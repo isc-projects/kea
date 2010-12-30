@@ -27,6 +27,9 @@ using namespace isc::dns;
 using namespace isc::datasrc;
 
 namespace {
+// Commonly used result codes (Who should write the prefix all the time)
+using result::SUCCESS;
+using result::EXIST;
 
 class MemoryDataSrcTest : public ::testing::Test {
 protected:
@@ -139,18 +142,24 @@ public:
         class_(RRClass::IN()),
         origin_("example.org"),
         ns_name_("ns.example.org"),
+        child_ns_name_("child.example.org"),
+        grandchild_ns_name_("grand.child.example.org"),
         zone_(class_, origin_),
         rr_out_(new RRset(Name("example.com"), class_, RRType::A(),
             RRTTL(300))),
         rr_ns_(new RRset(origin_, class_, RRType::NS(), RRTTL(300))),
         rr_ns_a_(new RRset(ns_name_, class_, RRType::A(), RRTTL(300))),
         rr_ns_aaaa_(new RRset(ns_name_, class_, RRType::AAAA(), RRTTL(300))),
-        rr_a_(new RRset(origin_, class_, RRType::A(), RRTTL(300)))
+        rr_a_(new RRset(origin_, class_, RRType::A(), RRTTL(300))),
+        rr_child_ns_(new RRset(child_ns_name_, class_, RRType::NS(),
+                               RRTTL(300))),
+        rr_grandchild_ns_(new RRset(grandchild_ns_name_, class_, RRType::NS(),
+                               RRTTL(300)))
     {
     }
     // Some data to test with
-    RRClass class_;
-    Name origin_, ns_name_;
+    const RRClass class_;
+    const Name origin_, ns_name_, child_ns_name_, grandchild_ns_name_;
     // The zone to torture by tests
     MemoryZone zone_;
 
@@ -160,7 +169,7 @@ public:
      * inside anyway. We will check it finds them and does not change
      * the pointer.
      */
-    RRsetPtr
+    ConstRRsetPtr
         // Out of zone RRset
         rr_out_,
         // NS of example.org
@@ -171,6 +180,8 @@ public:
         rr_ns_aaaa_,
         // A of example.org
         rr_a_;
+    ConstRRsetPtr rr_child_ns_; // NS of a child domain (for delegation)
+    ConstRRsetPtr rr_grandchild_ns_; // NS below a zone cut (unusual)
 
     /**
      * \brief Test one find query to the zone.
@@ -230,7 +241,6 @@ TEST_F(MemoryZoneTest, add) {
     // Test null pointer
     EXPECT_THROW(zone_.add(ConstRRsetPtr()), MemoryZone::NullRRset);
 
-    using namespace result; // Who should write the prefix all the time
     // Now put all the data we have there. It should throw nothing
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_ns_)));
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_ns_a_)));
@@ -242,6 +252,46 @@ TEST_F(MemoryZoneTest, add) {
     EXPECT_NO_THROW(EXPECT_EQ(EXIST, zone_.add(rr_ns_a_)));
 }
 
+// Test adding child zones and zone cut handling
+TEST_F(MemoryZoneTest, delegationNS) {
+    // add in-zone data
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_ns_)));
+
+    // install a zone cut
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_child_ns_)));
+
+    // below the zone cut
+    findTest(Name("www.child.example.org"), RRType::A(), Zone::DELEGATION,
+             true, rr_child_ns_);
+
+    // at the zone cut
+    findTest(Name("child.example.org"), RRType::A(), Zone::DELEGATION,
+             true, rr_child_ns_);
+    findTest(Name("child.example.org"), RRType::NS(), Zone::DELEGATION,
+             true, rr_child_ns_);
+
+    // finding NS for the apex (origin) node.  This must not be confused
+    // with delegation due to the existence of an NS RR.
+    findTest(origin_, RRType::NS(), Zone::SUCCESS, true, rr_ns_);
+
+    // unusual case of "nested delegation": the highest cut should be used.
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_grandchild_ns_)));
+    findTest(Name("www.grand.child.example.org"), RRType::A(),
+             Zone::DELEGATION, true, rr_child_ns_); // note: !rr_grandchild_ns_
+}
+
+// Test adding DNAMEs and resulting delegation handling
+// Listing ideas only for now
+TEST_F(MemoryZoneTest, delegationDNAME) {
+    // apex DNAME: allowed by spec.  No DNAME delegation at the apex;
+    // descendants are subject to delegation.
+
+    // Other cases of NS and DNAME mixture are prohibited.
+    // BIND 9 doesn't reject such cases at load time, however.
+
+    // DNAME and ordinary types (allowed by spec)
+}
+
 /**
  * \brief Test searching.
  *
@@ -251,7 +301,6 @@ TEST_F(MemoryZoneTest, add) {
  */
 TEST_F(MemoryZoneTest, find) {
     // Fill some data inside
-    using namespace result; // Who should write the prefix all the time
     // Now put all the data we have there. It should throw nothing
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_ns_)));
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_ns_a_)));
