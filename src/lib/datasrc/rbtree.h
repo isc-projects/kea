@@ -412,6 +412,16 @@ public:
     Result insert(const isc::dns::Name& name, RBNode<T>** inserted_node);
     //@}
 
+    /// \brief Swaps two tree's contents.
+    ///
+    /// This acts the same as many std::*.swap functions, exchanges the
+    /// contents. This doesn't throw anything.
+    void swap(RBTree<T>& other) {
+        std::swap(root_, other.root_);
+        std::swap(NULLNODE, other.NULLNODE);
+        std::swap(node_count_, other.node_count_);
+    }
+
 private:
     /// \name RBTree balance functions
     //@{

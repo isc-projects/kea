@@ -1,3 +1,8 @@
+  141.	[bug]		jinmei
+	b10-auth: Fixed a bug that the authoritative server includes
+	trailing garbage data in responses.  This is a regression due to
+	change #135. (Trac #462, svn r4081)
+
   140.  [func]		y-aharen
 	src/bin/auth: Added a feature to count queries and send counter
 	values to statistics periodically. To support it, added wrapping

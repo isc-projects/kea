@@ -97,6 +97,30 @@ public:
         { }
     };
 
+    /// \brief Load zone from masterfile.
+    ///
+    /// This loads data from masterfile specified by filename. It replaces
+    /// current content. The masterfile parsing ability is kind of limited,
+    /// see isc::dns::masterLoad.
+    ///
+    /// This throws isc::dns::MasterLoadError if there is problem with loading
+    /// (missing file, malformed, it contains different zone, etc - see
+    /// isc::dns::masterLoad for details).
+    ///
+    /// In case of internal problems, OutOfZone, NullRRset or AssertError could
+    /// be thrown, but they should not be expected. Exceptions caused by
+    /// allocation may be thrown as well.
+    ///
+    /// If anything is thrown, the previous content is preserved (so it can
+    /// be used to update the data, but if user makes a typo, the old one
+    /// is kept).
+    ///
+    /// \param filename The master file to load.
+    ///
+    /// \todo We may need to split it to some kind of build and commit/abort.
+    ///     This will probably be needed when a better implementation of
+    ///     configuration reloading is written.
+    void load(const std::string& filename);
 private:
     /// \name Hidden private data
     //@{

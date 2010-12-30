@@ -231,4 +231,34 @@ TEST_F(RBTreeTest, dumpTree) {
     str2 << "tree has 13 node(s)\nb. (black)\n     a. (black)\n          NULL\n          NULL\n     d.e.f. (black)[invisible] \n          begin down from d.e.f.\n          w.y. (black)[invisible] \n               begin down from w.y.\n               p. (black)\n                    o. (red)\n                         NULL\n                         NULL\n                    q. (red)\n                         NULL\n                         NULL\n               end down from w.y.\n               x. (red)\n                    NULL\n                    NULL\n               z. (red)\n                    begin down from z.\n                    j. (black)\n                         NULL\n                         NULL\n                    end down from z.\n                    NULL\n                    NULL\n          end down from d.e.f.\n          c. (red)\n               NULL\n               NULL\n          g.h. (red)\n               begin down from g.h.\n               i. (black)\n                    NULL\n                    NULL\n               end down from g.h.\n               NULL\n               NULL\n";
     EXPECT_EQ(str.str(), str2.str());
 }
+
+TEST_F(RBTreeTest, swap) {
+    // Store info about the first tree
+    std::ostringstream str1;
+    rbtree.dumpTree(str1);
+    size_t count1(rbtree.getNodeCount());
+
+    // Create second one and store state
+    RBTree<int> tree2;
+    RBNode<int>* node;
+    tree2.insert(Name("second"), &node);
+    std::ostringstream str2;
+    tree2.dumpTree(str2);
+
+    // Swap them
+    ASSERT_NO_THROW(tree2.swap(rbtree));
+
+    // Check their sizes
+    ASSERT_EQ(1, rbtree.getNodeCount());
+    ASSERT_EQ(count1, tree2.getNodeCount());
+
+    // And content
+    std::ostringstream out;
+    rbtree.dumpTree(out);
+    ASSERT_EQ(str2.str(), out.str());
+    out.str("");
+    tree2.dumpTree(out);
+    ASSERT_EQ(str1.str(), out.str());
+}
+
 }
