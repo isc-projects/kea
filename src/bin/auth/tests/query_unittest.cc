@@ -32,11 +32,23 @@ using namespace isc::auth;
 RRsetPtr a_rrset = RRsetPtr(new RRset(Name("www.example.com"),
                                       RRClass::IN(), RRType::A(),
                                       RRTTL(3600)));
-RRsetPtr glue_a_rrset(RRsetPtr(new RRset(Name("glue.a.example.com"),
+RRsetPtr glue_a_rrset(RRsetPtr(new RRset(Name("glue.ns.example.com"),
                                          RRClass::IN(), RRType::A(),
                                          RRTTL(3600))));
-RRsetPtr glue_aaaa_rrset(RRsetPtr(new RRset(Name("glue.aaaa.example.com"),
+RRsetPtr ns_rrset(RRsetPtr(new RRset(Name("ns.example.com"),
+                                     RRClass::IN(), RRType::NS(),
+                                     RRTTL(3600))));
+RRsetPtr delegation_rrset(RRsetPtr(new RRset(Name("delegation.example.com"),
+                                             RRClass::IN(), RRType::NS(),
+                                             RRTTL(3600))));
+RRsetPtr noglue_rrset(RRsetPtr(new RRset(Name("noglue.example.com"),
+                                         RRClass::IN(), RRType::A(),
+                                         RRTTL(3600))));
+RRsetPtr glue_aaaa_rrset(RRsetPtr(new RRset(Name("glue.ns.example.com"),
                                             RRClass::IN(), RRType::AAAA(),
+                                            RRTTL(3600))));
+RRsetPtr cname_rrset(RRsetPtr(new RRset(Name("cname.example.com"),
+                                            RRClass::IN(), RRType::CNAME(),
                                             RRTTL(3600))));
 namespace {
 // This is a mock Zone class for testing.
@@ -48,15 +60,18 @@ namespace {
 // otherwise return DNAME
 class MockZone : public Zone {
 public:
-    MockZone() : origin_(Name("example.com")),
-                 ns_rrset(RRsetPtr(new RRset(Name("delegation.example.com"),
-                                             RRClass::IN(), RRType::NS(),
-                                             RRTTL(3600))))
+    MockZone() : origin_(Name("example.com"))
     {
-        ns_rrset->addRdata(rdata::generic::NS(
-                          Name("glue.a.example.com")));
-        ns_rrset->addRdata(rdata::generic::NS(
-                          Name("glue.aaaa.example.com")));
+        delegation_rrset->addRdata(rdata::generic::NS(
+                          Name("glue.ns.example.com")));
+        delegation_rrset->addRdata(rdata::generic::NS(
+                          Name("noglue.example.com")));
+        delegation_rrset->addRdata(rdata::generic::NS(
+                          Name("cname.example.com")));
+        delegation_rrset->addRdata(rdata::generic::NS(
+                          Name("example.org")));
+        cname_rrset->addRdata(rdata::generic::CNAME(
+                          Name("www.example.com")));
     }
     virtual const isc::dns::Name& getOrigin() const;
     virtual const isc::dns::RRClass& getClass() const;
@@ -66,7 +81,6 @@ public:
 
 private:
     Name origin_;
-    RRsetPtr ns_rrset;
 };
 
 const Name&
@@ -80,22 +94,26 @@ MockZone::getClass() const {
 }
 
 Zone::FindResult
-MockZone::find(const Name& name, const RRType&) const {
+MockZone::find(const Name& name, const RRType& type) const {
     // hardcode the find results
     if (name == Name("www.example.com")) {
         return (FindResult(SUCCESS, a_rrset));
-    } else if (name == Name("glue.a.example.com")) {
+    } else if (name == Name("glue.ns.example.com") && type == RRType::A()) {
         return (FindResult(SUCCESS, glue_a_rrset));
-    } else if (name == Name("glue.aaaa.example.com")) {
+    } else if (name == Name("noglue.example.com") && type == RRType::A()) {
+        return (FindResult(SUCCESS, noglue_rrset));
+    } else if (name == Name("glue.ns.example.com") && type == RRType::AAAA()) {
         return (FindResult(SUCCESS, glue_aaaa_rrset));
     } else if (name == Name("delegation.example.com")) {
+        return (FindResult(DELEGATION, delegation_rrset));
+    } else if (name == Name("ns.example.com")) {
         return (FindResult(DELEGATION, ns_rrset));
     } else if (name == Name("nxdomain.example.com")) {
         return (FindResult(NXDOMAIN, RRsetPtr()));
     } else if (name == Name("nxrrset.example.com")) {
         return FindResult(NXRRSET, RRsetPtr());
     } else if ((name == Name("cname.example.com"))) {
-        return (FindResult(CNAME, RRsetPtr()));
+        return (FindResult(CNAME, cname_rrset));
     } else {
         return (FindResult(DNAME, RRsetPtr()));
     }
@@ -144,12 +162,25 @@ TEST_F(QueryTest, matchZone) {
     EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
                                   Name("delegation.example.com"),
                                   RRClass::IN(), RRType::NS()));
+    // glue address records
     EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
-                                  Name("glue.a.example.com"),
+                                  Name("glue.ns.example.com"),
                                   RRClass::IN(), RRType::A()));
     EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
-                                  Name("glue.aaaa.example.com"),
+                                  Name("glue.ns.example.com"),
                                   RRClass::IN(), RRType::AAAA()));
+    // noglue address records
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("noglue.example.com"),
+                                  RRClass::IN(), RRType::A()));
+    // NS name has a CNAME
+    EXPECT_FALSE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("www.example.com"),
+                                  RRClass::IN(), RRType::A()));
+    // NS name is out of zone
+    EXPECT_FALSE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("example.org"),
+                                  RRClass::IN(), RRType::A()));
 
     // NXDOMAIN
     const Name nxdomain_name(Name("nxdomain.example.com"));

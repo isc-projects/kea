@@ -106,10 +106,12 @@ public:
     /// future version.
     void process() const;
 
+private:
     /// Look up additional data (i.e., address records for the names included
     /// in NS or MX records).
     ///
-    /// Right now this method never throws an exception.
+    /// This method may throw a exception because its underlying methods may
+    /// throw exceptions.
     ///
     /// \param zone The Zone wherein the additional data to the query is bo be
     /// found.
@@ -134,7 +136,6 @@ public:
     void findAddrs(const isc::datasrc::Zone& zone,
                    const isc::dns::Name& qname) const;
 
-private:
     const isc::datasrc::MemoryDataSrc& memory_datasrc_;
     const isc::dns::Name& qname_;
     const isc::dns::RRType& qtype_;
