@@ -15,9 +15,11 @@
 #include <map>
 #include <cassert>
 #include <boost/shared_ptr.hpp>
+#include <boost/bind.hpp>
 
 #include <dns/name.h>
 #include <dns/rrclass.h>
+#include <dns/masterload.h>
 
 #include <datasrc/memory_datasrc.h>
 #include <datasrc/rbtree.h>
@@ -65,7 +67,7 @@ struct MemoryZone::MemoryZoneImpl {
      * access is without the impl_-> and it will get inlined anyway.
      */
     // Implementation of MemoryZone::add
-    result::Result add(const ConstRRsetPtr& rrset) {
+    result::Result add(const ConstRRsetPtr& rrset, DomainTree* domains) {
         // Sanitize input
         if (!rrset) {
             isc_throw(NullRRset, "The rrset provided is NULL");
@@ -80,7 +82,7 @@ struct MemoryZone::MemoryZoneImpl {
         }
         // Get the node
         DomainNode* node;
-        switch (domains_.insert(name, &node)) {
+        switch (domains->insert(name, &node)) {
             // Just check it returns reasonable results
             case DomainTree::SUCCEED:
             case DomainTree::ALREADYEXIST:
@@ -118,6 +120,22 @@ struct MemoryZone::MemoryZoneImpl {
             // The RRSet of given type was already there
             return (result::EXIST);
         }
+    }
+
+    /*
+     * Same as above, but it checks the return value and if it already exists,
+     * it throws.
+     */
+    void addFromLoad(const ConstRRsetPtr& set, DomainTree* domains) {
+            switch (add(set, domains)) {
+                case result::EXIST:
+                    isc_throw(dns::MasterLoadError, "Duplicate rrset: " <<
+                        set->toText());
+                case result::SUCCESS:
+                    return;
+                default:
+                    assert(0);
+            }
     }
 
     // Maintain intermediate data specific to the search context used in
@@ -235,7 +253,19 @@ MemoryZone::find(const Name& name, const RRType& type) const {
 
 result::Result
 MemoryZone::add(const ConstRRsetPtr& rrset) {
-    return (impl_->add(rrset));
+    return (impl_->add(rrset, &impl_->domains_));
+}
+
+
+void
+MemoryZone::load(const string& filename) {
+    // Load it into a temporary tree
+    MemoryZoneImpl::DomainTree tmp;
+    masterLoad(filename.c_str(), getOrigin(), getClass(),
+        boost::bind(&MemoryZoneImpl::addFromLoad, impl_, _1, &tmp));
+    // If it went well, put it inside
+    tmp.swap(impl_->domains_);
+    // And let the old data die with tmp
 }
 
 /// Implementation details for \c MemoryDataSrc hidden from the public

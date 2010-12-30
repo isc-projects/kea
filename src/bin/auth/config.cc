@@ -151,16 +151,21 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
             isc_throw(AuthConfigError, "Missing zone file for zone: "
                       << origin->str());
         }
-        const result::Result result = memory_datasrc_->addZone(
-            ZonePtr(new MemoryZone(rrclass_, Name(origin->stringValue()))));
+        shared_ptr<MemoryZone> new_zone(new MemoryZone(rrclass_,
+            Name(origin->stringValue())));
+        const result::Result result = memory_datasrc_->addZone(new_zone);
         if (result == result::EXIST) {
             isc_throw(AuthConfigError, "zone "<< origin->str()
                       << " already exists");
         }
 
-        // TODO
-        // then load the zone from 'file', which is currently not implemented.
-        //
+        /*
+         * TODO: Once we have better reloading of configuration (something
+         * else than throwing everything away and loading it again), we will
+         * need the load method to be split into some kind of build and
+         * commit/abort parts.
+         */
+        new_zone->load(file->stringValue());
     }
 }
 
