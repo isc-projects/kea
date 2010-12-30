@@ -33,6 +33,7 @@ Query::getAdditional(const isc::datasrc::Zone& zone,
 {
     if (rrset.getType() == RRType::NS()) {
         // Need to perform the search in the "GLUE OK" mode.
+        // Currently, we simply search the whole zone for address records.
         RdataIteratorPtr rdata_iterator = rrset.getRdataIterator();
         for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
              const Rdata& rdata(rdata_iterator->getCurrent());
