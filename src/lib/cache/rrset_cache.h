@@ -65,6 +65,14 @@ public:
     /// \brief Resize the size of rrset cache in runtime. 
     bool resize(uint32_t size);
 
+protected:
+    /// \brief Get the hash key for the rrset entry in the cache.
+    /// \param name name of the rrset.
+    /// \param type type of the rrset.
+    /// \return return the hash key.
+    HashKey getEntryHashKey(const isc::dns::Name& name, 
+                            const isc::dns::RRType& type) const;
+
 private:
     uint16_t class_; // The class of the rrset cache.
     isc::nsas::HashTable<RRsetEntry> rrset_table_;

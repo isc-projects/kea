@@ -33,7 +33,7 @@ RRsetCache::RRsetCache(uint32_t cache_size):
 
 {
 }
-    
+
 RRsetEntryPtr
 RRsetCache::lookup(const isc::dns::Name& qname,
                    const isc::dns::RRType& qtype)
@@ -41,8 +41,14 @@ RRsetCache::lookup(const isc::dns::Name& qname,
     CacheEntryKey keydata = genCacheEntryKey(qname, qtype);
     //TODO, HashKey need to be refactored, since we don't need query class
     // as the parameters.
-    return rrset_table_.get(HashKey(
+    RRsetEntryPtr entry_ptr = rrset_table_.get(HashKey(
            keydata.first, keydata.second, RRClass(class_)));
+
+    //If the rrset entry has expired, return NULL.
+    if(time(NULL) > entry_ptr->getExpireTime()) {
+        return RRsetEntryPtr();
+    }
+    return entry_ptr;
 }
 
 RRsetEntryPtr
@@ -53,7 +59,8 @@ RRsetCache::update(const isc::dns::RRset& rrset, const RRsetTrustLevel& level) {
         // rrset entry doesn't exist, create one rrset entry for the rrset
         // and add it directly.
         entry_ptr.reset(new RRsetEntry(rrset, level));
-        rrset_table_.add(entry_ptr, entry_ptr->hashKey());
+        // Replace the expired rrset entry if it exists.
+        rrset_table_.add(entry_ptr, entry_ptr->hashKey(), true);
         //TODO , lru list touch.
         return entry_ptr;
     } else {
@@ -69,22 +76,33 @@ RRsetCache::update(const isc::dns::RRset& rrset, const RRsetTrustLevel& level) {
             rrset_table_.remove(key);
             entry_ptr.reset(new RRsetEntry(rrset, level));
             //TODO, lru list touch.
-            rrset_table_.add(entry_ptr, key);
+            // Replace the expired rrset entry if it exists.
+            rrset_table_.add(entry_ptr, key, true);
             return entry_ptr;
         }
     }
 }
 
+HashKey
+RRsetCache::getEntryHashKey(const Name& name, const RRType& type) const 
+{
+    CacheEntryKey keydata = genCacheEntryKey(name, type);
+    return HashKey(keydata.first, keydata.second, RRClass(class_));
+}
+
 void
 RRsetCache::dump(const std::string&) {
+    //TODO
 }
 
 void
 RRsetCache::load(const std::string&) {
+    //TODO
 }
 
 bool
 RRsetCache::resize(uint32_t) {
+    //TODO
     return true;
 }
 

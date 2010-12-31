@@ -27,7 +27,7 @@ using namespace isc::nsas;
 namespace isc {
 namespace cache {
 
-/// \brief RRset Trustworthiness
+/// \enum RRset Trustworthiness
 /// For detail of rrset trustworthiness, please refer to
 /// RFC2181 section5.4.1.
 /// Bigger value is more trustworthy.
@@ -67,10 +67,15 @@ public:
     RRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& level);
 
     /// \brief Generate one rrset according the entry information.
-    void generateRRset(isc::dns::RRset& rrset) const;
+    void genRRset(isc::dns::RRset& rrset) const;
     
     /// \brief Get the expiration time of the rrset.
-    time_t getExpirationTime() const;
+    time_t getExpireTime() const;
+
+    /// \brief Get the ttl of the rrset.
+    uint32_t getTTL() const {
+        return ttl_;
+    }
 
     /// \return return hash key
     virtual HashKey hashKey() const;

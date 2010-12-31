@@ -21,6 +21,7 @@
 #include <dns/message.h>
 #include <nsas/nsas_entry.h>
 #include <nsas/fetchable.h>
+#include "rrset_entry.h"
 
 
 using namespace isc::nsas;
@@ -43,8 +44,9 @@ public:
     /// message.
     /// \param message The message used to initialize MessageEntry.
     /// \param rrset_cache the pointer of RRsetCache. When one message
-    /// entry is created, some new rrset entries may be created/updated
-    /// if they doesn't exist in the rrset cache.
+    /// entry is created, rrset cache needs to be updated, since some
+    /// new rrset entries may be inserted into the rrset cache, or the
+    /// existed rrset entries need to be updated.
     MessageEntry(const isc::dns::Message& message,
                  boost::shared_ptr<RRsetCache> rrset_cache);
 
@@ -60,10 +62,35 @@ public:
     bool genMessage(const time_t& time_now,
                     const uint16_t query_header,
                     isc::dns::Message& response);
+    
+    /// \brief Get the hash key of the message entry.
+    /// \return return hash key
+    virtual HashKey hashKey() const;
+
 protected:
-    // Initialize the message entry with dns message.
+    /// \brief Initialize the message entry with dns message.
     void initMessageEntry(const isc::dns::Message& message);
 
+    /// \brief These two functions should be static functions
+    /// placed in cc file. Put them here just for easy unit 
+    /// test.
+    //@{
+    /// \brief Parse the rrsets in specified section.
+    /// \param smaller_ttl Get the smallest ttl of rrsets in 
+    /// specified section, if it's smaller than the given value.
+    void parseSection(const isc::dns::Message& msg,
+                      const isc::dns::Message::Section& section,
+                      uint32_t& smaller_ttl);
+
+    /// \brief Get RRset Trust worthiness
+    /// only the rrset can be updated by the rrsets 
+    /// with higher trust level.
+    ///
+    /// \return return rrset trust level.
+    RRsetTrustLevel getRRsetTrustLevel(const isc::dns::Message& message,
+                               const isc::dns::RRset& rrset,
+                               const isc::dns::Message::Section& section);
+    //@}
 private:
     time_t expire_time_;  // Expiration time of the message.
 
@@ -77,7 +104,7 @@ private:
     uint16_t authority_count_; // rrset count in authority section.
     uint16_t additional_count_; // rrset count in addition section.
 
-    std::vector<boost::shared_ptr<RRsetEntry*> > rrsets_;
+    std::vector<boost::shared_ptr<RRsetEntry> > rrsets_;
     boost::shared_ptr<RRsetCache> rrset_cache_;
 };
     
