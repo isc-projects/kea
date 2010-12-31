@@ -32,24 +32,18 @@ using namespace isc::auth;
 RRsetPtr a_rrset = RRsetPtr(new RRset(Name("www.example.com"),
                                       RRClass::IN(), RRType::A(),
                                       RRTTL(3600)));
-RRsetPtr glue_a_rrset(RRsetPtr(new RRset(Name("glue.ns.example.com"),
-                                         RRClass::IN(), RRType::A(),
-                                         RRTTL(3600))));
 RRsetPtr ns_rrset(RRsetPtr(new RRset(Name("ns.example.com"),
                                      RRClass::IN(), RRType::NS(),
                                      RRTTL(3600))));
-RRsetPtr delegation_rrset(RRsetPtr(new RRset(Name("delegation.example.com"),
-                                             RRClass::IN(), RRType::NS(),
-                                             RRTTL(3600))));
-RRsetPtr noglue_rrset(RRsetPtr(new RRset(Name("noglue.example.com"),
+RRsetPtr glue_a_rrset(RRsetPtr(new RRset(Name("glue.ns.example.com"),
                                          RRClass::IN(), RRType::A(),
                                          RRTTL(3600))));
 RRsetPtr glue_aaaa_rrset(RRsetPtr(new RRset(Name("glue.ns.example.com"),
                                             RRClass::IN(), RRType::AAAA(),
                                             RRTTL(3600))));
-RRsetPtr cname_rrset(RRsetPtr(new RRset(Name("cname.example.com"),
-                                            RRClass::IN(), RRType::CNAME(),
-                                            RRTTL(3600))));
+RRsetPtr noglue_a_rrset(RRsetPtr(new RRset(Name("noglue.example.com"),
+                                         RRClass::IN(), RRType::A(),
+                                         RRTTL(3600))));
 namespace {
 // This is a mock Zone class for testing.
 // It is a derived class of Zone, and simply hardcode the results of find()
@@ -60,7 +54,14 @@ namespace {
 // otherwise return DNAME
 class MockZone : public Zone {
 public:
-    MockZone() : origin_(Name("example.com"))
+    MockZone() :
+        origin_(Name("example.com")),
+        delegation_rrset(RRsetPtr(new RRset(Name("delegation.example.com"),
+                        RRClass::IN(), RRType::NS(),
+                        RRTTL(3600)))),
+        cname_rrset(RRsetPtr(new RRset(Name("cname.example.com"),
+                        RRClass::IN(), RRType::CNAME(),
+                        RRTTL(3600))))
     {
         delegation_rrset->addRdata(rdata::generic::NS(
                           Name("glue.ns.example.com")));
@@ -81,6 +82,8 @@ public:
 
 private:
     Name origin_;
+    RRsetPtr delegation_rrset;
+    RRsetPtr cname_rrset;
 };
 
 const Name&
@@ -101,7 +104,7 @@ MockZone::find(const Name& name, const RRType& type) const {
     } else if (name == Name("glue.ns.example.com") && type == RRType::A()) {
         return (FindResult(SUCCESS, glue_a_rrset));
     } else if (name == Name("noglue.example.com") && type == RRType::A()) {
-        return (FindResult(SUCCESS, noglue_rrset));
+        return (FindResult(SUCCESS, noglue_a_rrset));
     } else if (name == Name("glue.ns.example.com") && type == RRType::AAAA()) {
         return (FindResult(SUCCESS, glue_aaaa_rrset));
     } else if (name == Name("delegation.example.com")) {
