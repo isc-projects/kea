@@ -169,7 +169,10 @@ struct MemoryZone::MemoryZoneImpl {
             // double check for it?
             state->zonecut_node_ = &node;
             state->rrset_ = found->second;
-            return ((state->options_ & FIND_GLUE_OK) != 0 ? false : true);
+
+            // Unless glue is allowed the search stops here, so we return
+            // false; otherwise return true to continue the search.
+            return ((state->options_ & FIND_GLUE_OK) == 0);
         }
 
         // This case should not happen because we enable callback only
