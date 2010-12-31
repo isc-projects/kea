@@ -33,7 +33,6 @@ MessageCache::MessageCache(boost::shared_ptr<RRsetCache> rrset_cache,
     message_table_(new NsasEntryCompare<MessageEntry>, cache_size),
     message_lru_((3 * cache_size),
                   new HashDeleter<MessageEntry>(message_table_))
-
 {
 }
     
@@ -43,12 +42,8 @@ MessageCache::lookup(const isc::dns::Name& qname,
                      const uint16_t query_header,
                      isc::dns::Message& response)
 {
-    CacheEntryKey keydata = genCacheEntryKey(qname, qtype);
-
-    //TODO, HashKey need to be refactored, since we don't need query class
-    // as the parameters.
-    boost::shared_ptr<MessageEntry> msg_entry = message_table_.get(HashKey(
-                keydata.first, keydata.second, RRClass(message_class_)));
+    HashKey entry_key = getEntryHashKey(qname, qtype);
+    MessageEntryPtr msg_entry = message_table_.get(entry_key);
     if(msg_entry) {
        return msg_entry->genMessage(time(NULL), query_header, response);
     }
@@ -57,20 +52,37 @@ MessageCache::lookup(const isc::dns::Name& qname,
 }
 
 bool
-MessageCache::update(const Message&) {
-    return true;
+MessageCache::update(const Message& msg) {
+    // The simplest way to update is removing the old message entry directly.
+    QuestionIterator iter = msg.beginQuestion();
+    HashKey entry_key = getEntryHashKey((*iter)->getName(),
+                                           (*iter)->getType());
+    message_table_.remove(entry_key);
+    MessageEntryPtr msg_entry(new MessageEntry(msg, rrset_cache_));
+    //TODO, lru list touch
+    return message_table_.add(msg_entry, entry_key, true);
+}
+
+HashKey
+MessageCache::getEntryHashKey(const Name& name, const RRType& type) const 
+{
+    CacheEntryKey keydata = genCacheEntryKey(name, type);
+    return HashKey(keydata.first, keydata.second, RRClass(message_class_));
 }
 
 void
 MessageCache::dump(const std::string&) {
+    //TODO
 }
 
 void
 MessageCache::load(const std::string&) {
+    //TODO
 }
 
 bool
 MessageCache::resize(uint32_t) {
+    //TODO
     return true;
 }
 

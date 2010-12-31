@@ -71,6 +71,14 @@ public:
     /// \brief Resize the size of message cache in runtime. 
     bool resize(uint32_t size);
 
+protected:
+    /// \brief Get the hash key for the message entry in the cache.
+    /// \param name query name of the message.
+    /// \param type query type of the message.
+    /// \return return the hash key.
+    HashKey getEntryHashKey(const isc::dns::Name& name, 
+                            const isc::dns::RRType& type) const;
+
 private:
     uint16_t message_class_; // The class of the message cache.
     boost::shared_ptr<RRsetCache> rrset_cache_;

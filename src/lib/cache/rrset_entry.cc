@@ -30,18 +30,17 @@ RRsetEntry::RRsetEntry(const isc::dns::RRset&,
 }
 
 void
-RRsetEntry::generateRRset(isc::dns::RRset&) const {
+RRsetEntry::genRRset(isc::dns::RRset&) const {
 }
 
 time_t
-RRsetEntry::getExpirationTime() const {
+RRsetEntry::getExpireTime() const {
     return expire_time_;
 }
 
 HashKey
 RRsetEntry::hashKey() const {
     CacheEntryKey keydata = genCacheEntryKey(name_, type_);
-    // as the parameters.
     return HashKey(keydata.first, keydata.second, RRClass(class_));
 }
 
