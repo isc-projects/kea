@@ -25,7 +25,7 @@ namespace isc {
 namespace dns {
 class Name;
 class RRClass;
-};
+}
 
 namespace datasrc {
 
