@@ -67,7 +67,7 @@
       },
       {
         "command_name": "loadzone",
-        "command_description": "TBD",
+        "command_description": "(Re)load a specified zone",
         "command_args": [
           {
             "item_name": "class", "item_type": "string",
@@ -86,4 +86,3 @@
     ]
   }
 }
-
