@@ -40,6 +40,7 @@ struct MemoryZone::MemoryZoneImpl {
     // Information about the zone
     RRClass zone_class_;
     Name origin_;
+    string file_name_;
 
     // Some type aliases
     /*
@@ -275,8 +276,19 @@ MemoryZone::load(const string& filename) {
     masterLoad(filename.c_str(), getOrigin(), getClass(),
         boost::bind(&MemoryZoneImpl::addFromLoad, impl_, _1, &tmp));
     // If it went well, put it inside
+    impl_->file_name_ = filename;
     tmp.swap(impl_->domains_);
     // And let the old data die with tmp
+}
+
+void
+MemoryZone::swap(MemoryZone& zone) {
+    std::swap(impl_, zone.impl_);
+}
+
+const string
+MemoryZone::getFileName() const {
+    return (impl_->file_name_);
 }
 
 /// Implementation details for \c MemoryDataSrc hidden from the public

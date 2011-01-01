@@ -41,11 +41,11 @@ namespace datasrc {
 class ZoneTable {
 public:
     struct FindResult {
-        FindResult(result::Result param_code, const ConstZonePtr param_zone) :
+        FindResult(result::Result param_code, const ZonePtr param_zone) :
             code(param_code), zone(param_zone)
         {}
         const result::Result code;
-        const ConstZonePtr zone;
+        const ZonePtr zone;
     };
     ///
     /// \name Constructors and Destructor.

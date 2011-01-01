@@ -1,4 +1,4 @@
-CLEANFILES = *.wire
+CLEANFILES = *.wire *.copied
 
 BUILT_SOURCES = badExampleQuery_fromWire.wire examplequery_fromWire.wire
 BUILT_SOURCES += iqueryresponse_fromWire.wire multiquestion_fromWire.wire
@@ -24,6 +24,12 @@ EXTRA_DIST += example.com.zone example.net.zone example.org.zone example.zone
 
 EXTRA_DIST += example.com
 EXTRA_DIST += example.sqlite3
+
+EXTRA_DIST += test1.zone.in
+EXTRA_DIST += test1-new.zone.in
+EXTRA_DIST += test1-broken.zone.in
+EXTRA_DIST += test2.zone.in
+EXTRA_DIST += test2-new.zone.in
 
 .spec.wire:
 	$(abs_top_builddir)/src/lib/dns/tests/testdata/gen-wiredata.py -o $@ $<
