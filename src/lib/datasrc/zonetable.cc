@@ -85,12 +85,12 @@ struct ZoneTable::ZoneTableImpl {
                 break;
             // We have no data there, so translate the pointer to NULL as well
             case ZoneTree::NOTFOUND:
-                return (FindResult(result::NOTFOUND, ConstZonePtr()));
+                return (FindResult(result::NOTFOUND, ZonePtr()));
             // Can Not Happen
             default:
                 assert(0);
                 // Because of warning
-                return (FindResult(result::NOTFOUND, ConstZonePtr()));
+                return (FindResult(result::NOTFOUND, ZonePtr()));
         }
 
         // Can Not Happen (remember, NOTFOUND is handled)

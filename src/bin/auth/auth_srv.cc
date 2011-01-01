@@ -195,10 +195,19 @@ private:
 
 AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client) :
     impl_(new AuthSrvImpl(use_cache, xfrout_client)),
+    io_service_(NULL),
     checkin_(new ConfigChecker(this)),
     dns_lookup_(new MessageLookup(this)),
     dns_answer_(new MessageAnswer(this))
 {}
+
+void
+AuthSrv::stop() {
+    if (io_service_ == NULL) {
+        throw FatalError("Assumption failure; server is stopped before start");
+    }
+    io_service_->stop();
+}
 
 AuthSrv::~AuthSrv() {
     delete impl_;
@@ -299,8 +308,8 @@ AuthSrv::getConfigSession() const {
     return (impl_->config_session_);
 }
 
-AuthSrv::ConstMemoryDataSrcPtr
-AuthSrv::getMemoryDataSrc(const RRClass& rrclass) const {
+AuthSrv::MemoryDataSrcPtr
+AuthSrv::getMemoryDataSrc(const RRClass& rrclass) {
     // XXX: for simplicity, we only support the IN class right now.
     if (rrclass != impl_->memory_datasrc_class_) {
         isc_throw(InvalidParameter,

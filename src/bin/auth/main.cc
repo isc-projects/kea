@@ -42,6 +42,7 @@
 #include <auth/spec_config.h>
 #include <auth/common.h>
 #include <auth/config.h>
+#include <auth/command.h>
 #include <auth/change_user.h>
 #include <auth/auth_srv.h>
 #include <asiolink/asiolink.h>
@@ -80,23 +81,8 @@ my_config_handler(ConstElementPtr new_config) {
 
 ConstElementPtr
 my_command_handler(const string& command, ConstElementPtr args) {
-    ConstElementPtr answer = createAnswer();
-
-    if (command == "print_message") {
-        cout << args << endl;
-        /* let's add that message to our answer as well */
-        answer = createAnswer(0, args);
-    } else if (command == "shutdown") {
-        io_service.stop();
-    } else if (command == "sendstats") {
-        if (verbose_mode) {
-            cerr << "[b10-auth] command 'sendstats' received" << endl;
-        }
-        assert(auth_server != NULL);
-        auth_server->submitStatistics();
-    }
-
-    return (answer);
+    assert(auth_server != NULL);
+    return (execAuthServerCommand(*auth_server, command, args));
 }
 
 void
