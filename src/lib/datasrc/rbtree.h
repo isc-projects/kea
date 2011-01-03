@@ -17,11 +17,11 @@
 
 //! \file datasrc/rbtree.h
 ///
-/// \note The purpose of the RBTree is to provide a generic map with 
-/// domain names as the key that can be used by various BIND 10 modules or
-/// even by other applications.  However, because of some unresolved design
-/// issue, the design and interface are not fixed, and RBTree isn't ready to
-/// be used as a base data structure by other modules.
+/// \note The purpose of the RBTree is to provide a generic map with
+///     domain names as the key that can be used by various BIND 10 modules or
+///     even by other applications.  However, because of some unresolved design
+///     issue, the design and interface are not fixed, and RBTree isn't ready
+///     to be used as a base data structure by other modules.
 
 #include <dns/name.h>
 #include <boost/utility.hpp>
@@ -35,16 +35,18 @@ namespace datasrc {
 
 namespace helper {
 
-/// Helper function to remove the base domain from super domain
+/// \brief Helper function to remove the base domain from super domain.
 ///
-/// the precondition of this function is the super_name contains the
+/// The precondition of this function is the super_name contains the
 /// sub_name so
 /// \code Name a("a.b.c");
 /// Name b("b.c");
 /// Name c = a - b;
 /// \endcode
+/// c will contain "a".
 ///
-/// \note function in this namespace is not intended to be used outside.
+/// \note Functions in this namespace is not intended to be used outside of
+///     RBTree implementation.
 inline isc::dns::Name
 operator-(const isc::dns::Name& super_name, const isc::dns::Name& sub_name) {
     return (super_name.split(0, super_name.getLabelCount() -
@@ -55,63 +57,94 @@ operator-(const isc::dns::Name& super_name, const isc::dns::Name& sub_name) {
 template <typename T>
 class RBTree;
 
-/// \brief \c RBNode use by RBTree to store any data related to one domain name
+/// \brief \c RBNode is use by RBTree to store any data related to one domain
+///     name.
 ///
-/// It has two roles, the first one is as one node in the \c RBTree,
-/// the second one is to store the data related to one domain name and maintain
-/// the domain name hierarchy struct in one domain name space.
-/// As for the first role, it has left, right, parent and color members
-/// which is used to keep the balance of the \c RBTree.
-/// As for the second role, \c RBNode use down pointer to refer to all its sub
-/// domains, so the name of current node always relative to the up node. since
-/// we only has down pointer without up pointer, so we can only walk down from
-/// top domain to sub domain.
-/// One special kind of node is non-terminal node
-/// which has subdomains with RRset but itself doesn't have any RRsets.
+/// This is meant to be used only from RBTree. It is meaningless to inherit it
+/// or create instances of it from elsewhere. For that reason, the constructor
+/// is private.
 ///
-/// \note \c RBNode basically used internally by RBTree, it is meaningless to
-/// inherited from it or create it without \c RBTree.
+/// It serves three roles. One is to keep structure of the \c RBTree as a
+/// red-black tree. For that purpose, it has left, right and parent pointers
+/// and color member. These are private and accessed only from within the tree.
+///
+/// The second one is to store data for one domain name. The data related
+/// functions can be used to access and set the data.
+///
+/// The third role is to keep the hierarchy of domains. The down pointer points
+/// to a subtree of subdomains. Note that we can traverse the hierarchy down,
+/// but not up.
+///
+/// One special kind of node is non-terminal node. It has subdomains with
+/// RRsets, but doesn't have any RRsets itself.
 template <typename T>
 class RBNode : public boost::noncopyable {
-public:
-    /// only \c RBTree can create and destroy \c RBNode
+private:
+    /// The RBNode is meant for use from within RBTree, so it has access to
+    /// it.
     friend class RBTree<T>;
-    typedef boost::shared_ptr<T> NodeDataPtr;
 
-    /// \name Destructor
-    /// \note it's seems a little strange that constructor is private
-    /// but deconstructor left public, the reason is for some smart pointer
-    /// like std::auto_ptr, they needs to delete RBNode in sometimes, but
-    /// \code delete *pointer_to_node \endcode shouldn't be called directly
+    /// \name Constructors
+    ///
+    /// \note The existence of a RBNode without a RBTree is meaningless.
+    ///     Therefore the constructors are private.
     //@{
-    ~RBNode();
+
+    /// \brief Default constructor.
+    ///
+    /// This constructor is provided specifically for generating a special
+    /// "null" node.
+    RBNode();
+
+    /// \brief Constructor from the node name.
+    ///
+    /// \param name The *relative* domain name (if this will live inside
+    ///     a.b.c and is called d.e.a.b.c, then you pass d.e).
+    RBNode(const isc::dns::Name& name);
     //@}
 
-    /// \name Test functions
+public:
+    /// \brief Alias for shared pointer to the data.
+    typedef boost::shared_ptr<T> NodeDataPtr;
+
+    /// \brief Destructor
+    ///
+    /// It might seem strange that constructors are private and destructor
+    /// public, but this is needed because of shared pointers need access
+    /// to the destructor.
+    ///
+    /// You should never call \code delete pointer_to_node; \endcode, the
+    /// RBTree handles both creation and destructoion of nodes.
+    ~RBNode();
+
+    /// \name Getter functions.
     //@{
-    /// \brief return the name of current node, it's relative to its top node
+    /// \brief Return the name of current node.
+    ///
+    /// It's relative to its containing node.
     ///
     /// To get the absolute name of one node, the node path from the top node
-    /// to current node has to be recorded
+    /// to current node has to be recorded.
     const isc::dns::Name& getName() const { return (name_); }
 
-    /// \brief return the data store in this node
-    /// \note, since the data is managed by RBNode, developer should not
-    /// free the pointer
+    /// \brief Return the data stored in this node.
+    ///
+    /// You should not delete the data, it is handled by shared pointers.
     NodeDataPtr& getData() { return (data_); }
-    /// \brief return the data stored in this node, read-only version
+    /// \brief Return the data stored in this node.
     const NodeDataPtr& getData() const { return (data_); }
 
-    /// \brief return whether the node has related data
-    /// \note it's meaningless has empty \c RBNode in one RBTree, the only
-    /// exception is for non-terminal node which has sub domain nodes who
-    /// has data(rrset)
+    /// \brief return whether the node has related data.
+    ///
+    /// There can be empty nodes inside the RBTree. They are usually the
+    /// non-terminal domains, but it is possible (yet probably meaningless)
+    /// empty nodes anywhere.
     bool isEmpty() const { return (data_.get() == NULL); }
     //@}
 
-    /// \name Modify functions
+    /// \name Setter functions.
     //@{
-    /// \breif set the data stored in the node
+    /// \brief Set the data stored in the node.
     void setData(const NodeDataPtr& data) { data_ = data; }
     //@}
 
@@ -122,8 +155,6 @@ public:
     /// These methods never throw an exception.
     //@{
     /// Return if callback is enabled at the node.
-    ///
-    /// This method never throws an exception.
     bool isCallbackEnabled() const { return (callback_required_); }
 
     /// Enable callback at the node.
@@ -137,55 +168,45 @@ public:
 private:
     /// \brief Define rbnode color
     enum RBNodeColor {BLACK, RED};
-
-    /// \name Constructors
-    /// \note \c Single RBNode is meaningless without living inside one \c RBTree
-    /// the creation and destroy of one \c RBNode is handle by host \c RBTree, so
-    /// the constructors and destructor of \c RBNode is left private
-    //@{
-    /// \brief Default constructor.
-    ///
-    /// This constructor is provided specifically for generating a special
-    /// "null" node, and is intended be used only internally.
-    RBNode();
-
-    /// \brief Constructor from the node name.
-    ///
-    /// \param name The domain name corresponding to the node.
-    RBNode(const isc::dns::Name& name);
-    //@}
-
     /// This is a factory class method of a special singleton null node.
     static RBNode<T>* NULL_NODE() {
         static RBNode<T> null_node;
         return (&null_node);
     }
 
-    /// data to maintain the rbtree balance
+    /// \name Data to maintain the rbtree structure.
+    //@{
     RBNode<T>*  parent_;
     RBNode<T>*  left_;
     RBNode<T>*  right_;
     RBNodeColor color_;
+    //@}
 
+    /// \brief Relative name of the node.
     isc::dns::Name     name_;
+    /// \brief Data stored here.
     NodeDataPtr       data_;
 
-    /// the down pointer points to the root node of sub domains of current
-    /// domain
-    /// \par Adding down pointer to \c RBNode is for two purpose:
-    /// \li Accelerate the search process, with sub domain tree, it split the
-    /// big flat tree into several hierarchy trees
-    /// \li It save memory useage, so same label won't be saved several times
+    /// \brief The subdomain tree.
+    ///
+    /// This points to the root node of trees of subdomains of this domain.
+    ///
+    /// \par Adding down pointer to \c RBNode has two purposes:
+    /// \li Accelerate the search process, with sub domain tree, it splits the
+    ///     big flat tree into several hierarchy trees.
+    /// \li It saves memory useage as it allows storing only relative names,
+    ///     avoiding storage of the same domain labels multiple times.
     RBNode<T>*  down_;
 
-    // If true, callback should be called at this node in search.
-    // (This may have to become part of more general "attribute flags")
+    /// \brief If callback should be called when traversing this node in
+    /// RBTree::find().
+    ///
+    /// \todo It might be needed to put it into more general attributes field.
     bool callback_required_;
 };
 
 
-// typically each node should has a name associate with it
-// this construction is only used to create \c NULLNODE
+// This is only to support NULL nodes.
 template <typename T>
 RBNode<T>::RBNode() :
     parent_(this),
