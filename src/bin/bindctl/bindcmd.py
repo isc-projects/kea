@@ -590,7 +590,10 @@ class BindCmdInterpreter(Cmd):
                     data, default = self.config_data.get_value(identifier)
                     print(json.dumps(data))
             elif cmd.command == "add":
-                self.config_data.add_value(identifier, cmd.params['value'])
+                if 'value' in cmd.params:
+                    self.config_data.add_value(identifier, cmd.params['value'])
+                else:
+                    self.config_data.add_value(identifier)
             elif cmd.command == "remove":
                 if 'value' in cmd.params:
                     self.config_data.remove_value(identifier, cmd.params['value'])
