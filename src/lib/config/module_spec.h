@@ -91,6 +91,20 @@ namespace isc { namespace config {
         bool validate_config(isc::data::ConstElementPtr data,
                              const bool full = false) const;
 
+        /// Validates the arguments for the given command
+        ///
+        /// \param command The command to validate the arguments for
+        /// \param args A dict containing the command parameters
+        /// \param errors An ElementPtr pointing to a ListElement. Any
+        ///               errors that are found are added as
+        ///               StringElements to this list
+        /// \return true if the command is known and the parameters are correct
+        ///         false otherwise
+        bool validate_command(const std::string& command,
+                              isc::data::ConstElementPtr args,
+                              isc::data::ElementPtr errors);
+
+
         /// errors must be of type ListElement
         bool validate_config(isc::data::ConstElementPtr data, const bool full,
                              isc::data::ElementPtr errors) const;

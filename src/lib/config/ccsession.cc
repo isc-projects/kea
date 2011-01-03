@@ -149,7 +149,7 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
             if (cmd->size() > 1) {
                 arg = cmd->get(1);
             } else {
-                arg = ElementPtr();
+                arg = Element::createMap();
             }
             return (cmd->get(0)->stringValue());
         } else {
@@ -314,7 +314,17 @@ ModuleCCSession::checkCommand() {
             } else {
                 if (target_module == module_name_) {
                     if (command_handler_) {
-                        answer = command_handler_(cmd_str, arg);
+                        ElementPtr errors = Element::createList();
+                        if (module_specification_.validate_command(cmd_str, arg, errors)) {
+                            answer = command_handler_(cmd_str, arg);
+                        } else {
+                            std::stringstream ss;
+                            ss << "Error in command validation: ";
+                            BOOST_FOREACH(ConstElementPtr error, errors->listValue()) {
+                                ss << error->stringValue();
+                            }
+                            answer = createAnswer(3, ss.str());
+                        }
                     } else {
                         answer = createAnswer(1, "Command given but no command handler for module");
                     }

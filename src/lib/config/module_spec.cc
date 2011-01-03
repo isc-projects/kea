@@ -183,6 +183,34 @@ ModuleSpec::validate_config(ConstElementPtr data, const bool full) const {
 }
 
 bool
+ModuleSpec::validate_command(const std::string& command,
+                             ConstElementPtr args,
+                             ElementPtr errors) {
+    ConstElementPtr commands_spec = module_specification->find("commands");
+
+    if (args->getType() != Element::map) {
+        errors->add(Element::create("args for command " + command + " is not a map"));
+        return (false);
+    }
+
+    if (!commands_spec) {
+        // there are no commands according to the spec.
+        errors->add(Element::create("The given module has no commands"));
+        return (false);
+    }
+
+    BOOST_FOREACH(ConstElementPtr cur_command, commands_spec->listValue()) {
+        if (cur_command->get("command_name")->stringValue() == command) {
+            return (validate_spec_list(cur_command->get("command_args"), args, true, errors));
+        }
+    }
+
+    // this command is unknown
+    errors->add(Element::create("Unknown command " + command));
+    return (false);
+}
+
+bool
 ModuleSpec::validate_config(ConstElementPtr data, const bool full,
                             ElementPtr errors) const
 {

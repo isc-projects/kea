@@ -92,7 +92,7 @@ isc::data::ConstElementPtr createCommand(const std::string& command,
 ///        command and an ElementPtr containing the optional argument.
 ///
 /// \param arg This value will be set to the ElementPtr pointing to
-///        the argument, or to an empty ElementPtr if there was none.
+///        the argument, or to an empty Map (ElementPtr) if there was none.
 /// \param command The command message containing the command (as made
 ///        by createCommand()
 /// \return The command string
