@@ -59,6 +59,11 @@
         "command_name": "shutdown",
         "command_description": "Shut down authoritative DNS server",
         "command_args": []
+      },
+      {
+        "command_name": "sendstats",
+        "command_description": "Send data to a statistics module at once",
+        "command_args": []
       }
     ]
   }

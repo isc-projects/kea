@@ -42,9 +42,8 @@
 
     <note>
       <para>
-        BIND 10, at this time, does not provide a recursive
-        DNS server. It does provide a EDNS0- and DNSSEC-capable
-        authoritative DNS server.
+        BIND 10 provides a EDNS0- and DNSSEC-capable
+        authoritative DNS server and a forwarding DNS server.
       </para>
     </note>
 

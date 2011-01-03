@@ -23,6 +23,7 @@
 #include <unistd.h>             // for some network system calls
 #include <asio/ip/address.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/function.hpp>
 
 #include <functional>
 #include <string>
@@ -98,6 +99,7 @@ class io_service;
 namespace asiolink {
 class DNSServiceImpl;
 struct IOServiceImpl;
+struct IntervalTimerImpl;
 
 /// \brief An exception that is thrown if an error occurs within the IO
 /// module.  This is mainly intended to be a wrapper exception class for
@@ -233,7 +235,7 @@ public:
     /// that share the same \c io_service with the authoritative server.
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
-    asio::io_service& get_io_service() { return io_service_.get_io_service(); };
+    asio::io_service& get_io_service() { return io_service_.get_io_service(); }
 private:
     DNSServiceImpl* impl_;
     IOService& io_service_;
@@ -565,6 +567,98 @@ private:
         upstream_;
     int timeout_;
     unsigned retries_;
+};
+
+/// \brief The \c IntervalTimer class is a wrapper for the ASIO
+/// \c asio::deadline_timer class.
+///
+/// This class is implemented to use \c asio::deadline_timer as
+/// interval timer.
+///
+/// \c setupTimer() sets a timer to expire on (now + interval) and
+/// a call back function.
+///
+/// \c IntervalTimerImpl::callback() is called by the timer when
+/// it expires.
+///
+/// The function calls the call back function set by \c setupTimer()
+/// and updates the timer to expire in (now + interval) seconds.
+/// The type of call back function is \c void(void).
+/// 
+/// The call back function will not be called if the instance of this
+/// class is destructed before the timer is expired.
+///
+/// Note: Destruction of an instance of this class while call back
+/// is pending causes throwing an exception from \c IOService.
+///
+/// Sample code:
+/// \code
+///  void function_to_call_back() {
+///      // this function will be called periodically
+///  }
+///  int interval_in_seconds = 1;
+///  IOService io_service;
+///
+///  IntervalTimer intervalTimer(io_service);
+///  intervalTimer.setupTimer(function_to_call_back, interval_in_seconds);
+///  io_service.run();
+/// \endcode
+///
+class IntervalTimer {
+public:
+    /// \name The type of timer callback function
+    typedef boost::function<void()> Callback;
+
+    ///
+    /// \name Constructors and Destructor
+    ///
+    /// Note: The copy constructor and the assignment operator are
+    /// intentionally defined as private, making this class non-copyable.
+    //@{
+private:
+    IntervalTimer(const IntervalTimer& source);
+    IntervalTimer& operator=(const IntervalTimer& source);
+public:
+    /// \brief The constructor with \c IOService.
+    ///
+    /// This constructor may throw a standard exception if
+    /// memory allocation fails inside the method.
+    /// This constructor may also throw \c asio::system_error.
+    ///
+    /// \param io_service A reference to an instance of IOService
+    ///
+    IntervalTimer(IOService& io_service);
+
+    /// \brief The destructor.
+    ///
+    /// This destructor never throws an exception.
+    ///
+    /// On the destruction of this class the timer will be canceled
+    /// inside \c asio::deadline_timer.
+    ///
+    ~IntervalTimer();
+    //@}
+
+    /// \brief Register timer callback function and interval.
+    ///
+    /// This function sets callback function and interval in seconds.
+    /// Timer will actually start after calling \c IOService::run().
+    ///
+    /// \param cbfunc A reference to a function \c void(void) to call back
+    /// when the timer is expired (should not be an empty functor)
+    /// \param interval Interval in seconds (greater than 0)
+    ///
+    /// Note: IntervalTimer will not pass \c asio::error_code to
+    /// call back function. In case the timer is cancelled, the function
+    /// will not be called.
+    ///
+    /// \throw isc::InvalidParameter cbfunc is empty
+    /// \throw isc::BadValue interval is 0
+    /// \throw isc::Unexpected ASIO library error
+    ///
+    void setupTimer(const Callback& cbfunc, const uint32_t interval);
+private:
+    IntervalTimerImpl* impl_;
 };
 
 }      // asiolink
