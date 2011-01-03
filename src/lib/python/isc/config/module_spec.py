@@ -339,13 +339,14 @@ def _validate_spec_list(module_spec, full, data, errors):
 
     # check if there are items in our data that are not in the
     # specification
-    for item_name in data:
-        found = False
-        for spec_item in module_spec:
-            if spec_item["item_name"] == item_name:
-                found = True
-        if not found:
-            if errors != None:
-                errors.append("unknown item " + item_name)
-            validated = False
+    if data is not None:
+        for item_name in data:
+            found = False
+            for spec_item in module_spec:
+                if spec_item["item_name"] == item_name:
+                    found = True
+            if not found:
+                if errors != None:
+                    errors.append("unknown item " + item_name)
+                validated = False
     return validated

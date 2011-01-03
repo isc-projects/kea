@@ -55,6 +55,7 @@
 #include <auth/config.h>
 #include <auth/auth_srv.h>
 #include <auth/query.h>
+#include <auth/statistics.h>
 
 using namespace std;
 
@@ -100,6 +101,9 @@ public:
 
     /// Hot spot cache
     isc::datasrc::HotCache cache_;
+
+    /// Query counters for statistics
+    AuthCounters counters_;
 private:
     std::string db_file_;
 
@@ -111,6 +115,9 @@ private:
 
     bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
+
+    /// Increment query counter
+    void incCounter(const int protocol);
 };
 
 AuthSrvImpl::AuthSrvImpl(const bool use_cache,
@@ -118,6 +125,7 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
     config_session_(NULL), verbose_mode_(false),
     xfrin_session_(NULL),
     memory_datasrc_class_(RRClass::IN()),
+    counters_(verbose_mode_),
     xfrout_connected_(false),
     xfrout_client_(xfrout_client)
 {
@@ -154,33 +162,20 @@ private:
     AuthSrv* server_;
 };
 
-// This is a derived class of \c DNSAnswer, to serve as a
-// callback in the asiolink module.  It takes a completed
-// set of answer data from the DNS lookup and assembles it
-// into a wire-format response.
+// This is a derived class of \c DNSAnswer, to serve as a callback in the
+// asiolink module.  We actually shouldn't do anything in this class because
+// we build complete response messages in the process methods; otherwise
+// the response message will contain trailing garbage.  In future, we should
+// probably even drop the reliance on DNSAnswer.  We don't need the coroutine
+// tricks provided in that framework, and its overhead would be significant
+// in terms of performance consideration for the authoritative server
+// implementation.
 class MessageAnswer : public DNSAnswer {
 public:
-    MessageAnswer(AuthSrv* srv) : server_(srv) {}
-    virtual void operator()(const IOMessage& io_message, MessagePtr message,
-                            OutputBufferPtr buffer) const
-    {
-        MessageRenderer renderer(*buffer);
-        if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
-            ConstEDNSPtr edns(message->getEDNS());
-            renderer.setLengthLimit(edns ? edns->getUDPSize() :
-                Message::DEFAULT_MAX_UDPSIZE);
-        } else {
-            renderer.setLengthLimit(65535);
-        }
-        message->toWire(renderer);
-        if (server_->getVerbose()) {
-            cerr << "[b10-auth] sending a response (" << renderer.getLength()
-                 << " bytes):\n" << message->toText() << endl;
-        }
-    }
-
-private:
-    AuthSrv* server_;
+    MessageAnswer(AuthSrv*) {}
+    virtual void operator()(const IOMessage&, MessagePtr,
+                            OutputBufferPtr) const
+    {}
 };
 
 // This is a derived class of \c SimpleCallback, to serve
@@ -292,6 +287,11 @@ AuthSrv::setXfrinSession(AbstractSession* xfrin_session) {
 void
 AuthSrv::setConfigSession(ModuleCCSession* config_session) {
     impl_->config_session_ = config_session;
+}
+
+void
+AuthSrv::setStatisticsSession(AbstractSession* statistics_session) {
+    impl_->counters_.setStatisticsSession(statistics_session);
 }
 
 ModuleCCSession*
@@ -429,6 +429,9 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, MessagePtr message,
     message->setHeaderFlag(Message::HEADERFLAG_AA);
     message->setRcode(Rcode::NOERROR());
 
+    // Increment query counter.
+    incCounter(io_message.getSocket().getProtocol());
+
     if (remote_edns) {
         EDNSPtr local_edns = EDNSPtr(new EDNS());
         local_edns->setDNSSECAwareness(dnssec_ok);
@@ -476,6 +479,9 @@ bool
 AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, MessagePtr message,
                               OutputBufferPtr buffer)
 {
+    // Increment query counter.
+    incCounter(io_message.getSocket().getProtocol());
+
     if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
         if (verbose_mode_) {
             cerr << "[b10-auth] AXFR query over UDP isn't allowed" << endl;
@@ -601,6 +607,19 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, MessagePtr message,
     return (true);
 }
 
+void
+AuthSrvImpl::incCounter(const int protocol) {
+    // Increment query counter.
+    if (protocol == IPPROTO_UDP) {
+        counters_.inc(AuthCounters::COUNTER_UDP_QUERY);
+    } else if (protocol == IPPROTO_TCP) {
+        counters_.inc(AuthCounters::COUNTER_TCP_QUERY);
+    } else {
+        // unknown protocol
+        isc_throw(Unexpected, "Unknown protocol: " << protocol);
+    }
+}
+
 ConstElementPtr
 AuthSrvImpl::setDbFile(ConstElementPtr config) {
     ConstElementPtr answer = isc::config::createAnswer();
@@ -669,4 +688,13 @@ AuthSrv::updateConfig(ConstElementPtr new_config) {
         }
         return (isc::config::createAnswer(1, error.what()));
     }
+}
+
+bool AuthSrv::submitStatistics() const {
+    return (impl_->counters_.submitStatistics());
+}
+
+uint64_t
+AuthSrv::getCounter(const AuthCounters::CounterType type) const {
+    return (impl_->counters_.getCounter(type));
 }

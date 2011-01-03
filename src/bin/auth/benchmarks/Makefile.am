@@ -11,6 +11,7 @@ query_bench_SOURCES = query_bench.cc
 query_bench_SOURCES += ../query.h  ../query.cc
 query_bench_SOURCES += ../auth_srv.h ../auth_srv.cc
 query_bench_SOURCES += ../config.h ../config.cc
+query_bench_SOURCES += ../statistics.h ../statistics.cc
 
 query_bench_LDADD = $(top_builddir)/src/lib/dns/libdns++.la
 query_bench_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la

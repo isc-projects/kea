@@ -28,10 +28,14 @@ using namespace isc::dns;
 using namespace isc::datasrc;
 using namespace isc::auth;
 
+namespace {
+
 RRsetPtr a_rrset = RRsetPtr(new RRset(Name("www.example.com"),
                                       RRClass::IN(), RRType::A(),
                                       RRTTL(3600)));
-namespace {
+RRsetPtr soa_rrset = RRsetPtr(new RRset(Name("example.com"),
+                                        RRClass::IN(), RRType::SOA(),
+                                        RRTTL(3600)));
 // This is a mock Zone class for testing.
 // It is a derived class of Zone, and simply hardcode the results of find()
 // return SUCCESS for "www.example.com",
@@ -41,16 +45,20 @@ namespace {
 // else return DNAME
 class MockZone : public Zone {
 public:
-    MockZone() : origin_(Name("example.com"))
+    MockZone(bool has_SOA = true) :
+        origin_(Name("example.com")),
+        has_SOA_(has_SOA)
     {}
     virtual const isc::dns::Name& getOrigin() const;
     virtual const isc::dns::RRClass& getClass() const;
 
     FindResult find(const isc::dns::Name& name,
-            const isc::dns::RRType& type) const;
+                    const isc::dns::RRType& type,
+                    const FindOptions options = FIND_DEFAULT) const;
 
 private:
     Name origin_;
+    bool has_SOA_;
 };
 
 const Name&
@@ -64,20 +72,24 @@ MockZone::getClass() const {
 }
 
 Zone::FindResult
-MockZone::find(const Name& name, const RRType&) const {
+MockZone::find(const Name& name, const RRType& type, const FindOptions) const {
     // hardcode the find results
     if (name == Name("www.example.com")) {
-        return FindResult(SUCCESS, a_rrset);
+        return (FindResult(SUCCESS, a_rrset));
+    } else if (name == Name("example.com") && type == RRType::SOA() &&
+        has_SOA_)
+    {
+        return (FindResult(SUCCESS, soa_rrset));
     } else if (name == Name("delegation.example.com")) {
-        return FindResult(DELEGATION, RRsetPtr());
+        return (FindResult(DELEGATION, RRsetPtr()));
     } else if (name == Name("nxdomain.example.com")) {
-        return FindResult(NXDOMAIN, RRsetPtr());
+        return (FindResult(NXDOMAIN, RRsetPtr()));
     } else if (name == Name("nxrrset.example.com")) {
-        return FindResult(NXRRSET, RRsetPtr());
+        return (FindResult(NXRRSET, RRsetPtr()));
     } else if (name == Name("cname.example.com")) {
-        return FindResult(CNAME, RRsetPtr());
+        return (FindResult(CNAME, RRsetPtr()));
     } else {
-        return FindResult(DNAME, RRsetPtr());
+        return (FindResult(DNAME, RRsetPtr()));
     }
 }
 
@@ -106,7 +118,7 @@ TEST_F(QueryTest, noZone) {
 }
 
 TEST_F(QueryTest, matchZone) {
-    // match qname, normal query
+    // add a matching zone.
     memory_datasrc.addZone(ZonePtr(new MockZone()));
     query.process();
     EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
@@ -119,12 +131,39 @@ TEST_F(QueryTest, matchZone) {
     Query nxdomain_query(memory_datasrc, nxdomain_name, qtype, response);
     nxdomain_query.process();
     EXPECT_EQ(Rcode::NXDOMAIN(), response.getRcode());
+    EXPECT_EQ(0, response.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0, response.getRRCount(Message::SECTION_ADDITIONAL));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
+        Name("example.com"), RRClass::IN(), RRType::SOA()));
 
     // NXRRSET
     const Name nxrrset_name(Name("nxrrset.example.com"));
     Query nxrrset_query(memory_datasrc, nxrrset_name, qtype, response);
     nxrrset_query.process();
     EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
+    EXPECT_EQ(0, response.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0, response.getRRCount(Message::SECTION_ADDITIONAL));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
+        Name("example.com"), RRClass::IN(), RRType::SOA()));
+}
+
+/*
+ * This tests that when there's no SOA and we need a negative answer. It should
+ * throw in that case.
+ */
+TEST_F(QueryTest, noSOA) {
+    memory_datasrc.addZone(ZonePtr(new MockZone(false)));
+
+    // The NX Domain
+    const Name nxdomain_name(Name("nxdomain.example.com"));
+    Query nxdomain_query(memory_datasrc, nxdomain_name, qtype, response);
+    EXPECT_THROW(nxdomain_query.process(), Query::NoSOA);
+    // Of course, we don't look into the response, as it throwed
+
+    // NXRRSET
+    const Name nxrrset_name(Name("nxrrset.example.com"));
+    Query nxrrset_query(memory_datasrc, nxrrset_name, qtype, response);
+    EXPECT_THROW(nxrrset_query.process(), Query::NoSOA);
 }
 
 TEST_F(QueryTest, noMatchZone) {
@@ -136,4 +175,5 @@ TEST_F(QueryTest, noMatchZone) {
     nomatch_query.process();
     EXPECT_EQ(Rcode::REFUSED(), response.getRcode());
 }
+
 }

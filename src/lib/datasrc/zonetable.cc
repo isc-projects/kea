@@ -89,6 +89,8 @@ struct ZoneTable::ZoneTableImpl {
             // Can Not Happen
             default:
                 assert(0);
+                // Because of warning
+                return (FindResult(result::NOTFOUND, ConstZonePtr()));
         }
 
         // Can Not Happen (remember, NOTFOUND is handled)

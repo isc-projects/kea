@@ -27,6 +27,7 @@
 #include <config/ccsession.h>
 
 #include <asiolink/asiolink.h>
+#include <auth/statistics.h>
 
 namespace isc {
 namespace datasrc {
@@ -62,6 +63,7 @@ class AuthSrvImpl;
 ///
 /// The design of this class is still in flux.  It's quite likely to change
 /// in future versions.
+///
 class AuthSrv {
     ///
     /// \name Constructors, Assignment Operator and Destructor.
@@ -96,6 +98,8 @@ public:
     /// \param message Pointer to the \c Message object
     /// \param buffer Pointer to an \c OutputBuffer for the resposne
     /// \param server Pointer to the \c DNSServer
+    ///
+    /// \throw isc::Unexpected Protocol type of \a message is unexpected
     void processMessage(const asiolink::IOMessage& io_message,
                         isc::dns::MessagePtr message,
                         isc::dns::OutputBufferPtr buffer,
@@ -280,6 +284,49 @@ public:
     /// \param memory_datasrc A (shared) pointer to \c MemoryDataSrc to be set.
     void setMemoryDataSrc(const isc::dns::RRClass& rrclass,
                           MemoryDataSrcPtr memory_datasrc);
+
+    /// \brief Set the communication session with Statistics.
+    ///
+    /// This function never throws an exception as far as
+    /// AuthCounters::setStatisticsSession() doesn't throw.
+    ///
+    /// Note: this interface is tentative.  We'll revisit the ASIO and
+    /// session frameworks, at which point the session will probably
+    /// be passed on construction of the server.
+    ///
+    /// \param statistics_session A Session object over which statistics
+    /// information is exchanged with statistics module.
+    /// The session must be established before setting in the server
+    /// object.
+    /// Ownership isn't transferred: the caller is responsible for keeping
+    /// this object to be valid while the server object is working and for
+    /// disconnecting the session and destroying the object when the server
+    /// is shutdown.
+    void setStatisticsSession(isc::cc::AbstractSession* statistics_session);
+
+    /// \brief Submit statistics counters to statistics module.
+    ///
+    /// This function can throw an exception from
+    /// AuthCounters::submitStatistics().
+    ///
+    /// \return true on success, false on failure (e.g. session timeout,
+    /// session error).
+    bool submitStatistics() const;
+
+    /// \brief Get the value of counter in the AuthCounters.
+    /// 
+    /// This function calls AuthCounters::getCounter() and
+    /// returns its return value.
+    ///
+    /// This function never throws an exception as far as
+    /// AuthCounters::getCounter() doesn't throw.
+    /// 
+    /// Note: Currently this function is for testing purpose only.
+    ///
+    /// \param type Type of a counter to get the value of
+    ///
+    /// \return the value of the counter.
+    uint64_t getCounter(const AuthCounters::CounterType type) const;
 
 private:
     AuthSrvImpl* impl_;

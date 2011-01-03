@@ -15,14 +15,30 @@
 // $Id$
 
 #include <config.h>
+
+#include <vector>
+
+#include <gtest/gtest.h>
+
+#include <dns/message.h>
+#include <dns/messagerenderer.h>
+#include <dns/name.h>
+#include <dns/rrclass.h>
+#include <dns/rrtype.h>
+#include <dns/rrttl.h>
+#include <dns/rdataclass.h>
+
 #include <datasrc/memory_datasrc.h>
 #include <auth/auth_srv.h>
+#include <auth/statistics.h>
 
 #include <dns/tests/unittest_util.h>
 #include <testutils/srv_test.h>
 
+using namespace std;
 using namespace isc::cc;
 using namespace isc::dns;
+using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::xfr;
 using namespace asiolink;
@@ -41,15 +57,113 @@ class AuthSrvTest : public SrvTestBase {
 protected:
     AuthSrvTest() : server(true, xfrout), rrclass(RRClass::IN()) {
         server.setXfrinSession(&notify_session);
+        server.setStatisticsSession(&statistics_session);
     }
     virtual void processMessage() {
         server.processMessage(*io_message, parse_message, response_obuffer,
                               &dnsserv);
     }
+    MockSession statistics_session;
     MockXfroutClient xfrout;
     AuthSrv server;
     const RRClass rrclass;
+    vector<uint8_t> response_data;
 };
+
+// A helper function that builds a response to version.bind/TXT/CH that
+// should be identical to the response from our builtin (static) data source
+// by default.  The resulting wire-format data will be stored in 'data'.
+void
+createBuiltinVersionResponse(const qid_t qid, vector<uint8_t>& data) {
+    const Name version_name("version.bind");
+    Message message(Message::RENDER);
+
+    UnitTestUtil::createRequestMessage(message, Opcode::QUERY(),
+                                       qid, version_name,
+                                       RRClass::CH(), RRType::TXT());
+    message.setHeaderFlag(Message::HEADERFLAG_QR);
+    message.setHeaderFlag(Message::HEADERFLAG_AA);
+    RRsetPtr rrset_version = RRsetPtr(new RRset(version_name, RRClass::CH(),
+                                                RRType::TXT(), RRTTL(0)));
+    rrset_version->addRdata(generic::TXT(PACKAGE_STRING));
+    message.addRRset(Message::SECTION_ANSWER, rrset_version);
+
+    RRsetPtr rrset_version_ns = RRsetPtr(new RRset(version_name, RRClass::CH(),
+                                                   RRType::NS(), RRTTL(0)));
+    rrset_version_ns->addRdata(generic::NS(version_name));
+    message.addRRset(Message::SECTION_AUTHORITY, rrset_version_ns);
+
+    OutputBuffer obuffer(0);
+    MessageRenderer renderer(obuffer);
+    message.toWire(renderer);
+
+    data.clear();
+    data.assign(static_cast<const uint8_t*>(renderer.getData()),
+                static_cast<const uint8_t*>(renderer.getData()) +
+                renderer.getLength());
+}
+
+// In the following tests we confirm the response data is rendered in
+// wire format in the expected way.
+
+// The most primitive check: checking the result of the processMessage()
+// method
+TEST_F(AuthSrvTest, builtInQuery) {
+    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
+                                       default_qid, Name("version.bind"),
+                                       RRClass::CH(), RRType::TXT());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, parse_message, response_obuffer,
+                          &dnsserv);
+    createBuiltinVersionResponse(default_qid, response_data);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        response_obuffer->getData(),
+                        response_obuffer->getLength(),
+                        &response_data[0], response_data.size());
+}
+
+// Same test emulating the UDPServer class behavior (defined in libasiolink).
+// This is not a good test in that it assumes internal implementation details
+// of UDPServer, but we've encountered a regression due to the introduction
+// of that class, so we add a test for that case to prevent such a regression
+// in future.
+// Besides, the generalization of UDPServer is probably too much for the
+// authoritative only server in terms of performance, and it's quite likely
+// we need to drop it for the authoritative server implementation.
+// At that point we can drop this test, too.
+TEST_F(AuthSrvTest, builtInQueryViaDNSServer) {
+    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
+                                       default_qid, Name("version.bind"),
+                                       RRClass::CH(), RRType::TXT());
+    createRequestPacket(request_message, IPPROTO_UDP);
+
+    (*server.getDNSLookupProvider())(*io_message, parse_message,
+                                     response_obuffer, &dnsserv);
+    (*server.getDNSAnswerProvider())(*io_message, parse_message,
+                                     response_obuffer);
+
+    createBuiltinVersionResponse(default_qid, response_data);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        response_obuffer->getData(),
+                        response_obuffer->getLength(),
+                        &response_data[0], response_data.size());
+}
+
+// Same type of test as builtInQueryViaDNSServer but for an error response.
+TEST_F(AuthSrvTest, iqueryViaDNSServer) {
+    createDataFromFile("iquery_fromWire.wire");
+    (*server.getDNSLookupProvider())(*io_message, parse_message,
+                                     response_obuffer, &dnsserv);
+    (*server.getDNSAnswerProvider())(*io_message, parse_message,
+                                     response_obuffer);
+
+    UnitTestUtil::readWireData("iquery_response_fromWire.wire",
+                               response_data);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        response_obuffer->getData(),
+                        response_obuffer->getLength(),
+                        &response_data[0], response_data.size());
+}
 
 // Unsupported requests.  Should result in NOTIMP.
 TEST_F(AuthSrvTest, unsupportedRequest) {
@@ -439,5 +553,91 @@ TEST_F(AuthSrvTest, cacheSlots) {
     // 0 is a valid size
     server.setCacheSlots(0);
     EXPECT_EQ(00, server.getCacheSlots());
+}
+
+// Submit UDP normal query and check query counter
+TEST_F(AuthSrvTest, queryCounterUDPNormal) {
+    // The counter should be initialized to 0.
+    EXPECT_EQ(0, server.getCounter(AuthCounters::COUNTER_UDP_QUERY));
+    // Create UDP message and process.
+    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::NS());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, parse_message, response_obuffer,
+                          &dnsserv);
+    // After processing UDP query, the counter should be 1.
+    EXPECT_EQ(1, server.getCounter(AuthCounters::COUNTER_UDP_QUERY));
+}
+
+// Submit TCP normal query and check query counter
+TEST_F(AuthSrvTest, queryCounterTCPNormal) {
+    // The counter should be initialized to 0.
+    EXPECT_EQ(0, server.getCounter(AuthCounters::COUNTER_TCP_QUERY));
+    // Create TCP message and process.
+    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::NS());
+    createRequestPacket(request_message, IPPROTO_TCP);
+    server.processMessage(*io_message, parse_message, response_obuffer,
+                          &dnsserv);
+    // After processing TCP query, the counter should be 1.
+    EXPECT_EQ(1, server.getCounter(AuthCounters::COUNTER_TCP_QUERY));
+}
+
+// Submit TCP AXFR query and check query counter
+TEST_F(AuthSrvTest, queryCounterTCPAXFR) {
+    // The counter should be initialized to 0.
+    EXPECT_EQ(0, server.getCounter(AuthCounters::COUNTER_TCP_QUERY));
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::AXFR());
+    createRequestPacket(request_message, IPPROTO_TCP);
+    // On success, the AXFR query has been passed to a separate process,
+    // so we shouldn't have to respond.
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    // After processing TCP AXFR query, the counter should be 1.
+    EXPECT_EQ(1, server.getCounter(AuthCounters::COUNTER_TCP_QUERY));
+}
+
+// class for queryCounterUnexpected test
+// getProtocol() returns IPPROTO_IP
+class DummyUnknownSocket : public IOSocket {
+public:
+    DummyUnknownSocket() {}
+    virtual int getNative() const { return (0); }
+    virtual int getProtocol() const { return (IPPROTO_IP); }
+};
+
+// function for queryCounterUnexpected test
+// returns a reference to a static object of DummyUnknownSocket
+IOSocket&
+getDummyUnknownSocket() {
+    static DummyUnknownSocket socket;
+    return (socket);
+}
+
+// Submit unexpected type of query and check it throws isc::Unexpected
+TEST_F(AuthSrvTest, queryCounterUnexpected) {
+    // This code isn't exception safe, but we'd rather keep the code
+    // simpler and more readable as this is only for tests and if it throws
+    // the program would immediately terminate anyway.
+
+    // Create UDP query packet.
+    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::NS());
+    createRequestPacket(request_message, IPPROTO_UDP);
+
+    // Modify the message.
+    delete io_message;
+    endpoint = IOEndpoint::create(IPPROTO_UDP,
+                                  IOAddress(DEFAULT_REMOTE_ADDRESS), 5300);
+    io_message = new IOMessage(request_renderer.getData(),
+                               request_renderer.getLength(),
+                               getDummyUnknownSocket(), *endpoint);
+
+    EXPECT_THROW(server.processMessage(*io_message, parse_message,
+                                       response_obuffer, &dnsserv),
+                 isc::Unexpected);
 }
 }
