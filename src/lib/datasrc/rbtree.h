@@ -291,12 +291,12 @@ class RBTree : public boost::noncopyable {
 public:
     /// \brief The return value for the \c find() insert() and erase() method
     enum Result {
-        SUCCEED, //insert or erase succeed
+        SUCCESS, //insert or erase succeed
         EXACTMATCH, //find the target name
         PARTIALMATCH, //find part of target name
         NOTFOUND,  // for find function means no related name found
                    // for erase function means erase not exist name
-        ALREADYEXIST, //for insert operation, the name to insert already exist
+        ALREADYEXISTS, //for insert operation, the name to insert already exist
     };
 
     /// \name Constructor and Destructor
@@ -424,8 +424,8 @@ public:
     /// Anyway the pointer point to the node with the name will be assigned to
     /// inserted_node
     /// \return
-    //  - SUCCEED means no node exists in the tree with the name before insert
-    /// - ALREADYEXIST means already has the node with the given name
+    //  - SUCCESS means no node exists in the tree with the name before insert
+    /// - ALREADYEXISTS means already has the node with the given name
     //
     /// \node To modify the data related with one name but not sure the name has
     /// inserted or not, it is better to call \c insert,instead of
@@ -632,7 +632,7 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
             if (new_node != NULL) {
                 *new_node = current;
             }
-            return (ALREADYEXIST);
+            return (ALREADYEXISTS);
         } else {
             const int common_label_count = compare_result.getCommonLabels();
             if (common_label_count == 1) {
@@ -685,7 +685,7 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
 
     ++node_count_;
     node.release();
-    return (SUCCEED);
+    return (SUCCESS);
 }
 
 template <typename T>
