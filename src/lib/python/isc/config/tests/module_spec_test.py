@@ -321,6 +321,7 @@ class TestModuleSpec(unittest.TestCase):
                }]
 
         errors = []
+        self.assertEqual(True, isc.config.module_spec._validate_spec_list(spec, True, None, None))
         self.assertEqual(False, isc.config.module_spec._validate_spec_list(spec, True, { 'does_not_exist': 1 }, None))
         self.assertEqual(False, isc.config.module_spec._validate_spec_list(spec, True, { 'does_not_exist': 1 }, errors))
         self.assertEqual(['unknown item does_not_exist'], errors)
