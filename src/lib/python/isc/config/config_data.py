@@ -432,7 +432,7 @@ class MultiConfigData:
                 spec_part_list = spec_part['list_item_spec']
                 list_value, status = self.get_value(identifier)
                 if list_value is None:
-                    print("Error: %s not found" % identifier)
+                    print("Error: identifier '%s' not found" % identifier)
                     return
                 if type(list_value) != list:
                     # the identifier specified a single element
@@ -448,18 +448,10 @@ class MultiConfigData:
                         for i in range(len(list_value)):
                             self._append_value_item(result, spec_part_list, "%s[%d]" % (identifier, i), all)
             elif item_type == "map":
+                # just show the specific contents of a map, we are
+                # almost never interested in just its name
                 spec_part_map = spec_part['map_item_spec']
-                value, status = self.get_value(identifier)
-                # if there are no contents, simply add the value
-                # as one empty element, otherwise append them
-                # individually
-                if value != {}:
-                    self._append_value_item(result, spec_part_map, identifier, all)
-                else:
-                    entry = _create_value_map_entry(identifier,
-                                                    item_type,
-                                                    {}, status)
-                    result.append(entry)
+                self._append_value_item(result, spec_part_map, identifier, all)
             else:
                 value, status = self.get_value(identifier)
                 entry = _create_value_map_entry(identifier,
