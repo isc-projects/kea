@@ -335,6 +335,8 @@ class TestMultiConfigData(unittest.TestCase):
         pass
 
     def test_get_local_value(self):
+        module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
+        self.mcd.set_specification(module_spec)
         value = self.mcd.get_local_value("Spec2/item1")
         self.assertEqual(None, value)
         self.mcd.set_value("Spec2/item1", 2)
@@ -481,12 +483,11 @@ class TestMultiConfigData(unittest.TestCase):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
         self.mcd.set_specification(module_spec)
         self.mcd.set_value("Spec2/item1", 2)
-        self.assertRaises(isc.cc.data.DataTypeError, self.mcd.set_value, "Spec2/item1", "asdf")
+        self.assertRaises(isc.cc.data.DataTypeError,
+                          self.mcd.set_value, "Spec2/item1", "asdf")
 
-        self.mcd.set_value("Spec2/no_such_item", 4)
-        value, status = self.mcd.get_value("Spec2/no_such_item")
-        self.assertEqual(value, 4)
-        self.assertEqual(MultiConfigData.LOCAL, status)
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.mcd.set_value, "Spec2/no_such_item", 4)
 
         self.mcd.set_value("Spec2/item5[0]", "c")
         value, status = self.mcd.get_value("Spec2/item5[0]")

@@ -24,6 +24,112 @@ class Name;
 
 namespace datasrc {
 
+/// A derived zone class intended to be used with the memory data source.
+class MemoryZone : public Zone {
+    ///
+    /// \name Constructors and Destructor.
+    ///
+    /// \b Note:
+    /// The copy constructor and the assignment operator are intentionally
+    /// defined as private, making this class non copyable.
+    //@{
+private:
+    MemoryZone(const MemoryZone& source);
+    MemoryZone& operator=(const MemoryZone& source);
+public:
+    /// \brief Constructor from zone parameters.
+    ///
+    /// This constructor internally involves resource allocation, and if
+    /// it fails, a corresponding standard exception will be thrown.
+    /// It never throws an exception otherwise.
+    ///
+    /// \param rrclass The RR class of the zone.
+    /// \param origin The origin name of the zone.
+    MemoryZone(const isc::dns::RRClass& rrclass, const isc::dns::Name& origin);
+
+    /// The destructor.
+    virtual ~MemoryZone();
+    //@}
+
+    /// \brief Returns the origin of the zone.
+    virtual const isc::dns::Name& getOrigin() const;
+    /// \brief Returns the class of the zone.
+    virtual const isc::dns::RRClass& getClass() const;
+    /// \brief Looks up an RRset in the zone.
+    ///
+    /// See documentation in \c Zone.
+    ///
+    /// It returns NULL pointer in case of NXDOMAIN and NXRRSET
+    /// (the base class documentation does not seem to require that).
+    virtual FindResult find(const isc::dns::Name& name,
+                            const isc::dns::RRType& type,
+                            const FindOptions options = FIND_DEFAULT) const;
+
+    /// \brief Inserts an rrset into the zone.
+    ///
+    /// It puts another RRset into the zone.
+    ///
+    /// It throws NullRRset or OutOfZone if the provided rrset is invalid. It
+    /// might throw standard allocation exceptions, in which case this function
+    /// does not guarantee strong exception safety (it is currently not needed,
+    /// if it is needed in future, it should be implemented).
+    ///
+    /// \param rrset The set to add.
+    /// \return SUCCESS or EXIST (if an rrset for given name and type already
+    ///    exists).
+    result::Result add(const isc::dns::ConstRRsetPtr& rrset);
+
+    /// \brief RRSet out of zone exception.
+    ///
+    /// This is thrown if addition of an RRset that doesn't belong under the
+    /// zone's origin is requested.
+    struct OutOfZone : public InvalidParameter {
+        OutOfZone(const char* file, size_t line, const char* what) :
+            InvalidParameter(file, line, what)
+        { }
+    };
+
+    /// \brief RRset is NULL exception.
+    ///
+    /// This is thrown if the provided RRset parameter is NULL.
+    struct NullRRset : public InvalidParameter {
+        NullRRset(const char* file, size_t line, const char* what) :
+            InvalidParameter(file, line, what)
+        { }
+    };
+
+    /// \brief Load zone from masterfile.
+    ///
+    /// This loads data from masterfile specified by filename. It replaces
+    /// current content. The masterfile parsing ability is kind of limited,
+    /// see isc::dns::masterLoad.
+    ///
+    /// This throws isc::dns::MasterLoadError if there is problem with loading
+    /// (missing file, malformed, it contains different zone, etc - see
+    /// isc::dns::masterLoad for details).
+    ///
+    /// In case of internal problems, OutOfZone, NullRRset or AssertError could
+    /// be thrown, but they should not be expected. Exceptions caused by
+    /// allocation may be thrown as well.
+    ///
+    /// If anything is thrown, the previous content is preserved (so it can
+    /// be used to update the data, but if user makes a typo, the old one
+    /// is kept).
+    ///
+    /// \param filename The master file to load.
+    ///
+    /// \todo We may need to split it to some kind of build and commit/abort.
+    ///     This will probably be needed when a better implementation of
+    ///     configuration reloading is written.
+    void load(const std::string& filename);
+private:
+    /// \name Hidden private data
+    //@{
+    struct MemoryZoneImpl;
+    MemoryZoneImpl* impl_;
+    //@}
+};
+
 /// \brief A data source that uses in memory dedicated backend.
 ///
 /// The \c MemoryDataSrc class represents a data source and provides a
@@ -104,6 +210,13 @@ public:
     ~MemoryDataSrc();
     //@}
 
+    /// Return the number of zones stored in the data source.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \return The number of zones stored in the data source.
+    unsigned int getZoneCount() const;
+
     /// Add a \c Zone to the \c MemoryDataSrc.
     ///
     /// \c Zone must not be associated with a NULL pointer; otherwise
@@ -140,7 +253,7 @@ public:
     FindResult findZone(const isc::dns::Name& name) const;
 
 private:
-    struct MemoryDataSrcImpl;
+    class MemoryDataSrcImpl;
     MemoryDataSrcImpl* impl_;
 };
 }

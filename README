@@ -15,11 +15,11 @@ five year plan are described here:
 
 This release includes the bind10 master process, b10-msgq message
 bus, b10-auth authoritative DNS server (with SQLite3 backend),
-b10-cmdctl remote control daemon, b10-cfgmgr configuration manager,
-b10-xfrin AXFR inbound service, b10-xfrout outgoing AXFR service,
-b10-zonemgr secondary manager, b10-stats statistics collection and
-reporting daemon, and a new libdns++ library for C++ with a python
-wrapper.
+b10-recurse forwarding DNS server, b10-cmdctl remote control daemon,
+b10-cfgmgr configuration manager, b10-xfrin AXFR inbound service,
+b10-xfrout outgoing AXFR service, b10-zonemgr secondary manager,
+b10-stats statistics collection and reporting daemon, and a new
+libdns++ library for C++ with a python wrapper.
 
 Documentation is included and also available via the BIND 10
 website at http://bind10.isc.org/
@@ -93,26 +93,55 @@ Then run "make check" to run these tests.
 
 TEST COVERAGE
 
+Code coverage reports may be generated using make. These are
+based on running on the unit tests. The resulting reports are placed
+in coverage-cpp-html and coverage-python-html directories for C++
+and Python, respectively.
+
 The code coverage report for the C++ tests uses LCOV. It is available
-from http://ltp.sourceforge.net/. To generate your own HTML report,
+from http://ltp.sourceforge.net/. To generate the HTML report,
 first configure BIND 10 with:
  
   ./configure --with-lcov
 
+The code coverage report for the Python tests uses coverage.py (aka
+pycoverage). It is available from http://nedbatchelder.com/code/coverage/.
+To generate the HTML report, first configure BIND 10 with:
+
+  ./configure --with-pycoverage
+
 Doing code coverage tests:
 
   make coverage
-	Does the following:
+	Does the clean, perform, and report targets for C++ and Python.
 
   make clean-coverage
-	Zeroes the lcov code coverage counters and removes the coverage HTML.
+	Zeroes the code coverage counters and removes the HTML reports
+	for C++ and Python.
 
   make perform-coverage
-	Runs the C++ tests (using googletests framework).
+	Runs the C++ (using the googletests framework) and Python
+	tests.
 
   make report-coverage
-	Generates the coverage HTML, excluding some unrelated headers.
-	The HTML reports are placed in a directory called coverage/.
+	Generates the coverage reports in HTML for C++ and Python.
+
+  make clean-cpp-coverage
+	Zeroes the code coverage counters and removes the HTML report
+	for the C++ tests.
+
+  make clean-python-coverage
+	Zeroes the code coverage counters and removes the HTML report
+	for the Python tests.
+
+  make report-cpp-coverage
+	Generates the coverage report in HTML for C++, excluding
+	some unrelated headers.  The HTML reports are placed in a
+	directory called coverage-cpp-html/.
+
+  make report-python-coverage
+	Generates the coverage report in HTML for Python. The HTML
+	reports are placed in a directory called coverage-python-html/.
 
 DEVELOPERS
 
