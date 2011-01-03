@@ -176,3 +176,40 @@ TEST(ModuleSpec, DataValidation) {
     EXPECT_FALSE(data_test_with_errors(dd, "data22_9.data", errors));
     EXPECT_EQ("[ \"Unknown item value_does_not_exist\" ]", errors->str());
 }
+
+TEST(ModuleSpec, CommandValidation) {
+    ModuleSpec dd = moduleSpecFromFile(specfile("spec2.spec"));
+    ConstElementPtr arg = Element::fromJSON("{}");
+    ElementPtr errors = Element::createList();
+
+    EXPECT_TRUE(dd.validate_command("shutdown", arg, errors));
+    EXPECT_EQ(errors->size(), 0);
+
+    errors = Element::createList();
+    EXPECT_FALSE(dd.validate_command("unknowncommand", arg, errors));
+    EXPECT_EQ(errors->size(), 1);
+    EXPECT_EQ(errors->get(0)->stringValue(), "Unknown command unknowncommand");
+
+    errors = Element::createList();
+    EXPECT_FALSE(dd.validate_command("print_message", arg, errors));
+    EXPECT_EQ(errors->size(), 1);
+    EXPECT_EQ(errors->get(0)->stringValue(), "Non-optional value missing");
+
+    errors = Element::createList();
+    arg = Element::fromJSON("{ \"message\": \"Hello\" }");
+    EXPECT_TRUE(dd.validate_command("print_message", arg, errors));
+    EXPECT_EQ(errors->size(), 0);
+
+    errors = Element::createList();
+    arg = Element::fromJSON("{ \"message\": \"Hello\", \"unknown_second_arg\": 1 }");
+    EXPECT_FALSE(dd.validate_command("print_message", arg, errors));
+    EXPECT_EQ(errors->size(), 1);
+    EXPECT_EQ(errors->get(0)->stringValue(), "Unknown item unknown_second_arg");
+
+    errors = Element::createList();
+    arg = Element::fromJSON("{ \"message\": 1 }");
+    EXPECT_FALSE(dd.validate_command("print_message", arg, errors));
+    EXPECT_EQ(errors->size(), 1);
+    EXPECT_EQ(errors->get(0)->stringValue(), "Type mismatch");
+
+}
