@@ -1,3 +1,67 @@
+  142.	[func]		jinmei
+	b10-auth: updated query benchmark so that it can test in memory
+	data source.  Also fixed a bug that the output buffer isn't
+	cleared after query processing, resulting in misleading results
+	or program crash.  This is a regression due to change #135.
+	(Trac #465, svn r4103)
+
+  141.	[bug]		jinmei
+	b10-auth: Fixed a bug that the authoritative server includes
+	trailing garbage data in responses.  This is a regression due to
+	change #135. (Trac #462, svn r4081)
+
+  140.  [func]		y-aharen
+	src/bin/auth: Added a feature to count queries and send counter
+	values to statistics periodically. To support it, added wrapping
+	class of asio::deadline_timer to use as interval timer.
+	The counters can be seen using the "Stats show" command from
+	bindctl.  The result would look like:
+	  ... "auth.queries.tcp": 1, "auth.queries.udp": 1 ...
+	Using the "Auth sendstats" command you can make b10-auth send the
+	counters to b10-stats immediately.
+	(Trac #347, svn r4026)
+
+  139.  [build]		jreed
+	Introduced configure option and make targets for generating
+	Python code coverage report. This adds new make targets:
+	report-python-coverage and clean-python-coverage. The C++
+	code coverage targets were renamed to clean-cpp-coverage
+	and report-cpp-coverage. (Trac #362, svn r4023)
+
+  138.	[func]*		jinmei
+	b10-auth: added a configuration interface to support in memory
+	data sources.  For example, the following command to bindctl
+	will configure a memory data source containing the "example.com"
+	zone with the zone file named "example.com.zone":
+	> config set Auth/datasources/ [{"type": "memory", "zones": \
+	 [{"origin": "example.com", "file": "example.com.zone"}]}]
+	By default, the memory data source is disabled; it must be
+	configured explicitly.  To disable it again, specify a null list
+	for Auth/datasources:
+	> config set Auth/datasources/ []
+	Notes: it's currently for class IN only.  The zone files are not
+	actually loaded into memory yet (which will soon be implemented).
+	This is an experimental feature and the syntax may change in
+	future versions.
+	(Trac #446, svn r3998)
+
+  137.	[bug]		jreed
+	Fix run_*.sh scripts that are used for development testing
+	so they use a msgq socket file in the build tree.
+	(Trac #226, svn r3989)
+
+  136.  [bug]       jelte
+  	bindctl (and the configuration manager in general) now no longer
+	accepts 'unknown' data; i.e. data for modules that it does not know
+	about, or configuration items that are not specified in the .spec
+	files.
+	(Trac #202, svn r3967)
+
+  135.  [func]      each
+	Add b10-recurse. This is an example recursive server that
+	currently does forwarding only and no caching.
+	(Trac #327, svn r3903)
+
   134.  [func]      vorner
 	b10-recurse supports timeouts and retries in forwarder mode.
 	(Trac #401, svn r3660)
@@ -8,7 +72,7 @@
 	(Trac #393, r3602)
 
   132.  [func]      vorner
-	The b10-recursive is configured through config manager.
+	The b10-recurse is configured through config manager.
 	It has "listen_on" and "forward_addresses" options.
 	(Trac #389, r3448)
 
@@ -39,7 +103,6 @@
 	for root zone was added.
 	(Trac #85, svn r3836)
 
->>>>>>> .merge-right.r3894
   127.  [bug]       stephen
 	During normal operation process termination and resurrection messages
 	are now output regardless of the state of the verbose flag.

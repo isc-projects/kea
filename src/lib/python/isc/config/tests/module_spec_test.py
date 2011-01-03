@@ -312,6 +312,19 @@ class TestModuleSpec(unittest.TestCase):
         self.assertEqual(False, isc.config.module_spec._validate_spec(spec, True, {}, None))
         self.assertEqual(False, isc.config.module_spec._validate_spec(spec, True, {}, errors))
         self.assertEqual(['non-optional item an_item missing'], errors)
+
+    def test_validate_unknown_items(self):
+        spec = [{ 'item_name': "an_item",
+                 'item_type': "string",
+                 'item_optional': True,
+                 'item_default': "asdf"
+               }]
+
+        errors = []
+        self.assertEqual(True, isc.config.module_spec._validate_spec_list(spec, True, None, None))
+        self.assertEqual(False, isc.config.module_spec._validate_spec_list(spec, True, { 'does_not_exist': 1 }, None))
+        self.assertEqual(False, isc.config.module_spec._validate_spec_list(spec, True, { 'does_not_exist': 1 }, errors))
+        self.assertEqual(['unknown item does_not_exist'], errors)
         
 
 

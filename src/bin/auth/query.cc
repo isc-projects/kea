@@ -15,7 +15,7 @@
 #include <dns/message.h>
 #include <dns/rcode.h>
 
-#include <datasrc/zonetable.h>
+#include <datasrc/memory_datasrc.h>
 
 #include <auth/query.h>
 
@@ -24,19 +24,74 @@ using namespace isc::datasrc;
 
 namespace isc {
 namespace auth {
+
+void
+Query::putSOA(const Zone& zone) const {
+    Zone::FindResult soa_result(zone.find(zone.getOrigin(),
+        RRType::SOA()));
+    if (soa_result.code != Zone::SUCCESS) {
+        isc_throw(NoSOA, "There's no SOA record in zone " <<
+            zone.getOrigin().toText());
+    } else {
+        /*
+         * FIXME:
+         * The const-cast is wrong, but the Message interface seems
+         * to insist.
+         */
+        response_.addRRset(Message::SECTION_AUTHORITY,
+            boost::const_pointer_cast<RRset>(soa_result.rrset));
+    }
+}
+
 void
 Query::process() const {
-    const ZoneTable::FindResult result = zone_table_.findZone(qname_);
+    bool keep_doing = true;
+    response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
+    const MemoryDataSrc::FindResult result =
+        memory_datasrc_.findZone(qname_);
 
-    if (result.code != isc::datasrc::result::SUCCESS &&
-        result.code != isc::datasrc::result::PARTIALMATCH) {
-        response_.setRcode(Rcode::SERVFAIL());
+    // If we have no matching authoritative zone for the query name, return
+    // REFUSED.  In short, this is to be compatible with BIND 9, but the
+    // background discussion is not that simple.  See the relevant topic
+    // at the BIND 10 developers's ML:
+    // https://lists.isc.org/mailman/htdig/bind10-dev/2010-December/001633.html
+    if (result.code != result::SUCCESS &&
+        result.code != result::PARTIALMATCH) {
+        response_.setRcode(Rcode::REFUSED());
         return;
     }
 
-    // Right now we have no code to search the zone, so we simply return
-    // NXDOMAIN for tests.
-    response_.setRcode(Rcode::NXDOMAIN());
+    // Found a zone which is the nearest ancestor to QNAME, set the AA bit
+    response_.setHeaderFlag(Message::HEADERFLAG_AA);
+    while (keep_doing) {
+        keep_doing = false;
+        Zone::FindResult db_result = result.zone->find(qname_, qtype_);
+        switch (db_result.code) {
+            case Zone::SUCCESS:
+                response_.setRcode(Rcode::NOERROR());
+                response_.addRRset(Message::SECTION_ANSWER,
+                            boost::const_pointer_cast<RRset>(db_result.rrset));
+                // TODO : fill in authority and addtional sections.
+                break;
+            case Zone::DELEGATION:
+                // TODO : add NS to authority section, fill in additional section.
+                break;
+            case Zone::NXDOMAIN:
+                // Just empty answer with SOA in authority section
+                response_.setRcode(Rcode::NXDOMAIN());
+                putSOA(*result.zone);
+                break;
+            case Zone::NXRRSET:
+                // Just empty answer with SOA in authority section
+                response_.setRcode(Rcode::NOERROR());
+                putSOA(*result.zone);
+                break;
+            case Zone::CNAME:
+            case Zone::DNAME:
+                // TODO : replace qname, continue lookup
+                break;
+        }
+    }
 }
 }
 }

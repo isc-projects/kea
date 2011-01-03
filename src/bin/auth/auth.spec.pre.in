@@ -8,68 +8,59 @@
         "item_optional": true,
         "item_default": "@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3"
       },
-      {
-        "item_name": "list",
+      { "item_name": "datasources",
         "item_type": "list",
         "item_optional": true,
         "item_default": [],
-        "list_item_spec": {
-            "item_name": "value",
-            "item_type": "map",
+        "list_item_spec":
+        { "item_name": "list_element",
+          "item_type": "map",
+          "item_optional": false,
+          "item_default": {},
+          "map_item_spec": [
+          { "item_name": "type",
+            "item_type": "string",
             "item_optional": false,
-            "item_default": {},
-            "map_item_spec":
-            [{
-              "item_name": "number",
-              "item_type": "integer",
-              "item_optional": false,
-              "item_default": 1
-            },
-            {
-              "item_name": "name",
-              "item_type": "string",
-              "item_optional": false,
-              "item_default": ""
-            }]
+            "item_default": ""
+          },
+          { "item_name": "class",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": "IN"
+          },
+          { "item_name": "zones",
+            "item_type": "list",
+            "item_optional": false,
+            "item_default": [],
+            "list_item_spec":
+            { "item_name": "list_element",
+              "item_type": "map",
+              "item_optional": true,
+              "map_item_spec": [
+              { "item_name": "origin",
+                "item_type": "string",
+                "item_optional": false,
+                "item_default": ""
+              },
+              { "item_name": "file",
+                "item_type": "string",
+                "item_optional": false,
+                "item_default": ""
+              }]
+            }
+          }]
         }
-    },
-    {
-      "item_name": "map",
-      "item_type": "map",
-      "item_optional": false,
-      "item_default": {},
-      "map_item_spec":
-        [{
-          "item_name": "number",
-          "item_type": "integer",
-          "item_optional": false,
-          "item_default": 1
-        },
-        {
-          "item_name": "name",
-          "item_type": "string",
-          "item_optional": false,
-          "item_default": ""
-        },
-        {
-          "item_name": "list",
-          "item_type": "list",
-          "item_optional": false,
-          "item_default": [],
-          "list_item_spec": {
-            "item_name": "value",
-            "item_type": "integer",
-            "item_optional": false,
-            "item_default": 1
-          }
-        }            
-        ]
       }
     ],
     "commands": [
       {
         "command_name": "shutdown",
         "command_description": "Shut down authoritative DNS server",
+        "command_args": []
+      },
+      {
+        "command_name": "sendstats",
+        "command_description": "Send data to a statistics module at once",
         "command_args": []
       }
     ]

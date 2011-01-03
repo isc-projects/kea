@@ -45,13 +45,17 @@
 
 #include <datasrc/query.h>
 #include <datasrc/data_source.h>
+#include <datasrc/memory_datasrc.h>
 #include <datasrc/static_datasrc.h>
 #include <datasrc/sqlite3_datasrc.h>
 
 #include <xfr/xfrout_client.h>
 
 #include <auth/common.h>
+#include <auth/config.h>
 #include <auth/auth_srv.h>
+#include <auth/query.h>
+#include <auth/statistics.h>
 
 using namespace std;
 
@@ -59,6 +63,7 @@ using namespace isc;
 using namespace isc::cc;
 using namespace isc::datasrc;
 using namespace isc::dns;
+using namespace isc::auth;
 using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::config;
@@ -90,8 +95,15 @@ public:
     bool verbose_mode_;
     AbstractSession* xfrin_session_;
 
+    /// In-memory data source.  Currently class IN only for simplicity.
+    const RRClass memory_datasrc_class_;
+    AuthSrv::MemoryDataSrcPtr memory_datasrc_;
+
     /// Hot spot cache
     isc::datasrc::HotCache cache_;
+
+    /// Query counters for statistics
+    AuthCounters counters_;
 private:
     std::string db_file_;
 
@@ -103,12 +115,17 @@ private:
 
     bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
+
+    /// Increment query counter
+    void incCounter(const int protocol);
 };
 
 AuthSrvImpl::AuthSrvImpl(const bool use_cache,
                          AbstractXfroutClient& xfrout_client) :
     config_session_(NULL), verbose_mode_(false),
     xfrin_session_(NULL),
+    memory_datasrc_class_(RRClass::IN()),
+    counters_(verbose_mode_),
     xfrout_connected_(false),
     xfrout_client_(xfrout_client)
 {
@@ -145,33 +162,20 @@ private:
     AuthSrv* server_;
 };
 
-// This is a derived class of \c DNSAnswer, to serve as a
-// callback in the asiolink module.  It takes a completed
-// set of answer data from the DNS lookup and assembles it
-// into a wire-format response.
+// This is a derived class of \c DNSAnswer, to serve as a callback in the
+// asiolink module.  We actually shouldn't do anything in this class because
+// we build complete response messages in the process methods; otherwise
+// the response message will contain trailing garbage.  In future, we should
+// probably even drop the reliance on DNSAnswer.  We don't need the coroutine
+// tricks provided in that framework, and its overhead would be significant
+// in terms of performance consideration for the authoritative server
+// implementation.
 class MessageAnswer : public DNSAnswer {
 public:
-    MessageAnswer(AuthSrv* srv) : server_(srv) {}
-    virtual void operator()(const IOMessage& io_message, MessagePtr message,
-                            OutputBufferPtr buffer) const
-    {
-        MessageRenderer renderer(*buffer);
-        if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
-            ConstEDNSPtr edns(message->getEDNS());
-            renderer.setLengthLimit(edns ? edns->getUDPSize() :
-                Message::DEFAULT_MAX_UDPSIZE);
-        } else {
-            renderer.setLengthLimit(65535);
-        }
-        message->toWire(renderer);
-        if (server_->getVerbose()) {
-            cerr << "[b10-auth] sending a response (" << renderer.getLength()
-                 << " bytes):\n" << message->toText() << endl;
-        }
-    }
-
-private:
-    AuthSrv* server_;
+    MessageAnswer(AuthSrv*) {}
+    virtual void operator()(const IOMessage&, MessagePtr,
+                            OutputBufferPtr) const
+    {}
 };
 
 // This is a derived class of \c SimpleCallback, to serve
@@ -285,9 +289,47 @@ AuthSrv::setConfigSession(ModuleCCSession* config_session) {
     impl_->config_session_ = config_session;
 }
 
+void
+AuthSrv::setStatisticsSession(AbstractSession* statistics_session) {
+    impl_->counters_.setStatisticsSession(statistics_session);
+}
+
 ModuleCCSession*
 AuthSrv::getConfigSession() const {
     return (impl_->config_session_);
+}
+
+AuthSrv::ConstMemoryDataSrcPtr
+AuthSrv::getMemoryDataSrc(const RRClass& rrclass) const {
+    // XXX: for simplicity, we only support the IN class right now.
+    if (rrclass != impl_->memory_datasrc_class_) {
+        isc_throw(InvalidParameter,
+                  "Memory data source is not supported for RR class "
+                  << rrclass);
+    }
+    return (impl_->memory_datasrc_);
+}
+
+void
+AuthSrv::setMemoryDataSrc(const isc::dns::RRClass& rrclass,
+                          MemoryDataSrcPtr memory_datasrc)
+{
+    // XXX: see above
+    if (rrclass != impl_->memory_datasrc_class_) {
+        isc_throw(InvalidParameter,
+                  "Memory data source is not supported for RR class "
+                  << rrclass);
+    }
+    if (impl_->verbose_mode_) {
+        if (!impl_->memory_datasrc_ && memory_datasrc) {
+            cerr << "[b10-auth] Memory data source is enabled for class "
+                 << rrclass << endl;
+        } else if (impl_->memory_datasrc_ && !memory_datasrc) {
+            cerr << "[b10-auth] Memory data source is disabled for class "
+                 << rrclass << endl;
+        }
+    }
+    impl_->memory_datasrc_ = memory_datasrc;
 }
 
 void
@@ -387,6 +429,9 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, MessagePtr message,
     message->setHeaderFlag(Message::HEADERFLAG_AA);
     message->setRcode(Rcode::NOERROR());
 
+    // Increment query counter.
+    incCounter(io_message.getSocket().getProtocol());
+
     if (remote_edns) {
         EDNSPtr local_edns = EDNSPtr(new EDNS());
         local_edns->setDNSSECAwareness(dnssec_ok);
@@ -395,8 +440,17 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, MessagePtr message,
     }
 
     try {
-        Query query(*message, cache_, dnssec_ok);
-        data_sources_.doQuery(query);
+        // If a memory data source is configured call the separate
+        // Query::process()
+        const ConstQuestionPtr question = *message->beginQuestion();
+        if (memory_datasrc_ && memory_datasrc_class_ == question->getClass()) {
+            const RRType& qtype = question->getType();
+            const Name& qname = question->getName();
+            auth::Query(*memory_datasrc_, qname, qtype, *message).process();
+        } else {
+            datasrc::Query query(*message, cache_, dnssec_ok);
+            data_sources_.doQuery(query);
+        }
     } catch (const Exception& ex) {
         if (verbose_mode_) {
             cerr << "[b10-auth] Internal error, returning SERVFAIL: " <<
@@ -405,7 +459,6 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, MessagePtr message,
         makeErrorMessage(message, buffer, Rcode::SERVFAIL(), verbose_mode_);
         return (true);
     }
-
 
     MessageRenderer renderer(*buffer);
     const bool udp_buffer =
@@ -426,6 +479,9 @@ bool
 AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, MessagePtr message,
                               OutputBufferPtr buffer)
 {
+    // Increment query counter.
+    incCounter(io_message.getSocket().getProtocol());
+
     if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
         if (verbose_mode_) {
             cerr << "[b10-auth] AXFR query over UDP isn't allowed" << endl;
@@ -551,6 +607,19 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, MessagePtr message,
     return (true);
 }
 
+void
+AuthSrvImpl::incCounter(const int protocol) {
+    // Increment query counter.
+    if (protocol == IPPROTO_UDP) {
+        counters_.inc(AuthCounters::COUNTER_UDP_QUERY);
+    } else if (protocol == IPPROTO_TCP) {
+        counters_.inc(AuthCounters::COUNTER_TCP_QUERY);
+    } else {
+        // unknown protocol
+        isc_throw(Unexpected, "Unknown protocol: " << protocol);
+    }
+}
+
 ConstElementPtr
 AuthSrvImpl::setDbFile(ConstElementPtr config) {
     ConstElementPtr answer = isc::config::createAnswer();
@@ -609,6 +678,9 @@ AuthSrv::updateConfig(ConstElementPtr new_config) {
     try {
         // the ModuleCCSession has already checked if we have
         // the correct ElementPtr type as specified in our .spec file
+        if (new_config) {
+            configureAuthServer(*this, new_config);
+        }
         return (impl_->setDbFile(new_config));
     } catch (const isc::Exception& error) {
         if (impl_->verbose_mode_) {
@@ -616,4 +688,13 @@ AuthSrv::updateConfig(ConstElementPtr new_config) {
         }
         return (isc::config::createAnswer(1, error.what()));
     }
+}
+
+bool AuthSrv::submitStatistics() const {
+    return (impl_->counters_.submitStatistics());
+}
+
+uint64_t
+AuthSrv::getCounter(const AuthCounters::CounterType type) const {
+    return (impl_->counters_.getCounter(type));
 }

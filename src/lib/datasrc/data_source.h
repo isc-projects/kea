@@ -248,7 +248,7 @@ public:
     void addDataSrc(ConstDataSrcPtr data_src);
     void removeDataSrc(ConstDataSrcPtr data_src);
     size_t dataSrcCount() { return (data_sources.size()); }
-    
+
     void findClosestEnclosure(DataSrcMatch& match) const;
 
     // Actual queries for data should not be sent to a MetaDataSrc object,
