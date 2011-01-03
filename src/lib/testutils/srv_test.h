@@ -49,7 +49,7 @@ using isc::UnitTestUtil;
 namespace {
 const char* const DEFAULT_REMOTE_ADDRESS = "192.0.2.1";
 
-// The base class for Auth and Recurse test case
+// The base class for Auth and Resolver test case
 class SrvTestBase : public ::testing::Test {
 protected:
     SrvTestBase() : request_message(Message::RENDER),

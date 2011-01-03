@@ -77,7 +77,7 @@ class io_service;
 ///
 /// Notes to developers:
 /// Currently the wrapper interface is fairly specific to use by a
-/// DNS server, i.e., b10-auth or b10-recurse.  But the plan is to
+/// DNS server, i.e., b10-auth or b10-resolver.  But the plan is to
 /// generalize it and have other modules use it as well.
 ///
 /// One obvious drawback of this approach is performance overhead
