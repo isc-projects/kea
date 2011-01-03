@@ -84,8 +84,8 @@ struct MemoryZone::MemoryZoneImpl {
         DomainNode* node;
         switch (domains->insert(name, &node)) {
             // Just check it returns reasonable results
-            case DomainTree::SUCCEED:
-            case DomainTree::ALREADYEXIST:
+            case DomainTree::SUCCESS:
+            case DomainTree::ALREADYEXISTS:
                 break;
             // Something odd got out
             default:
