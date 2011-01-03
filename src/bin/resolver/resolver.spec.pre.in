@@ -1,6 +1,6 @@
 {
   "module_spec": {
-    "module_name": "Recurse",
+    "module_name": "Resolver",
     "module_description": "Recursive service",
     "config_data": [
       {

@@ -58,21 +58,21 @@
 	(Trac #202, svn r3967)
 
   135.  [func]      each
-	Add b10-recurse. This is an example recursive server that
+	Add b10-resolver. This is an example recursive server that
 	currently does forwarding only and no caching.
 	(Trac #327, svn r3903)
 
   134.  [func]      vorner
-	b10-recurse supports timeouts and retries in forwarder mode.
+	b10-resolver supports timeouts and retries in forwarder mode.
 	(Trac #401, svn r3660)
 
   133.  [func]      vorner
 	New temporary logging function available in isc::log. It is used by
-	b10-recurse.
+	b10-resolver.
 	(Trac #393, r3602)
 
   132.  [func]      vorner
-	The b10-recurse is configured through config manager.
+	The b10-resolver is configured through config manager.
 	It has "listen_on" and "forward_addresses" options.
 	(Trac #389, r3448)
 
@@ -135,7 +135,7 @@ bind10-devel-20101201 released on December 01, 2010
   122.  [func]		stephen
 	src/bin/bind10: Added configuration options to Boss to determine
 	whether to start the authoritative server, recursive server (or
-	both). A dummy recursor has been provided for test purposes.
+	both). A dummy program has been provided for test purposes.
 	(Trac #412, svn r3676)
 
   121.  [func]		jinmei

@@ -14,60 +14,60 @@
 
 // $Id$
 
-#include <recurse/recursor.h>
+#include <resolver/resolver.h>
 #include <testutils/srv_unittest.h>
 
 namespace {
 const char* const TEST_PORT = "53535";
 
-class RecursorTest : public SrvTestBase{
+class ResolverTest : public SrvTestBase{
 protected:
-    RecursorTest() : server(){}
-    Recursor server;
+    ResolverTest() : server(){}
+    Resolver server;
 };
 
 // Unsupported requests.  Should result in NOTIMP.
-TEST_F(RecursorTest, unsupportedRequest) {
+TEST_F(ResolverTest, unsupportedRequest) {
     UNSUPPORTED_REQUEST_TEST;
 }
 
 // Multiple questions.  Should result in FORMERR.
-TEST_F(RecursorTest, multiQuestion) {
+TEST_F(ResolverTest, multiQuestion) {
     MULTI_QUESTION_TEST; 
 }
 
 // Incoming data doesn't even contain the complete header.  Must be silently
 // dropped.
-TEST_F(RecursorTest, shortMessage) {
+TEST_F(ResolverTest, shortMessage) {
     SHORT_MESSAGE_TEST;
 }
 
 // Response messages.  Must be silently dropped, whether it's a valid response
 // or malformed or could otherwise cause a protocol error.
-TEST_F(RecursorTest, response) {
+TEST_F(ResolverTest, response) {
     RESPONSE_TEST;
 }
 
 // Query with a broken question
-TEST_F(RecursorTest, shortQuestion) {
+TEST_F(ResolverTest, shortQuestion) {
     SHORT_QUESTION_TEST;
 }
 
 // Query with a broken answer section
-TEST_F(RecursorTest, shortAnswer) {
+TEST_F(ResolverTest, shortAnswer) {
     SHORT_ANSWER_TEST;
 }
 
 // Query with unsupported version of EDNS.
-TEST_F(RecursorTest, ednsBadVers) {
+TEST_F(ResolverTest, ednsBadVers) {
     EDNS_BADVERS_TEST;
 }
 
-TEST_F(RecursorTest, AXFROverUDP) {
+TEST_F(ResolverTest, AXFROverUDP) {
     AXFR_OVER_UDP_TEST;
 }
 
-TEST_F(RecursorTest, AXFRFail) {
+TEST_F(ResolverTest, AXFRFail) {
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
                                        Name("example.com"), RRClass::IN(),
                                        RRType::AXFR());
@@ -79,7 +79,7 @@ TEST_F(RecursorTest, AXFRFail) {
                 QR_FLAG, 1, 0, 0, 0);
 }
 
-TEST_F(RecursorTest, notifyFail) {
+TEST_F(ResolverTest, notifyFail) {
     // Notify should always return NOTAUTH
     request_message.clear(Message::RENDER);
     request_message.setOpcode(Opcode::NOTIFY());

@@ -14,16 +14,16 @@
 
 // $Id$
 
-#include <recurse/recursor.h>
+#include <resolver/resolver.h>
 #include <testutils/srv_unittest.h>
 
 namespace {
-class RecursorConfig : public ::testing::Test {
+class ResolverConfig : public ::testing::Test {
     public:
         IOService ios;
         DNSService dnss;
-        Recursor server;
-        RecursorConfig() :
+        Resolver server;
+        ResolverConfig() :
             dnss(ios, NULL, NULL, NULL)
         {
             server.setDNSService(dnss);
@@ -31,7 +31,7 @@ class RecursorConfig : public ::testing::Test {
         void invalidTest(const string &JOSN);
 };
 
-TEST_F(RecursorConfig, forwardAddresses) {
+TEST_F(ResolverConfig, forwardAddresses) {
     // Default value should be fully recursive
     EXPECT_TRUE(server.getForwardAddresses().empty());
     EXPECT_FALSE(server.isForwarding());
@@ -55,7 +55,7 @@ TEST_F(RecursorConfig, forwardAddresses) {
     EXPECT_FALSE(server.isForwarding());
 }
 
-TEST_F(RecursorConfig, forwardAddressConfig) {
+TEST_F(ResolverConfig, forwardAddressConfig) {
     // Try putting there some address
     ElementPtr config(Element::fromJSON("{"
         "\"forward_addresses\": ["
@@ -83,13 +83,13 @@ TEST_F(RecursorConfig, forwardAddressConfig) {
 }
 
 void
-RecursorConfig::invalidTest(const string &JOSN) {
+ResolverConfig::invalidTest(const string &JOSN) {
     ElementPtr config(Element::fromJSON(JOSN));
     EXPECT_FALSE(server.updateConfig(config)->equals(
         *isc::config::createAnswer())) << "Accepted config " << JOSN << endl;
 }
 
-TEST_F(RecursorConfig, invalidForwardAddresses) {
+TEST_F(ResolverConfig, invalidForwardAddresses) {
     // Try torturing it with some invalid inputs
     invalidTest("{"
         "\"forward_addresses\": \"error\""
@@ -114,7 +114,7 @@ TEST_F(RecursorConfig, invalidForwardAddresses) {
         "}]}");
 }
 
-TEST_F(RecursorConfig, listenAddresses) {
+TEST_F(ResolverConfig, listenAddresses) {
     // Default value should be fully recursive
     EXPECT_TRUE(server.getListenAddresses().empty());
 
@@ -135,7 +135,7 @@ TEST_F(RecursorConfig, listenAddresses) {
     EXPECT_TRUE(server.getListenAddresses().empty());
 }
 
-TEST_F(RecursorConfig, DISABLED_listenAddressConfig) {
+TEST_F(ResolverConfig, DISABLED_listenAddressConfig) {
     // Try putting there some address
     ElementPtr config(Element::fromJSON("{"
         "\"listen_on\": ["
@@ -171,7 +171,7 @@ TEST_F(RecursorConfig, DISABLED_listenAddressConfig) {
     EXPECT_EQ(5300, server.getListenAddresses()[0].second);
 }
 
-TEST_F(RecursorConfig, invalidListenAddresses) {
+TEST_F(ResolverConfig, invalidListenAddresses) {
     // Try torturing it with some invalid inputs
     invalidTest("{"
         "\"listen_on\": \"error\""
@@ -197,7 +197,7 @@ TEST_F(RecursorConfig, invalidListenAddresses) {
 }
 
 // Just test it sets and gets the values correctly
-TEST_F(RecursorConfig, timeouts) {
+TEST_F(ResolverConfig, timeouts) {
     server.setTimeouts(0, 1);
     EXPECT_EQ(0, server.getTimeouts().first);
     EXPECT_EQ(1, server.getTimeouts().second);
@@ -206,7 +206,7 @@ TEST_F(RecursorConfig, timeouts) {
     EXPECT_EQ(0, server.getTimeouts().second);
 }
 
-TEST_F(RecursorConfig, timeoutsConfig) {
+TEST_F(ResolverConfig, timeoutsConfig) {
     ElementPtr config = Element::fromJSON("{"
             "\"timeout\": 1000,"
             "\"retries\": 3"
@@ -217,7 +217,7 @@ TEST_F(RecursorConfig, timeoutsConfig) {
     EXPECT_EQ(3, server.getTimeouts().second);
 }
 
-TEST_F(RecursorConfig, invalidTimeoutsConfig) {
+TEST_F(ResolverConfig, invalidTimeoutsConfig) {
     invalidTest("{"
         "\"timeout\": \"error\""
         "}");

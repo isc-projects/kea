@@ -19,9 +19,9 @@ if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES = $(top_srcdir)/src/lib/dns/tests/unittest_util.h
 run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
-run_unittests_SOURCES += ../recursor.h ../recursor.cc
-run_unittests_SOURCES += recursor_unittest.cc
-run_unittests_SOURCES += recursor_config_unittest.cc
+run_unittests_SOURCES += ../resolver.h ../resolver.cc
+run_unittests_SOURCES += resolver_unittest.cc
+run_unittests_SOURCES += resolver_config_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)

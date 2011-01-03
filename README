@@ -15,7 +15,7 @@ five year plan are described here:
 
 This release includes the bind10 master process, b10-msgq message
 bus, b10-auth authoritative DNS server (with SQLite3 backend),
-b10-recurse forwarding DNS server, b10-cmdctl remote control daemon,
+b10-resolver forwarding DNS server, b10-cmdctl remote control daemon,
 b10-cfgmgr configuration manager, b10-xfrin AXFR inbound service,
 b10-xfrout outgoing AXFR service, b10-zonemgr secondary manager,
 b10-stats statistics collection and reporting daemon, and a new
