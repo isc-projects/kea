@@ -364,34 +364,44 @@ class MultiConfigData:
            See get_value() for a general way to find a configuration
            value
         """
-        if identifier[0] == '/':
-            identifier = identifier[1:]
-        module, sep, id = identifier.partition("/")
         try:
-            spec = find_spec_part(self._specifications[module].get_config_spec(), id)
-            if type(spec) == dict and 'item_default' in spec:
-                id, list_indices = isc.cc.data.split_identifier_list_indices(id)
-                if list_indices is not None and \
-                   type(spec['item_default']) == list:
-                    if len(list_indices) == 1:
-                        default_list = spec['item_default']
-                        index = list_indices[0]
-                        if index < len(default_list):
-                            return default_list[index]
+            if identifier[0] == '/':
+                identifier = identifier[1:]
+            module, sep, id = identifier.partition("/")
+            # if there is a 'higher-level' list index specified, we need
+            # to check if that list specification has a default that
+            # overrides the more specific default in the final spec item
+            # (ie. list_default = [1, 2, 3], list_item_spec=int, default=0)
+            # def default list[1] should return 2, not 0
+            id_parts = isc.cc.data.split_identifier(id)
+            id_prefix = ""
+            while len(id_parts) > 0:
+                id_part = id_parts.pop(0)
+                item_id, list_indices = isc.cc.data.split_identifier_list_indices(id_part)
+                id_prefix += "/" + id_part
+                if list_indices is not None:
+                    spec = find_spec_part(self._specifications[module].get_config_spec(), id_prefix)
+                    if 'item_default' in spec:
+                        list_value = spec['item_default']
+                        for i in list_indices:
+                            if i < len(list_value):
+                                list_value = list_value[i]
+                            else:
+                                # out of range, return None
+                                return None
+                            
+                        if len(id_parts) > 0:
+                            rest_of_id = "/".join(id_parts)
+                            return isc.cc.data.find(list_value, rest_of_id)
                         else:
-                            return None
-                else:
-                    return spec['item_default']
-            elif type(spec) == list:
-                result = {}
-                for i in spec:
-                    if type(i) == dict and 'item_default' in i:
-                        result[i['item_name']] = i['item_default']
-                    else:
-                        result[i['item_name']] = None
-                return result
+                            return list_value
+    
+            spec = find_spec_part(self._specifications[module].get_config_spec(), id)
+            if 'item_default' in spec:
+                return spec['item_default']
             else:
                 return None
+
         except isc.cc.data.DataNotFoundError as dnfe:
             return None
 

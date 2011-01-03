@@ -360,6 +360,8 @@ class TestMultiConfigData(unittest.TestCase):
         self.assertEqual(1, value)
         value = self.mcd.get_default_value("Spec2/item5[0]")
         self.assertEqual('a', value)
+        value = self.mcd.get_default_value("Spec2/item5[1]")
+        self.assertEqual('b', value)
         value = self.mcd.get_default_value("Spec2/item5[5]")
         self.assertEqual(None, value)
         value = self.mcd.get_default_value("Spec2/item5[0][1]")
@@ -394,6 +396,10 @@ class TestMultiConfigData(unittest.TestCase):
         self.assertEqual(None, value)
         self.assertEqual(MultiConfigData.NONE, status)
 
+        value, status = self.mcd.get_value("Spec2/item5")
+        self.assertEqual(['a', 'b'], value)
+        self.assertEqual(MultiConfigData.DEFAULT, status)
+
         value, status = self.mcd.get_value("Spec2/item5[0]")
         self.assertEqual("a", value)
         self.assertEqual(MultiConfigData.DEFAULT, status)
@@ -401,6 +407,11 @@ class TestMultiConfigData(unittest.TestCase):
         value, status = self.mcd.get_value("Spec2/item5[0]", False)
         self.assertEqual(None, value)
         self.assertEqual(MultiConfigData.NONE, status)
+
+        value, status = self.mcd.get_value("Spec2/item5[1]")
+        self.assertEqual("b", value)
+        self.assertEqual(MultiConfigData.DEFAULT, status)
+
 
 
     def test_get_value_maps(self):
@@ -425,21 +436,21 @@ class TestMultiConfigData(unittest.TestCase):
         self.mcd._set_current_config({ "Spec2": { "item1": 2 } })
         self.mcd.set_value("Spec2/item3", False)
         maps = self.mcd.get_value_maps("/Spec2")
-        print("[XX] MAPS:")
-        print(maps)
         self.assertEqual([{'default': False, 'type': 'integer', 'name': 'Spec2/item1', 'value': 2, 'modified': False},
                           {'default': True, 'type': 'real', 'name': 'Spec2/item2', 'value': 1.1, 'modified': False},
                           {'default': False, 'type': 'boolean', 'name': 'Spec2/item3', 'value': False, 'modified': True},
                           {'default': True, 'type': 'string', 'name': 'Spec2/item4', 'value': 'test', 'modified': False},
                           {'default': True, 'type': 'list', 'name': 'Spec2/item5', 'value': ['a', 'b'], 'modified': False},
-                          {'default': True, 'type': 'map', 'name': 'Spec2/item6', 'value': {}, 'modified': False}], maps)
+                          {'default': True, 'type': 'string', 'name': 'Spec2/item6/value1', 'value': 'default', 'modified': False},
+                          {'default': False, 'type': 'integer', 'name': 'Spec2/item6/value2', 'value': None, 'modified': False}], maps)
         maps = self.mcd.get_value_maps("Spec2")
         self.assertEqual([{'default': False, 'type': 'integer', 'name': 'Spec2/item1', 'value': 2, 'modified': False},
                           {'default': True, 'type': 'real', 'name': 'Spec2/item2', 'value': 1.1, 'modified': False},
                           {'default': False, 'type': 'boolean', 'name': 'Spec2/item3', 'value': False, 'modified': True},
                           {'default': True, 'type': 'string', 'name': 'Spec2/item4', 'value': 'test', 'modified': False},
                           {'default': True, 'type': 'list', 'name': 'Spec2/item5', 'value': ['a', 'b'], 'modified': False},
-                          {'default': True, 'type': 'map', 'name': 'Spec2/item6', 'value': {}, 'modified': False}], maps)
+                          {'default': True, 'type': 'string', 'name': 'Spec2/item6/value1', 'value': 'default', 'modified': False},
+                          {'default': False, 'type': 'integer', 'name': 'Spec2/item6/value2', 'value': None, 'modified': False}], maps)
         maps = self.mcd.get_value_maps("/Spec2/item5")
         self.assertEqual([{'default': True, 'type': 'string', 'name': 'Spec2/item5[0]', 'value': 'a', 'modified': False},
                           {'default': True, 'type': 'string', 'name': 'Spec2/item5[1]', 'value': 'b', 'modified': False}], maps)
@@ -471,9 +482,15 @@ class TestMultiConfigData(unittest.TestCase):
                      'value': 'def'},
                     {'default': True,
                      'modified': False,
-                     'name': 'Spec22/value9/v92',
-                     'type': 'map',
-                     'value': {}
+                     'name': 'Spec22/value9/v92/v92a',
+                     'type': 'string',
+                     'value': 'Hello'
+                    },
+                    {'default': True,
+                     'modified': False,
+                     'name': 'Spec22/value9/v92/v92b',
+                     'type': 'integer',
+                     'value': 47806
                     }
                    ]
         maps = self.mcd.get_value_maps("/Spec22/value9")
