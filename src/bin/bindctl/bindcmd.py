@@ -623,7 +623,7 @@ class BindCmdInterpreter(Cmd):
         except isc.cc.data.DataTypeError as dte:
             print("Error: " + str(dte))
         except isc.cc.data.DataNotFoundError as dnfe:
-            print("Error: " + identifier + " not found")
+            print("Error: " + str(dnfe))
         except KeyError as ke:
             print("Error: missing " + str(ke))
             raise ke
