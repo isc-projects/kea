@@ -238,30 +238,39 @@ template <typename T>
 RBNode<T>::~RBNode() {
 }
 
-// note: the following class description is documented using C-style comments
+// note: the following class description is documented using multiline comments
 // because the verbatim diagram contain a backslash, which could be interpreted
-// as part of a multi-line comment with C++ style comments.
+// as escape of newline in singleline comment.
 /**
  *  \brief \c RBTree class represents all the domains with the same suffix,
- *  so it can be used to store the domains in one zone.
- * 
- *  \c RBTree is a generic red black tree, and contains all the nodes with
- *  the same suffix, since each name may have sub domain names
- *  so \c RBTree is a recursive data structure namely tree in tree.
- *  So for one zone, several RBTrees may be involved. But from outside, the sub
- *  tree is opaque for end users.
- * 
+ *      It can be used to store the domains in one zone, for example.
+ *
+ *  RBTree is generic map from domain names to any kind of data. Internally, it
+ *  uses a red-black tree. However, it isn't one tree containing everything.
+ *  Subdomains are trees, so this structure is recursive - trees inside trees.
+ *  But, from the interface point of view, it is opaque data structure.
+ *
  *  \c RBTree split the domain space into hierarchy red black trees, nodes in one
  *  tree has the same base name. The benefit of this struct is that:
- *  - enhance the query performace compared with one big flat red black tree
- *  - decrase the memory footprint to save common labels only once.
- * 
+ *  - Enhances the query performace compared with one big flat red black tree.
+ *  - Decrases the memory footprint, as it doesn't store the suffix labels
+ *      multiple times.
+ *
+ * \anchor diagram
+ *
+ * with the following names:
+ *  - a
+ *  - b
+ *  - c
+ *  - x.d.e.f
+ *  - z.d.e.f
+ *  - g.h
+ *  - o.w.y.d.e.f
+ *  - p.w.y.d.e.f
+ *  - q.w.y.d.e.f
+ *
+ * the tree will looks like:
  *  \verbatim
-  with the following names:
-      a       x.d.e.f     o.w.y.d.e.f
-      b       z.d.e.f     p.w.y.d.e.f
-      c       g.h         q.w.y.d.e.f
-      the tree will looks like:
                                 b
                               /   \
                              a    d.e.f
@@ -275,7 +284,7 @@ RBNode<T>::~RBNode() {
                                      p
                                     / \
                                    o   q
- *  \endverbatim
+   \endverbatim
  *  \note open problems:
  *  - current find funciton only return non-empty nodes, so there is no difference
  *    between find one not exist name with empty non-terminal nodes, but in DNS query
@@ -290,14 +299,15 @@ template <typename T>
 class RBTree : public boost::noncopyable {
     friend class RBNode<T>;
 public:
-    /// \brief The return value for the \c find() insert() and erase() method
+    /// \brief The return value for the \c find() and insert() methods
     enum Result {
-        SUCCESS, //insert or erase succeed
-        EXACTMATCH, //find the target name
-        PARTIALMATCH, //find part of target name
-        NOTFOUND,  // for find function means no related name found
-                   // for erase function means erase not exist name
-        ALREADYEXISTS, //for insert operation, the name to insert already exist
+        SUCCESS,    ///< Insert was successful
+        /// \brief The node returned from find mathes exactly the name given
+        EXACTMATCH,
+        PARTIALMATCH, ///< A superdomain node was found
+        NOTFOUND,   ///< Not even any superdomain was found
+        /// \brief Returned by insert() if a node of the name already exists
+        ALREADYEXISTS,
     };
 
     /// \name Constructor and Destructor
@@ -309,106 +319,108 @@ public:
     ~RBTree();
     //@}
 
-    /// \name Inquery methods
-    //@{
-    /// \brief Find the node that gives a longest match against the given name
+    /// \name Find methods
     ///
-    /// This method searches the \c RBTree for a node whose name is a longest
-    /// match against \c name.  The found node, if any, is returned via the
-    /// \c node pointer.
-    /// By default, nodes that don't have data will be ignored, and the result
-    /// can be \c NOTFOUND even if there is a node whose name matches the
-    /// given \c name.
-    /// We'll soon introduce a "no data OK" mode in this method.  It would
-    /// match any node of the tree regardless of whether the node has data
-    /// or not.
-    /// Since the tree is "compressed", i.e., a node can contain multiple
-    /// name labels, there are counter intuitive cases in the "no data OK"
-    /// mode.  For example, see the diagram of the class description.
-    /// Name "y.d.e.f" is logically contained in the tree as part of the
-    /// "compressed" node of "w.y".  But the search logic of this method
-    /// cannot find the logical match, and would return a \c PARTIALMATCH
-    /// result pointing to node "d.e.f".  To correctly identify the real
-    /// longest match, "y.d.e.f" with empty data, the caller needs to
-    /// perform additional steps.
+    /// \brief Find the node that gives a longest match agains the given name.
     ///
-    /// This version of \c find() method is templated to allow the caller
-    /// to specify a "hook" at nodes that give a partial match.
-    /// When the search encounters a node with data that partially matches
-    /// \c name (i.e. node's name is a superdomain of \c name) and has
-    /// enabled callback (via the \c RBNode::enableCallback() method), if
-    /// \c callback is non \c NULL then the callback function is called
-    /// with the argument of a reference to the node and the given
-    /// callback argument (\c callback_arg).  The template parameter specifies
-    /// the type of the callback argument.
-    /// The callback function returns either \c true or \c false, meaning
-    /// the search should stop or continue, respectively.
-    /// If the return value is \c true the search stops immediately at the
-    /// node even if there could be a longer matching name below it.
-    /// In reality, this convoluted callback rule is specifically intended
-    /// to be used to handle a zone cut (delegation) at a name search inside
-    /// a zone, and won't be used in any other cases.
-    /// Other applications of the tree won't need callbacks, and they should
-    /// use the non templated version of the \c find() method.
+    /// \anchor find
     ///
-    /// Since the expected usage of callback is very limited, we do not
-    /// generalize the interface so that it can be an arbitrary functions or
-    /// functor objects in favor of simplicity and efficiency.
+    /// These methods search the RBTree fo a node whose name is a longest
+    /// against name. The found node, if any, is returned via the node pointer.
     ///
-    /// This method involves operations on names that can throw an exception.
+    /// By default, nodes that don't have data (see RBNode::isEmpty) are
+    /// ignored and the result can be NOTFOUND even if there's a node whose
+    /// name mathes. The plan is to introduce a "no data OK" mode for this
+    /// method, that would match any node of the tree regardless of wheather
+    /// the node has any data or not.
+    ///
+    /// The case with "no data OK" mode is not as easy as it seems. For example
+    /// in the diagram, the name y.d.e.f is logically contained in the tree as
+    /// part of the node w.y.
+    ///
+    /// These methods involves operations on names that can throw an exception.
     /// If that happens the exception will be propagated to the caller.
     /// The callback function should generally not throw an exception, but
     /// if it throws, the exception will be propagated to the caller.
     ///
+    /// The \c name parameter says what should be found. The node parameter
+    /// is output only and in case of EXACTMATCH and PARTIALMATCH, it is set
+    /// to a pointer to the found node.
+    ///
+    /// They return:
+    ///  - EXACTMATCH when a node with the same name as requested exists.
+    ///  - PARTIALMATCH when a node with the same name does not exist (or is
+    ///    empty), but there's a (nonempty) superdomain of the requested one.
+    ///    The superdomain with longest name is returned trough the node
+    ///    parameter. Beware that if you store a zone in the tree, you may get
+    ///    PARTIALMATCH with zone apex when the given domain name is not there.
+    ///    You should not try to delegate into another zone in that case.
+    ///  - NOTFOUND if there's no node with the same name nor any superdomain
+    ///    of the it. In that case, node parameter is left intact.
+    //@{
+
+    /// \brief Find with callback.
+    ///
+    /// \anchor callback
+    ///
+    /// This version of find calls the callback whenever traversing (on the
+    /// way from root down the tree) a marked node on the way down trough the
+    /// domain namespace (see RBNode::enableCallback and related functions).
+    ///
+    /// If you return true from the callback, the search is stopped and a
+    /// PARTIALMATCH is returned with the given node. Note that this node
+    /// doesn't really need to be the one with longest possible match.
+    ///
+    /// This callback mechanism was designed with zone cut (delegation)
+    /// processing in mind. The marked nodes would be the ones at delegation
+    /// points. It is not expected that any other applications would need
+    /// callbacks, they should use the versions of find without callbacks.
+    /// The callbacks are not general functors for the same reason - we don't
+    /// expect it to be needed.
+    ///
     /// \param name Target to be found
     /// \param node On success (either \c EXACTMATCH or \c PARTIALMATCH)
-    /// it will store a pointer to the matching node
+    ///     it will store a pointer to the matching node
     /// \param callback If non \c NULL, a call back function to be called
-    /// at "delegation" nodes (see above).
+    ///     at marked nodes (see above).
     /// \param callback_arg A caller supplied argument to be passed to
-    /// \c callback.
+    ///     \c callback.
     ///
-    /// \return \c EXACTMATCH A node that whose name is equal to \c name is
-    /// found.  \c *node will be set to point to that node.
-    /// \return \c PARTIALMATCH There is a no exact match, but a superdomain
-    /// of \c name exists.  \c node will be set to point to the node whose
-    /// name is the longest among such superdomains.
-    /// \return \c NOTFOUND There is no exact or partial match against \c name
-    /// \c *node will be intact in this case.
+    /// \return As described above, but in case of callback returning true,
+    ///     it returns imediatelly with the current node.
     template <typename CBARG>
     Result find(const isc::dns::Name& name, RBNode<T>** node,
                 bool (*callback)(const RBNode<T>&, CBARG),
                 CBARG callback_arg) const;
 
-    /// Same as the other version, but the returned \c node will be immutable.
+    /// \brief Find with callback returning imutable node.
+    ///
+    /// It has the same behaviour as the find with \ref callback version.
     template <typename CBARG>
     Result find(const isc::dns::Name& name, const RBNode<T>** node,
                 bool (*callback)(const RBNode<T>&, CBARG),
                 CBARG callback_arg) const;
 
-    /// Same as the templated version, but does not use callback.
+    /// \brief Simple find.
     ///
-    /// Applications except the zone implementation should generally use the
-    /// non templated version.
+    /// Acts as described in the \ref find section.
     Result find(const isc::dns::Name& name, RBNode<T>** node) const {
         return (find<void*>(name, node, NULL, NULL));
     }
 
-    /// Same as the templated version, but does not use callback, and the
-    /// returned \c node will be immutable.
+    /// \brieg Simple find returning imutable node.
     ///
-    /// In general, this version should be preferred over the other non
-    /// templated version, unless the caller knows it should modify the
-    /// returned node.
+    /// Acts as described in the \ref find section, but returns imutable node
+    /// pointer.
     Result find(const isc::dns::Name& name, const RBNode<T>** node) const {
         return (find<void*>(name, node, NULL, NULL));
     }
+    //@}
 
     /// \brief Get the total node count in the tree
     /// the node count including the node created common suffix node,
     /// this function will only be used for debuging
     int getNodeCount() const { return (node_count_);}
-    //@}
 
     /// \name Debug function
     //@{
@@ -416,23 +428,28 @@ public:
     void dumpTree(std::ostream& os, unsigned int depth = 0) const;
     //@}
 
-    /// \name Modify function
+    /// \name Modify functions
     //@{
-    /// \brief Insert the domain name into the tree
-    /// \param name The name to be inserted into the tree
-    /// \param inserted_node If no node with the name in the tree,
-    /// new \c RBNode will be created, otherwise nothing will be done.
-    /// Anyway the pointer point to the node with the name will be assigned to
-    /// inserted_node
+    /// \brief Insert the domain name into the tree.
+    ///
+    /// It either finds an already existing node of the given name or inserts
+    /// a new one, if none exists yet. In any case, the inserted_node parameter
+    /// is set to point to that node. You can fill data into it or modify it.
+    /// So, if you don't know if a node exists or not and you need to modify
+    /// it, just call insert and act by the result.
+    ///
+    /// Please note that the tree can add some empty nodes by itself, so don't
+    /// assume that if you didn't insert a node of that name it doesn't exist.
+    ///
+    /// \param name The name to be inserted into the tree.
+    /// \param inserted_node This is an output parameter and is set to the
+    ///     node.
+    ///
     /// \return
-    //  - SUCCESS means no node exists in the tree with the name before insert
-    /// - ALREADYEXISTS means already has the node with the given name
-    //
-    /// \node To modify the data related with one name but not sure the name has
-    /// inserted or not, it is better to call \c insert,instead of
-    /// \c find(), in case the name isn't exist and needs to insert again
+    ///  - SUCCESS The node was added.
+    ///  - ALREADYEXISTS There was already a node of that name, so it was not
+    ///     added.
     Result insert(const isc::dns::Name& name, RBNode<T>** inserted_node);
-    //@}
 
     /// \brief Swaps two tree's contents.
     ///
@@ -443,6 +460,7 @@ public:
         std::swap(NULLNODE, other.NULLNODE);
         std::swap(node_count_, other.node_count_);
     }
+    //@}
 
 private:
     /// \name RBTree balance functions
@@ -457,14 +475,15 @@ private:
     /// \brief delete tree whose root is equal to node
     void deleteHelper(RBNode<T> *node);
     /// \brief find the node with name
-    /// \param name is the target, up will points to the base domain of
-    /// the tree which name resides, node will point to the target node
-    /// if we has exact same name or partical name in current tree.
-    /// so for example, in zone a, we has
-    /// b.a, c.b.a and d.b.a search c.b.a, up will points to b.a.
-    /// and node will points to c.b.a
-    /// \note parameter up now is not used by any funciton, but we are gonna
-    /// need it soon to implement function like remove
+    ///
+    /// Internal searching function.
+    ///
+    /// \param name What should be found.
+    /// \param up It will point to the node whose down pointer points
+    ///     to the tree containing node. If we looked for o.w.y.d.e.f in the
+    ///     \ref diagram, the up would point to the w.y node.
+    ///     This parameter is not used currently, but it will be soon.
+    /// \param node The found node.
     template <typename CBARG>
     Result findHelper(const isc::dns::Name& name, const RBNode<T>** up,
                       RBNode<T>** node,
@@ -472,9 +491,7 @@ private:
                       CBARG callback_arg) const;
     void dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
                         unsigned int depth) const;
-    /// for indent purpose, add certian mount empty charachter to output stream
-    /// according to the depth. This is a helper function which is only used when
-    /// dump tree
+    /// \brief Indentation helper function for dumpTree
     static void indent(std::ostream& os, unsigned int depth);
 
     /// Split one node into two nodes, keep the old node and create one new
