@@ -235,7 +235,7 @@ public:
     /// that share the same \c io_service with the authoritative server.
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
-    asio::io_service& get_io_service() { return io_service_.get_io_service(); };
+    asio::io_service& get_io_service() { return io_service_.get_io_service(); }
 private:
     DNSServiceImpl* impl_;
     IOService& io_service_;

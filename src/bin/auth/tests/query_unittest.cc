@@ -29,24 +29,57 @@ using namespace isc::dns;
 using namespace isc::datasrc;
 using namespace isc::auth;
 
+namespace {
+
 RRsetPtr a_rrset = RRsetPtr(new RRset(Name("www.example.com"),
                                       RRClass::IN(), RRType::A(),
                                       RRTTL(3600)));
-namespace {
+RRsetPtr soa_rrset = RRsetPtr(new RRset(Name("example.com"),
+                                        RRClass::IN(), RRType::SOA(),
+                                        RRTTL(3600)));
+RRsetPtr ns_rrset(RRsetPtr(new RRset(Name("ns.example.com"),
+                                     RRClass::IN(), RRType::NS(),
+                                     RRTTL(3600))));
+RRsetPtr glue_a_rrset(RRsetPtr(new RRset(Name("glue.ns.example.com"),
+                                         RRClass::IN(), RRType::A(),
+                                         RRTTL(3600))));
+RRsetPtr glue_aaaa_rrset(RRsetPtr(new RRset(Name("glue.ns.example.com"),
+                                            RRClass::IN(), RRType::AAAA(),
+                                            RRTTL(3600))));
+RRsetPtr noglue_a_rrset(RRsetPtr(new RRset(Name("noglue.example.com"),
+                                         RRClass::IN(), RRType::A(),
+                                         RRTTL(3600))));
 // This is a mock Zone class for testing.
 // It is a derived class of Zone, and simply hardcode the results of find()
 // return SUCCESS for "www.example.com",
 // return NXDOMAIN for "nxdomain.example.com",
 // return NXRRSET for "nxrrset.example.com",
 // return CNAME for "cname.example.com",
-// else return DNAME
+// otherwise return DNAME
 class MockZone : public Zone {
 public:
-    MockZone() :
+    MockZone(bool has_SOA = true) :
         origin_(Name("example.com")),
+        has_SOA_(has_SOA),
+        delegation_rrset(RRsetPtr(new RRset(Name("delegation.example.com"),
+                                            RRClass::IN(), RRType::NS(),
+                                            RRTTL(3600)))),
+        cname_rrset(RRsetPtr(new RRset(Name("cname.example.com"),
+                                       RRClass::IN(), RRType::CNAME(),
+                                       RRTTL(3600)))),
         mx_rrset_(new RRset(Name("mx.example.com"), RRClass::IN(),
             RRType::MX(), RRTTL(3600)))
     {
+        delegation_rrset->addRdata(rdata::generic::NS(
+                          Name("glue.ns.example.com")));
+        delegation_rrset->addRdata(rdata::generic::NS(
+                          Name("noglue.example.com")));
+        delegation_rrset->addRdata(rdata::generic::NS(
+                          Name("cname.example.com")));
+        delegation_rrset->addRdata(rdata::generic::NS(
+                          Name("example.org")));
+        cname_rrset->addRdata(rdata::generic::CNAME(
+                          Name("www.example.com")));
         mx_rrset_->addRdata(isc::dns::rdata::generic::MX(10,
             Name("www.example.com")));
         mx_rrset_->addRdata(isc::dns::rdata::generic::MX(20,
@@ -56,10 +89,14 @@ public:
     virtual const isc::dns::RRClass& getClass() const;
 
     FindResult find(const isc::dns::Name& name,
-            const isc::dns::RRType& type) const;
+                    const isc::dns::RRType& type,
+                    const FindOptions options = FIND_DEFAULT) const;
 
 private:
     Name origin_;
+    bool has_SOA_;
+    RRsetPtr delegation_rrset;
+    RRsetPtr cname_rrset;
     RRsetPtr mx_rrset_;
 };
 
@@ -74,22 +111,38 @@ MockZone::getClass() const {
 }
 
 Zone::FindResult
-MockZone::find(const Name& name, const RRType&) const {
+MockZone::find(const Name& name, const RRType& type,
+               const FindOptions options) const
+{
     // hardcode the find results
     if (name == Name("www.example.com")) {
-        return FindResult(SUCCESS, a_rrset);
+        return (FindResult(SUCCESS, a_rrset));
+    } else if (name == Name("glue.ns.example.com") && type == RRType::A() &&
+        options == FIND_GLUE_OK) {
+        return (FindResult(SUCCESS, glue_a_rrset));
+    } else if (name == Name("noglue.example.com") && type == RRType::A()) {
+        return (FindResult(SUCCESS, noglue_a_rrset));
+    } else if (name == Name("glue.ns.example.com") && type == RRType::AAAA() &&
+        options == FIND_GLUE_OK) {
+        return (FindResult(SUCCESS, glue_aaaa_rrset));
+    } else if (name == Name("example.com") && type == RRType::SOA() &&
+        has_SOA_)
+    {
+        return (FindResult(SUCCESS, soa_rrset));
     } else if (name == Name("delegation.example.com")) {
-        return FindResult(DELEGATION, RRsetPtr());
+        return (FindResult(DELEGATION, delegation_rrset));
+    } else if (name == Name("ns.example.com")) {
+        return (FindResult(DELEGATION, ns_rrset));
     } else if (name == Name("nxdomain.example.com")) {
-        return FindResult(NXDOMAIN, RRsetPtr());
+        return (FindResult(NXDOMAIN, RRsetPtr()));
     } else if (name == Name("nxrrset.example.com")) {
-        return FindResult(NXRRSET, RRsetPtr());
-    } else if (name == Name("cname.example.com")) {
-        return FindResult(CNAME, RRsetPtr());
+        return (FindResult(NXRRSET, RRsetPtr()));
+    } else if ((name == Name("cname.example.com"))) {
+        return (FindResult(CNAME, cname_rrset));
     } else if (name == Name("mx.example.com")) {
         return (FindResult(SUCCESS, mx_rrset_));
     } else {
-        return FindResult(DNAME, RRsetPtr());
+        return (FindResult(DNAME, RRsetPtr()));
     }
 }
 
@@ -118,25 +171,82 @@ TEST_F(QueryTest, noZone) {
 }
 
 TEST_F(QueryTest, matchZone) {
-    // match qname, normal query
+    // add a matching zone.
     memory_datasrc.addZone(ZonePtr(new MockZone()));
     query.process();
+    EXPECT_TRUE(response.getHeaderFlag(Message::HEADERFLAG_AA));
     EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
     EXPECT_TRUE(response.hasRRset(Message::SECTION_ANSWER,
                                   Name("www.example.com"), RRClass::IN(),
                                   RRType::A()));
+
+    // Delegation
+    const Name delegation_name(Name("delegation.example.com"));
+    Query delegation_query(memory_datasrc, delegation_name, qtype, response);
+    delegation_query.process();
+    EXPECT_FALSE(response.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
+                                  Name("delegation.example.com"),
+                                  RRClass::IN(), RRType::NS()));
+    // glue address records
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("glue.ns.example.com"),
+                                  RRClass::IN(), RRType::A()));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("glue.ns.example.com"),
+                                  RRClass::IN(), RRType::AAAA()));
+    // noglue address records
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("noglue.example.com"),
+                                  RRClass::IN(), RRType::A()));
+    // NS name has a CNAME
+    EXPECT_FALSE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("www.example.com"),
+                                  RRClass::IN(), RRType::A()));
+    // NS name is out of zone
+    EXPECT_FALSE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("example.org"),
+                                  RRClass::IN(), RRType::A()));
 
     // NXDOMAIN
     const Name nxdomain_name(Name("nxdomain.example.com"));
     Query nxdomain_query(memory_datasrc, nxdomain_name, qtype, response);
     nxdomain_query.process();
     EXPECT_EQ(Rcode::NXDOMAIN(), response.getRcode());
+    EXPECT_EQ(0, response.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0, response.getRRCount(Message::SECTION_ADDITIONAL));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
+        Name("example.com"), RRClass::IN(), RRType::SOA()));
 
     // NXRRSET
     const Name nxrrset_name(Name("nxrrset.example.com"));
     Query nxrrset_query(memory_datasrc, nxrrset_name, qtype, response);
     nxrrset_query.process();
     EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
+    EXPECT_EQ(0, response.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0, response.getRRCount(Message::SECTION_ADDITIONAL));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
+        Name("example.com"), RRClass::IN(), RRType::SOA()));
+}
+
+/*
+ * This tests that when there's no SOA and we need a negative answer. It should
+ * throw in that case.
+ */
+TEST_F(QueryTest, noSOA) {
+    memory_datasrc.addZone(ZonePtr(new MockZone(false)));
+
+    // The NX Domain
+    const Name nxdomain_name(Name("nxdomain.example.com"));
+    Query nxdomain_query(memory_datasrc, nxdomain_name, qtype, response);
+    EXPECT_THROW(nxdomain_query.process(), Query::NoSOA);
+    // Of course, we don't look into the response, as it throwed
+
+    // NXRRSET
+    const Name nxrrset_name(Name("nxrrset.example.com"));
+    Query nxrrset_query(memory_datasrc, nxrrset_name, qtype, response);
+    EXPECT_THROW(nxrrset_query.process(), Query::NoSOA);
 }
 
 TEST_F(QueryTest, noMatchZone) {
