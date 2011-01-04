@@ -127,19 +127,19 @@ MockZone::find(const Name& name, const RRType& type,
     } else if (name == Name("www.example.com")) {
         return (FindResult(NXRRSET, RRsetPtr()));
     } else if (name == Name("glue.ns.example.com") && type == RRType::A() &&
-        (options & FIND_GLUE_OK)) {
+        (options & FIND_GLUE_OK) != 0) {
         return (FindResult(SUCCESS, glue_a_rrset));
     } else if (name == Name("noglue.example.com") && type == RRType::A()) {
         return (FindResult(SUCCESS, noglue_a_rrset));
     } else if (name == Name("glue.ns.example.com") && type == RRType::AAAA() &&
-        (options & FIND_GLUE_OK)) {
+        (options & FIND_GLUE_OK) != 0) {
         return (FindResult(SUCCESS, glue_aaaa_rrset));
     } else if (name == Name("example.com") && type == RRType::SOA() &&
         has_SOA_)
     {
         return (FindResult(SUCCESS, soa_rrset));
     } else if (name == Name("mx.delegation.example.com") &&
-        type == RRType::A() && (options & FIND_GLUE_OK))
+        type == RRType::A() && (options & FIND_GLUE_OK) != 0)
     {
         return (FindResult(SUCCESS, delegated_mx_a_rrset));
     } else if (name == Name("delegation.example.com") ||
@@ -155,7 +155,7 @@ MockZone::find(const Name& name, const RRType& type,
         return (FindResult(NXRRSET, RRsetPtr()));
     } else if ((name == Name("cname.example.com"))) {
         return (FindResult(CNAME, cname_rrset));
-    } else if ((name == Name("cnamemailer.example.com"))) {
+    } else if (name == Name("cnamemailer.example.com")) {
         return (FindResult(CNAME, mx_cname_rrset_));
     } else if (name == Name("mx.example.com")) {
         return (FindResult(SUCCESS, mx_rrset_));
@@ -304,7 +304,7 @@ TEST_F(QueryTest, MX) {
         Message::SECTION_ADDITIONAL)); ai != response.endSection(
         Message::SECTION_ADDITIONAL); ++ai)
     {
-        additional_count++;
+        ++additional_count;
         EXPECT_EQ(Name("www.example.com"), (*ai)->getName());
         EXPECT_EQ(RRType::A(), (*ai)->getType());
     }
