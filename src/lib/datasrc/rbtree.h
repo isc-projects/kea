@@ -113,8 +113,9 @@ public:
     /// public, but this is needed because of shared pointers need access
     /// to the destructor.
     ///
-    /// You should never call \code delete pointer_to_node; \endcode, the
-    /// RBTree handles both creation and destructoion of nodes.
+    /// You should never call anything like:
+    /// \code delete pointer_to_node; \endcode
+    /// The RBTree handles both creation and destructoion of nodes.
     ~RBNode();
 
     /// \name Getter functions.
