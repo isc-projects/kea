@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <cassert>
+
 #include <dns/message.h>
 #include <dns/rcode.h>
 #include <dns/rdataclass.h>
@@ -28,8 +30,7 @@ namespace isc {
 namespace auth {
 
 void
-Query::getAdditional(const isc::datasrc::Zone& zone,
-                     const isc::dns::RRset& rrset) const
+Query::getAdditional(const Zone& zone, const RRset& rrset) const
 {
     if (rrset.getType() == RRType::NS()) {
         // Need to perform the search in the "GLUE OK" mode.
@@ -43,9 +44,8 @@ Query::getAdditional(const isc::datasrc::Zone& zone,
 }
 
 void
-Query::findAddrs(const isc::datasrc::Zone& zone,
-                 const isc::dns::Name& qname,
-                 const isc::datasrc::Zone::FindOptions options) const
+Query::findAddrs(const Zone& zone, const Name& qname,
+                 const Zone::FindOptions options) const
 {
     // Out of zone name
     NameComparisonResult result = zone.getOrigin().compare(qname);
@@ -53,17 +53,30 @@ Query::findAddrs(const isc::datasrc::Zone& zone,
         (result.getRelation() != NameComparisonResult::EQUAL))
         return;
 
+    // Omit additional data which has already been provided in the answer
+    // section from the additional.
+    //
+    // All the address rrset with the owner name of qname have been inserted
+    // into ANSWER section.
+    if (qname_ == qname && qtype_ == RRType::ANY())
+        return;
+
     // Find A rrset
-    Zone::FindResult a_result = zone.find(qname, RRType::A(), options);
-    if (a_result.code == Zone::SUCCESS) {
-        response_.addRRset(Message::SECTION_ADDITIONAL,
-                     boost::const_pointer_cast<RRset>(a_result.rrset));
+    if (qname_ != qname || qtype_ != RRType::A()) {
+        Zone::FindResult a_result = zone.find(qname, RRType::A(), options);
+        if (a_result.code == Zone::SUCCESS) {
+            response_.addRRset(Message::SECTION_ADDITIONAL,
+                    boost::const_pointer_cast<RRset>(a_result.rrset));
+        }
     }
+
     // Find AAAA rrset
-    Zone::FindResult aaaa_result = zone.find(qname, RRType::AAAA(), options);
-    if (aaaa_result.code == Zone::SUCCESS) {
-        response_.addRRset(Message::SECTION_ADDITIONAL,
-                     boost::const_pointer_cast<RRset>(aaaa_result.rrset));
+    if (qname_ != qname || qtype_ != RRType::AAAA()) {
+        Zone::FindResult aaaa_result = zone.find(qname, RRType::AAAA(), options);
+        if (aaaa_result.code == Zone::SUCCESS) {
+            response_.addRRset(Message::SECTION_ADDITIONAL,
+                    boost::const_pointer_cast<RRset>(aaaa_result.rrset));
+        }
     }
 }
 
@@ -83,6 +96,17 @@ Query::putSOA(const Zone& zone) const {
         response_.addRRset(Message::SECTION_AUTHORITY,
             boost::const_pointer_cast<RRset>(soa_result.rrset));
     }
+}
+
+void
+Query::getAuthAdditional(const Zone& zone) const {
+    // Fill in authority and addtional sections.
+    Zone::FindResult ns_result = zone.find(zone.getOrigin(), RRType::NS());
+    // zone origin name should have NS records
+    assert(ns_result.code == Zone::SUCCESS);
+    response_.addRRset(Message::SECTION_AUTHORITY,
+            boost::const_pointer_cast<RRset>(ns_result.rrset));
+    getAdditional(zone, *ns_result.rrset);
 }
 
 void
@@ -112,8 +136,8 @@ Query::process() const {
             case Zone::SUCCESS:
                 response_.setRcode(Rcode::NOERROR());
                 response_.addRRset(Message::SECTION_ANSWER,
-                            boost::const_pointer_cast<RRset>(db_result.rrset));
-                // TODO : fill in authority and addtional sections.
+                    boost::const_pointer_cast<RRset>(db_result.rrset));
+                getAuthAdditional(*result.zone);
                 break;
             case Zone::DELEGATION:
                 response_.setHeaderFlag(Message::HEADERFLAG_AA, false);

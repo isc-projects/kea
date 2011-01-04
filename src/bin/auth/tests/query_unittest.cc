@@ -47,8 +47,8 @@ RRsetPtr glue_aaaa_rrset(RRsetPtr(new RRset(Name("glue.ns.example.com"),
                                             RRClass::IN(), RRType::AAAA(),
                                             RRTTL(3600))));
 RRsetPtr noglue_a_rrset(RRsetPtr(new RRset(Name("noglue.example.com"),
-                                         RRClass::IN(), RRType::A(),
-                                         RRTTL(3600))));
+                                           RRClass::IN(), RRType::A(),
+                                           RRTTL(3600))));
 // This is a mock Zone class for testing.
 // It is a derived class of Zone, and simply hardcode the results of find()
 // return SUCCESS for "www.example.com",
@@ -66,7 +66,10 @@ public:
                                             RRTTL(3600)))),
         cname_rrset(RRsetPtr(new RRset(Name("cname.example.com"),
                                        RRClass::IN(), RRType::CNAME(),
-                                       RRTTL(3600))))
+                                       RRTTL(3600)))),
+        auth_ns_rrset(RRsetPtr(new RRset(Name("example.com"),
+                                         RRClass::IN(), RRType::NS(),
+                                         RRTTL(3600))))
     {
         delegation_rrset->addRdata(rdata::generic::NS(
                           Name("glue.ns.example.com")));
@@ -78,6 +81,10 @@ public:
                           Name("example.org")));
         cname_rrset->addRdata(rdata::generic::CNAME(
                           Name("www.example.com")));
+        auth_ns_rrset->addRdata(rdata::generic::NS(
+                          Name("glue.ns.example.com")));
+        auth_ns_rrset->addRdata(rdata::generic::NS(
+                          Name("noglue.example.com")));
     }
     virtual const isc::dns::Name& getOrigin() const;
     virtual const isc::dns::RRClass& getClass() const;
@@ -91,6 +98,7 @@ private:
     bool has_SOA_;
     RRsetPtr delegation_rrset;
     RRsetPtr cname_rrset;
+    RRsetPtr auth_ns_rrset;
 };
 
 const Name&
@@ -113,7 +121,8 @@ MockZone::find(const Name& name, const RRType& type,
     } else if (name == Name("glue.ns.example.com") && type == RRType::A() &&
         options == FIND_GLUE_OK) {
         return (FindResult(SUCCESS, glue_a_rrset));
-    } else if (name == Name("noglue.example.com") && type == RRType::A()) {
+    } else if (name == Name("noglue.example.com") && (type == RRType::A() ||
+        type == RRType::ANY())) {
         return (FindResult(SUCCESS, noglue_a_rrset));
     } else if (name == Name("glue.ns.example.com") && type == RRType::AAAA() &&
         options == FIND_GLUE_OK) {
@@ -122,6 +131,8 @@ MockZone::find(const Name& name, const RRType& type,
         has_SOA_)
     {
         return (FindResult(SUCCESS, soa_rrset));
+    } else if (name == Name("example.com") && type == RRType::NS()) {
+        return (FindResult(SUCCESS, auth_ns_rrset));
     } else if (name == Name("delegation.example.com")) {
         return (FindResult(DELEGATION, delegation_rrset));
     } else if (name == Name("ns.example.com")) {
@@ -161,17 +172,85 @@ TEST_F(QueryTest, noZone) {
     EXPECT_EQ(Rcode::REFUSED(), response.getRcode());
 }
 
-TEST_F(QueryTest, matchZone) {
+TEST_F(QueryTest, exactMatch) {
     // add a matching zone.
     memory_datasrc.addZone(ZonePtr(new MockZone()));
     query.process();
+    // find match rrset
     EXPECT_TRUE(response.getHeaderFlag(Message::HEADERFLAG_AA));
     EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
     EXPECT_TRUE(response.hasRRset(Message::SECTION_ANSWER,
                                   Name("www.example.com"), RRClass::IN(),
                                   RRType::A()));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
+                                  Name("example.com"), RRClass::IN(),
+                                  RRType::NS()));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("glue.ns.example.com"),
+                                  RRClass::IN(), RRType::A()));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("glue.ns.example.com"),
+                                  RRClass::IN(), RRType::AAAA()));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("noglue.example.com"),
+                                  RRClass::IN(), RRType::A()));
+}
 
-    // Delegation
+TEST_F(QueryTest, exactAddrMatch) {
+    // find match rrset, omit additional data which has already been provided
+    // in the answer section from the additional.
+    memory_datasrc.addZone(ZonePtr(new MockZone()));
+    const Name noglue_name(Name("noglue.example.com"));
+    Query noglue_query(memory_datasrc, noglue_name, qtype, response);
+    noglue_query.process();
+    EXPECT_TRUE(response.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ANSWER,
+                                  Name("noglue.example.com"), RRClass::IN(),
+                                  RRType::A()));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
+                                  Name("example.com"), RRClass::IN(),
+                                  RRType::NS()));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("glue.ns.example.com"),
+                                  RRClass::IN(), RRType::A()));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("glue.ns.example.com"),
+                                  RRClass::IN(), RRType::AAAA()));
+    EXPECT_FALSE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("noglue.example.com"),
+                                  RRClass::IN(), RRType::A()));
+}
+
+TEST_F(QueryTest, exactAnyMatch) {
+    // find match rrset, omit additional data which has already been provided
+    // in the answer section from the additional.
+    memory_datasrc.addZone(ZonePtr(new MockZone()));
+    const Name noglue_name(Name("noglue.example.com"));
+    Query noglue_query(memory_datasrc, noglue_name, RRType::ANY(), response);
+    noglue_query.process();
+    EXPECT_TRUE(response.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ANSWER,
+                                  Name("noglue.example.com"), RRClass::IN(),
+                                  RRType::A()));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
+                                  Name("example.com"), RRClass::IN(),
+                                  RRType::NS()));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("glue.ns.example.com"),
+                                  RRClass::IN(), RRType::A()));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("glue.ns.example.com"),
+                                  RRClass::IN(), RRType::AAAA()));
+    EXPECT_FALSE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("noglue.example.com"),
+                                  RRClass::IN(), RRType::A()));
+}
+
+TEST_F(QueryTest, delegation) {
+    // add a matching zone.
+    memory_datasrc.addZone(ZonePtr(new MockZone()));
     const Name delegation_name(Name("delegation.example.com"));
     Query delegation_query(memory_datasrc, delegation_name, qtype, response);
     delegation_query.process();
@@ -199,8 +278,11 @@ TEST_F(QueryTest, matchZone) {
     EXPECT_FALSE(response.hasRRset(Message::SECTION_ADDITIONAL,
                                   Name("example.org"),
                                   RRClass::IN(), RRType::A()));
+}
 
-    // NXDOMAIN
+TEST_F(QueryTest, nxdomain) {
+    // add a matching zone.
+    memory_datasrc.addZone(ZonePtr(new MockZone()));
     const Name nxdomain_name(Name("nxdomain.example.com"));
     Query nxdomain_query(memory_datasrc, nxdomain_name, qtype, response);
     nxdomain_query.process();
@@ -209,8 +291,11 @@ TEST_F(QueryTest, matchZone) {
     EXPECT_EQ(0, response.getRRCount(Message::SECTION_ADDITIONAL));
     EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
         Name("example.com"), RRClass::IN(), RRType::SOA()));
+}
 
-    // NXRRSET
+TEST_F(QueryTest, nxrrset) {
+    // add a matching zone.
+    memory_datasrc.addZone(ZonePtr(new MockZone()));
     const Name nxrrset_name(Name("nxrrset.example.com"));
     Query nxrrset_query(memory_datasrc, nxrrset_name, qtype, response);
     nxrrset_query.process();
