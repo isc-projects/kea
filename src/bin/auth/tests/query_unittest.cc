@@ -49,13 +49,13 @@ RRsetPtr glue_aaaa_rrset(RRsetPtr(new RRset(Name("glue.ns.example.com"),
 RRsetPtr noglue_a_rrset(RRsetPtr(new RRset(Name("noglue.example.com"),
                                          RRClass::IN(), RRType::A(),
                                          RRTTL(3600))));
+RRsetPtr delegated_mx_a_rrset(RRsetPtr(new RRset(
+    Name("mx.delegation.example.com"), RRClass::IN(), RRType::A(),
+    RRTTL(3600))));
+
 // This is a mock Zone class for testing.
-// It is a derived class of Zone, and simply hardcode the results of find()
-// return SUCCESS for "www.example.com",
-// return NXDOMAIN for "nxdomain.example.com",
-// return NXRRSET for "nxrrset.example.com",
-// return CNAME for "cname.example.com",
-// otherwise return DNAME
+// It is a derived class of Zone, and simply hardcodes the results of find()
+// See the find() implementation if you want to know its content.
 class MockZone : public Zone {
 public:
     MockZone(bool has_SOA = true) :
@@ -84,6 +84,8 @@ public:
             Name("www.example.com")));
         mx_rrset_->addRdata(isc::dns::rdata::generic::MX(20,
             Name("mailer.example.org")));
+        mx_rrset_->addRdata(isc::dns::rdata::generic::MX(30,
+            Name("mx.delegation.example.com")));
     }
     virtual const isc::dns::Name& getOrigin() const;
     virtual const isc::dns::RRClass& getClass() const;
@@ -115,21 +117,30 @@ MockZone::find(const Name& name, const RRType& type,
                const FindOptions options) const
 {
     // hardcode the find results
-    if (name == Name("www.example.com")) {
+    if (name == Name("www.example.com") && type == RRType::A()) {
         return (FindResult(SUCCESS, a_rrset));
+    } else if (name == Name("www.example.com")) {
+        return (FindResult(NXRRSET, RRsetPtr()));
     } else if (name == Name("glue.ns.example.com") && type == RRType::A() &&
-        options == FIND_GLUE_OK) {
+        (options & FIND_GLUE_OK)) {
         return (FindResult(SUCCESS, glue_a_rrset));
     } else if (name == Name("noglue.example.com") && type == RRType::A()) {
         return (FindResult(SUCCESS, noglue_a_rrset));
     } else if (name == Name("glue.ns.example.com") && type == RRType::AAAA() &&
-        options == FIND_GLUE_OK) {
+        (options & FIND_GLUE_OK)) {
         return (FindResult(SUCCESS, glue_aaaa_rrset));
     } else if (name == Name("example.com") && type == RRType::SOA() &&
         has_SOA_)
     {
         return (FindResult(SUCCESS, soa_rrset));
-    } else if (name == Name("delegation.example.com")) {
+    } else if (name == Name("mx.delegation.example.com") &&
+        type == RRType::A() && (options & FIND_GLUE_OK))
+    {
+        return (FindResult(SUCCESS, delegated_mx_a_rrset));
+    } else if (name == Name("delegation.example.com") ||
+        name.compare(Name("delegation.example.com")).getRelation() ==
+        NameComparisonResult::SUBDOMAIN)
+    {
         return (FindResult(DELEGATION, delegation_rrset));
     } else if (name == Name("ns.example.com")) {
         return (FindResult(DELEGATION, ns_rrset));
@@ -275,14 +286,20 @@ TEST_F(QueryTest, MX) {
         Name("mx.example.com"), RRClass::IN(), RRType::MX()));
     EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
         Name("www.example.com"), RRClass::IN(), RRType::A()));
-    // In fact, the MX RRset mentions two names, but we don't know anything
-    // about the other, so we have just 1 additional rrset
-    size_t additional_count(0);
+    /*
+     * In fact, the MX RRset mentions three names, but we don't know anything
+     * about one of them and one is under a zone cut, so we should have just
+     * one RRset (A for www.example.com)
+     */
+    // We can't use getRRCount, as it counts RRs, not RRsets
+    unsigned additional_count(0);
     for (SectionIterator<RRsetPtr> ai(response.beginSection(
-        Message::SECTION_ANSWER)); ai != response.endSection(
-        Message::SECTION_ANSWER); ++ ai)
+        Message::SECTION_ADDITIONAL)); ai != response.endSection(
+        Message::SECTION_ADDITIONAL); ++ai)
     {
-        additional_count ++;
+        additional_count++;
+        EXPECT_EQ(Name("www.example.com"), (*ai)->getName());
+        EXPECT_EQ(RRType::A(), (*ai)->getType());
     }
     EXPECT_EQ(1, additional_count);
 }

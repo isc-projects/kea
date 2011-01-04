@@ -26,7 +26,6 @@
 using namespace isc::dns;
 using namespace isc::datasrc;
 using namespace isc::dns::rdata;
-using namespace std;
 
 namespace isc {
 namespace auth {
