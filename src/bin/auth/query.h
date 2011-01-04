@@ -15,17 +15,18 @@
  */
 
 #include <exceptions/exceptions.h>
+#include <datasrc/zone.h>
 
 namespace isc {
 namespace dns {
 class Message;
 class Name;
 class RRType;
+class RRset;
 }
 
 namespace datasrc {
 class MemoryDataSrc;
-class Zone;
 }
 
 namespace auth {
@@ -63,6 +64,48 @@ namespace auth {
 /// accidentally, and since it's considered a temporary development state,
 /// we keep this name at the moment.
 class Query {
+private:
+
+    /// \short Adds a SOA.
+    ///
+    /// Adds a SOA of the zone into the authority zone of response_.
+    /// Can throw NoSOA.
+    ///
+    void putSOA(const isc::datasrc::Zone& zone) const;
+
+    /// Look up additional data (i.e., address records for the names included
+    /// in NS or MX records).
+    ///
+    /// This method may throw a exception because its underlying methods may
+    /// throw exceptions.
+    ///
+    /// \param zone The Zone wherein the additional data to the query is bo be
+    /// found.
+    /// \param rrset The RRset (i.e., NS or MX rrset) which require additional
+    /// processing.
+    void getAdditional(const isc::datasrc::Zone& zone,
+                       const isc::dns::RRset& rrset) const;
+
+    /// Find address records for a specified name.
+    ///
+    /// Search the specified zone for AAAA/A RRs of each of the NS/MX RDATA
+    /// (domain name), and insert the found ones into the additional section
+    /// if address records are available. By default the search will stop
+    /// once it encounters a zone cut.
+    ///
+    /// Note: we need to perform the search in the "GLUE OK" mode for NS RDATA,
+    /// which means that we should include A/AAAA RRs under a zone cut.
+    /// The glue records must exactly match the name in the NS RDATA, without
+    /// CNAME or wildcard processing.
+    ///
+    /// \param zone The Zone wherein the address records is to be found.
+    /// \param qname The name in rrset RDATA.
+    /// \param options The search options.
+    void findAddrs(const isc::datasrc::Zone& zone,
+                   const isc::dns::Name& qname,
+                   const isc::datasrc::Zone::FindOptions options
+                   = isc::datasrc::Zone::FIND_DEFAULT) const;
+
 public:
     /// Constructor from query parameters.
     ///
@@ -135,14 +178,6 @@ private:
     const isc::dns::Name& qname_;
     const isc::dns::RRType& qtype_;
     isc::dns::Message& response_;
-
-    /**
-     * \short Adds a SOA.
-     *
-     * Adds a SOA of the zone into the authority zone of response_.
-     * Can throw NoSOA.
-     */
-    void putSOA(const isc::datasrc::Zone& zone) const;
 };
 
 }

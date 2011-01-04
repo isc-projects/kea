@@ -103,14 +103,14 @@ getAdditional(Query& q, ConstRRsetPtr rrset) {
                                new QueryTask(q, ns.getNSName(),
                                              Message::SECTION_ADDITIONAL,
                                              QueryTask::GLUE_QUERY,
-                                             QueryTask::GETADDITIONAL))); 
+                                             QueryTask::GETADDITIONAL)));
         } else if (rrset->getType() == RRType::MX()) {
             const generic::MX& mx = dynamic_cast<const generic::MX&>(rd);
             q.tasks().push(QueryTaskPtr(
                                new QueryTask(q, mx.getMXName(),
                                              Message::SECTION_ADDITIONAL,
                                              QueryTask::NOGLUE_QUERY,
-                                             QueryTask::GETADDITIONAL))); 
+                                             QueryTask::GETADDITIONAL)));
         }
     }
 }
