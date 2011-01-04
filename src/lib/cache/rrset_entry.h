@@ -69,7 +69,7 @@ public:
     RRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& level);
 
     /// \brief Generate one rrset according the entry information.
-    boost::shared_ptr<RRset> genRRset() const;
+    boost::shared_ptr<isc::dns::RRset> genRRset() const;
     
     /// \brief Get the expiration time of the rrset.
     time_t getExpireTime() const;
