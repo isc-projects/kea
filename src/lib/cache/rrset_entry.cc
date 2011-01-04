@@ -29,8 +29,8 @@ RRsetEntry::RRsetEntry(const isc::dns::RRset&,
 {
 }
 
-void
-RRsetEntry::genRRset(isc::dns::RRset&) const {
+boost::shared_ptr<RRset>
+RRsetEntry::genRRset() const {
 }
 
 time_t
