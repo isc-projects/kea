@@ -16,6 +16,8 @@
 """This module holds classes representing modules, commands and
    parameters for use in bindctl"""
 
+import textwrap
+
 try:
     from collections import OrderedDict
 except ImportError:
@@ -52,6 +54,12 @@ class ParamInfo:
     def __str__(self):        
         return str("\t%s <type: %s> \t(%s)" % (self.name, self.type, self.desc))
 
+    def get_name(self):
+        return "%s <type: %s>" % (self.name, self.type)
+
+    def get_desc(self):
+        return self.desc
+
 class CommandInfo:
     """One command which is provided by one bind10 module, it has zero
        or more parameters
@@ -68,8 +76,13 @@ class CommandInfo:
                 
     def __str__(self):
         return str("%s \t(%s)" % (self.name, self.desc))
-        
 
+    def get_name(self):
+        return self.name
+
+    def get_desc(self):
+        return self.desc;
+    
     def add_param(self, paraminfo):
         """Add a ParamInfo object to this CommandInfo"""
         self.params[paraminfo.name] = paraminfo
@@ -144,22 +157,30 @@ class CommandInfo:
         del params["help"]
 
         if len(params) == 0:
-            print("\tNo parameters for the command")
+            print("No parameters for the command")
             return
         
-        print("\n\tMandatory parameters:")
+        print("\nMandatory parameters:")
         mandatory_infos = []
         for info in params.values():            
             if not info.is_optional:
-                print("\t", info)
+                print("\t%s" % info.get_name())
+                print(textwrap.fill(info.get_desc(),
+                      initial_indent="\t\t",
+                      subsequent_indent="\t\t",
+                      width=50))
                 mandatory_infos.append(info)
 
         optional_infos = [info for info in params.values() 
                           if info not in mandatory_infos]
         if len(optional_infos) > 0:
-            print("\n\tOptional parameters:")      
+            print("\nOptional parameters:")      
             for info in optional_infos:
-                    print("\t", info)
+                print("\t%s" % info.get_name())
+                print(textwrap.fill(info.get_desc(),
+                      initial_indent="\t\t",
+                      subsequent_indent="\t\t",
+                      width=50))
 
 
 class ModuleInfo:
@@ -176,7 +197,13 @@ class ModuleInfo:
         
     def __str__(self):
         return str("%s \t%s" % (self.name, self.desc))
-        
+
+    def get_name(self):
+        return self.name
+
+    def get_desc(self):
+        return self.desc
+
     def add_command(self, command_info):
         """Add a CommandInfo to this ModuleInfo."""
         self.commands[command_info.name] = command_info
@@ -201,8 +228,19 @@ class ModuleInfo:
     def module_help(self):
         """Prints the help info for this module to stdout"""
         print("Module ", self, "\nAvailable commands:")
-        for k in self.commands.keys():
-            print("\t", self.commands[k])
+        for k in self.commands.values():
+            n = k.get_name()
+            if len(n) >= 8:
+                print("\t%s" % n)
+                print(textwrap.fill(k.get_desc(),
+                      initial_indent="\t\t",
+                      subsequent_indent="\t\t",
+                      width=70))
+            else:
+                print(textwrap.fill("%s\t%s" % (k.get_name(), k.get_desc()),
+                      initial_indent="\t",
+                      subsequent_indent="\t\t",
+                      width=70))
             
     def command_help(self, command):
         """Prints the help info for the command with the given name.
