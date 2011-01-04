@@ -67,6 +67,8 @@ public:
         cname_rrset(RRsetPtr(new RRset(Name("cname.example.com"),
                                        RRClass::IN(), RRType::CNAME(),
                                        RRTTL(3600)))),
+        mx_cname_rrset_(new RRset(Name("cnamemailer.example.com"),
+            RRClass::IN(), RRType::CNAME(), RRTTL(3600))),
         mx_rrset_(new RRset(Name("mx.example.com"), RRClass::IN(),
             RRType::MX(), RRTTL(3600)))
     {
@@ -86,6 +88,8 @@ public:
             Name("mailer.example.org")));
         mx_rrset_->addRdata(isc::dns::rdata::generic::MX(30,
             Name("mx.delegation.example.com")));
+        mx_cname_rrset_->addRdata(rdata::generic::CNAME(
+            Name("mx.example.com")));
     }
     virtual const isc::dns::Name& getOrigin() const;
     virtual const isc::dns::RRClass& getClass() const;
@@ -99,6 +103,7 @@ private:
     bool has_SOA_;
     RRsetPtr delegation_rrset;
     RRsetPtr cname_rrset;
+    RRsetPtr mx_cname_rrset_;
     RRsetPtr mx_rrset_;
 };
 
@@ -150,6 +155,8 @@ MockZone::find(const Name& name, const RRType& type,
         return (FindResult(NXRRSET, RRsetPtr()));
     } else if ((name == Name("cname.example.com"))) {
         return (FindResult(CNAME, cname_rrset));
+    } else if ((name == Name("cnamemailer.example.com"))) {
+        return (FindResult(CNAME, mx_cname_rrset_));
     } else if (name == Name("mx.example.com")) {
         return (FindResult(SUCCESS, mx_rrset_));
     } else {
@@ -302,6 +309,23 @@ TEST_F(QueryTest, MX) {
         EXPECT_EQ(RRType::A(), (*ai)->getType());
     }
     EXPECT_EQ(1, additional_count);
+}
+
+/*
+ * Test when we ask for MX and encounter an alias (CNAME in this case).
+ *
+ * This should not trigger the additional processing.
+ */
+TEST_F(QueryTest, MXAlias) {
+    memory_datasrc.addZone(ZonePtr(new MockZone()));
+    Name qname("cnamemailer.example.com");
+    Query mx_query(memory_datasrc, qname, RRType::MX(), response);
+    EXPECT_NO_THROW(mx_query.process());
+    EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
+    // We should not have the IP address in additional section
+    // Currently, the section should be completely empty
+    EXPECT_TRUE(response.beginSection(Message::SECTION_ADDITIONAL) ==
+        response.endSection(Message::SECTION_ADDITIONAL));
 }
 
 }
