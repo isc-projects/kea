@@ -388,9 +388,19 @@ class BindCmdInterpreter(Cmd):
 
     def do_help(self, name):
         print(CONST_BINDCTL_HELP)
-        for k in self.modules.keys():
-            print("\t", self.modules[k])
-                
+        for k in self.modules.values():
+            n = k.get_name()
+            if len(n) >= 8:
+                print("\t%s" % n)
+                print(textwrap.fill(k.get_desc(),
+                      initial_indent="\t\t",
+                      subsequent_indent="\t\t",
+                      width=70))
+            else:
+                print(textwrap.fill("%s\t%s" % (k.get_name(), k.get_desc()),
+                      initial_indent="\t",
+                      subsequent_indent="\t\t",
+                      width=70))
     
     def onecmd(self, line):
         if line == 'EOF' or line.lower() == "quit":
@@ -540,14 +550,16 @@ class BindCmdInterpreter(Cmd):
                 if cmd.params['identifier'].startswith("/"):
                     identifier = cmd.params['identifier']
                 else:
+                    if cmd.params['identifier'].startswith('['):
+                        identifier = identifier[:-1]
                     identifier += cmd.params['identifier']
 
                 # Check if the module is known; for unknown modules
                 # we currently deny setting preferences, as we have
                 # no way yet to determine if they are ok.
                 module_name = identifier.split('/')[1]
-                if self.config_data is None or \
-                   not self.config_data.have_specification(module_name):
+                if module_name != "" and (self.config_data is None or \
+                   not self.config_data.have_specification(module_name)):
                     print("Error: Module '" + module_name + "' unknown or not running")
                     return
 
@@ -630,16 +642,24 @@ class BindCmdInterpreter(Cmd):
 
     def go(self, identifier):
         '''Handles the config go command, change the 'current' location
-           within the configuration tree'''
-        # this is just to see if it exists
-        self.config_data.get_value(identifier)
-        # some sanitizing
-        identifier = identifier.replace("//", "/")
-        if not identifier.startswith("/"):
-            identifier = "/" + identifier
-        if identifier.endswith("/"):
-            identifier = identifier[:-1]
-        self.location = identifier
+           within the configuration tree. '..' will be interpreted as
+           'up one level'.'''
+        id_parts = isc.cc.data.split_identifier(identifier)
+
+        new_location = ""
+        for id_part in id_parts:
+            if (id_part == ".."):
+                # go 'up' one level
+                new_location, a, b = new_location.rpartition("/")
+            else:
+                new_location += "/" + id_part
+                # check if exists, if not, revert and error
+                v = self.config_data.find_spec_part(new_location)
+                if v is None:
+                    print("Error: " + identifier + " not found")
+                    return
+
+        self.location = new_location
 
     def apply_cmd(self, cmd):
         '''Handles a general module command'''
