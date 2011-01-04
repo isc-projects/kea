@@ -27,6 +27,8 @@ using namespace isc::nsas;
 namespace isc {
 namespace cache {
 
+class RRset;
+
 /// \enum RRset Trustworthiness
 /// For detail of rrset trustworthiness, please refer to
 /// RFC2181 section5.4.1.
