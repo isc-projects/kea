@@ -43,6 +43,15 @@ Query::getAdditional(const isc::datasrc::Zone& zone,
              const generic::NS& ns = dynamic_cast<const generic::NS&>(rdata);
              findAddrs(zone, ns.getNSName(), Zone::FIND_GLUE_OK);
         }
+    } else if (rrset.getType() == RRType::MX()) {
+        RdataIteratorPtr rdata_iterator = rrset.getRdataIterator();
+        for (RdataIteratorPtr rdata_iterator(rrset.getRdataIterator());
+            !rdata_iterator->isLast(); rdata_iterator->next())
+        {
+             const Rdata& rdata(rdata_iterator->getCurrent());
+             const generic::MX& mx(dynamic_cast<const generic::MX&>(rdata));
+             findAddrs(zone, mx.getMXName());
+        }
     }
 }
 
@@ -117,45 +126,7 @@ Query::process() const {
                 response_.setRcode(Rcode::NOERROR());
                 response_.addRRset(Message::SECTION_ANSWER,
                             boost::const_pointer_cast<RRset>(db_result.rrset));
-                // Some additional processing
-                if (qtype_ == RRType::MX()) {
-                    // We look up these RR types
-                    vector<RRType> interesting_types;
-                    interesting_types.push_back(RRType::A());
-                    interesting_types.push_back(RRType::AAAA());
-                    // Go trough all the RRs in the RRset
-                    for (RdataIteratorPtr i(
-                        db_result.rrset->getRdataIterator()); !i->isLast();
-                        i->next())
-                    {
-                        // Who does it talk about?
-                        Name name(
-                            dynamic_cast<const isc::dns::rdata::generic::MX &>(
-                            i->getCurrent()).getMXName());
-                        // Look up both addresses
-                        BOOST_FOREACH(const RRType& type, interesting_types) {
-                            // Recursively call query
-                            Message response(Message::RENDER);
-                            Query sub(memory_datasrc_, name, type, response);
-                            sub.process();
-                            // And run trough all the answers and look if some
-                            // of them match
-                            for (SectionIterator<RRsetPtr> ai(
-                                response.beginSection(
-                                Message::SECTION_ANSWER)); ai !=
-                                response.endSection(Message::SECTION_ANSWER);
-                                ++ ai)
-                            {
-                                if ((*ai)->getType() == type &&
-                                    (*ai)->getName() == name)
-                                {
-                                    response_.addRRset(
-                                        Message::SECTION_ADDITIONAL, *ai);
-                                }
-                            }
-                        }
-                    }
-                }
+                getAdditional(*result.zone, *db_result.rrset);
                 // TODO : fill in authority and addtional sections.
                 break;
             case Zone::DELEGATION:
