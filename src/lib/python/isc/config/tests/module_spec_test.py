@@ -109,6 +109,9 @@ class TestModuleSpec(unittest.TestCase):
         return dd.validate_command(cmd_name, params)
 
     def test_command_validation(self):
+        # tests for a command that doesn't take an argument
+        self.assertEqual(True, self.read_spec_file("spec2.spec").validate_command("shutdown", None));
+        self.assertEqual(False, self.read_spec_file("spec2.spec").validate_command("shutdown", '{"val": 1}'));
         self.assertEqual(True, self.validate_command_params("spec27.spec", "data22_1.data", 'cmd1'))
         self.assertEqual(False, self.validate_command_params("spec27.spec", "data22_2.data",'cmd1'))
         self.assertEqual(False, self.validate_command_params("spec27.spec", "data22_3.data", 'cmd1'))
