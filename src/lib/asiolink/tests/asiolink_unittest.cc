@@ -17,6 +17,9 @@
 
 #include <config.h>
 
+#include <sys/socket.h>
+#include <sys/time.h>
+
 #include <string.h>
 
 #include <boost/lexical_cast.hpp>
@@ -32,19 +35,21 @@
 #include <dns/buffer.h>
 #include <dns/message.h>
 
+// IMPORTANT: We shouldn't directly use ASIO definitions in this test.
+// In particular, we must not include asio.hpp in this file.
+// The asiolink module is primarily intended to be a wrapper that hide the
+// details of the underlying implementations.  We need to test the wrapper
+// level behaviors.  In addition, some compilers reject to compile this file
+// if we include asio.hpp unless we specify a special compiler option.
+// If we need to test something at the level of underlying ASIO and need
+// their definition, that test should go to asiolink/internal/tests.
 #include <asiolink/asiolink.h>
 #include <asiolink/iosocket.h>
-#include <asiolink/internal/tcpdns.h>
-#include <asiolink/internal/udpdns.h>
-
-#include <asio.hpp>
 
 using isc::UnitTestUtil;
 using namespace std;
 using namespace asiolink;
 using namespace isc::dns;
-using namespace asio;
-using asio::ip::udp;
 
 namespace {
 const char* const TEST_SERVER_PORT = "53535";
@@ -330,10 +335,30 @@ protected:
         // ... and this one will block until the send has completed
         io_service_->run_one();
 
-        // Now we attempt to recv() whatever was sent
-        const int ret = recv(sock_, buffer, size, MSG_DONTWAIT);
+        // Now we attempt to recv() whatever was sent.
+        // XXX: there's no guarantee the receiving socket can immediately get
+        // the packet.  Normally we can perform blocking recv to wait for it,
+        // but in theory it's even possible that the packet is lost.
+        // In order to prevent the test from hanging in such a worst case
+        // we add an ad hoc timeout.
+        const struct timeval timeo = { 10, 0 };
+        int recv_options = 0;
+        if (setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO, &timeo,
+                       sizeof(timeo))) {
+            if (errno == ENOPROTOOPT) {
+                // Workaround for Solaris: it doesn't accept SO_RCVTIMEO
+                // with the error of ENOPROTOOPT.  Since this is a workaround
+                // for rare error cases anyway, we simply switch to the
+                // "don't wait" mode.  If we still find an error in recv()
+                // can happen often we'll consider a more complete solution.
+                recv_options = MSG_DONTWAIT;
+            } else {
+                isc_throw(IOError, "set RCVTIMEO failed: " << strerror(errno));
+            }
+        }
+        const int ret = recv(sock_, buffer, size, recv_options);
         if (ret < 0) {
-            isc_throw(IOError, "recvfrom failed");
+            isc_throw(IOError, "recvfrom failed: " << strerror(errno));
         }
         
         // Pass the message size back via the size parameter
@@ -411,8 +436,7 @@ protected:
     // has completed.
     class MockServer : public DNSServer {
     public:
-        explicit MockServer(asio::io_service& io_service,
-                            const asio::ip::address& addr, const uint16_t port,
+        explicit MockServer(IOService& io_service,
                             SimpleCallback* checkin = NULL,
                             DNSLookup* lookup = NULL,
                             DNSAnswer* answer = NULL) :
@@ -426,9 +450,7 @@ protected:
                         size_t length = 0)
         {}
 
-        void resume(const bool done) {
-            done_ = done;
-            io_.post(*this);
+        void resume(const bool) { // in our test this shouldn't be called
         }
 
         DNSServer* clone() {
@@ -443,7 +465,7 @@ protected:
         }
 
     protected:
-        asio::io_service& io_;
+        IOService& io_;
         bool done_;
 
     private:
@@ -462,8 +484,8 @@ protected:
     // This version of mock server just stops the io_service when it is resumed
     class MockServerStop : public MockServer {
         public:
-            explicit MockServerStop(asio::io_service& io_service, bool* done) :
-                MockServer(io_service, asio::ip::address(), 0),
+            explicit MockServerStop(IOService& io_service, bool* done) :
+                MockServer(io_service),
                 done_(done)
             {}
 
@@ -511,7 +533,6 @@ protected:
     string callback_address_;
     vector<uint8_t> callback_data_;
     int sock_;
-private:
     struct addrinfo* res_;
 };
 
@@ -640,14 +661,12 @@ TEST_F(ASIOLinkTest, recursiveSetupV6) {
 // full code coverage including error cases.
 TEST_F(ASIOLinkTest, recursiveSend) {
     setDNSService(true, false);
-    asio::io_service& io = io_service_->get_io_service();
 
     // Note: We use the test prot plus one to ensure we aren't binding
     // to the same port as the actual server
     uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    asio::ip::address addr = asio::ip::address::from_string(TEST_IPV4_ADDR);
 
-    MockServer server(io, addr, port, NULL, NULL, NULL);
+    MockServer server(*io_service_);
     RecursiveQuery rq(*dns_service_, singleAddress(TEST_IPV4_ADDR, port));
 
     Question q(Name("example.com"), RRClass::IN(), RRType::TXT());
@@ -656,7 +675,7 @@ TEST_F(ASIOLinkTest, recursiveSend) {
 
     char data[4096];
     size_t size = sizeof(data);
-    EXPECT_NO_THROW(recvUDP(AF_INET, data, size));
+    ASSERT_NO_THROW(recvUDP(AF_INET, data, size));
 
     Message m(Message::PARSE);
     InputBuffer ibuf(data, size);
@@ -672,34 +691,27 @@ TEST_F(ASIOLinkTest, recursiveSend) {
     EXPECT_EQ(q.getClass(), q2->getClass());
 }
 
-void
-receive_and_inc(udp::socket* socket, int* num) {
-    (*num) ++;
-    static char inbuff[512];
-    socket->async_receive(asio::buffer(inbuff, 512),
-        boost::bind(receive_and_inc, socket, num));
-}
-
 // Test it tries the correct amount of times before giving up
 TEST_F(ASIOLinkTest, recursiveTimeout) {
     // Prepare the service (we do not use the common setup, we do not answer
     setDNSService();
-    asio::io_service& service = io_service_->get_io_service();
 
     // Prepare the socket
-    uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    udp::socket socket(service, udp::v4());
-    socket.set_option(socket_base::reuse_address(true));
-    socket.bind(udp::endpoint(ip::address::from_string(TEST_IPV4_ADDR), port));
-    // And count the answers
-    int num = -1; // One is counted before the receipt of the first one
-    receive_and_inc(&socket, &num);
+    res_ = resolveAddress(AF_INET, IPPROTO_UDP, true);
+    sock_ = socket(res_->ai_family, res_->ai_socktype, res_->ai_protocol);
+    if (sock_ < 0) {
+        isc_throw(IOError, "failed to open test socket");
+    }
+    if (bind(sock_, res_->ai_addr, res_->ai_addrlen) < 0) {
+        isc_throw(IOError, "failed to bind test socket");
+    }
 
     // Prepare the server
     bool done(true);
-    MockServerStop server(service, &done);
+    MockServerStop server(*io_service_, &done);
 
     // Do the answer
+    const uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
     RecursiveQuery query(*dns_service_, singleAddress(TEST_IPV4_ADDR, port),
         10, 2);
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
@@ -707,7 +719,27 @@ TEST_F(ASIOLinkTest, recursiveTimeout) {
     query.sendQuery(question, buffer, &server);
 
     // Run the test
-    service.run();
+    io_service_->run();
+
+    // Read up to 3 packets.  Use some ad hoc timeout to prevent an infinite
+    // block (see also recvUDP()).
+    const struct timeval timeo = { 10, 0 };
+    int recv_options = 0;
+    if (setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO, &timeo, sizeof(timeo))) {
+        if (errno == ENOPROTOOPT) { // see ASIOLinkTest::recvUDP()
+            recv_options = MSG_DONTWAIT;
+        } else {
+            isc_throw(IOError, "set RCVTIMEO failed: " << strerror(errno));
+        }
+    }
+    int num = 0;
+    do {
+        char inbuff[512];
+        if (recv(sock_, inbuff, sizeof(inbuff), recv_options) < 0) {
+            num = -1;
+            break;
+        }
+    } while (++num < 3);
 
     // The query should fail
     EXPECT_FALSE(done);
