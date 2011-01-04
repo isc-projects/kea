@@ -162,33 +162,20 @@ private:
     AuthSrv* server_;
 };
 
-// This is a derived class of \c DNSAnswer, to serve as a
-// callback in the asiolink module.  It takes a completed
-// set of answer data from the DNS lookup and assembles it
-// into a wire-format response.
+// This is a derived class of \c DNSAnswer, to serve as a callback in the
+// asiolink module.  We actually shouldn't do anything in this class because
+// we build complete response messages in the process methods; otherwise
+// the response message will contain trailing garbage.  In future, we should
+// probably even drop the reliance on DNSAnswer.  We don't need the coroutine
+// tricks provided in that framework, and its overhead would be significant
+// in terms of performance consideration for the authoritative server
+// implementation.
 class MessageAnswer : public DNSAnswer {
 public:
-    MessageAnswer(AuthSrv* srv) : server_(srv) {}
-    virtual void operator()(const IOMessage& io_message, MessagePtr message,
-                            OutputBufferPtr buffer) const
-    {
-        MessageRenderer renderer(*buffer);
-        if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
-            ConstEDNSPtr edns(message->getEDNS());
-            renderer.setLengthLimit(edns ? edns->getUDPSize() :
-                Message::DEFAULT_MAX_UDPSIZE);
-        } else {
-            renderer.setLengthLimit(65535);
-        }
-        message->toWire(renderer);
-        if (server_->getVerbose()) {
-            cerr << "[b10-auth] sending a response (" << renderer.getLength()
-                 << " bytes):\n" << message->toText() << endl;
-        }
-    }
-
-private:
-    AuthSrv* server_;
+    MessageAnswer(AuthSrv*) {}
+    virtual void operator()(const IOMessage&, MessagePtr,
+                            OutputBufferPtr) const
+    {}
 };
 
 // This is a derived class of \c SimpleCallback, to serve

@@ -25,10 +25,69 @@
 
 using namespace isc::dns;
 using namespace isc::datasrc;
+using namespace isc::dns::rdata;
 using namespace std;
 
 namespace isc {
 namespace auth {
+
+void
+Query::getAdditional(const isc::datasrc::Zone& zone,
+                     const isc::dns::RRset& rrset) const
+{
+    if (rrset.getType() == RRType::NS()) {
+        // Need to perform the search in the "GLUE OK" mode.
+        RdataIteratorPtr rdata_iterator = rrset.getRdataIterator();
+        for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
+             const Rdata& rdata(rdata_iterator->getCurrent());
+             const generic::NS& ns = dynamic_cast<const generic::NS&>(rdata);
+             findAddrs(zone, ns.getNSName(), Zone::FIND_GLUE_OK);
+        }
+    }
+}
+
+void
+Query::findAddrs(const isc::datasrc::Zone& zone,
+                 const isc::dns::Name& qname,
+                 const isc::datasrc::Zone::FindOptions options) const
+{
+    // Out of zone name
+    NameComparisonResult result = zone.getOrigin().compare(qname);
+    if ((result.getRelation() != NameComparisonResult::SUPERDOMAIN) &&
+        (result.getRelation() != NameComparisonResult::EQUAL))
+        return;
+
+    // Find A rrset
+    Zone::FindResult a_result = zone.find(qname, RRType::A(), options);
+    if (a_result.code == Zone::SUCCESS) {
+        response_.addRRset(Message::SECTION_ADDITIONAL,
+                     boost::const_pointer_cast<RRset>(a_result.rrset));
+    }
+    // Find AAAA rrset
+    Zone::FindResult aaaa_result = zone.find(qname, RRType::AAAA(), options);
+    if (aaaa_result.code == Zone::SUCCESS) {
+        response_.addRRset(Message::SECTION_ADDITIONAL,
+                     boost::const_pointer_cast<RRset>(aaaa_result.rrset));
+    }
+}
+
+void
+Query::putSOA(const Zone& zone) const {
+    Zone::FindResult soa_result(zone.find(zone.getOrigin(),
+        RRType::SOA()));
+    if (soa_result.code != Zone::SUCCESS) {
+        isc_throw(NoSOA, "There's no SOA record in zone " <<
+            zone.getOrigin().toText());
+    } else {
+        /*
+         * FIXME:
+         * The const-cast is wrong, but the Message interface seems
+         * to insist.
+         */
+        response_.addRRset(Message::SECTION_AUTHORITY,
+            boost::const_pointer_cast<RRset>(soa_result.rrset));
+    }
+}
 
 void
 Query::process() const {
@@ -100,15 +159,21 @@ Query::process() const {
                 // TODO : fill in authority and addtional sections.
                 break;
             case Zone::DELEGATION:
-                // TODO : add NS to authority section, fill in additional section.
+                response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
+                response_.setRcode(Rcode::NOERROR());
+                response_.addRRset(Message::SECTION_AUTHORITY,
+                            boost::const_pointer_cast<RRset>(db_result.rrset));
+                getAdditional(*result.zone, *db_result.rrset);
                 break;
             case Zone::NXDOMAIN:
+                // Just empty answer with SOA in authority section
                 response_.setRcode(Rcode::NXDOMAIN());
-                // TODO : add SOA to authority section
+                putSOA(*result.zone);
                 break;
             case Zone::NXRRSET:
+                // Just empty answer with SOA in authority section
                 response_.setRcode(Rcode::NOERROR());
-                // TODO : add SOA to authority section
+                putSOA(*result.zone);
                 break;
             case Zone::CNAME:
             case Zone::DNAME:
@@ -117,5 +182,6 @@ Query::process() const {
         }
     }
 }
+
 }
 }

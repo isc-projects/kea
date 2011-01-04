@@ -17,6 +17,7 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/rrclass.h>
+#include <dns/masterload.h>
 
 #include <cc/data.h>
 
@@ -143,33 +144,42 @@ TEST_F(MemoryDatasrcConfigTest, addZeroZone) {
 }
 
 TEST_F(MemoryDatasrcConfigTest, addOneZone) {
-    parser->build(Element::fromJSON(
+    EXPECT_NO_THROW(parser->build(Element::fromJSON(
                       "[{\"type\": \"memory\","
                       "  \"zones\": [{\"origin\": \"example.com\","
-                      "               \"file\": \"example.zone\"}]}]"));
-    parser->commit();
+                      "               \"file\": \"" TEST_DATA_DIR
+                      "/example.zone\"}]}]")));
+    EXPECT_NO_THROW(parser->commit());
     EXPECT_EQ(1, server.getMemoryDataSrc(rrclass)->getZoneCount());
+    // Check it actually loaded something
+    EXPECT_EQ(Zone::SUCCESS, server.getMemoryDataSrc(rrclass)->findZone(
+        Name("ns.example.com.")).zone->find(Name("ns.example.com."),
+        RRType::A()).code);
 }
 
 TEST_F(MemoryDatasrcConfigTest, addMultiZones) {
-    parser->build(Element::fromJSON(
+    EXPECT_NO_THROW(parser->build(Element::fromJSON(
                       "[{\"type\": \"memory\","
                       "  \"zones\": [{\"origin\": \"example.com\","
-                      "               \"file\": \"example.zone\"},"
+                      "               \"file\": \"" TEST_DATA_DIR
+                      "/example.zone\"},"
                       "              {\"origin\": \"example.org\","
-                      "               \"file\": \"example.org.zone\"},"
+                      "               \"file\": \"" TEST_DATA_DIR
+                      "/example.org.zone\"},"
                       "              {\"origin\": \"example.net\","
-                      "               \"file\": \"example.net.zone\"}]}]"));
-    parser->commit();
+                      "               \"file\": \"" TEST_DATA_DIR
+                      "/example.net.zone\"}]}]")));
+    EXPECT_NO_THROW(parser->commit());
     EXPECT_EQ(3, server.getMemoryDataSrc(rrclass)->getZoneCount());
 }
 
 TEST_F(MemoryDatasrcConfigTest, replace) {
-    parser->build(Element::fromJSON(
+    EXPECT_NO_THROW(parser->build(Element::fromJSON(
                       "[{\"type\": \"memory\","
                       "  \"zones\": [{\"origin\": \"example.com\","
-                      "               \"file\": \"example.zone\"}]}]"));
-    parser->commit();
+                      "               \"file\": \"" TEST_DATA_DIR
+                      "/example.zone\"}]}]")));
+    EXPECT_NO_THROW(parser->commit());
     EXPECT_EQ(1, server.getMemoryDataSrc(rrclass)->getZoneCount());
     EXPECT_EQ(isc::datasrc::result::SUCCESS,
               server.getMemoryDataSrc(rrclass)->findZone(
@@ -179,31 +189,69 @@ TEST_F(MemoryDatasrcConfigTest, replace) {
     // should replace the old one.
     delete parser;
     parser = createAuthConfigParser(server, "datasources"); 
-    parser->build(Element::fromJSON(
+    EXPECT_NO_THROW(parser->build(Element::fromJSON(
                       "[{\"type\": \"memory\","
                       "  \"zones\": [{\"origin\": \"example.org\","
-                      "               \"file\": \"example.org.zone\"},"
+                      "               \"file\": \"" TEST_DATA_DIR
+                      "/example.org.zone\"},"
                       "              {\"origin\": \"example.net\","
-                      "               \"file\": \"example.net.zone\"}]}]"));
-    parser->commit();
+                      "               \"file\": \"" TEST_DATA_DIR
+                      "/example.net.zone\"}]}]")));
+    EXPECT_NO_THROW(parser->commit());
     EXPECT_EQ(2, server.getMemoryDataSrc(rrclass)->getZoneCount());
     EXPECT_EQ(isc::datasrc::result::NOTFOUND,
               server.getMemoryDataSrc(rrclass)->findZone(
                   Name("example.com")).code);
 }
 
-TEST_F(MemoryDatasrcConfigTest, remove) {
-    parser->build(Element::fromJSON(
+TEST_F(MemoryDatasrcConfigTest, exception) {
+    // Load a zone
+    EXPECT_NO_THROW(parser->build(Element::fromJSON(
                       "[{\"type\": \"memory\","
                       "  \"zones\": [{\"origin\": \"example.com\","
-                      "               \"file\": \"example.zone\"}]}]"));
-    parser->commit();
+                      "               \"file\": \"" TEST_DATA_DIR
+                      "/example.zone\"}]}]")));
+    EXPECT_NO_THROW(parser->commit());
+    EXPECT_EQ(1, server.getMemoryDataSrc(rrclass)->getZoneCount());
+    EXPECT_EQ(isc::datasrc::result::SUCCESS,
+              server.getMemoryDataSrc(rrclass)->findZone(
+                  Name("example.com")).code);
+
+    // create a new parser, and try to load something. It will throw,
+    // the given master file should not exist
+    delete parser;
+    parser = createAuthConfigParser(server, "datasources");
+    EXPECT_THROW(parser->build(Element::fromJSON(
+                      "[{\"type\": \"memory\","
+                      "  \"zones\": [{\"origin\": \"example.org\","
+                      "               \"file\": \"" TEST_DATA_DIR
+                      "/example.org.zone\"},"
+                      "              {\"origin\": \"example.net\","
+                      "               \"file\": \"" TEST_DATA_DIR
+                      "/nonexistent.zone\"}]}]")), isc::dns::MasterLoadError);
+    // As that one throwed exception, it is not expected from us to
+    // commit it
+
+    // The original should be untouched
+    EXPECT_EQ(1, server.getMemoryDataSrc(rrclass)->getZoneCount());
+    EXPECT_EQ(isc::datasrc::result::SUCCESS,
+              server.getMemoryDataSrc(rrclass)->findZone(
+                  Name("example.com")).code);
+}
+
+TEST_F(MemoryDatasrcConfigTest, remove) {
+    EXPECT_NO_THROW(parser->build(Element::fromJSON(
+                      "[{\"type\": \"memory\","
+                      "  \"zones\": [{\"origin\": \"example.com\","
+                      "               \"file\": \"" TEST_DATA_DIR
+                      "/example.zone\"}]}]")));
+    EXPECT_NO_THROW(parser->commit());
     EXPECT_EQ(1, server.getMemoryDataSrc(rrclass)->getZoneCount());
 
     delete parser;
     parser = createAuthConfigParser(server, "datasources"); 
-    parser->build(Element::fromJSON("[]"));
-    parser->commit();
+    EXPECT_NO_THROW(parser->build(Element::fromJSON("[]")));
+    EXPECT_NO_THROW(parser->commit());
     EXPECT_EQ(AuthSrv::MemoryDataSrcPtr(), server.getMemoryDataSrc(rrclass));
 }
 
@@ -212,9 +260,11 @@ TEST_F(MemoryDatasrcConfigTest, adDuplicateZones) {
                      Element::fromJSON(
                          "[{\"type\": \"memory\","
                          "  \"zones\": [{\"origin\": \"example.com\","
-                         "               \"file\": \"example.zone\"},"
+                         "               \"file\": \"" TEST_DATA_DIR
+                         "/example.zone\"},"
                          "              {\"origin\": \"example.com\","
-                         "               \"file\": \"example.com.zone\"}]}]")),
+                         "               \"file\": \"" TEST_DATA_DIR
+                         "/example.com.zone\"}]}]")),
                  AuthConfigError);
 }
 

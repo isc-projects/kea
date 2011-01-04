@@ -15,9 +15,11 @@
 #include <map>
 #include <cassert>
 #include <boost/shared_ptr.hpp>
+#include <boost/bind.hpp>
 
 #include <dns/name.h>
 #include <dns/rrclass.h>
+#include <dns/masterload.h>
 
 #include <datasrc/memory_datasrc.h>
 #include <datasrc/rbtree.h>
@@ -65,7 +67,7 @@ struct MemoryZone::MemoryZoneImpl {
      * access is without the impl_-> and it will get inlined anyway.
      */
     // Implementation of MemoryZone::add
-    result::Result add(const ConstRRsetPtr& rrset) {
+    result::Result add(const ConstRRsetPtr& rrset, DomainTree* domains) {
         // Sanitize input
         if (!rrset) {
             isc_throw(NullRRset, "The rrset provided is NULL");
@@ -80,7 +82,7 @@ struct MemoryZone::MemoryZoneImpl {
         }
         // Get the node
         DomainNode* node;
-        switch (domains_.insert(name, &node)) {
+        switch (domains->insert(name, &node)) {
             // Just check it returns reasonable results
             case DomainTree::SUCCEED:
             case DomainTree::ALREADYEXIST:
@@ -104,6 +106,15 @@ struct MemoryZone::MemoryZoneImpl {
         // Try inserting the rrset there
         if (domain->insert(DomainPair(rrset->getType(), rrset)).second) {
             // Ok, we just put it in
+
+            // If this RRset creates a zone cut at this node, mark the node
+            // indicating the need for callback in find().
+            // TBD: handle DNAME, too
+            if (rrset->getType() == RRType::NS() &&
+                rrset->getName() != origin_) {
+                node->enableCallback();
+            }
+
             return (result::SUCCESS);
         } else {
             // The RRSet of given type was already there
@@ -111,16 +122,84 @@ struct MemoryZone::MemoryZoneImpl {
         }
     }
 
+    /*
+     * Same as above, but it checks the return value and if it already exists,
+     * it throws.
+     */
+    void addFromLoad(const ConstRRsetPtr& set, DomainTree* domains) {
+            switch (add(set, domains)) {
+                case result::EXIST:
+                    isc_throw(dns::MasterLoadError, "Duplicate rrset: " <<
+                        set->toText());
+                case result::SUCCESS:
+                    return;
+                default:
+                    assert(0);
+            }
+    }
+
+    // Maintain intermediate data specific to the search context used in
+    /// \c find().
+    ///
+    /// It will be passed to \c zonecutCallback() and record a possible
+    /// zone cut node and related RRset (normally NS or DNAME).
+    struct FindState {
+        FindState(FindOptions options) : zonecut_node_(NULL),
+                                         options_(options)
+        {}
+        const DomainNode* zonecut_node_;
+        ConstRRsetPtr rrset_;
+        const FindOptions options_;
+    };
+
+    // A callback called from possible zone cut nodes.  This will be passed
+    // from the \c find() method to \c RBTree::find().
+    static bool zonecutCallback(const DomainNode& node, FindState* state) {
+        // We perform callback check only for the highest zone cut in the
+        // rare case of nested zone cuts.
+        if (state->zonecut_node_ != NULL) {
+            return (false);
+        }
+
+        const Domain::const_iterator found(node.getData()->find(RRType::NS()));
+        if (found != node.getData()->end()) {
+            // BIND 9 checks if this node is not the origin.  But it cannot
+            // be the origin because we don't enable the callback at the
+            // origin node (see MemoryZoneImpl::add()).  Or should we do a
+            // double check for it?
+            state->zonecut_node_ = &node;
+            state->rrset_ = found->second;
+
+            // Unless glue is allowed the search stops here, so we return
+            // false; otherwise return true to continue the search.
+            return ((state->options_ & FIND_GLUE_OK) == 0);
+        }
+
+        // This case should not happen because we enable callback only
+        // when we add an RR searched for above.
+        assert(0);
+        // This is here to avoid warning (therefore compilation error)
+        // in case assert is turned off. Otherwise we could get "Control
+        // reached end of non-void function".
+        return (false);
+    }
+
     // Implementation of MemoryZone::find
-    FindResult find(const Name& name, RRType type) const {
+    FindResult find(const Name& name, RRType type,
+                    const FindOptions options) const
+    {
         // Get the node
-        DomainNode* node;
-        switch (domains_.find(name, &node)) {
+        DomainNode* node(NULL);
+        FindState state(options);
+        switch (domains_.find(name, &node, zonecutCallback, &state)) {
             case DomainTree::PARTIALMATCH:
-                // Pretend it was not found for now
-                // TODO: Implement real delegation. Currently, not having
-                // the the domain can cause a partialmatch as well, so
-                // better check.
+                if (state.zonecut_node_ != NULL) {
+                    return (FindResult(DELEGATION, state.rrset_));
+                }
+                // TODO: we should also cover empty non-terminal cases, which
+                // will require non trivial code and is deferred for later
+                // development.  For now, we regard any partial match that
+                // didn't hit a zone cut as "not found".
             case DomainTree::NOTFOUND:
                 return (FindResult(NXDOMAIN, ConstRRsetPtr()));
             case DomainTree::EXACTMATCH: // This one is OK, handle it
@@ -131,7 +210,18 @@ struct MemoryZone::MemoryZoneImpl {
         assert(node);
         assert(!node->isEmpty());
 
-        Domain::const_iterator found(node->getData()->find(type));
+        Domain::const_iterator found;
+
+        // If the node callback is enabled, this may be a zone cut.  If it
+        // has a NS RR, we should return a delegation.
+        if (node->isCallbackEnabled()) {
+            found = node->getData()->find(RRType::NS());
+            if (found != node->getData()->end()) {
+                return (FindResult(DELEGATION, found->second));
+            }
+        }
+
+        found = node->getData()->find(type);
         if (found != node->getData()->end()) {
             // Good, it is here
             return (FindResult(SUCCESS, found->second));
@@ -166,13 +256,27 @@ MemoryZone::getClass() const {
 }
 
 Zone::FindResult
-MemoryZone::find(const Name& name, const RRType& type) const {
-    return (impl_->find(name, type));
+MemoryZone::find(const Name& name, const RRType& type,
+                 const FindOptions options) const
+{
+    return (impl_->find(name, type, options));
 }
 
 result::Result
 MemoryZone::add(const ConstRRsetPtr& rrset) {
-    return (impl_->add(rrset));
+    return (impl_->add(rrset, &impl_->domains_));
+}
+
+
+void
+MemoryZone::load(const string& filename) {
+    // Load it into a temporary tree
+    MemoryZoneImpl::DomainTree tmp;
+    masterLoad(filename.c_str(), getOrigin(), getClass(),
+        boost::bind(&MemoryZoneImpl::addFromLoad, impl_, _1, &tmp));
+    // If it went well, put it inside
+    tmp.swap(impl_->domains_);
+    // And let the old data die with tmp
 }
 
 /// Implementation details for \c MemoryDataSrc hidden from the public
