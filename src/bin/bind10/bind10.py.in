@@ -208,13 +208,13 @@ class BoB:
         self.dns_port = dns_port
         self.forward = forward
         if forward:
-            self.recursive = True
+            self.resolver = True
         else:
-            self.recursive = False
+            self.resolver = False
         self.cc_session = None
         self.ccs = None
         self.cfg_start_auth = True
-        self.cfg_start_recurse = False
+        self.cfg_start_resolver = False
         self.curproc = None
         self.dead_processes = {}
         self.msgq_socket_file = msgq_socket_file
@@ -278,13 +278,13 @@ class BoB:
 
         config_data = self.ccs.get_full_config()
         self.cfg_start_auth = config_data.get("start_auth")
-        self.cfg_start_recurse = config_data.get("start_recurse")
+        self.cfg_start_resolver = config_data.get("start_resolver")
 
         if self.verbose:
             sys.stdout.write("[bind10] - start_auth: %s\n" %
                 str(self.cfg_start_auth))
-            sys.stdout.write("[bind10] - start_recurse: %s\n" %
-                str(self.cfg_start_recurse))
+            sys.stdout.write("[bind10] - start_resolver: %s\n" %
+                str(self.cfg_start_resolver))
 
     def log_starting(self, process, port = None, address = None):
         """
@@ -423,13 +423,13 @@ class BoB:
             Start the Authoritative server
         """
         # XXX: this must be read from the configuration manager in the future
-        if self.recursive:
-            dns_prog = 'b10-recurse'
+        if self.resolver:
+            dns_prog = 'b10-resolver'
         else:
             dns_prog = 'b10-auth'
         dnsargs = [dns_prog]
-        if not self.recursive:
-            # The recursive uses configuration manager for these
+        if not self.resolver:
+            # The resolver uses configuration manager for these
             dnsargs += ['-p', str(self.dns_port)]
             if self.address:
                 dnsargs += ['-a', str(self.address)]
@@ -444,22 +444,22 @@ class BoB:
         self.start_process("b10-auth", dnsargs, c_channel_env,
             self.dns_port, self.address)
 
-    def start_recurse(self, c_channel_env):
+    def start_resolver(self, c_channel_env):
         """
             Start the Resolver.  At present, all these arguments and switches
             are pure speculation.  As with the auth daemon, they should be
             read from the configuration database.
         """
-        self.curproc = "b10-recurse"
+        self.curproc = "b10-resolver"
         # XXX: this must be read from the configuration manager in the future
-        resargs = ['b10-recurse']
+        resargs = ['b10-resolver']
         if self.uid:
             resargs += ['-u', str(self.uid)]
         if self.verbose:
             resargs += ['-v']
 
         # ... and start
-        self.start_process("b10-recurse", resargs, c_channel_env)
+        self.start_process("b10-resolver", resargs, c_channel_env)
 
     def start_xfrout(self, c_channel_env):
         self.start_simple("b10-xfrout", c_channel_env)
@@ -496,8 +496,8 @@ class BoB:
             self.start_auth(c_channel_env)
 
         # ... and resolver (if selected):
-        if self.cfg_start_recurse:
-            self.start_recurse(c_channel_env)
+        if self.cfg_start_resolver:
+            self.start_resolver(c_channel_env)
 
         # Everything after the main components can run as non-root.
         # TODO: this is only temporary - once the privileged socket creator is
@@ -557,7 +557,7 @@ class BoB:
         self.cc_session.group_sendmsg(cmd, 'Cmdctl', 'Cmdctl')
         self.cc_session.group_sendmsg(cmd, "ConfigManager", "ConfigManager")
         self.cc_session.group_sendmsg(cmd, "Auth", "Auth")
-        self.cc_session.group_sendmsg(cmd, "Recurse", "Recurse")
+        self.cc_session.group_sendmsg(cmd, "Resolver", "Resolver")
         self.cc_session.group_sendmsg(cmd, "Xfrout", "Xfrout")
         self.cc_session.group_sendmsg(cmd, "Xfrin", "Xfrin")
         self.cc_session.group_sendmsg(cmd, "Zonemgr", "Zonemgr")
