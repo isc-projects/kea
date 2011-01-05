@@ -40,10 +40,9 @@ MessageEntry::MessageEntry(const isc::dns::Message& msg,
     
 bool
 MessageEntry::genMessage(const time_t&,
-                         const uint16_t,
                          isc::dns::Message&)
 {
-    //TODO
+    //TODO, generate message according the query header flags.
     return true;
 }
 

@@ -39,13 +39,13 @@ MessageCache::MessageCache(boost::shared_ptr<RRsetCache> rrset_cache,
 bool
 MessageCache::lookup(const isc::dns::Name& qname,
                      const isc::dns::RRType& qtype,
-                     const uint16_t query_header,
                      isc::dns::Message& response)
 {
     HashKey entry_key = getEntryHashKey(qname, qtype);
     MessageEntryPtr msg_entry = message_table_.get(entry_key);
     if(msg_entry) {
-       return msg_entry->genMessage(time(NULL), query_header, response);
+        message_lru_.touch(msg_entry);
+        return msg_entry->genMessage(time(NULL), response);
     }
 
     return false;
@@ -53,13 +53,21 @@ MessageCache::lookup(const isc::dns::Name& qname,
 
 bool
 MessageCache::update(const Message& msg) {
-    // The simplest way to update is removing the old message entry directly.
     QuestionIterator iter = msg.beginQuestion();
     HashKey entry_key = getEntryHashKey((*iter)->getName(),
                                            (*iter)->getType());
-    message_table_.remove(entry_key);
+    
+    // The simplest way to update is removing the old message entry directly.
+    // We have find the existed message entry, since we need to delete it
+    // from lru list too.
+    MessageEntryPtr old_msg_entry = message_table_.get(entry_key);
+    if (old_msg_entry) {
+        message_table_.remove(entry_key);
+        message_lru_.remove(old_msg_entry);
+    }
+
     MessageEntryPtr msg_entry(new MessageEntry(msg, rrset_cache_));
-    //TODO, lru list touch
+    message_lru_.touch(msg_entry); // Touch the new message entry
     return message_table_.add(msg_entry, entry_key, true);
 }
 
