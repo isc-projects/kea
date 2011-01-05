@@ -21,17 +21,17 @@
 <refentry>
 
   <refentryinfo>
-    <date>December 27, 2010</date>
+    <date>January 3, 2011</date>
   </refentryinfo>
 
   <refmeta>
-    <refentrytitle>b10-recurse</refentrytitle>
+    <refentrytitle>b10-resolver</refentrytitle>
     <manvolnum>8</manvolnum>
     <refmiscinfo>BIND10</refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>b10-recurse</refname>
+    <refname>b10-resolver</refname>
     <refpurpose>Recursive DNS server</refpurpose>
   </refnamediv>
 
@@ -44,7 +44,7 @@
 
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>b10-recurse</command>
+      <command>b10-resolver</command>
       <arg><option>-u <replaceable>username</replaceable></option></arg>
       <arg><option>-v</option></arg>
     </cmdsynopsis>
@@ -52,7 +52,7 @@
 
   <refsect1>
     <title>DESCRIPTION</title>
-    <para>The <command>b10-recurse</command> daemon provides the BIND 10
+    <para>The <command>b10-resolver</command> daemon provides the BIND 10
       recursive DNS server.  Normally it is started by the
       <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       boss process.
@@ -62,7 +62,7 @@
       This daemon communicates with other BIND 10 components over a
       <citerefentry><refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       C-Channel connection.  If this connection is not established,
-      <command>b10-recurse</command> will exit.
+      <command>b10-resolver</command> will exit.
     </para>
 
     <para>
@@ -89,7 +89,7 @@
         <term><option>-u <replaceable>username</replaceable></option></term>
         <listitem>
 	  <para>
-	    The user name of the <command>b10-recurse</command> daemon.
+	    The user name of the <command>b10-resolver</command> daemon.
 	    If specified, the daemon changes the process owner to the
 	    specified user.
 	    The <replaceable>username</replaceable> must be either a
@@ -141,7 +141,7 @@
   <refsect1>
     <title>HISTORY</title>
     <para>
-      The <command>b10-recurse</command> daemon was first coded in
+      The <command>b10-resolver</command> daemon was first coded in
       September 2010.
     </para>
   </refsect1>

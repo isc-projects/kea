@@ -14,7 +14,7 @@
 
 #include <dns/name.h>
 
-#include <recurse/recursor.h>
+#include <resolver/resolver.h>
 #include <dns/tests/unittest_util.h>
 #include <testutils/srv_test.h>
 
@@ -25,58 +25,58 @@ using isc::UnitTestUtil;
 namespace {
 const char* const TEST_PORT = "53535";
 
-class RecursorTest : public SrvTestBase{
+class ResolverTest : public SrvTestBase{
 protected:
-    RecursorTest() : server(){}
+    ResolverTest() : server(){}
     virtual void processMessage() {
         server.processMessage(*io_message, parse_message, response_obuffer,
                               &dnsserv);
     }
-    Recursor server;
+    Resolver server;
 };
 
 // Unsupported requests.  Should result in NOTIMP.
-TEST_F(RecursorTest, unsupportedRequest) {
+TEST_F(ResolverTest, unsupportedRequest) {
     unsupportedRequest();
 }
 
 // Multiple questions.  Should result in FORMERR.
-TEST_F(RecursorTest, multiQuestion) {
-    multiQuestion();
+TEST_F(ResolverTest, multiQuestion) {
+    multiQuestion(); 
 }
 
 // Incoming data doesn't even contain the complete header.  Must be silently
 // dropped.
-TEST_F(RecursorTest, shortMessage) {
+TEST_F(ResolverTest, shortMessage) {
     shortMessage();
 }
 
 // Response messages.  Must be silently dropped, whether it's a valid response
 // or malformed or could otherwise cause a protocol error.
-TEST_F(RecursorTest, response) {
-    response();
+TEST_F(ResolverTest, response) {
+     response();
 }
 
 // Query with a broken question
-TEST_F(RecursorTest, shortQuestion) {
+TEST_F(ResolverTest, shortQuestion) {
     shortQuestion();
 }
 
 // Query with a broken answer section
-TEST_F(RecursorTest, shortAnswer) {
+TEST_F(ResolverTest, shortAnswer) {
     shortAnswer();
 }
 
 // Query with unsupported version of EDNS.
-TEST_F(RecursorTest, ednsBadVers) {
+TEST_F(ResolverTest, ednsBadVers) {
     ednsBadVers();
 }
 
-TEST_F(RecursorTest, AXFROverUDP) {
+TEST_F(ResolverTest, AXFROverUDP) {
     axfrOverUDP();
 }
 
-TEST_F(RecursorTest, AXFRFail) {
+TEST_F(ResolverTest, AXFRFail) {
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
                                        Name("example.com"), RRClass::IN(),
                                        RRType::AXFR());
@@ -88,7 +88,7 @@ TEST_F(RecursorTest, AXFRFail) {
                 QR_FLAG, 1, 0, 0, 0);
 }
 
-TEST_F(RecursorTest, notifyFail) {
+TEST_F(ResolverTest, notifyFail) {
     // Notify should always return NOTAUTH
     request_message.clear(Message::RENDER);
     request_message.setOpcode(Opcode::NOTIFY());

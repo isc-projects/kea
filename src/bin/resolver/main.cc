@@ -44,8 +44,8 @@
 #include <auth/change_user.h>
 #include <auth/common.h>
 
-#include <recurse/spec_config.h>
-#include <recurse/recursor.h>
+#include <resolver/spec_config.h>
+#include <resolver/resolver.h>
 
 #include <log/dummylog.h>
 
@@ -59,14 +59,14 @@ using namespace asiolink;
 namespace {
 
 // Default port current 5300 for testing purposes
-static const string PROGRAM = "Recurse";
+static const string PROGRAM = "Resolver";
 
 IOService io_service;
-static Recursor *recursor;
+static Resolver *resolver;
 
 ConstElementPtr
 my_config_handler(ConstElementPtr new_config) {
-    return (recursor->updateConfig(new_config));
+    return (resolver->updateConfig(new_config));
 }
 
 ConstElementPtr
@@ -86,7 +86,7 @@ my_command_handler(const string& command, ConstElementPtr args) {
 
 void
 usage() {
-    cerr << "Usage:  b10-recurse [-u user] [-v]" << endl;
+    cerr << "Usage:  b10-resolver [-u user] [-v]" << endl;
     cerr << "\t-u: change process UID to the specified user" << endl;
     cerr << "\t-v: verbose output" << endl;
     exit(1);
@@ -95,7 +95,7 @@ usage() {
 
 int
 main(int argc, char* argv[]) {
-    isc::log::dprefix = "b10-recurse";
+    isc::log::dprefix = "b10-resolver";
     int ch;
     const char* uid = NULL;
 
@@ -133,21 +133,21 @@ main(int argc, char* argv[]) {
         string specfile;
         if (getenv("B10_FROM_BUILD")) {
             specfile = string(getenv("B10_FROM_BUILD")) +
-                "/src/bin/recurse/recurse.spec";
+                "/src/bin/resolver/resolver.spec";
         } else {
-            specfile = string(RECURSE_SPECFILE_LOCATION);
+            specfile = string(RESOLVER_SPECFILE_LOCATION);
         }
 
-        recursor = new Recursor();
+        resolver = new Resolver();
         dlog("Server created.");
 
-        SimpleCallback* checkin = recursor->getCheckinProvider();
-        DNSLookup* lookup = recursor->getDNSLookupProvider();
-        DNSAnswer* answer = recursor->getDNSAnswerProvider();
+        SimpleCallback* checkin = resolver->getCheckinProvider();
+        DNSLookup* lookup = resolver->getDNSLookupProvider();
+        DNSAnswer* answer = resolver->getDNSAnswerProvider();
 
         DNSService dns_service(io_service, checkin, lookup, answer);
 
-        recursor->setDNSService(dns_service);
+        resolver->setDNSService(dns_service);
         dlog("IOService created.");
 
         cc_session = new Session(io_service.get_io_service());
@@ -163,7 +163,7 @@ main(int argc, char* argv[]) {
             changeUser(uid);
         }
 
-        recursor->setConfigSession(config_session);
+        resolver->setConfigSession(config_session);
         dlog("Config loaded");
 
         dlog("Server started.");
@@ -175,7 +175,7 @@ main(int argc, char* argv[]) {
 
     delete config_session;
     delete cc_session;
-    delete recursor;
+    delete resolver;
 
     return (ret);
 }
