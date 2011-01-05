@@ -47,13 +47,15 @@ enum RRsetTrustLevel {
     RRSET_TRUST_NONAUTH_ANSWER_AA,
     // Data from the answer section of a non-authoritative answer.
     RRSET_TRUST_ANSWER_NONAA,
+    // Glue from a primary zone, or glue from a zone transfer.
+    RRSET_TRUST_PRIM_GLUE,
     // Data from the authority section of an authoritative answer.
     RRSET_TRUST_AUTHORITY_AA, 
     // Authoritative data included in the answer section of 
     // an authoritative reply.
     RRSET_TRUST_ANSWER_AA,
     // Data from a primary zone file, other than glue data.
-    RRSET_TRUST_PRIM_ZONE_NONGLUE, ///< RRSET_TRUST_DEFAULT
+    RRSET_TRUST_PRIM_ZONE_NONGLUE
 };
 
 /// \brief RRset Entry
@@ -69,7 +71,7 @@ public:
     RRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& level);
 
     /// \brief Generate one rrset according the entry information.
-    boost::shared_ptr<isc::dns::RRset> genRRset() const;
+    isc::dns::RRsetPtr genRRset() const;
     
     /// \brief Get the expiration time of the rrset.
     time_t getExpireTime() const;

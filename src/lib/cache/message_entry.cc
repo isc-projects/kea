@@ -43,13 +43,14 @@ MessageEntry::genMessage(const time_t&,
                          const uint16_t,
                          isc::dns::Message&)
 {
+    //TODO
     return true;
 }
 
 RRsetTrustLevel
 MessageEntry::getRRsetTrustLevel(const Message& message,
-                   const RRset&,
-                   const Message::Section& section) 
+                   const isc::dns::RRset&,
+                   const isc::dns::Message::Section& section) 
 {
     bool aa = message.getHeaderFlag(Message::HEADERFLAG_AA);
     switch(section) {

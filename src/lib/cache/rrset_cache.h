@@ -33,7 +33,9 @@ class RRsetEntry;
 /// RRsets.
 class RRsetCache{
 public:
-    RRsetCache(uint32_t cache_size);
+    /// \param cache_size the size of rrset cache.
+    /// \param rrset_class the class of rrset cache.
+    RRsetCache(uint32_t cache_size, uint16_t rrset_class);
     
     /// \brief Look up rrset in cache.
     /// \return return the shared_ptr of rrset entry if it can 

@@ -23,10 +23,19 @@
 #include <dns/message.h>
 #include "message_cache.h"
 
-
 namespace isc {
 namespace cache {
 class RRsetCache;
+
+typedef boost::shared_ptr<MessageCache> MessageCachePtr;
+typedef boost::shared_ptr<RRsetCache> RRsetCachePtr;
+typedef std::map<uint16_t, MessageCachePtr> MessageCacheMap;
+typedef std::map<uint16_t, RRsetCachePtr> RRsetCacheMap;
+
+//TODO a better proper default cache size
+#define MESSAGE_CACHE_DEFAULT_SIZE 1000000 
+#define RRSET_CACHE1_DEFAULT_SIZE  1000
+#define RRSET_CACHE2_DEFAULT_SIZE  10000
 
 ///    
 /// \brief Recursor Cache
@@ -35,7 +44,9 @@ class RRsetCache;
 ///
 class RecursorCache {
 public:
-    RecursorCache();
+    /// \brief Construct Function
+    /// \param dns_classes cache the messages/rrsets for these classes.
+    RecursorCache(std::vector<uint16_t> dns_classes);
 
     /// \name Lookup Interfaces
     //@{
@@ -43,35 +54,42 @@ public:
     ///
     /// \param response generated response message if the message can be found 
     ///  in cache.
+    /// \param query_header the 16bit query header.
     ///
     /// \return return true if the message can be found, or else, return false.
-    bool lookUp(const isc::dns::Name& qname, 
+    bool lookup(const isc::dns::Name& qname, 
                 const isc::dns::RRType& qtype,
                 const isc::dns::RRClass& qclass,
-                isc::dns::Message& response);
+                const uint16_t query_header,
+                isc::dns::Message& response) const;
 
     /// \brief Look up rrset in cache.
-    /// \param rrset generated rrset if it can be found in the cache.
-    /// \return return true if the rrset can be found, or else, return false.
+    /// \return return the shared_ptr of rrset if it can be found, 
+    /// or else, return NULL. When looking up, cache1(localzone) will 
+    /// be searched first, if not found, then search in cache2.
     ///
     /// \overload
     ///
-    bool lookUp(const isc::dns::Name& qname, 
-                const isc::dns::RRType& qtype,
-                const isc::dns::RRClass& qclass,
-                isc::dns::RRset& rrset);
+    isc::dns::RRsetPtr lookup(const isc::dns::Name& qname, 
+                              const isc::dns::RRType& qtype,
+                              const isc::dns::RRClass& qclass) const;
     //@}
 
     /// \brief Update the message in the cache with the new one.
-    void update(const isc::dns::Message& msg);
+    /// \return return true if the message is updated into the cache,
+    /// or else, return false.
+    bool update(const isc::dns::Message& msg);
 
     /// \brief Update the rrset in the cache with the new one.
-    /// rrset_cache1_ and rrset_cache2_ should be updated together
-    /// if the rrset exists in both of them.
+    /// rrset_cache1_ and rrset_cache2_ should be updated together.
+    /// If the rrset doesn't exist in both of them, then the rrset
+    /// will be added into both of them.
+    /// \return return false, if the class of the parameter rrset is
+    /// allowed to be cached.
     ///
     /// \overload 
     ///
-    void update(const isc::dns::RRset& rrset);
+    bool update(const isc::dns::RRset& rrset);
 
     /// \name Cache Serialization
     //@{
@@ -84,21 +102,41 @@ public:
     void load(const std::string& file_name);
     //@}
 
+protected:    
+    /// \brief Look up rrset in one specified rrset cache.
+    /// This function is used internally by lookup()
+    /// \param rrsets_cache the cache for looking up rrset.
+    /// \return return the shared_ptr of the rrset if it can be
+    /// found in the cache.
+    isc::dns::RRsetPtr lookup_in_rrset_cache(const isc::dns::Name& qname, 
+                      const isc::dns::RRType& qtype,
+                      const isc::dns::RRClass& qclass,
+                      const RRsetCacheMap& rrsets_cache) const;
+
+    /// \brief Update the rrset in one rrset cache.
+    /// \return return true if the rrset is updated in the rrset cache,
+    /// or else return false.
+    /// \param rrset_cache_map the map of rrset cache, the rrset cache needs
+    /// to be updated should be found first according the class of the rrset.
+    /// If the class-specific rrset cache can't be found in the map, it returns
+    /// false.
+    bool updateRRsetCache(const isc::dns::RRset& rrset,
+                          RRsetCacheMap& rrset_cache_map);
 protected:
 
     /// \brief the list of message cache for configured classes(message cache
     /// is class-specific)
-    std::map<uint16_t, MessageCache*> messages_cache_;
+    MessageCacheMap messages_cache_;
     
     /// \name rrset caches
     //@{
     /// \brief the list of rrset cache for configured classes.
     /// rrsets_cache1_ is used to cache the configured rrsets in localzone, rrsets 
     /// in it will never expire.
-    std::map<uint16_t, RRsetCache*> rrsets_cache1_;
+    RRsetCacheMap rrsets_cache1_;
 
     /// \brief cache the rrsets parsed from the received message.
-    std::map<uint16_t, RRsetCache*> rrsets_cache2_;
+    RRsetCacheMap rrsets_cache2_;
     //@}
 };
 
