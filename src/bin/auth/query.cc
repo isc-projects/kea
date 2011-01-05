@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <vector>
+#include <boost/foreach.hpp>
+
 #include <dns/message.h>
 #include <dns/rcode.h>
 #include <dns/rdataclass.h>
@@ -36,6 +39,15 @@ Query::getAdditional(const Zone& zone, const RRset& rrset) const {
              const Rdata& rdata(rdata_iterator->getCurrent());
              const generic::NS& ns = dynamic_cast<const generic::NS&>(rdata);
              findAddrs(zone, ns.getNSName(), Zone::FIND_GLUE_OK);
+        }
+    } else if (rrset.getType() == RRType::MX()) {
+        RdataIteratorPtr rdata_iterator = rrset.getRdataIterator();
+        for (RdataIteratorPtr rdata_iterator(rrset.getRdataIterator());
+            !rdata_iterator->isLast(); rdata_iterator->next())
+        {
+             const Rdata& rdata(rdata_iterator->getCurrent());
+             const generic::MX& mx(dynamic_cast<const generic::MX&>(rdata));
+             findAddrs(zone, mx.getMXName());
         }
     }
 }
@@ -140,6 +152,7 @@ Query::process() const {
                 response_.addRRset(Message::SECTION_ANSWER,
                     boost::const_pointer_cast<RRset>(db_result.rrset));
                 getAuthAdditional(*result.zone);
+                getAdditional(*result.zone, *db_result.rrset);
                 break;
             case Zone::DELEGATION:
                 response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
@@ -165,5 +178,6 @@ Query::process() const {
         }
     }
 }
+
 }
 }
