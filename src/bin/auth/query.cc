@@ -30,8 +30,7 @@ namespace isc {
 namespace auth {
 
 void
-Query::getAdditional(const Zone& zone, const RRset& rrset) const
-{
+Query::getAdditional(const Zone& zone, const RRset& rrset) const {
     if (rrset.getType() == RRType::NS()) {
         // Need to perform the search in the "GLUE OK" mode.
         RdataIteratorPtr rdata_iterator = rrset.getRdataIterator();
@@ -72,7 +71,8 @@ Query::findAddrs(const Zone& zone, const Name& qname,
 
     // Find AAAA rrset
     if (qname_ != qname || qtype_ != RRType::AAAA()) {
-        Zone::FindResult aaaa_result = zone.find(qname, RRType::AAAA(), options);
+        Zone::FindResult aaaa_result =
+            zone.find(qname, RRType::AAAA(), options);
         if (aaaa_result.code == Zone::SUCCESS) {
             response_.addRRset(Message::SECTION_ADDITIONAL,
                     boost::const_pointer_cast<RRset>(aaaa_result.rrset));
@@ -103,10 +103,14 @@ Query::getAuthAdditional(const Zone& zone) const {
     // Fill in authority and addtional sections.
     Zone::FindResult ns_result = zone.find(zone.getOrigin(), RRType::NS());
     // zone origin name should have NS records
-    assert(ns_result.code == Zone::SUCCESS);
-    response_.addRRset(Message::SECTION_AUTHORITY,
-            boost::const_pointer_cast<RRset>(ns_result.rrset));
-    getAdditional(zone, *ns_result.rrset);
+    if (ns_result.code != Zone::SUCCESS) {
+        isc_throw(NoApexNS, "There's no apex NS records in zone " <<
+                zone.getOrigin().toText());
+    } else {
+        response_.addRRset(Message::SECTION_AUTHORITY,
+                boost::const_pointer_cast<RRset>(ns_result.rrset));
+        getAdditional(zone, *ns_result.rrset);
+    }
 }
 
 void
