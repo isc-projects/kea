@@ -197,6 +197,16 @@ public:
         {}
     };
 
+    /// \short Zone is missing its apex NS records.
+    ///
+    /// We tried to add apex NS records into the authority section, but the
+    /// zone does not contain any.
+    struct NoApexNS: public BadZone {
+        NoApexNS(const char* file, size_t line, const char* what) :
+            BadZone(file, line, what)
+        {}
+    };
+
 private:
     const isc::datasrc::MemoryDataSrc& memory_datasrc_;
     const isc::dns::Name& qname_;

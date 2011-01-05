@@ -58,9 +58,10 @@ RRsetPtr noglue_a_rrset(RRsetPtr(new RRset(Name("noglue.example.com"),
 // otherwise return DNAME
 class MockZone : public Zone {
 public:
-    MockZone(bool has_SOA = true) :
+    MockZone(bool has_SOA = true, bool has_apex_NS = true) :
         origin_(Name("example.com")),
         has_SOA_(has_SOA),
+        has_apex_NS_(has_apex_NS),
         delegation_rrset(RRsetPtr(new RRset(Name("delegation.example.com"),
                                             RRClass::IN(), RRType::NS(),
                                             RRTTL(3600)))),
@@ -85,6 +86,8 @@ public:
                           Name("glue.ns.example.com")));
         auth_ns_rrset->addRdata(rdata::generic::NS(
                           Name("noglue.example.com")));
+        auth_ns_rrset->addRdata(rdata::generic::NS(
+                          Name("example.net")));
     }
     virtual const isc::dns::Name& getOrigin() const;
     virtual const isc::dns::RRClass& getClass() const;
@@ -96,6 +99,7 @@ public:
 private:
     Name origin_;
     bool has_SOA_;
+    bool has_apex_NS_;
     RRsetPtr delegation_rrset;
     RRsetPtr cname_rrset;
     RRsetPtr auth_ns_rrset;
@@ -131,7 +135,9 @@ MockZone::find(const Name& name, const RRType& type,
         has_SOA_)
     {
         return (FindResult(SUCCESS, soa_rrset));
-    } else if (name == Name("example.com") && type == RRType::NS()) {
+    } else if (name == Name("example.com") && type == RRType::NS() &&
+        has_apex_NS_)
+    {
         return (FindResult(SUCCESS, auth_ns_rrset));
     } else if (name == Name("delegation.example.com")) {
         return (FindResult(DELEGATION, delegation_rrset));
@@ -168,14 +174,14 @@ protected:
 TEST_F(QueryTest, noZone) {
     // There's no zone in the memory datasource.  So the response should have
     // REFUSED.
-    query.process();
+    EXPECT_NO_THROW(query.process());
     EXPECT_EQ(Rcode::REFUSED(), response.getRcode());
 }
 
 TEST_F(QueryTest, exactMatch) {
     // add a matching zone.
     memory_datasrc.addZone(ZonePtr(new MockZone()));
-    query.process();
+    EXPECT_NO_THROW(query.process());
     // find match rrset
     EXPECT_TRUE(response.getHeaderFlag(Message::HEADERFLAG_AA));
     EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
@@ -202,7 +208,7 @@ TEST_F(QueryTest, exactAddrMatch) {
     memory_datasrc.addZone(ZonePtr(new MockZone()));
     const Name noglue_name(Name("noglue.example.com"));
     Query noglue_query(memory_datasrc, noglue_name, qtype, response);
-    noglue_query.process();
+    EXPECT_NO_THROW(noglue_query.process());
     EXPECT_TRUE(response.getHeaderFlag(Message::HEADERFLAG_AA));
     EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
     EXPECT_TRUE(response.hasRRset(Message::SECTION_ANSWER,
@@ -228,7 +234,7 @@ TEST_F(QueryTest, exactAnyMatch) {
     memory_datasrc.addZone(ZonePtr(new MockZone()));
     const Name noglue_name(Name("noglue.example.com"));
     Query noglue_query(memory_datasrc, noglue_name, RRType::ANY(), response);
-    noglue_query.process();
+    EXPECT_NO_THROW(noglue_query.process());
     EXPECT_TRUE(response.getHeaderFlag(Message::HEADERFLAG_AA));
     EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
     EXPECT_TRUE(response.hasRRset(Message::SECTION_ANSWER,
@@ -248,12 +254,24 @@ TEST_F(QueryTest, exactAnyMatch) {
                                   RRClass::IN(), RRType::A()));
 }
 
+// This tests that when we need to look up Zone's apex NS records for 
+// authoritative answer, and there is no apex NS records. It should
+// throw in that case.
+TEST_F(QueryTest, noApexNS) {
+    // Add a zone without apex NS records 
+    memory_datasrc.addZone(ZonePtr(new MockZone(true, false)));
+    const Name noglue_name(Name("noglue.example.com"));
+    Query noglue_query(memory_datasrc, noglue_name, qtype, response);
+    EXPECT_THROW(noglue_query.process(), Query::NoApexNS);
+    // We don't look into the response, as it throwed
+}
+
 TEST_F(QueryTest, delegation) {
     // add a matching zone.
     memory_datasrc.addZone(ZonePtr(new MockZone()));
     const Name delegation_name(Name("delegation.example.com"));
     Query delegation_query(memory_datasrc, delegation_name, qtype, response);
-    delegation_query.process();
+    EXPECT_NO_THROW(delegation_query.process());
     EXPECT_FALSE(response.getHeaderFlag(Message::HEADERFLAG_AA));
     EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
     EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
@@ -285,7 +303,7 @@ TEST_F(QueryTest, nxdomain) {
     memory_datasrc.addZone(ZonePtr(new MockZone()));
     const Name nxdomain_name(Name("nxdomain.example.com"));
     Query nxdomain_query(memory_datasrc, nxdomain_name, qtype, response);
-    nxdomain_query.process();
+    EXPECT_NO_THROW(nxdomain_query.process());
     EXPECT_EQ(Rcode::NXDOMAIN(), response.getRcode());
     EXPECT_EQ(0, response.getRRCount(Message::SECTION_ANSWER));
     EXPECT_EQ(0, response.getRRCount(Message::SECTION_ADDITIONAL));
@@ -298,7 +316,7 @@ TEST_F(QueryTest, nxrrset) {
     memory_datasrc.addZone(ZonePtr(new MockZone()));
     const Name nxrrset_name(Name("nxrrset.example.com"));
     Query nxrrset_query(memory_datasrc, nxrrset_name, qtype, response);
-    nxrrset_query.process();
+    EXPECT_NO_THROW(nxrrset_query.process());
     EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
     EXPECT_EQ(0, response.getRRCount(Message::SECTION_ANSWER));
     EXPECT_EQ(0, response.getRRCount(Message::SECTION_ADDITIONAL));
