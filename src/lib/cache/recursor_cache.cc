@@ -44,7 +44,6 @@ bool
 RecursorCache::lookup(const isc::dns::Name& qname, 
                const isc::dns::RRType& qtype,
                const isc::dns::RRClass& qclass,
-               const uint16_t query_header,
                isc::dns::Message& response) const
 {
     // First, query in rrsets_cache1_, if the rrset(qname, qtype, qclass) can be 
@@ -65,7 +64,7 @@ RecursorCache::lookup(const isc::dns::Name& qname,
         // Can't find the class-specific message cache, return false.
         return false;
     } else {
-        return iter->second->lookup(qname, qtype, query_header, response);
+        return iter->second->lookup(qname, qtype, response);
     }
 }
 

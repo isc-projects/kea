@@ -43,16 +43,12 @@ public:
     /// \brief Look up message in cache.
     /// \param message generated response message if the message entry 
     ///        can be found.
-    /// \param query_header the uint16_t length header of the query message.
-    /// The message in the cache maybe need to be refactored when answering the
-    /// lookup according the query header(flags).
     ///
     /// \return return true if the message can be found in cache, or else,
     /// return false.
     //TODO Maybe some user just want to get the message_entry.
     bool lookup(const isc::dns::Name& qname,
                 const isc::dns::RRType& qtype,
-                const uint16_t query_header,
                 isc::dns::Message& message);
 
     /// \brief Update the message in the cache with the new one.

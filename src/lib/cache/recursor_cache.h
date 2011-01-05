@@ -54,13 +54,11 @@ public:
     ///
     /// \param response generated response message if the message can be found 
     ///  in cache.
-    /// \param query_header the 16bit query header.
     ///
     /// \return return true if the message can be found, or else, return false.
     bool lookup(const isc::dns::Name& qname, 
                 const isc::dns::RRType& qtype,
                 const isc::dns::RRClass& qclass,
-                const uint16_t query_header,
                 isc::dns::Message& response) const;
 
     /// \brief Look up rrset in cache.
