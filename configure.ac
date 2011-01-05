@@ -327,6 +327,39 @@ if test "$lcov" != "no"; then
 fi
 AC_SUBST(USE_LCOV)
 
+# Configure log4cxx header and library path
+#
+# If explicitly specified, use it.
+
+AC_ARG_WITH([log4cxx],
+  AC_HELP_STRING([--with-log4cxx=PATH],
+    [specify directory where log4cxx is installed]),
+  [log4cxx_include_path="${withval}/include"])
+
+# If not specified, try some common paths.  These default to
+# /usr/include if not found
+
+if test -z "$with_log4cxx"; then
+	log4cxxdirs="/usr/local /usr/pkg /opt /opt/local"
+	for d in $log4cxxdirs
+	do
+		if test -d $d/include/log4cxx; then
+			log4cxx_include_path=$d/include
+			break
+		fi
+	done
+fi
+
+CPPFLAGS_SAVES="$CPPFLAGS"
+if test "${log4cxx_include_path}" ; then
+	LOG4CXX_INCLUDES="-I${log4cxx_include_path}"
+	CPPFLAGS="$CPPFLAGS $LOG4CXX_INCLUDES"
+fi
+AC_CHECK_HEADER([log4cxx/logger.h],, AC_MSG_ERROR([Missing log4cxx header files.]))
+CPPFLAGS="$CPPFLAGS_SAVES"
+AC_SUBST(LOG4CXX_INCLUDES)
+
+
 #
 # Configure Boost header path
 #
@@ -612,6 +645,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/datasrc/tests/Makefile
                  src/lib/xfr/Makefile
                  src/lib/log/Makefile
+                 src/lib/log/tests/Makefile
                  src/lib/testutils/Makefile
                  src/lib/testutils/testdata/Makefile
                  src/lib/nsas/Makefile
@@ -721,6 +755,7 @@ dnl includes too
                  ${PYTHON_LDFLAGS}
                  ${PYTHON_LIB}
   Boost:         ${BOOST_INCLUDES}
+  log4cxx:       ${LOG4CXX_INCLUDES}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
 
