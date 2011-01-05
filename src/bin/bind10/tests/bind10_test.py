@@ -89,7 +89,7 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.username, None)
         self.assertEqual(bob.nocache, False)
         self.assertEqual(bob.cfg_start_auth, True)
-        self.assertEqual(bob.cfg_start_recurse, False)
+        self.assertEqual(bob.cfg_start_resolver, False)
 
     def test_init_alternate_socket(self):
         bob = BoB("alt_socket_file")
@@ -106,7 +106,7 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.username, None)
         self.assertEqual(bob.nocache, False)
         self.assertEqual(bob.cfg_start_auth, True)
-        self.assertEqual(bob.cfg_start_recurse, False)
+        self.assertEqual(bob.cfg_start_resolver, False)
 
     def test_init_alternate_dns_port(self):
         bob = BoB(None, 9999)
@@ -123,7 +123,7 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.username, None)
         self.assertEqual(bob.nocache, False)
         self.assertEqual(bob.cfg_start_auth, True)
-        self.assertEqual(bob.cfg_start_recurse, False)
+        self.assertEqual(bob.cfg_start_resolver, False)
 
     def test_init_alternate_address(self):
         bob = BoB(None, 1234, IPAddr('127.127.127.127'))
@@ -140,7 +140,7 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.username, None)
         self.assertEqual(bob.nocache, False)
         self.assertEqual(bob.cfg_start_auth, True)
-        self.assertEqual(bob.cfg_start_recurse, False)
+        self.assertEqual(bob.cfg_start_resolver, False)
 
 # Class for testing the Bob.start_all_processes() method call.
 #
@@ -157,7 +157,7 @@ class StartAllProcessesBob(BoB):
         self.cfgmgr = False
         self.ccsession = False
         self.auth = False
-        self.recurse = False
+        self.resolver = False
         self.xfrout = False
         self.xfrin = False
         self.zonemgr = False
@@ -180,8 +180,8 @@ class StartAllProcessesBob(BoB):
     def start_auth(self, c_channel_env):
         self.auth = True
 
-    def start_recurse(self, c_channel_env):
-        self.recurse = True
+    def start_resolver(self, c_channel_env):
+        self.resolver = True
 
     def start_xfrout(self, c_channel_env):
         self.xfrout = True
@@ -206,14 +206,14 @@ class TestStartAllProcessesBob(unittest.TestCase):
         self.assertEqual(bob.cfgmgr, False)
         self.assertEqual(bob.ccsession, False)
         self.assertEqual(bob.auth, False)
-        self.assertEqual(bob.recurse, False)
+        self.assertEqual(bob.resolver, False)
         self.assertEqual(bob.xfrout, False)
         self.assertEqual(bob.xfrin, False)
         self.assertEqual(bob.zonemgr, False)
         self.assertEqual(bob.stats, False)
         self.assertEqual(bob.cmdctl, False)
 
-    # Checks the processes started when starting neither auth nor recurse
+    # Checks the processes started when starting neither auth nor resolver
     # is specified.
     def test_start_none(self):
         # Created Bob and ensure initialization correct
@@ -223,7 +223,7 @@ class TestStartAllProcessesBob(unittest.TestCase):
         # Start processes and check what was started
         c_channel_env = {}
         bob.cfg_start_auth = False
-        bob.cfg_start_recurse = False
+        bob.cfg_start_resolver = False
 
         bob.start_all_processes(c_channel_env)
 
@@ -231,7 +231,7 @@ class TestStartAllProcessesBob(unittest.TestCase):
         self.assertEqual(bob.cfgmgr, True)
         self.assertEqual(bob.ccsession, True)
         self.assertEqual(bob.auth, False)
-        self.assertEqual(bob.recurse, False)
+        self.assertEqual(bob.resolver, False)
         self.assertEqual(bob.xfrout, False)
         self.assertEqual(bob.xfrin, False)
         self.assertEqual(bob.zonemgr, False)
@@ -247,7 +247,7 @@ class TestStartAllProcessesBob(unittest.TestCase):
         # Start processes and check what was started
         c_channel_env = {}
         bob.cfg_start_auth = True
-        bob.cfg_start_recurse = False
+        bob.cfg_start_resolver = False
 
         bob.start_all_processes(c_channel_env)
 
@@ -255,15 +255,15 @@ class TestStartAllProcessesBob(unittest.TestCase):
         self.assertEqual(bob.cfgmgr, True)
         self.assertEqual(bob.ccsession, True)
         self.assertEqual(bob.auth, True)
-        self.assertEqual(bob.recurse, False)
+        self.assertEqual(bob.resolver, False)
         self.assertEqual(bob.xfrout, True)
         self.assertEqual(bob.xfrin, True)
         self.assertEqual(bob.zonemgr, True)
         self.assertEqual(bob.stats, True)
         self.assertEqual(bob.cmdctl, True)
 
-    # Checks the processes started when starting only the recurse process
-    def test_start_recurse(self):
+    # Checks the processes started when starting only the resolver process
+    def test_start_resolver(self):
         # Created Bob and ensure initialization correct
         bob = StartAllProcessesBob()
         self.check_preconditions(bob)
@@ -271,7 +271,7 @@ class TestStartAllProcessesBob(unittest.TestCase):
         # Start processes and check what was started
         c_channel_env = {}
         bob.cfg_start_auth = False
-        bob.cfg_start_recurse = True
+        bob.cfg_start_resolver = True
 
         bob.start_all_processes(c_channel_env)
 
@@ -279,14 +279,14 @@ class TestStartAllProcessesBob(unittest.TestCase):
         self.assertEqual(bob.cfgmgr, True)
         self.assertEqual(bob.ccsession, True)
         self.assertEqual(bob.auth, False)
-        self.assertEqual(bob.recurse, True)
+        self.assertEqual(bob.resolver, True)
         self.assertEqual(bob.xfrout, False)
         self.assertEqual(bob.xfrin, False)
         self.assertEqual(bob.zonemgr, False)
         self.assertEqual(bob.stats, True)
         self.assertEqual(bob.cmdctl, True)
 
-    # Checks the processes started when starting both auth and recurse process
+    # Checks the processes started when starting both auth and resolver process
     def test_start_both(self):
         # Created Bob and ensure initialization correct
         bob = StartAllProcessesBob()
@@ -295,7 +295,7 @@ class TestStartAllProcessesBob(unittest.TestCase):
         # Start processes and check what was started
         c_channel_env = {}
         bob.cfg_start_auth = True
-        bob.cfg_start_recurse = True
+        bob.cfg_start_resolver = True
 
         bob.start_all_processes(c_channel_env)
 
@@ -303,7 +303,7 @@ class TestStartAllProcessesBob(unittest.TestCase):
         self.assertEqual(bob.cfgmgr, True)
         self.assertEqual(bob.ccsession, True)
         self.assertEqual(bob.auth, True)
-        self.assertEqual(bob.recurse, True)
+        self.assertEqual(bob.resolver, True)
         self.assertEqual(bob.xfrout, True)
         self.assertEqual(bob.xfrin, True)
         self.assertEqual(bob.zonemgr, True)

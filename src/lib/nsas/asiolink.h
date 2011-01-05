@@ -24,7 +24,7 @@ namespace asiolink {
 
 /// \brief IO Address Dummy Class
 ///
-/// As part of ther recursor, Evan has written the asiolink.h file, which
+/// As part of ther resolver, Evan has written the asiolink.h file, which
 /// encapsulates some of the boost::asio classes.  Until these are checked
 /// into trunk and merged with this branch, these dummy classes should fulfill
 /// their function.

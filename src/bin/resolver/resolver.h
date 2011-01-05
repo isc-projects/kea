@@ -14,8 +14,8 @@
 
 // $Id$
 
-#ifndef __RECURSOR_H
-#define __RECURSOR_H 1
+#ifndef __RESOLVER_H
+#define __RESOLVER_H 1
 
 #include <string>
 #include <vector>
@@ -26,7 +26,7 @@
 
 #include <asiolink/asiolink.h>
 
-class RecursorImpl;
+class ResolverImpl;
 
 /**
  * \short The recursive nameserver.
@@ -37,7 +37,7 @@ class RecursorImpl;
  * answer. It doesn't really know about chasing referrals and similar, it
  * simply plugs the parts that know into the network handling code.
  */
-class Recursor {
+class Resolver {
     ///
     /// \name Constructors, Assignment Operator and Destructor.
     ///
@@ -45,12 +45,12 @@ class Recursor {
     /// intentionally defined as private.
     //@{
 private:
-    Recursor(const Recursor& source);
-    Recursor& operator=(const Recursor& source);
+    Resolver(const Resolver& source);
+    Resolver& operator=(const Resolver& source);
 public:
     /// The constructor.
-    Recursor();
-    ~Recursor();
+    Resolver();
+    ~Resolver();
     //@}
 
     /// \brief Process an incoming DNS message, then signal 'server' to resume 
@@ -76,7 +76,7 @@ public:
     /// \brief Handle commands from the config session
     isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
 
-    /// \brief Assign an ASIO IO Service queue to this Recursor object
+    /// \brief Assign an ASIO IO Service queue to this Resolver object
     void setDNSService(asiolink::DNSService& dnss);
 
     /// \brief Return this object's ASIO IO Service queue
@@ -137,14 +137,14 @@ public:
     std::pair<int, unsigned> getTimeouts() const;
 
 private:
-    RecursorImpl* impl_;
+    ResolverImpl* impl_;
     asiolink::DNSService* dnss_;
     asiolink::SimpleCallback* checkin_;
     asiolink::DNSLookup* dns_lookup_;
     asiolink::DNSAnswer* dns_answer_;
 };
 
-#endif // __RECURSOR_H
+#endif // __RESOLVER_H
 
 // Local Variables: 
 // mode: c++
