@@ -106,7 +106,8 @@ Query::getAuthAdditional(const Zone& zone) const {
                 zone.getOrigin().toText());
     } else {
         response_.addRRset(Message::SECTION_AUTHORITY,
-                boost::const_pointer_cast<RRset>(ns_result.rrset));
+            boost::const_pointer_cast<RRset>(ns_result.rrset));
+        // Handle additional for authority section
         getAdditional(zone, *ns_result.rrset);
     }
 }
@@ -139,13 +140,23 @@ Query::process() const {
                 response_.setRcode(Rcode::NOERROR());
                 response_.addRRset(Message::SECTION_ANSWER,
                     boost::const_pointer_cast<RRset>(db_result.rrset));
-                getAuthAdditional(*result.zone);
+                // Handle additional for answer section
+                getAdditional(*result.zone, *db_result.rrset);
+                // If apex NS records haven't been provided in the answer
+                // section, insert apex NS records into the authority section
+                // and AAAA/A RRS of each of the NS RDATA into the additional
+                // section.
+                if (qname_ != result.zone->getOrigin() ||
+                    (qtype_ != RRType::NS() && qtype_ != RRType::ANY()))
+                {
+                    getAuthAdditional(*result.zone);
+                }
                 break;
             case Zone::DELEGATION:
                 response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
                 response_.setRcode(Rcode::NOERROR());
                 response_.addRRset(Message::SECTION_AUTHORITY,
-                            boost::const_pointer_cast<RRset>(db_result.rrset));
+                    boost::const_pointer_cast<RRset>(db_result.rrset));
                 getAdditional(*result.zone, *db_result.rrset);
                 break;
             case Zone::NXDOMAIN:

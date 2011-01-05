@@ -228,6 +228,32 @@ TEST_F(QueryTest, exactAddrMatch) {
                                   RRClass::IN(), RRType::A()));
 }
 
+TEST_F(QueryTest, apexNSMatch) {
+    // find match rrset, omit authority data which has already been provided
+    // in the answer section from the authority section.
+    memory_datasrc.addZone(ZonePtr(new MockZone()));
+    const Name apex_name(Name("example.com"));
+    Query apex_ns_query(memory_datasrc, apex_name, RRType::NS(), response);
+    EXPECT_NO_THROW(apex_ns_query.process());
+    EXPECT_TRUE(response.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ANSWER,
+                                  Name("example.com"), RRClass::IN(),
+                                  RRType::NS()));
+    EXPECT_FALSE(response.hasRRset(Message::SECTION_AUTHORITY,
+                                  Name("example.com"), RRClass::IN(),
+                                  RRType::NS()));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("glue.ns.example.com"),
+                                  RRClass::IN(), RRType::A()));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("glue.ns.example.com"),
+                                  RRClass::IN(), RRType::AAAA()));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("noglue.example.com"),
+                                  RRClass::IN(), RRType::A()));
+}
+
 TEST_F(QueryTest, exactAnyMatch) {
     // find match rrset, omit additional data which has already been provided
     // in the answer section from the additional.
@@ -254,11 +280,11 @@ TEST_F(QueryTest, exactAnyMatch) {
                                   RRClass::IN(), RRType::A()));
 }
 
-// This tests that when we need to look up Zone's apex NS records for 
+// This tests that when we need to look up Zone's apex NS records for
 // authoritative answer, and there is no apex NS records. It should
 // throw in that case.
 TEST_F(QueryTest, noApexNS) {
-    // Add a zone without apex NS records 
+    // Add a zone without apex NS records
     memory_datasrc.addZone(ZonePtr(new MockZone(true, false)));
     const Name noglue_name(Name("noglue.example.com"));
     Query noglue_query(memory_datasrc, noglue_name, qtype, response);
