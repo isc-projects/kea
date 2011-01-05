@@ -29,7 +29,7 @@ RRsetEntry::RRsetEntry(const isc::dns::RRset&,
 {
 }
 
-boost::shared_ptr<isc::dns::RRset>
+isc::dns::RRsetPtr
 RRsetEntry::genRRset() const {
     return boost::shared_ptr<isc::dns::RRset> ();
 }

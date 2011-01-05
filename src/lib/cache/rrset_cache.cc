@@ -26,11 +26,12 @@ using namespace isc::dns;
 namespace isc {
 namespace cache {
 
-RRsetCache::RRsetCache(uint32_t cache_size):
+RRsetCache::RRsetCache(uint32_t cache_size,
+                       uint16_t rrset_class):
+    class_(rrset_class),
     rrset_table_(new NsasEntryCompare<RRsetEntry>, cache_size),
     rrset_lru_((3 * cache_size),
                   new HashDeleter<RRsetEntry>(rrset_table_))
-
 {
 }
 
