@@ -12,10 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
+#include <dns/name.h>
 
 #include <resolver/resolver.h>
-#include <testutils/srv_unittest.h>
+#include <dns/tests/unittest_util.h>
+#include <testutils/srv_test.h>
+
+using namespace isc::dns;
+using namespace isc::testutils;
+using isc::UnitTestUtil;
 
 namespace {
 const char* const TEST_PORT = "53535";
@@ -23,48 +28,52 @@ const char* const TEST_PORT = "53535";
 class ResolverTest : public SrvTestBase{
 protected:
     ResolverTest() : server(){}
+    virtual void processMessage() {
+        server.processMessage(*io_message, parse_message, response_obuffer,
+                              &dnsserv);
+    }
     Resolver server;
 };
 
 // Unsupported requests.  Should result in NOTIMP.
 TEST_F(ResolverTest, unsupportedRequest) {
-    UNSUPPORTED_REQUEST_TEST;
+    unsupportedRequest();
 }
 
 // Multiple questions.  Should result in FORMERR.
 TEST_F(ResolverTest, multiQuestion) {
-    MULTI_QUESTION_TEST; 
+    multiQuestion(); 
 }
 
 // Incoming data doesn't even contain the complete header.  Must be silently
 // dropped.
 TEST_F(ResolverTest, shortMessage) {
-    SHORT_MESSAGE_TEST;
+    shortMessage();
 }
 
 // Response messages.  Must be silently dropped, whether it's a valid response
 // or malformed or could otherwise cause a protocol error.
 TEST_F(ResolverTest, response) {
-    RESPONSE_TEST;
+     response();
 }
 
 // Query with a broken question
 TEST_F(ResolverTest, shortQuestion) {
-    SHORT_QUESTION_TEST;
+    shortQuestion();
 }
 
 // Query with a broken answer section
 TEST_F(ResolverTest, shortAnswer) {
-    SHORT_ANSWER_TEST;
+    shortAnswer();
 }
 
 // Query with unsupported version of EDNS.
 TEST_F(ResolverTest, ednsBadVers) {
-    EDNS_BADVERS_TEST;
+    ednsBadVers();
 }
 
 TEST_F(ResolverTest, AXFROverUDP) {
-    AXFR_OVER_UDP_TEST;
+    axfrOverUDP();
 }
 
 TEST_F(ResolverTest, AXFRFail) {

@@ -12,10 +12,24 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
+#include <string>
+
+#include <gtest/gtest.h>
+
+#include <cc/data.h>
+
+#include <asiolink/asiolink.h>
 
 #include <resolver/resolver.h>
-#include <testutils/srv_unittest.h>
+
+#include <dns/tests/unittest_util.h>
+#include <testutils/srv_test.h>
+
+using namespace std;
+using namespace isc::data;
+using namespace isc::testutils;
+using namespace asiolink;
+using isc::UnitTestUtil;
 
 namespace {
 class ResolverConfig : public ::testing::Test {
