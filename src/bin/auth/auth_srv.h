@@ -185,7 +185,7 @@ public:
     /// control commands and configuration updates.
     void setConfigSession(isc::config::ModuleCCSession* config_session);
 
-    /// \brief Assign an ASIO IO Service queue to this Recursor object
+    /// \brief Assign an ASIO IO Service queue to this Resolver object
     void setIOService(asiolink::IOService& ios) { io_service_ = &ios; }
 
     /// \brief Return this object's ASIO IO Service queue
