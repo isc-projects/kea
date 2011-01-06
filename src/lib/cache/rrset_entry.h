@@ -17,7 +17,9 @@
 #ifndef __RRSET_ENTRY_H
 #define __RRSET_ENTRY_H
 
+#include <dns/rrset.h>
 #include <dns/message.h>
+#include <dns/rrttl.h>
 #include <nsas/nsas_entry.h>
 #include <nsas/fetchable.h>
 #include "cache_entry_key.h"
@@ -26,8 +28,6 @@ using namespace isc::nsas;
 
 namespace isc {
 namespace cache {
-
-class RRset;
 
 /// \enum RRset Trustworthiness
 /// For detail of RRset trustworthiness, please refer to
@@ -78,7 +78,7 @@ public:
 
     /// \brief Get the ttl of the RRset.
     uint32_t getTTL() const {
-        return ttl_;
+        return rrset_->getTTL().getValue();
     }
 
     /// \return return hash key
@@ -90,17 +90,12 @@ public:
     }
 
 private:
-    std::string name_;      // RRset owner name.
-    uint16_t type_;         // RRset type.
-    uint16_t class_;        // RRset class.
-
-    uint32_t ttl_;          // TTL of RRset
     uint32_t rr_count_;     // RRset count
     uint32_t rrsig_count_;  // RRSIG count
 
     time_t expire_time_;    // Expiration time of rrset.
     RRsetTrustLevel trust_level_; // rrset trustworthiness.
-    // sec_status;
+    boost::shared_ptr<isc::dns::RRset> rrset_;
 };
     
 typedef boost::shared_ptr<RRsetEntry> RRsetEntryPtr;    

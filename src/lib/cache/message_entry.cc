@@ -19,9 +19,7 @@
 #include <nsas/nsas_entry.h>
 #include <nsas/fetchable.h>
 #include "message_entry.h"
-#include "rrset_entry.h"
 #include "rrset_cache.h"
-
 
 using namespace isc::dns;
 using namespace std;
