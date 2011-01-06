@@ -54,7 +54,7 @@ RecursorCache::lookup(const isc::dns::Name& qname,
     if (cache_iter != rrsets_cache1_.end()) {
         RRsetEntryPtr rrset_entry = cache_iter->second->lookup(qname, qtype);
         if (rrset_entry) {
-            boost::shared_ptr<isc::dns::RRset> rrset_ptr = rrset_entry->genRRset();
+            boost::shared_ptr<isc::dns::RRset> rrset_ptr = rrset_entry->getRRset();
             response.addRRset(Message::SECTION_ANSWER, rrset_ptr);
         }
     }
@@ -79,7 +79,7 @@ RecursorCache::lookup_in_rrset_cache(const isc::dns::Name& qname,
     if (cache_iter != rrsets_cache.end()) {
         RRsetEntryPtr rrset_entry = cache_iter->second->lookup(qname, qtype);
         if (rrset_entry) {
-            return rrset_entry->genRRset();
+            return rrset_entry->getRRset();
         }
     }
 
