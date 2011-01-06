@@ -79,8 +79,9 @@ private:
     uint16_t class_; // The class of the rrset cache.
     isc::nsas::HashTable<RRsetEntry> rrset_table_;
     isc::nsas::LruList<RRsetEntry> rrset_lru_;
-
 };
+
+typedef boost::shared_ptr<RRsetCache> RRsetCachePtr;
     
 } // namespace cache
 } // namespace isc

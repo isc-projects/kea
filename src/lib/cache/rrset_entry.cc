@@ -33,6 +33,7 @@ RRsetEntry::RRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& leve
     rdata_itor->first();
     while(!rdata_itor->isLast()){
         rrset_->addRdata(rdata_itor->getCurrent());
+        rdata_itor->next();
     }
 }
 
