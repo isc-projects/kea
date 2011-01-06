@@ -25,15 +25,15 @@ namespace isc {
 namespace cache {
 
 RRsetEntry::RRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& level): 
-    type_(rrset.getClass().getCode()), 
-    class_(rrset.getClass().getCode()), ttl_(0), rr_count_(0), rrsig_count_(0),
-    expire_time_(0), trust_level_(level)
+    expire_time_(time(NULL) + rrset.getTTL().getValue()),
+    trust_level_(level),
+    rrset_(new RRset(rrset.getName(), rrset.getClass(), rrset.getType(), rrset.getTTL()))
 {
 }
 
 isc::dns::RRsetPtr
 RRsetEntry::genRRset() const {
-    return boost::shared_ptr<isc::dns::RRset> ();
+    return rrset_;
 }
 
 time_t
@@ -43,8 +43,8 @@ RRsetEntry::getExpireTime() const {
 
 HashKey
 RRsetEntry::hashKey() const {
-    CacheEntryKey keydata = genCacheEntryKey(name_, type_);
-    return HashKey(keydata.first, keydata.second, RRClass(class_));
+    CacheEntryKey keydata = genCacheEntryKey(rrset_->getName().toText(), rrset_->getType().getCode());
+    return HashKey(keydata.first, keydata.second, RRClass(rrset_->getClass().getCode()));
 }
 
 } // namespace cache
