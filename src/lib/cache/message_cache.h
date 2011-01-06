@@ -75,7 +75,8 @@ protected:
     HashKey getEntryHashKey(const isc::dns::Name& name, 
                             const isc::dns::RRType& type) const;
 
-private:
+    // Make these variants be protected for easy unittest.
+protected:
     uint16_t message_class_; // The class of the message cache.
     boost::shared_ptr<RRsetCache> rrset_cache_;
     isc::nsas::HashTable<MessageEntry> message_table_;

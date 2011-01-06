@@ -25,17 +25,18 @@ using namespace std;
 namespace isc {
 namespace cache {
 
-RecursorCache::RecursorCache(std::vector<uint16_t> dns_classes) {
+RecursorCache::RecursorCache(std::vector<CacheSizeInfo> caches_size) {
     uint32_t index = 0;
-    uint32_t size = dns_classes.size();
+    uint32_t size = caches_size.size();
     for (; index < size; index++) {
-        uint16_t klass = dns_classes[index];
+        CacheSizeInfo* infop = &caches_size[index];
+        uint16_t klass = infop->class_;
         rrsets_cache1_[klass] = RRsetCachePtr(new 
-                                RRsetCache(RRSET_CACHE1_DEFAULT_SIZE, klass));
+                                     RRsetCache(infop->rrset_cache_size, klass));
         rrsets_cache2_[klass] = RRsetCachePtr(new 
-                                RRsetCache(RRSET_CACHE2_DEFAULT_SIZE, klass));
+                                     RRsetCache(infop->rrset_cache_size, klass));
         messages_cache_[klass] = MessageCachePtr(new MessageCache(rrsets_cache2_[klass], 
-                                                      MESSAGE_CACHE_DEFAULT_SIZE, 
+                                                      infop->message_cache_size, 
                                                       klass));
     }
 }
