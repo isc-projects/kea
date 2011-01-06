@@ -30,11 +30,11 @@ namespace cache {
 class RRset;
 
 /// \enum RRset Trustworthiness
-/// For detail of rrset trustworthiness, please refer to
+/// For detail of RRset trustworthiness, please refer to
 /// RFC2181 section5.4.1.
 /// Bigger value is more trustworthy.
 enum RRsetTrustLevel {
-    // Default trust for rrset. 
+    // Default trust for RRset. 
     RRSET_TRUST_DEFAULT = 0,
     // Additional information from non-authoritative answer.
     RRSET_TRUST_ADDITIONAL_NONAA,
@@ -59,24 +59,24 @@ enum RRsetTrustLevel {
 };
 
 /// \brief RRset Entry
-/// The object of RRsetEntry represents one cached rrset.
-/// Each rrset entry may be refered using shared_ptr by several message 
+/// The object of RRsetEntry represents one cached RRset.
+/// Each RRset entry may be refered using shared_ptr by several message 
 /// entries.
-class RRsetEntry : public NsasEntry<RRsetEntry>, 
-                   public Fetchable 
+class RRsetEntry : public NsasEntry<RRsetEntry>
 {
 public:
-    /// \param rrset The rrset used to initialize the rrset entry.
-    /// \param level trustworthiness of the rrset.
+    /// \brief Constructor
+    /// \param rrset The RRset used to initialize the RRset entry.
+    /// \param level trustworthiness of the RRset.
     RRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& level);
 
-    /// \brief Generate one rrset according the entry information.
+    /// \brief Return a pointer to a generated RRset
     isc::dns::RRsetPtr genRRset() const;
     
-    /// \brief Get the expiration time of the rrset.
+    /// \brief Get the expiration time of the RRset.
     time_t getExpireTime() const;
 
-    /// \brief Get the ttl of the rrset.
+    /// \brief Get the ttl of the RRset.
     uint32_t getTTL() const {
         return ttl_;
     }
@@ -84,21 +84,21 @@ public:
     /// \return return hash key
     virtual HashKey hashKey() const;
 
-    /// \brief get rrset trustworthiness
+    /// \brief get RRset trustworthiness
     RRsetTrustLevel getTrustLevel() const {
         return trust_level_;
     }
 
 private:
-    std::string name_; // rrset name.
-    uint16_t type_; // rrset type.
-    uint16_t class_; // rrset class.
+    std::string name_;      // RRset owner name.
+    uint16_t type_;         // RRset type.
+    uint16_t class_;        // RRset class.
 
-    uint32_t ttl_; // ttl of rrset
-    uint32_t rr_count;
-    uint32_t rrsig_count;
+    uint32_t ttl_;          // TTL of RRset
+    uint32_t rr_count_;     // RRset count
+    uint32_t rrsig_count_;  // RRSIG count
 
-    time_t expire_time_; // Expiration time of rrset.
+    time_t expire_time_;    // Expiration time of rrset.
     RRsetTrustLevel trust_level_; // rrset trustworthiness.
     // sec_status;
 };
