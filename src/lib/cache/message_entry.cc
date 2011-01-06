@@ -53,14 +53,14 @@ MessageEntry::genMessage(const time_t& time_now,
         // Add answer section's rrsets.
         for(index = 0; index < answer_count_; index++) {
             msg.addRRset(Message::SECTION_ANSWER, 
-                         rrsets_[index]->genRRset(), dnssec_need);
+                         rrsets_[index]->getRRset(), dnssec_need);
         }
         
         // Add authority section's rrsets.
         uint16_t end = answer_count_ + authority_count_;
         for(index = answer_count_; index < end; index++) {
             msg.addRRset(Message::SECTION_AUTHORITY, 
-                         rrsets_[index]->genRRset(), dnssec_need);
+                         rrsets_[index]->getRRset(), dnssec_need);
         }
 
         // Add additional section's rrsets.
@@ -68,7 +68,7 @@ MessageEntry::genMessage(const time_t& time_now,
         end = end + additional_count_;
         for(; index < end; index++) {
             msg.addRRset(Message::SECTION_ADDITIONAL, 
-                         rrsets_[index]->genRRset(), dnssec_need);
+                         rrsets_[index]->getRRset(), dnssec_need);
         }
         return true;
     }

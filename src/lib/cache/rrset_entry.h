@@ -71,13 +71,14 @@ public:
     RRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& level);
 
     /// \brief Return a pointer to a generated RRset
-    isc::dns::RRsetPtr genRRset() const;
+    isc::dns::RRsetPtr getRRset();
     
     /// \brief Get the expiration time of the RRset.
     time_t getExpireTime() const;
 
     /// \brief Get the ttl of the RRset.
-    uint32_t getTTL() const {
+    uint32_t getTTL() {
+        updateTTL();
         return rrset_->getTTL().getValue();
     }
 
@@ -88,11 +89,11 @@ public:
     RRsetTrustLevel getTrustLevel() const {
         return trust_level_;
     }
+private:
+    /// \brief Update TTL according to expiration time
+    void updateTTL();
 
 private:
-    uint32_t rr_count_;     // RRset count
-    uint32_t rrsig_count_;  // RRSIG count
-
     time_t expire_time_;    // Expiration time of rrset.
     RRsetTrustLevel trust_level_; // rrset trustworthiness.
     boost::shared_ptr<isc::dns::RRset> rrset_;

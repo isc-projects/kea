@@ -29,10 +29,16 @@ RRsetEntry::RRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& leve
     trust_level_(level),
     rrset_(new RRset(rrset.getName(), rrset.getClass(), rrset.getType(), rrset.getTTL()))
 {
+    RdataIteratorPtr rdata_itor = rrset.getRdataIterator();
+    rdata_itor->first();
+    while(!rdata_itor->isLast()){
+        rrset_->addRdata(rdata_itor->getCurrent());
+    }
 }
 
 isc::dns::RRsetPtr
-RRsetEntry::genRRset() const {
+RRsetEntry::getRRset() {
+    updateTTL();
     return rrset_;
 }
 
@@ -45,6 +51,18 @@ HashKey
 RRsetEntry::hashKey() const {
     CacheEntryKey keydata = genCacheEntryKey(rrset_->getName().toText(), rrset_->getType().getCode());
     return HashKey(keydata.first, keydata.second, RRClass(rrset_->getClass().getCode()));
+}
+
+void
+RRsetEntry::updateTTL(){
+    uint32_t oldTTL = rrset_->getTTL().getValue();
+    if(oldTTL == 0) return;
+
+    uint32_t now = time(NULL);
+    uint32_t newTTL = now < expire_time_ ? (expire_time_ - now) : 0;
+
+    RRTTL ttl(newTTL);
+    rrset_->setTTL(ttl);
 }
 
 } // namespace cache
