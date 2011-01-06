@@ -34,8 +34,16 @@ typedef std::map<uint16_t, RRsetCachePtr> RRsetCacheMap;
 
 //TODO a better proper default cache size
 #define MESSAGE_CACHE_DEFAULT_SIZE 1000000 
-#define RRSET_CACHE1_DEFAULT_SIZE  1000
-#define RRSET_CACHE2_DEFAULT_SIZE  10000
+#define RRSET_CACHE_DEFAULT_SIZE  10000
+
+/// \brief Cache Size Information.
+/// It is used to initialize the size of rrset/message.
+struct CacheSizeInfo
+{
+    uint16_t class_; // class of the cache.
+    uint32_t message_cache_size; // the size for message cache.
+    uint32_t rrset_cache_size; // The size for rrset cache.
+};
 
 ///    
 /// \brief Recursor Cache
@@ -45,15 +53,17 @@ typedef std::map<uint16_t, RRsetCachePtr> RRsetCacheMap;
 class RecursorCache {
 public:
     /// \brief Construct Function
-    /// \param dns_classes cache the messages/rrsets for these classes.
-    RecursorCache(std::vector<uint16_t> dns_classes);
+    /// \param caches_size cache size information for each 
+    /// messages/rrsets.
+    RecursorCache(std::vector<CacheSizeInfo> caches_size);
 
     /// \name Lookup Interfaces
     //@{
     /// \brief Look up message in cache.
     ///
-    /// \param response generated response message if the message can be found 
-    ///  in cache.
+    /// \param response the query message (must in RENDER mode),
+    /// if the message can be found in cache, rrsets for the message
+    /// will be added to different sections.
     ///
     /// \return return true if the message can be found, or else, return false.
     bool lookup(const isc::dns::Name& qname, 
@@ -75,7 +85,10 @@ public:
 
     /// \brief Update the message in the cache with the new one.
     /// \return return true if the message is updated into the cache,
-    /// or else, return false.
+    /// or else, return false. 
+    ///
+    /// \note, the function doesn't do any message
+    /// validation check, the user should make sure the message is valid.
     bool update(const isc::dns::Message& msg);
 
     /// \brief Update the rrset in the cache with the new one.
@@ -84,7 +97,7 @@ public:
     /// will be added into both of them.
     /// \return return false, if the class of the parameter rrset is
     /// allowed to be cached.
-    ///
+    /// 
     /// \overload 
     ///
     bool update(const isc::dns::RRset& rrset);

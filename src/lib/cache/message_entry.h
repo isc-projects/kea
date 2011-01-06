@@ -75,9 +75,9 @@ protected:
     /// \brief Parse the rrsets in specified section.
     /// \param smaller_ttl Get the smallest ttl of rrsets in 
     /// specified section, if it's smaller than the given value.
-    void parseSection(const isc::dns::Message& msg,
-                      const isc::dns::Message::Section& section,
-                      uint32_t& smaller_ttl);
+    void parseRRset(const isc::dns::Message& msg,
+                    const isc::dns::Message::Section& section,
+                    uint32_t& smaller_ttl);
 
     /// \brief Get RRset Trust worthiness
     /// only the rrset can be updated by the rrsets 
@@ -95,7 +95,6 @@ private:
     uint16_t query_class_; // query class of the message.
     uint16_t query_type_; // query type of message.
 
-    uint16_t query_header; // query header of the message.
     uint16_t query_count_; // query count in query section.
     uint16_t answer_count_; // rrset count in answer section.
     uint16_t authority_count_; // rrset count in authority section.
@@ -103,6 +102,11 @@ private:
 
     std::vector<boost::shared_ptr<RRsetEntry> > rrsets_;
     boost::shared_ptr<RRsetCache> rrset_cache_;
+
+    //TODO, there should be a better way to cache these header flags
+    bool headerflag_aa_; // Whether AA bit is set.
+    bool headerflag_tc_; // Whether TC bit is set.
+    bool headerflag_ad_; // Whether AD bit is set.
 };
     
 typedef boost::shared_ptr<MessageEntry> MessageEntryPtr;
