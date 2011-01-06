@@ -31,17 +31,47 @@ static uint32_t MAX_UINT32 = numeric_limits<uint32_t>::max();
 
 MessageEntry::MessageEntry(const isc::dns::Message& msg,
                            boost::shared_ptr<RRsetCache> rrset_cache):
-    rrset_cache_(rrset_cache)
+    rrset_cache_(rrset_cache),
+    headerflag_aa_(false),
+    headerflag_tc_(false),
+    headerflag_ad_(false)
 {
     initMessageEntry(msg);
 }
     
 bool
-MessageEntry::genMessage(const time_t&,
-                         isc::dns::Message&)
+MessageEntry::genMessage(const time_t& time_now,
+                         isc::dns::Message& msg)
 {
-    //TODO, generate message according the query header flags.
-    return true;
+    if (time_now > expire_time_) {
+        // The message entry has expired.
+        return false;
+    } else {
+        ConstEDNSPtr edns(msg.getEDNS());
+        bool dnssec_need = edns;
+        uint16_t index = 0;
+        // Add answer section's rrsets.
+        for(index = 0; index < answer_count_; index++) {
+            msg.addRRset(Message::SECTION_ANSWER, 
+                         rrsets_[index]->genRRset(), dnssec_need);
+        }
+        
+        // Add authority section's rrsets.
+        uint16_t end = answer_count_ + authority_count_;
+        for(index = answer_count_; index < end; index++) {
+            msg.addRRset(Message::SECTION_AUTHORITY, 
+                         rrsets_[index]->genRRset(), dnssec_need);
+        }
+
+        // Add additional section's rrsets.
+        index = end;
+        end = end + additional_count_;
+        for(; index < end; index++) {
+            msg.addRRset(Message::SECTION_ADDITIONAL, 
+                         rrsets_[index]->genRRset(), dnssec_need);
+        }
+        return true;
+    }
 }
 
 RRsetTrustLevel
@@ -86,9 +116,9 @@ MessageEntry::getRRsetTrustLevel(const Message& message,
 }
 
 void
-MessageEntry::parseSection(const isc::dns::Message& msg,
-                           const Message::Section& section,
-                           uint32_t& smaller_ttl)
+MessageEntry::parseRRset(const isc::dns::Message& msg,
+                         const Message::Section& section,
+                         uint32_t& smaller_ttl)
 {
     RRsetIterator iter;
     for (iter = msg.beginSection(section);
@@ -116,8 +146,10 @@ MessageEntry::initMessageEntry(const isc::dns::Message& msg) {
     authority_count_ = msg.getRRCount(Message::SECTION_AUTHORITY);
     additional_count_ = msg.getRRCount(Message::SECTION_ADDITIONAL);
     
-    //TODO how to cache the header?
-    // query_header 
+    //TODO better way to cache the header flags?
+    headerflag_aa_ = msg.getHeaderFlag(Message::HEADERFLAG_AA);
+    headerflag_tc_ = msg.getHeaderFlag(Message::HEADERFLAG_TC);
+    headerflag_ad_ = msg.getHeaderFlag(Message::HEADERFLAG_AD);
 
     // We only cache the first question in question section.
     // TODO, do we need to support muptiple questions?
@@ -127,9 +159,9 @@ MessageEntry::initMessageEntry(const isc::dns::Message& msg) {
     query_class_ = (*iter)->getClass().getCode();
     
     uint32_t min_ttl = MAX_UINT32;
-    parseSection(msg, Message::SECTION_ANSWER, min_ttl);
-    parseSection(msg, Message::SECTION_AUTHORITY, min_ttl);
-    parseSection(msg, Message::SECTION_ADDITIONAL, min_ttl);
+    parseRRset(msg, Message::SECTION_ANSWER, min_ttl);
+    parseRRset(msg, Message::SECTION_AUTHORITY, min_ttl);
+    parseRRset(msg, Message::SECTION_ADDITIONAL, min_ttl);
 
     expire_time_ = time(NULL) + min_ttl;
 }
