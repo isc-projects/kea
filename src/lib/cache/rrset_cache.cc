@@ -46,7 +46,7 @@ RRsetCache::lookup(const isc::dns::Name& qname,
            keydata.first, keydata.second, RRClass(class_)));
 
     //If the rrset entry has expired, return NULL.
-    if(time(NULL) > entry_ptr->getExpireTime()) {
+    if(entry_ptr && (time(NULL) > entry_ptr->getExpireTime())) {
         return RRsetEntryPtr();
     }
     return entry_ptr;
