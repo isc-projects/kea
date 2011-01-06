@@ -193,6 +193,7 @@ config revert:	Revert all changes that have not been committed
 config commit: Commit all changes
 config diff: Show the changes that have not been committed yet
 
+
 EXAMPLE SESSION
 
 ~> bindctl
