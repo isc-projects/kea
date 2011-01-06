@@ -260,7 +260,7 @@ convertAddr(const string& address) {
         isc_throw(IOError, "Invalid IP address '" << &address << "': "
             << err.message());
     }
-    return addr;
+    return (addr);
 }
 
 }
