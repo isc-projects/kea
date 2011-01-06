@@ -24,8 +24,10 @@ using namespace isc::dns;
 namespace isc {
 namespace cache {
 
-RRsetEntry::RRsetEntry(const isc::dns::RRset&, 
-    const RRsetTrustLevel& level):trust_level_(level)
+RRsetEntry::RRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& level): 
+    type_(rrset.getClass().getCode()), 
+    class_(rrset.getClass().getCode()), ttl_(0), rr_count_(0), rrsig_count_(0),
+    expire_time_(0), trust_level_(level)
 {
 }
 
