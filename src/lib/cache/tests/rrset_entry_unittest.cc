@@ -47,11 +47,12 @@ TEST_F(GenCacheKeyTest, genCacheEntryKey2) {
     EXPECT_EQ(keystr, genCacheEntryName(name, type));
 }
 
+#define TEST_TTL 100
 class RRsetEntryTest : public ::testing::Test {
 protected:
     RRsetEntryTest(): 
         name("test.example.com"), 
-        rrset(name, RRClass::IN(), RRType::A(), RRTTL(100)),
+        rrset(name, RRClass::IN(), RRType::A(), RRTTL(TEST_TTL)),
         trust_level(RRSET_TRUST_ADDITIONAL_AA),
         rrset_entry(rrset, trust_level)
     {
@@ -63,7 +64,23 @@ protected:
 };
 
 TEST_F(RRsetEntryTest, constructor) {
-//    EXPECT_EQ(trust_level, rrset_entry.getTrustLevel());
+    EXPECT_EQ(trust_level, rrset_entry.getTrustLevel());
+    EXPECT_EQ(rrset.getName(), rrset_entry.getRRset()->getName());
+    EXPECT_EQ(rrset.getClass(), rrset_entry.getRRset()->getClass());
+    EXPECT_EQ(rrset.getType(), rrset_entry.getRRset()->getType());
+    EXPECT_EQ(rrset.getRdataCount(), rrset_entry.getRRset()->getRdataCount());
+}
+
+TEST_F(RRsetEntryTest, updateTTL) {
+    uint32_t ttl = rrset_entry.getTTL();
+    sleep(1);
+    // The TTL should be decreased
+    EXPECT_TRUE(rrset_entry.getTTL() < ttl);
+}
+
+TEST_F(RRsetEntryTest, getExpireTime){
+    uint32_t exp_time = time(NULL) + TEST_TTL;
+    EXPECT_EQ(exp_time, rrset_entry.getExpireTime());
 }
 
 }   // namespace
