@@ -36,6 +36,8 @@ RRsetEntry::RRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& leve
         rrset_->addRdata(rdata_itor->getCurrent());
         rdata_itor->next();
     }
+
+    rrset_->addRRsig(rrset.getRRsig());
 }
 
 isc::dns::RRsetPtr
