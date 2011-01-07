@@ -19,6 +19,9 @@
    configuration to the modules that need them.
 """
 
+# defect #426
+import pdb
+#
 import isc
 import signal
 import ast
@@ -100,6 +103,7 @@ class ConfigManagerData:
            output_file_name is not specified, the file used in
            read_from_file is used."""
         filename = None
+        pdb.set_trace()
         try:
             file = tempfile.NamedTemporaryFile(mode='w',
                                                prefix="b10-config.db.",
