@@ -202,8 +202,8 @@ class XfroutSession(BaseRequestHandler):
 
     def _zone_exist(self, zonename):
         '''Judge if the zone is configured by config manager.'''
-        # Currently, we judge the state by search datasource, if we find the
-        # zone in datasource successfully, we consider the zone is configured.
+        # Currently, if we find the zone in datasource successfully, we
+        # consider the zone is configured.
         # TODO: should get zone's configuration from cfgmgr or other place
         # in future.
         return sqlite3_ds.zone_exist(zonename, self.server.get_db_file())
