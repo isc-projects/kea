@@ -1,3 +1,11 @@
+  145.	[func]*		jinmei
+	b10-auth: added a new command 'loadzone' for (re)loading a
+	specific zone.  The command syntax is generic but it is currently
+	only feasible for class IN in memory data source.  To reload a
+	zone "example.com" via bindctl, execute the command as follows:
+	> Auth loadzone origin = example.com
+	(Trac #467)
+
   144.	[build]		jinmei
 	Introduced a workaround for clang++ build on FreeBSD (and probably
 	some other OSes).  If building BIND 10 fails with clang++ due to
