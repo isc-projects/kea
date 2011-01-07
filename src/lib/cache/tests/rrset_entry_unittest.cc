@@ -16,7 +16,13 @@
 #include <config.h>
 #include <string>
 #include <gtest/gtest.h>
-#include "../cache_entry_key.h"
+#include <cache/cache_entry_key.h>
+#include <cache/rrset_entry.h>
+#include <dns/name.h>
+#include <dns/rrclass.h>
+#include <dns/rrtype.h>
+#include <dns/rrttl.h>
+#include <dns/rrset.h>
 
 using namespace isc::cache;
 using namespace isc::dns;
@@ -39,6 +45,25 @@ TEST_F(GenCacheKeyTest, genCacheEntryKey2) {
     RRType type(1234);
     string keystr = "example.com.1234";
     EXPECT_EQ(keystr, genCacheEntryName(name, type));
+}
+
+class RRsetEntryTest : public ::testing::Test {
+protected:
+    RRsetEntryTest(): 
+        name("test.example.com"), 
+        rrset(name, RRClass::IN(), RRType::A(), RRTTL(100)),
+        trust_level(RRSET_TRUST_ADDITIONAL_AA),
+        rrset_entry(rrset, trust_level)
+    {
+    }
+    Name name;
+    RRset rrset;
+    RRsetTrustLevel trust_level;
+    RRsetEntry rrset_entry;
+};
+
+TEST_F(RRsetEntryTest, constructor) {
+//    EXPECT_EQ(trust_level, rrset_entry.getTrustLevel());
 }
 
 }   // namespace
