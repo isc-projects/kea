@@ -791,8 +791,10 @@ bind10-devel-20100421 released on April 21, 2010
 bind10-devel-20100319 released on March 19, 2010
 
 For complete code revision history, see http://bind10.isc.org/browser
-Specific subversion changesets can be accessed at:
+Specific git changesets can be accessed at:
 	http://bind10.isc.org/changeset/rrrr
+Subversion changesets are not accessible any more.  The subversion
+revision numbers will be replaced with corresponding git revisions.
 Trac tickets can be accessed at: https://bind10.isc.org/ticket/nnn
 
 LEGEND
