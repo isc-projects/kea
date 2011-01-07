@@ -249,11 +249,11 @@ private:
     isc::data::ConstElementPtr checkConfigUpdateCommand(
         const std::string& target_module,
         isc::data::ConstElementPtr arg);
-    
+
     isc::data::ConstElementPtr checkModuleCommand(
         const std::string& cmd_str,
         const std::string& target_module,
-        isc::data::ConstElementPtr arg);
+        isc::data::ConstElementPtr arg) const;
 
     isc::data::ConstElementPtr(*config_handler_)(
         isc::data::ConstElementPtr new_config);

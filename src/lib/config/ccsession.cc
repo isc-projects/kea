@@ -286,29 +286,31 @@ ModuleCCSession::hasQueuedMsgs() const {
 
 ConstElementPtr
 ModuleCCSession::checkConfigUpdateCommand(const std::string& target_module,
-                                          ConstElementPtr arg) {
+                                          ConstElementPtr arg)
+{
     if (target_module == module_name_) {
-        return handleConfigUpdate(arg);
+        return (handleConfigUpdate(arg));
     } else {
         // ok this update is not for us, if we have this module
         // in our remote config list, update that
         updateRemoteConfig(target_module, arg);
         // we're not supposed to answer to this, so return
-        return ElementPtr();
+        return (ElementPtr());
     }
 }
 
 ConstElementPtr
 ModuleCCSession::checkModuleCommand(const std::string& cmd_str,
                                     const std::string& target_module,
-                                    ConstElementPtr arg) {
+                                    ConstElementPtr arg) const
+{
     if (target_module == module_name_) {
         if (command_handler_) {
             ElementPtr errors = Element::createList();
             if (module_specification_.validateCommand(cmd_str,
                                                        arg,
                                                        errors)) {
-                return command_handler_(cmd_str, arg);
+                return (command_handler_(cmd_str, arg));
             } else {
                 std::stringstream ss;
                 ss << "Error in command validation: ";
@@ -316,15 +318,15 @@ ModuleCCSession::checkModuleCommand(const std::string& cmd_str,
                               errors->listValue()) {
                     ss << error->stringValue();
                 }
-                return createAnswer(3, ss.str());
+                return (createAnswer(3, ss.str()));
             }
         } else {
-            return createAnswer(1,
-                                "Command given but no "
-                                "command handler for module");
+            return (createAnswer(1,
+                                 "Command given but no "
+                                 "command handler for module"));
         }
     }
-    return ElementPtr();
+    return (ElementPtr());
 }
 
 int
