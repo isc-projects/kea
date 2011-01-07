@@ -83,6 +83,8 @@ protected:
     isc::nsas::LruList<MessageEntry> message_lru_;
 };
     
+typedef boost::shared_ptr<MessageCache> MessageCachePtr;
+
 } // namespace cache
 } // namespace isc
 

@@ -21,26 +21,26 @@ using namespace std;
 
 namespace isc {
 namespace cache {
-CacheEntryKey
-genCacheEntryKey(const isc::dns::Name& name,
+const std::string
+genCacheEntryName(const isc::dns::Name& name,
                  const isc::dns::RRType& type) 
 {
     std::string keystr = name.toText();
     ostringstream stream;
     stream << type.getCode();
     keystr += stream.str();
-    return CacheEntryKey(keystr.c_str(), keystr.length());
+    return keystr;
 }
-    
-CacheEntryKey
-genCacheEntryKey(const std::string& namestr,
+
+const std::string
+genCacheEntryName(const std::string& namestr,
                  const uint16_t type) 
 {
     std::string keystr = namestr;
     ostringstream stream;
     stream << type;
     keystr += stream.str();
-    return CacheEntryKey(keystr.c_str(), keystr.length());
+    return keystr;
 }
     
 } // namespace cache

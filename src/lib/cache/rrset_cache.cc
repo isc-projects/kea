@@ -22,6 +22,7 @@
 
 using namespace isc::nsas;
 using namespace isc::dns;
+using namespace std;
 
 namespace isc {
 namespace cache {
@@ -39,11 +40,8 @@ RRsetEntryPtr
 RRsetCache::lookup(const isc::dns::Name& qname,
                    const isc::dns::RRType& qtype)
 {
-    CacheEntryKey keydata = genCacheEntryKey(qname, qtype);
-    //TODO, HashKey need to be refactored, since we don't need query class
-    // as the parameters.
-    RRsetEntryPtr entry_ptr = rrset_table_.get(HashKey(
-           keydata.first, keydata.second, RRClass(class_)));
+    const string entry_name = genCacheEntryName(qname, qtype);
+    RRsetEntryPtr entry_ptr = rrset_table_.get(HashKey(entry_name, RRClass(class_)));
 
     //If the rrset entry has expired, return NULL.
     if(entry_ptr && (time(NULL) > entry_ptr->getExpireTime())) {
@@ -82,13 +80,6 @@ RRsetCache::update(const isc::dns::RRset& rrset, const RRsetTrustLevel& level) {
             return entry_ptr;
         }
     }
-}
-
-HashKey
-RRsetCache::getEntryHashKey(const Name& name, const RRType& type) const 
-{
-    CacheEntryKey keydata = genCacheEntryKey(name, type);
-    return HashKey(keydata.first, keydata.second, RRClass(class_));
 }
 
 void

@@ -25,6 +25,7 @@ namespace isc {
 namespace cache {
 
 RRsetEntry::RRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& level): 
+    entry_name_(genCacheEntryName(rrset.getName(), rrset.getType())), 
     expire_time_(time(NULL) + rrset.getTTL().getValue()),
     trust_level_(level),
     rrset_(new RRset(rrset.getName(), rrset.getClass(), rrset.getType(), rrset.getTTL()))
@@ -50,8 +51,7 @@ RRsetEntry::getExpireTime() const {
 
 HashKey
 RRsetEntry::hashKey() const {
-    CacheEntryKey keydata = genCacheEntryKey(rrset_->getName().toText(), rrset_->getType().getCode());
-    return HashKey(keydata.first, keydata.second, RRClass(rrset_->getClass().getCode()));
+    return HashKey(entry_name_, rrset_->getClass());
 }
 
 void
