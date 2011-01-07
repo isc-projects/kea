@@ -41,7 +41,9 @@ MessageCache::lookup(const isc::dns::Name& qname,
                      const isc::dns::RRType& qtype,
                      isc::dns::Message& response)
 {
-    HashKey entry_key = getEntryHashKey(qname, qtype);
+
+    std::string entry_name = genCacheEntryName(qname, qtype);
+    HashKey entry_key = HashKey(entry_name, RRClass(message_class_));
     MessageEntryPtr msg_entry = message_table_.get(entry_key);
     if(msg_entry) {
         message_lru_.touch(msg_entry);
@@ -54,12 +56,14 @@ MessageCache::lookup(const isc::dns::Name& qname,
 bool
 MessageCache::update(const Message& msg) {
     QuestionIterator iter = msg.beginQuestion();
-    HashKey entry_key = getEntryHashKey((*iter)->getName(),
-                                           (*iter)->getType());
+    std::string entry_name = genCacheEntryName((*iter)->getName(), (*iter)->getType());
+    HashKey entry_key = HashKey(entry_name, RRClass(message_class_));
     
     // The simplest way to update is removing the old message entry directly.
     // We have find the existed message entry, since we need to delete it
     // from lru list too.
+    // TODO, but there should be a better way, since we here have to remove and
+    // add the message entry, maybe there is one way to touch it once.
     MessageEntryPtr old_msg_entry = message_table_.get(entry_key);
     if (old_msg_entry) {
         message_table_.remove(entry_key);
@@ -67,15 +71,8 @@ MessageCache::update(const Message& msg) {
     }
 
     MessageEntryPtr msg_entry(new MessageEntry(msg, rrset_cache_));
-    message_lru_.touch(msg_entry); // Touch the new message entry
-    return message_table_.add(msg_entry, entry_key, true);
-}
-
-HashKey
-MessageCache::getEntryHashKey(const Name& name, const RRType& type) const 
-{
-    CacheEntryKey keydata = genCacheEntryKey(name, type);
-    return HashKey(keydata.first, keydata.second, RRClass(message_class_));
+    message_lru_.touch(msg_entry); 
+    return message_table_.add(msg_entry, entry_key, true); 
 }
 
 void

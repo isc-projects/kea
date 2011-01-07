@@ -4,7 +4,10 @@ AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(MULTITHREADING_FLAG)
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/cache -I$(top_builddir)/src/lib/cache
+AM_CPPFLAGS += -DTEST_DATA_SRCDIR=\"$(srcdir)/testdata\"
+AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/cache/tests/testdata\"
 AM_CXXFLAGS = $(B10_CXXFLAGS)
+
 
 AM_LDFLAGS = $(PTHREAD_LDFLAGS)
 if USE_STATIC_LINK
@@ -28,7 +31,9 @@ TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
+run_unittests_SOURCES  += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
 run_unittests_SOURCES  += rrset_entry_unittest.cc
+run_unittests_SOURCES  += message_cache_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)

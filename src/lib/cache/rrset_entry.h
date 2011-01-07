@@ -94,6 +94,7 @@ private:
     void updateTTL();
 
 private:
+    std::string entry_name_; // the entry name for this rrset entry.
     time_t expire_time_;    // Expiration time of rrset.
     RRsetTrustLevel trust_level_; // rrset trustworthiness.
     boost::shared_ptr<isc::dns::RRset> rrset_;

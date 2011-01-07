@@ -22,13 +22,12 @@
 #include <boost/shared_ptr.hpp>
 #include <dns/message.h>
 #include "message_cache.h"
+#include "rrset_cache.h"
 
 namespace isc {
 namespace cache {
 class RRsetCache;
 
-typedef boost::shared_ptr<MessageCache> MessageCachePtr;
-typedef boost::shared_ptr<RRsetCache> RRsetCachePtr;
 typedef std::map<uint16_t, MessageCachePtr> MessageCacheMap;
 typedef std::map<uint16_t, RRsetCachePtr> RRsetCacheMap;
 

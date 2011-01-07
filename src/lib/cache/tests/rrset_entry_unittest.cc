@@ -31,18 +31,14 @@ TEST_F(GenCacheKeyTest, genCacheEntryKey1) {
     uint16_t type = 12;
     string name_type = "example.com.12";
 
-    pair<const char*, const int32_t> key =  genCacheEntryKey(name, type);
-    EXPECT_EQ(name_type, string(key.first));
-    EXPECT_EQ(name_type.length(), key.second);
+    EXPECT_EQ(name_type, genCacheEntryName(name, type));
 }
 
 TEST_F(GenCacheKeyTest, genCacheEntryKey2) {
     Name name("example.com");
     RRType type(1234);
     string keystr = "example.com.1234";
-    pair<const char*, const int32_t> key = genCacheEntryKey(name, type);
-    EXPECT_EQ(keystr, string(key.first));
-    EXPECT_EQ(keystr.length(), key.second);
+    EXPECT_EQ(keystr, genCacheEntryName(name, type));
 }
 
 }   // namespace

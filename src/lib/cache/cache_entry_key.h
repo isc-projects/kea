@@ -24,22 +24,23 @@
 namespace isc {
 namespace cache {
 
-typedef std::pair<const char*, const uint32_t> CacheEntryKey;
-
-/// \brief Key Generation Functions
-/// Generate the hash key for message/rrset entries.
-/// The key is name(name of rrset) + type(16bits). 
+/// \brief Entry Name Generation Functions
+/// Generate the name for message/rrset entries.
+/// The name is name(name of rrset, for message entry, 
+/// the name is query name) + str(type)
 /// Note. the name is text string, not wire format.
-/// \return a pair(key_name, key_lenght) is returned
-CacheEntryKey
-genCacheEntryKey(const isc::dns::Name& name, 
+/// eg. if name is 'example.com.', type is 'A', the return
+/// value is 'example.com.1'
+/// \return return the entry name.
+const std::string
+genCacheEntryName(const isc::dns::Name& name, 
                  const isc::dns::RRType& type);
    
 /// 
 /// \overload
 /// 
-CacheEntryKey
-genCacheEntryKey(const std::string& namestr, const uint16_t type);
+const std::string
+genCacheEntryName(const std::string& namestr, const uint16_t type);
 
 } // namespace cache
 } // namespace isc
