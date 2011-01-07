@@ -190,7 +190,8 @@ ModuleSpec::validate_command(const std::string& command,
     ConstElementPtr commands_spec = module_specification->find("commands");
 
     if (args->getType() != Element::map) {
-        errors->add(Element::create("args for command " + command + " is not a map"));
+        errors->add(Element::create("args for command " +
+                                    command + " is not a map"));
         return (false);
     }
 
@@ -202,7 +203,8 @@ ModuleSpec::validate_command(const std::string& command,
 
     BOOST_FOREACH(ConstElementPtr cur_command, commands_spec->listValue()) {
         if (cur_command->get("command_name")->stringValue() == command) {
-            return (validate_spec_list(cur_command->get("command_args"), args, true, errors));
+            return (validate_spec_list(cur_command->get("command_args"),
+                                       args, true, errors));
         }
     }
 
