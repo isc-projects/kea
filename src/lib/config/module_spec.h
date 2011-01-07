@@ -102,7 +102,7 @@ namespace isc { namespace config {
         ///         false otherwise
         bool validate_command(const std::string& command,
                               isc::data::ConstElementPtr args,
-                              isc::data::ElementPtr errors);
+                              isc::data::ElementPtr errors) const;
 
 
         /// errors must be of type ListElement
