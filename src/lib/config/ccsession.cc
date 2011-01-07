@@ -284,6 +284,49 @@ ModuleCCSession::hasQueuedMsgs() const {
     return (session_.hasQueuedMsgs());
 }
 
+ConstElementPtr
+ModuleCCSession::checkConfigUpdateCommand(const std::string& target_module,
+                                          ConstElementPtr arg) {
+    if (target_module == module_name_) {
+        return handleConfigUpdate(arg);
+    } else {
+        // ok this update is not for us, if we have this module
+        // in our remote config list, update that
+        updateRemoteConfig(target_module, arg);
+        // we're not supposed to answer to this, so return
+        return ElementPtr();
+    }
+}
+
+ConstElementPtr
+ModuleCCSession::checkModuleCommand(const std::string& cmd_str,
+                                    const std::string& target_module,
+                                    ConstElementPtr arg) {
+    if (target_module == module_name_) {
+        if (command_handler_) {
+            ElementPtr errors = Element::createList();
+            if (module_specification_.validate_command(cmd_str,
+                                                       arg,
+                                                       errors)) {
+                return command_handler_(cmd_str, arg);
+            } else {
+                std::stringstream ss;
+                ss << "Error in command validation: ";
+                BOOST_FOREACH(ConstElementPtr error,
+                              errors->listValue()) {
+                    ss << error->stringValue();
+                }
+                return createAnswer(3, ss.str());
+            }
+        } else {
+            return createAnswer(1,
+                                "Command given but no "
+                                "command handler for module");
+        }
+    }
+    return ElementPtr();
+}
+
 int
 ModuleCCSession::checkCommand() {
     ConstElementPtr cmd, routing, data;
@@ -300,38 +343,9 @@ ModuleCCSession::checkCommand() {
             std::string cmd_str = parseCommand(arg, data);
             std::string target_module = routing->get("group")->stringValue();
             if (cmd_str == "config_update") {
-                if (target_module == module_name_) {
-                    answer = handleConfigUpdate(arg);
-                } else {
-                    // ok this update is not for us, if we have this module
-                    // in our remote config list, update that
-                    updateRemoteConfig(target_module, arg);
-                    // we're not supposed to answer to this, so return
-                    return (0);
-                }
+                answer = checkConfigUpdateCommand(target_module, arg);
             } else {
-                if (target_module == module_name_) {
-                    if (command_handler_) {
-                        ElementPtr errors = Element::createList();
-                        if (module_specification_.validate_command(cmd_str,
-                                                                   arg,
-                                                                   errors)) {
-                            answer = command_handler_(cmd_str, arg);
-                        } else {
-                            std::stringstream ss;
-                            ss << "Error in command validation: ";
-                            BOOST_FOREACH(ConstElementPtr error,
-                                          errors->listValue()) {
-                                ss << error->stringValue();
-                            }
-                            answer = createAnswer(3, ss.str());
-                        }
-                    } else {
-                        answer = createAnswer(1,
-                                              "Command given but no "
-                                              "command handler for module");
-                    }
-                }
+                answer = checkModuleCommand(cmd_str, target_module, arg);
             }
         } catch (const CCSessionError& re) {
             // TODO: Once we have logging and timeouts, we should not
