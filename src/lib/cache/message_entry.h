@@ -75,9 +75,13 @@ protected:
     /// \brief Parse the rrsets in specified section.
     /// \param smaller_ttl Get the smallest ttl of rrsets in 
     /// specified section, if it's smaller than the given value.
+    /// \param rrset_count set the rrset count of the section.
+    /// (TODO for Message, getRRsetCount() should be one interface provided 
+    //  by Message.)
     void parseRRset(const isc::dns::Message& msg,
                     const isc::dns::Message::Section& section,
-                    uint32_t& smaller_ttl);
+                    uint32_t& smaller_ttl,
+                    uint16_t& rrset_count);
 
     /// \brief Get RRset Trust worthiness
     /// only the rrset can be updated by the rrsets 
