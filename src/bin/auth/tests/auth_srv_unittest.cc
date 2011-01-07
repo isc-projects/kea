@@ -33,14 +33,17 @@
 #include <auth/common.h>
 #include <auth/statistics.h>
 
-#include <testutils/srv_unittest.h>
+#include <dns/tests/unittest_util.h>
+#include <testutils/srv_test.h>
 
+using namespace std;
 using namespace isc::cc;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::xfr;
 using namespace asiolink;
+using namespace isc::testutils;
 using isc::UnitTestUtil;
 
 namespace {
@@ -56,6 +59,10 @@ protected:
     AuthSrvTest() : server(true, xfrout), rrclass(RRClass::IN()) {
         server.setXfrinSession(&notify_session);
         server.setStatisticsSession(&statistics_session);
+    }
+    virtual void processMessage() {
+        server.processMessage(*io_message, parse_message, response_obuffer,
+                              &dnsserv);
     }
     MockSession statistics_session;
     MockXfroutClient xfrout;
@@ -161,48 +168,52 @@ TEST_F(AuthSrvTest, iqueryViaDNSServer) {
 
 // Unsupported requests.  Should result in NOTIMP.
 TEST_F(AuthSrvTest, unsupportedRequest) {
-    UNSUPPORTED_REQUEST_TEST;
+    unsupportedRequest();
 }
 
 // Simple API check
 TEST_F(AuthSrvTest, verbose) {
-    VERBOSE_TEST;
+    EXPECT_FALSE(server.getVerbose());
+    server.setVerbose(true);
+    EXPECT_TRUE(server.getVerbose());
+    server.setVerbose(false);
+    EXPECT_FALSE(server.getVerbose());
 }
 
 // Multiple questions.  Should result in FORMERR.
 TEST_F(AuthSrvTest, multiQuestion) {
-    MULTI_QUESTION_TEST;
+    multiQuestion();
 }
 
 // Incoming data doesn't even contain the complete header.  Must be silently
 // dropped.
 TEST_F(AuthSrvTest, shortMessage) {
-    SHORT_MESSAGE_TEST;
+    shortMessage();
 }
 
 // Response messages.  Must be silently dropped, whether it's a valid response
 // or malformed or could otherwise cause a protocol error.
 TEST_F(AuthSrvTest, response) {
-    RESPONSE_TEST;
+    response();
 }
 
 // Query with a broken question
 TEST_F(AuthSrvTest, shortQuestion) {
-    SHORT_QUESTION_TEST;
+    shortQuestion();
 }
 
 // Query with a broken answer section
 TEST_F(AuthSrvTest, shortAnswer) {
-    SHORT_ANSWER_TEST;
+    shortAnswer();
 }
 
 // Query with unsupported version of EDNS.
 TEST_F(AuthSrvTest, ednsBadVers) {
-    EDNS_BADVERS_TEST;
+    ednsBadVers();
 }
 
 TEST_F(AuthSrvTest, AXFROverUDP) {
-    AXFR_OVER_UDP_TEST;
+    axfrOverUDP();
 }
 
 TEST_F(AuthSrvTest, AXFRSuccess) {

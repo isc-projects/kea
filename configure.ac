@@ -9,7 +9,23 @@ AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
 AC_PROG_CXX
+
+# Libtool configuration
+#
+# On FreeBSD (and probably some others), clang++ does not meet an autoconf
+# assumption in identifying libtool configuration regarding shared library:
+# the configure script will execute "$CC -shared $CFLAGS -v -o" and expect
+# the output contains -Lxxx or -Ryyy.  This is the case for g++, but not for
+# clang++, and, as a result, it will cause various errors in linking programs
+# or running them with a shared object (such as some of our python scripts).
+# To work around this problem we define a temporary variable
+# "CXX_LIBTOOL_LDFLAGS".  It's expected to be defined as, e.g, "-L/usr/lib"
+# to temporarily fake the output so that it will be compatible with that of
+# g++.
+CFLAGS_SAVED=$CFLAGS
+CFLAGS="$CFLAGS $CXX_LIBTOOL_LDFLAGS"
 AC_PROG_LIBTOOL
+CFLAGS=$CFLAGS_SAVED
 
 # Use C++ language
 AC_LANG([C++])
@@ -577,8 +593,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/auth/Makefile
                  src/bin/auth/tests/Makefile
                  src/bin/auth/benchmarks/Makefile
-                 src/bin/recurse/Makefile
-                 src/bin/recurse/tests/Makefile
+                 src/bin/resolver/Makefile
+                 src/bin/resolver/tests/Makefile
                  src/bin/xfrin/Makefile
                  src/bin/xfrin/tests/Makefile
                  src/bin/xfrout/Makefile
@@ -597,6 +613,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/Makefile
                  src/lib/asiolink/Makefile
                  src/lib/asiolink/tests/Makefile
+                 src/lib/asiolink/internal/Makefile
+                 src/lib/asiolink/internal/tests/Makefile
                  src/lib/bench/Makefile
                  src/lib/bench/example/Makefile
                  src/lib/bench/tests/Makefile
@@ -650,8 +668,8 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/xfrout/xfrout.spec.pre
            src/bin/xfrout/tests/xfrout_test
            src/bin/xfrout/run_b10-xfrout.sh
-           src/bin/recurse/recurse.spec.pre
-           src/bin/recurse/spec_config.h.pre
+           src/bin/resolver/resolver.spec.pre
+           src/bin/resolver/spec_config.h.pre
            src/bin/zonemgr/zonemgr.py
            src/bin/zonemgr/zonemgr.spec.pre
            src/bin/zonemgr/tests/zonemgr_test
@@ -694,7 +712,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
-           chmod +x src/bin/recurse/run_b10-recurse.sh
+           chmod +x src/bin/resolver/run_b10-resolver.sh
            chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
            chmod +x src/bin/stats/tests/stats_test
            chmod +x src/bin/stats/run_b10-stats.sh

@@ -12,8 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <vector>
+#include <boost/foreach.hpp>
+
 #include <dns/message.h>
 #include <dns/rcode.h>
+#include <dns/rdataclass.h>
 
 #include <datasrc/memory_datasrc.h>
 
@@ -21,9 +25,64 @@
 
 using namespace isc::dns;
 using namespace isc::datasrc;
+using namespace isc::dns::rdata;
 
 namespace isc {
 namespace auth {
+
+void
+Query::getAdditional(const Zone& zone, const RRset& rrset) const {
+    RdataIteratorPtr rdata_iterator(rrset.getRdataIterator());
+    for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
+        const Rdata& rdata(rdata_iterator->getCurrent());
+        if (rrset.getType() == RRType::NS()) {
+            // Need to perform the search in the "GLUE OK" mode.
+            const generic::NS& ns = dynamic_cast<const generic::NS&>(rdata);
+            findAddrs(zone, ns.getNSName(), Zone::FIND_GLUE_OK);
+        } else if (rrset.getType() == RRType::MX()) {
+            const generic::MX& mx(dynamic_cast<const generic::MX&>(rdata));
+            findAddrs(zone, mx.getMXName());
+        }
+    }
+}
+
+void
+Query::findAddrs(const Zone& zone, const Name& qname,
+                 const Zone::FindOptions options) const
+{
+    // Out of zone name
+    NameComparisonResult result = zone.getOrigin().compare(qname);
+    if ((result.getRelation() != NameComparisonResult::SUPERDOMAIN) &&
+        (result.getRelation() != NameComparisonResult::EQUAL))
+        return;
+
+    // Omit additional data which has already been provided in the answer
+    // section from the additional.
+    //
+    // All the address rrset with the owner name of qname have been inserted
+    // into ANSWER section.
+    if (qname_ == qname && qtype_ == RRType::ANY())
+        return;
+
+    // Find A rrset
+    if (qname_ != qname || qtype_ != RRType::A()) {
+        Zone::FindResult a_result = zone.find(qname, RRType::A(), options);
+        if (a_result.code == Zone::SUCCESS) {
+            response_.addRRset(Message::SECTION_ADDITIONAL,
+                    boost::const_pointer_cast<RRset>(a_result.rrset));
+        }
+    }
+
+    // Find AAAA rrset
+    if (qname_ != qname || qtype_ != RRType::AAAA()) {
+        Zone::FindResult aaaa_result =
+            zone.find(qname, RRType::AAAA(), options);
+        if (aaaa_result.code == Zone::SUCCESS) {
+            response_.addRRset(Message::SECTION_ADDITIONAL,
+                    boost::const_pointer_cast<RRset>(aaaa_result.rrset));
+        }
+    }
+}
 
 void
 Query::putSOA(const Zone& zone) const {
@@ -40,6 +99,22 @@ Query::putSOA(const Zone& zone) const {
          */
         response_.addRRset(Message::SECTION_AUTHORITY,
             boost::const_pointer_cast<RRset>(soa_result.rrset));
+    }
+}
+
+void
+Query::getAuthAdditional(const Zone& zone) const {
+    // Fill in authority and addtional sections.
+    Zone::FindResult ns_result = zone.find(zone.getOrigin(), RRType::NS());
+    // zone origin name should have NS records
+    if (ns_result.code != Zone::SUCCESS) {
+        isc_throw(NoApexNS, "There's no apex NS records in zone " <<
+                zone.getOrigin().toText());
+    } else {
+        response_.addRRset(Message::SECTION_AUTHORITY,
+            boost::const_pointer_cast<RRset>(ns_result.rrset));
+        // Handle additional for authority section
+        getAdditional(zone, *ns_result.rrset);
     }
 }
 
@@ -70,11 +145,25 @@ Query::process() const {
             case Zone::SUCCESS:
                 response_.setRcode(Rcode::NOERROR());
                 response_.addRRset(Message::SECTION_ANSWER,
-                            boost::const_pointer_cast<RRset>(db_result.rrset));
-                // TODO : fill in authority and addtional sections.
+                    boost::const_pointer_cast<RRset>(db_result.rrset));
+                // Handle additional for answer section
+                getAdditional(*result.zone, *db_result.rrset);
+                // If apex NS records haven't been provided in the answer
+                // section, insert apex NS records into the authority section
+                // and AAAA/A RRS of each of the NS RDATA into the additional
+                // section.
+                if (qname_ != result.zone->getOrigin() ||
+                    (qtype_ != RRType::NS() && qtype_ != RRType::ANY()))
+                {
+                    getAuthAdditional(*result.zone);
+                }
                 break;
             case Zone::DELEGATION:
-                // TODO : add NS to authority section, fill in additional section.
+                response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
+                response_.setRcode(Rcode::NOERROR());
+                response_.addRRset(Message::SECTION_AUTHORITY,
+                    boost::const_pointer_cast<RRset>(db_result.rrset));
+                getAdditional(*result.zone, *db_result.rrset);
                 break;
             case Zone::NXDOMAIN:
                 // Just empty answer with SOA in authority section
@@ -93,5 +182,6 @@ Query::process() const {
         }
     }
 }
+
 }
 }
