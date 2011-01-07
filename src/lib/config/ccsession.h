@@ -91,11 +91,13 @@ isc::data::ConstElementPtr createCommand(const std::string& command,
 /// \brief Parses the given command into a string containing the actual
 ///        command and an ElementPtr containing the optional argument.
 ///
+/// Raises a CCSessionError if this is not a well-formed command
+///
 /// \param arg This value will be set to the ElementPtr pointing to
 ///        the argument, or to an empty Map (ElementPtr) if there was none.
 /// \param command The command message containing the command (as made
 ///        by createCommand()
-/// \return The command string
+/// \return The command name
 std::string parseCommand(isc::data::ConstElementPtr& arg,
                          isc::data::ConstElementPtr command);
 

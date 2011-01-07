@@ -135,8 +135,6 @@ createCommand(const std::string& command, ConstElementPtr arg) {
     return (cmd);
 }
 
-/// Returns "" and empty ElementPtr() if this does not
-/// look like a command
 std::string
 parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
     if (command &&
