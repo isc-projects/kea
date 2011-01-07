@@ -93,6 +93,35 @@ namespace isc { namespace config {
 
         /// Validates the arguments for the given command
         ///
+        /// This checks the command and argument against the
+        /// specification in the module's .spec file.
+        ///
+        /// A command is considered valid if:
+        /// - it is known (the 'command' string must have an entry in
+        ///                the specification)
+        /// - the args is a MapElement
+        /// - args contains all mandatory arguments
+        /// - args does not contain unknown arguments
+        /// - all arguments in args match their specification
+        /// If all of these are true, this function returns \c true
+        /// If not, this method returns \c false
+        ///
+        /// Example usage:
+        /// \code
+        ///     ElementPtr errors = Element::createList();
+        ///     if (module_specification_.validateCommand(cmd_str,
+        ///                                               arg,
+        ///                                               errors)) {
+        ///         std::cout << "Command is valid" << std::endl;
+        ///     } else {
+        ///         std::cout << "Command is invalid: " << std::endl;
+        ///         BOOST_FOREACH(ConstElementPtr error,
+        ///                       errors->listValue()) {
+        ///             std::cout << error->stringValue() << std::endl;
+        ///         }
+        ///     }
+        /// \endcode
+        ///
         /// \param command The command to validate the arguments for
         /// \param args A dict containing the command parameters
         /// \param errors An ElementPtr pointing to a ListElement. Any
