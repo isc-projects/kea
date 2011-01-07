@@ -255,7 +255,7 @@ ModuleCCSession::handleConfigUpdate(ConstElementPtr new_config) {
     ElementPtr errors = Element::createList();
     if (!config_handler_) {
         answer = createAnswer(1, module_name_ + " does not have a config handler");
-    } else if (!module_specification_.validate_config(new_config, false,
+    } else if (!module_specification_.validateConfig(new_config, false,
                                                       errors)) {
         std::stringstream ss;
         ss << "Error in config validation: ";
@@ -305,7 +305,7 @@ ModuleCCSession::checkModuleCommand(const std::string& cmd_str,
     if (target_module == module_name_) {
         if (command_handler_) {
             ElementPtr errors = Element::createList();
-            if (module_specification_.validate_command(cmd_str,
+            if (module_specification_.validateCommand(cmd_str,
                                                        arg,
                                                        errors)) {
                 return command_handler_(cmd_str, arg);
