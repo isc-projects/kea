@@ -194,28 +194,31 @@ class XfroutSession(BaseRequestHandler):
 
 
     def _zone_is_empty(self, zone):
+        '''Judge if the zone has data.'''
         if sqlite3_ds.get_zone_soa(zone, self.server.get_db_file()):
             return False
 
         return True
 
     def _zone_exist(self, zonename):
-        # Find zone in datasource, should this works? maybe should ask
-        # config manager.
-        soa = sqlite3_ds.get_zone_soa(zonename, self.server.get_db_file())
-        if soa:
-            return True
-        return False
-
+        '''Judge if the zone is configured by config manager.'''
+        # Currently, we judge the state by search datasource, if we find the
+        # zone in datasource successfully, we consider the zone is configured.
+        # TODO: should get zone's configuration from cfgmgr or other place
+        # in future.
+        return sqlite3_ds.zone_exist(zonename, self.server.get_db_file())
 
     def _check_xfrout_available(self, zone_name):
         '''Check if xfr request can be responsed.
            TODO, Get zone's configuration from cfgmgr or some other place
            eg. check allow_transfer setting,
         '''
+        # The zone isn't configured by config manager, so we are not the
+        # authoritative name server for it.
         if not self._zone_exist(zone_name):
             return Rcode.NOTAUTH()
 
+        # The zone is configured but zone data is empty.
         if self._zone_is_empty(zone_name):
             return Rcode.SERVFAIL()
 
