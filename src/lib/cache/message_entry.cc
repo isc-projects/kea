@@ -119,9 +119,11 @@ MessageEntry::getRRsetTrustLevel(const Message& message,
 void
 MessageEntry::parseRRset(const isc::dns::Message& msg,
                          const Message::Section& section,
-                         uint32_t& smaller_ttl)
+                         uint32_t& smaller_ttl, 
+                         uint16_t& rrset_count)
 {
     RRsetIterator iter;
+    int count = 0;
     for (iter = msg.beginSection(section);
          iter != msg.endSection(section);
          ++iter) {
@@ -137,16 +139,15 @@ MessageEntry::parseRRset(const isc::dns::Message& msg,
         if (smaller_ttl > rrset_ttl) {
             smaller_ttl = rrset_ttl;
         }
+
+        count++;
     }
+
+    rrset_count = count;
 }
 
 void
 MessageEntry::initMessageEntry(const isc::dns::Message& msg) {
-    query_count_ = msg.getRRCount(Message::SECTION_QUESTION);
-    answer_count_ = msg.getRRCount(Message::SECTION_ANSWER);
-    authority_count_ = msg.getRRCount(Message::SECTION_AUTHORITY);
-    additional_count_ = msg.getRRCount(Message::SECTION_ADDITIONAL);
-    
     //TODO better way to cache the header flags?
     headerflag_aa_ = msg.getHeaderFlag(Message::HEADERFLAG_AA);
     headerflag_tc_ = msg.getHeaderFlag(Message::HEADERFLAG_TC);
@@ -154,15 +155,16 @@ MessageEntry::initMessageEntry(const isc::dns::Message& msg) {
 
     // We only cache the first question in question section.
     // TODO, do we need to support muptiple questions?
+    query_count_ = 1; 
     QuestionIterator iter = msg.beginQuestion();
     query_name_ = (*iter)->getName().toText();
     query_type_ = (*iter)->getType().getCode();
     query_class_ = (*iter)->getClass().getCode();
     
     uint32_t min_ttl = MAX_UINT32;
-    parseRRset(msg, Message::SECTION_ANSWER, min_ttl);
-    parseRRset(msg, Message::SECTION_AUTHORITY, min_ttl);
-    parseRRset(msg, Message::SECTION_ADDITIONAL, min_ttl);
+    parseRRset(msg, Message::SECTION_ANSWER, min_ttl, answer_count_);
+    parseRRset(msg, Message::SECTION_AUTHORITY, min_ttl, authority_count_);
+    parseRRset(msg, Message::SECTION_ADDITIONAL, min_ttl, additional_count_);
 
     expire_time_ = time(NULL) + min_ttl;
 }
