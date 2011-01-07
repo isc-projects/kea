@@ -1,3 +1,13 @@
+  144.	[build]		jinmei
+	Introduced a workaround for clang++ build on FreeBSD (and probably
+	some other OSes).  If building BIND 10 fails with clang++ due to
+	a link error about "__dso_handle", try again from the configure
+	script with CXX_LIBTOOL_LDFLAGS=-L/usr/lib (the path actually
+	doesn't matter; the important part is the -L flag).  This
+	workaround is not automatically enabled as it's difficult to
+	detect the need for it dynamically, and must be enabled via the
+	variable by hand. (Trac #474, git cfde436)
+
   143.	[build]		jinmei
 	Fixed build problems with clang++ in unit tests due to recent
 	changes.  No behavior change. (Trac #448, svn r4133)
