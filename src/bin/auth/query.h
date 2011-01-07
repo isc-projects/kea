@@ -15,17 +15,18 @@
  */
 
 #include <exceptions/exceptions.h>
+#include <datasrc/zone.h>
 
 namespace isc {
 namespace dns {
 class Message;
 class Name;
 class RRType;
+class RRset;
 }
 
 namespace datasrc {
 class MemoryDataSrc;
-class Zone;
 }
 
 namespace auth {
@@ -63,6 +64,72 @@ namespace auth {
 /// accidentally, and since it's considered a temporary development state,
 /// we keep this name at the moment.
 class Query {
+private:
+
+    /// \brief Adds a SOA.
+    ///
+    /// Adds a SOA of the zone into the authority zone of response_.
+    /// Can throw NoSOA.
+    ///
+    void putSOA(const isc::datasrc::Zone& zone) const;
+
+    /// \brief Look up additional data (i.e., address records for the names
+    /// included in NS or MX records).
+    ///
+    /// Note: Any additional data which has already been provided in the
+    /// answer section (i.e., if the original query happend to be for the
+    /// address of the DNS server), it should be omitted from the additional.
+    ///
+    /// This method may throw a exception because its underlying methods may
+    /// throw exceptions.
+    ///
+    /// \param zone The Zone wherein the additional data to the query is bo be
+    /// found.
+    /// \param rrset The RRset (i.e., NS or MX rrset) which require additional
+    /// processing.
+    void getAdditional(const isc::datasrc::Zone& zone,
+                       const isc::dns::RRset& rrset) const;
+
+    /// \brief Find address records for a specified name.
+    ///
+    /// Search the specified zone for AAAA/A RRs of each of the NS/MX RDATA
+    /// (domain name), and insert the found ones into the additional section
+    /// if address records are available. By default the search will stop
+    /// once it encounters a zone cut.
+    ///
+    /// Note: we need to perform the search in the "GLUE OK" mode for NS RDATA,
+    /// which means that we should include A/AAAA RRs under a zone cut.
+    /// The glue records must exactly match the name in the NS RDATA, without
+    /// CNAME or wildcard processing.
+    ///
+    /// \param zone The \c Zone wherein the address records is to be found.
+    /// \param qname The name in rrset RDATA.
+    /// \param options The search options.
+    void findAddrs(const isc::datasrc::Zone& zone,
+                   const isc::dns::Name& qname,
+                   const isc::datasrc::Zone::FindOptions options
+                   = isc::datasrc::Zone::FIND_DEFAULT) const;
+
+    /// \brief Look up \c Zone's NS and address records for the NS RDATA
+    /// (domain name) for authoritative answer.
+    ///
+    /// On returning an authoritative answer, insert the \c Zone's NS into the
+    /// authority section and AAAA/A RRs of each of the NS RDATA into the
+    /// additional section.
+    ///
+    /// <b>Notes to developer:</b>
+    ///
+    /// We should omit address records which has already been provided in the
+    /// answer section from the additional.
+    ///
+    /// For now, in order to optimize the additional section processing, we
+    /// include AAAA/A RRs under a zone cut in additional section. (BIND 9
+    /// excludes under-cut RRs; NSD include them.)
+    ///
+    /// \param zone The \c Zone wherein the additional data to the query is to
+    /// be found.
+    void getAuthAdditional(const isc::datasrc::Zone& zone) const;
+
 public:
     /// Constructor from query parameters.
     ///
@@ -130,19 +197,21 @@ public:
         {}
     };
 
+    /// \short Zone is missing its apex NS records.
+    ///
+    /// We tried to add apex NS records into the authority section, but the
+    /// zone does not contain any.
+    struct NoApexNS: public BadZone {
+        NoApexNS(const char* file, size_t line, const char* what) :
+            BadZone(file, line, what)
+        {}
+    };
+
 private:
     const isc::datasrc::MemoryDataSrc& memory_datasrc_;
     const isc::dns::Name& qname_;
     const isc::dns::RRType& qtype_;
     isc::dns::Message& response_;
-
-    /**
-     * \short Adds a SOA.
-     *
-     * Adds a SOA of the zone into the authority zone of response_.
-     * Can throw NoSOA.
-     */
-    void putSOA(const isc::datasrc::Zone& zone) const;
 };
 
 }

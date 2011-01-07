@@ -12,62 +12,71 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
+#include <dns/name.h>
 
-#include <recurse/recursor.h>
-#include <testutils/srv_unittest.h>
+#include <resolver/resolver.h>
+#include <dns/tests/unittest_util.h>
+#include <testutils/srv_test.h>
+
+using namespace isc::dns;
+using namespace isc::testutils;
+using isc::UnitTestUtil;
 
 namespace {
 const char* const TEST_PORT = "53535";
 
-class RecursorTest : public SrvTestBase{
+class ResolverTest : public SrvTestBase{
 protected:
-    RecursorTest() : server(){}
-    Recursor server;
+    ResolverTest() : server(){}
+    virtual void processMessage() {
+        server.processMessage(*io_message, parse_message, response_obuffer,
+                              &dnsserv);
+    }
+    Resolver server;
 };
 
 // Unsupported requests.  Should result in NOTIMP.
-TEST_F(RecursorTest, unsupportedRequest) {
-    UNSUPPORTED_REQUEST_TEST;
+TEST_F(ResolverTest, unsupportedRequest) {
+    unsupportedRequest();
 }
 
 // Multiple questions.  Should result in FORMERR.
-TEST_F(RecursorTest, multiQuestion) {
-    MULTI_QUESTION_TEST; 
+TEST_F(ResolverTest, multiQuestion) {
+    multiQuestion(); 
 }
 
 // Incoming data doesn't even contain the complete header.  Must be silently
 // dropped.
-TEST_F(RecursorTest, shortMessage) {
-    SHORT_MESSAGE_TEST;
+TEST_F(ResolverTest, shortMessage) {
+    shortMessage();
 }
 
 // Response messages.  Must be silently dropped, whether it's a valid response
 // or malformed or could otherwise cause a protocol error.
-TEST_F(RecursorTest, response) {
-    RESPONSE_TEST;
+TEST_F(ResolverTest, response) {
+     response();
 }
 
 // Query with a broken question
-TEST_F(RecursorTest, shortQuestion) {
-    SHORT_QUESTION_TEST;
+TEST_F(ResolverTest, shortQuestion) {
+    shortQuestion();
 }
 
 // Query with a broken answer section
-TEST_F(RecursorTest, shortAnswer) {
-    SHORT_ANSWER_TEST;
+TEST_F(ResolverTest, shortAnswer) {
+    shortAnswer();
 }
 
 // Query with unsupported version of EDNS.
-TEST_F(RecursorTest, ednsBadVers) {
-    EDNS_BADVERS_TEST;
+TEST_F(ResolverTest, ednsBadVers) {
+    ednsBadVers();
 }
 
-TEST_F(RecursorTest, AXFROverUDP) {
-    AXFR_OVER_UDP_TEST;
+TEST_F(ResolverTest, AXFROverUDP) {
+    axfrOverUDP();
 }
 
-TEST_F(RecursorTest, AXFRFail) {
+TEST_F(ResolverTest, AXFRFail) {
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
                                        Name("example.com"), RRClass::IN(),
                                        RRType::AXFR());
@@ -79,7 +88,7 @@ TEST_F(RecursorTest, AXFRFail) {
                 QR_FLAG, 1, 0, 0, 0);
 }
 
-TEST_F(RecursorTest, notifyFail) {
+TEST_F(ResolverTest, notifyFail) {
     // Notify should always return NOTAUTH
     request_message.clear(Message::RENDER);
     request_message.setOpcode(Opcode::NOTIFY());

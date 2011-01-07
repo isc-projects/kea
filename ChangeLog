@@ -1,3 +1,17 @@
+  144.	[build]		jinmei
+	Introduced a workaround for clang++ build on FreeBSD (and probably
+	some other OSes).  If building BIND 10 fails with clang++ due to
+	a link error about "__dso_handle", try again from the configure
+	script with CXX_LIBTOOL_LDFLAGS=-L/usr/lib (the path actually
+	doesn't matter; the important part is the -L flag).  This
+	workaround is not automatically enabled as it's difficult to
+	detect the need for it dynamically, and must be enabled via the
+	variable by hand. (Trac #474, git cfde436)
+
+  143.	[build]		jinmei
+	Fixed build problems with clang++ in unit tests due to recent
+	changes.  No behavior change. (Trac #448, svn r4133)
+
   142.	[func]		jinmei
 	b10-auth: updated query benchmark so that it can test in memory
 	data source.  Also fixed a bug that the output buffer isn't
@@ -58,21 +72,21 @@
 	(Trac #202, svn r3967)
 
   135.  [func]      each
-	Add b10-recurse. This is an example recursive server that
+	Add b10-resolver. This is an example recursive server that
 	currently does forwarding only and no caching.
 	(Trac #327, svn r3903)
 
   134.  [func]      vorner
-	b10-recurse supports timeouts and retries in forwarder mode.
+	b10-resolver supports timeouts and retries in forwarder mode.
 	(Trac #401, svn r3660)
 
   133.  [func]      vorner
 	New temporary logging function available in isc::log. It is used by
-	b10-recurse.
+	b10-resolver.
 	(Trac #393, r3602)
 
   132.  [func]      vorner
-	The b10-recurse is configured through config manager.
+	The b10-resolver is configured through config manager.
 	It has "listen_on" and "forward_addresses" options.
 	(Trac #389, r3448)
 
@@ -135,7 +149,7 @@ bind10-devel-20101201 released on December 01, 2010
   122.  [func]		stephen
 	src/bin/bind10: Added configuration options to Boss to determine
 	whether to start the authoritative server, recursive server (or
-	both). A dummy recursor has been provided for test purposes.
+	both). A dummy program has been provided for test purposes.
 	(Trac #412, svn r3676)
 
   121.  [func]		jinmei
@@ -777,8 +791,10 @@ bind10-devel-20100421 released on April 21, 2010
 bind10-devel-20100319 released on March 19, 2010
 
 For complete code revision history, see http://bind10.isc.org/browser
-Specific subversion changesets can be accessed at:
+Specific git changesets can be accessed at:
 	http://bind10.isc.org/changeset/rrrr
+Subversion changesets are not accessible any more.  The subversion
+revision numbers will be replaced with corresponding git revisions.
 Trac tickets can be accessed at: https://bind10.isc.org/ticket/nnn
 
 LEGEND
