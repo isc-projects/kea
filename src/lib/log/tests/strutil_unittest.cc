@@ -18,10 +18,9 @@
 
 #include <gtest/gtest.h>
 
-#include <log/stringutil.h>
+#include <log/strutil.h>
 
 using namespace isc;
-using namespace isc::log;
 using namespace std;
 
 class StringUtilTest : public ::testing::Test {
@@ -37,15 +36,15 @@ protected:
 TEST_F(StringUtilTest, Slash) {
 
     string instring = "";
-    StringUtil::normalizeSlash(instring);
+    isc::strutil::normalizeSlash(instring);
     EXPECT_EQ("", instring);
 
     instring = "C:\\A\\B\\C.D";
-    StringUtil::normalizeSlash(instring);
+    isc::strutil::normalizeSlash(instring);
     EXPECT_EQ("C:/A/B/C.D", instring);
 
     instring = "// \\ //";
-    StringUtil::normalizeSlash(instring);
+    isc::strutil::normalizeSlash(instring);
     EXPECT_EQ("// / //", instring);
 }
 
@@ -54,19 +53,19 @@ TEST_F(StringUtilTest, Slash) {
 TEST_F(StringUtilTest, Trim) {
 
     // Empty and full string.
-    EXPECT_EQ("", StringUtil::trim(""));
-    EXPECT_EQ("abcxyz", StringUtil::trim("abcxyz"));
+    EXPECT_EQ("", isc::strutil::trim(""));
+    EXPECT_EQ("abcxyz", isc::strutil::trim("abcxyz"));
 
     // Trim right-most blanks
-    EXPECT_EQ("ABC", StringUtil::trim("ABC   "));
-    EXPECT_EQ("ABC", StringUtil::trim("ABC\t\t  \n\t"));
+    EXPECT_EQ("ABC", isc::strutil::trim("ABC   "));
+    EXPECT_EQ("ABC", isc::strutil::trim("ABC\t\t  \n\t"));
 
     // Left-most blank trimming
-    EXPECT_EQ("XYZ", StringUtil::trim("  XYZ"));
-    EXPECT_EQ("XYZ", StringUtil::trim("\t\t  \tXYZ"));
+    EXPECT_EQ("XYZ", isc::strutil::trim("  XYZ"));
+    EXPECT_EQ("XYZ", isc::strutil::trim("\t\t  \tXYZ"));
 
     // Right and left, with embedded spaces
-    EXPECT_EQ("MN \t OP", StringUtil::trim("\t\tMN \t OP \t"));
+    EXPECT_EQ("MN \t OP", isc::strutil::trim("\t\tMN \t OP \t"));
 }
 
 // Check tokenization.  Note that ASSERT_EQ is used to check the size of the
@@ -77,25 +76,25 @@ TEST_F(StringUtilTest, Tokens) {
     vector<string>  result;
 
     // Default delimiters
-    result = StringUtil::tokens(" \n ");    // Empty string
+    result = isc::strutil::tokens(" \n ");    // Empty string
     EXPECT_EQ(0, result.size());
 
-    result = StringUtil::tokens("abc");     // Full string
+    result = isc::strutil::tokens("abc");     // Full string
     ASSERT_EQ(1, result.size());
     EXPECT_EQ(string("abc"), result[0]);
 
-    result = StringUtil::tokens("\t xyz \n");
+    result = isc::strutil::tokens("\t xyz \n");
     ASSERT_EQ(1, result.size());
     EXPECT_EQ(string("xyz"), result[0]);
 
-    result = StringUtil::tokens("abc\ndef\t\tghi ");
+    result = isc::strutil::tokens("abc\ndef\t\tghi ");
     ASSERT_EQ(3, result.size());
     EXPECT_EQ(string("abc"), result[0]);
     EXPECT_EQ(string("def"), result[1]);
     EXPECT_EQ(string("ghi"), result[2]);
 
     // Non-default delimiters
-    result = StringUtil::tokens("alpha/beta/ /gamma//delta/epsilon/", "/");
+    result = isc::strutil::tokens("alpha/beta/ /gamma//delta/epsilon/", "/");
     ASSERT_EQ(6, result.size());
     EXPECT_EQ(string("alpha"), result[0]);
     EXPECT_EQ(string("beta"), result[1]);
@@ -113,10 +112,53 @@ TEST_F(StringUtilTest, ChangeCase) {
     string lower("abcdefghijklmno123[]{=+--+]}");
 
     string test = mixed;
-    StringUtil::lowercase(test);
+    isc::strutil::lowercase(test);
     EXPECT_EQ(lower, test);
 
     test = mixed;
-    StringUtil::uppercase(test);
+    isc::strutil::uppercase(test);
     EXPECT_EQ(upper, test);
+}
+
+// Formatting
+
+TEST_F(StringUtilTest, Formatting) {
+
+    vector<string> args;
+    args.push_back("arg1");
+    args.push_back("arg2");
+    args.push_back("arg3");
+
+    string format1 = "This is a string with no tokens";
+    EXPECT_EQ(format1, isc::strutil::format(format1, args));
+
+    string format2 = "";    // Empty string
+    EXPECT_EQ(format2, isc::strutil::format(format2, args));
+
+    string format3 = "   ";    // Empty string
+    EXPECT_EQ(format3, isc::strutil::format(format3, args));
+
+    string format4 = "String with %d non-string tokens %lf";
+    EXPECT_EQ(format4, isc::strutil::format(format4, args));
+
+    string format5 = "String with %s correct %s number of tokens %s";
+    string result5 = "String with arg1 correct arg2 number of tokens arg3";
+    EXPECT_EQ(result5, isc::strutil::format(format5, args));
+
+    string format6 = "String with %s too %s few tokens";
+    string result6 = "String with arg1 too arg2 few tokens";
+    EXPECT_EQ(result6, isc::strutil::format(format6, args));
+
+    string format7 = "String with %s too %s many %s tokens %s !";
+    string result7 = "String with arg1 too arg2 many arg3 tokens %s !";
+    EXPECT_EQ(result7, isc::strutil::format(format7, args));
+
+    string format8 = "String with embedded%s%s%stokens";
+    string result8 = "String with embeddedarg1arg2arg3tokens";
+    EXPECT_EQ(result8, isc::strutil::format(format8, args));
+
+    // Handle an empty vector
+    args.clear();
+    string format9 = "%s %s";
+    EXPECT_EQ(format9, isc::strutil::format(format9, args));
 }

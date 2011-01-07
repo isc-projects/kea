@@ -19,7 +19,7 @@
 
 #include <string>
 
-#include <stringutil.h>
+#include <strutil.h>
 
 namespace isc {
 namespace log {
@@ -71,9 +71,9 @@ public:
     ///
     /// \param name New name to replaced currently stored name
     void setName(const std::string& name) {
-        full_name_ = StringUtil::trim(name);
+        full_name_ = isc::strutil::trim(name);
 #ifdef WIN32
-        StringUtil::normalizeSlash(full_name_);
+        isc::strutil::normalizeSlash(full_name_);
 #endif
         split(full_name_, directory_, name_, extension_);
     }

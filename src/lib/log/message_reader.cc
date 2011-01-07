@@ -14,8 +14,16 @@
 
 // $Id$
 
+#include <errno.h>
+#include <string.h>
+
+#include <iostream>
+#include <fstream>
+
+#include <log/message_exception.h>
+#include <log/messagedef.h>
 #include <log/message_reader.h>
-#include <log/stringutil.h>
+#include <log/strutil.h>
 
 using namespace std;
 
@@ -26,87 +34,90 @@ namespace log {
 MessageReader::~MessageReader() {
 }
 
-// Return error text
+// Get/Set the dictionary.
 
-string MessageReader::errorText(MessageReader::Status status) {
-    switch (status) {
-        case SUCCESS:
-            return "Success";
+MessageDictionary* MessageReader::getDictionary() const {
+    return dictionary_;
+}
 
-        case DUPLPRFX:
-            return "Error, duplicate $PREFIX directive found";
+void
+MessageReader::setDictionary(MessageDictionary* dictionary) {
+    dictionary_ = dictionary;
+    dictionary_->clearOverflow();
+}
 
-        case PRFXEXTRARG:
-            return "Error, $PREFIX directive has extra arguments";
 
-        case PRFXINVARG:
-            return "Error, $PREFIX directive has an invalid argument";
+// Read the file.
 
-        case PRFXNOARG:
-            return "Error, $PREFIX directive has no arguments";
+void
+MessageReader::readFile(const string& file, MessageReader::Mode mode) {
 
-        case UNRECDIR:
-            return "Error, unrecognised directive";
-
-        default:
-            return "Unknown message code";
+    // Open the file
+    ifstream infile(file.c_str());
+    if (infile.fail()) {
+        throw MessageException(MSG_OPENIN, file, strerror(errno));
     }
-}
 
-// Read the file
+    // Loop round reading it.
+    string line;
+    getline(infile, line);
+    while (infile.good()) {
+        processLine(line, mode);
+        getline(infile, line);
+    }
 
-MessageReader::Status MessageReader::readFile(const string&) {
-    return OPENIN;
-}
-
-// Clear the Message Map
-
-void MessageReader::clear() {
+    // Why did the loop terminate?
+    if (! infile.eof()) {
+        throw MessageException(MSG_READERR, file, strerror(errno));
+    }
+    infile.close();
 }
 
 // Parse a line of the file
 
-MessageReader::Status MessageReader::processLine(const string& line) {
+void
+MessageReader::processLine(const string& line, MessageReader::Mode mode) {
 
     // Get rid of leading and trailing spaces
-    string text = StringUtil::trim(line);
+    string text = isc::strutil::trim(line);
 
     if (text.empty()) {
-        return SUCCESS;             // Ignore blank lines
+        ;                           // Ignore blank lines
 
     } else if ((text[0] == '#') || (text[0] == '+')) {
-        return SUCCESS;             // Ignore comments or descriptions
+        ;                           // Ignore comments or descriptions
 
     } else if (text[0] == '$') {
-        return directive(text);     // Process directives
+        parseDirective(text);       // Process directives
 
     } else {
-        return OPENIN;
+        parseMessage(text, mode);   // Process other lines
 
     }
 }
 
 // Process directive
 
-MessageReader::Status MessageReader::directive(const std::string& text) {
+void
+MessageReader::parseDirective(const std::string& text) {
 
     static string valid = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
 
     // Regardless of what happens, all prefixes will be uppercase (as will
     // all symbols).
     string line = text;
-    StringUtil::uppercase(line);
-    vector<string> tokens = StringUtil::tokens(line);
+    isc::strutil::uppercase(line);
+    vector<string> tokens = isc::strutil::tokens(line);
 
     // Only $PREFIX is recognised so far, so we'll handle it here.
     if (tokens[0] != string("$PREFIX")) {
-        return UNRECDIR;            // Directive is not prefix
+        throw MessageException(MSG_UNRECDIR, tokens[0]);
 
     } else if (tokens.size() < 2) {
-        return PRFXNOARG;           // Does not have an argument
+        throw MessageException(MSG_PRFNOARG);
 
     } else if (tokens.size() > 2) {
-        return PRFXEXTRARG;         // Too many arguments
+        throw MessageException(MSG_PRFEXTRARG);
 
     }
 
@@ -117,20 +128,59 @@ MessageReader::Status MessageReader::directive(const std::string& text) {
     if ((tokens[1].find_first_not_of(valid) != string::npos) ||
         (std::isdigit(tokens[1][0]))) {
 
-        // Invalid character in string opr it starts with a digit.
-        return PRFXINVARG;
+        // Invalid character in string or it starts with a digit.
+        throw MessageException(MSG_PRFINVARG, tokens[1]);
     }
 
     // All OK - unless the prefix has already been set.
 
     if (prefix_.size() != 0) {
-        return DUPLPRFX;
+        throw MessageException(MSG_DUPLPRFX);
     }
 
     // Prefix has not been set, so set it and return success.
 
     prefix_ = tokens[1];
-    return SUCCESS;
+}
+
+// Process message.  By the time this method is called, the line has been
+// stripped of leading and trailing spaces, and we believe that it is a line
+// defining a message.  The first token on the line is convered to uppercase
+// and becomes the message ID; the rest of the line is the message text.
+
+void
+MessageReader::parseMessage(const std::string& text, MessageReader::Mode mode) {
+
+    static string delimiters("\t\n ");   // Delimiters
+
+    // Look for the first delimiter.
+    size_t first_delim = text.find_first_of(delimiters);
+    if (first_delim == string::npos) {
+
+        // Just a single token in the line - this is not valid
+        throw MessageException(MSG_ONETOKEN, text);
+    }
+
+    // Extract the first token into the message ID
+    MessageID ident = text.substr(0, first_delim);
+
+    // Locate the start of the message text
+    size_t first_text = text.find_first_not_of(delimiters, first_delim);
+    if (first_text == string::npos) {
+
+        // ?? This happens if there are trailing delimiters, which should not
+        // occur as we have stripped trailing spaces off the line.  Just treat
+        // this as a single-token error for simplicity's sake.
+        throw MessageException(MSG_ONETOKEN, text);
+    }
+
+    // Add the result to the dictionary.
+    if (mode == ADD) {
+        (void) dictionary_->add(ident, text.substr(first_text));
+    }
+    else {
+        (void) dictionary_->replace(ident, text.substr(first_text));
+    }
 }
 
 } // namespace log

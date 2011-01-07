@@ -334,10 +334,13 @@ AC_SUBST(USE_LCOV)
 AC_ARG_WITH([log4cxx],
   AC_HELP_STRING([--with-log4cxx=PATH],
     [specify directory where log4cxx is installed]),
-  [log4cxx_include_path="${withval}/include"])
+  [
+   log4cxx_include_path="${withval}/include";
+   log4cxx_lib_path="${$withval}/lib"
+  ])
 
 # If not specified, try some common paths.  These default to
-# /usr/include if not found
+# /usr/include and /usr/lib if not found
 
 if test -z "$with_log4cxx"; then
 	log4cxxdirs="/usr/local /usr/pkg /opt /opt/local"
@@ -345,6 +348,7 @@ if test -z "$with_log4cxx"; then
 	do
 		if test -d $d/include/log4cxx; then
 			log4cxx_include_path=$d/include
+            log4cxx_library_path=$d/lib
 			break
 		fi
 	done
@@ -358,6 +362,13 @@ fi
 AC_CHECK_HEADER([log4cxx/logger.h],, AC_MSG_ERROR([Missing log4cxx header files.]))
 CPPFLAGS="$CPPFLAGS_SAVES"
 AC_SUBST(LOG4CXX_INCLUDES)
+
+LOG4CXX_LDFLAGS="-llog4cxx";
+if test "${log4cxx_library_path}"; then
+    LOG4CXX_LDFLAGS="-L{log4cxx_library_path} -llog4cxx"
+fi
+AC_SUBST(LOG4CXX_LDFLAGS)
+
 
 
 #
@@ -645,6 +656,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/datasrc/tests/Makefile
                  src/lib/xfr/Makefile
                  src/lib/log/Makefile
+                 src/lib/log/compiler/Makefile
                  src/lib/log/tests/Makefile
                  src/lib/testutils/Makefile
                  src/lib/testutils/testdata/Makefile
@@ -756,6 +768,7 @@ dnl includes too
                  ${PYTHON_LIB}
   Boost:         ${BOOST_INCLUDES}
   log4cxx:       ${LOG4CXX_INCLUDES}
+                 ${LOG4CXX_LDFLAGS}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
 

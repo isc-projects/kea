@@ -14,19 +14,31 @@
 
 // $Id$
 
+#include <numeric>
 #include <iostream>
 
 #include <string.h>
-#include <stringutil.h>
+#include <strutil.h>
 
 using namespace std;
 
 namespace isc {
-namespace log {
+namespace strutil {
+
+// Normalize slashes
+
+void normalizeSlash(std::string& name) {
+    if (! name.empty()) {
+        size_t pos = 0;
+        while ((pos = name.find('\\', pos)) != std::string::npos) {
+            name[pos] = '/';
+        }
+    }
+}
 
 // Trim String
 
-string StringUtil::trim(const string& instring) {
+string trim(const string& instring) {
     static const char* blanks = " \t\n";
 
     string retstring = "";
@@ -50,9 +62,8 @@ string StringUtil::trim(const string& instring) {
 // Tokenise string.  As noted in the header, this is locally written to avoid
 // another dependency on a Boost library.
 
-vector<string> StringUtil::tokens(const std::string text,
-    const std::string& delim)
-{
+vector<string>
+tokens(const std::string text, const std::string& delim) {
     vector<string> result;
 
     // Search for the first non-delimiter character
@@ -73,6 +84,48 @@ vector<string> StringUtil::tokens(const std::string text,
             // End of string found, extract rest of string and flag to exit
             result.push_back(text.substr(start));
             start = string::npos;
+        }
+    }
+
+    return result;
+}
+
+// Local function to pass to accumulate() for summing up string lengths.
+
+namespace {
+
+size_t
+lengthSum(string::size_type curlen, const string& cur_string) {
+    return (curlen + cur_string.size());
+}
+
+}
+
+// Provide printf-style formatting.
+
+std::string
+format(const std::string& format, const std::vector<std::string>& args) {
+
+    static const string flag = "%s";
+
+    // Initialize return string.  To speed things up, we'll reserve an
+    // appropriate amount of space - current string size, plus length of all
+    // the argument strings, less two characters for each argument (the %s in
+    // the format string is being replaced).
+    string result;
+    size_t length = accumulate(args.begin(), args.end(), format.size(),
+        lengthSum) - (args.size() * flag.size());
+    result.reserve(length);
+
+    // Iterate through replacing all tokens
+    result = format;
+    size_t tokenpos = 0;    // Position of last token replaced
+    int i = 0;              // Index into argument array
+
+    while ((i < args.size()) && (tokenpos != string::npos)) {
+        tokenpos = result.find(flag, tokenpos);
+        if (tokenpos != string::npos) {
+            result.replace(tokenpos, flag.size(), args[i++]);
         }
     }
 

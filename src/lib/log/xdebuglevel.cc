@@ -138,7 +138,7 @@ LevelPtr XDebugLevel::toLevelLS(const LogString& sArg,
         }
         else {
 
-            // Unknown string - return default
+            // Unknown string - return default.
             return defaultLevel;
         }
     }

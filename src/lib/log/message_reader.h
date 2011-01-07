@@ -22,6 +22,9 @@
 #include <string>
 #include <vector>
 
+#include <log/message_dictionary.h>
+#include <log/message_types.h>
+
 namespace isc {
 namespace log {
 
@@ -33,23 +36,18 @@ namespace log {
 class MessageReader {
 public:
 
-    /// \brief Status Returns
+    /// \brief Read Mode
     ///
-    /// It may seem odd that a class devoted to reading logfile messages does
-    /// not have its own set of messages.  The reason is that this class is
-    /// used in both the server and in the message compiler.  The latter is
-    /// a stand-along program used to create message files, so at the time this
-    /// file is compiled, there is nothing to build an associated message file.
+    /// If ADD, messages are added to the dictionary if the ID does not exist
+    /// there.  If it does, the ID is added to the dictionary's overflow
+    /// vector.
+    ///
+    /// If REPLACE, the dictionary is only modified if the message ID already
+    /// exists in it.  New message IDs are added to the overflow vector.
     typedef enum {
-        SUCCESS,                // Success, all OK.
-        DUPLPRFX,               // Error, duplicate prefix found
-        OPENIN,                 // Error openinin input file
-        PRFXEXTRARG,            // Error, $PREFIX directive has extra arguments
-        PRFXINVARG,             // Error, $PREFIX has invalid argument
-        PRFXNOARG,              // Error, $PREFIX directive has no arguments
-        UNRECDIR                // Error, unrecognised directive
-
-    } Status;                   // Status code
+        ADD,
+        REPLACE
+    } Mode;
 
     /// \brief Other Types
     typedef std::map<std::string, std::string>  MessageMap;
@@ -60,38 +58,48 @@ public:
     /// Default constructor.  All work is done in the main readFile code (so
     /// that a status return can be returned instead of needing to throw an
     /// exception).
-    MessageReader() : messages_(), duplicates_()
+    ///
+    /// \param dictionary Dictionary to which messages read read from the file
+    /// are added.  (This should be a local dictionary when the class is used in
+    /// the message compiler, and the global dictionary when used in a server.
+    /// The ownership of the dictionary object is not transferred - the caller
+    /// is responsible for managing the lifetime of the dictionary.
+    MessageReader(MessageDictionary* dictionary = NULL) :
+        dictionary_(dictionary)
     {}
+
 
     /// \brief Virtual Destructor
     virtual ~MessageReader();
 
-    /// \brief Return Error Text
+
+    /// \brief Get Dictionary
     ///
-    /// Returns the message associated with the error code
+    /// Returns the pointer to the dictionary object.  Note that ownership is
+    /// not transferred - the caller should not delete it.
     ///
-    /// \param status Status code for which a message is required
+    /// \return Pointer to current dictionary object
+    virtual MessageDictionary* getDictionary() const;
+
+
+    /// \brief Set Dictionary
     ///
-    /// \return Text of the error.
-    virtual std::string errorText(Status status);
+    /// Sets the current dictionary object.
+    ///
+    /// \param dictionary New dictionary object. The ownership of the dictionary
+    /// object is not transferred - the caller is responsible for managing the
+    /// lifetime of the dictionary.
+    virtual void setDictionary(MessageDictionary* dictionary);
 
 
     /// \brief Read File
     ///
     /// This is the main method of the class and reads in the file, parses it,
-    /// and stores the result in the message map.
+    /// and stores the result in the message dictionary.
     ///
     /// \param file Name of the message file.
-    ///
-    /// \return Status return.  Should be SUCCESS, else an error has occurred.
-    virtual Status readFile(const std::string& file);
-
-
-    /// \brief Clears Message Mapgit find new files
-    ///
-    /// In the event of an instance of the class needing to be reused, this
-    /// method will clear the message map and the list of duplicated.
-    virtual void clear();
+    /// \param mode Addition mode.  See the description of the "Mode" enum.
+    virtual void readFile(const std::string& file, Mode mode = ADD);
 
 
     /// \brief Process Line
@@ -101,29 +109,9 @@ public:
     /// to the message map.
     ///
     /// \param line Line of text to process
-    ///
-    /// \return Status return
-    virtual Status processLine(const std::string& line);
+    /// \param mode If a message line, how to add the message to the dictionary.
+    virtual void processLine(const std::string& line, Mode mode = ADD);
 
-
-    /// \brief Return Message Map
-    ///
-    /// Returns the message map.
-    ///
-    /// \return Returns a copy of the internal map.
-    /// TODO: Usse a reference?
-    virtual MessageMap getMessageMap() const {
-        return messages_;
-    }
-
-    /// \brief Return Message Duplicates
-    ///
-    /// Returns a copy of the duplicates vector.
-    ///
-    /// \return Copy of the duplicates vector
-    virtual MessageDuplicates getMessageDuplicates() {
-        return duplicates_;
-    }
 
     /// \brief Get Prefix
     ///
@@ -132,7 +120,26 @@ public:
         return prefix_;
     }
 
+
+    /// \brief Clear Prefix
+    ///
+    /// Clears the current prefix.
+    virtual void clearPrefix() {
+        prefix_ = "";
+    }
+
 private:
+
+    /// \brief Handle a Message Definition
+    ///
+    /// Passed a line that should contain a message, this processes that line
+    /// and adds it to the dictionary according to the mode setting.
+    ///
+    /// \param line Line of text
+    /// \param ADD or REPLACE depending on how the reader is operating.  (See
+    /// the description of the Mode typedef for details.)
+    void parseMessage(const std::string& line, Mode mode);
+
 
     /// \brief Handle Directive
     ///
@@ -140,13 +147,10 @@ private:
     /// directives.
     ///
     /// \param line Line of text that starts with "$",
-    ///
-    /// \return Status return code.  NORMAL implies success
-    Status directive(const std::string& line);
+    void parseDirective(const std::string& line);
 
     /// Attributes
-    MessageMap          messages_;      // Message map
-    MessageDuplicates   duplicates_;    // Duplicate messages
+    MessageDictionary*  dictionary_;    // Dictionary to add messages to
     std::string         prefix_;        // Input of $PREFIX statement
 };
 

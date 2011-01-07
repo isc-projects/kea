@@ -20,7 +20,8 @@
 
 #include <ctype.h>
 
-#include <filename.h>
+#include <log/filename.h>
+#include <log/strutil.h>
 
 using namespace std;
 
@@ -90,8 +91,8 @@ string Filename::expandWithDefault(const string& defname) const {
     string def_extension("");
 
     // Normalize the input string.
-    string copy_defname = StringUtil::trim(defname);
-    StringUtil::normalizeSlash(copy_defname);
+    string copy_defname = isc::strutil::trim(defname);
+    isc::strutil::normalizeSlash(copy_defname);
 
     // Split into the components
     split(copy_defname, def_directory, def_name, def_extension);
@@ -113,8 +114,8 @@ string Filename::useAsDefault(const string& name) const {
     string name_extension("");
 
     // Normalize the input string.
-    string copy_name = StringUtil::trim(name);
-    StringUtil::normalizeSlash(copy_name);
+    string copy_name = isc::strutil::trim(name);
+    isc::strutil::normalizeSlash(copy_name);
 
     // Split into the components
     split(copy_name, name_directory, name_name, name_extension);
