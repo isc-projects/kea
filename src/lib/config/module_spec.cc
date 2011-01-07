@@ -185,7 +185,7 @@ ModuleSpec::validate_config(ConstElementPtr data, const bool full) const {
 bool
 ModuleSpec::validate_command(const std::string& command,
                              ConstElementPtr args,
-                             ElementPtr errors)
+                             ElementPtr errors) const
 {
     ConstElementPtr commands_spec = module_specification->find("commands");
 
