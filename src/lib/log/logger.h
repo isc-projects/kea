@@ -22,14 +22,13 @@
 #include <log4cxx/logger.h>
 
 #include <log/dbglevels.h>
+#include <log/message_types.h>
 
 namespace isc {
 namespace log {
 
 class Logger {
 public:
-
-    typedef int MessageCode;    ///< Type of the message code
 
     /// \brief Severity Levels
     typedef enum {
@@ -70,7 +69,7 @@ public:
     ///
     /// \param name Name of the logger.  If the name is that of the root name,
     /// this creates an instance of the root logger; otherwise it creates a
-    /// chold of the root logger.
+    /// child of the root logger.
     Logger(const std::string& name);
 
     /// \brief Get Name of Logger
@@ -188,51 +187,90 @@ public:
     /// not have a level set, the inheritance tree is traversed until a level
     /// is found.
     virtual Level getEffectiveLevel() const;
+*/
+
+    // NOTE - THE FOLLOWING ARE TEMPORARY
+    //
+    // Until properly integrated into log4cxx, the following formatting methods
+    // are used. (It is this that explains why the arguments to the logging
+    // messages are concatenated into a single string only to be broken up
+    // again in the formatting code.)
+
+
+    /// \brief Basic Message Formatting
+    ///
+    /// Extracts a message from the global dictionary and substitutes
+    /// arguments (if any).
+    ///
+    /// \param ident Message identifier
+    /// \param args Pointer to an argument vector or NULL if none.
+    ///
+    /// \return Formatted message.
+    std::string formatMessage(MessageID ident,
+        std::vector<std::string>* args = NULL);
+
+    /// \brief Basic Message Formatting
+    ///
+    /// Extracts a message from the global dictionary and substitutes
+    /// arguments (if any).
+    ///
+    /// \param ident Message identifier
+    /// \param args Set of arguments as a single string separated by the NULL
+    /// character.
+    ///
+    /// \return Formatted message.
+    std::string formatMessage(MessageID ident, const std::string& args);
+
+
     /// \brief Debug Messages
     ///
     /// A set of functions that control the output of the message and up to
     /// four parameters.
-    void debugCommon(MessageCode code, std::string arg);
+
+    void debugCommon(MessageID ident, const std::string* args = NULL);
+
+    void debug(MessageID ident) {
+        if (isDebugEnabled()) {
+            debugCommon(ident);
+        }
+    }
 
     template <typename T1>
-    void debug(Level level, MessageCode code, T1 arg1) {
-        if (shouldOutputDebug(level)) {
-            debugCommon(code,
-                boost::lexical_cast<std::string>(arg1)
-            );
+    void debug(MessageID ident, T1 arg1) {
+        if (isDebugEnabled()) {
+            std::string args = boost::lexical_cast<std::string>(arg1);
+            debugCommon(ident, &args);
         }
     }
 
     template <typename T1, typename T2>
-    void debug(MessageCode code, T1 arg1, T2 arg2) {
-        if (shouldOutputDebug(level)) {
-            debugCommon(code,
-                boost::lexical_cast<std::string>(arg1) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg2)
-            );
+    void debug(MessageID ident, T1 arg1, T2 arg2) {
+        if (isDebugEnabled()) {
+            std::string args = boost::lexical_cast<std::string>(arg1) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg2);
+            debugCommon(ident, &args);
         }
     }
 
     template <typename T1, typename T2, typename T3>
-    void debug(MessageCode code, T1 arg1, T2 arg2, T3 arg3) {
-        if (shouldOutputDebug(level)) {
-            debugCommon(code,
-                boost::lexical_cast<std::string>(arg1) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg2) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg3)
-            );
+    void debug(MessageID ident, T1 arg1, T2 arg2, T3 arg3) {
+        if (isDebugEnabled()) {
+            std::string args = boost::lexical_cast<std::string>(arg1) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg3);
+            debugCommon(ident, &args);
         }
     }
 
     template <typename T1, typename T2, typename T3, typename T4>
-    void debug(MessageCode code, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
-        if (shouldOutputDebug(level)) {
-            debugCommon(code,
-                boost::lexical_cast<std::string>(arg1) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg2) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg3) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg4)
-            );
+    void debug(MessageID ident, T1 arg1, T2 arg2, T3 arg3,
+        T4 arg4) {
+        if (isDebugEnabled()) {
+            std::string args = boost::lexical_cast<std::string>(arg1) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg3) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg4);
+            debugCommon(ident, &args);
         }
     }
 
@@ -240,47 +278,50 @@ public:
     ///
     /// A set of functions that control the output of the message and up to
     /// four parameters.
-    void infoCommon(MessageCode code, std::string arg);
+
+    void infoCommon(MessageID ident, const std::string* args = NULL);
+
+    void info(MessageID ident) {
+        if (isInfoEnabled()) {
+            infoCommon(ident);
+        }
+    }
 
     template <typename T1>
-    void info(MessageCode code, T1 arg1) {
+    void info(MessageID ident, T1 arg1) {
         if (isInfoEnabled()) {
-            infoCommon(code,
-                boost::lexical_cast<std::string>(arg1)
-            );
+            std::string args = boost::lexical_cast<std::string>(arg1);
+            infoCommon(ident, &args);
         }
     }
 
     template <typename T1, typename T2>
-    void info(MessageCode code, T1 arg1, T2 arg2) {
+    void info(MessageID ident, T1 arg1, T2 arg2) {
         if (isInfoEnabled()) {
-            infoCommon(code,
-                boost::lexical_cast<std::string>(arg1) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg2)
-            );
+            std::string args = boost::lexical_cast<std::string>(arg1) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg2);
+            infoCommon(ident, &args);
         }
     }
 
     template <typename T1, typename T2, typename T3>
-    void info(MessageCode code, T1 arg1, T2 arg2, T3 arg3) {
+    void info(MessageID ident, T1 arg1, T2 arg2, T3 arg3) {
         if (isInfoEnabled()) {
-            infoCommon(code,
-                boost::lexical_cast<std::string>(arg1) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg2) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg3)
-            );
+            std::string args = boost::lexical_cast<std::string>(arg1) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg3);
+            infoCommon(ident, &args);
         }
     }
 
     template <typename T1, typename T2, typename T3, typename T4>
-    void info(MessageCode code, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
+    void info(MessageID ident, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
         if (isInfoEnabled()) {
-            infoCommon(code,
-                boost::lexical_cast<std::string>(arg1) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg2) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg3) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg4)
-            );
+            std::string args = boost::lexical_cast<std::string>(arg1) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg3) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg4);
+            infoCommon(ident, &args);
         }
     }
 
@@ -288,47 +329,50 @@ public:
     ///
     /// A set of functions that control the output of the message and up to
     /// four parameters.
-    void warnCommon(MessageCode code, std::string arg);
+
+    void warnCommon(MessageID ident, const std::string* args = NULL);
+
+    void warn(MessageID ident) {
+        if (isWarnEnabled()) {
+            warnCommon(ident);
+        }
+    }
 
     template <typename T1>
-    void warn(MessageCode code, T1 arg1) {
+    void warn(Severity severity, MessageID ident, T1 arg1) {
         if (isWarnEnabled()) {
-            warnCommon(code,
-                boost::lexical_cast<std::string>(arg1)
-            );
+            std::string args = boost::lexical_cast<std::string>(arg1);
+            warnCommon(ident, &args);
         }
     }
 
     template <typename T1, typename T2>
-    void warn(MessageCode code, T1 arg1, T2 arg2) {
+    void warn(MessageID ident, T1 arg1, T2 arg2) {
         if (isWarnEnabled()) {
-            warnCommon(code,
-                boost::lexical_cast<std::string>(arg1) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg2)
-            );
+            std::string args = boost::lexical_cast<std::string>(arg1) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg2);
+            warnCommon(ident, &args);
         }
     }
 
     template <typename T1, typename T2, typename T3>
-    void warn(MessageCode code, T1 arg1, T2 arg2, T3 arg3) {
+    void warn(MessageID ident, T1 arg1, T2 arg2, T3 arg3) {
         if (isWarnEnabled()) {
-            warnCommon(code,
-                boost::lexical_cast<std::string>(arg1) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg2) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg3)
-            );
+            std::string args = boost::lexical_cast<std::string>(arg1) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg3);
+            warnCommon(ident, &args);
         }
     }
 
     template <typename T1, typename T2, typename T3, typename T4>
-    void warn(MessageCode code, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
+    void warn(MessageID ident, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
         if (isWarnEnabled()) {
-            warnCommon(code,
-                boost::lexical_cast<std::string>(arg1) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg2) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg3) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg4)
-            );
+            std::string args = boost::lexical_cast<std::string>(arg1) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg3) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg4);
+            warnCommon(ident, &args);
         }
     }
 
@@ -336,98 +380,103 @@ public:
     ///
     /// A set of functions that control the output of the message and up to
     /// four parameters.
-    void errorCommon(MessageCode code, std::string arg);
+
+    void errorCommon(MessageID ident, const std::string* args = NULL);
+
+    void error(MessageID ident) {
+        if (isErrorEnabled()) {
+            errorCommon(ident);
+        }
+    }
 
     template <typename T1>
-    void error(MessageCode code, T1 arg1) {
+    void error(Severity severity, MessageID ident, T1 arg1) {
         if (isErrorEnabled()) {
-            errorCommon(code,
-                boost::lexical_cast<std::string>(arg1)
-            );
+            std::string args = boost::lexical_cast<std::string>(arg1);
+            errorCommon(ident, &args);
         }
     }
 
     template <typename T1, typename T2>
-    void error(MessageCode code, T1 arg1, T2 arg2) {
+    void error(MessageID ident, T1 arg1, T2 arg2) {
         if (isErrorEnabled()) {
-            errorCommon(code,
-                boost::lexical_cast<std::string>(arg1) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg2)
-            );
+            std::string args = boost::lexical_cast<std::string>(arg1) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg2);
+            errorCommon(ident, &args);
         }
     }
 
     template <typename T1, typename T2, typename T3>
-    void error(MessageCode code, T1 arg1, T2 arg2, T3 arg3) {
+    void error(MessageID ident, T1 arg1, T2 arg2, T3 arg3) {
         if (isErrorEnabled()) {
-            errorCommon(code,
-                boost::lexical_cast<std::string>(arg1) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg2) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg3)
-            );
+            std::string args = boost::lexical_cast<std::string>(arg1) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg3);
+            errorCommon(ident, &args);
         }
     }
 
     template <typename T1, typename T2, typename T3, typename T4>
-    void error(MessageCode code, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
+    void error(MessageID ident, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
         if (isErrorEnabled()) {
-            errorCommon(code,
-                boost::lexical_cast<std::string>(arg1) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg2) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg3) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg4)
-            );
+            std::string args = boost::lexical_cast<std::string>(arg1) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg3) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg4);
+            errorCommon(ident, &args);
         }
     }
 
-    /// \brief Critical Messages
+    /// \brief Fatal Messages
     ///
     /// A set of functions that control the output of the message and up to
     /// four parameters.
-    void criticalCommon(MessageCode code, std::string arg);
+
+    void fatalCommon(MessageID ident, const std::string* args = NULL);
+
+    void fatal(MessageID ident) {
+        if (isFatalEnabled()) {
+            fatalCommon(ident);
+        }
+    }
 
     template <typename T1>
-    void critical(MessageCode code, T1 arg1) {
-        if (isCriticalEnabled()) {
-            criticalCommon(code,
-                boost::lexical_cast<std::string>(arg1)
-            );
+    void fatal(Severity severity, MessageID ident, T1 arg1) {
+        if (isFatalEnabled()) {
+            std::string args = boost::lexical_cast<std::string>(arg1);
+            fatalCommon(ident, &args);
         }
     }
 
     template <typename T1, typename T2>
-    void critical(MessageCode code, T1 arg1, T2 arg2) {
-        if (isCriticalEnabled()) {
-            criticalCommon(code,
-                boost::lexical_cast<std::string>(arg1) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg2)
-            );
+    void fatal(MessageID ident, T1 arg1, T2 arg2) {
+        if (isFatalEnabled()) {
+            std::string args = boost::lexical_cast<std::string>(arg1) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg2);
+            fatalCommon(ident, &args);
         }
     }
 
     template <typename T1, typename T2, typename T3>
-    void critical(MessageCode code, T1 arg1, T2 arg2, T3 arg3) {
-        if (isCriticalEnabled()) {
-            criticalCommon(code,
-                boost::lexical_cast<std::string>(arg1) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg2) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg3)
-            );
+    void fatal(MessageID ident, T1 arg1, T2 arg2, T3 arg3) {
+        if (isFatalEnabled()) {
+            std::string args = boost::lexical_cast<std::string>(arg1) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg3);
+            fatalCommon(ident, &args);
         }
     }
 
     template <typename T1, typename T2, typename T3, typename T4>
-    void critical(MessageCode code, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
-        if (isCriticalEnabled()) {
-            errorCommon(code,
-                boost::lexical_cast<std::string>(arg1) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg2) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg3) + std::string('\0') +
-                boost::lexical_cast<std::string>(arg4)
-            );
+    void fatal(MessageID ident, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
+        if (isFatalEnabled()) {
+            std::string args = boost::lexical_cast<std::string>(arg1) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg3) +
+                std::string("\0") + boost::lexical_cast<std::string>(arg4);
+            fatalCommon(ident, &args);
         }
     }
-*/
 
 protected:
 
@@ -478,9 +527,16 @@ protected:
     /// \return BIND-10 logging severity
     Severity convertLevel(int value) const;
 
+    /// \brief Formats Message
+    ///
+    /// Receives a message in the form of 
+
 private:
     log4cxx::LoggerPtr  loggerptr_; ///< Pointer to the underlying logger
     std::string         fullname_;  ///< Full name of this logger
+
+    // NOTE - THIS IS A PLACE HOLDER
+    static bool         init_;      ///< Set true when initialized
 };
 
 } // namespace log

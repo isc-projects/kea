@@ -1,4 +1,23 @@
-Logging Messages
+This directory holds the first release of the logging system.
+
+The steps in using the system are:
+
+1. Create a message file.  Ideally it should have a file type of ".msg".
+2. Run it through the message compiler to produce the .h and .cc files.
+3. Include the .h file in your source code to define message symbols.  Also
+   include the file logger.h to create loggers and to log error messages.
+   The ".cc" file needs to be linked into the program - static initialization
+   will add the symbols to the global dictionary.
+
+
+Outstanding
+===========
+* Ability to configure system according to configuration database.
+* Writing of suitable appenders and formatters.
+* Ability to override message via a run-time file.
+* Update the build procedure to create .cc and .h files from the .msg file
+  during the build process. (Requires that the message compiler is built first.)
+
 
 Message Storage
 ===============
@@ -10,14 +29,17 @@ The message identifier (along with parameters) is passed through the logging
 system to an appender, which uses the identifier to look up the message in
 the dictionary.  The message is then formatted and written out.
 
-Message File
-============
+Message Files
+=============
+
+1) File Contents and Format
 A message file is a file containing message definitions.  Typically there will
 be one message file for each component that declares message symbols.
 
 
-A example file could
-be:
+A example file could be:
+
+-- BEGIN --
 
 # Example message file
 # $ID:$
@@ -29,43 +51,54 @@ TEST1       message %s is much too large
 UNKNOWN     unknown message
 + Issued when the message is unknown.
 
+-- END --
+
 Point to note:
 * Leading and trailing space are trimmed from the line.
 * Blank lines are ignored
 * Lines starting with "#" are comments are are ignored.
 * Lines starting $ are directives.  At present, the only directive recognised
   is $PREFIX, which has one argument: the string used to prefix symbols.  If
-  there is no facility directive, there is no prefix to the symbols.
+  there is no facility directive, there is no prefix to the symbols. (Prefixes
+  are explained below.)
 * Lines starting + indicate an explanation for the preceding message.  These
   are processed by a separate program and used to generate an error messages
   manual.  However they are treated like comments here.
-* Message lines.  These comprise a symbol name and a message (which includes
-  C-style substitution strings).
+* Message lines.  These comprise a symbol name and a message, which may
+  include one or more instances of the "%s" the C-style substitution string.
+  (The logging system only recognises the "%s" string.)
 
-Message Compiler
-================
-The message compiler produces two files:
+2) Message Compiler
+The message compiler is a program built in the src/log/compiler directory.  It
+processes the message file to produce two files:
 
 1) A C++ header file (called <message-file-name>.h) that holds lines of the
 form:
 
 namespace {
-const char* PREFIX_IDENTIFIER = "identifier";
+
+isc::log::MessageID PREFIX_IDENTIFIER = "IDENTIFIER";
    :
 
 }
 
-These are just convenience symbols to avoid the need to type in the string in
-quotes.  PREFIX_ is the string in the $PREFIX directive and is used to avoid
-potential clashes with system-defined symbols.
+The symbols define the keys in the global message dictionary.  At present
+they are defined as std::strings, but a future implementation could redefine
+them as numeric values.
 
-2) A C++ source file (called <message-file-name>.cpp) that holds the code
-to insert the symbols and messages into the map.
+The "PREFIX_" part of the symbol name is the string defined in the $PREFIX
+the argument to the directive.  So "$PREFIX MSG_" would prefix the identifer
+ABC with "MSG_" to give the symbol MSG_ABC.  Similarly "$PREFIX E" would
+prefix it with "E" to give the symbol EABC.
+
+
+2) A C++ source file (called <message-file-name>.cpp) that holds the code to
+insert the symbols and messages into the map.
 
 This file declares an array of identifiers/messages in the form:
 
 namespace {
-const char* messages = {
+const char* values[] = {
     identifier1, text1,
     identifier2, text2,
     :
@@ -79,41 +112,42 @@ it is not needed.)
 
 It then declares an object that will add information to the global dictionary:
 
-DictionaryAppender <message-file-name>_<prefix>_<time>(messages);
+MessageInitializer <message-file-name>_<time>(values);
 
 (Declaring the object as "static" or in the anonymous namespace runs the risk
 of it being optimised away when the module is compiled with optimisation.  But
 giving it a standard name would cause a clash when multiple files are used,
 hence an attempt at disambiguation.)
 
-The constructor of the DictionaryAppender object retrieves the singleton
-global Dictionary object (created using standard methods to avoid the "static
-initialization fiasco") and adds each identifier and text to the member
-std::map.  A check is made as each is added; if the identifier already exists,
-it is added to "overflow" vector; the vector is printed to the main logging
-output when logging is finally enabled (to indicate a programming error).
+The constructor of the MessageInitializer object retrieves the singleton
+global Dictionary object (created using standard methods to avoid the
+"static initialization fiasco") and adds each identifier and text to it.
+A check is made as each is added; if the identifier already exists, it is
+added to "overflow" vector; the vector is printed to the main logging output
+when logging is finally enabled (to indicate a programming error).
 
-User Message Files
-==================
-During logging initialization, a search is made for a user message file in a
-specific location.  (The specification of the location has yet to be decided -
-it will probably be a command-line option.)  These messages are read into a
-local Dictionary object (which performs the same checks as the global
-Dictionary for duplicate messages).
+Using the Logging
+=================
+To use the current version of the logging:
 
-The local Dictionary is then merged with the global Dictionary.  In this case
-though, warnings are issued where a message does not replace one in the global
-Dictionary.
+1. Build message header file and source file as describe above.
+2. In the code that needs to do logging, declare a logger with a given name,
+   e.g.
 
-An additional check that could be done is to compare the user message string
-with the main message string and to check that they have the same number of
-"%s" components.  This will avoid potential problems in message formatting. (As
-noted in another design document, the intention within logging is to convert
-all parameters to strings at the point at which the logging call is made.)
+   #include <log/logger.h>
+        :
+   isc::log::Logger logger("myname");   // "myname" can be anything
 
-Message Compiler Implementation
-===============================
-The fact that user files are read in at run-time implies that the code that
-reads the files should be C++.  An implication of this is that the message
-compiler should be written in C++ (instead of Python, which is probably
-better for the task) to avoid two sets of code where message files are parsed.
+3. Issue logging calls using methods on logger, e.g.
+
+   logger.error(DPS_NSTIMEOUT, "isc.org");
+
+   (where, in the example above we might have defined the symbol in the message
+   file with something along the lines of:
+
+   $PREFIX DPS_
+       :
+   NSTIMEOUT  queries to all nameservers for %s have timed out
+
+As noted above, presently the only logging is to the console using the default
+log4cxx format (which is somewhat awkward to read).

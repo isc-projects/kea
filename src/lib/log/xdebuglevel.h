@@ -151,7 +151,7 @@ public:
     /// name is invalid, the given default is returned.
     ///
     /// \param sArg name of the level.
-    /// \param defaultLevel Logging level to return if name does not exist.
+    /// \param defaultLevel Logging level to return if name doesn't exist.
     ///
     /// \return Pointer to the desired logging level object.
     static LevelPtr toLevelLS(const LogString& sArg,

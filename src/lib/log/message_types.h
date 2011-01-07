@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,18 +14,19 @@
 
 // $Id$
 
-#ifndef __DBGLEVELS_H
-#define __DBGLEVELS_H
+#ifndef __MESSAGE_TYPES_H
+#define __MESSAGE_TYPES_H
 
-/// \brief Defines Debug Levels
-///
-/// Defines the maximum and minimum debug levels and the number of levels.
-/// These are defined using #define as they are referenced in the construction
-/// of variables declared outside execution units.  (In this way we avoid the
-/// "static initialization fiasco" problem.)
+#include <string>
 
-#define MIN_DEBUG_LEVEL 0
-#define MAX_DEBUG_LEVEL 99
-#define NUM_DEBUG_LEVEL (MAX_DEBUG_LEVEL - MIN_DEBUG_LEVEL + 1)
+namespace isc {
+namespace log {
 
-#endif // __DBGLEVELS_H
+typedef std::string MessageID;
+
+} // namespace log
+} // namespace isc
+
+
+
+#endif // __MESSAGE_TYPES_H

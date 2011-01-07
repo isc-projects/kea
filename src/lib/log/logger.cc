@@ -18,12 +18,19 @@
 
 #include <log/root_logger_name.h>
 #include <log/logger.h>
+#include <log/message_dictionary.h>
+#include <log/message_types.h>
+#include <log/strutil.h>
 #include <log/xdebuglevel.h>
+
+#include <log4cxx/basicconfigurator.h>
 
 using namespace std;
 
 namespace isc {
 namespace log {
+
+bool Logger::init_ = false;
 
 // Constructor - create a logger as a child of the root logger.  With log4cxx
 // this is assured by naming the logger <parent>.<child>.
@@ -38,6 +45,12 @@ Logger::Logger(const std::string& name) : loggerptr_()
         fullname_ = root_name + "." + name;
     }
     loggerptr_ = log4cxx::Logger::getLogger(fullname_);
+
+    // Initialize basic logging if not already done
+    if (! init_) {
+        log4cxx::BasicConfigurator::configure();
+        init_ = true;
+    }
 }
 
 // Set the severity for logging.  There is a 1:1 mapping between the logging
@@ -180,8 +193,83 @@ int Logger::getDebugLevel() const {
             return (0);
         }
     }
-             
 }
+
+// Return formatted message
+// THIS IS A PLACE HOLDER
+
+string
+Logger::formatMessage(MessageID ident, vector<string>* args) {
+
+    // Return the format string
+    MessageDictionary* global = MessageDictionary::globalDictionary();
+    string text = global->getText(ident);
+
+    // Do argument substitution if there are any
+    if (args) {
+        text = isc::strutil::format(text, *args);
+    }
+
+    return ident + ", " + text;
+}
+
+string
+Logger::formatMessage(MessageID ident, const string& composite) {
+    vector<string> args = isc::strutil::tokens(composite, "\0");
+    return formatMessage(ident, &args);
+}
+
+
+// Debug methods
+
+void Logger::debugCommon(MessageID ident, const std::string* args) {
+    if (args) {
+        LOG4CXX_DEBUG(loggerptr_, formatMessage(ident, *args));
+    } else {
+        LOG4CXX_DEBUG(loggerptr_, formatMessage(ident));
+    }
+}
+
+// Info
+
+void Logger::infoCommon(MessageID ident, const std::string* args) {
+    if (args) {
+        LOG4CXX_INFO(loggerptr_, formatMessage(ident, *args));
+    } else {
+        LOG4CXX_INFO(loggerptr_, formatMessage(ident));
+    }
+}
+
+// Warning
+
+void Logger::warnCommon(MessageID ident, const std::string* args) {
+    if (args) {
+        LOG4CXX_WARN(loggerptr_, formatMessage(ident, *args));
+    } else {
+        LOG4CXX_WARN(loggerptr_, formatMessage(ident));
+    }
+}
+
+// Error
+
+void Logger::errorCommon(MessageID ident, const std::string* args) {
+    if (args) {
+        LOG4CXX_ERROR(loggerptr_, formatMessage(ident, *args));
+    } else {
+        LOG4CXX_ERROR(loggerptr_, formatMessage(ident));
+    }
+}
+
+// Fatal
+
+void Logger::fatalCommon(MessageID ident, const std::string* args) {
+    if (args) {
+        LOG4CXX_FATAL(loggerptr_, formatMessage(ident, *args));
+    } else {
+        LOG4CXX_FATAL(loggerptr_, formatMessage(ident));
+    }
+}
+
 
 } // namespace log
 } // namespace isc
