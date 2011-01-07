@@ -88,7 +88,7 @@ namespace isc { namespace config {
         /// \param data The base \c Element of the data to check
         /// \return true if the data conforms to the specification,
         /// false otherwise.
-        bool validate_config(isc::data::ConstElementPtr data,
+        bool validateConfig(isc::data::ConstElementPtr data,
                              const bool full = false) const;
 
         /// Validates the arguments for the given command
@@ -100,25 +100,25 @@ namespace isc { namespace config {
         ///               StringElements to this list
         /// \return true if the command is known and the parameters are correct
         ///         false otherwise
-        bool validate_command(const std::string& command,
+        bool validateCommand(const std::string& command,
                               isc::data::ConstElementPtr args,
                               isc::data::ElementPtr errors) const;
 
 
         /// errors must be of type ListElement
-        bool validate_config(isc::data::ConstElementPtr data, const bool full,
+        bool validateConfig(isc::data::ConstElementPtr data, const bool full,
                              isc::data::ElementPtr errors) const;
 
     private:
-        bool validate_item(isc::data::ConstElementPtr spec,
+        bool validateItem(isc::data::ConstElementPtr spec,
+                          isc::data::ConstElementPtr data,
+                          const bool full,
+                          isc::data::ElementPtr errors) const;
+        bool validateSpec(isc::data::ConstElementPtr spec,
                            isc::data::ConstElementPtr data,
                            const bool full,
                            isc::data::ElementPtr errors) const;
-        bool validate_spec(isc::data::ConstElementPtr spec,
-                           isc::data::ConstElementPtr data,
-                           const bool full,
-                           isc::data::ElementPtr errors) const;
-        bool validate_spec_list(isc::data::ConstElementPtr spec,
+        bool validateSpecList(isc::data::ConstElementPtr spec,
                                 isc::data::ConstElementPtr data,
                                 const bool full,
                                 isc::data::ElementPtr errors) const;
