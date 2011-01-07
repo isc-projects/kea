@@ -90,6 +90,7 @@ protected:
     //@}
 private:
     time_t expire_time_;  // Expiration time of the message.
+    std::string entry_name_; // The name for this entry(name + type)
 
     std::string query_name_; // query name of the message.
     uint16_t query_class_; // query class of the message.

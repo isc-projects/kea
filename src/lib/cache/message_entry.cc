@@ -37,6 +37,7 @@ MessageEntry::MessageEntry(const isc::dns::Message& msg,
     headerflag_ad_(false)
 {
     initMessageEntry(msg);
+    entry_name_ = genCacheEntryName(query_name_, query_type_);
 }
     
 bool
@@ -168,8 +169,7 @@ MessageEntry::initMessageEntry(const isc::dns::Message& msg) {
 
 HashKey
 MessageEntry::hashKey() const {
-    CacheEntryKey keydata = genCacheEntryKey(query_name_, query_type_);
-    return HashKey(keydata.first, keydata.second, RRClass(query_class_));
+    return HashKey(entry_name_, RRClass(query_class_));
 }
 
 } // namespace cache
