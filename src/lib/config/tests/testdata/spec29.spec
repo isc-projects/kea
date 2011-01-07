@@ -21,7 +21,7 @@
       },
       {
         "command_name": "command_with_arg",
-        "command_description": "A bad command",
+        "command_description": "A command with an (integer) argument",
         "command_args": [ {
           "item_name": "number",
           "item_type": "integer",
