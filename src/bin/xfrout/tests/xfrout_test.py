@@ -228,9 +228,9 @@ class TestXfroutSession(unittest.TestCase):
 
     def test_zone_exist(self):
         global sqlite3_ds
-        def zone_soa(zone, file):
+        def zone_exist(zone, file):
             return zone
-        sqlite3_ds.get_zone_soa = zone_soa
+        sqlite3_ds.zone_exist = zone_exist 
         self.assertEqual(self.xfrsess._zone_exist(True), True)
         self.assertEqual(self.xfrsess._zone_exist(False), False)
 

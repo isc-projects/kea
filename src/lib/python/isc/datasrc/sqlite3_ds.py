@@ -172,7 +172,20 @@ def get_zoneid(zone, cur):
         return row[0]
     else:
         return ''
-    
+
+#########################################################################
+# zone_exist:
+#   returns True if the zone is found, otherwise False
+#########################################################################
+def zone_exist(zonename, dbfile):
+    conn, cur = open(db_file)
+    zoneid = get_zoneid(zonename, cur)
+    cur.close()
+    conn.close()
+    if (zoneid):
+        return True
+    return False
+
 #########################################################################
 # reverse_name:
 #   reverse the labels of a DNS name.  (for example,
