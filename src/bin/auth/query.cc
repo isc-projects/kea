@@ -32,22 +32,16 @@ namespace auth {
 
 void
 Query::getAdditional(const Zone& zone, const RRset& rrset) const {
-    if (rrset.getType() == RRType::NS()) {
-        // Need to perform the search in the "GLUE OK" mode.
-        RdataIteratorPtr rdata_iterator = rrset.getRdataIterator();
-        for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
-             const Rdata& rdata(rdata_iterator->getCurrent());
-             const generic::NS& ns = dynamic_cast<const generic::NS&>(rdata);
-             findAddrs(zone, ns.getNSName(), Zone::FIND_GLUE_OK);
-        }
-    } else if (rrset.getType() == RRType::MX()) {
-        RdataIteratorPtr rdata_iterator = rrset.getRdataIterator();
-        for (RdataIteratorPtr rdata_iterator(rrset.getRdataIterator());
-            !rdata_iterator->isLast(); rdata_iterator->next())
-        {
-             const Rdata& rdata(rdata_iterator->getCurrent());
-             const generic::MX& mx(dynamic_cast<const generic::MX&>(rdata));
-             findAddrs(zone, mx.getMXName());
+    RdataIteratorPtr rdata_iterator(rrset.getRdataIterator());
+    for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
+        const Rdata& rdata(rdata_iterator->getCurrent());
+        if (rrset.getType() == RRType::NS()) {
+            // Need to perform the search in the "GLUE OK" mode.
+            const generic::NS& ns = dynamic_cast<const generic::NS&>(rdata);
+            findAddrs(zone, ns.getNSName(), Zone::FIND_GLUE_OK);
+        } else if (rrset.getType() == RRType::MX()) {
+            const generic::MX& mx(dynamic_cast<const generic::MX&>(rdata));
+            findAddrs(zone, mx.getMXName());
         }
     }
 }
