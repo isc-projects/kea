@@ -738,10 +738,13 @@ RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     // using auto_ptr here is to avoid memory leak in case of exceptoin raised
     // after the RBNode creation
     std::auto_ptr<RBNode<T> > down_node(new RBNode<T>(sub_name));
+    node.name_ = base_name;
+    // the rest of this function should be exception free so that it keeps
+    // consistent behavior (i.e., a weak form of strong exception guarantee)
+    // even if code after the call to this function throws an exception.
     std::swap(node.data_, down_node->data_);
     std::swap(node.callback_required_, down_node->callback_required_);
     down_node->down_ = node.down_;
-    node.name_ = base_name;
     node.down_ = down_node.get();
     //root node of sub tree, the initial color is BLACK
     down_node->color_ = RBNode<T>::BLACK;
