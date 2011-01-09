@@ -93,6 +93,30 @@ isc::data::ConstElementPtr createCommand(const std::string& command,
 ///
 /// Raises a CCSessionError if this is not a well-formed command
 ///
+/// Example code: (command_message is a ConstElementPtr that is
+/// passed here)
+/// \code
+/// ConstElementPtr args;
+/// std::string command_str;
+///
+/// try {
+///     command_str = parseCommand(args, command_message);
+///     if (command_str == "foo") {
+///         std::cout << "The command 'foo' was given" << std::endl;
+///         if (args.contains("bar")) {
+///             std::cout << "It had argument name 'bar' set, which has
+///                       << "value " 
+///                       << args->get("bar")->stringValue();
+///         }
+///     } else {
+///         std::cout << "Unknown command '" << command_str << std::endl;
+///     }
+/// } catch (CCSessionError cse) {
+///     std::cerr << "Bad command in CC Session: "
+///     << cse.what() << std::endl;
+/// }
+/// \endcode
+/// 
 /// \param arg This value will be set to the ElementPtr pointing to
 ///        the argument, or to an empty Map (ElementPtr) if there was none.
 /// \param command The command message containing the command (as made
