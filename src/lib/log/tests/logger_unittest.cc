@@ -21,9 +21,11 @@
 
 #include <log/root_logger_name.h>
 #include <log/logger.h>
+#include <log/messagedef.h>
 
 using namespace isc;
 using namespace isc::log;
+using namespace std;
 
 namespace isc {
 namespace log {
@@ -36,7 +38,7 @@ namespace log {
 class TestLogger : public Logger {
 public:
     /// \brief constructor
-    TestLogger(const std::string& name) : Logger(name)
+    TestLogger(const string& name) : Logger(name)
     {}
 
     /// \brief Logger Equality
@@ -76,7 +78,7 @@ TEST_F(LoggerTest, Name) {
     Logger logger("alpha");
 
     // ... and check the name
-    EXPECT_EQ(std::string("test1.alpha"), logger.getName());
+    EXPECT_EQ(string("test1.alpha"), logger.getName());
 }
 
 // This test attempts to get two instances of a logger with the same name
@@ -88,8 +90,8 @@ TEST_F(LoggerTest, GetLogger) {
     // case in the program(.
     RootLoggerName::setName("test2");
 
-    const std::string name1 = "alpha";
-    const std::string name2 = "beta";
+    const string name1 = "alpha";
+    const string name2 = "beta";
 
     // Instantiate two loggers that should be the same
     TestLogger logger1(name1);
@@ -380,4 +382,51 @@ TEST_F(LoggerTest, IsDebugEnabledLevel) {
     EXPECT_TRUE(logger.isDebugEnabled(MIN_DEBUG_LEVEL));
     EXPECT_TRUE(logger.isDebugEnabled(MID_LEVEL));
     EXPECT_TRUE(logger.isDebugEnabled(MAX_DEBUG_LEVEL));
+}
+
+// Check that the message formatting is correct.  As this test program is
+// linking with the logger library - which includes messages from the logger
+// itself - we'll use those messages for testing.
+
+TEST_F(LoggerTest, Format) {
+    RootLoggerName::setName("test9");
+    Logger logger("test9");
+
+// Individual arguments
+    string result = logger.formatMessage(MSG_OPENIN);
+    EXPECT_EQ(string("OPENIN, unable to open %s for input: %s"), result);
+
+    vector<string> args;
+    args.push_back("alpha.txt");
+
+    result = logger.formatMessage(MSG_OPENIN, &args);
+    EXPECT_EQ(string("OPENIN, unable to open alpha.txt for input: %s"), result);
+
+    args.push_back("test");
+    result = logger.formatMessage(MSG_OPENIN, &args);
+    EXPECT_EQ(string("OPENIN, unable to open alpha.txt for input: test"), result);
+
+    // Excess arguments should be ignored
+    args.push_back("ignore me");
+    result = logger.formatMessage(MSG_OPENIN, &args);
+    EXPECT_EQ(string("OPENIN, unable to open alpha.txt for input: test"), result);
+
+    // Try the same using concatenated arguments
+    string strarg = "alpha.txt";
+    result = logger.formatMessage(MSG_OPENIN, strarg);
+    EXPECT_EQ(string("OPENIN, unable to open alpha.txt for input: %s"), result);
+
+    strarg += "\0test";
+    result = logger.formatMessage(MSG_OPENIN, &args);
+    EXPECT_EQ(string("OPENIN, unable to open alpha.txt for input: test"), result);
+
+    // With the latter method, try a few "unusual" argument strings
+    strarg = "";
+    result = logger.formatMessage(MSG_OPENIN, strarg);
+    EXPECT_EQ(string("OPENIN, unable to open %s for input: %s"), result);
+    
+    strarg="\0";
+    result = logger.formatMessage(MSG_OPENIN, strarg);
+    EXPECT_EQ(string("OPENIN, unable to open %s for input: %s"), result);
+
 }
