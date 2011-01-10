@@ -51,8 +51,8 @@ struct ZoneTable::ZoneTableImpl {
         ZoneNode* node(NULL);
         switch (zones_.insert(zone->getOrigin(), &node)) {
             // This is OK
-            case ZoneTree::SUCCEED:
-            case ZoneTree::ALREADYEXIST:
+            case ZoneTree::SUCCESS:
+            case ZoneTree::ALREADYEXISTS:
                 break;
             // Can Not Happen
             default:

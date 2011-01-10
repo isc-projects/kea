@@ -90,62 +90,62 @@ TEST_F(RBTreeTest, setGetData) {
 }
 
 TEST_F(RBTreeTest, insertNames) {
-    EXPECT_EQ(RBTree<int>::ALREADYEXIST, rbtree.insert(Name("d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::ALREADYEXISTS, rbtree.insert(Name("d.e.f"), &rbtnode));
     EXPECT_EQ(Name("d.e.f"), rbtnode->getName());
     EXPECT_EQ(13, rbtree.getNodeCount());
 
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("."), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("."), &rbtnode));
     EXPECT_EQ(Name("."), rbtnode->getName());
     EXPECT_EQ(14, rbtree.getNodeCount());
 
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("example.com"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("example.com"), &rbtnode));
     EXPECT_EQ(15, rbtree.getNodeCount());
     rbtnode->setData(RBNode<int>::NodeDataPtr(new int(12)));
 
-    // return ALREADYEXIST, since node "example.com" already has been explicitly inserted
-    EXPECT_EQ(RBTree<int>::ALREADYEXIST, rbtree.insert(Name("example.com"), &rbtnode));
+    // return ALREADYEXISTS, since node "example.com" already has been explicitly inserted
+    EXPECT_EQ(RBTree<int>::ALREADYEXISTS, rbtree.insert(Name("example.com"), &rbtnode));
     EXPECT_EQ(15, rbtree.getNodeCount());
 
     // split the node "d.e.f"
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("k.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("k.e.f"), &rbtnode));
     EXPECT_EQ(Name("k"), rbtnode->getName());
     EXPECT_EQ(17, rbtree.getNodeCount());
 
     // split the node "g.h"
-    EXPECT_EQ(RBTree<int>::ALREADYEXIST, rbtree.insert(Name("h"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::ALREADYEXISTS, rbtree.insert(Name("h"), &rbtnode));
     EXPECT_EQ(Name("h"), rbtnode->getName());
     EXPECT_EQ(18, rbtree.getNodeCount());
 
     // add child domain
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("m.p.w.y.d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("m.p.w.y.d.e.f"), &rbtnode));
     EXPECT_EQ(Name("m"), rbtnode->getName());
     EXPECT_EQ(19, rbtree.getNodeCount());
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("n.p.w.y.d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("n.p.w.y.d.e.f"), &rbtnode));
     EXPECT_EQ(Name("n"), rbtnode->getName());
     EXPECT_EQ(20, rbtree.getNodeCount());
 
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("l.a"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("l.a"), &rbtnode));
     EXPECT_EQ(Name("l"), rbtnode->getName());
     EXPECT_EQ(21, rbtree.getNodeCount());
 
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("r.d.e.f"), &rbtnode));
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("s.d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("r.d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("s.d.e.f"), &rbtnode));
     EXPECT_EQ(23, rbtree.getNodeCount());
 
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("h.w.y.d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("h.w.y.d.e.f"), &rbtnode));
 
     // add more nodes one by one to cover leftRotate and rightRotate
-    EXPECT_EQ(RBTree<int>::ALREADYEXIST, rbtree.insert(Name("f"), &rbtnode));
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("m"), &rbtnode));
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("nm"), &rbtnode));
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("om"), &rbtnode));
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("k"), &rbtnode));
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("l"), &rbtnode));
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("fe"), &rbtnode));
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("ge"), &rbtnode));
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("i"), &rbtnode));
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("ae"), &rbtnode));
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("n"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::ALREADYEXISTS, rbtree.insert(Name("f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("m"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("nm"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("om"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("k"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("l"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("fe"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("ge"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("i"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("ae"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("n"), &rbtnode));
 }
 
 TEST_F(RBTreeTest, findName) {
@@ -177,7 +177,7 @@ testCallback(const RBNode<int>&, bool* callack_checker) {
 
 TEST_F(RBTreeTest, callback) {
     // by default callback isn't enabled
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("callback.example"),
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("callback.example"),
                                                   &rbtnode));
     rbtnode->setData(RBNode<int>::NodeDataPtr(new int(1)));
     EXPECT_FALSE(rbtnode->isCallbackEnabled());
@@ -192,11 +192,11 @@ TEST_F(RBTreeTest, callback) {
     rbtnode->enableCallback();
     // add more levels below and above the callback node for partial match.
     RBNode<int>* subrbtnode;
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("sub.callback.example"),
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("sub.callback.example"),
                                                   &subrbtnode));
     subrbtnode->setData(RBNode<int>::NodeDataPtr(new int(2)));
     RBNode<int>* parentrbtnode;
-    EXPECT_EQ(RBTree<int>::ALREADYEXIST, rbtree.insert(Name("example"),
+    EXPECT_EQ(RBTree<int>::ALREADYEXISTS, rbtree.insert(Name("example"),
                                                        &parentrbtnode));
     //  the chilld/parent nodes shouldn't "inherit" the callback flag.
     // "rbtnode" may be invalid due to the insertion, so we need to re-find
