@@ -55,6 +55,16 @@ std::string trim(const std::string& instring);
 /// the delimiter characters) and returns the tokens in a vector array. Note
 /// that adjacent delimiters are considered to be a single delimiter.
 ///
+/// Special cases are:
+/// 1) The empty string is considered to be zero tokens.
+/// 2) A string comprising nothing but delimiters is considered to be zero
+///    tokens.
+///
+/// The reasoning behind this is that the string can be thought of as having
+/// invisible leading and trailing delimiter characters.  Therefore both cases
+/// reduce to a set of contiguous delimiters, which are considered a single
+/// delimiter (so getting rid of the string).
+///
 /// We could use Boost for this, but this (simple) function eliminates one
 /// dependency in the code.
 ///

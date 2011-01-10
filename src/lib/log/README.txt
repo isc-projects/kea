@@ -14,7 +14,7 @@ Outstanding
 ===========
 * Ability to configure system according to configuration database.
 * Writing of suitable appenders and formatters.
-* Ability to override message via a run-time file.
+* Overrididing message at run-time with a localised file.
 * Update the build procedure to create .cc and .h files from the .msg file
   during the build process. (Requires that the message compiler is built first.)
 
@@ -151,3 +151,14 @@ To use the current version of the logging:
 
 As noted above, presently the only logging is to the console using the default
 log4cxx format (which is somewhat awkward to read).
+
+
+Notes
+=====
+The message compiler is written in C++ (instead of Python) because it contains
+a component that reads the message file.  This component is used in both the
+message compiler and the server; in the server it is used when the server
+starts up (or when triggered by a command) to read in a message file to
+overwrite the internal dictionary.  Writing it in C++ means there is only
+one piece of code that does this functionality.
+
