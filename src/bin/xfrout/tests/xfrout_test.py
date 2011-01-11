@@ -215,36 +215,38 @@ class TestXfroutSession(unittest.TestCase):
         rrset_soa = self.xfrsess._create_rrset_from_db_record(self.soa_record)
         self.assertEqual(82, get_rrset_len(rrset_soa))
 
-    def test_zone_is_empty(self):
+    def test_zone_has_soa(self):
         global sqlite3_ds
         def mydb1(zone, file):
             return True
         sqlite3_ds.get_zone_soa = mydb1
-        self.assertEqual(self.xfrsess._zone_is_empty(""), False)
+        self.assertTrue(self.xfrsess._zone_has_soa(""))
         def mydb2(zone, file):
             return False
         sqlite3_ds.get_zone_soa = mydb2
-        self.assertEqual(self.xfrsess._zone_is_empty(""), True)
+        self.assertFalse(self.xfrsess._zone_has_soa(""))
 
     def test_zone_exist(self):
         global sqlite3_ds
         def zone_exist(zone, file):
             return zone
         sqlite3_ds.zone_exist = zone_exist
-        self.assertEqual(self.xfrsess._zone_exist(True), True)
-        self.assertEqual(self.xfrsess._zone_exist(False), False)
+        self.assertTrue(self.xfrsess._zone_exist(True))
+        self.assertFalse(self.xfrsess._zone_exist(False))
 
     def test_check_xfrout_available(self):
         def zone_exist(zone):
             return zone
+        def zone_has_soa(zone):
+            return (not zone)
         self.xfrsess._zone_exist = zone_exist
-        self.xfrsess._zone_is_empty = zone_exist
+        self.xfrsess._zone_has_soa = zone_has_soa
         self.assertEqual(self.xfrsess._check_xfrout_available(False).to_text(), "NOTAUTH")
         self.assertEqual(self.xfrsess._check_xfrout_available(True).to_text(), "SERVFAIL")
 
         def zone_empty(zone):
-            return not zone
-        self.xfrsess._zone_is_empty = zone_empty
+            return zone
+        self.xfrsess._zone_has_soa = zone_empty
         def false_func():
             return False
         self.xfrsess.server.increase_transfers_counter = false_func

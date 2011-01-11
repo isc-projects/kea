@@ -193,17 +193,22 @@ class XfroutSession(BaseRequestHandler):
         self._send_message(sock_fd, msg)
 
 
-    def _zone_is_empty(self, zone):
-        '''Judge if the zone has data.'''
+    def _zone_has_soa(self, zone):
+        '''Judge if the zone has soa records.'''
+        # In some sense, the soa defines a zone.
+        # If the current NS is the authoritative NS for the specific zone,
+        # we need to judge if the zone has soa records, if not, we consider
+        # the zone has incomplete data, so xfrout can't serve for it.
         if sqlite3_ds.get_zone_soa(zone, self.server.get_db_file()):
-            return False
+            return True
 
-        return True
+        return False
 
     def _zone_exist(self, zonename):
         '''Judge if the zone is configured by config manager.'''
         # Currently, if we find the zone in datasource successfully, we
-        # consider the zone is configured.
+        # consider the zone is configured, and the current NS are the
+        # authoritative NS for the specific zone.
         # TODO: should get zone's configuration from cfgmgr or other place
         # in future.
         return sqlite3_ds.zone_exist(zonename, self.server.get_db_file())
@@ -213,13 +218,15 @@ class XfroutSession(BaseRequestHandler):
            TODO, Get zone's configuration from cfgmgr or some other place
            eg. check allow_transfer setting,
         '''
-        # The zone isn't configured by config manager, so we are not the
-        # authoritative name server for it.
+        # If the current NS isn't the authoritative name server for the
+        # zone, xfrout can't serve for it, return rcode NOTAUTH.
         if not self._zone_exist(zone_name):
             return Rcode.NOTAUTH()
 
-        # The zone is configured but zone data is empty.
-        if self._zone_is_empty(zone_name):
+        # If we are the authoritative name server for the zone, but fail
+        # to find the zone's soa record in datasource, xfrout can't
+        # provide zone transfer for it.
+        if not self._zone_has_soa(zone_name):
             return Rcode.SERVFAIL()
 
         #TODO, check allow_transfer

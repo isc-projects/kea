@@ -38,12 +38,12 @@ def create(cur):
     """Create new zone database"""
     cur.execute("CREATE TABLE schema_version (version INTEGER NOT NULL)")
     cur.execute("INSERT INTO schema_version VALUES (1)")
-    cur.execute("""CREATE TABLE zones (id INTEGER PRIMARY KEY, 
+    cur.execute("""CREATE TABLE zones (id INTEGER PRIMARY KEY,
                    name STRING NOT NULL COLLATE NOCASE,
-                   rdclass STRING NOT NULL COLLATE NOCASE DEFAULT 'IN', 
+                   rdclass STRING NOT NULL COLLATE NOCASE DEFAULT 'IN',
                    dnssec BOOLEAN NOT NULL DEFAULT 0)""")
     cur.execute("CREATE INDEX zones_byname ON zones (name)")
-    cur.execute("""CREATE TABLE records (id INTEGER PRIMARY KEY, 
+    cur.execute("""CREATE TABLE records (id INTEGER PRIMARY KEY,
                    zone_id INTEGER NOT NULL,
                    name STRING NOT NULL COLLATE NOCASE,
                    rname STRING NOT NULL COLLATE NOCASE,
@@ -53,7 +53,7 @@ def create(cur):
                    rdata STRING NOT NULL)""")
     cur.execute("CREATE INDEX records_byname ON records (name)")
     cur.execute("CREATE INDEX records_byrname ON records (rname)")
-    cur.execute("""CREATE TABLE nsec3 (id INTEGER PRIMARY KEY, 
+    cur.execute("""CREATE TABLE nsec3 (id INTEGER PRIMARY KEY,
                    zone_id INTEGER NOT NULL,
                    hash STRING NOT NULL COLLATE NOCASE,
                    owner STRING NOT NULL COLLATE NOCASE,
@@ -63,7 +63,7 @@ def create(cur):
     cur.execute("CREATE INDEX nsec3_byhash ON nsec3 (hash)")
 
 #########################################################################
-# open: open a database.  if the database is not yet set up, 
+# open: open a database.  if the database is not yet set up,
 # call create to do so.
 # input:
 #   dbfile - the filename for the sqlite3 database
@@ -72,7 +72,7 @@ def create(cur):
 #########################################################################
 def open(dbfile):
     """Open the database file.  If necessary, set it up"""
-    try: 
+    try:
         conn = sqlite3.connect(dbfile)
         cur = conn.cursor()
     except Exception as e:
@@ -93,9 +93,10 @@ def open(dbfile):
 
     return conn, cur
 
+
 #########################################################################
 # get_zone_datas
-#   a generator function producing an iterable set of 
+#   a generator function producing an iterable set of
 #   the records in the zone with the given zone name.
 #########################################################################
 def get_zone_datas(zonename, dbfile):
@@ -114,8 +115,8 @@ def get_zone_datas(zonename, dbfile):
 
 #########################################################################
 # get_zone_soa
-#   returns the soa record of the zone with the given zone name. 
-#   If the zone doesn't exist, return None. 
+#   returns the soa record of the zone with the given zone name.
+#   If the zone doesn't exist, return None.
 #########################################################################
 def get_zone_soa(zonename, dbfile):
     conn, cur = open(dbfile)
@@ -130,14 +131,14 @@ def get_zone_soa(zonename, dbfile):
 
 #########################################################################
 # get_zone_rrset
-#   returns the rrset of the zone with the given zone name, rrset name 
-#   and given rd type. 
-#   If the zone doesn't exist or rd type doesn't exist, return an empty list. 
+#   returns the rrset of the zone with the given zone name, rrset name
+#   and given rd type.
+#   If the zone doesn't exist or rd type doesn't exist, return an empty list.
 #########################################################################
 def get_zone_rrset(zonename, rr_name, rdtype, dbfile):
     conn, cur = open(dbfile)
     id = get_zoneid(zonename, cur)
-    cur.execute("SELECT * FROM records WHERE name = ? and zone_id = ? and rdtype = ?", 
+    cur.execute("SELECT * FROM records WHERE name = ? and zone_id = ? and rdtype = ?",
                 [rr_name, id, rdtype])
     datas = cur.fetchall()
     cur.close()
@@ -160,6 +161,7 @@ def get_zones_info(db_file):
     cur.close()
     conn.close()
 
+
 #########################################################################
 # get_zoneid:
 #   returns the zone_id for a given zone name, or an empty
@@ -173,18 +175,27 @@ def get_zoneid(zone, cur):
     else:
         return ''
 
+
 #########################################################################
 # zone_exist:
-#   returns True if the zone is found, otherwise False
+#   Search for the zone with the name zonename in databse. This method
+#   may throw a exception because its underlying methods open() may
+#   throw exceptions.
+# input:
+#   zonename: the zone's origin name.
+#   dbfile: the filename for the sqlite3 database.
+# returns:
+#   returns True if the zone is found, otherwise False.
 #########################################################################
 def zone_exist(zonename, dbfile):
-    conn, cur = open(db_file)
+    conn, cur = open(dbfile)
     zoneid = get_zoneid(zonename, cur)
     cur.close()
     conn.close()
     if (zoneid):
         return True
     return False
+
 
 #########################################################################
 # reverse_name:
@@ -200,6 +211,7 @@ def reverse_name(name):
     if new[0] == '':
         new.pop(0)
     return '.'.join(new)+'.'
+
 
 #########################################################################
 # load:
