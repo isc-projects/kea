@@ -29,6 +29,20 @@ using namespace std;
 
 namespace {
 
+/// \brief Derived from base class to make it easy to test
+/// its internals.
+class DerivedMessageCache: public MessageCache {
+public:
+    DerivedMessageCache(boost::shared_ptr<RRsetCache> rrset_cache_,
+                        uint32_t cache_size, uint16_t message_class):
+        MessageCache(rrset_cache_, cache_size, message_class)
+    {}
+
+    uint16_t messages_count() {
+        return message_table_.tableSize();
+    }
+};
+
 class MessageCacheTest: public testing::Test {
 public:
     MessageCacheTest(): message_parse(Message::PARSE),
@@ -36,14 +50,14 @@ public:
     {
         uint16_t class_ = 1; // class IN
         rrset_cache_.reset(new RRsetCache(RRSET_CACHE_DEFAULT_SIZE, class_));
-        message_cache_.reset(new MessageCache(rrset_cache_, 
+        message_cache_.reset(new DerivedMessageCache(rrset_cache_, 
                                           MESSAGE_CACHE_DEFAULT_SIZE, class_ ));
     }
 
     void messageFromFile(Message& message, const char* datafile);
 
 protected:
-    MessageCachePtr message_cache_;
+    boost::shared_ptr<DerivedMessageCache> message_cache_;
     RRsetCachePtr rrset_cache_;
     Message message_parse;
     Message message_render;
@@ -63,8 +77,16 @@ TEST_F(MessageCacheTest, testUpdate) {
     EXPECT_TRUE(message_cache_->update(message_parse));
     Name qname("test.example.com.");
     RRType qtype(1);
-
     EXPECT_TRUE(message_cache_->lookup(qname, qtype, message_render));
+    EXPECT_EQ(message_cache_->messages_count(), 1);
+
+    messageFromFile(message_parse, "message_fromWire2");
+    EXPECT_TRUE(message_cache_->update(message_parse));
+    EXPECT_EQ(message_cache_->messages_count(), 2);
+
+    Name qname1("test.example.net.");
+    RRType qtype1(1);
+    EXPECT_TRUE(message_cache_->lookup(qname1, qtype1, message_render));
 }
 
 }   // namespace
