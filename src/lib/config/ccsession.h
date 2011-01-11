@@ -96,17 +96,16 @@ isc::data::ConstElementPtr createCommand(const std::string& command,
 /// Example code: (command_message is a ConstElementPtr that is
 /// passed here)
 /// \code
-/// ConstElementPtr args;
-/// std::string command_str;
-///
+/// ElementPtr command_message = Element::fromJSON("{ \"command\": [\"foo\", { \"bar\": 123 } ] }");
 /// try {
-///     command_str = parseCommand(args, command_message);
+///     ConstElementPtr args;
+///     std::string command_str = parseCommand(args, command_message);
 ///     if (command_str == "foo") {
 ///         std::cout << "The command 'foo' was given" << std::endl;
-///         if (args.contains("bar")) {
-///             std::cout << "It had argument name 'bar' set, which has
+///         if (args->contains("bar")) {
+///             std::cout << "It had argument name 'bar' set, which has"
 ///                       << "value " 
-///                       << args->get("bar")->stringValue();
+///                       << args->get("bar")->intValue();
 ///         }
 ///     } else {
 ///         std::cout << "Unknown command '" << command_str << std::endl;
