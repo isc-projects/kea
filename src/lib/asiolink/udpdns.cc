@@ -139,6 +139,8 @@ UDPServer::operator()(error_code ec, size_t length) {
         // this point.
         CORO_YIELD io_.post(AsyncLookup<UDPServer>(*this));
 
+        dlog("[XX] got an answer");
+
         // The 'done_' flag indicates whether we have an answer
         // to send back.  If not, exit the coroutine permanently.
         if (!done_) {
@@ -233,6 +235,7 @@ UDPQuery::operator()(error_code ec, size_t length) {
     if (ec || data_->stopped) {
         return;
     }
+    bool done = false;
 
     CORO_REENTER (this) {
         /// Generate the upstream query and render it to wire format
@@ -253,6 +256,7 @@ UDPQuery::operator()(error_code ec, size_t length) {
                 data_->remote.address().to_string());
         }
 
+
         // If we timeout, we stop, which will shutdown everything and
         // cancel all other attempts to run inside the coroutine
         if (data_->timeout != -1) {
@@ -262,6 +266,7 @@ UDPQuery::operator()(error_code ec, size_t length) {
                 TIME_OUT));
         }
 
+    while (!done) {
         // Begin an asynchronous send, and then yield.  When the
         // send completes, we will resume immediately after this point.
         CORO_YIELD data_->socket.async_send_to(buffer(data_->msgbuf->getData(),
@@ -277,6 +282,48 @@ UDPQuery::operator()(error_code ec, size_t length) {
             MAX_LENGTH), data_->remote, *this);
         // The message is not rendered yet, so we can't print it easilly
         dlog("Received response from " + data_->remote.address().to_string());
+
+        // Initial naive resolver:
+        // The answer may be one of
+        // - the final result
+        // - a delegation
+        // - an error
+        // (there are more options but this is a start)
+        Message incoming(Message::PARSE);
+        InputBuffer ibuf(data_->data.get(), length);
+        incoming.fromWire(ibuf);
+        if (incoming.getRcode() == Rcode::NOERROR()) {
+            if (incoming.getRRCount(Message::SECTION_ANSWER) > 0) {
+                dlog("[XX] this looks like the final result");
+                // stop and copy the full data (with the code we
+                // already had, by providing the current buffer to
+                // the answerprovider (we should revisit that part)
+                done = true;
+            } else {
+                dlog("[XX] this looks like a delegation");
+                // ok we need to do some more processing.
+                // the ns list should contain all nameservers
+                // while the additional may contain addresses for
+                // them.
+                // this needs to tie into NSAS of course
+                // for this very first mockup, hope there is an
+                // address in additional and just use that
+                if (incoming.getRRCount(Message::SECTION_ANSWER) > 0) {
+                    // send query to the first address
+                    
+                } else {
+                    dlog("[XX] no ready-made addresses in additional. need nsas.");
+                    // this will result in answering with the delegation. oh well
+                    done = true;
+                }
+            }
+        } else if (false) {
+            dlog("[XX] this looks like an error");
+            // like for a final answer, stop and pass on the
+            // last buffer for now.
+            done = true;
+        }
+    }
 
         /// Copy the answer into the response buffer.  (XXX: If the
         /// OutputBuffer object were made to meet the requirements of
