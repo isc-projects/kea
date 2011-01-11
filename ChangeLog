@@ -1,3 +1,10 @@
+  146.	[func]		jelte
+	Command arguments were not validated internally against their
+	specifications. This change fixes that (on the C++ side, Python
+	side depends on an as yet planned addition). Note: this is only
+	an added internal check, the cli already checks format.
+	(Trac #473, git 5474eba181cb2fdd80e2b2200e072cd0a13a4e52)
+
   145.	[func]*		jinmei
 	b10-auth: added a new command 'loadzone' for (re)loading a
 	specific zone.  The command syntax is generic but it is currently
