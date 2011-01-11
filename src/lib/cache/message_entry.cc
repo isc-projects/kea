@@ -48,6 +48,8 @@ MessageEntry::genMessage(const time_t& time_now,
         // The message entry has expired.
         return false;
     } else {
+        // We don't need to add question section, since it has 
+        // been included in the message.
         ConstEDNSPtr edns(msg.getEDNS());
         bool dnssec_need = edns;
         uint16_t index = 0;
