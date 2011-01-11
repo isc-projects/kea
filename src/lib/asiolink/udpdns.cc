@@ -308,9 +308,28 @@ UDPQuery::operator()(error_code ec, size_t length) {
                 // this needs to tie into NSAS of course
                 // for this very first mockup, hope there is an
                 // address in additional and just use that
-                if (incoming.getRRCount(Message::SECTION_ANSWER) > 0) {
+                if (incoming.getRRCount(Message::SECTION_ADDITIONAL) > 0) {
                     // send query to the first address
-                    
+                    for (RRsetIterator rrsi = incoming.beginSection(Message::SECTION_ADDITIONAL);
+                         rrsi != incoming.endSection(Message::SECTION_ADDITIONAL);
+                         rrsi++) {
+                        ConstRRsetPtr rrs = *rrsi;
+                        if (rrs->getType() == RRType::A()) {
+                            // found address
+                            RdataIteratorPtr rdi = rrs->getRdataIterator();
+                            // just use the first
+                            if (!rdi->isLast()) {
+                                std::string addr_str = rdi->getCurrent().toText();
+                                dlog("[XX] first address found: " + addr_str);
+                                // now we have one address, simply
+                                // resend that exact same query
+                                // to that address and yield, when it
+                                // returns, loop again.
+                                //ip::address addr = 
+                                data_->remote.address(ip::address::from_string(addr_str));
+                            }
+                        }
+                    }
                 } else {
                     dlog("[XX] no ready-made addresses in additional. need nsas.");
                     // this will result in answering with the delegation. oh well
