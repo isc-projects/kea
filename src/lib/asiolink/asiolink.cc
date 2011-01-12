@@ -358,6 +358,7 @@ public:
         timeout_(timeout),
         retries_(retries)
     {
+        dlog("[XX] Started a new RunningQuery");
         done = false;
         send();
     }
@@ -412,7 +413,6 @@ public:
                                 // resend that exact same query
                                 // to that address and yield, when it
                                 // returns, loop again.
-                                //ip::address addr =
                                 
                                 upstream_->push_back(addr_t(addr_str, 53));
                                 found_address = true;
@@ -434,7 +434,7 @@ public:
             }
             
             if (done) {
-                std::cerr << "[XX] Done or error, returning to server" << std::endl;
+                std::cerr << "[XX] Done, returning to server" << std::endl;
                 server_->resume(result == UDPQuery::SUCCESS);
                 delete this;
             }
