@@ -235,7 +235,6 @@ UDPQuery::operator()(error_code ec, size_t length) {
     if (ec || data_->stopped) {
         return;
     }
-    bool done = false;
 
     CORO_REENTER (this) {
         /// Generate the upstream query and render it to wire format
@@ -266,7 +265,6 @@ UDPQuery::operator()(error_code ec, size_t length) {
                 TIME_OUT));
         }
 
-    while (!done) {
         // Begin an asynchronous send, and then yield.  When the
         // send completes, we will resume immediately after this point.
         CORO_YIELD data_->socket.async_send_to(buffer(data_->msgbuf->getData(),
@@ -282,71 +280,6 @@ UDPQuery::operator()(error_code ec, size_t length) {
             MAX_LENGTH), data_->remote, *this);
         // The message is not rendered yet, so we can't print it easilly
         dlog("Received response from " + data_->remote.address().to_string());
-
-        // Initial naive resolver:
-        // The answer may be one of
-        // - the final result
-        // - a delegation
-        // - an error
-        // (there are more options but this is a start)
-        Message incoming(Message::PARSE);
-        InputBuffer ibuf(data_->data.get(), length);
-        incoming.fromWire(ibuf);
-        if (incoming.getRcode() == Rcode::NOERROR()) {
-            if (incoming.getRRCount(Message::SECTION_ANSWER) > 0) {
-                dlog("[XX] this looks like the final result");
-                // stop and copy the full data (with the code we
-                // already had, by providing the current buffer to
-                // the answerprovider (we should revisit that part)
-                done = true;
-            } else {
-                dlog("[XX] this looks like a delegation");
-                // ok we need to do some more processing.
-                // the ns list should contain all nameservers
-                // while the additional may contain addresses for
-                // them.
-                // this needs to tie into NSAS of course
-                // for this very first mockup, hope there is an
-                // address in additional and just use that
-
-                // send query to the first address
-                bool found_address = false;
-                for (RRsetIterator rrsi = incoming.beginSection(Message::SECTION_ADDITIONAL);
-                     rrsi != incoming.endSection(Message::SECTION_ADDITIONAL) && !found_address;
-                     rrsi++) {
-                    ConstRRsetPtr rrs = *rrsi;
-                    if (rrs->getType() == RRType::A()) {
-                        // found address
-                        RdataIteratorPtr rdi = rrs->getRdataIterator();
-                        // just use the first
-                        if (!rdi->isLast()) {
-                            std::string addr_str = rdi->getCurrent().toText();
-                            dlog("[XX] first address found: " + addr_str);
-                            // now we have one address, simply
-                            // resend that exact same query
-                            // to that address and yield, when it
-                            // returns, loop again.
-                            //ip::address addr = 
-                            data_->remote.address(ip::address::from_string(addr_str));
-                            found_address = true;
-                        }
-                    }
-                }
-                if (found_address) {
-                    // restart loop
-                } else {
-                    dlog("[XX] no ready-made addresses in additional. need nsas.");
-                    // this will result in answering with the delegation. oh well
-                    done = true;
-                }
-            }
-        } else if (false) {
-            dlog("[XX] this looks like an error");
-            // like for a final answer, stop and pass on the
-            // last buffer for now.
-            done = true;
-        }
-    }
 
         /// Copy the answer into the response buffer.  (XXX: If the
         /// OutputBuffer object were made to meet the requirements of

@@ -438,7 +438,9 @@ ResolverImpl::processNormalQuery(const Question& question, MessagePtr message,
         edns_response->setUDPSize(ResolverImpl::DEFAULT_LOCAL_UDPSIZE);
         message->setEDNS(edns_response);
     }
+    dlog("[XX] calling sendQuery()");
     rec_query_->sendQuery(question, buffer, server);
+    dlog("[XX] done processing normal query");
 }
 
 namespace {

@@ -32,12 +32,14 @@
 
 #include <dns/buffer.h>
 #include <dns/message.h>
+#include <dns/rcode.h>
 
 #include <asiolink/asiolink.h>
 #include <asiolink/internal/tcpdns.h>
 #include <asiolink/internal/udpdns.h>
 
 #include <log/dummylog.h>
+
 
 using namespace asio;
 using asio::ip::udp;
@@ -49,6 +51,8 @@ using isc::log::dlog;
 using namespace boost;
 
 namespace asiolink {
+
+typedef pair<string, uint16_t> addr_t;
 
 class IOServiceImpl {
 private:
@@ -298,6 +302,8 @@ private:
 
     // Info for (re)sending the query (the question and destination)
     Question question_;
+    // currently we use upstream as the current list of NS records
+    // we should differentiate between forwarding and resolving
     shared_ptr<AddressVector> upstream_;
 
     // Buffer to store the result.
@@ -313,6 +319,15 @@ private:
     // Timeout information
     int timeout_;
     unsigned retries_;
+
+    // normal query state
+    // XXX hold CNAME info here
+
+    // if we change this to running and add a sent, we can do
+    // decoupled timeouts i think
+    bool done;
+    
+
 
     // (re)send the query to the server.
     void send() {
@@ -343,18 +358,86 @@ public:
         timeout_(timeout),
         retries_(retries)
     {
+        done = false;
         send();
     }
 
     // This function is used as callback from DNSQuery.
     virtual void operator()(UDPQuery::Result result) {
+        dlog("[XX] RunningQuery operator() called with result: " + result);
+        // XXX is this the place for TCP retry?
         if (result == UDPQuery::TIME_OUT && retries_ --) {
             dlog("Resending query");
             // We timed out, but we have some retries, so send again
             send();
         } else {
-            server_->resume(result == UDPQuery::SUCCESS);
-            delete this;
+            // we got an answer
+            std::cout << "[XX] for question: " << question_.toText() << std::endl;
+            Message incoming(Message::PARSE);
+            InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
+            incoming.fromWire(ibuf);
+            std::cout << "[XX] i received answer: " << incoming.toText() << std::endl;
+            //
+
+            if (incoming.getRcode() == Rcode::NOERROR()) {
+                if (incoming.getRRCount(Message::SECTION_ANSWER) > 0) {
+                    dlog("[XX] this looks like the final result");
+                    done = true;
+                } else {
+                    dlog("[XX] this looks like a delegation");
+                    // ok we need to do some more processing.
+                    // the ns list should contain all nameservers
+                    // while the additional may contain addresses for
+                    // them.
+                    // this needs to tie into NSAS of course
+                    // for this very first mockup, hope there is an
+                    // address in additional and just use that
+    
+                    // send query to the addresses in the delegation
+                    bool found_address = false;
+                    upstream_->clear();
+
+                    for (RRsetIterator rrsi = incoming.beginSection(Message::SECTION_ADDITIONAL);
+                         rrsi != incoming.endSection(Message::SECTION_ADDITIONAL) && !found_address;
+                         rrsi++) {
+                        ConstRRsetPtr rrs = *rrsi;
+                        if (rrs->getType() == RRType::A()) {
+                            // found address
+                            RdataIteratorPtr rdi = rrs->getRdataIterator();
+                            // just use the first for now
+                            if (!rdi->isLast()) {
+                                std::string addr_str = rdi->getCurrent().toText();
+                                dlog("[XX] first address found: " + addr_str);
+                                // now we have one address, simply
+                                // resend that exact same query
+                                // to that address and yield, when it
+                                // returns, loop again.
+                                //ip::address addr =
+                                
+                                upstream_->push_back(addr_t(addr_str, 53));
+                                found_address = true;
+                            }
+                        }
+                    }
+                    if (found_address) {
+                        // next resolver round
+                        buffer_->clear();
+                        send();
+                    } else {
+                        dlog("[XX] no ready-made addresses in additional. need nsas.");
+                        // this will result in answering with the delegation. oh well
+                        done = true;
+                    }
+                }
+            } else {
+                done = true;
+            }
+            
+            if (done) {
+                std::cerr << "[XX] Done or error, returning to server" << std::endl;
+                server_->resume(result == UDPQuery::SUCCESS);
+                delete this;
+            }
         }
     }
 };
