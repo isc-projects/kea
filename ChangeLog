@@ -1,3 +1,8 @@
+  147.	[bug]		jinmei
+	python/isc/config: Fixed a bug that importing custom configuration
+	(in b10-config.db) of a remote module didn't work.
+	(Trac #478, git ea4a481)
+
   146.	[func]		jelte
 	Command arguments were not validated internally against their
 	specifications. This change fixes that (on the C++ side, Python
