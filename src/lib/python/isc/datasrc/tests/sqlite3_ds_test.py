@@ -1,4 +1,4 @@
-# Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2011  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -17,17 +17,26 @@ from isc.datasrc import sqlite3_ds
 import socket
 import unittest
 
+TEST_DATA_PATH = "./testdata/"
+
 class TestSqlite3_ds(unittest.TestCase):
     def test_zone_exist(self):
-        def open(db_file):
-            conn, cur = socket.socketpair()
-            return conn, cur
-        def get_zoneid(zone_name, cur):
-            return zone_name
-        sqlite3_ds.open = open
-        sqlite3_ds.get_zoneid = get_zoneid
-        self.assertTrue(sqlite3_ds.zone_exist("example.com", "sqlite3_db"))
-        self.assertFalse(sqlite3_ds.zone_exist("", "sqlite3_db"))
+        # The following file must be non existent and must be non
+        # "creatable"; the sqlite3 library will try to create a new
+        # DB file if it doesn't exist, so to test a failure case the
+        # create operation should also fail. The "nodir", a non
+        # existent directory, is inserted for this purpose.
+        nodir = "/nodir/notexist"
+        self.assertRaises(sqlite3_ds.Sqlite3DSError,
+                          sqlite3_ds.zone_exist, "example.com", nodir)
+        # Open a broken database file
+        self.assertRaises(sqlite3_ds.Sqlite3DSError,
+                          sqlite3_ds.zone_exist, "example.com",
+                          TEST_DATA_PATH + "brokendb.sqlite3")
+        self.assertTrue(sqlite3_ds.zone_exist("example.com.",
+                            TEST_DATA_PATH + "example.com.sqlite3"))
+        self.assertFalse(sqlite3_ds.zone_exist("example.org.",
+                            TEST_DATA_PATH + "example.com.sqlite3"))
 
 if __name__ == '__main__':
     unittest.main()
