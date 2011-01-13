@@ -405,4 +405,58 @@ TEST_F(MemoryZoneTest, load) {
         MasterLoadError);
 }
 
+TEST_F(MemoryZoneTest, swap) {
+    // build one zone with some data
+    MemoryZone zone1(class_, origin_);
+    EXPECT_EQ(result::SUCCESS, zone1.add(rr_ns_));
+    EXPECT_EQ(result::SUCCESS, zone1.add(rr_ns_aaaa_));
+
+    // build another zone of a different RR class with some other data
+    const Name other_origin("version.bind");
+    ASSERT_NE(origin_, other_origin); // make sure these two are different
+    MemoryZone zone2(RRClass::CH(), other_origin);
+    EXPECT_EQ(result::SUCCESS,
+              zone2.add(RRsetPtr(new RRset(Name("version.bind"),
+                                           RRClass::CH(), RRType::TXT(),
+                                           RRTTL(0)))));
+
+    zone1.swap(zone2);
+    EXPECT_EQ(other_origin, zone1.getOrigin());
+    EXPECT_EQ(origin_, zone2.getOrigin());
+    EXPECT_EQ(RRClass::CH(), zone1.getClass());
+    EXPECT_EQ(RRClass::IN(), zone2.getClass());
+    // make sure the zone data is swapped, too
+    findTest(origin_, RRType::NS(), Zone::NXDOMAIN, false, ConstRRsetPtr(),
+             &zone1);
+    findTest(other_origin, RRType::TXT(), Zone::SUCCESS, false,
+             ConstRRsetPtr(), &zone1);
+    findTest(origin_, RRType::NS(), Zone::SUCCESS, false, ConstRRsetPtr(),
+             &zone2);
+    findTest(other_origin, RRType::TXT(), Zone::NXDOMAIN, false,
+             ConstRRsetPtr(), &zone2);
+}
+
+TEST_F(MemoryZoneTest, getFileName) {
+    // for an empty zone the file name should also be empty.
+    EXPECT_TRUE(zone_.getFileName().empty());
+
+    // if loading a zone fails the file name shouldn't be set.
+    EXPECT_THROW(zone_.load(TEST_DATA_DIR "/root.zone"), MasterLoadError);
+    EXPECT_TRUE(zone_.getFileName().empty());
+
+    // after a successful load, the specified file name should be set
+    MemoryZone rootzone(class_, Name("."));
+    EXPECT_NO_THROW(rootzone.load(TEST_DATA_DIR "/root.zone"));
+    EXPECT_EQ(TEST_DATA_DIR "/root.zone", rootzone.getFileName());
+    // overriding load, which will fail
+    EXPECT_THROW(rootzone.load(TEST_DATA_DIR "/duplicate_rrset.zone"),
+                 MasterLoadError);
+    // the file name should be intact.
+    EXPECT_EQ(TEST_DATA_DIR "/root.zone", rootzone.getFileName());
+
+    // After swap, file names should also be swapped.
+    zone_.swap(rootzone);
+    EXPECT_EQ(TEST_DATA_DIR "/root.zone", zone_.getFileName());
+    EXPECT_TRUE(rootzone.getFileName().empty());
+}
 }
