@@ -71,7 +71,6 @@ def open(dbfile):
 
     Return sqlite3 connection, sqlite3 cursor.
     """
-    # Open the database file.  If necessary, set it up"""
     try:
         conn = sqlite3.connect(dbfile)
         cur = conn.cursor()
@@ -135,13 +134,13 @@ def get_zone_soa(zonename, dbfile):
 
 def get_zone_rrset(zonename, rr_name, rdtype, dbfile):
     """Return the rrset of the zone with the given zone name, rrset
-    name and given rd type. If the zone doesn't exist or rd type
+    name and given RR type. If the zone doesn't exist or RR type
     doesn't exist, return an empty list.
 
     Arguments:
         zonename - the zone's origin name.
         rr_name - rr name.
-        rdtype - rdata type.
+        rdtype - RR type.
         dbfile - the filename for the sqlite3 database.
     """
     conn, cur = open(dbfile)
@@ -154,13 +153,13 @@ def get_zone_rrset(zonename, rr_name, rdtype, dbfile):
     return datas
 
 
-def get_zones_info(db_file):
+def get_zones_info(dbfile):
     """ Return all the zones' information in the database.
 
     Arguments:
         dbfile - the filename for the sqlite3 database.
     """
-    conn, cur = open(db_file)
+    conn, cur = open(dbfile)
     cur.execute("SELECT name, rdclass FROM zones")
     info = cur.fetchone()
     while info:
@@ -192,7 +191,7 @@ def get_zoneid(zonename, cur):
 def zone_exist(zonename, dbfile):
     """ Search for the zone with the given zone name in databse. This
     method may throw a Sqlite3DSError exception because its underlying
-    methods open() can throw that exception.
+    method open() can throw that exception.
 
     Arguments:
         zonename - the zone's origin name.
@@ -204,14 +203,14 @@ def zone_exist(zonename, dbfile):
     zoneid = get_zoneid(zonename, cur)
     cur.close()
     conn.close()
-    if (zoneid):
+    if zoneid:
         return True
     return False
 
 
 def reverse_name(name):
     """Reverse the labels of a domain name; for example,
-    given 'www.isc.org.', return 'org.isc.www.'  This is needed
+    given 'www.example.org.', return 'org.example.www.'  This is needed
     for DNSSEC sort order.
 
     Arguments:
