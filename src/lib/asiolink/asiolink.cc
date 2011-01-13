@@ -326,19 +326,21 @@ private:
     // if we change this to running and add a sent, we can do
     // decoupled timeouts i think
     bool done;
-    
 
+    // Not using NSAS at this moment, so we keep a list
+    // of 'current' zone servers
+    vector<addr_t> zone_servers_;
 
     // (re)send the query to the server.
     void send() {
-        const int uc = upstream_->size();
+        const int uc = zone_servers_.size();
         if (uc > 0) {
             int serverIndex = rand() % uc;
             dlog("Sending upstream query (" + question_.toText() +
-                ") to " + upstream_->at(serverIndex).first);
+                ") to " + zone_servers_.at(serverIndex).first);
             UDPQuery query(io_, question_,
-                upstream_->at(serverIndex).first,
-                upstream_->at(serverIndex).second, buffer_, this,
+                zone_servers_.at(serverIndex).first,
+                zone_servers_.at(serverIndex).second, buffer_, this,
                 timeout_);
             io_.post(query);
         } else {
@@ -356,10 +358,15 @@ public:
         buffer_(buffer),
         server_(server->clone()),
         timeout_(timeout),
-        retries_(retries)
+        retries_(retries),
+        zone_servers_()
     {
         dlog("[XX] Started a new RunningQuery");
         done = false;
+
+        dlog("[XX] zone_servers size: " + zone_servers_.size());
+        // hardcoded f.root-servers.net now, should use NSAS
+        zone_servers_.push_back(addr_t("192.5.5.241", 53));
         send();
     }
 
@@ -377,7 +384,7 @@ public:
             Message incoming(Message::PARSE);
             InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
             incoming.fromWire(ibuf);
-            std::cout << "[XX] i received answer: " << incoming.toText() << std::endl;
+            std::cout << "[XX] received answer: " << incoming.toText() << std::endl;
             //
 
             if (incoming.getRcode() == Rcode::NOERROR()) {
@@ -395,11 +402,11 @@ public:
                     // address in additional and just use that
     
                     // send query to the addresses in the delegation
-                    bool found_address = false;
-                    upstream_->clear();
+                    bool found_ns_address = false;
+                    zone_servers_.clear();
 
                     for (RRsetIterator rrsi = incoming.beginSection(Message::SECTION_ADDITIONAL);
-                         rrsi != incoming.endSection(Message::SECTION_ADDITIONAL) && !found_address;
+                         rrsi != incoming.endSection(Message::SECTION_ADDITIONAL) && !found_ns_address;
                          rrsi++) {
                         ConstRRsetPtr rrs = *rrsi;
                         if (rrs->getType() == RRType::A()) {
@@ -414,12 +421,13 @@ public:
                                 // to that address and yield, when it
                                 // returns, loop again.
                                 
-                                upstream_->push_back(addr_t(addr_str, 53));
-                                found_address = true;
+                                // should use NSAS
+                                zone_servers_.push_back(addr_t(addr_str, 53));
+                                found_ns_address = true;
                             }
                         }
                     }
-                    if (found_address) {
+                    if (found_ns_address) {
                         // next resolver round
                         buffer_->clear();
                         send();
