@@ -14,10 +14,11 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from isc.datasrc import sqlite3_ds
+import os
 import socket
 import unittest
 
-TEST_DATA_PATH = "./testdata/"
+TESTDATA_PATH = os.environ['TESTDATA_PATH'] + os.sep
 
 class TestSqlite3_ds(unittest.TestCase):
     def test_zone_exist(self):
@@ -32,11 +33,11 @@ class TestSqlite3_ds(unittest.TestCase):
         # Open a broken database file
         self.assertRaises(sqlite3_ds.Sqlite3DSError,
                           sqlite3_ds.zone_exist, "example.com",
-                          TEST_DATA_PATH + "brokendb.sqlite3")
+                          TESTDATA_PATH + "brokendb.sqlite3")
         self.assertTrue(sqlite3_ds.zone_exist("example.com.",
-                            TEST_DATA_PATH + "example.com.sqlite3"))
+                            TESTDATA_PATH + "example.com.sqlite3"))
         self.assertFalse(sqlite3_ds.zone_exist("example.org.",
-                            TEST_DATA_PATH + "example.com.sqlite3"))
+                            TESTDATA_PATH + "example.com.sqlite3"))
 
 if __name__ == '__main__':
     unittest.main()
