@@ -87,6 +87,15 @@ public:
     ~AuthSrv();
     //@}
 
+    /// Stop the server.
+    ///
+    /// It stops the internal event loop of the server and subsequently
+    /// returns the control to the top level context.
+    /// The server must have been associated with an \c IOService object;
+    /// otherwise an exception of \c FatalError will be thrown.
+    /// This method never throws an exception otherwise.
+    void stop();
+
     /// \brief Process an incoming DNS message, then signal 'server' to resume 
     ///
     /// A DNS query (or other message) has been received by a \c DNSServer
@@ -265,8 +274,7 @@ public:
     /// \param rrclass The RR class of the requested in-memory data source.
     /// \return A pointer to the in-memory data source, if configured;
     /// otherwise NULL.
-    ConstMemoryDataSrcPtr
-    getMemoryDataSrc(const isc::dns::RRClass& rrclass) const;
+    MemoryDataSrcPtr getMemoryDataSrc(const isc::dns::RRClass& rrclass);
 
     /// Sets or replaces the in-memory data source of the specified RR class.
     ///
