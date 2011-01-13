@@ -622,9 +622,11 @@ class BindCmdInterpreter(Cmd):
         if (len(cmd.params) != 0):
             cmd_params = json.dumps(cmd.params)
 
-        print("send the command to cmd-ctrld")        
         reply = self.send_POST(url, cmd.params)
         data = reply.read().decode()
-        print("received reply:", data)
+        # The reply is a string containing JSON data,
+        # parse it, then prettyprint
+        if data != "" and data != "{}":
+            print(json.dumps(json.loads(data), sort_keys=True, indent=4))
 
 
