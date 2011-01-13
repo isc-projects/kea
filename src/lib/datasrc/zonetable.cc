@@ -51,8 +51,8 @@ struct ZoneTable::ZoneTableImpl {
         ZoneNode* node(NULL);
         switch (zones_.insert(zone->getOrigin(), &node)) {
             // This is OK
-            case ZoneTree::SUCCEED:
-            case ZoneTree::ALREADYEXIST:
+            case ZoneTree::SUCCESS:
+            case ZoneTree::ALREADYEXISTS:
                 break;
             // Can Not Happen
             default:
@@ -85,12 +85,12 @@ struct ZoneTable::ZoneTableImpl {
                 break;
             // We have no data there, so translate the pointer to NULL as well
             case ZoneTree::NOTFOUND:
-                return (FindResult(result::NOTFOUND, ConstZonePtr()));
+                return (FindResult(result::NOTFOUND, ZonePtr()));
             // Can Not Happen
             default:
                 assert(0);
                 // Because of warning
-                return (FindResult(result::NOTFOUND, ConstZonePtr()));
+                return (FindResult(result::NOTFOUND, ZonePtr()));
         }
 
         // Can Not Happen (remember, NOTFOUND is handled)

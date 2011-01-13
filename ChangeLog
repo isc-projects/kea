@@ -1,3 +1,33 @@
+  147.	[bug]		jinmei
+	python/isc/config: Fixed a bug that importing custom configuration
+	(in b10-config.db) of a remote module didn't work.
+	(Trac #478, git ea4a481)
+
+  146.	[func]		jelte
+	Command arguments were not validated internally against their
+	specifications. This change fixes that (on the C++ side, Python
+	side depends on an as yet planned addition). Note: this is only
+	an added internal check, the cli already checks format.
+	(Trac #473, git 5474eba181cb2fdd80e2b2200e072cd0a13a4e52)
+
+  145.	[func]*		jinmei
+	b10-auth: added a new command 'loadzone' for (re)loading a
+	specific zone.  The command syntax is generic but it is currently
+	only feasible for class IN in memory data source.  To reload a
+	zone "example.com" via bindctl, execute the command as follows:
+	> Auth loadzone origin = example.com
+	(Trac #467)
+
+  144.	[build]		jinmei
+	Introduced a workaround for clang++ build on FreeBSD (and probably
+	some other OSes).  If building BIND 10 fails with clang++ due to
+	a link error about "__dso_handle", try again from the configure
+	script with CXX_LIBTOOL_LDFLAGS=-L/usr/lib (the path actually
+	doesn't matter; the important part is the -L flag).  This
+	workaround is not automatically enabled as it's difficult to
+	detect the need for it dynamically, and must be enabled via the
+	variable by hand. (Trac #474, git cfde436)
+
   143.	[build]		jinmei
 	Fixed build problems with clang++ in unit tests due to recent
 	changes.  No behavior change. (Trac #448, svn r4133)
@@ -781,8 +811,12 @@ bind10-devel-20100421 released on April 21, 2010
 bind10-devel-20100319 released on March 19, 2010
 
 For complete code revision history, see http://bind10.isc.org/browser
-Specific subversion changesets can be accessed at:
-	http://bind10.isc.org/changeset/rrrr
+Specific git changesets can be accessed at:
+	http://bind10.isc.org/changeset/?reponame=&old=rrrr^&new=rrrr
+or after cloning the original git repository by executing:
+	% git diff rrrr^ rrrr
+Subversion changesets are not accessible any more.  The subversion
+revision numbers will be replaced with corresponding git revisions.
 Trac tickets can be accessed at: https://bind10.isc.org/ticket/nnn
 
 LEGEND

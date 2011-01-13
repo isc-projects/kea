@@ -9,7 +9,23 @@ AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
 AC_PROG_CXX
+
+# Libtool configuration
+#
+# On FreeBSD (and probably some others), clang++ does not meet an autoconf
+# assumption in identifying libtool configuration regarding shared library:
+# the configure script will execute "$CC -shared $CFLAGS -v -o" and expect
+# the output contains -Lxxx or -Ryyy.  This is the case for g++, but not for
+# clang++, and, as a result, it will cause various errors in linking programs
+# or running them with a shared object (such as some of our python scripts).
+# To work around this problem we define a temporary variable
+# "CXX_LIBTOOL_LDFLAGS".  It's expected to be defined as, e.g, "-L/usr/lib"
+# to temporarily fake the output so that it will be compatible with that of
+# g++.
+CFLAGS_SAVED=$CFLAGS
+CFLAGS="$CFLAGS $CXX_LIBTOOL_LDFLAGS"
 AC_PROG_LIBTOOL
+CFLAGS=$CFLAGS_SAVED
 
 # Use C++ language
 AC_LANG([C++])
