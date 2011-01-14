@@ -141,7 +141,7 @@ TEST_F(AuthSrvTest, builtInQueryViaDNSServer) {
     (*server.getDNSLookupProvider())(*io_message, parse_message,
                                      response_obuffer, &dnsserv);
     (*server.getDNSAnswerProvider())(*io_message, parse_message,
-                                     response_obuffer);
+                                     response_message, response_obuffer);
 
     createBuiltinVersionResponse(default_qid, response_data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
@@ -156,7 +156,7 @@ TEST_F(AuthSrvTest, iqueryViaDNSServer) {
     (*server.getDNSLookupProvider())(*io_message, parse_message,
                                      response_obuffer, &dnsserv);
     (*server.getDNSAnswerProvider())(*io_message, parse_message,
-                                     response_obuffer);
+                                     response_message, response_obuffer);
 
     UnitTestUtil::readWireData("iquery_response_fromWire.wire",
                                response_data);
