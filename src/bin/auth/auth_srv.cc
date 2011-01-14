@@ -174,7 +174,7 @@ class MessageAnswer : public DNSAnswer {
 public:
     MessageAnswer(AuthSrv*) {}
     virtual void operator()(const IOMessage&, MessagePtr,
-                            OutputBufferPtr) const
+                            MessagePtr, OutputBufferPtr) const
     {}
 };
 
