@@ -211,6 +211,7 @@ private:
     // DNS lookup and answer providers
     boost::shared_ptr<asiolink::IOMessage> io_message_;
     isc::dns::MessagePtr message_;
+    isc::dns::MessagePtr answer_message_;
 
     // The buffer into which the response is written
     isc::dns::OutputBufferPtr respbuf_;

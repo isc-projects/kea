@@ -224,6 +224,7 @@ class MessageAnswer : public DNSAnswer {
 public:
     virtual void operator()(const IOMessage& io_message,
                             MessagePtr message,
+                            MessagePtr answer_message,
                             OutputBufferPtr buffer) const
     {
         const qid_t qid = message->getQid();
@@ -233,7 +234,8 @@ public:
         const Rcode& rcode = message->getRcode();
         vector<QuestionPtr> questions;
         questions.assign(message->beginQuestion(), message->endQuestion());
-
+        (void)answer_message;
+        
         message->clear(Message::RENDER);
         message->setQid(qid);
         message->setOpcode(opcode);
