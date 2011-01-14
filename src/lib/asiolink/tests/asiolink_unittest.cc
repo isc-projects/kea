@@ -442,6 +442,7 @@ protected:
                             DNSAnswer* answer = NULL) :
             io_(io_service),
             message_(new Message(Message::PARSE)),
+            answer_message_(new Message(Message::RENDER)),
             respbuf_(new OutputBuffer(0)),
             checkin_(checkin), lookup_(lookup), answer_(answer)
         {}
@@ -473,6 +474,7 @@ protected:
         // asynchronous lookup calls via the asyncLookup() method
         boost::shared_ptr<asiolink::IOMessage> io_message_;
         isc::dns::MessagePtr message_;
+        isc::dns::MessagePtr answer_message_;
         isc::dns::OutputBufferPtr respbuf_;
 
         // Callback functions provided by the caller
