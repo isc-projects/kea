@@ -105,7 +105,9 @@ public:
         }
     }
 
-    void processNormalQuery(const Question& question, MessagePtr message,
+    void processNormalQuery(const Question& question,
+                            MessagePtr message,
+                            MessagePtr answer_message,
                             OutputBufferPtr buffer,
                             DNSServer* server);
 
@@ -214,7 +216,8 @@ public:
                             DNSServer* server) const
     {
         (void) answer_message,
-        server_->processMessage(io_message, message, buffer, server);
+        server_->processMessage(io_message, message, answer_message,
+                                buffer, server);
     }
 private:
     Resolver* server_;
@@ -349,8 +352,11 @@ Resolver::getConfigSession() const {
 }
 
 void
-Resolver::processMessage(const IOMessage& io_message, MessagePtr message,
-                        OutputBufferPtr buffer, DNSServer* server)
+Resolver::processMessage(const IOMessage& io_message,
+                         MessagePtr message,
+                         MessagePtr answer_message,
+                         OutputBufferPtr buffer,
+                         DNSServer* server)
 {
     dlog("Got a DNS message");
     InputBuffer request_buffer(io_message.getData(), io_message.getDataSize());
@@ -418,7 +424,8 @@ Resolver::processMessage(const IOMessage& io_message, MessagePtr message,
             // The RecursiveQuery object will post the "resume" event to the
             // DNSServer when an answer arrives, so we don't have to do it now.
             sendAnswer = false;
-            impl_->processNormalQuery(*question, message, buffer, server);
+            impl_->processNormalQuery(*question, message,
+                                      answer_message, buffer, server);
         }
     }
 
@@ -428,8 +435,11 @@ Resolver::processMessage(const IOMessage& io_message, MessagePtr message,
 }
 
 void
-ResolverImpl::processNormalQuery(const Question& question, MessagePtr message,
-                                 OutputBufferPtr buffer, DNSServer* server)
+ResolverImpl::processNormalQuery(const Question& question,
+                                 MessagePtr message,
+                                 MessagePtr answer_message,
+                                 OutputBufferPtr buffer,
+                                 DNSServer* server)
 {
     dlog("Processing normal query");
     ConstEDNSPtr edns(message->getEDNS());
@@ -445,7 +455,7 @@ ResolverImpl::processNormalQuery(const Question& question, MessagePtr message,
         message->setEDNS(edns_response);
     }
     dlog("[XX] calling sendQuery()");
-    rec_query_->sendQuery(question, buffer, server);
+    rec_query_->sendQuery(question, answer_message, buffer, server);
     dlog("[XX] done processing normal query");
 }
 
