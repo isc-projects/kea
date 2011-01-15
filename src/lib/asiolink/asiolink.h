@@ -561,6 +561,7 @@ public:
     /// \param buffer An output buffer into which the response can be copied
     /// \param server A pointer to the \c DNSServer object handling the client
     void sendQuery(const isc::dns::Question& question,
+                   isc::dns::MessagePtr answer_message,
                    isc::dns::OutputBufferPtr buffer,
                    DNSServer* server);
 private:
