@@ -673,7 +673,8 @@ TEST_F(ASIOLinkTest, recursiveSend) {
 
     Question q(Name("example.com"), RRClass::IN(), RRType::TXT());
     OutputBufferPtr buffer(new OutputBuffer(0));
-    rq.sendQuery(q, buffer, &server);
+    MessagePtr answer(new Message(Message::RENDER));
+    rq.sendQuery(q, answer, buffer, &server);
 
     char data[4096];
     size_t size = sizeof(data);
@@ -718,7 +719,8 @@ TEST_F(ASIOLinkTest, recursiveTimeout) {
         10, 2);
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
-    query.sendQuery(question, buffer, &server);
+    MessagePtr answer(new Message(Message::RENDER));
+    query.sendQuery(question, answer, buffer, &server);
 
     // Run the test
     io_service_->run();

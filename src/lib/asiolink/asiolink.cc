@@ -453,7 +453,9 @@ public:
 }
 
 void
-RecursiveQuery::sendQuery(const Question& question, OutputBufferPtr buffer,
+RecursiveQuery::sendQuery(const Question& question,
+                          MessagePtr answer_message,
+                          OutputBufferPtr buffer,
                           DNSServer* server)
 {
     // XXX: eventually we will need to be able to determine whether
@@ -462,6 +464,7 @@ RecursiveQuery::sendQuery(const Question& question, OutputBufferPtr buffer,
     // we're only going to handle UDP.
     asio::io_service& io = dns_service_.get_io_service();
     // It will delete itself when it is done
+    (void) answer_message;
     new RunningQuery(io, question, upstream_, buffer, server,
          timeout_, retries_);
 }
