@@ -139,6 +139,7 @@ TEST_F(AuthSrvTest, builtInQueryViaDNSServer) {
     createRequestPacket(request_message, IPPROTO_UDP);
 
     (*server.getDNSLookupProvider())(*io_message, parse_message,
+                                     response_message,
                                      response_obuffer, &dnsserv);
     (*server.getDNSAnswerProvider())(*io_message, parse_message,
                                      response_message, response_obuffer);
@@ -154,6 +155,7 @@ TEST_F(AuthSrvTest, builtInQueryViaDNSServer) {
 TEST_F(AuthSrvTest, iqueryViaDNSServer) {
     createDataFromFile("iquery_fromWire.wire");
     (*server.getDNSLookupProvider())(*io_message, parse_message,
+                                     response_message,
                                      response_obuffer, &dnsserv);
     (*server.getDNSAnswerProvider())(*io_message, parse_message,
                                      response_message, response_obuffer);

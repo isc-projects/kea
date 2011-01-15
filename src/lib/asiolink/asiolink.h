@@ -414,10 +414,11 @@ public:
     /// \param DNSServer DNSServer object to use
     virtual void operator()(const IOMessage& io_message,
                             isc::dns::MessagePtr message,
+                            isc::dns::MessagePtr answer_message,
                             isc::dns::OutputBufferPtr buffer,
                             DNSServer* server) const
     {
-        (*self_)(io_message, message, buffer, server);
+        (*self_)(io_message, message, answer_message, buffer, server);
     }
 private:
     DNSLookup* self_;

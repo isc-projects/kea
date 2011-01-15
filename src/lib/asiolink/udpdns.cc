@@ -166,7 +166,7 @@ UDPServer::operator()(error_code ec, size_t length) {
 /// AsyncLookup<UDPServer> handler.)
 void
 UDPServer::asyncLookup() {
-    (*lookup_callback_)(*io_message_, message_, respbuf_, this);
+    (*lookup_callback_)(*io_message_, message_, answer_message_, respbuf_, this);
 }
 
 /// Post this coroutine on the ASIO service queue so that it will

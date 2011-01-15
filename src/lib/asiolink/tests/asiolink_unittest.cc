@@ -461,7 +461,7 @@ protected:
 
         inline void asyncLookup() {
             if (lookup_) {
-                (*lookup_)(*io_message_, message_, respbuf_, this);
+                (*lookup_)(*io_message_, message_, answer_message_, respbuf_, this);
             }
         }
 
