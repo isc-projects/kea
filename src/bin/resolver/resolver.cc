@@ -207,9 +207,13 @@ public:
     MessageLookup(Resolver* srv) : server_(srv) {}
 
     // \brief Handle the DNS Lookup
-    virtual void operator()(const IOMessage& io_message, MessagePtr message,
-                            OutputBufferPtr buffer, DNSServer* server) const
+    virtual void operator()(const IOMessage& io_message,
+                            MessagePtr message,
+                            MessagePtr answer_message,
+                            OutputBufferPtr buffer,
+                            DNSServer* server) const
     {
+        (void) answer_message,
         server_->processMessage(io_message, message, buffer, server);
     }
 private:
