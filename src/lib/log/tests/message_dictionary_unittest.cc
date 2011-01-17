@@ -59,17 +59,11 @@ TEST_F(MessageDictionaryTest, Add) {
     MessageDictionary dictionary;
     EXPECT_EQ(0, dictionary.size());
 
-    vector<MessageID> overflow = dictionary.getOverflow();
-    EXPECT_EQ(0, overflow.size());
-
     // Add a few messages and check that we can look them up and that there is
     // nothing in the overflow vector.
     EXPECT_TRUE(dictionary.add(alpha_id, alpha_text));
     EXPECT_TRUE(dictionary.add(beta_id, beta_text));
     EXPECT_EQ(2, dictionary.size());
-
-    overflow = dictionary.getOverflow();
-    EXPECT_EQ(0, overflow.size());
 
     EXPECT_EQ(alpha_text, dictionary.getText(alpha_id));
     EXPECT_EQ(beta_text, dictionary.getText(beta_id));
@@ -79,35 +73,6 @@ TEST_F(MessageDictionaryTest, Add) {
     // current text and the ID should be in the overflow section.
     EXPECT_FALSE(dictionary.add(alpha_id, gamma_text));
     EXPECT_EQ(2, dictionary.size());
-
-    overflow = dictionary.getOverflow();
-    ASSERT_EQ(1, overflow.size());
-    EXPECT_EQ(alpha_id, overflow[0]);
-    EXPECT_EQ(alpha_text, dictionary.getText(alpha_id));
-}
-
-// Check that clearing the overflow vector works
-
-TEST_F(MessageDictionaryTest, ClearOverflow) {
-    MessageDictionary dictionary;
-    EXPECT_EQ(0, dictionary.size());
-
-    vector<MessageID> overflow = dictionary.getOverflow();
-
-    // Add one message twice to get an overflow
-    EXPECT_TRUE(dictionary.add(alpha_id, alpha_text));
-    EXPECT_FALSE(dictionary.add(alpha_id, alpha_text));
-    EXPECT_EQ(1, dictionary.size());
-
-    // Check the overflow
-    overflow = dictionary.getOverflow();
-    ASSERT_EQ(1, overflow.size());
-    EXPECT_EQ(alpha_id, overflow[0]);
-
-    // ... and check that clearing it works
-    dictionary.clearOverflow();
-    overflow = dictionary.getOverflow();
-    ASSERT_EQ(0, overflow.size());
 }
 
 // Check that replacing messages works.
@@ -116,21 +81,11 @@ TEST_F(MessageDictionaryTest, Replace) {
     MessageDictionary dictionary;
     EXPECT_EQ(0, dictionary.size());
 
-    vector<MessageID> overflow = dictionary.getOverflow();
-    EXPECT_EQ(0, overflow.size());
-
     // Try to replace a non-existent message
     EXPECT_FALSE(dictionary.replace(alpha_id, alpha_text));
     EXPECT_EQ(0, dictionary.size());
-    overflow = dictionary.getOverflow();
-    ASSERT_EQ(1, overflow.size());
-    EXPECT_EQ(alpha_id, overflow[0]);
 
-    // Clear the overflow and add a couple of messages.
-    dictionary.clearOverflow();
-    overflow = dictionary.getOverflow();
-    ASSERT_EQ(0, overflow.size());
-
+    // Add a couple of messages.
     EXPECT_TRUE(dictionary.add(alpha_id, alpha_text));
     EXPECT_TRUE(dictionary.add(beta_id, beta_text));
     EXPECT_EQ(2, dictionary.size());
@@ -139,8 +94,6 @@ TEST_F(MessageDictionaryTest, Replace) {
     EXPECT_TRUE(dictionary.replace(alpha_id, gamma_text));
     EXPECT_EQ(2, dictionary.size());
     EXPECT_EQ(gamma_text, dictionary.getText(alpha_id));
-    overflow = dictionary.getOverflow();
-    ASSERT_EQ(0, overflow.size());
 
     // ... and replace non-existent message (but now the dictionary has some
     // items in it).
@@ -169,27 +122,26 @@ TEST_F(MessageDictionaryTest, LoadTest) {
     EXPECT_EQ(0, dictionary1.size());
 
     // Load a dictionary1.
-    dictionary1.load(data1);
+    vector<MessageID> duplicates = dictionary1.load(data1);
     EXPECT_EQ(3, dictionary1.size());
     EXPECT_EQ(string(data1[1]), dictionary1.getText(data1[0]));
     EXPECT_EQ(string(data1[3]), dictionary1.getText(data1[2]));
     EXPECT_EQ(string(data1[5]), dictionary1.getText(data1[4]));
-    vector<MessageID> overflow = dictionary1.getOverflow();
-    EXPECT_EQ(0, overflow.size());
+    EXPECT_EQ(0, duplicates.size());
 
     // Attempt an overwrite
-    dictionary1.load(data1);
+    duplicates = dictionary1.load(data1);
     EXPECT_EQ(3, dictionary1.size());
-    overflow = dictionary1.getOverflow();
-    EXPECT_EQ(3, overflow.size());
+    EXPECT_EQ(3, duplicates.size());
 
     // Try a new dictionary but with an incorrect number of elements
     MessageDictionary dictionary2;
     EXPECT_EQ(0, dictionary2.size());
 
-    dictionary2.load(data2);
+    duplicates = dictionary2.load(data2);
     EXPECT_EQ(2, dictionary2.size());
     EXPECT_EQ(string(data2[1]), dictionary2.getText(data2[0]));
     EXPECT_EQ(string(data2[3]), dictionary2.getText(data2[2]));
     EXPECT_EQ(string(""), dictionary2.getText(data2[4]));
+    EXPECT_EQ(0, duplicates.size());
 }

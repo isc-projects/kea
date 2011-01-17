@@ -33,19 +33,14 @@ MessageDictionary::~MessageDictionary() {
 bool MessageDictionary::add(const MessageID& ident, const std::string& text)
 {
     map<MessageID, string>::iterator i = dictionary_.find(ident);
+    bool not_found = (i == dictionary_.end());
+    if (not_found) {
 
-    if (i == dictionary_.end()) {
-
-        // Not found, so add it
+        // Message not already in the dictionary, so add it.
         dictionary_[ident] = text;
-        return true;
     }
-    else {
-
-        // Exists, so add the ID to the overflow vector.
-        overflow_.push_back(ident);
-        return false;
-    }
+    
+    return (not_found);
 }
 
 // Add message and note if ID does not already exist
@@ -53,34 +48,39 @@ bool MessageDictionary::add(const MessageID& ident, const std::string& text)
 bool MessageDictionary::replace(const MessageID& ident, const std::string& text)
 {
     map<MessageID, string>::iterator i = dictionary_.find(ident);
-
-    if (i != dictionary_.end()) {
+    bool found = (i != dictionary_.end());
+    if (found) {
 
         // Exists, so replace it.
         dictionary_[ident] = text;
-        return true;
     }
-    else {
-
-        // Not found, so add to the overflow vector.
-        overflow_.push_back(ident);
-        return false;
-    }
+    
+    return (found);
 }
 
 // Load a set of messages
 
-void MessageDictionary::load(const char* messages[]) {
+vector<MessageID> MessageDictionary::load(const char* messages[]) {
+    vector<MessageID> duplicates;
     int i = 0;
     while (messages[i]) {
-        MessageID ident(messages[i]);
-        ++i;
+
+        // ID present, so note it and point to text.
+        MessageID ident(messages[i++]);
         if (messages[i]) {
-            string text(messages[i]);
-            add(ident, text);
-            ++i;
+
+            // Text not null, note it and point to next ident. 
+            string text(messages[i++]);
+
+            // Add ID and text to message dictionary, noting if the ID was
+            // already present.
+            bool added = add(ident, text);
+            if (! added) {
+                duplicates.push_back(ident);
+            }
         }
     }
+    return duplicates;
 }
 
 // Return message text or blank string

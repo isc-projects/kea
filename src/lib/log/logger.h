@@ -17,6 +17,7 @@
 #ifndef __LOGGER_H
 #define __LOGGER_H
 
+#include <cstdlib>
 #include <string>
 #include <boost/lexical_cast.hpp>
 #include <log4cxx/logger.h>
@@ -44,25 +45,6 @@ public:
         FATAL = CRITICAL
     } Severity;
 
-    /// \brief Return a logger of a given name
-    ///
-    /// Returns a logger with the specified name. 
-    ///
-    /// \param name Name of the logger.  Unless specified as a root logger
-    /// (with a call to setRootLoggerName), the returned logger is a child
-    /// of the root logger.
-    ///
-    /// \return Pointer to Logger object
-    // static Logger* getLogger(const char* name) {}
-
-    /// \brief Set Root Logger Name
-    ///
-    /// One of the first calls in the program, this sets the name of the
-    /// root logger.  (The name appears in logging messages.)
-    ///
-    /// \param name Name of the root logger.
-    // static void setRootLoggerName(const char* name);
-
     /// \brief Constructor
     ///
     /// Creates/attaches to a logger of a specific name.
@@ -70,14 +52,63 @@ public:
     /// \param name Name of the logger.  If the name is that of the root name,
     /// this creates an instance of the root logger; otherwise it creates a
     /// child of the root logger.
-    Logger(const std::string& name);
+    /// \param exit_delete This argument is present to get round a bug in
+    /// log4cxx.  If a log4cxx logger is declared outside an execution unit, it
+    /// is not deleted until the program runs down.  At that point all such
+    /// objects - including internal log4cxx objects - are deleted.  However,
+    /// there seems to be a bug in log4cxx where the way that such objects are
+    /// destroyed causes a MutexException to be thrown (this is described in
+    /// https://issues.apache.org/jira/browse/LOGCXX-322).  As this only occurs
+    /// during program rundown, the issue is not serious - it just looks bad to
+    /// have the program crash instead of shut down cleanly.<BR>
+    /// The original implementation of the isc::log::Logger had as a member a
+    /// log4cxx logger (actually a LoggerPtr).  If the isc:: Logger was declared
+    /// statically, when it was destroyed at the end of the program the internal
+    /// LoggerPtr was destroyed, which triggered the problem.  The problem did
+    /// not occur if the isc::log::Logger was created on the stack.  To get
+    /// round this, the internal LoggerPtr is now created dynamically.  The
+    /// exit_delete argument controls its destruction: if true, it is destroyed
+    /// in the ISC Logger destructor.  If false, it is not.<BR>
+    /// When creating an isc::log::Logger on the stack, the argument should be
+    /// false (the default); when the Logger is destroyed, all the internal
+    /// log4cxx objects are destroyed.  As only the logger (and not the internal
+    /// log4cxx data structures are being destroyed), all is well.  However,
+    /// when creating the logger statically, the argument should be false.  This
+    /// means that the log4cxx objects are not destroyed at program rundown;
+    /// instead memory is reclaimed and files are closed when the process is
+    /// destroyed, something that does not trigger the bug.
+    Logger(const std::string& name, bool exit_delete = true) :
+        loggerptr_(), name_(name), exit_delete_(exit_delete)
+    {}
+
+
+    /// \brief Destructor
+    virtual ~Logger();
+
+
+    /// \brief Configure Options
+    ///
+    /// TEMPORARY: Pass in the command-line options to set the logging severity
+    /// for the root logger.  Future versions of the logger will get this
+    /// information from the configuration database.
+    ///
+    /// \param severity Severity level to log
+    /// \param dbglevel If the severity is DEBUG, this is the debug level.
+    /// This can be in the range 1 to 100 and controls the verbosity.  A value
+    /// outside these limits is silently coerced to the nearest boundary.
+    /// \param local_file If provided, the name of a message file to read in and
+    /// supersede one or more of the current messages.
+    static void runTimeInit(Severity severity = INFO, int dbglevel = 1,
+        const char* local_file = NULL);
+
 
     /// \brief Get Name of Logger
     ///
     /// \return The full name of the logger (including the root name)
-    virtual std::string getName() const {
-        return loggerptr_->getName();
+    virtual std::string getName() {
+        return getLogger()->getName();
     }
+
 
     /// \brief Set Severity Level for Logger
     ///
@@ -90,12 +121,13 @@ public:
     /// outside these limits is silently coerced to the nearest boundary.
     virtual void setSeverity(Severity severity, int dbglevel = 1);
 
+
     /// \brief Get Severity Level for Logger
     ///
     /// \return The current logging level of this logger.  In most cases though,
     /// the effective logging level is what is required.
-    virtual Severity getSeverity() const {
-        return getSeverityCommon(loggerptr_, false);
+    virtual Severity getSeverity() {
+        return getSeverityCommon(getLogger(), false);
     }
 
     /// \brief Get Effective Severity Level for Logger
@@ -103,15 +135,17 @@ public:
     /// \return The effective severity level of the logger.  This is the same
     /// as getSeverity() if the logger has a severity level set, but otherwise
     /// is the severity of the parent.
-    virtual Severity getEffectiveSeverity() const {
-        return getSeverityCommon(loggerptr_, true);
+    virtual Severity getEffectiveSeverity() {
+        return getSeverityCommon(getLogger(), true);
     }
+
 
     /// \brief Return DEBUG Level
     ///
     /// \return Current setting of debug level.  This is returned regardless of
     /// whether the 
-    virtual int getDebugLevel() const;
+    virtual int getDebugLevel();
+
 
     /// \brief Returns if Debug Message Should Be Output
     ///
@@ -119,364 +153,86 @@ public:
     /// enabled only if the logger has DEBUG enabled and if the dbglevel
     /// checked is less than or equal to the debug level set for the logger.
     virtual bool
-    isDebugEnabled(int dbglevel = MIN_DEBUG_LEVEL) const {
-        return (loggerptr_->getEffectiveLevel()->toInt() <=
+    isDebugEnabled(int dbglevel = MIN_DEBUG_LEVEL) {
+        return (getLogger()->getEffectiveLevel()->toInt() <=
             (log4cxx::Level::DEBUG_INT - dbglevel));
     }
 
+
     /// \brief Is INFO Enabled?
-    virtual bool isInfoEnabled() const {
-        return (loggerptr_->isInfoEnabled());
+    virtual bool isInfoEnabled() {
+        return (getLogger()->isInfoEnabled());
     }
 
-    /// \brief Is WARNING Enabled?
-    virtual bool isWarnEnabled() const {
-        return (loggerptr_->isWarnEnabled());
-    }
 
     /// \brief Is WARNING Enabled?
-    virtual bool isWarningEnabled() const {
-        return (loggerptr_->isWarnEnabled());
+    virtual bool isWarnEnabled() {
+        return (getLogger()->isWarnEnabled());
     }
+
+
+    /// \brief Is WARNING Enabled?
+    virtual bool isWarningEnabled() {
+        return (getLogger()->isWarnEnabled());
+    }
+
 
     /// \brief Is ERROR Enabled?
-    virtual bool isErrorEnabled() const {
-        return (loggerptr_->isErrorEnabled());
+    virtual bool isErrorEnabled() {
+        return (getLogger()->isErrorEnabled());
     }
 
+
     /// \brief Is CRITICAL Enabled?
-    virtual bool isCriticalEnabled() const {
-        return (loggerptr_->isFatalEnabled());
+    virtual bool isCriticalEnabled() {
+        return (getLogger()->isFatalEnabled());
     }
+
 
     /// \brief Is FATAL Enabled?
     ///
     /// FATAL is a synonym for CRITICAL.
-    virtual bool isFatalEnabled() const {
-        return (loggerptr_->isFatalEnabled());
+    virtual bool isFatalEnabled() {
+        return (getLogger()->isFatalEnabled());
     }
-/*
-    /// \brief Add Appender
+
+
+    /// \brief Output Debug Message
     ///
-    /// Adds an appender to the list of appenders for this logger.  The
-    /// appender is assumed to have an independent existence so although
-    /// a pointer to the appender is added here, the logger does not
-    /// assume responsibility for its destruction.
+    /// \param dbglevel Debug level, ranging between 0 and 99.  Higher numbers
+    /// are used for more verbose output.
+    /// \param ident Message identification.
+    /// \param ... Optional arguments for the message.
+    void debug(int dbglevel, MessageID ident, ...);
+
+
+    /// \brief Output Informational Message
     ///
-    /// \param appender Pointer to the appender that should be added.
-    /// If the appender is already added to this logger, a duplicate
-    /// is not added.
+    /// \param ident Message identification.
+    /// \param ... Optional arguments for the message.
+    void info(MessageID ident, ...);
+
+
+    /// \brief Output Warning Message
     ///
-    /// \return true if the logger was added, false if it was already in the
-    /// list of appenders for this logger.
-    virtual bool addAppender(AbstractAppender* appender);
+    /// \param ident Message identification.
+    /// \param ... Optional arguments for the message.
+    void warn(MessageID ident, ...);
 
-    /// \brief Remove Appender
+
+    /// \brief Output Error Message
     ///
-    /// Removes the appender from the list of appenders for this logger.
-    /// 
-    /// \param appender Pointer to the appender that should be removed.
+    /// \param ident Message identification.
+    /// \param ... Optional arguments for the message.
+    void error(MessageID ident, ...);
+
+
+    /// \brief Output Fatal Message
     ///
-    /// \return true if the appender was removed, false if it could not be
-    /// found in the list.
-    virtual bool removeAppender(AbstractAppender* appender);
+    /// \param ident Message identification.
+    /// \param ... Optional arguments for the message.
+    void fatal(MessageID ident, ...);
 
-    /// \brief Get Effective Level for Logger
-    ///
-    /// Gets the current effective logging level.  If the current logger does
-    /// not have a level set, the inheritance tree is traversed until a level
-    /// is found.
-    virtual Level getEffectiveLevel() const;
-*/
-
-    // NOTE - THE FOLLOWING ARE TEMPORARY
-    //
-    // Until properly integrated into log4cxx, the following formatting methods
-    // are used. (It is this that explains why the arguments to the logging
-    // messages are concatenated into a single string only to be broken up
-    // again in the formatting code.)
-
-
-    /// \brief Basic Message Formatting
-    ///
-    /// Extracts a message from the global dictionary and substitutes
-    /// arguments (if any).
-    ///
-    /// \param ident Message identifier
-    /// \param args Pointer to an argument vector or NULL if none.
-    ///
-    /// \return Formatted message.
-    std::string formatMessage(MessageID ident,
-        std::vector<std::string>* args = NULL);
-
-    /// \brief Basic Message Formatting
-    ///
-    /// Extracts a message from the global dictionary and substitutes
-    /// arguments (if any).
-    ///
-    /// \param ident Message identifier
-    /// \param args Set of arguments as a single string separated by the NULL
-    /// character.
-    ///
-    /// \return Formatted message.
-    std::string formatMessage(MessageID ident, const std::string& args);
-
-
-    /// \brief Debug Messages
-    ///
-    /// A set of functions that control the output of the message and up to
-    /// four parameters.
-
-    void debugCommon(MessageID ident, const std::string* args = NULL);
-
-    void debug(MessageID ident) {
-        if (isDebugEnabled()) {
-            debugCommon(ident);
-        }
-    }
-
-    template <typename T1>
-    void debug(MessageID ident, T1 arg1) {
-        if (isDebugEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1);
-            debugCommon(ident, &args);
-        }
-    }
-
-    template <typename T1, typename T2>
-    void debug(MessageID ident, T1 arg1, T2 arg2) {
-        if (isDebugEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg2);
-            debugCommon(ident, &args);
-        }
-    }
-
-    template <typename T1, typename T2, typename T3>
-    void debug(MessageID ident, T1 arg1, T2 arg2, T3 arg3) {
-        if (isDebugEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg3);
-            debugCommon(ident, &args);
-        }
-    }
-
-    template <typename T1, typename T2, typename T3, typename T4>
-    void debug(MessageID ident, T1 arg1, T2 arg2, T3 arg3,
-        T4 arg4) {
-        if (isDebugEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg3) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg4);
-            debugCommon(ident, &args);
-        }
-    }
-
-    /// \brief Informational Messages
-    ///
-    /// A set of functions that control the output of the message and up to
-    /// four parameters.
-
-    void infoCommon(MessageID ident, const std::string* args = NULL);
-
-    void info(MessageID ident) {
-        if (isInfoEnabled()) {
-            infoCommon(ident);
-        }
-    }
-
-    template <typename T1>
-    void info(MessageID ident, T1 arg1) {
-        if (isInfoEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1);
-            infoCommon(ident, &args);
-        }
-    }
-
-    template <typename T1, typename T2>
-    void info(MessageID ident, T1 arg1, T2 arg2) {
-        if (isInfoEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg2);
-            infoCommon(ident, &args);
-        }
-    }
-
-    template <typename T1, typename T2, typename T3>
-    void info(MessageID ident, T1 arg1, T2 arg2, T3 arg3) {
-        if (isInfoEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg3);
-            infoCommon(ident, &args);
-        }
-    }
-
-    template <typename T1, typename T2, typename T3, typename T4>
-    void info(MessageID ident, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
-        if (isInfoEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg3) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg4);
-            infoCommon(ident, &args);
-        }
-    }
-
-    /// \brief Warning Messages
-    ///
-    /// A set of functions that control the output of the message and up to
-    /// four parameters.
-
-    void warnCommon(MessageID ident, const std::string* args = NULL);
-
-    void warn(MessageID ident) {
-        if (isWarnEnabled()) {
-            warnCommon(ident);
-        }
-    }
-
-    template <typename T1>
-    void warn(Severity severity, MessageID ident, T1 arg1) {
-        if (isWarnEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1);
-            warnCommon(ident, &args);
-        }
-    }
-
-    template <typename T1, typename T2>
-    void warn(MessageID ident, T1 arg1, T2 arg2) {
-        if (isWarnEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg2);
-            warnCommon(ident, &args);
-        }
-    }
-
-    template <typename T1, typename T2, typename T3>
-    void warn(MessageID ident, T1 arg1, T2 arg2, T3 arg3) {
-        if (isWarnEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg3);
-            warnCommon(ident, &args);
-        }
-    }
-
-    template <typename T1, typename T2, typename T3, typename T4>
-    void warn(MessageID ident, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
-        if (isWarnEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg3) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg4);
-            warnCommon(ident, &args);
-        }
-    }
-
-    /// \brief Error Messages
-    ///
-    /// A set of functions that control the output of the message and up to
-    /// four parameters.
-
-    void errorCommon(MessageID ident, const std::string* args = NULL);
-
-    void error(MessageID ident) {
-        if (isErrorEnabled()) {
-            errorCommon(ident);
-        }
-    }
-
-    template <typename T1>
-    void error(Severity severity, MessageID ident, T1 arg1) {
-        if (isErrorEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1);
-            errorCommon(ident, &args);
-        }
-    }
-
-    template <typename T1, typename T2>
-    void error(MessageID ident, T1 arg1, T2 arg2) {
-        if (isErrorEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg2);
-            errorCommon(ident, &args);
-        }
-    }
-
-    template <typename T1, typename T2, typename T3>
-    void error(MessageID ident, T1 arg1, T2 arg2, T3 arg3) {
-        if (isErrorEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg3);
-            errorCommon(ident, &args);
-        }
-    }
-
-    template <typename T1, typename T2, typename T3, typename T4>
-    void error(MessageID ident, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
-        if (isErrorEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg3) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg4);
-            errorCommon(ident, &args);
-        }
-    }
-
-    /// \brief Fatal Messages
-    ///
-    /// A set of functions that control the output of the message and up to
-    /// four parameters.
-
-    void fatalCommon(MessageID ident, const std::string* args = NULL);
-
-    void fatal(MessageID ident) {
-        if (isFatalEnabled()) {
-            fatalCommon(ident);
-        }
-    }
-
-    template <typename T1>
-    void fatal(Severity severity, MessageID ident, T1 arg1) {
-        if (isFatalEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1);
-            fatalCommon(ident, &args);
-        }
-    }
-
-    template <typename T1, typename T2>
-    void fatal(MessageID ident, T1 arg1, T2 arg2) {
-        if (isFatalEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg2);
-            fatalCommon(ident, &args);
-        }
-    }
-
-    template <typename T1, typename T2, typename T3>
-    void fatal(MessageID ident, T1 arg1, T2 arg2, T3 arg3) {
-        if (isFatalEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg3);
-            fatalCommon(ident, &args);
-        }
-    }
-
-    template <typename T1, typename T2, typename T3, typename T4>
-    void fatal(MessageID ident, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
-        if (isFatalEnabled()) {
-            std::string args = boost::lexical_cast<std::string>(arg1) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg2) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg3) +
-                std::string("\0") + boost::lexical_cast<std::string>(arg4);
-            fatalCommon(ident, &args);
-        }
-    }
 
 protected:
 
@@ -487,8 +243,9 @@ protected:
     ///
     /// \return true if the logger objects are instances of the same logger.
     bool operator==(const Logger& other) const {
-        return (loggerptr_ == other.loggerptr_);
+        return (*loggerptr_ == *other.loggerptr_);
     }
+
 
     /// \brief Logger Initialized
     ///
@@ -497,8 +254,9 @@ protected:
     ///
     /// \return true if this logger object has been initialized.
     bool isInitialized() const {
-        return (loggerptr_ != log4cxx::LoggerPtr());
+        return (loggerptr_ != NULL);
     }
+
 
     /// \brief Get Severity Level for Logger
     ///
@@ -517,6 +275,7 @@ protected:
     Logger::Severity getSeverityCommon(const log4cxx::LoggerPtr& ptrlogger,
         bool check_parent) const;
 
+
     /// \brief Convert Between BIND-10 and log4cxx Logging Levels
     ///
     /// Converts between the numeric value of the log4cxx logging level
@@ -527,13 +286,44 @@ protected:
     /// \return BIND-10 logging severity
     Severity convertLevel(int value) const;
 
-    /// \brief Formats Message
+
+    /// \brief Initialize log4cxx Logger
     ///
-    /// Receives a message in the form of 
+    /// Creates the log4cxx logger used internally.  A function is provided for
+    /// this so that the creation does not take place when this Logger object
+    /// is created but when it is used.  As the latter occurs in executable
+    /// code but the former can occur during initialization, this order
+    /// guarantees that anything that is statically initialized has completed
+    /// its initialization by the time the logger is used.
+    void initLogger();
+
+
+    /// \brief Return log4cxx Logger
+    ///
+    /// Returns the log4cxx logger, initializing it if not already initialized.
+    ///
+    /// \return Loggerptr object
+    log4cxx::LoggerPtr& getLogger() {
+        if (loggerptr_ == NULL) {
+            initLogger();
+        }
+        return *loggerptr_;
+    }
+
+
+    /// \brief Read Local Message File
+    ///
+    /// Reads a local message file into the global dictionary, replacing any
+    /// definitions there.  Any messages found in the local file that do not
+    /// replace ones in the global dictionary are listed.
+    ///
+    /// \param file Local message file to be read.
+    static void readLocalMessageFile(const char* file);
 
 private:
-    log4cxx::LoggerPtr  loggerptr_; ///< Pointer to the underlying logger
-    std::string         fullname_;  ///< Full name of this logger
+    log4cxx::LoggerPtr*  loggerptr_;    ///< Pointer to the underlying logger
+    std::string          name_;         ///< Name of this logger]
+    bool                 exit_delete_;  ///< Delete loggerptr_ on exit?
 
     // NOTE - THIS IS A PLACE HOLDER
     static bool         init_;      ///< Set true when initialized

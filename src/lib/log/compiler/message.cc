@@ -239,7 +239,7 @@ void writeHeaderFile(const string& file, const string& prefix,
             "\n" <<
             "} // Anonymous namespace\n" <<
             "\n" <<
-            "#endif // " << sentinel_text;
+            "#endif // " << sentinel_text << "\n";
 
         // Report errors (if any) and exit
         if (hfile.fail()) {
@@ -348,21 +348,21 @@ void writeProgramFile(const string& file, MessageDictionary* dictionary)
 /// If the input file contained duplicate message IDs, only the first will be
 /// processed.  However, we should warn about it.
 ///
-/// \param dictionary Dictionary containing the message IDs and text.
+/// \param reader Message Reader used to read the file
 
-static void warnDuplicates(MessageDictionary* dictionary) {
+static void warnDuplicates(MessageReader& reader) {
 
     // Get the duplicates (the overflow) and, if present, sort them into some
     // order and remove those which occur more than once (which mean that they
     // occur more than twice in the input file).
-    vector<MessageID> duplicates = dictionary->getOverflow();
+    MessageReader::MessageIDCollection duplicates = reader.getNotAdded();
     if (duplicates.size() > 0) {
         cout << "Warning: the following duplicate IDs were found:\n";
 
         sort(duplicates.begin(), duplicates.end());
-        vector<MessageID>::iterator new_end =
+        MessageReader::MessageIDCollection::iterator new_end =
             unique(duplicates.begin(), duplicates.end());
-        for (vector<MessageID>::iterator i = duplicates.begin();
+        for (MessageReader::MessageIDCollection::iterator i = duplicates.begin();
             i != new_end; ++i) {
             cout << "    " << *i << "\n";
         }
@@ -379,15 +379,13 @@ int main(int argc, char** argv) {
     
     const struct option loptions[] = {          // Long options
         {"help",    no_argument, NULL, 'h'},
-        {"python",  no_argument, NULL, 'p'},
         {"version", no_argument, NULL, 'v'},
         {NULL,      0,           NULL, 0  }
     };
-    const char* soptions = "hpv";               // Short options
+    const char* soptions = "hv";               // Short options
 
     optind = 1;             // Ensure we start a new scan
     int  opt;               // Value of the option
-    bool python = false;    // Set true if the -p flag is detected
 
     while ((opt = getopt_long(argc, argv, soptions, loptions, NULL)) != -1) {
         switch (opt) {
@@ -398,10 +396,6 @@ int main(int argc, char** argv) {
             case 'v':
                 version();
                 return 0;
-
-            case 'p':
-                python = true;
-                break;
 
             default:
                 // A message will have already been output about the error.
@@ -437,7 +431,7 @@ int main(int argc, char** argv) {
         writeProgramFile(message_file, &dictionary);
 
         // Finally, warn of any duplicates encountered.
-        warnDuplicates(&dictionary);
+        warnDuplicates(reader);
     }
     catch (MessageException& e) {
         // Create an error message from the ID and the text

@@ -34,23 +34,15 @@ namespace log {
 MessageReader::~MessageReader() {
 }
 
-// Get/Set the dictionary.
-
-MessageDictionary* MessageReader::getDictionary() const {
-    return dictionary_;
-}
-
-void
-MessageReader::setDictionary(MessageDictionary* dictionary) {
-    dictionary_ = dictionary;
-    dictionary_->clearOverflow();
-}
-
 
 // Read the file.
 
 void
 MessageReader::readFile(const string& file, MessageReader::Mode mode) {
+
+    // Ensure the non-added collection is empty: this object might be
+    // being reused.
+    not_added_.clear();
 
     // Open the file
     ifstream infile(file.c_str());
@@ -174,12 +166,17 @@ MessageReader::parseMessage(const std::string& text, MessageReader::Mode mode) {
         throw MessageException(MSG_ONETOKEN, text);
     }
 
-    // Add the result to the dictionary.
+    // Add the result to the dictionary and to the non-added list if the add to
+    // the dictionary fails.
+    bool added;
     if (mode == ADD) {
-        (void) dictionary_->add(ident, text.substr(first_text));
+        added = dictionary_->add(ident, text.substr(first_text));
     }
     else {
-        (void) dictionary_->replace(ident, text.substr(first_text));
+        added = dictionary_->replace(ident, text.substr(first_text));
+    }
+    if (! added) {
+        not_added_.push_back(ident);
     }
 }
 

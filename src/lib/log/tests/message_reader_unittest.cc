@@ -62,8 +62,6 @@ TEST_F(MessageReaderTest, BlanksAndComments) {
 
     // Ensure that the dictionary is empty.
     EXPECT_EQ(0, dictionary_->size());
-    vector<MessageID> overflow = dictionary_->getOverflow();
-    EXPECT_EQ(0, overflow.size());
 
     // Add a number of blank lines and comments and check that (a) they are
     // parsed successfully ...
@@ -76,10 +74,10 @@ TEST_F(MessageReaderTest, BlanksAndComments) {
     EXPECT_NO_THROW(reader_.processLine("#+ A comment"));
     EXPECT_NO_THROW(reader_.processLine("  +# A description line"));
 
-    // ... and (b) nothing gets added to either the map or the duplicates
+    // ... and (b) nothing gets added to either the map or the not-added section.
     EXPECT_EQ(0, dictionary_->size());
-    overflow = dictionary_->getOverflow();
-    EXPECT_EQ(0, overflow.size());
+    vector<MessageID> not_added = reader_.getNotAdded();
+    EXPECT_EQ(0, not_added.size());
 }
 
 
@@ -149,9 +147,9 @@ TEST_F(MessageReaderTest, ValidMessageAddDefault) {
         dictionary_->getText("GLOBAL2"));
     EXPECT_EQ(2, dictionary_->size());
 
-    // ... and ensure no overflows
-    vector<MessageID> overflow = dictionary_->getOverflow();
-    EXPECT_EQ(0, overflow.size());
+    // ... and ensure no messages were not added
+    vector<MessageID> not_added = reader_.getNotAdded();
+    EXPECT_EQ(0, not_added.size());
 }
 
 TEST_F(MessageReaderTest, ValidMessageAdd) {
@@ -169,9 +167,9 @@ TEST_F(MessageReaderTest, ValidMessageAdd) {
         dictionary_->getText("GLOBAL2"));
     EXPECT_EQ(2, dictionary_->size());
 
-    // ... and ensure no overflows
-    vector<MessageID> overflow = dictionary_->getOverflow();
-    EXPECT_EQ(0, overflow.size());
+    // ... and ensure no messages were not added
+    vector<MessageID> not_added = reader_.getNotAdded();
+    EXPECT_EQ(0, not_added.size());
 }
 
 TEST_F(MessageReaderTest, ValidMessageReplace) {
@@ -192,9 +190,9 @@ TEST_F(MessageReaderTest, ValidMessageReplace) {
         dictionary_->getText("GLOBAL2"));
     EXPECT_EQ(2, dictionary_->size());
 
-    // ... and ensure no overflows
-    vector<MessageID> overflow = dictionary_->getOverflow();
-    EXPECT_EQ(0, overflow.size());
+    // ... and ensure no messages were not added
+    vector<MessageID> not_added = reader_.getNotAdded();
+    EXPECT_EQ(0, not_added.size());
 }
 
 // Do checks on overflows, although this essentially duplicates the checks
@@ -220,11 +218,11 @@ TEST_F(MessageReaderTest, Overflows) {
         dictionary_->getText("GLOBAL2"));
     EXPECT_EQ(2, dictionary_->size());
 
-    // Check what is in the overflow
-    vector<MessageID> overflow = dictionary_->getOverflow();
-    ASSERT_EQ(2, overflow.size());
+    // ... and ensure no overflows
+    vector<MessageID> not_added = reader_.getNotAdded();
+    ASSERT_EQ(2, not_added.size());
 
-    sort(overflow.begin(), overflow.end());
-    EXPECT_EQ(string("GLOBAL1"), overflow[0]);
-    EXPECT_EQ(string("LOCAL"), overflow[1]);
+    sort(not_added.begin(), not_added.end());
+    EXPECT_EQ(string("GLOBAL1"), not_added[0]);
+    EXPECT_EQ(string("LOCAL"), not_added[1]);
 }

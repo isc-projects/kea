@@ -35,18 +35,12 @@ namespace log {
 /// Adding text occurs in two modes:
 ///
 /// Through the "Add" method, ID/text mappings are added to the dictionary
-/// unless the ID already exists.  If so, the ID is added to an "overflow"
-/// vector from where it can be retrieved later.
+/// unless the ID already exists.  This is designed for use during program
+/// initialization, where a local message may supplant a compiled-in message.
 ///
 /// Through the "Replace" method, ID/text mappings are added to the dictionary
-/// only if the ID already exists.  Otherwise the ID is added to the overflow
-/// vector.
-///
-/// The "Add" method is designed for initialization of the program with the
-/// text supplied by the developers.  Here the message IDs must be unique.
-/// The "Replace" method is for use when a message file is supplied to replace
-/// messages provided with the program.  The supplied messages in this case
-/// should replace the ones that come with the program.
+/// only if the ID already exists.  This is for use when a message file is
+/// supplied to replace messages provided with the program.
 ///
 /// Although the class can be used stand-alone, it does supply a static method
 /// to return a particular instance - the "global" dictionary.
@@ -68,7 +62,7 @@ public:
     /// \param text Message text
     ///
     /// \return true if the message was added to the dictionary, false if the
-    /// message existed and it was added to the overflow vector.
+    /// message existed and it was not added.
     virtual bool add(const MessageID& ident, const std::string& text);
 
 
@@ -81,7 +75,7 @@ public:
     /// \param text Message text
     ///
     /// \return true if the message was added to the dictionary, false if the
-    /// message did not exist and it was added to the overflow vector.
+    /// message did not exist and it was not added.
     virtual bool replace(const MessageID& ident, const std::string& text);
 
 
@@ -96,7 +90,11 @@ public:
     /// message text.  This should be an odd number of elements long, the last
     /// elemnent being NULL.  If it is an even number of elements long, the
     /// last ID is ignored.
-    virtual void load(const char* elements[]);
+    ///
+    /// \return Vector of message IDs that were not loaded because an ID of the
+    /// same name already existing in the dictionary.  This vector may be
+    /// empty.
+    virtual std::vector<MessageID> load(const char* elements[]);
 
 
     /// \brief Get Message Text
@@ -111,25 +109,6 @@ public:
     virtual std::string getText(const MessageID& ident) const;
 
 
-    /// \brief Clear Overflow
-    ///
-    /// Clears the overflow vector, perhaps because new definitions are going
-    /// to be added.
-    virtual void clearOverflow() {
-        overflow_.clear();
-    }
-
-
-    /// \brief Return Overflow Vector
-    ///
-    /// Returns the overflow vector.
-    ///
-    /// \return Overflow vector
-    virtual std::vector<MessageID> getOverflow() const {
-        return overflow_;
-    }
-
-
     /// \brief Number of Items in Dictionary
     ///
     /// \return Number of items in the dictionary
@@ -137,13 +116,16 @@ public:
         return dictionary_.size();
     }
 
+
     // Allow access to the internal map structure, but don't allow alteration.
     typedef std::map<MessageID, std::string>::const_iterator const_iterator;
+
 
     /// \brief Return begin() iterator of internal map
     const_iterator begin() const {
         return dictionary_.begin();
     }
+
 
     /// \brief Return end() iterator of internal map
     const_iterator end() const {
@@ -160,7 +142,6 @@ public:
 
 private:
     std::map<MessageID, std::string>  dictionary_;
-    std::vector<MessageID>            overflow_;
 };
 
 } // namespace log

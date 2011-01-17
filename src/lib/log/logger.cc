@@ -10,11 +10,19 @@
 // INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWAR
+// PERFORMANCE OF THIS SOFTWARE
 
 // $Id$
 
 #include <iostream>
+
+#include <stdarg.h>
+#include <stdio.h>
+
+#include <log4cxx/appender.h>
+#include <log4cxx/basicconfigurator.h>
+#include <log4cxx/patternlayout.h>
+#include <log4cxx/consoleappender.h>
 
 #include <log/root_logger_name.h>
 #include <log/logger.h>
@@ -23,35 +31,68 @@
 #include <log/strutil.h>
 #include <log/xdebuglevel.h>
 
-#include <log4cxx/basicconfigurator.h>
-
 using namespace std;
 
 namespace isc {
 namespace log {
 
+// Static initializations
+
 bool Logger::init_ = false;
 
-// Constructor - create a logger as a child of the root logger.  With log4cxx
-// this is assured by naming the logger <parent>.<child>.
+// Destructor.  Delete log4cxx stuff if "don't delete" is clear.
 
-Logger::Logger(const std::string& name) : loggerptr_()
-{
-    string root_name = RootLoggerName::getName();
-    if (root_name.empty() || (name == root_name)) {
-        fullname_ = name;
-    }
-    else {
-        fullname_ = root_name + "." + name;
-    }
-    loggerptr_ = log4cxx::Logger::getLogger(fullname_);
-
-    // Initialize basic logging if not already done
-    if (! init_) {
-        log4cxx::BasicConfigurator::configure();
-        init_ = true;
+Logger::~Logger() {
+    if (exit_delete_) {
+        delete loggerptr_;
     }
 }
+
+// Initialize logger - create a logger as a child of the root logger.  With
+// log4cxx this is assured by naming the logger <parent>.<child>.
+
+void Logger::initLogger() {
+
+    // Initialize basic logging if not already done.  This is a one-off for
+    // all loggers.
+    if (! init_) {
+
+        // TEMPORARY
+        // Add a suitable console logger to the log4cxx root logger.  (This
+        // is the logger at the root of the log4cxx tree, not the BIND-10 root
+        // logger, which is one level down.)  The chosen format is:
+        //
+        // YYYY-MM-DD hh:mm:ss.sss [logger] SEVERITY: text
+        //
+        // As noted, this is a temporary hack: it is done here to ensure that
+        // a suitable output and output pattern is set.  Future versions of the
+        // software will set this based on configuration data.
+
+        log4cxx::LayoutPtr layout(
+            new log4cxx::PatternLayout(
+                "%d{yyyy-MM-DD HH:mm:ss.SSS} %-5p [%c] %m\n"));
+        log4cxx::AppenderPtr console(
+            new log4cxx::ConsoleAppender(layout));
+        log4cxx::LoggerPtr sys_root_logger = log4cxx::Logger::getRootLogger();
+        sys_root_logger->addAppender(console);
+        
+        // All static stuff initialized
+        init_ = true;
+    }
+
+    // Initialize this logger.  Name this as to whether the BIND-10 root logger
+    // name has beens set.
+    string root_name = RootLoggerName::getName();
+    if (root_name.empty() || (name_ == root_name)) {
+        loggerptr_ = new log4cxx::LoggerPtr(log4cxx::Logger::getLogger(name_));
+    }
+    else {
+        loggerptr_ = new log4cxx::LoggerPtr(
+            log4cxx::Logger::getLogger(root_name + "." + name_)
+        );
+    }
+}
+
 
 // Set the severity for logging.  There is a 1:1 mapping between the logging
 // severity and the log4cxx logging levels, apart from DEBUG.
@@ -73,45 +114,45 @@ Logger::Logger(const std::string& name) : loggerptr_()
 // level set is 10000 - 25 = 99975.
 //
 // Attempting to log a debug message of level 26 is an attempt to log a message
-// of level 10000 - 26 = 99974.  As 99974 !>= 99975, it is not logged.  A
-// message of level 25 is, because 99975 >= 99975.
+// of level 10000 - 26 = 9974.  As 9974 !>= 9975, it is not logged.  A
+// message of level 25 is, because 9975 >= 9975.
 //
 // The extended set of logging levels is implemented by the XDebugLevel class.
 
 void Logger::setSeverity(Severity severity, int dbglevel) {
     switch (severity) {
         case NONE:
-            loggerptr_->setLevel(
+            getLogger()->setLevel(
                 log4cxx::Level::toLevel(
                 log4cxx::Level::OFF_INT));
             break;
 
         case FATAL:
-            loggerptr_->setLevel(
+            getLogger()->setLevel(
                 log4cxx::Level::toLevel(
                 log4cxx::Level::FATAL_INT));
             break;
 
         case ERROR:
-            loggerptr_->setLevel(
+            getLogger()->setLevel(
                 log4cxx::Level::toLevel(
                 log4cxx::Level::ERROR_INT));
             break;
 
         case WARNING:
-            loggerptr_->setLevel(
+            getLogger()->setLevel(
                 log4cxx::Level::toLevel(
                 log4cxx::Level::WARN_INT));
             break;
 
         case INFO:
-            loggerptr_->setLevel(
+            getLogger()->setLevel(
                 log4cxx::Level::toLevel(
                 log4cxx::Level::INFO_INT));
             break;
 
         case DEBUG:
-            loggerptr_->setLevel(
+            getLogger()->setLevel(
                 log4cxx::XDebugLevel::getExtendedDebug(dbglevel));
             break;
 
@@ -119,7 +160,7 @@ void Logger::setSeverity(Severity severity, int dbglevel) {
         // logger's own severity and it defaults to the severity of the parent
         // logger.
         default:
-            loggerptr_->setLevel(0);
+            getLogger()->setLevel(0);
     }
 }
 
@@ -174,11 +215,13 @@ Logger::Severity Logger::getSeverityCommon(const log4cxx::LoggerPtr& ptrlogger,
         return convertLevel(level->toInt());
     }
 }
+
+
 // Get the debug level.  This returns 0 unless the severity is DEBUG.
 
-int Logger::getDebugLevel() const {
+int Logger::getDebugLevel() {
 
-    log4cxx::LevelPtr level = loggerptr_->getLevel();
+    log4cxx::LevelPtr level = getLogger()->getLevel();
     if (level == log4cxx::LevelPtr()) {
 
         // Null pointer returned, logging should be that of the parent.
@@ -195,78 +238,64 @@ int Logger::getDebugLevel() const {
     }
 }
 
-// Return formatted message
-// THIS IS A PLACE HOLDER
+// Log an error message:
+// Common code.  Owing to the use of variable arguments, this must be inline
+// (hence the definition of the macro).  Also note that it expects that the
+// message buffer "message" is declared in the compilation unit.
 
-string
-Logger::formatMessage(MessageID ident, vector<string>* args) {
+#define MESSAGE_SIZE (256)
 
-    // Return the format string
-    MessageDictionary* global = MessageDictionary::globalDictionary();
-    string text = global->getText(ident);
-
-    // Do argument substitution if there are any
-    if (args) {
-        text = isc::strutil::format(text, *args);
+#define FORMAT_MESSAGE(message) \
+    { \
+    MessageDictionary* global = MessageDictionary::globalDictionary(); \
+    string format = global->getText(ident); \
+    va_list ap; \
+    va_start(ap, ident); \
+    vsnprintf(message, sizeof(message), format.c_str(), ap); \
+    message[sizeof(message) - 1] = '\0'; \
+    va_end(ap); \
     }
+    
 
-    return ident + ", " + text;
-}
+// Output methods
 
-string
-Logger::formatMessage(MessageID ident, const string& composite) {
-    vector<string> args = isc::strutil::tokens(composite, "\0");
-    return formatMessage(ident, &args);
-}
-
-
-// Debug methods
-
-void Logger::debugCommon(MessageID ident, const std::string* args) {
-    if (args) {
-        LOG4CXX_DEBUG(loggerptr_, formatMessage(ident, *args));
-    } else {
-        LOG4CXX_DEBUG(loggerptr_, formatMessage(ident));
+void Logger::debug(int dbglevel, isc::log::MessageID ident, ...) {
+    if (isDebugEnabled(dbglevel)) {
+        char message[MESSAGE_SIZE];
+        FORMAT_MESSAGE(message);
+        LOG4CXX_DEBUG(getLogger(), message);
     }
 }
 
-// Info
-
-void Logger::infoCommon(MessageID ident, const std::string* args) {
-    if (args) {
-        LOG4CXX_INFO(loggerptr_, formatMessage(ident, *args));
-    } else {
-        LOG4CXX_INFO(loggerptr_, formatMessage(ident));
+void Logger::info(isc::log::MessageID ident, ...) {
+    if (isInfoEnabled()) {
+        char message[MESSAGE_SIZE];
+        FORMAT_MESSAGE(message);
+        LOG4CXX_INFO(getLogger(), message);
     }
 }
 
-// Warning
-
-void Logger::warnCommon(MessageID ident, const std::string* args) {
-    if (args) {
-        LOG4CXX_WARN(loggerptr_, formatMessage(ident, *args));
-    } else {
-        LOG4CXX_WARN(loggerptr_, formatMessage(ident));
+void Logger::warn(isc::log::MessageID ident, ...) {
+    if (isWarnEnabled()) {
+        char message[MESSAGE_SIZE];
+        FORMAT_MESSAGE(message);
+        LOG4CXX_WARN(getLogger(), message);
     }
 }
 
-// Error
-
-void Logger::errorCommon(MessageID ident, const std::string* args) {
-    if (args) {
-        LOG4CXX_ERROR(loggerptr_, formatMessage(ident, *args));
-    } else {
-        LOG4CXX_ERROR(loggerptr_, formatMessage(ident));
+void Logger::error(isc::log::MessageID ident, ...) {
+    if (isErrorEnabled()) {
+        char message[MESSAGE_SIZE];
+        FORMAT_MESSAGE(message);
+        LOG4CXX_ERROR(getLogger(), message);
     }
 }
 
-// Fatal
-
-void Logger::fatalCommon(MessageID ident, const std::string* args) {
-    if (args) {
-        LOG4CXX_FATAL(loggerptr_, formatMessage(ident, *args));
-    } else {
-        LOG4CXX_FATAL(loggerptr_, formatMessage(ident));
+void Logger::fatal(isc::log::MessageID ident, ...) {
+    if (isFatalEnabled()) {
+        char message[MESSAGE_SIZE];
+        FORMAT_MESSAGE(message);
+        LOG4CXX_FATAL(getLogger(), message);
     }
 }
 
