@@ -1,3 +1,9 @@
+  149.  [bug]		jelte
+	bindctl: Check if the user session has disappeared (either by a
+	timeout or by a server restart), and reauthenticate if so. This
+	fixes the 'cmdctl not running' problem.
+        (trac #431, git b929be82fec5f92e115d8985552f84b4fdd385b9)
+
   148.	[func]		jelte
 	bindctl: Command results are now pretty-printed (i.e. printed in
 	a more readable form). Empty results are no longer printed at all
