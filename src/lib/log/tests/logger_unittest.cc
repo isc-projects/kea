@@ -38,7 +38,7 @@ namespace log {
 class TestLogger : public Logger {
 public:
     /// \brief constructor
-    TestLogger(const string& name) : Logger(name)
+    TestLogger(const string& name) : Logger(name, true)
     {}
 
     /// \brief Logger Equality
@@ -152,7 +152,7 @@ TEST_F(LoggerTest, Severity) {
 
     // Create a logger
     RootLoggerName::setName("test3");
-    Logger logger("alpha");
+    TestLogger logger("alpha");
 
     // Now check the levels
     logger.setSeverity(Logger::NONE);
@@ -183,7 +183,7 @@ TEST_F(LoggerTest, DebugLevels) {
 
     // Create a logger
     RootLoggerName::setName("test4");
-    Logger logger("alpha");
+    TestLogger logger("alpha");
 
     // Debug level should be 0 if not at debug severity
     logger.setSeverity(Logger::NONE, 20);
@@ -229,8 +229,8 @@ TEST_F(LoggerTest, SeverityInheritance) {
     // relationship if the loggers are named <parent> and <parent>.<child>.
 
     RootLoggerName::setName("test5");
-    Logger parent("alpha");
-    Logger child("alpha.beta");
+    TestLogger parent("alpha");
+    TestLogger child("alpha.beta");
 
     // By default, newly created loggers should have a level of DEFAULT
     // (i.e. default to parent)

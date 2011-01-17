@@ -716,6 +716,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/lib/dns/tests/testdata/gen-wiredata.py
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
+           src/lib/log/tests/run_time_init_test.sh
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
@@ -740,6 +741,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/msgq/tests/msgq_test
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
+           chmod +x src/lib/log/tests/run_time_init_test.sh
           ])
 AC_OUTPUT
 

@@ -77,7 +77,7 @@ public:
     /// means that the log4cxx objects are not destroyed at program rundown;
     /// instead memory is reclaimed and files are closed when the process is
     /// destroyed, something that does not trigger the bug.
-    Logger(const std::string& name, bool exit_delete = true) :
+    Logger(const std::string& name, bool exit_delete = false) :
         loggerptr_(), name_(name), exit_delete_(exit_delete)
     {}
 
