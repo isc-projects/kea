@@ -32,6 +32,15 @@ namespace log {
 class RootLoggerName {
 public:
 
+    /// \brief Constructor
+    ///
+    /// Sets the root logger name.  Although the name is static, setting the
+    /// name in the constructor allows static initialization of the name by
+    /// declaring an external instance of the class in the main execution unit.
+    RootLoggerName(const std::string& name) {
+        setName(name);
+    } 
+
     /// \brief Set Root Logger Name
     ///
     /// \param name Name of the root logger.  This should be the program

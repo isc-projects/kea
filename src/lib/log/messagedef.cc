@@ -1,4 +1,4 @@
-// File created from messagedef.mes on Fri Jan  7 17:26:42 2011
+// File created from messagedef.mes on Mon Jan 17 15:25:32 2011
 
 #include <cstddef>
 #include <log/message_initializer.h>
@@ -9,8 +9,9 @@ namespace {
 
 const char* values[] = {
     "DUPLPRFX", "duplicate $PREFIX directive found",
+    "IDNOTFND", "could not replace message for '%s': no such message identification",
     "ONETOKEN", "a line containing a message ID ('%s') and nothing else was found",
-    "OPENIN", "unable to open %s for input: %s",
+    "OPENIN", "unable to open message file %s for input: %s",
     "OPENOUT", "unable to open %s for output: %s",
     "PRFEXTRARG", "$PREFIX directive has too many arguments",
     "PRFINVARG", "$PREFIX directive has an invalid argument ('%s')",
@@ -23,4 +24,4 @@ const char* values[] = {
 
 } // Anonymous namespace
 
-MessageInitializer messagedef_cc_Fri_Jan__7_17_26_42_2011(values);
+MessageInitializer messagedef_cc_Mon_Jan_17_15_25_32_2011(values);

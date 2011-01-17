@@ -49,9 +49,8 @@ public:
         REPLACE
     } Mode;
 
-    /// \brief Other Types
-    typedef std::map<std::string, std::string>  MessageMap;
-    typedef std::vector<std::string>            MessageDuplicates;
+    /// \brief Visible collection types
+    typedef std::vector<MessageID>   MessageIDCollection;
 
     /// \brief Constructor
     ///
@@ -79,7 +78,9 @@ public:
     /// not transferred - the caller should not delete it.
     ///
     /// \return Pointer to current dictionary object
-    virtual MessageDictionary* getDictionary() const;
+    MessageDictionary* getDictionary() const {
+        return dictionary_;
+    }
 
 
     /// \brief Set Dictionary
@@ -89,7 +90,9 @@ public:
     /// \param dictionary New dictionary object. The ownership of the dictionary
     /// object is not transferred - the caller is responsible for managing the
     /// lifetime of the dictionary.
-    virtual void setDictionary(MessageDictionary* dictionary);
+    void setDictionary(MessageDictionary* dictionary) {
+        dictionary_ = dictionary;
+    }
 
 
     /// \brief Read File
@@ -128,6 +131,17 @@ public:
         prefix_ = "";
     }
 
+
+    /// \brief Get Not-Added List
+    ///
+    /// Returns the list of IDs that were not added during the last
+    /// read of the file.
+    ///
+    /// \return Collection of messages not added
+    MessageIDCollection getNotAdded() const {
+        return not_added_;
+    }
+
 private:
 
     /// \brief Handle a Message Definition
@@ -150,8 +164,9 @@ private:
     void parseDirective(const std::string& line);
 
     /// Attributes
-    MessageDictionary*  dictionary_;    // Dictionary to add messages to
-    std::string         prefix_;        // Input of $PREFIX statement
+    MessageDictionary*  dictionary_;    ///< Dictionary to add messages to
+    MessageIDCollection not_added_;     ///< List of IDs not added
+    std::string         prefix_;        ///< Input of $PREFIX statement
 };
 
 } // namespace log

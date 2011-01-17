@@ -97,7 +97,15 @@ TEST_F(LoggerTest, GetLogger) {
     TestLogger logger1(name1);
     TestLogger logger2(name1);
 
-    // And check they are equal and non-null
+    // And check they are null at this point.
+    EXPECT_FALSE(logger1.isInitialized());
+    EXPECT_FALSE(logger2.isInitialized());
+
+    // Do some random operation
+    EXPECT_TRUE(logger1.isFatalEnabled());
+    EXPECT_TRUE(logger2.isFatalEnabled());
+
+    // And check they initialized and equal
     EXPECT_TRUE(logger1.isInitialized());
     EXPECT_TRUE(logger2.isInitialized());
     EXPECT_TRUE(logger1 == logger2);
@@ -105,6 +113,8 @@ TEST_F(LoggerTest, GetLogger) {
     // Instantiate another logger with another name and check that it
     // is different to the previously instantiated ones.
     TestLogger logger3(name2);
+    EXPECT_FALSE(logger3.isInitialized());
+    EXPECT_TRUE(logger3.isFatalEnabled());
     EXPECT_TRUE(logger3.isInitialized());
     EXPECT_FALSE(logger1 == logger3);
 }
@@ -382,51 +392,4 @@ TEST_F(LoggerTest, IsDebugEnabledLevel) {
     EXPECT_TRUE(logger.isDebugEnabled(MIN_DEBUG_LEVEL));
     EXPECT_TRUE(logger.isDebugEnabled(MID_LEVEL));
     EXPECT_TRUE(logger.isDebugEnabled(MAX_DEBUG_LEVEL));
-}
-
-// Check that the message formatting is correct.  As this test program is
-// linking with the logger library - which includes messages from the logger
-// itself - we'll use those messages for testing.
-
-TEST_F(LoggerTest, Format) {
-    RootLoggerName::setName("test9");
-    Logger logger("test9");
-
-// Individual arguments
-    string result = logger.formatMessage(MSG_OPENIN);
-    EXPECT_EQ(string("OPENIN, unable to open %s for input: %s"), result);
-
-    vector<string> args;
-    args.push_back("alpha.txt");
-
-    result = logger.formatMessage(MSG_OPENIN, &args);
-    EXPECT_EQ(string("OPENIN, unable to open alpha.txt for input: %s"), result);
-
-    args.push_back("test");
-    result = logger.formatMessage(MSG_OPENIN, &args);
-    EXPECT_EQ(string("OPENIN, unable to open alpha.txt for input: test"), result);
-
-    // Excess arguments should be ignored
-    args.push_back("ignore me");
-    result = logger.formatMessage(MSG_OPENIN, &args);
-    EXPECT_EQ(string("OPENIN, unable to open alpha.txt for input: test"), result);
-
-    // Try the same using concatenated arguments
-    string strarg = "alpha.txt";
-    result = logger.formatMessage(MSG_OPENIN, strarg);
-    EXPECT_EQ(string("OPENIN, unable to open alpha.txt for input: %s"), result);
-
-    strarg += "\0test";
-    result = logger.formatMessage(MSG_OPENIN, &args);
-    EXPECT_EQ(string("OPENIN, unable to open alpha.txt for input: test"), result);
-
-    // With the latter method, try a few "unusual" argument strings
-    strarg = "";
-    result = logger.formatMessage(MSG_OPENIN, strarg);
-    EXPECT_EQ(string("OPENIN, unable to open %s for input: %s"), result);
-    
-    strarg="\0";
-    result = logger.formatMessage(MSG_OPENIN, strarg);
-    EXPECT_EQ(string("OPENIN, unable to open %s for input: %s"), result);
-
 }
