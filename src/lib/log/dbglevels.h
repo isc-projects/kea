@@ -24,8 +24,8 @@
 /// of variables declared outside execution units.  (In this way we avoid the
 /// "static initialization fiasco" problem.)
 
-#define MIN_DEBUG_LEVEL 0
-#define MAX_DEBUG_LEVEL 99
+#define MIN_DEBUG_LEVEL (0)
+#define MAX_DEBUG_LEVEL (99)
 #define NUM_DEBUG_LEVEL (MAX_DEBUG_LEVEL - MIN_DEBUG_LEVEL + 1)
 
 #endif // __DBGLEVELS_H

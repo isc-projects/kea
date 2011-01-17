@@ -30,4 +30,16 @@ run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 run_unittests_LDADD += -llog4cxx
 endif
 
+TESTS += logger_support_test
+logger_support_test_SOURCES = logger_support_test.cc
+logger_support_test_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
+logger_support_test_LDFLAGS = $(AM_LDFLAGS)
+logger_support_test_LDADD  = $(top_builddir)/src/lib/log/liblog.la
+logger_support_test_LDADD += -llog4cxx
+
 noinst_PROGRAMS = $(TESTS)
+
+# Additional test using the shell
+PYTESTS = run_time_init_test.sh
+check-local:
+	$(SHELL) $(abs_builddir)/run_time_init_test.sh

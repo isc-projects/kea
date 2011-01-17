@@ -76,12 +76,15 @@ void Logger::initLogger() {
         log4cxx::LoggerPtr sys_root_logger = log4cxx::Logger::getRootLogger();
         sys_root_logger->addAppender(console);
         
+        // Set the default logging to INFO
+        sys_root_logger->setLevel(log4cxx::Level::getInfo());
+
         // All static stuff initialized
         init_ = true;
     }
 
     // Initialize this logger.  Name this as to whether the BIND-10 root logger
-    // name has beens set.
+    // name has been set.  (If not, this mucks up the hierarchy :-( ).
     string root_name = RootLoggerName::getName();
     if (root_name.empty() || (name_ == root_name)) {
         loggerptr_ = new log4cxx::LoggerPtr(log4cxx::Logger::getLogger(name_));
@@ -122,33 +125,23 @@ void Logger::initLogger() {
 void Logger::setSeverity(Severity severity, int dbglevel) {
     switch (severity) {
         case NONE:
-            getLogger()->setLevel(
-                log4cxx::Level::toLevel(
-                log4cxx::Level::OFF_INT));
+            getLogger()->setLevel(log4cxx::Level::getOff());
             break;
 
         case FATAL:
-            getLogger()->setLevel(
-                log4cxx::Level::toLevel(
-                log4cxx::Level::FATAL_INT));
+            getLogger()->setLevel(log4cxx::Level::getFatal());
             break;
 
         case ERROR:
-            getLogger()->setLevel(
-                log4cxx::Level::toLevel(
-                log4cxx::Level::ERROR_INT));
+            getLogger()->setLevel(log4cxx::Level::getError());
             break;
 
         case WARNING:
-            getLogger()->setLevel(
-                log4cxx::Level::toLevel(
-                log4cxx::Level::WARN_INT));
+            getLogger()->setLevel(log4cxx::Level::getWarn());
             break;
 
         case INFO:
-            getLogger()->setLevel(
-                log4cxx::Level::toLevel(
-                log4cxx::Level::INFO_INT));
+            getLogger()->setLevel(log4cxx::Level::getInfo());
             break;
 
         case DEBUG:
@@ -263,7 +256,7 @@ void Logger::debug(int dbglevel, isc::log::MessageID ident, ...) {
     if (isDebugEnabled(dbglevel)) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);
-        LOG4CXX_DEBUG(getLogger(), message);
+        LOG4CXX_DEBUG(getLogger(), ident << ", " << message);
     }
 }
 
@@ -271,7 +264,7 @@ void Logger::info(isc::log::MessageID ident, ...) {
     if (isInfoEnabled()) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);
-        LOG4CXX_INFO(getLogger(), message);
+        LOG4CXX_INFO(getLogger(), ident << ", " << message);
     }
 }
 
@@ -279,7 +272,7 @@ void Logger::warn(isc::log::MessageID ident, ...) {
     if (isWarnEnabled()) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);
-        LOG4CXX_WARN(getLogger(), message);
+        LOG4CXX_WARN(getLogger(), ident << ", " << message);
     }
 }
 
@@ -287,7 +280,7 @@ void Logger::error(isc::log::MessageID ident, ...) {
     if (isErrorEnabled()) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);
-        LOG4CXX_ERROR(getLogger(), message);
+        LOG4CXX_ERROR(getLogger(), ident << ", " << message);
     }
 }
 
@@ -295,7 +288,7 @@ void Logger::fatal(isc::log::MessageID ident, ...) {
     if (isFatalEnabled()) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);
-        LOG4CXX_FATAL(getLogger(), message);
+        LOG4CXX_FATAL(getLogger(), ident << ", " << message);
     }
 }
 
