@@ -146,21 +146,6 @@ public:
     MessagePtr message_;
 };
 
-// TODO remove?
-class SectionInserter {
-public:
-    SectionInserter(MessagePtr message, const Message::Section sect) :
-        message_(message), section_(sect)
-    {}
-    void operator()(const RRsetPtr rrset) {
-        //dlog("Adding RRSet to message section " +
-        //    boost::lexical_cast<string>(section_));
-        message_->addRRset(section_, rrset, true);
-    }
-    MessagePtr message_;
-    const Message::Section section_;
-};
-
 void
 makeErrorMessage(MessagePtr message, OutputBufferPtr buffer,
                  const Rcode& rcode)
@@ -236,8 +221,6 @@ public:
         const bool rd = query_message->getHeaderFlag(Message::HEADERFLAG_RD);
         const bool cd = query_message->getHeaderFlag(Message::HEADERFLAG_CD);
         const Opcode& opcode = query_message->getOpcode();
-        vector<QuestionPtr> questions;
-        questions.assign(query_message->beginQuestion(), query_message->endQuestion());
 
         // Fill in the final details of the answer message
         answer_message->setQid(qid);
@@ -252,6 +235,10 @@ public:
             answer_message->setHeaderFlag(Message::HEADERFLAG_CD);
         }
 
+        vector<QuestionPtr> questions;
+        questions.assign(query_message->beginQuestion(), query_message->endQuestion());
+        for_each(questions.begin(), questions.end(), QuestionInserter(answer_message));
+        
         // Now we can clear the buffer and render the new message into it
         buffer->clear();
         MessageRenderer renderer(*buffer);
