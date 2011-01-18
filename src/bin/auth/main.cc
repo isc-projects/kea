@@ -57,10 +57,11 @@ using namespace asiolink;
 
 namespace {
 
-bool verbose_mode = false;
+static bool verbose_mode = false;
 
 // Default port current 5300 for testing purposes
-const char* DNSPORT = "5300";
+static const string PROGRAM = "Auth";
+static const char* DNSPORT = "5300";
 
 // Note: this value must be greater than 0.
 // TODO: make it configurable via command channel.
@@ -69,9 +70,9 @@ const uint32_t STATISTICS_SEND_INTERVAL_SEC = 60;
 /* need global var for config/command handlers.
  * todo: turn this around, and put handlers in the authserver
  * class itself? */
-AuthSrv *auth_server;
+static AuthSrv *auth_server;
 
-IOService io_service;
+static IOService io_service;
 
 ConstElementPtr
 my_config_handler(ConstElementPtr new_config) {
