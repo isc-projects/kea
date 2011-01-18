@@ -50,6 +50,44 @@ using namespace isc::dns;
 using isc::log::dlog;
 using namespace boost;
 
+// Is this something we can use in libdns++?
+namespace {
+    class SectionInserter {
+    public:
+        SectionInserter(MessagePtr message, const Message::Section sect) :
+            message_(message), section_(sect)
+        {}
+        void operator()(const RRsetPtr rrset) {
+            //dlog("Adding RRSet to message section " +
+            //    boost::lexical_cast<string>(section_));
+            message_->addRRset(section_, rrset, true);
+        }
+        MessagePtr message_;
+        const Message::Section section_;
+    };
+
+
+    /// \brief Copies the parts relevant for a DNS answer to the
+    /// target message
+    ///
+    /// This adds all the RRsets in the answer, authority and
+    /// additional sections to the target, as well as the response
+    /// code
+    void copyAnswerMessage(const Message& source, MessagePtr target) {
+        target->setRcode(source.getRcode());
+
+        for_each(source.beginSection(Message::SECTION_ANSWER),
+                 source.endSection(Message::SECTION_ANSWER),
+                 SectionInserter(target, Message::SECTION_ANSWER));
+        for_each(source.beginSection(Message::SECTION_AUTHORITY),
+                 source.endSection(Message::SECTION_AUTHORITY),
+                 SectionInserter(target, Message::SECTION_AUTHORITY));
+        for_each(source.beginSection(Message::SECTION_ADDITIONAL),
+                 source.endSection(Message::SECTION_ADDITIONAL),
+                 SectionInserter(target, Message::SECTION_ADDITIONAL));
+    }
+}
+
 namespace asiolink {
 
 typedef pair<string, uint16_t> addr_t;
@@ -302,6 +340,10 @@ private:
 
     // Info for (re)sending the query (the question and destination)
     Question question_;
+
+    // This is where we build and store our final answer
+    MessagePtr answer_message_;
+
     // currently we use upstream as the current list of NS records
     // we should differentiate between forwarding and resolving
     shared_ptr<AddressVector> upstream_;
@@ -349,11 +391,12 @@ private:
     }
 public:
     RunningQuery(asio::io_service& io, const Question &question,
-        shared_ptr<AddressVector> upstream,
+        MessagePtr answer_message, shared_ptr<AddressVector> upstream,
         OutputBufferPtr buffer, DNSServer* server, int timeout,
         unsigned retries) :
         io_(io),
         question_(question),
+        answer_message_(answer_message),
         upstream_(upstream),
         buffer_(buffer),
         server_(server->clone()),
@@ -390,6 +433,7 @@ public:
             if (incoming.getRcode() == Rcode::NOERROR()) {
                 if (incoming.getRRCount(Message::SECTION_ANSWER) > 0) {
                     dlog("[XX] this looks like the final result");
+                    copyAnswerMessage(incoming, answer_message_);
                     done = true;
                 } else {
                     dlog("[XX] this looks like a delegation");
@@ -434,10 +478,12 @@ public:
                     } else {
                         dlog("[XX] no ready-made addresses in additional. need nsas.");
                         // this will result in answering with the delegation. oh well
+                        copyAnswerMessage(incoming, answer_message_);
                         done = true;
                     }
                 }
             } else {
+                copyAnswerMessage(incoming, answer_message_);
                 done = true;
             }
             
@@ -464,9 +510,8 @@ RecursiveQuery::sendQuery(const Question& question,
     // we're only going to handle UDP.
     asio::io_service& io = dns_service_.get_io_service();
     // It will delete itself when it is done
-    (void) answer_message;
-    new RunningQuery(io, question, upstream_, buffer, server,
-         timeout_, retries_);
+    new RunningQuery(io, question, answer_message, upstream_, buffer,
+                     server, timeout_, retries_);
 }
 
 class IntervalTimerImpl {

@@ -148,6 +148,7 @@ public:
     MessagePtr message_;
 };
 
+// TODO remove?
 class SectionInserter {
 public:
     SectionInserter(MessagePtr message, const Message::Section sect) :
@@ -215,7 +216,6 @@ public:
                             OutputBufferPtr buffer,
                             DNSServer* server) const
     {
-        (void) answer_message,
         server_->processMessage(io_message, message, answer_message,
                                 buffer, server);
     }
@@ -241,47 +241,20 @@ public:
         const Rcode& rcode = message->getRcode();
         vector<QuestionPtr> questions;
         questions.assign(message->beginQuestion(), message->endQuestion());
-        (void)answer_message;
-        
-        message->clear(Message::RENDER);
-        message->setQid(qid);
-        message->setOpcode(opcode);
-        message->setRcode(rcode);
 
-        message->setHeaderFlag(Message::HEADERFLAG_QR);
-        message->setHeaderFlag(Message::HEADERFLAG_RA);
+        // Fill in the final details of the answer message
+        //message->clear(Message::RENDER);
+        answer_message->setQid(qid);
+        answer_message->setOpcode(opcode);
+        answer_message->setRcode(rcode);
+
+        answer_message->setHeaderFlag(Message::HEADERFLAG_QR);
+        answer_message->setHeaderFlag(Message::HEADERFLAG_RA);
         if (rd) {
-            message->setHeaderFlag(Message::HEADERFLAG_RD);
+            answer_message->setHeaderFlag(Message::HEADERFLAG_RD);
         }
         if (cd) {
-            message->setHeaderFlag(Message::HEADERFLAG_CD);
-        }
-
-
-        // Copy the question section.
-        for_each(questions.begin(), questions.end(), QuestionInserter(message));
-
-        // If the buffer already has an answer in it, copy RRsets from
-        // that into the new message, then clear the buffer and render
-        // the new message into it.
-        if (buffer->getLength() != 0) {
-            try {
-                Message incoming(Message::PARSE);
-                InputBuffer ibuf(buffer->getData(), buffer->getLength());
-                incoming.fromWire(ibuf);
-                for_each(incoming.beginSection(Message::SECTION_ANSWER),
-                         incoming.endSection(Message::SECTION_ANSWER),
-                         SectionInserter(message, Message::SECTION_ANSWER));
-                for_each(incoming.beginSection(Message::SECTION_AUTHORITY),
-                         incoming.endSection(Message::SECTION_AUTHORITY),
-                         SectionInserter(message, Message::SECTION_AUTHORITY));
-                for_each(incoming.beginSection(Message::SECTION_ADDITIONAL),
-                         incoming.endSection(Message::SECTION_ADDITIONAL),
-                         SectionInserter(message, Message::SECTION_ADDITIONAL));
-            } catch (const Exception& ex) {
-                // Incoming message couldn't be read, we just SERVFAIL
-                message->setRcode(Rcode::SERVFAIL());
-            }
+            answer_message->setHeaderFlag(Message::HEADERFLAG_CD);
         }
 
         // Now we can clear the buffer and render the new message into it
@@ -296,7 +269,7 @@ public:
             renderer.setLengthLimit(65535);
         }
 
-        message->toWire(renderer);
+        answer_message->toWire(renderer);
 
         dlog(string("sending a response (") +
             boost::lexical_cast<string>(renderer.getLength()) + "bytes): \n" +
