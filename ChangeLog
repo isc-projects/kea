@@ -1,3 +1,10 @@
+  150.  [bug]		jelte
+	b10-cfgmgr: No longer save the configuration on exit. Configuration
+	is already saved if it is changed succesfully, so writing it on
+	exit (and hence, when nothing has changed too) is unnecessary and
+	may even cause problems.
+	(Trac #435, git fd7baa38c08d54d5b5f84930c1684c436d2776dc)
+
   149.  [bug]		jelte
 	bindctl: Check if the user session has disappeared (either by a
 	timeout or by a server restart), and reauthenticate if so. This
