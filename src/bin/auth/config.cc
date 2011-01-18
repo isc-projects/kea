@@ -169,16 +169,25 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
     }
 }
 
+/// A derived \c AuthConfigParser class for the "statistics-internal"
+/// configuration identifier.
 class StatisticsIntervalConfig : public AuthConfigParser {
 public:
     StatisticsIntervalConfig(AuthSrv& server) :
-        server_(server)
+        server_(server), interval_(0)
     {}
-    //virtual void build(ConstElementPtr config_value);
-    virtual void build(ConstElementPtr) {}
-    virtual void commit() {}
+    virtual void build(ConstElementPtr config_value) {
+        interval_ = config_value->intValue();
+    }
+    virtual void commit() {
+        // setStatisticsTimerInterval() is not 100% exception free.  But
+        // exceptions should happen only in a very rare situation, so we
+        // let them be thrown and subsequently regard them as a fatal error.
+        server_.setStatisticsTimerInterval(interval_);
+    }
 private:
     AuthSrv& server_;
+    uint32_t interval_;
 };
 
 /// A special parser for testing: it throws from commit() despite the

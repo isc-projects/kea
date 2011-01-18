@@ -646,8 +646,7 @@ TEST_F(AuthSrvTest, stop) {
     // normal case is covered in command_unittest.cc.  we should primarily
     // test it here, but the current design of the stop test takes time,
     // so we consolidate the cases in the command tests.
-
-    // stop before start is prohibited.
-    EXPECT_THROW(server.stop(), FatalError);
+    // If/when the interval timer has finer granularity we'll probably add
+    // our own tests here, so we keep this empty test case.
 }
 }
