@@ -217,24 +217,16 @@ class BindCmdInterpreter(Cmd):
         for module_name in self.config_data.get_config_item_list():
             self._prepare_module_commands(self.config_data.get_module_spec(module_name))
 
-    def _send_message(self, url, body):
-        headers = {"cookie" : self.session_id}
-        self.conn.request('GET', url, body, headers)
-        res = self.conn.getresponse()
-        return res.status, res.read()
-
     def send_GET(self, url, body = None):
         '''Send GET request to cmdctl, session id is send with the name
         'cookie' in header.
         '''
-        status, reply_msg = self._send_message(url, body)
-        if status == http.client.UNAUTHORIZED:
-            if self.login_to_cmdctl():
-                # successful, so try send again
-                status, reply_msg = self._send_message(url, body)
-            
+        headers = {"cookie" : self.session_id}
+        self.conn.request('GET', url, body, headers)
+        res = self.conn.getresponse()
+        reply_msg = res.read()
         if reply_msg:
-            return json.loads(reply_msg.decode())
+           return json.loads(reply_msg.decode())
         else:
             return {}
        
@@ -630,11 +622,9 @@ class BindCmdInterpreter(Cmd):
         if (len(cmd.params) != 0):
             cmd_params = json.dumps(cmd.params)
 
+        print("send the command to cmd-ctrld")        
         reply = self.send_POST(url, cmd.params)
         data = reply.read().decode()
-        # The reply is a string containing JSON data,
-        # parse it, then prettyprint
-        if data != "" and data != "{}":
-            print(json.dumps(json.loads(data), sort_keys=True, indent=4))
+        print("received reply:", data)
 
 
