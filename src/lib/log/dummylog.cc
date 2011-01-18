@@ -24,8 +24,8 @@ namespace log {
 bool denabled = false;
 string dprefix;
 
-void dlog(const string& message) {
-    if (denabled) {
+void dlog(const string& message,bool error_flag) {
+    if (denabled || error_flag) {
         if (!dprefix.empty()) {
             cerr << "[" << dprefix << "] ";
         }
