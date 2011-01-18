@@ -169,6 +169,18 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
     }
 }
 
+class StatisticsIntervalConfig : public AuthConfigParser {
+public:
+    StatisticsIntervalConfig(AuthSrv& server) :
+        server_(server)
+    {}
+    //virtual void build(ConstElementPtr config_value);
+    virtual void build(ConstElementPtr) {}
+    virtual void commit() {}
+private:
+    AuthSrv& server_;
+};
+
 /// A special parser for testing: it throws from commit() despite the
 /// suggested convention of the class interface.
 class ThrowerCommitConfig : public AuthConfigParser {
@@ -191,6 +203,8 @@ createAuthConfigParser(AuthSrv& server, const std::string& config_id,
     // that it can be dynamically customized.
     if (config_id == "datasources") {
         return (new DatasourcesConfig(server));
+    } else if (config_id == "statistics-interval") {
+        return (new StatisticsIntervalConfig(server));
     } else if (internal && config_id == "datasources/memory") {
         return (new MemoryDatasourceConfig(server));
     } else if (config_id == "_commit_throw") {

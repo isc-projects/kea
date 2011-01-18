@@ -386,6 +386,7 @@ public:
     void setupTimer(const IntervalTimer::Callback& cbfunc,
                     const uint32_t interval);
     void callback(const asio::error_code& error);
+    uint32_t getInterval() const { return (interval_); }
 private:
     // a function to update timer_ when it expires
     void updateTimer();
@@ -459,6 +460,11 @@ IntervalTimer::~IntervalTimer() {
 void
 IntervalTimer::setupTimer(const Callback& cbfunc, const uint32_t interval) {
     return (impl_->setupTimer(cbfunc, interval));
+}
+
+uint32_t
+IntervalTimer::getInterval() const {
+    return (impl_->getInterval());
 }
 
 }
