@@ -260,7 +260,6 @@ public:
                 Message incoming(Message::PARSE);
                 InputBuffer ibuf(buffer->getData(), buffer->getLength());
                 incoming.fromWire(ibuf);
-                message->setRcode(incoming.getRcode());
                 for_each(incoming.beginSection(Message::SECTION_ANSWER),
                          incoming.endSection(Message::SECTION_ANSWER),
                          SectionInserter(message, Message::SECTION_ANSWER));
