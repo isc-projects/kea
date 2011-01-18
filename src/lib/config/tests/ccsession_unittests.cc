@@ -308,10 +308,26 @@ TEST_F(CCSessionTest, checkCommand) {
     msg = session.getFirstMessage(group, to);
     EXPECT_EQ("{ \"result\": [ 1, \"Command given but no command handler for module\" ] }", msg->str());
     EXPECT_EQ(0, result);
+}
+
+// A heuristic workaround for clang++: It doesn't seem to compile the whole
+// test, probably due to its length.  Dividing the tests into two separate
+// test cases seems to work.
+TEST_F(CCSessionTest, checkCommand2) {
+    session.getMessages()->add(createAnswer(0, el("{}")));
+    EXPECT_FALSE(session.haveSubscription("Spec29", "*"));
+    ModuleCCSession mccs(ccspecfile("spec29.spec"), session, my_config_handler,
+                         my_command_handler);
+    EXPECT_TRUE(session.haveSubscription("Spec29", "*"));
+    ConstElementPtr msg;
+    std::string group, to;
+    // checked above, drop em
+    msg = session.getFirstMessage(group, to);
+    msg = session.getFirstMessage(group, to);
 
     EXPECT_EQ(1, mccs.getValue("item1")->intValue());
     session.addMessage(el("{ \"command\": [ \"config_update\", { \"item1\": 2 } ] }"), "Spec29", "*");
-    result = mccs.checkCommand();
+    int result = mccs.checkCommand();
     EXPECT_EQ(1, session.getMsgQueue()->size());
     msg = session.getFirstMessage(group, to);
     EXPECT_EQ("{ \"result\": [ 0 ] }", msg->str());
