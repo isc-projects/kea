@@ -320,4 +320,23 @@ TEST_F(MemoryDatasrcConfigTest, badDatasrcType) {
                                                  " {\"type\": \"memory\"}]")),
                  AuthConfigError);
 }
+
+class StatisticsIntervalConfigTest : public AuthConfigTest {
+protected:
+    StatisticsIntervalConfigTest() :
+        parser(createAuthConfigParser(server, "statistics-interval"))
+    {
+        server.setStatisticsSession(&statistics_session);
+    }
+    ~StatisticsIntervalConfigTest() {
+        delete parser;
+    }
+    MockSession statistics_session;
+    AuthConfigParser* parser;
+};
+
+TEST_F(StatisticsIntervalConfigTest, setInterval) {
+    parser->build(Element::fromJSON("1"));
+    parser->commit();
+}
 }

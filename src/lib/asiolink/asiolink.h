@@ -657,6 +657,10 @@ public:
     /// \throw isc::Unexpected ASIO library error
     ///
     void setupTimer(const Callback& cbfunc, const uint32_t interval);
+
+    /// TBD
+    uint32_t getInterval() const;
+
 private:
     IntervalTimerImpl* impl_;
 };
