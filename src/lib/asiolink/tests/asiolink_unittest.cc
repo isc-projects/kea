@@ -864,6 +864,7 @@ TEST_F(IntervalTimerTest, startIntervalTimer) {
     start = boost::posix_time::microsec_clock::universal_time();
     // setup timer
     itimer.setupTimer(TimerCallBack(this), 1);
+    EXPECT_EQ(1, itimer.getInterval());
     io_service_.run();
     // reaches here after timer expired
     // delta: difference between elapsed time and 1 second
