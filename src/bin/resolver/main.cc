@@ -169,7 +169,7 @@ main(int argc, char* argv[]) {
         dlog("Server started.");
         io_service.run();
     } catch (const std::exception& ex) {
-        dlog(string("Server failed: ") + ex.what());
+        dlog(string("Server failed: ") + ex.what(),true);
         ret = 1;
     }
 
