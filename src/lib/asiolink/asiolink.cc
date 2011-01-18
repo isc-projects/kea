@@ -428,7 +428,6 @@ public:
             InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
             incoming.fromWire(ibuf);
             std::cout << "[XX] received answer: " << incoming.toText() << std::endl;
-            //
 
             if (incoming.getRcode() == Rcode::NOERROR()) {
                 if (incoming.getRRCount(Message::SECTION_ANSWER) > 0) {

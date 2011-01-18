@@ -106,7 +106,6 @@ public:
     }
 
     void processNormalQuery(const Question& question,
-                            MessagePtr message,
                             MessagePtr answer_message,
                             OutputBufferPtr buffer,
                             DNSServer* server);
@@ -211,13 +210,13 @@ public:
 
     // \brief Handle the DNS Lookup
     virtual void operator()(const IOMessage& io_message,
-                            MessagePtr message,
+                            MessagePtr query_message,
                             MessagePtr answer_message,
                             OutputBufferPtr buffer,
                             DNSServer* server) const
     {
-        server_->processMessage(io_message, message, answer_message,
-                                buffer, server);
+        server_->processMessage(io_message, query_message,
+                                answer_message, buffer, server);
     }
 private:
     Resolver* server_;
@@ -230,17 +229,17 @@ private:
 class MessageAnswer : public DNSAnswer {
 public:
     virtual void operator()(const IOMessage& io_message,
-                            MessagePtr message,
+                            MessagePtr query_message,
                             MessagePtr answer_message,
                             OutputBufferPtr buffer) const
     {
-        const qid_t qid = message->getQid();
-        const bool rd = message->getHeaderFlag(Message::HEADERFLAG_RD);
-        const bool cd = message->getHeaderFlag(Message::HEADERFLAG_CD);
-        const Opcode& opcode = message->getOpcode();
-        const Rcode& rcode = message->getRcode();
+        const qid_t qid = query_message->getQid();
+        const bool rd = query_message->getHeaderFlag(Message::HEADERFLAG_RD);
+        const bool cd = query_message->getHeaderFlag(Message::HEADERFLAG_CD);
+        const Opcode& opcode = query_message->getOpcode();
+        const Rcode& rcode = query_message->getRcode();
         vector<QuestionPtr> questions;
-        questions.assign(message->beginQuestion(), message->endQuestion());
+        questions.assign(query_message->beginQuestion(), query_message->endQuestion());
 
         // Fill in the final details of the answer message
         //message->clear(Message::RENDER);
@@ -261,10 +260,23 @@ public:
         buffer->clear();
         MessageRenderer renderer(*buffer);
 
+        ConstEDNSPtr edns(query_message->getEDNS());
+        const bool dnssec_ok = edns && edns->getDNSSECAwareness();
+        if (edns) {
+            EDNSPtr edns_response(new EDNS());
+            edns_response->setDNSSECAwareness(dnssec_ok);
+
+            // TODO: We should make our own edns bufsize length configurable
+            edns_response->setUDPSize(Message::DEFAULT_MAX_EDNS0_UDPSIZE);
+            answer_message->setEDNS(edns_response);
+        }
+        
         if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
-            ConstEDNSPtr edns(message->getEDNS());
-            renderer.setLengthLimit(edns ? edns->getUDPSize() :
-                Message::DEFAULT_MAX_UDPSIZE);
+            if (edns) {
+                renderer.setLengthLimit(edns->getUDPSize());
+            } else {
+                renderer.setLengthLimit(Message::DEFAULT_MAX_UDPSIZE);
+            }
         } else {
             renderer.setLengthLimit(65535);
         }
@@ -273,7 +285,7 @@ public:
 
         dlog(string("sending a response (") +
             boost::lexical_cast<string>(renderer.getLength()) + "bytes): \n" +
-            message->toText());
+            answer_message->toText());
     }
 };
 
@@ -326,7 +338,7 @@ Resolver::getConfigSession() const {
 
 void
 Resolver::processMessage(const IOMessage& io_message,
-                         MessagePtr message,
+                         MessagePtr query_message,
                          MessagePtr answer_message,
                          OutputBufferPtr buffer,
                          DNSServer* server)
@@ -336,10 +348,10 @@ Resolver::processMessage(const IOMessage& io_message,
     // First, check the header part.  If we fail even for the base header,
     // just drop the message.
     try {
-        message->parseHeader(request_buffer);
+        query_message->parseHeader(request_buffer);
 
         // Ignore all responses.
-        if (message->getHeaderFlag(Message::HEADERFLAG_QR)) {
+        if (query_message->getHeaderFlag(Message::HEADERFLAG_QR)) {
             dlog("Received unexpected response, ignoring");
             server->resume(false);
             return;
@@ -352,53 +364,53 @@ Resolver::processMessage(const IOMessage& io_message,
 
     // Parse the message.  On failure, return an appropriate error.
     try {
-        message->fromWire(request_buffer);
+        query_message->fromWire(request_buffer);
     } catch (const DNSProtocolError& error) {
         dlog(string("returning ") + error.getRcode().toText() + ": " + 
             error.what());
-        makeErrorMessage(message, buffer, error.getRcode());
+        makeErrorMessage(query_message, buffer, error.getRcode());
         server->resume(true);
         return;
     } catch (const Exception& ex) {
         dlog(string("returning SERVFAIL: ") + ex.what());
-        makeErrorMessage(message, buffer, Rcode::SERVFAIL());
+        makeErrorMessage(query_message, buffer, Rcode::SERVFAIL());
         server->resume(true);
         return;
     } // other exceptions will be handled at a higher layer.
 
-    dlog("received a message:\n" + message->toText());
+    dlog("received a message:\n" + query_message->toText());
 
     // Perform further protocol-level validation.
     bool sendAnswer = true;
-    if (message->getOpcode() == Opcode::NOTIFY()) {
-        makeErrorMessage(message, buffer, Rcode::NOTAUTH());
+    if (query_message->getOpcode() == Opcode::NOTIFY()) {
+        makeErrorMessage(query_message, buffer, Rcode::NOTAUTH());
         dlog("Notify arrived, but we are not authoritative");
-    } else if (message->getOpcode() != Opcode::QUERY()) {
-        dlog("Unsupported opcode (got: " + message->getOpcode().toText() +
+    } else if (query_message->getOpcode() != Opcode::QUERY()) {
+        dlog("Unsupported opcode (got: " + query_message->getOpcode().toText() +
             ", expected: " + Opcode::QUERY().toText());
-        makeErrorMessage(message, buffer, Rcode::NOTIMP());
-    } else if (message->getRRCount(Message::SECTION_QUESTION) != 1) {
+        makeErrorMessage(query_message, buffer, Rcode::NOTIMP());
+    } else if (query_message->getRRCount(Message::SECTION_QUESTION) != 1) {
         dlog("The query contained " +
-            boost::lexical_cast<string>(message->getRRCount(
+            boost::lexical_cast<string>(query_message->getRRCount(
             Message::SECTION_QUESTION) + " questions, exactly one expected"));
-        makeErrorMessage(message, buffer, Rcode::FORMERR());
+        makeErrorMessage(query_message, buffer, Rcode::FORMERR());
     } else {
-        ConstQuestionPtr question = *message->beginQuestion();
+        ConstQuestionPtr question = *query_message->beginQuestion();
         const RRType &qtype = question->getType();
         if (qtype == RRType::AXFR()) {
             if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
-                makeErrorMessage(message, buffer, Rcode::FORMERR());
+                makeErrorMessage(query_message, buffer, Rcode::FORMERR());
             } else {
-                makeErrorMessage(message, buffer, Rcode::NOTIMP());
+                makeErrorMessage(query_message, buffer, Rcode::NOTIMP());
             }
         } else if (qtype == RRType::IXFR()) {
-            makeErrorMessage(message, buffer, Rcode::NOTIMP());
+            makeErrorMessage(query_message, buffer, Rcode::NOTIMP());
         } else {
             // The RecursiveQuery object will post the "resume" event to the
             // DNSServer when an answer arrives, so we don't have to do it now.
             sendAnswer = false;
-            impl_->processNormalQuery(*question, message,
-                                      answer_message, buffer, server);
+            impl_->processNormalQuery(*question, answer_message,
+                                      buffer, server);
         }
     }
 
@@ -409,27 +421,12 @@ Resolver::processMessage(const IOMessage& io_message,
 
 void
 ResolverImpl::processNormalQuery(const Question& question,
-                                 MessagePtr message,
                                  MessagePtr answer_message,
                                  OutputBufferPtr buffer,
                                  DNSServer* server)
 {
     dlog("Processing normal query");
-    ConstEDNSPtr edns(message->getEDNS());
-    const bool dnssec_ok = edns && edns->getDNSSECAwareness();
-
-    message->makeResponse();
-    message->setHeaderFlag(Message::HEADERFLAG_RA);
-    message->setRcode(Rcode::NOERROR());
-    if (edns) {
-        EDNSPtr edns_response(new EDNS());
-        edns_response->setDNSSECAwareness(dnssec_ok);
-        edns_response->setUDPSize(ResolverImpl::DEFAULT_LOCAL_UDPSIZE);
-        message->setEDNS(edns_response);
-    }
-    dlog("[XX] calling sendQuery()");
     rec_query_->sendQuery(question, answer_message, buffer, server);
-    dlog("[XX] done processing normal query");
 }
 
 namespace {
