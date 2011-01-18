@@ -52,7 +52,7 @@ extern std::string dprefix;
  * @param message The message to log. The real interface will probably have
  *     more parameters.
  */
-void dlog(const std::string& message);
+void dlog(const std::string& message, bool error_flag=false);
 
 }
 }
