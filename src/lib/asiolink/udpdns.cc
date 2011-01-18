@@ -133,7 +133,7 @@ UDPServer::operator()(error_code ec, size_t length) {
         // asynchronous DNS lookup and/or by the send call.
         respbuf_.reset(new OutputBuffer(0));
         message_.reset(new Message(Message::PARSE));
-        answer_message_.reset(new Message(Message::PARSE));
+        answer_message_.reset(new Message(Message::RENDER));
 
         // Schedule a DNS lookup, and yield.  When the lookup is
         // finished, the coroutine will resume immediately after
