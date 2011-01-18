@@ -375,10 +375,20 @@ private:
 
     // (re)send the query to the server.
     void send() {
-        const int uc = zone_servers_.size();
+        const int uc = upstream_->size();
+        const int zs = zone_servers_.size();
         if (uc > 0) {
             int serverIndex = rand() % uc;
             dlog("Sending upstream query (" + question_.toText() +
+                ") to " + upstream_->at(serverIndex).first);
+            UDPQuery query(io_, question_,
+                upstream_->at(serverIndex).first,
+                upstream_->at(serverIndex).second, buffer_, this,
+                timeout_);
+            io_.post(query);
+        } else if (zs > 0) {
+            int serverIndex = rand() % zs;
+            dlog("Sending query to zone server (" + question_.toText() +
                 ") to " + zone_servers_.at(serverIndex).first);
             UDPQuery query(io_, question_,
                 zone_servers_.at(serverIndex).first,
@@ -409,7 +419,9 @@ public:
 
         dlog("[XX] zone_servers size: " + zone_servers_.size());
         // hardcoded f.root-servers.net now, should use NSAS
-        zone_servers_.push_back(addr_t("192.5.5.241", 53));
+        if (upstream_->empty()) {
+            zone_servers_.push_back(addr_t("192.5.5.241", 53));
+        }
         send();
     }
 
@@ -417,11 +429,7 @@ public:
     virtual void operator()(UDPQuery::Result result) {
         dlog("[XX] RunningQuery operator() called with result: " + result);
         // XXX is this the place for TCP retry?
-        if (result == UDPQuery::TIME_OUT && retries_ --) {
-            dlog("Resending query");
-            // We timed out, but we have some retries, so send again
-            send();
-        } else {
+        if (result != UDPQuery::TIME_OUT) {
             // we got an answer
             std::cout << "[XX] for question: " << question_.toText() << std::endl;
             Message incoming(Message::PARSE);
@@ -429,7 +437,8 @@ public:
             incoming.fromWire(ibuf);
             std::cout << "[XX] received answer: " << incoming.toText() << std::endl;
 
-            if (incoming.getRcode() == Rcode::NOERROR()) {
+            if (upstream_->size() == 0 &&
+                incoming.getRcode() == Rcode::NOERROR()) {
                 if (incoming.getRRCount(Message::SECTION_ANSWER) > 0) {
                     dlog("[XX] this looks like the final result");
                     copyAnswerMessage(incoming, answer_message_);
@@ -491,6 +500,14 @@ public:
                 server_->resume(result == UDPQuery::SUCCESS);
                 delete this;
             }
+        } else if (retries_--) {
+            dlog("Resending query");
+            // We timed out, but we have some retries, so send again
+            send();
+        } else {
+            // out of retries, give up for now
+            server_->resume(false);
+            delete this;
         }
     }
 };

@@ -91,17 +91,16 @@ public:
         queryShutdown();
         upstream_ = upstream;
         if (dnss) {
-            if (upstream_.empty()) {
-                dlog("Asked to do full recursive, but not implemented yet. "
-                    "I'll do nothing.");
-            } else {
+            if (!upstream_.empty()) {
                 dlog("Setting forward addresses:");
                 BOOST_FOREACH(const addr_t& address, upstream) {
                     dlog(" " + address.first + ":" +
                         boost::lexical_cast<string>(address.second));
                 }
-                querySetup(*dnss);
+            } else {
+                dlog("No forward addresses, running in recursive mode");
             }
+            querySetup(*dnss);
         }
     }
 
@@ -237,15 +236,12 @@ public:
         const bool rd = query_message->getHeaderFlag(Message::HEADERFLAG_RD);
         const bool cd = query_message->getHeaderFlag(Message::HEADERFLAG_CD);
         const Opcode& opcode = query_message->getOpcode();
-        const Rcode& rcode = query_message->getRcode();
         vector<QuestionPtr> questions;
         questions.assign(query_message->beginQuestion(), query_message->endQuestion());
 
         // Fill in the final details of the answer message
-        //message->clear(Message::RENDER);
         answer_message->setQid(qid);
         answer_message->setOpcode(opcode);
-        answer_message->setRcode(rcode);
 
         answer_message->setHeaderFlag(Message::HEADERFLAG_QR);
         answer_message->setHeaderFlag(Message::HEADERFLAG_RA);
