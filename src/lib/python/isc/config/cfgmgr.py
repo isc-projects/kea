@@ -26,6 +26,7 @@ import os
 import copy
 import tempfile
 import json
+import errno
 from isc.cc import data
 from isc.config import ccsession, config_data
 
@@ -87,7 +88,12 @@ class ConfigManagerData:
             else:
                 raise ConfigManagerDataReadError("No version information in configuration file " + config.db_filename)
         except IOError as ioe:
-            raise ConfigManagerDataEmpty("No configuration file found")
+            # if IOError is 'no such file or directory', then continue
+            # (raise empty), otherwise fail (raise error)
+            if ioe.errno == errno.ENOENT:
+                raise ConfigManagerDataEmpty("No configuration file found")
+            else:
+                raise ConfigManagerDataReadError("Can't read configuration file: " + str(ioe))
         except ValueError:
             raise ConfigManagerDataReadError("Configuration file out of date or corrupt, please update or remove " + config.db_filename)
         finally:

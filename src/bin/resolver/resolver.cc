@@ -93,7 +93,7 @@ public:
         if (dnss) {
             if (upstream_.empty()) {
                 dlog("Asked to do full recursive, but not implemented yet. "
-                    "I'll do nothing.");
+                    "I'll do nothing.",true);
             } else {
                 dlog("Setting forward addresses:");
                 BOOST_FOREACH(const addr_t& address, upstream) {
@@ -322,7 +322,7 @@ Resolver::~Resolver() {
     delete checkin_;
     delete dns_lookup_;
     delete dns_answer_;
-    dlog("Deleting the Resolver");
+    dlog("Deleting the Resolver",true);
 }
 
 void
@@ -360,7 +360,7 @@ Resolver::processMessage(const IOMessage& io_message, MessagePtr message,
             return;
         }
     } catch (const Exception& ex) {
-        dlog(string("DNS packet exception: ") + ex.what());
+        dlog(string("DNS packet exception: ") + ex.what(),true);
         server->resume(false);
         return;
     }
@@ -525,7 +525,7 @@ Resolver::updateConfig(ConstElementPtr config) {
         }
         return (isc::config::createAnswer());
     } catch (const isc::Exception& error) {
-        dlog(string("error in config: ") + error.what());
+        dlog(string("error in config: ") + error.what(),true);
         return (isc::config::createAnswer(1, error.what()));
     }
 }
@@ -577,13 +577,13 @@ Resolver::setListenAddresses(const vector<addr_t>& addresses) {
          * If that fails, bad luck, but we are useless anyway, so just die
          * and let boss start us again.
          */
-        dlog(string("Unable to set new address: ") + e.what());
+        dlog(string("Unable to set new address: ") + e.what(),true);
         try {
             setAddresses(dnss_, impl_->listen_);
         }
         catch (const exception& e2) {
-            dlog(string("Unable to recover from error;"));
-            dlog(string("Rollback failed with: ") + e2.what());
+            dlog(string("Unable to recover from error;"),true);
+            dlog(string("Rollback failed with: ") + e2.what(),true);
             abort();
         }
         throw e; // Let it fly a little bit further
