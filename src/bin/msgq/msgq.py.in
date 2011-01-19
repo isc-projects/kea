@@ -187,6 +187,12 @@ class MsgQ:
         # TODO: When we have logging, we might want
         # to add a debug message here that a new connection
         # was made
+        self.register_socket(self, newsocket)
+
+    def register_socket(self, newsocket):
+        """
+        Internal function to insert a socket. Used by process_accept and some tests.
+        """
         self.sockets[newsocket.fileno()] = newsocket
         lname = self.newlname()
         self.lnames[lname] = newsocket
