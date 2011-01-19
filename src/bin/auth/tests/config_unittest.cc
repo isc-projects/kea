@@ -364,5 +364,6 @@ TEST_F(StatisticsIntervalConfigTest, badInterval) {
                  isc::data::TypeError);
     EXPECT_THROW(parser->build(Element::fromJSON("2.5")),
                  isc::data::TypeError);
+    EXPECT_THROW(parser->build(Element::fromJSON("-1")), AuthConfigError);
 }
 }
