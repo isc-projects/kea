@@ -34,7 +34,7 @@ namespace cache {
 /// RFC2181 section5.4.1.
 /// Bigger value is more trustworthy.
 enum RRsetTrustLevel {
-    // Default trust for RRset. 
+    // Default trust for RRset.
     RRSET_TRUST_DEFAULT = 0,
     // Additional information from non-authoritative answer.
     RRSET_TRUST_ADDITIONAL_NONAA,
@@ -50,8 +50,8 @@ enum RRsetTrustLevel {
     // Glue from a primary zone, or glue from a zone transfer.
     RRSET_TRUST_PRIM_GLUE,
     // Data from the authority section of an authoritative answer.
-    RRSET_TRUST_AUTHORITY_AA, 
-    // Authoritative data included in the answer section of 
+    RRSET_TRUST_AUTHORITY_AA,
+    // Authoritative data included in the answer section of
     // an authoritative reply.
     RRSET_TRUST_ANSWER_AA,
     // Data from a primary zone file, other than glue data.
@@ -60,7 +60,7 @@ enum RRsetTrustLevel {
 
 /// \brief RRset Entry
 /// The object of RRsetEntry represents one cached RRset.
-/// Each RRset entry may be refered using shared_ptr by several message 
+/// Each RRset entry may be refered using shared_ptr by several message
 /// entries.
 class RRsetEntry : public NsasEntry<RRsetEntry>
 {
@@ -72,7 +72,7 @@ public:
 
     /// \brief Return a pointer to a generated RRset
     isc::dns::RRsetPtr getRRset();
-    
+
     /// \brief Get the expiration time of the RRset.
     time_t getExpireTime() const;
 
@@ -99,8 +99,8 @@ private:
     RRsetTrustLevel trust_level_; // rrset trustworthiness.
     boost::shared_ptr<isc::dns::RRset> rrset_;
 };
-    
-typedef boost::shared_ptr<RRsetEntry> RRsetEntryPtr;    
+
+typedef boost::shared_ptr<RRsetEntry> RRsetEntryPtr;
 
 } // namespace cache
 } // namespace isc
