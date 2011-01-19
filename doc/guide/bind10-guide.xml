@@ -402,7 +402,7 @@ var/
       <para>
         BIND 10 is open source software written in C++ and Python.
         It is freely available in source code form from ISC via
-        the Subversion code revision control system or as a downloadable
+        the Git code revision control system or as a downloadable
         tar file. It may also be available in pre-compiled ready-to-use
         packages from operating system vendors.
       </para>
@@ -423,7 +423,7 @@ var/
       </section>
 
       <section>
-        <title>Retrieve from Subversion</title>
+        <title>Retrieve from Git</title>
         <para>
           Downloading this "bleeding edge" code is recommended only for
           developers or advanced users.  Using development code in a production
@@ -432,7 +432,7 @@ var/
 
         <note>
           <para>
-            When using source code retrieved via Subversion additional
+            When using source code retrieved via Git additional
             software will be required:  automake (v1.11 or newer),
             libtoolize, and autoconf (2.59 or newer).
             These may need to be installed.
@@ -442,14 +442,16 @@ var/
         <para>
           The latest development code, including temporary experiments
           and un-reviewed code, is available via the BIND 10 code revision
-          control system. This is powered by Subversion and all the BIND 10
+          control system. This is powered by Git and all the BIND 10
           development is public.
-          The leading development is done in the <quote>trunk</quote>.
+          The leading development is done in the <quote>master</quote>.
         </para>
         <para>
-          The code can be checked out from <filename>svn://bind10.isc.org/svn/bind10</filename>; for example to check out the trunk:
+          The code can be checked out from
+          <filename>git://bind10.isc.org/bind10</filename>;
+          for example:
 
-        <screen>$ <userinput>svn co svn://bind10.isc.org/svn/bind10/trunk</userinput></screen>
+        <screen>$ <userinput>git clone git://bind10.isc.org/bind10</userinput></screen>
         </para>
 
         <para>
