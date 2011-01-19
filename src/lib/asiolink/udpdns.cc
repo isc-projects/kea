@@ -69,7 +69,7 @@ UDPServer::UDPServer(io_service& io_service,
     if (addr.is_v6()) {
         socket_->set_option(asio::ip::v6_only(true));
     }
-    socket_->bind(udp::endpoint(proto, port));
+    socket_->bind(udp::endpoint(addr, port));
 }
 
 /// The function operator is implemented with the "stackless coroutine"
