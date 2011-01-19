@@ -21,7 +21,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>September 8, 2010</date>
+    <date>October 18, 2010</date>
   </refentryinfo>
 
   <refmeta>
@@ -90,11 +90,39 @@
 
   <refsect1>
     <title>CONFIGURATION AND COMMANDS</title>
-<!--
     <para>
       The configurable settings are:
     </para>
--->
+    <para>
+      <varname>jitter_scope</varname>
+      defines the random jitter range subtracted from the refresh
+      and retry timers to avoid many zones from refreshing at the
+      same time.
+      The refresh or retry time actually used is a random time
+      between the defined refresh or retry time and it multiplied
+      by the <varname>jitter_scope</varname>.
+      This is re-evaluated after each refresh or retry.
+      This value is a real number and the maximum is 0.5 (half of the
+      refresh or retry time).
+      The default is 0.25.
+      Set to 0 to disable the jitter.
+    </para>
+    <para>
+      <varname>lowerbound_refresh</varname>
+      defines the minimum SOA REFRESH time in seconds.
+      The default is 10.
+    </para>
+    <para>
+      <varname>lowerbound_retry</varname>
+      defines the minimum SOA RETRY time in seconds.
+      The default is 5.
+    </para>
+    <para>
+      <varname>max_transfer_timeout</varname>
+      defines the maximum amount of time in seconds for a transfer.
+<!-- TODO: what is the purpose of this? -->
+      The default is 14400 (4 hours).
+    </para>
 
 <!-- TODO: formating -->
     <para>
