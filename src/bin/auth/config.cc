@@ -177,7 +177,12 @@ public:
         server_(server), interval_(0)
     {}
     virtual void build(ConstElementPtr config_value) {
-        interval_ = config_value->intValue();
+        const int32_t config_interval = config_value->intValue();
+        if (config_interval < 0) {
+            isc_throw(AuthConfigError, "negative statistics-interval value: "
+                      << config_interval);
+        }
+        interval_ = config_interval;
     }
     virtual void commit() {
         // setStatisticsTimerInterval() is not 100% exception free.  But
