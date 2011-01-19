@@ -80,15 +80,19 @@ public:
     }
 
     void queryShutdown() {
-        dlog("Query shutdown");
-        delete rec_query_;
-        rec_query_ = NULL;
+        // only shut down if we have actually called querySetup before
+        // (this is not a safety check, just to prevent logging of
+        // actions that are not performed
+        if (rec_query_) {
+            dlog("Query shutdown");
+            delete rec_query_;
+            rec_query_ = NULL;
+        }
     }
 
     void setForwardAddresses(const vector<addr_t>& upstream,
         DNSService *dnss)
     {
-        queryShutdown();
         upstream_ = upstream;
         if (dnss) {
             if (upstream_.empty()) {
@@ -100,7 +104,6 @@ public:
                     dlog(" " + address.first + ":" +
                         boost::lexical_cast<string>(address.second));
                 }
-                querySetup(*dnss);
             }
         }
     }
@@ -328,8 +331,6 @@ Resolver::~Resolver() {
 
 void
 Resolver::setDNSService(asiolink::DNSService& dnss) {
-    impl_->queryShutdown();
-    impl_->querySetup(dnss);
     dnss_ = &dnss;
 }
 
@@ -515,14 +516,24 @@ Resolver::updateConfig(ConstElementPtr config) {
         }
         // Everything OK, so commit the changes
         // listenAddresses can fail to bind, so try them first
+        bool need_query_restart = false;
+        
         if (listenAddressesE) {
             setListenAddresses(listenAddresses);
+            need_query_restart = true;
         }
         if (forwardAddressesE) {
             setForwardAddresses(forwardAddresses);
+            need_query_restart = true;
         }
         if (set_timeouts) {
             setTimeouts(timeout, retries);
+            need_query_restart = true;
+        }
+
+        if (need_query_restart) {
+            impl_->queryShutdown();
+            impl_->querySetup(*dnss_);
         }
         return (isc::config::createAnswer());
     } catch (const isc::Exception& error) {
@@ -597,8 +608,6 @@ Resolver::setTimeouts(int timeout, unsigned retries) {
         " and retry count to " + boost::lexical_cast<string>(retries));
     impl_->timeout_ = timeout;
     impl_->retries_ = retries;
-    impl_->queryShutdown();
-    impl_->querySetup(*dnss_);
 }
 pair<int, unsigned>
 Resolver::getTimeouts() const {
