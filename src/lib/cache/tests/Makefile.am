@@ -34,6 +34,7 @@ run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES  += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
 run_unittests_SOURCES  += rrset_entry_unittest.cc
 run_unittests_SOURCES  += message_cache_unittest.cc
+run_unittests_SOURCES  += message_entry_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
