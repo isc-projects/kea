@@ -107,7 +107,6 @@ public:
     isc::datasrc::HotCache cache_;
 
     /// Interval timer for periodic submission of statistics counters.
-    /// When NULL, the submission is disabled.
     IntervalTimer statistics_timer_;
 
     /// Query counters for statistics
