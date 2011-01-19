@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <dns/message.h>
+#include <dns/rrset.h>
 #include <nsas/nsas_entry.h>
 #include <nsas/fetchable.h>
 #include "rrset_entry.h"
@@ -84,12 +85,18 @@ protected:
                     uint16_t& rrset_count);
 
     /// \brief Get RRset Trust worthiness
-    /// only the rrset can be updated by the rrsets 
-    /// with higher trust level.
+    /// The algorithm refers to RFC2181 section 5.4.1
     ///
+    /// Only the rrset can be updated by the rrsets 
+    /// with higher trust level.
+    /// 
+    /// \param message Message that the rrset belongs to
+    /// \param rrset specified rrset which needs to get its 
+    ///     trust worthiness
+    /// \param section Section of the rrset
     /// \return return rrset trust level.
     RRsetTrustLevel getRRsetTrustLevel(const isc::dns::Message& message,
-                               const isc::dns::RRset& rrset,
+                               const isc::dns::RRsetPtr rrset,
                                const isc::dns::Message::Section& section);
     //@}
 private:
