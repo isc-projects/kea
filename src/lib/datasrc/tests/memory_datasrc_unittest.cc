@@ -303,13 +303,16 @@ TEST_F(MemoryZoneTest, findCNAME) {
 }
 
 TEST_F(MemoryZoneTest, findCNAMEUnderZoneCut) {
+    // There's nothing special when we find a CNAME under a zone cut
+    // (with FIND_GLUE_OK).  The behavior is different from BIND 9,
+    // so we test this case explicitly.
     EXPECT_EQ(SUCCESS, zone_.add(rr_child_ns_));
     RRsetPtr rr_cname_under_cut_(new RRset(Name("cname.child.example.org"),
                                            class_, RRType::CNAME(),
                                            RRTTL(300)));
     EXPECT_EQ(SUCCESS, zone_.add(rr_cname_under_cut_));
     findTest(Name("cname.child.example.org"), RRType::AAAA(),
-             Zone::NXRRSET, false, ConstRRsetPtr(), NULL, Zone::FIND_GLUE_OK);
+             Zone::CNAME, true, rr_cname_under_cut_, NULL, Zone::FIND_GLUE_OK);
 }
 
 // Test adding child zones and zone cut handling
