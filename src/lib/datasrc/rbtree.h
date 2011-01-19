@@ -54,7 +54,7 @@ operator-(const isc::dns::Name& super_name, const isc::dns::Name& sub_name) {
 }
 }
 
-template <typename T>
+template <typename T, typename SearchPolicy>
 class RBTree;
 
 /// \brief \c RBNode is used by RBTree to store any data related to one domain
@@ -82,7 +82,8 @@ class RBNode : public boost::noncopyable {
 private:
     /// The RBNode is meant for use from within RBTree, so it has access to
     /// it.
-    friend class RBTree<T>;
+    template <typename U, typename SearchPolicy>
+    friend class RBTree;
 
     /// \name Constructors
     ///
@@ -256,6 +257,12 @@ RBNode<T>::~RBNode() {
  *  - Decreases the memory footprint, as it doesn't store the suffix labels
  *      multiple times.
  *
+ *  Depending on different usage, rbtree will support different search policy.  
+ *  Whether return empty node to end user is one policy among them. Search 
+ *  policy is as the last template parameter, the default policy will NOT 
+ *  return empty node to end user, choose ReturnEmptyNodePolicy is empty node
+ *  is needed
+ *
  * \anchor diagram
  *
  * with the following names:
@@ -285,10 +292,6 @@ RBNode<T>::~RBNode() {
                                     / \
                                    o   q
    \endverbatim
- *  \note open problems:
- *  - current \c find() function only returns non-empty nodes, so there is no
- *    difference between find a non existent name and a name corresponding to
- *    an empty non-terminal nodes, but in DNS query logic, they are different
  *  \todo
  *  - add remove interface
  *  - add iterator to iterate over the whole \c RBTree.  This may be necessary,
@@ -296,8 +299,14 @@ RBNode<T>::~RBNode() {
  *  - since \c RBNode only has down pointer without up pointer, the node path
  *    during finding should be recorded for later use
  */
-template <typename T>
-class RBTree : public boost::noncopyable {
+
+/// \brief forward declare search policy class, which will affect the behavior 
+/// of the find function in rbtree whether to return empty node
+class ReturnEmptyNodePolicy;
+class ReturnNonEmptyNodePolicy;
+
+template <typename T, typename SearchPolicy = ReturnNonEmptyNodePolicy>
+class RBTree : public boost::noncopyable, public SearchPolicy {
     friend class RBNode<T>;
 public:
     /// \brief The return value for the \c find() and insert() methods
@@ -531,21 +540,22 @@ private:
     unsigned int node_count_;
 };
 
-template <typename T>
-RBTree<T>::RBTree() {
+template <typename T, typename S>
+RBTree<T,S>::RBTree() {
     NULLNODE = RBNode<T>::NULL_NODE();
     root_ = NULLNODE;
     node_count_ = 0;
 }
 
-template <typename T>
-RBTree<T>::~RBTree() {
+template <typename T, typename S>
+RBTree<T,S>::~RBTree() {
     deleteHelper(root_);
     assert(node_count_ == 0);
 }
 
-template <typename T>
-void RBTree<T> ::deleteHelper(RBNode<T> *root) {
+template <typename T, typename S>
+void 
+RBTree<T,S>::deleteHelper(RBNode<T> *root) {
     if (root == NULLNODE) {
         return;
     }
@@ -574,9 +584,10 @@ void RBTree<T> ::deleteHelper(RBNode<T> *root) {
     --node_count_;
 }
 
-template <typename T> template <typename CBARG>
-typename RBTree<T>::Result
-RBTree<T>::find(const isc::dns::Name& name, RBNode<T>** node,
+template <typename T, typename S>
+template <typename CBARG>
+typename RBTree<T,S>::Result
+RBTree<T,S>::find(const isc::dns::Name& name, RBNode<T>** node,
                 bool (*callback)(const RBNode<T>&, CBARG),
                 CBARG callback_arg) const
 {
@@ -584,9 +595,10 @@ RBTree<T>::find(const isc::dns::Name& name, RBNode<T>** node,
     return (findHelper(name, &up_node, node, callback, callback_arg));
 }
 
-template <typename T> template <typename CBARG>
-typename RBTree<T>::Result
-RBTree<T>::find(const isc::dns::Name& name, const RBNode<T>** node,
+template <typename T, typename S>
+template <typename CBARG>
+typename RBTree<T,S>::Result
+RBTree<T,S>::find(const isc::dns::Name& name, const RBNode<T>** node,
                 bool (*callback)(const RBNode<T>&, CBARG),
                 CBARG callback_arg) const
 {
@@ -600,9 +612,10 @@ RBTree<T>::find(const isc::dns::Name& name, const RBNode<T>** node,
     return (ret);
 }
 
-template <typename T> template <typename CBARG>
-typename RBTree<T>::Result
-RBTree<T>::findHelper(const isc::dns::Name& target_name,
+template <typename T, typename S>
+template <typename CBARG>
+typename RBTree<T,S>::Result
+RBTree<T,S>::findHelper(const isc::dns::Name& target_name,
                       const RBNode<T>** up_node,
                       RBNode<T>** target,
                       bool (*callback)(const RBNode<T>&, CBARG),
@@ -621,7 +634,7 @@ RBTree<T>::findHelper(const isc::dns::Name& target_name,
         const isc::dns::NameComparisonResult::NameRelation relation =
             compare_result.getRelation();
         if (relation == isc::dns::NameComparisonResult::EQUAL) {
-            if (!node->isEmpty()) {
+            if (S::returnEmptyNode() || !node->isEmpty()) {
                 *target = node;
                 ret = EXACTMATCH;
             }
@@ -634,7 +647,7 @@ RBTree<T>::findHelper(const isc::dns::Name& target_name,
                 node = (compare_result.getOrder() < 0) ?
                     node->left_ : node->right_;
             } else if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
-                if (!node->isEmpty()) {
+                if (S::returnEmptyNode() || !node->isEmpty()) {
                     ret = RBTree<T>::PARTIALMATCH;
                     *target = node;
                     if (callback != NULL && node->callback_required_) {
@@ -655,9 +668,10 @@ RBTree<T>::findHelper(const isc::dns::Name& target_name,
     return (ret);
 }
 
-template <typename T>
-typename RBTree<T>::Result
-RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
+
+template <typename T, typename S>
+typename RBTree<T,S>::Result
+RBTree<T,S>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
     using namespace helper;
     RBNode<T>* parent = NULLNODE;
     RBNode<T>* current = root_;
@@ -674,7 +688,12 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
             if (new_node != NULL) {
                 *new_node = current;
             }
-            return (ALREADYEXISTS);
+
+            if (current->isEmpty() && !S::returnEmptyNode()) {
+                return (SUCCESS);
+            } else {
+                return (ALREADYEXISTS);
+            }
         } else {
             const int common_label_count = compare_result.getCommonLabels();
             if (common_label_count == 1) {
@@ -730,9 +749,10 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
     return (SUCCESS);
 }
 
-template <typename T>
+
+template <typename T, typename S>
 void
-RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
+RBTree<T,S>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     using namespace helper;
     const isc::dns::Name sub_name = node.name_ - base_name;
     // using auto_ptr here is to avoid memory leak in case of exception raised
@@ -752,9 +772,10 @@ RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     down_node.release();
 }
 
-template <typename T>
+
+template <typename T, typename S>
 void
-RBTree<T>::insertRebalance(RBNode<T>** root, RBNode<T>* node) {
+RBTree<T,S>::insertRebalance(RBNode<T>** root, RBNode<T>* node) {
 
     RBNode<T>* uncle;
     while (node != *root && node->parent_->color_ == RBNode<T>::RED) {
@@ -798,9 +819,9 @@ RBTree<T>::insertRebalance(RBNode<T>** root, RBNode<T>* node) {
 }
 
 
-template <typename T>
+template <typename T, typename S>
 RBNode<T>*
-RBTree<T>::leftRotate(RBNode<T>** root, RBNode<T>* node) {
+RBTree<T,S>::leftRotate(RBNode<T>** root, RBNode<T>* node) {
     RBNode<T>* right = node->right_;
     node->right_ = right->left_;
     if (right->left_ != NULLNODE)
@@ -823,9 +844,9 @@ RBTree<T>::leftRotate(RBNode<T>** root, RBNode<T>* node) {
     return (node);
 }
 
-template <typename T>
+template <typename T, typename S>
 RBNode<T>*
-RBTree<T>::rightRotate(RBNode<T>** root, RBNode<T>* node) {
+RBTree<T,S>::rightRotate(RBNode<T>** root, RBNode<T>* node) {
     RBNode<T>* left = node->left_;
     node->left_ = left->right_;
     if (left->right_ != NULLNODE)
@@ -847,17 +868,18 @@ RBTree<T>::rightRotate(RBNode<T>** root, RBNode<T>* node) {
     return (node);
 }
 
-template <typename T>
+
+template <typename T, typename S>
 void
-RBTree<T>::dumpTree(std::ostream& os, unsigned int depth) const {
+RBTree<T,S>::dumpTree(std::ostream& os, unsigned int depth) const {
     indent(os, depth);
     os << "tree has " << node_count_ << " node(s)\n";
     dumpTreeHelper(os, root_, depth);
 }
 
-template <typename T>
+template <typename T, typename S>
 void
-RBTree<T>::dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
+RBTree<T,S>::dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
                           unsigned int depth) const
 {
     if (node == NULLNODE) {
@@ -882,12 +904,32 @@ RBTree<T>::dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
     dumpTreeHelper(os, node->right_, depth + 1);
 }
 
-template <typename T>
+template <typename T, typename S>
 void
-RBTree<T>::indent(std::ostream& os, unsigned int depth) {
+RBTree<T,S>::indent(std::ostream& os, unsigned int depth) {
     static const unsigned int INDENT_FOR_EACH_DEPTH = 5;
     os << std::string(depth * INDENT_FOR_EACH_DEPTH, ' ');
 }
+
+
+/// \brief search policy for rbtree which will affect the find function
+/// behavior, depend on usage for rbtree, sometimes it needs return 
+/// empty node like using rbtree as zone data, the default search policy
+/// for rbtree is ReturnNonEmptyNodePolicy.
+/// \note to use policy class instead of just a bool variable to add to
+/// the construction function of rbtree is considering the extendibility
+/// also it is more clean use policy based programming which typically
+/// use template class as the policy class
+class ReturnEmptyNodePolicy {
+    public:
+        bool returnEmptyNode()const { return true; }
+};
+
+class ReturnNonEmptyNodePolicy {
+    public:
+        bool returnEmptyNode()const { return false; }
+};
+
 
 }
 }
