@@ -28,7 +28,8 @@ RRsetEntry::RRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& leve
     entry_name_(genCacheEntryName(rrset.getName(), rrset.getType())),
     expire_time_(time(NULL) + rrset.getTTL().getValue()),
     trust_level_(level),
-    rrset_(new RRset(rrset.getName(), rrset.getClass(), rrset.getType(), rrset.getTTL()))
+    rrset_(new RRset(rrset.getName(), rrset.getClass(), rrset.getType(), rrset.getTTL())),
+    hash_key_(HashKey(entry_name_, rrset_->getClass()))
 {
     RdataIteratorPtr rdata_itor = rrset.getRdataIterator();
     rdata_itor->first();
@@ -52,11 +53,6 @@ RRsetEntry::getRRset() {
 time_t
 RRsetEntry::getExpireTime() const {
     return expire_time_;
-}
-
-HashKey
-RRsetEntry::hashKey() const {
-    return HashKey(entry_name_, rrset_->getClass());
 }
 
 void
