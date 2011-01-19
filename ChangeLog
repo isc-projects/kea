@@ -1,3 +1,8 @@
+  153.	[bug]		jelte
+	b10-cfgmgr: Fixed a bug where configuration updates sometimes
+	lost previous settings in the configuration manager.
+	(Trac #427, git 2df894155657754151e0860e2ca9cdbed7317c70)
+
   152.	[func]*		jinmei
 	b10-auth: Added new configuration variable "statistics-interval"
 	to allow the user to change the timer interval for periodic
