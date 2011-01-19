@@ -36,22 +36,22 @@ public:
     /// \param cache_size the size of rrset cache.
     /// \param rrset_class the class of rrset cache.
     RRsetCache(uint32_t cache_size, uint16_t rrset_class);
-    
+
     /// \brief Look up rrset in cache.
-    /// \return return the shared_ptr of rrset entry if it can 
+    /// \return return the shared_ptr of rrset entry if it can
     /// found in the cache, or else, return NULL.
     RRsetEntryPtr lookup(const isc::dns::Name& qname,
                          const isc::dns::RRType& qtype);
 
     /// \brief Update RRset Cache
     /// Update the rrset entry in the cache with the new one.
-    /// If the rrset has expired or doesn't exist in the cache, 
-    /// it will be added directly. It may be ingored if the new 
+    /// If the rrset has expired or doesn't exist in the cache,
+    /// it will be added directly. It may be ingored if the new
     /// rrset is not more authoritative than the old rrset in cache.
-    /// 
+    ///
     /// \param rrset The new rrset used to update cache.
     /// \param level trustworthiness of the rrset.
-    /// \return return the rrset entry in the cache, it may be the 
+    /// \return return the rrset entry in the cache, it may be the
     /// new added rrset entry or existed one if it is not replaced.
     RRsetEntryPtr update(const isc::dns::RRset& rrset,
                          const RRsetTrustLevel& level);
@@ -64,7 +64,7 @@ public:
     /// \todo It should can be loaded from one configured database.
     void load(const std::string& file_name);
 
-    /// \brief Resize the size of rrset cache in runtime. 
+    /// \brief Resize the size of rrset cache in runtime.
     bool resize(uint32_t size);
 
 private:
@@ -74,7 +74,7 @@ private:
 };
 
 typedef boost::shared_ptr<RRsetCache> RRsetCachePtr;
-    
+
 } // namespace cache
 } // namespace isc
 
