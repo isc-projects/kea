@@ -751,7 +751,7 @@ TEST_F(ASIOLinkTest, recursiveTimeout) {
 // or not.
 class IntervalTimerTest : public ::testing::Test {
 protected:
-    IntervalTimerTest() : io_service_() {};
+    IntervalTimerTest() : io_service_() {}
     ~IntervalTimerTest() {}
     class TimerCallBack : public std::unary_function<void, void> {
     public:
@@ -811,6 +811,19 @@ protected:
         int count_;
         int prev_counter_;
     };
+    class TimerCallBackCanceller {
+    public:
+        TimerCallBackCanceller(unsigned int& counter, IntervalTimer& itimer) :
+            counter_(counter), itimer_(itimer)
+        {}
+        void operator()() {
+            ++counter_;
+            itimer_.cancel();
+        }
+    private:
+        unsigned int& counter_;
+        IntervalTimer& itimer_;
+    };
     class TimerCallBackOverwriter : public std::unary_function<void, void> {
     public:
         TimerCallBackOverwriter(IntervalTimerTest* test_obj,
@@ -864,6 +877,7 @@ TEST_F(IntervalTimerTest, startIntervalTimer) {
     start = boost::posix_time::microsec_clock::universal_time();
     // setup timer
     itimer.setupTimer(TimerCallBack(this), 1);
+    EXPECT_EQ(1, itimer.getInterval());
     io_service_.run();
     // reaches here after timer expired
     // delta: difference between elapsed time and 1 second
@@ -924,6 +938,23 @@ TEST_F(IntervalTimerTest, destructIntervalTimer) {
         3);
     io_service_.run();
     EXPECT_TRUE(timer_cancel_success_);
+}
+
+TEST_F(IntervalTimerTest, cancel) {
+    // Similar to destructIntervalTimer test, but the first timer explicitly
+    // cancels itself on first callback.
+    IntervalTimer itimer_counter(io_service_);
+    IntervalTimer itimer_watcher(io_service_);
+    unsigned int counter = 0;
+    itimer_counter.setupTimer(TimerCallBackCanceller(counter, itimer_counter),
+                              1);
+    itimer_watcher.setupTimer(TimerCallBack(this), 3);
+    io_service_.run();
+    EXPECT_EQ(1, counter);
+    EXPECT_EQ(0, itimer_counter.getInterval());
+
+    // canceling an already canceled timer shouldn't cause any surprise.
+    EXPECT_NO_THROW(itimer_counter.cancel());
 }
 
 TEST_F(IntervalTimerTest, overwriteIntervalTimer) {

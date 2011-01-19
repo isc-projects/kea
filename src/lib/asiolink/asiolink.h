@@ -657,6 +657,29 @@ public:
     /// \throw isc::Unexpected ASIO library error
     ///
     void setupTimer(const Callback& cbfunc, const uint32_t interval);
+
+    /// Cancel the timer.
+    ///
+    /// If the timer has been set up, this method cancels any asynchronous
+    /// events waiting on the timer and stops the timer itself.
+    /// If the timer has already been canceled, this method effectively does
+    /// nothing.
+    ///
+    /// This method never throws an exception.
+    void cancel();
+
+    /// Return the timer interval.
+    ///
+    /// This method returns the timer interval in seconds if it's running;
+    /// if the timer has been canceled it returns 0.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// Note: We may want to change the granularity of the timer to
+    /// milliseconds or even finer.  If and when this happens the semantics
+    /// of the return value of this method will be changed accordingly.
+    uint32_t getInterval() const;
+
 private:
     IntervalTimerImpl* impl_;
 };
