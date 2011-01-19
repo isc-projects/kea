@@ -2,6 +2,8 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
 <!ENTITY mdash  "&#x2014;" >
+<!ENTITY % version SYSTEM "version.ent">
+%version;
 ]>
 <book>
   <?xml-stylesheet href="bind10-guide.css" type="text/css"?>
@@ -15,13 +17,20 @@
     </copyright>
 
     <abstract>
-      <para>This is the reference guide for BIND 10.</para>
-      <para>
-        The most up-to-date version of this document, along with other documents
-        for BIND 10, can be found at
-        <ulink url="http://bind10.isc.org/docs"/>.
+      <para>BIND 10 is a Domain Name System (DNS) suite managed by
+	Internet Systems Consortium (ISC). It includes DNS libraries
+	and modular components for controlling authoritative and
+	recursive DNS servers.
       </para>
-    </abstract>
+      <para>
+        This is the reference guide for BIND 10 version &__VERSION__;.
+	The most up-to-date version of this document, along with
+	other documents for BIND 10, can be found at <ulink
+	url="http://bind10.isc.org/docs"/>.  </para> </abstract>
+
+      <releaseinfo>This is the reference guide for BIND 10 version
+        &__VERSION__;.</releaseinfo>
+
   </bookinfo>
 
   <chapter id="intro">
@@ -35,8 +44,8 @@
 
     <note>
       <para>
-        This guide covers the experimental prototype version of
-        BIND 10.
+        This guide covers the experimental prototype of
+        BIND 10 version &__VERSION__;.
       </para>
     </note>
 
