@@ -1,9 +1,19 @@
+  152.	[func]*		jinmei
+	b10-auth: Added new configuration variable "statistics-interval"
+	to allow the user to change the timer interval for periodic
+	statistics updates.  The update can also be disabled by setting
+	the value to 0.  Disabling statistics updates will also work as
+	a temporary workaround of a known issue that b10-auth can block in
+	sending statistics and stop responding to queries as a result.
+	(Trac #513, git 285c5ee)
+
   151.  [bug]		smann
 	lib/log/dummylog.h: 
 	lib/log/dummylog.cc: Modify dlog so that it takes an optional 2nd
         argument of type bool (true or false). This flag, if set, will cause
         the message to be printed whether or not -v is chosen.
         (trac #432, git 880220478c3e8702d56d761b1e0b21b77d08ee5a)
+
   150.  [bug]		jelte
 	b10-cfgmgr: No longer save the configuration on exit. Configuration
 	is already saved if it is changed succesfully, so writing it on
