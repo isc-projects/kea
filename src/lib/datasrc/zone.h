@@ -158,9 +158,7 @@ public:
     /// - If there is a CNAME RR of the searched name but there is no
     ///   RR of the searched type of the name (so this type is different from
     ///   CNAME), it returns the code of \c CNAME and that CNAME RR.
-    ///   This special rule does not apply on or under a zone cut (which is
-    ///   possible when the \c GLUE_OK option is specified).
-    ///   Note also that if the searched RR type is CNAME, it is considered
+    ///   Note that if the searched RR type is CNAME, it is considered
     ///   a successful match, and the code of \c SUCCESS will be returned.
     /// - If the search name matches a delegation point of DNAME, it returns
     ///   the code of \c DNAME and that DNAME RR.

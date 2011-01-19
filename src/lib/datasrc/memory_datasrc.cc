@@ -254,8 +254,8 @@ struct MemoryZone::MemoryZoneImpl {
         if (found != node->getData()->end()) {
             // Good, it is here
             return (FindResult(SUCCESS, found->second));
-        } else if (state.zonecut_node_ == NULL) {
-            // Next, try CNAME unless we are under a zone cut.
+        } else {
+            // Next, try CNAME.
             found = node->getData()->find(RRType::CNAME());
             if (found != node->getData()->end()) {
                 return (FindResult(CNAME, found->second));
