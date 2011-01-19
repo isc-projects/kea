@@ -21,7 +21,7 @@
 
   150.  [bug]		jelte
 	b10-cfgmgr: No longer save the configuration on exit. Configuration
-	is already saved if it is changed succesfully, so writing it on
+	is already saved if it is changed successfully, so writing it on
 	exit (and hence, when nothing has changed too) is unnecessary and
 	may even cause problems.
 	(Trac #435, git fd7baa38c08d54d5b5f84930c1684c436d2776dc)
@@ -271,7 +271,7 @@ bind10-devel-20101201 released on December 01, 2010
 
   112.	[func]		zhang likun
 	Add one mixin class to override the naive serve_forever() provided
-	in python library socketserver. Instead of polling for shutdwon
+	in python library socketserver. Instead of polling for shutdown
 	every poll_interval seconds, one socketpair is used to wake up
 	the waiting server. (Trac #352, svn r3366)
 
