@@ -574,6 +574,7 @@ AC_ARG_ENABLE(install-configurations,
 AM_CONDITIONAL(INSTALL_CONFIGURATIONS, test x$install_configurations = xyes || test x$install_configurations = xtrue)
 
 AC_CONFIG_FILES([Makefile
+                 doc/guide/Makefile
                  src/Makefile
                  src/bin/Makefile
                  src/bin/bind10/Makefile
@@ -655,7 +656,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/nsas/Makefile
                  src/lib/nsas/tests/Makefile
                ])
-AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
+AC_OUTPUT([doc/version.ent
+           src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cfgmgr/tests/b10-cfgmgr_test.py
            src/bin/cmdctl/cmdctl.py
            src/bin/cmdctl/run_b10-cmdctl.sh
