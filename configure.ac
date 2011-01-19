@@ -83,7 +83,7 @@ case "$host" in
 	CPPFLAGS="$CPPFLAGS -D_XPG4_2 -D__EXTENSIONS__"
 	;;
 *-apple-darwin*)
-	# libtool doesn't work pefectly with Darwin: libtool embeds the
+	# libtool doesn't work perfectly with Darwin: libtool embeds the
 	# final install path in dynamic libraries and our loadable python
 	# modules always refer to that path even if it's loaded within the
 	# source tree.  This prevents pre-install tests from working.
@@ -202,7 +202,7 @@ fi
 
 # Compiler dependent settings: define some mandatory CXXFLAGS here.
 # We also use a separate variable B10_CXXFLAGS.  This will (and should) be
-# used as the default value for each specifc AM_CXXFLAGS:
+# used as the default value for each specific AM_CXXFLAGS:
 # AM_CXXFLAGS = $(B10_CXXFLAGS)
 # AM_CXXFLAGS += ... # add module specific flags
 # We need this so that we can disable some specific compiler warnings per
@@ -555,7 +555,7 @@ fi
 # So, for the moment, we simply disable the use of /dev/poll.  Unless we
 # implement recursive DNS server with randomized ports, we don't need the
 # scalability that /dev/poll can provide, so this decision wouldn't affect
-# run time performance.  Hpefully we can find a better solution or the ASIO
+# run time performance.  Hopefully we can find a better solution or the ASIO
 # code will be updated by the time we really need it.
 AC_CHECK_HEADERS(sys/devpoll.h, ac_cv_have_devpoll=yes, ac_cv_have_devpoll=no)
 if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GXX" = "Xyes"; then
