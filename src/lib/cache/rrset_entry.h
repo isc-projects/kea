@@ -64,11 +64,24 @@ enum RRsetTrustLevel {
 /// entries.
 class RRsetEntry : public NsasEntry<RRsetEntry>
 {
+    ///
+    /// \name Constructors and Destructor
+    ///
+    /// Note: The copy constructor and the assignment operator are intentionally
+    /// defined as private to make it uncopyable
+    //@{
+private:
+    RRsetEntry(const RRsetEntry&);
+    RRsetEntry& operator=(const RRsetEntry&);
 public:
     /// \brief Constructor
     /// \param rrset The RRset used to initialize the RRset entry.
     /// \param level trustworthiness of the RRset.
     RRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& level);
+
+    /// The destructor.
+    ~RRsetEntry() {}
+    //@}
 
     /// \brief Return a pointer to a generated RRset
     isc::dns::RRsetPtr getRRset();
@@ -83,7 +96,9 @@ public:
     }
 
     /// \return return hash key
-    virtual HashKey hashKey() const;
+    HashKey hashKey() const{
+        return hash_key_;
+    }
 
     /// \brief get RRset trustworthiness
     RRsetTrustLevel getTrustLevel() const {
@@ -94,10 +109,11 @@ private:
     void updateTTL();
 
 private:
-    std::string entry_name_; // the entry name for this rrset entry.
-    time_t expire_time_;    // Expiration time of rrset.
-    RRsetTrustLevel trust_level_; // rrset trustworthiness.
+    std::string entry_name_; // The entry name for this rrset entry.
+    time_t expire_time_;     // Expiration time of rrset.
+    RRsetTrustLevel trust_level_; // RRset trustworthiness.
     boost::shared_ptr<isc::dns::RRset> rrset_;
+    HashKey hash_key_;       // RRsetEntry hash key
 };
 
 typedef boost::shared_ptr<RRsetEntry> RRsetEntryPtr;
