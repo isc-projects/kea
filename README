@@ -48,7 +48,7 @@ Simple build instructions:
   ./configure
   make
 
-If building from Subversion repository, run:
+If building from Git repository, run:
 
   autoreconf --install
 
