@@ -16,11 +16,12 @@
 #include <config.h>
 #include <string>
 #include <gtest/gtest.h>
+#include <dns/tests/unittest_util.h>
+#include <dns/buffer.h>
 #include "../message_cache.h"
 #include "../rrset_cache.h"
 #include "../recursor_cache.h"
-#include <dns/tests/unittest_util.h>
-#include <dns/buffer.h>
+#include "cache_test_util.h"
 
 using namespace isc::cache;
 using namespace isc;
@@ -39,7 +40,7 @@ public:
     {}
 
     uint16_t messages_count() {
-        return message_table_.tableSize();
+        return message_lru_.size();
     }
 };
 
@@ -54,23 +55,12 @@ public:
                                           MESSAGE_CACHE_DEFAULT_SIZE, class_ ));
     }
 
-    void messageFromFile(Message& message, const char* datafile);
-
 protected:
     boost::shared_ptr<DerivedMessageCache> message_cache_;
     RRsetCachePtr rrset_cache_;
     Message message_parse;
     Message message_render;
 };
-
-void
-MessageCacheTest::messageFromFile(Message& message, const char* datafile) {
-    std::vector<unsigned char> data;
-    UnitTestUtil::readWireData(datafile, data);
-
-    InputBuffer buffer(&data[0], data.size());
-    message.fromWire(buffer);
-}
 
 TEST_F(MessageCacheTest, testUpdate) {
     messageFromFile(message_parse, "message_fromWire1");
@@ -80,8 +70,9 @@ TEST_F(MessageCacheTest, testUpdate) {
     EXPECT_TRUE(message_cache_->lookup(qname, qtype, message_render));
     EXPECT_EQ(message_cache_->messages_count(), 1);
 
-    messageFromFile(message_parse, "message_fromWire2");
-    EXPECT_TRUE(message_cache_->update(message_parse));
+    Message message_net(Message::PARSE);
+    messageFromFile(message_net, "message_fromWire2");
+    EXPECT_TRUE(message_cache_->update(message_net));
     EXPECT_EQ(message_cache_->messages_count(), 2);
 
     Name qname1("test.example.net.");

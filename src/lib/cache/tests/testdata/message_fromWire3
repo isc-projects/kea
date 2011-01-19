@@ -1,0 +1,76 @@
+#
+# A simple DNS response message
+# ID = 0x0513
+# QR=1 (response), Opcode=0, AA=1, RD=1 (other fields are 0)
+# QDCOUNT=1, ANCOUNT=1, AUTHORITY COUNT=5, ADDITIONAL COUNT=7
+# Question: example.com. IN SOA
+# ANSWER:
+#   ;; QUESTION SECTION:
+#   ;example.com.                   IN      SOA
+
+#   ;; ANSWER SECTION:
+#   example.com.            21600   IN      SOA     a.dns.example.com. root.example.com. 2009070811 7200 3600 2419200 21600
+
+#   ;; AUTHORITY SECTION:
+#   example.com.            21600   IN      NS      b.dns.example.com.
+#   example.com.            21600   IN      NS      c.dns.example.com.
+#   example.com.            21600   IN      NS      a.dns.example.com.
+#   example.com.            21600   IN      NS      e.dns.example.com.
+#   example.com.            21600   IN      NS      d.dns.example.com.
+
+#    ;; ADDITIONAL SECTION:
+#    a.dns.example.com.      21600   IN      A       1.1.1.1
+#    a.dns.example.com.      21600   IN      A       2.2.2.2
+#    b.dns.example.com.      21600   IN      A       3.3.3.3
+#    c.dns.example.com.      10800   IN      A       4.4.4.4
+#    d.dns.example.com.      43200   IN      A       5.5.5.5
+#    e.dns.example.com.      21600   IN      A       7.7.7.7
+#    e.dns.example.com.      21600   IN      A       6.6.6.6
+
+0513 8500
+0001 0001 0005 0007
+#(7) e x  a  m  p  l  e (3) c  o  m  .
+ 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+0006 0001
+# same name, fully compressed
+c0 0c
+# SOA IN  TTL=6h   RDLENGTH=35 rdata
+0006 0001 00005460 0023 01 61 03 64 6e 73 c0 0c 04 72 6f 6f 74 c0 0c 77 bf fc db 00 00 1c 20 00 00 0e 10 00 24 ea 00 00 00 54 60
+#Authority section begin
+c0 0c
+# NS IN   TTL=6h   RDLENGTH=4  b.dns.example.com.
+0002 0001 00005460 0004 01 62 c0 2b
+# NS IN   TTL=6h  c.dns.example.com.
+c0 0c
+0002 0001 00005460 00 04 01 63 c0 2b
+# NS IN a.dns.example.com.
+c0 0c
+0002 0001 00005460 00 02 c0 29
+# NS IN e.dns.example.com.
+c0 0c
+0002 0001 00005460 0004 01 65 c0 2b
+# NS IN d.dns.example.com.
+c0 0c
+0002 0001 00005460 0004 01 64 c0 2b
+# additional section begin
+# a.dns.example.com. A
+c0 29
+0001 0001 00005460 0004 01 01 01 01
+# a.dns.example.com. A
+c0 29
+0001 0001 00005460 0004 02 02 02 02
+#b.dns.example.com.  A
+c0 58
+0001 0001 00002A30 0004 03 03 03 03
+#c.dns.example.com.  A
+c0 68
+0001 0001 00005460 0004 04 04 04 04
+# d.dns.example.com. A
+c0 96
+0001 0001 0000A8C0 0004 05 05 05 05
+# e.dns.example.com. A
+c0 86
+0001 0001 00005460 0004 07 07 07 07
+# e.dns.example.com. A
+c0 86
+0001 0001 00005460 0004 06 06 06 06

@@ -22,6 +22,7 @@
 
 using namespace isc::nsas;
 using namespace isc::dns;
+using namespace std;
 
 namespace isc {
 namespace cache {
@@ -41,7 +42,6 @@ MessageCache::lookup(const isc::dns::Name& qname,
                      const isc::dns::RRType& qtype,
                      isc::dns::Message& response)
 {
-
     std::string entry_name = genCacheEntryName(qname, qtype);
     HashKey entry_key = HashKey(entry_name, RRClass(message_class_));
     MessageEntryPtr msg_entry = message_table_.get(entry_key);
@@ -71,7 +71,7 @@ MessageCache::update(const Message& msg) {
     }
 
     MessageEntryPtr msg_entry(new MessageEntry(msg, rrset_cache_));
-    message_lru_.touch(msg_entry); 
+    message_lru_.add(msg_entry); 
     return message_table_.add(msg_entry, entry_key, true); 
 }
 

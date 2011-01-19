@@ -1,8 +1,4 @@
-* Implement the TODO item for getRRsetTrustLevel() in message_entry.cc
-    
-  "TODO, according RFC2181 section 5.4.1, only the record 
-   describing that ailas is necessarily authoritative."
-
+* Revisit the algorithm used by getRRsetTrustLevel() in message_entry.cc.
 * Implement dump/load/resize interfaces of rrset/message/recursor cache.   
 * Once LRU hash table is implemented, it should be used by message/rrset cache.  
 * Once the hash/lrulist related files in /lib/nsas is moved to seperated

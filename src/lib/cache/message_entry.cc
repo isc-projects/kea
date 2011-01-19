@@ -79,16 +79,45 @@ MessageEntry::genMessage(const time_t& time_now,
 
 RRsetTrustLevel
 MessageEntry::getRRsetTrustLevel(const Message& message,
-                   const isc::dns::RRset&,
+                   const isc::dns::RRsetPtr rrset,
                    const isc::dns::Message::Section& section) 
 {
     bool aa = message.getHeaderFlag(Message::HEADERFLAG_AA);
     switch(section) {
         case Message::SECTION_ANSWER: {
             if (aa) {
-                //TODO, according RFC2181 section 5.4.1, only the record 
+                // According RFC2181 section 5.4.1, only the record 
                 // describing that ailas is necessarily authoritative.
+                // If there is one or more CNAME records in answer section.
+                // CNAME records is assumed as the first rrset.
+                RRsetIterator rrset_iter = message.beginSection(section);
+                if ((*rrset_iter)->getType() == RRType("CNAME")) {
+                    if ((*rrset_iter).get() == rrset.get()) {
+                        return RRSET_TRUST_ANSWER_AA;
+                    } else {
+                        return RRSET_TRUST_ANSWER_NONAA;
+                    }
+                } 
+
+                // Here, if the first rrset is DNAME, then assume the 
+                // second rrset is synchronized CNAME record, except
+                // these two records, any other records in answer section
+                // should be treated as non-authoritative.
+                // TODO, this part logic should be revisited later,
+                // since it's not mentioned by RFC2181.
+                if ((*rrset_iter)->getType() == RRType("DNAME")) {
+                    if ((*rrset_iter).get() == rrset.get() || 
+                        ((++rrset_iter) != message.endSection(section) && 
+                                     (*rrset_iter).get() == rrset.get())) {
+
+                        return RRSET_TRUST_ANSWER_AA;
+                    } else {
+                        return RRSET_TRUST_ANSWER_NONAA;
+                    }
+                } 
+                
                 return RRSET_TRUST_ANSWER_AA;
+
             } else {
                 return RRSET_TRUST_ANSWER_NONAA;
             }
@@ -133,7 +162,7 @@ MessageEntry::parseRRset(const isc::dns::Message& msg,
         // rrset entry if the new one is more authoritative.
         //TODO set proper rrset trust level.
         RRsetPtr rrset_ptr = *iter;
-        RRsetTrustLevel level = getRRsetTrustLevel(msg, *rrset_ptr, section);
+        RRsetTrustLevel level = getRRsetTrustLevel(msg, rrset_ptr, section);
         RRsetEntryPtr rrset_entry = rrset_cache_->update(*rrset_ptr, level);
         rrsets_.push_back(rrset_entry);
         
