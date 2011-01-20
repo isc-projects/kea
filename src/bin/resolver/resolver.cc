@@ -104,6 +104,25 @@ public:
         }
     }
 
+    void setRootAddresses(const vector<addr_t>& upstream_root,
+        DNSService *dnss)
+    {
+        queryShutdown();
+        upstream_root_ = upstream_root;
+        if (dnss) {
+            if (!upstream_.empty()) {
+                dlog("Setting forward addresses:");
+                BOOST_FOREACH(const addr_t& address, upstream_root) {
+                    dlog(" " + address.first + ":" +
+                        boost::lexical_cast<string>(address.second));
+                }
+            } else {
+                dlog("No root addresses");
+            }
+            querySetup(*dnss);
+        }
+    }
+
     void processNormalQuery(const Question& question,
                             MessagePtr answer_message,
                             OutputBufferPtr buffer,
@@ -114,6 +133,8 @@ public:
 
     /// These members are public because Resolver accesses them directly.
     ModuleCCSession* config_session_;
+    /// Addresses of the root nameserver(s)
+    vector<addr_t> upstream_root_;
     /// Addresses of the forward nameserver
     vector<addr_t> upstream_;
     /// Addresses we listen on
@@ -458,6 +479,8 @@ Resolver::updateConfig(ConstElementPtr config) {
 
     try {
         // Parse forward_addresses
+        ConstElementPtr rootAddressesE(config->get("root_addresses"));
+        vector<addr_t> rootAddresses(parseAddresses(rootAddressesE));
         ConstElementPtr forwardAddressesE(config->get("forward_addresses"));
         vector<addr_t> forwardAddresses(parseAddresses(forwardAddressesE));
         ConstElementPtr listenAddressesE(config->get("listen_on"));
@@ -491,6 +514,9 @@ Resolver::updateConfig(ConstElementPtr config) {
         if (forwardAddressesE) {
             setForwardAddresses(forwardAddresses);
         }
+        if (rootAddressesE) {
+            setRootAddresses(rootAddresses);
+        }
         if (set_timeouts) {
             setTimeouts(timeout, retries);
         }
@@ -507,6 +533,12 @@ Resolver::setForwardAddresses(const vector<addr_t>& addresses)
     impl_->setForwardAddresses(addresses, dnss_);
 }
 
+void
+Resolver::setRootAddresses(const vector<addr_t>& addresses)
+{
+    impl_->setRootAddresses(addresses, dnss_);
+}
+
 bool
 Resolver::isForwarding() const {
     return (!impl_->upstream_.empty());
@@ -515,6 +547,11 @@ Resolver::isForwarding() const {
 vector<addr_t>
 Resolver::getForwardAddresses() const {
     return (impl_->upstream_);
+}
+
+vector<addr_t>
+Resolver::getRootAddresses() const {
+    return (impl_->upstream_root_);
 }
 
 namespace {
