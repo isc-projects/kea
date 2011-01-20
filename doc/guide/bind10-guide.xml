@@ -60,7 +60,7 @@
       <title>Supported Platforms</title>
       <para>
   BIND 10 builds have been tested on Debian GNU/Linux 5,
-  Ubuntu 9.10, NetBSD 5, Solaris 10, FreeBSD 7, and CentOS
+  Ubuntu 9.10, NetBSD 5, Solaris 10, FreeBSD 7 and 8, and CentOS
   Linux 5.3.
 
   It has been tested on Sparc, i386, and amd64 hardware
@@ -124,6 +124,7 @@
       <para>
 
         <itemizedlist>
+
           <listitem>
             <simpara>
               <command>b10-msgq</command> &mdash;
@@ -132,6 +133,7 @@
               BIND 10 processes.
             </simpara>
           </listitem>
+
           <listitem>
             <simpara>
               <command>b10-auth</command> &mdash;
@@ -139,6 +141,7 @@
               This process serves DNS requests.
             </simpara>
           </listitem>
+
           <listitem>
             <simpara>
               <command>b10-cfgmgr</command> &mdash;
@@ -146,11 +149,21 @@
               This process maintains all of the configuration for BIND 10.
             </simpara>
           </listitem>
+
           <listitem>
             <simpara>
               <command>b10-cmdctl</command> &mdash;
               Command and control service.
               This process allows external control of the BIND 10 system.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-resolver</command> &mdash;
+              Recursive name server.
+              This process handles incoming queries.
+<!-- TODO: -->
             </simpara>
           </listitem>
 
@@ -668,7 +681,8 @@ var/
       about other modules.
       The <command>bind10</command> master process will also start up
       <command>b10-cmdctl</command> for admins to communicate with the
-      system, <command>b10-auth</command> for Authoritative DNS service,
+      system, <command>b10-auth</command> for authoritative DNS service or
+      <command>b10-resolver</command> for recursive name service,
       <command>b10-xfrin</command> for inbound DNS zone transfers,
       <command>b10-xfrout</command> for outbound DNS zone transfers,
       and <command>b10-zonemgr</command> for secondary service.
@@ -1269,6 +1283,45 @@ what is XfroutClient xfr_client??
     </simpara></note>
 
 <!-- TODO: lots to describe for zonemgr -->
+
+  </chapter>
+
+  <chapter id="resolverserver">
+    <title>Recursive Name Server</title>
+
+    <para>
+      The <command>b10-resolver</command> process is started by
+      <command>bind10</command>.
+<!-- TODO
+      It provides a resolver so DNS clients can ask it to do recursion
+      and it will return answers.
+-->
+    </para>
+
+    <note><simpara>
+      The current version only provides a forwarding DNS server.
+      It does not cache and does not iterate to find answers.
+      It simply forwards the query on to another full resolver.
+    </simpara></note>
+
+<!-- TODO:
+
+By default, bind10 starts the authoritative service.
+
+> config set Boss/start_auth false
+> config set Boss/start_resolver true
+
+config commit
+Boss shutdown
+
+restart Boss
+
+then next set forward_addresses as needed
+
+{"version": 2, "Resolver": {"forward_addresses": [{"port": 5302, "address": "127.0.0.1"}], "listen_on": [{"port": 53, "address": "192.168.1.2"}, {"port": 53, "address": "127.0.0.1"}]}, "Boss": {"start_auth": false, "start_resolver": true}}
+
+
+-->
 
   </chapter>
 
