@@ -66,6 +66,8 @@ private:
 public:
     ResolverImpl() :
         config_session_(NULL),
+        timeout_(2000),
+        retries_(3),
         rec_query_(NULL)
     {}
 
