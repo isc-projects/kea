@@ -239,6 +239,25 @@ template <typename T>
 RBNode<T>::~RBNode() {
 }
 
+/// \brief search policy for rbtree which will affect the find function
+/// behavior, depend on usage for rbtree, sometimes it needs return 
+/// empty node like using rbtree as zone data, the default search policy
+/// for rbtree is ReturnNonEmptyNodePolicy.
+/// \note to use policy class instead of just a bool variable to add to
+/// the construction function of rbtree is considering the extendibility
+/// also it is more clean use policy based programming which typically
+/// use template class as the policy class
+class ReturnEmptyNodePolicy {
+    public:
+        bool returnEmptyNode()const { return true; }
+};
+
+class ReturnNonEmptyNodePolicy {
+    public:
+        bool returnEmptyNode()const { return false; }
+};
+
+
 // note: the following class description is documented using multiline comments
 // because the verbatim diagram contain a backslash, which could be interpreted
 // as escape of newline in singleline comment.
@@ -299,12 +318,6 @@ RBNode<T>::~RBNode() {
  *  - since \c RBNode only has down pointer without up pointer, the node path
  *    during finding should be recorded for later use
  */
-
-/// \brief forward declare search policy class, which will affect the behavior 
-/// of the find function in rbtree whether to return empty node
-class ReturnEmptyNodePolicy;
-class ReturnNonEmptyNodePolicy;
-
 template <typename T, typename SearchPolicy = ReturnNonEmptyNodePolicy>
 class RBTree : public boost::noncopyable, public SearchPolicy {
     friend class RBNode<T>;
@@ -911,24 +924,6 @@ RBTree<T,S>::indent(std::ostream& os, unsigned int depth) {
     os << std::string(depth * INDENT_FOR_EACH_DEPTH, ' ');
 }
 
-
-/// \brief search policy for rbtree which will affect the find function
-/// behavior, depend on usage for rbtree, sometimes it needs return 
-/// empty node like using rbtree as zone data, the default search policy
-/// for rbtree is ReturnNonEmptyNodePolicy.
-/// \note to use policy class instead of just a bool variable to add to
-/// the construction function of rbtree is considering the extendibility
-/// also it is more clean use policy based programming which typically
-/// use template class as the policy class
-class ReturnEmptyNodePolicy {
-    public:
-        bool returnEmptyNode()const { return true; }
-};
-
-class ReturnNonEmptyNodePolicy {
-    public:
-        bool returnEmptyNode()const { return false; }
-};
 
 
 }
