@@ -363,7 +363,6 @@ private:
     unsigned retries_;
 
     // normal query state
-    // XXX hold CNAME info here
 
     // if we change this to running and add a sent, we can do
     // decoupled timeouts i think
@@ -373,10 +372,16 @@ private:
     // of 'current' zone servers
     vector<addr_t> zone_servers_;
 
+    // Update the question that will be sent to the server
+    void setQuestion(const Question& new_question) {
+        question_ = new_question;
+    }
+
     // (re)send the query to the server.
     void send() {
         const int uc = upstream_->size();
         const int zs = zone_servers_.size();
+        buffer_->clear();
         if (uc > 0) {
             int serverIndex = rand() % uc;
             dlog("Sending upstream query (" + question_.toText() +
@@ -399,6 +404,71 @@ private:
             dlog("Error, no upstream servers to send to.");
         }
     }
+    
+    // This function is called by operator() if there is an actual
+    // answer from a server and we are in recursive mode
+    // depending on the contents, we go on recursing or return
+    //
+    // Note that the footprint may change as this function may
+    // need to append data to the answer we are building later.
+    //
+    // returns true if we are done
+    // returns false if we are not done
+    bool handleRecursiveAnswer(const Message& incoming) {
+        if (incoming.getRRCount(Message::SECTION_ANSWER) > 0) {
+            dlog("[XX] this looks like the final result");
+            copyAnswerMessage(incoming, answer_message_);
+            return true;
+        } else {
+            dlog("[XX] this looks like a delegation");
+            // ok we need to do some more processing.
+            // the ns list should contain all nameservers
+            // while the additional may contain addresses for
+            // them.
+            // this needs to tie into NSAS of course
+            // for this very first mockup, hope there is an
+            // address in additional and just use that
+
+            // send query to the addresses in the delegation
+            bool found_ns_address = false;
+            zone_servers_.clear();
+
+            for (RRsetIterator rrsi = incoming.beginSection(Message::SECTION_ADDITIONAL);
+                 rrsi != incoming.endSection(Message::SECTION_ADDITIONAL) && !found_ns_address;
+                 rrsi++) {
+                ConstRRsetPtr rrs = *rrsi;
+                if (rrs->getType() == RRType::A()) {
+                    // found address
+                    RdataIteratorPtr rdi = rrs->getRdataIterator();
+                    // just use the first for now
+                    if (!rdi->isLast()) {
+                        std::string addr_str = rdi->getCurrent().toText();
+                        dlog("[XX] first address found: " + addr_str);
+                        // now we have one address, simply
+                        // resend that exact same query
+                        // to that address and yield, when it
+                        // returns, loop again.
+                        
+                        // should use NSAS
+                        zone_servers_.push_back(addr_t(addr_str, 53));
+                        found_ns_address = true;
+                    }
+                }
+            }
+            if (found_ns_address) {
+                // next resolver round
+                send();
+                return false;
+            } else {
+                dlog("[XX] no ready-made addresses in additional. need nsas.");
+                // this will result in answering with the delegation. oh well
+                copyAnswerMessage(incoming, answer_message_);
+                return true;
+            }
+        }
+    }
+    
+
 public:
     RunningQuery(asio::io_service& io, const Question &question,
         MessagePtr answer_message, shared_ptr<AddressVector> upstream,
@@ -425,6 +495,7 @@ public:
         send();
     }
 
+
     // This function is used as callback from DNSQuery.
     virtual void operator()(UDPQuery::Result result) {
         dlog("[XX] RunningQuery operator() called with result: " + result);
@@ -439,57 +510,7 @@ public:
 
             if (upstream_->size() == 0 &&
                 incoming.getRcode() == Rcode::NOERROR()) {
-                if (incoming.getRRCount(Message::SECTION_ANSWER) > 0) {
-                    dlog("[XX] this looks like the final result");
-                    copyAnswerMessage(incoming, answer_message_);
-                    done = true;
-                } else {
-                    dlog("[XX] this looks like a delegation");
-                    // ok we need to do some more processing.
-                    // the ns list should contain all nameservers
-                    // while the additional may contain addresses for
-                    // them.
-                    // this needs to tie into NSAS of course
-                    // for this very first mockup, hope there is an
-                    // address in additional and just use that
-    
-                    // send query to the addresses in the delegation
-                    bool found_ns_address = false;
-                    zone_servers_.clear();
-
-                    for (RRsetIterator rrsi = incoming.beginSection(Message::SECTION_ADDITIONAL);
-                         rrsi != incoming.endSection(Message::SECTION_ADDITIONAL) && !found_ns_address;
-                         rrsi++) {
-                        ConstRRsetPtr rrs = *rrsi;
-                        if (rrs->getType() == RRType::A()) {
-                            // found address
-                            RdataIteratorPtr rdi = rrs->getRdataIterator();
-                            // just use the first for now
-                            if (!rdi->isLast()) {
-                                std::string addr_str = rdi->getCurrent().toText();
-                                dlog("[XX] first address found: " + addr_str);
-                                // now we have one address, simply
-                                // resend that exact same query
-                                // to that address and yield, when it
-                                // returns, loop again.
-                                
-                                // should use NSAS
-                                zone_servers_.push_back(addr_t(addr_str, 53));
-                                found_ns_address = true;
-                            }
-                        }
-                    }
-                    if (found_ns_address) {
-                        // next resolver round
-                        buffer_->clear();
-                        send();
-                    } else {
-                        dlog("[XX] no ready-made addresses in additional. need nsas.");
-                        // this will result in answering with the delegation. oh well
-                        copyAnswerMessage(incoming, answer_message_);
-                        done = true;
-                    }
-                }
+                done = handleRecursiveAnswer(incoming);
             } else {
                 copyAnswerMessage(incoming, answer_message_);
                 done = true;
