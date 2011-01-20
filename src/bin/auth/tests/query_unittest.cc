@@ -26,6 +26,7 @@
 #include <gtest/gtest.h>
 
 using namespace isc::dns;
+using namespace isc::dns::rdata;
 using namespace isc::datasrc;
 using namespace isc::auth;
 
@@ -62,44 +63,48 @@ public:
         origin_(Name("example.com")),
         has_SOA_(has_SOA),
         has_apex_NS_(has_apex_NS),
+        rrclass_(RRClass::IN()),
+        rrttl_(RRTTL(3600)),
+        // delegation.example.com. NS glue.ns.example.com.
+        //                         NS noglue.ns.example.com.
+        //                         NS cname.example.com.
+        //                         NS example.org.
         delegation_rrset(RRsetPtr(new RRset(Name("delegation.example.com"),
-                                            RRClass::IN(), RRType::NS(),
-                                            RRTTL(3600)))),
-        cname_rrset(RRsetPtr(new RRset(Name("cname.example.com"),
-                                       RRClass::IN(), RRType::CNAME(),
-                                       RRTTL(3600)))),
-        auth_ns_rrset(RRsetPtr(new RRset(Name("example.com"),
-                                         RRClass::IN(), RRType::NS(),
-                                         RRTTL(3600)))),
-        mx_cname_rrset_(new RRset(Name("cnamemailer.example.com"),
-            RRClass::IN(), RRType::CNAME(), RRTTL(3600))),
-        mx_rrset_(new RRset(Name("mx.example.com"), RRClass::IN(),
-            RRType::MX(), RRTTL(3600)))
+                                            rrclass_, RRType::NS(), rrttl_))),
+        // cname.example.com. CNAME www.example.com.
+        cname_rrset(RRsetPtr(new RRset(Name("cname.example.com"), rrclass_,
+                                       RRType::CNAME(), rrttl_))),
+        // example.com. NS glue.ns.example.com.
+        //              NS noglue.ns.example.com.
+        //              NS example.net.
+        auth_ns_rrset(RRsetPtr(new RRset(Name("example.com"), rrclass_,
+                                         RRType::NS(), rrttl_))),
+        // cnamemailer.example.com. CNAME host.example.com.
+        mx_cname_rrset_(new RRset(Name("cnamemailer.example.com"), rrclass_,
+                                  RRType::CNAME(), rrttl_)),
+        // mx.example.com. MX 10 www.example.com.
+        //                 MX 20 mailer.example.com.
+        //                 MX 30 mx.delegation.example.com.
+        mx_rrset_(new RRset(Name("mx.example.com"), rrclass_, RRType::MX(),
+                            rrttl_)),
+        // host.example.com. A 192.0.2.1
+        a_rrset_(new RRset(Name("host.example.com"), rrclass_, RRType::A(),
+                           rrttl_))
     {
-        delegation_rrset->addRdata(rdata::generic::NS(
-                          Name("glue.ns.example.com")));
-        delegation_rrset->addRdata(rdata::generic::NS(
-                          Name("noglue.example.com")));
-        delegation_rrset->addRdata(rdata::generic::NS(
-                          Name("cname.example.com")));
-        delegation_rrset->addRdata(rdata::generic::NS(
-                          Name("example.org")));
-        cname_rrset->addRdata(rdata::generic::CNAME(
-                          Name("www.example.com")));
-        auth_ns_rrset->addRdata(rdata::generic::NS(
-                          Name("glue.ns.example.com")));
-        auth_ns_rrset->addRdata(rdata::generic::NS(
-                          Name("noglue.example.com")));
-        auth_ns_rrset->addRdata(rdata::generic::NS(
-                          Name("example.net")));
-        mx_rrset_->addRdata(isc::dns::rdata::generic::MX(10,
-            Name("www.example.com")));
-        mx_rrset_->addRdata(isc::dns::rdata::generic::MX(20,
-            Name("mailer.example.org")));
-        mx_rrset_->addRdata(isc::dns::rdata::generic::MX(30,
-            Name("mx.delegation.example.com")));
-        mx_cname_rrset_->addRdata(rdata::generic::CNAME(
-            Name("mx.example.com")));
+        delegation_rrset->addRdata(generic::NS(Name("glue.ns.example.com")));
+        delegation_rrset->addRdata(generic::NS(Name("noglue.example.com")));
+        delegation_rrset->addRdata(generic::NS(Name("cname.example.com")));
+        delegation_rrset->addRdata(generic::NS(Name("example.org")));
+        cname_rrset->addRdata(generic::CNAME(Name("www.example.com")));
+        auth_ns_rrset->addRdata(generic::NS(Name("glue.ns.example.com")));
+        auth_ns_rrset->addRdata(generic::NS(Name("noglue.example.com")));
+        auth_ns_rrset->addRdata(generic::NS(Name("example.net")));
+        mx_rrset_->addRdata(generic::MX(10, Name("www.example.com")));
+        mx_rrset_->addRdata(generic::MX(20, Name("mailer.example.org")));
+        mx_rrset_->addRdata(generic::MX(30,
+                                        Name("mx.delegation.example.com")));
+        mx_cname_rrset_->addRdata(generic::CNAME(Name("host.example.com")));
+        a_rrset_->addRdata(in::A("192.0.2.1"));
     }
     virtual const isc::dns::Name& getOrigin() const;
     virtual const isc::dns::RRClass& getClass() const;
@@ -112,11 +117,14 @@ private:
     Name origin_;
     bool has_SOA_;
     bool has_apex_NS_;
+    const RRClass rrclass_;
+    const RRTTL rrttl_;
     RRsetPtr delegation_rrset;
     RRsetPtr cname_rrset;
     RRsetPtr auth_ns_rrset;
     RRsetPtr mx_cname_rrset_;
     RRsetPtr mx_rrset_;
+    RRsetPtr a_rrset_;
 };
 
 const Name&
