@@ -18,6 +18,7 @@
 #define __STATISTICS_H 1
 
 #include <cc/session.h>
+#include <stdint.h>
 
 class AuthCountersImpl;
 

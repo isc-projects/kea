@@ -1,3 +1,74 @@
+  153.	[bug]		jelte
+	b10-cfgmgr: Fixed a bug where configuration updates sometimes
+	lost previous settings in the configuration manager.
+	(Trac #427, git 2df894155657754151e0860e2ca9cdbed7317c70)
+
+  152.	[func]*		jinmei
+	b10-auth: Added new configuration variable "statistics-interval"
+	to allow the user to change the timer interval for periodic
+	statistics updates.  The update can also be disabled by setting
+	the value to 0.  Disabling statistics updates will also work as
+	a temporary workaround of a known issue that b10-auth can block in
+	sending statistics and stop responding to queries as a result.
+	(Trac #513, git 285c5ee)
+
+  151.  [bug]		smann
+	lib/log/dummylog.h: 
+	lib/log/dummylog.cc: Modify dlog so that it takes an optional 2nd
+        argument of type bool (true or false). This flag, if set, will cause
+        the message to be printed whether or not -v is chosen.
+        (trac #432, git 880220478c3e8702d56d761b1e0b21b77d08ee5a)
+
+  150.  [bug]		jelte
+	b10-cfgmgr: No longer save the configuration on exit. Configuration
+	is already saved if it is changed successfully, so writing it on
+	exit (and hence, when nothing has changed too) is unnecessary and
+	may even cause problems.
+	(Trac #435, git fd7baa38c08d54d5b5f84930c1684c436d2776dc)
+
+  149.  [bug]		jelte
+	bindctl: Check if the user session has disappeared (either by a
+	timeout or by a server restart), and reauthenticate if so. This
+	fixes the 'cmdctl not running' problem.
+        (trac #431, git b929be82fec5f92e115d8985552f84b4fdd385b9)
+
+  148.	[func]		jelte
+	bindctl: Command results are now pretty-printed (i.e. printed in
+	a more readable form). Empty results are no longer printed at all
+	(used to print '{}'), and the message
+	'send the command to cmd-ctrl' has also been removed.
+	(git 3954c628c13ec90722a2d8816f52a380e0065bae)
+
+  147.	[bug]		jinmei
+	python/isc/config: Fixed a bug that importing custom configuration
+	(in b10-config.db) of a remote module didn't work.
+	(Trac #478, git ea4a481)
+
+  146.	[func]		jelte
+	Command arguments were not validated internally against their
+	specifications. This change fixes that (on the C++ side, Python
+	side depends on an as yet planned addition). Note: this is only
+	an added internal check, the cli already checks format.
+	(Trac #473, git 5474eba181cb2fdd80e2b2200e072cd0a13a4e52)
+
+  145.	[func]*		jinmei
+	b10-auth: added a new command 'loadzone' for (re)loading a
+	specific zone.  The command syntax is generic but it is currently
+	only feasible for class IN in memory data source.  To reload a
+	zone "example.com" via bindctl, execute the command as follows:
+	> Auth loadzone origin = example.com
+	(Trac #467)
+
+  144.	[build]		jinmei
+	Introduced a workaround for clang++ build on FreeBSD (and probably
+	some other OSes).  If building BIND 10 fails with clang++ due to
+	a link error about "__dso_handle", try again from the configure
+	script with CXX_LIBTOOL_LDFLAGS=-L/usr/lib (the path actually
+	doesn't matter; the important part is the -L flag).  This
+	workaround is not automatically enabled as it's difficult to
+	detect the need for it dynamically, and must be enabled via the
+	variable by hand. (Trac #474, git cfde436)
+
   143.	[build]		jinmei
 	Fixed build problems with clang++ in unit tests due to recent
 	changes.  No behavior change. (Trac #448, svn r4133)
@@ -62,21 +133,21 @@
 	(Trac #202, svn r3967)
 
   135.  [func]      each
-	Add b10-recurse. This is an example recursive server that
+	Add b10-resolver. This is an example recursive server that
 	currently does forwarding only and no caching.
 	(Trac #327, svn r3903)
 
   134.  [func]      vorner
-	b10-recurse supports timeouts and retries in forwarder mode.
+	b10-resolver supports timeouts and retries in forwarder mode.
 	(Trac #401, svn r3660)
 
   133.  [func]      vorner
 	New temporary logging function available in isc::log. It is used by
-	b10-recurse.
+	b10-resolver.
 	(Trac #393, r3602)
 
   132.  [func]      vorner
-	The b10-recurse is configured through config manager.
+	The b10-resolver is configured through config manager.
 	It has "listen_on" and "forward_addresses" options.
 	(Trac #389, r3448)
 
@@ -139,7 +210,7 @@ bind10-devel-20101201 released on December 01, 2010
   122.  [func]		stephen
 	src/bin/bind10: Added configuration options to Boss to determine
 	whether to start the authoritative server, recursive server (or
-	both). A dummy recursor has been provided for test purposes.
+	both). A dummy program has been provided for test purposes.
 	(Trac #412, svn r3676)
 
   121.  [func]		jinmei
@@ -200,7 +271,7 @@ bind10-devel-20101201 released on December 01, 2010
 
   112.	[func]		zhang likun
 	Add one mixin class to override the naive serve_forever() provided
-	in python library socketserver. Instead of polling for shutdwon
+	in python library socketserver. Instead of polling for shutdown
 	every poll_interval seconds, one socketpair is used to wake up
 	the waiting server. (Trac #352, svn r3366)
 
@@ -781,8 +852,12 @@ bind10-devel-20100421 released on April 21, 2010
 bind10-devel-20100319 released on March 19, 2010
 
 For complete code revision history, see http://bind10.isc.org/browser
-Specific subversion changesets can be accessed at:
-	http://bind10.isc.org/changeset/rrrr
+Specific git changesets can be accessed at:
+	http://bind10.isc.org/changeset/?reponame=&old=rrrr^&new=rrrr
+or after cloning the original git repository by executing:
+	% git diff rrrr^ rrrr
+Subversion changesets are not accessible any more.  The subversion
+revision numbers will be replaced with corresponding git revisions.
 Trac tickets can be accessed at: https://bind10.isc.org/ticket/nnn
 
 LEGEND

@@ -137,7 +137,7 @@ TEST_F(CCSessionTest, parseCommand) {
 
     cmd = parseCommand(arg, el("{ \"command\": [ \"my_command\" ] }"));
     EXPECT_EQ("my_command", cmd);
-    EXPECT_TRUE(isNull(arg));
+    EXPECT_EQ(*arg, *Element::createMap());
 
     cmd = parseCommand(arg, el("{ \"command\": [ \"my_command\", 1 ] }"));
     EXPECT_EQ("my_command", cmd);
@@ -193,8 +193,8 @@ ConstElementPtr my_command_handler(const std::string& command,
     if (command == "good_command") {
         return (createAnswer());
     } else if (command == "command_with_arg") {
-        if (arg) {
-            if (arg->getType() == Element::integer) {
+        if (arg->contains("number")) {
+            if (arg->get("number")->getType() == Element::integer) {
                 return (createAnswer(0, el("2")));
             } else {
                 return (createAnswer(1, "arg bad type"));
@@ -235,10 +235,10 @@ TEST_F(CCSessionTest, checkCommand) {
     // client will ask for config
     session.getMessages()->add(createAnswer(0, el("{}")));
 
-    EXPECT_FALSE(session.haveSubscription("Spec2", "*"));
-    ModuleCCSession mccs(ccspecfile("spec2.spec"), session, my_config_handler,
+    EXPECT_FALSE(session.haveSubscription("Spec29", "*"));
+    ModuleCCSession mccs(ccspecfile("spec29.spec"), session, my_config_handler,
                          my_command_handler);
-    EXPECT_TRUE(session.haveSubscription("Spec2", "*"));
+    EXPECT_TRUE(session.haveSubscription("Spec29", "*"));
 
     EXPECT_EQ(2, session.getMsgQueue()->size());
     ConstElementPtr msg;
@@ -252,19 +252,19 @@ TEST_F(CCSessionTest, checkCommand) {
     EXPECT_EQ(0, result);
 
     // not a command, should be ignored
-    session.addMessage(el("1"), "Spec2", "*");
+    session.addMessage(el("1"), "Spec29", "*");
     result = mccs.checkCommand();
     EXPECT_EQ(0, result);
-
-    session.addMessage(el("{ \"command\": [ \"good_command\" ] }"), "Spec2",
+    session.addMessage(el("{ \"command\": [ \"good_command\" ] }"), "Spec29",
                        "*");
+
     result = mccs.checkCommand();
     EXPECT_EQ(1, session.getMsgQueue()->size());
     msg = session.getFirstMessage(group, to);
     EXPECT_EQ("{ \"result\": [ 0 ] }", msg->str());
     EXPECT_EQ(0, result);
 
-    session.addMessage(el("{ \"command\": \"bad_command\" }"), "Spec2", "*");
+    session.addMessage(el("{ \"command\": \"bad_command\" }"), "Spec29", "*");
     result = mccs.checkCommand();
     EXPECT_EQ(1, session.getMsgQueue()->size());
     msg = session.getFirstMessage(group, to);
@@ -272,53 +272,69 @@ TEST_F(CCSessionTest, checkCommand) {
     EXPECT_EQ(0, result);
 
     session.addMessage(el("{ \"command\": [ \"bad_command\" ] }"),
-                       "Spec2", "*");
+                       "Spec29", "*");
     result = mccs.checkCommand();
     EXPECT_EQ(1, session.getMsgQueue()->size());
     msg = session.getFirstMessage(group, to);
     EXPECT_EQ("{ \"result\": [ 1, \"bad command\" ] }", msg->str());
     EXPECT_EQ(0, result);
 
-    session.addMessage(el("{ \"command\": [ \"command_with_arg\", 1 ] }"),
-                       "Spec2", "*");
+    session.addMessage(el("{ \"command\": [ \"command_with_arg\", {\"number\": 1} ] }"),
+                       "Spec29", "*");
     result = mccs.checkCommand();
     EXPECT_EQ(1, session.getMsgQueue()->size());
     msg = session.getFirstMessage(group, to);
     EXPECT_EQ("{ \"result\": [ 0, 2 ] }", msg->str());
     EXPECT_EQ(0, result);
 
-    session.addMessage(el("{ \"command\": [ \"command_with_arg\" ] }"), "Spec2", "*");
+    session.addMessage(el("{ \"command\": [ \"command_with_arg\" ] }"), "Spec29", "*");
     result = mccs.checkCommand();
     EXPECT_EQ(1, session.getMsgQueue()->size());
     msg = session.getFirstMessage(group, to);
     EXPECT_EQ("{ \"result\": [ 1, \"arg missing\" ] }", msg->str());
     EXPECT_EQ(0, result);
 
-    session.addMessage(el("{ \"command\": [ \"command_with_arg\", \"asdf\" ] }"), "Spec2", "*");
+    session.addMessage(el("{ \"command\": [ \"command_with_arg\", \"asdf\" ] }"), "Spec29", "*");
     result = mccs.checkCommand();
     EXPECT_EQ(1, session.getMsgQueue()->size());
     msg = session.getFirstMessage(group, to);
-    EXPECT_EQ("{ \"result\": [ 1, \"arg bad type\" ] }", msg->str());
+    EXPECT_EQ("{ \"result\": [ 3, \"Error in command validation: args for command command_with_arg is not a map\" ] }", msg->str());
     EXPECT_EQ(0, result);
 
     mccs.setCommandHandler(NULL);
-    session.addMessage(el("{ \"command\": [ \"whatever\" ] }"), "Spec2", "*");
+    session.addMessage(el("{ \"command\": [ \"whatever\" ] }"), "Spec29", "*");
     result = mccs.checkCommand();
     EXPECT_EQ(1, session.getMsgQueue()->size());
     msg = session.getFirstMessage(group, to);
     EXPECT_EQ("{ \"result\": [ 1, \"Command given but no command handler for module\" ] }", msg->str());
     EXPECT_EQ(0, result);
+}
+
+// A heuristic workaround for clang++: It doesn't seem to compile the whole
+// test, probably due to its length.  Dividing the tests into two separate
+// test cases seems to work.
+TEST_F(CCSessionTest, checkCommand2) {
+    session.getMessages()->add(createAnswer(0, el("{}")));
+    EXPECT_FALSE(session.haveSubscription("Spec29", "*"));
+    ModuleCCSession mccs(ccspecfile("spec29.spec"), session, my_config_handler,
+                         my_command_handler);
+    EXPECT_TRUE(session.haveSubscription("Spec29", "*"));
+    ConstElementPtr msg;
+    std::string group, to;
+    // checked above, drop em
+    msg = session.getFirstMessage(group, to);
+    msg = session.getFirstMessage(group, to);
 
     EXPECT_EQ(1, mccs.getValue("item1")->intValue());
-    session.addMessage(el("{ \"command\": [ \"config_update\", { \"item1\": 2 } ] }"), "Spec2", "*");
-    result = mccs.checkCommand();
+    session.addMessage(el("{ \"command\": [ \"config_update\", { \"item1\": 2 } ] }"), "Spec29", "*");
+    int result = mccs.checkCommand();
     EXPECT_EQ(1, session.getMsgQueue()->size());
     msg = session.getFirstMessage(group, to);
     EXPECT_EQ("{ \"result\": [ 0 ] }", msg->str());
     EXPECT_EQ(0, result);
     EXPECT_EQ(2, mccs.getValue("item1")->intValue());
 
-    session.addMessage(el("{ \"command\": [ \"config_update\", { \"item1\": \"asdf\" } ] }"), "Spec2", "*");
+    session.addMessage(el("{ \"command\": [ \"config_update\", { \"item1\": \"asdf\" } ] }"), "Spec29", "*");
     result = mccs.checkCommand();
     EXPECT_EQ(1, session.getMsgQueue()->size());
     msg = session.getFirstMessage(group, to);
@@ -326,7 +342,7 @@ TEST_F(CCSessionTest, checkCommand) {
     EXPECT_EQ(0, result);
     EXPECT_EQ(2, mccs.getValue("item1")->intValue());
 
-    session.addMessage(el("{ \"command\": [ \"config_update\", { \"item1\": 5 } ] }"), "Spec2", "*");
+    session.addMessage(el("{ \"command\": [ \"config_update\", { \"item1\": 5 } ] }"), "Spec29", "*");
     result = mccs.checkCommand();
     EXPECT_EQ(1, session.getMsgQueue()->size());
     msg = session.getFirstMessage(group, to);
@@ -387,9 +403,9 @@ TEST_F(CCSessionTest, ignoreRemoteConfigCommands) {
     // client will ask for config
     session.getMessages()->add(createAnswer(0, el("{  }")));
 
-    EXPECT_FALSE(session.haveSubscription("Spec2", "*"));
-    ModuleCCSession mccs(ccspecfile("spec2.spec"), session, my_config_handler, my_command_handler);
-    EXPECT_TRUE(session.haveSubscription("Spec2", "*"));
+    EXPECT_FALSE(session.haveSubscription("Spec29", "*"));
+    ModuleCCSession mccs(ccspecfile("spec29.spec"), session, my_config_handler, my_command_handler);
+    EXPECT_TRUE(session.haveSubscription("Spec29", "*"));
 
     EXPECT_EQ(2, session.getMsgQueue()->size());
     ConstElementPtr msg;
@@ -404,7 +420,7 @@ TEST_F(CCSessionTest, ignoreRemoteConfigCommands) {
     msg = session.getFirstMessage(group, to);
 
     // Check if commands for the module are handled
-    session.addMessage(el("{ \"command\": [ \"good_command\" ] }"), "Spec2", "*");
+    session.addMessage(el("{ \"command\": [ \"good_command\" ] }"), "Spec29", "*");
     int result = mccs.checkCommand();
     EXPECT_EQ(1, session.getMsgQueue()->size());
     msg = session.getFirstMessage(group, to);

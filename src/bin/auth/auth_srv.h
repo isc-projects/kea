@@ -87,6 +87,14 @@ public:
     ~AuthSrv();
     //@}
 
+    /// Stop the server.
+    ///
+    /// It stops the internal event loop of the server and subsequently
+    /// returns the control to the top level context.
+    ///
+    /// This method should never throw an exception.
+    void stop();
+
     /// \brief Process an incoming DNS message, then signal 'server' to resume 
     ///
     /// A DNS query (or other message) has been received by a \c DNSServer
@@ -185,11 +193,8 @@ public:
     /// control commands and configuration updates.
     void setConfigSession(isc::config::ModuleCCSession* config_session);
 
-    /// \brief Assign an ASIO IO Service queue to this Recursor object
-    void setIOService(asiolink::IOService& ios) { io_service_ = &ios; }
-
     /// \brief Return this object's ASIO IO Service queue
-    asiolink::IOService& getIOService() const { return (*io_service_); }
+    asiolink::IOService& getIOService();
 
     /// \brief Return pointer to the DNS Lookup callback function
     asiolink::DNSLookup* getDNSLookupProvider() const { return (dns_lookup_); }
@@ -265,8 +270,7 @@ public:
     /// \param rrclass The RR class of the requested in-memory data source.
     /// \return A pointer to the in-memory data source, if configured;
     /// otherwise NULL.
-    ConstMemoryDataSrcPtr
-    getMemoryDataSrc(const isc::dns::RRClass& rrclass) const;
+    MemoryDataSrcPtr getMemoryDataSrc(const isc::dns::RRClass& rrclass);
 
     /// Sets or replaces the in-memory data source of the specified RR class.
     ///
@@ -304,6 +308,28 @@ public:
     /// is shutdown.
     void setStatisticsSession(isc::cc::AbstractSession* statistics_session);
 
+    /// Return the interval of periodic submission of statistics in seconds.
+    ///
+    /// If the statistics submission is disabled, it returns 0.
+    ///
+    /// This method never throws an exception.
+    uint32_t getStatisticsTimerInterval() const;
+
+    /// Set the interval of periodic submission of statistics.
+    ///
+    /// If the specified value is non 0, the \c AuthSrv object will submit
+    /// its statistics to the statistics module every \c interval seconds.
+    /// If it's 0, and \c AuthSrv currently submits statistics, the submission
+    /// will be disabled.
+    ///
+    /// This method should normally not throw an exception; however, its
+    /// underlying library routines may involve resource allocation, and
+    /// when it fails it would result in a corresponding standard exception.
+    ///
+    /// \param interval The submission interval in seconds if non 0;
+    /// or a value of 0 to disable the submission.
+    void setStatisticsTimerInterval(uint32_t interval);
+
     /// \brief Submit statistics counters to statistics module.
     ///
     /// This function can throw an exception from
@@ -330,7 +356,6 @@ public:
 
 private:
     AuthSrvImpl* impl_;
-    asiolink::IOService* io_service_;
     asiolink::SimpleCallback* checkin_;
     asiolink::DNSLookup* dns_lookup_;
     asiolink::DNSAnswer* dns_answer_;

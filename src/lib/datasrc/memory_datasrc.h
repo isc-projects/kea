@@ -15,6 +15,8 @@
 #ifndef __MEMORY_DATA_SOURCE_H
 #define __MEMORY_DATA_SOURCE_H 1
 
+#include <string>
+
 #include <datasrc/zonetable.h>
 
 namespace isc {
@@ -98,6 +100,20 @@ public:
         { }
     };
 
+    /// Return the master file name of the zone
+    ///
+    /// This method returns the name of the zone's master file to be loaded.
+    /// The returned string will be an empty unless the zone has successfully
+    /// loaded a zone.
+    ///
+    /// This method should normally not throw an exception.  But the creation
+    /// of the return string may involve a resource allocation, and if it
+    /// fails, the corresponding standard exception will be thrown.
+    ///
+    /// \return The name of the zone file loaded in the zone, or an empty
+    /// string if the zone hasn't loaded any file.
+    const std::string getFileName() const;
+
     /// \brief Load zone from masterfile.
     ///
     /// This loads data from masterfile specified by filename. It replaces
@@ -122,6 +138,15 @@ public:
     ///     This will probably be needed when a better implementation of
     ///     configuration reloading is written.
     void load(const std::string& filename);
+
+    /// Exchanges the content of \c this zone with that of the given \c zone.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \param zone Another \c MemoryZone object which is to be swapped with
+    /// \c this zone.
+    void swap(MemoryZone& zone);
+
 private:
     /// \name Hidden private data
     //@{
@@ -158,10 +183,6 @@ private:
 /// The findZone() method takes a domain name and returns the best matching \c
 /// MemoryZone in the form of (Boost) shared pointer, so that it can provide
 /// the general interface for all data sources.
-///
-/// Currently, \c FindResult::zone is immutable for safety.
-/// In future versions we may want to make it changeable.  For example,
-/// we may want to allow configuration update on an existing zone.
 class MemoryDataSrc {
 public:
     /// \brief A helper structure to represent the search result of
@@ -180,11 +201,11 @@ public:
     /// See the description of \c find() for the semantics of the member
     /// variables.
     struct FindResult {
-        FindResult(result::Result param_code, const ConstZonePtr param_zone) :
+        FindResult(result::Result param_code, const ZonePtr param_zone) :
             code(param_code), zone(param_zone)
         {}
         const result::Result code;
-        const ConstZonePtr zone;
+        const ZonePtr zone;
     };
 
     ///

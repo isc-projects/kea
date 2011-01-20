@@ -260,7 +260,7 @@ convertAddr(const string& address) {
         isc_throw(IOError, "Invalid IP address '" << &address << "': "
             << err.message());
     }
-    return addr;
+    return (addr);
 }
 
 }
@@ -386,6 +386,11 @@ public:
     void setupTimer(const IntervalTimer::Callback& cbfunc,
                     const uint32_t interval);
     void callback(const asio::error_code& error);
+    void cancel() {
+        timer_.cancel();
+        interval_ = 0;
+    }
+    uint32_t getInterval() const { return (interval_); }
 private:
     // a function to update timer_ when it expires
     void updateTimer();
@@ -398,7 +403,7 @@ private:
 };
 
 IntervalTimerImpl::IntervalTimerImpl(IOService& io_service) :
-    timer_(io_service.get_io_service())
+    interval_(0), timer_(io_service.get_io_service())
 {}
 
 IntervalTimerImpl::~IntervalTimerImpl()
@@ -427,6 +432,10 @@ IntervalTimerImpl::setupTimer(const IntervalTimer::Callback& cbfunc,
 
 void
 IntervalTimerImpl::updateTimer() {
+    if (interval_ == 0) {
+        // timer has been canceled.  Do nothing.
+        return;
+    }
     try {
         // Update expire time to (current time + interval_).
         timer_.expires_from_now(boost::posix_time::seconds(interval_));
@@ -459,6 +468,16 @@ IntervalTimer::~IntervalTimer() {
 void
 IntervalTimer::setupTimer(const Callback& cbfunc, const uint32_t interval) {
     return (impl_->setupTimer(cbfunc, interval));
+}
+
+void
+IntervalTimer::cancel() {
+    impl_->cancel();
+}
+
+uint32_t
+IntervalTimer::getInterval() const {
+    return (impl_->getInterval());
 }
 
 }
