@@ -162,7 +162,7 @@ class SendNonblock(unittest.TestCase):
         out (in blocking call, wrong) or closes it (correct).
         """
         self.terminate_check(lambda: self.infinite_sender(
-            lambda msgq, socket: msgq.sendmsg(socket, {}, {"message":"x"})))
+            lambda msgq, socket: msgq.sendmsg(socket, {}, {"message" : "x"})))
 
     def test_infinite_sendprepared(self):
         """
@@ -172,7 +172,7 @@ class SendNonblock(unittest.TestCase):
         self.terminate_check(lambda: self.infinite_sender(
             lambda msgq, socket: msgq.send_prepared_msg(socket, b"data")))
 
-    def test_send_works(self):
+    def send_many(self, data, count = 1000):
         """
         Tries that sending a command many times and getting an answer works.
         """
@@ -186,17 +186,35 @@ class SendNonblock(unittest.TestCase):
         msgq.listen_socket = DummySocket
         (queue, out) = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
         def run():
+            length = len(data)
             queue_pid = os.fork()
             if queue_pid == 0:
                 msgq.register_socket(queue)
                 msgq.run()
             else:
-                msg = msgq.preparemsg({"type":"getlname"},{})
-                for i in range(1, 1000):
+                msg = msgq.preparemsg({"type" : "ping"}, {"data" : data})
+                for i in range(1, count):
                     out.send(msg)
-                    out.recv(1024)
+                    amount = 0
+                    while amount < length:
+                        amount += len(out.recv(1024 + length - amount))
                 os.kill(queue_pid, signal.SIGTERM)
         self.terminate_check(run)
+
+    def test_small_sends(self):
+        """
+        Tests sending small data many times.
+        """
+        self.send_many("")
+
+    def test_large_sends(self):
+        """
+        Tests sending large data many times.
+        """
+        data = "data"
+        for i in range(1, 20):
+            data = data + data
+        self.send_many(data, 10)
 
 if __name__ == '__main__':
     unittest.main()
