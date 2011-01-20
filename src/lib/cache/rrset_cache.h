@@ -85,6 +85,7 @@ private:
 };
 
 typedef boost::shared_ptr<RRsetCache> RRsetCachePtr;
+typedef boost::shared_ptr<const RRsetCache> ConstRRsetCachePtr;
 
 } // namespace cache
 } // namespace isc
