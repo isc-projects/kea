@@ -111,8 +111,6 @@ class TestSubscriptionManager(unittest.TestCase):
         msgq = MsgQ("/does/not/exist")
         self.assertRaises(socket.error, msgq.setup)
 
-class TestPassed(Exception): pass
-
 class SendNonblock(unittest.TestCase):
     """
     Tests that the whole thing will not get blocked if someone does not read.
@@ -154,7 +152,7 @@ class SendNonblock(unittest.TestCase):
         try:
             while True:
                 sender(msgq, write)
-        except (socket.error, TestPassed):
+        except socket.error:
             pass
 
     def test_infinite_sendmsg(self):
@@ -193,6 +191,10 @@ class SendNonblock(unittest.TestCase):
                 msgq.register_socket(queue)
                 msgq.run()
             else:
+                def killall(signum, frame):
+                    os.kill(queue_pid, signal.SIGTERM)
+                    sys.exit(1)
+                signal.signal(signal.SIGALRM, killall)
                 msg = msgq.preparemsg({"type" : "ping"}, {"data" : data})
                 now = time.clock()
                 while time.clock() - now < 0.2:
@@ -207,7 +209,7 @@ class SendNonblock(unittest.TestCase):
         """
         Tests sending small data many times.
         """
-        self.send_many("")
+        self.send_many("data")
 
     def test_large_sends(self):
         """
