@@ -599,7 +599,7 @@ RBTree<T,S>::find(const isc::dns::Name& name, const RBNode<T>** node,
 {
     const RBNode<T>* up_node;
     RBNode<T>* target_node;
-    const typename RBTree<T>::Result ret =
+    const typename RBTree<T,S>::Result ret =
         findHelper(name, &up_node, &target_node, callback, callback_arg);
     if (ret != NOTFOUND) {
         *node = target_node;
@@ -619,7 +619,7 @@ RBTree<T,returnEmptyNode>::findHelper(const isc::dns::Name& target_name,
     using namespace helper;
 
     RBNode<T>* node = root_;
-    typename RBTree<T>::Result ret = NOTFOUND;
+    typename RBTree<T,returnEmptyNode>::Result ret = NOTFOUND;
     *up_node = NULLNODE;
     isc::dns::Name name = target_name;
 
@@ -643,7 +643,7 @@ RBTree<T,returnEmptyNode>::findHelper(const isc::dns::Name& target_name,
                     node->left_ : node->right_;
             } else if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
                 if (returnEmptyNode || !node->isEmpty()) {
-                    ret = RBTree<T>::PARTIALMATCH;
+                    ret = RBTree<T,returnEmptyNode>::PARTIALMATCH;
                     *target = node;
                     if (callback != NULL && node->callback_required_) {
                         if ((callback)(*node, callback_arg)) {
