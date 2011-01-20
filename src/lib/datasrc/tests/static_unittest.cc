@@ -53,9 +53,10 @@ protected:
         // (defined as PACKAGE_STRING in config.h)
         version_data.push_back(PACKAGE_STRING);
 
-        // XXX: in addition, the order the following items matter.
+        // NOTE: in addition, the order of the following items matter.
         authors_data.push_back("Chen Zhengzhang");
         authors_data.push_back("Evan Hunt");
+        authors_data.push_back("Haidong Wang");
         authors_data.push_back("Han Feng");
         authors_data.push_back("Jelte Jansen");
         authors_data.push_back("Jeremy C. Reed"); 
@@ -68,6 +69,7 @@ protected:
         authors_data.push_back("Shane Kerr");
         authors_data.push_back("Shen Tingting");
         authors_data.push_back("Stephen Morris");
+        authors_data.push_back("Yoshitaka Aharen");
         authors_data.push_back("Zhang Likun");
 
         version_ns_data.push_back("version.bind.");
