@@ -19,6 +19,7 @@
 
 #include <dns/name.h>
 #include <dns/rrclass.h>
+#include <dns/rrsetlist.h>
 #include <dns/masterload.h>
 
 #include <datasrc/memory_datasrc.h>
@@ -185,6 +186,7 @@ struct MemoryZone::MemoryZoneImpl {
         return (false);
     }
 
+
     // Implementation of MemoryZone::find
     FindResult find(const Name& name, RRType type,
                     const FindOptions options) const
@@ -222,6 +224,16 @@ struct MemoryZone::MemoryZoneImpl {
             }
         }
 
+        // handle type any query
+        const bool is_any_query = (type == RRType::ANY());
+        if (is_any_query){
+            if (node->getData()->empty()) {
+                return (FindResult(NXRRSET, ConstRRsetPtr()));
+            } else {
+                return (FindResult(SUCCESS, ConstRRsetPtr()));
+            }
+        }
+
         found = node->getData()->find(type);
         if (found != node->getData()->end()) {
             // Good, it is here
@@ -234,6 +246,26 @@ struct MemoryZone::MemoryZoneImpl {
              */
             return (FindResult(NXRRSET, ConstRRsetPtr()));
         }
+    }
+
+    // Implementation of MemoryZone::findAny
+    FindResult findAny(const Name& name, RRsetList& target) const
+    {
+        FindResult result(find(name, RRType::ANY(), FIND_DEFAULT));
+        if (result.code == SUCCESS) {
+            DomainNode* node(NULL);
+            FindState state(FIND_DEFAULT);
+            domains_.find(name, &node, zonecutCallback, &state);
+            assert(!node->getData()->empty());
+
+            Domain::const_iterator it;
+            for (it = node->getData()->begin();
+                 it != node->getData()->end(); it++)
+            {
+                target.addRRset(boost::const_pointer_cast<RRset>(it->second));
+            }
+        }
+        return (result);
     }
 };
 
@@ -261,6 +293,12 @@ MemoryZone::find(const Name& name, const RRType& type,
                  const FindOptions options) const
 {
     return (impl_->find(name, type, options));
+}
+
+Zone::FindResult
+MemoryZone::findAny(const Name& name, RRsetList& target) const
+{
+    return (impl_->findAny(name, target));
 }
 
 result::Result

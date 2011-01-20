@@ -22,6 +22,7 @@
 namespace isc {
 namespace dns {
 class Name;
+class RRsetList;
 };
 
 namespace datasrc {
@@ -61,11 +62,28 @@ public:
     ///
     /// See documentation in \c Zone.
     ///
-    /// It returns NULL pointer in case of NXDOMAIN and NXRRSET
+    /// It returns NULL pointer in case of NXDOMAIN and NXRRSET,
+    /// and also SUCCESS for TYPE_ANY query.
     /// (the base class documentation does not seem to require that).
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type,
                             const FindOptions options = FIND_DEFAULT) const;
+
+    /// \brief Iterate over RRs with the same owner name in the zone.
+    ///
+    /// It gets all RRsets under the domain name.
+    ///
+    /// It throws DuplicateRRset exception if there are duplicate rrsets under
+    /// the same domain. This method involve internal resource allocation,
+    /// especially for constructing the FindResult, and may throw an exception
+    /// if it fails. It should not throw other types of exceptions.
+    ///
+    /// \param name The domain name to be searched for.
+    /// \param target  Insert RRs under the domain name into it.
+    /// \return A \c FindResult object enclosing the search result, it returns
+    /// NULL in case of NXDOMAIN, NXRRSET and SUCCESS.
+    FindResult findAny(const isc::dns::Name& name,
+                       isc::dns::RRsetList& target) const;
 
     /// \brief Inserts an rrset into the zone.
     ///
