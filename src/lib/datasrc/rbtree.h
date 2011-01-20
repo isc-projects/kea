@@ -649,7 +649,7 @@ RBTree<T,S>::find(const isc::dns::Name& name, const RBNode<T>** node,
 {
     NodeChain node_path;
     RBNode<T>* target_node = NULLNODE;
-    const typename RBTree<T,S>::Result ret =
+    const Result ret =
         findEx(name, node_path, &target_node, callback, callback_arg);
     if (ret != NOTFOUND) {
         *node = target_node;
@@ -669,7 +669,7 @@ RBTree<T,returnEmptyNode>::findEx(const isc::dns::Name& target_name,
     using namespace helper;
 
     RBNode<T>* node = root_;
-    typename RBTree<T,returnEmptyNode>::Result ret = NOTFOUND;
+    Result ret = NOTFOUND;
     isc::dns::Name name = target_name;
 
     while (node != NULLNODE) {
@@ -692,7 +692,7 @@ RBTree<T,returnEmptyNode>::findEx(const isc::dns::Name& target_name,
                     node->left_ : node->right_;
             } else if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
                 if (returnEmptyNode || !node->isEmpty()) {
-                    ret = RBTree<T,returnEmptyNode>::PARTIALMATCH;
+                    ret = PARTIALMATCH;
                     *target = node;
                     if (callback != NULL && node->callback_required_) {
                         if ((callback)(*node, callback_arg)) {
@@ -722,7 +722,7 @@ RBTree<T,S>::findEx(const isc::dns::Name& target_name,
                                       CBARG callback_arg) const
 {
     RBNode<T> *node = NULLNODE;
-    const typename RBTree<T,S>::Result ret =
+    const Result ret =
         findEx(target_name, node_path, &node, callback, callback_arg);
     if (ret != NOTFOUND) {
         *target = node;
