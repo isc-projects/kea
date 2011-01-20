@@ -266,7 +266,11 @@ class ZonemgrRefresh:
         """Send command between modules."""
         msg = create_command(command_name, params)
         try:
-            self._cc.group_sendmsg(msg, module_name)
+            seq = self._cc.group_sendmsg(msg, module_name)
+            try:
+                answer, env = self._cc.group_recvmsg(False, seq)
+            except isc.cc.session.SessionTimeout:
+                pass        # for now we just ignore the failure
         except socket.error:
             sys.stderr.write("[b10-zonemgr] Failed to send to module %s, the session has been closed." % module_name)
 
