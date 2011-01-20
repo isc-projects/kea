@@ -293,6 +293,9 @@ class MsgQ:
             self.process_command_unsubscribe(sock, routing, data)
         elif cmd == 'getlname':
             self.process_command_getlname(sock, routing, data)
+        elif cmd == 'ping':
+            # Command for testing purposes
+            self.process_command_ping(sock, routing, data)
         else:
             sys.stderr.write("[b10-msgq] Invalid command: %s\n" % cmd)
 
@@ -322,6 +325,9 @@ class MsgQ:
         time."""
         self.connection_counter += 1
         return "%x_%x@%s" % (time.time(), self.connection_counter, self.hostname)
+
+    def process_command_ping(self, sock, routing, data):
+        self.sendmsg(sock, { "type" : "pong" }, data)
 
     def process_command_getlname(self, sock, routing, data):
         lname = [ k for k, v in self.lnames.items() if v == sock ][0]
