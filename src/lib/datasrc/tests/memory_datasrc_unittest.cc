@@ -16,6 +16,7 @@
 
 #include <dns/name.h>
 #include <dns/rrclass.h>
+#include <dns/rrsetlist.h>
 #include <dns/rrttl.h>
 #include <dns/masterload.h>
 
@@ -229,6 +230,41 @@ public:
                 }
             });
     }
+
+    /**
+     * \brief Test one TYPE_ANY find query to the zone.
+     *
+     * Asks a query to the zone and checks it does not throw and returns
+     * expected results. It returns nothing, it just signals failures
+     * to GTEST.
+     *
+     * \param name The name to ask for.
+     * \param result The expected code of the result.
+     * \param check_answer Should a check against equality of the answer be
+     *     done?
+     * \param answer The expected rrset, if any should be returned.
+     * \param zone Check different MemoryZone object than zone_ (if NULL,
+     *     uses zone_)
+     */
+    void findAnyTest(const Name& name, Zone::Result result,
+                     RRsetList& target, bool check_answer = true,
+                     const ConstRRsetPtr& answer = ConstRRsetPtr(),
+                     MemoryZone *zone = NULL)
+    {
+        if (!zone) {
+            zone = &zone_;
+        }
+        // The whole block is inside, because we need to check the result and
+        // we can't assign to FindResult
+        EXPECT_NO_THROW({
+                Zone::FindResult find_result(zone->findAny(name, target));
+                // Check it returns correct answers
+                EXPECT_EQ(result, find_result.code);
+                if (check_answer) {
+                    EXPECT_EQ(answer, find_result.rrset);
+                }
+            });
+    }
 };
 
 /**
@@ -290,6 +326,62 @@ TEST_F(MemoryZoneTest, delegationNS) {
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_grandchild_ns_)));
     findTest(Name("www.grand.child.example.org"), RRType::A(),
              Zone::DELEGATION, true, rr_child_ns_); // note: !rr_grandchild_ns_
+}
+
+TEST_F(MemoryZoneTest, any) {
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_a_)));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_ns_)));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_child_ns_)));
+
+    findTest(Name("example.org"), RRType::ANY(), Zone::SUCCESS,
+             true, ConstRRsetPtr());
+    findTest(Name("child.example.org"), RRType::ANY(), Zone::DELEGATION,
+             true, rr_child_ns_);
+    findTest(Name("example.com"), RRType::ANY(), Zone::NXDOMAIN,
+             true, ConstRRsetPtr());
+}
+
+TEST_F(MemoryZoneTest, findAny) {
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_a_)));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_ns_)));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_child_glue_)));
+
+    // origin
+    RRsetList origin_rrsets;
+    findAnyTest(origin_, Zone::SUCCESS, origin_rrsets,
+                true, ConstRRsetPtr());
+    EXPECT_EQ(2, origin_rrsets.size());
+    EXPECT_EQ(rr_a_, origin_rrsets.findRRset(RRType::A(), RRClass::IN()));
+    EXPECT_EQ(rr_ns_, origin_rrsets.findRRset(RRType::NS(), RRClass::IN()));
+
+    // out zone name
+    RRsetList out_rrsets;
+    findAnyTest(Name("example.com"), Zone::NXDOMAIN, out_rrsets,
+                true, ConstRRsetPtr());
+    EXPECT_EQ(0, out_rrsets.size());
+
+    RRsetList glue_child_rrsets;
+    findAnyTest(child_glue_name_, Zone::SUCCESS, glue_child_rrsets,
+                true, ConstRRsetPtr());
+    EXPECT_EQ(1, glue_child_rrsets.size());
+
+    // TODO: test NXRRSET case after rbtree non-terminal logic has
+    // been implemented
+
+    // add zone cut
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_child_ns_)));
+
+    // zone cut
+    RRsetList child_rrsets;
+    findAnyTest(child_ns_name_, Zone::DELEGATION, child_rrsets,
+                true, rr_child_ns_);
+    EXPECT_EQ(0, child_rrsets.size());
+
+    // glue for this zone cut
+    RRsetList new_glue_child_rrsets;
+    findAnyTest(child_glue_name_, Zone::DELEGATION, new_glue_child_rrsets,
+                true, rr_child_ns_);
+    EXPECT_EQ(0, new_glue_child_rrsets.size());
 }
 
 TEST_F(MemoryZoneTest, glue) {
@@ -459,4 +551,5 @@ TEST_F(MemoryZoneTest, getFileName) {
     EXPECT_EQ(TEST_DATA_DIR "/root.zone", zone_.getFileName());
     EXPECT_TRUE(rootzone.getFileName().empty());
 }
+
 }
