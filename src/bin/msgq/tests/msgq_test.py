@@ -194,7 +194,7 @@ class SendNonblock(unittest.TestCase):
             else:
                 msg = msgq.preparemsg({"type" : "ping"}, {"data" : data})
                 for i in range(1, count):
-                    out.send(msg)
+                    out.sendall(msg)
                     amount = 0
                     while amount < length:
                         amount += len(out.recv(1024 + length - amount))
