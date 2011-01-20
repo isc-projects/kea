@@ -108,6 +108,8 @@ public:
     }
     virtual const isc::dns::Name& getOrigin() const;
     virtual const isc::dns::RRClass& getClass() const;
+    void setSOAFlag(bool on) { has_SOA_ = on; }
+    void setApexNSFlag(bool on) { has_apex_NS_ = on; }
 
     FindResult find(const isc::dns::Name& name,
                     const isc::dns::RRType& type,
@@ -197,7 +199,10 @@ protected:
         query(memory_datasrc, qname, qtype, response)
     {
         response.setRcode(Rcode::NOERROR());
+        mock_zone = new MockZone();
+        memory_datasrc.addZone(ZonePtr(mock_zone));
     }
+    MockZone* mock_zone;
     MemoryDataSrc memory_datasrc;
     const Name qname;
     const RRClass qclass;
@@ -209,13 +214,14 @@ protected:
 TEST_F(QueryTest, noZone) {
     // There's no zone in the memory datasource.  So the response should have
     // REFUSED.
-    EXPECT_NO_THROW(query.process());
+    MemoryDataSrc empty_memory_datasrc;
+    Query nozone_query(empty_memory_datasrc, qname, qtype, response);
+    EXPECT_NO_THROW(nozone_query.process());
     EXPECT_EQ(Rcode::REFUSED(), response.getRcode());
 }
 
 TEST_F(QueryTest, exactMatch) {
     // add a matching zone.
-    memory_datasrc.addZone(ZonePtr(new MockZone()));
     EXPECT_NO_THROW(query.process());
     // find match rrset
     EXPECT_TRUE(response.getHeaderFlag(Message::HEADERFLAG_AA));
@@ -240,7 +246,6 @@ TEST_F(QueryTest, exactMatch) {
 TEST_F(QueryTest, exactAddrMatch) {
     // find match rrset, omit additional data which has already been provided
     // in the answer section from the additional.
-    memory_datasrc.addZone(ZonePtr(new MockZone()));
     const Name noglue_name(Name("noglue.example.com"));
     Query noglue_query(memory_datasrc, noglue_name, qtype, response);
     EXPECT_NO_THROW(noglue_query.process());
@@ -266,7 +271,6 @@ TEST_F(QueryTest, exactAddrMatch) {
 TEST_F(QueryTest, apexNSMatch) {
     // find match rrset, omit authority data which has already been provided
     // in the answer section from the authority section.
-    memory_datasrc.addZone(ZonePtr(new MockZone()));
     const Name apex_name(Name("example.com"));
     Query apex_ns_query(memory_datasrc, apex_name, RRType::NS(), response);
     EXPECT_NO_THROW(apex_ns_query.process());
@@ -292,7 +296,6 @@ TEST_F(QueryTest, apexNSMatch) {
 TEST_F(QueryTest, exactAnyMatch) {
     // find match rrset, omit additional data which has already been provided
     // in the answer section from the additional.
-    memory_datasrc.addZone(ZonePtr(new MockZone()));
     const Name noglue_name(Name("noglue.example.com"));
     Query noglue_query(memory_datasrc, noglue_name, RRType::ANY(), response);
     EXPECT_NO_THROW(noglue_query.process());
@@ -319,8 +322,9 @@ TEST_F(QueryTest, exactAnyMatch) {
 // authoritative answer, and there is no apex NS records. It should
 // throw in that case.
 TEST_F(QueryTest, noApexNS) {
-    // Add a zone without apex NS records
-    memory_datasrc.addZone(ZonePtr(new MockZone(true, false)));
+    // Disable apex NS record
+    mock_zone->setApexNSFlag(false);
+    
     const Name noglue_name(Name("noglue.example.com"));
     Query noglue_query(memory_datasrc, noglue_name, qtype, response);
     EXPECT_THROW(noglue_query.process(), Query::NoApexNS);
@@ -328,8 +332,6 @@ TEST_F(QueryTest, noApexNS) {
 }
 
 TEST_F(QueryTest, delegation) {
-    // add a matching zone.
-    memory_datasrc.addZone(ZonePtr(new MockZone()));
     const Name delegation_name(Name("delegation.example.com"));
     Query delegation_query(memory_datasrc, delegation_name, qtype, response);
     EXPECT_NO_THROW(delegation_query.process());
@@ -360,8 +362,6 @@ TEST_F(QueryTest, delegation) {
 }
 
 TEST_F(QueryTest, nxdomain) {
-    // add a matching zone.
-    memory_datasrc.addZone(ZonePtr(new MockZone()));
     const Name nxdomain_name(Name("nxdomain.example.com"));
     Query nxdomain_query(memory_datasrc, nxdomain_name, qtype, response);
     EXPECT_NO_THROW(nxdomain_query.process());
@@ -373,8 +373,6 @@ TEST_F(QueryTest, nxdomain) {
 }
 
 TEST_F(QueryTest, nxrrset) {
-    // add a matching zone.
-    memory_datasrc.addZone(ZonePtr(new MockZone()));
     const Name nxrrset_name(Name("nxrrset.example.com"));
     Query nxrrset_query(memory_datasrc, nxrrset_name, qtype, response);
     EXPECT_NO_THROW(nxrrset_query.process());
@@ -390,7 +388,8 @@ TEST_F(QueryTest, nxrrset) {
  * throw in that case.
  */
 TEST_F(QueryTest, noSOA) {
-    memory_datasrc.addZone(ZonePtr(new MockZone(false)));
+    // disable zone's SOA RR.
+    mock_zone->setSOAFlag(false);
 
     // The NX Domain
     const Name nxdomain_name(Name("nxdomain.example.com"));
@@ -407,7 +406,6 @@ TEST_F(QueryTest, noSOA) {
 TEST_F(QueryTest, noMatchZone) {
     // there's a zone in the memory datasource but it doesn't match the qname.
     // should result in REFUSED.
-    memory_datasrc.addZone(ZonePtr(new MockZone()));
     const Name nomatch_name(Name("example.org"));
     Query nomatch_query(memory_datasrc, nomatch_name, qtype, response);
     nomatch_query.process();
@@ -421,7 +419,6 @@ TEST_F(QueryTest, noMatchZone) {
  * A record, other to unknown out of zone one.
  */
 TEST_F(QueryTest, MX) {
-    memory_datasrc.addZone(ZonePtr(new MockZone()));
     Name qname("mx.example.com");
     Query mx_query(memory_datasrc, qname, RRType::MX(), response);
     EXPECT_NO_THROW(mx_query.process());
@@ -482,7 +479,6 @@ TEST_F(QueryTest, MX) {
  * This should not trigger the additional processing.
  */
 TEST_F(QueryTest, MXAlias) {
-    memory_datasrc.addZone(ZonePtr(new MockZone()));
     Name qname("cnamemailer.example.com");
     Query mx_query(memory_datasrc, qname, RRType::MX(), response);
     EXPECT_NO_THROW(mx_query.process());
@@ -492,5 +488,4 @@ TEST_F(QueryTest, MXAlias) {
     EXPECT_TRUE(response.beginSection(Message::SECTION_ADDITIONAL) ==
         response.endSection(Message::SECTION_ADDITIONAL));
 }
-
 }
