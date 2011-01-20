@@ -34,6 +34,7 @@
 using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::datasrc;
+using namespace asiolink;
 
 namespace {
 class AuthConfigTest : public ::testing::Test {
@@ -319,5 +320,50 @@ TEST_F(MemoryDatasrcConfigTest, badDatasrcType) {
     EXPECT_THROW(parser->build(Element::fromJSON("[{\"type\": \"memory\"},"
                                                  " {\"type\": \"memory\"}]")),
                  AuthConfigError);
+}
+
+class StatisticsIntervalConfigTest : public AuthConfigTest {
+protected:
+    StatisticsIntervalConfigTest() :
+        parser(createAuthConfigParser(server, "statistics-interval"))
+    {}
+    ~StatisticsIntervalConfigTest() {
+        delete parser;
+    }
+    AuthConfigParser* parser;
+};
+
+TEST_F(StatisticsIntervalConfigTest, setInterval) {
+    // initially the timer is not configured.
+    EXPECT_EQ(0, server.getStatisticsTimerInterval());
+
+    // initialize the timer
+    parser->build(Element::fromJSON("5"));
+    parser->commit();
+    EXPECT_EQ(5, server.getStatisticsTimerInterval());
+
+    // reset the timer with a new interval
+    delete parser;
+    parser = createAuthConfigParser(server, "statistics-interval");
+    ASSERT_NE(static_cast<void*>(NULL), parser);
+    parser->build(Element::fromJSON("10"));
+    parser->commit();
+    EXPECT_EQ(10, server.getStatisticsTimerInterval());
+
+    // disable the timer again
+    delete parser;
+    parser = createAuthConfigParser(server, "statistics-interval");
+    ASSERT_NE(static_cast<void*>(NULL), parser);
+    parser->build(Element::fromJSON("0"));
+    parser->commit();
+    EXPECT_EQ(0, server.getStatisticsTimerInterval());
+}
+
+TEST_F(StatisticsIntervalConfigTest, badInterval) {
+    EXPECT_THROW(parser->build(Element::fromJSON("\"should be integer\"")),
+                 isc::data::TypeError);
+    EXPECT_THROW(parser->build(Element::fromJSON("2.5")),
+                 isc::data::TypeError);
+    EXPECT_THROW(parser->build(Element::fromJSON("-1")), AuthConfigError);
 }
 }

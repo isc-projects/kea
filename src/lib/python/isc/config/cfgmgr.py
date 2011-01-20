@@ -26,6 +26,7 @@ import os
 import copy
 import tempfile
 import json
+import errno
 from isc.cc import data
 from isc.config import ccsession, config_data
 
@@ -87,7 +88,12 @@ class ConfigManagerData:
             else:
                 raise ConfigManagerDataReadError("No version information in configuration file " + config.db_filename)
         except IOError as ioe:
-            raise ConfigManagerDataEmpty("No configuration file found")
+            # if IOError is 'no such file or directory', then continue
+            # (raise empty), otherwise fail (raise error)
+            if ioe.errno == errno.ENOENT:
+                raise ConfigManagerDataEmpty("No configuration file found")
+            else:
+                raise ConfigManagerDataReadError("Can't read configuration file: " + str(ioe))
         except ValueError:
             raise ConfigManagerDataReadError("Configuration file out of date or corrupt, please update or remove " + config.db_filename)
         finally:
@@ -270,16 +276,15 @@ class ConfigManager:
         else:
             return ccsession.create_answer(0, self.config.data)
 
-    def _handle_set_config_module(self, cmd):
+    def _handle_set_config_module(self, module_name, cmd):
         # the answer comes (or does not come) from the relevant module
         # so we need a variable to see if we got it
         answer = None
         # todo: use api (and check the data against the definition?)
         old_data = copy.deepcopy(self.config.data)
-        module_name = cmd[0]
         conf_part = data.find_no_exc(self.config.data, module_name)
         if conf_part:
-            data.merge(conf_part, cmd[1])
+            data.merge(conf_part, cmd)
             update_cmd = ccsession.create_command(ccsession.COMMAND_CONFIG_UPDATE,
                                                   conf_part)
             seq = self.cc.group_sendmsg(update_cmd, module_name)
@@ -289,7 +294,7 @@ class ConfigManager:
                 answer = ccsession.create_answer(1, "Timeout waiting for answer from " + module_name)
         else:
             conf_part = data.set(self.config.data, module_name, {})
-            data.merge(conf_part[module_name], cmd[1])
+            data.merge(conf_part[module_name], cmd)
             # send out changed info
             update_cmd = ccsession.create_command(ccsession.COMMAND_CONFIG_UPDATE,
                                                   conf_part[module_name])
@@ -309,29 +314,21 @@ class ConfigManager:
 
     def _handle_set_config_all(self, cmd):
         old_data = copy.deepcopy(self.config.data)
-        data.merge(self.config.data, cmd[0])
-        # send out changed info
         got_error = False
         err_list = []
-        for module in self.config.data:
-            if module != "version" and \
-               (module not in old_data or self.config.data[module] != old_data[module]):
-                update_cmd = ccsession.create_command(ccsession.COMMAND_CONFIG_UPDATE,
-                                                      self.config.data[module])
-                seq = self.cc.group_sendmsg(update_cmd, module)
-                try:
-                    answer, env = self.cc.group_recvmsg(False, seq)
-                    if answer == None:
-                        got_error = True
-                        err_list.append("No answer message from " + module)
-                    else:
-                        rcode, val = ccsession.parse_answer(answer)
-                        if rcode != 0:
-                            got_error = True
-                            err_list.append(val)
-                except isc.cc.SessionTimeout:
+        # The format of the command is a dict with module->newconfig
+        # sets, so we simply call set_config_module for each of those
+        for module in cmd:
+            if module != "version":
+                answer = self._handle_set_config_module(module, cmd[module])
+                if answer == None:
                     got_error = True
-                    err_list.append("CC Timeout waiting on answer message from " + module)
+                    err_list.append("No answer message from " + module)
+                else:
+                    rcode, val = ccsession.parse_answer(answer)
+                    if rcode != 0:
+                        got_error = True
+                        err_list.append(val)
         if not got_error:
             self.write_config()
             return ccsession.create_answer(0)
@@ -343,12 +340,13 @@ class ConfigManager:
     def _handle_set_config(self, cmd):
         """Private function that handles the 'set_config' command"""
         answer = None
+
         if cmd == None:
             return ccsession.create_answer(1, "Wrong number of arguments")
         if len(cmd) == 2:
-            answer = self._handle_set_config_module(cmd)
+            answer = self._handle_set_config_module(cmd[0], cmd[1])
         elif len(cmd) == 1:
-            answer = self._handle_set_config_all(cmd)
+            answer = self._handle_set_config_all(cmd[0])
         else:
             answer = ccsession.create_answer(1, "Wrong number of arguments")
         if not answer:

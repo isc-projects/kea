@@ -61,8 +61,6 @@ def main():
     except ConfigManagerDataReadError as cmdre:
         print("[b10-cfgmgr] " + str(cmdre))
         return 2
-    if cm:
-        return cm.write_config()
     return 0
 
 if __name__ == "__main__":

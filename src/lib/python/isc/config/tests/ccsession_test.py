@@ -530,7 +530,19 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertTrue("Spec2" in fake_session.subscriptions)
         mccs = None
         self.assertFalse("Spec2" in fake_session.subscriptions)
-        
+
+    def test_remote_module_with_custom_config(self):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        # override the default config value for "item1".  add_remote_config()
+        # should incorporate the overridden value, and we should be abel to
+        # get it via get_remote_config_value().
+        fake_session.group_sendmsg({'result': [0, {"item1": 10}]}, 'Spec2')
+        rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
+        value, default = mccs.get_remote_config_value(rmodname, "item1")
+        self.assertEqual(10, value)
+        self.assertEqual(False, default)
+
     def test_ignore_command_remote_module(self):
         # Create a Spec1 module and subscribe to remote config for Spec2
         fake_session = FakeModuleCCSession()
