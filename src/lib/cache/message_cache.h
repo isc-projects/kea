@@ -20,6 +20,7 @@
 #include <map>
 #include <string>
 #include <boost/shared_ptr.hpp>
+#include <boost/noncopyable.hpp>
 #include <dns/message.h>
 #include "message_entry.h"
 #include <nsas/hash_table.h>
@@ -34,7 +35,7 @@ class RRsetCache;
 /// The object of MessageCache represents the cache for class-specific 
 /// messages.
 ///
-class MessageCache {
+class MessageCache: public boost::noncopyable {
 public:
     /// \param cache_size The size of message cache.
     MessageCache(boost::shared_ptr<RRsetCache> rrset_cache_,

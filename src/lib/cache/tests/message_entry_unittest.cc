@@ -43,12 +43,12 @@ public:
     {}
 
     /// \brief Wrap the protected function so that it can be tested.   
-    void parseRRsetForTest(const Message& msg,
+    void parseSectionForTest(const Message& msg,
                            const Message::Section& section,
                            uint32_t& smaller_ttl, 
                            uint16_t& rrset_count)
     {
-        parseRRset(msg, section, smaller_ttl, rrset_count);
+        parseSection(msg, section, smaller_ttl, rrset_count);
     }
 
     RRsetTrustLevel getRRsetTrustLevelForTest(const Message& message,
@@ -56,6 +56,14 @@ public:
                                               const Message::Section& section) 
     {
         return getRRsetTrustLevel(message, rrset, section);
+    }
+
+    bool getRRsetEntriesForTest(vector<RRsetEntryPtr> vec, time_t now) {
+        return getRRsetEntries(vec, now);
+    }
+
+    time_t getExpireTime() {
+        return expire_time_;
     }
 
 };
@@ -82,17 +90,17 @@ TEST_F(MessageEntryTest, testParseRRset) {
     DerivedMessageEntry message_entry(message_parse, rrset_cache_);
     uint32_t ttl = MAX_UINT32;
     uint16_t rrset_count = 0;
-    message_entry.parseRRsetForTest(message_parse, Message::SECTION_ANSWER, ttl, rrset_count);
+    message_entry.parseSectionForTest(message_parse, Message::SECTION_ANSWER, ttl, rrset_count);
     EXPECT_EQ(ttl, 21600);
     EXPECT_EQ(rrset_count, 1);
 
     ttl = MAX_UINT32;
-    message_entry.parseRRsetForTest(message_parse, Message::SECTION_AUTHORITY, ttl, rrset_count);
+    message_entry.parseSectionForTest(message_parse, Message::SECTION_AUTHORITY, ttl, rrset_count);
     EXPECT_EQ(ttl, 21600);
     EXPECT_EQ(rrset_count, 1);
 
     ttl = MAX_UINT32;
-    message_entry.parseRRsetForTest(message_parse, Message::SECTION_ADDITIONAL, ttl, rrset_count);
+    message_entry.parseSectionForTest(message_parse, Message::SECTION_ADDITIONAL, ttl, rrset_count);
     EXPECT_EQ(ttl, 10800);
     EXPECT_EQ(rrset_count, 5);
 }
@@ -181,10 +189,60 @@ TEST_F(MessageEntryTest, testGetRRsetTrustLevel_DNAME) {
     EXPECT_EQ(level, RRSET_TRUST_ANSWER_NONAA);
 }
 
+// We only test the expire_time of the message entry.
+// The test for genMessage() will make sure whether InitMessageEntry()
+// is right
 TEST_F(MessageEntryTest, testInitMessageEntry) {
     messageFromFile(message_parse, "message_fromWire3");
     DerivedMessageEntry message_entry(message_parse, rrset_cache_);
+    time_t expire_time = message_entry.getExpireTime();
+    // 1 second should be enough to do the compare
+    EXPECT_TRUE((time(NULL) + 10801) > expire_time);
 }
 
+TEST_F(MessageEntryTest, testGetRRsetEntries) {
+    messageFromFile(message_parse, "message_fromWire3");
+    DerivedMessageEntry message_entry(message_parse, rrset_cache_);
+    vector<RRsetEntryPtr> vec;
+    
+    // the time is bigger than the smallest expire time of 
+    // the rrset in message.
+    time_t expire_time = time(NULL) + 10802;
+    EXPECT_FALSE(message_entry.getRRsetEntriesForTest(vec, expire_time));
+}
+
+static int
+section_rrset_count(Message& msg, Message::Section section) {
+    int count = 0;
+    for (RRsetIterator rrset_iter = msg.beginSection(section);
+         rrset_iter != msg.endSection(section); 
+         ++rrset_iter) {
+        ++count;
+    }
+
+    return count;
+}
+
+TEST_F(MessageEntryTest, testGenMessage) {
+    messageFromFile(message_parse, "message_fromWire3");
+    DerivedMessageEntry message_entry(message_parse, rrset_cache_);
+    time_t expire_time = message_entry.getExpireTime();
+    
+    Message msg(Message::RENDER);
+    EXPECT_FALSE(message_entry.genMessage(expire_time + 2, msg));
+    message_entry.genMessage(time(NULL), msg);
+    // Check whether the generated message is same with cached one.
+    
+    EXPECT_TRUE(msg.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_FALSE(msg.getHeaderFlag(Message::HEADERFLAG_TC));
+    EXPECT_EQ(1, section_rrset_count(msg, Message::SECTION_ANSWER)); 
+    EXPECT_EQ(1, section_rrset_count(msg, Message::SECTION_AUTHORITY)); 
+    EXPECT_EQ(5, section_rrset_count(msg, Message::SECTION_ADDITIONAL)); 
+
+    // Check the rrset in answer section.
+    EXPECT_EQ(1, msg.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(5, msg.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(7, msg.getRRCount(Message::SECTION_ADDITIONAL));
+}
 
 }   // namespace
