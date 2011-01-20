@@ -1,3 +1,11 @@
+  154.	[bug]		jinmei
+	b10-xfrin/b10-zonemgr: Fixed a bug where these programs didn't
+	receive command responses from CC sessions.  Eventually the
+	receive buffer became full, and many other components that rely
+	on CC channels would stall (as noted in #420 and #513).  This is
+	an urgent care fix due to the severity of the problem; we'll need
+	to revisit it for cleaner fix later. (Trac #516, git 62c72fc)
+
   153.	[bug]		jelte
 	b10-cfgmgr: Fixed a bug where configuration updates sometimes
 	lost previous settings in the configuration manager.
