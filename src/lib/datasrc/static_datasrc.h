@@ -76,9 +76,9 @@ public:
                             isc::dns::Name& target,
                             const isc::dns::Name* zonename) const;
 
-   Result findCoveringNSEC3(const isc::dns::Name& zonename,
-                            std::string& hash,
-                            isc::dns::RRsetList& target) const;
+    Result findCoveringNSEC3(const isc::dns::Name& zonename,
+                             std::string& hash,
+                             isc::dns::RRsetList& target) const;
 
     Result init();
     Result init(isc::data::ConstElementPtr config);
