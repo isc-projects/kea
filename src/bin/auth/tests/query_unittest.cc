@@ -12,8 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <vector>
+
 #include <dns/message.h>
 #include <dns/name.h>
+#include <dns/opcode.h>
 #include <dns/rcode.h>
 #include <dns/rrttl.h>
 #include <dns/rrtype.h>
@@ -23,36 +26,18 @@
 
 #include <auth/query.h>
 
+#include <testutils/srv_test.h>
+
 #include <gtest/gtest.h>
 
+using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::datasrc;
 using namespace isc::auth;
+using namespace isc::testutils;
 
 namespace {
-
-RRsetPtr a_rrset = RRsetPtr(new RRset(Name("www.example.com"),
-                                      RRClass::IN(), RRType::A(),
-                                      RRTTL(3600)));
-RRsetPtr soa_rrset = RRsetPtr(new RRset(Name("example.com"),
-                                        RRClass::IN(), RRType::SOA(),
-                                        RRTTL(3600)));
-RRsetPtr ns_rrset(RRsetPtr(new RRset(Name("ns.example.com"),
-                                     RRClass::IN(), RRType::NS(),
-                                     RRTTL(3600))));
-RRsetPtr glue_a_rrset(RRsetPtr(new RRset(Name("glue.ns.example.com"),
-                                         RRClass::IN(), RRType::A(),
-                                         RRTTL(3600))));
-RRsetPtr glue_aaaa_rrset(RRsetPtr(new RRset(Name("glue.ns.example.com"),
-                                            RRClass::IN(), RRType::AAAA(),
-                                            RRTTL(3600))));
-RRsetPtr noglue_a_rrset(RRsetPtr(new RRset(Name("noglue.example.com"),
-                                           RRClass::IN(), RRType::A(),
-                                           RRTTL(3600))));
-RRsetPtr delegated_mx_a_rrset(RRsetPtr(new RRset(
-    Name("mx.delegation.example.com"), RRClass::IN(), RRType::A(),
-    RRTTL(3600))));
 
 // This is a mock Zone class for testing.
 // It is a derived class of Zone, and simply hardcodes the results of find()
@@ -79,7 +64,7 @@ public:
         //              NS example.net.
         auth_ns_rrset(RRsetPtr(new RRset(Name("example.com"), rrclass_,
                                          RRType::NS(), rrttl_))),
-        // cnamemailer.example.com. CNAME host.example.com.
+        // cnamemailer.example.com. CNAME www.example.com.
         mx_cname_rrset_(new RRset(Name("cnamemailer.example.com"), rrclass_,
                                   RRType::CNAME(), rrttl_)),
         // mx.example.com. MX 10 www.example.com.
@@ -87,9 +72,28 @@ public:
         //                 MX 30 mx.delegation.example.com.
         mx_rrset_(new RRset(Name("mx.example.com"), rrclass_, RRType::MX(),
                             rrttl_)),
-        // host.example.com. A 192.0.2.1
-        a_rrset_(new RRset(Name("host.example.com"), rrclass_, RRType::A(),
-                           rrttl_))
+        // cnamemx.example.com. MX 10 cnamemailer.example.com.
+        cnamemx_rrset_(new RRset(Name("cnamemx.example.com"), rrclass_,
+                                 RRType::MX(), rrttl_)),
+        // www.example.com. A 192.0.2.80
+        a_rrset(new RRset(Name("www.example.com"), rrclass_, RRType::A(),
+                          rrttl_)),
+        // glue.ns.example.com. A 192.0.2.153
+        glue_a_rrset(new RRset(Name("glue.ns.example.com"), rrclass_,
+                               RRType::A(), rrttl_)),
+        // glue.ns.example.com. A 2001:db8::53
+        glue_aaaa_rrset(new RRset(Name("glue.ns.example.com"), rrclass_,
+                                  RRType::AAAA(), rrttl_)),
+
+        // The following RRsets will be used without RDATA for now.
+        soa_rrset(new RRset(Name("example.com"), rrclass_, RRType::SOA(),
+                            rrttl_)),
+        ns_rrset(new RRset(Name("ns.example.com"), rrclass_,RRType::NS(),
+                           rrttl_)),
+        noglue_a_rrset(new RRset(Name("noglue.example.com"), rrclass_,
+                                 RRType::A(), rrttl_)),
+        delegated_mx_a_rrset(new RRset(Name("mx.delegation.example.com"),
+                                       rrclass_, RRType::A(), rrttl_))
     {
         delegation_rrset->addRdata(generic::NS(Name("glue.ns.example.com")));
         delegation_rrset->addRdata(generic::NS(Name("noglue.example.com")));
@@ -103,8 +107,13 @@ public:
         mx_rrset_->addRdata(generic::MX(20, Name("mailer.example.org")));
         mx_rrset_->addRdata(generic::MX(30,
                                         Name("mx.delegation.example.com")));
-        mx_cname_rrset_->addRdata(generic::CNAME(Name("host.example.com")));
-        a_rrset_->addRdata(in::A("192.0.2.1"));
+        cnamemx_rrset_->addRdata(generic::MX(10,
+                                             Name("cnamemailer.example.com")));
+        mx_cname_rrset_->addRdata(generic::CNAME(Name("www.example.com")));
+        noglue_a_rrset->addRdata(in::A("192.0.2.53"));
+        glue_a_rrset->addRdata(in::A("192.0.2.153"));
+        glue_aaaa_rrset->addRdata(in::AAAA("2001:db8::53"));
+        a_rrset->addRdata(in::A("192.0.2.80"));
     }
     virtual const isc::dns::Name& getOrigin() const;
     virtual const isc::dns::RRClass& getClass() const;
@@ -126,7 +135,14 @@ private:
     RRsetPtr auth_ns_rrset;
     RRsetPtr mx_cname_rrset_;
     RRsetPtr mx_rrset_;
-    RRsetPtr a_rrset_;
+    RRsetPtr cnamemx_rrset_;
+    RRsetPtr a_rrset;
+    RRsetPtr glue_a_rrset;
+    RRsetPtr glue_aaaa_rrset;
+    RRsetPtr soa_rrset;
+    RRsetPtr ns_rrset;
+    RRsetPtr noglue_a_rrset;
+    RRsetPtr delegated_mx_a_rrset;
 };
 
 const Name&
@@ -186,6 +202,8 @@ MockZone::find(const Name& name, const RRType& type,
         return (FindResult(CNAME, mx_cname_rrset_));
     } else if (name == Name("mx.example.com")) {
         return (FindResult(SUCCESS, mx_rrset_));
+    } else if (name == Name("cnamemx.example.com")) {
+        return (FindResult(SUCCESS, cnamemx_rrset_));
     } else {
         return (FindResult(DNAME, RRsetPtr()));
     }
@@ -196,9 +214,11 @@ protected:
     QueryTest() :
         qname(Name("www.example.com")), qclass(RRClass::IN()),
         qtype(RRType::A()), response(Message::RENDER),
-        query(memory_datasrc, qname, qtype, response)
+        qid(response.getQid()), query_code(Opcode::QUERY().getCode())
     {
         response.setRcode(Rcode::NOERROR());
+        response.setOpcode(Opcode::QUERY());
+        // create and add a matching zone.
         mock_zone = new MockZone();
         memory_datasrc.addZone(ZonePtr(mock_zone));
     }
@@ -208,7 +228,8 @@ protected:
     const RRClass qclass;
     const RRType qtype;
     Message response;
-    Query query;
+    const qid_t qid;
+    const uint16_t query_code;
 };
 
 TEST_F(QueryTest, noZone) {
@@ -221,7 +242,7 @@ TEST_F(QueryTest, noZone) {
 }
 
 TEST_F(QueryTest, exactMatch) {
-    // add a matching zone.
+    Query query(memory_datasrc, qname, qtype, response);
     EXPECT_NO_THROW(query.process());
     // find match rrset
     EXPECT_TRUE(response.getHeaderFlag(Message::HEADERFLAG_AA));
@@ -474,18 +495,18 @@ TEST_F(QueryTest, MX) {
 }
 
 /*
- * Test when we ask for MX and encounter an alias (CNAME in this case).
+ * Test when we ask for MX whose exchange is an alias (CNAME in this case).
  *
- * This should not trigger the additional processing.
+ * This should not trigger the additional processing for the exchange.
  */
 TEST_F(QueryTest, MXAlias) {
-    Name qname("cnamemailer.example.com");
+    Name qname("cnamemx.example.com");
     Query mx_query(memory_datasrc, qname, RRType::MX(), response);
     EXPECT_NO_THROW(mx_query.process());
     EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
-    // We should not have the IP address in additional section
-    // Currently, the section should be completely empty
-    EXPECT_TRUE(response.beginSection(Message::SECTION_ADDITIONAL) ==
-        response.endSection(Message::SECTION_ADDITIONAL));
+    // there shouldn't be no additional RRs for the exchanges (we have 3
+    // RRs for the NS)
+    headerCheck(response, qid, Rcode::NOERROR(), query_code,
+                AA_FLAG, 0, 1, 3, 3);
 }
 }
