@@ -416,11 +416,11 @@ private:
     // returns false if we are not done
     bool handleRecursiveAnswer(const Message& incoming) {
         if (incoming.getRRCount(Message::SECTION_ANSWER) > 0) {
-            dlog("[XX] this looks like the final result");
+            dlog("Got final result, copying answer.");
             copyAnswerMessage(incoming, answer_message_);
             return true;
         } else {
-            dlog("[XX] this looks like a delegation");
+            dlog("Got delegation, continuing");
             // ok we need to do some more processing.
             // the ns list should contain all nameservers
             // while the additional may contain addresses for
@@ -484,10 +484,9 @@ public:
         retries_(retries),
         zone_servers_()
     {
-        dlog("[XX] Started a new RunningQuery");
+        dlog("Started a new RunningQuery");
         done = false;
 
-        dlog("[XX] zone_servers size: " + zone_servers_.size());
         // hardcoded f.root-servers.net now, should use NSAS
         if (upstream_->empty()) {
             zone_servers_.push_back(addr_t("192.5.5.241", 53));
@@ -498,15 +497,12 @@ public:
 
     // This function is used as callback from DNSQuery.
     virtual void operator()(UDPQuery::Result result) {
-        dlog("[XX] RunningQuery operator() called with result: " + result);
         // XXX is this the place for TCP retry?
         if (result != UDPQuery::TIME_OUT) {
             // we got an answer
-            std::cout << "[XX] for question: " << question_.toText() << std::endl;
             Message incoming(Message::PARSE);
             InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
             incoming.fromWire(ibuf);
-            std::cout << "[XX] received answer: " << incoming.toText() << std::endl;
 
             if (upstream_->size() == 0 &&
                 incoming.getRcode() == Rcode::NOERROR()) {
@@ -517,13 +513,12 @@ public:
             }
             
             if (done) {
-                std::cerr << "[XX] Done, returning to server" << std::endl;
                 server_->resume(result == UDPQuery::SUCCESS);
                 delete this;
             }
         } else if (retries_--) {
-            dlog("Resending query");
             // We timed out, but we have some retries, so send again
+            dlog("Timeout, resending query");
             send();
         } else {
             // out of retries, give up for now
