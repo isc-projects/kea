@@ -30,6 +30,7 @@
 
 #include <datasrc/memory_datasrc.h>
 #include <auth/auth_srv.h>
+#include <auth/common.h>
 #include <auth/statistics.h>
 
 #include <dns/tests/unittest_util.h>
@@ -639,5 +640,13 @@ TEST_F(AuthSrvTest, queryCounterUnexpected) {
     EXPECT_THROW(server.processMessage(*io_message, parse_message,
                                        response_obuffer, &dnsserv),
                  isc::Unexpected);
+}
+
+TEST_F(AuthSrvTest, stop) {
+    // normal case is covered in command_unittest.cc.  we should primarily
+    // test it here, but the current design of the stop test takes time,
+    // so we consolidate the cases in the command tests.
+    // If/when the interval timer has finer granularity we'll probably add
+    // our own tests here, so we keep this empty test case.
 }
 }

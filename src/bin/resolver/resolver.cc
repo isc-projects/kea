@@ -45,7 +45,7 @@
 
 #include <log/dummylog.h>
 
-#include <recurse/recursor.h>
+#include <resolver/resolver.h>
 
 using namespace std;
 
@@ -58,49 +58,52 @@ using namespace asiolink;
 
 typedef pair<string, uint16_t> addr_t;
 
-class RecursorImpl {
+class ResolverImpl {
 private:
     // prohibit copy
-    RecursorImpl(const RecursorImpl& source);
-    RecursorImpl& operator=(const RecursorImpl& source);
+    ResolverImpl(const ResolverImpl& source);
+    ResolverImpl& operator=(const ResolverImpl& source);
 public:
-    RecursorImpl() :
+    ResolverImpl() :
         config_session_(NULL),
         rec_query_(NULL)
     {}
 
-    ~RecursorImpl() {
+    ~ResolverImpl() {
         queryShutdown();
     }
 
     void querySetup(DNSService& dnss) {
         assert(!rec_query_); // queryShutdown must be called first
         dlog("Query setup");
-        rec_query_ = new RecursiveQuery(dnss, upstream_);
+        rec_query_ = new RecursiveQuery(dnss, upstream_, timeout_, retries_);
     }
 
     void queryShutdown() {
-        dlog("Query shutdown");
-        delete rec_query_;
-        rec_query_ = NULL;
+        // only shut down if we have actually called querySetup before
+        // (this is not a safety check, just to prevent logging of
+        // actions that are not performed
+        if (rec_query_) {
+            dlog("Query shutdown");
+            delete rec_query_;
+            rec_query_ = NULL;
+        }
     }
 
     void setForwardAddresses(const vector<addr_t>& upstream,
         DNSService *dnss)
     {
-        queryShutdown();
         upstream_ = upstream;
         if (dnss) {
             if (upstream_.empty()) {
                 dlog("Asked to do full recursive, but not implemented yet. "
-                    "I'll do nothing.");
+                    "I'll do nothing.",true);
             } else {
                 dlog("Setting forward addresses:");
                 BOOST_FOREACH(const addr_t& address, upstream) {
                     dlog(" " + address.first + ":" +
                         boost::lexical_cast<string>(address.second));
                 }
-                querySetup(*dnss);
             }
         }
     }
@@ -112,7 +115,7 @@ public:
     /// Currently non-configurable, but will be.
     static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
 
-    /// These members are public because Recursor accesses them directly.
+    /// These members are public because Resolver accesses them directly.
     ModuleCCSession* config_session_;
     /// Addresses of the forward nameserver
     vector<addr_t> upstream_;
@@ -201,10 +204,10 @@ makeErrorMessage(MessagePtr message, OutputBufferPtr buffer,
 
 // This is a derived class of \c DNSLookup, to serve as a
 // callback in the asiolink module.  It calls
-// Recursor::processMessage() on a single DNS message.
+// Resolver::processMessage() on a single DNS message.
 class MessageLookup : public DNSLookup {
 public:
-    MessageLookup(Recursor* srv) : server_(srv) {}
+    MessageLookup(Resolver* srv) : server_(srv) {}
 
     // \brief Handle the DNS Lookup
     virtual void operator()(const IOMessage& io_message, MessagePtr message,
@@ -213,7 +216,7 @@ public:
         server_->processMessage(io_message, message, buffer, server);
     }
 private:
-    Recursor* server_;
+    Resolver* server_;
 };
 
 // This is a derived class of \c DNSAnswer, to serve as a
@@ -260,6 +263,7 @@ public:
                 Message incoming(Message::PARSE);
                 InputBuffer ibuf(buffer->getData(), buffer->getLength());
                 incoming.fromWire(ibuf);
+                message->setRcode(incoming.getRcode());
                 for_each(incoming.beginSection(Message::SECTION_ANSWER),
                          incoming.endSection(Message::SECTION_ANSWER),
                          SectionInserter(message, Message::SECTION_ANSWER));
@@ -300,50 +304,48 @@ public:
 // configuration messages, and executes them if found.
 class ConfigCheck : public SimpleCallback {
 public:
-    ConfigCheck(Recursor* srv) : server_(srv) {}
+    ConfigCheck(Resolver* srv) : server_(srv) {}
     virtual void operator()(const IOMessage&) const {
         if (server_->getConfigSession()->hasQueuedMsgs()) {
             server_->getConfigSession()->checkCommand();
         }
     }
 private:
-    Recursor* server_;
+    Resolver* server_;
 };
 
-Recursor::Recursor() :
-    impl_(new RecursorImpl()),
+Resolver::Resolver() :
+    impl_(new ResolverImpl()),
     checkin_(new ConfigCheck(this)),
     dns_lookup_(new MessageLookup(this)),
     dns_answer_(new MessageAnswer)
 {}
 
-Recursor::~Recursor() {
+Resolver::~Resolver() {
     delete impl_;
     delete checkin_;
     delete dns_lookup_;
     delete dns_answer_;
-    dlog("Deleting the Recursor");
+    dlog("Deleting the Resolver",true);
 }
 
 void
-Recursor::setDNSService(asiolink::DNSService& dnss) {
-    impl_->queryShutdown();
-    impl_->querySetup(dnss);
+Resolver::setDNSService(asiolink::DNSService& dnss) {
     dnss_ = &dnss;
 }
 
 void
-Recursor::setConfigSession(ModuleCCSession* config_session) {
+Resolver::setConfigSession(ModuleCCSession* config_session) {
     impl_->config_session_ = config_session;
 }
 
 ModuleCCSession*
-Recursor::getConfigSession() const {
+Resolver::getConfigSession() const {
     return (impl_->config_session_);
 }
 
 void
-Recursor::processMessage(const IOMessage& io_message, MessagePtr message,
+Resolver::processMessage(const IOMessage& io_message, MessagePtr message,
                         OutputBufferPtr buffer, DNSServer* server)
 {
     dlog("Got a DNS message");
@@ -360,7 +362,7 @@ Recursor::processMessage(const IOMessage& io_message, MessagePtr message,
             return;
         }
     } catch (const Exception& ex) {
-        dlog(string("DNS packet exception: ") + ex.what());
+        dlog(string("DNS packet exception: ") + ex.what(),true);
         server->resume(false);
         return;
     }
@@ -422,7 +424,7 @@ Recursor::processMessage(const IOMessage& io_message, MessagePtr message,
 }
 
 void
-RecursorImpl::processNormalQuery(const Question& question, MessagePtr message,
+ResolverImpl::processNormalQuery(const Question& question, MessagePtr message,
                                  OutputBufferPtr buffer, DNSServer* server)
 {
     dlog("Processing normal query");
@@ -435,7 +437,7 @@ RecursorImpl::processNormalQuery(const Question& question, MessagePtr message,
     if (edns) {
         EDNSPtr edns_response(new EDNS());
         edns_response->setDNSSECAwareness(dnssec_ok);
-        edns_response->setUDPSize(RecursorImpl::DEFAULT_LOCAL_UDPSIZE);
+        edns_response->setUDPSize(ResolverImpl::DEFAULT_LOCAL_UDPSIZE);
         message->setEDNS(edns_response);
     }
     rec_query_->sendQuery(question, buffer, server);
@@ -482,7 +484,7 @@ parseAddresses(ConstElementPtr addresses) {
 }
 
 ConstElementPtr
-Recursor::updateConfig(ConstElementPtr config) {
+Resolver::updateConfig(ConstElementPtr config) {
     dlog("New config comes: " + config->toWire());
 
     try {
@@ -514,35 +516,45 @@ Recursor::updateConfig(ConstElementPtr config) {
         }
         // Everything OK, so commit the changes
         // listenAddresses can fail to bind, so try them first
+        bool need_query_restart = false;
+        
         if (listenAddressesE) {
             setListenAddresses(listenAddresses);
+            need_query_restart = true;
         }
         if (forwardAddressesE) {
             setForwardAddresses(forwardAddresses);
+            need_query_restart = true;
         }
         if (set_timeouts) {
             setTimeouts(timeout, retries);
+            need_query_restart = true;
+        }
+
+        if (need_query_restart) {
+            impl_->queryShutdown();
+            impl_->querySetup(*dnss_);
         }
         return (isc::config::createAnswer());
     } catch (const isc::Exception& error) {
-        dlog(string("error in config: ") + error.what());
+        dlog(string("error in config: ") + error.what(),true);
         return (isc::config::createAnswer(1, error.what()));
     }
 }
 
 void
-Recursor::setForwardAddresses(const vector<addr_t>& addresses)
+Resolver::setForwardAddresses(const vector<addr_t>& addresses)
 {
     impl_->setForwardAddresses(addresses, dnss_);
 }
 
 bool
-Recursor::isForwarding() const {
+Resolver::isForwarding() const {
     return (!impl_->upstream_.empty());
 }
 
 vector<addr_t>
-Recursor::getForwardAddresses() const {
+Resolver::getForwardAddresses() const {
     return (impl_->upstream_);
 }
 
@@ -559,7 +571,7 @@ setAddresses(DNSService *service, const vector<addr_t>& addresses) {
 }
 
 void
-Recursor::setListenAddresses(const vector<addr_t>& addresses) {
+Resolver::setListenAddresses(const vector<addr_t>& addresses) {
     try {
         dlog("Setting listen addresses:");
         BOOST_FOREACH(const addr_t& addr, addresses) {
@@ -577,13 +589,13 @@ Recursor::setListenAddresses(const vector<addr_t>& addresses) {
          * If that fails, bad luck, but we are useless anyway, so just die
          * and let boss start us again.
          */
-        dlog(string("Unable to set new address: ") + e.what());
+        dlog(string("Unable to set new address: ") + e.what(),true);
         try {
             setAddresses(dnss_, impl_->listen_);
         }
         catch (const exception& e2) {
-            dlog(string("Unable to recover from error;"));
-            dlog(string("Rollback failed with: ") + e2.what());
+            dlog(string("Unable to recover from error;"),true);
+            dlog(string("Rollback failed with: ") + e2.what(),true);
             abort();
         }
         throw e; // Let it fly a little bit further
@@ -591,20 +603,18 @@ Recursor::setListenAddresses(const vector<addr_t>& addresses) {
 }
 
 void
-Recursor::setTimeouts(int timeout, unsigned retries) {
+Resolver::setTimeouts(int timeout, unsigned retries) {
     dlog("Setting timeout to " + boost::lexical_cast<string>(timeout) +
         " and retry count to " + boost::lexical_cast<string>(retries));
     impl_->timeout_ = timeout;
     impl_->retries_ = retries;
-    impl_->queryShutdown();
-    impl_->querySetup(*dnss_);
 }
 pair<int, unsigned>
-Recursor::getTimeouts() const {
+Resolver::getTimeouts() const {
     return (pair<int, unsigned>(impl_->timeout_, impl_->retries_));
 }
 
 vector<addr_t>
-Recursor::getListenAddresses() const {
+Resolver::getListenAddresses() const {
     return (impl_->listen_);
 }

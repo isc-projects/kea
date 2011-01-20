@@ -288,6 +288,66 @@ class TestConfigManager(unittest.TestCase):
                                 },
                                 {'result': [0]})
 
+    def test_set_config_all(self):
+        my_ok_answer = { 'result': [ 0 ] }
+
+        self.assertEqual({"version": 2}, self.cm.config.data)
+
+        self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
+        self.cm._handle_set_config_all({"test": { "value1": 123 }})
+        self.assertEqual({"version": config_data.BIND10_CONFIG_DATA_VERSION,
+                          "test": { "value1": 123 }
+                         }, self.cm.config.data)
+
+        self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
+        self.cm._handle_set_config_all({"test": { "value1": 124 }})
+        self.assertEqual({"version": config_data.BIND10_CONFIG_DATA_VERSION,
+                          "test": { "value1": 124 }
+                         }, self.cm.config.data)
+
+        self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
+        self.cm._handle_set_config_all({"test": { "value2": True }})
+        self.assertEqual({"version": config_data.BIND10_CONFIG_DATA_VERSION,
+                          "test": { "value1": 124,
+                                    "value2": True
+                                  }
+                         }, self.cm.config.data)
+
+        self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
+        self.cm._handle_set_config_all({"test": { "value3": [ 1, 2, 3 ] }})
+        self.assertEqual({"version": config_data.BIND10_CONFIG_DATA_VERSION,
+                          "test": { "value1": 124,
+                                    "value2": True,
+                                    "value3": [ 1, 2, 3 ]
+                                  }
+                         }, self.cm.config.data)
+
+        self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
+        self.cm._handle_set_config_all({"test": { "value2": False }})
+        self.assertEqual({"version": config_data.BIND10_CONFIG_DATA_VERSION,
+                          "test": { "value1": 124,
+                                    "value2": False,
+                                    "value3": [ 1, 2, 3 ]
+                                  }
+                         }, self.cm.config.data)
+
+        self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
+        self.cm._handle_set_config_all({"test": { "value1": None }})
+        self.assertEqual({"version": config_data.BIND10_CONFIG_DATA_VERSION,
+                          "test": { "value2": False,
+                                    "value3": [ 1, 2, 3 ]
+                                  }
+                         }, self.cm.config.data)
+
+        self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
+        self.cm._handle_set_config_all({"test": { "value3": [ 1 ] }})
+        self.assertEqual({"version": config_data.BIND10_CONFIG_DATA_VERSION,
+                          "test": { "value2": False,
+                                    "value3": [ 1 ]
+                                  }
+                         }, self.cm.config.data)
+
+
     def test_run(self):
         self.fake_session.group_sendmsg({ "command": [ "get_commands_spec" ] }, "ConfigManager")
         self.fake_session.group_sendmsg({ "command": [ "shutdown" ] }, "ConfigManager")
