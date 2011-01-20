@@ -65,7 +65,7 @@ protected:
     }
 
     RBTree<int> rbtree;
-    RBTree<int, ReturnEmptyNodePolicy> rbtree_expose_empty_node;
+    RBTree<int, true> rbtree_expose_empty_node;
     RBNode<int>* rbtnode;
     const RBNode<int>* crbtnode;
 };
