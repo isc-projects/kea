@@ -32,10 +32,21 @@ class RRsetEntry;
 /// The object of RRsetCache represented the cache for class-specific
 /// RRsets.
 class RRsetCache{
+    ///
+    /// \name Constructors and Destructor
+    ///
+    /// Note: The copy constructor and the assignment operator are intentionally
+    /// defined as private to make it uncopyable
+    //@{
+private:
+    RRsetCache(const RRsetCache&);
+    RRsetCache& operator=(const RRsetCache&);
 public:
     /// \param cache_size the size of rrset cache.
     /// \param rrset_class the class of rrset cache.
     RRsetCache(uint32_t cache_size, uint16_t rrset_class);
+    ~RRsetCache() {}
+    //@}
 
     /// \brief Look up rrset in cache.
     /// \return return the shared_ptr of rrset entry if it can

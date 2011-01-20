@@ -87,6 +87,7 @@ public:
     isc::dns::RRsetPtr getRRset();
 
     /// \brief Get the expiration time of the RRset.
+    /// \todo RRsig expiration processing
     time_t getExpireTime() const;
 
     /// \brief Get the ttl of the RRset.
