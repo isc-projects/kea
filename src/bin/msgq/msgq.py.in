@@ -317,7 +317,7 @@ class MsgQ:
         return ret
 
     def sendmsg(self, sock, env, msg = None):
-        sock.send(self.preparemsg(env, msg))
+        self.send_prepared_msg(sock, self.preparemsg(env, msg))
 
     def send_prepared_msg(self, sock, msg):
         # Try to send the data, but only if there's nothing waiting
