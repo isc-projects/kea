@@ -5,6 +5,7 @@ import os
 import socket
 import signal
 import sys
+import time
 
 #
 # Currently only the subscription part and some sending is implemented...
@@ -172,7 +173,7 @@ class SendNonblock(unittest.TestCase):
         self.terminate_check(lambda: self.infinite_sender(
             lambda msgq, socket: msgq.send_prepared_msg(socket, b"data")))
 
-    def send_many(self, data, count = 1000):
+    def send_many(self, data):
         """
         Tries that sending a command many times and getting an answer works.
         """
@@ -193,7 +194,8 @@ class SendNonblock(unittest.TestCase):
                 msgq.run()
             else:
                 msg = msgq.preparemsg({"type" : "ping"}, {"data" : data})
-                for i in range(1, count):
+                now = time.clock()
+                while time.clock() - now < 0.2:
                     out.sendall(msg)
                     amount = 0
                     while amount < length:
@@ -214,7 +216,7 @@ class SendNonblock(unittest.TestCase):
         data = "data"
         for i in range(1, 20):
             data = data + data
-        self.send_many(data, 10)
+        self.send_many(data)
 
 if __name__ == '__main__':
     unittest.main()
