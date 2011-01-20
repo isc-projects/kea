@@ -1,3 +1,10 @@
+bind10-devel-20110120 released on January 20, 2011
+
+  155.	[doc]		jreed
+	Miscellaneous documentation improvements for man pages and
+	the guide, including auth, resolver, stats, xfrout, and
+	zonemgr.  (git c14c4741b754a1eb226d3bdc3a7abbc4c5d727c0)
+
   154.	[bug]		jinmei
 	b10-xfrin/b10-zonemgr: Fixed a bug where these programs didn't
 	receive command responses from CC sessions.  Eventually the
