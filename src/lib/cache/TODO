@@ -3,4 +3,5 @@
 * Once LRU hash table is implemented, it should be used by message/rrset cache.  
 * Once the hash/lrulist related files in /lib/nsas is moved to seperated
   folder, the code of recursor cache has to be updated.
+* Set proper AD flags once DNSSEC is supported by the cache.
 

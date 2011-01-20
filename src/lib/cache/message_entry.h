@@ -20,8 +20,8 @@
 #include <vector>
 #include <dns/message.h>
 #include <dns/rrset.h>
+#include <boost/noncopyable.hpp>
 #include <nsas/nsas_entry.h>
-#include <nsas/fetchable.h>
 #include "rrset_entry.h"
 
 
@@ -33,10 +33,23 @@ namespace cache {
 class RRsetEntry;
 class RRsetCache;
 
+/// \brief Information to refer an RRset.
+/// There is no class information here, since the rrsets
+/// are cached in the class-specific rrset cache.
+struct RRsetRef{
+    RRsetRef(const isc::dns::Name& name, const isc::dns::RRType& type):
+            name_(name), type_(type)
+    {}
+
+    isc::dns::Name name_; // Name of rrset.
+    isc::dns::RRType type_; // Type of rrset. 
+};
+
 /// \brief Message Entry
 /// The object of MessageEntry represents one response message
 /// answered to the recursor client. 
-class MessageEntry : public NsasEntry<MessageEntry>
+class MessageEntry : public NsasEntry<MessageEntry>,
+                     public boost::noncopyable
 {
 public:
 
@@ -63,7 +76,9 @@ public:
     
     /// \brief Get the hash key of the message entry.
     /// \return return hash key
-    virtual HashKey hashKey() const;
+    virtual HashKey hashKey() const {
+        return *hash_key_ptr_;
+    }
 
 protected:
     /// \brief Initialize the message entry with dns message.
@@ -79,7 +94,7 @@ protected:
     /// \param rrset_count set the rrset count of the section.
     /// (TODO for Message, getRRsetCount() should be one interface provided 
     //  by Message.)
-    void parseRRset(const isc::dns::Message& msg,
+    void parseSection(const isc::dns::Message& msg,
                     const isc::dns::Message::Section& section,
                     uint32_t& smaller_ttl,
                     uint16_t& rrset_count);
@@ -98,10 +113,36 @@ protected:
     RRsetTrustLevel getRRsetTrustLevel(const isc::dns::Message& message,
                                const isc::dns::RRsetPtr rrset,
                                const isc::dns::Message::Section& section);
+
+    /// \brief Add rrset to one section of message.
+    /// \param dnssec_need need dnssec records or not.
+    /// \param message The message to add rrsets.
+    /// \param rrset_entry_vec vector for rrset entries in
+    ///        different sections.
+    void addRRset(isc::dns::Message& message,
+                  const std::vector<RRsetEntryPtr> rrset_entry_vec,
+                  isc::dns::Message::Section section,
+                  bool dnssec_need);
+
+    /// \brief Get the all the rrset entries for the message entry.
+    /// \param rrset_entry_vec vector of rrset entries
+    /// \param time_now the time of now. Used to compare with rrset
+    ///        entry's expire time.
+    /// \return return false if any rrset entry has expired, or else,
+    ///         return false.
+    bool getRRsetEntries(std::vector<RRsetEntryPtr>& rrset_entry_vec, 
+                         const time_t time_now); 
     //@}
-private:
+protected:
+    /// \note Make the variable be protected for easy test.
     time_t expire_time_;  // Expiration time of the message.
+
+private:
     std::string entry_name_; // The name for this entry(name + type)
+    HashKey* hash_key_ptr_;  // the key for messag entry in hash table.
+
+    std::vector<RRsetRef> rrsets_;
+    boost::shared_ptr<RRsetCache> rrset_cache_;
 
     std::string query_name_; // query name of the message.
     uint16_t query_class_; // query class of the message.
@@ -112,13 +153,9 @@ private:
     uint16_t authority_count_; // rrset count in authority section.
     uint16_t additional_count_; // rrset count in addition section.
 
-    std::vector<boost::shared_ptr<RRsetEntry> > rrsets_;
-    boost::shared_ptr<RRsetCache> rrset_cache_;
-
     //TODO, there should be a better way to cache these header flags
     bool headerflag_aa_; // Whether AA bit is set.
     bool headerflag_tc_; // Whether TC bit is set.
-    bool headerflag_ad_; // Whether AD bit is set.
 };
     
 typedef boost::shared_ptr<MessageEntry> MessageEntryPtr;
