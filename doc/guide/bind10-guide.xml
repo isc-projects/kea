@@ -169,6 +169,14 @@
 
           <listitem>
             <simpara>
+              <command>b10-stats</command> &mdash;
+              Statistics collection daemon.
+              This process collects and reports statistics data.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
               <command>b10-xfrin</command> &mdash;
               Incoming zone transfer service.
               This process is used to transfer a new copy
@@ -683,6 +691,7 @@ var/
       <command>b10-cmdctl</command> for admins to communicate with the
       system, <command>b10-auth</command> for authoritative DNS service or
       <command>b10-resolver</command> for recursive name service,
+      <command>b10-stats</command> for statistics collection,
       <command>b10-xfrin</command> for inbound DNS zone transfers,
       <command>b10-xfrout</command> for outbound DNS zone transfers,
       and <command>b10-zonemgr</command> for secondary service.
@@ -1304,24 +1313,97 @@ what is XfroutClient xfr_client??
       It simply forwards the query on to another full resolver.
     </simpara></note>
 
-<!-- TODO:
+    <para>
+      The main <command>bind10</command> process can be configured
+      to select to run either the authoritative or resolver.
+      By default, it starts the authoritative service.
+<!-- TODO: later both -->
 
-By default, bind10 starts the authoritative service.
+      You may change this using <command>bindctl</command>, for example:
 
-> config set Boss/start_auth false
-> config set Boss/start_resolver true
+      <screen>
+&gt; <userinput>config set Boss/start_auth false</userinput>
+&gt; <userinput>config set Boss/start_resolver true</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
 
-config commit
-Boss shutdown
+    </para>
 
-restart Boss
+<!-- TODO: -->
+    <note><simpara>
+       In the current version, the master <command>bind10</command>
+       process must be stopped and restarted to start up the resolver.
+    </simpara></note>
 
-then next set forward_addresses as needed
+    <para>
+      Then the upstream address and port must be configured to
+      forward queries to, such as:
 
-{"version": 2, "Resolver": {"forward_addresses": [{"port": 5302, "address": "127.0.0.1"}], "listen_on": [{"port": 53, "address": "192.168.1.2"}, {"port": 53, "address": "127.0.0.1"}]}, "Boss": {"start_auth": false, "start_resolver": true}}
+      <screen>
+&gt; <userinput>config set Resolver/forward_addresses [{ "address": "<replaceable>192.168.1.1</replaceable>", "port": 53 }]</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
 
+      (Replace <replaceable>192.168.1.1</replaceable> to point to your
+      full resolver.)
+    </para>
 
+    <para>
+      The resolver also needs to be configured to listen on an address
+      and port:
+
+      <screen>
+&gt; <userinput>config set Resolver/listen_on [{ "address": "127.0.0.1", "port": 53 }]</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+    </para>
+
+<!-- TODO: later the above will have some defaults -->
+
+<!-- TODO: later try this
+
+> config set Resolver/forward_addresses[0]/address "192.168.8.8"
+> config set Resolver/forward_addresses[0]/port 53
+then change those defaults with config set Resolver/forward_addresses[0]/address "1.2.3.4"
+> config set Resolver/forward_addresses[0]/address "1.2.3.4"
 -->
+
+  </chapter>
+
+  <chapter id="statistics">
+    <title>Statistics</title>
+
+    <para>
+      The <command>b10-stats</command> process is started by
+      <command>bind10</command>.
+      It periodically collects statistics data from various modules
+      and aggregates it.
+<!-- TODO -->
+    </para>
+
+    <para>
+
+       This stats daemon provides commands to identify if it is running,
+       show specified or all statistics data, set values, remove data,
+       and reset data.
+
+       For example, using <command>bindctl</command>:
+
+       <screen>
+&gt; <userinput>Stats show</userinput>
+{
+    "auth.queries.tcp": 1749,
+    "auth.queries.udp": 867868,
+    "bind10.boot_time": "2011-01-20T16:59:03Z",
+    "report_time": "2011-01-20T17:04:06Z",
+    "stats.boot_time": "2011-01-20T16:59:05Z",
+    "stats.last_update_time": "2011-01-20T17:04:05Z",
+    "stats.lname": "4d3869d9_a@jreed.example.net",
+    "stats.start_time": "2011-01-20T16:59:05Z",
+    "stats.timestamp": 1295543046.823504
+}
+       </screen>
+    </para>
 
   </chapter>
 
