@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 /*! \file
  * Some parts of this code were copied from BIND-9, which in turn was derived
  * from universal hash function libraries of Rice University.
