@@ -79,7 +79,7 @@ public:
     /// if it fails. It should not throw other types of exceptions.
     ///
     /// \param name The domain name to be searched for.
-    /// \param target  Insert RRs under the domain name into it.
+    /// \param target  Get all RRs under the domain name.
     /// \return A \c FindResult object enclosing the search result, it returns
     /// NULL in case of NXDOMAIN, NXRRSET and SUCCESS.
     FindResult findAny(const isc::dns::Name& name,
