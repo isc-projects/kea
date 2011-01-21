@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <vector>
+#include <sstream>
 
 #include <dns/message.h>
 #include <dns/name.h>
@@ -26,7 +26,7 @@
 
 #include <auth/query.h>
 
-#include <testutils/srv_test.h>
+#include <testutils/dnsmessage_test.h>
 
 #include <gtest/gtest.h>
 
@@ -51,7 +51,7 @@ public:
         rrclass_(RRClass::IN()),
         rrttl_(RRTTL(3600)),
         // delegation.example.com. NS glue.ns.example.com.
-        //                         NS noglue.ns.example.com.
+        //                         NS noglue.example.com.
         //                         NS cname.example.com.
         //                         NS example.org.
         delegation_rrset(RRsetPtr(new RRset(Name("delegation.example.com"),
@@ -60,7 +60,7 @@ public:
         cname_rrset(RRsetPtr(new RRset(Name("cname.example.com"), rrclass_,
                                        RRType::CNAME(), rrttl_))),
         // example.com. NS glue.ns.example.com.
-        //              NS noglue.ns.example.com.
+        //              NS noglue.example.com.
         //              NS example.net.
         auth_ns_rrset(RRsetPtr(new RRset(Name("example.com"), rrclass_,
                                          RRType::NS(), rrttl_))),
@@ -68,7 +68,7 @@ public:
         mx_cname_rrset_(new RRset(Name("cnamemailer.example.com"), rrclass_,
                                   RRType::CNAME(), rrttl_)),
         // mx.example.com. MX 10 www.example.com.
-        //                 MX 20 mailer.example.com.
+        //                 MX 20 mailer.example.org.
         //                 MX 30 mx.delegation.example.com.
         mx_rrset_(new RRset(Name("mx.example.com"), rrclass_, RRType::MX(),
                             rrttl_)),
@@ -81,17 +81,19 @@ public:
         // glue.ns.example.com. A 192.0.2.153
         glue_a_rrset(new RRset(Name("glue.ns.example.com"), rrclass_,
                                RRType::A(), rrttl_)),
-        // glue.ns.example.com. A 2001:db8::53
+        // glue.ns.example.com. AAAA 2001:db8::53
         glue_aaaa_rrset(new RRset(Name("glue.ns.example.com"), rrclass_,
                                   RRType::AAAA(), rrttl_)),
 
-        // The following RRsets will be used without RDATA for now.
+        // example.com. SOA . . 0 0 0 0 0
         soa_rrset(new RRset(Name("example.com"), rrclass_, RRType::SOA(),
                             rrttl_)),
-        ns_rrset(new RRset(Name("ns.example.com"), rrclass_,RRType::NS(),
-                           rrttl_)),
+
+        // noglue.example.com. A 192.0.2.53
         noglue_a_rrset(new RRset(Name("noglue.example.com"), rrclass_,
                                  RRType::A(), rrttl_)),
+
+        // The following RRsets will be used without RDATA for now.
         delegated_mx_a_rrset(new RRset(Name("mx.delegation.example.com"),
                                        rrclass_, RRType::A(), rrttl_))
     {
@@ -113,6 +115,7 @@ public:
         noglue_a_rrset->addRdata(in::A("192.0.2.53"));
         glue_a_rrset->addRdata(in::A("192.0.2.153"));
         glue_aaaa_rrset->addRdata(in::AAAA("2001:db8::53"));
+        soa_rrset->addRdata(generic::SOA(". . 0 0 0 0 0"));
         a_rrset->addRdata(in::A("192.0.2.80"));
     }
     virtual const isc::dns::Name& getOrigin() const;
@@ -140,7 +143,6 @@ private:
     RRsetPtr glue_a_rrset;
     RRsetPtr glue_aaaa_rrset;
     RRsetPtr soa_rrset;
-    RRsetPtr ns_rrset;
     RRsetPtr noglue_a_rrset;
     RRsetPtr delegated_mx_a_rrset;
 };
@@ -190,8 +192,6 @@ MockZone::find(const Name& name, const RRType& type,
         NameComparisonResult::SUBDOMAIN)
     {
         return (FindResult(DELEGATION, delegation_rrset));
-    } else if (name == Name("ns.example.com")) {
-        return (FindResult(DELEGATION, ns_rrset));
     } else if (name == Name("nxdomain.example.com")) {
         return (FindResult(NXDOMAIN, RRsetPtr()));
     } else if (name == Name("nxrrset.example.com")) {
@@ -208,6 +208,16 @@ MockZone::find(const Name& name, const RRType& type,
         return (FindResult(DNAME, RRsetPtr()));
     }
 }
+
+const char* const soa_txt = "example.com. 3600 IN SOA . . 0 0 0 0 0";
+const char* const zone_ns_txt =
+    "example.com. 3600 IN NS glue.ns.example.com.\n"
+    "example.com. 3600 IN NS noglue.example.com.\n"
+    "example.com. 3600 IN NS example.net.";
+const char* const glue_txt =
+    "glue.ns.example.com. 3600 IN A 192.0.2.153\n"
+    "glue.ns.example.com. 3600 IN AAAA 2001:db8::53\n"
+    "noglue.example.com. 3600 IN A 192.0.2.53\n";
 
 class QueryTest : public ::testing::Test {
 protected:
@@ -230,6 +240,9 @@ protected:
     Message response;
     const qid_t qid;
     const uint16_t query_code;
+    stringstream expected_answer;
+    stringstream expected_authority;
+    stringstream expected_additional;
 };
 
 TEST_F(QueryTest, noZone) {
@@ -245,23 +258,23 @@ TEST_F(QueryTest, exactMatch) {
     Query query(memory_datasrc, qname, qtype, response);
     EXPECT_NO_THROW(query.process());
     // find match rrset
-    EXPECT_TRUE(response.getHeaderFlag(Message::HEADERFLAG_AA));
-    EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_ANSWER,
-                                  Name("www.example.com"), RRClass::IN(),
-                                  RRType::A()));
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
-                                  Name("example.com"), RRClass::IN(),
-                                  RRType::NS()));
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
-                                  Name("glue.ns.example.com"),
-                                  RRClass::IN(), RRType::A()));
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
-                                  Name("glue.ns.example.com"),
-                                  RRClass::IN(), RRType::AAAA()));
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
-                                  Name("noglue.example.com"),
-                                  RRClass::IN(), RRType::A()));
+    headerCheck(response, qid, Rcode::NOERROR(), query_code,
+                AA_FLAG, 0, 1, 3, 3);
+
+    expected_answer << "www.example.com. 3600 IN A 192.0.2.80\n";
+    rrsetsCheck(expected_answer,
+                response.beginSection(Message::SECTION_ANSWER),
+                response.endSection(Message::SECTION_ANSWER));
+
+    expected_authority << zone_ns_txt;
+    rrsetsCheck(expected_authority,
+                response.beginSection(Message::SECTION_AUTHORITY),
+                response.endSection(Message::SECTION_AUTHORITY));
+
+    expected_additional << glue_txt;
+    rrsetsCheck(expected_additional,
+                response.beginSection(Message::SECTION_ADDITIONAL),
+                response.endSection(Message::SECTION_ADDITIONAL));
 }
 
 TEST_F(QueryTest, exactAddrMatch) {
@@ -270,23 +283,25 @@ TEST_F(QueryTest, exactAddrMatch) {
     const Name noglue_name(Name("noglue.example.com"));
     Query noglue_query(memory_datasrc, noglue_name, qtype, response);
     EXPECT_NO_THROW(noglue_query.process());
-    EXPECT_TRUE(response.getHeaderFlag(Message::HEADERFLAG_AA));
-    EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_ANSWER,
-                                  Name("noglue.example.com"), RRClass::IN(),
-                                  RRType::A()));
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
-                                  Name("example.com"), RRClass::IN(),
-                                  RRType::NS()));
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
-                                  Name("glue.ns.example.com"),
-                                  RRClass::IN(), RRType::A()));
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
-                                  Name("glue.ns.example.com"),
-                                  RRClass::IN(), RRType::AAAA()));
-    EXPECT_FALSE(response.hasRRset(Message::SECTION_ADDITIONAL,
-                                  Name("noglue.example.com"),
-                                  RRClass::IN(), RRType::A()));
+
+    headerCheck(response, qid, Rcode::NOERROR(), query_code,
+                AA_FLAG, 0, 1, 3, 2);
+
+    expected_answer << "noglue.example.com. 3600 IN A 192.0.2.53\n";
+    rrsetsCheck(expected_answer,
+                response.beginSection(Message::SECTION_ANSWER),
+                response.endSection(Message::SECTION_ANSWER));
+
+    expected_authority << zone_ns_txt;
+    rrsetsCheck(expected_authority,
+                response.beginSection(Message::SECTION_AUTHORITY),
+                response.endSection(Message::SECTION_AUTHORITY));
+
+    expected_additional << "glue.ns.example.com. 3600 IN A 192.0.2.153\n"
+        "glue.ns.example.com. 3600 IN AAAA 2001:db8::53\n";
+    rrsetsCheck(expected_additional,
+                response.beginSection(Message::SECTION_ADDITIONAL),
+                response.endSection(Message::SECTION_ADDITIONAL));
 }
 
 TEST_F(QueryTest, apexNSMatch) {
@@ -295,23 +310,19 @@ TEST_F(QueryTest, apexNSMatch) {
     const Name apex_name(Name("example.com"));
     Query apex_ns_query(memory_datasrc, apex_name, RRType::NS(), response);
     EXPECT_NO_THROW(apex_ns_query.process());
-    EXPECT_TRUE(response.getHeaderFlag(Message::HEADERFLAG_AA));
-    EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_ANSWER,
-                                  Name("example.com"), RRClass::IN(),
-                                  RRType::NS()));
-    EXPECT_FALSE(response.hasRRset(Message::SECTION_AUTHORITY,
-                                  Name("example.com"), RRClass::IN(),
-                                  RRType::NS()));
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
-                                  Name("glue.ns.example.com"),
-                                  RRClass::IN(), RRType::A()));
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
-                                  Name("glue.ns.example.com"),
-                                  RRClass::IN(), RRType::AAAA()));
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
-                                  Name("noglue.example.com"),
-                                  RRClass::IN(), RRType::A()));
+
+    headerCheck(response, qid, Rcode::NOERROR(), query_code,
+                AA_FLAG, 0, 3, 0, 3);
+
+    expected_answer << zone_ns_txt;
+    rrsetsCheck(expected_answer,
+                response.beginSection(Message::SECTION_ANSWER),
+                response.endSection(Message::SECTION_ANSWER));
+
+    expected_additional << glue_txt;
+    rrsetsCheck(expected_additional,
+                response.beginSection(Message::SECTION_ADDITIONAL),
+                response.endSection(Message::SECTION_ADDITIONAL));
 }
 
 TEST_F(QueryTest, exactAnyMatch) {
@@ -320,23 +331,25 @@ TEST_F(QueryTest, exactAnyMatch) {
     const Name noglue_name(Name("noglue.example.com"));
     Query noglue_query(memory_datasrc, noglue_name, RRType::ANY(), response);
     EXPECT_NO_THROW(noglue_query.process());
-    EXPECT_TRUE(response.getHeaderFlag(Message::HEADERFLAG_AA));
-    EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_ANSWER,
-                                  Name("noglue.example.com"), RRClass::IN(),
-                                  RRType::A()));
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
-                                  Name("example.com"), RRClass::IN(),
-                                  RRType::NS()));
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
-                                  Name("glue.ns.example.com"),
-                                  RRClass::IN(), RRType::A()));
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
-                                  Name("glue.ns.example.com"),
-                                  RRClass::IN(), RRType::AAAA()));
-    EXPECT_FALSE(response.hasRRset(Message::SECTION_ADDITIONAL,
-                                  Name("noglue.example.com"),
-                                  RRClass::IN(), RRType::A()));
+
+    headerCheck(response, qid, Rcode::NOERROR(), query_code,
+                AA_FLAG, 0, 1, 3, 2);
+
+    expected_answer << "noglue.example.com. 3600 IN A 192.0.2.53\n";
+    rrsetsCheck(expected_answer,
+                response.beginSection(Message::SECTION_ANSWER),
+                response.endSection(Message::SECTION_ANSWER));
+
+    expected_authority << zone_ns_txt;
+    rrsetsCheck(expected_authority,
+                response.beginSection(Message::SECTION_AUTHORITY),
+                response.endSection(Message::SECTION_AUTHORITY));
+
+    expected_additional << "glue.ns.example.com. 3600 IN A 192.0.2.153\n"
+        "glue.ns.example.com. 3600 IN AAAA 2001:db8::53\n";
+    rrsetsCheck(expected_additional,
+                response.beginSection(Message::SECTION_ADDITIONAL),
+                response.endSection(Message::SECTION_ADDITIONAL));
 }
 
 // This tests that when we need to look up Zone's apex NS records for
@@ -356,52 +369,52 @@ TEST_F(QueryTest, delegation) {
     const Name delegation_name(Name("delegation.example.com"));
     Query delegation_query(memory_datasrc, delegation_name, qtype, response);
     EXPECT_NO_THROW(delegation_query.process());
-    EXPECT_FALSE(response.getHeaderFlag(Message::HEADERFLAG_AA));
-    EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
-                                  Name("delegation.example.com"),
-                                  RRClass::IN(), RRType::NS()));
-    // glue address records
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
-                                  Name("glue.ns.example.com"),
-                                  RRClass::IN(), RRType::A()));
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
-                                  Name("glue.ns.example.com"),
-                                  RRClass::IN(), RRType::AAAA()));
-    // noglue address records
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
-                                  Name("noglue.example.com"),
-                                  RRClass::IN(), RRType::A()));
-    // NS name has a CNAME
-    EXPECT_FALSE(response.hasRRset(Message::SECTION_ADDITIONAL,
-                                  Name("www.example.com"),
-                                  RRClass::IN(), RRType::A()));
-    // NS name is out of zone
-    EXPECT_FALSE(response.hasRRset(Message::SECTION_ADDITIONAL,
-                                  Name("example.org"),
-                                  RRClass::IN(), RRType::A()));
+
+    headerCheck(response, qid, Rcode::NOERROR(), query_code,
+                0, 0, 0, 4, 3);
+
+    stringstream expected_authority;
+    expected_authority <<
+        "delegation.example.com. 3600 IN NS glue.ns.example.com.\n"
+        "delegation.example.com. 3600 IN NS noglue.example.com.\n"
+        "delegation.example.com. 3600 IN NS cname.example.com.\n"
+        "delegation.example.com. 3600 IN NS example.org.\n";
+    rrsetsCheck(expected_authority,
+                response.beginSection(Message::SECTION_AUTHORITY),
+                response.endSection(Message::SECTION_AUTHORITY));
+
+    stringstream expected_additional;
+    expected_additional << glue_txt;
+    rrsetsCheck(expected_additional,
+                response.beginSection(Message::SECTION_ADDITIONAL),
+                response.endSection(Message::SECTION_ADDITIONAL));
 }
 
 TEST_F(QueryTest, nxdomain) {
     const Name nxdomain_name(Name("nxdomain.example.com"));
     Query nxdomain_query(memory_datasrc, nxdomain_name, qtype, response);
     EXPECT_NO_THROW(nxdomain_query.process());
-    EXPECT_EQ(Rcode::NXDOMAIN(), response.getRcode());
-    EXPECT_EQ(0, response.getRRCount(Message::SECTION_ANSWER));
-    EXPECT_EQ(0, response.getRRCount(Message::SECTION_ADDITIONAL));
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
-        Name("example.com"), RRClass::IN(), RRType::SOA()));
+    headerCheck(response, qid, Rcode::NXDOMAIN(), query_code,
+                AA_FLAG, 0, 0, 1, 0);
+    expected_authority << soa_txt;
+    rrsetsCheck(expected_authority,
+                response.beginSection(Message::SECTION_AUTHORITY),
+                response.endSection(Message::SECTION_AUTHORITY),
+                Name("example.com"));
 }
 
 TEST_F(QueryTest, nxrrset) {
     const Name nxrrset_name(Name("nxrrset.example.com"));
     Query nxrrset_query(memory_datasrc, nxrrset_name, qtype, response);
     EXPECT_NO_THROW(nxrrset_query.process());
-    EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
-    EXPECT_EQ(0, response.getRRCount(Message::SECTION_ANSWER));
-    EXPECT_EQ(0, response.getRRCount(Message::SECTION_ADDITIONAL));
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
-        Name("example.com"), RRClass::IN(), RRType::SOA()));
+
+    headerCheck(response, qid, Rcode::NOERROR(), query_code,
+                AA_FLAG, 0, 0, 1, 0);
+    expected_authority << soa_txt;
+    rrsetsCheck(expected_authority,
+                response.beginSection(Message::SECTION_AUTHORITY),
+                response.endSection(Message::SECTION_AUTHORITY),
+                Name("example.com"));
 }
 
 /*
@@ -443,55 +456,22 @@ TEST_F(QueryTest, MX) {
     Name qname("mx.example.com");
     Query mx_query(memory_datasrc, qname, RRType::MX(), response);
     EXPECT_NO_THROW(mx_query.process());
-    EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_ANSWER,
-        Name("mx.example.com"), RRClass::IN(), RRType::MX()));
-    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
-        Name("www.example.com"), RRClass::IN(), RRType::A()));
-    // We want to skip the additional ones related to authoritative
-    RRsetPtr ns;
-    for (SectionIterator<RRsetPtr> ai(response.beginSection(
-        Message::SECTION_AUTHORITY)); ai != response.endSection(
-        Message::SECTION_AUTHORITY); ++ai)
-    {
-        if ((*ai)->getName() == Name("example.com") && (*ai)->getType() ==
-            RRType::NS())
-        {
-            ns = *ai;
-            break;
-        }
-    }
-    /*
-     * In fact, the MX RRset mentions three names, but we don't know anything
-     * about one of them and one is under a zone cut, so we should have just
-     * one RRset (A for www.example.com)
-     */
-    // We can't use getRRCount, as it counts RRs, not RRsets
-    unsigned additional_count(0);
-    for (SectionIterator<RRsetPtr> ai(response.beginSection(
-        Message::SECTION_ADDITIONAL)); ai != response.endSection(
-        Message::SECTION_ADDITIONAL); ++ai)
-    {
-        // Skip the ones for the NS record
-        if (ns) {
-            for (RdataIteratorPtr nsi(ns->getRdataIterator()); !nsi->isLast();
-                nsi->next())
-            {
-                if ((*ai)->getName() ==
-                    dynamic_cast<const isc::dns::rdata::generic::NS&>(
-                    nsi->getCurrent()).getNSName())
-                {
-                    goto NS_ADDITIONAL_DATA;
-                }
-            }
-        }
-        // It is not related to the NS, then it must be related to the MX
-        ++additional_count;
-        EXPECT_EQ(Name("www.example.com"), (*ai)->getName());
-        EXPECT_EQ(RRType::A(), (*ai)->getType());
-        NS_ADDITIONAL_DATA:;
-    }
-    EXPECT_EQ(1, additional_count);
+
+    headerCheck(response, qid, Rcode::NOERROR(), query_code,
+                AA_FLAG, 0, 3, 3, 4);
+
+    expected_answer << "mx.example.com. 3600 IN MX 10 www.example.com.\n"
+        "mx.example.com. 3600 IN MX 20 mailer.example.org.\n"
+        "mx.example.com. 3600 IN MX 30 mx.delegation.example.com.\n";
+    rrsetsCheck(expected_answer,
+                response.beginSection(Message::SECTION_ANSWER),
+                response.endSection(Message::SECTION_ANSWER));
+
+    expected_additional << glue_txt;
+    expected_additional << "www.example.com. 3600 IN A 192.0.2.80\n";
+    rrsetsCheck(expected_additional,
+                response.beginSection(Message::SECTION_ADDITIONAL),
+                response.endSection(Message::SECTION_ADDITIONAL));
 }
 
 /*
@@ -508,5 +488,10 @@ TEST_F(QueryTest, MXAlias) {
     // RRs for the NS)
     headerCheck(response, qid, Rcode::NOERROR(), query_code,
                 AA_FLAG, 0, 1, 3, 3);
+
+    expected_additional << glue_txt;
+    rrsetsCheck(expected_additional,
+                response.beginSection(Message::SECTION_ADDITIONAL),
+                response.endSection(Message::SECTION_ADDITIONAL));
 }
 }
