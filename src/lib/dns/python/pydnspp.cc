@@ -23,8 +23,6 @@
 //
 // And of course care has to be taken that all identifiers be unique
 
-// $Id$
-
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
