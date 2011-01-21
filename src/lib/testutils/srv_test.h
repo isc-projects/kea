@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <gtest/gtest.h>
-
 #include <dns/buffer.h>
 #include <dns/name.h>
 #include <dns/message.h>
@@ -45,14 +43,6 @@ extern const unsigned int RD_FLAG;
 extern const unsigned int RA_FLAG;
 extern const unsigned int AD_FLAG;
 extern const unsigned int CD_FLAG;
-
-void
-headerCheck(const isc::dns::Message& message, const isc::dns::qid_t qid,
-            const isc::dns::Rcode& rcode,
-            const uint16_t opcodeval, const unsigned int flags,
-            const unsigned int qdcount,
-            const unsigned int ancount, const unsigned int nscount,
-            const unsigned int arcount);
 
 // The base class for Auth and Recurse test case
 class SrvTestBase : public ::testing::Test {
