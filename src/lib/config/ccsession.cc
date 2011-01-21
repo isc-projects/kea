@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 // 
 // todo: generalize this and make it into a specific API for all modules
 //       to use (i.e. connect to cc, send config and commands, get config,
