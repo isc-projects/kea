@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: session.cc 1250 2010-03-09 22:52:15Z jinmei $
-
 #include <config.h>
 
 #include <stdint.h>

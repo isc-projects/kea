@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: run_unittests.cc 476 2010-01-19 00:29:28Z jinmei $
-
 #include <gtest/gtest.h>
 
 int

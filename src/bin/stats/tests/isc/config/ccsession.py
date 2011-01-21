@@ -13,7 +13,6 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# $Id$
 # This module is a mock-up class of isc.cc.session
 
 __version__ = "$Revision$"
