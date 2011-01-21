@@ -115,13 +115,18 @@ private:
 ///
 /// Note that the sets of RRsets are compared as "sets", i.e, they don't have
 /// to be listed in the same order.
-/// There is one known restriction: each set of RRsets must not have more
-/// then one RRsets for the same name, RR type and RR class.  If this
-/// condition isn't met, this function will be confused and produce
-/// meaningless results.
 ///
 /// The entire tests will pass if the two sets are identical.  Otherwise
 /// some of the tests will indicate a failure.
+///
+/// \note
+/// - There is one known restriction: each set of RRsets must not have more
+///   than one RRsets for the same name, RR type and RR class.  If this
+///   condition isn't met, some of the tests will fail either against an
+///   explicit duplication check or as a result of counter mismatch.
+/// - This function uses linear searches on the expected and actual sequences,
+///   and won't be scalable for large input.  For the purpose of testing it
+///   should be acceptable, but be aware of the size of test data.
 ///
 /// \param expected_begin The beginning of the expected set of RRsets
 /// \param expected_end The end of the expected set of RRsets
@@ -132,23 +137,34 @@ void
 rrsetsCheck(EXPECTED_ITERATOR expected_begin, EXPECTED_ITERATOR expected_end,
             ACTUAL_ITERATOR actual_begin, ACTUAL_ITERATOR actual_end)
 {
+    std::vector<isc::dns::ConstRRsetPtr> checked_rrsets; // for duplicate check
     unsigned int rrset_matched = 0;
-    unsigned int rrset_count = 0;
     ACTUAL_ITERATOR it;
     for (it = actual_begin; it != actual_end; ++it) {
+        // Make sure there's no duplicate RRset in actual (using a naive
+        // search).  Since the actual set is guaranteed to be unique, we can
+        // detect it if the expected data has a duplicate by the match/size
+        // checks at the end of the function.
+        // Note: we cannot use EXPECT_EQ for iterators
+        EXPECT_TRUE(checked_rrsets.end() ==
+                    std::find_if(checked_rrsets.begin(), checked_rrsets.end(),
+                                 detail::RRsetMatch(*it)));
+        checked_rrsets.push_back(*it);
+
         EXPECTED_ITERATOR found_rrset_it =
-            find_if(expected_begin, expected_end, detail::RRsetMatch(*it));
+            std::find_if(expected_begin, expected_end,
+                         detail::RRsetMatch(*it));
         if (found_rrset_it != expected_end) {
             rrsetCheck(*found_rrset_it, *it);
             ++rrset_matched;
         }
-        ++rrset_count;
     }
 
     // make sure all expected RRsets are in actual sets
     EXPECT_EQ(std::distance(expected_begin, expected_end), rrset_matched);
     // make sure rrsets only contains expected RRsets
-    EXPECT_EQ(std::distance(expected_begin, expected_end), rrset_count);
+    EXPECT_EQ(std::distance(expected_begin, expected_end),
+              std::distance(actual_begin, actual_end));
 }
 
 /// Set of unit tests to check if two sets of RRsets are identical using
