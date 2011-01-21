@@ -34,7 +34,7 @@ namespace cache {
 /// RFC2181 section5.4.1.
 /// Bigger value is more trustworthy.
 enum RRsetTrustLevel {
-    // Default trust for RRset. 
+    // Default trust for RRset.
     RRSET_TRUST_DEFAULT = 0,
     // Additional information from non-authoritative answer.
     RRSET_TRUST_ADDITIONAL_NONAA,
@@ -50,8 +50,8 @@ enum RRsetTrustLevel {
     // Glue from a primary zone, or glue from a zone transfer.
     RRSET_TRUST_PRIM_GLUE,
     // Data from the authority section of an authoritative answer.
-    RRSET_TRUST_AUTHORITY_AA, 
-    // Authoritative data included in the answer section of 
+    RRSET_TRUST_AUTHORITY_AA,
+    // Authoritative data included in the answer section of
     // an authoritative reply.
     RRSET_TRUST_ANSWER_AA,
     // Data from a primary zone file, other than glue data.
@@ -60,20 +60,34 @@ enum RRsetTrustLevel {
 
 /// \brief RRset Entry
 /// The object of RRsetEntry represents one cached RRset.
-/// Each RRset entry may be refered using shared_ptr by several message 
+/// Each RRset entry may be refered using shared_ptr by several message
 /// entries.
 class RRsetEntry : public NsasEntry<RRsetEntry>
 {
+    ///
+    /// \name Constructors and Destructor
+    ///
+    /// Note: The copy constructor and the assignment operator are intentionally
+    /// defined as private to make it uncopyable
+    //@{
+private:
+    RRsetEntry(const RRsetEntry&);
+    RRsetEntry& operator=(const RRsetEntry&);
 public:
     /// \brief Constructor
     /// \param rrset The RRset used to initialize the RRset entry.
     /// \param level trustworthiness of the RRset.
     RRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& level);
 
+    /// The destructor.
+    ~RRsetEntry() {}
+    //@}
+
     /// \brief Return a pointer to a generated RRset
     isc::dns::RRsetPtr getRRset();
-    
+
     /// \brief Get the expiration time of the RRset.
+    /// \todo RRsig expiration processing
     time_t getExpireTime() const;
 
     /// \brief Get the ttl of the RRset.
@@ -83,7 +97,9 @@ public:
     }
 
     /// \return return hash key
-    virtual HashKey hashKey() const;
+    HashKey hashKey() const{
+        return hash_key_;
+    }
 
     /// \brief get RRset trustworthiness
     RRsetTrustLevel getTrustLevel() const {
@@ -94,13 +110,14 @@ private:
     void updateTTL();
 
 private:
-    std::string entry_name_; // the entry name for this rrset entry.
-    time_t expire_time_;    // Expiration time of rrset.
-    RRsetTrustLevel trust_level_; // rrset trustworthiness.
+    std::string entry_name_; // The entry name for this rrset entry.
+    time_t expire_time_;     // Expiration time of rrset.
+    RRsetTrustLevel trust_level_; // RRset trustworthiness.
     boost::shared_ptr<isc::dns::RRset> rrset_;
+    HashKey hash_key_;       // RRsetEntry hash key
 };
-    
-typedef boost::shared_ptr<RRsetEntry> RRsetEntryPtr;    
+
+typedef boost::shared_ptr<RRsetEntry> RRsetEntryPtr;
 
 } // namespace cache
 } // namespace isc
