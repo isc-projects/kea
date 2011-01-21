@@ -211,6 +211,38 @@ rrsetsCheck(std::istream& expected_stream,
                          detail::RRsetInserter(expected));
     rrsetsCheck(expected.begin(), expected.end(), actual_begin, actual_end);
 }
+
+/// Set of unit tests to check if two sets of RRsets are identical using
+/// expected data as string.
+///
+/// This function is a wrapper for the input stream version:
+/// \c rrsetsCheck(std::istream&, ACTUAL_ITERATOR, ACTUAL_ITERATOR, const isc::dns::Name&, const isc::dns::RRClass&)(),
+/// and takes a string object instead of a stream.
+/// While the stream version is more generic, this version would be more
+/// convenient for tests using hardcoded expected data.  Using this version,
+/// the example test case shown for the stream version would look as follows:
+/// \code
+/// rrsetsCheck("foo.example.com. 3600 IN A 192.0.2.1\n"
+///             "foo.example.com. 3600 IN A 192.0.2.2\n"
+///             "foo.example.com. 7200 IN AAAA 2001:db8::1\n",
+///             message.beginSection(Message::SECTION_ADDITIONAL),
+///             message.endSection(Message::SECTION_ADDITIONAL));
+/// \endcode
+///
+/// The semantics of parameters is the same as that of the stream version
+/// except that \c expected is a string of expected sets of RRsets.
+template<typename ACTUAL_ITERATOR>
+void
+rrsetsCheck(const std::string& expected,
+            ACTUAL_ITERATOR actual_begin, ACTUAL_ITERATOR actual_end,
+            const isc::dns::Name& origin = isc::dns::Name::ROOT_NAME(),
+            const isc::dns::RRClass& rrclass = isc::dns::RRClass::IN())
+{
+    std::stringstream expected_stream(expected);
+    rrsetsCheck(expected_stream, actual_begin, actual_end, origin,
+                rrclass);
+}
+
 } // end of namespace testutils
 } // end of namespace isc
 
