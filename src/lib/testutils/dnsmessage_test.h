@@ -26,9 +26,14 @@
 
 namespace isc {
 namespace testutils {
-// These are flags to indicate whether the corresponding flag bit of the
-// DNS header is to be set in the test cases.  (The flag values
-// is irrelevant to their wire-format values)
+///
+/// \name Header flags
+///
+/// These are flags to indicate whether the corresponding flag bit of the
+/// DNS header is to be set in the test cases using \c headerCheck().
+/// (The flag values is irrelevant to their wire-format values).
+/// The meaning of the flags should be obvious from the variable names.
+//@{
 extern const unsigned int QR_FLAG;
 extern const unsigned int AA_FLAG;
 extern const unsigned int TC_FLAG;
@@ -36,7 +41,33 @@ extern const unsigned int RD_FLAG;
 extern const unsigned int RA_FLAG;
 extern const unsigned int AD_FLAG;
 extern const unsigned int CD_FLAG;
+//@}
 
+/// Set of unit tests to examine a DNS message header.
+///
+/// This function takes a dns::Message object and performs various tests
+/// to confirm if the header fields of the message have the given specified
+/// value.  The \c message parameter is the Message object to be tested,
+/// and the remaining parameters specify the expected values of the fields.
+///
+/// The meaning of the parameters should be obvious, but here are some notes
+/// that may not be so trivial:
+/// - \c opcode is an integer, not an \c dns::Opcode object.  This is because
+///   we can easily iterate over all possible OPCODEs in a test.
+/// - \c flags is a bitmask so that we can specify a set of header flags
+///   via a single parameter.  For example, when we expect the message has
+///   QR and AA flags are on and others are off, we'd set this parameter to
+///   <code>(QR_FLAG | AA_FLAG)</code>.
+///
+/// \param message The DNS message to be tested.
+/// \param qid The expected QID
+/// \param rcode The expected RCODE
+/// \param opcodeval The code value of the expected OPCODE
+/// \param flags Bit flags specifying header flags that are expected to be set
+/// \param qdcount The expected value of QDCOUNT
+/// \param ancount The expected value of ANCOUNT
+/// \param nscount The expected value of NSCOUNT
+/// \param arcount The expected value of ARCOUNT
 void
 headerCheck(const isc::dns::Message& message, const isc::dns::qid_t qid,
             const isc::dns::Rcode& rcode,
