@@ -322,7 +322,7 @@ TEST_F(QueryTest, exactAnyMatch) {
 TEST_F(QueryTest, noApexNS) {
     // Disable apex NS record
     mock_zone->setApexNSFlag(false);
-    
+
     EXPECT_THROW(Query(memory_datasrc, Name("noglue.example.com"), qtype,
                        response).process(), Query::NoApexNS);
     // We don't look into the response, as it threw
