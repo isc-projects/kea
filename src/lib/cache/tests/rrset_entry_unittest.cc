@@ -50,8 +50,8 @@ TEST_F(GenCacheKeyTest, genCacheEntryKey2) {
 #define TEST_TTL 100
 class RRsetEntryTest : public ::testing::Test {
 protected:
-    RRsetEntryTest(): 
-        name("test.example.com"), 
+    RRsetEntryTest():
+        name("test.example.com"),
         rrset(name, RRClass::IN(), RRType::A(), RRTTL(TEST_TTL)),
         trust_level(RRSET_TRUST_ADDITIONAL_AA),
         rrset_entry(rrset, trust_level)
