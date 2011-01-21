@@ -80,7 +80,11 @@ public:
     void querySetup(DNSService& dnss) {
         assert(!rec_query_); // queryShutdown must be called first
         dlog("Query setup");
-        rec_query_ = new RecursiveQuery(dnss, upstream_, query_timeout_, retries_);
+        rec_query_ = new RecursiveQuery(dnss, upstream_,
+                                        query_timeout_,
+                                        client_timeout_,
+                                        lookup_timeout_,
+                                        retries_);
     }
 
     void queryShutdown() {
