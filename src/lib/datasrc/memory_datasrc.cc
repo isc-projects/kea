@@ -73,6 +73,15 @@ struct MemoryZone::MemoryZoneImpl {
         if (!rrset) {
             isc_throw(NullRRset, "The rrset provided is NULL");
         }
+        if (rrset->getType() == RRType::CNAME() &&
+            rrset->getRdataCount() > 1) {
+            // XXX: this is not only for CNAME.  We should generalize this
+            // code for all other "singleton RR types" (such as SOA) in a
+            // separate task.
+            isc_throw(AddError, "multiple RRs of singleton type for "
+                      << rrset->getName());
+        }
+
         Name name(rrset->getName());
         NameComparisonResult compare(origin_.compare(name));
         if (compare.getRelation() != NameComparisonResult::SUPERDOMAIN &&
@@ -92,7 +101,7 @@ struct MemoryZone::MemoryZoneImpl {
             default:
                 assert(0);
         }
-        assert(node);
+        assert(node != NULL);
 
         // Now get the domain
         DomainPtr domain;
@@ -102,6 +111,25 @@ struct MemoryZone::MemoryZoneImpl {
             node->setData(domain);
         } else { // Get existing one
             domain = node->getData();
+        }
+
+        // Ensure CNAME and other type of RR don't coexist for the same
+        // owner name.
+        // Note: when the check fails and the exception is thrown, it may
+        // break strong exception guarantee.  At the moment we prefer
+        // code simplicity and don't bother to introduce complicated
+        // recovery code.
+        if (rrset->getType() == RRType::CNAME()) {
+            // XXX: this check will become incorrect when we support DNSSEC
+            // (depending on how we support DNSSEC).  We should revisit it
+            // at that point.
+            if (!domain->empty()) {
+                isc_throw(AddError, "CNAME can't be added with other data for "
+                          << rrset->getName());
+            }
+        } else if (domain->find(RRType::CNAME()) != domain->end()) {
+            isc_throw(AddError, "CNAME and " << rrset->getType() <<
+                      " can't coexist for " << rrset->getName());
         }
 
         // Try inserting the rrset there
@@ -227,13 +255,14 @@ struct MemoryZone::MemoryZoneImpl {
             // Good, it is here
             return (FindResult(SUCCESS, found->second));
         } else {
-            /*
-             * TODO Look for CNAME and DNAME (it should be OK to do so when
-             * the value is not found, as CNAME/DNAME domain should be
-             * empty otherwise.)
-             */
-            return (FindResult(NXRRSET, ConstRRsetPtr()));
+            // Next, try CNAME.
+            found = node->getData()->find(RRType::CNAME());
+            if (found != node->getData()->end()) {
+                return (FindResult(CNAME, found->second));
+            }
         }
+        // No exact match or CNAME.  Return NXRRSET.
+        return (FindResult(NXRRSET, ConstRRsetPtr()));
     }
 };
 
