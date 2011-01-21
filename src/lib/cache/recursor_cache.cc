@@ -20,7 +20,7 @@
 #include <string>
 
 using namespace isc::dns;
-using namespace std; 
+using namespace std;
 
 namespace isc {
 namespace cache {
@@ -31,24 +31,24 @@ RecursorCache::RecursorCache(std::vector<CacheSizeInfo> caches_size) {
     for (; index < size; index++) {
         CacheSizeInfo* infop = &caches_size[index];
         uint16_t klass = infop->class_;
-        rrsets_cache1_[klass] = RRsetCachePtr(new 
+        rrsets_cache1_[klass] = RRsetCachePtr(new
                                      RRsetCache(infop->rrset_cache_size, klass));
-        rrsets_cache2_[klass] = RRsetCachePtr(new 
+        rrsets_cache2_[klass] = RRsetCachePtr(new
                                      RRsetCache(infop->rrset_cache_size, klass));
-        messages_cache_[klass] = MessageCachePtr(new MessageCache(rrsets_cache2_[klass], 
-                                                      infop->message_cache_size, 
+        messages_cache_[klass] = MessageCachePtr(new MessageCache(rrsets_cache2_[klass],
+                                                      infop->message_cache_size,
                                                       klass));
     }
 }
 
 bool
-RecursorCache::lookup(const isc::dns::Name& qname, 
+RecursorCache::lookup(const isc::dns::Name& qname,
                const isc::dns::RRType& qtype,
                const isc::dns::RRClass& qclass,
                isc::dns::Message& response) const
 {
-    // First, query in rrsets_cache1_, if the rrset(qname, qtype, qclass) can be 
-    // found in rrsets_cache1_, generated reply message with only the rrset in 
+    // First, query in rrsets_cache1_, if the rrset(qname, qtype, qclass) can be
+    // found in rrsets_cache1_, generated reply message with only the rrset in
     // answer section.
     RRsetCacheMap::const_iterator cache_iter = rrsets_cache1_.find(qclass.getCode());
     if (cache_iter != rrsets_cache1_.end()) {
@@ -70,7 +70,7 @@ RecursorCache::lookup(const isc::dns::Name& qname,
 }
 
 isc::dns::RRsetPtr
-RecursorCache::lookup_in_rrset_cache(const isc::dns::Name& qname, 
+RecursorCache::lookup_in_rrset_cache(const isc::dns::Name& qname,
                       const isc::dns::RRType& qtype,
                       const isc::dns::RRClass& qclass,
                       const RRsetCacheMap& rrsets_cache) const
@@ -88,12 +88,12 @@ RecursorCache::lookup_in_rrset_cache(const isc::dns::Name& qname,
 }
 
 isc::dns::RRsetPtr
-RecursorCache::lookup(const isc::dns::Name& qname, 
+RecursorCache::lookup(const isc::dns::Name& qname,
                const isc::dns::RRType& qtype,
                const isc::dns::RRClass& qclass) const
 {
     // Algorithm:
-    // 1. Search in rrsets_cache1_ first, 
+    // 1. Search in rrsets_cache1_ first,
     // 2. Then do search in rrsets_cache2_.
     RRsetPtr rrset_ptr = lookup_in_rrset_cache(qname, qtype, qclass, rrsets_cache1_);
     if (rrset_ptr) {
@@ -119,7 +119,7 @@ RecursorCache::update(const isc::dns::Message& msg) {
 
 bool
 RecursorCache::updateRRsetCache(const isc::dns::RRset& rrset,
-                                RRsetCacheMap& rrset_cache_map) 
+                                RRsetCacheMap& rrset_cache_map)
 {
     uint16_t klass = rrset.getClass().getCode();
     RRsetCacheMap::iterator cache_iter = rrset_cache_map.find(klass);
