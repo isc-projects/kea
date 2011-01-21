@@ -14,6 +14,7 @@
 
 #include <dns/message.h>
 #include <dns/opcode.h>
+#include <dns/rdata.h>
 #include <dns/rcode.h>
 #include <dns/rrset.h>
 #include <dns/rrttl.h>
@@ -65,16 +66,32 @@ headerCheck(const Message& message, const qid_t qid, const Rcode& rcode,
     EXPECT_EQ(arcount, message.getRRCount(Message::SECTION_ADDITIONAL));
 }
 
+namespace {
+::testing::AssertionResult
+matchRdata(const char*, const char*,
+           const rdata::Rdata& expected, const rdata::Rdata& actual)
+{
+    if (expected.compare(actual) != 0) {
+        ::testing::Message msg;
+        msg << "Two RDATAs are expected to be equal but not:\n"
+            << "  Actual: " << actual.toText() << "\n"
+            << "Expected: " << expected.toText();
+        return (::testing::AssertionFailure(msg));
+    }
+    return (::testing::AssertionSuccess());
+}
+}
+
 void
 rrsetCheck(isc::dns::ConstRRsetPtr expected_rrset,
-           isc::dns::ConstRRsetPtr rrset)
-{ 
-    EXPECT_EQ(expected_rrset->getName(), rrset->getName());
-    EXPECT_EQ(expected_rrset->getClass(), rrset->getClass());
-    EXPECT_EQ(expected_rrset->getType(), rrset->getType());
-    EXPECT_EQ(expected_rrset->getTTL(), rrset->getTTL());
+           isc::dns::ConstRRsetPtr actual_rrset)
+{
+    EXPECT_EQ(expected_rrset->getName(), actual_rrset->getName());
+    EXPECT_EQ(expected_rrset->getClass(), actual_rrset->getClass());
+    EXPECT_EQ(expected_rrset->getType(), actual_rrset->getType());
+    EXPECT_EQ(expected_rrset->getTTL(), actual_rrset->getTTL());
 
-    isc::dns::RdataIteratorPtr rdata_it = rrset->getRdataIterator();
+    isc::dns::RdataIteratorPtr rdata_it = actual_rrset->getRdataIterator();
     isc::dns::RdataIteratorPtr expected_rdata_it =
         expected_rrset->getRdataIterator();
     while (!expected_rdata_it->isLast()) {
@@ -84,13 +101,8 @@ rrsetCheck(isc::dns::ConstRRsetPtr expected_rrset,
             break;
         }
 
-        // We use text-based comparison so that we can easily identify which
-        // data causes the error in case of failure.  RDATA::compare() is the
-        // most strict comparison method, but in this case text-based
-        // comparison should be okay because we generate the text data
-        // from Rdata objects rather than hand-write the expected text.
-        EXPECT_EQ(expected_rdata_it->getCurrent().toText(),
-                  rdata_it->getCurrent().toText());
+        EXPECT_PRED_FORMAT2(matchRdata, expected_rdata_it->getCurrent(),
+                            rdata_it->getCurrent());
 
         expected_rdata_it->next();
         rdata_it->next();
