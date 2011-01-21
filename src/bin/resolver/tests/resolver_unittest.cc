@@ -16,6 +16,7 @@
 
 #include <resolver/resolver.h>
 #include <dns/tests/unittest_util.h>
+#include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
 
 using namespace isc::dns;
