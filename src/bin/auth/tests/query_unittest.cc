@@ -207,6 +207,42 @@ protected:
     const uint16_t query_code;
 };
 
+// A wrapper to check resulting response message commonly used in
+// tests below.
+// check_origin needs to be specified only when the authority section has
+// an SOA RR.  The interface is not generic enough but should be okay
+// for our test cases in practice.
+void
+responseCheck(Message& response, const isc::dns::Rcode& rcode,
+              unsigned int flags, const unsigned int ancount,
+              const unsigned int nscount, const unsigned int arcount,
+              const char* const expected_answer,
+              const char* const expected_authority,
+              const char* const expected_additional,
+              const Name& check_origin = Name::ROOT_NAME())
+{
+    // In our test cases QID, Opcode, and QDCOUNT should be constant, so
+    // we don't bother the test cases specifying these values.
+    headerCheck(response, response.getQid(), rcode, Opcode::QUERY().getCode(),
+                flags, 0, ancount, nscount, arcount);
+    if (expected_answer != NULL) {
+        rrsetsCheck(expected_answer,
+                    response.beginSection(Message::SECTION_ANSWER),
+                    response.endSection(Message::SECTION_ANSWER));
+    }
+    if (expected_authority != NULL) {
+        rrsetsCheck(expected_authority,
+                    response.beginSection(Message::SECTION_AUTHORITY),
+                    response.endSection(Message::SECTION_AUTHORITY),
+                    check_origin);
+    }
+    if (expected_additional != NULL) {
+        rrsetsCheck(expected_additional,
+                    response.beginSection(Message::SECTION_ADDITIONAL),
+                    response.endSection(Message::SECTION_ADDITIONAL));
+    }
+}
+
 TEST_F(QueryTest, noZone) {
     // There's no zone in the memory datasource.  So the response should have
     // REFUSED.
@@ -220,20 +256,8 @@ TEST_F(QueryTest, exactMatch) {
     Query query(memory_datasrc, qname, qtype, response);
     EXPECT_NO_THROW(query.process());
     // find match rrset
-    headerCheck(response, qid, Rcode::NOERROR(), query_code,
-                AA_FLAG, 0, 1, 3, 3);
-
-    rrsetsCheck(www_a_txt,
-                response.beginSection(Message::SECTION_ANSWER),
-                response.endSection(Message::SECTION_ANSWER));
-
-    rrsetsCheck(zone_ns_txt,
-                response.beginSection(Message::SECTION_AUTHORITY),
-                response.endSection(Message::SECTION_AUTHORITY));
-
-    rrsetsCheck(ns_addrs_txt,
-                response.beginSection(Message::SECTION_ADDITIONAL),
-                response.endSection(Message::SECTION_ADDITIONAL));
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+                  www_a_txt, zone_ns_txt, ns_addrs_txt);
 }
 
 TEST_F(QueryTest, exactAddrMatch) {
@@ -242,21 +266,10 @@ TEST_F(QueryTest, exactAddrMatch) {
     EXPECT_NO_THROW(Query(memory_datasrc, Name("noglue.example.com"), qtype,
                           response).process());
 
-    headerCheck(response, qid, Rcode::NOERROR(), query_code,
-                AA_FLAG, 0, 1, 3, 2);
-
-    rrsetsCheck("noglue.example.com. 3600 IN A 192.0.2.53\n",
-                response.beginSection(Message::SECTION_ANSWER),
-                response.endSection(Message::SECTION_ANSWER));
-
-    rrsetsCheck(zone_ns_txt,
-                response.beginSection(Message::SECTION_AUTHORITY),
-                response.endSection(Message::SECTION_AUTHORITY));
-
-    rrsetsCheck("glue.delegation.example.com. 3600 IN A 192.0.2.153\n"
-                "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n",
-                response.beginSection(Message::SECTION_ADDITIONAL),
-                response.endSection(Message::SECTION_ADDITIONAL));
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 2,
+                  "noglue.example.com. 3600 IN A 192.0.2.53\n", zone_ns_txt,
+                  "glue.delegation.example.com. 3600 IN A 192.0.2.153\n"
+                  "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n");
 }
 
 TEST_F(QueryTest, apexNSMatch) {
@@ -265,16 +278,8 @@ TEST_F(QueryTest, apexNSMatch) {
     EXPECT_NO_THROW(Query(memory_datasrc, Name("example.com"), RRType::NS(),
                           response).process());
 
-    headerCheck(response, qid, Rcode::NOERROR(), query_code,
-                AA_FLAG, 0, 3, 0, 3);
-
-    rrsetsCheck(zone_ns_txt,
-                response.beginSection(Message::SECTION_ANSWER),
-                response.endSection(Message::SECTION_ANSWER));
-
-    rrsetsCheck(ns_addrs_txt,
-                response.beginSection(Message::SECTION_ADDITIONAL),
-                response.endSection(Message::SECTION_ADDITIONAL));
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 3, 0, 3,
+                  zone_ns_txt, NULL, ns_addrs_txt);
 }
 
 TEST_F(QueryTest, exactAnyMatch) {
@@ -283,21 +288,11 @@ TEST_F(QueryTest, exactAnyMatch) {
     EXPECT_NO_THROW(Query(memory_datasrc, Name("noglue.example.com"),
                           RRType::ANY(), response).process());
 
-    headerCheck(response, qid, Rcode::NOERROR(), query_code,
-                AA_FLAG, 0, 1, 3, 2);
-
-    rrsetsCheck("noglue.example.com. 3600 IN A 192.0.2.53\n",
-                response.beginSection(Message::SECTION_ANSWER),
-                response.endSection(Message::SECTION_ANSWER));
-
-    rrsetsCheck(zone_ns_txt,
-                response.beginSection(Message::SECTION_AUTHORITY),
-                response.endSection(Message::SECTION_AUTHORITY));
-
-    rrsetsCheck("glue.delegation.example.com. 3600 IN A 192.0.2.153\n"
-                "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n",
-                response.beginSection(Message::SECTION_ADDITIONAL),
-                response.endSection(Message::SECTION_ADDITIONAL));
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 2,
+                  "noglue.example.com. 3600 IN A 192.0.2.53\n",
+                  zone_ns_txt,
+                  "glue.delegation.example.com. 3600 IN A 192.0.2.153\n"
+                  "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n");
 }
 
 // This tests that when we need to look up Zone's apex NS records for
@@ -316,39 +311,23 @@ TEST_F(QueryTest, delegation) {
     EXPECT_NO_THROW(Query(memory_datasrc, Name("delegation.example.com"),
                           qtype, response).process());
 
-    headerCheck(response, qid, Rcode::NOERROR(), query_code,
-                0, 0, 0, 4, 3);
-
-    rrsetsCheck(delegation_txt,
-                response.beginSection(Message::SECTION_AUTHORITY),
-                response.endSection(Message::SECTION_AUTHORITY));
-
-    rrsetsCheck(ns_addrs_txt,
-                response.beginSection(Message::SECTION_ADDITIONAL),
-                response.endSection(Message::SECTION_ADDITIONAL));
+    responseCheck(response, Rcode::NOERROR(), 0, 0, 4, 3,
+                  NULL, delegation_txt, ns_addrs_txt);
 }
 
 TEST_F(QueryTest, nxdomain) {
     EXPECT_NO_THROW(Query(memory_datasrc, Name("nxdomain.example.com"), qtype,
                           response).process());
-    headerCheck(response, qid, Rcode::NXDOMAIN(), query_code,
-                AA_FLAG, 0, 0, 1, 0);
-    rrsetsCheck(soa_txt,
-                response.beginSection(Message::SECTION_AUTHORITY),
-                response.endSection(Message::SECTION_AUTHORITY),
-                Name("example.com"));
+    responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 1, 0,
+                  NULL, soa_txt, NULL, mock_zone->getOrigin());
 }
 
 TEST_F(QueryTest, nxrrset) {
     EXPECT_NO_THROW(Query(memory_datasrc, Name("www.example.com"),
                           RRType::TXT(), response).process());
 
-    headerCheck(response, qid, Rcode::NOERROR(), query_code,
-                AA_FLAG, 0, 0, 1, 0);
-    rrsetsCheck(soa_txt,
-                response.beginSection(Message::SECTION_AUTHORITY),
-                response.endSection(Message::SECTION_AUTHORITY),
-                Name("example.com"));
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 1, 0,
+                  NULL, soa_txt, NULL, mock_zone->getOrigin());
 }
 
 /*
@@ -386,16 +365,9 @@ TEST_F(QueryTest, MX) {
     Query(memory_datasrc, Name("mx.example.com"), RRType::MX(),
           response).process();
 
-    headerCheck(response, qid, Rcode::NOERROR(), query_code,
-                AA_FLAG, 0, 3, 3, 4);
-
-    rrsetsCheck(mx_txt,
-                response.beginSection(Message::SECTION_ANSWER),
-                response.endSection(Message::SECTION_ANSWER));
-
-    rrsetsCheck(string(ns_addrs_txt) + string(www_a_txt),
-                response.beginSection(Message::SECTION_ADDITIONAL),
-                response.endSection(Message::SECTION_ADDITIONAL));
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 3, 3, 4,
+                  mx_txt, NULL,
+                  (string(ns_addrs_txt) + string(www_a_txt)).c_str());
 }
 
 /*
@@ -406,14 +378,11 @@ TEST_F(QueryTest, MX) {
 TEST_F(QueryTest, MXAlias) {
     Query(memory_datasrc, Name("cnamemx.example.com"), RRType::MX(),
           response).process();
-    EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
-    // there shouldn't be no additional RRs for the exchanges (we have 3
-    // RRs for the NS)
-    headerCheck(response, qid, Rcode::NOERROR(), query_code,
-                AA_FLAG, 0, 1, 3, 3);
 
-    rrsetsCheck(ns_addrs_txt,
-                response.beginSection(Message::SECTION_ADDITIONAL),
-                response.endSection(Message::SECTION_ADDITIONAL));
+    // there shouldn't be no additional RRs for the exchanges (we have 3
+    // RRs for the NS).  The normal MX case is tested separately so we don't
+    // bother to examine the answer (and authority) sections.
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+                  NULL, NULL, ns_addrs_txt);
 }
 }
