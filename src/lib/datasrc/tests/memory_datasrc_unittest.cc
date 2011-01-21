@@ -363,6 +363,8 @@ TEST_F(MemoryZoneTest, findAny) {
     RRsetList glue_child_rrsets;
     findAnyTest(child_glue_name_, Zone::SUCCESS, glue_child_rrsets,
                 true, ConstRRsetPtr());
+    EXPECT_EQ(rr_child_glue_, glue_child_rrsets.findRRset(RRType::A(),
+                                                     RRClass::IN()));
     EXPECT_EQ(1, glue_child_rrsets.size());
 
     // TODO: test NXRRSET case after rbtree non-terminal logic has
