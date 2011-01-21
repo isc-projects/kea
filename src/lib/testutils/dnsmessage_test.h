@@ -50,6 +50,10 @@ extern const unsigned int CD_FLAG;
 /// value.  The \c message parameter is the Message object to be tested,
 /// and the remaining parameters specify the expected values of the fields.
 ///
+/// If all fields have the expected values the test will be considered
+/// successful.  Otherwise, some of the tests will indicate a failure, which
+/// will make the test case that calls this function fail.
+///
 /// The meaning of the parameters should be obvious, but here are some notes
 /// that may not be so trivial:
 /// - \c opcode is an integer, not an \c dns::Opcode object.  This is because
