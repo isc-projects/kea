@@ -212,31 +212,51 @@ TEST_F(ResolverConfig, invalidListenAddresses) {
 
 // Just test it sets and gets the values correctly
 TEST_F(ResolverConfig, timeouts) {
-    server.setTimeouts(0, 1);
-    EXPECT_EQ(0, server.getTimeouts().first);
-    EXPECT_EQ(1, server.getTimeouts().second);
+    server.setTimeouts(0, 1, 2, 3);
+    EXPECT_EQ(0, server.getQueryTimeout());
+    EXPECT_EQ(1, server.getClientTimeout());
+    EXPECT_EQ(2, server.getLookupTimeout());
+    EXPECT_EQ(3, server.getRetries());
     server.setTimeouts();
-    EXPECT_EQ(-1, server.getTimeouts().first);
-    EXPECT_EQ(0, server.getTimeouts().second);
+    EXPECT_EQ(2000, server.getQueryTimeout());
+    EXPECT_EQ(4000, server.getClientTimeout());
+    EXPECT_EQ(30000, server.getLookupTimeout());
+    EXPECT_EQ(3, server.getRetries());
 }
 
 TEST_F(ResolverConfig, timeoutsConfig) {
     ElementPtr config = Element::fromJSON("{"
-            "\"timeout\": 1000,"
-            "\"retries\": 3"
+            "\"timeout_query\": 1000,"
+            "\"timeout_client\": 2000,"
+            "\"timeout_lookup\": 3000,"
+            "\"retries\": 4"
             "}");
     ConstElementPtr result(server.updateConfig(config));
     EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
-    EXPECT_EQ(1000, server.getTimeouts().first);
-    EXPECT_EQ(3, server.getTimeouts().second);
+    EXPECT_EQ(1000, server.getQueryTimeout());
+    EXPECT_EQ(2000, server.getClientTimeout());
+    EXPECT_EQ(3000, server.getLookupTimeout());
+    EXPECT_EQ(4, server.getRetries());
 }
 
 TEST_F(ResolverConfig, invalidTimeoutsConfig) {
     invalidTest("{"
-        "\"timeout\": \"error\""
+        "\"timeout_query\": \"error\""
         "}");
     invalidTest("{"
-        "\"timeout\": -2"
+        "\"timeout_query\": -2"
+        "}");
+    invalidTest("{"
+        "\"timeout_client\": \"error\""
+        "}");
+    invalidTest("{"
+        "\"timeout_client\": -2"
+        "}");
+    invalidTest("{"
+        "\"timeout_lookup\": \"error\""
+        "}");
+    invalidTest("{"
+        "\"timeout_lookup\": -2"
         "}");
     invalidTest("{"
         "\"retries\": \"error\""
