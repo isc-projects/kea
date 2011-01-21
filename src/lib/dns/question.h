@@ -188,7 +188,7 @@ public:
     ///
     /// This method simply calls the \c %toWire() methods of the corresponding
     /// \c Name, \c RRType and \c RRClass classes for this \c Question, and
-    /// these methods may throw an exception.
+    /// these methods may throw an exception.QU
     /// In particular, if resource allocation fails, a corresponding standard
     /// exception will be thrown.
     ///
@@ -230,16 +230,36 @@ public:
     //@}
 
     ///
-    /// \name Comparison Operator
+    /// \name Comparison Operators
     ///
     //@{
-    /// A comparison operator is needed for this class so it can
+    /// A "less than" operator is needed for this class so it can
     /// function as an index to std::map.
     bool operator <(const Question& rhs) const {
         return (rrclass_ < rhs.rrclass_ ||
                 (rrclass_ == rhs.rrclass_ &&
                  (rrtype_ < rhs.rrtype_ ||
                   (rrtype_ == rhs.rrtype_ && (name_ < rhs.name_)))));
+    }
+
+    /// Equality operator.  Primarily used to compare the question section in
+    /// a response to that in the query.
+    ///
+    /// \param rhs Question to compare against
+    /// \return true if name, class and type are equal, false otherwise
+    bool operator==(const Question& rhs) const {
+        return ((rrclass_ == rhs.rrclass_) && (rrtype_ == rhs.rrtype_) &&
+                (name_ == rhs.name_));
+    }
+
+    /// Inequality operator.  Primarily used to compare the question section in
+    /// a response to that in the query.
+    ///
+    /// \param rhs Question to compare against
+    /// \return true if one or more of the name, class and type do not match,
+    /// false otherwise.
+    bool operator!=(const Question& rhs) const {
+        return (!operator==(rhs));
     }
     //@}
 
