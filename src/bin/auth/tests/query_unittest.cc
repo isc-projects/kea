@@ -205,9 +205,6 @@ protected:
     Message response;
     const qid_t qid;
     const uint16_t query_code;
-    stringstream expected_answer;
-    stringstream expected_authority;
-    stringstream expected_additional;
 };
 
 TEST_F(QueryTest, noZone) {
@@ -226,18 +223,15 @@ TEST_F(QueryTest, exactMatch) {
     headerCheck(response, qid, Rcode::NOERROR(), query_code,
                 AA_FLAG, 0, 1, 3, 3);
 
-    expected_answer << www_a_txt;
-    rrsetsCheck(expected_answer,
+    rrsetsCheck(www_a_txt,
                 response.beginSection(Message::SECTION_ANSWER),
                 response.endSection(Message::SECTION_ANSWER));
 
-    expected_authority << zone_ns_txt;
-    rrsetsCheck(expected_authority,
+    rrsetsCheck(zone_ns_txt,
                 response.beginSection(Message::SECTION_AUTHORITY),
                 response.endSection(Message::SECTION_AUTHORITY));
 
-    expected_additional << ns_addrs_txt;
-    rrsetsCheck(expected_additional,
+    rrsetsCheck(ns_addrs_txt,
                 response.beginSection(Message::SECTION_ADDITIONAL),
                 response.endSection(Message::SECTION_ADDITIONAL));
 }
@@ -251,20 +245,16 @@ TEST_F(QueryTest, exactAddrMatch) {
     headerCheck(response, qid, Rcode::NOERROR(), query_code,
                 AA_FLAG, 0, 1, 3, 2);
 
-    expected_answer << "noglue.example.com. 3600 IN A 192.0.2.53\n";
-    rrsetsCheck(expected_answer,
+    rrsetsCheck("noglue.example.com. 3600 IN A 192.0.2.53\n",
                 response.beginSection(Message::SECTION_ANSWER),
                 response.endSection(Message::SECTION_ANSWER));
 
-    expected_authority << zone_ns_txt;
-    rrsetsCheck(expected_authority,
+    rrsetsCheck(zone_ns_txt,
                 response.beginSection(Message::SECTION_AUTHORITY),
                 response.endSection(Message::SECTION_AUTHORITY));
 
-    expected_additional <<
-        "glue.delegation.example.com. 3600 IN A 192.0.2.153\n"
-        "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n";
-    rrsetsCheck(expected_additional,
+    rrsetsCheck("glue.delegation.example.com. 3600 IN A 192.0.2.153\n"
+                "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n",
                 response.beginSection(Message::SECTION_ADDITIONAL),
                 response.endSection(Message::SECTION_ADDITIONAL));
 }
@@ -278,13 +268,11 @@ TEST_F(QueryTest, apexNSMatch) {
     headerCheck(response, qid, Rcode::NOERROR(), query_code,
                 AA_FLAG, 0, 3, 0, 3);
 
-    expected_answer << zone_ns_txt;
-    rrsetsCheck(expected_answer,
+    rrsetsCheck(zone_ns_txt,
                 response.beginSection(Message::SECTION_ANSWER),
                 response.endSection(Message::SECTION_ANSWER));
 
-    expected_additional << ns_addrs_txt;
-    rrsetsCheck(expected_additional,
+    rrsetsCheck(ns_addrs_txt,
                 response.beginSection(Message::SECTION_ADDITIONAL),
                 response.endSection(Message::SECTION_ADDITIONAL));
 }
@@ -298,20 +286,16 @@ TEST_F(QueryTest, exactAnyMatch) {
     headerCheck(response, qid, Rcode::NOERROR(), query_code,
                 AA_FLAG, 0, 1, 3, 2);
 
-    expected_answer << "noglue.example.com. 3600 IN A 192.0.2.53\n";
-    rrsetsCheck(expected_answer,
+    rrsetsCheck("noglue.example.com. 3600 IN A 192.0.2.53\n",
                 response.beginSection(Message::SECTION_ANSWER),
                 response.endSection(Message::SECTION_ANSWER));
 
-    expected_authority << zone_ns_txt;
-    rrsetsCheck(expected_authority,
+    rrsetsCheck(zone_ns_txt,
                 response.beginSection(Message::SECTION_AUTHORITY),
                 response.endSection(Message::SECTION_AUTHORITY));
 
-    expected_additional <<
-        "glue.delegation.example.com. 3600 IN A 192.0.2.153\n"
-        "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n";
-    rrsetsCheck(expected_additional,
+    rrsetsCheck("glue.delegation.example.com. 3600 IN A 192.0.2.153\n"
+                "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n",
                 response.beginSection(Message::SECTION_ADDITIONAL),
                 response.endSection(Message::SECTION_ADDITIONAL));
 }
@@ -335,13 +319,11 @@ TEST_F(QueryTest, delegation) {
     headerCheck(response, qid, Rcode::NOERROR(), query_code,
                 0, 0, 0, 4, 3);
 
-    expected_authority << delegation_txt;
-    rrsetsCheck(expected_authority,
+    rrsetsCheck(delegation_txt,
                 response.beginSection(Message::SECTION_AUTHORITY),
                 response.endSection(Message::SECTION_AUTHORITY));
 
-    expected_additional << ns_addrs_txt;
-    rrsetsCheck(expected_additional,
+    rrsetsCheck(ns_addrs_txt,
                 response.beginSection(Message::SECTION_ADDITIONAL),
                 response.endSection(Message::SECTION_ADDITIONAL));
 }
@@ -351,8 +333,7 @@ TEST_F(QueryTest, nxdomain) {
                           response).process());
     headerCheck(response, qid, Rcode::NXDOMAIN(), query_code,
                 AA_FLAG, 0, 0, 1, 0);
-    expected_authority << soa_txt;
-    rrsetsCheck(expected_authority,
+    rrsetsCheck(soa_txt,
                 response.beginSection(Message::SECTION_AUTHORITY),
                 response.endSection(Message::SECTION_AUTHORITY),
                 Name("example.com"));
@@ -364,8 +345,7 @@ TEST_F(QueryTest, nxrrset) {
 
     headerCheck(response, qid, Rcode::NOERROR(), query_code,
                 AA_FLAG, 0, 0, 1, 0);
-    expected_authority << soa_txt;
-    rrsetsCheck(expected_authority,
+    rrsetsCheck(soa_txt,
                 response.beginSection(Message::SECTION_AUTHORITY),
                 response.endSection(Message::SECTION_AUTHORITY),
                 Name("example.com"));
@@ -409,14 +389,11 @@ TEST_F(QueryTest, MX) {
     headerCheck(response, qid, Rcode::NOERROR(), query_code,
                 AA_FLAG, 0, 3, 3, 4);
 
-    expected_answer << mx_txt;
-    rrsetsCheck(expected_answer,
+    rrsetsCheck(mx_txt,
                 response.beginSection(Message::SECTION_ANSWER),
                 response.endSection(Message::SECTION_ANSWER));
 
-    expected_additional << ns_addrs_txt;
-    expected_additional << www_a_txt;
-    rrsetsCheck(expected_additional,
+    rrsetsCheck(string(ns_addrs_txt) + string(www_a_txt),
                 response.beginSection(Message::SECTION_ADDITIONAL),
                 response.endSection(Message::SECTION_ADDITIONAL));
 }
@@ -435,8 +412,7 @@ TEST_F(QueryTest, MXAlias) {
     headerCheck(response, qid, Rcode::NOERROR(), query_code,
                 AA_FLAG, 0, 1, 3, 3);
 
-    expected_additional << ns_addrs_txt;
-    rrsetsCheck(expected_additional,
+    rrsetsCheck(ns_addrs_txt,
                 response.beginSection(Message::SECTION_ADDITIONAL),
                 response.endSection(Message::SECTION_ADDITIONAL));
 }
