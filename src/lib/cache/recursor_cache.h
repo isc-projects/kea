@@ -32,7 +32,7 @@ typedef std::map<uint16_t, MessageCachePtr> MessageCacheMap;
 typedef std::map<uint16_t, RRsetCachePtr> RRsetCacheMap;
 
 //TODO a better proper default cache size
-#define MESSAGE_CACHE_DEFAULT_SIZE 1000000 
+#define MESSAGE_CACHE_DEFAULT_SIZE 1000000
 #define RRSET_CACHE_DEFAULT_SIZE  10000
 
 /// \brief Cache Size Information.
@@ -44,7 +44,7 @@ struct CacheSizeInfo
     uint32_t rrset_cache_size; // The size for rrset cache.
 };
 
-///    
+///
 /// \brief Recursor Cache
 /// The object of RecursorCache represents the cache of the recursor. It holds
 /// a list of message cache and rrset cache.
@@ -52,7 +52,7 @@ struct CacheSizeInfo
 class RecursorCache {
 public:
     /// \brief Construct Function
-    /// \param caches_size cache size information for each 
+    /// \param caches_size cache size information for each
     /// messages/rrsets.
     RecursorCache(std::vector<CacheSizeInfo> caches_size);
 
@@ -65,26 +65,26 @@ public:
     /// will be added to different sections.
     ///
     /// \return return true if the message can be found, or else, return false.
-    bool lookup(const isc::dns::Name& qname, 
+    bool lookup(const isc::dns::Name& qname,
                 const isc::dns::RRType& qtype,
                 const isc::dns::RRClass& qclass,
                 isc::dns::Message& response) const;
 
     /// \brief Look up rrset in cache.
-    /// \return return the shared_ptr of rrset if it can be found, 
-    /// or else, return NULL. When looking up, cache1(localzone) will 
+    /// \return return the shared_ptr of rrset if it can be found,
+    /// or else, return NULL. When looking up, cache1(localzone) will
     /// be searched first, if not found, then search in cache2.
     ///
     /// \overload
     ///
-    isc::dns::RRsetPtr lookup(const isc::dns::Name& qname, 
+    isc::dns::RRsetPtr lookup(const isc::dns::Name& qname,
                               const isc::dns::RRType& qtype,
                               const isc::dns::RRClass& qclass) const;
     //@}
 
     /// \brief Update the message in the cache with the new one.
     /// \return return true if the message is updated into the cache,
-    /// or else, return false. 
+    /// or else, return false.
     ///
     /// \note, the function doesn't do any message
     /// validation check, the user should make sure the message is valid.
@@ -96,8 +96,8 @@ public:
     /// will be added into both of them.
     /// \return return false, if the class of the parameter rrset is
     /// allowed to be cached.
-    /// 
-    /// \overload 
+    ///
+    /// \overload
     ///
     bool update(const isc::dns::RRset& rrset);
 
@@ -112,13 +112,13 @@ public:
     void load(const std::string& file_name);
     //@}
 
-protected:    
+protected:
     /// \brief Look up rrset in one specified rrset cache.
     /// This function is used internally by lookup()
     /// \param rrsets_cache the cache for looking up rrset.
     /// \return return the shared_ptr of the rrset if it can be
     /// found in the cache.
-    isc::dns::RRsetPtr lookup_in_rrset_cache(const isc::dns::Name& qname, 
+    isc::dns::RRsetPtr lookup_in_rrset_cache(const isc::dns::Name& qname,
                       const isc::dns::RRType& qtype,
                       const isc::dns::RRClass& qclass,
                       const RRsetCacheMap& rrsets_cache) const;
@@ -137,11 +137,11 @@ protected:
     /// \brief the list of message cache for configured classes(message cache
     /// is class-specific)
     MessageCacheMap messages_cache_;
-    
+
     /// \name rrset caches
     //@{
     /// \brief the list of rrset cache for configured classes.
-    /// rrsets_cache1_ is used to cache the configured rrsets in localzone, rrsets 
+    /// rrsets_cache1_ is used to cache the configured rrsets in localzone, rrsets
     /// in it will never expire.
     RRsetCacheMap rrsets_cache1_;
 
