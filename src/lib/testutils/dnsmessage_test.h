@@ -14,6 +14,8 @@
 
 #include <algorithm>
 #include <functional>
+#include <iosfwd>
+#include <string>
 #include <vector>
 
 #include <dns/message.h>
