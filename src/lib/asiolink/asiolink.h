@@ -545,7 +545,10 @@ public:
     ///     and return if it returs).
     RecursiveQuery(DNSService& dns_service,
                    const std::vector<std::pair<std::string, uint16_t> >&
-                   upstream, int timeout = -1, unsigned retries = 0);
+                   upstream, int query_timeout = 2000,
+                   int client_timeout = 4000,
+                   int lookup_timeout = 30000,
+                   unsigned retries = 3);
     //@}
 
     /// \brief Initiates an upstream query in the \c RecursiveQuery object.
@@ -565,7 +568,9 @@ private:
     DNSService& dns_service_;
     boost::shared_ptr<std::vector<std::pair<std::string, uint16_t> > >
         upstream_;
-    int timeout_;
+    int query_timeout_;
+    int client_timeout_;
+    int lookup_timeout_;
     unsigned retries_;
 };
 
