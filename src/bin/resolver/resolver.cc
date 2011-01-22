@@ -457,7 +457,6 @@ parseAddresses(ConstElementPtr addresses) {
                     }
                     result.push_back(addr_t(addr->stringValue(),
                         port->intValue()));
-                    dlog("[Resolver] tmpDebug: Adding " + addr->stringValue() + "\n");
                 }
                 catch (const TypeError &e) { // Better error message
                     isc_throw(TypeError,

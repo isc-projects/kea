@@ -27,7 +27,6 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <boost/foreach.hpp>
 
 #include <boost/shared_ptr.hpp>
 
@@ -499,24 +498,21 @@ public:
         // should use NSAS for root servers
         // Adding root servers if not a forwarder
         if (upstream_->empty()) {
-            dlog("====checking upstream_root_");
             if (upstream_root_->empty()) { //if no root ips given, use this
                 zone_servers_.push_back(addr_t("192.5.5.241", 53));
             }
             else
             {
-              //copy the list (would be faster to just point, but that
-              //should be done in NSAS, I think...)
-              zone_servers_.push_back(addr_t("192.5.5.241", 53));
-              //BOOST_FOREACH(addr_t& address, upstream_root);
-              //{
-               // zone_servers_.push_back(address);
-               dlog("Found root server ");
-/* + \
-                     boost::lexical_cast<string>(upstream_root_->size()) + \
-                     "\n");
-*/
-              //}
+              //copy the list
+              dlog("Size is " + 
+                    boost::lexical_cast<string>(upstream_root_->size()) + 
+                    "\n");
+              //Use BOOST_FOREACH here? Is it faster?
+              for(AddressVector::iterator it = upstream_root_->begin();
+                   it < upstream_root_->end(); it++) {
+                zone_servers_.push_back(addr_t(it->first,it->second));
+                dlog("Put " + zone_servers_.back().first + "into root list\n");
+              }
             }
         }
         send();
