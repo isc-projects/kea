@@ -351,7 +351,7 @@ TEST_F(QueryTest, noSOA) {
 TEST_F(QueryTest, noMatchZone) {
     // there's a zone in the memory datasource but it doesn't match the qname.
     // should result in REFUSED.
-    Query(memory_datasrc, Name("example.org"), qtype, response).process();;
+    Query(memory_datasrc, Name("example.org"), qtype, response).process();
     EXPECT_EQ(Rcode::REFUSED(), response.getRcode());
 }
 
