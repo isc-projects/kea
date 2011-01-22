@@ -19,6 +19,8 @@
 
 #include <xfr/xfrout_client.h>
 
+#include <asiolink/asiolink.h>
+
 // A minimal mock configuration session.  Most the methods are
 // stubbed out, except for a very basic group_sendmsg() and
 // group_recvmsg().  hasQueuedMessages() always returns false.

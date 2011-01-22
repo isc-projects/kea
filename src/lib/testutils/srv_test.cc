@@ -21,6 +21,7 @@
 
 #include <dns/tests/unittest_util.h>
 
+#include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
 
 using namespace isc::dns;
@@ -29,14 +30,6 @@ using namespace asiolink;
 namespace isc {
 namespace testutils {
 const char* const DEFAULT_REMOTE_ADDRESS = "192.0.2.1";
-
-const unsigned int QR_FLAG = 0x1;
-const unsigned int AA_FLAG = 0x2;
-const unsigned int TC_FLAG = 0x4;
-const unsigned int RD_FLAG = 0x8;
-const unsigned int RA_FLAG = 0x10;
-const unsigned int AD_FLAG = 0x20;
-const unsigned int CD_FLAG = 0x40;
 
 SrvTestBase::SrvTestBase() : request_message(Message::RENDER),
                              parse_message(new Message(Message::PARSE)),
@@ -231,37 +224,6 @@ SrvTestBase::axfrOverUDP() {
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, isc::dns::Rcode::FORMERR(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
-}
-
-void
-headerCheck(const Message& message, const qid_t qid, const Rcode& rcode,
-            const uint16_t opcodeval, const unsigned int flags,
-            const unsigned int qdcount,
-            const unsigned int ancount, const unsigned int nscount,
-            const unsigned int arcount)
-{
-    EXPECT_EQ(qid, message.getQid());
-    EXPECT_EQ(rcode, message.getRcode());
-    EXPECT_EQ(opcodeval, message.getOpcode().getCode());
-    EXPECT_EQ((flags & QR_FLAG) != 0,
-              message.getHeaderFlag(Message::HEADERFLAG_QR));
-    EXPECT_EQ((flags & AA_FLAG) != 0,
-              message.getHeaderFlag(Message::HEADERFLAG_AA));
-    EXPECT_EQ((flags & TC_FLAG) != 0,
-              message.getHeaderFlag(Message::HEADERFLAG_TC));
-    EXPECT_EQ((flags & RA_FLAG) != 0,
-              message.getHeaderFlag(Message::HEADERFLAG_RA));
-    EXPECT_EQ((flags & RD_FLAG) != 0,
-              message.getHeaderFlag(Message::HEADERFLAG_RD));
-    EXPECT_EQ((flags & AD_FLAG) != 0,
-              message.getHeaderFlag(Message::HEADERFLAG_AD));
-    EXPECT_EQ((flags & CD_FLAG) != 0,
-              message.getHeaderFlag(Message::HEADERFLAG_CD));
-
-    EXPECT_EQ(qdcount, message.getRRCount(Message::SECTION_QUESTION));
-    EXPECT_EQ(ancount, message.getRRCount(Message::SECTION_ANSWER));
-    EXPECT_EQ(nscount, message.getRRCount(Message::SECTION_AUTHORITY));
-    EXPECT_EQ(arcount, message.getRRCount(Message::SECTION_ADDITIONAL));
 }
 } // end of namespace testutils
 } // end of namespace isc
