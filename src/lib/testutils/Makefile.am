@@ -8,6 +8,7 @@ if HAVE_GTEST
 lib_LTLIBRARIES = libtestutils.la
 
 libtestutils_la_SOURCES = srv_test.h srv_test.cc
+libtestutils_la_SOURCES += dnsmessage_test.h dnsmessage_test.cc
 libtestutils_la_SOURCES += mockups.h
 libtestutils_la_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 endif
