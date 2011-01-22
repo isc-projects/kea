@@ -540,6 +540,8 @@ public:
     ///        query on.
     /// \param upstream Addresses and ports of the upstream servers
     ///        to forward queries to.
+    /// \param upstream_root Addresses and ports of the root servers
+    ///        to forward queries to.
     /// \param timeout How long to timeout the query, in ms
     ///     -1 means never timeout (but do not use that).
     ///     TODO: This should be computed somehow dynamically in future
@@ -547,7 +549,10 @@ public:
     ///     and return if it returs).
     RecursiveQuery(DNSService& dns_service,
                    const std::vector<std::pair<std::string, uint16_t> >&
-                   upstream, int timeout = -1, unsigned retries = 0);
+                   upstream, 
+                   const std::vector<std::pair<std::string, uint16_t> >&
+                   upstream_root, 
+                   int timeout = -1, unsigned retries = 0);
     //@}
 
     /// \brief Initiates an upstream query in the \c RecursiveQuery object.
@@ -568,6 +573,8 @@ private:
     DNSService& dns_service_;
     boost::shared_ptr<std::vector<std::pair<std::string, uint16_t> > >
         upstream_;
+    boost::shared_ptr<std::vector<std::pair<std::string, uint16_t> > >
+        upstream_root_;
     int timeout_;
     unsigned retries_;
 };
