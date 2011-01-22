@@ -76,7 +76,7 @@ public:
     void querySetup(DNSService& dnss) {
         assert(!rec_query_); // queryShutdown must be called first
         dlog("Query setup");
-        rec_query_ = new RecursiveQuery(dnss, upstream_);
+        rec_query_ = new RecursiveQuery(dnss, upstream_,upstream_root_);
     }
 
     void queryShutdown() {
@@ -110,8 +110,8 @@ public:
         queryShutdown();
         upstream_root_ = upstream_root;
         if (dnss) {
-            if (!upstream_.empty()) {
-                dlog("Setting forward addresses:");
+            if (!upstream_root_.empty()) {
+                dlog("Setting root addresses:");
                 BOOST_FOREACH(const addr_t& address, upstream_root) {
                     dlog(" " + address.first + ":" +
                         boost::lexical_cast<string>(address.second));
@@ -457,6 +457,7 @@ parseAddresses(ConstElementPtr addresses) {
                     }
                     result.push_back(addr_t(addr->stringValue(),
                         port->intValue()));
+                    dlog("[Resolver] tmpDebug: Adding " + addr->stringValue() + "\n");
                 }
                 catch (const TypeError &e) { // Better error message
                     isc_throw(TypeError,
@@ -465,7 +466,7 @@ parseAddresses(ConstElementPtr addresses) {
             }
         } else if (addresses->getType() != Element::null) {
             isc_throw(TypeError,
-                "forward_addresses config element must be a list");
+                "root_addresses, forward_addresses, and listen_on config element must be a list");
         }
     }
     return (result);
