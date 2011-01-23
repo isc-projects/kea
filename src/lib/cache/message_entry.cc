@@ -26,7 +26,7 @@ using namespace std;
 namespace isc {
 namespace cache {
 
-static uint32_t MAX_UINT32 = numeric_limits<uint32_t>::max();    
+static uint32_t MAX_UINT32 = numeric_limits<uint32_t>::max();
 
 MessageEntry::MessageEntry(const isc::dns::Message& msg,
                            boost::shared_ptr<RRsetCache> rrset_cache):
@@ -38,14 +38,14 @@ MessageEntry::MessageEntry(const isc::dns::Message& msg,
     entry_name_ = genCacheEntryName(query_name_, query_type_);
     hash_key_ptr_ = new HashKey(entry_name_, RRClass(query_class_));
 }
-    
+
 bool
-MessageEntry::getRRsetEntries(vector<RRsetEntryPtr>& rrset_entry_vec, 
+MessageEntry::getRRsetEntries(vector<RRsetEntryPtr>& rrset_entry_vec,
                               const time_t time_now)
 {
     uint16_t entry_count = answer_count_ + authority_count_ + additional_count_;
     for (int index = 0; index < entry_count; ++index) {
-        RRsetEntryPtr rrset_entry = rrset_cache_->lookup(rrsets_[index].name_, 
+        RRsetEntryPtr rrset_entry = rrset_cache_->lookup(rrsets_[index].name_,
                                                         rrsets_[index].type_);
         if (time_now < rrset_entry->getExpireTime()) {
             rrset_entry_vec.push_back(rrset_entry);
@@ -93,7 +93,7 @@ MessageEntry::genMessage(const time_t& time_now,
             return false;
         }
 
-        // Begin message generation. We don't need to add question 
+        // Begin message generation. We don't need to add question
         // section, since it has been included in the message.
         // Set cached header flags.
         msg.setHeaderFlag(Message::HEADERFLAG_AA, headerflag_aa_);
@@ -111,13 +111,13 @@ MessageEntry::genMessage(const time_t& time_now,
 RRsetTrustLevel
 MessageEntry::getRRsetTrustLevel(const Message& message,
                    const isc::dns::RRsetPtr rrset,
-                   const isc::dns::Message::Section& section) 
+                   const isc::dns::Message::Section& section)
 {
     bool aa = message.getHeaderFlag(Message::HEADERFLAG_AA);
     switch(section) {
         case Message::SECTION_ANSWER: {
             if (aa) {
-                // According RFC2181 section 5.4.1, only the record 
+                // According RFC2181 section 5.4.1, only the record
                 // describing that ailas is necessarily authoritative.
                 // If there is one or more CNAME records in answer section.
                 // CNAME records is assumed as the first rrset.
@@ -128,25 +128,25 @@ MessageEntry::getRRsetTrustLevel(const Message& message,
                     } else {
                         return RRSET_TRUST_ANSWER_NONAA;
                     }
-                } 
+                }
 
-                // Here, if the first rrset is DNAME, then assume the 
+                // Here, if the first rrset is DNAME, then assume the
                 // second rrset is synchronized CNAME record, except
                 // these two records, any other records in answer section
                 // should be treated as non-authoritative.
                 // TODO, this part logic should be revisited later,
                 // since it's not mentioned by RFC2181.
                 if ((*rrset_iter)->getType() == RRType("DNAME")) {
-                    if ((*rrset_iter).get() == rrset.get() || 
-                        ((++rrset_iter) != message.endSection(section) && 
+                    if ((*rrset_iter).get() == rrset.get() ||
+                        ((++rrset_iter) != message.endSection(section) &&
                                      (*rrset_iter).get() == rrset.get())) {
 
                         return RRSET_TRUST_ANSWER_AA;
                     } else {
                         return RRSET_TRUST_ANSWER_NONAA;
                     }
-                } 
-                
+                }
+
                 return RRSET_TRUST_ANSWER_AA;
 
             } else {
@@ -154,7 +154,7 @@ MessageEntry::getRRsetTrustLevel(const Message& message,
             }
             break;
         }
-        
+
         case Message::SECTION_AUTHORITY: {
             if (aa) {
                 return RRSET_TRUST_AUTHORITY_AA;
@@ -181,7 +181,7 @@ MessageEntry::getRRsetTrustLevel(const Message& message,
 void
 MessageEntry::parseSection(const isc::dns::Message& msg,
                          const Message::Section& section,
-                         uint32_t& smaller_ttl, 
+                         uint32_t& smaller_ttl,
                          uint16_t& rrset_count)
 {
     RRsetIterator iter;
@@ -189,7 +189,7 @@ MessageEntry::parseSection(const isc::dns::Message& msg,
     for (iter = msg.beginSection(section);
          iter != msg.endSection(section);
          ++iter) {
-        // Add the rrset entry to rrset_cache or update the existed 
+        // Add the rrset entry to rrset_cache or update the existed
         // rrset entry if the new one is more authoritative.
         //TODO set proper rrset trust level.
         RRsetPtr rrset_ptr = *iter;
@@ -216,12 +216,12 @@ MessageEntry::initMessageEntry(const isc::dns::Message& msg) {
 
     // We only cache the first question in question section.
     // TODO, do we need to support muptiple questions?
-    query_count_ = 1; 
+    query_count_ = 1;
     QuestionIterator iter = msg.beginQuestion();
     query_name_ = (*iter)->getName().toText();
     query_type_ = (*iter)->getType().getCode();
     query_class_ = (*iter)->getClass().getCode();
-    
+
     uint32_t min_ttl = MAX_UINT32;
     parseSection(msg, Message::SECTION_ANSWER, min_ttl, answer_count_);
     parseSection(msg, Message::SECTION_AUTHORITY, min_ttl, authority_count_);

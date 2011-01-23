@@ -26,19 +26,19 @@ namespace cache {
 
 /// \brief Entry Name Generation Functions
 /// Generate the name for message/rrset entries.
-/// The name is name(name of rrset, for message entry, 
+/// The name is name(name of rrset, for message entry,
 /// the name is query name) + str(type)
 /// Note. the name is text string, not wire format.
 /// eg. if name is 'example.com.', type is 'A', the return
 /// value is 'example.com.1'
 /// \return return the entry name.
 const std::string
-genCacheEntryName(const isc::dns::Name& name, 
+genCacheEntryName(const isc::dns::Name& name,
                  const isc::dns::RRType& type);
-   
-/// 
+
+///
 /// \overload
-/// 
+///
 const std::string
 genCacheEntryName(const std::string& namestr, const uint16_t type);
 

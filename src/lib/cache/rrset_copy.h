@@ -17,10 +17,10 @@
 #ifndef __RRSET_COPY_
 #define __RRSET_COPY_
 
+#include <dns/rrset.h>
+
 namespace isc {
 namespace cache {
-
-class RRset;
 
 /// \brief RRset Copy Function
 /// \note RRset class doesn't provide the interface for
@@ -28,7 +28,7 @@ class RRset;
 ///       we have to do the copy.
 
 void
-rrset_copy(const isc::dns::RRset& src, isc::dns::RRset& dst);
+rrsetCopy(const isc::dns::RRset& src, isc::dns::RRset& dst);
 
 } // namespace cache
 } // namespace isc

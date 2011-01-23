@@ -211,18 +211,6 @@ TEST_F(MessageEntryTest, testGetRRsetEntries) {
     EXPECT_FALSE(message_entry.getRRsetEntriesForTest(vec, expire_time));
 }
 
-static int
-section_rrset_count(Message& msg, Message::Section section) {
-    int count = 0;
-    for (RRsetIterator rrset_iter = msg.beginSection(section);
-         rrset_iter != msg.endSection(section); 
-         ++rrset_iter) {
-        ++count;
-    }
-
-    return count;
-}
-
 TEST_F(MessageEntryTest, testGenMessage) {
     messageFromFile(message_parse, "message_fromWire3");
     DerivedMessageEntry message_entry(message_parse, rrset_cache_);
