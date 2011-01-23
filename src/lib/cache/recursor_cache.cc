@@ -18,6 +18,7 @@
 #include "dns/message.h"
 #include "rrset_cache.h"
 #include <string>
+#include <algorithm>
 
 using namespace isc::dns;
 using namespace std;
@@ -25,20 +26,40 @@ using namespace std;
 namespace isc {
 namespace cache {
 
+RecursorCache::RecursorCache() {
+    uint16_t klass = 1; // class 'IN'
+    class_supported_.push_back(klass);
+    local_zone_data_[klass] = LocalZoneDataPtr(new LocalZoneData(klass));
+    rrsets_cache_[klass] = RRsetCachePtr(new RRsetCache(RRSET_CACHE_DEFAULT_SIZE, klass));
+    messages_cache_[klass] = MessageCachePtr(new MessageCache(rrsets_cache_[klass],
+                                                        MESSAGE_CACHE_DEFAULT_SIZE,
+                                                        klass));
+}
+
 RecursorCache::RecursorCache(std::vector<CacheSizeInfo> caches_size) {
     uint32_t index = 0;
     uint32_t size = caches_size.size();
-    for (; index < size; index++) {
+    for (; index < size; ++index) {
         CacheSizeInfo* infop = &caches_size[index];
-        uint16_t klass = infop->class_;
-        rrsets_cache1_[klass] = RRsetCachePtr(new
+        uint16_t klass = infop->klass;
+        class_supported_.push_back(klass);
+        // TODO We should find one way to load local zone data.
+        local_zone_data_[klass] = LocalZoneDataPtr(new LocalZoneData(klass));
+        rrsets_cache_[klass] = RRsetCachePtr(new
                                      RRsetCache(infop->rrset_cache_size, klass));
-        rrsets_cache2_[klass] = RRsetCachePtr(new
-                                     RRsetCache(infop->rrset_cache_size, klass));
-        messages_cache_[klass] = MessageCachePtr(new MessageCache(rrsets_cache2_[klass],
+        messages_cache_[klass] = MessageCachePtr(new MessageCache(rrsets_cache_[klass],
                                                       infop->message_cache_size,
                                                       klass));
     }
+
+    // Sort the vector, so that binary_find can be used.
+    sort(class_supported_.begin(), class_supported_.end());
+}
+
+bool
+RecursorCache::classIsSupported(uint16_t klass) const {
+    return binary_search(class_supported_.begin(),
+                         class_supported_.end(), klass);
 }
 
 bool
@@ -47,44 +68,27 @@ RecursorCache::lookup(const isc::dns::Name& qname,
                const isc::dns::RRClass& qclass,
                isc::dns::Message& response) const
 {
-    // First, query in rrsets_cache1_, if the rrset(qname, qtype, qclass) can be
-    // found in rrsets_cache1_, generated reply message with only the rrset in
+    uint16_t class_code = qclass.getCode();
+    if (!classIsSupported(class_code)) {
+        return false;
+    }
+
+    // message response should has question section already.
+    if (response.beginQuestion() == response.endQuestion()) {
+        isc_throw(MessageNoQuestionSection, "Message has no question section");
+    }
+
+    // First, query in local zone, if the rrset(qname, qtype, qclass) can be
+    // found in local zone, generated reply message with only the rrset in
     // answer section.
-    RRsetCacheMap::const_iterator cache_iter = rrsets_cache1_.find(qclass.getCode());
-    if (cache_iter != rrsets_cache1_.end()) {
-        RRsetEntryPtr rrset_entry = cache_iter->second->lookup(qname, qtype);
-        if (rrset_entry) {
-            boost::shared_ptr<isc::dns::RRset> rrset_ptr = rrset_entry->getRRset();
-            response.addRRset(Message::SECTION_ANSWER, rrset_ptr);
-        }
+    RRsetPtr rrset_ptr = (local_zone_data_[class_code])->lookup(qname, qtype);
+    if (rrset_ptr) {
+        response.addRRset(Message::SECTION_ANSWER, rrset_ptr);
+        return true;
     }
 
     // Search in class-specific message cache.
-    MessageCacheMap::const_iterator iter = messages_cache_.find(qclass.getCode());
-    if (iter == messages_cache_.end()) {
-        // Can't find the class-specific message cache, return false.
-        return false;
-    } else {
-        return iter->second->lookup(qname, qtype, response);
-    }
-}
-
-isc::dns::RRsetPtr
-RecursorCache::lookup_in_rrset_cache(const isc::dns::Name& qname,
-                      const isc::dns::RRType& qtype,
-                      const isc::dns::RRClass& qclass,
-                      const RRsetCacheMap& rrsets_cache) const
-{
-    RRsetCacheMap::const_iterator cache_iter = rrsets_cache.find(qclass.getCode());
-    if (cache_iter != rrsets_cache.end()) {
-        RRsetEntryPtr rrset_entry = cache_iter->second->lookup(qname, qtype);
-        if (rrset_entry) {
-            return rrset_entry->getRRset();
-        }
-    }
-
-    // Can't find the rrset in specified rrset cache, return NULL.
-    return RRsetPtr();
+    return messages_cache_[class_code]->lookup(qname, qtype, response);
 }
 
 isc::dns::RRsetPtr
@@ -92,61 +96,85 @@ RecursorCache::lookup(const isc::dns::Name& qname,
                const isc::dns::RRType& qtype,
                const isc::dns::RRClass& qclass) const
 {
+    uint16_t klass = qclass.getCode();
+    if (!classIsSupported(klass)) {
+        return RRsetPtr();
+    }
+
     // Algorithm:
-    // 1. Search in rrsets_cache1_ first,
-    // 2. Then do search in rrsets_cache2_.
-    RRsetPtr rrset_ptr = lookup_in_rrset_cache(qname, qtype, qclass, rrsets_cache1_);
+    // 1. Search in local zone data first,
+    // 2. Then do search in rrsets_cache_.
+    RRsetPtr rrset_ptr = local_zone_data_[klass]->lookup(qname, qtype);
     if (rrset_ptr) {
         return rrset_ptr;
     } else {
-        rrset_ptr = lookup_in_rrset_cache(qname, qtype, qclass, rrsets_cache2_);
+        RRsetEntryPtr rrset_entry = rrsets_cache_[klass]->lookup(qname, qtype);
+        if (rrset_entry) {
+            return rrset_entry->getRRset();
+        } else {
+            return RRsetPtr();
+        }
+    }
+}
+
+isc::dns::RRsetPtr
+RecursorCache::lookupClosestRRset(const isc::dns::Name& qname,
+                                  const isc::dns::RRType& qtype,
+                                  const isc::dns::RRClass& qclass) const
+{
+    unsigned int count = qname.getLabelCount();
+    unsigned int level = 0;
+    while(level < count) {
+        Name close_name = qname.split(level);
+        RRsetPtr rrset_ptr = lookup(close_name, qtype, qclass);
+        if (rrset_ptr) {
+            return rrset_ptr;
+        } else {
+            ++level;
+        }
     }
 
-    return rrset_ptr;
+    return RRsetPtr();
 }
 
 bool
 RecursorCache::update(const isc::dns::Message& msg) {
     QuestionIterator iter = msg.beginQuestion();
-    MessageCacheMap::iterator cache_iter = messages_cache_.find((*iter)->getClass().getCode());
-    if (cache_iter == messages_cache_.end()) {
-        // The message is not allowed to cached.
+    uint16_t klass = (*iter)->getClass().getCode();
+    if (!classIsSupported(klass)) {
         return false;
-    } else {
-        return cache_iter->second->update(msg);
     }
+
+    return messages_cache_[klass]->update(msg);
 }
 
 bool
-RecursorCache::updateRRsetCache(const isc::dns::RRset& rrset,
-                                RRsetCacheMap& rrset_cache_map)
+RecursorCache::updateRRsetCache(const isc::dns::ConstRRsetPtr rrset_ptr,
+                                RRsetCachePtr rrset_cache_ptr)
 {
-    uint16_t klass = rrset.getClass().getCode();
-    RRsetCacheMap::iterator cache_iter = rrset_cache_map.find(klass);
-    if (cache_iter == rrset_cache_map.end()) {
-        // The rrset is not allowed to be cached.
-        return false;
+    RRsetTrustLevel level;
+    string typestr = rrset_ptr->getType().toText();
+    if (typestr == "A" || typestr == "AAAA") {
+        level = RRSET_TRUST_PRIM_GLUE;
     } else {
-        RRsetTrustLevel level;
-        string typestr = rrset.getType().toText();
-        if (typestr == "A" || typestr == "AAAA") {
-            level = RRSET_TRUST_PRIM_GLUE;
-        } else {
-            level = RRSET_TRUST_PRIM_ZONE_NONGLUE;
-        }
-
-        cache_iter->second->update(rrset, level);
+        level = RRSET_TRUST_PRIM_ZONE_NONGLUE;
     }
+
+    rrset_cache_ptr->update((*rrset_ptr.get()), level);
     return true;
 }
 
 bool
-RecursorCache::update(const isc::dns::RRset& rrset) {
-    if (!updateRRsetCache(rrset, rrsets_cache1_)) {
+RecursorCache::update(const isc::dns::ConstRRsetPtr rrset_ptr) {
+    uint16_t klass = rrset_ptr->getClass().getCode();
+    if (!classIsSupported(klass)) {
         return false;
     }
 
-    return updateRRsetCache(rrset, rrsets_cache2_);
+    // First update local zone, then update rrset cache.
+    local_zone_data_[klass]->update((*rrset_ptr.get()));
+    updateRRsetCache(rrset_ptr, rrsets_cache_[klass]);
+    return true;
 }
 
 void

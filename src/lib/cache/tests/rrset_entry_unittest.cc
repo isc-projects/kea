@@ -47,6 +47,14 @@ TEST_F(GenCacheKeyTest, genCacheEntryKey2) {
     EXPECT_EQ(keystr, genCacheEntryName(name, type));
 }
 
+class DerivedRRsetEntry: public RRsetEntry {
+public:
+
+    void updateTTLForTest() {
+        
+    }
+};
+
 #define TEST_TTL 100
 class RRsetEntryTest : public ::testing::Test {
 protected:

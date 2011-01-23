@@ -36,7 +36,7 @@ MessageCache::MessageCache(boost::shared_ptr<RRsetCache> rrset_cache,
                   new HashDeleter<MessageEntry>(message_table_))
 {
 }
-    
+
 bool
 MessageCache::lookup(const isc::dns::Name& qname,
                      const isc::dns::RRType& qtype,
@@ -58,7 +58,7 @@ MessageCache::update(const Message& msg) {
     QuestionIterator iter = msg.beginQuestion();
     std::string entry_name = genCacheEntryName((*iter)->getName(), (*iter)->getType());
     HashKey entry_key = HashKey(entry_name, RRClass(message_class_));
-    
+
     // The simplest way to update is removing the old message entry directly.
     // We have find the existed message entry, since we need to delete it
     // from lru list too.
@@ -71,8 +71,8 @@ MessageCache::update(const Message& msg) {
     }
 
     MessageEntryPtr msg_entry(new MessageEntry(msg, rrset_cache_));
-    message_lru_.add(msg_entry); 
-    return message_table_.add(msg_entry, entry_key, true); 
+    message_lru_.add(msg_entry);
+    return message_table_.add(msg_entry, entry_key, true);
 }
 
 void

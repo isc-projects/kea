@@ -18,6 +18,7 @@
 #include <nsas/nsas_entry.h>
 #include <nsas/fetchable.h>
 #include "rrset_entry.h"
+#include "rrset_copy.h"
 
 using namespace isc::dns;
 
@@ -31,17 +32,7 @@ RRsetEntry::RRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& leve
     rrset_(new RRset(rrset.getName(), rrset.getClass(), rrset.getType(), rrset.getTTL())),
     hash_key_(HashKey(entry_name_, rrset_->getClass()))
 {
-    RdataIteratorPtr rdata_itor = rrset.getRdataIterator();
-    rdata_itor->first();
-    while(!rdata_itor->isLast()){
-        rrset_->addRdata(rdata_itor->getCurrent());
-        rdata_itor->next();
-    }
-
-    RRsetPtr rrsig = rrset.getRRsig();
-    if (rrsig != NULL){
-        rrset_->addRRsig(rrsig);
-    }
+    rrsetCopy(rrset, *(rrset_.get()));
 }
 
 isc::dns::RRsetPtr
