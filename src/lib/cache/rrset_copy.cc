@@ -15,28 +15,26 @@
 // $Id$
 
 #include "rrset_copy.h"
-#include <dns/rrset.h>
+
+using namespace isc::dns;
 
 namespace isc {
 namespace cache {
 
 void
-rrset_copy(const isc::dns::RRset& src, isc::dns::RRset& dst) {
+rrsetCopy(const isc::dns::RRset& src, isc::dns::RRset& dst) {
     RdataIteratorPtr rdata_itor = src.getRdataIterator();
     rdata_itor->first();
     while(!rdata_itor->isLast()){
-        dst->addRdata(rdata_itor->getCurrent());
+        dst.addRdata(rdata_itor->getCurrent());
         rdata_itor->next();
     }
 
     RRsetPtr rrsig = src.getRRsig();
     if (rrsig != NULL){
-        dst->addRRsig(rrsig);
+        dst.addRRsig(rrsig);
     }
 }
 
 } // namespace cache
 } // namespace isc
-
-#endif // __RRSET_COPY_
-

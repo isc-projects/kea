@@ -16,6 +16,8 @@
 
 #include <dns/rrset.h>
 #include "local_zone_data.h"
+#include "cache_entry_key.h"
+#include "rrset_copy.h"
 
 using namespace std;
 using namespace isc::dns;
@@ -24,28 +26,39 @@ namespace isc {
 namespace cache {
 
 typedef pair<std::string, RRsetPtr> RRsetMapPair;
+typedef map<std::string, RRsetPtr>::iterator RRsetMapIterator;
 
-RRsetPtr
-LocalZoneData::lookup(const isc::dns::Name& qname,
-                      const isc::dns::RRType& qtype)
+isc::dns::RRsetPtr
+LocalZoneData::lookup(const isc::dns::Name& name,
+                      const isc::dns::RRType& type)
 {
-    
-
+    string key = genCacheEntryName(name, type);
+    RRsetMapIterator iter = rrsets_map_.find(key);
+    if (iter == rrsets_map_.end()) {
+        return RRsetPtr();
+    } else {
+        return iter->second;
+    }
 }
 
 void
 LocalZoneData::update(const isc::dns::RRset& rrset) {
     //TODO Do we really need to recreate the rrset again?
-    string key = genCacheEntryName(rrset.getName(), rrset.getRRType());
-    
-    rrsets_map_.insert(RRsetMapPair(key, rrset_ptr));
-}
+    string key = genCacheEntryName(rrset.getName(), rrset.getType());
+    RRset* rrset_copy = new RRset(rrset.getName(), rrset.getClass(),
+                                  rrset.getType(), rrset.getTTL());
 
-    std::map<std::string, RRsetPtr> rrsets_map_; // RRsets of the zone
-    uint16_t class_; // The class of the zone
+    rrsetCopy(rrset, *rrset_copy);
+    RRsetPtr rrset_ptr(rrset_copy);
+    pair<RRsetMapIterator, bool> result = rrsets_map_.insert(RRsetMapPair(key, rrset_ptr));
+    if (!result.second) {
+        // Insert failed, we should remove the existed rrset first,
+        // then insert again.
+        rrsets_map_.erase(result.first);
+        rrsets_map_.insert(RRsetMapPair(key, rrset_ptr));
+    }
+}
 
 } // namespace cache
 } // namespace isc
-
-#endif // _LOCAL_ZONE_DATA
 

@@ -62,7 +62,7 @@ protected:
     Message message_render;
 };
 
-TEST_F(MessageCacheTest, testUpdate) {
+TEST_F(MessageCacheTest, testLookup) {
     messageFromFile(message_parse, "message_fromWire1");
     EXPECT_TRUE(message_cache_->update(message_parse));
     Name qname("test.example.com.");
@@ -78,6 +78,23 @@ TEST_F(MessageCacheTest, testUpdate) {
     Name qname1("test.example.net.");
     RRType qtype1(1);
     EXPECT_TRUE(message_cache_->lookup(qname1, qtype1, message_render));
+}
+
+TEST_F(MessageCacheTest, testUpdate) {
+    messageFromFile(message_parse, "message_fromWire4");
+    EXPECT_TRUE(message_cache_->update(message_parse));
+
+    Name qname("example.com.");
+    RRType qtype(6);
+    EXPECT_TRUE(message_cache_->lookup(qname, qtype, message_render));
+    EXPECT_FALSE(message_render.getHeaderFlag(Message::HEADERFLAG_AA));
+
+    Message new_msg(Message::PARSE);
+    messageFromFile(new_msg, "message_fromWire3");
+    EXPECT_TRUE(message_cache_->update(new_msg));
+    Message new_msg_render(Message::RENDER);
+    EXPECT_TRUE(message_cache_->lookup(qname, qtype, new_msg_render));
+    EXPECT_TRUE(new_msg_render.getHeaderFlag(Message::HEADERFLAG_AA));
 }
 
 }   // namespace

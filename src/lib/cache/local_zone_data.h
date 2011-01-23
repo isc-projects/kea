@@ -35,20 +35,23 @@ public:
     {}
 
     /// \brief Look up one rrset.
-    /// \return return the shared_ptr of rrset if it can 
+    /// \return return the shared_ptr of rrset if it can
     /// found in the local zone, or else, return NULL.
-    RRsetPtr lookup(const isc::dns::Name& qname,
-                    const isc::dns::RRType& qtype);
-    
-    /// \brief Update the rrset in the local zone. If the 
+    isc::dns::RRsetPtr lookup(const isc::dns::Name& qname,
+                              const isc::dns::RRType& qtype);
+
+    /// \brief Update the rrset in the local zone. If the
     /// the rrset doesn't exist, it will be added directly,
     /// or else, the existed one will be overwrited.
     void update(const isc::dns::RRset& rrset);
 
 private:
-    std::map<std::string, RRsetPtr> rrsets_map_; // RRsets of the zone
+    std::map<std::string, isc::dns::RRsetPtr> rrsets_map_; // RRsets of the zone
     uint16_t class_; // The class of the zone
 };
+
+typedef boost::shared_ptr<LocalZoneData> LocalZoneDataPtr;
+typedef boost::shared_ptr<const LocalZoneData> ConstLocalZoneDataPtr;
 
 } // namespace cache
 } // namespace isc

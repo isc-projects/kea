@@ -36,6 +36,8 @@ run_unittests_SOURCES  += rrset_entry_unittest.cc
 run_unittests_SOURCES  += rrset_cache_unittest.cc
 run_unittests_SOURCES  += message_cache_unittest.cc
 run_unittests_SOURCES  += message_entry_unittest.cc
+run_unittests_SOURCES  += local_zone_data_unittest.cc
+run_unittests_SOURCES  += recursor_cache_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)

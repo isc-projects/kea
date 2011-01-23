@@ -32,7 +32,7 @@ namespace cache {
 class RRsetCache;
 
 /// \brief Message Cache
-/// The object of MessageCache represents the cache for class-specific 
+/// The object of MessageCache represents the cache for class-specific
 /// messages.
 ///
 class MessageCache: public boost::noncopyable {
@@ -40,9 +40,9 @@ public:
     /// \param cache_size The size of message cache.
     MessageCache(boost::shared_ptr<RRsetCache> rrset_cache_,
                  uint32_t cache_size, uint16_t message_class);
-    
+
     /// \brief Look up message in cache.
-    /// \param message generated response message if the message entry 
+    /// \param message generated response message if the message entry
     ///        can be found.
     ///
     /// \return return true if the message can be found in cache, or else,
@@ -54,7 +54,7 @@ public:
 
     /// \brief Update the message in the cache with the new one.
     /// If the message doesn't exist in the cache, it will be added
-    /// directly. 
+    /// directly.
     bool update(const isc::dns::Message& msg);
 
     /// \brief Dump the message cache to specified file.
@@ -65,7 +65,7 @@ public:
     /// \todo It should can be loaded from one configured database.
     void load(const std::string& file_name);
 
-    /// \brief Resize the size of message cache in runtime. 
+    /// \brief Resize the size of message cache in runtime.
     bool resize(uint32_t size);
 
 protected:
@@ -73,7 +73,7 @@ protected:
     /// \param name query name of the message.
     /// \param type query type of the message.
     /// \return return the hash key.
-    HashKey getEntryHashKey(const isc::dns::Name& name, 
+    HashKey getEntryHashKey(const isc::dns::Name& name,
                             const isc::dns::RRType& type) const;
 
     // Make these variants be protected for easy unittest.
@@ -83,7 +83,7 @@ protected:
     isc::nsas::HashTable<MessageEntry> message_table_;
     isc::nsas::LruList<MessageEntry> message_lru_;
 };
-    
+
 typedef boost::shared_ptr<MessageCache> MessageCachePtr;
 
 } // namespace cache
