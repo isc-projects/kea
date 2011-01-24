@@ -76,24 +76,22 @@ ResponseClassifier::Category ResponseClassifier::classify(
             // Without doing further classification, it is sufficient to say
             // that if an NXDOMAIN is received, there was no translation of the
             // QNAME available.
-
             return (NXDOMAIN);  // Received NXDOMAIN from parent.
 
         } else {
 
             // Not NXDOMAIN but not NOERROR either.  Must be an RCODE-related
             // error.
-
             return (RCODE);
         }
     }
 
     // All seems OK and we can start looking at the content.  However, one
-    // more header check remains - was the response truncated.  If so, we'll
+    // more header check remains - was the response truncated?  If so, we'll
     // probably want to re-query over TCP.  However, in some circumstances we
     // might want to go with what we have.  So give the caller the option of
     // ignoring the TC bit.
-    if (!tcignore && message->getHeaderFlag(Message::HEADERFLAG_TC)) {
+    if (message->getHeaderFlag(Message::HEADERFLAG_TC) && (!tcignore)) {
         return (TRUNCATED);
     }
 
@@ -113,7 +111,11 @@ ResponseClassifier::Category ResponseClassifier::classify(
     // If there is nothing in the answer section, it is a referral - unless
     // there is nothing in the authority section
     if (answer.empty()) {
-        return (authority.empty() ? EMPTY : REFERRAL);
+        if (authority.empty()) {
+            return (EMPTY);
+        } else {
+            return (REFERRAL);
+        }
     }
 
     // Look at two cases - one RRset in the answer and multiple RRsets in
@@ -127,7 +129,7 @@ ResponseClassifier::Category ResponseClassifier::classify(
             // It does.  How about the type of the response?  The response
             // is an answer if the type matches that of the question, or if the
             // question was for type ANY.  It is a CNAME reply if the answer
-            // type is Referral.  And it is an error for anything else.
+            // type is CNAME.  And it is an error for anything else.
             if ((answer[0]->getType() == question.getType()) ||
                 (question.getType() == RRType::ANY())) {
                 return (ANSWER);
@@ -138,20 +140,25 @@ ResponseClassifier::Category ResponseClassifier::classify(
             }
         }
         else {
+
+            // Either the name and/or class of the reply don't match that of
+            // the question.
             return (INVNAMCLASS);
         }
     }
 
-    // Finally, there could be multiple RRsets in the answer. They should all
-    // have the same QCLASS, else there is some error in the response.
+    // There are multiple RRsets in the answer. They should all have the same
+    // QCLASS, else there is some error in the response.
     for (int i = 1; i < answer.size(); ++i) {
         if (answer[0]->getClass() != answer[i]->getClass()) {
             return (MULTICLASS);
         }
     }
 
-    // If they all have the same QNAME and the request type was ANY, we have
-    // an answer.
+    // If the request type was ANY and they all have the same QNAME, we have
+    // an answer.  But if they don't have the same QNAME, we must have an error;
+    // the only way we could get different QNAMES in an answer is if one were a
+    // CNAME - in which case there should no other record types at that QNAME.
     if (question.getType() == RRType::ANY()) {
         bool all_same = true;
         for (int i = 1; (i < answer.size()) && all_same; ++i) {
@@ -159,6 +166,8 @@ ResponseClassifier::Category ResponseClassifier::classify(
         }
         if (all_same) {
             return (ANSWER);
+        } else {
+            return (EXTRADATA);
         }
     }
 
@@ -186,7 +195,6 @@ ResponseClassifier::Category ResponseClassifier::cnameChase(
     const Name& qname, const RRType& qtype, vector<RRsetPtr>& ansrrset,
     vector<int>& present, size_t size)
 {
-
     // Search through the vector of RRset pointers until we find one with the
     // right QNAME.
     for (int i = 0; i < ansrrset.size(); ++i) {
@@ -197,7 +205,7 @@ ResponseClassifier::Category ResponseClassifier::cnameChase(
 
                 // QNAME match.  If this RRset is a CNAME, remove it from
                 // further consideration.  If nothing is left, the end of the
-                // chain is a CNAME so this is a referral.  Otherwise replace
+                // chain is a CNAME so this is a CNAME.  Otherwise replace
                 // the name with the RDATA of the CNAME and call ourself
                 // recursively.
                 if (ansrrset[i]->getType() == RRType::CNAME()) {
@@ -231,7 +239,11 @@ ResponseClassifier::Category ResponseClassifier::cnameChase(
                     // there is more than one RRset left in the list we are
                     // searching, we have extra data in the answer.
                     if (ansrrset[i]->getType() == qtype) {
-                        return ((size == 1) ? ANSWER : EXTRADATA);
+                        if (size == 1) {
+                            return (ANSWERCNAME);
+                        } else {
+                            return (EXTRADATA);
+                        }
                     }
                     return (INVTYPE);
                 }
