@@ -647,15 +647,17 @@ singleAddress(const string &address, uint16_t port) {
 TEST_F(ASIOLinkTest, recursiveSetupV4) {
     setDNSService(true, false);
     uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    EXPECT_NO_THROW(RecursiveQuery(*dns_service_, singleAddress(TEST_IPV4_ADDR,
-        port),singleAddress(TEST_IPV4_ADDR,port)));
+    EXPECT_NO_THROW(RecursiveQuery(*dns_service_,
+                                   singleAddress(TEST_IPV4_ADDR, port),
+                                   singleAddress(TEST_IPV4_ADDR, port)));
 }
 
 TEST_F(ASIOLinkTest, recursiveSetupV6) {
     setDNSService(false, true);
     uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    EXPECT_NO_THROW(RecursiveQuery(*dns_service_, singleAddress(TEST_IPV6_ADDR,
-        port),singleAddress(TEST_IPV6_ADDR,port)));
+    EXPECT_NO_THROW(RecursiveQuery(*dns_service_,
+                                   singleAddress(TEST_IPV6_ADDR, port),
+                                   singleAddress(TEST_IPV6_ADDR,port)));
 }
 
 // XXX:
@@ -671,8 +673,9 @@ TEST_F(ASIOLinkTest, forwarderSend) {
     uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
 
     MockServer server(*io_service_);
-    RecursiveQuery rq(*dns_service_, singleAddress(TEST_IPV4_ADDR, port),
-                       singleAddress(TEST_IPV4_ADDR, port));
+    RecursiveQuery rq(*dns_service_,
+                      singleAddress(TEST_IPV4_ADDR, port),
+                      singleAddress(TEST_IPV4_ADDR, port));
 
     Question q(Name("example.com"), RRClass::IN(), RRType::TXT());
     OutputBufferPtr buffer(new OutputBuffer(0));
@@ -718,8 +721,10 @@ TEST_F(ASIOLinkTest, recursiveTimeout) {
 
     // Do the answer
     const uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    RecursiveQuery query(*dns_service_, singleAddress(TEST_IPV4_ADDR, port),
-         singleAddress(TEST_IPV4_ADDR, port),10, 2);
+    RecursiveQuery query(*dns_service_,
+                         singleAddress(TEST_IPV4_ADDR, port),
+                         singleAddress(TEST_IPV4_ADDR, port),
+                         10, 2);
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));

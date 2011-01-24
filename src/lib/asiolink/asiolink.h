@@ -541,7 +541,7 @@ public:
     /// \param upstream Addresses and ports of the upstream servers
     ///        to forward queries to.
     /// \param upstream_root Addresses and ports of the root servers
-    ///        to forward queries to.
+    ///        to use when resolving.
     /// \param timeout How long to timeout the query, in ms
     ///     -1 means never timeout (but do not use that).
     ///     TODO: This should be computed somehow dynamically in future
