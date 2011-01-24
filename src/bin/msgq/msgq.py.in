@@ -136,9 +136,9 @@ class MsgQ:
         except AttributeError:
             self.kqueue = select.kqueue()
     
-    def add_kqueue_socket(self, socket, add_filter = 0):
+    def add_kqueue_socket(self, socket, additional_filters = 0):
         event = select.kevent(socket.fileno(),
-                              select.KQ_FILTER_READ | add_filter,
+                              select.KQ_FILTER_READ | additional_filters,
                               select.KQ_EV_ADD | select.KQ_EV_ENABLE)
         self.kqueue.control([event], 0)
 
