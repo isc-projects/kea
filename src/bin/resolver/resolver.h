@@ -122,7 +122,8 @@ public:
      * and port pair).
      */
     void setRootAddresses(const std::vector<std::pair<std::string,
-        uint16_t> >& addresses);
+                          uint16_t> >& addresses);
+
     /**
      * \short Get list of root addresses.
      *

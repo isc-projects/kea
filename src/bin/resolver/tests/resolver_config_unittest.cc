@@ -111,8 +111,6 @@ TEST_F(ResolverConfig, rootAddressConfig) {
     ASSERT_EQ(1, server.getRootAddresses().size());
     EXPECT_EQ("192.0.2.1", server.getRootAddresses()[0].first);
     EXPECT_EQ(53, server.getRootAddresses()[0].second);
-    //EXPECT_EQ("199.7.83.42", server.getRootAddresses()[0].first);
-    //EXPECT_EQ(53, server.getRootAddresses()[0].second);
 
     // And then remove all addresses
     config = Element::fromJSON("{"
