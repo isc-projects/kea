@@ -36,13 +36,10 @@ public:
         DEFAULT,    // Default to logging level of parent
         DEBUG,
         INFO,
-        WARNING,
+        WARN,
         ERROR,
-        CRITICAL,
-        NONE,       // Disable logging
-        INFORMATION = INFO,
-        WARN = WARNING,
-        FATAL = CRITICAL
+        FATAL,
+        NONE        // Disable logging
     } Severity;
 
     /// \brief Constructor
@@ -60,7 +57,7 @@ public:
     /// destroyed causes a MutexException to be thrown (this is described in
     /// https://issues.apache.org/jira/browse/LOGCXX-322).  As this only occurs
     /// during program rundown, the issue is not serious - it just looks bad to
-    /// have the program crash instead of shut down cleanly.<BR>
+    /// have the program crash instead of shut down cleanly.\n\n
     /// The original implementation of the isc::log::Logger had as a member a
     /// log4cxx logger (actually a LoggerPtr).  If the isc:: Logger was declared
     /// statically, when it was destroyed at the end of the program the internal
@@ -68,7 +65,7 @@ public:
     /// not occur if the isc::log::Logger was created on the stack.  To get
     /// round this, the internal LoggerPtr is now created dynamically.  The
     /// exit_delete argument controls its destruction: if true, it is destroyed
-    /// in the ISC Logger destructor.  If false, it is not.<BR>
+    /// in the ISC Logger destructor.  If false, it is not.\n\n
     /// When creating an isc::log::Logger on the stack, the argument should be
     /// false (the default); when the Logger is destroyed, all the internal
     /// log4cxx objects are destroyed.  As only the logger (and not the internal
@@ -171,27 +168,13 @@ public:
     }
 
 
-    /// \brief Is WARNING Enabled?
-    virtual bool isWarningEnabled() {
-        return (getLogger()->isWarnEnabled());
-    }
-
-
     /// \brief Is ERROR Enabled?
     virtual bool isErrorEnabled() {
         return (getLogger()->isErrorEnabled());
     }
 
 
-    /// \brief Is CRITICAL Enabled?
-    virtual bool isCriticalEnabled() {
-        return (getLogger()->isFatalEnabled());
-    }
-
-
     /// \brief Is FATAL Enabled?
-    ///
-    /// FATAL is a synonym for CRITICAL.
     virtual bool isFatalEnabled() {
         return (getLogger()->isFatalEnabled());
     }
@@ -321,6 +304,11 @@ protected:
     static void readLocalMessageFile(const char* file);
 
 private:
+    // Note that loggerptr_ is a pointer to a LoggerPtr, which is itself a
+    // pointer to the underlying log4cxx logger.  This is due to the problems
+    // with memory deletion on program exit, explained in the comments for
+    // the "exit_delete" parameter in this class's constructor.
+
     log4cxx::LoggerPtr*  loggerptr_;    ///< Pointer to the underlying logger
     std::string          name_;         ///< Name of this logger]
     bool                 exit_delete_;  ///< Delete loggerptr_ on exit?

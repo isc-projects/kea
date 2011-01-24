@@ -131,10 +131,10 @@ TEST_F(LoggerTest, ConvertLevel) {
     EXPECT_EQ(Logger::DEBUG, logger.convertLevel(log4cxx::Level::DEBUG_INT));
     EXPECT_EQ(Logger::INFO, logger.convertLevel(log4cxx::Level::INFO_INT));
     EXPECT_EQ(Logger::WARN, logger.convertLevel(log4cxx::Level::WARN_INT));
-    EXPECT_EQ(Logger::WARNING, logger.convertLevel(log4cxx::Level::WARN_INT));
+    EXPECT_EQ(Logger::WARN, logger.convertLevel(log4cxx::Level::WARN_INT));
     EXPECT_EQ(Logger::ERROR, logger.convertLevel(log4cxx::Level::ERROR_INT));
     EXPECT_EQ(Logger::FATAL, logger.convertLevel(log4cxx::Level::FATAL_INT));
-    EXPECT_EQ(Logger::CRITICAL, logger.convertLevel(log4cxx::Level::FATAL_INT));
+    EXPECT_EQ(Logger::FATAL, logger.convertLevel(log4cxx::Level::FATAL_INT));
     EXPECT_EQ(Logger::NONE, logger.convertLevel(log4cxx::Level::OFF_INT));
 
     // Now some debug levels
@@ -158,14 +158,14 @@ TEST_F(LoggerTest, Severity) {
     logger.setSeverity(Logger::NONE);
     EXPECT_EQ(Logger::NONE, logger.getSeverity());
 
-    logger.setSeverity(Logger::CRITICAL);
-    EXPECT_EQ(Logger::CRITICAL, logger.getSeverity());
+    logger.setSeverity(Logger::FATAL);
+    EXPECT_EQ(Logger::FATAL, logger.getSeverity());
 
     logger.setSeverity(Logger::ERROR);
     EXPECT_EQ(Logger::ERROR, logger.getSeverity());
 
-    logger.setSeverity(Logger::WARNING);
-    EXPECT_EQ(Logger::WARNING, logger.getSeverity());
+    logger.setSeverity(Logger::WARN);
+    EXPECT_EQ(Logger::WARN, logger.getSeverity());
 
     logger.setSeverity(Logger::INFO);
     EXPECT_EQ(Logger::INFO, logger.getSeverity());

@@ -59,7 +59,7 @@ MessageReader::readFile(const string& file, MessageReader::Mode mode) {
     }
 
     // Why did the loop terminate?
-    if (! infile.eof()) {
+    if (!infile.eof()) {
         throw MessageException(MSG_READERR, file, strerror(errno));
     }
     infile.close();
@@ -175,7 +175,7 @@ MessageReader::parseMessage(const std::string& text, MessageReader::Mode mode) {
     else {
         added = dictionary_->replace(ident, text.substr(first_text));
     }
-    if (! added) {
+    if (!added) {
         not_added_.push_back(ident);
     }
 }

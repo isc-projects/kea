@@ -30,8 +30,8 @@ MessageDictionary::~MessageDictionary() {
 
 // Add message and note if ID already exists
 
-bool MessageDictionary::add(const MessageID& ident, const std::string& text)
-{
+bool
+MessageDictionary::add(const MessageID& ident, const std::string& text) {
     map<MessageID, string>::iterator i = dictionary_.find(ident);
     bool not_found = (i == dictionary_.end());
     if (not_found) {
@@ -45,8 +45,8 @@ bool MessageDictionary::add(const MessageID& ident, const std::string& text)
 
 // Add message and note if ID does not already exist
 
-bool MessageDictionary::replace(const MessageID& ident, const std::string& text)
-{
+bool
+MessageDictionary::replace(const MessageID& ident, const std::string& text) {
     map<MessageID, string>::iterator i = dictionary_.find(ident);
     bool found = (i != dictionary_.end());
     if (found) {
@@ -60,7 +60,8 @@ bool MessageDictionary::replace(const MessageID& ident, const std::string& text)
 
 // Load a set of messages
 
-vector<MessageID> MessageDictionary::load(const char* messages[]) {
+vector<MessageID>
+MessageDictionary::load(const char* messages[]) {
     vector<MessageID> duplicates;
     int i = 0;
     while (messages[i]) {
@@ -75,7 +76,7 @@ vector<MessageID> MessageDictionary::load(const char* messages[]) {
             // Add ID and text to message dictionary, noting if the ID was
             // already present.
             bool added = add(ident, text);
-            if (! added) {
+            if (!added) {
                 duplicates.push_back(ident);
             }
         }
@@ -85,7 +86,8 @@ vector<MessageID> MessageDictionary::load(const char* messages[]) {
 
 // Return message text or blank string
 
-string MessageDictionary::getText(const MessageID& ident) const {
+string
+MessageDictionary::getText(const MessageID& ident) const {
     map<MessageID, string>::const_iterator i = dictionary_.find(ident);
     if (i == dictionary_.end()) {
         return string("");
@@ -97,7 +99,8 @@ string MessageDictionary::getText(const MessageID& ident) const {
 
 // Return global dictionary
 
-MessageDictionary* MessageDictionary::globalDictionary() {
+MessageDictionary*
+MessageDictionary::globalDictionary() {
     static MessageDictionary* global = NULL;
 
     if (global == NULL) {

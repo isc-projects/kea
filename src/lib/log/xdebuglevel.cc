@@ -39,7 +39,8 @@ IMPLEMENT_LOG4CXX_LEVEL(XDebugLevel)
 
 // Create Extended Debug Level Objects
 
-LevelPtr XDebugLevel::getExtendedDebug(int level) {
+LevelPtr
+XDebugLevel::getExtendedDebug(int level) {
 
     // Initialize the logging levels corresponding to the possible range of
     // debug if we have not already done so
@@ -77,11 +78,13 @@ LevelPtr XDebugLevel::getExtendedDebug(int level) {
 // logging level object.  If it lies outside the valid range, an object
 // corresponding to the minimum debug value is returned.
 
-LevelPtr XDebugLevel::toLevel(int val) {
+LevelPtr
+XDebugLevel::toLevel(int val) {
     return toLevel(val, getExtendedDebug(MIN_DEBUG_LEVEL));
 }
 
-LevelPtr XDebugLevel::toLevel(int val, const LevelPtr& defaultLevel) {
+LevelPtr
+XDebugLevel::toLevel(int val, const LevelPtr& defaultLevel) {
 
     // Note the reversal of the notion of MIN and MAX - see the header file for
     // details.
@@ -95,13 +98,13 @@ LevelPtr XDebugLevel::toLevel(int val, const LevelPtr& defaultLevel) {
 
 // Convert string passed to a logging level or return default level.
 
-LevelPtr XDebugLevel::toLevelLS(const LogString& sArg) {
+LevelPtr
+XDebugLevel::toLevelLS(const LogString& sArg) {
     return toLevelLS(sArg, getExtendedDebug(0));
 }
 
-LevelPtr XDebugLevel::toLevelLS(const LogString& sArg,
-    const LevelPtr& defaultLevel)
-{
+LevelPtr
+XDebugLevel::toLevelLS(const LogString& sArg, const LevelPtr& defaultLevel) {
     std::string name = sArg;        // Get to known type
     size_t length = name.size();    // Length of the string
 

@@ -56,8 +56,8 @@ std::string trim(const std::string& instring);
 /// that adjacent delimiters are considered to be a single delimiter.
 ///
 /// Special cases are:
-/// 1) The empty string is considered to be zero tokens.
-/// 2) A string comprising nothing but delimiters is considered to be zero
+/// -# The empty string is considered to be zero tokens.
+/// -# A string comprising nothing but delimiters is considered to be zero
 ///    tokens.
 ///
 /// The reasoning behind this is that the string can be thought of as having
@@ -79,9 +79,10 @@ std::vector<std::string> tokens(const std::string text,
 
 /// \brief Uppercase Character
 ///
-/// Needed to pass as an argument to transform() in uppercase(), as the
-/// function std::toupper() takes an "int" as its argument and the template
-/// expansion mechanism gets confused.
+/// Used in uppercase() to pass as an argument to std::transform().  The
+/// function std::toupper() can't be used as it takes an "int" as its argument;
+/// this confuses the template expansion mechanism because defererencing a
+/// string::iterator returns a char.
 ///
 /// \param chr Character to be upper-cased.
 ///
@@ -103,9 +104,10 @@ inline void uppercase(std::string& text) {
 
 /// \brief Lowercase Character
 ///
-/// Needed to pass as an argument to transform() in lowercase(), as the
-/// function std::tolower() takes an "int" as its argument and the template
-/// expansion mechanism gets confused.
+/// Used in lowercase() to pass as an argument to std::transform().  The
+/// function std::tolower() can't be used as it takes an "int" as its argument;
+/// this confuses the template expansion mechanism because defererencing a
+/// string::iterator returns a char.
 ///
 /// \param chr Character to be lower-cased.
 ///

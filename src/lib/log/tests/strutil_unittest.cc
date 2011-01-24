@@ -76,25 +76,77 @@ TEST_F(StringUtilTest, Tokens) {
     vector<string>  result;
 
     // Default delimiters
-    result = isc::strutil::tokens(" \n ");    // Empty string
+
+    // Degenerate cases
+    result = isc::strutil::tokens("");          // Empty string
     EXPECT_EQ(0, result.size());
 
-    result = isc::strutil::tokens("abc");     // Full string
+    result = isc::strutil::tokens(" \n ");      // String is all delimiters
+    EXPECT_EQ(0, result.size());
+
+    result = isc::strutil::tokens("abc");       // String has no delimiters
     ASSERT_EQ(1, result.size());
     EXPECT_EQ(string("abc"), result[0]);
 
-    result = isc::strutil::tokens("\t xyz \n");
+    // String containing leading and/or trailing delimiters, no embedded ones.
+    result = isc::strutil::tokens("\txyz");     // One leading delimiter
     ASSERT_EQ(1, result.size());
     EXPECT_EQ(string("xyz"), result[0]);
 
-    result = isc::strutil::tokens("abc\ndef\t\tghi ");
-    ASSERT_EQ(3, result.size());
+    result = isc::strutil::tokens("\t \nxyz");  // Multiple leading delimiters
+    ASSERT_EQ(1, result.size());
+    EXPECT_EQ(string("xyz"), result[0]);
+
+    result = isc::strutil::tokens("xyz\n");     // One trailing delimiter
+    ASSERT_EQ(1, result.size());
+    EXPECT_EQ(string("xyz"), result[0]);
+
+    result = isc::strutil::tokens("xyz  \t");   // Multiple trailing
+    ASSERT_EQ(1, result.size());
+    EXPECT_EQ(string("xyz"), result[0]);
+
+    result = isc::strutil::tokens("\t xyz \n"); // Leading and trailing
+    ASSERT_EQ(1, result.size());
+    EXPECT_EQ(string("xyz"), result[0]);
+
+    // Embedded delimiters
+    result = isc::strutil::tokens("abc\ndef");  // 2 tokens, one separator
+    ASSERT_EQ(2, result.size());
+    EXPECT_EQ(string("abc"), result[0]);
+    EXPECT_EQ(string("def"), result[1]);
+
+    result = isc::strutil::tokens("abc\t\t\ndef");  // 2 tokens, 3 separators
+    ASSERT_EQ(2, result.size());
+    EXPECT_EQ(string("abc"), result[0]);
+    EXPECT_EQ(string("def"), result[1]);
+
+    result = isc::strutil::tokens("abc\n  \tdef\t\tghi");
+    ASSERT_EQ(3, result.size());                // Multiple tokens, many delims
     EXPECT_EQ(string("abc"), result[0]);
     EXPECT_EQ(string("def"), result[1]);
     EXPECT_EQ(string("ghi"), result[2]);
 
-    // Non-default delimiters
+    // Embedded and non-embedded delimiters
+
+    result = isc::strutil::tokens("\t\t  \nabc\n  \tdef\t\tghi   \n\n");
+    ASSERT_EQ(3, result.size());                // Multiple tokens, many delims
+    EXPECT_EQ(string("abc"), result[0]);
+    EXPECT_EQ(string("def"), result[1]);
+    EXPECT_EQ(string("ghi"), result[2]);
+
+    // Non-default delimiter
     result = isc::strutil::tokens("alpha/beta/ /gamma//delta/epsilon/", "/");
+    ASSERT_EQ(6, result.size());
+    EXPECT_EQ(string("alpha"), result[0]);
+    EXPECT_EQ(string("beta"), result[1]);
+    EXPECT_EQ(string(" "), result[2]);
+    EXPECT_EQ(string("gamma"), result[3]);
+    EXPECT_EQ(string("delta"), result[4]);
+    EXPECT_EQ(string("epsilon"), result[5]);
+
+    // Non-default delimiters (plural)
+    result = isc::strutil::tokens("+*--alpha*beta+ -gamma**delta+epsilon-+**",
+        "*+-");
     ASSERT_EQ(6, result.size());
     EXPECT_EQ(string("alpha"), result[0]);
     EXPECT_EQ(string("beta"), result[1]);

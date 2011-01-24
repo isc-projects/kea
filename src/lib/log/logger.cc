@@ -51,11 +51,12 @@ Logger::~Logger() {
 // Initialize logger - create a logger as a child of the root logger.  With
 // log4cxx this is assured by naming the logger <parent>.<child>.
 
-void Logger::initLogger() {
+void
+Logger::initLogger() {
 
     // Initialize basic logging if not already done.  This is a one-off for
     // all loggers.
-    if (! init_) {
+    if (!init_) {
 
         // TEMPORARY
         // Add a suitable console logger to the log4cxx root logger.  (This
@@ -100,13 +101,13 @@ void Logger::initLogger() {
 // Set the severity for logging.  There is a 1:1 mapping between the logging
 // severity and the log4cxx logging levels, apart from DEBUG.
 //
-// In log4cxx, each of the logging levels (DEBUG, INFO, WARNING etc.) has a
-// numeric value.  The level is set to one of these and any numeric level equal
-// to or above it that is reported.  For example INFO has a value of 20000 and
-// ERROR a value of 40000. So if a message of WARNING severity (= 30000) is
-// logged, it is not logged when the logger's severity level is ERROR (as
-// 30000 !>= 40000).  It is reported if the logger's severity level is set to
-// WARNING (as 30000 >= 30000) or INFO (30000 >= 20000).
+// In log4cxx, each of the logging levels (DEBUG, INFO, WARN etc.) has a numeric
+// value.  The level is set to one of these and any numeric level equal to or
+// above it that is reported.  For example INFO has a value of 20000 and ERROR
+// a value of 40000. So if a message of WARN severity (= 30000) is logged, it is
+// not logged when the logger's severity level is ERROR (as 30000 !>= 40000).
+// It is reported if the logger's severity level is set to WARN (as 30000 >=
+/// 30000) or INFO (30000 >= 20000).
 //
 // This gives a simple system for handling different debug levels.  The debug
 // level is a number between 0 and 99, with 0 being least verbose and 99 the
@@ -122,7 +123,8 @@ void Logger::initLogger() {
 //
 // The extended set of logging levels is implemented by the XDebugLevel class.
 
-void Logger::setSeverity(Severity severity, int dbglevel) {
+void
+Logger::setSeverity(Severity severity, int dbglevel) {
     switch (severity) {
         case NONE:
             getLogger()->setLevel(log4cxx::Level::getOff());
@@ -136,7 +138,7 @@ void Logger::setSeverity(Severity severity, int dbglevel) {
             getLogger()->setLevel(log4cxx::Level::getError());
             break;
 
-        case WARNING:
+        case WARN:
             getLogger()->setLevel(log4cxx::Level::getWarn());
             break;
 
@@ -159,7 +161,8 @@ void Logger::setSeverity(Severity severity, int dbglevel) {
 
 // Convert between numeric log4cxx logging level and BIND-10 logging severity.
 
-Logger::Severity Logger::convertLevel(int value) const {
+Logger::Severity
+Logger::convertLevel(int value) const {
 
     // The order is optimised.  This is only likely to be called when testing
     // for writing debug messages, so the check for DEBUG_INT is first.
@@ -168,7 +171,7 @@ Logger::Severity Logger::convertLevel(int value) const {
     } else if (value <= log4cxx::Level::INFO_INT) {
         return (INFO);
     } else if (value <= log4cxx::Level::WARN_INT) {
-        return (WARNING);
+        return (WARN);
     } else if (value <= log4cxx::Level::ERROR_INT) {
         return (ERROR);
     } else if (value <= log4cxx::Level::FATAL_INT) {
@@ -181,7 +184,8 @@ Logger::Severity Logger::convertLevel(int value) const {
 
 // Return the logging severity associated with this logger.
 
-Logger::Severity Logger::getSeverityCommon(const log4cxx::LoggerPtr& ptrlogger,
+Logger::Severity
+Logger::getSeverityCommon(const log4cxx::LoggerPtr& ptrlogger,
     bool check_parent) const {
 
     log4cxx::LevelPtr level = ptrlogger->getLevel();
@@ -212,7 +216,8 @@ Logger::Severity Logger::getSeverityCommon(const log4cxx::LoggerPtr& ptrlogger,
 
 // Get the debug level.  This returns 0 unless the severity is DEBUG.
 
-int Logger::getDebugLevel() {
+int
+Logger::getDebugLevel() {
 
     log4cxx::LevelPtr level = getLogger()->getLevel();
     if (level == log4cxx::LevelPtr()) {
@@ -252,7 +257,8 @@ int Logger::getDebugLevel() {
 
 // Output methods
 
-void Logger::debug(int dbglevel, isc::log::MessageID ident, ...) {
+void
+Logger::debug(int dbglevel, isc::log::MessageID ident, ...) {
     if (isDebugEnabled(dbglevel)) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);
@@ -260,7 +266,8 @@ void Logger::debug(int dbglevel, isc::log::MessageID ident, ...) {
     }
 }
 
-void Logger::info(isc::log::MessageID ident, ...) {
+void
+Logger::info(isc::log::MessageID ident, ...) {
     if (isInfoEnabled()) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);
@@ -268,7 +275,8 @@ void Logger::info(isc::log::MessageID ident, ...) {
     }
 }
 
-void Logger::warn(isc::log::MessageID ident, ...) {
+void
+Logger::warn(isc::log::MessageID ident, ...) {
     if (isWarnEnabled()) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);
@@ -276,7 +284,8 @@ void Logger::warn(isc::log::MessageID ident, ...) {
     }
 }
 
-void Logger::error(isc::log::MessageID ident, ...) {
+void
+Logger::error(isc::log::MessageID ident, ...) {
     if (isErrorEnabled()) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);
@@ -284,7 +293,8 @@ void Logger::error(isc::log::MessageID ident, ...) {
     }
 }
 
-void Logger::fatal(isc::log::MessageID ident, ...) {
+void
+Logger::fatal(isc::log::MessageID ident, ...) {
     if (isFatalEnabled()) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);

@@ -27,8 +27,9 @@ namespace strutil {
 
 // Normalize slashes
 
-void normalizeSlash(std::string& name) {
-    if (! name.empty()) {
+void
+normalizeSlash(std::string& name) {
+    if (!name.empty()) {
         size_t pos = 0;
         while ((pos = name.find('\\', pos)) != std::string::npos) {
             name[pos] = '/';
@@ -38,11 +39,12 @@ void normalizeSlash(std::string& name) {
 
 // Trim String
 
-string trim(const string& instring) {
+string
+trim(const string& instring) {
     static const char* blanks = " \t\n";
 
     string retstring = "";
-    if (! instring.empty()) {
+    if (!instring.empty()) {
 
         // Search for first non-blank character in the string
         size_t first = instring.find_first_not_of(blanks);
