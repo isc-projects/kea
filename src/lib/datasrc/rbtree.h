@@ -292,10 +292,11 @@ RBNode<T>::successor()const {
  *  Whether return empty node to end user is one policy among them. the default
  *  policy will NOT return empty node to end user, pass ture will get empty node
  *  during find is needed.
- *  \note The search policy only affect find behavior of rbtree, but when inserting
- *  one name, if the node already exist not matter it's insert explictly by end user
- *  or empty node created by the rbtree itself, insert will return ALREADYEXISTS
- *  not matter we want expose empty node or not.
+ *  \note The search policy only affect find behavior of rbtree, but when
+ *  inserting one name, if the node already exist not matter it's insert
+ *  explictly by end user or empty node created by the rbtree itself,
+ *  insert will return ALREADYEXISTS not matter we want expose empty node
+ *  or not.
  *
  * \anchor diagram
  *
@@ -454,7 +455,7 @@ public:
         return (find<void*>(name, node, NULL, NULL));
     }
 
-    /// \brieg Simple find returning immutable node.
+    /// \brief Simple find returning immutable node.
     ///
     /// Acts as described in the \ref find section, but returns immutable node
     /// pointer.
@@ -465,7 +466,7 @@ public:
     /// \param name What should be found.
     /// \param node_path It will save all the ancestor nodes
     ///     to the tree containing node. If we looked for o.w.y.d.e.f in the
-    ///     \ref diagram, the node_path will have w.y node and d.e.f node. 
+    ///     \ref diagram, the node_path will have w.y node and d.e.f node.
     /// with the node path, we can also get the next node of current node
     /// \param node The found node.
     template <typename CBARG>
@@ -474,6 +475,10 @@ public:
                   bool (*callback)(const RBNode<T>&, CBARG),
                   CBARG callback_arg) const;
 
+    /// \brief Simple find returning immutable node.
+    ///
+    /// Acts as described in the \ref findEx section, but returns immutable 
+    /// node pointer.
     template <typename CBARG>
     Result findEx(const isc::dns::Name& name, NodeChain &node_path,
                   const RBNode<T>** node,
@@ -484,7 +489,8 @@ public:
     /// \brief return the next node which is bigger than node
     /// \param node_path store the path from base to sub domains in reverse order
     /// the node_path is fetched through findEx function call, next_node_path will
-    /// store the node path to next_node
+    /// store the node path to next_node, which can be used in turn to find
+    /// the next node of next node.
     const RBNode<T> *nextNode(const RBNode<T> *node, const NodeChain &node_path,
                               NodeChain &next_node_path) const;
 
@@ -1013,8 +1019,6 @@ RBTree<T>::indent(std::ostream& os, unsigned int depth) {
     static const unsigned int INDENT_FOR_EACH_DEPTH = 5;
     os << std::string(depth * INDENT_FOR_EACH_DEPTH, ' ');
 }
-
-
 
 }
 }
