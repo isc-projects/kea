@@ -85,7 +85,11 @@ TEST_F(ResolverTest, AXFRFail) {
                                        RRType::AXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
     // AXFR is not implemented and should always send NOTIMP.
-    server.processMessage(*io_message, parse_message, response_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message,
+                          parse_message,
+                          response_message,
+                          response_obuffer,
+                          &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::NOTIMP(), opcode.getCode(),
                 QR_FLAG, 1, 0, 0, 0);
@@ -100,7 +104,11 @@ TEST_F(ResolverTest, notifyFail) {
     request_message.setQid(default_qid);
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message,
+                          parse_message,
+                          response_message,
+                          response_obuffer,
+                          &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::NOTAUTH(),
                 Opcode::NOTIFY().getCode(), QR_FLAG, 0, 0, 0, 0);
