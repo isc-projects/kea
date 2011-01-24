@@ -268,6 +268,91 @@ To use the current version of the logging:
    At present, the only logging is to the console.
 
 
+Severity Guidelines
+===================
+When using logging, the question arises, what severity should a message be
+logged at?  The following is a suggestion - as always, the decision must be
+made in the context of which the message is logged.
+
+FATAL
+-----
+The program has encountered an error that is so severe that it cannot
+continue (or there is no point in continuing).  When a fatal error has been
+logged, the program will usually exit immediately (via a call to abort()) or
+shortly afterwards, after dumping some diagnostic information.
+
+ERROR
+-----
+Something has happened such that the program can continue but the results
+for the current (or future) operations cannot be guaranteed to be correct,
+or the results will be correct but the service is impaired.  For example,
+the program started but attempts to open one or more network interfaces failed.
+
+WARN
+----
+An unusual event  happened.  Although the program will continue working
+normally, the event was sufficiently out of the ordinary to warrant drawings
+attention to it.  For example, at program start-up a zone was loaded that
+contained no resource records,
+
+INFO
+----
+A normal but significant event has occurred that should be recorded,
+e.g. the program has started or is just about to terminate, a new zone has
+been created, etc.
+
+DEBUG
+-----
+This severity is only enabled on for debugging purposes.  A debug level is
+associated with debug messages, level 0 (the default) being for high-level
+messages and level 99 (the maximum) for the lowest level.  How the messages
+are distributed between the levels is up to the developer.  So if debugging
+the NSAS (for example), a level 0 message might record the creation of a new
+zone, a level 10 recording a timeout when trying to get a nameserver address,
+but a level 50 would record every query for an address. (And we might add
+level 51 to record every update of the RTT.)
+
+Note that like severities, levels are cumulative; so if level 25 is set as the
+debug level, all debug levels from 0 to 25 will be output.  In fact, it is
+probably easier to visualise the debug levels as part of the severity system:
+
+    FATAL                High
+    ERROR
+    WARN
+    INFO
+    DEBUG level 0
+    DEBUG level 1
+       :
+    DEBUG level 99       Low
+
+When a particular severity is set, it - and all severities and/or debug
+levels above it - will be logged.
+
+Logging Sources v Logging Severities
+------------------------------------
+When logging events, make a distinction between events related to the server
+and events related to DNS messages received.  Caution needs to be exercised
+with the latter as, if the logging is enabled in the normal course of events,
+such logging could be a denoial of service vector. For example, suppose that
+the main authoritiative service logger were to log both zone loading and
+unloading as INFO and a warning message if it received an invalid packet. An
+attacker could make the INFO messages unusable by flooding the server with
+malformed packets.
+
+There are two approaches to get round this:
+
+a) Make the logging of packet-dependent events a DEBUG-severity message.
+DEBUG is not enabled by default, so these events will not be recorded unless
+DEBUG is specifically chosen.
+
+b) Record system-related and packet-related messages via different loggers
+(e.g.  in the example given, sever events could be logged using the logger
+"auth" and packet-related events at that level logged using the logger
+"pkt-auth".)
+As the loggers are independent and the severity levels independent, fine-tuning
+of what and what is not recorded can be achieved.
+
+
 Outstanding Issues
 ==================
 * Ability to configure system according to configuration database.

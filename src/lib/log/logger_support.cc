@@ -55,7 +55,8 @@ Logger logger("log");
 /// dictionary, they are listed in a warning message.
 ///
 /// \param file Name of the local message file
-static void readLocalMessageFile(const char* file) {
+static void
+readLocalMessageFile(const char* file) {
     
     MessageDictionary* dictionary = MessageDictionary::globalDictionary();
     MessageReader reader(dictionary);
@@ -89,7 +90,8 @@ static void readLocalMessageFile(const char* file) {
 
 /// Logger Run-Time Initialization
 
-void runTimeInit(Logger::Severity severity, int dbglevel, const char* file) {
+void
+runTimeInit(Logger::Severity severity, int dbglevel, const char* file) {
 
     // Create the application root logger.  This is the logger that has the
     // name of the application (and is one level down from the log4cxx root

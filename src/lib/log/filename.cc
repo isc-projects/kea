@@ -32,12 +32,13 @@ namespace log {
 // Split string into components.  Any backslashes are assumed to have
 // been replaced by forward slashes.
 
-void Filename::split(const string& full_name, string& directory,
+void
+Filename::split(const string& full_name, string& directory,
     string& name, string& extension) const
 {
     directory = name = extension = "";
     bool dir_present = false;
-    if (! full_name.empty()) {
+    if (!full_name.empty()) {
 
         // Find the directory.
         size_t last_slash = full_name.find_last_of('/');
@@ -84,7 +85,8 @@ void Filename::split(const string& full_name, string& directory,
 
 // Expand the stored filename with the default.
 
-string Filename::expandWithDefault(const string& defname) const {
+string
+Filename::expandWithDefault(const string& defname) const {
 
     string def_directory("");
     string def_name("");
@@ -92,7 +94,9 @@ string Filename::expandWithDefault(const string& defname) const {
 
     // Normalize the input string.
     string copy_defname = isc::strutil::trim(defname);
+#ifdef WIN32
     isc::strutil::normalizeSlash(copy_defname);
+#endif
 
     // Split into the components
     split(copy_defname, def_directory, def_name, def_extension);
@@ -107,7 +111,8 @@ string Filename::expandWithDefault(const string& defname) const {
 
 // Use the stored name as default for a given name
 
-string Filename::useAsDefault(const string& name) const {
+string
+Filename::useAsDefault(const string& name) const {
 
     string name_directory("");
     string name_name("");
@@ -115,7 +120,9 @@ string Filename::useAsDefault(const string& name) const {
 
     // Normalize the input string.
     string copy_name = isc::strutil::trim(name);
+#ifdef WIN32
     isc::strutil::normalizeSlash(copy_name);
+#endif
 
     // Split into the components
     split(copy_name, name_directory, name_name, name_extension);

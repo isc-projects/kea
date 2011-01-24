@@ -17,5 +17,4 @@ CLEANFILES = *.gcno *.gcda
 pkglibexec_PROGRAMS = message
 message_SOURCES = message.cc
 message_LDADD  = $(top_builddir)/src/lib/log/liblog.la
-message_LDADD += $(LOG4CXX_LDFLAGS)
 

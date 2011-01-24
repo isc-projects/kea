@@ -35,7 +35,6 @@ logger_support_test_SOURCES = logger_support_test.cc
 logger_support_test_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 logger_support_test_LDFLAGS = $(AM_LDFLAGS)
 logger_support_test_LDADD  = $(top_builddir)/src/lib/log/liblog.la
-logger_support_test_LDADD += -llog4cxx
 
 noinst_PROGRAMS = $(TESTS)
 
