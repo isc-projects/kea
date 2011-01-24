@@ -76,7 +76,7 @@ public:
     void querySetup(DNSService& dnss) {
         assert(!rec_query_); // queryShutdown must be called first
         dlog("Query setup");
-        rec_query_ = new RecursiveQuery(dnss, upstream_,upstream_root_);
+        rec_query_ = new RecursiveQuery(dnss, upstream_, upstream_root_);
     }
 
     void queryShutdown() {
@@ -105,7 +105,7 @@ public:
     }
 
     void setRootAddresses(const vector<addr_t>& upstream_root,
-        DNSService *dnss)
+                          DNSService *dnss)
     {
         queryShutdown();
         upstream_root_ = upstream_root;
