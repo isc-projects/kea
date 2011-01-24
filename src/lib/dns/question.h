@@ -188,7 +188,7 @@ public:
     ///
     /// This method simply calls the \c %toWire() methods of the corresponding
     /// \c Name, \c RRType and \c RRClass classes for this \c Question, and
-    /// these methods may throw an exception.QU
+    /// these methods may throw an exception.
     /// In particular, if resource allocation fails, a corresponding standard
     /// exception will be thrown.
     ///

@@ -48,6 +48,7 @@ public:
         // Packet is valid
 
         ANSWER,             ///< Response contains the answer
+        ANSWERCNAME,        ///< Response was a CNAME chain ending in an answer
         CNAME,              ///< Response was a CNAME
         NXDOMAIN,           ///< Response was an NXDOMAIN
         REFERRAL,           ///< Response contains a referral
@@ -67,6 +68,19 @@ public:
         RCODE,              ///< RCODE indicated an error
         TRUNCATED           ///< Response was truncated
     };
+
+    /// \brief Check Error
+    ///
+    /// An inline routine to quickly classify whether the return category is
+    /// an error or not.  This makes use of internal knowledge of the order of
+    /// codes in the Category enum.
+    ///
+    /// \param code Return category from classify()
+    ///
+    /// \return true if the category is an error, false if not.
+    static bool error(Category code) {
+        return (code > REFERRAL);
+    }
 
     /// \brief Classify
     ///
