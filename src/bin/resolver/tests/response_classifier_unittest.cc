@@ -145,6 +145,29 @@ public:
     RRsetPtr    rrs_in_txt_www;     // www.example.com IN TXT
 };
 
+// Test that the error() function categorises the codes correctly.
+
+TEST_F(ResponseClassifierTest, StatusCodes) {
+    EXPECT_FALSE(ResponseClassifier::error(ResponseClassifier::ANSWER));
+    EXPECT_FALSE(ResponseClassifier::error(ResponseClassifier::ANSWERCNAME));
+    EXPECT_FALSE(ResponseClassifier::error(ResponseClassifier::CNAME));
+    EXPECT_FALSE(ResponseClassifier::error(ResponseClassifier::NXDOMAIN));
+    EXPECT_FALSE(ResponseClassifier::error(ResponseClassifier::REFERRAL));
+
+    EXPECT_TRUE(ResponseClassifier::error(ResponseClassifier::EMPTY));
+    EXPECT_TRUE(ResponseClassifier::error(ResponseClassifier::EXTRADATA));
+    EXPECT_TRUE(ResponseClassifier::error(ResponseClassifier::INVNAMCLASS));
+    EXPECT_TRUE(ResponseClassifier::error(ResponseClassifier::INVTYPE));
+    EXPECT_TRUE(ResponseClassifier::error(ResponseClassifier::MISMATQUEST));
+    EXPECT_TRUE(ResponseClassifier::error(ResponseClassifier::MULTICLASS));
+    EXPECT_TRUE(ResponseClassifier::error(ResponseClassifier::NOTONEQUEST));
+    EXPECT_TRUE(ResponseClassifier::error(ResponseClassifier::NOTRESPONSE));
+    EXPECT_TRUE(ResponseClassifier::error(ResponseClassifier::NOTSINGLE));
+    EXPECT_TRUE(ResponseClassifier::error(ResponseClassifier::OPCODE));
+    EXPECT_TRUE(ResponseClassifier::error(ResponseClassifier::RCODE));
+    EXPECT_TRUE(ResponseClassifier::error(ResponseClassifier::TRUNCATED));
+}
+
 // Test that the system will reject a message which is a query.
 
 TEST_F(ResponseClassifierTest, Query) {
@@ -410,6 +433,18 @@ TEST_F(ResponseClassifierTest, MultipleAnswerRRsets) {
     message_d->addRRset(Message::SECTION_ANSWER, rrs_in_a_mail);
     EXPECT_EQ(ResponseClassifier::EXTRADATA,
         ResponseClassifier::classify(qu_in_a_www, message_d));
+
+    // Mixed QNAME is not valid when the query is an ANY.
+    MessagePtr message_e(new Message(Message::RENDER));
+    message_e->setHeaderFlag(Message::HEADERFLAG_QR);
+    message_e->setOpcode(Opcode::QUERY());
+    message_e->setRcode(Rcode::NOERROR());
+    message_e->addQuestion(qu_in_any_www);
+    message_e->addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
+    message_e->addRRset(Message::SECTION_ANSWER, rrs_in_txt_www);
+    message_e->addRRset(Message::SECTION_ANSWER, rrs_in_a_mail);
+    EXPECT_EQ(ResponseClassifier::EXTRADATA,
+        ResponseClassifier::classify(qu_in_any_www, message_e));
 }
 
 // CNAME chain is CNAME if it terminates in a CNAME, answer if it
@@ -433,7 +468,7 @@ TEST_F(ResponseClassifierTest, CNAMEChain) {
 
     // Add the A record for www and it should be an answer
     message_a->addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
-    EXPECT_EQ(ResponseClassifier::ANSWER,
+    EXPECT_EQ(ResponseClassifier::ANSWERCNAME,
         ResponseClassifier::classify(qu_in_a_www2, message_a));
 
     // Adding an unrelated TXT record should result in EXTRADATA
