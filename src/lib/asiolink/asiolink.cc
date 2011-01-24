@@ -58,8 +58,6 @@ namespace {
             message_(message), section_(sect)
         {}
         void operator()(const RRsetPtr rrset) {
-            //dlog("Adding RRSet to message section " +
-            //    boost::lexical_cast<string>(section_));
             message_->addRRset(section_, rrset, true);
         }
         MessagePtr message_;
