@@ -319,19 +319,22 @@ class MsgQ:
     def sendmsg(self, sock, env, msg = None):
         self.send_prepared_msg(sock, self.preparemsg(env, msg))
 
+    def __send_data(self, sock, data):
+        try:
+            return sock.send(data, socket.MSG_DONTWAIT)
+        except socket.error as e:
+            if e.errno == errno.EAGAIN or e.errno == errno.EWOULDBLOCK:
+                return 0
+            else:
+                raise e
+
     def send_prepared_msg(self, sock, msg):
         # Try to send the data, but only if there's nothing waiting
         fileno = sock.fileno()
         if fileno in self.sendbuffs:
             amount_sent = 0
         else:
-            try:
-                amount_sent = sock.send(msg, socket.MSG_DONTWAIT)
-            except socket.error as e:
-                if e.errno == errno.EAGAIN or e.errno == errno.EWOULDBLOCK:
-                    amount_sent = 0
-                else:
-                    raise e
+            amount_sent = self.__send_data(sock, msg)
 
         # Still something to send
         if amount_sent < len(msg):
@@ -347,26 +350,17 @@ class MsgQ:
                 buff = msg
                 last_sent = now
                 if self.poller:
-                    try:
-                        self.poller.register(fileno, select.POLLIN |
-                            select.POLLOUT)
-                    except Exception as e:
-                        raise e
+                    self.poller.register(fileno, select.POLLIN |
+                        select.POLLOUT)
                 else:
                     self.add_kqueue_socket(fileno, select.KQ_FILTER_WRITE)
             self.sendbuffs[fileno] = (last_sent, buff)
 
-    def process_write(self, fileno):
+    def __process_write(self, fileno):
         # Try to send some data from the buffer
         (_, msg) = self.sendbuffs[fileno]
         sock = self.sockets[fileno]
-        try:
-            amount_sent = sock.send(msg, socket.MSG_DONTWAIT)
-        except socket.error as e:
-            if e.errno == errno.EAGAIN or e.errno == errno.EWOULDBLOCK:
-                amount_sent = 0
-            else:
-                raise e
+        amount_sent = self.__send_data(sock, msg)
         # Keep the rest
         msg = msg[amount_sent:]
         if len(msg) == 0:
@@ -452,7 +446,7 @@ class MsgQ:
                     self.process_accept()
                 else:
                     if event & select.POLLOUT:
-                        self.process_write(fd)
+                        self.__process_write(fd)
                     if event & select.POLLIN:
                         self.process_socket(fd)
 
