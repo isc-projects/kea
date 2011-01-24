@@ -345,9 +345,9 @@ class MsgQ:
                 if now - last_sent > 0.1:
                     self.kill_socket(fileno, sock)
                     return
-                buff += msg[amount_sent:]
+                buff += msg
             else:
-                buff = msg
+                buff = msg[amount_sent:]
                 last_sent = now
                 if self.poller:
                     self.poller.register(fileno, select.POLLIN |
