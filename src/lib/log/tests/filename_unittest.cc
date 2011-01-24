@@ -90,18 +90,53 @@ TEST_F(FilenameTest, Components) {
     EXPECT_EQ("nu", fname.name());
     EXPECT_EQ("", fname.extension());
 
+    // Check that the decomposition can occur in the presence of leading and
+    // trailing spaces
+    fname.setName("  lambda/mu/nu\t  ");
+    EXPECT_EQ("lambda/mu/", fname.directory());
+    EXPECT_EQ("nu", fname.name());
+    EXPECT_EQ("", fname.extension());
+
     // Empty string
     fname.setName("");
     EXPECT_EQ("", fname.directory());
     EXPECT_EQ("", fname.name());
     EXPECT_EQ("", fname.extension());
 
-    // ... and finally check that the decomposition can occur in the presence
-    // of leading and trailing spaces
-    fname.setName("  lambda/mu/nu\t  ");
-    EXPECT_EQ("lambda/mu/", fname.directory());
-    EXPECT_EQ("nu", fname.name());
+    // ... and just spaces
+    fname.setName("  ");
+    EXPECT_EQ("", fname.directory());
+    EXPECT_EQ("", fname.name());
     EXPECT_EQ("", fname.extension());
+
+    // Check corner cases - where separators are present, but strings are
+    // absent.
+    fname.setName("/");
+    EXPECT_EQ("/", fname.directory());
+    EXPECT_EQ("", fname.name());
+    EXPECT_EQ("", fname.extension());
+
+    fname.setName(".");
+    EXPECT_EQ("", fname.directory());
+    EXPECT_EQ("", fname.name());
+    EXPECT_EQ(".", fname.extension());
+
+    fname.setName("/.");
+    EXPECT_EQ("/", fname.directory());
+    EXPECT_EQ("", fname.name());
+    EXPECT_EQ(".", fname.extension());
+
+    // Note that the space is a valid filename here; only leading and trailing
+    // spaces should be trimmed.
+    fname.setName("/ .");
+    EXPECT_EQ("/", fname.directory());
+    EXPECT_EQ(" ", fname.name());
+    EXPECT_EQ(".", fname.extension());
+
+    fname.setName(" / . ");
+    EXPECT_EQ("/", fname.directory());
+    EXPECT_EQ(" ", fname.name());
+    EXPECT_EQ(".", fname.extension());
 }
 
 // Check that the expansion with a default works.
