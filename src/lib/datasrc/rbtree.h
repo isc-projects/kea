@@ -246,7 +246,7 @@ RBNode<T>::~RBNode() {
 
 template <typename T>
 const RBNode<T> *
-RBNode<T>::successor()const {
+RBNode<T>::successor() const {
     const RBNode<T>* current = this;
     // If it has right node, the successor is the left-most node of the right
     // subtree.
