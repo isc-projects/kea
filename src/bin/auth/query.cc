@@ -66,7 +66,8 @@ Query::findAddrs(const Zone& zone, const Name& qname,
 
     // Find A rrset
     if (qname_ != qname || qtype_ != RRType::A()) {
-        Zone::FindResult a_result = zone.find(qname, RRType::A(), options);
+        Zone::FindResult a_result = zone.find(qname, RRType::A(), NULL,
+                                              options);
         if (a_result.code == Zone::SUCCESS) {
             response_.addRRset(Message::SECTION_ADDITIONAL,
                     boost::const_pointer_cast<RRset>(a_result.rrset));
@@ -76,7 +77,7 @@ Query::findAddrs(const Zone& zone, const Name& qname,
     // Find AAAA rrset
     if (qname_ != qname || qtype_ != RRType::AAAA()) {
         Zone::FindResult aaaa_result =
-            zone.find(qname, RRType::AAAA(), options);
+            zone.find(qname, RRType::AAAA(), NULL, options);
         if (aaaa_result.code == Zone::SUCCESS) {
             response_.addRRset(Message::SECTION_ADDITIONAL,
                     boost::const_pointer_cast<RRset>(aaaa_result.rrset));
