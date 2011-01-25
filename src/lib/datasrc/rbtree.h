@@ -491,7 +491,8 @@ public:
     /// the node_path is fetched through findEx function call, next_node_path will
     /// store the node path to next_node, which can be used in turn to find
     /// the next node of next node.
-    const RBNode<T> *nextNode(const RBNode<T> *node, const NodeChain &node_path,
+    const RBNode<T>* nextNode(const RBNode<T> *node,
+                              const NodeChain &node_path,
                               NodeChain &next_node_path) const;
 
 
