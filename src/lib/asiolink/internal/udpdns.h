@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __UDPDNS_H
 #define __UDPDNS_H 1
 
@@ -210,7 +208,12 @@ private:
     // \c IOMessage and \c Message objects to be passed to the
     // DNS lookup and answer providers
     boost::shared_ptr<asiolink::IOMessage> io_message_;
-    isc::dns::MessagePtr message_;
+
+    // The original query as sent by the client
+    isc::dns::MessagePtr query_message_;
+
+    // The response message we are building
+    isc::dns::MessagePtr answer_message_;
 
     // The buffer into which the response is written
     isc::dns::OutputBufferPtr respbuf_;

@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __RESOLVER_H
 #define __RESOLVER_H 1
 
@@ -65,7 +63,8 @@ public:
     /// \param buffer Pointer to an \c OutputBuffer for the resposne
     /// \param server Pointer to the \c DNSServer
     void processMessage(const asiolink::IOMessage& io_message,
-                        isc::dns::MessagePtr message,
+                        isc::dns::MessagePtr query_message,
+                        isc::dns::MessagePtr answer_message,
                         isc::dns::OutputBufferPtr buffer,
                         asiolink::DNSServer* server);
 
@@ -111,6 +110,24 @@ public:
     std::vector<std::pair<std::string, uint16_t> > getForwardAddresses() const;
     /// Return if we are in forwarding mode (if not, we are in fully recursive)
     bool isForwarding() const;
+
+    /**
+     * \brief Specify the list of root nameservers.
+     *
+     * Specify the list of addresses of root nameservers
+     *
+     * @param addresses The list of addresses to use (each one is the address
+     * and port pair).
+     */
+    void setRootAddresses(const std::vector<std::pair<std::string,
+                          uint16_t> >& addresses);
+
+    /**
+     * \short Get list of root addresses.
+     *
+     * \see setRootAddresses.
+     */
+    std::vector<std::pair<std::string, uint16_t> > getRootAddresses() const;
 
     /**
      * Set and get the addresses we listen on.

@@ -1,12 +1,67 @@
+  159.	[func]		smann
+	The resolver now has a configurable set of root servers to start
+	resolving at (called root_addresses). By default these are not
+	(yet) filled in. If empty, a hardcoded address for f-root will be
+	used right now.
+	(Trac #483, git a07e078b4feeb01949133fc88c9939254c38aa7c)
+
+  158.	[func]		jelte
+	The Resolver module will now do (very limited) resolving, if not
+	set to forwarding mode (i.e. if the configuration option
+	forward_addresses is left empty). It only supports referrals that
+	contain glue addresses at this point, and does no other processing
+	of authoritative answers.
+	(Trac #484, git 7b84de4c0e11f4a070e038ca4f093486e55622af)
+
+  157.  [bug]       vorner
+	One frozen process no longer freezes the whole b10-msgq. It caused the
+	whole system to stop working.
+	(Trac #420, git 93697f58e4d912fa87bc7f9a591c1febc9e0d139)
+
+  156.	[func]		stephen
+	Added ResponseClassifier class to examine response from
+	a server and classify it into one of several categories.
+	(Trac #487, git 18491370576e7438c7893f8551bbb8647001be9c)
+
+bind10-devel-20110120 released on January 20, 2011
+
+  155.	[doc]		jreed
+	Miscellaneous documentation improvements for man pages and
+	the guide, including auth, resolver, stats, xfrout, and
+	zonemgr.  (git c14c4741b754a1eb226d3bdc3a7abbc4c5d727c0)
+
+  154.	[bug]		jinmei
+	b10-xfrin/b10-zonemgr: Fixed a bug where these programs didn't
+	receive command responses from CC sessions.  Eventually the
+	receive buffer became full, and many other components that rely
+	on CC channels would stall (as noted in #420 and #513).  This is
+	an urgent care fix due to the severity of the problem; we'll need
+	to revisit it for cleaner fix later. (Trac #516, git 62c72fc)
+
+  153.	[bug]		jelte
+	b10-cfgmgr: Fixed a bug where configuration updates sometimes
+	lost previous settings in the configuration manager.
+	(Trac #427, git 2df894155657754151e0860e2ca9cdbed7317c70)
+
+  152.	[func]*		jinmei
+	b10-auth: Added new configuration variable "statistics-interval"
+	to allow the user to change the timer interval for periodic
+	statistics updates.  The update can also be disabled by setting
+	the value to 0.  Disabling statistics updates will also work as
+	a temporary workaround of a known issue that b10-auth can block in
+	sending statistics and stop responding to queries as a result.
+	(Trac #513, git 285c5ee)
+
   151.  [bug]		smann
 	lib/log/dummylog.h: 
 	lib/log/dummylog.cc: Modify dlog so that it takes an optional 2nd
         argument of type bool (true or false). This flag, if set, will cause
         the message to be printed whether or not -v is chosen.
         (trac #432, git 880220478c3e8702d56d761b1e0b21b77d08ee5a)
+
   150.  [bug]		jelte
 	b10-cfgmgr: No longer save the configuration on exit. Configuration
-	is already saved if it is changed succesfully, so writing it on
+	is already saved if it is changed successfully, so writing it on
 	exit (and hence, when nothing has changed too) is unnecessary and
 	may even cause problems.
 	(Trac #435, git fd7baa38c08d54d5b5f84930c1684c436d2776dc)
@@ -256,7 +311,7 @@ bind10-devel-20101201 released on December 01, 2010
 
   112.	[func]		zhang likun
 	Add one mixin class to override the naive serve_forever() provided
-	in python library socketserver. Instead of polling for shutdwon
+	in python library socketserver. Instead of polling for shutdown
 	every poll_interval seconds, one socketpair is used to wake up
 	the waiting server. (Trac #352, svn r3366)
 

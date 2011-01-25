@@ -156,8 +156,11 @@ public:
     /// - If there is a matching name but no RRset of the search type, it
     ///   returns the code of \c NXRRSET, and, if DNSSEC is required,
     ///   the NSEC RRset for that name.
-    /// - If there is a matching name with CNAME, it returns the code of
-    ///   \c CNAME and that CNAME RR.
+    /// - If there is a CNAME RR of the searched name but there is no
+    ///   RR of the searched type of the name (so this type is different from
+    ///   CNAME), it returns the code of \c CNAME and that CNAME RR.
+    ///   Note that if the searched RR type is CNAME, it is considered
+    ///   a successful match, and the code of \c SUCCESS will be returned.
     /// - If the search name matches a delegation point of DNAME, it returns
     ///   the code of \c DNAME and that DNAME RR.
     /// - If the target isn't NULL, all RRsets under the domain are inserted

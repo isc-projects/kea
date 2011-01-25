@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __ASIOLINK_H
 #define __ASIOLINK_H 1
 
@@ -414,10 +412,11 @@ public:
     /// \param DNSServer DNSServer object to use
     virtual void operator()(const IOMessage& io_message,
                             isc::dns::MessagePtr message,
+                            isc::dns::MessagePtr answer_message,
                             isc::dns::OutputBufferPtr buffer,
                             DNSServer* server) const
     {
-        (*self_)(io_message, message, buffer, server);
+        (*self_)(io_message, message, answer_message, buffer, server);
     }
 private:
     DNSLookup* self_;
@@ -467,6 +466,7 @@ public:
     /// \param buffer The result is put here
     virtual void operator()(const IOMessage& io_message,
                             isc::dns::MessagePtr message,
+                            isc::dns::MessagePtr answer_message,
                             isc::dns::OutputBufferPtr buffer) const = 0;
 };
 
@@ -538,6 +538,8 @@ public:
     ///        query on.
     /// \param upstream Addresses and ports of the upstream servers
     ///        to forward queries to.
+    /// \param upstream_root Addresses and ports of the root servers
+    ///        to use when resolving.
     /// \param timeout How long to timeout the query, in ms
     ///     -1 means never timeout (but do not use that).
     ///     TODO: This should be computed somehow dynamically in future
@@ -545,7 +547,10 @@ public:
     ///     and return if it returs).
     RecursiveQuery(DNSService& dns_service,
                    const std::vector<std::pair<std::string, uint16_t> >&
-                   upstream, int timeout = -1, unsigned retries = 0);
+                   upstream, 
+                   const std::vector<std::pair<std::string, uint16_t> >&
+                   upstream_root, 
+                   int timeout = -1, unsigned retries = 0);
     //@}
 
     /// \brief Initiates an upstream query in the \c RecursiveQuery object.
@@ -559,12 +564,15 @@ public:
     /// \param buffer An output buffer into which the response can be copied
     /// \param server A pointer to the \c DNSServer object handling the client
     void sendQuery(const isc::dns::Question& question,
+                   isc::dns::MessagePtr answer_message,
                    isc::dns::OutputBufferPtr buffer,
                    DNSServer* server);
 private:
     DNSService& dns_service_;
     boost::shared_ptr<std::vector<std::pair<std::string, uint16_t> > >
         upstream_;
+    boost::shared_ptr<std::vector<std::pair<std::string, uint16_t> > >
+        upstream_root_;
     int timeout_;
     unsigned retries_;
 };
@@ -657,6 +665,29 @@ public:
     /// \throw isc::Unexpected ASIO library error
     ///
     void setupTimer(const Callback& cbfunc, const uint32_t interval);
+
+    /// Cancel the timer.
+    ///
+    /// If the timer has been set up, this method cancels any asynchronous
+    /// events waiting on the timer and stops the timer itself.
+    /// If the timer has already been canceled, this method effectively does
+    /// nothing.
+    ///
+    /// This method never throws an exception.
+    void cancel();
+
+    /// Return the timer interval.
+    ///
+    /// This method returns the timer interval in seconds if it's running;
+    /// if the timer has been canceled it returns 0.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// Note: We may want to change the granularity of the timer to
+    /// milliseconds or even finer.  If and when this happens the semantics
+    /// of the return value of this method will be changed accordingly.
+    uint32_t getInterval() const;
+
 private:
     IntervalTimerImpl* impl_;
 };
