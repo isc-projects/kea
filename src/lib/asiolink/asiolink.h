@@ -572,24 +572,23 @@ private:
 /// \brief The \c IntervalTimer class is a wrapper for the ASIO
 /// \c asio::deadline_timer class.
 ///
-/// This class is implemented to use \c asio::deadline_timer as
-/// interval timer.
+/// This class is implemented to use \c asio::deadline_timer as interval
+/// timer.
 ///
-/// \c setupTimer() sets a timer to expire on (now + interval) and
-/// a call back function.
+/// \c setup() sets a timer to expire on (now + interval) and a call back
+/// function.
 ///
-/// \c IntervalTimerImpl::callback() is called by the timer when
-/// it expires.
+/// \c IntervalTimerImpl::callback() is called by the timer when it expires.
 ///
-/// The function calls the call back function set by \c setupTimer()
-/// and updates the timer to expire in (now + interval) seconds.
+/// The function calls the call back function set by \c setup() and updates
+/// the timer to expire in (now + interval) seconds.
 /// The type of call back function is \c void(void).
 /// 
-/// The call back function will not be called if the instance of this
-/// class is destructed before the timer is expired.
+/// The call back function will not be called if the instance of this class is
+/// destructed before the timer is expired.
 ///
-/// Note: Destruction of an instance of this class while call back
-/// is pending causes throwing an exception from \c IOService.
+/// Note: Destruction of an instance of this class while call back is pending
+/// causes throwing an exception from \c IOService.
 ///
 /// Sample code:
 /// \code
@@ -600,7 +599,7 @@ private:
 ///  IOService io_service;
 ///
 ///  IntervalTimer intervalTimer(io_service);
-///  intervalTimer.setupTimer(function_to_call_back, interval_in_seconds);
+///  intervalTimer.setup(function_to_call_back, interval_in_seconds);
 ///  io_service.run();
 /// \endcode
 ///
@@ -656,7 +655,7 @@ public:
     /// \throw isc::BadValue interval is 0
     /// \throw isc::Unexpected ASIO library error
     ///
-    void setupTimer(const Callback& cbfunc, const uint32_t interval);
+    void setup(const Callback& cbfunc, const uint32_t interval);
 
     /// Cancel the timer.
     ///

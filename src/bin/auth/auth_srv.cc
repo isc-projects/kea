@@ -363,8 +363,9 @@ AuthSrv::setStatisticsTimerInterval(uint32_t interval) {
     if (interval == 0) {
         impl_->statistics_timer_.cancel();
     } else {
-        impl_->statistics_timer_.setupTimer(
-            boost::bind(&AuthSrv::submitStatistics, this), interval);
+        impl_->statistics_timer_.setup(boost::bind(&AuthSrv::submitStatistics,
+                                                   this),
+                                       interval);
     }
     if (impl_->verbose_mode_) {
         if (interval == 0) {
