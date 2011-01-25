@@ -146,7 +146,7 @@ public:
 
     /// \brief return the next node which is bigger than current node
     /// in the same tree
-    const RBNode<T> *successor() const;
+    const RBNode<T>* successor() const;
     //@}
 
     /// \name Setter functions.
@@ -247,7 +247,7 @@ RBNode<T>::~RBNode() {
 template <typename T>
 const RBNode<T> *
 RBNode<T>::successor()const {
-    const RBNode<T> *current = this;
+    const RBNode<T>* current = this;
     // If it has right node, the successor is the left-most node of the right
     // subtree.
     if (right_ != NULL_NODE()) {
@@ -350,7 +350,7 @@ public:
     };
 
     /// save the nodes along the path from root to the target node
-    typedef typename std::stack<const RBNode<T> *> NodeChain;
+    typedef typename std::stack<const RBNode<T>*> NodeChain;
 
     /// \name Constructor and Destructor
     //@{
@@ -477,7 +477,7 @@ public:
 
     /// \brief Simple find returning immutable node.
     ///
-    /// Acts as described in the \ref findEx section, but returns immutable 
+    /// Acts as described in the \ref findEx section, but returns immutable
     /// node pointer.
     template <typename CBARG>
     Result findEx(const isc::dns::Name& name, NodeChain &node_path,
@@ -577,7 +577,7 @@ private:
     /// Internal searching function.
     ///
    void dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
-                        unsigned int depth) const;
+                       unsigned int depth) const;
     /// \brief Indentation helper function for dumpTree
     static void indent(std::ostream& os, unsigned int depth);
 
@@ -588,20 +588,21 @@ private:
     void nodeFission(RBNode<T>& node, const isc::dns::Name& sub_name);
     //@}
 
-    RBNode<T>*  root_;
     RBNode<T>*  NULLNODE;
+    RBNode<T>*  root_;
     /// the node count of current tree
     unsigned int node_count_;
     /// search policy for rbtree
-    bool needsReturnEmptyNode_;
+    const bool needsReturnEmptyNode_;
 };
 
 template <typename T>
-RBTree<T>::RBTree(bool returnEmptyNode) {
-    NULLNODE = RBNode<T>::NULL_NODE();
-    root_ = NULLNODE;
-    node_count_ = 0;
-    needsReturnEmptyNode_ = returnEmptyNode;
+RBTree<T>::RBTree(bool returnEmptyNode) :
+    NULLNODE(RBNode<T>::NULL_NODE()),
+    root_(NULLNODE),
+    node_count_(0),
+    needsReturnEmptyNode_(returnEmptyNode)
+{
 }
 
 template <typename T>
@@ -612,18 +613,18 @@ RBTree<T>::~RBTree() {
 
 template <typename T>
 void
-RBTree<T>::deleteHelper(RBNode<T> *root) {
+RBTree<T>::deleteHelper(RBNode<T>* root) {
     if (root == NULLNODE) {
         return;
     }
 
-    RBNode<T> *node = root;
+    RBNode<T>* node = root;
     while (root->left_ != NULLNODE || root->right_ != NULLNODE) {
         while (node->left_ != NULLNODE || node->right_ != NULLNODE) {
             node = (node->left_ != NULLNODE) ? node->left_ : node->right_;
         }
 
-        RBNode<T> *parent = node->parent_;
+        RBNode<T>* parent = node->parent_;
         if (parent->left_ == node) {
             parent->left_ = NULLNODE;
         } else {
@@ -733,7 +734,7 @@ RBTree<T>::findEx(const isc::dns::Name& target_name,
                   bool (*callback)(const RBNode<T>&, CBARG),
                   CBARG callback_arg) const
 {
-    RBNode<T> *node = NULLNODE;
+    RBNode<T>* node = NULLNODE;
     const Result ret =
         findEx(target_name, node_path, &node, callback, callback_arg);
     if (ret != NOTFOUND) {
@@ -743,16 +744,16 @@ RBTree<T>::findEx(const isc::dns::Name& target_name,
 }
 
 template <typename T>
-const RBNode<T> *
-RBTree<T>::nextNode(const RBNode<T> *node, const NodeChain &node_path,
-                    NodeChain &next_node_path) const
+const RBNode<T>*
+RBTree<T>::nextNode(const RBNode<T>* node, const NodeChain& node_path,
+                    NodeChain& next_node_path) const
 {
     next_node_path = node_path;
-    // if node has sub domain, the next domain is the samllest
+    // if node has sub domain, the next domain is the smallest
     // domain in sub domain tree
     if (node->down_ != NULLNODE) {
         next_node_path.push(node);
-        const RBNode<T> *left_most = node->down_;
+        const RBNode<T>* left_most = node->down_;
         while (left_most->left_ != NULLNODE) {
             left_most = left_most->left_;
         }
@@ -760,7 +761,7 @@ RBTree<T>::nextNode(const RBNode<T> *node, const NodeChain &node_path,
     }
 
     // otherwise found the successor node in current level
-    const RBNode<T> *successor = node->successor();
+    const RBNode<T>* successor = node->successor();
     if (successor != NULLNODE) {
         return (successor);
     }
@@ -770,7 +771,7 @@ RBTree<T>::nextNode(const RBNode<T> *node, const NodeChain &node_path,
     // up node doesn't has successor we gonna keep moving to up
     // level
     while (!next_node_path.empty()) {
-        const RBNode<T> *up_node_successor = next_node_path.top()->successor();
+        const RBNode<T>* up_node_successor = next_node_path.top()->successor();
         next_node_path.pop();
         if (up_node_successor != NULLNODE) {
             return (up_node_successor);
