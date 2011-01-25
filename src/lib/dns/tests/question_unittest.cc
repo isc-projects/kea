@@ -139,6 +139,39 @@ TEST_F(QuestionTest, comparison) {
     EXPECT_FALSE(Question(a, ch, ns) < Question(a, ch, ns));
     EXPECT_FALSE(Question(b, in, ns) < Question(b, in, ns));
     EXPECT_FALSE(Question(b, in, aaaa) < Question(b, in, aaaa));
+
+    // Identical questions are equal
+
+    EXPECT_TRUE(Question(a, in, ns) == Question(a, in, ns));
+    EXPECT_FALSE(Question(a, in, ns) != Question(a, in, ns));
+
+    // Components differing by one component are unequal...
+
+    EXPECT_FALSE(Question(b, in, ns) == Question(a, in, ns));
+    EXPECT_TRUE(Question(b, in, ns) != Question(a, in, ns));
+
+    EXPECT_FALSE(Question(a, ch, ns) == Question(a, in, ns));
+    EXPECT_TRUE(Question(a, ch, ns) != Question(a, in, ns));
+
+    EXPECT_FALSE(Question(a, in, aaaa) == Question(a, in, ns));
+    EXPECT_TRUE(Question(a, in, aaaa) != Question(a, in, ns));
+
+    // ... as are those differing by two components
+
+    EXPECT_FALSE(Question(b, ch, ns) == Question(a, in, ns));
+    EXPECT_TRUE(Question(b, ch, ns) != Question(a, in, ns));
+
+    EXPECT_FALSE(Question(b, in, aaaa) == Question(a, in, ns));
+    EXPECT_TRUE(Question(b, in, aaaa) != Question(a, in, ns));
+
+    EXPECT_FALSE(Question(a, ch, aaaa) == Question(a, in, ns));
+    EXPECT_TRUE(Question(a, ch, aaaa) != Question(a, in, ns));
+
+    // ... and question differing by all three
+
+    EXPECT_FALSE(Question(b, ch, aaaa) == Question(a, in, ns));
+    EXPECT_TRUE(Question(b, ch, aaaa) != Question(a, in, ns));
+
 }
 
 }
