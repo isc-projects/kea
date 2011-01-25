@@ -189,7 +189,7 @@ struct MemoryZone::MemoryZoneImpl {
 
     // Implementation of MemoryZone::find
     FindResult find(const Name& name, RRType type,
-                    const FindOptions options) const
+                    RRsetList* target, const FindOptions options) const
     {
         // Get the node
         DomainNode* node(NULL);
@@ -225,12 +225,17 @@ struct MemoryZone::MemoryZoneImpl {
         }
 
         // handle type any query
-        const bool is_any_query = (type == RRType::ANY());
-        if (is_any_query){
-            if (node->getData()->empty()) {
-                return (FindResult(NXRRSET, ConstRRsetPtr()));
-            } else {
+        if (target){
+            if (!node->getData()->empty()) {
+                for (found = node->getData()->begin();
+                     found != node->getData()->end(); found++)
+                {
+                    target->addRRset(
+                        boost::const_pointer_cast<RRset>(found->second));
+                }
                 return (FindResult(SUCCESS, ConstRRsetPtr()));
+            } else {
+                return (FindResult(NXRRSET, ConstRRsetPtr()));
             }
         }
 
@@ -246,26 +251,6 @@ struct MemoryZone::MemoryZoneImpl {
              */
             return (FindResult(NXRRSET, ConstRRsetPtr()));
         }
-    }
-
-    // Implementation of MemoryZone::findAny
-    FindResult findAny(const Name& name, RRsetList& target) const
-    {
-        FindResult result(find(name, RRType::ANY(), FIND_DEFAULT));
-        if (result.code == SUCCESS) {
-            DomainNode* node(NULL);
-            FindState state(FIND_DEFAULT);
-            domains_.find(name, &node, zonecutCallback, &state);
-            assert(!node->getData()->empty());
-
-            Domain::const_iterator it;
-            for (it = node->getData()->begin();
-                 it != node->getData()->end(); it++)
-            {
-                target.addRRset(boost::const_pointer_cast<RRset>(it->second));
-            }
-        }
-        return (result);
     }
 };
 
@@ -290,15 +275,9 @@ MemoryZone::getClass() const {
 
 Zone::FindResult
 MemoryZone::find(const Name& name, const RRType& type,
-                 const FindOptions options) const
+                 RRsetList* target, const FindOptions options) const
 {
-    return (impl_->find(name, type, options));
-}
-
-Zone::FindResult
-MemoryZone::findAny(const Name& name, RRsetList& target) const
-{
-    return (impl_->findAny(name, target));
+    return (impl_->find(name, type, target, options));
 }
 
 result::Result

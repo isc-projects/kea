@@ -17,6 +17,7 @@
 #define __ZONE_H 1
 
 #include <datasrc/result.h>
+#include <dns/rrsetlist.h>
 
 namespace isc {
 namespace datasrc {
@@ -159,6 +160,8 @@ public:
     ///   \c CNAME and that CNAME RR.
     /// - If the search name matches a delegation point of DNAME, it returns
     ///   the code of \c DNAME and that DNAME RR.
+    /// - If the query type is ANY, target shouldn't be NULL. It iterate over
+    ///   RRs under the domain, and insert them into target.
     ///
     /// The \c options parameter specifies customized behavior of the search.
     /// Their semantics is as follows:
@@ -174,6 +177,8 @@ public:
     /// A derived version of this method may involve internal resource
     /// allocation, especially for constructing the resulting RRset, and may
     /// throw an exception if it fails.
+    /// It throws DuplicateRRset exception if there are duplicate rrsets under
+    /// the same domain.
     /// It should not throw other types of exceptions.
     ///
     /// Note: It's quite likely that we'll need to specify search options.
@@ -183,10 +188,13 @@ public:
     ///
     /// \param name The domain name to be searched for.
     /// \param type The RR type to be searched for.
+    /// \param target If target is not NULL, insert all RRs under the domain
+    /// into it.
     /// \param options The search options.
     /// \return A \c FindResult object enclosing the search result (see above).
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type,
+                            isc::dns::RRsetList* target = NULL,
                             const FindOptions options
                             = FIND_DEFAULT) const = 0;
     //@}

@@ -56,34 +56,21 @@ public:
 
     /// \brief Returns the origin of the zone.
     virtual const isc::dns::Name& getOrigin() const;
+
     /// \brief Returns the class of the zone.
     virtual const isc::dns::RRClass& getClass() const;
+
     /// \brief Looks up an RRset in the zone.
     ///
     /// See documentation in \c Zone.
     ///
     /// It returns NULL pointer in case of NXDOMAIN and NXRRSET,
-    /// and also SUCCESS for TYPE_ANY query.
+    /// and also SUCCESS if target is not NULL(TYPE_ANY query).
     /// (the base class documentation does not seem to require that).
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type,
+                            isc::dns::RRsetList* target = NULL,
                             const FindOptions options = FIND_DEFAULT) const;
-
-    /// \brief Iterate over RRs with the same owner name in the zone.
-    ///
-    /// It gets all RRsets under the domain name.
-    ///
-    /// It throws DuplicateRRset exception if there are duplicate rrsets under
-    /// the same domain. This method involve internal resource allocation,
-    /// especially for constructing the FindResult, and may throw an exception
-    /// if it fails. It should not throw other types of exceptions.
-    ///
-    /// \param name The domain name to be searched for.
-    /// \param target  Get all RRs under the domain name.
-    /// \return A \c FindResult object enclosing the search result, it returns
-    /// NULL in case of NXDOMAIN, NXRRSET and SUCCESS.
-    FindResult findAny(const isc::dns::Name& name,
-                       isc::dns::RRsetList& target) const;
 
     /// \brief Inserts an rrset into the zone.
     ///
