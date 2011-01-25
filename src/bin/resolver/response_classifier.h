@@ -45,7 +45,7 @@ public:
     /// do not end with a non-CNAME RRset.
     enum Category {
 
-        // Packet is valid
+        // Codes indicating that a message is valid.
 
         ANSWER,             ///< Response contains the answer
         ANSWERCNAME,        ///< Response was a CNAME chain ending in an answer
@@ -53,7 +53,8 @@ public:
         NXDOMAIN,           ///< Response was an NXDOMAIN
         REFERRAL,           ///< Response contains a referral
 
-        // Packet is invalid
+        // Codes indicating that a message is invalid.  Note that the error()
+        // method relies on these appearing after the "message valid" codes.
 
         EMPTY,              ///< No answer or authority sections
         EXTRADATA,          ///< Answer section contains more RRsets than needed
