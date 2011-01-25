@@ -1,3 +1,10 @@
+  159.	[func]		smann
+	The resolver now has a configurable set of root servers to start
+	resolving at (called root_addresses). By default these are not
+	(yet) filled in. If empty, a hardcoded address for f-root will be
+	used right now.
+	(Trac #483, git a07e078b4feeb01949133fc88c9939254c38aa7c)
+
   158.	[func]		jelte
 	The Resolver module will now do (very limited) resolving, if not
 	set to forwarding mode (i.e. if the configuration option
