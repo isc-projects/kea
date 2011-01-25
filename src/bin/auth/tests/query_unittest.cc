@@ -106,6 +106,7 @@ public:
 
     FindResult find(const isc::dns::Name& name,
                     const isc::dns::RRType& type,
+                    RRsetList* target = NULL,
                     const FindOptions options = FIND_DEFAULT) const;
 
 private:
@@ -131,7 +132,7 @@ MockZone::getClass() const {
 
 Zone::FindResult
 MockZone::find(const Name& name, const RRType& type,
-               const FindOptions options) const
+               RRsetList* target, const FindOptions options) const
 {
     // hardcode the find results
     if (name == Name("www.example.com") && type == RRType::A()) {
@@ -155,6 +156,10 @@ MockZone::find(const Name& name, const RRType& type,
         has_apex_NS_)
     {
         return (FindResult(SUCCESS, auth_ns_rrset));
+    } else if (name == Name("example.com") && type == RRType::ANY()) {
+        target->addRRset(soa_rrset);
+        target->addRRset(auth_ns_rrset);
+        return (FindResult(SUCCESS, RRsetPtr()));
     } else if (name == Name("mx.delegation.example.com") &&
         type == RRType::A() && (options & FIND_GLUE_OK) != 0)
     {
