@@ -323,12 +323,18 @@ class MsgQ:
 
     def __send_data(self, sock, data):
         try:
-            return sock.send(data, socket.MSG_DONTWAIT)
+            # We set the socket nonblocking, MSG_DONTWAIT doesn't exist
+            # on some OSes
+            sock.setblocking(0)
+            return sock.send(data)
         except socket.error as e:
             if e.errno == errno.EAGAIN or e.errno == errno.EWOULDBLOCK:
                 return 0
             else:
                 raise e
+        finally:
+            # And set it back again
+            sock.setblocking(1)
 
     def send_prepared_msg(self, sock, msg):
         # Try to send the data, but only if there's nothing waiting
@@ -355,7 +361,7 @@ class MsgQ:
                     self.poller.register(fileno, select.POLLIN |
                         select.POLLOUT)
                 else:
-                    self.add_kqueue_socket(fileno, True)
+                    self.add_kqueue_socket(sock, True)
             self.sendbuffs[fileno] = (last_sent, buff)
 
     def __process_write(self, fileno):
@@ -370,7 +376,7 @@ class MsgQ:
             if self.poller:
                 self.poller.register(fileno, select.POLLIN)
             else:
-                self.add_kqueue_socket(fileno)
+                self.add_kqueue_socket(sock)
             del self.sendbuffs[fileno]
         else:
             self.sendbuffs[fileno] = (time.clock(), msg)
