@@ -189,23 +189,27 @@ class SendNonblock(unittest.TestCase):
             length = len(data)
             queue_pid = os.fork()
             if queue_pid == 0:
+                signal.alarm(10)
                 msgq.register_socket(queue)
                 msgq.run()
             else:
-                def killall(signum, frame):
+                try:
+                    def killall(signum, frame):
+                        os.kill(queue_pid, signal.SIGTERM)
+                        sys.exit(1)
+                    signal.signal(signal.SIGALRM, killall)
+                    msg = msgq.preparemsg({"type" : "ping"}, data)
+                    now = time.clock()
+                    while time.clock() - now < 0.2:
+                        out.sendall(msg)
+                        # Check the answer
+                        (routing, received) = msgq.read_packet(out.fileno(),
+                            out)
+                        self.assertEqual({"type" : "pong"},
+                            isc.cc.message.from_wire(routing))
+                        self.assertEqual(data, received)
+                finally:
                     os.kill(queue_pid, signal.SIGTERM)
-                    sys.exit(1)
-                signal.signal(signal.SIGALRM, killall)
-                msg = msgq.preparemsg({"type" : "ping"}, data)
-                now = time.clock()
-                while time.clock() - now < 0.2:
-                    out.sendall(msg)
-                    # Check the answer
-                    (routing, received) = msgq.read_packet(out.fileno(), out)
-                    self.assertEqual({"type" : "pong"},
-                        isc.cc.message.from_wire(routing))
-                    self.assertEqual(data, received)
-                os.kill(queue_pid, signal.SIGTERM)
         self.terminate_check(run)
 
     def test_small_sends(self):
