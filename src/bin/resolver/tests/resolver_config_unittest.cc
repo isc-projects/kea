@@ -134,8 +134,8 @@ TEST_F(ResolverConfig, listenAddresses) {
 
     // Try putting there some addresses
     vector<pair<string, uint16_t> > addresses;
-    addresses.push_back(pair<string, uint16_t>("127.0.0.1", 5300));
-    addresses.push_back(pair<string, uint16_t>("::1", 5300));
+    addresses.push_back(pair<string, uint16_t>("127.0.0.1", 5321));
+    addresses.push_back(pair<string, uint16_t>("::1", 5321));
     server.setListenAddresses(addresses);
     EXPECT_EQ(2, server.getListenAddresses().size());
     EXPECT_EQ("::1", server.getListenAddresses()[1].first);
@@ -155,7 +155,7 @@ TEST_F(ResolverConfig, DISABLED_listenAddressConfig) {
         "\"listen_on\": ["
         "   {"
         "       \"address\": \"127.0.0.1\","
-        "       \"port\": 5300"
+        "       \"port\": 5321"
         "   }"
         "]"
         "}"));
@@ -163,7 +163,7 @@ TEST_F(ResolverConfig, DISABLED_listenAddressConfig) {
     EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
     ASSERT_EQ(1, server.getListenAddresses().size());
     EXPECT_EQ("127.0.0.1", server.getListenAddresses()[0].first);
-    EXPECT_EQ(5300, server.getListenAddresses()[0].second);
+    EXPECT_EQ(5321, server.getListenAddresses()[0].second);
 
     // As this is example address, the machine should not have it on
     // any interface
@@ -174,7 +174,7 @@ TEST_F(ResolverConfig, DISABLED_listenAddressConfig) {
         "\"listen_on\": ["
         "   {"
         "       \"address\": \"192.0.2.0\","
-        "       \"port\": 5300"
+        "       \"port\": 5321"
         "   }"
         "]"
         "}");
@@ -182,7 +182,7 @@ TEST_F(ResolverConfig, DISABLED_listenAddressConfig) {
     EXPECT_FALSE(result->equals(*isc::config::createAnswer()));
     ASSERT_EQ(1, server.getListenAddresses().size());
     EXPECT_EQ("127.0.0.1", server.getListenAddresses()[0].first);
-    EXPECT_EQ(5300, server.getListenAddresses()[0].second);
+    EXPECT_EQ(5321, server.getListenAddresses()[0].second);
 }
 
 TEST_F(ResolverConfig, invalidListenAddresses) {

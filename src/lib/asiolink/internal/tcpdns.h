@@ -195,7 +195,8 @@ private:
     // \c IOMessage and \c Message objects to be passed to the
     // DNS lookup and answer providers
     boost::shared_ptr<asiolink::IOMessage> io_message_;
-    isc::dns::MessagePtr message_;
+    isc::dns::MessagePtr query_message_;
+    isc::dns::MessagePtr answer_message_;
 
     // The buffer into which the query packet is written
     boost::shared_array<char>data_;
