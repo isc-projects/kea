@@ -652,10 +652,10 @@ public:
     /// will not be called.
     ///
     /// \throw isc::InvalidParameter cbfunc is empty
-    /// \throw isc::BadValue interval is 0
+    /// \throw isc::BadValue interval is less than or equal to 0
     /// \throw isc::Unexpected ASIO library error
     ///
-    void setup(const Callback& cbfunc, const uint32_t interval);
+    void setup(const Callback& cbfunc, const long interval);
 
     /// Cancel the timer.
     ///
@@ -677,7 +677,7 @@ public:
     /// Note: We may want to change the granularity of the timer to
     /// milliseconds or even finer.  If and when this happens the semantics
     /// of the return value of this method will be changed accordingly.
-    uint32_t getInterval() const;
+    long getInterval() const;
 
 private:
     IntervalTimerImpl* impl_;
