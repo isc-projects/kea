@@ -225,18 +225,15 @@ struct MemoryZone::MemoryZoneImpl {
         }
 
         // handle type any query
-        if (target){
-            if (!node->getData()->empty()) {
-                for (found = node->getData()->begin();
-                     found != node->getData()->end(); found++)
-                {
-                    target->addRRset(
-                        boost::const_pointer_cast<RRset>(found->second));
-                }
-                return (FindResult(SUCCESS, ConstRRsetPtr()));
-            } else {
-                return (FindResult(NXRRSET, ConstRRsetPtr()));
+        if (target && !node->getData()->empty()) {
+            // Empty domain will be handled as NXRRSET by normal processing
+            for (found = node->getData()->begin();
+                 found != node->getData()->end(); found++)
+            {
+                target->addRRset(
+                    boost::const_pointer_cast<RRset>(found->second));
             }
+            return (FindResult(SUCCESS, ConstRRsetPtr()));
         }
 
         found = node->getData()->find(type);
