@@ -47,7 +47,7 @@ struct RRsetRef{
 
 /// \brief Message Entry
 /// The object of MessageEntry represents one response message
-/// answered to the recursor client.
+/// answered to the resolver client.
 class MessageEntry : public NsasEntry<MessageEntry>,
                      public boost::noncopyable
 {

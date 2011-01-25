@@ -17,7 +17,7 @@ endif
 # Some versions of GCC warn about some versions of Boost regarding
 # missing initializer for members in its posix_time.
 # https://svn.boost.org/trac/boost/ticket/3477
-# But older GCC compilers don't have the flag.     
+# But older GCC compilers don't have the flag.
 AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 if USE_CLANGPP
@@ -37,7 +37,7 @@ run_unittests_SOURCES  += rrset_cache_unittest.cc
 run_unittests_SOURCES  += message_cache_unittest.cc
 run_unittests_SOURCES  += message_entry_unittest.cc
 run_unittests_SOURCES  += local_zone_data_unittest.cc
-run_unittests_SOURCES  += recursor_cache_unittest.cc
+run_unittests_SOURCES  += resolver_cache_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)

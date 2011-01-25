@@ -20,7 +20,7 @@
 #include <dns/buffer.h>
 #include "../message_cache.h"
 #include "../rrset_cache.h"
-#include "../recursor_cache.h"
+#include "../resolver_cache.h"
 #include "cache_test_util.h"
 
 using namespace isc::cache;
