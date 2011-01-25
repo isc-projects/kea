@@ -1,5 +1,10 @@
 bind10-devel-20110120 released on January 20, 2011
 
+  156.	[func]		stephen
+	Added ResponseClassifier class to examine response from
+	a server and classify it into one of several categories.
+	(Trac #487, git 18491370576e7438c7893f8551bbb8647001be9c)
+
   155.	[doc]		jreed
 	Miscellaneous documentation improvements for man pages and
 	the guide, including auth, resolver, stats, xfrout, and
