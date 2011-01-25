@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: nsec_47.h 991 2010-02-26 08:53:26Z jinmei $
-
 #include <stdint.h>
 
 #include <string>

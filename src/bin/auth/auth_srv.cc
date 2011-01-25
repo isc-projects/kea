@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <config.h>
 
 #include <netinet/in.h>
@@ -22,6 +20,8 @@
 #include <cassert>
 #include <iostream>
 #include <vector>
+
+#include <boost/bind.hpp>
 
 #include <asiolink/asiolink.h>
 
@@ -87,6 +87,8 @@ public:
     bool processNotify(const IOMessage& io_message, MessagePtr message,
                        OutputBufferPtr buffer);
 
+    IOService io_service_;
+
     /// Currently non-configurable, but will be.
     static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
 
@@ -101,6 +103,9 @@ public:
 
     /// Hot spot cache
     isc::datasrc::HotCache cache_;
+
+    /// Interval timer for periodic submission of statistics counters.
+    IntervalTimer statistics_timer_;
 
     /// Query counters for statistics
     AuthCounters counters_;
@@ -125,6 +130,7 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
     config_session_(NULL), verbose_mode_(false),
     xfrin_session_(NULL),
     memory_datasrc_class_(RRClass::IN()),
+    statistics_timer_(io_service_),
     counters_(verbose_mode_),
     xfrout_connected_(false),
     xfrout_client_(xfrout_client)
@@ -153,9 +159,13 @@ AuthSrvImpl::~AuthSrvImpl() {
 class MessageLookup : public DNSLookup {
 public:
     MessageLookup(AuthSrv* srv) : server_(srv) {}
-    virtual void operator()(const IOMessage& io_message, MessagePtr message,
-                            OutputBufferPtr buffer, DNSServer* server) const
+    virtual void operator()(const IOMessage& io_message,
+                            MessagePtr message,
+                            MessagePtr answer_message,
+                            OutputBufferPtr buffer,
+                            DNSServer* server) const
     {
+        (void) answer_message;
         server_->processMessage(io_message, message, buffer, server);
     }
 private:
@@ -174,7 +184,7 @@ class MessageAnswer : public DNSAnswer {
 public:
     MessageAnswer(AuthSrv*) {}
     virtual void operator()(const IOMessage&, MessagePtr,
-                            OutputBufferPtr) const
+                            MessagePtr, OutputBufferPtr) const
     {}
 };
 
@@ -195,7 +205,6 @@ private:
 
 AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client) :
     impl_(new AuthSrvImpl(use_cache, xfrout_client)),
-    io_service_(NULL),
     checkin_(new ConfigChecker(this)),
     dns_lookup_(new MessageLookup(this)),
     dns_answer_(new MessageAnswer(this))
@@ -203,10 +212,7 @@ AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client) :
 
 void
 AuthSrv::stop() {
-    if (io_service_ == NULL) {
-        throw FatalError("Assumption failure; server is stopped before start");
-    }
-    io_service_->stop();
+    impl_->io_service_.stop();
 }
 
 AuthSrv::~AuthSrv() {
@@ -278,6 +284,11 @@ AuthSrv::getVerbose() const {
     return (impl_->verbose_mode_);
 }
 
+IOService&
+AuthSrv::getIOService() {
+    return (impl_->io_service_);
+}
+
 void
 AuthSrv::setCacheSlots(const size_t slots) {
     impl_->cache_.setSlots(slots);
@@ -339,6 +350,32 @@ AuthSrv::setMemoryDataSrc(const isc::dns::RRClass& rrclass,
         }
     }
     impl_->memory_datasrc_ = memory_datasrc;
+}
+
+uint32_t
+AuthSrv::getStatisticsTimerInterval() const {
+    return (impl_->statistics_timer_.getInterval());
+}
+
+void
+AuthSrv::setStatisticsTimerInterval(uint32_t interval) {
+    if (interval == impl_->statistics_timer_.getInterval()) {
+        return;
+    }
+    if (interval == 0) {
+        impl_->statistics_timer_.cancel();
+    } else {
+        impl_->statistics_timer_.setupTimer(
+            boost::bind(&AuthSrv::submitStatistics, this), interval);
+    }
+    if (impl_->verbose_mode_) {
+        if (interval == 0) {
+            cerr << "[b10-auth] Disabled statistics timer" << endl;
+        } else {
+            cerr << "[b10-auth] Set statistics timer to " << interval
+                 << " seconds" << endl;
+        }
+    }
 }
 
 void

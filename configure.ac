@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20101201, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20110120, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -83,7 +83,7 @@ case "$host" in
 	CPPFLAGS="$CPPFLAGS -D_XPG4_2 -D__EXTENSIONS__"
 	;;
 *-apple-darwin*)
-	# libtool doesn't work pefectly with Darwin: libtool embeds the
+	# libtool doesn't work perfectly with Darwin: libtool embeds the
 	# final install path in dynamic libraries and our loadable python
 	# modules always refer to that path even if it's loaded within the
 	# source tree.  This prevents pre-install tests from working.
@@ -202,7 +202,7 @@ fi
 
 # Compiler dependent settings: define some mandatory CXXFLAGS here.
 # We also use a separate variable B10_CXXFLAGS.  This will (and should) be
-# used as the default value for each specifc AM_CXXFLAGS:
+# used as the default value for each specific AM_CXXFLAGS:
 # AM_CXXFLAGS = $(B10_CXXFLAGS)
 # AM_CXXFLAGS += ... # add module specific flags
 # We need this so that we can disable some specific compiler warnings per
@@ -555,7 +555,7 @@ fi
 # So, for the moment, we simply disable the use of /dev/poll.  Unless we
 # implement recursive DNS server with randomized ports, we don't need the
 # scalability that /dev/poll can provide, so this decision wouldn't affect
-# run time performance.  Hpefully we can find a better solution or the ASIO
+# run time performance.  Hopefully we can find a better solution or the ASIO
 # code will be updated by the time we really need it.
 AC_CHECK_HEADERS(sys/devpoll.h, ac_cv_have_devpoll=yes, ac_cv_have_devpoll=no)
 if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GXX" = "Xyes"; then
@@ -574,6 +574,8 @@ AC_ARG_ENABLE(install-configurations,
 AM_CONDITIONAL(INSTALL_CONFIGURATIONS, test x$install_configurations = xyes || test x$install_configurations = xtrue)
 
 AC_CONFIG_FILES([Makefile
+                 doc/Makefile
+                 doc/guide/Makefile
                  src/Makefile
                  src/bin/Makefile
                  src/bin/bind10/Makefile
@@ -655,7 +657,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/nsas/Makefile
                  src/lib/nsas/tests/Makefile
                ])
-AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
+AC_OUTPUT([doc/version.ent
+           src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cfgmgr/tests/b10-cfgmgr_test.py
            src/bin/cmdctl/cmdctl.py
            src/bin/cmdctl/run_b10-cmdctl.sh
@@ -712,7 +715,6 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
-           chmod +x src/bin/resolver/run_b10-resolver.sh
            chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
            chmod +x src/bin/stats/tests/stats_test
            chmod +x src/bin/stats/run_b10-stats.sh

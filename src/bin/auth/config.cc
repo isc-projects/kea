@@ -169,6 +169,32 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
     }
 }
 
+/// A derived \c AuthConfigParser class for the "statistics-internal"
+/// configuration identifier.
+class StatisticsIntervalConfig : public AuthConfigParser {
+public:
+    StatisticsIntervalConfig(AuthSrv& server) :
+        server_(server), interval_(0)
+    {}
+    virtual void build(ConstElementPtr config_value) {
+        const int32_t config_interval = config_value->intValue();
+        if (config_interval < 0) {
+            isc_throw(AuthConfigError, "negative statistics-interval value: "
+                      << config_interval);
+        }
+        interval_ = config_interval;
+    }
+    virtual void commit() {
+        // setStatisticsTimerInterval() is not 100% exception free.  But
+        // exceptions should happen only in a very rare situation, so we
+        // let them be thrown and subsequently regard them as a fatal error.
+        server_.setStatisticsTimerInterval(interval_);
+    }
+private:
+    AuthSrv& server_;
+    uint32_t interval_;
+};
+
 /// A special parser for testing: it throws from commit() despite the
 /// suggested convention of the class interface.
 class ThrowerCommitConfig : public AuthConfigParser {
@@ -191,6 +217,8 @@ createAuthConfigParser(AuthSrv& server, const std::string& config_id,
     // that it can be dynamically customized.
     if (config_id == "datasources") {
         return (new DatasourcesConfig(server));
+    } else if (config_id == "statistics-interval") {
+        return (new StatisticsIntervalConfig(server));
     } else if (internal && config_id == "datasources/memory") {
         return (new MemoryDatasourceConfig(server));
     } else if (config_id == "_commit_throw") {

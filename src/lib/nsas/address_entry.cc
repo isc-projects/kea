@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 /// \file address_entry.cc
 ///
 /// This file exists to define the single constant \c AddressEntry::UNREACHABLE,

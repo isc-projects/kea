@@ -12,9 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
-
 #include <config.h>
 
 #include <sys/socket.h>
@@ -31,6 +28,7 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/tests/unittest_util.h>
+#include <dns/rcode.h>
 
 #include <dns/buffer.h>
 #include <dns/message.h>
@@ -442,6 +440,7 @@ protected:
                             DNSAnswer* answer = NULL) :
             io_(io_service),
             message_(new Message(Message::PARSE)),
+            answer_message_(new Message(Message::RENDER)),
             respbuf_(new OutputBuffer(0)),
             checkin_(checkin), lookup_(lookup), answer_(answer)
         {}
@@ -450,7 +449,8 @@ protected:
                         size_t length = 0)
         {}
 
-        void resume(const bool) { // in our test this shouldn't be called
+        void resume(const bool) {
+          // should never be called in our tests
         }
 
         DNSServer* clone() {
@@ -460,7 +460,8 @@ protected:
 
         inline void asyncLookup() {
             if (lookup_) {
-                (*lookup_)(*io_message_, message_, respbuf_, this);
+                (*lookup_)(*io_message_, message_, answer_message_,
+                           respbuf_, this);
             }
         }
 
@@ -473,6 +474,7 @@ protected:
         // asynchronous lookup calls via the asyncLookup() method
         boost::shared_ptr<asiolink::IOMessage> io_message_;
         isc::dns::MessagePtr message_;
+        isc::dns::MessagePtr answer_message_;
         isc::dns::OutputBufferPtr respbuf_;
 
         // Callback functions provided by the caller
@@ -643,15 +645,17 @@ singleAddress(const string &address, uint16_t port) {
 TEST_F(ASIOLinkTest, recursiveSetupV4) {
     setDNSService(true, false);
     uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    EXPECT_NO_THROW(RecursiveQuery(*dns_service_, singleAddress(TEST_IPV6_ADDR,
-        port)));
+    EXPECT_NO_THROW(RecursiveQuery(*dns_service_,
+                                   singleAddress(TEST_IPV4_ADDR, port),
+                                   singleAddress(TEST_IPV4_ADDR, port)));
 }
 
 TEST_F(ASIOLinkTest, recursiveSetupV6) {
     setDNSService(false, true);
     uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    EXPECT_NO_THROW(RecursiveQuery(*dns_service_, singleAddress(TEST_IPV6_ADDR,
-        port)));
+    EXPECT_NO_THROW(RecursiveQuery(*dns_service_,
+                                   singleAddress(TEST_IPV6_ADDR, port),
+                                   singleAddress(TEST_IPV6_ADDR,port)));
 }
 
 // XXX:
@@ -659,7 +663,7 @@ TEST_F(ASIOLinkTest, recursiveSetupV6) {
 // a routine that can do this with variable address family, address, and
 // port, and with the various callbacks defined in such a way as to ensure
 // full code coverage including error cases.
-TEST_F(ASIOLinkTest, recursiveSend) {
+TEST_F(ASIOLinkTest, forwarderSend) {
     setDNSService(true, false);
 
     // Note: We use the test prot plus one to ensure we aren't binding
@@ -667,11 +671,14 @@ TEST_F(ASIOLinkTest, recursiveSend) {
     uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
 
     MockServer server(*io_service_);
-    RecursiveQuery rq(*dns_service_, singleAddress(TEST_IPV4_ADDR, port));
+    RecursiveQuery rq(*dns_service_,
+                      singleAddress(TEST_IPV4_ADDR, port),
+                      singleAddress(TEST_IPV4_ADDR, port));
 
     Question q(Name("example.com"), RRClass::IN(), RRType::TXT());
     OutputBufferPtr buffer(new OutputBuffer(0));
-    rq.sendQuery(q, buffer, &server);
+    MessagePtr answer(new Message(Message::RENDER));
+    rq.sendQuery(q, answer, buffer, &server);
 
     char data[4096];
     size_t size = sizeof(data);
@@ -712,11 +719,14 @@ TEST_F(ASIOLinkTest, recursiveTimeout) {
 
     // Do the answer
     const uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    RecursiveQuery query(*dns_service_, singleAddress(TEST_IPV4_ADDR, port),
-        10, 2);
+    RecursiveQuery query(*dns_service_,
+                         singleAddress(TEST_IPV4_ADDR, port),
+                         singleAddress(TEST_IPV4_ADDR, port),
+                         10, 2);
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
-    query.sendQuery(question, buffer, &server);
+    MessagePtr answer(new Message(Message::RENDER));
+    query.sendQuery(question, answer, buffer, &server);
 
     // Run the test
     io_service_->run();
@@ -746,12 +756,64 @@ TEST_F(ASIOLinkTest, recursiveTimeout) {
     EXPECT_EQ(3, num);
 }
 
+// as mentioned above, we need a more better framework for this,
+// in addition to that, this sends out queries into the world
+// (which we should catch somehow and fake replies for)
+// for the skeleton code, it shouldn't be too much of a problem
+// Ok so even we don't all have access to the DNS world right now,
+// so disabling these tests too.
+TEST_F(ASIOLinkTest, DISABLED_recursiveSendOk) {
+    setDNSService(true, false);
+    bool done;
+    
+    MockServerStop server(*io_service_, &done);
+    vector<pair<string, uint16_t> > empty_vector;
+    RecursiveQuery rq(*dns_service_, empty_vector, empty_vector, 10000, 0);
+
+    Question q(Name("www.isc.org"), RRClass::IN(), RRType::A());
+    OutputBufferPtr buffer(new OutputBuffer(0));
+    MessagePtr answer(new Message(Message::RENDER));
+    rq.sendQuery(q, answer, buffer, &server);
+    io_service_->run();
+
+    // Check that the answer we got matches the one we wanted
+    EXPECT_EQ(Rcode::NOERROR(), answer->getRcode());
+    ASSERT_EQ(1, answer->getRRCount(Message::SECTION_ANSWER));
+    RRsetPtr a = *answer->beginSection(Message::SECTION_ANSWER);
+    EXPECT_EQ(q.getName(), a->getName());
+    EXPECT_EQ(q.getType(), a->getType());
+    EXPECT_EQ(q.getClass(), a->getClass());
+    EXPECT_EQ(1, a->getRdataCount());
+}
+
+// see comments at previous test
+TEST_F(ASIOLinkTest, DISABLED_recursiveSendNXDOMAIN) {
+    setDNSService(true, false);
+    bool done;
+    
+    MockServerStop server(*io_service_, &done);
+    vector<pair<string, uint16_t> > empty_vector;
+    RecursiveQuery rq(*dns_service_, empty_vector, empty_vector, 10000, 0);
+
+    Question q(Name("wwwdoesnotexist.isc.org"), RRClass::IN(), RRType::A());
+    OutputBufferPtr buffer(new OutputBuffer(0));
+    MessagePtr answer(new Message(Message::RENDER));
+    rq.sendQuery(q, answer, buffer, &server);
+    io_service_->run();
+
+    // Check that the answer we got matches the one we wanted
+    EXPECT_EQ(Rcode::NXDOMAIN(), answer->getRcode());
+    EXPECT_EQ(0, answer->getRRCount(Message::SECTION_ANSWER));
+}
+
+
+
 // This fixture is for testing IntervalTimer. Some callback functors are 
 // registered as callback function of the timer to test if they are called
 // or not.
 class IntervalTimerTest : public ::testing::Test {
 protected:
-    IntervalTimerTest() : io_service_() {};
+    IntervalTimerTest() : io_service_() {}
     ~IntervalTimerTest() {}
     class TimerCallBack : public std::unary_function<void, void> {
     public:
@@ -811,6 +873,19 @@ protected:
         int count_;
         int prev_counter_;
     };
+    class TimerCallBackCanceller {
+    public:
+        TimerCallBackCanceller(unsigned int& counter, IntervalTimer& itimer) :
+            counter_(counter), itimer_(itimer)
+        {}
+        void operator()() {
+            ++counter_;
+            itimer_.cancel();
+        }
+    private:
+        unsigned int& counter_;
+        IntervalTimer& itimer_;
+    };
     class TimerCallBackOverwriter : public std::unary_function<void, void> {
     public:
         TimerCallBackOverwriter(IntervalTimerTest* test_obj,
@@ -864,6 +939,7 @@ TEST_F(IntervalTimerTest, startIntervalTimer) {
     start = boost::posix_time::microsec_clock::universal_time();
     // setup timer
     itimer.setupTimer(TimerCallBack(this), 1);
+    EXPECT_EQ(1, itimer.getInterval());
     io_service_.run();
     // reaches here after timer expired
     // delta: difference between elapsed time and 1 second
@@ -924,6 +1000,23 @@ TEST_F(IntervalTimerTest, destructIntervalTimer) {
         3);
     io_service_.run();
     EXPECT_TRUE(timer_cancel_success_);
+}
+
+TEST_F(IntervalTimerTest, cancel) {
+    // Similar to destructIntervalTimer test, but the first timer explicitly
+    // cancels itself on first callback.
+    IntervalTimer itimer_counter(io_service_);
+    IntervalTimer itimer_watcher(io_service_);
+    unsigned int counter = 0;
+    itimer_counter.setupTimer(TimerCallBackCanceller(counter, itimer_counter),
+                              1);
+    itimer_watcher.setupTimer(TimerCallBack(this), 3);
+    io_service_.run();
+    EXPECT_EQ(1, counter);
+    EXPECT_EQ(0, itimer_counter.getInterval());
+
+    // canceling an already canceled timer shouldn't cause any surprise.
+    EXPECT_NO_THROW(itimer_counter.cancel());
 }
 
 TEST_F(IntervalTimerTest, overwriteIntervalTimer) {

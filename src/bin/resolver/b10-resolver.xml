@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2010-2011  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -17,11 +17,10 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $Id$ -->
 <refentry>
 
   <refentryinfo>
-    <date>January 3, 2011</date>
+    <date>January 19, 2011</date>
   </refentryinfo>
 
   <refmeta>
@@ -68,7 +67,6 @@
     <para>
       It also receives its configurations from
 <citerefentry><refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
-      Currently no configuration commands are defined.
     </para>
 
     <note><para>
@@ -112,12 +110,71 @@
   </refsect1>
 
   <refsect1>
+    <title>CONFIGURATION AND COMMANDS</title>
+    <para>
+      The configurable settings are:
+    </para>
+
+    <para>
+      <varname>forward_addresses</varname> defines the list of addresses
+      and ports that <command>b10-resolver</command> should forward
+      queries to.
+      Defining this enables forwarding.
+<!-- TODO: list
+address
+	::1
+port
+	53
+-->
+    </para>
+
+<!-- trac386:
+
+once that is merged you can for instance do 'config add Resolver/forward_addresses { "port": 123 } and it will fill in the rest (in this case ::1 for the address)
+
+-->
+
+    <para>
+      <varname>listen_on</varname> is a list of addresses and ports for
+      <command>b10-resolver</command> to listen on.
+      The list items are the <varname>address</varname> string
+      and <varname>port</varname> number.
+      The defaults are address ::1 port 5300 and
+      address 127.0.0.1 port 5300.
+    </para>
+
+    <para>
+      <varname>retries</varname> is the number of times to retry
+      (resend query) after a timeout.
+      The default is 0 (do not retry).
+    </para>
+
+    <para>
+      <varname>timeout</varname> is the number of milliseconds to
+      wait for answer. If set to -1, the timeout is disabled.
+      The default is 2000.
+    </para>
+
+<!-- TODO: formating -->
+    <para>
+      The configuration command is:
+    </para>
+
+    <para>
+      <command>shutdown</command> exits <command>b10-resolver</command>.
+      (Note that the BIND 10 boss process will restart this service.)
+    </para>
+
+  </refsect1>
+
+<!--
+  <refsect1>
     <title>FILES</title>
     <para>
       None.
     </para>
-<!-- TODO: this is not correct yet. -->
   </refsect1>
+-->
 
   <refsect1>
     <title>SEE ALSO</title>
@@ -142,7 +199,11 @@
     <title>HISTORY</title>
     <para>
       The <command>b10-resolver</command> daemon was first coded in
-      September 2010.
+      September 2010. The initial implementation only provided
+      forwarding.
+<!-- TODO: document when caching was added -->
+<!-- TODO: document when iteration was added -->
+<!-- TODO: document when validation was added -->
     </para>
   </refsect1>
 </refentry><!--

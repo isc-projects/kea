@@ -1,4 +1,3 @@
-; $Id: ttl1.db,v 1.6 2007/06/19 23:47:04 tbox Exp $
 $ORIGIN mix1.
 @			IN SOA	ns hostmaster (
 				1        ; serial
