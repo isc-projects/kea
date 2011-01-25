@@ -112,6 +112,24 @@ public:
     bool isForwarding() const;
 
     /**
+     * \brief Specify the list of root nameservers.
+     *
+     * Specify the list of addresses of root nameservers
+     *
+     * @param addresses The list of addresses to use (each one is the address
+     * and port pair).
+     */
+    void setRootAddresses(const std::vector<std::pair<std::string,
+                          uint16_t> >& addresses);
+
+    /**
+     * \short Get list of root addresses.
+     *
+     * \see setRootAddresses.
+     */
+    std::vector<std::pair<std::string, uint16_t> > getRootAddresses() const;
+
+    /**
      * Set and get the addresses we listen on.
      */
     void setListenAddresses(const std::vector<std::pair<std::string,
