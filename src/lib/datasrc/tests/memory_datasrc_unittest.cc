@@ -314,7 +314,8 @@ TEST_F(MemoryZoneTest, findCNAMEUnderZoneCut) {
                                            RRTTL(300)));
     EXPECT_EQ(SUCCESS, zone_.add(rr_cname_under_cut_));
     findTest(Name("cname.child.example.org"), RRType::AAAA(),
-             Zone::CNAME, true, rr_cname_under_cut_, NULL, Zone::FIND_GLUE_OK);
+             Zone::CNAME, true, rr_cname_under_cut_, NULL, NULL,
+             Zone::FIND_GLUE_OK);
 }
 
 // Test adding child zones and zone cut handling
