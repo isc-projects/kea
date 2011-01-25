@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 // XXX: we have another exceptions.h, so we need to use a prefix "DNS_" in
 // the include guard.  More preferably, we should define a consistent naming
 // style for the header guide (e.g. module-name_file-name_H) throughout the

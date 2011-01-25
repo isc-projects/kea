@@ -15,6 +15,8 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/name.h>
+#include <dns/rdata.h>
+#include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrsetlist.h>
 #include <dns/rrttl.h>
@@ -25,6 +27,7 @@
 #include <gtest/gtest.h>
 
 using namespace isc::dns;
+using namespace isc::dns::rdata;
 using namespace isc::datasrc;
 
 namespace {
@@ -143,6 +146,7 @@ public:
         class_(RRClass::IN()),
         origin_("example.org"),
         ns_name_("ns.example.org"),
+        cname_name_("cname.example.org"),
         child_ns_name_("child.example.org"),
         child_glue_name_("ns.child.example.org"),
         grandchild_ns_name_("grand.child.example.org"),
@@ -154,6 +158,8 @@ public:
         rr_ns_a_(new RRset(ns_name_, class_, RRType::A(), RRTTL(300))),
         rr_ns_aaaa_(new RRset(ns_name_, class_, RRType::AAAA(), RRTTL(300))),
         rr_a_(new RRset(origin_, class_, RRType::A(), RRTTL(300))),
+        rr_cname_(new RRset(cname_name_, class_, RRType::CNAME(), RRTTL(300))),
+        rr_cname_a_(new RRset(cname_name_, class_, RRType::A(), RRTTL(300))),
         rr_child_ns_(new RRset(child_ns_name_, class_, RRType::NS(),
                                RRTTL(300))),
         rr_child_glue_(new RRset(child_glue_name_, class_, RRType::A(),
@@ -166,8 +172,8 @@ public:
     }
     // Some data to test with
     const RRClass class_;
-    const Name origin_, ns_name_, child_ns_name_, child_glue_name_,
-        grandchild_ns_name_, grandchild_glue_name_;
+    const Name origin_, ns_name_, cname_name_, child_ns_name_,
+        child_glue_name_, grandchild_ns_name_, grandchild_glue_name_;
     // The zone to torture by tests
     MemoryZone zone_;
 
@@ -188,6 +194,8 @@ public:
         rr_ns_aaaa_,
         // A of example.org
         rr_a_;
+    RRsetPtr rr_cname_;         // CNAME in example.org (RDATA will be added)
+    ConstRRsetPtr rr_cname_a_; // for mixed CNAME + A case
     ConstRRsetPtr rr_child_ns_; // NS of a child domain (for delegation)
     ConstRRsetPtr rr_child_glue_; // glue RR of the child domain
     ConstRRsetPtr rr_grandchild_ns_; // NS below a zone cut (unusual)
@@ -264,6 +272,49 @@ TEST_F(MemoryZoneTest, add) {
     // Try putting there something twice, it should be rejected
     EXPECT_NO_THROW(EXPECT_EQ(EXIST, zone_.add(rr_ns_)));
     EXPECT_NO_THROW(EXPECT_EQ(EXIST, zone_.add(rr_ns_a_)));
+}
+
+TEST_F(MemoryZoneTest, addMultipleCNAMEs) {
+    rr_cname_->addRdata(generic::CNAME("canonical1.example.org."));
+    rr_cname_->addRdata(generic::CNAME("canonical2.example.org."));
+    EXPECT_THROW(zone_.add(rr_cname_), MemoryZone::AddError);
+}
+
+TEST_F(MemoryZoneTest, addCNAMEThenOther) {
+    rr_cname_->addRdata(generic::CNAME("canonical.example.org."));
+    EXPECT_EQ(SUCCESS, zone_.add(rr_cname_));
+    EXPECT_THROW(zone_.add(rr_cname_a_), MemoryZone::AddError);
+}
+
+TEST_F(MemoryZoneTest, addOtherThenCNAME) {
+    rr_cname_->addRdata(generic::CNAME("canonical.example.org."));
+    EXPECT_EQ(SUCCESS, zone_.add(rr_cname_a_));
+    EXPECT_THROW(zone_.add(rr_cname_), MemoryZone::AddError);
+}
+
+TEST_F(MemoryZoneTest, findCNAME) {
+    // install CNAME RR
+    rr_cname_->addRdata(generic::CNAME("canonical.example.org."));
+    EXPECT_EQ(SUCCESS, zone_.add(rr_cname_));
+
+    // Find A RR of the same.  Should match the CNAME
+    findTest(cname_name_, RRType::NS(), Zone::CNAME, true, rr_cname_);
+
+    // Find the CNAME itself.  Should result in normal SUCCESS
+    findTest(cname_name_, RRType::CNAME(), Zone::SUCCESS, true, rr_cname_);
+}
+
+TEST_F(MemoryZoneTest, findCNAMEUnderZoneCut) {
+    // There's nothing special when we find a CNAME under a zone cut
+    // (with FIND_GLUE_OK).  The behavior is different from BIND 9,
+    // so we test this case explicitly.
+    EXPECT_EQ(SUCCESS, zone_.add(rr_child_ns_));
+    RRsetPtr rr_cname_under_cut_(new RRset(Name("cname.child.example.org"),
+                                           class_, RRType::CNAME(),
+                                           RRTTL(300)));
+    EXPECT_EQ(SUCCESS, zone_.add(rr_cname_under_cut_));
+    findTest(Name("cname.child.example.org"), RRType::AAAA(),
+             Zone::CNAME, true, rr_cname_under_cut_, NULL, Zone::FIND_GLUE_OK);
 }
 
 // Test adding child zones and zone cut handling

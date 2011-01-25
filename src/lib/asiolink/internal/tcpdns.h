@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __TCPDNS_H
 #define __TCPDNS_H 1
 
@@ -197,7 +195,8 @@ private:
     // \c IOMessage and \c Message objects to be passed to the
     // DNS lookup and answer providers
     boost::shared_ptr<asiolink::IOMessage> io_message_;
-    isc::dns::MessagePtr message_;
+    isc::dns::MessagePtr query_message_;
+    isc::dns::MessagePtr answer_message_;
 
     // The buffer into which the query packet is written
     boost::shared_array<char>data_;

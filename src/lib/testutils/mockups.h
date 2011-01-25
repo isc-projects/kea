@@ -12,14 +12,14 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <config.h>
 
 #include <cc/data.h>
 #include <cc/session.h>
 
 #include <xfr/xfrout_client.h>
+
+#include <asiolink/asiolink.h>
 
 // A minimal mock configuration session.  Most the methods are
 // stubbed out, except for a very basic group_sendmsg() and

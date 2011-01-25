@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/select.h>
@@ -24,8 +22,6 @@
 
 #include <cassert>
 #include <iostream>
-
-#include <boost/bind.hpp>
 
 #include <exceptions/exceptions.h>
 
@@ -62,16 +58,10 @@ bool verbose_mode = false;
 // Default port current 5300 for testing purposes
 const char* DNSPORT = "5300";
 
-// Note: this value must be greater than 0.
-// TODO: make it configurable via command channel.
-const uint32_t STATISTICS_SEND_INTERVAL_SEC = 60;
-
 /* need global var for config/command handlers.
  * todo: turn this around, and put handlers in the authserver
  * class itself? */
 AuthSrv *auth_server;
-
-IOService io_service;
 
 ConstElementPtr
 my_config_handler(ConstElementPtr new_config) {
@@ -97,12 +87,6 @@ usage() {
     cerr << "\t-u: change process UID to the specified user" << endl;
     cerr << "\t-v: verbose output" << endl;
     exit(1);
-}
-
-void
-statisticsTimerCallback(AuthSrv* auth_server) {
-    assert(auth_server != NULL);
-    auth_server->submitStatistics();
 }
 } // end of anonymous namespace
 
@@ -170,7 +154,6 @@ main(int argc, char* argv[]) {
     Session* cc_session = NULL;
     Session* xfrin_session = NULL;
     Session* statistics_session = NULL;
-    IntervalTimer* itimer = NULL;
     bool xfrin_session_established = false; // XXX (see Trac #287)
     bool statistics_session_established = false; // XXX (see Trac #287)
     ModuleCCSession* config_session = NULL;
@@ -195,6 +178,7 @@ main(int argc, char* argv[]) {
         cout << "[b10-auth] Server created." << endl;
 
         SimpleCallback* checkin = auth_server->getCheckinProvider();
+        IOService& io_service = auth_server->getIOService();
         DNSLookup* lookup = auth_server->getDNSLookupProvider();
         DNSAnswer* answer = auth_server->getDNSAnswerProvider();
 
@@ -213,8 +197,7 @@ main(int argc, char* argv[]) {
                                          use_ipv6, checkin, lookup,
                                          answer);
         }
-        auth_server->setIOService(io_service);
-        cout << "[b10-auth] IOService created." << endl;
+        cout << "[b10-auth] DNSServices created." << endl;
 
         cc_session = new Session(io_service.get_io_service());
         cout << "[b10-auth] Configuration session channel created." << endl;
@@ -240,11 +223,6 @@ main(int argc, char* argv[]) {
         statistics_session_established = true;
         cout << "[b10-auth] Statistics session channel established." << endl;
 
-        // XXX: with the current interface to asiolink we have to create
-        // auth_server before io_service while Session needs io_service.
-        // In a next step of refactoring we should make asiolink independent
-        // from auth_server, and create io_service, auth_server, and
-        // sessions in that order.
         auth_server->setXfrinSession(xfrin_session);
         auth_server->setStatisticsSession(statistics_session);
 
@@ -255,14 +233,6 @@ main(int argc, char* argv[]) {
         auth_server->setConfigSession(config_session);
         configureAuthServer(*auth_server, config_session->getFullConfig());
         auth_server->updateConfig(ElementPtr());
-
-        // create interval timer instance
-        itimer = new IntervalTimer(io_service);
-        // set up interval timer
-        // register function to send statistics with interval
-        itimer->setupTimer(boost::bind(statisticsTimerCallback, auth_server),
-                           STATISTICS_SEND_INTERVAL_SEC);
-        cout << "[b10-auth] Interval timer to send statistics set." << endl;
 
         cout << "[b10-auth] Server started." << endl;
         io_service.run();
@@ -281,7 +251,6 @@ main(int argc, char* argv[]) {
         xfrin_session->disconnect();
     }
 
-    delete itimer;
     delete statistics_session;
     delete xfrin_session;
     delete config_session;
