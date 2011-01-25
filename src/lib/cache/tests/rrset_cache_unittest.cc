@@ -16,7 +16,7 @@
 #include <config.h>
 #include <string>
 #include <gtest/gtest.h>
-#include <cache/recursor_cache.h>
+#include <cache/resolver_cache.h>
 #include <cache/cache_entry_key.h>
 #include <cache/rrset_entry.h>
 #include <cache/rrset_cache.h>

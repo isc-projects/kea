@@ -17,7 +17,7 @@
 #include <string>
 #include <gtest/gtest.h>
 #include <dns/rrset.h>
-#include "recursor_cache.h"
+#include "resolver_cache.h"
 #include "cache_test_util.h"
 
 using namespace isc::cache;
@@ -26,21 +26,21 @@ using namespace std;
 
 namespace {
 
-class RecursorCacheTest: public testing::Test {
+class ResolverCacheTest: public testing::Test {
 public:
-    RecursorCacheTest() {
+    ResolverCacheTest() {
         vector<CacheSizeInfo> vec;
         CacheSizeInfo class_in(1, 100, 200);
         CacheSizeInfo class_ch(3, 100, 200);
         vec.push_back(class_in);
         vec.push_back(class_ch);
-        cache = RecursorCache(vec);
+        cache = ResolverCache(vec);
     }
 
-    RecursorCache cache;
+    ResolverCache cache;
 };
 
-TEST_F(RecursorCacheTest, testUpdateMessage) {
+TEST_F(ResolverCacheTest, testUpdateMessage) {
     Message msg(Message::PARSE);
     messageFromFile(msg, "message_fromWire3");
     cache.update(msg);
@@ -63,7 +63,7 @@ TEST_F(RecursorCacheTest, testUpdateMessage) {
     EXPECT_FALSE(new_msg.getHeaderFlag(Message::HEADERFLAG_AA));
 }
 
-TEST_F(RecursorCacheTest, testUpdateRRset) {
+TEST_F(ResolverCacheTest, testUpdateRRset) {
     Message msg(Message::PARSE);
     messageFromFile(msg, "message_fromWire3");
     cache.update(msg);
@@ -94,7 +94,7 @@ TEST_F(RecursorCacheTest, testUpdateRRset) {
     EXPECT_EQ(0, section_rrset_count(new_msg, Message::SECTION_ADDITIONAL));
 }
 
-TEST_F(RecursorCacheTest, testLookupUnsupportedClass) {
+TEST_F(ResolverCacheTest, testLookupUnsupportedClass) {
     Message msg(Message::PARSE);
     messageFromFile(msg, "message_fromWire3");
     cache.update(msg);
@@ -107,7 +107,7 @@ TEST_F(RecursorCacheTest, testLookupUnsupportedClass) {
     EXPECT_FALSE(cache.lookup(qname, qtype, RRClass(2)));
 }
 
-TEST_F(RecursorCacheTest, testLookupClosestRRset) {
+TEST_F(ResolverCacheTest, testLookupClosestRRset) {
     Message msg(Message::PARSE);
     messageFromFile(msg, "message_fromWire3");
     cache.update(msg);
@@ -128,7 +128,7 @@ TEST_F(RecursorCacheTest, testLookupClosestRRset) {
     EXPECT_FALSE(rrset_ptr);
 }
 
-TEST_F(RecursorCacheTest, testClassIsSupported) {
+TEST_F(ResolverCacheTest, testClassIsSupported) {
     EXPECT_TRUE(cache.classIsSupported(1));
     EXPECT_TRUE(cache.classIsSupported(3));
     EXPECT_FALSE(cache.classIsSupported(2));

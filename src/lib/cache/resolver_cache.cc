@@ -14,7 +14,7 @@
 
 // $Id$
 
-#include "recursor_cache.h"
+#include "resolver_cache.h"
 #include "dns/message.h"
 #include "rrset_cache.h"
 #include <string>
@@ -26,7 +26,7 @@ using namespace std;
 namespace isc {
 namespace cache {
 
-RecursorCache::RecursorCache() {
+ResolverCache::ResolverCache() {
     uint16_t klass = 1; // class 'IN'
     class_supported_.push_back(klass);
     local_zone_data_[klass] = LocalZoneDataPtr(new LocalZoneData(klass));
@@ -36,7 +36,7 @@ RecursorCache::RecursorCache() {
                                                         klass));
 }
 
-RecursorCache::RecursorCache(std::vector<CacheSizeInfo> caches_size) {
+ResolverCache::ResolverCache(std::vector<CacheSizeInfo> caches_size) {
     uint32_t index = 0;
     uint32_t size = caches_size.size();
     for (; index < size; ++index) {
@@ -57,13 +57,13 @@ RecursorCache::RecursorCache(std::vector<CacheSizeInfo> caches_size) {
 }
 
 bool
-RecursorCache::classIsSupported(uint16_t klass) const {
+ResolverCache::classIsSupported(uint16_t klass) const {
     return binary_search(class_supported_.begin(),
                          class_supported_.end(), klass);
 }
 
 bool
-RecursorCache::lookup(const isc::dns::Name& qname,
+ResolverCache::lookup(const isc::dns::Name& qname,
                const isc::dns::RRType& qtype,
                const isc::dns::RRClass& qclass,
                isc::dns::Message& response) const
@@ -92,7 +92,7 @@ RecursorCache::lookup(const isc::dns::Name& qname,
 }
 
 isc::dns::RRsetPtr
-RecursorCache::lookup(const isc::dns::Name& qname,
+ResolverCache::lookup(const isc::dns::Name& qname,
                const isc::dns::RRType& qtype,
                const isc::dns::RRClass& qclass) const
 {
@@ -118,7 +118,7 @@ RecursorCache::lookup(const isc::dns::Name& qname,
 }
 
 isc::dns::RRsetPtr
-RecursorCache::lookupClosestRRset(const isc::dns::Name& qname,
+ResolverCache::lookupClosestRRset(const isc::dns::Name& qname,
                                   const isc::dns::RRType& qtype,
                                   const isc::dns::RRClass& qclass) const
 {
@@ -138,7 +138,7 @@ RecursorCache::lookupClosestRRset(const isc::dns::Name& qname,
 }
 
 bool
-RecursorCache::update(const isc::dns::Message& msg) {
+ResolverCache::update(const isc::dns::Message& msg) {
     QuestionIterator iter = msg.beginQuestion();
     uint16_t klass = (*iter)->getClass().getCode();
     if (!classIsSupported(klass)) {
@@ -149,7 +149,7 @@ RecursorCache::update(const isc::dns::Message& msg) {
 }
 
 bool
-RecursorCache::updateRRsetCache(const isc::dns::ConstRRsetPtr rrset_ptr,
+ResolverCache::updateRRsetCache(const isc::dns::ConstRRsetPtr rrset_ptr,
                                 RRsetCachePtr rrset_cache_ptr)
 {
     RRsetTrustLevel level;
@@ -165,7 +165,7 @@ RecursorCache::updateRRsetCache(const isc::dns::ConstRRsetPtr rrset_ptr,
 }
 
 bool
-RecursorCache::update(const isc::dns::ConstRRsetPtr rrset_ptr) {
+ResolverCache::update(const isc::dns::ConstRRsetPtr rrset_ptr) {
     uint16_t klass = rrset_ptr->getClass().getCode();
     if (!classIsSupported(klass)) {
         return false;
@@ -178,12 +178,12 @@ RecursorCache::update(const isc::dns::ConstRRsetPtr rrset_ptr) {
 }
 
 void
-RecursorCache::dump(const std::string&) {
+ResolverCache::dump(const std::string&) {
     //TODO
 }
 
 void
-RecursorCache::load(const std::string&) {
+ResolverCache::load(const std::string&) {
     //TODO
 }
 
