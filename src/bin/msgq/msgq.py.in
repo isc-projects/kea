@@ -136,9 +136,11 @@ class MsgQ:
         except AttributeError:
             self.kqueue = select.kqueue()
     
-    def add_kqueue_socket(self, socket, additional_filters = 0):
-        event = select.kevent(socket.fileno(),
-                              select.KQ_FILTER_READ | additional_filters,
+    def add_kqueue_socket(self, socket, enable_write = False):
+        filters = select.KQ_FILTER_READ
+        if enable_write:
+            filters |= select.KQ_FILTER_WRITE
+        event = select.kevent(socket.fileno(), filters,
                               select.KQ_EV_ADD | select.KQ_EV_ENABLE)
         self.kqueue.control([event], 0)
 
@@ -353,7 +355,7 @@ class MsgQ:
                     self.poller.register(fileno, select.POLLIN |
                         select.POLLOUT)
                 else:
-                    self.add_kqueue_socket(fileno, select.KQ_FILTER_WRITE)
+                    self.add_kqueue_socket(fileno, True)
             self.sendbuffs[fileno] = (last_sent, buff)
 
     def __process_write(self, fileno):
