@@ -245,7 +245,7 @@ RBNode<T>::~RBNode() {
 }
 
 template <typename T>
-const RBNode<T> *
+const RBNode<T>*
 RBNode<T>::successor() const {
     const RBNode<T>* current = this;
     // If it has right node, the successor is the left-most node of the right
@@ -470,7 +470,7 @@ public:
     /// with the node path, we can also get the next node of current node
     /// \param node The found node.
     template <typename CBARG>
-    Result findEx(const isc::dns::Name& name, NodeChain &node_path,
+    Result findEx(const isc::dns::Name& name, NodeChain& node_path,
                   RBNode<T>** node,
                   bool (*callback)(const RBNode<T>&, CBARG),
                   CBARG callback_arg) const;
@@ -480,7 +480,7 @@ public:
     /// Acts as described in the \ref findEx section, but returns immutable
     /// node pointer.
     template <typename CBARG>
-    Result findEx(const isc::dns::Name& name, NodeChain &node_path,
+    Result findEx(const isc::dns::Name& name, NodeChain& node_path,
                   const RBNode<T>** node,
                   bool (*callback)(const RBNode<T>&, CBARG),
                   CBARG callback_arg) const;
@@ -491,9 +491,9 @@ public:
     /// the node_path is fetched through findEx function call, next_node_path will
     /// store the node path to next_node, which can be used in turn to find
     /// the next node of next node.
-    const RBNode<T>* nextNode(const RBNode<T> *node,
-                              const NodeChain &node_path,
-                              NodeChain &next_node_path) const;
+    const RBNode<T>* nextNode(const RBNode<T>* node,
+                              const NodeChain& node_path,
+                              NodeChain& next_node_path) const;
 
 
     //@}
@@ -675,7 +675,7 @@ template <typename T>
 template <typename CBARG>
 typename RBTree<T>::Result
 RBTree<T>::findEx(const isc::dns::Name& target_name,
-                  NodeChain &node_path,
+                  NodeChain& node_path,
                   RBNode<T>** target,
                   bool (*callback)(const RBNode<T>&, CBARG),
                   CBARG callback_arg) const
@@ -730,7 +730,7 @@ template <typename T>
 template <typename CBARG>
 typename RBTree<T>::Result
 RBTree<T>::findEx(const isc::dns::Name& target_name,
-                  NodeChain &node_path,
+                  NodeChain& node_path,
                   const RBNode<T>** target,
                   bool (*callback)(const RBNode<T>&, CBARG),
                   CBARG callback_arg) const

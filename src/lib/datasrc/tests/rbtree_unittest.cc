@@ -251,8 +251,8 @@ TEST_F(RBTreeTest, callback) {
  *              o     q
  */
 Name
-nodeAbsoluteName(const RBNode<int> *node,
-                 const RBTree<int>::NodeChain &node_path)
+nodeAbsoluteName(const RBNode<int>* node,
+                 const RBTree<int>::NodeChain& node_path)
 {
     isc::dns::Name absoluteName = node->getName();
     RBTree<int>::NodeChain node_path_copy = node_path;
@@ -264,12 +264,12 @@ nodeAbsoluteName(const RBNode<int> *node,
 }
 
 void
-testNodeAdjacentHelper(const RBTree<int> &tree, const Name &currentDomain,
-                       const Name &nextDomain)
+testNodeAdjacentHelper(const RBTree<int>& tree, const Name& currentDomain,
+                       const Name& nextDomain)
 {
     RBTree<int>::NodeChain node_path;
     RBTree<int>::NodeChain next_node_path;
-    const RBNode<int> *node;
+    const RBNode<int>* node;
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
               tree.findEx<void*>(currentDomain, node_path, &node, NULL, NULL));
     node = tree.nextNode(node, node_path, next_node_path);
