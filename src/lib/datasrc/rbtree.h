@@ -146,6 +146,12 @@ public:
 
     /// \brief return the next node which is bigger than current node
     /// in the same tree
+    ///
+    /// The next successor for this node is the node in the same tree which
+    /// name is bigger than current node, since RBTree is a tree in tree,
+    /// so the successor maybe NOT the cloest next node for current node,
+    /// especially when current node has sub domains, the next node is the
+    /// smallest node in the sub domain tree.
     const RBNode<T>* successor() const;
     //@}
 
@@ -331,8 +337,6 @@ RBNode<T>::successor() const {
  *  - add remove interface
  *  - add iterator to iterate over the whole \c RBTree.  This may be necessary,
  *    for example, to support AXFR.
- *  - since \c RBNode only has down pointer without up pointer, the node path
- *    during finding should be recorded for later use
  */
 template <typename T>
 class RBTree : public boost::noncopyable {
@@ -463,6 +467,19 @@ public:
         return (find<void*>(name, node, NULL, NULL));
     }
 
+    /// \brief extensive versoin of find
+    ///
+    /// This version of find, not only return the longest node matching
+    /// target name but also return all the ancestors for the node returned.
+    /// Actually it's the underlaying implementation for other version of
+    /// find.
+    ///
+    /// Returning all the ancesotr nodes is quite useful, since each node
+    /// has down pointer pointing the subdomains so we can travel downside
+    /// from one node, but there is no way to traval upside, with all the
+    /// ancestors we can get the absolute name for the node, also we can
+    /// use the ancestors to find the next node in the tree.
+    ///
     /// \param name What should be found.
     /// \param node_path It will save all the ancestor nodes
     ///     to the tree containing node. If we looked for o.w.y.d.e.f in the
@@ -475,7 +492,7 @@ public:
                   bool (*callback)(const RBNode<T>&, CBARG),
                   CBARG callback_arg) const;
 
-    /// \brief Simple find returning immutable node.
+    /// \brief Simple findEx returning immutable node.
     ///
     /// Acts as described in the \ref findEx section, but returns immutable
     /// node pointer.
@@ -487,10 +504,22 @@ public:
 
 
     /// \brief return the next node which is bigger than node
-    /// \param node_path store the path from base to sub domains in reverse order
-    /// the node_path is fetched through findEx function call, next_node_path will
-    /// store the node path to next_node, which can be used in turn to find
-    /// the next node of next node.
+    ///
+    /// Each node in the tree has down pointer pointing to its subdomains,
+    /// if it has sub domains, the next node will be the smallest node in them.
+    /// if it doesn't have, we will try to find the next node in the same level
+    /// domain tree. And if the node is the last node in the tree, we have to
+    /// keep moving to up level, and this is the reason why we needs to provide
+    /// all the ancestor nodes in node_path
+    ///
+    /// Return the node_path for next node is convinent in case we want to get
+    /// the next node of next node, so in this way, we can iterator the whole
+    /// domain trees from root node, and the node_path for root is empty.
+    ///
+    /// \param node_path store the path from base to sub domains in reverse 
+    /// order the node_path is fetched through findEx function call, next_node_path 
+    /// will store the node path to next_node, which can be used in turn 
+    /// to find the next node of next node.
     const RBNode<T>* nextNode(const RBNode<T>* node,
                               const NodeChain& node_path,
                               NodeChain& next_node_path) const;
