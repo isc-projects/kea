@@ -383,8 +383,7 @@ private:
 public:
     IntervalTimerImpl(IOService& io_service);
     ~IntervalTimerImpl();
-    void setupTimer(const IntervalTimer::Callback& cbfunc,
-                    const uint32_t interval);
+    void setup(const IntervalTimer::Callback& cbfunc, const uint32_t interval);
     void callback(const asio::error_code& error);
     void cancel() {
         timer_.cancel();
@@ -393,7 +392,7 @@ public:
     uint32_t getInterval() const { return (interval_); }
 private:
     // a function to update timer_ when it expires
-    void updateTimer();
+    void update();
     // a function to call back when timer_ expires
     IntervalTimer::Callback cbfunc_;
     // interval in seconds
@@ -410,8 +409,8 @@ IntervalTimerImpl::~IntervalTimerImpl()
 {}
 
 void
-IntervalTimerImpl::setupTimer(const IntervalTimer::Callback& cbfunc,
-                              const uint32_t interval)
+IntervalTimerImpl::setup(const IntervalTimer::Callback& cbfunc,
+                         const uint32_t interval)
 {
     // Interval should not be 0.
     if (interval == 0) {
@@ -426,12 +425,12 @@ IntervalTimerImpl::setupTimer(const IntervalTimer::Callback& cbfunc,
     // Set initial expire time.
     // At this point the timer is not running yet and will not expire.
     // After calling IOService::run(), the timer will expire.
-    updateTimer();
+    update();
     return;
 }
 
 void
-IntervalTimerImpl::updateTimer() {
+IntervalTimerImpl::update() {
     if (interval_ == 0) {
         // timer has been canceled.  Do nothing.
         return;
@@ -453,7 +452,7 @@ IntervalTimerImpl::callback(const asio::error_code& cancelled) {
     if (!cancelled) {
         cbfunc_();
         // Set next expire time.
-        updateTimer();
+        update();
     }
 }
 
@@ -466,8 +465,8 @@ IntervalTimer::~IntervalTimer() {
 }
 
 void
-IntervalTimer::setupTimer(const Callback& cbfunc, const uint32_t interval) {
-    return (impl_->setupTimer(cbfunc, interval));
+IntervalTimer::setup(const Callback& cbfunc, const uint32_t interval) {
+    return (impl_->setup(cbfunc, interval));
 }
 
 void
