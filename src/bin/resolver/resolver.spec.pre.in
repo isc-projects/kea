@@ -42,6 +42,32 @@
         }
       },
       {
+        "item_name": "root_addresses",
+        "item_type": "list",
+        "item_optional": True,
+        "item_default": [],
+        "list_item_spec" : {
+          "item_name": "address",
+          "item_type": "map",
+          "item_optional": False,
+          "item_default": {},
+          "map_item_spec": [
+            {
+              "item_name": "address",
+              "item_type": "string",
+              "item_optional": False,
+              "item_default": "::1"
+            },
+            {
+              "item_name": "port",
+              "item_type": "integer",
+              "item_optional": False,
+              "item_default": 53
+            }
+          ]
+        }
+      },
+      {
         "item_name": "listen_on",
         "item_type": "list",
         "item_optional": False,

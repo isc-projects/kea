@@ -96,6 +96,31 @@ TEST_F(ResolverConfig, forwardAddressConfig) {
     EXPECT_EQ(0, server.getForwardAddresses().size());
 }
 
+TEST_F(ResolverConfig, rootAddressConfig) {
+    // Try putting there some address
+    ElementPtr config(Element::fromJSON("{"
+        "\"root_addresses\": ["
+        "   {"
+        "       \"address\": \"192.0.2.1\","
+        "       \"port\": 53"
+        "   }"
+        "]"
+        "}"));
+    ConstElementPtr result(server.updateConfig(config));
+    EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
+    ASSERT_EQ(1, server.getRootAddresses().size());
+    EXPECT_EQ("192.0.2.1", server.getRootAddresses()[0].first);
+    EXPECT_EQ(53, server.getRootAddresses()[0].second);
+
+    // And then remove all addresses
+    config = Element::fromJSON("{"
+        "\"root_addresses\": null"
+        "}");
+    result = server.updateConfig(config);
+    EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
+    EXPECT_EQ(0, server.getRootAddresses().size());
+}
+
 void
 ResolverConfig::invalidTest(const string &JOSN) {
     ElementPtr config(Element::fromJSON(JOSN));

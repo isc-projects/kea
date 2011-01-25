@@ -283,8 +283,11 @@ typedef std::vector<std::pair<std::string, uint16_t> > AddressVector;
 }
 
 RecursiveQuery::RecursiveQuery(DNSService& dns_service,
-    const AddressVector& upstream, int timeout, unsigned retries) :
+    const AddressVector& upstream,
+    const AddressVector& upstream_root,
+    int timeout, unsigned retries) :
     dns_service_(dns_service), upstream_(new AddressVector(upstream)),
+    upstream_root_(new AddressVector(upstream_root)),
     timeout_(timeout), retries_(retries)
 {}
 
@@ -343,6 +346,9 @@ private:
     // currently we use upstream as the current list of NS records
     // we should differentiate between forwarding and resolving
     shared_ptr<AddressVector> upstream_;
+
+    // root servers...just copied over to the zone_servers_
+    shared_ptr<AddressVector> upstream_root_;
 
     // Buffer to store the result.
     OutputBufferPtr buffer_;
@@ -468,12 +474,14 @@ private:
 public:
     RunningQuery(asio::io_service& io, const Question &question,
         MessagePtr answer_message, shared_ptr<AddressVector> upstream,
+        shared_ptr<AddressVector> upstream_root,
         OutputBufferPtr buffer, DNSServer* server, int timeout,
         unsigned retries) :
         io_(io),
         question_(question),
         answer_message_(answer_message),
         upstream_(upstream),
+        upstream_root_(upstream_root),
         buffer_(buffer),
         server_(server->clone()),
         timeout_(timeout),
@@ -483,9 +491,25 @@ public:
         dlog("Started a new RunningQuery");
         done = false;
 
-        // hardcoded f.root-servers.net now, should use NSAS
+        // should use NSAS for root servers
+        // Adding root servers if not a forwarder
         if (upstream_->empty()) {
-            zone_servers_.push_back(addr_t("192.5.5.241", 53));
+            if (upstream_root_->empty()) { //if no root ips given, use this
+                zone_servers_.push_back(addr_t("192.5.5.241", 53));
+            }
+            else
+            {
+              //copy the list
+              dlog("Size is " + 
+                    boost::lexical_cast<string>(upstream_root_->size()) + 
+                    "\n");
+              //Use BOOST_FOREACH here? Is it faster?
+              for(AddressVector::iterator it = upstream_root_->begin();
+                   it < upstream_root_->end(); it++) {
+                zone_servers_.push_back(addr_t(it->first,it->second));
+                dlog("Put " + zone_servers_.back().first + "into root list\n");
+              }
+            }
         }
         send();
     }
@@ -538,8 +562,8 @@ RecursiveQuery::sendQuery(const Question& question,
     // we're only going to handle UDP.
     asio::io_service& io = dns_service_.get_io_service();
     // It will delete itself when it is done
-    new RunningQuery(io, question, answer_message, upstream_, buffer,
-                     server, timeout_, retries_);
+    new RunningQuery(io, question, answer_message, upstream_, upstream_root_,
+                         buffer, server, timeout_, retries_);
 }
 
 class IntervalTimerImpl {
