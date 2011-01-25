@@ -577,8 +577,8 @@ private:
     ///
     /// Internal searching function.
     ///
-   void dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
-                       unsigned int depth) const;
+    void dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
+                        unsigned int depth) const;
     /// \brief Indentation helper function for dumpTree
     static void indent(std::ostream& os, unsigned int depth);
 
