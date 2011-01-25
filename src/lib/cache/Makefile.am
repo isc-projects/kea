@@ -21,7 +21,7 @@ AM_CXXFLAGS += -Wno-unused-parameter
 endif
 
 lib_LTLIBRARIES = libcache.la
-libcache_la_SOURCES  = recursor_cache.h recursor_cache.cc
+libcache_la_SOURCES  = resolver_cache.h resolver_cache.cc
 libcache_la_SOURCES  += message_cache.h message_cache.cc
 libcache_la_SOURCES  += message_entry.h message_entry.cc
 libcache_la_SOURCES  += rrset_cache.h rrset_cache.cc

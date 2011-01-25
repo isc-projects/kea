@@ -14,8 +14,8 @@
 
 // $Id$
 
-#ifndef __RECURSOR_CACHE_H
-#define __RECURSOR_CACHE_H
+#ifndef __RESOLVER_CACHE_H
+#define __RESOLVER_CACHE_H
 
 #include <map>
 #include <string>
@@ -67,22 +67,22 @@ public:
 };
 
 ///
-/// \brief Recursor Cache.
-/// The object of RecursorCache represents the cache of the recursor. It may holds
+/// \brief Resolver Cache.
+/// The object of ResolverCache represents the cache of the resolver. It may holds
 /// a list of message/rrset cache which are in different class.
 ///
-class RecursorCache {
+class ResolverCache {
 public:
     /// \brief Default Construct Function.
     ///  Only support for class "IN", and message cache size is
     /// MESSAGE_CACHE_DEFAULT_SIZE, rrset cache size is
     /// RRSET_CACHE_DEFAULT_SIZE
-    RecursorCache();
+    ResolverCache();
 
     /// \brief Construct Function.
     /// \param caches_size cache size information for each
     ///        messages/rrsets of different classes.
-    RecursorCache(std::vector<CacheSizeInfo> caches_size);
+    ResolverCache(std::vector<CacheSizeInfo> caches_size);
 
     /// \name Lookup Interfaces
     //@{
@@ -198,5 +198,5 @@ protected:
 } // namespace cache
 } // namespace isc
 
-#endif // __RECURSOR_CACHE_H
+#endif // __RESOLVER_CACHE_H
 
