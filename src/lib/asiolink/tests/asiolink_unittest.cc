@@ -754,7 +754,9 @@ TEST_F(ASIOLinkTest, recursiveTimeout) {
 // in addition to that, this sends out queries into the world
 // (which we should catch somehow and fake replies for)
 // for the skeleton code, it shouldn't be too much of a problem
-TEST_F(ASIOLinkTest, recursiveSendOk) {
+// Ok so even we don't all have access to the DNS world right now,
+// so disabling these tests too.
+TEST_F(ASIOLinkTest, DISABLED_recursiveSendOk) {
     setDNSService(true, false);
     bool done;
     
@@ -779,7 +781,7 @@ TEST_F(ASIOLinkTest, recursiveSendOk) {
 }
 
 // see comments at previous test
-TEST_F(ASIOLinkTest, recursiveSendNXDOMAIN) {
+TEST_F(ASIOLinkTest, DISABLED_recursiveSendNXDOMAIN) {
     setDNSService(true, false);
     bool done;
     
