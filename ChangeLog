@@ -1,3 +1,8 @@
+  157.  [bug]       vorner
+	One frozen process no longer freezes the whole b10-msgq. It caused the
+	whole system to stop working.
+	(Trac #420, git 93697f58e4d912fa87bc7f9a591c1febc9e0d139)
+
 bind10-devel-20110120 released on January 20, 2011
 
   156.	[func]		stephen
