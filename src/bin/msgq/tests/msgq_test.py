@@ -6,6 +6,7 @@ import socket
 import signal
 import sys
 import time
+import isc.cc
 
 #
 # Currently only the subscription part and some sending is implemented...
@@ -195,13 +196,15 @@ class SendNonblock(unittest.TestCase):
                     os.kill(queue_pid, signal.SIGTERM)
                     sys.exit(1)
                 signal.signal(signal.SIGALRM, killall)
-                msg = msgq.preparemsg({"type" : "ping"}, {"data" : data})
+                msg = msgq.preparemsg({"type" : "ping"}, data)
                 now = time.clock()
                 while time.clock() - now < 0.2:
                     out.sendall(msg)
-                    amount = 0
-                    while amount < length:
-                        amount += len(out.recv(1024 + length - amount))
+                    # Check the answer
+                    (routing, received) = msgq.read_packet(out.fileno(), out)
+                    self.assertEqual({"type" : "pong"},
+                        isc.cc.message.from_wire(routing))
+                    self.assertEqual(data, received)
                 os.kill(queue_pid, signal.SIGTERM)
         self.terminate_check(run)
 
@@ -209,13 +212,13 @@ class SendNonblock(unittest.TestCase):
         """
         Tests sending small data many times.
         """
-        self.send_many("data")
+        self.send_many(b"data")
 
     def test_large_sends(self):
         """
         Tests sending large data many times.
         """
-        data = "data"
+        data = b"data"
         for i in range(1, 20):
             data = data + data
         self.send_many(data)
