@@ -63,7 +63,8 @@ public:
     /// \param buffer Pointer to an \c OutputBuffer for the resposne
     /// \param server Pointer to the \c DNSServer
     void processMessage(const asiolink::IOMessage& io_message,
-                        isc::dns::MessagePtr message,
+                        isc::dns::MessagePtr query_message,
+                        isc::dns::MessagePtr answer_message,
                         isc::dns::OutputBufferPtr buffer,
                         asiolink::DNSServer* server);
 

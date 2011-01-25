@@ -412,10 +412,11 @@ public:
     /// \param DNSServer DNSServer object to use
     virtual void operator()(const IOMessage& io_message,
                             isc::dns::MessagePtr message,
+                            isc::dns::MessagePtr answer_message,
                             isc::dns::OutputBufferPtr buffer,
                             DNSServer* server) const
     {
-        (*self_)(io_message, message, buffer, server);
+        (*self_)(io_message, message, answer_message, buffer, server);
     }
 private:
     DNSLookup* self_;
@@ -465,6 +466,7 @@ public:
     /// \param buffer The result is put here
     virtual void operator()(const IOMessage& io_message,
                             isc::dns::MessagePtr message,
+                            isc::dns::MessagePtr answer_message,
                             isc::dns::OutputBufferPtr buffer) const = 0;
 };
 
@@ -557,6 +559,7 @@ public:
     /// \param buffer An output buffer into which the response can be copied
     /// \param server A pointer to the \c DNSServer object handling the client
     void sendQuery(const isc::dns::Question& question,
+                   isc::dns::MessagePtr answer_message,
                    isc::dns::OutputBufferPtr buffer,
                    DNSServer* server);
 private:
