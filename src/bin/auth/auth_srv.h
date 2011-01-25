@@ -308,7 +308,8 @@ public:
     /// is shutdown.
     void setStatisticsSession(isc::cc::AbstractSession* statistics_session);
 
-    /// Return the interval of periodic submission of statistics in seconds.
+    /// Return the interval of periodic submission of statistics in
+    /// milliseconds.
     ///
     /// If the statistics submission is disabled, it returns 0.
     ///
@@ -318,7 +319,7 @@ public:
     /// Set the interval of periodic submission of statistics.
     ///
     /// If the specified value is non 0, the \c AuthSrv object will submit
-    /// its statistics to the statistics module every \c interval seconds.
+    /// its statistics to the statistics module every \c interval milliseconds.
     /// If it's 0, and \c AuthSrv currently submits statistics, the submission
     /// will be disabled.
     ///
@@ -326,7 +327,7 @@ public:
     /// underlying library routines may involve resource allocation, and
     /// when it fails it would result in a corresponding standard exception.
     ///
-    /// \param interval The submission interval in seconds if non 0;
+    /// \param interval The submission interval in milliseconds if non 0;
     /// or a value of 0 to disable the submission.
     void setStatisticsTimerInterval(uint32_t interval);
 

@@ -395,7 +395,7 @@ private:
     void update();
     // a function to call back when timer_ expires
     IntervalTimer::Callback cbfunc_;
-    // interval in seconds
+    // interval in milliseconds
     long interval_;
     // asio timer
     asio::deadline_timer timer_;
@@ -438,7 +438,7 @@ IntervalTimerImpl::update() {
     }
     try {
         // Update expire time to (current time + interval_).
-        timer_.expires_from_now(boost::posix_time::seconds(interval_));
+        timer_.expires_from_now(boost::posix_time::millisec(interval_));
     } catch (const asio::system_error& e) {
         isc_throw(isc::Unexpected, "Failed to update timer");
     }

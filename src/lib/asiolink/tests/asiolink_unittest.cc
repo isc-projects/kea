@@ -836,7 +836,7 @@ protected:
                 // First time of call back.
                 // Call setup() to update callback function to TimerCallBack.
                 test_obj_->timer_called_ = false;
-                timer_.setup(TimerCallBack(test_obj_), 1);
+                timer_.setup(TimerCallBack(test_obj_), 100);
             } else if (count_ == 2) {
                 // Second time of call back.
                 // If it reaches here, re-setup() is failed (unexpected).
@@ -876,27 +876,24 @@ TEST_F(IntervalTimerTest, startIntervalTimer) {
     boost::posix_time::ptime start;
     start = boost::posix_time::microsec_clock::universal_time();
     // setup timer
-    itimer.setup(TimerCallBack(this), 1);
-    EXPECT_EQ(1, itimer.getInterval());
+    itimer.setup(TimerCallBack(this), 100);
+    EXPECT_EQ(100, itimer.getInterval());
     io_service_.run();
     // reaches here after timer expired
-    // delta: difference between elapsed time and 1 second
+    // delta: difference between elapsed time and 100 milliseconds.
     boost::posix_time::time_duration delta =
         (boost::posix_time::microsec_clock::universal_time() - start)
-         - boost::posix_time::seconds(1);
+         - boost::posix_time::millisec(100);
     if (delta.is_negative()) {
         delta.invert_sign();
     }
     // expect TimerCallBack is called; timer_called_ is true
     EXPECT_TRUE(timer_called_);
-    // expect interval is 1 second +/- TIMER_MARGIN_MSEC.
+    // expect interval is 100 milliseconds +/- TIMER_MARGIN_MSEC.
     EXPECT_TRUE(delta < TIMER_MARGIN_MSEC);
 }
 
 TEST_F(IntervalTimerTest, destructIntervalTimer) {
-    // Note: This test currently takes 6 seconds. The timer should have
-    // finer granularity and timer periods in this test should be shorter
-    // in the future.
     // This code isn't exception safe, but we'd rather keep the code
     // simpler and more readable as this is only for tests and if it throws
     // the program would immediately terminate anyway.
@@ -917,24 +914,24 @@ TEST_F(IntervalTimerTest, destructIntervalTimer) {
     //       if they are same the timer was not called; expected result
     //       if they are different the timer was called after destructed
     //
-    //     0  1  2  3  4  5  6 (s)
-    // (A) i-----+--x
-    //              ^
-    //              |destruct itimer_counter
-    // (B) i--------+--------s
-    //                       ^stop io_service
-    //                        and test itimer_counter have been stopped
-    //
+    //     0  100  200  300  400  500  600 (ms)
+    // (A) i--------+----x
+    //                   ^
+    //                   |destruct itimer_counter
+    // (B) i-------------+--------------s
+    //                                  ^stop io_service
+    //                                   and check if itimer_counter have been
+    //                                   stopped
 
     // itimer_counter will be deleted in TimerCallBackCancelDeleter
     IntervalTimer* itimer_counter = new IntervalTimer(io_service_);
     IntervalTimer itimer_canceller(io_service_);
     timer_cancel_success_ = false;
     TimerCallBackCounter callback_canceller(this);
-    itimer_counter->setup(callback_canceller, 2);
+    itimer_counter->setup(callback_canceller, 200);
     itimer_canceller.setup(
         TimerCallBackCancelDeleter(this, itimer_counter, callback_canceller),
-        3);
+        300);
     io_service_.run();
     EXPECT_TRUE(timer_cancel_success_);
 }
@@ -945,8 +942,8 @@ TEST_F(IntervalTimerTest, cancel) {
     IntervalTimer itimer_counter(io_service_);
     IntervalTimer itimer_watcher(io_service_);
     unsigned int counter = 0;
-    itimer_counter.setup(TimerCallBackCanceller(counter, itimer_counter), 1);
-    itimer_watcher.setup(TimerCallBack(this), 3);
+    itimer_counter.setup(TimerCallBackCanceller(counter, itimer_counter), 100);
+    itimer_watcher.setup(TimerCallBack(this), 200);
     io_service_.run();
     EXPECT_EQ(1, counter);
     EXPECT_EQ(0, itimer_counter.getInterval());
@@ -956,10 +953,6 @@ TEST_F(IntervalTimerTest, cancel) {
 }
 
 TEST_F(IntervalTimerTest, overwriteIntervalTimer) {
-    // Note: This test currently takes 4 seconds. The timer should have
-    // finer granularity and timer periods in this test should be shorter
-    // in the future.
-
     // Calling setup() multiple times updates call back function and interval.
     //
     // There are two timers:
@@ -967,23 +960,24 @@ TEST_F(IntervalTimerTest, overwriteIntervalTimer) {
     //   (Calls TimerCallBackCounter / TimerCallBack)
     //     - increments internal counter in callback function
     //       (TimerCallBackCounter)
-    //       interval: 2 seconds
+    //       interval: 300 milliseconds
     //     - io_service_.stop() (TimerCallBack)
-    //       interval: 1 second
+    //       interval: 100 milliseconds
     //  itimer_overwriter (B)
     //   (Calls TimerCallBackOverwriter)
     //     - first time of callback, it calls setup() to change call back
-    //       function and interval of itimer to TimerCallBack / 1 second
-    //       after 3 + 1 seconds from the beginning of this test,
+    //       function to TimerCallBack and interval of itimer to 100
+    //       milliseconds
+    //       after 300 + 100 milliseconds from the beginning of this test,
     //       TimerCallBack() will be called and io_service_ stops.
     //     - second time of callback, it means the test fails.
     //
-    //     0  1  2  3  4  5  6 (s)
-    // (A) i-----+--C--s
-    //              ^  ^stop io_service
-    //              |change call back function
-    // (B) i--------+--------S
-    //                       ^(stop io_service on fail)
+    //     0  100  200  300  400  500  600  700  800 (ms)
+    // (A) i-------------+----C----s
+    //                        ^    ^stop io_service
+    //                        |change call back function
+    // (B) i------------------+-------------------S
+    //                                            ^(stop io_service on fail)
     //
 
     IntervalTimer itimer(io_service_);
@@ -991,22 +985,22 @@ TEST_F(IntervalTimerTest, overwriteIntervalTimer) {
     // store start time
     boost::posix_time::ptime start;
     start = boost::posix_time::microsec_clock::universal_time();
-    itimer.setup(TimerCallBackCounter(this), 2);
-    itimer_overwriter.setup(TimerCallBackOverwriter(this, itimer), 3);
+    itimer.setup(TimerCallBackCounter(this), 300);
+    itimer_overwriter.setup(TimerCallBackOverwriter(this, itimer), 400);
     io_service_.run();
     // reaches here after timer expired
     // if interval is updated, it takes
-    //   3 seconds for TimerCallBackOverwriter
-    //   + 1 second for TimerCallBack (stop)
-    //   = 4 seconds.
+    //   400 milliseconds for TimerCallBackOverwriter
+    //   + 100 milliseconds for TimerCallBack (stop)
+    //   = 500 milliseconds.
     // otherwise (test fails), it takes
-    //   3 seconds for TimerCallBackOverwriter
-    //   + 3 seconds for TimerCallBackOverwriter (stop)
-    //   = 6 seconds.
-    // delta: difference between elapsed time and 3 + 1 seconds
+    //   400 milliseconds for TimerCallBackOverwriter
+    //   + 400 milliseconds for TimerCallBackOverwriter (stop)
+    //   = 800 milliseconds.
+    // delta: difference between elapsed time and 400 + 100 milliseconds
     boost::posix_time::time_duration delta =
         (boost::posix_time::microsec_clock::universal_time() - start)
-         - boost::posix_time::seconds(3 + 1);
+         - boost::posix_time::millisec(400 + 100);
     if (delta.is_negative()) {
         delta.invert_sign();
     }

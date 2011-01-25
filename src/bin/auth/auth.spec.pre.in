@@ -56,7 +56,7 @@
       { "item_name": "statistics-interval",
         "item_type": "integer",
         "item_optional": true,
-        "item_default": 60
+        "item_default": 60000
       }
     ],
     "commands": [
