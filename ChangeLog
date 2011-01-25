@@ -1,14 +1,22 @@
+  158.	[func]		jelte
+	The Resolver module will now do (very limited) resolving, if not
+	set to forwarding mode (i.e. if the configuration option
+	forward_addresses is left empty). It only supports referrals that
+	contain glue addresses at this point, and does no other processing
+	of authoritative answers.
+	(Trac #484, git 7b84de4c0e11f4a070e038ca4f093486e55622af)
+
   157.  [bug]       vorner
 	One frozen process no longer freezes the whole b10-msgq. It caused the
 	whole system to stop working.
 	(Trac #420, git 93697f58e4d912fa87bc7f9a591c1febc9e0d139)
 
-bind10-devel-20110120 released on January 20, 2011
-
   156.	[func]		stephen
 	Added ResponseClassifier class to examine response from
 	a server and classify it into one of several categories.
 	(Trac #487, git 18491370576e7438c7893f8551bbb8647001be9c)
+
+bind10-devel-20110120 released on January 20, 2011
 
   155.	[doc]		jreed
 	Miscellaneous documentation improvements for man pages and
