@@ -76,7 +76,7 @@ public:
     void querySetup(DNSService& dnss) {
         assert(!rec_query_); // queryShutdown must be called first
         dlog("Query setup");
-        rec_query_ = new RecursiveQuery(dnss, upstream_, timeout_, retries_);
+        rec_query_ = new RecursiveQuery(dnss, upstream_, upstream_root_, timeout_, retries_);
     }
 
     void queryShutdown() {
@@ -107,6 +107,25 @@ public:
         }
     }
 
+    void setRootAddresses(const vector<addr_t>& upstream_root,
+                          DNSService *dnss)
+    {
+        queryShutdown();
+        upstream_root_ = upstream_root;
+        if (dnss) {
+            if (!upstream_root_.empty()) {
+                dlog("Setting root addresses:");
+                BOOST_FOREACH(const addr_t& address, upstream_root) {
+                    dlog(" " + address.first + ":" +
+                        boost::lexical_cast<string>(address.second));
+                }
+            } else {
+                dlog("No root addresses");
+            }
+            querySetup(*dnss);
+        }
+    }
+
     void processNormalQuery(const Question& question,
                             MessagePtr answer_message,
                             OutputBufferPtr buffer,
@@ -117,6 +136,8 @@ public:
 
     /// These members are public because Resolver accesses them directly.
     ModuleCCSession* config_session_;
+    /// Addresses of the root nameserver(s)
+    vector<addr_t> upstream_root_;
     /// Addresses of the forward nameserver
     vector<addr_t> upstream_;
     /// Addresses we listen on
@@ -445,7 +466,7 @@ parseAddresses(ConstElementPtr addresses) {
             }
         } else if (addresses->getType() != Element::null) {
             isc_throw(TypeError,
-                "forward_addresses config element must be a list");
+                "root_addresses, forward_addresses, and listen_on config element must be a list");
         }
     }
     return (result);
@@ -459,6 +480,8 @@ Resolver::updateConfig(ConstElementPtr config) {
 
     try {
         // Parse forward_addresses
+        ConstElementPtr rootAddressesE(config->get("root_addresses"));
+        vector<addr_t> rootAddresses(parseAddresses(rootAddressesE));
         ConstElementPtr forwardAddressesE(config->get("forward_addresses"));
         vector<addr_t> forwardAddresses(parseAddresses(forwardAddressesE));
         ConstElementPtr listenAddressesE(config->get("listen_on"));
@@ -496,6 +519,9 @@ Resolver::updateConfig(ConstElementPtr config) {
             setForwardAddresses(forwardAddresses);
             need_query_restart = true;
         }
+        if (rootAddressesE) {
+            setRootAddresses(rootAddresses);
+        }
         if (set_timeouts) {
             setTimeouts(timeout, retries);
             need_query_restart = true;
@@ -518,6 +544,12 @@ Resolver::setForwardAddresses(const vector<addr_t>& addresses)
     impl_->setForwardAddresses(addresses, dnss_);
 }
 
+void
+Resolver::setRootAddresses(const vector<addr_t>& addresses)
+{
+    impl_->setRootAddresses(addresses, dnss_);
+}
+
 bool
 Resolver::isForwarding() const {
     return (!impl_->upstream_.empty());
@@ -526,6 +558,11 @@ Resolver::isForwarding() const {
 vector<addr_t>
 Resolver::getForwardAddresses() const {
     return (impl_->upstream_);
+}
+
+vector<addr_t>
+Resolver::getRootAddresses() const {
+    return (impl_->upstream_root_);
 }
 
 namespace {
