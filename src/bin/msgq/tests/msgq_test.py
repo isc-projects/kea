@@ -183,7 +183,6 @@ class SendNonblock(unittest.TestCase):
         Tries that sending a command many times and getting an answer works.
         """
         msgq = MsgQ()
-        msgq.setup_poller()
         # msgq.run needs to compare with the listen_socket, so we provide
         # a replacement
         class DummySocket:
@@ -196,6 +195,7 @@ class SendNonblock(unittest.TestCase):
             queue_pid = os.fork()
             if queue_pid == 0:
                 signal.alarm(30)
+                msgq.setup_poller()
                 msgq.register_socket(queue)
                 msgq.run()
             else:
