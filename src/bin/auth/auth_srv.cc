@@ -372,7 +372,7 @@ AuthSrv::setStatisticsTimerInterval(uint32_t interval) {
             cerr << "[b10-auth] Disabled statistics timer" << endl;
         } else {
             cerr << "[b10-auth] Set statistics timer to " << interval
-                 << " seconds" << endl;
+                 << " milliseconds" << endl;
         }
     }
 }
