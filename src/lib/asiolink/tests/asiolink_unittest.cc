@@ -771,7 +771,7 @@ TEST_F(ASIOLinkTest, forwardQueryTimeout) {
     // The query should fail
     EXPECT_FALSE(done);
     EXPECT_EQ(3, num);
-    EXPECT_EQ(true, read_success);
+    EXPECT_TRUE(read_success);
 }
 
 // If we set client timeout to lower than querytimeout, we should
@@ -814,7 +814,7 @@ TEST_F(ASIOLinkTest, forwardClientTimeout) {
     // back)
     EXPECT_FALSE(done);
     EXPECT_EQ(3, num);
-    EXPECT_EQ(false, read_success);
+    EXPECT_FALSE(read_success);
 }
 
 // If we set lookup timeout to lower than querytimeout*retries, we should
@@ -852,7 +852,7 @@ TEST_F(ASIOLinkTest, forwardLookupTimeout) {
     // The query should fail
     EXPECT_FALSE(done);
     EXPECT_EQ(3, num);
-    EXPECT_EQ(false, read_success);
+    EXPECT_FALSE(read_success);
 }
 
 // This fixture is for testing IntervalTimer. Some callback functors are 
