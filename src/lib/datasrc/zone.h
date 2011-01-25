@@ -160,8 +160,9 @@ public:
     ///   \c CNAME and that CNAME RR.
     /// - If the search name matches a delegation point of DNAME, it returns
     ///   the code of \c DNAME and that DNAME RR.
-    /// - If the query type is ANY, target shouldn't be NULL. It iterate over
-    ///   RRs under the domain, and insert them into target.
+    /// - If the target isn't NULL, all RRsets under the domain are inserted
+    ///   there and SUCCESS (or NXDOMAIN, in case of empty domain) is returned
+    ///   instead of normall processing. This is intended to handle ANY query.
     ///
     /// The \c options parameter specifies customized behavior of the search.
     /// Their semantics is as follows:
