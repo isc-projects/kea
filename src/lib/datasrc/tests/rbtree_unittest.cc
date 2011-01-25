@@ -51,8 +51,9 @@ namespace {
 class RBTreeTest : public::testing::Test {
 protected:
     RBTreeTest() : rbtree_expose_empty_node(true) {
-        const char * domain_names[] = {"c", "b", "a", "x.d.e.f", "z.d.e.f", "g.h", "i.g.h",
-            "o.w.y.d.e.f", "j.z.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f"};
+        const char* const domain_names[] = {
+            "c", "b", "a", "x.d.e.f", "z.d.e.f", "g.h", "i.g.h", "o.w.y.d.e.f",
+            "j.z.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f"};
         int name_count = sizeof(domain_names) / sizeof(domain_names[0]);
         for (int i = 0; i < name_count; ++i) {
             rbtree.insert(Name(domain_names[i]), &rbtnode);
@@ -81,7 +82,8 @@ TEST_F(RBTreeTest, setGetData) {
 }
 
 TEST_F(RBTreeTest, insertNames) {
-    EXPECT_EQ(RBTree<int>::ALREADYEXISTS, rbtree.insert(Name("d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::ALREADYEXISTS, rbtree.insert(Name("d.e.f"),
+                                                        &rbtnode));
     EXPECT_EQ(Name("d.e.f"), rbtnode->getName());
     EXPECT_EQ(13, rbtree.getNodeCount());
 
@@ -232,7 +234,7 @@ TEST_F(RBTreeTest, callback) {
 
 /*
  *the domain order should be:
- * a, b, c, d.e.f, x.d.e.f, w.y.d.e.f, o.w.y.d.e.f, p.w.y.d.e.f, q.w.y.d.e.f, 
+ * a, b, c, d.e.f, x.d.e.f, w.y.d.e.f, o.w.y.d.e.f, p.w.y.d.e.f, q.w.y.d.e.f,
  * z.d.e.f, j.z.d.e.f, g.h, i.g.h
  *             b
  *           /   \
@@ -247,9 +249,11 @@ TEST_F(RBTreeTest, callback) {
  *                 p   j
  *               /   \
  *              o     q
- 
- * */
-Name nodeAbsoluteName(const RBNode<int> *node, const RBTree<int>::NodeChain &node_path) {
+ */
+Name
+nodeAbsoluteName(const RBNode<int> *node,
+                 const RBTree<int>::NodeChain &node_path)
+{
     isc::dns::Name absoluteName = node->getName();
     RBTree<int>::NodeChain node_path_copy = node_path;
     while (!node_path_copy.empty()) {
@@ -259,22 +263,28 @@ Name nodeAbsoluteName(const RBNode<int> *node, const RBTree<int>::NodeChain &nod
     return (absoluteName);
 }
 
-void testNodeAdjacentHelper(const RBTree<int> &tree, const Name &currentDomain, const Name &nextDomain) {
+void
+testNodeAdjacentHelper(const RBTree<int> &tree, const Name &currentDomain,
+                       const Name &nextDomain)
+{
     RBTree<int>::NodeChain node_path;
     RBTree<int>::NodeChain next_node_path;
     const RBNode<int> *node;
-    EXPECT_EQ(RBTree<int>::EXACTMATCH, tree.findEx<void *>(currentDomain, node_path, &node, NULL, NULL));
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              tree.findEx<void*>(currentDomain, node_path, &node, NULL, NULL));
     node = tree.nextNode(node, node_path, next_node_path);
     EXPECT_EQ(nextDomain, nodeAbsoluteName(node,  next_node_path));
 }
 
 TEST_F(RBTreeTest, nextNode) {
-    const char *names[] = {"a", "b", "c", "d.e.f", "x.d.e.f", "w.y.d.e.f", "o.w.y.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f",
-       "z.d.e.f", "j.z.d.e.f", "g.h", "i.g.h"};
-    int name_count = sizeof(names) / sizeof(names[0]);
+    const char* const names[] = {
+        "a", "b", "c", "d.e.f", "x.d.e.f", "w.y.d.e.f", "o.w.y.d.e.f",
+        "p.w.y.d.e.f", "q.w.y.d.e.f", "z.d.e.f", "j.z.d.e.f", "g.h", "i.g.h"};
+    const int name_count = sizeof(names) / sizeof(names[0]);
     int i = 0;
     for (; i < name_count - 1; ++i) {
-        testNodeAdjacentHelper(rbtree_expose_empty_node, Name(names[i]), Name(names[i + 1]));
+        testNodeAdjacentHelper(rbtree_expose_empty_node, Name(names[i]),
+                               Name(names[i + 1]));
     }
 }
 
