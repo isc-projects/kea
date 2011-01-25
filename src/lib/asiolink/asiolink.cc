@@ -383,20 +383,20 @@ private:
 public:
     IntervalTimerImpl(IOService& io_service);
     ~IntervalTimerImpl();
-    void setup(const IntervalTimer::Callback& cbfunc, const uint32_t interval);
+    void setup(const IntervalTimer::Callback& cbfunc, const long interval);
     void callback(const asio::error_code& error);
     void cancel() {
         timer_.cancel();
         interval_ = 0;
     }
-    uint32_t getInterval() const { return (interval_); }
+    long getInterval() const { return (interval_); }
 private:
     // a function to update timer_ when it expires
     void update();
     // a function to call back when timer_ expires
     IntervalTimer::Callback cbfunc_;
     // interval in seconds
-    uint32_t interval_;
+    long interval_;
     // asio timer
     asio::deadline_timer timer_;
 };
@@ -410,11 +410,12 @@ IntervalTimerImpl::~IntervalTimerImpl()
 
 void
 IntervalTimerImpl::setup(const IntervalTimer::Callback& cbfunc,
-                         const uint32_t interval)
+                         const long interval)
 {
-    // Interval should not be 0.
-    if (interval == 0) {
-        isc_throw(isc::BadValue, "Interval should not be 0");
+    // Interval should not be less than or equal to 0.
+    if (interval <= 0) {
+        isc_throw(isc::BadValue, "Interval should not be less than or "
+                                 "equal to 0");
     }
     // Call back function should not be empty.
     if (cbfunc.empty()) {
@@ -465,7 +466,7 @@ IntervalTimer::~IntervalTimer() {
 }
 
 void
-IntervalTimer::setup(const Callback& cbfunc, const uint32_t interval) {
+IntervalTimer::setup(const Callback& cbfunc, const long interval) {
     return (impl_->setup(cbfunc, interval));
 }
 
@@ -474,7 +475,7 @@ IntervalTimer::cancel() {
     impl_->cancel();
 }
 
-uint32_t
+long
 IntervalTimer::getInterval() const {
     return (impl_->getInterval());
 }
