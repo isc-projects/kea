@@ -1,7 +1,12 @@
 * Revisit the algorithm used by getRRsetTrustLevel() in message_entry.cc.
-* Implement dump/load/resize interfaces of rrset/message/recursor cache.   
-* Once LRU hash table is implemented, it should be used by message/rrset cache.  
+* Implement dump/load/resize interfaces of rrset/message/recursor cache.
+* Once LRU hash table is implemented, it should be used by message/rrset cache.
 * Once the hash/lrulist related files in /lib/nsas is moved to seperated
   folder, the code of recursor cache has to be updated.
 * Set proper AD flags once DNSSEC is supported by the cache.
+* When the message or rrset entry has expired, it should be removed
+  from the cache, or just moved to the head of LRU list, so that it
+  can removed first.
+* Make resolver cache be smart to refetch the messages that are about
+  to expire.
 
