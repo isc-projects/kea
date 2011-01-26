@@ -68,9 +68,10 @@ const char* const mx_txt =
     "mx.example.com. 3600 IN MX 20 mailer.example.org.\n"
     "mx.example.com. 3600 IN MX 30 mx.delegation.example.com.\n";
 const char* const www_a_txt = "www.example.com. 3600 IN A 192.0.2.80\n";
+const char* const cname_txt =
+    "cname.example.com. 3600 IN CNAME www.example.com.\n";
 // The rest of data won't be referenced from the test cases.
 const char* const other_zone_rrs =
-    "cname.example.com. 3600 IN CNAME www.example.com.\n"
     "cnamemailer.example.com. 3600 IN CNAME www.example.com.\n"
     "cnamemx.example.com. 3600 IN MX 10 cnamemailer.example.com.\n"
     "mx.delegation.example.com. 3600 IN A 192.0.2.100\n";
@@ -95,7 +96,8 @@ public:
     {
         stringstream zone_stream;
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
-            delegation_txt << mx_txt << www_a_txt << other_zone_rrs;
+            delegation_txt << mx_txt << www_a_txt << cname_txt <<
+            other_zone_rrs;
 
         masterLoad(zone_stream, origin_, rrclass_,
                    boost::bind(&MockZone::loadRRset, this, _1));
@@ -395,4 +397,19 @@ TEST_F(QueryTest, MXAlias) {
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
                   NULL, NULL, ns_addrs_txt);
 }
+
+/*
+ * Test encountering a cname.
+ *
+ * TODO: We currently don't do chaining, so only the CNAME itself should be
+ * returned.
+ */
+TEST_F(QueryTest, CNAME) {
+    Query(memory_datasrc, Name("cname.example.com"), RRType::A(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_txt, zone_ns_txt, ns_addrs_txt);
+}
+
 }
