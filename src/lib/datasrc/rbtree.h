@@ -29,7 +29,7 @@
 #include <exception>
 #include <ostream>
 #include <algorithm>
-#include <stack>
+#include <cassert>
 
 namespace isc {
 namespace datasrc {
@@ -54,9 +54,6 @@ operator-(const isc::dns::Name& super_name, const isc::dns::Name& sub_name) {
                              sub_name.getLabelCount()));
 }
 }
-
-template <typename T>
-class RBTree;
 
 /// \brief \c RBNode is used by RBTree to store any data related to one domain
 ///     name.
@@ -144,16 +141,7 @@ public:
     /// empty nodes anywhere.
     bool isEmpty() const { return (data_.get() == NULL); }
 
-    /// \brief return the next node which is bigger than current node
-    /// in the same tree
-    ///
-    /// The next successor for this node is the node in the same tree which
-    /// name is bigger than current node, since RBTree is a tree in tree,
-    /// so the successor maybe NOT the cloest next node for current node,
-    /// especially when current node has sub domains, the next node is the
-    /// smallest node in the sub domain tree.
-    const RBNode<T>* successor() const;
-    //@}
+   //@}
 
     /// \name Setter functions.
     //@{
@@ -186,6 +174,16 @@ private:
         static RBNode<T> null_node;
         return (&null_node);
     }
+
+    /// \brief return the next node which is bigger than current node
+    /// in the same tree
+    ///
+    /// The next successor for this node is the node in the same tree which
+    /// name is bigger than current node, since RBTree is a tree in tree,
+    /// so the successor maybe NOT the cloest next node for current node,
+    /// especially when current node has sub domains, the next node is the
+    /// smallest node in the sub domain tree.
+    const RBNode<T>* successor() const;
 
     /// \name Data to maintain the rbtree structure.
     //@{
@@ -276,6 +274,56 @@ RBNode<T>::successor() const {
     return (parent);
 }
 
+
+/// A chain is used to keep track of the sequence of nodes to reach any
+/// given node from the root of rbtree.  RBNode did not have parent
+/// pointers in them (for memory usage reasons) so there was no way to find
+/// the path back to the root from any given node.
+template <typename T>
+class NodeChain {
+    public:
+        NodeChain() : node_count_(0) {}
+        NodeChain(const NodeChain<T> &node_path) {
+            node_count_ = node_path.node_count_;
+            if (node_count_ > 0) {
+                memcpy(nodes_, node_path.nodes_, node_count_ * sizeof(RBNode<T> *));
+            }
+        }
+
+        NodeChain<T> &operator=(const NodeChain<T> &node_path) {
+            node_count_ = node_path.node_count_;
+            if (node_count_ > 0) {
+                memcpy(nodes_, node_path.nodes_, node_count_ * sizeof(RBNode<T> *));
+            }
+            return(*this);
+        }
+
+        bool isEmpty() const { return(node_count_ == 0); }
+
+        const RBNode<T>* top() const {
+            assert(node_count_ > 0);
+            return(nodes_[node_count_ - 1]);
+        }
+
+        void pop() {
+            assert(node_count_ > 0);
+            --node_count_;
+        }
+
+        void push(const RBNode<T>* node) {
+            assert(node_count_ < RBT_MAX_LEVEL);
+            nodes_[node_count_++] = node;
+        }
+
+    private:
+        /// DNSSEC restricts the number of "logical" labels in a name to
+        /// 255, meaning only 254 pointers are needed in the worst case.
+        enum {RBT_MAX_LEVEL = 254};
+        const RBNode<T>* nodes_[RBT_MAX_LEVEL];
+        int node_count_;
+};
+
+
 // note: the following class description is documented using multiline comments
 // because the verbatim diagram contain a backslash, which could be interpreted
 // as escape of newline in singleline comment.
@@ -296,13 +344,13 @@ RBNode<T>::successor() const {
  *
  *  Depending on different usage, rbtree will support different search policy.
  *  Whether return empty node to end user is one policy among them. the default
- *  policy will NOT return empty node to end user, pass ture will get empty node
+ *  policy will NOT return empty node to end user, pass true will get empty node
  *  during find is needed.
- *  \note The search policy only affect find behavior of rbtree, but when
- *  inserting one name, if the node already exist not matter it's insert
- *  explictly by end user or empty node created by the rbtree itself,
- *  insert will return ALREADYEXISTS not matter we want expose empty node
- *  or not.
+ *  \note The search policy only affect find behavior of rbtree. When
+ *  inserting one name into RBTree, if the node with the name  already exists
+ *  in the rbtree and it's empty node which doesn't have any data, even the
+ *  search policy is not return empty node to end user, the insert function
+ *  will still return ALREADYEXISTS.
  *
  * \anchor diagram
  *
@@ -352,9 +400,6 @@ public:
         /// \brief Returned by insert() if a node of the name already exists
         ALREADYEXISTS,
     };
-
-    /// save the nodes along the path from root to the target node
-    typedef typename std::stack<const RBNode<T>*> NodeChain;
 
     /// \name Constructor and Destructor
     //@{
@@ -410,9 +455,36 @@ public:
     ///    of it. In that case, node parameter is left intact.
     //@{
 
+    /// \brief Simple find.
+    ///
+    /// Acts as described in the \ref find section.
+    Result find(const isc::dns::Name& name, RBNode<T>** node) const {
+        NodeChain<T> node_path;
+        return (find<void*>(name, node, node_path, NULL, NULL));
+    }
+
+    /// \brief Simple find returning immutable node.
+    ///
+    /// Acts as described in the \ref find section, but returns immutable node
+    /// pointer.
+    Result find(const isc::dns::Name& name, const RBNode<T>** node) const {
+        NodeChain<T> node_path;
+        RBNode<T> *target_node = NULL;
+        Result ret = (find<void*>(name, &target_node, node_path, NULL, NULL));
+        if (ret != NOTFOUND) {
+            *node = target_node;
+        }
+        return (ret);
+    }
+
     /// \brief Find with callback.
     ///
     /// \anchor callback
+    /// Returning all the ancesotr nodes is quite useful, since each node
+    /// has down pointer pointing the subdomains so we can travel downside
+    /// from one node, but there is no way to traval upside, with all the
+    /// ancestors we can get the absolute name for the node, also we can
+    /// use the ancestors to find the next node in the tree.
     ///
     /// This version of find calls the callback whenever traversing (on the
     /// way from root down the tree) a marked node on the way down through the
@@ -432,6 +504,10 @@ public:
     /// \param name Target to be found
     /// \param node On success (either \c EXACTMATCH or \c PARTIALMATCH)
     ///     it will store a pointer to the matching node
+    /// \param node_path It will save all the ancestor nodes
+    ///     to the tree containing node. If we looked for o.w.y.d.e.f in the
+    ///     \ref diagram, the node_path will have w.y node and d.e.f node.
+    /// with the node path, we can also get the next node of current node
     /// \param callback If non \c NULL, a call back function to be called
     ///     at marked nodes (see above).
     /// \param callback_arg A caller supplied argument to be passed to
@@ -440,67 +516,30 @@ public:
     /// \return As described above, but in case of callback returning true,
     ///     it returns immediately with the current node.
     template <typename CBARG>
-    Result find(const isc::dns::Name& name, RBNode<T>** node,
+    Result find(const isc::dns::Name& name,
+                RBNode<T>** node,
+                NodeChain<T> &node_path,
                 bool (*callback)(const RBNode<T>&, CBARG),
                 CBARG callback_arg) const;
-
-    /// \brief Find with callback returning immutable node.
-    ///
-    /// It has the same behaviour as the find with \ref callback version.
-    template <typename CBARG>
-    Result find(const isc::dns::Name& name, const RBNode<T>** node,
-                bool (*callback)(const RBNode<T>&, CBARG),
-                CBARG callback_arg) const;
-
-    /// \brief Simple find.
-    ///
-    /// Acts as described in the \ref find section.
-    Result find(const isc::dns::Name& name, RBNode<T>** node) const {
-        return (find<void*>(name, node, NULL, NULL));
-    }
 
     /// \brief Simple find returning immutable node.
     ///
-    /// Acts as described in the \ref find section, but returns immutable node
-    /// pointer.
-    Result find(const isc::dns::Name& name, const RBNode<T>** node) const {
-        return (find<void*>(name, node, NULL, NULL));
-    }
-
-    /// \brief extensive versoin of find
-    ///
-    /// This version of find, not only return the longest node matching
-    /// target name but also return all the ancestors for the node returned.
-    /// Actually it's the underlaying implementation for other version of
-    /// find.
-    ///
-    /// Returning all the ancesotr nodes is quite useful, since each node
-    /// has down pointer pointing the subdomains so we can travel downside
-    /// from one node, but there is no way to traval upside, with all the
-    /// ancestors we can get the absolute name for the node, also we can
-    /// use the ancestors to find the next node in the tree.
-    ///
-    /// \param name What should be found.
-    /// \param node_path It will save all the ancestor nodes
-    ///     to the tree containing node. If we looked for o.w.y.d.e.f in the
-    ///     \ref diagram, the node_path will have w.y node and d.e.f node.
-    /// with the node path, we can also get the next node of current node
-    /// \param node The found node.
-    template <typename CBARG>
-    Result findEx(const isc::dns::Name& name, NodeChain& node_path,
-                  RBNode<T>** node,
-                  bool (*callback)(const RBNode<T>&, CBARG),
-                  CBARG callback_arg) const;
-
-    /// \brief Simple findEx returning immutable node.
-    ///
-    /// Acts as described in the \ref findEx section, but returns immutable
+    /// Acts as described in the \ref find section, but returns immutable
     /// node pointer.
     template <typename CBARG>
-    Result findEx(const isc::dns::Name& name, NodeChain& node_path,
-                  const RBNode<T>** node,
-                  bool (*callback)(const RBNode<T>&, CBARG),
-                  CBARG callback_arg) const;
+    Result find(const isc::dns::Name& name,
+                const RBNode<T>** node,
+                NodeChain<T>& node_path,
+                bool (*callback)(const RBNode<T>&, CBARG),
+                CBARG callback_arg) const
+    {
+        RBNode<T> *target_node = NULL;
+        Result ret = find(name, &target_node, node_path, callback, callback_arg);
+        if (ret != NOTFOUND) {
+            *node = target_node;
+        }
+        return (ret);
+    }
 
 
     /// \brief return the next node which is bigger than node
@@ -512,17 +551,16 @@ public:
     /// keep moving to up level, and this is the reason why we needs to provide
     /// all the ancestor nodes in node_path
     ///
+    ///
     /// Return the node_path for next node is convinent in case we want to get
     /// the next node of next node, so in this way, we can iterator the whole
     /// domain trees from root node, and the node_path for root is empty.
     ///
-    /// \param node_path store the path from base to sub domains in reverse 
-    /// order the node_path is fetched through findEx function call, next_node_path 
-    /// will store the node path to next_node, which can be used in turn 
-    /// to find the next node of next node.
+    /// \param node_path store all the nodes along the path from root to node
+    /// node_path is fetched through find function call, after function call
+    /// node_path will be the node chain for the next node
     const RBNode<T>* nextNode(const RBNode<T>* node,
-                              const NodeChain& node_path,
-                              NodeChain& next_node_path) const;
+                              NodeChain<T>& node_path) const;
 
 
     //@}
@@ -675,39 +713,11 @@ RBTree<T>::deleteHelper(RBNode<T>* root) {
 template <typename T>
 template <typename CBARG>
 typename RBTree<T>::Result
-RBTree<T>::find(const isc::dns::Name& name, RBNode<T>** node,
+RBTree<T>::find(const isc::dns::Name& target_name,
+                RBNode<T>** target,
+                NodeChain<T>& node_path,
                 bool (*callback)(const RBNode<T>&, CBARG),
                 CBARG callback_arg) const
-{
-    NodeChain node_path;
-    return (findEx(name, node_path, node, callback, callback_arg));
-}
-
-template <typename T>
-template <typename CBARG>
-typename RBTree<T>::Result
-RBTree<T>::find(const isc::dns::Name& name, const RBNode<T>** node,
-                bool (*callback)(const RBNode<T>&, CBARG),
-                CBARG callback_arg) const
-{
-    NodeChain node_path;
-    RBNode<T>* target_node = NULLNODE;
-    const Result ret =
-        findEx(name, node_path, &target_node, callback, callback_arg);
-    if (ret != NOTFOUND) {
-        *node = target_node;
-    }
-    return (ret);
-}
-
-template <typename T>
-template <typename CBARG>
-typename RBTree<T>::Result
-RBTree<T>::findEx(const isc::dns::Name& target_name,
-                  NodeChain& node_path,
-                  RBNode<T>** target,
-                  bool (*callback)(const RBNode<T>&, CBARG),
-                  CBARG callback_arg) const
 {
     using namespace helper;
 
@@ -756,33 +766,14 @@ RBTree<T>::findEx(const isc::dns::Name& target_name,
 }
 
 template <typename T>
-template <typename CBARG>
-typename RBTree<T>::Result
-RBTree<T>::findEx(const isc::dns::Name& target_name,
-                  NodeChain& node_path,
-                  const RBNode<T>** target,
-                  bool (*callback)(const RBNode<T>&, CBARG),
-                  CBARG callback_arg) const
-{
-    RBNode<T>* node = NULLNODE;
-    const Result ret =
-        findEx(target_name, node_path, &node, callback, callback_arg);
-    if (ret != NOTFOUND) {
-        *target = node;
-    }
-    return (ret);
-}
-
-template <typename T>
 const RBNode<T>*
-RBTree<T>::nextNode(const RBNode<T>* node, const NodeChain& node_path,
-                    NodeChain& next_node_path) const
+RBTree<T>::nextNode(const RBNode<T>* node,
+                    NodeChain<T>& node_path) const
 {
-    next_node_path = node_path;
     // if node has sub domain, the next domain is the smallest
     // domain in sub domain tree
     if (node->down_ != NULLNODE) {
-        next_node_path.push(node);
+        node_path.push(node);
         const RBNode<T>* left_most = node->down_;
         while (left_most->left_ != NULLNODE) {
             left_most = left_most->left_;
@@ -800,9 +791,9 @@ RBTree<T>::nextNode(const RBNode<T>* node, const NodeChain& node_path,
     // is the successor of up node in the up level tree, if
     // up node doesn't has successor we gonna keep moving to up
     // level
-    while (!next_node_path.empty()) {
-        const RBNode<T>* up_node_successor = next_node_path.top()->successor();
-        next_node_path.pop();
+    while (!node_path.isEmpty()) {
+        const RBNode<T>* up_node_successor = node_path.top()->successor();
+        node_path.pop();
         if (up_node_successor != NULLNODE) {
             return (up_node_successor);
         }
