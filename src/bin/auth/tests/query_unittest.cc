@@ -166,8 +166,8 @@ MockZone::find(const Name& name, const RRType& type,
             return (FindResult(SUCCESS, found_rrset->second));
         }
 
-        // If not found but the qtype is ANY, return the first RRset
-        if (!found_domain->second.empty() && type == RRType::ANY()) {
+        // If not found but we have a target, fill it with all RRsets here
+        if (!found_domain->second.empty() && target != NULL) {
             for (found_rrset = found_domain->second.begin();
                  found_rrset != found_domain->second.end(); found_rrset++)
             {
