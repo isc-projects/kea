@@ -117,7 +117,7 @@ class SendNonblock(unittest.TestCase):
     Tests that the whole thing will not get blocked if someone does not read.
     """
 
-    def terminate_check(self, task, timeout = 1):
+    def terminate_check(self, task, timeout = 10):
         """
         Runs task in separate process (task is a function) and checks
         it terminates sooner than timeout.
@@ -161,23 +161,28 @@ class SendNonblock(unittest.TestCase):
         Tries sending messages (and not reading them) until it either times
         out (in blocking call, wrong) or closes it (correct).
         """
+        data = "data"
+        for i in range(1, 10):
+            data += data
         self.terminate_check(lambda: self.infinite_sender(
-            lambda msgq, socket: msgq.sendmsg(socket, {}, {"message" : "x"})))
+            lambda msgq, socket: msgq.sendmsg(socket, {}, {"message" : data})))
 
     def test_infinite_sendprepared(self):
         """
         Tries sending data (and not reading them) until it either times
         out (in blocking call, wrong) or closes it (correct).
         """
+        data = b"data"
+        for i in range(1, 10):
+            data += data
         self.terminate_check(lambda: self.infinite_sender(
-            lambda msgq, socket: msgq.send_prepared_msg(socket, b"data")))
+            lambda msgq, socket: msgq.send_prepared_msg(socket, data)))
 
     def send_many(self, data):
         """
         Tries that sending a command many times and getting an answer works.
         """
         msgq = MsgQ()
-        msgq.setup_poller()
         # msgq.run needs to compare with the listen_socket, so we provide
         # a replacement
         class DummySocket:
@@ -189,7 +194,8 @@ class SendNonblock(unittest.TestCase):
             length = len(data)
             queue_pid = os.fork()
             if queue_pid == 0:
-                signal.alarm(10)
+                signal.alarm(30)
+                msgq.setup_poller()
                 msgq.register_socket(queue)
                 msgq.run()
             else:
