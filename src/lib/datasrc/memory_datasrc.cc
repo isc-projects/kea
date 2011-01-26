@@ -192,7 +192,8 @@ struct MemoryZone::MemoryZoneImpl {
         // Get the node
         DomainNode* node(NULL);
         FindState state(options);
-        switch (domains_.find(name, &node, zonecutCallback, &state)) {
+        NodeChain<Domain> node_path;
+        switch (domains_.find(name, &node, node_path, zonecutCallback, &state)) {
             case DomainTree::PARTIALMATCH:
                 if (state.zonecut_node_ != NULL) {
                     return (FindResult(DELEGATION, state.rrset_));
