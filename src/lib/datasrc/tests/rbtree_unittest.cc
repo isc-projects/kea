@@ -184,6 +184,7 @@ testCallback(const RBNode<int>&, bool* callack_checker) {
 }
 
 TEST_F(RBTreeTest, callback) {
+    NodeChain<int> node_path;
     // by default callback isn't enabled
     EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("callback.example"),
                                                   &rbtnode));
@@ -218,7 +219,7 @@ TEST_F(RBTreeTest, callback) {
     // check if the callback is called from find()
     bool callback_called = false;
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
-              rbtree.find(Name("sub.callback.example"), &crbtnode,
+              rbtree.find(Name("sub.callback.example"), &crbtnode, node_path,
                           testCallback, &callback_called));
     EXPECT_TRUE(callback_called);
 
@@ -227,7 +228,7 @@ TEST_F(RBTreeTest, callback) {
     parentrbtnode->enableCallback();
     callback_called = false;
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
-              rbtree.find(Name("callback.example"), &crbtnode,
+              rbtree.find(Name("callback.example"), &crbtnode, node_path,
                           testCallback, &callback_called));
     EXPECT_FALSE(callback_called);
 }
@@ -252,11 +253,11 @@ TEST_F(RBTreeTest, callback) {
  */
 Name
 nodeAbsoluteName(const RBNode<int>* node,
-                 const RBTree<int>::NodeChain& node_path)
+                 const NodeChain<int>& node_path)
 {
     isc::dns::Name absoluteName = node->getName();
-    RBTree<int>::NodeChain node_path_copy = node_path;
-    while (!node_path_copy.empty()) {
+    NodeChain<int> node_path_copy = node_path;
+    while (!node_path_copy.isEmpty()) {
         absoluteName = absoluteName.concatenate(node_path_copy.top()->getName());
         node_path_copy.pop();
     }
@@ -267,13 +268,12 @@ void
 testNodeAdjacentHelper(const RBTree<int>& tree, const Name& currentDomain,
                        const Name& nextDomain)
 {
-    RBTree<int>::NodeChain node_path;
-    RBTree<int>::NodeChain next_node_path;
-    const RBNode<int>* node;
+    NodeChain<int> node_path;
+    const RBNode<int>* node = NULL;
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
-              tree.findEx<void*>(currentDomain, node_path, &node, NULL, NULL));
-    node = tree.nextNode(node, node_path, next_node_path);
-    EXPECT_EQ(nextDomain, nodeAbsoluteName(node,  next_node_path));
+              tree.find<void*>(currentDomain, &node, node_path, NULL, NULL));
+    node = tree.nextNode(node, node_path);
+    EXPECT_EQ(nextDomain, nodeAbsoluteName(node,  node_path));
 }
 
 TEST_F(RBTreeTest, nextNode) {
