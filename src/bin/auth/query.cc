@@ -122,6 +122,10 @@ Query::getAuthAdditional(const Zone& zone) const {
 void
 Query::process() const {
     bool keep_doing = true;
+    const bool qtype_is_any = (qtype_ == RRType::ANY());
+    RRsetList result_rrsets;
+    RRsetList* target = NULL;
+
     response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
     const MemoryDataSrc::FindResult result =
         memory_datasrc_.findZone(qname_);
@@ -141,20 +145,33 @@ Query::process() const {
     response_.setHeaderFlag(Message::HEADERFLAG_AA);
     while (keep_doing) {
         keep_doing = false;
-        Zone::FindResult db_result = result.zone->find(qname_, qtype_);
+        if (qtype_is_any) {
+            target = &result_rrsets;
+        }
+
+        Zone::FindResult db_result = result.zone->find(qname_, qtype_, target);
+
         switch (db_result.code) {
             case Zone::SUCCESS:
                 response_.setRcode(Rcode::NOERROR());
-                response_.addRRset(Message::SECTION_ANSWER,
-                    boost::const_pointer_cast<RRset>(db_result.rrset));
-                // Handle additional for answer section
-                getAdditional(*result.zone, *db_result.rrset);
+                if (qtype_is_any) {
+                    // If quety type is ANY, insert all RRs under the domain
+                    // into answer section.
+                    BOOST_FOREACH(RRsetPtr rrset, *target) {
+                        response_.addRRset(Message::SECTION_ANSWER, rrset);
+                    }
+                } else {
+                    response_.addRRset(Message::SECTION_ANSWER,
+                        boost::const_pointer_cast<RRset>(db_result.rrset));
+                    // Handle additional for answer section
+                    getAdditional(*result.zone, *db_result.rrset);
+                }
                 // If apex NS records haven't been provided in the answer
                 // section, insert apex NS records into the authority section
                 // and AAAA/A RRS of each of the NS RDATA into the additional
                 // section.
                 if (qname_ != result.zone->getOrigin() ||
-                    (qtype_ != RRType::NS() && qtype_ != RRType::ANY()))
+                    (qtype_ != RRType::NS() && !qtype_is_any))
                 {
                     getAuthAdditional(*result.zone);
                 }
