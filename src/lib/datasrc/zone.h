@@ -166,6 +166,9 @@ public:
     /// - If the target isn't NULL, all RRsets under the domain are inserted
     ///   there and SUCCESS (or NXDOMAIN, in case of empty domain) is returned
     ///   instead of normall processing. This is intended to handle ANY query.
+    ///   \note: this behavior is controversial as we discussed in
+    ///   https://lists.isc.org/pipermail/bind10-dev/2011-January/001918.html
+    ///   We should revisit the interface before we heavily rely on it.
     ///
     /// The \c options parameter specifies customized behavior of the search.
     /// Their semantics is as follows:
