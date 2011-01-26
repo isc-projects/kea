@@ -59,10 +59,10 @@ const char* const ns_addrs_txt =
     "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n"
     "noglue.example.com. 3600 IN A 192.0.2.53\n";
 const char* const delegation_txt =
-        "delegation.example.com. 3600 IN NS glue.delegation.example.com.\n"
-        "delegation.example.com. 3600 IN NS noglue.example.com.\n"
-        "delegation.example.com. 3600 IN NS cname.example.com.\n"
-        "delegation.example.com. 3600 IN NS example.org.\n";
+    "delegation.example.com. 3600 IN NS glue.delegation.example.com.\n"
+    "delegation.example.com. 3600 IN NS noglue.example.com.\n"
+    "delegation.example.com. 3600 IN NS cname.example.com.\n"
+    "delegation.example.com. 3600 IN NS example.org.\n";
 const char* const mx_txt =
     "mx.example.com. 3600 IN MX 10 www.example.com.\n"
     "mx.example.com. 3600 IN MX 20 mailer.example.org.\n"
@@ -172,10 +172,8 @@ MockZone::find(const Name& name, const RRType& type,
                  found_rrset != found_domain->second.end(); found_rrset++)
             {
                 // Insert RRs under the domain name into target
-                if (target) {
-                    target->addRRset(
-                        boost::const_pointer_cast<RRset>(found_rrset->second));
-                }
+                target->addRRset(
+                    boost::const_pointer_cast<RRset>(found_rrset->second));
             }
             return (FindResult(SUCCESS, found_domain->second.begin()->second));
         }
@@ -238,7 +236,8 @@ responseCheck(Message& response, const isc::dns::Rcode& rcode,
     if (expected_answer != NULL) {
         rrsetsCheck(expected_answer,
                     response.beginSection(Message::SECTION_ANSWER),
-                    response.endSection(Message::SECTION_ANSWER));
+                    response.endSection(Message::SECTION_ANSWER),
+                    check_origin);
     }
     if (expected_authority != NULL) {
         rrsetsCheck(expected_authority,
@@ -292,6 +291,7 @@ TEST_F(QueryTest, apexNSMatch) {
                   zone_ns_txt, NULL, ns_addrs_txt);
 }
 
+// test type any query logic
 TEST_F(QueryTest, exactAnyMatch) {
     // find match rrset, omit additional data which has already been provided
     // in the answer section from the additional.
@@ -303,6 +303,33 @@ TEST_F(QueryTest, exactAnyMatch) {
                   zone_ns_txt,
                   "glue.delegation.example.com. 3600 IN A 192.0.2.153\n"
                   "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n");
+}
+
+TEST_F(QueryTest, apexAnyMatch) {
+    // find match rrset, omit additional data which has already been provided
+    // in the answer section from the additional.
+    EXPECT_NO_THROW(Query(memory_datasrc, Name("example.com"),
+                          RRType::ANY(), response).process());
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 4, 0, 0,
+                  "example.com. 3600 IN SOA . . 0 0 0 0 0\n"
+                  "example.com. 3600 IN NS glue.delegation.example.com.\n"
+                  "example.com. 3600 IN NS noglue.example.com.\n"
+                  "example.com. 3600 IN NS example.net.\n",
+                  NULL, NULL, mock_zone->getOrigin());
+}
+
+TEST_F(QueryTest, glueANYMatch) {
+    EXPECT_NO_THROW(Query(memory_datasrc, Name("delegation.example.com"),
+                          RRType::ANY(), response).process());
+    responseCheck(response, Rcode::NOERROR(), 0, 0, 4, 3,
+                  NULL, delegation_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, nodomainANY) {
+    EXPECT_NO_THROW(Query(memory_datasrc, Name("nxdomain.example.com"),
+                          RRType::ANY(), response).process());
+    responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 1, 0,
+                  NULL, soa_txt, NULL, mock_zone->getOrigin());
 }
 
 // This tests that when we need to look up Zone's apex NS records for
