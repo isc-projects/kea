@@ -126,6 +126,9 @@ public:
         }
     }
 
+    void resolve(const isc::dns::QuestionPtr& question,
+                 const isc::nsas::ResolverInterface::CallbackPtr& callback);
+
     void processNormalQuery(const Question& question,
                             MessagePtr answer_message,
                             OutputBufferPtr buffer,
@@ -341,6 +344,36 @@ Resolver::getConfigSession() const {
     return (impl_->config_session_);
 }
 
+/* tmp for in-dev testing */
+class MyCallback : public nsas::ResolverInterface::Callback {
+public:
+    virtual void success(
+        const boost::shared_ptr<isc::dns::AbstractRRset>&
+        response) {
+        std::cout << "[XX] CALLBACK FOR LOOKUP!" << std::endl;
+        std::cout << "[XX] GOT: " << *response << std::endl;
+        std::cout << "[XX] END" << std::endl;
+    };
+
+    virtual void failure() {
+        std::cout << "[XX] internal lookup failed" << std::endl;
+    }
+
+    ~MyCallback() {
+        std::cout << "[XX] MyCallback deleted!" << std::endl;
+    }
+};
+
+void
+Resolver::resolve(const isc::dns::QuestionPtr& question,
+                  const isc::nsas::ResolverInterface::CallbackPtr& callback)
+{
+    std::cout << "[XX] asked to resolve: " << *question << std::endl;
+    impl_->resolve(question, callback);
+    std::cout << "[XX] done?" << std::endl;
+}
+
+
 void
 Resolver::processMessage(const IOMessage& io_message,
                          MessagePtr query_message,
@@ -348,6 +381,17 @@ Resolver::processMessage(const IOMessage& io_message,
                          OutputBufferPtr buffer,
                          DNSServer* server)
 {
+    std::cout << "[XX] remove this :p" << std::endl;
+    QuestionPtr q(new Question(Name("www.tjeb.nl"), RRClass::IN(), RRType::A()));
+    boost::shared_ptr<MyCallback> callback(new MyCallback());
+
+    std::cout << "[XX] CREATED CALLBACK AT " << callback << std::endl;
+
+    resolve(q, callback);
+    //resolve(q, callback);
+    std::cout << "[XX] up to here" << std::endl;
+
+
     dlog("Got a DNS message");
     InputBuffer request_buffer(io_message.getData(), io_message.getDataSize());
     // First, check the header part.  If we fail even for the base header,
@@ -422,6 +466,13 @@ Resolver::processMessage(const IOMessage& io_message,
     if (sendAnswer) {
         server->resume(true);
     }
+}
+
+void
+ResolverImpl::resolve(const QuestionPtr& question,
+                      const isc::nsas::ResolverInterface::CallbackPtr& callback)
+{
+    rec_query_->sendQuery(question, callback);
 }
 
 void
