@@ -123,8 +123,6 @@ void
 Query::process() const {
     bool keep_doing = true;
     const bool qtype_is_any = (qtype_ == RRType::ANY());
-    RRsetList result_rrsets;
-    RRsetList* target = NULL;
 
     response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
     const MemoryDataSrc::FindResult result =
@@ -145,11 +143,9 @@ Query::process() const {
     response_.setHeaderFlag(Message::HEADERFLAG_AA);
     while (keep_doing) {
         keep_doing = false;
-        if (qtype_is_any) {
-            target = &result_rrsets;
-        }
-
-        Zone::FindResult db_result = result.zone->find(qname_, qtype_, target);
+        std::auto_ptr<RRsetList> target(qtype_is_any ? new RRsetList : NULL);
+        Zone::FindResult db_result =
+            result.zone->find(qname_, qtype_, target.get());
 
         switch (db_result.code) {
             case Zone::SUCCESS:
