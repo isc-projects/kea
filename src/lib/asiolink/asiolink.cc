@@ -31,13 +31,13 @@
 #include <dns/buffer.h>
 #include <dns/message.h>
 #include <dns/rcode.h>
+#include <dns/opcode.h>
 
 #include <asiolink/asiolink.h>
 #include <asiolink/internal/tcpdns.h>
 #include <asiolink/internal/udpdns.h>
 
 #include <log/dummylog.h>
-
 
 using namespace asio;
 using asio::ip::udp;
@@ -354,7 +354,8 @@ private:
     OutputBufferPtr buffer_;
 
     // Server to notify when we succeed or fail
-    shared_ptr<DNSServer> server_;
+    //shared_ptr<DNSServer> server_;
+    AbstractResolverCallback* resolvercallback_;
 
     /*
      * TODO Do something more clever with timeouts. In the long term, some
@@ -475,7 +476,10 @@ public:
     RunningQuery(asio::io_service& io, const Question &question,
         MessagePtr answer_message, shared_ptr<AddressVector> upstream,
         shared_ptr<AddressVector> upstream_root,
-        OutputBufferPtr buffer, DNSServer* server, int timeout,
+        OutputBufferPtr buffer,
+        //DNSServer* server,
+        AbstractResolverCallback* cb,
+        int timeout,
         unsigned retries) :
         io_(io),
         question_(question),
@@ -483,7 +487,8 @@ public:
         upstream_(upstream),
         upstream_root_(upstream_root),
         buffer_(buffer),
-        server_(server->clone()),
+        //server_(server->clone()),
+        resolvercallback_(cb),
         timeout_(timeout),
         retries_(retries),
         zone_servers_()
@@ -533,7 +538,8 @@ public:
             }
             
             if (done) {
-                server_->resume(result == UDPQuery::SUCCESS);
+                resolvercallback_->callback(result == UDPQuery::SUCCESS);
+                //server_->resume(result == UDPQuery::SUCCESS);
                 delete this;
             }
         } else if (retries_--) {
@@ -542,12 +548,30 @@ public:
             send();
         } else {
             // out of retries, give up for now
-            server_->resume(false);
+            resolvercallback_->callback(false);
+            //server_->resume(false);
             delete this;
         }
     }
 };
 
+}
+
+void
+RecursiveQuery::sendQuery(const isc::dns::QuestionPtr& question,
+    const isc::nsas::ResolverInterface::CallbackPtr callback)
+{
+    asio::io_service& io = dns_service_.get_io_service();
+
+    MessagePtr answer_message(new Message(Message::RENDER));
+    answer_message->setOpcode(isc::dns::Opcode::QUERY());
+    OutputBufferPtr buffer(new OutputBuffer(0));
+    ResolverCallbackDirect* rcd = new ResolverCallbackDirect(callback,
+                                                             answer_message);
+    
+    // It will delete itself when it is done
+    new RunningQuery(io, *question, answer_message, upstream_,
+                     upstream_root_, buffer, rcd, timeout_, retries_);
 }
 
 void
@@ -561,10 +585,39 @@ RecursiveQuery::sendQuery(const Question& question,
     // UDP and then fall back to TCP on failure, but for the moment
     // we're only going to handle UDP.
     asio::io_service& io = dns_service_.get_io_service();
+
+    ResolverCallbackServer* crs = new ResolverCallbackServer(server);
+    
     // It will delete itself when it is done
-    new RunningQuery(io, question, answer_message, upstream_, upstream_root_,
-                         buffer, server, timeout_, retries_);
+    new RunningQuery(io, question, answer_message, upstream_,
+                     upstream_root_, buffer, crs, timeout_, retries_);
 }
+
+void
+ResolverCallbackServer::callback(bool result) {
+    server_->resume(result);
+    delete server_;
+    delete this;
+}
+
+void
+ResolverCallbackDirect::callback(bool result)
+{
+    // simply return with the first rrset from answer right now
+    if (result &&
+        answer_message_->getRcode() == isc::dns::Rcode::NOERROR() &&
+        answer_message_->getRRCount(isc::dns::Message::SECTION_ANSWER) > 0) {
+        std::cout << *answer_message_ << std::endl;
+        isc::dns::RRsetIterator rrsi = answer_message_->beginSection(isc::dns::Message::SECTION_ANSWER);
+        const isc::dns::RRsetPtr result = *rrsi;
+        callback_->success(result);
+    } else {
+        callback_->failure();
+    }
+    // once called back we don't need ourselves anymore
+    delete this;
+}
+
 
 class IntervalTimerImpl {
 private:
