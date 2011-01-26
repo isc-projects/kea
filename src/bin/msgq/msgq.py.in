@@ -463,7 +463,7 @@ class MsgQ:
             events = self.kqueue.control(None, 10)
             if not events:
                 raise RuntimeError('serve: kqueue returned no events')
-            
+
             for event in events:
                 if event.ident == self.listen_socket.fileno():
                     self.process_accept()
