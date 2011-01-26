@@ -185,11 +185,6 @@ public:
     /// the same domain.
     /// It should not throw other types of exceptions.
     ///
-    /// Note: It's quite likely that we'll need to specify search options.
-    /// For example, we should be able to specify whether to allow returning
-    /// glue records at or under a zone cut.  We leave this interface open
-    /// at this moment.
-    ///
     /// \param name The domain name to be searched for.
     /// \param type The RR type to be searched for.
     /// \param target If target is not NULL, insert all RRs under the domain
