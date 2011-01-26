@@ -540,8 +540,7 @@ public:
         }
         return (ret);
     }
-
-
+    //@}
     /// \brief return the next node which is bigger than node
     ///
     /// Each node in the tree has down pointer pointing to its subdomains,
@@ -561,9 +560,6 @@ public:
     /// node_path will be the node chain for the next node
     const RBNode<T>* nextNode(const RBNode<T>* node,
                               NodeChain<T>& node_path) const;
-
-
-    //@}
 
     /// \brief Get the total number of nodes in the tree
     ///
