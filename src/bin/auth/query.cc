@@ -143,6 +143,16 @@ Query::process() const {
         keep_doing = false;
         Zone::FindResult db_result = result.zone->find(qname_, qtype_);
         switch (db_result.code) {
+            case Zone::CNAME:
+                /*
+                 * We don't do chaining yet. Therefore handling a CNAME is
+                 * mostly the same as handling SUCCESS, but we didn't get
+                 * what we expected. It means no exceptions in ANY or NS
+                 * on the origin (though CNAME in origin is probably
+                 * forbidden anyway).
+                 *
+                 */
+                // No break; here, fall trough.
             case Zone::SUCCESS:
                 response_.setRcode(Rcode::NOERROR());
                 response_.addRRset(Message::SECTION_ANSWER,
@@ -154,6 +164,7 @@ Query::process() const {
                 // and AAAA/A RRS of each of the NS RDATA into the additional
                 // section.
                 if (qname_ != result.zone->getOrigin() ||
+                    db_result.code != Zone::SUCCESS ||
                     (qtype_ != RRType::NS() && qtype_ != RRType::ANY()))
                 {
                     getAuthAdditional(*result.zone);
@@ -176,7 +187,6 @@ Query::process() const {
                 response_.setRcode(Rcode::NOERROR());
                 putSOA(*result.zone);
                 break;
-            case Zone::CNAME:
             case Zone::DNAME:
                 // TODO : replace qname, continue lookup
                 break;
