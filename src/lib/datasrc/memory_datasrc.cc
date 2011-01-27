@@ -194,31 +194,48 @@ struct MemoryZone::MemoryZoneImpl {
     /// It will be passed to \c zonecutCallback() and record a possible
     /// zone cut node and related RRset (normally NS or DNAME).
     struct FindState {
-        FindState(FindOptions options) : zonecut_node_(NULL),
-                                         options_(options)
+        FindState(FindOptions options) :
+            zonecut_node_(NULL),
+            dname_node_(NULL),
+            options_(options)
         {}
         const DomainNode* zonecut_node_;
+        const DomainNode* dname_node_;
         ConstRRsetPtr rrset_;
         const FindOptions options_;
     };
 
-    // A callback called from possible zone cut nodes.  This will be passed
-    // from the \c find() method to \c RBTree::find().
-    static bool zonecutCallback(const DomainNode& node, FindState* state) {
+    // A callback called from possible zone cut nodes and nodes with DNAME.
+    // This will be passed from the \c find() method to \c RBTree::find().
+    static bool cutCallback(const DomainNode& node, FindState* state) {
         // We perform callback check only for the highest zone cut in the
         // rare case of nested zone cuts.
         if (state->zonecut_node_ != NULL) {
             return (false);
         }
 
-        const Domain::const_iterator found(node.getData()->find(RRType::NS()));
-        if (found != node.getData()->end()) {
+        // We need to look for DNAME first, there's allowed case where
+        // DNAME and NS coexist in the apex. DNAME is the one to notice,
+        // the NS is authoritative, not delegation
+        const Domain::const_iterator foundDNAME(node.getData()->find(
+            RRType::DNAME()));
+        if (foundDNAME != node.getData()->end()) {
+            state->dname_node_ = &node;
+            state->rrset_ = foundDNAME->second;
+            // No more processing below the DNAME
+            return true;
+        }
+
+        // Look for NS
+        const Domain::const_iterator foundNS(node.getData()->find(
+            RRType::NS()));
+        if (foundNS != node.getData()->end()) {
             // BIND 9 checks if this node is not the origin.  But it cannot
             // be the origin because we don't enable the callback at the
             // origin node (see MemoryZoneImpl::add()).  Or should we do a
             // double check for it?
             state->zonecut_node_ = &node;
-            state->rrset_ = found->second;
+            state->rrset_ = foundNS->second;
 
             // Unless glue is allowed the search stops here, so we return
             // false; otherwise return true to continue the search.
@@ -242,8 +259,13 @@ struct MemoryZone::MemoryZoneImpl {
         // Get the node
         DomainNode* node(NULL);
         FindState state(options);
-        switch (domains_.find(name, &node, zonecutCallback, &state)) {
+        switch (domains_.find(name, &node, cutCallback, &state)) {
             case DomainTree::PARTIALMATCH:
+                if (state.dname_node_ != NULL) {
+                    // We were traversing a DNAME node (and wanted to go
+                    // lower below it), so return the DNAME
+                    return (FindResult(DNAME, state.rrset_));
+                }
                 if (state.zonecut_node_ != NULL) {
                     return (FindResult(DELEGATION, state.rrset_));
                 }
