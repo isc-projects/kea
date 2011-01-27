@@ -74,10 +74,12 @@ struct MemoryZone::MemoryZoneImpl {
         if (!rrset) {
             isc_throw(NullRRset, "The rrset provided is NULL");
         }
-        if (rrset->getType() == RRType::CNAME() &&
-            rrset->getRdataCount() > 1) {
-            // XXX: this is not only for CNAME.  We should generalize this
-            // code for all other "singleton RR types" (such as SOA) in a
+        if ((rrset->getType() == RRType::CNAME() ||
+            rrset->getType() == RRType::DNAME()) &&
+            rrset->getRdataCount() > 1)
+        {
+            // XXX: this is not only for CNAME or DNAME. We should generalize
+            // this code for all other "singleton RR types" (such as SOA) in a
             // separate task.
             isc_throw(AddError, "multiple RRs of singleton type for "
                       << rrset->getName());
@@ -133,15 +135,33 @@ struct MemoryZone::MemoryZoneImpl {
                       " can't coexist for " << rrset->getName());
         }
 
+        /*
+         * Similar with DNAME, but it must not coexist only with NS and only in
+         * non-apex domains.
+         */
+        if (rrset->getName() != origin_ &&
+            // Adding DNAME, NS already there
+            ((rrset->getType() == RRType::DNAME() &&
+            domain->find(RRType::NS()) != domain->end()) ||
+            // Adding NS, DNAME already there
+            (rrset->getType() == RRType::NS() &&
+            domain->find(RRType::DNAME()) != domain->end())))
+        {
+            isc_throw(AddError, "DNAME can't coexist with NS in non-apex "
+                "domain " << rrset->getName());
+        }
+
         // Try inserting the rrset there
         if (domain->insert(DomainPair(rrset->getType(), rrset)).second) {
             // Ok, we just put it in
 
             // If this RRset creates a zone cut at this node, mark the node
             // indicating the need for callback in find().
-            // TBD: handle DNAME, too
             if (rrset->getType() == RRType::NS() &&
                 rrset->getName() != origin_) {
+                node->enableCallback();
+            // If it is DNAME, we have a callback as well here
+            } else if (rrset->getType() == RRType::DNAME()) {
                 node->enableCallback();
             }
 
