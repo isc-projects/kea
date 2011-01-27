@@ -150,7 +150,6 @@ Query::process() const {
                  * what we expected. It means no exceptions in ANY or NS
                  * on the origin (though CNAME in origin is probably
                  * forbidden anyway).
-                 *
                  */
                 // No break; here, fall trough.
             case Zone::SUCCESS:
