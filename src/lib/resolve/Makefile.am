@@ -11,5 +11,6 @@ CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libresolve.la
 libresolve_la_SOURCES = resolve.h resolve.cc
+libresolve_la_SOURCES += resolver_interface.h
 libresolve_la_LIBADD = $(top_builddir)/src/lib/dns/libdns++.la
 libresolve_la_LIBADD += $(top_builddir)/src/lib/exceptions/libexceptions.la

@@ -25,10 +25,12 @@
  * This file contains a dummy interface for the resolver, which does not yet
  * exist. When the resolver appears, this file should either wrap its
  * interface or, better, be removed completely.
+ *
+ * Currently left in while moving interfaces and classes around
  */
 
 namespace isc {
-namespace nsas {
+namespace resolve {
 
 /**
  * \short Abstract interface to the resolver.

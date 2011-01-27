@@ -36,13 +36,14 @@
 #include <dns/rrset.h>
 #include <dns/rrtype.h>
 
+#include <resolve/resolver_interface.h>
+
 #include "address_entry.h"
 #include "asiolink.h"
 #include "nsas_types.h"
 #include "hash_key.h"
 #include "lru_list.h"
 #include "fetchable.h"
-#include "resolver_interface.h"
 #include "nsas_entry.h"
 #include "nameserver_address.h"
 
@@ -84,7 +85,7 @@ public:
 };
 
 class ZoneEntry;
-class ResolverInterface;
+//class ResolverInterface;
 
 /// \brief Nameserver Entry
 ///
@@ -247,7 +248,7 @@ public:
      *     even when there are addresses, if there are no addresses for this
      *     family.
      */
-    void askIP(boost::shared_ptr<ResolverInterface> resolver,
+    void askIP(boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
         boost::shared_ptr<Callback> callback, AddressFamily family);
     //@}
 
@@ -279,7 +280,7 @@ private:
     /// \short Private version that does the actual asking of one address type
     ///
     /// Call unlocked.
-    void askIP(boost::shared_ptr<ResolverInterface> resolver,
+    void askIP(boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
         const isc::dns::RRType&, AddressFamily);
 };
 

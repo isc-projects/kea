@@ -42,7 +42,8 @@ namespace {
 /// \brief Inherited version with access into its internals for tests
 class InheritedZoneEntry : public ZoneEntry {
     public:
-        InheritedZoneEntry(boost::shared_ptr<ResolverInterface> resolver,
+        InheritedZoneEntry(
+            boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
             const std::string& name, const RRClass& class_code,
             boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table,
             boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru) :
