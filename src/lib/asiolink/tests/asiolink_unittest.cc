@@ -698,20 +698,59 @@ TEST_F(ASIOLinkTest, forwarderSend) {
     EXPECT_EQ(q.getClass(), q2->getClass());
 }
 
-// Test it tries the correct amount of times before giving up
-TEST_F(ASIOLinkTest, recursiveTimeout) {
-    // Prepare the service (we do not use the common setup, we do not answer
-    setDNSService();
-
-    // Prepare the socket
-    res_ = resolveAddress(AF_INET, IPPROTO_UDP, true);
-    sock_ = socket(res_->ai_family, res_->ai_socktype, res_->ai_protocol);
+int
+createTestSocket()
+{
+    struct addrinfo* res_ = resolveAddress(AF_INET, IPPROTO_UDP, true);
+    int sock_ = socket(res_->ai_family, res_->ai_socktype, res_->ai_protocol);
     if (sock_ < 0) {
         isc_throw(IOError, "failed to open test socket");
     }
     if (bind(sock_, res_->ai_addr, res_->ai_addrlen) < 0) {
         isc_throw(IOError, "failed to bind test socket");
     }
+    return sock_;
+}
+
+int
+setSocketTimeout(int sock_, size_t tv_sec, size_t tv_usec) {
+    const struct timeval timeo = { tv_sec, tv_usec };
+    int recv_options = 0;
+    if (setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO, &timeo, sizeof(timeo))) {
+        if (errno == ENOPROTOOPT) { // see ASIOLinkTest::recvUDP()
+            recv_options = MSG_DONTWAIT;
+        } else {
+            isc_throw(IOError, "set RCVTIMEO failed: " << strerror(errno));
+        }
+    }
+    return recv_options;
+}
+
+// try to read from the socket max time
+// *num is incremented for every succesfull read
+// returns true if it can read max times, false otherwise
+bool tryRead(int sock_, int recv_options, size_t max, int* num) {
+    size_t i = 0;
+    do {
+        char inbuff[512];
+        if (recv(sock_, inbuff, sizeof(inbuff), recv_options) < 0) {
+            return false;
+        } else {
+            ++i;
+            ++*num;
+        }
+    } while (i < max);
+    return true;
+}
+
+
+// Test it tries the correct amount of times before giving up
+TEST_F(ASIOLinkTest, forwardQueryTimeout) {
+    // Prepare the service (we do not use the common setup, we do not answer
+    setDNSService();
+
+    // Prepare the socket
+    sock_ = createTestSocket();
 
     // Prepare the server
     bool done(true);
@@ -722,7 +761,7 @@ TEST_F(ASIOLinkTest, recursiveTimeout) {
     RecursiveQuery query(*dns_service_,
                          singleAddress(TEST_IPV4_ADDR, port),
                          singleAddress(TEST_IPV4_ADDR, port),
-                         10, 2);
+                         10, 4000, 3000, 2);
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
@@ -733,27 +772,103 @@ TEST_F(ASIOLinkTest, recursiveTimeout) {
 
     // Read up to 3 packets.  Use some ad hoc timeout to prevent an infinite
     // block (see also recvUDP()).
-    const struct timeval timeo = { 10, 0 };
-    int recv_options = 0;
-    if (setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO, &timeo, sizeof(timeo))) {
-        if (errno == ENOPROTOOPT) { // see ASIOLinkTest::recvUDP()
-            recv_options = MSG_DONTWAIT;
-        } else {
-            isc_throw(IOError, "set RCVTIMEO failed: " << strerror(errno));
-        }
-    }
+    int recv_options = setSocketTimeout(sock_, 10, 0);
     int num = 0;
-    do {
-        char inbuff[512];
-        if (recv(sock_, inbuff, sizeof(inbuff), recv_options) < 0) {
-            num = -1;
-            break;
-        }
-    } while (++num < 3);
+    bool read_success = tryRead(sock_, recv_options, 3, &num);
 
     // The query should fail
     EXPECT_FALSE(done);
     EXPECT_EQ(3, num);
+    EXPECT_TRUE(read_success);
+}
+
+// If we set client timeout to lower than querytimeout, we should
+// get a failure answer, but still see retries
+// (no actual answer is given here yet)
+TEST_F(ASIOLinkTest, forwardClientTimeout) {
+    // Prepare the service (we do not use the common setup, we do not answer
+    setDNSService();
+
+    sock_ = createTestSocket();
+
+    // Prepare the server
+    bool done(true);
+    MockServerStop server(*io_service_, &done);
+
+    MessagePtr answer(new Message(Message::RENDER));
+
+    // Do the answer
+    const uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
+    // Set it up to retry twice before client timeout fires
+    // Since the lookup timer has not fired, it should retry
+    // a third time
+    RecursiveQuery query(*dns_service_,
+                         singleAddress(TEST_IPV4_ADDR, port),
+                         singleAddress(TEST_IPV4_ADDR, port),
+                         5, 12, 1000, 3);
+    Question question(Name("example.net"), RRClass::IN(), RRType::A());
+    OutputBufferPtr buffer(new OutputBuffer(0));
+    query.sendQuery(question, answer, buffer, &server);
+
+    // Run the test
+    io_service_->run();
+
+    // we know it'll fail, so make it a shorter timeout
+    int recv_options = setSocketTimeout(sock_, 1, 0);
+
+    // Try to read 5 times, should stop after 3 reads
+    int num = 0;
+    bool read_success = tryRead(sock_, recv_options, 5, &num);
+
+    // The query should fail (for resolver it should send back servfail,
+    // but currently, and perhaps for forwarder in general, the effect
+    // will be the same as on a lookup timeout, i.e. no answer is sent
+    // back)
+    EXPECT_FALSE(done);
+    EXPECT_EQ(3, num);
+    EXPECT_FALSE(read_success);
+}
+
+// If we set lookup timeout to lower than querytimeout*retries, we should
+// fail before the full amount of retries
+TEST_F(ASIOLinkTest, forwardLookupTimeout) {
+    // Prepare the service (we do not use the common setup, we do not answer
+    setDNSService();
+
+    // Prepare the socket
+    sock_ = createTestSocket();
+
+    // Prepare the server
+    bool done(true);
+    MockServerStop server(*io_service_, &done);
+
+    MessagePtr answer(new Message(Message::RENDER));
+
+    // Do the answer
+    const uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
+    // Set up the test so that it will retry 5 times, but the lookup
+    // timeout will fire after only 3 normal timeouts
+    RecursiveQuery query(*dns_service_,
+                         singleAddress(TEST_IPV4_ADDR, port),
+                         singleAddress(TEST_IPV4_ADDR, port),
+                         5, 4000, 12, 5);
+    Question question(Name("example.net"), RRClass::IN(), RRType::A());
+    OutputBufferPtr buffer(new OutputBuffer(0));
+    query.sendQuery(question, answer, buffer, &server);
+
+    // Run the test
+    io_service_->run();
+
+    int recv_options = setSocketTimeout(sock_, 1, 0);
+
+    // Try to read 5 times, should stop after 3 reads
+    int num = 0;
+    bool read_success = tryRead(sock_, recv_options, 5, &num);
+
+    // The query should fail
+    EXPECT_FALSE(done);
+    EXPECT_EQ(3, num);
+    EXPECT_FALSE(read_success);
 }
 
 // as mentioned above, we need a more better framework for this,

@@ -144,7 +144,10 @@ public:
      * \param retries The number of retries (0 means try the first time only,
      *     do not retry).
      */
-    void setTimeouts(int timeout = -1, unsigned retries = 0);
+    void setTimeouts(int query_timeout = 2000,
+                     int client_timeout = 4000,
+                     int lookup_timeout = 30000,
+                     unsigned retries = 3);
 
     /**
      * \short Get info about timeouts.
@@ -152,6 +155,39 @@ public:
      * \returns Timeout and retries (as described in setTimeouts).
      */
     std::pair<int, unsigned> getTimeouts() const;
+
+    /**
+     * \brief Get the timeout for outgoing queries
+     *
+     * \returns Timeout for outgoing queries
+     */
+    int getQueryTimeout() const;
+
+    /**
+     * \brief Get the timeout for incoming client queries
+     *
+     * After this timeout, a SERVFAIL shall be sent back
+     * (internal resolving on the query will continue, see
+     * \c getLookupTimeout())
+     * 
+     * \returns Timeout for outgoing queries
+     */
+    int getClientTimeout() const;
+
+    /**
+     * \brief Get the timeout for lookups
+     *
+     * After this timeout, internal processing shall stop
+     */
+    int getLookupTimeout() const;
+
+    /**
+     * \brief Get the number of retries for outgoing queries
+     *
+     * If a query times out (value of \c getQueryTimeout()), we
+     * will retry this number of times
+     */
+    int getRetries() const;
 
 private:
     ResolverImpl* impl_;

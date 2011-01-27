@@ -64,7 +64,9 @@ private:
 public:
     ResolverImpl() :
         config_session_(NULL),
-        timeout_(2000),
+        query_timeout_(2000),
+        client_timeout_(4000),
+        lookup_timeout_(30000),
         retries_(3),
         rec_query_(NULL)
     {}
@@ -76,7 +78,12 @@ public:
     void querySetup(DNSService& dnss) {
         assert(!rec_query_); // queryShutdown must be called first
         dlog("Query setup");
-        rec_query_ = new RecursiveQuery(dnss, upstream_, upstream_root_, timeout_, retries_);
+        rec_query_ = new RecursiveQuery(dnss, upstream_,
+                                        upstream_root_,
+                                        query_timeout_,
+                                        client_timeout_,
+                                        lookup_timeout_,
+                                        retries_);
     }
 
     void queryShutdown() {
@@ -143,8 +150,13 @@ public:
     /// Addresses we listen on
     vector<addr_t> listen_;
 
-    /// Time in milliseconds, to timeout
-    int timeout_;
+    /// Timeout for outgoing queries in milliseconds
+    int query_timeout_;
+    /// Timeout for incoming client queries in milliseconds
+    int client_timeout_;
+    /// Timeout for lookup processing in milliseconds
+    int lookup_timeout_;
+    
     /// Number of retries after timeout
     unsigned retries_;
 
@@ -487,16 +499,34 @@ Resolver::updateConfig(ConstElementPtr config) {
         ConstElementPtr listenAddressesE(config->get("listen_on"));
         vector<addr_t> listenAddresses(parseAddresses(listenAddressesE));
         bool set_timeouts(false);
-        int timeout = impl_->timeout_;
+        int qtimeout = impl_->query_timeout_;
+        int ctimeout = impl_->client_timeout_;
+        int ltimeout = impl_->lookup_timeout_;
         unsigned retries = impl_->retries_;
-        ConstElementPtr timeoutE(config->get("timeout")),
-            retriesE(config->get("retries"));
-        if (timeoutE) {
+        ConstElementPtr qtimeoutE(config->get("timeout_query")),
+                        ctimeoutE(config->get("timeout_client")),
+                        ltimeoutE(config->get("timeout_lookup")),
+                        retriesE(config->get("retries"));
+        if (qtimeoutE) {
             // It should be safe to just get it, the config manager should
             // check for us
-            timeout = timeoutE->intValue();
-            if (timeout < -1) {
-                isc_throw(BadValue, "Timeout too small");
+            qtimeout = qtimeoutE->intValue();
+            if (qtimeout < -1) {
+                isc_throw(BadValue, "Query timeout too small");
+            }
+            set_timeouts = true;
+        }
+        if (ctimeoutE) {
+            ctimeout = ctimeoutE->intValue();
+            if (ctimeout < -1) {
+                isc_throw(BadValue, "Client timeout too small");
+            }
+            set_timeouts = true;
+        }
+        if (ltimeoutE) {
+            ltimeout = ltimeoutE->intValue();
+            if (ltimeout < -1) {
+                isc_throw(BadValue, "Lookup timeout too small");
             }
             set_timeouts = true;
         }
@@ -523,7 +553,7 @@ Resolver::updateConfig(ConstElementPtr config) {
             setRootAddresses(rootAddresses);
         }
         if (set_timeouts) {
-            setTimeouts(timeout, retries);
+            setTimeouts(qtimeout, ctimeout, ltimeout, retries);
             need_query_restart = true;
         }
 
@@ -610,15 +640,36 @@ Resolver::setListenAddresses(const vector<addr_t>& addresses) {
 }
 
 void
-Resolver::setTimeouts(int timeout, unsigned retries) {
-    dlog("Setting timeout to " + boost::lexical_cast<string>(timeout) +
-        " and retry count to " + boost::lexical_cast<string>(retries));
-    impl_->timeout_ = timeout;
+Resolver::setTimeouts(int query_timeout, int client_timeout,
+                      int lookup_timeout, unsigned retries) {
+    dlog("Setting query timeout to " + boost::lexical_cast<string>(query_timeout) +
+         ", client timeout to " + boost::lexical_cast<string>(client_timeout) +
+         ", lookup timeout to " + boost::lexical_cast<string>(lookup_timeout) +
+         " and retry count to " + boost::lexical_cast<string>(retries));
+    impl_->query_timeout_ = query_timeout;
+    impl_->client_timeout_ = client_timeout;
+    impl_->lookup_timeout_ = lookup_timeout;
     impl_->retries_ = retries;
 }
-pair<int, unsigned>
-Resolver::getTimeouts() const {
-    return (pair<int, unsigned>(impl_->timeout_, impl_->retries_));
+
+int
+Resolver::getQueryTimeout() const {
+    return impl_->query_timeout_;
+}
+
+int
+Resolver::getClientTimeout() const {
+    return impl_->client_timeout_;
+}
+
+int
+Resolver::getLookupTimeout() const {
+    return impl_->lookup_timeout_;
+}
+
+int
+Resolver::getRetries() const {
+    return impl_->retries_;
 }
 
 vector<addr_t>
