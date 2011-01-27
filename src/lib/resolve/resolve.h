@@ -45,14 +45,14 @@ private:
 class ResolverCallbackDirect : public AbstractResolverCallback {
 public:
     ResolverCallbackDirect(
-        const isc::nsas::ResolverInterface::CallbackPtr callback,
+        const isc::resolve::ResolverInterface::CallbackPtr callback,
         isc::dns::MessagePtr answer_message) :
             callback_(callback),
             answer_message_(answer_message) {}
     void callback(bool result);
 
 private:
-    const isc::nsas::ResolverInterface::CallbackPtr callback_;
+    const isc::resolve::ResolverInterface::CallbackPtr callback_;
     isc::dns::MessagePtr answer_message_;
 };
 

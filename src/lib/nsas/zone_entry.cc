@@ -32,7 +32,8 @@ using namespace dns;
 
 namespace nsas {
 
-ZoneEntry::ZoneEntry(boost::shared_ptr<ResolverInterface> resolver,
+ZoneEntry::ZoneEntry(
+    boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
     const std::string& name, const isc::dns::RRClass& class_code,
     boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table,
     boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru) :
@@ -73,7 +74,8 @@ newNs(const std::string* name, const RRClass* class_code) {
  * code. It manipulates directly ZoneEntry's data members, locks it and like
  * that. Mostly eliminates C++ bad design of missing lambda functions.
  */
-class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
+class ZoneEntry::ResolverCallback :
+        public isc::resolve::ResolverInterface::Callback {
     public:
         /// \short Constructor. Pass "this" zone entry
         ResolverCallback(boost::shared_ptr<ZoneEntry> entry) :

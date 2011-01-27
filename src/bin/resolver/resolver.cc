@@ -127,7 +127,7 @@ public:
     }
 
     void resolve(const isc::dns::QuestionPtr& question,
-                 const isc::nsas::ResolverInterface::CallbackPtr& callback);
+        const isc::resolve::ResolverInterface::CallbackPtr& callback);
 
     void processNormalQuery(const Question& question,
                             MessagePtr answer_message,
@@ -345,7 +345,7 @@ Resolver::getConfigSession() const {
 }
 
 /* tmp for in-dev testing */
-class MyCallback : public nsas::ResolverInterface::Callback {
+class MyCallback : public resolve::ResolverInterface::Callback {
 public:
     virtual void success(
         const boost::shared_ptr<isc::dns::AbstractRRset>&
@@ -366,7 +366,7 @@ public:
 
 void
 Resolver::resolve(const isc::dns::QuestionPtr& question,
-                  const isc::nsas::ResolverInterface::CallbackPtr& callback)
+    const isc::resolve::ResolverInterface::CallbackPtr& callback)
 {
     std::cout << "[XX] asked to resolve: " << *question << std::endl;
     impl_->resolve(question, callback);
@@ -390,7 +390,6 @@ Resolver::processMessage(const IOMessage& io_message,
     resolve(q, callback);
     //resolve(q, callback);
     std::cout << "[XX] up to here" << std::endl;
-
 
     dlog("Got a DNS message");
     InputBuffer request_buffer(io_message.getData(), io_message.getDataSize());
@@ -470,7 +469,7 @@ Resolver::processMessage(const IOMessage& io_message,
 
 void
 ResolverImpl::resolve(const QuestionPtr& question,
-                      const isc::nsas::ResolverInterface::CallbackPtr& callback)
+    const isc::resolve::ResolverInterface::CallbackPtr& callback)
 {
     rec_query_->sendQuery(question, callback);
 }

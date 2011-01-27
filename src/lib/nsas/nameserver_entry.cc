@@ -31,11 +31,11 @@
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
 #include <dns/question.h>
+#include <resolve/resolver_interface.h>
 
 #include "address_entry.h"
 #include "nameserver_address.h"
 #include "nameserver_entry.h"
-#include "resolver_interface.h"
 
 using namespace asiolink;
 using namespace isc::nsas;
@@ -199,7 +199,8 @@ NameserverEntry::setAddressUnreachable(const IOAddress& address) {
  * fed back trough this. It holds a shared pointer to the entry so it is not
  * destroyed too soon.
  */
-class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
+class NameserverEntry::ResolverCallback :
+        public isc::resolve::ResolverInterface::Callback {
     public:
         ResolverCallback(boost::shared_ptr<NameserverEntry> entry,
             AddressFamily family, const RRType& type) :
@@ -363,7 +364,8 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
 };
 
 void
-NameserverEntry::askIP(boost::shared_ptr<ResolverInterface> resolver,
+NameserverEntry::askIP(
+    boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
     const RRType& type, AddressFamily family)
 {
     QuestionPtr question(new Question(Name(getName()), RRClass(getClass()),
@@ -374,7 +376,8 @@ NameserverEntry::askIP(boost::shared_ptr<ResolverInterface> resolver,
 }
 
 void
-NameserverEntry::askIP(boost::shared_ptr<ResolverInterface> resolver,
+NameserverEntry::askIP(
+    boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
     boost::shared_ptr<Callback> callback, AddressFamily family)
 {
     Lock lock(mutex_);
