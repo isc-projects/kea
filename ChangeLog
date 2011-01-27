@@ -1,3 +1,11 @@
+  160.  [func]		jelte
+  	Updated the resolver to take 3 different timeout values;
+	timeout_query for outstanding queries we sent while resolving
+	timeout_client for sending an answer back to the client
+	timeout_lookup for stopping the resolving
+	(currently 2 and 3 have the same final effect)
+	(Trac 489, git 578ea7f4ba94dc0d8a3d39231dad2be118e125a2)
+
   159.	[func]		smann
 	The resolver now has a configurable set of root servers to start
 	resolving at (called root_addresses). By default these are not
