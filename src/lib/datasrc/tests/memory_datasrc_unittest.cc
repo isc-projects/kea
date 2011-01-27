@@ -1,4 +1,5 @@
 // Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  CZ NIC
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -318,6 +319,43 @@ TEST_F(MemoryZoneTest, findCNAMEUnderZoneCut) {
              Zone::FIND_GLUE_OK);
 }
 
+// Two DNAMEs at single domain are disallowed by RFC 2672, section 3)
+// Having a CNAME there is disallowed too, but it is tested by
+// addOtherThenCNAME and addCNAMEThenOther.
+TEST_F(MemoryZoneTest, addMultipleDNAMEs) {
+
+}
+
+/*
+ * These two tests ensure that we can't have DNAME and NS at the same
+ * node with the exception of the apex of zone (forbidden by RFC 2672)
+ */
+TEST_F(MemoryZoneTest, addDNAMEThenNS) {
+
+}
+
+TEST_F(MemoryZoneTest, addNSThenDNAME) {
+
+}
+
+// It is allowed to have NS and DNAME at apex
+TEST_F(MemoryZoneTest, DNAMEandNSAtApex) {
+}
+
+// TODO: Test (and implement) adding data under DNAME. That is forbidden by
+// 2672 as well.
+
+// Search under a DNAME record. It should return the DNAME
+TEST_F(MemoryZoneTest, findBelowDNAME) {
+
+}
+
+// Search at the domain with DNAME. It should act as DNAME isn't there, DNAME
+// influences only the data below (see RFC 2672, section 3)
+TEST_F(MemoryZoneTest, findAtDNAME) {
+
+}
+
 // Test adding child zones and zone cut handling
 TEST_F(MemoryZoneTest, delegationNS) {
     // add in-zone data
@@ -433,18 +471,6 @@ TEST_F(MemoryZoneTest, glue) {
     findTest(Name("www.grand.child.example.org"), RRType::TXT(),
              Zone::DELEGATION, true, rr_child_ns_, NULL, NULL,
              Zone::FIND_GLUE_OK);
-}
-
-// Test adding DNAMEs and resulting delegation handling
-// Listing ideas only for now
-TEST_F(MemoryZoneTest, delegationDNAME) {
-    // apex DNAME: allowed by spec.  No DNAME delegation at the apex;
-    // descendants are subject to delegation.
-
-    // Other cases of NS and DNAME mixture are prohibited.
-    // BIND 9 doesn't reject such cases at load time, however.
-
-    // DNAME and ordinary types (allowed by spec)
 }
 
 /**
