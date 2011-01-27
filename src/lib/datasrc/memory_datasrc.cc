@@ -286,8 +286,8 @@ struct MemoryZone::MemoryZoneImpl {
         Domain::const_iterator found;
 
         // If the node callback is enabled, this may be a zone cut.  If it
-        // has a NS RR, we should return a delegation.
-        if (node->isCallbackEnabled()) {
+        // has a NS RR, we should return a delegation, but not in the apex.
+        if (node->isCallbackEnabled() && node->getName() != origin_) {
             found = node->getData()->find(RRType::NS());
             if (found != node->getData()->end()) {
                 return (FindResult(DELEGATION, found->second));
