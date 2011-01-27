@@ -805,7 +805,7 @@ TEST_F(ASIOLinkTest, forwardClientTimeout) {
     RecursiveQuery query(*dns_service_,
                          singleAddress(TEST_IPV4_ADDR, port),
                          singleAddress(TEST_IPV4_ADDR, port),
-                         5, 12, 1000, 3);
+                         50, 120, 1000, 3);
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     query.sendQuery(question, answer, buffer, &server);
@@ -851,7 +851,7 @@ TEST_F(ASIOLinkTest, forwardLookupTimeout) {
     RecursiveQuery query(*dns_service_,
                          singleAddress(TEST_IPV4_ADDR, port),
                          singleAddress(TEST_IPV4_ADDR, port),
-                         5, 4000, 12, 5);
+                         50, 4000, 120, 5);
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     query.sendQuery(question, answer, buffer, &server);
