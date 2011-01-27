@@ -371,43 +371,6 @@ private:
     DNSServer* self_;
 };
 
-// We define two types of callbackholders for processing recursive
-// queries; one calls back the original DNSServer to resume()
-// the other uses direct callbacks (for instance when we need to
-// resolve something ourselves)
-// Caller warning: only callback once! The objects will delete
-// themselves on callback (after they have done they callback)
-class AbstractResolverCallback {
-public:
-    ~AbstractResolverCallback() {};
-    virtual void callback(bool result) = 0;
-};
-
-class ResolverCallbackServer : public AbstractResolverCallback {
-public:
-    ResolverCallbackServer(DNSServer* server) :
-        server_(server->clone()) {}
-    void callback(bool result);
-
-private:
-    DNSServer* server_;
-};
-
-class ResolverCallbackDirect : public AbstractResolverCallback {
-public:
-    ResolverCallbackDirect(
-        const isc::nsas::ResolverInterface::CallbackPtr callback,
-        isc::dns::MessagePtr answer_message) :
-            callback_(callback),
-            answer_message_(answer_message) {}
-    void callback(bool result);
-
-private:
-    const isc::nsas::ResolverInterface::CallbackPtr callback_;
-    isc::dns::MessagePtr answer_message_;
-};
-        
-
 /// \brief The \c DNSLookup class is an abstract base class for a DNS
 /// Lookup provider function.
 ///
