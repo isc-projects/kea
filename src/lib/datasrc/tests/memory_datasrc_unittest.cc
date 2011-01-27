@@ -357,6 +357,11 @@ TEST_F(MemoryZoneTest, addNSThenDNAME) {
 TEST_F(MemoryZoneTest, DNAMEAndNSAtApex) {
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_dname_apex_)));
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_ns_)));
+
+    // The NS should be possible to be found, below should be DNAME, not
+    // delegation
+    findTest(origin_, RRType::NS(), Zone::SUCCESS, true, rr_ns_);
+    findTest(child_ns_name_, RRType::A(), Zone::DNAME, true, rr_dname_apex_);
 }
 
 TEST_F(MemoryZoneTest, NSAndDNAMEAtApex) {
@@ -384,6 +389,7 @@ TEST_F(MemoryZoneTest, findAtDNAME) {
 
     findTest(dname_name_, RRType::A(), Zone::SUCCESS, true, rr_dname_a_);
     findTest(dname_name_, RRType::DNAME(), Zone::SUCCESS, true, rr_dname_);
+    findTest(dname_name_, RRType::TXT(), Zone::NXRRSET, true);
 }
 
 // Test adding child zones and zone cut handling
