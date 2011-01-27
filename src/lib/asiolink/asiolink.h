@@ -40,7 +40,7 @@
 #include <asiolink/iomessage.h>
 #include <asiolink/iosocket.h>
 
-#include <nsas/resolver_interface.h>
+#include <resolve/resolver_interface.h>
 
 namespace asio {
 // forward declaration for IOService::get_io_service() below
@@ -558,7 +558,7 @@ public:
     //@}
 
     void sendQuery(const isc::dns::QuestionPtr& question,
-                   const isc::nsas::ResolverInterface::CallbackPtr callback);
+                   const isc::resolve::ResolverInterface::CallbackPtr callback);
 
 
     /// \brief Initiates an upstream query in the \c RecursiveQuery object.

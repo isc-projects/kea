@@ -561,7 +561,7 @@ public:
 
 void
 RecursiveQuery::sendQuery(const isc::dns::QuestionPtr& question,
-    const isc::nsas::ResolverInterface::CallbackPtr callback)
+    const isc::resolve::ResolverInterface::CallbackPtr callback)
 {
     asio::io_service& io = dns_service_.get_io_service();
 

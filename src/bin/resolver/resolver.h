@@ -24,7 +24,7 @@
 
 #include <asiolink/asiolink.h>
 
-#include <nsas/resolver_interface.h>
+#include <resolve/resolver_interface.h>
 
 class ResolverImpl;
 
@@ -37,7 +37,7 @@ class ResolverImpl;
  * answer. It doesn't really know about chasing referrals and similar, it
  * simply plugs the parts that know into the network handling code.
  */
-class Resolver : public isc::nsas::ResolverInterface {
+class Resolver : public isc::resolve::ResolverInterface {
     ///
     /// \name Constructors, Assignment Operator and Destructor.
     ///
@@ -53,8 +53,9 @@ public:
     ~Resolver();
     //@}
 
-    virtual void resolve(const isc::dns::QuestionPtr& question,
-                         const isc::nsas::ResolverInterface::CallbackPtr& callback);
+    virtual void resolve(
+        const isc::dns::QuestionPtr& question,
+        const isc::resolve::ResolverInterface::CallbackPtr& callback);
 
     /// \brief Process an incoming DNS message, then signal 'server' to resume 
     ///

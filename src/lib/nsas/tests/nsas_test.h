@@ -31,8 +31,8 @@
 #include <dns/rrttl.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdataclass.h>
+#include <resolve/resolver_interface.h>
 #include "../nsas_entry.h"
-#include "../resolver_interface.h"
 
 using namespace isc::dns::rdata;
 using namespace isc::dns;
@@ -217,7 +217,7 @@ using namespace std;
  * This pretends to be a resolver. It stores the queries and
  * they can be answered.
  */
-class TestResolver : public isc::nsas::ResolverInterface {
+class TestResolver : public isc::resolve::ResolverInterface {
     private:
         bool checkIndex(size_t index) {
             return (requests.size() > index);
