@@ -164,13 +164,17 @@ TEST_F(RBTreeTest, findName) {
     EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("x"), &crbtnode));
     EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("m.n"), &crbtnode));
 
-    //if we expose empty node, we can get the empty node created during insert
-    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree_expose_empty_node.find(Name("d.e.f"), &crbtnode));
-    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree_expose_empty_node.find(Name("w.y.d.e.f"), &crbtnode));
+    // if we expose empty node, we can get the empty node created during insert
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              rbtree_expose_empty_node.find(Name("d.e.f"), &crbtnode));
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              rbtree_expose_empty_node.find(Name("w.y.d.e.f"), &crbtnode));
 
     // partial match
     EXPECT_EQ(RBTree<int>::PARTIALMATCH, rbtree.find(Name("m.b"), &crbtnode));
     EXPECT_EQ(Name("b"), crbtnode->getName());
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              rbtree_expose_empty_node.find(Name("m.d.e.f"), &crbtnode));
 
     // find rbtnode
     EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("q.w.y.d.e.f"), &rbtnode));
@@ -273,7 +277,7 @@ testNodeAdjacentHelper(const RBTree<int>& tree, const Name& currentDomain,
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
               tree.find<void*>(currentDomain, &node, node_path, NULL, NULL));
     node = tree.nextNode(node, node_path);
-    EXPECT_EQ(nextDomain, nodeAbsoluteName(node,  node_path));
+    EXPECT_EQ(nextDomain, nodeAbsoluteName(node, node_path));
 }
 
 TEST_F(RBTreeTest, nextNode) {
@@ -281,8 +285,7 @@ TEST_F(RBTreeTest, nextNode) {
         "a", "b", "c", "d.e.f", "x.d.e.f", "w.y.d.e.f", "o.w.y.d.e.f",
         "p.w.y.d.e.f", "q.w.y.d.e.f", "z.d.e.f", "j.z.d.e.f", "g.h", "i.g.h"};
     const int name_count = sizeof(names) / sizeof(names[0]);
-    int i = 0;
-    for (; i < name_count - 1; ++i) {
+    for (int i = 0; i < name_count - 1; ++i) {
         testNodeAdjacentHelper(rbtree_expose_empty_node, Name(names[i]),
                                Name(names[i + 1]));
     }
