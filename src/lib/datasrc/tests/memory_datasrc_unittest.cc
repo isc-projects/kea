@@ -148,6 +148,7 @@ public:
         origin_("example.org"),
         ns_name_("ns.example.org"),
         cname_name_("cname.example.org"),
+        dname_name_("dname.example.org"),
         child_ns_name_("child.example.org"),
         child_glue_name_("ns.child.example.org"),
         grandchild_ns_name_("grand.child.example.org"),
@@ -161,6 +162,12 @@ public:
         rr_a_(new RRset(origin_, class_, RRType::A(), RRTTL(300))),
         rr_cname_(new RRset(cname_name_, class_, RRType::CNAME(), RRTTL(300))),
         rr_cname_a_(new RRset(cname_name_, class_, RRType::A(), RRTTL(300))),
+        rr_dname_(new RRset(dname_name_, class_, RRType::DNAME(), RRTTL(300))),
+        rr_dname_a_(new RRset(dname_name_, class_, RRType::A(),
+            RRTTL(300))),
+        rr_dname_ns_(new RRset(dname_name_, class_, RRType::NS(), RRTTL(300))),
+        rr_dname_apex_(new RRset(origin_, class_, RRType::DNAME(),
+            RRTTL(300))),
         rr_child_ns_(new RRset(child_ns_name_, class_, RRType::NS(),
                                RRTTL(300))),
         rr_child_glue_(new RRset(child_glue_name_, class_, RRType::A(),
@@ -173,7 +180,7 @@ public:
     }
     // Some data to test with
     const RRClass class_;
-    const Name origin_, ns_name_, cname_name_, child_ns_name_,
+    const Name origin_, ns_name_, cname_name_, dname_name_, child_ns_name_,
         child_glue_name_, grandchild_ns_name_, grandchild_glue_name_;
     // The zone to torture by tests
     MemoryZone zone_;
@@ -197,6 +204,10 @@ public:
         rr_a_;
     RRsetPtr rr_cname_;         // CNAME in example.org (RDATA will be added)
     ConstRRsetPtr rr_cname_a_; // for mixed CNAME + A case
+    RRsetPtr rr_dname_;         // DNAME in example.org (RDATA will be added)
+    ConstRRsetPtr rr_dname_a_; // for mixed DNAME + A case
+    ConstRRsetPtr rr_dname_ns_; // for mixed DNAME + NS case
+    ConstRRsetPtr rr_dname_apex_; // for mixed DNAME + NS case in the apex
     ConstRRsetPtr rr_child_ns_; // NS of a child domain (for delegation)
     ConstRRsetPtr rr_child_glue_; // glue RR of the child domain
     ConstRRsetPtr rr_grandchild_ns_; // NS below a zone cut (unusual)
@@ -323,7 +334,9 @@ TEST_F(MemoryZoneTest, findCNAMEUnderZoneCut) {
 // Having a CNAME there is disallowed too, but it is tested by
 // addOtherThenCNAME and addCNAMEThenOther.
 TEST_F(MemoryZoneTest, addMultipleDNAMEs) {
-
+    rr_dname_->addRdata(generic::DNAME("dname1.example.org."));
+    rr_dname_->addRdata(generic::DNAME("dname2.example.org."));
+    EXPECT_THROW(zone_.add(rr_dname_), MemoryZone::AddError);
 }
 
 /*
@@ -331,15 +344,24 @@ TEST_F(MemoryZoneTest, addMultipleDNAMEs) {
  * node with the exception of the apex of zone (forbidden by RFC 2672)
  */
 TEST_F(MemoryZoneTest, addDNAMEThenNS) {
-
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_dname_)));
+    EXPECT_THROW(zone_.add(rr_dname_ns_), MemoryZone::AddError);
 }
 
 TEST_F(MemoryZoneTest, addNSThenDNAME) {
-
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_dname_ns_)));
+    EXPECT_THROW(zone_.add(rr_dname_), MemoryZone::AddError);
 }
 
 // It is allowed to have NS and DNAME at apex
-TEST_F(MemoryZoneTest, DNAMEandNSAtApex) {
+TEST_F(MemoryZoneTest, DNAMEAndNSAtApex) {
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_dname_apex_)));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_ns_)));
+}
+
+TEST_F(MemoryZoneTest, NSAndDNAMEAtApex) {
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_ns_)));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_dname_apex_)));
 }
 
 // TODO: Test (and implement) adding data under DNAME. That is forbidden by
@@ -347,13 +369,21 @@ TEST_F(MemoryZoneTest, DNAMEandNSAtApex) {
 
 // Search under a DNAME record. It should return the DNAME
 TEST_F(MemoryZoneTest, findBelowDNAME) {
-
+    rr_dname_->addRdata(generic::DNAME("target.example.org."));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_dname_)));
+    findTest(Name("below.dname.example.org"), RRType::A(), Zone::DNAME, true,
+        rr_dname_);
 }
 
 // Search at the domain with DNAME. It should act as DNAME isn't there, DNAME
 // influences only the data below (see RFC 2672, section 3)
 TEST_F(MemoryZoneTest, findAtDNAME) {
+    rr_dname_->addRdata(generic::DNAME("target.example.org."));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_dname_)));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_dname_a_)));
 
+    findTest(dname_name_, RRType::A(), Zone::SUCCESS, true, rr_dname_a_);
+    findTest(dname_name_, RRType::DNAME(), Zone::SUCCESS, true, rr_dname_);
 }
 
 // Test adding child zones and zone cut handling
