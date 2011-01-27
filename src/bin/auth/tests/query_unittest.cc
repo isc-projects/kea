@@ -420,9 +420,31 @@ TEST_F(QueryTest, CNAME) {
         cname_txt, zone_ns_txt, ns_addrs_txt);
 }
 
+TEST_F(QueryTest, explicitCNAME) {
+    // same owner name as the CNAME test but explicitly query for CNAME RR.
+    // expect the same response as we don't provide a full chain yet.
+    Query(memory_datasrc, Name("cname.example.com"), RRType::CNAME(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_txt, zone_ns_txt, ns_addrs_txt);
+}
+
 TEST_F(QueryTest, CNAME_NX_RRSET) {
     // Leads to www.example.com, it doesn't have TXT
+    // note: with chaining, what should be expected is not trivial:
+    // BIND 9 returns the CNAME in answer and SOA in authority, no additional.
+    // NSD returns the CNAME, NS in authority, A/AAAA for NS in additional.
     Query(memory_datasrc, Name("cname.example.com"), RRType::TXT(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, explicitCNAME_NX_RRSET) {
+    // same owner name as the NXRRSET test but explicitly query for CNAME RR.
+    Query(memory_datasrc, Name("cname.example.com"), RRType::CNAME(),
         response).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
@@ -431,7 +453,21 @@ TEST_F(QueryTest, CNAME_NX_RRSET) {
 
 TEST_F(QueryTest, CNAME_NX_DOMAIN) {
     // Leads to nxdomain.example.com
+    // note: with chaining, what should be expected is not trivial:
+    // BIND 9 returns the CNAME in answer and SOA in authority, no additional,
+    // RCODE being NXDOMAIN.
+    // NSD returns the CNAME, NS in authority, A/AAAA for NS in additional,
+    // RCODE being NOERROR.
     Query(memory_datasrc, Name("cnamenxdom.example.com"), RRType::A(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_nxdom_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, explicitCNAME_NX_DOMAIN) {
+    // same owner name as the NXDOMAIN test but explicitly query for CNAME RR.
+    Query(memory_datasrc, Name("cnamenxdom.example.com"), RRType::CNAME(),
         response).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
@@ -448,6 +484,15 @@ TEST_F(QueryTest, CNAME_OUT) {
      * see what it does (depends on what we want to do)
      */
     Query(memory_datasrc, Name("cnameout.example.com"), RRType::A(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_out_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, explicitCNAME_OUT) {
+    // same owner name as the OUT test but explicitly query for CNAME RR.
+    Query(memory_datasrc, Name("cnameout.example.com"), RRType::CNAME(),
         response).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
