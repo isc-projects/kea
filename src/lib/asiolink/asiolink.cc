@@ -288,6 +288,7 @@ RecursiveQuery::RecursiveQuery(DNSService& dns_service,
     int query_timeout, int client_timeout, int lookup_timeout,
     unsigned retries) :
     dns_service_(dns_service), upstream_(new AddressVector(upstream)),
+    upstream_root_(new AddressVector(upstream_root)),
     query_timeout_(query_timeout), client_timeout_(client_timeout),
     lookup_timeout_(lookup_timeout), retries_(retries)
 {}
@@ -390,7 +391,6 @@ private:
         const int zs = zone_servers_.size();
         buffer_->clear();
         if (uc > 0) {
-            ++queries_out_;
             int serverIndex = rand() % uc;
             dlog("Sending upstream query (" + question_.toText() +
                 ") to " + upstream_->at(serverIndex).first);
@@ -398,6 +398,7 @@ private:
                 upstream_->at(serverIndex).first,
                 upstream_->at(serverIndex).second, buffer_, this,
                 query_timeout_);
+            ++queries_out_;
             io_.post(query);
         } else if (zs > 0) {
             int serverIndex = rand() % zs;
@@ -407,6 +408,7 @@ private:
                 zone_servers_.at(serverIndex).first,
                 zone_servers_.at(serverIndex).second, buffer_, this,
                 query_timeout_);
+            ++queries_out_;
             io_.post(query);
         } else {
             dlog("Error, no upstream servers to send to.");
@@ -565,9 +567,9 @@ public:
     }
 
     // This function is used as callback from DNSQuery.
-    // This function is used as callback from DNSQuery.
     virtual void operator()(UDPQuery::Result result) {
         // XXX is this the place for TCP retry?
+        --queries_out_;
         if (!done_ && result != UDPQuery::TIME_OUT) {
             // we got an answer
             Message incoming(Message::PARSE);

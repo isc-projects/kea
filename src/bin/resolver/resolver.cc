@@ -117,7 +117,6 @@ public:
     void setRootAddresses(const vector<addr_t>& upstream_root,
                           DNSService *dnss)
     {
-        queryShutdown();
         upstream_root_ = upstream_root;
         if (dnss) {
             if (!upstream_root_.empty()) {
@@ -129,7 +128,6 @@ public:
             } else {
                 dlog("No root addresses");
             }
-            querySetup(*dnss);
         }
     }
 
@@ -551,6 +549,7 @@ Resolver::updateConfig(ConstElementPtr config) {
         }
         if (rootAddressesE) {
             setRootAddresses(rootAddresses);
+            need_query_restart = true;
         }
         if (set_timeouts) {
             setTimeouts(qtimeout, ctimeout, ltimeout, retries);
