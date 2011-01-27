@@ -417,6 +417,11 @@ private:
     // returns true if we are done
     // returns false if we are not done
     bool handleRecursiveAnswer(const Message& incoming) {
+        //temporary code to grab TC enabled responses
+        if(incoming.getHeaderFlag(Message::HEADERFLAG_TC)) {
+            //TC (truncated) bit is set, which means we need to use TCP
+            //  need to check if TCP conn already open (RFC 5966)
+        }
         if (incoming.getRRCount(Message::SECTION_ANSWER) > 0) {
             dlog("Got final result, copying answer.");
             copyAnswerMessage(incoming, answer_message_);
