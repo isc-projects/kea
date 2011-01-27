@@ -70,6 +70,11 @@ const char* const mx_txt =
 const char* const www_a_txt = "www.example.com. 3600 IN A 192.0.2.80\n";
 const char* const cname_txt =
     "cname.example.com. 3600 IN CNAME www.example.com.\n";
+const char* const cname_nxdom_txt =
+    "cnamenxdom.example.com. 3600 IN CNAME nxdomain.example.com.\n";
+// CNAME Leading out of zone
+const char* const cname_out_txt =
+    "cnameout.example.com. 3600 IN CNAME www.example.org.\n";
 // The rest of data won't be referenced from the test cases.
 const char* const other_zone_rrs =
     "cnamemailer.example.com. 3600 IN CNAME www.example.com.\n"
@@ -97,7 +102,7 @@ public:
         stringstream zone_stream;
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
             delegation_txt << mx_txt << www_a_txt << cname_txt <<
-            other_zone_rrs;
+            cname_nxdom_txt << cname_out_txt << other_zone_rrs;
 
         masterLoad(zone_stream, origin_, rrclass_,
                    boost::bind(&MockZone::loadRRset, this, _1));
@@ -399,7 +404,10 @@ TEST_F(QueryTest, MXAlias) {
 }
 
 /*
- * Test encountering a cname.
+ * Tests encountering a cname.
+ *
+ * There are tests leading to successful answers, NXRRSET, NXDOMAIN and
+ * out of the zone.
  *
  * TODO: We currently don't do chaining, so only the CNAME itself should be
  * returned.
@@ -410,6 +418,40 @@ TEST_F(QueryTest, CNAME) {
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
         cname_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, CNAME_NX_RRSET) {
+    // Leads to www.example.com, it doesn't have TXT
+    Query(memory_datasrc, Name("cname.example.com"), RRType::TXT(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, CNAME_NX_DOMAIN) {
+    // Leads to nxdomain.example.com
+    Query(memory_datasrc, Name("cnamenxdom.example.com"), RRType::A(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_nxdom_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, CNAME_OUT) {
+    /*
+     * This leads out of zone. This should have only the CNAME even
+     * when we do chaining.
+     *
+     * TODO: We should be able to have two zones in the mock data source.
+     * Then the same test should be done with .org included there and
+     * see what it does (depends on what we want to do)
+     */
+    Query(memory_datasrc, Name("cnameout.example.com"), RRType::A(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_out_txt, zone_ns_txt, ns_addrs_txt);
 }
 
 }
