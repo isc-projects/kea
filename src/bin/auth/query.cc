@@ -122,7 +122,7 @@ Query::getAuthAdditional(const Zone& zone) const {
 void
 Query::process() const {
     bool keep_doing = true;
-    const bool qtype_is_any = (qtype_ == RRType::ANY());
+    bool qtype_is_any = (qtype_ == RRType::ANY());
 
     response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
     const MemoryDataSrc::FindResult result =
@@ -183,6 +183,10 @@ Query::process() const {
                     rrset->getName().getLabelCount()).concatenate(
                     dname.getDname())));
                 rrset = cname;
+                // If this was ANY, act as it wasn't, because we put the CNAME
+                // into rrset, not to target and there's nothing else.
+                // TODO: This might need to be changed when CNAME gets chaining.
+                qtype_is_any = false;
                 // No break; here, fall trough.
             }
             case Zone::CNAME:
