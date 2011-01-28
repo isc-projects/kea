@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef _ISC_RESOLVE_H
-#define _ISC_RESOLVE_H 1
+#ifndef _ISC_RESOLVER_CALLBACK_H
+#define _ISC_RESOLVER_CALLBACK_H 1
 
 #include <asiolink/asiolink.h>
 
@@ -59,4 +59,4 @@ private:
 } //namespace resolve
 } //namespace isc
 
-#endif // ISC_RESOLVE_H_
+#endif // ISC_RESOLVER_CALLBACK_H_
