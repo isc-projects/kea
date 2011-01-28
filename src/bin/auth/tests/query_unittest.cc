@@ -79,6 +79,9 @@ const char* const dname_txt =
     "dname.example.com. 3600 IN DNAME dnametarget.example.com.\n";
 const char* const dname_a_txt =
     "dname.example.com. 3600 IN A 192.0.2.5\n";
+// This is not inside the zone, this is created at runtime
+const char* const synthetized_cname_txt =
+    "www.dname.example.com. 3600 IN CNAME www.dnametarget.example.com.\n";
 // The rest of data won't be referenced from the test cases.
 const char* const other_zone_rrs =
     "cnamemailer.example.com. 3600 IN CNAME www.example.com.\n"
@@ -556,9 +559,24 @@ TEST_F(QueryTest, DNAME) {
         response).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 3, 3,
-        (string(dname_txt) +
-        "www.dname.example.com. 3600 IN CNAME www.dnametarget.example.com.\n"
-        ).c_str(), zone_ns_txt, ns_addrs_txt);
+        (string(dname_txt) + synthetized_cname_txt).c_str(),
+        zone_ns_txt, ns_addrs_txt);
+}
+
+/*
+ * Ask an ANY query below a DNAME. Should return the DNAME and synthetized
+ * CNAME.
+ *
+ * This is added because the original version didn't include the CNAME at
+ * all.
+ */
+TEST_F(QueryTest, DNAME_ANY) {
+    Query(memory_datasrc, Name("www.dname.example.com"), RRType::ANY(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 3, 3,
+        (string(dname_txt) + synthetized_cname_txt).c_str(),
+        zone_ns_txt, ns_addrs_txt);
 }
 
 // Test when we ask for DNAME explicitly, it does no synthetizing.
