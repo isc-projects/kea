@@ -550,7 +550,10 @@ public:
                    upstream, 
                    const std::vector<std::pair<std::string, uint16_t> >&
                    upstream_root, 
-                   int timeout = -1, unsigned retries = 0);
+                   int query_timeout = 2000,
+                   int client_timeout = 4000,
+                   int lookup_timeout = 30000,
+                   unsigned retries = 3);
     //@}
 
     /// \brief Initiates an upstream query in the \c RecursiveQuery object.
@@ -573,7 +576,9 @@ private:
         upstream_;
     boost::shared_ptr<std::vector<std::pair<std::string, uint16_t> > >
         upstream_root_;
-    int timeout_;
+    int query_timeout_;
+    int client_timeout_;
+    int lookup_timeout_;
     unsigned retries_;
 };
 

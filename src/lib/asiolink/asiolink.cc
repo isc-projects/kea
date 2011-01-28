@@ -285,10 +285,12 @@ typedef std::vector<std::pair<std::string, uint16_t> > AddressVector;
 RecursiveQuery::RecursiveQuery(DNSService& dns_service,
     const AddressVector& upstream,
     const AddressVector& upstream_root,
-    int timeout, unsigned retries) :
+    int query_timeout, int client_timeout, int lookup_timeout,
+    unsigned retries) :
     dns_service_(dns_service), upstream_(new AddressVector(upstream)),
     upstream_root_(new AddressVector(upstream_root)),
-    timeout_(timeout), retries_(retries)
+    query_timeout_(query_timeout), client_timeout_(client_timeout),
+    lookup_timeout_(lookup_timeout), retries_(retries)
 {}
 
 namespace {
@@ -361,14 +363,10 @@ private:
      *     computation of average RTT, increase with each retry, etc.
      */
     // Timeout information
-    int timeout_;
+    int query_timeout_;
     unsigned retries_;
 
     // normal query state
-
-    // if we change this to running and add a sent, we can do
-    // decoupled timeouts i think
-    bool done;
 
     // Not using NSAS at this moment, so we keep a list
     // of 'current' zone servers
@@ -378,6 +376,14 @@ private:
     void setQuestion(const Question& new_question) {
         question_ = new_question;
     }
+
+    deadline_timer client_timer;
+    deadline_timer lookup_timer;
+
+    size_t queries_out_;
+
+    // If we timed out ourselves (lookup timeout), stop issuing queries
+    bool done_;
 
     // (re)send the query to the server.
     void send() {
@@ -391,7 +397,8 @@ private:
             UDPQuery query(io_, question_,
                 upstream_->at(serverIndex).first,
                 upstream_->at(serverIndex).second, buffer_, this,
-                timeout_);
+                query_timeout_);
+            ++queries_out_;
             io_.post(query);
         } else if (zs > 0) {
             int serverIndex = rand() % zs;
@@ -400,7 +407,8 @@ private:
             UDPQuery query(io_, question_,
                 zone_servers_.at(serverIndex).first,
                 zone_servers_.at(serverIndex).second, buffer_, this,
-                timeout_);
+                query_timeout_);
+            ++queries_out_;
             io_.post(query);
         } else {
             dlog("Error, no upstream servers to send to.");
@@ -475,7 +483,8 @@ public:
     RunningQuery(asio::io_service& io, const Question &question,
         MessagePtr answer_message, shared_ptr<AddressVector> upstream,
         shared_ptr<AddressVector> upstream_root,
-        OutputBufferPtr buffer, DNSServer* server, int timeout,
+        OutputBufferPtr buffer, DNSServer* server,
+        int query_timeout, int client_timeout, int lookup_timeout,
         unsigned retries) :
         io_(io),
         question_(question),
@@ -484,13 +493,27 @@ public:
         upstream_root_(upstream_root),
         buffer_(buffer),
         server_(server->clone()),
-        timeout_(timeout),
+        query_timeout_(query_timeout),
         retries_(retries),
-        zone_servers_()
+        client_timer(io),
+        lookup_timer(io),
+        queries_out_(0),
+        done_(false)
     {
-        dlog("Started a new RunningQuery");
-        done = false;
-
+        // Setup the timer to stop trying (lookup_timeout)
+        if (lookup_timeout >= 0) {
+            lookup_timer.expires_from_now(
+                boost::posix_time::milliseconds(lookup_timeout));
+            lookup_timer.async_wait(boost::bind(&RunningQuery::stop, this, false));
+        }
+        
+        // Setup the timer to send an answer (client_timeout)
+        if (client_timeout >= 0) {
+            client_timer.expires_from_now(
+                boost::posix_time::milliseconds(client_timeout));
+            client_timer.async_wait(boost::bind(&RunningQuery::clientTimeout, this));
+        }
+        
         // should use NSAS for root servers
         // Adding root servers if not a forwarder
         if (upstream_->empty()) {
@@ -511,14 +534,43 @@ public:
               }
             }
         }
+
         send();
     }
 
+    virtual void clientTimeout() {
+        // right now, just stop (should make SERVFAIL and send that
+        // back, but not stop)
+        stop(false);
+    }
+
+    virtual void stop(bool resume) {
+        // if we cancel our timers, we will still get an event for
+        // that, so we cannot delete ourselves just yet (those events
+        // would be bound to a deleted object)
+        // cancel them one by one, both cancels should get us back
+        // here again.
+        // same goes if we have an outstanding query (can't delete
+        // until that one comes back to us)
+        done_ = true;
+        server_->resume(resume);
+        if (lookup_timer.cancel() != 0) {
+            return;
+        }
+        if (client_timer.cancel() != 0) {
+            return;
+        }
+        if (queries_out_ > 0) {
+            return;
+        }
+        delete this;
+    }
 
     // This function is used as callback from DNSQuery.
     virtual void operator()(UDPQuery::Result result) {
         // XXX is this the place for TCP retry?
-        if (result != UDPQuery::TIME_OUT) {
+        --queries_out_;
+        if (!done_ && result != UDPQuery::TIME_OUT) {
             // we got an answer
             Message incoming(Message::PARSE);
             InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
@@ -526,24 +578,22 @@ public:
 
             if (upstream_->size() == 0 &&
                 incoming.getRcode() == Rcode::NOERROR()) {
-                done = handleRecursiveAnswer(incoming);
+                done_ = handleRecursiveAnswer(incoming);
             } else {
                 copyAnswerMessage(incoming, answer_message_);
-                done = true;
+                done_ = true;
             }
             
-            if (done) {
-                server_->resume(result == UDPQuery::SUCCESS);
-                delete this;
+            if (done_) {
+                stop(result == UDPQuery::SUCCESS);
             }
-        } else if (retries_--) {
+        } else if (!done_ && retries_--) {
             // We timed out, but we have some retries, so send again
             dlog("Timeout, resending query");
             send();
         } else {
-            // out of retries, give up for now
-            server_->resume(false);
-            delete this;
+            // We are done
+            stop(false);
         }
     }
 };
@@ -563,7 +613,8 @@ RecursiveQuery::sendQuery(const Question& question,
     asio::io_service& io = dns_service_.get_io_service();
     // It will delete itself when it is done
     new RunningQuery(io, question, answer_message, upstream_, upstream_root_,
-                         buffer, server, timeout_, retries_);
+                         buffer, server, query_timeout_, client_timeout_,
+                         lookup_timeout_, retries_);
 }
 
 class IntervalTimerImpl {
