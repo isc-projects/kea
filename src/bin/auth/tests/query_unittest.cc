@@ -95,6 +95,7 @@ public:
     MockZone() :
         origin_(Name("example.com")),
         delegation_name_("delegation.example.com"),
+        dname_name_("dname.example.com"),
         has_SOA_(true),
         has_apex_NS_(true),
         rrclass_(RRClass::IN())
@@ -131,14 +132,20 @@ private:
         if (rrset->getName() == delegation_name_ &&
             rrset->getType() == RRType::NS()) {
             delegation_rrset_ = rrset;
+        } else if (rrset->getName() == dname_name_ &&
+            rrset->getType() == RRType::DNAME())
+        {
+            dname_rrset_ = rrset;
         }
     }
 
     const Name origin_;
     const Name delegation_name_;
+    const Name dname_name_;
     bool has_SOA_;
     bool has_apex_NS_;
     ConstRRsetPtr delegation_rrset_;
+    ConstRRsetPtr dname_rrset_;
     const RRClass rrclass_;
 };
 
@@ -160,6 +167,11 @@ MockZone::find(const Name& name, const RRType& type,
          name.compare(delegation_name_).getRelation() ==
          NameComparisonResult::SUBDOMAIN)) {
         return (FindResult(DELEGATION, delegation_rrset_));
+    // And under DNAME
+    } else if (name.compare(dname_name_).getRelation() ==
+        NameComparisonResult::SUBDOMAIN)
+    {
+        return (FindResult(DNAME, dname_rrset_));
     }
 
     // normal cases.  names are searched for only per exact-match basis
