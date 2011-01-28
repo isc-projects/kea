@@ -144,10 +144,47 @@ Query::process() const {
     while (keep_doing) {
         keep_doing = false;
         std::auto_ptr<RRsetList> target(qtype_is_any ? new RRsetList : NULL);
-        Zone::FindResult db_result =
-            result.zone->find(qname_, qtype_, target.get());
+        /*
+         * We use the rrset, not db_result.rrset because we might replace
+         * it while synthetizing the CNAME out of DNAME. The db_result is
+         * imutable, so we have a different variable.
+         */
+        Zone::FindResult db_result(result.zone->find(qname_, qtype_,
+            target.get()));
+        ConstRRsetPtr rrset(db_result.rrset);
 
         switch (db_result.code) {
+            case Zone::DNAME: {
+                // First, put the dname into the answer
+                response_.addRRset(Message::SECTION_ANSWER,
+                    boost::const_pointer_cast<RRset>(rrset));
+                /*
+                 * We synthetize CNAME out of it, replace the rrset and let
+                 * the CNAME case handle it (including future chaining).
+                 * Therefore, we just fall trough to it.
+                 */
+                /*
+                 * Empty DNAME should never get in, as it is impossible to
+                 * create one in master file.
+                 */
+                assert(rrset->getRdataCount() > 0);
+                // Get the data of DNAME
+                const rdata::generic::DNAME& dname(
+                    dynamic_cast<const rdata::generic::DNAME&>(
+                    rrset->getRdataIterator()->getCurrent()));
+                // The new CNAME we are creating (it will be unsigned even
+                // with DNSSEC, the DNAME is signed and it can be validated
+                // by that)
+                RRsetPtr cname(new RRset(qname_, rrset->getClass(),
+                    RRType::CNAME(), rrset->getTTL()));
+                // Construct the new target by replacing the end
+                cname->addRdata(rdata::generic::CNAME(qname_.split(0,
+                    qname_.getLabelCount() -
+                    rrset->getName().getLabelCount()).concatenate(
+                    dname.getDname())));
+                rrset = cname;
+                // No break; here, fall trough.
+            }
             case Zone::CNAME:
                 /*
                  * We don't do chaining yet. Therefore handling a CNAME is
@@ -167,9 +204,9 @@ Query::process() const {
                     }
                 } else {
                     response_.addRRset(Message::SECTION_ANSWER,
-                        boost::const_pointer_cast<RRset>(db_result.rrset));
+                        boost::const_pointer_cast<RRset>(rrset));
                     // Handle additional for answer section
-                    getAdditional(*result.zone, *db_result.rrset);
+                    getAdditional(*result.zone, *rrset);
                 }
                 // If apex NS records haven't been provided in the answer
                 // section, insert apex NS records into the authority section
@@ -186,8 +223,8 @@ Query::process() const {
                 response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
                 response_.setRcode(Rcode::NOERROR());
                 response_.addRRset(Message::SECTION_AUTHORITY,
-                    boost::const_pointer_cast<RRset>(db_result.rrset));
-                getAdditional(*result.zone, *db_result.rrset);
+                    boost::const_pointer_cast<RRset>(rrset));
+                getAdditional(*result.zone, *rrset);
                 break;
             case Zone::NXDOMAIN:
                 // Just empty answer with SOA in authority section
@@ -198,9 +235,6 @@ Query::process() const {
                 // Just empty answer with SOA in authority section
                 response_.setRcode(Rcode::NOERROR());
                 putSOA(*result.zone);
-                break;
-            case Zone::DNAME:
-                // TODO : replace qname, continue lookup
                 break;
         }
     }
