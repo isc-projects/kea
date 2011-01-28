@@ -75,6 +75,10 @@ const char* const cname_nxdom_txt =
 // CNAME Leading out of zone
 const char* const cname_out_txt =
     "cnameout.example.com. 3600 IN CNAME www.example.org.\n";
+const char* const dname_txt =
+    "dname.example.com. 3600 IN DNAME dnametarget.example.com.\n";
+const char* const dname_a_txt =
+    "dname.example.com. 3600 IN A 192.0.2.5\n";
 // The rest of data won't be referenced from the test cases.
 const char* const other_zone_rrs =
     "cnamemailer.example.com. 3600 IN CNAME www.example.com.\n"
@@ -103,7 +107,8 @@ public:
         stringstream zone_stream;
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
             delegation_txt << mx_txt << www_a_txt << cname_txt <<
-            cname_nxdom_txt << cname_out_txt << other_zone_rrs;
+            cname_nxdom_txt << cname_out_txt << dname_txt << dname_a_txt <<
+            other_zone_rrs;
 
         masterLoad(zone_stream, origin_, rrclass_,
                    boost::bind(&MockZone::loadRRset, this, _1));
@@ -536,6 +541,57 @@ TEST_F(QueryTest, explicitCNAME_OUT) {
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
         cname_out_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+/*
+ * Test a query under a domain with DNAME. We should get a synthetized CNAME
+ * as well as the DNAME.
+ *
+ * TODO: Once we have CNAME chaining, check it works with synthetized CNAMEs
+ * as well. This includes tests pointing inside the zone, outside the zone,
+ * pointing to NXRRSET and NXDOMAIN cases (similarly as with CNAME).
+ */
+TEST_F(QueryTest, DNAME) {
+    Query(memory_datasrc, Name("www.dname.example.com"), RRType::A(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 3, 3,
+        (string(dname_txt) +
+        "www.dname.example.com. 3600 IN CNAME www.dnametarget.example.com.\n"
+        ).c_str(), zone_ns_txt, ns_addrs_txt);
+}
+
+// Test when we ask for DNAME explicitly, it does no synthetizing.
+TEST_F(QueryTest, explicitDNAME) {
+    Query(memory_datasrc, Name("dname.example.com"), RRType::DNAME(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        dname_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+/*
+ * Request a RRset at the domain with DNAME. It should not synthetize
+ * the CNAME, it should return the RRset.
+ */
+TEST_F(QueryTest, DNAME_A) {
+    Query(memory_datasrc, Name("dname.example.com"), RRType::A(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        dname_a_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+/*
+ * Request a RRset at the domain with DNAME that is not there (NXRRSET).
+ * It should not synthetize the CNAME.
+ */
+TEST_F(QueryTest, DNAME_NX_RRSET) {
+    EXPECT_NO_THROW(Query(memory_datasrc, Name("dname.example.com"),
+        RRType::TXT(), response).process());
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 1, 0,
+        NULL, soa_txt, NULL, mock_zone->getOrigin());
 }
 
 }
