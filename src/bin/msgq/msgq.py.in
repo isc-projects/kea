@@ -205,7 +205,7 @@ class MsgQ:
         # TODO: When we have logging, we might want
         # to add a debug message here that a new connection
         # was made
-        self.register_socket(self, newsocket)
+        self.register_socket(newsocket)
 
     def register_socket(self, newsocket):
         """
