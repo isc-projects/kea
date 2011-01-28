@@ -46,9 +46,8 @@ class ResolverInterface {
         class Callback {
             public:
                 /// \short Some data arrived.
-                virtual void success(
-                    const boost::shared_ptr<isc::dns::AbstractRRset>&
-                    response) = 0;
+                virtual void success(isc::dns::MessagePtr response) = 0;
+                
                 /**
                  * \short No data available.
                  *

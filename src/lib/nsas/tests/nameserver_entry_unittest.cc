@@ -69,10 +69,10 @@ private:
      *     as a failure.
      */
     void fillSet(boost::shared_ptr<TestResolver> resolver, size_t index,
-        boost::shared_ptr<BasicRRset> set)
+        RRsetPtr set)
     {
         if (set) {
-            resolver->requests[index].second->success(set);
+            resolver->requests[index].second->success(createResponseMessage(set));
         } else {
             resolver->requests[index].second->failure();
         }
@@ -80,7 +80,7 @@ private:
 protected:
     /// Fills the nameserver entry with data trough ask IP
     void fillNSEntry(boost::shared_ptr<NameserverEntry> entry,
-        boost::shared_ptr<BasicRRset> rrv4, boost::shared_ptr<BasicRRset> rrv6)
+        RRsetPtr rrv4, RRsetPtr rrv6)
     {
         // Prepare data to run askIP
         boost::shared_ptr<TestResolver> resolver(new TestResolver);
@@ -212,13 +212,13 @@ TEST_F(NameserverEntryTest, ExpirationTime) {
     // Test where there is a single TTL
     boost::shared_ptr<NameserverEntry> alpha(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
-    fillNSEntry(alpha, rrv4_, boost::shared_ptr<BasicRRset>());
+    fillNSEntry(alpha, rrv4_, RRsetPtr());
     expiration = alpha->getExpiration();
     EXPECT_EQ(expiration, curtime + rrv4_->getTTL().getValue());
 
     boost::shared_ptr<NameserverEntry> beta(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
-    fillNSEntry(beta, boost::shared_ptr<BasicRRset>(), rrv6_);
+    fillNSEntry(beta, RRsetPtr(), rrv6_);
     expiration = beta->getExpiration();
     EXPECT_EQ(expiration, curtime + rrv6_->getTTL().getValue());
 
@@ -237,7 +237,7 @@ TEST_F(NameserverEntryTest, ExpirationTime) {
 
     boost::shared_ptr<NameserverEntry> delta(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
-    fillNSEntry(delta, rrv4_, boost::shared_ptr<BasicRRset>());
+    fillNSEntry(delta, rrv4_, RRsetPtr());
     EXPECT_GT(delta->getExpiration(), rrv4_->getTTL().getValue());
 }
 
@@ -347,9 +347,9 @@ TEST_F(NameserverEntryTest, DirectAnswer) {
     resolver->addPresetAnswer(Question(Name(EXAMPLE_CO_UK), RRClass::IN(),
         RRType::AAAA()), rrv6_);
     resolver->addPresetAnswer(Question(Name(EXAMPLE_NET), RRClass::IN(),
-        RRType::A()), boost::shared_ptr<AbstractRRset>());
+        RRType::A()), RRsetPtr());
     resolver->addPresetAnswer(Question(Name(EXAMPLE_NET), RRClass::IN(),
-        RRType::AAAA()), boost::shared_ptr<AbstractRRset>());
+        RRType::AAAA()), RRsetPtr());
 
     // A successfull test first
     entry->askIP(resolver, callback, ANY_OK);
