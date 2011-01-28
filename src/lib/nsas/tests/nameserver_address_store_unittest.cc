@@ -86,7 +86,7 @@ public:
      * if it is asked for by the resolver.
      */
     void lookupAndAnswer(const string& name, const RRClass& class_code,
-        boost::shared_ptr<AbstractRRset> authority,
+        RRsetPtr authority,
         boost::shared_ptr<AddressRequestCallback> callback)
     {
         size_t size(resolver_->requests.size());

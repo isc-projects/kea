@@ -22,6 +22,7 @@
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
 #include <dns/rrttl.h>
+#include <dns/rcode.h>
 #include <dns/rdataclass.h>
 
 using namespace std;
@@ -92,8 +93,21 @@ class ZoneEntry::ResolverCallback :
          * examining them and seeing if some addresses are already there
          * and to ask for the rest of them.
          */
-        virtual void success(const boost::shared_ptr<AbstractRRset>& answer) {
+        virtual void success(MessagePtr response_message) {
             Lock lock(entry_->mutex_);
+
+            // TODO: find the correct RRset, not simply the first
+            if (!response_message ||
+                response_message->getRcode() != isc::dns::Rcode::NOERROR() ||
+                response_message->getRRCount(isc::dns::Message::SECTION_ANSWER) == 0) {
+                // todo: define this
+                failureInternal(300);
+            }
+
+            isc::dns::RRsetIterator rrsi =
+                response_message->beginSection(isc::dns::Message::SECTION_ANSWER);
+            const isc::dns::RRsetPtr answer = *rrsi;
+
             RdataIteratorPtr iterator(answer->getRdataIterator());
             // If there are no data
             if (iterator->isLast()) {
