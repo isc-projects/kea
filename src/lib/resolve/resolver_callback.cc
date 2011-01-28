@@ -31,10 +31,13 @@ ResolverCallbackDirect::callback(bool result)
     if (result &&
         answer_message_->getRcode() == isc::dns::Rcode::NOERROR() &&
         answer_message_->getRRCount(isc::dns::Message::SECTION_ANSWER) > 0) {
+        /*
         std::cout << *answer_message_ << std::endl;
         isc::dns::RRsetIterator rrsi = answer_message_->beginSection(isc::dns::Message::SECTION_ANSWER);
         const isc::dns::RRsetPtr result = *rrsi;
         callback_->success(result);
+        */
+        callback_->success(answer_message_);
     } else {
         callback_->failure();
     }

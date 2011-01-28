@@ -30,6 +30,8 @@
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
+#include <dns/rcode.h>
+#include <dns/opcode.h>
 #include <dns/question.h>
 #include <resolve/resolver_interface.h>
 
@@ -214,11 +216,22 @@ class NameserverEntry::ResolverCallback :
          * This extracts the addresses out from the response and puts them
          * inside the entry. It tries to reuse the address entries from before (if there were any), to keep their RTTs.
          */
-        virtual void success(const boost::shared_ptr<AbstractRRset>& response) {
+        virtual void success(MessagePtr response_message) {
             time_t now = time(NULL);
 
             Lock lock(entry_->mutex_);
 
+            // TODO: find the correct RRset, not simply the first
+            if (!response_message ||
+                response_message->getRcode() != isc::dns::Rcode::NOERROR() ||
+                response_message->getRRCount(isc::dns::Message::SECTION_ANSWER) == 0) {
+                failureInternal(lock);
+            }
+                
+            isc::dns::RRsetIterator rrsi =
+                response_message->beginSection(isc::dns::Message::SECTION_ANSWER);
+            const isc::dns::RRsetPtr response = *rrsi;
+            
             vector<AddressEntry> entries;
 
             if (response->getType() != type_ ||

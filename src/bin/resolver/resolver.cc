@@ -347,9 +347,7 @@ Resolver::getConfigSession() const {
 /* tmp for in-dev testing */
 class MyCallback : public resolve::ResolverInterface::Callback {
 public:
-    virtual void success(
-        const boost::shared_ptr<isc::dns::AbstractRRset>&
-        response) {
+    virtual void success(MessagePtr response) {
         std::cout << "[XX] CALLBACK FOR LOOKUP!" << std::endl;
         std::cout << "[XX] GOT: " << *response << std::endl;
         std::cout << "[XX] END" << std::endl;
@@ -381,6 +379,7 @@ Resolver::processMessage(const IOMessage& io_message,
                          OutputBufferPtr buffer,
                          DNSServer* server)
 {
+/*
     std::cout << "[XX] remove this :p" << std::endl;
     QuestionPtr q(new Question(Name("www.tjeb.nl"), RRClass::IN(), RRType::A()));
     boost::shared_ptr<MyCallback> callback(new MyCallback());
@@ -390,7 +389,7 @@ Resolver::processMessage(const IOMessage& io_message,
     resolve(q, callback);
     //resolve(q, callback);
     std::cout << "[XX] up to here" << std::endl;
-
+*/
     dlog("Got a DNS message");
     InputBuffer request_buffer(io_message.getData(), io_message.getDataSize());
     // First, check the header part.  If we fail even for the base header,

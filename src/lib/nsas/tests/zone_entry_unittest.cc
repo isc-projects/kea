@@ -460,7 +460,7 @@ TEST_F(ZoneEntryTest, DirectAnswer) {
 
     // One unsuccessfull attempt, nameservers fail
     resolver_->addPresetAnswer(Question(Name(EXAMPLE_CO_UK), RRClass::IN(),
-        RRType::NS()), boost::shared_ptr<AbstractRRset>());
+        RRType::NS()), RRsetPtr());
     zone->addCallback(callback_, ANY_OK);
     EXPECT_EQ(0, callback_->successes_.size());
     EXPECT_EQ(1, callback_->unreachable_count_);
@@ -494,9 +494,9 @@ TEST_F(ZoneEntryTest, DirectAnswer) {
     callback_->successes_.clear();
     // Now, pretend we do not have IP addresses
     resolver_->addPresetAnswer(Question(ns_name, RRClass::IN(), RRType::A()),
-        boost::shared_ptr<AbstractRRset>());
+        RRsetPtr());
     resolver_->addPresetAnswer(Question(ns_name, RRClass::IN(),
-        RRType::AAAA()), boost::shared_ptr<AbstractRRset>());
+        RRType::AAAA()), RRsetPtr());
     // Get another zone and ask it again. It should fail.
     // Clean the table first, though, so it does not find the old nameserver
     nameserver_table_->remove(HashKey(ns_name.toText(), RRClass::IN()));
