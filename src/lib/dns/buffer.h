@@ -15,6 +15,8 @@
 #ifndef __BUFFER_H
 #define __BUFFER_H 1
 
+#include <cstdlib>
+#include <cstring>
 #include <vector>
 
 #include <string.h>
@@ -286,8 +288,50 @@ public:
     /// \brief Constructor from the initial size of the buffer.
     ///
     /// \param len The initial length of the buffer in bytes.
-    OutputBuffer(size_t len) { data_.reserve(len); }
+    OutputBuffer(size_t len) :
+        buffer_(NULL),
+        size_(0),
+        allocated_(len)
+    {
+        // We use malloc and free instead of C++ new[] and delete[].
+        // This way we can use realloc, which may in fact do it without a copy.
+        buffer_ = static_cast<uint8_t*>(malloc(allocated_));
+        if (buffer_ == NULL) {
+            throw std::bad_alloc();
+        }
+    }
+
+    /// \brief Copy constructor
+    OutputBuffer(const OutputBuffer& other) :
+        buffer_(NULL),
+        size_(other.size_),
+        allocated_(other.allocated_)
+    {
+        buffer_ = static_cast<uint8_t*>(malloc(allocated_));
+        if (buffer_ == NULL) {
+            throw std::bad_alloc();
+        }
+        memcpy(buffer_, other.buffer_, size_);
+    }
+
+    ~ OutputBuffer() {
+        free(buffer_);
+    }
     //@}
+
+    /// \brief Assignment operator
+    OutputBuffer& operator =(const OutputBuffer& other) {
+        uint8_t* newbuff(static_cast<uint8_t*>(malloc(other.allocated_)));
+        if (newbuff == NULL) {
+            throw std::bad_alloc();
+        }
+        free(buffer_);
+        buffer_ = newbuff;
+        size_ = other.size_;
+        allocated_ = other.allocated_;
+        memcpy(buffer_, other.buffer_, size_);
+        return (*this);
+    }
 
     ///
     /// \name Getter Methods
@@ -408,9 +452,29 @@ public:
         data_.insert(data_.end(), cp, cp + len);
     }
     //@}
-    
+
 private:
-    std::vector<uint8_t> data_;
+    uint8_t* buffer_;
+    size_t size_;
+    size_t allocated_;
+    void ensureAllocated(size_t needed_size) {
+        if (allocated_ < needed_size) {
+            // Guess some bigger size
+            size_t new_size = (allocated_ == 0) ? 1024 : allocated_;
+            while (new_size < needed_size) {
+                new_size *= 2;
+            }
+            // Allocate bigger space
+            uint8_t* new_buffer_(static_cast<uint8_t*>(realloc(buffer_,
+                new_size)));
+            if (new_buffer_ == NULL) {
+                // If it fails, the original block is left intact by it
+                throw std::bad_alloc();
+            }
+            buffer_ = new_buffer_;
+            allocated_ = new_size;
+        }
+    }
 };
 
 /// \brief Pointer-like types pointing to \c InputBuffer or \c OutputBuffer
