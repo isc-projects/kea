@@ -55,19 +55,19 @@ operator-(const isc::dns::Name& super_name, const isc::dns::Name& sub_name) {
 }
 }
 
-/// \brief invalid RBTreeNodeChain exception
+/// \brief Invalid RBTreeNodeChain exception
 ///
 /// Normally, RBTreeNodeChain is initialized and manipuate by RBTRee,
-/// this is thrown when using one RBTreeNodeChain which is created by without
-/// initialized by RBTree
+/// this is thrown when using one RBTreeNodeChain which is created by default
+/// constructor but not initialized by RBTree through find function
 struct InvalidNodeChain : public isc::Exception {
     InvalidNodeChain(const char* file, size_t line, const char* what) :
         Exception(file, line, what){}
 };
 
-/// \brief too long RBTreeNodeChain exception
+/// \brief Too long RBTreeNodeChain exception
 ///
-/// RBTreeNodeChain has length limitation as 253, this exception is thrown
+/// RBTreeNodeChain has length limitation as 128, this exception is thrown
 /// when RBTreeNodeChain is longer than that limitation which is caused by
 /// too deep RBTree.
 struct TooLongNodeChain : public isc::Exception {
@@ -75,8 +75,11 @@ struct TooLongNodeChain : public isc::Exception {
         Exception(file, line, what){}
 };
 
+/// Forward declare RBTree class here is convinent for following friend 
+/// class declare inside RBNode and RBTreeNodeChain
 template <typename T>
 class RBTree;
+
 /// \brief \c RBNode is used by RBTree to store any data related to one domain
 ///     name.
 ///
@@ -410,6 +413,12 @@ private:
     /// is too deep with level bigger than RBT_MAX_LEVEL, the node 
     /// chain for leaf node will longer than RBT_MAX_LEVEL then
     /// exception TooLongNodeChain will be thrown
+    ///
+    /// \note Since RBTree grows through inserting new node
+    /// and Name class has the check whether the name is too long
+    /// or has too many labels, so TooLongNodeChain exception is 
+    /// hidden by TooLongName exception since it's impossible to create
+    /// the RBTree which is deeper than MAX_LABELS of Name class.
     void push(const RBNode<T>* node) {
         if (node_count_ >= RBT_MAX_LEVEL) {
             isc_throw(TooLongNodeChain, "node chain is too long");
@@ -419,7 +428,7 @@ private:
 
 private:
     /// the max lable count for one domain name is 128
-    /// since each node in rbtree at least store one label
+    /// since each node in rbtree stores at least one label
     /// so the max node count for one node chain is 128
     const static int RBT_MAX_LEVEL = isc::dns::Name::MAX_LABELS;
     const RBNode<T>* nodes_[RBT_MAX_LEVEL];
@@ -682,7 +691,7 @@ public:
     /// from root to node.
     ///
     /// \return An \c RBNode that is next bigger than \c node; if \c node is
-    /// the largest, \c NULL_NODE() will be returned.
+    /// the largest, \c NULL will be returned.
     const RBNode<T>* nextNode(RBTreeNodeChain<T>& node_path) const;
 
     /// \brief Get the total number of nodes in the tree
@@ -890,7 +899,7 @@ template <typename T>
 const RBNode<T>*
 RBTree<T>::nextNode(RBTreeNodeChain<T>& node_path) const
 {
-    const RBNode<T> *node = node_path.top();
+    const RBNode<T>* node = node_path.top();
     // if node has sub domain, the next domain is the smallest
     // domain in sub domain tree
     if (node->down_ != NULLNODE) {
