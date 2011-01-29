@@ -188,7 +188,7 @@ testCallback(const RBNode<int>&, bool* callack_checker) {
 }
 
 TEST_F(RBTreeTest, callback) {
-    NodeChain<int> node_path;
+    RBTreeNodeChain<int> node_path;
     // by default callback isn't enabled
     EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("callback.example"),
                                                   &rbtnode));
@@ -255,39 +255,18 @@ TEST_F(RBTreeTest, callback) {
  *               /   \
  *              o     q
  */
-Name
-nodeAbsoluteName(const RBNode<int>* node,
-                 const NodeChain<int>& node_path)
-{
-    isc::dns::Name absoluteName = node->getName();
-    NodeChain<int> node_path_copy = node_path;
-    while (!node_path_copy.isEmpty()) {
-        absoluteName = absoluteName.concatenate(node_path_copy.top()->getName());
-        node_path_copy.pop();
-    }
-    return (absoluteName);
-}
-
-void
-testNodeAdjacentHelper(const RBTree<int>& tree, const Name& currentDomain,
-                       const Name& nextDomain)
-{
-    NodeChain<int> node_path;
-    const RBNode<int>* node = NULL;
-    EXPECT_EQ(RBTree<int>::EXACTMATCH,
-              tree.find<void*>(currentDomain, &node, node_path, NULL, NULL));
-    node = tree.nextNode(node, node_path);
-    EXPECT_EQ(nextDomain, nodeAbsoluteName(node, node_path));
-}
-
 TEST_F(RBTreeTest, nextNode) {
     const char* const names[] = {
         "a", "b", "c", "d.e.f", "x.d.e.f", "w.y.d.e.f", "o.w.y.d.e.f",
         "p.w.y.d.e.f", "q.w.y.d.e.f", "z.d.e.f", "j.z.d.e.f", "g.h", "i.g.h"};
     const int name_count = sizeof(names) / sizeof(names[0]);
+    RBTreeNodeChain<int> node_path;
+    const RBNode<int>* node = NULL;
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              rbtree.find<void*>(Name(names[0]), &node, node_path, NULL, NULL));
     for (int i = 0; i < name_count - 1; ++i) {
-        testNodeAdjacentHelper(rbtree_expose_empty_node, Name(names[i]),
-                               Name(names[i + 1]));
+        EXPECT_EQ(Name(names[i]), node_path.getAbsoluteName());
+        rbtree.nextNode(node_path);
     }
 }
 
@@ -327,5 +306,4 @@ TEST_F(RBTreeTest, swap) {
     tree2.dumpTree(out);
     ASSERT_EQ(str1.str(), out.str());
 }
-
 }
