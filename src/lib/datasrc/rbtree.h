@@ -677,6 +677,11 @@ public:
 
     /// \brief return the next bigger node in DNSSEC order of the given node.
     ///
+    /// \note nextNode will iterator all the nodes in RBTree including empty 
+    /// nodes. If empty node isn't desired, it's easy to add logic to check
+    /// return node and keep invoking nextNode until the non-empty node is 
+    /// retrived
+    ///
     /// This method also updates the given \c node_path so that it will store
     /// the path for the returned next node.
     /// It will be convenient when we want to iterate over the all nodes
