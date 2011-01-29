@@ -230,10 +230,12 @@ struct MemoryZone::MemoryZoneImpl {
         const Domain::const_iterator foundNS(node.getData()->find(
             RRType::NS()));
         if (foundNS != node.getData()->end()) {
-            // BIND 9 checks if this node is not the origin.  But it cannot
-            // be the origin because we don't enable the callback at the
-            // origin node (see MemoryZoneImpl::add()).  Or should we do a
-            // double check for it?
+            // BIND 9 checks if this node is not the origin.  That's probably
+            // because it can support multiple versions for dynamic updates
+            // and IXFR, and it's possible that the callback is called at
+            // the apex and the DNAME doesn't exist for a particular version.
+            // It cannot happen for us (at least for now), so we don't do
+            // that check.
             state->zonecut_node_ = &node;
             state->rrset_ = foundNS->second;
 
