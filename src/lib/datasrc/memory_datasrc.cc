@@ -138,6 +138,7 @@ struct MemoryZone::MemoryZoneImpl {
         /*
          * Similar with DNAME, but it must not coexist only with NS and only in
          * non-apex domains.
+         * RFC 2672 section 3 mentions that it is implied from it and RFC 2181
          */
         if (rrset->getName() != origin_ &&
             // Adding DNAME, NS already there
@@ -216,13 +217,19 @@ struct MemoryZone::MemoryZoneImpl {
 
         // We need to look for DNAME first, there's allowed case where
         // DNAME and NS coexist in the apex. DNAME is the one to notice,
-        // the NS is authoritative, not delegation
+        // the NS is authoritative, not delegation (corner case explicitly
+        // allowed by section 3 of 2672)
         const Domain::const_iterator foundDNAME(node.getData()->find(
             RRType::DNAME()));
         if (foundDNAME != node.getData()->end()) {
             state->dname_node_ = &node;
             state->rrset_ = foundDNAME->second;
-            // No more processing below the DNAME
+            // No more processing below the DNAME (RFC 2672, section 3
+            // forbids anything to exist below it, so there's no need
+            // to actually search for it). This is strictly speaking
+            // a different way than described in 4.1 of that RFC,
+            // but because of the assumption in section 3, it has the
+            // same behaviour.
             return true;
         }
 
