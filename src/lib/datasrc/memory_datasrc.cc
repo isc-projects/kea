@@ -67,6 +67,51 @@ struct MemoryZone::MemoryZoneImpl {
     DomainTree domains_;
 
     /*
+     * Does some checks in context of the data that are already in the zone.
+     * Currently checks for forbidden combinations of RRsets in the same
+     * domain (CNAME+anything, DNAME+NS).
+     *
+     * If such condition is found, it throws AddError.
+     */
+    void contextCheck(const ConstRRsetPtr& rrset, const DomainPtr& domain) {
+        // Ensure CNAME and other type of RR don't coexist for the same
+        // owner name.
+        // Note: when the check fails and the exception is thrown, it may
+        // break strong exception guarantee.  At the moment we prefer
+        // code simplicity and don't bother to introduce complicated
+        // recovery code.
+        if (rrset->getType() == RRType::CNAME()) {
+            // XXX: this check will become incorrect when we support DNSSEC
+            // (depending on how we support DNSSEC).  We should revisit it
+            // at that point.
+            if (!domain->empty()) {
+                isc_throw(AddError, "CNAME can't be added with other data for "
+                          << rrset->getName());
+            }
+        } else if (domain->find(RRType::CNAME()) != domain->end()) {
+            isc_throw(AddError, "CNAME and " << rrset->getType() <<
+                      " can't coexist for " << rrset->getName());
+        }
+
+        /*
+         * Similar with DNAME, but it must not coexist only with NS and only in
+         * non-apex domains.
+         * RFC 2672 section 3 mentions that it is implied from it and RFC 2181
+         */
+        if (rrset->getName() != origin_ &&
+            // Adding DNAME, NS already there
+            ((rrset->getType() == RRType::DNAME() &&
+            domain->find(RRType::NS()) != domain->end()) ||
+            // Adding NS, DNAME already there
+            (rrset->getType() == RRType::NS() &&
+            domain->find(RRType::DNAME()) != domain->end())))
+        {
+            isc_throw(AddError, "DNAME can't coexist with NS in non-apex "
+                "domain " << rrset->getName());
+        }
+    }
+
+    /*
      * Implementation of longer methods. We put them here, because the
      * access is without the impl_-> and it will get inlined anyway.
      */
@@ -76,6 +121,8 @@ struct MemoryZone::MemoryZoneImpl {
         if (!rrset) {
             isc_throw(NullRRset, "The rrset provided is NULL");
         }
+        // Check for singleton RRs. It should probably handled at a different
+        // in future.
         if ((rrset->getType() == RRType::CNAME() ||
             rrset->getType() == RRType::DNAME()) &&
             rrset->getRdataCount() > 1)
@@ -121,41 +168,8 @@ struct MemoryZone::MemoryZoneImpl {
             domain = node->getData();
         }
 
-        // Ensure CNAME and other type of RR don't coexist for the same
-        // owner name.
-        // Note: when the check fails and the exception is thrown, it may
-        // break strong exception guarantee.  At the moment we prefer
-        // code simplicity and don't bother to introduce complicated
-        // recovery code.
-        if (rrset->getType() == RRType::CNAME()) {
-            // XXX: this check will become incorrect when we support DNSSEC
-            // (depending on how we support DNSSEC).  We should revisit it
-            // at that point.
-            if (!domain->empty()) {
-                isc_throw(AddError, "CNAME can't be added with other data for "
-                          << rrset->getName());
-            }
-        } else if (domain->find(RRType::CNAME()) != domain->end()) {
-            isc_throw(AddError, "CNAME and " << rrset->getType() <<
-                      " can't coexist for " << rrset->getName());
-        }
-
-        /*
-         * Similar with DNAME, but it must not coexist only with NS and only in
-         * non-apex domains.
-         * RFC 2672 section 3 mentions that it is implied from it and RFC 2181
-         */
-        if (rrset->getName() != origin_ &&
-            // Adding DNAME, NS already there
-            ((rrset->getType() == RRType::DNAME() &&
-            domain->find(RRType::NS()) != domain->end()) ||
-            // Adding NS, DNAME already there
-            (rrset->getType() == RRType::NS() &&
-            domain->find(RRType::DNAME()) != domain->end())))
-        {
-            isc_throw(AddError, "DNAME can't coexist with NS in non-apex "
-                "domain " << rrset->getName());
-        }
+        // Checks related to the surrounding data
+        contextCheck(rrset, domain);
 
         // Try inserting the rrset there
         if (domain->insert(DomainPair(rrset->getType(), rrset)).second) {
