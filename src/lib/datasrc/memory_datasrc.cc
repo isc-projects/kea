@@ -35,13 +35,8 @@ namespace datasrc {
 struct MemoryZone::MemoryZoneImpl {
     // Constructor
     MemoryZoneImpl(const RRClass& zone_class, const Name& origin) :
-        zone_class_(zone_class), origin_(origin)
+        zone_class_(zone_class), origin_(origin), origin_data_(NULL)
     {}
-
-    // Information about the zone
-    RRClass zone_class_;
-    Name origin_;
-    string file_name_;
 
     // Some type aliases
     /*
@@ -61,6 +56,13 @@ struct MemoryZone::MemoryZoneImpl {
     // The tree stores domains
     typedef RBTree<Domain> DomainTree;
     typedef RBNode<Domain> DomainNode;
+
+    // Information about the zone
+    RRClass zone_class_;
+    Name origin_;
+    DomainNode* origin_data_;
+    string file_name_;
+
     // The actual zone data
     DomainTree domains_;
 
@@ -112,6 +114,9 @@ struct MemoryZone::MemoryZoneImpl {
         if (node->isEmpty()) {
             domain.reset(new Domain);
             node->setData(domain);
+            if (origin_data_ == NULL && name == origin_) {
+                origin_data_ = node;
+            }
         } else { // Get existing one
             domain = node->getData();
         }
@@ -296,7 +301,7 @@ struct MemoryZone::MemoryZoneImpl {
 
         // If the node callback is enabled, this may be a zone cut.  If it
         // has a NS RR, we should return a delegation, but not in the apex.
-        if (node->isCallbackEnabled() && node->getName() != origin_) {
+        if (node->isCallbackEnabled() && node != origin_data_) {
             found = node->getData()->find(RRType::NS());
             if (found != node->getData()->end()) {
                 return (FindResult(DELEGATION, found->second));
