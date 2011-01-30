@@ -20,6 +20,7 @@
 #include <dns/question.h>
 
 #include <asiolink/internal/udpdns.h>
+#include <asiolink/internal/ioquery.h>
 
 using namespace asio;
 using namespace isc::dns;
