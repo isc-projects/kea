@@ -129,7 +129,7 @@ def find_spec_part(element, identifier):
                     cur_el = cur_el_item
                     found = True
             if not found:
-                raise isc.cc.data.DataNotFoundError(id + " in " + str(cur_el))
+                raise isc.cc.data.DataNotFoundError(id + " not found")
         elif type(cur_el) == dict and 'list_item_spec' in cur_el.keys():
             cur_el = cur_el['list_item_spec']
         elif type(cur_el) == list:
@@ -146,7 +146,7 @@ def find_spec_part(element, identifier):
                             cur_el = cur_el["list_item_spec"]
                     found = True
             if not found:
-                raise isc.cc.data.DataNotFoundError(id + " in " + str(cur_el))
+                raise isc.cc.data.DataNotFoundError(id + " not found")
         else:
             raise isc.cc.data.DataNotFoundError("Not a correct config specification")
     return cur_el
@@ -476,8 +476,10 @@ class MultiConfigData:
            name: name of the entry (string)
            type: string containing the type of the value (or 'module')
            value: value of the entry if it is a string, int, double or bool
-           modified: true if the value is a local change
-           default: true if the value has been changed
+           modified: true if the value is a local change that has not
+                     been committed
+           default: true if the value has not been changed (i.e. the
+                    value is the default from the specification)
            TODO: use the consts for those last ones
            Throws DataNotFoundError if the identifier is bad
         """
