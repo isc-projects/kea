@@ -252,6 +252,30 @@ TEST_F(MessageTest, hasRRset) {
                  OutOfRange);
 }
 
+TEST_F(MessageTest, removeRRset) {
+    message_render.addRRset(Message::SECTION_ANSWER, rrset_a);
+    message_render.addRRset(Message::SECTION_ANSWER, rrset_aaaa);
+    EXPECT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
+        RRClass::IN(), RRType::A()));
+    EXPECT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
+        RRClass::IN(), RRType::AAAA()));
+    EXPECT_EQ(3, message_render.getRRCount(Message::SECTION_ANSWER));
+
+    // Locate the AAAA RRset and remove it; this has one RR in it.
+    RRsetIterator i = message_render.beginSection(Message::SECTION_ANSWER);
+    if ((*i)->getType() == RRType::A()) {
+        ++i;
+    }
+    EXPECT_EQ(RRType::AAAA(), (*i)->getType());
+    message_render.removeRRset(Message::SECTION_ANSWER, i);
+
+    EXPECT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
+        RRClass::IN(), RRType::A()));
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
+        RRClass::IN(), RRType::AAAA()));
+    EXPECT_EQ(2, message_render.getRRCount(Message::SECTION_ANSWER));
+}
+
 TEST_F(MessageTest, badBeginSection) {
     // valid cases are tested via other tests
     EXPECT_THROW(message_render.beginSection(Message::SECTION_QUESTION),
