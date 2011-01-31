@@ -32,6 +32,9 @@ MODULE_NODE_NAME = 'module'
 COMMAND_NODE_NAME = 'command'
 PARAM_NODE_NAME = 'param'
 
+# this is used to align the descriptions in help output
+CONST_BINDCTL_HELP_INDENT_WIDTH=12
+
 
 class ParamInfo:
     """One parameter of one command.
@@ -164,10 +167,10 @@ class CommandInfo:
         mandatory_infos = []
         for info in params.values():            
             if not info.is_optional:
-                print("\t%s" % info.get_name())
+                print("    %s" % info.get_name())
                 print(textwrap.fill(info.get_desc(),
-                      initial_indent="\t\t",
-                      subsequent_indent="\t\t",
+                      initial_indent="        ",
+                      subsequent_indent="        ",
                       width=50))
                 mandatory_infos.append(info)
 
@@ -176,10 +179,10 @@ class CommandInfo:
         if len(optional_infos) > 0:
             print("\nOptional parameters:")      
             for info in optional_infos:
-                print("\t%s" % info.get_name())
+                print("    %s" % info.get_name())
                 print(textwrap.fill(info.get_desc(),
-                      initial_indent="\t\t",
-                      subsequent_indent="\t\t",
+                      initial_indent="        ",
+                      subsequent_indent="        ",
                       width=50))
 
 
@@ -230,17 +233,22 @@ class ModuleInfo:
         print("Module ", self, "\nAvailable commands:")
         for k in self.commands.values():
             n = k.get_name()
-            if len(n) >= 8:
-                print("\t%s" % n)
+            if len(n) >= CONST_BINDCTL_HELP_INDENT_WIDTH:
+                print("    %s" % n)
                 print(textwrap.fill(k.get_desc(),
-                      initial_indent="\t\t",
-                      subsequent_indent="\t\t",
+                      initial_indent="            ",
+                      subsequent_indent="    " +
+                      " " * CONST_BINDCTL_HELP_INDENT_WIDTH,
                       width=70))
             else:
-                print(textwrap.fill("%s\t%s" % (k.get_name(), k.get_desc()),
-                      initial_indent="\t",
-                      subsequent_indent="\t\t",
-                      width=70))
+                print(textwrap.fill("%s%s%s" %
+                    (k.get_name(),
+                     " "*(CONST_BINDCTL_HELP_INDENT_WIDTH - len(k.get_name())),
+                     k.get_desc()),
+                    initial_indent="    ",
+                    subsequent_indent="    " +
+                    " " * CONST_BINDCTL_HELP_INDENT_WIDTH,
+                    width=70))
             
     def command_help(self, command):
         """Prints the help info for the command with the given name.
