@@ -344,31 +344,11 @@ Resolver::getConfigSession() const {
     return (impl_->config_session_);
 }
 
-/* tmp for in-dev testing */
-class MyCallback : public resolve::ResolverInterface::Callback {
-public:
-    virtual void success(MessagePtr response) {
-        std::cout << "[XX] CALLBACK FOR LOOKUP!" << std::endl;
-        std::cout << "[XX] GOT: " << *response << std::endl;
-        std::cout << "[XX] END" << std::endl;
-    };
-
-    virtual void failure() {
-        std::cout << "[XX] internal lookup failed" << std::endl;
-    }
-
-    ~MyCallback() {
-        std::cout << "[XX] MyCallback deleted!" << std::endl;
-    }
-};
-
 void
 Resolver::resolve(const isc::dns::QuestionPtr& question,
     const isc::resolve::ResolverInterface::CallbackPtr& callback)
 {
-    std::cout << "[XX] asked to resolve: " << *question << std::endl;
     impl_->resolve(question, callback);
-    std::cout << "[XX] done?" << std::endl;
 }
 
 
@@ -379,17 +359,6 @@ Resolver::processMessage(const IOMessage& io_message,
                          OutputBufferPtr buffer,
                          DNSServer* server)
 {
-/*
-    std::cout << "[XX] remove this :p" << std::endl;
-    QuestionPtr q(new Question(Name("www.tjeb.nl"), RRClass::IN(), RRType::A()));
-    boost::shared_ptr<MyCallback> callback(new MyCallback());
-
-    std::cout << "[XX] CREATED CALLBACK AT " << callback << std::endl;
-
-    resolve(q, callback);
-    //resolve(q, callback);
-    std::cout << "[XX] up to here" << std::endl;
-*/
     dlog("Got a DNS message");
     InputBuffer request_buffer(io_message.getData(), io_message.getDataSize());
     // First, check the header part.  If we fail even for the base header,
