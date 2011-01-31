@@ -357,7 +357,7 @@ private:
 
     // Server to notify when we succeed or fail
     //shared_ptr<DNSServer> server_;
-    isc::resolve::AbstractResolverCallback* resolvercallback_;
+    isc::resolve::ResolverInterface::CallbackPtr resolvercallback_;
 
     /*
      * TODO Do something more clever with timeouts. In the long term, some
@@ -480,7 +480,7 @@ public:
         shared_ptr<AddressVector> upstream_root,
         OutputBufferPtr buffer,
         //DNSServer* server,
-        isc::resolve::AbstractResolverCallback* cb,
+        isc::resolve::ResolverInterface::CallbackPtr cb,
         int timeout,
         unsigned retries) :
         io_(io),
@@ -566,15 +566,17 @@ RecursiveQuery::sendQuery(const isc::dns::QuestionPtr& question,
     asio::io_service& io = dns_service_.get_io_service();
 
     MessagePtr answer_message(new Message(Message::RENDER));
-    answer_message->setOpcode(isc::dns::Opcode::QUERY());
     OutputBufferPtr buffer(new OutputBuffer(0));
+    /*
+    answer_message->setOpcode(isc::dns::Opcode::QUERY());
     isc::resolve::ResolverCallbackDirect* rcd =
         new isc::resolve::ResolverCallbackDirect(callback,
                                                  answer_message);
+    */
     
     // It will delete itself when it is done
     new RunningQuery(io, *question, answer_message, upstream_,
-                     upstream_root_, buffer, rcd, timeout_, retries_);
+                     upstream_root_, buffer, callback, timeout_, retries_);
 }
 
 void
@@ -589,8 +591,8 @@ RecursiveQuery::sendQuery(const Question& question,
     // we're only going to handle UDP.
     asio::io_service& io = dns_service_.get_io_service();
 
-    isc::resolve::ResolverCallbackServer* crs =
-        new isc::resolve::ResolverCallbackServer(server);
+    isc::resolve::ResolverInterface::CallbackPtr crs(
+        new isc::resolve::ResolverCallbackServer(server));
     
     // It will delete itself when it is done
     new RunningQuery(io, question, answer_message, upstream_,
