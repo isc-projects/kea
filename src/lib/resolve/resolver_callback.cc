@@ -24,42 +24,13 @@ ResolverCallbackServer::success(isc::dns::MessagePtr response)
     (void)response;
     
     server_->resume(true);
-    // delete our clone now
-    delete server_;
-    delete this;
 }
 
 void
 ResolverCallbackServer::failure()
 {
     server_->resume(false);
-    // delete our clone now
-    delete server_;
-    delete this;
 }
-
-void
-ResolverCallbackDirect::success(isc::dns::MessagePtr response)
-{
-    if (response &&
-        response->getRcode() == isc::dns::Rcode::NOERROR() &&
-        response->getRRCount(isc::dns::Message::SECTION_ANSWER) > 0) {
-        callback_->success(response);
-        // once called back we don't need ourselves anymore
-        delete this;
-    } else {
-        failure();
-    }
-}
-
-void
-ResolverCallbackDirect::failure()
-{
-    callback_->failure();
-    // once called back we don't need ourselves anymore
-    delete this;
-}
-
 
 } // namespace resolve
 } // namespace isc

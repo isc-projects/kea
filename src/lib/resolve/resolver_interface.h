@@ -16,7 +16,6 @@
 #define __RESOLVER_INTERFACE_H
 
 #include <dns/message.h>
-#include <dns/rrset.h>
 
 /**
  * \file resolver_interface.h
