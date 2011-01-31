@@ -412,10 +412,11 @@ public:
     /// \param DNSServer DNSServer object to use
     virtual void operator()(const IOMessage& io_message,
                             isc::dns::MessagePtr message,
+                            isc::dns::MessagePtr answer_message,
                             isc::dns::OutputBufferPtr buffer,
                             DNSServer* server) const
     {
-        (*self_)(io_message, message, buffer, server);
+        (*self_)(io_message, message, answer_message, buffer, server);
     }
 private:
     DNSLookup* self_;
@@ -465,6 +466,7 @@ public:
     /// \param buffer The result is put here
     virtual void operator()(const IOMessage& io_message,
                             isc::dns::MessagePtr message,
+                            isc::dns::MessagePtr answer_message,
                             isc::dns::OutputBufferPtr buffer) const = 0;
 };
 
@@ -536,6 +538,8 @@ public:
     ///        query on.
     /// \param upstream Addresses and ports of the upstream servers
     ///        to forward queries to.
+    /// \param upstream_root Addresses and ports of the root servers
+    ///        to use when resolving.
     /// \param timeout How long to timeout the query, in ms
     ///     -1 means never timeout (but do not use that).
     ///     TODO: This should be computed somehow dynamically in future
@@ -543,7 +547,13 @@ public:
     ///     and return if it returs).
     RecursiveQuery(DNSService& dns_service,
                    const std::vector<std::pair<std::string, uint16_t> >&
-                   upstream, int timeout = -1, unsigned retries = 0);
+                   upstream, 
+                   const std::vector<std::pair<std::string, uint16_t> >&
+                   upstream_root, 
+                   int query_timeout = 2000,
+                   int client_timeout = 4000,
+                   int lookup_timeout = 30000,
+                   unsigned retries = 3);
     //@}
 
     /// \brief Initiates an upstream query in the \c RecursiveQuery object.
@@ -557,13 +567,18 @@ public:
     /// \param buffer An output buffer into which the response can be copied
     /// \param server A pointer to the \c DNSServer object handling the client
     void sendQuery(const isc::dns::Question& question,
+                   isc::dns::MessagePtr answer_message,
                    isc::dns::OutputBufferPtr buffer,
                    DNSServer* server);
 private:
     DNSService& dns_service_;
     boost::shared_ptr<std::vector<std::pair<std::string, uint16_t> > >
         upstream_;
-    int timeout_;
+    boost::shared_ptr<std::vector<std::pair<std::string, uint16_t> > >
+        upstream_root_;
+    int query_timeout_;
+    int client_timeout_;
+    int lookup_timeout_;
     unsigned retries_;
 };
 

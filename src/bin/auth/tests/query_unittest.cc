@@ -59,18 +59,24 @@ const char* const ns_addrs_txt =
     "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n"
     "noglue.example.com. 3600 IN A 192.0.2.53\n";
 const char* const delegation_txt =
-        "delegation.example.com. 3600 IN NS glue.delegation.example.com.\n"
-        "delegation.example.com. 3600 IN NS noglue.example.com.\n"
-        "delegation.example.com. 3600 IN NS cname.example.com.\n"
-        "delegation.example.com. 3600 IN NS example.org.\n";
+    "delegation.example.com. 3600 IN NS glue.delegation.example.com.\n"
+    "delegation.example.com. 3600 IN NS noglue.example.com.\n"
+    "delegation.example.com. 3600 IN NS cname.example.com.\n"
+    "delegation.example.com. 3600 IN NS example.org.\n";
 const char* const mx_txt =
     "mx.example.com. 3600 IN MX 10 www.example.com.\n"
     "mx.example.com. 3600 IN MX 20 mailer.example.org.\n"
     "mx.example.com. 3600 IN MX 30 mx.delegation.example.com.\n";
 const char* const www_a_txt = "www.example.com. 3600 IN A 192.0.2.80\n";
+const char* const cname_txt =
+    "cname.example.com. 3600 IN CNAME www.example.com.\n";
+const char* const cname_nxdom_txt =
+    "cnamenxdom.example.com. 3600 IN CNAME nxdomain.example.com.\n";
+// CNAME Leading out of zone
+const char* const cname_out_txt =
+    "cnameout.example.com. 3600 IN CNAME www.example.org.\n";
 // The rest of data won't be referenced from the test cases.
 const char* const other_zone_rrs =
-    "cname.example.com. 3600 IN CNAME www.example.com.\n"
     "cnamemailer.example.com. 3600 IN CNAME www.example.com.\n"
     "cnamemx.example.com. 3600 IN MX 10 cnamemailer.example.com.\n"
     "mx.delegation.example.com. 3600 IN A 192.0.2.100\n";
@@ -95,7 +101,8 @@ public:
     {
         stringstream zone_stream;
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
-            delegation_txt << mx_txt << www_a_txt << other_zone_rrs;
+            delegation_txt << mx_txt << www_a_txt << cname_txt <<
+            cname_nxdom_txt << cname_out_txt << other_zone_rrs;
 
         masterLoad(zone_stream, origin_, rrclass_,
                    boost::bind(&MockZone::loadRRset, this, _1));
@@ -104,6 +111,7 @@ public:
     virtual const isc::dns::RRClass& getClass() const { return (rrclass_); }
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type,
+                            RRsetList* target = NULL,
                             const FindOptions options = FIND_DEFAULT) const;
 
     // If false is passed, it makes the zone broken as if it didn't have the
@@ -136,7 +144,7 @@ private:
 
 Zone::FindResult
 MockZone::find(const Name& name, const RRType& type,
-               const FindOptions options) const
+               RRsetList* target, const FindOptions options) const
 {
     // Emulating a broken zone: mandatory apex RRs are missing if specifically
     // configured so (which are rare cases).
@@ -165,8 +173,15 @@ MockZone::find(const Name& name, const RRType& type,
             return (FindResult(SUCCESS, found_rrset->second));
         }
 
-        // If not found but the qtype is ANY, return the first RRset
-        if (type == RRType::ANY()) {
+        // If not found but we have a target, fill it with all RRsets here
+        if (!found_domain->second.empty() && target != NULL) {
+            for (found_rrset = found_domain->second.begin();
+                 found_rrset != found_domain->second.end(); found_rrset++)
+            {
+                // Insert RRs under the domain name into target
+                target->addRRset(
+                    boost::const_pointer_cast<RRset>(found_rrset->second));
+            }
             return (FindResult(SUCCESS, found_domain->second.begin()->second));
         }
 
@@ -228,7 +243,8 @@ responseCheck(Message& response, const isc::dns::Rcode& rcode,
     if (expected_answer != NULL) {
         rrsetsCheck(expected_answer,
                     response.beginSection(Message::SECTION_ANSWER),
-                    response.endSection(Message::SECTION_ANSWER));
+                    response.endSection(Message::SECTION_ANSWER),
+                    check_origin);
     }
     if (expected_authority != NULL) {
         rrsetsCheck(expected_authority,
@@ -282,6 +298,7 @@ TEST_F(QueryTest, apexNSMatch) {
                   zone_ns_txt, NULL, ns_addrs_txt);
 }
 
+// test type any query logic
 TEST_F(QueryTest, exactAnyMatch) {
     // find match rrset, omit additional data which has already been provided
     // in the answer section from the additional.
@@ -293,6 +310,33 @@ TEST_F(QueryTest, exactAnyMatch) {
                   zone_ns_txt,
                   "glue.delegation.example.com. 3600 IN A 192.0.2.153\n"
                   "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n");
+}
+
+TEST_F(QueryTest, apexAnyMatch) {
+    // find match rrset, omit additional data which has already been provided
+    // in the answer section from the additional.
+    EXPECT_NO_THROW(Query(memory_datasrc, Name("example.com"),
+                          RRType::ANY(), response).process());
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 4, 0, 0,
+                  "example.com. 3600 IN SOA . . 0 0 0 0 0\n"
+                  "example.com. 3600 IN NS glue.delegation.example.com.\n"
+                  "example.com. 3600 IN NS noglue.example.com.\n"
+                  "example.com. 3600 IN NS example.net.\n",
+                  NULL, NULL, mock_zone->getOrigin());
+}
+
+TEST_F(QueryTest, glueANYMatch) {
+    EXPECT_NO_THROW(Query(memory_datasrc, Name("delegation.example.com"),
+                          RRType::ANY(), response).process());
+    responseCheck(response, Rcode::NOERROR(), 0, 0, 4, 3,
+                  NULL, delegation_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, nodomainANY) {
+    EXPECT_NO_THROW(Query(memory_datasrc, Name("nxdomain.example.com"),
+                          RRType::ANY(), response).process());
+    responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 1, 0,
+                  NULL, soa_txt, NULL, mock_zone->getOrigin());
 }
 
 // This tests that when we need to look up Zone's apex NS records for
@@ -385,4 +429,101 @@ TEST_F(QueryTest, MXAlias) {
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
                   NULL, NULL, ns_addrs_txt);
 }
+
+/*
+ * Tests encountering a cname.
+ *
+ * There are tests leading to successful answers, NXRRSET, NXDOMAIN and
+ * out of the zone.
+ *
+ * TODO: We currently don't do chaining, so only the CNAME itself should be
+ * returned.
+ */
+TEST_F(QueryTest, CNAME) {
+    Query(memory_datasrc, Name("cname.example.com"), RRType::A(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, explicitCNAME) {
+    // same owner name as the CNAME test but explicitly query for CNAME RR.
+    // expect the same response as we don't provide a full chain yet.
+    Query(memory_datasrc, Name("cname.example.com"), RRType::CNAME(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, CNAME_NX_RRSET) {
+    // Leads to www.example.com, it doesn't have TXT
+    // note: with chaining, what should be expected is not trivial:
+    // BIND 9 returns the CNAME in answer and SOA in authority, no additional.
+    // NSD returns the CNAME, NS in authority, A/AAAA for NS in additional.
+    Query(memory_datasrc, Name("cname.example.com"), RRType::TXT(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, explicitCNAME_NX_RRSET) {
+    // same owner name as the NXRRSET test but explicitly query for CNAME RR.
+    Query(memory_datasrc, Name("cname.example.com"), RRType::CNAME(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, CNAME_NX_DOMAIN) {
+    // Leads to nxdomain.example.com
+    // note: with chaining, what should be expected is not trivial:
+    // BIND 9 returns the CNAME in answer and SOA in authority, no additional,
+    // RCODE being NXDOMAIN.
+    // NSD returns the CNAME, NS in authority, A/AAAA for NS in additional,
+    // RCODE being NOERROR.
+    Query(memory_datasrc, Name("cnamenxdom.example.com"), RRType::A(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_nxdom_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, explicitCNAME_NX_DOMAIN) {
+    // same owner name as the NXDOMAIN test but explicitly query for CNAME RR.
+    Query(memory_datasrc, Name("cnamenxdom.example.com"), RRType::CNAME(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_nxdom_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, CNAME_OUT) {
+    /*
+     * This leads out of zone. This should have only the CNAME even
+     * when we do chaining.
+     *
+     * TODO: We should be able to have two zones in the mock data source.
+     * Then the same test should be done with .org included there and
+     * see what it does (depends on what we want to do)
+     */
+    Query(memory_datasrc, Name("cnameout.example.com"), RRType::A(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_out_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, explicitCNAME_OUT) {
+    // same owner name as the OUT test but explicitly query for CNAME RR.
+    Query(memory_datasrc, Name("cnameout.example.com"), RRType::CNAME(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_out_txt, zone_ns_txt, ns_addrs_txt);
+}
+
 }

@@ -130,12 +130,15 @@ UDPServer::operator()(error_code ec, size_t length) {
         // Instantiate objects that will be needed by the
         // asynchronous DNS lookup and/or by the send call.
         respbuf_.reset(new OutputBuffer(0));
-        message_.reset(new Message(Message::PARSE));
+        query_message_.reset(new Message(Message::PARSE));
+        answer_message_.reset(new Message(Message::RENDER));
 
         // Schedule a DNS lookup, and yield.  When the lookup is
         // finished, the coroutine will resume immediately after
         // this point.
         CORO_YIELD io_.post(AsyncLookup<UDPServer>(*this));
+
+        dlog("[XX] got an answer");
 
         // The 'done_' flag indicates whether we have an answer
         // to send back.  If not, exit the coroutine permanently.
@@ -145,7 +148,8 @@ UDPServer::operator()(error_code ec, size_t length) {
 
         // Call the DNS answer provider to render the answer into
         // wire format
-        (*answer_callback_)(*io_message_, message_, respbuf_);
+        (*answer_callback_)(*io_message_, query_message_,
+                            answer_message_, respbuf_);
 
         // Begin an asynchronous send, and then yield.  When the
         // send completes, we will resume immediately after this point
@@ -161,7 +165,8 @@ UDPServer::operator()(error_code ec, size_t length) {
 /// AsyncLookup<UDPServer> handler.)
 void
 UDPServer::asyncLookup() {
-    (*lookup_callback_)(*io_message_, message_, respbuf_, this);
+    (*lookup_callback_)(*io_message_, query_message_, answer_message_,
+                        respbuf_, this);
 }
 
 /// Post this coroutine on the ASIO service queue so that it will
@@ -250,6 +255,7 @@ UDPQuery::operator()(error_code ec, size_t length) {
             dlog("Sending " + msg.toText() + " to " +
                 data_->remote.address().to_string());
         }
+
 
         // If we timeout, we stop, which will shutdown everything and
         // cancel all other attempts to run inside the coroutine

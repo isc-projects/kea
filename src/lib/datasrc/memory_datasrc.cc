@@ -19,6 +19,7 @@
 
 #include <dns/name.h>
 #include <dns/rrclass.h>
+#include <dns/rrsetlist.h>
 #include <dns/masterload.h>
 
 #include <datasrc/memory_datasrc.h>
@@ -213,9 +214,10 @@ struct MemoryZone::MemoryZoneImpl {
         return (false);
     }
 
+
     // Implementation of MemoryZone::find
     FindResult find(const Name& name, RRType type,
-                    const FindOptions options) const
+                    RRsetList* target, const FindOptions options) const
     {
         // Get the node
         DomainNode* node(NULL);
@@ -248,6 +250,18 @@ struct MemoryZone::MemoryZoneImpl {
             if (found != node->getData()->end()) {
                 return (FindResult(DELEGATION, found->second));
             }
+        }
+
+        // handle type any query
+        if (target && !node->getData()->empty()) {
+            // Empty domain will be handled as NXRRSET by normal processing
+            for (found = node->getData()->begin();
+                 found != node->getData()->end(); found++)
+            {
+                target->addRRset(
+                    boost::const_pointer_cast<RRset>(found->second));
+            }
+            return (FindResult(SUCCESS, ConstRRsetPtr()));
         }
 
         found = node->getData()->find(type);
@@ -287,9 +301,9 @@ MemoryZone::getClass() const {
 
 Zone::FindResult
 MemoryZone::find(const Name& name, const RRType& type,
-                 const FindOptions options) const
+                 RRsetList* target, const FindOptions options) const
 {
-    return (impl_->find(name, type, options));
+    return (impl_->find(name, type, target, options));
 }
 
 result::Result
