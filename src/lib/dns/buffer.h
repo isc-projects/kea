@@ -338,7 +338,7 @@ public:
     ///
     //@{
     /// \brief Return the current capacity of the buffer.
-    size_t getCapacity() const { return (data_.capacity()); }
+    size_t getCapacity() const { return (allocated_); }
     /// \brief Return a pointer to the head of the data stored in the buffer.
     ///
     /// The caller can assume that the subsequent \c getLength() bytes are
@@ -346,9 +346,9 @@ public:
     ///
     /// Note: The pointer returned by this method may be invalidated after a
     /// subsequent write operation.
-    const void* getData() const { return (&data_[0]); }
+    const void* getData() const { return (buffer_); }
     /// \brief Return the length of data written in the buffer.
-    size_t getLength() const { return (data_.size()); }
+    size_t getLength() const { return (size_); }
     /// \brief Return the value of the buffer at the specified position.
     ///
     /// \c pos must specify the valid position of the buffer; otherwise an
@@ -357,10 +357,10 @@ public:
     /// \param pos The position in the buffer to be returned.
     const uint8_t& operator[](size_t pos) const
     {
-        if (pos >= data_.size()) {
+        if (pos >= size_) {
             isc_throw(InvalidBufferPosition, "read at invalid position");
         }
-        return (data_[pos]);
+        return (buffer_[pos]);
     }
     //@}
 
@@ -374,7 +374,10 @@ public:
     /// This method is provided as a shortcut to make a hole in the buffer
     /// that is to be filled in later, e.g, by \ref writeUint16At().
     /// \param len The length of the gap to be inserted in bytes.
-    void skip(size_t len) { data_.insert(data_.end(), len, 0); }
+    void skip(size_t len) {
+        ensureAllocated(size_ + len);
+        size_ += len;
+    }
 
     /// \brief Trim the specified length of data from the end of the buffer.
     ///
@@ -385,20 +388,23 @@ public:
     /// \param len The length of data that should be trimmed.
     void trim(size_t len)
     {
-        if (len > data_.size()) {
+        if (len > size_) {
             isc_throw(OutOfRange, "trimming too large from output buffer");
         }
-        data_.resize(data_.size() - len);
+        size_ -= len;
     }
     /// \brief Clear buffer content.
     ///
     /// This method can be used to re-initialize and reuse the buffer without
     /// constructing a new one.
-    void clear() { data_.clear(); }
+    void clear() { size_ = 0; }
     /// \brief Write an unsigned 8-bit integer into the buffer.
     ///
     /// \param data The 8-bit integer to be written into the buffer.
-    void writeUint8(uint8_t data) { data_.push_back(data); }
+    void writeUint8(uint8_t data) {
+        ensureAllocated(size_ + 1);
+        buffer_[size_ ++] = data;
+    }
 
     /// \brief Write an unsigned 16-bit integer in host byte order into the
     /// buffer in network byte order.
@@ -406,8 +412,9 @@ public:
     /// \param data The 16-bit integer to be written into the buffer.
     void writeUint16(uint16_t data)
     {
-        data_.push_back(static_cast<uint8_t>((data & 0xff00U) >> 8));
-        data_.push_back(static_cast<uint8_t>(data & 0x00ffU));
+        ensureAllocated(size_ + sizeof(data));
+        buffer_[size_ ++] = static_cast<uint8_t>((data & 0xff00U) >> 8);
+        buffer_[size_ ++] = static_cast<uint8_t>(data & 0x00ffU);
     }
     /// \brief Write an unsigned 16-bit integer in host byte order at the
     /// specified position of the buffer in network byte order.
@@ -422,12 +429,12 @@ public:
     /// \param pos The beginning position in the buffer to write the data.
     void writeUint16At(uint16_t data, size_t pos)
     {
-        if (pos + sizeof(data) > data_.size()) {
+        if (pos + sizeof(data) > size_) {
             isc_throw(InvalidBufferPosition, "write at invalid position");
         }
 
-        data_[pos] = static_cast<uint8_t>((data & 0xff00U) >> 8);
-        data_[pos + 1] = static_cast<uint8_t>(data & 0x00ffU);
+        buffer_[pos] = static_cast<uint8_t>((data & 0xff00U) >> 8);
+        buffer_[pos + 1] = static_cast<uint8_t>(data & 0x00ffU);
     }
     /// \brief Write an unsigned 32-bit integer in host byte order
     /// into the buffer in network byte order.
@@ -435,10 +442,11 @@ public:
     /// \param data The 32-bit integer to be written into the buffer.
     void writeUint32(uint32_t data)
     {
-        data_.push_back(static_cast<uint8_t>((data & 0xff000000) >> 24));
-        data_.push_back(static_cast<uint8_t>((data & 0x00ff0000) >> 16));
-        data_.push_back(static_cast<uint8_t>((data & 0x0000ff00) >> 8));
-        data_.push_back(static_cast<uint8_t>(data & 0x000000ff));
+        ensureAllocated(size_ + sizeof(data));
+        buffer_[size_ ++] = static_cast<uint8_t>((data & 0xff000000) >> 24);
+        buffer_[size_ ++] = static_cast<uint8_t>((data & 0x00ff0000) >> 16);
+        buffer_[size_ ++] = static_cast<uint8_t>((data & 0x0000ff00) >> 8);
+        buffer_[size_ ++] = static_cast<uint8_t>(data & 0x000000ff);
     }
     /// \brief Copy an arbitrary length of data into the buffer.
     ///
@@ -448,8 +456,9 @@ public:
     /// \param len The length of the data in bytes.
     void writeData(const void *data, size_t len)
     {
-        const uint8_t* cp = static_cast<const uint8_t*>(data);
-        data_.insert(data_.end(), cp, cp + len);
+        ensureAllocated(size_ + len);
+        memcpy(buffer_ + size_, data, len);
+        size_ += len;
     }
     //@}
 
