@@ -314,6 +314,7 @@ public:
         memcpy(buffer_, other.buffer_, size_);
     }
 
+    /// \brief Destructor
     ~ OutputBuffer() {
         free(buffer_);
     }
@@ -463,9 +464,13 @@ public:
     //@}
 
 private:
+    // The actual data
     uint8_t* buffer_;
+    // How many bytes are used
     size_t size_;
+    // How many bytes do we have preallocated (eg. the capacity)
     size_t allocated_;
+    // Make sure at last needed_size bytes are allocated in the buffer
     void ensureAllocated(size_t needed_size) {
         if (allocated_ < needed_size) {
             // Guess some bigger size
