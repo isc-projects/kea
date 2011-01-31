@@ -557,19 +557,39 @@ public:
                    int timeout = -1, unsigned retries = 0);
     //@}
 
+    /// \brief Initiate resolving
+    /// 
+    /// When sendQuery() is called, a (set of) message(s) is sent
+    /// asynchronously. If upstream servers are set, one is chosen
+    /// and the response (if any) from that server will be returned.
+    ///
+    /// If not upstream is set, a root server is chosen from the
+    /// root_servers, and the RunningQuery shall do a full resolve
+    /// (i.e. if the answer is a delegation, it will be followed, etc.)
+    /// until there is an answer or an error.
+    ///
+    /// When there is a response or an error and we give up, the given
+    /// CallbackPtr object shall be called (with either success() or
+    /// failure(). See ResolverInterface::Callback for more information.
+    ///
+    /// \param question The question being answered <qname/qclass/qtype>
+    /// \param callback Callback object
+    /// \param buffer An output Message into which the final response will be copied
+    /// \param buffer An output buffer into which the intermediate responses will be copied
+    /// \param server A pointer to the \c DNSServer object handling the client
     void sendQuery(const isc::dns::QuestionPtr& question,
                    const isc::resolve::ResolverInterface::CallbackPtr callback);
 
 
-    /// \brief Initiates an upstream query in the \c RecursiveQuery object.
+    /// \brief Initiates resolving for the given question.
     ///
-    /// When sendQuery() is called, a message is sent asynchronously to
-    /// the upstream name server.  When a reply arrives, 'server'
-    /// is placed on the ASIO service queue via io_service::post(), so
-    /// that the original \c DNSServer objct can resume processing.
+    /// This actually calls the previous sendQuery() with a default
+    /// callback object, which calls resume() on the given DNSServer
+    /// object.
     ///
     /// \param question The question being answered <qname/qclass/qtype>
-    /// \param buffer An output buffer into which the response can be copied
+    /// \param buffer An output Message into which the final response will be copied
+    /// \param buffer An output buffer into which the intermediate responses will be copied
     /// \param server A pointer to the \c DNSServer object handling the client
     void sendQuery(const isc::dns::Question& question,
                    isc::dns::MessagePtr answer_message,

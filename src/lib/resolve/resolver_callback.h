@@ -21,14 +21,21 @@
 namespace isc {
 namespace resolve {
 
+/// \short Standard Callback for sendQuery for DNSServer instances
+///
+/// This is a standard ResolverInterface::Callback implementation
+/// that is used by Resolver; when RunningQuery finishes and has either
+/// some data or an error, DNSServer::resume() will be called.
+///
+/// This class will ignore the response MessagePtr in the callback,
+/// as the server itself should also have a reference.
 class ResolverCallbackServer : public ResolverInterface::Callback {
 public:
     ResolverCallbackServer(asiolink::DNSServer* server) :
         server_(server->clone()) {}
     ~ResolverCallbackServer() { delete server_; };
     
-    //void callback(bool result);
-    void success(isc::dns::MessagePtr response);
+    void success(const isc::dns::MessagePtr response);
     void failure();
 
 private:
