@@ -460,9 +460,24 @@ public:
     bool hasRRset(const Section section, const Name& name,
                   const RRClass& rrclass, const RRType& rrtype);
 
+    /// \brief Remove RRSet from Message
+    ///
+    /// Removes the RRset identified by the section iterator from the message.
+    /// Note: if,.for some reason, the RRset is duplicated in the section, only
+    /// one occurrence is removed.
+    ///
+    /// If the operation is successful, all iterators into the section are
+    /// invalidated.
+    ///
+    /// \param section Section to which the iterator belongs
+    /// \param iterator Iterator pointing to the element to be removed
+    ///
+    /// \return true if the element was removed, false if the iterator was not
+    /// found in the specified section.
+    bool removeRRset(const Section section, RRsetIterator& iterator);
+
     // The following methods are not currently implemented.
     //void removeQuestion(QuestionPtr question);
-    //void removeRRset(const Section section, RRsetPtr rrset);
     // notyet:
     //void addRR(const Section section, const RR& rr);
     //void removeRR(const Section section, const RR& rr);
