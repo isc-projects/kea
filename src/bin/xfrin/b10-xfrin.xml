@@ -63,7 +63,7 @@
     </para>
 
     <note><simpara>
-      The Y1 prototype release only supports AXFR. IXFR is not implemented.
+      This prototype release only supports AXFR. IXFR is not implemented.
     </simpara></note>
 
     <para>
