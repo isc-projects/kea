@@ -4,10 +4,22 @@
     "module_description": "Recursive service",
     "config_data": [
       {
-        "item_name": "timeout",
+        "item_name": "timeout_query",
         "item_type": "integer",
         "item_optional": False,
         "item_default": 2000
+      },
+      {
+        "item_name": "timeout_client",
+        "item_type": "integer",
+        "item_optional": False,
+        "item_default": 4000
+      },
+      {
+        "item_name": "timeout_lookup",
+        "item_type": "integer",
+        "item_optional": False,
+        "item_default": 30000
       },
       {
         "item_name": "retries",
@@ -17,6 +29,32 @@
       },
       {
         "item_name": "forward_addresses",
+        "item_type": "list",
+        "item_optional": True,
+        "item_default": [],
+        "list_item_spec" : {
+          "item_name": "address",
+          "item_type": "map",
+          "item_optional": False,
+          "item_default": {},
+          "map_item_spec": [
+            {
+              "item_name": "address",
+              "item_type": "string",
+              "item_optional": False,
+              "item_default": "::1"
+            },
+            {
+              "item_name": "port",
+              "item_type": "integer",
+              "item_optional": False,
+              "item_default": 53
+            }
+          ]
+        }
+      },
+      {
+        "item_name": "root_addresses",
         "item_type": "list",
         "item_optional": True,
         "item_default": [],

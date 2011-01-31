@@ -89,6 +89,7 @@ protected:
     MockSession notify_session;
     MockServer dnsserv;
     isc::dns::Message request_message;
+    isc::dns::MessagePtr response_message;
     isc::dns::MessagePtr parse_message;
     const isc::dns::qid_t default_qid;
     const isc::dns::Opcode opcode;

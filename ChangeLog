@@ -1,3 +1,36 @@
+  160.  [func]		jelte
+  	Updated the resolver to take 3 different timeout values;
+	timeout_query for outstanding queries we sent while resolving
+	timeout_client for sending an answer back to the client
+	timeout_lookup for stopping the resolving
+	(currently 2 and 3 have the same final effect)
+	(Trac 489, git 578ea7f4ba94dc0d8a3d39231dad2be118e125a2)
+
+  159.	[func]		smann
+	The resolver now has a configurable set of root servers to start
+	resolving at (called root_addresses). By default these are not
+	(yet) filled in. If empty, a hardcoded address for f-root will be
+	used right now.
+	(Trac #483, git a07e078b4feeb01949133fc88c9939254c38aa7c)
+
+  158.	[func]		jelte
+	The Resolver module will now do (very limited) resolving, if not
+	set to forwarding mode (i.e. if the configuration option
+	forward_addresses is left empty). It only supports referrals that
+	contain glue addresses at this point, and does no other processing
+	of authoritative answers.
+	(Trac #484, git 7b84de4c0e11f4a070e038ca4f093486e55622af)
+
+  157.  [bug]       vorner
+	One frozen process no longer freezes the whole b10-msgq. It caused the
+	whole system to stop working.
+	(Trac #420, git 93697f58e4d912fa87bc7f9a591c1febc9e0d139)
+
+  156.	[func]		stephen
+	Added ResponseClassifier class to examine response from
+	a server and classify it into one of several categories.
+	(Trac #487, git 18491370576e7438c7893f8551bbb8647001be9c)
+
 bind10-devel-20110120 released on January 20, 2011
 
   155.	[doc]		jreed

@@ -17,6 +17,7 @@
 #define __ZONE_H 1
 
 #include <datasrc/result.h>
+#include <dns/rrsetlist.h>
 
 namespace isc {
 namespace datasrc {
@@ -162,6 +163,12 @@ public:
     ///   a successful match, and the code of \c SUCCESS will be returned.
     /// - If the search name matches a delegation point of DNAME, it returns
     ///   the code of \c DNAME and that DNAME RR.
+    /// - If the target isn't NULL, all RRsets under the domain are inserted
+    ///   there and SUCCESS (or NXDOMAIN, in case of empty domain) is returned
+    ///   instead of normall processing. This is intended to handle ANY query.
+    ///   \note: this behavior is controversial as we discussed in
+    ///   https://lists.isc.org/pipermail/bind10-dev/2011-January/001918.html
+    ///   We should revisit the interface before we heavily rely on it.
     ///
     /// The \c options parameter specifies customized behavior of the search.
     /// Their semantics is as follows:
@@ -177,19 +184,19 @@ public:
     /// A derived version of this method may involve internal resource
     /// allocation, especially for constructing the resulting RRset, and may
     /// throw an exception if it fails.
+    /// It throws DuplicateRRset exception if there are duplicate rrsets under
+    /// the same domain.
     /// It should not throw other types of exceptions.
-    ///
-    /// Note: It's quite likely that we'll need to specify search options.
-    /// For example, we should be able to specify whether to allow returning
-    /// glue records at or under a zone cut.  We leave this interface open
-    /// at this moment.
     ///
     /// \param name The domain name to be searched for.
     /// \param type The RR type to be searched for.
+    /// \param target If target is not NULL, insert all RRs under the domain
+    /// into it.
     /// \param options The search options.
     /// \return A \c FindResult object enclosing the search result (see above).
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type,
+                            isc::dns::RRsetList* target = NULL,
                             const FindOptions options
                             = FIND_DEFAULT) const = 0;
     //@}
