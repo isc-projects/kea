@@ -282,9 +282,13 @@ typedef std::vector<std::pair<std::string, uint16_t> > AddressVector;
 
 }
 
+// Here we do not use the typedef above, as the SunStudio compiler
+// mishandles this in its name mangling, and wouldn't compile.
+// We can probably use a typedef, but need to move it to a central
+// location and use it consistently.
 RecursiveQuery::RecursiveQuery(DNSService& dns_service,
-    const AddressVector& upstream,
-    const AddressVector& upstream_root,
+    const std::vector<std::pair<std::string, uint16_t> >& upstream,
+    const std::vector<std::pair<std::string, uint16_t> >& upstream_root,
     int query_timeout, int client_timeout, int lookup_timeout,
     unsigned retries) :
     dns_service_(dns_service), upstream_(new AddressVector(upstream)),
