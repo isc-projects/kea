@@ -533,11 +533,13 @@ class RecursiveQuery {
     ///
     //@{
 public:
-    /// \brief Constructor for use when acting as a forwarder
+    /// \brief Constructor
     ///
     /// This is currently the only way to construct \c RecursiveQuery
-    /// object.  The addresses of the forward nameservers is specified,
-    /// and every upstream query will be sent to one random address.
+    /// object. If the addresses of the forward nameservers is specified,
+    /// and every upstream query will be sent to one random address, and
+    /// the result sent back directly. If not, it will do full resolving.
+    ///
     /// \param dns_service The DNS Service to perform the recursive
     ///        query on.
     /// \param upstream Addresses and ports of the upstream servers

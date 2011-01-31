@@ -17,28 +17,33 @@
 
 #include <dns/message.h>
 
-/**
- * \file resolver_interface.h
- * \short Temporary interface to resolver.
- *
- * This file contains a dummy interface for the resolver, which does not yet
- * exist. When the resolver appears, this file should either wrap its
- * interface or, better, be removed completely.
- *
- * Currently left in while moving interfaces and classes around
- */
+///
+/// \file resolver_interface.h
+/// \short Interface to resolver.
+///
+/// This file contains an interface for the resolver. By subclassing
+/// this abstract interface, other parts of the system can ask the
+/// resolver to do some resolving too.
+///
+/// This is done by creating a subclass of ResolverInterface::Callback,
+/// which defines what to do with the result, and then calling resolve()
+/// on the ResolverInterface implementation.
+///
+/// One default Callback subclass is provided right now, in
+/// resolver_callback.[h|cc], which calls resumse() on a given DNSServer
+///
 
 namespace isc {
 namespace resolve {
 
-/**
- * \short Abstract interface to the resolver.
- *
- * Abstract interface to the resolver. The NameserverAddressStore uses this
- * to ask for addresses. It is here because resolver does not yet exist.
- *
- * It is abstract to allow tests pass dummy resolvers.
- */
+///
+/// \short Abstract interface to the resolver.
+///
+/// Abstract interface to the resolver. The NameserverAddressStore uses this
+/// to ask for addresses. It is here because resolver does not yet exist.
+///
+/// It is abstract to allow tests pass dummy resolvers.
+///
 class ResolverInterface {
     public:
         /// \short An abstract callback for when the resolver is done.
@@ -56,13 +61,13 @@ class ResolverInterface {
                 /// \short Some data arrived.
                 virtual void success(const isc::dns::MessagePtr response) = 0;
                 
-                /**
-                 * \short No data available.
-                 *
-                 * \todo Provide error reason (result of the
-                 *       classification call, for instance? We'd also
-                 *       need some way to say 'everything times out')
-                 */
+                ///
+                ///\short No data available.
+                ///
+                ///\todo Provide error reason (result of the
+                ///      classification call, for instance? We'd also
+                ///      need some way to say 'everything times out')
+                ///
                 virtual void failure() = 0;
 
                 /// \short Virtual destructor, so descendants are cleaned up
@@ -71,15 +76,15 @@ class ResolverInterface {
 
         typedef boost::shared_ptr<Callback> CallbackPtr;
 
-        /**
-         * \short Ask a question.
-         *
-         * Asks the resolver a question. Once the answer is ready
-         * the callback is called.
-         *
-         * \param question What to ask. The resolver will decide who.
-         * \param callback What should happen when the answer is ready.
-         */
+        ///
+        ///\short Ask a question.
+        ///
+        /// Asks the resolver a question. Once the answer is ready
+        /// the callback is called.
+        ///
+        /// \param question What to ask. The resolver will decide who.
+        /// \param callback What should happen when the answer is ready.
+        ///
         virtual void resolve(const isc::dns::QuestionPtr& question,
             const CallbackPtr& callback) = 0;
 
