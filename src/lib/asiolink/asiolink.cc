@@ -540,7 +540,7 @@ public:
             }
             
             if (done) {
-                resolvercallback_->callback(result == UDPQuery::SUCCESS);
+                resolvercallback_->success(answer_message_);
                 //server_->resume(result == UDPQuery::SUCCESS);
                 delete this;
             }
@@ -550,7 +550,7 @@ public:
             send();
         } else {
             // out of retries, give up for now
-            resolvercallback_->callback(false);
+            resolvercallback_->failure();
             //server_->resume(false);
             delete this;
         }

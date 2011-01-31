@@ -16,6 +16,7 @@
 #define _ISC_RESOLVER_CALLBACK_H 1
 
 #include <asiolink/asiolink.h>
+#include <dns/message.h>
 
 namespace isc {
 namespace resolve {
@@ -29,14 +30,18 @@ namespace resolve {
 class AbstractResolverCallback {
 public:
     ~AbstractResolverCallback() {};
-    virtual void callback(bool result) = 0;
+    //virtual void callback(bool result) = 0;
+    virtual void success(isc::dns::MessagePtr response) = 0;
+    virtual void failure() = 0;
 };
 
 class ResolverCallbackServer : public AbstractResolverCallback {
 public:
     ResolverCallbackServer(asiolink::DNSServer* server) :
         server_(server->clone()) {}
-    void callback(bool result);
+    //void callback(bool result);
+    void success(isc::dns::MessagePtr response);
+    void failure();
 
 private:
     asiolink::DNSServer* server_;
@@ -49,7 +54,9 @@ public:
         isc::dns::MessagePtr answer_message) :
             callback_(callback),
             answer_message_(answer_message) {}
-    void callback(bool result);
+    //void callback(bool result);
+    void success(isc::dns::MessagePtr response);
+    void failure();
 
 private:
     const isc::resolve::ResolverInterface::CallbackPtr callback_;
