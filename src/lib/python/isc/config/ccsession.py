@@ -401,8 +401,7 @@ class UIModuleCCSession(MultiConfigData):
             
         if value not in cur_list:
             cur_list.append(value)
-
-        self.set_value(identifier, cur_list)
+            self.set_value(identifier, cur_list)
 
     def remove_value(self, identifier, value_str):
         """Remove a value from a configuration list. The value string
