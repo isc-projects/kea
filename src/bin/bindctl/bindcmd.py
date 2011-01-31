@@ -601,8 +601,8 @@ class BindCmdInterpreter(Cmd):
                 line = value_map['name']
                 if value_map['type'] in [ 'module', 'map' ]:
                     line += "/"
-                elif len(value_map) > 1 and value_map['type'] == 'list' \
-                     and (value_map['value'] != []):
+                elif value_map['type'] == 'list' \
+                     and value_map['value'] != []:
                     # do not print content of non-empty lists if
                     # we have more data to show
                     line += "/"

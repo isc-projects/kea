@@ -171,7 +171,7 @@ class CommandInfo:
                 print(textwrap.fill(info.get_desc(),
                       initial_indent="        ",
                       subsequent_indent="        ",
-                      width=50))
+                      width=70))
                 mandatory_infos.append(info)
 
         optional_infos = [info for info in params.values() 
@@ -183,7 +183,7 @@ class CommandInfo:
                 print(textwrap.fill(info.get_desc(),
                       initial_indent="        ",
                       subsequent_indent="        ",
-                      width=50))
+                      width=70))
 
 
 class ModuleInfo:
