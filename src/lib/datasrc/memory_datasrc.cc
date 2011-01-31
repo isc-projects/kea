@@ -73,13 +73,10 @@ struct MemoryZone::MemoryZoneImpl {
      *
      * If such condition is found, it throws AddError.
      */
-    void contextCheck(const ConstRRsetPtr& rrset, const DomainPtr& domain) {
+    void contextCheck(const ConstRRsetPtr& rrset,
+                      const DomainPtr& domain) const {
         // Ensure CNAME and other type of RR don't coexist for the same
         // owner name.
-        // Note: when the check fails and the exception is thrown, it may
-        // break strong exception guarantee.  At the moment we prefer
-        // code simplicity and don't bother to introduce complicated
-        // recovery code.
         if (rrset->getType() == RRType::CNAME()) {
             // XXX: this check will become incorrect when we support DNSSEC
             // (depending on how we support DNSSEC).  We should revisit it
@@ -168,7 +165,11 @@ struct MemoryZone::MemoryZoneImpl {
             domain = node->getData();
         }
 
-        // Checks related to the surrounding data
+        // Checks related to the surrounding data.
+        // Note: when the check fails and the exception is thrown, it may
+        // break strong exception guarantee.  At the moment we prefer
+        // code simplicity and don't bother to introduce complicated
+        // recovery code.
         contextCheck(rrset, domain);
 
         // Try inserting the rrset there
@@ -249,7 +250,7 @@ struct MemoryZone::MemoryZoneImpl {
             // a different way than described in 4.1 of that RFC,
             // but because of the assumption in section 3, it has the
             // same behaviour.
-            return true;
+            return (true);
         }
 
         // Look for NS
