@@ -41,22 +41,36 @@ namespace resolve {
  */
 class ResolverInterface {
     public:
-        /// \short An abstract callback when data from resolver are ready.
+        /// \short An abstract callback for when the resolver is done.
+        ///
+        /// You can pass an instance of a subclass of this (as a
+        /// CallbackPtr) to RecursiveQuery::sendQuery(), and when it
+        /// is done, it will either call success() if there is an
+        /// answer MessagePtr, or failure(), if the resolver was not
+        /// able to find anything.
+        ///
+        /// Note that a result Message does not necessarily contain
+        /// the actual answer (it could be a noerror/nodata response).
         class Callback {
             public:
                 /// \short Some data arrived.
-                virtual void success(isc::dns::MessagePtr response) = 0;
+                virtual void success(const isc::dns::MessagePtr response) = 0;
                 
                 /**
                  * \short No data available.
                  *
-                 * \todo Pass some reason.
+                 * \todo Provide error reason (result of the
+                 *       classification call, for instance? We'd also
+                 *       need some way to say 'everything times out')
                  */
                 virtual void failure() = 0;
+
                 /// \short Virtual destructor, so descendants are cleaned up
-                virtual ~ Callback() {};
+                virtual ~Callback() {};
         };
+
         typedef boost::shared_ptr<Callback> CallbackPtr;
+
         /**
          * \short Ask a question.
          *
@@ -68,6 +82,7 @@ class ResolverInterface {
          */
         virtual void resolve(const isc::dns::QuestionPtr& question,
             const CallbackPtr& callback) = 0;
+
         /// \short Virtual destructor, so descendants are properly cleaned up
         virtual ~ ResolverInterface() {}
 };

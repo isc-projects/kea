@@ -18,7 +18,7 @@ namespace isc {
 namespace resolve {
 
 void
-ResolverCallbackServer::success(isc::dns::MessagePtr response)
+ResolverCallbackServer::success(const isc::dns::MessagePtr response)
 {
     // ignore our response here
     (void)response;
