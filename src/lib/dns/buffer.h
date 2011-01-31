@@ -355,7 +355,7 @@ public:
     /// exception class of \c InvalidBufferPosition will be thrown.
     ///
     /// \param pos The position in the buffer to be returned.
-    const uint8_t& operator[](size_t pos) const
+    uint8_t operator[](size_t pos) const
     {
         if (pos >= size_) {
             isc_throw(InvalidBufferPosition, "read at invalid position");
