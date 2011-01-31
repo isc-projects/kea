@@ -35,7 +35,7 @@
 #include <asiolink/asiolink.h>
 #include <asiolink/internal/tcpdns.h>
 #include <asiolink/internal/udpdns.h>
-#include <asiolink/internal/ioquery.h>
+#include <asiolink/internal/iofetch.h>
 
 #include <log/dummylog.h>
 

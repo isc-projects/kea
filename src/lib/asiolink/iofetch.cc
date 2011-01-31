@@ -38,7 +38,7 @@
 #include <internal/coroutine.h>
 #include <internal/udpdns.h>
 #include <internal/tcpdns.h>
-#include <internal/ioquery.h>
+#include <internal/iofetch.h>
 
 using namespace asio;
 using asio::ip::udp;
@@ -56,6 +56,10 @@ struct UDPQuery::PrivateData {
     udp::socket socket;
     // Where was the query sent
     udp::endpoint remote;
+    // TCP Socket
+    //tcp::socket tsocket;
+    // tcp endpoint
+    //tcp::endpoint tremote;
     // What we ask the server
     Question question;
     // We will store the answer here
