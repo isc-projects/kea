@@ -18,6 +18,7 @@
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
+#include <dns/rrsetlist.h>
 #include <dns/rrttl.h>
 #include <dns/masterload.h>
 
@@ -219,7 +220,8 @@ public:
     void findTest(const Name& name, const RRType& rrtype, Zone::Result result,
                   bool check_answer = true,
                   const ConstRRsetPtr& answer = ConstRRsetPtr(),
-                  MemoryZone *zone = NULL,
+                  RRsetList* target = NULL,
+                  MemoryZone* zone = NULL,
                   Zone::FindOptions options = Zone::FIND_DEFAULT)
     {
         if (!zone) {
@@ -228,7 +230,7 @@ public:
         // The whole block is inside, because we need to check the result and
         // we can't assign to FindResult
         EXPECT_NO_THROW({
-                Zone::FindResult find_result(zone->find(name, rrtype,
+                Zone::FindResult find_result(zone->find(name, rrtype, target,
                                                         options));
                 // Check it returns correct answers
                 EXPECT_EQ(result, find_result.code);
@@ -312,7 +314,8 @@ TEST_F(MemoryZoneTest, findCNAMEUnderZoneCut) {
                                            RRTTL(300)));
     EXPECT_EQ(SUCCESS, zone_.add(rr_cname_under_cut_));
     findTest(Name("cname.child.example.org"), RRType::AAAA(),
-             Zone::CNAME, true, rr_cname_under_cut_, NULL, Zone::FIND_GLUE_OK);
+             Zone::CNAME, true, rr_cname_under_cut_, NULL, NULL,
+             Zone::FIND_GLUE_OK);
 }
 
 // Test adding child zones and zone cut handling
@@ -343,6 +346,51 @@ TEST_F(MemoryZoneTest, delegationNS) {
              Zone::DELEGATION, true, rr_child_ns_); // note: !rr_grandchild_ns_
 }
 
+TEST_F(MemoryZoneTest, findAny) {
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_a_)));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_ns_)));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_child_glue_)));
+
+    // origin
+    RRsetList origin_rrsets;
+    findTest(origin_, RRType::ANY(), Zone::SUCCESS, true,
+             ConstRRsetPtr(), &origin_rrsets);
+    EXPECT_EQ(2, origin_rrsets.size());
+    EXPECT_EQ(rr_a_, origin_rrsets.findRRset(RRType::A(), RRClass::IN()));
+    EXPECT_EQ(rr_ns_, origin_rrsets.findRRset(RRType::NS(), RRClass::IN()));
+
+    // out zone name
+    RRsetList out_rrsets;
+    findTest(Name("example.com"), RRType::ANY(), Zone::NXDOMAIN, true,
+             ConstRRsetPtr(), &out_rrsets);
+    EXPECT_EQ(0, out_rrsets.size());
+
+    RRsetList glue_child_rrsets;
+    findTest(child_glue_name_, RRType::ANY(), Zone::SUCCESS, true,
+                ConstRRsetPtr(), &glue_child_rrsets);
+    EXPECT_EQ(rr_child_glue_, glue_child_rrsets.findRRset(RRType::A(),
+                                                     RRClass::IN()));
+    EXPECT_EQ(1, glue_child_rrsets.size());
+
+    // TODO: test NXRRSET case after rbtree non-terminal logic has
+    // been implemented
+
+    // add zone cut
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_child_ns_)));
+
+    // zone cut
+    RRsetList child_rrsets;
+    findTest(child_ns_name_, RRType::ANY(), Zone::DELEGATION, true,
+             rr_child_ns_, &child_rrsets);
+    EXPECT_EQ(0, child_rrsets.size());
+
+    // glue for this zone cut
+    RRsetList new_glue_child_rrsets;
+    findTest(child_glue_name_, RRType::ANY(), Zone::DELEGATION, true,
+                rr_child_ns_, &new_glue_child_rrsets);
+    EXPECT_EQ(0, new_glue_child_rrsets.size());
+}
+
 TEST_F(MemoryZoneTest, glue) {
     // install zone data:
     // a zone cut
@@ -361,15 +409,15 @@ TEST_F(MemoryZoneTest, glue) {
 
     // If we do it in the "glue OK" mode, we should find the exact match.
     findTest(child_glue_name_, RRType::A(), Zone::SUCCESS, true,
-             rr_child_glue_, NULL, Zone::FIND_GLUE_OK);
+             rr_child_glue_, NULL, NULL, Zone::FIND_GLUE_OK);
 
     // glue OK + NXRRSET case
     findTest(child_glue_name_, RRType::AAAA(), Zone::NXRRSET, true,
-             ConstRRsetPtr(), NULL, Zone::FIND_GLUE_OK);
+             ConstRRsetPtr(), NULL, NULL, Zone::FIND_GLUE_OK);
 
     // glue OK + NXDOMAIN case
     findTest(Name("www.child.example.org"), RRType::A(), Zone::DELEGATION,
-             true, rr_child_ns_, NULL, Zone::FIND_GLUE_OK);
+             true, rr_child_ns_, NULL, NULL, Zone::FIND_GLUE_OK);
 
     // TODO:
     // glue name would match a wildcard under a zone cut: wildcard match
@@ -378,12 +426,13 @@ TEST_F(MemoryZoneTest, glue) {
 
     // nested cut case.  The glue should be found.
     findTest(grandchild_glue_name_, RRType::AAAA(), Zone::SUCCESS,
-             true, rr_grandchild_glue_, NULL, Zone::FIND_GLUE_OK);    
+             true, rr_grandchild_glue_, NULL, NULL, Zone::FIND_GLUE_OK);
 
     // A non-existent name in nested cut.  This should result in delegation
     // at the highest zone cut.
     findTest(Name("www.grand.child.example.org"), RRType::TXT(),
-             Zone::DELEGATION, true, rr_child_ns_, NULL, Zone::FIND_GLUE_OK);
+             Zone::DELEGATION, true, rr_child_ns_, NULL, NULL,
+             Zone::FIND_GLUE_OK);
 }
 
 // Test adding DNAMEs and resulting delegation handling
@@ -442,14 +491,14 @@ TEST_F(MemoryZoneTest, load) {
 
     // Now see there are some rrsets (we don't look inside, though)
     findTest(Name("."), RRType::SOA(), Zone::SUCCESS, false, ConstRRsetPtr(),
-        &rootzone);
+        NULL, &rootzone);
     findTest(Name("."), RRType::NS(), Zone::SUCCESS, false, ConstRRsetPtr(),
-        &rootzone);
+        NULL, &rootzone);
     findTest(Name("a.root-servers.net."), RRType::A(), Zone::SUCCESS, false,
-        ConstRRsetPtr(), &rootzone);
+        ConstRRsetPtr(), NULL, &rootzone);
     // But this should no longer be here
     findTest(ns_name_, RRType::AAAA(), Zone::NXDOMAIN, true, ConstRRsetPtr(),
-        &rootzone);
+        NULL, &rootzone);
 
     // Try loading zone that is wrong in a different way
     EXPECT_THROW(zone_.load(TEST_DATA_DIR "/duplicate_rrset.zone"),
@@ -478,13 +527,13 @@ TEST_F(MemoryZoneTest, swap) {
     EXPECT_EQ(RRClass::IN(), zone2.getClass());
     // make sure the zone data is swapped, too
     findTest(origin_, RRType::NS(), Zone::NXDOMAIN, false, ConstRRsetPtr(),
-             &zone1);
+             NULL, &zone1);
     findTest(other_origin, RRType::TXT(), Zone::SUCCESS, false,
-             ConstRRsetPtr(), &zone1);
+             ConstRRsetPtr(), NULL, &zone1);
     findTest(origin_, RRType::NS(), Zone::SUCCESS, false, ConstRRsetPtr(),
-             &zone2);
+             NULL, &zone2);
     findTest(other_origin, RRType::TXT(), Zone::NXDOMAIN, false,
-             ConstRRsetPtr(), &zone2);
+             ConstRRsetPtr(), NULL, &zone2);
 }
 
 TEST_F(MemoryZoneTest, getFileName) {
@@ -510,4 +559,5 @@ TEST_F(MemoryZoneTest, getFileName) {
     EXPECT_EQ(TEST_DATA_DIR "/root.zone", zone_.getFileName());
     EXPECT_TRUE(rootzone.getFileName().empty());
 }
+
 }

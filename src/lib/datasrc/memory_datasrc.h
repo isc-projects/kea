@@ -22,6 +22,7 @@
 namespace isc {
 namespace dns {
 class Name;
+class RRsetList;
 };
 
 namespace datasrc {
@@ -55,16 +56,20 @@ public:
 
     /// \brief Returns the origin of the zone.
     virtual const isc::dns::Name& getOrigin() const;
+
     /// \brief Returns the class of the zone.
     virtual const isc::dns::RRClass& getClass() const;
+
     /// \brief Looks up an RRset in the zone.
     ///
     /// See documentation in \c Zone.
     ///
-    /// It returns NULL pointer in case of NXDOMAIN and NXRRSET
+    /// It returns NULL pointer in case of NXDOMAIN and NXRRSET,
+    /// and also SUCCESS if target is not NULL(TYPE_ANY query).
     /// (the base class documentation does not seem to require that).
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type,
+                            isc::dns::RRsetList* target = NULL,
                             const FindOptions options = FIND_DEFAULT) const;
 
     /// \brief Inserts an rrset into the zone.
