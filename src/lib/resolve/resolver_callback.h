@@ -21,46 +21,18 @@
 namespace isc {
 namespace resolve {
 
-// We define two types of callbackholders for processing recursive
-// queries; one calls back the original DNSServer to resume()
-// the other uses direct callbacks (for instance when we need to
-// resolve something ourselves)
-// Caller warning: only callback once! The objects will delete
-// themselves on callback (after they have done they callback)
-class AbstractResolverCallback {
-public:
-    ~AbstractResolverCallback() {};
-    //virtual void callback(bool result) = 0;
-    virtual void success(isc::dns::MessagePtr response) = 0;
-    virtual void failure() = 0;
-};
-
-class ResolverCallbackServer : public AbstractResolverCallback {
+class ResolverCallbackServer : public ResolverInterface::Callback {
 public:
     ResolverCallbackServer(asiolink::DNSServer* server) :
         server_(server->clone()) {}
+    ~ResolverCallbackServer() { delete server_; };
+    
     //void callback(bool result);
     void success(isc::dns::MessagePtr response);
     void failure();
 
 private:
     asiolink::DNSServer* server_;
-};
-
-class ResolverCallbackDirect : public AbstractResolverCallback {
-public:
-    ResolverCallbackDirect(
-        const isc::resolve::ResolverInterface::CallbackPtr callback,
-        isc::dns::MessagePtr answer_message) :
-            callback_(callback),
-            answer_message_(answer_message) {}
-    //void callback(bool result);
-    void success(isc::dns::MessagePtr response);
-    void failure();
-
-private:
-    const isc::resolve::ResolverInterface::CallbackPtr callback_;
-    isc::dns::MessagePtr answer_message_;
 };
 
 } //namespace resolve
