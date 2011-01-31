@@ -378,24 +378,34 @@ class MultiConfigData:
             while len(id_parts) > 0:
                 id_part = id_parts.pop(0)
                 item_id, list_indices = isc.cc.data.split_identifier_list_indices(id_part)
+                id_list = module + "/" + id_prefix + "/" + item_id
                 id_prefix += "/" + id_part
                 if list_indices is not None:
-                    spec = find_spec_part(self._specifications[module].get_config_spec(), id_prefix)
-                    if 'item_default' in spec:
-                        list_value = spec['item_default']
-                        for i in list_indices:
-                            if i < len(list_value):
-                                list_value = list_value[i]
+                    # there's actually two kinds of default here for
+                    # lists; they can have a default value (like an
+                    # empty list), but their elements can  also have
+                    # default values.
+                    # So if the list item *itself* is a default,
+                    # we need to get the value out of that. If not, we
+                    # need to find the default for the specific element.
+                    list_value, type = self.get_value(id_list) 
+                    list_spec = find_spec_part(self._specifications[module].get_config_spec(), id_prefix)
+                    if type == self.DEFAULT:
+                        if 'item_default' in list_spec:
+                            list_value = list_spec['item_default']
+                            for i in list_indices:
+                                if i < len(list_value):
+                                    list_value = list_value[i]
+                                else:
+                                    # out of range, return None
+                                    return None
+                                
+                            if len(id_parts) > 0:
+                                rest_of_id = "/".join(id_parts)
+                                return isc.cc.data.find(list_value, rest_of_id)
                             else:
-                                # out of range, return None
-                                return None
-                            
-                        if len(id_parts) > 0:
-                            rest_of_id = "/".join(id_parts)
-                            return isc.cc.data.find(list_value, rest_of_id)
-                        else:
-                            return list_value
-    
+                                return list_value
+                    
             spec = find_spec_part(self._specifications[module].get_config_spec(), id)
             if 'item_default' in spec:
                 return spec['item_default']
