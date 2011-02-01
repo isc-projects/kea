@@ -234,64 +234,6 @@ private:
     boost::shared_ptr<IOEndpoint> peer_;
     boost::shared_ptr<IOSocket> iosock_;
 };
-
-//
-// Asynchronous UDP coroutine for upstream queries
-//
-class UDPQuery : public coroutine {
-public:
-    // TODO Maybe this should be more generic than just for UDPQuery?
-    ///
-    /// \brief Result of the query
-    ///
-    /// This is related only to contacting the remote server. If the answer
-    ///indicates error, it is still counted as SUCCESS here, if it comes back.
-    ///
-    enum Result {
-        SUCCESS,
-        TIME_OUT,
-        STOPPED
-    };
-    /// Abstract callback for the UDPQuery.
-    class Callback {
-    public:
-        virtual ~Callback() {}
-
-        /// This will be called when the UDPQuery is completed
-        virtual void operator()(Result result) = 0;
-    };
-    ///
-    /// \brief Constructor.
-    ///
-    /// It creates the query.
-    /// @param callback will be called when we terminate. It is your task to
-    ///        delete it if allocated on heap.
-    ///@param timeout in ms.
-    ///
-    explicit UDPQuery(asio::io_service& io_service,
-                      const isc::dns::Question& q,
-                      const IOAddress& addr, uint16_t port,
-                      isc::dns::OutputBufferPtr buffer,
-                      Callback* callback, int timeout = -1);
-    void operator()(asio::error_code ec = asio::error_code(),
-                    size_t length = 0);
-    /// Terminate the query.
-    void stop(Result reason = STOPPED);
-private:
-    enum { MAX_LENGTH = 4096 };
-
-    ///
-    /// \short Private data
-    ///
-    /// They are not private because of stability of the
-    /// interface (this is private class anyway), but because this class
-    /// will be copyed often (it is used as a coroutine and passed as callback
-    /// to many async_*() functions) and we want keep the same data. Some of
-    /// the data is not copyable too.
-    ///
-    struct PrivateData;
-    boost::shared_ptr<PrivateData> data_;
-};
 }
 
 
