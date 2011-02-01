@@ -36,7 +36,12 @@ struct MemoryZone::MemoryZoneImpl {
     // Constructor
     MemoryZoneImpl(const RRClass& zone_class, const Name& origin) :
         zone_class_(zone_class), origin_(origin), origin_data_(NULL)
-    {}
+    {
+        // We create the node for origin (it needs to exist anyway in future)
+        domains_.insert(origin, &origin_data_);
+        DomainPtr origin_domain(new Domain);
+        origin_data_->setData(origin_domain);
+    }
 
     // Some type aliases
     /*
@@ -158,9 +163,6 @@ struct MemoryZone::MemoryZoneImpl {
         if (node->isEmpty()) {
             domain.reset(new Domain);
             node->setData(domain);
-            if (origin_data_ == NULL && name == origin_) {
-                origin_data_ = node;
-            }
         } else { // Get existing one
             domain = node->getData();
         }
