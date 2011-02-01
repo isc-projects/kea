@@ -336,7 +336,7 @@ AC_ARG_WITH([log4cxx],
     [specify directory where log4cxx is installed]),
   [
    log4cxx_include_path="${withval}/include";
-   log4cxx_lib_path="${$withval}/lib"
+   log4cxx_library_path="${withval}/lib"
   ])
 
 # If not specified, try some common paths.  These default to
@@ -348,7 +348,7 @@ if test -z "$with_log4cxx"; then
 	do
 		if test -d $d/include/log4cxx; then
 			log4cxx_include_path=$d/include
-            log4cxx_library_path=$d/lib
+			log4cxx_library_path=$d/lib
 			break
 		fi
 	done
@@ -365,7 +365,7 @@ AC_SUBST(LOG4CXX_INCLUDES)
 
 LOG4CXX_LDFLAGS="-llog4cxx";
 if test "${log4cxx_library_path}"; then
-    LOG4CXX_LDFLAGS="-L{log4cxx_library_path} -llog4cxx"
+    LOG4CXX_LDFLAGS="-L${log4cxx_library_path} -llog4cxx"
 fi
 AC_SUBST(LOG4CXX_LDFLAGS)
 
