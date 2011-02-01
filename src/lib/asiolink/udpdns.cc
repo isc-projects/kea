@@ -46,29 +46,106 @@ using namespace std;
 using namespace isc::dns;
 
 namespace asiolink {
+
+struct UDPServer::Data {
+    Data(io_service& io_service, const ip::address& addr, const uint16_t port,
+        SimpleCallback* checkin, DNSLookup* lookup, DNSAnswer* answer) :
+        io_(io_service), done_(false), checkin_callback_(checkin),
+        lookup_callback_(lookup), answer_callback_(answer)
+    {
+        // We must use different instantiations for v4 and v6;
+        // otherwise ASIO will bind to both
+        udp proto = addr.is_v4() ? udp::v4() : udp::v6();
+        socket_.reset(new udp::socket(io_service, proto));
+        socket_->set_option(socket_base::reuse_address(true));
+        if (addr.is_v6()) {
+            socket_->set_option(asio::ip::v6_only(true));
+        }
+        socket_->bind(udp::endpoint(addr, port));
+    }
+
+    Data(const Data& other) :
+        io_(other.io_), socket_(other.socket_), done_(false),
+        checkin_callback_(other.checkin_callback_),
+        lookup_callback_(other.lookup_callback_),
+        answer_callback_(other.answer_callback_)
+    {
+        // Instantiate the data buffer and endpoint that will
+        // be used by the asynchronous receive call.
+        data_.reset(new char[MAX_LENGTH]);
+        sender_.reset(new udp::endpoint());
+    }
+
+    // The ASIO service object
+    asio::io_service& io_;
+
+    // Class member variables which are dynamic, and changes to which
+    // need to accessible from both sides of a coroutine fork or from
+    // outside of the coroutine (i.e., from an asynchronous I/O call),
+    // should be declared here as pointers and allocated in the
+    // constructor or in the coroutine.  This allows state information
+    // to persist when an individual copy of the coroutine falls out
+    // scope while waiting for an event, *so long as* there is another
+    // object that is referencing the same data.  As a side-benefit, using
+    // pointers also reduces copy overhead for coroutine objects.
+    //
+    // Note: Currently these objects are allocated by "new" in the
+    // constructor, or in the function operator while processing a query.
+    // Repeated allocations from the heap for every incoming query is
+    // clearly a performance issue; this must be optimized in the future.
+    // The plan is to have a structure pre-allocate several "server state"
+    // objects which can be pulled off a free list and placed on an in-use
+    // list whenever a query comes in.  This will serve the dual purpose
+    // of improving performance and guaranteeing that state information
+    // will *not* be destroyed when any one instance of the coroutine
+    // falls out of scope while waiting for an event.
+    //
+    // Socket used to for listen for queries.  Created in the
+    // constructor and stored in a shared_ptr because socket objects
+    // are not copyable.
+    boost::shared_ptr<asio::ip::udp::socket> socket_;
+
+    // The ASIO-enternal endpoint object representing the client
+    boost::shared_ptr<asio::ip::udp::endpoint> sender_;
+
+    // \c IOMessage and \c Message objects to be passed to the
+    // DNS lookup and answer providers
+    boost::shared_ptr<asiolink::IOMessage> io_message_;
+
+    // The original query as sent by the client
+    isc::dns::MessagePtr query_message_;
+
+    // The response message we are building
+    isc::dns::MessagePtr answer_message_;
+
+    // The buffer into which the response is written
+    isc::dns::OutputBufferPtr respbuf_;
+
+    // The buffer into which the query packet is written
+    boost::shared_array<char> data_;
+
+    // State information that is entirely internal to a given instance
+    // of the coroutine can be declared here.
+    size_t bytes_;
+    bool done_;
+
+    // Callback functions provided by the caller
+    const SimpleCallback* checkin_callback_;
+    const DNSLookup* lookup_callback_;
+    const DNSAnswer* answer_callback_;
+
+    boost::shared_ptr<IOEndpoint> peer_;
+    boost::shared_ptr<IOSocket> iosock_;
+};
+
 /// The following functions implement the \c UDPServer class.
 ///
 /// The constructor
-UDPServer::UDPServer(io_service& io_service,
-                     const ip::address& addr, const uint16_t port,
-                     SimpleCallback* checkin,
-                     DNSLookup* lookup,
-                     DNSAnswer* answer) :
-    io_(io_service), done_(false),
-    checkin_callback_(checkin),
-    lookup_callback_(lookup),
-    answer_callback_(answer)
-{
-    // We must use different instantiations for v4 and v6;
-    // otherwise ASIO will bind to both
-    udp proto = addr.is_v4() ? udp::v4() : udp::v6();
-    socket_.reset(new udp::socket(io_service, proto));
-    socket_->set_option(socket_base::reuse_address(true));
-    if (addr.is_v6()) {
-        socket_->set_option(asio::ip::v6_only(true));
-    }
-    socket_->bind(udp::endpoint(addr, port));
-}
+UDPServer::UDPServer(io_service& io_service, const ip::address& addr,
+    const uint16_t port, SimpleCallback* checkin, DNSLookup* lookup,
+    DNSAnswer* answer) :
+    data_(new Data(io_service, addr, port, checkin, lookup, answer))
+{ }
 
 /// The function operator is implemented with the "stackless coroutine"
 /// pattern; see internal/coroutine.h for details.
@@ -80,27 +157,24 @@ UDPServer::operator()(error_code ec, size_t length) {
 
     CORO_REENTER (this) {
         do {
-            // Instantiate the data buffer and endpoint that will
-            // be used by the asynchronous receive call.
-            data_.reset(new char[MAX_LENGTH]);
-            sender_.reset(new udp::endpoint());
+            data_.reset(new Data(*data_));
 
             do {
                 // Begin an asynchronous receive, then yield.
                 // When the receive event is posted, the coroutine
                 // will resume immediately after this point.
-                CORO_YIELD socket_->async_receive_from(buffer(data_.get(),
-                                                              MAX_LENGTH),
-                                                  *sender_, *this);
+                CORO_YIELD data_->socket_->async_receive_from(
+                    buffer(data_->data_.get(), MAX_LENGTH), *data_->sender_,
+                    *this);
             } while (ec || length == 0);
 
-            bytes_ = length;
+            data_->bytes_ = length;
 
             /// Fork the coroutine by creating a copy of this one and
             /// scheduling it on the ASIO service queue.  The parent
             /// will continue listening for DNS packets while the child
             /// processes the one that has just arrived.
-            CORO_FORK io_.post(UDPServer(*this));
+            CORO_FORK data_->io_.post(UDPServer(*this));
         } while (is_parent());
 
         // Create an \c IOMessage object to store the query.
@@ -108,56 +182,57 @@ UDPServer::operator()(error_code ec, size_t length) {
         // (XXX: It would be good to write a factory function
         // that would quickly generate an IOMessage object without
         // all these calls to "new".)
-        peer_.reset(new UDPEndpoint(*sender_));
-        iosock_.reset(new UDPSocket(*socket_));
-        io_message_.reset(new IOMessage(data_.get(), bytes_, *iosock_, *peer_));
+        data_->peer_.reset(new UDPEndpoint(*data_->sender_));
+        data_->iosock_.reset(new UDPSocket(*data_->socket_));
+        data_->io_message_.reset(new IOMessage(data_->data_.get(),
+            data_->bytes_, *data_->iosock_, *data_->peer_));
 
         // Perform any necessary operations prior to processing an incoming
         // query (e.g., checking for queued configuration messages).
         //
         // (XXX: it may be a performance issue to check in for every single
         // incoming query; we may wish to throttle this in the future.)
-        if (checkin_callback_ != NULL) {
-            (*checkin_callback_)(*io_message_);
+        if (data_->checkin_callback_ != NULL) {
+            (*data_->checkin_callback_)(*data_->io_message_);
         }
 
         // If we don't have a DNS Lookup provider, there's no point in
         // continuing; we exit the coroutine permanently.
-        if (lookup_callback_ == NULL) {
+        if (data_->lookup_callback_ == NULL) {
             CORO_YIELD return;
         }
 
         // Instantiate objects that will be needed by the
         // asynchronous DNS lookup and/or by the send call.
-        respbuf_.reset(new OutputBuffer(0));
-        query_message_.reset(new Message(Message::PARSE));
-        answer_message_.reset(new Message(Message::RENDER));
+        data_->respbuf_.reset(new OutputBuffer(0));
+        data_->query_message_.reset(new Message(Message::PARSE));
+        data_->answer_message_.reset(new Message(Message::RENDER));
 
         // Schedule a DNS lookup, and yield.  When the lookup is
         // finished, the coroutine will resume immediately after
         // this point.
-        CORO_YIELD io_.post(AsyncLookup<UDPServer>(*this));
+        CORO_YIELD data_->io_.post(AsyncLookup<UDPServer>(*this));
 
         dlog("[XX] got an answer");
 
         // The 'done_' flag indicates whether we have an answer
         // to send back.  If not, exit the coroutine permanently.
-        if (!done_) {
+        if (!data_->done_) {
             CORO_YIELD return;
         }
 
         // Call the DNS answer provider to render the answer into
         // wire format
-        (*answer_callback_)(*io_message_, query_message_,
-                            answer_message_, respbuf_);
+        (*data_->answer_callback_)(*data_->io_message_, data_->query_message_,
+                            data_->answer_message_, data_->respbuf_);
 
         // Begin an asynchronous send, and then yield.  When the
         // send completes, we will resume immediately after this point
         // (though we have nothing further to do, so the coroutine
         // will simply exit at that time).
-        CORO_YIELD socket_->async_send_to(buffer(respbuf_->getData(),
-                                                 respbuf_->getLength()),
-                                     *sender_, *this);
+        CORO_YIELD data_->socket_->async_send_to(
+            buffer(data_->respbuf_->getData(), data_->respbuf_->getLength()),
+            *data_->sender_, *this);
     }
 }
 
@@ -165,8 +240,8 @@ UDPServer::operator()(error_code ec, size_t length) {
 /// AsyncLookup<UDPServer> handler.)
 void
 UDPServer::asyncLookup() {
-    (*lookup_callback_)(*io_message_, query_message_, answer_message_,
-                        respbuf_, this);
+    (*data_->lookup_callback_)(*data_->io_message_,
+        data_->query_message_, data_->answer_message_, data_->respbuf_, this);
 }
 
 /// Post this coroutine on the ASIO service queue so that it will
@@ -174,8 +249,13 @@ UDPServer::asyncLookup() {
 /// whether there is an answer to return to the client.
 void
 UDPServer::resume(const bool done) {
-    done_ = done;
-    io_.post(*this);
+    data_->done_ = done;
+    data_->io_.post(*this);
+}
+
+bool
+UDPServer::hasAnswer() {
+    return (data_->done_);
 }
 
 // Private UDPQuery data (see internal/udpdns.h for reasons)
