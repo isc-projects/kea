@@ -75,7 +75,7 @@ struct TooLongNodeChain : public isc::Exception {
         Exception(file, line, what){}
 };
 
-/// Forward declare RBTree class here is convinent for following friend 
+/// Forward declare RBTree class here is convinent for following friend
 /// class declare inside RBNode and RBTreeNodeChain
 template <typename T>
 class RBTree;
@@ -306,25 +306,26 @@ RBNode<T>::successor() const {
 }
 
 
-/// \brief RBTreeNodeChain is used to keep track of the sequence of 
-/// nodes to reach any given node from the root of RBTree.  
+/// \brief RBTreeNodeChain is used to keep track of the sequence of
+/// nodes to reach any given node from the root of RBTree.
 ///
-/// RBNode did not have "up" pointers in them (for memory usage reasons) 
-/// so there was no way to find the path back to the root from any given 
-/// RBNode. 
+/// RBNode does not have "up" pointers in them (for memory usage reasons)
+/// so there is no way to find the path back to the root from any given
+/// RBNode.
 ///
-/// RBTreeNodeChain is constructed and manipulate only by \c RBTree. 
-/// RBTree use it as a inner data struct to iterator the whole RBTree.
-/// This is the reason why only construct function and getAbsoluteName
-/// function is public and others are private
+/// RBTreeNodeChain is constructed and manipulate only by \c RBTree.
+/// \c RBTree uses it as an inner data structure to iterate over the whole
+/// RBTree.
+/// This is the reason why only construct function and \c getAbsoluteName
+/// function is public and others are private.
 template <typename T>
 class RBTreeNodeChain {
-    /// RBTreeNodeChain is initialized by RBTree, only RBTree has 
+    /// RBTreeNodeChain is initialized by RBTree, only RBTree has
     /// knowledge to manipuate it.
     friend class RBTree<T>;
 public:
     /// \name Constructors
-    /// 
+    ///
     /// \note empty RBTreeNodeChain isn't meaningful, use it
     /// as parameter for functions like getAbsoluteName or
     /// nextNode in \c RBTree will throw InvalidNodeChain exception
@@ -335,29 +336,27 @@ public:
     RBTreeNodeChain(const RBTreeNodeChain<T>& node_path) {
         node_count_ = node_path.node_count_;
         if (node_count_ > 0) {
-            memcpy(nodes_, node_path.nodes_,
-                    node_count_ * sizeof(RBNode<T>*));
+            memcpy(nodes_, node_path.nodes_, node_count_ * sizeof(RBNode<T>*));
         }
     }
 
-    RBTreeNodeChain<T>& 
+    RBTreeNodeChain<T>&
     operator=(const RBTreeNodeChain<T>& node_path) {
         node_count_ = node_path.node_count_;
         if (node_count_ > 0) {
-            memcpy(nodes_, node_path.nodes_,
-                    node_count_ * sizeof(RBNode<T>*));
+            memcpy(nodes_, node_path.nodes_, node_count_ * sizeof(RBNode<T>*));
         }
         return (*this);
     }
     //@}
-    
-    /// \brief return the absolute name for the node which current 
+
+    /// \brief return the absolute name for the node which current
     /// RBTreeNodeChain traces.
     ///
-    /// \exception RBTreeNodeChain has to be initialized by RBtree, 
+    /// \exception RBTreeNodeChain has to be initialized by RBtree,
     /// otherwise InvalidNodeChain exception will be thrown
     isc::dns::Name getAbsoluteName() const {
-        const RBNode<T> *top_node = top();
+        const RBNode<T>* top_node = top();
         isc::dns::Name absolute_name = top_node->getName();
         int node_count = node_count_ - 1;
         while (node_count > 0) {
@@ -376,7 +375,7 @@ private:
     bool isEmpty() const { return (node_count_ == 0); }
 
     /// \brief return the top node for the node chain
-    /// 
+    ///
     /// RBTreeNodeChain store all the nodes along top node to
     /// root node of RBTree
     ///
@@ -402,21 +401,21 @@ private:
         }
         --node_count_;
     }
-   
+
     /// \brief add the node into the node chain
     ///
     /// If the node chain isn't empty, the node should be
     /// the sub domain of the original top node in node chain
     /// otherwise the node should be the root node of RBTree.
     ///
-    /// \exception If RBTreeNodeChain is initialized by RBTree who 
-    /// is too deep with level bigger than RBT_MAX_LEVEL, the node 
+    /// \exception If RBTreeNodeChain is initialized by RBTree who
+    /// is too deep with level bigger than RBT_MAX_LEVEL, the node
     /// chain for leaf node will longer than RBT_MAX_LEVEL then
     /// exception TooLongNodeChain will be thrown
     ///
     /// \note Since RBTree grows through inserting new node
     /// and Name class has the check whether the name is too long
-    /// or has too many labels, so TooLongNodeChain exception is 
+    /// or has too many labels, so TooLongNodeChain exception is
     /// hidden by TooLongName exception since it's impossible to create
     /// the RBTree which is deeper than MAX_LABELS of Name class.
     void push(const RBNode<T>* node) {
@@ -427,7 +426,7 @@ private:
     }
 
 private:
-    /// the max lable count for one domain name is 128
+    /// the max label count for one domain name is 128
     /// since each node in rbtree stores at least one label
     /// so the max node count for one node chain is 128
     const static int RBT_MAX_LEVEL = isc::dns::Name::MAX_LABELS;
@@ -677,9 +676,9 @@ public:
 
     /// \brief return the next bigger node in DNSSEC order of the given node.
     ///
-    /// \note nextNode will iterator all the nodes in RBTree including empty 
+    /// \note nextNode will iterator all the nodes in RBTree including empty
     /// nodes. If empty node isn't desired, it's easy to add logic to check
-    /// return node and keep invoking nextNode until the non-empty node is 
+    /// return node and keep invoking nextNode until the non-empty node is
     /// retrived
     ///
     /// This method also updates the given \c node_path so that it will store
