@@ -153,6 +153,7 @@ public:
         child_glue_name_("ns.child.example.org"),
         grandchild_ns_name_("grand.child.example.org"),
         grandchild_glue_name_("ns.grand.child.example.org"),
+        child_dname_name_("dname.child.example.org"),
         zone_(class_, origin_),
         rr_out_(new RRset(Name("example.com"), class_, RRType::A(),
             RRTTL(300))),
@@ -175,13 +176,16 @@ public:
         rr_grandchild_ns_(new RRset(grandchild_ns_name_, class_, RRType::NS(),
                                     RRTTL(300))),
         rr_grandchild_glue_(new RRset(grandchild_glue_name_, class_,
-                                      RRType::AAAA(), RRTTL(300)))
+                                      RRType::AAAA(), RRTTL(300))),
+        rr_child_dname_(new RRset(child_dname_name_, class_, RRType::DNAME(),
+            RRTTL(300)))
     {
     }
     // Some data to test with
     const RRClass class_;
     const Name origin_, ns_name_, cname_name_, dname_name_, child_ns_name_,
-        child_glue_name_, grandchild_ns_name_, grandchild_glue_name_;
+        child_glue_name_, grandchild_ns_name_, grandchild_glue_name_,
+        child_dname_name_;
     // The zone to torture by tests
     MemoryZone zone_;
 
@@ -212,6 +216,7 @@ public:
     ConstRRsetPtr rr_child_glue_; // glue RR of the child domain
     ConstRRsetPtr rr_grandchild_ns_; // NS below a zone cut (unusual)
     ConstRRsetPtr rr_grandchild_glue_; // glue RR below a deeper zone cut
+    ConstRRsetPtr rr_child_dname_; // A DNAME under NS
 
     /**
      * \brief Test one find query to the zone.
@@ -390,6 +395,19 @@ TEST_F(MemoryZoneTest, findAtDNAME) {
     findTest(dname_name_, RRType::A(), Zone::SUCCESS, true, rr_dname_a_);
     findTest(dname_name_, RRType::DNAME(), Zone::SUCCESS, true, rr_dname_);
     findTest(dname_name_, RRType::TXT(), Zone::NXRRSET, true);
+}
+
+// Try searching something that is both under NS and DNAME, without and with
+// GLUE_OK mode (it should stop at the NS and DNAME respectively).
+TEST_F(MemoryZoneTest, DNAMEUnderNS) {
+    zone_.add(rr_child_ns_);
+    zone_.add(rr_child_dname_);
+
+    Name lowName("below.dname.child.example.org.");
+
+    findTest(lowName, RRType::A(), Zone::DELEGATION, true, rr_child_ns_);
+    findTest(lowName, RRType::A(), Zone::DNAME, true, rr_child_dname_, NULL,
+        NULL, Zone::FIND_GLUE_OK);
 }
 
 // Test adding child zones and zone cut handling

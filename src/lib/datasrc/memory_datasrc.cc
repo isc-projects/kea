@@ -231,12 +231,6 @@ struct MemoryZone::MemoryZoneImpl {
     // A callback called from possible zone cut nodes and nodes with DNAME.
     // This will be passed from the \c find() method to \c RBTree::find().
     static bool cutCallback(const DomainNode& node, FindState* state) {
-        // We perform callback check only for the highest zone cut in the
-        // rare case of nested zone cuts.
-        if (state->zonecut_node_ != NULL) {
-            return (false);
-        }
-
         // We need to look for DNAME first, there's allowed case where
         // DNAME and NS coexist in the apex. DNAME is the one to notice,
         // the NS is authoritative, not delegation (corner case explicitly
@@ -259,6 +253,12 @@ struct MemoryZone::MemoryZoneImpl {
         const Domain::const_iterator foundNS(node.getData()->find(
             RRType::NS()));
         if (foundNS != node.getData()->end()) {
+            // We perform callback check only for the highest zone cut in the
+            // rare case of nested zone cuts.
+            if (state->zonecut_node_ != NULL) {
+                return (false);
+            }
+
             // BIND 9 checks if this node is not the origin.  That's probably
             // because it can support multiple versions for dynamic updates
             // and IXFR, and it's possible that the callback is called at
