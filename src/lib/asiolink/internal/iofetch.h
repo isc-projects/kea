@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __IOQUERY_H
-#define __IOQUERY_H 1
+#ifndef __IOFETCH_H
+#define __IOFETCH_H 1
 
 #include <config.h>
 
@@ -36,9 +36,9 @@ namespace asiolink {
 //
 // Asynchronous UDP coroutine for upstream queries
 //
-class UDPQuery : public coroutine {
+class IOFetch : public coroutine {
 public:
-    // TODO Maybe this should be more generic than just for UDPQuery?
+    // TODO Maybe this should be more generic than just for IOFetch?
     ///
     /// \brief Result of the query
     ///
@@ -50,12 +50,12 @@ public:
         TIME_OUT,
         STOPPED
     };
-    /// Abstract callback for the UDPQuery.
+    /// Abstract callback for the IOFetch.
     class Callback {
     public:
         virtual ~Callback() {}
 
-        /// This will be called when the UDPQuery is completed
+        /// This will be called when the IOFetch is completed
         virtual void operator()(Result result) = 0;
     };
     ///
@@ -66,7 +66,7 @@ public:
     ///        delete it if allocated on heap.
     ///@param timeout in ms.
     ///
-    explicit UDPQuery(asio::io_service& io_service,
+    explicit IOFetch(asio::io_service& io_service,
                       const isc::dns::Question& q,
                       const IOAddress& addr, uint16_t port,
                       isc::dns::OutputBufferPtr buffer,
@@ -93,7 +93,7 @@ private:
 }
 
 
-#endif // __IOQUERY_H
+#endif // __IOFETCH_H
 
 // Local Variables: 
 // mode: c++
