@@ -901,8 +901,7 @@ RBTree<T>::find(const isc::dns::Name& target_name,
 
 template <typename T>
 const RBNode<T>*
-RBTree<T>::nextNode(RBTreeNodeChain<T>& node_path) const
-{
+RBTree<T>::nextNode(RBTreeNodeChain<T>& node_path) const {
     const RBNode<T>* node = node_path.top();
     // if node has sub domain, the next domain is the smallest
     // domain in sub domain tree
@@ -943,9 +942,7 @@ RBTree<T>::nextNode(RBTreeNodeChain<T>& node_path) const
 
 template <typename T>
 typename RBTree<T>::Result
-RBTree<T>::insert(const isc::dns::Name& target_name,
-                  RBNode<T>** new_node)
-{
+RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
     using namespace helper;
     RBNode<T>* parent = NULLNODE;
     RBNode<T>* current = root_;
