@@ -48,7 +48,20 @@ using namespace isc::dns;
 
 namespace asiolink {
 
+/*
+ * Some of the member variables here are shared_ptrs and some are
+ * auto_ptrs. There will be one instance of Data for the lifetime
+ * of packet. The variables that are state only for a single packet
+ * use auto_ptr, as it is more lightweight. In the case of shared
+ * configuration (eg. the callbacks, socket), we use shared_ptrs.
+ */
 struct UDPServer::Data {
+    /*
+     * Constructor from parameters passed to UDPServer constructor.
+     * This instance will not be used to retrieve and answer the actual
+     * query, it will only hold parameters until we wait for the
+     * first packet. But we do initialize the socket in here.
+     */
     Data(io_service& io_service, const ip::address& addr, const uint16_t port,
         SimpleCallback* checkin, DNSLookup* lookup, DNSAnswer* answer) :
         io_(io_service), done_(false), checkin_callback_(checkin),
@@ -65,6 +78,13 @@ struct UDPServer::Data {
         socket_->bind(udp::endpoint(addr, port));
     }
 
+    /*
+     * Copy constructor. Default one would probably do, but it is unnecessary
+     * to copy many of the member variables every time we fork to handle
+     * another packet.
+     *
+     * We also allocate data for receiving the packet here.
+     */
     Data(const Data& other) :
         io_(other.io_), socket_(other.socket_), done_(false),
         checkin_callback_(other.checkin_callback_),
@@ -94,7 +114,7 @@ struct UDPServer::Data {
     // constructor, or in the function operator while processing a query.
     // Repeated allocations from the heap for every incoming query is
     // clearly a performance issue; this must be optimized in the future.
-    // The plan is to have a structure pre-allocate several "server state"
+    // The plan is to have a structure pre-allocate several "Data"
     // objects which can be pulled off a free list and placed on an in-use
     // list whenever a query comes in.  This will serve the dual purpose
     // of improving performance and guaranteeing that state information
@@ -141,7 +161,8 @@ struct UDPServer::Data {
 
 /// The following functions implement the \c UDPServer class.
 ///
-/// The constructor
+/// The constructor. It just creates new internal state object
+/// and lets it handle the initialization.
 UDPServer::UDPServer(io_service& io_service, const ip::address& addr,
     const uint16_t port, SimpleCallback* checkin, DNSLookup* lookup,
     DNSAnswer* answer) :
@@ -158,6 +179,11 @@ UDPServer::operator()(error_code ec, size_t length) {
 
     CORO_REENTER (this) {
         do {
+            /*
+             * This is preparation for receiving a packet. We get a new
+             * state object for the lifetime of the next packet to come.
+             * It allocates the buffers to receive data into.
+             */
             data_.reset(new Data(*data_));
 
             do {
@@ -171,10 +197,16 @@ UDPServer::operator()(error_code ec, size_t length) {
 
             data_->bytes_ = length;
 
-            /// Fork the coroutine by creating a copy of this one and
-            /// scheduling it on the ASIO service queue.  The parent
-            /// will continue listening for DNS packets while the child
-            /// processes the one that has just arrived.
+            /*
+             * We fork the coroutine now. One (the child) will keep
+             * the current state and handle the packet, then die and
+             * drop ownership of the state. The other (parent) will just
+             * go into the loop again and replace the current state with
+             * a new one for a new object.
+             *
+             * Actually, both of the coroutines will be a copy of this
+             * one, but that's just internal implementation detail.
+             */
             CORO_FORK data_->io_.post(UDPServer(*this));
         } while (is_parent());
 
