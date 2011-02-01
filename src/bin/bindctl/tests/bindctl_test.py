@@ -299,16 +299,31 @@ class TestConfigCommands(unittest.TestCase):
         cmd = cmdparse.BindCmdParse("config set identifier=\"foo/an_int\" value=\"[]\"")
         self.assertRaises(isc.cc.data.DataTypeError, self.tool.apply_config_cmd, cmd)
 
+    # this is a very specific one for use with a set of list tests
+    # to try out the flexibility of the parser (only in the next test)
+    def clt(self, full_cmd_string, item_value):
+        cmd = cmdparse.BindCmdParse(full_cmd_string)
+        self.tool.apply_config_cmd(cmd)
+        self.assertEqual(([item_value], MultiConfigData.LOCAL),
+                         self.tool.config_data.get_value("/foo/a_list"))
+
     def test_apply_cfg_command_list(self):
         self.tool.location = '/'
 
         self.assertEqual(([], MultiConfigData.DEFAULT),
                          self.tool.config_data.get_value("/foo/a_list"))
 
-        cmd = cmdparse.BindCmdParse("config set identifier=\"foo/a_list\" value=[\"a\"]")
-        self.tool.apply_config_cmd(cmd)
-        self.assertEqual((["a"], MultiConfigData.LOCAL),
-                         self.tool.config_data.get_value("/foo/a_list"))
+        self.clt("config set identifier=\"foo/a_list\" value=[\"a\"]", "a")
+        self.clt("config set identifier=\"foo/a_list\" value =[\"b\"]", "b")
+        self.clt("config set identifier=\"foo/a_list\" value= [\"c\"]", "c")
+        self.clt("config set identifier=\"foo/a_list\" value = [\"d\"]", "d")
+        self.clt("config set identifier =\"foo/a_list\" value=[\"e\"]", "e")
+        self.clt("config set identifier= \"foo/a_list\" value=[\"f\"]", "f")
+        self.clt("config set identifier = \"foo/a_list\" value=[\"g\"]", "g")
+        self.clt("config set identifier = \"foo/a_list\" value = [\"h\"]", "h")
+        self.clt("config set identifier = \"foo/a_list\" value=[\"i\" ]", "i")
+        self.clt("config set identifier = \"foo/a_list\" value=[ \"j\"]", "j")
+        self.clt("config set identifier = \"foo/a_list\" value=[ \"k\" ]", "k")
 
         # this should raise a TypeError
         cmd = cmdparse.BindCmdParse("config set identifier=\"foo/a_list\" value=\"a\"")
@@ -316,6 +331,7 @@ class TestConfigCommands(unittest.TestCase):
         
         cmd = cmdparse.BindCmdParse("config set identifier=\"foo/a_list\" value=[1]")
         self.assertRaises(isc.cc.data.DataTypeError, self.tool.apply_config_cmd, cmd)
+
 
     
 

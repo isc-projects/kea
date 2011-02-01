@@ -33,6 +33,7 @@ param_value_str  = "(?P<param_value>[^\'\" ][^, ]+)"
 param_value_with_quota_str  = "[\"\'](?P<param_value>.+?)(?<!\\\)[\"\']"
 next_params_str = "(?P<blank>\s*)(?P<comma>,?)(?P<next_params>.*)$"
 
+
 PARAM_WITH_QUOTA_PATTERN = re.compile(param_name_str + 
                                       param_value_with_quota_str + 
                                       next_params_str)
@@ -40,6 +41,56 @@ PARAM_PATTERN = re.compile(param_name_str + param_value_str + next_params_str)
 # Used for module and command name
 NAME_PATTERN = re.compile("^\s*(?P<name>[\w]+)(?P<blank>\s*)(?P<others>.*)$")
 
+# this removes all whitespace inthe given string, except when
+# between " quotes
+_remove_unquoted_whitespace = \
+    lambda text:'"'.join( it if i%2 else ''.join(it.split())
+        for i,it in enumerate(text.split('"'))  )
+
+
+def _remove_list_and_map_whitespace(text):
+    """Returns a string where the whitespace between matching [ and ]
+       is removed, unless quoted"""
+    # regular expression aren't really the right tool, since we may have
+    # nested structures
+    result = []
+    start_pos = 0
+    pos = 0
+    list_count = 0
+    map_count = 0
+    cur_start_list_pos = None
+    cur_start_map_pos = None
+    for i in text:
+        if i == '[' and map_count == 0:
+            if list_count == 0:
+                result.append(text[start_pos:pos + 1])
+                cur_start_list_pos = pos + 1
+            list_count = list_count + 1
+        elif i == ']' and map_count == 0:
+            if list_count > 0:
+                list_count = list_count - 1
+                if list_count == 0:
+                    result.append(_remove_unquoted_whitespace(text[cur_start_list_pos:pos + 1]))
+                    start_pos = pos + 1
+        if i == '{' and list_count == 0:
+            if map_count == 0:
+                result.append(text[start_pos:pos + 1])
+                cur_start_map_pos = pos + 1
+            map_count = map_count + 1
+        elif i == '}' and list_count == 0:
+            if map_count > 0:
+                map_count = map_count - 1
+                if map_count == 0:
+                    result.append(_remove_unquoted_whitespace(text[cur_start_map_pos:pos + 1]))
+                    start_pos = pos + 1
+        
+
+        pos = pos + 1
+    if start_pos <= len(text):
+        result.append(text[start_pos:len(text)])
+    return "".join(result)
+    
+    
 class BindCmdParse:
     """ This class will parse the command line usr input into three part
     module name, command, parameters
@@ -86,9 +137,12 @@ class BindCmdParse:
 
             self._parse_params(param_str)
 
+    def _remove_list_whitespace(self, text):
+        return ""
 
     def _parse_params(self, param_text):
         """convert a=b,c=d into one hash """
+        param_text = _remove_list_and_map_whitespace(param_text)
         
         # Check parameter name "help"
         param = NAME_PATTERN.match(param_text)
