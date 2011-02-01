@@ -253,7 +253,7 @@ struct MemoryZone::MemoryZoneImpl {
         }
 
         // handle type any query
-        if (target && !node->getData()->empty()) {
+        if (target != NULL && !node->getData()->empty()) {
             // Empty domain will be handled as NXRRSET by normal processing
             for (found = node->getData()->begin();
                  found != node->getData()->end(); found++)
