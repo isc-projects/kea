@@ -309,15 +309,21 @@ RBNode<T>::successor() const {
 /// \brief RBTreeNodeChain is used to keep track of the sequence of
 /// nodes to reach any given node from the root of RBTree.
 ///
-/// RBNode does not have "up" pointers in them (for memory usage reasons)
-/// so there is no way to find the path back to the root from any given
-/// RBNode.
+/// Currently, RBNode does not have "up" pointers in them (i.e., back pointers
+/// from the root of one level of tree of trees to the node in the parent
+/// tree whose down pointer points to that root node) for memory usage
+/// reasons, so there is no way to find the path back to the root from any
+/// given RBNode.
+/// Note: this design may change in future versions.  In particular, it's
+/// quite likely we want to have that pointer if we want to optimize name
+/// compression by exploiting the structure of the zone.  If and when that
+/// happens we should also revisit the need for the chaining.
 ///
 /// RBTreeNodeChain is constructed and manipulate only by \c RBTree.
 /// \c RBTree uses it as an inner data structure to iterate over the whole
 /// RBTree.
-/// This is the reason why only construct function and \c getAbsoluteName
-/// function is public and others are private.
+/// This is the reason why manipulation methods such as \c push() and \c pop()
+/// are private.
 template <typename T>
 class RBTreeNodeChain {
     /// RBTreeNodeChain is initialized by RBTree, only RBTree has
@@ -350,10 +356,18 @@ public:
     }
     //@}
 
+    /// \brief Return the number of levels stored in the chain.
+    ///
+    /// It's equal to the number of nodes in the chain; for an empty
+    /// chain, 0 will be returned.
+    ///
+    /// \exception None
+    unsigned int getLevelCount() const { return (node_count_); }
+
     /// \brief return the absolute name for the node which current
     /// RBTreeNodeChain traces.
     ///
-    /// \exception RBTreeNodeChain has to be initialized by RBtree,
+    /// \exception RBTreeNodeChain has to be initialized by RBTree,
     /// otherwise InvalidNodeChain exception will be thrown
     isc::dns::Name getAbsoluteName() const {
         const RBNode<T>* top_node = top();
@@ -426,10 +440,14 @@ private:
     }
 
 private:
-    /// the max label count for one domain name is 128
-    /// since each node in rbtree stores at least one label
-    /// so the max node count for one node chain is 128
-    const static int RBT_MAX_LEVEL = isc::dns::Name::MAX_LABELS;
+    // The max label count for one domain name is Name::MAX_LABELS (128).
+    // Since each node in rbtree stores at least one label, and the root
+    // name always shares the same level with some others (which means
+    // all top level nodes except the one for the root name contain at least
+    // two labels), the possible maximum level is MAX_LABELS - 1.
+    // It's also the possible maximum nodes stored in a chain.
+    const static int RBT_MAX_LEVEL = isc::dns::Name::MAX_LABELS - 1;
+
     const RBNode<T>* nodes_[RBT_MAX_LEVEL];
     int node_count_;
 };

@@ -30,6 +30,10 @@ using namespace isc::dns;
 using isc::UnitTestUtil;
 using namespace isc::datasrc;
 
+// XXX: some compilers cannot find class static constants used in
+// EXPECT_xxx macros, for which we need an explicit empty definition.
+const size_t Name::MAX_LABELS;
+
 /* The initial structure of rbtree
  *
  *             b
@@ -151,7 +155,6 @@ TEST_F(RBTreeTest, insertNames) {
     EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("n"), &rbtnode));
 }
 
-
 TEST_F(RBTreeTest, findName) {
     // find const rbtnode
     // exact match
@@ -235,6 +238,53 @@ TEST_F(RBTreeTest, callback) {
               rbtree.find(Name("callback.example"), &crbtnode, node_path,
                           testCallback, &callback_called));
     EXPECT_FALSE(callback_called);
+}
+
+TEST_F(RBTreeTest, chainLevel) {
+    RBTreeNodeChain<int> chain;
+
+    // by default there should be no level in the chain.
+    EXPECT_EQ(0, chain.getLevelCount());
+
+    // insert one node to the tree and find it.  there should be exactly
+    // one level in the chain.
+    RBTree<int> tree(true);
+    Name node_name(Name::ROOT_NAME());
+    EXPECT_EQ(RBTree<int>::SUCCESS, tree.insert(node_name, &rbtnode));
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              tree.find<void*>(node_name, &crbtnode, chain, NULL, NULL));
+    EXPECT_EQ(1, chain.getLevelCount());
+
+    /*
+     * Now creating a possibly deepest tree with MAX_LABELS - 1 levels.
+     * it should look like:
+     *            a
+     *           /|
+     *         (.)a
+     *            |
+     *            a
+     *            : (MAX_LABELS - 1) "a"'s
+     *
+     * then confirm that find() for the deepest name succeeds without any
+     * disruption, and the resulting chain has the expected level.
+     * Note that "a." and the root name (".") belong to the same level.
+     * So the possible maximum level is MAX_LABELS - 1, not MAX_LABELS.
+     */
+    for (unsigned int i = 1; i < Name::MAX_LABELS; ++i) {
+        node_name = Name("a.").concatenate(node_name);
+        EXPECT_EQ(RBTree<int>::SUCCESS, tree.insert(node_name, &rbtnode));
+        RBTreeNodeChain<int> found_chain;
+        EXPECT_EQ(RBTree<int>::EXACTMATCH,
+                  tree.find<void*>(node_name, &crbtnode, found_chain,
+                                   NULL, NULL));
+        EXPECT_EQ(i, found_chain.getLevelCount());
+    }
+
+    // Confirm the last inserted name has the possible maximum length with
+    // maximum label count.  This confirms the rbtree and chain level cannot
+    // be larger.
+    EXPECT_EQ(Name::MAX_LABELS, node_name.getLabelCount());
+    EXPECT_THROW(node_name.concatenate(Name("a.")), TooLongName);
 }
 
 /*
