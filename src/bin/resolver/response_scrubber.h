@@ -164,37 +164,37 @@ public:
 
     /// \brief Response Code for Address Check
     enum Category {
-        SUCCESS = 0,            // Packet is OK
+        SUCCESS = 0,            ///< Packet is OK
 
         // Error categories
 
-        ADDRESS,                // Mismatching IP address
-        PORT                    // Mismatching port
+        ADDRESS,                ///< Mismatching IP address
+        PORT                    ///< Mismatching port
     };
 
-    // \brief Check IP Address
-    //
-    // Compares the address to which the query was sent and the port it was
-    // sent from with the address from which the query was received and the
-    // port it was sent to.
-    //
-    // This is only required of a UDP connection - it is assumed that data that
-    // data received on a TCP stream is received from the system to which the
-    // connection was made.
-    //
-    // \param to Endpoint representing the address to which the query was sent.
-    // \param from Endpoint from which the response was received.
+    /// \brief Check IP Address
+    ///
+    /// Compares the address to which the query was sent and the port it was
+    /// sent from with the address from which the query was received and the
+    /// port it was sent to.
+    ///
+    /// This is only required of a UDP connection - it is assumed that data that
+    /// data received on a TCP stream is received from the system to which the
+    /// connection was made.
+    ///
+    /// \param to Endpoint representing the address to which the query was sent.
+    /// \param from Endpoint from which the response was received.
     static Category addressPortCheck(const asio::ip::udp::endpoint& to,
         const asio::ip::udp::endpoint& from);
 
-    // \brief Check QID
-    //
-    // Compares the QID in the sent message with the QID in the response.
-    //
-    // \param sent Message sent to the authoritative server
-    // \param received Message received from the authoritative server
-    //
-    // \return true if the QIDs match, false otherwise.
+    /// \brief Check QID
+    ///
+    /// Compares the QID in the sent message with the QID in the response.
+    ///
+    /// \param sent Message sent to the authoritative server
+    /// \param received Message received from the authoritative server
+    ///
+    /// \return true if the QIDs match, false otherwise.
     static bool qidCheck(const isc::dns::Message& sent,
         const isc::dns::Message& received) {
         return (sent.getQid() == received.getQid());
