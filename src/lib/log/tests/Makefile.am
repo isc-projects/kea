@@ -20,6 +20,7 @@ run_unittests_SOURCES += logger_unittest.cc
 run_unittests_SOURCES += message_dictionary_unittest.cc
 run_unittests_SOURCES += message_reader_unittest.cc
 run_unittests_SOURCES += message_initializer_unittest.cc
+run_unittests_SOURCES += message_initializer_unittest_2.cc
 run_unittests_SOURCES += strutil_unittest.cc
 run_unittests_SOURCES += xdebuglevel_unittest.cc
 run_unittests_SOURCES += run_unittests.cc

@@ -145,3 +145,29 @@ TEST_F(MessageDictionaryTest, LoadTest) {
     EXPECT_EQ(string(""), dictionary2.getText(data2[4]));
     EXPECT_EQ(0, duplicates.size());
 }
+
+// Check for some non-existent items
+
+TEST_F(MessageDictionaryTest, Lookups) {
+    static const char* data[] = {
+        "ALPHA", "This is alpha",
+        "BETA", "This is beta",
+        "GAMMA", "This is gamma",
+        NULL
+    };
+
+    MessageDictionary dictionary;
+    vector<MessageID> duplicates = dictionary.load(data);
+    EXPECT_EQ(3, dictionary.size());
+    EXPECT_EQ(0, duplicates.size());
+
+    // Valid lookups
+    EXPECT_EQ(string("This is alpha"), dictionary.getText("ALPHA"));
+    EXPECT_EQ(string("This is beta"), dictionary.getText("BETA"));
+    EXPECT_EQ(string("This is gamma"), dictionary.getText("GAMMA"));
+
+    // ... and invalid ones
+    EXPECT_EQ(string(""), dictionary.getText("XYZZY"));
+    EXPECT_EQ(string(""), dictionary.getText(""));
+    EXPECT_EQ(string(""), dictionary.getText("\n\n\n"));
+}

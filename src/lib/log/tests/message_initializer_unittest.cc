@@ -27,16 +27,26 @@ using namespace std;
 // Declare a set of messages to go into the global dictionary.
 
 namespace {
-const char* values[] = {
+const char* values1[] = {
     "GLOBAL1", "global message one",
     "GLOBAL2", "global message two",
     NULL
 };
+
+const char* values2[] = {
+    "GLOBAL3", "global message three",
+    "GLOBAL4", "global message four",
+    NULL
+};
+
 }
 
-// Statically initialize the global dictionary with those messages.
-MessageInitializer init_message_initializer_unittest(values);
+// Statically initialize the global dictionary with those messages.  Three sets
+// are used to check that the declaration of separate initializer objects really// does combine the messages. (The third set is declared in the separately-
+// compiled file message_identifier_initializer_unittest_2.cc.)
 
+MessageInitializer init_message_initializer_unittest_1(values1);
+MessageInitializer init_message_initializer_unittest_2(values2);
 
 
 class MessageInitializerTest : public ::testing::Test {
@@ -55,5 +65,8 @@ TEST_F(MessageInitializerTest, MessageTest) {
 
     EXPECT_EQ(string("global message one"), global->getText("GLOBAL1"));
     EXPECT_EQ(string("global message two"), global->getText("GLOBAL2"));
-    EXPECT_EQ(string(""), global->getText(""));
+    EXPECT_EQ(string("global message three"), global->getText("GLOBAL3"));
+    EXPECT_EQ(string("global message four"), global->getText("GLOBAL4"));
+    EXPECT_EQ(string("global message five"), global->getText("GLOBAL5"));
+    EXPECT_EQ(string("global message six"), global->getText("GLOBAL6"));
 }
