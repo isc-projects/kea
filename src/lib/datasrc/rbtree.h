@@ -330,7 +330,7 @@ class RBTreeNodeChain {
     /// knowledge to manipuate it.
     friend class RBTree<T>;
 public:
-    /// \name Constructors
+    /// \name Constructors and Assignment Operator.
     ///
     /// \note empty RBTreeNodeChain isn't meaningful, use it
     /// as parameter for functions like getAbsoluteName or
@@ -338,7 +338,14 @@ public:
     /// empty RBTreeNodeChain has to be initialized by RBTree, through
     /// \c find function call.
     //{@
+    /// The default constructor.
+    ///
+    /// \exception None
     RBTreeNodeChain() : node_count_(0) {}
+
+    /// Copy constructor.
+    ///
+    /// \exception None
     RBTreeNodeChain(const RBTreeNodeChain<T>& node_path) {
         node_count_ = node_path.node_count_;
         if (node_count_ > 0) {
@@ -346,6 +353,9 @@ public:
         }
     }
 
+    /// Assignment operator.
+    ///
+    /// \exception None
     RBTreeNodeChain<T>&
     operator=(const RBTreeNodeChain<T>& node_path) {
         node_count_ = node_path.node_count_;
