@@ -50,8 +50,8 @@ using namespace isc::dns;
 
 namespace asiolink {
 
-// Private UDPQuery data (see internal/udpdns.h for reasons)
-struct UDPQuery::PrivateData {
+// Private IOFetch data (see internal/udpdns.h for reasons)
+struct IOFetch::PrivateData {
     // UDP Socket we send query to and expect reply from there
     udp::socket socket;
     // Where was the query sent
@@ -91,10 +91,10 @@ struct UDPQuery::PrivateData {
     { }
 };
 
-/// The following functions implement the \c UDPQuery class.
+/// The following functions implement the \c IOFetch class.
 ///
 /// The constructor
-UDPQuery::UDPQuery(io_service& io_service,
+IOFetch::IOFetch(io_service& io_service,
                    const Question& q, const IOAddress& addr, uint16_t port,
                    OutputBufferPtr buffer, Callback *callback, int timeout) :
     data_(new PrivateData(io_service,
@@ -108,7 +108,7 @@ UDPQuery::UDPQuery(io_service& io_service,
 /// The function operator is implemented with the "stackless coroutine"
 /// pattern; see internal/coroutine.h for details.
 void
-UDPQuery::operator()(error_code ec, size_t length) {
+IOFetch::operator()(error_code ec, size_t length) {
     if (ec || data_->stopped) {
         return;
     }
@@ -138,7 +138,7 @@ UDPQuery::operator()(error_code ec, size_t length) {
         if (data_->timeout != -1) {
             data_->timer.expires_from_now(boost::posix_time::milliseconds(
                 data_->timeout));
-            data_->timer.async_wait(boost::bind(&UDPQuery::stop, *this,
+            data_->timer.async_wait(boost::bind(&IOFetch::stop, *this,
                 TIME_OUT));
         }
 
@@ -171,7 +171,7 @@ UDPQuery::operator()(error_code ec, size_t length) {
 }
 
 void
-UDPQuery::stop(Result result) {
+IOFetch::stop(Result result) {
     if (!data_->stopped) {
         switch (result) {
             case TIME_OUT:

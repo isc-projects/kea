@@ -339,7 +339,7 @@ namespace {
  *
  * Used by RecursiveQuery::sendQuery.
  */
-class RunningQuery : public UDPQuery::Callback {
+class RunningQuery : public IOFetch::Callback {
 private:
     // The io service to handle async calls
     asio::io_service& io_;
@@ -399,7 +399,7 @@ private:
             int serverIndex = rand() % uc;
             dlog("Sending upstream query (" + question_.toText() +
                 ") to " + upstream_->at(serverIndex).first);
-            UDPQuery query(io_, question_,
+            IOFetch query(io_, question_,
                 upstream_->at(serverIndex).first,
                 upstream_->at(serverIndex).second, buffer_, this,
                 query_timeout_);
@@ -409,7 +409,7 @@ private:
             int serverIndex = rand() % zs;
             dlog("Sending query to zone server (" + question_.toText() +
                 ") to " + zone_servers_.at(serverIndex).first);
-            UDPQuery query(io_, question_,
+            IOFetch query(io_, question_,
                 zone_servers_.at(serverIndex).first,
                 zone_servers_.at(serverIndex).second, buffer_, this,
                 query_timeout_);
@@ -572,10 +572,10 @@ public:
     }
 
     // This function is used as callback from DNSQuery.
-    virtual void operator()(UDPQuery::Result result) {
+    virtual void operator()(IOFetch::Result result) {
         // XXX is this the place for TCP retry?
         --queries_out_;
-        if (!done_ && result != UDPQuery::TIME_OUT) {
+        if (!done_ && result != IOFetch::TIME_OUT) {
             // we got an answer
             Message incoming(Message::PARSE);
             InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
@@ -590,7 +590,7 @@ public:
             }
             
             if (done_) {
-                stop(result == UDPQuery::SUCCESS);
+                stop(result == IOFetch::SUCCESS);
             }
         } else if (!done_ && retries_--) {
             // We timed out, but we have some retries, so send again
