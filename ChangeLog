@@ -44,7 +44,8 @@ bind10-devel-20110120 released on January 20, 2011
 	receive buffer became full, and many other components that rely
 	on CC channels would stall (as noted in #420 and #513).  This is
 	an urgent care fix due to the severity of the problem; we'll need
-	to revisit it for cleaner fix later. (Trac #516, git 62c72fc)
+	to revisit it for cleaner fix later.
+	(Trac #516, git 62c72fcdf4617e4841e901408f1e7961255b8194)
 
   153.	[bug]		jelte
 	b10-cfgmgr: Fixed a bug where configuration updates sometimes
@@ -58,7 +59,7 @@ bind10-devel-20110120 released on January 20, 2011
 	the value to 0.  Disabling statistics updates will also work as
 	a temporary workaround of a known issue that b10-auth can block in
 	sending statistics and stop responding to queries as a result.
-	(Trac #513, git 285c5ee)
+	(Trac #513, git 285c5ee3d5582ed6df02d1aa00387f92a74e3695)
 
   151.  [bug]		smann
 	lib/log/dummylog.h: 
@@ -90,7 +91,7 @@ bind10-devel-20110120 released on January 20, 2011
   147.	[bug]		jinmei
 	python/isc/config: Fixed a bug that importing custom configuration
 	(in b10-config.db) of a remote module didn't work.
-	(Trac #478, git ea4a481)
+	(Trac #478, git ea4a481003d80caf2bff8d0187790efd526d72ca)
 
   146.	[func]		jelte
 	Command arguments were not validated internally against their
@@ -105,7 +106,8 @@ bind10-devel-20110120 released on January 20, 2011
 	only feasible for class IN in memory data source.  To reload a
 	zone "example.com" via bindctl, execute the command as follows:
 	> Auth loadzone origin = example.com
-	(Trac #467)
+	(Trac #467 git 4f7e1f46da1046de527ab129a88f6aad3dba7562
+	from 1d7d3918661ba1c6a8b1e40d8fcbc5640a84df12)
 
   144.	[build]		jinmei
 	Introduced a workaround for clang++ build on FreeBSD (and probably
@@ -115,7 +117,8 @@ bind10-devel-20110120 released on January 20, 2011
 	doesn't matter; the important part is the -L flag).  This
 	workaround is not automatically enabled as it's difficult to
 	detect the need for it dynamically, and must be enabled via the
-	variable by hand. (Trac #474, git cfde436)
+	variable by hand.
+	(Trac #474, git cfde436fbd7ddf3f49cbbd153999656e8ca2a298)
 
   143.	[build]		jinmei
 	Fixed build problems with clang++ in unit tests due to recent
