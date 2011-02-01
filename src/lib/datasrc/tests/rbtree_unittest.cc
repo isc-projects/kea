@@ -313,11 +313,16 @@ TEST_F(RBTreeTest, nextNode) {
     RBTreeNodeChain<int> node_path;
     const RBNode<int>* node = NULL;
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
-              rbtree.find<void*>(Name(names[0]), &node, node_path, NULL, NULL));
-    for (int i = 0; i < name_count - 1; ++i) {
+              rbtree.find<void*>(Name(names[0]), &node, node_path, NULL,
+                                 NULL));
+    for (int i = 0; i < name_count; ++i) {
+        EXPECT_NE(static_cast<void*>(NULL), node);
         EXPECT_EQ(Name(names[i]), node_path.getAbsoluteName());
-        rbtree.nextNode(node_path);
+        node = rbtree.nextNode(node_path);
     }
+
+    // We should have reached the end of the tree.
+    EXPECT_EQ(static_cast<void*>(NULL), node);
 }
 
 TEST_F(RBTreeTest, dumpTree) {
