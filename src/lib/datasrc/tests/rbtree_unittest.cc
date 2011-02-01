@@ -15,6 +15,8 @@
 
 #include <gtest/gtest.h>
 
+#include <exceptions/exceptions.h>
+
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <dns/rrset.h>
@@ -26,6 +28,7 @@
 #include <dns/tests/unittest_util.h>
 
 using namespace std;
+using namespace isc;
 using namespace isc::dns;
 using isc::UnitTestUtil;
 using namespace isc::datasrc;
@@ -323,6 +326,12 @@ TEST_F(RBTreeTest, nextNode) {
 
     // We should have reached the end of the tree.
     EXPECT_EQ(static_cast<void*>(NULL), node);
+}
+
+TEST_F(RBTreeTest, nextNodeError) {
+    // Empty chain for nextNode() is invalid.
+    RBTreeNodeChain<int> chain;
+    EXPECT_THROW(rbtree.nextNode(chain), BadValue);
 }
 
 TEST_F(RBTreeTest, dumpTree) {
