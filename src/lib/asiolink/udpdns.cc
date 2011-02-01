@@ -23,6 +23,7 @@
 #include <asio.hpp>
 #include <asio/deadline_timer.hpp>
 
+#include <memory>
 #include <boost/shared_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
@@ -106,11 +107,11 @@ struct UDPServer::Data {
     boost::shared_ptr<asio::ip::udp::socket> socket_;
 
     // The ASIO-enternal endpoint object representing the client
-    boost::shared_ptr<asio::ip::udp::endpoint> sender_;
+    std::auto_ptr<asio::ip::udp::endpoint> sender_;
 
     // \c IOMessage and \c Message objects to be passed to the
     // DNS lookup and answer providers
-    boost::shared_ptr<asiolink::IOMessage> io_message_;
+    std::auto_ptr<asiolink::IOMessage> io_message_;
 
     // The original query as sent by the client
     isc::dns::MessagePtr query_message_;
@@ -134,8 +135,8 @@ struct UDPServer::Data {
     const DNSLookup* lookup_callback_;
     const DNSAnswer* answer_callback_;
 
-    boost::shared_ptr<IOEndpoint> peer_;
-    boost::shared_ptr<IOSocket> iosock_;
+    std::auto_ptr<IOEndpoint> peer_;
+    std::auto_ptr<IOSocket> iosock_;
 };
 
 /// The following functions implement the \c UDPServer class.
