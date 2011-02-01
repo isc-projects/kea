@@ -154,14 +154,14 @@ TEST(IOServiceTest, unavailableAddress) {
     IOService io_service;
     // These addresses should generally be unavailable as a valid local
     // address, although there's no guarantee in theory.
-    EXPECT_THROW(DNSService(io_service, *TEST_SERVER_PORT, *"255.255.0.0", NULL, NULL, NULL), IOError);
+    EXPECT_THROW(DNSService(io_service, *TEST_SERVER_PORT, *"192.0.2.0", NULL, NULL, NULL), IOError);
 
     // Some OSes would simply reject binding attempt for an AF_INET6 socket
     // to an IPv4-mapped IPv6 address.  Even if those that allow it, since
     // the corresponding IPv4 address is the same as the one used in the
     // AF_INET socket case above, it should at least show the same result
     // as the previous one.
-    EXPECT_THROW(DNSService(io_service, *TEST_SERVER_PORT, *"::ffff:255.255.0.0", NULL, NULL, NULL), IOError);
+    EXPECT_THROW(DNSService(io_service, *TEST_SERVER_PORT, *"::ffff:192.0.2.0", NULL, NULL, NULL), IOError);
 }
 
 TEST(IOServiceTest, duplicateBind_v6) {
