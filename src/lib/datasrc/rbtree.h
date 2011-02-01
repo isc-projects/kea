@@ -702,22 +702,23 @@ public:
     }
     //@}
 
-    /// \brief return the next bigger node in DNSSEC order of the given node.
+    /// \brief return the next bigger node in DNSSEC order from a given node
+    /// chain.
     ///
-    /// \note nextNode will iterator all the nodes in RBTree including empty
-    /// nodes. If empty node isn't desired, it's easy to add logic to check
-    /// return node and keep invoking nextNode until the non-empty node is
-    /// retrived
-    ///
-    /// This method also updates the given \c node_path so that it will store
+    /// This method identifies the next bigger node of the node currently
+    /// referenced in \c node_path and returns it.
+    /// This method also updates the passed \c node_path so that it will store
     /// the path for the returned next node.
     /// It will be convenient when we want to iterate over the all nodes
     /// of \c RBTree; we can do this by calling this method repeatedly
     /// starting from the root node.
     ///
-    /// \exception If the node_path isn't initalized by find function and not
-    /// get from previous nextNode function call, InvalidNodeChain exception
-    /// will be thrown
+    /// \note \c nextNode() will iterate over all the nodes in RBTree including
+    /// empty nodes. If empty node isn't desired, it's easy to add logic to
+    /// check return node and keep invoking \c nextNode() until the non-empty
+    /// node is retrieved.
+    ///
+    /// \exception isc::BadValue node_path is empty.
     ///
     /// \param node_path A node chain that stores all the nodes along the path
     /// from root to node.
@@ -801,12 +802,11 @@ private:
     //@{
     /// \brief delete tree whose root is equal to node
     void deleteHelper(RBNode<T> *node);
-    /// \brief find the node with name
-    ///
-    /// Internal searching function.
-    ///
+
+    /// \brief Print the information of given RBNode.
     void dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
                         unsigned int depth) const;
+
     /// \brief Indentation helper function for dumpTree
     static void indent(std::ostream& os, unsigned int depth);
 
@@ -930,6 +930,10 @@ RBTree<T>::find(const isc::dns::Name& target_name,
 template <typename T>
 const RBNode<T>*
 RBTree<T>::nextNode(RBTreeNodeChain<T>& node_path) const {
+    if (node_path.isEmpty()) {
+        isc_throw(isc::BadValue, "RBTree::nextNode is given an empty chain");
+    }
+
     const RBNode<T>* node = node_path.top();
     // if node has sub domain, the next domain is the smallest
     // domain in sub domain tree
