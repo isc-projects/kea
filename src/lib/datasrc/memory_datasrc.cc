@@ -307,7 +307,7 @@ struct MemoryZone::MemoryZoneImpl {
                  * with NS and ignore it for the answer, but it gets set
                  * anyway. Then we find the DNAME and we need to act by it,
                  * therefore we first check for DNAME and then for NS. In
-                 * all other cases it doesn't matter, as at last one of them
+                 * all other cases it doesn't matter, as at least one of them
                  * is NULL.
                  */
                 if (state.dname_node_ != NULL) {
