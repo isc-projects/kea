@@ -290,6 +290,24 @@ struct MemoryZone::MemoryZoneImpl {
         FindState state(options);
         switch (domains_.find(name, &node, cutCallback, &state)) {
             case DomainTree::PARTIALMATCH:
+                /*
+                 * In fact, we could use a single variable instead of
+                 * dname_node_ and zonecut_node_. But then we would need
+                 * to distinquish these two cases by something else and
+                 * it seemed little more confusing to me when I wrote it.
+                 *
+                 * Usually at most one of them will be something else than
+                 * NULL (it might happen both are NULL, in which case we
+                 * consider it NOT FOUND). There's one corner case when
+                 * both might be something else than NULL and it is in case
+                 * there's a DNAME under a zone cut and we search in
+                 * glue OK mode ‒ in that case we don't stop on the domain
+                 * with NS and ignore it for the answer, but it gets set
+                 * anyway. Then we find the DNAME and we need to act by it,
+                 * therefore we first check for DNAME and then for NS. In
+                 * all other cases it doesn't matter, as at last one of them
+                 * is NULL.
+                 */
                 if (state.dname_node_ != NULL) {
                     // We were traversing a DNAME node (and wanted to go
                     // lower below it), so return the DNAME
