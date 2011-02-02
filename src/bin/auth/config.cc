@@ -182,6 +182,10 @@ public:
             isc_throw(AuthConfigError, "negative statistics-interval value: "
                       << config_interval);
         }
+        if (config_interval > 86400) {
+            isc_throw(AuthConfigError, "too long statistics-interval value: "
+                      << config_interval);
+        }
         interval_ = config_interval;
     }
     virtual void commit() {
