@@ -326,7 +326,6 @@ Resolver::~Resolver() {
     delete checkin_;
     delete dns_lookup_;
     delete dns_answer_;
-    dlog("Deleting the Resolver",true);
 }
 
 void
@@ -439,7 +438,7 @@ void
 ResolverImpl::resolve(const QuestionPtr& question,
     const isc::resolve::ResolverInterface::CallbackPtr& callback)
 {
-    rec_query_->sendQuery(question, callback);
+    rec_query_->resolve(question, callback);
 }
 
 void
@@ -449,7 +448,7 @@ ResolverImpl::processNormalQuery(const Question& question,
                                  DNSServer* server)
 {
     dlog("Processing normal query");
-    rec_query_->sendQuery(question, answer_message, buffer, server);
+    rec_query_->resolve(question, answer_message, buffer, server);
 }
 
 namespace {

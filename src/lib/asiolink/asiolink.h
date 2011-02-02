@@ -575,12 +575,10 @@ public:
     /// failure(). See ResolverInterface::Callback for more information.
     ///
     /// \param question The question being answered <qname/qclass/qtype>
-    /// \param callback Callback object
-    /// \param buffer An output Message into which the final response will be copied
-    /// \param buffer An output buffer into which the intermediate responses will be copied
-    /// \param server A pointer to the \c DNSServer object handling the client
-    void sendQuery(const isc::dns::QuestionPtr& question,
-                   const isc::resolve::ResolverInterface::CallbackPtr callback);
+    /// \param callback Callback object. See
+    ///        \c ResolverInterface::Callback for more information
+    void resolve(const isc::dns::QuestionPtr& question,
+                 const isc::resolve::ResolverInterface::CallbackPtr callback);
 
 
     /// \brief Initiates resolving for the given question.
@@ -590,13 +588,13 @@ public:
     /// object.
     ///
     /// \param question The question being answered <qname/qclass/qtype>
-    /// \param buffer An output Message into which the final response will be copied
+    /// \param answer_message An output Message into which the final response will be copied
     /// \param buffer An output buffer into which the intermediate responses will be copied
     /// \param server A pointer to the \c DNSServer object handling the client
-    void sendQuery(const isc::dns::Question& question,
-                   isc::dns::MessagePtr answer_message,
-                   isc::dns::OutputBufferPtr buffer,
-                   DNSServer* server);
+    void resolve(const isc::dns::Question& question,
+                 isc::dns::MessagePtr answer_message,
+                 isc::dns::OutputBufferPtr buffer,
+                 DNSServer* server);
 private:
     DNSService& dns_service_;
     boost::shared_ptr<std::vector<std::pair<std::string, uint16_t> > >
