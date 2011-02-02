@@ -314,35 +314,23 @@ class RBTreeNodeChain {
 public:
     /// \name Constructors and Assignment Operator.
     ///
+    /// \note The copy constructor and the assignment operator are
+    /// intentionally defined as private, making this class non copyable.
+    /// This may have to be changed in a future version with newer need.
+    /// For now we explicitly disable copy to avoid accidental copy happens
+    /// unintentionally.
     //{@
     /// The default constructor.
     ///
     /// \exception None
     RBTreeNodeChain() : node_count_(0) {}
 
-    /// Copy constructor.
-    ///
-    /// \exception None
-    RBTreeNodeChain(const RBTreeNodeChain<T>& node_path) {
-        node_count_ = node_path.node_count_;
-        if (node_count_ > 0) {
-            memcpy(nodes_, node_path.nodes_, node_count_ * sizeof(RBNode<T>*));
-        }
-    }
-
-    /// Assignment operator.
-    ///
-    /// \exception None
-    RBTreeNodeChain<T>&
-    operator=(const RBTreeNodeChain<T>& node_path) {
-        node_count_ = node_path.node_count_;
-        if (node_count_ > 0) {
-            memcpy(nodes_, node_path.nodes_, node_count_ * sizeof(RBNode<T>*));
-        }
-        return (*this);
-    }
+private:
+    RBTreeNodeChain(const RBTreeNodeChain<T>&);
+    RBTreeNodeChain<T>& operator=(const RBTreeNodeChain<T>&);
     //@}
 
+public:
     /// \brief Return the number of levels stored in the chain.
     ///
     /// It's equal to the number of nodes in the chain; for an empty
