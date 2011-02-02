@@ -85,7 +85,6 @@ public:
 };
 
 class ZoneEntry;
-//class ResolverInterface;
 
 /// \brief Nameserver Entry
 ///
