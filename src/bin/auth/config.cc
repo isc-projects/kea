@@ -179,11 +179,11 @@ public:
     virtual void build(ConstElementPtr config_value) {
         const int32_t config_interval = config_value->intValue();
         if (config_interval < 0) {
-            isc_throw(AuthConfigError, "negative statistics-interval value: "
+            isc_throw(AuthConfigError, "negative statistics interval value: "
                       << config_interval);
         }
         if (config_interval > 86400) {
-            isc_throw(AuthConfigError, "too long statistics-interval value: "
+            isc_throw(AuthConfigError, "Too long statistics interval value: "
                       << config_interval);
         }
         interval_ = config_interval;

@@ -899,7 +899,7 @@ TEST_F(IntervalTimerTest, destructIntervalTimer) {
     // the program would immediately terminate anyway.
 
     // The call back function will not be called after the timer is
-    // destructed.
+    // destroyed.
     //
     // There are two timers:
     //  itimer_counter (A)
@@ -908,16 +908,16 @@ TEST_F(IntervalTimerTest, destructIntervalTimer) {
     //  itimer_canceller (B)
     //   (Calls TimerCallBackCancelDeleter)
     //     - first time of callback, it stores the counter value of
-    //       callback_canceller and destructs itimer_counter
+    //       callback_canceller and destroys itimer_counter
     //     - second time of callback, it compares the counter value of
     //       callback_canceller with stored value
     //       if they are same the timer was not called; expected result
-    //       if they are different the timer was called after destructed
+    //       if they are different the timer was called after destroyed
     //
     //     0  100  200  300  400  500  600 (ms)
     // (A) i--------+----x
     //                   ^
-    //                   |destruct itimer_counter
+    //                   |destroy itimer_counter
     // (B) i-------------+--------------s
     //                                  ^stop io_service
     //                                   and check if itimer_counter have been
