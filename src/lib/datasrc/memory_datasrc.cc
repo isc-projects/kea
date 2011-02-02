@@ -34,7 +34,7 @@ namespace datasrc {
 struct MemoryZone::MemoryZoneImpl {
     // Constructor
     MemoryZoneImpl(const RRClass& zone_class, const Name& origin) :
-        zone_class_(zone_class), origin_(origin)
+        zone_class_(zone_class), origin_(origin), domains_(true)
     {}
 
     // Information about the zone
@@ -193,7 +193,8 @@ struct MemoryZone::MemoryZoneImpl {
         DomainNode* node(NULL);
         FindState state(options);
         RBTreeNodeChain<Domain> node_path;
-        switch (domains_.find(name, &node, node_path, zonecutCallback, &state)) {
+        switch (domains_.find(name, &node, node_path, zonecutCallback,
+                              &state)) {
             case DomainTree::PARTIALMATCH:
                 if (state.zonecut_node_ != NULL) {
                     return (FindResult(DELEGATION, state.rrset_));
@@ -210,7 +211,12 @@ struct MemoryZone::MemoryZoneImpl {
                 assert(0);
         }
         assert(node);
-        assert(!node->isEmpty());
+
+        // If there is an exact match but the node is empty, it's equivalent
+        // to NXRRSET.
+        if (node->isEmpty()) {
+            return (FindResult(NXRRSET, ConstRRsetPtr()));
+        }
 
         Domain::const_iterator found;
 
