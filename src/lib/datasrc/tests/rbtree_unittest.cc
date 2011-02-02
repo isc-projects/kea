@@ -187,6 +187,16 @@ TEST_F(RBTreeTest, findName) {
     EXPECT_EQ(Name("q"), rbtnode->getName());
 }
 
+TEST_F(RBTreeTest, findError) {
+    // For the version that takes a node chain, the chain must be empty.
+    RBTreeNodeChain<int> chain;
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find<void*>(Name("a"), &crbtnode,
+                                                          chain, NULL, NULL));
+    // trying to reuse the same chain.  it should result in an exception.
+    EXPECT_THROW(rbtree.find<void*>(Name("a"), &crbtnode, chain, NULL, NULL),
+                 BadValue);
+}
+
 bool
 testCallback(const RBNode<int>&, bool* callack_checker) {
     *callack_checker = true;
@@ -194,7 +204,6 @@ testCallback(const RBNode<int>&, bool* callack_checker) {
 }
 
 TEST_F(RBTreeTest, callback) {
-    RBTreeNodeChain<int> node_path;
     // by default callback isn't enabled
     EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("callback.example"),
                                                   &rbtnode));
@@ -227,18 +236,20 @@ TEST_F(RBTreeTest, callback) {
     EXPECT_FALSE(parentrbtnode->isCallbackEnabled());
 
     // check if the callback is called from find()
+    RBTreeNodeChain<int> node_path1;
     bool callback_called = false;
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
-              rbtree.find(Name("sub.callback.example"), &crbtnode, node_path,
+              rbtree.find(Name("sub.callback.example"), &crbtnode, node_path1,
                           testCallback, &callback_called));
     EXPECT_TRUE(callback_called);
 
     // enable callback at the parent node, but it doesn't have data so
     // the callback shouldn't be called.
+    RBTreeNodeChain<int> node_path2;
     parentrbtnode->enableCallback();
     callback_called = false;
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
-              rbtree.find(Name("callback.example"), &crbtnode, node_path,
+              rbtree.find(Name("callback.example"), &crbtnode, node_path2,
                           testCallback, &callback_called));
     EXPECT_FALSE(callback_called);
 }
@@ -288,6 +299,12 @@ TEST_F(RBTreeTest, chainLevel) {
     // be larger.
     EXPECT_EQ(Name::MAX_LABELS, node_name.getLabelCount());
     EXPECT_THROW(node_name.concatenate(Name("a.")), TooLongName);
+}
+
+TEST_F(RBTreeTest, getAbsoluteNameError) {
+    // an empty chain isn't allowed.
+    RBTreeNodeChain<int> chain;
+    EXPECT_THROW(chain.getAbsoluteName(), BadValue);
 }
 
 /*
