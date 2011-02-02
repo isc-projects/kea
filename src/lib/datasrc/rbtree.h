@@ -318,7 +318,11 @@ public:
     /// The default constructor.
     ///
     /// \exception None
-    RBTreeNodeChain() : node_count_(0) {}
+    RBTreeNodeChain() : node_count_(0), last_compared_(NULL),
+                        // XXX: meaningless initial values:
+                        last_comparison_(0, 0,
+                                         isc::dns::NameComparisonResult::EQUAL)
+    {}
 
     /// Copy constructor.
     ///
@@ -343,6 +347,23 @@ public:
     }
     //@}
 
+    /// TBD
+    /// \exception None
+    void clear() {
+        node_count_ = 0;
+        last_compared_ = NULL;
+    }
+
+    /// TBD
+    /// \exception None
+    const RBNode<T>* getLastComparedNode() const {
+        return (last_compared_);
+    }
+
+    const isc::dns::NameComparisonResult& getLastComparisonResult() const {
+        return (last_comparison_);
+    }
+
 private:
     // The max label count for one domain name is Name::MAX_LABELS (128).
     // Since each node in rbtree stores at least one label, and the root
@@ -352,8 +373,10 @@ private:
     // It's also the possible maximum nodes stored in a chain.
     const static int RBT_MAX_LEVEL = isc::dns::Name::MAX_LABELS - 1;
 
-    const RBNode<T>* nodes_[RBT_MAX_LEVEL];
     int node_count_;
+    const RBNode<T>* nodes_[RBT_MAX_LEVEL];
+    const RBNode<T>* last_compared_;
+    isc::dns::NameComparisonResult last_comparison_;
 };
 
 
@@ -747,7 +770,7 @@ template <typename CBARG>
 typename RBTree<T>::Result
 RBTree<T>::find(const isc::dns::Name& target_name,
                 RBNode<T>** target,
-                RBTreeNodeChain<T>&,
+                RBTreeNodeChain<T>& node_path,
                 bool (*callback)(const RBNode<T>&, CBARG),
                 CBARG callback_arg) const
 {
@@ -758,10 +781,11 @@ RBTree<T>::find(const isc::dns::Name& target_name,
     isc::dns::Name name = target_name;
 
     while (node != NULLNODE) {
-        const isc::dns::NameComparisonResult compare_result =
-            name.compare(node->name_);
+        node_path.last_compared_ = node;
+        node_path.last_comparison_ = name.compare(node->name_);
         const isc::dns::NameComparisonResult::NameRelation relation =
-            compare_result.getRelation();
+            node_path.last_comparison_.getRelation();
+
         if (relation == isc::dns::NameComparisonResult::EQUAL) {
             if (needsReturnEmptyNode_ || !node->isEmpty()) {
                 *target = node;
@@ -769,11 +793,12 @@ RBTree<T>::find(const isc::dns::Name& target_name,
             }
             break;
         } else {
-            const int common_label_count = compare_result.getCommonLabels();
+            const int common_label_count =
+                node_path.last_comparison_.getCommonLabels();
             // If the common label count is 1, there is no common label between
             // the two names, except the trailing "dot".
             if (common_label_count == 1) {
-                node = (compare_result.getOrder() < 0) ?
+                node = (node_path.last_comparison_.getOrder() < 0) ?
                     node->left_ : node->right_;
             } else if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
                 if (needsReturnEmptyNode_ || !node->isEmpty()) {
