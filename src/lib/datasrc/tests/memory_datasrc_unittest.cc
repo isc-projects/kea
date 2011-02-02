@@ -375,6 +375,34 @@ TEST_F(MemoryZoneTest, find) {
     findTest(Name("example.net"), RRType::A(), Zone::NXDOMAIN);
 }
 
+TEST_F(MemoryZoneTest, emptyNode) {
+    /*
+     * The backend RBTree for this test should look like as follows:
+     *          example.org
+     *               |
+     *              baz (empty; easy case)
+     *            /  |  \
+     *          bar  |  x.foo ('foo' part is empty; a bit trickier) 
+     *              bbb
+     *             /
+     *           aaa
+     */
+
+    // Construct the test zone
+    const char* const names[] = {
+        "bar.example.org", "x.foo.example.org", "aaa.baz.example.org",
+        "bbb.baz.example.org.", NULL};
+    for (int i = 0; names[i] != NULL; ++i) {
+        ConstRRsetPtr rrset(new RRset(Name(names[i]), class_, RRType::A(),
+                                      RRTTL(300)));
+        EXPECT_EQ(SUCCESS, zone_.add(rrset));
+    }
+
+    // empty node matching, easy case: the node for 'baz' exists with
+    // no data.
+    findTest(Name("baz.example.org"), RRType::A(), Zone::NXRRSET);
+}
+
 TEST_F(MemoryZoneTest, load) {
     // Put some data inside the zone
     EXPECT_NO_THROW(EXPECT_EQ(result::SUCCESS, zone_.add(rr_ns_)));
