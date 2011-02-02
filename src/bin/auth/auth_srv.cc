@@ -361,7 +361,7 @@ AuthSrv::setStatisticsTimerInterval(uint32_t interval) {
         return;
     }
     if (interval > 86400) {
-        // It can't be occur since the value is checked in
+        // It can't occur since the value is checked in
         // statisticsIntervalConfig::build().
         isc_throw(InvalidParameter, "Too long interval: " << interval);
     }

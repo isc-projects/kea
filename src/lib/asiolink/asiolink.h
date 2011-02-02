@@ -585,7 +585,7 @@ private:
 /// The type of call back function is \c void(void).
 /// 
 /// The call back function will not be called if the instance of this class is
-/// destructed before the timer is expired.
+/// destroyed before the timer is expired.
 ///
 /// Note: Destruction of an instance of this class while call back is pending
 /// causes throwing an exception from \c IOService.
