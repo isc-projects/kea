@@ -343,84 +343,6 @@ public:
     }
     //@}
 
-    /// \brief Return the number of levels stored in the chain.
-    ///
-    /// It's equal to the number of nodes in the chain; for an empty
-    /// chain, 0 will be returned.
-    ///
-    /// \exception None
-    unsigned int getLevelCount() const { return (node_count_); }
-
-    /// \brief return the absolute name for the node which this
-    /// \c RBTreeNodeChain currently refers to.
-    ///
-    /// The chain must not be empty.
-    ///
-    /// \exception isc::BadValue the chain is empty.
-    /// \exception std::bad_alloc memory allocation for the new name fails.
-    isc::dns::Name getAbsoluteName() const {
-        if (isEmpty()) {
-            isc_throw(isc::BadValue,
-                      "RBTreeNodeChain::getAbsoluteName is called on an empty "
-                      "chain");
-        }
-
-        const RBNode<T>* top_node = top();
-        isc::dns::Name absolute_name = top_node->getName();
-        int node_count = node_count_ - 1;
-        while (node_count > 0) {
-            top_node = nodes_[node_count - 1];
-            absolute_name = absolute_name.concatenate(top_node->getName());
-            --node_count;
-        }
-        return (absolute_name);
-    }
-
-private:
-    // the following private functions check invariants about the internal
-    // state using assert() instead of exception.  The state of a chain
-    // can only be modified operations within this file, so if any of the
-    // assumptions fails it means an internal bug.
-
-    /// \brief return whther node chain has node in it.
-    ///
-    /// \exception None
-    bool isEmpty() const { return (node_count_ == 0); }
-
-    /// \brief return the top node for the node chain
-    ///
-    /// RBTreeNodeChain store all the nodes along top node to
-    /// root node of RBTree
-    ///
-    /// \exception None
-    const RBNode<T>* top() const {
-        assert(!isEmpty());
-        return (nodes_[node_count_ - 1]);
-    }
-
-    /// \brief pop the top node from the node chain
-    ///
-    /// After pop, up/super node of original top node will be
-    /// the top node
-    ///
-    /// \exception None
-    void pop() {
-        assert(!isEmpty());
-        --node_count_;
-    }
-
-    /// \brief add the node into the node chain
-    ///
-    /// If the node chain isn't empty, the node should be
-    /// the sub domain of the original top node in node chain
-    /// otherwise the node should be the root node of RBTree.
-    ///
-    /// \exception None
-    void push(const RBNode<T>* node) {
-        assert(node_count_ < RBT_MAX_LEVEL);
-        nodes_[node_count_++] = node;
-    }
-
 private:
     // The max label count for one domain name is Name::MAX_LABELS (128).
     // Since each node in rbtree stores at least one label, and the root
@@ -676,31 +598,6 @@ public:
     }
     //@}
 
-    /// \brief return the next bigger node in DNSSEC order from a given node
-    /// chain.
-    ///
-    /// This method identifies the next bigger node of the node currently
-    /// referenced in \c node_path and returns it.
-    /// This method also updates the passed \c node_path so that it will store
-    /// the path for the returned next node.
-    /// It will be convenient when we want to iterate over the all nodes
-    /// of \c RBTree; we can do this by calling this method repeatedly
-    /// starting from the root node.
-    ///
-    /// \note \c nextNode() will iterate over all the nodes in RBTree including
-    /// empty nodes. If empty node isn't desired, it's easy to add logic to
-    /// check return node and keep invoking \c nextNode() until the non-empty
-    /// node is retrieved.
-    ///
-    /// \exception isc::BadValue node_path is empty.
-    ///
-    /// \param node_path A node chain that stores all the nodes along the path
-    /// from root to node.
-    ///
-    /// \return An \c RBNode that is next bigger than \c node; if \c node is
-    /// the largest, \c NULL will be returned.
-    const RBNode<T>* nextNode(RBTreeNodeChain<T>& node_path) const;
-
     /// \brief Get the total number of nodes in the tree
     ///
     /// It includes nodes internally created as a result of adding a domain
@@ -850,15 +747,11 @@ template <typename CBARG>
 typename RBTree<T>::Result
 RBTree<T>::find(const isc::dns::Name& target_name,
                 RBNode<T>** target,
-                RBTreeNodeChain<T>& node_path,
+                RBTreeNodeChain<T>&,
                 bool (*callback)(const RBNode<T>&, CBARG),
                 CBARG callback_arg) const
 {
     using namespace helper;
-
-    if (!node_path.isEmpty()) {
-        isc_throw(isc::BadValue, "RBTree::find is given a non empty chain");
-    }
 
     RBNode<T>* node = root_;
     Result ret = NOTFOUND;
@@ -871,7 +764,6 @@ RBTree<T>::find(const isc::dns::Name& target_name,
             compare_result.getRelation();
         if (relation == isc::dns::NameComparisonResult::EQUAL) {
             if (needsReturnEmptyNode_ || !node->isEmpty()) {
-                node_path.push(node);
                 *target = node;
                 ret = EXACTMATCH;
             }
@@ -893,7 +785,6 @@ RBTree<T>::find(const isc::dns::Name& target_name,
                         }
                     }
                 }
-                node_path.push(node);
                 name = name - node->name_;
                 node = node->down_;
             } else {
@@ -904,51 +795,6 @@ RBTree<T>::find(const isc::dns::Name& target_name,
 
     return (ret);
 }
-
-template <typename T>
-const RBNode<T>*
-RBTree<T>::nextNode(RBTreeNodeChain<T>& node_path) const {
-    if (node_path.isEmpty()) {
-        isc_throw(isc::BadValue, "RBTree::nextNode is given an empty chain");
-    }
-
-    const RBNode<T>* node = node_path.top();
-    // if node has sub domain, the next domain is the smallest
-    // domain in sub domain tree
-    if (node->down_ != NULLNODE) {
-        const RBNode<T>* left_most = node->down_;
-        while (left_most->left_ != NULLNODE) {
-            left_most = left_most->left_;
-        }
-        node_path.push(left_most);
-        return (left_most);
-    }
-
-    // node_path go to up level
-    node_path.pop();
-    // otherwise found the successor node in current level
-    const RBNode<T>* successor = node->successor();
-    if (successor != NULLNODE) {
-        node_path.push(successor);
-        return (successor);
-    }
-
-    // if no successor found move to up level, the next successor
-    // is the successor of up node in the up level tree, if
-    // up node doesn't have successor we gonna keep moving to up
-    // level
-    while (!node_path.isEmpty()) {
-        const RBNode<T>* up_node_successor = node_path.top()->successor();
-        node_path.pop();
-        if (up_node_successor != NULLNODE) {
-            node_path.push(up_node_successor);
-            return (up_node_successor);
-        }
-    }
-
-    return (NULL);
-}
-
 
 template <typename T>
 typename RBTree<T>::Result
