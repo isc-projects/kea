@@ -678,7 +678,7 @@ TEST_F(ASIOLinkTest, forwarderSend) {
     Question q(Name("example.com"), RRClass::IN(), RRType::TXT());
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
-    rq.sendQuery(q, answer, buffer, &server);
+    rq.resolve(q, answer, buffer, &server);
 
     char data[4096];
     size_t size = sizeof(data);
@@ -726,7 +726,7 @@ TEST_F(ASIOLinkTest, recursiveTimeout) {
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
-    query.sendQuery(question, answer, buffer, &server);
+    query.resolve(question, answer, buffer, &server);
 
     // Run the test
     io_service_->run();
@@ -773,7 +773,7 @@ TEST_F(ASIOLinkTest, DISABLED_recursiveSendOk) {
     Question q(Name("www.isc.org"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
-    rq.sendQuery(q, answer, buffer, &server);
+    rq.resolve(q, answer, buffer, &server);
     io_service_->run();
 
     // Check that the answer we got matches the one we wanted
@@ -798,7 +798,7 @@ TEST_F(ASIOLinkTest, DISABLED_recursiveSendNXDOMAIN) {
     Question q(Name("wwwdoesnotexist.isc.org"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
-    rq.sendQuery(q, answer, buffer, &server);
+    rq.resolve(q, answer, buffer, &server);
     io_service_->run();
 
     // Check that the answer we got matches the one we wanted

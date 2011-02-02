@@ -479,7 +479,6 @@ public:
         MessagePtr answer_message, shared_ptr<AddressVector> upstream,
         shared_ptr<AddressVector> upstream_root,
         OutputBufferPtr buffer,
-        //DNSServer* server,
         isc::resolve::ResolverInterface::CallbackPtr cb,
         int timeout,
         unsigned retries) :
@@ -489,7 +488,6 @@ public:
         upstream_(upstream),
         upstream_root_(upstream_root),
         buffer_(buffer),
-        //server_(server->clone()),
         resolvercallback_(cb),
         timeout_(timeout),
         retries_(retries),
@@ -560,19 +558,13 @@ public:
 }
 
 void
-RecursiveQuery::sendQuery(const isc::dns::QuestionPtr& question,
+RecursiveQuery::resolve(const isc::dns::QuestionPtr& question,
     const isc::resolve::ResolverInterface::CallbackPtr callback)
 {
     asio::io_service& io = dns_service_.get_io_service();
 
     MessagePtr answer_message(new Message(Message::RENDER));
     OutputBufferPtr buffer(new OutputBuffer(0));
-    /*
-    answer_message->setOpcode(isc::dns::Opcode::QUERY());
-    isc::resolve::ResolverCallbackDirect* rcd =
-        new isc::resolve::ResolverCallbackDirect(callback,
-                                                 answer_message);
-    */
     
     // It will delete itself when it is done
     new RunningQuery(io, *question, answer_message, upstream_,
@@ -580,10 +572,10 @@ RecursiveQuery::sendQuery(const isc::dns::QuestionPtr& question,
 }
 
 void
-RecursiveQuery::sendQuery(const Question& question,
-                          MessagePtr answer_message,
-                          OutputBufferPtr buffer,
-                          DNSServer* server)
+RecursiveQuery::resolve(const Question& question,
+                        MessagePtr answer_message,
+                        OutputBufferPtr buffer,
+                        DNSServer* server)
 {
     // XXX: eventually we will need to be able to determine whether
     // the message should be sent via TCP or UDP, or sent initially via
