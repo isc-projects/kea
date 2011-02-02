@@ -87,8 +87,8 @@ private:
     /// to many async_*() functions) and we want keep the same data. Some of
     /// the data is not copyable too.
     ///
-    struct PrivateData;
-    boost::shared_ptr<PrivateData> data_;
+    struct IOFetchProtocol;
+    boost::shared_ptr<IOFetchProtocol> data_;
 };
 }
 

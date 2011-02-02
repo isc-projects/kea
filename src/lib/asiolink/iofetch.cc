@@ -50,16 +50,16 @@ using namespace isc::dns;
 
 namespace asiolink {
 
-// Private IOFetch data (see internal/udpdns.h for reasons)
-struct IOFetch::PrivateData {
+// Private IOFetch data (see internal/iofetch.h for reasons)
+struct IOFetch::IOFetchProtocol {
     // UDP Socket we send query to and expect reply from there
     udp::socket socket;
     // Where was the query sent
     udp::endpoint remote;
     // TCP Socket
-    //tcp::socket tsocket;
+    tcp::socket tsocket;
     // tcp endpoint
-    //tcp::endpoint tremote;
+    tcp::endpoint tremote;
     // What we ask the server
     Question question;
     // We will store the answer here
@@ -78,17 +78,24 @@ struct IOFetch::PrivateData {
     // How many milliseconds are we willing to wait for answer?
     int timeout;
 
-    PrivateData(io_service& service,
-        const udp::socket::protocol_type& protocol, const Question &q,
+    IOFetchProtocol(io_service& service,
+        const udp::socket::protocol_type& protocol,
+        const tcp::socket::protocol_type& tprotocol,
+        const Question &q,
         OutputBufferPtr b, Callback *c) :
-        socket(service, protocol),
-        question(q),
-        buffer(b),
-        msgbuf(new OutputBuffer(512)),
-        callback(c),
-        stopped(false),
-        timer(service)
-    { }
+          socket(service, protocol),
+          tsocket(service, tprotocol),
+          question(q),
+          buffer(b),
+          msgbuf(new OutputBuffer(512)),
+          callback(c),
+          stopped(false),
+          timer(service)
+    {
+
+ }
+
+
 };
 
 /// The following functions implement the \c IOFetch class.
@@ -97,8 +104,10 @@ struct IOFetch::PrivateData {
 IOFetch::IOFetch(io_service& io_service,
                    const Question& q, const IOAddress& addr, uint16_t port,
                    OutputBufferPtr buffer, Callback *callback, int timeout) :
-    data_(new PrivateData(io_service,
-        addr.getFamily() == AF_INET ? udp::v4() : udp::v6(), q, buffer,
+    data_(new IOFetchProtocol(io_service,
+        addr.getFamily() == AF_INET ? udp::v4() : udp::v6(), 
+        addr.getFamily() == AF_INET ? tcp::v4() : tcp::v6(), 
+        q, buffer,
         callback))
 {
     data_->remote = UDPEndpoint(addr, port).getASIOEndpoint();
