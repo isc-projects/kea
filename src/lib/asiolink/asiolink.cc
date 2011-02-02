@@ -581,6 +581,10 @@ public:
             InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
             incoming.fromWire(ibuf);
 
+            if (message->getHeaderFlag(Message::HEADERFLAG_TC) {
+            
+            }
+
             if (upstream_->size() == 0 &&
                 incoming.getRcode() == Rcode::NOERROR()) {
                 done_ = handleRecursiveAnswer(incoming);
