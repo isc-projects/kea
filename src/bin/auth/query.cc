@@ -177,16 +177,28 @@ Query::process() const {
                 // by that)
                 RRsetPtr cname(new RRset(qname_, rrset->getClass(),
                     RRType::CNAME(), rrset->getTTL()));
-                // Construct the new target by replacing the end
-                cname->addRdata(rdata::generic::CNAME(qname_.split(0,
-                    qname_.getLabelCount() -
-                    rrset->getName().getLabelCount()).concatenate(
-                    dname.getDname())));
-                rrset = cname;
-                // If this was ANY, act as it wasn't, because we put the CNAME
-                // into rrset, not to target and there's nothing else.
-                // TODO: This might need to be changed when CNAME gets chaining.
-                qtype_is_any = false;
+                try {
+                    // Construct the new target by replacing the end
+                    cname->addRdata(rdata::generic::CNAME(qname_.split(0,
+                        qname_.getLabelCount() -
+                        rrset->getName().getLabelCount()).concatenate(
+                        dname.getDname())));
+                    rrset = cname;
+                    // If this was ANY, act as it wasn't, because we put the
+                    // CNAME into rrset, not to target and there's nothing else.
+                    // TODO: This might need to be changed when CNAME gets
+                    // chaining.
+                    qtype_is_any = false;
+                }
+                /*
+                 * In case the synthetized name is too long, section 4.1 of RFC 2672
+                 * mandates we return YXDOMAIN.
+                 */
+                catch (const isc::dns::TooLongName&) {
+                    response_.setRcode(Rcode::YXDOMAIN());
+                    getAuthAdditional(*result.zone);
+                    return;
+                }
                 // No break; here, fall trough.
             }
             case Zone::CNAME:
