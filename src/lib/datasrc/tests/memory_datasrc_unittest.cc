@@ -382,7 +382,7 @@ TEST_F(MemoryZoneTest, emptyNode) {
      *               |
      *              baz (empty; easy case)
      *            /  |  \
-     *          bar  |  x.foo ('foo' part is empty; a bit trickier) 
+     *          bar  |  x.foo ('foo' part is empty; a bit trickier)
      *              bbb
      *             /
      *           aaa
