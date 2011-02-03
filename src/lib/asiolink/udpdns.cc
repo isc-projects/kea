@@ -126,7 +126,7 @@ struct UDPServer::Data {
     // are not copyable.
     boost::shared_ptr<asio::ip::udp::socket> socket_;
 
-    // The ASIO-enternal endpoint object representing the client
+    // The ASIO-internal endpoint object representing the client
     std::auto_ptr<asio::ip::udp::endpoint> sender_;
 
     // \c IOMessage and \c Message objects to be passed to the
