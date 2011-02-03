@@ -91,9 +91,7 @@ struct IOFetch::IOFetchProtocol {
           callback(c),
           stopped(false),
           timer(service)
-    {
-
- }
+    { }
 
 
 };
@@ -101,15 +99,17 @@ struct IOFetch::IOFetchProtocol {
 /// The following functions implement the \c IOFetch class.
 ///
 /// The constructor
-IOFetch::IOFetch(io_service& io_service,
-                   const Question& q, const IOAddress& addr, uint16_t port,
-                   OutputBufferPtr buffer, Callback *callback, int timeout) :
+IOFetch::IOFetch(io_service& io_service, const Question& q, 
+                 const IOAddress& addr, uint16_t port,
+                 OutputBufferPtr buffer, Callback *callback, int timeout) :
     data_(new IOFetchProtocol(io_service,
         addr.getFamily() == AF_INET ? udp::v4() : udp::v6(), 
         addr.getFamily() == AF_INET ? tcp::v4() : tcp::v6(), 
         q, buffer,
         callback))
+
 {
+    data_->tremote = TCPEndpoint(addr, port).getASIOEndpoint();
     data_->remote = UDPEndpoint(addr, port).getASIOEndpoint();
     data_->timeout = timeout;
 }
