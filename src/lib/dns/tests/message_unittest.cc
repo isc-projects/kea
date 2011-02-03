@@ -250,6 +250,27 @@ TEST_F(MessageTest, hasRRset) {
     EXPECT_THROW(message_render.hasRRset(bogus_section, test_name,
                                          RRClass::IN(), RRType::A()),
                  OutOfRange);
+
+    // Repeat the checks having created an RRset of the appropriate type.
+
+    RRsetPtr rrs1(new RRset(test_name, RRClass::IN(), RRType::A(), RRTTL(60)));
+    EXPECT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, rrs1));
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ADDITIONAL, rrs1));
+
+    RRsetPtr rrs2(new RRset(Name("nomatch.example"), RRClass::IN(), RRType::A(),
+        RRTTL(5)));
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, rrs2));
+
+    RRsetPtr rrs3(new RRset(test_name, RRClass::CH(), RRType::A(), RRTTL(60)));
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, rrs3));
+
+    RRsetPtr rrs4(new RRset(test_name, RRClass::IN(), RRType::AAAA(), RRTTL(5)));
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, rrs4));
+
+    RRsetPtr rrs5(new RRset(test_name, RRClass::IN(), RRType::AAAA(), RRTTL(5)));
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, rrs4));
+
+    EXPECT_THROW(message_render.hasRRset(bogus_section, rrs1), OutOfRange);
 }
 
 TEST_F(MessageTest, removeRRset) {

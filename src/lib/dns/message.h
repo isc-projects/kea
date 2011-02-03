@@ -460,6 +460,13 @@ public:
     bool hasRRset(const Section section, const Name& name,
                   const RRClass& rrclass, const RRType& rrtype);
 
+    /// \brief Determine whether the given section already has an RRset
+    /// matching the one pointed to by the argumet
+    ///
+    /// \c section must be a valid constant of the \c Section type;
+    /// otherwise, an exception of class \c OutOfRange will be thrown.
+    bool hasRRset(const Section section, const RRsetPtr& rrset);
+
     /// \brief Remove RRSet from Message
     ///
     /// Removes the RRset identified by the section iterator from the message.
