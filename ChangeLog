@@ -1,5 +1,5 @@
   XXX.  [bug]           naokikambe
-	Fixed failure of termination of msgq_test.py in python3 coverage(3.3.1)
+	Fixed failure of termination of msgq_test.py with python3 coverage(3.3.1)
 	(Trac #nnn, git tbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbd)
 
   166.  [func]      jelte
