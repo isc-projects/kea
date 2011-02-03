@@ -39,7 +39,6 @@
 	for root zone was added.
 	(Trac #85, svn r3836)
 
->>>>>>> .merge-right.r3894
   127.  [bug]       stephen
 	During normal operation process termination and resurrection messages
 	are now output regardless of the state of the verbose flag.
