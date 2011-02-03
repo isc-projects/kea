@@ -1,0 +1,84 @@
+#!/bin/bash
+# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# $Id$
+
+tempfile=`echo /tmp/run_init_test_$$`
+failcount=0
+localmes=@abs_builddir@/localdef.mes
+tempfile=@abs_builddir@/run_time_init_test_tempfile_$$
+
+function passfail() {
+    if [ $1 -eq 0 ]; then
+        echo "pass"
+    else
+        echo "FAIL"
+    fi
+    failcount=`expr $failcount + $1`
+}
+    
+echo -n "1. runInitTest default parameters: "
+cat > $tempfile << .
+FATAL [alpha.example] WRITERR, error writing to test1: 42
+ERROR [alpha.example] UNRECDIR, unrecognised directive 'false'
+WARN  [alpha.dlm] READERR, error reading from a.txt: dummy test
+INFO  [alpha.dlm] OPENIN, unable to open message file example.msg for input: dummy test
+.
+./logger_support_test | cut -d' ' -f3- | diff $tempfile -
+passfail $?
+
+echo -n "2. Severity filter: "
+cat > $tempfile << .
+FATAL [alpha.example] WRITERR, error writing to test1: 42
+ERROR [alpha.example] UNRECDIR, unrecognised directive 'false'
+.
+./logger_support_test -s error | cut -d' ' -f3- | diff $tempfile -
+passfail $?
+
+echo -n "3. Debug level: "
+cat > $tempfile << .
+FATAL [alpha.example] WRITERR, error writing to test1: 42
+ERROR [alpha.example] UNRECDIR, unrecognised directive 'false'
+WARN  [alpha.dlm] READERR, error reading from a.txt: dummy test
+INFO  [alpha.dlm] OPENIN, unable to open message file example.msg for input: dummy test
+DEBUG [alpha.example] UNRECDIR, unrecognised directive '[abc]'
+DEBUG [alpha.example] UNRECDIR, unrecognised directive '[24]'
+DEBUG [alpha.example] UNRECDIR, unrecognised directive '[25]'
+.
+./logger_support_test -s debug -d 25 | cut -d' ' -f3- | diff $tempfile -
+passfail $?
+
+echo -n "4. Local message replacement: "
+cat > $tempfile << .
+WARN  [alpha.log] IDNOTFND, could not replace message for 'NOTHERE': no such message identification
+FATAL [alpha.example] WRITERR, error writing to test1: 42
+ERROR [alpha.example] UNRECDIR, replacement unrecognised directive message, parameter is 'false'
+WARN  [alpha.dlm] READERR, replacement read error, parameters: 'a.txt' and 'dummy test'
+INFO  [alpha.dlm] OPENIN, unable to open message file example.msg for input: dummy test
+.
+./logger_support_test $localmes | cut -d' ' -f3- | diff $tempfile -
+passfail $?
+
+rm -f $tempfile
+
+if [ $failcount -eq 0 ]; then
+    echo "PASS: run_time_init_test"
+elif [ $failcount -eq 1 ]; then
+    echo "FAIL: run_time_init_test - 1 test failed"
+else
+    echo "FAIL: run_time_init_test - $failcount tests failed"
+fi
+
+exit $failcount
