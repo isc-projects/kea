@@ -286,8 +286,19 @@ RBNode<T>::successor() const {
 }
 
 
-/// \brief RBTreeNodeChain is used to keep track of the sequence of
-/// nodes to reach any given node from the root of RBTree.
+/// \brief RBTreeNodeChain stores detailed information of \c RBTree::find()
+/// result.
+///
+/// - The \c RBNode that was last compared with the search name, and
+///   the comparison result at that point in the form of
+///   \c isc::dns::NameComparisonResult.
+/// - A sequence of nodes that forms a path to the found node (which is
+///   not yet implemented).
+///
+/// The comparison result can be used to handle some rare cases such as
+/// empty node processing.
+/// The node sequence keeps track of the nodes to reach any given node from
+/// the root of RBTree.
 ///
 /// Currently, RBNode does not have "up" pointers in them (i.e., back pointers
 /// from the root of one level of tree of trees to the node in the parent
@@ -299,6 +310,10 @@ RBNode<T>::successor() const {
 /// quite likely we want to have that pointer if we want to optimize name
 /// compression by exploiting the structure of the zone.  If and when that
 /// happens we should also revisit the need for the chaining.
+/// Also, the class name may not be appropriate now that it contains other
+/// information than a node "chain", and the chain itself may even be
+/// deprecated.  Something like "RBTreeFindContext" may be a better name.
+/// This point should be revisited later.
 ///
 /// RBTreeNodeChain is constructed and manipulated only inside the \c RBTree
 /// class.
@@ -347,19 +362,42 @@ public:
     }
     //@}
 
-    /// TBD
+    /// Clear the state of the chain.
+    ///
+    /// This method re-initializes the internal state of the chain so that
+    /// it can be reused for subsequent operations.
+    ///
     /// \exception None
     void clear() {
         node_count_ = 0;
         last_compared_ = NULL;
     }
 
-    /// TBD
+    /// Return the \c RBNode that was last compared in \c RBTree::find().
+    ///
+    /// If this chain has been passed to \c RBTree::find() and there has
+    /// been name comparison against the search name, the last compared
+    /// \c RBNode is recorded within the chain.  This method returns that
+    /// node.
+    /// If \c RBTree::find() hasn't been called with this chain or name
+    /// comparison hasn't taken place (which is possible if the tree is empty),
+    /// this method returns \c NULL.
+    ///
     /// \exception None
     const RBNode<T>* getLastComparedNode() const {
         return (last_compared_);
     }
 
+    /// Return the result of last name comparison in \c RBTree::find().
+    ///
+    /// Like \c getLastComparedNode(), \c RBTree::find() records the result
+    /// of the last name comparison in the chain.  This method returns the
+    /// result.
+    /// The return value of this method is only meaningful when comparison
+    /// has taken place, i.e, when \c getLastComparedNode() would return a
+    /// non \c NULL value.
+    ///
+    /// \exception None
     const isc::dns::NameComparisonResult& getLastComparisonResult() const {
         return (last_comparison_);
     }
@@ -560,12 +598,18 @@ public:
     /// The callbacks are not general functors for the same reason - we don't
     /// expect it to be needed.
     ///
-    /// Another special feature of this version is the ability to provide
-    /// a node chain containing a path to the found node.  The chain will be
-    /// returned via the \c node_path parameter.
+    /// Another special feature of this version is the ability to record
+    /// more detailed information regarding the search result.
+    ///
+    /// This information will be returned via the \c node_path parameter,
+    /// which is an object of class \c RBTreeNodeChain.
     /// The passed parameter must be empty.
-    /// On success, it will contain all the ancestor nodes from the found
-    /// node towards the root.
+    ///
+    /// \note The rest of the description isn't yet implemented.  It will be
+    /// handled in Trac ticket #517.
+    ///
+    /// On success, the node sequence stoed in \c node_path will contain all
+    /// the ancestor nodes from the found node towards the root.
     /// For example, if we look for o.w.y.d.e.f in the example \ref diagram,
     /// \c node_path will contain w.y and d.e.f; the \c top() node of the
     /// chain will be o, w.f and d.e.f will be stored below it.
@@ -579,13 +623,13 @@ public:
     /// node of a given node in the entire RBTree; the \c nextNode() method
     /// takes a node chain as a parameter.
     ///
-    /// \exception isc::BadValue node_path is not empty.
+    /// \exception isc::BadValue node_path is not empty (not yet implemented).
     ///
     /// \param name Target to be found
     /// \param node On success (either \c EXACTMATCH or \c PARTIALMATCH)
     ///     it will store a pointer to the matching node
-    /// \param node_path It will store all the ancestor nodes in the RBTree
-    ///        from the found node to the root.  The found node is stored.
+    /// \param node_path Other search details will be stored (see the
+    ///        description)
     /// \param callback If non \c NULL, a call back function to be called
     ///     at marked nodes (see above).
     /// \param callback_arg A caller supplied argument to be passed to
