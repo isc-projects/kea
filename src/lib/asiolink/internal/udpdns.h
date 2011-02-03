@@ -155,7 +155,7 @@ public:
     /// \brief Check if we have an answer
     ///
     /// \return true if we have an answer
-    bool hasAnswer() { return (done_); }
+    bool hasAnswer();
 
     /// \brief Returns the coroutine state value
     ///
@@ -173,66 +173,17 @@ public:
 private:
     enum { MAX_LENGTH = 4096 };
 
-    // The ASIO service object
-    asio::io_service& io_;
-
-    // Class member variables which are dynamic, and changes to which
-    // need to accessible from both sides of a coroutine fork or from
-    // outside of the coroutine (i.e., from an asynchronous I/O call),
-    // should be declared here as pointers and allocated in the
-    // constructor or in the coroutine.  This allows state information
-    // to persist when an individual copy of the coroutine falls out
-    // scope while waiting for an event, *so long as* there is another
-    // object that is referencing the same data.  As a side-benefit, using
-    // pointers also reduces copy overhead for coroutine objects.
-    //
-    // Note: Currently these objects are allocated by "new" in the
-    // constructor, or in the function operator while processing a query.
-    // Repeated allocations from the heap for every incoming query is
-    // clearly a performance issue; this must be optimized in the future.
-    // The plan is to have a structure pre-allocate several "server state"
-    // objects which can be pulled off a free list and placed on an in-use
-    // list whenever a query comes in.  This will serve the dual purpose
-    // of improving performance and guaranteeing that state information
-    // will *not* be destroyed when any one instance of the coroutine
-    // falls out of scope while waiting for an event.
-    //
-    // Socket used to for listen for queries.  Created in the
-    // constructor and stored in a shared_ptr because socket objects
-    // are not copyable.
-    boost::shared_ptr<asio::ip::udp::socket> socket_;
-
-    // The ASIO-enternal endpoint object representing the client
-    boost::shared_ptr<asio::ip::udp::endpoint> sender_;
-
-    // \c IOMessage and \c Message objects to be passed to the
-    // DNS lookup and answer providers
-    boost::shared_ptr<asiolink::IOMessage> io_message_;
-
-    // The original query as sent by the client
-    isc::dns::MessagePtr query_message_;
-
-    // The response message we are building
-    isc::dns::MessagePtr answer_message_;
-
-    // The buffer into which the response is written
-    isc::dns::OutputBufferPtr respbuf_;
-    
-    // The buffer into which the query packet is written
-    boost::shared_array<char> data_;
-
-    // State information that is entirely internal to a given instance
-    // of the coroutine can be declared here.
-    size_t bytes_;
-    bool done_;
-
-    // Callback functions provided by the caller
-    const SimpleCallback* checkin_callback_;
-    const DNSLookup* lookup_callback_;
-    const DNSAnswer* answer_callback_;
-
-    boost::shared_ptr<IOEndpoint> peer_;
-    boost::shared_ptr<IOSocket> iosock_;
+    /**
+     * \brief Internal state and data.
+     *
+     * We use the pimple design pattern, but not because we need to hide
+     * internal data. This class and whole header is for private use anyway.
+     * It turned out that UDPServer is copied a lot, because it is a coroutine.
+     * This way the overhead of copying is lower, we copy only one shared
+     * pointer instead of about 10 of them.
+     */
+    class Data;
+    boost::shared_ptr<Data> data_;
 };
 
 //
