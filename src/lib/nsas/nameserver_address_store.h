@@ -20,6 +20,8 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <resolve/resolver_interface.h>
+
 #include "nsas_types.h"
 
 namespace isc {
@@ -62,7 +64,8 @@ public:
     /// value of 3001 is the first prime number over 3000, and by implication,
     /// there is an assumption that there will be more nameservers than zones
     /// in the store.
-    NameserverAddressStore(boost::shared_ptr<ResolverInterface> resolver,
+    NameserverAddressStore(
+        boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
         uint32_t zonehashsize = 1009, uint32_t nshashsize = 3001);
 
     /// \brief Destructor
@@ -105,7 +108,7 @@ protected:
     boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru_;
     // The resolver we use
 private:
-    boost::shared_ptr<ResolverInterface> resolver_;
+    boost::shared_ptr<isc::resolve::ResolverInterface> resolver_;
     //}@
 };
 

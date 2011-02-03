@@ -36,11 +36,12 @@
 
 #include <dns/rrset.h>
 
+#include <resolve/resolver_interface.h>
+
 #include "hash_key.h"
 #include "nsas_entry.h"
 #include "asiolink.h"
 #include "fetchable.h"
-#include "resolver_interface.h"
 #include "nsas_types.h"
 #include "random_number_generator.h"
 
@@ -76,7 +77,8 @@ public:
      * \todo Move to cc file, include the lookup (if NSAS uses resolver for
      *     everything)
      */
-    ZoneEntry(boost::shared_ptr<ResolverInterface> resolver,
+    ZoneEntry(
+        boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
         const std::string& name, const isc::dns::RRClass& class_code,
         boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table,
         boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru);
@@ -151,7 +153,7 @@ private:
     void process(AddressFamily family,
         const boost::shared_ptr<NameserverEntry>& nameserver);
     // Resolver we use
-    boost::shared_ptr<ResolverInterface> resolver_;
+    boost::shared_ptr<isc::resolve::ResolverInterface> resolver_;
     // We store the nameserver table and lru, so we can look up when there's
     // update
     boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table_;
