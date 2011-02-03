@@ -257,7 +257,7 @@ UDPServer::operator()(error_code ec, size_t length) {
         // Call the DNS answer provider to render the answer into
         // wire format
         (*data_->answer_callback_)(*data_->io_message_, data_->query_message_,
-                            data_->answer_message_, data_->respbuf_);
+            data_->answer_message_, data_->respbuf_);
 
         // Begin an asynchronous send, and then yield.  When the
         // send completes, we will resume immediately after this point
