@@ -310,6 +310,11 @@ Message::hasRRset(const Section section, const Name& name,
 }
 
 bool
+Message::hasRRset(const Section section, const RRsetPtr& rrset) {
+    return (hasRRset(section, rrset->getName(), rrset->getClass(), rrset->getType()));
+}
+
+bool
 Message::removeRRset(const Section section, RRsetIterator& iterator) {
     if (section >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);

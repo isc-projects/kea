@@ -82,6 +82,23 @@ TEST(IOAddressTest, fromText) {
     EXPECT_THROW(IOAddress("2001:db8::efgh"), IOError);
 }
 
+TEST(IOAddressTest, Equality) {
+    EXPECT_TRUE(IOAddress("192.0.2.1") == IOAddress("192.0.2.1"));
+    EXPECT_FALSE(IOAddress("192.0.2.1") != IOAddress("192.0.2.1"));
+
+    EXPECT_TRUE(IOAddress("192.0.2.1") != IOAddress("192.0.2.2"));
+    EXPECT_FALSE(IOAddress("192.0.2.1") == IOAddress("192.0.2.2"));
+
+    EXPECT_TRUE(IOAddress("2001:db8::12") == IOAddress("2001:0DB8:0:0::0012"));
+    EXPECT_FALSE(IOAddress("2001:db8::12") != IOAddress("2001:0DB8:0:0::0012"));
+
+    EXPECT_TRUE(IOAddress("2001:db8::1234") != IOAddress("2001:db8::1235"));
+    EXPECT_FALSE(IOAddress("2001:db8::1234") == IOAddress("2001:db8::1235"));
+
+    EXPECT_TRUE(IOAddress("2001:db8::1234") != IOAddress("192.0.2.3"));
+    EXPECT_FALSE(IOAddress("2001:db8::1234") == IOAddress("192.0.2.3"));
+}
+
 TEST(IOEndpointTest, createUDPv4) {
     const IOEndpoint* ep;
     ep = IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.1"), 5300);
