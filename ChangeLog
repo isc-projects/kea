@@ -1,7 +1,8 @@
   163.  [func]      vorner
-	The pimpl design pattern is used in IOServer, with a shared pointer. This
+	The pimpl design pattern is used in UDPServer, with a shared pointer. This
 	makes it smaller to copy (which is done a lot as a sideeffect of being
-	coroutine) and speeds the server up by around 10%.
+	coroutine) and speeds applications of this class (notably b10-auth) up by
+	around 10%.
 	(Trac #537, git 94cb95b1d508541201fc064302ba836164d3cbe6)
 
   162.  [func]		stephen
