@@ -401,6 +401,17 @@ TEST_F(MemoryZoneTest, emptyNode) {
     // empty node matching, easy case: the node for 'baz' exists with
     // no data.
     findTest(Name("baz.example.org"), RRType::A(), Zone::NXRRSET);
+
+    // empty node matching, a trickier case: the node for 'foo' is part of
+    // "x.foo", which should be considered an empty node.
+    findTest(Name("foo.example.org"), RRType::A(), Zone::NXRRSET);
+
+    // "org" is contained in "example.org", but it shouldn't be treated as
+    // NXRRSET because it's out of zone.
+    // Note: basically we don't expect such a query to be performed (the common
+    // operation is to identify the best matching zone first then perform
+    // search it), but we shouldn't be confused even in the unexpected case.
+    findTest(Name("org"), RRType::A(), Zone::NXDOMAIN);
 }
 
 TEST_F(MemoryZoneTest, load) {
