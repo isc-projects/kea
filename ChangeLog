@@ -1,8 +1,17 @@
+  162.  [func]		stephen
+	Added C++ logging, allowing logging at different severities.
+	Code specifies the message to be logged via a symbol, and the
+	logging code picks up the message from an in-built dictionary.
+	The contents of the dictionary can be replaced at run-time by
+	locale-specific messages.  A message compiler program is provided
+	to create message header files and supply the default messages.
+	(Trac #438, git 7b1606cea7af15dc71f5ec1d70d958b00aa98af7)
+
   161.  [func]		stephen
 	Added ResponseScrubber class to examine response from
 	a server and to remove out-of-bailiwick RRsets.  Also
 	does cross-section checks to ensure consistency.
-	(Trac 496, git b9296ca023cc9e76cda48a7eeebb0119166592c5)
+	(Trac #496, git b9296ca023cc9e76cda48a7eeebb0119166592c5)
 
   160.  [func]		jelte
   	Updated the resolver to take 3 different timeout values;
