@@ -1,3 +1,9 @@
+  161.  [func]		stephen
+	Added ResponseScrubber class to examine response from
+	a server and to remove out-of-bailiwick RRsets.  Also
+	does cross-section checks to ensure consistency.
+	(Trac 496, git b9296ca023cc9e76cda48a7eeebb0119166592c5)
+
   160.  [func]		jelte
   	Updated the resolver to take 3 different timeout values;
 	timeout_query for outstanding queries we sent while resolving
