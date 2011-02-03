@@ -199,10 +199,16 @@ struct MemoryZone::MemoryZoneImpl {
                 if (state.zonecut_node_ != NULL) {
                     return (FindResult(DELEGATION, state.rrset_));
                 }
-                // TODO: we should also cover empty non-terminal cases, which
-                // will require non trivial code and is deferred for later
-                // development.  For now, we regard any partial match that
-                // didn't hit a zone cut as "not found".
+
+                // If the RBTree search stopped at a node for a super domain
+                // of the search name, it means the search name exists in
+                // the zone but is empty.  Treat it as NXRRSET.
+                if (node_path.getLastComparisonResult().getRelation() ==
+                    NameComparisonResult::SUPERDOMAIN) {
+                    return (FindResult(NXRRSET, ConstRRsetPtr()));
+                }
+
+                // fall through
             case DomainTree::NOTFOUND:
                 return (FindResult(NXDOMAIN, ConstRRsetPtr()));
             case DomainTree::EXACTMATCH: // This one is OK, handle it
@@ -210,7 +216,7 @@ struct MemoryZone::MemoryZoneImpl {
             default:
                 assert(0);
         }
-        assert(node);
+        assert(node != NULL);
 
         // If there is an exact match but the node is empty, it's equivalent
         // to NXRRSET.
