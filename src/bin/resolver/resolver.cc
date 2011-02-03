@@ -131,6 +131,9 @@ public:
         }
     }
 
+    void resolve(const isc::dns::QuestionPtr& question,
+        const isc::resolve::ResolverInterface::CallbackPtr& callback);
+
     void processNormalQuery(const Question& question,
                             MessagePtr answer_message,
                             OutputBufferPtr buffer,
@@ -333,7 +336,6 @@ Resolver::~Resolver() {
     delete checkin_;
     delete dns_lookup_;
     delete dns_answer_;
-    dlog("Deleting the Resolver",true);
 }
 
 void
@@ -350,6 +352,14 @@ ModuleCCSession*
 Resolver::getConfigSession() const {
     return (impl_->config_session_);
 }
+
+void
+Resolver::resolve(const isc::dns::QuestionPtr& question,
+    const isc::resolve::ResolverInterface::CallbackPtr& callback)
+{
+    impl_->resolve(question, callback);
+}
+
 
 void
 Resolver::processMessage(const IOMessage& io_message,
@@ -435,13 +445,20 @@ Resolver::processMessage(const IOMessage& io_message,
 }
 
 void
+ResolverImpl::resolve(const QuestionPtr& question,
+    const isc::resolve::ResolverInterface::CallbackPtr& callback)
+{
+    rec_query_->resolve(question, callback);
+}
+
+void
 ResolverImpl::processNormalQuery(const Question& question,
                                  MessagePtr answer_message,
                                  OutputBufferPtr buffer,
                                  DNSServer* server)
 {
     dlog("Processing normal query");
-    rec_query_->sendQuery(question, answer_message, buffer, server);
+    rec_query_->resolve(question, answer_message, buffer, server);
 }
 
 namespace {
