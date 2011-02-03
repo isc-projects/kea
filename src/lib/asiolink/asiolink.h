@@ -31,6 +31,7 @@
 #include <dns/buffer.h>
 #include <dns/message.h>
 #include <dns/question.h>
+#include <dns/rcode.h>
 
 #include <exceptions/exceptions.h>
 
@@ -38,6 +39,8 @@
 #include <asiolink/ioendpoint.h>
 #include <asiolink/iomessage.h>
 #include <asiolink/iosocket.h>
+
+#include <resolve/resolver_interface.h>
 
 namespace asio {
 // forward declaration for IOService::get_io_service() below
@@ -98,6 +101,7 @@ namespace asiolink {
 class DNSServiceImpl;
 struct IOServiceImpl;
 struct IntervalTimerImpl;
+
 
 /// \brief An exception that is thrown if an error occurs within the IO
 /// module.  This is mainly intended to be a wrapper exception class for
@@ -529,11 +533,13 @@ class RecursiveQuery {
     ///
     //@{
 public:
-    /// \brief Constructor for use when acting as a forwarder
+    /// \brief Constructor
     ///
     /// This is currently the only way to construct \c RecursiveQuery
-    /// object.  The addresses of the forward nameservers is specified,
-    /// and every upstream query will be sent to one random address.
+    /// object. If the addresses of the forward nameservers is specified,
+    /// and every upstream query will be sent to one random address, and
+    /// the result sent back directly. If not, it will do full resolving.
+    ///
     /// \param dns_service The DNS Service to perform the recursive
     ///        query on.
     /// \param upstream Addresses and ports of the upstream servers
@@ -556,20 +562,42 @@ public:
                    unsigned retries = 3);
     //@}
 
-    /// \brief Initiates an upstream query in the \c RecursiveQuery object.
+    /// \brief Initiate resolving
+    /// 
+    /// When sendQuery() is called, a (set of) message(s) is sent
+    /// asynchronously. If upstream servers are set, one is chosen
+    /// and the response (if any) from that server will be returned.
     ///
-    /// When sendQuery() is called, a message is sent asynchronously to
-    /// the upstream name server.  When a reply arrives, 'server'
-    /// is placed on the ASIO service queue via io_service::post(), so
-    /// that the original \c DNSServer objct can resume processing.
+    /// If not upstream is set, a root server is chosen from the
+    /// root_servers, and the RunningQuery shall do a full resolve
+    /// (i.e. if the answer is a delegation, it will be followed, etc.)
+    /// until there is an answer or an error.
+    ///
+    /// When there is a response or an error and we give up, the given
+    /// CallbackPtr object shall be called (with either success() or
+    /// failure(). See ResolverInterface::Callback for more information.
     ///
     /// \param question The question being answered <qname/qclass/qtype>
-    /// \param buffer An output buffer into which the response can be copied
+    /// \param callback Callback object. See
+    ///        \c ResolverInterface::Callback for more information
+    void resolve(const isc::dns::QuestionPtr& question,
+                 const isc::resolve::ResolverInterface::CallbackPtr callback);
+
+
+    /// \brief Initiates resolving for the given question.
+    ///
+    /// This actually calls the previous sendQuery() with a default
+    /// callback object, which calls resume() on the given DNSServer
+    /// object.
+    ///
+    /// \param question The question being answered <qname/qclass/qtype>
+    /// \param answer_message An output Message into which the final response will be copied
+    /// \param buffer An output buffer into which the intermediate responses will be copied
     /// \param server A pointer to the \c DNSServer object handling the client
-    void sendQuery(const isc::dns::Question& question,
-                   isc::dns::MessagePtr answer_message,
-                   isc::dns::OutputBufferPtr buffer,
-                   DNSServer* server);
+    void resolve(const isc::dns::Question& question,
+                 isc::dns::MessagePtr answer_message,
+                 isc::dns::OutputBufferPtr buffer,
+                 DNSServer* server);
 private:
     DNSService& dns_service_;
     boost::shared_ptr<std::vector<std::pair<std::string, uint16_t> > >

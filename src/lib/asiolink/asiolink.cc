@@ -31,13 +31,15 @@
 #include <dns/buffer.h>
 #include <dns/message.h>
 #include <dns/rcode.h>
+#include <dns/opcode.h>
 
 #include <asiolink/asiolink.h>
 #include <asiolink/internal/tcpdns.h>
 #include <asiolink/internal/udpdns.h>
 
-#include <log/dummylog.h>
+#include <resolve/resolve.h>
 
+#include <log/dummylog.h>
 
 using namespace asio;
 using asio::ip::udp;
@@ -360,7 +362,8 @@ private:
     OutputBufferPtr buffer_;
 
     // Server to notify when we succeed or fail
-    shared_ptr<DNSServer> server_;
+    //shared_ptr<DNSServer> server_;
+    isc::resolve::ResolverInterface::CallbackPtr resolvercallback_;
 
     /*
      * TODO Do something more clever with timeouts. In the long term, some
@@ -487,7 +490,8 @@ public:
     RunningQuery(asio::io_service& io, const Question &question,
         MessagePtr answer_message, shared_ptr<AddressVector> upstream,
         shared_ptr<AddressVector> upstream_root,
-        OutputBufferPtr buffer, DNSServer* server,
+        OutputBufferPtr buffer,
+        isc::resolve::ResolverInterface::CallbackPtr cb,
         int query_timeout, int client_timeout, int lookup_timeout,
         unsigned retries) :
         io_(io),
@@ -496,7 +500,7 @@ public:
         upstream_(upstream),
         upstream_root_(upstream_root),
         buffer_(buffer),
-        server_(server->clone()),
+        resolvercallback_(cb),
         query_timeout_(query_timeout),
         retries_(retries),
         client_timer(io),
@@ -557,7 +561,7 @@ public:
         // same goes if we have an outstanding query (can't delete
         // until that one comes back to us)
         done_ = true;
-        server_->resume(resume);
+        resolvercallback_->success(answer_message_);
         if (lookup_timer.cancel() != 0) {
             return;
         }
@@ -589,15 +593,19 @@ public:
             }
             
             if (done_) {
-                stop(result == UDPQuery::SUCCESS);
+                resolvercallback_->success(answer_message_);
+                //server_->resume(result == UDPQuery::SUCCESS);
+                delete this;
             }
         } else if (!done_ && retries_--) {
             // We timed out, but we have some retries, so send again
             dlog("Timeout, resending query");
             send();
         } else {
-            // We are done
-            stop(false);
+            // out of retries, give up for now
+            resolvercallback_->failure();
+            //server_->resume(false);
+            delete this;
         }
     }
 };
@@ -605,19 +613,38 @@ public:
 }
 
 void
-RecursiveQuery::sendQuery(const Question& question,
-                          MessagePtr answer_message,
-                          OutputBufferPtr buffer,
-                          DNSServer* server)
+RecursiveQuery::resolve(const isc::dns::QuestionPtr& question,
+    const isc::resolve::ResolverInterface::CallbackPtr callback)
+{
+    asio::io_service& io = dns_service_.get_io_service();
+
+    MessagePtr answer_message(new Message(Message::RENDER));
+    OutputBufferPtr buffer(new OutputBuffer(0));
+    
+    // It will delete itself when it is done
+    new RunningQuery(io, *question, answer_message, upstream_,
+                     upstream_root_, buffer, callback, query_timeout_,
+                     client_timeout_, lookup_timeout_, retries_);
+}
+
+void
+RecursiveQuery::resolve(const Question& question,
+                        MessagePtr answer_message,
+                        OutputBufferPtr buffer,
+                        DNSServer* server)
 {
     // XXX: eventually we will need to be able to determine whether
     // the message should be sent via TCP or UDP, or sent initially via
     // UDP and then fall back to TCP on failure, but for the moment
     // we're only going to handle UDP.
     asio::io_service& io = dns_service_.get_io_service();
+
+    isc::resolve::ResolverInterface::CallbackPtr crs(
+        new isc::resolve::ResolverCallbackServer(server));
+    
     // It will delete itself when it is done
     new RunningQuery(io, question, answer_message, upstream_, upstream_root_,
-                         buffer, server, query_timeout_, client_timeout_,
+                         buffer, crs, query_timeout_, client_timeout_,
                          lookup_timeout_, retries_);
 }
 
