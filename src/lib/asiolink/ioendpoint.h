@@ -24,6 +24,7 @@
 #include <string>
 
 #include <exceptions/exceptions.h>
+#include <asiolink/ioaddress.h>
 
 namespace asiolink {
 
