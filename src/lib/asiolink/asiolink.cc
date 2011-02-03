@@ -581,7 +581,8 @@ public:
             InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
             incoming.fromWire(ibuf);
 
-            if (message->getHeaderFlag(Message::HEADERFLAG_TC) {
+            if (incoming.getHeaderFlag(Message::HEADERFLAG_TC)) {
+              //truncate bit is set, so retry via tcp
             
             }
 
