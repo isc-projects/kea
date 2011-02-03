@@ -323,6 +323,29 @@ TEST_F(RBTreeTest, getLastComparedNode) {
     comparisonChecks(chain, 1, 1, NameComparisonResult::COMMONANCESTOR);
     chain.clear();
 
+    // Partial match, search stopped at a node for a super domain of the
+    // search name in the subtree below the matching node.
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              tree.find(Name("w.y.d.e.f"), &expected_node));
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              tree.find<void*>(Name("y.d.e.f"), &crbtnode, chain,
+                                 NULL, NULL));
+    EXPECT_EQ(expected_node, chain.getLastComparedNode());
+    // y < w.y, 2 = # labels of "y."
+    comparisonChecks(chain, -1, 2, NameComparisonResult::SUPERDOMAIN);
+    chain.clear();
+
+    // Partial match, search stopped at a node that share a common ancestor
+    // with the search name in the subtree below the matching node.
+    // (the expected node is the same as the previous case)
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              tree.find<void*>(Name("z.y.d.e.f"), &crbtnode, chain,
+                                 NULL, NULL));
+    EXPECT_EQ(expected_node, chain.getLastComparedNode());
+    // z.y > w.y, 2 = # labels of "y."
+    comparisonChecks(chain, 1, 2, NameComparisonResult::COMMONANCESTOR);
+    chain.clear();
+
     // Search stops in the highest level after following a left branch.
     EXPECT_EQ(RBTree<int>::EXACTMATCH, tree.find(Name("c"), &expected_node));
     EXPECT_EQ(RBTree<int>::NOTFOUND,
