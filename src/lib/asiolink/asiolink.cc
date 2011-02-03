@@ -561,7 +561,11 @@ public:
         // same goes if we have an outstanding query (can't delete
         // until that one comes back to us)
         done_ = true;
-        resolvercallback_->success(answer_message_);
+        if (resume) {
+            resolvercallback_->success(answer_message_);
+        } else {
+            resolvercallback_->failure();
+        }
         if (lookup_timer.cancel() != 0) {
             return;
         }
@@ -593,9 +597,7 @@ public:
             }
             
             if (done_) {
-                resolvercallback_->success(answer_message_);
-                //server_->resume(result == UDPQuery::SUCCESS);
-                delete this;
+                stop(true);
             }
         } else if (!done_ && retries_--) {
             // We timed out, but we have some retries, so send again
@@ -603,9 +605,7 @@ public:
             send();
         } else {
             // out of retries, give up for now
-            resolvercallback_->failure();
-            //server_->resume(false);
-            delete this;
+            stop(false);
         }
     }
 };
