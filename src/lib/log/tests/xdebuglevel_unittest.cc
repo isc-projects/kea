@@ -21,7 +21,7 @@
 
 #include <log4cxx/level.h>
 #include <log/xdebuglevel.h>
-#include <log/dbglevels.h>
+#include <log/debug_levels.h>
 
 /// \brief XDebugLevel (Debug Extension to Level Class)
 ///

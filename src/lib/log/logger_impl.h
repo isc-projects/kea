@@ -23,7 +23,7 @@
 #include <log4cxx/logger.h>
 #include <log4cxx/logger.h>
 
-#include <log/dbglevels.h>
+#include <log/debug_levels.h>
 #include <log/logger.h>
 #include <log/message_types.h>
 
