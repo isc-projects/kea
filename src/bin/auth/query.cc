@@ -196,7 +196,6 @@ Query::process() const {
                  */
                 catch (const isc::dns::TooLongName&) {
                     response_.setRcode(Rcode::YXDOMAIN());
-                    getAuthAdditional(*result.zone);
                     return;
                 }
                 // No break; here, fall trough.
