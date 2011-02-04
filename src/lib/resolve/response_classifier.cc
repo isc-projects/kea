@@ -32,21 +32,21 @@ namespace resolve {
 // Classify the response in the "message" object.
 
 ResponseClassifier::Category ResponseClassifier::classify(
-    const Question& question, const MessagePtr& message, bool tcignore)
+    const Question& question, const Message& message, bool tcignore)
 {
     // Check header bits
-    if (!message->getHeaderFlag(Message::HEADERFLAG_QR)) {
+    if (!message.getHeaderFlag(Message::HEADERFLAG_QR)) {
         return (NOTRESPONSE);   // Query-response bit not set in the response
     }
 
     // We only recognise responses to queries here
-    if (message->getOpcode() != Opcode::QUERY()) {
+    if (message.getOpcode() != Opcode::QUERY()) {
         return (OPCODE);
     }
 
     // Apparently have a response.  There must be a single question in it...
-    const vector<QuestionPtr> msgquestion(message->beginQuestion(),
-            message->endQuestion());
+    const vector<QuestionPtr> msgquestion(message.beginQuestion(),
+            message.endQuestion());
     if (msgquestion.size() != 1) {
         return (NOTONEQUEST); // Not one question in response question section
     }
@@ -60,7 +60,7 @@ ResponseClassifier::Category ResponseClassifier::classify(
     }
 
     // Check for Rcode-related errors.
-    const Rcode& rcode = message->getRcode();
+    const Rcode& rcode = message.getRcode();
     if (rcode != Rcode::NOERROR()) {
         if (rcode == Rcode::NXDOMAIN()) {
 
@@ -94,7 +94,7 @@ ResponseClassifier::Category ResponseClassifier::classify(
     // probably want to re-query over TCP.  However, in some circumstances we
     // might want to go with what we have.  So give the caller the option of
     // ignoring the TC bit.
-    if (message->getHeaderFlag(Message::HEADERFLAG_TC) && (!tcignore)) {
+    if (message.getHeaderFlag(Message::HEADERFLAG_TC) && (!tcignore)) {
         return (TRUNCATED);
     }
 
@@ -103,12 +103,12 @@ ResponseClassifier::Category ResponseClassifier::classify(
     // referral.  For this, we need to inspect the contents of the answer
     // and authority sections.
     const vector<RRsetPtr> answer(
-            message->beginSection(Message::SECTION_ANSWER),
-            message->endSection(Message::SECTION_ANSWER)
+            message.beginSection(Message::SECTION_ANSWER),
+            message.endSection(Message::SECTION_ANSWER)
             );
     const vector<RRsetPtr> authority(
-            message->beginSection(Message::SECTION_AUTHORITY),
-            message->endSection(Message::SECTION_AUTHORITY)
+            message.beginSection(Message::SECTION_AUTHORITY),
+            message.endSection(Message::SECTION_AUTHORITY)
             );
 
     // If there is nothing in the answer section, it is a referral - unless
