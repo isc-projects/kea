@@ -35,6 +35,8 @@ using namespace isc::dns;
 using namespace rdata;
 using namespace isc::dns::rdata::generic;
 using namespace isc::dns::rdata::in;
+using namespace isc::resolve;
+
 
 namespace {
 class ResponseClassifierTest : public ::testing::Test {
