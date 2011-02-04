@@ -71,6 +71,46 @@ struct MemoryZone::MemoryZoneImpl {
     // The actual zone data
     DomainTree domains_;
 
+    // Add the necessary magic for any wildcard contained in 'name'
+    // (including itself) to be found in the zone.
+    //
+    // In order for wildcard matching to work correctly in find(),
+    // we must ensure that a node for the wildcarding level exists in the
+    // backend RBTree.
+    // E.g. if the wildcard name is "*.sub.example." then we must ensure
+    // that "sub.example." exists and is marked as a wildcard level.
+    // Note: the "wildcarding level" is for the parent name of the wildcard
+    // name (such as "sub.example.").
+    //
+    // We also perform the same trick for empty wild card names possibly
+    // contained in 'name' (e.g., '*.foo.example' in 'bar.*.foo.example').
+    void addWildcards(DomainTree& domains, const Name& name) {
+        Name wname(name);
+        const unsigned int labels(wname.getLabelCount());
+        const unsigned int origin_labels(origin_.getLabelCount());
+        for (unsigned int l = labels;
+             l > origin_labels;
+             --l, wname = wname.split(1)) {
+            if (wname.isWildcard()) {
+                DomainNode* node;
+                DomainTree::Result result;
+
+                // Ensure a separate level exists for the wildcard name.
+                // Note: for 'name' itself we do this later anyway, but the
+                // overhead should be marginal because wildcard names should
+                // be rare.
+                result = domains.insert(wname.split(1), &node);
+                assert(result == DomainTree::SUCCESS ||
+                       result == DomainTree::ALREADYEXISTS);
+
+                // Ensure a separate level exists for the "wildcarding" name
+                result = domains.insert(wname, &node);
+                assert(result == DomainTree::SUCCESS ||
+                       result == DomainTree::ALREADYEXISTS);
+            }
+        }
+    }
+
     /*
      * Does some checks in context of the data that are already in the zone.
      * Currently checks for forbidden combinations of RRsets in the same
@@ -144,6 +184,30 @@ struct MemoryZone::MemoryZoneImpl {
             isc_throw(OutOfZone, "The name " << name <<
                 " is not contained in zone " << origin_);
         }
+
+        // Some RR types do not really work well with a wildcard.
+        // Even though the protocol specifically doesn't completely ban such
+        // usage, we refuse to load a zone containing such RR in order to
+        // keep the lookup logic simpler and more predictable.
+        // See RFC4592 and (for DNAME) draft-ietf-dnsext-rfc2672bis-dname
+        // for more technical background.  Note also that BIND 9 refuses
+        // NS at a wildcard, so in that sense we simply provide compatible
+        // behavior.
+        if (name.isWildcard()) {
+            if (rrset->getType() == RRType::NS()) {
+                isc_throw(AddError, "Invalid NS owner name (wildcard): " <<
+                          name);
+            }
+            if (rrset->getType() == RRType::DNAME()) {
+                isc_throw(AddError, "Invalid DNAME owner name (wildcard): " <<
+                          name);
+            }
+        }
+
+        // Add wildcards possibly contained in the owner name to the domain
+        // tree.
+        addWildcards(*domains, name);
+
         // Get the node
         DomainNode* node;
         switch (domains->insert(name, &node)) {
