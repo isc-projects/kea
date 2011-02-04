@@ -47,13 +47,8 @@ public:
     }
 
     /// \brief Logger is Null
-    bool isInitialized() const {
+    bool isInitialized() {
         return Logger::isInitialized();
-    }
-
-    /// \brief Conversion Between log4cxx Number and BIND-10 Severity
-    Severity convertLevel(int value) {
-        return Logger::convertLevel(value);
     }
 };
 
@@ -119,33 +114,6 @@ TEST_F(LoggerTest, GetLogger) {
     EXPECT_FALSE(logger1 == logger3);
 }
 
-// Test the number to severity conversion function
-
-TEST_F(LoggerTest, ConvertLevel) {
-
-    // Create a logger
-    RootLoggerName::setName("test3");
-    TestLogger logger("alpha");
-
-    // Basic 1:1
-    EXPECT_EQ(Logger::DEBUG, logger.convertLevel(log4cxx::Level::DEBUG_INT));
-    EXPECT_EQ(Logger::INFO, logger.convertLevel(log4cxx::Level::INFO_INT));
-    EXPECT_EQ(Logger::WARN, logger.convertLevel(log4cxx::Level::WARN_INT));
-    EXPECT_EQ(Logger::WARN, logger.convertLevel(log4cxx::Level::WARN_INT));
-    EXPECT_EQ(Logger::ERROR, logger.convertLevel(log4cxx::Level::ERROR_INT));
-    EXPECT_EQ(Logger::FATAL, logger.convertLevel(log4cxx::Level::FATAL_INT));
-    EXPECT_EQ(Logger::FATAL, logger.convertLevel(log4cxx::Level::FATAL_INT));
-    EXPECT_EQ(Logger::NONE, logger.convertLevel(log4cxx::Level::OFF_INT));
-
-    // Now some debug levels
-    EXPECT_EQ(Logger::DEBUG,
-        logger.convertLevel(log4cxx::Level::DEBUG_INT - 1));
-    EXPECT_EQ(Logger::DEBUG,
-        logger.convertLevel(log4cxx::Level::DEBUG_INT - MAX_DEBUG_LEVEL));
-    EXPECT_EQ(Logger::DEBUG,
-        logger.convertLevel(log4cxx::Level::DEBUG_INT - 2 * MAX_DEBUG_LEVEL));
-}
-
 // Check that the logger levels are get set properly.
 
 TEST_F(LoggerTest, Severity) {
@@ -155,26 +123,26 @@ TEST_F(LoggerTest, Severity) {
     TestLogger logger("alpha");
 
     // Now check the levels
-    logger.setSeverity(Logger::NONE);
-    EXPECT_EQ(Logger::NONE, logger.getSeverity());
+    logger.setSeverity(isc::log::NONE);
+    EXPECT_EQ(isc::log::NONE, logger.getSeverity());
 
-    logger.setSeverity(Logger::FATAL);
-    EXPECT_EQ(Logger::FATAL, logger.getSeverity());
+    logger.setSeverity(isc::log::FATAL);
+    EXPECT_EQ(isc::log::FATAL, logger.getSeverity());
 
-    logger.setSeverity(Logger::ERROR);
-    EXPECT_EQ(Logger::ERROR, logger.getSeverity());
+    logger.setSeverity(isc::log::ERROR);
+    EXPECT_EQ(isc::log::ERROR, logger.getSeverity());
 
-    logger.setSeverity(Logger::WARN);
-    EXPECT_EQ(Logger::WARN, logger.getSeverity());
+    logger.setSeverity(isc::log::WARN);
+    EXPECT_EQ(isc::log::WARN, logger.getSeverity());
 
-    logger.setSeverity(Logger::INFO);
-    EXPECT_EQ(Logger::INFO, logger.getSeverity());
+    logger.setSeverity(isc::log::INFO);
+    EXPECT_EQ(isc::log::INFO, logger.getSeverity());
 
-    logger.setSeverity(Logger::DEBUG);
-    EXPECT_EQ(Logger::DEBUG, logger.getSeverity());
+    logger.setSeverity(isc::log::DEBUG);
+    EXPECT_EQ(isc::log::DEBUG, logger.getSeverity());
 
-    logger.setSeverity(Logger::DEFAULT);
-    EXPECT_EQ(Logger::DEFAULT, logger.getSeverity());
+    logger.setSeverity(isc::log::DEFAULT);
+    EXPECT_EQ(isc::log::DEFAULT, logger.getSeverity());
 }
 
 // Check that the debug level is set correctly.
@@ -186,36 +154,36 @@ TEST_F(LoggerTest, DebugLevels) {
     TestLogger logger("alpha");
 
     // Debug level should be 0 if not at debug severity
-    logger.setSeverity(Logger::NONE, 20);
+    logger.setSeverity(isc::log::NONE, 20);
     EXPECT_EQ(0, logger.getDebugLevel());
 
-    logger.setSeverity(Logger::INFO, 42);
+    logger.setSeverity(isc::log::INFO, 42);
     EXPECT_EQ(0, logger.getDebugLevel());
 
     // Should be the value set if the severity is set to DEBUG though.
-    logger.setSeverity(Logger::DEBUG, 32);
+    logger.setSeverity(isc::log::DEBUG, 32);
     EXPECT_EQ(32, logger.getDebugLevel());
 
-    logger.setSeverity(Logger::DEBUG, 97);
+    logger.setSeverity(isc::log::DEBUG, 97);
     EXPECT_EQ(97, logger.getDebugLevel());
 
     // Try the limits
-    logger.setSeverity(Logger::DEBUG, -1);
+    logger.setSeverity(isc::log::DEBUG, -1);
     EXPECT_EQ(0, logger.getDebugLevel());
 
-    logger.setSeverity(Logger::DEBUG, 0);
+    logger.setSeverity(isc::log::DEBUG, 0);
     EXPECT_EQ(0, logger.getDebugLevel());
 
-    logger.setSeverity(Logger::DEBUG, 1);
+    logger.setSeverity(isc::log::DEBUG, 1);
     EXPECT_EQ(1, logger.getDebugLevel());
 
-    logger.setSeverity(Logger::DEBUG, 98);
+    logger.setSeverity(isc::log::DEBUG, 98);
     EXPECT_EQ(98, logger.getDebugLevel());
 
-    logger.setSeverity(Logger::DEBUG, 99);
+    logger.setSeverity(isc::log::DEBUG, 99);
     EXPECT_EQ(99, logger.getDebugLevel());
 
-    logger.setSeverity(Logger::DEBUG, 100);
+    logger.setSeverity(isc::log::DEBUG, 100);
     EXPECT_EQ(99, logger.getDebugLevel());
 }
 
@@ -234,22 +202,22 @@ TEST_F(LoggerTest, SeverityInheritance) {
 
     // By default, newly created loggers should have a level of DEFAULT
     // (i.e. default to parent)
-    EXPECT_EQ(Logger::DEFAULT, parent.getSeverity());
-    EXPECT_EQ(Logger::DEFAULT, child.getSeverity());
+    EXPECT_EQ(isc::log::DEFAULT, parent.getSeverity());
+    EXPECT_EQ(isc::log::DEFAULT, child.getSeverity());
 
     // Set the severity of the child to something other than the default -
     // check it changes and that of the parent does not.
-    child.setSeverity(Logger::INFO);
-    EXPECT_EQ(Logger::DEFAULT, parent.getSeverity());
-    EXPECT_EQ(Logger::INFO, child.getSeverity());
+    child.setSeverity(isc::log::INFO);
+    EXPECT_EQ(isc::log::DEFAULT, parent.getSeverity());
+    EXPECT_EQ(isc::log::INFO, child.getSeverity());
 
     // Reset the child severity and set that of the parent
-    child.setSeverity(Logger::DEFAULT);
-    EXPECT_EQ(Logger::DEFAULT, parent.getSeverity());
-    EXPECT_EQ(Logger::DEFAULT, child.getSeverity());
-    parent.setSeverity(Logger::WARN);
-    EXPECT_EQ(Logger::WARN, parent.getSeverity());
-    EXPECT_EQ(Logger::DEFAULT, child.getSeverity());
+    child.setSeverity(isc::log::DEFAULT);
+    EXPECT_EQ(isc::log::DEFAULT, parent.getSeverity());
+    EXPECT_EQ(isc::log::DEFAULT, child.getSeverity());
+    parent.setSeverity(isc::log::WARN);
+    EXPECT_EQ(isc::log::WARN, parent.getSeverity());
+    EXPECT_EQ(isc::log::DEFAULT, child.getSeverity());
 }
 
 // Check that severity is inherited.
@@ -268,27 +236,27 @@ TEST_F(LoggerTest, EffectiveSeverityInheritance) {
     // (i.e. default to parent) and the root should have a default severity
     // of INFO.  However, the latter is only enforced when created by the
     // RootLogger class, so explicitly set it for the parent for now.
-    parent.setSeverity(Logger::INFO);
-    EXPECT_EQ(Logger::INFO, parent.getEffectiveSeverity());
+    parent.setSeverity(isc::log::INFO);
+    EXPECT_EQ(isc::log::INFO, parent.getEffectiveSeverity());
 
-    EXPECT_EQ(Logger::DEFAULT, child.getSeverity());
-    EXPECT_EQ(Logger::INFO, child.getEffectiveSeverity());
+    EXPECT_EQ(isc::log::DEFAULT, child.getSeverity());
+    EXPECT_EQ(isc::log::INFO, child.getEffectiveSeverity());
 
     // Set the severity of the child to something other than the default -
     // check it changes and that of the parent does not.
-    child.setSeverity(Logger::FATAL);
-    EXPECT_EQ(Logger::INFO, parent.getEffectiveSeverity());
-    EXPECT_EQ(Logger::FATAL, child.getEffectiveSeverity());
+    child.setSeverity(isc::log::FATAL);
+    EXPECT_EQ(isc::log::INFO, parent.getEffectiveSeverity());
+    EXPECT_EQ(isc::log::FATAL, child.getEffectiveSeverity());
 
     // Reset the child severity and check again.
-    child.setSeverity(Logger::DEFAULT);
-    EXPECT_EQ(Logger::INFO, parent.getEffectiveSeverity());
-    EXPECT_EQ(Logger::INFO, child.getEffectiveSeverity());
+    child.setSeverity(isc::log::DEFAULT);
+    EXPECT_EQ(isc::log::INFO, parent.getEffectiveSeverity());
+    EXPECT_EQ(isc::log::INFO, child.getEffectiveSeverity());
 
     // Change the parwnt's severity and check it is reflects in the child.
-    parent.setSeverity(Logger::WARN);
-    EXPECT_EQ(Logger::WARN, parent.getEffectiveSeverity());
-    EXPECT_EQ(Logger::WARN, child.getEffectiveSeverity());
+    parent.setSeverity(isc::log::WARN);
+    EXPECT_EQ(isc::log::WARN, parent.getEffectiveSeverity());
+    EXPECT_EQ(isc::log::WARN, child.getEffectiveSeverity());
 }
 
 // Test the isXxxxEnabled methods.
@@ -298,28 +266,28 @@ TEST_F(LoggerTest, IsXxxEnabled) {
     RootLoggerName::setName("test7");
     Logger logger("test7");
 
-    logger.setSeverity(Logger::INFO);
+    logger.setSeverity(isc::log::INFO);
     EXPECT_FALSE(logger.isDebugEnabled());
     EXPECT_TRUE(logger.isInfoEnabled());
     EXPECT_TRUE(logger.isWarnEnabled());
     EXPECT_TRUE(logger.isErrorEnabled());
     EXPECT_TRUE(logger.isFatalEnabled());
 
-    logger.setSeverity(Logger::WARN);
+    logger.setSeverity(isc::log::WARN);
     EXPECT_FALSE(logger.isDebugEnabled());
     EXPECT_FALSE(logger.isInfoEnabled());
     EXPECT_TRUE(logger.isWarnEnabled());
     EXPECT_TRUE(logger.isErrorEnabled());
     EXPECT_TRUE(logger.isFatalEnabled());
 
-    logger.setSeverity(Logger::ERROR);
+    logger.setSeverity(isc::log::ERROR);
     EXPECT_FALSE(logger.isDebugEnabled());
     EXPECT_FALSE(logger.isInfoEnabled());
     EXPECT_FALSE(logger.isWarnEnabled());
     EXPECT_TRUE(logger.isErrorEnabled());
     EXPECT_TRUE(logger.isFatalEnabled());
 
-    logger.setSeverity(Logger::FATAL);
+    logger.setSeverity(isc::log::FATAL);
     EXPECT_FALSE(logger.isDebugEnabled());
     EXPECT_FALSE(logger.isInfoEnabled());
     EXPECT_FALSE(logger.isWarnEnabled());
@@ -328,14 +296,14 @@ TEST_F(LoggerTest, IsXxxEnabled) {
 
     // Check various debug levels
 
-    logger.setSeverity(Logger::DEBUG);
+    logger.setSeverity(isc::log::DEBUG);
     EXPECT_TRUE(logger.isDebugEnabled());
     EXPECT_TRUE(logger.isInfoEnabled());
     EXPECT_TRUE(logger.isWarnEnabled());
     EXPECT_TRUE(logger.isErrorEnabled());
     EXPECT_TRUE(logger.isFatalEnabled());
 
-    logger.setSeverity(Logger::DEBUG, 45);
+    logger.setSeverity(isc::log::DEBUG, 45);
     EXPECT_TRUE(logger.isDebugEnabled());
     EXPECT_TRUE(logger.isInfoEnabled());
     EXPECT_TRUE(logger.isWarnEnabled());
@@ -346,14 +314,14 @@ TEST_F(LoggerTest, IsXxxEnabled) {
     // the severity of the parent logger.
 
     Logger child("test7.child");
-    logger.setSeverity(Logger::FATAL);
+    logger.setSeverity(isc::log::FATAL);
     EXPECT_FALSE(child.isDebugEnabled());
     EXPECT_FALSE(child.isInfoEnabled());
     EXPECT_FALSE(child.isWarnEnabled());
     EXPECT_FALSE(child.isErrorEnabled());
     EXPECT_TRUE(child.isFatalEnabled());
 
-    logger.setSeverity(Logger::INFO);
+    logger.setSeverity(isc::log::INFO);
     EXPECT_FALSE(child.isDebugEnabled());
     EXPECT_TRUE(child.isInfoEnabled());
     EXPECT_TRUE(child.isWarnEnabled());
@@ -371,24 +339,24 @@ TEST_F(LoggerTest, IsDebugEnabledLevel) {
 
     int MID_LEVEL = (MIN_DEBUG_LEVEL + MAX_DEBUG_LEVEL) / 2;
 
-    logger.setSeverity(Logger::DEBUG);
+    logger.setSeverity(isc::log::DEBUG);
     EXPECT_TRUE(logger.isDebugEnabled(MIN_DEBUG_LEVEL));
     EXPECT_FALSE(logger.isDebugEnabled(MID_LEVEL));
     EXPECT_FALSE(logger.isDebugEnabled(MAX_DEBUG_LEVEL));
 
-    logger.setSeverity(Logger::DEBUG, MIN_DEBUG_LEVEL);
+    logger.setSeverity(isc::log::DEBUG, MIN_DEBUG_LEVEL);
     EXPECT_TRUE(logger.isDebugEnabled(MIN_DEBUG_LEVEL));
     EXPECT_FALSE(logger.isDebugEnabled(MID_LEVEL));
     EXPECT_FALSE(logger.isDebugEnabled(MAX_DEBUG_LEVEL));
 
-    logger.setSeverity(Logger::DEBUG, MID_LEVEL);
+    logger.setSeverity(isc::log::DEBUG, MID_LEVEL);
     EXPECT_TRUE(logger.isDebugEnabled(MIN_DEBUG_LEVEL));
     EXPECT_TRUE(logger.isDebugEnabled(MID_LEVEL - 1));
     EXPECT_TRUE(logger.isDebugEnabled(MID_LEVEL));
     EXPECT_FALSE(logger.isDebugEnabled(MID_LEVEL + 1));
     EXPECT_FALSE(logger.isDebugEnabled(MAX_DEBUG_LEVEL));
 
-    logger.setSeverity(Logger::DEBUG, MAX_DEBUG_LEVEL);
+    logger.setSeverity(isc::log::DEBUG, MAX_DEBUG_LEVEL);
     EXPECT_TRUE(logger.isDebugEnabled(MIN_DEBUG_LEVEL));
     EXPECT_TRUE(logger.isDebugEnabled(MID_LEVEL));
     EXPECT_TRUE(logger.isDebugEnabled(MAX_DEBUG_LEVEL));

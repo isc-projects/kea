@@ -47,13 +47,12 @@ Logger logger_dlm("dlm");
 // "level" is the debug level, a number between 0 and 99
 // "local_file" is the name of a local file.
 //
-// The program sets the attributes on the root logger.  Looking
-// at the output determines whether the program worked.e root logger.  Looking
-// at the output determines whether the 
+// The program sets the attributes on the root logger and logs a set of
+// messages.  Looking at the output determines whether the program worked.
 
 int main(int argc, char** argv) {
 
-    Logger::Severity    severity = Logger::INFO;
+    isc::log::Severity  severity = isc::log::INFO;
     int                 dbglevel = -1;
     const char*         localfile = NULL;
     int                 option;
@@ -63,15 +62,15 @@ int main(int argc, char** argv) {
         switch (option) {
             case 's':
                 if (strcmp(optarg, "debug") == 0) {
-                    severity = Logger::DEBUG;
+                    severity = isc::log::DEBUG;
                 } else if (strcmp(optarg, "info") == 0) {
-                    severity = Logger::INFO;
+                    severity = isc::log::INFO;
                 } else if (strcmp(optarg, "warn") == 0) {
-                    severity = Logger::WARN;
+                    severity = isc::log::WARN;
                 } else if (strcmp(optarg, "error") == 0) {
-                    severity = Logger::ERROR;
+                    severity = isc::log::ERROR;
                 } else if (strcmp(optarg, "fatal") == 0) {
-                    severity = Logger::FATAL;
+                    severity = isc::log::FATAL;
                 } else {
                     std::cout << "Unrecognised severity option: " <<
                         optarg << "\n";

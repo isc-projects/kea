@@ -34,7 +34,7 @@ namespace log {
 /// \param severity Severity at which to log
 /// \param dbglevel Debug severiy (ignored if "severity" is not "DEBUG")
 /// \param file Name of the local message file.
-void runTimeInit(Logger::Severity severity, int dbglevel, const char* file);
+void runTimeInit(isc::log::Severity severity, int dbglevel, const char* file);
 
 } // namespace log
 } // namespace isc
