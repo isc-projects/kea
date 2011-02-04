@@ -365,6 +365,8 @@ private:
     //shared_ptr<DNSServer> server_;
     isc::resolve::ResolverInterface::CallbackPtr resolvercallback_;
 
+    unsigned cname_count_;
+
     /*
      * TODO Do something more clever with timeouts. In the long term, some
      *     computation of average RTT, increase with each retry, etc.
@@ -432,20 +434,67 @@ private:
     // returns true if we are done
     // returns false if we are not done
     bool handleRecursiveAnswer(const Message& incoming) {
+        dlog("Handle response");
         isc::resolve::ResponseClassifier::Category category =
             isc::resolve::ResponseClassifier::classify(question_, incoming, true);
 
         bool found_ns_address = false;
+        ConstRRsetPtr cname_rrs;
+        RdataIteratorPtr cname_rdatas;
+
         switch (category) {
         case isc::resolve::ResponseClassifier::ANSWER:
         case isc::resolve::ResponseClassifier::ANSWERCNAME:
+            // Done. copy and return.
             copyAnswerMessage(incoming, answer_message_);
             return true;
             break;
         case isc::resolve::ResponseClassifier::CNAME:
-            // TODO: add CNAME, restart
-            copyAnswerMessage(incoming, answer_message_);
-            return true;
+            dlog("Response is CNAME!");
+            // add the current answer to our response,
+            // set the question to the cname target,
+            // and restart from the top
+            for_each(incoming.beginSection(Message::SECTION_ANSWER),
+                     incoming.endSection(Message::SECTION_ANSWER),
+                     SectionInserter(answer_message_, Message::SECTION_ANSWER));
+            setZoneServersToRoot();
+            // we need the target of the last CNAME
+            // assuming the cnames are in order (are they?)
+            dlog("[XX] walking through answers");
+            for (RRsetIterator rrsi = incoming.beginSection(Message::SECTION_ANSWER);
+                 rrsi != incoming.endSection(Message::SECTION_ANSWER) && !found_ns_address;
+                 rrsi++) {
+                if (*rrsi && (*rrsi)->getType() == isc::dns::RRType::CNAME()) {
+                    ++cname_count_;
+                    cname_rrs = *rrsi;
+                }
+            }
+
+            if (cname_count_ >= RESOLVER_MAX_CNAME_CHAIN) {
+                // just give up
+                // TODO: make SERVFAIL? clear currently read answers?
+                // just copy for now.
+                dlog("CNAME chain too long");
+                copyAnswerMessage(incoming, answer_message_);
+                return true;
+            }
+
+            cname_rdatas = cname_rrs->getRdataIterator();
+            while (!cname_rdatas->isLast()) {
+                if (!cname_rdatas->isLast()) {
+                    // hmz, why does getCurrent() return a reference? can't use
+                    // ->rrtypeSpecific()
+                    question_ = isc::dns::Question(Name(
+                        cname_rdatas->getCurrent().toText()),
+                        question_.getClass(),
+                        question_.getType());
+                }
+                cname_rdatas->next();
+            }
+
+            dlog("Following CNAME chain to " + question_.toText());
+            send();
+            return false;
             break;
         case isc::resolve::ResponseClassifier::NXDOMAIN:
             copyAnswerMessage(incoming, answer_message_);
@@ -578,6 +627,7 @@ public:
         upstream_root_(upstream_root),
         buffer_(buffer),
         resolvercallback_(cb),
+        cname_count_(0),
         query_timeout_(query_timeout),
         retries_(retries),
         client_timer(io),
@@ -602,27 +652,29 @@ public:
         // should use NSAS for root servers
         // Adding root servers if not a forwarder
         if (upstream_->empty()) {
-            if (upstream_root_->empty()) { //if no root ips given, use this
-                zone_servers_.push_back(addr_t("192.5.5.241", 53));
-            }
-            else
-            {
-              //copy the list
-              dlog("Size is " + 
-                    boost::lexical_cast<string>(upstream_root_->size()) + 
-                    "\n");
-              //Use BOOST_FOREACH here? Is it faster?
-              for(AddressVector::iterator it = upstream_root_->begin();
-                   it < upstream_root_->end(); it++) {
-                zone_servers_.push_back(addr_t(it->first,it->second));
-                dlog("Put " + zone_servers_.back().first + "into root list\n");
-              }
-            }
+            setZoneServersToRoot();
         }
 
         send();
     }
 
+    void setZoneServersToRoot() {
+        zone_servers_.clear();
+        if (upstream_root_->empty()) { //if no root ips given, use this
+            zone_servers_.push_back(addr_t("192.5.5.241", 53));
+        } else {
+            //copy the list
+            dlog("Size is " + 
+                boost::lexical_cast<string>(upstream_root_->size()) + 
+                "\n");
+            //Use BOOST_FOREACH here? Is it faster?
+            for(AddressVector::iterator it = upstream_root_->begin();
+                it < upstream_root_->end(); it++) {
+            zone_servers_.push_back(addr_t(it->first,it->second));
+            dlog("Put " + zone_servers_.back().first + "into root list\n");
+            }
+        }
+    }
     virtual void clientTimeout() {
         // right now, just stop (should make SERVFAIL and send that
         // back, but not stop)
