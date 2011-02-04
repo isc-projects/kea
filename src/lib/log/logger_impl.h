@@ -17,66 +17,66 @@
 #ifndef __LOGGER_IMPL_H
 #define __LOGGER_IMPL_H
 
+#include <time.h>
+
 #include <cstdlib>
+#include <iostream>
 #include <string>
-#include <boost/lexical_cast.hpp>
-#include <log4cxx/logger.h>
-#include <log4cxx/logger.h>
+#include <map>
+#include <utility>
 
 #include <log/debug_levels.h>
 #include <log/logger.h>
 #include <log/message_types.h>
+#include <log/root_logger_name.h>
 
 namespace isc {
 namespace log {
 
-/// \brief Log4cxx Logger Implementation
+/// \brief Console Logger Implementation
 ///
 /// The logger uses a "pimpl" idiom for implementation, where the base logger
 /// class contains little more than a pointer to the implementation class, and
 /// all actions are carried out by the latter.  This class is an implementation
-/// class interfacing to the log4cxx logging system.
+/// class that just outputs to stdout.
 
 class LoggerImpl {
 public:
 
+    /// \brief Information About Logger
+    ///
+    /// Holds a information about a logger, namely its severity and its debug
+    /// level.  This could be a std::pair, except that it gets confusing when
+    /// accessing the LoggerInfoMap: that returns a pair, so we to reference
+    /// elements we would use constructs like ((i->first).second);
+    struct LoggerInfo {
+        isc::log::Severity  severity;
+        int                 dbglevel;
+
+        LoggerInfo(isc::log::Severity sev = isc::log::INFO,
+            int dbg = MIN_DEBUG_LEVEL) : severity(sev), dbglevel(dbg)
+        {}
+    };
+
+
+    /// \brief Information About All Loggers
+    ///
+    /// Information about all loggers in the system - except the root logger -
+    /// is held in a map, linking name of the logger (excluding the root
+    /// name component) and its set severity and debug levels.  The root
+    /// logger information is held separately.
+    typedef std::map<std::string, LoggerInfo>   LoggerInfoMap;
+
+
     /// \brief Constructor
     ///
-    /// Creates/attaches to a logger of a specific name.
+    /// Creates a logger of the specific name.
     ///
-    /// \param name Name of the logger.  If the name is that of the root name,
-    /// this creates an instance of the root logger; otherwise it creates a
-    /// child of the root logger.
+    /// \param name Name of the logger.
     ///
     /// \param exit_delete This argument is present to get round a bug in
-    /// log4cxx.  If a log4cxx logger is declared outside an execution unit, it
-    /// is not deleted until the program runs down.  At that point all such
-    /// objects - including internal log4cxx objects - are deleted.  However,
-    /// there seems to be a bug in log4cxx where the way that such objects are
-    /// destroyed causes a MutexException to be thrown (this is described in
-    /// https://issues.apache.org/jira/browse/LOGCXX-322).  As this only occurs
-    /// during program rundown, the issue is not serious - it just looks bad to
-    /// have the program crash instead of shut down cleanly.\n
-    /// \n
-    /// The original implementation of the isc::log::Logger had as a member a
-    /// log4cxx logger (actually a LoggerPtr).  If the isc:: Logger was declared
-    /// statically, when it was destroyed at the end of the program the internal
-    /// LoggerPtr was destroyed, which triggered the problem.  The problem did
-    /// not occur if the isc::log::Logger was created on the stack.  To get
-    /// round this, the internal LoggerPtr is now created dynamically.  The
-    /// exit_delete argument controls its destruction: if true, it is destroyed
-    /// in the ISC Logger destructor.  If false, it is not.\n
-    /// \n
-    /// When creating an isc::log::Logger on the stack, the argument should be
-    /// false (the default); when the Logger is destroyed, all the internal
-    /// log4cxx objects are destroyed.  As only the logger (and not the internal
-    /// log4cxx data structures are being destroyed), all is well.  However,
-    /// when creating the logger statically, the argument should be false.  This
-    /// means that the log4cxx objects are not destroyed at program rundown;
-    /// instead memory is reclaimed and files are closed when the process is
-    /// destroyed, something that does not trigger the bug.
-    LoggerImpl(const std::string& name, bool exit_delete = false) :
-        loggerptr_(NULL), name_(name), exit_delete_(exit_delete)
+    /// the log4cxx implementation.  It is unused here.
+    LoggerImpl(const std::string& name, bool) : name_(name)
     {}
 
 
@@ -85,8 +85,15 @@ public:
 
 
     /// \brief Get the full name of the logger (including the root name)
-    virtual std::string getName() {
-        return (getLogger()->getName());
+    virtual std::string getName();
+
+
+    /// \brief Check if this is the root logger
+    ///
+    /// \return true if the name of this logger is the same as that of the
+    /// root logger.
+    virtual bool isRootLogger() const {
+        return (name_ == RootLoggerName::getName());
     }
 
 
@@ -106,9 +113,7 @@ public:
     ///
     /// \return The current logging level of this logger.  In most cases though,
     /// the effective logging level is what is required.
-    virtual isc::log::Severity getSeverity() {
-        return getSeverityCommon(getLogger(), false);
-    }
+    virtual isc::log::Severity getSeverity();
 
 
     /// \brief Get Effective Severity Level for Logger
@@ -116,9 +121,7 @@ public:
     /// \return The effective severity level of the logger.  This is the same
     /// as getSeverity() if the logger has a severity level set, but otherwise
     /// is the severity of the parent.
-    virtual isc::log::Severity getEffectiveSeverity() {
-        return getSeverityCommon(getLogger(), true);
-    }
+    virtual isc::log::Severity getEffectiveSeverity();
 
 
     /// \brief Return DEBUG Level
@@ -134,85 +137,91 @@ public:
     /// enabled only if the logger has DEBUG enabled and if the dbglevel
     /// checked is less than or equal to the debug level set for the logger.
     virtual bool
-    isDebugEnabled(int dbglevel = MIN_DEBUG_LEVEL) {
-        return (getLogger()->getEffectiveLevel()->toInt() <=
-            (log4cxx::Level::DEBUG_INT - dbglevel));
-    }
-
+    isDebugEnabled(int dbglevel = MIN_DEBUG_LEVEL);
 
     /// \brief Is INFO Enabled?
     virtual bool isInfoEnabled() {
-        return (getLogger()->isInfoEnabled());
+        return (isEnabled(isc::log::INFO));
     }
-
 
     /// \brief Is WARNING Enabled?
     virtual bool isWarnEnabled() {
-        return (getLogger()->isWarnEnabled());
+        return (isEnabled(isc::log::WARN));
     }
-
 
     /// \brief Is ERROR Enabled?
     virtual bool isErrorEnabled() {
-        return (getLogger()->isErrorEnabled());
+        return (isEnabled(isc::log::ERROR));
     }
-
 
     /// \brief Is FATAL Enabled?
     virtual bool isFatalEnabled() {
-        return (getLogger()->isFatalEnabled());
+        return (isEnabled(isc::log::FATAL));
     }
+
+
+    /// \brief Common Severity check
+    ///
+    /// Implements the common severity check.  As an optimisation, this checks
+    /// to see if any logger-specific levels have been set (a quick check as it
+    /// just involves seeing if the collection of logger information is empty).
+    /// if not, it returns the information for the root level; if so, it has
+    /// to take longer and look up the information in the map holding the
+    /// logging details.
+    virtual bool isEnabled(isc::log::Severity severity) {
+        if (logger_info_.empty()) {
+            return (root_logger_info_.severity <= severity);
+        }
+        else {
+            return (getSeverity() <= severity);
+        }
+    }
+
+
+    /// \brief Output General Message
+    ///
+    /// The message is formatted to include the date and time, the severity
+    /// and the logger generating the message.
+    ///
+    /// \param sev_text Severity lovel as a text string
+    /// \param text Text to log
+    void output(const char* sev_text, const std::string& message);
 
 
     /// \brief Output Debug Message
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void debug(MessageID ident, const char* text) {
-        LOG4CXX_DEBUG(getLogger(), ident << ", " << text);
-    }
+    void debug(MessageID ident, const char* text);
 
 
     /// \brief Output Informational Message
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void info(MessageID ident, const char* text) {
-        LOG4CXX_INFO(getLogger(), ident << ", " << text);
-    }
+    void info(MessageID ident, const char* text);
 
 
     /// \brief Output Warning Message
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void warn(MessageID ident, const char* text) {
-        LOG4CXX_WARN(getLogger(), ident << ", " << text);
-    }
+    void warn(MessageID ident, const char* text);
 
 
     /// \brief Output Error Message
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void error(MessageID ident, const char* text) {
-        LOG4CXX_ERROR(getLogger(), ident << ", " << text);
-    }
+    void error(MessageID ident, const char* text);
 
 
     /// \brief Output Fatal Message
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void fatal(MessageID ident, const char* text) {
-        LOG4CXX_FATAL(getLogger(), ident << ", " << text);
-    }
+    void fatal(MessageID ident, const char* text);
 
-    //@{
-    /// \brief Testing Methods
-    ///
-    /// The next set of methods are used in testing.  As they are accessed from
-    /// the main logger class, they must be public.
 
     /// \brief Equality
     ///
@@ -221,86 +230,30 @@ public:
     ///
     /// \return true if the logger objects are instances of the same logger.
     bool operator==(const LoggerImpl& other) {
-        return (*loggerptr_ == *other.loggerptr_);
+        return (name_ == other.name_);
     }
 
 
-    /// \brief Logger Initialized
+    /// \brief Reset Global Data
     ///
-    /// Check that the logger has been properly initialized.  (This method
-    /// is principally for testing.)
-    ///
-    /// \return true if this logger object has been initialized.
-    bool isInitialized() {
-        return (loggerptr_ != NULL);
+    /// Only used for testing, this clears all the logger information and
+    /// resets it back to default values.
+    static void reset() {
+        root_logger_info_ = LoggerInfo(isc::log::INFO, MIN_DEBUG_LEVEL);
+        logger_info_.clear();
     }
 
-    //@}
-
-protected:
-
-    /// \brief Convert Between BIND-10 and log4cxx Logging Levels
-    ///
-    /// This method is marked protected to allow for unit testing.
-    ///
-    /// \param value log4cxx numeric logging level
-    ///
-    /// \return BIND-10 logging severity
-    isc::log::Severity convertLevel(int value);
 
 private:
+    std::string          name_;                 ///< Name of this logger
+    
+    // Split the status of the root logger from this logger.  If - is will
+    // probably be the usual case - no per-logger setting is enabled, a
+    // quick check of logger_info_.empty() will return true and we can quickly
+    // return the root logger status without a length lookup in the map.
 
-    /// \brief Get Severity Level for Logger
-    ///
-    /// This is common code for getSeverity() and getEffectiveSeverity() -
-    /// it returns the severity of the logger; if not set (and the check_parent)
-    /// flag is set, it searches up the parent-child tree until a severity
-    /// level is found and uses that.
-    ///
-    /// \param ptrlogger Pointer to the log4cxx logger to check.
-    /// \param check_parent true to search up the tree, false to return the
-    /// current level.
-    ///
-    /// \return The effective severity level of the logger.  This is the same
-    /// as getSeverity() if the logger has a severity level set, but otherwise
-    /// is the severity of the parent.
-    isc::log::Severity getSeverityCommon(const log4cxx::LoggerPtr& ptrlogger,
-        bool check_parent);
-
-
-
-    /// \brief Initialize log4cxx Logger
-    ///
-    /// Creates the log4cxx logger used internally.  A function is provided for
-    /// this so that the creation does not take place when this Logger object
-    /// is created but when it is used.  As the latter occurs in executable
-    /// code but the former can occur during initialization, this order
-    /// guarantees that anything that is statically initialized has completed
-    /// its initialization by the time the logger is used.
-    void initLogger();
-
-
-    /// \brief Return underlying log4cxx logger, initializing it if necessary
-    ///
-    /// \return Loggerptr object
-    log4cxx::LoggerPtr& getLogger() {
-        if (loggerptr_ == NULL) {
-            initLogger();
-        }
-        return *loggerptr_;
-    }
-
-    // Members.  Note that loggerptr_ is a pointer to a LoggerPtr, which is
-    // itself a pointer to the underlying log4cxx logger.  This is due to the
-    // problems with memory deletion on program exit, explained in the comments
-    // for the "exit_delete" parameter in this class's constructor.
-
-    mutable log4cxx::LoggerPtr*  loggerptr_; ///< Pointer to the underlying logger
-    std::string          name_;         ///< Name of this logger]
-    bool                 exit_delete_;  ///< Delete loggerptr_ on exit?
-
-    // NOTE - THIS IS A PLACE HOLDER
-    static bool         init_;      ///< Set true when initialized
+    static LoggerInfo       root_logger_info_;  ///< Status of root logger
+    static LoggerInfoMap    logger_info_;       ///< Store of debug levels etc.
 };
 
 } // namespace log
