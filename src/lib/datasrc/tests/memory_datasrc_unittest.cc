@@ -196,6 +196,8 @@ public:
             {"dname.child.example.org. 300 IN DNAME example.com.",
              &rr_child_dname_},
             {"example.com. 300 IN A 192.0.2.10", &rr_out_},
+            {"*.wild.example.org. 300 IN A 192.0.2.1", &rr_wild_},
+            {"bar.tmp.example.org. 300 IN A 192.0.2.1", &rr_tmp2_},
             {NULL, NULL}
         };
 
@@ -241,6 +243,7 @@ public:
     RRsetPtr rr_grandchild_ns_; // NS below a zone cut (unusual)
     RRsetPtr rr_grandchild_glue_; // glue RR below a deeper zone cut
     RRsetPtr rr_child_dname_; // A DNAME under NS
+    RRsetPtr rr_wild_, rr_tmp2_;
 
     /**
      * \brief Test one find query to the zone.
@@ -604,6 +607,12 @@ TEST_F(MemoryZoneTest, load) {
     // Try loading zone that is wrong in a different way
     EXPECT_THROW(zone_.load(TEST_DATA_DIR "/duplicate_rrset.zone"),
         MasterLoadError);
+}
+
+TEST_F(MemoryZoneTest, loadWildcard) {
+    EXPECT_EQ(SUCCESS, zone_.add(rr_wild_));
+    EXPECT_EQ(SUCCESS, zone_.add(rr_tmp2_));
+    findTest(Name("tmp.example.org"), RRType::A(), Zone::NXRRSET);
 }
 
 TEST_F(MemoryZoneTest, swap) {

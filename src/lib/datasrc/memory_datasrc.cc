@@ -59,7 +59,7 @@ struct MemoryZone::MemoryZoneImpl {
     typedef Domain::value_type DomainPair;
     typedef boost::shared_ptr<Domain> DomainPtr;
     // The tree stores domains
-    typedef RBTree<Domain> DomainTree;
+    typedef RBTree<Domain, true> DomainTree;
     typedef RBNode<Domain> DomainNode;
 
     // Information about the zone
@@ -330,7 +330,12 @@ struct MemoryZone::MemoryZoneImpl {
                 assert(0);
         }
         assert(node);
-        assert(!node->isEmpty());
+
+        // If there is an exact match but the node is empty, it's equivalent
+        // to NXRRSET.
+        if (node->isEmpty()) {
+            return (FindResult(NXRRSET, ConstRRsetPtr()));
+        }
 
         Domain::const_iterator found;
 
