@@ -24,6 +24,9 @@ namespace log {
 ///
 /// Defines the severity levels for logging.  This is shared between the logger
 /// and the implementations classes.
+///
+/// N.B. The order of the levels - DEBUG less than INFO less that WARN etc. is
+/// implicitly assumed in several implementations.  They must not be changed.
 
 typedef enum {
     DEFAULT = 0,    // Default to logging level of the parent

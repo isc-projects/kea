@@ -80,7 +80,7 @@ public:
     /// enables their deletion - which causes no issues as the problem only
     /// manifests itself during program rundown.
     /// \n
-    /// The falg has no effect on non-log4cxx implementations.
+    /// The flag has no effect on non-log4cxx implementations.
     Logger(const std::string& name, bool infunc = false);
 
 
@@ -188,8 +188,6 @@ public:
     /// \param ... Optional arguments for the message.
     void fatal(MessageID ident, ...);
 
-protected:
-
     /// \brief Equality
     ///
     /// Check if two instances of this logger refer to the same stream.
@@ -198,14 +196,13 @@ protected:
     /// \return true if the logger objects are instances of the same logger.
     bool operator==(const Logger& other);
 
-    
-    /// \brief Logger Initialized
+protected:
+
+    /// \brief Reset Global Data
     ///
-    /// Check that the logger has been properly initialized.  (This method
-    /// is principally for testing.)
-    ///
-    /// \return true if this logger object has been initialized.
-    bool isInitialized();
+    /// Used for testing, this calls upon the underlying logger implementation
+    /// to clear any global data.
+    static void reset();
 
 private:
     LoggerImpl*     loggerptr_;     /// Pointer to the underlying logger

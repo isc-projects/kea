@@ -41,14 +41,8 @@ public:
     TestLogger(const string& name) : Logger(name, true)
     {}
 
-    /// \brief Logger Equality
-    bool operator==(const TestLogger& other) {
-        return Logger::operator==(other);
-    }
-
-    /// \brief Logger is Null
-    bool isInitialized() {
-        return Logger::isInitialized();
+    static void reset() {
+        Logger::reset();
     }
 };
 
@@ -60,6 +54,10 @@ class LoggerTest : public ::testing::Test {
 protected:
     LoggerTest()
     {
+    }
+
+    ~LoggerTest() {
+        TestLogger::reset();
     }
 };
 
@@ -91,26 +89,12 @@ TEST_F(LoggerTest, GetLogger) {
     // Instantiate two loggers that should be the same
     TestLogger logger1(name1);
     TestLogger logger2(name1);
-
-    // And check they are null at this point.
-    EXPECT_FALSE(logger1.isInitialized());
-    EXPECT_FALSE(logger2.isInitialized());
-
-    // Do some random operation
-    EXPECT_TRUE(logger1.isFatalEnabled());
-    EXPECT_TRUE(logger2.isFatalEnabled());
-
-    // And check they initialized and equal
-    EXPECT_TRUE(logger1.isInitialized());
-    EXPECT_TRUE(logger2.isInitialized());
+    // And check they equal
     EXPECT_TRUE(logger1 == logger2);
 
     // Instantiate another logger with another name and check that it
     // is different to the previously instantiated ones.
     TestLogger logger3(name2);
-    EXPECT_FALSE(logger3.isInitialized());
-    EXPECT_TRUE(logger3.isFatalEnabled());
-    EXPECT_TRUE(logger3.isInitialized());
     EXPECT_FALSE(logger1 == logger3);
 }
 

@@ -15,22 +15,19 @@
 // $Id$
 
 #include <iostream>
+#include <algorithm>
 
 #include <stdarg.h>
 #include <stdio.h>
 
-#include <log4cxx/appender.h>
-#include <log4cxx/basicconfigurator.h>
-#include <log4cxx/patternlayout.h>
-#include <log4cxx/consoleappender.h>
-
+#include <log/debug_levels.h>
 #include <log/root_logger_name.h>
 #include <log/logger.h>
 #include <log/logger_impl.h>
 #include <log/message_dictionary.h>
 #include <log/message_types.h>
+#include <log/root_logger_name.h>
 #include <log/strutil.h>
-#include <log/xdebuglevel.h>
 
 using namespace std;
 
@@ -39,205 +36,221 @@ namespace log {
 
 // Static initializations
 
-bool LoggerImpl::init_ = false;
+LoggerImpl::LoggerInfoMap LoggerImpl::logger_info_;
+LoggerImpl::LoggerInfo LoggerImpl::root_logger_info_(isc::log::INFO, 0);
 
-// Destructor.  Delete log4cxx stuff if "don't delete" is clear.
+// Destructor. (Here because of virtual declaration.)
 
 LoggerImpl::~LoggerImpl() {
-    if (exit_delete_) {
-        delete loggerptr_;
-    }
 }
 
-// Initialize logger - create a logger as a child of the root logger.  With
-// log4cxx this is assured by naming the logger <parent>.<child>.
+// Return the name of the logger (fully-qualified with the root name if
+// possible).
 
-void
-LoggerImpl::initLogger() {
-
-    // Initialize basic logging if not already done.  This is a one-off for
-    // all loggers.
-    if (!init_) {
-
-        // TEMPORARY
-        // Add a suitable console logger to the log4cxx root logger.  (This
-        // is the logger at the root of the log4cxx tree, not the BIND-10 root
-        // logger, which is one level down.)  The chosen format is:
-        //
-        // YYYY-MM-DD hh:mm:ss.sss [logger] SEVERITY: text
-        //
-        // As noted, this is a temporary hack: it is done here to ensure that
-        // a suitable output and output pattern is set.  Future versions of the
-        // software will set this based on configuration data.
-
-        log4cxx::LayoutPtr layout(
-            new log4cxx::PatternLayout(
-                "%d{yyyy-MM-DD HH:mm:ss.SSS} %-5p [%c] %m\n"));
-        log4cxx::AppenderPtr console(
-            new log4cxx::ConsoleAppender(layout));
-        log4cxx::LoggerPtr sys_root_logger = log4cxx::Logger::getRootLogger();
-        sys_root_logger->addAppender(console);
-        
-        // Set the default logging to INFO
-        sys_root_logger->setLevel(log4cxx::Level::getInfo());
-
-        // All static stuff initialized
-        init_ = true;
-    }
-
-    // Initialize this logger.  Name this as to whether the BIND-10 root logger
-    // name has been set.  (If not, this mucks up the hierarchy :-( ).
+string LoggerImpl::getName() {
     string root_name = RootLoggerName::getName();
     if (root_name.empty() || (name_ == root_name)) {
-        loggerptr_ = new log4cxx::LoggerPtr(log4cxx::Logger::getLogger(name_));
+        return (name_);
     }
     else {
-        loggerptr_ = new log4cxx::LoggerPtr(
-            log4cxx::Logger::getLogger(root_name + "." + name_)
-        );
+        return (root_name + "." + name_);
     }
 }
 
-
-// Set the severity for logging.  There is a 1:1 mapping between the logging
-// severity and the log4cxx logging levels, apart from DEBUG.
-//
-// In log4cxx, each of the logging levels (DEBUG, INFO, WARN etc.) has a numeric
-// value.  The level is set to one of these and any numeric level equal to or
-// above it that is reported.  For example INFO has a value of 20000 and ERROR
-// a value of 40000. So if a message of WARN severity (= 30000) is logged, it is
-// not logged when the logger's severity level is ERROR (as 30000 !>= 40000).
-// It is reported if the logger's severity level is set to WARN (as 30000 >=
-/// 30000) or INFO (30000 >= 20000).
-//
-// This gives a simple system for handling different debug levels.  The debug
-// level is a number between 0 and 99, with 0 being least verbose and 99 the
-// most.  To implement this seamlessly, when DEBUG is set, the numeric value
-// of the logging level is actually set to (DEBUG - debug-level).  Similarly
-// messages of level "n" are logged at a logging level of (DEBUG - n).  Thus if
-// the logging level is set to DEBUG and the debug level set to 25, the actual
-// level set is 10000 - 25 = 99975.
-//
-// Attempting to log a debug message of level 26 is an attempt to log a message
-// of level 10000 - 26 = 9974.  As 9974 !>= 9975, it is not logged.  A
-// message of level 25 is, because 9975 >= 9975.
-//
-// The extended set of logging levels is implemented by the XDebugLevel class.
+// Set the severity for logging.
 
 void
 LoggerImpl::setSeverity(isc::log::Severity severity, int dbglevel) {
-    switch (severity) {
-        case NONE:
-            getLogger()->setLevel(log4cxx::Level::getOff());
-            break;
 
-        case FATAL:
-            getLogger()->setLevel(log4cxx::Level::getFatal());
-            break;
+    // Silently coerce the debug level into the valid range of 0 to 99
 
-        case ERROR:
-            getLogger()->setLevel(log4cxx::Level::getError());
-            break;
+    int debug_level = max(MIN_DEBUG_LEVEL, min(MAX_DEBUG_LEVEL, dbglevel));
+    if (isRootLogger()) {
+        
+        // Can only set severity for the root logger, you can't disable it.
+        // Any attempt to do so is silently ignored.
+        if (severity != isc::log::DEFAULT) {
+            root_logger_info_ = LoggerInfo(severity, debug_level);
+        }
 
-        case WARN:
-            getLogger()->setLevel(log4cxx::Level::getWarn());
-            break;
+    } else if (severity == isc::log::DEFAULT) {
 
-        case INFO:
-            getLogger()->setLevel(log4cxx::Level::getInfo());
-            break;
+        // Want to set to default; this means removing the information
+        // about this logger from the logger_info_ if it is set.
+        LoggerInfoMap::iterator i = logger_info_.find(name_);
+        if (i != logger_info_.end()) {
+            logger_info_.erase(i);
+        }
 
-        case DEBUG:
-            getLogger()->setLevel(
-                log4cxx::XDebugLevel::getExtendedDebug(dbglevel));
-            break;
-
-        // Will get here for DEFAULT or any other value.  This disables the
-        // logger's own severity and it defaults to the severity of the parent
-        // logger.
-        default:
-            getLogger()->setLevel(0);
-    }
-}
-
-// Convert between numeric log4cxx logging level and BIND-10 logging severity.
-
-isc::log::Severity
-LoggerImpl::convertLevel(int value) {
-
-    // The order is optimised.  This is only likely to be called when testing
-    // for writing debug messages, so the check for DEBUG_INT is first.
-    if (value <= log4cxx::Level::DEBUG_INT) {
-        return (DEBUG);
-    } else if (value <= log4cxx::Level::INFO_INT) {
-        return (INFO);
-    } else if (value <= log4cxx::Level::WARN_INT) {
-        return (WARN);
-    } else if (value <= log4cxx::Level::ERROR_INT) {
-        return (ERROR);
-    } else if (value <= log4cxx::Level::FATAL_INT) {
-        return (FATAL);
     } else {
-        return (NONE);
+
+        // Want to set this information
+        logger_info_[name_] = LoggerInfo(severity, debug_level);
     }
 }
 
-
-// Return the logging severity associated with this logger.
+// Return severity level
 
 isc::log::Severity
-LoggerImpl::getSeverityCommon(const log4cxx::LoggerPtr& ptrlogger,
-    bool check_parent) {
+LoggerImpl::getSeverity() {
 
-    log4cxx::LevelPtr level = ptrlogger->getLevel();
-    if (level == log4cxx::LevelPtr()) {
-
-        // Null level returned, logging should be that of the parent.
-
-        if (check_parent) {
-            log4cxx::LoggerPtr parent = ptrlogger->getParent();
-            if (parent == log4cxx::LoggerPtr()) {
-
-                // No parent, so reached the end of the chain.  Return INFO
-                // severity.
-                return (INFO);
-            }
-            else {
-                return getSeverityCommon(parent, check_parent);
-            }
+    if (isRootLogger()) {
+        return (root_logger_info_.severity);
+    }
+    else {
+        LoggerInfoMap::iterator i = logger_info_.find(name_);
+        if (i != logger_info_.end()) {
+           return ((i->second).severity);
         }
         else {
-            return (DEFAULT);
+            return (isc::log::DEFAULT);
         }
-    } else {
-        return convertLevel(level->toInt());
     }
 }
 
+// Get effective severity.  Either the current severity or, if not set, the
+// severity of the root level.
+
+isc::log::Severity
+LoggerImpl::getEffectiveSeverity() {
+    if (! isRootLogger()) {
+
+        // Not root logger, look this logger up in the map.
+        LoggerInfoMap::iterator i = logger_info_.find(name_);
+        if (i != logger_info_.end()) {
+
+            // Found, so return the severity.
+            return ((i->second).severity);
+        }
+    }
+
+    // Must be the root logger, or this logger is defaulting to the root logger
+    // settings.
+    return (root_logger_info_.severity);
+}
 
 // Get the debug level.  This returns 0 unless the severity is DEBUG.
 
 int
 LoggerImpl::getDebugLevel() {
 
-    log4cxx::LevelPtr level = getLogger()->getLevel();
-    if (level == log4cxx::LevelPtr()) {
+    if (! isRootLogger()) {
 
-        // Null pointer returned, logging should be that of the parent.
-        return (0);
-        
+        // Not root logger, look this logger up in the map.
+        LoggerInfoMap::iterator i = logger_info_.find(name_);
+        if (i != logger_info_.end()) {
+
+            // Found, so return the debug level.
+            if ((i->second).severity == isc::log::DEBUG) {
+                return ((i->second).dbglevel);
+            } else {
+                return (0);
+            }
+        }
+    }
+
+    // Must be the root logger, or this logger is defaulting to the root logger
+    // settings.
+    if (root_logger_info_.severity == isc::log::DEBUG) {
+        return (root_logger_info_.dbglevel);
     } else {
-        int severity = level->toInt();
-        if (severity <= log4cxx::Level::DEBUG_INT) {
-            return (log4cxx::Level::DEBUG_INT - severity);
-        }
-        else {
-            return (0);
-        }
+        return (0);
     }
 }
 
+// The code for isXxxEnabled is quite simple and is in the header.  The only
+// exception is isDebugEnabled() where we have the complication of the debug
+// levels.
 
+bool
+LoggerImpl::isDebugEnabled(int dbglevel) {
+
+    if (logger_info_.empty()) {
+
+        // Nothing set, return information from the root logger.
+        return ((root_logger_info_.severity <= isc::log::DEBUG) &&
+            (root_logger_info_.dbglevel >= dbglevel));
+    }
+
+    // Something is in the general logger map, so we need to look up the
+    // information.  We don't use getSeverity() and getDebugLevel() separately
+    // as each involves a lookup in the map, something that we can optimise
+    // here.
+
+    if (! isRootLogger()) {
+
+        // Not root logger, look this logger up in the map.
+        LoggerInfoMap::iterator i = logger_info_.find(name_);
+        if (i != logger_info_.end()) {
+
+            // Found, so return the debug level.
+            if ((i->second).severity <= isc::log::DEBUG) {
+                return ((i->second).dbglevel >= dbglevel);
+            } else {
+                return (false); // Nothing lower than debug
+            }
+        }
+    }
+
+    // Must be the root logger, or this logger is defaulting to the root logger
+    // settings.
+    if (root_logger_info_.severity <= isc::log::DEBUG) {
+        return (root_logger_info_.dbglevel > dbglevel);
+    } else {
+        return (false);
+    }
+}
+
+// Output a general message
+
+void
+LoggerImpl::output(const char* sev_text, const string& message) {
+    
+    // Get the time in a struct tm format, and convert to text
+    time_t t_time;
+    time(&t_time);
+    struct tm* tm_time = localtime(&t_time);
+
+    char chr_time[32];
+    (void) strftime(chr_time, sizeof(chr_time), "%Y-%m-%d %H:%M:%S", tm_time);
+    chr_time[sizeof(chr_time) - 1] = '\0';  // Guarantee a trailing NULL
+
+    // Now output.
+    std::cout << chr_time << " " << sev_text << " [" << getName() << "] " <<
+        message << "\n";
+}
+
+// Output various levels
+
+void
+LoggerImpl::debug(MessageID ident, const char* text) {
+    string message = ident + ", " + text;
+    output("DEBUG", message);
+}
+
+void
+LoggerImpl::info(MessageID ident, const char* text) {
+    string message = ident + ", " + text;
+    output("INFO ", message);
+}
+
+void
+LoggerImpl::warn(MessageID ident, const char* text) {
+    string message = ident + ", " + text;
+    output("WARN ", message);
+}
+
+void
+LoggerImpl::error(MessageID ident, const char* text) {
+    string message = ident + ", " + text;
+    output("ERROR", message);
+}
+
+void
+LoggerImpl::fatal(MessageID ident, const char* text) {
+    string message = ident + ", " + text;
+    output("FATAL", message);
+}
 
 } // namespace log
 } // namespace isc

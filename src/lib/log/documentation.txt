@@ -216,18 +216,8 @@ To use the current version of the logging:
 
        isc::log::Logger logger("myname", true);
 
-   This is due to an apparent bug in the underlying log4cxx, where the deletion
-   of a statically-declared object at program termination can cause a segment
-   fault. (The destruction of internal memory structures can sometimes happen
-   out of order.)  By default the Logger class creates the structures in its
-   constructor but does not delete them in the destruction.  The default
-   behavious works because instead of reclaiming memory at program run-down,
-   the operating system reclaims it when the process is deleted.
-
-   Setting the second argument "true" causes the Logger's destructor to delete
-   the log4cxx structures.  This does not cause a problem if the program is
-   not terminating.  So use the second form when declaring an automatic
-   instance of isc::log::Logger on the stack.
+   The argument is ignored for underlying implementations other than log4cxx.
+   See below for the use of this argument.
 
 3. The main program unit should include a call to isc::log::runTimeInit()
    (defined in logger_support.h) to set the logging severity, debug log level,
@@ -235,12 +225,12 @@ To use the current version of the logging:
 
    a) The logging severity is one of the enum defined in logger.h, i.e.
 
-        isc::log::Logger::DEBUG
-        isc::log::Logger::INFO
-        isc::log::Logger::WARN
-        isc::log::Logger::ERROR
-        isc::log::Logger::FATAL
-        isc::log::Logger::NONE
+        isc::log::DEBUG
+        isc::log::INFO
+        isc::log::WARN
+        isc::log::ERROR
+        isc::log::FATAL
+        isc::log::NONE
 
    b) The debug log level is only interpreted when the severity is DEBUG and
       is an integer raning from 0 to 99.  0 should be used for the highest-level
@@ -348,16 +338,8 @@ DEBUG is specifically chosen.
 b) Record system-related and packet-related messages via different loggers
 (e.g.  in the example given, sever events could be logged using the logger
 "auth" and packet-related events at that level logged using the logger
-"pkt-auth".)
-As the loggers are independent and the severity levels independent, fine-tuning
-of what and what is not recorded can be achieved.
-
-
-Outstanding Issues
-==================
-* Ability to configure system according to configuration database.
-* Update the build procedure to create .cc and .h files from the .msg file
-  during the build process. (Requires that the message compiler is built first.)
+"pkt-auth".)  As the loggers are independent and the severity levels
+independent, fine-tuning of what and what is not recorded can be achieved.
 
 
 Notes
@@ -369,3 +351,67 @@ the server starts up (or when triggered by a command) to read in a message
 file to overwrite the internal dictionary.  Writing it in C++ means there
 is only one piece of code that does this functionality.
 
+
+Outstanding Issues
+==================
+* Ability to configure system according to configuration database.
+* Update the build procedure to create .cc and .h files from the .msg file
+  during the build process. (Requires that the message compiler is built
+  first.)
+
+
+log4cxx Issues
+==============
+
+Second Argument in Logger Constructor
+-------------------------------------
+As noted above, when using log4cxx as the underlying implementation, the
+argument to the logger's constructor should be set true if declaring the
+logger within a method and set false (or omitted) if declaring the logger
+external to an execution unit.
+
+This is due to an apparent bug in the underlying log4cxx, where the deletion
+of a statically-declared object at program termination can cause a segment
+fault. (The destruction of internal memory structures can sometimes happen
+out of order.)  By default the Logger class creates the structures in
+its constructor but does not delete them in the destruction.  The default
+behavious works because instead of reclaiming memory at program run-down,
+the operating system reclaims it when the process is deleted.
+
+Setting the second argument "true" causes the Logger's destructor to delete
+the log4cxx structures.  This does not cause a problem if the program is
+not terminating.  So use the second form when declaring an automatic instance
+of isc::log::Logger on the stack.
+
+Building with log4cxx
+---------------------
+Owing to issues with versions of log4cxx on different systems, log4cxx was
+temporarily disabled.  To use log4cxx on your system:
+
+* Uncomment the log4cxx lines in configure.ac
+* In src/lib/log, replace the logger_impl.{cc,h} files with their log4cxx
+  equivalents, i.e.
+
+  cp logger_impl_log4cxx.h logger_impl.h
+  cp logger_impl_log4cxx.cc logger_impl.cc
+
+* In src/lib/log/Makefile.am, uncomment the lines:
+
+  # AM_CPPFLAGS += $(LOG4CXX_INCLUDES)
+
+  # liblog_la_SOURCES += xdebuglevel.cc xdebuglevel.h
+
+  # liblog_la_LDFLAGS = $(LOG4CXX_LDFLAGS)
+
+* In src/lib/log/test, re-enable testing of the log4cxx implementation
+  class, i.e.
+
+  cp logger_impl_log4cxx_unittest.cc logger_impl_unittest.cc
+
+  ... and uncomment the following lines in Makefile.am:
+
+  # run_unittests_SOURCES += logger_impl_unittest.cc
+
+  # run_unittests_SOURCES += xdebuglevel_unittest.cc
+
+Then rebuild the system from scratch.
