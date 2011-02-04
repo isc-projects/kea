@@ -197,7 +197,12 @@ public:
              &rr_child_dname_},
             {"example.com. 300 IN A 192.0.2.10", &rr_out_},
             {"*.wild.example.org. 300 IN A 192.0.2.1", &rr_wild_},
-            {"bar.tmp.example.org. 300 IN A 192.0.2.1", &rr_tmp2_},
+            {"wild.*.foo.example.org. 300 IN A 192.0.2.1", &rr_emptywild_},
+            {"wild.*.foo.*.bar.example.org. 300 IN A 192.0.2.1",
+             &rr_nested_emptywild_},
+            {"*.nswild.example.org. 300 IN NS nswild.example.", &rr_nswild_},
+            {"*.dnamewild.example.org. 300 IN DNAME dnamewild.example.",
+             &rr_dnamewild_},
             {NULL, NULL}
         };
 
@@ -243,7 +248,10 @@ public:
     RRsetPtr rr_grandchild_ns_; // NS below a zone cut (unusual)
     RRsetPtr rr_grandchild_glue_; // glue RR below a deeper zone cut
     RRsetPtr rr_child_dname_; // A DNAME under NS
-    RRsetPtr rr_wild_, rr_tmp2_;
+    RRsetPtr rr_wild_;
+    RRsetPtr rr_emptywild_;
+    RRsetPtr rr_nested_emptywild_;
+    RRsetPtr rr_nswild_, rr_dnamewild_;
 
     /**
      * \brief Test one find query to the zone.
@@ -609,10 +617,49 @@ TEST_F(MemoryZoneTest, load) {
         MasterLoadError);
 }
 
+// Note: once #507 is merged, findTest() would succeed whether or not
+// we load the wildcard correctly, so the test will become meaningless.
+// The plan is to clean them up when we complete #551 (then the effect of
+// load will be indirectly tested via find() tests).
 TEST_F(MemoryZoneTest, loadWildcard) {
+    /*
+     *            example.org.
+     *                 |
+     *                wild (not *.wild, should have wild mark)
+     *                 |
+     *                 *
+     */
     EXPECT_EQ(SUCCESS, zone_.add(rr_wild_));
-    EXPECT_EQ(SUCCESS, zone_.add(rr_tmp2_));
-    findTest(Name("tmp.example.org"), RRType::A(), Zone::NXRRSET);
+    findTest(Name("wild.example.org"), RRType::A(), Zone::NXRRSET);
+}
+
+// same note as loadWildcard applies.
+TEST_F(MemoryZoneTest, loadEmptyWildcard) {
+    /*
+     *            example.org.
+     *                foo
+     *                 *
+     *               wild
+     */
+    EXPECT_EQ(SUCCESS, zone_.add(rr_emptywild_));
+    findTest(Name("*.foo.example.org"), RRType::A(), Zone::NXRRSET);
+    findTest(Name("foo.example.org"), RRType::A(), Zone::NXRRSET);
+}
+
+// same note as loadWildcard applies.
+TEST_F(MemoryZoneTest, loadNestedEmptyWildcard) {
+    EXPECT_EQ(SUCCESS, zone_.add(rr_nested_emptywild_));
+    findTest(Name("*.foo.*.bar.example.org"), RRType::A(), Zone::NXRRSET);
+    findTest(Name("foo.*.bar.example.org"), RRType::A(), Zone::NXRRSET);
+    findTest(Name("*.bar.example.org"), RRType::A(), Zone::NXRRSET);
+    findTest(Name("bar.example.org"), RRType::A(), Zone::NXRRSET);
+}
+
+TEST_F(MemoryZoneTest, loadBadWildcard) {
+    // We reject loading the zone if it contains a wildcard name for
+    // NS or DNAME.
+    EXPECT_THROW(zone_.add(rr_nswild_), MemoryZone::AddError);
+    EXPECT_THROW(zone_.add(rr_dnamewild_), MemoryZone::AddError);
 }
 
 TEST_F(MemoryZoneTest, swap) {
