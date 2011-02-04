@@ -173,16 +173,16 @@ Logger::fatal(isc::log::MessageID ident, ...) {
     }
 }
 
-// Protected methods (used for testing)
-
 bool Logger::operator==(const Logger& other) {
     return (*loggerptr_ == *other.loggerptr_);
 }
 
-bool Logger::isInitialized() {
-    return loggerptr_->isInitialized();
-}
+// Protected methods (used for testing)
 
+void
+Logger::reset() {
+    LoggerImpl::reset();
+}
 
 } // namespace log
 } // namespace isc
