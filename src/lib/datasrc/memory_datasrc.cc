@@ -206,6 +206,8 @@ struct MemoryZone::MemoryZoneImpl {
 
         // Add wildcards possibly contained in the owner name to the domain
         // tree.
+        // Note: this can throw an exception, breaking strong exception
+        // guarantee.  (see also the note for contextCheck() below).
         addWildcards(*domains, name);
 
         // Get the node
