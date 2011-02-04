@@ -483,7 +483,7 @@ public:
     ///
     /// This acts the same as many std::*.swap functions, exchanges the
     /// contents. This doesn't throw anything.
-    void swap(RBTree<T>& other) {
+    void swap(RBTree<T, returnEmptyNode>& other) {
         std::swap(root_, other.root_);
         std::swap(NULLNODE, other.NULLNODE);
         std::swap(node_count_, other.node_count_);
