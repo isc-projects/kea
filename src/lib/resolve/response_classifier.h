@@ -98,7 +98,7 @@ public:
     /// going to fail over to TCP and will want to use what is returned, even
     /// if some of the response was lost.
     static Category classify(const isc::dns::Question& question,
-            const isc::dns::MessagePtr& message, bool tcignore = false);
+            const isc::dns::Message& message, bool tcignore = false);
 
 private:
     /// \brief Follow CNAMEs
