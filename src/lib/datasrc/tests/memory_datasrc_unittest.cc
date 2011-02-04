@@ -195,7 +195,8 @@ public:
              &rr_grandchild_glue_},
             {"dname.child.example.org. 300 IN DNAME example.com.",
              &rr_child_dname_},
-            {"example.com. 300 IN A 192.0.2.10", &rr_out_}
+            {"example.com. 300 IN A 192.0.2.10", &rr_out_},
+            {NULL, NULL}
         };
 
         stringstream zone_data_stream;
