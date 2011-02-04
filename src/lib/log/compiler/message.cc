@@ -101,13 +101,10 @@ static void usage() {
 
 static string currentTime() {
 
-    // Get the current time.
+    // Get a text representation of the current time.
     time_t curtime;
     time(&curtime);
-
-    // Format it
-    char buffer[32];
-    ctime_r(&curtime, buffer);
+    char* buffer = ctime(&curtime);
 
     // Convert to string and strip out the trailing newline
     string current_time = buffer;
