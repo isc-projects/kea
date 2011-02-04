@@ -432,6 +432,83 @@ private:
     // returns true if we are done
     // returns false if we are not done
     bool handleRecursiveAnswer(const Message& incoming) {
+        isc::resolve::ResponseClassifier::Category category =
+            isc::resolve::ResponseClassifier::classify(question_, incoming, true);
+
+        bool found_ns_address = false;
+        switch (category) {
+        case isc::resolve::ResponseClassifier::ANSWER:
+        case isc::resolve::ResponseClassifier::ANSWERCNAME:
+            copyAnswerMessage(incoming, answer_message_);
+            return true;
+            break;
+        case isc::resolve::ResponseClassifier::CNAME:
+            // TODO: add CNAME, restart
+            copyAnswerMessage(incoming, answer_message_);
+            return true;
+            break;
+        case isc::resolve::ResponseClassifier::NXDOMAIN:
+            copyAnswerMessage(incoming, answer_message_);
+            return true;
+            break;
+        case isc::resolve::ResponseClassifier::REFERRAL:
+            zone_servers_.clear();
+
+            for (RRsetIterator rrsi = incoming.beginSection(Message::SECTION_ADDITIONAL);
+                 rrsi != incoming.endSection(Message::SECTION_ADDITIONAL) && !found_ns_address;
+                 rrsi++) {
+                ConstRRsetPtr rrs = *rrsi;
+                if (rrs->getType() == RRType::A()) {
+                    // found address
+                    RdataIteratorPtr rdi = rrs->getRdataIterator();
+                    // just use the first for now
+                    if (!rdi->isLast()) {
+                        std::string addr_str = rdi->getCurrent().toText();
+                        dlog("[XX] first address found: " + addr_str);
+                        // now we have one address, simply
+                        // resend that exact same query
+                        // to that address and yield, when it
+                        // returns, loop again.
+                        
+                        // should use NSAS
+                        zone_servers_.push_back(addr_t(addr_str, 53));
+                        found_ns_address = true;
+                    }
+                }
+            }
+            if (found_ns_address) {
+                // next resolver round
+                send();
+                return false;
+            } else {
+                dlog("[XX] no ready-made addresses in additional. need nsas.");
+                // this will result in answering with the delegation. oh well
+                copyAnswerMessage(incoming, answer_message_);
+                return true;
+            }
+            break;
+        case isc::resolve::ResponseClassifier::EMPTY:
+        case isc::resolve::ResponseClassifier::EXTRADATA:
+        case isc::resolve::ResponseClassifier::INVNAMCLASS:
+        case isc::resolve::ResponseClassifier::INVTYPE:
+        case isc::resolve::ResponseClassifier::MISMATQUEST:
+        case isc::resolve::ResponseClassifier::MULTICLASS:
+        case isc::resolve::ResponseClassifier::NOTONEQUEST:
+        case isc::resolve::ResponseClassifier::NOTRESPONSE:
+        case isc::resolve::ResponseClassifier::NOTSINGLE:
+        case isc::resolve::ResponseClassifier::OPCODE:
+        case isc::resolve::ResponseClassifier::RCODE:
+        case isc::resolve::ResponseClassifier::TRUNCATED:
+            // TODO should create SERVFAIL?
+            return true;
+            break;
+        }
+        // should not be reached
+        dlog("[FATAL] unreachable code");
+        return true;
+    }
+    
+    bool oldhandleRecursiveAnswer(const Message& incoming) {
         if (incoming.getRRCount(Message::SECTION_ANSWER) > 0) {
             dlog("Got final result, copying answer.");
             copyAnswerMessage(incoming, answer_message_);
