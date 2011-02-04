@@ -153,13 +153,10 @@ struct MemoryZone::MemoryZoneImpl {
         }
     }
 
-    /*
-     * Implementation of longer methods. We put them here, because the
-     * access is without the impl_-> and it will get inlined anyway.
-     */
-    // Implementation of MemoryZone::add
-    result::Result add(const ConstRRsetPtr& rrset, DomainTree* domains) {
-        // Sanitize input
+    // Validate rrset before adding it to the zone.  If something is wrong
+    // it throws an exception.  It doesn't modify the zone, and provides
+    // the strong exception guarantee. 
+    void addValidation(const ConstRRsetPtr rrset) {
         if (!rrset) {
             isc_throw(NullRRset, "The rrset provided is NULL");
         }
@@ -176,12 +173,11 @@ struct MemoryZone::MemoryZoneImpl {
                       << rrset->getName());
         }
 
-        Name name(rrset->getName());
-        NameComparisonResult compare(origin_.compare(name));
+        NameComparisonResult compare(origin_.compare(rrset->getName()));
         if (compare.getRelation() != NameComparisonResult::SUPERDOMAIN &&
             compare.getRelation() != NameComparisonResult::EQUAL)
         {
-            isc_throw(OutOfZone, "The name " << name <<
+            isc_throw(OutOfZone, "The name " << rrset->getName() <<
                 " is not contained in zone " << origin_);
         }
 
@@ -193,35 +189,39 @@ struct MemoryZone::MemoryZoneImpl {
         // for more technical background.  Note also that BIND 9 refuses
         // NS at a wildcard, so in that sense we simply provide compatible
         // behavior.
-        if (name.isWildcard()) {
+        if (rrset->getName().isWildcard()) {
             if (rrset->getType() == RRType::NS()) {
                 isc_throw(AddError, "Invalid NS owner name (wildcard): " <<
-                          name);
+                          rrset->getName());
             }
             if (rrset->getType() == RRType::DNAME()) {
                 isc_throw(AddError, "Invalid DNAME owner name (wildcard): " <<
-                          name);
+                          rrset->getName());
             }
         }
+    }
+
+    /*
+     * Implementation of longer methods. We put them here, because the
+     * access is without the impl_-> and it will get inlined anyway.
+     */
+    // Implementation of MemoryZone::add
+    result::Result add(const ConstRRsetPtr& rrset, DomainTree* domains) {
+        // Sanitize input
+        addValidation(rrset);
 
         // Add wildcards possibly contained in the owner name to the domain
         // tree.
         // Note: this can throw an exception, breaking strong exception
         // guarantee.  (see also the note for contextCheck() below).
-        addWildcards(*domains, name);
+        addWildcards(*domains, rrset->getName());
 
         // Get the node
         DomainNode* node;
-        switch (domains->insert(name, &node)) {
-            // Just check it returns reasonable results
-            case DomainTree::SUCCESS:
-            case DomainTree::ALREADYEXISTS:
-                break;
-            // Something odd got out
-            default:
-                assert(0);
-        }
-        assert(node != NULL);
+        DomainTree::Result result = domains->insert(rrset->getName(), &node);
+        // Just check it returns reasonable results
+        assert((result == DomainTree::SUCCESS ||
+                result == DomainTree::ALREADYEXISTS) && node!= NULL);
 
         // Now get the domain
         DomainPtr domain;
