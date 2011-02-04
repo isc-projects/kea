@@ -14,8 +14,8 @@
 
 // $Id$
 
-#ifndef __DBGLEVELS_H
-#define __DBGLEVELS_H
+#ifndef __DEBUG_LEVELS_H
+#define __DEBUG_LEVELS_H
 
 /// \brief Defines Debug Levels
 ///
@@ -28,4 +28,4 @@
 #define MAX_DEBUG_LEVEL (99)
 #define NUM_DEBUG_LEVEL (MAX_DEBUG_LEVEL - MIN_DEBUG_LEVEL + 1)
 
-#endif // __DBGLEVELS_H
+#endif // __DEBUG_LEVELS_H

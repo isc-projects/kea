@@ -9,7 +9,7 @@ CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = liblog.la
 liblog_la_SOURCES  =
-liblog_la_SOURCES += dbglevels.h
+liblog_la_SOURCES += debug_levels.h logger_levels.h
 liblog_la_SOURCES += dummylog.h dummylog.cc
 liblog_la_SOURCES += filename.h filename.cc
 liblog_la_SOURCES += logger.cc logger.h
