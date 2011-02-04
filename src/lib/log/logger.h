@@ -20,7 +20,7 @@
 #include <cstdlib>
 #include <string>
 
-#include <log/dbglevels.h>
+#include <log/debug_levels.h>
 #include <log/logger_levels.h>
 #include <log/message_types.h>
 

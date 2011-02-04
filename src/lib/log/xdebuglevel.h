@@ -20,7 +20,7 @@
 #include <syslog.h>
 #include <log4cxx/level.h>
 
-#include <dbglevels.h>
+#include <debug_levels.h>
 
 namespace log4cxx {
 

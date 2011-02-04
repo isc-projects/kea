@@ -21,7 +21,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <xdebuglevel.h>
-#include <dbglevels.h>
+#include <debug_levels.h>
 #include <log4cxx/helpers/stringhelper.h>
 
 using namespace log4cxx;
