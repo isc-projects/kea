@@ -17,4 +17,5 @@
 
 #include <resolve/resolver_interface.h>
 #include <resolve/resolver_callback.h>
+#include <resolve/response_classifier.h>
 #endif // ISC_RESOLVE_H_
