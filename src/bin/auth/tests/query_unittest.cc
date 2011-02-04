@@ -641,8 +641,8 @@ TEST_F(QueryTest, LongDNAME) {
         "somethingveryveryverylong.longdname.example.com"), RRType::A(),
         response).process());
 
-    responseCheck(response, Rcode::YXDOMAIN(), AA_FLAG, 1, 3, 3,
-        dname_long_txt, zone_ns_txt, ns_addrs_txt);
+    responseCheck(response, Rcode::YXDOMAIN(), AA_FLAG, 1, 0, 0,
+        dname_long_txt, NULL, NULL);
 }
 
 }
