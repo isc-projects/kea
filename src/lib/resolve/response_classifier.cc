@@ -17,7 +17,7 @@
 #include <cstddef>
 #include <vector>
 
-#include <resolver/response_classifier.h>
+#include <resolve/response_classifier.h>
 #include <dns/name.h>
 #include <dns/opcode.h>
 #include <dns/rcode.h>
