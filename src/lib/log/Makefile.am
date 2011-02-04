@@ -13,6 +13,7 @@ liblog_la_SOURCES += dbglevels.h
 liblog_la_SOURCES += dummylog.h dummylog.cc
 liblog_la_SOURCES += filename.h filename.cc
 liblog_la_SOURCES += logger.cc logger.h
+liblog_la_SOURCES += logger_impl.cc logger_impl.h
 liblog_la_SOURCES += logger_support.cc logger_support.h
 liblog_la_SOURCES += messagedef.cc messagedef.h
 liblog_la_SOURCES += message_dictionary.cc message_dictionary.h

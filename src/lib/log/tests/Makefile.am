@@ -17,6 +17,7 @@ TESTS += run_unittests
 run_unittests_SOURCES  = root_logger_name_unittest.cc
 run_unittests_SOURCES += filename_unittest.cc
 run_unittests_SOURCES += logger_unittest.cc
+run_unittests_SOURCES += logger_impl_unittest.cc
 run_unittests_SOURCES += message_dictionary_unittest.cc
 run_unittests_SOURCES += message_reader_unittest.cc
 run_unittests_SOURCES += message_initializer_unittest.cc
