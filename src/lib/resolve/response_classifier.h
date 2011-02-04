@@ -23,6 +23,8 @@
 #include <dns/message.h>
 #include <dns/question.h>
 
+#define RESOLVER_MAX_CNAME_CHAIN    16
+
 namespace isc {
 namespace resolve {
 
