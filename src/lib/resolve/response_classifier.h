@@ -23,6 +23,9 @@
 #include <dns/message.h>
 #include <dns/question.h>
 
+namespace isc {
+namespace resolve {
+
 /// \brief Classify Server Response
 ///
 /// This class is used in the recursive server.  It is passed an answer received
@@ -136,3 +139,6 @@ private:
 };
 
 #endif // __RESPONSE_CLASSIFIER_H
+
+} // namespace resolve
+} // namespace isc

@@ -26,6 +26,9 @@
 using namespace isc::dns;
 using namespace std;
 
+namespace isc {
+namespace resolve {
+
 // Classify the response in the "message" object.
 
 ResponseClassifier::Category ResponseClassifier::classify(
@@ -257,3 +260,6 @@ ResponseClassifier::Category ResponseClassifier::cnameChase(
 
     return (EXTRADATA);
 }
+
+} // namespace resolve
+} // namespace isc
