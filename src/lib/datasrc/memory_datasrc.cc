@@ -61,6 +61,7 @@ struct MemoryZone::MemoryZoneImpl {
     // The tree stores domains
     typedef RBTree<Domain, true> DomainTree;
     typedef RBNode<Domain> DomainNode;
+    static const DomainNode::Flags DOMAINFLAG_WILD = DomainNode::FLAG_USER1;
 
     // Information about the zone
     RRClass zone_class_;
@@ -103,10 +104,12 @@ struct MemoryZone::MemoryZoneImpl {
                 assert(result == DomainTree::SUCCESS ||
                        result == DomainTree::ALREADYEXISTS);
 
-                // Ensure a separate level exists for the "wildcarding" name
+                // Ensure a separate level exists for the "wildcarding" name,
+                // and mark the node as "wild".
                 result = domains.insert(wname, &node);
                 assert(result == DomainTree::SUCCESS ||
                        result == DomainTree::ALREADYEXISTS);
+                node->setFlag(DOMAINFLAG_WILD);
             }
         }
     }
