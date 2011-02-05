@@ -248,10 +248,10 @@ struct MemoryZone::MemoryZoneImpl {
             // indicating the need for callback in find().
             if (rrset->getType() == RRType::NS() &&
                 rrset->getName() != origin_) {
-                node->enableCallback();
+                node->setFlag(DomainNode::FLAG_CALLBACK);
             // If it is DNAME, we have a callback as well here
             } else if (rrset->getType() == RRType::DNAME()) {
-                node->enableCallback();
+                node->setFlag(DomainNode::FLAG_CALLBACK);
             }
 
             return (result::SUCCESS);
@@ -407,7 +407,7 @@ struct MemoryZone::MemoryZoneImpl {
 
         // If the node callback is enabled, this may be a zone cut.  If it
         // has a NS RR, we should return a delegation, but not in the apex.
-        if (node->isCallbackEnabled() && node != origin_data_) {
+        if (node->getFlag(DomainNode::FLAG_CALLBACK) && node != origin_data_) {
             found = node->getData()->find(RRType::NS());
             if (found != node->getData()->end()) {
                 return (FindResult(DELEGATION, found->second));
