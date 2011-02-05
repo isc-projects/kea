@@ -158,7 +158,7 @@ struct MemoryZone::MemoryZoneImpl {
 
     // Validate rrset before adding it to the zone.  If something is wrong
     // it throws an exception.  It doesn't modify the zone, and provides
-    // the strong exception guarantee. 
+    // the strong exception guarantee.
     void addValidation(const ConstRRsetPtr rrset) {
         if (!rrset) {
             isc_throw(NullRRset, "The rrset provided is NULL");
