@@ -207,8 +207,8 @@ public:
     ///
     /// \param io_service The IOService to work with
     /// \param port the port to listen on
-    /// \param ipv4 If true, listen on ipv4 'any'
-    /// \param ipv6 If true, listen on ipv6 'any'
+    /// \param use_ipv4 If true, listen on ipv4 'any'
+    /// \param use_ipv6 If true, listen on ipv6 'any'
     /// \param checkin Provider for cc-channel events (see \c SimpleCallback)
     /// \param lookup The lookup provider (see \c DNSLookup)
     /// \param answer The answer provider (see \c DNSAnswer)
@@ -412,8 +412,9 @@ public:
     ///
     /// \param io_message The event message to handle
     /// \param message The DNS MessagePtr that needs handling
+    /// \param answer_message The DNS MessagePtr TODO
     /// \param buffer The final answer is put here
-    /// \param DNSServer DNSServer object to use
+    /// \param server DNSServer object to use
     virtual void operator()(const IOMessage& io_message,
                             isc::dns::MessagePtr message,
                             isc::dns::MessagePtr answer_message,
@@ -467,6 +468,7 @@ public:
     ///
     /// \param io_message The event message to handle
     /// \param message The DNS MessagePtr that needs handling
+    /// \param answer_message The DNS MessagePtr TODO
     /// \param buffer The result is put here
     virtual void operator()(const IOMessage& io_message,
                             isc::dns::MessagePtr message,
@@ -546,9 +548,11 @@ public:
     ///        to forward queries to.
     /// \param upstream_root Addresses and ports of the root servers
     ///        to use when resolving.
-    /// \param timeout How long to timeout the query, in ms
+    /// \param query_timeout How long to timeout the query, in ms
     ///     -1 means never timeout (but do not use that).
     ///     TODO: This should be computed somehow dynamically in future
+    /// \param client_timeout TODO:
+    /// \param lookup_timeout TODO:
     /// \param retries how many times we try again (0 means just send and
     ///     and return if it returs).
     RecursiveQuery(DNSService& dns_service,

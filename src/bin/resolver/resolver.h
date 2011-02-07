@@ -65,7 +65,8 @@ public:
     /// send the reply.
     ///
     /// \param io_message The raw message received
-    /// \param message Pointer to the \c Message object
+    /// \param query_message Pointer to the \c Message object TODO
+    /// \param answer_message Pointer to the \c Message object TODO
     /// \param buffer Pointer to an \c OutputBuffer for the resposne
     /// \param server Pointer to the \c DNSServer
     void processMessage(const asiolink::IOMessage& io_message,
@@ -146,7 +147,10 @@ public:
      * \short Set options related to timeouts.
      *
      * This sets the time of timeout and number of retries.
-     * \param timeout The time in milliseconds. The value -1 disables timeouts.
+     * The value -1 disables timeouts.
+     * \param query_timeout The time in milliseconds.TODO
+     * \param client_timeout The time in milliseconds. TODO
+     * \param lookup_timeout The time in milliseconds. TODO
      * \param retries The number of retries (0 means try the first time only,
      *     do not retry).
      */

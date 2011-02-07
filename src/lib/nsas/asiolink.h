@@ -33,7 +33,7 @@ public:
     IOAddress(const std::string& address_str) : address_(address_str)
     {}
 
-    /// \param Just a virtual destructor
+    /// \brief Just a virtual destructor
     virtual ~ IOAddress() { }
 
     /// \return Textual representation of the address
