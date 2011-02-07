@@ -93,32 +93,45 @@ MessageReader::processLine(const string& line, MessageReader::Mode mode) {
 void
 MessageReader::parseDirective(const std::string& text) {
 
-    static string valid = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
 
-    // Regardless of what happens, all prefixes will be uppercase (as will
-    // all symbols).
-    string line = text;
-    isc::strutil::uppercase(line);
-    vector<string> tokens = isc::strutil::tokens(line);
+    // Break into tokens
+    vector<string> tokens = isc::strutil::tokens(text);
 
-    // Only $PREFIX is recognised so far, so we'll handle it here.
-    if (tokens[0] != string("$PREFIX")) {
+    // Uppercase directive and branch on valid ones
+    isc::strutil::uppercase(tokens[0]);
+    if (tokens[0] == string("$PREFIX")) {
+        parsePrefix(tokens);
+    } else if (tokens[0] == string("$NAMESPACE")) {
+        parseNamespace(tokens);
+    } else {
         throw MessageException(MSG_UNRECDIR, tokens[0]);
+    }
+}
 
-    } else if (tokens.size() < 2) {
+// Process $PREFIX
+
+void
+MessageReader::parsePrefix(const vector<string>& tokens) {
+
+    // Check argument count
+
+    static string valid = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
+    if (tokens.size() < 2) {
         throw MessageException(MSG_PRFNOARG);
-
     } else if (tokens.size() > 2) {
         throw MessageException(MSG_PRFEXTRARG);
 
     }
 
+    // As a style, we are going to have the symbols in uppercase
+    string prefix = tokens[1];
+    isc::strutil::uppercase(prefix);
+
     // Token is potentially valid providing it only contains alphabetic
     // and numeric characters (and underscores) and does not start with a
     // digit.
-    
-    if ((tokens[1].find_first_not_of(valid) != string::npos) ||
-        (std::isdigit(tokens[1][0]))) {
+    if ((prefix.find_first_not_of(valid) != string::npos) ||
+        (std::isdigit(prefix[0]))) {
 
         // Invalid character in string or it starts with a digit.
         throw MessageException(MSG_PRFINVARG, tokens[1]);
@@ -132,7 +145,45 @@ MessageReader::parseDirective(const std::string& text) {
 
     // Prefix has not been set, so set it and return success.
 
-    prefix_ = tokens[1];
+    prefix_ = prefix;
+}
+
+// Process $NAMESPACE.  A lot of the processing is similar to that of $PREFIX,
+// except that only limited checks will be done on the namespace (to avoid a
+// lot of parsing and separating out of the namespace components.)
+
+void
+MessageReader::parseNamespace(const vector<string>& tokens) {
+
+    // Check argument count
+
+    static string valid = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_:"
+        "abcdefghijklmnopqrstuvwxyz";
+
+    if (tokens.size() < 2) {
+        throw MessageException(MSG_NSNOARG);
+
+    } else if (tokens.size() > 2) {
+        throw MessageException(MSG_NSEXTRARG);
+
+    }
+
+    // Token is potentially valid providing it only contains alphabetic
+    // and numeric characters (and underscores and colons).
+    if (tokens[1].find_first_not_of(valid) != string::npos) {
+
+        // Invalid character in string or it starts with a digit.
+        throw MessageException(MSG_NSINVARG, tokens[1]);
+    }
+
+    // All OK - unless the namespace has already been set.
+    if (ns_.size() != 0) {
+        throw MessageException(MSG_DUPLNS);
+    }
+
+    // Prefix has not been set, so set it and return success.
+
+    ns_ = tokens[1];
 }
 
 // Process message.  By the time this method is called, the line has been
@@ -154,7 +205,7 @@ MessageReader::parseMessage(const std::string& text, MessageReader::Mode mode) {
     }
 
     // Extract the first token into the message ID
-    MessageID ident = text.substr(0, first_delim);
+    string ident = text.substr(0, first_delim);
 
     // Locate the start of the message text
     size_t first_text = text.find_first_not_of(delimiters, first_delim);

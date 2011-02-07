@@ -19,6 +19,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <boost/lexical_cast.hpp>
 
 #include <log/debug_levels.h>
 #include <log/root_logger_name.h>
@@ -223,32 +224,32 @@ LoggerImpl::output(const char* sev_text, const string& message) {
 // Output various levels
 
 void
-LoggerImpl::debug(MessageID ident, const char* text) {
-    string message = ident + ", " + text;
+LoggerImpl::debug(const MessageID& ident, const char* text) {
+    string message = boost::lexical_cast<string>(ident) + ", " + text;
     output("DEBUG", message);
 }
 
 void
-LoggerImpl::info(MessageID ident, const char* text) {
-    string message = ident + ", " + text;
+LoggerImpl::info(const MessageID& ident, const char* text) {
+    string message = boost::lexical_cast<string>(ident) + ", " + text;
     output("INFO ", message);
 }
 
 void
-LoggerImpl::warn(MessageID ident, const char* text) {
-    string message = ident + ", " + text;
+LoggerImpl::warn(const MessageID& ident, const char* text) {
+    string message = boost::lexical_cast<string>(ident) + ", " + text;
     output("WARN ", message);
 }
 
 void
-LoggerImpl::error(MessageID ident, const char* text) {
-    string message = ident + ", " + text;
+LoggerImpl::error(const MessageID& ident, const char* text) {
+    string message = boost::lexical_cast<string>(ident) + ", " + text;
     output("ERROR", message);
 }
 
 void
-LoggerImpl::fatal(MessageID ident, const char* text) {
-    string message = ident + ", " + text;
+LoggerImpl::fatal(const MessageID& ident, const char* text) {
+    string message = boost::lexical_cast<string>(ident) + ", " + text;
     output("FATAL", message);
 }
 

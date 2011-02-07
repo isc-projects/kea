@@ -12,28 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
+#include <log/message_types.h>
+#include <log/messagedef.h>
 
-#ifndef __MESSAGE_TYPES_H
-#define __MESSAGE_TYPES_H
+// Return a value for testing in message_types_unittest.cc
 
-#include <string.h>
-
-namespace isc {
-namespace log {
-
-typedef const char* MessageID;
-
-/// \brief Compare MessageID for Equality
-///
-/// \param m1 First message ID
-/// \param m2 Second message ID
-/// \return true if they are equal, false if not
-bool equalMessageID(const MessageID& m1, const MessageID& m2);
-
-} // namespace log
-} // namespace isc
-
-
-
-#endif // __MESSAGE_TYPES_H
+isc::log::MessageID MessageTypeTest_MSG_DUPLNS() {
+    return (MSG_DUPLNS);
+}

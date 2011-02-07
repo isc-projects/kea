@@ -1,4 +1,4 @@
-// File created from messagedef.mes on Mon Jan 17 15:25:32 2011
+// File created from messagedef.mes on Sat Feb  5 18:08:17 2011
 
 #ifndef __MESSAGEDEF_H
 #define __MESSAGEDEF_H
@@ -7,18 +7,22 @@
 
 namespace {
 
-isc::log::MessageID MSG_DUPLPRFX = "DUPLPRFX";
-isc::log::MessageID MSG_IDNOTFND = "IDNOTFND";
-isc::log::MessageID MSG_ONETOKEN = "ONETOKEN";
-isc::log::MessageID MSG_OPENIN = "OPENIN";
-isc::log::MessageID MSG_OPENOUT = "OPENOUT";
-isc::log::MessageID MSG_PRFEXTRARG = "PRFEXTRARG";
-isc::log::MessageID MSG_PRFINVARG = "PRFINVARG";
-isc::log::MessageID MSG_PRFNOARG = "PRFNOARG";
-isc::log::MessageID MSG_READERR = "READERR";
-isc::log::MessageID MSG_UNRECDIR = "UNRECDIR";
-isc::log::MessageID MSG_WRITERR = "WRITERR";
+const isc::log::MessageID MSG_DUPLNS = "DUPLNS";
+const isc::log::MessageID MSG_DUPLPRFX = "DUPLPRFX";
+const isc::log::MessageID MSG_IDNOTFND = "IDNOTFND";
+const isc::log::MessageID MSG_NSEXTRARG = "NSEXTRARG";
+const isc::log::MessageID MSG_NSINVARG = "NSINVARG";
+const isc::log::MessageID MSG_NSNOARG = "NSNOARG";
+const isc::log::MessageID MSG_ONETOKEN = "ONETOKEN";
+const isc::log::MessageID MSG_OPENIN = "OPENIN";
+const isc::log::MessageID MSG_OPENOUT = "OPENOUT";
+const isc::log::MessageID MSG_PRFEXTRARG = "PRFEXTRARG";
+const isc::log::MessageID MSG_PRFINVARG = "PRFINVARG";
+const isc::log::MessageID MSG_PRFNOARG = "PRFNOARG";
+const isc::log::MessageID MSG_READERR = "READERR";
+const isc::log::MessageID MSG_UNRECDIR = "UNRECDIR";
+const isc::log::MessageID MSG_WRITERR = "WRITERR";
 
-} // Anonymous namespace
+}
 
 #endif // __MESSAGEDEF_H

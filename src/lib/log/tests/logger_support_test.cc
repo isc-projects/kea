@@ -32,9 +32,7 @@
 
 using namespace isc::log;
 
-// Declare root logger and a logger to use an example.
-//RootLoggerName root_name("testing");
-
+// Declare root logger and a loggers to use an example.
 RootLoggerName root("alpha");
 Logger logger_ex("example");
 Logger logger_dlm("dlm");

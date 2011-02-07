@@ -22,6 +22,8 @@
 #include <map>
 #include <vector>
 
+#include <boost/lexical_cast.hpp>
+
 #include <log/message_types.h>
 
 namespace isc {
@@ -48,6 +50,9 @@ namespace log {
 class MessageDictionary {
 public:
 
+    typedef std::map<std::string, std::string> Dictionary;
+    typedef Dictionary::const_iterator  const_iterator;
+
     // Default constructor and assignment operator are OK for this class
 
     /// \brief Virtual Destructor
@@ -63,7 +68,20 @@ public:
     ///
     /// \return true if the message was added to the dictionary, false if the
     /// message existed and it was not added.
-    virtual bool add(const MessageID& ident, const std::string& text);
+    virtual bool add(const MessageID& ident, const std::string& text) {
+        return (add(boost::lexical_cast<std::string>(ident), text));
+    }
+
+    /// \brief Add Message
+    ///
+    /// Alternate signature.
+    ///
+    /// \param ident Identification of the message to add
+    /// \param text Message text
+    ///
+    /// \return true if the message was added to the dictionary, false if the
+    /// message existed and it was not added.
+    virtual bool add (const std::string& ident, const std::string& test);
 
 
     /// \brief Replace Message
@@ -76,7 +94,21 @@ public:
     ///
     /// \return true if the message was added to the dictionary, false if the
     /// message did not exist and it was not added.
-    virtual bool replace(const MessageID& ident, const std::string& text);
+    virtual bool replace(const MessageID& ident, const std::string& text) {
+        return (replace(boost::lexical_cast<std::string>(ident), text));
+    }
+
+
+    /// \brief Replace Message
+    ///
+    /// Alternate signature.
+    ///
+    /// \param ident Identification of the message to replace
+    /// \param text Message text
+    ///
+    /// \return true if the message was added to the dictionary, false if the
+    /// message did not exist and it was not added.
+    virtual bool replace(const std::string& ident, const std::string& text);
 
 
     /// \brief Load Dictionary
@@ -94,7 +126,7 @@ public:
     /// \return Vector of message IDs that were not loaded because an ID of the
     /// same name already existing in the dictionary.  This vector may be
     /// empty.
-    virtual std::vector<MessageID> load(const char* elements[]);
+    virtual std::vector<std::string> load(const char* elements[]);
 
 
     /// \brief Get Message Text
@@ -106,7 +138,21 @@ public:
     /// \return Text associated with message or empty string if the ID is not
     /// recognised.  (Note: this precludes an ID being associated with an empty
     /// string.)
-    virtual std::string getText(const MessageID& ident) const;
+    virtual std::string getText(const MessageID& ident) const {
+        return(getText(boost::lexical_cast<std::string>(ident)));
+    }
+
+
+    /// \brief Get Message Text
+    ///
+    /// Alternate signature.
+    ///
+    /// \param ident Message identification
+    ///
+    /// \return Text associated with message or empty string if the ID is not
+    /// recognised.  (Note: this precludes an ID being associated with an empty
+    /// string.)
+    virtual std::string getText(const std::string& ident) const;
 
 
     /// \brief Number of Items in Dictionary
@@ -115,11 +161,7 @@ public:
     virtual size_t size() const {
         return dictionary_.size();
     }
-
-
-    // Allow access to the internal map structure, but don't allow alteration.
-    typedef std::map<MessageID, std::string>::const_iterator const_iterator;
-
+    
 
     /// \brief Return begin() iterator of internal map
     const_iterator begin() const {
@@ -141,7 +183,7 @@ public:
     static MessageDictionary* globalDictionary();
 
 private:
-    std::map<MessageID, std::string>  dictionary_;
+    Dictionary       dictionary_;   ///< Holds the ID to text lookups
 };
 
 } // namespace log
