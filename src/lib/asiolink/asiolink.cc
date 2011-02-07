@@ -52,6 +52,7 @@ using namespace boost;
 
 // Is this something we can use in libdns++?
 namespace {
+    // TODO: remove
     class SectionInserter {
     public:
         SectionInserter(MessagePtr message, const Message::Section sect) :
@@ -65,6 +66,7 @@ namespace {
     };
 
 
+    // TODO: move to resolve.cc
     /// \brief Copies the parts relevant for a DNS answer to the
     /// target message
     ///
@@ -431,7 +433,8 @@ private:
     // Note that the footprint may change as this function may
     // need to append data to the answer we are building later.
     //
-    // returns true if we are done
+    // returns true if we are done (either we have an answer or an
+    //              error message)
     // returns false if we are not done
     bool handleRecursiveAnswer(const Message& incoming) {
         dlog("Handle response");
@@ -458,7 +461,8 @@ private:
                 // TODO: make SERVFAIL? clear currently read answers?
                 // just copy for now.
                 dlog("CNAME chain too long");
-                copyAnswerMessage(incoming, answer_message_);
+                isc::resolve::makeErrorMessage(answer_message_,
+                                               Rcode::SERVFAIL());
                 return true;
             }
 
