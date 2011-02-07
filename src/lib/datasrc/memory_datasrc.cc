@@ -290,7 +290,8 @@ struct MemoryZone::MemoryZoneImpl {
         // Get the node
         DomainNode* node(NULL);
         FindState state(options);
-        switch (domains_.find(name, &node, cutCallback, &state)) {
+        RBTreeNodeChain<Domain> node_path;
+        switch (domains_.find(name, &node, node_path, cutCallback, &state)) {
             case DomainTree::PARTIALMATCH:
                 /*
                  * In fact, we could use a single variable instead of
