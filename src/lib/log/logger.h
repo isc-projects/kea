@@ -81,7 +81,9 @@ public:
     /// manifests itself during program rundown.
     /// \n
     /// The flag has no effect on non-log4cxx implementations.
-    Logger(const std::string& name, bool infunc = false);
+    Logger(const std::string& name, bool infunc = false) :
+        loggerptr_(NULL), name_(name), infunc_(infunc)
+    {}
 
 
     /// \brief Destructor
@@ -158,35 +160,35 @@ public:
     /// are used for more verbose output.
     /// \param ident Message identification.
     /// \param ... Optional arguments for the message.
-    void debug(int dbglevel, MessageID ident, ...);
+    void debug(int dbglevel, const MessageID& ident, ...);
 
 
     /// \brief Output Informational Message
     ///
     /// \param ident Message identification.
     /// \param ... Optional arguments for the message.
-    void info(MessageID ident, ...);
+    void info(const MessageID& ident, ...);
 
 
     /// \brief Output Warning Message
     ///
     /// \param ident Message identification.
     /// \param ... Optional arguments for the message.
-    void warn(MessageID ident, ...);
+    void warn(const MessageID& ident, ...);
 
 
     /// \brief Output Error Message
     ///
     /// \param ident Message identification.
     /// \param ... Optional arguments for the message.
-    void error(MessageID ident, ...);
+    void error(const MessageID& ident, ...);
 
 
     /// \brief Output Fatal Message
     ///
     /// \param ident Message identification.
     /// \param ... Optional arguments for the message.
-    void fatal(MessageID ident, ...);
+    void fatal(const MessageID& ident, ...);
 
     /// \brief Equality
     ///
@@ -194,7 +196,7 @@ public:
     /// (This method is principally for testing.)
     ///
     /// \return true if the logger objects are instances of the same logger.
-    bool operator==(const Logger& other);
+    bool operator==(Logger& other);
 
 protected:
 
@@ -205,7 +207,32 @@ protected:
     static void reset();
 
 private:
-    LoggerImpl*     loggerptr_;     /// Pointer to the underlying logger
+    /// \brief Initialize Implementation
+    ///
+    /// Returns the logger pointer.  If not yet set, the underlying
+    /// implementation class is initialized.\n
+    /// \n
+    /// The reason for this indirection is to avoid the "static initialization
+    /// fiacso", whereby we cannot rely on the order of static initializations.
+    /// The main problem is the root logger name - declared statically - which
+    /// is referenced by various loggers.  By deferring a reference to it until
+    /// after the program starts executing - by which time the root name object
+    /// will be initialized - we avoid this problem.
+    ///
+    /// \return Returns pointer to implementation
+    LoggerImpl* getLoggerptr() {
+        if (!loggerptr_) {
+            initLoggerImpl();
+        }
+        return loggerptr_;
+    }
+
+    /// \brief Initialize Underlying Implementation and Set loggerptr_
+    void initLoggerImpl();
+
+    LoggerImpl*     loggerptr_;     ///< Pointer to the underlying logger
+    std::string     name_;          ///< Copy of the logger name
+    bool            infunc_;        ///< Copy of the infunc argument
 };
 
 } // namespace log

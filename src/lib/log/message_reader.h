@@ -50,7 +50,7 @@ public:
     } Mode;
 
     /// \brief Visible collection types
-    typedef std::vector<MessageID>   MessageIDCollection;
+    typedef std::vector<std::string>   MessageIDCollection;
 
     /// \brief Constructor
     ///
@@ -116,6 +116,22 @@ public:
     virtual void processLine(const std::string& line, Mode mode = ADD);
 
 
+    /// \brief Get Namespace
+    ///
+    /// \return Argument to the $NAMESPACE directive (if present)
+    virtual std::string getNamespace() const {
+        return ns_;
+    }
+
+
+    /// \brief Clear Namespace
+    ///
+    /// Clears the current namespace.
+    virtual void clearNamespace() {
+        ns_ = "";
+    }
+
+
     /// \brief Get Prefix
     ///
     /// \return Argument to the $PREFIX directive (if present)
@@ -163,10 +179,24 @@ private:
     /// \param line Line of text that starts with "$",
     void parseDirective(const std::string& line);
 
+
+    /// \brief Parse $PREFIX line
+    ///
+    /// \param tokens $PREFIX line split into tokens
+    void parsePrefix(const std::vector<std::string>& tokens);
+
+
+    /// \brief Parse $NAMESPACE line
+    ///
+    /// \param tokens $NAMESPACE line split into tokens
+    void parseNamespace(const std::vector<std::string>& tokens);
+
+
     /// Attributes
     MessageDictionary*  dictionary_;    ///< Dictionary to add messages to
     MessageIDCollection not_added_;     ///< List of IDs not added
-    std::string         prefix_;        ///< Input of $PREFIX statement
+    std::string         prefix_;        ///< Argument of $PREFIX statement
+    std::string         ns_;            ///< Argument of $NAMESPACE statement
 };
 
 } // namespace log

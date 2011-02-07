@@ -15,6 +15,7 @@
 // $Id$
 
 #include <cctype>
+#include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -84,8 +85,6 @@ static void usage() {
         "-h       Print this message and exit\n" <<
         "-p       Output a Python module holding the message definitions.\n" <<
         "         By default a C++ header file and implementation file are\n" <<
-
-
         "         written.\n" <<
         "-v       Print the program version and exit\n" <<
         "\n" <<
@@ -169,8 +168,8 @@ string quoteString(const string& instring) {
 ///
 /// \return Sorted list of message IDs
 
-vector<MessageID> sortedIdentifiers(MessageDictionary* dictionary) {
-    vector<MessageID> ident;
+vector<string> sortedIdentifiers(MessageDictionary* dictionary) {
+    vector<string> ident;
 
     for (MessageDictionary::const_iterator i = dictionary->begin();
          i != dictionary->end(); ++i) {
@@ -182,6 +181,34 @@ vector<MessageID> sortedIdentifiers(MessageDictionary* dictionary) {
 }
 
 
+/// \brief Split Namespace
+///
+/// The $NAMESPACE directive may well specify a namespace in the form a::b.
+/// Unfortunately, the C++ "namespace" statement can only accept a single
+/// string - to set up the namespace of "a::b" requires two statements, one
+/// for "namspace a" and the other for "namespace b".
+///
+/// This function returns the set of namespace components as a vector of
+/// strings.
+///
+/// \param ns Argument to $NAMESPACE (passed by valid, as we will be modifying
+/// it.)
+
+vector<string> splitNamespace(string ns) {
+
+    // Namespaces components are separated by double colon characters - convert
+    // to single colons.
+    size_t dcolon;
+    while ((dcolon = ns.find("::")) != string::npos) {
+        ns.replace(dcolon, 2, ":");
+    }
+
+    // ... and return the vector of namespace components split on the single
+    // colon.
+    return isc::strutil::tokens(ns, ":");
+}
+
+
 /// \brief Write Header File
 ///
 /// Writes the C++ header file containing the symbol definitions.
@@ -189,9 +216,12 @@ vector<MessageID> sortedIdentifiers(MessageDictionary* dictionary) {
 /// \param file Name of the message file.  The header file is written to a
 /// file of the same name but with a .h suffix.
 /// \param prefix Prefix string to use in symbols
+/// \param ns Namespace in which the definitions are to be placed.  An empty
+/// string indicates no namespace, the special string of "::" the anonymous
+/// namespace, and anything else is the namspace desired.
 /// \param dictionary Dictionary holding the message definitions.
 
-void writeHeaderFile(const string& file, const string& prefix,
+void writeHeaderFile(const string& file, const string& prefix, const string& ns,
     MessageDictionary* dictionary)
 {
     Filename message_file(file);
@@ -220,23 +250,60 @@ void writeHeaderFile(const string& file, const string& prefix,
              "#define "  << sentinel_text << "\n" <<
              "\n" <<
              "#include <log/message_types.h>\n" <<
-             "\n" <<
-             "namespace {\n" <<
              "\n";
 
-        vector<MessageID> idents = sortedIdentifiers(dictionary);
-        for (vector<MessageID>::const_iterator j = idents.begin();
-            j != idents.end(); ++j) {
-            hfile << "isc::log::MessageID " << prefix << *j <<
-                " = \"" << *j << "\";\n";
+        // Namespaces
+        vector<string> ns_components;
+        if (ns == "") {
+
+            ; // Nothing given, so no namespace
+
+        } else if (ns == "::") {
+
+            // Use the anonymous namespace.
+            hfile << "namespace {\n" <<
+                "\n";
+        } else {
+
+            // Output one namespace statement for each namespace component.
+            ns_components = splitNamespace(ns);
+            for (int i = 0; i < ns_components.size(); ++i) {
+                hfile << "namespace " << ns_components[i] << " {\n";
+            }
+            hfile << "\n";
         }
 
+        // Now the m,essage identifications themselves.
+        vector<string> idents = sortedIdentifiers(dictionary);
+        for (vector<string>::const_iterator j = idents.begin();
+            j != idents.end(); ++j) {
+            hfile << "const isc::log::MessageID " << prefix << *j <<
+                " = \"" << *j << "\";\n";
+        }
+        hfile << "\n";
+
+        // Close off namespaces if appropriate.
+        if (ns == "") {
+
+            ; // Nothing given, so no namespace
+
+        } else if (ns == "::") {
+
+            // Use the anonymous namespace.
+            hfile << "}\n" <<
+                "\n";
+        } else {
+
+            // Output one namespace statement for each namespace component.
+            for (int i = (ns_components.size() - 1); i >= 0; --i) {
+                hfile << "} // namespace " << ns_components[i] << "\n";
+            }
+            hfile << "\n";
+        }
+
+
         // ... and finally the postamble
-        hfile <<
-            "\n" <<
-            "} // Anonymous namespace\n" <<
-            "\n" <<
-            "#endif // " << sentinel_text << "\n";
+        hfile << "#endif // " << sentinel_text << "\n";
 
         // Report errors (if any) and exit
         if (hfile.fail()) {
@@ -298,8 +365,8 @@ void writeProgramFile(const string& file, MessageDictionary* dictionary)
              "const char* values[] = {\n";
 
         // Output the identifiers and the associated text.
-        vector<MessageID> idents = sortedIdentifiers(dictionary);
-        for (vector<MessageID>::const_iterator i = idents.begin();
+        vector<string> idents = sortedIdentifiers(dictionary);
+        for (vector<string>::const_iterator i = idents.begin();
             i != idents.end(); ++i) {
                 ccfile << "    \"" << *i << "\", \"" <<
                     quoteString(dictionary->getText(*i)) << "\",\n";
@@ -422,7 +489,8 @@ int main(int argc, char** argv) {
         reader.readFile(message_file);
 
         // Now write the header file.
-        writeHeaderFile(message_file, reader.getPrefix(), &dictionary);
+        writeHeaderFile(message_file, reader.getPrefix(), reader.getNamespace(),
+            &dictionary);
 
         // ... and the message text file.
         writeProgramFile(message_file, &dictionary);
@@ -433,7 +501,9 @@ int main(int argc, char** argv) {
     catch (MessageException& e) {
         // Create an error message from the ID and the text
         MessageDictionary* global = MessageDictionary::globalDictionary();
-        string text = e.id() + ", " + global->getText(e.id());
+        string text = e.id();
+        text += ", ";
+        text += global->getText(e.id());
 
         // Format with arguments
         text = isc::strutil::format(text, e.arguments());

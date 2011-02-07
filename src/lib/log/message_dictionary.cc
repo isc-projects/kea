@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include <iostream>
+
 #include <cstddef>
 #include <log/message_dictionary.h>
 #include <log/message_types.h>
@@ -31,8 +33,8 @@ MessageDictionary::~MessageDictionary() {
 // Add message and note if ID already exists
 
 bool
-MessageDictionary::add(const MessageID& ident, const std::string& text) {
-    map<MessageID, string>::iterator i = dictionary_.find(ident);
+MessageDictionary::add(const string& ident, const string& text) {
+    Dictionary::iterator i = dictionary_.find(ident);
     bool not_found = (i == dictionary_.end());
     if (not_found) {
 
@@ -46,8 +48,8 @@ MessageDictionary::add(const MessageID& ident, const std::string& text) {
 // Add message and note if ID does not already exist
 
 bool
-MessageDictionary::replace(const MessageID& ident, const std::string& text) {
-    map<MessageID, string>::iterator i = dictionary_.find(ident);
+MessageDictionary::replace(const string& ident, const string& text) {
+    Dictionary::iterator i = dictionary_.find(ident);
     bool found = (i != dictionary_.end());
     if (found) {
 
@@ -60,14 +62,14 @@ MessageDictionary::replace(const MessageID& ident, const std::string& text) {
 
 // Load a set of messages
 
-vector<MessageID>
+vector<std::string>
 MessageDictionary::load(const char* messages[]) {
-    vector<MessageID> duplicates;
+    vector<std::string> duplicates;
     int i = 0;
     while (messages[i]) {
 
         // ID present, so note it and point to text.
-        MessageID ident(messages[i++]);
+        const MessageID ident(messages[i++]);
         if (messages[i]) {
 
             // Text not null, note it and point to next ident. 
@@ -77,7 +79,7 @@ MessageDictionary::load(const char* messages[]) {
             // already present.
             bool added = add(ident, text);
             if (!added) {
-                duplicates.push_back(ident);
+                duplicates.push_back(boost::lexical_cast<string>(ident));
             }
         }
     }
@@ -87,8 +89,8 @@ MessageDictionary::load(const char* messages[]) {
 // Return message text or blank string
 
 string
-MessageDictionary::getText(const MessageID& ident) const {
-    map<MessageID, string>::const_iterator i = dictionary_.find(ident);
+MessageDictionary::getText(const string& ident) const {
+    Dictionary::const_iterator i = dictionary_.find(ident);
     if (i == dictionary_.end()) {
         return string("");
     }

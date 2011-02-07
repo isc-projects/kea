@@ -31,11 +31,11 @@ using namespace std;
 namespace isc {
 namespace log {
 
-// Constructor
-
-Logger::Logger(const std::string& name, bool infunc) :
-    loggerptr_(new LoggerImpl(name, infunc))
-{}
+// Initialize Logger implementation.  Does not check whether the implementation
+// has already been ionitialized - that was done by the caller (getLoggerptr()).
+void Logger::initLoggerImpl() {
+    loggerptr_ = new LoggerImpl(name_, infunc_);
+}
 
 // Destructor.
 
@@ -47,62 +47,62 @@ Logger::~Logger() {
 
 std::string
 Logger::getName() {
-    return (loggerptr_->getName());
+    return (getLoggerptr()->getName());
 }
 
 // Set the severity for logging.
 
 void
 Logger::setSeverity(isc::log::Severity severity, int dbglevel) {
-    loggerptr_->setSeverity(severity, dbglevel);
+    getLoggerptr()->setSeverity(severity, dbglevel);
 }
 
 // Return the severity of the logger.
 
 isc::log::Severity
 Logger::getSeverity() {
-    return (loggerptr_->getSeverity());
+    return (getLoggerptr()->getSeverity());
 }
 
 // Get Effective Severity Level for Logger
 
 isc::log::Severity
 Logger::getEffectiveSeverity() {
-    return (loggerptr_->getEffectiveSeverity());
+    return (getLoggerptr()->getEffectiveSeverity());
 }
 
 // Debug level (only relevant if messages of severity DEBUG are being logged).
 
 int
 Logger::getDebugLevel() {
-    return (loggerptr_->getDebugLevel());
+    return (getLoggerptr()->getDebugLevel());
 }
 
 // Check on the current severity settings
 
 bool
 Logger::isDebugEnabled(int dbglevel) {
-    return (loggerptr_->isDebugEnabled(dbglevel));
+    return (getLoggerptr()->isDebugEnabled(dbglevel));
 }
 
 bool
 Logger::isInfoEnabled() {
-    return (loggerptr_->isInfoEnabled());
+    return (getLoggerptr()->isInfoEnabled());
 }
 
 bool
 Logger::isWarnEnabled() {
-    return (loggerptr_->isWarnEnabled());
+    return (getLoggerptr()->isWarnEnabled());
 }
 
 bool
 Logger::isErrorEnabled() {
-    return (loggerptr_->isErrorEnabled());
+    return (getLoggerptr()->isErrorEnabled());
 }
 
 bool
 Logger::isFatalEnabled() {
-    return (loggerptr_->isFatalEnabled());
+    return (getLoggerptr()->isFatalEnabled());
 }
 
 // Format a message: looks up the message text in the dictionary and formats
@@ -129,52 +129,52 @@ Logger::isFatalEnabled() {
 // Output methods
 
 void
-Logger::debug(int dbglevel, isc::log::MessageID ident, ...) {
+Logger::debug(int dbglevel, const isc::log::MessageID& ident, ...) {
     if (isDebugEnabled(dbglevel)) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);
-        loggerptr_->debug(ident, message);
+        getLoggerptr()->debug(ident, message);
     }
 }
 
 void
-Logger::info(isc::log::MessageID ident, ...) {
+Logger::info(const isc::log::MessageID& ident, ...) {
     if (isInfoEnabled()) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);
-        loggerptr_->info(ident, message);
+        getLoggerptr()->info(ident, message);
     }
 }
 
 void
-Logger::warn(isc::log::MessageID ident, ...) {
+Logger::warn(const isc::log::MessageID& ident, ...) {
     if (isWarnEnabled()) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);
-        loggerptr_->warn(ident, message);
+        getLoggerptr()->warn(ident, message);
     }
 }
 
 void
-Logger::error(isc::log::MessageID ident, ...) {
+Logger::error(const isc::log::MessageID& ident, ...) {
     if (isErrorEnabled()) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);
-        loggerptr_->error(ident, message);
+        getLoggerptr()->error(ident, message);
     }
 }
 
 void
-Logger::fatal(isc::log::MessageID ident, ...) {
+Logger::fatal(const isc::log::MessageID& ident, ...) {
     if (isFatalEnabled()) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);
-        loggerptr_->fatal(ident, message);
+        getLoggerptr()->fatal(ident, message);
     }
 }
 
-bool Logger::operator==(const Logger& other) {
-    return (*loggerptr_ == *other.loggerptr_);
+bool Logger::operator==(Logger& other) {
+    return (*getLoggerptr() == *other.getLoggerptr());
 }
 
 // Protected methods (used for testing)

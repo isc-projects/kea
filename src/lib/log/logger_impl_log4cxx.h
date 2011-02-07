@@ -168,7 +168,7 @@ public:
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void debug(MessageID ident, const char* text) {
+    void debug(const MessageID& ident, const char* text) {
         LOG4CXX_DEBUG(getLogger(), ident << ", " << text);
     }
 
@@ -177,7 +177,7 @@ public:
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void info(MessageID ident, const char* text) {
+    void info(const MessageID& ident, const char* text) {
         LOG4CXX_INFO(getLogger(), ident << ", " << text);
     }
 
@@ -186,7 +186,7 @@ public:
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void warn(MessageID ident, const char* text) {
+    void warn(const MessageID& ident, const char* text) {
         LOG4CXX_WARN(getLogger(), ident << ", " << text);
     }
 
@@ -195,7 +195,7 @@ public:
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void error(MessageID ident, const char* text) {
+    void error(const MessageID& ident, const char* text) {
         LOG4CXX_ERROR(getLogger(), ident << ", " << text);
     }
 
@@ -204,7 +204,7 @@ public:
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void fatal(MessageID ident, const char* text) {
+    void fatal(const MessageID& ident, const char* text) {
         LOG4CXX_FATAL(getLogger(), ident << ", " << text);
     }
 
@@ -220,7 +220,7 @@ public:
     /// (This method is principally for testing.)
     ///
     /// \return true if the logger objects are instances of the same logger.
-    bool operator==(const LoggerImpl& other) {
+    bool operator==(LoggerImpl& other) {
         return (*loggerptr_ == *other.loggerptr_);
     }
 
@@ -302,7 +302,7 @@ private:
     // problems with memory deletion on program exit, explained in the comments
     // for the "exit_delete" parameter in this class's constructor.
 
-    mutable log4cxx::LoggerPtr*  loggerptr_; ///< Pointer to the underlying logger
+    log4cxx::LoggerPtr*  loggerptr_;    ///< Pointer to the underlying logger
     std::string          name_;         ///< Name of this logger]
     bool                 exit_delete_;  ///< Delete loggerptr_ on exit?
 

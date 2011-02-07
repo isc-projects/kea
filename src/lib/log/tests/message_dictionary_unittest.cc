@@ -122,7 +122,7 @@ TEST_F(MessageDictionaryTest, LoadTest) {
     EXPECT_EQ(0, dictionary1.size());
 
     // Load a dictionary1.
-    vector<MessageID> duplicates = dictionary1.load(data1);
+    vector<string> duplicates = dictionary1.load(data1);
     EXPECT_EQ(3, dictionary1.size());
     EXPECT_EQ(string(data1[1]), dictionary1.getText(data1[0]));
     EXPECT_EQ(string(data1[3]), dictionary1.getText(data1[2]));
@@ -157,7 +157,7 @@ TEST_F(MessageDictionaryTest, Lookups) {
     };
 
     MessageDictionary dictionary;
-    vector<MessageID> duplicates = dictionary.load(data);
+    vector<string> duplicates = dictionary.load(data);
     EXPECT_EQ(3, dictionary.size());
     EXPECT_EQ(0, duplicates.size());
 

@@ -1,4 +1,4 @@
-// File created from messagedef.mes on Mon Jan 17 15:25:32 2011
+// File created from messagedef.mes on Sat Feb  5 18:08:17 2011
 
 #include <cstddef>
 #include <log/message_initializer.h>
@@ -8,8 +8,12 @@ using namespace isc::log;
 namespace {
 
 const char* values[] = {
+    "DUPLNS", "duplicate $NAMESPACE directive found",
     "DUPLPRFX", "duplicate $PREFIX directive found",
     "IDNOTFND", "could not replace message for '%s': no such message identification",
+    "NSEXTRARG", "$NAMESPACE directive has too many arguments",
+    "NSINVARG", "$NAMESPACE directive has an invalid argument ('%s')",
+    "NSNOARG", "no arguments were given to the $NAMESPACE directive",
     "ONETOKEN", "a line containing a message ID ('%s') and nothing else was found",
     "OPENIN", "unable to open message file %s for input: %s",
     "OPENOUT", "unable to open %s for output: %s",
@@ -24,4 +28,4 @@ const char* values[] = {
 
 } // Anonymous namespace
 
-MessageInitializer messagedef_cc_Mon_Jan_17_15_25_32_2011(values);
+MessageInitializer messagedef_cc_Sat_Feb__5_18_08_17_2011(values);
