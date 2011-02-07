@@ -32,7 +32,9 @@ namespace resolve {
 // Classify the response in the "message" object.
 
 ResponseClassifier::Category ResponseClassifier::classify(
-    const Question& question, const Message& message, bool tcignore)
+    const Question& question, const Message& message, 
+    Name& cname_target, unsigned int& cname_count, bool tcignore
+    )
 {
     // Check header bits
     if (!message.getHeaderFlag(Message::HEADERFLAG_QR)) {
@@ -137,6 +139,9 @@ ResponseClassifier::Category ResponseClassifier::classify(
                 (question.getType() == RRType::ANY())) {
                 return (ANSWER);
             } else if (answer[0]->getType() == RRType::CNAME()) {
+                RdataIteratorPtr it = answer[0]->getRdataIterator();
+                cname_target = Name(it->getCurrent().toText());
+                ++cname_count;
                 return (CNAME);
             } else {
                 return (INVTYPE);
@@ -189,14 +194,16 @@ ResponseClassifier::Category ResponseClassifier::classify(
 
     vector<RRsetPtr> ansrrset(answer);
     vector<int> present(ansrrset.size(), 1);
-    return cnameChase(question.getName(), question.getType(), ansrrset, present,
-        ansrrset.size());
+    return cnameChase(question.getName(), question.getType(),
+        cname_target, cname_count,
+        ansrrset, present, ansrrset.size());
 }
 
 // Search the CNAME chain.
 ResponseClassifier::Category ResponseClassifier::cnameChase(
-    const Name& qname, const RRType& qtype, vector<RRsetPtr>& ansrrset,
-    vector<int>& present, size_t size)
+    const Name& qname, const RRType& qtype,
+    Name& cname_target, unsigned int& cname_count,
+    vector<RRsetPtr>& ansrrset, vector<int>& present, size_t size)
 {
     // Search through the vector of RRset pointers until we find one with the
     // right QNAME.
@@ -218,9 +225,10 @@ ResponseClassifier::Category ResponseClassifier::cnameChase(
                     present[i] = 0;
                     --size;
                     if (size == 0) {
+                        RdataIteratorPtr it = ansrrset[i]->getRdataIterator();
+                        cname_target = Name(it->getCurrent().toText());
                         return (CNAME);
-                    }
-                    else {
+                    } else {
                         if (ansrrset[i]->getRdataCount() != 1) {
 
                             // Multiple RDATA for a CNAME?  This is invalid.
@@ -230,8 +238,9 @@ ResponseClassifier::Category ResponseClassifier::cnameChase(
                         RdataIteratorPtr it = ansrrset[i]->getRdataIterator();
                         Name newname(it->getCurrent().toText());
 
-                        return cnameChase(newname, qtype, ansrrset, present,
-                            size);
+                        // Increase CNAME count, and continue
+                        return cnameChase(newname, qtype, cname_target,
+                            ++cname_count, ansrrset, present, size);
                     }
 
                 } else {

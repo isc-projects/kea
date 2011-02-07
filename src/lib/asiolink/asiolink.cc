@@ -435,12 +435,13 @@ private:
     // returns false if we are not done
     bool handleRecursiveAnswer(const Message& incoming) {
         dlog("Handle response");
+        Name cname_target(question_.getName());
+        
         isc::resolve::ResponseClassifier::Category category =
-            isc::resolve::ResponseClassifier::classify(question_, incoming, true);
+            isc::resolve::ResponseClassifier::classify(
+                question_, incoming, cname_target, cname_count_, true);
 
         bool found_ns_address = false;
-        ConstRRsetPtr cname_rrs;
-        RdataIteratorPtr cname_rdatas;
 
         switch (category) {
         case isc::resolve::ResponseClassifier::ANSWER:
@@ -451,24 +452,6 @@ private:
             break;
         case isc::resolve::ResponseClassifier::CNAME:
             dlog("Response is CNAME!");
-            // add the current answer to our response,
-            // set the question to the cname target,
-            // and restart from the top
-            for_each(incoming.beginSection(Message::SECTION_ANSWER),
-                     incoming.endSection(Message::SECTION_ANSWER),
-                     SectionInserter(answer_message_, Message::SECTION_ANSWER));
-            setZoneServersToRoot();
-            // we need the target of the last CNAME
-            // assuming the cnames are in order (are they?)
-            dlog("[XX] walking through answers");
-            for (RRsetIterator rrsi = incoming.beginSection(Message::SECTION_ANSWER);
-                 rrsi != incoming.endSection(Message::SECTION_ANSWER) && !found_ns_address;
-                 rrsi++) {
-                if (*rrsi && (*rrsi)->getType() == isc::dns::RRType::CNAME()) {
-                    ++cname_count_;
-                    cname_rrs = *rrsi;
-                }
-            }
 
             if (cname_count_ >= RESOLVER_MAX_CNAME_CHAIN) {
                 // just give up
@@ -479,18 +462,12 @@ private:
                 return true;
             }
 
-            cname_rdatas = cname_rrs->getRdataIterator();
-            while (!cname_rdatas->isLast()) {
-                if (!cname_rdatas->isLast()) {
-                    // hmz, why does getCurrent() return a reference? can't use
-                    // ->rrtypeSpecific()
-                    question_ = isc::dns::Question(Name(
-                        cname_rdatas->getCurrent().toText()),
-                        question_.getClass(),
-                        question_.getType());
-                }
-                cname_rdatas->next();
-            }
+            for_each(incoming.beginSection(Message::SECTION_ANSWER),
+                     incoming.endSection(Message::SECTION_ANSWER),
+                     SectionInserter(answer_message_, Message::SECTION_ANSWER));
+            setZoneServersToRoot();
+
+            question_ = Question(cname_target, question_.getClass(), question_.getType());
 
             dlog("Following CNAME chain to " + question_.toText());
             send();
