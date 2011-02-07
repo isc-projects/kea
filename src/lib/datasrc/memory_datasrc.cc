@@ -103,13 +103,13 @@ struct MemoryZone::MemoryZoneImpl {
                 result = domains.insert(wname.split(1), &node);
                 assert(result == DomainTree::SUCCESS ||
                        result == DomainTree::ALREADYEXISTS);
+                node->setFlag(DOMAINFLAG_WILD);
 
                 // Ensure a separate level exists for the "wildcarding" name,
                 // and mark the node as "wild".
                 result = domains.insert(wname, &node);
                 assert(result == DomainTree::SUCCESS ||
                        result == DomainTree::ALREADYEXISTS);
-                node->setFlag(DOMAINFLAG_WILD);
             }
         }
     }
