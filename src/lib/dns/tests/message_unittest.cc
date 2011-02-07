@@ -297,6 +297,75 @@ TEST_F(MessageTest, removeRRset) {
     EXPECT_EQ(2, message_render.getRRCount(Message::SECTION_ANSWER));
 }
 
+TEST_F(MessageTest, clearQuestionSection) {
+    QuestionPtr q(new Question(Name("www.example.com"), RRClass::IN(),
+                               RRType::A()));
+    message_render.addQuestion(q);
+    ASSERT_EQ(1, message_render.getRRCount(Message::SECTION_QUESTION));
+
+    message_render.clearSection(Message::SECTION_QUESTION);
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_QUESTION));
+}
+
+
+TEST_F(MessageTest, clearAnswerSection) {
+    // Add two RRsets, check they are present, clear the section,
+    // check if they are gone.
+    message_render.addRRset(Message::SECTION_ANSWER, rrset_a);
+    message_render.addRRset(Message::SECTION_ANSWER, rrset_aaaa);
+    ASSERT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
+        RRClass::IN(), RRType::A()));
+    ASSERT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
+        RRClass::IN(), RRType::AAAA()));
+    ASSERT_EQ(3, message_render.getRRCount(Message::SECTION_ANSWER));
+
+    message_render.clearSection(Message::SECTION_ANSWER);
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
+        RRClass::IN(), RRType::A()));
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
+        RRClass::IN(), RRType::AAAA()));
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ANSWER));
+}
+
+TEST_F(MessageTest, clearAuthoritySection) {
+    // Add two RRsets, check they are present, clear the section,
+    // check if they are gone.
+    message_render.addRRset(Message::SECTION_AUTHORITY, rrset_a);
+    message_render.addRRset(Message::SECTION_AUTHORITY, rrset_aaaa);
+    ASSERT_TRUE(message_render.hasRRset(Message::SECTION_AUTHORITY, test_name,
+        RRClass::IN(), RRType::A()));
+    ASSERT_TRUE(message_render.hasRRset(Message::SECTION_AUTHORITY, test_name,
+        RRClass::IN(), RRType::AAAA()));
+    ASSERT_EQ(3, message_render.getRRCount(Message::SECTION_AUTHORITY));
+
+    message_render.clearSection(Message::SECTION_AUTHORITY);
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_AUTHORITY, test_name,
+        RRClass::IN(), RRType::A()));
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_AUTHORITY, test_name,
+        RRClass::IN(), RRType::AAAA()));
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_AUTHORITY));
+}
+
+TEST_F(MessageTest, clearAdditionalSection) {
+    // Add two RRsets, check they are present, clear the section,
+    // check if they are gone.
+    message_render.addRRset(Message::SECTION_ADDITIONAL, rrset_a);
+    message_render.addRRset(Message::SECTION_ADDITIONAL, rrset_aaaa);
+    ASSERT_TRUE(message_render.hasRRset(Message::SECTION_ADDITIONAL, test_name,
+        RRClass::IN(), RRType::A()));
+    ASSERT_TRUE(message_render.hasRRset(Message::SECTION_ADDITIONAL, test_name,
+        RRClass::IN(), RRType::AAAA()));
+    ASSERT_EQ(3, message_render.getRRCount(Message::SECTION_ADDITIONAL));
+
+    message_render.clearSection(Message::SECTION_ADDITIONAL);
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ADDITIONAL, test_name,
+        RRClass::IN(), RRType::A()));
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ADDITIONAL, test_name,
+        RRClass::IN(), RRType::AAAA()));
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ADDITIONAL));
+}
+
+
 TEST_F(MessageTest, badBeginSection) {
     // valid cases are tested via other tests
     EXPECT_THROW(message_render.beginSection(Message::SECTION_QUESTION),

@@ -338,6 +338,14 @@ Message::removeRRset(const Section section, RRsetIterator& iterator) {
     return (removed);
 }
 
+void
+Message::clearSection(const Section section) {
+    if (section >= MessageImpl::NUM_SECTIONS) {
+        isc_throw(OutOfRange, "Invalid message section: " << section);
+    }
+    impl_->rrsets_[section].clear();
+    impl_->counts_[section] = 0;
+}
 
 void
 Message::addQuestion(const QuestionPtr question) {

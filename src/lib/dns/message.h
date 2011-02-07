@@ -483,6 +483,11 @@ public:
     /// found in the specified section.
     bool removeRRset(const Section section, RRsetIterator& iterator);
 
+    /// \brief Remove all RRSets from the given Section
+    ///
+    /// \param section Section to remove all rrsets from
+    void clearSection(const Section section);
+
     // The following methods are not currently implemented.
     //void removeQuestion(QuestionPtr question);
     // notyet:
