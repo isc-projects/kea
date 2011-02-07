@@ -617,11 +617,11 @@ TEST_F(MemoryZoneTest, load) {
         MasterLoadError);
 }
 
-// Note: once #507 is merged, findTest() would succeed whether or not
-// we load the wildcard correctly, so the test will become meaningless.
-// The plan is to clean them up when we complete #551 (then the effect of
-// load will be indirectly tested via find() tests).
-TEST_F(MemoryZoneTest, loadWildcard) {
+/*
+ * Test that puts a (simple) wildcard into the zone and checks we can
+ * correctly find the data.
+ */
+TEST_F(MemoryZoneTest, wildcard) {
     /*
      *            example.org.
      *                 |
@@ -630,10 +630,21 @@ TEST_F(MemoryZoneTest, loadWildcard) {
      *                 *
      */
     EXPECT_EQ(SUCCESS, zone_.add(rr_wild_));
+    // Search at the parent. The parent will not have the A, but it will be here
     findTest(Name("wild.example.org"), RRType::A(), Zone::NXRRSET);
+    // Search the original name of wildcard
+    findTest(Name("*.wild.example.org"), RRType::A(), Zone::SUCCESS, true,
+        rr_wild_);
+    // Search „created“ name.
+    // TODO We need to synthetize the name correctly, there'll be different rrset
+    findTest(Name("a.wild.example.org"), RRType::A(), Zone::SUCCESS, true,
+        rr_wild_);
 }
 
-// same note as loadWildcard applies.
+// Note: once #507 is merged, findTest() would succeed whether or not
+// we load the wildcard correctly, so the test will become meaningless.
+// The plan is to clean them up when we complete #551 (then the effect of
+// load will be indirectly tested via find() tests).
 TEST_F(MemoryZoneTest, loadEmptyWildcard) {
     /*
      *            example.org.
@@ -646,7 +657,7 @@ TEST_F(MemoryZoneTest, loadEmptyWildcard) {
     findTest(Name("foo.example.org"), RRType::A(), Zone::NXRRSET);
 }
 
-// same note as loadWildcard applies.
+// same note as loadEmptyWildcard applies.
 TEST_F(MemoryZoneTest, loadNestedEmptyWildcard) {
     EXPECT_EQ(SUCCESS, zone_.add(rr_nested_emptywild_));
     findTest(Name("*.foo.*.bar.example.org"), RRType::A(), Zone::NXRRSET);
