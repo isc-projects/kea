@@ -37,9 +37,28 @@ namespace resolve {
 /// \param answer_message The message to clear and place the error in
 /// \param question The question to add to the
 /// \param error_code The error Rcode
-void
-makeErrorMessage(isc::dns::MessagePtr answer_message,
-                 const isc::dns::Rcode::Rcode& error_code);
+void makeErrorMessage(isc::dns::MessagePtr answer_message,
+                      const isc::dns::Rcode::Rcode& error_code);
+
+/// \brief Copies all rrsets in the given section from source
+/// to target
+///
+/// \param source The source Message
+/// \param target The target MessagePtr
+/// \param section the section to copy
+void copySection(const isc::dns::Message& source,
+                 isc::dns::MessagePtr target,
+                 isc::dns::Message::Section section);
+
+/// \brief Copies the parts relevant for a DNS answer to the
+/// target message
+///
+/// This adds all the RRsets in the answer, authority and
+/// additional sections to the target, as well as the response
+/// code
+void copyAnswerMessage(const isc::dns::Message& source,
+                       isc::dns::MessagePtr target);
+
 
 } // namespace resolve
 } // namespace isc
