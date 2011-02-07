@@ -387,6 +387,27 @@ struct MemoryZone::MemoryZoneImpl {
                 if (state.zonecut_node_ != NULL) {
                     return (FindResult(DELEGATION, state.rrset_));
                 }
+                /*
+                 * No redirection anywhere. Let's try if it is a wildcard.
+                 */
+                if (node->getFlag(DOMAINFLAG_WILD)) {
+                    Name wildcard(Name("*").concatenate(name.split(1)));
+                    switch (domains_.find(wildcard, &node))
+                    {
+                        case DomainTree::EXACTMATCH:
+                            // This is the node we want.
+                            break;
+                        default:
+                            // This wildcard is not here. It means we want
+                            // something like a.b.wildcard.example.org
+                            // and have only *.wildcard.example.org and
+                            // we don't want that.
+                            return (FindResult(NXDOMAIN, ConstRRsetPtr()));
+                    }
+                    // If we got here, we have the wildcard node. Jump to
+                    // EXACTMATCH
+                    break;
+                }
                 // TODO: we should also cover empty non-terminal cases, which
                 // will require non trivial code and is deferred for later
                 // development.  For now, we regard any partial match that
