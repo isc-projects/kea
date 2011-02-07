@@ -53,6 +53,8 @@ namespace isc { namespace config {
         /// Create a \c ModuleSpec instance with the given data as
         /// the specification
         /// \param e The Element containing the data specification
+        /// \param check If false, the module specification in the file
+        /// is not checked to be of the correct form.
         explicit ModuleSpec(isc::data::ConstElementPtr e,
                             const bool check = true)
             throw(ModuleSpecError);
@@ -86,6 +88,8 @@ namespace isc { namespace config {
         // configuration specification
         /// Validates the given configuration data for this specification.
         /// \param data The base \c Element of the data to check
+        /// \param full If true, all non-optional configuration parameters
+        /// must be specified.
         /// \return true if the data conforms to the specification,
         /// false otherwise.
         bool validateConfig(isc::data::ConstElementPtr data,

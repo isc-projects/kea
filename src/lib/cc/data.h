@@ -222,6 +222,7 @@ public:
 
     /// Sets the ElementPtr at the given key
     /// \param name The key of the Element to set
+    /// \param element The ElementPtr to set at the given key.
     virtual void set(const std::string& name, ConstElementPtr element);
 
     /// Remove the ElementPtr at the given key
@@ -315,10 +316,11 @@ public:
     /// Creates an Element from the given input stream, where we keep
     /// track of the location in the stream for error reporting.
     ///
-    /// \param in The string to parse the element from
+    /// \param in The string to parse the element from.
+    /// \param file The input file name.
     /// \param line A reference to the int where the function keeps
     /// track of the current line.
-    /// \param line A reference to the int where the function keeps
+    /// \param pos A reference to the int where the function keeps
     /// track of the current position within the current line.
     /// \return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
@@ -548,18 +550,18 @@ void merge(ElementPtr element, ConstElementPtr other);
 ///
 /// \brief Insert the Element as a string into stream.
 ///
-/// This method converts the \c ElemetPtr into a string with
+/// This method converts the \c ElementPtr into a string with
 /// \c Element::str() and inserts it into the
 /// output stream \c out.
 ///
 /// This function overloads the global operator<< to behave as described in
 /// ostream::operator<< but applied to \c ElementPtr objects.
 ///
-/// \param os A \c std::ostream object on which the insertion operation is
+/// \param out A \c std::ostream object on which the insertion operation is
 /// performed.
 /// \param e The \c ElementPtr object to insert.
 /// \return A reference to the same \c std::ostream object referenced by
-/// parameter \c os after the insertion operation.
+/// parameter \c out after the insertion operation.
 std::ostream& operator<<(std::ostream& out, const Element& e);
 
 bool operator==(const Element& a, const Element& b);
