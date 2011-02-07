@@ -50,44 +50,6 @@ using namespace isc::dns;
 using isc::log::dlog;
 using namespace boost;
 
-// Is this something we can use in libdns++?
-namespace {
-    // TODO: remove
-    class SectionInserter {
-    public:
-        SectionInserter(MessagePtr message, const Message::Section sect) :
-            message_(message), section_(sect)
-        {}
-        void operator()(const RRsetPtr rrset) {
-            message_->addRRset(section_, rrset, true);
-        }
-        MessagePtr message_;
-        const Message::Section section_;
-    };
-
-
-    // TODO: move to resolve.cc
-    /// \brief Copies the parts relevant for a DNS answer to the
-    /// target message
-    ///
-    /// This adds all the RRsets in the answer, authority and
-    /// additional sections to the target, as well as the response
-    /// code
-    void copyAnswerMessage(const Message& source, MessagePtr target) {
-        target->setRcode(source.getRcode());
-
-        for_each(source.beginSection(Message::SECTION_ANSWER),
-                 source.endSection(Message::SECTION_ANSWER),
-                 SectionInserter(target, Message::SECTION_ANSWER));
-        for_each(source.beginSection(Message::SECTION_AUTHORITY),
-                 source.endSection(Message::SECTION_AUTHORITY),
-                 SectionInserter(target, Message::SECTION_AUTHORITY));
-        for_each(source.beginSection(Message::SECTION_ADDITIONAL),
-                 source.endSection(Message::SECTION_ADDITIONAL),
-                 SectionInserter(target, Message::SECTION_ADDITIONAL));
-    }
-}
-
 namespace asiolink {
 
 typedef pair<string, uint16_t> addr_t;
@@ -396,6 +358,11 @@ private:
     // If we timed out ourselves (lookup timeout), stop issuing queries
     bool done_;
 
+    // If we have a client timeout, we send back an answer, but don't
+    // stop. We use this variable to make sure we don't send another
+    // answer if we do find one later (or if we have a lookup_timeout)
+    bool answer_sent_;
+
     // (re)send the query to the server.
     void send() {
         const int uc = upstream_->size();
@@ -438,6 +405,9 @@ private:
     // returns false if we are not done
     bool handleRecursiveAnswer(const Message& incoming) {
         dlog("Handle response");
+        // In case we get a CNAME, we store the target
+        // here (classify() will set it when it walks through
+        // the cname chain to verify it).
         Name cname_target(question_.getName());
         
         isc::resolve::ResponseClassifier::Category category =
@@ -450,38 +420,41 @@ private:
         case isc::resolve::ResponseClassifier::ANSWER:
         case isc::resolve::ResponseClassifier::ANSWERCNAME:
             // Done. copy and return.
-            copyAnswerMessage(incoming, answer_message_);
+            isc::resolve::copyAnswerMessage(incoming, answer_message_);
             return true;
             break;
         case isc::resolve::ResponseClassifier::CNAME:
             dlog("Response is CNAME!");
-
+            // (unfinished) CNAME. We set our question_ to the CNAME
+            // target, then start over at the beginning (for now, that
+            // is, we reset our 'current servers' to the root servers).
             if (cname_count_ >= RESOLVER_MAX_CNAME_CHAIN) {
                 // just give up
-                // TODO: make SERVFAIL? clear currently read answers?
-                // just copy for now.
                 dlog("CNAME chain too long");
                 isc::resolve::makeErrorMessage(answer_message_,
                                                Rcode::SERVFAIL());
                 return true;
             }
 
-            for_each(incoming.beginSection(Message::SECTION_ANSWER),
-                     incoming.endSection(Message::SECTION_ANSWER),
-                     SectionInserter(answer_message_, Message::SECTION_ANSWER));
+            isc::resolve::copySection(incoming, answer_message_,
+                                      Message::SECTION_ANSWER);
             setZoneServersToRoot();
 
-            question_ = Question(cname_target, question_.getClass(), question_.getType());
+            question_ = Question(cname_target, question_.getClass(),
+                                 question_.getType());
 
             dlog("Following CNAME chain to " + question_.toText());
             send();
             return false;
             break;
         case isc::resolve::ResponseClassifier::NXDOMAIN:
-            copyAnswerMessage(incoming, answer_message_);
+            // NXDOMAIN, just copy and return.
+            isc::resolve::copyAnswerMessage(incoming, answer_message_);
             return true;
             break;
         case isc::resolve::ResponseClassifier::REFERRAL:
+            // Referral. For now we just take the first glue address
+            // we find and continue with that
             zone_servers_.clear();
 
             for (RRsetIterator rrsi = incoming.beginSection(Message::SECTION_ADDITIONAL);
@@ -513,7 +486,7 @@ private:
             } else {
                 dlog("[XX] no ready-made addresses in additional. need nsas.");
                 // this will result in answering with the delegation. oh well
-                copyAnswerMessage(incoming, answer_message_);
+                isc::resolve::copyAnswerMessage(incoming, answer_message_);
                 return true;
             }
             break;
@@ -529,70 +502,17 @@ private:
         case isc::resolve::ResponseClassifier::OPCODE:
         case isc::resolve::ResponseClassifier::RCODE:
         case isc::resolve::ResponseClassifier::TRUNCATED:
-            // TODO should create SERVFAIL?
+            // Should we try a different server rather than SERVFAIL?
+            isc::resolve::makeErrorMessage(answer_message_,
+                                           Rcode::SERVFAIL());
             return true;
             break;
         }
-        // should not be reached
+        // should not be reached. assert here?
         dlog("[FATAL] unreachable code");
         return true;
     }
     
-    bool oldhandleRecursiveAnswer(const Message& incoming) {
-        if (incoming.getRRCount(Message::SECTION_ANSWER) > 0) {
-            dlog("Got final result, copying answer.");
-            copyAnswerMessage(incoming, answer_message_);
-            return true;
-        } else {
-            dlog("Got delegation, continuing");
-            // ok we need to do some more processing.
-            // the ns list should contain all nameservers
-            // while the additional may contain addresses for
-            // them.
-            // this needs to tie into NSAS of course
-            // for this very first mockup, hope there is an
-            // address in additional and just use that
-
-            // send query to the addresses in the delegation
-            bool found_ns_address = false;
-            zone_servers_.clear();
-
-            for (RRsetIterator rrsi = incoming.beginSection(Message::SECTION_ADDITIONAL);
-                 rrsi != incoming.endSection(Message::SECTION_ADDITIONAL) && !found_ns_address;
-                 rrsi++) {
-                ConstRRsetPtr rrs = *rrsi;
-                if (rrs->getType() == RRType::A()) {
-                    // found address
-                    RdataIteratorPtr rdi = rrs->getRdataIterator();
-                    // just use the first for now
-                    if (!rdi->isLast()) {
-                        std::string addr_str = rdi->getCurrent().toText();
-                        dlog("[XX] first address found: " + addr_str);
-                        // now we have one address, simply
-                        // resend that exact same query
-                        // to that address and yield, when it
-                        // returns, loop again.
-                        
-                        // should use NSAS
-                        zone_servers_.push_back(addr_t(addr_str, 53));
-                        found_ns_address = true;
-                    }
-                }
-            }
-            if (found_ns_address) {
-                // next resolver round
-                send();
-                return false;
-            } else {
-                dlog("[XX] no ready-made addresses in additional. need nsas.");
-                // this will result in answering with the delegation. oh well
-                copyAnswerMessage(incoming, answer_message_);
-                return true;
-            }
-        }
-    }
-    
-
 public:
     RunningQuery(asio::io_service& io, const Question &question,
         MessagePtr answer_message, shared_ptr<AddressVector> upstream,
@@ -614,7 +534,8 @@ public:
         client_timer(io),
         lookup_timer(io),
         queries_out_(0),
-        done_(false)
+        done_(false),
+        answer_sent_(false)
     {
         // Setup the timer to stop trying (lookup_timeout)
         if (lookup_timeout >= 0) {
@@ -657,9 +578,12 @@ public:
         }
     }
     virtual void clientTimeout() {
-        // right now, just stop (should make SERVFAIL and send that
-        // back, but not stop)
-        stop(false);
+        // Return a SERVFAIL, but do not stop until
+        // we have an answer or timeout ourselves
+        isc::resolve::makeErrorMessage(answer_message_,
+                                       Rcode::SERVFAIL());
+        resolvercallback_->success(answer_message_);
+        answer_sent_ = true;
     }
 
     virtual void stop(bool resume) {
@@ -671,7 +595,7 @@ public:
         // same goes if we have an outstanding query (can't delete
         // until that one comes back to us)
         done_ = true;
-        if (resume) {
+        if (resume && !answer_sent_) {
             resolvercallback_->success(answer_message_);
         } else {
             resolvercallback_->failure();
@@ -702,7 +626,7 @@ public:
                 incoming.getRcode() == Rcode::NOERROR()) {
                 done_ = handleRecursiveAnswer(incoming);
             } else {
-                copyAnswerMessage(incoming, answer_message_);
+                isc::resolve::copyAnswerMessage(incoming, answer_message_);
                 done_ = true;
             }
             
