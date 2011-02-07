@@ -418,7 +418,7 @@ private:
 /// \param name The owner name of the OPT RR.  This must be the root name.
 /// \param rrclass The RR class of the OPT RR.
 /// \param rrtype This must specify the OPT RR type.
-/// \param rrttl The TTL of the OPT RR.
+/// \param ttl The TTL of the OPT RR.
 /// \param rdata The RDATA of the OPT RR.
 /// \param extended_rcode A placeholder to store the topmost 8 bits of the
 /// extended Rcode.
