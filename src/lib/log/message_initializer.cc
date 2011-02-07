@@ -28,5 +28,10 @@ MessageInitializer::MessageInitializer(const char* values[]) {
     global->load(values);
 }
 
+// Dummy constructor for the MessageInstantiator
+
+MessageInstantiator::MessageInstantiator(MessageInitializer*) {
+}
+
 } // namespace log
 } // namespace isc

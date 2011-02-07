@@ -1,9 +1,7 @@
-// File created from messagedef.mes on Sat Feb  5 18:08:17 2011
+// File created from messagedef.mes on Mon Feb  7 11:18:04 2011
 
 #include <cstddef>
 #include <log/message_initializer.h>
-
-using namespace isc::log;
 
 namespace {
 
@@ -28,4 +26,11 @@ const char* values[] = {
 
 } // Anonymous namespace
 
-MessageInitializer messagedef_cc_Sat_Feb__5_18_08_17_2011(values);
+namespace isc {
+namespace log {
+
+MessageInitializer messagedef_cc_Mon_Feb__7_11_18_04_2011(values);
+
+} // namespace log
+} // namespace isc
+

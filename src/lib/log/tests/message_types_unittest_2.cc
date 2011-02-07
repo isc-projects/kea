@@ -18,5 +18,5 @@
 // Return a value for testing in message_types_unittest.cc
 
 isc::log::MessageID MessageTypeTest_MSG_DUPLNS() {
-    return (MSG_DUPLNS);
+    return (isc::log::MSG_DUPLNS);
 }

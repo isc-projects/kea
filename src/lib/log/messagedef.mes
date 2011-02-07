@@ -15,7 +15,7 @@
 # $Id$
 
 $PREFIX MSG_
-$NAMESPACE ::
+$NAMESPACE isc::log
 
 # \brief Message Utility Message File
 #

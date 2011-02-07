@@ -70,7 +70,8 @@ static const char* VERSION = "1.0-0";
 ///
 /// Prints the program's version number.
 
-static void version() {
+void
+version() {
     cout << VERSION << "\n";
 }
 
@@ -78,7 +79,8 @@ static void version() {
 ///
 /// Prints program usage to stdout.
 
-static void usage() {
+void
+usage() {
     cout <<
         "Usage: message [-h] [-p] [-v] <message-file>\n" <<
         "\n" <<
@@ -98,7 +100,8 @@ static void usage() {
 ///
 /// \return Current time
 
-static string currentTime() {
+string
+currentTime() {
 
     // Get a text representation of the current time.
     time_t curtime;
@@ -123,7 +126,8 @@ static string currentTime() {
 ///
 /// \return Sentinel name
 
-static string sentinel(Filename& file) {
+string
+sentinel(Filename& file) {
 
     string name = file.name();
     string ext = file.extension();
@@ -139,7 +143,8 @@ static string sentinel(Filename& file) {
 /// characters.  This is used to handle the fact that the input file does not
 /// contain quotes, yet the string will be included in a C++ literal string.
 
-string quoteString(const string& instring) {
+string
+quoteString(const string& instring) {
 
     // Create the output string and reserve the space needed to hold the input
     // string. (Most input strings will not contain quotes, so this single
@@ -168,7 +173,8 @@ string quoteString(const string& instring) {
 ///
 /// \return Sorted list of message IDs
 
-vector<string> sortedIdentifiers(MessageDictionary* dictionary) {
+vector<string>
+sortedIdentifiers(MessageDictionary* dictionary) {
     vector<string> ident;
 
     for (MessageDictionary::const_iterator i = dictionary->begin();
@@ -194,7 +200,8 @@ vector<string> sortedIdentifiers(MessageDictionary* dictionary) {
 /// \param ns Argument to $NAMESPACE (passed by valid, as we will be modifying
 /// it.)
 
-vector<string> splitNamespace(string ns) {
+vector<string>
+splitNamespace(string ns) {
 
     // Namespaces components are separated by double colon characters - convert
     // to single colons.
@@ -209,6 +216,34 @@ vector<string> splitNamespace(string ns) {
 }
 
 
+/// \brief Write Opening Namespace(s)
+///
+/// Writes the lines listing the namespaces in use.
+void
+writeOpeningNamespace(ostream& output, vector<string>& ns) {
+    if (!ns.empty()) {
+        for (int i = 0; i < ns.size(); ++i) {
+            output << "namespace " << ns[i] << " {\n";
+        }
+        output << "\n";
+    }
+}
+
+
+/// \brief Write Closing Namespace(s)
+///
+/// Writes the lines listing the namespaces in use.
+void
+writeClosingNamespace(ostream& output, vector<string>& ns) {
+    if (!ns.empty()) {
+        for (int i = ns.size() - 1; i >= 0; --i) {
+            output << "} // namespace " << ns[i] << "\n";
+        }
+        output << "\n";
+    }
+}
+
+
 /// \brief Write Header File
 ///
 /// Writes the C++ header file containing the symbol definitions.
@@ -217,12 +252,12 @@ vector<string> splitNamespace(string ns) {
 /// file of the same name but with a .h suffix.
 /// \param prefix Prefix string to use in symbols
 /// \param ns Namespace in which the definitions are to be placed.  An empty
-/// string indicates no namespace, the special string of "::" the anonymous
-/// namespace, and anything else is the namspace desired.
+/// string indicates no namespace.
 /// \param dictionary Dictionary holding the message definitions.
 
-void writeHeaderFile(const string& file, const string& prefix, const string& ns,
-    MessageDictionary* dictionary)
+void
+writeHeaderFile(const string& file, const string& prefix, const string& ns,
+    string& mi_name, MessageDictionary* dictionary)
 {
     Filename message_file(file);
     Filename header_file(message_file.useAsDefault(".h"));
@@ -250,56 +285,37 @@ void writeHeaderFile(const string& file, const string& prefix, const string& ns,
              "#define "  << sentinel_text << "\n" <<
              "\n" <<
              "#include <log/message_types.h>\n" <<
+             "#include <log/message_initializer.h>\n" <<
              "\n";
 
         // Namespaces
-        vector<string> ns_components;
-        if (ns == "") {
-
-            ; // Nothing given, so no namespace
-
-        } else if (ns == "::") {
-
-            // Use the anonymous namespace.
-            hfile << "namespace {\n" <<
-                "\n";
-        } else {
-
-            // Output one namespace statement for each namespace component.
-            ns_components = splitNamespace(ns);
-            for (int i = 0; i < ns_components.size(); ++i) {
-                hfile << "namespace " << ns_components[i] << " {\n";
-            }
-            hfile << "\n";
-        }
+        vector<string> ns_components = splitNamespace(ns);
+        writeOpeningNamespace(hfile, ns_components);
 
         // Now the m,essage identifications themselves.
         vector<string> idents = sortedIdentifiers(dictionary);
         for (vector<string>::const_iterator j = idents.begin();
             j != idents.end(); ++j) {
-            hfile << "const isc::log::MessageID " << prefix << *j <<
+            hfile << "static const isc::log::MessageID " << prefix << *j <<
                 " = \"" << *j << "\";\n";
         }
         hfile << "\n";
 
         // Close off namespaces if appropriate.
-        if (ns == "") {
+        writeClosingNamespace(hfile, ns_components);
 
-            ; // Nothing given, so no namespace
+        // Now create the reference to the message initializer to ensure that
+        // it gets run at program startup.
 
-        } else if (ns == "::") {
-
-            // Use the anonymous namespace.
-            hfile << "}\n" <<
-                "\n";
-        } else {
-
-            // Output one namespace statement for each namespace component.
-            for (int i = (ns_components.size() - 1); i >= 0; --i) {
-                hfile << "} // namespace " << ns_components[i] << "\n";
-            }
-            hfile << "\n";
-        }
+        hfile << "namespace isc {\n" <<
+            "namespace log {\n" <<
+            "\n" <<
+            "extern MessageInitializer " << mi_name << ";\n" <<
+            "static MessageInstantiator m(&" << mi_name << ");\n" <<
+            "\n" <<
+            "} // namespace log\n" <<
+            "} // namespace isc\n" <<
+            "\n";
 
 
         // ... and finally the postamble
@@ -324,7 +340,8 @@ void writeHeaderFile(const string& file, const string& prefix, const string& ns,
 ///
 /// Simple function for use in a call to transform
 
-char replaceNonAlphaNum(char c) {
+char
+replaceNonAlphaNum(char c) {
     return (isalnum(c) ? c : '_');
 }
 
@@ -335,7 +352,8 @@ char replaceNonAlphaNum(char c) {
 /// constructor is run at initialization time.  The constructor adds the message
 /// definitions to the main global dictionary.
 
-void writeProgramFile(const string& file, MessageDictionary* dictionary)
+string
+writeProgramFile(const string& file, MessageDictionary* dictionary)
 {
     Filename message_file(file);
     Filename program_file(message_file.useAsDefault(".cc"));
@@ -357,8 +375,6 @@ void writeProgramFile(const string& file, MessageDictionary* dictionary)
              "\n" <<
              "#include <cstddef>\n" <<
              "#include <log/message_initializer.h>\n" <<
-             "\n" <<
-             "using namespace isc::log;\n" <<
              "\n" <<
              "namespace {\n" <<
              "\n" <<
@@ -390,7 +406,14 @@ void writeProgramFile(const string& file, MessageDictionary* dictionary)
 
         // ... and write the initialization code
         ccfile <<
-            "MessageInitializer " << unique_name << "(values);\n";
+            "namespace isc {\n" <<
+            "namespace log {\n" <<
+            "\n" <<
+            "MessageInitializer " << unique_name << "(values);\n" <<
+            "\n" <<
+            "} // namespace log\n" <<
+            "} // namespace isc\n" <<
+            "\n";
 
         // Report errors (if any) and exit
         if (ccfile.fail()) {
@@ -399,6 +422,8 @@ void writeProgramFile(const string& file, MessageDictionary* dictionary)
         }
 
         ccfile.close();
+
+        return unique_name;
     }
     catch (MessageException&) {
         ccfile.close();
@@ -414,7 +439,8 @@ void writeProgramFile(const string& file, MessageDictionary* dictionary)
 ///
 /// \param reader Message Reader used to read the file
 
-static void warnDuplicates(MessageReader& reader) {
+void
+warnDuplicates(MessageReader& reader) {
 
     // Get the duplicates (the overflow) and, if present, sort them into some
     // order and remove those which occur more than once (which mean that they
@@ -439,7 +465,8 @@ static void warnDuplicates(MessageReader& reader) {
 /// Parses the options then dispatches to the appropriate function.  See the
 /// main file header for the invocation.
 
-int main(int argc, char** argv) {
+int
+main(int argc, char** argv) {
     
     const struct option loptions[] = {          // Long options
         {"help",    no_argument, NULL, 'h'},
@@ -488,12 +515,13 @@ int main(int argc, char** argv) {
         MessageReader reader(&dictionary);
         reader.readFile(message_file);
 
+        // Write the file that defines the message text
+        std::string mi_name =
+            writeProgramFile(message_file, &dictionary);
+
         // Now write the header file.
         writeHeaderFile(message_file, reader.getPrefix(), reader.getNamespace(),
-            &dictionary);
-
-        // ... and the message text file.
-        writeProgramFile(message_file, &dictionary);
+            mi_name, &dictionary);
 
         // Finally, warn of any duplicates encountered.
         warnDuplicates(reader);

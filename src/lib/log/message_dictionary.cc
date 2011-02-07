@@ -103,12 +103,8 @@ MessageDictionary::getText(const string& ident) const {
 
 MessageDictionary*
 MessageDictionary::globalDictionary() {
-    static MessageDictionary* global = NULL;
-
-    if (global == NULL) {
-        global = new MessageDictionary();
-    }
-    return global;
+    static MessageDictionary global;
+    return &global;
 }
 
 
