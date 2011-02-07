@@ -1,4 +1,4 @@
-// File created from messagedef.mes on Mon Feb  7 11:18:04 2011
+// File created from messagedef.mes on Mon Feb  7 11:47:45 2011
 
 #ifndef __MESSAGEDEF_H
 #define __MESSAGEDEF_H
@@ -31,8 +31,9 @@ static const isc::log::MessageID MSG_WRITERR = "WRITERR";
 namespace isc {
 namespace log {
 
-extern MessageInitializer messagedef_cc_Mon_Feb__7_11_18_04_2011;
-static MessageInstantiator m(&messagedef_cc_Mon_Feb__7_11_18_04_2011);
+extern MessageInitializer messagedef_cc_Mon_Feb__7_11_47_45_2011;
+static MessageInstantiator instantiate_messagedef_cc_Mon_Feb__7_11_47_45_2011(
+   &messagedef_cc_Mon_Feb__7_11_47_45_2011);
 
 } // namespace log
 } // namespace isc

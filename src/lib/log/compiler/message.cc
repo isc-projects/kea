@@ -195,24 +195,37 @@ sortedIdentifiers(MessageDictionary* dictionary) {
 /// for "namspace a" and the other for "namespace b".
 ///
 /// This function returns the set of namespace components as a vector of
-/// strings.
+/// strings.  A vector of one element, containing the empty string, is returned
+/// if the anonymous namespace is specified.
 ///
-/// \param ns Argument to $NAMESPACE (passed by valid, as we will be modifying
+/// \param ns Argument to $NAMESPACE (passed by value, as we will be modifying
 /// it.)
 
 vector<string>
 splitNamespace(string ns) {
 
-    // Namespaces components are separated by double colon characters - convert
-    // to single colons.
-    size_t dcolon;
-    while ((dcolon = ns.find("::")) != string::npos) {
-        ns.replace(dcolon, 2, ":");
+    vector<string>  components;
+
+    if (ns == "::") {
+
+        // Unnamed namespace
+        components.push_back("");
+        
+    } else {
+
+        // Namespaces components are separated by double colon characters -
+         //convert to single colons.
+        size_t dcolon;
+        while ((dcolon = ns.find("::")) != string::npos) {
+            ns.replace(dcolon, 2, ":");
+        }
+
+        // ... and return the vector of namespace components split on the single
+        // colon.
+        components = isc::strutil::tokens(ns, ":");
     }
 
-    // ... and return the vector of namespace components split on the single
-    // colon.
-    return isc::strutil::tokens(ns, ":");
+    return components;
 }
 
 
@@ -222,8 +235,16 @@ splitNamespace(string ns) {
 void
 writeOpeningNamespace(ostream& output, vector<string>& ns) {
     if (!ns.empty()) {
-        for (int i = 0; i < ns.size(); ++i) {
-            output << "namespace " << ns[i] << " {\n";
+        if (ns[0].empty()) {
+
+            // Empty namespace
+            output << "namespace {\n";
+        } else {
+
+            // Output namespaces in correct order
+            for (int i = 0; i < ns.size(); ++i) {
+                output << "namespace " << ns[i] << " {\n";
+            }
         }
         output << "\n";
     }
@@ -236,8 +257,12 @@ writeOpeningNamespace(ostream& output, vector<string>& ns) {
 void
 writeClosingNamespace(ostream& output, vector<string>& ns) {
     if (!ns.empty()) {
-        for (int i = ns.size() - 1; i >= 0; --i) {
-            output << "} // namespace " << ns[i] << "\n";
+        if (ns[0].empty()) {
+            output << "} // Unnamed namespace\n";
+        } else {
+            for (int i = ns.size() - 1; i >= 0; --i) {
+                output << "} // namespace " << ns[i] << "\n";
+            }
         }
         output << "\n";
     }
@@ -305,13 +330,17 @@ writeHeaderFile(const string& file, const string& prefix, const string& ns,
         writeClosingNamespace(hfile, ns_components);
 
         // Now create the reference to the message initializer to ensure that
-        // it gets run at program startup.
+        // it gets run at program startup.  Note that even the instantiator
+        // object is given its own unique name - multiple message header files
+        // might be included in the file, and identical multiple static names
+        // would clash.
 
         hfile << "namespace isc {\n" <<
             "namespace log {\n" <<
             "\n" <<
             "extern MessageInitializer " << mi_name << ";\n" <<
-            "static MessageInstantiator m(&" << mi_name << ");\n" <<
+            "static MessageInstantiator instantiate_" << mi_name << "(\n" <<
+            "   &" << mi_name << ");\n" <<
             "\n" <<
             "} // namespace log\n" <<
             "} // namespace isc\n" <<
