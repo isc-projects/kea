@@ -192,35 +192,35 @@ public:
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void debug(MessageID ident, const char* text);
+    void debug(const MessageID& ident, const char* text);
 
 
     /// \brief Output Informational Message
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void info(MessageID ident, const char* text);
+    void info(const MessageID& ident, const char* text);
 
 
     /// \brief Output Warning Message
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void warn(MessageID ident, const char* text);
+    void warn(const MessageID& ident, const char* text);
 
 
     /// \brief Output Error Message
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void error(MessageID ident, const char* text);
+    void error(const MessageID& ident, const char* text);
 
 
     /// \brief Output Fatal Message
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void fatal(MessageID ident, const char* text);
+    void fatal(const MessageID& ident, const char* text);
 
 
     /// \brief Equality

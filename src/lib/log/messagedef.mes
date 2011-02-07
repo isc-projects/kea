@@ -15,6 +15,7 @@
 # $Id$
 
 $PREFIX MSG_
+$NAMESPACE ::
 
 # \brief Message Utility Message File
 #
@@ -23,6 +24,11 @@ $PREFIX MSG_
 # file though and are not built during the build process; this is to avoid the
 # chicken-and-egg situation where we need the files to build the message
 # compiler, yet we need the compiler to build the files.
+
+DUPLNS    duplicate $NAMESPACE directive found
++ When reading a message file, more than one $NAMESPACE directive was found.  In
++ this version of the code, such a condition is regarded as an error and the
++ read will be abandonded.
 
 DUPLPRFX    duplicate $PREFIX directive found
 + When reading a message file, more than one $PREFIX directive was found.  In
@@ -39,6 +45,22 @@ IDNOTFND    could not replace message for '%s': no such message identification
 +
 + This message may appear a number of times in the file, once for every such
 + unknown mnessage identification.
+
+NSEXTRARG  $NAMESPACE directive has too many arguments
++ The $NAMESPACE directive takes a single argument, a namespace in which all the
++ generated symbol names are placed.  This error is generated when the
++ compiler finds a $NAMESPACE directive with more than one argument.
+
+NSINVARG   $NAMESPACE directive has an invalid argument ('%s')
++ The $NAMESPACE argument should be a valid C++ namespace.  The reader does a
++ cursory check on its validity, checking that the characters in the namspace
++ are correct.  The error is generated when the reader finds an invalid
++ character. (Valid are alphanumeric characters, underscroes and colons.)
+
+NSNOARG    no arguments were given to the $NAMESPACE directive
++ The $NAMESPACE directive takes a single argument, a namespace in which all the
++ generated symbol names are placed.  This error is generated when the
++ compiler finds a $NAMESPACE directive with no arguments.
 
 ONETOKEN    a line containing a message ID ('%s') and nothing else was found
 + Message definitions comprise lines starting with a message identification (a
@@ -69,7 +91,7 @@ PRFINVARG   $PREFIX directive has an invalid argument ('%s')
 PRFNOARG    no arguments were given to the $PREFIX directive
 + The $PREFIX directive takes a single argument, a prefix to be added to the
 + symbol names when a C++ .h file is created.  This error is generated when the
-+ compiler finds a $PREFIX directive with noa rguments.
++ compiler finds a $PREFIX directive with no arguments.
 
 READERR     error reading from %s: %s
 + The specified error was encountered reading from the named input file.

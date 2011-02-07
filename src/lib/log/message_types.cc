@@ -12,28 +12,26 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
-#ifndef __MESSAGE_TYPES_H
-#define __MESSAGE_TYPES_H
-
 #include <string.h>
+#include <log/message_types.h>
 
 namespace isc {
 namespace log {
 
-typedef const char* MessageID;
+// Compare MessageID for Equality
 
-/// \brief Compare MessageID for Equality
-///
-/// \param m1 First message ID
-/// \param m2 Second message ID
-/// \return true if they are equal, false if not
-bool equalMessageID(const MessageID& m1, const MessageID& m2);
+bool equalMessageID(const MessageID& m1, const MessageID& m2) {
+
+    // Attempt to optimise the check.  If both are the same instance of the
+    // message ID, the check for addresses will successed.  If both are the
+    // same message ID but declared in a separate files (so different
+    // addresses but pointing to the same string), the string equality check
+    // will work.
+    return ((m1 == m2) || (strcmp(m1, m2) == 0));
+}
 
 } // namespace log
 } // namespace isc
 
 
 
-#endif // __MESSAGE_TYPES_H

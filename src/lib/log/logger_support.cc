@@ -29,6 +29,7 @@
 /// the logging parameters from the configuration database.
 
 #include <vector>
+#include <boost/lexical_cast.hpp>
 
 #include <log/logger.h>
 #include <log/logger_support.h>
@@ -67,12 +68,13 @@ readLocalMessageFile(const char* file) {
         MessageReader::MessageIDCollection unknown = reader.getNotAdded();
         for (MessageReader::MessageIDCollection::const_iterator
             i = unknown.begin(); i != unknown.end(); ++i) {
-                logger.warn(MSG_IDNOTFND, (*i).c_str());
+            string message_id = boost::lexical_cast<string>(*i);
+                logger.warn(MSG_IDNOTFND, message_id.c_str());
         }
     }
     catch (MessageException& e) {
         MessageID ident = e.id();
-        vector<MessageID> args = e.arguments();
+        vector<string> args = e.arguments();
         switch (args.size()) {
         case 0:
             logger.error(ident);

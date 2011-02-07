@@ -76,7 +76,7 @@ TEST_F(MessageReaderTest, BlanksAndComments) {
 
     // ... and (b) nothing gets added to either the map or the not-added section.
     EXPECT_EQ(0, dictionary_->size());
-    vector<MessageID> not_added = reader_.getNotAdded();
+    vector<string> not_added = reader_.getNotAdded();
     EXPECT_EQ(0, not_added.size());
 }
 
@@ -85,14 +85,15 @@ TEST_F(MessageReaderTest, BlanksAndComments) {
 
 void
 processLineException(MessageReader& reader, const char* what,
-    MessageID& expected) {
+    const MessageID& expected) {
 
     try {
         reader.processLine(what);
         FAIL() << "MessageReader::processLine() should throw an exception " <<
             " with message ID " << expected << " for '" << what << "'\n";
     } catch (MessageException& e) {
-        EXPECT_EQ(expected, e.id());
+        EXPECT_EQ(boost::lexical_cast<string>(expected),
+            boost::lexical_cast<string>(e.id()));
     } catch (...) {
         FAIL() << "Unknown exception thrown by MessageReader::processLine()\n";
     }
@@ -102,13 +103,13 @@ processLineException(MessageReader& reader, const char* what,
 
 TEST_F(MessageReaderTest, Prefix) {
 
-    // Check that no prefix is present
+    // Check that no $PREFIX is present
     EXPECT_EQ(string(""), reader_.getPrefix());
 
-    // Check that a prefix directive with no argument generates an error.
+    // Check that a $PREFIX directive with no argument generates an error.
     processLineException(reader_, "$PREFIX", MSG_PRFNOARG);
 
-    // Check a prefix with multiple arguments is invalid
+    // Check a $PREFIX with multiple arguments is invalid
     processLineException(reader_, "$prefix A B", MSG_PRFEXTRARG);
 
     // Prefixes should be alphanumeric (with underscores) and not start
@@ -132,6 +133,43 @@ TEST_F(MessageReaderTest, Prefix) {
     EXPECT_EQ(string(""), reader_.getPrefix());
 }
 
+// Check that it can parse a namespace
+
+TEST_F(MessageReaderTest, Namespace) {
+
+    // Check that no $NAMESPACE is present
+    EXPECT_EQ(string(""), reader_.getNamespace());
+
+    // Check that a $NAMESPACE directive with no argument generates an error.
+    processLineException(reader_, "$NAMESPACE", MSG_NSNOARG);
+
+    // Check a $NAMESPACE with multiple arguments is invalid
+    processLineException(reader_, "$namespace A B", MSG_NSEXTRARG);
+
+    // Namespaces should be alphanumeric (with underscores and colons)
+    processLineException(reader_, "$namespace ab[cd", MSG_NSINVARG);
+
+    // A valid $NAMESPACE should be accepted
+    EXPECT_NO_THROW(reader_.processLine("$NAMESPACE isc"));
+    EXPECT_EQ(string("isc"), reader_.getNamespace());
+
+    // (Check that we can clear the namespace)
+    reader_.clearNamespace();
+    EXPECT_EQ(string(""), reader_.getNamespace());
+
+    // Check that a valid namespace can include colons
+    EXPECT_NO_THROW(reader_.processLine("$NAMESPACE isc::log"));
+    EXPECT_EQ(string("isc::log"), reader_.getNamespace());
+
+    // Check that the indication of the anonymous namespace will be recognised.
+    reader_.clearNamespace();
+    EXPECT_NO_THROW(reader_.processLine("$NAMESPACE ::"));
+    EXPECT_EQ(string("::"), reader_.getNamespace());
+
+    // ... and that another $NAMESPACE is rejected
+    processLineException(reader_, "$NAMESPACE ABC", MSG_DUPLNS);
+}
+
 // Check that it can parse a line
 
 TEST_F(MessageReaderTest, ValidMessageAddDefault) {
@@ -148,7 +186,7 @@ TEST_F(MessageReaderTest, ValidMessageAddDefault) {
     EXPECT_EQ(2, dictionary_->size());
 
     // ... and ensure no messages were not added
-    vector<MessageID> not_added = reader_.getNotAdded();
+    vector<string> not_added = reader_.getNotAdded();
     EXPECT_EQ(0, not_added.size());
 }
 
@@ -168,7 +206,7 @@ TEST_F(MessageReaderTest, ValidMessageAdd) {
     EXPECT_EQ(2, dictionary_->size());
 
     // ... and ensure no messages were not added
-    vector<MessageID> not_added = reader_.getNotAdded();
+    vector<string> not_added = reader_.getNotAdded();
     EXPECT_EQ(0, not_added.size());
 }
 
@@ -191,7 +229,7 @@ TEST_F(MessageReaderTest, ValidMessageReplace) {
     EXPECT_EQ(2, dictionary_->size());
 
     // ... and ensure no messages were not added
-    vector<MessageID> not_added = reader_.getNotAdded();
+    vector<string> not_added = reader_.getNotAdded();
     EXPECT_EQ(0, not_added.size());
 }
 
@@ -219,7 +257,7 @@ TEST_F(MessageReaderTest, Overflows) {
     EXPECT_EQ(2, dictionary_->size());
 
     // ... and ensure no overflows
-    vector<MessageID> not_added = reader_.getNotAdded();
+    vector<string> not_added = reader_.getNotAdded();
     ASSERT_EQ(2, not_added.size());
 
     sort(not_added.begin(), not_added.end());

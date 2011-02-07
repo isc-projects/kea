@@ -12,28 +12,28 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
+#include <gtest/gtest.h>
+#include <log/message_types.h>
+#include <log/messagedef.h>
 
-#ifndef __MESSAGE_TYPES_H
-#define __MESSAGE_TYPES_H
+using namespace isc::log;
 
-#include <string.h>
+class MessageTypesTest : public ::testing::Test {
+public:
+    MessageTypesTest()
+    {
+    }
+};
 
-namespace isc {
-namespace log {
-
-typedef const char* MessageID;
-
-/// \brief Compare MessageID for Equality
-///
-/// \param m1 First message ID
-/// \param m2 Second message ID
-/// \return true if they are equal, false if not
-bool equalMessageID(const MessageID& m1, const MessageID& m2);
-
-} // namespace log
-} // namespace isc
+MessageID MessageTypeTest_MSG_DUPLNS();
 
 
+// Check that the message type equality check works.  This compares
+// two message IDs in the "messagedef.h" file declared here, with
+// the returned ID (which should be MSG_DUPLNS) declared elsewhere.
 
-#endif // __MESSAGE_TYPES_H
+TEST_F(MessageTypesTest, EqualID) {
+    EXPECT_TRUE(equalMessageID(MSG_DUPLNS, MSG_DUPLNS));
+    EXPECT_FALSE(equalMessageID(MSG_DUPLNS, MSG_DUPLPRFX));
+    EXPECT_TRUE(equalMessageID(MSG_DUPLNS, MessageTypeTest_MSG_DUPLNS()));
+}
