@@ -59,8 +59,9 @@ struct MemoryZone::MemoryZoneImpl {
     typedef Domain::value_type DomainPair;
     typedef boost::shared_ptr<Domain> DomainPtr;
     // The tree stores domains
-    typedef RBTree<Domain> DomainTree;
+    typedef RBTree<Domain, true> DomainTree;
     typedef RBNode<Domain> DomainNode;
+    static const DomainNode::Flags DOMAINFLAG_WILD = DomainNode::FLAG_USER1;
 
     // Information about the zone
     RRClass zone_class_;
@@ -70,6 +71,48 @@ struct MemoryZone::MemoryZoneImpl {
 
     // The actual zone data
     DomainTree domains_;
+
+    // Add the necessary magic for any wildcard contained in 'name'
+    // (including itself) to be found in the zone.
+    //
+    // In order for wildcard matching to work correctly in find(),
+    // we must ensure that a node for the wildcarding level exists in the
+    // backend RBTree.
+    // E.g. if the wildcard name is "*.sub.example." then we must ensure
+    // that "sub.example." exists and is marked as a wildcard level.
+    // Note: the "wildcarding level" is for the parent name of the wildcard
+    // name (such as "sub.example.").
+    //
+    // We also perform the same trick for empty wild card names possibly
+    // contained in 'name' (e.g., '*.foo.example' in 'bar.*.foo.example').
+    void addWildcards(DomainTree& domains, const Name& name) {
+        Name wname(name);
+        const unsigned int labels(wname.getLabelCount());
+        const unsigned int origin_labels(origin_.getLabelCount());
+        for (unsigned int l = labels;
+             l > origin_labels;
+             --l, wname = wname.split(1)) {
+            if (wname.isWildcard()) {
+                DomainNode* node;
+                DomainTree::Result result;
+
+                // Ensure a separate level exists for the wildcard name.
+                // Note: for 'name' itself we do this later anyway, but the
+                // overhead should be marginal because wildcard names should
+                // be rare.
+                result = domains.insert(wname.split(1), &node);
+                assert(result == DomainTree::SUCCESS ||
+                       result == DomainTree::ALREADYEXISTS);
+
+                // Ensure a separate level exists for the "wildcarding" name,
+                // and mark the node as "wild".
+                result = domains.insert(wname, &node);
+                assert(result == DomainTree::SUCCESS ||
+                       result == DomainTree::ALREADYEXISTS);
+                node->setFlag(DOMAINFLAG_WILD);
+            }
+        }
+    }
 
     /*
      * Does some checks in context of the data that are already in the zone.
@@ -113,13 +156,10 @@ struct MemoryZone::MemoryZoneImpl {
         }
     }
 
-    /*
-     * Implementation of longer methods. We put them here, because the
-     * access is without the impl_-> and it will get inlined anyway.
-     */
-    // Implementation of MemoryZone::add
-    result::Result add(const ConstRRsetPtr& rrset, DomainTree* domains) {
-        // Sanitize input
+    // Validate rrset before adding it to the zone.  If something is wrong
+    // it throws an exception.  It doesn't modify the zone, and provides
+    // the strong exception guarantee.
+    void addValidation(const ConstRRsetPtr rrset) {
         if (!rrset) {
             isc_throw(NullRRset, "The rrset provided is NULL");
         }
@@ -136,26 +176,55 @@ struct MemoryZone::MemoryZoneImpl {
                       << rrset->getName());
         }
 
-        Name name(rrset->getName());
-        NameComparisonResult compare(origin_.compare(name));
+        NameComparisonResult compare(origin_.compare(rrset->getName()));
         if (compare.getRelation() != NameComparisonResult::SUPERDOMAIN &&
             compare.getRelation() != NameComparisonResult::EQUAL)
         {
-            isc_throw(OutOfZone, "The name " << name <<
+            isc_throw(OutOfZone, "The name " << rrset->getName() <<
                 " is not contained in zone " << origin_);
         }
+
+        // Some RR types do not really work well with a wildcard.
+        // Even though the protocol specifically doesn't completely ban such
+        // usage, we refuse to load a zone containing such RR in order to
+        // keep the lookup logic simpler and more predictable.
+        // See RFC4592 and (for DNAME) draft-ietf-dnsext-rfc2672bis-dname
+        // for more technical background.  Note also that BIND 9 refuses
+        // NS at a wildcard, so in that sense we simply provide compatible
+        // behavior.
+        if (rrset->getName().isWildcard()) {
+            if (rrset->getType() == RRType::NS()) {
+                isc_throw(AddError, "Invalid NS owner name (wildcard): " <<
+                          rrset->getName());
+            }
+            if (rrset->getType() == RRType::DNAME()) {
+                isc_throw(AddError, "Invalid DNAME owner name (wildcard): " <<
+                          rrset->getName());
+            }
+        }
+    }
+
+    /*
+     * Implementation of longer methods. We put them here, because the
+     * access is without the impl_-> and it will get inlined anyway.
+     */
+    // Implementation of MemoryZone::add
+    result::Result add(const ConstRRsetPtr& rrset, DomainTree* domains) {
+        // Sanitize input
+        addValidation(rrset);
+
+        // Add wildcards possibly contained in the owner name to the domain
+        // tree.
+        // Note: this can throw an exception, breaking strong exception
+        // guarantee.  (see also the note for contextCheck() below).
+        addWildcards(*domains, rrset->getName());
+
         // Get the node
         DomainNode* node;
-        switch (domains->insert(name, &node)) {
-            // Just check it returns reasonable results
-            case DomainTree::SUCCESS:
-            case DomainTree::ALREADYEXISTS:
-                break;
-            // Something odd got out
-            default:
-                assert(0);
-        }
-        assert(node != NULL);
+        DomainTree::Result result = domains->insert(rrset->getName(), &node);
+        // Just check it returns reasonable results
+        assert((result == DomainTree::SUCCESS ||
+                result == DomainTree::ALREADYEXISTS) && node!= NULL);
 
         // Now get the domain
         DomainPtr domain;
@@ -182,10 +251,10 @@ struct MemoryZone::MemoryZoneImpl {
             // indicating the need for callback in find().
             if (rrset->getType() == RRType::NS() &&
                 rrset->getName() != origin_) {
-                node->enableCallback();
+                node->setFlag(DomainNode::FLAG_CALLBACK);
             // If it is DNAME, we have a callback as well here
             } else if (rrset->getType() == RRType::DNAME()) {
-                node->enableCallback();
+                node->setFlag(DomainNode::FLAG_CALLBACK);
             }
 
             return (result::SUCCESS);
@@ -330,13 +399,18 @@ struct MemoryZone::MemoryZoneImpl {
                 assert(0);
         }
         assert(node);
-        assert(!node->isEmpty());
+
+        // If there is an exact match but the node is empty, it's equivalent
+        // to NXRRSET.
+        if (node->isEmpty()) {
+            return (FindResult(NXRRSET, ConstRRsetPtr()));
+        }
 
         Domain::const_iterator found;
 
         // If the node callback is enabled, this may be a zone cut.  If it
         // has a NS RR, we should return a delegation, but not in the apex.
-        if (node->isCallbackEnabled() && node != origin_data_) {
+        if (node->getFlag(DomainNode::FLAG_CALLBACK) && node != origin_data_) {
             found = node->getData()->find(RRType::NS());
             if (found != node->getData()->end()) {
                 return (FindResult(DELEGATION, found->second));
