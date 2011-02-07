@@ -418,7 +418,7 @@ public:
         return (find<void*>(name, node, NULL, NULL));
     }
 
-    /// \brieg Simple find returning immutable node.
+    /// \brief Simple find returning immutable node.
     ///
     /// Acts as described in the \ref find section, but returns immutable node
     /// pointer.
