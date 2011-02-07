@@ -46,18 +46,27 @@ public:
     /// \param name Name of the root logger.  This should be the program
     /// name.
     static void setName(const std::string& name) {
-        name_ = name;
+        rootName() = name;
     }
 
     /// \brief Get Root Logger Name
     ///
     /// \return Name of the root logger.
     static std::string getName() {
-        return name_;
+        return rootName();
     }
     
 private:
-    static std::string name_;      ///< Name of the root logger
+    /// \brief Store Root Logger Name
+    ///
+    /// Access the singleton root logger name.  This is stored as a static
+    /// variable inside a method to avoid the "static initialization fiasco";
+    /// when accessed by another class during initialization, the name will be
+    /// instantiated. (Else it will be only by chance that it is instantiated
+    /// before the cassling class.)
+    ///
+    /// \return Name addisnged to the root logger.
+    static std::string& rootName();
 };
 
 }
