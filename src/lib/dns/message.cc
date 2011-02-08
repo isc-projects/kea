@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <stdint.h>
 
 #include <algorithm>
@@ -310,6 +308,36 @@ Message::hasRRset(const Section section, const Name& name,
 
     return (false);
 }
+
+bool
+Message::hasRRset(const Section section, const RRsetPtr& rrset) {
+    return (hasRRset(section, rrset->getName(), rrset->getClass(), rrset->getType()));
+}
+
+bool
+Message::removeRRset(const Section section, RRsetIterator& iterator) {
+    if (section >= MessageImpl::NUM_SECTIONS) {
+        isc_throw(OutOfRange, "Invalid message section: " << section);
+    }
+
+    bool removed = false;
+    for (vector<RRsetPtr>::iterator i = impl_->rrsets_[section].begin();
+            i != impl_->rrsets_[section].end(); ++i) {
+        if (((*i)->getName() == (*iterator)->getName()) &&
+            ((*i)->getClass() == (*iterator)->getClass()) &&
+            ((*i)->getType() == (*iterator)->getType())) {
+
+            // Found the matching RRset so remove it & ignore rest
+            impl_->counts_[section] -= (*iterator)->getRdataCount();
+            impl_->rrsets_[section].erase(i);
+            removed = true;
+            break;
+        }
+    }
+
+    return (removed);
+}
+
 
 void
 Message::addQuestion(const QuestionPtr question) {

@@ -22,6 +22,7 @@
 namespace isc {
 namespace dns {
 class Name;
+class RRsetList;
 };
 
 namespace datasrc {
@@ -55,26 +56,35 @@ public:
 
     /// \brief Returns the origin of the zone.
     virtual const isc::dns::Name& getOrigin() const;
+
     /// \brief Returns the class of the zone.
     virtual const isc::dns::RRClass& getClass() const;
+
     /// \brief Looks up an RRset in the zone.
     ///
     /// See documentation in \c Zone.
     ///
-    /// It returns NULL pointer in case of NXDOMAIN and NXRRSET
+    /// It returns NULL pointer in case of NXDOMAIN and NXRRSET,
+    /// and also SUCCESS if target is not NULL(TYPE_ANY query).
     /// (the base class documentation does not seem to require that).
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type,
+                            isc::dns::RRsetList* target = NULL,
                             const FindOptions options = FIND_DEFAULT) const;
 
     /// \brief Inserts an rrset into the zone.
     ///
     /// It puts another RRset into the zone.
     ///
-    /// It throws NullRRset or OutOfZone if the provided rrset is invalid. It
-    /// might throw standard allocation exceptions, in which case this function
-    /// does not guarantee strong exception safety (it is currently not needed,
-    /// if it is needed in future, it should be implemented).
+    /// Except for NullRRset and OutOfZone, this method does not guarantee
+    /// strong exception safety (it is currently not needed, if it is needed
+    /// in future, it should be implemented).
+    ///
+    /// \throw NullRRset \c rrset is a NULL pointer.
+    /// \throw OutOfZone The owner name of \c rrset is outside of the
+    /// origin of the zone.
+    /// \throw AddError Other general errors.
+    /// \throw Others This method might throw standard allocation exceptions.
     ///
     /// \param rrset The set to add.
     /// \return SUCCESS or EXIST (if an rrset for given name and type already
@@ -96,6 +106,21 @@ public:
     /// This is thrown if the provided RRset parameter is NULL.
     struct NullRRset : public InvalidParameter {
         NullRRset(const char* file, size_t line, const char* what) :
+            InvalidParameter(file, line, what)
+        { }
+    };
+
+    /// \brief General failure exception for \c add().
+    ///
+    /// This is thrown against general error cases in adding an RRset
+    /// to the zone.
+    ///
+    /// Note: this exception would cover cases for \c OutOfZone or
+    /// \c NullRRset.  We'll need to clarify and unify the granularity
+    /// of exceptions eventually.  For now, exceptions are added as
+    /// developers see the need for it.
+    struct AddError : public InvalidParameter {
+        AddError(const char* file, size_t line, const char* what) :
             InvalidParameter(file, line, what)
         { }
     };

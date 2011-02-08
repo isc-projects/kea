@@ -37,6 +37,8 @@ spec_config.h: spec_config.h.pre
 BUILT_SOURCES = spec_config.h 
 pkglibexec_PROGRAMS = b10-resolver
 b10_resolver_SOURCES = resolver.cc resolver.h
+b10_resolver_SOURCES += response_classifier.cc response_classifier.h
+b10_resolver_SOURCES += response_scrubber.cc response_scrubber.h
 b10_resolver_SOURCES += $(top_builddir)/src/bin/auth/change_user.h
 b10_resolver_SOURCES += $(top_builddir)/src/bin/auth/common.h
 b10_resolver_SOURCES += main.cc

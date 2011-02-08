@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __NSAS_TEST_H
 #define __NSAS_TEST_H
 
@@ -27,17 +25,32 @@
 
 #include <config.h>
 
+#include <dns/message.h>
 #include <dns/buffer.h>
 #include <dns/rdata.h>
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
+#include <dns/opcode.h>
+#include <dns/rcode.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdataclass.h>
+#include <resolve/resolver_interface.h>
 #include "../nsas_entry.h"
-#include "../resolver_interface.h"
 
 using namespace isc::dns::rdata;
 using namespace isc::dns;
+
+namespace {
+    MessagePtr
+    createResponseMessage(RRsetPtr answer_rrset)
+    {
+        MessagePtr response(new Message(Message::RENDER));
+        response->setOpcode(Opcode::QUERY());
+        response->setRcode(Rcode::NOERROR());
+        response->addRRset(Message::SECTION_ANSWER, answer_rrset);
+        return response;
+    }
+}
 
 namespace isc {
 namespace dns {
@@ -219,13 +232,13 @@ using namespace std;
  * This pretends to be a resolver. It stores the queries and
  * they can be answered.
  */
-class TestResolver : public isc::nsas::ResolverInterface {
+class TestResolver : public isc::resolve::ResolverInterface {
     private:
         bool checkIndex(size_t index) {
             return (requests.size() > index);
         }
 
-        typedef std::map<isc::dns::Question, boost::shared_ptr<AbstractRRset> >
+        typedef std::map<isc::dns::Question, RRsetPtr >
             PresetAnswers;
         PresetAnswers answers_;
     public:
@@ -237,7 +250,7 @@ class TestResolver : public isc::nsas::ResolverInterface {
                 requests.push_back(Request(q, c));
             } else {
                 if (it->second) {
-                    c->success(it->second);
+                    c->success(createResponseMessage(it->second));
                 } else {
                     c->failure();
                 }
@@ -250,7 +263,7 @@ class TestResolver : public isc::nsas::ResolverInterface {
          * it goes to requests and you can answer later.
          */
         void addPresetAnswer(const isc::dns::Question& question,
-            boost::shared_ptr<AbstractRRset> answer)
+            RRsetPtr answer)
         {
             answers_[question] = answer;
         }
@@ -310,11 +323,11 @@ class TestResolver : public isc::nsas::ResolverInterface {
             RRsetPtr set(new RRset(name, RRClass::IN(),
                 type, RRTTL(TTL)));
             set->addRdata(rdata);
-            requests[index].second->success(set);
+            requests[index].second->success(createResponseMessage(set));
         }
 
         void provideNS(size_t index,
-            boost::shared_ptr<AbstractRRset> nameservers)
+            RRsetPtr nameservers)
         {
             if (index >= requests.size()) {
                 throw NoSuchRequest();
@@ -324,7 +337,7 @@ class TestResolver : public isc::nsas::ResolverInterface {
             {
                 throw DifferentRequest();
             }
-            requests[index].second->success(nameservers);
+            requests[index].second->success(createResponseMessage(nameservers));
         }
 };
 

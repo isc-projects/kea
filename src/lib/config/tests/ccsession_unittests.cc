@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: module_spec_unittests.cc 1321 2010-03-11 10:17:03Z jelte $
-
 #include <config.h>
 
 #include <gtest/gtest.h>

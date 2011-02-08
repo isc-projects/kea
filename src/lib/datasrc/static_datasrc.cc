@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <config.h>
 
 #include <cassert>
@@ -72,6 +70,7 @@ StaticDataSrcImpl::StaticDataSrcImpl() :
                                  RRType::TXT(), RRTTL(0)));
     authors->addRdata(generic::TXT("Chen Zhengzhang")); // Jerry
     authors->addRdata(generic::TXT("Evan Hunt"));
+    authors->addRdata(generic::TXT("Haidong Wang")); // Ocean
     authors->addRdata(generic::TXT("Han Feng"));
     authors->addRdata(generic::TXT("Jelte Jansen"));
     authors->addRdata(generic::TXT("Jeremy C. Reed")); 
@@ -84,6 +83,7 @@ StaticDataSrcImpl::StaticDataSrcImpl() :
     authors->addRdata(generic::TXT("Shane Kerr"));
     authors->addRdata(generic::TXT("Shen Tingting"));
     authors->addRdata(generic::TXT("Stephen Morris"));
+    authors->addRdata(generic::TXT("Yoshitaka Aharen"));
     authors->addRdata(generic::TXT("Zhang Likun"));
 
     authors_ns = RRsetPtr(new RRset(authors_name, RRClass::CH(),
