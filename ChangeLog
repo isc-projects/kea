@@ -1,3 +1,8 @@
+  164.  [bug]           y-aharen
+	IntervalTimer: Modified the interface to accept interval in
+	milliseconds. It shortens the time of the tests of IntervalTimer.
+	(Trac #452, git c9f6acc81e24c4b8f0eb351123dc7b43f64e0914)
+
   163.  [func]      vorner
 	The pimpl design pattern is used in UDPServer, with a shared pointer. This
 	makes it smaller to copy (which is done a lot as a sideeffect of being
