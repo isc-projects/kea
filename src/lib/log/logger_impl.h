@@ -183,45 +183,53 @@ public:
     /// The message is formatted to include the date and time, the severity
     /// and the logger generating the message.
     ///
-    /// \param sev_text Severity lovel as a text string
+    /// \param sev_text Severity level as a text string
+    /// \param ident Message identification
     /// \param text Text to log
-    void output(const char* sev_text, const std::string& message);
+    void output(const char* sev_text, const MessageID& ident,
+        const char* text);
 
 
     /// \brief Output Debug Message
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void debug(const MessageID& ident, const char* text);
+    void debug(const MessageID& ident, const char* text) {
+        output("DEBUG", ident, text);
+    }
 
 
     /// \brief Output Informational Message
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void info(const MessageID& ident, const char* text);
-
+    void info(const MessageID& ident, const char* text) {
+        output("INFO ", ident, text);
+    }
 
     /// \brief Output Warning Message
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void warn(const MessageID& ident, const char* text);
-
+    void warn(const MessageID& ident, const char* text) {
+        output("WARN ", ident, text);
+    }
 
     /// \brief Output Error Message
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void error(const MessageID& ident, const char* text);
-
+    void error(const MessageID& ident, const char* text) {
+        output("ERROR", ident, text);
+    }
 
     /// \brief Output Fatal Message
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void fatal(const MessageID& ident, const char* text);
-
+    void fatal(const MessageID& ident, const char* text) {
+        output("FATAL", ident, text);
+    }
 
     /// \brief Equality
     ///

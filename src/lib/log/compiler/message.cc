@@ -335,16 +335,25 @@ writeHeaderFile(const string& file, const string& prefix, const string& ns,
         // might be included in the file, and identical multiple static names
         // would clash.
 
-        hfile << "namespace isc {\n" <<
+        hfile <<
+            "namespace isc {\n" <<
             "namespace log {\n" <<
+            "\n" <<
+            "// The next two objects are needed to bring the default message\n" <<
+            "// definitions into the program.  They make sure that the file\n" <<
+            "// containing the message text is included in the link process.\n" <<
+            "//\n" <<
+            "// The objects are uniquely named (with file name and date and\n" <<
+            "// time of compilation) to avoid clashes with other objects of\n" <<
+            "// the same type, either by another #include or as a global\n" <<
+            "// symbol in another module.\n" <<
             "\n" <<
             "extern MessageInitializer " << mi_name << ";\n" <<
             "static MessageInstantiator instantiate_" << mi_name << "(\n" <<
             "   &" << mi_name << ");\n" <<
             "\n" <<
             "} // namespace log\n" <<
-            "} // namespace isc\n" <<
-            "\n";
+            "} // namespace isc\n";
 
 
         // ... and finally the postamble

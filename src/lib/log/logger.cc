@@ -32,7 +32,7 @@ namespace isc {
 namespace log {
 
 // Initialize Logger implementation.  Does not check whether the implementation
-// has already been initialized - that was done by the caller (getLoggerptr()).
+// has already been initialized - that was done by the caller (getLoggerPtr()).
 void Logger::initLoggerImpl() {
     loggerptr_ = new LoggerImpl(name_, infunc_);
 }
@@ -47,62 +47,62 @@ Logger::~Logger() {
 
 std::string
 Logger::getName() {
-    return (getLoggerptr()->getName());
+    return (getLoggerPtr()->getName());
 }
 
 // Set the severity for logging.
 
 void
 Logger::setSeverity(isc::log::Severity severity, int dbglevel) {
-    getLoggerptr()->setSeverity(severity, dbglevel);
+    getLoggerPtr()->setSeverity(severity, dbglevel);
 }
 
 // Return the severity of the logger.
 
 isc::log::Severity
 Logger::getSeverity() {
-    return (getLoggerptr()->getSeverity());
+    return (getLoggerPtr()->getSeverity());
 }
 
 // Get Effective Severity Level for Logger
 
 isc::log::Severity
 Logger::getEffectiveSeverity() {
-    return (getLoggerptr()->getEffectiveSeverity());
+    return (getLoggerPtr()->getEffectiveSeverity());
 }
 
 // Debug level (only relevant if messages of severity DEBUG are being logged).
 
 int
 Logger::getDebugLevel() {
-    return (getLoggerptr()->getDebugLevel());
+    return (getLoggerPtr()->getDebugLevel());
 }
 
 // Check on the current severity settings
 
 bool
 Logger::isDebugEnabled(int dbglevel) {
-    return (getLoggerptr()->isDebugEnabled(dbglevel));
+    return (getLoggerPtr()->isDebugEnabled(dbglevel));
 }
 
 bool
 Logger::isInfoEnabled() {
-    return (getLoggerptr()->isInfoEnabled());
+    return (getLoggerPtr()->isInfoEnabled());
 }
 
 bool
 Logger::isWarnEnabled() {
-    return (getLoggerptr()->isWarnEnabled());
+    return (getLoggerPtr()->isWarnEnabled());
 }
 
 bool
 Logger::isErrorEnabled() {
-    return (getLoggerptr()->isErrorEnabled());
+    return (getLoggerPtr()->isErrorEnabled());
 }
 
 bool
 Logger::isFatalEnabled() {
-    return (getLoggerptr()->isFatalEnabled());
+    return (getLoggerPtr()->isFatalEnabled());
 }
 
 // Format a message: looks up the message text in the dictionary and formats
@@ -133,7 +133,7 @@ Logger::debug(int dbglevel, const isc::log::MessageID& ident, ...) {
     if (isDebugEnabled(dbglevel)) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);
-        getLoggerptr()->debug(ident, message);
+        getLoggerPtr()->debug(ident, message);
     }
 }
 
@@ -142,7 +142,7 @@ Logger::info(const isc::log::MessageID& ident, ...) {
     if (isInfoEnabled()) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);
-        getLoggerptr()->info(ident, message);
+        getLoggerPtr()->info(ident, message);
     }
 }
 
@@ -151,7 +151,7 @@ Logger::warn(const isc::log::MessageID& ident, ...) {
     if (isWarnEnabled()) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);
-        getLoggerptr()->warn(ident, message);
+        getLoggerPtr()->warn(ident, message);
     }
 }
 
@@ -160,7 +160,7 @@ Logger::error(const isc::log::MessageID& ident, ...) {
     if (isErrorEnabled()) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);
-        getLoggerptr()->error(ident, message);
+        getLoggerPtr()->error(ident, message);
     }
 }
 
@@ -169,12 +169,12 @@ Logger::fatal(const isc::log::MessageID& ident, ...) {
     if (isFatalEnabled()) {
         char message[MESSAGE_SIZE];
         FORMAT_MESSAGE(message);
-        getLoggerptr()->fatal(ident, message);
+        getLoggerPtr()->fatal(ident, message);
     }
 }
 
 bool Logger::operator==(Logger& other) {
-    return (*getLoggerptr() == *other.getLoggerptr());
+    return (*getLoggerPtr() == *other.getLoggerPtr());
 }
 
 // Protected methods (used for testing)
