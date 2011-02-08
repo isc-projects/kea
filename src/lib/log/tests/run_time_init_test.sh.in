@@ -26,6 +26,15 @@ passfail() {
     fi
     failcount=`expr $failcount + $1`
 }
+
+# Create the local message file for testing
+
+cat > $localmes << .
+NOTHERE     this message is not in the global dictionary
+READERR     replacement read error, parameters: '%s' and '%s'
+UNRECDIR    replacement unrecognised directive message, parameter is '%s'
+.
+
     
 echo -n "1. runInitTest default parameters: "
 cat > $tempfile << .
@@ -69,6 +78,7 @@ INFO  [alpha.dlm] OPENIN, unable to open message file example.msg for input: dum
 ./logger_support_test $localmes | cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
+rm -f $localmes
 rm -f $tempfile
 
 if [ $failcount -eq 0 ]; then
