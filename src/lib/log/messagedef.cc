@@ -33,4 +33,3 @@ MessageInitializer messagedef_cc_Tue_Feb__8_18_01_54_2011(values);
 
 } // namespace log
 } // namespace isc
-

@@ -254,7 +254,7 @@ public:
 
 private:
     std::string          name_;                 ///< Name of this logger
-    
+
     // Split the status of the root logger from this logger.  If - is will
     // probably be the usual case - no per-logger setting is enabled, a
     // quick check of logger_info_.empty() will return true and we can quickly
