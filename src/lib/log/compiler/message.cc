@@ -210,7 +210,7 @@ splitNamespace(string ns) {
 
         // Unnamed namespace
         components.push_back("");
-        
+
     } else {
 
         // Namespaces components are separated by double colon characters -

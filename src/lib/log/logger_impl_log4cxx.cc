@@ -77,7 +77,7 @@ LoggerImpl::initLogger() {
             new log4cxx::ConsoleAppender(layout));
         log4cxx::LoggerPtr sys_root_logger = log4cxx::Logger::getRootLogger();
         sys_root_logger->addAppender(console);
-        
+
         // Set the default logging to INFO
         sys_root_logger->setLevel(log4cxx::Level::getInfo());
 
@@ -225,7 +225,7 @@ LoggerImpl::getDebugLevel() {
 
         // Null pointer returned, logging should be that of the parent.
         return (0);
-        
+
     } else {
         int severity = level->toInt();
         if (severity <= log4cxx::Level::DEBUG_INT) {
