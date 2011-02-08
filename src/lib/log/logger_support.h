@@ -25,7 +25,7 @@ namespace log {
 /// \brief Run-Time Initialization
 ///
 /// This code will be used until the logger is fully integrated into the BIND-10
-/// configuration database.  It performs run-time initialization of th logger,
+/// configuration database.  It performs run-time initialization of the logger,
 /// in particular supplying run-time choices to it:
 ///
 /// * The severity (and if applicable, debug level) at which to log

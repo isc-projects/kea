@@ -214,7 +214,7 @@ splitNamespace(string ns) {
     } else {
 
         // Namespaces components are separated by double colon characters -
-         //convert to single colons.
+        // convert to single colons.
         size_t dcolon;
         while ((dcolon = ns.find("::")) != string::npos) {
             ns.replace(dcolon, 2, ":");
