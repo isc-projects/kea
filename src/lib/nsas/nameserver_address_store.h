@@ -60,7 +60,7 @@ public:
     /// tests) should it use to ask questions.
     /// \param zonehashsize Size of the zone hash table.  The default value of
     /// 1009 is the first prime number above 1000.
-    /// \param nshash size Size of the nameserver hash table.  The default
+    /// \param nshashsize Size of the nameserver hash table.  The default
     /// value of 3001 is the first prime number over 3000, and by implication,
     /// there is an assumption that there will be more nameservers than zones
     /// in the store.

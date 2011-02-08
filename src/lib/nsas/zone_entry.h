@@ -74,6 +74,8 @@ public:
      * \param name Name of the zone
      * \param class_code Class of this zone (zones of different classes have
      *     different objects.
+     * \param nameserver_table TODO
+     * \param nameserver_lru TODO
      * \todo Move to cc file, include the lookup (if NSAS uses resolver for
      *     everything)
      */

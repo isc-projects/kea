@@ -140,7 +140,7 @@ public:
     ///
     /// Initialises the hash table.
     ///
-    /// \param CmpFn Compare function (or object) used to compare an object with
+    /// \param cmp Compare function (or object) used to compare an object with
     /// to get the name to be used as a key in the table.  The object should be
     /// created via a "new" as ownership passes to the hash table.  The hash
     /// table will take the responsibility of deleting it.

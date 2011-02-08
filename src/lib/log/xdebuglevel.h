@@ -134,7 +134,7 @@ public:
     /// \return Pointer to the desired logging level object.
     static LevelPtr toLevel(int val, const LevelPtr& defaultLevel);
 
-    /// \param Convert String to Logging Level
+    /// \brief Convert String to Logging Level
     ///
     /// Returns a logging level object corresponding to the given name.  If the
     /// name is invalid, an object of logging level DEBUG (the minimum debug
@@ -145,7 +145,7 @@ public:
     /// \return Pointer to the desired logging level object.
     static LevelPtr toLevelLS(const LogString& sArg);
 
-    /// \param Convert String to Logging Level
+    /// \brief Convert String to Logging Level
     ///
     /// Returns a logging level object corresponding to the given name.  If the
     /// name is invalid, the given default is returned.
