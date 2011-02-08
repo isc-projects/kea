@@ -375,6 +375,10 @@ AC_ARG_WITH([log4cxx],
    log4cxx_library_path="${withval}/lib"
   ])
 
+# This is an urgent fix to avoid regression due to log4cxx on some
+# platforms.  It should be cleaned up with a better fix.
+if test "X$with_log4cxx" != "Xno"; then
+
 # If not specified, try some common paths.  These default to
 # /usr/include and /usr/lib if not found
 
@@ -405,7 +409,10 @@ if test "${log4cxx_library_path}"; then
 fi
 AC_SUBST(LOG4CXX_LDFLAGS)
 
-
+# The following two lines are part of the urgent fix, and should be cleaned
+# up with a better fix.
+fi
+AM_CONDITIONAL(USE_LOG4CXX, test "X${with_log4cxx}" != "Xno")
 
 #
 # Configure Boost header path
