@@ -67,7 +67,7 @@ LoggerImpl::setSeverity(isc::log::Severity severity, int dbglevel) {
 
     int debug_level = max(MIN_DEBUG_LEVEL, min(MAX_DEBUG_LEVEL, dbglevel));
     if (isRootLogger()) {
-        
+
         // Can only set severity for the root logger, you can't disable it.
         // Any attempt to do so is silently ignored.
         if (severity != isc::log::DEFAULT) {
@@ -208,7 +208,7 @@ void
 LoggerImpl::output(const char* sev_text, const MessageID& ident,
     const char* text)
 {
-    
+
     // Get the time in a struct tm format, and convert to text
     time_t t_time;
     time(&t_time);

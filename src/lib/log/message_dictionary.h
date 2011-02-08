@@ -161,7 +161,7 @@ public:
     virtual size_t size() const {
         return dictionary_.size();
     }
-    
+
 
     /// \brief Return begin() iterator of internal map
     const_iterator begin() const {

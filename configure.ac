@@ -366,7 +366,7 @@ AC_SUBST(USE_LCOV)
 # Configure log4cxx header and library path
 #
 # If explicitly specified, use it.
-# 
+#
 # AC_ARG_WITH([log4cxx],
 #   AC_HELP_STRING([--with-log4cxx=PATH],
 #     [specify directory where log4cxx is installed]),
@@ -374,10 +374,10 @@ AC_SUBST(USE_LCOV)
 #    log4cxx_include_path="${withval}/include";
 #    log4cxx_library_path="${withval}/lib"
 #   ])
-# 
+#
 # # If not specified, try some common paths.  These default to
 # # /usr/include and /usr/lib if not found
-# 
+#
 # if test -z "$with_log4cxx"; then
 # 	log4cxxdirs="/usr/local /usr/pkg /opt /opt/local"
 # 	for d in $log4cxxdirs
@@ -389,7 +389,7 @@ AC_SUBST(USE_LCOV)
 # 		fi
 # 	done
 # fi
-# 
+#
 # CPPFLAGS_SAVES="$CPPFLAGS"
 # if test "${log4cxx_include_path}" ; then
 # 	LOG4CXX_INCLUDES="-I${log4cxx_include_path}"
@@ -398,7 +398,7 @@ AC_SUBST(USE_LCOV)
 # AC_CHECK_HEADER([log4cxx/logger.h],, AC_MSG_ERROR([Missing log4cxx header files.]))
 # CPPFLAGS="$CPPFLAGS_SAVES"
 # AC_SUBST(LOG4CXX_INCLUDES)
-# 
+#
 # LOG4CXX_LDFLAGS="-llog4cxx";
 # if test "${log4cxx_library_path}"; then
 #     LOG4CXX_LDFLAGS="-L${log4cxx_library_path} -llog4cxx"
