@@ -14,8 +14,8 @@
 
 // $Id$
 
-#ifndef __LOGGER_IMPL_H
-#define __LOGGER_IMPL_H
+#ifndef __LOGGER_IMPL_LOG4CXX_H
+#define __LOGGER_IMPL_LOG4CXX_H
 
 #include <cstdlib>
 #include <string>
@@ -314,4 +314,4 @@ private:
 } // namespace isc
 
 
-#endif // __LOGGER_IMPL_H
+#endif // __LOGGER_IMPL_LOG4CXX_H
