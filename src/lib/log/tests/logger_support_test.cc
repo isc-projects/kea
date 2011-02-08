@@ -18,6 +18,7 @@
 ///
 /// Simple example program showing how to use the logger.
 
+#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 
