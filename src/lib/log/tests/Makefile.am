@@ -33,6 +33,8 @@ run_unittests_LDADD  = $(GTEST_LDADD)
 run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 endif
 
+EXTRA_DIST=localdef.mes
+
 TESTS += logger_support_test
 logger_support_test_SOURCES = logger_support_test.cc
 logger_support_test_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
