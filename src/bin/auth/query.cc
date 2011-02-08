@@ -141,54 +141,40 @@ Query::process() const {
 
     // Found a zone which is the nearest ancestor to QNAME, set the AA bit
     response_.setHeaderFlag(Message::HEADERFLAG_AA);
+    response_.setRcode(Rcode::NOERROR());
     while (keep_doing) {
         keep_doing = false;
         std::auto_ptr<RRsetList> target(qtype_is_any ? new RRsetList : NULL);
-        /*
-         * We use the rrset, not db_result.rrset because we might replace
-         * it while synthetizing the CNAME out of DNAME. The db_result is
-         * imutable, so we have a different variable.
-         */
         Zone::FindResult db_result(result.zone->find(qname_, qtype_,
             target.get()));
-        ConstRRsetPtr rrset(db_result.rrset);
 
         switch (db_result.code) {
             case Zone::DNAME: {
                 // First, put the dname into the answer
                 response_.addRRset(Message::SECTION_ANSWER,
-                    boost::const_pointer_cast<RRset>(rrset));
-                /*
-                 * We synthetize CNAME out of it, replace the rrset and let
-                 * the CNAME case handle it (including future chaining).
-                 * Therefore, we just fall trough to it.
-                 */
+                    boost::const_pointer_cast<RRset>(db_result.rrset));
                 /*
                  * Empty DNAME should never get in, as it is impossible to
                  * create one in master file.
                  */
-                assert(rrset->getRdataCount() > 0);
+                assert(db_result.rrset->getRdataCount() > 0);
                 // Get the data of DNAME
                 const rdata::generic::DNAME& dname(
                     dynamic_cast<const rdata::generic::DNAME&>(
-                    rrset->getRdataIterator()->getCurrent()));
+                    db_result.rrset->getRdataIterator()->getCurrent()));
                 // The new CNAME we are creating (it will be unsigned even
                 // with DNSSEC, the DNAME is signed and it can be validated
                 // by that)
-                RRsetPtr cname(new RRset(qname_, rrset->getClass(),
-                    RRType::CNAME(), rrset->getTTL()));
+                RRsetPtr cname(new RRset(qname_, db_result.rrset->getClass(),
+                    RRType::CNAME(), db_result.rrset->getTTL()));
                 try {
                     // Construct the new target by replacing the end
                     cname->addRdata(rdata::generic::CNAME(qname_.split(0,
                         qname_.getLabelCount() -
-                        rrset->getName().getLabelCount()).concatenate(
-                        dname.getDname())));
-                    rrset = cname;
-                    // If this was ANY, act as it wasn't, because we put the
-                    // CNAME into rrset, not to target and there's nothing else.
-                    // TODO: This might need to be changed when CNAME gets
-                    // chaining.
-                    qtype_is_any = false;
+                        db_result.rrset->getName().getLabelCount()).
+                        concatenate(dname.getDname())));
+                    response_.addRRset(Message::SECTION_ANSWER, cname);
+                    break;
                 }
                 /*
                  * In case the synthetized name is too long, section 4.1 of RFC 2672
@@ -198,7 +184,6 @@ Query::process() const {
                     response_.setRcode(Rcode::YXDOMAIN());
                     return;
                 }
-                // No break; here, fall trough.
             }
             case Zone::CNAME:
                 /*
@@ -207,10 +192,13 @@ Query::process() const {
                  * what we expected. It means no exceptions in ANY or NS
                  * on the origin (though CNAME in origin is probably
                  * forbidden anyway).
+                 *
+                 * So, just put it there.
                  */
-                // No break; here, fall trough.
+                response_.addRRset(Message::SECTION_ANSWER,
+                    boost::const_pointer_cast<RRset>(db_result.rrset));
+                break;
             case Zone::SUCCESS:
-                response_.setRcode(Rcode::NOERROR());
                 if (qtype_is_any) {
                     // If quety type is ANY, insert all RRs under the domain
                     // into answer section.
@@ -219,9 +207,9 @@ Query::process() const {
                     }
                 } else {
                     response_.addRRset(Message::SECTION_ANSWER,
-                        boost::const_pointer_cast<RRset>(rrset));
+                        boost::const_pointer_cast<RRset>(db_result.rrset));
                     // Handle additional for answer section
-                    getAdditional(*result.zone, *rrset);
+                    getAdditional(*result.zone, *db_result.rrset);
                 }
                 // If apex NS records haven't been provided in the answer
                 // section, insert apex NS records into the authority section
@@ -236,10 +224,9 @@ Query::process() const {
                 break;
             case Zone::DELEGATION:
                 response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
-                response_.setRcode(Rcode::NOERROR());
                 response_.addRRset(Message::SECTION_AUTHORITY,
-                    boost::const_pointer_cast<RRset>(rrset));
-                getAdditional(*result.zone, *rrset);
+                    boost::const_pointer_cast<RRset>(db_result.rrset));
+                getAdditional(*result.zone, *db_result.rrset);
                 break;
             case Zone::NXDOMAIN:
                 // Just empty answer with SOA in authority section
@@ -248,7 +235,6 @@ Query::process() const {
                 break;
             case Zone::NXRRSET:
                 // Just empty answer with SOA in authority section
-                response_.setRcode(Rcode::NOERROR());
                 putSOA(*result.zone);
                 break;
         }
