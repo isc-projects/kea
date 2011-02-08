@@ -365,5 +365,9 @@ TEST_F(StatisticsIntervalConfigTest, badInterval) {
     EXPECT_THROW(parser->build(Element::fromJSON("2.5")),
                  isc::data::TypeError);
     EXPECT_THROW(parser->build(Element::fromJSON("-1")), AuthConfigError);
+    // bounds check: interval value must be equal to or shorter than
+    // 86400 seconds (1 day)
+    EXPECT_NO_THROW(parser->build(Element::fromJSON("86400")));
+    EXPECT_THROW(parser->build(Element::fromJSON("86401")), AuthConfigError);
 }
 }
