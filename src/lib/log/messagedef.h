@@ -1,4 +1,4 @@
-// File created from messagedef.mes on Mon Feb  7 11:47:45 2011
+// File created from messagedef.mes on Tue Feb  8 18:01:54 2011
 
 #ifndef __MESSAGEDEF_H
 #define __MESSAGEDEF_H
@@ -31,11 +31,19 @@ static const isc::log::MessageID MSG_WRITERR = "WRITERR";
 namespace isc {
 namespace log {
 
-extern MessageInitializer messagedef_cc_Mon_Feb__7_11_47_45_2011;
-static MessageInstantiator instantiate_messagedef_cc_Mon_Feb__7_11_47_45_2011(
-   &messagedef_cc_Mon_Feb__7_11_47_45_2011);
+// The next two objects are needed to bring the default message
+// definitions into the program.  They make sure that the file
+// containing the message text is included in the link process.
+//
+// The objects are uniquely named (with file name and date and
+// time of compilation) to avoid clashes with other objects of
+// the same type, either by another #include or as a global
+// symbol in another module.
+
+extern MessageInitializer messagedef_cc_Tue_Feb__8_18_01_54_2011;
+static MessageInstantiator instantiate_messagedef_cc_Tue_Feb__8_18_01_54_2011(
+   &messagedef_cc_Tue_Feb__8_18_01_54_2011);
 
 } // namespace log
 } // namespace isc
-
 #endif // __MESSAGEDEF_H
