@@ -207,6 +207,18 @@ protected:
     static void reset();
 
 private:
+    /// \brief Copy Constructor
+    ///
+    /// Disabled (marked private) as it makes no sense to copy the logger -
+    /// just create another one of the same name.
+    Logger(const Logger&);
+
+    /// \brief Assignment Operator
+    ///
+    /// Disabled (marked private) as it makes no sense to copy the logger -
+    /// just create another one of the same name.
+    Logger& operator=(const Logger&);
+
     /// \brief Initialize Implementation
     ///
     /// Returns the logger pointer.  If not yet set, the underlying
@@ -220,7 +232,7 @@ private:
     /// will be initialized - we avoid this problem.
     ///
     /// \return Returns pointer to implementation
-    LoggerImpl* getLoggerptr() {
+    LoggerImpl* getLoggerPtr() {
         if (!loggerptr_) {
             initLoggerImpl();
         }

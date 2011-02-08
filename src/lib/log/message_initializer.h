@@ -74,7 +74,14 @@ public:
 /// that takes the extern reference to the MessageInitializer as its constructor
 /// argument.  The constructor - declared in another file - is a no-op.  But as
 /// the linker doesn't know, it must resolve the reference, hence pulling in the
-/// file containing the MessageInitializr.
+/// file containing the MessageInitializer.
+///\n
+/// Note that there is no problem about the static initialization fiasco here -
+/// a pointer to the MessageInitializer is passed to the MessageInstantiator,
+/// not the object itself; at the MessageInstantiator does nothing with the
+/// pointer and does not touch the MessageInitializer.  So it doesn't matter
+/// whether or not the MessageInitializer's constructor has been called when the
+/// MessageInstantiator runs.
 
 class MessageInstantiator {
 public:

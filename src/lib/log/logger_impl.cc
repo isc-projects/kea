@@ -205,7 +205,9 @@ LoggerImpl::isDebugEnabled(int dbglevel) {
 // Output a general message
 
 void
-LoggerImpl::output(const char* sev_text, const string& message) {
+LoggerImpl::output(const char* sev_text, const MessageID& ident,
+    const char* text)
+{
     
     // Get the time in a struct tm format, and convert to text
     time_t t_time;
@@ -218,39 +220,7 @@ LoggerImpl::output(const char* sev_text, const string& message) {
 
     // Now output.
     std::cout << chr_time << " " << sev_text << " [" << getName() << "] " <<
-        message << "\n";
-}
-
-// Output various levels
-
-void
-LoggerImpl::debug(const MessageID& ident, const char* text) {
-    string message = boost::lexical_cast<string>(ident) + ", " + text;
-    output("DEBUG", message);
-}
-
-void
-LoggerImpl::info(const MessageID& ident, const char* text) {
-    string message = boost::lexical_cast<string>(ident) + ", " + text;
-    output("INFO ", message);
-}
-
-void
-LoggerImpl::warn(const MessageID& ident, const char* text) {
-    string message = boost::lexical_cast<string>(ident) + ", " + text;
-    output("WARN ", message);
-}
-
-void
-LoggerImpl::error(const MessageID& ident, const char* text) {
-    string message = boost::lexical_cast<string>(ident) + ", " + text;
-    output("ERROR", message);
-}
-
-void
-LoggerImpl::fatal(const MessageID& ident, const char* text) {
-    string message = boost::lexical_cast<string>(ident) + ", " + text;
-    output("FATAL", message);
+        ident << ", " << text << "\n";
 }
 
 } // namespace log
