@@ -1,3 +1,74 @@
+  163.  [func]      vorner
+	The pimpl design pattern is used in UDPServer, with a shared pointer. This
+	makes it smaller to copy (which is done a lot as a sideeffect of being
+	coroutine) and speeds applications of this class (notably b10-auth) up by
+	around 10%.
+	(Trac #537, git 94cb95b1d508541201fc064302ba836164d3cbe6)
+
+  162.  [func]		stephen
+	Added C++ logging, allowing logging at different severities.
+	Code specifies the message to be logged via a symbol, and the
+	logging code picks up the message from an in-built dictionary.
+	The contents of the dictionary can be replaced at run-time by
+	locale-specific messages.  A message compiler program is provided
+	to create message header files and supply the default messages.
+	(Trac #438, git 7b1606cea7af15dc71f5ec1d70d958b00aa98af7)
+
+  161.  [func]		stephen
+	Added ResponseScrubber class to examine response from
+	a server and to remove out-of-bailiwick RRsets.  Also
+	does cross-section checks to ensure consistency.
+	(Trac #496, git b9296ca023cc9e76cda48a7eeebb0119166592c5)
+
+  160.  [func]		jelte
+  	Updated the resolver to take 3 different timeout values;
+	timeout_query for outstanding queries we sent while resolving
+	timeout_client for sending an answer back to the client
+	timeout_lookup for stopping the resolving
+	(currently 2 and 3 have the same final effect)
+	(Trac 489, git 578ea7f4ba94dc0d8a3d39231dad2be118e125a2)
+
+  159.	[func]		smann
+	The resolver now has a configurable set of root servers to start
+	resolving at (called root_addresses). By default these are not
+	(yet) filled in. If empty, a hardcoded address for f-root will be
+	used right now.
+	(Trac #483, git a07e078b4feeb01949133fc88c9939254c38aa7c)
+
+  158.	[func]		jelte
+	The Resolver module will now do (very limited) resolving, if not
+	set to forwarding mode (i.e. if the configuration option
+	forward_addresses is left empty). It only supports referrals that
+	contain glue addresses at this point, and does no other processing
+	of authoritative answers.
+	(Trac #484, git 7b84de4c0e11f4a070e038ca4f093486e55622af)
+
+  157.  [bug]       vorner
+	One frozen process no longer freezes the whole b10-msgq. It caused the
+	whole system to stop working.
+	(Trac #420, git 93697f58e4d912fa87bc7f9a591c1febc9e0d139)
+
+  156.	[func]		stephen
+	Added ResponseClassifier class to examine response from
+	a server and classify it into one of several categories.
+	(Trac #487, git 18491370576e7438c7893f8551bbb8647001be9c)
+
+bind10-devel-20110120 released on January 20, 2011
+
+  155.	[doc]		jreed
+	Miscellaneous documentation improvements for man pages and
+	the guide, including auth, resolver, stats, xfrout, and
+	zonemgr.  (git c14c4741b754a1eb226d3bdc3a7abbc4c5d727c0)
+
+  154.	[bug]		jinmei
+	b10-xfrin/b10-zonemgr: Fixed a bug where these programs didn't
+	receive command responses from CC sessions.  Eventually the
+	receive buffer became full, and many other components that rely
+	on CC channels would stall (as noted in #420 and #513).  This is
+	an urgent care fix due to the severity of the problem; we'll need
+	to revisit it for cleaner fix later.
+	(Trac #516, git 62c72fcdf4617e4841e901408f1e7961255b8194)
+
   153.	[bug]		jelte
 	b10-cfgmgr: Fixed a bug where configuration updates sometimes
 	lost previous settings in the configuration manager.
@@ -10,7 +81,7 @@
 	the value to 0.  Disabling statistics updates will also work as
 	a temporary workaround of a known issue that b10-auth can block in
 	sending statistics and stop responding to queries as a result.
-	(Trac #513, git 285c5ee)
+	(Trac #513, git 285c5ee3d5582ed6df02d1aa00387f92a74e3695)
 
   151.  [bug]		smann
 	lib/log/dummylog.h: 
@@ -42,7 +113,7 @@
   147.	[bug]		jinmei
 	python/isc/config: Fixed a bug that importing custom configuration
 	(in b10-config.db) of a remote module didn't work.
-	(Trac #478, git ea4a481)
+	(Trac #478, git ea4a481003d80caf2bff8d0187790efd526d72ca)
 
   146.	[func]		jelte
 	Command arguments were not validated internally against their
@@ -57,7 +128,8 @@
 	only feasible for class IN in memory data source.  To reload a
 	zone "example.com" via bindctl, execute the command as follows:
 	> Auth loadzone origin = example.com
-	(Trac #467)
+	(Trac #467 git 4f7e1f46da1046de527ab129a88f6aad3dba7562
+	from 1d7d3918661ba1c6a8b1e40d8fcbc5640a84df12)
 
   144.	[build]		jinmei
 	Introduced a workaround for clang++ build on FreeBSD (and probably
@@ -67,7 +139,8 @@
 	doesn't matter; the important part is the -L flag).  This
 	workaround is not automatically enabled as it's difficult to
 	detect the need for it dynamically, and must be enabled via the
-	variable by hand. (Trac #474, git cfde436)
+	variable by hand.
+	(Trac #474, git cfde436fbd7ddf3f49cbbd153999656e8ca2a298)
 
   143.	[build]		jinmei
 	Fixed build problems with clang++ in unit tests due to recent

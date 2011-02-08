@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <exceptions/exceptions.h>
 
 #include <dns/buffer.h>
@@ -252,6 +250,51 @@ TEST_F(MessageTest, hasRRset) {
     EXPECT_THROW(message_render.hasRRset(bogus_section, test_name,
                                          RRClass::IN(), RRType::A()),
                  OutOfRange);
+
+    // Repeat the checks having created an RRset of the appropriate type.
+
+    RRsetPtr rrs1(new RRset(test_name, RRClass::IN(), RRType::A(), RRTTL(60)));
+    EXPECT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, rrs1));
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ADDITIONAL, rrs1));
+
+    RRsetPtr rrs2(new RRset(Name("nomatch.example"), RRClass::IN(), RRType::A(),
+        RRTTL(5)));
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, rrs2));
+
+    RRsetPtr rrs3(new RRset(test_name, RRClass::CH(), RRType::A(), RRTTL(60)));
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, rrs3));
+
+    RRsetPtr rrs4(new RRset(test_name, RRClass::IN(), RRType::AAAA(), RRTTL(5)));
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, rrs4));
+
+    RRsetPtr rrs5(new RRset(test_name, RRClass::IN(), RRType::AAAA(), RRTTL(5)));
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, rrs4));
+
+    EXPECT_THROW(message_render.hasRRset(bogus_section, rrs1), OutOfRange);
+}
+
+TEST_F(MessageTest, removeRRset) {
+    message_render.addRRset(Message::SECTION_ANSWER, rrset_a);
+    message_render.addRRset(Message::SECTION_ANSWER, rrset_aaaa);
+    EXPECT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
+        RRClass::IN(), RRType::A()));
+    EXPECT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
+        RRClass::IN(), RRType::AAAA()));
+    EXPECT_EQ(3, message_render.getRRCount(Message::SECTION_ANSWER));
+
+    // Locate the AAAA RRset and remove it; this has one RR in it.
+    RRsetIterator i = message_render.beginSection(Message::SECTION_ANSWER);
+    if ((*i)->getType() == RRType::A()) {
+        ++i;
+    }
+    EXPECT_EQ(RRType::AAAA(), (*i)->getType());
+    message_render.removeRRset(Message::SECTION_ANSWER, i);
+
+    EXPECT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
+        RRClass::IN(), RRType::A()));
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
+        RRClass::IN(), RRType::AAAA()));
+    EXPECT_EQ(2, message_render.getRRCount(Message::SECTION_ANSWER));
 }
 
 TEST_F(MessageTest, badBeginSection) {

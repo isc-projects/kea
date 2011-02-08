@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __RRSETLIST_H
 #define __RRSETLIST_H 1
 
@@ -75,6 +73,27 @@ private:
     T it_;
 };
 
+/// A set of RRsets.
+///
+/// \note Do not use this class unless you really understand what
+/// you're doing and you're 100% sure that this class is the best choice
+/// for your purpose.
+///
+/// Counter intuitively, this class is not a "list" of RRsets but a
+/// "set" of them; it doesn't allow multiple RRsets of the same RR
+/// type and RR class to be added at the same time.  And, for that
+/// reason, adding an RRset is more expensive than you'd expect.  The
+/// class name is confusing, but was named so as a result of
+/// compromise: "RRsetset" would look awkward; RRsets would be
+/// confusing (with RRset).
+///
+/// In any case, if you want a list like container of RRsets, your best choice
+/// would be \c std::vector<RRset> or \c std::list<RRset>, not this class.
+/// In fact, in many cases \c RRsetList will be a suboptimal choice.
+/// This class is defined publicly as part of libdns++ for a historical
+/// reason and is actually quite specific to a particular need for libdatasrc.
+/// If you are tempted to use it, think twice to assess if this class
+/// is really what you want.  Again, in many cases the answer will be no.
 class RRsetList {
 private:
     RRsetList(const RRsetList& source);

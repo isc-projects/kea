@@ -13,8 +13,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <gtest/gtest.h>
 
 #include <config/tests/data_def_unittests_config.h>

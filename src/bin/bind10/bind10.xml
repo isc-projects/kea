@@ -17,7 +17,6 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $Id$ -->
 <refentry>
 
   <refentryinfo>
@@ -132,7 +131,7 @@
             daemon to listen on.
             The default is 5300.</para>
 <!-- TODO: -->
-	    <note><simpara>The Y1 prototype release uses a non-default
+	    <note><simpara>This prototype release uses a non-default
 	    port for domain service.</simpara></note>
          </listitem>
       </varlistentry>

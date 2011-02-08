@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <config.h>
 
 #include <netinet/in.h>
@@ -161,9 +159,13 @@ AuthSrvImpl::~AuthSrvImpl() {
 class MessageLookup : public DNSLookup {
 public:
     MessageLookup(AuthSrv* srv) : server_(srv) {}
-    virtual void operator()(const IOMessage& io_message, MessagePtr message,
-                            OutputBufferPtr buffer, DNSServer* server) const
+    virtual void operator()(const IOMessage& io_message,
+                            MessagePtr message,
+                            MessagePtr answer_message,
+                            OutputBufferPtr buffer,
+                            DNSServer* server) const
     {
+        (void) answer_message;
         server_->processMessage(io_message, message, buffer, server);
     }
 private:
@@ -182,7 +184,7 @@ class MessageAnswer : public DNSAnswer {
 public:
     MessageAnswer(AuthSrv*) {}
     virtual void operator()(const IOMessage&, MessagePtr,
-                            OutputBufferPtr) const
+                            MessagePtr, OutputBufferPtr) const
     {}
 };
 

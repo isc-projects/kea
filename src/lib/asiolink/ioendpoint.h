@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __IOENDPOINT_H
 #define __IOENDPOINT_H 1
 
@@ -26,6 +24,7 @@
 #include <string>
 
 #include <exceptions/exceptions.h>
+#include <asiolink/ioaddress.h>
 
 namespace asiolink {
 

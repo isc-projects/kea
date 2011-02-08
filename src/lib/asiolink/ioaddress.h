@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __IOADDRESS_H
 #define __IOADDRESS_H 1
 
@@ -75,8 +73,47 @@ public:
     /// \return A string representation of the address.
     std::string toText() const;
 
-    /// \brief Returns the address family.
+    /// \brief Returns the address family
+    ///
+    /// \return AF_INET for IPv4 or AF_INET6 for IPv6.
     short getFamily() const;
+
+    /// \brief Compare addresses for equality
+    ///
+    /// \param other Address to compare against.
+    ///
+    /// \return true if addresses are equal, false if not.
+    bool equals(const IOAddress& other) const {
+        return (asio_address_ == other.asio_address_);
+    }
+
+    /// \brief Compare addresses for equality
+    ///
+    /// \param other Address to compare against.
+    ///
+    /// \return true if addresses are equal, false if not.
+    bool operator==(const IOAddress& other) const {
+        return equals(other);
+    }
+
+    // \brief Compare addresses for inequality
+    ///
+    /// \param other Address to compare against.
+    ///
+    /// \return false if addresses are equal, true if not.
+    bool nequals(const IOAddress& other) const {
+        return (!equals(other));
+    }
+
+    // \brief Compare addresses for inequality
+    ///
+    /// \param other Address to compare against.
+    ///
+    /// \return false if addresses are equal, true if not.
+    bool operator!=(const IOAddress& other) const {
+        return (nequals(other));
+    }
+
 
 private:
     asio::ip::address asio_address_;

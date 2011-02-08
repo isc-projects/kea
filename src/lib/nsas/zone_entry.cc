@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $id$
-
 #include <config.h>
 
 #include "zone_entry.h"
@@ -24,6 +22,7 @@
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
 #include <dns/rrttl.h>
+#include <dns/rcode.h>
 #include <dns/rdataclass.h>
 
 using namespace std;
@@ -34,7 +33,8 @@ using namespace dns;
 
 namespace nsas {
 
-ZoneEntry::ZoneEntry(boost::shared_ptr<ResolverInterface> resolver,
+ZoneEntry::ZoneEntry(
+    boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
     const std::string& name, const isc::dns::RRClass& class_code,
     boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table,
     boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru) :
@@ -75,7 +75,8 @@ newNs(const std::string* name, const RRClass* class_code) {
  * code. It manipulates directly ZoneEntry's data members, locks it and like
  * that. Mostly eliminates C++ bad design of missing lambda functions.
  */
-class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
+class ZoneEntry::ResolverCallback :
+        public isc::resolve::ResolverInterface::Callback {
     public:
         /// \short Constructor. Pass "this" zone entry
         ResolverCallback(boost::shared_ptr<ZoneEntry> entry) :
@@ -92,8 +93,21 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
          * examining them and seeing if some addresses are already there
          * and to ask for the rest of them.
          */
-        virtual void success(const boost::shared_ptr<AbstractRRset>& answer) {
+        virtual void success(MessagePtr response_message) {
             Lock lock(entry_->mutex_);
+
+            // TODO: find the correct RRset, not simply the first
+            if (!response_message ||
+                response_message->getRcode() != isc::dns::Rcode::NOERROR() ||
+                response_message->getRRCount(isc::dns::Message::SECTION_ANSWER) == 0) {
+                // todo: define this
+                failureInternal(300);
+            }
+
+            isc::dns::RRsetIterator rrsi =
+                response_message->beginSection(isc::dns::Message::SECTION_ANSWER);
+            const isc::dns::RRsetPtr answer = *rrsi;
+
             RdataIteratorPtr iterator(answer->getRdataIterator());
             // If there are no data
             if (iterator->isLast()) {

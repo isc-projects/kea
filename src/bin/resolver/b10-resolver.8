@@ -2,12 +2,12 @@
 .\"     Title: b10-resolver
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: January 3, 2011
+.\"      Date: January 19, 2011
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
-.TH "B10\-RESOLVER" "8" "January 3, 2011" "BIND10" "BIND10"
+.TH "B10\-RESOLVER" "8" "January 19, 2011" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -38,7 +38,7 @@ C\-Channel connection\&. If this connection is not established,
 will exit\&.
 .PP
 It also receives its configurations from
-\fBb10-cfgmgr\fR(8)\&. Currently no configuration commands are defined\&.
+\fBb10-cfgmgr\fR(8)\&.
 .if n \{\
 .sp
 .\}
@@ -73,9 +73,40 @@ must be either a valid numeric user ID or a valid user name\&. By default the da
 .RS 4
 Enabled verbose mode\&. This enables diagnostic messages to STDERR\&.
 .RE
-.SH "FILES"
+.SH "CONFIGURATION AND COMMANDS"
 .PP
-None\&.
+The configurable settings are:
+.PP
+
+\fIforward_addresses\fR
+defines the list of addresses and ports that
+\fBb10\-resolver\fR
+should forward queries to\&. Defining this enables forwarding\&.
+.PP
+
+\fIlisten_on\fR
+is a list of addresses and ports for
+\fBb10\-resolver\fR
+to listen on\&. The list items are the
+\fIaddress\fR
+string and
+\fIport\fR
+number\&. The defaults are address ::1 port 5300 and address 127\&.0\&.0\&.1 port 5300\&.
+.PP
+
+\fIretries\fR
+is the number of times to retry (resend query) after a timeout\&. The default is 0 (do not retry)\&.
+.PP
+
+\fItimeout\fR
+is the number of milliseconds to wait for answer\&. If set to \-1, the timeout is disabled\&. The default is 2000\&.
+.PP
+The configuration command is:
+.PP
+
+\fBshutdown\fR
+exits
+\fBb10\-resolver\fR\&. (Note that the BIND 10 boss process will restart this service\&.)
 .SH "SEE ALSO"
 .PP
 
@@ -88,7 +119,9 @@ BIND 10 Guide\&.
 .PP
 The
 \fBb10\-resolver\fR
-daemon was first coded in September 2010\&.
+daemon was first coded in September 2010\&. The initial implementation only provided forwarding\&.
+
+
 .SH "COPYRIGHT"
 .br
 Copyright \(co 2010 Internet Systems Consortium, Inc. ("ISC")

@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <config.h>
 
 #include <vector>
@@ -34,6 +32,7 @@
 #include <auth/statistics.h>
 
 #include <dns/tests/unittest_util.h>
+#include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
 
 using namespace std;
@@ -139,9 +138,10 @@ TEST_F(AuthSrvTest, builtInQueryViaDNSServer) {
     createRequestPacket(request_message, IPPROTO_UDP);
 
     (*server.getDNSLookupProvider())(*io_message, parse_message,
+                                     response_message,
                                      response_obuffer, &dnsserv);
     (*server.getDNSAnswerProvider())(*io_message, parse_message,
-                                     response_obuffer);
+                                     response_message, response_obuffer);
 
     createBuiltinVersionResponse(default_qid, response_data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
@@ -154,9 +154,10 @@ TEST_F(AuthSrvTest, builtInQueryViaDNSServer) {
 TEST_F(AuthSrvTest, iqueryViaDNSServer) {
     createDataFromFile("iquery_fromWire.wire");
     (*server.getDNSLookupProvider())(*io_message, parse_message,
+                                     response_message,
                                      response_obuffer, &dnsserv);
     (*server.getDNSAnswerProvider())(*io_message, parse_message,
-                                     response_obuffer);
+                                     response_message, response_obuffer);
 
     UnitTestUtil::readWireData("iquery_response_fromWire.wire",
                                response_data);

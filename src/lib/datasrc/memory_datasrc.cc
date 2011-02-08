@@ -19,6 +19,7 @@
 
 #include <dns/name.h>
 #include <dns/rrclass.h>
+#include <dns/rrsetlist.h>
 #include <dns/masterload.h>
 
 #include <datasrc/memory_datasrc.h>
@@ -34,13 +35,13 @@ namespace datasrc {
 struct MemoryZone::MemoryZoneImpl {
     // Constructor
     MemoryZoneImpl(const RRClass& zone_class, const Name& origin) :
-        zone_class_(zone_class), origin_(origin)
-    {}
-
-    // Information about the zone
-    RRClass zone_class_;
-    Name origin_;
-    string file_name_;
+        zone_class_(zone_class), origin_(origin), origin_data_(NULL)
+    {
+        // We create the node for origin (it needs to exist anyway in future)
+        domains_.insert(origin, &origin_data_);
+        DomainPtr origin_domain(new Domain);
+        origin_data_->setData(origin_domain);
+    }
 
     // Some type aliases
     /*
@@ -60,8 +61,57 @@ struct MemoryZone::MemoryZoneImpl {
     // The tree stores domains
     typedef RBTree<Domain> DomainTree;
     typedef RBNode<Domain> DomainNode;
+
+    // Information about the zone
+    RRClass zone_class_;
+    Name origin_;
+    DomainNode* origin_data_;
+    string file_name_;
+
     // The actual zone data
     DomainTree domains_;
+
+    /*
+     * Does some checks in context of the data that are already in the zone.
+     * Currently checks for forbidden combinations of RRsets in the same
+     * domain (CNAME+anything, DNAME+NS).
+     *
+     * If such condition is found, it throws AddError.
+     */
+    void contextCheck(const ConstRRsetPtr& rrset,
+                      const DomainPtr& domain) const {
+        // Ensure CNAME and other type of RR don't coexist for the same
+        // owner name.
+        if (rrset->getType() == RRType::CNAME()) {
+            // XXX: this check will become incorrect when we support DNSSEC
+            // (depending on how we support DNSSEC).  We should revisit it
+            // at that point.
+            if (!domain->empty()) {
+                isc_throw(AddError, "CNAME can't be added with other data for "
+                          << rrset->getName());
+            }
+        } else if (domain->find(RRType::CNAME()) != domain->end()) {
+            isc_throw(AddError, "CNAME and " << rrset->getType() <<
+                      " can't coexist for " << rrset->getName());
+        }
+
+        /*
+         * Similar with DNAME, but it must not coexist only with NS and only in
+         * non-apex domains.
+         * RFC 2672 section 3 mentions that it is implied from it and RFC 2181
+         */
+        if (rrset->getName() != origin_ &&
+            // Adding DNAME, NS already there
+            ((rrset->getType() == RRType::DNAME() &&
+            domain->find(RRType::NS()) != domain->end()) ||
+            // Adding NS, DNAME already there
+            (rrset->getType() == RRType::NS() &&
+            domain->find(RRType::DNAME()) != domain->end())))
+        {
+            isc_throw(AddError, "DNAME can't coexist with NS in non-apex "
+                "domain " << rrset->getName());
+        }
+    }
 
     /*
      * Implementation of longer methods. We put them here, because the
@@ -73,6 +123,19 @@ struct MemoryZone::MemoryZoneImpl {
         if (!rrset) {
             isc_throw(NullRRset, "The rrset provided is NULL");
         }
+        // Check for singleton RRs. It should probably handled at a different
+        // in future.
+        if ((rrset->getType() == RRType::CNAME() ||
+            rrset->getType() == RRType::DNAME()) &&
+            rrset->getRdataCount() > 1)
+        {
+            // XXX: this is not only for CNAME or DNAME. We should generalize
+            // this code for all other "singleton RR types" (such as SOA) in a
+            // separate task.
+            isc_throw(AddError, "multiple RRs of singleton type for "
+                      << rrset->getName());
+        }
+
         Name name(rrset->getName());
         NameComparisonResult compare(origin_.compare(name));
         if (compare.getRelation() != NameComparisonResult::SUPERDOMAIN &&
@@ -92,7 +155,7 @@ struct MemoryZone::MemoryZoneImpl {
             default:
                 assert(0);
         }
-        assert(node);
+        assert(node != NULL);
 
         // Now get the domain
         DomainPtr domain;
@@ -104,15 +167,24 @@ struct MemoryZone::MemoryZoneImpl {
             domain = node->getData();
         }
 
+        // Checks related to the surrounding data.
+        // Note: when the check fails and the exception is thrown, it may
+        // break strong exception guarantee.  At the moment we prefer
+        // code simplicity and don't bother to introduce complicated
+        // recovery code.
+        contextCheck(rrset, domain);
+
         // Try inserting the rrset there
         if (domain->insert(DomainPair(rrset->getType(), rrset)).second) {
             // Ok, we just put it in
 
             // If this RRset creates a zone cut at this node, mark the node
             // indicating the need for callback in find().
-            // TBD: handle DNAME, too
             if (rrset->getType() == RRType::NS() &&
                 rrset->getName() != origin_) {
+                node->enableCallback();
+            // If it is DNAME, we have a callback as well here
+            } else if (rrset->getType() == RRType::DNAME()) {
                 node->enableCallback();
             }
 
@@ -145,31 +217,56 @@ struct MemoryZone::MemoryZoneImpl {
     /// It will be passed to \c zonecutCallback() and record a possible
     /// zone cut node and related RRset (normally NS or DNAME).
     struct FindState {
-        FindState(FindOptions options) : zonecut_node_(NULL),
-                                         options_(options)
+        FindState(FindOptions options) :
+            zonecut_node_(NULL),
+            dname_node_(NULL),
+            options_(options)
         {}
         const DomainNode* zonecut_node_;
+        const DomainNode* dname_node_;
         ConstRRsetPtr rrset_;
         const FindOptions options_;
     };
 
-    // A callback called from possible zone cut nodes.  This will be passed
-    // from the \c find() method to \c RBTree::find().
-    static bool zonecutCallback(const DomainNode& node, FindState* state) {
-        // We perform callback check only for the highest zone cut in the
-        // rare case of nested zone cuts.
-        if (state->zonecut_node_ != NULL) {
-            return (false);
+    // A callback called from possible zone cut nodes and nodes with DNAME.
+    // This will be passed from the \c find() method to \c RBTree::find().
+    static bool cutCallback(const DomainNode& node, FindState* state) {
+        // We need to look for DNAME first, there's allowed case where
+        // DNAME and NS coexist in the apex. DNAME is the one to notice,
+        // the NS is authoritative, not delegation (corner case explicitly
+        // allowed by section 3 of 2672)
+        const Domain::const_iterator foundDNAME(node.getData()->find(
+            RRType::DNAME()));
+        if (foundDNAME != node.getData()->end()) {
+            state->dname_node_ = &node;
+            state->rrset_ = foundDNAME->second;
+            // No more processing below the DNAME (RFC 2672, section 3
+            // forbids anything to exist below it, so there's no need
+            // to actually search for it). This is strictly speaking
+            // a different way than described in 4.1 of that RFC,
+            // but because of the assumption in section 3, it has the
+            // same behaviour.
+            return (true);
         }
 
-        const Domain::const_iterator found(node.getData()->find(RRType::NS()));
-        if (found != node.getData()->end()) {
-            // BIND 9 checks if this node is not the origin.  But it cannot
-            // be the origin because we don't enable the callback at the
-            // origin node (see MemoryZoneImpl::add()).  Or should we do a
-            // double check for it?
+        // Look for NS
+        const Domain::const_iterator foundNS(node.getData()->find(
+            RRType::NS()));
+        if (foundNS != node.getData()->end()) {
+            // We perform callback check only for the highest zone cut in the
+            // rare case of nested zone cuts.
+            if (state->zonecut_node_ != NULL) {
+                return (false);
+            }
+
+            // BIND 9 checks if this node is not the origin.  That's probably
+            // because it can support multiple versions for dynamic updates
+            // and IXFR, and it's possible that the callback is called at
+            // the apex and the DNAME doesn't exist for a particular version.
+            // It cannot happen for us (at least for now), so we don't do
+            // that check.
             state->zonecut_node_ = &node;
-            state->rrset_ = found->second;
+            state->rrset_ = foundNS->second;
 
             // Unless glue is allowed the search stops here, so we return
             // false; otherwise return true to continue the search.
@@ -185,15 +282,40 @@ struct MemoryZone::MemoryZoneImpl {
         return (false);
     }
 
+
     // Implementation of MemoryZone::find
     FindResult find(const Name& name, RRType type,
-                    const FindOptions options) const
+                    RRsetList* target, const FindOptions options) const
     {
         // Get the node
         DomainNode* node(NULL);
         FindState state(options);
-        switch (domains_.find(name, &node, zonecutCallback, &state)) {
+        RBTreeNodeChain<Domain> node_path;
+        switch (domains_.find(name, &node, node_path, cutCallback, &state)) {
             case DomainTree::PARTIALMATCH:
+                /*
+                 * In fact, we could use a single variable instead of
+                 * dname_node_ and zonecut_node_. But then we would need
+                 * to distinquish these two cases by something else and
+                 * it seemed little more confusing to me when I wrote it.
+                 *
+                 * Usually at most one of them will be something else than
+                 * NULL (it might happen both are NULL, in which case we
+                 * consider it NOT FOUND). There's one corner case when
+                 * both might be something else than NULL and it is in case
+                 * there's a DNAME under a zone cut and we search in
+                 * glue OK mode ‒ in that case we don't stop on the domain
+                 * with NS and ignore it for the answer, but it gets set
+                 * anyway. Then we find the DNAME and we need to act by it,
+                 * therefore we first check for DNAME and then for NS. In
+                 * all other cases it doesn't matter, as at least one of them
+                 * is NULL.
+                 */
+                if (state.dname_node_ != NULL) {
+                    // We were traversing a DNAME node (and wanted to go
+                    // lower below it), so return the DNAME
+                    return (FindResult(DNAME, state.rrset_));
+                }
                 if (state.zonecut_node_ != NULL) {
                     return (FindResult(DELEGATION, state.rrset_));
                 }
@@ -214,12 +336,24 @@ struct MemoryZone::MemoryZoneImpl {
         Domain::const_iterator found;
 
         // If the node callback is enabled, this may be a zone cut.  If it
-        // has a NS RR, we should return a delegation.
-        if (node->isCallbackEnabled()) {
+        // has a NS RR, we should return a delegation, but not in the apex.
+        if (node->isCallbackEnabled() && node != origin_data_) {
             found = node->getData()->find(RRType::NS());
             if (found != node->getData()->end()) {
                 return (FindResult(DELEGATION, found->second));
             }
+        }
+
+        // handle type any query
+        if (target != NULL && !node->getData()->empty()) {
+            // Empty domain will be handled as NXRRSET by normal processing
+            for (found = node->getData()->begin();
+                 found != node->getData()->end(); found++)
+            {
+                target->addRRset(
+                    boost::const_pointer_cast<RRset>(found->second));
+            }
+            return (FindResult(SUCCESS, ConstRRsetPtr()));
         }
 
         found = node->getData()->find(type);
@@ -227,13 +361,14 @@ struct MemoryZone::MemoryZoneImpl {
             // Good, it is here
             return (FindResult(SUCCESS, found->second));
         } else {
-            /*
-             * TODO Look for CNAME and DNAME (it should be OK to do so when
-             * the value is not found, as CNAME/DNAME domain should be
-             * empty otherwise.)
-             */
-            return (FindResult(NXRRSET, ConstRRsetPtr()));
+            // Next, try CNAME.
+            found = node->getData()->find(RRType::CNAME());
+            if (found != node->getData()->end()) {
+                return (FindResult(CNAME, found->second));
+            }
         }
+        // No exact match or CNAME.  Return NXRRSET.
+        return (FindResult(NXRRSET, ConstRRsetPtr()));
     }
 };
 
@@ -258,9 +393,9 @@ MemoryZone::getClass() const {
 
 Zone::FindResult
 MemoryZone::find(const Name& name, const RRType& type,
-                 const FindOptions options) const
+                 RRsetList* target, const FindOptions options) const
 {
-    return (impl_->find(name, type, options));
+    return (impl_->find(name, type, target, options));
 }
 
 result::Result
