@@ -12,7 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-
 #include <gtest/gtest.h>
 
 #include <exceptions/exceptions.h>
@@ -340,6 +339,128 @@ TEST_F(RBTreeTest, nextNodeError) {
     // Empty chain for nextNode() is invalid.
     RBTreeNodeChain<int> chain;
     EXPECT_THROW(rbtree.nextNode(chain), BadValue);
+}
+
+// A helper function for getLastComparedNode() below.
+void
+comparisonChecks(const RBTreeNodeChain<int>& chain,
+                 int expected_order, int expected_common_labels,
+                 NameComparisonResult::NameRelation expected_reln)
+{
+    if (expected_order > 0) {
+        EXPECT_LT(0, chain.getLastComparisonResult().getOrder());
+    } else if (expected_order < 0) {
+        EXPECT_GT(0, chain.getLastComparisonResult().getOrder());
+    } else {
+        EXPECT_EQ(0, chain.getLastComparisonResult().getOrder());
+    }
+    EXPECT_EQ(expected_common_labels,
+              chain.getLastComparisonResult().getCommonLabels());
+    EXPECT_EQ(expected_reln,
+              chain.getLastComparisonResult().getRelation());
+}
+
+TEST_F(RBTreeTest, getLastComparedNode) {
+    RBTree<int>& tree = rbtree_expose_empty_node; // use the "empty OK" mode
+    RBTreeNodeChain<int> chain;
+
+    // initially there should be no 'last compared'.
+    EXPECT_EQ(static_cast<void*>(NULL), chain.getLastComparedNode());
+
+    // A search for an empty tree should result in no 'last compared', too.
+    RBTree<int> empty_tree;
+    EXPECT_EQ(RBTree<int>::NOTFOUND,
+              empty_tree.find<void*>(Name("a"), &crbtnode, chain, NULL, NULL));
+    EXPECT_EQ(static_cast<void*>(NULL), chain.getLastComparedNode());
+    chain.clear();
+
+    const RBNode<int>* expected_node;
+
+    // Exact match case.  The returned node should be last compared.
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              tree.find<void*>(Name("x.d.e.f"), &expected_node, chain,
+                               NULL, NULL));
+    EXPECT_EQ(expected_node, chain.getLastComparedNode());
+    // 2 = # labels of "x."
+    comparisonChecks(chain, 0, 2, NameComparisonResult::EQUAL);
+    chain.clear();
+
+    // Partial match, search stopped at the matching node, which should be
+    // the last compared node.
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              tree.find(Name("i.g.h"), &expected_node));
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              tree.find<void*>(Name("x.i.g.h"), &crbtnode, chain,
+                                 NULL, NULL));
+    EXPECT_EQ(expected_node, chain.getLastComparedNode());
+    // i.g.h < x.i.g.h, 2 = # labels of "i."
+    comparisonChecks(chain, 1, 2, NameComparisonResult::SUBDOMAIN);
+    chain.clear();
+
+    // Partial match, search stopped in the subtree below the matching node
+    // after following a left branch.
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              tree.find(Name("x.d.e.f"), &expected_node));
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              tree.find<void*>(Name("a.d.e.f"), &crbtnode, chain,
+                                 NULL, NULL));
+    EXPECT_EQ(expected_node, chain.getLastComparedNode());
+    // a < x, 1 = # labels of "." (trailing dot)
+    comparisonChecks(chain, -1, 1, NameComparisonResult::COMMONANCESTOR);
+    chain.clear();
+
+    // Partial match, search stopped in the subtree below the matching node
+    // after following a right branch.
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              tree.find(Name("z.d.e.f"), &expected_node));
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              tree.find<void*>(Name("zz.d.e.f"), &crbtnode, chain,
+                                 NULL, NULL));
+    EXPECT_EQ(expected_node, chain.getLastComparedNode());
+    // zz > z, 1 = # labels of "." (trailing dot)
+    comparisonChecks(chain, 1, 1, NameComparisonResult::COMMONANCESTOR);
+    chain.clear();
+
+    // Partial match, search stopped at a node for a super domain of the
+    // search name in the subtree below the matching node.
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              tree.find(Name("w.y.d.e.f"), &expected_node));
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              tree.find<void*>(Name("y.d.e.f"), &crbtnode, chain,
+                                 NULL, NULL));
+    EXPECT_EQ(expected_node, chain.getLastComparedNode());
+    // y < w.y, 2 = # labels of "y."
+    comparisonChecks(chain, -1, 2, NameComparisonResult::SUPERDOMAIN);
+    chain.clear();
+
+    // Partial match, search stopped at a node that share a common ancestor
+    // with the search name in the subtree below the matching node.
+    // (the expected node is the same as the previous case)
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              tree.find<void*>(Name("z.y.d.e.f"), &crbtnode, chain,
+                                 NULL, NULL));
+    EXPECT_EQ(expected_node, chain.getLastComparedNode());
+    // z.y > w.y, 2 = # labels of "y."
+    comparisonChecks(chain, 1, 2, NameComparisonResult::COMMONANCESTOR);
+    chain.clear();
+
+    // Search stops in the highest level after following a left branch.
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, tree.find(Name("c"), &expected_node));
+    EXPECT_EQ(RBTree<int>::NOTFOUND,
+              tree.find<void*>(Name("bb"), &crbtnode, chain, NULL, NULL));
+    EXPECT_EQ(expected_node, chain.getLastComparedNode());
+    // bb < c, 1 = # labels of "." (trailing dot)
+    comparisonChecks(chain, -1, 1, NameComparisonResult::COMMONANCESTOR);
+    chain.clear();
+
+    // Search stops in the highest level after following a right branch.
+    // (the expected node is the same as the previous case)
+    EXPECT_EQ(RBTree<int>::NOTFOUND,
+              tree.find<void*>(Name("d"), &crbtnode, chain, NULL, NULL));
+    EXPECT_EQ(expected_node, chain.getLastComparedNode());
+    // d > c, 1 = # labels of "." (trailing dot)
+    comparisonChecks(chain, 1, 1, NameComparisonResult::COMMONANCESTOR);
+    chain.clear();
 }
 
 TEST_F(RBTreeTest, dumpTree) {
