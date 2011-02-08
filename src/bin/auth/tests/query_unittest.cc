@@ -481,8 +481,8 @@ TEST_F(QueryTest, CNAME) {
     Query(memory_datasrc, Name("cname.example.com"), RRType::A(),
         response).process();
 
-    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
-        cname_txt, zone_ns_txt, ns_addrs_txt);
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 0, 0,
+        cname_txt, NULL, NULL);
 }
 
 TEST_F(QueryTest, explicitCNAME) {
@@ -503,8 +503,8 @@ TEST_F(QueryTest, CNAME_NX_RRSET) {
     Query(memory_datasrc, Name("cname.example.com"), RRType::TXT(),
         response).process();
 
-    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
-        cname_txt, zone_ns_txt, ns_addrs_txt);
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 0, 0,
+        cname_txt, NULL, NULL);
 }
 
 TEST_F(QueryTest, explicitCNAME_NX_RRSET) {
@@ -526,8 +526,8 @@ TEST_F(QueryTest, CNAME_NX_DOMAIN) {
     Query(memory_datasrc, Name("cnamenxdom.example.com"), RRType::A(),
         response).process();
 
-    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
-        cname_nxdom_txt, zone_ns_txt, ns_addrs_txt);
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 0, 0,
+        cname_nxdom_txt, NULL, NULL);
 }
 
 TEST_F(QueryTest, explicitCNAME_NX_DOMAIN) {
@@ -551,8 +551,8 @@ TEST_F(QueryTest, CNAME_OUT) {
     Query(memory_datasrc, Name("cnameout.example.com"), RRType::A(),
         response).process();
 
-    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
-        cname_out_txt, zone_ns_txt, ns_addrs_txt);
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 0, 0,
+        cname_out_txt, NULL, NULL);
 }
 
 TEST_F(QueryTest, explicitCNAME_OUT) {
@@ -576,25 +576,24 @@ TEST_F(QueryTest, DNAME) {
     Query(memory_datasrc, Name("www.dname.example.com"), RRType::A(),
         response).process();
 
-    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 3, 3,
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 0, 0,
         (string(dname_txt) + synthetized_cname_txt).c_str(),
-        zone_ns_txt, ns_addrs_txt);
+        NULL, NULL);
 }
 
 /*
  * Ask an ANY query below a DNAME. Should return the DNAME and synthetized
  * CNAME.
  *
- * This is added because the original version didn't include the CNAME at
- * all.
+ * This is added because the original implementation had a bug and didn't
+ * include the CNAME at all.
  */
 TEST_F(QueryTest, DNAME_ANY) {
     Query(memory_datasrc, Name("www.dname.example.com"), RRType::ANY(),
         response).process();
 
-    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 3, 3,
-        (string(dname_txt) + synthetized_cname_txt).c_str(),
-        zone_ns_txt, ns_addrs_txt);
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 0, 0,
+        (string(dname_txt) + synthetized_cname_txt).c_str(), NULL, NULL);
 }
 
 // Test when we ask for DNAME explicitly, it does no synthetizing.
