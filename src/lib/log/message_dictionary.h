@@ -86,7 +86,7 @@ public:
     /// const char* and adds them to the dictionary.  The messages are added
     /// using "Add".
     ///
-    /// \param data null-terminated array of const char* alternating ID and
+    /// \param elements null-terminated array of const char* alternating ID and
     /// message text.  This should be an odd number of elements long, the last
     /// elemnent being NULL.  If it is an even number of elements long, the
     /// last ID is ignored.

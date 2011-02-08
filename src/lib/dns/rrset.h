@@ -278,6 +278,7 @@ public:
     /// name when possible in the context of zone dump.  This is a future
     /// TODO item.
     ///
+/* TODO: why does this have a param when not in argument list? */
     /// \param rrset A reference to a (derived class of) \c AbstractRRset object
     /// whose content is to be converted.
     /// \return A string representation of the RRset.
