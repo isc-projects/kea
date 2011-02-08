@@ -133,7 +133,7 @@ public:
     /// \param name Name to expand
     ///
     /// \return Name expanded with stored name
-    std::string useAsDefault(const std::string&) const;
+    std::string useAsDefault(const std::string& name) const;
 
 private:
     /// \brief Split Name into Components
