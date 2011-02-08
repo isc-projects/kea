@@ -32,7 +32,7 @@ namespace isc {
 namespace log {
 
 // Initialize Logger implementation.  Does not check whether the implementation
-// has already been ionitialized - that was done by the caller (getLoggerptr()).
+// has already been initialized - that was done by the caller (getLoggerptr()).
 void Logger::initLoggerImpl() {
     loggerptr_ = new LoggerImpl(name_, infunc_);
 }
