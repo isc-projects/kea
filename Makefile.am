@@ -1,4 +1,4 @@
-SUBDIRS = src
+SUBDIRS = doc src
 USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
 GENHTML=@GENHTML@
@@ -282,9 +282,3 @@ EXTRA_DIST += ext/asio/asio/is_write_buffered.hpp
 EXTRA_DIST += ext/asio/asio/buffered_read_stream_fwd.hpp
 EXTRA_DIST += ext/asio/asio/socket_acceptor_service.hpp
 EXTRA_DIST += ext/asio/asio.hpp
-
-## include the guide in tarball, later will include the other parts there
-## but they cleanup.
-EXTRA_DIST += doc/guide/bind10-guide.css
-EXTRA_DIST += doc/guide/bind10-guide.html
-EXTRA_DIST += doc/guide/bind10-guide.xml

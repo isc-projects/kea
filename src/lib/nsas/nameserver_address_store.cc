@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <config.h>
 
 // Workaround for a problem with boost and sunstudio 5.10
@@ -58,8 +56,8 @@ namespace nsas {
 // hash table, on the assumption that three elements is the longest linear
 // search we want to do when looking up names in the hash table.
 NameserverAddressStore::NameserverAddressStore(
-    boost::shared_ptr<ResolverInterface> resolver, uint32_t zonehashsize,
-    uint32_t nshashsize) :
+    boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
+    uint32_t zonehashsize, uint32_t nshashsize) :
     zone_hash_(new HashTable<ZoneEntry>(new NsasEntryCompare<ZoneEntry>,
         zonehashsize)),
     nameserver_hash_(new HashTable<NameserverEntry>(
@@ -80,8 +78,9 @@ namespace {
  * called at all to create the object, just call the function.
  */
 boost::shared_ptr<ZoneEntry>
-newZone(const boost::shared_ptr<ResolverInterface>* resolver, const string* zone,
-    const RRClass* class_code,
+newZone(
+    const boost::shared_ptr<isc::resolve::ResolverInterface>* resolver,
+    const string* zone, const RRClass* class_code,
     const boost::shared_ptr<HashTable<NameserverEntry> >* ns_hash,
     const boost::shared_ptr<LruList<NameserverEntry> >* ns_lru)
 {

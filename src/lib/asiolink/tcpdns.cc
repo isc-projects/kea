@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <config.h>
 
 #include <unistd.h>             // for some IPC/network system calls
@@ -144,7 +142,8 @@ TCPServer::operator()(error_code ec, size_t length) {
         // Reset or instantiate objects that will be needed by the
         // DNS lookup and the write call.
         respbuf_.reset(new OutputBuffer(0));
-        message_.reset(new Message(Message::PARSE));
+        query_message_.reset(new Message(Message::PARSE));
+        answer_message_.reset(new Message(Message::RENDER));
 
         // Schedule a DNS lookup, and yield.  When the lookup is
         // finished, the coroutine will resume immediately after
@@ -159,7 +158,8 @@ TCPServer::operator()(error_code ec, size_t length) {
 
         // Call the DNS answer provider to render the answer into
         // wire format
-        (*answer_callback_)(*io_message_, message_, respbuf_);
+        (*answer_callback_)(*io_message_, query_message_,
+                            answer_message_, respbuf_);
 
         // Set up the response, beginning with two length bytes.
         lenbuf.writeUint16(respbuf_->getLength());
@@ -178,7 +178,8 @@ TCPServer::operator()(error_code ec, size_t length) {
 /// AsyncLookup<TCPServer> handler.)
 void
 TCPServer::asyncLookup() {
-    (*lookup_callback_)(*io_message_, message_, respbuf_, this);
+    (*lookup_callback_)(*io_message_, query_message_,
+                        answer_message_, respbuf_, this);
 }
 
 /// Post this coroutine on the ASIO service queue so that it will

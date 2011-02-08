@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20101201, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20110120, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -363,6 +363,57 @@ if test "$lcov" != "no"; then
 fi
 AC_SUBST(USE_LCOV)
 
+# Configure log4cxx header and library path
+#
+# If explicitly specified, use it.
+
+AC_ARG_WITH([log4cxx],
+  AC_HELP_STRING([--with-log4cxx=PATH],
+    [specify directory where log4cxx is installed]),
+  [
+   log4cxx_include_path="${withval}/include";
+   log4cxx_library_path="${withval}/lib"
+  ])
+
+# This is an urgent fix to avoid regression due to log4cxx on some
+# platforms.  It should be cleaned up with a better fix.
+if test "X$with_log4cxx" != "Xno"; then
+
+# If not specified, try some common paths.  These default to
+# /usr/include and /usr/lib if not found
+
+if test -z "$with_log4cxx"; then
+	log4cxxdirs="/usr/local /usr/pkg /opt /opt/local"
+	for d in $log4cxxdirs
+	do
+		if test -d $d/include/log4cxx; then
+			log4cxx_include_path=$d/include
+			log4cxx_library_path=$d/lib
+			break
+		fi
+	done
+fi
+
+CPPFLAGS_SAVES="$CPPFLAGS"
+if test "${log4cxx_include_path}" ; then
+	LOG4CXX_INCLUDES="-I${log4cxx_include_path}"
+	CPPFLAGS="$CPPFLAGS $LOG4CXX_INCLUDES"
+fi
+AC_CHECK_HEADER([log4cxx/logger.h],, AC_MSG_ERROR([Missing log4cxx header files.]))
+CPPFLAGS="$CPPFLAGS_SAVES"
+AC_SUBST(LOG4CXX_INCLUDES)
+
+LOG4CXX_LDFLAGS="-llog4cxx";
+if test "${log4cxx_library_path}"; then
+    LOG4CXX_LDFLAGS="-L${log4cxx_library_path} -llog4cxx"
+fi
+AC_SUBST(LOG4CXX_LDFLAGS)
+
+# The following two lines are part of the urgent fix, and should be cleaned
+# up with a better fix.
+fi
+AM_CONDITIONAL(USE_LOG4CXX, test "X${with_log4cxx}" != "Xno")
+
 #
 # Configure Boost header path
 #
@@ -574,6 +625,8 @@ AC_ARG_ENABLE(install-configurations,
 AM_CONDITIONAL(INSTALL_CONFIGURATIONS, test x$install_configurations = xyes || test x$install_configurations = xtrue)
 
 AC_CONFIG_FILES([Makefile
+                 doc/Makefile
+                 doc/guide/Makefile
                  src/Makefile
                  src/bin/Makefile
                  src/bin/bind10/Makefile
@@ -650,12 +703,17 @@ AC_CONFIG_FILES([Makefile
                  src/lib/datasrc/tests/Makefile
                  src/lib/xfr/Makefile
                  src/lib/log/Makefile
+                 src/lib/log/compiler/Makefile
+                 src/lib/log/tests/Makefile
+                 src/lib/resolve/Makefile
+                 src/lib/resolve/tests/Makefile
                  src/lib/testutils/Makefile
                  src/lib/testutils/testdata/Makefile
                  src/lib/nsas/Makefile
                  src/lib/nsas/tests/Makefile
                ])
-AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
+AC_OUTPUT([doc/version.ent
+           src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cfgmgr/tests/b10-cfgmgr_test.py
            src/bin/cmdctl/cmdctl.py
            src/bin/cmdctl/run_b10-cmdctl.sh
@@ -708,11 +766,11 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/lib/dns/tests/testdata/gen-wiredata.py
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
+           src/lib/log/tests/run_time_init_test.sh
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
-           chmod +x src/bin/resolver/run_b10-resolver.sh
            chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
            chmod +x src/bin/stats/tests/stats_test
            chmod +x src/bin/stats/run_b10-stats.sh
@@ -732,6 +790,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/msgq/tests/msgq_test
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
+           chmod +x src/lib/log/tests/run_time_init_test.sh
           ])
 AC_OUTPUT
 
@@ -759,6 +818,8 @@ dnl includes too
                  ${PYTHON_LDFLAGS}
                  ${PYTHON_LIB}
   Boost:         ${BOOST_INCLUDES}
+  log4cxx:       ${LOG4CXX_INCLUDES}
+                 ${LOG4CXX_LDFLAGS}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
 

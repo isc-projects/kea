@@ -12,9 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
-
 #include <config.h>
 
 #include <sys/socket.h>
@@ -31,6 +28,7 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/tests/unittest_util.h>
+#include <dns/rcode.h>
 
 #include <dns/buffer.h>
 #include <dns/message.h>
@@ -82,6 +80,23 @@ TEST(IOAddressTest, fromText) {
 
     // bogus IPv6 address-like input
     EXPECT_THROW(IOAddress("2001:db8::efgh"), IOError);
+}
+
+TEST(IOAddressTest, Equality) {
+    EXPECT_TRUE(IOAddress("192.0.2.1") == IOAddress("192.0.2.1"));
+    EXPECT_FALSE(IOAddress("192.0.2.1") != IOAddress("192.0.2.1"));
+
+    EXPECT_TRUE(IOAddress("192.0.2.1") != IOAddress("192.0.2.2"));
+    EXPECT_FALSE(IOAddress("192.0.2.1") == IOAddress("192.0.2.2"));
+
+    EXPECT_TRUE(IOAddress("2001:db8::12") == IOAddress("2001:0DB8:0:0::0012"));
+    EXPECT_FALSE(IOAddress("2001:db8::12") != IOAddress("2001:0DB8:0:0::0012"));
+
+    EXPECT_TRUE(IOAddress("2001:db8::1234") != IOAddress("2001:db8::1235"));
+    EXPECT_FALSE(IOAddress("2001:db8::1234") == IOAddress("2001:db8::1235"));
+
+    EXPECT_TRUE(IOAddress("2001:db8::1234") != IOAddress("192.0.2.3"));
+    EXPECT_FALSE(IOAddress("2001:db8::1234") == IOAddress("192.0.2.3"));
 }
 
 TEST(IOEndpointTest, createUDPv4) {
@@ -156,14 +171,14 @@ TEST(IOServiceTest, unavailableAddress) {
     IOService io_service;
     // These addresses should generally be unavailable as a valid local
     // address, although there's no guarantee in theory.
-    EXPECT_THROW(DNSService(io_service, *TEST_SERVER_PORT, *"255.255.0.0", NULL, NULL, NULL), IOError);
+    EXPECT_THROW(DNSService(io_service, *TEST_SERVER_PORT, *"192.0.2.0", NULL, NULL, NULL), IOError);
 
     // Some OSes would simply reject binding attempt for an AF_INET6 socket
     // to an IPv4-mapped IPv6 address.  Even if those that allow it, since
     // the corresponding IPv4 address is the same as the one used in the
     // AF_INET socket case above, it should at least show the same result
     // as the previous one.
-    EXPECT_THROW(DNSService(io_service, *TEST_SERVER_PORT, *"::ffff:255.255.0.0", NULL, NULL, NULL), IOError);
+    EXPECT_THROW(DNSService(io_service, *TEST_SERVER_PORT, *"::ffff:192.0.2.0", NULL, NULL, NULL), IOError);
 }
 
 TEST(IOServiceTest, duplicateBind_v6) {
@@ -442,6 +457,7 @@ protected:
                             DNSAnswer* answer = NULL) :
             io_(io_service),
             message_(new Message(Message::PARSE)),
+            answer_message_(new Message(Message::RENDER)),
             respbuf_(new OutputBuffer(0)),
             checkin_(checkin), lookup_(lookup), answer_(answer)
         {}
@@ -450,7 +466,8 @@ protected:
                         size_t length = 0)
         {}
 
-        void resume(const bool) { // in our test this shouldn't be called
+        void resume(const bool) {
+          // should never be called in our tests
         }
 
         DNSServer* clone() {
@@ -460,7 +477,8 @@ protected:
 
         inline void asyncLookup() {
             if (lookup_) {
-                (*lookup_)(*io_message_, message_, respbuf_, this);
+                (*lookup_)(*io_message_, message_, answer_message_,
+                           respbuf_, this);
             }
         }
 
@@ -473,6 +491,7 @@ protected:
         // asynchronous lookup calls via the asyncLookup() method
         boost::shared_ptr<asiolink::IOMessage> io_message_;
         isc::dns::MessagePtr message_;
+        isc::dns::MessagePtr answer_message_;
         isc::dns::OutputBufferPtr respbuf_;
 
         // Callback functions provided by the caller
@@ -643,15 +662,17 @@ singleAddress(const string &address, uint16_t port) {
 TEST_F(ASIOLinkTest, recursiveSetupV4) {
     setDNSService(true, false);
     uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    EXPECT_NO_THROW(RecursiveQuery(*dns_service_, singleAddress(TEST_IPV6_ADDR,
-        port)));
+    EXPECT_NO_THROW(RecursiveQuery(*dns_service_,
+                                   singleAddress(TEST_IPV4_ADDR, port),
+                                   singleAddress(TEST_IPV4_ADDR, port)));
 }
 
 TEST_F(ASIOLinkTest, recursiveSetupV6) {
     setDNSService(false, true);
     uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    EXPECT_NO_THROW(RecursiveQuery(*dns_service_, singleAddress(TEST_IPV6_ADDR,
-        port)));
+    EXPECT_NO_THROW(RecursiveQuery(*dns_service_,
+                                   singleAddress(TEST_IPV6_ADDR, port),
+                                   singleAddress(TEST_IPV6_ADDR,port)));
 }
 
 // XXX:
@@ -659,7 +680,7 @@ TEST_F(ASIOLinkTest, recursiveSetupV6) {
 // a routine that can do this with variable address family, address, and
 // port, and with the various callbacks defined in such a way as to ensure
 // full code coverage including error cases.
-TEST_F(ASIOLinkTest, recursiveSend) {
+TEST_F(ASIOLinkTest, forwarderSend) {
     setDNSService(true, false);
 
     // Note: We use the test prot plus one to ensure we aren't binding
@@ -667,11 +688,14 @@ TEST_F(ASIOLinkTest, recursiveSend) {
     uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
 
     MockServer server(*io_service_);
-    RecursiveQuery rq(*dns_service_, singleAddress(TEST_IPV4_ADDR, port));
+    RecursiveQuery rq(*dns_service_,
+                      singleAddress(TEST_IPV4_ADDR, port),
+                      singleAddress(TEST_IPV4_ADDR, port));
 
     Question q(Name("example.com"), RRClass::IN(), RRType::TXT());
     OutputBufferPtr buffer(new OutputBuffer(0));
-    rq.sendQuery(q, buffer, &server);
+    MessagePtr answer(new Message(Message::RENDER));
+    rq.resolve(q, answer, buffer, &server);
 
     char data[4096];
     size_t size = sizeof(data);
@@ -691,39 +715,23 @@ TEST_F(ASIOLinkTest, recursiveSend) {
     EXPECT_EQ(q.getClass(), q2->getClass());
 }
 
-// Test it tries the correct amount of times before giving up
-TEST_F(ASIOLinkTest, recursiveTimeout) {
-    // Prepare the service (we do not use the common setup, we do not answer
-    setDNSService();
-
-    // Prepare the socket
-    res_ = resolveAddress(AF_INET, IPPROTO_UDP, true);
-    sock_ = socket(res_->ai_family, res_->ai_socktype, res_->ai_protocol);
+int
+createTestSocket()
+{
+    struct addrinfo* res_ = resolveAddress(AF_INET, IPPROTO_UDP, true);
+    int sock_ = socket(res_->ai_family, res_->ai_socktype, res_->ai_protocol);
     if (sock_ < 0) {
         isc_throw(IOError, "failed to open test socket");
     }
     if (bind(sock_, res_->ai_addr, res_->ai_addrlen) < 0) {
         isc_throw(IOError, "failed to bind test socket");
     }
+    return sock_;
+}
 
-    // Prepare the server
-    bool done(true);
-    MockServerStop server(*io_service_, &done);
-
-    // Do the answer
-    const uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    RecursiveQuery query(*dns_service_, singleAddress(TEST_IPV4_ADDR, port),
-        10, 2);
-    Question question(Name("example.net"), RRClass::IN(), RRType::A());
-    OutputBufferPtr buffer(new OutputBuffer(0));
-    query.sendQuery(question, buffer, &server);
-
-    // Run the test
-    io_service_->run();
-
-    // Read up to 3 packets.  Use some ad hoc timeout to prevent an infinite
-    // block (see also recvUDP()).
-    const struct timeval timeo = { 10, 0 };
+int
+setSocketTimeout(int sock_, size_t tv_sec, size_t tv_usec) {
+    const struct timeval timeo = { tv_sec, tv_usec };
     int recv_options = 0;
     if (setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO, &timeo, sizeof(timeo))) {
         if (errno == ENOPROTOOPT) { // see ASIOLinkTest::recvUDP()
@@ -732,19 +740,205 @@ TEST_F(ASIOLinkTest, recursiveTimeout) {
             isc_throw(IOError, "set RCVTIMEO failed: " << strerror(errno));
         }
     }
-    int num = 0;
+    return recv_options;
+}
+
+// try to read from the socket max time
+// *num is incremented for every succesfull read
+// returns true if it can read max times, false otherwise
+bool tryRead(int sock_, int recv_options, size_t max, int* num) {
+    size_t i = 0;
     do {
         char inbuff[512];
         if (recv(sock_, inbuff, sizeof(inbuff), recv_options) < 0) {
-            num = -1;
-            break;
+            return false;
+        } else {
+            ++i;
+            ++*num;
         }
-    } while (++num < 3);
+    } while (i < max);
+    return true;
+}
+
+
+// Test it tries the correct amount of times before giving up
+TEST_F(ASIOLinkTest, forwardQueryTimeout) {
+    // Prepare the service (we do not use the common setup, we do not answer
+    setDNSService();
+
+    // Prepare the socket
+    sock_ = createTestSocket();
+
+    // Prepare the server
+    bool done(true);
+    MockServerStop server(*io_service_, &done);
+
+    // Do the answer
+    const uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
+    RecursiveQuery query(*dns_service_,
+                         singleAddress(TEST_IPV4_ADDR, port),
+                         singleAddress(TEST_IPV4_ADDR, port),
+                         10, 4000, 3000, 2);
+    Question question(Name("example.net"), RRClass::IN(), RRType::A());
+    OutputBufferPtr buffer(new OutputBuffer(0));
+    MessagePtr answer(new Message(Message::RENDER));
+    query.resolve(question, answer, buffer, &server);
+
+    // Run the test
+    io_service_->run();
+
+    // Read up to 3 packets.  Use some ad hoc timeout to prevent an infinite
+    // block (see also recvUDP()).
+    int recv_options = setSocketTimeout(sock_, 10, 0);
+    int num = 0;
+    bool read_success = tryRead(sock_, recv_options, 3, &num);
 
     // The query should fail
     EXPECT_FALSE(done);
     EXPECT_EQ(3, num);
+    EXPECT_TRUE(read_success);
 }
+
+// If we set client timeout to lower than querytimeout, we should
+// get a failure answer, but still see retries
+// (no actual answer is given here yet)
+TEST_F(ASIOLinkTest, forwardClientTimeout) {
+    // Prepare the service (we do not use the common setup, we do not answer
+    setDNSService();
+
+    sock_ = createTestSocket();
+
+    // Prepare the server
+    bool done(true);
+    MockServerStop server(*io_service_, &done);
+
+    MessagePtr answer(new Message(Message::RENDER));
+
+    // Do the answer
+    const uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
+    // Set it up to retry twice before client timeout fires
+    // Since the lookup timer has not fired, it should retry
+    // a third time
+    RecursiveQuery query(*dns_service_,
+                         singleAddress(TEST_IPV4_ADDR, port),
+                         singleAddress(TEST_IPV4_ADDR, port),
+                         50, 120, 1000, 3);
+    Question question(Name("example.net"), RRClass::IN(), RRType::A());
+    OutputBufferPtr buffer(new OutputBuffer(0));
+    query.resolve(question, answer, buffer, &server);
+
+    // Run the test
+    io_service_->run();
+
+    // we know it'll fail, so make it a shorter timeout
+    int recv_options = setSocketTimeout(sock_, 1, 0);
+
+    // Try to read 5 times, should stop after 3 reads
+    int num = 0;
+    bool read_success = tryRead(sock_, recv_options, 5, &num);
+
+    // The query should fail (for resolver it should send back servfail,
+    // but currently, and perhaps for forwarder in general, the effect
+    // will be the same as on a lookup timeout, i.e. no answer is sent
+    // back)
+    EXPECT_FALSE(done);
+    EXPECT_EQ(3, num);
+    EXPECT_FALSE(read_success);
+}
+
+// If we set lookup timeout to lower than querytimeout*retries, we should
+// fail before the full amount of retries
+TEST_F(ASIOLinkTest, forwardLookupTimeout) {
+    // Prepare the service (we do not use the common setup, we do not answer
+    setDNSService();
+
+    // Prepare the socket
+    sock_ = createTestSocket();
+
+    // Prepare the server
+    bool done(true);
+    MockServerStop server(*io_service_, &done);
+
+    MessagePtr answer(new Message(Message::RENDER));
+
+    // Do the answer
+    const uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
+    // Set up the test so that it will retry 5 times, but the lookup
+    // timeout will fire after only 3 normal timeouts
+    RecursiveQuery query(*dns_service_,
+                         singleAddress(TEST_IPV4_ADDR, port),
+                         singleAddress(TEST_IPV4_ADDR, port),
+                         50, 4000, 120, 5);
+    Question question(Name("example.net"), RRClass::IN(), RRType::A());
+    OutputBufferPtr buffer(new OutputBuffer(0));
+    query.resolve(question, answer, buffer, &server);
+
+    // Run the test
+    io_service_->run();
+
+    int recv_options = setSocketTimeout(sock_, 1, 0);
+
+    // Try to read 5 times, should stop after 3 reads
+    int num = 0;
+    bool read_success = tryRead(sock_, recv_options, 5, &num);
+
+    // The query should fail
+    EXPECT_FALSE(done);
+    EXPECT_EQ(3, num);
+    EXPECT_FALSE(read_success);
+}
+
+// as mentioned above, we need a more better framework for this,
+// in addition to that, this sends out queries into the world
+// (which we should catch somehow and fake replies for)
+// for the skeleton code, it shouldn't be too much of a problem
+// Ok so even we don't all have access to the DNS world right now,
+// so disabling these tests too.
+TEST_F(ASIOLinkTest, DISABLED_recursiveSendOk) {
+    setDNSService(true, false);
+    bool done;
+    
+    MockServerStop server(*io_service_, &done);
+    vector<pair<string, uint16_t> > empty_vector;
+    RecursiveQuery rq(*dns_service_, empty_vector, empty_vector, 10000, 0);
+
+    Question q(Name("www.isc.org"), RRClass::IN(), RRType::A());
+    OutputBufferPtr buffer(new OutputBuffer(0));
+    MessagePtr answer(new Message(Message::RENDER));
+    rq.resolve(q, answer, buffer, &server);
+    io_service_->run();
+
+    // Check that the answer we got matches the one we wanted
+    EXPECT_EQ(Rcode::NOERROR(), answer->getRcode());
+    ASSERT_EQ(1, answer->getRRCount(Message::SECTION_ANSWER));
+    RRsetPtr a = *answer->beginSection(Message::SECTION_ANSWER);
+    EXPECT_EQ(q.getName(), a->getName());
+    EXPECT_EQ(q.getType(), a->getType());
+    EXPECT_EQ(q.getClass(), a->getClass());
+    EXPECT_EQ(1, a->getRdataCount());
+}
+
+// see comments at previous test
+TEST_F(ASIOLinkTest, DISABLED_recursiveSendNXDOMAIN) {
+    setDNSService(true, false);
+    bool done;
+    
+    MockServerStop server(*io_service_, &done);
+    vector<pair<string, uint16_t> > empty_vector;
+    RecursiveQuery rq(*dns_service_, empty_vector, empty_vector, 10000, 0);
+
+    Question q(Name("wwwdoesnotexist.isc.org"), RRClass::IN(), RRType::A());
+    OutputBufferPtr buffer(new OutputBuffer(0));
+    MessagePtr answer(new Message(Message::RENDER));
+    rq.resolve(q, answer, buffer, &server);
+    io_service_->run();
+
+    // Check that the answer we got matches the one we wanted
+    EXPECT_EQ(Rcode::NXDOMAIN(), answer->getRcode());
+    EXPECT_EQ(0, answer->getRRCount(Message::SECTION_ANSWER));
+}
+
+
 
 // This fixture is for testing IntervalTimer. Some callback functors are 
 // registered as callback function of the timer to test if they are called

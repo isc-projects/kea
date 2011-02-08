@@ -66,7 +66,8 @@ Query::findAddrs(const Zone& zone, const Name& qname,
 
     // Find A rrset
     if (qname_ != qname || qtype_ != RRType::A()) {
-        Zone::FindResult a_result = zone.find(qname, RRType::A(), options);
+        Zone::FindResult a_result = zone.find(qname, RRType::A(), NULL,
+                                              options);
         if (a_result.code == Zone::SUCCESS) {
             response_.addRRset(Message::SECTION_ADDITIONAL,
                     boost::const_pointer_cast<RRset>(a_result.rrset));
@@ -76,7 +77,7 @@ Query::findAddrs(const Zone& zone, const Name& qname,
     // Find AAAA rrset
     if (qname_ != qname || qtype_ != RRType::AAAA()) {
         Zone::FindResult aaaa_result =
-            zone.find(qname, RRType::AAAA(), options);
+            zone.find(qname, RRType::AAAA(), NULL, options);
         if (aaaa_result.code == Zone::SUCCESS) {
             response_.addRRset(Message::SECTION_ADDITIONAL,
                     boost::const_pointer_cast<RRset>(aaaa_result.rrset));
@@ -121,6 +122,8 @@ Query::getAuthAdditional(const Zone& zone) const {
 void
 Query::process() const {
     bool keep_doing = true;
+    const bool qtype_is_any = (qtype_ == RRType::ANY());
+
     response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
     const MemoryDataSrc::FindResult result =
         memory_datasrc_.findZone(qname_);
@@ -140,20 +143,41 @@ Query::process() const {
     response_.setHeaderFlag(Message::HEADERFLAG_AA);
     while (keep_doing) {
         keep_doing = false;
-        Zone::FindResult db_result = result.zone->find(qname_, qtype_);
+        std::auto_ptr<RRsetList> target(qtype_is_any ? new RRsetList : NULL);
+        Zone::FindResult db_result =
+            result.zone->find(qname_, qtype_, target.get());
+
         switch (db_result.code) {
+            case Zone::CNAME:
+                /*
+                 * We don't do chaining yet. Therefore handling a CNAME is
+                 * mostly the same as handling SUCCESS, but we didn't get
+                 * what we expected. It means no exceptions in ANY or NS
+                 * on the origin (though CNAME in origin is probably
+                 * forbidden anyway).
+                 */
+                // No break; here, fall trough.
             case Zone::SUCCESS:
                 response_.setRcode(Rcode::NOERROR());
-                response_.addRRset(Message::SECTION_ANSWER,
-                    boost::const_pointer_cast<RRset>(db_result.rrset));
-                // Handle additional for answer section
-                getAdditional(*result.zone, *db_result.rrset);
+                if (qtype_is_any) {
+                    // If quety type is ANY, insert all RRs under the domain
+                    // into answer section.
+                    BOOST_FOREACH(RRsetPtr rrset, *target) {
+                        response_.addRRset(Message::SECTION_ANSWER, rrset);
+                    }
+                } else {
+                    response_.addRRset(Message::SECTION_ANSWER,
+                        boost::const_pointer_cast<RRset>(db_result.rrset));
+                    // Handle additional for answer section
+                    getAdditional(*result.zone, *db_result.rrset);
+                }
                 // If apex NS records haven't been provided in the answer
                 // section, insert apex NS records into the authority section
                 // and AAAA/A RRS of each of the NS RDATA into the additional
                 // section.
                 if (qname_ != result.zone->getOrigin() ||
-                    (qtype_ != RRType::NS() && qtype_ != RRType::ANY()))
+                    db_result.code != Zone::SUCCESS ||
+                    (qtype_ != RRType::NS() && !qtype_is_any))
                 {
                     getAuthAdditional(*result.zone);
                 }
@@ -175,7 +199,6 @@ Query::process() const {
                 response_.setRcode(Rcode::NOERROR());
                 putSOA(*result.zone);
                 break;
-            case Zone::CNAME:
             case Zone::DNAME:
                 // TODO : replace qname, continue lookup
                 break;

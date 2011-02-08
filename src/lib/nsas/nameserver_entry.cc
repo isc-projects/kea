@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <config.h>
 
 #include <algorithm>
@@ -32,12 +30,14 @@
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
+#include <dns/rcode.h>
+#include <dns/opcode.h>
 #include <dns/question.h>
+#include <resolve/resolver_interface.h>
 
 #include "address_entry.h"
 #include "nameserver_address.h"
 #include "nameserver_entry.h"
-#include "resolver_interface.h"
 
 using namespace asiolink;
 using namespace isc::nsas;
@@ -201,7 +201,8 @@ NameserverEntry::setAddressUnreachable(const IOAddress& address) {
  * fed back trough this. It holds a shared pointer to the entry so it is not
  * destroyed too soon.
  */
-class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
+class NameserverEntry::ResolverCallback :
+        public isc::resolve::ResolverInterface::Callback {
     public:
         ResolverCallback(boost::shared_ptr<NameserverEntry> entry,
             AddressFamily family, const RRType& type) :
@@ -215,11 +216,22 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
          * This extracts the addresses out from the response and puts them
          * inside the entry. It tries to reuse the address entries from before (if there were any), to keep their RTTs.
          */
-        virtual void success(const boost::shared_ptr<AbstractRRset>& response) {
+        virtual void success(MessagePtr response_message) {
             time_t now = time(NULL);
 
             Lock lock(entry_->mutex_);
 
+            // TODO: find the correct RRset, not simply the first
+            if (!response_message ||
+                response_message->getRcode() != isc::dns::Rcode::NOERROR() ||
+                response_message->getRRCount(isc::dns::Message::SECTION_ANSWER) == 0) {
+                failureInternal(lock);
+            }
+                
+            isc::dns::RRsetIterator rrsi =
+                response_message->beginSection(isc::dns::Message::SECTION_ANSWER);
+            const isc::dns::RRsetPtr response = *rrsi;
+            
             vector<AddressEntry> entries;
 
             if (response->getType() != type_ ||
@@ -365,7 +377,8 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
 };
 
 void
-NameserverEntry::askIP(boost::shared_ptr<ResolverInterface> resolver,
+NameserverEntry::askIP(
+    boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
     const RRType& type, AddressFamily family)
 {
     QuestionPtr question(new Question(Name(getName()), RRClass(getClass()),
@@ -376,7 +389,8 @@ NameserverEntry::askIP(boost::shared_ptr<ResolverInterface> resolver,
 }
 
 void
-NameserverEntry::askIP(boost::shared_ptr<ResolverInterface> resolver,
+NameserverEntry::askIP(
+    boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
     boost::shared_ptr<Callback> callback, AddressFamily family)
 {
     Lock lock(mutex_);

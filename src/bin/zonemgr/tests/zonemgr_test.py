@@ -43,6 +43,9 @@ class MySession():
         if module_name not in ("Auth", "Xfrin"):
             raise ZonemgrTestException("module name not exist")
 
+    def group_recvmsg(self, nonblock, seq):
+        return None, None
+
 class MyZonemgrRefresh(ZonemgrRefresh):
     def __init__(self):
         class FakeConfig:

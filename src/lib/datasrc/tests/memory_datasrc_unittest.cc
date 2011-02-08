@@ -1,4 +1,5 @@
 // Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  CZ NIC
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +16,10 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/name.h>
+#include <dns/rdata.h>
+#include <dns/rdataclass.h>
 #include <dns/rrclass.h>
+#include <dns/rrsetlist.h>
 #include <dns/rrttl.h>
 #include <dns/masterload.h>
 
@@ -24,6 +28,7 @@
 #include <gtest/gtest.h>
 
 using namespace isc::dns;
+using namespace isc::dns::rdata;
 using namespace isc::datasrc;
 
 namespace {
@@ -142,10 +147,13 @@ public:
         class_(RRClass::IN()),
         origin_("example.org"),
         ns_name_("ns.example.org"),
+        cname_name_("cname.example.org"),
+        dname_name_("dname.example.org"),
         child_ns_name_("child.example.org"),
         child_glue_name_("ns.child.example.org"),
         grandchild_ns_name_("grand.child.example.org"),
         grandchild_glue_name_("ns.grand.child.example.org"),
+        child_dname_name_("dname.child.example.org"),
         zone_(class_, origin_),
         rr_out_(new RRset(Name("example.com"), class_, RRType::A(),
             RRTTL(300))),
@@ -153,6 +161,14 @@ public:
         rr_ns_a_(new RRset(ns_name_, class_, RRType::A(), RRTTL(300))),
         rr_ns_aaaa_(new RRset(ns_name_, class_, RRType::AAAA(), RRTTL(300))),
         rr_a_(new RRset(origin_, class_, RRType::A(), RRTTL(300))),
+        rr_cname_(new RRset(cname_name_, class_, RRType::CNAME(), RRTTL(300))),
+        rr_cname_a_(new RRset(cname_name_, class_, RRType::A(), RRTTL(300))),
+        rr_dname_(new RRset(dname_name_, class_, RRType::DNAME(), RRTTL(300))),
+        rr_dname_a_(new RRset(dname_name_, class_, RRType::A(),
+            RRTTL(300))),
+        rr_dname_ns_(new RRset(dname_name_, class_, RRType::NS(), RRTTL(300))),
+        rr_dname_apex_(new RRset(origin_, class_, RRType::DNAME(),
+            RRTTL(300))),
         rr_child_ns_(new RRset(child_ns_name_, class_, RRType::NS(),
                                RRTTL(300))),
         rr_child_glue_(new RRset(child_glue_name_, class_, RRType::A(),
@@ -160,13 +176,16 @@ public:
         rr_grandchild_ns_(new RRset(grandchild_ns_name_, class_, RRType::NS(),
                                     RRTTL(300))),
         rr_grandchild_glue_(new RRset(grandchild_glue_name_, class_,
-                                      RRType::AAAA(), RRTTL(300)))
+                                      RRType::AAAA(), RRTTL(300))),
+        rr_child_dname_(new RRset(child_dname_name_, class_, RRType::DNAME(),
+            RRTTL(300)))
     {
     }
     // Some data to test with
     const RRClass class_;
-    const Name origin_, ns_name_, child_ns_name_, child_glue_name_,
-        grandchild_ns_name_, grandchild_glue_name_;
+    const Name origin_, ns_name_, cname_name_, dname_name_, child_ns_name_,
+        child_glue_name_, grandchild_ns_name_, grandchild_glue_name_,
+        child_dname_name_;
     // The zone to torture by tests
     MemoryZone zone_;
 
@@ -187,10 +206,17 @@ public:
         rr_ns_aaaa_,
         // A of example.org
         rr_a_;
+    RRsetPtr rr_cname_;         // CNAME in example.org (RDATA will be added)
+    ConstRRsetPtr rr_cname_a_; // for mixed CNAME + A case
+    RRsetPtr rr_dname_;         // DNAME in example.org (RDATA will be added)
+    ConstRRsetPtr rr_dname_a_; // for mixed DNAME + A case
+    ConstRRsetPtr rr_dname_ns_; // for mixed DNAME + NS case
+    ConstRRsetPtr rr_dname_apex_; // for mixed DNAME + NS case in the apex
     ConstRRsetPtr rr_child_ns_; // NS of a child domain (for delegation)
     ConstRRsetPtr rr_child_glue_; // glue RR of the child domain
     ConstRRsetPtr rr_grandchild_ns_; // NS below a zone cut (unusual)
     ConstRRsetPtr rr_grandchild_glue_; // glue RR below a deeper zone cut
+    ConstRRsetPtr rr_child_dname_; // A DNAME under NS
 
     /**
      * \brief Test one find query to the zone.
@@ -211,7 +237,8 @@ public:
     void findTest(const Name& name, const RRType& rrtype, Zone::Result result,
                   bool check_answer = true,
                   const ConstRRsetPtr& answer = ConstRRsetPtr(),
-                  MemoryZone *zone = NULL,
+                  RRsetList* target = NULL,
+                  MemoryZone* zone = NULL,
                   Zone::FindOptions options = Zone::FIND_DEFAULT)
     {
         if (!zone) {
@@ -220,7 +247,7 @@ public:
         // The whole block is inside, because we need to check the result and
         // we can't assign to FindResult
         EXPECT_NO_THROW({
-                Zone::FindResult find_result(zone->find(name, rrtype,
+                Zone::FindResult find_result(zone->find(name, rrtype, target,
                                                         options));
                 // Check it returns correct answers
                 EXPECT_EQ(result, find_result.code);
@@ -264,6 +291,125 @@ TEST_F(MemoryZoneTest, add) {
     EXPECT_NO_THROW(EXPECT_EQ(EXIST, zone_.add(rr_ns_a_)));
 }
 
+TEST_F(MemoryZoneTest, addMultipleCNAMEs) {
+    rr_cname_->addRdata(generic::CNAME("canonical1.example.org."));
+    rr_cname_->addRdata(generic::CNAME("canonical2.example.org."));
+    EXPECT_THROW(zone_.add(rr_cname_), MemoryZone::AddError);
+}
+
+TEST_F(MemoryZoneTest, addCNAMEThenOther) {
+    rr_cname_->addRdata(generic::CNAME("canonical.example.org."));
+    EXPECT_EQ(SUCCESS, zone_.add(rr_cname_));
+    EXPECT_THROW(zone_.add(rr_cname_a_), MemoryZone::AddError);
+}
+
+TEST_F(MemoryZoneTest, addOtherThenCNAME) {
+    rr_cname_->addRdata(generic::CNAME("canonical.example.org."));
+    EXPECT_EQ(SUCCESS, zone_.add(rr_cname_a_));
+    EXPECT_THROW(zone_.add(rr_cname_), MemoryZone::AddError);
+}
+
+TEST_F(MemoryZoneTest, findCNAME) {
+    // install CNAME RR
+    rr_cname_->addRdata(generic::CNAME("canonical.example.org."));
+    EXPECT_EQ(SUCCESS, zone_.add(rr_cname_));
+
+    // Find A RR of the same.  Should match the CNAME
+    findTest(cname_name_, RRType::NS(), Zone::CNAME, true, rr_cname_);
+
+    // Find the CNAME itself.  Should result in normal SUCCESS
+    findTest(cname_name_, RRType::CNAME(), Zone::SUCCESS, true, rr_cname_);
+}
+
+TEST_F(MemoryZoneTest, findCNAMEUnderZoneCut) {
+    // There's nothing special when we find a CNAME under a zone cut
+    // (with FIND_GLUE_OK).  The behavior is different from BIND 9,
+    // so we test this case explicitly.
+    EXPECT_EQ(SUCCESS, zone_.add(rr_child_ns_));
+    RRsetPtr rr_cname_under_cut_(new RRset(Name("cname.child.example.org"),
+                                           class_, RRType::CNAME(),
+                                           RRTTL(300)));
+    EXPECT_EQ(SUCCESS, zone_.add(rr_cname_under_cut_));
+    findTest(Name("cname.child.example.org"), RRType::AAAA(),
+             Zone::CNAME, true, rr_cname_under_cut_, NULL, NULL,
+             Zone::FIND_GLUE_OK);
+}
+
+// Two DNAMEs at single domain are disallowed by RFC 2672, section 3)
+// Having a CNAME there is disallowed too, but it is tested by
+// addOtherThenCNAME and addCNAMEThenOther.
+TEST_F(MemoryZoneTest, addMultipleDNAMEs) {
+    rr_dname_->addRdata(generic::DNAME("dname1.example.org."));
+    rr_dname_->addRdata(generic::DNAME("dname2.example.org."));
+    EXPECT_THROW(zone_.add(rr_dname_), MemoryZone::AddError);
+}
+
+/*
+ * These two tests ensure that we can't have DNAME and NS at the same
+ * node with the exception of the apex of zone (forbidden by RFC 2672)
+ */
+TEST_F(MemoryZoneTest, addDNAMEThenNS) {
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_dname_)));
+    EXPECT_THROW(zone_.add(rr_dname_ns_), MemoryZone::AddError);
+}
+
+TEST_F(MemoryZoneTest, addNSThenDNAME) {
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_dname_ns_)));
+    EXPECT_THROW(zone_.add(rr_dname_), MemoryZone::AddError);
+}
+
+// It is allowed to have NS and DNAME at apex
+TEST_F(MemoryZoneTest, DNAMEAndNSAtApex) {
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_dname_apex_)));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_ns_)));
+
+    // The NS should be possible to be found, below should be DNAME, not
+    // delegation
+    findTest(origin_, RRType::NS(), Zone::SUCCESS, true, rr_ns_);
+    findTest(child_ns_name_, RRType::A(), Zone::DNAME, true, rr_dname_apex_);
+}
+
+TEST_F(MemoryZoneTest, NSAndDNAMEAtApex) {
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_ns_)));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_dname_apex_)));
+}
+
+// TODO: Test (and implement) adding data under DNAME. That is forbidden by
+// 2672 as well.
+
+// Search under a DNAME record. It should return the DNAME
+TEST_F(MemoryZoneTest, findBelowDNAME) {
+    rr_dname_->addRdata(generic::DNAME("target.example.org."));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_dname_)));
+    findTest(Name("below.dname.example.org"), RRType::A(), Zone::DNAME, true,
+        rr_dname_);
+}
+
+// Search at the domain with DNAME. It should act as DNAME isn't there, DNAME
+// influences only the data below (see RFC 2672, section 3)
+TEST_F(MemoryZoneTest, findAtDNAME) {
+    rr_dname_->addRdata(generic::DNAME("target.example.org."));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_dname_)));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_dname_a_)));
+
+    findTest(dname_name_, RRType::A(), Zone::SUCCESS, true, rr_dname_a_);
+    findTest(dname_name_, RRType::DNAME(), Zone::SUCCESS, true, rr_dname_);
+    findTest(dname_name_, RRType::TXT(), Zone::NXRRSET, true);
+}
+
+// Try searching something that is both under NS and DNAME, without and with
+// GLUE_OK mode (it should stop at the NS and DNAME respectively).
+TEST_F(MemoryZoneTest, DNAMEUnderNS) {
+    zone_.add(rr_child_ns_);
+    zone_.add(rr_child_dname_);
+
+    Name lowName("below.dname.child.example.org.");
+
+    findTest(lowName, RRType::A(), Zone::DELEGATION, true, rr_child_ns_);
+    findTest(lowName, RRType::A(), Zone::DNAME, true, rr_child_dname_, NULL,
+        NULL, Zone::FIND_GLUE_OK);
+}
+
 // Test adding child zones and zone cut handling
 TEST_F(MemoryZoneTest, delegationNS) {
     // add in-zone data
@@ -292,6 +438,51 @@ TEST_F(MemoryZoneTest, delegationNS) {
              Zone::DELEGATION, true, rr_child_ns_); // note: !rr_grandchild_ns_
 }
 
+TEST_F(MemoryZoneTest, findAny) {
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_a_)));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_ns_)));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_child_glue_)));
+
+    // origin
+    RRsetList origin_rrsets;
+    findTest(origin_, RRType::ANY(), Zone::SUCCESS, true,
+             ConstRRsetPtr(), &origin_rrsets);
+    EXPECT_EQ(2, origin_rrsets.size());
+    EXPECT_EQ(rr_a_, origin_rrsets.findRRset(RRType::A(), RRClass::IN()));
+    EXPECT_EQ(rr_ns_, origin_rrsets.findRRset(RRType::NS(), RRClass::IN()));
+
+    // out zone name
+    RRsetList out_rrsets;
+    findTest(Name("example.com"), RRType::ANY(), Zone::NXDOMAIN, true,
+             ConstRRsetPtr(), &out_rrsets);
+    EXPECT_EQ(0, out_rrsets.size());
+
+    RRsetList glue_child_rrsets;
+    findTest(child_glue_name_, RRType::ANY(), Zone::SUCCESS, true,
+                ConstRRsetPtr(), &glue_child_rrsets);
+    EXPECT_EQ(rr_child_glue_, glue_child_rrsets.findRRset(RRType::A(),
+                                                     RRClass::IN()));
+    EXPECT_EQ(1, glue_child_rrsets.size());
+
+    // TODO: test NXRRSET case after rbtree non-terminal logic has
+    // been implemented
+
+    // add zone cut
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_child_ns_)));
+
+    // zone cut
+    RRsetList child_rrsets;
+    findTest(child_ns_name_, RRType::ANY(), Zone::DELEGATION, true,
+             rr_child_ns_, &child_rrsets);
+    EXPECT_EQ(0, child_rrsets.size());
+
+    // glue for this zone cut
+    RRsetList new_glue_child_rrsets;
+    findTest(child_glue_name_, RRType::ANY(), Zone::DELEGATION, true,
+                rr_child_ns_, &new_glue_child_rrsets);
+    EXPECT_EQ(0, new_glue_child_rrsets.size());
+}
+
 TEST_F(MemoryZoneTest, glue) {
     // install zone data:
     // a zone cut
@@ -310,15 +501,15 @@ TEST_F(MemoryZoneTest, glue) {
 
     // If we do it in the "glue OK" mode, we should find the exact match.
     findTest(child_glue_name_, RRType::A(), Zone::SUCCESS, true,
-             rr_child_glue_, NULL, Zone::FIND_GLUE_OK);
+             rr_child_glue_, NULL, NULL, Zone::FIND_GLUE_OK);
 
     // glue OK + NXRRSET case
     findTest(child_glue_name_, RRType::AAAA(), Zone::NXRRSET, true,
-             ConstRRsetPtr(), NULL, Zone::FIND_GLUE_OK);
+             ConstRRsetPtr(), NULL, NULL, Zone::FIND_GLUE_OK);
 
     // glue OK + NXDOMAIN case
     findTest(Name("www.child.example.org"), RRType::A(), Zone::DELEGATION,
-             true, rr_child_ns_, NULL, Zone::FIND_GLUE_OK);
+             true, rr_child_ns_, NULL, NULL, Zone::FIND_GLUE_OK);
 
     // TODO:
     // glue name would match a wildcard under a zone cut: wildcard match
@@ -327,24 +518,13 @@ TEST_F(MemoryZoneTest, glue) {
 
     // nested cut case.  The glue should be found.
     findTest(grandchild_glue_name_, RRType::AAAA(), Zone::SUCCESS,
-             true, rr_grandchild_glue_, NULL, Zone::FIND_GLUE_OK);    
+             true, rr_grandchild_glue_, NULL, NULL, Zone::FIND_GLUE_OK);
 
     // A non-existent name in nested cut.  This should result in delegation
     // at the highest zone cut.
     findTest(Name("www.grand.child.example.org"), RRType::TXT(),
-             Zone::DELEGATION, true, rr_child_ns_, NULL, Zone::FIND_GLUE_OK);
-}
-
-// Test adding DNAMEs and resulting delegation handling
-// Listing ideas only for now
-TEST_F(MemoryZoneTest, delegationDNAME) {
-    // apex DNAME: allowed by spec.  No DNAME delegation at the apex;
-    // descendants are subject to delegation.
-
-    // Other cases of NS and DNAME mixture are prohibited.
-    // BIND 9 doesn't reject such cases at load time, however.
-
-    // DNAME and ordinary types (allowed by spec)
+             Zone::DELEGATION, true, rr_child_ns_, NULL, NULL,
+             Zone::FIND_GLUE_OK);
 }
 
 /**
@@ -391,14 +571,14 @@ TEST_F(MemoryZoneTest, load) {
 
     // Now see there are some rrsets (we don't look inside, though)
     findTest(Name("."), RRType::SOA(), Zone::SUCCESS, false, ConstRRsetPtr(),
-        &rootzone);
+        NULL, &rootzone);
     findTest(Name("."), RRType::NS(), Zone::SUCCESS, false, ConstRRsetPtr(),
-        &rootzone);
+        NULL, &rootzone);
     findTest(Name("a.root-servers.net."), RRType::A(), Zone::SUCCESS, false,
-        ConstRRsetPtr(), &rootzone);
+        ConstRRsetPtr(), NULL, &rootzone);
     // But this should no longer be here
     findTest(ns_name_, RRType::AAAA(), Zone::NXDOMAIN, true, ConstRRsetPtr(),
-        &rootzone);
+        NULL, &rootzone);
 
     // Try loading zone that is wrong in a different way
     EXPECT_THROW(zone_.load(TEST_DATA_DIR "/duplicate_rrset.zone"),
@@ -427,13 +607,13 @@ TEST_F(MemoryZoneTest, swap) {
     EXPECT_EQ(RRClass::IN(), zone2.getClass());
     // make sure the zone data is swapped, too
     findTest(origin_, RRType::NS(), Zone::NXDOMAIN, false, ConstRRsetPtr(),
-             &zone1);
+             NULL, &zone1);
     findTest(other_origin, RRType::TXT(), Zone::SUCCESS, false,
-             ConstRRsetPtr(), &zone1);
+             ConstRRsetPtr(), NULL, &zone1);
     findTest(origin_, RRType::NS(), Zone::SUCCESS, false, ConstRRsetPtr(),
-             &zone2);
+             NULL, &zone2);
     findTest(other_origin, RRType::TXT(), Zone::NXDOMAIN, false,
-             ConstRRsetPtr(), &zone2);
+             ConstRRsetPtr(), NULL, &zone2);
 }
 
 TEST_F(MemoryZoneTest, getFileName) {
@@ -459,4 +639,5 @@ TEST_F(MemoryZoneTest, getFileName) {
     EXPECT_EQ(TEST_DATA_DIR "/root.zone", zone_.getFileName());
     EXPECT_TRUE(rootzone.getFileName().empty());
 }
+
 }
