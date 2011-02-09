@@ -153,7 +153,7 @@ TEST_F(ResolveHelperFunctionsTest, copyAnswerMessage) {
     ASSERT_EQ(0, message_a_->getRRCount(Message::SECTION_AUTHORITY));
     ASSERT_EQ(0, message_a_->getRRCount(Message::SECTION_ADDITIONAL));
 
-    isc::resolve::copyAnswerMessage(*message_b_, message_a_);
+    isc::resolve::copyResponseMessage(*message_b_, message_a_);
 
     EXPECT_EQ(message_b_->getRcode(), message_a_->getRcode());
     ASSERT_EQ(message_b_->getRRCount(Message::SECTION_ANSWER),

@@ -44,22 +44,12 @@ makeErrorMessage(MessagePtr answer_message,
     answer_message->setRcode(error_code);
 }
 
-void
-copySection(const Message& source, MessagePtr target,
-            Message::Section section)
-{
-    for_each(source.beginSection(section),
-             source.endSection(section),
-             SectionInserter(target, section));
-}
-
-void copyAnswerMessage(const Message& source, MessagePtr target) {
-
+void copyResponseMessage(const Message& source, MessagePtr target) {
     target->setRcode(source.getRcode());
 
-    copySection(source, target, Message::SECTION_ANSWER);
-    copySection(source, target, Message::SECTION_AUTHORITY);
-    copySection(source, target, Message::SECTION_ADDITIONAL);
+    source.copySection(*target, Message::SECTION_ANSWER);
+    source.copySection(*target, Message::SECTION_AUTHORITY);
+    source.copySection(*target, Message::SECTION_ADDITIONAL);
 }
 
 

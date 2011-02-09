@@ -40,24 +40,17 @@ namespace resolve {
 void makeErrorMessage(isc::dns::MessagePtr answer_message,
                       const isc::dns::Rcode::Rcode& error_code);
 
-/// \brief Copies all rrsets in the given section from source
-/// to target
-///
-/// \param source The source Message
-/// \param target The target MessagePtr
-/// \param section the section to copy
-void copySection(const isc::dns::Message& source,
-                 isc::dns::MessagePtr target,
-                 isc::dns::Message::Section section);
 
-/// \brief Copies the parts relevant for a DNS answer to the
+/// \brief Copies the parts relevant for a DNS reponse to the
 /// target message
 ///
 /// This adds all the RRsets in the answer, authority and
 /// additional sections to the target, as well as the response
 /// code
-void copyAnswerMessage(const isc::dns::Message& source,
-                       isc::dns::MessagePtr target);
+/// \param source The Message to copy the data from
+/// \param target The Message to copy the data to
+void copyResponseMessage(const isc::dns::Message& source,
+                         isc::dns::MessagePtr target);
 
 
 } // namespace resolve

@@ -380,6 +380,63 @@ TEST_F(MessageTest, badEndSection) {
     EXPECT_THROW(message_render.endSection(bogus_section), OutOfRange);
 }
 
+TEST_F(MessageTest, copySection) {
+    Message target(Message::RENDER);
+
+    // Section check
+    EXPECT_THROW(message_render.copySection(target, bogus_section),
+                 OutOfRange);
+
+    // Make sure nothing is copied if there is nothing to copy
+    message_render.copySection(target, Message::SECTION_QUESTION);
+    EXPECT_EQ(0, target.getRRCount(Message::SECTION_QUESTION));
+    message_render.copySection(target, Message::SECTION_ANSWER);
+    EXPECT_EQ(0, target.getRRCount(Message::SECTION_ANSWER));
+    message_render.copySection(target, Message::SECTION_AUTHORITY);
+    EXPECT_EQ(0, target.getRRCount(Message::SECTION_AUTHORITY));
+    message_render.copySection(target, Message::SECTION_ADDITIONAL);
+    EXPECT_EQ(0, target.getRRCount(Message::SECTION_ADDITIONAL));
+
+    // Now add some data, copy again, and see if it got added
+    message_render.addQuestion(Question(Name("test.example.com"),
+                                        RRClass::IN(), RRType::A()));
+    message_render.addRRset(Message::SECTION_ANSWER, rrset_a);
+    message_render.addRRset(Message::SECTION_AUTHORITY, rrset_a);
+    message_render.addRRset(Message::SECTION_ADDITIONAL, rrset_a);
+    message_render.addRRset(Message::SECTION_ADDITIONAL, rrset_aaaa);
+
+    message_render.copySection(target, Message::SECTION_QUESTION);
+    EXPECT_EQ(1, target.getRRCount(Message::SECTION_QUESTION));
+
+    message_render.copySection(target, Message::SECTION_ANSWER);
+    EXPECT_EQ(2, target.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_TRUE(target.hasRRset(Message::SECTION_ANSWER, test_name,
+        RRClass::IN(), RRType::A()));
+
+    message_render.copySection(target, Message::SECTION_AUTHORITY);
+    EXPECT_EQ(2, target.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_TRUE(target.hasRRset(Message::SECTION_AUTHORITY, test_name,
+        RRClass::IN(), RRType::A()));
+
+    message_render.copySection(target, Message::SECTION_ADDITIONAL);
+    EXPECT_EQ(3, target.getRRCount(Message::SECTION_ADDITIONAL));
+    EXPECT_TRUE(target.hasRRset(Message::SECTION_ADDITIONAL, test_name,
+        RRClass::IN(), RRType::A()));
+    EXPECT_TRUE(target.hasRRset(Message::SECTION_ADDITIONAL, test_name,
+        RRClass::IN(), RRType::AAAA()));
+
+    // One more test, test to see if the section gets added, not replaced
+    Message source2(Message::RENDER);
+    source2.addRRset(Message::SECTION_ANSWER, rrset_aaaa);
+    source2.copySection(target, Message::SECTION_ANSWER);
+    EXPECT_EQ(3, target.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_TRUE(target.hasRRset(Message::SECTION_ANSWER, test_name,
+        RRClass::IN(), RRType::A()));
+    EXPECT_TRUE(target.hasRRset(Message::SECTION_ANSWER, test_name,
+        RRClass::IN(), RRType::AAAA()));
+    
+}
+
 TEST_F(MessageTest, fromWire) {
     factoryFromFile(message_parse, "message_fromWire1");
     EXPECT_EQ(0x1035, message_parse.getQid());

@@ -777,6 +777,26 @@ Message::clear(Mode mode) {
 }
 
 void
+Message::copySection(Message& target, const Section section) const {
+    if (section >= MessageImpl::NUM_SECTIONS) {
+        isc_throw(OutOfRange, "Invalid message section: " << section);
+    }
+
+    if (section == SECTION_QUESTION) {
+        BOOST_FOREACH(QuestionPtr q, impl_->questions_) {
+            std::cout << "[XX] copy question " << q << std::endl;
+            target.addQuestion(q);
+        }
+    } else {
+        std::cout << "[XX] copy section " << section << std::endl;
+        BOOST_FOREACH(RRsetPtr r, impl_->rrsets_[section]) {
+            std::cout << "[XX] copy rrset " << r << std::endl;
+            target.addRRset(section, r, false);
+        }
+    }
+}
+
+void
 Message::makeResponse() {
     if (impl_->mode_ != Message::PARSE) {
         isc_throw(InvalidMessageOperation,
