@@ -41,7 +41,7 @@ void makeErrorMessage(isc::dns::MessagePtr answer_message,
                       const isc::dns::Rcode::Rcode& error_code);
 
 
-/// \brief Copies the parts relevant for a DNS reponse to the
+/// \brief Copies the parts relevant for a DNS response to the
 /// target message
 ///
 /// This adds all the RRsets in the answer, authority and
