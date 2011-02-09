@@ -1,7 +1,30 @@
-// File created from messagedef.mes on Tue Feb  8 18:01:54 2011
+// File created from messagedef.mes on Wed Feb  9 10:11:36 2011
 
 #include <cstddef>
+#include <log/message_types.h>
 #include <log/message_initializer.h>
+
+namespace isc {
+namespace log {
+
+extern const isc::log::MessageID MSG_DUPLNS = "DUPLNS";
+extern const isc::log::MessageID MSG_DUPLPRFX = "DUPLPRFX";
+extern const isc::log::MessageID MSG_IDNOTFND = "IDNOTFND";
+extern const isc::log::MessageID MSG_NSEXTRARG = "NSEXTRARG";
+extern const isc::log::MessageID MSG_NSINVARG = "NSINVARG";
+extern const isc::log::MessageID MSG_NSNOARG = "NSNOARG";
+extern const isc::log::MessageID MSG_ONETOKEN = "ONETOKEN";
+extern const isc::log::MessageID MSG_OPENIN = "OPENIN";
+extern const isc::log::MessageID MSG_OPENOUT = "OPENOUT";
+extern const isc::log::MessageID MSG_PRFEXTRARG = "PRFEXTRARG";
+extern const isc::log::MessageID MSG_PRFINVARG = "PRFINVARG";
+extern const isc::log::MessageID MSG_PRFNOARG = "PRFNOARG";
+extern const isc::log::MessageID MSG_READERR = "READERR";
+extern const isc::log::MessageID MSG_UNRECDIR = "UNRECDIR";
+extern const isc::log::MessageID MSG_WRITERR = "WRITERR";
+
+} // namespace log
+} // namespace isc
 
 namespace {
 
@@ -24,12 +47,7 @@ const char* values[] = {
     NULL
 };
 
+isc::log::MessageInitializer initializer(values);
+
 } // Anonymous namespace
 
-namespace isc {
-namespace log {
-
-MessageInitializer messagedef_cc_Tue_Feb__8_18_01_54_2011(values);
-
-} // namespace log
-} // namespace isc
