@@ -70,7 +70,7 @@ ResolverCache::lookup(const isc::dns::Name& qname,
 {
     uint16_t class_code = qclass.getCode();
     if (!classIsSupported(class_code)) {
-        return false;
+        return (false);
     }
 
     // message response should has question section already.
@@ -84,11 +84,11 @@ ResolverCache::lookup(const isc::dns::Name& qname,
     RRsetPtr rrset_ptr = (local_zone_data_[class_code])->lookup(qname, qtype);
     if (rrset_ptr) {
         response.addRRset(Message::SECTION_ANSWER, rrset_ptr);
-        return true;
+        return (true);
     }
 
     // Search in class-specific message cache.
-    return messages_cache_[class_code]->lookup(qname, qtype, response);
+    return (messages_cache_[class_code]->lookup(qname, qtype, response));
 }
 
 isc::dns::RRsetPtr
@@ -98,7 +98,7 @@ ResolverCache::lookup(const isc::dns::Name& qname,
 {
     uint16_t klass = qclass.getCode();
     if (!classIsSupported(klass)) {
-        return RRsetPtr();
+        return (RRsetPtr());
     }
 
     // Algorithm:
@@ -106,13 +106,13 @@ ResolverCache::lookup(const isc::dns::Name& qname,
     // 2. Then do search in rrsets_cache_.
     RRsetPtr rrset_ptr = local_zone_data_[klass]->lookup(qname, qtype);
     if (rrset_ptr) {
-        return rrset_ptr;
+        return (rrset_ptr);
     } else {
         RRsetEntryPtr rrset_entry = rrsets_cache_[klass]->lookup(qname, qtype);
         if (rrset_entry) {
-            return rrset_entry->getRRset();
+            return (rrset_entry->getRRset());
         } else {
-            return RRsetPtr();
+            return (RRsetPtr());
         }
     }
 }
@@ -128,13 +128,13 @@ ResolverCache::lookupClosestRRset(const isc::dns::Name& qname,
         Name close_name = qname.split(level);
         RRsetPtr rrset_ptr = lookup(close_name, qtype, qclass);
         if (rrset_ptr) {
-            return rrset_ptr;
+            return (rrset_ptr);
         } else {
             ++level;
         }
     }
 
-    return RRsetPtr();
+    return (RRsetPtr());
 }
 
 bool
@@ -142,10 +142,10 @@ ResolverCache::update(const isc::dns::Message& msg) {
     QuestionIterator iter = msg.beginQuestion();
     uint16_t klass = (*iter)->getClass().getCode();
     if (!classIsSupported(klass)) {
-        return false;
+        return (false);
     }
 
-    return messages_cache_[klass]->update(msg);
+    return (messages_cache_[klass]->update(msg));
 }
 
 bool
@@ -161,20 +161,20 @@ ResolverCache::updateRRsetCache(const isc::dns::ConstRRsetPtr rrset_ptr,
     }
 
     rrset_cache_ptr->update((*rrset_ptr.get()), level);
-    return true;
+    return (true);
 }
 
 bool
 ResolverCache::update(const isc::dns::ConstRRsetPtr rrset_ptr) {
     uint16_t klass = rrset_ptr->getClass().getCode();
     if (!classIsSupported(klass)) {
-        return false;
+        return (false);
     }
 
     // First update local zone, then update rrset cache.
     local_zone_data_[klass]->update((*rrset_ptr.get()));
     updateRRsetCache(rrset_ptr, rrsets_cache_[klass]);
-    return true;
+    return (true);
 }
 
 void

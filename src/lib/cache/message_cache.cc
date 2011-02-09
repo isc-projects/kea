@@ -47,10 +47,10 @@ MessageCache::lookup(const isc::dns::Name& qname,
     MessageEntryPtr msg_entry = message_table_.get(entry_key);
     if(msg_entry) {
         message_lru_.touch(msg_entry);
-        return msg_entry->genMessage(time(NULL), response);
+        return (msg_entry->genMessage(time(NULL), response));
     }
 
-    return false;
+    return (false);
 }
 
 bool
@@ -72,7 +72,7 @@ MessageCache::update(const Message& msg) {
 
     MessageEntryPtr msg_entry(new MessageEntry(msg, rrset_cache_));
     message_lru_.add(msg_entry);
-    return message_table_.add(msg_entry, entry_key, true);
+    return (message_table_.add(msg_entry, entry_key, true));
 }
 
 void
@@ -88,7 +88,7 @@ MessageCache::load(const std::string&) {
 bool
 MessageCache::resize(uint32_t) {
     //TODO
-    return true;
+    return (true);
 }
 
 } // namespace cache

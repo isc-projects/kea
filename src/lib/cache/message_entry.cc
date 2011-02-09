@@ -50,11 +50,11 @@ MessageEntry::getRRsetEntries(vector<RRsetEntryPtr>& rrset_entry_vec,
         if (time_now < rrset_entry->getExpireTime()) {
             rrset_entry_vec.push_back(rrset_entry);
         } else {
-            return false;
+            return (false);
         }
     }
 
-    return true;
+    return (true);
 }
 
 void
@@ -84,13 +84,13 @@ MessageEntry::genMessage(const time_t& time_now,
 {
     if (time_now > expire_time_) {
         // The message entry has expired.
-        return false;
+        return (false);
     } else {
         // Before do any generation, we should check if some rrset
         // has expired, if it is, return false.
         vector<RRsetEntryPtr> rrset_entry_vec;
         if (false == getRRsetEntries(rrset_entry_vec, time_now)) {
-            return false;
+            return (false);
         }
 
         // Begin message generation. We don't need to add question
@@ -104,7 +104,7 @@ MessageEntry::genMessage(const time_t& time_now,
         addRRset(msg, rrset_entry_vec, Message::SECTION_AUTHORITY, dnssec_need);
         addRRset(msg, rrset_entry_vec, Message::SECTION_ADDITIONAL, dnssec_need);
 
-        return true;
+        return (true);
     }
 }
 
@@ -124,9 +124,9 @@ MessageEntry::getRRsetTrustLevel(const Message& message,
                 RRsetIterator rrset_iter = message.beginSection(section);
                 if ((*rrset_iter)->getType() == RRType("CNAME")) {
                     if ((*rrset_iter).get() == rrset.get()) {
-                        return RRSET_TRUST_ANSWER_AA;
+                        return (RRSET_TRUST_ANSWER_AA);
                     } else {
-                        return RRSET_TRUST_ANSWER_NONAA;
+                        return (RRSET_TRUST_ANSWER_NONAA);
                     }
                 }
 
@@ -141,40 +141,40 @@ MessageEntry::getRRsetTrustLevel(const Message& message,
                         ((++rrset_iter) != message.endSection(section) &&
                                      (*rrset_iter).get() == rrset.get())) {
 
-                        return RRSET_TRUST_ANSWER_AA;
+                        return (RRSET_TRUST_ANSWER_AA);
                     } else {
-                        return RRSET_TRUST_ANSWER_NONAA;
+                        return (RRSET_TRUST_ANSWER_NONAA);
                     }
                 }
 
-                return RRSET_TRUST_ANSWER_AA;
+                return (RRSET_TRUST_ANSWER_AA);
 
             } else {
-                return RRSET_TRUST_ANSWER_NONAA;
+                return (RRSET_TRUST_ANSWER_NONAA);
             }
             break;
         }
 
         case Message::SECTION_AUTHORITY: {
             if (aa) {
-                return RRSET_TRUST_AUTHORITY_AA;
+                return (RRSET_TRUST_AUTHORITY_AA);
             } else {
-                return RRSET_TRUST_AUTHORITY_NONAA;
+                return (RRSET_TRUST_AUTHORITY_NONAA);
             }
             break;
         }
 
         case Message::SECTION_ADDITIONAL: {
             if (aa) {
-                return RRSET_TRUST_ADDITIONAL_AA;
+                return (RRSET_TRUST_ADDITIONAL_AA);
             } else {
-                return RRSET_TRUST_ADDITIONAL_NONAA;
+                return (RRSET_TRUST_ADDITIONAL_NONAA);
             }
             break;
         }
 
         default:
-            return RRSET_TRUST_DEFAULT;
+            return (RRSET_TRUST_DEFAULT);
     }
 }
 

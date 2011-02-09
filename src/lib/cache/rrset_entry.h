@@ -93,17 +93,17 @@ public:
     /// \brief Get the ttl of the RRset.
     uint32_t getTTL() {
         updateTTL();
-        return rrset_->getTTL().getValue();
+        return (rrset_->getTTL().getValue());
     }
 
     /// \return return hash key
     HashKey hashKey() const{
-        return hash_key_;
+        return (hash_key_);
     }
 
     /// \brief get RRset trustworthiness
     RRsetTrustLevel getTrustLevel() const {
-        return trust_level_;
+        return (trust_level_);
     }
 private:
     /// \brief Update TTL according to expiration time
