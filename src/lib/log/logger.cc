@@ -110,7 +110,9 @@ Logger::isFatalEnabled() {
 // definition of the macro).  Also note that it expects that the message buffer
 // "message" is declared in the compilation unit.
 
-#define MESSAGE_SIZE (512)
+namespace {
+const size_t MESSAGE_SIZE = 512;
+}
 
 #define FORMAT_MESSAGE(message) \
     { \

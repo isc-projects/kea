@@ -32,7 +32,6 @@
 using namespace isc::log;
 
 // Declare root logger and a loggers to use an example.
-RootLoggerName root("alpha");
 Logger logger_ex("example");
 Logger logger_dlm("dlm");
 
@@ -53,6 +52,8 @@ int main(int argc, char** argv) {
     int                 dbglevel = -1;
     const char*         localfile = NULL;
     int                 option;
+
+    isc::log::setRootLoggerName("alpha");
 
     // Parse options
     while ((option = getopt(argc, argv, "s:d:")) != -1) {

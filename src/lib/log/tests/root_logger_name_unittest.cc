@@ -35,8 +35,8 @@ TEST_F(RootLoggerNameTest, SetGet) {
     const std::string name2 = "test2";
 
     // Check that Set/Get works
-    RootLoggerName::setName(name1);
-    EXPECT_EQ(name1, RootLoggerName::getName());
+    setRootLoggerName(name1);
+    EXPECT_EQ(name1, getRootLoggerName());
 
     // We could not test that the root logger name is initialised
     // correctly (as there is one instance of it and we don't know
@@ -45,6 +45,6 @@ TEST_F(RootLoggerNameTest, SetGet) {
     //
     // (There was always the outside chance that the root logger name
     // was initialised with name1 and that setName() has no effect.)
-    RootLoggerName::setName(name2);
-    EXPECT_EQ(name2, RootLoggerName::getName());
+    setRootLoggerName(name2);
+    EXPECT_EQ(name2, getRootLoggerName());
 }

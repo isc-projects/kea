@@ -27,45 +27,13 @@
 namespace isc {
 namespace log {
 
-class RootLoggerName {
-public:
+/// \brief Set Root Logger Name
+///
+/// \param name Name of the root logger.  This should be the program
+/// name.
 
-    /// \brief Constructor
-    ///
-    /// Sets the root logger name.  Although the name is static, setting the
-    /// name in the constructor allows static initialization of the name by
-    /// declaring an external instance of the class in the main execution unit.
-    RootLoggerName(const std::string& name) {
-        setName(name);
-    } 
-
-    /// \brief Set Root Logger Name
-    ///
-    /// \param name Name of the root logger.  This should be the program
-    /// name.
-    static void setName(const std::string& name) {
-        rootName() = name;
-    }
-
-    /// \brief Get Root Logger Name
-    ///
-    /// \return Name of the root logger.
-    static std::string getName() {
-        return (rootName());
-    }
-    
-private:
-    /// \brief Store Root Logger Name
-    ///
-    /// Access the singleton root logger name.  This is stored as a static
-    /// variable inside a method to avoid the "static initialization fiasco";
-    /// when accessed by another class during initialization, the name will be
-    /// instantiated. (Else it will be only by chance that it is instantiated
-    /// before the cassling class.)
-    ///
-    /// \return Name addisnged to the root logger.
-    static std::string& rootName();
-};
+void setRootLoggerName(const std::string& name);
+const std::string& getRootLoggerName();
 
 }
 }
