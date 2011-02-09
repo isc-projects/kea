@@ -31,24 +31,24 @@ passfail() {
 
 cat > $localmes << .
 NOTHERE     this message is not in the global dictionary
-READERR     replacement read error, parameters: '%s' and '%s'
+MSGRDERR    replacement read error, parameters: '%s' and '%s'
 UNRECDIR    replacement unrecognised directive message, parameter is '%s'
 .
 
     
 echo -n "1. runInitTest default parameters: "
 cat > $tempfile << .
-FATAL [alpha.example] WRITERR, error writing to test1: 42
+FATAL [alpha.example] MSGWRTERR, error writing to test1: 42
 ERROR [alpha.example] UNRECDIR, unrecognised directive 'false'
-WARN  [alpha.dlm] READERR, error reading from a.txt: dummy test
-INFO  [alpha.dlm] OPENIN, unable to open message file example.msg for input: dummy test
+WARN  [alpha.dlm] MSGRDERR, error reading from message file a.txt: dummy test
+INFO  [alpha.dlm] OPNMSGIN, unable to open message file example.msg for input: dummy test
 .
 ./logger_support_test | cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
 echo -n "2. Severity filter: "
 cat > $tempfile << .
-FATAL [alpha.example] WRITERR, error writing to test1: 42
+FATAL [alpha.example] MSGWRTERR, error writing to test1: 42
 ERROR [alpha.example] UNRECDIR, unrecognised directive 'false'
 .
 ./logger_support_test -s error | cut -d' ' -f3- | diff $tempfile -
@@ -56,10 +56,10 @@ passfail $?
 
 echo -n "3. Debug level: "
 cat > $tempfile << .
-FATAL [alpha.example] WRITERR, error writing to test1: 42
+FATAL [alpha.example] MSGWRTERR, error writing to test1: 42
 ERROR [alpha.example] UNRECDIR, unrecognised directive 'false'
-WARN  [alpha.dlm] READERR, error reading from a.txt: dummy test
-INFO  [alpha.dlm] OPENIN, unable to open message file example.msg for input: dummy test
+WARN  [alpha.dlm] MSGRDERR, error reading from message file a.txt: dummy test
+INFO  [alpha.dlm] OPNMSGIN, unable to open message file example.msg for input: dummy test
 DEBUG [alpha.example] UNRECDIR, unrecognised directive '[abc]'
 DEBUG [alpha.example] UNRECDIR, unrecognised directive '[24]'
 DEBUG [alpha.example] UNRECDIR, unrecognised directive '[25]'
@@ -70,9 +70,9 @@ passfail $?
 echo -n "4. Local message replacement: "
 cat > $tempfile << .
 WARN  [alpha.log] IDNOTFND, could not replace message for 'NOTHERE': no such message identification
-FATAL [alpha.example] WRITERR, error writing to test1: 42
+FATAL [alpha.example] MSGWRTERR, error writing to test1: 42
 ERROR [alpha.example] UNRECDIR, replacement unrecognised directive message, parameter is 'false'
-WARN  [alpha.dlm] READERR, replacement read error, parameters: 'a.txt' and 'dummy test'
+WARN  [alpha.dlm] MSGRDERR, replacement read error, parameters: 'a.txt' and 'dummy test'
 .
 ./logger_support_test -s warn $localmes | cut -d' ' -f3- | diff $tempfile -
 passfail $?
