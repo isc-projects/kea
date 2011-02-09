@@ -121,7 +121,7 @@ public:
     /// set to on by the \c setFlag() method.
     enum Flags {
         FLAG_CALLBACK = 1, ///< Callback enabled. See \ref callback
-        FLAG_USER1 = 0x8000000U ///< Application specific flag
+        FLAG_USER1 = 0x80000000U ///< Application specific flag
     };
 private:
     // Some flag values are expected to be used for internal purposes
