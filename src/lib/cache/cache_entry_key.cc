@@ -29,7 +29,7 @@ genCacheEntryName(const isc::dns::Name& name,
     ostringstream stream;
     stream << type.getCode();
     keystr += stream.str();
-    return keystr;
+    return (keystr);
 }
 
 const std::string
@@ -40,7 +40,7 @@ genCacheEntryName(const std::string& namestr,
     ostringstream stream;
     stream << type;
     keystr += stream.str();
-    return keystr;
+    return (keystr);
 }
 
 } // namespace cache

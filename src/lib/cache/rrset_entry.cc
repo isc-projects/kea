@@ -38,12 +38,12 @@ RRsetEntry::RRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& leve
 isc::dns::RRsetPtr
 RRsetEntry::getRRset() {
     updateTTL();
-    return rrset_;
+    return (rrset_);
 }
 
 time_t
 RRsetEntry::getExpireTime() const {
-    return expire_time_;
+    return (expire_time_);
 }
 
 void

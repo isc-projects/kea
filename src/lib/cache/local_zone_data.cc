@@ -35,9 +35,9 @@ LocalZoneData::lookup(const isc::dns::Name& name,
     string key = genCacheEntryName(name, type);
     RRsetMapIterator iter = rrsets_map_.find(key);
     if (iter == rrsets_map_.end()) {
-        return RRsetPtr();
+        return (RRsetPtr());
     } else {
-        return iter->second;
+        return (iter->second);
     }
 }
 
