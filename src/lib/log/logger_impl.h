@@ -15,6 +15,7 @@
 #ifndef __LOGGER_IMPL_H
 #define __LOGGER_IMPL_H
 
+#include <stdarg.h>
 #include <time.h>
 
 #include <cstdlib>
@@ -175,17 +176,18 @@ public:
     ///
     /// \param sev_text Severity level as a text string
     /// \param ident Message identification
-    /// \param text Text to log
+    /// \param ap Variable argument list holding message arguments
     void output(const char* sev_text, const MessageID& ident,
-        const char* text);
+        va_list ap);
 
 
     /// \brief Output Debug Message
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void debug(const MessageID& ident, const char* text) {
-        output("DEBUG", ident, text);
+    /// \param ap Variable argument list holding message arguments
+    void debug(const MessageID& ident, va_list ap) {
+        output("DEBUG", ident, ap);
     }
 
 
@@ -193,32 +195,36 @@ public:
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void info(const MessageID& ident, const char* text) {
-        output("INFO ", ident, text);
+    /// \param ap Variable argument list holding message arguments
+    void info(const MessageID& ident, va_list ap) {
+        output("INFO ", ident, ap);
     }
 
     /// \brief Output Warning Message
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void warn(const MessageID& ident, const char* text) {
-        output("WARN ", ident, text);
+    /// \param ap Variable argument list holding message arguments
+    void warn(const MessageID& ident, va_list ap) {
+        output("WARN ", ident, ap);
     }
 
     /// \brief Output Error Message
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void error(const MessageID& ident, const char* text) {
-        output("ERROR", ident, text);
+    /// \param ap Variable argument list holding message arguments
+    void error(const MessageID& ident, va_list ap) {
+        output("ERROR", ident, ap);
     }
 
     /// \brief Output Fatal Message
     ///
     /// \param ident Message identification.
     /// \param text Text to log
-    void fatal(const MessageID& ident, const char* text) {
-        output("FATAL", ident, text);
+    /// \param ap Variable argument list holding message arguments
+    void fatal(const MessageID& ident, va_list ap) {
+        output("FATAL", ident, ap);
     }
 
     /// \brief Equality

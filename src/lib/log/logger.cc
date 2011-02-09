@@ -110,20 +110,6 @@ Logger::isFatalEnabled() {
 // definition of the macro).  Also note that it expects that the message buffer
 // "message" is declared in the compilation unit.
 
-namespace {
-const size_t MESSAGE_SIZE = 512;
-}
-
-#define FORMAT_MESSAGE(message) \
-    { \
-    MessageDictionary& global = MessageDictionary::globalDictionary(); \
-    string format = global.getText(ident); \
-    va_list ap; \
-    va_start(ap, ident); \
-    vsnprintf(message, sizeof(message), format.c_str(), ap); \
-    message[sizeof(message) - 1] = '\0'; \
-    va_end(ap); \
-    }
     
 
 // Output methods
@@ -131,45 +117,50 @@ const size_t MESSAGE_SIZE = 512;
 void
 Logger::debug(int dbglevel, const isc::log::MessageID& ident, ...) {
     if (isDebugEnabled(dbglevel)) {
-        char message[MESSAGE_SIZE];
-        FORMAT_MESSAGE(message);
-        getLoggerPtr()->debug(ident, message);
+        va_list ap;
+        va_start(ap, ident);
+        getLoggerPtr()->debug(ident, ap);
+        va_end(ap);
     }
 }
 
 void
 Logger::info(const isc::log::MessageID& ident, ...) {
     if (isInfoEnabled()) {
-        char message[MESSAGE_SIZE];
-        FORMAT_MESSAGE(message);
-        getLoggerPtr()->info(ident, message);
+        va_list ap;
+        va_start(ap, ident);
+        getLoggerPtr()->info(ident, ap);
+        va_end(ap);
     }
 }
 
 void
 Logger::warn(const isc::log::MessageID& ident, ...) {
     if (isWarnEnabled()) {
-        char message[MESSAGE_SIZE];
-        FORMAT_MESSAGE(message);
-        getLoggerPtr()->warn(ident, message);
+        va_list ap;
+        va_start(ap, ident);
+        getLoggerPtr()->warn(ident, ap);
+        va_end(ap);
     }
 }
 
 void
 Logger::error(const isc::log::MessageID& ident, ...) {
     if (isErrorEnabled()) {
-        char message[MESSAGE_SIZE];
-        FORMAT_MESSAGE(message);
-        getLoggerPtr()->error(ident, message);
+        va_list ap;
+        va_start(ap, ident);
+        getLoggerPtr()->error(ident, ap);
+        va_end(ap);
     }
 }
 
 void
 Logger::fatal(const isc::log::MessageID& ident, ...) {
     if (isFatalEnabled()) {
-        char message[MESSAGE_SIZE];
-        FORMAT_MESSAGE(message);
-        getLoggerPtr()->fatal(ident, message);
+        va_list ap;
+        va_start(ap, ident);
+        getLoggerPtr()->fatal(ident, ap);
+        va_end(ap);
     }
 }
 

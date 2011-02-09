@@ -196,8 +196,14 @@ LoggerImpl::isDebugEnabled(int dbglevel) {
 
 void
 LoggerImpl::output(const char* sev_text, const MessageID& ident,
-    const char* text)
+    va_list ap)
 {
+    char message[512];      // Should be large enough for any message
+
+    // Obtain text of the message and substitute arguments.
+    const string format = MessageDictionary::globalDictionary().getText(ident);
+    vsnprintf(message, sizeof(message), format.c_str(), ap);
+    message[sizeof(message) - 1] = '\0';    // Guarantee trailing NULL
 
     // Get the time in a struct tm format, and convert to text
     time_t t_time;
@@ -210,7 +216,7 @@ LoggerImpl::output(const char* sev_text, const MessageID& ident,
 
     // Now output.
     std::cout << chr_time << " " << sev_text << " [" << getName() << "] " <<
-        ident << ", " << text << "\n";
+        ident << ", " << message << "\n";
 }
 
 } // namespace log
