@@ -1,4 +1,4 @@
-// File created from messagedef.mes on Wed Feb  9 10:11:36 2011
+// File created from messagedef.mes on Wed Feb  9 13:09:05 2011
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -9,6 +9,7 @@ namespace log {
 
 extern const isc::log::MessageID MSG_DUPLNS = "DUPLNS";
 extern const isc::log::MessageID MSG_DUPLPRFX = "DUPLPRFX";
+extern const isc::log::MessageID MSG_DUPMSGID = "DUPMSGID";
 extern const isc::log::MessageID MSG_IDNOTFND = "IDNOTFND";
 extern const isc::log::MessageID MSG_NSEXTRARG = "NSEXTRARG";
 extern const isc::log::MessageID MSG_NSINVARG = "NSINVARG";
@@ -19,6 +20,7 @@ extern const isc::log::MessageID MSG_OPENOUT = "OPENOUT";
 extern const isc::log::MessageID MSG_PRFEXTRARG = "PRFEXTRARG";
 extern const isc::log::MessageID MSG_PRFINVARG = "PRFINVARG";
 extern const isc::log::MessageID MSG_PRFNOARG = "PRFNOARG";
+extern const isc::log::MessageID MSG_RDLOCMES = "RDLOCMES";
 extern const isc::log::MessageID MSG_READERR = "READERR";
 extern const isc::log::MessageID MSG_UNRECDIR = "UNRECDIR";
 extern const isc::log::MessageID MSG_WRITERR = "WRITERR";
@@ -31,6 +33,7 @@ namespace {
 const char* values[] = {
     "DUPLNS", "duplicate $NAMESPACE directive found",
     "DUPLPRFX", "duplicate $PREFIX directive found",
+    "DUPMSGID", "duplicate ID found in source code: %s",
     "IDNOTFND", "could not replace message for '%s': no such message identification",
     "NSEXTRARG", "$NAMESPACE directive has too many arguments",
     "NSINVARG", "$NAMESPACE directive has an invalid argument ('%s')",
@@ -41,6 +44,7 @@ const char* values[] = {
     "PRFEXTRARG", "$PREFIX directive has too many arguments",
     "PRFINVARG", "$PREFIX directive has an invalid argument ('%s')",
     "PRFNOARG", "no arguments were given to the $PREFIX directive",
+    "RDLOCMES", "reading local message file %s",
     "READERR", "error reading from %s: %s",
     "UNRECDIR", "unrecognised directive '%s'",
     "WRITERR", "error writing to %s: %s",

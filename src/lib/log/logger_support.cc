@@ -24,6 +24,8 @@
 /// These functions will be replaced once the code has bneen written to obtain
 /// the logging parameters from the configuration database.
 
+#include <algorithm>
+#include <string>
 #include <vector>
 #include <boost/lexical_cast.hpp>
 
@@ -32,6 +34,7 @@
 #include <log/messagedef.h>
 #include <log/message_dictionary.h>
 #include <log/message_exception.h>
+#include <log/message_initializer.h>
 #include <log/message_reader.h>
 #include <log/message_types.h>
 #include <log/root_logger_name.h>
@@ -41,7 +44,8 @@ namespace log {
 
 using namespace std;
 
-// Declare a logger for the logging subsystem
+// Declare a logger for the logging subsystem.  This is a sub-logger of the
+// root logger and is used in all functions in this file.
 Logger logger("log");
 
 
@@ -58,6 +62,7 @@ readLocalMessageFile(const char* file) {
     MessageDictionary& dictionary = MessageDictionary::globalDictionary();
     MessageReader reader(&dictionary);
     try {
+        logger.info(MSG_RDLOCMES, file);
         reader.readFile(file, MessageReader::REPLACE);
 
         // File successfully read, list the duplicates
@@ -89,20 +94,33 @@ readLocalMessageFile(const char* file) {
 /// Logger Run-Time Initialization
 
 void
-runTimeInit(isc::log::Severity severity, int dbglevel, const char* file) {
+init(const string& root, isc::log::Severity severity, int dbglevel,
+    const char* file) {
 
-    // Create the application root logger.  This is the logger that has the
-    // name of the application (and is one level down from the log4cxx root
-    // logger).  All other loggers created in this application will be its
-    // child.
-    //
-    // The main purpose of the application root logger is to provide the root
-    // name in output message for all other loggers.
-    Logger logger(isc::log::getRootLoggerName());
+    // Create the application root logger and set the default severity and
+    // debug level.  This is the logger that has the name of the application.
+    // All other loggers created in this application will be its children.
+    setRootLoggerName(root);
+    Logger root_logger(isc::log::getRootLoggerName(), true);
 
     // Set the severity associated with it.  If no other logger has a severity,
     // this will be the default.
-    logger.setSeverity(severity, dbglevel);
+    root_logger.setSeverity(severity, dbglevel);
+
+    // Check if there were any duplicate message IDs in the default dictionary
+    // and if so, log them.  Log using the logging facility root logger.
+    vector<string>& duplicates = MessageInitializer::getDuplicates();
+    if (!duplicates.empty()) {
+
+        // There are - sort and remove any duplicates.
+        sort(duplicates.begin(), duplicates.end());
+        vector<string>::iterator new_end =
+            unique(duplicates.begin(), duplicates.end());
+        for (vector<string>::iterator i = duplicates.begin(); i != new_end; ++i) {
+            logger.warn(MSG_DUPMSGID, i->c_str());
+        }
+
+    }
 
     // Replace any messages with local ones (if given)
     if (file) {

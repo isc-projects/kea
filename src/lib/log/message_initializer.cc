@@ -23,7 +23,21 @@ namespace log {
 
 MessageInitializer::MessageInitializer(const char* values[]) {
     MessageDictionary& global = MessageDictionary::globalDictionary();
-    global.load(values);
+    std::vector<std::string> repeats = global.load(values);
+
+    // Append the IDs in the list just loaded (the "repeats") to the global list
+    // of duplicate IDs.
+    if (!repeats.empty()) {
+        std::vector<std::string>& duplicates = getDuplicates();
+        duplicates.insert(duplicates.end(), repeats.begin(), repeats.end());
+    }
+}
+
+// Return reference to duplicate array
+
+std::vector<std::string>& MessageInitializer::getDuplicates() {
+    static std::vector<std::string> duplicates;
+    return (duplicates);
 }
 
 } // namespace log
