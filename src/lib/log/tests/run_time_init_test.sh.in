@@ -73,9 +73,8 @@ WARN  [alpha.log] IDNOTFND, could not replace message for 'NOTHERE': no such mes
 FATAL [alpha.example] WRITERR, error writing to test1: 42
 ERROR [alpha.example] UNRECDIR, replacement unrecognised directive message, parameter is 'false'
 WARN  [alpha.dlm] READERR, replacement read error, parameters: 'a.txt' and 'dummy test'
-INFO  [alpha.dlm] OPENIN, unable to open message file example.msg for input: dummy test
 .
-./logger_support_test $localmes | cut -d' ' -f3- | diff $tempfile -
+./logger_support_test -s warn $localmes | cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
 rm -f $localmes

@@ -53,8 +53,6 @@ int main(int argc, char** argv) {
     const char*         localfile = NULL;
     int                 option;
 
-    isc::log::setRootLoggerName("alpha");
-
     // Parse options
     while ((option = getopt(argc, argv, "s:d:")) != -1) {
         switch (option) {
@@ -91,7 +89,7 @@ int main(int argc, char** argv) {
     }
 
     // Update the logging parameters
-    runTimeInit(severity, dbglevel, localfile);
+    init("alpha", severity, dbglevel, localfile);
 
     // Log a few messages
     logger_ex.fatal(MSG_WRITERR, "test1", "42");

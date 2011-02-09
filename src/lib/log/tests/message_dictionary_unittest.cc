@@ -16,11 +16,28 @@
 #include <string>
 #include <gtest/gtest.h>
 #include <log/message_dictionary.h>
+#include <log/message_initializer.h>
 #include <log/message_types.h>
 
 using namespace isc;
 using namespace isc::log;
 using namespace std;
+
+// set up another message initializer.  This will add a symbol found in the
+// logging library and a symbol not found in the logging library.  When the
+// global dictionary is loaded, the former should be marked as a duplicate
+// and the latter should be present.
+
+static const char* values[] = {
+    "DUPLNS", "duplicate $NAMESPACE directive found",
+    "NEWSYM", "new symbol added",
+    NULL
+};
+
+MessageInitializer init(values);
+
+
+
 
 class MessageDictionaryTest : public ::testing::Test {
 protected:
@@ -39,15 +56,6 @@ protected:
     std::string gamma_text;
 
 };
-
-
-// Check that the global dictionary is a singleton.
-
-TEST_F(MessageDictionaryTest, GlobalTest) {
-    MessageDictionary& global = MessageDictionary::globalDictionary();
-    MessageDictionary& global2 = MessageDictionary::globalDictionary();
-    EXPECT_TRUE(&global2 == &global);
-}
 
 // Check that adding messages works
 
@@ -166,4 +174,24 @@ TEST_F(MessageDictionaryTest, Lookups) {
     EXPECT_EQ(string(""), dictionary.getText("XYZZY"));
     EXPECT_EQ(string(""), dictionary.getText(""));
     EXPECT_EQ(string(""), dictionary.getText("\n\n\n"));
+}
+
+// Check that the global dictionary is a singleton.
+
+TEST_F(MessageDictionaryTest, GlobalTest) {
+    MessageDictionary& global = MessageDictionary::globalDictionary();
+    MessageDictionary& global2 = MessageDictionary::globalDictionary();
+    EXPECT_TRUE(&global2 == &global);
+}
+
+// Check that the global dictionary has detected the duplicate and the
+// new symbol.
+
+TEST_F(MessageDictionaryTest, GlobalLoadTest) {
+    vector<string>& duplicates = MessageInitializer::getDuplicates();
+    ASSERT_EQ(1, duplicates.size());
+    EXPECT_EQ(string("DUPLNS"), duplicates[0]);
+
+    string text = MessageDictionary::globalDictionary().getText("NEWSYM");
+    EXPECT_EQ(string("new symbol added"), text);
 }

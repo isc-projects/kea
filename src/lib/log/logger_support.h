@@ -15,6 +15,7 @@
 #ifndef __LOGGER_SUPPORT_H
 #define __LOGGER_SUPPORT_H
 
+#include <string>
 #include <log/logger.h>
 
 namespace isc {
@@ -22,17 +23,21 @@ namespace log {
 
 /// \brief Run-Time Initialization
 ///
-/// This code will be used until the logger is fully integrated into the BIND-10
-/// configuration database.  It performs run-time initialization of the logger,
-/// in particular supplying run-time choices to it:
+/// Performs run-time initialization of the logger in particular supplying:
 ///
-/// * The severity (and if applicable, debug level) at which to log
-/// * Name of a local message file, containing localisation of message text.
+/// - Name of the root logger
+/// - The severity (and if applicable, debug level) for the root logger.
+/// - Name of a local message file, containing localisation of message text.
 ///
+/// This function is likely to change over time as more debugging options are
+/// held in the configuration database.
+///
+/// \param root Name of the root logger
 /// \param severity Severity at which to log
 /// \param dbglevel Debug severiy (ignored if "severity" is not "DEBUG")
 /// \param file Name of the local message file.
-void runTimeInit(isc::log::Severity severity, int dbglevel, const char* file);
+void init(const std::string& root, isc::log::Severity severity, int dbglevel,
+    const char* file);
 
 } // namespace log
 } // namespace isc
