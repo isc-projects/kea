@@ -71,7 +71,7 @@ XDebugLevel::getExtendedDebug(int level) {
     int actual = std::max(MIN_DEBUG_LEVEL, std::min(MAX_DEBUG_LEVEL, level));
 
     // ... and return a pointer to the appropriate logging level object
-    return dbglevels_[actual - MIN_DEBUG_LEVEL];
+    return (dbglevels_[actual - MIN_DEBUG_LEVEL]);
 }
 
 // Convert an integer (an absolute logging level number, not a debug level) to a
@@ -80,7 +80,7 @@ XDebugLevel::getExtendedDebug(int level) {
 
 LevelPtr
 XDebugLevel::toLevel(int val) {
-    return toLevel(val, getExtendedDebug(MIN_DEBUG_LEVEL));
+    return (toLevel(val, getExtendedDebug(MIN_DEBUG_LEVEL)));
 }
 
 LevelPtr
@@ -89,10 +89,10 @@ XDebugLevel::toLevel(int val, const LevelPtr& defaultLevel) {
     // Note the reversal of the notion of MIN and MAX - see the header file for
     // details.
     if ((val >= XDEBUG_MAX_LEVEL_INT) && (val <= XDEBUG_MIN_LEVEL_INT)) {
-        return getExtendedDebug(XDEBUG_MIN_LEVEL_INT - val);
+        return (getExtendedDebug(XDEBUG_MIN_LEVEL_INT - val));
     }
     else {
-        return defaultLevel;
+        return (defaultLevel);
     }
 }
 
@@ -100,7 +100,7 @@ XDebugLevel::toLevel(int val, const LevelPtr& defaultLevel) {
 
 LevelPtr
 XDebugLevel::toLevelLS(const LogString& sArg) {
-    return toLevelLS(sArg, getExtendedDebug(0));
+    return (toLevelLS(sArg, getExtendedDebug(0)));
 }
 
 LevelPtr
@@ -111,7 +111,7 @@ XDebugLevel::toLevelLS(const LogString& sArg, const LevelPtr& defaultLevel) {
     if (length < 5) {
 
         // String can't possibly start DEBUG so we don't know what it is.
-        return defaultLevel;
+        return (defaultLevel);
     }
     else {
         if (strncasecmp(name.c_str(), "DEBUG", 5) == 0) {
@@ -121,7 +121,7 @@ XDebugLevel::toLevelLS(const LogString& sArg, const LevelPtr& defaultLevel) {
             if (length == 5) {
 
                 // It is plain "DEBUG".  Take this as level 0.
-                return getExtendedDebug(0);
+                return (getExtendedDebug(0));
             }
             else {
 
@@ -132,17 +132,17 @@ XDebugLevel::toLevelLS(const LogString& sArg, const LevelPtr& defaultLevel) {
                 // if DEBUG99 has been specified.
                 try {
                     int level = boost::lexical_cast<int>(name.substr(5));
-                    return getExtendedDebug(level);
+                    return (getExtendedDebug(level));
                 }
-                catch (boost::bad_lexical_cast&) {
-                    return defaultLevel;
+                catch ((boost::bad_lexical_cast&) ){
+                    return (defaultLevel);
                 }
             }
         }
         else {
 
             // Unknown string - return default.
-            return defaultLevel;
+            return (defaultLevel);
         }
     }
 }

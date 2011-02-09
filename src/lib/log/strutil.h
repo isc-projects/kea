@@ -88,7 +88,7 @@ std::vector<std::string> tokens(const std::string text,
 ///
 /// \return Uppercase version of the argument
 inline char toUpper(char chr) {
-    return static_cast<char>(std::toupper(static_cast<int>(chr)));
+    return (static_cast<char>(std::toupper(static_cast<int>(chr))));
 }
 
 
@@ -113,7 +113,7 @@ inline void uppercase(std::string& text) {
 ///
 /// \return Lowercase version of the argument
 inline char toLower(char chr) {
-    return static_cast<char>(std::tolower(static_cast<int>(chr)));
+    return (static_cast<char>(std::tolower(static_cast<int>(chr))));
 }
 
 /// \brief Lowercase String

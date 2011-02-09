@@ -236,7 +236,7 @@ private:
         if (!loggerptr_) {
             initLoggerImpl();
         }
-        return loggerptr_;
+        return (loggerptr_);
     }
 
     /// \brief Initialize Underlying Implementation and Set loggerptr_

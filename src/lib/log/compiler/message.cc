@@ -110,7 +110,7 @@ currentTime() {
 
     // Convert to string and strip out the trailing newline
     string current_time = buffer;
-    return isc::strutil::trim(current_time);
+    return (isc::strutil::trim(current_time));
 }
 
 
@@ -133,7 +133,7 @@ sentinel(Filename& file) {
     string ext = file.extension();
     string sentinel_text = "__" + name + "_" + ext.substr(1);
     isc::strutil::uppercase(sentinel_text);
-    return sentinel_text;
+    return (sentinel_text);
 }
 
 
@@ -160,7 +160,7 @@ quoteString(const string& instring) {
         outstring += instring[i];
     }
 
-    return outstring;
+    return (outstring);
 }
 
 
@@ -183,7 +183,7 @@ sortedIdentifiers(MessageDictionary* dictionary) {
     }
     sort(ident.begin(), ident.end());
 
-    return ident;
+    return (ident);
 }
 
 
@@ -225,7 +225,7 @@ splitNamespace(string ns) {
         components = isc::strutil::tokens(ns, ":");
     }
 
-    return components;
+    return (components);
 }
 
 
@@ -461,7 +461,7 @@ writeProgramFile(const string& file, MessageDictionary* dictionary)
 
         ccfile.close();
 
-        return unique_name;
+        return (unique_name);
     }
     catch (MessageException&) {
         ccfile.close();
@@ -520,15 +520,15 @@ main(int argc, char** argv) {
         switch (opt) {
             case 'h':
                 usage();
-                return 0;
+                return (0);
 
             case 'v':
                 version();
-                return 0;
+                return (0);
 
             default:
                 // A message will have already been output about the error.
-                return 1;
+                return (1);
         }
     }
 
@@ -536,11 +536,11 @@ main(int argc, char** argv) {
     if (optind < (argc - 1)) {
         cout << "Error: excess arguments in command line\n";
         usage();
-        return 1;
+        return (1);
     } else if (optind >= argc) {
         cout << "Error: missing message file\n";
         usage();
-        return 1;
+        return (1);
     }
     string message_file = argv[optind];
 
@@ -575,9 +575,9 @@ main(int argc, char** argv) {
         text = isc::strutil::format(text, e.arguments());
         cerr << text << "\n";
 
-        return 1;
+        return (1);
     }
 
-    return 0;
+    return (0);
 
 }

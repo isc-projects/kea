@@ -79,7 +79,7 @@ public:
     ///
     /// \return Pointer to current dictionary object
     MessageDictionary* getDictionary() const {
-        return dictionary_;
+        return (dictionary_);
     }
 
 
@@ -120,7 +120,7 @@ public:
     ///
     /// \return Argument to the $NAMESPACE directive (if present)
     virtual std::string getNamespace() const {
-        return ns_;
+        return (ns_);
     }
 
 
@@ -136,7 +136,7 @@ public:
     ///
     /// \return Argument to the $PREFIX directive (if present)
     virtual std::string getPrefix() const {
-        return prefix_;
+        return (prefix_);
     }
 
 
@@ -155,7 +155,7 @@ public:
     ///
     /// \return Collection of messages not added
     MessageIDCollection getNotAdded() const {
-        return not_added_;
+        return (not_added_);
     }
 
 private:

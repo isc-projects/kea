@@ -159,19 +159,19 @@ public:
     ///
     /// \return Number of items in the dictionary
     virtual size_t size() const {
-        return dictionary_.size();
+        return (dictionary_.size());
     }
 
 
     /// \brief Return begin() iterator of internal map
     const_iterator begin() const {
-        return dictionary_.begin();
+        return (dictionary_.begin());
     }
 
 
     /// \brief Return end() iterator of internal map
     const_iterator end() const {
-        return dictionary_.end();
+        return (dictionary_.end());
     }
 
 

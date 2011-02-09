@@ -83,7 +83,7 @@ MessageDictionary::load(const char* messages[]) {
             }
         }
     }
-    return duplicates;
+    return (duplicates);
 }
 
 // Return message text or blank string
@@ -92,10 +92,10 @@ string
 MessageDictionary::getText(const string& ident) const {
     Dictionary::const_iterator i = dictionary_.find(ident);
     if (i == dictionary_.end()) {
-        return string("");
+        return (string(""));
     }
     else {
-        return i->second;
+        return (i->second);
     }
 }
 
@@ -104,7 +104,7 @@ MessageDictionary::getText(const string& ident) const {
 MessageDictionary*
 MessageDictionary::globalDictionary() {
     static MessageDictionary global;
-    return &global;
+    return (&global);
 }
 
 

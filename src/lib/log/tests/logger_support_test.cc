@@ -103,5 +103,5 @@ int main(int argc, char** argv) {
     logger_ex.debug(24, MSG_UNRECDIR, "[24]");
     logger_ex.debug(25, MSG_UNRECDIR, "[25]");
     logger_ex.debug(26, MSG_UNRECDIR, "[26]");
-    return 0;
+    return (0);
 }
