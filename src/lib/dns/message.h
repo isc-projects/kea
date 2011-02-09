@@ -498,6 +498,13 @@ public:
     /// specified mode.
     void clear(Mode mode);
 
+    /// \brief Adds all rrsets in the given section to the same section
+    /// in target
+    ///
+    /// \param target The target Message
+    /// \param section the section to copy
+    void copySection(Message& target, const Section section) const;
+
     /// \brief Prepare for making a response from a request.
     ///
     /// This will clear the DNS header except those fields that should be kept
