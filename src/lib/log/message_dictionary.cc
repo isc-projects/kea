@@ -84,13 +84,16 @@ MessageDictionary::load(const char* messages[]) {
     return (duplicates);
 }
 
-// Return message text or blank string
+// Return message text or blank string.  A reference is returned to a string
+// in the dictionary - this is fine, as the string is immediately used for
+// output.
 
-string
+const string&
 MessageDictionary::getText(const string& ident) const {
+    static const string empty("");
     Dictionary::const_iterator i = dictionary_.find(ident);
     if (i == dictionary_.end()) {
-        return (string(""));
+        return (empty);
     }
     else {
         return (i->second);
