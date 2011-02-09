@@ -76,19 +76,14 @@ const char* const cname_nxdom_txt =
 const char* const cname_out_txt =
     "cnameout.example.com. 3600 IN CNAME www.example.org.\n";
 const char* const dname_txt =
-    "dname.example.com. 3600 IN DNAME dnametarget.example.com.\n";
+    "dname.example.com. 3600 IN DNAME "
+    "somethinglong.dnametarget.example.com.\n";
 const char* const dname_a_txt =
     "dname.example.com. 3600 IN A 192.0.2.5\n";
-const char* const dname_long_txt =
-    "longdname.example.com. 3600 IN DNAME "
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
-    "example.com.\n";
 // This is not inside the zone, this is created at runtime
 const char* const synthetized_cname_txt =
-    "www.dname.example.com. 3600 IN CNAME www.dnametarget.example.com.\n";
+    "www.dname.example.com. 3600 IN CNAME "
+    "www.somethinglong.dnametarget.example.com.\n";
 // The rest of data won't be referenced from the test cases.
 const char* const other_zone_rrs =
     "cnamemailer.example.com. 3600 IN CNAME www.example.com.\n"
@@ -110,7 +105,6 @@ public:
         origin_(Name("example.com")),
         delegation_name_("delegation.example.com"),
         dname_name_("dname.example.com"),
-        longdname_name_("longdname.example.com"),
         has_SOA_(true),
         has_apex_NS_(true),
         rrclass_(RRClass::IN())
@@ -119,7 +113,7 @@ public:
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
             delegation_txt << mx_txt << www_a_txt << cname_txt <<
             cname_nxdom_txt << cname_out_txt << dname_txt << dname_a_txt <<
-            dname_long_txt << other_zone_rrs;
+            other_zone_rrs;
 
         masterLoad(zone_stream, origin_, rrclass_,
                    boost::bind(&MockZone::loadRRset, this, _1));
@@ -152,22 +146,16 @@ private:
             rrset->getType() == RRType::DNAME())
         {
             dname_rrset_ = rrset;
-        } else if (rrset->getName() == longdname_name_ &&
-            rrset->getType() == RRType::DNAME())
-        {
-            longdname_rrset_ = rrset;
         }
     }
 
     const Name origin_;
     const Name delegation_name_;
     const Name dname_name_;
-    const Name longdname_name_;
     bool has_SOA_;
     bool has_apex_NS_;
     ConstRRsetPtr delegation_rrset_;
     ConstRRsetPtr dname_rrset_;
-    ConstRRsetPtr longdname_rrset_;
     const RRClass rrclass_;
 };
 
@@ -194,10 +182,6 @@ MockZone::find(const Name& name, const RRType& type,
         NameComparisonResult::SUBDOMAIN)
     {
         return (FindResult(DNAME, dname_rrset_));
-    } else if (name.compare(longdname_name_).getRelation() ==
-        NameComparisonResult::SUBDOMAIN)
-    {
-        return (FindResult(DNAME, longdname_rrset_));
     }
 
     // normal cases.  names are searched for only per exact-match basis
@@ -635,13 +619,18 @@ TEST_F(QueryTest, DNAME_NX_RRSET) {
  * YXDOMAIN.
  */
 TEST_F(QueryTest, LongDNAME) {
-    EXPECT_NO_THROW(Query(memory_datasrc,
-        Name("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
-        "somethingveryveryverylong.longdname.example.com"), RRType::A(),
+    // A name that is as long as it can be
+    Name longname(
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+        "dname.example.com.");
+    EXPECT_NO_THROW(Query(memory_datasrc, longname, RRType::A(),
         response).process());
 
     responseCheck(response, Rcode::YXDOMAIN(), AA_FLAG, 1, 0, 0,
-        dname_long_txt, NULL, NULL);
+        dname_txt, NULL, NULL);
 }
 
 }
