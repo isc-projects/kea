@@ -79,7 +79,7 @@ public:
     /// \brief Get the hash key of the message entry.
     /// \return return hash key
     virtual HashKey hashKey() const {
-        return *hash_key_ptr_;
+        return (*hash_key_ptr_);
     }
 
 protected:

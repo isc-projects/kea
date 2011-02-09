@@ -45,9 +45,9 @@ RRsetCache::lookup(const isc::dns::Name& qname,
 
     //If the rrset entry has expired, return NULL.
     if(entry_ptr && (time(NULL) > entry_ptr->getExpireTime())) {
-        return RRsetEntryPtr();
+        return (RRsetEntryPtr());
     }
-    return entry_ptr;
+    return (entry_ptr);
 }
 
 RRsetEntryPtr
@@ -61,7 +61,7 @@ RRsetCache::update(const isc::dns::RRset& rrset, const RRsetTrustLevel& level) {
         // Replace the expired rrset entry if it exists.
         rrset_table_.add(entry_ptr, entry_ptr->hashKey(), true);
         //TODO , lru list touch.
-        return entry_ptr;
+        return (entry_ptr);
     } else {
         // there is one rrset entry in the cache, need to check whether
         // the new rrset is more authoritative.
@@ -69,7 +69,7 @@ RRsetCache::update(const isc::dns::RRset& rrset, const RRsetTrustLevel& level) {
             // existed rrset entry is more authoritative, do nothing,
             // just return it.
             //TODO, lru list touch
-            return entry_ptr;
+            return (entry_ptr);
         } else {
             HashKey key = entry_ptr->hashKey();
             rrset_table_.remove(key);
@@ -77,7 +77,7 @@ RRsetCache::update(const isc::dns::RRset& rrset, const RRsetTrustLevel& level) {
             //TODO, lru list touch.
             // Replace the expired rrset entry if it exists.
             rrset_table_.add(entry_ptr, key, true);
-            return entry_ptr;
+            return (entry_ptr);
         }
     }
 }
@@ -95,7 +95,7 @@ RRsetCache::load(const std::string&) {
 bool
 RRsetCache::resize(uint32_t) {
     //TODO
-    return true;
+    return (true);
 }
 
 } // namespace cache
