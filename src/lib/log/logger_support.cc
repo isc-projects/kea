@@ -12,10 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE
 
-// $Id$
-
-
-
 /// \brief Temporary Logger Support
 ///
 /// Performs run-time initialization of the logger system.  In particular, it

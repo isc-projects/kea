@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: base64_unittest.cc 2549 2010-07-20 19:09:37Z jinmei $
-
 // The sole purpose of this file is to provide a set of message definitions
 // in a separate compilation unit from the one in which their presence is
 // checked.  This tests that merely declaring the MessageInitializer object

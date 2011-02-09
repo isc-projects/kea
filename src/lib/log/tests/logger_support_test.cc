@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: $
-
 /// \brief Example Program
 ///
 /// Simple example program showing how to use the logger.

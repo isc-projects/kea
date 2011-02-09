@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 /// \brief Body of Virtual Destructor
 
 #include <log/message_exception.h>
