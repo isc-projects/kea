@@ -55,8 +55,8 @@ Logger logger("log");
 static void
 readLocalMessageFile(const char* file) {
     
-    MessageDictionary* dictionary = MessageDictionary::globalDictionary();
-    MessageReader reader(dictionary);
+    MessageDictionary& dictionary = MessageDictionary::globalDictionary();
+    MessageReader reader(&dictionary);
     try {
         reader.readFile(file, MessageReader::REPLACE);
 

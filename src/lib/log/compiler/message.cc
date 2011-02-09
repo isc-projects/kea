@@ -513,10 +513,10 @@ main(int argc, char** argv) {
     }
     catch (MessageException& e) {
         // Create an error message from the ID and the text
-        MessageDictionary* global = MessageDictionary::globalDictionary();
+        MessageDictionary& global = MessageDictionary::globalDictionary();
         string text = e.id();
         text += ", ";
-        text += global->getText(e.id());
+        text += global.getText(e.id());
 
         // Format with arguments
         text = isc::strutil::format(text, e.arguments());
