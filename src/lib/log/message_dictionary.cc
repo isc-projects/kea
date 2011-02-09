@@ -99,10 +99,10 @@ MessageDictionary::getText(const string& ident) const {
 
 // Return global dictionary
 
-MessageDictionary*
+MessageDictionary&
 MessageDictionary::globalDictionary() {
     static MessageDictionary global;
-    return (&global);
+    return (global);
 }
 
 

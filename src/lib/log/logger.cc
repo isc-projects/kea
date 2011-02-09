@@ -116,8 +116,8 @@ const size_t MESSAGE_SIZE = 512;
 
 #define FORMAT_MESSAGE(message) \
     { \
-    MessageDictionary* global = MessageDictionary::globalDictionary(); \
-    string format = global->getText(ident); \
+    MessageDictionary& global = MessageDictionary::globalDictionary(); \
+    string format = global.getText(ident); \
     va_list ap; \
     va_start(ap, ident); \
     vsnprintf(message, sizeof(message), format.c_str(), ap); \

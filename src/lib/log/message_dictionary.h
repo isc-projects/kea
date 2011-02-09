@@ -178,7 +178,7 @@ public:
     /// Returns a pointer to the singleton global dictionary.
     ///
     /// \return Pointer to global dictionary.
-    static MessageDictionary* globalDictionary();
+    static MessageDictionary& globalDictionary();
 
 private:
     Dictionary       dictionary_;   ///< Holds the ID to text lookups
