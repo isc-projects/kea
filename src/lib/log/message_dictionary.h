@@ -136,7 +136,7 @@ public:
     /// \return Text associated with message or empty string if the ID is not
     /// recognised.  (Note: this precludes an ID being associated with an empty
     /// string.)
-    virtual std::string getText(const MessageID& ident) const {
+    virtual const std::string& getText(const MessageID& ident) const {
         return(getText(boost::lexical_cast<std::string>(ident)));
     }
 
@@ -150,7 +150,7 @@ public:
     /// \return Text associated with message or empty string if the ID is not
     /// recognised.  (Note: this precludes an ID being associated with an empty
     /// string.)
-    virtual std::string getText(const std::string& ident) const;
+    virtual const std::string& getText(const std::string& ident) const;
 
 
     /// \brief Number of Items in Dictionary
