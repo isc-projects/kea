@@ -58,7 +58,7 @@ trim(const string& instring) {
         }
     }
 
-    return retstring;
+    return (retstring);
 }
 
 // Tokenise string.  As noted in the header, this is locally written to avoid
@@ -89,7 +89,7 @@ tokens(const std::string text, const std::string& delim) {
         }
     }
 
-    return result;
+    return (result);
 }
 
 // Local function to pass to accumulate() for summing up string lengths.
@@ -131,7 +131,7 @@ format(const std::string& format, const std::vector<std::string>& args) {
         }
     }
 
-    return result;
+    return (result);
 }
 
 } // namespace log

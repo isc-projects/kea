@@ -203,14 +203,14 @@ LoggerImpl::getSeverityCommon(const log4cxx::LoggerPtr& ptrlogger,
                 return (INFO);
             }
             else {
-                return getSeverityCommon(parent, check_parent);
+                return (getSeverityCommon(parent, check_parent));
             }
         }
         else {
             return (DEFAULT);
         }
     } else {
-        return convertLevel(level->toInt());
+        return (convertLevel(level->toInt()));
     }
 }
 

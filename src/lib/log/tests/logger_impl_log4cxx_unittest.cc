@@ -50,7 +50,7 @@ public:
 
     /// \brief Conversion Between log4cxx Number and BIND-10 Severity
     Severity convertLevel(int value) {
-        return LoggerImpl::convertLevel(value);
+        return (LoggerImpl::convertLevel(value));
     }
 };
 

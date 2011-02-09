@@ -76,7 +76,7 @@ public:
     ///
     /// \return Exception Arguments
     std::vector<std::string> arguments() const {
-        return args_;
+        return (args_);
     }
 
 private:
