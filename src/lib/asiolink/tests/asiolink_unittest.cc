@@ -852,7 +852,7 @@ TEST_F(ASIOLinkTest, forwardClientTimeout) {
     const uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
     // Set it up to retry twice before client timeout fires
     // Since the lookup timer has not fired, it should retry
-    // a third time
+    // four times
     RecursiveQuery query(*dns_service_,
                          singleAddress(TEST_IPV4_ADDR, port),
                          singleAddress(TEST_IPV4_ADDR, port),

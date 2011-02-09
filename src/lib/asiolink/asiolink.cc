@@ -329,6 +329,10 @@ private:
     //shared_ptr<DNSServer> server_;
     isc::resolve::ResolverInterface::CallbackPtr resolvercallback_;
 
+    // To prevent both unreasonably long cname chains and cname loops,
+    // we simply keep a counter of the number of CNAMEs we have
+    // followed so far (and error if it exceeds RESOLVER_MAX_CNAME_CHAIN
+    // from lib/resolve/response_classifier.h)
     unsigned cname_count_;
 
     /*
@@ -420,7 +424,7 @@ private:
         case isc::resolve::ResponseClassifier::ANSWER:
         case isc::resolve::ResponseClassifier::ANSWERCNAME:
             // Done. copy and return.
-            isc::resolve::copyAnswerMessage(incoming, answer_message_);
+            isc::resolve::copyResponseMessage(incoming, answer_message_);
             return true;
             break;
         case isc::resolve::ResponseClassifier::CNAME:
@@ -436,8 +440,8 @@ private:
                 return true;
             }
 
-            isc::resolve::copySection(incoming, answer_message_,
-                                      Message::SECTION_ANSWER);
+            incoming.copySection(*answer_message_,
+                Message::SECTION_ANSWER);
             setZoneServersToRoot();
 
             question_ = Question(cname_target, question_.getClass(),
@@ -449,7 +453,7 @@ private:
             break;
         case isc::resolve::ResponseClassifier::NXDOMAIN:
             // NXDOMAIN, just copy and return.
-            isc::resolve::copyAnswerMessage(incoming, answer_message_);
+            isc::resolve::copyResponseMessage(incoming, answer_message_);
             return true;
             break;
         case isc::resolve::ResponseClassifier::REFERRAL:
@@ -473,7 +477,7 @@ private:
                         // to that address and yield, when it
                         // returns, loop again.
                         
-                        // should use NSAS
+                        // TODO should use NSAS
                         zone_servers_.push_back(addr_t(addr_str, 53));
                         found_ns_address = true;
                     }
@@ -485,8 +489,8 @@ private:
                 return false;
             } else {
                 dlog("[XX] no ready-made addresses in additional. need nsas.");
-                // this will result in answering with the delegation. oh well
-                isc::resolve::copyAnswerMessage(incoming, answer_message_);
+                // TODO this will result in answering with the delegation. oh well
+                isc::resolve::copyResponseMessage(incoming, answer_message_);
                 return true;
             }
             break;
@@ -565,11 +569,10 @@ public:
         if (upstream_root_->empty()) { //if no root ips given, use this
             zone_servers_.push_back(addr_t("192.5.5.241", 53));
         } else {
-            //copy the list
+            // copy the list
             dlog("Size is " + 
                 boost::lexical_cast<string>(upstream_root_->size()) + 
                 "\n");
-            //Use BOOST_FOREACH here? Is it faster?
             for(AddressVector::iterator it = upstream_root_->begin();
                 it < upstream_root_->end(); it++) {
             zone_servers_.push_back(addr_t(it->first,it->second));
@@ -626,7 +629,7 @@ public:
                 incoming.getRcode() == Rcode::NOERROR()) {
                 done_ = handleRecursiveAnswer(incoming);
             } else {
-                isc::resolve::copyAnswerMessage(incoming, answer_message_);
+                isc::resolve::copyResponseMessage(incoming, answer_message_);
                 done_ = true;
             }
             
