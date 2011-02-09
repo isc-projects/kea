@@ -23,12 +23,16 @@ $NAMESPACE isc::log
 # chicken-and-egg situation where we need the files to build the message
 # compiler, yet we need the compiler to build the files.
 
-DUPMSGID  duplicate ID found in source code: %s
-+ The same message identification appears in more that one file in the BIND10
-+ source code.  Every message logged by BIND10 should have a unique
-+ identification associated with it, so this indicates a failure in the build
-+ process.  The develops should locate the duplicate IDs and alter one (or more)
-+ of them.
+DUPMSGID  duplicate message ID (%s) in compiled code
++ Indicative of a programming error, when it started up, BIND10 detected that
++ the given message ID had been registered by one or more modules.  (All message
++ IDs should be unique throughout BIND10.)  This has no impact on the operation
++ of the server other that erroneous messages may be logged.  (When BIND10 loads
++ the message IDs (and their associated text), if a duplicate ID is found it is
++ discarded.  However, when the module that supplied the duplicate ID logs that
++ particular message, the text supplied by the module that added the original
++ ID will be output - something that may bear no relation to the condition being
++ logged.
 
 DUPLNS    duplicate $NAMESPACE directive found
 + When reading a message file, more than one $NAMESPACE directive was found.  In
@@ -51,33 +55,40 @@ IDNOTFND    could not replace message for '%s': no such message identification
 + This message may appear a number of times in the file, once for every such
 + unknown mnessage identification.
 
+MSGRDERR    error reading from message file %s: %s
++ The specified error was encountered reading from the named message file.
+
+MSGWRTERR   error writing to %s: %s
++ The specified error was encountered by the message compiler when writing to
++ the named output file.
+
 NSEXTRARG  $NAMESPACE directive has too many arguments
 + The $NAMESPACE directive takes a single argument, a namespace in which all the
 + generated symbol names are placed.  This error is generated when the
 + compiler finds a $NAMESPACE directive with more than one argument.
 
-NSINVARG   $NAMESPACE directive has an invalid argument ('%s')
+NSINVARG    $NAMESPACE directive has an invalid argument ('%s')
 + The $NAMESPACE argument should be a valid C++ namespace.  The reader does a
 + cursory check on its validity, checking that the characters in the namspace
 + are correct.  The error is generated when the reader finds an invalid
 + character. (Valid are alphanumeric characters, underscroes and colons.)
 
-NSNOARG    no arguments were given to the $NAMESPACE directive
+NOMSGTXT    a line containing a message ID ('%s') and nothing else was found
++ Message definitions comprise lines starting with a message identification (a
++ symbolic name for the message) and followed by the text of the message.  This
++ error is generated when a line is found in the message file that contains just
++ the message identification and no text.
+
+NSNOARG     no arguments were given to the $NAMESPACE directive
 + The $NAMESPACE directive takes a single argument, a namespace in which all the
 + generated symbol names are placed.  This error is generated when the
 + compiler finds a $NAMESPACE directive with no arguments.
 
-ONETOKEN    a line containing a message ID ('%s') and nothing else was found
-+ Message definitions comprise lines starting with a message identification (a
-+ symbolic name for the message) and followed by the text of the message.  This
-+ error is generated when a line is found in the message file that contains just
-+ the message identification.
-
-OPENIN      unable to open message file %s for input: %s
+OPNMSGIN     unable to open message file %s for input: %s
 + The program was not able to open the specified input message file for the
 + reason given.
 
-OPENOUT     unable to open %s for output: %s
+OPNMSGOUT   unable to open %s for output: %s
 + The program was not able to open the specified output file for the reason
 + given.
 
@@ -99,15 +110,10 @@ PRFNOARG    no arguments were given to the $PREFIX directive
 + compiler finds a $PREFIX directive with no arguments.
 
 RDLOCMES    reading local message file %s
-+ This is an informational message output on BIND start-up when it is about to
-+ read a supplied local message file.
-
-READERR     error reading from %s: %s
-+ The specified error was encountered reading from the named input file.
++ This is an informational message output by BIND10 when it starts to read a
++ local message file.  (A local message file may replace the text of one of more
++ messages; the ID of the message will not be changed though.)
 
 UNRECDIR    unrecognised directive '%s'
 + A line starting with a dollar symbol was found, but the first word on the line
 + (shown in the message) was not a recognised message compiler directive.
-
-WRITERR     error writing to %s: %s
-+ The specified error was encountered writing to the named output file.

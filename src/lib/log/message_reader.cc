@@ -45,7 +45,7 @@ MessageReader::readFile(const string& file, MessageReader::Mode mode) {
     // Open the file
     ifstream infile(file.c_str());
     if (infile.fail()) {
-        throw MessageException(MSG_OPENIN, file, strerror(errno));
+        throw MessageException(MSG_OPNMSGIN, file, strerror(errno));
     }
 
     // Loop round reading it.
@@ -58,7 +58,7 @@ MessageReader::readFile(const string& file, MessageReader::Mode mode) {
 
     // Why did the loop terminate?
     if (!infile.eof()) {
-        throw MessageException(MSG_READERR, file, strerror(errno));
+        throw MessageException(MSG_MSGRDERR, file, strerror(errno));
     }
     infile.close();
 }
@@ -199,7 +199,7 @@ MessageReader::parseMessage(const std::string& text, MessageReader::Mode mode) {
     if (first_delim == string::npos) {
 
         // Just a single token in the line - this is not valid
-        throw MessageException(MSG_ONETOKEN, text);
+        throw MessageException(MSG_NOMSGTXT, text);
     }
 
     // Extract the first token into the message ID
@@ -212,7 +212,7 @@ MessageReader::parseMessage(const std::string& text, MessageReader::Mode mode) {
         // ?? This happens if there are trailing delimiters, which should not
         // occur as we have stripped trailing spaces off the line.  Just treat
         // this as a single-token error for simplicity's sake.
-        throw MessageException(MSG_ONETOKEN, text);
+        throw MessageException(MSG_NOMSGTXT, text);
     }
 
     // Add the result to the dictionary and to the non-added list if the add to
