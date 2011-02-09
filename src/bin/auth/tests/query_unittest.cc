@@ -377,7 +377,7 @@ TEST_F(QueryTest, nodomainANY) {
                   NULL, soa_txt, NULL, mock_zone->getOrigin());
 }
 
-
+// This tests that when we need to look up Zone's apex NS records for
 // authoritative answer, and there is no apex NS records. It should
 // throw in that case.
 TEST_F(QueryTest, noApexNS) {
