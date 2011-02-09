@@ -187,6 +187,30 @@ TEST_F(RBTreeTest, findError) {
                  BadValue);
 }
 
+TEST_F(RBTreeTest, flags) {
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("flags.example"),
+                                                  &rbtnode));
+
+    // by default, flags are all off
+    EXPECT_FALSE(rbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
+
+    // set operation, by default it enables the flag
+    rbtnode->setFlag(RBNode<int>::FLAG_CALLBACK);
+    EXPECT_TRUE(rbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
+
+    // try disable the flag explicitly
+    rbtnode->setFlag(RBNode<int>::FLAG_CALLBACK, false);
+    EXPECT_FALSE(rbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
+
+    // try enable the flag explicitly
+    rbtnode->setFlag(RBNode<int>::FLAG_CALLBACK, true);
+    EXPECT_TRUE(rbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
+
+    // setting an unknown flag will trigger an exception
+    EXPECT_THROW(rbtnode->setFlag(static_cast<RBNode<int>::Flags>(2), true),
+                 isc::InvalidParameter);
+}
+
 bool
 testCallback(const RBNode<int>&, bool* callack_checker) {
     *callack_checker = true;
@@ -198,16 +222,16 @@ TEST_F(RBTreeTest, callback) {
     EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("callback.example"),
                                                   &rbtnode));
     rbtnode->setData(RBNode<int>::NodeDataPtr(new int(1)));
-    EXPECT_FALSE(rbtnode->isCallbackEnabled());
+    EXPECT_FALSE(rbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
 
     // enable/re-disable callback
-    rbtnode->enableCallback();
-    EXPECT_TRUE(rbtnode->isCallbackEnabled());
-    rbtnode->disableCallback();
-    EXPECT_FALSE(rbtnode->isCallbackEnabled());
+    rbtnode->setFlag(RBNode<int>::FLAG_CALLBACK);
+    EXPECT_TRUE(rbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
+    rbtnode->setFlag(RBNode<int>::FLAG_CALLBACK, false);
+    EXPECT_FALSE(rbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
 
     // enable again for subsequent tests
-    rbtnode->enableCallback();
+    rbtnode->setFlag(RBNode<int>::FLAG_CALLBACK);
     // add more levels below and above the callback node for partial match.
     RBNode<int>* subrbtnode;
     EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("sub.callback.example"),
@@ -221,9 +245,9 @@ TEST_F(RBTreeTest, callback) {
     // it.
     EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("callback.example"),
                                                    &rbtnode));
-    EXPECT_TRUE(rbtnode->isCallbackEnabled());
-    EXPECT_FALSE(subrbtnode->isCallbackEnabled());
-    EXPECT_FALSE(parentrbtnode->isCallbackEnabled());
+    EXPECT_TRUE(rbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
+    EXPECT_FALSE(subrbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
+    EXPECT_FALSE(parentrbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
 
     // check if the callback is called from find()
     RBTreeNodeChain<int> node_path1;
@@ -236,7 +260,7 @@ TEST_F(RBTreeTest, callback) {
     // enable callback at the parent node, but it doesn't have data so
     // the callback shouldn't be called.
     RBTreeNodeChain<int> node_path2;
-    parentrbtnode->enableCallback();
+    parentrbtnode->setFlag(RBNode<int>::FLAG_CALLBACK);
     callback_called = false;
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
               rbtree.find(Name("callback.example"), &crbtnode, node_path2,

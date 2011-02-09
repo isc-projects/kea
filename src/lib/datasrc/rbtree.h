@@ -23,6 +23,8 @@
 ///     issue, the design and interface are not fixed, and RBTree isn't ready
 ///     to be used as a base data structure by other modules.
 
+#include <exceptions/exceptions.h>
+
 #include <dns/name.h>
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
@@ -110,6 +112,29 @@ public:
     /// \brief Alias for shared pointer to the data.
     typedef boost::shared_ptr<T> NodeDataPtr;
 
+    /// Node flags.
+    ///
+    /// Each flag value defines a non default property for a specific node.
+    /// These are defined as bitmask type values for the convenience of
+    /// internal implementation, but applications are expected to use
+    /// each flag separately via the enum definitions.
+    ///
+    /// All (settable) flags are off by default; they must be explicitly
+    /// set to on by the \c setFlag() method.
+    enum Flags {
+        FLAG_CALLBACK = 1, ///< Callback enabled. See \ref callback
+        FLAG_USER1 = 0x8000000U ///< Application specific flag
+    };
+private:
+    // Some flag values are expected to be used for internal purposes
+    // (e.g., representing the node color) in future versions, so we
+    // limit the settable flags via the \c setFlag() method to those
+    // explicitly defined in \c Flags.  This constant represents all
+    // such flags.
+    static const uint32_t SETTABLE_FLAGS = (FLAG_CALLBACK | FLAG_USER1);
+
+public:
+
     /// \brief Destructor
     ///
     /// It might seem strange that constructors are private and destructor
@@ -153,6 +178,52 @@ public:
     void setData(const NodeDataPtr& data) { data_ = data; }
     //@}
 
+    /// \name Node flag manipulation methods
+    //@{
+    /// Get the status of a node flag.
+    ///
+    /// This method returns whether the given node flag is set (enabled)
+    /// on the node.  The \c flag parameter is expected to be one of the
+    /// defined \c Flags constants.  For simplicity, the method interface
+    /// does not prohibit passing an undefined flag or combined flags, but
+    /// the return value in such a case will be meaningless for the caller
+    /// (an application would have to use an ugly cast for such an unintended
+    /// form of call, which will hopefully avoid accidental misuse).
+    ///
+    /// \exception None
+    /// \param flag The flag to be tested.
+    /// \return \c true if the \c flag is set; \c false otherwise.
+    bool getFlag(Flags flag) const {
+        return ((flags_ & flag) != 0);
+    }
+
+    /// Set or clear a node flag.
+    ///
+    /// This method changes the status of the specified node flag to either
+    /// "on" (enabled) or "off" (disabled).  The new status is specified by
+    /// the \c on parameter.
+    /// Like the \c getFlag() method, \c flag is expected to be one of the
+    /// defined \c Flags constants.  If an undefined or unsettable flag is
+    /// specified, \c isc::InvalidParameter exception will be thrown.
+    ///
+    /// \exception isc::InvalidParameter Unsettable flag is specified
+    /// \exception None otherwise
+    /// \param flag The node flag to be changed.
+    /// \on If \c true, set the flag to on; otherwise set it to off.
+    void setFlag(Flags flag, bool on = true) {
+        if ((flag & ~SETTABLE_FLAGS) != 0) {
+            isc_throw(isc::InvalidParameter,
+                      "Unsettable RBTree flag is being set");
+        }
+        if (on) {
+            flags_ |= flag;
+        } else {
+            flags_ &= ~flag;
+        }
+    }
+    //@}
+
+private:
     /// \name Callback related methods
     ///
     /// See the description of \c RBTree<T>::find() about callbacks.
@@ -160,15 +231,7 @@ public:
     /// These methods never throw an exception.
     //@{
     /// Return if callback is enabled at the node.
-    bool isCallbackEnabled() const { return (callback_required_); }
-
-    /// Enable callback at the node.
-    void enableCallback() { callback_required_ = true; }
-
-    /// Disable callback at the node.
-    void disableCallback() { callback_required_ = false; }
     //@}
-
 
 private:
     /// \brief Define rbnode color
@@ -224,7 +287,7 @@ private:
     /// RBTree::find().
     ///
     /// \todo It might be needed to put it into more general attributes field.
-    bool callback_required_;
+    uint32_t flags_;
 };
 
 
@@ -238,7 +301,7 @@ RBNode<T>::RBNode() :
     // dummy name, the value doesn't matter:
     name_(isc::dns::Name::ROOT_NAME()),
     down_(this),
-    callback_required_(false)
+    flags_(0)
 {
 }
 
@@ -250,7 +313,7 @@ RBNode<T>::RBNode(const isc::dns::Name& name) :
     color_(RED),
     name_(name),
     down_(NULL_NODE()),
-    callback_required_(false)
+    flags_(0)
 {
 }
 
@@ -650,7 +713,7 @@ public:
     ///
     /// This version of \c find() calls the callback whenever traversing (on
     /// the way from root down the tree) a marked node on the way down through
-    /// the domain namespace (see RBNode::enableCallback and related
+    /// the domain namespace (see \c RBNode::enableCallback and related
     /// functions).
     ///
     /// If you return true from the callback, the search is stopped and a
@@ -944,7 +1007,8 @@ RBTree<T>::find(const isc::dns::Name& target_name,
                 if (needsReturnEmptyNode_ || !node->isEmpty()) {
                     ret = PARTIALMATCH;
                     *target = node;
-                    if (callback != NULL && node->callback_required_) {
+                    if (callback != NULL &&
+                        node->getFlag(RBNode<T>::FLAG_CALLBACK)) {
                         if ((callback)(*node, callback_arg)) {
                             break;
                         }
@@ -1096,7 +1160,7 @@ RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     // consistent behavior (i.e., a weak form of strong exception guarantee)
     // even if code after the call to this function throws an exception.
     std::swap(node.data_, down_node->data_);
-    std::swap(node.callback_required_, down_node->callback_required_);
+    std::swap(node.flags_, down_node->flags_);
     down_node->down_ = node.down_;
     node.down_ = down_node.get();
     // root node of sub tree, the initial color is BLACK
