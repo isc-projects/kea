@@ -55,37 +55,6 @@ public:
     MessageInitializer(const char* values[]);
 };
 
-/// \brief Instantiate Message Initializer
-///
-/// A problem with the MessageInitializer class is that an instance of it is
-/// created in an external file and initialization of a set of messages requires
-/// that that file be included in the link.  Unfortunately, if there is no
-/// reference to the MessageInitializer object, we cannot guarantee that that
-/// will be the case.\n
-/// \n
-/// The MessageInitializer object is created as a global object, so in theory
-/// an "extern" reference to it should work.  However, that reference may well
-/// be optimised away.  To overcome this, the MessageInstantiator class is
-/// used.\n
-/// \n
-/// In the message header file, an instance of MessageInstantiator is created
-/// that takes the extern reference to the MessageInitializer as its constructor
-/// argument.  The constructor - declared in another file - is a no-op.  But as
-/// the linker doesn't know, it must resolve the reference, hence pulling in the
-/// file containing the MessageInitializer.
-///\n
-/// Note that there is no problem about the static initialization fiasco here -
-/// a pointer to the MessageInitializer is passed to the MessageInstantiator,
-/// not the object itself; at the MessageInstantiator does nothing with the
-/// pointer and does not touch the MessageInitializer.  So it doesn't matter
-/// whether or not the MessageInitializer's constructor has been called when the
-/// MessageInstantiator runs.
-
-class MessageInstantiator {
-public:
-    MessageInstantiator(MessageInitializer* dummy);
-};
-
 } // namespace log
 } // namespace isc
 
