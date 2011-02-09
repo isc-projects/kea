@@ -23,6 +23,13 @@ $NAMESPACE isc::log
 # chicken-and-egg situation where we need the files to build the message
 # compiler, yet we need the compiler to build the files.
 
+DUPMSGID  duplicate ID found in source code: %s
++ The same message identification appears in more that one file in the BIND10
++ source code.  Every message logged by BIND10 should have a unique
++ identification associated with it, so this indicates a failure in the build
++ process.  The develops should locate the duplicate IDs and alter one (or more)
++ of them.
+
 DUPLNS    duplicate $NAMESPACE directive found
 + When reading a message file, more than one $NAMESPACE directive was found.  In
 + this version of the code, such a condition is regarded as an error and the
@@ -90,6 +97,10 @@ PRFNOARG    no arguments were given to the $PREFIX directive
 + The $PREFIX directive takes a single argument, a prefix to be added to the
 + symbol names when a C++ .h file is created.  This error is generated when the
 + compiler finds a $PREFIX directive with no arguments.
+
+RDLOCMES    reading local message file %s
++ This is an informational message output on BIND start-up when it is about to
++ read a supplied local message file.
 
 READERR     error reading from %s: %s
 + The specified error was encountered reading from the named input file.
