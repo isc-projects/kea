@@ -75,9 +75,11 @@ const char* const cname_nxdom_txt =
 // CNAME Leading out of zone
 const char* const cname_out_txt =
     "cnameout.example.com. 3600 IN CNAME www.example.org.\n";
+// The DNAME to do tests against
 const char* const dname_txt =
     "dname.example.com. 3600 IN DNAME "
     "somethinglong.dnametarget.example.com.\n";
+// Some data at the dname node (allowed by RFC 2672)
 const char* const dname_a_txt =
     "dname.example.com. 3600 IN A 192.0.2.5\n";
 // This is not inside the zone, this is created at runtime
