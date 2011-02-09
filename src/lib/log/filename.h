@@ -80,22 +80,22 @@ public:
 
     /// \return Stored Filename
     std::string fullName() const {
-        return full_name_;
+        return (full_name_);
     }
 
     /// \return Directory of Given File Name
     std::string directory() const {
-        return directory_;
+        return (directory_);
     }
 
     /// \return Name of Given File Name
     std::string name() const {
-        return name_;
+        return (name_);
     }
 
     /// \return Extension of Given File Name
     std::string extension() const {
-        return extension_;
+        return (extension_);
     }
 
     /// \brief Expand Name with Default

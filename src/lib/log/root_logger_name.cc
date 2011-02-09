@@ -22,7 +22,7 @@ namespace log {
 
 std::string& RootLoggerName::rootName() {
     static std::string root_name("");
-    return root_name;
+    return (root_name);
 }
 
 }

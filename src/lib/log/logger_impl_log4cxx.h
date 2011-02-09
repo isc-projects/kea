@@ -107,7 +107,7 @@ public:
     /// \return The current logging level of this logger.  In most cases though,
     /// the effective logging level is what is required.
     virtual isc::log::Severity getSeverity() {
-        return getSeverityCommon(getLogger(), false);
+        return (getSeverityCommon(getLogger(), false));
     }
 
 
@@ -117,7 +117,7 @@ public:
     /// as getSeverity() if the logger has a severity level set, but otherwise
     /// is the severity of the parent.
     virtual isc::log::Severity getEffectiveSeverity() {
-        return getSeverityCommon(getLogger(), true);
+        return (getSeverityCommon(getLogger(), true));
     }
 
 
@@ -294,7 +294,7 @@ private:
         if (loggerptr_ == NULL) {
             initLogger();
         }
-        return *loggerptr_;
+        return (*loggerptr_);
     }
 
     // Members.  Note that loggerptr_ is a pointer to a LoggerPtr, which is

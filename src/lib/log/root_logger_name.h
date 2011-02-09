@@ -53,7 +53,7 @@ public:
     ///
     /// \return Name of the root logger.
     static std::string getName() {
-        return rootName();
+        return (rootName());
     }
     
 private:
