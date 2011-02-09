@@ -177,8 +177,8 @@ Query::process() const {
                     break;
                 }
                 /*
-                 * In case the synthetized name is too long, section 4.1 of RFC 2672
-                 * mandates we return YXDOMAIN.
+                 * In case the synthetized name is too long, section 4.1 of RFC
+                 * 2672 mandates we return YXDOMAIN.
                  */
                 catch (const isc::dns::TooLongName&) {
                     response_.setRcode(Rcode::YXDOMAIN());
