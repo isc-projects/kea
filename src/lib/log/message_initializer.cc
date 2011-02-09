@@ -22,8 +22,8 @@ namespace log {
 // associated text into it.
 
 MessageInitializer::MessageInitializer(const char* values[]) {
-    MessageDictionary* global = MessageDictionary::globalDictionary();
-    global->load(values);
+    MessageDictionary& global = MessageDictionary::globalDictionary();
+    global.load(values);
 }
 
 } // namespace log

@@ -59,12 +59,12 @@ protected:
 // messages.
 
 TEST_F(MessageInitializerTest, MessageTest) {
-    MessageDictionary* global = MessageDictionary::globalDictionary();
+    MessageDictionary& global = MessageDictionary::globalDictionary();
 
-    EXPECT_EQ(string("global message one"), global->getText("GLOBAL1"));
-    EXPECT_EQ(string("global message two"), global->getText("GLOBAL2"));
-    EXPECT_EQ(string("global message three"), global->getText("GLOBAL3"));
-    EXPECT_EQ(string("global message four"), global->getText("GLOBAL4"));
-    EXPECT_EQ(string("global message five"), global->getText("GLOBAL5"));
-    EXPECT_EQ(string("global message six"), global->getText("GLOBAL6"));
+    EXPECT_EQ(string("global message one"), global.getText("GLOBAL1"));
+    EXPECT_EQ(string("global message two"), global.getText("GLOBAL2"));
+    EXPECT_EQ(string("global message three"), global.getText("GLOBAL3"));
+    EXPECT_EQ(string("global message four"), global.getText("GLOBAL4"));
+    EXPECT_EQ(string("global message five"), global.getText("GLOBAL5"));
+    EXPECT_EQ(string("global message six"), global.getText("GLOBAL6"));
 }

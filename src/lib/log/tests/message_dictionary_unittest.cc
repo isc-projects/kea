@@ -44,11 +44,9 @@ protected:
 // Check that the global dictionary is a singleton.
 
 TEST_F(MessageDictionaryTest, GlobalTest) {
-    MessageDictionary* global = MessageDictionary::globalDictionary();
-    EXPECT_FALSE(NULL == global);
-
-    MessageDictionary* global2 = MessageDictionary::globalDictionary();
-    EXPECT_EQ(global2, global);
+    MessageDictionary& global = MessageDictionary::globalDictionary();
+    MessageDictionary& global2 = MessageDictionary::globalDictionary();
+    EXPECT_TRUE(&global2 == &global);
 }
 
 // Check that adding messages works
