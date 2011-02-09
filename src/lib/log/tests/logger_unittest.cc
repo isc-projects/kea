@@ -65,7 +65,7 @@ protected:
 TEST_F(LoggerTest, Name) {
 
     // Create a logger
-    RootLoggerName::setName("test1");
+    setRootLoggerName("test1");
     Logger logger("alpha");
 
     // ... and check the name
@@ -79,7 +79,7 @@ TEST_F(LoggerTest, GetLogger) {
 
     // Set the root logger name (not strictly needed, but this will be the
     // case in the program(.
-    RootLoggerName::setName("test2");
+    setRootLoggerName("test2");
 
     const string name1 = "alpha";
     const string name2 = "beta";
@@ -101,7 +101,7 @@ TEST_F(LoggerTest, GetLogger) {
 TEST_F(LoggerTest, Severity) {
 
     // Create a logger
-    RootLoggerName::setName("test3");
+    setRootLoggerName("test3");
     TestLogger logger("alpha");
 
     // Now check the levels
@@ -132,7 +132,7 @@ TEST_F(LoggerTest, Severity) {
 TEST_F(LoggerTest, DebugLevels) {
 
     // Create a logger
-    RootLoggerName::setName("test4");
+    setRootLoggerName("test4");
     TestLogger logger("alpha");
 
     // Debug level should be 0 if not at debug severity
@@ -178,7 +178,7 @@ TEST_F(LoggerTest, SeverityInheritance) {
     // implementation (in this case log4cxx) will set a parent-child
     // relationship if the loggers are named <parent> and <parent>.<child>.
 
-    RootLoggerName::setName("test5");
+    setRootLoggerName("test5");
     TestLogger parent("alpha");
     TestLogger child("alpha.beta");
 
@@ -210,7 +210,7 @@ TEST_F(LoggerTest, EffectiveSeverityInheritance) {
     // implementation (in this case log4cxx) will set a parent-child
     // relationship if the loggers are named <parent> and <parent>.<child>.
 
-    RootLoggerName::setName("test6");
+    setRootLoggerName("test6");
     Logger parent("test6");
     Logger child("test6.beta");
 
@@ -245,7 +245,7 @@ TEST_F(LoggerTest, EffectiveSeverityInheritance) {
 
 TEST_F(LoggerTest, IsXxxEnabled) {
 
-    RootLoggerName::setName("test7");
+    setRootLoggerName("test7");
     Logger logger("test7");
 
     logger.setSeverity(isc::log::INFO);
@@ -316,7 +316,7 @@ TEST_F(LoggerTest, IsXxxEnabled) {
 
 TEST_F(LoggerTest, IsDebugEnabledLevel) {
 
-    RootLoggerName::setName("test8");
+    setRootLoggerName("test8");
     Logger logger("test8");
 
     int MID_LEVEL = (MIN_DEBUG_LEVEL + MAX_DEBUG_LEVEL) / 2;

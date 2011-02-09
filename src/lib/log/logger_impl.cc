@@ -38,22 +38,22 @@ namespace log {
 LoggerImpl::LoggerInfoMap LoggerImpl::logger_info_;
 LoggerImpl::LoggerInfo LoggerImpl::root_logger_info_(isc::log::INFO, 0);
 
+// Constructor
+LoggerImpl::LoggerImpl(const std::string& name, bool)
+{
+    // Are we the root logger?
+    if (name == getRootLoggerName()) { 
+        is_root_ = true;
+        name_ = name;
+    } else {
+        is_root_ = false;
+        name_ = getRootLoggerName() + "." + name;
+    }
+}
+
 // Destructor. (Here because of virtual declaration.)
 
 LoggerImpl::~LoggerImpl() {
-}
-
-// Return the name of the logger (fully-qualified with the root name if
-// possible).
-
-string LoggerImpl::getName() {
-    string root_name = RootLoggerName::getName();
-    if (root_name.empty() || (name_ == root_name)) {
-        return (name_);
-    }
-    else {
-        return (root_name + "." + name_);
-    }
 }
 
 // Set the severity for logging.
@@ -64,7 +64,7 @@ LoggerImpl::setSeverity(isc::log::Severity severity, int dbglevel) {
     // Silently coerce the debug level into the valid range of 0 to 99
 
     int debug_level = max(MIN_DEBUG_LEVEL, min(MAX_DEBUG_LEVEL, dbglevel));
-    if (isRootLogger()) {
+    if (is_root_) {
 
         // Can only set severity for the root logger, you can't disable it.
         // Any attempt to do so is silently ignored.
@@ -93,7 +93,7 @@ LoggerImpl::setSeverity(isc::log::Severity severity, int dbglevel) {
 isc::log::Severity
 LoggerImpl::getSeverity() {
 
-    if (isRootLogger()) {
+    if (is_root_) {
         return (root_logger_info_.severity);
     }
     else {
@@ -112,9 +112,11 @@ LoggerImpl::getSeverity() {
 
 isc::log::Severity
 LoggerImpl::getEffectiveSeverity() {
-    if (! isRootLogger()) {
 
-        // Not root logger, look this logger up in the map.
+    if (!is_root_ && !logger_info_.empty()) {
+
+        // Not root logger and there is at least one item in the info map for a
+        // logger.
         LoggerInfoMap::iterator i = logger_info_.find(name_);
         if (i != logger_info_.end()) {
 
@@ -133,9 +135,10 @@ LoggerImpl::getEffectiveSeverity() {
 int
 LoggerImpl::getDebugLevel() {
 
-    if (! isRootLogger()) {
+    if (!is_root_ && !logger_info_.empty()) {
 
-        // Not root logger, look this logger up in the map.
+        // Not root logger and there is something in the map, check if there
+        // is a setting for this one.
         LoggerInfoMap::iterator i = logger_info_.find(name_);
         if (i != logger_info_.end()) {
 
@@ -164,21 +167,10 @@ LoggerImpl::getDebugLevel() {
 bool
 LoggerImpl::isDebugEnabled(int dbglevel) {
 
-    if (logger_info_.empty()) {
+    if (!is_root_ && !logger_info_.empty()) {
 
-        // Nothing set, return information from the root logger.
-        return ((root_logger_info_.severity <= isc::log::DEBUG) &&
-            (root_logger_info_.dbglevel >= dbglevel));
-    }
-
-    // Something is in the general logger map, so we need to look up the
-    // information.  We don't use getSeverity() and getDebugLevel() separately
-    // as each involves a lookup in the map, something that we can optimise
-    // here.
-
-    if (! isRootLogger()) {
-
-        // Not root logger, look this logger up in the map.
+        // Not root logger and there is something in the map, check if there
+        // is a setting for this one.
         LoggerInfoMap::iterator i = logger_info_.find(name_);
         if (i != logger_info_.end()) {
 
@@ -194,9 +186,9 @@ LoggerImpl::isDebugEnabled(int dbglevel) {
     // Must be the root logger, or this logger is defaulting to the root logger
     // settings.
     if (root_logger_info_.severity <= isc::log::DEBUG) {
-        return (root_logger_info_.dbglevel > dbglevel);
+        return (root_logger_info_.dbglevel >= dbglevel);
     } else {
-        return (false);
+       return (false);
     }
 }
 

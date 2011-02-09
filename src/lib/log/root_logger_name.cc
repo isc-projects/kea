@@ -18,10 +18,17 @@
 namespace isc {
 namespace log {
 
-std::string& RootLoggerName::rootName() {
-    static std::string root_name("");
-    return (root_name);
+static std::string root_name_;
+
+void
+setRootLoggerName(const std::string& name) {
+    root_name_ = name;
 }
+
+const std::string& getRootLoggerName() {
+    return root_name_;
+}
+
 
 }
 }

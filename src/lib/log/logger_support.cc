@@ -98,7 +98,7 @@ runTimeInit(isc::log::Severity severity, int dbglevel, const char* file) {
     //
     // The main purpose of the application root logger is to provide the root
     // name in output message for all other loggers.
-    Logger logger(RootLoggerName::getName());
+    Logger logger(isc::log::getRootLoggerName());
 
     // Set the severity associated with it.  If no other logger has a severity,
     // this will be the default.

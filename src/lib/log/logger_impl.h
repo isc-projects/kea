@@ -74,8 +74,7 @@ public:
     ///
     /// \param exit_delete This argument is present to get round a bug in
     /// the log4cxx implementation.  It is unused here.
-    LoggerImpl(const std::string& name, bool) : name_(name)
-    {}
+    LoggerImpl(const std::string& name, bool);
 
 
     /// \brief Destructor
@@ -83,15 +82,8 @@ public:
 
 
     /// \brief Get the full name of the logger (including the root name)
-    virtual std::string getName();
-
-
-    /// \brief Check if this is the root logger
-    ///
-    /// \return true if the name of this logger is the same as that of the
-    /// root logger.
-    virtual bool isRootLogger() const {
-        return (name_ == RootLoggerName::getName());
+    virtual std::string getName() {
+        return (name_);
     }
 
 
@@ -251,7 +243,8 @@ public:
 
 
 private:
-    std::string          name_;                 ///< Name of this logger
+    bool                is_root_;           ///< true if a root logger
+    std::string         name_;              ///< Name of this logger
 
     // Split the status of the root logger from this logger.  If - is will
     // probably be the usual case - no per-logger setting is enabled, a
