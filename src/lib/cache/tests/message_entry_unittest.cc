@@ -164,7 +164,7 @@ TEST_F(MessageEntryTest, testGetRRsetTrustLevel_CNAME) {
     level = message_entry.getRRsetTrustLevelForTest(message_parse,
                                                     *rrset_iter,
                                                     Message::SECTION_ANSWER);
-    EXPECT_EQ(level, RRSET_TRUST_ANSWER_NONAA);
+    EXPECT_EQ(level, RRSET_TRUST_ANSWER_AA);
 }
 
 TEST_F(MessageEntryTest, testGetRRsetTrustLevel_DNAME) {
@@ -186,7 +186,7 @@ TEST_F(MessageEntryTest, testGetRRsetTrustLevel_DNAME) {
     level = message_entry.getRRsetTrustLevelForTest(message_parse,
                                                     *rrset_iter,
                                                     Message::SECTION_ANSWER);
-    EXPECT_EQ(level, RRSET_TRUST_ANSWER_NONAA);
+    EXPECT_EQ(level, RRSET_TRUST_ANSWER_AA);
 }
 
 // We only test the expire_time of the message entry.
@@ -223,9 +223,9 @@ TEST_F(MessageEntryTest, testGenMessage) {
     
     EXPECT_TRUE(msg.getHeaderFlag(Message::HEADERFLAG_AA));
     EXPECT_FALSE(msg.getHeaderFlag(Message::HEADERFLAG_TC));
-    EXPECT_EQ(1, section_rrset_count(msg, Message::SECTION_ANSWER)); 
-    EXPECT_EQ(1, section_rrset_count(msg, Message::SECTION_AUTHORITY)); 
-    EXPECT_EQ(5, section_rrset_count(msg, Message::SECTION_ADDITIONAL)); 
+    EXPECT_EQ(1, sectionRRsetCount(msg, Message::SECTION_ANSWER)); 
+    EXPECT_EQ(1, sectionRRsetCount(msg, Message::SECTION_AUTHORITY)); 
+    EXPECT_EQ(5, sectionRRsetCount(msg, Message::SECTION_ADDITIONAL)); 
 
     // Check the rrset in answer section.
     EXPECT_EQ(1, msg.getRRCount(Message::SECTION_ANSWER));

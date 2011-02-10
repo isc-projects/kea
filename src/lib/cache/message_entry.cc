@@ -44,6 +44,7 @@ MessageEntry::getRRsetEntries(vector<RRsetEntryPtr>& rrset_entry_vec,
                               const time_t time_now)
 {
     uint16_t entry_count = answer_count_ + authority_count_ + additional_count_;
+    rrset_entry_vec.reserve(rrset_entry_vec.size() + entry_count);
     for (int index = 0; index < entry_count; ++index) {
         RRsetEntryPtr rrset_entry = rrset_cache_->lookup(rrsets_[index].name_,
                                                         rrsets_[index].type_);
@@ -59,11 +60,13 @@ MessageEntry::getRRsetEntries(vector<RRsetEntryPtr>& rrset_entry_vec,
 
 void
 MessageEntry::addRRset(isc::dns::Message& message,
-                       const vector<RRsetEntryPtr> rrset_entry_vec,
-                       isc::dns::Message::Section section,
-                       bool dnssec_need) {
+                       const vector<RRsetEntryPtr>& rrset_entry_vec,
+                       const isc::dns::Message::Section& section,
+                       bool dnssec_need)
+{
     uint16_t start_index = 0;
     uint16_t end_index = answer_count_;
+    assert(section != Message::SECTION_QUESTION);
 
     if (section == Message::SECTION_AUTHORITY) {
         start_index = answer_count_;
@@ -82,7 +85,7 @@ bool
 MessageEntry::genMessage(const time_t& time_now,
                          isc::dns::Message& msg)
 {
-    if (time_now > expire_time_) {
+    if (time_now >= expire_time_) {
         // The message entry has expired.
         return (false);
     } else {
@@ -110,19 +113,28 @@ MessageEntry::genMessage(const time_t& time_now,
 
 RRsetTrustLevel
 MessageEntry::getRRsetTrustLevel(const Message& message,
-                   const isc::dns::RRsetPtr rrset,
-                   const isc::dns::Message::Section& section)
+    const isc::dns::RRsetPtr& rrset,
+    const isc::dns::Message::Section& section)
 {
     bool aa = message.getHeaderFlag(Message::HEADERFLAG_AA);
     switch(section) {
         case Message::SECTION_ANSWER: {
             if (aa) {
+                RRsetIterator rrset_iter = message.beginSection(section);
+
+                // Make sure we are inspecting the right RRset
+                while((*rrset_iter)->getName() != rrset->getName() &&
+                      (*rrset_iter)->getType() != rrset->getType() &&
+                      rrset_iter != message.endSection(section)) {
+                    ++rrset_iter;
+                }
+                
                 // According RFC2181 section 5.4.1, only the record
                 // describing that ailas is necessarily authoritative.
                 // If there is one or more CNAME records in answer section.
                 // CNAME records is assumed as the first rrset.
-                RRsetIterator rrset_iter = message.beginSection(section);
-                if ((*rrset_iter)->getType() == RRType("CNAME")) {
+                if ((*rrset_iter)->getType() == RRType::CNAME()) {
+                    // TODO: real equals for RRsets?
                     if ((*rrset_iter).get() == rrset.get()) {
                         return (RRSET_TRUST_ANSWER_AA);
                     } else {
@@ -136,11 +148,11 @@ MessageEntry::getRRsetTrustLevel(const Message& message,
                 // should be treated as non-authoritative.
                 // TODO, this part logic should be revisited later,
                 // since it's not mentioned by RFC2181.
-                if ((*rrset_iter)->getType() == RRType("DNAME")) {
+                if ((*rrset_iter)->getType() == RRType::DNAME()) {
+                    // TODO: real equals for RRsets?
                     if ((*rrset_iter).get() == rrset.get() ||
                         ((++rrset_iter) != message.endSection(section) &&
                                      (*rrset_iter).get() == rrset.get())) {
-
                         return (RRSET_TRUST_ANSWER_AA);
                     } else {
                         return (RRSET_TRUST_ANSWER_NONAA);

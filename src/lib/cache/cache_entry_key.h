@@ -39,8 +39,7 @@ namespace cache {
 /// \param type The RRType to create a text entry for
 /// \return return the entry name.
 const std::string
-genCacheEntryName(const isc::dns::Name& name,
-                 const isc::dns::RRType& type);
+genCacheEntryName(const isc::dns::Name& name, const isc::dns::RRType& type);
 
 ///
 /// \overload

@@ -66,7 +66,6 @@ MessageCache::update(const Message& msg) {
     // add the message entry, maybe there is one way to touch it once.
     MessageEntryPtr old_msg_entry = message_table_.get(entry_key);
     if (old_msg_entry) {
-        message_table_.remove(entry_key);
         message_lru_.remove(old_msg_entry);
     }
 

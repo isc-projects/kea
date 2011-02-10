@@ -20,7 +20,6 @@
 #include <vector>
 #include <dns/message.h>
 #include <dns/rrset.h>
-#include <boost/noncopyable.hpp>
 #include <nsas/nsas_entry.h>
 #include "rrset_entry.h"
 
@@ -54,9 +53,11 @@ struct RRsetRef{
 ///
 /// The object of MessageEntry represents one response message
 /// answered to the resolver client.
-class MessageEntry : public NsasEntry<MessageEntry>,
-                     public boost::noncopyable
-{
+class MessageEntry : public NsasEntry<MessageEntry> {
+// Noncopyable
+private:
+    MessageEntry(const MessageEntry& source);
+    MessageEntry& operator=(const MessageEntry& source);
 public:
 
     /// \brief Initialize the message entry object with one dns
@@ -73,14 +74,13 @@ public:
     /// \brief generate one dns message according
     ///        the rrsets information of the message.
     ///
-    /// \param response generated dns message.
     /// \param time_now set the ttl of each rrset in the message
     ///        as "expire_time - time_now" (expire_time is the
     ///        expiration time of the rrset).
+    /// \param response generated dns message.
     /// \return return true if the response message can be generated
     ///         from the cached information, or else, return false.
-    bool genMessage(const time_t& time_now,
-                    isc::dns::Message& response);
+    bool genMessage(const time_t& time_now, isc::dns::Message& response);
 
     /// \brief Get the hash key of the message entry.
     ///
@@ -124,8 +124,8 @@ protected:
     /// \param section Section of the rrset
     /// \return return rrset trust level.
     RRsetTrustLevel getRRsetTrustLevel(const isc::dns::Message& message,
-                               const isc::dns::RRsetPtr rrset,
-                               const isc::dns::Message::Section& section);
+        const isc::dns::RRsetPtr& rrset,
+        const isc::dns::Message::Section& section);
 
     /// \brief Add rrset to one section of message.
     ///
@@ -135,8 +135,8 @@ protected:
     /// \param section The section to add to
     /// \param dnssec_need need dnssec records or not.
     void addRRset(isc::dns::Message& message,
-                  const std::vector<RRsetEntryPtr> rrset_entry_vec,
-                  isc::dns::Message::Section section,
+                  const std::vector<RRsetEntryPtr>& rrset_entry_vec,
+                  const isc::dns::Message::Section& section,
                   bool dnssec_need);
 
     /// \brief Get the all the rrset entries for the message entry.

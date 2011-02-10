@@ -49,7 +49,9 @@ RRsetEntry::getExpireTime() const {
 void
 RRsetEntry::updateTTL(){
     uint32_t oldTTL = rrset_->getTTL().getValue();
-    if(oldTTL == 0) return;
+    if(oldTTL == 0) {
+        return;
+    }
 
     uint32_t now = time(NULL);
     uint32_t newTTL = now < expire_time_ ? (expire_time_ - now) : 0;
