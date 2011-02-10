@@ -20,6 +20,7 @@
 #include <map>
 #include <string>
 #include <boost/shared_ptr.hpp>
+#include <dns/rrclass.h>
 #include <dns/message.h>
 #include <exceptions/exceptions.h>
 #include "message_cache.h"
@@ -29,10 +30,6 @@
 namespace isc {
 namespace cache {
 class RRsetCache;
-
-typedef std::map<uint16_t, MessageCachePtr> MessageCacheMap;
-typedef std::map<uint16_t, RRsetCachePtr> RRsetCacheMap;
-typedef std::map<uint16_t, LocalZoneDataPtr> LocalZoneDataMap;
 
 //TODO a better proper default cache size
 #define MESSAGE_CACHE_DEFAULT_SIZE 10000
@@ -49,15 +46,15 @@ public:
     /// \param cls The RRClass code
     /// \param msg_cache_size The size for the message cache
     /// \param rst_cache_size The size for the RRset cache
-    CacheSizeInfo(uint16_t cls, 
+    CacheSizeInfo(const isc::dns::RRClass& cls, 
                   uint32_t msg_cache_size,
                   uint32_t rst_cache_size):
-                    klass(cls),
+                    cclass(cls),
                     message_cache_size(msg_cache_size),
                     rrset_cache_size(rst_cache_size)
     {}
 
-    uint16_t klass; // class of the cache.
+    isc::dns::RRClass cclass; // class of the cache.
     uint32_t message_cache_size; // the size for message cache.
     uint32_t rrset_cache_size; // The size for rrset cache.
 };
@@ -73,15 +70,131 @@ public:
     {}
 };
 
-/// \brief Resolver Cache.
+/// \brief Class-specific Resolver Cache.
 ///
 /// The object of ResolverCache represents the cache of the resolver. It may hold
 /// a list of message/rrset cache which are in different class.
-class ResolverCache {
+///
+/// \note Public interaction with the cache should be through ResolverCache,
+/// not directly with this one. (TODO: make this private/hidden/local to the .cc?)
+class ResolverClassCache {
 public:
     /// \brief Default Constructor.
     ///
     /// Only support for class "IN", and message cache size is
+    /// MESSAGE_CACHE_DEFAULT_SIZE, rrset cache size is
+    /// RRSET_CACHE_DEFAULT_SIZE
+    ResolverClassCache(const isc::dns::RRClass& cache_class);
+
+    /// \brief Construct Function.
+    /// \param caches_size cache size information for each
+    ///        messages/rrsets of different classes.
+    ResolverClassCache(CacheSizeInfo cache_info);
+
+    /// \name Lookup Interfaces
+    //@{
+    /// \brief Look up message in cache.
+    ///
+    /// \param qname The query name to look up
+    /// \param qtype The query type to look up
+    /// \param response the query message (must be in RENDER mode)
+    ///        which has question section already (exception
+    ///        MessageNoQeustionSection will be thrown if it has
+    ///        no question section). If the message can be found
+    ///        in cache, rrsets for the message will be added to
+    ///        different sections(answer, authority, additional).
+    /// \return return true if the message can be found, or else,
+    ///         return false.
+    bool lookup(const isc::dns::Name& qname,
+                const isc::dns::RRType& qtype,
+                isc::dns::Message& response) const;
+
+    /// \brief Look up rrset in cache.
+    ///
+    /// \param qname The query name to look up
+    /// \param qtype The query type to look up
+    ///
+    /// \return return the shared_ptr of rrset if it can be found,
+    ///         or else, return NULL. When looking up, local zone
+    ///         data will be searched first, if not found, then
+    ///         search in rrset cache.
+    ///
+    /// \overload
+    ///
+    isc::dns::RRsetPtr lookup(const isc::dns::Name& qname,
+                              const isc::dns::RRType& qtype) const;
+
+    /// \brief Update the message in the cache with the new one.
+    ///
+    /// \param msg The message to update
+    ///
+    /// \return return true if the message is updated successfully,
+    ///         or else, return false.
+    ///
+    /// \note the function doesn't do any message validation check,
+    ///       the user should make sure the message is valid, and of
+    ///       the right class
+    bool update(const isc::dns::Message& msg);
+
+    /// \brief Update the rrset in the cache with the new one.
+    ///
+    /// local zone data and rrset cache will be updated together.
+    /// If the rrset doesn't exist in both of them, then the rrset
+    /// will be added into both of them.
+    ///
+    /// \param rrset_ptr The RRset to update
+    ///
+    /// \return return false, if the class of the parameter rrset is
+    ///        allowed to be cached.
+    ///
+    /// \overload
+    ///
+    /// \note The class of the RRset must have been checked. It is not
+    /// here.
+    bool update(const isc::dns::ConstRRsetPtr rrset_ptr);
+
+    /// \brief Get the RRClass this cache is for
+    ///
+    /// \return The RRClass of this cache
+    const isc::dns::RRClass& getClass() const;
+    
+private:
+    /// \brief Update rrset cache.
+    ///
+    /// \param rrset_ptr The rrset to update with
+    /// \param rrset_cache_ptr the rrset cache to update
+    ///
+    /// \return return true if the rrset is updated in the rrset cache,
+    ///         or else return false if failed.
+    /// \param rrset_cache_ptr The rrset cache need to be updated.
+    bool updateRRsetCache(const isc::dns::ConstRRsetPtr rrset_ptr,
+                          RRsetCachePtr rrset_cache_ptr);
+
+private:
+    /// \brief Class this cache is for.
+    const isc::dns::RRClass cache_class_;
+
+    /// \brief map of message caches for configured classes(each message
+    /// cache is class-specific)
+    MessageCachePtr messages_cache_;
+
+    /// \name rrset caches
+    //@{
+    /// \brief Local Zone data cache
+    /// Cache for rrsets in local zones, rrsets
+    /// in it never expire.
+    LocalZoneDataPtr local_zone_data_;
+
+    /// \brief cache the rrsets parsed from the received message.
+    RRsetCachePtr rrsets_cache_;
+    //@}
+};
+
+class ResolverCache {
+public:
+    /// \brief Default Constructor.
+    ///
+    /// Right now, only support for class "IN", and message cache size is
     /// MESSAGE_CACHE_DEFAULT_SIZE, rrset cache size is
     /// RRSET_CACHE_DEFAULT_SIZE
     ResolverCache();
@@ -90,6 +203,9 @@ public:
     /// \param caches_size cache size information for each
     ///        messages/rrsets of different classes.
     ResolverCache(std::vector<CacheSizeInfo> caches_size);
+
+    /// \brief Destructor
+    ~ResolverCache();
 
     /// \name Lookup Interfaces
     //@{
@@ -179,10 +295,6 @@ public:
     ///
     bool update(const isc::dns::ConstRRsetPtr rrset_ptr);
 
-    /// \brief Check whether the messages/rrsets of specified class
-    ///        are cached.
-    bool classIsSupported(uint16_t klass) const;
-
     /// \name Cache Serialization
     //@{
     /// \brief Dump the cache content to one file.
@@ -200,45 +312,17 @@ public:
     void load(const std::string& file_name);
     //@}
 
-protected:
-    /// \brief Update rrset cache.
+    /// \brief Returns the class-specific subcache
     ///
-    /// \param rrset_ptr The rrset to update with
-    /// \param rrset_cache_ptr the rrset cache to update
-    ///
-    /// \return return true if the rrset is updated in the rrset cache,
-    ///         or else return false if failed.
-    /// \param rrset_cache_ptr The rrset cache need to be updated.
-    bool updateRRsetCache(const isc::dns::ConstRRsetPtr rrset_ptr,
-                          RRsetCachePtr rrset_cache_ptr);
-
-protected:
-    /// \brief Classes supported by the cache.
-    std::vector<uint16_t> class_supported_;
-
-    /// \brief map of message caches for configured classes(each message
-    /// cache is class-specific)
-    mutable MessageCacheMap messages_cache_;
-
-    /// \name rrset caches
-    //@{
-    /// \brief Local Zone data cache
-    /// Cache for rrsets in local zones, rrsets
-    /// in it never expire.
-    mutable LocalZoneDataMap local_zone_data_;
-
-    /// \brief cache the rrsets parsed from the received message.
-    mutable RRsetCacheMap rrsets_cache_;
-    //@}
+    /// \param cache_class the class to get the subcache for
+    /// \return The subcache, or NULL if there is no cache for this class
+    ResolverClassCache* getClassCache(const isc::dns::RRClass& cache_class) const;
 
 private:
-    /// Internal method that performs the actual method
-    /// (this is separated from the lookup() method itself
-    /// so that we can bypass unnecessary calls to classIsSupported()
-    bool lookupInternal(const isc::dns::Name& qname,
-                        const isc::dns::RRType& qtype,
-                        const isc::dns::RRClass& qclass,
-                        isc::dns::Message& response);
+    /// The class-specific caches.
+    /// TODO: I think we can optimize for IN, and always have that
+    /// one directly available, use the vector for the rest?
+    std::vector<ResolverClassCache*> class_caches_;
 };
 
 } // namespace cache
