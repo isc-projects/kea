@@ -49,6 +49,9 @@ TEST_F(LocalZoneDataTest, updateAndLookup) {
 
     // Test whether the old one is replaced
     uint32_t ttl = (*rrset_iter)->getTTL().getValue();
+    // Make sure it is not zero
+    ASSERT_NE(ttl / 2, ttl);
+    
     RRsetPtr rrset_ptr = local_zone_data.lookup(name, type);
     EXPECT_EQ(ttl, rrset_ptr->getTTL().getValue());
 

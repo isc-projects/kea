@@ -75,7 +75,7 @@ public:
 
 /// \brief Resolver Cache.
 ///
-/// The object of ResolverCache represents the cache of the resolver. It may holds
+/// The object of ResolverCache represents the cache of the resolver. It may hold
 /// a list of message/rrset cache which are in different class.
 class ResolverCache {
 public:
@@ -98,9 +98,9 @@ public:
     /// \param qname The query name to look up
     /// \param qtype The query type to look up
     /// \param qclass The query class to look up
-    /// \param response the query message (must in RENDER mode)
-    ///        which has question section already(exception
-    ///        MessageNoQeustionSection) will be thrown if it has
+    /// \param response the query message (must be in RENDER mode)
+    ///        which has question section already (exception
+    ///        MessageNoQeustionSection will be thrown if it has
     ///        no question section). If the message can be found
     ///        in cache, rrsets for the message will be added to
     ///        different sections(answer, authority, additional).
@@ -230,6 +230,15 @@ protected:
     /// \brief cache the rrsets parsed from the received message.
     mutable RRsetCacheMap rrsets_cache_;
     //@}
+
+private:
+    /// Internal method that performs the actual method
+    /// (this is separated from the lookup() method itself
+    /// so that we can bypass unnecessary calls to classIsSupported()
+    bool lookupInternal(const isc::dns::Name& qname,
+                        const isc::dns::RRType& qtype,
+                        const isc::dns::RRClass& qclass,
+                        isc::dns::Message& response);
 };
 
 } // namespace cache

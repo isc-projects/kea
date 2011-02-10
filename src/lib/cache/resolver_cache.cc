@@ -62,11 +62,12 @@ ResolverCache::classIsSupported(uint16_t klass) const {
                          class_supported_.end(), klass);
 }
 
+
 bool
 ResolverCache::lookup(const isc::dns::Name& qname,
-               const isc::dns::RRType& qtype,
-               const isc::dns::RRClass& qclass,
-               isc::dns::Message& response) const
+                      const isc::dns::RRType& qtype,
+                      const isc::dns::RRClass& qclass,
+                      isc::dns::Message& response) const
 {
     uint16_t class_code = qclass.getCode();
     if (!classIsSupported(class_code)) {

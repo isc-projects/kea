@@ -49,7 +49,7 @@ public:
     MessageCacheTest(): message_parse(Message::PARSE),
                         message_render(Message::RENDER)
     {
-        uint16_t class_ = 1; // class IN
+        uint16_t class_ = RRClass::IN().getCode();
         rrset_cache_.reset(new RRsetCache(RRSET_CACHE_DEFAULT_SIZE, class_));
         message_cache_.reset(new DerivedMessageCache(rrset_cache_, 
                                           MESSAGE_CACHE_DEFAULT_SIZE, class_ ));
@@ -66,8 +66,7 @@ TEST_F(MessageCacheTest, testLookup) {
     messageFromFile(message_parse, "message_fromWire1");
     EXPECT_TRUE(message_cache_->update(message_parse));
     Name qname("test.example.com.");
-    RRType qtype(1);
-    EXPECT_TRUE(message_cache_->lookup(qname, qtype, message_render));
+    EXPECT_TRUE(message_cache_->lookup(qname, RRType::A(), message_render));
     EXPECT_EQ(message_cache_->messages_count(), 1);
 
     Message message_net(Message::PARSE);
@@ -76,8 +75,7 @@ TEST_F(MessageCacheTest, testLookup) {
     EXPECT_EQ(message_cache_->messages_count(), 2);
 
     Name qname1("test.example.net.");
-    RRType qtype1(1);
-    EXPECT_TRUE(message_cache_->lookup(qname1, qtype1, message_render));
+    EXPECT_TRUE(message_cache_->lookup(qname1, RRType::A(), message_render));
 }
 
 TEST_F(MessageCacheTest, testUpdate) {
@@ -85,15 +83,14 @@ TEST_F(MessageCacheTest, testUpdate) {
     EXPECT_TRUE(message_cache_->update(message_parse));
 
     Name qname("example.com.");
-    RRType qtype(6);
-    EXPECT_TRUE(message_cache_->lookup(qname, qtype, message_render));
+    EXPECT_TRUE(message_cache_->lookup(qname, RRType::SOA(), message_render));
     EXPECT_FALSE(message_render.getHeaderFlag(Message::HEADERFLAG_AA));
 
     Message new_msg(Message::PARSE);
     messageFromFile(new_msg, "message_fromWire3");
     EXPECT_TRUE(message_cache_->update(new_msg));
     Message new_msg_render(Message::RENDER);
-    EXPECT_TRUE(message_cache_->lookup(qname, qtype, new_msg_render));
+    EXPECT_TRUE(message_cache_->lookup(qname, RRType::SOA(), new_msg_render));
     EXPECT_TRUE(new_msg_render.getHeaderFlag(Message::HEADERFLAG_AA));
 }
 

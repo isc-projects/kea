@@ -22,9 +22,7 @@ using namespace std;
 namespace isc {
 namespace cache {
 const std::string
-genCacheEntryName(const isc::dns::Name& name,
-                 const isc::dns::RRType& type)
-{
+genCacheEntryName(const isc::dns::Name& name, const isc::dns::RRType& type) {
     std::string keystr = name.toText();
     ostringstream stream;
     stream << type.getCode();
@@ -33,9 +31,7 @@ genCacheEntryName(const isc::dns::Name& name,
 }
 
 const std::string
-genCacheEntryName(const std::string& namestr,
-                 const uint16_t type)
-{
+genCacheEntryName(const std::string& namestr, const uint16_t type) {
     std::string keystr = namestr;
     ostringstream stream;
     stream << type;

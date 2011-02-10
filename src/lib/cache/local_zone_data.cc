@@ -50,13 +50,7 @@ LocalZoneData::update(const isc::dns::RRset& rrset) {
 
     rrsetCopy(rrset, *rrset_copy);
     RRsetPtr rrset_ptr(rrset_copy);
-    pair<RRsetMapIterator, bool> result = rrsets_map_.insert(RRsetMapPair(key, rrset_ptr));
-    if (!result.second) {
-        // Insert failed, we should remove the existed rrset first,
-        // then insert again.
-        rrsets_map_.erase(result.first);
-        rrsets_map_.insert(RRsetMapPair(key, rrset_ptr));
-    }
+    rrsets_map_[key] = rrset_ptr;
 }
 
 } // namespace cache
