@@ -587,6 +587,45 @@ TEST_F(MemoryZoneTest, find) {
     findTest(Name("example.net"), RRType::A(), Zone::NXDOMAIN);
 }
 
+TEST_F(MemoryZoneTest, emptyNode) {
+    /*
+     * The backend RBTree for this test should look like as follows:
+     *          example.org
+     *               |
+     *              baz (empty; easy case)
+     *            /  |  \
+     *          bar  |  x.foo ('foo' part is empty; a bit trickier)
+     *              bbb
+     *             /
+     *           aaa
+     */
+
+    // Construct the test zone
+    const char* const names[] = {
+        "bar.example.org", "x.foo.example.org", "aaa.baz.example.org",
+        "bbb.baz.example.org.", NULL};
+    for (int i = 0; names[i] != NULL; ++i) {
+        ConstRRsetPtr rrset(new RRset(Name(names[i]), class_, RRType::A(),
+                                      RRTTL(300)));
+        EXPECT_EQ(SUCCESS, zone_.add(rrset));
+    }
+
+    // empty node matching, easy case: the node for 'baz' exists with
+    // no data.
+    findTest(Name("baz.example.org"), RRType::A(), Zone::NXRRSET);
+
+    // empty node matching, a trickier case: the node for 'foo' is part of
+    // "x.foo", which should be considered an empty node.
+    findTest(Name("foo.example.org"), RRType::A(), Zone::NXRRSET);
+
+    // "org" is contained in "example.org", but it shouldn't be treated as
+    // NXRRSET because it's out of zone.
+    // Note: basically we don't expect such a query to be performed (the common
+    // operation is to identify the best matching zone first then perform
+    // search it), but we shouldn't be confused even in the unexpected case.
+    findTest(Name("org"), RRType::A(), Zone::NXDOMAIN);
+}
+
 TEST_F(MemoryZoneTest, load) {
     // Put some data inside the zone
     EXPECT_NO_THROW(EXPECT_EQ(result::SUCCESS, zone_.add(rr_ns_)));

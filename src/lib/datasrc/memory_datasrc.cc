@@ -35,7 +35,8 @@ namespace datasrc {
 struct MemoryZone::MemoryZoneImpl {
     // Constructor
     MemoryZoneImpl(const RRClass& zone_class, const Name& origin) :
-        zone_class_(zone_class), origin_(origin), origin_data_(NULL)
+        zone_class_(zone_class), origin_(origin), origin_data_(NULL),
+        domains_(true)
     {
         // We create the node for origin (it needs to exist anyway in future)
         domains_.insert(origin, &origin_data_);
@@ -59,7 +60,7 @@ struct MemoryZone::MemoryZoneImpl {
     typedef Domain::value_type DomainPair;
     typedef boost::shared_ptr<Domain> DomainPtr;
     // The tree stores domains
-    typedef RBTree<Domain, true> DomainTree;
+    typedef RBTree<Domain> DomainTree;
     typedef RBNode<Domain> DomainNode;
     static const DomainNode::Flags DOMAINFLAG_WILD = DomainNode::FLAG_USER1;
 
@@ -93,14 +94,13 @@ struct MemoryZone::MemoryZoneImpl {
              l > origin_labels;
              --l, wname = wname.split(1)) {
             if (wname.isWildcard()) {
-                DomainNode* node;
-                DomainTree::Result result;
-
                 // Ensure a separate level exists for the wildcard name.
                 // Note: for 'name' itself we do this later anyway, but the
                 // overhead should be marginal because wildcard names should
                 // be rare.
-                result = domains.insert(wname.split(1), &node);
+                DomainNode* node;
+                DomainTree::Result result(domains.insert(wname.split(1),
+                                                         &node));
                 assert(result == DomainTree::SUCCESS ||
                        result == DomainTree::ALREADYEXISTS);
                 node->setFlag(DOMAINFLAG_WILD);
@@ -359,7 +359,8 @@ struct MemoryZone::MemoryZoneImpl {
         // Get the node
         DomainNode* node(NULL);
         FindState state(options);
-        switch (domains_.find(name, &node, cutCallback, &state)) {
+        RBTreeNodeChain<Domain> node_path;
+        switch (domains_.find(name, &node, node_path, cutCallback, &state)) {
             case DomainTree::PARTIALMATCH:
                 /*
                  * In fact, we could use a single variable instead of
@@ -408,10 +409,16 @@ struct MemoryZone::MemoryZoneImpl {
                     // EXACTMATCH
                     break;
                 }
-                // TODO: we should also cover empty non-terminal cases, which
-                // will require non trivial code and is deferred for later
-                // development.  For now, we regard any partial match that
-                // didn't hit a zone cut as "not found".
+
+                // If the RBTree search stopped at a node for a super domain
+                // of the search name, it means the search name exists in
+                // the zone but is empty.  Treat it as NXRRSET.
+                if (node_path.getLastComparisonResult().getRelation() ==
+                    NameComparisonResult::SUPERDOMAIN) {
+                    return (FindResult(NXRRSET, ConstRRsetPtr()));
+                }
+
+                // fall through
             case DomainTree::NOTFOUND:
                 return (FindResult(NXDOMAIN, ConstRRsetPtr()));
             case DomainTree::EXACTMATCH: // This one is OK, handle it
@@ -419,7 +426,7 @@ struct MemoryZone::MemoryZoneImpl {
             default:
                 assert(0);
         }
-        assert(node);
+        assert(node != NULL);
 
         // If there is an exact match but the node is empty, it's equivalent
         // to NXRRSET.
