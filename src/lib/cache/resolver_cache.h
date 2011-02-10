@@ -39,10 +39,16 @@ typedef std::map<uint16_t, LocalZoneDataPtr> LocalZoneDataMap;
 #define RRSET_CACHE_DEFAULT_SIZE   20000
 
 /// \brief Cache Size Information.
+///
 /// Used to initialize the size of class-specific rrset/message cache.
 struct CacheSizeInfo
 {
-public:    
+public:
+    /// \brief Constructor
+    ///
+    /// \param cls The RRClass code
+    /// \param msg_cache_size The size for the message cache
+    /// \param rst_cache_size The size for the RRset cache
     CacheSizeInfo(uint16_t cls, 
                   uint32_t msg_cache_size,
                   uint32_t rst_cache_size):
@@ -57,6 +63,7 @@ public:
 };
 
 /// \brief  Message has no question section.
+///
 /// Thrown if the given message has no question section when looking up
 /// the message in cache.
 class MessageNoQuestionSection : public isc::Exception {
@@ -66,15 +73,15 @@ public:
     {}
 };
 
-///
 /// \brief Resolver Cache.
+///
 /// The object of ResolverCache represents the cache of the resolver. It may holds
 /// a list of message/rrset cache which are in different class.
-///
 class ResolverCache {
 public:
-    /// \brief Default Construct Function.
-    ///  Only support for class "IN", and message cache size is
+    /// \brief Default Constructor.
+    ///
+    /// Only support for class "IN", and message cache size is
     /// MESSAGE_CACHE_DEFAULT_SIZE, rrset cache size is
     /// RRSET_CACHE_DEFAULT_SIZE
     ResolverCache();
@@ -88,6 +95,9 @@ public:
     //@{
     /// \brief Look up message in cache.
     ///
+    /// \param qname The query name to look up
+    /// \param qtype The query type to look up
+    /// \param qclass The query class to look up
     /// \param response the query message (must in RENDER mode)
     ///        which has question section already(exception
     ///        MessageNoQeustionSection) will be thrown if it has
@@ -102,6 +112,11 @@ public:
                 isc::dns::Message& response) const;
 
     /// \brief Look up rrset in cache.
+    ///
+    /// \param qname The query name to look up
+    /// \param qtype The query type to look up
+    /// \param qclass The query class to look up
+    ///
     /// \return return the shared_ptr of rrset if it can be found,
     ///         or else, return NULL. When looking up, local zone
     ///         data will be searched first, if not found, then
@@ -114,6 +129,11 @@ public:
                               const isc::dns::RRClass& qclass) const;
 
     /// \brief Look up closest rrset in cache.
+    ///
+    /// \param qname The query name to look up
+    /// \param qtype The query type to look up
+    /// \param qclass The query class to look up
+    ///
     /// \return return the shared_ptr of rrset if it can be found in
     ///         cache, or else return NULL.
     ///
@@ -134,6 +154,9 @@ public:
     //@}
 
     /// \brief Update the message in the cache with the new one.
+    ///
+    /// \param msg The message to update
+    ///
     /// \return return true if the message is updated successfully,
     ///         or else, return false.
     ///
@@ -142,9 +165,13 @@ public:
     bool update(const isc::dns::Message& msg);
 
     /// \brief Update the rrset in the cache with the new one.
-    ///        local zone data and rrset cache will be updated together.
-    ///        If the rrset doesn't exist in both of them, then the rrset
-    ///        will be added into both of them.
+    ///
+    /// local zone data and rrset cache will be updated together.
+    /// If the rrset doesn't exist in both of them, then the rrset
+    /// will be added into both of them.
+    ///
+    /// \param rrset_ptr The RRset to update
+    ///
     /// \return return false, if the class of the parameter rrset is
     ///        allowed to be cached.
     ///
@@ -159,16 +186,26 @@ public:
     /// \name Cache Serialization
     //@{
     /// \brief Dump the cache content to one file.
+    ///
+    /// \param file_name file to write to
+    ///
     /// \todo It should can be dumped to one configured database.
     void dump(const std::string& file_name);
 
     /// \brief Load the cache from one file.
+    ///
+    /// \param file to load from
+    ///
     /// \todo It should can be loaded from one configured database.
     void load(const std::string& file_name);
     //@}
 
 protected:
     /// \brief Update rrset cache.
+    ///
+    /// \param rrset_ptr The rrset to update with
+    /// \param rrset_cache_ptr the rrset cache to update
+    ///
     /// \return return true if the rrset is updated in the rrset cache,
     ///         or else return false if failed.
     /// \param rrset_cache_ptr The rrset cache need to be updated.

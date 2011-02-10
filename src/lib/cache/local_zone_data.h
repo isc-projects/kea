@@ -35,14 +35,20 @@ public:
     {}
 
     /// \brief Look up one rrset.
-    /// \return return the shared_ptr of rrset if it can
+    ///
+    /// \param qname The query name to look up
+    /// \param qtype The query type to look up
+    /// \return return the shared_ptr of rrset if it is
     /// found in the local zone, or else, return NULL.
     isc::dns::RRsetPtr lookup(const isc::dns::Name& qname,
                               const isc::dns::RRType& qtype);
 
-    /// \brief Update the rrset in the local zone. If the
-    /// the rrset doesn't exist, it will be added directly,
-    /// or else, the existed one will be overwrited.
+    /// \brief Update the rrset in the local zone.
+    ///
+    /// If the rrset doesn't exist, it will be added.
+    /// Otherwise, the existed one will be overwritten.
+    ///
+    /// \param rrset The rrset to update
     void update(const isc::dns::RRset& rrset);
 
 private:

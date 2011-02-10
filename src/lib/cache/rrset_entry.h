@@ -34,27 +34,27 @@ namespace cache {
 /// RFC2181 section5.4.1.
 /// Bigger value is more trustworthy.
 enum RRsetTrustLevel {
-    // Default trust for RRset.
+    /// Default trust for RRset.
     RRSET_TRUST_DEFAULT = 0,
-    // Additional information from non-authoritative answer.
+    /// Additional information from non-authoritative answer.
     RRSET_TRUST_ADDITIONAL_NONAA,
-    // Data from the authority section of a non-authoritative answer
+    /// Data from the authority section of a non-authoritative answer
     RRSET_TRUST_AUTHORITY_NONAA,
-    // Additional information from an authoritative answer.
+    /// Additional information from an authoritative answer.
     RRSET_TRUST_ADDITIONAL_AA,
-    // Non-authoritative data from the answer section of authoritative
-    // answers
+    /// Non-authoritative data from the answer section of authoritative
+    /// answers
     RRSET_TRUST_NONAUTH_ANSWER_AA,
-    // Data from the answer section of a non-authoritative answer.
+    /// Data from the answer section of a non-authoritative answer.
     RRSET_TRUST_ANSWER_NONAA,
-    // Glue from a primary zone, or glue from a zone transfer.
+    /// Glue from a primary zone, or glue from a zone transfer.
     RRSET_TRUST_PRIM_GLUE,
-    // Data from the authority section of an authoritative answer.
+    /// Data from the authority section of an authoritative answer.
     RRSET_TRUST_AUTHORITY_AA,
-    // Authoritative data included in the answer section of
-    // an authoritative reply.
+    /// Authoritative data included in the answer section of
+    /// an authoritative reply.
     RRSET_TRUST_ANSWER_AA,
-    // Data from a primary zone file, other than glue data.
+    /// Data from a primary zone file, other than glue data.
     RRSET_TRUST_PRIM_ZONE_NONGLUE
 };
 
@@ -84,24 +84,35 @@ public:
     //@}
 
     /// \brief Return a pointer to a generated RRset
+    ///
+    /// \return Pointer to the generated RRset
     isc::dns::RRsetPtr getRRset();
 
     /// \brief Get the expiration time of the RRset.
+    ///
+    /// \return The expiration time of the RRset
+    ///
     /// \todo RRsig expiration processing
     time_t getExpireTime() const;
 
     /// \brief Get the ttl of the RRset.
+    ///
+    /// \return The TTL of the RRset
     uint32_t getTTL() {
         updateTTL();
         return (rrset_->getTTL().getValue());
     }
 
+    /// \brief Get the hash key
+    ///
     /// \return return hash key
-    HashKey hashKey() const{
+    HashKey hashKey() const {
         return (hash_key_);
     }
 
     /// \brief get RRset trustworthiness
+    ///
+    /// \return return the trust level
     RRsetTrustLevel getTrustLevel() const {
         return (trust_level_);
     }
