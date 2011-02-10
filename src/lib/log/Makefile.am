@@ -1,4 +1,6 @@
+if USE_LOG4CXX
 SUBDIRS = . compiler tests
+endif
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
@@ -10,7 +12,8 @@ CLEANFILES = *.gcno *.gcda
 lib_LTLIBRARIES = liblog.la
 liblog_la_SOURCES  =
 liblog_la_SOURCES += dbglevels.h
-liblog_la_SOURCES += dummylog.h dummylog.cc Message.h
+liblog_la_SOURCES += dummylog.h dummylog.cc
+if USE_LOG4CXX
 liblog_la_SOURCES += filename.h filename.cc
 liblog_la_SOURCES += logger.cc logger.h
 liblog_la_SOURCES += logger_support.cc logger_support.h
@@ -25,6 +28,7 @@ liblog_la_SOURCES += strutil.h strutil.cc
 liblog_la_SOURCES += xdebuglevel.cc xdebuglevel.h
 
 liblog_la_LDFLAGS = $(LOG4CXX_LDFLAGS)
+endif
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
