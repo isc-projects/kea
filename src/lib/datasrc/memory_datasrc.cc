@@ -385,6 +385,7 @@ struct MemoryZone::MemoryZoneImpl {
         DomainNode* node(NULL);
         FindState state(options);
         RBTreeNodeChain<Domain> node_path;
+        bool rename(false);
         switch (domains_.find(name, &node, node_path, cutCallback, &state)) {
             case DomainTree::PARTIALMATCH:
                 /*
@@ -408,10 +409,12 @@ struct MemoryZone::MemoryZoneImpl {
                 if (state.dname_node_ != NULL) {
                     // We were traversing a DNAME node (and wanted to go
                     // lower below it), so return the DNAME
-                    return (FindResult(DNAME, state.rrset_));
+                    return (FindResult(DNAME, prepareRRset(name, state.rrset_,
+                        rename)));
                 }
                 if (state.zonecut_node_ != NULL) {
-                    return (FindResult(DELEGATION, state.rrset_));
+                    return (FindResult(DELEGATION, prepareRRset(name,
+                        state.rrset_, rename)));
                 }
                 /*
                  * No redirection anywhere. Let's try if it is a wildcard.
@@ -429,8 +432,9 @@ struct MemoryZone::MemoryZoneImpl {
                      * We have the wildcard node now. Jump below the switch,
                      * where handling of the common (exact-match) case is.
                      *
-                     * TODO: Some synthesis of RRsets for the wildcard node.
+                     * However, rename it to the searched name.
                      */
+                    rename = true;
                     break;
                 }
 
@@ -465,7 +469,8 @@ struct MemoryZone::MemoryZoneImpl {
         if (node->getFlag(DomainNode::FLAG_CALLBACK) && node != origin_data_) {
             found = node->getData()->find(RRType::NS());
             if (found != node->getData()->end()) {
-                return (FindResult(DELEGATION, found->second));
+                return (FindResult(DELEGATION, prepareRRset(name,
+                    found->second, rename)));
             }
         }
 
@@ -476,7 +481,8 @@ struct MemoryZone::MemoryZoneImpl {
                  found != node->getData()->end(); found++)
             {
                 target->addRRset(
-                    boost::const_pointer_cast<RRset>(found->second));
+                    boost::const_pointer_cast<RRset>(prepareRRset(name,
+                    found->second, rename)));
             }
             return (FindResult(SUCCESS, ConstRRsetPtr()));
         }
@@ -484,12 +490,14 @@ struct MemoryZone::MemoryZoneImpl {
         found = node->getData()->find(type);
         if (found != node->getData()->end()) {
             // Good, it is here
-            return (FindResult(SUCCESS, found->second));
+            return (FindResult(SUCCESS, prepareRRset(name, found->second,
+                rename)));
         } else {
             // Next, try CNAME.
             found = node->getData()->find(RRType::CNAME());
             if (found != node->getData()->end()) {
-                return (FindResult(CNAME, found->second));
+                return (FindResult(CNAME, prepareRRset(name, found->second,
+                    rename)));
             }
         }
         // No exact match or CNAME.  Return NXRRSET.
