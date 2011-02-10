@@ -23,6 +23,10 @@ using namespace isc::dns;
 
 namespace {
 
+/// \brief Reads a Message from a data file
+///
+/// \param message Message to put the read data in
+/// \param datafile The file to read from
 void
 messageFromFile(Message& message, const char* datafile) {
     std::vector<unsigned char> data;
@@ -32,8 +36,14 @@ messageFromFile(Message& message, const char* datafile) {
     message.fromWire(buffer);
 }
 
+/// \brief Counts the number of rrsets in the given section
+///
+/// \param msg The message to count in
+/// \param section The section to count
+///
+/// \return The number of RRsets in the given section
 int
-section_rrset_count(Message& msg, Message::Section section) {
+sectionRRsetCount(Message& msg, Message::Section section) {
     int count = 0;
     for (RRsetIterator rrset_iter = msg.beginSection(section);
          rrset_iter != msg.endSection(section); 

@@ -87,11 +87,11 @@ TEST_F(ResolverCacheTest, testUpdateRRset) {
     cache.update(rrset_ptr);
 
     Message new_msg(Message::RENDER);
-    Question question(qname, klass, RRType(2));
+    Question question(qname, klass, RRType::NS());
     new_msg.addQuestion(question);
-    EXPECT_TRUE(cache.lookup(qname, RRType(2), klass, new_msg));
-    EXPECT_EQ(0, section_rrset_count(new_msg, Message::SECTION_AUTHORITY));
-    EXPECT_EQ(0, section_rrset_count(new_msg, Message::SECTION_ADDITIONAL));
+    EXPECT_TRUE(cache.lookup(qname, RRType::NS(), klass, new_msg));
+    EXPECT_EQ(0, sectionRRsetCount(new_msg, Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0, sectionRRsetCount(new_msg, Message::SECTION_ADDITIONAL));
 }
 
 TEST_F(ResolverCacheTest, testLookupUnsupportedClass) {
@@ -100,11 +100,10 @@ TEST_F(ResolverCacheTest, testLookupUnsupportedClass) {
     cache.update(msg);
 
     Name qname("example.com.");
-    RRType qtype(6);
 
     msg.makeResponse();
-    EXPECT_FALSE(cache.lookup(qname, qtype, RRClass(2), msg));
-    EXPECT_FALSE(cache.lookup(qname, qtype, RRClass(2)));
+    EXPECT_FALSE(cache.lookup(qname, RRType::SOA(), RRClass::CH(), msg));
+    EXPECT_FALSE(cache.lookup(qname, RRType::SOA(), RRClass::CH()));
 }
 
 TEST_F(ResolverCacheTest, testLookupClosestRRset) {
@@ -113,18 +112,19 @@ TEST_F(ResolverCacheTest, testLookupClosestRRset) {
     cache.update(msg);
 
     Name qname("www.test.example.com.");
-    RRType qtype(6);
-    RRClass klass(1);
 
-    RRsetPtr rrset_ptr = cache.lookupClosestRRset(qname, qtype, klass);
+    RRsetPtr rrset_ptr = cache.lookupClosestRRset(qname, RRType::NS(),
+                                                  RRClass::IN());
     EXPECT_TRUE(rrset_ptr);
     EXPECT_EQ(rrset_ptr->getName(), Name("example.com."));
 
-    rrset_ptr = cache.lookupClosestRRset(Name("example.com."), RRType(2), klass);
+    rrset_ptr = cache.lookupClosestRRset(Name("example.com."),
+                                         RRType::NS(), RRClass::IN());
     EXPECT_TRUE(rrset_ptr);
     EXPECT_EQ(rrset_ptr->getName(), Name("example.com."));
 
-    rrset_ptr = cache.lookupClosestRRset(Name("com."), RRType(2), klass);
+    rrset_ptr = cache.lookupClosestRRset(Name("com."),
+                                         RRType::NS(), RRClass::IN());
     EXPECT_FALSE(rrset_ptr);
 }
 
