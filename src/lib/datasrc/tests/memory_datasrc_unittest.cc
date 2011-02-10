@@ -203,6 +203,7 @@ public:
             {"*.nswild.example.org. 300 IN NS nswild.example.", &rr_nswild_},
             {"*.dnamewild.example.org. 300 IN DNAME dnamewild.example.",
              &rr_dnamewild_},
+            {"*.child.example.org. 300 IN A 192.0.2.1", &rr_child_wild_},
             {NULL, NULL}
         };
 
@@ -252,6 +253,7 @@ public:
     RRsetPtr rr_emptywild_;
     RRsetPtr rr_nested_emptywild_;
     RRsetPtr rr_nswild_, rr_dnamewild_;
+    RRsetPtr rr_child_wild_;
 
     /**
      * \brief Test one find query to the zone.
@@ -724,11 +726,47 @@ TEST_F(MemoryZoneTest, wildcard) {
     }
 }
 
-// Note: once #507 is merged, findTest() would succeed whether or not
-// we load the wildcard correctly, so the test will become meaningless.
-// The plan is to clean them up when we complete #551 (then the effect of
-// load will be indirectly tested via find() tests).
-TEST_F(MemoryZoneTest, loadEmptyWildcard) {
+/*
+ * Test that we don't match a wildcard if we get under delegation.
+ */
+TEST_F(MemoryZoneTest, delegatedWildcard) {
+    EXPECT_EQ(SUCCESS, zone_.add(rr_child_wild_));
+    EXPECT_EQ(SUCCESS, zone_.add(rr_child_ns_));
+
+    findTest(Name("a.child.example.org"), RRType::A(), Zone::DELEGATION, true,
+        rr_child_ns_);
+}
+
+// Tests combination of wildcard and ANY.
+TEST_F(MemoryZoneTest, anyWildcard) {
+    EXPECT_EQ(SUCCESS, zone_.add(rr_wild_));
+
+    // First try directly the name (normal match)
+    {
+        SCOPED_TRACE("Asking direcly for *");
+        RRsetList target;
+        findTest(Name("*.wild.example.org"), RRType::ANY(), Zone::SUCCESS,
+            true, ConstRRsetPtr(), &target);
+        ASSERT_EQ(1, target.size());
+        EXPECT_EQ(RRType::A(), (*target.begin())->getType());
+        EXPECT_EQ(Name("*.wild.example.org"), (*target.begin())->getName());
+    }
+
+    // Then a wildcard match
+    {
+        SCOPED_TRACE("Asking in the wild way");
+        RRsetList target;
+        findTest(Name("a.wild.example.org"), RRType::ANY(), Zone::SUCCESS,
+            true, ConstRRsetPtr(), &target);
+        ASSERT_EQ(1, target.size());
+        EXPECT_EQ(RRType::A(), (*target.begin())->getType());
+        EXPECT_EQ(Name("a.wild.example.org"), (*target.begin())->getName());
+    }
+}
+
+// Test there's nothing in the wildcard in the middle if we load
+// wild.*.foo.example.org.
+TEST_F(MemoryZoneTest, emptyWildcard) {
     /*
      *            example.org.
      *                foo
@@ -736,17 +774,74 @@ TEST_F(MemoryZoneTest, loadEmptyWildcard) {
      *               wild
      */
     EXPECT_EQ(SUCCESS, zone_.add(rr_emptywild_));
-    findTest(Name("*.foo.example.org"), RRType::A(), Zone::NXRRSET);
-    findTest(Name("foo.example.org"), RRType::A(), Zone::NXRRSET);
+
+    {
+        SCOPED_TRACE("Asking for the original record under wildcard");
+        findTest(Name("wild.*.foo.example.org"), RRType::A(), Zone::SUCCESS,
+            true, rr_emptywild_);
+    }
+
+    {
+        SCOPED_TRACE("Asking for A record");
+        findTest(Name("a.foo.example.org"), RRType::A(), Zone::NXRRSET);
+        findTest(Name("*.foo.example.org"), RRType::A(), Zone::NXRRSET);
+        findTest(Name("foo.example.org"), RRType::A(), Zone::NXRRSET);
+    }
+
+    {
+        SCOPED_TRACE("Asking for ANY record");
+        RRsetList normalTarget;
+        findTest(Name("*.foo.example.org"), RRType::ANY(), Zone::NXRRSET, true,
+            ConstRRsetPtr(), &normalTarget);
+        EXPECT_EQ(0, normalTarget.size());
+
+        RRsetList wildTarget;
+        findTest(Name("a.foo.example.org"), RRType::ANY(), Zone::NXRRSET, true,
+            ConstRRsetPtr(), &wildTarget);
+        EXPECT_EQ(0, wildTarget.size());
+    }
 }
 
-// same note as loadEmptyWildcard applies.
-TEST_F(MemoryZoneTest, loadNestedEmptyWildcard) {
+// Same as emptyWildcard, but with multiple * in the path.
+TEST_F(MemoryZoneTest, nestedEmptyWildcard) {
     EXPECT_EQ(SUCCESS, zone_.add(rr_nested_emptywild_));
-    findTest(Name("*.foo.*.bar.example.org"), RRType::A(), Zone::NXRRSET);
-    findTest(Name("foo.*.bar.example.org"), RRType::A(), Zone::NXRRSET);
-    findTest(Name("*.bar.example.org"), RRType::A(), Zone::NXRRSET);
-    findTest(Name("bar.example.org"), RRType::A(), Zone::NXRRSET);
+
+    {
+        SCOPED_TRACE("Asking for the original record under wildcards");
+        findTest(Name("wild.*.foo.*.bar.example.org"), RRType::A(),
+            Zone::SUCCESS, true, rr_nested_emptywild_);
+    }
+
+    // Domains to test
+    const char *names[] = {
+        "*.foo.*.bar.example.org",
+        "foo.*.bar.example.org",
+        "*.bar.example.org",
+        "bar.example.org",
+        NULL
+    };
+
+    {
+        SCOPED_TRACE("Asking directly for A on parent nodes");
+
+        for (const char **name(names); *name; ++ name) {
+            SCOPED_TRACE(string("Node ") + *name);
+            findTest(Name(*name), RRType::A(), Zone::NXRRSET);
+        }
+    }
+
+    {
+        SCOPED_TRACE("Asking for ANY on parent nodes");
+
+        for (const char **name(names); *name; ++ name) {
+            SCOPED_TRACE(string("Node ") + *name);
+
+            RRsetList target;
+            findTest(Name(*name), RRType::ANY(), Zone::NXRRSET, true,
+                ConstRRsetPtr(), &target);
+            EXPECT_EQ(0, target.size());
+        }
+    }
 }
 
 TEST_F(MemoryZoneTest, loadBadWildcard) {
