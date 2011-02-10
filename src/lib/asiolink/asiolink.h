@@ -613,38 +613,36 @@ private:
 /// \brief The \c IntervalTimer class is a wrapper for the ASIO
 /// \c asio::deadline_timer class.
 ///
-/// This class is implemented to use \c asio::deadline_timer as
-/// interval timer.
+/// This class is implemented to use \c asio::deadline_timer as interval
+/// timer.
 ///
-/// \c setupTimer() sets a timer to expire on (now + interval) and
-/// a call back function.
+/// \c setup() sets a timer to expire on (now + interval) and a call back
+/// function.
 ///
-/// \c IntervalTimerImpl::callback() is called by the timer when
-/// it expires.
+/// \c IntervalTimerImpl::callback() is called by the timer when it expires.
 ///
-/// The function calls the call back function set by \c setupTimer()
-/// and updates the timer to expire in (now + interval) seconds.
+/// The function calls the call back function set by \c setup() and updates
+/// the timer to expire in (now + interval) milliseconds.
 /// The type of call back function is \c void(void).
 /// 
-/// The call back function will not be called if the instance of this
-/// class is destructed before the timer is expired.
+/// The call back function will not be called if the instance of this class is
+/// destroyed before the timer is expired.
 ///
-/// Note: Destruction of an instance of this class while call back
-/// is pending causes throwing an exception from \c IOService.
+/// Note: Destruction of an instance of this class while call back is pending
+/// causes throwing an exception from \c IOService.
 ///
 /// Sample code:
 /// \code
 ///  void function_to_call_back() {
 ///      // this function will be called periodically
 ///  }
-///  int interval_in_seconds = 1;
+///  int interval_in_milliseconds = 1000;
 ///  IOService io_service;
 ///
 ///  IntervalTimer intervalTimer(io_service);
-///  intervalTimer.setupTimer(function_to_call_back, interval_in_seconds);
+///  intervalTimer.setup(function_to_call_back, interval_in_milliseconds);
 ///  io_service.run();
 /// \endcode
-///
 class IntervalTimer {
 public:
     /// \name The type of timer callback function
@@ -667,7 +665,6 @@ public:
     /// This constructor may also throw \c asio::system_error.
     ///
     /// \param io_service A reference to an instance of IOService
-    ///
     IntervalTimer(IOService& io_service);
 
     /// \brief The destructor.
@@ -676,28 +673,26 @@ public:
     ///
     /// On the destruction of this class the timer will be canceled
     /// inside \c asio::deadline_timer.
-    ///
     ~IntervalTimer();
     //@}
 
     /// \brief Register timer callback function and interval.
     ///
-    /// This function sets callback function and interval in seconds.
+    /// This function sets callback function and interval in milliseconds.
     /// Timer will actually start after calling \c IOService::run().
     ///
     /// \param cbfunc A reference to a function \c void(void) to call back
     /// when the timer is expired (should not be an empty functor)
-    /// \param interval Interval in seconds (greater than 0)
+    /// \param interval Interval in milliseconds (greater than 0)
     ///
     /// Note: IntervalTimer will not pass \c asio::error_code to
     /// call back function. In case the timer is cancelled, the function
     /// will not be called.
     ///
     /// \throw isc::InvalidParameter cbfunc is empty
-    /// \throw isc::BadValue interval is 0
+    /// \throw isc::BadValue interval is less than or equal to 0
     /// \throw isc::Unexpected ASIO library error
-    ///
-    void setupTimer(const Callback& cbfunc, const uint32_t interval);
+    void setup(const Callback& cbfunc, const long interval);
 
     /// Cancel the timer.
     ///
@@ -711,15 +706,11 @@ public:
 
     /// Return the timer interval.
     ///
-    /// This method returns the timer interval in seconds if it's running;
+    /// This method returns the timer interval in milliseconds if it's running;
     /// if the timer has been canceled it returns 0.
     ///
     /// This method never throws an exception.
-    ///
-    /// Note: We may want to change the granularity of the timer to
-    /// milliseconds or even finer.  If and when this happens the semantics
-    /// of the return value of this method will be changed accordingly.
-    uint32_t getInterval() const;
+    long getInterval() const;
 
 private:
     IntervalTimerImpl* impl_;

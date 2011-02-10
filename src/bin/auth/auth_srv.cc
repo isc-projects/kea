@@ -354,7 +354,7 @@ AuthSrv::setMemoryDataSrc(const isc::dns::RRClass& rrclass,
 
 uint32_t
 AuthSrv::getStatisticsTimerInterval() const {
-    return (impl_->statistics_timer_.getInterval());
+    return (impl_->statistics_timer_.getInterval() / 1000);
 }
 
 void
@@ -362,11 +362,17 @@ AuthSrv::setStatisticsTimerInterval(uint32_t interval) {
     if (interval == impl_->statistics_timer_.getInterval()) {
         return;
     }
+    if (interval > 86400) {
+        // It can't occur since the value is checked in
+        // statisticsIntervalConfig::build().
+        isc_throw(InvalidParameter, "Too long interval: " << interval);
+    }
     if (interval == 0) {
         impl_->statistics_timer_.cancel();
     } else {
-        impl_->statistics_timer_.setupTimer(
-            boost::bind(&AuthSrv::submitStatistics, this), interval);
+        impl_->statistics_timer_.setup(boost::bind(&AuthSrv::submitStatistics,
+                                                   this),
+                                       interval * 1000);
     }
     if (impl_->verbose_mode_) {
         if (interval == 0) {
