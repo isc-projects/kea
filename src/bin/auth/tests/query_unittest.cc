@@ -145,8 +145,7 @@ private:
             rrset->getType() == RRType::NS()) {
             delegation_rrset_ = rrset;
         } else if (rrset->getName() == dname_name_ &&
-            rrset->getType() == RRType::DNAME())
-        {
+            rrset->getType() == RRType::DNAME()) {
             dname_rrset_ = rrset;
         }
     }
@@ -182,8 +181,7 @@ MockZone::find(const Name& name, const RRType& type,
         return (FindResult(DELEGATION, delegation_rrset_));
     // And under DNAME
     } else if (name.compare(dname_name_).getRelation() ==
-        NameComparisonResult::SUBDOMAIN)
-    {
+        NameComparisonResult::SUBDOMAIN) {
         return (FindResult(DNAME, dname_rrset_));
     }
 
@@ -201,8 +199,7 @@ MockZone::find(const Name& name, const RRType& type,
         // If not found but we have a target, fill it with all RRsets here
         if (!found_domain->second.empty() && target != NULL) {
             for (found_rrset = found_domain->second.begin();
-                 found_rrset != found_domain->second.end(); found_rrset++)
-            {
+                 found_rrset != found_domain->second.end(); found_rrset++) {
                 // Insert RRs under the domain name into target
                 target->addRRset(
                     boost::const_pointer_cast<RRset>(found_rrset->second));
