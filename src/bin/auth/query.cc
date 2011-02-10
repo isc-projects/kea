@@ -162,28 +162,34 @@ Query::process() const {
                 const rdata::generic::DNAME& dname(
                     dynamic_cast<const rdata::generic::DNAME&>(
                     db_result.rrset->getRdataIterator()->getCurrent()));
-                // The new CNAME we are creating (it will be unsigned even
-                // with DNSSEC, the DNAME is signed and it can be validated
-                // by that)
-                RRsetPtr cname(new RRset(qname_, db_result.rrset->getClass(),
-                    RRType::CNAME(), db_result.rrset->getTTL()));
-                try {
-                    // Construct the new target by replacing the end
-                    cname->addRdata(rdata::generic::CNAME(qname_.split(0,
-                        qname_.getLabelCount() -
-                        db_result.rrset->getName().getLabelCount()).
-                        concatenate(dname.getDname())));
-                    response_.addRRset(Message::SECTION_ANSWER, cname);
-                    break;
-                }
+                // The yet unmatched prefix dname
+                Name prefix(qname_.split(0, qname_.getLabelCount() -
+                    db_result.rrset->getName().getLabelCount()));
+                // If we put it together, will it be too long?
+                // (The prefix contains trailing ., which will be removed
+                if (prefix.getLength() - Name(".").getLength() +
+                    dname.getDname().getLength() > Name::MAX_WIRE ||
+                    prefix.getLabelCount() - Name(".").getLabelCount() +
+                    dname.getDname().getLabelCount() > Name::MAX_LABELS) {
                 /*
                  * In case the synthetized name is too long, section 4.1 of RFC
                  * 2672 mandates we return YXDOMAIN.
                  */
-                catch (const isc::dns::TooLongName&) {
                     response_.setRcode(Rcode::YXDOMAIN());
                     return;
                 }
+                // The new CNAME we are creating (it will be unsigned even
+                // with DNSSEC, the DNAME is signed and it can be validated
+                // by that)
+                RRsetPtr cname(new RRset(qname_, db_result.rrset->getClass(),
+                RRType::CNAME(), db_result.rrset->getTTL()));
+                // Construct the new target by replacing the end
+                cname->addRdata(rdata::generic::CNAME(qname_.split(0,
+                    qname_.getLabelCount() -
+                    db_result.rrset->getName().getLabelCount()).
+                    concatenate(dname.getDname())));
+                response_.addRRset(Message::SECTION_ANSWER, cname);
+                break;
             }
             case Zone::CNAME:
                 /*
