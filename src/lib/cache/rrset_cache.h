@@ -42,6 +42,8 @@ private:
     RRsetCache(const RRsetCache&);
     RRsetCache& operator=(const RRsetCache&);
 public:
+    /// \brief Constructor
+    ///
     /// \param cache_size the size of rrset cache.
     /// \param rrset_class the class of rrset cache.
     RRsetCache(uint32_t cache_size, uint16_t rrset_class);
@@ -49,7 +51,10 @@ public:
     //@}
 
     /// \brief Look up rrset in cache.
-    /// \return return the shared_ptr of rrset entry if it can
+    ///
+    /// \param qname The query name to look up
+    /// \param qtype The query type 
+    /// \return return the shared_ptr of rrset entry if it can be
     /// found in the cache, or else, return NULL.
     RRsetEntryPtr lookup(const isc::dns::Name& qname,
                          const isc::dns::RRType& qtype);
@@ -68,14 +73,23 @@ public:
                          const RRsetTrustLevel& level);
 
     /// \brief Dump the rrset cache to specified file.
+    ///
+    /// \param file_name The file to write to
+    ///
     /// \todo It should can be dumped to one configured database.
     void dump(const std::string& file_name);
 
     /// \brief Load the cache from one file.
+    ///
+    /// \param file_name The file to read from
+    ///
     /// \todo It should can be loaded from one configured database.
     void load(const std::string& file_name);
 
     /// \brief Resize the size of rrset cache in runtime.
+    ///
+    /// \param The size to resize to
+    /// \return true
     bool resize(uint32_t size);
 
 private:

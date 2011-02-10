@@ -23,6 +23,13 @@ namespace isc {
 namespace cache {
 
 /// \brief RRset Copy Function
+///
+/// Adds all Rdatas and the RRsig in the source RRset to the target
+/// RRset
+///
+/// \param src RRset to copy from
+/// \param dst RRset to copy to
+///
 /// \note RRset class doesn't provide the interface for
 ///       doing RRset copy. But in cache's code, sometime
 ///       we have to do the copy.
