@@ -156,6 +156,8 @@ Query::process() const {
                 /*
                  * Empty DNAME should never get in, as it is impossible to
                  * create one in master file.
+                 *
+                 * FIXME: Other way to prevent this should be done
                  */
                 assert(db_result.rrset->getRdataCount() > 0);
                 // Get the data of DNAME
