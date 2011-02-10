@@ -28,14 +28,15 @@
 #include <asiolink/asiolink.h>
 #include <asiolink/internal/coroutine.h>
 
-// This file contains UDP-specific implementations of generic classes 
+// This file contains TCP/UDP-specific implementations of generic classes 
 // defined in asiolink.h.  It is *not* intended to be part of the public
 // API.
 
 namespace asiolink {
 //
-// Asynchronous UDP coroutine for upstream queries
+// Asynchronous UDP/TCP coroutine for upstream fetches
 //
+//class IOFetch : public coroutine, public UdpFetch, public TcpFetch {
 class IOFetch : public coroutine {
 public:
     // TODO Maybe this should be more generic than just for IOFetch?
@@ -66,11 +67,12 @@ public:
     ///        delete it if allocated on heap.
     ///@param timeout in ms.
     ///
-    explicit IOFetch(asio::io_service& io_service,
+    IOFetch(asio::io_service& io_service,
                       const isc::dns::Question& q,
                       const IOAddress& addr, uint16_t port,
                       isc::dns::OutputBufferPtr buffer,
-                      Callback* callback, int timeout = -1);
+                      Callback* callback, int timeout = -1, 
+                      int protocol = IPPROTO_UDP);
     void operator()(asio::error_code ec = asio::error_code(),
                     size_t length = 0);
     /// Terminate the query.
@@ -87,9 +89,32 @@ private:
     /// to many async_*() functions) and we want keep the same data. Some of
     /// the data is not copyable too.
     ///
-    struct IOFetchProtocol;
-    boost::shared_ptr<IOFetchProtocol> data_;
+    //struct IOFetchProtocol;
+    //boost::shared_ptr<IOFetchProtocol> data_;
+    //struct UdpData;
+    //struct TcpData;
+    boost::shared_ptr<UdpFetch> data_;
+    boost::shared_ptr<TcpFetch> tcp_data_;
 };
+class UdpFetch : public IOFetch {
+    public:
+        struct UdpData;
+        explicit UdpFetch(asio::io_service& io_service,
+                          const isc::dns::Question& q,
+                          const IOAddress& addr,
+                          uint16_t port,
+                          isc::dns::OutputBufferPtr buffer,
+                          IOFetch::Callback *callback,
+                          int timeout);
+};
+class TcpFetch : public IOFetch {
+    public:
+        struct TcpData;
+        explicit TcpFetch(io_service& io_service, const Question& q,
+                 const IOAddress& addr, uint16_t port,
+                 OutputBufferPtr buffer, Callback *callback, int timeout);
+};
+
 }
 
 

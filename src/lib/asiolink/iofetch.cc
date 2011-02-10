@@ -50,16 +50,51 @@ using namespace isc::dns;
 
 namespace asiolink {
 
-// Private IOFetch data (see internal/iofetch.h for reasons)
-struct IOFetch::IOFetchProtocol {
+struct TcpFetch::UdpData {
     // UDP Socket we send query to and expect reply from there
     udp::socket socket;
     // Where was the query sent
     udp::endpoint remote;
+    // What we ask the server
+    Question question;
+    // We will store the answer here
+    OutputBufferPtr buffer;
+    OutputBufferPtr msgbuf;
+    // Temporary buffer for answer
+    boost::shared_array<char> data;
+    // This will be called when the data arrive or timeouts
+    Callback* callback;
+    //Callback* callback;
+    // Did we already stop operating (data arrived, we timed out, someone
+    // called stop). This can be so when we are cleaning up/there are
+    // still pointers to us.
+    bool stopped;
+    // Timer to measure timeouts.
+    deadline_timer timer;
+    // How many milliseconds are we willing to wait for answer?
+    int timeout;
+
+    UdpData(io_service& service,
+        const udp::socket::protocol_type& protocol,
+        const Question &q,
+        OutputBufferPtr b, Callback *c) :
+          socket(service, protocol),
+          question(q),
+          buffer(b),
+          msgbuf(new OutputBuffer(512)),
+          callback(c),
+          stopped(false),
+          timer(service)
+    { }
+
+
+};
+
+struct TcpFetch::TcpData {
     // TCP Socket
-    tcp::socket tsocket;
+    tcp::socket socket;
     // tcp endpoint
-    tcp::endpoint tremote;
+    tcp::endpoint remote;
     // What we ask the server
     Question question;
     // We will store the answer here
@@ -78,13 +113,11 @@ struct IOFetch::IOFetchProtocol {
     // How many milliseconds are we willing to wait for answer?
     int timeout;
 
-    IOFetchProtocol(io_service& service,
-        const udp::socket::protocol_type& protocol,
-        const tcp::socket::protocol_type& tprotocol,
+    TcpData(io_service& service,
+        const tcp::socket::protocol_type& protocol,
         const Question &q,
         OutputBufferPtr b, Callback *c) :
           socket(service, protocol),
-          tsocket(service, tprotocol),
           question(q),
           buffer(b),
           msgbuf(new OutputBuffer(512)),
@@ -96,22 +129,58 @@ struct IOFetch::IOFetchProtocol {
 
 };
 
+UdpFetch::UdpFetch(io_service& io_service, const Question& q,
+                 const IOAddress& addr, uint16_t port,
+                 OutputBufferPtr buffer, Callback *callback, int timeout) :
+    data_(new UdpData(io_service, 
+          addr.getFamily() == AF_INET ? udp::v4() : udp::v6(), 
+          q, buffer, callback))
+{
+    data_->remote = UDPEndpoint(addr, port).getASIOEndpoint();
+    data_->timeout = timeout;
+}
+TcpFetch::TcpFetch(io_service& io_service, const Question& q,
+                 const IOAddress& addr, uint16_t port,
+                 OutputBufferPtr buffer, Callback *callback, int timeout) :
+    tcp_data_(new TcpData(io_service, 
+          addr.getFamily() == AF_INET ? udp::v4() : udp::v6(), 
+          q, buffer, callback))
+{
+    tcp_data_->remote = TCPEndpoint(addr, port).getASIOEndpoint();
+    tcp_data_->timeout = timeout;
+}
+
+//
 /// The following functions implement the \c IOFetch class.
 ///
 /// The constructor
 IOFetch::IOFetch(io_service& io_service, const Question& q, 
                  const IOAddress& addr, uint16_t port,
-                 OutputBufferPtr buffer, Callback *callback, int timeout) :
-    data_(new IOFetchProtocol(io_service,
-        addr.getFamily() == AF_INET ? udp::v4() : udp::v6(), 
-        addr.getFamily() == AF_INET ? tcp::v4() : tcp::v6(), 
-        q, buffer,
-        callback))
-
+                 OutputBufferPtr buffer, Callback *callback, int timeout,
+                 int protocol)
 {
-    data_->tremote = TCPEndpoint(addr, port).getASIOEndpoint();
-    data_->remote = UDPEndpoint(addr, port).getASIOEndpoint();
-    data_->timeout = timeout;
+    if (protocol == IPPROTO_TCP)
+    {
+        TcpFetch(io_service, q, addr, port, buffer, callback, timeout);
+/*
+        tcp_data_ = new TcpData(io_service, 
+          addr.getFamily() == AF_INET ? udp::v4() : udp::v6(), 
+          q, buffer, callback);
+        tcp_data_->remote = TCPEndpoint(addr, port).getASIOEndpoint();
+        tcp_data_->timeout = timeout;
+*/
+    }
+    else
+    {
+        UdpFetch(io_service, q, addr, port, buffer, callback, timeout);
+/*
+        data_(new UdpData(io_service, 
+          addr.getFamily() == AF_INET ? udp::v4() : udp::v6(), 
+          q, buffer, callback));
+        data_->remote = UDPEndpoint(addr, port).getASIOEndpoint();
+        data_->timeout = timeout;
+*/
+    }
 }
 
 /// The function operator is implemented with the "stackless coroutine"
