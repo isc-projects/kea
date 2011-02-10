@@ -26,54 +26,42 @@ using namespace std;
 namespace isc {
 namespace cache {
 
-ResolverCache::ResolverCache() {
-    uint16_t klass = 1; // class 'IN'
-    class_supported_.push_back(klass);
-    local_zone_data_[klass] = LocalZoneDataPtr(new LocalZoneData(klass));
-    rrsets_cache_[klass] = RRsetCachePtr(new RRsetCache(RRSET_CACHE_DEFAULT_SIZE, klass));
-    messages_cache_[klass] = MessageCachePtr(new MessageCache(rrsets_cache_[klass],
-                                                        MESSAGE_CACHE_DEFAULT_SIZE,
-                                                        klass));
+ResolverClassCache::ResolverClassCache(const RRClass& cache_class) :
+    cache_class_(cache_class)
+{
+    local_zone_data_ = LocalZoneDataPtr(new LocalZoneData(cache_class_.getCode()));
+    rrsets_cache_ = RRsetCachePtr(new RRsetCache(RRSET_CACHE_DEFAULT_SIZE,
+                                                 cache_class_.getCode()));
+    messages_cache_ = MessageCachePtr(new MessageCache(rrsets_cache_,
+                                      MESSAGE_CACHE_DEFAULT_SIZE,
+                                      cache_class_.getCode()));
+    std::cout << "[XX] Created cache for class " << cache_class_ << std::endl;
 }
 
-ResolverCache::ResolverCache(std::vector<CacheSizeInfo> caches_size) {
-    uint32_t index = 0;
-    uint32_t size = caches_size.size();
-    for (; index < size; ++index) {
-        CacheSizeInfo* infop = &caches_size[index];
-        uint16_t klass = infop->klass;
-        class_supported_.push_back(klass);
-        // TODO We should find one way to load local zone data.
-        local_zone_data_[klass] = LocalZoneDataPtr(new LocalZoneData(klass));
-        rrsets_cache_[klass] = RRsetCachePtr(new
-                                     RRsetCache(infop->rrset_cache_size, klass));
-        messages_cache_[klass] = MessageCachePtr(new MessageCache(rrsets_cache_[klass],
-                                                      infop->message_cache_size,
-                                                      klass));
-    }
+ResolverClassCache::ResolverClassCache(CacheSizeInfo cache_info) :
+    cache_class_(cache_info.cclass)
+{
+    uint16_t klass = cache_class_.getCode();
+    // TODO We should find one way to load local zone data.
+    local_zone_data_ = LocalZoneDataPtr(new LocalZoneData(klass));
+    rrsets_cache_ = RRsetCachePtr(new
+                        RRsetCache(cache_info.rrset_cache_size, klass));
+    messages_cache_ = MessageCachePtr(new MessageCache(rrsets_cache_,
+                                      cache_info.message_cache_size,
+                                      klass));
+    std::cout << "[XX] Created cache for class " << cache_class_ << std::endl;
+}
 
-    // Sort the vector, so that binary_find can be used.
-    sort(class_supported_.begin(), class_supported_.end());
+const RRClass&
+ResolverClassCache::getClass() const {
+    return cache_class_;
 }
 
 bool
-ResolverCache::classIsSupported(uint16_t klass) const {
-    return binary_search(class_supported_.begin(),
-                         class_supported_.end(), klass);
-}
-
-
-bool
-ResolverCache::lookup(const isc::dns::Name& qname,
+ResolverClassCache::lookup(const isc::dns::Name& qname,
                       const isc::dns::RRType& qtype,
-                      const isc::dns::RRClass& qclass,
                       isc::dns::Message& response) const
 {
-    uint16_t class_code = qclass.getCode();
-    if (!classIsSupported(class_code)) {
-        return (false);
-    }
-
     // message response should has question section already.
     if (response.beginQuestion() == response.endQuestion()) {
         isc_throw(MessageNoQuestionSection, "Message has no question section");
@@ -82,34 +70,28 @@ ResolverCache::lookup(const isc::dns::Name& qname,
     // First, query in local zone, if the rrset(qname, qtype, qclass) can be
     // found in local zone, generated reply message with only the rrset in
     // answer section.
-    RRsetPtr rrset_ptr = (local_zone_data_[class_code])->lookup(qname, qtype);
+    RRsetPtr rrset_ptr = local_zone_data_->lookup(qname, qtype);
     if (rrset_ptr) {
         response.addRRset(Message::SECTION_ANSWER, rrset_ptr);
         return (true);
     }
 
     // Search in class-specific message cache.
-    return (messages_cache_[class_code]->lookup(qname, qtype, response));
+    return (messages_cache_->lookup(qname, qtype, response));
 }
 
 isc::dns::RRsetPtr
-ResolverCache::lookup(const isc::dns::Name& qname,
-               const isc::dns::RRType& qtype,
-               const isc::dns::RRClass& qclass) const
+ResolverClassCache::lookup(const isc::dns::Name& qname,
+               const isc::dns::RRType& qtype) const
 {
-    uint16_t klass = qclass.getCode();
-    if (!classIsSupported(klass)) {
-        return (RRsetPtr());
-    }
-
     // Algorithm:
     // 1. Search in local zone data first,
     // 2. Then do search in rrsets_cache_.
-    RRsetPtr rrset_ptr = local_zone_data_[klass]->lookup(qname, qtype);
+    RRsetPtr rrset_ptr = local_zone_data_->lookup(qname, qtype);
     if (rrset_ptr) {
         return (rrset_ptr);
     } else {
-        RRsetEntryPtr rrset_entry = rrsets_cache_[klass]->lookup(qname, qtype);
+        RRsetEntryPtr rrset_entry = rrsets_cache_->lookup(qname, qtype);
         if (rrset_entry) {
             return (rrset_entry->getRRset());
         } else {
@@ -118,39 +100,13 @@ ResolverCache::lookup(const isc::dns::Name& qname,
     }
 }
 
-isc::dns::RRsetPtr
-ResolverCache::lookupClosestRRset(const isc::dns::Name& qname,
-                                  const isc::dns::RRType& qtype,
-                                  const isc::dns::RRClass& qclass) const
-{
-    unsigned int count = qname.getLabelCount();
-    unsigned int level = 0;
-    while(level < count) {
-        Name close_name = qname.split(level);
-        RRsetPtr rrset_ptr = lookup(close_name, qtype, qclass);
-        if (rrset_ptr) {
-            return (rrset_ptr);
-        } else {
-            ++level;
-        }
-    }
-
-    return (RRsetPtr());
+bool
+ResolverClassCache::update(const isc::dns::Message& msg) {
+    return (messages_cache_->update(msg));
 }
 
 bool
-ResolverCache::update(const isc::dns::Message& msg) {
-    QuestionIterator iter = msg.beginQuestion();
-    uint16_t klass = (*iter)->getClass().getCode();
-    if (!classIsSupported(klass)) {
-        return (false);
-    }
-
-    return (messages_cache_[klass]->update(msg));
-}
-
-bool
-ResolverCache::updateRRsetCache(const isc::dns::ConstRRsetPtr rrset_ptr,
+ResolverClassCache::updateRRsetCache(const isc::dns::ConstRRsetPtr rrset_ptr,
                                 RRsetCachePtr rrset_cache_ptr)
 {
     RRsetTrustLevel level;
@@ -166,16 +122,104 @@ ResolverCache::updateRRsetCache(const isc::dns::ConstRRsetPtr rrset_ptr,
 }
 
 bool
-ResolverCache::update(const isc::dns::ConstRRsetPtr rrset_ptr) {
-    uint16_t klass = rrset_ptr->getClass().getCode();
-    if (!classIsSupported(klass)) {
+ResolverClassCache::update(const isc::dns::ConstRRsetPtr rrset_ptr) {
+    // First update local zone, then update rrset cache.
+    local_zone_data_->update((*rrset_ptr.get()));
+    updateRRsetCache(rrset_ptr, rrsets_cache_);
+    return (true);
+}
+
+
+ResolverCache::ResolverCache()
+{
+    class_caches_.push_back(new ResolverClassCache(RRClass::IN()));
+}
+
+ResolverCache::ResolverCache(std::vector<CacheSizeInfo> caches_info)
+{
+    for (int i = 0; i < caches_info.size(); ++i) {
+        class_caches_.push_back(new ResolverClassCache(caches_info[i]));
+    }
+}
+
+ResolverCache::~ResolverCache()
+{
+    for (int i = 0; i < class_caches_.size(); ++i) {
+        delete class_caches_[i];
+    }
+}
+
+bool
+ResolverCache::lookup(const isc::dns::Name& qname,
+                      const isc::dns::RRType& qtype,
+                      const isc::dns::RRClass& qclass,
+                      isc::dns::Message& response) const
+{
+    ResolverClassCache* cc = getClassCache(qclass);
+    if (cc) {
+        return (cc->lookup(qname, qtype, response));
+    } else {
+        return (false);
+    }
+}
+
+isc::dns::RRsetPtr
+ResolverCache::lookup(const isc::dns::Name& qname,
+               const isc::dns::RRType& qtype,
+               const isc::dns::RRClass& qclass) const
+{
+    ResolverClassCache* cc = getClassCache(qclass);
+    if (cc) {
+        return (cc->lookup(qname, qtype));
+    } else {
+        return (RRsetPtr());
+    }
+}
+
+isc::dns::RRsetPtr
+ResolverCache::lookupClosestRRset(const isc::dns::Name& qname,
+                                  const isc::dns::RRType& qtype,
+                                  const isc::dns::RRClass& qclass) const
+{
+    ResolverClassCache* cc = getClassCache(qclass);
+    if (!cc) {
+        return (RRsetPtr());
+    }
+
+    unsigned int count = qname.getLabelCount();
+    unsigned int level = 0;
+    while(level < count) {
+        Name close_name = qname.split(level);
+        RRsetPtr rrset_ptr = cc->lookup(close_name, qtype);
+        if (rrset_ptr) {
+            return (rrset_ptr);
+        } else {
+            ++level;
+        }
+    }
+
+    return (RRsetPtr());
+}
+
+bool
+ResolverCache::update(const isc::dns::Message& msg) {
+    
+    QuestionIterator iter = msg.beginQuestion();
+    ResolverClassCache* cc = getClassCache((*iter)->getClass());
+    if (!cc) {
         return (false);
     }
 
-    // First update local zone, then update rrset cache.
-    local_zone_data_[klass]->update((*rrset_ptr.get()));
-    updateRRsetCache(rrset_ptr, rrsets_cache_[klass]);
-    return (true);
+    return (cc->update(msg));
+}
+
+bool
+ResolverCache::update(const isc::dns::ConstRRsetPtr rrset_ptr) {
+    ResolverClassCache* cc = getClassCache(rrset_ptr->getClass());
+    if (!cc) {
+        return (false);
+    }
+    return (cc->update(rrset_ptr));
 }
 
 void
@@ -187,6 +231,19 @@ void
 ResolverCache::load(const std::string&) {
     //TODO
 }
+
+ResolverClassCache*
+ResolverCache::getClassCache(const isc::dns::RRClass& cache_class) const {
+    for (int i = 0; i < class_caches_.size(); ++i) {
+        if (class_caches_[i]->getClass() == cache_class) {
+            return class_caches_[i];
+        }
+    }
+    return NULL;
+}
+
+
+
 
 } // namespace cache
 } // namespace isc
