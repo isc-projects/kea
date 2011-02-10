@@ -392,21 +392,20 @@ struct MemoryZone::MemoryZoneImpl {
                  * No redirection anywhere. Let's try if it is a wildcard.
                  */
                 if (node->getFlag(DOMAINFLAG_WILD)) {
-                    Name wildcard(Name("*").concatenate(name.split(1)));
-                    switch (domains_.find(wildcard, &node))
-                    {
-                        case DomainTree::EXACTMATCH:
-                            // This is the node we want.
-                            break;
-                        default:
-                            // This wildcard is not here. It means we want
-                            // something like a.b.wildcard.example.org
-                            // and have only *.wildcard.example.org and
-                            // we don't want that.
-                            return (FindResult(NXDOMAIN, ConstRRsetPtr()));
-                    }
-                    // If we got here, we have the wildcard node. Jump to
-                    // EXACTMATCH
+                    Name wildcard(Name("*").concatenate(
+                        node_path.getAbsoluteName()));
+                    DomainTree::Result result(domains_.find(wildcard, &node));
+                    /*
+                     * Otherwise, why would the DOMAINFLAG_WILD be there if
+                     * there was no wildcard under it?
+                     */
+                    assert(result = DomainTree::EXACTMATCH);
+                    /*
+                     * We have the wildcard node now. Jump below the switch,
+                     * where handling of the common (exact-match) case is.
+                     *
+                     * TODO: Some synthesis of RRsets for the wildcard node.
+                     */
                     break;
                 }
 
