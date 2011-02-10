@@ -268,13 +268,18 @@ public:
      * \param answer The expected rrset, if any should be returned.
      * \param zone Check different MemoryZone object than zone_ (if NULL,
      *     uses zone_)
+     * \param check_wild_answer Checks that the answer has the same RRs, type
+     *     class and TTL as the eqxpected answer and that the name corresponds
+     *     to the one searched. It is meant for checking answers for wildcard
+     *     queries.
      */
     void findTest(const Name& name, const RRType& rrtype, Zone::Result result,
                   bool check_answer = true,
                   const ConstRRsetPtr& answer = ConstRRsetPtr(),
                   RRsetList* target = NULL,
                   MemoryZone* zone = NULL,
-                  Zone::FindOptions options = Zone::FIND_DEFAULT)
+                  Zone::FindOptions options = Zone::FIND_DEFAULT,
+                  bool check_wild_answer = false)
     {
         if (!zone) {
             zone = &zone_;
@@ -288,6 +293,28 @@ public:
                 EXPECT_EQ(result, find_result.code);
                 if (check_answer) {
                     EXPECT_EQ(answer, find_result.rrset);
+                } else if (check_wild_answer) {
+                    RdataIteratorPtr expectedIt(answer->getRdataIterator());
+                    RdataIteratorPtr gotIt(answer->getRdataIterator());
+                    while (!expectedIt->isLast() && !gotIt->isLast()) {
+                        EXPECT_EQ(0, expectedIt->getCurrent().compare(
+                            gotIt->getCurrent())) << "The RRs differ ('" <<
+                            expectedIt->getCurrent().toText() << "', '" <<
+                            gotIt->getCurrent().toText() << "')";
+                        expectedIt->next();
+                        gotIt->next();
+                    }
+                    EXPECT_TRUE(expectedIt->isLast()) <<
+                        "Result has less RRs than expected";
+                    EXPECT_TRUE(gotIt->isLast()) <<
+                        "Result has more RRs than expected";
+                    EXPECT_EQ(answer->getType(),
+                        find_result.rrset->getType());
+                    EXPECT_EQ(answer->getType(),
+                        find_result.rrset->getType());
+                    EXPECT_EQ(answer->getTTL(),
+                        find_result.rrset->getTTL());
+                    EXPECT_EQ(name, find_result.rrset->getName());
                 }
             });
     }
