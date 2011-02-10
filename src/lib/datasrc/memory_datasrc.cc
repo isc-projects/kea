@@ -351,6 +351,31 @@ struct MemoryZone::MemoryZoneImpl {
         return (false);
     }
 
+    /*
+     * Prepares a rrset to be return as a result.
+     *
+     * If rename is false, it returns the one provided. If it is true, it
+     * creates a new rrset with the same data but with provided name.
+     * It is designed for wildcard case, where we create the rrsets
+     * dynamically.
+     */
+    static ConstRRsetPtr prepareRRset(const Name& name, const ConstRRsetPtr&
+        rrset, bool rename)
+    {
+        if (rename) {
+            // TODO What about signatures? If we change the name, it would be
+            // wrong anyway...
+            RRsetPtr result(new RRset(name, rrset->getClass(),
+                rrset->getType(), rrset->getTTL()));
+            for (RdataIteratorPtr i(rrset->getRdataIterator()); !i->isLast();
+                i->next()) {
+                result->addRdata(i->getCurrent());
+            }
+            return (result);
+        } else {
+            return (rrset);
+        }
+    }
 
     // Implementation of MemoryZone::find
     FindResult find(const Name& name, RRType type,
