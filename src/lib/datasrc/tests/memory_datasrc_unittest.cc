@@ -710,18 +710,17 @@ TEST_F(MemoryZoneTest, wildcard) {
             rr_wild_);
     }
     // Search "created" name.
-    // TODO We need to synthetize the name correctly, there'll be different rrset
     {
         SCOPED_TRACE("Search at created child");
-        findTest(Name("a.wild.example.org"), RRType::A(), Zone::SUCCESS, true,
-            rr_wild_);
+        findTest(Name("a.wild.example.org"), RRType::A(), Zone::SUCCESS, false,
+            rr_wild_, NULL, NULL, Zone::FIND_DEFAULT, true);
     }
 
     // Search another created name, this time little bit lower
     {
         SCOPED_TRACE("Search at created grand-child");
         findTest(Name("a.b.wild.example.org"), RRType::A(), Zone::SUCCESS,
-            true, rr_wild_);
+            false, rr_wild_, NULL, NULL, Zone::FIND_DEFAULT, true);
     }
 }
 
