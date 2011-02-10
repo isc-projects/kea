@@ -630,15 +630,33 @@ TEST_F(MemoryZoneTest, wildcard) {
      *                 *
      */
     EXPECT_EQ(SUCCESS, zone_.add(rr_wild_));
+
     // Search at the parent. The parent will not have the A, but it will be here
-    findTest(Name("wild.example.org"), RRType::A(), Zone::NXRRSET);
+    {
+        SCOPED_TRACE("Search at parrent");
+        findTest(Name("wild.example.org"), RRType::A(), Zone::NXRRSET);
+    }
+
     // Search the original name of wildcard
-    findTest(Name("*.wild.example.org"), RRType::A(), Zone::SUCCESS, true,
-        rr_wild_);
-    // Search „created“ name.
+    {
+        SCOPED_TRACE("Search directly at *");
+        findTest(Name("*.wild.example.org"), RRType::A(), Zone::SUCCESS, true,
+            rr_wild_);
+    }
+    // Search "created" name.
     // TODO We need to synthetize the name correctly, there'll be different rrset
-    findTest(Name("a.wild.example.org"), RRType::A(), Zone::SUCCESS, true,
-        rr_wild_);
+    {
+        SCOPED_TRACE("Search at created child");
+        findTest(Name("a.wild.example.org"), RRType::A(), Zone::SUCCESS, true,
+            rr_wild_);
+    }
+
+    // Search another created name, this time little bit lower
+    {
+        SCOPED_TRACE("Search at created grand-child");
+        findTest(Name("a.b.wild.example.org"), RRType::A(), Zone::SUCCESS,
+            true, rr_wild_);
+    }
 }
 
 // Note: once #507 is merged, findTest() would succeed whether or not
