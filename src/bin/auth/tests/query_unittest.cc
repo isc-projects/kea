@@ -152,6 +152,7 @@ private:
     }
 
     const Name origin_;
+    // Names where we delegate somewhere else
     const Name delegation_name_;
     const Name dname_name_;
     bool has_SOA_;
