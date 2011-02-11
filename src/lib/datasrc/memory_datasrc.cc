@@ -416,8 +416,22 @@ struct MemoryZone::MemoryZoneImpl {
                     return (FindResult(DELEGATION, prepareRRset(name,
                         state.rrset_, rename)));
                 }
+
+                // If the RBTree search stopped at a node for a super domain
+                // of the search name, it means the search name exists in
+                // the zone but is empty.  Treat it as NXRRSET.
+                if (node_path.getLastComparisonResult().getRelation() ==
+                    NameComparisonResult::SUPERDOMAIN) {
+                    return (FindResult(NXRRSET, ConstRRsetPtr()));
+                }
+
                 /*
                  * No redirection anywhere. Let's try if it is a wildcard.
+                 *
+                 * The wildcard is checked after the empty non-terminal domain
+                 * case above, because if that one triggers, it means we should
+                 * not match according to 4.3.3 of RFC 1034 (the query name
+                 * is known to exist).
                  */
                 if (node->getFlag(DOMAINFLAG_WILD)) {
                     Name wildcard(Name("*").concatenate(
@@ -436,14 +450,6 @@ struct MemoryZone::MemoryZoneImpl {
                      */
                     rename = true;
                     break;
-                }
-
-                // If the RBTree search stopped at a node for a super domain
-                // of the search name, it means the search name exists in
-                // the zone but is empty.  Treat it as NXRRSET.
-                if (node_path.getLastComparisonResult().getRelation() ==
-                    NameComparisonResult::SUPERDOMAIN) {
-                    return (FindResult(NXRRSET, ConstRRsetPtr()));
                 }
 
                 // fall through
