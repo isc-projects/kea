@@ -22,6 +22,8 @@
 #include <resolve/resolver_callback.h>
 #include <resolve/response_classifier.h>
 
+#include <dns/rcode.h>
+
 namespace isc {
 namespace resolve {
 
