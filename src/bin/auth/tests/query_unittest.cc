@@ -571,8 +571,8 @@ TEST_F(QueryTest, DNAME) {
  * Ask an ANY query below a DNAME. Should return the DNAME and synthetized
  * CNAME.
  *
- * This is added because the original implementation had a bug and didn't
- * include the CNAME at all.
+ * ANY is handled specially sometimes. We check it is not the case with
+ * DNAME.
  */
 TEST_F(QueryTest, DNAME_ANY) {
     Query(memory_datasrc, Name("www.dname.example.com"), RRType::ANY(),
