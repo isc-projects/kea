@@ -17,7 +17,7 @@
 #include <cstddef>
 #include <vector>
 
-#include <resolver/response_classifier.h>
+#include <resolve/response_classifier.h>
 #include <dns/name.h>
 #include <dns/opcode.h>
 #include <dns/rcode.h>
@@ -26,24 +26,29 @@
 using namespace isc::dns;
 using namespace std;
 
+namespace isc {
+namespace resolve {
+
 // Classify the response in the "message" object.
 
 ResponseClassifier::Category ResponseClassifier::classify(
-    const Question& question, const MessagePtr& message, bool tcignore)
+    const Question& question, const Message& message, 
+    Name& cname_target, unsigned int& cname_count, bool tcignore
+    )
 {
     // Check header bits
-    if (!message->getHeaderFlag(Message::HEADERFLAG_QR)) {
+    if (!message.getHeaderFlag(Message::HEADERFLAG_QR)) {
         return (NOTRESPONSE);   // Query-response bit not set in the response
     }
 
     // We only recognise responses to queries here
-    if (message->getOpcode() != Opcode::QUERY()) {
+    if (message.getOpcode() != Opcode::QUERY()) {
         return (OPCODE);
     }
 
     // Apparently have a response.  There must be a single question in it...
-    const vector<QuestionPtr> msgquestion(message->beginQuestion(),
-            message->endQuestion());
+    const vector<QuestionPtr> msgquestion(message.beginQuestion(),
+            message.endQuestion());
     if (msgquestion.size() != 1) {
         return (NOTONEQUEST); // Not one question in response question section
     }
@@ -57,7 +62,7 @@ ResponseClassifier::Category ResponseClassifier::classify(
     }
 
     // Check for Rcode-related errors.
-    const Rcode& rcode = message->getRcode();
+    const Rcode& rcode = message.getRcode();
     if (rcode != Rcode::NOERROR()) {
         if (rcode == Rcode::NXDOMAIN()) {
 
@@ -91,7 +96,7 @@ ResponseClassifier::Category ResponseClassifier::classify(
     // probably want to re-query over TCP.  However, in some circumstances we
     // might want to go with what we have.  So give the caller the option of
     // ignoring the TC bit.
-    if (message->getHeaderFlag(Message::HEADERFLAG_TC) && (!tcignore)) {
+    if (message.getHeaderFlag(Message::HEADERFLAG_TC) && (!tcignore)) {
         return (TRUNCATED);
     }
 
@@ -100,12 +105,12 @@ ResponseClassifier::Category ResponseClassifier::classify(
     // referral.  For this, we need to inspect the contents of the answer
     // and authority sections.
     const vector<RRsetPtr> answer(
-            message->beginSection(Message::SECTION_ANSWER),
-            message->endSection(Message::SECTION_ANSWER)
+            message.beginSection(Message::SECTION_ANSWER),
+            message.endSection(Message::SECTION_ANSWER)
             );
     const vector<RRsetPtr> authority(
-            message->beginSection(Message::SECTION_AUTHORITY),
-            message->endSection(Message::SECTION_AUTHORITY)
+            message.beginSection(Message::SECTION_AUTHORITY),
+            message.endSection(Message::SECTION_AUTHORITY)
             );
 
     // If there is nothing in the answer section, it is a referral - unless
@@ -134,6 +139,9 @@ ResponseClassifier::Category ResponseClassifier::classify(
                 (question.getType() == RRType::ANY())) {
                 return (ANSWER);
             } else if (answer[0]->getType() == RRType::CNAME()) {
+                RdataIteratorPtr it = answer[0]->getRdataIterator();
+                cname_target = Name(it->getCurrent().toText());
+                ++cname_count;
                 return (CNAME);
             } else {
                 return (INVTYPE);
@@ -186,14 +194,16 @@ ResponseClassifier::Category ResponseClassifier::classify(
 
     vector<RRsetPtr> ansrrset(answer);
     vector<int> present(ansrrset.size(), 1);
-    return cnameChase(question.getName(), question.getType(), ansrrset, present,
-        ansrrset.size());
+    return cnameChase(question.getName(), question.getType(),
+        cname_target, cname_count,
+        ansrrset, present, ansrrset.size());
 }
 
 // Search the CNAME chain.
 ResponseClassifier::Category ResponseClassifier::cnameChase(
-    const Name& qname, const RRType& qtype, vector<RRsetPtr>& ansrrset,
-    vector<int>& present, size_t size)
+    const Name& qname, const RRType& qtype,
+    Name& cname_target, unsigned int& cname_count,
+    vector<RRsetPtr>& ansrrset, vector<int>& present, size_t size)
 {
     // Search through the vector of RRset pointers until we find one with the
     // right QNAME.
@@ -215,9 +225,10 @@ ResponseClassifier::Category ResponseClassifier::cnameChase(
                     present[i] = 0;
                     --size;
                     if (size == 0) {
+                        RdataIteratorPtr it = ansrrset[i]->getRdataIterator();
+                        cname_target = Name(it->getCurrent().toText());
                         return (CNAME);
-                    }
-                    else {
+                    } else {
                         if (ansrrset[i]->getRdataCount() != 1) {
 
                             // Multiple RDATA for a CNAME?  This is invalid.
@@ -227,8 +238,9 @@ ResponseClassifier::Category ResponseClassifier::cnameChase(
                         RdataIteratorPtr it = ansrrset[i]->getRdataIterator();
                         Name newname(it->getCurrent().toText());
 
-                        return cnameChase(newname, qtype, ansrrset, present,
-                            size);
+                        // Increase CNAME count, and continue
+                        return cnameChase(newname, qtype, cname_target,
+                            ++cname_count, ansrrset, present, size);
                     }
 
                 } else {
@@ -257,3 +269,6 @@ ResponseClassifier::Category ResponseClassifier::cnameChase(
 
     return (EXTRADATA);
 }
+
+} // namespace resolve
+} // namespace isc

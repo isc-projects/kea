@@ -17,7 +17,7 @@
 
 #include <dns/tests/unittest_util.h>
 
-#include <resolver/response_classifier.h>
+#include <resolve/response_classifier.h>
 
 #include <dns/name.h>
 #include <dns/opcode.h>
@@ -35,6 +35,8 @@ using namespace isc::dns;
 using namespace rdata;
 using namespace isc::dns::rdata::generic;
 using namespace isc::dns::rdata::in;
+using namespace isc::resolve;
+
 
 namespace {
 class ResponseClassifierTest : public ::testing::Test {
@@ -57,8 +59,8 @@ public:
     /// in the early tests where simple messages are required.
 
     ResponseClassifierTest() :
-        msg_a(new Message(Message::RENDER)),
-        msg_any(new Message(Message::RENDER)),
+        msg_a(Message::RENDER),
+        msg_any(Message::RENDER),
         qu_ch_a_www(Name("www.example.com"), RRClass::CH(), RRType::A()),
         qu_in_any_www(Name("www.example.com"), RRClass::IN(), RRType::ANY()),
         qu_in_a_www2(Name("www2.example.com"), RRClass::IN(), RRType::A()),
@@ -79,20 +81,22 @@ public:
         rrs_in_ns_(new RRset(Name("example.com"), RRClass::IN(),
             RRType::NS(), RRTTL(300))),
         rrs_in_txt_www(new RRset(Name("www.example.com"), RRClass::IN(),
-            RRType::TXT(), RRTTL(300)))
+            RRType::TXT(), RRTTL(300))),
+        cname_target("."),
+        cname_count(0)
     {
         // Set up the message to indicate a successful response to the question
         // "www.example.com A", but don't add in any response sections.
-        msg_a->setHeaderFlag(Message::HEADERFLAG_QR);
-        msg_a->setOpcode(Opcode::QUERY());
-        msg_a->setRcode(Rcode::NOERROR());
-        msg_a->addQuestion(qu_in_a_www);
+        msg_a.setHeaderFlag(Message::HEADERFLAG_QR);
+        msg_a.setOpcode(Opcode::QUERY());
+        msg_a.setRcode(Rcode::NOERROR());
+        msg_a.addQuestion(qu_in_a_www);
 
         // ditto for the query "www.example.com ANY"
-        msg_any->setHeaderFlag(Message::HEADERFLAG_QR);
-        msg_any->setOpcode(Opcode::QUERY());
-        msg_any->setRcode(Rcode::NOERROR());
-        msg_any->addQuestion(qu_in_any_www);
+        msg_any.setHeaderFlag(Message::HEADERFLAG_QR);
+        msg_any.setOpcode(Opcode::QUERY());
+        msg_any.setRcode(Rcode::NOERROR());
+        msg_any.addQuestion(qu_in_any_www);
 
         // The next set of assignments set up the following zone records
         //
@@ -127,8 +131,8 @@ public:
             new CNAME("www1.example.com")));
     }
 
-    MessagePtr  msg_a;              // Pointer to message in RENDER state
-    MessagePtr  msg_any;            // Pointer to message in RENDER state
+    Message     msg_a;              // Pointer to message in RENDER state
+    Message     msg_any;            // Pointer to message in RENDER state
     Question    qu_ch_a_www;        // www.example.com CH A
     Question    qu_in_any_www;      // www.example.com IN ANY
     Question    qu_in_a_www2;       // www.example.com IN ANY
@@ -143,6 +147,10 @@ public:
     RRsetPtr    rrs_in_cname_www2;  // www2.example.com IN CNAME
     RRsetPtr    rrs_in_ns_;         // example.com IN NS
     RRsetPtr    rrs_in_txt_www;     // www.example.com IN TXT
+    Name        cname_target;       // Used in response classifier to
+                                    // store the target of a possible
+                                    // CNAME chain
+    unsigned int cname_count;       // Used to count cnames in a chain
 };
 
 // Test that the error() function categorises the codes correctly.
@@ -174,11 +182,12 @@ TEST_F(ResponseClassifierTest, Query) {
 
     // Set up message to indicate a query (QR flag = 0, one question).  By
     // default the opcode will be 0 (query)
-    msg_a->setHeaderFlag(Message::HEADERFLAG_QR, false);
+    msg_a.setHeaderFlag(Message::HEADERFLAG_QR, false);
 
     // Should be rejected as it is a query, not a response
     EXPECT_EQ(ResponseClassifier::NOTRESPONSE,
-        ResponseClassifier::classify(qu_in_a_www, msg_a));
+        ResponseClassifier::classify(qu_in_a_www, msg_a,
+                                     cname_target, cname_count));
 }
 
 // Check that we get an OPCODE error on all but QUERY opcodes.
@@ -188,13 +197,15 @@ TEST_F(ResponseClassifierTest, Opcode) {
     uint8_t query = static_cast<uint8_t>(Opcode::QUERY().getCode());
 
     for (uint8_t i = 0; i < (1 << 4); ++i) {
-        msg_a->setOpcode(Opcode(i));
+        msg_a.setOpcode(Opcode(i));
         if (i == query) {
             EXPECT_NE(ResponseClassifier::OPCODE,
-                ResponseClassifier::classify(qu_in_a_www, msg_a));
+                ResponseClassifier::classify(qu_in_a_www, msg_a,
+                                             cname_target, cname_count));
         } else {
             EXPECT_EQ(ResponseClassifier::OPCODE,
-                ResponseClassifier::classify(qu_in_a_www, msg_a));
+                ResponseClassifier::classify(qu_in_a_www, msg_a,
+                                             cname_target, cname_count));
         }
     }
 }
@@ -205,29 +216,33 @@ TEST_F(ResponseClassifierTest, Opcode) {
 TEST_F(ResponseClassifierTest, MultipleQuestions) {
 
     // Create a message object for this test that has no question section.
-    MessagePtr message(new Message(Message::RENDER));
-    message->setHeaderFlag(Message::HEADERFLAG_QR);
-    message->setOpcode(Opcode::QUERY());
-    message->setRcode(Rcode::NOERROR());
+    Message message(Message::RENDER);
+    message.setHeaderFlag(Message::HEADERFLAG_QR);
+    message.setOpcode(Opcode::QUERY());
+    message.setRcode(Rcode::NOERROR());
 
     // Zero questions
     EXPECT_EQ(ResponseClassifier::NOTONEQUEST,
-        ResponseClassifier::classify(qu_in_a_www, message));
+        ResponseClassifier::classify(qu_in_a_www, message,
+                                     cname_target, cname_count));
 
     // One question
-    message->addQuestion(qu_in_a_www);
+    message.addQuestion(qu_in_a_www);
     EXPECT_NE(ResponseClassifier::NOTONEQUEST,
-        ResponseClassifier::classify(qu_in_a_www, message));
+        ResponseClassifier::classify(qu_in_a_www, message,
+                                     cname_target, cname_count));
 
     // Two questions
-    message->addQuestion(qu_in_ns_);
+    message.addQuestion(qu_in_ns_);
     EXPECT_EQ(ResponseClassifier::NOTONEQUEST,
-        ResponseClassifier::classify(qu_in_a_www, message));
+        ResponseClassifier::classify(qu_in_a_www, message,
+                                     cname_target, cname_count));
 
     // And finish the check with three questions
-    message->addQuestion(qu_in_txt_www);
+    message.addQuestion(qu_in_txt_www);
     EXPECT_EQ(ResponseClassifier::NOTONEQUEST,
-        ResponseClassifier::classify(qu_in_a_www, message));
+        ResponseClassifier::classify(qu_in_a_www, message,
+                                     cname_target, cname_count));
 }
 
 // Test that the question in the question section in the message response
@@ -236,9 +251,11 @@ TEST_F(ResponseClassifierTest, MultipleQuestions) {
 TEST_F(ResponseClassifierTest, SameQuestion) {
 
     EXPECT_EQ(ResponseClassifier::MISMATQUEST,
-        ResponseClassifier::classify(qu_in_ns_, msg_a));
+        ResponseClassifier::classify(qu_in_ns_, msg_a,
+                                     cname_target, cname_count));
     EXPECT_NE(ResponseClassifier::MISMATQUEST,
-        ResponseClassifier::classify(qu_in_a_www, msg_a));
+        ResponseClassifier::classify(qu_in_a_www, msg_a,
+                                     cname_target, cname_count));
 }
 
 // Should get an NXDOMAIN response only on an NXDOMAIN RCODE.
@@ -248,13 +265,15 @@ TEST_F(ResponseClassifierTest, NXDOMAIN) {
     uint16_t nxdomain = static_cast<uint16_t>(Rcode::NXDOMAIN().getCode());
 
     for (uint8_t i = 0; i < (1 << 4); ++i) {
-        msg_a->setRcode(Rcode(i));
+        msg_a.setRcode(Rcode(i));
         if (i == nxdomain) {
             EXPECT_EQ(ResponseClassifier::NXDOMAIN,
-                ResponseClassifier::classify(qu_in_a_www, msg_a));
+                ResponseClassifier::classify(qu_in_a_www, msg_a,
+                                             cname_target, cname_count));
         } else {
             EXPECT_NE(ResponseClassifier::NXDOMAIN,
-                ResponseClassifier::classify(qu_in_a_www, msg_a));
+                ResponseClassifier::classify(qu_in_a_www, msg_a,
+                                             cname_target, cname_count));
         }
     }
 }
@@ -267,13 +286,15 @@ TEST_F(ResponseClassifierTest, RCODE) {
     uint16_t noerror = static_cast<uint16_t>(Rcode::NOERROR().getCode());
 
     for (uint8_t i = 0; i < (1 << 4); ++i) {
-        msg_a->setRcode(Rcode(i));
+        msg_a.setRcode(Rcode(i));
         if ((i == nxdomain) || (i == noerror)) {
             EXPECT_NE(ResponseClassifier::RCODE,
-                ResponseClassifier::classify(qu_in_a_www, msg_a));
+                ResponseClassifier::classify(qu_in_a_www, msg_a,
+                                             cname_target, cname_count));
         } else {
             EXPECT_EQ(ResponseClassifier::RCODE,
-                ResponseClassifier::classify(qu_in_a_www, msg_a));
+                ResponseClassifier::classify(qu_in_a_www, msg_a,
+                                             cname_target, cname_count));
         }
     }
 }
@@ -287,19 +308,23 @@ TEST_F(ResponseClassifierTest, Truncated) {
 
     // Don't expect the truncated code whatever option we ask for if the TC
     // bit is not set.
-    msg_a->setHeaderFlag(Message::HEADERFLAG_TC, false);
+    msg_a.setHeaderFlag(Message::HEADERFLAG_TC, false);
     EXPECT_NE(ResponseClassifier::TRUNCATED,
-        ResponseClassifier::classify(qu_in_a_www, msg_a, true));
+        ResponseClassifier::classify(qu_in_a_www, msg_a, cname_target,
+                                     cname_count, true));
     EXPECT_NE(ResponseClassifier::TRUNCATED,
-        ResponseClassifier::classify(qu_in_a_www, msg_a, false));
+        ResponseClassifier::classify(qu_in_a_www, msg_a, cname_target,
+                                     cname_count, false));
 
     // Expect the truncated code if the TC bit is set, only if we don't ignore
     // it.
-    msg_a->setHeaderFlag(Message::HEADERFLAG_TC, true);
+    msg_a.setHeaderFlag(Message::HEADERFLAG_TC, true);
     EXPECT_NE(ResponseClassifier::TRUNCATED,
-        ResponseClassifier::classify(qu_in_a_www, msg_a, true));
+        ResponseClassifier::classify(qu_in_a_www, msg_a, cname_target,
+                                     cname_count, true));
     EXPECT_EQ(ResponseClassifier::TRUNCATED,
-        ResponseClassifier::classify(qu_in_a_www, msg_a, false));
+        ResponseClassifier::classify(qu_in_a_www, msg_a, cname_target,
+                                     cname_count, false));
 }
 
 // Check for an empty packet (i.e. no error, but with the answer and additional
@@ -308,7 +333,8 @@ TEST_F(ResponseClassifierTest, Truncated) {
 TEST_F(ResponseClassifierTest, Empty) {
 
     EXPECT_EQ(ResponseClassifier::EMPTY,
-        ResponseClassifier::classify(qu_in_a_www, msg_a));
+        ResponseClassifier::classify(qu_in_a_www, msg_a, cname_target,
+                                     cname_count));
 }
 
 // Anything where we have an empty answer section but something in the
@@ -316,9 +342,10 @@ TEST_F(ResponseClassifierTest, Empty) {
 
 TEST_F(ResponseClassifierTest, EmptyAnswerReferral) {
 
-    msg_a->addRRset(Message::SECTION_AUTHORITY, rrs_in_ns_);
+    msg_a.addRRset(Message::SECTION_AUTHORITY, rrs_in_ns_);
     EXPECT_EQ(ResponseClassifier::REFERRAL,
-        ResponseClassifier::classify(qu_in_a_www, msg_a));
+        ResponseClassifier::classify(qu_in_a_www, msg_a, cname_target,
+                                     cname_count));
 
 }
 
@@ -330,60 +357,66 @@ TEST_F(ResponseClassifierTest, EmptyAnswerReferral) {
 TEST_F(ResponseClassifierTest, SingleAnswer) {
 
     // Check a question that matches the answer
-    msg_a->addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
+    msg_a.addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
     EXPECT_EQ(ResponseClassifier::ANSWER,
-        ResponseClassifier::classify(qu_in_a_www, msg_a));
+        ResponseClassifier::classify(qu_in_a_www, msg_a, cname_target,
+                                     cname_count));
 
     // Check an ANY question that matches the answer
-    msg_any->addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
+    msg_any.addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
     EXPECT_EQ(ResponseClassifier::ANSWER,
-        ResponseClassifier::classify(qu_in_any_www, msg_any));
+        ResponseClassifier::classify(qu_in_any_www, msg_any, cname_target,
+                                     cname_count));
 
     // Check a CNAME response that matches the QNAME.
-    MessagePtr message_a(new Message(Message::RENDER));
-    message_a->setHeaderFlag(Message::HEADERFLAG_QR);
-    message_a->setOpcode(Opcode::QUERY());
-    message_a->setRcode(Rcode::NOERROR());
-    message_a->addQuestion(qu_in_cname_www1);
-    message_a->addRRset(Message::SECTION_ANSWER, rrs_in_cname_www1);
+    Message message_a(Message::RENDER);
+    message_a.setHeaderFlag(Message::HEADERFLAG_QR);
+    message_a.setOpcode(Opcode::QUERY());
+    message_a.setRcode(Rcode::NOERROR());
+    message_a.addQuestion(qu_in_cname_www1);
+    message_a.addRRset(Message::SECTION_ANSWER, rrs_in_cname_www1);
     EXPECT_EQ(ResponseClassifier::CNAME,
-        ResponseClassifier::classify(qu_in_cname_www1, message_a));
+        ResponseClassifier::classify(qu_in_cname_www1, message_a,
+                                     cname_target, cname_count));
 
     // Check if the answer QNAME does not match the question
     // Q: www.example.com  IN A
     // A: mail.example.com IN A
-    MessagePtr message_b(new Message(Message::RENDER));
-    message_b->setHeaderFlag(Message::HEADERFLAG_QR);
-    message_b->setOpcode(Opcode::QUERY());
-    message_b->setRcode(Rcode::NOERROR());
-    message_b->addQuestion(qu_in_a_www);
-    message_b->addRRset(Message::SECTION_ANSWER, rrs_in_a_mail);
+    Message message_b(Message::RENDER);
+    message_b.setHeaderFlag(Message::HEADERFLAG_QR);
+    message_b.setOpcode(Opcode::QUERY());
+    message_b.setRcode(Rcode::NOERROR());
+    message_b.addQuestion(qu_in_a_www);
+    message_b.addRRset(Message::SECTION_ANSWER, rrs_in_a_mail);
     EXPECT_EQ(ResponseClassifier::INVNAMCLASS,
-        ResponseClassifier::classify(qu_in_a_www, message_b));
+        ResponseClassifier::classify(qu_in_a_www, message_b,
+                                     cname_target, cname_count));
 
     // Check if the answer class does not match the question
     // Q: www.example.com CH A
     // A: www.example.com IN A
-    MessagePtr message_c(new Message(Message::RENDER));
-    message_c->setHeaderFlag(Message::HEADERFLAG_QR);
-    message_c->setOpcode(Opcode::QUERY());
-    message_c->setRcode(Rcode::NOERROR());
-    message_c->addQuestion(qu_ch_a_www);
-    message_c->addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
+    Message message_c(Message::RENDER);
+    message_c.setHeaderFlag(Message::HEADERFLAG_QR);
+    message_c.setOpcode(Opcode::QUERY());
+    message_c.setRcode(Rcode::NOERROR());
+    message_c.addQuestion(qu_ch_a_www);
+    message_c.addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
     EXPECT_EQ(ResponseClassifier::INVNAMCLASS,
-        ResponseClassifier::classify(qu_ch_a_www, message_c));
+        ResponseClassifier::classify(qu_ch_a_www, message_c,
+                                     cname_target, cname_count));
 
     // Check if the answer type does not match the question
     // Q: www.example.com IN A
     // A: www.example.com IN TXT
-    MessagePtr message_d(new Message(Message::RENDER));
-    message_d->setHeaderFlag(Message::HEADERFLAG_QR);
-    message_d->setOpcode(Opcode::QUERY());
-    message_d->setRcode(Rcode::NOERROR());
-    message_d->addQuestion(qu_in_a_www);
-    message_d->addRRset(Message::SECTION_ANSWER, rrs_in_txt_www);
+    Message message_d(Message::RENDER);
+    message_d.setHeaderFlag(Message::HEADERFLAG_QR);
+    message_d.setOpcode(Opcode::QUERY());
+    message_d.setRcode(Rcode::NOERROR());
+    message_d.addQuestion(qu_in_a_www);
+    message_d.addRRset(Message::SECTION_ANSWER, rrs_in_txt_www);
     EXPECT_EQ(ResponseClassifier::INVTYPE,
-        ResponseClassifier::classify(qu_in_a_www, message_d));
+        ResponseClassifier::classify(qu_in_a_www, message_d,
+                                     cname_target, cname_count));
 }
 
 // Check what happens if we have multiple RRsets in the answer.
@@ -391,60 +424,65 @@ TEST_F(ResponseClassifierTest, SingleAnswer) {
 TEST_F(ResponseClassifierTest, MultipleAnswerRRsets) {
 
     // All the same QNAME but different types is only valid on an ANY query.
-    MessagePtr message_a(new Message(Message::RENDER));
-    message_a->setHeaderFlag(Message::HEADERFLAG_QR);
-    message_a->setOpcode(Opcode::QUERY());
-    message_a->setRcode(Rcode::NOERROR());
-    message_a->addQuestion(qu_in_any_www);
-    message_a->addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
-    message_a->addRRset(Message::SECTION_ANSWER, rrs_in_txt_www);
+    Message message_a(Message::RENDER);
+    message_a.setHeaderFlag(Message::HEADERFLAG_QR);
+    message_a.setOpcode(Opcode::QUERY());
+    message_a.setRcode(Rcode::NOERROR());
+    message_a.addQuestion(qu_in_any_www);
+    message_a.addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
+    message_a.addRRset(Message::SECTION_ANSWER, rrs_in_txt_www);
     EXPECT_EQ(ResponseClassifier::ANSWER,
-        ResponseClassifier::classify(qu_in_any_www, message_a));
+        ResponseClassifier::classify(qu_in_any_www, message_a,
+                                     cname_target, cname_count));
 
     // On another type of query, it results in an EXTRADATA error
-    MessagePtr message_b(new Message(Message::RENDER));
-    message_b->setHeaderFlag(Message::HEADERFLAG_QR);
-    message_b->setOpcode(Opcode::QUERY());
-    message_b->setRcode(Rcode::NOERROR());
-    message_b->addQuestion(qu_in_a_www);
-    message_b->addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
-    message_b->addRRset(Message::SECTION_ANSWER, rrs_in_txt_www);
+    Message message_b(Message::RENDER);
+    message_b.setHeaderFlag(Message::HEADERFLAG_QR);
+    message_b.setOpcode(Opcode::QUERY());
+    message_b.setRcode(Rcode::NOERROR());
+    message_b.addQuestion(qu_in_a_www);
+    message_b.addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
+    message_b.addRRset(Message::SECTION_ANSWER, rrs_in_txt_www);
     EXPECT_EQ(ResponseClassifier::EXTRADATA,
-        ResponseClassifier::classify(qu_in_a_www, message_b));
+        ResponseClassifier::classify(qu_in_a_www, message_b,
+                                     cname_target, cname_count));
 
     // Same QNAME on an ANY query is not valid with mixed classes
-    MessagePtr message_c(new Message(Message::RENDER));
-    message_c->setHeaderFlag(Message::HEADERFLAG_QR);
-    message_c->setOpcode(Opcode::QUERY());
-    message_c->setRcode(Rcode::NOERROR());
-    message_c->addQuestion(qu_in_any_www);
-    message_c->addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
-    message_c->addRRset(Message::SECTION_ANSWER, rrs_hs_txt_www);
+    Message message_c(Message::RENDER);
+    message_c.setHeaderFlag(Message::HEADERFLAG_QR);
+    message_c.setOpcode(Opcode::QUERY());
+    message_c.setRcode(Rcode::NOERROR());
+    message_c.addQuestion(qu_in_any_www);
+    message_c.addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
+    message_c.addRRset(Message::SECTION_ANSWER, rrs_hs_txt_www);
     EXPECT_EQ(ResponseClassifier::MULTICLASS,
-        ResponseClassifier::classify(qu_in_any_www, message_c));
+        ResponseClassifier::classify(qu_in_any_www, message_c,
+                                     cname_target, cname_count));
 
     // Mixed QNAME is not valid unless QNAME requested is a CNAME.
-    MessagePtr message_d(new Message(Message::RENDER));
-    message_d->setHeaderFlag(Message::HEADERFLAG_QR);
-    message_d->setOpcode(Opcode::QUERY());
-    message_d->setRcode(Rcode::NOERROR());
-    message_d->addQuestion(qu_in_a_www);
-    message_d->addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
-    message_d->addRRset(Message::SECTION_ANSWER, rrs_in_a_mail);
+    Message message_d(Message::RENDER);
+    message_d.setHeaderFlag(Message::HEADERFLAG_QR);
+    message_d.setOpcode(Opcode::QUERY());
+    message_d.setRcode(Rcode::NOERROR());
+    message_d.addQuestion(qu_in_a_www);
+    message_d.addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
+    message_d.addRRset(Message::SECTION_ANSWER, rrs_in_a_mail);
     EXPECT_EQ(ResponseClassifier::EXTRADATA,
-        ResponseClassifier::classify(qu_in_a_www, message_d));
+        ResponseClassifier::classify(qu_in_a_www, message_d,
+                                     cname_target, cname_count));
 
     // Mixed QNAME is not valid when the query is an ANY.
-    MessagePtr message_e(new Message(Message::RENDER));
-    message_e->setHeaderFlag(Message::HEADERFLAG_QR);
-    message_e->setOpcode(Opcode::QUERY());
-    message_e->setRcode(Rcode::NOERROR());
-    message_e->addQuestion(qu_in_any_www);
-    message_e->addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
-    message_e->addRRset(Message::SECTION_ANSWER, rrs_in_txt_www);
-    message_e->addRRset(Message::SECTION_ANSWER, rrs_in_a_mail);
+    Message message_e(Message::RENDER);
+    message_e.setHeaderFlag(Message::HEADERFLAG_QR);
+    message_e.setOpcode(Opcode::QUERY());
+    message_e.setRcode(Rcode::NOERROR());
+    message_e.addQuestion(qu_in_any_www);
+    message_e.addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
+    message_e.addRRset(Message::SECTION_ANSWER, rrs_in_txt_www);
+    message_e.addRRset(Message::SECTION_ANSWER, rrs_in_a_mail);
     EXPECT_EQ(ResponseClassifier::EXTRADATA,
-        ResponseClassifier::classify(qu_in_any_www, message_e));
+        ResponseClassifier::classify(qu_in_any_www, message_e,
+                                     cname_target, cname_count));
 }
 
 // CNAME chain is CNAME if it terminates in a CNAME, answer if it
@@ -452,43 +490,48 @@ TEST_F(ResponseClassifierTest, MultipleAnswerRRsets) {
 TEST_F(ResponseClassifierTest, CNAMEChain) {
 
     // Answer contains a single CNAME
-    MessagePtr message_a(new Message(Message::RENDER));
-    message_a->setHeaderFlag(Message::HEADERFLAG_QR);
-    message_a->setOpcode(Opcode::QUERY());
-    message_a->setRcode(Rcode::NOERROR());
-    message_a->addQuestion(qu_in_a_www2);
-    message_a->addRRset(Message::SECTION_ANSWER, rrs_in_cname_www2);
+    Message message_a(Message::RENDER);
+    message_a.setHeaderFlag(Message::HEADERFLAG_QR);
+    message_a.setOpcode(Opcode::QUERY());
+    message_a.setRcode(Rcode::NOERROR());
+    message_a.addQuestion(qu_in_a_www2);
+    message_a.addRRset(Message::SECTION_ANSWER, rrs_in_cname_www2);
     EXPECT_EQ(ResponseClassifier::CNAME,
-        ResponseClassifier::classify(qu_in_a_www2, message_a));
+        ResponseClassifier::classify(qu_in_a_www2, message_a,
+                                     cname_target, cname_count));
 
     // Add a CNAME for www1, and it should still return a CNAME
-    message_a->addRRset(Message::SECTION_ANSWER, rrs_in_cname_www1);
+    message_a.addRRset(Message::SECTION_ANSWER, rrs_in_cname_www1);
     EXPECT_EQ(ResponseClassifier::CNAME,
-        ResponseClassifier::classify(qu_in_a_www2, message_a));
+        ResponseClassifier::classify(qu_in_a_www2, message_a,
+                                     cname_target, cname_count));
 
     // Add the A record for www and it should be an answer
-    message_a->addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
+    message_a.addRRset(Message::SECTION_ANSWER, rrs_in_a_www);
     EXPECT_EQ(ResponseClassifier::ANSWERCNAME,
-        ResponseClassifier::classify(qu_in_a_www2, message_a));
+        ResponseClassifier::classify(qu_in_a_www2, message_a,
+                                     cname_target, cname_count));
 
     // Adding an unrelated TXT record should result in EXTRADATA
-    message_a->addRRset(Message::SECTION_ANSWER, rrs_in_txt_www);
+    message_a.addRRset(Message::SECTION_ANSWER, rrs_in_txt_www);
     EXPECT_EQ(ResponseClassifier::EXTRADATA,
-        ResponseClassifier::classify(qu_in_a_www2, message_a));
+        ResponseClassifier::classify(qu_in_a_www2, message_a,
+                                     cname_target, cname_count));
 
     // Recreate the chain, but this time end with a TXT RR and not the A
     // record.  This should return INVTYPE.
-    MessagePtr message_b(new Message(Message::RENDER));
-    message_b->setHeaderFlag(Message::HEADERFLAG_QR);
-    message_b->setOpcode(Opcode::QUERY());
-    message_b->setRcode(Rcode::NOERROR());
-    message_b->addQuestion(qu_in_a_www2);
-    message_b->addRRset(Message::SECTION_ANSWER, rrs_in_cname_www2);
-    message_b->addRRset(Message::SECTION_ANSWER, rrs_in_cname_www1);
-    message_b->addRRset(Message::SECTION_ANSWER, rrs_in_txt_www);
+    Message message_b(Message::RENDER);
+    message_b.setHeaderFlag(Message::HEADERFLAG_QR);
+    message_b.setOpcode(Opcode::QUERY());
+    message_b.setRcode(Rcode::NOERROR());
+    message_b.addQuestion(qu_in_a_www2);
+    message_b.addRRset(Message::SECTION_ANSWER, rrs_in_cname_www2);
+    message_b.addRRset(Message::SECTION_ANSWER, rrs_in_cname_www1);
+    message_b.addRRset(Message::SECTION_ANSWER, rrs_in_txt_www);
 
     EXPECT_EQ(ResponseClassifier::INVTYPE,
-        ResponseClassifier::classify(qu_in_a_www2, message_b));
+        ResponseClassifier::classify(qu_in_a_www2, message_b,
+                                     cname_target, cname_count));
 }
 
 } // Anonymous namespace

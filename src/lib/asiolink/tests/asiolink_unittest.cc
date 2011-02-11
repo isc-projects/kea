@@ -520,6 +520,39 @@ protected:
             bool* done_;
     };
 
+    // This version of mock server just stops the io_service when it is resumed
+    // the second time. (Used in the clientTimeout test, where resume
+    // is called initially with the error answer, and later when the
+    // lookup times out, it is called without an answer to send back)
+    class MockServerStop2 : public MockServer {
+        public:
+            explicit MockServerStop2(IOService& io_service,
+                                     bool* done1, bool* done2) :
+                MockServer(io_service),
+                done1_(done1),
+                done2_(done2),
+                stopped_once_(false)
+            {}
+
+            void resume(const bool done) {
+                if (stopped_once_) {
+                    *done2_ = done;
+                    io_.stop();
+                } else {
+                    *done1_ = done;
+                    stopped_once_ = true;
+                }
+            }
+
+            DNSServer* clone() {
+                return (new MockServerStop2(*this));
+            }
+        private:
+            bool* done1_;
+            bool* done2_;
+            bool stopped_once_;
+    };
+
 private:
     class ASIOCallBack : public SimpleCallback {
     public:
@@ -809,8 +842,9 @@ TEST_F(ASIOLinkTest, forwardClientTimeout) {
     sock_ = createTestSocket();
 
     // Prepare the server
-    bool done(true);
-    MockServerStop server(*io_service_, &done);
+    bool done1(true);
+    bool done2(true);
+    MockServerStop2 server(*io_service_, &done1, &done2);
 
     MessagePtr answer(new Message(Message::RENDER));
 
@@ -818,11 +852,11 @@ TEST_F(ASIOLinkTest, forwardClientTimeout) {
     const uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
     // Set it up to retry twice before client timeout fires
     // Since the lookup timer has not fired, it should retry
-    // a third time
+    // four times
     RecursiveQuery query(*dns_service_,
                          singleAddress(TEST_IPV4_ADDR, port),
                          singleAddress(TEST_IPV4_ADDR, port),
-                         50, 120, 1000, 3);
+                         50, 120, 1000, 4);
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     query.resolve(question, answer, buffer, &server);
@@ -833,17 +867,15 @@ TEST_F(ASIOLinkTest, forwardClientTimeout) {
     // we know it'll fail, so make it a shorter timeout
     int recv_options = setSocketTimeout(sock_, 1, 0);
 
-    // Try to read 5 times, should stop after 3 reads
+    // Try to read 5 times
     int num = 0;
     bool read_success = tryRead(sock_, recv_options, 5, &num);
 
-    // The query should fail (for resolver it should send back servfail,
-    // but currently, and perhaps for forwarder in general, the effect
-    // will be the same as on a lookup timeout, i.e. no answer is sent
-    // back)
-    EXPECT_FALSE(done);
-    EXPECT_EQ(3, num);
-    EXPECT_FALSE(read_success);
+    // The query should fail, but we should have kept on trying
+    EXPECT_TRUE(done1);
+    EXPECT_FALSE(done2);
+    EXPECT_EQ(5, num);
+    EXPECT_TRUE(read_success);
 }
 
 // If we set lookup timeout to lower than querytimeout*retries, we should
