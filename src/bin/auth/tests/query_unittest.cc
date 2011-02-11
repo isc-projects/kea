@@ -99,8 +99,10 @@ const char* const other_zone_rrs =
 // behavior.
 // For simplicity, most names are assumed to be "in zone"; there's only
 // one zone cut at the point of name "delegation.example.com".
-// It doesn't handle empty non terminal nodes (if we need to test such cases
-// find() should have specialized code for it).
+// Another special name is "dname.example.com".  Query names under this name
+// will result in DNAME.
+// This mock zone doesn't handle empty non terminal nodes (if we need to test
+// such cases find() should have specialized code for it).
 class MockZone : public Zone {
 public:
     MockZone() :
