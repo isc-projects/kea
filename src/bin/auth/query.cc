@@ -173,10 +173,10 @@ Query::process() const {
                     dname.getDname().getLength() > Name::MAX_WIRE ||
                     prefix.getLabelCount() - Name(".").getLabelCount() +
                     dname.getDname().getLabelCount() > Name::MAX_LABELS) {
-                /*
-                 * In case the synthetized name is too long, section 4.1 of RFC
-                 * 2672 mandates we return YXDOMAIN.
-                 */
+                    /*
+                     * In case the synthesized name is too long, section 4.1
+                     * of RFC 2672 mandates we return YXDOMAIN.
+                     */
                     response_.setRcode(Rcode::YXDOMAIN());
                     return;
                 }
@@ -184,7 +184,7 @@ Query::process() const {
                 // with DNSSEC, the DNAME is signed and it can be validated
                 // by that)
                 RRsetPtr cname(new RRset(qname_, db_result.rrset->getClass(),
-                RRType::CNAME(), db_result.rrset->getTTL()));
+                    RRType::CNAME(), db_result.rrset->getTTL()));
                 // Construct the new target by replacing the end
                 cname->addRdata(rdata::generic::CNAME(qname_.split(0,
                     qname_.getLabelCount() -
