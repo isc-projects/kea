@@ -122,7 +122,7 @@ Query::getAuthAdditional(const Zone& zone) const {
 void
 Query::process() const {
     bool keep_doing = true;
-    bool qtype_is_any = (qtype_ == RRType::ANY());
+    const bool qtype_is_any = (qtype_ == RRType::ANY());
 
     response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
     const MemoryDataSrc::FindResult result =
@@ -145,7 +145,7 @@ Query::process() const {
     while (keep_doing) {
         keep_doing = false;
         std::auto_ptr<RRsetList> target(qtype_is_any ? new RRsetList : NULL);
-        Zone::FindResult db_result(result.zone->find(qname_, qtype_,
+        const Zone::FindResult db_result(result.zone->find(qname_, qtype_,
             target.get()));
 
         switch (db_result.code) {
@@ -165,7 +165,7 @@ Query::process() const {
                     dynamic_cast<const rdata::generic::DNAME&>(
                     db_result.rrset->getRdataIterator()->getCurrent()));
                 // The yet unmatched prefix dname
-                Name prefix(qname_.split(0, qname_.getLabelCount() -
+                const Name prefix(qname_.split(0, qname_.getLabelCount() -
                     db_result.rrset->getName().getLabelCount()));
                 // If we put it together, will it be too long?
                 // (The prefix contains trailing ., which will be removed
