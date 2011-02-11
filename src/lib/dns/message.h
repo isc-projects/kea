@@ -498,12 +498,12 @@ public:
     /// specified mode.
     void clear(Mode mode);
 
-    /// \brief Adds all rrsets in the given section to the same section
-    /// in target
+    /// \brief Adds all rrsets from the source the given section in the
+    /// source message to the same section of this message
     ///
-    /// \param target The target Message
-    /// \param section the section to copy
-    void copySection(Message& target, const Section section) const;
+    /// \param section the section to append
+    /// \param target The source Message
+    void appendSection(const Section section, const Message& source);
 
     /// \brief Prepare for making a response from a request.
     ///

@@ -440,8 +440,8 @@ private:
                 return true;
             }
 
-            incoming.copySection(*answer_message_,
-                Message::SECTION_ANSWER);
+            answer_message_->appendSection(Message::SECTION_ANSWER,
+                                           incoming);
             setZoneServersToRoot();
 
             question_ = Question(cname_target, question_.getClass(),
@@ -574,7 +574,7 @@ public:
                 boost::lexical_cast<string>(upstream_root_->size()) + 
                 "\n");
             for(AddressVector::iterator it = upstream_root_->begin();
-                it < upstream_root_->end(); it++) {
+                it < upstream_root_->end(); ++it) {
             zone_servers_.push_back(addr_t(it->first,it->second));
             dlog("Put " + zone_servers_.back().first + "into root list\n");
             }
