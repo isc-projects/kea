@@ -1,3 +1,13 @@
+  166.  [func]      jelte
+	The resolver now sends back a SERVFAIL when there is a client
+	timeout (timeout_client config setting), but it will not stop
+	resolving (until there is a lookup timeout or a result).
+
+  165.  [func]      jelte
+	The resolver now handles CNAMEs, it will follow them, and include
+	them in the answer. The maximum length of CNAME chains that is
+	supported is 16.
+
   164.  [bug]           y-aharen
 	IntervalTimer: Modified the interface to accept interval in
 	milliseconds. It shortens the time of the tests of IntervalTimer.
