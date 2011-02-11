@@ -635,4 +635,44 @@ TEST_F(QueryTest, LongDNAME) {
         dname_txt, NULL, NULL);
 }
 
+/*
+ * Constructing the CNAME will result in a name of maximal length.
+ * This tests that we don't reject valid one by some kind of off by
+ * one mistake.
+ */
+TEST_F(QueryTest, MaxLenDNAME) {
+    Name longname(
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+        "dname.example.com.");
+    EXPECT_NO_THROW(Query(memory_datasrc, longname, RRType::A(),
+        response).process());
+
+    // Check the answer is OK
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 0, 0,
+        NULL, NULL, NULL);
+
+    // Check that the CNAME has the maximal length.
+    bool ok(false);
+    for (RRsetIterator i(response.beginSection(Message::SECTION_ANSWER));
+        i != response.endSection(Message::SECTION_ANSWER); ++ i) {
+        if ((*i)->getType() == RRType::CNAME()) {
+            ok = true;
+            RdataIteratorPtr ci((*i)->getRdataIterator());
+            ASSERT_FALSE(ci->isLast()) << "The CNAME is empty";
+            /*
+             * Does anybody have a clue why, if the Name::MAX_WIRE is put
+             * directly inside ASSERT_EQ, it fails to link and complains
+             * it is unresolved external?
+             */
+            size_t max_len(Name::MAX_WIRE);
+            ASSERT_EQ(max_len, dynamic_cast<const rdata::generic::CNAME&>(
+                ci->getCurrent()).getCname().getLength());
+        }
+    }
+    EXPECT_TRUE(ok) << "The synthetized CNAME not found";
+}
+
 }
