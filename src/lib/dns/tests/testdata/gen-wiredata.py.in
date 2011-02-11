@@ -319,10 +319,6 @@ class NSECBASE:
 class NSEC(NSECBASE):
     rdlen = None                # auto-calculate
     nextname = 'next.example.com'
-    nbitmap = 1                 # number of bitmaps
-    block = 0
-    maplen = -1                 # default bitmap length, auto-calculate
-    bitmap = '040000000003'     # an arbtrarily chosen bitmap sample
     def dump_fixedpart(self, f, bitmaplen):
         name_wire = encode_name(self.nextname)
         if not self.rdlen:
