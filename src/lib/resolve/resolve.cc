@@ -35,7 +35,7 @@ namespace resolve {
 
 void
 makeErrorMessage(MessagePtr answer_message,
-                 const Rcode::Rcode& error_code)
+                 const Rcode& error_code)
 {
     answer_message->clearSection(Message::SECTION_ANSWER);
     answer_message->clearSection(Message::SECTION_AUTHORITY);
