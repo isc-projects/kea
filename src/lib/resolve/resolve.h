@@ -38,8 +38,7 @@ namespace resolve {
 /// \param question The question to add to the
 /// \param error_code The error Rcode
 void makeErrorMessage(isc::dns::MessagePtr answer_message,
-                      const isc::dns::Rcode::Rcode& error_code);
-
+                      const isc::dns::Rcode& error_code);
 
 /// \brief Copies the parts relevant for a DNS response to the
 /// target message
