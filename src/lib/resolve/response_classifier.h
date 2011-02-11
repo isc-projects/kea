@@ -23,13 +23,15 @@
 #include <dns/message.h>
 #include <dns/question.h>
 
+#define RESOLVER_MAX_CNAME_CHAIN    16
+
+namespace isc {
+namespace resolve {
+
 /// \brief Classify Server Response
 ///
 /// This class is used in the recursive server.  It is passed an answer received
 /// from an upstream server and categorises it.
-///
-/// TODO: It is unlikely that the code can be used in this form.  Some adaption
-/// of it will be required to put it in the server.
 ///
 /// TODO: The code here does not take into account any EDNS0 fields.
 
@@ -89,13 +91,20 @@ public:
     ///
     /// \param question Question that was sent to the server
     /// \param message Pointer to the associated response from the server.
+    /// \param cname_target If the message contains an (unfinished) CNAME
+    /// chain, this Name will be replaced by the target of the last CNAME
+    /// in the chain
+    /// \param cname_count This unsigned int will be incremented with
+    /// the number of CNAMEs followed
     /// \param tcignore If set, the TC bit in a response packet is
     /// ignored.  Otherwise the error code TRUNCATED will be returned.  The
     /// only time this is likely to be used is in development where we are not
     /// going to fail over to TCP and will want to use what is returned, even
     /// if some of the response was lost.
     static Category classify(const isc::dns::Question& question,
-            const isc::dns::MessagePtr& message, bool tcignore = false);
+            const isc::dns::Message& message, 
+            isc::dns::Name& cname_target, unsigned int& cname_count,
+            bool tcignore = false);
 
 private:
     /// \brief Follow CNAMEs
@@ -127,12 +136,21 @@ private:
     /// management seemed high.  This solution imposes some additional loop
     /// cycles, but that should be minimal compared with the overhead of the
     /// memory management.
+    /// \param cname_target If the message contains an (unfinished) CNAME
+    /// chain, this Name will be replaced by the target of the last CNAME
+    /// in the chain
+    /// \param cname_count This unsigned int will be incremented with
+    /// the number of CNAMEs followed
     /// \param size Number of elements to check.  See description of \c present
     /// for details.
     static Category cnameChase(const isc::dns::Name& qname,
         const isc::dns::RRType& qtype,
+        isc::dns::Name& cname_target, unsigned int& cname_count,
         std::vector<isc::dns::RRsetPtr>& ansrrset, std::vector<int>& present,
         size_t size);
 };
 
 #endif // __RESPONSE_CLASSIFIER_H
+
+} // namespace resolve
+} // namespace isc

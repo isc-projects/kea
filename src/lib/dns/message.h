@@ -483,6 +483,11 @@ public:
     /// found in the specified section.
     bool removeRRset(const Section section, RRsetIterator& iterator);
 
+    /// \brief Remove all RRSets from the given Section
+    ///
+    /// \param section Section to remove all rrsets from
+    void clearSection(const Section section);
+
     // The following methods are not currently implemented.
     //void removeQuestion(QuestionPtr question);
     // notyet:
@@ -492,6 +497,13 @@ public:
     /// \brief Clear the message content (if any) and reinitialize it in the
     /// specified mode.
     void clear(Mode mode);
+
+    /// \brief Adds all rrsets from the source the given section in the
+    /// source message to the same section of this message
+    ///
+    /// \param section the section to append
+    /// \param target The source Message
+    void appendSection(const Section section, const Message& source);
 
     /// \brief Prepare for making a response from a request.
     ///

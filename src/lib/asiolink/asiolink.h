@@ -466,10 +466,12 @@ public:
     /// class.
     ///
     /// \param io_message The event message to handle
-    /// \param message The DNS MessagePtr that needs handling
-    /// \param buffer The result is put here
+    /// \param query_message The DNS MessagePtr of the original query
+    /// \param answer_message The DNS MessagePtr of the answer we are
+    /// building
+    /// \param buffer Intermediate data results are put here
     virtual void operator()(const IOMessage& io_message,
-                            isc::dns::MessagePtr message,
+                            isc::dns::MessagePtr query_message,
                             isc::dns::MessagePtr answer_message,
                             isc::dns::OutputBufferPtr buffer) const = 0;
 };
@@ -546,9 +548,10 @@ public:
     ///        to forward queries to.
     /// \param upstream_root Addresses and ports of the root servers
     ///        to use when resolving.
-    /// \param timeout How long to timeout the query, in ms
-    ///     -1 means never timeout (but do not use that).
-    ///     TODO: This should be computed somehow dynamically in future
+    /// \param query_timeout Timeout value for queries we sent, in ms
+    /// \param client_timeout Timeout value for when we send back an
+    ///        error, in ms
+    /// \param lookup_timeout Timeout value for when we give up, in ms
     /// \param retries how many times we try again (0 means just send and
     ///     and return if it returs).
     RecursiveQuery(DNSService& dns_service,
