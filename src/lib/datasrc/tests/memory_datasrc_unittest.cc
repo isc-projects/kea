@@ -205,6 +205,8 @@ public:
              &rr_dnamewild_},
             {"*.child.example.org. 300 IN A 192.0.2.1", &rr_child_wild_},
             {"bar.foo.wild.example.org. 300 IN A 192.0.2.2", &rr_not_wild_},
+            {"baz.foo.wild.example.org. 300 IN A 192.0.2.3",
+             &rr_not_wild_another_},
             {NULL, NULL}
         };
 
@@ -256,6 +258,7 @@ public:
     RRsetPtr rr_nswild_, rr_dnamewild_;
     RRsetPtr rr_child_wild_;
     RRsetPtr rr_not_wild_;
+    RRsetPtr rr_not_wild_another_;
 
     /**
      * \brief Test one find query to the zone.
@@ -327,6 +330,8 @@ public:
                 }
             });
     }
+    // Internal part of the cancelWildcard test that is run twice
+    void doCancelWildcardTest();
 };
 
 /**
@@ -851,20 +856,10 @@ TEST_F(MemoryZoneTest, nestedEmptyWildcard) {
     }
 }
 
-/*
- * This tests that if there's a name between the wildcard domain and the
- * searched one, it will not trigger wildcard, for example, if we have
- * *.wild.example.org and bar.foo.example.org, then we know foo.example.org
- * exists and is not wildcard. Therefore, search for aaa.foo.example.org should
- * return NXDOMAIN.
- *
- * Tests few cases "around" the canceled wildcard match, to see something that
- * shouldn't be canceled isn't.
- */
-TEST_F(MemoryZoneTest, cancelWildcard) {
-    EXPECT_EQ(SUCCESS, zone_.add(rr_wild_));
-    EXPECT_EQ(SUCCESS, zone_.add(rr_not_wild_));
-
+// We run this part twice from the below test, in two slightly different
+// situations
+void
+MemoryZoneTest::doCancelWildcardTest() {
     // These should be canceled
     {
         SCOPED_TRACE("Canceled under foo.example.org");
@@ -904,6 +899,35 @@ TEST_F(MemoryZoneTest, cancelWildcard) {
     {
         SCOPED_TRACE("The foo.wild.example.org itself");
         findTest(Name("foo.wild.example.org"), RRType::A(), Zone::NXRRSET);
+    }
+}
+
+/*
+ * This tests that if there's a name between the wildcard domain and the
+ * searched one, it will not trigger wildcard, for example, if we have
+ * *.wild.example.org and bar.foo.example.org, then we know foo.example.org
+ * exists and is not wildcard. Therefore, search for aaa.foo.example.org should
+ * return NXDOMAIN.
+ *
+ * Tests few cases "around" the canceled wildcard match, to see something that
+ * shouldn't be canceled isn't.
+ */
+TEST_F(MemoryZoneTest, cancelWildcard) {
+    EXPECT_EQ(SUCCESS, zone_.add(rr_wild_));
+    EXPECT_EQ(SUCCESS, zone_.add(rr_not_wild_));
+
+    {
+        SCOPED_TRACE("Runnig with single entry under foo.example.org");
+        doCancelWildcardTest();
+    }
+
+    // Try putting another one undef foo.wild....
+    // The result should be the same but it will be done in another way in the
+    // code, because the foo.wild.example.org will exist in the tree.
+    EXPECT_EQ(SUCCESS, zone_.add(rr_not_wild_another_));
+    {
+        SCOPED_TRACE("Runnig with two entries under foo.example.org");
+        doCancelWildcardTest();
     }
 }
 
