@@ -47,9 +47,9 @@ makeErrorMessage(MessagePtr answer_message,
 void copyResponseMessage(const Message& source, MessagePtr target) {
     target->setRcode(source.getRcode());
 
-    source.copySection(*target, Message::SECTION_ANSWER);
-    source.copySection(*target, Message::SECTION_AUTHORITY);
-    source.copySection(*target, Message::SECTION_ADDITIONAL);
+    target->appendSection(Message::SECTION_ANSWER, source);
+    target->appendSection(Message::SECTION_AUTHORITY, source);
+    target->appendSection(Message::SECTION_ADDITIONAL, source);
 }
 
 

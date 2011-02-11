@@ -777,21 +777,22 @@ Message::clear(Mode mode) {
 }
 
 void
-Message::copySection(Message& target, const Section section) const {
+Message::appendSection(const Section section, const Message& source) {
     if (section >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
 
     if (section == SECTION_QUESTION) {
-        BOOST_FOREACH(QuestionPtr q, impl_->questions_) {
-            std::cout << "[XX] copy question " << q << std::endl;
-            target.addQuestion(q);
+        for (QuestionIterator qi = source.beginQuestion();
+             qi != source.endQuestion();
+             ++qi) {
+            addQuestion(*qi);
         }
     } else {
-        std::cout << "[XX] copy section " << section << std::endl;
-        BOOST_FOREACH(RRsetPtr r, impl_->rrsets_[section]) {
-            std::cout << "[XX] copy rrset " << r << std::endl;
-            target.addRRset(section, r, false);
+        for (RRsetIterator rrsi = source.beginSection(section);
+             rrsi != source.endSection(section);
+             ++rrsi) {
+            addRRset(section, *rrsi);
         }
     }
 }
