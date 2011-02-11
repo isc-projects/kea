@@ -170,7 +170,6 @@ private:
     bool updateRRsetCache(const isc::dns::ConstRRsetPtr rrset_ptr,
                           RRsetCachePtr rrset_cache_ptr);
 
-private:
     /// \brief Class this cache is for.
     const isc::dns::RRClass cache_class_;
 
@@ -312,13 +311,13 @@ public:
     void load(const std::string& file_name);
     //@}
 
+private:
     /// \brief Returns the class-specific subcache
     ///
     /// \param cache_class the class to get the subcache for
     /// \return The subcache, or NULL if there is no cache for this class
     ResolverClassCache* getClassCache(const isc::dns::RRClass& cache_class) const;
 
-private:
     /// The class-specific caches.
     /// TODO: I think we can optimize for IN, and always have that
     /// one directly available, use the vector for the rest?
