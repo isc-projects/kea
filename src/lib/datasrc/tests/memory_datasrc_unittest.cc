@@ -296,6 +296,11 @@ public:
                 if (check_answer) {
                     EXPECT_EQ(answer, find_result.rrset);
                 } else if (check_wild_answer) {
+                    ASSERT_NE(ConstRRsetPtr(), answer) <<
+                        "Wrong test, don't check for wild names if you expect"
+                        "empty answer";
+                    ASSERT_NE(ConstRRsetPtr(), find_result.rrset) <<
+                        "No answer found";
                     RdataIteratorPtr expectedIt(answer->getRdataIterator());
                     RdataIteratorPtr gotIt(answer->getRdataIterator());
                     while (!expectedIt->isLast() && !gotIt->isLast()) {
