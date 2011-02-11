@@ -204,6 +204,7 @@ public:
             {"*.dnamewild.example.org. 300 IN DNAME dnamewild.example.",
              &rr_dnamewild_},
             {"*.child.example.org. 300 IN A 192.0.2.1", &rr_child_wild_},
+            {"bar.foo.wild.example.org. 300 IN A 192.0.2.2", &rr_not_wild_},
             {NULL, NULL}
         };
 
@@ -254,6 +255,7 @@ public:
     RRsetPtr rr_nested_emptywild_;
     RRsetPtr rr_nswild_, rr_dnamewild_;
     RRsetPtr rr_child_wild_;
+    RRsetPtr rr_not_wild_;
 
     /**
      * \brief Test one find query to the zone.
@@ -846,6 +848,62 @@ TEST_F(MemoryZoneTest, nestedEmptyWildcard) {
                 ConstRRsetPtr(), &target);
             EXPECT_EQ(0, target.size());
         }
+    }
+}
+
+/*
+ * This tests that if there's a name between the wildcard domain and the
+ * searched one, it will not trigger wildcard, for example, if we have
+ * *.wild.example.org and bar.foo.example.org, then we know foo.example.org
+ * exists and is not wildcard. Therefore, search for aaa.foo.example.org should
+ * return NXDOMAIN.
+ *
+ * Tests few cases "around" the canceled wildcard match, to see something that
+ * shouldn't be canceled isn't.
+ */
+TEST_F(MemoryZoneTest, cancelWildcard) {
+    EXPECT_EQ(SUCCESS, zone_.add(rr_wild_));
+    EXPECT_EQ(SUCCESS, zone_.add(rr_not_wild_));
+
+    // These should be canceled
+    {
+        SCOPED_TRACE("Canceled under foo.example.org");
+        findTest(Name("aaa.foo.wild.example.org"), RRType::A(),
+            Zone::NXDOMAIN);
+        findTest(Name("zzz.foo.wild.example.org"), RRType::A(),
+            Zone::NXDOMAIN);
+    }
+
+    // This is existing, non-wildcard domain, shouldn't wildcard at all
+    {
+        SCOPED_TRACE("Existing domain under foo.example.org");
+        findTest(Name("bar.foo.wild.example.org"), RRType::A(), Zone::SUCCESS,
+            true, rr_not_wild_);
+    }
+
+    // These should be caught by the wildcard
+    {
+        SCOPED_TRACE("Neighbor wildcards to foo.example.org");
+
+        const char *names[] = {
+            "aaa.bbb.wild.example.org",
+            "aaa.zzz.wild.example.org",
+            "zzz.wild.example.org",
+            NULL
+        };
+
+        for (const char **name(names); *name; ++ name) {
+            SCOPED_TRACE(string("Node ") + *name);
+
+            findTest(Name(*name), RRType::A(), Zone::SUCCESS, false, rr_wild_,
+                NULL, NULL, Zone::FIND_DEFAULT, true);
+        }
+    }
+
+    // This shouldn't be wildcarded, it's an existing domain
+    {
+        SCOPED_TRACE("The foo.wild.example.org itself");
+        findTest(Name("foo.wild.example.org"), RRType::A(), Zone::NXRRSET);
     }
 }
 
