@@ -86,6 +86,17 @@ TEST_F(RRsetEntryTest, updateTTL) {
     EXPECT_TRUE(rrset_entry.getTTL() < ttl);
 }
 
+TEST_F(RRsetEntryTest, TTLExpire) {
+    RRset exp_rrset(name, RRClass::IN(), RRType::A(), RRTTL(1));
+    RRsetEntry rrset_entry(exp_rrset, RRSET_TRUST_ANSWER_AA);
+    sleep(1);
+    uint32_t ttl = rrset_entry.getTTL();
+    EXPECT_LT(ttl, 1);
+    sleep(1);
+    ttl = rrset_entry.getTTL();
+    EXPECT_LT(ttl, 1);
+}
+
 TEST_F(RRsetEntryTest, getExpireTime){
     uint32_t exp_time = time(NULL) + TEST_TTL;
     EXPECT_EQ(exp_time, rrset_entry.getExpireTime());
