@@ -50,11 +50,9 @@ TEST_F(ResolverCacheTest, testUpdateMessage) {
     cache->update(msg);
 
     Name qname("example.com.");
-    RRType qtype(6);
-    RRClass klass(1);
 
     msg.makeResponse();
-    EXPECT_TRUE(cache->lookup(qname, qtype, klass, msg));
+    EXPECT_TRUE(cache->lookup(qname, RRType::SOA(), RRClass::IN(), msg));
     EXPECT_TRUE(msg.getHeaderFlag(Message::HEADERFLAG_AA));
 
     // Test whether the old message can be updated
@@ -63,7 +61,7 @@ TEST_F(ResolverCacheTest, testUpdateMessage) {
     cache->update(new_msg);
 
     new_msg.makeResponse();
-    EXPECT_TRUE(cache->lookup(qname, qtype, klass, new_msg));
+    EXPECT_TRUE(cache->lookup(qname, RRType::SOA(), RRClass::IN(), new_msg));
     EXPECT_FALSE(new_msg.getHeaderFlag(Message::HEADERFLAG_AA));
 }
 #if 0
@@ -73,14 +71,12 @@ TEST_F(ResolverCacheTest, testUpdateRRset) {
     cache->update(msg);
 
     Name qname("example.com.");
-    RRType qtype(6);
-    RRClass klass(1);
 
     msg.makeResponse();
-    EXPECT_TRUE(cache->lookup(qname, qtype, klass, msg));
+    EXPECT_TRUE(cache->lookup(qname, RRType::SOA(), RRClass::IN(), msg));
 
     Message except_msg(Message::RENDER);
-    EXPECT_THROW(cache->lookup(qname, qtype, klass, except_msg), 
+    EXPECT_THROW(cache->lookup(qname, RRType::SOA(), RRClass::IN(), except_msg), 
                  MessageNoQuestionSection);
 
     // Get one rrset in the message, then use it to 
@@ -93,7 +89,7 @@ TEST_F(ResolverCacheTest, testUpdateRRset) {
     Message new_msg(Message::RENDER);
     Question question(qname, klass, RRType::NS());
     new_msg.addQuestion(question);
-    EXPECT_TRUE(cache->lookup(qname, RRType::NS(), klass, new_msg));
+    EXPECT_TRUE(cache->lookup(qname, RRType::NS(), RRClass::IN(), new_msg));
     EXPECT_EQ(0, sectionRRsetCount(new_msg, Message::SECTION_AUTHORITY));
     EXPECT_EQ(0, sectionRRsetCount(new_msg, Message::SECTION_ADDITIONAL));
 }
