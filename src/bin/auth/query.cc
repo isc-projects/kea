@@ -169,10 +169,8 @@ Query::process() const {
                     db_result.rrset->getName().getLabelCount()));
                 // If we put it together, will it be too long?
                 // (The prefix contains trailing ., which will be removed
-                if (prefix.getLength() - Name(".").getLength() +
-                    dname.getDname().getLength() > Name::MAX_WIRE ||
-                    prefix.getLabelCount() - Name(".").getLabelCount() +
-                    dname.getDname().getLabelCount() > Name::MAX_LABELS) {
+                if (prefix.getLength() - Name::ROOT_NAME().getLength() +
+                    dname.getDname().getLength() > Name::MAX_WIRE) {
                     /*
                      * In case the synthesized name is too long, section 4.1
                      * of RFC 2672 mandates we return YXDOMAIN.
