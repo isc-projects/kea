@@ -30,11 +30,13 @@
 #include <dns/rrttl.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+#include <dns/rdata/generic/detail/nsec_bitmap.h>
 
 #include <stdio.h>
 #include <time.h>
 
 using namespace std;
+using namespace isc::dns::rdata::generic::detail::nsec;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -126,17 +128,18 @@ NSEC3::NSEC3(const string& nsec3_str) :
 }
 
 NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) {
+    // NSEC3 RR must have at least 5 octets:
+    // hash(1), flags(1), iteration(2), saltlen(1)
     if (rdata_len < 5) {
         isc_throw(InvalidRdataLength, "NSEC3 too short");
     }
 
-    uint8_t hashalg = buffer.readUint8();
-    uint8_t flags = buffer.readUint8();
-    uint16_t iterations = buffer.readUint16();
-    rdata_len -= 4;
+    const uint8_t hashalg = buffer.readUint8();
+    const uint8_t flags = buffer.readUint8();
+    const uint16_t iterations = buffer.readUint16();
 
-    uint8_t saltlen = buffer.readUint8();
-    --rdata_len;
+    const uint8_t saltlen = buffer.readUint8();
+    rdata_len -= 5;
 
     if (rdata_len < saltlen) {
         isc_throw(InvalidRdataLength, "NSEC3 salt too short");
@@ -163,20 +166,7 @@ NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) {
 
     vector<uint8_t> typebits(rdata_len);
     buffer.readData(&typebits[0], rdata_len);
-
-    int len = 0;
-    for (int i = 0; i < typebits.size(); i += len) {
-        if (i + 2 > typebits.size()) {
-            isc_throw(DNSMessageFORMERR, "Invalid rdata: "
-                                         "bad NSEC3 type bitmap");
-        }
-        len = typebits[i + 1];
-        if (len > 31) {
-            isc_throw(DNSMessageFORMERR, "Invalid rdata: "
-                                         "bad NSEC3 type bitmap");
-        }
-        i += 2;
-    }
+    buildRRTypeBitmap("NSEC3", rdata_len, typebits);
 
     impl_ = new NSEC3Impl(hashalg, flags, iterations, salt, next, typebits);
 }
