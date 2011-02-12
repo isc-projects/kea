@@ -667,7 +667,7 @@ TEST_F(QueryTest, MaxLenDNAME) {
              * directly inside ASSERT_EQ, it fails to link and complains
              * it is unresolved external?
              */
-            size_t max_len(Name::MAX_WIRE);
+            const size_t max_len(Name::MAX_WIRE);
             ASSERT_EQ(max_len, dynamic_cast<const rdata::generic::CNAME&>(
                 ci->getCurrent()).getCname().getLength());
         }
