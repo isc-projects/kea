@@ -298,7 +298,7 @@ class NSECBASE:
                 maplen_list.append(self.__dict__[key_maplen])
             else:
                 maplen_list.append(self.maplen)
-            if not maplen_list[-1]: # calculate it if not specified
+            if maplen_list[-1] is None: # calculate it if not specified
                 maplen_list[-1] = int(len(bitmap_list[-1]) / 2)
             key_block = 'block' + str(i)
             if key_block in self.__dict__:
@@ -307,7 +307,8 @@ class NSECBASE:
                 block_list.append(self.block)
 
         # dump RR-type specific part (NSEC or NSEC3)
-        self.dump_fixedpart(f, int(len(''.join(bitmap_list)) / 2))
+        self.dump_fixedpart(f, 2 * self.nbitmap + \
+                                int(len(''.join(bitmap_list)) / 2))
 
         # dump the bitmap
         for i in range(0, self.nbitmap):
@@ -319,12 +320,12 @@ class NSECBASE:
 class NSEC(NSECBASE):
     rdlen = None                # auto-calculate
     nextname = 'next.example.com'
-    def dump_fixedpart(self, f, bitmaplen):
+    def dump_fixedpart(self, f, bitmap_totallen):
         name_wire = encode_name(self.nextname)
-        if not self.rdlen:
+        if self.rdlen is None:
             # if rdlen needs to be calculated, it must be based on the bitmap
             # length, because the configured maplen can be fake.
-            self.rdlen = int(len(name_wire) / 2) + 2 * self.nbitmap + bitmaplen
+            self.rdlen = int(len(name_wire) / 2) + bitmap_totallen
         f.write('\n# NSEC RDATA (RDLEN=%d)\n' % self.rdlen)
         f.write('%04x\n' % self.rdlen);
         f.write('# Next Name=%s (%d bytes)\n' % (self.nextname,
@@ -334,19 +335,19 @@ class NSEC(NSECBASE):
 class NSEC3(NSECBASE):
     rdlen = None                # auto-calculate
     hashalg = 1                 # SHA-1
-    optout = False              # oput-out flag
+    optout = False              # opt-out flag
     mbz = 0                     # other flag fields (none defined yet)
     iterations = 1
     saltlen = 5
     salt = 's' * saltlen
     hashlen = 20
     hash = 'h' * hashlen
-    def dump_fixedpart(self, f, bitmaplen):
-        if not self.rdlen:
+    def dump_fixedpart(self, f, bitmap_totallen):
+        if self.rdlen is None:
             # if rdlen needs to be calculated, it must be based on the bitmap
             # length, because the configured maplen can be fake.
             self.rdlen = 4 + 1 + len(self.salt) + 1 + len(self.hash) \
-                + bitmaplen
+                + bitmap_totallen
         f.write('\n# NSEC3 RDATA (RDLEN=%d)\n' % self.rdlen)
         f.write('%04x\n' % self.rdlen)
         optout_val = 1 if self.optout else 0
