@@ -163,6 +163,7 @@ class StartAllProcessesBob(BoB):
         self.zonemgr = False
         self.stats = False
         self.cmdctl = False
+        self.c_channel_env = {}
 
     def read_bind10_config(self):
         # Configuration options are set directly
@@ -198,34 +199,34 @@ class StartAllProcessesBob(BoB):
     def start_cmdctl(self, c_channel_env):
         self.cmdctl = True
 
-    def stop_msgq(self, c_channel_env):
+    def stop_msgq(self):
         self.msgq = False
 
-    def stop_cfgmgr(self, c_channel_env):
+    def stop_cfgmgr(self):
         self.cfgmgr = False
 
-    def stop_ccsession(self, c_channel_env):
+    def stop_ccsession(self):
         self.ccsession = False
 
-    def stop_auth(self, c_channel_env):
+    def stop_auth(self):
         self.auth = False
 
-    def stop_resolver(self, c_channel_env):
+    def stop_resolver(self):
         self.resolver = False
 
-    def stop_xfrout(self, c_channel_env):
+    def stop_xfrout(self):
         self.xfrout = False
 
-    def stop_xfrin(self, c_channel_env):
+    def stop_xfrin(self):
         self.xfrin = False
 
-    def stop_zonemgr(self, c_channel_env):
+    def stop_zonemgr(self):
         self.zonemgr = False
 
-    def stop_stats(self, c_channel_env):
+    def stop_stats(self):
         self.stats = False
 
-    def stop_cmdctl(self, c_channel_env):
+    def stop_cmdctl(self):
         self.cmdctl = False
 
 class TestStartStopProcessesBob(unittest.TestCase):
@@ -316,11 +317,10 @@ class TestStartStopProcessesBob(unittest.TestCase):
         self.check_preconditions(bob)
 
         # Start processes and check what was started
-        c_channel_env = {}
         bob.cfg_start_auth = False
         bob.cfg_start_resolver = False
 
-        bob.start_all_processes(c_channel_env)
+        bob.start_all_processes()
         self.check_started_none(bob)
 
     # Checks the processes started when starting only the auth process
@@ -330,11 +330,10 @@ class TestStartStopProcessesBob(unittest.TestCase):
         self.check_preconditions(bob)
 
         # Start processes and check what was started
-        c_channel_env = {}
         bob.cfg_start_auth = True
         bob.cfg_start_resolver = False
 
-        bob.start_all_processes(c_channel_env)
+        bob.start_all_processes()
 
         self.check_started_auth(bob)
 
@@ -345,11 +344,10 @@ class TestStartStopProcessesBob(unittest.TestCase):
         self.check_preconditions(bob)
 
         # Start processes and check what was started
-        c_channel_env = {}
         bob.cfg_start_auth = False
         bob.cfg_start_resolver = True
 
-        bob.start_all_processes(c_channel_env)
+        bob.start_all_processes()
 
         self.check_started_resolver(bob)
 
@@ -360,11 +358,10 @@ class TestStartStopProcessesBob(unittest.TestCase):
         self.check_preconditions(bob)
 
         # Start processes and check what was started
-        c_channel_env = {}
         bob.cfg_start_auth = True
         bob.cfg_start_resolver = True
 
-        bob.start_all_processes(c_channel_env)
+        bob.start_all_processes()
 
         self.check_started_both(bob)
 
@@ -380,11 +377,10 @@ class TestStartStopProcessesBob(unittest.TestCase):
 
         # Start processes (nothing much should be started, as in
         # test_start_none)
-        c_channel_env = {}
         bob.cfg_start_auth = False
         bob.cfg_start_resolver = False
 
-        bob.start_all_processes(c_channel_env)
+        bob.start_all_processes()
         self.check_started_none(bob)
 
         # Enable both at once

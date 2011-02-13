@@ -229,6 +229,29 @@ class BoB:
         if self.verbose:
             sys.stdout.write("[bind10] Handling new configuration: " +
                 str(new_config) + "\n")
+        if 'start_resolver' in new_config:
+            if new_config['start_resolver']:
+                if self.uid is not None:
+                    sys.stderr.write("[bind10] Starting resolver as a user," +
+                        "not root. This might fail.\n")
+                self.start_resolver(self.c_channel_env)
+            else:
+                self.stop_resolver()
+        if 'start_auth' in new_config:
+            if new_config['start_auth']:
+                if self.uid is not None:
+                    sys.stderr.write("[bind10] Starting auth as a user," +
+                        "not root. This might fail.\n")
+                self.start_auth(self.c_channel_env)
+                self.start_xfrout(self.c_channel_env)
+                self.start_xfrin(self.c_channel_env)
+                self.start_zonemgr(self.c_channel_env)
+            else:
+                self.stop_zonemgr()
+                self.stop_xfrin()
+                self.stop_xfrout()
+                self.stop_auth()
+
         answer = isc.config.ccsession.create_answer(0)
         return answer
         # TODO
@@ -477,11 +500,12 @@ class BoB:
         # XXX: we hardcode port 8080
         self.start_simple("b10-cmdctl", c_channel_env, 8080)
 
-    def start_all_processes(self, c_channel_env):
+    def start_all_processes(self):
         """
             Starts up all the processes.  Any exception generated during the
             starting of the processes is handled by the caller.
         """
+        c_channel_env = self.c_channel_env
         self.start_msgq(c_channel_env)
         self.start_cfgmgr(c_channel_env)
         self.start_ccsession(c_channel_env)
@@ -541,7 +565,8 @@ class BoB:
         # Start all processes.  If any one fails to start, kill all started
         # processes and exit with an error indication.
         try:
-            self.start_all_processes(c_channel_env)
+            self.c_channel_env = c_channel_env
+            self.start_all_processes()
         except Exception as e:
             self.kill_started_processes()
             return "Unable to start " + self.curproc + ": " + str(e)
