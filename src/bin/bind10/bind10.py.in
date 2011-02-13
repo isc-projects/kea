@@ -195,8 +195,7 @@ class BoB:
     """Boss of BIND class."""
     
     def __init__(self, msgq_socket_file=None, dns_port=5300, address=None,
-                 forward=None, nocache=False, verbose=False, setuid=None,
-                 username=None):
+                 nocache=False, verbose=False, setuid=None, username=None):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
         
@@ -206,11 +205,6 @@ class BoB:
         """
         self.address = address
         self.dns_port = dns_port
-        self.forward = forward
-        if forward:
-            self.resolver = True
-        else:
-            self.resolver = False
         self.cc_session = None
         self.ccs = None
         self.cfg_start_auth = True
@@ -422,19 +416,13 @@ class BoB:
         """
             Start the Authoritative server
         """
-        # XXX: this must be read from the configuration manager in the future
-        if self.resolver:
-            dns_prog = 'b10-resolver'
-        else:
-            dns_prog = 'b10-auth'
+        dns_prog = 'b10-auth'
         dnsargs = [dns_prog]
-        if not self.resolver:
-            # The resolver uses configuration manager for these
-            dnsargs += ['-p', str(self.dns_port)]
-            if self.address:
-                dnsargs += ['-a', str(self.address)]
-            if self.nocache:
-                dnsargs += ['-n']
+        dnsargs += ['-p', str(self.dns_port)]
+        if self.address:
+            dnsargs += ['-a', str(self.address)]
+        if self.nocache:
+            dnsargs += ['-n']
         if self.uid:
             dnsargs += ['-u', str(self.uid)]
         if self.verbose:
@@ -739,8 +727,6 @@ def check_addr(option, opt_str, value, parser):
     try:
         if opt_str in ['-a', '--address']:
             parser.values.address = isc.net.parse.addr_parse(value)
-        elif opt_str in ['-f', '--forward']:
-            parser.values.forward = isc.net.parse.addr_parse(value)
         else:
             raise OptionValueError("Unknown option " + opt_str)
     except ValueError:
@@ -761,9 +747,6 @@ def main():
     parser.add_option("-a", "--address", dest="address", type="string",
                       action="callback", callback=check_addr, default=None,
                       help="address the DNS server will use (default: listen on all addresses)")
-    parser.add_option("-f", "--forward", dest="forward", type="string",
-                      action="callback", callback=check_addr, default=None,
-                      help="nameserver to which DNS queries should be forwarded")
     parser.add_option("-m", "--msgq-socket-file", dest="msgq_socket_file",
                       type="string", default=None,
                       help="UNIX domain socket file the b10-msgq daemon will use")
@@ -833,8 +816,8 @@ def main():
 
     # Go bob!
     boss_of_bind = BoB(options.msgq_socket_file, options.dns_port,
-                       options.address, options.forward, options.nocache,
-                       options.verbose, setuid, username)
+                       options.address, options.nocache, options.verbose,
+                       setuid, username)
     startup_result = boss_of_bind.startup()
     if startup_result:
         sys.stderr.write("[bind10] Error on startup: %s\n" % startup_result)
