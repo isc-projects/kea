@@ -21,8 +21,8 @@
 
 #include <config.h>
 
-#include <asiolink/ioendpoint.h>
-#include <asiolink/ioaddress.h>
+#include <asiolink/io_endpoint.h>
+#include <asiolink/io_address.h>
 #include <netinet/in.h>
 
 #include <dns/name.h>
