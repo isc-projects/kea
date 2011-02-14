@@ -33,6 +33,7 @@ const char* const DEFAULT_REMOTE_ADDRESS = "192.0.2.1";
 
 SrvTestBase::SrvTestBase() : request_message(Message::RENDER),
                              parse_message(new Message(Message::PARSE)),
+                             response_message(new Message(Message::RENDER)),
                              default_qid(0x1035),
                              opcode(Opcode(Opcode::QUERY())),
                              qname("www.example.com"),

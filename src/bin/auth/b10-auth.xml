@@ -134,7 +134,7 @@
         <listitem><para>
           The port number it listens on.
           The default is 5300.</para>
-	  <note><simpara>The Y1 prototype runs on all interfaces
+	  <note><simpara>This prototype runs on all interfaces
 	  and on this nonstandard port.</simpara></note>
         </listitem>
       </varlistentry>
