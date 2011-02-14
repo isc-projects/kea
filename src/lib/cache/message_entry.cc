@@ -128,6 +128,7 @@ MessageEntry::getRRsetTrustLevel(const Message& message,
                       rrset_iter != message.endSection(section)) {
                     ++rrset_iter;
                 }
+                assert(rrset_iter != message.endSection(section));
                 
                 // According RFC2181 section 5.4.1, only the record
                 // describing that ailas is necessarily authoritative.

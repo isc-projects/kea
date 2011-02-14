@@ -35,7 +35,6 @@ ResolverClassCache::ResolverClassCache(const RRClass& cache_class) :
     messages_cache_ = MessageCachePtr(new MessageCache(rrsets_cache_,
                                       MESSAGE_CACHE_DEFAULT_SIZE,
                                       cache_class_.getCode()));
-    std::cout << "[XX] Created cache for class " << cache_class_ << std::endl;
 }
 
 ResolverClassCache::ResolverClassCache(CacheSizeInfo cache_info) :
@@ -49,7 +48,6 @@ ResolverClassCache::ResolverClassCache(CacheSizeInfo cache_info) :
     messages_cache_ = MessageCachePtr(new MessageCache(rrsets_cache_,
                                       cache_info.message_cache_size,
                                       klass));
-    std::cout << "[XX] Created cache for class " << cache_class_ << std::endl;
 }
 
 const RRClass&
@@ -110,8 +108,8 @@ ResolverClassCache::updateRRsetCache(const isc::dns::ConstRRsetPtr rrset_ptr,
                                 RRsetCachePtr rrset_cache_ptr)
 {
     RRsetTrustLevel level;
-    string typestr = rrset_ptr->getType().toText();
-    if (typestr == "A" || typestr == "AAAA") {
+    if (rrset_ptr->getType() == RRType::A() || 
+        rrset_ptr->getType() == RRType::AAAA()) {
         level = RRSET_TRUST_PRIM_GLUE;
     } else {
         level = RRSET_TRUST_PRIM_ZONE_NONGLUE;
@@ -182,21 +180,19 @@ ResolverCache::lookupClosestRRset(const isc::dns::Name& qname,
                                   const isc::dns::RRClass& qclass) const
 {
     ResolverClassCache* cc = getClassCache(qclass);
-    if (!cc) {
-        return (RRsetPtr());
-    }
-
-    unsigned int count = qname.getLabelCount();
-    unsigned int level = 0;
-    while(level < count) {
-        Name close_name = qname.split(level);
-        RRsetPtr rrset_ptr = cc->lookup(close_name, qtype);
-        if (rrset_ptr) {
-            return (rrset_ptr);
-        } else {
-            ++level;
-        }
-    }
+	if (cc) {
+	    unsigned int count = qname.getLabelCount();
+	    unsigned int level = 0;
+	    while(level < count) {
+	        Name close_name = qname.split(level);
+	        RRsetPtr rrset_ptr = cc->lookup(close_name, qtype);
+	        if (rrset_ptr) {
+	            return (rrset_ptr);
+	        } else {
+	            ++level;
+	        }
+	    }
+	}
 
     return (RRsetPtr());
 }
@@ -206,20 +202,21 @@ ResolverCache::update(const isc::dns::Message& msg) {
     
     QuestionIterator iter = msg.beginQuestion();
     ResolverClassCache* cc = getClassCache((*iter)->getClass());
-    if (!cc) {
-        return (false);
-    }
-
-    return (cc->update(msg));
+    if (cc) {
+		return (cc->update(msg));
+	} else {
+		return (false);
+	}
 }
 
 bool
 ResolverCache::update(const isc::dns::ConstRRsetPtr rrset_ptr) {
     ResolverClassCache* cc = getClassCache(rrset_ptr->getClass());
-    if (!cc) {
-        return (false);
-    }
-    return (cc->update(rrset_ptr));
+    if (cc) {
+		return (cc->update(rrset_ptr));
+	} else {
+		return (false);
+	}
 }
 
 void
