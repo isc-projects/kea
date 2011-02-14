@@ -15,6 +15,8 @@
 #ifndef __ASIOLINK_SIMPLE_CALLBACK_H
 #define __ASIOLINK_SIMPLE_CALLBACK_H 1
 
+#include <asiolink/io_message.h>
+
 namespace asiolink {
 
 /// \brief The \c SimpleCallback class is an abstract base class for a

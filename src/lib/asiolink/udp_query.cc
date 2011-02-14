@@ -29,7 +29,7 @@
 
 #include <asiolink.h>
 
-#include <asiolink/coroutine.h>
+#include <coroutine.h>
 #include <asiolink/udp_endpoint.h>
 
 #include <asiolink/udp_query.h>

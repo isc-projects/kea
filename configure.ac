@@ -573,6 +573,9 @@ AC_SUBST(MULTITHREADING_FLAG)
 #
 CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/asio"
 #
+# Use our 'coroutine' header from ext
+CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/coroutine"
+#
 # Disable threads: Currently we don't use them.
 CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_THREADS=1"
 #
