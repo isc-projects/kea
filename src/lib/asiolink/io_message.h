@@ -25,8 +25,8 @@
 
 #include <exceptions/exceptions.h>
 
-#include <asiolink/ioendpoint.h>
-#include <asiolink/iosocket.h>
+#include <asiolink/io_endpoint.h>
+#include <asiolink/io_socket.h>
 
 namespace asiolink {
 

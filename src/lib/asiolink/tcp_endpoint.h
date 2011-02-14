@@ -19,7 +19,7 @@
 #error "asio.hpp must be included before including this, see asiolink.h as to why"
 #endif
 
-#include <asiolink/ioendpoint.h>
+#include <asiolink/io_endpoint.h>
 
 namespace asiolink {
 
