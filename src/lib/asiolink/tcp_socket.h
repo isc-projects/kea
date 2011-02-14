@@ -19,7 +19,7 @@
 #error "asio.hpp must be included before including this, see asiolink.h as to why"
 #endif
 
-#include <asiolink/iosocket.h>
+#include <asiolink/io_socket.h>
 
 namespace asiolink {
 
