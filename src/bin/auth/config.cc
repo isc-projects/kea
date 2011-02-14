@@ -179,8 +179,13 @@ public:
     virtual void build(ConstElementPtr config_value) {
         const int32_t config_interval = config_value->intValue();
         if (config_interval < 0) {
-            isc_throw(AuthConfigError, "negative statistics-interval value: "
+            isc_throw(AuthConfigError, "Negative statistics interval value: "
                       << config_interval);
+        }
+        if (config_interval > 86400) {
+            isc_throw(AuthConfigError, "Statistics interval value "
+                      << config_interval
+                      << " must be equal to or shorter than 86400");
         }
         interval_ = config_interval;
     }
