@@ -37,7 +37,7 @@ MessageDictionary::add(const string& ident, const string& text) {
         // Message not already in the dictionary, so add it.
         dictionary_[ident] = text;
     }
-    
+
     return (not_found);
 }
 
@@ -52,7 +52,7 @@ MessageDictionary::replace(const string& ident, const string& text) {
         // Exists, so replace it.
         dictionary_[ident] = text;
     }
-    
+
     return (found);
 }
 
@@ -68,7 +68,7 @@ MessageDictionary::load(const char* messages[]) {
         const MessageID ident(messages[i++]);
         if (messages[i]) {
 
-            // Text not null, note it and point to next ident. 
+            // Text not null, note it and point to next ident.
             string text(messages[i++]);
 
             // Add ID and text to message dictionary, noting if the ID was

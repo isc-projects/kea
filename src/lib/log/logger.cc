@@ -108,8 +108,6 @@ Logger::isFatalEnabled() {
 // definition of the macro).  Also note that it expects that the message buffer
 // "message" is declared in the compilation unit.
 
-    
-
 // Output methods
 
 void

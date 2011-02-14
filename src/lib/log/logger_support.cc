@@ -58,7 +58,7 @@ Logger logger("log");
 /// \param file Name of the local message file
 static void
 readLocalMessageFile(const char* file) {
-    
+
     MessageDictionary& dictionary = MessageDictionary::globalDictionary();
     MessageReader reader(&dictionary);
     try {

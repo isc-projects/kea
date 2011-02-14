@@ -35,7 +35,6 @@ MSGRDERR    replacement read error, parameters: '%s' and '%s'
 UNRECDIR    replacement unrecognised directive message, parameter is '%s'
 .
 
-    
 echo -n "1. runInitTest default parameters: "
 cat > $tempfile << .
 FATAL [alpha.example] MSGWRTERR, error writing to test1: 42
