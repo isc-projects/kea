@@ -431,5 +431,30 @@ class TestStartStopProcessesBob(unittest.TestCase):
         bob.config_handler({'start_auth': True, 'start_resolver': False})
         self.check_started_auth(bob)
 
+    def test_config_start_once(self):
+        """
+        Tests that a process is started only once.
+        """
+        # Created Bob and ensure initialization correct
+        bob = StartAllProcessesBob()
+        self.check_preconditions(bob)
+
+        # Start processes (both)
+        bob.cfg_start_auth = True
+        bob.cfg_start_resolver = True
+
+        bob.start_all_processes()
+        self.check_started_both(bob)
+
+        bob.start_auth = lambda: self.fail("Started auth again")
+        bob.start_xfrout = lambda: self.fail("Started xfrout again")
+        bob.start_xfrin = lambda: self.fail("Started xfrin again")
+        bob.start_zonemgr = lambda: self.fail("Started zonemgr again")
+        bob.start_resolver = lambda: self.fail("Started resolver again")
+
+        # Send again we want to start them. Should not do it, as they are.
+        bob.config_handler({'start_auth': True})
+        bob.config_handler({'start_resolver': True})
+
 if __name__ == '__main__':
     unittest.main()
