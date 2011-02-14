@@ -40,6 +40,56 @@ public:
     virtual int getNative() const { return (socket_.native()); }
     virtual int getProtocol() const { return (IPPROTO_UDP); }
 
+    /// \brief Open Socket
+    ///
+    /// No-op for UDP sockets
+    ///
+    /// \param endpoint Unused.
+    /// \param callback Unused.
+    ///
+    /// \return false to indicate that the "operation" completed synchronously.
+    virtual bool open(const IOEndpoint*, IOCompletionCallback&) {
+        return false;
+    }
+
+    /// \brief Send Asynchronously
+    ///
+    /// This corresponds to async_send_to() for UDP sockets and async_send()
+    /// for TCP.  In both cases an endpoint argument is supplied indicating the
+    /// target of the send - this is ignored for TCP.
+    ///
+    /// \param data Data to send
+    /// \param length Length of data to send
+    /// \param endpoint Target of the send
+    /// \param callback Callback object.
+    virtual void async_send(const void*, size_t,
+        const IOEndpoint*, IOCompletionCallback&) {
+    }
+
+    /// \brief Receive Asynchronously
+    ///
+    /// This correstponds to async_receive_from() for UDP sockets and
+    /// async_receive() for TCP.  In both cases, an endpoint argument is
+    /// supplied to receive the source of the communication.  For TCP it will
+    /// be filled in with details of the connection.
+    ///
+    /// \param data Buffer to receive incoming message
+    /// \param length Length of the data buffer
+    /// \param endpoint Source of the communication
+    /// \param callback Callback object
+    virtual void async_receive(void* data, size_t, IOEndpoint*,
+        IOCompletionCallback&) {
+    }
+
+    /// \brief Cancel I/O On Socket
+    virtual void cancel() {
+    }
+
+    /// \brief Close socket
+    virtual void close() {
+    }
+
+
 private:
     asio::ip::udp::socket& socket_;
 };
