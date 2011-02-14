@@ -15,7 +15,7 @@
 #ifndef __ASIOLINK_DNS_ANSWER_H
 #define __ASIOLINK_DNS_ANSWER_H 1
 
-#include <asiolink/iomessage.h>
+#include <asiolink/io_message.h>
 
 namespace asiolink {
 

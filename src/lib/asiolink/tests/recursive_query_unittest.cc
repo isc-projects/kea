@@ -42,7 +42,7 @@
 // If we need to test something at the level of underlying ASIO and need
 // their definition, that test should go to asiolink/internal/tests.
 #include <asiolink/asiolink.h>
-#include <asiolink/iosocket.h>
+#include <asiolink/io_socket.h>
 
 using isc::UnitTestUtil;
 using namespace std;

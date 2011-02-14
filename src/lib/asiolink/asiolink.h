@@ -28,10 +28,10 @@
 #include <asiolink/recursive_query.h>
 #include <asiolink/interval_timer.h>
 
-#include <asiolink/ioaddress.h>
-#include <asiolink/ioendpoint.h>
-#include <asiolink/iomessage.h>
-#include <asiolink/iosocket.h>
+#include <asiolink/io_address.h>
+#include <asiolink/io_endpoint.h>
+#include <asiolink/io_message.h>
+#include <asiolink/io_socket.h>
 
 /// \namespace asiolink
 /// \brief A wrapper interface for the ASIO library.

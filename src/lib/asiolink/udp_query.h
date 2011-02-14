@@ -21,7 +21,7 @@
 
 #include <dns/buffer.h>
 
-#include <asiolink/ioaddress.h>
+#include <asiolink/io_address.h>
 #include <asiolink/coroutine.h>
 
 namespace asiolink {
