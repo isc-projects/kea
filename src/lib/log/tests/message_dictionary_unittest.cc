@@ -41,7 +41,7 @@ MessageInitializer init(values);
 
 class MessageDictionaryTest : public ::testing::Test {
 protected:
-    MessageDictionaryTest() : 
+    MessageDictionaryTest() :
         alpha_id("ALPHA"), alpha_text("This is alpha"),
         beta_id("BETA"), beta_text("This is beta"),
         gamma_id("GAMMA"), gamma_text("This is gamma")

@@ -141,7 +141,7 @@ quoteString(const string& instring) {
 
     // Create the output string and reserve the space needed to hold the input
     // string. (Most input strings will not contain quotes, so this single
-    // reservation should be all that is needed.) 
+    // reservation should be all that is needed.)
     string outstring;
     outstring.reserve(instring.size());
 
@@ -355,7 +355,7 @@ writeProgramFile(const string& file, const string& prefix,
              "#include <log/message_types.h>\n" <<
              "#include <log/message_initializer.h>\n" <<
              "\n";
-        
+
         // Declare the message symbols themselves.
 
         writeOpeningNamespace(ccfile, ns_components);
@@ -396,7 +396,6 @@ writeProgramFile(const string& file, const string& prefix,
             "} // Anonymous namespace\n" <<
             "\n";
 
- 
         // Report errors (if any) and exit
         if (ccfile.fail()) {
             throw MessageException(MSG_MSGWRTERR, program_file.fullName(),
@@ -447,7 +446,7 @@ warnDuplicates(MessageReader& reader) {
 
 int
 main(int argc, char** argv) {
-    
+
     const struct option loptions[] = {          // Long options
         {"help",    no_argument, NULL, 'h'},
         {"version", no_argument, NULL, 'v'},

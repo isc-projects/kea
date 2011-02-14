@@ -124,7 +124,7 @@ public:
     /// \brief Return DEBUG Level
     ///
     /// \return Current setting of debug level.  This is returned regardless of
-    /// whether the 
+    /// whether the severity is set to debug.
     virtual int getDebugLevel();
 
 
