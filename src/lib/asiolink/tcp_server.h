@@ -23,7 +23,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <asiolink/asiolink.h>
-#include <asiolink/coroutine.h>
+#include <coroutine.h>
 
 
 namespace asiolink {

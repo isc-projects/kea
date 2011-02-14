@@ -24,7 +24,7 @@
 #include <asiolink/dns_lookup.h>
 #include <asiolink/dns_answer.h>
 
-#include <asiolink/coroutine.h>
+#include <coroutine.h>
 
 namespace asiolink {
 
