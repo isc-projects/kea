@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,239 +14,30 @@
 
 #include <config.h>
 
-#include <cstdlib> // For rand(), temporary until better forwarding is done
+#include <asio/ip/address.hpp>
 
-#include <unistd.h>             // for some IPC/network system calls
-#include <sys/socket.h>
-#include <netinet/in.h>
-
-#include <vector>
 #include <asio.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/bind.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 
-#include <boost/shared_ptr.hpp>
-
-#include <dns/buffer.h>
-#include <dns/message.h>
-#include <dns/rcode.h>
-#include <dns/opcode.h>
-
-#include <asiolink/asiolink.h>
-#include <asiolink/internal/tcpdns.h>
-#include <asiolink/internal/udpdns.h>
-
-#include <resolve/resolve.h>
+#include <asiolink/recursive_query.h>
+#include <asiolink/dns_service.h>
+#include <asiolink/udp_query.h>
 
 #include <log/dummylog.h>
 
-using namespace asio;
-using asio::ip::udp;
-using asio::ip::tcp;
+#include <boost/lexical_cast.hpp>
+#include <boost/bind.hpp>
 
-using namespace std;
-using namespace isc::dns;
+#include <dns/question.h>
+#include <dns/message.h>
+
+#include <resolve/resolve.h>
+
 using isc::log::dlog;
-using namespace boost;
+using namespace isc::dns;
 
 namespace asiolink {
 
-typedef pair<string, uint16_t> addr_t;
-
-class IOServiceImpl {
-private:
-    IOServiceImpl(const IOService& source);
-    IOServiceImpl& operator=(const IOService& source);
-public:
-    /// \brief The constructor
-    IOServiceImpl() :
-        io_service_(),
-        work_(io_service_)
-    {};
-    /// \brief The destructor.
-    ~IOServiceImpl() {};
-    //@}
-
-    /// \brief Start the underlying event loop.
-    ///
-    /// This method does not return control to the caller until
-    /// the \c stop() method is called via some handler.
-    void run() { io_service_.run(); };
-
-    /// \brief Run the underlying event loop for a single event.
-    ///
-    /// This method return control to the caller as soon as the
-    /// first handler has completed.  (If no handlers are ready when
-    /// it is run, it will block until one is.)
-    void run_one() { io_service_.run_one();} ;
-
-    /// \brief Stop the underlying event loop.
-    ///
-    /// This will return the control to the caller of the \c run() method.
-    void stop() { io_service_.stop();} ;
-
-    /// \brief Return the native \c io_service object used in this wrapper.
-    ///
-    /// This is a short term work around to support other BIND 10 modules
-    /// that share the same \c io_service with the authoritative server.
-    /// It will eventually be removed once the wrapper interface is
-    /// generalized.
-    asio::io_service& get_io_service() { return io_service_; };
-private:
-    asio::io_service io_service_;
-    asio::io_service::work work_;
-};
-
-IOService::IOService() {
-    io_impl_ = new IOServiceImpl();
-}
-
-IOService::~IOService() {
-    delete io_impl_;
-}
-
-void
-IOService::run() {
-    io_impl_->run();
-}
-
-void
-IOService::run_one() {
-    io_impl_->run_one();
-}
-
-void
-IOService::stop() {
-    io_impl_->stop();
-}
-
-asio::io_service&
-IOService::get_io_service() {
-    return (io_impl_->get_io_service());
-}
-
-class DNSServiceImpl {
-public:
-    DNSServiceImpl(IOService& io_service, const char& port,
-                  const ip::address* v4addr, const ip::address* v6addr,
-                  SimpleCallback* checkin, DNSLookup* lookup,
-                  DNSAnswer* answer);
-
-    IOService& io_service_;
-
-    typedef boost::shared_ptr<UDPServer> UDPServerPtr;
-    typedef boost::shared_ptr<TCPServer> TCPServerPtr;
-    typedef boost::shared_ptr<DNSServer> DNSServerPtr;
-    vector<DNSServerPtr> servers_;
-    SimpleCallback *checkin_;
-    DNSLookup *lookup_;
-    DNSAnswer *answer_;
-
-    void addServer(uint16_t port, const ip::address& address) {
-        try {
-            dlog(std::string("Initialize TCP server at ") + address.to_string() + ":" + boost::lexical_cast<string>(port));
-            TCPServerPtr tcpServer(new TCPServer(io_service_.get_io_service(),
-                address, port, checkin_, lookup_, answer_));
-            (*tcpServer)();
-            servers_.push_back(tcpServer);
-            dlog(std::string("Initialize UDP server at ") + address.to_string() + ":" + boost::lexical_cast<string>(port));
-            UDPServerPtr udpServer(new UDPServer(io_service_.get_io_service(),
-                address, port, checkin_, lookup_, answer_));
-            (*udpServer)();
-            servers_.push_back(udpServer);
-        }
-        catch (const asio::system_error& err) {
-            // We need to catch and convert any ASIO level exceptions.
-            // This can happen for unavailable address, binding a privilege port
-            // without the privilege, etc.
-            isc_throw(IOError, "Failed to initialize network servers: " <<
-                      err.what());
-        }
-    }
-    void addServer(const char& port, const ip::address& address) {
-        uint16_t portnum;
-        try {
-            // XXX: SunStudio with stlport4 doesn't reject some invalid
-            // representation such as "-1" by lexical_cast<uint16_t>, so
-            // we convert it into a signed integer of a larger size and perform
-            // range check ourselves.
-            const int32_t portnum32 = boost::lexical_cast<int32_t>(&port);
-            if (portnum32 < 0 || portnum32 > 65535) {
-                isc_throw(IOError, "Invalid port number '" << &port);
-            }
-            portnum = portnum32;
-        } catch (const boost::bad_lexical_cast& ex) {
-            isc_throw(IOError, "Invalid port number '" << &port << "': " <<
-                      ex.what());
-        }
-        addServer(portnum, address);
-    }
-};
-
-DNSServiceImpl::DNSServiceImpl(IOService& io_service,
-                               const char& port,
-                               const ip::address* const v4addr,
-                               const ip::address* const v6addr,
-                               SimpleCallback* checkin,
-                               DNSLookup* lookup,
-                               DNSAnswer* answer) :
-    io_service_(io_service),
-    checkin_(checkin),
-    lookup_(lookup),
-    answer_(answer)
-{
-
-    if (v4addr) {
-        addServer(port, *v4addr);
-    }
-    if (v6addr) {
-        addServer(port, *v6addr);
-    }
-}
-
-DNSService::DNSService(IOService& io_service,
-                       const char& port, const char& address,
-                       SimpleCallback* checkin,
-                       DNSLookup* lookup,
-                       DNSAnswer* answer) :
-    impl_(new DNSServiceImpl(io_service, port, NULL, NULL, checkin, lookup,
-        answer)), io_service_(io_service)
-{
-    addServer(port, &address);
-}
-
-DNSService::DNSService(IOService& io_service,
-                       const char& port,
-                       const bool use_ipv4, const bool use_ipv6,
-                       SimpleCallback* checkin,
-                       DNSLookup* lookup,
-                       DNSAnswer* answer) :
-    impl_(NULL), io_service_(io_service)
-{
-    const ip::address v4addr_any = ip::address(ip::address_v4::any());
-    const ip::address* const v4addrp = use_ipv4 ? &v4addr_any : NULL; 
-    const ip::address v6addr_any = ip::address(ip::address_v6::any());
-    const ip::address* const v6addrp = use_ipv6 ? &v6addr_any : NULL;
-    impl_ = new DNSServiceImpl(io_service, port, v4addrp, v6addrp, checkin, lookup, answer);
-}
-
-DNSService::DNSService(IOService& io_service, SimpleCallback* checkin,
-    DNSLookup* lookup, DNSAnswer *answer) :
-    impl_(new DNSServiceImpl(io_service, *"0", NULL, NULL, checkin, lookup,
-        answer)), io_service_(io_service)
-{
-}
-
-DNSService::~DNSService() {
-    delete impl_;
-}
-
-namespace {
-
 typedef std::vector<std::pair<std::string, uint16_t> > AddressVector;
-
-}
 
 // Here we do not use the typedef above, as the SunStudio compiler
 // mishandles this in its name mangling, and wouldn't compile.
@@ -265,37 +56,7 @@ RecursiveQuery::RecursiveQuery(DNSService& dns_service,
 
 namespace {
 
-ip::address
-convertAddr(const string& address) {
-    error_code err;
-    ip::address addr = ip::address::from_string(address, err);
-    if (err) {
-        isc_throw(IOError, "Invalid IP address '" << &address << "': "
-            << err.message());
-    }
-    return (addr);
-}
-
-}
-
-void
-DNSService::addServer(const char& port, const string& address) {
-    impl_->addServer(port, convertAddr(address));
-}
-
-void
-DNSService::addServer(uint16_t port, const string& address) {
-    impl_->addServer(port, convertAddr(address));
-}
-
-void
-DNSService::clearServers() {
-    // FIXME: This does not work, it does not close the socket.
-    // How is it done?
-    impl_->servers_.clear();
-}
-
-namespace {
+typedef std::pair<std::string, uint16_t> addr_t;
 
 /*
  * This is a query in progress. When a new query is made, this one holds
@@ -317,10 +78,10 @@ private:
 
     // currently we use upstream as the current list of NS records
     // we should differentiate between forwarding and resolving
-    shared_ptr<AddressVector> upstream_;
+    boost::shared_ptr<AddressVector> upstream_;
 
     // root servers...just copied over to the zone_servers_
-    shared_ptr<AddressVector> upstream_root_;
+    boost::shared_ptr<AddressVector> upstream_root_;
 
     // Buffer to store the result.
     OutputBufferPtr buffer_;
@@ -347,15 +108,16 @@ private:
 
     // Not using NSAS at this moment, so we keep a list
     // of 'current' zone servers
-    vector<addr_t> zone_servers_;
+    std::vector<addr_t> zone_servers_;
 
     // Update the question that will be sent to the server
     void setQuestion(const Question& new_question) {
         question_ = new_question;
     }
 
-    deadline_timer client_timer;
-    deadline_timer lookup_timer;
+    // TODO: replace by our wrapper
+    asio::deadline_timer client_timer;
+    asio::deadline_timer lookup_timer;
 
     size_t queries_out_;
 
@@ -518,9 +280,11 @@ private:
     }
     
 public:
-    RunningQuery(asio::io_service& io, const Question &question,
-        MessagePtr answer_message, shared_ptr<AddressVector> upstream,
-        shared_ptr<AddressVector> upstream_root,
+    RunningQuery(asio::io_service& io,
+        const Question &question,
+        MessagePtr answer_message,
+        boost::shared_ptr<AddressVector> upstream,
+        boost::shared_ptr<AddressVector> upstream_root,
         OutputBufferPtr buffer,
         isc::resolve::ResolverInterface::CallbackPtr cb,
         int query_timeout, int client_timeout, int lookup_timeout,
@@ -571,7 +335,7 @@ public:
         } else {
             // copy the list
             dlog("Size is " + 
-                boost::lexical_cast<string>(upstream_root_->size()) + 
+                boost::lexical_cast<std::string>(upstream_root_->size()) + 
                 "\n");
             for(AddressVector::iterator it = upstream_root_->begin();
                 it < upstream_root_->end(); ++it) {
@@ -650,7 +414,7 @@ public:
 }
 
 void
-RecursiveQuery::resolve(const isc::dns::QuestionPtr& question,
+RecursiveQuery::resolve(const QuestionPtr& question,
     const isc::resolve::ResolverInterface::CallbackPtr callback)
 {
     asio::io_service& io = dns_service_.get_io_service();
@@ -685,109 +449,6 @@ RecursiveQuery::resolve(const Question& question,
                          lookup_timeout_, retries_);
 }
 
-class IntervalTimerImpl {
-private:
-    // prohibit copy
-    IntervalTimerImpl(const IntervalTimerImpl& source);
-    IntervalTimerImpl& operator=(const IntervalTimerImpl& source);
-public:
-    IntervalTimerImpl(IOService& io_service);
-    ~IntervalTimerImpl();
-    void setup(const IntervalTimer::Callback& cbfunc, const long interval);
-    void callback(const asio::error_code& error);
-    void cancel() {
-        timer_.cancel();
-        interval_ = 0;
-    }
-    long getInterval() const { return (interval_); }
-private:
-    // a function to update timer_ when it expires
-    void update();
-    // a function to call back when timer_ expires
-    IntervalTimer::Callback cbfunc_;
-    // interval in milliseconds
-    long interval_;
-    // asio timer
-    asio::deadline_timer timer_;
-};
 
-IntervalTimerImpl::IntervalTimerImpl(IOService& io_service) :
-    interval_(0), timer_(io_service.get_io_service())
-{}
 
-IntervalTimerImpl::~IntervalTimerImpl()
-{}
-
-void
-IntervalTimerImpl::setup(const IntervalTimer::Callback& cbfunc,
-                         const long interval)
-{
-    // Interval should not be less than or equal to 0.
-    if (interval <= 0) {
-        isc_throw(isc::BadValue, "Interval should not be less than or "
-                                 "equal to 0");
-    }
-    // Call back function should not be empty.
-    if (cbfunc.empty()) {
-        isc_throw(isc::InvalidParameter, "Callback function is empty");
-    }
-    cbfunc_ = cbfunc;
-    interval_ = interval;
-    // Set initial expire time.
-    // At this point the timer is not running yet and will not expire.
-    // After calling IOService::run(), the timer will expire.
-    update();
-    return;
-}
-
-void
-IntervalTimerImpl::update() {
-    if (interval_ == 0) {
-        // timer has been canceled.  Do nothing.
-        return;
-    }
-    try {
-        // Update expire time to (current time + interval_).
-        timer_.expires_from_now(boost::posix_time::millisec(interval_));
-    } catch (const asio::system_error& e) {
-        isc_throw(isc::Unexpected, "Failed to update timer");
-    }
-    // Reset timer.
-    timer_.async_wait(boost::bind(&IntervalTimerImpl::callback, this, _1));
-}
-
-void
-IntervalTimerImpl::callback(const asio::error_code& cancelled) {
-    // Do not call cbfunc_ in case the timer was cancelled.
-    // The timer will be canelled in the destructor of asio::deadline_timer.
-    if (!cancelled) {
-        cbfunc_();
-        // Set next expire time.
-        update();
-    }
-}
-
-IntervalTimer::IntervalTimer(IOService& io_service) {
-    impl_ = new IntervalTimerImpl(io_service);
-}
-
-IntervalTimer::~IntervalTimer() {
-    delete impl_;
-}
-
-void
-IntervalTimer::setup(const Callback& cbfunc, const long interval) {
-    return (impl_->setup(cbfunc, interval));
-}
-
-void
-IntervalTimer::cancel() {
-    impl_->cancel();
-}
-
-long
-IntervalTimer::getInterval() const {
-    return (impl_->getInterval());
-}
-
-}
+} // namespace asiolink

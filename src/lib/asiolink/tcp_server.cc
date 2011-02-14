@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,22 +14,17 @@
 
 #include <config.h>
 
-#include <unistd.h>             // for some IPC/network system calls
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include <boost/shared_array.hpp>
 
 #include <asio.hpp>
-#include <asio/ip/address.hpp>
 
-#include <boost/array.hpp>
-#include <boost/shared_ptr.hpp>
+#include <log/dummylog.h>
 
-#include <dns/buffer.h>
-#include <dns/message.h>
+#include <asiolink/tcp_endpoint.h>
+#include <asiolink/tcp_socket.h>
 
-#include <asiolink.h>
-#include <internal/coroutine.h>
-#include <internal/tcpdns.h>
+#include <asiolink/tcp_server.h>
+
 
 using namespace asio;
 using asio::ip::udp;
@@ -39,7 +34,8 @@ using namespace std;
 using namespace isc::dns;
 
 namespace asiolink {
-/// The following functions implement the \c UDPServer class.
+
+/// The following functions implement the \c TCPServer class.
 ///
 /// The constructor
 TCPServer::TCPServer(io_service& io_service,
@@ -191,4 +187,5 @@ TCPServer::resume(const bool done) {
     io_.post(*this);
 }
 
-}
+} // namespace asiolink
+

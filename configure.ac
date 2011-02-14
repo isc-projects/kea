@@ -573,6 +573,9 @@ AC_SUBST(MULTITHREADING_FLAG)
 #
 CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/asio"
 #
+# Use our 'coroutine' header from ext
+CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/coroutine"
+#
 # Disable threads: Currently we don't use them.
 CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_THREADS=1"
 #
@@ -666,8 +669,6 @@ AC_CONFIG_FILES([Makefile
                  src/lib/Makefile
                  src/lib/asiolink/Makefile
                  src/lib/asiolink/tests/Makefile
-                 src/lib/asiolink/internal/Makefile
-                 src/lib/asiolink/internal/tests/Makefile
                  src/lib/bench/Makefile
                  src/lib/bench/example/Makefile
                  src/lib/bench/tests/Makefile
