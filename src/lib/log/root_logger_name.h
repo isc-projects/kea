@@ -19,20 +19,25 @@
 
 /// \brief Define Name of Root Logger
 ///
-/// In the log4cxx system, the root logger is ".".  The definition for the
-/// BIND-10 system is that the root logger of a program has the name of the
-/// program.  This (trivial) class stores the name of the program in a
-/// location accessible to the logger classes.
+/// IN BIND-10, the name root logger of a program is the name of the program
+/// itself (in contrast to packages such as log4cxx where the root logger name
+//  is something like ".").  These trivial functions allow the setting and
+// getting of that name by the logger classes.
 
 namespace isc {
 namespace log {
 
 /// \brief Set Root Logger Name
 ///
-/// \param name Name of the root logger.  This should be the program
-/// name.
-
+/// This function should be called by the program's initialization code before
+/// any logging functions are called.
+///
+/// \param name Name of the root logger.  This should be the program name.
 void setRootLoggerName(const std::string& name);
+
+/// \brief Get Root Logger Name
+///
+/// \return Name of the root logger.
 const std::string& getRootLoggerName();
 
 }

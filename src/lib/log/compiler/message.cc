@@ -391,7 +391,7 @@ writeProgramFile(const string& file, const string& prefix,
             "    NULL\n" <<
             "};\n" <<
             "\n" <<
-            "isc::log::MessageInitializer initializer(values);\n" <<
+            "const isc::log::MessageInitializer initializer(values);\n" <<
             "\n" <<
             "} // Anonymous namespace\n" <<
             "\n";
