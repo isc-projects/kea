@@ -14,7 +14,10 @@
 
 #include <config.h>
 
-#include <asio/ip/address.hpp>
+#include <stdlib.h>
+
+// unistd is needed for asio.hpp with SunStudio
+#include <unistd.h>
 
 #include <asio.hpp>
 
