@@ -1,4 +1,4 @@
-// File created from messagedef.mes on Wed Feb  9 16:55:11 2011
+// File created from messagedef.mes on Mon Feb 14 11:07:45 2011
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -51,7 +51,7 @@ const char* values[] = {
     NULL
 };
 
-isc::log::MessageInitializer initializer(values);
+const isc::log::MessageInitializer initializer(values);
 
 } // Anonymous namespace
 

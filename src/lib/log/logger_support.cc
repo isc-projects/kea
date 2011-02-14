@@ -94,7 +94,7 @@ readLocalMessageFile(const char* file) {
 /// Logger Run-Time Initialization
 
 void
-init(const string& root, isc::log::Severity severity, int dbglevel,
+initLogger(const string& root, isc::log::Severity severity, int dbglevel,
     const char* file) {
 
     // Create the application root logger and set the default severity and
