@@ -42,7 +42,7 @@ LoggerImpl::LoggerInfo LoggerImpl::root_logger_info_(isc::log::INFO, 0);
 LoggerImpl::LoggerImpl(const std::string& name, bool)
 {
     // Are we the root logger?
-    if (name == getRootLoggerName()) { 
+    if (name == getRootLoggerName()) {
         is_root_ = true;
         name_ = name;
     } else {
