@@ -222,6 +222,7 @@ class BoB:
         self.msgq_socket_file = msgq_socket_file
         self.nocache = nocache
         self.processes = {}
+        self.expected_shutdowns = {}
         self.runnable = False
         self.uid = setuid
         self.username = username
@@ -601,10 +602,32 @@ class BoB:
         self.cc_session.group_sendmsg(cmd, "Zonemgr", "Zonemgr")
         self.cc_session.group_sendmsg(cmd, "Stats", "Stats")
 
-    def stop_process(self, process):
-        """Stop the given process, friendly-like."""
-        # XXX nothing yet
-        pass
+    def stop_process(self, process, sendto):
+        """
+        Stop the given process, friendly-like. The process is the name it has
+        (in logs, etc), the second is the address on msgq.
+        """
+        # TODO: Some timeout to solve processes that don't want to die would
+        # help. We can even store it in the dict, it is used only as a set
+        self.expected_shutdowns[process] = 1
+        # Ask the process to die willingly
+        self.cc_session.group_sendmsg({'command': ['shutdown']}, sendto,
+            sendto)
+
+    def stop_resolver(self):
+        self.stop_process('b10-resolver', 'Resolver')
+
+    def stop_auth(self):
+        self.stop_process('b10-auth', 'Auth')
+
+    def stop_xfrout(self):
+        self.stop_process('b10-xfrout', 'Xfrout')
+
+    def stop_xfrin(self):
+        self.stop_process('b10-xfrin', 'Xfrin')
+
+    def stop_zonemgr(self):
+        self.stop_process('b10-zonemgr', 'Zonemgr')
 
     def shutdown(self):
         """Stop the BoB instance."""
@@ -710,6 +733,10 @@ class BoB:
         still_dead = {}
         now = time.time()
         for proc_info in self.dead_processes.values():
+            if proc_info.name in self.expected_shutdowns:
+                # We don't restart, we wanted it to die
+                del self.expected_shutdowns[proc_info.name]
+                continue
             restart_time = proc_info.restart_schedule.get_restart_time(now)
             if restart_time > now:
                 if (next_restart is None) or (next_restart > restart_time):
