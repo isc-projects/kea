@@ -16,6 +16,9 @@
 
 #include <boost/shared_array.hpp>
 
+// unistd is needed for asio.hpp with SunStudio
+#include <unistd.h>
+
 #include <asio.hpp>
 
 #include <log/dummylog.h>

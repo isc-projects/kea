@@ -14,11 +14,12 @@
 
 #include <config.h>
 
-#include <asiolink/io_service.h>
-
-#include <asio/ip/address.hpp>
+// unistd is needed for asio.hpp with SunStudio
+#include <unistd.h>
 
 #include <asio.hpp>
+
+#include <asiolink/io_service.h>
 #include <asiolink/tcp_server.h>
 #include <asiolink/udp_server.h>
 
