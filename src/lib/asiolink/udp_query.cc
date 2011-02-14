@@ -14,6 +14,9 @@
 
 #include <config.h>
 
+// unistd is needed for asio.hpp with SunStudio
+#include <unistd.h>
+
 #include <asio.hpp>
 
 #include <boost/bind.hpp>
