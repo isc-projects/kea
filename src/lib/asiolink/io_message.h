@@ -46,6 +46,7 @@ class IOMessage {
     ///
     /// \name Constructors and Destructor
     ///
+
     /// Note: The copy constructor and the assignment operator are
     /// intentionally defined as private, making this class non-copyable.
     //@{

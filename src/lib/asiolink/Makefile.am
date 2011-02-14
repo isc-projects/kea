@@ -21,6 +21,7 @@ libasiolink_la_SOURCES += dns_answer.h
 libasiolink_la_SOURCES += simple_callback.h
 libasiolink_la_SOURCES += interval_timer.h interval_timer.cc
 libasiolink_la_SOURCES += recursive_query.h recursive_query.cc
+libasiolink_la_SOURCES += io_error.h
 libasiolink_la_SOURCES += io_socket.cc io_socket.h
 libasiolink_la_SOURCES += io_message.h
 libasiolink_la_SOURCES += io_address.cc io_address.h

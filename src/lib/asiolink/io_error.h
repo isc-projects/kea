@@ -12,18 +12,24 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
-#include <gtest/gtest.h>
 
-#include <asiolink/asiolink.h>
+#ifndef __IO_ERROR_H
+#define __IO_ERROR_H
 
-using namespace asiolink;
+#include <exceptions/exceptions.h>
 
-TEST(IOSocketTest, dummySockets) {
-    EXPECT_EQ(IPPROTO_UDP, IOSocket::getDummyUDPSocket().getProtocol());
-    EXPECT_EQ(IPPROTO_TCP, IOSocket::getDummyTCPSocket().getProtocol());
-    EXPECT_EQ(-1, IOSocket::getDummyUDPSocket().getNative());
-    EXPECT_EQ(-1, IOSocket::getDummyTCPSocket().getNative());
-}
+namespace asiolink {
+
+/// \brief An exception that is thrown if an error occurs within the IO
+/// module.  This is mainly intended to be a wrapper exception class for
+/// ASIO specific exceptions.
+class IOError : public isc::Exception {
+public:
+    IOError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
 
 
+}      // asiolink
+
+#endif // __IO_ERROR_H
