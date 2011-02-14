@@ -381,6 +381,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         bob.cfg_start_resolver = False
 
         bob.start_all_processes()
+        bob.runnable = True
         self.check_started_none(bob)
 
         # Enable both at once
@@ -444,6 +445,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         bob.cfg_start_resolver = True
 
         bob.start_all_processes()
+        bob.runnable = True
         self.check_started_both(bob)
 
         bob.start_auth = lambda: self.fail("Started auth again")
@@ -455,6 +457,22 @@ class TestStartStopProcessesBob(unittest.TestCase):
         # Send again we want to start them. Should not do it, as they are.
         bob.config_handler({'start_auth': True})
         bob.config_handler({'start_resolver': True})
+
+    def test_config_not_started_early(self):
+        """
+        Test that processes are not started by the config handler before
+        startup.
+        """
+        bob = StartAllProcessesBob()
+        self.check_preconditions(bob)
+
+        bob.start_auth = lambda: self.fail("Started auth again")
+        bob.start_xfrout = lambda: self.fail("Started xfrout again")
+        bob.start_xfrin = lambda: self.fail("Started xfrin again")
+        bob.start_zonemgr = lambda: self.fail("Started zonemgr again")
+        bob.start_resolver = lambda: self.fail("Started resolver again")
+
+        bob.config_handler({'start_auth': True, 'start_resolver': True})
 
 if __name__ == '__main__':
     unittest.main()
