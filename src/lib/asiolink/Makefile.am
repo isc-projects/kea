@@ -1,4 +1,4 @@
-SUBDIRS = . tests internal
+SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
@@ -12,14 +12,25 @@ CLEANFILES = *.gcno *.gcda
 # have some code fragments that would hit gcc's unused-parameter warning,
 # which would make the build fail with -Werror (our default setting).
 lib_LTLIBRARIES = libasiolink.la
-libasiolink_la_SOURCES = asiolink.cc asiolink.h
-libasiolink_la_SOURCES += iosocket.cc iosocket.h
-libasiolink_la_SOURCES += iomessage.h
-libasiolink_la_SOURCES += ioaddress.cc ioaddress.h
-libasiolink_la_SOURCES += ioendpoint.cc ioendpoint.h
-libasiolink_la_SOURCES += udpdns.cc internal/udpdns.h
-libasiolink_la_SOURCES += tcpdns.cc internal/tcpdns.h
-libasiolink_la_SOURCES += internal/coroutine.h
+libasiolink_la_SOURCES = asiolink.h
+libasiolink_la_SOURCES += io_service.cc io_service.h
+libasiolink_la_SOURCES += dns_service.cc dns_service.h
+libasiolink_la_SOURCES += dns_server.h
+libasiolink_la_SOURCES += dns_lookup.h
+libasiolink_la_SOURCES += dns_answer.h
+libasiolink_la_SOURCES += simple_callback.h
+libasiolink_la_SOURCES += interval_timer.h interval_timer.cc
+libasiolink_la_SOURCES += recursive_query.h recursive_query.cc
+libasiolink_la_SOURCES += io_socket.cc io_socket.h
+libasiolink_la_SOURCES += io_message.h
+libasiolink_la_SOURCES += io_address.cc io_address.h
+libasiolink_la_SOURCES += io_endpoint.cc io_endpoint.h
+libasiolink_la_SOURCES += udp_endpoint.h udp_socket.h
+libasiolink_la_SOURCES += udp_server.h udp_server.cc
+libasiolink_la_SOURCES += udp_query.h udp_query.cc
+libasiolink_la_SOURCES += tcp_endpoint.h tcp_socket.h
+libasiolink_la_SOURCES += tcp_server.h tcp_server.cc
+libasiolink_la_SOURCES += coroutine.h
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
 libasiolink_la_CXXFLAGS = $(AM_CXXFLAGS)
