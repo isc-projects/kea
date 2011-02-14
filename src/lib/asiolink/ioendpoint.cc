@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,9 +18,11 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include <asio.hpp>
+
 #include <asiolink/asiolink.h>
-#include <internal/tcpdns.h>
-#include <internal/udpdns.h>
+#include <asiolink/tcp_endpoint.h>
+#include <asiolink/udp_endpoint.h>
 
 using namespace std;
 
