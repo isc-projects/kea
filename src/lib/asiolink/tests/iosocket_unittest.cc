@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,10 +12,18 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <gtest/gtest.h>
 
-int
-main(int argc, char* argv[]) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return (RUN_ALL_TESTS());
+#include <asiolink/asiolink.h>
+
+using namespace asiolink;
+
+TEST(IOSocketTest, dummySockets) {
+    EXPECT_EQ(IPPROTO_UDP, IOSocket::getDummyUDPSocket().getProtocol());
+    EXPECT_EQ(IPPROTO_TCP, IOSocket::getDummyTCPSocket().getProtocol());
+    EXPECT_EQ(-1, IOSocket::getDummyUDPSocket().getNative());
+    EXPECT_EQ(-1, IOSocket::getDummyTCPSocket().getNative());
 }
+
+
