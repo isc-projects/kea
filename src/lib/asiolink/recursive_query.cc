@@ -16,10 +16,11 @@
 
 #include <asio/ip/address.hpp>
 
+#include <asio.hpp>
+
 #include <asiolink/recursive_query.h>
 #include <asiolink/dns_service.h>
-#include <asiolink/internal/tcpdns.h>
-#include <asiolink/internal/udpdns.h>
+#include <asiolink/udp_query.h>
 
 #include <log/dummylog.h>
 

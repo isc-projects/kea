@@ -18,8 +18,9 @@
 
 #include <asio/ip/address.hpp>
 
-#include <asiolink/internal/tcpdns.h>
-#include <asiolink/internal/udpdns.h>
+#include <asio.hpp>
+#include <tcp_server.h>
+#include <asiolink/udp_server.h>
 
 #include <log/dummylog.h>
 

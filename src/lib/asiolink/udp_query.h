@@ -1,0 +1,88 @@
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+#ifndef __UDP_QUERY_H
+#define __UDP_QUERY_H 1
+
+#ifndef ASIO_HPP
+#error "asio.hpp must be included before including this, see asiolink.h as to why"
+#endif
+
+#include <dns/buffer.h>
+
+#include <asiolink/ioaddress.h>
+#include <asiolink/coroutine.h>
+
+namespace asiolink {
+
+//
+// Asynchronous UDP coroutine for upstream queries
+//
+class UDPQuery : public coroutine {
+public:
+    // TODO Maybe this should be more generic than just for UDPQuery?
+    ///
+    /// \brief Result of the query
+    ///
+    /// This is related only to contacting the remote server. If the answer
+    ///indicates error, it is still counted as SUCCESS here, if it comes back.
+    ///
+    enum Result {
+        SUCCESS,
+        TIME_OUT,
+        STOPPED
+    };
+    /// Abstract callback for the UDPQuery.
+    class Callback {
+    public:
+        virtual ~Callback() {}
+
+        /// This will be called when the UDPQuery is completed
+        virtual void operator()(Result result) = 0;
+    };
+    ///
+    /// \brief Constructor.
+    ///
+    /// It creates the query.
+    /// @param callback will be called when we terminate. It is your task to
+    ///        delete it if allocated on heap.
+    ///@param timeout in ms.
+    ///
+    explicit UDPQuery(asio::io_service& io_service,
+                      const isc::dns::Question& q,
+                      const IOAddress& addr, uint16_t port,
+                      isc::dns::OutputBufferPtr buffer,
+                      Callback* callback, int timeout = -1);
+    void operator()(asio::error_code ec = asio::error_code(),
+                    size_t length = 0);
+    /// Terminate the query.
+    void stop(Result reason = STOPPED);
+private:
+    enum { MAX_LENGTH = 4096 };
+
+    ///
+    /// \short Private data
+    ///
+    /// They are not private because of stability of the
+    /// interface (this is private class anyway), but because this class
+    /// will be copyed often (it is used as a coroutine and passed as callback
+    /// to many async_*() functions) and we want keep the same data. Some of
+    /// the data is not copyable too.
+    ///
+    struct PrivateData;
+    boost::shared_ptr<PrivateData> data_;
+};
+
+}      // namespace asiolink
+#endif // __UDP_QUERY_H

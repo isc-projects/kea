@@ -19,7 +19,7 @@
 
 #include <dns/question.h>
 
-#include <asiolink/internal/udpdns.h>
+#include <asiolink/udp_query.h>
 
 using namespace asio;
 using namespace isc::dns;
