@@ -18,6 +18,7 @@
 #include <asiolink/iomessage.h>
 #include <asiolink/dns_server.h>
 #include <dns/buffer.h>
+#include <dns/message.h>
 
 namespace asiolink {
 
