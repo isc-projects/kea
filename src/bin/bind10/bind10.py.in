@@ -215,6 +215,8 @@ class BoB:
         self.ccs = None
         self.cfg_start_auth = True
         self.cfg_start_resolver = False
+        self.started_auth_family = False
+        self.started_resolver_family = False
         self.curproc = None
         self.dead_processes = {}
         self.msgq_socket_file = msgq_socket_file
@@ -231,26 +233,32 @@ class BoB:
                 str(new_config) + "\n")
         if 'start_resolver' in new_config:
             if new_config['start_resolver']:
-                if self.uid is not None:
-                    sys.stderr.write("[bind10] Starting resolver as a user," +
-                        "not root. This might fail.\n")
-                self.start_resolver(self.c_channel_env)
+                if not self.started_resolver_family:
+                    if self.uid is not None:
+                        sys.stderr.write("[bind10] Starting resolver as a user," +
+                            "not root. This might fail.\n")
+                    self.start_resolver(self.c_channel_env)
+                    self.started_resolver_family = True
             else:
                 self.stop_resolver()
+                self.started_resolver_family = False
         if 'start_auth' in new_config:
             if new_config['start_auth']:
-                if self.uid is not None:
-                    sys.stderr.write("[bind10] Starting auth as a user," +
-                        "not root. This might fail.\n")
-                self.start_auth(self.c_channel_env)
-                self.start_xfrout(self.c_channel_env)
-                self.start_xfrin(self.c_channel_env)
-                self.start_zonemgr(self.c_channel_env)
+                if not self.started_auth_family:
+                    if self.uid is not None:
+                        sys.stderr.write("[bind10] Starting auth as a user," +
+                            "not root. This might fail.\n")
+                    self.start_auth(self.c_channel_env)
+                    self.start_xfrout(self.c_channel_env)
+                    self.start_xfrin(self.c_channel_env)
+                    self.start_zonemgr(self.c_channel_env)
+                    self.started_auth_family = True
             else:
                 self.stop_zonemgr()
                 self.stop_xfrin()
                 self.stop_xfrout()
                 self.stop_auth()
+                self.started_auth_family = False
 
         answer = isc.config.ccsession.create_answer(0)
         return answer
@@ -522,6 +530,7 @@ class BoB:
         # ... and resolver (if selected):
         if self.cfg_start_resolver:
             self.start_resolver(c_channel_env)
+            self.started_resolver_family = True
 
         # Everything after the main components can run as non-root.
         # TODO: this is only temporary - once the privileged socket creator is
@@ -535,6 +544,7 @@ class BoB:
             self.start_xfrout(c_channel_env)
             self.start_xfrin(c_channel_env)
             self.start_zonemgr(c_channel_env)
+            self.started_auth_family = True
 
         # ... and finally start the remaining processes
         self.start_stats(c_channel_env)
