@@ -203,7 +203,6 @@ LoggerImpl::output(const char* sev_text, const MessageID& ident,
     // Obtain text of the message and substitute arguments.
     const string format = MessageDictionary::globalDictionary().getText(ident);
     vsnprintf(message, sizeof(message), format.c_str(), ap);
-    message[sizeof(message) - 1] = '\0';    // Guarantee trailing NULL
 
     // Get the time in a struct tm format, and convert to text
     time_t t_time;
@@ -212,7 +211,6 @@ LoggerImpl::output(const char* sev_text, const MessageID& ident,
 
     char chr_time[32];
     (void) strftime(chr_time, sizeof(chr_time), "%Y-%m-%d %H:%M:%S", tm_time);
-    chr_time[sizeof(chr_time) - 1] = '\0';  // Guarantee a trailing NULL
 
     // Now output.
     std::cout << chr_time << " " << sev_text << " [" << getName() << "] " <<

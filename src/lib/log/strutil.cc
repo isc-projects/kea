@@ -13,7 +13,6 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <numeric>
-#include <iostream>
 
 #include <string.h>
 #include <strutil.h>

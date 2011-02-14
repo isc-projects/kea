@@ -15,7 +15,6 @@
 #ifndef __MESSAGE_READER_H
 #define __MESSAGE_READER_H
 
-#include <iostream>
 #include <map>
 #include <string>
 #include <vector>

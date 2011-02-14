@@ -31,9 +31,8 @@
 
 using namespace isc::log;
 
-// Declare root logger and a loggers to use an example.
+// Declare logger to use an example.
 Logger logger_ex("example");
-Logger logger_dlm("dlm");
 
 // The program is invoked:
 //
@@ -48,10 +47,11 @@ Logger logger_dlm("dlm");
 
 int main(int argc, char** argv) {
 
-    isc::log::Severity  severity = isc::log::INFO;
-    int                 dbglevel = -1;
-    const char*         localfile = NULL;
-    int                 option;
+    isc::log::Severity  severity = isc::log::INFO;  // Default logger severity
+    int                 dbglevel = -1;              // Logger debug level
+    const char*         localfile = NULL;           // Local message file
+    int                 option;                     // For getopt() processing
+    Logger              logger_dlm("dlm", true);    // Another example logger
 
     // Parse options
     while ((option = getopt(argc, argv, "s:d:")) != -1) {
@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
     }
 
     // Update the logging parameters
-    init("alpha", severity, dbglevel, localfile);
+    initLogger("alpha", severity, dbglevel, localfile);
 
     // Log a few messages
     logger_ex.fatal(MSG_MSGWRTERR, "test1", "42");
