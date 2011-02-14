@@ -607,6 +607,8 @@ class BoB:
         Stop the given process, friendly-like. The process is the name it has
         (in logs, etc), the second is the address on msgq.
         """
+        if self.verbose:
+            sys.stdout.write("[bind10] Asking %s to terminate\n" % process)
         # TODO: Some timeout to solve processes that don't want to die would
         # help. We can even store it in the dict, it is used only as a set
         self.expected_shutdowns[process] = 1
@@ -614,6 +616,7 @@ class BoB:
         self.cc_session.group_sendmsg({'command': ['shutdown']}, sendto,
             sendto)
 
+    # Series of stop_process wrappers
     def stop_resolver(self):
         self.stop_process('b10-resolver', 'Resolver')
 
