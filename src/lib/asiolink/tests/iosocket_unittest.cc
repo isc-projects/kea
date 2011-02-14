@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -13,31 +13,17 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-
-#include <unistd.h>             // for some IPC/network system calls
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include <gtest/gtest.h>
 
 #include <asiolink/asiolink.h>
-#include <internal/tcpdns.h>
-#include <internal/udpdns.h>
 
-using namespace std;
+using namespace asiolink;
 
-namespace asiolink {
-
-const IOEndpoint*
-IOEndpoint::create(const int protocol, const IOAddress& address,
-                   const unsigned short port)
-{
-    if (protocol == IPPROTO_UDP) {
-        return (new UDPEndpoint(address, port));
-    } else if (protocol == IPPROTO_TCP) {
-        return (new TCPEndpoint(address, port));
-    }
-    isc_throw(IOError,
-              "IOEndpoint creation attempt for unsupported protocol: " <<
-              protocol);
+TEST(IOSocketTest, dummySockets) {
+    EXPECT_EQ(IPPROTO_UDP, IOSocket::getDummyUDPSocket().getProtocol());
+    EXPECT_EQ(IPPROTO_TCP, IOSocket::getDummyTCPSocket().getProtocol());
+    EXPECT_EQ(-1, IOSocket::getDummyUDPSocket().getNative());
+    EXPECT_EQ(-1, IOSocket::getDummyTCPSocket().getNative());
 }
 
-}
+

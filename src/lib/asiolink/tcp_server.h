@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,121 +12,21 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __TCPDNS_H
-#define __TCPDNS_H 1
+#ifndef __TCP_SERVER_H
+#define __TCP_SERVER_H 1
 
-#include <config.h>
+#ifndef ASIO_HPP
+#error "asio.hpp must be included before including this, see asiolink.h as to why"
+#endif
 
-
-#include <asio.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <dns/buffer.h>
-#include <dns/message.h>
-
 #include <asiolink/asiolink.h>
-#include <asiolink/internal/coroutine.h>
+#include <coroutine.h>
 
-// This file contains TCP-specific implementations of generic classes 
-// defined in asiolink.h.  It is *not* intended to be part of the public
-// API.
 
 namespace asiolink {
-/// \brief The \c TCPEndpoint class is a concrete derived class of
-/// \c IOEndpoint that represents an endpoint of a TCP connection.
-///
-/// In the current implementation, an object of this class is always
-/// instantiated within the wrapper routines.  Applications are expected to
-/// get access to the object via the abstract base class, \c IOEndpoint.
-/// This design may be changed when we generalize the wrapper interface.
-///
-/// Note: this implementation is optimized for the case where this object
-/// is created from an ASIO endpoint object in a receiving code path
-/// by avoiding to make a copy of the base endpoint.  For TCP it may not be
-/// a big deal, but when we receive UDP packets at a high rate, the copy
-/// overhead might be significant.
-class TCPEndpoint : public IOEndpoint {
-public:
-    ///
-    /// \name Constructors and Destructor
-    ///
-    //@{
-    /// \brief Constructor from a pair of address and port.
-    ///
-    /// \param address The IP address of the endpoint.
-    /// \param port The TCP port number of the endpoint.
-    TCPEndpoint(const IOAddress& address, const unsigned short port) :
-        asio_endpoint_placeholder_(
-            new asio::ip::tcp::endpoint(
-                asio::ip::address::from_string(address.toText()), port)),
-        asio_endpoint_(*asio_endpoint_placeholder_)
-    {}
-
-    /// \brief Constructor from an ASIO TCP endpoint.
-    ///
-    /// This constructor is designed to be an efficient wrapper for the
-    /// corresponding ASIO class, \c tcp::endpoint.
-    ///
-    /// \param asio_endpoint The ASIO representation of the TCP endpoint.
-    TCPEndpoint(const asio::ip::tcp::endpoint& asio_endpoint) :
-        asio_endpoint_placeholder_(NULL), asio_endpoint_(asio_endpoint)
-    {}
-
-    /// \brief The destructor.
-    ~TCPEndpoint() { delete asio_endpoint_placeholder_; }
-    //@}
-
-    IOAddress getAddress() const {
-        return (asio_endpoint_.address());
-    }
-
-    uint16_t getPort() const {
-        return (asio_endpoint_.port());
-    }
-
-    short getProtocol() const {
-        return (asio_endpoint_.protocol().protocol());
-    }
-
-    short getFamily() const {
-        return (asio_endpoint_.protocol().family());
-    }
-
-    // This is not part of the exosed IOEndpoint API but allows
-    // direct access to the ASIO implementation of the endpoint
-    const asio::ip::tcp::endpoint& getASIOEndpoint() const {
-        return (asio_endpoint_);
-    }
-
-private:
-    const asio::ip::tcp::endpoint* asio_endpoint_placeholder_;
-    const asio::ip::tcp::endpoint& asio_endpoint_;
-};
-
-/// \brief The \c TCPSocket class is a concrete derived class of
-/// \c IOSocket that represents a TCP socket.
-///
-/// In the current implementation, an object of this class is always
-/// instantiated within the wrapper routines.  Applications are expected to
-/// get access to the object via the abstract base class, \c IOSocket.
-/// This design may be changed when we generalize the wrapper interface.
-class TCPSocket : public IOSocket {
-private:
-    TCPSocket(const TCPSocket& source);
-    TCPSocket& operator=(const TCPSocket& source);
-public:
-    /// \brief Constructor from an ASIO TCP socket.
-    ///
-    /// \param socket The ASIO representation of the TCP socket.
-    TCPSocket(asio::ip::tcp::socket& socket) : socket_(socket) {}
-
-    int getNative() const { return (socket_.native()); }
-    int getProtocol() const { return (IPPROTO_TCP); }
-
-private:
-    asio::ip::tcp::socket& socket_;
-};
 
 /// \brief A TCP-specific \c DNSServer object.
 ///
@@ -215,10 +115,5 @@ private:
     boost::shared_ptr<IOSocket> iosock_;
 };
 
-}
-
-#endif // __TCPDNS_H
-
-// Local Variables: 
-// mode: c++
-// End: 
+}      // namespace asiolink
+#endif // __TCP_SERVER_H
