@@ -1,3 +1,42 @@
+  166.  [func]      jelte
+	The resolver now sends back a SERVFAIL when there is a client
+	timeout (timeout_client config setting), but it will not stop
+	resolving (until there is a lookup timeout or a result).
+	(Trac #497 and #489, git af0e5cd93bebb27cb5c4457f7759d12c8bf953a6)
+
+  165.  [func]      jelte
+	The resolver now handles CNAMEs, it will follow them, and include
+	them in the answer. The maximum length of CNAME chains that is
+	supported is 16.
+	(Trac #497, git af0e5cd93bebb27cb5c4457f7759d12c8bf953a6)
+
+  164.  [bug]           y-aharen
+	IntervalTimer: Modified the interface to accept interval in
+	milliseconds. It shortens the time of the tests of IntervalTimer.
+	(Trac #452, git c9f6acc81e24c4b8f0eb351123dc7b43f64e0914)
+
+  163.  [func]      vorner
+	The pimpl design pattern is used in UDPServer, with a shared pointer. This
+	makes it smaller to copy (which is done a lot as a sideeffect of being
+	coroutine) and speeds applications of this class (notably b10-auth) up by
+	around 10%.
+	(Trac #537, git 94cb95b1d508541201fc064302ba836164d3cbe6)
+
+  162.  [func]		stephen
+	Added C++ logging, allowing logging at different severities.
+	Code specifies the message to be logged via a symbol, and the
+	logging code picks up the message from an in-built dictionary.
+	The contents of the dictionary can be replaced at run-time by
+	locale-specific messages.  A message compiler program is provided
+	to create message header files and supply the default messages.
+	(Trac #438, git 7b1606cea7af15dc71f5ec1d70d958b00aa98af7)
+
+  161.  [func]		stephen
+	Added ResponseScrubber class to examine response from
+	a server and to remove out-of-bailiwick RRsets.  Also
+	does cross-section checks to ensure consistency.
+	(Trac #496, git b9296ca023cc9e76cda48a7eeebb0119166592c5)
+
   160.  [func]		jelte
   	Updated the resolver to take 3 different timeout values;
 	timeout_query for outstanding queries we sent while resolving

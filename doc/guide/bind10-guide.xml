@@ -982,6 +982,8 @@ accounts_file
       <para>
         The control commands are:
 print_settings
+<!-- TODO: remove that -->
+
 shutdown
       </para>
 <!-- TODO -->
