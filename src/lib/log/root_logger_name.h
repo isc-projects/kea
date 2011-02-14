@@ -19,7 +19,7 @@
 
 /// \brief Define Name of Root Logger
 ///
-/// IN BIND-10, the name root logger of a program is the name of the program
+/// In BIND-10, the name root logger of a program is the name of the program
 /// itself (in contrast to packages such as log4cxx where the root logger name
 //  is something like ".").  These trivial functions allow the setting and
 // getting of that name by the logger classes.

@@ -37,7 +37,7 @@ setRootLoggerName(const std::string& name) {
 }
 
 const std::string& getRootLoggerName() {
-    return getRootLoggerNameInternal();
+    return (getRootLoggerNameInternal());
 }
 
 } // namespace log
