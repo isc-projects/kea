@@ -94,10 +94,8 @@ struct MemoryZone::MemoryZoneImpl {
              l > origin_labels;
              --l, wname = wname.split(1)) {
             if (wname.isWildcard()) {
-                // Ensure a separate level exists for the wildcard name.
-                // Note: for 'name' itself we do this later anyway, but the
-                // overhead should be marginal because wildcard names should
-                // be rare.
+                // Ensure a separate level exists for the "wildcarding" name,
+                // and mark the node as "wild".
                 DomainNode* node;
                 DomainTree::Result result(domains.insert(wname.split(1),
                                                          &node));
@@ -105,8 +103,10 @@ struct MemoryZone::MemoryZoneImpl {
                        result == DomainTree::ALREADYEXISTS);
                 node->setFlag(DOMAINFLAG_WILD);
 
-                // Ensure a separate level exists for the "wildcarding" name,
-                // and mark the node as "wild".
+                // Ensure a separate level exists for the wildcard name.
+                // Note: for 'name' itself we do this later anyway, but the
+                // overhead should be marginal because wildcard names should
+                // be rare.
                 result = domains.insert(wname, &node);
                 assert(result == DomainTree::SUCCESS ||
                        result == DomainTree::ALREADYEXISTS);
