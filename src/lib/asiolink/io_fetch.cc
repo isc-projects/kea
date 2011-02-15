@@ -172,6 +172,9 @@ IOFetch::operator()(error_code ec, size_t length) {
         /// be unnecessary.)
         data_->buffer->writeData(data_->data.get(), length);
 
+        // Finished with this socket, so close it.
+        data_->socket->close();
+
         /// We are done
         stop(SUCCESS);
     }

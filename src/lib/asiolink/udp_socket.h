@@ -19,7 +19,9 @@
 #error "asio.hpp must be included before including this, see asiolink.h as to why"
 #endif
 
+#include <cstddef>
 #include <asiolink/io_socket.h>
+#include <asiolink/io_service.h>
 
 namespace asiolink {
 
@@ -29,28 +31,46 @@ namespace asiolink {
 /// Other notes about \c TCPSocket applies to this class, too.
 class UDPSocket : public IOSocket {
 private:
-    UDPSocket(const UDPSocket& source);
-    UDPSocket& operator=(const UDPSocket& source);
+    /// \brief Class is non-copyable
+    UDPSocket(const UDPSocket&);
+    UDPSocket& operator=(const UDPSocket&);
+
 public:
+    enum {
+        MAX_SIZE = 4096         // Send and receive size
+    };
+    
     /// \brief Constructor from an ASIO UDP socket.
     ///
     /// \param socket The ASIO representation of the UDP socket.
-    UDPSocket(asio::ip::udp::socket& socket) : socket_(socket) {}
+    UDPSocket(asio::ip::udp::socket& socket) :
+        socket_ptr_(NULL), socket_(socket)
+    {}
+
+    /// \brief Constructor
+    ///
+    /// Used when the UDPSocket is being asked to manage its own internal
+    /// socket.
+    UDPSocket(IOService& service);
+
+    /// \brief Destructor
+    virtual ~UDPSocket();
 
     virtual int getNative() const { return (socket_.native()); }
     virtual int getProtocol() const { return (IPPROTO_UDP); }
 
     /// \brief Open Socket
     ///
-    /// No-op for UDP sockets
+    /// Opens the UDP socket.  In the model for transport-layer agnostic I/O,
+    /// an "open" operation includes a connection to the remote end (which
+    /// may take time).  This does not happen for UDP, so the method returns
+    /// "false" to indicate that the operation completed synchronously.
     ///
-    /// \param endpoint Unused.
+    /// \param endpoint Endpoint to which the socket will connect to.
     /// \param callback Unused.
     ///
     /// \return false to indicate that the "operation" completed synchronously.
-    virtual bool open(const IOEndpoint*, IOCompletionCallback&) {
-        return false;
-    }
+    virtual bool open(const IOEndpoint* endpoint, IOCompletionCallback&);
 
     /// \brief Send Asynchronously
     ///
@@ -62,9 +82,8 @@ public:
     /// \param length Length of data to send
     /// \param endpoint Target of the send
     /// \param callback Callback object.
-    virtual void async_send(const void*, size_t,
-        const IOEndpoint*, IOCompletionCallback&) {
-    }
+    virtual void async_send(const void* data, size_t length,
+        const IOEndpoint* endpoint, IOCompletionCallback& callback);
 
     /// \brief Receive Asynchronously
     ///
@@ -77,21 +96,22 @@ public:
     /// \param length Length of the data buffer
     /// \param endpoint Source of the communication
     /// \param callback Callback object
-    virtual void async_receive(void* data, size_t, IOEndpoint*,
-        IOCompletionCallback&) {
-    }
+    virtual void async_receive(void* data, size_t length, IOEndpoint* endpoint,
+        IOCompletionCallback& callback);
 
     /// \brief Cancel I/O On Socket
-    virtual void cancel() {
-    }
+    virtual void cancel();
 
     /// \brief Close socket
-    virtual void close() {
-    }
+    virtual void close();
 
 
 private:
-    asio::ip::udp::socket& socket_;
+    // Two variables to hold the socket - a socket and a pointer to it.  This
+    // handles the case where a socket is passed to the UDPSocket on
+    // construction, or where it is asked to manage its own socket.
+    asio::ip::udp::socket*      socket_ptr_;    ///< Pointer to the socket
+    asio::ip::udp::socket&      socket_;        ///< Socket
 };
 
 }      // namespace asiolink

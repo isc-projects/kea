@@ -15,9 +15,11 @@
 #ifndef __IO_COMPLETION_CB_H
 #define __IO_COMPLETION_CB_H
 
+#include <asio/error.hpp>
 #include <asio/error_code.hpp>
 #include <coroutine.h>
 
+namespace asiolink {
 
 /// \brief Asynchronous I/O Completion Callback
 ///
@@ -83,5 +85,6 @@ private:
     IOCompletionCallback*   self_;      ///< Pointer to real object
 };
 
+} // namespace asiolink
 
 #endif // __IO_COMPLETION_CB_H
