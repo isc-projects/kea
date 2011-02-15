@@ -416,20 +416,19 @@ class BoB:
         """
             Start the Authoritative server
         """
-        dns_prog = 'b10-auth'
-        dnsargs = [dns_prog]
-        dnsargs += ['-p', str(self.dns_port)]
+        authargs = ['b10-auth']
+        authargs += ['-p', str(self.dns_port)]
         if self.address:
-            dnsargs += ['-a', str(self.address)]
+            authargs += ['-a', str(self.address)]
         if self.nocache:
-            dnsargs += ['-n']
+            authargs += ['-n']
         if self.uid:
-            dnsargs += ['-u', str(self.uid)]
+            authargs += ['-u', str(self.uid)]
         if self.verbose:
-            dnsargs += ['-v']
+            authargs += ['-v']
 
         # ... and start
-        self.start_process("b10-auth", dnsargs, c_channel_env,
+        self.start_process("b10-auth", authargs, c_channel_env,
             self.dns_port, self.address)
 
     def start_resolver(self, c_channel_env):
