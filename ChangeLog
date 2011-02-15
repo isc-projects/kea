@@ -1,7 +1,7 @@
   167.  [func]      zhang likun, jelte
 	Added a basic implementation for a resolver cache (though not
 	used yet).
-	(Trac #449, git 756e56a8c683906b1b50bba5675c996fb1295820)
+	(Trac #449, git 8aa3b2246ae095bbe7f855fd11656ae3bdb98986)
 
   166.  [func]      jelte
 	The resolver now sends back a SERVFAIL when there is a client
