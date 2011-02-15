@@ -34,6 +34,9 @@
 #include <asiolink/io_socket.h>
 #include <asiolink/io_error.h>
 
+#include <asiolink/udp_endpoint.h>
+#include <asiolink/udp_socket.h>
+
 /// \namespace asiolink
 /// \brief A wrapper interface for the ASIO library.
 ///
