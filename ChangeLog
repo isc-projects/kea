@@ -1,6 +1,6 @@
-  XXX.  [bug]           naokikambe
+  167.  [bug]           naokikambe
 	Fixed failure of termination of msgq_test.py with python3 coverage(3.3.1)
-	(Trac #nnn, git tbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbd)
+	(Trac #573, git 0e6a18e12f61cc482e07078776234f32605312e5)
 
   166.  [func]      jelte
 	The resolver now sends back a SERVFAIL when there is a client
