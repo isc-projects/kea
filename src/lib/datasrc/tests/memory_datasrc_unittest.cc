@@ -813,7 +813,7 @@ TEST_F(MemoryZoneTest, nestedEmptyWildcard) {
     }
 
     // Domains to test
-    const char *names[] = {
+    const char* names[] = {
         "*.foo.*.bar.example.org",
         "foo.*.bar.example.org",
         "*.bar.example.org",
@@ -824,7 +824,7 @@ TEST_F(MemoryZoneTest, nestedEmptyWildcard) {
     {
         SCOPED_TRACE("Asking directly for A on parent nodes");
 
-        for (const char **name(names); *name; ++ name) {
+        for (const char** name(names); *name != NULL; ++ name) {
             SCOPED_TRACE(string("Node ") + *name);
             findTest(Name(*name), RRType::A(), Zone::NXRRSET);
         }
@@ -833,7 +833,7 @@ TEST_F(MemoryZoneTest, nestedEmptyWildcard) {
     {
         SCOPED_TRACE("Asking for ANY on parent nodes");
 
-        for (const char **name(names); *name; ++ name) {
+        for (const char** name(names); *name != NULL; ++ name) {
             SCOPED_TRACE(string("Node ") + *name);
 
             RRsetList target;
