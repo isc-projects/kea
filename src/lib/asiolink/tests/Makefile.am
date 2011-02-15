@@ -17,13 +17,15 @@ if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES = $(top_srcdir)/src/lib/dns/tests/unittest_util.h
 run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
-run_unittests_SOURCES += udp_query_unittest.cc
 run_unittests_SOURCES += io_address_unittest.cc
 run_unittests_SOURCES += io_endpoint_unittest.cc
 run_unittests_SOURCES += io_socket_unittest.cc
 run_unittests_SOURCES += io_service_unittest.cc
 run_unittests_SOURCES += interval_timer_unittest.cc
 run_unittests_SOURCES += recursive_query_unittest.cc
+run_unittests_SOURCES += udp_endpoint_unittest.cc
+run_unittests_SOURCES += udp_query_unittest.cc
+run_unittests_SOURCES += udp_socket_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS) $(LOG4CXX_LDFLAGS)
