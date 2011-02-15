@@ -1,3 +1,8 @@
+  168.  [bug]       vorner
+	Boss no longer has the -f argument, which was undocumented and stayed as
+	a relict of previous versions, currently causing only strange behaviour.
+	(Trac #572, git 17f237478961005707d649a661cc72a4a0d612d4)
+
   167.  [bug]           naokikambe
 	Fixed failure of termination of msgq_test.py with python3 coverage(3.3.1)
 	(Trac #573, git 0e6a18e12f61cc482e07078776234f32605312e5)
