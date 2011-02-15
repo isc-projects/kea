@@ -52,8 +52,8 @@ RRsetCache::lookup(const isc::dns::Name& qname,
 
 RRsetEntryPtr
 RRsetCache::update(const isc::dns::RRset& rrset, const RRsetTrustLevel& level) {
-	// TODO: If the RRset is an NS, we should update the NSAS as well
-	
+    // TODO: If the RRset is an NS, we should update the NSAS as well
+    
     // lookup first
     RRsetEntryPtr entry_ptr = lookup(rrset.getName(), rrset.getType());
     if(!entry_ptr) {
