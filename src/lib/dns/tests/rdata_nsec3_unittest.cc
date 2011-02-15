@@ -90,10 +90,10 @@ TEST_F(Rdata_NSEC3_Test, createFromWire) {
                   *rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
                                         "rdata_nsec3_fromWire1")));
 
-    // Too short RDLENGTH
+    // Too short RDLENGTH: it doesn't even contain the first 5 octets.
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
-                                      "rdata_nsec3_fromWire2"),
-                 InvalidRdataLength);
+                                      "rdata_nsec3_fromWire2.wire"),
+                 DNSMessageFORMERR);
 
     // These tests are the same as NSEC tests.  See the NSEC cases for
     // details.
@@ -121,6 +121,30 @@ TEST_F(Rdata_NSEC3_Test, createFromWire) {
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
                                       "rdata_nsec3_fromWire10.wire"),
                  DNSMessageFORMERR);
+
+    // salt length is too large
+    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
+                                      "rdata_nsec3_fromWire11.wire"),
+                 DNSMessageFORMERR);
+
+    // hash length is too large
+    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
+                                      "rdata_nsec3_fromWire12.wire"),
+                 DNSMessageFORMERR);
+
+    //
+    // Short buffer cases.  The data is valid NSEC3 RDATA, but the buffer
+    // is trimmed at the end.  All cases should result in an exception from
+    // the buffer class.
+    vector<uint8_t> data;
+    UnitTestUtil::readWireData("rdata_nsec3_fromWire1", data);
+    const uint16_t rdlen = (data.at(0) << 8) + data.at(1);
+    for (int i = 0; i < rdlen; ++i) {
+        // intentionally construct a short buffer
+        InputBuffer b(&data[0] + 2, i);
+        EXPECT_THROW(createRdata(RRType::NSEC3(), RRClass::IN(), b, 39),
+                     InvalidBufferPosition);
+    }
 }
 
 TEST_F(Rdata_NSEC3_Test, toWireRenderer) {

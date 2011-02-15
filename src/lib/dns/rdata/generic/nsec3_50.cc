@@ -129,9 +129,9 @@ NSEC3::NSEC3(const string& nsec3_str) :
 
 NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) {
     // NSEC3 RR must have at least 5 octets:
-    // hash(1), flags(1), iteration(2), saltlen(1)
+    // hash algorithm(1), flags(1), iteration(2), saltlen(1)
     if (rdata_len < 5) {
-        isc_throw(InvalidRdataLength, "NSEC3 too short");
+        isc_throw(DNSMessageFORMERR, "NSEC3 too short, length: " << rdata_len);
     }
 
     const uint8_t hashalg = buffer.readUint8();
@@ -140,29 +140,25 @@ NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) {
 
     const uint8_t saltlen = buffer.readUint8();
     rdata_len -= 5;
-
     if (rdata_len < saltlen) {
-        isc_throw(InvalidRdataLength, "NSEC3 salt too short");
+        isc_throw(DNSMessageFORMERR, "NSEC3 salt length is too large: " <<
+                  static_cast<unsigned int>(saltlen));
     }
 
     vector<uint8_t> salt(saltlen);
     buffer.readData(&salt[0], saltlen);
     rdata_len -= saltlen;
 
-    uint8_t nextlen = buffer.readUint8();
+    const uint8_t nextlen = buffer.readUint8();
     --rdata_len;
-
-    if (rdata_len < nextlen) {
-        isc_throw(InvalidRdataLength, "NSEC3 next hash too short");
+    if (rdata_len <= nextlen) {
+        isc_throw(DNSMessageFORMERR, "NSEC3 hash length is too large: " <<
+                  static_cast<unsigned int>(nextlen));
     }
 
     vector<uint8_t> next(nextlen);
     buffer.readData(&next[0], nextlen);
     rdata_len -= nextlen;
-
-    if (rdata_len == 0) {
-        isc_throw(InvalidRdataLength, "NSEC3 type bitmap too short");
-    }
 
     vector<uint8_t> typebits(rdata_len);
     buffer.readData(&typebits[0], rdata_len);
