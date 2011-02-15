@@ -1,3 +1,8 @@
+  167.  [func]      zhang likun, jelte
+	Added a basic implementation for a resolver cache (though not
+	used yet).
+	(Trac #449, git 756e56a8c683906b1b50bba5675c996fb1295820)
+
   166.  [func]      jelte
 	The resolver now sends back a SERVFAIL when there is a client
 	timeout (timeout_client config setting), but it will not stop
