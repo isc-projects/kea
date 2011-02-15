@@ -21,7 +21,7 @@
 #include "../message_cache.h"
 #include "../rrset_cache.h"
 #include "../resolver_cache.h"
-#include "cache_test_util.h"
+#include "cache_test_messagefromfile.h"
 
 using namespace isc::cache;
 using namespace isc;
