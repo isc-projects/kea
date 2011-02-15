@@ -1,3 +1,7 @@
+  XXX.  [bug]           naokikambe
+	Fixed failure of termination of msgq_test.py with python3 coverage(3.3.1)
+	(Trac #nnn, git tbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbd)
+
   166.  [func]      jelte
 	The resolver now sends back a SERVFAIL when there is a client
 	timeout (timeout_client config setting), but it will not stop
