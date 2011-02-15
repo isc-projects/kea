@@ -19,7 +19,7 @@
 #include <cache/local_zone_data.h>
 #include <dns/rrset.h>
 #include <dns/rrttl.h>
-#include "cache_test_util.h"
+#include "cache_test_messagefromfile.h"
 
 using namespace isc::cache;
 using namespace isc::dns;
