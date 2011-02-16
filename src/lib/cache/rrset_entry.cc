@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include <config.h>
+
 #include <dns/message.h>
 #include <nsas/nsas_entry.h>
 #include <nsas/fetchable.h>

@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include <config.h>
+
 #include <string>
 #include "rrset_cache.h"
 #include <nsas/nsas_entry_compare.h>

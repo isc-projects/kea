@@ -21,7 +21,7 @@
 #include "../message_cache.h"
 #include "../rrset_cache.h"
 #include "../resolver_cache.h"
-#include "cache_test_util.h"
+#include "cache_test_messagefromfile.h"
 
 using namespace isc::cache;
 using namespace isc;
@@ -78,7 +78,7 @@ TEST_F(MessageCacheTest, testLookup) {
     EXPECT_TRUE(message_cache_->lookup(qname1, RRType::A(), message_render));
 }
 
-TEST_F(MessageCacheTest, testUpdate) {
+TEST_F(MessageCacheTest, DISABLED_testUpdate) {
     messageFromFile(message_parse, "message_fromWire4");
     EXPECT_TRUE(message_cache_->update(message_parse));
 
