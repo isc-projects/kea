@@ -38,6 +38,8 @@ run_unittests_SOURCES  += message_cache_unittest.cc
 run_unittests_SOURCES  += message_entry_unittest.cc
 run_unittests_SOURCES  += local_zone_data_unittest.cc
 run_unittests_SOURCES  += resolver_cache_unittest.cc
+run_unittests_SOURCES  += cache_test_messagefromfile.h
+run_unittests_SOURCES  += cache_test_sectioncount.h
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
@@ -55,3 +57,10 @@ run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 endif
 
 noinst_PROGRAMS = $(TESTS)
+
+EXTRA_DIST = testdata/message_fromWire1
+EXTRA_DIST += testdata/message_fromWire2
+EXTRA_DIST += testdata/message_fromWire3
+EXTRA_DIST += testdata/message_fromWire4
+EXTRA_DIST += testdata/message_fromWire5
+EXTRA_DIST += testdata/message_fromWire6

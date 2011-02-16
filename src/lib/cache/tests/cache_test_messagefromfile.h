@@ -36,23 +36,5 @@ messageFromFile(Message& message, const char* datafile) {
     message.fromWire(buffer);
 }
 
-/// \brief Counts the number of rrsets in the given section
-///
-/// \param msg The message to count in
-/// \param section The section to count
-///
-/// \return The number of RRsets in the given section
-int
-sectionRRsetCount(Message& msg, Message::Section section) {
-    int count = 0;
-    for (RRsetIterator rrset_iter = msg.beginSection(section);
-         rrset_iter != msg.endSection(section);
-         ++rrset_iter) {
-        ++count;
-    }
-
-    return count;
-}
-
 }   // namespace
 
