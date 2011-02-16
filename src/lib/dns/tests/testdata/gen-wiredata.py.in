@@ -357,7 +357,9 @@ class NSEC3(NSECBASE):
         f.write('%02x %02x %04x\n' %
                 (self.hashalg, (self.mbz << 1) | optout_val, self.iterations))
         f.write("# Salt Len=%d, Salt='%s'\n" % (self.saltlen, self.salt))
-        f.write('%02x %s\n' % (self.saltlen, encode_string(self.salt)))
+        f.write('%02x%s%s\n' % (self.saltlen,
+                                ' ' if len(self.salt) > 0 else '',
+                                encode_string(self.salt)))
         f.write("# Hash Len=%d, Hash='%s'\n" % (self.hashlen, self.hash))
         f.write('%02x %s\n' % (self.hashlen, encode_string(self.hash)))
 
