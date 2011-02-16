@@ -79,6 +79,9 @@ TEST_F(Rdata_NSEC3_Test, badText) {
     EXPECT_THROW(generic::NSEC3("1 1 1 ADDAFEE "
                                 "WXYZWXYZWXYZ=WXYZWXYZ==WXYZWXYZW A NS SOA"),
                  BadValue);     // bad hex
+    EXPECT_THROW(generic::NSEC3("1 1 1 -- H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
+                                "A"),
+                 BadValue); // this shouldn't be confused a valid empty salt
     EXPECT_THROW(generic::NSEC3("1 1 1 ADDAFEEE "
                                 "WXYZWXYZWXYZ=WXYZWXYZ==WXYZWXYZW A NS SOA"),
                  BadValue);     // bad base32hex
