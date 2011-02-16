@@ -56,6 +56,10 @@ TEST_F(Rdata_NSEC3_Test, fromText) {
     EXPECT_NO_THROW(generic::NSEC3("255 255 65535 D399EAAB "
                                    "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
                                    "NS SOA RRSIG DNSKEY NSEC3PARAM"));
+
+    // 0-length salt
+    EXPECT_EQ(0, generic::NSEC3("1 1 1 - H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
+                                "A").getSalt().size());
 }
 
 TEST_F(Rdata_NSEC3_Test, toText) {
@@ -95,6 +99,7 @@ TEST_F(Rdata_NSEC3_Test, badText) {
 }
 
 TEST_F(Rdata_NSEC3_Test, createFromWire) {
+    // Normal case
     const generic::NSEC3 rdata_nsec3(nsec3_txt);
     EXPECT_EQ(0, rdata_nsec3.compare(
                   *rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
@@ -136,6 +141,12 @@ TEST_F(Rdata_NSEC3_Test, createFromWire) {
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
                                       "rdata_nsec3_fromWire11.wire"),
                  DNSMessageFORMERR);
+
+    // empty salt.  unusual, but valid.
+    ConstRdataPtr rdata =
+        rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
+                             "rdata_nsec3_fromWire13.wire");
+    EXPECT_EQ(0, dynamic_cast<const generic::NSEC3&>(*rdata).getSalt().size());
 
     // hash length is too large
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),

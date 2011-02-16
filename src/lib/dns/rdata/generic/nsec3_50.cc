@@ -92,7 +92,9 @@ NSEC3::NSEC3(const string& nsec3_str) :
     }
 
     vector<uint8_t> salt;
-    decodeHex(salthex, salt);
+    if (salthex != "-") {       // "-" means an 0-length salt
+        decodeHex(salthex, salt);
+    }
 
     vector<uint8_t> next;
     decodeBase32Hex(nexthash, next);
@@ -154,8 +156,10 @@ NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) {
     }
 
     vector<uint8_t> salt(saltlen);
-    buffer.readData(&salt[0], saltlen);
-    rdata_len -= saltlen;
+    if (saltlen > 0) {
+        buffer.readData(&salt[0], saltlen);
+        rdata_len -= saltlen;
+    }
 
     const uint8_t nextlen = buffer.readUint8();
     --rdata_len;
