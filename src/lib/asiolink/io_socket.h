@@ -133,7 +133,7 @@ public:
     /// \param length Length of data to send
     /// \param endpoint Target of the send
     /// \param callback Callback object.
-    virtual void async_send(const void* data, size_t length,
+    virtual void asyncSend(const void* data, size_t length,
         const IOEndpoint* endpoint, IOCompletionCallback& callback) = 0;
 
     /// \brief Receive Asynchronously
@@ -145,10 +145,32 @@ public:
     ///
     /// \param data Buffer to receive incoming message
     /// \param length Length of the data buffer
+    /// \param cumulative Amount of data that should already be in the buffer.
     /// \param endpoint Source of the communication
     /// \param callback Callback object
-    virtual void async_receive(void* data, size_t length, IOEndpoint* endpoint,
-        IOCompletionCallback& callback) = 0;
+    virtual void asyncReceive(void* data, size_t length, size_t cumulative,
+        IOEndpoint* endpoint, IOCompletionCallback& callback) = 0;
+
+    /// \brief Checks if the data received is complete.
+    ///
+    /// This applies to TCP receives, where the data is a byte stream and a
+    /// receive is not guaranteed to receive the entire message.  DNS messages
+    /// over TCP are prefixed by a two-byte count field.  This method takes the
+    /// amount received so far and the amount received in this I/O and checks
+    /// if the message is complete, returning the appropriate indication.  As
+    /// a side-effect, it also updates the amount received.
+    ///
+    /// For a UDP receive, all the data is received in one I/O, so this is
+    /// effectively a no-op (although it does update the amount received).
+    ///
+    /// \param data Data buffer containing data to date
+    /// \param length Amount of data received in last asynchronous I/O
+    /// \param cumulative On input, amount of data received before the last
+    /// I/O.  On output, the total amount of data received to date.
+    ///
+    /// \return true if the receive is complete, false if another receive is
+    /// needed.
+    virtual bool receiveComplete(void* data, size_t length, size_t& cumulative) = 0;
 
     /// \brief Cancel I/O On Socket
     virtual void cancel() = 0;

@@ -74,7 +74,7 @@ public:
     /// \param length Unused
     /// \param endpoint Unused
     /// \param callback Unused
-    virtual void async_send(const void*, size_t, const IOEndpoint*,
+    virtual void asyncSend(const void*, size_t, const IOEndpoint*,
         IOCompletionCallback&) {
     }
 
@@ -84,10 +84,22 @@ public:
     ///
     /// \param data Unused
     /// \param length Unused
+    /// \param cumulative Unused
     /// \param endpoint Unused
     /// \param callback Unused
-    virtual void async_receive(void* data, size_t, IOEndpoint*,
+    virtual void asyncReceive(void* data, size_t, size_t, IOEndpoint*,
         IOCompletionCallback&) {
+    }
+
+    /// \brief Checks if the data received is complete.
+    ///
+    /// \param data Unused
+    /// \param length Unused
+    /// \param cumulative Unused
+    ///
+    /// \return Always true
+    virtual bool receiveComplete(void*, size_t, size_t&) {
+        return (true);
     }
 
     /// \brief Cancel I/O On Socket
