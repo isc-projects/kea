@@ -163,8 +163,8 @@ NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) {
 
     const uint8_t nextlen = buffer.readUint8();
     --rdata_len;
-    if (rdata_len <= nextlen) {
-        isc_throw(DNSMessageFORMERR, "NSEC3 hash length is too large: " <<
+    if (nextlen == 0 || rdata_len <= nextlen) {
+        isc_throw(DNSMessageFORMERR, "NSEC3 invalid hash length: " <<
                   static_cast<unsigned int>(nextlen));
     }
 
