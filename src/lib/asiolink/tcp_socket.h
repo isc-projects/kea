@@ -75,7 +75,7 @@ public:
     /// \param length Length of data to send
     /// \param endpoint Target of the send
     /// \param callback Callback object.
-    virtual void async_send(const void*, size_t,
+    virtual void asyncSend(const void*, size_t,
         const IOEndpoint*, IOCompletionCallback&) {
     }
 
@@ -88,10 +88,28 @@ public:
     ///
     /// \param data Buffer to receive incoming message
     /// \param length Length of the data buffer
+    /// \param cumulative Amount of data that should already be in the buffer.
     /// \param endpoint Source of the communication
     /// \param callback Callback object
-    virtual void async_receive(void* data, size_t, IOEndpoint*,
+    virtual void asyncReceive(void* data, size_t, size_t, IOEndpoint*,
         IOCompletionCallback&) {
+    }
+
+    /// \brief Checks if the data received is complete.
+    ///
+    /// Checks that the total data received is the amount expected by the
+    /// two-byte header to the message.
+    ///
+    /// \param data Data buffer containing data to date
+    /// \param length Amount of data received in last asynchronous I/O
+    /// \param cumulative On input, amount of data received before the last
+    /// I/O.  On output, the total amount of data received to date.
+    ///
+    /// \return true if the receive is complete, false if another receive is
+    /// needed.
+    virtual bool receiveComplete(void*, size_t length, size_t& cumulative) {
+        cumulative = length;
+        return (true);
     }
 
     /// \brief Cancel I/O On Socket

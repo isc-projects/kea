@@ -64,10 +64,10 @@ using namespace std;
 
 namespace {
 
-const char* SERVER_ADDRESS = "127.0.0.1";
+const char SERVER_ADDRESS[] = "127.0.0.1";
 const unsigned short SERVER_PORT = 5301;
 
-// FIXME Shouldn't we send something that is real message?
+// TODO: Shouldn't we send something that is real message?
 const char OUTBOUND_DATA[] = "Data sent from client to server";
 const char INBOUND_DATA[] = "Returned data from server to client";
 }
@@ -179,6 +179,7 @@ private:
     boost::shared_ptr<PrivateData>  ptr_;   ///< Pointer to private data
 };
 
+// TODO: Need to add a test to check the cancel() method
 
 // Tests the operation of a UDPSocket by opening it, sending an asynchronous
 // message to a server, receiving an asynchronous message from the server and
@@ -193,6 +194,7 @@ TEST(UDPSocket, SequenceTest) {
     // The client - the UDPSocket being tested
     UDPSocket   client(service);            // Socket under test
     UDPCallback client_cb("Client");        // Async I/O callback function
+    size_t      client_cumulative = 0;      // Cumulative data received
 
     // The server - with which the client communicates.  For convenience, we
     // use the same io_service, and use the endpoint object created for
@@ -220,7 +222,7 @@ TEST(UDPSocket, SequenceTest) {
     // be called until we call the io_service.run() method.
     client_cb.setCalled(false);
     client_cb.setCode(7);  // Arbitrary number
-    client.async_send(OUTBOUND_DATA, sizeof(OUTBOUND_DATA), &endpoint, client_cb);
+    client.asyncSend(OUTBOUND_DATA, sizeof(OUTBOUND_DATA), &endpoint, client_cb);
     EXPECT_FALSE(client_cb.getCalled());
 
     // Execute the two callbacks.
@@ -243,7 +245,8 @@ TEST(UDPSocket, SequenceTest) {
     client_cb.setCalled(false);
     client_cb.setCode(32);                  // Arbitrary number
     UDPEndpoint client_remote_endpoint;     // To receive address of remote system
-    client.async_receive(data, sizeof(data), &client_remote_endpoint, client_cb);
+    client.asyncReceive(data, sizeof(data), client_cumulative,
+        &client_remote_endpoint, client_cb);
 
     // Issue the write on the server side to the source of the data it received.
     server_cb.setLength(22345);             // Arbitrary number
@@ -251,7 +254,6 @@ TEST(UDPSocket, SequenceTest) {
     server_cb.setCode(232);                 // Arbitrary number
     server.async_send_to(buffer(INBOUND_DATA, sizeof(INBOUND_DATA)),
         server_remote_endpoint.getASIOEndpoint(), server_cb);
-
 
     // Expect two callbacks to run
     service.run_one();
@@ -271,6 +273,11 @@ TEST(UDPSocket, SequenceTest) {
     // address and port the server is listening on.
     EXPECT_TRUE(server_address == client_remote_endpoint.getAddress());
     EXPECT_EQ(SERVER_PORT, client_remote_endpoint.getPort());
+
+    // Finally, check that the receive received a complete buffer's worth of data.
+    EXPECT_TRUE(client.receiveComplete(&data[0], client_cb.getLength(),
+        client_cumulative));
+    EXPECT_EQ(client_cb.getLength(), client_cumulative);
 
     // Close client and server.
     EXPECT_NO_THROW(client.close());
