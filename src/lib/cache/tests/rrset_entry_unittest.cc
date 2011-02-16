@@ -49,6 +49,7 @@ TEST_F(GenCacheKeyTest, genCacheEntryKey2) {
 
 class DerivedRRsetEntry: public RRsetEntry {
 public:
+    DerivedRRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& level) : RRsetEntry(rrset, level) {};
 
     void updateTTLForTest() {
 
