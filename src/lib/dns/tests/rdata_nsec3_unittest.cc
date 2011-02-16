@@ -153,6 +153,11 @@ TEST_F(Rdata_NSEC3_Test, createFromWire) {
                                       "rdata_nsec3_fromWire12.wire"),
                  DNSMessageFORMERR);
 
+    // empty hash.  invalid.
+    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
+                                      "rdata_nsec3_fromWire14.wire"),
+                 DNSMessageFORMERR);
+
     //
     // Short buffer cases.  The data is valid NSEC3 RDATA, but the buffer
     // is trimmed at the end.  All cases should result in an exception from
