@@ -46,6 +46,18 @@ public:
     string nsec3_txt;
 };
 
+TEST_F(Rdata_NSEC3_Test, fromText) {
+    // A normal case: the test constructor should successfully parse the
+    // text and construct nsec3_txt.  It will be tested against the wire format
+    // representation in the createFromWire test.
+
+    // Numeric parameters have possible maximum values.  Unusual, but must
+    // be accepted.
+    EXPECT_NO_THROW(generic::NSEC3("255 255 65535 D399EAAB "
+                                   "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
+                                   "NS SOA RRSIG DNSKEY NSEC3PARAM"));
+}
+
 TEST_F(Rdata_NSEC3_Test, toText) {
     const generic::NSEC3 rdata_nsec3(nsec3_txt);
     EXPECT_EQ(nsec3_txt, rdata_nsec3.toText());

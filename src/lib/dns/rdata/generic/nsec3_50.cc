@@ -71,7 +71,7 @@ NSEC3::NSEC3(const string& nsec3_str) :
     if (iss.bad() || iss.fail()) {
         isc_throw(InvalidRdataText, "Invalid NSEC3 text: " << nsec3_str);
     }
-    if (hashalg > 0xf) {
+    if (hashalg > 0xff) {
         isc_throw(InvalidRdataText,
                   "NSEC3 hash algorithm out of range: " << hashalg);
     }
