@@ -201,8 +201,8 @@ ResolverCache::lookupClosestRRset(const isc::dns::Name& qname,
 
 bool
 ResolverCache::update(const isc::dns::Message& msg) {
-    
     QuestionIterator iter = msg.beginQuestion();
+    RRClass c = (*iter)->getClass();
     ResolverClassCache* cc = getClassCache((*iter)->getClass());
     if (cc) {
         return (cc->update(msg));

@@ -256,11 +256,10 @@ public:
         const qid_t qid = query_message->getQid();
         const bool rd = query_message->getHeaderFlag(Message::HEADERFLAG_RD);
         const bool cd = query_message->getHeaderFlag(Message::HEADERFLAG_CD);
-        const Opcode& opcode = query_message->getOpcode();
-
-        // Fill in the final details of the answer message
+        
+        // The opcode and question section should have already been set,
+        // fill in the final details of the answer message
         answer_message->setQid(qid);
-        answer_message->setOpcode(opcode);
 
         answer_message->setHeaderFlag(Message::HEADERFLAG_QR);
         answer_message->setHeaderFlag(Message::HEADERFLAG_RA);
@@ -271,10 +270,6 @@ public:
             answer_message->setHeaderFlag(Message::HEADERFLAG_CD);
         }
 
-        vector<QuestionPtr> questions;
-        questions.assign(query_message->beginQuestion(), query_message->endQuestion());
-        for_each(questions.begin(), questions.end(), QuestionInserter(answer_message));
-        
         // Now we can clear the buffer and render the new message into it
         buffer->clear();
         MessageRenderer renderer(*buffer);

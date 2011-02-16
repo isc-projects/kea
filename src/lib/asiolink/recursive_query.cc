@@ -32,8 +32,11 @@
 
 #include <dns/question.h>
 #include <dns/message.h>
+#include <dns/opcode.h>
 
 #include <resolve/resolve.h>
+
+#include <cache/resolver_cache.h>
 
 using isc::log::dlog;
 using namespace isc::dns;
@@ -123,7 +126,7 @@ private:
     asio::deadline_timer lookup_timer;
 
     size_t queries_out_;
-
+    
     // If we timed out ourselves (lookup timeout), stop issuing queries
     bool done_;
 
@@ -131,6 +134,9 @@ private:
     // stop. We use this variable to make sure we don't send another
     // answer if we do find one later (or if we have a lookup_timeout)
     bool answer_sent_;
+
+    // Reference to our cache
+    isc::cache::ResolverCache& cache_;
 
     // (re)send the query to the server.
     void send() {
@@ -291,7 +297,8 @@ public:
         OutputBufferPtr buffer,
         isc::resolve::ResolverInterface::CallbackPtr cb,
         int query_timeout, int client_timeout, int lookup_timeout,
-        unsigned retries) :
+        unsigned retries,
+        isc::cache::ResolverCache& cache) :
         io_(io),
         question_(question),
         answer_message_(answer_message),
@@ -306,7 +313,8 @@ public:
         lookup_timer(io),
         queries_out_(0),
         done_(false),
-        answer_sent_(false)
+        answer_sent_(false),
+        cache_(cache)
     {
         // Setup the timer to stop trying (lookup_timeout)
         if (lookup_timeout >= 0) {
@@ -366,6 +374,11 @@ public:
         // until that one comes back to us)
         done_ = true;
         if (resume && !answer_sent_) {
+            // Store the answer we found in our cache
+            std::cout << "[XX] caching our answer:" << std::endl;
+            std::cout << answer_message_->toText();
+            cache_.update(*answer_message_);
+            std::cout << "[XX] done caching our answer" << std::endl;
             resolvercallback_->success(answer_message_);
         } else {
             resolvercallback_->failure();
@@ -424,11 +437,26 @@ RecursiveQuery::resolve(const QuestionPtr& question,
 
     MessagePtr answer_message(new Message(Message::RENDER));
     OutputBufferPtr buffer(new OutputBuffer(0));
-    
-    // It will delete itself when it is done
-    new RunningQuery(io, *question, answer_message, upstream_,
-                     upstream_root_, buffer, callback, query_timeout_,
-                     client_timeout_, lookup_timeout_, retries_);
+
+    // TODO: general 'prepareinitialanswer'
+    answer_message->setOpcode(isc::dns::Opcode::QUERY());
+    answer_message->addQuestion(question);
+    dlog("Try out cache first (direct call to resolve)");
+    // First try to see if we have something cached in the messagecache
+    if (cache_.lookup(question->getName(), question->getType(),
+                      question->getClass(), *answer_message)) {
+        dlog("Message found in cache, returning that");
+        // TODO: err, should cache set rcode as well?
+        answer_message->setRcode(Rcode::NOERROR());
+        callback->success(answer_message);
+    } else {
+        dlog("Message not found in cache, starting recursive query");
+        // It will delete itself when it is done
+        new RunningQuery(io, *question, answer_message, upstream_,
+                         upstream_root_, buffer, callback, query_timeout_,
+                         client_timeout_, lookup_timeout_, retries_,
+                         cache_);
+    }
 }
 
 void
@@ -445,11 +473,26 @@ RecursiveQuery::resolve(const Question& question,
 
     isc::resolve::ResolverInterface::CallbackPtr crs(
         new isc::resolve::ResolverCallbackServer(server));
+
+    // TODO: general 'prepareinitialanswer'
+    answer_message->setOpcode(isc::dns::Opcode::QUERY());
+    answer_message->addQuestion(question);
     
-    // It will delete itself when it is done
-    new RunningQuery(io, question, answer_message, upstream_, upstream_root_,
-                         buffer, crs, query_timeout_, client_timeout_,
-                         lookup_timeout_, retries_);
+    // First try to see if we have something cached in the messagecache
+    dlog("Try out cache first (started by incoming event)");
+    if (cache_.lookup(question.getName(), question.getType(),
+                      question.getClass(), *answer_message)) {
+        dlog("Message found in cache, returning that");
+        // TODO: err, should cache set rcode as well?
+        answer_message->setRcode(Rcode::NOERROR());
+        crs->success(answer_message);
+    } else {
+        dlog("Message not found in cache, starting recursive query");
+        // It will delete itself when it is done
+        new RunningQuery(io, question, answer_message, upstream_, upstream_root_,
+                             buffer, crs, query_timeout_, client_timeout_,
+                             lookup_timeout_, retries_, cache_);
+    }
 }
 
 
