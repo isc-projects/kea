@@ -63,9 +63,11 @@ NSEC3::NSEC3(const string& nsec3_str) :
 {
     istringstream iss(nsec3_str);
     unsigned int hashalg, flags, iterations;
-    string salthex;
+    string iterations_str, salthex, nexthash;
+    stringbuf bitmaps;
 
-    iss >> hashalg >> flags >> iterations >> salthex;
+    iss >> hashalg >> flags >> iterations_str >> salthex >> nexthash
+        >> &bitmaps;
     if (iss.bad() || iss.fail()) {
         isc_throw(InvalidRdataText, "Invalid NSEC3 text");
     }
@@ -75,6 +77,14 @@ NSEC3::NSEC3(const string& nsec3_str) :
     if (flags > 0xff) {
         isc_throw(InvalidRdataText, "NSEC3 flags out of range");
     }
+    // Convert iteration.  To reject an invalid case where there's no space
+    // between iteration and salt, we extract this field as string and convert
+    // to integer.
+    try {
+        iterations = lexical_cast<unsigned int>(iterations_str);
+    } catch (const bad_lexical_cast&) {
+        isc_throw(InvalidRdataText, "Bad NSEC3 iteration: " << iterations_str);
+    }
     if (iterations > 0xffff) {
         isc_throw(InvalidRdataText, "NSEC3 iterations out of range");
     }
@@ -82,14 +92,10 @@ NSEC3::NSEC3(const string& nsec3_str) :
     vector<uint8_t> salt;
     decodeHex(salthex, salt);
 
-    string nextstr;
-    iss >> setw(32) >> nextstr;
     vector<uint8_t> next;
-    if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid NSEC3 hash algorithm");
-    }
-    decodeBase32Hex(nextstr, next);
+    decodeBase32Hex(nexthash, next);
 
+    stringstream bitmap_stream(bitmaps.str());
     uint8_t bitmap[8 * 1024];       // 64k bits
     vector<uint8_t> typebits;
 
@@ -97,7 +103,7 @@ NSEC3::NSEC3(const string& nsec3_str) :
     do { 
         string type;
         int code;
-        iss >> type;
+        bitmap_stream >> type;
         if (type.length() != 0) {
             try {
                 code = RRType(type).getCode();
@@ -106,7 +112,7 @@ NSEC3::NSEC3(const string& nsec3_str) :
                 isc_throw(InvalidRdataText, "Invalid RRtype in NSEC3");
             }
         }
-    } while(!iss.eof());
+    } while (!bitmap_stream.eof());
 
     for (int window = 0; window < 256; window++) {
         int octet;
