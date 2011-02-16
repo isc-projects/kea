@@ -60,6 +60,11 @@ TEST_F(Rdata_NSEC3_Test, fromText) {
     // 0-length salt
     EXPECT_EQ(0, generic::NSEC3("1 1 1 - H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
                                 "A").getSalt().size());
+
+    // salt that has the possible max length
+    EXPECT_EQ(255, generic::NSEC3("1 1 1 " + string(255 * 2, '0') +
+                                  " H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
+                                  "NS").getSalt().size());
 }
 
 TEST_F(Rdata_NSEC3_Test, toText) {
@@ -99,6 +104,11 @@ TEST_F(Rdata_NSEC3_Test, badText) {
     EXPECT_THROW(generic::NSEC3(
                      "1 1 1D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
                      "NS SOA RRSIG DNSKEY NSEC3PARAM"), InvalidRdataText);
+
+    // Salt is too long (possible max + 1 bytes)
+    EXPECT_THROW(generic::NSEC3("1 1 1 " + string(256 * 2, '0') +
+                                " H9RSFB7FPF2L8HG35CMPC765TDK23RP6 NS"),
+                 InvalidRdataText);
 }
 
 TEST_F(Rdata_NSEC3_Test, createFromWire) {
