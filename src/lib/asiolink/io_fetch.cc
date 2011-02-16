@@ -86,6 +86,7 @@ IOFetch::IOFetchData::IOFetchData(IOService& io_service,
     msgbuf(new OutputBuffer(512)),         // TODO: Why this number?
     data(new char[IOFetch::MAX_LENGTH]),
     callback(cb),
+    rcv_amount(0),
     stopped(false),
     timer(io_service.get_io_service()),
     timeout(wait)
@@ -127,6 +128,10 @@ IOFetch::operator()(error_code ec, size_t length) {
             msg.addQuestion(data_->question);
             MessageRenderer renderer(*data_->msgbuf);
             msg.toWire(renderer);
+
+            // As this is a new fetch, clear the amount of data received
+            data_->rcv_amount = 0;
+
             dlog("Sending " + msg.toText() + " to " +
                 data_->remote->getAddress().toText());
         }
@@ -142,9 +147,9 @@ IOFetch::operator()(error_code ec, size_t length) {
         }
 
         // Open a connection to the target system.  For speed, if the operation
-        // was a no-op (i.e. UDP operation) we bypass the yield.
-        bool do_yield = data_->socket->open(data->remote.get(), *this);
-        if (do_yield) {
+        // was completed synchronously (i.e. UDP operation) we bypass the yield.
+        bool asynch = data_->socket->open(data->remote.get(), *this);
+        if (asynch) {
             CORO_YIELD;
         }
 
@@ -152,10 +157,6 @@ IOFetch::operator()(error_code ec, size_t length) {
         // send completes, we will resume immediately after this point.
         CORO_YIELD data_->socket->async_send(data_->msgbuf->getData(),
             data_->msgbuf->getLength(), data_->remote.get(), *this);
-
-        /// Allocate space for the response.  (XXX: This should be
-        /// optimized by maintaining a free list of pre-allocated blocks)
-        data_->data.reset(new char[MAX_LENGTH]);
 
         /// Begin an asynchronous receive, and yield.  When the receive
         /// completes, we will resume immediately after this point.

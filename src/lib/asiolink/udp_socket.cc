@@ -84,7 +84,7 @@ UDPSocket::open(const IOEndpoint* endpoint, IOCompletionCallback&) {
 // Send a message.
 
 void
-UDPSocket::async_send(const void* data, size_t length,
+UDPSocket::asyncSend(const void* data, size_t length,
     const IOEndpoint* endpoint, IOCompletionCallback& callback)
 {
     // Upconverting.  Not nice, but we have the problem that in the abstract
@@ -99,10 +99,12 @@ UDPSocket::async_send(const void* data, size_t length,
         callback);
 }
 
-// UDPSocket::receive_from
+// Receive a message. Note that the "cumulative" argument is ignored - every UDP
+// receive is put into the buffer beginning at the start - there is no concept
+// receiving a subsequent part of a message.
 
 void
-UDPSocket::async_receive(void* data, size_t length, IOEndpoint* endpoint,
+UDPSocket::asyncReceive(void* data, size_t length, size_t, IOEndpoint* endpoint,
     IOCompletionCallback& callback)
 {
     // Upconvert the endpoint again.

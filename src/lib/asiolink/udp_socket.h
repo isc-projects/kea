@@ -82,7 +82,7 @@ public:
     /// \param length Length of data to send
     /// \param endpoint Target of the send
     /// \param callback Callback object.
-    virtual void async_send(const void* data, size_t length,
+    virtual void asyncSend(const void* data, size_t length,
         const IOEndpoint* endpoint, IOCompletionCallback& callback);
 
     /// \brief Receive Asynchronously
@@ -94,10 +94,30 @@ public:
     ///
     /// \param data Buffer to receive incoming message
     /// \param length Length of the data buffer
+    /// \param cumulative Amount of data that should already be in the buffer.
+    /// (This is ignored - every UPD receive fills the buffer from the start.)
     /// \param endpoint Source of the communication
     /// \param callback Callback object
-    virtual void async_receive(void* data, size_t length, IOEndpoint* endpoint,
-        IOCompletionCallback& callback);
+    virtual void asyncReceive(void* data, size_t length, size_t cumulative,
+        IOEndpoint* endpoint, IOCompletionCallback& callback);
+
+    /// \brief Checks if the data received is complete.
+    ///
+    /// As all the data is received in one I/O, so this is, this is effectively
+    /// a no-op (although it does update the amount of data received).
+    ///
+    /// \param data Data buffer containing data to date.  (This is ignored
+    /// for UDP receives.)
+    /// \param length Amount of data received in last asynchronous I/O
+    /// \param cumulative On input, amount of data received before the last
+    /// I/O.  On output, the total amount of data received to date.
+    ///
+    /// \return true if the receive is complete, false if another receive is
+    /// needed.
+    virtual bool receiveComplete(void*, size_t length, size_t& cumulative) {
+        cumulative = length;
+        return (true);
+    }
 
     /// \brief Cancel I/O On Socket
     virtual void cancel();

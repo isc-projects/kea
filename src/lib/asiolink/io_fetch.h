@@ -44,9 +44,7 @@ namespace asiolink {
 /// \brief Upstream Fetch Processing
 ///
 /// IOFetch is the class used to send upstream fetches and to handle responses.
-/// It is a base class containing most of the logic, although the ASIO will
-/// actually instantiate one of the derived classes TCPFetch or UDPFetch.
-/// (These differ in the type of socket and endpoint.)
+/// It is more or less transport-agnostic, although the
 class IOFetch : public IOCompletionCallback  {
 public:
 
@@ -114,6 +112,7 @@ public:
         isc::dns::OutputBufferPtr   msgbuf;     ///< ... and here
         boost::shared_array<char>   data;       ///< Temporary array for the data
         Callback*                   callback;   ///< Called on I/O Completion
+        size_t                      rcv_amount; ///< Received amount
         bool                        stopped;    ///< Have we stopped running?
         asio::deadline_timer        timer;      ///< Timer to measure timeouts
         int                         timeout;    ///< Timeout in ms
