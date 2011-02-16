@@ -197,6 +197,7 @@ public:
              &rr_child_dname_},
             {"example.com. 300 IN A 192.0.2.10", &rr_out_},
             {"*.wild.example.org. 300 IN A 192.0.2.1", &rr_wild_},
+            {"foo.wild.example.org. 300 IN A 192.0.2.3", &rr_under_wild_},
             {"wild.*.foo.example.org. 300 IN A 192.0.2.1", &rr_emptywild_},
             {"wild.*.foo.*.bar.example.org. 300 IN A 192.0.2.1",
              &rr_nested_emptywild_},
@@ -254,6 +255,7 @@ public:
     RRsetPtr rr_nested_emptywild_;
     RRsetPtr rr_nswild_, rr_dnamewild_;
     RRsetPtr rr_child_wild_;
+    RRsetPtr rr_under_wild_;
 
     /**
      * \brief Test one find query to the zone.
@@ -297,21 +299,22 @@ public:
                     EXPECT_EQ(answer, find_result.rrset);
                 } else if (check_wild_answer) {
                     RdataIteratorPtr expectedIt(answer->getRdataIterator());
-                    RdataIteratorPtr gotIt(answer->getRdataIterator());
-                    while (!expectedIt->isLast() && !gotIt->isLast()) {
+                    RdataIteratorPtr actualIt(
+                        find_result.rrset->getRdataIterator());
+                    while (!expectedIt->isLast() && !actualIt->isLast()) {
                         EXPECT_EQ(0, expectedIt->getCurrent().compare(
-                            gotIt->getCurrent())) << "The RRs differ ('" <<
+                            actualIt->getCurrent())) << "The RRs differ ('" <<
                             expectedIt->getCurrent().toText() << "', '" <<
-                            gotIt->getCurrent().toText() << "')";
+                            actualIt->getCurrent().toText() << "')";
                         expectedIt->next();
-                        gotIt->next();
+                        actualIt->next();
                     }
                     EXPECT_TRUE(expectedIt->isLast()) <<
                         "Result has less RRs than expected";
-                    EXPECT_TRUE(gotIt->isLast()) <<
+                    EXPECT_TRUE(actualIt->isLast()) <<
                         "Result has more RRs than expected";
-                    EXPECT_EQ(answer->getType(),
-                        find_result.rrset->getType());
+                    EXPECT_EQ(answer->getClass(),
+                        find_result.rrset->getClass());
                     EXPECT_EQ(answer->getType(),
                         find_result.rrset->getType());
                     EXPECT_EQ(answer->getTTL(),
@@ -571,11 +574,6 @@ TEST_F(MemoryZoneTest, glue) {
     findTest(Name("www.child.example.org"), RRType::A(), Zone::DELEGATION,
              true, rr_child_ns_, NULL, NULL, Zone::FIND_GLUE_OK);
 
-    // TODO:
-    // glue name would match a wildcard under a zone cut: wildcard match
-    // shouldn't happen under a cut and result must be PARTIALMATCH
-    // (This case cannot be tested yet)
-
     // nested cut case.  The glue should be found.
     findTest(rr_grandchild_glue_->getName(), RRType::AAAA(),
              Zone::SUCCESS,
@@ -699,7 +697,8 @@ TEST_F(MemoryZoneTest, wildcard) {
      */
     EXPECT_EQ(SUCCESS, zone_.add(rr_wild_));
 
-    // Search at the parent. The parent will not have the A, but it will be here
+    // Search at the parent. The parent will not have the A, but it will
+    // be in the wildcard (so check the wildcard isn't matched at the parent)
     {
         SCOPED_TRACE("Search at parrent");
         findTest(Name("wild.example.org"), RRType::A(), Zone::NXRRSET);
@@ -724,17 +723,37 @@ TEST_F(MemoryZoneTest, wildcard) {
         findTest(Name("a.b.wild.example.org"), RRType::A(), Zone::SUCCESS,
             false, rr_wild_, NULL, NULL, Zone::FIND_DEFAULT, true);
     }
+
+    EXPECT_EQ(SUCCESS, zone_.add(rr_under_wild_));
+    {
+        SCOPED_TRACE("Search under non-wildcard");
+        findTest(Name("bar.foo.wild.example.org"), RRType::A(),
+            Zone::NXDOMAIN);
+    }
 }
 
 /*
  * Test that we don't match a wildcard if we get under delegation.
+ * By 4.3.3 of RFC1034:
+ * "Wildcard RRs do not apply:
+ *   - When the query is in another zone.  That is, delegation cancels
+ *     the wildcard defaults."
  */
 TEST_F(MemoryZoneTest, delegatedWildcard) {
     EXPECT_EQ(SUCCESS, zone_.add(rr_child_wild_));
     EXPECT_EQ(SUCCESS, zone_.add(rr_child_ns_));
 
-    findTest(Name("a.child.example.org"), RRType::A(), Zone::DELEGATION, true,
-        rr_child_ns_);
+    {
+        SCOPED_TRACE("Looking under delegation point");
+        findTest(Name("a.child.example.org"), RRType::A(), Zone::DELEGATION,
+            true, rr_child_ns_);
+    }
+
+    {
+        SCOPED_TRACE("Looking under delegation point in GLUE_OK mode");
+        findTest(Name("a.child.example.org"), RRType::A(), Zone::DELEGATION,
+            true, rr_child_ns_);
+    }
 }
 
 // Tests combination of wildcard and ANY.
@@ -800,6 +819,12 @@ TEST_F(MemoryZoneTest, emptyWildcard) {
             ConstRRsetPtr(), &wildTarget);
         EXPECT_EQ(0, wildTarget.size());
     }
+
+    {
+        SCOPED_TRACE("Asking outside the wildcard");
+        findTest(Name("wild.bar.foo.example.org"), RRType::A(),
+            Zone::NXDOMAIN);
+    }
 }
 
 // Same as emptyWildcard, but with multiple * in the path.
@@ -810,6 +835,24 @@ TEST_F(MemoryZoneTest, nestedEmptyWildcard) {
         SCOPED_TRACE("Asking for the original record under wildcards");
         findTest(Name("wild.*.foo.*.bar.example.org"), RRType::A(),
             Zone::SUCCESS, true, rr_nested_emptywild_);
+    }
+
+    {
+        SCOPED_TRACE("Matching against lower wildcard");
+        findTest(Name("baz.foo.*.bar.example.org"), RRType::A(),
+            Zone::NXRRSET);
+    }
+
+    {
+        SCOPED_TRACE("Trying to match over both wildcards at once");
+        findTest(Name("baz.foo.baz.bar.example.org"), RRType::A(),
+            Zone::NXDOMAIN);
+    }
+
+    {
+        SCOPED_TRACE("Trying to match over upper wildcard");
+        findTest(Name("*.foo.baz.bar.example.org"), RRType::A(),
+            Zone::NXDOMAIN);
     }
 
     // Domains to test
