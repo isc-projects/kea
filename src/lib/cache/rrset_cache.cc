@@ -76,11 +76,10 @@ RRsetCache::update(const isc::dns::RRset& rrset, const RRsetTrustLevel& level) {
             return (entry_ptr);
         } else {
             HashKey key = entry_ptr->hashKey();
-            rrset_table_.remove(key);
             entry_ptr.reset(new RRsetEntry(rrset, level));
             //TODO, lru list touch.
             // Replace the expired rrset entry if it exists.
-            rrset_table_.add(entry_ptr, key, true);
+            rrset_table_.add(entry_ptr, entry_ptr->hashKey(), true);
             return (entry_ptr);
         }
     }
