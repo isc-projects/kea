@@ -6,4 +6,4 @@
 sections: nsec3
 [nsec3]
 maplen: 31
-bitmap: '01' 
+bitmap: '01'

@@ -56,7 +56,6 @@ buildRRTypeBitmap(const char* const rrtype_name,
         if (i + len > total_len) {
             isc_throw(DNSMessageFORMERR, rrtype_name <<
                       " RDATA from wire: bitmap length too large: " << len);
-                      
         }
         // The last octet of the bitmap must be non zero.
         if (typebits[i + len - 1] == 0) {

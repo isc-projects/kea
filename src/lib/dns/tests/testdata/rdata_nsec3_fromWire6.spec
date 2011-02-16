@@ -8,4 +8,4 @@ sections: nsec3
 rdlen: 33
 maplen: 0
 # dummy data:
-bitmap: '01' 
+bitmap: '01'
