@@ -361,7 +361,9 @@ class NSEC3(NSECBASE):
                                 ' ' if len(self.salt) > 0 else '',
                                 encode_string(self.salt)))
         f.write("# Hash Len=%d, Hash='%s'\n" % (self.hashlen, self.hash))
-        f.write('%02x %s\n' % (self.hashlen, encode_string(self.hash)))
+        f.write('%02x%s%s\n' % (self.hashlen,
+                                ' ' if len(self.hash) > 0 else '',
+                                encode_string(self.hash)))
 
 class RRSIG:
     rdlen = -1                  # auto-calculate
