@@ -95,6 +95,10 @@ NSEC3::NSEC3(const string& nsec3_str) :
     if (salthex != "-") {       // "-" means an 0-length salt
         decodeHex(salthex, salt);
     }
+    if (salt.size() > 255) {
+        isc_throw(InvalidRdataText, "NSEC3 salt is too long: "
+                  << salt.size() << " bytes");
+    }
 
     vector<uint8_t> next;
     decodeBase32Hex(nexthash, next);
