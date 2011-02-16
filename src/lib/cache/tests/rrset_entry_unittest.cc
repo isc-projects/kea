@@ -51,7 +51,7 @@ class DerivedRRsetEntry: public RRsetEntry {
 public:
 
     void updateTTLForTest() {
-        
+
     }
 };
 
