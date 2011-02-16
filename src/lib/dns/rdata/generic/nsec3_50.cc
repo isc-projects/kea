@@ -69,13 +69,14 @@ NSEC3::NSEC3(const string& nsec3_str) :
     iss >> hashalg >> flags >> iterations_str >> salthex >> nexthash
         >> &bitmaps;
     if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid NSEC3 text");
+        isc_throw(InvalidRdataText, "Invalid NSEC3 text: " << nsec3_str);
     }
     if (hashalg > 0xf) {
-        isc_throw(InvalidRdataText, "NSEC3 hash algorithm out of range");
+        isc_throw(InvalidRdataText,
+                  "NSEC3 hash algorithm out of range: " << hashalg);
     }
     if (flags > 0xff) {
-        isc_throw(InvalidRdataText, "NSEC3 flags out of range");
+        isc_throw(InvalidRdataText, "NSEC3 flags out of range: " << flags);
     }
     // Convert iteration.  To reject an invalid case where there's no space
     // between iteration and salt, we extract this field as string and convert
@@ -86,7 +87,8 @@ NSEC3::NSEC3(const string& nsec3_str) :
         isc_throw(InvalidRdataText, "Bad NSEC3 iteration: " << iterations_str);
     }
     if (iterations > 0xffff) {
-        isc_throw(InvalidRdataText, "NSEC3 iterations out of range");
+        isc_throw(InvalidRdataText, "NSEC3 iterations out of range: " <<
+            iterations);
     }
 
     vector<uint8_t> salt;

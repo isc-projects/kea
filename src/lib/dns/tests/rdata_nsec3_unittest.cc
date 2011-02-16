@@ -52,29 +52,28 @@ TEST_F(Rdata_NSEC3_Test, toText) {
 }
 
 TEST_F(Rdata_NSEC3_Test, badText) {
-    EXPECT_THROW(generic::NSEC3 rdata_nsec3("1 1 1 ADDAFEEE "
-                                            "0123456789ABCDEFGHIJKLMNOPQRSTUV "
-                                            "BIFF POW SPOON"),
+    // Bitmap is missing
+    EXPECT_THROW(generic::NSEC3(
+                     "1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6"),
                  InvalidRdataText);
-    EXPECT_THROW(generic::NSEC3 rdata_nsec3("1 1 1 ADDAFEE "
-                                            "WXYZWXYZWXYZ=WXYZWXYZ==WXYZWXYZW "
-                                            "A NS SOA"),
+    EXPECT_THROW(generic::NSEC3("1 1 1 ADDAFEEE "
+                                "0123456789ABCDEFGHIJKLMNOPQRSTUV "
+                                "BIFF POW SPOON"),
+                 InvalidRdataText);
+    EXPECT_THROW(generic::NSEC3("1 1 1 ADDAFEE "
+                                "WXYZWXYZWXYZ=WXYZWXYZ==WXYZWXYZW A NS SOA"),
                  BadValue);     // bad hex
-    EXPECT_THROW(generic::NSEC3 rdata_nsec3("1 1 1 ADDAFEEE "
-                                            "WXYZWXYZWXYZ=WXYZWXYZ==WXYZWXYZW "
-                                            "A NS SOA"),
+    EXPECT_THROW(generic::NSEC3("1 1 1 ADDAFEEE "
+                                "WXYZWXYZWXYZ=WXYZWXYZ==WXYZWXYZW A NS SOA"),
                  BadValue);     // bad base32hex
-    EXPECT_THROW(generic::NSEC3 rdata_nsec3("1000000 1 1 ADDAFEEE "
-                                            "0123456789ABCDEFGHIJKLMNOPQRSTUV "
-                                            "A NS SOA"),
+    EXPECT_THROW(generic::NSEC3("1000000 1 1 ADDAFEEE "
+                                "0123456789ABCDEFGHIJKLMNOPQRSTUV A NS SOA"),
                  InvalidRdataText);
-    EXPECT_THROW(generic::NSEC3 rdata_nsec3("1 1000000 1 ADDAFEEE "
-                                            "0123456789ABCDEFGHIJKLMNOPQRSTUV "
-                                            "A NS SOA"),
+    EXPECT_THROW(generic::NSEC3("1 1000000 1 ADDAFEEE "
+                                "0123456789ABCDEFGHIJKLMNOPQRSTUV A NS SOA"),
                  InvalidRdataText);
-    EXPECT_THROW(generic::NSEC3 rdata_nsec3("1 1 1000000 ADDAFEEE "
-                                            "0123456789ABCDEFGHIJKLMNOPQRSTUV "
-                                            "A NS SOA"),
+    EXPECT_THROW(generic::NSEC3("1 1 1000000 ADDAFEEE "
+                                "0123456789ABCDEFGHIJKLMNOPQRSTUV A NS SOA"),
                  InvalidRdataText);
 
     // There should be a space between "1" and "D399EAAB" (salt)
