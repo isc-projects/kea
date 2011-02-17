@@ -85,6 +85,8 @@ libdns___la_SOURCES += rrtype.cc
 libdns___la_SOURCES += question.h question.cc
 libdns___la_SOURCES += util/sha1.h util/sha1.cc
 libdns___la_SOURCES += tsigkey.h tsigkey.cc
+libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.h
+libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.cc
 
 nodist_libdns___la_SOURCES = rdataclass.cc rrclass.h rrtype.h
 nodist_libdns___la_SOURCES += rrparamregistry.cc
@@ -117,5 +119,6 @@ libdns___include_HEADERS = \
 	tsigkey.h
 # Purposely not installing these headers:
 # util/*.h: used only internally, and not actually DNS specific
+# rdata/*/detail/*.h: these are internal use only
 # rrclass-placeholder.h
 # rrtype-placeholder.h
