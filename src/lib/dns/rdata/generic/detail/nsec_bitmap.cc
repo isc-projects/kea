@@ -30,18 +30,18 @@ void
 checkRRTypeBitmaps(const char* const rrtype_name,
                    const vector<uint8_t>& typebits)
 {
-    int len = 0;
     bool first = true;
-    unsigned int block, lastblock = 0;
+    unsigned int lastblock = 0;
     const size_t total_len = typebits.size();
+    size_t i = 0;
 
-    for (int i = 0; i < total_len; i += len) {
+    while (i < total_len) {
         if (i + 2 > total_len) {
             isc_throw(DNSMessageFORMERR, rrtype_name <<
                       " RDATA from wire: incomplete bit map field");
         }
-        block = typebits[i];
-        len = typebits[i + 1];
+        const unsigned int block = typebits[i];
+        const size_t len = typebits[i + 1];
         // Check that bitmap window blocks are in the correct order.
         if (!first && block <= lastblock) {
             isc_throw(DNSMessageFORMERR, rrtype_name <<
@@ -65,6 +65,7 @@ checkRRTypeBitmaps(const char* const rrtype_name,
                       " RDATA from wire: bitmap ending an all-zero byte");
         }
 
+        i += len;
         lastblock = block;
         first = false;
     }
