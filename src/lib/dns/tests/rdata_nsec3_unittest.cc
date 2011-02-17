@@ -65,6 +65,12 @@ TEST_F(Rdata_NSEC3_Test, fromText) {
     EXPECT_EQ(255, generic::NSEC3("1 1 1 " + string(255 * 2, '0') +
                                   " H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
                                   "NS").getSalt().size());
+
+    // hash that has the possible max length (see badText about the magic
+    // numbers)
+    EXPECT_EQ(255, generic::NSEC3("1 1 1 D399EAAB " +
+                                  string((255 * 8) / 5, '0') +
+                                  " NS").getNext().size());
 }
 
 TEST_F(Rdata_NSEC3_Test, toText) {
@@ -108,6 +114,13 @@ TEST_F(Rdata_NSEC3_Test, badText) {
     // Salt is too long (possible max + 1 bytes)
     EXPECT_THROW(generic::NSEC3("1 1 1 " + string(256 * 2, '0') +
                                 " H9RSFB7FPF2L8HG35CMPC765TDK23RP6 NS"),
+                 InvalidRdataText);
+
+    // Hash is too long.  Max = 255 bytes, base32-hex converts each 5 bytes
+    // of the original to 8 characters, so 260 * 8 / 5 is the smallest length
+    // of the encoded string that exceeds the max and doesn't require padding.
+    EXPECT_THROW(generic::NSEC3("1 1 1 D399EAAB " + string((260 * 8) / 5, '0') +
+                                " NS"),
                  InvalidRdataText);
 }
 
