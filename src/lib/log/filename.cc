@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,8 +11,6 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
-
-// $Id$
 
 #include <iostream>
 #include <algorithm>
@@ -106,7 +104,7 @@ Filename::expandWithDefault(const string& defname) const {
         (directory_.empty() ? def_directory : directory_) +
         (name_.empty() ? def_name : name_) +
         (extension_.empty() ? def_extension : extension_);
-    return retstring;
+    return (retstring);
 }
 
 // Use the stored name as default for a given name
@@ -132,7 +130,7 @@ Filename::useAsDefault(const string& name) const {
         (name_directory.empty() ? directory_ : name_directory) +
         (name_name.empty() ? name_ : name_name) +
         (name_extension.empty() ? extension_ : name_extension);
-    return retstring;
+    return (retstring);
 }
 
 

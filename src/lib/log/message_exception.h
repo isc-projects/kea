@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __MESSAGE_EXCEPTION_H
 #define __MESSAGE_EXCEPTION_H
 
@@ -76,7 +74,7 @@ public:
     ///
     /// \return Exception Arguments
     std::vector<std::string> arguments() const {
-        return args_;
+        return (args_);
     }
 
 private:

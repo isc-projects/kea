@@ -94,22 +94,22 @@ struct MemoryZone::MemoryZoneImpl {
              l > origin_labels;
              --l, wname = wname.split(1)) {
             if (wname.isWildcard()) {
-                // Ensure a separate level exists for the wildcard name.
-                // Note: for 'name' itself we do this later anyway, but the
-                // overhead should be marginal because wildcard names should
-                // be rare.
+                // Ensure a separate level exists for the "wildcarding" name,
+                // and mark the node as "wild".
                 DomainNode* node;
                 DomainTree::Result result(domains.insert(wname.split(1),
                                                          &node));
                 assert(result == DomainTree::SUCCESS ||
                        result == DomainTree::ALREADYEXISTS);
+                node->setFlag(DOMAINFLAG_WILD);
 
-                // Ensure a separate level exists for the "wildcarding" name,
-                // and mark the node as "wild".
+                // Ensure a separate level exists for the wildcard name.
+                // Note: for 'name' itself we do this later anyway, but the
+                // overhead should be marginal because wildcard names should
+                // be rare.
                 result = domains.insert(wname, &node);
                 assert(result == DomainTree::SUCCESS ||
                        result == DomainTree::ALREADYEXISTS);
-                node->setFlag(DOMAINFLAG_WILD);
             }
         }
     }
@@ -351,6 +351,35 @@ struct MemoryZone::MemoryZoneImpl {
         return (false);
     }
 
+    /*
+     * Prepares a rrset to be return as a result.
+     *
+     * If rename is false, it returns the one provided. If it is true, it
+     * creates a new rrset with the same data but with provided name.
+     * It is designed for wildcard case, where we create the rrsets
+     * dynamically.
+     */
+    static ConstRRsetPtr prepareRRset(const Name& name, const ConstRRsetPtr&
+        rrset, bool rename)
+    {
+        if (rename) {
+            /*
+             * We lose a signature here. But it would be wrong anyway, because
+             * the name changed. This might turn out to be unimportant in
+             * future, because wildcards will probably be handled somehow
+             * by DNSSEC.
+             */
+            RRsetPtr result(new RRset(name, rrset->getClass(),
+                rrset->getType(), rrset->getTTL()));
+            for (RdataIteratorPtr i(rrset->getRdataIterator()); !i->isLast();
+                i->next()) {
+                result->addRdata(i->getCurrent());
+            }
+            return (result);
+        } else {
+            return (rrset);
+        }
+    }
 
     // Implementation of MemoryZone::find
     FindResult find(const Name& name, RRType type,
@@ -360,6 +389,7 @@ struct MemoryZone::MemoryZoneImpl {
         DomainNode* node(NULL);
         FindState state(options);
         RBTreeNodeChain<Domain> node_path;
+        bool rename(false);
         switch (domains_.find(name, &node, node_path, cutCallback, &state)) {
             case DomainTree::PARTIALMATCH:
                 /*
@@ -383,10 +413,33 @@ struct MemoryZone::MemoryZoneImpl {
                 if (state.dname_node_ != NULL) {
                     // We were traversing a DNAME node (and wanted to go
                     // lower below it), so return the DNAME
-                    return (FindResult(DNAME, state.rrset_));
+                    return (FindResult(DNAME, prepareRRset(name, state.rrset_,
+                        rename)));
                 }
                 if (state.zonecut_node_ != NULL) {
-                    return (FindResult(DELEGATION, state.rrset_));
+                    return (FindResult(DELEGATION, prepareRRset(name,
+                        state.rrset_, rename)));
+                }
+                /*
+                 * No redirection anywhere. Let's try if it is a wildcard.
+                 */
+                if (node->getFlag(DOMAINFLAG_WILD)) {
+                    Name wildcard(Name("*").concatenate(
+                        node_path.getAbsoluteName()));
+                    DomainTree::Result result(domains_.find(wildcard, &node));
+                    /*
+                     * Otherwise, why would the DOMAINFLAG_WILD be there if
+                     * there was no wildcard under it?
+                     */
+                    assert(result = DomainTree::EXACTMATCH);
+                    /*
+                     * We have the wildcard node now. Jump below the switch,
+                     * where handling of the common (exact-match) case is.
+                     *
+                     * However, rename it to the searched name.
+                     */
+                    rename = true;
+                    break;
                 }
 
                 // If the RBTree search stopped at a node for a super domain
@@ -420,7 +473,8 @@ struct MemoryZone::MemoryZoneImpl {
         if (node->getFlag(DomainNode::FLAG_CALLBACK) && node != origin_data_) {
             found = node->getData()->find(RRType::NS());
             if (found != node->getData()->end()) {
-                return (FindResult(DELEGATION, found->second));
+                return (FindResult(DELEGATION, prepareRRset(name,
+                    found->second, rename)));
             }
         }
 
@@ -431,7 +485,8 @@ struct MemoryZone::MemoryZoneImpl {
                  found != node->getData()->end(); found++)
             {
                 target->addRRset(
-                    boost::const_pointer_cast<RRset>(found->second));
+                    boost::const_pointer_cast<RRset>(prepareRRset(name,
+                    found->second, rename)));
             }
             return (FindResult(SUCCESS, ConstRRsetPtr()));
         }
@@ -439,12 +494,14 @@ struct MemoryZone::MemoryZoneImpl {
         found = node->getData()->find(type);
         if (found != node->getData()->end()) {
             // Good, it is here
-            return (FindResult(SUCCESS, found->second));
+            return (FindResult(SUCCESS, prepareRRset(name, found->second,
+                rename)));
         } else {
             // Next, try CNAME.
             found = node->getData()->find(RRType::CNAME());
             if (found != node->getData()->end()) {
-                return (FindResult(CNAME, found->second));
+                return (FindResult(CNAME, prepareRRset(name, found->second,
+                    rename)));
             }
         }
         // No exact match or CNAME.  Return NXRRSET.

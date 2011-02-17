@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,10 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <numeric>
-#include <iostream>
 
 #include <string.h>
 #include <strutil.h>
@@ -58,7 +55,7 @@ trim(const string& instring) {
         }
     }
 
-    return retstring;
+    return (retstring);
 }
 
 // Tokenise string.  As noted in the header, this is locally written to avoid
@@ -89,7 +86,7 @@ tokens(const std::string text, const std::string& delim) {
         }
     }
 
-    return result;
+    return (result);
 }
 
 // Local function to pass to accumulate() for summing up string lengths.
@@ -131,7 +128,7 @@ format(const std::string& format, const std::vector<std::string>& args) {
         }
     }
 
-    return result;
+    return (result);
 }
 
 } // namespace log
