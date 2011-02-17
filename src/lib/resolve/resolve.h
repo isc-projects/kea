@@ -42,6 +42,36 @@ namespace resolve {
 void makeErrorMessage(isc::dns::MessagePtr answer_message,
                       const isc::dns::Rcode& error_code);
 
+
+/// \brief Initialize a response message
+///
+/// Based on the given query message, this fills in the very
+/// first details of the response (i.e. the Question section and
+/// the Opcode). This allows for direct usage of makeErrorMessage(),
+/// as well as ResolveCache.lookup().
+///
+/// \param query_message The query message to take the Question, Qid,
+///                      and Opcode from.
+/// \param response_message The fresh response message to initialize
+///                         (must be type Message::RENDER)
+void initResponseMessage(const isc::dns::Message& query_message,
+                         isc::dns::Message& response_message);
+
+
+/// \brief Initialize a response message
+///
+/// Based on the given question, this fills in the very
+/// first details of the response (i.e. the Question section and the
+/// Opcode Query). This allows for direct usage of makeErrorMessage(),
+/// as well as ResolveCache.lookup().
+///
+/// \param question The question to place in the Question section
+/// \param response_message The fresh response message to initialize
+///                         (must be type Message::RENDER)
+void initResponseMessage(const isc::dns::Question& question,
+                         isc::dns::Message& response_message);
+
+
 /// \brief Copies the parts relevant for a DNS response to the
 /// target message
 ///
