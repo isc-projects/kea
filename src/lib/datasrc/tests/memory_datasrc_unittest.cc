@@ -821,9 +821,9 @@ TEST_F(MemoryZoneTest, emptyWildcard) {
     }
 
     {
-        SCOPED_TRACE("Asking outside the wildcard");
+        SCOPED_TRACE("Asking on the non-terminal");
         findTest(Name("wild.bar.foo.example.org"), RRType::A(),
-            Zone::NXDOMAIN);
+            Zone::NXRRSET);
     }
 }
 
@@ -838,21 +838,19 @@ TEST_F(MemoryZoneTest, nestedEmptyWildcard) {
     }
 
     {
-        SCOPED_TRACE("Matching against lower wildcard");
-        findTest(Name("baz.foo.*.bar.example.org"), RRType::A(),
-            Zone::NXRRSET);
-    }
+        SCOPED_TRACE("Matching wildcard against empty nonterminal");
 
-    {
-        SCOPED_TRACE("Trying to match over both wildcards at once");
-        findTest(Name("baz.foo.baz.bar.example.org"), RRType::A(),
-            Zone::NXDOMAIN);
-    }
+        const char* names[] = {
+            "baz.foo.*.bar.example.org",
+            "baz.foo.baz.bar.example.org",
+            "*.foo.baz.bar.example.org",
+            NULL
+        };
 
-    {
-        SCOPED_TRACE("Trying to match over upper wildcard");
-        findTest(Name("*.foo.baz.bar.example.org"), RRType::A(),
-            Zone::NXDOMAIN);
+        for (const char** name(names); *name != NULL; ++ name) {
+            SCOPED_TRACE(string("Node ") + *name);
+            findTest(Name(*name), RRType::A(), Zone::NXRRSET);
+        }
     }
 
     // Domains to test
