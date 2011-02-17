@@ -569,6 +569,8 @@ class BindCmdInterpreter(Cmd):
                 identifier += "/"
             if cmd.params['identifier'].startswith("/"):
                 identifier = cmd.params['identifier']
+            else:
+                identifier += cmd.params['identifier']
 
             # Check if the module is known; for unknown modules
             # we currently deny setting preferences, as we have
