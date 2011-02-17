@@ -144,8 +144,7 @@ private:
     void doLookup() {
         dlog("doLookup: try cache");
         Message cached_message(Message::RENDER);
-        cached_message.addQuestion(question_);
-        cached_message.setOpcode(Opcode::QUERY());
+        isc::resolve::initResponseMessage(question_, cached_message);
         if (cache_.lookup(question_.getName(), question_.getType(),
                           question_.getClass(), cached_message)) {
             dlog("Message found in cache, returning that");
@@ -396,11 +395,6 @@ public:
         // until that one comes back to us)
         done_ = true;
         if (resume && !answer_sent_) {
-            // Store the answer we found in our cache
-            //std::cout << "[XX] caching our answer:" << std::endl;
-            //std::cout << answer_message_->toText();
-            //cache_.update(*answer_message_);
-            //std::cout << "[XX] done caching our answer" << std::endl;
             resolvercallback_->success(answer_message_);
         } else {
             resolvercallback_->failure();
@@ -461,11 +455,10 @@ RecursiveQuery::resolve(const QuestionPtr& question,
     asio::io_service& io = dns_service_.get_io_service();
 
     MessagePtr answer_message(new Message(Message::RENDER));
+    isc::resolve::initResponseMessage(*question, *answer_message);
+
     OutputBufferPtr buffer(new OutputBuffer(0));
 
-    // TODO: general 'prepareinitialanswer'
-    answer_message->setOpcode(isc::dns::Opcode::QUERY());
-    answer_message->addQuestion(question);
     dlog("Try out cache first (direct call to resolve)");
     // First try to see if we have something cached in the messagecache
     if (cache_.lookup(question->getName(), question->getType(),

@@ -182,6 +182,8 @@ public:
     MessagePtr message_;
 };
 
+
+// TODO: REMOVE, USE isc::resolve::MakeErrorMessage?
 void
 makeErrorMessage(MessagePtr message, OutputBufferPtr buffer,
                  const Rcode& rcode)
