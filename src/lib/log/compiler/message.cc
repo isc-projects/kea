@@ -467,19 +467,14 @@ warnDuplicates(MessageReader& reader) {
 /// main file header for the invocation.
 
 int
-main(int argc, char** argv) {
+main(int argc, char* argv[]) {
 
-    const struct option loptions[] = {          // Long options
-        {"help",    no_argument, NULL, 'h'},
-        {"version", no_argument, NULL, 'v'},
-        {NULL,      0,           NULL, 0  }
-    };
     const char* soptions = "hv";               // Short options
 
     optind = 1;             // Ensure we start a new scan
     int  opt;               // Value of the option
 
-    while ((opt = getopt_long(argc, argv, soptions, loptions, NULL)) != -1) {
+    while ((opt = getopt(argc, argv, soptions)) != -1) {
         switch (opt) {
             case 'h':
                 usage();
