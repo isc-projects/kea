@@ -5,6 +5,7 @@
 	DNSSEC support and zone transfer.
 	(Last trac #552, but many more,
 	git 6f031a09a248e7684723c000f3e8cc981dcdb349)
+
   170.	[bug]		jinmei
 	Tightened validity checks in the NSEC3 constructors, both "from
 	"text" and "from wire".  Specifically, wire data containing
@@ -18,12 +19,14 @@
 	(Trac #449, git 8aa3b2246ae095bbe7f855fd11656ae3bdb98986)
 
   168.  [bug]       vorner
-	Boss no longer has the -f argument, which was undocumented and stayed as
-	a relict of previous versions, currently causing only strange behaviour.
+	Boss no longer has the -f argument, which was undocumented and
+	stayed as a relict of previous versions, currently causing only
+	strange behaviour.
 	(Trac #572, git 17f237478961005707d649a661cc72a4a0d612d4)
 
   167.  [bug]           naokikambe
-	Fixed failure of termination of msgq_test.py with python3 coverage(3.3.1)
+	Fixed failure of termination of msgq_test.py with python3
+	coverage(3.3.1)
 	(Trac #573, git 0e6a18e12f61cc482e07078776234f32605312e5)
 
   166.  [func]      jelte
@@ -44,10 +47,10 @@
 	(Trac #452, git c9f6acc81e24c4b8f0eb351123dc7b43f64e0914)
 
   163.  [func]      vorner
-	The pimpl design pattern is used in UDPServer, with a shared pointer. This
-	makes it smaller to copy (which is done a lot as a sideeffect of being
-	coroutine) and speeds applications of this class (notably b10-auth) up by
-	around 10%.
+	The pimpl design pattern is used in UDPServer, with a shared
+	pointer. This makes it smaller to copy (which is done a lot as a
+	sideeffect of being coroutine) and speeds applications of this
+	class (notably b10-auth) up by around 10%.
 	(Trac #537, git 94cb95b1d508541201fc064302ba836164d3cbe6)
 
   162.  [func]		stephen
