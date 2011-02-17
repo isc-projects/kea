@@ -55,13 +55,13 @@ static const char* VERSION = "1.0-0";
 /// \b Invocation<BR>
 /// The program is invoked with the command:
 ///
-/// <tt>message [-p] \<message-file\></tt>
+/// <tt>message [-v | -h | \<message-file\>]</tt>
 ///
 /// It reads the message file and writes out two files of the same name but with
 /// extensions of .h and .cc.
 ///
-/// If \c -p is specified, the C++ files are not written; instead a Python file
-/// of the same name (but with the file extension .py) is written.
+/// \-v causes it to print the version number and exit. \-h prints a help
+/// message (and exits).
 
 
 /// \brief Print Version
@@ -242,7 +242,10 @@ writeClosingNamespace(ostream& output, const vector<string>& ns) {
 
 /// \brief Write Header File
 ///
-/// Writes the C++ header file containing the symbol definitions.
+/// Writes the C++ header file containing the symbol definitions.  These are
+/// "extern" references to definitions in the .cc file.  As such, they should
+/// take up no space in the module in which they are included, and redundant
+/// references should be removed by the compiler.
 ///
 /// \param file Name of the message file.  The header file is written to a
 /// file of the same name but with a .h suffix.
@@ -326,8 +329,27 @@ replaceNonAlphaNum(char c) {
 /// \brief Write Program File
 ///
 /// Writes the C++ source code file.  This defines the text of the message
-/// symbols, as well as the initializer object that sets the entries in
-/// the global dictionary.
+/// symbols, as well as the initializer object that sets the entries in the
+/// global dictionary.
+///
+/// The construction of the initializer object loads the dictionary with the
+/// message text.  However, nothing actually references it.  If the initializer
+/// were in a file by itself, the lack of things referencing it would cause the
+/// linker to ignore it when pulling modules out of the logging library in a
+/// static link.  By including it in the file with the symbol definitions, the
+/// module will get included in the link process to resolve the symbol
+/// definitions, and so the initializer object will be included in the final
+/// image. (Note that there are no such problems when the logging library is
+/// built as a dynamically-linked library: the whole library - including the
+/// initializer module - gets mapped into address space when the library is
+/// loaded, after which all the initializing code (including the constructors
+/// of objects declared outside functions) gets run.)
+///
+/// There _may_ be a problem when we come to port this to Windows.  Microsoft
+/// Visual Studio contains a "Whole Program Optimisation" option, where the
+/// optimisation is done at link-time, not compiler-time.  In this it _may_
+/// decide to remove the initializer object because of a lack of references
+/// to it.  But until BIND-10 is ported to Windows, we won't know.
 
 void
 writeProgramFile(const string& file, const string& prefix,
