@@ -278,6 +278,9 @@ class TXT:
                                     wirestring_list[i]))
 
 class NSECBASE:
+    '''Implements rendering NSEC/NSEC3 type bitmaps commonly used for
+    these RRs.  The NSEC and NSEC3 classes will be inherited from this
+    class.'''
     nbitmap = 1                 # number of bitmaps
     block = 0
     maplen = None              # default bitmap length, auto-calculate
