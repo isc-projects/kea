@@ -92,7 +92,7 @@ NSEC3::NSEC3(const string& nsec3_str) :
     }
 
     vector<uint8_t> salt;
-    if (salthex != "-") {       // "-" means an 0-length salt
+    if (salthex != "-") {       // "-" means a 0-length salt
         decodeHex(salthex, salt);
     }
     if (salt.size() > 255) {
