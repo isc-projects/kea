@@ -197,12 +197,14 @@ public:
              &rr_child_dname_},
             {"example.com. 300 IN A 192.0.2.10", &rr_out_},
             {"*.wild.example.org. 300 IN A 192.0.2.1", &rr_wild_},
+            {"foo.wild.example.org. 300 IN A 192.0.2.3", &rr_under_wild_},
             {"wild.*.foo.example.org. 300 IN A 192.0.2.1", &rr_emptywild_},
             {"wild.*.foo.*.bar.example.org. 300 IN A 192.0.2.1",
              &rr_nested_emptywild_},
             {"*.nswild.example.org. 300 IN NS nswild.example.", &rr_nswild_},
             {"*.dnamewild.example.org. 300 IN DNAME dnamewild.example.",
              &rr_dnamewild_},
+            {"*.child.example.org. 300 IN A 192.0.2.1", &rr_child_wild_},
             {NULL, NULL}
         };
 
@@ -252,6 +254,8 @@ public:
     RRsetPtr rr_emptywild_;
     RRsetPtr rr_nested_emptywild_;
     RRsetPtr rr_nswild_, rr_dnamewild_;
+    RRsetPtr rr_child_wild_;
+    RRsetPtr rr_under_wild_;
 
     /**
      * \brief Test one find query to the zone.
@@ -268,13 +272,18 @@ public:
      * \param answer The expected rrset, if any should be returned.
      * \param zone Check different MemoryZone object than zone_ (if NULL,
      *     uses zone_)
+     * \param check_wild_answer Checks that the answer has the same RRs, type
+     *     class and TTL as the eqxpected answer and that the name corresponds
+     *     to the one searched. It is meant for checking answers for wildcard
+     *     queries.
      */
     void findTest(const Name& name, const RRType& rrtype, Zone::Result result,
                   bool check_answer = true,
                   const ConstRRsetPtr& answer = ConstRRsetPtr(),
                   RRsetList* target = NULL,
                   MemoryZone* zone = NULL,
-                  Zone::FindOptions options = Zone::FIND_DEFAULT)
+                  Zone::FindOptions options = Zone::FIND_DEFAULT,
+                  bool check_wild_answer = false)
     {
         if (!zone) {
             zone = &zone_;
@@ -288,6 +297,29 @@ public:
                 EXPECT_EQ(result, find_result.code);
                 if (check_answer) {
                     EXPECT_EQ(answer, find_result.rrset);
+                } else if (check_wild_answer) {
+                    RdataIteratorPtr expectedIt(answer->getRdataIterator());
+                    RdataIteratorPtr actualIt(
+                        find_result.rrset->getRdataIterator());
+                    while (!expectedIt->isLast() && !actualIt->isLast()) {
+                        EXPECT_EQ(0, expectedIt->getCurrent().compare(
+                            actualIt->getCurrent())) << "The RRs differ ('" <<
+                            expectedIt->getCurrent().toText() << "', '" <<
+                            actualIt->getCurrent().toText() << "')";
+                        expectedIt->next();
+                        actualIt->next();
+                    }
+                    EXPECT_TRUE(expectedIt->isLast()) <<
+                        "Result has less RRs than expected";
+                    EXPECT_TRUE(actualIt->isLast()) <<
+                        "Result has more RRs than expected";
+                    EXPECT_EQ(answer->getClass(),
+                        find_result.rrset->getClass());
+                    EXPECT_EQ(answer->getType(),
+                        find_result.rrset->getType());
+                    EXPECT_EQ(answer->getTTL(),
+                        find_result.rrset->getTTL());
+                    EXPECT_EQ(name, find_result.rrset->getName());
                 }
             });
     }
@@ -542,11 +574,6 @@ TEST_F(MemoryZoneTest, glue) {
     findTest(Name("www.child.example.org"), RRType::A(), Zone::DELEGATION,
              true, rr_child_ns_, NULL, NULL, Zone::FIND_GLUE_OK);
 
-    // TODO:
-    // glue name would match a wildcard under a zone cut: wildcard match
-    // shouldn't happen under a cut and result must be PARTIALMATCH
-    // (This case cannot be tested yet)
-
     // nested cut case.  The glue should be found.
     findTest(rr_grandchild_glue_->getName(), RRType::AAAA(),
              Zone::SUCCESS,
@@ -656,11 +683,11 @@ TEST_F(MemoryZoneTest, load) {
         MasterLoadError);
 }
 
-// Note: once #507 is merged, findTest() would succeed whether or not
-// we load the wildcard correctly, so the test will become meaningless.
-// The plan is to clean them up when we complete #551 (then the effect of
-// load will be indirectly tested via find() tests).
-TEST_F(MemoryZoneTest, loadWildcard) {
+/*
+ * Test that puts a (simple) wildcard into the zone and checks we can
+ * correctly find the data.
+ */
+TEST_F(MemoryZoneTest, wildcard) {
     /*
      *            example.org.
      *                 |
@@ -669,11 +696,96 @@ TEST_F(MemoryZoneTest, loadWildcard) {
      *                 *
      */
     EXPECT_EQ(SUCCESS, zone_.add(rr_wild_));
-    findTest(Name("wild.example.org"), RRType::A(), Zone::NXRRSET);
+
+    // Search at the parent. The parent will not have the A, but it will
+    // be in the wildcard (so check the wildcard isn't matched at the parent)
+    {
+        SCOPED_TRACE("Search at parrent");
+        findTest(Name("wild.example.org"), RRType::A(), Zone::NXRRSET);
+    }
+
+    // Search the original name of wildcard
+    {
+        SCOPED_TRACE("Search directly at *");
+        findTest(Name("*.wild.example.org"), RRType::A(), Zone::SUCCESS, true,
+            rr_wild_);
+    }
+    // Search "created" name.
+    {
+        SCOPED_TRACE("Search at created child");
+        findTest(Name("a.wild.example.org"), RRType::A(), Zone::SUCCESS, false,
+            rr_wild_, NULL, NULL, Zone::FIND_DEFAULT, true);
+    }
+
+    // Search another created name, this time little bit lower
+    {
+        SCOPED_TRACE("Search at created grand-child");
+        findTest(Name("a.b.wild.example.org"), RRType::A(), Zone::SUCCESS,
+            false, rr_wild_, NULL, NULL, Zone::FIND_DEFAULT, true);
+    }
+
+    EXPECT_EQ(SUCCESS, zone_.add(rr_under_wild_));
+    {
+        SCOPED_TRACE("Search under non-wildcard");
+        findTest(Name("bar.foo.wild.example.org"), RRType::A(),
+            Zone::NXDOMAIN);
+    }
 }
 
-// same note as loadWildcard applies.
-TEST_F(MemoryZoneTest, loadEmptyWildcard) {
+/*
+ * Test that we don't match a wildcard if we get under delegation.
+ * By 4.3.3 of RFC1034:
+ * "Wildcard RRs do not apply:
+ *   - When the query is in another zone.  That is, delegation cancels
+ *     the wildcard defaults."
+ */
+TEST_F(MemoryZoneTest, delegatedWildcard) {
+    EXPECT_EQ(SUCCESS, zone_.add(rr_child_wild_));
+    EXPECT_EQ(SUCCESS, zone_.add(rr_child_ns_));
+
+    {
+        SCOPED_TRACE("Looking under delegation point");
+        findTest(Name("a.child.example.org"), RRType::A(), Zone::DELEGATION,
+            true, rr_child_ns_);
+    }
+
+    {
+        SCOPED_TRACE("Looking under delegation point in GLUE_OK mode");
+        findTest(Name("a.child.example.org"), RRType::A(), Zone::DELEGATION,
+            true, rr_child_ns_, NULL, NULL, Zone::FIND_GLUE_OK);
+    }
+}
+
+// Tests combination of wildcard and ANY.
+TEST_F(MemoryZoneTest, anyWildcard) {
+    EXPECT_EQ(SUCCESS, zone_.add(rr_wild_));
+
+    // First try directly the name (normal match)
+    {
+        SCOPED_TRACE("Asking direcly for *");
+        RRsetList target;
+        findTest(Name("*.wild.example.org"), RRType::ANY(), Zone::SUCCESS,
+            true, ConstRRsetPtr(), &target);
+        ASSERT_EQ(1, target.size());
+        EXPECT_EQ(RRType::A(), (*target.begin())->getType());
+        EXPECT_EQ(Name("*.wild.example.org"), (*target.begin())->getName());
+    }
+
+    // Then a wildcard match
+    {
+        SCOPED_TRACE("Asking in the wild way");
+        RRsetList target;
+        findTest(Name("a.wild.example.org"), RRType::ANY(), Zone::SUCCESS,
+            true, ConstRRsetPtr(), &target);
+        ASSERT_EQ(1, target.size());
+        EXPECT_EQ(RRType::A(), (*target.begin())->getType());
+        EXPECT_EQ(Name("a.wild.example.org"), (*target.begin())->getName());
+    }
+}
+
+// Test there's nothing in the wildcard in the middle if we load
+// wild.*.foo.example.org.
+TEST_F(MemoryZoneTest, emptyWildcard) {
     /*
      *            example.org.
      *                foo
@@ -681,17 +793,96 @@ TEST_F(MemoryZoneTest, loadEmptyWildcard) {
      *               wild
      */
     EXPECT_EQ(SUCCESS, zone_.add(rr_emptywild_));
-    findTest(Name("*.foo.example.org"), RRType::A(), Zone::NXRRSET);
-    findTest(Name("foo.example.org"), RRType::A(), Zone::NXRRSET);
+
+    {
+        SCOPED_TRACE("Asking for the original record under wildcard");
+        findTest(Name("wild.*.foo.example.org"), RRType::A(), Zone::SUCCESS,
+            true, rr_emptywild_);
+    }
+
+    {
+        SCOPED_TRACE("Asking for A record");
+        findTest(Name("a.foo.example.org"), RRType::A(), Zone::NXRRSET);
+        findTest(Name("*.foo.example.org"), RRType::A(), Zone::NXRRSET);
+        findTest(Name("foo.example.org"), RRType::A(), Zone::NXRRSET);
+    }
+
+    {
+        SCOPED_TRACE("Asking for ANY record");
+        RRsetList normalTarget;
+        findTest(Name("*.foo.example.org"), RRType::ANY(), Zone::NXRRSET, true,
+            ConstRRsetPtr(), &normalTarget);
+        EXPECT_EQ(0, normalTarget.size());
+
+        RRsetList wildTarget;
+        findTest(Name("a.foo.example.org"), RRType::ANY(), Zone::NXRRSET, true,
+            ConstRRsetPtr(), &wildTarget);
+        EXPECT_EQ(0, wildTarget.size());
+    }
+
+    {
+        SCOPED_TRACE("Asking on the non-terminal");
+        findTest(Name("wild.bar.foo.example.org"), RRType::A(),
+            Zone::NXRRSET);
+    }
 }
 
-// same note as loadWildcard applies.
-TEST_F(MemoryZoneTest, loadNestedEmptyWildcard) {
+// Same as emptyWildcard, but with multiple * in the path.
+TEST_F(MemoryZoneTest, nestedEmptyWildcard) {
     EXPECT_EQ(SUCCESS, zone_.add(rr_nested_emptywild_));
-    findTest(Name("*.foo.*.bar.example.org"), RRType::A(), Zone::NXRRSET);
-    findTest(Name("foo.*.bar.example.org"), RRType::A(), Zone::NXRRSET);
-    findTest(Name("*.bar.example.org"), RRType::A(), Zone::NXRRSET);
-    findTest(Name("bar.example.org"), RRType::A(), Zone::NXRRSET);
+
+    {
+        SCOPED_TRACE("Asking for the original record under wildcards");
+        findTest(Name("wild.*.foo.*.bar.example.org"), RRType::A(),
+            Zone::SUCCESS, true, rr_nested_emptywild_);
+    }
+
+    {
+        SCOPED_TRACE("Matching wildcard against empty nonterminal");
+
+        const char* names[] = {
+            "baz.foo.*.bar.example.org",
+            "baz.foo.baz.bar.example.org",
+            "*.foo.baz.bar.example.org",
+            NULL
+        };
+
+        for (const char** name(names); *name != NULL; ++ name) {
+            SCOPED_TRACE(string("Node ") + *name);
+            findTest(Name(*name), RRType::A(), Zone::NXRRSET);
+        }
+    }
+
+    // Domains to test
+    const char* names[] = {
+        "*.foo.*.bar.example.org",
+        "foo.*.bar.example.org",
+        "*.bar.example.org",
+        "bar.example.org",
+        NULL
+    };
+
+    {
+        SCOPED_TRACE("Asking directly for A on parent nodes");
+
+        for (const char** name(names); *name != NULL; ++ name) {
+            SCOPED_TRACE(string("Node ") + *name);
+            findTest(Name(*name), RRType::A(), Zone::NXRRSET);
+        }
+    }
+
+    {
+        SCOPED_TRACE("Asking for ANY on parent nodes");
+
+        for (const char** name(names); *name != NULL; ++ name) {
+            SCOPED_TRACE(string("Node ") + *name);
+
+            RRsetList target;
+            findTest(Name(*name), RRType::ANY(), Zone::NXRRSET, true,
+                ConstRRsetPtr(), &target);
+            EXPECT_EQ(0, target.size());
+        }
+    }
 }
 
 TEST_F(MemoryZoneTest, loadBadWildcard) {

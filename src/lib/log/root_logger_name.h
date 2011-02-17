@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __ROOT_LOGGER_NAME_H
 #define __ROOT_LOGGER_NAME_H
 
@@ -21,44 +19,26 @@
 
 /// \brief Define Name of Root Logger
 ///
-/// In the log4cxx system, the root logger is ".".  The definition for the
-/// BIND-10 system is that the root logger of a program has the name of the
-/// program.  This (trivial) class stores the name of the program in a
-/// location accessible to the logger classes.
+/// In BIND-10, the name root logger of a program is the name of the program
+/// itself (in contrast to packages such as log4cxx where the root logger name
+//  is something like ".").  These trivial functions allow the setting and
+// getting of that name by the logger classes.
 
 namespace isc {
 namespace log {
 
-class RootLoggerName {
-public:
+/// \brief Set Root Logger Name
+///
+/// This function should be called by the program's initialization code before
+/// any logging functions are called.
+///
+/// \param name Name of the root logger.  This should be the program name.
+void setRootLoggerName(const std::string& name);
 
-    /// \brief Constructor
-    ///
-    /// Sets the root logger name.  Although the name is static, setting the
-    /// name in the constructor allows static initialization of the name by
-    /// declaring an external instance of the class in the main execution unit.
-    RootLoggerName(const std::string& name) {
-        setName(name);
-    } 
-
-    /// \brief Set Root Logger Name
-    ///
-    /// \param name Name of the root logger.  This should be the program
-    /// name.
-    static void setName(const std::string& name) {
-        name_ = name;
-    }
-
-    /// \brief Get Root Logger Name
-    ///
-    /// \return Name of the root logger.
-    static std::string getName() {
-        return name_;
-    }
-    
-private:
-    static std::string name_;      ///< Name of the root logger
-};
+/// \brief Get Root Logger Name
+///
+/// \return Name of the root logger.
+const std::string& getRootLoggerName();
 
 }
 }
