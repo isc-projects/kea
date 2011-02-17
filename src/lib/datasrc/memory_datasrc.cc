@@ -449,7 +449,7 @@ struct MemoryZone::MemoryZoneImpl {
                      * have exactly one common label (the ".") in case we have
                      * nothing common under the node we got and we will get
                      * more common labels otherwise (yes, this relies on the
-                     * internal RBTree structure, which leaks out trough this
+                     * internal RBTree structure, which leaks out through this
                      * little bit).
                      *
                      * If the empty non-terminal node actually exists in the
