@@ -60,7 +60,9 @@ bool
 MessageCache::update(const Message& msg) {
     QuestionIterator iter = msg.beginQuestion();
     std::string entry_name = genCacheEntryName((*iter)->getName(), (*iter)->getType());
-    std::cout << "[XX] MESSAGECACHE UDPATE: " << entry_name << std::endl;
+    std::cout << "[XX] MESSAGECACHE UPDATE: " << entry_name << std::endl;
+    std::cout << "[XX] FOR MESSAGE:" << std::endl;
+    std::cout << msg.toText();
     HashKey entry_key = HashKey(entry_name, RRClass(message_class_));
 
     // The simplest way to update is removing the old message entry directly.

@@ -138,6 +138,24 @@ private:
     // Reference to our cache
     isc::cache::ResolverCache& cache_;
 
+    // perform a single lookup; first we check the cache to see
+    // if we have a response for our query stored already. if
+    // so, call handlerecursiveresponse(), if not, we call send()
+    void doLookup() {
+        dlog("doLookup: try cache");
+        Message cached_message(Message::RENDER);
+        cached_message.addQuestion(question_);
+        cached_message.setOpcode(Opcode::QUERY());
+        if (cache_.lookup(question_.getName(), question_.getType(),
+                          question_.getClass(), cached_message)) {
+            dlog("Message found in cache, returning that");
+            handleRecursiveAnswer(cached_message);
+        } else {
+            send();
+        }
+        
+    }
+
     // (re)send the query to the server.
     void send() {
         const int uc = upstream_->size();
@@ -219,7 +237,7 @@ private:
                                  question_.getType());
 
             dlog("Following CNAME chain to " + question_.toText());
-            send();
+            doLookup();
             return false;
             break;
         case isc::resolve::ResponseClassifier::NXDOMAIN:
@@ -256,6 +274,10 @@ private:
             }
             if (found_ns_address) {
                 // next resolver round
+                // we do NOT use doLookup() here, but send() (i.e. we
+                // skip the cache), since if we had the final answer
+                // instead of a delegation cached, we would have been
+                // there by now.
                 send();
                 return false;
             } else {
@@ -336,7 +358,7 @@ public:
             setZoneServersToRoot();
         }
 
-        send();
+        doLookup();
     }
 
     void setZoneServersToRoot() {
@@ -375,10 +397,10 @@ public:
         done_ = true;
         if (resume && !answer_sent_) {
             // Store the answer we found in our cache
-            std::cout << "[XX] caching our answer:" << std::endl;
-            std::cout << answer_message_->toText();
-            cache_.update(*answer_message_);
-            std::cout << "[XX] done caching our answer" << std::endl;
+            //std::cout << "[XX] caching our answer:" << std::endl;
+            //std::cout << answer_message_->toText();
+            //cache_.update(*answer_message_);
+            //std::cout << "[XX] done caching our answer" << std::endl;
             resolvercallback_->success(answer_message_);
         } else {
             resolvercallback_->failure();
@@ -405,6 +427,9 @@ public:
             InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
             incoming.fromWire(ibuf);
 
+            // let's first dunk it into our cache
+            cache_.update(incoming);
+            
             if (upstream_->size() == 0 &&
                 incoming.getRcode() == Rcode::NOERROR()) {
                 done_ = handleRecursiveAnswer(incoming);
