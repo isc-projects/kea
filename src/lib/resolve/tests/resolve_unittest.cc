@@ -122,21 +122,47 @@ TEST_F(ResolveHelperFunctionsTest, makeErrorMessageNonEmptyMessage) {
 }
 
 void
-compareSections(const MessagePtr message_a, const MessagePtr message_b,
+compareSections(const Message& message_a, const Message& message_b,
                 Message::Section section)
 {
-    RRsetIterator rrs_a = message_a->beginSection(section);
-    RRsetIterator rrs_b = message_b->beginSection(section);
-    while (rrs_a != message_a->endSection(section) &&
-           rrs_b != message_b->endSection(section)
+    RRsetIterator rrs_a = message_a.beginSection(section);
+    RRsetIterator rrs_b = message_b.beginSection(section);
+    while (rrs_a != message_a.endSection(section) &&
+           rrs_b != message_b.endSection(section)
           ) {
         EXPECT_EQ(*rrs_a, *rrs_b);
         ++rrs_a;
         ++rrs_b;
     }
     // can't use EXPECT_EQ here, no eqHelper for endsection comparison
-    EXPECT_TRUE(rrs_a == message_a->endSection(section));
-    EXPECT_TRUE(rrs_b == message_b->endSection(section));
+    EXPECT_TRUE(rrs_a == message_a.endSection(section));
+    EXPECT_TRUE(rrs_b == message_b.endSection(section));
+}
+
+TEST_F(ResolveHelperFunctionsTest, initResponseMessage) {
+    Message response_parse(Message::PARSE);
+    EXPECT_THROW(isc::resolve::initResponseMessage(*message_a_,
+                                                   response_parse),
+                 isc::dns::InvalidMessageOperation);
+    EXPECT_THROW(isc::resolve::initResponseMessage(*question_,
+                                                   response_parse),
+                 isc::dns::InvalidMessageOperation);
+    
+    Message response1(Message::RENDER);
+    isc::resolve::initResponseMessage(*message_a_, response1);
+    ASSERT_EQ(message_a_->getOpcode(), response1.getOpcode());
+    ASSERT_EQ(message_a_->getQid(), response1.getQid());
+    isc::dns::QuestionIterator qi = response1.beginQuestion();
+    ASSERT_EQ(*question_, **qi);
+    ASSERT_TRUE(++qi == response1.endQuestion());
+
+    Message response2(Message::RENDER);
+    isc::resolve::initResponseMessage(*question_, response2);
+    ASSERT_EQ(Opcode::QUERY(), response2.getOpcode());
+    ASSERT_EQ(0, response2.getQid());
+    qi = response2.beginQuestion();
+    ASSERT_EQ(*question_, **qi);
+    ASSERT_TRUE(++qi == response2.endQuestion());
 }
 
 TEST_F(ResolveHelperFunctionsTest, copyAnswerMessage) {
@@ -164,9 +190,9 @@ TEST_F(ResolveHelperFunctionsTest, copyAnswerMessage) {
               message_a_->getRRCount(Message::SECTION_ADDITIONAL));
 
     
-    compareSections(message_a_, message_b_, Message::SECTION_ANSWER);
-    compareSections(message_a_, message_b_, Message::SECTION_AUTHORITY);
-    compareSections(message_a_, message_b_, Message::SECTION_ADDITIONAL);
+    compareSections(*message_a_, *message_b_, Message::SECTION_ANSWER);
+    compareSections(*message_a_, *message_b_, Message::SECTION_AUTHORITY);
+    compareSections(*message_a_, *message_b_, Message::SECTION_ADDITIONAL);
 }
 
 } // Anonymous namespace
