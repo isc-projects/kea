@@ -50,6 +50,9 @@ void makeErrorMessage(isc::dns::MessagePtr answer_message,
 /// the Opcode). This allows for direct usage of makeErrorMessage(),
 /// as well as ResolveCache.lookup().
 ///
+/// Raises an isc::dns::InvalidMessageOperation if reponse_message is
+/// not in RENDER mode.
+///
 /// \param query_message The query message to take the Question, Qid,
 ///                      and Opcode from.
 /// \param response_message The fresh response message to initialize
@@ -64,6 +67,9 @@ void initResponseMessage(const isc::dns::Message& query_message,
 /// first details of the response (i.e. the Question section and the
 /// Opcode Query). This allows for direct usage of makeErrorMessage(),
 /// as well as ResolveCache.lookup().
+///
+/// Raises an isc::dns::InvalidMessageOperation if reponse_message is
+/// not in RENDER mode.
 ///
 /// \param question The question to place in the Question section
 /// \param response_message The fresh response message to initialize
