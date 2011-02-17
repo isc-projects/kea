@@ -124,15 +124,12 @@ def set_bindctl_options(parser):
                       help = 'PEM formatted server certificate validation chain file')
 
 if __name__ == '__main__':
-    try:
-        parser = OptionParser(version = VERSION)
-        set_bindctl_options(parser)
-        (options, args) = parser.parse_args()
-        server_addr = options.addr + ':' + str(options.port)
-        tool = BindCmdInterpreter(server_addr, pem_file=options.cert_chain)
-        prepare_config_commands(tool)
-        tool.run()
-    except Exception as e:
-        print(e, "\nFailed to connect with b10-cmdctl module, is it running?")
+    parser = OptionParser(version = VERSION)
+    set_bindctl_options(parser)
+    (options, args) = parser.parse_args()
+    server_addr = options.addr + ':' + str(options.port)
+    tool = BindCmdInterpreter(server_addr, pem_file=options.cert_chain)
+    prepare_config_commands(tool)
+    tool.run()
 
 
