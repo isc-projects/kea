@@ -22,8 +22,23 @@ namespace rdata {
 namespace generic {
 namespace detail {
 namespace nsec {
-void buildRRTypeBitmap(const char* const rrtype_name,
-                       const size_t total_len, std::vector<uint8_t>& typebits);
+/// Check if a given "type bitmap" for NSEC/NSEC3 is valid.
+///
+/// This helper function checks given wire format data (stored in a
+/// \c std::vector) is a valid type bitmaps used for the NSEC and NSEC3 RRs
+/// according to RFC4034 and RFC5155.  The validation logic is the same
+/// for these two RRs, so a unified check function is provided.
+/// This function is essentially private and is only expected to be called
+/// from the \c NSEC and \c NSEC3 class implementations.
+///
+/// \exception DNSMessageFORMERR The bitmap is not valid.
+///
+/// \param rrtype_name Either "NSEC" or "NSEC3"; used as part of exception
+/// messages.
+/// \param typebits The type bitmaps in wire format.  The size of vector
+/// is the total length of the bitmaps.
+void checkRRTypeBitmaps(const char* const rrtype_name,
+                        const std::vector<uint8_t>& typebits);
 }
 }
 }

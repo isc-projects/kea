@@ -182,7 +182,7 @@ NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) {
 
     vector<uint8_t> typebits(rdata_len);
     buffer.readData(&typebits[0], rdata_len);
-    buildRRTypeBitmap("NSEC3", rdata_len, typebits);
+    checkRRTypeBitmaps("NSEC3", typebits);
 
     impl_ = new NSEC3Impl(hashalg, flags, iterations, salt, next, typebits);
 }
