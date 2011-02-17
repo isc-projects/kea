@@ -51,7 +51,6 @@ except ImportError:
     my_readline = sys.stdin.readline
 
 CSV_FILE_NAME = 'default_user.csv'
-FAIL_TO_CONNECT_WITH_CMDCTL = "Fail to connect with b10-cmdctl module, is it running?"
 CONFIG_MODULE_NAME = 'config'
 CONST_BINDCTL_HELP = """
 usage: <module name> <command name> [param1 = value1 [, param2 = value2]]
@@ -92,7 +91,10 @@ class BindCmdInterpreter(Cmd):
         Cmd.__init__(self)
         self.location = ""
         self.prompt_end = '> '
-        self.prompt = self.prompt_end
+        if sys.stdin.isatty():
+            self.prompt = self.prompt_end
+        else:
+            self.prompt = ""
         self.ruler = '-'
         self.modules = OrderedDict()
         self.add_module_info(ModuleInfo("help", desc = "Get help for bindctl"))
@@ -119,8 +121,8 @@ class BindCmdInterpreter(Cmd):
 
             self.cmdloop()
         except FailToLogin as err:
-            print(err)
-            print(FAIL_TO_CONNECT_WITH_CMDCTL)
+            # error already printed when this was raised, ignoring
+            pass
         except KeyboardInterrupt:
             print('\nExit from bindctl')
 
@@ -270,8 +272,10 @@ class BindCmdInterpreter(Cmd):
         return line 
 
     def postcmd(self, stop, line):
-        '''Update the prompt after every command'''
-        self.prompt = self.location + self.prompt_end
+        '''Update the prompt after every command, but only if we
+           have a tty as output'''
+        if sys.stdin.isatty():
+            self.prompt = self.location + self.prompt_end
         return stop
 
     def _prepare_module_commands(self, module_spec):
@@ -525,8 +529,7 @@ class BindCmdInterpreter(Cmd):
             self._validate_cmd(cmd)
             self._handle_cmd(cmd)
         except (IOError, http.client.HTTPException) as err:
-            print('Error!', err)
-            print(FAIL_TO_CONNECT_WITH_CMDCTL)
+            print('Error: ', err)
         except BindCtlException as err:
             print("Error! ", err)
             self._print_correct_usage(err)
