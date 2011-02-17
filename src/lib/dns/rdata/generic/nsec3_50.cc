@@ -80,8 +80,8 @@ NSEC3::NSEC3(const string& nsec3_str) :
     // between iteration and salt, we extract this field as string and convert
     // to integer.
     try {
-        iterations = lexical_cast<unsigned int>(iterations_str);
-    } catch (const bad_lexical_cast&) {
+        iterations = boost::lexical_cast<unsigned int>(iterations_str);
+    } catch (const boost::bad_lexical_cast&) {
         isc_throw(InvalidRdataText, "Bad NSEC3 iteration: " << iterations_str);
     }
     if (iterations > 0xffff) {
