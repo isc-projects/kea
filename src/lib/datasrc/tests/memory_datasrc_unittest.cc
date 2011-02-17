@@ -752,7 +752,7 @@ TEST_F(MemoryZoneTest, delegatedWildcard) {
     {
         SCOPED_TRACE("Looking under delegation point in GLUE_OK mode");
         findTest(Name("a.child.example.org"), RRType::A(), Zone::DELEGATION,
-            true, rr_child_ns_);
+            true, rr_child_ns_, NULL, NULL, Zone::FIND_GLUE_OK);
     }
 }
 
