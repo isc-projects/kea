@@ -243,7 +243,7 @@
 /// scrubbed.
 
 #include <config.h>
-#include <asiolink/ioendpoint.h>
+#include <asiolink/io_endpoint.h>
 #include <dns/message.h>
 #include <dns/name.h>
 

@@ -318,7 +318,8 @@ public:
     /// If the specified value is non 0, the \c AuthSrv object will submit
     /// its statistics to the statistics module every \c interval seconds.
     /// If it's 0, and \c AuthSrv currently submits statistics, the submission
-    /// will be disabled.
+    /// will be disabled. \c interval must be equal to or shorter than 86400
+    /// seconds (1 day).
     ///
     /// This method should normally not throw an exception; however, its
     /// underlying library routines may involve resource allocation, and

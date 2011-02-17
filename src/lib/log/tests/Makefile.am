@@ -11,6 +11,8 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
+EXTRA_DIST = localdef.mes
+
 TESTS =
 if HAVE_GTEST
 TESTS += run_unittests

@@ -23,9 +23,6 @@ liblog_la_SOURCES += message_reader.cc message_reader.h
 liblog_la_SOURCES += message_types.h
 liblog_la_SOURCES += root_logger_name.cc root_logger_name.h
 liblog_la_SOURCES += strutil.h strutil.cc
-# liblog_la_SOURCES += xdebuglevel.cc xdebuglevel.h
-
-# liblog_la_LDFLAGS = $(LOG4CXX_LDFLAGS)
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
