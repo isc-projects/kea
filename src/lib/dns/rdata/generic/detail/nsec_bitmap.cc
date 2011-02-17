@@ -27,12 +27,14 @@ namespace generic {
 namespace detail {
 namespace nsec {
 void
-buildRRTypeBitmap(const char* const rrtype_name,
-                  const size_t total_len, vector<uint8_t>& typebits)
+checkRRTypeBitmaps(const char* const rrtype_name,
+                   const vector<uint8_t>& typebits)
 {
     int len = 0;
     bool first = true;
     unsigned int block, lastblock = 0;
+    const size_t total_len = typebits.size();
+
     for (int i = 0; i < total_len; i += len) {
         if (i + 2 > total_len) {
             isc_throw(DNSMessageFORMERR, rrtype_name <<

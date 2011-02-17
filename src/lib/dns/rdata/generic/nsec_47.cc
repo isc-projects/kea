@@ -105,7 +105,7 @@ NSEC::NSEC(InputBuffer& buffer, size_t rdata_len) {
 
     vector<uint8_t> typebits(rdata_len);
     buffer.readData(&typebits[0], rdata_len);
-    buildRRTypeBitmap("NSEC", rdata_len, typebits);
+    checkRRTypeBitmaps("NSEC", typebits);
 
     impl_ = new NSECImpl(nextname, typebits);
 }
