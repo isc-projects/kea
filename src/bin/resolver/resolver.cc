@@ -21,7 +21,6 @@
 #include <cassert>
 
 #include <asiolink/asiolink.h>
-#include <asiolink/ioaddress.h>
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>

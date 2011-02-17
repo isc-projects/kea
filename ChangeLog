@@ -1,3 +1,34 @@
+  169.  [func]      zhang likun, jelte
+	Added a basic implementation for a resolver cache (though not
+	used yet).
+	(Trac #449, git 8aa3b2246ae095bbe7f855fd11656ae3bdb98986)
+
+  168.  [bug]       vorner
+	Boss no longer has the -f argument, which was undocumented and stayed as
+	a relict of previous versions, currently causing only strange behaviour.
+	(Trac #572, git 17f237478961005707d649a661cc72a4a0d612d4)
+
+  167.  [bug]           naokikambe
+	Fixed failure of termination of msgq_test.py with python3 coverage(3.3.1)
+	(Trac #573, git 0e6a18e12f61cc482e07078776234f32605312e5)
+
+  166.  [func]      jelte
+	The resolver now sends back a SERVFAIL when there is a client
+	timeout (timeout_client config setting), but it will not stop
+	resolving (until there is a lookup timeout or a result).
+	(Trac #497 and #489, git af0e5cd93bebb27cb5c4457f7759d12c8bf953a6)
+
+  165.  [func]      jelte
+	The resolver now handles CNAMEs, it will follow them, and include
+	them in the answer. The maximum length of CNAME chains that is
+	supported is 16.
+	(Trac #497, git af0e5cd93bebb27cb5c4457f7759d12c8bf953a6)
+
+  164.  [bug]           y-aharen
+	IntervalTimer: Modified the interface to accept interval in
+	milliseconds. It shortens the time of the tests of IntervalTimer.
+	(Trac #452, git c9f6acc81e24c4b8f0eb351123dc7b43f64e0914)
+
   163.  [func]      vorner
 	The pimpl design pattern is used in UDPServer, with a shared pointer. This
 	makes it smaller to copy (which is done a lot as a sideeffect of being
