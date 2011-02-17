@@ -1,3 +1,10 @@
+  170.	[bug]		jinmei
+	Tightened validity checks in the NSEC3 constructors, both "from
+	"text" and "from wire".  Specifically, wire data containing
+	invalid type bitmaps or invalid lengths of salt or hash is now
+	correctly rejected.
+	(Trac #117, git 9c690982f24fef19c747a72f43c4298333a58f48)
+
   169.  [func]      zhang likun, jelte
 	Added a basic implementation for a resolver cache (though not
 	used yet).
