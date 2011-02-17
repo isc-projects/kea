@@ -14,7 +14,7 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 failcount=0
-localmes=@abs_srcdir@/localdef.mes
+localmes=@abs_builddir@/localdef_mes_$$
 tempfile=@abs_builddir@/run_time_init_test_tempfile_$$
 
 passfail() {
