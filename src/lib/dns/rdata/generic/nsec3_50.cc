@@ -64,10 +64,8 @@ NSEC3::NSEC3(const string& nsec3_str) :
     istringstream iss(nsec3_str);
     unsigned int hashalg, flags, iterations;
     string iterations_str, salthex, nexthash;
-    stringbuf bitmaps;
 
-    iss >> hashalg >> flags >> iterations_str >> salthex >> nexthash
-        >> &bitmaps;
+    iss >> hashalg >> flags >> iterations_str >> salthex >> nexthash;
     if (iss.bad() || iss.fail()) {
         isc_throw(InvalidRdataText, "Invalid NSEC3 text: " << nsec3_str);
     }
@@ -107,15 +105,20 @@ NSEC3::NSEC3(const string& nsec3_str) :
                   << next.size() << " bytes");
     }
 
-    stringstream bitmap_stream(bitmaps.str());
-    uint8_t bitmap[8 * 1024];       // 64k bits
-    vector<uint8_t> typebits;
+    // For NSEC3 empty bitmap is possible and allowed.
+    if (iss.eof()) {
+        impl_ = new NSEC3Impl(hashalg, flags, iterations, salt, next,
+                              vector<uint8_t>());
+        return;
+    }
 
+    vector<uint8_t> typebits;
+    uint8_t bitmap[8 * 1024];       // 64k bits
     memset(bitmap, 0, sizeof(bitmap));
     do { 
         string type;
         int code;
-        bitmap_stream >> type;
+        iss >> type;
         if (type.length() != 0) {
             try {
                 code = RRType(type).getCode();
@@ -124,7 +127,7 @@ NSEC3::NSEC3(const string& nsec3_str) :
                 isc_throw(InvalidRdataText, "Invalid RRtype in NSEC3");
             }
         }
-    } while (!bitmap_stream.eof());
+    } while (!iss.eof());
 
     for (int window = 0; window < 256; window++) {
         int octet;
@@ -171,7 +174,7 @@ NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) {
 
     const uint8_t nextlen = buffer.readUint8();
     --rdata_len;
-    if (nextlen == 0 || rdata_len <= nextlen) {
+    if (nextlen == 0 || rdata_len < nextlen) {
         isc_throw(DNSMessageFORMERR, "NSEC3 invalid hash length: " <<
                   static_cast<unsigned int>(nextlen));
     }
@@ -181,8 +184,12 @@ NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) {
     rdata_len -= nextlen;
 
     vector<uint8_t> typebits(rdata_len);
-    buffer.readData(&typebits[0], rdata_len);
-    checkRRTypeBitmaps("NSEC3", typebits);
+    if (rdata_len > 0) {
+        // Read and parse the bitmaps only when they exist; empty bitmap
+        // is possible for NSEC3.
+        buffer.readData(&typebits[0], rdata_len);
+        checkRRTypeBitmaps("NSEC3", typebits);
+    }
 
     impl_ = new NSEC3Impl(hashalg, flags, iterations, salt, next, typebits);
 }
