@@ -420,10 +420,51 @@ struct MemoryZone::MemoryZoneImpl {
                     return (FindResult(DELEGATION, prepareRRset(name,
                         state.rrset_, rename)));
                 }
+
+                // If the RBTree search stopped at a node for a super domain
+                // of the search name, it means the search name exists in
+                // the zone but is empty.  Treat it as NXRRSET.
+                if (node_path.getLastComparisonResult().getRelation() ==
+                    NameComparisonResult::SUPERDOMAIN) {
+                    return (FindResult(NXRRSET, ConstRRsetPtr()));
+                }
+
                 /*
                  * No redirection anywhere. Let's try if it is a wildcard.
+                 *
+                 * The wildcard is checked after the empty non-terminal domain
+                 * case above, because if that one triggers, it means we should
+                 * not match according to 4.3.3 of RFC 1034 (the query name
+                 * is known to exist).
                  */
                 if (node->getFlag(DOMAINFLAG_WILD)) {
+                    /* Should we cancel this match?
+                     *
+                     * If we compare with some node and get a common ancestor,
+                     * it might mean we are comparing with a non-wildcard node.
+                     * In that case, we check which part is common. If we have
+                     * something in common that lives below the node we got
+                     * (the one above *), then we should cancel the match
+                     * according to section 4.3.3 of RFC 1034 (as the name
+                     * between the wildcard domain and the query name is known
+                     * to exist).
+                     *
+                     * Because the way the tree stores relative names, we will
+                     * have exactly one common label (the ".") in case we have
+                     * nothing common under the node we got and we will get
+                     * more common labels otherwise (yes, this relies on the
+                     * internal RBTree structure, which leaks out through this
+                     * little bit).
+                     *
+                     * If the empty non-terminal node actually exists in the
+                     * tree, then this cancellation is not needed, because we
+                     * will not get here at all.
+                     */
+                    if (node_path.getLastComparisonResult().getRelation() ==
+                        NameComparisonResult::COMMONANCESTOR && node_path.
+                        getLastComparisonResult().getCommonLabels() > 1) {
+                        return (FindResult(NXDOMAIN, ConstRRsetPtr()));
+                    }
                     Name wildcard(Name("*").concatenate(
                         node_path.getAbsoluteName()));
                     DomainTree::Result result(domains_.find(wildcard, &node));
@@ -440,14 +481,6 @@ struct MemoryZone::MemoryZoneImpl {
                      */
                     rename = true;
                     break;
-                }
-
-                // If the RBTree search stopped at a node for a super domain
-                // of the search name, it means the search name exists in
-                // the zone but is empty.  Treat it as NXRRSET.
-                if (node_path.getLastComparisonResult().getRelation() ==
-                    NameComparisonResult::SUPERDOMAIN) {
-                    return (FindResult(NXRRSET, ConstRRsetPtr()));
                 }
 
                 // fall through
