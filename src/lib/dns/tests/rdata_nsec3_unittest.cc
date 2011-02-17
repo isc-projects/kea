@@ -71,6 +71,9 @@ TEST_F(Rdata_NSEC3_Test, fromText) {
     EXPECT_EQ(255, generic::NSEC3("1 1 1 D399EAAB " +
                                   string((255 * 8) / 5, '0') +
                                   " NS").getNext().size());
+
+    // type bitmap is empty.  it's possible and allowed for NSEC3.
+    generic::NSEC3("1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6");
 }
 
 TEST_F(Rdata_NSEC3_Test, toText) {
@@ -79,10 +82,6 @@ TEST_F(Rdata_NSEC3_Test, toText) {
 }
 
 TEST_F(Rdata_NSEC3_Test, badText) {
-    // Bitmap is missing
-    EXPECT_THROW(generic::NSEC3(
-                     "1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6"),
-                 InvalidRdataText);
     EXPECT_THROW(generic::NSEC3("1 1 1 ADDAFEEE "
                                 "0123456789ABCDEFGHIJKLMNOPQRSTUV "
                                 "BIFF POW SPOON"),
@@ -130,6 +129,10 @@ TEST_F(Rdata_NSEC3_Test, createFromWire) {
     EXPECT_EQ(0, rdata_nsec3.compare(
                   *rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
                                         "rdata_nsec3_fromWire1")));
+
+    // A valid NSEC3 RR with empty type bitmap.
+    EXPECT_NO_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
+                                         "rdata_nsec3_fromWire15.wire"));
 
     // Too short RDLENGTH: it doesn't even contain the first 5 octets.
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
