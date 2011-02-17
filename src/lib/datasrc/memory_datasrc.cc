@@ -363,8 +363,12 @@ struct MemoryZone::MemoryZoneImpl {
         rrset, bool rename)
     {
         if (rename) {
-            // TODO What about signatures? If we change the name, it would be
-            // wrong anyway...
+            /*
+             * We lose a signature here. But it would be wrong anyway, because
+             * the name changed. This might turn out to be unimportant in
+             * future, because wildcards will probably be handled somehow
+             * by DNSSEC.
+             */
             RRsetPtr result(new RRset(name, rrset->getClass(),
                 rrset->getType(), rrset->getTTL()));
             for (RdataIteratorPtr i(rrset->getRdataIterator()); !i->isLast();
