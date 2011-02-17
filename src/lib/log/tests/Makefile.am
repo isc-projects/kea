@@ -11,24 +11,22 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
-EXTRA_DIST = localdef.mes
-
 TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES  = root_logger_name_unittest.cc
 run_unittests_SOURCES += filename_unittest.cc
 run_unittests_SOURCES += logger_unittest.cc
-# run_unittests_SOURCES += logger_impl_unittest.cc
 run_unittests_SOURCES += message_dictionary_unittest.cc
 run_unittests_SOURCES += message_reader_unittest.cc
 run_unittests_SOURCES += message_initializer_unittest.cc
 run_unittests_SOURCES += message_initializer_unittest_2.cc
 run_unittests_SOURCES += strutil_unittest.cc
-# run_unittests_SOURCES += xdebuglevel_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
+
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
+
 run_unittests_LDADD  = $(GTEST_LDADD)
 run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 endif
