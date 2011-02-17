@@ -102,6 +102,10 @@ NSEC3::NSEC3(const string& nsec3_str) :
 
     vector<uint8_t> next;
     decodeBase32Hex(nexthash, next);
+    if (next.size() > 255) {
+        isc_throw(InvalidRdataText, "NSEC3 hash is too long: "
+                  << next.size() << " bytes");
+    }
 
     stringstream bitmap_stream(bitmaps.str());
     uint8_t bitmap[8 * 1024];       // 64k bits
@@ -329,9 +333,14 @@ NSEC3::getIterations() const {
     return (impl_->iterations_);
 }
 
-vector<uint8_t>&
+const vector<uint8_t>&
 NSEC3::getSalt() const {
     return (impl_->salt_);
+}
+
+const vector<uint8_t>&
+NSEC3::getNext() const {
+    return (impl_->next_);
 }
 
 // END_RDATA_NAMESPACE
