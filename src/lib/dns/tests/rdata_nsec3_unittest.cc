@@ -73,7 +73,8 @@ TEST_F(Rdata_NSEC3_Test, fromText) {
                                   " NS").getNext().size());
 
     // type bitmap is empty.  it's possible and allowed for NSEC3.
-    generic::NSEC3("1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6");
+    EXPECT_NO_THROW(generic::NSEC3(
+                        "1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6"));
 }
 
 TEST_F(Rdata_NSEC3_Test, toText) {
