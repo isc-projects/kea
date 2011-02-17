@@ -140,32 +140,7 @@ TEST_F(Rdata_NSEC3_Test, createFromWire) {
                                       "rdata_nsec3_fromWire2.wire"),
                  DNSMessageFORMERR);
 
-    // These tests are the same as NSEC tests.  See the NSEC cases for
-    // details.
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
-                                      "rdata_nsec3_fromWire3"),
-                 DNSMessageFORMERR);
-
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
-                                      "rdata_nsec3_fromWire4.wire"),
-                 DNSMessageFORMERR);
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
-                                      "rdata_nsec3_fromWire5.wire"),
-                 DNSMessageFORMERR);
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
-                                      "rdata_nsec3_fromWire6.wire"),
-                 DNSMessageFORMERR);
-    EXPECT_NO_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
-                                         "rdata_nsec3_fromWire7.wire"));
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
-                                      "rdata_nsec3_fromWire8.wire"),
-                 DNSMessageFORMERR);
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
-                                      "rdata_nsec3_fromWire9.wire"),
-                 DNSMessageFORMERR);
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
-                                      "rdata_nsec3_fromWire10.wire"),
-                 DNSMessageFORMERR);
+    // Invalid bitmap cases are tested in Rdata_NSECBITMAP_Test.
 
     // salt length is too large
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
