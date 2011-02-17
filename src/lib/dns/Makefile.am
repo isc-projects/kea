@@ -85,11 +85,11 @@ libdns___la_SOURCES += rrtype.cc
 libdns___la_SOURCES += question.h question.cc
 libdns___la_SOURCES += util/sha1.h util/sha1.cc
 libdns___la_SOURCES += tsigkey.h tsigkey.cc
+libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.h
+libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.cc
 
 nodist_libdns___la_SOURCES = rdataclass.cc rrclass.h rrtype.h
 nodist_libdns___la_SOURCES += rrparamregistry.cc
-nodist_libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.h
-nodist_libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.cc
 
 rrclass.h: rrclass-placeholder.h
 rrtype.h: rrtype-placeholder.h

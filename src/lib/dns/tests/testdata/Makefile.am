@@ -57,7 +57,7 @@ EXTRA_DIST += rdata_nsec_fromWire6.spec rdata_nsec_fromWire7.spec
 EXTRA_DIST += rdata_nsec_fromWire8.spec rdata_nsec_fromWire9.spec
 EXTRA_DIST += rdata_nsec_fromWire10.spec
 EXTRA_DIST += rdata_nsec3param_fromWire1
-EXTRA_DIST += rdata_nsec3_fromWire1 rdata_nsec3_fromWire2 rdata_nsec3_fromWire3
+EXTRA_DIST += rdata_nsec3_fromWire1 rdata_nsec3_fromWire3
 EXTRA_DIST += rdata_nsec3_fromWire4.spec rdata_nsec3_fromWire5.spec
 EXTRA_DIST += rdata_nsec3_fromWire6.spec rdata_nsec3_fromWire7.spec
 EXTRA_DIST += rdata_nsec3_fromWire8.spec rdata_nsec3_fromWire9.spec
@@ -81,6 +81,7 @@ EXTRA_DIST += rdata_tsig_fromWire9.spec
 EXTRA_DIST += rdata_tsig_toWire1.spec rdata_tsig_toWire2.spec
 EXTRA_DIST += rdata_tsig_toWire3.spec rdata_tsig_toWire4.spec
 EXTRA_DIST += rdata_tsig_toWire5.spec
+EXTRA_DIST += rdata_nsec3_fromWire2.spec
 
 .spec.wire:
 	./gen-wiredata.py -o $@ $<
