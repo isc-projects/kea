@@ -570,6 +570,8 @@ class BindCmdInterpreter(Cmd):
             if cmd.params['identifier'].startswith("/"):
                 identifier = cmd.params['identifier']
             else:
+                if cmd.params['identifier'].startswith('['):
+                    identifier = identifier[:-1]
                 identifier += cmd.params['identifier']
 
             # Check if the module is known; for unknown modules
