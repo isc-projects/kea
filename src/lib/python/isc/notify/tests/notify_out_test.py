@@ -27,24 +27,28 @@ class MockSocket():
     def __init__(self, family, type):
         self.family = family
         self.type = type
-        self._read_sock, self._write_sock  = socket.socketpair()
+        self._local_sock, self._remote_sock = socket.socketpair()
 
     def connect(self, to):
         pass
 
     def fileno(self):
-        return self._read_sock.fileno()
+        return self._local_sock.fileno()
 
     def close(self):
-        self._read_sock.close()
-        self._write_sock.close()
+        self._local_sock.close()
+        self._remote_sock.close()
 
     def sendto(self, data, flag, dst):
-        return self._write_sock.send(data)
+        return self._local_sock.send(data)
 
     def recvfrom(self, length):
-        data = self._read_sock.recv(length)
+        data = self._local_sock.recv(length)
         return (data, None)
+
+    # provide a remote end which can write data to MockSocket for testing.
+    def remote_end(self):
+        return self._remote_sock
 
 # We subclass the ZoneNotifyInfo class we're testing here, only
 # to override the prepare_notify_out() method.
@@ -137,12 +141,11 @@ class TestNotifyOut(unittest.TestCase):
         self.assertEqual(len(timeout_zones), 2)
 
         # Now make one socket be readable
-        addr = ('localhost', 12340)
         self._notify._notify_infos[('example.net.', 'IN')].notify_timeout = time.time() + 10
         self._notify._notify_infos[('example.com.', 'IN')].notify_timeout = time.time() + 10
 
         #Send some data to socket 12340, to make the target socket be readable
-        self._notify._notify_infos[('example.net.', 'IN')]._sock.sendto(b'data', 0, addr)
+        self._notify._notify_infos[('example.net.', 'IN')]._sock.remote_end().send(b'data')
         replied_zones, timeout_zones = self._notify._wait_for_notify_reply()
         self.assertEqual(len(replied_zones), 1)
         self.assertEqual(len(timeout_zones), 1)
