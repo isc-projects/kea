@@ -23,9 +23,27 @@
 using namespace std;
 using namespace isc::dns;
 
+// See dnssectime.cc
+namespace isc {
+namespace dns {
+namespace dnssectime {
+namespace detail {
+extern int64_t (*gettimeFunction)();
+}
+}
+}
+}
+
 namespace {
 
-TEST(DNSSECTimeTest, fromText) {
+class DNSSECTimeTest : public ::testing::Test {
+protected:
+    ~DNSSECTimeTest() {
+        dnssectime::detail::gettimeFunction = NULL;
+    }
+};
+
+TEST_F(DNSSECTimeTest, fromText) {
     // In most cases (in practice) the 32-bit and 64-bit versions should
     // behave identically, so we'll mainly test the 32-bit version, which
     // will be more commonly used in actual code (because many of the wire
@@ -74,12 +92,67 @@ TEST(DNSSECTimeTest, fromText) {
     EXPECT_EQ(4294967306LL, timeFromText64("21060207062826"));
 }
 
-TEST(DNSSECTimeTest, toText) {
-    EXPECT_EQ("19700101000000", timeToText32(0));
-    EXPECT_EQ("20100311233000", timeToText32(1268350200));
+// This helper templated function tells timeToText32 a faked current time.
+// The template parameter is that faked time in the form of int64_t seconds
+// since epoch.
+template <int64_t NOW>
+int64_t
+testGetTime() {
+    return (NOW);
 }
 
-TEST(DNSSECTimeTest, overflow) {
+TEST_F(DNSSECTimeTest, toText) {
+    // Set the current time to: Feb 18 09:04:14 UTC 2012 (an arbitrary choice
+    // in the range of the first half of uint32 since epoch).
+    dnssectime::detail::gettimeFunction = testGetTime<1329555854LL>;
+
+    // Check some basic cases
+    EXPECT_EQ("19700101000000", timeToText32(0));
+    EXPECT_EQ("20100311233000", timeToText32(1268350200));
+
+    // Test the "year 2038" problem.
+    // Check the result of toText() for "INT_MIN" in int32_t.  It's in the
+    // 68-year range from the faked current time, so the result should be
+    // in year 2038, instead of 1901.
+    EXPECT_EQ("20380119031408", timeToText64(0x80000000L));
+    EXPECT_EQ("20380119031408", timeToText32(0x80000000L));
+
+    // A controversial case: what should we do with "-1"?  It's out of range
+    // in future, but according to RFC time before epoch doesn't seem to be
+    // considered "in-range" either.  Our toText() implementation handles
+    // this range as a special case and always treats them as future time
+    // until year 2038.  This won't be a real issue in practice, though,
+    // since such too large values won't be used in actual deployment by then.
+    EXPECT_EQ("21060207062815", timeToText32(0xffffffffL));
+
+    // After the singular point of year 2038, the first half of uint32 can
+    // point to a future time.
+    // Set the current time to: Apr 1 00:00:00 UTC 2038:
+    dnssectime::detail::gettimeFunction = testGetTime<2153692800LL>;
+    // then time "10" is Feb 7 06:28:26 UTC 2106
+    EXPECT_EQ("21060207062826", timeToText32(10));
+    // in 64-bit, it's 2^32 + 10
+    EXPECT_EQ("21060207062826", timeToText64(0x10000000aLL));
+
+    // After year 2106, the upper half of uint32 can point to past time
+    // (as it should).
+    dnssectime::detail::gettimeFunction = testGetTime<0x10000000aLL>;
+    EXPECT_EQ("21060207062815", timeToText32(0xffffffffL));
+
+    // set the current time to: Mar16 12:56:32 UTC 2242
+    dnssectime::detail::gettimeFunction = testGetTime<8589934592LL>;
+    EXPECT_EQ("22420316125632", timeToText64(8589934592LL));
+    EXPECT_EQ("22420316125632", timeToText32(0));
+
+    // Try very large time value.  Actually it's the possible farthest time
+    // that can be represented in the form of YYYYMMDDHHmmSS.
+    const uint64_t YEAR10K_EVE = 253402300799LL;
+    EXPECT_EQ("99991231235959", timeToText64(YEAR10K_EVE));
+    dnssectime::detail::gettimeFunction = testGetTime<YEAR10K_EVE - 10>;
+    EXPECT_EQ("99991231235959", timeToText32(4294197631L));
+}
+
+TEST_F(DNSSECTimeTest, overflow) {
     // Jan 1, Year 10,000.
     EXPECT_THROW(timeToText64(253402300800LL), InvalidTime);
 }
