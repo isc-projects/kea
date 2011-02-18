@@ -437,7 +437,19 @@ class BindCmdInterpreter(Cmd):
         Cmd.onecmd(self, line)
 
     def remove_prefix(self, list, prefix):
-        return [(val[len(prefix):]) for val in list]
+        """Removes the prefix already entered, and all elements from the
+           list that don't match it"""
+        if prefix.startswith('/'):
+            prefix = prefix[1:]
+
+        new_list = []
+        for val in list:
+            if val.startswith(prefix):
+                new_val = val[len(prefix):]
+                if new_val.startswith("/"):
+                    new_val = new_val[1:]
+                new_list.append(new_val)
+        return new_list
 
     def complete(self, text, state):
         if 0 == state:
