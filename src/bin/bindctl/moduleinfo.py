@@ -74,7 +74,7 @@ class CommandInfo:
         self.params = OrderedDict()        
         # Set default parameter "help"
         self.add_param(ParamInfo("help", 
-                                  desc = "Get help for command",
+                                  desc = "Get help for command.",
                                   optional = True))
                 
     def __str__(self):
@@ -196,7 +196,7 @@ class ModuleInfo:
         self.desc = desc
         self.commands = OrderedDict()         
         self.add_command(CommandInfo(name = "help", 
-                                     desc = "Get help for module"))
+                                     desc = "Get help for module."))
         
     def __str__(self):
         return str("%s \t%s" % (self.name, self.desc))
