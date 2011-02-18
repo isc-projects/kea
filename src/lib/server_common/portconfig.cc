@@ -15,10 +15,16 @@
 #include "portconfig.h"
 
 #include <asiolink/io_address.h>
+#include <asiolink/dns_service.h>
+#include <log/dummylog.h>
+
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
 using namespace std;
 using namespace isc::data;
 using namespace asiolink;
+using isc::log::dlog;
 
 namespace isc {
 namespace server_common {
@@ -61,8 +67,52 @@ parseAddresses(isc::data::ConstElementPtr addresses,
     return (result);
 }
 
+namespace {
+
 void
-installListenAddresses(const AddressList&, AddressList&, asiolink::DNSService&) {}
+setAddresses(DNSService& service, const AddressList& addresses) {
+    service.clearServers();
+    BOOST_FOREACH(const AddressPair &address, addresses) {
+        service.addServer(address.second, address.first);
+    }
+}
+
+}
+
+void
+installListenAddresses(const AddressList& newAddresses,
+                       AddressList& addressStore,
+                       asiolink::DNSService& service)
+{
+    try {
+        dlog("Setting listen addresses:");
+        BOOST_FOREACH(const AddressPair& addr, newAddresses) {
+            dlog(" " + addr.first + ":" +
+                        boost::lexical_cast<string>(addr.second));
+        }
+        setAddresses(service, newAddresses);
+        addressStore = newAddresses;
+    }
+    catch (const exception& e) {
+        /*
+         * We couldn't set it. So return it back. If that fails as well,
+         * we have a problem.
+         *
+         * If that fails, bad luck, but we are useless anyway, so just die
+         * and let boss start us again.
+         */
+        dlog(string("Unable to set new address: ") + e.what(), true);
+        try {
+            setAddresses(service, addressStore);
+        }
+        catch (const exception& e2) {
+            dlog("Unable to recover from error;", true);
+            dlog(string("Rollback failed with: ") + e2.what(), true);
+            abort();
+        }
+        throw e; // Let it fly a little bit further
+    }
+}
 
 }
 }
