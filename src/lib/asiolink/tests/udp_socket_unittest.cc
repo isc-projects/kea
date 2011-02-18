@@ -52,14 +52,12 @@
 
 #include <asio.hpp>
 
-#include <asiolink/io_completion_cb.h>
 #include <asiolink/io_service.h>
 #include <asiolink/udp_endpoint.h>
 #include <asiolink/udp_socket.h>
 
 using namespace asio;
 using namespace asiolink;
-using asio::ip::udp;
 using namespace std;
 
 namespace {
@@ -77,7 +75,7 @@ const char INBOUND_DATA[] = "Returned data from server to client";
 /// and the operator() method is called when when an asynchronous I/O
 /// completes.  The arguments to the completion callback are stored for later
 /// retrieval.
-class UDPCallback : public IOCompletionCallback {
+class UDPCallback {
 public:
 
     struct PrivateData {
@@ -187,33 +185,38 @@ private:
 TEST(UDPSocket, SequenceTest) {
 
     // Common objects.
-    IOAddress   server_address(SERVER_ADDRESS);         // Address of target server
-    UDPEndpoint endpoint(server_address, SERVER_PORT);  // Endpoint of target server
     IOService   service;                    // Service object for async control
 
+    // Server
+    IOAddress   server_address(SERVER_ADDRESS); // Address of target server
+    UDPCallback server_cb("Server");        // Server callback
+    UDPEndpoint server_endpoint(            // Endpoint describing server
+        server_address, SERVER_PORT);
+    UDPEndpoint server_remote_endpoint;     // Address where server received message from
+
     // The client - the UDPSocket being tested
-    UDPSocket   client(service);            // Socket under test
+    UDPSocket<UDPCallback>  client(service);// Socket under test
     UDPCallback client_cb("Client");        // Async I/O callback function
+    UDPEndpoint client_remote_endpoint;     // Where client receives message from
     size_t      client_cumulative = 0;      // Cumulative data received
 
     // The server - with which the client communicates.  For convenience, we
     // use the same io_service, and use the endpoint object created for
     // the client to send to as the endpoint object in the constructor.
-    UDPCallback server_cb("Server");
-    udp::socket server(service.get_io_service(), endpoint.getASIOEndpoint());
+    asio::ip::udp::socket server(service.get_io_service(),
+        server_endpoint.getASIOEndpoint());
     server.set_option(socket_base::reuse_address(true));
 
     // Assertion to ensure that the server buffer is large enough
-    char data[UDPSocket::MAX_SIZE];
+    char data[UDPSocket<UDPCallback>::MAX_SIZE];
     ASSERT_GT(sizeof(data), sizeof(OUTBOUND_DATA));
 
     // Open the client socket - the operation should be synchronous
-    EXPECT_FALSE(client.open(&endpoint, client_cb));
+    EXPECT_FALSE(client.open(&server_endpoint, client_cb));
 
     // Issue read on the server.  Completion callback should not have run.
     server_cb.setCalled(false);
     server_cb.setCode(42); // Answer to Life, the Universe and Everything!
-    UDPEndpoint server_remote_endpoint;
     server.async_receive_from(buffer(data, sizeof(data)),
         server_remote_endpoint.getASIOEndpoint(), server_cb);
     EXPECT_FALSE(server_cb.getCalled());
@@ -222,7 +225,7 @@ TEST(UDPSocket, SequenceTest) {
     // be called until we call the io_service.run() method.
     client_cb.setCalled(false);
     client_cb.setCode(7);  // Arbitrary number
-    client.asyncSend(OUTBOUND_DATA, sizeof(OUTBOUND_DATA), &endpoint, client_cb);
+    client.asyncSend(OUTBOUND_DATA, sizeof(OUTBOUND_DATA), &server_endpoint, client_cb);
     EXPECT_FALSE(client_cb.getCalled());
 
     // Execute the two callbacks.
@@ -244,7 +247,6 @@ TEST(UDPSocket, SequenceTest) {
     client_cb.setLength(12345);             // Arbitrary number
     client_cb.setCalled(false);
     client_cb.setCode(32);                  // Arbitrary number
-    UDPEndpoint client_remote_endpoint;     // To receive address of remote system
     client.asyncReceive(data, sizeof(data), client_cumulative,
         &client_remote_endpoint, client_cb);
 
@@ -256,8 +258,8 @@ TEST(UDPSocket, SequenceTest) {
         server_remote_endpoint.getASIOEndpoint(), server_cb);
 
     // Expect two callbacks to run
-    service.run_one();
-    service.run_one();
+    service.get_io_service().poll();
+    //service.run_one();
 
     EXPECT_TRUE(client_cb.getCalled());
     EXPECT_EQ(0, client_cb.getCode());

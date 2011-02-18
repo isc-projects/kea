@@ -15,74 +15,33 @@
 #ifndef __IO_COMPLETION_CB_H
 #define __IO_COMPLETION_CB_H
 
+#include <iostream>
+
 #include <asio/error.hpp>
 #include <asio/error_code.hpp>
-#include <coroutine.h>
 
 namespace asiolink {
 
 /// \brief Asynchronous I/O Completion Callback
 ///
-/// The stackless coroutine code requires that there be an "entry function"
-/// containing the coroutine macros.  When the coroutine yields, its state is
-/// stored and when the "entry function" is called again, it jumps to the
-/// line when processing left off last time.  In BIND-10, that "entry function"
-/// is the Boost asynchronous I/O completion callback - in essence operator().
-///
-/// This class solves the problem of circularity in class definitions.  In
-/// BIND10, classes such as IOFetch contain the coroutine code.  These include
-/// objects of classes such as IOSocket, whose signature has to include the
-/// callback object - IOFetch.  By abstracting the I/O completion callback into
-/// this class, that circularity is broken.
-///
-/// One more point: the asynchronous I/O functions take the callback object by
-/// reference.  But if a derived class object is passed as a reference to its
-/// base class, "class slicing" takes place - the derived part of the class is
-/// lost and only the base class functionality remains.  By storing a pointer
-/// to the true object and having the base class method call the derived class
-/// method through that, the behaviour of class inheritance is restored. In
-/// other words:
-/// \code
-/// class derived: public class base {
-/// :
-/// };
-/// derived drv;
-///
-/// // Call with pointer to base class
-/// void f(base* b, asio::error_code& ec, size_t length) {
-///    b->operator()(ec, length);
-/// }
-///
-/// // Call with reference to base class
-/// void g(base& b, asio::error_code& ec, size_t length) {
-///    b.operator()(ec, length);
-/// }
-///
-/// void function xyz(derived *d, asio::error_code& ec, size_t length) {
-///    f(d, ec, length);  // Calls derived::operator()
-///    g(*d, ec, length); // Also calls derived::operator()
-/// }
-/// \endcode
+/// The two socket classes (UDPSocket and TCPSocket) require that the I/O
+/// completion callback function have an operator() method with the appropriate
+/// signature.  The classes are templates, any class with that method and
+/// signature can be passed as the callback object - there is no need for a
+/// base class defining the interface.  However, some users of the socket
+/// classes do not use the asynchronous I/O operations, yet have to supply a
+/// template parameter.  This is the reason for this class - it is the dummy
+/// template parameter.
 
-class IOCompletionCallback : public coroutine {
+class IOCompletionCallback {
 public:
 
-    /// \brief Constructor
-    IOCompletionCallback() : self_(this)
+    /// \brief Asynchronous I/O callback method
+    ///
+    /// \param error Unused
+    /// \param length Unused
+    void operator()(asio::error_code, size_t)
     {}
-
-    /// \brief Virtual Destructor
-    virtual ~IOCompletionCallback()
-    {}
-
-    /// \brief Callback Method
-    virtual void operator()(asio::error_code ec = asio::error_code(),
-        size_t length = 0) {
-        (*self_)(ec, length);
-    }
-
-private:
-    IOCompletionCallback*   self_;      ///< Pointer to real object
 };
 
 } // namespace asiolink
