@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <stdint.h>
+
 #include <string>
 #include <iomanip>
 #include <iostream>
@@ -71,8 +73,8 @@ isLeap(const int y) {
 }
 }
 
-time_t
-timeFromText(const string& time_txt) {
+uint64_t
+timeFromText64(const string& time_txt) {
     // first try reading YYYYMMDDHHmmSS format
     int year, month, day, hour, minute, second;
 
@@ -111,6 +113,11 @@ timeFromText(const string& time_txt) {
     }
 
     return (timeval);
+}
+
+uint32_t
+timeFromText32(const string& time_txt) {
+    return (timeFromText64(time_txt));
 }
 }
 }

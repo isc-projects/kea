@@ -93,8 +93,8 @@ RRSIG::RRSIG(const string& rrsig_str) :
         isc_throw(InvalidRdataText, "RRSIG labels out of range");
     }
 
-    uint32_t timeexpire = timeFromText(expire_txt);
-    uint32_t timeinception = timeFromText(inception_txt);
+    const uint32_t timeexpire = timeFromText32(expire_txt);
+    const uint32_t timeinception = timeFromText32(inception_txt);
 
     vector<uint8_t> signature;
     decodeBase64(signaturebuf.str(), signature);
