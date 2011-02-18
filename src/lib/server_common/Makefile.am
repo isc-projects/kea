@@ -21,5 +21,6 @@ libserver_common_la_SOURCES = portconfig.h portconfig.cc
 libserver_common_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 libserver_common_la_LIBADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 libserver_common_la_LIBADD += $(top_builddir)/src/lib/cc/libcc.la
+libserver_common_la_LIBADD += $(top_builddir)/src/lib/log/liblog.la
 
 CLEANFILES = *.gcno *.gcda

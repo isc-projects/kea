@@ -573,48 +573,9 @@ Resolver::getRootAddresses() const {
     return (impl_->upstream_root_);
 }
 
-namespace {
-
-void
-setAddresses(DNSService *service, const vector<AddressPair>& addresses) {
-    service->clearServers();
-    BOOST_FOREACH(const AddressPair &address, addresses) {
-        service->addServer(address.second, address.first);
-    }
-}
-
-}
-
 void
 Resolver::setListenAddresses(const vector<AddressPair>& addresses) {
-    try {
-        dlog("Setting listen addresses:");
-        BOOST_FOREACH(const AddressPair& addr, addresses) {
-            dlog(" " + addr.first + ":" +
-                        boost::lexical_cast<string>(addr.second));
-        }
-        setAddresses(dnss_, addresses);
-        impl_->listen_ = addresses;
-    }
-    catch (const exception& e) {
-        /*
-         * We couldn't set it. So return it back. If that fails as well,
-         * we have a problem.
-         *
-         * If that fails, bad luck, but we are useless anyway, so just die
-         * and let boss start us again.
-         */
-        dlog(string("Unable to set new address: ") + e.what(), true);
-        try {
-            setAddresses(dnss_, impl_->listen_);
-        }
-        catch (const exception& e2) {
-            dlog("Unable to recover from error;", true);
-            dlog(string("Rollback failed with: ") + e2.what(), true);
-            abort();
-        }
-        throw e; // Let it fly a little bit further
-    }
+    installListenAddresses(addresses, impl_->listen_, *dnss_);
 }
 
 void
