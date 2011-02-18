@@ -61,6 +61,9 @@ parseAddresses(isc::data::ConstElementPtr addresses,
     return (result);
 }
 
+void
+installListenAddresses(const AddressList&, AddressList&, asiolink::DNSService&) {}
+
 }
 }
 }
