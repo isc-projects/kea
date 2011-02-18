@@ -170,6 +170,8 @@ class XfroutSession(BaseRequestHandler):
 
     def _send_message(self, sock_fd, msg):
         render = MessageRenderer()
+        # As defined in RFC5936 section3.4, perform case-preserving name
+        # compression for AXFR message.
         render.set_compress_mode(MessageRenderer.CASE_SENSITIVE)
         render.set_length_limit(XFROUT_MAX_MESSAGE_SIZE)
         msg.to_wire(render)
