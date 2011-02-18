@@ -12,40 +12,44 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __IOFETCH_H
-#define __IOFETCH_H 1
-
-#include <netinet/in.h>
+#ifndef __IO_FETCH_H
+#define __IO_FETCH_H 1
 
 #include <config.h>
 
-#include <asio.hpp>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>             // for some IPC/network system calls
+
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <asio/deadline_timer.hpp>
+
+#include <coroutine.h>
 
 #include <dns/buffer.h>
 #include <dns/question.h>
 
-#include <asiolink/asiolink.h>
-#include <asiolink/ioaddress.h>
-#include <asiolink/iocompletioncb.h>
-#include <asiolink/iocompletioncb.h>
-
-
-#include <asiolink/iosocket.h>
-#include <asiolink/ioendpoint.h>
-#include <coroutine.h>
-
+#include <asiolink/io_asio_socket.h>
+#include <asiolink/io_endpoint.h>
+#include <asiolink/io_service.h>
+#include <asiolink/tcp_socket.h>
+#include <asiolink/tcp_endpoint.h>
+#include <asiolink/udp_socket.h>
+#include <asiolink/udp_endpoint.h>
 
 
 namespace asiolink {
 
+
 /// \brief Upstream Fetch Processing
 ///
 /// IOFetch is the class used to send upstream fetches and to handle responses.
-/// It is more or less transport-agnostic, although the
-class IOFetch : public IOCompletionCallback  {
+///
+/// \param E Endpoint type to use.
+
+class IOFetch : public coroutine {
 public:
 
     /// \brief Result of Upstream Fetch
@@ -56,8 +60,10 @@ public:
     enum Result {
         SUCCESS = 0,        ///< Success, fetch completed
         TIME_OUT,           ///< Failure, fetch timed out
-        STOPPED             ///< Control code, fetch has been stopped
+        STOPPED,            ///< Control code, fetch has been stopped
+        NOTSET              ///< For testing, indicates value not set
     };
+
     // The next enum is a "trick" to allow constants to be defined in a class
     // declaration.
 
@@ -65,8 +71,10 @@ public:
     enum {
         MAX_LENGTH = 4096   ///< Maximum size of receive buffer
     };
+
     /// \brief I/O Fetch Callback
     ///
+    /// TODO: change documentation
     /// Callback object for when the fetch itself has completed.  Note that this
     /// is different to the IOCompletionCallback; that is used to signal the
     /// completion of an asynchronous I/O call.  The IOFetch::Callback is called
@@ -94,9 +102,9 @@ public:
     ///
     /// The data for IOFetch is held in a separate struct pointed to by a
     /// shared_ptr object.  This is because the IOFetch object will be copied
-    /// often (it is used as a coroutine and passed as callback to many async_*()
-    /// functions) and we want keep the same data).  Organising the data this
-    /// way keeps copying to a minimum.
+    /// often (it is used as a coroutine and passed as callback to many
+    /// async_*() functions) and we want keep the same data).  Organising the
+    /// data in this way keeps copying to a minimum.
     struct IOFetchData {
 
         // The next two members are shared pointers to a base class because what
@@ -104,15 +112,15 @@ public:
         // TCP, which is not known until construction of the IOFetch.  Use of
         // a shared pointer here is merely to ensure deletion when the data
         // object is deleted.
-        boost::shared_ptr<IOSocket> socket;     ///< Socket to use for I/O
+        boost::shared_ptr<IOAsioSocket<IOFetch> > socket;
+                                                ///< Socket to use for I/O
         boost::shared_ptr<IOEndpoint> remote;   ///< Where the fetch was sent
-
         isc::dns::Question          question;   ///< Question to be asked
+        isc::dns::OutputBufferPtr   msgbuf;     ///< Wire buffer for question
         isc::dns::OutputBufferPtr   buffer;     ///< Received data held here
-        isc::dns::OutputBufferPtr   msgbuf;     ///< ... and here
-        boost::shared_array<char>   data;       ///< Temporary array for the data
-        Callback*                   callback;   ///< Called on I/O Completion
-        size_t                      rcv_amount; ///< Received amount
+        boost::shared_array<char>   data;       ///< Temporary array for data
+        IOFetch::Callback*          callback;   ///< Called on I/O Completion
+        size_t                      cumulative; ///< Cumulative received amount
         bool                        stopped;    ///< Have we stopped running?
         asio::deadline_timer        timer;      ///< Timer to measure timeouts
         int                         timeout;    ///< Timeout in ms
@@ -121,7 +129,8 @@ public:
         ///
         /// Just fills in the data members of the IOFetchData structure
         ///
-        /// \param io_service I/O Service object to handle the asynchronous
+        /// \param protocol either IPPROTO_UDP or IPPROTO_TCP
+        /// \param service I/O Service object to handle the asynchronous
         ///     operations.
         /// \param query DNS question to send to the upstream server.
         /// \param address IP address of upstream server
@@ -131,38 +140,60 @@ public:
         /// \param cb Callback object containing the callback to be called
         ///     when we terminate.  The caller is responsible for managing this
         ///     object and deleting it if necessary.
-        /// \param wait Timeout for the fetch (in ms).  The default value of
-        ///     -1 indicates no timeout.
-        /// \param protocol Protocol to use for the fetch.  The default is UDP
-
-        IOFetchData(IOService& io_service, const isc::dns::Question& query,
-            const IOAddress& address, uint16_t port,
-            isc::dns::OutputBufferPtr buff, Callback* cb, int wait = -1,
-            int protocol = IPPROTO_UDP);
+        /// \param wait Timeout for the fetch (in ms).
+        IOFetchData(int protocol, IOService& service,
+            const isc::dns::Question& query, const IOAddress& address,
+            uint16_t port, isc::dns::OutputBufferPtr& buff, Callback* cb,
+            int wait)
+            :
+            socket((protocol == IPPROTO_UDP) ?
+                static_cast<IOAsioSocket<IOFetch>*>(
+                    new UDPSocket<IOFetch>(service)) :
+                static_cast<IOAsioSocket<IOFetch>*>(
+                    new TCPSocket<IOFetch>(service))
+                ),
+            remote((protocol == IPPROTO_UDP) ?
+                static_cast<IOEndpoint*>(new UDPEndpoint(address, port)) :
+                static_cast<IOEndpoint*>(new TCPEndpoint(address, port))
+                ),
+            question(query),
+            msgbuf(new isc::dns::OutputBuffer(512)),
+            buffer(buff),
+            data(new char[IOFetch::MAX_LENGTH]),
+            callback(cb),
+            cumulative(0),
+            stopped(false),
+            timer(service.get_io_service()),
+            timeout(wait)
+        {}
     };
 
     /// \brief Constructor.
     ///
     /// Creates the object that will handle the upstream fetch.
     ///
-    /// \param io_service I/O Service object to handle the asynchronous
+    /// TODO: Need to randomise the source port
+    ///
+    /// \param protocol Fetch protocol, either IPPROTO_UDP or IPPROTO_TCP
+    /// \param service I/O Service object to handle the asynchronous
     ///     operations.
     /// \param question DNS question to send to the upstream server.
-    /// \param address IP address of upstream server
-    /// \param port Port to use for the query
-    /// \param buffer Output buffer into which the response (in wire format)
+    /// \param buff Output buffer into which the response (in wire format)
     ///     is written (if a response is received).
-    /// \param callback Callback object containing the callback to be called
+    /// \param cb Callback object containing the callback to be called
     ///     when we terminate.  The caller is responsible for managing this
     ///     object and deleting it if necessary.
-    /// \param timeout Timeout for the fetch (in ms).  The default value of
+    /// \param address IP address of upstream server
+    /// \param port Port to which to connect on the upstream server
+    /// (default = 53)
+    /// \param wait Timeout for the fetch (in ms).  The default value of
     ///     -1 indicates no timeout.
-    /// \param protocol Protocol to use for the fetch.  The default is UDP
-    IOFetch(IOService& io_service, const isc::dns::Question& question,
-        const IOAddress& address, uint16_t port,
-        isc::dns::OutputBufferPtr buffer, Callback* callback,
-        int timeout = -1, int protocol = IPPROTO_UDP);
+    IOFetch(int protocol, IOService& service,
+        const isc::dns::Question& question, const IOAddress& address,
+        uint16_t port, isc::dns::OutputBufferPtr& buff, Callback* cb,
+        int wait = -1);
 
+    // The default constructor and copy constructor are correct for this method.
 
     /// \brief Coroutine entry point
     ///
@@ -174,7 +205,6 @@ public:
     void operator()(asio::error_code ec = asio::error_code(),
         size_t length = 0);
 
-
     /// \brief Terminate query
     ///
     /// This method can be called at any point.  It terminates the current
@@ -184,10 +214,10 @@ public:
     void stop(Result reason = STOPPED);
 
 private:
-    boost::shared_ptr<IOFetchData> data_;   ///< Private data
+    boost::shared_ptr<IOFetchData>  data_;   ///< Private data
+
 };
 
-}
+} // namespace asiolink
 
-
-#endif // __IOFETCH_H
+#endif // __IO_FETCH_H

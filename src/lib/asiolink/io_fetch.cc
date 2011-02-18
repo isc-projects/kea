@@ -18,95 +18,38 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#include <asio.hpp>
-#include <asio/deadline_timer.hpp>
-#include <asio/ip/address.hpp>
-
-#include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 
-#include <dns/buffer.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
-#include <log/dummylog.h>
 #include <dns/opcode.h>
 #include <dns/rcode.h>
+#include <log/dummylog.h>
 
-#include <asiolink.h>
-#include <coroutine.h>
-#include <internal/udpdns.h>
-#include <internal/tcpdns.h>
-#include <internal/iofetch.h>
+#include <asio.hpp>
+#include <asiolink/io_fetch.h>
 
 using namespace asio;
-using asio::ip::udp;
-using asio::ip::tcp;
-using isc::log::dlog;
-
-using namespace std;
 using namespace isc::dns;
+using namespace isc::log;
+using namespace std;
 
 namespace asiolink {
 
-// Constructor for the IOFetchData member
-
-/// \brief Constructor
-///
-/// Just fills in the data members of the IOFetchData structure
-///
-/// \param io_service I/O Service object to handle the asynchronous
-///     operations.
-/// \param question DNS question to send to the upstream server.
-/// \param address IP address of upstream server
-/// \param port Port to use for the query
-/// \param buffer Output buffer into which the response (in wire format)
-///     is written (if a response is received).
-/// \param callback Callback object containing the callback to be called
-///     when we terminate.  The caller is responsible for managing this
-///     object and deleting it if necessary.
-/// \param timeout Timeout for the fetch (in ms).  The default value of
-///     -1 indicates no timeout.
-/// \param protocol Protocol to use for the fetch.  The default is UDP
-
-IOFetch::IOFetchData::IOFetchData(IOService& io_service,
-    const isc::dns::Question& query, const IOAddress& address, uint16_t port,
-    isc::dns::OutputBufferPtr buff, Callback* cb, int wait, int protocol)
-        :
-    socket((protocol == IPPROTO_UDP) ?
-        static_cast<IOSocket*>(new UDPSocket(io_service, address)) :
-        static_cast<IOSocket*>(new TCPSocket(io_service, address))
-    ),
-    remote((protocol == IPPROTO_UDP) ?
-        static_cast<IOEndpoint*>(new UDPEndpoint(address, port)) :
-        static_cast<IOEndpoint*>(new TCPEndpoint(address, port))
-    ),
-    question(query),
-    buffer(buff),
-    msgbuf(new OutputBuffer(512)),         // TODO: Why this number?
-    data(new char[IOFetch::MAX_LENGTH]),
-    callback(cb),
-    rcv_amount(0),
-    stopped(false),
-    timer(io_service.get_io_service()),
-    timeout(wait)
-{
-}
-
-
-
 /// IOFetch Constructor - just initialize the private data
-IOFetch::IOFetch(IOService& io_service, const Question& question,
-    const IOAddress& address, uint16_t port, OutputBufferPtr buffer,
-    Callback *callback, int timeout, int protocol) :
-        data_(new IOFetch::IOFetchData(io_service, question, address, port,
-            buffer, callback, timeout, protocol)
-        )
+
+IOFetch::IOFetch(int protocol, IOService& service,
+    const isc::dns::Question& question, const IOAddress& address, uint16_t port,
+    isc::dns::OutputBufferPtr& buff, Callback* cb, int wait)
+    :
+    data_(new IOFetch::IOFetchData(protocol, service, question, address,
+        port, buff, cb, wait))
 {
 }
 
 /// The function operator is implemented with the "stackless coroutine"
 /// pattern; see internal/coroutine.h for details.
+
 void
 IOFetch::operator()(error_code ec, size_t length) {
     if (ec || data_->stopped) {
@@ -114,6 +57,7 @@ IOFetch::operator()(error_code ec, size_t length) {
     }
 
     CORO_REENTER (this) {
+
         /// Generate the upstream query and render it to wire format
         /// This is done in a different scope to allow inline variable
         /// declarations.
@@ -130,7 +74,7 @@ IOFetch::operator()(error_code ec, size_t length) {
             msg.toWire(renderer);
 
             // As this is a new fetch, clear the amount of data received
-            data_->rcv_amount = 0;
+            data_->cumulative = 0;
 
             dlog("Sending " + msg.toText() + " to " +
                 data_->remote->getAddress().toText());
@@ -148,22 +92,30 @@ IOFetch::operator()(error_code ec, size_t length) {
 
         // Open a connection to the target system.  For speed, if the operation
         // was completed synchronously (i.e. UDP operation) we bypass the yield.
-        bool asynch = data_->socket->open(data->remote.get(), *this);
-        if (asynch) {
+        if (data_->socket->open(data_->remote.get(), *this)) {
             CORO_YIELD;
         }
 
-        // Begin an asynchronous send, and then yield.  When the
+        // Begin an asynchronous send, and then yield.  When the send completes
         // send completes, we will resume immediately after this point.
-        CORO_YIELD data_->socket->async_send(data_->msgbuf->getData(),
+        CORO_YIELD data_->socket->asyncSend(data_->msgbuf->getData(),
             data_->msgbuf->getLength(), data_->remote.get(), *this);
 
-        /// Begin an asynchronous receive, and yield.  When the receive
-        /// completes, we will resume immediately after this point.
-        CORO_YIELD data_->socket->async_receive(data_->data.get(),
-            static_cast<size_t>(MAX_LENGTH), data_->remote.get(), *this);
+        // Now receive the response.  Since TCP may not receive the entire
+        // message in one operation, we need to loop until we have received
+        // it. (This can't be done within the asyncReceive() method because
+        // each I/O operation will be done asynchronously and between each one
+        // we need to yield ... and we *really* don't want to set up another
+        // coroutine within that method.)  So after each receive (and yield),
+        // we check if the operation is complete and if not, loop to read again.
+        do {
+            CORO_YIELD data_->socket->asyncReceive(data_->data.get(),
+                static_cast<size_t>(MAX_LENGTH), data_->cumulative,
+                data_->remote.get(), *this);
+        } while (!data_->socket->receiveComplete(data_->data.get(), length,
+            data_->cumulative));
 
-        // The message is not rendered yet, so we can't print it easilly
+        // The message is not rendered yet, so we can't print it easily
         dlog("Received response from " + data_->remote->getAddress().toText());
 
         /// Copy the answer into the response buffer.  (TODO: If the
@@ -188,6 +140,7 @@ IOFetch::operator()(error_code ec, size_t length) {
 // As the function may be entered multiple times as things wind down, the
 // stopped_ flag checks if stop() has already been called.  If it has,
 // subsequent calls are no-ops.
+
 void
 IOFetch::stop(Result result) {
     if (!data_->stopped) {
@@ -203,15 +156,23 @@ IOFetch::stop(Result result) {
             default:
                 ;
         }
-        data_->stopped = true;
-        data_->socket->cancel();    // Cancel outstanding I/O
-        data_->socket->close();     // ... and close the socket
-        data_->timer.cancel();      // Cancel timeout timer
 
+        // Stop requested, cancel and I/O's on the socket and shut it down,
+        // and cancel the timer.
+        data_->socket->cancel();
+        data_->socket->close();
+
+        data_->timer.cancel();
+
+        // Execute the I/O completion callback (if present).
         if (data_->callback) {
-            (*(data_->callback))(result);   // Call callback
+            (*(data_->callback))(result);
         }
+
+        // Mark that stop() has now been called.
+        data_->stopped = true;
     }
 }
 
 } // namespace asiolink
+

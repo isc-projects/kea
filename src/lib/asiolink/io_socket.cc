@@ -14,10 +14,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <asio.hpp>
-
 #include "io_socket.h"
 
+#include <asio.hpp>
 
 using namespace asio;
 
@@ -44,76 +43,11 @@ public:
 
     /// \brief A dummy derived method of \c IOSocket::getNative().
     ///
-    /// \return Always returns -1 as the object is not associated with a real
-    /// (native) socket.
+    /// This version of method always returns -1 as the object is not
+    /// associated with a real (native) socket.
     virtual int getNative() const { return (-1); }
 
-    /// \brief A dummy derived method of \c IOSocket::getProtocol().
-    ///
-    /// \return Protocol socket was created with
     virtual int getProtocol() const { return (protocol_); }
-
-
-    /// \brief Open Socket
-    ///
-    /// A call that is a no-op on UDP sockets, this opens a connection to the
-    /// system identified by the given endpoint.
-    ///
-    /// \param endpoint Unused
-    /// \param callback Unused.
-    ///false indicating that the operation completed synchronously.
-    virtual bool open(const IOEndpoint*, IOCompletionCallback&) {
-        return (false);
-    }
-
-    /// \brief Send Asynchronously
-    ///
-    /// Must be supplied as it is abstract in the base class.
-    ///
-    /// \param data Unused
-    /// \param length Unused
-    /// \param endpoint Unused
-    /// \param callback Unused
-    virtual void asyncSend(const void*, size_t, const IOEndpoint*,
-        IOCompletionCallback&) {
-    }
-
-    /// \brief Receive Asynchronously
-    ///
-    /// Must be supplied as it is abstract in the base class.
-    ///
-    /// \param data Unused
-    /// \param length Unused
-    /// \param cumulative Unused
-    /// \param endpoint Unused
-    /// \param callback Unused
-    virtual void asyncReceive(void* data, size_t, size_t, IOEndpoint*,
-        IOCompletionCallback&) {
-    }
-
-    /// \brief Checks if the data received is complete.
-    ///
-    /// \param data Unused
-    /// \param length Unused
-    /// \param cumulative Unused
-    ///
-    /// \return Always true
-    virtual bool receiveComplete(void*, size_t, size_t&) {
-        return (true);
-    }
-
-    /// \brief Cancel I/O On Socket
-    ///
-    /// Must be supplied as it is abstract in the base class.
-    virtual void cancel() {
-    }
-
-    /// \brief Close socket
-    ///
-    /// Must be supplied as it is abstract in the base class.
-    virtual void close() {
-    }
-
 private:
     const int protocol_;
 };

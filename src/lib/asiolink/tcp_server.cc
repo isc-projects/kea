@@ -20,9 +20,9 @@
 
 #include <log/dummylog.h>
 
+#include <asiolink/io_completion_cb.h>
 #include <asiolink/tcp_endpoint.h>
 #include <asiolink/tcp_socket.h>
-
 #include <asiolink/tcp_server.h>
 
 
@@ -115,7 +115,15 @@ TCPServer::operator()(error_code ec, size_t length) {
         // that would quickly generate an IOMessage object without
         // all these calls to "new".)
         peer_.reset(new TCPEndpoint(socket_->remote_endpoint()));
-        iosock_.reset(new TCPSocket(*socket_));
+
+        // The TCP socket class has been extended with asynchronous functions
+        // and takes as a template parameter a completion callback class.  As
+        // TCPServer does not use these extended functions (only those defined
+        // in the IOSocket base class) - but needs a TCPSocket to get hold of
+        // the underlying Boost TCP socket - use "IOCompletionCallback" -
+        // a basic callback class: it is not used but provides the appropriate
+        // signature.
+        iosock_.reset(new TCPSocket<IOCompletionCallback>(*socket_));
         io_message_.reset(new IOMessage(data_.get(), length, *iosock_, *peer_));
         bytes_ = length;
 
