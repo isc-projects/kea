@@ -604,13 +604,13 @@ Resolver::setListenAddresses(const vector<AddressPair>& addresses) {
          * If that fails, bad luck, but we are useless anyway, so just die
          * and let boss start us again.
          */
-        dlog(string("Unable to set new address: ") + e.what(),true);
+        dlog(string("Unable to set new address: ") + e.what(), true);
         try {
             setAddresses(dnss_, impl_->listen_);
         }
         catch (const exception& e2) {
-            dlog(string("Unable to recover from error;"),true);
-            dlog(string("Rollback failed with: ") + e2.what(),true);
+            dlog("Unable to recover from error;", true);
+            dlog(string("Rollback failed with: ") + e2.what(), true);
             abort();
         }
         throw e; // Let it fly a little bit further
