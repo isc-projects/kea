@@ -22,6 +22,13 @@
 
 #include <cc/data.h>
 
+/*
+ * Some forward declarations.
+ */
+namespace asiolink {
+class DNSService;
+}
+
 namespace isc {
 namespace server_common {
 /**
@@ -78,6 +85,34 @@ typedef std::vector<AddressPair> AddressList;
 AddressList
 parseAddresses(isc::data::ConstElementPtr addresses,
                const std::string& elemName);
+
+/**
+ * \brief Changes current listening addresses and ports.
+ *
+ * Removes all sockets we currently listen on and starts listening on the
+ * addresses and ports requested in newAddresses.
+ *
+ * If it fails to set up the new addresses, it attempts to roll back to the
+ * previous addresses (but it still propagates the exception). If the rollback
+ * fails as well, it aborts the application (it assumes if it can't listen
+ * on the new addresses nor on the old ones, the application is useless anyway
+ * and should be restarted by Boss, not to mention that the internal state is
+ * probably broken).
+ *
+ * \param newAddresses are the addresses you want to listen on.
+ * \param addressStore is the place you store your current addresses. It is
+ *     used when there's a need for rollback. The newAddresses are copied here
+ *     when the change is successful.
+ * \param dnsService is the DNSService object we use now. The requests from
+ *     the new sockets are handled using this dnsService (and all current
+ *     sockets on the service are closed first).
+ * \throw asiolink::IOError when initialization or closing of socket fails.
+ * \throw std::bad_alloc when allocation fails.
+ */
+void
+installListenAddresses(const AddressList& newAddresses,
+                       AddressList& addressStore,
+                       asiolink::DNSService& dnsService);
 
 }
 }
