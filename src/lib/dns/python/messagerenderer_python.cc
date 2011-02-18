@@ -37,9 +37,11 @@ static PyObject* MessageRenderer_getData(s_MessageRenderer* self);
 static PyObject* MessageRenderer_getLength(s_MessageRenderer* self);
 static PyObject* MessageRenderer_isTruncated(s_MessageRenderer* self);
 static PyObject* MessageRenderer_getLengthLimit(s_MessageRenderer* self);
+static PyObject* MessageRenderer_getCompressMode(s_MessageRenderer* self);
 // TODO: set/get compressmode
 static PyObject* MessageRenderer_setTruncated(s_MessageRenderer* self);
 static PyObject* MessageRenderer_setLengthLimit(s_MessageRenderer* self, PyObject* args);
+static PyObject* MessageRenderer_setCompressMode(s_MessageRenderer* self, PyObject* args);
 static PyObject* MessageRenderer_clear(s_MessageRenderer* self);
 
 static PyMethodDef MessageRenderer_methods[] = {
@@ -51,10 +53,14 @@ static PyMethodDef MessageRenderer_methods[] = {
       "Returns True if the data is truncated" },
     { "get_length_limit", reinterpret_cast<PyCFunction>(MessageRenderer_getLengthLimit), METH_NOARGS,
       "Returns the length limit of the data" },
+    { "get_compress_mode", reinterpret_cast<PyCFunction>(MessageRenderer_getCompressMode), METH_NOARGS,
+      "Returns the current compression mode" },
     { "set_truncated", reinterpret_cast<PyCFunction>(MessageRenderer_setTruncated), METH_NOARGS,
       "Sets truncated to true" },
     { "set_length_limit", reinterpret_cast<PyCFunction>(MessageRenderer_setLengthLimit), METH_VARARGS,
       "Sets the length limit of the data to the given number" },
+    { "set_compress_mode", reinterpret_cast<PyCFunction>(MessageRenderer_setCompressMode), METH_VARARGS,
+      "Sets the compression mode of the MessageRenderer" },
     { "clear", reinterpret_cast<PyCFunction>(MessageRenderer_clear),
       METH_NOARGS,
       "Clear the internal buffer and other internal resources." },
@@ -159,6 +165,11 @@ MessageRenderer_getLengthLimit(s_MessageRenderer* self) {
 }
 
 static PyObject*
+MessageRenderer_getCompressMode(s_MessageRenderer* self) {
+    return (Py_BuildValue("I", self->messagerenderer->getCompressMode()));
+}
+
+static PyObject*
 MessageRenderer_setTruncated(s_MessageRenderer* self) {
     self->messagerenderer->setTruncated();
     Py_RETURN_NONE;
@@ -174,6 +185,30 @@ MessageRenderer_setLengthLimit(s_MessageRenderer* self,
     }
     self->messagerenderer->setLengthLimit(lengthlimit);
     Py_RETURN_NONE;
+}
+
+static PyObject*
+MessageRenderer_setCompressMode(s_MessageRenderer* self,
+                               PyObject* args)
+{
+    unsigned int mode;
+    if (!PyArg_ParseTuple(args, "I", &mode)) {
+        return (NULL);
+    }
+
+    if (mode == MessageRenderer::CASE_INSENSITIVE) {
+        self->messagerenderer->setCompressMode(MessageRenderer::CASE_INSENSITIVE);
+        // If we return NULL it is seen as an error, so use this for
+        // None returns, it also applies to CASE_SENSITIVE.
+        Py_RETURN_NONE;
+    } else if (mode == MessageRenderer::CASE_SENSITIVE) {
+        self->messagerenderer->setCompressMode(MessageRenderer::CASE_SENSITIVE);
+        Py_RETURN_NONE;
+    } else {
+        PyErr_SetString(PyExc_TypeError,
+                        "Message mode must be Message.PARSE or Message.RENDER");
+        return (NULL);
+    }
 }
 
 static PyObject*
@@ -203,6 +238,14 @@ initModulePart_MessageRenderer(PyObject* mod) {
         return (false);
     }
     Py_INCREF(&messagerenderer_type);
+
+    // Class variables
+    // These are added to the tp_dict of the type object
+    addClassVariable(messagerenderer_type, "CASE_INSENSITIVE",
+                     Py_BuildValue("I", MessageRenderer::CASE_INSENSITIVE));
+    addClassVariable(messagerenderer_type, "CASE_SENSITIVE",
+                     Py_BuildValue("I", MessageRenderer::CASE_SENSITIVE));
+
     PyModule_AddObject(mod, "MessageRenderer",
                        reinterpret_cast<PyObject*>(&messagerenderer_type));
     

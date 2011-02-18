@@ -79,6 +79,14 @@ class MessageRendererTest(unittest.TestCase):
         self.assertEqual(512, self.renderer2.get_length_limit())
         self.assertEqual(50, self.renderer3.get_length_limit())
 
+    def test_messagerenderer_get_compress_mode(self):
+        self.assertEqual(MessageRenderer.CASE_INSENSITIVE,
+                         self.renderer1.get_compress_mode())
+        self.assertEqual(MessageRenderer.CASE_INSENSITIVE,
+                         self.renderer2.get_compress_mode())
+        self.assertEqual(MessageRenderer.CASE_INSENSITIVE,
+                         self.renderer3.get_compress_mode())
+
     def test_messagerenderer_set_truncated(self):
         self.assertFalse(self.renderer1.is_truncated())
         self.renderer1.set_truncated()
@@ -90,6 +98,15 @@ class MessageRendererTest(unittest.TestCase):
         renderer.set_length_limit(1024)
         self.assertEqual(1024, renderer.get_length_limit())
         self.assertRaises(TypeError, renderer.set_length_limit, "wrong")
+
+    def test_messagerenderer_set_compress_mode(self):
+        renderer = MessageRenderer()
+        self.assertEqual(MessageRenderer.CASE_INSENSITIVE,
+                         renderer.get_compress_mode())
+        renderer.set_compress_mode(MessageRenderer.CASE_SENSITIVE)
+        self.assertEqual(MessageRenderer.CASE_SENSITIVE,
+                         renderer.get_compress_mode())
+        self.assertRaises(TypeError, renderer.set_compress_mode, "wrong")
 
 if __name__ == '__main__':
     unittest.main()
