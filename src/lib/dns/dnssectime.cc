@@ -188,7 +188,7 @@ timeFromText64(const string& time_txt) {
 
     time_t timeval = second + (60 * minute) + (3600 * hour) +
         ((day - 1) * 86400);
-    for (int m = 0; m < (month - 1); m++) {
+    for (int m = 0; m < (month - 1); ++m) {
             timeval += days[m] * 86400;
     }
     if (isLeap(year) && month > 2) {
