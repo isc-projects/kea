@@ -41,7 +41,7 @@ PARAM_PATTERN = re.compile(param_name_str + param_value_str + next_params_str)
 # Used for module and command name
 NAME_PATTERN = re.compile("^\s*(?P<name>[\w]+)(?P<blank>\s*)(?P<others>.*)$")
 
-# this removes all whitespace inthe given string, except when
+# this removes all whitespace in the given string, except when
 # between " quotes
 _remove_unquoted_whitespace = \
     lambda text:'"'.join( it if i%2 else ''.join(it.split())
@@ -92,7 +92,7 @@ def _remove_list_and_map_whitespace(text):
     
     
 class BindCmdParse:
-    """ This class will parse the command line usr input into three part
+    """ This class will parse the command line user input into three parts:
     module name, command, parameters
     the first two parts are strings and parameter is one hash, 
     parameters part is optional

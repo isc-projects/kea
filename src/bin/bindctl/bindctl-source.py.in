@@ -33,13 +33,13 @@ isc.util.process.rename()
 # number, and the overall BIND 10 version number (set in configure.ac).
 VERSION = "bindctl 20101201 (BIND 10 @PACKAGE_VERSION@)"
 
-DEFAULT_IDENTIFIER_DESC = "The identifier specifiec the config item. Child elements are separated with the '/' character. List indices can be specified with '[i]', where i is an integer specifying the index, starting with 0. Examples: 'Boss/start_auth', 'Recurse/listen_on[0]/address'. If no identifier is given, shows the item at the current location."
+DEFAULT_IDENTIFIER_DESC = "The identifier specifies the config item. Child elements are separated with the '/' character. List indices can be specified with '[i]', where i is an integer specifying the index, starting with 0. Examples: 'Boss/start_auth', 'Recurse/listen_on[0]/address'. If no identifier is given, shows the item at the current location."
 
 def prepare_config_commands(tool):
     '''Prepare fixed commands for local configuration editing'''
     module = ModuleInfo(name = CONFIG_MODULE_NAME, desc = "Configuration commands")
     cmd = CommandInfo(name = "show", desc = "Show configuration")
-    param = ParamInfo(name = "argument", type = "string", optional=True, desc = "If you specify the argument 'all' (before the identifier), recursively shows all child elements for the given identifier")
+    param = ParamInfo(name = "argument", type = "string", optional=True, desc = "If you specify the argument 'all' (before the identifier), recursively show all child elements for the given identifier")
     cmd.add_param(param)
     param = ParamInfo(name = "identifier", type = "string", optional=True, desc = DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
