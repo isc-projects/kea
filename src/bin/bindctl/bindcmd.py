@@ -97,7 +97,7 @@ class BindCmdInterpreter(Cmd):
             self.prompt = ""
         self.ruler = '-'
         self.modules = OrderedDict()
-        self.add_module_info(ModuleInfo("help", desc = "Get help for bindctl"))
+        self.add_module_info(ModuleInfo("help", desc = "Get help for bindctl."))
         self.server_port = server_port
         self.conn = ValidatedHTTPSConnection(self.server_port,
                                              ca_certs=pem_file)
