@@ -395,6 +395,13 @@ public:
         // until that one comes back to us)
         done_ = true;
         if (resume && !answer_sent_) {
+            // If we have a full successful answer, let's store that
+            // as well
+            // (note: we can either do this or only cache answers
+            // we receive, but in that case we'd need to re-do all
+            // answer processing, e.g. cname handling etc)
+            cache_.update(*answer_message_);
+
             resolvercallback_->success(answer_message_);
         } else {
             resolvercallback_->failure();
