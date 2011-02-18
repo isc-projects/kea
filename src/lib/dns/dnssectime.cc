@@ -14,6 +14,8 @@
 
 #include <stdint.h>
 
+#include <sys/time.h>
+
 #include <string>
 #include <iomanip>
 #include <iostream>
@@ -100,9 +102,47 @@ timeToText64(uint64_t t) {
     return (oss.str());
 }
 
+// timeToText32() below uses the current system time.  To test it with
+// unusual current time values we introduce the following function pointer;
+// when it's non NULL, we call it to get the (normally faked) current time.
+// Otherwise we use the standard gettimeofday(2).  This hook is specifically
+// intended for testing purposes, so, even if it's visible outside of this
+// library, it's not even declared in a header file.
+namespace dnssectime {
+namespace detail {
+int64_t (*gettimeFunction)() = NULL;
+}
+}
+
+namespace {
+int64_t
+gettimeofdayWrapper() {
+    using namespace dnssectime::detail;
+    if (gettimeFunction != NULL) {
+        return (gettimeFunction());
+    }
+
+    struct timeval now;
+    gettimeofday(&now, NULL);
+
+    return (static_cast<int64_t>(now.tv_sec));
+}
+}
+
 string
-timeToText32(const time_t timeval) {
-    return (timeToText64(timeval));
+timeToText32(const uint32_t timeval) {
+    // We first adjust the time to the closest epoch based on the current time.
+    // Note that the following variables must be signed in order to handle
+    // time until year 2038 correctly.
+    const int64_t start = gettimeofdayWrapper() - 0x7fffffff;
+    int64_t base = 0;
+    int64_t t;
+    while ((t = (base + timeval)) < start) {
+        base += 0x100000000LL;
+    }
+
+    // Then convert it to text.
+    return (timeToText64(t));
 }
 
 namespace {
