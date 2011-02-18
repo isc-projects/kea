@@ -46,7 +46,7 @@ uint64_t
 timeFromText64(const std::string& time_txt);
 
 std::string
-timeToText32(const time_t timeval);
+timeToText32(const uint32_t timeval);
 
 std::string
 timeToText64(uint64_t t);
