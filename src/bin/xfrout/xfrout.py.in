@@ -170,6 +170,7 @@ class XfroutSession(BaseRequestHandler):
 
     def _send_message(self, sock_fd, msg):
         render = MessageRenderer()
+        render.set_compress_mode(MessageRenderer.CASE_SENSITIVE)
         render.set_length_limit(XFROUT_MAX_MESSAGE_SIZE)
         msg.to_wire(render)
         header_len = struct.pack('H', socket.htons(render.get_length()))
