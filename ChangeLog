@@ -1,3 +1,9 @@
+  172.  [func]      jelte
+	Improved the bindctl cli in various ways, mainly concerning
+	list and map item addressing, the correct display of actual values,
+	and internal help.
+	(Trac #384, git e5fb3bc1ed5f3c0aec6eb40a16c63f3d0fc6a7b2)
+
   171.  [func]      feng, jerry, jinmei, vorner
 	b10-auth, src/lib/datasrc: in memory data source now works as a
 	complete data source for authoritative DNS servers and b10-auth
