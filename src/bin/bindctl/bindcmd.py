@@ -387,7 +387,6 @@ class BindCmdInterpreter(Cmd):
                 print("Error: " + str(dnfe))
             except KeyError as ke:
                 print("Error: missing " + str(ke))
-                raise ke
         else:
             self.apply_cmd(cmd)
 
@@ -669,11 +668,11 @@ class BindCmdInterpreter(Cmd):
                 new_location, a, b = new_location.rpartition("/")
             else:
                 new_location += "/" + id_part
-                # check if exists, if not, revert and error
-                v = self.config_data.find_spec_part(new_location)
-                if v is None:
-                    print("Error: " + identifier + " not found")
-                    return
+        # check if exists, if not, revert and error
+        v,d = self.config_data.get_value(new_location)
+        if v is None:
+            print("Error: " + identifier + " not found")
+            return
 
         self.location = new_location
 

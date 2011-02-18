@@ -405,6 +405,15 @@ class MultiConfigData:
                                 return isc.cc.data.find(list_value, rest_of_id)
                             else:
                                 return list_value
+                    else:
+                        # we do have a non-default list, see if our indices
+                        # exist
+                        for i in list_indices:
+                            if i < len(list_value):
+                                list_value = list_value[i]
+                            else:
+                                # out of range, return None
+                                return None
                     
             spec = find_spec_part(self._specifications[module].get_config_spec(), id)
             if 'item_default' in spec:
