@@ -26,7 +26,6 @@ run_unittests_SOURCES += io_service_unittest.cc
 run_unittests_SOURCES += interval_timer_unittest.cc
 run_unittests_SOURCES += recursive_query_unittest.cc
 run_unittests_SOURCES += udp_endpoint_unittest.cc
-run_unittests_SOURCES += udp_query_unittest.cc
 run_unittests_SOURCES += udp_socket_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
