@@ -157,15 +157,12 @@ RRSIG::~RRSIG() {
 
 string
 RRSIG::toText() const {
-    string expire = timeToText(impl_->timeexpire_);
-    string inception = timeToText(impl_->timeinception_);
-
     return (impl_->covered_.toText() +
             " " + boost::lexical_cast<string>(static_cast<int>(impl_->algorithm_))
             + " " + boost::lexical_cast<string>(static_cast<int>(impl_->labels_))
             + " " + boost::lexical_cast<string>(impl_->originalttl_)
-            + " " + expire
-            + " " + inception
+            + " " + timeToText32(impl_->timeexpire_)
+            + " " + timeToText32(impl_->timeinception_)
             + " " + boost::lexical_cast<string>(impl_->tag_)
             + " " + impl_->signer_.toText()
             + " " + encodeBase64(impl_->signature_));
