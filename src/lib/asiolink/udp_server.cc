@@ -20,10 +20,10 @@
 
 #include <log/dummylog.h>
 
+#include <asiolink/io_completion_cb.h>
 #include <asiolink/udp_endpoint.h>
-#include <asiolink/udp_socket.h>
-
 #include <asiolink/udp_server.h>
+#include <asiolink/udp_socket.h>
 
 using namespace asio;
 using asio::ip::udp;
@@ -203,7 +203,17 @@ UDPServer::operator()(error_code ec, size_t length) {
         // that would quickly generate an IOMessage object without
         // all these calls to "new".)
         data_->peer_.reset(new UDPEndpoint(*data_->sender_));
-        data_->iosock_.reset(new UDPSocket(*data_->socket_));
+
+        // The TCP socket class has been extended with asynchronous functions
+        // and takes as a template parameter a completion callback class.  As
+        // TCPServer does not use these extended functions (only those defined
+        // in the IOSocket base class) - but needs a TCPSocket to get hold of
+        // the underlying Boost TCP socket - use "IOCompletionCallback" -
+        // a basic callback class: it is not used but provides the appropriate
+        // signature.
+        data_->iosock_.reset(
+            new UDPSocket<IOCompletionCallback>(*data_->socket_));
+
         data_->io_message_.reset(new IOMessage(data_->data_.get(),
             data_->bytes_, *data_->iosock_, *data_->peer_));
 

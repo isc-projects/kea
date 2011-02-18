@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __IOMESSAGE_H
-#define __IOMESSAGE_H 1
+#ifndef __IO_MESSAGE_H
+#define __IO_MESSAGE_H 1
 
 // IMPORTANT NOTE: only very few ASIO headers files can be included in
 // this file.  In particular, asio.hpp should never be included here.
@@ -97,7 +97,7 @@ private:
 
 
 }      // asiolink
-#endif // __IOMESSAGE_H
+#endif // __IO_MESSAGE_H
 
 // Local Variables: 
 // mode: c++
