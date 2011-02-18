@@ -19,6 +19,7 @@ libasiolink_la_SOURCES += dns_server.h
 libasiolink_la_SOURCES += dns_service.h dns_service.cc
 libasiolink_la_SOURCES += interval_timer.h interval_timer.cc
 libasiolink_la_SOURCES += io_address.h io_address.cc
+libasiolink_la_SOURCES += io_completion_cb.h
 libasiolink_la_SOURCES += io_endpoint.h io_endpoint.cc
 libasiolink_la_SOURCES += io_error.h
 libasiolink_la_SOURCES += io_fetch.h io_fetch.cc
@@ -31,7 +32,6 @@ libasiolink_la_SOURCES += tcp_endpoint.h
 libasiolink_la_SOURCES += tcp_server.h tcp_server.cc
 libasiolink_la_SOURCES += tcp_socket.h
 libasiolink_la_SOURCES += udp_endpoint.h
-libasiolink_la_SOURCES += udp_query.h udp_query.cc
 libasiolink_la_SOURCES += udp_server.h udp_server.cc
 libasiolink_la_SOURCES += udp_socket.h
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
