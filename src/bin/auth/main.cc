@@ -197,6 +197,7 @@ main(int argc, char* argv[]) {
                                          use_ipv6, checkin, lookup,
                                          answer);
         }
+        auth_server->setDNSService(*dns_service);
         cout << "[b10-auth] DNSServices created." << endl;
 
         cc_session = new Session(io_service.get_io_service());

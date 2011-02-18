@@ -26,6 +26,8 @@
 #include <dns/rrttl.h>
 #include <dns/rdataclass.h>
 
+#include <server_common/portconfig.h>
+
 #include <datasrc/memory_datasrc.h>
 #include <auth/auth_srv.h>
 #include <auth/common.h>
@@ -43,6 +45,7 @@ using namespace isc::data;
 using namespace isc::xfr;
 using namespace asiolink;
 using namespace isc::testutils;
+using namespace isc::server_common::portconfig;
 using isc::UnitTestUtil;
 
 namespace {
@@ -55,7 +58,12 @@ const char* const BADCONFIG_TESTDB =
 
 class AuthSrvTest : public SrvTestBase {
 protected:
-    AuthSrvTest() : server(true, xfrout), rrclass(RRClass::IN()) {
+    AuthSrvTest() :
+        dnss_(ios_, NULL, NULL, NULL),
+        server(true, xfrout),
+        rrclass(RRClass::IN())
+    {
+        server.setDNSService(dnss_);
         server.setXfrinSession(&notify_session);
         server.setStatisticsSession(&statistics_session);
     }
@@ -63,6 +71,8 @@ protected:
         server.processMessage(*io_message, parse_message, response_obuffer,
                               &dnsserv);
     }
+    IOService ios_;
+    DNSService dnss_;
     MockSession statistics_session;
     MockXfroutClient xfrout;
     AuthSrv server;
@@ -649,5 +659,26 @@ TEST_F(AuthSrvTest, stop) {
     // so we consolidate the cases in the command tests.
     // If/when the interval timer has finer granularity we'll probably add
     // our own tests here, so we keep this empty test case.
+}
+
+TEST_F(AuthSrvTest, listenAddresses) {
+    // Default value should be not listening to anything
+    EXPECT_TRUE(server.getListenAddresses().empty());
+
+    // Try putting there some addresses
+    AddressList addresses;
+    addresses.push_back(AddressPair("127.0.0.1", 5321));
+    addresses.push_back(AddressPair("::1", 5321));
+    server.setListenAddresses(addresses);
+    ASSERT_EQ(2, server.getListenAddresses().size());
+    EXPECT_EQ("::1", server.getListenAddresses()[1].first);
+
+    // Is it independent from what we do with the vector later?
+    addresses.clear();
+    EXPECT_EQ(2, server.getListenAddresses().size());
+
+    // Did it return to empty list if we ask it to?
+    server.setListenAddresses(addresses);
+    EXPECT_TRUE(server.getListenAddresses().empty());
 }
 }
