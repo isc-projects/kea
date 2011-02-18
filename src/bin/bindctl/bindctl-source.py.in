@@ -33,51 +33,60 @@ isc.util.process.rename()
 # number, and the overall BIND 10 version number (set in configure.ac).
 VERSION = "bindctl 20101201 (BIND 10 @PACKAGE_VERSION@)"
 
+DEFAULT_IDENTIFIER_DESC = "The identifier specifiec the config item. Child elements are separated with the '/' character. List indices can be specified with '[i]', where i is an integer specifying the index, starting with 0. Examples: 'Boss/start_auth', 'Recurse/listen_on[0]/address'. If no identifier is given, shows the item at the current location."
+
 def prepare_config_commands(tool):
     '''Prepare fixed commands for local configuration editing'''
     module = ModuleInfo(name = CONFIG_MODULE_NAME, desc = "Configuration commands")
     cmd = CommandInfo(name = "show", desc = "Show configuration")
-    param = ParamInfo(name = "identifier", type = "string", optional=True)
+    param = ParamInfo(name = "argument", type = "string", optional=True, desc = "If you specify the argument 'all' (before the identifier), recursively shows all child elements for the given identifier")
+    cmd.add_param(param)
+    param = ParamInfo(name = "identifier", type = "string", optional=True, desc = DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "add", desc = "Add entry to configuration list")
-    param = ParamInfo(name = "identifier", type = "string", optional=True)
+    cmd = CommandInfo(name = "show_json", desc = "Show full configuration in JSON format")
+    param = ParamInfo(name = "identifier", type = "string", optional=True, desc = DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
-    param = ParamInfo(name = "value", type = "string", optional=False)
+    module.add_command(cmd)
+
+    cmd = CommandInfo(name = "add", desc = "Add an entry to configuration list. If no value is given, a default value is added.")
+    param = ParamInfo(name = "identifier", type = "string", optional=True, desc = DEFAULT_IDENTIFIER_DESC)
+    cmd.add_param(param)
+    param = ParamInfo(name = "value", type = "string", optional=True, desc = "Specifies a value to add to the list. It must be in correct JSON format and complete.")
     cmd.add_param(param)
     module.add_command(cmd)
 
     cmd = CommandInfo(name = "remove", desc = "Remove entry from configuration list")
-    param = ParamInfo(name = "identifier", type = "string", optional=True)
+    param = ParamInfo(name = "identifier", type = "string", optional=True, desc = DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
-    param = ParamInfo(name = "value", type = "string", optional=True)
+    param = ParamInfo(name = "value", type = "string", optional=True, desc = "Specifies a value to remove from the list. It must be in correct JSON format and complete.")
     cmd.add_param(param)
     module.add_command(cmd)
 
     cmd = CommandInfo(name = "set", desc = "Set a configuration value")
-    param = ParamInfo(name = "identifier", type = "string", optional=True)
+    param = ParamInfo(name = "identifier", type = "string", optional=True, desc = DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
-    param = ParamInfo(name = "value", type = "string", optional=False)
-    cmd.add_param(param)
-    module.add_command(cmd)
-
-    cmd = CommandInfo(name = "unset", desc = "Unset a configuration value")
-    param = ParamInfo(name = "identifier", type = "string", optional=False)
+    param = ParamInfo(name = "value", type = "string", optional=False, desc = "Specifies a value to set. It must be in correct JSON format and complete.")
     cmd.add_param(param)
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "diff", desc = "Show all local changes")
+    cmd = CommandInfo(name = "unset", desc = "Unset a configuration value (i.e. revert to the default, if any)")
+    param = ParamInfo(name = "identifier", type = "string", optional=False, desc = DEFAULT_IDENTIFIER_DESC)
+    cmd.add_param(param)
+    module.add_command(cmd)
+
+    cmd = CommandInfo(name = "diff", desc = "Show all local changes that have not been committed")
     module.add_command(cmd)
 
     cmd = CommandInfo(name = "revert", desc = "Revert all local changes")
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "commit", desc = "Commit all local changes")
+    cmd = CommandInfo(name = "commit", desc = "Commit all local changes.")
     module.add_command(cmd)
 
     cmd = CommandInfo(name = "go", desc = "Go to a specific configuration part")
-    param = ParamInfo(name = "identifier", type="string", optional=False)
+    param = ParamInfo(name = "identifier", type="string", optional=False, desc = DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
     module.add_command(cmd)
 
@@ -115,15 +124,12 @@ def set_bindctl_options(parser):
                       help = 'PEM formatted server certificate validation chain file')
 
 if __name__ == '__main__':
-    try:
-        parser = OptionParser(version = VERSION)
-        set_bindctl_options(parser)
-        (options, args) = parser.parse_args()
-        server_addr = options.addr + ':' + str(options.port)
-        tool = BindCmdInterpreter(server_addr, pem_file=options.cert_chain)
-        prepare_config_commands(tool)
-        tool.run()
-    except Exception as e:
-        print(e, "\nFailed to connect with b10-cmdctl module, is it running?")
+    parser = OptionParser(version = VERSION)
+    set_bindctl_options(parser)
+    (options, args) = parser.parse_args()
+    server_addr = options.addr + ':' + str(options.port)
+    tool = BindCmdInterpreter(server_addr, pem_file=options.cert_chain)
+    prepare_config_commands(tool)
+    tool.run()
 
 
