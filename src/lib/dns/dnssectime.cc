@@ -75,16 +75,16 @@ isLeap(const int y) {
 
 uint64_t
 timeFromText64(const string& time_txt) {
-    // first try reading YYYYMMDDHHmmSS format
-    int year, month, day, hour, minute, second;
-
+    // Confirm the source only consists digits.  sscanf() allows some
+    // minor exceptions.
     for (int i = 0; i < time_txt.length(); ++i) {
         if (!isdigit(time_txt.at(i))) {
-            isc_throw(InvalidTime,
-                      "Couldn't convert non-numeric time value: " << time_txt); 
+            isc_throw(InvalidTime, "Couldn't convert non-numeric time value: "
+                      << time_txt); 
         }
     }
 
+    int year, month, day, hour, minute, second;
     if (time_txt.length() != DATE_LEN ||
         sscanf(time_txt.c_str(), "%4d%2d%2d%2d%2d%2d",
                &year, &month, &day, &hour, &minute, &second) != 6)
