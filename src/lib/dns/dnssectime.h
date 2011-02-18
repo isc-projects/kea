@@ -17,7 +17,6 @@
 
 #include <sys/types.h>
 #include <stdint.h>
-#include <time.h>
 
 #include <exceptions/exceptions.h>
 
@@ -40,8 +39,11 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-time_t
-timeFromText(const std::string& time_txt);
+uint32_t
+timeFromText32(const std::string& time_txt);
+
+uint64_t
+timeFromText64(const std::string& time_txt);
 
 std::string
 timeToText(const time_t timeval);
