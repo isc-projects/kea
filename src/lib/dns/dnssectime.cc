@@ -28,28 +28,81 @@
 
 using namespace std;
 
+namespace {
+int days[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+inline bool
+isLeap(const int y) {
+    return ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0);
+}
+
+int
+yearSecs(const int year) {
+    return ((isLeap(year) ? 366 : 365 ) * 86400);
+}
+
+int
+monthSecs(const int month, const int year) {
+    return ((days[month] + ((month == 1 && isLeap(year)) ? 1 : 0 )) * 86400);
+}
+}
+
 namespace isc {
 namespace dns {
 
 string
-timeToText(const time_t timeval) {
-    struct tm* const t = gmtime(&timeval);
+timeToText64(uint64_t t) {
+    struct tm tm;
+    int secs;
 
-    // gmtime() will keep most values within range, but it can
-    // produce a five-digit year; check for this.
-    if ((t->tm_year + 1900) > 9999) {
-        isc_throw(InvalidTime, "Time value out of range: year > 9999");
+    // We cannot rely on gmtime() because time_t may not be of 64 bit
+    // integer.  The following conversion logic is borrowed from BIND 9.
+    tm.tm_year = 70;
+    while ((secs = yearSecs(tm.tm_year + 1900)) <= t) {
+        t -= secs;
+        ++tm.tm_year;
+        if (tm.tm_year + 1900 > 9999) {
+            isc_throw(InvalidTime,
+                      "Time value out of range (year > 9999): " <<
+                      tm.tm_year + 1900);
+        }
     }
+    tm.tm_mon = 0;
+    while ((secs = monthSecs(tm.tm_mon, tm.tm_year + 1900)) <= t) {
+        t -= secs;
+        tm.tm_mon++;
+    }
+    tm.tm_mday = 1;
+    while (86400 <= t) {
+        t -= 86400;
+        ++tm.tm_mday;
+    }
+    tm.tm_hour = 0;
+    while (3600 <= t) {
+        t -= 3600;
+        ++tm.tm_hour;
+    }
+    tm.tm_min = 0;
+    while (60 <= t) {
+        t -= 60;
+        ++tm.tm_min;
+    }
+    tm.tm_sec = t;              // now t < 60, so this substitution is safe.
 
     ostringstream oss;
     oss << setfill('0')
-        << setw(4) << t->tm_year + 1900
-        << setw(2) << t->tm_mon + 1
-        << setw(2) << t->tm_mday 
-        << setw(2) << t->tm_hour
-        << setw(2) << t->tm_min
-        << setw(2) << t->tm_sec;
+        << setw(4) << tm.tm_year + 1900
+        << setw(2) << tm.tm_mon + 1
+        << setw(2) << tm.tm_mday
+        << setw(2) << tm.tm_hour
+        << setw(2) << tm.tm_min
+        << setw(2) << tm.tm_sec;
     return (oss.str());
+}
+
+string
+timeToText32(const time_t timeval) {
+    return (timeToText64(timeval));
 }
 
 namespace {
@@ -63,13 +116,6 @@ checkRange(const int min, const int max, const int value,
         return;
     }
     isc_throw(InvalidTime, "Invalid " << valname << "value: " << value);
-}
-
-int days[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-
-inline bool
-isLeap(const int y) {
-    return ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0);
 }
 }
 
