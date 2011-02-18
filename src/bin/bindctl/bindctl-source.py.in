@@ -37,15 +37,15 @@ DEFAULT_IDENTIFIER_DESC = "The identifier specifies the config item. Child eleme
 
 def prepare_config_commands(tool):
     '''Prepare fixed commands for local configuration editing'''
-    module = ModuleInfo(name = CONFIG_MODULE_NAME, desc = "Configuration commands")
-    cmd = CommandInfo(name = "show", desc = "Show configuration")
-    param = ParamInfo(name = "argument", type = "string", optional=True, desc = "If you specify the argument 'all' (before the identifier), recursively show all child elements for the given identifier")
+    module = ModuleInfo(name = CONFIG_MODULE_NAME, desc = "Configuration commands.")
+    cmd = CommandInfo(name = "show", desc = "Show configuration.")
+    param = ParamInfo(name = "argument", type = "string", optional=True, desc = "If you specify the argument 'all' (before the identifier), recursively show all child elements for the given identifier.")
     cmd.add_param(param)
     param = ParamInfo(name = "identifier", type = "string", optional=True, desc = DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "show_json", desc = "Show full configuration in JSON format")
+    cmd = CommandInfo(name = "show_json", desc = "Show full configuration in JSON format.")
     param = ParamInfo(name = "identifier", type = "string", optional=True, desc = DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
     module.add_command(cmd)
@@ -57,35 +57,35 @@ def prepare_config_commands(tool):
     cmd.add_param(param)
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "remove", desc = "Remove entry from configuration list")
+    cmd = CommandInfo(name = "remove", desc = "Remove entry from configuration list.")
     param = ParamInfo(name = "identifier", type = "string", optional=True, desc = DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
     param = ParamInfo(name = "value", type = "string", optional=True, desc = "Specifies a value to remove from the list. It must be in correct JSON format and complete.")
     cmd.add_param(param)
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "set", desc = "Set a configuration value")
+    cmd = CommandInfo(name = "set", desc = "Set a configuration value.")
     param = ParamInfo(name = "identifier", type = "string", optional=True, desc = DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
     param = ParamInfo(name = "value", type = "string", optional=False, desc = "Specifies a value to set. It must be in correct JSON format and complete.")
     cmd.add_param(param)
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "unset", desc = "Unset a configuration value (i.e. revert to the default, if any)")
+    cmd = CommandInfo(name = "unset", desc = "Unset a configuration value (i.e. revert to the default, if any).")
     param = ParamInfo(name = "identifier", type = "string", optional=False, desc = DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "diff", desc = "Show all local changes that have not been committed")
+    cmd = CommandInfo(name = "diff", desc = "Show all local changes that have not been committed.")
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "revert", desc = "Revert all local changes")
+    cmd = CommandInfo(name = "revert", desc = "Revert all local changes.")
     module.add_command(cmd)
 
     cmd = CommandInfo(name = "commit", desc = "Commit all local changes.")
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "go", desc = "Go to a specific configuration part")
+    cmd = CommandInfo(name = "go", desc = "Go to a specific configuration part.")
     param = ParamInfo(name = "identifier", type="string", optional=False, desc = DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
     module.add_command(cmd)
