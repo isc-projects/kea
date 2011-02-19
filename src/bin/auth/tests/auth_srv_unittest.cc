@@ -36,6 +36,7 @@
 #include <dns/tests/unittest_util.h>
 #include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
+#include <testutils/portconfig.h>
 
 using namespace std;
 using namespace isc::cc;
@@ -662,23 +663,7 @@ TEST_F(AuthSrvTest, stop) {
 }
 
 TEST_F(AuthSrvTest, listenAddresses) {
-    // Default value should be not listening to anything
-    EXPECT_TRUE(server.getListenAddresses().empty());
-
-    // Try putting there some addresses
-    AddressList addresses;
-    addresses.push_back(AddressPair("127.0.0.1", 5321));
-    addresses.push_back(AddressPair("::1", 5321));
-    server.setListenAddresses(addresses);
-    ASSERT_EQ(2, server.getListenAddresses().size());
-    EXPECT_EQ("::1", server.getListenAddresses()[1].first);
-
-    // Is it independent from what we do with the vector later?
-    addresses.clear();
-    EXPECT_EQ(2, server.getListenAddresses().size());
-
-    // Did it return to empty list if we ask it to?
-    server.setListenAddresses(addresses);
-    EXPECT_TRUE(server.getListenAddresses().empty());
+    isc::testutils::portconfig::listenAddresses(server);
 }
+
 }
