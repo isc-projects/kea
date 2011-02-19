@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,8 +11,6 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
-
-// $Id$
 
 #ifndef __STRUTIL_H
 #define __STRUTIL_H
@@ -88,7 +86,7 @@ std::vector<std::string> tokens(const std::string text,
 ///
 /// \return Uppercase version of the argument
 inline char toUpper(char chr) {
-    return static_cast<char>(std::toupper(static_cast<int>(chr)));
+    return (static_cast<char>(std::toupper(static_cast<int>(chr))));
 }
 
 
@@ -113,7 +111,7 @@ inline void uppercase(std::string& text) {
 ///
 /// \return Lowercase version of the argument
 inline char toLower(char chr) {
-    return static_cast<char>(std::tolower(static_cast<int>(chr)));
+    return (static_cast<char>(std::tolower(static_cast<int>(chr))));
 }
 
 /// \brief Lowercase String

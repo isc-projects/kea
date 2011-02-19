@@ -131,7 +131,7 @@ MessageEntry::getRRsetTrustLevel(const Message& message,
                     ++rrset_iter;
                 }
                 assert(rrset_iter != message.endSection(section));
-                
+
                 // According RFC2181 section 5.4.1, only the record
                 // describing that ailas is necessarily authoritative.
                 // If there is one or more CNAME records in answer section.

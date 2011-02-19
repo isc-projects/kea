@@ -12,11 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __MESSAGEINITIALIZER_H
 #define __MESSAGEINITIALIZER_H
 
+#include <string>
+#include <vector>
 #include <log/message_dictionary.h>
 
 namespace isc {
@@ -52,9 +52,21 @@ public:
 
     /// \brief Constructor
     ///
-    /// The only method in the class, this adds the array of values to the
-    /// global dictionary.
+    /// Adds the array of values to the global dictionary, and notes any
+    /// duplicates.
+    ///
+    /// \param values NULL-terminated array of alternating identifier strings
+    /// and associated message text.
     MessageInitializer(const char* values[]);
+
+    /// \brief Return Duplicates
+    ///
+    /// When messages are added to the global dictionary, any duplicates are
+    /// recorded.  They can later be output through the logging system.
+    ///
+    /// \return List of duplicate message IDs when the global dictionary was
+    /// loaded.  Note that the duplicates list itself may contain duplicates.
+    static std::vector<std::string>& getDuplicates();
 };
 
 } // namespace log
