@@ -1,3 +1,9 @@
+  173.	[bug]		jerry
+	python/isc/notify: A notify_out test fails without network
+	connectivity, encapsulate the socket behavior using a mock
+	socket class to fix it.
+	(Trac #346, git 319debfb957641f311102739a15059f8453c54ce)
+
   172.  [func]      jelte
 	Improved the bindctl cli in various ways, mainly concerning
 	list and map item addressing, the correct display of actual values,
