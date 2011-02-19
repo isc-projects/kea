@@ -28,7 +28,7 @@ class MessageRendererTest(unittest.TestCase):
         c = RRClass("IN")
         t = RRType("A")
         ttl = RRTTL("3600")
-        
+
         message = Message(Message.RENDER)
         message.set_qid(123)
         message.set_opcode(Opcode.QUERY())
@@ -56,14 +56,14 @@ class MessageRendererTest(unittest.TestCase):
         self.message1.to_wire(self.renderer1)
         self.message2.to_wire(self.renderer2)
         self.message2.to_wire(self.renderer3)
-        
-    
+
+
     def test_messagerenderer_get_data(self):
         data1 = b'\x00{\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\x01\x00\x01'
         self.assertEqual(data1, self.renderer1.get_data())
         data2 = b'\x00{\x84\x00\x00\x01\x00\x00\x00\x02\x00\x00\x07example\x03com\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x0e\x10\x00\x04\xc0\x00\x02b\xc0\x0c\x00\x01\x00\x01\x00\x00\x0e\x10\x00\x04\xc0\x00\x02c'
         self.assertEqual(data2, self.renderer2.get_data())
-        
+
     def test_messagerenderer_get_length(self):
         self.assertEqual(29, self.renderer1.get_length())
         self.assertEqual(61, self.renderer2.get_length())
@@ -105,6 +105,9 @@ class MessageRendererTest(unittest.TestCase):
                          renderer.get_compress_mode())
         renderer.set_compress_mode(MessageRenderer.CASE_SENSITIVE)
         self.assertEqual(MessageRenderer.CASE_SENSITIVE,
+                         renderer.get_compress_mode())
+        renderer.set_compress_mode(MessageRenderer.CASE_INSENSITIVE)
+        self.assertEqual(MessageRenderer.CASE_INSENSITIVE,
                          renderer.get_compress_mode())
         self.assertRaises(TypeError, renderer.set_compress_mode, "wrong")
 

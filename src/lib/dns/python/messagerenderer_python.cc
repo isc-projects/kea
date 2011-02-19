@@ -38,7 +38,6 @@ static PyObject* MessageRenderer_getLength(s_MessageRenderer* self);
 static PyObject* MessageRenderer_isTruncated(s_MessageRenderer* self);
 static PyObject* MessageRenderer_getLengthLimit(s_MessageRenderer* self);
 static PyObject* MessageRenderer_getCompressMode(s_MessageRenderer* self);
-// TODO: set/get compressmode
 static PyObject* MessageRenderer_setTruncated(s_MessageRenderer* self);
 static PyObject* MessageRenderer_setLengthLimit(s_MessageRenderer* self, PyObject* args);
 static PyObject* MessageRenderer_setCompressMode(s_MessageRenderer* self, PyObject* args);
@@ -206,7 +205,8 @@ MessageRenderer_setCompressMode(s_MessageRenderer* self,
         Py_RETURN_NONE;
     } else {
         PyErr_SetString(PyExc_TypeError,
-                        "Message mode must be Message.PARSE or Message.RENDER");
+                        "MessageRenderer compress mode must be MessageRenderer.CASE_INSENSITIVE"
+                        "or MessageRenderer.CASE_SENSITIVE");
         return (NULL);
     }
 }
