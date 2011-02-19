@@ -144,11 +144,6 @@ TEST_F(DNSSECTimeTest, toText) {
     dnssectime::detail::gettimeFunction = testGetTime<0x10000000aLL>;
     EXPECT_EQ("21060207062815", timeToText32(0xffffffffL));
 
-    // set the current time to: Mar16 12:56:32 UTC 2242
-    dnssectime::detail::gettimeFunction = testGetTime<8589934592LL>;
-    EXPECT_EQ("22420316125632", timeToText64(8589934592LL));
-    EXPECT_EQ("22420316125632", timeToText32(0));
-
     // Try very large time value.  Actually it's the possible farthest time
     // that can be represented in the form of YYYYMMDDHHmmSS.
     EXPECT_EQ("99991231235959", timeToText64(YEAR10K_EVE));
