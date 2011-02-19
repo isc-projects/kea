@@ -128,7 +128,8 @@ TEST_F(AuthConfigTest, invalidListenAddressConfig) {
 }
 
 // Try setting addresses trough config
-TEST_F(AuthConfigTest, listenAddressConfig) {
+// TODO Enable after #388 is solved
+TEST_F(AuthConfigTest, DISABLED_listenAddressConfig) {
     isc::testutils::portconfig::listenAddressConfig(server);
 }
 
