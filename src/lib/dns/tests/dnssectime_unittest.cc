@@ -54,7 +54,8 @@ TEST_F(DNSSECTimeTest, fromText) {
     EXPECT_THROW(timeFromText32("2011 101120000"), InvalidTime);
     EXPECT_THROW(timeFromText32("201101011200-0"), InvalidTime);
 
-    // Short length
+    // Short length (or "decimal integer" version of representation;
+    // it's valid per RFC4034, but is not supported in this implementation)
     EXPECT_THROW(timeFromText32("20100223"), InvalidTime);
 
     // Leap year checks
