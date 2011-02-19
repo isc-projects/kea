@@ -417,9 +417,10 @@ class BoB:
             Start the Authoritative server
         """
         authargs = ['b10-auth']
-        authargs += ['-p', str(self.dns_port)]
-        if self.address:
-            authargs += ['-a', str(self.address)]
+        #TODO Remove these properly, with the rest
+        #authargs += ['-p', str(self.dns_port)]
+        #if self.address:
+        #    authargs += ['-a', str(self.address)]
         if self.nocache:
             authargs += ['-n']
         if self.uid:
