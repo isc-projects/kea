@@ -107,13 +107,15 @@ testGetTime() {
 const uint64_t YEAR10K_EVE = 253402300799LL;
 
 TEST_F(DNSSECTimeTest, toText) {
+    // Check a basic case with the default (normal) gettimeFunction
+    // based on the "real current time".
+    // Note: this will fail after year 2078, but at that point we won't use
+    // this program anyway:-)
+    EXPECT_EQ("20100311233000", timeToText32(1268350200));
+
     // Set the current time to: Feb 18 09:04:14 UTC 2012 (an arbitrary choice
     // in the range of the first half of uint32 since epoch).
     dnssectime::detail::gettimeFunction = testGetTime<1329555854LL>;
-
-    // Check some basic cases
-    EXPECT_EQ("19700101000000", timeToText32(0));
-    EXPECT_EQ("20100311233000", timeToText32(1268350200));
 
     // Test the "year 2038" problem.
     // Check the result of toText() for "INT_MIN" in int32_t.  It's in the
