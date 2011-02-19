@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,20 +12,31 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
+#ifndef __LOGGER_LEVELS_H
+#define __LOGGER_LEVELS_H
 
-#ifndef __DBGLEVELS_H
-#define __DBGLEVELS_H
+namespace isc {
+namespace log {
 
-/// \brief Defines Debug Levels
+/// \brief Severity Levels
 ///
-/// Defines the maximum and minimum debug levels and the number of levels.
-/// These are defined using #define as they are referenced in the construction
-/// of variables declared outside execution units.  (In this way we avoid the
-/// "static initialization fiasco" problem.)
+/// Defines the severity levels for logging.  This is shared between the logger
+/// and the implementations classes.
+///
+/// N.B. The order of the levels - DEBUG less than INFO less that WARN etc. is
+/// implicitly assumed in several implementations.  They must not be changed.
 
-#define MIN_DEBUG_LEVEL (0)
-#define MAX_DEBUG_LEVEL (99)
-#define NUM_DEBUG_LEVEL (MAX_DEBUG_LEVEL - MIN_DEBUG_LEVEL + 1)
+typedef enum {
+    DEFAULT = 0,    // Default to logging level of the parent
+    DEBUG = 1,
+    INFO = 2,
+    WARN = 3,
+    ERROR = 4,
+    FATAL = 5,
+    NONE = 6    // Disable logging
+} Severity;
 
-#endif // __DBGLEVELS_H
+}   // namespace log
+}   // namespace isc
+
+#endif // __LOGGER_LEVELS_H

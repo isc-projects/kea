@@ -9,4 +9,6 @@
   can removed first.
 * Make resolver cache be smart to refetch the messages that are about
   to expire.
+* When the rrset beging updated is an NS rrset, NSAS should be updated
+  together.
 

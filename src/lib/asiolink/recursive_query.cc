@@ -352,8 +352,10 @@ public:
         // we have an answer or timeout ourselves
         isc::resolve::makeErrorMessage(answer_message_,
                                        Rcode::SERVFAIL());
-        resolvercallback_->success(answer_message_);
-        answer_sent_ = true;
+        if (!answer_sent_) {
+            answer_sent_ = true;
+            resolvercallback_->success(answer_message_);
+        }
     }
 
     virtual void stop(bool resume) {
@@ -366,6 +368,7 @@ public:
         // until that one comes back to us)
         done_ = true;
         if (resume && !answer_sent_) {
+            answer_sent_ = true;
             resolvercallback_->success(answer_message_);
         } else {
             resolvercallback_->failure();

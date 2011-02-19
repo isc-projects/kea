@@ -89,16 +89,14 @@ public:
         return (*hash_key_ptr_);
     }
 
+    /// \short Protected memebers, so they can be accessed by tests.
+    //@{
 protected:
     /// \brief Initialize the message entry with dns message.
     ///
     /// \param message The Message to initialize the entry with
     void initMessageEntry(const isc::dns::Message& message);
 
-    /// \brief These two functions should be static functions
-    ///        placed in cc file. Put them here just for easy unit
-    ///        tests.
-    //@{
     /// \brief Parse the rrsets in specified section.
     ///
     /// \param msg The message to parse the RRsets from
@@ -148,10 +146,9 @@ protected:
     ///         otherwise.
     bool getRRsetEntries(std::vector<RRsetEntryPtr>& rrset_entry_vec,
                          const time_t time_now);
-    //@}
-protected:
-    /// \note Make the variable be protected for easy test.
+
     time_t expire_time_;  // Expiration time of the message.
+    //@}
 
 private:
     std::string entry_name_; // The name for this entry(name + type)

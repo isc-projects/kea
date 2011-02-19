@@ -25,7 +25,7 @@
         "item_name": "retries",
         "item_type": "integer",
         "item_optional": False,
-        "item_default": 0
+        "item_default": 3
       },
       {
         "item_name": "forward_addresses",
