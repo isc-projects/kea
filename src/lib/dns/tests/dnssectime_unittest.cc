@@ -102,6 +102,10 @@ testGetTime() {
     return (NOW);
 }
 
+// Seconds since epoch for the year 10K eve.  Commonly used in some tests
+// below.
+const uint64_t YEAR10K_EVE = 253402300799LL;
+
 TEST_F(DNSSECTimeTest, toText) {
     // Set the current time to: Feb 18 09:04:14 UTC 2012 (an arbitrary choice
     // in the range of the first half of uint32 since epoch).
@@ -147,7 +151,6 @@ TEST_F(DNSSECTimeTest, toText) {
 
     // Try very large time value.  Actually it's the possible farthest time
     // that can be represented in the form of YYYYMMDDHHmmSS.
-    const uint64_t YEAR10K_EVE = 253402300799LL;
     EXPECT_EQ("99991231235959", timeToText64(YEAR10K_EVE));
     dnssectime::detail::gettimeFunction = testGetTime<YEAR10K_EVE - 10>;
     EXPECT_EQ("99991231235959", timeToText32(4294197631L));
@@ -156,6 +159,8 @@ TEST_F(DNSSECTimeTest, toText) {
 TEST_F(DNSSECTimeTest, overflow) {
     // Jan 1, Year 10,000.
     EXPECT_THROW(timeToText64(253402300800LL), InvalidTime);
+    dnssectime::detail::gettimeFunction = testGetTime<YEAR10K_EVE - 10>;
+    EXPECT_THROW(timeToText32(4294197632L), InvalidTime);
 }
 
 }
