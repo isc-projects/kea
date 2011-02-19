@@ -80,7 +80,7 @@ TEST_F(DNSSECTimeTest, fromText) {
 
     // Feb 7, 06:28:15 UTC 2106 is the possible maximum time that can be
     // represented as an unsigned 32bit integer without overflow.
-    EXPECT_EQ(4294967295L, timeFromText32("21060207062815"));
+    EXPECT_EQ(4294967295LU, timeFromText32("21060207062815"));
 
     // After that, timeFromText32() should start returning the second count
     // modulo 2^32.
@@ -150,14 +150,14 @@ TEST_F(DNSSECTimeTest, toText) {
     // that can be represented in the form of YYYYMMDDHHmmSS.
     EXPECT_EQ("99991231235959", timeToText64(YEAR10K_EVE));
     dnssectime::detail::gettimeFunction = testGetTime<YEAR10K_EVE - 10>;
-    EXPECT_EQ("99991231235959", timeToText32(4294197631L));
+    EXPECT_EQ("99991231235959", timeToText32(4294197631LU));
 }
 
 TEST_F(DNSSECTimeTest, overflow) {
     // Jan 1, Year 10,000.
     EXPECT_THROW(timeToText64(253402300800LL), InvalidTime);
     dnssectime::detail::gettimeFunction = testGetTime<YEAR10K_EVE - 10>;
-    EXPECT_THROW(timeToText32(4294197632L), InvalidTime);
+    EXPECT_THROW(timeToText32(4294197632LU), InvalidTime);
 }
 
 }
