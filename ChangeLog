@@ -1,3 +1,12 @@
+  174.	[bug]*		jinmei
+	src/lib/dns: revised dnssectime functions so that they don't rely
+	on the time_t type (whose size varies on different systems, which
+	can lead to subtle bugs like some form of "year 2038 problem").
+	Also handled 32-bit wrap around issues more explicitly, with more
+	detailed tests.  The function API has been changed, but the effect
+	should be minimal because these functions are mostly private.
+	(Trac #61, git 09ece8cdd41c0f025e8b897b4883885d88d4ba5d)
+
   173.	[bug]		jerry
 	python/isc/notify: A notify_out test fails without network
 	connectivity, encapsulate the socket behavior using a mock
