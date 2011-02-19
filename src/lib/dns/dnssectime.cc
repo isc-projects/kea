@@ -38,12 +38,12 @@ isLeap(const int y) {
     return ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0);
 }
 
-int
+unsigned int
 yearSecs(const int year) {
     return ((isLeap(year) ? 366 : 365 ) * 86400);
 }
 
-int
+unsigned int
 monthSecs(const int month, const int year) {
     return ((days[month] + ((month == 1 && isLeap(year)) ? 1 : 0 )) * 86400);
 }
@@ -53,15 +53,15 @@ namespace isc {
 namespace dns {
 
 string
-timeToText64(uint64_t t) {
+timeToText64(uint64_t value) {
     struct tm tm;
-    int secs;
+    unsigned int secs;
 
     // We cannot rely on gmtime() because time_t may not be of 64 bit
     // integer.  The following conversion logic is borrowed from BIND 9.
     tm.tm_year = 70;
-    while ((secs = yearSecs(tm.tm_year + 1900)) <= t) {
-        t -= secs;
+    while ((secs = yearSecs(tm.tm_year + 1900)) <= value) {
+        value -= secs;
         ++tm.tm_year;
         if (tm.tm_year + 1900 > 9999) {
             isc_throw(InvalidTime,
@@ -70,26 +70,26 @@ timeToText64(uint64_t t) {
         }
     }
     tm.tm_mon = 0;
-    while ((secs = monthSecs(tm.tm_mon, tm.tm_year + 1900)) <= t) {
-        t -= secs;
+    while ((secs = monthSecs(tm.tm_mon, tm.tm_year + 1900)) <= value) {
+        value -= secs;
         tm.tm_mon++;
     }
     tm.tm_mday = 1;
-    while (86400 <= t) {
-        t -= 86400;
+    while (86400 <= value) {
+        value -= 86400;
         ++tm.tm_mday;
     }
     tm.tm_hour = 0;
-    while (3600 <= t) {
-        t -= 3600;
+    while (3600 <= value) {
+        value -= 3600;
         ++tm.tm_hour;
     }
     tm.tm_min = 0;
-    while (60 <= t) {
-        t -= 60;
+    while (60 <= value) {
+        value -= 60;
         ++tm.tm_min;
     }
-    tm.tm_sec = t;              // now t < 60, so this substitution is safe.
+    tm.tm_sec = value;    // now t < 60, so this substitution is safe.
 
     ostringstream oss;
     oss << setfill('0')
@@ -130,14 +130,14 @@ gettimeofdayWrapper() {
 }
 
 string
-timeToText32(const uint32_t timeval) {
+timeToText32(const uint32_t value) {
     // We first adjust the time to the closest epoch based on the current time.
     // Note that the following variables must be signed in order to handle
     // time until year 2038 correctly.
     const int64_t start = gettimeofdayWrapper() - 0x7fffffff;
     int64_t base = 0;
     int64_t t;
-    while ((t = (base + timeval)) < start) {
+    while ((t = (base + value)) < start) {
         base += 0x100000000LL;
     }
 
@@ -203,6 +203,8 @@ timeFromText64(const string& time_txt) {
 
 uint32_t
 timeFromText32(const string& time_txt) {
+    // The implicit conversion from uint64_t to uint32_t should just work here,
+    // because we only need to drop higher 32 bits.
     return (timeFromText64(time_txt));
 }
 }
