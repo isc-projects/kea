@@ -186,7 +186,7 @@ timeFromText64(const string& time_txt) {
     checkRange(0, 59, minute, "minute");
     checkRange(0, 60, second, "second"); // 60 == leap second.
 
-    time_t timeval = second + (60 * minute) + (3600 * hour) +
+    uint64_t timeval = second + (60 * minute) + (3600 * hour) +
         ((day - 1) * 86400);
     for (int m = 0; m < (month - 1); ++m) {
             timeval += days[m] * 86400;
