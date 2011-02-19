@@ -1,24 +1,32 @@
-// File created from messagedef.mes on Mon Jan 17 15:25:32 2011
+// File created from messagedef.mes on Mon Feb 14 11:07:45 2011
 
 #ifndef __MESSAGEDEF_H
 #define __MESSAGEDEF_H
 
 #include <log/message_types.h>
 
-namespace {
+namespace isc {
+namespace log {
 
-isc::log::MessageID MSG_DUPLPRFX = "DUPLPRFX";
-isc::log::MessageID MSG_IDNOTFND = "IDNOTFND";
-isc::log::MessageID MSG_ONETOKEN = "ONETOKEN";
-isc::log::MessageID MSG_OPENIN = "OPENIN";
-isc::log::MessageID MSG_OPENOUT = "OPENOUT";
-isc::log::MessageID MSG_PRFEXTRARG = "PRFEXTRARG";
-isc::log::MessageID MSG_PRFINVARG = "PRFINVARG";
-isc::log::MessageID MSG_PRFNOARG = "PRFNOARG";
-isc::log::MessageID MSG_READERR = "READERR";
-isc::log::MessageID MSG_UNRECDIR = "UNRECDIR";
-isc::log::MessageID MSG_WRITERR = "WRITERR";
+extern const isc::log::MessageID MSG_DUPLNS;
+extern const isc::log::MessageID MSG_DUPLPRFX;
+extern const isc::log::MessageID MSG_DUPMSGID;
+extern const isc::log::MessageID MSG_IDNOTFND;
+extern const isc::log::MessageID MSG_MSGRDERR;
+extern const isc::log::MessageID MSG_MSGWRTERR;
+extern const isc::log::MessageID MSG_NOMSGTXT;
+extern const isc::log::MessageID MSG_NSEXTRARG;
+extern const isc::log::MessageID MSG_NSINVARG;
+extern const isc::log::MessageID MSG_NSNOARG;
+extern const isc::log::MessageID MSG_OPNMSGIN;
+extern const isc::log::MessageID MSG_OPNMSGOUT;
+extern const isc::log::MessageID MSG_PRFEXTRARG;
+extern const isc::log::MessageID MSG_PRFINVARG;
+extern const isc::log::MessageID MSG_PRFNOARG;
+extern const isc::log::MessageID MSG_RDLOCMES;
+extern const isc::log::MessageID MSG_UNRECDIR;
 
-} // Anonymous namespace
+} // namespace log
+} // namespace isc
 
 #endif // __MESSAGEDEF_H

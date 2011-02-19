@@ -1,21 +1,19 @@
-if USE_LOG4CXX
 SUBDIRS = . compiler tests
-endif
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-AM_CPPFLAGS += $(LOG4CXX_INCLUDES)
+# AM_CPPFLAGS += $(LOG4CXX_INCLUDES)
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/log -I$(top_builddir)/src/lib/log
 
 CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = liblog.la
 liblog_la_SOURCES  =
-liblog_la_SOURCES += dbglevels.h
+liblog_la_SOURCES += debug_levels.h logger_levels.h
 liblog_la_SOURCES += dummylog.h dummylog.cc
-if USE_LOG4CXX
 liblog_la_SOURCES += filename.h filename.cc
 liblog_la_SOURCES += logger.cc logger.h
+liblog_la_SOURCES += logger_impl.cc logger_impl.h
 liblog_la_SOURCES += logger_support.cc logger_support.h
 liblog_la_SOURCES += messagedef.cc messagedef.h
 liblog_la_SOURCES += message_dictionary.cc message_dictionary.h
@@ -25,10 +23,6 @@ liblog_la_SOURCES += message_reader.cc message_reader.h
 liblog_la_SOURCES += message_types.h
 liblog_la_SOURCES += root_logger_name.cc root_logger_name.h
 liblog_la_SOURCES += strutil.h strutil.cc
-liblog_la_SOURCES += xdebuglevel.cc xdebuglevel.h
-
-liblog_la_LDFLAGS = $(LOG4CXX_LDFLAGS)
-endif
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)

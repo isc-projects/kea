@@ -52,8 +52,11 @@ rdict_rrclass = dict([(dict_rrclass[k], k.upper()) for k in \
                           dict_rrclass.keys()])
 dict_algorithm = { 'rsamd5' : 1, 'dh' : 2, 'dsa' : 3, 'ecc' : 4,
                    'rsasha1' : 5 }
+dict_nsec3_algorithm = { 'reserved' : 0, 'sha1' : 1 }
 rdict_algorithm = dict([(dict_algorithm[k], k.upper()) for k in \
                             dict_algorithm.keys()])
+rdict_nsec3_algorithm = dict([(dict_nsec3_algorithm[k], k.upper()) for k in \
+                                  dict_nsec3_algorithm.keys()])
 
 header_xtables = { 'qr' : dict_qr, 'opcode' : dict_opcode,
                    'rcode' : dict_rcode }
@@ -274,14 +277,16 @@ class TXT:
                                     ' ' if len(wirestring_list[i]) > 0 else '',
                                     wirestring_list[i]))
 
-class NSEC:
-    rdlen = -1                  # auto-calculate
-    nextname = 'next.example.com'
+class NSECBASE:
+    '''Implements rendering NSEC/NSEC3 type bitmaps commonly used for
+    these RRs.  The NSEC and NSEC3 classes will be inherited from this
+    class.'''
     nbitmap = 1                 # number of bitmaps
     block = 0
-    maplen = -1                 # default bitmap length, auto-calculate
+    maplen = None              # default bitmap length, auto-calculate
     bitmap = '040000000003'     # an arbtrarily chosen bitmap sample
     def dump(self, f):
+        # first, construct the bitmpa data
         block_list = []
         maplen_list = []
         bitmap_list = []
@@ -296,30 +301,72 @@ class NSEC:
                 maplen_list.append(self.__dict__[key_maplen])
             else:
                 maplen_list.append(self.maplen)
-            if maplen_list[-1] < 0:
+            if maplen_list[-1] is None: # calculate it if not specified
                 maplen_list[-1] = int(len(bitmap_list[-1]) / 2)
             key_block = 'block' + str(i)
             if key_block in self.__dict__:
                block_list.append(self.__dict__[key_block])
             else:
                 block_list.append(self.block)
-        name_wire = encode_name(self.nextname)
-        rdlen = self.rdlen
-        if rdlen < 0:
-            # if rdlen needs to be calculated, it must be based on the bitmap
-            # length, because the configured maplen can be fake.
-            rdlen = int(len(name_wire) / 2) + 2 * self.nbitmap
-            rdlen = rdlen + int(len(''.join(bitmap_list)) / 2)
-        f.write('\n# NSEC RDATA (RDLEN=%d)\n' % rdlen)
-        f.write('%04x\n' % rdlen);
-        f.write('# Next Name=%s (%d bytes)\n' % (self.nextname,
-                                                 int(len(name_wire) / 2)))
-        f.write('%s\n' % name_wire)
+
+        # dump RR-type specific part (NSEC or NSEC3)
+        self.dump_fixedpart(f, 2 * self.nbitmap + \
+                                int(len(''.join(bitmap_list)) / 2))
+
+        # dump the bitmap
         for i in range(0, self.nbitmap):
             f.write('# Bitmap: Block=%d, Length=%d\n' %
                     (block_list[i], maplen_list[i]))
             f.write('%02x %02x %s\n' %
                     (block_list[i], maplen_list[i], bitmap_list[i]))
+
+class NSEC(NSECBASE):
+    rdlen = None                # auto-calculate
+    nextname = 'next.example.com'
+    def dump_fixedpart(self, f, bitmap_totallen):
+        name_wire = encode_name(self.nextname)
+        if self.rdlen is None:
+            # if rdlen needs to be calculated, it must be based on the bitmap
+            # length, because the configured maplen can be fake.
+            self.rdlen = int(len(name_wire) / 2) + bitmap_totallen
+        f.write('\n# NSEC RDATA (RDLEN=%d)\n' % self.rdlen)
+        f.write('%04x\n' % self.rdlen);
+        f.write('# Next Name=%s (%d bytes)\n' % (self.nextname,
+                                                 int(len(name_wire) / 2)))
+        f.write('%s\n' % name_wire)
+
+class NSEC3(NSECBASE):
+    rdlen = None                # auto-calculate
+    hashalg = 1                 # SHA-1
+    optout = False              # opt-out flag
+    mbz = 0                     # other flag fields (none defined yet)
+    iterations = 1
+    saltlen = 5
+    salt = 's' * saltlen
+    hashlen = 20
+    hash = 'h' * hashlen
+    def dump_fixedpart(self, f, bitmap_totallen):
+        if self.rdlen is None:
+            # if rdlen needs to be calculated, it must be based on the bitmap
+            # length, because the configured maplen can be fake.
+            self.rdlen = 4 + 1 + len(self.salt) + 1 + len(self.hash) \
+                + bitmap_totallen
+        f.write('\n# NSEC3 RDATA (RDLEN=%d)\n' % self.rdlen)
+        f.write('%04x\n' % self.rdlen)
+        optout_val = 1 if self.optout else 0
+        f.write('# Hash Alg=%s, Opt-Out=%d, Other Flags=%0x, Iterations=%d\n' %
+                (code_totext(self.hashalg, rdict_nsec3_algorithm),
+                 optout_val, self.mbz, self.iterations))
+        f.write('%02x %02x %04x\n' %
+                (self.hashalg, (self.mbz << 1) | optout_val, self.iterations))
+        f.write("# Salt Len=%d, Salt='%s'\n" % (self.saltlen, self.salt))
+        f.write('%02x%s%s\n' % (self.saltlen,
+                                ' ' if len(self.salt) > 0 else '',
+                                encode_string(self.salt)))
+        f.write("# Hash Len=%d, Hash='%s'\n" % (self.hashlen, self.hash))
+        f.write('%02x%s%s\n' % (self.hashlen,
+                                ' ' if len(self.hash) > 0 else '',
+                                encode_string(self.hash)))
 
 class RRSIG:
     rdlen = -1                  # auto-calculate
@@ -415,7 +462,7 @@ def get_config_param(section):
                     'question' : (DNSQuestion, question_xtables),
                     'edns' : (EDNS, {}), 'soa' : (SOA, {}), 'txt' : (TXT, {}),
                     'rrsig' : (RRSIG, {}), 'nsec' : (NSEC, {}),
-                    'tsig' : (TSIG, {}) }
+                    'nsec3' : (NSEC3, {}), 'tsig' : (TSIG, {}) }
     s = section
     m = re.match('^([^:]+)/\d+$', section)
     if m:

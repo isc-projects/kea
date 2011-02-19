@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <cstddef>
 #include <log/message_dictionary.h>
 #include <log/message_types.h>
@@ -31,82 +29,81 @@ MessageDictionary::~MessageDictionary() {
 // Add message and note if ID already exists
 
 bool
-MessageDictionary::add(const MessageID& ident, const std::string& text) {
-    map<MessageID, string>::iterator i = dictionary_.find(ident);
+MessageDictionary::add(const string& ident, const string& text) {
+    Dictionary::iterator i = dictionary_.find(ident);
     bool not_found = (i == dictionary_.end());
     if (not_found) {
 
         // Message not already in the dictionary, so add it.
         dictionary_[ident] = text;
     }
-    
+
     return (not_found);
 }
 
 // Add message and note if ID does not already exist
 
 bool
-MessageDictionary::replace(const MessageID& ident, const std::string& text) {
-    map<MessageID, string>::iterator i = dictionary_.find(ident);
+MessageDictionary::replace(const string& ident, const string& text) {
+    Dictionary::iterator i = dictionary_.find(ident);
     bool found = (i != dictionary_.end());
     if (found) {
 
         // Exists, so replace it.
         dictionary_[ident] = text;
     }
-    
+
     return (found);
 }
 
 // Load a set of messages
 
-vector<MessageID>
+vector<std::string>
 MessageDictionary::load(const char* messages[]) {
-    vector<MessageID> duplicates;
+    vector<std::string> duplicates;
     int i = 0;
     while (messages[i]) {
 
         // ID present, so note it and point to text.
-        MessageID ident(messages[i++]);
+        const MessageID ident(messages[i++]);
         if (messages[i]) {
 
-            // Text not null, note it and point to next ident. 
+            // Text not null, note it and point to next ident.
             string text(messages[i++]);
 
             // Add ID and text to message dictionary, noting if the ID was
             // already present.
             bool added = add(ident, text);
             if (!added) {
-                duplicates.push_back(ident);
+                duplicates.push_back(boost::lexical_cast<string>(ident));
             }
         }
     }
-    return duplicates;
+    return (duplicates);
 }
 
-// Return message text or blank string
+// Return message text or blank string.  A reference is returned to a string
+// in the dictionary - this is fine, as the string is immediately used for
+// output.
 
-string
-MessageDictionary::getText(const MessageID& ident) const {
-    map<MessageID, string>::const_iterator i = dictionary_.find(ident);
+const string&
+MessageDictionary::getText(const string& ident) const {
+    static const string empty("");
+    Dictionary::const_iterator i = dictionary_.find(ident);
     if (i == dictionary_.end()) {
-        return string("");
+        return (empty);
     }
     else {
-        return i->second;
+        return (i->second);
     }
 }
 
 // Return global dictionary
 
-MessageDictionary*
+MessageDictionary&
 MessageDictionary::globalDictionary() {
-    static MessageDictionary* global = NULL;
-
-    if (global == NULL) {
-        global = new MessageDictionary();
-    }
-    return global;
+    static MessageDictionary global;
+    return (global);
 }
 
 

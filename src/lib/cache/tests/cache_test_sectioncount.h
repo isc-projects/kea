@@ -33,7 +33,7 @@ int
 sectionRRsetCount(Message& msg, Message::Section section) {
     int count = 0;
     for (RRsetIterator rrset_iter = msg.beginSection(section);
-         rrset_iter != msg.endSection(section); 
+         rrset_iter != msg.endSection(section);
          ++rrset_iter) {
         ++count;
     }

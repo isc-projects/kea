@@ -241,9 +241,6 @@ ResolverCache::getClassCache(const isc::dns::RRClass& cache_class) const {
     return NULL;
 }
 
-
-
-
 } // namespace cache
 } // namespace isc
 

@@ -13,19 +13,19 @@ Hierarchical Logging System
 When a program writes a message to the logging system, it does so using an
 instance of the Logger class.  As well as performing the write of the message,
 the logger identifies the source of the message: different sources can write
-to different destinations and can log different severities of messages.  For
-example, the "cache" logger could write messages of DEBUG severity or above
-to a file while all other components write messages of "INFO" severity or above
-to the Syslog file.
+to different destinations and can log different severities of messages.
+For example, the "cache" logger could write messages of DEBUG severity or
+above to a file while all other components write messages of "INFO" severity
+or above to the Syslog file.
 
-The loggers are hierarchical in that each logger is the child of another logger.
-The top of the hierarchy is the root logger, which does not have a parent.  The
-point of the hierarchy is that unless a logger is explicitly assigned an
-attribute (such as severity of message being logger), it picks it up from the
-parent.  (In BIND-10, there is the root logger (named after the program) and
-every other logger is a child of that.)  So in the example above, the
-INFO/Syslog attributes could be associated with the root logger while the
-DEBUG/file attributes are associated with the "cache" logger.
+The loggers are hierarchical in that each logger is the child of another
+logger.  The top of the hierarchy is the root logger, which does not have
+a parent.  The point of the hierarchy is that unless a logger is explicitly
+assigned an attribute (such as severity of message being logger), it picks
+it up from the parent.  (In BIND-10, there is the root logger (named after
+the program) and every other logger is a child of that.)  So in the example
+above, the INFO/Syslog attributes could be associated with the root logger
+while the DEBUG/file attributes are associated with the "cache" logger.
 
 
 Separation of Messages Definitions And Text
@@ -38,10 +38,11 @@ retrieve the message associated with it (e.g. "unable to open %s for input").
 substitutes any message parameters (in this example, the string that is an
 invalid filename) and logs it to the destination.
 
-In the BIND-10 system, a set of default messages are linked into the program.
-At run-time. each program reads a message file, updating the stored definitions;
-this updated text is logged.  However, to aid support, the message identifier
-so in the example above, the message finally logged would be something like:
+In the BIND-10 system, a set of default messages are linked into the
+program.  At run-time. each program reads a message file, updating the
+stored definitions; this updated text is logged.  However, to aid support,
+the message identifier so in the example above, the message finally logged
+would be something like:
 
     OPENIN, unable to open a.txt for input
 
@@ -57,11 +58,11 @@ The steps in using the system are:
    Ideally the file should have a file type of ".msg".
 
 2. Run it through the message compiler to produce the .h and .cc files.  It
-   is intended that this step be included in the build process.  However, for
-   not run the compiler (found in the "compiler" subdirectory) manually.  The
-   only argument is the name of the message file: it will produce as output
-   two files, having the same name as the input file but with file types of
-   ".h" and ".cc".
+   is intended that this step be included in the build process.  However,
+   for not run the compiler (found in the "compiler" subdirectory) manually.
+   The only argument is the name of the message file: it will produce as
+   output two files, having the same name as the input file but with file
+   types of ".h" and ".cc".
 
    The compiler is built in the "compiler" subdirectory of the "src/lib/log"
    directory.
@@ -70,13 +71,13 @@ The steps in using the system are:
    make sure that the .cc file is compiled and linked into your program -
    static initialization will add the symbols to the global dictionary.
 
-4. Declare loggers in your code and use them to log messages.  This is described
-   in more detail below.
+4. Declare loggers in your code and use them to log messages.  This is
+   described in more detail below.
 
 5. To set the debug level and run-time message file, call runTimeInit (declared
    in logger_support.h) in the main program unit.  This is a temporary solution
-   for Year 2, and will be replaced at a later date, the information coming from
-   the configuration database.
+   for Year 2, and will be replaced at a later date, the information coming
+   from the configuration database.
 
 
 Message Files
@@ -84,9 +85,9 @@ Message Files
 
 File Contents and Format
 ------------------------
-A message file is a file containing message definitions.  Typically there will
-be one message file for each component that declares message symbols.  An
-example file could be:
+A message file is a file containing message definitions.  Typically there
+will be one message file for each component that declares message symbols.
+An example file could be:
 
 -- BEGIN --
 
@@ -94,6 +95,7 @@ example file could be:
 # $ID:$
 
 $PREFIX TEST_
+$NAMESPACE isc::log
 TEST1       message %s is much too large
 + This message is a test for the general message code
 
@@ -104,8 +106,8 @@ UNKNOWN     unknown message
 
 Points to note:
 * Leading and trailing space are trimmed from the line.  Although the above
-  exampl,e has every line starting at column 1, the lines could be indented if
-  desired.
+  exampl,e has every line starting at column 1, the lines could be indented
+  if desired.
 
 * Blank lines are ignored.
 
@@ -113,16 +115,22 @@ Points to note:
   a line by themselves - inline comments will be interpreted as part of the
   text of the line.
 
-* Lines starting $ are directives.  At present, the only directive recognised
-  is $PREFIX, which has one argument: the string used to prefix symbols.  If
-  there is no facility directive, there is no prefix to the symbols. (Prefixes
-  are explained below.)
+* Lines starting $ are directives.  At present, two directives are recognised:
+
+  * $PREFIX, which has one argument: the string used to prefix symbols.  If
+    absent, there is no prefix to the symbols. (Prefixes are explained below.)
+  * $NAMESPACE, which has one argument: the namespace in which the symbols are
+    created.  (Specifying the argument as a double colon - i.e. "$NAMESPACE
+    ::" puts the symbol definitions in the unnamed namespace.  And not
+    including a $NAMESPACE directive will result in the symbols note being
+    put in any namespace.
 
 * Lines starting + indicate an explanation for the preceding message.  These
-  are intended to be processed by a separate program and used to generate an
-  error messages manual.  However they are treated like comments by the message
-  compiler.  As with comments, these must be on a line by themselves; if inline,
-  the text (including the leading "+") will be interpreted as part of the line.
+  are intended to be processed by a separate program and used to generate
+  an error messages manual.  However they are treated like comments by the
+  message compiler.  As with comments, these must be on a line by themselves;
+  if inline, the text (including the leading "+") will be interpreted as
+  part of the line.
 
 * Message lines.  These comprise a symbol name and a message, which may
   include zero or more printf-style tokens.  Symbol names will be upper-cased
@@ -132,12 +140,17 @@ Points to note:
 Message Compiler
 ----------------
 The message compiler is a program built in the src/log/compiler directory.
-It processes the message file to produce two files:
+It is invoked by the command:
+
+    message [-h] [-v] <message-file>
+
+("-v" prints the version number and exits; "-h" prints brief help text.)
+The message compiler processes the message file to produce two files:
 
 1) A C++ header file (called <message-file-name>.h) that holds lines of
 the form:
 
-   namespace {
+   namespace <namespace> {
    isc::log::MessageID PREFIX_IDENTIFIER = "IDENTIFIER";
       :
    }
@@ -146,11 +159,16 @@ The symbols define the keys in the global message dictionary.  At present
 they are defined as std::strings, but a future implementation could redefine
 them as numeric values.
 
+The namespace enclosing the symbols is set by the $NAMESPACE directive.
+
 The "PREFIX_" part of the symbol name is the string defined in the $PREFIX
 the argument to the directive.  So "$PREFIX MSG_" would prefix the identifer
 ABC with "MSG_" to give the symbol MSG_ABC.  Similarly "$PREFIX E" would
 prefix it with "E" to give the symbol EABC.  If no $PREFIX is given, no
 prefix appears (so the symbol in this example would be ABC).
+
+The header file also includes a couple of lines to ensure that the message
+text is included in the final program image.
 
 
 2) A C++ source file (called <message-file-name>.cc) that holds the code to
@@ -201,8 +219,7 @@ To use the current version of the logging:
 
        isc::log::RootLoggerName("b10-auth");
 
-   It should be declared outside an execution unit to allow other statically-
-   declared loggers to pick it up.
+   This can be declared inside or outside an execution unit.
 
 2. In the code that needs to do logging, declare a logger with a given name,
    e.g.
@@ -216,18 +233,8 @@ To use the current version of the logging:
 
        isc::log::Logger logger("myname", true);
 
-   This is due to an apparent bug in the underlying log4cxx, where the deletion
-   of a statically-declared object at program termination can cause a segment
-   fault. (The destruction of internal memory structures can sometimes happen
-   out of order.)  By default the Logger class creates the structures in its
-   constructor but does not delete them in the destruction.  The default
-   behavious works because instead of reclaiming memory at program run-down,
-   the operating system reclaims it when the process is deleted.
-
-   Setting the second argument "true" causes the Logger's destructor to delete
-   the log4cxx structures.  This does not cause a problem if the program is
-   not terminating.  So use the second form when declaring an automatic
-   instance of isc::log::Logger on the stack.
+   The argument is ignored for underlying implementations other than log4cxx.
+   See below for the use of this argument.
 
 3. The main program unit should include a call to isc::log::runTimeInit()
    (defined in logger_support.h) to set the logging severity, debug log level,
@@ -235,12 +242,12 @@ To use the current version of the logging:
 
    a) The logging severity is one of the enum defined in logger.h, i.e.
 
-        isc::log::Logger::DEBUG
-        isc::log::Logger::INFO
-        isc::log::Logger::WARN
-        isc::log::Logger::ERROR
-        isc::log::Logger::FATAL
-        isc::log::Logger::NONE
+        isc::log::DEBUG
+        isc::log::INFO
+        isc::log::WARN
+        isc::log::ERROR
+        isc::log::FATAL
+        isc::log::NONE
 
    b) The debug log level is only interpreted when the severity is DEBUG and
       is an integer raning from 0 to 99.  0 should be used for the highest-level
@@ -291,7 +298,7 @@ the program started but attempts to open one or more network interfaces failed.
 WARN
 ----
 An unusual event  happened.  Although the program will continue working
-normally, the event was sufficiently out of the ordinary to warrant drawings
+normally, the event was sufficiently out of the ordinary to warrant drawing
 attention to it.  For example, at program start-up a zone was loaded that
 contained no resource records,
 
@@ -348,16 +355,8 @@ DEBUG is specifically chosen.
 b) Record system-related and packet-related messages via different loggers
 (e.g.  in the example given, sever events could be logged using the logger
 "auth" and packet-related events at that level logged using the logger
-"pkt-auth".)
-As the loggers are independent and the severity levels independent, fine-tuning
-of what and what is not recorded can be achieved.
-
-
-Outstanding Issues
-==================
-* Ability to configure system according to configuration database.
-* Update the build procedure to create .cc and .h files from the .msg file
-  during the build process. (Requires that the message compiler is built first.)
+"pkt-auth".)  As the loggers are independent and the severity levels
+independent, fine-tuning of what and what is not recorded can be achieved.
 
 
 Notes
@@ -369,3 +368,67 @@ the server starts up (or when triggered by a command) to read in a message
 file to overwrite the internal dictionary.  Writing it in C++ means there
 is only one piece of code that does this functionality.
 
+
+Outstanding Issues
+==================
+* Ability to configure system according to configuration database.
+* Update the build procedure to create .cc and .h files from the .msg file
+  during the build process. (Requires that the message compiler is built
+  first.)
+
+
+log4cxx Issues
+==============
+
+Second Argument in Logger Constructor
+-------------------------------------
+As noted above, when using log4cxx as the underlying implementation, the
+argument to the logger's constructor should be set true if declaring the
+logger within a method and set false (or omitted) if declaring the logger
+external to an execution unit.
+
+This is due to an apparent bug in the underlying log4cxx, where the deletion
+of a statically-declared object at program termination can cause a segment
+fault. (The destruction of internal memory structures can sometimes happen
+out of order.)  By default the Logger class creates the structures in
+its constructor but does not delete them in the destruction.  The default
+behavious works because instead of reclaiming memory at program run-down,
+the operating system reclaims it when the process is deleted.
+
+Setting the second argument "true" causes the Logger's destructor to delete
+the log4cxx structures.  This does not cause a problem if the program is
+not terminating.  So use the second form when declaring an automatic instance
+of isc::log::Logger on the stack.
+
+Building with log4cxx
+---------------------
+Owing to issues with versions of log4cxx on different systems, log4cxx was
+temporarily disabled.  To use log4cxx on your system:
+
+* Uncomment the log4cxx lines in configure.ac
+* In src/lib/log, replace the logger_impl.{cc,h} files with their log4cxx
+  equivalents, i.e.
+
+  cp logger_impl_log4cxx.h logger_impl.h
+  cp logger_impl_log4cxx.cc logger_impl.cc
+
+* In src/lib/log/Makefile.am, uncomment the lines:
+
+  # AM_CPPFLAGS += $(LOG4CXX_INCLUDES)
+
+  # liblog_la_SOURCES += xdebuglevel.cc xdebuglevel.h
+
+  # liblog_la_LDFLAGS = $(LOG4CXX_LDFLAGS)
+
+* In src/lib/log/test, re-enable testing of the log4cxx implementation
+  class, i.e.
+
+  cp logger_impl_log4cxx_unittest.cc logger_impl_unittest.cc
+
+  ... and uncomment the following lines in Makefile.am:
+
+  # run_unittests_SOURCES += logger_impl_unittest.cc
+
+  # run_unittests_SOURCES += xdebuglevel_unittest.cc
+
+Then rebuild the system from scratch.
