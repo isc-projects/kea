@@ -166,7 +166,7 @@ timeFromText64(const string& time_txt) {
     for (int i = 0; i < time_txt.length(); ++i) {
         if (!isdigit(time_txt.at(i))) {
             isc_throw(InvalidTime, "Couldn't convert non-numeric time value: "
-                      << time_txt); 
+                      << time_txt);
         }
     }
 
