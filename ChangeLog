@@ -15,7 +15,7 @@
 	complete data source for authoritative DNS servers and b10-auth
 	uses it.  It still misses major features, however, including
 	DNSSEC support and zone transfer.
-	(Last trac #552, but many more,
+	(Last trac #553, but many more,
 	git 6f031a09a248e7684723c000f3e8cc981dcdb349)
 
   170.	[bug]		jinmei
