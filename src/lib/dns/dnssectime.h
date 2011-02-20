@@ -132,7 +132,7 @@ timeToText64(uint64_t value);
 /// 2^32-1 (the highest value in 32-bit unsigned integers) will be converted
 /// to "21060207062815", instead of "19691231235959".
 std::string
-timeToText32(uint32_t value);
+timeToText32(const uint32_t value);
 
 //@}
 }
