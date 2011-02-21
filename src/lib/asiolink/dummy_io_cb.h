@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __IO_COMPLETION_CB_H
-#define __IO_COMPLETION_CB_H
+#ifndef __DUMMY_IO_CB_H
+#define __DUMMY_IO_CB_H
 
 #include <iostream>
 
@@ -33,7 +33,7 @@ namespace asiolink {
 /// template parameter.  This is the reason for this class - it is the dummy
 /// template parameter.
 
-class IOCompletionCallback {
+class DummyIOCallback {
 public:
 
     /// \brief Asynchronous I/O callback method
@@ -41,9 +41,11 @@ public:
     /// \param error Unused
     /// \param length Unused
     void operator()(asio::error_code, size_t)
-    {}
+    {
+        // TODO: log an error if this method ever gets called.
+    }
 };
 
 } // namespace asiolink
 
-#endif // __IO_COMPLETION_CB_H
+#endif // __DUMMY_IO_CB_H
