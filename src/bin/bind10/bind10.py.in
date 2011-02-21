@@ -194,8 +194,8 @@ class CChannelConnectError(Exception): pass
 class BoB:
     """Boss of BIND class."""
     
-    def __init__(self, msgq_socket_file=None, dns_port=5300, address=None,
-                 nocache=False, verbose=False, setuid=None, username=None):
+    def __init__(self, msgq_socket_file=None, nocache=False, verbose=False,
+    setuid=None, username=None):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
         
@@ -203,8 +203,6 @@ class BoB:
             msgq process listens on.  If verbose is True, then the boss reports
             what it is doing.
         """
-        self.address = address
-        self.dns_port = dns_port
         self.cc_session = None
         self.ccs = None
         self.cfg_start_auth = True
@@ -417,10 +415,6 @@ class BoB:
             Start the Authoritative server
         """
         authargs = ['b10-auth']
-        #TODO Remove these properly, with the rest
-        #authargs += ['-p', str(self.dns_port)]
-        #if self.address:
-        #    authargs += ['-a', str(self.address)]
         if self.nocache:
             authargs += ['-n']
         if self.uid:
@@ -429,8 +423,7 @@ class BoB:
             authargs += ['-v']
 
         # ... and start
-        self.start_process("b10-auth", authargs, c_channel_env,
-            self.dns_port, self.address)
+        self.start_process("b10-auth", authargs, c_channel_env)
 
     def start_resolver(self, c_channel_env):
         """
@@ -710,28 +703,6 @@ def fatal_signal(signal_number, stack_frame):
     signal.signal(signal.SIGCHLD, signal.SIG_DFL)
     boss_of_bind.runnable = False
 
-def check_port(option, opt_str, value, parser):
-    """Function to insure that the port we are passed is actually 
-    a valid port number. Used by OptionParser() on startup."""
-    try:
-        if opt_str in ['-p', '--port']:
-            parser.values.dns_port = isc.net.parse.port_parse(value)
-        else:
-            raise OptionValueError("Unknown option " + opt_str)
-    except ValueError as e:
-        raise OptionValueError(str(e))
-
-def check_addr(option, opt_str, value, parser):
-    """Function to insure that the address we are passed is actually 
-    a valid address. Used by OptionParser() on startup."""
-    try:
-        if opt_str in ['-a', '--address']:
-            parser.values.address = isc.net.parse.addr_parse(value)
-        else:
-            raise OptionValueError("Unknown option " + opt_str)
-    except ValueError:
-        raise OptionValueError("%s requires a valid IPv4 or IPv6 address" % opt_str)
-
 def process_rename(option, opt_str, value, parser):
     """Function that renames the process if it is requested by a option."""
     isc.util.process.rename(value)
@@ -744,17 +715,11 @@ def main():
 
     # Parse any command-line options.
     parser = OptionParser(version=VERSION)
-    parser.add_option("-a", "--address", dest="address", type="string",
-                      action="callback", callback=check_addr, default=None,
-                      help="address the DNS server will use (default: listen on all addresses)")
     parser.add_option("-m", "--msgq-socket-file", dest="msgq_socket_file",
                       type="string", default=None,
                       help="UNIX domain socket file the b10-msgq daemon will use")
     parser.add_option("-n", "--no-cache", action="store_true", dest="nocache",
                       default=False, help="disable hot-spot cache in authoritative DNS server")
-    parser.add_option("-p", "--port", dest="dns_port", type="int",
-                      action="callback", callback=check_port, default=5300,
-                      help="port the DNS server will use (default 5300)")
     parser.add_option("-u", "--user", dest="user", type="string", default=None,
                       help="Change user after startup (must run as root)")
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
@@ -815,9 +780,8 @@ def main():
     signal.signal(signal.SIGPIPE, signal.SIG_IGN)
 
     # Go bob!
-    boss_of_bind = BoB(options.msgq_socket_file, options.dns_port,
-                       options.address, options.nocache, options.verbose,
-                       setuid, username)
+    boss_of_bind = BoB(options.msgq_socket_file, options.nocache,
+                       options.verbose, setuid, username)
     startup_result = boss_of_bind.startup()
     if startup_result:
         sys.stderr.write("[bind10] Error on startup: %s\n" % startup_result)
