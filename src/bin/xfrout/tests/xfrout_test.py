@@ -121,6 +121,29 @@ class TestXfroutSession(unittest.TestCase):
         get_msg = self.sock.read_msg()
         self.assertEqual(get_msg.get_rcode().to_text(), "NXDOMAIN")
 
+    def test_send_message(self):
+        msg = self.getmsg()
+        msg.make_response()
+        # soa record data with different cases
+        soa_record = (4, 3, 'Example.com.', 'com.Example.', 3600, 'SOA', None, 'master.Example.com. admin.exAmple.com. 1234 3600 1800 2419200 7200')
+        rrset_soa = self.xfrsess._create_rrset_from_db_record(soa_record)
+        msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
+        self.xfrsess._send_message(self.sock, msg)
+        send_out_data = self.sock.readsent()[2:]
+
+        # CASE_INSENSITIVE compression mode
+        render = MessageRenderer();
+        render.set_length_limit(XFROUT_MAX_MESSAGE_SIZE)
+        msg.to_wire(render)
+        self.assertNotEqual(render.get_data(), send_out_data)
+
+        # CASE_SENSITIVE compression mode
+        render.clear()
+        render.set_compress_mode(MessageRenderer.CASE_SENSITIVE)
+        render.set_length_limit(XFROUT_MAX_MESSAGE_SIZE)
+        msg.to_wire(render)
+        self.assertEqual(render.get_data(), send_out_data)
+
     def test_clear_message(self):
         msg = self.getmsg()
         qid = msg.get_qid()
