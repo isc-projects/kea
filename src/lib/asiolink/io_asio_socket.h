@@ -28,9 +28,7 @@
 
 #include <asiolink/io_error.h>
 #include <asiolink/io_socket.h>
-#include <asiolink/io_completion_cb.h>
 
-using namespace asio;
 
 namespace asiolink {
 
@@ -126,22 +124,29 @@ public:
 
     /// \brief Open AsioSocket
     ///
-    /// A call that is a no-op on UDP sockets, this opens a connection to the
-    /// system identified by the given endpoint.
+    /// Opens the socket for asynchronous I/O.  On a UDP socket, this is merely
+    /// an "open()" on the underlying socket (so completes immediately), but on
+    /// a TCP socket it also connects to the remote end (which is done as an
+    /// asynchronous operation).
+    ///
+    /// For TCP, signalling of the completion of the operation is done by
+    /// by calling the callback function in the normal way.  This could be done
+    /// for UDP (by posting en event on the event queue); however, that will
+    /// incur additional overhead in the most common case.  Instead, the return
+    /// value indicates whether the operation was asynchronous or not. If yes,
+    /// (i.e. TCP) the callback has been posted to the event queue: if no (UDP),
+    /// no callback has been posted (in which case it is up to the caller as to
+    /// whether they want to manually post the callback themself.)
     ///
     /// \param endpoint Pointer to the endpoint object.  This is ignored for
     /// a UDP socket (the target is specified in the send call), but should
     /// be of type TCPEndpoint for a TCP connection.
-    /// \param callback I/O Completion callback, called when the connect has
-    /// completed.  In the stackless coroutines model, this will be the
-    /// method containing the call to this function, allowing the operation to
-    /// resume after the socket open has completed.
+    /// \param callback I/O Completion callback, called when the operation has
+    /// completed, but only if the operation was asynchronous.
     ///
     /// \return true if an asynchronous operation was started and the caller
-    /// should yield and wait for completion, false if not. (i.e. The UDP
-    /// derived class will return false, the TCP class will return true).  This
-    /// optimisation avoids the overhead required to post a callback to the
-    /// I/O Service queue where nothing is done.
+    /// should yield and wait for completion, false if the operation was
+    /// completed synchronously and no callback was queued.
     virtual bool open(const IOEndpoint* endpoint, C& callback) = 0;
 
     /// \brief Send Asynchronously

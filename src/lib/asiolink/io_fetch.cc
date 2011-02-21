@@ -143,7 +143,22 @@ IOFetch::operator()(error_code ec, size_t length) {
 
 void
 IOFetch::stop(Result result) {
+
     if (!data_->stopped) {
+
+        // Mark the fetch as stopped to prevent other completion callbacks
+        // (invoked because of the calls to cancel()) from executing the
+        // cancel calls again.
+        //
+        // In a single threaded environment, the callbacks won't be invoked
+        // until this one completes. In a multi-threaded environment, they may
+        // well be, in which case the testing (and setting) of the stopped_
+        // variable should be done inside a mutex (and the stopped_ variable
+        // declared as "volatile").
+        //
+        // TODO: Update testing of stopped_ if threads are used.
+        data_->stopped = true;
+
         switch (result) {
             case TIME_OUT:
                 dlog("Query timed out");
@@ -170,7 +185,7 @@ IOFetch::stop(Result result) {
         }
 
         // Mark that stop() has now been called.
-        data_->stopped = true;
+
     }
 }
 

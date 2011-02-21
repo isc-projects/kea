@@ -30,7 +30,6 @@
 #include <dns/rcode.h>
 
 #include <asiolink/io_fetch.h>
-#include <asiolink/io_completion_cb.h>
 #include <asiolink/io_service.h>
 
 using namespace asio;

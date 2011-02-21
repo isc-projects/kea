@@ -36,10 +36,8 @@
 
 namespace asiolink {
 
-/// \brief The \c TCPSocket class is a concrete derived class of
-/// \c IOSocket that represents a TCP socket.
-///
-/// Other notes about \c TCPSocket applies to this class, too.
+/// \brief The \c TCPSocket class is a concrete derived class of \c IOAsioSocket
+/// that represents a TCP socket.
 ///
 /// \param C Callback type
 template <typename C>
@@ -50,9 +48,6 @@ private:
     TCPSocket& operator=(const TCPSocket&);
 
 public:
-    enum {
-        MAX_SIZE = 4096         // Send and receive size
-    };
     
     /// \brief Constructor from an ASIO TCP socket.
     ///
