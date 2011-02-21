@@ -16,6 +16,10 @@
 
 #include <boost/shared_array.hpp>
 
+#include <unistd.h>             // for some IPC/network system calls
+#include <sys/socket.h>
+#include <netinet/in.h>
+
 #include <asio.hpp>
 
 #include <log/dummylog.h>
