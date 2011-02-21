@@ -14,6 +14,12 @@
 
 #include <config.h>
 
+#include <unistd.h>             // for some IPC/network system calls
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+#include <asiolink/dns_service.h>
+
 #include <asiolink/io_service.h>
 
 #include <asio/ip/address.hpp>
