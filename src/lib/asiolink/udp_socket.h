@@ -28,6 +28,7 @@
 
 #include <config.h>
 
+
 #include <asiolink/io_asio_socket.h>
 #include <asiolink/io_endpoint.h>
 #include <asiolink/io_service.h>
@@ -220,7 +221,7 @@ UDPSocket<C>::asyncSend(const void* data, size_t length,
         assert(endpoint->getProtocol() == IPPROTO_UDP);
         const UDPEndpoint* udp_endpoint =
             static_cast<const UDPEndpoint*>(endpoint);
-        socket_.async_send_to(buffer(data, length),
+        socket_.async_send_to(asio::buffer(data, length),
             udp_endpoint->getASIOEndpoint(), callback);
     } else {
         isc_throw(SocketNotOpen,
@@ -243,7 +244,7 @@ UDPSocket<C>::asyncReceive(void* data, size_t length, size_t,
         assert(endpoint->getProtocol() == IPPROTO_UDP);
         UDPEndpoint* udp_endpoint = static_cast<UDPEndpoint*>(endpoint);
 
-        socket_.async_receive_from(buffer(data, length),
+        socket_.async_receive_from(asio::buffer(data, length),
             udp_endpoint->getASIOEndpoint(), callback);
     } else {
         isc_throw(SocketNotOpen,
