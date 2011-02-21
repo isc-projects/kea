@@ -74,12 +74,15 @@ public:
 
     /// \brief I/O Fetch Callback
     ///
-    /// TODO: change documentation
-    /// Callback object for when the fetch itself has completed.  Note that this
-    /// is different to the IOCompletionCallback; that is used to signal the
-    /// completion of an asynchronous I/O call.  The IOFetch::Callback is called
-    /// when an upstream fetch - which may have involved several asynchronous
-    /// I/O operations - has completed.
+    /// Class of callback object for when the fetch itself has completed - an
+    /// object of this class is passed to the IOFetch constructor and its
+    /// operator() method called when the fetch completes.
+    ///
+    /// Note the difference between the two operator() methods:
+    /// - IOFetch::operator() callback is called when an asynchronous I/O has
+    ///   completed.
+    /// - IOFetch::Callback::operator() is called when an upstream fetch - which
+    ///   may have involved several asynchronous I/O operations - has completed.
     ///
     /// This is an abstract class.
     class Callback {
@@ -141,6 +144,8 @@ public:
         ///     when we terminate.  The caller is responsible for managing this
         ///     object and deleting it if necessary.
         /// \param wait Timeout for the fetch (in ms).
+        ///
+        /// TODO: May need to alter constructor (see comment 4 in Trac ticket #554)
         IOFetchData(int protocol, IOService& service,
             const isc::dns::Question& query, const IOAddress& address,
             uint16_t port, isc::dns::OutputBufferPtr& buff, Callback* cb,
@@ -192,9 +197,7 @@ public:
         const isc::dns::Question& question, const IOAddress& address,
         uint16_t port, isc::dns::OutputBufferPtr& buff, Callback* cb,
         int wait = -1);
-
-    // The default constructor and copy constructor are correct for this method.
-
+    
     /// \brief Coroutine entry point
     ///
     /// The operator() method is the method in which the coroutine code enters

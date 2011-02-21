@@ -35,10 +35,8 @@
 
 namespace asiolink {
 
-/// \brief The \c UDPSocket class is a concrete derived class of
-/// \c IOSocket that represents a UDP socket.
-///
-/// Other notes about \c TCPSocket applies to this class, too.
+/// \brief The \c UDPSocket class is a concrete derived class of \c IOAsioSocket
+/// that represents a UDP socket.
 ///
 /// \param C Callback type
 template <typename C>
