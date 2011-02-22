@@ -268,6 +268,7 @@ private:
                         // TODO should use NSAS
                         zone_servers_.push_back(addr_t(addr_str, 53));
                         found_ns_address = true;
+                        break;
                     }
                 }
             }
