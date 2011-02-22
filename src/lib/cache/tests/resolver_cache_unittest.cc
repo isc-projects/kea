@@ -18,6 +18,7 @@
 #include <dns/rrset.h>
 #include "resolver_cache.h"
 #include "cache_test_messagefromfile.h"
+#include "cache_test_sectioncount.h"
 
 using namespace isc::cache;
 using namespace isc::dns;
@@ -63,7 +64,7 @@ TEST_F(ResolverCacheTest, testUpdateMessage) {
     EXPECT_TRUE(cache->lookup(qname, RRType::SOA(), RRClass::IN(), new_msg));
     EXPECT_FALSE(new_msg.getHeaderFlag(Message::HEADERFLAG_AA));
 }
-#if 0
+
 TEST_F(ResolverCacheTest, testUpdateRRset) {
     Message msg(Message::PARSE);
     messageFromFile(msg, "message_fromWire3");
@@ -86,7 +87,7 @@ TEST_F(ResolverCacheTest, testUpdateRRset) {
     cache->update(rrset_ptr);
 
     Message new_msg(Message::RENDER);
-    Question question(qname, klass, RRType::NS());
+    Question question(qname, RRClass::IN(), RRType::NS());
     new_msg.addQuestion(question);
     EXPECT_TRUE(cache->lookup(qname, RRType::NS(), RRClass::IN(), new_msg));
     EXPECT_EQ(0, sectionRRsetCount(new_msg, Message::SECTION_AUTHORITY));
@@ -126,12 +127,5 @@ TEST_F(ResolverCacheTest, testLookupClosestRRset) {
                                          RRType::NS(), RRClass::IN());
     EXPECT_FALSE(rrset_ptr);
 }
-
-TEST_F(ResolverCacheTest, testHasClass) {
-    EXPECT_TRUE(cache->getClassCache(RRClass::IN()));
-    EXPECT_TRUE(cache->getClassCache(RRClass::CH()));
-    EXPECT_FALSE(cache->getClassCache(RRClass::ANY()));
-}
-#endif
 
 }
