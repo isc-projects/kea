@@ -12,20 +12,27 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
+#include "rrset_copy.h"
 
-#ifndef __DBGLEVELS_H
-#define __DBGLEVELS_H
+using namespace isc::dns;
 
-/// \brief Defines Debug Levels
-///
-/// Defines the maximum and minimum debug levels and the number of levels.
-/// These are defined using #define as they are referenced in the construction
-/// of variables declared outside execution units.  (In this way we avoid the
-/// "static initialization fiasco" problem.)
+namespace isc {
+namespace cache {
 
-#define MIN_DEBUG_LEVEL (0)
-#define MAX_DEBUG_LEVEL (99)
-#define NUM_DEBUG_LEVEL (MAX_DEBUG_LEVEL - MIN_DEBUG_LEVEL + 1)
+void
+rrsetCopy(const isc::dns::RRset& src, isc::dns::RRset& dst) {
+    RdataIteratorPtr rdata_itor = src.getRdataIterator();
+    rdata_itor->first();
+    while(!rdata_itor->isLast()){
+        dst.addRdata(rdata_itor->getCurrent());
+        rdata_itor->next();
+    }
 
-#endif // __DBGLEVELS_H
+    RRsetPtr rrsig = src.getRRsig();
+    if (rrsig != NULL){
+        dst.addRRsig(rrsig);
+    }
+}
+
+} // namespace cache
+} // namespace isc

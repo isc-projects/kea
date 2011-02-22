@@ -12,31 +12,28 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
-
-#include <unistd.h>             // for some IPC/network system calls
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdlib.h>
-
-#include <asio/ip/address.hpp>
-
-#include <asio.hpp>
-
-#include <asiolink/dns_service.h>
-#include <asiolink/io_fetch.h>
-#include <asiolink/io_service.h>
-#include <asiolink/recursive_query.h>
-
-#include <log/dummylog.h>
+#include <sys/socket.h>
+#include <unistd.h>             // for some IPC/network system calls
 
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
+
+#include <config.h>
+
+#include <log/dummylog.h>
 
 #include <dns/question.h>
 #include <dns/message.h>
 
 #include <resolve/resolve.h>
+
+#include <asio.hpp>
+#include <asiolink/dns_service.h>
+#include <asiolink/io_fetch.h>
+#include <asiolink/io_service.h>
+#include <asiolink/recursive_query.h>
 
 using isc::log::dlog;
 using namespace isc::dns;
@@ -355,8 +352,10 @@ public:
         // we have an answer or timeout ourselves
         isc::resolve::makeErrorMessage(answer_message_,
                                        Rcode::SERVFAIL());
-        resolvercallback_->success(answer_message_);
-        answer_sent_ = true;
+        if (!answer_sent_) {
+            answer_sent_ = true;
+            resolvercallback_->success(answer_message_);
+        }
     }
 
     virtual void stop(bool resume) {
@@ -369,6 +368,7 @@ public:
         // until that one comes back to us)
         done_ = true;
         if (resume && !answer_sent_) {
+            answer_sent_ = true;
             resolvercallback_->success(answer_message_);
         } else {
             resolvercallback_->failure();

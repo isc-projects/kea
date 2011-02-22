@@ -14,20 +14,20 @@
 
 #include <config.h>
 
-#include <boost/shared_array.hpp>
-
-#include <unistd.h>             // for some IPC/network system calls
-#include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>             // for some IPC/network system calls
 
-#include <asio.hpp>
+#include <boost/shared_array.hpp>
 
 #include <log/dummylog.h>
 
+#include <asio.hpp>
 #include <asiolink/dummy_io_cb.h>
 #include <asiolink/tcp_endpoint.h>
 #include <asiolink/tcp_socket.h>
 #include <asiolink/tcp_server.h>
+
 
 using namespace asio;
 using asio::ip::udp;

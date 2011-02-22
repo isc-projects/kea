@@ -282,3 +282,4 @@ EXTRA_DIST += ext/asio/asio/is_write_buffered.hpp
 EXTRA_DIST += ext/asio/asio/buffered_read_stream_fwd.hpp
 EXTRA_DIST += ext/asio/asio/socket_acceptor_service.hpp
 EXTRA_DIST += ext/asio/asio.hpp
+EXTRA_DIST += ext/coroutine/coroutine.h

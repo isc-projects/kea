@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,8 +11,6 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
-
-// $Id: base64_unittest.cc 2549 2010-07-20 19:09:37Z jinmei $
 
 #include <cstddef>
 #include <string>
@@ -61,12 +59,12 @@ protected:
 // messages.
 
 TEST_F(MessageInitializerTest, MessageTest) {
-    MessageDictionary* global = MessageDictionary::globalDictionary();
+    MessageDictionary& global = MessageDictionary::globalDictionary();
 
-    EXPECT_EQ(string("global message one"), global->getText("GLOBAL1"));
-    EXPECT_EQ(string("global message two"), global->getText("GLOBAL2"));
-    EXPECT_EQ(string("global message three"), global->getText("GLOBAL3"));
-    EXPECT_EQ(string("global message four"), global->getText("GLOBAL4"));
-    EXPECT_EQ(string("global message five"), global->getText("GLOBAL5"));
-    EXPECT_EQ(string("global message six"), global->getText("GLOBAL6"));
+    EXPECT_EQ(string("global message one"), global.getText("GLOBAL1"));
+    EXPECT_EQ(string("global message two"), global.getText("GLOBAL2"));
+    EXPECT_EQ(string("global message three"), global.getText("GLOBAL3"));
+    EXPECT_EQ(string("global message four"), global.getText("GLOBAL4"));
+    EXPECT_EQ(string("global message five"), global.getText("GLOBAL5"));
+    EXPECT_EQ(string("global message six"), global.getText("GLOBAL6"));
 }

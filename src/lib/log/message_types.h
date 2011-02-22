@@ -12,17 +12,22 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __MESSAGE_TYPES_H
 #define __MESSAGE_TYPES_H
 
-#include <string>
+#include <string.h>
 
 namespace isc {
 namespace log {
 
-typedef std::string MessageID;
+typedef const char* MessageID;
+
+/// \brief Compare MessageID for Equality
+///
+/// \param m1 First message ID
+/// \param m2 Second message ID
+/// \return true if they are equal, false if not
+bool equalMessageID(const MessageID& m1, const MessageID& m2);
 
 } // namespace log
 } // namespace isc
