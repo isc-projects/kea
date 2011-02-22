@@ -1,0 +1,12 @@
+#
+# compressed MX RDATA stored in an output buffer
+#
+# sentinel name: example.com.
+# 0  1  2  3  4  5  6  7  8  9 10  1  2 (bytes)
+#(7) e  x  a  m  p  l  e (3) c  o  m  .
+ 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+# PREFERENCE: 10
+  00 0a
+# EXCHANGE: not compressed
+#(4) m  x ptr=0
+ 02 6d 78 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
