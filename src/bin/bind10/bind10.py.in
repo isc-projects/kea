@@ -314,8 +314,8 @@ class BoB:
             sys.stdout.write("\n")
 
     # The next few methods start the individual processes of BIND-10.  They
-    # are called via start_all_process().  If any fail, an exception is raised
-    # which is caught by the caller of start_all_processes(); this kills
+    # are called via start_all_processes().  If any fail, an exception is
+    # raised which is caught by the caller of start_all_processes(); this kills
     # processes started up to that point before terminating the program.
 
     def start_msgq(self, c_channel_env):
