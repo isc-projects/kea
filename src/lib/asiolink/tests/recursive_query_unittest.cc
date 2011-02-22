@@ -679,7 +679,7 @@ TEST_F(RecursiveQueryTest, forwardClientTimeout) {
     RecursiveQuery query(*dns_service_,
                          singleAddress(TEST_IPV4_ADDR, port),
                          singleAddress(TEST_IPV4_ADDR, port),
-                         50, 120, 1000, 4);
+                         200, 480, 4000, 4);
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     query.resolve(question, answer, buffer, &server);
@@ -723,7 +723,7 @@ TEST_F(RecursiveQueryTest, forwardLookupTimeout) {
     RecursiveQuery query(*dns_service_,
                          singleAddress(TEST_IPV4_ADDR, port),
                          singleAddress(TEST_IPV4_ADDR, port),
-                         50, 4000, 120, 5);
+                         200, 4000, 480, 5);
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     query.resolve(question, answer, buffer, &server);

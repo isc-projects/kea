@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,8 +11,6 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
-
-// $Id$
 
 #ifndef __FILENAME_H
 #define __FILENAME_H
@@ -80,22 +78,22 @@ public:
 
     /// \return Stored Filename
     std::string fullName() const {
-        return full_name_;
+        return (full_name_);
     }
 
     /// \return Directory of Given File Name
     std::string directory() const {
-        return directory_;
+        return (directory_);
     }
 
     /// \return Name of Given File Name
     std::string name() const {
-        return name_;
+        return (name_);
     }
 
     /// \return Extension of Given File Name
     std::string extension() const {
-        return extension_;
+        return (extension_);
     }
 
     /// \brief Expand Name with Default

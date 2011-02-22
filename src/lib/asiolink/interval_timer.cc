@@ -18,14 +18,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#include <asio.hpp>
+#include <boost/bind.hpp>
 
 #include <exceptions/exceptions.h>
 
+#include <asio.hpp>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
-
-#include <boost/bind.hpp>
 
 namespace asiolink {
 
