@@ -175,10 +175,10 @@ ResolverCache::lookup(const isc::dns::Name& qname,
 }
 
 isc::dns::RRsetPtr
-ResolverCache::lookupClosestRRset(const isc::dns::Name& qname,
-                                  const isc::dns::RRType& qtype,
-                                  const isc::dns::RRClass& qclass) const
+ResolverCache::lookupDeepestNS(const isc::dns::Name& qname,
+                               const isc::dns::RRClass& qclass) const
 {
+    isc::dns::RRType qtype = RRType::NS();
     ResolverClassCache* cc = getClassCache(qclass);
     if (cc) {
         unsigned int count = qname.getLabelCount();
@@ -199,7 +199,6 @@ ResolverCache::lookupClosestRRset(const isc::dns::Name& qname,
 
 bool
 ResolverCache::update(const isc::dns::Message& msg) {
-    
     QuestionIterator iter = msg.beginQuestion();
     ResolverClassCache* cc = getClassCache((*iter)->getClass());
     if (cc) {

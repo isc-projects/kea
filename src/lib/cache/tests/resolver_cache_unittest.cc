@@ -113,18 +113,15 @@ TEST_F(ResolverCacheTest, testLookupClosestRRset) {
 
     Name qname("www.test.example.com.");
 
-    RRsetPtr rrset_ptr = cache->lookupClosestRRset(qname, RRType::NS(),
-                                                  RRClass::IN());
+    RRsetPtr rrset_ptr = cache->lookupDeepestNS(qname, RRClass::IN());
     EXPECT_TRUE(rrset_ptr);
     EXPECT_EQ(rrset_ptr->getName(), Name("example.com."));
 
-    rrset_ptr = cache->lookupClosestRRset(Name("example.com."),
-                                         RRType::NS(), RRClass::IN());
+    rrset_ptr = cache->lookupDeepestNS(Name("example.com."), RRClass::IN());
     EXPECT_TRUE(rrset_ptr);
     EXPECT_EQ(rrset_ptr->getName(), Name("example.com."));
 
-    rrset_ptr = cache->lookupClosestRRset(Name("com."),
-                                         RRType::NS(), RRClass::IN());
+    rrset_ptr = cache->lookupDeepestNS(Name("com."), RRClass::IN());
     EXPECT_FALSE(rrset_ptr);
 }
 
