@@ -100,8 +100,8 @@ def split_identifier_list_indices(identifier):
 
     i = id_str.find('[')
     if i < 0:
-        if identifier.find(']') >= 0:
-            raise DataTypeError("Bad format in identifier: " + str(identifier))
+        if id_str.find(']') >= 0:
+            raise DataTypeError("Bad format in identifier (] but no [): " + str(identifier))
         return identifier, None
 
     # keep the non-index part of that to replace later
@@ -110,7 +110,7 @@ def split_identifier_list_indices(identifier):
     while i >= 0:
         e = id_str.find(']')
         if e < i + 1:
-            raise DataTypeError("Bad format in identifier: " + str(identifier))
+            raise DataTypeError("Bad format in identifier (] before [): " + str(identifier))
         try:
             indices.append(int(id_str[i+1:e]))
         except ValueError:
@@ -118,9 +118,9 @@ def split_identifier_list_indices(identifier):
         id_str = id_str[e + 1:]
         i = id_str.find('[')
         if i > 0:
-            raise DataTypeError("Bad format in identifier: " + str(identifier))
+            raise DataTypeError("Bad format in identifier ([ within []): " + str(identifier))
     if id.find(']') >= 0 or len(id_str) > 0:
-        raise DataTypeError("Bad format in identifier: " + str(identifier))
+        raise DataTypeError("Bad format in identifier (extra ]): " + str(identifier))
 
     # we replace the final part of the original identifier with
     # the stripped string
