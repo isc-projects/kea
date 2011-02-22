@@ -207,6 +207,11 @@ private:
                 question_, incoming, cname_target, cname_count_, true);
 
         bool found_ns_address = false;
+            
+        // If the packet is OK, store it in the cache
+        if (!isc::resolve::ResponseClassifier::error(category)) {
+            cache_.update(incoming);
+        }
 
         switch (category) {
         case isc::resolve::ResponseClassifier::ANSWER:
@@ -396,11 +401,23 @@ public:
         // until that one comes back to us)
         done_ = true;
         if (resume && !answer_sent_) {
-            // If we have a full successful answer, let's store that
-            // as well
-            // (note: we can either do this or only cache answers
-            // we receive, but in that case we'd need to re-do all
-            // answer processing, e.g. cname handling etc)
+            // There are two types of messages we could store in the
+            // cache;
+            // 1. answers to our fetches from authoritative servers,
+            //    exactly as we receive them, and
+            // 2. answers to queries we received from clients, which
+            //    have received additional processing (following CNAME
+            //    chains, for instance)
+            //
+            // Doing only the first would mean we would have to re-do
+            // processing when we get data from our cache, and doing
+            // only the second would miss out on the side-effect of
+            // having nameserver data in our cache.
+            //
+            // So right now we do both. Since the cache (currently)
+            // stores Messages on their question section only, this
+            // does mean that we overwrite the messages we stored in
+            // the previous iteration if we are following a delegation.
             cache_.update(*answer_message_);
 
             resolvercallback_->success(answer_message_);
@@ -429,9 +446,6 @@ public:
             InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
             incoming.fromWire(ibuf);
 
-            // let's first dunk it into our cache
-            cache_.update(incoming);
-            
             if (upstream_->size() == 0 &&
                 incoming.getRcode() == Rcode::NOERROR()) {
                 done_ = handleRecursiveAnswer(incoming);
