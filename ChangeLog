@@ -1,3 +1,8 @@
+  175.	[bug]		jerry
+	src/bin/xfrout: Xfrout use the case-sensitive mode to compress
+	names in an AXFR massage.
+	(Trac #253, git 004e382616150f8a2362e94d3458b59bb2710182)
+
   174.	[bug]*		jinmei
 	src/lib/dns: revised dnssectime functions so that they don't rely
 	on the time_t type (whose size varies on different systems, which
