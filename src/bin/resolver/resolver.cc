@@ -265,12 +265,8 @@ public:
 
         answer_message->setHeaderFlag(Message::HEADERFLAG_QR);
         answer_message->setHeaderFlag(Message::HEADERFLAG_RA);
-        if (rd) {
-            answer_message->setHeaderFlag(Message::HEADERFLAG_RD);
-        }
-        if (cd) {
-            answer_message->setHeaderFlag(Message::HEADERFLAG_CD);
-        }
+        answer_message->setHeaderFlag(Message::HEADERFLAG_RD, rd);
+        answer_message->setHeaderFlag(Message::HEADERFLAG_CD, cd);
 
         // Now we can clear the buffer and render the new message into it
         buffer->clear();

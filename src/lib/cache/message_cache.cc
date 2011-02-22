@@ -45,7 +45,6 @@ MessageCache::lookup(const isc::dns::Name& qname,
                      isc::dns::Message& response)
 {
     std::string entry_name = genCacheEntryName(qname, qtype);
-    std::cout << "[XX] MESSAGECACHE LOOKUP: " << entry_name << std::endl;
     HashKey entry_key = HashKey(entry_name, RRClass(message_class_));
     MessageEntryPtr msg_entry = message_table_.get(entry_key);
     if(msg_entry) {
@@ -60,8 +59,6 @@ bool
 MessageCache::update(const Message& msg) {
     QuestionIterator iter = msg.beginQuestion();
     std::string entry_name = genCacheEntryName((*iter)->getName(), (*iter)->getType());
-    std::cout << "[XX] MESSAGECACHE UPDATE: " << entry_name << std::endl;
-    std::cout << "[XX] FOR MESSAGE:" << std::endl;
     std::cout << msg.toText();
     HashKey entry_key = HashKey(entry_name, RRClass(message_class_));
 

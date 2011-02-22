@@ -52,6 +52,7 @@ void initResponseMessage(const isc::dns::Message& query_message,
 {
     response_message.setOpcode(query_message.getOpcode());
     response_message.setQid(query_message.getQid());
+    assert(response_message.getRRCount(Message::SECTION_QUESTION) == 0);
     response_message.appendSection(Message::SECTION_QUESTION,
         query_message);
 }

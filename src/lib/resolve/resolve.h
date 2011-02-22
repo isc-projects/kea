@@ -56,7 +56,7 @@ void makeErrorMessage(isc::dns::MessagePtr answer_message,
 /// \param query_message The query message to take the Question, Qid,
 ///                      and Opcode from.
 /// \param response_message The fresh response message to initialize
-///                         (must be type Message::RENDER)
+///                         (must be in RENDER mode)
 void initResponseMessage(const isc::dns::Message& query_message,
                          isc::dns::Message& response_message);
 
@@ -73,7 +73,7 @@ void initResponseMessage(const isc::dns::Message& query_message,
 ///
 /// \param question The question to place in the Question section
 /// \param response_message The fresh response message to initialize
-///                         (must be type Message::RENDER)
+///                         (must be in RENDER mode)
 void initResponseMessage(const isc::dns::Question& question,
                          isc::dns::Message& response_message);
 
