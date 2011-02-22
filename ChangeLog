@@ -1,7 +1,7 @@
   176.  [func]      zhang likun
 	src/lib/cache: Rename one interface: from lookupClosestRRset()
 	to lookupDeepestNS(), and remove one parameter of it.
-	(Trac #492, git)
+	(Trac #492, git ecbfb7cf929d62a018dd4cdc7a841add3d5a35ae)
 
   175.	[bug]		jerry
 	src/bin/xfrout: Xfrout use the case-sensitive mode to compress
