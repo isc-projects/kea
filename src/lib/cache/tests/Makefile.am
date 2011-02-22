@@ -38,6 +38,7 @@ run_unittests_SOURCES  += message_cache_unittest.cc
 run_unittests_SOURCES  += message_entry_unittest.cc
 run_unittests_SOURCES  += local_zone_data_unittest.cc
 run_unittests_SOURCES  += resolver_cache_unittest.cc
+run_unittests_SOURCES  += negative_cache_unittest.cc
 run_unittests_SOURCES  += cache_test_messagefromfile.h
 run_unittests_SOURCES  += cache_test_sectioncount.h
 
