@@ -31,8 +31,10 @@ namespace cache {
 static uint32_t MAX_UINT32 = numeric_limits<uint32_t>::max();
 
 MessageEntry::MessageEntry(const isc::dns::Message& msg,
-                           boost::shared_ptr<RRsetCache> rrset_cache):
+                           boost::shared_ptr<RRsetCache> rrset_cache,
+                           boost::shared_ptr<RRsetCache> negative_soa_cache):
     rrset_cache_(rrset_cache),
+    negative_soa_cache_(negative_soa_cache),
     headerflag_aa_(false),
     headerflag_tc_(false)
 {

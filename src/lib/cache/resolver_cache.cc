@@ -34,9 +34,13 @@ ResolverClassCache::ResolverClassCache(const RRClass& cache_class) :
     local_zone_data_ = LocalZoneDataPtr(new LocalZoneData(cache_class_.getCode()));
     rrsets_cache_ = RRsetCachePtr(new RRsetCache(RRSET_CACHE_DEFAULT_SIZE,
                                                  cache_class_.getCode()));
+    // SOA rrset cache from negative response
+    negative_soa_cache_ = RRsetCachePtr(new
+                        RRsetCache(NEGATIVE_RRSET_CACHE_DEFAULT_SIZE, cache_class_.getCode()));
+
     messages_cache_ = MessageCachePtr(new MessageCache(rrsets_cache_,
                                       MESSAGE_CACHE_DEFAULT_SIZE,
-                                      cache_class_.getCode()));
+                                      cache_class_.getCode(), negative_soa_cache_));
 }
 
 ResolverClassCache::ResolverClassCache(CacheSizeInfo cache_info) :
@@ -47,9 +51,13 @@ ResolverClassCache::ResolverClassCache(CacheSizeInfo cache_info) :
     local_zone_data_ = LocalZoneDataPtr(new LocalZoneData(klass));
     rrsets_cache_ = RRsetCachePtr(new
                         RRsetCache(cache_info.rrset_cache_size, klass));
+    // SOA rrset cache from negative response
+    negative_soa_cache_ = RRsetCachePtr(new
+                        RRsetCache(cache_info.rrset_cache_size, klass));
+
     messages_cache_ = MessageCachePtr(new MessageCache(rrsets_cache_,
                                       cache_info.message_cache_size,
-                                      klass));
+                                      klass, negative_soa_cache_));
 }
 
 const RRClass&

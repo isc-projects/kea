@@ -34,6 +34,7 @@ class RRsetCache;
 //TODO a better proper default cache size
 #define MESSAGE_CACHE_DEFAULT_SIZE 10000
 #define RRSET_CACHE_DEFAULT_SIZE   20000
+#define NEGATIVE_RRSET_CACHE_DEFAULT_SIZE   10000
 
 /// \brief Cache Size Information.
 ///
@@ -183,10 +184,13 @@ private:
     /// Cache for rrsets in local zones, rrsets
     /// in it never expire.
     LocalZoneDataPtr local_zone_data_;
+    //@}
 
     /// \brief cache the rrsets parsed from the received message.
     RRsetCachePtr rrsets_cache_;
-    //@}
+
+    /// \brief cache the SOA rrset parsed from the negative response message.
+    RRsetCachePtr negative_soa_cache_;
 };
 
 class ResolverCache {
