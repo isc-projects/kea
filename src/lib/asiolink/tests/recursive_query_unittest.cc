@@ -41,8 +41,13 @@
 // if we include asio.hpp unless we specify a special compiler option.
 // If we need to test something at the level of underlying ASIO and need
 // their definition, that test should go to asiolink/internal/tests.
-#include <asiolink/asiolink.h>
+#include <asiolink/recursive_query.h>
 #include <asiolink/io_socket.h>
+#include <asiolink/io_service.h>
+#include <asiolink/io_message.h>
+#include <asiolink/io_error.h>
+#include <asiolink/dns_lookup.h>
+#include <asiolink/simple_callback.h>
 
 using isc::UnitTestUtil;
 using namespace std;

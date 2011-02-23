@@ -12,28 +12,28 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
-
+#include <netinet/in.h>
 #include <stdlib.h>
-
-// unistd is needed for asio.hpp with SunStudio
-#include <unistd.h>
-
-#include <asio.hpp>
-
-#include <asiolink/recursive_query.h>
-#include <asiolink/dns_service.h>
-#include <asiolink/udp_query.h>
-
-#include <log/dummylog.h>
+#include <sys/socket.h>
+#include <unistd.h>             // for some IPC/network system calls
 
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
+
+#include <config.h>
+
+#include <log/dummylog.h>
 
 #include <dns/question.h>
 #include <dns/message.h>
 
 #include <resolve/resolve.h>
+
+#include <asio.hpp>
+#include <asiolink/dns_service.h>
+#include <asiolink/io_fetch.h>
+#include <asiolink/io_service.h>
+#include <asiolink/recursive_query.h>
 
 using isc::log::dlog;
 using namespace isc::dns;
@@ -68,10 +68,10 @@ typedef std::pair<std::string, uint16_t> addr_t;
  *
  * Used by RecursiveQuery::sendQuery.
  */
-class RunningQuery : public UDPQuery::Callback {
+class RunningQuery : public IOFetch::Callback {
 private:
     // The io service to handle async calls
-    asio::io_service& io_;
+    IOService& io_;
 
     // Info for (re)sending the query (the question and destination)
     Question question_;
@@ -141,22 +141,22 @@ private:
             int serverIndex = rand() % uc;
             dlog("Sending upstream query (" + question_.toText() +
                 ") to " + upstream_->at(serverIndex).first);
-            UDPQuery query(io_, question_,
+            IOFetch query(IPPROTO_UDP, io_, question_,
                 upstream_->at(serverIndex).first,
                 upstream_->at(serverIndex).second, buffer_, this,
                 query_timeout_);
             ++queries_out_;
-            io_.post(query);
+            io_.get_io_service().post(query);
         } else if (zs > 0) {
             int serverIndex = rand() % zs;
             dlog("Sending query to zone server (" + question_.toText() +
                 ") to " + zone_servers_.at(serverIndex).first);
-            UDPQuery query(io_, question_,
+            IOFetch query(IPPROTO_IDP, io_, question_,
                 zone_servers_.at(serverIndex).first,
                 zone_servers_.at(serverIndex).second, buffer_, this,
                 query_timeout_);
             ++queries_out_;
-            io_.post(query);
+            io_.get_io_service().post(query);
         } else {
             dlog("Error, no upstream servers to send to.");
         }
@@ -283,7 +283,7 @@ private:
     }
     
 public:
-    RunningQuery(asio::io_service& io,
+    RunningQuery(IOService& io,
         const Question &question,
         MessagePtr answer_message,
         boost::shared_ptr<AddressVector> upstream,
@@ -302,8 +302,8 @@ public:
         cname_count_(0),
         query_timeout_(query_timeout),
         retries_(retries),
-        client_timer(io),
-        lookup_timer(io),
+        client_timer(io.get_io_service()),
+        lookup_timer(io.get_io_service()),
         queries_out_(0),
         done_(false),
         answer_sent_(false)
@@ -386,10 +386,10 @@ public:
     }
 
     // This function is used as callback from DNSQuery.
-    virtual void operator()(UDPQuery::Result result) {
+    virtual void operator()(IOFetch::Result result) {
         // XXX is this the place for TCP retry?
         --queries_out_;
-        if (!done_ && result != UDPQuery::TIME_OUT) {
+        if (!done_ && result != IOFetch::TIME_OUT) {
             // we got an answer
             Message incoming(Message::PARSE);
             InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
@@ -423,7 +423,7 @@ void
 RecursiveQuery::resolve(const QuestionPtr& question,
     const isc::resolve::ResolverInterface::CallbackPtr callback)
 {
-    asio::io_service& io = dns_service_.get_io_service();
+    IOService& io = dns_service_.getIOService();
 
     MessagePtr answer_message(new Message(Message::RENDER));
     OutputBufferPtr buffer(new OutputBuffer(0));
@@ -444,7 +444,7 @@ RecursiveQuery::resolve(const Question& question,
     // the message should be sent via TCP or UDP, or sent initially via
     // UDP and then fall back to TCP on failure, but for the moment
     // we're only going to handle UDP.
-    asio::io_service& io = dns_service_.get_io_service();
+    IOService& io = dns_service_.getIOService();
 
     isc::resolve::ResolverInterface::CallbackPtr crs(
         new isc::resolve::ResolverCallbackServer(server));

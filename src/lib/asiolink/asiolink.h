@@ -32,6 +32,7 @@
 #include <asiolink/io_endpoint.h>
 #include <asiolink/io_message.h>
 #include <asiolink/io_socket.h>
+#include <asiolink/io_error.h>
 
 /// \namespace asiolink
 /// \brief A wrapper interface for the ASIO library.
@@ -83,20 +84,6 @@
 /// the placeholder of callback handlers:
 /// http://think-async.com/Asio/asio-1.3.1/doc/asio/reference/asio_handler_allocate.html
 
-namespace asiolink {
-
-
-/// \brief An exception that is thrown if an error occurs within the IO
-/// module.  This is mainly intended to be a wrapper exception class for
-/// ASIO specific exceptions.
-class IOError : public isc::Exception {
-public:
-    IOError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
-
-}      // asiolink
 #endif // __ASIOLINK_H
 
 // Local Variables: 
