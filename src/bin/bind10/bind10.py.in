@@ -232,9 +232,9 @@ class BoB:
         # If this is initial update, don't do anything now, leave it to startup
         if not self.runnable:
             return
-        if self.verbose:
-            sys.stdout.write("[bind10] Handling new configuration: " +
-                str(new_config) + "\n")
+        # Now we declare few functions used only internally here. Besides the
+        # benefit of not polluting the name space, they are closures, so we
+        # don't need to pass some variables
         def start_stop(name, started, start, stop):
             if not'start_' + name in new_config:
                 return
@@ -246,14 +246,14 @@ class BoB:
                     start()
             else:
                 stop()
+        # These four functions are passed to start_stop (smells like functional
+        # programming little bit)
         def resolver_on():
             self.start_resolver(self.c_channel_env)
             self.started_resolver_family = True
         def resolver_off():
             self.stop_resolver()
             self.started_resolver_family = False
-        start_stop('resolver', self.started_resolver_family, resolver_on,
-            resolver_off)
         def auth_on():
             self.start_auth(self.c_channel_env)
             self.start_xfrout(self.c_channel_env)
@@ -266,11 +266,17 @@ class BoB:
             self.stop_xfrout()
             self.stop_auth()
             self.started_auth_family = False
+
+        # The real code of the config handler function follows here
+        if self.verbose:
+            sys.stdout.write("[bind10] Handling new configuration: " +
+                str(new_config) + "\n")
+        start_stop('resolver', self.started_resolver_family, resolver_on,
+            resolver_off)
         start_stop('auth', self.started_auth_family, auth_on, auth_off)
 
         answer = isc.config.ccsession.create_answer(0)
         return answer
-        # TODO
 
     def command_handler(self, command, args):
         if self.verbose:
