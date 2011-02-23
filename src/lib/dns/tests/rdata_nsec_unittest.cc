@@ -62,46 +62,7 @@ TEST_F(Rdata_NSEC_Test, createFromWire_NSEC) {
                                       "rdata_nsec_fromWire2"),
                  DNSMessageFORMERR);
 
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-                                      "rdata_nsec_fromWire3"),
-                 DNSMessageFORMERR);
-
-    // A malformed NSEC bitmap length field that could cause overflow.
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-                                      "rdata_nsec_fromWire4.wire"),
-                 DNSMessageFORMERR);
-
-    // The bitmap field is incomplete (only the first byte is included)
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-                                      "rdata_nsec_fromWire5.wire"),
-                 DNSMessageFORMERR);
-
-    // Bitmap length is 0, which is invalid.
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-                                      "rdata_nsec_fromWire6.wire"),
-                 DNSMessageFORMERR);
-
-    // A boundary case: longest possible bitmaps (32 maps).  This should be
-    // accepted.
-    EXPECT_NO_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-                                         "rdata_nsec_fromWire7.wire"));
-
-    // Another boundary condition: 33 bitmaps, which should be rejected.
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-                                      "rdata_nsec_fromWire8.wire"),
-                 DNSMessageFORMERR);
-
-    // Disordered bitmap window blocks.
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-                                      "rdata_nsec_fromWire9.wire"),
-                 DNSMessageFORMERR);
-
-    // Bitmap ending with all-zero bytes.  Not necessarily harmful except
-    // the additional overhead of parsing, but invalid according to the
-    // spec anyway.
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-                                      "rdata_nsec_fromWire10.wire"),
-                 DNSMessageFORMERR);
+    // Invalid bitmap cases are tested in Rdata_NSECBITMAP_Test.
 }
 
 TEST_F(Rdata_NSEC_Test, toWireRenderer_NSEC) {

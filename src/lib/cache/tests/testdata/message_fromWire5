@@ -1,0 +1,36 @@
+#
+# A simple DNS response message
+# ID = 0x07b2
+# QR=1 (response), Opcode=0, AA=1, RD=1 (other fields are 0)
+# QDCOUNT=1, ANCOUNT=2, other COUNTS=0
+# Question: a.example.net. IN A
+# Answer:
+#    ANSWER SECTION:
+#    a.example.com.          21600   IN      CNAME   cname.example.com.
+#    cname.example.com.      21600   IN      A       1.1.1.1
+#
+#    AUTHORITY SECTION:
+#    example.com.            21600   IN      NS      a.dns.example.com.
+#
+#    ADDITIONAL SECTION:
+#    a.dns.example.com.      21600   IN      A       1.1.1.1
+#
+07b2 8500
+0001 0002 0001 0001
+#(1) a (7)  e  x  a  m  p  l  e  (3) c o  m  .
+ 01 61 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+# A  IN
+0001 0001
+#
+c0 0c
+#CNAME IN  TTL     RDATA_LEN
+0005 0001 00005460 0008 05 63 6e 61 6d 65 c0 0e
+#
+c0 2b
+0001 0001 00005460 0004 01 01 01 01
+#
+c0 0e
+0002 0001 00005460 0008 01 61 03 64 6e 73 c0 0e
+#
+c0 4f
+0001 0001 00005460 0004 01 01 01 01

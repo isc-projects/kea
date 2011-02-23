@@ -4,16 +4,28 @@
     "module_description": "Recursive service",
     "config_data": [
       {
-        "item_name": "timeout",
+        "item_name": "timeout_query",
         "item_type": "integer",
         "item_optional": False,
         "item_default": 2000
       },
       {
+        "item_name": "timeout_client",
+        "item_type": "integer",
+        "item_optional": False,
+        "item_default": 4000
+      },
+      {
+        "item_name": "timeout_lookup",
+        "item_type": "integer",
+        "item_optional": False,
+        "item_default": 30000
+      },
+      {
         "item_name": "retries",
         "item_type": "integer",
         "item_optional": False,
-        "item_default": 0
+        "item_default": 3
       },
       {
         "item_name": "forward_addresses",
