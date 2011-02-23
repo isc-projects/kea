@@ -15,6 +15,7 @@
 #include <config.h>
 #include <gtest/gtest.h>
 
+#include <asio.hpp>
 #include <asiolink/asiolink.h>
 
 #include <boost/date_time/posix_time/posix_time_types.hpp>

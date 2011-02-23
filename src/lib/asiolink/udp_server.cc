@@ -12,25 +12,24 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>             // for some IPC/network system calls
 
 #include <boost/shared_array.hpp>
 
-// unistd is needed for asio.hpp with SunStudio
-#include <unistd.h>
-
-#include <asio.hpp>
+#include <config.h>
 
 #include <log/dummylog.h>
 
+#include <asio.hpp>
+#include <asiolink/dummy_io_cb.h>
 #include <asiolink/udp_endpoint.h>
-#include <asiolink/udp_socket.h>
-
 #include <asiolink/udp_server.h>
+#include <asiolink/udp_socket.h>
 
 using namespace asio;
 using asio::ip::udp;
-using asio::ip::tcp;
 using isc::log::dlog;
 
 using namespace std;
@@ -206,7 +205,16 @@ UDPServer::operator()(error_code ec, size_t length) {
         // that would quickly generate an IOMessage object without
         // all these calls to "new".)
         data_->peer_.reset(new UDPEndpoint(*data_->sender_));
-        data_->iosock_.reset(new UDPSocket(*data_->socket_));
+
+        // The UDP socket class has been extended with asynchronous functions
+        // and takes as a template parameter a completion callback class.  As
+        // UDPServer does not use these extended functions (only those defined
+        // in the IOSocket base class) - but needs a UDPSocket to get hold of
+        // the underlying Boost UDP socket - DummyIOCallback is used.  This
+        // provides the appropriate operator() but is otherwise functionless.
+        data_->iosock_.reset(
+            new UDPSocket<DummyIOCallback>(*data_->socket_));
+
         data_->io_message_.reset(new IOMessage(data_->data_.get(),
             data_->bytes_, *data_->iosock_, *data_->peer_));
 

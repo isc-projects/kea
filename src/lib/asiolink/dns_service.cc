@@ -12,20 +12,22 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>             // for some IPC/network system calls
+
+#include <boost/lexical_cast.hpp>
+
 #include <config.h>
-
-// unistd is needed for asio.hpp with SunStudio
-#include <unistd.h>
-
-#include <asio.hpp>
-
-#include <asiolink/io_service.h>
-#include <asiolink/tcp_server.h>
-#include <asiolink/udp_server.h>
 
 #include <log/dummylog.h>
 
-#include <boost/lexical_cast.hpp>
+#include <asio.hpp>
+#include <asiolink/dns_service.h>
+#include <asiolink/io_service.h>
+#include <asiolink/io_service.h>
+#include <asiolink/tcp_server.h>
+#include <asiolink/udp_server.h>
 
 using isc::log::dlog;
 

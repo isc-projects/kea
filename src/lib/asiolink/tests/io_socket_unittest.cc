@@ -13,34 +13,20 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+#include <gtest/gtest.h>
 
-#include <unistd.h>             // for some IPC/network system calls
-#include <sys/socket.h>
 #include <netinet/in.h>
 
 #include <asio.hpp>
+#include <asiolink/io_socket.h>
 
-#include <asiolink/io_address.h>
-#include <asiolink/io_error.h>
-#include <asiolink/tcp_endpoint.h>
-#include <asiolink/udp_endpoint.h>
+using namespace asiolink;
 
-using namespace std;
-
-namespace asiolink {
-
-const IOEndpoint*
-IOEndpoint::create(const int protocol, const IOAddress& address,
-                   const unsigned short port)
-{
-    if (protocol == IPPROTO_UDP) {
-        return (new UDPEndpoint(address, port));
-    } else if (protocol == IPPROTO_TCP) {
-        return (new TCPEndpoint(address, port));
-    }
-    isc_throw(IOError,
-              "IOEndpoint creation attempt for unsupported protocol: " <<
-              protocol);
+TEST(IOSocketTest, dummySockets) {
+    EXPECT_EQ(IPPROTO_UDP, IOSocket::getDummyUDPSocket().getProtocol());
+    EXPECT_EQ(IPPROTO_TCP, IOSocket::getDummyTCPSocket().getProtocol());
+    EXPECT_EQ(-1, IOSocket::getDummyUDPSocket().getNative());
+    EXPECT_EQ(-1, IOSocket::getDummyTCPSocket().getNative());
 }
 
-}
+

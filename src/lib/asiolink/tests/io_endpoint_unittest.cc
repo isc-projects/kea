@@ -15,7 +15,8 @@
 #include <config.h>
 #include <gtest/gtest.h>
 
-#include <asiolink/asiolink.h>
+#include <asiolink/io_endpoint.h>
+#include <asiolink/io_error.h>
 
 using namespace asiolink;
 
