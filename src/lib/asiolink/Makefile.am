@@ -47,3 +47,5 @@ endif
 libasiolink_la_CPPFLAGS = $(AM_CPPFLAGS)
 libasiolink_la_LIBADD = $(top_builddir)/src/lib/log/liblog.la
 libasiolink_la_LIBADD += $(top_builddir)/src/lib/resolve/libresolve.la
+libasiolink_la_LIBADD += $(top_builddir)/src/lib/cache/libcache.la
+libasiolink_la_LIBADD += $(top_builddir)/src/lib/nsas/libnsas.la
