@@ -20,6 +20,7 @@ libasiolink_la_SOURCES += dns_service.h dns_service.cc
 libasiolink_la_SOURCES += dummy_io_cb.h
 libasiolink_la_SOURCES += interval_timer.h interval_timer.cc
 libasiolink_la_SOURCES += io_address.h io_address.cc
+libasiolink_la_SOURCES += io_asio_socket.h
 libasiolink_la_SOURCES += io_endpoint.h io_endpoint.cc
 libasiolink_la_SOURCES += io_error.h
 libasiolink_la_SOURCES += io_fetch.h io_fetch.cc
