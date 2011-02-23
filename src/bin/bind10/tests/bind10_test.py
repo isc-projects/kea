@@ -257,33 +257,33 @@ class TestStartStopProcessesBob(unittest.TestCase):
         self.assertEqual(bob.cmdctl, core)
 
     def check_preconditions(self, bob):
-        self.check_started(self, bob, False, False, False)
+        self.check_started(bob, False, False, False)
 
     def check_started_none(self, bob):
         """
         Check that the situation is according to configuration where no servers
         should be started. Some processes still need to be running.
         """
-        self.check_started(self, bob, True, False, False)
+        self.check_started(bob, True, False, False)
 
     def check_started_both(self, bob):
         """
         Check the situation is according to configuration where both servers
         (auth and resolver) are enabled.
         """
-        self.check_started(self, bob, True, True, True)
+        self.check_started(bob, True, True, True)
 
     def check_started_auth(self, bob):
         """
         Check the set of processes needed to run auth only is started.
         """
-        self.check_started(self, bob, True, True, False)
+        self.check_started(bob, True, True, False)
 
     def check_started_resolver(self, bob):
         """
         Check the set of processes needed to run resolver only is started.
         """
-        self.check_started(self, bob, True, False, True)
+        self.check_started(bob, True, False, True)
 
     # Checks the processes started when starting neither auth nor resolver
     # is specified.
