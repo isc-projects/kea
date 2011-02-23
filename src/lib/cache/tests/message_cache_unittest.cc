@@ -34,9 +34,10 @@ namespace {
 /// its internals.
 class DerivedMessageCache: public MessageCache {
 public:
-    DerivedMessageCache(boost::shared_ptr<RRsetCache> rrset_cache_,
-                        uint32_t cache_size, uint16_t message_class):
-        MessageCache(rrset_cache_, cache_size, message_class)
+    DerivedMessageCache(boost::shared_ptr<RRsetCache> rrset_cache,
+                        uint32_t cache_size, uint16_t message_class,
+                        boost::shared_ptr<RRsetCache> negative_soa_cache):
+        MessageCache(rrset_cache, cache_size, message_class, negative_soa_cache)
     {}
 
     uint16_t messages_count() {
@@ -51,13 +52,16 @@ public:
     {
         uint16_t class_ = RRClass::IN().getCode();
         rrset_cache_.reset(new RRsetCache(RRSET_CACHE_DEFAULT_SIZE, class_));
+        negative_soa_cache_.reset(new RRsetCache(NEGATIVE_RRSET_CACHE_DEFAULT_SIZE, class_));
         message_cache_.reset(new DerivedMessageCache(rrset_cache_, 
-                                          MESSAGE_CACHE_DEFAULT_SIZE, class_ ));
+                                          MESSAGE_CACHE_DEFAULT_SIZE, class_, 
+                                          negative_soa_cache_));
     }
 
 protected:
     boost::shared_ptr<DerivedMessageCache> message_cache_;
     RRsetCachePtr rrset_cache_;
+    RRsetCachePtr negative_soa_cache_;
     Message message_parse;
     Message message_render;
 };

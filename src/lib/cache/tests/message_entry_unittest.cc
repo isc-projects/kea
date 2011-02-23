@@ -39,8 +39,9 @@ namespace {
 class DerivedMessageEntry: public MessageEntry {
 public:
     DerivedMessageEntry(const isc::dns::Message& message,
-                        boost::shared_ptr<RRsetCache> rrset_cache_):
-             MessageEntry(message, rrset_cache_)
+                        boost::shared_ptr<RRsetCache> rrset_cache_,
+                        boost::shared_ptr<RRsetCache> negative_soa_cache_):
+             MessageEntry(message, rrset_cache_, negative_soa_cache_)
     {}
 
     /// \brief Wrap the protected function so that it can be tested.   
@@ -77,18 +78,20 @@ public:
     {
         
         rrset_cache_.reset(new RRsetCache(RRSET_CACHE_DEFAULT_SIZE, class_));
+        negative_soa_cache_.reset(new RRsetCache(NEGATIVE_RRSET_CACHE_DEFAULT_SIZE, class_));
     }
 
 protected:
     uint16_t class_;
     RRsetCachePtr rrset_cache_;
+    RRsetCachePtr negative_soa_cache_;
     Message message_parse;
     Message message_render;
 };
 
 TEST_F(MessageEntryTest, testParseRRset) {
     messageFromFile(message_parse, "message_fromWire3");
-    DerivedMessageEntry message_entry(message_parse, rrset_cache_);
+    DerivedMessageEntry message_entry(message_parse, rrset_cache_, negative_soa_cache_);
     uint32_t ttl = MAX_UINT32;
     uint16_t rrset_count = 0;
     message_entry.parseSectionForTest(message_parse, Message::SECTION_ANSWER, ttl, rrset_count);
@@ -108,7 +111,7 @@ TEST_F(MessageEntryTest, testParseRRset) {
 
 TEST_F(MessageEntryTest, testGetRRsetTrustLevel_AA) {
     messageFromFile(message_parse, "message_fromWire3");
-    DerivedMessageEntry message_entry(message_parse, rrset_cache_);
+    DerivedMessageEntry message_entry(message_parse, rrset_cache_, negative_soa_cache_);
     
 
     RRsetIterator rrset_iter = message_parse.beginSection(Message::SECTION_ANSWER);
@@ -132,7 +135,7 @@ TEST_F(MessageEntryTest, testGetRRsetTrustLevel_AA) {
 
 TEST_F(MessageEntryTest, testGetRRsetTrustLevel_NONAA) {
     messageFromFile(message_parse, "message_fromWire4");
-    DerivedMessageEntry message_entry(message_parse, rrset_cache_);
+    DerivedMessageEntry message_entry(message_parse, rrset_cache_, negative_soa_cache_);
     RRsetIterator rrset_iter = message_parse.beginSection(Message::SECTION_ANSWER);
     RRsetTrustLevel level = message_entry.getRRsetTrustLevelForTest(message_parse,
                                                                     *rrset_iter,
@@ -154,7 +157,7 @@ TEST_F(MessageEntryTest, testGetRRsetTrustLevel_NONAA) {
 
 TEST_F(MessageEntryTest, testGetRRsetTrustLevel_CNAME) {
     messageFromFile(message_parse, "message_fromWire5");
-    DerivedMessageEntry message_entry(message_parse, rrset_cache_);
+    DerivedMessageEntry message_entry(message_parse, rrset_cache_, negative_soa_cache_);
     RRsetIterator rrset_iter = message_parse.beginSection(Message::SECTION_ANSWER);
     RRsetTrustLevel level = message_entry.getRRsetTrustLevelForTest(message_parse,
                                                                     *rrset_iter,
@@ -170,7 +173,7 @@ TEST_F(MessageEntryTest, testGetRRsetTrustLevel_CNAME) {
 
 TEST_F(MessageEntryTest, testGetRRsetTrustLevel_DNAME) {
     messageFromFile(message_parse, "message_fromWire6");
-    DerivedMessageEntry message_entry(message_parse, rrset_cache_);
+    DerivedMessageEntry message_entry(message_parse, rrset_cache_, negative_soa_cache_);
     RRsetIterator rrset_iter = message_parse.beginSection(Message::SECTION_ANSWER);
     RRsetTrustLevel level = message_entry.getRRsetTrustLevelForTest(message_parse,
                                                                     *rrset_iter,
@@ -195,7 +198,7 @@ TEST_F(MessageEntryTest, testGetRRsetTrustLevel_DNAME) {
 // is right
 TEST_F(MessageEntryTest, testInitMessageEntry) {
     messageFromFile(message_parse, "message_fromWire3");
-    DerivedMessageEntry message_entry(message_parse, rrset_cache_);
+    DerivedMessageEntry message_entry(message_parse, rrset_cache_, negative_soa_cache_);
     time_t expire_time = message_entry.getExpireTime();
     // 1 second should be enough to do the compare
     EXPECT_TRUE((time(NULL) + 10801) > expire_time);
@@ -203,7 +206,7 @@ TEST_F(MessageEntryTest, testInitMessageEntry) {
 
 TEST_F(MessageEntryTest, testGetRRsetEntries) {
     messageFromFile(message_parse, "message_fromWire3");
-    DerivedMessageEntry message_entry(message_parse, rrset_cache_);
+    DerivedMessageEntry message_entry(message_parse, rrset_cache_, negative_soa_cache_);
     vector<RRsetEntryPtr> vec;
     
     // the time is bigger than the smallest expire time of 
@@ -214,7 +217,7 @@ TEST_F(MessageEntryTest, testGetRRsetEntries) {
 
 TEST_F(MessageEntryTest, testGenMessage) {
     messageFromFile(message_parse, "message_fromWire3");
-    DerivedMessageEntry message_entry(message_parse, rrset_cache_);
+    DerivedMessageEntry message_entry(message_parse, rrset_cache_, negative_soa_cache_);
     time_t expire_time = message_entry.getExpireTime();
     
     Message msg(Message::RENDER);

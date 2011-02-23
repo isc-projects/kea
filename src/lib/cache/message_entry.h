@@ -68,8 +68,12 @@ public:
     ///        since some new rrset entries may be inserted into
     ///        rrset cache, or the existed rrset entries need
     ///        to be updated.
+    /// \param negative_soa_cache the pointer of RRsetCAche. This
+    ///        cache is used only for storing SOA rrset from negative
+    ///        response (NXDOMAIN or NOERROR_NODATA)
     MessageEntry(const isc::dns::Message& message,
-                 boost::shared_ptr<RRsetCache> rrset_cache);
+                 boost::shared_ptr<RRsetCache> rrset_cache,
+                 boost::shared_ptr<RRsetCache> negative_soa_cache);
 
     /// \brief generate one dns message according
     ///        the rrsets information of the message.
@@ -155,7 +159,8 @@ private:
     HashKey* hash_key_ptr_;  // the key for messag entry in hash table.
 
     std::vector<RRsetRef> rrsets_;
-    boost::shared_ptr<RRsetCache> rrset_cache_;
+    boost::shared_ptr<RRsetCache> rrset_cache_; //Normal rrset cache
+    boost::shared_ptr<RRsetCache> negative_soa_cache_; // SOA rrset from negative response
 
     std::string query_name_; // query name of the message.
     uint16_t query_class_; // query class of the message.
