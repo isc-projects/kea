@@ -309,6 +309,44 @@ Message::hasRRset(const Section section, const Name& name,
     return (false);
 }
 
+bool
+Message::hasRRset(const Section section, const RRsetPtr& rrset) {
+    return (hasRRset(section, rrset->getName(), rrset->getClass(), rrset->getType()));
+}
+
+bool
+Message::removeRRset(const Section section, RRsetIterator& iterator) {
+    if (section >= MessageImpl::NUM_SECTIONS) {
+        isc_throw(OutOfRange, "Invalid message section: " << section);
+    }
+
+    bool removed = false;
+    for (vector<RRsetPtr>::iterator i = impl_->rrsets_[section].begin();
+            i != impl_->rrsets_[section].end(); ++i) {
+        if (((*i)->getName() == (*iterator)->getName()) &&
+            ((*i)->getClass() == (*iterator)->getClass()) &&
+            ((*i)->getType() == (*iterator)->getType())) {
+
+            // Found the matching RRset so remove it & ignore rest
+            impl_->counts_[section] -= (*iterator)->getRdataCount();
+            impl_->rrsets_[section].erase(i);
+            removed = true;
+            break;
+        }
+    }
+
+    return (removed);
+}
+
+void
+Message::clearSection(const Section section) {
+    if (section >= MessageImpl::NUM_SECTIONS) {
+        isc_throw(OutOfRange, "Invalid message section: " << section);
+    }
+    impl_->rrsets_[section].clear();
+    impl_->counts_[section] = 0;
+}
+
 void
 Message::addQuestion(const QuestionPtr question) {
     if (impl_->mode_ != Message::RENDER) {
@@ -736,6 +774,27 @@ void
 Message::clear(Mode mode) {
     impl_->init();
     impl_->mode_ = mode;
+}
+
+void
+Message::appendSection(const Section section, const Message& source) {
+    if (section >= MessageImpl::NUM_SECTIONS) {
+        isc_throw(OutOfRange, "Invalid message section: " << section);
+    }
+
+    if (section == SECTION_QUESTION) {
+        for (QuestionIterator qi = source.beginQuestion();
+             qi != source.endQuestion();
+             ++qi) {
+            addQuestion(*qi);
+        }
+    } else {
+        for (RRsetIterator rrsi = source.beginSection(section);
+             rrsi != source.endSection(section);
+             ++rrsi) {
+            addRRset(section, *rrsi);
+        }
+    }
 }
 
 void

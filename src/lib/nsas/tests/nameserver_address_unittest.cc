@@ -39,7 +39,7 @@ class NameserverEntrySample {
 public:
     NameserverEntrySample():
         name_("example.org"),
-        rrv4_(new BasicRRset(name_, RRClass::IN(), RRType::A(), RRTTL(1200)))
+        rrv4_(new RRset(name_, RRClass::IN(), RRType::A(), RRTTL(1200)))
     {
         // Add some sample A records
         rrv4_->addRdata(ConstRdataPtr(new RdataTest<A>("1.2.3.4")));
@@ -50,7 +50,7 @@ public:
         boost::shared_ptr<TestResolver> resolver(new TestResolver);
         ns_->askIP(resolver, boost::shared_ptr<Callback>(new Callback), ANY_OK);
         resolver->asksIPs(name_, 0, 1);
-        resolver->requests[0].second->success(rrv4_);
+        resolver->requests[0].second->success(createResponseMessage(rrv4_));
     }
 
     // Return the sample NameserverEntry
@@ -73,7 +73,7 @@ public:
 
 private:
     Name name_;                             ///< Name of the sample
-    boost::shared_ptr<BasicRRset> rrv4_;           ///< Standard RRSet - IN, A, lowercase name
+    RRsetPtr rrv4_;           ///< Standard RRSet - IN, A, lowercase name
     boost::shared_ptr<NameserverEntry> ns_; ///< Shared_ptr that points to a NameserverEntry object
 
     class Callback : public NameserverEntry::Callback {
