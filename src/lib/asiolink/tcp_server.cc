@@ -14,18 +14,18 @@
 
 #include <config.h>
 
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>             // for some IPC/network system calls
+
 #include <boost/shared_array.hpp>
-
-// unistd is needed for asio.hpp with SunStudio
-#include <unistd.h>
-
-#include <asio.hpp>
 
 #include <log/dummylog.h>
 
+#include <asio.hpp>
+#include <asiolink/dummy_io_cb.h>
 #include <asiolink/tcp_endpoint.h>
 #include <asiolink/tcp_socket.h>
-
 #include <asiolink/tcp_server.h>
 
 
@@ -118,7 +118,14 @@ TCPServer::operator()(error_code ec, size_t length) {
         // that would quickly generate an IOMessage object without
         // all these calls to "new".)
         peer_.reset(new TCPEndpoint(socket_->remote_endpoint()));
-        iosock_.reset(new TCPSocket(*socket_));
+
+        // The TCP socket class has been extended with asynchronous functions
+        // and takes as a template parameter a completion callback class.  As
+        // TCPServer does not use these extended functions (only those defined
+        // in the IOSocket base class) - but needs a TCPSocket to get hold of
+        // the underlying Boost TCP socket - DummyIOCallback is used.  This
+        // provides the appropriate operator() but is otherwise functionless.
+        iosock_.reset(new TCPSocket<DummyIOCallback>(*socket_));
         io_message_.reset(new IOMessage(data_.get(), length, *iosock_, *peer_));
         bytes_ = length;
 

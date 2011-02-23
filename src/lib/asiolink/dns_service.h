@@ -97,6 +97,12 @@ public:
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
     asio::io_service& get_io_service() { return io_service_.get_io_service(); }
+
+    /// \brief Return the IO Service Object
+    ///
+    /// \return IOService object for this DNS service.
+    asiolink::IOService& getIOService() { return (io_service_);}
+
 private:
     DNSServiceImpl* impl_;
     IOService& io_service_;
