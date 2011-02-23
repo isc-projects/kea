@@ -17,6 +17,8 @@
 import unittest
 import isc.cc.data
 import os
+from isc.config.config_data import ConfigData, MultiConfigData
+from isc.config.module_spec import ModuleSpec
 from bindctl import cmdparse
 from bindctl import bindcmd
 from bindctl.moduleinfo import *
@@ -238,11 +240,101 @@ class TestNameSequence(unittest.TestCase):
             assert self.random_names[i] == module_names[i+1]
             i = i + 1
 
-    def test_apply_cfg_command(self):
-        self.tool.location = '/'
-        cmd = cmdparse.BindCmdParse("config set identifier=\"foo/bar\" value=\"5\"")
-        self.tool.apply_config_cmd(cmd)
+# tine class to fake a UIModuleCCSession, but only the config data
+# parts for the next set of tests
+class FakeCCSession(MultiConfigData):
+    def __init__(self):
+        self._local_changes = {}
+        self._current_config = {}
+        self._specifications = {}
+        self.add_foo_spec()
+
+    def add_foo_spec(self):
+        spec = { "module_name": "foo",
+                 "config_data": [
+                 { "item_name": "an_int",
+                   "item_type": "integer",
+                   "item_optional": False,
+                   "item_default": 1
+                 },
+                 { "item_name": "a_list",
+                   "item_type": "list",
+                   "item_optional": False,
+                   "item_default": [],
+                   "list_item_spec":
+                   { "item_name": "a_string",
+                     "item_type": "string",
+                     "item_optional": False,
+                     "item_default": "bar"
+                   }
+                 }
+                 ]
+               }
+        self.set_specification(ModuleSpec(spec))
     
+
+class TestConfigCommands(unittest.TestCase):
+    def setUp(self):
+        self.tool = bindcmd.BindCmdInterpreter()
+        mod_info = ModuleInfo(name = "foo")
+        self.tool.add_module_info(mod_info)
+        self.tool.config_data = FakeCCSession()
+        
+    def test_apply_cfg_command_int(self):
+        self.tool.location = '/'
+
+        self.assertEqual((1, MultiConfigData.DEFAULT),
+                         self.tool.config_data.get_value("/foo/an_int"))
+
+        cmd = cmdparse.BindCmdParse("config set identifier=\"foo/an_int\" value=\"5\"")
+        self.tool.apply_config_cmd(cmd)
+        self.assertEqual((5, MultiConfigData.LOCAL),
+                         self.tool.config_data.get_value("/foo/an_int"))
+
+        # this should raise a NotFoundError
+        cmd = cmdparse.BindCmdParse("config set identifier=\"foo/bar\" value=\"[]\"")
+        self.assertRaises(isc.cc.data.DataNotFoundError, self.tool.apply_config_cmd, cmd)
+
+        # this should raise a TypeError
+        cmd = cmdparse.BindCmdParse("config set identifier=\"foo/an_int\" value=\"[]\"")
+        self.assertRaises(isc.cc.data.DataTypeError, self.tool.apply_config_cmd, cmd)
+
+    # this is a very specific one for use with a set of list tests
+    # to try out the flexibility of the parser (only in the next test)
+    def clt(self, full_cmd_string, item_value):
+        cmd = cmdparse.BindCmdParse(full_cmd_string)
+        self.tool.apply_config_cmd(cmd)
+        self.assertEqual(([item_value], MultiConfigData.LOCAL),
+                         self.tool.config_data.get_value("/foo/a_list"))
+
+    def test_apply_cfg_command_list(self):
+        self.tool.location = '/'
+
+        self.assertEqual(([], MultiConfigData.DEFAULT),
+                         self.tool.config_data.get_value("/foo/a_list"))
+
+        self.clt("config set identifier=\"foo/a_list\" value=[\"a\"]", "a")
+        self.clt("config set identifier=\"foo/a_list\" value =[\"b\"]", "b")
+        self.clt("config set identifier=\"foo/a_list\" value= [\"c\"]", "c")
+        self.clt("config set identifier=\"foo/a_list\" value = [\"d\"]", "d")
+        self.clt("config set identifier =\"foo/a_list\" value=[\"e\"]", "e")
+        self.clt("config set identifier= \"foo/a_list\" value=[\"f\"]", "f")
+        self.clt("config set identifier = \"foo/a_list\" value=[\"g\"]", "g")
+        self.clt("config set identifier = \"foo/a_list\" value = [\"h\"]", "h")
+        self.clt("config set identifier = \"foo/a_list\" value=[\"i\" ]", "i")
+        self.clt("config set identifier = \"foo/a_list\" value=[ \"j\"]", "j")
+        self.clt("config set identifier = \"foo/a_list\" value=[ \"k\" ]", "k")
+
+        # this should raise a TypeError
+        cmd = cmdparse.BindCmdParse("config set identifier=\"foo/a_list\" value=\"a\"")
+        self.assertRaises(isc.cc.data.DataTypeError, self.tool.apply_config_cmd, cmd)
+        
+        cmd = cmdparse.BindCmdParse("config set identifier=\"foo/a_list\" value=[1]")
+        self.assertRaises(isc.cc.data.DataTypeError, self.tool.apply_config_cmd, cmd)
+
+
+    
+
 class FakeBindCmdInterpreter(bindcmd.BindCmdInterpreter):
     def __init__(self):
         pass

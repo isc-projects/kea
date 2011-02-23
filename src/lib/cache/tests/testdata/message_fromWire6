@@ -1,0 +1,40 @@
+#
+# A simple DNS response message
+# ID = 0x005e
+# QR=1 (response), Opcode=0, AA=1, RD=1 (other fields are 0)
+# QDCOUNT=1, ANCOUNT=2, other COUNTS=0
+# Question: a.d.example.net. IN A
+# Answer:
+#    ;; ANSWER SECTION:
+#    d.example.com.          21600   IN      DNAME   dname.example.com.
+#    a.d.example.com.        21600   IN      CNAME   a.dname.example.com.
+#    a.dname.example.com.    21600   IN      A       1.1.1.1
+#
+#    ;; AUTHORITY SECTION:
+#    example.com.            21600   IN      NS      a.dns.example.com.
+#
+#    ;; ADDITIONAL SECTION:
+#    a.dns.example.com.      21600   IN      A       1.1.1.1
+#
+#
+005e 8500
+0001 0003 0001 0001
+#(1)a (1) b (7) e  x  a  m  p  l  e (3) c  o  m  .
+ 01 61 01 64 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+# A  IN
+0001 0001
+#
+c0 0e
+0027 0001 00005460 0013 05 64 6e 61 6d 65 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+# 
+c0 0c
+0005 0001 00005460 0004 01 61 c0 2d
+#
+c0 4c
+0001 0001 00005460 0004 01 01 01 01
+#
+c0 33
+0002 0001 00005460 0008 01 61 03 64 6e 73 c0 33
+#
+c0 6c
+0001 0001 00005460 0004 01 01 01 01

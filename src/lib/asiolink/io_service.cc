@@ -1,0 +1,98 @@
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>             // for some IPC/network system calls
+
+#include <config.h>
+
+#include <asio.hpp>
+#include <asiolink/io_service.h>
+
+namespace asiolink {
+
+class IOServiceImpl {
+private:
+    IOServiceImpl(const IOService& source);
+    IOServiceImpl& operator=(const IOService& source);
+public:
+    /// \brief The constructor
+    IOServiceImpl() :
+        io_service_(),
+        work_(io_service_)
+    {};
+    /// \brief The destructor.
+    ~IOServiceImpl() {};
+    //@}
+
+    /// \brief Start the underlying event loop.
+    ///
+    /// This method does not return control to the caller until
+    /// the \c stop() method is called via some handler.
+    void run() { io_service_.run(); };
+
+    /// \brief Run the underlying event loop for a single event.
+    ///
+    /// This method return control to the caller as soon as the
+    /// first handler has completed.  (If no handlers are ready when
+    /// it is run, it will block until one is.)
+    void run_one() { io_service_.run_one();} ;
+
+    /// \brief Stop the underlying event loop.
+    ///
+    /// This will return the control to the caller of the \c run() method.
+    void stop() { io_service_.stop();} ;
+
+    /// \brief Return the native \c io_service object used in this wrapper.
+    ///
+    /// This is a short term work around to support other BIND 10 modules
+    /// that share the same \c io_service with the authoritative server.
+    /// It will eventually be removed once the wrapper interface is
+    /// generalized.
+    asio::io_service& get_io_service() { return io_service_; };
+private:
+    asio::io_service io_service_;
+    asio::io_service::work work_;
+};
+
+IOService::IOService() {
+    io_impl_ = new IOServiceImpl();
+}
+
+IOService::~IOService() {
+    delete io_impl_;
+}
+
+void
+IOService::run() {
+    io_impl_->run();
+}
+
+void
+IOService::run_one() {
+    io_impl_->run_one();
+}
+
+void
+IOService::stop() {
+    io_impl_->stop();
+}
+
+asio::io_service&
+IOService::get_io_service() {
+    return (io_impl_->get_io_service());
+}
+
+} // namepsace asiolink

@@ -24,17 +24,17 @@
 # made there as well
 """Classes and functions for handling configuration and commands
 
-   This module provides the ModuleCCSession and UICCSession classes,
-   as well as a set of utility functions to create and parse messages
-   related to commands and configuration
+   This module provides the ModuleCCSession and UIModuleCCSession
+   classes, as well as a set of utility functions to create and parse
+   messages related to commands and configuration
 
    Modules should use the ModuleCCSession class to connect to the
    configuration manager, and receive updates and commands from
    other modules.
 
-   Configuration user interfaces should use the UICCSession to connect
-   to b10-cmdctl, and receive and send configuration and commands
-   through that to the configuration manager.
+   Configuration user interfaces should use the UIModuleCCSession
+   to connect to b10-cmdctl, and receive and send configuration and
+   commands through that to the configuration manager.
 """
 
 from isc.cc import Session
@@ -374,20 +374,34 @@ class UIModuleCCSession(MultiConfigData):
         self._set_current_config(config)
 
 
-    def add_value(self, identifier, value_str):
+    def add_value(self, identifier, value_str = None):
         """Add a value to a configuration list. Raises a DataTypeError
            if the value does not conform to the list_item_spec field
-           of the module config data specification"""
+           of the module config data specification. If value_str is
+           not given, we add the default as specified by the .spec
+           file."""
         module_spec = self.find_spec_part(identifier)
         if (type(module_spec) != dict or "list_item_spec" not in module_spec):
             raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list")
-        value = isc.cc.data.parse_value_str(value_str)
+
         cur_list, status = self.get_value(identifier)
         if not cur_list:
             cur_list = []
+
+        # Hmm. Do we need to check for duplicates?
+        value = None
+        if value_str is not None:
+            value = isc.cc.data.parse_value_str(value_str)
+        else:
+            if "item_default" in module_spec["list_item_spec"]:
+                value = module_spec["list_item_spec"]["item_default"]
+
+        if value is None:
+            raise isc.cc.data.DataNotFoundError("No value given and no default for " + str(identifier))
+            
         if value not in cur_list:
             cur_list.append(value)
-        self.set_value(identifier, cur_list)
+            self.set_value(identifier, cur_list)
 
     def remove_value(self, identifier, value_str):
         """Remove a value from a configuration list. The value string

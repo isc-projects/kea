@@ -1,3 +1,122 @@
+  178.  [func]      jelte
+	Resolver now makes (limited) use of the cache
+	(Trac #491, git 8b41f77f0099ddc7ca7d34d39ad8c39bb1a8363c)
+
+  177.  [func]      stephen
+	The upstream fetch code in asiolink is now protocol agnostic to
+	allow for the addition of fallback to TCP if a fetch response
+	indicates truncation.
+	(Trac #554, git 9739cbce2eaffc7e80640db58a8513295cf684de)
+
+  176.  [func]      zhang likun
+	src/lib/cache: Rename one interface: from lookupClosestRRset()
+	to lookupDeepestNS(), and remove one parameter of it.
+	(Trac #492, git ecbfb7cf929d62a018dd4cdc7a841add3d5a35ae)
+
+  175.	[bug]		jerry
+	src/bin/xfrout: Xfrout use the case-sensitive mode to compress
+	names in an AXFR massage.
+	(Trac #253, git 004e382616150f8a2362e94d3458b59bb2710182)
+
+  174.	[bug]*		jinmei
+	src/lib/dns: revised dnssectime functions so that they don't rely
+	on the time_t type (whose size varies on different systems, which
+	can lead to subtle bugs like some form of "year 2038 problem").
+	Also handled 32-bit wrap around issues more explicitly, with more
+	detailed tests.  The function API has been changed, but the effect
+	should be minimal because these functions are mostly private.
+	(Trac #61, git 09ece8cdd41c0f025e8b897b4883885d88d4ba5d)
+
+  173.	[bug]		jerry
+	python/isc/notify: A notify_out test fails without network
+	connectivity, encapsulate the socket behavior using a mock
+	socket class to fix it.
+	(Trac #346, git 319debfb957641f311102739a15059f8453c54ce)
+
+  172.  [func]      jelte
+	Improved the bindctl cli in various ways, mainly concerning
+	list and map item addressing, the correct display of actual values,
+	and internal help.
+	(Trac #384, git e5fb3bc1ed5f3c0aec6eb40a16c63f3d0fc6a7b2)
+
+  171.  [func]      feng, jerry, jinmei, vorner
+	b10-auth, src/lib/datasrc: in memory data source now works as a
+	complete data source for authoritative DNS servers and b10-auth
+	uses it.  It still misses major features, however, including
+	DNSSEC support and zone transfer.
+	(Last trac #553, but many more,
+	git 6f031a09a248e7684723c000f3e8cc981dcdb349)
+
+  170.	[bug]		jinmei
+	Tightened validity checks in the NSEC3 constructors, both "from
+	"text" and "from wire".  Specifically, wire data containing
+	invalid type bitmaps or invalid lengths of salt or hash is now
+	correctly rejected.
+	(Trac #117, git 9c690982f24fef19c747a72f43c4298333a58f48)
+
+  169.  [func]      zhang likun, jelte
+	Added a basic implementation for a resolver cache (though not
+	used yet).
+	(Trac #449, git 8aa3b2246ae095bbe7f855fd11656ae3bdb98986)
+
+  168.  [bug]       vorner
+	Boss no longer has the -f argument, which was undocumented and
+	stayed as a relict of previous versions, currently causing only
+	strange behaviour.
+	(Trac #572, git 17f237478961005707d649a661cc72a4a0d612d4)
+
+  167.  [bug]           naokikambe
+	Fixed failure of termination of msgq_test.py with python3
+	coverage(3.3.1)
+	(Trac #573, git 0e6a18e12f61cc482e07078776234f32605312e5)
+
+  166.  [func]      jelte
+	The resolver now sends back a SERVFAIL when there is a client
+	timeout (timeout_client config setting), but it will not stop
+	resolving (until there is a lookup timeout or a result).
+	(Trac #497 and #489, git af0e5cd93bebb27cb5c4457f7759d12c8bf953a6)
+
+  165.  [func]      jelte
+	The resolver now handles CNAMEs, it will follow them, and include
+	them in the answer. The maximum length of CNAME chains that is
+	supported is 16.
+	(Trac #497, git af0e5cd93bebb27cb5c4457f7759d12c8bf953a6)
+
+  164.  [bug]           y-aharen
+	IntervalTimer: Modified the interface to accept interval in
+	milliseconds. It shortens the time of the tests of IntervalTimer.
+	(Trac #452, git c9f6acc81e24c4b8f0eb351123dc7b43f64e0914)
+
+  163.  [func]      vorner
+	The pimpl design pattern is used in UDPServer, with a shared
+	pointer. This makes it smaller to copy (which is done a lot as a
+	sideeffect of being coroutine) and speeds applications of this
+	class (notably b10-auth) up by around 10%.
+	(Trac #537, git 94cb95b1d508541201fc064302ba836164d3cbe6)
+
+  162.  [func]		stephen
+	Added C++ logging, allowing logging at different severities.
+	Code specifies the message to be logged via a symbol, and the
+	logging code picks up the message from an in-built dictionary.
+	The contents of the dictionary can be replaced at run-time by
+	locale-specific messages.  A message compiler program is provided
+	to create message header files and supply the default messages.
+	(Trac #438, git 7b1606cea7af15dc71f5ec1d70d958b00aa98af7)
+
+  161.  [func]		stephen
+	Added ResponseScrubber class to examine response from
+	a server and to remove out-of-bailiwick RRsets.  Also
+	does cross-section checks to ensure consistency.
+	(Trac #496, git b9296ca023cc9e76cda48a7eeebb0119166592c5)
+
+  160.  [func]		jelte
+  	Updated the resolver to take 3 different timeout values;
+	timeout_query for outstanding queries we sent while resolving
+	timeout_client for sending an answer back to the client
+	timeout_lookup for stopping the resolving
+	(currently 2 and 3 have the same final effect)
+	(Trac 489, git 578ea7f4ba94dc0d8a3d39231dad2be118e125a2)
+
   159.	[func]		smann
 	The resolver now has a configurable set of root servers to start
 	resolving at (called root_addresses). By default these are not
@@ -36,7 +155,8 @@ bind10-devel-20110120 released on January 20, 2011
 	receive buffer became full, and many other components that rely
 	on CC channels would stall (as noted in #420 and #513).  This is
 	an urgent care fix due to the severity of the problem; we'll need
-	to revisit it for cleaner fix later. (Trac #516, git 62c72fc)
+	to revisit it for cleaner fix later.
+	(Trac #516, git 62c72fcdf4617e4841e901408f1e7961255b8194)
 
   153.	[bug]		jelte
 	b10-cfgmgr: Fixed a bug where configuration updates sometimes
@@ -50,7 +170,7 @@ bind10-devel-20110120 released on January 20, 2011
 	the value to 0.  Disabling statistics updates will also work as
 	a temporary workaround of a known issue that b10-auth can block in
 	sending statistics and stop responding to queries as a result.
-	(Trac #513, git 285c5ee)
+	(Trac #513, git 285c5ee3d5582ed6df02d1aa00387f92a74e3695)
 
   151.  [bug]		smann
 	lib/log/dummylog.h: 
@@ -82,7 +202,7 @@ bind10-devel-20110120 released on January 20, 2011
   147.	[bug]		jinmei
 	python/isc/config: Fixed a bug that importing custom configuration
 	(in b10-config.db) of a remote module didn't work.
-	(Trac #478, git ea4a481)
+	(Trac #478, git ea4a481003d80caf2bff8d0187790efd526d72ca)
 
   146.	[func]		jelte
 	Command arguments were not validated internally against their
@@ -97,7 +217,8 @@ bind10-devel-20110120 released on January 20, 2011
 	only feasible for class IN in memory data source.  To reload a
 	zone "example.com" via bindctl, execute the command as follows:
 	> Auth loadzone origin = example.com
-	(Trac #467)
+	(Trac #467 git 4f7e1f46da1046de527ab129a88f6aad3dba7562
+	from 1d7d3918661ba1c6a8b1e40d8fcbc5640a84df12)
 
   144.	[build]		jinmei
 	Introduced a workaround for clang++ build on FreeBSD (and probably
@@ -107,7 +228,8 @@ bind10-devel-20110120 released on January 20, 2011
 	doesn't matter; the important part is the -L flag).  This
 	workaround is not automatically enabled as it's difficult to
 	detect the need for it dynamically, and must be enabled via the
-	variable by hand. (Trac #474, git cfde436)
+	variable by hand.
+	(Trac #474, git cfde436fbd7ddf3f49cbbd153999656e8ca2a298)
 
   143.	[build]		jinmei
 	Fixed build problems with clang++ in unit tests due to recent

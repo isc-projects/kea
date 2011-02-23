@@ -68,9 +68,26 @@ const char* const mx_txt =
     "mx.example.com. 3600 IN MX 20 mailer.example.org.\n"
     "mx.example.com. 3600 IN MX 30 mx.delegation.example.com.\n";
 const char* const www_a_txt = "www.example.com. 3600 IN A 192.0.2.80\n";
+const char* const cname_txt =
+    "cname.example.com. 3600 IN CNAME www.example.com.\n";
+const char* const cname_nxdom_txt =
+    "cnamenxdom.example.com. 3600 IN CNAME nxdomain.example.com.\n";
+// CNAME Leading out of zone
+const char* const cname_out_txt =
+    "cnameout.example.com. 3600 IN CNAME www.example.org.\n";
+// The DNAME to do tests against
+const char* const dname_txt =
+    "dname.example.com. 3600 IN DNAME "
+    "somethinglong.dnametarget.example.com.\n";
+// Some data at the dname node (allowed by RFC 2672)
+const char* const dname_a_txt =
+    "dname.example.com. 3600 IN A 192.0.2.5\n";
+// This is not inside the zone, this is created at runtime
+const char* const synthetized_cname_txt =
+    "www.dname.example.com. 3600 IN CNAME "
+    "www.somethinglong.dnametarget.example.com.\n";
 // The rest of data won't be referenced from the test cases.
 const char* const other_zone_rrs =
-    "cname.example.com. 3600 IN CNAME www.example.com.\n"
     "cnamemailer.example.com. 3600 IN CNAME www.example.com.\n"
     "cnamemx.example.com. 3600 IN MX 10 cnamemailer.example.com.\n"
     "mx.delegation.example.com. 3600 IN A 192.0.2.100\n";
@@ -82,20 +99,25 @@ const char* const other_zone_rrs =
 // behavior.
 // For simplicity, most names are assumed to be "in zone"; there's only
 // one zone cut at the point of name "delegation.example.com".
-// It doesn't handle empty non terminal nodes (if we need to test such cases
-// find() should have specialized code for it).
+// Another special name is "dname.example.com".  Query names under this name
+// will result in DNAME.
+// This mock zone doesn't handle empty non terminal nodes (if we need to test
+// such cases find() should have specialized code for it).
 class MockZone : public Zone {
 public:
     MockZone() :
         origin_(Name("example.com")),
         delegation_name_("delegation.example.com"),
+        dname_name_("dname.example.com"),
         has_SOA_(true),
         has_apex_NS_(true),
         rrclass_(RRClass::IN())
     {
         stringstream zone_stream;
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
-            delegation_txt << mx_txt << www_a_txt << other_zone_rrs;
+            delegation_txt << mx_txt << www_a_txt << cname_txt <<
+            cname_nxdom_txt << cname_out_txt << dname_txt << dname_a_txt <<
+            other_zone_rrs;
 
         masterLoad(zone_stream, origin_, rrclass_,
                    boost::bind(&MockZone::loadRRset, this, _1));
@@ -124,14 +146,20 @@ private:
         if (rrset->getName() == delegation_name_ &&
             rrset->getType() == RRType::NS()) {
             delegation_rrset_ = rrset;
+        } else if (rrset->getName() == dname_name_ &&
+            rrset->getType() == RRType::DNAME()) {
+            dname_rrset_ = rrset;
         }
     }
 
     const Name origin_;
+    // Names where we delegate somewhere else
     const Name delegation_name_;
+    const Name dname_name_;
     bool has_SOA_;
     bool has_apex_NS_;
     ConstRRsetPtr delegation_rrset_;
+    ConstRRsetPtr dname_rrset_;
     const RRClass rrclass_;
 };
 
@@ -153,6 +181,10 @@ MockZone::find(const Name& name, const RRType& type,
          name.compare(delegation_name_).getRelation() ==
          NameComparisonResult::SUBDOMAIN)) {
         return (FindResult(DELEGATION, delegation_rrset_));
+    // And under DNAME
+    } else if (name.compare(dname_name_).getRelation() ==
+        NameComparisonResult::SUBDOMAIN) {
+        return (FindResult(DNAME, dname_rrset_));
     }
 
     // normal cases.  names are searched for only per exact-match basis
@@ -169,8 +201,7 @@ MockZone::find(const Name& name, const RRType& type,
         // If not found but we have a target, fill it with all RRsets here
         if (!found_domain->second.empty() && target != NULL) {
             for (found_rrset = found_domain->second.begin();
-                 found_rrset != found_domain->second.end(); found_rrset++)
-            {
+                 found_rrset != found_domain->second.end(); found_rrset++) {
                 // Insert RRs under the domain name into target
                 target->addRRset(
                     boost::const_pointer_cast<RRset>(found_rrset->second));
@@ -422,4 +453,226 @@ TEST_F(QueryTest, MXAlias) {
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
                   NULL, NULL, ns_addrs_txt);
 }
+
+/*
+ * Tests encountering a cname.
+ *
+ * There are tests leading to successful answers, NXRRSET, NXDOMAIN and
+ * out of the zone.
+ *
+ * TODO: We currently don't do chaining, so only the CNAME itself should be
+ * returned.
+ */
+TEST_F(QueryTest, CNAME) {
+    Query(memory_datasrc, Name("cname.example.com"), RRType::A(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 0, 0,
+        cname_txt, NULL, NULL);
+}
+
+TEST_F(QueryTest, explicitCNAME) {
+    // same owner name as the CNAME test but explicitly query for CNAME RR.
+    // expect the same response as we don't provide a full chain yet.
+    Query(memory_datasrc, Name("cname.example.com"), RRType::CNAME(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, CNAME_NX_RRSET) {
+    // Leads to www.example.com, it doesn't have TXT
+    // note: with chaining, what should be expected is not trivial:
+    // BIND 9 returns the CNAME in answer and SOA in authority, no additional.
+    // NSD returns the CNAME, NS in authority, A/AAAA for NS in additional.
+    Query(memory_datasrc, Name("cname.example.com"), RRType::TXT(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 0, 0,
+        cname_txt, NULL, NULL);
+}
+
+TEST_F(QueryTest, explicitCNAME_NX_RRSET) {
+    // same owner name as the NXRRSET test but explicitly query for CNAME RR.
+    Query(memory_datasrc, Name("cname.example.com"), RRType::CNAME(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, CNAME_NX_DOMAIN) {
+    // Leads to nxdomain.example.com
+    // note: with chaining, what should be expected is not trivial:
+    // BIND 9 returns the CNAME in answer and SOA in authority, no additional,
+    // RCODE being NXDOMAIN.
+    // NSD returns the CNAME, NS in authority, A/AAAA for NS in additional,
+    // RCODE being NOERROR.
+    Query(memory_datasrc, Name("cnamenxdom.example.com"), RRType::A(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 0, 0,
+        cname_nxdom_txt, NULL, NULL);
+}
+
+TEST_F(QueryTest, explicitCNAME_NX_DOMAIN) {
+    // same owner name as the NXDOMAIN test but explicitly query for CNAME RR.
+    Query(memory_datasrc, Name("cnamenxdom.example.com"), RRType::CNAME(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_nxdom_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, CNAME_OUT) {
+    /*
+     * This leads out of zone. This should have only the CNAME even
+     * when we do chaining.
+     *
+     * TODO: We should be able to have two zones in the mock data source.
+     * Then the same test should be done with .org included there and
+     * see what it does (depends on what we want to do)
+     */
+    Query(memory_datasrc, Name("cnameout.example.com"), RRType::A(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 0, 0,
+        cname_out_txt, NULL, NULL);
+}
+
+TEST_F(QueryTest, explicitCNAME_OUT) {
+    // same owner name as the OUT test but explicitly query for CNAME RR.
+    Query(memory_datasrc, Name("cnameout.example.com"), RRType::CNAME(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        cname_out_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+/*
+ * Test a query under a domain with DNAME. We should get a synthetized CNAME
+ * as well as the DNAME.
+ *
+ * TODO: Once we have CNAME chaining, check it works with synthetized CNAMEs
+ * as well. This includes tests pointing inside the zone, outside the zone,
+ * pointing to NXRRSET and NXDOMAIN cases (similarly as with CNAME).
+ */
+TEST_F(QueryTest, DNAME) {
+    Query(memory_datasrc, Name("www.dname.example.com"), RRType::A(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 0, 0,
+        (string(dname_txt) + synthetized_cname_txt).c_str(),
+        NULL, NULL);
+}
+
+/*
+ * Ask an ANY query below a DNAME. Should return the DNAME and synthetized
+ * CNAME.
+ *
+ * ANY is handled specially sometimes. We check it is not the case with
+ * DNAME.
+ */
+TEST_F(QueryTest, DNAME_ANY) {
+    Query(memory_datasrc, Name("www.dname.example.com"), RRType::ANY(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 0, 0,
+        (string(dname_txt) + synthetized_cname_txt).c_str(), NULL, NULL);
+}
+
+// Test when we ask for DNAME explicitly, it does no synthetizing.
+TEST_F(QueryTest, explicitDNAME) {
+    Query(memory_datasrc, Name("dname.example.com"), RRType::DNAME(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        dname_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+/*
+ * Request a RRset at the domain with DNAME. It should not synthetize
+ * the CNAME, it should return the RRset.
+ */
+TEST_F(QueryTest, DNAME_A) {
+    Query(memory_datasrc, Name("dname.example.com"), RRType::A(),
+        response).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+        dname_a_txt, zone_ns_txt, ns_addrs_txt);
+}
+
+/*
+ * Request a RRset at the domain with DNAME that is not there (NXRRSET).
+ * It should not synthetize the CNAME.
+ */
+TEST_F(QueryTest, DNAME_NX_RRSET) {
+    EXPECT_NO_THROW(Query(memory_datasrc, Name("dname.example.com"),
+        RRType::TXT(), response).process());
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 1, 0,
+        NULL, soa_txt, NULL, mock_zone->getOrigin());
+}
+
+/*
+ * Constructing the CNAME will result in a name that is too long. This,
+ * however, should not throw (and crash the server), but respond with
+ * YXDOMAIN.
+ */
+TEST_F(QueryTest, LongDNAME) {
+    // A name that is as long as it can be
+    Name longname(
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+        "dname.example.com.");
+    EXPECT_NO_THROW(Query(memory_datasrc, longname, RRType::A(),
+        response).process());
+
+    responseCheck(response, Rcode::YXDOMAIN(), AA_FLAG, 1, 0, 0,
+        dname_txt, NULL, NULL);
+}
+
+/*
+ * Constructing the CNAME will result in a name of maximal length.
+ * This tests that we don't reject valid one by some kind of off by
+ * one mistake.
+ */
+TEST_F(QueryTest, MaxLenDNAME) {
+    Name longname(
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+        "dname.example.com.");
+    EXPECT_NO_THROW(Query(memory_datasrc, longname, RRType::A(),
+        response).process());
+
+    // Check the answer is OK
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 0, 0,
+        NULL, NULL, NULL);
+
+    // Check that the CNAME has the maximal length.
+    bool ok(false);
+    for (RRsetIterator i(response.beginSection(Message::SECTION_ANSWER));
+        i != response.endSection(Message::SECTION_ANSWER); ++ i) {
+        if ((*i)->getType() == RRType::CNAME()) {
+            ok = true;
+            RdataIteratorPtr ci((*i)->getRdataIterator());
+            ASSERT_FALSE(ci->isLast()) << "The CNAME is empty";
+            /*
+             * Does anybody have a clue why, if the Name::MAX_WIRE is put
+             * directly inside ASSERT_EQ, it fails to link and complains
+             * it is unresolved external?
+             */
+            const size_t max_len(Name::MAX_WIRE);
+            ASSERT_EQ(max_len, dynamic_cast<const rdata::generic::CNAME&>(
+                ci->getCurrent()).getCname().getLength());
+        }
+    }
+    EXPECT_TRUE(ok) << "The synthetized CNAME not found";
+}
+
 }
