@@ -609,7 +609,7 @@ class BoB:
     def stop_process(self, process, sendto):
         """
         Stop the given process, friendly-like. The process is the name it has
-        (in logs, etc), the sento is the address on msgq.
+        (in logs, etc), the sendto is the address on msgq.
         """
         if self.verbose:
             sys.stdout.write("[bind10] Asking %s to terminate\n" % process)
