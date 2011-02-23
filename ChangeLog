@@ -1,3 +1,7 @@
+  178.  [func]      jelte
+	Resolver now makes (limited) use of the cache
+	(Trac #491, git 8b41f77f0099ddc7ca7d34d39ad8c39bb1a8363c)
+
   177.  [func]      stephen
 	The upstream fetch code in asiolink is now protocol agnostic to
 	allow for the addition of fallback to TCP if a fetch response
