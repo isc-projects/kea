@@ -142,13 +142,13 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.cfg_start_auth, True)
         self.assertEqual(bob.cfg_start_resolver, False)
 
-# Class for testing the Bob.start_all_processes() method call.
+# Class for testing the BoB start/stop components routines.
 #
 # Although testing that external processes start is outside the scope
 # of the unit test, by overriding the process start methods we can check
 # that the right processes are started depending on the configuration
 # options.
-class StartAllProcessesBob(BoB):
+class StartCheckBob(BoB):
     def __init__(self):
         BoB.__init__(self)
 
@@ -199,6 +199,9 @@ class StartAllProcessesBob(BoB):
     def start_cmdctl(self, c_channel_env):
         self.cmdctl = True
 
+    # We don't really use all of these stop_ methods. But it might turn out
+    # someone would add some stop_ method to BoB and we want that one overriden
+    # in case he forgets to update the tests.
     def stop_msgq(self):
         self.msgq = False
 
@@ -285,8 +288,8 @@ class TestStartStopProcessesBob(unittest.TestCase):
     # Checks the processes started when starting neither auth nor resolver
     # is specified.
     def test_start_none(self):
-        # Created Bob and ensure initialization correct
-        bob = StartAllProcessesBob()
+        # Create BoB and ensure correct initialization
+        bob = StartCheckBob()
         self.check_preconditions(bob)
 
         # Start processes and check what was started
@@ -298,8 +301,8 @@ class TestStartStopProcessesBob(unittest.TestCase):
 
     # Checks the processes started when starting only the auth process
     def test_start_auth(self):
-        # Created Bob and ensure initialization correct
-        bob = StartAllProcessesBob()
+        # Create BoB and ensure correct initialization
+        bob = StartCheckBob()
         self.check_preconditions(bob)
 
         # Start processes and check what was started
@@ -312,8 +315,8 @@ class TestStartStopProcessesBob(unittest.TestCase):
 
     # Checks the processes started when starting only the resolver process
     def test_start_resolver(self):
-        # Created Bob and ensure initialization correct
-        bob = StartAllProcessesBob()
+        # Create BoB and ensure correct initialization
+        bob = StartCheckBob()
         self.check_preconditions(bob)
 
         # Start processes and check what was started
@@ -326,8 +329,8 @@ class TestStartStopProcessesBob(unittest.TestCase):
 
     # Checks the processes started when starting both auth and resolver process
     def test_start_both(self):
-        # Created Bob and ensure initialization correct
-        bob = StartAllProcessesBob()
+        # Create BoB and ensure correct initialization
+        bob = StartCheckBob()
         self.check_preconditions(bob)
 
         # Start processes and check what was started
@@ -344,8 +347,8 @@ class TestStartStopProcessesBob(unittest.TestCase):
         to configuration changes.
         """
 
-        # Created Bob and ensure initialization correct
-        bob = StartAllProcessesBob()
+        # Create BoB and ensure correct initialization
+        bob = StartCheckBob()
         self.check_preconditions(bob)
 
         # Start processes (nothing much should be started, as in
@@ -409,8 +412,8 @@ class TestStartStopProcessesBob(unittest.TestCase):
         """
         Tests that a process is started only once.
         """
-        # Created Bob and ensure initialization correct
-        bob = StartAllProcessesBob()
+        # Create BoB and ensure correct initialization
+        bob = StartCheckBob()
         self.check_preconditions(bob)
 
         # Start processes (both)
@@ -436,7 +439,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         Test that processes are not started by the config handler before
         startup.
         """
-        bob = StartAllProcessesBob()
+        bob = StartCheckBob()
         self.check_preconditions(bob)
 
         bob.start_auth = lambda: self.fail("Started auth again")
