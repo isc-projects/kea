@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/select.h>
@@ -37,7 +39,7 @@
 
 #include <auth/spec_config.h>
 #include <auth/common.h>
-#include <auth/config.h>
+#include <auth/auth_config.h>
 #include <auth/command.h>
 #include <auth/change_user.h>
 #include <auth/auth_srv.h>

@@ -26,7 +26,7 @@
 #include <xfr/xfrout_client.h>
 
 #include <auth/auth_srv.h>
-#include <auth/config.h>
+#include <auth/auth_config.h>
 #include <auth/common.h>
 
 #include <testutils/mockups.h>
