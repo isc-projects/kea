@@ -471,7 +471,6 @@ if test "${use_boost_threads}" = "yes" ; then
     boost::mutex m;
     ],
         [ AC_MSG_RESULT(yes (without libboost_thread)) ],
-    
         # there is one specific problem with SunStudio 5.10
         # where including boost/thread causes a compilation failure
         # There is a workaround in boost but it checks the version not being 5.10

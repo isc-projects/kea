@@ -33,7 +33,7 @@
 /// (TODO2)
 
 #ifndef __LOCKS_
-#define __LOCKS_ 
+#define __LOCKS_
 
 #ifndef USE_BOOST_THREADS
 
@@ -52,16 +52,16 @@ class upgradable_mutex {
 template <typename T> 
 class sharable_lock {
 public:
-    sharable_lock(T mtype) { (void) mtype; }
+    sharable_lock(T) { }
 };
 
-template <typename T> 
+template <typename T>
 class scoped_lock {
 public:
-    scoped_lock(T mtype) { (void) mtype; }
-    
-    void lock() {};
-    void unlock() {};
+    scoped_lock(T) { }
+
+    void lock() {}
+    void unlock() {}
 };
 
 }
@@ -104,7 +104,7 @@ public:
 template <class T> 
 struct scoped_lock : public boost::interprocess::scoped_lock<T> {
 public:
-    scoped_lock(T& mtype) : boost::interprocess::scoped_lock<T>(mtype) { (void) mtype; }
+    scoped_lock(T& mtype) : boost::interprocess::scoped_lock<T>(mtype) { }
 };
 
 }
