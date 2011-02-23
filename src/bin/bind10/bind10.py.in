@@ -235,34 +235,38 @@ class BoB:
         if self.verbose:
             sys.stdout.write("[bind10] Handling new configuration: " +
                 str(new_config) + "\n")
-        if 'start_resolver' in new_config:
-            if new_config['start_resolver']:
-                if not self.started_resolver_family:
+        def start_stop(name, started, start, stop):
+            if not'start_' + name in new_config:
+                return
+            if new_config['start_' + name]:
+                if not started:
                     if self.uid is not None:
-                        sys.stderr.write("[bind10] Starting resolver as a user," +
-                            "not root. This might fail.\n")
-                    self.start_resolver(self.c_channel_env)
-                    self.started_resolver_family = True
+                        sys.stderr.write("[bind10] Starting " + name + " as " +
+                            "a user, not root. This might fail.\n")
+                    start()
             else:
-                self.stop_resolver()
-                self.started_resolver_family = False
-        if 'start_auth' in new_config:
-            if new_config['start_auth']:
-                if not self.started_auth_family:
-                    if self.uid is not None:
-                        sys.stderr.write("[bind10] Starting auth as a user," +
-                            "not root. This might fail.\n")
-                    self.start_auth(self.c_channel_env)
-                    self.start_xfrout(self.c_channel_env)
-                    self.start_xfrin(self.c_channel_env)
-                    self.start_zonemgr(self.c_channel_env)
-                    self.started_auth_family = True
-            else:
-                self.stop_zonemgr()
-                self.stop_xfrin()
-                self.stop_xfrout()
-                self.stop_auth()
-                self.started_auth_family = False
+                stop()
+        def resolver_on():
+            self.start_resolver(self.c_channel_env)
+            self.started_resolver_family = True
+        def resolver_off():
+            self.stop_resolver()
+            self.started_resolver_family = False
+        start_stop('resolver', self.started_resolver_family, resolver_on,
+            resolver_off)
+        def auth_on():
+            self.start_auth(self.c_channel_env)
+            self.start_xfrout(self.c_channel_env)
+            self.start_xfrin(self.c_channel_env)
+            self.start_zonemgr(self.c_channel_env)
+            self.started_auth_family = True
+        def auth_off():
+            self.stop_zonemgr()
+            self.stop_xfrin()
+            self.stop_xfrout()
+            self.stop_auth()
+            self.started_auth_family = False
+        start_stop('auth', self.started_auth_family, auth_on, auth_off)
 
         answer = isc.config.ccsession.create_answer(0)
         return answer
