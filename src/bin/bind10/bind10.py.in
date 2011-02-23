@@ -229,7 +229,7 @@ class BoB:
         self.verbose = verbose
 
     def config_handler(self, new_config):
-        # This is initial update, don't do anything by it, leave it to startup
+        # If this is initial update, don't do anything now, leave it to startup
         if not self.runnable:
             return
         if self.verbose:
@@ -605,7 +605,7 @@ class BoB:
     def stop_process(self, process, sendto):
         """
         Stop the given process, friendly-like. The process is the name it has
-        (in logs, etc), the second is the address on msgq.
+        (in logs, etc), the sento is the address on msgq.
         """
         if self.verbose:
             sys.stdout.write("[bind10] Asking %s to terminate\n" % process)
