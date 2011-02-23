@@ -612,10 +612,10 @@ class BoB:
         self.cc_session.group_sendmsg(cmd, "Zonemgr", "Zonemgr")
         self.cc_session.group_sendmsg(cmd, "Stats", "Stats")
 
-    def stop_process(self, process, sendto):
+    def stop_process(self, process, recipient):
         """
         Stop the given process, friendly-like. The process is the name it has
-        (in logs, etc), the sendto is the address on msgq.
+        (in logs, etc), the recipient is the address on msgq.
         """
         if self.verbose:
             sys.stdout.write("[bind10] Asking %s to terminate\n" % process)
@@ -623,8 +623,8 @@ class BoB:
         # help. We can even store it in the dict, it is used only as a set
         self.expected_shutdowns[process] = 1
         # Ask the process to die willingly
-        self.cc_session.group_sendmsg({'command': ['shutdown']}, sendto,
-            sendto)
+        self.cc_session.group_sendmsg({'command': ['shutdown']}, recipient,
+            recipient)
 
     # Series of stop_process wrappers
     def stop_resolver(self):
