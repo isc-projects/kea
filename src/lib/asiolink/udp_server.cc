@@ -28,6 +28,8 @@
 #include <asiolink/udp_server.h>
 #include <asiolink/udp_socket.h>
 
+#include <dns/opcode.h>
+
 using namespace asio;
 using asio::ip::udp;
 using isc::log::dlog;

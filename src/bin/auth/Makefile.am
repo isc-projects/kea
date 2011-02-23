@@ -50,6 +50,7 @@ b10_auth_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
 b10_auth_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 b10_auth_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 b10_auth_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
+b10_auth_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 b10_auth_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
 b10_auth_LDADD += $(SQLITE_LIBS)
 

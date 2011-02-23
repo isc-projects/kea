@@ -1,2 +1,2 @@
 SUBDIRS = exceptions dns cc config datasrc python xfr bench log \
-          resolve asiolink testutils nsas cache
+          resolve nsas cache asiolink testutils
