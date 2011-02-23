@@ -235,79 +235,52 @@ class TestStartStopProcessesBob(unittest.TestCase):
     of processes and that the right processes are started and stopped
     according to changes in configuration.
     """
+    def check_started(self, bob, core, auth, resolver):
+        """
+        Check that the right sets of processes are started. The ones that
+        should running are specified by the core, auth and resolver parameters
+        (they are groups of processes, eg. auth means b10-auth, -xfrout, -xfrin
+        and -zonemgr).
+        """
+        self.assertEqual(bob.msgq, core)
+        self.assertEqual(bob.cfgmgr, core)
+        self.assertEqual(bob.ccsession, core)
+        self.assertEqual(bob.auth, auth)
+        self.assertEqual(bob.resolver, resolver)
+        self.assertEqual(bob.xfrout, auth)
+        self.assertEqual(bob.xfrin, auth)
+        self.assertEqual(bob.zonemgr, auth)
+        self.assertEqual(bob.stats, core)
+        self.assertEqual(bob.cmdctl, core)
+
     def check_preconditions(self, bob):
-        self.assertEqual(bob.msgq, False)
-        self.assertEqual(bob.cfgmgr, False)
-        self.assertEqual(bob.ccsession, False)
-        self.assertEqual(bob.auth, False)
-        self.assertEqual(bob.resolver, False)
-        self.assertEqual(bob.xfrout, False)
-        self.assertEqual(bob.xfrin, False)
-        self.assertEqual(bob.zonemgr, False)
-        self.assertEqual(bob.stats, False)
-        self.assertEqual(bob.cmdctl, False)
+        self.check_started(self, bob, False, False, False)
 
     def check_started_none(self, bob):
         """
         Check that the situation is according to configuration where no servers
         should be started. Some processes still need to be running.
         """
-        self.assertEqual(bob.msgq, True)
-        self.assertEqual(bob.cfgmgr, True)
-        self.assertEqual(bob.ccsession, True)
-        self.assertEqual(bob.auth, False)
-        self.assertEqual(bob.resolver, False)
-        self.assertEqual(bob.xfrout, False)
-        self.assertEqual(bob.xfrin, False)
-        self.assertEqual(bob.zonemgr, False)
-        self.assertEqual(bob.stats, True)
-        self.assertEqual(bob.cmdctl, True)
+        self.check_started(self, bob, True, False, False)
 
     def check_started_both(self, bob):
         """
         Check the situation is according to configuration where both servers
         (auth and resolver) are enabled.
         """
-        self.assertEqual(bob.msgq, True)
-        self.assertEqual(bob.cfgmgr, True)
-        self.assertEqual(bob.ccsession, True)
-        self.assertEqual(bob.auth, True)
-        self.assertEqual(bob.resolver, True)
-        self.assertEqual(bob.xfrout, True)
-        self.assertEqual(bob.xfrin, True)
-        self.assertEqual(bob.zonemgr, True)
-        self.assertEqual(bob.stats, True)
-        self.assertEqual(bob.cmdctl, True)
+        self.check_started(self, bob, True, True, True)
 
     def check_started_auth(self, bob):
         """
         Check the set of processes needed to run auth only is started.
         """
-        self.assertEqual(bob.msgq, True)
-        self.assertEqual(bob.cfgmgr, True)
-        self.assertEqual(bob.ccsession, True)
-        self.assertEqual(bob.auth, True)
-        self.assertEqual(bob.resolver, False)
-        self.assertEqual(bob.xfrout, True)
-        self.assertEqual(bob.xfrin, True)
-        self.assertEqual(bob.zonemgr, True)
-        self.assertEqual(bob.stats, True)
-        self.assertEqual(bob.cmdctl, True)
+        self.check_started(self, bob, True, True, False)
 
     def check_started_resolver(self, bob):
         """
         Check the set of processes needed to run resolver only is started.
         """
-        self.assertEqual(bob.msgq, True)
-        self.assertEqual(bob.cfgmgr, True)
-        self.assertEqual(bob.ccsession, True)
-        self.assertEqual(bob.auth, False)
-        self.assertEqual(bob.resolver, True)
-        self.assertEqual(bob.xfrout, False)
-        self.assertEqual(bob.xfrin, False)
-        self.assertEqual(bob.zonemgr, False)
-        self.assertEqual(bob.stats, True)
-        self.assertEqual(bob.cmdctl, True)
+        self.check_started(self, bob, True, False, True)
 
     # Checks the processes started when starting neither auth nor resolver
     # is specified.
