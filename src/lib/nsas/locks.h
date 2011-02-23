@@ -49,7 +49,7 @@ class recursive_mutex {
 class upgradable_mutex {
 };
 
-template <typename T> 
+template <typename T>
 class sharable_lock {
 public:
     sharable_lock(T) { }
@@ -94,14 +94,14 @@ typedef boost::mutex mutex;
 typedef boost::interprocess::interprocess_upgradable_mutex upgradable_mutex;
 typedef boost::interprocess::interprocess_recursive_mutex recursive_mutex;
 
-template <typename T> 
+template <typename T>
 struct sharable_lock : public boost::interprocess::sharable_lock<T> {
 public:
     sharable_lock(T&  mtype) : boost::interprocess::sharable_lock<T>(mtype) {}
 };
 
 
-template <class T> 
+template <class T>
 struct scoped_lock : public boost::interprocess::scoped_lock<T> {
 public:
     scoped_lock(T& mtype) : boost::interprocess::scoped_lock<T>(mtype) { }
