@@ -68,9 +68,9 @@ TCPServer::operator()(error_code ec, size_t length) {
     /// Because the coroutine reeentry block is implemented as
     /// a switch statement, inline variable declarations are not
     /// permitted.  Certain variables used below can be declared here.
-    
+
     /// If user has stopped the server, we won't enter the
-    /// coroutine body, just return 
+    /// coroutine body, just return
     if (stopped_by_hand_) {
         return;
     }
