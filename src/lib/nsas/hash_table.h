@@ -121,7 +121,7 @@ public:
     isc::locks::scoped_lock<typename HashTableSlot<T>::mutex_type>
     scoped_lock;                    ///< Type for a scope-limited write-lock
     //@}
-    
+
     /// \brief Constructor
     ///
     /// Initialises the hash table.
