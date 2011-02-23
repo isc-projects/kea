@@ -142,7 +142,7 @@ struct UDPServer::Data {
     size_t bytes_;
     bool done_;
 
-    //whether user implicitly stop the server
+    //whether user explicitly stop the server
     bool stopped_by_hand_;
 
     // Callback functions provided by the caller
