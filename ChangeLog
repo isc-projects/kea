@@ -1,3 +1,9 @@
+  177.  [func]      stephen
+	The upstream fetch code in asiolink is now protocol agnostic to
+	allow for the addition of fallback to TCP if a fetch response
+	indicates truncation.
+	(Trac #554, git 9739cbce2eaffc7e80640db58a8513295cf684de)
+
   176.  [func]      zhang likun
 	src/lib/cache: Rename one interface: from lookupClosestRRset()
 	to lookupDeepestNS(), and remove one parameter of it.
