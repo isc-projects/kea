@@ -63,10 +63,9 @@ NSEC::NSEC(const string& nsec_str) :
     memset(bitmap, 0, sizeof(bitmap));
     do { 
         string type;
-        int code;
         iss >> type;
         try {
-            code = RRType(type).getCode();
+            const int code = RRType(type).getCode();
             bitmap[code / 8] |= (0x80 >> (code % 8));
         } catch (...) {
             isc_throw(InvalidRdataText, "Invalid RRtype in NSEC");
