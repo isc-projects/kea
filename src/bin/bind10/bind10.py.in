@@ -72,7 +72,7 @@ isc.util.process.rename(sys.argv[0])
 # This is the version that gets displayed to the user.
 # The VERSION string consists of the module name, the module version
 # number, and the overall BIND 10 version number (set in configure.ac).
-VERSION = "bind10 20101129 (BIND 10 @PACKAGE_VERSION@)"
+VERSION = "bind10 20110223 (BIND 10 @PACKAGE_VERSION@)"
 
 # This is for bind10.boottime of stats module
 _BASETIME = time.gmtime()

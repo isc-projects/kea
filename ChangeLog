@@ -1,3 +1,5 @@
+bind10-devel-20110224 released on February 24, 2011
+
   179.  [func]      vorner
 	It is possible to start and stop resolver and authoritative
 	server without restart of the whole system. Change of the
