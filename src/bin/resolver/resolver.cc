@@ -633,7 +633,7 @@ Resolver::setListenAddresses(const vector<addr_t>& addresses) {
         setAddresses(dnss_, addresses);
         impl_->listen_ = addresses;
     }
-    catch (const exception& e) {
+    catch (exception& e) {
         /*
          * We couldn't set it. So return it back. If that fails as well,
          * we have a problem.
@@ -650,7 +650,7 @@ Resolver::setListenAddresses(const vector<addr_t>& addresses) {
             dlog(string("Rollback failed with: ") + e2.what(),true);
             abort();
         }
-        throw e; // Let it fly a little bit further
+        throw; // Let it fly a little bit further
     }
 }
 
