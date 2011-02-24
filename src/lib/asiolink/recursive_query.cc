@@ -173,7 +173,7 @@ private:
             int serverIndex = rand() % zs;
             dlog("Sending query to zone server (" + question_.toText() +
                 ") to " + zone_servers_.at(serverIndex).first);
-            IOFetch query(IPPROTO_IDP, io_, question_,
+            IOFetch query(IPPROTO_UDP, io_, question_,
                 zone_servers_.at(serverIndex).first,
                 zone_servers_.at(serverIndex).second, buffer_, this,
                 query_timeout_);
