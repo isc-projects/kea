@@ -209,23 +209,68 @@ class BoB:
         self.ccs = None
         self.cfg_start_auth = True
         self.cfg_start_resolver = False
+        self.started_auth_family = False
+        self.started_resolver_family = False
         self.curproc = None
         self.dead_processes = {}
         self.msgq_socket_file = msgq_socket_file
         self.nocache = nocache
         self.processes = {}
+        self.expected_shutdowns = {}
         self.runnable = False
         self.uid = setuid
         self.username = username
         self.verbose = verbose
 
     def config_handler(self, new_config):
+        # If this is initial update, don't do anything now, leave it to startup
+        if not self.runnable:
+            return
+        # Now we declare few functions used only internally here. Besides the
+        # benefit of not polluting the name space, they are closures, so we
+        # don't need to pass some variables
+        def start_stop(name, started, start, stop):
+            if not'start_' + name in new_config:
+                return
+            if new_config['start_' + name]:
+                if not started:
+                    if self.uid is not None:
+                        sys.stderr.write("[bind10] Starting " + name + " as " +
+                            "a user, not root. This might fail.\n")
+                    start()
+            else:
+                stop()
+        # These four functions are passed to start_stop (smells like functional
+        # programming little bit)
+        def resolver_on():
+            self.start_resolver(self.c_channel_env)
+            self.started_resolver_family = True
+        def resolver_off():
+            self.stop_resolver()
+            self.started_resolver_family = False
+        def auth_on():
+            self.start_auth(self.c_channel_env)
+            self.start_xfrout(self.c_channel_env)
+            self.start_xfrin(self.c_channel_env)
+            self.start_zonemgr(self.c_channel_env)
+            self.started_auth_family = True
+        def auth_off():
+            self.stop_zonemgr()
+            self.stop_xfrin()
+            self.stop_xfrout()
+            self.stop_auth()
+            self.started_auth_family = False
+
+        # The real code of the config handler function follows here
         if self.verbose:
             sys.stdout.write("[bind10] Handling new configuration: " +
                 str(new_config) + "\n")
+        start_stop('resolver', self.started_resolver_family, resolver_on,
+            resolver_off)
+        start_stop('auth', self.started_auth_family, auth_on, auth_off)
+
         answer = isc.config.ccsession.create_answer(0)
         return answer
-        # TODO
 
     def command_handler(self, command, args):
         if self.verbose:
@@ -464,11 +509,12 @@ class BoB:
         # XXX: we hardcode port 8080
         self.start_simple("b10-cmdctl", c_channel_env, 8080)
 
-    def start_all_processes(self, c_channel_env):
+    def start_all_processes(self):
         """
             Starts up all the processes.  Any exception generated during the
             starting of the processes is handled by the caller.
         """
+        c_channel_env = self.c_channel_env
         self.start_msgq(c_channel_env)
         self.start_cfgmgr(c_channel_env)
         self.start_ccsession(c_channel_env)
@@ -485,6 +531,7 @@ class BoB:
         # ... and resolver (if selected):
         if self.cfg_start_resolver:
             self.start_resolver(c_channel_env)
+            self.started_resolver_family = True
 
         # Everything after the main components can run as non-root.
         # TODO: this is only temporary - once the privileged socket creator is
@@ -498,6 +545,7 @@ class BoB:
             self.start_xfrout(c_channel_env)
             self.start_xfrin(c_channel_env)
             self.start_zonemgr(c_channel_env)
+            self.started_auth_family = True
 
         # ... and finally start the remaining processes
         self.start_stats(c_channel_env)
@@ -528,7 +576,8 @@ class BoB:
         # Start all processes.  If any one fails to start, kill all started
         # processes and exit with an error indication.
         try:
-            self.start_all_processes(c_channel_env)
+            self.c_channel_env = c_channel_env
+            self.start_all_processes()
         except Exception as e:
             self.kill_started_processes()
             return "Unable to start " + self.curproc + ": " + str(e)
@@ -550,10 +599,35 @@ class BoB:
         self.cc_session.group_sendmsg(cmd, "Zonemgr", "Zonemgr")
         self.cc_session.group_sendmsg(cmd, "Stats", "Stats")
 
-    def stop_process(self, process):
-        """Stop the given process, friendly-like."""
-        # XXX nothing yet
-        pass
+    def stop_process(self, process, recipient):
+        """
+        Stop the given process, friendly-like. The process is the name it has
+        (in logs, etc), the recipient is the address on msgq.
+        """
+        if self.verbose:
+            sys.stdout.write("[bind10] Asking %s to terminate\n" % process)
+        # TODO: Some timeout to solve processes that don't want to die would
+        # help. We can even store it in the dict, it is used only as a set
+        self.expected_shutdowns[process] = 1
+        # Ask the process to die willingly
+        self.cc_session.group_sendmsg({'command': ['shutdown']}, recipient,
+            recipient)
+
+    # Series of stop_process wrappers
+    def stop_resolver(self):
+        self.stop_process('b10-resolver', 'Resolver')
+
+    def stop_auth(self):
+        self.stop_process('b10-auth', 'Auth')
+
+    def stop_xfrout(self):
+        self.stop_process('b10-xfrout', 'Xfrout')
+
+    def stop_xfrin(self):
+        self.stop_process('b10-xfrin', 'Xfrin')
+
+    def stop_zonemgr(self):
+        self.stop_process('b10-zonemgr', 'Zonemgr')
 
     def shutdown(self):
         """Stop the BoB instance."""
@@ -659,6 +733,10 @@ class BoB:
         still_dead = {}
         now = time.time()
         for proc_info in self.dead_processes.values():
+            if proc_info.name in self.expected_shutdowns:
+                # We don't restart, we wanted it to die
+                del self.expected_shutdowns[proc_info.name]
+                continue
             restart_time = proc_info.restart_schedule.get_restart_time(now)
             if restart_time > now:
                 if (next_restart is None) or (next_restart > restart_time):
