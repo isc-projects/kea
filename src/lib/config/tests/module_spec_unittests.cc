@@ -23,7 +23,7 @@
 using namespace isc::data;
 using namespace isc::config;
 
-std::string specfile(const std::string name) {
+std::string specfile(const std::string& name) {
     return (std::string(TEST_DATA_PATH) + "/" + name);
 }
 
