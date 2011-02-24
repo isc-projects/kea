@@ -1,3 +1,8 @@
+	172.  [func] 	feng
+	Add stop interface into dns server, so we can stop each running
+	server individually.With it, user can reconfigure its running server
+	with different ip address or port.
+
   171.  [func]      feng, jerry, jinmei, vorner
 	b10-auth, src/lib/datasrc: in memory data source now works as a
 	complete data source for authoritative DNS servers and b10-auth
