@@ -189,6 +189,10 @@ TCPServer::asyncLookup() {
 }
 
 void TCPServer::stop() {
+    //server should not be stopped twice
+    if (stopped_by_hand_)
+        return;
+
     stopped_by_hand_ = true;
     acceptor_->close();
     socket_->close();
