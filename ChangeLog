@@ -1,3 +1,10 @@
+  179.  [func]      vorner
+	It is possible to start and stop resolver and authoritative
+	server without restart of the whole system. Change of the
+	configuration (Boss/start_auth and Boss/start_resolver) is
+	enough.
+	(Trac #565, git 0ac0b4602fa30852b0d86cc3c0b4730deb1a58fe)
+
   178.  [func]      jelte
 	Resolver now makes (limited) use of the cache
 	(Trac #491, git 8b41f77f0099ddc7ca7d34d39ad8c39bb1a8363c)
