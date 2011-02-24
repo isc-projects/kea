@@ -472,7 +472,7 @@ struct MemoryZone::MemoryZoneImpl {
                      * Otherwise, why would the DOMAINFLAG_WILD be there if
                      * there was no wildcard under it?
                      */
-                    assert(result = DomainTree::EXACTMATCH);
+                    assert(result == DomainTree::EXACTMATCH);
                     /*
                      * We have the wildcard node now. Jump below the switch,
                      * where handling of the common (exact-match) case is.
