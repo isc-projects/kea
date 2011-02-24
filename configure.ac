@@ -198,8 +198,9 @@ if test "$setproctitle_check" = "yes" ; then
         AC_MSG_RESULT(ok)
     else
         AC_MSG_RESULT(missing)
-        AC_MSG_ERROR([Missing setproctitle module. Either install it or provide --disable-setproctitle-check.
-In that case we will continue, but naming of python processes will not work.])
+        AC_MSG_WARN([Missing setproctitle python module.
+Use --disable-setproctitle-check to skip this check.
+In this case we will continue, but naming of python processes will not work.])
     fi
 fi
 
