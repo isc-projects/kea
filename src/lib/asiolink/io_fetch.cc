@@ -25,8 +25,12 @@
 #include <dns/opcode.h>
 #include <dns/rcode.h>
 #include <log/dummylog.h>
+#include <log/logger.h>
 
 #include <asio.hpp>
+#include <asiolink/asiodef.h>
+#include <asiolink/io_address.h>
+#include <asiolink/io_endpoint.h>
 #include <asiolink/io_fetch.h>
 
 using namespace asio;
@@ -35,6 +39,10 @@ using namespace isc::log;
 using namespace std;
 
 namespace asiolink {
+
+/// Use the ASIO logger
+
+isc::log::Logger logger("asio");
 
 /// IOFetch Constructor - just initialize the private data
 
@@ -52,7 +60,10 @@ IOFetch::IOFetch(int protocol, IOService& service,
 
 void
 IOFetch::operator()(error_code ec, size_t length) {
-    if (ec || data_->stopped) {
+    if (data_->stopped) {
+        return;
+    } else if (ec) {
+        logIOFailure(ec);
         return;
     }
 
@@ -93,11 +104,13 @@ IOFetch::operator()(error_code ec, size_t length) {
         // Open a connection to the target system.  For speed, if the operation
         // was completed synchronously (i.e. UDP operation) we bypass the yield.
         if (data_->socket->open(data_->remote.get(), *this)) {
+            data_->origin = OPEN;
             CORO_YIELD;
         }
 
         // Begin an asynchronous send, and then yield.  When the send completes
         // send completes, we will resume immediately after this point.
+        data_->origin = SEND;
         CORO_YIELD data_->socket->asyncSend(data_->msgbuf->getData(),
             data_->msgbuf->getLength(), data_->remote.get(), *this);
 
@@ -108,6 +121,7 @@ IOFetch::operator()(error_code ec, size_t length) {
         // we need to yield ... and we *really* don't want to set up another
         // coroutine within that method.)  So after each receive (and yield),
         // we check if the operation is complete and if not, loop to read again.
+        data_->origin = RECEIVE;
         do {
             CORO_YIELD data_->socket->asyncReceive(data_->data.get(),
                 static_cast<size_t>(MAX_LENGTH), data_->cumulative,
@@ -156,20 +170,30 @@ IOFetch::stop(Result result) {
         // variable should be done inside a mutex (and the stopped_ variable
         // declared as "volatile").
         //
+        // Although Logger::debug checks the debug flag internally, doing it
+        // in below avoids the overhead of a string conversion in the common
+        // case when debug is not enabled.
+        //
         // TODO: Update testing of stopped_ if threads are used.
         data_->stopped = true;
 
         switch (result) {
             case TIME_OUT:
-                dlog("Query timed out");
+                if (logger.isDebugEnabled(1)) {
+                    logger.debug(1, ASIO_RECVTMO,
+                                 data_->remote->getAddress().toText().c_str());
+                }
                 break;
 
             case STOPPED:
-                dlog("Query stopped");
+                if (logger.isDebugEnabled(50)) {
+                    logger.debug(50, ASIO_FETCOMP,
+                                 data_->remote->getAddress().toText().c_str());
+                }
                 break;
 
             default:
-                ;
+                logger.error(ASIO_UNKRESULT, static_cast<int>(result));
         }
 
         // Stop requested, cancel and I/O's on the socket and shut it down,
@@ -186,6 +210,38 @@ IOFetch::stop(Result result) {
 
         // Mark that stop() has now been called.
 
+    }
+}
+
+// Log an error - called on I/O failure
+
+void IOFetch::logIOFailure(asio::error_code& ec) {
+
+    // Get information that will be in all messages
+    static const char* PROTOCOL[2] = {"TCP", "UDP"};
+    const char* prot = (data_->remote->getProtocol() == IPPROTO_TCP) ?
+                        PROTOCOL[0] : PROTOCOL[1];
+
+    int errcode = ec.value();
+
+    std::string str_address = data_->remote->getAddress().toText();
+    const char* address = str_address.c_str();
+
+    switch (data_->origin) {
+    case OPEN:
+        logger.error(ASIO_OPENSOCK, errcode, prot, address);
+        break;
+
+    case SEND:
+        logger.error(ASIO_SENDSOCK, errcode, prot, address);
+        break;
+
+    case RECEIVE:
+        logger.error(ASIO_RECVSOCK, errcode, prot, address);
+        break;
+
+    default:
+        logger.error(ASIO_UNKORIGIN, errcode, prot, address);
     }
 }
 
