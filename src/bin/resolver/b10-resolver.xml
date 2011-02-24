@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>January 19, 2011</date>
+    <date>February 17, 2011</date>
   </refentryinfo>
 
   <refmeta>
@@ -69,11 +69,13 @@
 <citerefentry><refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
     </para>
 
+<!--
     <note><para>
-      This prototype version only supports forwarding.  Future versions
-      will introduce full recursion, cache, lookup of local authoritative
-      data (as in <command>b10-auth</command>), and DNSSEC validation.
+      Future versions will introduce lookup of local authoritative
+      data (as in <command>b10-auth</command>) and DNSSEC validation.
     </para></note>
+-->
+
   </refsect1>
 
   <refsect1>
@@ -128,7 +130,7 @@ port
 -->
     </para>
 
-<!-- trac386:
+<!-- trac384:
 
 once that is merged you can for instance do 'config add Resolver/forward_addresses { "port": 123 } and it will fill in the rest (in this case ::1 for the address)
 
@@ -145,13 +147,43 @@ once that is merged you can for instance do 'config add Resolver/forward_address
 
     <para>
       <varname>retries</varname> is the number of times to retry
-      (resend query) after a timeout.
-      The default is 0 (do not retry).
+      (resend query) after a query timeout
+      (<varname>timeout_query</varname>).
+      The default is 3.
     </para>
 
     <para>
-      <varname>timeout</varname> is the number of milliseconds to
-      wait for answer. If set to -1, the timeout is disabled.
+      <varname>root_addresses</varname> is a list of addresses and ports
+      for <command>b10-resolver</command> to use directly as
+      root servers to start resolving.
+      The list items are the <varname>address</varname> string
+      and <varname>port</varname> number.
+      If empty, a hardcoded address for F-root (192.5.5.241) is used.
+    </para>
+
+    <para>
+      <varname>timeout_client</varname> is the number of milliseconds
+      to wait before timing out the incoming client query.
+      If set to -1, this timeout is disabled.
+      The default is 4000.
+      After this timeout, a SERVFAIL is sent back to the client asking
+      the question.
+      (The lookup may continue after the timeout, but a later answer
+      is not returned for the now-past query.)
+    </para>
+
+    <para>
+      <varname>timeout_lookup</varname> is the number of milliseconds
+      before it stops trying the query.
+      If set to -1, this timeout is disabled.
+      The default is 30000.
+    </para>
+
+    <para>
+<!-- previous timeout was renamed to timeout_query -->
+      <varname>timeout_query</varname> is the number of milliseconds to
+      wait before it retries a query.
+      If set to -1, this timeout is disabled.
       The default is 2000.
     </para>
 
@@ -200,9 +232,8 @@ once that is merged you can for instance do 'config add Resolver/forward_address
     <para>
       The <command>b10-resolver</command> daemon was first coded in
       September 2010. The initial implementation only provided
-      forwarding.
+      forwarding. Iteration was introduced in January 2011.
 <!-- TODO: document when caching was added -->
-<!-- TODO: document when iteration was added -->
 <!-- TODO: document when validation was added -->
     </para>
   </refsect1>
