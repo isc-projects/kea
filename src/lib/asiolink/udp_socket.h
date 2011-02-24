@@ -70,8 +70,15 @@ public:
     /// \brief Destructor
     virtual ~UDPSocket();
 
-    virtual int getNative() const { return (socket_.native()); }
-    virtual int getProtocol() const { return (IPPROTO_UDP); }
+    /// \brief Return file descriptor of underlying socket
+    virtual int getNative() const {
+        return (socket_.native());
+    }
+
+    /// \brief Return protocol of socket
+    virtual int getProtocol() const {
+        return (IPPROTO_UDP);
+    }
 
     /// \brief Open Socket
     ///
