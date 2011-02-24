@@ -368,57 +368,6 @@ if test "$lcov" != "no"; then
 fi
 AC_SUBST(USE_LCOV)
 
-# Configure log4cxx header and library path
-#
-# If explicitly specified, use it.
-
-AC_ARG_WITH([log4cxx],
-  AC_HELP_STRING([--with-log4cxx=PATH],
-    [specify directory where log4cxx is installed]),
-  [
-   log4cxx_include_path="${withval}/include";
-   log4cxx_library_path="${withval}/lib"
-  ])
-
-# This is an urgent fix to avoid regression due to log4cxx on some
-# platforms.  It should be cleaned up with a better fix.
-if test "X$with_log4cxx" != "Xno"; then
-
-# If not specified, try some common paths.  These default to
-# /usr/include and /usr/lib if not found
-
-if test -z "$with_log4cxx"; then
-	log4cxxdirs="/usr/local /usr/pkg /opt /opt/local"
-	for d in $log4cxxdirs
-	do
-		if test -d $d/include/log4cxx; then
-			log4cxx_include_path=$d/include
-			log4cxx_library_path=$d/lib
-			break
-		fi
-	done
-fi
-
-CPPFLAGS_SAVES="$CPPFLAGS"
-if test "${log4cxx_include_path}" ; then
-	LOG4CXX_INCLUDES="-I${log4cxx_include_path}"
-	CPPFLAGS="$CPPFLAGS $LOG4CXX_INCLUDES"
-fi
-AC_CHECK_HEADER([log4cxx/logger.h],, AC_MSG_ERROR([Missing log4cxx header files.]))
-CPPFLAGS="$CPPFLAGS_SAVES"
-AC_SUBST(LOG4CXX_INCLUDES)
-
-LOG4CXX_LDFLAGS="-llog4cxx";
-if test "${log4cxx_library_path}"; then
-    LOG4CXX_LDFLAGS="-L${log4cxx_library_path} -llog4cxx"
-fi
-AC_SUBST(LOG4CXX_LDFLAGS)
-
-# The following two lines are part of the urgent fix, and should be cleaned
-# up with a better fix.
-fi
-AM_CONDITIONAL(USE_LOG4CXX, test "X${with_log4cxx}" != "Xno")
-
 #
 # Configure Boost header path
 #
@@ -833,8 +782,6 @@ dnl includes too
                  ${PYTHON_LDFLAGS}
                  ${PYTHON_LIB}
   Boost:         ${BOOST_INCLUDES}
-  log4cxx:       ${LOG4CXX_INCLUDES}
-                 ${LOG4CXX_LDFLAGS}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
 
