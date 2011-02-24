@@ -643,7 +643,7 @@ Resolver::setListenAddresses(const vector<addr_t>& addresses) {
             dlog(string("Rollback failed with: ") + e2.what(),true);
             abort();
         }
-        throw e; // Let it fly a little bit further
+        throw; // Let it fly a little bit further
     }
 }
 
