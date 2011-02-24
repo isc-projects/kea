@@ -79,9 +79,7 @@
       </para>
 
       <note><para>
-	For this development prototype release, the only supported
-	data source backend is SQLite3. The authoritative server
-	requires SQLite 3.3.9 or newer.
+	The authoritative server requires SQLite 3.3.9 or newer.
 	The <command>b10-xfrin</command>, <command>b10-xfrout</command>,
 	and <command>b10-zonemgr</command> modules require the
 	libpython3 library and the Python _sqlite3.so module.
@@ -1108,9 +1106,10 @@ This may be a temporary setting until then.
 
       <note><para>
         For the development prototype release, <command>b10-auth</command>
-        only supports the SQLite3 data source backend.
+        supports a SQLite3 data source backend and in-memory data source
+        backend.
         Upcoming versions will be able to use multiple different
-        data sources, such as MySQL, Berkeley DB, or in-memory DB.
+        data sources, such as MySQL and Berkeley DB.
       </para></note>
 
 
