@@ -281,6 +281,9 @@ UDPServer::asyncLookup() {
 /// Stop the UDPServer
 void
 UDPServer::stop() {
+    //server should not be stopped twice
+    if (data_->stopped_by_hand_)
+        return;
     data_->stopped_by_hand_ = true;
     data_->socket_->close();
 }
