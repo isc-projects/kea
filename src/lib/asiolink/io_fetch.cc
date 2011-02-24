@@ -46,7 +46,7 @@ isc::log::Logger logger("asio");
 
 /// IOFetch Constructor - just initialize the private data
 
-IOFetch::IOFetch(int protocol, IOService& service,
+IOFetch::IOFetch(Protocol protocol, IOService& service,
     const isc::dns::Question& question, const IOAddress& address, uint16_t port,
     isc::dns::OutputBufferPtr& buff, Callback* cb, int wait)
     :
@@ -140,6 +140,7 @@ IOFetch::operator()(error_code ec, size_t length) {
         data_->buffer->writeData(data_->data.get(), length);
 
         // Finished with this socket, so close it.
+        data_->origin = CLOSE;
         data_->socket->close();
 
         /// We are done
@@ -170,9 +171,14 @@ IOFetch::stop(Result result) {
         // variable should be done inside a mutex (and the stopped_ variable
         // declared as "volatile").
         //
+        // The numeric arguments indicate the debug level, with the lower
+        // numbers indicating the most important information.  The relative
+        // values are somewhat arbitrary.
+        //
         // Although Logger::debug checks the debug flag internally, doing it
-        // in below avoids the overhead of a string conversion in the common
-        // case when debug is not enabled.
+        // below before calling Logger::debug avoids the overhead of a string
+        // conversion in the common paths and in the common case when debug is
+        // not enabled.
         //
         // TODO: Update testing of stopped_ if threads are used.
         data_->stopped = true;
@@ -185,15 +191,24 @@ IOFetch::stop(Result result) {
                 }
                 break;
 
-            case STOPPED:
+            case SUCCESS:
                 if (logger.isDebugEnabled(50)) {
-                    logger.debug(50, ASIO_FETCOMP,
+                    logger.debug(50, ASIO_FETCHCOMP,
                                  data_->remote->getAddress().toText().c_str());
                 }
                 break;
 
+            case STOPPED:
+                // Fetch has been stopped for some other reason.  This is
+                // allowed but as it is unusual it is logged, but with a lower
+                // debug level than a timeout (which is totally normal).
+                logger.debug(10, ASIO_FETCHSTOP,
+                             data_->remote->getAddress().toText().c_str());
+                break;
+
             default:
-                logger.error(ASIO_UNKRESULT, static_cast<int>(result));
+                logger.error(ASIO_UNKRESULT, static_cast<int>(result),
+                             data_->remote->getAddress().toText().c_str());
         }
 
         // Stop requested, cancel and I/O's on the socket and shut it down,

@@ -41,7 +41,14 @@ public:
         IOError(file, line, what) {}
 };
 
-
+/// \brief Socket not open
+///
+/// Thrown if attempt to change socket options fails.
+class SocketSetError : public IOError {
+public:
+    SocketSetError(const char* file, size_t line, const char* what) :
+        IOError(file, line, what) {}
+};
 
 /// Forward declaration of an IOEndpoint
 class IOEndpoint;
@@ -276,7 +283,9 @@ public:
     /// \param cumulative Unused
     /// \param endpoint Unused
     /// \param callback Unused
-    virtual void asyncReceive(void* data, size_t, size_t, IOEndpoint*, C&) { } 
+    virtual void asyncReceive(void* data, size_t, size_t, IOEndpoint*, C&) {
+    }
+
     /// \brief Checks if the data received is complete.
     ///
     /// \param data Unused

@@ -116,7 +116,3 @@ public:
 
 }      // asiolink
 #endif // __IO_ENDPOINT_H
-
-// Local Variables: 
-// mode: c++
-// End: 

@@ -66,7 +66,7 @@ public:
         run_(false),
         question_(Name("example.net"), RRClass::IN(), RRType::A()),
         buff_(new OutputBuffer(512)),
-        udp_fetch_(IPPROTO_UDP, service_, question_, IOAddress(TEST_HOST),
+        udp_fetch_(IOFetch::UDP, service_, question_, IOAddress(TEST_HOST),
             TEST_PORT, buff_, this, 100)
         // tcp_fetch_(service_, question_, IOAddress(TEST_HOST), TEST_PORT,
         //    buff_, this, 100, IPPROTO_UDP)

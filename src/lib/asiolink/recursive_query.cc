@@ -163,7 +163,7 @@ private:
             int serverIndex = rand() % uc;
             dlog("Sending upstream query (" + question_.toText() +
                 ") to " + upstream_->at(serverIndex).first);
-            IOFetch query(IPPROTO_UDP, io_, question_,
+            IOFetch query(IOFetch::UDP, io_, question_,
                 upstream_->at(serverIndex).first,
                 upstream_->at(serverIndex).second, buffer_, this,
                 query_timeout_);
@@ -173,7 +173,7 @@ private:
             int serverIndex = rand() % zs;
             dlog("Sending query to zone server (" + question_.toText() +
                 ") to " + zone_servers_.at(serverIndex).first);
-            IOFetch query(IPPROTO_IDP, io_, question_,
+            IOFetch query(IOFetch::UDP, io_, question_,
                 zone_servers_.at(serverIndex).first,
                 zone_servers_.at(serverIndex).second, buffer_, this,
                 query_timeout_);

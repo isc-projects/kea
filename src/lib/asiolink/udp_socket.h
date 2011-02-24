@@ -28,7 +28,6 @@
 
 #include <config.h>
 
-
 #include <asiolink/io_asio_socket.h>
 #include <asiolink/io_endpoint.h>
 #include <asiolink/io_service.h>
@@ -51,7 +50,7 @@ public:
     enum {
         MAX_SIZE = 4096         // Send and receive size
     };
-    
+
     /// \brief Constructor from an ASIO UDP socket.
     ///
     /// \param socket The ASIO representation of the UDP socket.  It
@@ -201,12 +200,23 @@ UDPSocket<C>::open(const IOEndpoint* endpoint, C&) {
         isopen_ = true;
 
         // Ensure it can send and receive 4K buffers.
-        socket_.set_option(asio::socket_base::send_buffer_size(MAX_SIZE));
-        socket_.set_option(asio::socket_base::receive_buffer_size(MAX_SIZE));
-    ;
-        // Allow reuse of an existing port/address
-        socket_.set_option(asio::socket_base::reuse_address(true));
+
+        asio::ip::udp::socket::send_buffer_size snd_size;
+        socket_.get_option(snd_size);
+        if (snd_size.value() < MAX_SIZE) {
+            snd_size = MAX_SIZE;
+            socket_.set_option(snd_size);
+        }
+
+        asio::ip::udp::socket::receive_buffer_size rcv_size;
+        socket_.get_option(rcv_size);
+        if (rcv_size.value() < MAX_SIZE) {
+            rcv_size = MAX_SIZE;
+            socket_.set_option(rcv_size);
+        }
     }
+
+    // Nothing was done asynchronously, so tell the caller that.
     return (false);
 }
 
