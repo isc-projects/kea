@@ -51,6 +51,17 @@ namespace asiolink {
 
 class IOFetch : public coroutine {
 public:
+    /// \brief Origin of Asynchronous I/O Call
+    ///
+    /// Indicates what initiated an asynchronous I/O call and used in deciding
+    /// what error message to output if the I/O fails.
+    enum Origin {
+        NONE = 0,           ///< No asynchronous call outstanding
+        OPEN = 1,
+        SEND = 2,
+        RECEIVE = 3,
+        CLOSE = 4
+    };
 
     /// \brief Result of Upstream Fetch
     ///
@@ -95,7 +106,12 @@ public:
         virtual ~Callback()
         {}
 
-        /// \brief Callback method called when the fetch completes
+        /// \brief Callback method called when the fetch completes   /// \brief Origin of Asynchronous I/O Call
+    ///
+
+    // The next enum is a "trick" to allow constants to be defined in a class
+    // declaration.
+
         ///
         /// \brief result Result of the fetch
         virtual void operator()(Result result) = 0;
@@ -127,12 +143,13 @@ public:
         bool                        stopped;    ///< Have we stopped running?
         asio::deadline_timer        timer;      ///< Timer to measure timeouts
         int                         timeout;    ///< Timeout in ms
+        Origin                      origin;     ///< Origin of last asynchronous I/O
 
         /// \brief Constructor
         ///
         /// Just fills in the data members of the IOFetchData structure
         ///
-        /// \param protocol either IPPROTO_UDP or IPPROTO_TCP
+        /// \param proto either IPPROTO_UDP or IPPROTO_TCP
         /// \param service I/O Service object to handle the asynchronous
         ///     operations.
         /// \param query DNS question to send to the upstream server.
@@ -146,18 +163,18 @@ public:
         /// \param wait Timeout for the fetch (in ms).
         ///
         /// TODO: May need to alter constructor (see comment 4 in Trac ticket #554)
-        IOFetchData(int protocol, IOService& service,
+        IOFetchData(int proto, IOService& service,
             const isc::dns::Question& query, const IOAddress& address,
             uint16_t port, isc::dns::OutputBufferPtr& buff, Callback* cb,
             int wait)
             :
-            socket((protocol == IPPROTO_UDP) ?
+            socket((proto == IPPROTO_UDP) ?
                 static_cast<IOAsioSocket<IOFetch>*>(
                     new UDPSocket<IOFetch>(service)) :
                 static_cast<IOAsioSocket<IOFetch>*>(
                     new TCPSocket<IOFetch>(service))
                 ),
-            remote((protocol == IPPROTO_UDP) ?
+            remote((proto == IPPROTO_UDP) ?
                 static_cast<IOEndpoint*>(new UDPEndpoint(address, port)) :
                 static_cast<IOEndpoint*>(new TCPEndpoint(address, port))
                 ),
@@ -169,7 +186,8 @@ public:
             cumulative(0),
             stopped(false),
             timer(service.get_io_service()),
-            timeout(wait)
+            timeout(wait),
+            origin(NONE)
         {}
     };
 
@@ -217,6 +235,13 @@ public:
     void stop(Result reason = STOPPED);
 
 private:
+    /// \brief Log I/O Failure
+    ///
+    /// Records an I/O failure to the log file
+    ///
+    /// \param ec ASIO error code
+    void logIOFailure(asio::error_code& ec);
+
     boost::shared_ptr<IOFetchData>  data_;   ///< Private data
 
 };
