@@ -88,19 +88,10 @@ class TestXfroutSession(unittest.TestCase):
         request = MySocket(socket.AF_INET,socket.SOCK_STREAM)
         self.log = isc.log.NSLogger('xfrout', '',  severity = 'critical', log_to_console = False )
         self.xfrsess = MyXfroutSession(request, None, None, self.log)
-        self.write_sock, self.read_sock = socket.socketpair()
         self.xfrsess.server = Dbserver()
         self.mdata = bytes(b'\xd6=\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01')
         self.sock = MySocket(socket.AF_INET,socket.SOCK_STREAM)
         self.soa_record = (4, 3, 'example.com.', 'com.example.', 3600, 'SOA', None, 'master.example.com. admin.example.com. 1234 3600 1800 2419200 7200')
-
-    def test_receive_query_message(self):
-        send_msg = b"\xd6=\x00\x00\x00\x01\x00"
-        msg_len = struct.pack('H', socket.htons(len(send_msg)))
-        self.write_sock.send(msg_len)
-        self.write_sock.send(send_msg)
-        recv_msg = self.xfrsess._receive_query_message(self.read_sock)
-        self.assertEqual(recv_msg, send_msg)
 
     def test_parse_query_message(self):
         [get_rcode, get_msg] = self.xfrsess._parse_query_message(self.mdata)
@@ -321,7 +312,16 @@ class MyUnixSockServer(UnixSockServer):
 
 class TestUnixSockServer(unittest.TestCase):
     def setUp(self):
+        self.write_sock, self.read_sock = socket.socketpair()
         self.unix = MyUnixSockServer()
+
+    def test_receive_query_message(self):
+        send_msg = b"\xd6=\x00\x00\x00\x01\x00"
+        msg_len = struct.pack('H', socket.htons(len(send_msg)))
+        self.write_sock.send(msg_len)
+        self.write_sock.send(send_msg)
+        recv_msg = self.unix._receive_query_message(self.read_sock)
+        self.assertEqual(recv_msg, send_msg)
 
     def test_updata_config_data(self):
         self.unix.update_config_data({'transfers_out':10 })
