@@ -257,9 +257,9 @@ TEST(UDPSocket, SequenceTest) {
     server.async_send_to(buffer(INBOUND_DATA, sizeof(INBOUND_DATA)),
         server_remote_endpoint.getASIOEndpoint(), server_cb);
 
-    // Expect two callbacks to run
-    service.get_io_service().poll();
-    //service.run_one();
+    // Expect the two callbacks to run
+    service.run_one();
+    service.run_one();
 
     EXPECT_TRUE(client_cb.getCalled());
     EXPECT_EQ(0, client_cb.getCode());
