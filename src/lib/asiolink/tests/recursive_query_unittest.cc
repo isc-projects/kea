@@ -279,6 +279,7 @@ protected:
                             DNSLookup* lookup = NULL,
                             DNSAnswer* answer = NULL) :
             io_(io_service),
+            done_(false),
             message_(new Message(Message::PARSE)),
             answer_message_(new Message(Message::RENDER)),
             respbuf_(new OutputBuffer(0)),
@@ -412,7 +413,8 @@ protected:
 };
 
 RecursiveQueryTest::RecursiveQueryTest() :
-    dns_service_(NULL), callback_(NULL), sock_(-1), res_(NULL)
+    dns_service_(NULL), callback_(NULL), callback_protocol_(0),
+    callback_native_(-1), sock_(-1), res_(NULL)
 {
     io_service_ = new IOService();
     setDNSService(true, true);
