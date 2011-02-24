@@ -36,7 +36,7 @@ moduleSpecError(const std::string& file,
     EXPECT_THROW(moduleSpecFromFile(specfile(file)), ModuleSpecError);
     try {
         ModuleSpec dd = moduleSpecFromFile(specfile(file));
-    } catch (ModuleSpecError dde) {
+    } catch (const ModuleSpecError& dde) {
         std::string ddew = dde.what();
         EXPECT_EQ(error1 + error2 + error3, ddew);
     }
