@@ -16,7 +16,7 @@
 #include <string>
 #include <gtest/gtest.h>
 #include <dns/rrset.h>
-#include "resolver_cache.h"
+#include <cache/resolver_cache.h>
 #include "cache_test_messagefromfile.h"
 #include "cache_test_sectioncount.h"
 
