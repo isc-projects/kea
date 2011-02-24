@@ -10,11 +10,11 @@ if [ $? = 2 ] ; then
     exit 1
 fi
 
-set -ex
+set -e
 
 # Some configuration
 # TODO Escape for sed, this might break
-LOGFILE="${VALGRIND_FILE:-valgrind.log}"
+LOGFILE="${VALGRIND_FILE:-`pwd`/valgrind.log}"
 FLAGS="${VALGRIND_FLAGS:---read-var-info=yes --leak-check=full}"
 FLAGS="$FLAGS --log-file=$LOGFILE.%p"
 
@@ -28,13 +28,17 @@ eval $(find . -type f -executable -name run_unittests -print | grep -v '\.libs/r
     chmod +x "$testname.valgrind"
     echo "$testname" >>"$LOGFILE"
     echo "===============" >>"$LOGFILE"
-    "$testname.valgrind" >&2 &
+    pushd $(dirname "$testname") >/dev/null
+    "./run_unittests.valgrind" >&2 &
     PID="$!"
+    set +e
     wait "$PID"
     CODE="$?"
+    set -e
+    popd >/dev/null
     if [ "$CODE" != 0 ] ; then
         echo 'FAILED="$FAILED
-'"'$testname'"
+'"$testname"'"'
     fi
     NAME="$LOGFILE.$PID"
     rm "$testname.valgrind"
