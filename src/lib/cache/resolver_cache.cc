@@ -14,8 +14,8 @@
 
 #include <config.h>
 
-#include "resolver_cache.h"
-#include "dns/message.h"
+#include <cache/resolver_cache.h>
+#include <dns/message.h>
 #include "rrset_cache.h"
 #include <string>
 #include <algorithm>
