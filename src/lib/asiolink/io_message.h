@@ -98,7 +98,3 @@ private:
 
 }      // asiolink
 #endif // __IO_MESSAGE_H
-
-// Local Variables: 
-// mode: c++
-// End: 

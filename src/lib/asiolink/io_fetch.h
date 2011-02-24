@@ -51,6 +51,12 @@ namespace asiolink {
 
 class IOFetch : public coroutine {
 public:
+    /// \brief Protocol to use on the fetch
+    enum Protocol {
+        UDP = 0,
+        TCP = 1
+    };
+
     /// \brief Origin of Asynchronous I/O Call
     ///
     /// Indicates what initiated an asynchronous I/O call and used in deciding
@@ -149,7 +155,7 @@ public:
         ///
         /// Just fills in the data members of the IOFetchData structure
         ///
-        /// \param proto either IPPROTO_UDP or IPPROTO_TCP
+        /// \param proto Protocol: either IOFetch::TCP or IOFetch::UDP
         /// \param service I/O Service object to handle the asynchronous
         ///     operations.
         /// \param query DNS question to send to the upstream server.
@@ -163,18 +169,18 @@ public:
         /// \param wait Timeout for the fetch (in ms).
         ///
         /// TODO: May need to alter constructor (see comment 4 in Trac ticket #554)
-        IOFetchData(int proto, IOService& service,
+        IOFetchData(Protocol proto, IOService& service,
             const isc::dns::Question& query, const IOAddress& address,
             uint16_t port, isc::dns::OutputBufferPtr& buff, Callback* cb,
             int wait)
             :
-            socket((proto == IPPROTO_UDP) ?
+            socket((proto == UDP) ?
                 static_cast<IOAsioSocket<IOFetch>*>(
                     new UDPSocket<IOFetch>(service)) :
                 static_cast<IOAsioSocket<IOFetch>*>(
                     new TCPSocket<IOFetch>(service))
                 ),
-            remote((proto == IPPROTO_UDP) ?
+            remote((proto == UDP) ?
                 static_cast<IOEndpoint*>(new UDPEndpoint(address, port)) :
                 static_cast<IOEndpoint*>(new TCPEndpoint(address, port))
                 ),
@@ -197,7 +203,7 @@ public:
     ///
     /// TODO: Need to randomise the source port
     ///
-    /// \param protocol Fetch protocol, either IPPROTO_UDP or IPPROTO_TCP
+    /// \param protocol Fetch protocol, either IOFetch::TCP or IOFetch::UDP
     /// \param service I/O Service object to handle the asynchronous
     ///     operations.
     /// \param question DNS question to send to the upstream server.
@@ -211,11 +217,11 @@ public:
     /// (default = 53)
     /// \param wait Timeout for the fetch (in ms).  The default value of
     ///     -1 indicates no timeout.
-    IOFetch(int protocol, IOService& service,
+    IOFetch(Protocol protocol, IOService& service,
         const isc::dns::Question& question, const IOAddress& address,
         uint16_t port, isc::dns::OutputBufferPtr& buff, Callback* cb,
         int wait = -1);
-    
+
     /// \brief Coroutine entry point
     ///
     /// The operator() method is the method in which the coroutine code enters
