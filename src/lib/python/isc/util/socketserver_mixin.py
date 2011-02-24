@@ -79,7 +79,7 @@ class NoPollMixIn:
                 break
             else:
                 # Create a new thread to handle requests for each auth
-                threading.Thread(target=self._handle_request_noblock).start()
+                threading.Thread(target=self.handle_request).start()
 
         self._is_shut_down.set()
 
