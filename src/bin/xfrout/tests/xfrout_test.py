@@ -85,12 +85,10 @@ class TestXfroutSession(unittest.TestCase):
         return msg
 
     def setUp(self):
-        request = MySocket(socket.AF_INET,socket.SOCK_STREAM)
-        self.log = isc.log.NSLogger('xfrout', '',  severity = 'critical', log_to_console = False )
-        self.xfrsess = MyXfroutSession(request, None, None, self.log)
-        self.xfrsess.server = Dbserver()
-        self.mdata = bytes(b'\xd6=\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01')
         self.sock = MySocket(socket.AF_INET,socket.SOCK_STREAM)
+        self.log = isc.log.NSLogger('xfrout', '',  severity = 'critical', log_to_console = False )
+        self.xfrsess = MyXfroutSession(self.sock, None, Dbserver(), self.log)
+        self.mdata = bytes(b'\xd6=\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01')
         self.soa_record = (4, 3, 'example.com.', 'com.example.', 3600, 'SOA', None, 'master.example.com. admin.example.com. 1234 3600 1800 2419200 7200')
 
     def test_parse_query_message(self):
@@ -125,7 +123,6 @@ class TestXfroutSession(unittest.TestCase):
         self.assertTrue(msg.get_header_flag(Message.HEADERFLAG_AA))
 
     def test_reply_query_with_format_error(self):
-
         msg = self.getmsg()
         self.xfrsess._reply_query_with_format_error(msg, self.sock)
         get_msg = self.sock.read_msg()
@@ -238,11 +235,11 @@ class TestXfroutSession(unittest.TestCase):
         self.xfrsess._zone_is_empty = zone_empty
         def false_func():
             return False
-        self.xfrsess.server.increase_transfers_counter = false_func
+        self.xfrsess._server.increase_transfers_counter = false_func
         self.assertEqual(self.xfrsess._check_xfrout_available(True).to_text(), "REFUSED")
         def true_func():
             return True
-        self.xfrsess.server.increase_transfers_counter = true_func
+        self.xfrsess._server.increase_transfers_counter = true_func
         self.assertEqual(self.xfrsess._check_xfrout_available(True).to_text(), "NOERROR")
 
     def test_dns_xfrout_start_formerror(self):
