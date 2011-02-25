@@ -1,26 +1,27 @@
-#   ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 1060
+#
+#   ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 1155
 #   ;; flags: qr aa rd; QUERY: 1, ANSWER: 5, AUTHORITY: 0, ADDITIONAL: 0
 #   ;; WARNING: recursion requested but not available
 #
 #   ;; QUESTION SECTION:
-#   ;test.zlk.cn.                   IN      A
+#   ;test.example.com.              IN      A
 #
 #   ;; ANSWER SECTION:
-#   test.zlk.cn.            21600   IN      CNAME   cname.a.dname.test.zlk.cn.
-#   a.dname.test.zlk.cn.    21600   IN      DNAME   dname.zlk.org.
-#   cname.a.dname.test.zlk.cn. 21600 IN     CNAME   cname.dname.zlk.org.
-#   dname.zlk.org.          21600   IN      DNAME   dname.zlk.com.
-#   cname.dname.zlk.org.    21600   IN      CNAME   cname.dname.zlk.com.
+#   test.example.com.       21600   IN      CNAME   cname.a.dname.example.com.
+#   dname.example.com.      21600   IN      DNAME   dname.example.org.
+#   cname.a.dname.example.com. 21600 IN     CNAME   cname.a.dname.example.org.
+#   dname.example.org.      21600   IN      DNAME   dname.example.org.
+#   cname.a.dname.example.org. 21600 IN     CNAME   cname.a.dname.example.org.
 
 0424 8500
  00 01 00 05 00 00 00 00 04 74 65 73
- 74 03 7a 6c 6b 02 63 6e 00 00 01 00 01 c0 0c 00
- 05 00 01 00 00 54 60 00 10 05 63 6e 61 6d 65 01
- 61 05 64 6e 61 6d 65 c0 0c c0 2f 00 27 00 01 00
- 00 54 60 00 0f 05 64 6e 61 6d 65 03 7a 6c 6b 03
- 6f 72 67 00 c0 29 00 05 00 01 00 00 54 60 00 08
- 05 63 6e 61 6d 65 c0 45 c0 45 00 27 00 01 00 00
- 54 60 00 0f 05 64 6e 61 6d 65 03 7a 6c 6b 03 63
- 6f 6d 00 c0 60 00 05 00 01 00 00 54 60 00 08 05
- 63 6e 61 6d 65 c0 74
+ 74 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00 00 01
+ 00 01 c0 0c 00 05 00 01 00 00 54 60 00 10 05 63
+ 6e 61 6d 65 01 61 05 64 6e 61 6d 65 c0 11 c0 36
+ 00 27 00 01 00 00 54 60 00 13 05 64 6e 61 6d 65
+ 07 65 78 61 6d 70 6c 65 03 6f 72 67 00 c0 2e 00
+ 05 00 01 00 00 54 60 00 0a 05 63 6e 61 6d 65 01
+ 61 c0 4a c0 4a 00 27 00 01 00 00 54 60 00 13 05
+ 64 6e 61 6d 65 07 65 78 61 6d 70 6c 65 03 6f 72
+ 67 00 c0 69 00 05 00 01 00 00 54 60 00 02 c0 69
 
