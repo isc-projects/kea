@@ -1,3 +1,7 @@
+  180.  [build]     jreed
+        Fix custom DESTDIR for make install.
+        (Trac $629, git 5ac67ede03892a5eacf42ce3ace1e4e376164c9f)
+
 bind10-devel-20110224 released on February 24, 2011
 
   179.  [func]      vorner
