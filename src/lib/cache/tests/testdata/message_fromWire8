@@ -1,24 +1,23 @@
-#
-#   ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 1392
-#   ;; flags: qr aa rd; QUERY: 1, ANSWER: 4, AUTHORITY: 0, ADDITIONAL:
+#   A response includes multiple DNAME and synchronized CNAME records
+#   ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 900
+#   ;; flags: qr aa rd; QUERY: 1, ANSWER: 4, AUTHORITY: 0, ADDITIONAL: 0
 #   ;; WARNING: recursion requested but not available
-
+#
 #   ;; QUESTION SECTION:
-#   ;a.dname.zlk.cn.                        IN      NS
+#   ;a.dname.example.com.           IN      NS
 #
 #   ;; ANSWER SECTION:
-#   dname.zlk.cn.           21600   IN      DNAME   dname.zlk.org.
-#   a.dname.zlk.cn.         21600   IN      CNAME   a.dname.zlk.org.
-#   dname.zlk.org.          21600   IN      DNAME   dname.zlk.com.
-#   a.dname.zlk.org.        21600   IN      CNAME   a.dname.zlk.com.
-
-0570 8500
-00 01 00 04 00 00 00 00 01 61 05 64
- 6e 61 6d 65 03 7a 6c 6b 02 63 6e 00 00 02 00 01
- c0 0e 00 27 00 01 00 00 54 60 00 0f 05 64 6e 61
- 6d 65 03 7a 6c 6b 03 6f 72 67 00 c0 0c 00 05 00
- 01 00 00 54 60 00 04 01 61 c0 2c c0 2c 00 27 00
- 01 00 00 54 60 00 0f 05 64 6e 61 6d 65 03 7a 6c
- 6b 03 63 6f 6d 00 c0 47 00 05 00 01 00 00 54 60
- 00 04 01 61 c0 57
-
+#   dname.example.com.      21600   IN      DNAME   dname.example.org.
+#   a.dname.example.com.    21600   IN      CNAME   a.dname.example.org.
+#   dname.example.org.      21600   IN      DNAME   dname.example.org.
+#   a.dname.example.org.    21600   IN      CNAME   a.dname.example.org.
+0384 8500
+ 00 01 00 04 00 00 00 00 01 61 05 64
+ 6e 61 6d 65 07 65 78 61 6d 70 6c 65 03 63 6f 6d
+ 00 00 02 00 01 c0 0e 00 27 00 01 00 00 54 60 00
+ 13 05 64 6e 61 6d 65 07 65 78 61 6d 70 6c 65 03
+ 6f 72 67 00 c0 0c 00 05 00 01 00 00 54 60 00 04
+ 01 61 c0 31 c0 31 00 27 00 01 00 00 54 60 00 13
+ 05 64 6e 61 6d 65 07 65 78 61 6d 70 6c 65 03 6f
+ 72 67 00 c0 50 00 05 00 01 00 00 54 60 00 02 c0
+ 50
