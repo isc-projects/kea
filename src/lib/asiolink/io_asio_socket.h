@@ -50,6 +50,16 @@ public:
         IOError(file, line, what) {}
 };
 
+/// \brief Buffer Overflow
+///
+/// Thrown if an attempt is made to receive into an area beyond the end of
+/// the receive data buffer.
+class BufferOverflow : public IOError {
+public:
+    BufferOverflow(const char* file, size_t line, const char* what) :
+        IOError(file, line, what) {}
+};
+
 /// Forward declaration of an IOEndpoint
 class IOEndpoint;
 
@@ -129,32 +139,47 @@ public:
     /// \return IPPROTO_TCP for TCP sockets
     virtual int getProtocol() const = 0;
 
-    /// \brief Open AsioSocket
+    /// \brief Is Open() synchronous?
     ///
-    /// Opens the socket for asynchronous I/O.  On a UDP socket, this is merely
-    /// an "open()" on the underlying socket (so completes immediately), but on
-    /// a TCP socket it also connects to the remote end (which is done as an
+    /// On a UDP socket, an "open" operation is merely a call to "open()" on
+    /// the underlying socket (so completes immediately), but on a TCP socket it
+    /// also includings connecting to the remote end (which is done as an
     /// asynchronous operation).
     ///
     /// For TCP, signalling of the completion of the operation is done by
     /// by calling the callback function in the normal way.  This could be done
     /// for UDP (by posting en event on the event queue); however, that will
-    /// incur additional overhead in the most common case.  Instead, the return
-    /// value indicates whether the operation was asynchronous or not. If yes,
-    /// (i.e. TCP) the callback has been posted to the event queue: if no (UDP),
-    /// no callback has been posted (in which case it is up to the caller as to
-    /// whether they want to manually post the callback themself.)
+    /// incur additional overhead in the most common case.  So we give the
+    /// caller the choice for calling this open() method synchronously or
+    /// asynchronously.
+    ///
+    /// Owing to the way that the stackless coroutines are implemented, we need
+    /// to know _before_ executing the operation whether or not the open is
+    /// asynchronous.  So this method simply provides that information.
+    ///
+    /// (The reason there is a need to know is because the call to open() passes
+    /// in the state of the coroutine at the time the call is made.  On an
+    /// asynchronous I/O, we need to set the state to point to the statement
+    /// after the call to open() before we pass the corotuine to the open()
+    /// call.  Unfortunately, the macros that do this also yield control - which
+    /// we don't want to do if the open is synchronous.  Hence we need to know
+    /// before we make the call to open() whether that call will complete
+    /// asynchronously.)
+    virtual bool isOpenSynchronous() const = 0;
+
+    /// \brief Open AsioSocket
+    ///
+    /// Opens the socket for asynchronous I/O.  The open will complete
+    /// synchronously on UCP or asynchronously on TCP (in which case a callback
+    /// will be queued): what will happen can be found by calling the method
+    /// isOpenSynchronous().
     ///
     /// \param endpoint Pointer to the endpoint object.  This is ignored for
     /// a UDP socket (the target is specified in the send call), but should
     /// be of type TCPEndpoint for a TCP connection.
     /// \param callback I/O Completion callback, called when the operation has
     /// completed, but only if the operation was asynchronous.
-    ///
-    /// \return true if an asynchronous operation was started and the caller
-    /// should yield and wait for completion, false if the operation was
-    /// completed synchronously and no callback was queued.
-    virtual bool open(const IOEndpoint* endpoint, C& callback) = 0;
+    virtual void open(const IOEndpoint* endpoint, C& callback) = 0;
 
     /// \brief Send Asynchronously
     ///
@@ -167,7 +192,7 @@ public:
     /// \param endpoint Target of the send
     /// \param callback Callback object.
     virtual void asyncSend(const void* data, size_t length,
-        const IOEndpoint* endpoint, C& callback) = 0;
+                           const IOEndpoint* endpoint, C& callback) = 0;
 
     /// \brief Receive Asynchronously
     ///
@@ -178,11 +203,11 @@ public:
     ///
     /// \param data Buffer to receive incoming message
     /// \param length Length of the data buffer
-    /// \param cumulative Amount of data that should already be in the buffer.
+    /// \param offset Offset into buffer where data is to be put
     /// \param endpoint Source of the communication
     /// \param callback Callback object
-    virtual void asyncReceive(void* data, size_t length, size_t cumulative,
-        IOEndpoint* endpoint, C& callback) = 0;
+    virtual void asyncReceive(void* data, size_t length, size_t offset,
+                              IOEndpoint* endpoint, C& callback) = 0;
 
     /// \brief Checks if the data received is complete.
     ///
@@ -204,7 +229,7 @@ public:
     /// \return true if the receive is complete, false if another receive is
     /// needed.
     virtual bool receiveComplete(void* data, size_t length,
-        size_t& cumulative) = 0;
+                                 size_t& cumulative) = 0;
 
     /// \brief Cancel I/O On AsioSocket
     virtual void cancel() = 0;
@@ -251,6 +276,13 @@ public:
     virtual int getProtocol() const { return (protocol_); }
 
 
+    /// \brief Is socket opening synchronous?
+    ///
+    /// \return true - it is for this class.
+    bool isOpenSynchronous() const {
+        return true;
+    }
+
     /// \brief Open AsioSocket
     ///
     /// A call that is a no-op on UDP sockets, this opens a connection to the
@@ -280,7 +312,7 @@ public:
     ///
     /// \param data Unused
     /// \param length Unused
-    /// \param cumulative Unused
+    /// \param offset Unused
     /// \param endpoint Unused
     /// \param callback Unused
     virtual void asyncReceive(void* data, size_t, size_t, IOEndpoint*, C&) {
