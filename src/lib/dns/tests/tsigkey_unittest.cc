@@ -100,9 +100,10 @@ TEST_F(TSIGKeyTest, assignment) {
     delete copy2;
     compareTSIGKeys(original, copy3);
 
-    // self assignment
-    copy = copy;
-    compareTSIGKeys(original, copy);
+    // self assignment (via a reference to silence cppcheck)
+    TSIGKey& copyref(copy);
+    copyref = copy;
+    compareTSIGKeys(original, copyref);
 }
 
 class TSIGKeyRingTest : public ::testing::Test {
