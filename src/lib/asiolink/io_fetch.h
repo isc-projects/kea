@@ -17,31 +17,24 @@
 
 #include <config.h>
 
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <unistd.h>             // for some IPC/network system calls
 
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <asio/deadline_timer.hpp>
+
+#include <asio/error_code.hpp>
 
 #include <coroutine.h>
 
 #include <dns/buffer.h>
 #include <dns/question.h>
 
-#include <asiolink/io_asio_socket.h>
-#include <asiolink/io_endpoint.h>
-#include <asiolink/io_service.h>
-#include <asiolink/tcp_socket.h>
-#include <asiolink/tcp_endpoint.h>
-#include <asiolink/udp_socket.h>
-#include <asiolink/udp_endpoint.h>
-
-
 namespace asiolink {
 
+// Forward declarations
+class IOAddress;
+class IOFetchData;
+class IOService;
 
 /// \brief Upstream Fetch Processing
 ///
@@ -76,9 +69,9 @@ public:
     /// even if the contents of the packet indicate that some error occurred.
     enum Result {
         SUCCESS = 0,        ///< Success, fetch completed
-        TIME_OUT,           ///< Failure, fetch timed out
-        STOPPED,            ///< Control code, fetch has been stopped
-        NOTSET              ///< For testing, indicates value not set
+        TIME_OUT = 1,       ///< Failure, fetch timed out
+        STOPPED = 2,        ///< Control code, fetch has been stopped
+        NOTSET = 3          ///< For testing, indicates value not set
     };
 
     // The next enum is a "trick" to allow constants to be defined in a class
@@ -86,7 +79,7 @@ public:
 
     /// \brief Integer Constants
     enum {
-        MAX_LENGTH = 4096   ///< Maximum size of receive buffer
+        MIN_LENGTH = 4096   ///< Minimum size of receive buffer
     };
 
     /// \brief I/O Fetch Callback
@@ -112,89 +105,12 @@ public:
         virtual ~Callback()
         {}
 
-        /// \brief Callback method called when the fetch completes   /// \brief Origin of Asynchronous I/O Call
-    ///
-
-    // The next enum is a "trick" to allow constants to be defined in a class
-    // declaration.
-
+        /// \brief Callback method
         ///
-        /// \brief result Result of the fetch
+        /// This is the method called when the fecth completes.
+        ///
+        /// \param result Result of the fetch
         virtual void operator()(Result result) = 0;
-    };
-
-    /// \brief IOFetch Data
-    ///
-    /// The data for IOFetch is held in a separate struct pointed to by a
-    /// shared_ptr object.  This is because the IOFetch object will be copied
-    /// often (it is used as a coroutine and passed as callback to many
-    /// async_*() functions) and we want keep the same data).  Organising the
-    /// data in this way keeps copying to a minimum.
-    struct IOFetchData {
-
-        // The next two members are shared pointers to a base class because what
-        // is actually instantiated depends on whether the fetch is over UDP or
-        // TCP, which is not known until construction of the IOFetch.  Use of
-        // a shared pointer here is merely to ensure deletion when the data
-        // object is deleted.
-        boost::shared_ptr<IOAsioSocket<IOFetch> > socket;
-                                                ///< Socket to use for I/O
-        boost::shared_ptr<IOEndpoint> remote;   ///< Where the fetch was sent
-        isc::dns::Question          question;   ///< Question to be asked
-        isc::dns::OutputBufferPtr   msgbuf;     ///< Wire buffer for question
-        isc::dns::OutputBufferPtr   buffer;     ///< Received data held here
-        boost::shared_array<char>   data;       ///< Temporary array for data
-        IOFetch::Callback*          callback;   ///< Called on I/O Completion
-        size_t                      cumulative; ///< Cumulative received amount
-        bool                        stopped;    ///< Have we stopped running?
-        asio::deadline_timer        timer;      ///< Timer to measure timeouts
-        int                         timeout;    ///< Timeout in ms
-        Origin                      origin;     ///< Origin of last asynchronous I/O
-
-        /// \brief Constructor
-        ///
-        /// Just fills in the data members of the IOFetchData structure
-        ///
-        /// \param proto Protocol: either IOFetch::TCP or IOFetch::UDP
-        /// \param service I/O Service object to handle the asynchronous
-        ///     operations.
-        /// \param query DNS question to send to the upstream server.
-        /// \param address IP address of upstream server
-        /// \param port Port to use for the query
-        /// \param buff Output buffer into which the response (in wire format)
-        ///     is written (if a response is received).
-        /// \param cb Callback object containing the callback to be called
-        ///     when we terminate.  The caller is responsible for managing this
-        ///     object and deleting it if necessary.
-        /// \param wait Timeout for the fetch (in ms).
-        ///
-        /// TODO: May need to alter constructor (see comment 4 in Trac ticket #554)
-        IOFetchData(Protocol proto, IOService& service,
-            const isc::dns::Question& query, const IOAddress& address,
-            uint16_t port, isc::dns::OutputBufferPtr& buff, Callback* cb,
-            int wait)
-            :
-            socket((proto == UDP) ?
-                static_cast<IOAsioSocket<IOFetch>*>(
-                    new UDPSocket<IOFetch>(service)) :
-                static_cast<IOAsioSocket<IOFetch>*>(
-                    new TCPSocket<IOFetch>(service))
-                ),
-            remote((proto == UDP) ?
-                static_cast<IOEndpoint*>(new UDPEndpoint(address, port)) :
-                static_cast<IOEndpoint*>(new TCPEndpoint(address, port))
-                ),
-            question(query),
-            msgbuf(new isc::dns::OutputBuffer(512)),
-            buffer(buff),
-            data(new char[IOFetch::MAX_LENGTH]),
-            callback(cb),
-            cumulative(0),
-            stopped(false),
-            timer(service.get_io_service()),
-            timeout(wait),
-            origin(NONE)
-        {}
     };
 
     /// \brief Constructor.
@@ -229,8 +145,16 @@ public:
     ///
     /// \param ec Error code, the result of the last asynchronous I/O operation.
     /// \param length Amount of data received on the last asynchronous read
-    void operator()(asio::error_code ec = asio::error_code(),
-        size_t length = 0);
+    void operator()(asio::error_code ec, size_t length);
+
+    void operator()(asio::error_code ec) {
+        operator()(ec, 0);
+    }
+
+    void operator()() {
+        asio::error_code ec;
+        operator()(ec);
+    }
 
     /// \brief Terminate query
     ///
@@ -246,7 +170,7 @@ private:
     /// Records an I/O failure to the log file
     ///
     /// \param ec ASIO error code
-    void logIOFailure(asio::error_code& ec);
+    void logIOFailure(asio::error_code ec);
 
     boost::shared_ptr<IOFetchData>  data_;   ///< Private data
 

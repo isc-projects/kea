@@ -27,7 +27,12 @@
 #include <iostream>
 #include <cstddef>
 
+#include <boost/bind.hpp>
+#include <boost/numeric/conversion/cast.hpp>
+
 #include <config.h>
+
+#include <dns/buffer.h>
 
 #include <asiolink/io_asio_socket.h>
 #include <asiolink/io_endpoint.h>
@@ -35,6 +40,15 @@
 #include <asiolink/tcp_endpoint.h>
 
 namespace asiolink {
+
+/// \brief Buffer Too Large
+///
+/// Thrown on an attempt to send a buffer > 64k
+class BufferTooLarge : public IOError {
+public:
+    BufferTooLarge(const char* file, size_t line, const char* what) :
+        IOError(file, line, what) {}
+};
 
 /// \brief The \c TCPSocket class is a concrete derived class of \c IOAsioSocket
 /// that represents a TCP socket.
@@ -67,27 +81,37 @@ public:
     /// \brief Destructor
     virtual ~TCPSocket();
 
-    virtual int getNative() const { return (socket_.native()); }
-    virtual int getProtocol() const { return (IPPROTO_TCP); }
+    /// \brief Return file descriptor of underlying socket
+    virtual int getNative() const {
+        return (socket_.native());
+    }
+
+    /// \brief Return protocol of socket
+    virtual int getProtocol() const {
+        return (IPPROTO_TCP);
+    }
+
+    /// \brief Is "open()" synchronous?
+    ///
+    /// Indicates that the opening of a TCP socket is asynchronous.
+    virtual bool isOpenSynchronous() const {
+        return (false);
+    }
 
     /// \brief Open Socket
     ///
-    /// Opens the TCP socket.  In the model for transport-layer agnostic I/O,
-    /// an "open" operation includes a connection to the remote end (which
-    /// may take time).  This does not happen for TCP, so the method returns
-    /// "false" to indicate that the operation completed synchronously.
+    /// Opens the UDP socket.  This is an asynchronous operation, completion of
+    /// which will be signalled via a call to the callback function.
     ///
     /// \param endpoint Endpoint to which the socket will connect to.
-    /// \param callback Unused.
-    ///
-    /// \return false to indicate that the "operation" completed synchronously.
-    virtual bool open(const IOEndpoint* endpoint, C&);
+    /// \param callback Callback object.
+    virtual void open(const IOEndpoint* endpoint, C& callback);
 
     /// \brief Send Asynchronously
     ///
-    /// This corresponds to async_send_to() for TCP sockets and async_send()
-    /// for TCP.  In both cases an endpoint argument is supplied indicating the
-    /// target of the send - this is ignored for TCP.
+    /// Calls the underlying socket's async_send() method to send a packet of
+    /// data asynchronously to the remote endpoint.  The callback will be called
+    /// on completion.
     ///
     /// \param data Data to send
     /// \param length Length of data to send
@@ -98,19 +122,17 @@ public:
 
     /// \brief Receive Asynchronously
     ///
-    /// This correstponds to async_receive_from() for TCP sockets and
-    /// async_receive() for TCP.  In both cases, an endpoint argument is
-    /// supplied to receive the source of the communication.  For TCP it will
-    /// be filled in with details of the connection.
+    /// Calls the underlying socket's async_receive() method to read a packet
+    /// of data from a remote endpoint.  Arrival of the data is signalled via a
+    /// call to the callback function.
     ///
     /// \param data Buffer to receive incoming message
     /// \param length Length of the data buffer
-    /// \param cumulative Amount of data that should already be in the buffer.
-    /// (This is ignored - every UPD receive fills the buffer from the start.)
+    /// \param offset Offset into buffer where data is to be put
     /// \param endpoint Source of the communication
     /// \param callback Callback object
-    virtual void asyncReceive(void* data, size_t length, size_t cumulative,
-        IOEndpoint* endpoint, C& callback);
+    virtual void asyncReceive(void* data, size_t length, size_t offset,
+                              IOEndpoint* endpoint, C& callback);
 
     /// \brief Checks if the data received is complete.
     ///
@@ -144,13 +166,24 @@ private:
     asio::ip::tcp::socket*      socket_ptr_;    ///< Pointer to own socket
     asio::ip::tcp::socket&      socket_;        ///< Socket
     bool                        isopen_;        ///< true when socket is open
+
+    // TODO: Remove temporary buffer
+    // The current implementation copies the buffer passed to asyncSend() into
+    // a temporary buffer and precedes it with a two-byte count field.  As
+    // ASIO should really be just about sendiong and receiving data, the TCP
+    // code should not do this.  If the protocol using this requires a two-byte
+    // count, it should add it before calling this code.  (This may be best
+    // achieved by altering isc::dns::buffer to have pairs of methods:
+    // getLength()/getTCPLength(), getData()/getTCPData(), with the getTCPXxx()
+    // methods taking into account a two-byte count field.)
+    isc::dns::OutputBufferPtr   send_buffer_;   ///< Send buffer
 };
 
 // Constructor - caller manages socket
 
 template <typename C>
 TCPSocket<C>::TCPSocket(asio::ip::tcp::socket& socket) :
-    socket_ptr_(NULL), socket_(socket), isopen_(true)
+    socket_ptr_(NULL), socket_(socket), isopen_(true), send_buffer_()
 {
 }
 
@@ -171,16 +204,16 @@ TCPSocket<C>::~TCPSocket()
     delete socket_ptr_;
 }
 
-// Open the socket.  Throws an error on failure
-// TODO: Make the open more resilient
+// Open the socket.
 
-template <typename C> bool
-TCPSocket<C>::open(const IOEndpoint* endpoint, C&) {
+template <typename C> void
+TCPSocket<C>::open(const IOEndpoint* endpoint, C& callback) {
 
     // Ignore opens on already-open socket.  Don't throw a failure because
     // of uncertainties as to what precedes whan when using asynchronous I/O.
     // At also allows us a treat a passed-in socket as a self-managed socket.
 
+    std::cerr << "TCPSocket::open(): open_ flags is " << isopen_ << "\n";
     if (!isopen_) {
         if (endpoint->getFamily() == AF_INET) {
             socket_.open(asio::ip::tcp::v4());
@@ -190,35 +223,57 @@ TCPSocket<C>::open(const IOEndpoint* endpoint, C&) {
         }
         isopen_ = true;
 
-        // TODO: Complete TCPSocket::open()
+        // Set options on the socket:
 
+        // Reuse address - allow the socket to bind to a port even if the port
+        // is in the TIMED_WAIT state.
+        socket_.set_option(asio::socket_base::reuse_address(true));
     }
-    return (false);
+
+    // Upconvert to a TCPEndpoint.  We need to do this because although
+    // IOEndpoint is the base class of UDPEndpoint and TCPEndpoint, it does not
+    // contain a method for getting at the underlying endpoint type - that is in
+    /// the derived class and the two classes differ on return type.
+    assert(endpoint->getProtocol() == IPPROTO_TCP);
+    const TCPEndpoint* tcp_endpoint =
+        static_cast<const TCPEndpoint*>(endpoint);
+
+    // Connect to the remote endpoint.  On success, the handler will be
+    // called (with one argument - the length argument will default to
+    // zero).
+    socket_.async_connect(tcp_endpoint->getASIOEndpoint(), callback);
 }
 
 // Send a message.  Should never do this if the socket is not open, so throw
 // an exception if this is the case.
 
 template <typename C> void
-TCPSocket<C>::asyncSend(const void* data, size_t length,
-    const IOEndpoint* endpoint, C& callback)
+TCPSocket<C>::asyncSend(const void* data, size_t length, const IOEndpoint*,
+                        C& callback)
 {
     if (isopen_) {
 
-        // Upconvert to a TCPEndpoint.  We need to do this because although
-        // IOEndpoint is the base class of TCPEndpoint and TCPEndpoint, it
-        // doing cont contain a method for getting at the underlying endpoint
-        // type - those are in the derived class and the two classes differ on
-        // return type.
+        // Need to copy the data into a temporary buffer and precede it with
+        // a two-byte count field.
+        // TODO: arrange for the buffer passed to be preceded by the count
+        try {
+            // Ensure it fits into 16 bits
+            uint16_t count = boost::numeric_cast<uint16_t>(length);
 
-        assert(endpoint->getProtocol() == IPPROTO_TCP);
-        const TCPEndpoint* tcp_endpoint =
-            static_cast<const TCPEndpoint*>(endpoint);
-        std::cerr << "TCPSocket::asyncSend(): sending to " <<
-            tcp_endpoint->getAddress().toText() <<
-            ", port " << tcp_endpoint->getPort() << "\n";
+            // Copy data into a buffer preceded by the count field.
+            send_buffer_.reset(new isc::dns::OutputBuffer(length + 2));
+            send_buffer_->writeUint16(count);
+            send_buffer_->writeData(data, length);
 
-        // TODO: Complete TCPSocket::asyncSend()
+            // ... and send it
+            std::cerr << "TCPSocket::asyncSend(): sending " << count << " data bytes\n";
+
+            socket_.async_send(asio::buffer(send_buffer_->getData(),
+                               send_buffer_->getLength()), callback);
+        } catch (boost::numeric::bad_numeric_cast& e) {
+            isc_throw(BufferTooLarge,
+                      "attempt to send buffer larger than 64kB");
+        }
 
     } else {
         isc_throw(SocketNotOpen,
