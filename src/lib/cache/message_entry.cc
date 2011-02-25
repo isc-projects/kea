@@ -23,6 +23,47 @@
 using namespace isc::dns;
 using namespace std;
 
+// Put file scope functions in unnamed namespace.
+namespace {
+
+// Get the deepest owner name of DNAME record for the given query name.
+Name
+getDeepestDNAMEOwner(const Message& message, const Name& query_name) {
+    Name dname = query_name;
+    RRsetIterator rrset_iter = message.beginSection(Message::SECTION_ANSWER);
+    while(rrset_iter != message.endSection(Message::SECTION_ANSWER)) {
+        if ((*rrset_iter)->getType() == RRType::DNAME()) {
+            const Name& rrname = (*rrset_iter)->getName();
+            if (NameComparisonResult::SUBDOMAIN ==
+                dname.compare(rrname).getRelation()) {
+                dname = rrname;
+            }
+        }
+        ++rrset_iter;
+    }
+
+    return (dname);
+}
+
+// Check whether answer section in given message has non-authoritative rrsets.
+bool
+answerHasNonAuthRecord(const Message& message, const Name& query_name) {
+    RRsetIterator rrset_iter = message.beginSection(Message::SECTION_ANSWER);
+    while(rrset_iter != message.endSection(Message::SECTION_ANSWER)) {
+        // Here, only check CNAME is enough. If there is
+        // cname record whose ower name is same with query name, answer
+        // section may has non-authoritative rrsets.
+        if ((*rrset_iter)->getType() == RRType::CNAME() &&
+            (*rrset_iter)->getName() == query_name) {
+            return (true);
+        }
+        ++rrset_iter;
+    }
+    return (false);
+}
+
+} // End of unnamed namespace
+
 namespace isc {
 namespace cache {
 
@@ -111,42 +152,6 @@ MessageEntry::genMessage(const time_t& time_now,
     }
 }
 
-// Get the deepest owner name of DNAME record for the given query name.
-static Name
-getDeepestDNAMEOwner(const Message& message, const Name& query_name) {
-    Name dname = query_name;
-    RRsetIterator rrset_iter = message.beginSection(Message::SECTION_ANSWER);
-    while(rrset_iter != message.endSection(Message::SECTION_ANSWER)) {
-        if ((*rrset_iter)->getType() == RRType::DNAME()) {
-            const Name& rrname = (*rrset_iter)->getName();
-            if (NameComparisonResult::SUBDOMAIN ==
-                dname.compare(rrname).getRelation()) {
-                dname = rrname;
-            }
-        }
-        ++rrset_iter;
-    }
-
-    return dname;
-}
-
-// Check whether answer section in given message has non-authoritative rrsets.
-static bool
-answerHasNonAuthRecord(const Message& message, const Name& query_name) {
-    RRsetIterator rrset_iter = message.beginSection(Message::SECTION_ANSWER);
-    while(rrset_iter != message.endSection(Message::SECTION_ANSWER)) {
-        // Here, only check CNAME is enough. If there is
-        // cname record whose ower name is same with query name, answer
-        // section may has non-authoritative rrsets.
-        if ((*rrset_iter)->getType() == RRType::CNAME() &&
-            (*rrset_iter)->getName() == query_name) {
-            return true;
-        }
-        ++rrset_iter;
-    }
-    return false;
-}
-
 RRsetTrustLevel
 MessageEntry::getRRsetTrustLevel(const Message& message,
     const isc::dns::RRsetPtr& rrset,
@@ -174,9 +179,9 @@ MessageEntry::getRRsetTrustLevel(const Message& message,
                 if ((type == RRType::CNAME() && name == query_name) ||
                     (type == RRType::DNAME() &&
                      name == getDeepestDNAMEOwner(message, query_name))) {
-                    return RRSET_TRUST_ANSWER_AA;
+                    return (RRSET_TRUST_ANSWER_AA);
                 } else if (answerHasNonAuthRecord(message, query_name)) {
-                    return RRSET_TRUST_ANSWER_NONAA;
+                    return (RRSET_TRUST_ANSWER_NONAA);
                 }
 
                 return (RRSET_TRUST_ANSWER_AA);
