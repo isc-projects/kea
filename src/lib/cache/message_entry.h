@@ -40,13 +40,16 @@ struct RRsetRef{
     /// \brief Constructor
     ///
     /// \param name The Name for the RRset
-    /// \param type the RRType for the RRrset
-    RRsetRef(const isc::dns::Name& name, const isc::dns::RRType& type):
-            name_(name), type_(type)
+    /// \param type The RRType for the RRrset
+    /// \param cache Which cache the RRset is stored in
+    RRsetRef(const isc::dns::Name& name, const isc::dns::RRType& type,
+            boost::shared_ptr<RRsetCache> cache):
+            name_(name), type_(type), cache_(cache)
     {}
 
     isc::dns::Name name_; // Name of rrset.
     isc::dns::RRType type_; // Type of rrset.
+    boost::shared_ptr<RRsetCache> cache_; //Which cache the RRset is stored
 };
 
 /// \brief Message Entry
@@ -115,6 +118,18 @@ protected:
                       uint32_t& smaller_ttl,
                       uint16_t& rrset_count);
 
+    /// \brief Parse the RRsets in the authority section of
+    ///        negative response. The SOA RRset need to be located and
+    ///        stored in a seperate cache
+    /// \param msg The message to parse the RRsets from
+    /// \param soa_ttl Get the ttl of soa rrset in the authority section
+    /// \param rrset_count the rrset count of the authority section
+    /// \param found_soa whether the soa RRset is found in the authority section
+    void parseNegativeResponseAuthoritySection(const isc::dns::Message& msg,
+            uint32_t& soa_ttl,
+            uint16_t& rrset_count,
+            bool& found_soa);
+
     /// \brief Get RRset Trustworthiness
     ///        The algorithm refers to RFC2181 section 5.4.1
     ///        Only the rrset can be updated by the rrsets
@@ -155,6 +170,10 @@ protected:
     //@}
 
 private:
+    /// \brief Check whetehr the message is a negative response(NXDOMAIN or NOERROR_NODATA)
+    ///
+    bool isNegativeResponse(const isc::dns::Message& msg);
+
     std::string entry_name_; // The name for this entry(name + type)
     HashKey* hash_key_ptr_;  // the key for messag entry in hash table.
 
