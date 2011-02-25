@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <unistd.h>             // for usleep
+#include <time.h>               // for nanosleep
 
 #include <bench/benchmark.h>
 
@@ -26,16 +26,17 @@ namespace {
 // number of iterations.
 class TestBenchMark {
 public:
-    TestBenchMark(const int sub_iterations, const int sleep_time) :
+    TestBenchMark(const int sub_iterations,
+                  const struct timespec& sleep_time) :
         sub_iterations_(sub_iterations), sleep_time_(sleep_time),
         setup_completed_(false), teardown_completed_(false)
     {}
     unsigned int run() {
-        usleep(sleep_time_);
+        nanosleep(&sleep_time_, NULL);
         return (sub_iterations_);
     }
     const int sub_iterations_;
-    const int sleep_time_;
+    const struct timespec sleep_time_;
     bool setup_completed_;
     bool teardown_completed_;
 };
@@ -67,6 +68,7 @@ TEST(BenchMarkTest, run) {
     // use some uncommon iterations for testing purpose:
     const int sub_iterations = 23;
     const int sleep_time = 50000; // will sleep for 50ms
+    const struct timespec sleep_timespec = { 0, sleep_time * 1000 };
     // we cannot expect particular accuracy on the measured duration, so
     // we'll include some conservative margin (25%) and perform range
     // comparison below.
@@ -75,12 +77,12 @@ TEST(BenchMarkTest, run) {
 
     // Prerequisite check: since the tests in this case may depend on subtle
     // timing, it may result in false positives.  There are reportedly systems
-    // where usleep() doesn't work as this test expects.  So we check the
+    // where sleeping doesn't work as this test expects.  So we check the
     // conditions before the tests, and if it fails skip the tests at the
     // risk of overlooking possible bugs.
     struct timeval check_begin, check_end;
     gettimeofday(&check_begin, NULL);
-    usleep(sleep_time);
+    nanosleep(&sleep_timespec, 0);
     gettimeofday(&check_end, NULL);
     check_end.tv_sec -= check_begin.tv_sec;
     if (check_end.tv_usec >= check_begin.tv_usec) {
@@ -97,7 +99,7 @@ TEST(BenchMarkTest, run) {
         return;
     }
 
-    TestBenchMark test_bench(sub_iterations, sleep_time);
+    TestBenchMark test_bench(sub_iterations, sleep_timespec);
     BenchMark<TestBenchMark> bench(1, test_bench, false);
     // Check pre-test conditions.
     EXPECT_FALSE(test_bench.setup_completed_);
@@ -130,7 +132,8 @@ TEST(BenchMarkTest, run) {
 TEST(BenchMarkTest, runWithNoIteration) {
     // we'll lie on the number of iteration (0).  it will result in
     // meaningless result, but at least it shouldn't crash.
-    TestBenchMark test_bench(0, 0);
+    const struct timespec null_timespec = { 0, 0 };
+    TestBenchMark test_bench(0, null_timespec);
     BenchMark<TestBenchMark> bench(1, test_bench, false);
     bench.run();
     EXPECT_EQ(0, bench.getIteration());
