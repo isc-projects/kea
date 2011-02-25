@@ -45,6 +45,9 @@
 #include <resolver/spec_config.h>
 #include <resolver/resolver.h>
 
+#include <cache/resolver_cache.h>
+#include <nsas/nameserver_address_store.h>
+
 #include <log/dummylog.h>
 
 using namespace std;
@@ -60,7 +63,7 @@ namespace {
 static const string PROGRAM = "Resolver";
 
 IOService io_service;
-static Resolver *resolver;
+static boost::shared_ptr<Resolver> resolver;
 
 ConstElementPtr
 my_config_handler(ConstElementPtr new_config) {
@@ -136,15 +139,20 @@ main(int argc, char* argv[]) {
             specfile = string(RESOLVER_SPECFILE_LOCATION);
         }
 
-        resolver = new Resolver();
+        resolver = boost::shared_ptr<Resolver>(new Resolver());
         dlog("Server created.");
 
         SimpleCallback* checkin = resolver->getCheckinProvider();
         DNSLookup* lookup = resolver->getDNSLookupProvider();
         DNSAnswer* answer = resolver->getDNSAnswerProvider();
 
-        DNSService dns_service(io_service, checkin, lookup, answer);
+        isc::nsas::NameserverAddressStore nsas(resolver);
+        resolver->setNameserverAddressStore(nsas);
 
+        isc::cache::ResolverCache cache;
+        resolver->setCache(cache);
+
+        DNSService dns_service(io_service, checkin, lookup, answer);
         resolver->setDNSService(dns_service);
         dlog("IOService created.");
 
@@ -173,7 +181,6 @@ main(int argc, char* argv[]) {
 
     delete config_session;
     delete cc_session;
-    delete resolver;
 
     return (ret);
 }
