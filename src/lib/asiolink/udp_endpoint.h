@@ -33,6 +33,16 @@ public:
     /// \name Constructors and Destructor.
     ///
     //@{
+
+    /// \brief Default Constructor
+    ///
+    /// Creates an internal endpoint.  This is expected to be set by some
+    /// external call.
+    UDPEndpoint() :
+        asio_endpoint_placeholder_(new asio::ip::udp::endpoint()),
+        asio_endpoint_(*asio_endpoint_placeholder_)
+    {}
+
     /// \brief Constructor from a pair of address and port.
     ///
     /// \param address The IP address of the endpoint.
@@ -50,27 +60,27 @@ public:
     /// corresponding ASIO class, \c udp::endpoint.
     ///
     /// \param asio_endpoint The ASIO representation of the UDP endpoint.
-    UDPEndpoint(const asio::ip::udp::endpoint& asio_endpoint) :
+    UDPEndpoint(asio::ip::udp::endpoint& asio_endpoint) :
         asio_endpoint_placeholder_(NULL), asio_endpoint_(asio_endpoint)
     {}
 
     /// \brief The destructor.
-    ~UDPEndpoint() { delete asio_endpoint_placeholder_; }
+    virtual ~UDPEndpoint() { delete asio_endpoint_placeholder_; }
     //@}
 
-    inline IOAddress getAddress() const {
+    virtual IOAddress getAddress() const {
         return (asio_endpoint_.address());
     }
 
-    inline uint16_t getPort() const {
+    virtual uint16_t getPort() const {
         return (asio_endpoint_.port());
     }
 
-    inline short getProtocol() const {
+    virtual short getProtocol() const {
         return (asio_endpoint_.protocol().protocol());
     }
 
-    inline short getFamily() const {
+    virtual short getFamily() const {
         return (asio_endpoint_.protocol().family());
     }
 
@@ -79,10 +89,13 @@ public:
     inline const asio::ip::udp::endpoint& getASIOEndpoint() const {
         return (asio_endpoint_);
     }
+    inline asio::ip::udp::endpoint& getASIOEndpoint() {
+        return (asio_endpoint_);
+    }
 
 private:
-    const asio::ip::udp::endpoint* asio_endpoint_placeholder_;
-    const asio::ip::udp::endpoint& asio_endpoint_;
+    asio::ip::udp::endpoint* asio_endpoint_placeholder_;
+    asio::ip::udp::endpoint& asio_endpoint_;
 };
 
 }      // namespace asiolink

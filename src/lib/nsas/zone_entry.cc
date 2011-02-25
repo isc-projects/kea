@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <map>
+
 #include <config.h>
 
 #include "zone_entry.h"
@@ -49,7 +51,7 @@ ZoneEntry::ZoneEntry(
 
 namespace {
 // Shorter aliases for frequently used types
-typedef boost::recursive_mutex::scoped_lock Lock; // Local lock, nameservers not locked
+typedef isc::locks::scoped_lock<isc::locks::recursive_mutex> Lock; // Local lock, nameservers not locked
 typedef boost::shared_ptr<AddressRequestCallback> CallbackPtr;
 
 /*
