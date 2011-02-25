@@ -1,6 +1,22 @@
 #!/bin/bash
-
 # Yes, really bash, there are some bashisms
+
+###########################################
+# This script runs all tests in valgrind. Configure and compile bind the way
+# you want it to be tested (you should use --with-gtest, however, or you get
+# no tests). Then run this script from the top build directory.
+#
+# Note that the test isn't what you would call "production quality" (it is
+# expected to be used by the bind10 developers, not end user) and might break,
+# some ways of breaking it are known.
+#
+# There are two variables that modify it's behaviour.
+# * VALGRIND_FLAGS are the flag passed to valgrind. There are some, hopefully
+#      reasonable defaults which you can overwrite. Note that the variable is
+#      used unmodified inside a sed pattern with # as a modifier, which can
+#      easily break it. There was no motivation to fix this.
+# * VALGRIND_FILE is the file to store the output into. Default is valgrind.log
+###########################################
 
 # First, make sure the tests are up to date
 make
