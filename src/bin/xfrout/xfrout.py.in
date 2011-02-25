@@ -292,41 +292,6 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         self.update_config_data(config_data)
         self._cc = cc
 
-    def handle_request(self):
-        '''Rewrite _handle_request_noblock() from parent class ThreadingUnixStreamServer,
-        enable server handle a request until shutdown or xfrout client is closed.'''
-        try:
-            request, client_address = self.get_request()
-        except socket.error:
-            return
-
-        if self.verify_request(request, client_address):
-            # Check self._shutdown_event to ensure the real shutdown comes.
-            # Linux could trigger a spurious readable event on the _read_sock
-            # due to a bug, so we need perform a double check.
-            while not self._shutdown_event.is_set(): # Check if xfrout is shutdown
-                try:
-                    (rlist, wlist, xlist) = select.select([self._read_sock, request], [], [])
-                except select.error as e:
-                    if e.args[0] == errno.EINTR:
-                        (rlist, wlist, xlist) = ([], [], [])
-                        continue
-                    else:
-                        self._log.log_message("error", "Error with select(): %s" %e)
-                        break
-
-                # self.server._shutdown_event will be set by now, if it is not a false
-                # alarm
-                if self._read_sock in rlist:
-                    continue
-
-                try:
-                    self.process_request(request, client_address)
-                except:
-                    self.handle_error(request, client_address)
-                    self.close_request(request)
-                    break
-
     def _receive_query_message(self, sock):
         ''' receive request message from sock'''
         # receive data length
@@ -346,7 +311,41 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
 
         return msgdata
 
-    def process_request(self, request, client_address):
+    def handle_request(self):
+        ''' Enable server handle a request until shutdown or auth is closed.'''
+        try:
+            request, client_address = self.get_request()
+        except socket.error:
+            self._log.log_message("error", "Failed to fetch request")
+            return
+
+        # Check self._shutdown_event to ensure the real shutdown comes.
+        # Linux could trigger a spurious readable event on the _read_sock
+        # due to a bug, so we need perform a double check.
+        while not self._shutdown_event.is_set(): # Check if xfrout is shutdown
+            try:
+                (rlist, wlist, xlist) = select.select([self._read_sock, request], [], [])
+            except select.error as e:
+                if e.args[0] == errno.EINTR:
+                    (rlist, wlist, xlist) = ([], [], [])
+                    continue
+                else:
+                    self._log.log_message("error", "Error with select(): %s" %e)
+                    break
+
+            # self.server._shutdown_event will be set by now, if it is not a false
+            # alarm
+            if self._read_sock in rlist:
+                continue
+
+            try:
+                self.process_request(request)
+            except:
+                self._log.log_message("error", "Exception happened during processing of %s"
+                                      % str(client_address))
+                break
+
+    def process_request(self, request):
         """Receive socket fd and query message from auth, then
         start a new thread to process the request."""
         sock_fd = recv_fd(request.fileno())
@@ -364,13 +363,13 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
             return
 
         t = threading.Thread(target = self.finish_request,
-                             args = (sock_fd, request_data, client_address))
+                             args = (sock_fd, request_data))
         if self.daemon_threads:
             t.daemon = True
         t.start()
 
 
-    def finish_request(self, sock_fd, request_data, client_address):
+    def finish_request(self, sock_fd, request_data):
         '''Finish one request by instantiating RequestHandlerClass.'''
         self.RequestHandlerClass(sock_fd, request_data, self, self._log)
 
@@ -390,7 +389,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
             try:
                 os.unlink(sock_file)
             except OSError as err:
-                self._log.log_message("error", '[b10-xfrout] Fail to remove file %s: %s\n' % (sock_file, err))
+                self._log.log_message("error", "[b10-xfrout] Fail to remove file %s: %s\n" % (sock_file, err))
                 sys.exit(0)
 
     def _sock_file_in_use(self, sock_file):
@@ -411,7 +410,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         try:
             os.unlink(self._sock_file)
         except Exception as e:
-            self._log.log_message("error", str(e))
+            self._log.log_message('error', str(e))
 
     def update_config_data(self, new_config):
         '''Apply the new config setting of xfrout module. '''
