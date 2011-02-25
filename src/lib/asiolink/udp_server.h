@@ -58,6 +58,10 @@ public:
     /// \brief Calls the lookup callback
     void asyncLookup();
 
+    /// \brief Stop the running server
+    /// \note once the server stopped, it can't restart
+    void stop();
+
     /// \brief Resume operation
     ///
     /// \param done Set this to true if the lookup action is done and
