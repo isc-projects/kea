@@ -12,9 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-/// \brief Test of UDPSocket
+/// \brief Test of TCPSocket
 ///
-/// Tests the fuctionality of a UDPSocket by working through an open-send-
+/// Tests the fuctionality of a TCPSocket by working through an open-send-
 /// receive-close sequence and checking that the asynchronous notifications
 /// work.
 
@@ -38,17 +38,18 @@
 #include <asio.hpp>
 
 #include <asiolink/io_service.h>
-#include <asiolink/udp_endpoint.h>
-#include <asiolink/udp_socket.h>
+#include <asiolink/tcp_endpoint.h>
+#include <asiolink/tcp_socket.h>
 
 using namespace asio;
+using namespace asio::ip;
 using namespace asiolink;
 using namespace std;
 
 namespace {
 
 const char SERVER_ADDRESS[] = "127.0.0.1";
-const unsigned short SERVER_PORT = 5301;
+const unsigned short SERVER_PORT = 5303;
 
 // TODO: Shouldn't we send something that is real message?
 const char OUTBOUND_DATA[] = "Data sent from client to server";
@@ -60,18 +61,32 @@ const char INBOUND_DATA[] = "Returned data from server to client";
 /// and the operator() method is called when when an asynchronous I/O
 /// completes.  The arguments to the completion callback are stored for later
 /// retrieval.
-class UDPCallback {
+class TCPCallback {
 public:
+    /// \brief Operations the server is doing
+    enum Operation {
+        ACCEPT = 0,     ///< accept() was issued
+        OPEN = 1,       /// Client connected to server
+        READ = 2,       ///< Asynchronous read completed
+        WRITE = 3,      ///< Asynchronous write completed
+        NONE = 4        ///< "Not set" state
+    };
+
+    /// \brief Minimim size of buffers
+    enum {
+        MIN_SIZE = 4096
+    };
 
     struct PrivateData {
         PrivateData() :
-            error_code_(), length_(0), called_(false), name_("")
+            error_code_(), length_(0), name_(""), queued_(NONE), called_(NONE)
         {}
 
         asio::error_code    error_code_;    ///< Completion error code
         size_t              length_;        ///< Number of bytes transferred
-        bool                called_;        ///< Set true when callback called
         std::string         name_;          ///< Which of the objects this is
+        Operation           queued_;        ///< Queued operation
+        Operation           called_;        ///< Which callback called
     };
 
     /// \brief Constructor
@@ -86,7 +101,7 @@ public:
     /// data.
     ///
     /// \param which Which of the two callback objects this is
-    UDPCallback(std::string which) : ptr_(new PrivateData())
+    TCPCallback(std::string which) : ptr_(new PrivateData())
     {
         setName(which);
     }
@@ -94,20 +109,22 @@ public:
     /// \brief Destructor
     ///
     /// No code needed, destroying the shared pointer destroys the private data.
-    virtual ~UDPCallback()
+    virtual ~TCPCallback()
     {}
 
-    /// \brief Callback Function
+    /// \brief Client Callback Function
     ///
-    /// Called when an asynchronous I/O completes, this stores the
-    /// completion error code and the number of bytes transferred.
+    /// Called when an asynchronous connect is completed by the client, this
+    /// stores the origin of the operation in the client_called_ data member.
     ///
     /// \param ec I/O completion error code passed to callback function.
     /// \param length Number of bytes transferred
-    virtual void operator()(asio::error_code ec, size_t length = 0) {
-        ptr_->error_code_ = ec;
+    void operator()(asio::error_code ec = asio::error_code(),
+                            size_t length = 0)
+    {
+        setCode(ec.value());
+        setCalled(getQueued());
         setLength(length);
-        setCalled(true);
     }
 
     /// \brief Get I/O completion error code
@@ -134,15 +151,27 @@ public:
         ptr_->length_ = length;
     }
 
+    /// \brief Get flag to say what was queued
+    Operation getQueued() {
+        return (ptr_->queued_);
+    }
+
+    /// \brief Set flag to say what is being queued
+    ///
+    /// \param called New value of queued parameter
+    void setQueued(Operation queued) {
+        ptr_->queued_ = queued;
+    }
+
     /// \brief Get flag to say when callback was called
-    bool getCalled() {
+    Operation getCalled() {
         return (ptr_->called_);
     }
 
     /// \brief Set flag to say when callback was called
     ///
     /// \param called New value of called parameter
-    void setCalled(bool called) {
+    void setCalled(Operation called) {
         ptr_->called_ = called;
     }
 
@@ -164,72 +193,118 @@ private:
 
 // TODO: Need to add a test to check the cancel() method
 
-// Tests the operation of a UDPSocket by opening it, sending an asynchronous
+// Tests the operation of a TCPSocket by opening it, sending an asynchronous
 // message to a server, receiving an asynchronous message from the server and
 // closing.
-TEST(UDPSocket, SequenceTest) {
+TEST(TCPSocket, SequenceTest) {
 
     // Common objects.
     IOService   service;                    // Service object for async control
 
     // Server
-    IOAddress   server_address(SERVER_ADDRESS); // Address of target server
-    UDPCallback server_cb("Server");        // Server callback
-    UDPEndpoint server_endpoint(            // Endpoint describing server
-        server_address, SERVER_PORT);
-    UDPEndpoint server_remote_endpoint;     // Address where server received message from
+    IOAddress   server_address(SERVER_ADDRESS);
+                                            // Address of target server
+    TCPCallback server_cb("Server");        // Server callback
+    TCPEndpoint server_endpoint(server_address, SERVER_PORT);
+                                            // Endpoint describing server
+    TCPEndpoint server_remote_endpoint;     // Address where server received message from
+    tcp::socket server_socket(service.get_io_service());
+                                            // Socket used for server
+    char        server_data[TCPCallback::MIN_SIZE];
+                                            // Data received by server
+    ASSERT_GT(sizeof(server_data), sizeof(OUTBOUND_DATA));
+                                            // Make sure it's large enough
 
-    // The client - the UDPSocket being tested
-    UDPSocket<UDPCallback>  client(service);// Socket under test
-    UDPCallback client_cb("Client");        // Async I/O callback function
-    UDPEndpoint client_remote_endpoint;     // Where client receives message from
-    size_t      client_cumulative = 0;      // Cumulative data received
+    // The client - the TCPSocket being tested
+    TCPSocket<TCPCallback>  client(service);// Socket under test
+    TCPCallback client_cb("Client");        // Async I/O callback function
+    TCPEndpoint client_remote_endpoint;     // Where client receives message from
+    char        client_data[TCPCallback::MIN_SIZE];
+                                            // Data received by client
+    ASSERT_GT(sizeof(client_data), sizeof(OUTBOUND_DATA));
+                                            // Make sure it's large enough
+    //size_t      client_cumulative = 0;    // Cumulative data received
 
     // The server - with which the client communicates.  For convenience, we
     // use the same io_service, and use the endpoint object created for
     // the client to send to as the endpoint object in the constructor.
-    asio::ip::udp::socket server(service.get_io_service(),
-        server_endpoint.getASIOEndpoint());
-    server.set_option(socket_base::reuse_address(true));
 
-    // Assertion to ensure that the server buffer is large enough
-    char data[UDPSocket<UDPCallback>::MIN_SIZE];
-    ASSERT_GT(sizeof(data), sizeof(OUTBOUND_DATA));
+    std::cerr << "Setting up acceptor\n";
+    // Set up the server to accept incoming connections.
+    server_cb.setQueued(TCPCallback::ACCEPT);
+    server_cb.setCalled(TCPCallback::NONE);
+    server_cb.setCode(42);  // Some error
+    tcp::acceptor acceptor(service.get_io_service(),
+                            tcp::endpoint(tcp::v4(), SERVER_PORT));
+    acceptor.set_option(tcp::acceptor::reuse_address(true));
+    acceptor.async_accept(server_socket, server_cb);
 
-    // Open the client socket - the operation should be synchronous
-    EXPECT_TRUE(client.isOpenSynchronous());
+        std::cerr << "Setting up client\n";
+    // Open the client socket - the operation should be asynchronous
+    client_cb.setQueued(TCPCallback::OPEN);
+    client_cb.setCalled(TCPCallback::NONE);
+    client_cb.setCode(43);  // Some error
+    EXPECT_FALSE(client.isOpenSynchronous());
     client.open(&server_endpoint, client_cb);
-
-    // Issue read on the server.  Completion callback should not have run.
-    server_cb.setCalled(false);
-    server_cb.setCode(42); // Answer to Life, the Universe and Everything!
-    server.async_receive_from(buffer(data, sizeof(data)),
-        server_remote_endpoint.getASIOEndpoint(), server_cb);
-    EXPECT_FALSE(server_cb.getCalled());
-
-    // Write something to the server using the client - the callback should not
-    // be called until we call the io_service.run() method.
-    client_cb.setCalled(false);
-    client_cb.setCode(7);  // Arbitrary number
-    client.asyncSend(OUTBOUND_DATA, sizeof(OUTBOUND_DATA), &server_endpoint, client_cb);
-    EXPECT_FALSE(client_cb.getCalled());
-
-    // Execute the two callbacks.
+    
+    // Run the open and the accept callback and check that they ran.
     service.run_one();
     service.run_one();
-
-    EXPECT_TRUE(client_cb.getCalled());
-    EXPECT_EQ(0, client_cb.getCode());
-    EXPECT_EQ(sizeof(OUTBOUND_DATA), client_cb.getLength());
-
-    EXPECT_TRUE(server_cb.getCalled());
+    
+    EXPECT_EQ(TCPCallback::ACCEPT, server_cb.getCalled());
     EXPECT_EQ(0, server_cb.getCode());
-    EXPECT_EQ(sizeof(OUTBOUND_DATA), server_cb.getLength());
+    EXPECT_EQ(TCPCallback::OPEN, client_cb.getCalled());
+    EXPECT_EQ(0, client_cb.getCode());
 
-    EXPECT_TRUE(equal(&data[0], &data[server_cb.getLength() - 1], OUTBOUND_DATA));
+    // Write something to the server using the client and read it on ther server.
+    server_cb.setCalled(TCPCallback::NONE);
+    server_cb.setQueued(TCPCallback::READ);
+    server_cb.setCode(142);  // Arbitrary number
+    server_cb.setLength(0);
+    server_socket.async_receive(buffer(server_data, sizeof(server_data)), server_cb);
 
+    client_cb.setCalled(TCPCallback::NONE);
+    client_cb.setQueued(TCPCallback::WRITE);
+    client_cb.setCode(143);  // Arbitrary number
+    client_cb.setLength(0);
+    client.asyncSend(OUTBOUND_DATA, sizeof(OUTBOUND_DATA), &server_endpoint, client_cb);
+
+    // Run the write and read callback and check they ran
+    service.run_one();
+    service.run_one();
+
+    // Check lengths.  As the client wrote the buffer, currently two bytes
+    // will be prepended by the client containing the length.
+    EXPECT_EQ(TCPCallback::READ, server_cb.getCalled());
+    EXPECT_EQ(0, server_cb.getCode());
+    EXPECT_EQ(sizeof(OUTBOUND_DATA) + 2, server_cb.getLength());
+
+    EXPECT_EQ(TCPCallback::WRITE, client_cb.getCalled());
+    EXPECT_EQ(0, client_cb.getCode());
+    EXPECT_EQ(sizeof(OUTBOUND_DATA) + 2, client_cb.getLength());
+
+    // Check that the first two bytes of the buffer are in fact the remaining
+    // length of the buffer (code copied from isc::dns::buffer.h)
+    uint16_t count = ((unsigned int)(server_data[0])) << 8;
+    count |= ((unsigned int)(server_data[1]));
+    EXPECT_EQ(sizeof(OUTBOUND_DATA), count);
+
+    // ... and check data received by server is what we expect
+    EXPECT_TRUE(equal(&server_data[2], &server_data[server_cb.getLength() - 1],
+                      OUTBOUND_DATA));
+
+    // TODO: Complete this server test
+    // TODO: Add in loop for server to read data - read 2 bytes, then as much as needed
+    
+    /*
     // Now return data from the server to the client.  Issue the read on the
     // client.
+    client_cb.setCalled(TCPCallback::NONE);
+    client_cb.setQueued(TCPCallback::READ);
+    client_cb.setCode(143);  // Arbitrary number
+    client_cb.setLength(0);
+    client.asyncReceive(OUTBOUND_DATA, sizeof(OUTBOUND_DATA), &server_endpoint, client_cb);
+
     client_cb.setLength(12345);             // Arbitrary number
     client_cb.setCalled(false);
     client_cb.setCode(32);                  // Arbitrary number
@@ -270,4 +345,5 @@ TEST(UDPSocket, SequenceTest) {
     // Close client and server.
     EXPECT_NO_THROW(client.close());
     EXPECT_NO_THROW(server.close());
+     * */
 }

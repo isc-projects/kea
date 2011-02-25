@@ -22,6 +22,7 @@
 
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
+#include <asiolink/io_endpoint.h>
 #include <asiolink/tcp_endpoint.h>
 #include <asiolink/udp_endpoint.h>
 
