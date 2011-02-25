@@ -18,6 +18,7 @@
 #include <asiolink/dns_service.h>
 #include <asiolink/dns_server.h>
 #include <dns/buffer.h>
+#include <nsas/nameserver_address_store.h>
 #include <cache/resolver_cache.h>
 
 namespace asiolink {
@@ -52,6 +53,8 @@ public:
     /// \param retries how many times we try again (0 means just send and
     ///     and return if it returs).
     RecursiveQuery(DNSService& dns_service,
+                   isc::nsas::NameserverAddressStore& nsas,
+                   isc::cache::ResolverCache& cache,
                    const std::vector<std::pair<std::string, uint16_t> >&
                    upstream, 
                    const std::vector<std::pair<std::string, uint16_t> >&
@@ -100,6 +103,8 @@ public:
                  DNSServer* server);
 private:
     DNSService& dns_service_;
+    isc::nsas::NameserverAddressStore& nsas_;
+    isc::cache::ResolverCache& cache_;
     boost::shared_ptr<std::vector<std::pair<std::string, uint16_t> > >
         upstream_;
     boost::shared_ptr<std::vector<std::pair<std::string, uint16_t> > >
@@ -108,9 +113,6 @@ private:
     int client_timeout_;
     int lookup_timeout_;
     unsigned retries_;
-    // Cache. TODO: I think we want this initialized in Resolver class,
-    // not here
-    isc::cache::ResolverCache cache_;
 };
 
 }      // namespace asiolink

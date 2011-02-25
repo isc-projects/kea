@@ -49,15 +49,20 @@ typedef std::vector<std::pair<std::string, uint16_t> > AddressVector;
 // We can probably use a typedef, but need to move it to a central
 // location and use it consistently.
 RecursiveQuery::RecursiveQuery(DNSService& dns_service,
+    isc::nsas::NameserverAddressStore& nsas,
+    isc::cache::ResolverCache& cache,
     const std::vector<std::pair<std::string, uint16_t> >& upstream,
     const std::vector<std::pair<std::string, uint16_t> >& upstream_root,
     int query_timeout, int client_timeout, int lookup_timeout,
     unsigned retries) :
-    dns_service_(dns_service), upstream_(new AddressVector(upstream)),
+    dns_service_(dns_service),
+    nsas_(nsas), cache_(cache),
+    upstream_(new AddressVector(upstream)),
     upstream_root_(new AddressVector(upstream_root)),
     query_timeout_(query_timeout), client_timeout_(client_timeout),
     lookup_timeout_(lookup_timeout), retries_(retries)
-{}
+{
+}
 
 namespace {
 
@@ -133,6 +138,9 @@ private:
     // stop. We use this variable to make sure we don't send another
     // answer if we do find one later (or if we have a lookup_timeout)
     bool answer_sent_;
+
+    // Reference to our NSAS
+    isc::nsas::NameserverAddressStore& nsas_;
 
     // Reference to our cache
     isc::cache::ResolverCache& cache_;
@@ -263,7 +271,6 @@ private:
                     // just use the first for now
                     if (!rdi->isLast()) {
                         std::string addr_str = rdi->getCurrent().toText();
-                        dlog("[XX] first address found: " + addr_str);
                         // now we have one address, simply
                         // resend that exact same query
                         // to that address and yield, when it
@@ -285,7 +292,6 @@ private:
                 send();
                 return false;
             } else {
-                dlog("[XX] no ready-made addresses in additional. need nsas.");
                 // TODO this will result in answering with the delegation. oh well
                 isc::resolve::copyResponseMessage(incoming, answer_message_);
                 return true;
@@ -324,6 +330,7 @@ public:
         isc::resolve::ResolverInterface::CallbackPtr cb,
         int query_timeout, int client_timeout, int lookup_timeout,
         unsigned retries,
+        isc::nsas::NameserverAddressStore& nsas,
         isc::cache::ResolverCache& cache) :
         io_(io),
         question_(question),
@@ -340,6 +347,7 @@ public:
         queries_out_(0),
         done_(false),
         answer_sent_(false),
+        nsas_(nsas),
         cache_(cache)
     {
         // Setup the timer to stop trying (lookup_timeout)
@@ -498,7 +506,7 @@ RecursiveQuery::resolve(const QuestionPtr& question,
         new RunningQuery(io, *question, answer_message, upstream_,
                          upstream_root_, buffer, callback, query_timeout_,
                          client_timeout_, lookup_timeout_, retries_,
-                         cache_);
+                         nsas_, cache_);
     }
 }
 
@@ -534,7 +542,7 @@ RecursiveQuery::resolve(const Question& question,
         // It will delete itself when it is done
         new RunningQuery(io, question, answer_message, upstream_, upstream_root_,
                              buffer, crs, query_timeout_, client_timeout_,
-                             lookup_timeout_, retries_, cache_);
+                             lookup_timeout_, retries_, nsas_, cache_);
     }
 }
 
