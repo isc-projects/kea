@@ -1,0 +1,4 @@
+unreadVariable:src/lib/dns/rdata/template.cc:59
+uninitVar:src/lib/nsas/nameserver_entry.h
+functionConst:src/lib/cache/message_cache.h
+functionConst:src/lib/cache/rrset_cache.h
