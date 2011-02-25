@@ -56,6 +56,6 @@ b10_auth_LDADD += $(SQLITE_LIBS)
 
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir
 # and can't use @datadir@ because doesn't expand default ${prefix}
-b10_authdir = $(DESTDIR)$(pkgdatadir)
+b10_authdir = $(pkgdatadir)
 b10_auth_DATA = auth.spec
 

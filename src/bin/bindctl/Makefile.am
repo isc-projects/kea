@@ -8,7 +8,7 @@ EXTRA_DIST = $(man_MANS) bindctl.xml
 python_PYTHON = __init__.py bindcmd.py cmdparse.py exception.py moduleinfo.py mycollections.py
 pythondir = $(pyexecdir)/bindctl
 
-bindctldir = $(DESTDIR)$(pkgdatadir)
+bindctldir = $(pkgdatadir)
 
 CLEANFILES = bindctl
 

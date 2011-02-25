@@ -55,6 +55,6 @@ b10_resolver_LDFLAGS = -pthread
 
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir
 # and can't use @datadir@ because doesn't expand default ${prefix}
-b10_resolverdir = $(DESTDIR)$(pkgdatadir)
+b10_resolverdir = $(pkgdatadir)
 b10_resolver_DATA = resolver.spec
 
