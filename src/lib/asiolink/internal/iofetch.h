@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,26 +12,34 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __UDP_QUERY_H
-#define __UDP_QUERY_H 1
+#ifndef __IOFETCH_H
+#define __IOFETCH_H 1
 
-#ifndef ASIO_HPP
-#error "asio.hpp must be included before including this, see asiolink.h as to why"
-#endif
+#include <config.h>
+
+#include <asio.hpp>
+#include <boost/shared_array.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <dns/buffer.h>
+#include <dns/message.h>
+#include <dns/messagerenderer.h>
 
-#include <asiolink/io_address.h>
-#include <coroutine.h>
+#include <asiolink/asiolink.h>
+#include <asiolink/internal/coroutine.h>
+
+// This file contains TCP/UDP-specific implementations of generic classes 
+// defined in asiolink.h.  It is *not* intended to be part of the public
+// API.
 
 namespace asiolink {
-
 //
-// Asynchronous UDP coroutine for upstream queries
+// Asynchronous UDP/TCP coroutine for upstream fetches
 //
-class UDPQuery : public coroutine {
+//class IOFetch : public coroutine, public UdpFetch, public TcpFetch {
+class IOFetch : public coroutine {
 public:
-    // TODO Maybe this should be more generic than just for UDPQuery?
+    // TODO Maybe this should be more generic than just for IOFetch?
     ///
     /// \brief Result of the query
     ///
@@ -43,12 +51,12 @@ public:
         TIME_OUT,
         STOPPED
     };
-    /// Abstract callback for the UDPQuery.
+    /// Abstract callback for the IOFetch.
     class Callback {
     public:
         virtual ~Callback() {}
 
-        /// This will be called when the UDPQuery is completed
+        /// This will be called when the IOFetch is completed
         virtual void operator()(Result result) = 0;
     };
     ///
@@ -59,11 +67,12 @@ public:
     ///        delete it if allocated on heap.
     ///@param timeout in ms.
     ///
-    explicit UDPQuery(asio::io_service& io_service,
+    IOFetch(asio::io_service& io_service,
                       const isc::dns::Question& q,
                       const IOAddress& addr, uint16_t port,
                       isc::dns::OutputBufferPtr buffer,
-                      Callback* callback, int timeout = -1);
+                      Callback* callback, int timeout = -1, 
+                      int protocol = IPPROTO_UDP);
     void operator()(asio::error_code ec = asio::error_code(),
                     size_t length = 0);
     /// Terminate the query.
@@ -80,9 +89,37 @@ private:
     /// to many async_*() functions) and we want keep the same data. Some of
     /// the data is not copyable too.
     ///
-    struct PrivateData;
-    boost::shared_ptr<PrivateData> data_;
+    //struct IOFetchProtocol;
+    //boost::shared_ptr<IOFetchProtocol> data_;
+    //struct UdpData;
+    //struct TcpData;
+    boost::shared_ptr<UdpFetch> data_;
+    boost::shared_ptr<TcpFetch> tcp_data_;
+};
+class UdpFetch : public IOFetch {
+    public:
+        struct UdpData;
+        explicit UdpFetch(asio::io_service& io_service,
+                          const isc::dns::Question& q,
+                          const IOAddress& addr,
+                          uint16_t port,
+                          isc::dns::OutputBufferPtr buffer,
+                          IOFetch::Callback *callback,
+                          int timeout);
+};
+class TcpFetch : public IOFetch {
+    public:
+        struct TcpData;
+        explicit TcpFetch(io_service& io_service, const Question& q,
+                 const IOAddress& addr, uint16_t port,
+                 OutputBufferPtr buffer, Callback *callback, int timeout);
 };
 
-}      // namespace asiolink
-#endif // __UDP_QUERY_H
+}
+
+
+#endif // __IOFETCH_H
+
+// Local Variables: 
+// mode: c++
+// End: 

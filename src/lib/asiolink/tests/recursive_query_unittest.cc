@@ -41,8 +41,13 @@
 // if we include asio.hpp unless we specify a special compiler option.
 // If we need to test something at the level of underlying ASIO and need
 // their definition, that test should go to asiolink/internal/tests.
-#include <asiolink/asiolink.h>
+#include <asiolink/recursive_query.h>
 #include <asiolink/io_socket.h>
+#include <asiolink/io_service.h>
+#include <asiolink/io_message.h>
+#include <asiolink/io_error.h>
+#include <asiolink/dns_lookup.h>
+#include <asiolink/simple_callback.h>
 
 using isc::UnitTestUtil;
 using namespace std;
@@ -672,7 +677,7 @@ TEST_F(RecursiveQueryTest, forwardClientTimeout) {
     RecursiveQuery query(*dns_service_,
                          singleAddress(TEST_IPV4_ADDR, port),
                          singleAddress(TEST_IPV4_ADDR, port),
-                         50, 120, 1000, 4);
+                         200, 480, 4000, 4);
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     query.resolve(question, answer, buffer, &server);
@@ -716,7 +721,7 @@ TEST_F(RecursiveQueryTest, forwardLookupTimeout) {
     RecursiveQuery query(*dns_service_,
                          singleAddress(TEST_IPV4_ADDR, port),
                          singleAddress(TEST_IPV4_ADDR, port),
-                         50, 4000, 120, 5);
+                         200, 4000, 480, 5);
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     query.resolve(question, answer, buffer, &server);

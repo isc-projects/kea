@@ -1,15 +1,70 @@
-  172.  [func]      feng
+  181.  [func]      feng
 	Add stop interface into dns server, so we can stop each running
 	server individually. With it, user can reconfigure her running server
 	with different ip address or port.
 	(Trac #388, git TBD)
+
+  180.  [build]     jreed
+  Fix custom DESTDIR for make install.
+  (Trac $629, git 5ac67ede03892a5eacf42ce3ace1e4e376164c9f)
+
+bind10-devel-20110224 released on February 24, 2011
+
+  179.  [func]      vorner
+	It is possible to start and stop resolver and authoritative
+	server without restart of the whole system. Change of the
+	configuration (Boss/start_auth and Boss/start_resolver) is
+	enough.
+	(Trac #565, git 0ac0b4602fa30852b0d86cc3c0b4730deb1a58fe)
+
+  178.  [func]      jelte
+	Resolver now makes (limited) use of the cache
+	(Trac #491, git 8b41f77f0099ddc7ca7d34d39ad8c39bb1a8363c)
+
+  177.  [func]      stephen
+	The upstream fetch code in asiolink is now protocol agnostic to
+	allow for the addition of fallback to TCP if a fetch response
+	indicates truncation.
+	(Trac #554, git 9739cbce2eaffc7e80640db58a8513295cf684de)
+
+  176.  [func]      zhang likun
+	src/lib/cache: Rename one interface: from lookupClosestRRset()
+	to lookupDeepestNS(), and remove one parameter of it.
+	(Trac #492, git ecbfb7cf929d62a018dd4cdc7a841add3d5a35ae)
+
+  175.	[bug]		jerry
+	src/bin/xfrout: Xfrout use the case-sensitive mode to compress
+	names in an AXFR massage.
+	(Trac #253, git 004e382616150f8a2362e94d3458b59bb2710182)
+
+  174.	[bug]*		jinmei
+	src/lib/dns: revised dnssectime functions so that they don't rely
+	on the time_t type (whose size varies on different systems, which
+	can lead to subtle bugs like some form of "year 2038 problem").
+	Also handled 32-bit wrap around issues more explicitly, with more
+	detailed tests.  The function API has been changed, but the effect
+	should be minimal because these functions are mostly private.
+	(Trac #61, git 09ece8cdd41c0f025e8b897b4883885d88d4ba5d)
+
+  173.	[bug]		jerry
+	python/isc/notify: A notify_out test fails without network
+	connectivity, encapsulate the socket behavior using a mock
+	socket class to fix it.
+	(Trac #346, git 319debfb957641f311102739a15059f8453c54ce)
+
+  172.  [func]      jelte
+	Improved the bindctl cli in various ways, mainly concerning
+	list and map item addressing, the correct display of actual values,
+	and internal help.
+	(Trac #384, git e5fb3bc1ed5f3c0aec6eb40a16c63f3d0fc6a7b2)
+>>>>>>> master
 
   171.  [func]      feng, jerry, jinmei, vorner
 	b10-auth, src/lib/datasrc: in memory data source now works as a
 	complete data source for authoritative DNS servers and b10-auth
 	uses it.  It still misses major features, however, including
 	DNSSEC support and zone transfer.
-	(Last trac #552, but many more,
+	(Last trac #553, but many more,
 	git 6f031a09a248e7684723c000f3e8cc981dcdb349)
 
   170.	[bug]		jinmei
