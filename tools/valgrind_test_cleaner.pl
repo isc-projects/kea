@@ -2,6 +2,18 @@
 use strict;
 use warnings;
 
+# This script can be used on a valgrind output of the tests (from
+# tests_in_valgrind.sh) to remove some uninteresting error reports.
+# Since we care about the tested application not leaking/crashing, not
+# the tests itself, memory leaks that are caused only by the tests
+# (eg. unreleased test data), we don't want to have logs full of them.
+#
+# This script does some heuristics to eliminate some of such error
+# reports. Currently, the memory lost reports whose stack contains
+# no call from the real application are suppressed.
+#
+# Of course, the rest still can contain many uninteresting entries.
+
 my ($block, $blockOK);
 
 sub endBlock(_) {
