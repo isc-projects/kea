@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __RESOLVER_CACHE_H
 #define __RESOLVER_CACHE_H
 
@@ -243,28 +241,27 @@ public:
                               const isc::dns::RRType& qtype,
                               const isc::dns::RRClass& qclass) const;
 
-    /// \brief Look up closest rrset in cache.
+    /// \brief Look up closest enclosing NS rrset in cache.
     ///
     /// \param qname The query name to look up
-    /// \param qtype The query type to look up
     /// \param qclass The query class to look up
     ///
-    /// \return return the shared_ptr of rrset if it can be found in
-    ///         cache, or else return NULL.
+    /// \return return the shared_ptr of closest enclosing ns rrset
+    ///         if it can be found in cache, or else return NULL.
     ///
-    /// Currently the implementation is: search exact rrset
-    /// label by lable, If the rrset can't be found, remove the last
+    /// Currently the implementation is: search exact ns rrset
+    /// label by lable, If the ns rrset can't be found, remove the last
     /// label, then search again. The efficiency may be very low when
-    /// the name of rrset is very long but it's closest rrset's name
-    /// is very short.
-    /// If a good perfermance is needed when looking up the closest rrset,
-    /// rrset cache structure(HashTable) should be redesigned. By using
-    /// HashTable, it can only garantee the performance for looking
-    /// up exact rrset.
+    /// the name is very long but it's closest rrset's name is very short.
+    ///
+    /// If a good perfermance is needed when looking up the closest
+    /// enclosing ns rrset, cache structure(HashTable) should be
+    /// redesigned. By using HashTable, it can only garantee the
+    /// performance for looking up exact rrset.
+    ///
     /// So here there is another question, which rrset looking up interface
-    /// is used frequently? Exact or closest looking up.
-    isc::dns::RRsetPtr lookupClosestRRset(const isc::dns::Name& qname,
-                              const isc::dns::RRType& qtype,
+    /// is used frequently? Exact or closest enclosing ns looking up.
+    isc::dns::RRsetPtr lookupDeepestNS(const isc::dns::Name& qname,
                               const isc::dns::RRClass& qclass) const;
     //@}
 

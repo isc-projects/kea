@@ -12,12 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __RRSET_CACHE_H
 #define __RRSET_CACHE_H
 
-#include <rrset_entry.h>
+#include <cache/rrset_entry.h>
 #include <nsas/hash_table.h>
 #include <nsas/lru_list.h>
 

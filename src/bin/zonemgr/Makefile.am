@@ -4,7 +4,7 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 
 pkglibexec_SCRIPTS = b10-zonemgr
 
-b10_zonemgrdir = $(DESTDIR)$(pkgdatadir)
+b10_zonemgrdir = $(pkgdatadir)
 b10_zonemgr_DATA = zonemgr.spec
 
 CLEANFILES = b10-zonemgr zonemgr.pyc zonemgr.spec

@@ -11,13 +11,14 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>             // for some IPC/network system calls
+
 #include <config.h>
 
-// unistd is needed for asio.hpp with SunStudio
-#include <unistd.h>
-
 #include <asio.hpp>
-
 #include <asiolink/io_service.h>
 
 namespace asiolink {

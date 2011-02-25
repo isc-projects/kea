@@ -515,7 +515,7 @@ struct MemoryZone::MemoryZoneImpl {
         if (target != NULL && !node->getData()->empty()) {
             // Empty domain will be handled as NXRRSET by normal processing
             for (found = node->getData()->begin();
-                 found != node->getData()->end(); found++)
+                 found != node->getData()->end(); ++found)
             {
                 target->addRRset(
                     boost::const_pointer_cast<RRset>(prepareRRset(name,
