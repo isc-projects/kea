@@ -485,9 +485,7 @@ TEST_F(RecursiveQueryTest, v4AddServer) {
     EXPECT_THROW(sendTCP(AF_INET6), IOError);
 }
 
-TEST_F(RecursiveQueryTest, DISABLED_clearServers) {
-    // FIXME: Enable when clearServers actually close the sockets
-    //    See #388
+TEST_F(RecursiveQueryTest, clearServers) {
     setDNSService();
     dns_service_->clearServers();
 
