@@ -19,7 +19,6 @@ b10-cfgmgr.8: b10-cfgmgr.xml
 
 endif
 
-# TODO: does this need $$(DESTDIR) also?
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
 b10-cfgmgr: b10-cfgmgr.py
 	$(SED) "s|@@PYTHONPATH@@|@pyexecdir@|" b10-cfgmgr.py >$@
