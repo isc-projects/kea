@@ -1,6 +1,12 @@
+  181.  [func]      feng
+	Add stop interface into dns server, so we can stop each running
+	server individually. With it, user can reconfigure her running server
+	with different ip address or port.
+	(Trac #388, git TBD)
+
   180.  [build]     jreed
-        Fix custom DESTDIR for make install.
-        (Trac $629, git 5ac67ede03892a5eacf42ce3ace1e4e376164c9f)
+  Fix custom DESTDIR for make install.
+  (Trac $629, git 5ac67ede03892a5eacf42ce3ace1e4e376164c9f)
 
 bind10-devel-20110224 released on February 24, 2011
 
@@ -51,6 +57,7 @@ bind10-devel-20110224 released on February 24, 2011
 	list and map item addressing, the correct display of actual values,
 	and internal help.
 	(Trac #384, git e5fb3bc1ed5f3c0aec6eb40a16c63f3d0fc6a7b2)
+>>>>>>> master
 
   171.  [func]      feng, jerry, jinmei, vorner
 	b10-auth, src/lib/datasrc: in memory data source now works as a

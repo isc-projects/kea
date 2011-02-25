@@ -43,6 +43,7 @@ public:
     void operator()(asio::error_code ec = asio::error_code(),
                     size_t length = 0);
     void asyncLookup();
+    void stop();
     void resume(const bool done);
     bool hasAnswer() { return (done_); }
     int value() { return (get_value()); }
@@ -105,6 +106,9 @@ private:
     // of the coroutine can be declared here.
     size_t bytes_;
     bool done_;
+
+    // whether user has stopped the server
+    bool stopped_by_hand_;
 
     // Callback functions provided by the caller
     const SimpleCallback* checkin_callback_;
