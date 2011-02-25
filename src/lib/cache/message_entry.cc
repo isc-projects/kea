@@ -18,6 +18,7 @@
 
 #include <limits>
 #include <dns/message.h>
+#include <dns/rcode.h>
 #include <nsas/nsas_entry.h>
 #include "message_entry.h"
 #include "rrset_cache.h"
@@ -50,7 +51,8 @@ MessageEntry::getRRsetEntries(vector<RRsetEntryPtr>& rrset_entry_vec,
     uint16_t entry_count = answer_count_ + authority_count_ + additional_count_;
     rrset_entry_vec.reserve(rrset_entry_vec.size() + entry_count);
     for (int index = 0; index < entry_count; ++index) {
-        RRsetEntryPtr rrset_entry = rrset_cache_->lookup(rrsets_[index].name_,
+        boost::shared_ptr<RRsetCache> rrset_cache = rrsets_[index].cache_; 
+        RRsetEntryPtr rrset_entry = rrset_cache->lookup(rrsets_[index].name_,
                                                         rrsets_[index].type_);
         if (time_now < rrset_entry->getExpireTime()) {
             rrset_entry_vec.push_back(rrset_entry);
@@ -212,7 +214,7 @@ MessageEntry::parseSection(const isc::dns::Message& msg,
         RRsetPtr rrset_ptr = *iter;
         RRsetTrustLevel level = getRRsetTrustLevel(msg, rrset_ptr, section);
         RRsetEntryPtr rrset_entry = rrset_cache_->update(*rrset_ptr, level);
-        rrsets_.push_back(RRsetRef(rrset_ptr->getName(), rrset_ptr->getType()));
+        rrsets_.push_back(RRsetRef(rrset_ptr->getName(), rrset_ptr->getType(), rrset_cache_));
 
         uint32_t rrset_ttl = rrset_entry->getTTL();
         if (smaller_ttl > rrset_ttl) {
@@ -220,6 +222,48 @@ MessageEntry::parseSection(const isc::dns::Message& msg,
         }
 
         count++;
+    }
+
+    rrset_count = count;
+}
+
+void
+MessageEntry::parseNegativeResponseAuthoritySection(const isc::dns::Message& msg,
+        uint32_t& soa_ttl,
+        uint16_t& rrset_count,
+        bool& found_soa)
+{
+    RRsetIterator iter;
+    for(iter = msg.beginSection(Message::SECTION_AUTHORITY);
+            iter != msg.endSection(Message::SECTION_AUTHORITY);
+            ++iter){
+        RRsetPtr rrset_ptr = *iter;
+        if (rrset_ptr->getType() == RRType::SOA()){
+            found_soa = true;
+            break;
+        }
+    }
+    if(!found_soa){
+        return;
+    }
+
+    // We found the SOA record, so we can cache the message and RRsets in the cache
+    uint16_t count = 0;
+    for(iter = msg.beginSection(Message::SECTION_AUTHORITY);
+            iter != msg.endSection(Message::SECTION_AUTHORITY);
+            ++iter){
+        RRsetPtr rrset_ptr = *iter;
+        RRsetTrustLevel level = getRRsetTrustLevel(msg, rrset_ptr, Message::SECTION_AUTHORITY);
+        if (rrset_ptr->getType() == RRType::SOA()){
+            soa_ttl = rrset_ptr->getTTL().getValue();
+            RRsetEntryPtr rrset_entry = negative_soa_cache_->update(*rrset_ptr, level);
+            rrsets_.push_back(RRsetRef(rrset_ptr->getName(), rrset_ptr->getType(), negative_soa_cache_));
+        } else {
+            RRsetEntryPtr rrset_entry = rrset_cache_->update(*rrset_ptr, level);
+            rrsets_.push_back(RRsetRef(rrset_ptr->getName(), rrset_ptr->getType(), rrset_cache_));
+        }
+
+        ++count;
     }
 
     rrset_count = count;
@@ -239,12 +283,35 @@ MessageEntry::initMessageEntry(const isc::dns::Message& msg) {
     query_type_ = (*iter)->getType().getCode();
     query_class_ = (*iter)->getClass().getCode();
 
-    uint32_t min_ttl = MAX_UINT32;
-    parseSection(msg, Message::SECTION_ANSWER, min_ttl, answer_count_);
-    parseSection(msg, Message::SECTION_AUTHORITY, min_ttl, authority_count_);
-    parseSection(msg, Message::SECTION_ADDITIONAL, min_ttl, additional_count_);
+    if (!isNegativeResponse(msg)){
+        uint32_t min_ttl = MAX_UINT32;
+        parseSection(msg, Message::SECTION_ANSWER, min_ttl, answer_count_);
+        parseSection(msg, Message::SECTION_AUTHORITY, min_ttl, authority_count_);
+        parseSection(msg, Message::SECTION_ADDITIONAL, min_ttl, additional_count_);
+        expire_time_ = time(NULL) + min_ttl;
+    } else {
+        uint32_t min_ttl = MAX_UINT32;
+        uint32_t soa_ttl = MAX_UINT32;
+        bool found_soa = false;
+        uint16_t rrset_count = 0;
+        parseNegativeResponseAuthoritySection(msg, soa_ttl, rrset_count, found_soa);
+        // For negative response, if no soa RRset is found, dont cache it
+        if(!found_soa) {
+            return;
+        }
+        authority_count_ = rrset_count;
+        parseSection(msg, Message::SECTION_ANSWER, min_ttl, answer_count_);
+        parseSection(msg, Message::SECTION_ADDITIONAL, min_ttl, additional_count_);
 
-    expire_time_ = time(NULL) + min_ttl;
+        expire_time_ = time(NULL) + soa_ttl;
+    }
+
+}
+
+bool
+MessageEntry::isNegativeResponse(const isc::dns::Message& msg)
+{
+    return msg.getRcode() == Rcode::NXDOMAIN();
 }
 
 } // namespace cache
