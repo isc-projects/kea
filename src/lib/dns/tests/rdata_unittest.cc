@@ -223,9 +223,10 @@ TEST_F(Rdata_Unknown_Test, assignment) {
     delete copy2;
     EXPECT_EQ(0, copy3.compare(rdata_unknown));
 
-    // Self assignment
-    copy = copy;
-    EXPECT_EQ(0, copy.compare(rdata_unknown));
+    // Self assignment (via a reference to silence cppcheck)
+    generic::Generic& copyref(copy);
+    copyref = copy;
+    EXPECT_EQ(0, copyref.compare(rdata_unknown));
 }
 
 TEST_F(Rdata_Unknown_Test, toText) {
