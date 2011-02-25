@@ -111,6 +111,42 @@ MessageEntry::genMessage(const time_t& time_now,
     }
 }
 
+// Get the deepest owner name of DNAME record for the given query name.
+static Name
+getDeepestDNAMEOwner(const Message& message, const Name& query_name) {
+    Name dname = query_name;
+    RRsetIterator rrset_iter = message.beginSection(Message::SECTION_ANSWER);
+    while(rrset_iter != message.endSection(Message::SECTION_ANSWER)) {
+        if ((*rrset_iter)->getType() == RRType::DNAME()) {
+            const Name& rrname = (*rrset_iter)->getName();
+            if (NameComparisonResult::SUBDOMAIN ==
+                dname.compare(rrname).getRelation()) {
+                dname = rrname;
+            }
+        }
+        ++rrset_iter;
+    }
+
+    return dname;
+}
+
+// Check whether answer section in given message has non-authoritative rrsets.
+static bool
+answerHasNonAuthRecord(const Message& message, const Name& query_name) {
+    RRsetIterator rrset_iter = message.beginSection(Message::SECTION_ANSWER);
+    while(rrset_iter != message.endSection(Message::SECTION_ANSWER)) {
+        // Here, only check CNAME is enough. If there is
+        // cname record whose ower name is same with query name, answer
+        // section may has non-authoritative rrsets.
+        if ((*rrset_iter)->getType() == RRType::CNAME() &&
+            (*rrset_iter)->getName() == query_name) {
+            return true;
+        }
+        ++rrset_iter;
+    }
+    return false;
+}
+
 RRsetTrustLevel
 MessageEntry::getRRsetTrustLevel(const Message& message,
     const isc::dns::RRsetPtr& rrset,
@@ -120,48 +156,30 @@ MessageEntry::getRRsetTrustLevel(const Message& message,
     switch(section) {
         case Message::SECTION_ANSWER: {
             if (aa) {
-                RRsetIterator rrset_iter = message.beginSection(section);
-
-                // Make sure we are inspecting the right RRset
-                while((*rrset_iter)->getName() != rrset->getName() &&
-                      (*rrset_iter)->getType() != rrset->getType() &&
-                      rrset_iter != message.endSection(section)) {
-                    ++rrset_iter;
-                }
-                assert(rrset_iter != message.endSection(section));
-
                 // According RFC2181 section 5.4.1, only the record
                 // describing that ailas is necessarily authoritative.
-                // If there is one or more CNAME records in answer section.
-                // CNAME records is assumed as the first rrset.
-                if ((*rrset_iter)->getType() == RRType::CNAME()) {
-                    // TODO: real equals for RRsets?
-                    if ((*rrset_iter).get() == rrset.get()) {
-                        return (RRSET_TRUST_ANSWER_AA);
-                    } else {
-                        return (RRSET_TRUST_ANSWER_NONAA);
-                    }
-                }
-
-                // Here, if the first rrset is DNAME, then assume the
-                // second rrset is synchronized CNAME record, except
-                // these two records, any other records in answer section
-                // should be treated as non-authoritative.
-                // TODO, this part logic should be revisited later,
-                // since it's not mentioned by RFC2181.
-                if ((*rrset_iter)->getType() == RRType::DNAME()) {
-                    // TODO: real equals for RRsets?
-                    if ((*rrset_iter).get() == rrset.get() ||
-                        ((++rrset_iter) != message.endSection(section) &&
-                                     (*rrset_iter).get() == rrset.get())) {
-                        return (RRSET_TRUST_ANSWER_AA);
-                    } else {
-                        return (RRSET_TRUST_ANSWER_NONAA);
-                    }
+                // If there are CNAME(Not synchronized from DNAME)
+                // records in answer section, only the CNAME record
+                // whose owner name is same with qname is assumed as
+                // authoritative, all the left records are not authoritative.
+                //
+                // If there are DNAME records in answer section,
+                // Only the start DNAME and the synchronized CNAME record
+                // from it are authoritative, any other records in answer
+                // section are non-authoritative.
+                QuestionIterator quest_iter = message.beginQuestion();
+                const Name& query_name = (*quest_iter)->getName();
+                const RRType& type = rrset->getType();
+                const Name& name = rrset->getName();
+                if ((type == RRType::CNAME() && name == query_name) ||
+                    (type == RRType::DNAME() &&
+                     name == getDeepestDNAMEOwner(message, query_name))) {
+                    return RRSET_TRUST_ANSWER_AA;
+                } else if (answerHasNonAuthRecord(message, query_name)) {
+                    return RRSET_TRUST_ANSWER_NONAA;
                 }
 
                 return (RRSET_TRUST_ANSWER_AA);
-
             } else {
                 return (RRSET_TRUST_ANSWER_NONAA);
             }
