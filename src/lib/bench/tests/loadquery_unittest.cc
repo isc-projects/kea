@@ -55,7 +55,7 @@ const char* const LoadQueryTest::DATA_DIR = TEST_DATA_DIR;
 class QueryInserter {
 public:
     QueryInserter(stringstream& stream) : stream_(stream) {}
-    void operator()(const QueryParam& query) {
+    void operator()(const QueryParam& query) const {
         stream_ << query.first << " " << query.second << endl;
     }
 private:

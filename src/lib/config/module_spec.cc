@@ -121,7 +121,7 @@ void
 check_module_specification(ConstElementPtr def) {
     try {
         check_data_specification(def);
-    } catch (TypeError te) {
+    } catch (const TypeError& te) {
         throw ModuleSpecError(te.what());
     }
 }

@@ -271,7 +271,7 @@ configureAuthServer(AuthSrv& server, ConstElementPtr config_set) {
             parsers.push_back(parser);
         }
     } catch (const AuthConfigError& ex) {
-        throw ex;                  // simply rethrowing it
+        throw;                  // simply rethrowing it
     } catch (const isc::Exception& ex) {
         isc_throw(AuthConfigError, "Server configuration failed: " <<
                   ex.what());
