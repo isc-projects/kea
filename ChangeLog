@@ -5,7 +5,7 @@
 	(Trac #388, git 6df94e2db856c1adc020f658cc77da5edc967555)
 
   180.  [build]     jreed
-	Fix custom DESTDIR for make install.
+	Fix custom DESTDIR for make install. Patch from Jan Engelhardt.
 	(Trac #629, git 5ac67ede03892a5eacf42ce3ace1e4e376164c9f)
 
 bind10-devel-20110224 released on February 24, 2011
