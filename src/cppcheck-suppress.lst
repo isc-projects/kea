@@ -2,3 +2,4 @@ unreadVariable:src/lib/dns/rdata/template.cc:59
 functionConst:src/lib/cache/message_cache.h
 functionConst:src/lib/cache/rrset_cache.h
 debug
+missingInclude
