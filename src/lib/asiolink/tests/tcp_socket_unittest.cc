@@ -318,14 +318,14 @@ TEST(TCPSocket, SequenceTest) {
     client_cb.setCode(43);  // Some error
     EXPECT_FALSE(client.isOpenSynchronous());
     client.open(&server_endpoint, client_cb);
-    
+
     // Run the open and the accept callback and check that they ran.
     service.run_one();
     service.run_one();
 
     EXPECT_EQ(TCPCallback::ACCEPT, server_cb.called());
     EXPECT_EQ(0, server_cb.getCode());
-    
+
     EXPECT_EQ(TCPCallback::OPEN, client_cb.called());
     EXPECT_EQ(0, client_cb.getCode());
 

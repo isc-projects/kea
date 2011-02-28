@@ -62,7 +62,7 @@ private:
     TCPSocket& operator=(const TCPSocket&);
 
 public:
-    
+
     /// \brief Constructor from an ASIO TCP socket.
     ///
     /// \param socket The ASIO representation of the TCP socket.  It is assumed
