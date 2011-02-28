@@ -222,8 +222,9 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
             CORO_YIELD data_->socket->asyncReceive(data_->data.get(),
                 static_cast<size_t>(MIN_LENGTH), data_->cumulative,
                 data_->remote.get(), *this);
+            data_->cumulative += length;
              std::cerr << "IOFetch: resuming after asynchronous receive\n";
-        } while (!data_->socket->receiveComplete(data_->data.get(), length,
+        } while (!data_->socket->receiveComplete(data_->data.get(),
             data_->cumulative));
 
         // The message is not rendered yet, so we can't print it easily

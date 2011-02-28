@@ -18,6 +18,7 @@ TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.h
 run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
+run_unittests_SOURCES += asiolink_utilities_unittest.cc
 run_unittests_SOURCES += io_address_unittest.cc
 run_unittests_SOURCES += io_endpoint_unittest.cc
 run_unittests_SOURCES += io_fetch_unittest.cc

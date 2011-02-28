@@ -263,8 +263,8 @@ TEST(UDPSocket, SequenceTest) {
     EXPECT_EQ(SERVER_PORT, client_remote_endpoint.getPort());
 
     // Finally, check that the receive received a complete buffer's worth of data.
-    EXPECT_TRUE(client.receiveComplete(&data[0], client_cb.getLength(),
-        client_cumulative));
+    client_cumulative += client_cb.getLength();
+    EXPECT_TRUE(client.receiveComplete(&data[0], client_cumulative));
     EXPECT_EQ(client_cb.getLength(), client_cumulative);
 
     // Close client and server.
