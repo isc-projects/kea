@@ -24,7 +24,6 @@
 #include <sys/socket.h>
 #include <unistd.h>             // for some IPC/network system calls
 
-#include <iostream>
 #include <cstddef>
 
 #include <boost/bind.hpp>
@@ -34,6 +33,7 @@
 
 #include <dns/buffer.h>
 
+#include <asiolink/asiolink_utilities.h>
 #include <asiolink/io_asio_socket.h>
 #include <asiolink/io_endpoint.h>
 #include <asiolink/io_service.h>
@@ -65,15 +65,15 @@ public:
     
     /// \brief Constructor from an ASIO TCP socket.
     ///
-    /// \param socket The ASIO representation of the TCP socket.  It
-    /// is assumed that the caller will open and close the socket, so
-    /// these operations are a no-op for that socket.
+    /// \param socket The ASIO representation of the TCP socket.  It is assumed
+    ///        that the caller will open and close the socket, so these
+    ///        operations are a no-op for that socket.
     TCPSocket(asio::ip::tcp::socket& socket);
 
     /// \brief Constructor
     ///
     /// Used when the TCPSocket is being asked to manage its own internal
-    /// socket.  It is assumed that open() and close() will not be used.
+    /// socket.  In this case, the open() and close() methods are used.
     ///
     /// \param service I/O Service object used to manage the socket.
     TCPSocket(IOService& service);
@@ -100,10 +100,10 @@ public:
 
     /// \brief Open Socket
     ///
-    /// Opens the UDP socket.  This is an asynchronous operation, completion of
+    /// Opens the TCP socket.  This is an asynchronous operation, completion of
     /// which will be signalled via a call to the callback function.
     ///
-    /// \param endpoint Endpoint to which the socket will connect to.
+    /// \param endpoint Endpoint to which the socket will connect.
     /// \param callback Callback object.
     virtual void open(const IOEndpoint* endpoint, C& callback);
 
@@ -115,7 +115,8 @@ public:
     ///
     /// \param data Data to send
     /// \param length Length of data to send
-    /// \param endpoint Target of the send
+    /// \param endpoint Target of the send. (Unused for a TCP socket because
+    ///        that was determined when the connection was opened.)
     /// \param callback Callback object.
     virtual void asyncSend(const void* data, size_t length,
         const IOEndpoint* endpoint, C& callback);
@@ -136,21 +137,15 @@ public:
 
     /// \brief Checks if the data received is complete.
     ///
-    /// As all the data is received in one I/O, so this is, this is effectively
-    /// a no-op (although it does update the amount of data received).
+    /// Checks if all the data has been received by checking that the amount
+    /// of data received is equal to the number in the first two bytes of the
+    /// message plus two (for the count field itself).
     ///
-    /// \param data Data buffer containing data to date.  (This is ignored
-    /// for TCP receives.)
-    /// \param length Amount of data received in last asynchronous I/O
-    /// \param cumulative On input, amount of data received before the last
-    /// I/O.  On output, the total amount of data received to date.
+    /// \param data Data buffer containing data to date (ignored)
+    /// \param length Amount of data in the buffer.
     ///
-    /// \return true if the receive is complete, false if another receive is
-    /// needed.
-    virtual bool receiveComplete(void*, size_t length, size_t& cumulative) {
-        cumulative = length;
-        return (true);
-    }
+    /// \return true if the receive is complete, false if not.
+    virtual bool receiveComplete(const void* data, size_t length);
 
     /// \brief Cancel I/O On Socket
     virtual void cancel();
@@ -176,6 +171,10 @@ private:
     // achieved by altering isc::dns::buffer to have pairs of methods:
     // getLength()/getTCPLength(), getData()/getTCPData(), with the getTCPXxx()
     // methods taking into account a two-byte count field.)
+    //
+    // The option of sending the data in two operations, the count followed by
+    // the data was discounted as that would lead to two callbacks which would
+    // cause problems with the stackless coroutine code.
     isc::dns::OutputBufferPtr   send_buffer_;   ///< Send buffer
 };
 
@@ -212,8 +211,6 @@ TCPSocket<C>::open(const IOEndpoint* endpoint, C& callback) {
     // Ignore opens on already-open socket.  Don't throw a failure because
     // of uncertainties as to what precedes whan when using asynchronous I/O.
     // At also allows us a treat a passed-in socket as a self-managed socket.
-
-    std::cerr << "TCPSocket::open(): open_ flags is " << isopen_ << "\n";
     if (!isopen_) {
         if (endpoint->getFamily() == AF_INET) {
             socket_.open(asio::ip::tcp::v4());
@@ -266,8 +263,6 @@ TCPSocket<C>::asyncSend(const void* data, size_t length, const IOEndpoint*,
             send_buffer_->writeData(data, length);
 
             // ... and send it
-            std::cerr << "TCPSocket::asyncSend(): sending " << count << " data bytes\n";
-
             socket_.async_send(asio::buffer(send_buffer_->getData(),
                                send_buffer_->getLength()), callback);
         } catch (boost::numeric::bad_numeric_cast& e) {
@@ -281,34 +276,70 @@ TCPSocket<C>::asyncSend(const void* data, size_t length, const IOEndpoint*,
     }
 }
 
-// Receive a message. Note that the "cumulative" argument is ignored - every TCP
-// receive is put into the buffer beginning at the start - there is no concept
-// receiving a subsequent part of a message.  Same critera as before concerning
-// the need for the socket to be open.
-
+// Receive a message. Note that the "offset" argument is used as an index
+// into the buffer in order to decide where to put the data.  It is up to the
+// caller to initialize the data to zero
 template <typename C> void
-TCPSocket<C>::asyncReceive(void* data, size_t length, size_t,
+TCPSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
     IOEndpoint* endpoint, C& callback)
 {
     if (isopen_) {
-
-        // Upconvert the endpoint again.
+        // Upconvert to a TCPEndpoint.  We need to do this because although
+        // IOEndpoint is the base class of UDPEndpoint and TCPEndpoint, it
+        // does not contain a method for getting at the underlying endpoint
+        // type - that is in the derived class and the two classes differ on
+        // return type.
         assert(endpoint->getProtocol() == IPPROTO_TCP);
-        const TCPEndpoint* tcp_endpoint =
-            static_cast<const TCPEndpoint*>(endpoint);
-        std::cerr << "TCPSocket::asyncReceive(): receiving from " <<
-            tcp_endpoint->getAddress().toText() <<
-            ", port " << tcp_endpoint->getPort() << "\n";
+        TCPEndpoint* tcp_endpoint = static_cast<TCPEndpoint*>(endpoint);
+        
+        // Write the endpoint details from the comminications link.  Ideally
+        // we should make IOEndpoint assignable, but this runs in to all sorts
+        // of problems concerning the management of the underlying Boost
+        // endpoint (e.g. if it is not self-managed, is the copied one
+        // self-managed?) The most pragmatic solution is to let Boost take care
+        // of everything and copy details of the underlying endpoint.
+        tcp_endpoint->getASIOEndpoint() = socket_.remote_endpoint();
 
-        // TODO: Complete TCPSocket::asyncReceive()
+        // Ensure we can write into the buffer and if so, set the pointer to
+        // where the data will be written.
+        if (offset >= length) {
+            isc_throw(BufferOverflow, "attempt to read into area beyond end of "
+                                      "TCP receive buffer");
+        }
+        void* buffer_start = static_cast<void*>(static_cast<uint8_t*>(data) + offset);
 
+        // ... and kick off the read.
+        socket_.async_receive(asio::buffer(buffer_start, length - offset), callback);
+        
     } else {
         isc_throw(SocketNotOpen,
             "attempt to receive from a TCP socket that is not open");
     }
 }
 
+// Is the receive complete?
+
+template <typename C> bool
+TCPSocket<C>::receiveComplete(const void* data, size_t length) {
+
+    bool complete = false;
+
+    // If we have read at least two bytes, we can work out how much we should be
+    // reading.
+    if (length >= 2) {
+
+        // Convert first two bytes to a count and check that the following data
+        // is that length.
+        // TODO: Should we check to see if we have received too much data?
+        uint16_t expected = readUint16(data);
+        complete = ((expected + 2) == length);
+    }
+
+    return (complete);
+}
+
 // Cancel I/O on the socket.  No-op if the socket is not open.
+
 template <typename C> void
 TCPSocket<C>::cancel() {
     if (isopen_) {

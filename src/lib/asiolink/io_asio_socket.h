@@ -41,7 +41,7 @@ public:
         IOError(file, line, what) {}
 };
 
-/// \brief Socket not open
+/// \brief Error setting socket options
 ///
 /// Thrown if attempt to change socket options fails.
 class SocketSetError : public IOError {
@@ -50,7 +50,7 @@ public:
         IOError(file, line, what) {}
 };
 
-/// \brief Buffer Overflow
+/// \brief Buffer overflow
 ///
 /// Thrown if an attempt is made to receive into an area beyond the end of
 /// the receive data buffer.
@@ -108,24 +108,23 @@ public:
 
     /// \brief Return the "native" representation of the socket.
     ///
-    /// In practice, this is the file descriptor of the socket for
-    /// UNIX-like systems so the current implementation simply uses
-    /// \c int as the type of the return value.
-    /// We may have to need revisit this decision later.
+    /// In practice, this is the file descriptor of the socket for UNIX-like
+    /// systems so the current implementation simply uses \c int as the type of
+    /// the return value. We may have to need revisit this decision later.
     ///
-    /// In general, the application should avoid using this method;
-    /// it essentially discloses an implementation specific "handle" that
-    /// can change the internal state of the socket (consider the
-    /// application closes it, for example).
-    /// But we sometimes need to perform very low-level operations that
-    /// requires the native representation.  Passing the file descriptor
-    /// to a different process is one example.
-    /// This method is provided as a necessary evil for such limited purposes.
+    /// In general, the application should avoid using this method; it
+    /// essentially discloses an implementation specific "handle" that can
+    /// change the internal state of the socket (consider what would happen if
+    /// the application closes it, for example).  But we sometimes need to
+    /// perform very low-level operations that requires the native
+    /// representation.  Passing the file descriptor to a different process is
+    /// one example.  This method is provided as a necessary evil for such
+    //// limited purposes.
     ///
     /// This method never throws an exception.
     ///
     /// \return The native representation of the socket.  This is the socket
-    /// file descriptor for UNIX-like systems.
+    ///         file descriptor for UNIX-like systems.
     virtual int getNative() const = 0;
 
     /// \brief Return the transport protocol of the socket.
@@ -135,16 +134,15 @@ public:
     ///
     /// This method never throws an exception.
     ///
-    /// \return IPPROTO_UDP for UDP sockets
-    /// \return IPPROTO_TCP for TCP sockets
+    /// \return \c IPPROTO_UDP for UDP sockets, \c IPPROTO_TCP for TCP sockets
     virtual int getProtocol() const = 0;
 
     /// \brief Is Open() synchronous?
     ///
-    /// On a UDP socket, an "open" operation is merely a call to "open()" on
-    /// the underlying socket (so completes immediately), but on a TCP socket it
-    /// also includings connecting to the remote end (which is done as an
-    /// asynchronous operation).
+    /// On a TCP socket, an "open" operation is a call to the socket's "open()"
+    /// method followed by a connection to the remote system: it is an
+    /// asynchronous operation.  On a UDP socket, it is just a call to "open()"
+    /// and completes synchronously.
     ///
     /// For TCP, signalling of the completion of the operation is done by
     /// by calling the callback function in the normal way.  This could be done
@@ -154,31 +152,31 @@ public:
     /// asynchronously.
     ///
     /// Owing to the way that the stackless coroutines are implemented, we need
-    /// to know _before_ executing the operation whether or not the open is
-    /// asynchronous.  So this method simply provides that information.
+    /// to know _before_ executing the "open" function whether or not it is
+    /// asynchronous.  So this method is called to provide that information.
     ///
     /// (The reason there is a need to know is because the call to open() passes
     /// in the state of the coroutine at the time the call is made.  On an
     /// asynchronous I/O, we need to set the state to point to the statement
-    /// after the call to open() before we pass the corotuine to the open()
-    /// call.  Unfortunately, the macros that do this also yield control - which
-    /// we don't want to do if the open is synchronous.  Hence we need to know
-    /// before we make the call to open() whether that call will complete
-    /// asynchronously.)
+    /// after the call to open() _before_ we pass the corouine to the open()
+    /// call.  Unfortunately, the macros that set the state of the coroutine
+    /// also yield control - which we don't want to do if the open is
+    /// synchronous.  Hence we need to know before we make the call to open()
+    /// whether that call will complete asynchronously.)
     virtual bool isOpenSynchronous() const = 0;
 
     /// \brief Open AsioSocket
     ///
     /// Opens the socket for asynchronous I/O.  The open will complete
     /// synchronously on UCP or asynchronously on TCP (in which case a callback
-    /// will be queued): what will happen can be found by calling the method
-    /// isOpenSynchronous().
+    /// will be queued).
     ///
     /// \param endpoint Pointer to the endpoint object.  This is ignored for
-    /// a UDP socket (the target is specified in the send call), but should
-    /// be of type TCPEndpoint for a TCP connection.
+    ///        a UDP socket (the target is specified in the send call), but
+    ///        should be of type TCPEndpoint for a TCP connection.
     /// \param callback I/O Completion callback, called when the operation has
-    /// completed, but only if the operation was asynchronous.
+    ///        completed, but only if the operation was asynchronous. (It is
+    ///        ignored on a UDP socket.)
     virtual void open(const IOEndpoint* endpoint, C& callback) = 0;
 
     /// \brief Send Asynchronously
@@ -196,7 +194,7 @@ public:
 
     /// \brief Receive Asynchronously
     ///
-    /// This correstponds to async_receive_from() for UDP sockets and
+    /// This corresponds to async_receive_from() for UDP sockets and
     /// async_receive() for TCP.  In both cases, an endpoint argument is
     /// supplied to receive the source of the communication.  For TCP it will
     /// be filled in with details of the connection.
@@ -214,22 +212,17 @@ public:
     /// This applies to TCP receives, where the data is a byte stream and a
     /// receive is not guaranteed to receive the entire message.  DNS messages
     /// over TCP are prefixed by a two-byte count field.  This method takes the
-    /// amount received so far and the amount received in this I/O and checks
-    /// if the message is complete, returning the appropriate indication.  As
-    /// a side-effect, it also updates the amount received.
+    /// amount received so far and checks if the message is complete.
     ///
     /// For a UDP receive, all the data is received in one I/O, so this is
-    /// effectively a no-op (although it does update the amount received).
+    /// effectively a no-op).
     ///
     /// \param data Data buffer containing data to date
-    /// \param length Amount of data received in last asynchronous I/O
-    /// \param cumulative On input, amount of data received before the last
-    /// I/O.  On output, the total amount of data received to date.
+    /// \param length Total amount of data in the buffer.
     ///
     /// \return true if the receive is complete, false if another receive is
-    /// needed.
-    virtual bool receiveComplete(void* data, size_t length,
-                                 size_t& cumulative) = 0;
+    ///         needed.
+    virtual bool receiveComplete(const void* data, size_t length) = 0;
 
     /// \brief Cancel I/O On AsioSocket
     virtual void cancel() = 0;

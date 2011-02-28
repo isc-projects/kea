@@ -53,15 +53,15 @@ public:
 
     /// \brief Constructor from an ASIO UDP socket.
     ///
-    /// \param socket The ASIO representation of the UDP socket.  It
-    /// is assumed that the caller will open and close the socket, so
-    /// these operations are a no-op for that socket.
+    /// \param socket The ASIO representation of the UDP socket.  It is assumed
+    ///        that the caller will open and close the socket, so these
+    ///        operations are a no-op for that socket.
     UDPSocket(asio::ip::udp::socket& socket);
 
     /// \brief Constructor
     ///
     /// Used when the UDPSocket is being asked to manage its own internal
-    /// socket.  It is assumed that open() and close() will not be used.
+    /// socket.  In this case, the open() and close() methods are used.
     ///
     /// \param service I/O Service object used to manage the socket.
     UDPSocket(IOService& service);
@@ -90,9 +90,11 @@ public:
     ///
     /// Opens the UDP socket.  This is a synchronous operation.
     ///
-    /// \param endpoint Endpoint to which the socket will connect to.
-    /// \param callback Unused.
-    virtual void open(const IOEndpoint* endpoint, C&);
+    /// \param endpoint Endpoint to which the socket will send data.  This is
+    ///        used to determine the address family trhat should be used for the
+    ///        underlying socket.
+    /// \param callback Unused as the operation is synchronous.
+    virtual void open(const IOEndpoint* endpoint, C& callback);
 
     /// \brief Send Asynchronously
     ///
@@ -110,8 +112,8 @@ public:
     /// \brief Receive Asynchronously
     ///
     /// Calls the underlying socket's async_receive_from() method to read a
-    /// packet of data from a remote endpoint.  Arrival of the data is
-    /// signalled via a call to the callback function.
+    /// packet of data from a remote endpoint.  Arrival of the data is signalled
+    /// via a call to the callback function.
     ///
     /// \param data Buffer to receive incoming message
     /// \param length Length of the data buffer
@@ -123,19 +125,15 @@ public:
 
     /// \brief Checks if the data received is complete.
     ///
-    /// As all the data is received in one I/O, so this is, this is effectively
-    /// a no-op (although it does update the amount of data received).
+    /// For a UDP socket all the data is received in one I/O, so this is
+    /// effectively a no-op (although it does update the amount of data
+    /// received).
     ///
-    /// \param data Data buffer containing data to date.  (This is ignored
-    /// for UDP receives.)
-    /// \param length Amount of data received in last asynchronous I/O
-    /// \param cumulative On input, amount of data received before the last
-    /// I/O.  On output, the total amount of data received to date.
+    /// \param data Data buffer containing data to date (ignored)
+    /// \param length Amount of data in the buffer.
     ///
-    /// \return true if the receive is complete, false if another receive is
-    /// needed.  Always true for a UDP socket.
-    virtual bool receiveComplete(void*, size_t length, size_t& cumulative) {
-        cumulative = length;
+    /// \return Always true
+    virtual bool receiveComplete(const void*, size_t) {
         return (true);
     }
 
@@ -185,10 +183,11 @@ UDPSocket<C>::~UDPSocket()
 template <typename C> void
 UDPSocket<C>::open(const IOEndpoint* endpoint, C&) {
 
-    // Ignore opens on already-open socket.  Don't throw a failure because
-    // of uncertainties as to what precedes whan when using asynchronous I/O.
-    // At also allows us a treat a passed-in socket as a self-managed socket.
-
+    // Ignore opens on already-open socket.  (Don't throw a failure because
+    // of uncertainties as to what precedes whan when using asynchronous I/O.)
+    // It also allows us a treat a passed-in socket in exactly the same way as
+    // a self-managed socket (in that we can call the open() and close() methods
+    // of this class).
     if (!isopen_) {
         if (endpoint->getFamily() == AF_INET) {
             socket_.open(asio::ip::udp::v4());
@@ -198,8 +197,7 @@ UDPSocket<C>::open(const IOEndpoint* endpoint, C&) {
         }
         isopen_ = true;
 
-        // Ensure it can send and receive 4K buffers.
-
+        // Ensure it can send and receive at least 4K buffers.
         asio::ip::udp::socket::send_buffer_size snd_size;
         socket_.get_option(snd_size);
         if (snd_size.value() < MIN_SIZE) {
@@ -227,13 +225,14 @@ UDPSocket<C>::asyncSend(const void* data, size_t length,
 
         // Upconvert to a UDPEndpoint.  We need to do this because although
         // IOEndpoint is the base class of UDPEndpoint and TCPEndpoint, it
-        // doing cont contain a method for getting at the underlying endpoint
-        // type - those are in the derived class and the two classes differ on
+        // does not contain a method for getting at the underlying endpoint
+        // type - that is in the derived class and the two classes differ on
         // return type.
-
         assert(endpoint->getProtocol() == IPPROTO_UDP);
         const UDPEndpoint* udp_endpoint =
             static_cast<const UDPEndpoint*>(endpoint);
+
+        // ... and send the message.
         socket_.async_send_to(asio::buffer(data, length),
             udp_endpoint->getASIOEndpoint(), callback);
     } else {
@@ -242,10 +241,8 @@ UDPSocket<C>::asyncSend(const void* data, size_t length,
     }
 }
 
-// Receive a message. Note that the "cumulative" argument is ignored - every UDP
-// receive is put into the buffer beginning at the start - there is no concept
-// receiving a subsequent part of a message.  Same critera as before concerning
-// the need for the socket to be open.
+// Receive a message.   Should never do this if the socket is not open, so throw
+// an exception if this is the case.
 
 template <typename C> void
 UDPSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
