@@ -113,9 +113,6 @@ private:
     // we should differentiate between forwarding and resolving
     boost::shared_ptr<AddressVector> upstream_;
 
-    // root servers...just copied over to the zone_servers_
-    boost::shared_ptr<AddressVector> upstream_root_;
-
     // Buffer to store the result.
     OutputBufferPtr buffer_;
 
@@ -138,10 +135,6 @@ private:
     unsigned retries_;
 
     // normal query state
-
-    // Not using NSAS at this moment, so we keep a list
-    // of 'current' zone servers
-    std::vector<addr_t> zone_servers_;
 
     // Update the question that will be sent to the server
     void setQuestion(const Question& new_question) {
@@ -229,36 +222,6 @@ private:
         }
     }
 
-    // (re)send the query to the server.
-    void oldsend() {
-        const int uc = upstream_->size();
-        const int zs = zone_servers_.size();
-        buffer_->clear();
-        if (uc > 0) {
-            int serverIndex = rand() % uc;
-            dlog("Sending upstream query (" + question_.toText() +
-                ") to " + upstream_->at(serverIndex).first);
-            ++queries_out_;
-            IOFetch query(IPPROTO_UDP, io_, question_,
-                upstream_->at(serverIndex).first,
-                upstream_->at(serverIndex).second, buffer_, this,
-                query_timeout_);
-            io_.get_io_service().post(query);
-        } else if (zs > 0) {
-            int serverIndex = rand() % zs;
-            dlog("Sending query to zone server (" + question_.toText() +
-                ") to " + zone_servers_.at(serverIndex).first);
-            ++queries_out_;
-            IOFetch query(IPPROTO_UDP, io_, question_,
-                zone_servers_.at(serverIndex).first,
-                zone_servers_.at(serverIndex).second, buffer_, this,
-                query_timeout_);
-            io_.get_io_service().post(query);
-        } else {
-            dlog("Error, no upstream servers to send to.");
-        }
-    }
-    
     // This function is called by operator() if there is an actual
     // answer from a server and we are in recursive mode
     // depending on the contents, we go on recursing or return
@@ -312,7 +275,6 @@ private:
 
             answer_message_->appendSection(Message::SECTION_ANSWER,
                                            incoming);
-            setZoneServersToRoot();
 
             question_ = Question(cname_target, question_.getClass(),
                                  question_.getType());
@@ -336,7 +298,7 @@ private:
             cache_.update(incoming);
             // Referral. For now we just take the first glue address
             // we find and continue with that
-            zone_servers_.clear();
+
             // auth section should have at least one RRset
             // and one of them should be an NS (otherwise
             // classifier should have error'd)
@@ -397,7 +359,6 @@ public:
         const Question& question,
         MessagePtr answer_message,
         boost::shared_ptr<AddressVector> upstream,
-        boost::shared_ptr<AddressVector> upstream_root,
         OutputBufferPtr buffer,
         isc::resolve::ResolverInterface::CallbackPtr cb,
         int query_timeout, int client_timeout, int lookup_timeout,
@@ -408,7 +369,6 @@ public:
         question_(question),
         answer_message_(answer_message),
         upstream_(upstream),
-        upstream_root_(upstream_root),
         buffer_(buffer),
         resolvercallback_(cb),
         cname_count_(0),
@@ -438,31 +398,9 @@ public:
             client_timer.async_wait(boost::bind(&RunningQuery::clientTimeout, this));
         }
         
-        // should use NSAS for root servers
-        // Adding root servers if not a forwarder
-        if (upstream_->empty()) {
-            setZoneServersToRoot();
-        }
-
         doLookup();
     }
 
-    void setZoneServersToRoot() {
-        zone_servers_.clear();
-        if (upstream_root_->empty()) { //if no root ips given, use this
-            zone_servers_.push_back(addr_t("192.5.5.241", 53));
-        } else {
-            // copy the list
-            dlog("Size is " + 
-                boost::lexical_cast<std::string>(upstream_root_->size()) + 
-                "\n");
-            for(AddressVector::iterator it = upstream_root_->begin();
-                it < upstream_root_->end(); ++it) {
-            zone_servers_.push_back(addr_t(it->first,it->second));
-            dlog("Put " + zone_servers_.back().first + "into root list\n");
-            }
-        }
-    }
     virtual void clientTimeout() {
         // Return a SERVFAIL, but do not stop until
         // we have an answer or timeout ourselves
@@ -550,7 +488,7 @@ public:
             incoming.fromWire(ibuf);
 
             buffer_->clear();
-            if (upstream_->size() == 0 &&
+            if (recursive_mode() &&
                 incoming.getRcode() == Rcode::NOERROR()) {
                 done_ = handleRecursiveAnswer(incoming);
             } else {
@@ -564,18 +502,25 @@ public:
         } else if (!done_ && retries_--) {
             // We timed out, but we have some retries, so send again
             dlog("Timeout for " + question_.toText() + " to " + current_ns_address.getAddress().toText() + ", resending query");
-            if (upstream_->empty()) {
+            if (recursive_mode()) {
                 current_ns_address.updateRTT(isc::nsas::AddressEntry::UNREACHABLE);
             }
             send();
         } else {
             // out of retries, give up for now
             dlog("Timeout for " + question_.toText() + " to " + current_ns_address.getAddress().toText() + ", giving up");
-            if (upstream_->empty()) {
+            if (recursive_mode()) {
                 current_ns_address.updateRTT(isc::nsas::AddressEntry::UNREACHABLE);
             }
             stop(false);
         }
+    }
+    
+    // Returns true if we are in 'recursive' mode
+    // Returns false if we are in 'forwarding' mode
+    // (i.e. if we have anything in upstream_)
+    bool recursive_mode() const {
+        return upstream_->empty();
     }
 };
 
@@ -619,7 +564,7 @@ RecursiveQuery::resolve(const QuestionPtr& question,
             dlog("Message not found in cache, starting recursive query");
             // It will delete itself when it is done
             new RunningQuery(io, *question, answer_message, upstream_,
-                             upstream_root_, buffer, callback, query_timeout_,
+                             buffer, callback, query_timeout_,
                              client_timeout_, lookup_timeout_, retries_,
                              nsas_, cache_);
         }
@@ -671,7 +616,7 @@ RecursiveQuery::resolve(const Question& question,
         } else {
             dlog("Message not found in cache, starting recursive query");
             // It will delete itself when it is done
-            new RunningQuery(io, question, answer_message, upstream_, upstream_root_,
+            new RunningQuery(io, question, answer_message, upstream_,
                                  buffer, crs, query_timeout_, client_timeout_,
                                  lookup_timeout_, retries_, nsas_, cache_);
         }
