@@ -288,10 +288,9 @@ TEST_F(NameTest, assignment) {
     delete copy2;
     EXPECT_EQ(copy3, example_name);
 
-    // Self assignment (via a reference to silence cppcheck)
-    Name& copyref(copy);
-    copyref = copy;
-    EXPECT_EQ(example_name, copyref);
+    // Self assignment
+    copy = copy;
+    EXPECT_EQ(example_name, copy);
 }
 
 TEST_F(NameTest, toText) {
