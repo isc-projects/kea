@@ -56,7 +56,7 @@ const size_t Name::MAX_LABELS;
 namespace {
 class RBTreeTest : public::testing::Test {
 protected:
-    RBTreeTest() : rbtree_expose_empty_node(true) {
+    RBTreeTest() : rbtree_expose_empty_node(true), crbtnode(NULL) {
         const char* const domain_names[] = {
             "c", "b", "a", "x.d.e.f", "z.d.e.f", "g.h", "i.g.h", "o.w.y.d.e.f",
             "j.z.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f"};
