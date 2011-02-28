@@ -644,7 +644,7 @@ TEST_F(AuthSrvTest, queryCounterUnexpected) {
     // Modify the message.
     delete io_message;
     endpoint = IOEndpoint::create(IPPROTO_UDP,
-                                  IOAddress(DEFAULT_REMOTE_ADDRESS), 5300);
+                                  IOAddress(DEFAULT_REMOTE_ADDRESS), 53210);
     io_message = new IOMessage(request_renderer.getData(),
                                request_renderer.getLength(),
                                getDummyUnknownSocket(), *endpoint);

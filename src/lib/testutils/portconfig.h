@@ -51,8 +51,8 @@ listenAddresses(Server& server) {
 
     // Try putting there some addresses
     AddressList addresses;
-    addresses.push_back(AddressPair("127.0.0.1", 5321));
-    addresses.push_back(AddressPair("::1", 5321));
+    addresses.push_back(AddressPair("127.0.0.1", 53210));
+    addresses.push_back(AddressPair("::1", 53210));
     server.setListenAddresses(addresses);
     EXPECT_EQ(2, server.getListenAddresses().size());
     EXPECT_EQ("::1", server.getListenAddresses()[1].first);
@@ -88,7 +88,7 @@ listenAddressConfig(Server& server) {
                                         "\"listen_on\": ["
                                         "   {"
                                         "       \"address\": \"127.0.0.1\","
-                                        "       \"port\": 5321"
+                                        "       \"port\": 53210"
                                         "   }"
                                         "]"
                                         "}"));
@@ -96,7 +96,7 @@ listenAddressConfig(Server& server) {
     EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
     ASSERT_EQ(1, server.getListenAddresses().size());
     EXPECT_EQ("127.0.0.1", server.getListenAddresses()[0].first);
-    EXPECT_EQ(5321, server.getListenAddresses()[0].second);
+    EXPECT_EQ(53210, server.getListenAddresses()[0].second);
 
     // As this is example address, the machine should not have it on
     // any interface
@@ -107,7 +107,7 @@ listenAddressConfig(Server& server) {
                                "\"listen_on\": ["
                                "   {"
                                "       \"address\": \"192.0.2.0\","
-                               "       \"port\": 5321"
+                               "       \"port\": 53210"
                                "   }"
                                "]"
                                "}");
@@ -115,7 +115,7 @@ listenAddressConfig(Server& server) {
     EXPECT_FALSE(result->equals(*isc::config::createAnswer()));
     ASSERT_EQ(1, server.getListenAddresses().size());
     EXPECT_EQ("127.0.0.1", server.getListenAddresses()[0].first);
-    EXPECT_EQ(5321, server.getListenAddresses()[0].second);
+    EXPECT_EQ(53210, server.getListenAddresses()[0].second);
 
 }
 

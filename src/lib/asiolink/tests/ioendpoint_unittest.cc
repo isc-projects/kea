@@ -21,9 +21,9 @@ using namespace asiolink;
 
 TEST(IOEndpointTest, createUDPv4) {
     const IOEndpoint* ep;
-    ep = IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.1"), 5300);
+    ep = IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.1"), 53210);
     EXPECT_EQ("192.0.2.1", ep->getAddress().toText());
-    EXPECT_EQ(5300, ep->getPort());
+    EXPECT_EQ(53210, ep->getPort());
     EXPECT_EQ(AF_INET, ep->getFamily());
     EXPECT_EQ(AF_INET, ep->getAddress().getFamily());
     EXPECT_EQ(IPPROTO_UDP, ep->getProtocol());
@@ -61,7 +61,7 @@ TEST(IOEndpointTest, createTCPv6) {
 
 TEST(IOEndpointTest, createIPProto) {
     EXPECT_THROW(IOEndpoint::create(IPPROTO_IP, IOAddress("192.0.2.1"),
-                                    5300)->getAddress().toText(),
+                                    53210)->getAddress().toText(),
                  IOError);
 }
 
