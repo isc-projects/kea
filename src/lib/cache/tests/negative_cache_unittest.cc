@@ -88,6 +88,31 @@ TEST_F(NegativeCacheTest, testNXDOMAIN){
     // The TTL should equal to the TTL of negative response SOA record
     const RRTTL& nxdomain_ttl2 = rrset_ptr->getTTL();
     EXPECT_EQ(nxdomain_ttl2.getValue(), 86400);
+
+    // Check the normal SOA cache again
+    Message msg_example_com_soa2(Message::PARSE);
+    messageFromFile(msg_example_com_soa2, "message_example_com_soa.wire");
+    msg_example_com_soa2.makeResponse();
+    EXPECT_TRUE(cache->lookup(soa_qname, RRType::SOA(), RRClass::IN(), msg_example_com_soa2));
+
+    iter = msg_example_com_soa2.beginSection(Message::SECTION_ANSWER);
+    rrset_ptr = *iter;
+    const RRTTL& soa_ttl2 = rrset_ptr->getTTL();
+    // The TTL should equal to the TTL of SOA record in answer section
+    EXPECT_EQ(soa_ttl2.getValue(), 172800);
+}
+
+TEST_F(NegativeCacheTest, testNXDOMAINWithoutSOA){
+    // NXDOMAIN response for nonexist.example.com
+    Message msg_nxdomain(Message::PARSE);
+    messageFromFile(msg_nxdomain, "message_nxdomain_no_soa.wire");
+    cache->update(msg_nxdomain);
+
+    msg_nxdomain.makeResponse();
+
+    Name non_exist_qname("nonexist.example.com.");
+    // The message should not be cached
+    EXPECT_FALSE(cache->lookup(non_exist_qname, RRType::A(), RRClass::IN(), msg_nxdomain));
 }
 
 }
