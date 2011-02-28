@@ -57,6 +57,7 @@ public:
     /// directly.
     bool update(const isc::dns::Message& msg);
 
+#if 0
     /// \brief Dump the message cache to specified file.
     /// \todo It should can be dumped to one configured database.
     void dump(const std::string& file_name);
@@ -67,6 +68,7 @@ public:
 
     /// \brief Resize the size of message cache in runtime.
     bool resize(uint32_t size);
+#endif
 
 protected:
     /// \brief Get the hash key for the message entry in the cache.

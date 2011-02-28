@@ -70,6 +70,7 @@ public:
     RRsetEntryPtr update(const isc::dns::RRset& rrset,
                          const RRsetTrustLevel& level);
 
+#if 0
     /// \brief Dump the rrset cache to specified file.
     ///
     /// \param file_name The file to write to
@@ -89,6 +90,7 @@ public:
     /// \param The size to resize to
     /// \return true
     bool resize(uint32_t size);
+#endif
 
 private:
     uint16_t class_; // The class of the rrset cache.
