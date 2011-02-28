@@ -26,6 +26,8 @@
 #include <exceptions/exceptions.h>
 #include <coroutine.h>
 
+#include <dns/buffer.h>
+
 #include <asiolink/io_error.h>
 #include <asiolink/io_socket.h>
 
@@ -224,6 +226,21 @@ public:
     ///         needed.
     virtual bool receiveComplete(const void* data, size_t length) = 0;
 
+    /// \brief Append Normalized Data
+    ///
+    /// When a UDP buffer is received, the entire buffer contains the data.
+    /// When a TCP buffer is received, the first two bytes of the buffer hold
+    /// a length count.  This method removes those bytes from the buffer.
+    ///
+    /// \param inbuf Input buffer.  This contains the data received over the
+    ///        network connection.
+    /// \param length Amount of data in the input buffer.  If TCP, this includes
+    ///        the two-byte count field.
+    /// \param outbuf Pointer to output buffer to which the data will be
+    ///        appended.
+    virtual void appendNormalizedData(const void* inbuf, size_t length,
+        isc::dns::OutputBufferPtr outbuf) = 0;
+
     /// \brief Cancel I/O On AsioSocket
     virtual void cancel() = 0;
 
@@ -320,6 +337,15 @@ public:
     /// \return Always true
     virtual bool receiveComplete(void*, size_t, size_t&) {
         return (true);
+    }
+    /// \brief Append Normalized Data
+    ///
+    /// \param inbuf Unused.
+    /// \param length Unused.
+    /// \param outbuf unused.
+    virtual void appendNormalizedData(const void*, size_t,
+                                      isc::dns::OutputBufferPtr)
+    {
     }
 
     /// \brief Cancel I/O On AsioSocket
