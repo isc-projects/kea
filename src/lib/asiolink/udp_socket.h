@@ -107,7 +107,7 @@ public:
     /// \param endpoint Target of the send
     /// \param callback Callback object.
     virtual void asyncSend(const void* data, size_t length,
-        const IOEndpoint* endpoint, C& callback);
+                           const IOEndpoint* endpoint, C& callback);
 
     /// \brief Receive Asynchronously
     ///
@@ -135,6 +135,24 @@ public:
     /// \return Always true
     virtual bool receiveComplete(const void*, size_t) {
         return (true);
+    }
+
+    /// \brief Append Normalized Data
+    ///
+    /// When a UDP buffer is received, the entire buffer contains the data.
+    /// When a TCP buffer is received, the first two bytes of the buffer hold
+    /// a length count.  This method removes those bytes from the buffer.
+    ///
+    /// \param inbuf Input buffer.  This contains the data received over the
+    ///        network connection.
+    /// \param length Amount of data in the input buffer.  If TCP, this includes
+    ///        the two-byte count field.
+    /// \param outbuf Pointer to output buffer to which the data will be
+    ///        appended
+    virtual void appendNormalizedData(const void* inbuf, size_t length,
+                                      isc::dns::OutputBufferPtr outbuf)
+    {
+        outbuf->writeData(inbuf, length);
     }
 
     /// \brief Cancel I/O On Socket
@@ -271,6 +289,7 @@ UDPSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
 }
 
 // Cancel I/O on the socket.  No-op if the socket is not open.
+
 template <typename C> void
 UDPSocket<C>::cancel() {
     if (isopen_) {

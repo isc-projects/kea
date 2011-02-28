@@ -47,7 +47,7 @@ namespace asiolink {
 const asio::ip::address TEST_HOST(asio::ip::address::from_string("127.0.0.1"));
 const uint16_t TEST_PORT(5301);
 // FIXME Shouldn't we send something that is real message?
-const char TEST_DATA[] = "TEST DATA";
+const char TEST_DATA[] = "Test response from server to client";
 
 /// \brief Test fixture for the asiolink::IOFetch.
 class IOFetchTest : public virtual ::testing::Test, public virtual IOFetch::Callback
@@ -262,30 +262,11 @@ public:
         // when one of the "servers" in this class has sent back the TEST_DATA.
         // Check the data is as expected/
         if (expected_ == IOFetch::SUCCESS) {
-            size_t offset = 0;      // Offset into start of buffer of data
-            if (protocol_ == IOFetch::UDP) {
+            EXPECT_EQ(sizeof(TEST_DATA), result_buff_->getLength());
 
-                // Check the length of data received against the amount expected.
-                EXPECT_EQ(sizeof(TEST_DATA), result_buff_->getLength());
-
-            } else {
-
-                // Check the length of data received against the amount expected
-                EXPECT_EQ(sizeof(TEST_DATA) + 2, result_buff_->getLength());
-
-                // Check the count field.  This should be equal to the total
-                // length of the packet less 2 (the count field is equal to
-                // the total length of the message less the count field itself -
-                // RFC 1035, section 4.2.2).
-                uint16_t count = readUint16(result_buff_->getData());
-                EXPECT_EQ(result_buff_->getLength(), count + 2);
-
-                // Update offset and count for the content check.
-                offset  += 2;
-            }
-            const void* start = static_cast<const void*>(
-                static_cast<const uint8_t*>(result_buff_->getData()) + offset);
-            EXPECT_TRUE(memcmp(TEST_DATA, start, sizeof(TEST_DATA)) == 0);
+            const uint8_t* start = static_cast<const uint8_t*>(result_buff_->getData());
+            EXPECT_TRUE(equal(TEST_DATA, (TEST_DATA + sizeof(TEST_DATA) - 1),
+                              start));
         }
 
         // ... and cause the run loop to exit.

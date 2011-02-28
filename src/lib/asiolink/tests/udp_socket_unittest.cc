@@ -35,8 +35,11 @@
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <dns/buffer.h>
+
 #include <asio.hpp>
 
+#include <asiolink/asiolink_utilities.h>
 #include <asiolink/io_service.h>
 #include <asiolink/udp_endpoint.h>
 #include <asiolink/udp_socket.h>
@@ -161,6 +164,53 @@ public:
 private:
     boost::shared_ptr<PrivateData>  ptr_;   ///< Pointer to private data
 };
+
+// Receive complete method should return true regardless of what is in the first
+// two bytes of a buffer.
+
+TEST(UDPSocket, receiveComplete) {
+    IOService               service;        // Used to instantiate socket
+    UDPSocket<UDPCallback>  test(service);  // Socket under test
+    uint8_t                 buffer[32];     // Buffer to check
+
+    // Expect that the value is true whatever number is written in the first
+    // two bytes of the buffer.
+    uint16_t count = 0;
+    for (uint32_t i = 0; i < (2 << 16); ++i, ++count) {
+        writeUint16(count, buffer);
+        EXPECT_TRUE(test.receiveComplete(buffer, sizeof(buffer)));
+    }
+}
+
+// Check that the normalized data copy copies the entire buffer regardless of
+// the first two bytes.
+
+TEST(UDPSocket, appendNormalizedData) {
+    IOService               service;        // Used to instantiate socket
+    UDPSocket<UDPCallback>  test(service);  // Socket under test
+    uint8_t                 inbuff[32];     // Buffer to check
+    isc::dns::OutputBufferPtr outbuff(new isc::dns::OutputBuffer(sizeof(inbuff)));
+                                            // Where data is written
+
+    // Initialize the input buffer with data.
+    for (uint8_t i = 0; i < sizeof(inbuff); ++i) {
+        inbuff[i] = i + 1;      // An arbitrary number
+    }
+
+    // Loop to ensure that entire buffer is copied on all count values, no
+    // matter what.
+    uint16_t count = 0;
+    for (uint32_t i = 0; i < (2 << 16); ++i, ++count) {
+        writeUint16(count, inbuff);
+        outbuff->clear();
+        test.appendNormalizedData(inbuff, sizeof(inbuff), outbuff);
+
+        EXPECT_EQ(sizeof(inbuff), outbuff->getLength());
+
+        const uint8_t* outptr = static_cast<const uint8_t*>(outbuff->getData());
+        EXPECT_TRUE(equal(&inbuff[0], &inbuff[sizeof(inbuff) - 1], outptr));
+    }
+}
 
 // TODO: Need to add a test to check the cancel() method
 

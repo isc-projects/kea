@@ -274,6 +274,58 @@ clientReadComplete(TCPSocket<TCPCallback>& client, TCPCallback& client_cb,
     return (complete);
 }
 
+
+// Receive complete method should return true only if the count in the first
+// two bytes is equal to the size of the rest if the buffer.
+
+TEST(TCPSocket, receiveComplete) {
+    IOService               service;        // Used to instantiate socket
+    TCPSocket<TCPCallback>  test(service);  // Socket under test
+    uint8_t                 buffer[32];     // Buffer to check
+
+    // Expect that the value is true whatever number is written in the first
+    // two bytes of the buffer.
+    uint16_t count = 0;
+    for (uint32_t i = 0; i < (2 << 16); ++i, ++count) {
+        writeUint16(count, buffer);
+        if (count == (sizeof(buffer) - 2)) {
+            EXPECT_TRUE(test.receiveComplete(buffer, sizeof(buffer)));
+        } else {
+            EXPECT_FALSE(test.receiveComplete(buffer, sizeof(buffer)));
+        }
+    }
+}
+
+// Check that the normalized data copy only copies all but the first two bytes
+// of the buffer (whatever the count).
+
+TEST(TCPSocket, appendNormalizedData) {
+    IOService               service;        // Used to instantiate socket
+    TCPSocket<TCPCallback>  test(service);  // Socket under test
+    uint8_t                 inbuff[32];     // Buffer to check
+    isc::dns::OutputBufferPtr outbuff(new isc::dns::OutputBuffer(sizeof(inbuff)));
+                                            // Where data is written
+
+    // Initialize the input buffer with data.
+    for (uint8_t i = 0; i < sizeof(inbuff); ++i) {
+        inbuff[i] = i + 1;      // An arbitrary number
+    }
+
+    // Loop to ensure that entire buffer is copied on all count values, no
+    // matter what.
+    uint16_t count = 0;
+    for (uint32_t i = 0; i < (2 << 16); ++i, ++count) {
+        writeUint16(count, inbuff);
+        outbuff->clear();
+        test.appendNormalizedData(inbuff, sizeof(inbuff), outbuff);
+
+        EXPECT_EQ((sizeof(inbuff) - 2), outbuff->getLength());
+
+        const uint8_t* outptr = static_cast<const uint8_t*>(outbuff->getData());
+        EXPECT_TRUE(equal(&inbuff[2], &inbuff[sizeof(inbuff) - 1], outptr));
+    }
+}
+
 // TODO: Need to add a test to check the cancel() method
 
 // Tests the operation of a TCPSocket by opening it, sending an asynchronous

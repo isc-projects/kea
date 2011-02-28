@@ -72,8 +72,8 @@ struct IOFetchData {
     boost::shared_ptr<IOEndpoint> remote;   ///< Where the fetch was sent
     isc::dns::Question          question;   ///< Question to be asked
     isc::dns::OutputBufferPtr   msgbuf;     ///< Wire buffer for question
-    isc::dns::OutputBufferPtr   buffer;     ///< Received data held here
-    boost::shared_array<char>   data;       ///< Temporary array for data
+    isc::dns::OutputBufferPtr   received;   ///< Received data put here
+    boost::shared_array<char>   staging;    ///< Temporary array for received data
     IOFetch::Callback*          callback;   ///< Called on I/O Completion
     size_t                      cumulative; ///< Cumulative received amount
     bool                        stopped;    ///< Have we stopped running?
@@ -122,8 +122,8 @@ struct IOFetchData {
             ),
         question(query),
         msgbuf(new isc::dns::OutputBuffer(512)),
-        buffer(buff),
-        data(new char[IOFetch::MIN_LENGTH]),
+        received(buff),
+        staging(new char[IOFetch::MIN_LENGTH]),
         callback(cb),
         cumulative(0),
         stopped(false),
@@ -211,11 +211,11 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
         // we check if the operation is complete and if not, loop to read again.
         data_->origin = ASIO_RECVSOCK;
         do {
-            CORO_YIELD data_->socket->asyncReceive(data_->data.get(),
+            CORO_YIELD data_->socket->asyncReceive(data_->staging.get(),
                 static_cast<size_t>(MIN_LENGTH), data_->cumulative,
                 data_->remote.get(), *this);
             data_->cumulative += length;
-        } while (!data_->socket->receiveComplete(data_->data.get(),
+        } while (!data_->socket->receiveComplete(data_->staging.get(),
             data_->cumulative));
 
         /// Copy the answer into the response buffer.  (TODO: If the
@@ -223,7 +223,8 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
         /// MutableBufferSequence, then it could be written to directly by
         /// async_receive_from() and this additional copy step would be
         /// unnecessary.)
-        data_->buffer->writeData(data_->data.get(), length);
+        data_->socket->appendNormalizedData(data_->staging.get(),
+            data_->cumulative, data_->received);
 
         // Finished with this socket, so close it.  This will not generate an
         // I/O error, but reset the origin to unknown in case we change this.

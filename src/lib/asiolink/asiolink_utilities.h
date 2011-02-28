@@ -41,7 +41,7 @@ readUint16(const void* buffer) {
 
 /// \brief Write Unisgned 16-Bit Integer to Buffer
 ///
-/// This is essentially a copy of isc::dns::OutputBuffer::writeUint16.  It 
+/// This is essentially a copy of isc::dns::OutputBuffer::writeUint16.  It
 /// should really be moved into a separate library.
 ///
 /// \param value 16-bit value to convert
