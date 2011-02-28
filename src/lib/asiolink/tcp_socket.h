@@ -119,7 +119,7 @@ public:
     ///        that was determined when the connection was opened.)
     /// \param callback Callback object.
     virtual void asyncSend(const void* data, size_t length,
-        const IOEndpoint* endpoint, C& callback);
+                           const IOEndpoint* endpoint, C& callback);
 
     /// \brief Receive Asynchronously
     ///
@@ -146,6 +146,21 @@ public:
     ///
     /// \return true if the receive is complete, false if not.
     virtual bool receiveComplete(const void* data, size_t length);
+
+    /// \brief Append Normalized Data
+    ///
+    /// When a UDP buffer is received, the entire buffer contains the data.
+    /// When a TCP buffer is received, the first two bytes of the buffer hold
+    /// a length count.  This method removes those bytes from the buffer.
+    ///
+    /// \param inbuf Input buffer.  This contains the data received over the
+    ///        network connection.
+    /// \param length Amount of data in the input buffer.  If TCP, this includes
+    ///        the two-byte count field.
+    /// \param outbuf Pointer to output buffer to which the data will be
+    ///        appended
+    virtual void appendNormalizedData(const void* inbuf, size_t length,
+                                      isc::dns::OutputBufferPtr outbuf);
 
     /// \brief Cancel I/O On Socket
     virtual void cancel();
@@ -336,6 +351,16 @@ TCPSocket<C>::receiveComplete(const void* data, size_t length) {
     }
 
     return (complete);
+}
+
+// Copy buffer less leading two bytes to the target buffer.
+
+template <typename C> void
+TCPSocket<C>::appendNormalizedData(const void* inbuf, size_t length,
+                                   isc::dns::OutputBufferPtr outbuf)
+{
+    const uint8_t* bytebuff = static_cast<const uint8_t*>(inbuf);
+    outbuf->writeData(bytebuff + 2, length - 2);
 }
 
 // Cancel I/O on the socket.  No-op if the socket is not open.
