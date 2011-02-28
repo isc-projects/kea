@@ -6,6 +6,7 @@ missingInclude
 unreadVariable:src/lib/dns/rdata/template.cc:59
 // These two trigger warnings due to the incomplete implementation.  This is
 // our problem, but we need to suppress the warnings for now.
+functionConst:src/lib/cache/resolver_cache.h
 functionConst:src/lib/cache/message_cache.h
 functionConst:src/lib/cache/rrset_cache.h
 // Intentional self assignment tests.  Suppress warning about them.
