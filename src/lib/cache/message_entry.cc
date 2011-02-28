@@ -230,26 +230,12 @@ MessageEntry::parseSection(const isc::dns::Message& msg,
 void
 MessageEntry::parseNegativeResponseAuthoritySection(const isc::dns::Message& msg,
         uint32_t& soa_ttl,
-        uint16_t& rrset_count,
-        bool& found_soa)
+        uint16_t& rrset_count)
 {
-    RRsetIterator iter;
-    for(iter = msg.beginSection(Message::SECTION_AUTHORITY);
-            iter != msg.endSection(Message::SECTION_AUTHORITY);
-            ++iter){
-        RRsetPtr rrset_ptr = *iter;
-        if (rrset_ptr->getType() == RRType::SOA()){
-            found_soa = true;
-            break;
-        }
-    }
-    if(!found_soa){
-        return;
-    }
 
     // We found the SOA record, so we can cache the message and RRsets in the cache
     uint16_t count = 0;
-    for(iter = msg.beginSection(Message::SECTION_AUTHORITY);
+    for(RRsetIterator iter = msg.beginSection(Message::SECTION_AUTHORITY);
             iter != msg.endSection(Message::SECTION_AUTHORITY);
             ++iter){
         RRsetPtr rrset_ptr = *iter;
@@ -292,13 +278,15 @@ MessageEntry::initMessageEntry(const isc::dns::Message& msg) {
     } else {
         uint32_t min_ttl = MAX_UINT32;
         uint32_t soa_ttl = MAX_UINT32;
-        bool found_soa = false;
         uint16_t rrset_count = 0;
-        parseNegativeResponseAuthoritySection(msg, soa_ttl, rrset_count, found_soa);
-        // For negative response, if no soa RRset is found, dont cache it
-        if(!found_soa) {
+
+        // For negative response, if no soa RRset is found in authority section, dont cache it
+        if(!hasTheRecordInAuthoritySection(msg, RRType::SOA())){
             return;
         }
+
+        parseNegativeResponseAuthoritySection(msg, soa_ttl, rrset_count);
+
         authority_count_ = rrset_count;
         parseSection(msg, Message::SECTION_ANSWER, min_ttl, answer_count_);
         parseSection(msg, Message::SECTION_ADDITIONAL, min_ttl, additional_count_);
@@ -311,7 +299,35 @@ MessageEntry::initMessageEntry(const isc::dns::Message& msg) {
 bool
 MessageEntry::isNegativeResponse(const isc::dns::Message& msg)
 {
-    return msg.getRcode() == Rcode::NXDOMAIN();
+    if(msg.getRcode() == Rcode::NXDOMAIN()){
+        return true;
+    } else if (msg.getRcode() == Rcode::NOERROR()){
+        // no data in the answer section
+        if (msg.getRRCount(Message::SECTION_ANSWER) == 0){
+            // NODATA type 1/ type 2 (ref sec2.2 of RFC2308) 
+            if(hasTheRecordInAuthoritySection(msg, RRType::SOA())){
+                return true;
+            } else if (!hasTheRecordInAuthoritySection(msg, RRType::NS())){ // NODATA type 3 (sec2.2 of RFC2308)
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool
+MessageEntry::hasTheRecordInAuthoritySection(const isc::dns::Message& msg, const isc::dns::RRType& type)
+{
+    for(RRsetIterator iter = msg.beginSection(Message::SECTION_AUTHORITY);
+            iter != msg.endSection(Message::SECTION_AUTHORITY);
+            ++iter){
+        RRsetPtr rrset_ptr = *iter;
+        if (rrset_ptr->getType() == type){
+            return true;
+        }
+    }
+    return false;
 }
 
 } // namespace cache
