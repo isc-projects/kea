@@ -27,7 +27,6 @@
 #include <dns/messagerenderer.h>
 #include <dns/opcode.h>
 #include <dns/rcode.h>
-#include <log/dummylog.h>
 #include <log/logger.h>
 
 #include <asio.hpp>
@@ -177,9 +176,6 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
 
             // As this is a new fetch, clear the amount of data received
             data_->cumulative = 0;
-
-            dlog("Sending " + msg.toText() + " to " +
-                data_->remote->getAddress().toText());
         }
 
         // If we timeout, we stop, which will can cancel outstanding I/Os and
