@@ -30,7 +30,7 @@ c0 0c
 00 06
 # Class: IN (0x0001)
 00 01
-# Time to live: 2 days
+# Time to live: 2 days (172800s)
 00 02 a3 00
 # Data length: 49
 00 31
