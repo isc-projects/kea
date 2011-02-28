@@ -114,13 +114,17 @@ ResponseClassifier::Category ResponseClassifier::classify(
             );
 
     // If there is nothing in the answer section, it is a referral - unless
-    // there is nothing in the authority section
+    // there is no NS in the authority section
     if (answer.empty()) {
         if (authority.empty()) {
             return (EMPTY);
-        } else {
-            return (REFERRAL);
         }
+        for (int i = 0; i < authority.size(); ++i) {
+            if (authority[i]->getType() == RRType::NS()) {
+                return (REFERRAL);
+            }
+        }
+        return (NXRRSET);
     }
 
     // Look at two cases - one RRset in the answer and multiple RRsets in
