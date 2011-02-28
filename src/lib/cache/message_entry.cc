@@ -26,9 +26,13 @@ using namespace std;
 // Put file scope functions in unnamed namespace.
 namespace {
 
-// Get the deepest owner name of DNAME record for the given query name.
+// Get the shortest existing ancestor which is the owner name of
+// one DNAME record for the given query name.
+// Note: there maybe multiple DNAME records(DNAME chain) in answer section,
+// in most case they are in order, but the code can't depends on it, it has to
+// find the starter by iterating the DNAME chain.
 Name
-getDeepestDNAMEOwner(const Message& message, const Name& query_name) {
+getDNAMEChainStarter(const Message& message, const Name& query_name) {
     Name dname = query_name;
     RRsetIterator rrset_iter = message.beginSection(Message::SECTION_ANSWER);
     while(rrset_iter != message.endSection(Message::SECTION_ANSWER)) {
@@ -43,23 +47,6 @@ getDeepestDNAMEOwner(const Message& message, const Name& query_name) {
     }
 
     return (dname);
-}
-
-// Check whether answer section in given message has non-authoritative rrsets.
-bool
-answerHasNonAuthRecord(const Message& message, const Name& query_name) {
-    RRsetIterator rrset_iter = message.beginSection(Message::SECTION_ANSWER);
-    while(rrset_iter != message.endSection(Message::SECTION_ANSWER)) {
-        // Here, only check CNAME is enough. If there is
-        // cname record whose ower name is same with query name, answer
-        // section may has non-authoritative rrsets.
-        if ((*rrset_iter)->getType() == RRType::CNAME() &&
-            (*rrset_iter)->getName() == query_name) {
-            return (true);
-        }
-        ++rrset_iter;
-    }
-    return (false);
 }
 
 } // End of unnamed namespace
@@ -173,17 +160,32 @@ MessageEntry::getRRsetTrustLevel(const Message& message,
                 // from it are authoritative, any other records in answer
                 // section are non-authoritative.
                 QuestionIterator quest_iter = message.beginQuestion();
+                // Make sure question section is not empty.
+                assert( quest_iter != message.endQuestion());
+
                 const Name& query_name = (*quest_iter)->getName();
                 const RRType& type = rrset->getType();
                 const Name& name = rrset->getName();
                 if ((type == RRType::CNAME() && name == query_name) ||
                     (type == RRType::DNAME() &&
-                     name == getDeepestDNAMEOwner(message, query_name))) {
+                     name == getDNAMEChainStarter(message, query_name))) {
                     return (RRSET_TRUST_ANSWER_AA);
-                } else if (answerHasNonAuthRecord(message, query_name)) {
-                    return (RRSET_TRUST_ANSWER_NONAA);
+                } else {
+                    // If there is one CNAME record whose ower name is same with
+                    // query name in answer section, the left records in answer
+                    // section are non-authoritative, except the starter of DNAME
+                    // chain(only checking CNAME is enough, because if the CNAME
+                    // record is synchronized from one DNAME record, that DNAME
+                    // record must be the starter of DNAME chain).
+                    RRsetIterator iter = message.beginSection(Message::SECTION_ANSWER);
+                    while(iter != message.endSection(Message::SECTION_ANSWER)) {
+                        if ((*iter)->getType() == RRType::CNAME() &&
+                             (*iter)->getName() == query_name) {
+                            return (RRSET_TRUST_ANSWER_NONAA);
+                        }
+                        ++iter;
+                    }
                 }
-
                 return (RRSET_TRUST_ANSWER_AA);
             } else {
                 return (RRSET_TRUST_ANSWER_NONAA);
