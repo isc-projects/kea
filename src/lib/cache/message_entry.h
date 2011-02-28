@@ -124,11 +124,9 @@ protected:
     /// \param msg The message to parse the RRsets from
     /// \param soa_ttl Get the ttl of soa rrset in the authority section
     /// \param rrset_count the rrset count of the authority section
-    /// \param found_soa whether the soa RRset is found in the authority section
     void parseNegativeResponseAuthoritySection(const isc::dns::Message& msg,
             uint32_t& soa_ttl,
-            uint16_t& rrset_count,
-            bool& found_soa);
+            uint16_t& rrset_count);
 
     /// \brief Get RRset Trustworthiness
     ///        The algorithm refers to RFC2181 section 5.4.1
@@ -172,7 +170,14 @@ protected:
 private:
     /// \brief Check whetehr the message is a negative response(NXDOMAIN or NOERROR_NODATA)
     ///
+    /// \param msg The response message
     bool isNegativeResponse(const isc::dns::Message& msg);
+
+    /// \brief Check whether there is some type of record in Authority section
+    ///
+    /// \param msg The response message to be checked
+    /// \param type The RR type that need to check
+    bool hasTheRecordInAuthoritySection(const isc::dns::Message& msg, const isc::dns::RRType& type);
 
     std::string entry_name_; // The name for this entry(name + type)
     HashKey* hash_key_ptr_;  // the key for messag entry in hash table.

@@ -115,4 +115,53 @@ TEST_F(NegativeCacheTest, testNXDOMAINWithoutSOA){
     EXPECT_FALSE(cache->lookup(non_exist_qname, RRType::A(), RRClass::IN(), msg_nxdomain));
 }
 
+TEST_F(NegativeCacheTest, testNoerrorNodata){
+    // NODATA/NOERROR response for MX type query of example.com
+    Message msg_nodata(Message::PARSE);
+    messageFromFile(msg_nodata, "message_nodata_with_soa.wire");
+    cache->update(msg_nodata);
+
+    msg_nodata.makeResponse();
+
+    Name example_dot_com("example.com.");
+    EXPECT_TRUE(cache->lookup(example_dot_com, RRType::MX(), RRClass::IN(), msg_nodata));
+
+    RRsetIterator iter = msg_nodata.beginSection(Message::SECTION_AUTHORITY);
+    RRsetPtr rrset_ptr = *iter;
+
+    // The TTL should equal to the TTL of SOA record
+    const RRTTL& nodata_ttl1 = rrset_ptr->getTTL();
+    EXPECT_EQ(nodata_ttl1.getValue(), 86400);
+
+
+    // Normal SOA response for example.com
+    Message msg_example_com_soa(Message::PARSE);
+    messageFromFile(msg_example_com_soa, "message_example_com_soa.wire");
+    cache->update(msg_example_com_soa);
+
+    msg_example_com_soa.makeResponse();
+    Name soa_qname("example.com.");
+    EXPECT_TRUE(cache->lookup(soa_qname, RRType::SOA(), RRClass::IN(), msg_example_com_soa));
+
+    iter = msg_example_com_soa.beginSection(Message::SECTION_ANSWER);
+    rrset_ptr = *iter;
+
+    // The TTL should equal to the TTL of SOA record in answer section
+    const RRTTL& soa_ttl = rrset_ptr->getTTL();
+    EXPECT_EQ(soa_ttl.getValue(), 172800);
+
+    // Query MX record of example.com again
+    Message msg_nodata2(Message::PARSE);
+    messageFromFile(msg_nodata2, "message_nodata_with_soa.wire");
+    msg_nodata2.makeResponse();
+
+    EXPECT_TRUE(cache->lookup(example_dot_com, RRType::MX(), RRClass::IN(), msg_nodata2));
+    iter = msg_nodata2.beginSection(Message::SECTION_AUTHORITY);
+    rrset_ptr = *iter;
+
+    // The TTL should equal to the TTL of negative response SOA record
+    const RRTTL& nodata_ttl2 = rrset_ptr->getTTL();
+    EXPECT_EQ(nodata_ttl2.getValue(), 86400);
+}
+
 }
