@@ -30,6 +30,8 @@
 
 #include <resolve/resolve.h>
 #include <cache/resolver_cache.h>
+#include <nsas/address_request_callback.h>
+#include <nsas/nameserver_address.h>
 
 #include <asio.hpp>
 #include <asiolink/dns_service.h>
@@ -76,6 +78,26 @@ typedef std::pair<std::string, uint16_t> addr_t;
  * Used by RecursiveQuery::sendQuery.
  */
 class RunningQuery : public IOFetch::Callback {
+
+class ResolverNSASCallback : public isc::nsas::AddressRequestCallback {
+public:
+    ResolverNSASCallback(RunningQuery* rq) : rq_(rq) {}
+    
+    void success(const isc::nsas::NameserverAddress& address) {
+        rq_->sendTo(address);
+    }
+    
+    void unreachable() {
+        dlog("Nameservers unreachable");
+        // Drop query or send servfail?
+        rq_->stop(false);
+    }
+
+private:
+    RunningQuery* rq_;
+};
+
+
 private:
     // The io service to handle async calls
     IOService& io_;
@@ -144,6 +166,12 @@ private:
 
     // Reference to our cache
     isc::cache::ResolverCache& cache_;
+    
+    // the 'current' nameserver we have a query out to
+    std::string cur_zone_;
+    boost::shared_ptr<ResolverNSASCallback> nsas_callback_;
+    isc::nsas::NameserverAddress current_ns_address;
+    time_t current_ns_qsent_time;
 
     // perform a single lookup; first we check the cache to see
     // if we have a response for our query stored already. if
@@ -157,13 +185,51 @@ private:
             dlog("Message found in cache, returning that");
             handleRecursiveAnswer(cached_message);
         } else {
+            cur_zone_ = ".";
             send();
         }
         
     }
 
-    // (re)send the query to the server.
+    void sendTo(const isc::nsas::NameserverAddress& address) {
+        // We need to keep track of the Address, so that we can update
+        // the RTT
+        current_ns_address = address;
+        time(&current_ns_qsent_time);
+        std::cout << "[XX] ORIG SND TIME: " << current_ns_qsent_time << std::endl;
+        std::cout << "[XX] SENDING: " << question_.toText() << std::endl;
+        std::cout << "[XX] TO AUTH: " << current_ns_address.getAddress().toText() << std::endl;
+        IOFetch query(IPPROTO_UDP, io_, question_,
+            current_ns_address.getAddress(),
+            53, buffer_, this,
+            query_timeout_);
+        ++queries_out_;
+        io_.get_io_service().post(query);
+    }
+    
     void send() {
+        // If are in forwarder mode, send it to a random
+        // forwarder. If not, ask the NSAS for an address
+        const int uc = upstream_->size();
+        if (uc > 0) {
+            int serverIndex = rand() % uc;
+            dlog("Sending upstream query (" + question_.toText() +
+                ") to " + upstream_->at(serverIndex).first);
+            IOFetch query(IPPROTO_UDP, io_, question_,
+                upstream_->at(serverIndex).first,
+                upstream_->at(serverIndex).second, buffer_, this,
+                query_timeout_);
+            ++queries_out_;
+            io_.get_io_service().post(query);
+        } else {
+            // Ask the NSAS for an address for the current zone,
+            // the callback will call the actual sendTo()
+            nsas_.lookup(cur_zone_, question_.getClass(), nsas_callback_);
+        }
+    }
+
+    // (re)send the query to the server.
+    void oldsend() {
         const int uc = upstream_->size();
         const int zs = zone_servers_.size();
         buffer_->clear();
@@ -260,29 +326,21 @@ private:
             // Referral. For now we just take the first glue address
             // we find and continue with that
             zone_servers_.clear();
-
-            for (RRsetIterator rrsi = incoming.beginSection(Message::SECTION_ADDITIONAL);
-                 rrsi != incoming.endSection(Message::SECTION_ADDITIONAL) && !found_ns_address;
+            // auth section should have at least one RRset
+            // and one of them should be an NS (otherwise
+            // classifier should have error'd)
+            // TODO: should we check if it really is subzone?
+            for (RRsetIterator rrsi = incoming.beginSection(Message::SECTION_AUTHORITY);
+                 rrsi != incoming.endSection(Message::SECTION_AUTHORITY) && !found_ns_address;
                  rrsi++) {
                 ConstRRsetPtr rrs = *rrsi;
-                if (rrs->getType() == RRType::A()) {
-                    // found address
-                    RdataIteratorPtr rdi = rrs->getRdataIterator();
-                    // just use the first for now
-                    if (!rdi->isLast()) {
-                        std::string addr_str = rdi->getCurrent().toText();
-                        // now we have one address, simply
-                        // resend that exact same query
-                        // to that address and yield, when it
-                        // returns, loop again.
-                        
-                        // TODO should use NSAS
-                        zone_servers_.push_back(addr_t(addr_str, 53));
-                        found_ns_address = true;
-                        break;
-                    }
+                if (rrs->getType() == RRType::NS()) {
+                    cur_zone_ = rrs->getName().toText();
+                    found_ns_address = true;
+                    break;
                 }
             }
+
             if (found_ns_address) {
                 // next resolver round
                 // we do NOT use doLookup() here, but send() (i.e. we
@@ -322,7 +380,7 @@ private:
     
 public:
     RunningQuery(IOService& io,
-        const Question &question,
+        const Question& question,
         MessagePtr answer_message,
         boost::shared_ptr<AddressVector> upstream,
         boost::shared_ptr<AddressVector> upstream_root,
@@ -348,7 +406,9 @@ public:
         done_(false),
         answer_sent_(false),
         nsas_(nsas),
-        cache_(cache)
+        cache_(cache),
+        nsas_callback_(boost::shared_ptr<ResolverNSASCallback>(
+                                     new ResolverNSASCallback(this)))
     {
         // Setup the timer to stop trying (lookup_timeout)
         if (lookup_timeout >= 0) {
@@ -451,12 +511,25 @@ public:
     virtual void operator()(IOFetch::Result result) {
         // XXX is this the place for TCP retry?
         --queries_out_;
+        
         if (!done_ && result != IOFetch::TIME_OUT) {
             // we got an answer
+
+            // Update the NSAS with the time it took
+            time_t cur_time;
+            time(&cur_time);
+            if (cur_time == current_ns_qsent_time) {
+                dlog("[XX] well, that was fast. 0 ms? setting it to 1...");
+                ++cur_time;
+            }
+            current_ns_address.updateRTT(
+                static_cast<uint32_t>(cur_time - current_ns_qsent_time));
+            
             Message incoming(Message::PARSE);
             InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
             incoming.fromWire(ibuf);
 
+            buffer_->clear();
             if (upstream_->size() == 0 &&
                 incoming.getRcode() == Rcode::NOERROR()) {
                 done_ = handleRecursiveAnswer(incoming);
@@ -471,9 +544,11 @@ public:
         } else if (!done_ && retries_--) {
             // We timed out, but we have some retries, so send again
             dlog("Timeout, resending query");
+            //current_ns_address.updateRTT(isc::nsas::AddressEntry::UNREACHABLE);
             send();
         } else {
             // out of retries, give up for now
+            //current_ns_address.updateRTT(isc::nsas::AddressEntry::UNREACHABLE);
             stop(false);
         }
     }
@@ -499,14 +574,28 @@ RecursiveQuery::resolve(const QuestionPtr& question,
         dlog("Message found in cache, returning that");
         // TODO: err, should cache set rcode as well?
         answer_message->setRcode(Rcode::NOERROR());
+        std::cout << answer_message->toText();
         callback->success(answer_message);
     } else {
-        dlog("Message not found in cache, starting recursive query");
-        // It will delete itself when it is done
-        new RunningQuery(io, *question, answer_message, upstream_,
-                         upstream_root_, buffer, callback, query_timeout_,
-                         client_timeout_, lookup_timeout_, retries_,
-                         nsas_, cache_);
+        // Perhaps we only have the one RRset?
+        // TODO: can we do this? should we check for specific types only?
+        RRsetPtr cached_rrset = cache_.lookup(question->getName(),
+                                              question->getType(),
+                                              question->getClass());
+        if (cached_rrset) {
+            dlog("Found single RRset in cache");
+            answer_message->addRRset(Message::SECTION_ANSWER,
+                                     cached_rrset);
+            answer_message->setRcode(Rcode::NOERROR());
+            callback->success(answer_message);
+        } else {
+            dlog("Message not found in cache, starting recursive query");
+            // It will delete itself when it is done
+            new RunningQuery(io, *question, answer_message, upstream_,
+                             upstream_root_, buffer, callback, query_timeout_,
+                             client_timeout_, lookup_timeout_, retries_,
+                             nsas_, cache_);
+        }
     }
 }
 
@@ -538,11 +627,24 @@ RecursiveQuery::resolve(const Question& question,
         answer_message->setRcode(Rcode::NOERROR());
         crs->success(answer_message);
     } else {
-        dlog("Message not found in cache, starting recursive query");
-        // It will delete itself when it is done
-        new RunningQuery(io, question, answer_message, upstream_, upstream_root_,
-                             buffer, crs, query_timeout_, client_timeout_,
-                             lookup_timeout_, retries_, nsas_, cache_);
+        // Perhaps we only have the one RRset?
+        // TODO: can we do this? should we check for specific types only?
+        RRsetPtr cached_rrset = cache_.lookup(question.getName(),
+                                              question.getType(),
+                                              question.getClass());
+        if (cached_rrset) {
+            dlog("Found single RRset in cache");
+            answer_message->addRRset(Message::SECTION_ANSWER,
+                                     cached_rrset);
+            answer_message->setRcode(Rcode::NOERROR());
+            crs->success(answer_message);
+        } else {
+            dlog("Message not found in cache, starting recursive query");
+            // It will delete itself when it is done
+            new RunningQuery(io, question, answer_message, upstream_, upstream_root_,
+                                 buffer, crs, query_timeout_, client_timeout_,
+                                 lookup_timeout_, retries_, nsas_, cache_);
+        }
     }
 }
 
