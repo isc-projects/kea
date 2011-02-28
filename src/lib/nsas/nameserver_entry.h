@@ -105,7 +105,14 @@ public:
         name_(name),
         classCode_(class_code),
         expiration_(0)
-    {}
+    {
+        has_address_[V4_ONLY] = false;
+        has_address_[V6_ONLY] = false;
+        has_address_[ANY_OK] = false;
+        expect_address_[V4_ONLY] = false;
+        expect_address_[V6_ONLY] = false;
+        expect_address_[ANY_OK] = false;
+    }
 
     /*
      * \brief Return Address
