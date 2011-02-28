@@ -171,7 +171,7 @@ private:
     std::string cur_zone_;
     boost::shared_ptr<ResolverNSASCallback> nsas_callback_;
     isc::nsas::NameserverAddress current_ns_address;
-    time_t current_ns_qsent_time;
+    struct timeval current_ns_qsent_time;
 
     // perform a single lookup; first we check the cache to see
     // if we have a response for our query stored already. if
@@ -195,10 +195,7 @@ private:
         // We need to keep track of the Address, so that we can update
         // the RTT
         current_ns_address = address;
-        time(&current_ns_qsent_time);
-        std::cout << "[XX] ORIG SND TIME: " << current_ns_qsent_time << std::endl;
-        std::cout << "[XX] SENDING: " << question_.toText() << std::endl;
-        std::cout << "[XX] TO AUTH: " << current_ns_address.getAddress().toText() << std::endl;
+        gettimeofday(&current_ns_qsent_time, NULL);
         IOFetch query(IPPROTO_UDP, io_, question_,
             current_ns_address.getAddress(),
             53, buffer_, this,
@@ -516,14 +513,19 @@ public:
             // we got an answer
 
             // Update the NSAS with the time it took
-            time_t cur_time;
-            time(&cur_time);
-            if (cur_time == current_ns_qsent_time) {
-                dlog("[XX] well, that was fast. 0 ms? setting it to 1...");
-                ++cur_time;
+            struct timeval cur_time;
+            gettimeofday(&cur_time, NULL);
+            uint32_t rtt;
+            if (cur_time.tv_sec >= current_ns_qsent_time.tv_sec &&
+                cur_time.tv_usec > current_ns_qsent_time.tv_usec) {
+                rtt = 1000 * (cur_time.tv_sec - current_ns_qsent_time.tv_sec);
+                rtt += (cur_time.tv_usec - current_ns_qsent_time.tv_usec) / 1000;
+            } else {
+                rtt = 1;
             }
-            current_ns_address.updateRTT(
-                static_cast<uint32_t>(cur_time - current_ns_qsent_time));
+
+            dlog("RTT: " + boost::lexical_cast<std::string>(rtt));
+            current_ns_address.updateRTT(rtt);
             
             Message incoming(Message::PARSE);
             InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
