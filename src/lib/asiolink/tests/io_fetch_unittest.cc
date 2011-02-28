@@ -12,13 +12,14 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <gtest/gtest.h>
-#include <boost/bind.hpp>
+#include <algorithm>
 #include <cstdlib>
 #include <string>
 #include <iostream>
 
-#include <string.h>
+#include <gtest/gtest.h>
+#include <boost/bind.hpp>
+
 
 #include <asio.hpp>
 
@@ -30,6 +31,7 @@
 #include <dns/name.h>
 #include <dns/rcode.h>
 
+#include <asiolink/asiolink_utilities.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_endpoint.h>
 #include <asiolink/io_fetch.h>
@@ -38,6 +40,7 @@
 using namespace asio;
 using namespace isc::dns;
 using namespace asio::ip;
+using namespace std;
 
 namespace asiolink {
 
@@ -59,6 +62,7 @@ public:
     IOFetch         udp_fetch_;     ///< For UDP query test
     IOFetch         tcp_fetch_;     ///< For TCP query test
     IOFetch::Protocol protocol_;    ///< Protocol being tested
+    size_t          cumulative_;    ///< Cumulative data received by "server".
 
     // The next member is the buffer in which the "server" (implemented by the
     // response handler methods in this class) receives the question sent by the
@@ -77,7 +81,8 @@ public:
             TEST_PORT, result_buff_, this, 100),
         tcp_fetch_(IOFetch::TCP, service_, question_, IOAddress(TEST_HOST),
             TEST_PORT, result_buff_, this, 1000),
-        protocol_(IOFetch::TCP)         // for initialization - will be changed
+        protocol_(IOFetch::TCP),        // for initialization - will be changed
+        cumulative_(0)
     {
         // Construct the data buffer for question we expect to receive.
         Message msg(Message::RENDER);
@@ -140,7 +145,8 @@ public:
         // Check that length of the received data and the expected data are
         // identical, then check that the data is identical as well.
         EXPECT_EQ(msgbuf_->getLength(), length);
-        EXPECT_TRUE(memcmp(msgbuf_->getData(), server_buff_, length) == 0);
+        EXPECT_TRUE(equal(server_buff_, (server_buff_ + length - 1),
+        static_cast<const uint8_t*>(msgbuf_->getData())));
 
         // Return a message back to the IOFetch object.
         socket->send_to(asio::buffer(TEST_DATA, sizeof TEST_DATA), *remote);
@@ -155,10 +161,11 @@ public:
     /// \param ec Boost error code, value should be zero.
     void tcpAcceptHandler(tcp::socket* socket, error_code ec = error_code())
     {
-        std::cerr << "TCP Accept Handler\n";
-        EXPECT_EQ(0, ec.value());       // Expect no error
+        // Expect that the accept completed without a problem.
+        EXPECT_EQ(0, ec.value());
 
-        // Initiate a read on the socket
+        // Initiate a read on the socket.
+        cumulative_ = 0;
         socket->async_receive(asio::buffer(server_buff_, sizeof(server_buff_)),
             boost::bind(&IOFetchTest::tcpReceiveHandler, this, socket, _1, _2));
     }
@@ -166,8 +173,9 @@ public:
     /// \brief Completion handler for receiving TCP data
     ///
     /// When IOFetch is sending data, this response handler emulates the remote
-    /// DNS server.  It checks that the data sent by the IOFetch object is what
-    /// was expected to have been sent, then sends back a known buffer of data.
+    /// DNS server.  It that all the data sent by the IOFetch object has been
+    /// received, issuing another read if not.  If the data is complete, it is
+    /// compared to what is expected and a reply sent back to the IOFetch.
     ///
     /// \param socket Socket to use to send the answer
     /// \param ec ASIO error code, completion code of asynchronous I/O issued
@@ -176,36 +184,48 @@ public:
     void tcpReceiveHandler(tcp::socket* socket, error_code ec = error_code(),
                            size_t length = 0)
     {
-        std::cerr << "TCP Receive Handler\n";
-        // TODO - need to loop until all the data is received.
-        
-        // Interpret the received data.  The first two bytes, when converted
-        // to host byte order, are the count of the length of the message.
-        EXPECT_GE(2, length);
-        uint16_t dns_length = readUint16(server_buff_);
-        EXPECT_EQ(length, dns_length + 2);
+        // Expect that the receive completed without a problem.
+        EXPECT_EQ(0, ec.value());
 
-        // Check that length of the DNS message received is that expected.
-        EXPECT_EQ(msgbuf_->getLength(), dns_length);
+        // If we haven't received all the data, issue another read.
+        cumulative_ += length;
+        bool complete = false;
+        if (cumulative_ > 2) {
+            uint16_t dns_length = readUint16(server_buff_);
+            complete = ((dns_length + 2) == cumulative_);
+        }
 
-        // Compare buffers, zeroing the QID in the received buffer to match
+        if (!complete) {
+            socket->async_receive(asio::buffer((server_buff_ + cumulative_),
+                (sizeof(server_buff_) - cumulative_)),
+                boost::bind(&IOFetchTest::tcpReceiveHandler, this, socket, _1, _2));
+            return;
+        }
+
+        // Check that length of the DNS message received is that expected, then
+        // compare buffers, zeroing the QID in the received buffer to match
         // that set in our expected question.  Note that due to the length
-        // field the QID in the received buffer is in the thrid and fourth
+        // field the QID in the received buffer is in the third and fourth
         // bytes.
+        EXPECT_EQ(msgbuf_->getLength() + 2, cumulative_);
         server_buff_[2] = server_buff_[3] = 0;
-        EXPECT_TRUE(memcmp(msgbuf_->getData(), server_buff_ + 2, dns_length) == 0);
+        EXPECT_TRUE(equal((server_buff_ + 2), (server_buff_ + cumulative_ - 2),
+            static_cast<const uint8_t*>(msgbuf_->getData())));
 
         // ... and return a message back.  This has to be preceded by a two-byte
         // count field.  It's simpler to do this as two writes - it shouldn't
         // make any difference to the IOFetch object.
+        //
+        // When specifying the callback handler, the expected size of the
+        // data written is passed as the first parameter.
         uint8_t count[2];
         writeUint16(sizeof(TEST_DATA), count);
         socket->async_send(asio::buffer(count, 2),
                            boost::bind(&IOFetchTest::tcpSendHandler, this,
-                                       sizeof(count), _1, _2));
+                                       2, _1, _2));
         socket->async_send(asio::buffer(TEST_DATA, sizeof(TEST_DATA)),
                            boost::bind(&IOFetchTest::tcpSendHandler, this,
-                                       sizeof(count), _1, _2));
+                                       sizeof(TEST_DATA), _1, _2));
     }
 
     /// \brief Completion Handler for Sending TCP data
@@ -221,7 +241,6 @@ public:
     void tcpSendHandler(size_t expected = 0, error_code ec = error_code(),
                         size_t length = 0)
     {
-        std::cerr << "TCP Send Handler\n";
         EXPECT_EQ(0, ec.value());       // Expect no error
         EXPECT_EQ(expected, length);    // And that amount sent is as expected
     }
@@ -234,7 +253,7 @@ public:
     ///
     /// \param result Result indicated by the callback
     void operator()(IOFetch::Result result) {
-        std::cerr << "Fetch completion\n";
+
         EXPECT_EQ(expected_, result);   // Check correct result returned
         EXPECT_FALSE(run_);             // Check it is run only once
         run_ = true;                    // Note success
@@ -360,6 +379,7 @@ TEST_F(IOFetchTest, UdpSendReceive) {
     protocol_ = IOFetch::UDP;
     expected_ = IOFetch::SUCCESS;
 
+    // Set up the server.
     udp::socket socket(service_.get_io_service(), udp::v4());
     socket.set_option(socket_base::reuse_address(true));
     socket.bind(udp::endpoint(TEST_HOST, TEST_PORT));
@@ -395,21 +415,17 @@ TEST_F(IOFetchTest, TcpSendReceive) {
     protocol_ = IOFetch::TCP;
     expected_ = IOFetch::SUCCESS;
 
-    std::cerr << "Creating socket\n";
     // Socket into which the connection will be accepted
     tcp::socket socket(service_.get_io_service());
 
-    std::cerr << "Creating acceptor\n";
     // Acceptor object - called when the connection is made, the handler will
     // initiate a read on the socket.
     tcp::acceptor acceptor(service_.get_io_service(),
                            tcp::endpoint(tcp::v4(), TEST_PORT));
-    std::cerr << "Issuing async accept call\n";
     acceptor.async_accept(socket,
         boost::bind(&IOFetchTest::tcpAcceptHandler, this, &socket, _1));
 
     // Post the TCP fetch object to send the query and receive the response.
-    std::cerr << "Posting TCP fetch\n";
     service_.get_io_service().post(tcp_fetch_);
 
     // ... and execute all the callbacks.  This exits when the fetch completes.

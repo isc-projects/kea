@@ -1,4 +1,4 @@
-// File created from asiodef.msg on Thu Feb 24 11:52:42 2011
+// File created from asiodef.msg on Mon Feb 28 17:15:30 2011
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -20,14 +20,14 @@ extern const isc::log::MessageID ASIO_UNKRESULT = "UNKRESULT";
 namespace {
 
 const char* values[] = {
-    "FETCHCOMP", "upstream fetch to %s has now completed",
-    "FETCHSTOP", "upstream fetch to %s has been stopped",
-    "OPENSOCK", "error %d opening %s socket to %s",
-    "RECVSOCK", "error %d reading data from %s via a %s socket",
-    "RECVTMO", "receive timeout while waiting for data from %s",
-    "SENDSOCK", "error %d sending data to %s via a %s socket",
+    "FETCHCOMP", "upstream fetch to %s(%d) has now completed",
+    "FETCHSTOP", "upstream fetch to %s(%d) has been stopped",
+    "OPENSOCK", "error %d opening %s socket to %s(%d)",
+    "RECVSOCK", "error %d reading %s data from %s(%d)",
+    "RECVTMO", "receive timeout while waiting for data from %s(%d)",
+    "SENDSOCK", "error %d sending data using %s to %s(%d)",
     "UNKORIGIN", "unknown origin for ASIO error code %d (protocol: %s, address %s)",
-    "UNKRESULT", "unknown result (%d) when IOFetch::stop() was executed for I/O to %s",
+    "UNKRESULT", "unknown result (%d) when IOFetch::stop() was executed for I/O to %s(%d)",
     NULL
 };
 

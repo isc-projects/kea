@@ -1,4 +1,4 @@
-// File created from asiodef.msg on Thu Feb 24 11:52:42 2011
+// File created from asiodef.msg on Mon Feb 28 17:15:30 2011
 
 #ifndef __ASIODEF_H
 #define __ASIODEF_H
