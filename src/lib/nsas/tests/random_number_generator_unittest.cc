@@ -21,7 +21,7 @@
 #include <iostream>
 #include <vector>
 
-#include <nsas/random_number_generator.h>
+#include "random_number_generator.h"
 
 namespace isc {
 namespace nsas {
