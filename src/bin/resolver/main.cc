@@ -130,7 +130,7 @@ main(int argc, char* argv[]) {
 
     Session* cc_session = NULL;
     ModuleCCSession* config_session = NULL;
-    try {
+    //try {
         string specfile;
         if (getenv("B10_FROM_BUILD")) {
             specfile = string(getenv("B10_FROM_BUILD")) +
@@ -151,7 +151,45 @@ main(int argc, char* argv[]) {
 
         isc::cache::ResolverCache cache;
         resolver->setCache(cache);
-
+        
+        // TODO priming query, remove root from direct
+        // Fake a priming query result here (TODO2 how to flag non-expiry?)
+        // propagation to runningquery. And check for forwarder mode?
+        isc::dns::QuestionPtr root_question(new isc::dns::Question(
+                                            isc::dns::Name("."),
+                                            isc::dns::RRClass::IN(),
+                                            isc::dns::RRType::NS()));
+        isc::dns::RRsetPtr root_ns_rrset(new isc::dns::RRset(isc::dns::Name("."), 
+                                         isc::dns::RRClass::IN(),
+                                         isc::dns::RRType::NS(),
+                                         isc::dns::RRTTL(8888)));
+        root_ns_rrset->addRdata(isc::dns::rdata::createRdata(isc::dns::RRType::NS(),
+                                                             isc::dns::RRClass::IN(),
+                                                             "l.root-servers.net."));
+        isc::dns::RRsetPtr root_a_rrset(new isc::dns::RRset(isc::dns::Name("l.root-servers.net"), 
+                                        isc::dns::RRClass::IN(),
+                                        isc::dns::RRType::A(),
+                                        isc::dns::RRTTL(8888)));
+        root_a_rrset->addRdata(isc::dns::rdata::createRdata(isc::dns::RRType::A(),
+                                                             isc::dns::RRClass::IN(),
+                                                             "199.7.83.42"));
+        isc::dns::RRsetPtr root_aaaa_rrset(new isc::dns::RRset(isc::dns::Name("l.root-servers.net"), 
+                                        isc::dns::RRClass::IN(),
+                                        isc::dns::RRType::AAAA(),
+                                        isc::dns::RRTTL(8888)));
+        root_aaaa_rrset->addRdata(isc::dns::rdata::createRdata(isc::dns::RRType::AAAA(),
+                                                             isc::dns::RRClass::IN(),
+                                                             "2001:500:3::42"));
+        isc::dns::MessagePtr priming_result(new isc::dns::Message(isc::dns::Message::RENDER));
+        priming_result->addQuestion(root_question);
+        priming_result->addRRset(isc::dns::Message::SECTION_ANSWER, root_ns_rrset);
+        priming_result->addRRset(isc::dns::Message::SECTION_ADDITIONAL, root_a_rrset);
+        priming_result->addRRset(isc::dns::Message::SECTION_ADDITIONAL, root_aaaa_rrset);
+        cache.update(*priming_result);
+        cache.update(root_ns_rrset);
+        cache.update(root_a_rrset);
+        cache.update(root_aaaa_rrset);
+        
         DNSService dns_service(io_service, checkin, lookup, answer);
         resolver->setDNSService(dns_service);
         dlog("IOService created.");
@@ -174,10 +212,10 @@ main(int argc, char* argv[]) {
 
         dlog("Server started.");
         io_service.run();
-    } catch (const std::exception& ex) {
-        dlog(string("Server failed: ") + ex.what(),true);
-        ret = 1;
-    }
+    //} catch (const std::exception& ex) {
+    //    dlog(string("Server failed: ") + ex.what(),true);
+    //    ret = 1;
+    //}
 
     delete config_session;
     delete cc_session;
