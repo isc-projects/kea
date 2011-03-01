@@ -55,9 +55,21 @@ RecursiveQuery::RecursiveQuery(DNSService& dns_service,
     unsigned retries) :
     dns_service_(dns_service), upstream_(new AddressVector(upstream)),
     upstream_root_(new AddressVector(upstream_root)),
+    test_server_("", 0),
     query_timeout_(query_timeout), client_timeout_(client_timeout),
     lookup_timeout_(lookup_timeout), retries_(retries)
 {}
+
+// Set the test server - only used for unit testing.
+
+void
+RecursiveQuery::setTestServer(const std::string& address, uint16_t port) {
+    dlog("Setting test server to " + address + "(" +
+            boost::lexical_cast<std::string>(port) + ")");
+    test_server_.first = address;
+    test_server_.second = port;
+}
+
 
 namespace {
 
@@ -88,12 +100,22 @@ private:
     // root servers...just copied over to the zone_servers_
     boost::shared_ptr<AddressVector> upstream_root_;
 
+    // Test server - only used for testing.  This takes precedence over all
+    // other servers if the port is non-zero.
+    std::pair<std::string, uint16_t> test_server_;
+
     // Buffer to store the result.
     OutputBufferPtr buffer_;
 
     // Server to notify when we succeed or fail
     //shared_ptr<DNSServer> server_;
     isc::resolve::ResolverInterface::CallbackPtr resolvercallback_;
+
+    // Protocol used for the last query.  This is set to IOFetch::UDP when a
+    // new upstream query is initiated, and changed to IOFetch::TCP if a
+    // packet is returned with the TC bit set.  It is stored here to detect the
+    // case of a TCP packet being returned with the TC bit set.
+    IOFetch::Protocol protocol_;
 
     // To prevent both unreasonably long cname chains and cname loops,
     // we simply keep a counter of the number of CNAMEs we have
@@ -155,15 +177,27 @@ private:
     }
 
     // (re)send the query to the server.
-    void send() {
+    //
+    // \param protocol Protocol to use for the fetch (default is UDP)
+    void send(IOFetch::Protocol protocol = IOFetch::UDP) {
         const int uc = upstream_->size();
         const int zs = zone_servers_.size();
+        protocol_ = protocol;   // Store protocol being used for this
         buffer_->clear();
-        if (uc > 0) {
+        if (test_server_.second != 0) {
+            dlog("Sending upstream query (" + question_.toText() +
+                 ") to test server at " + test_server_.first);
+            IOFetch query(protocol, io_, question_,
+                test_server_.first,
+                test_server_.second, buffer_, this,
+                query_timeout_);
+            ++queries_out_;
+            io_.get_io_service().post(query);
+        } else if (uc > 0) {
             int serverIndex = rand() % uc;
             dlog("Sending upstream query (" + question_.toText() +
                 ") to " + upstream_->at(serverIndex).first);
-            IOFetch query(IOFetch::UDP, io_, question_,
+            IOFetch query(protocol, io_, question_,
                 upstream_->at(serverIndex).first,
                 upstream_->at(serverIndex).second, buffer_, this,
                 query_timeout_);
@@ -173,7 +207,7 @@ private:
             int serverIndex = rand() % zs;
             dlog("Sending query to zone server (" + question_.toText() +
                 ") to " + zone_servers_.at(serverIndex).first);
-            IOFetch query(IOFetch::UDP, io_, question_,
+            IOFetch query(protocol, io_, question_,
                 zone_servers_.at(serverIndex).first,
                 zone_servers_.at(serverIndex).second, buffer_, this,
                 query_timeout_);
@@ -291,6 +325,18 @@ private:
                 return true;
             }
             break;
+        case isc::resolve::ResponseClassifier::TRUNCATED:
+            // Truncated packet.  If the protocol we used for the last one is
+            // UDP, re-query using TCP.  Otherwise regard it as an error.
+            if (protocol_ == IOFetch::UDP) {
+                dlog("Response truncated, re-querying over TCP");
+                send(IOFetch::TCP);
+                break;
+            }
+            // Was a TCP query so we have received a packet over TCP with the TC
+            // bit set: drop through to common error processing.
+            // TODO: Can we use what we have received instead of discarding it?
+
         case isc::resolve::ResponseClassifier::EMPTY:
         case isc::resolve::ResponseClassifier::EXTRADATA:
         case isc::resolve::ResponseClassifier::INVNAMCLASS:
@@ -302,7 +348,7 @@ private:
         case isc::resolve::ResponseClassifier::NOTSINGLE:
         case isc::resolve::ResponseClassifier::OPCODE:
         case isc::resolve::ResponseClassifier::RCODE:
-        case isc::resolve::ResponseClassifier::TRUNCATED:
+
             // Should we try a different server rather than SERVFAIL?
             isc::resolve::makeErrorMessage(answer_message_,
                                            Rcode::SERVFAIL());
@@ -320,6 +366,7 @@ public:
         MessagePtr answer_message,
         boost::shared_ptr<AddressVector> upstream,
         boost::shared_ptr<AddressVector> upstream_root,
+        std::pair<std::string, uint16_t>& test_server,
         OutputBufferPtr buffer,
         isc::resolve::ResolverInterface::CallbackPtr cb,
         int query_timeout, int client_timeout, int lookup_timeout,
@@ -330,8 +377,10 @@ public:
         answer_message_(answer_message),
         upstream_(upstream),
         upstream_root_(upstream_root),
+        test_server_(test_server),
         buffer_(buffer),
         resolvercallback_(cb),
+        protocol_(IOFetch::UDP),
         cname_count_(0),
         query_timeout_(query_timeout),
         retries_(retries),
@@ -441,7 +490,6 @@ public:
 
     // This function is used as callback from DNSQuery.
     virtual void operator()(IOFetch::Result result) {
-        // XXX is this the place for TCP retry?
         --queries_out_;
         if (!done_ && result != IOFetch::TIME_OUT) {
             // we got an answer
@@ -496,7 +544,8 @@ RecursiveQuery::resolve(const QuestionPtr& question,
         dlog("Message not found in cache, starting recursive query");
         // It will delete itself when it is done
         new RunningQuery(io, *question, answer_message, upstream_,
-                         upstream_root_, buffer, callback, query_timeout_,
+                         upstream_root_, test_server_,
+                         buffer, callback, query_timeout_,
                          client_timeout_, lookup_timeout_, retries_,
                          cache_);
     }
@@ -533,8 +582,9 @@ RecursiveQuery::resolve(const Question& question,
         dlog("Message not found in cache, starting recursive query");
         // It will delete itself when it is done
         new RunningQuery(io, question, answer_message, upstream_, upstream_root_,
-                             buffer, crs, query_timeout_, client_timeout_,
-                             lookup_timeout_, retries_, cache_);
+                         test_server_,
+                         buffer, crs, query_timeout_, client_timeout_,
+                         lookup_timeout_, retries_, cache_);
     }
 }
 
