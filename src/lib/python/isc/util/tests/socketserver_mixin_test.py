@@ -25,7 +25,7 @@ class MyHandler(socketserver.BaseRequestHandler):
         data = self.request.recv(20)
         self.request.send(data)
 
-class MyServer(NoPollMixIn, 
+class MyServer(NoPollMixIn,
                socketserver.ThreadingMixIn,
                socketserver.TCPServer):
 

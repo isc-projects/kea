@@ -78,8 +78,7 @@ class NoPollMixIn:
             if self.__read_sock in r:
                 break
             else:
-                # Create a new thread to handle requests for each auth
-                threading.Thread(target=self.handle_request).start()
+                self._handle_request_noblock();
 
         self._is_shut_down.set()
 
