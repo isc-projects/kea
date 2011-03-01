@@ -338,18 +338,23 @@ public:
     }
 };
 
+// Check the protocol
+TEST_F(IOFetchTest, Protocol) {
+    EXPECT_EQ(IOFetch::UDP, udp_fetch_.getProtocol());
+    EXPECT_EQ(IOFetch::TCP, tcp_fetch_.getProtocol());
+}
 
-/// UDP Stop test - see IOFetchTest::stopTest() header.
+// UDP Stop test - see IOFetchTest::stopTest() header.
 TEST_F(IOFetchTest, UdpStop) {
     stopTest(IOFetch::UDP, udp_fetch_);
 }
 
-/// UDP premature stop test - see IOFetchTest::prematureStopTest() header.
+// UDP premature stop test - see IOFetchTest::prematureStopTest() header.
 TEST_F(IOFetchTest, UdpPrematureStop) {
     prematureStopTest(IOFetch::UDP, udp_fetch_);
 }
 
-/// UDP premature stop test - see IOFetchTest::timeoutTest() header.
+// UDP premature stop test - see IOFetchTest::timeoutTest() header.
 TEST_F(IOFetchTest, UdpTimeout) {
     timeoutTest(IOFetch::UDP, udp_fetch_);
 }
