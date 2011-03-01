@@ -106,7 +106,7 @@ public:
 
         /// \brief Callback method
         ///
-        /// This is the method called when the fecth completes.
+        /// This is the method called when the fetch completes.
         ///
         /// \param result Result of the fetch
         virtual void operator()(Result result) = 0;
