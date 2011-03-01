@@ -52,7 +52,7 @@ namespace asiolink {
 
 /// Use the ASIO logger
 
-isc::log::Logger logger("asio");
+isc::log::Logger logger("asiolink");
 
 /// \brief IOFetch Data
 ///
@@ -75,9 +75,10 @@ struct IOFetchData {
     isc::dns::OutputBufferPtr   received;   ///< Received data put here
     boost::shared_array<char>   staging;    ///< Temporary array for received data
     IOFetch::Callback*          callback;   ///< Called on I/O Completion
+    asio::deadline_timer        timer;      ///< Timer to measure timeouts
+    IOFetch::Protocol           protocol;   ///< Protocol being used
     size_t                      cumulative; ///< Cumulative received amount
     bool                        stopped;    ///< Have we stopped running?
-    asio::deadline_timer        timer;      ///< Timer to measure timeouts
     int                         timeout;    ///< Timeout in ms
 
     // In case we need to log an error, the origin of the last asynchronous
@@ -91,7 +92,7 @@ struct IOFetchData {
     ///
     /// Just fills in the data members of the IOFetchData structure
     ///
-    /// \param protocol Either IOFetch::TCP or IOFetch::UDP.
+    /// \param proto Either IOFetch::TCP or IOFetch::UDP.
     /// \param service I/O Service object to handle the asynchronous
     ///        operations.
     /// \param query DNS question to send to the upstream server.
@@ -105,18 +106,18 @@ struct IOFetchData {
     /// \param wait Timeout for the fetch (in ms).
     ///
     /// TODO: May need to alter constructor (see comment 4 in Trac ticket #554)
-    IOFetchData(IOFetch::Protocol protocol, IOService& service,
+    IOFetchData(IOFetch::Protocol proto, IOService& service,
         const isc::dns::Question& query, const IOAddress& address,
         uint16_t port, isc::dns::OutputBufferPtr& buff, IOFetch::Callback* cb,
         int wait)
         :
-        socket((protocol == IOFetch::UDP) ?
+        socket((proto == IOFetch::UDP) ?
             static_cast<IOAsioSocket<IOFetch>*>(
                 new UDPSocket<IOFetch>(service)) :
             static_cast<IOAsioSocket<IOFetch>*>(
                 new TCPSocket<IOFetch>(service))
             ),
-        remote((protocol == IOFetch::UDP) ?
+        remote((proto == IOFetch::UDP) ?
             static_cast<IOEndpoint*>(new UDPEndpoint(address, port)) :
             static_cast<IOEndpoint*>(new TCPEndpoint(address, port))
             ),
@@ -125,9 +126,10 @@ struct IOFetchData {
         received(buff),
         staging(new char[IOFetch::MIN_LENGTH]),
         callback(cb),
+        timer(service.get_io_service()),
+        protocol(proto),
         cumulative(0),
         stopped(false),
-        timer(service.get_io_service()),
         timeout(wait),
         origin(ASIO_UNKORIGIN)
     {}
@@ -142,6 +144,13 @@ IOFetch::IOFetch(Protocol protocol, IOService& service,
     data_(new IOFetchData(protocol, service, question, address,
         port, buff, cb, wait))
 {
+}
+
+// Return protocol in use.
+
+IOFetch::Protocol
+IOFetch::getProtocol() const {
+    return (data_->protocol);
 }
 
 /// The function operator is implemented with the "stackless coroutine"
