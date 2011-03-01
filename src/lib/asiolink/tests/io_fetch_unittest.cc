@@ -95,34 +95,6 @@ public:
         msg.toWire(renderer);
     }
 
-    /// \brief Read uint16_t from network-byte-order buffer
-    ///
-    /// Adapted from isc::dns::InputBuffer::readUint16().
-    ///
-    /// \param data Pointer to at least two bytes of data which are in network
-    ///        byte order.
-    ///
-    /// \return uint16_t value in host byte order.
-    uint16_t readUint16(const void* data) {
-        const uint8_t* cp = static_cast<const uint8_t*>(data);
-
-        uint16_t value = ((unsigned int)(cp[0])) << 8;
-        value |= ((unsigned int)(cp[1]));
-
-        return (value);
-    }
-
-    /// \brief Write uint16_t to network-byte-order buffer
-    ///
-    /// Adapted from isc::dns::OutputBuffer::writeUint16().
-    ///
-    /// \param value The 16-bit integer to be written into the buffer.
-    /// \param data Pointer to buffer at least two bytes long
-    void writeUint16(uint16_t value, uint8_t* data) {
-        data[0] = static_cast<uint8_t>((value & 0xff00U) >> 8);
-        data[1] = static_cast<uint8_t>(value & 0x00ffU);
-    }
-
     /// \brief UDP Response handler (the "remote UDP DNS server")
     ///
     /// When IOFetch is sending data, this response handler emulates the remote
