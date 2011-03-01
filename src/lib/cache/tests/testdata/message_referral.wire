@@ -1,0 +1,36 @@
+#
+# Query x.example.net to nameservr of example.org
+# It will just give some referral info
+#
+#
+# Transaction ID: 0x8b61
+# Flags: 0x8080 (Standard query response, No error)
+8b61 8080
+# Questions: 1
+# Authority RRs: 13
+00 01 00 00 00 0d 00 00
+##
+## Query
+##
+# x.example.net: type A, class IN
+01 78 07 65 78 61 6d 70 6c 65 03 6e 65 74 00 00 01 00 01
+##
+## Authority
+##
+# <Root>: type NS, class IN, ns B.ROOT-SERVERS.net
+# <Root>: type NS, class IN, ns M.ROOT-SERVERS.net
+# ...
+# <Root>: type NS, class IN, ns H.ROOT-SERVERS.net
+00 00 02 00 01 00 07 e9 00 00 11 01 42 0c 52 4f 4f
+54 2d 53 45 52 56 45 52 53 c0 16 00 00 02 00 01
+00 07 e9 00 00 04 01 4d c0 2c 00 00 02 00 01 00
+07 e9 00 00 04 01 44 c0 2c 00 00 02 00 01 00 07
+e9 00 00 04 01 4c c0 2c 00 00 02 00 01 00 07 e9
+00 00 04 01 4b c0 2c 00 00 02 00 01 00 07 e9 00
+00 04 01 43 c0 2c 00 00 02 00 01 00 07 e9 00 00
+04 01 41 c0 2c 00 00 02 00 01 00 07 e9 00 00 04
+01 49 c0 2c 00 00 02 00 01 00 07 e9 00 00 04 01
+45 c0 2c 00 00 02 00 01 00 07 e9 00 00 04 01 46
+c0 2c 00 00 02 00 01 00 07 e9 00 00 04 01 4a c0
+2c 00 00 02 00 01 00 07 e9 00 00 04 01 47 c0 2c
+00 00 02 00 01 00 07 e9 00 00 04 01 48 c0 2c
