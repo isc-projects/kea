@@ -101,6 +101,15 @@ public:
     void addCallback(boost::shared_ptr<AddressRequestCallback>
         callback, AddressFamily family);
 
+    /**
+     * \short Remove a callback from the list
+     *
+     * \param callback The callback itself.
+     * \param family Which address family is acceptable as an answer?
+     */
+    void removeCallback(boost::shared_ptr<AddressRequestCallback>
+                        callback, AddressFamily family);
+
     /// \short Protected members, so they can be accessed by tests.
     //@{
 protected:

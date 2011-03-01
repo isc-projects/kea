@@ -85,12 +85,14 @@ public:
     
     void success(const isc::nsas::NameserverAddress& address) {
         dlog("Found a nameserver, sending query to " + address.getAddress().toText());
+        rq_->nsasCallbackCalled();
         rq_->sendTo(address);
     }
     
     void unreachable() {
         dlog("Nameservers unreachable");
         // Drop query or send servfail?
+        rq_->nsasCallbackCalled();
         rq_->stop(false);
     }
 
@@ -143,6 +145,7 @@ private:
 
     // TODO: replace by our wrapper
     asio::deadline_timer client_timer;
+    bool client_timer_canceled_;
     asio::deadline_timer lookup_timer;
 
     size_t queries_out_;
@@ -164,6 +167,9 @@ private:
     // the 'current' nameserver we have a query out to
     std::string cur_zone_;
     boost::shared_ptr<ResolverNSASCallback> nsas_callback_;
+    // this is set to true if we have asked the nsas to give us
+    // an address and we are waiting for it to call us back
+    bool nsas_callback_out_;
     isc::nsas::NameserverAddress current_ns_address;
     struct timeval current_ns_qsent_time;
 
@@ -218,8 +224,18 @@ private:
             // Ask the NSAS for an address for the current zone,
             // the callback will call the actual sendTo()
             dlog("Look up nameserver for " + cur_zone_ + " in NSAS");
+            // Can we have multiple calls to nsas_out? Let's assume not
+            // for now
+            std::cout << "[XX] NSASLOOKUP " << this << " for " << cur_zone_ << std::endl;
+            assert(!nsas_callback_out_);
+            nsas_callback_out_ = true;
             nsas_.lookup(cur_zone_, question_.getClass(), nsas_callback_);
         }
+    }
+    
+    void nsasCallbackCalled() {
+        std::cout << "[XX] NSASLOOKUP DONE " << this << " for " << cur_zone_ << std::endl;
+        nsas_callback_out_ = false;
     }
 
     // This function is called by operator() if there is an actual
@@ -375,6 +391,7 @@ public:
         query_timeout_(query_timeout),
         retries_(retries),
         client_timer(io.get_io_service()),
+        client_timer_canceled_(false),
         lookup_timer(io.get_io_service()),
         queries_out_(0),
         done_(false),
@@ -382,7 +399,8 @@ public:
         nsas_(nsas),
         cache_(cache),
         nsas_callback_(boost::shared_ptr<ResolverNSASCallback>(
-                                     new ResolverNSASCallback(this)))
+                                     new ResolverNSASCallback(this))),
+        nsas_callback_out_(false)
     {
         // Setup the timer to stop trying (lookup_timeout)
         if (lookup_timeout >= 0) {
@@ -410,9 +428,15 @@ public:
             answer_sent_ = true;
             resolvercallback_->success(answer_message_);
         }
+        // if we got here because we canceled it in stop(), we
+        // need to go back to stop()
+        if (client_timer_canceled_) {
+            stop(false);
+        }
     }
 
     virtual void stop(bool resume) {
+        dlog("[XX] stop() called");
         // if we cancel our timers, we will still get an event for
         // that, so we cannot delete ourselves just yet (those events
         // would be bound to a deleted object)
@@ -421,7 +445,7 @@ public:
         // same goes if we have an outstanding query (can't delete
         // until that one comes back to us)
         done_ = true;
-        if (resume && !answer_sent_) {
+        if (!answer_sent_) {
             answer_sent_ = true;
 
             // There are two types of messages we could store in the
@@ -441,20 +465,30 @@ public:
             // stores Messages on their question section only, this
             // does mean that we overwrite the messages we stored in
             // the previous iteration if we are following a delegation.
-            cache_.update(*answer_message_);
-
-            resolvercallback_->success(answer_message_);
-        } else {
-            resolvercallback_->failure();
+            if (resume) {
+                cache_.update(*answer_message_);
+    
+                resolvercallback_->success(answer_message_);
+            } else {
+                resolvercallback_->failure();
+            }
         }
         if (lookup_timer.cancel() != 0) {
+            dlog("[XX] lookup timer canceled");
             return;
         }
         if (client_timer.cancel() != 0) {
+            dlog("[XX] client timer canceled");
+            client_timer_canceled_ = true;
             return;
         }
         if (queries_out_ > 0) {
+            dlog("[XX] still one or more queries out");
             return;
+        }
+        if (nsas_callback_out_) {
+            nsas_.cancel(cur_zone_, question_.getClass(), nsas_callback_);
+            nsas_callback_out_ = false;
         }
         dlog("Recursive query stopped, deleting");
         delete this;
@@ -512,7 +546,10 @@ public:
             if (recursive_mode()) {
                 current_ns_address.updateRTT(isc::nsas::AddressEntry::UNREACHABLE);
             }
-            stop(false);
+            if (!answer_sent_) {
+                answer_message_->setRcode(Rcode::SERVFAIL());
+            }
+            stop(!answer_sent_);
         }
     }
     
