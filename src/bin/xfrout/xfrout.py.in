@@ -346,8 +346,8 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
                 break
 
     def _handle_request_noblock(self):
-        """Overide the function _handle_request_noblock(), it create a new thread to
-        handle requests for each auth"""
+        """Override the function _handle_request_noblock(), it creates a new
+        thread to handle requests for each auth"""
         td = threading.Thread(target=self.handle_request)
         td.setDaemon(True)
         td.start()
