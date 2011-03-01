@@ -17,14 +17,13 @@
 
 #include <config.h>
 
-
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
-#include <asio/error_code.hpp>
-
 #include <coroutine.h>
+
+#include <asio/error_code.hpp>
 
 #include <dns/buffer.h>
 #include <dns/question.h>
@@ -138,6 +137,11 @@ public:
         uint16_t port, isc::dns::OutputBufferPtr& buff, Callback* cb,
         int wait = -1);
 
+    /// \brief Return Current Protocol
+    ///
+    /// \return Protocol associated with this IOFetch object.
+    Protocol getProtocol() const;
+
     /// \brief Coroutine entry point
     ///
     /// The operator() method is the method in which the coroutine code enters
@@ -145,16 +149,7 @@ public:
     ///
     /// \param ec Error code, the result of the last asynchronous I/O operation.
     /// \param length Amount of data received on the last asynchronous read
-    void operator()(asio::error_code ec, size_t length);
-
-    void operator()(asio::error_code ec) {
-        operator()(ec, 0);
-    }
-
-    void operator()() {
-        asio::error_code ec;
-        operator()(ec);
-    }
+    void operator()(asio::error_code ec = asio::error_code(), size_t length = 0);
 
     /// \brief Terminate query
     ///
@@ -172,6 +167,9 @@ private:
     /// \param ec ASIO error code
     void logIOFailure(asio::error_code ec);
 
+    // Member variables.  All data is in a structure pointed to by a shared
+    // pointer.  The IOFetch object is copied a number of times during its
+    // life, and only requiring a pointer to be copied reduces overhead.
     boost::shared_ptr<IOFetchData>  data_;   ///< Private data
 
 };
