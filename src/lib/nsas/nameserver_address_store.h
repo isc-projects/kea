@@ -87,6 +87,13 @@ public:
         boost::shared_ptr<AddressRequestCallback> callback, AddressFamily
         family = ANY_OK);
 
+    /// \brief cancel the given lookup action
+    ///
+    /// \param callback Callback object that would be called
+    void cancel(const std::string& zone, const dns::RRClass& class_code,
+                boost::shared_ptr<AddressRequestCallback> callback,
+                AddressFamily family = ANY_OK);
+
     /// \brief Protected Members
     ///
     /// These members should be private.  However, with so few public methods
