@@ -295,6 +295,7 @@ AC_SUBST(B10_CXXFLAGS)
 
 AC_SEARCH_LIBS(inet_pton, [nsl])
 AC_SEARCH_LIBS(recvfrom, [socket])
+AC_SEARCH_LIBS(nanosleep, [rt])
 
 # Checks for header files.
 
