@@ -200,8 +200,8 @@ TCPSocket<C>::open(const IOEndpoint* endpoint, C&) {
 // an exception if this is the case.
 
 template <typename C> void
-TCPSocket<C>::asyncSend(const void* data, size_t length,
-    const IOEndpoint* endpoint, C& callback)
+TCPSocket<C>::asyncSend(const void*, size_t,
+    const IOEndpoint* endpoint, C&)
 {
     if (isopen_) {
 
@@ -232,8 +232,8 @@ TCPSocket<C>::asyncSend(const void* data, size_t length,
 // the need for the socket to be open.
 
 template <typename C> void
-TCPSocket<C>::asyncReceive(void* data, size_t length, size_t,
-    IOEndpoint* endpoint, C& callback)
+TCPSocket<C>::asyncReceive(void*, size_t, size_t,
+    IOEndpoint* endpoint, C&)
 {
     if (isopen_) {
 

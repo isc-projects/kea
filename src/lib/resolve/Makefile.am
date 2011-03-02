@@ -14,5 +14,6 @@ libresolve_la_SOURCES = resolve.h resolve.cc
 libresolve_la_SOURCES += resolver_interface.h
 libresolve_la_SOURCES += resolver_callback.h resolver_callback.cc
 libresolve_la_SOURCES += response_classifier.cc response_classifier.h
+libresolve_la_SOURCES += recursive_query.cc recursive_query.h
 libresolve_la_LIBADD = $(top_builddir)/src/lib/dns/libdns++.la
 libresolve_la_LIBADD += $(top_builddir)/src/lib/exceptions/libexceptions.la

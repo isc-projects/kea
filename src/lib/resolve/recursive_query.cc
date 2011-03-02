@@ -37,7 +37,7 @@
 #include <asiolink/dns_service.h>
 #include <asiolink/io_fetch.h>
 #include <asiolink/io_service.h>
-#include <asiolink/recursive_query.h>
+#include <resolve/recursive_query.h>
 
 using isc::log::dlog;
 using namespace isc::dns;
