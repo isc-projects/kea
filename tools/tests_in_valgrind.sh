@@ -31,7 +31,7 @@ set -e
 # Some configuration
 # TODO Escape for sed, this might break
 LOGFILE="${VALGRIND_FILE:-`pwd`/valgrind.log}"
-FLAGS="${VALGRIND_FLAGS:---read-var-info=yes --leak-check=full --track-fds=yes}"
+FLAGS="${VALGRIND_FLAGS:---leak-check=full --track-fds=yes}"
 FLAGS="$FLAGS --log-file=$LOGFILE.%p"
 
 FOUND_ANY=false
