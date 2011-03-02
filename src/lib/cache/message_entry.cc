@@ -229,7 +229,7 @@ MessageEntry::parseSection(const isc::dns::Message& msg,
 
 void
 MessageEntry::parseNegativeResponseAuthoritySection(const isc::dns::Message& msg,
-        uint32_t& soa_ttl,
+        uint32_t& min_ttl,
         uint16_t& rrset_count)
 {
 
@@ -240,15 +240,20 @@ MessageEntry::parseNegativeResponseAuthoritySection(const isc::dns::Message& msg
             ++iter){
         RRsetPtr rrset_ptr = *iter;
         RRsetTrustLevel level = getRRsetTrustLevel(msg, rrset_ptr, Message::SECTION_AUTHORITY);
+        uint32_t rrset_ttl = 0;
         if (rrset_ptr->getType() == RRType::SOA()){
-            soa_ttl = rrset_ptr->getTTL().getValue();
             RRsetEntryPtr rrset_entry = negative_soa_cache_->update(*rrset_ptr, level);
             rrsets_.push_back(RRsetRef(rrset_ptr->getName(), rrset_ptr->getType(), negative_soa_cache_));
+            rrset_ttl = rrset_entry->getTTL();
         } else {
             RRsetEntryPtr rrset_entry = rrset_cache_->update(*rrset_ptr, level);
             rrsets_.push_back(RRsetRef(rrset_ptr->getName(), rrset_ptr->getType(), rrset_cache_));
+            rrset_ttl = rrset_entry->getTTL();
         }
 
+        if (min_ttl > rrset_ttl) {
+            min_ttl = rrset_ttl;
+        }
         ++count;
     }
 
@@ -269,15 +274,12 @@ MessageEntry::initMessageEntry(const isc::dns::Message& msg) {
     query_type_ = (*iter)->getType().getCode();
     query_class_ = (*iter)->getClass().getCode();
 
+    uint32_t min_ttl = MAX_UINT32;
     if (!isNegativeResponse(msg)){
-        uint32_t min_ttl = MAX_UINT32;
         parseSection(msg, Message::SECTION_ANSWER, min_ttl, answer_count_);
         parseSection(msg, Message::SECTION_AUTHORITY, min_ttl, authority_count_);
         parseSection(msg, Message::SECTION_ADDITIONAL, min_ttl, additional_count_);
-        expire_time_ = time(NULL) + min_ttl;
     } else {
-        uint32_t min_ttl = MAX_UINT32;
-        uint32_t soa_ttl = MAX_UINT32;
         uint16_t rrset_count = 0;
 
         // For negative response, if no soa RRset is found in authority section, dont cache it
@@ -285,14 +287,14 @@ MessageEntry::initMessageEntry(const isc::dns::Message& msg) {
             return;
         }
 
-        parseNegativeResponseAuthoritySection(msg, soa_ttl, rrset_count);
+        parseNegativeResponseAuthoritySection(msg, min_ttl, rrset_count);
 
         authority_count_ = rrset_count;
         parseSection(msg, Message::SECTION_ANSWER, min_ttl, answer_count_);
         parseSection(msg, Message::SECTION_ADDITIONAL, min_ttl, additional_count_);
 
-        expire_time_ = time(NULL) + soa_ttl;
     }
+    expire_time_ = time(NULL) + min_ttl;
 
 }
 
