@@ -1,3 +1,9 @@
+  183.  [bug]      jerry
+    src/bin/xfrout: Enable parallel sessions between xfrout server and
+	muti-Auth. The session needs to be created only on the first time
+	or if an error occur.
+	(Trac #419, git TBD)
+
   182.	[func]		jinmei
 	Support cppcheck for static code check on C++ code.  If cppcheck
 	is available, 'make cppcheck' on the top source directory will run
