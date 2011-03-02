@@ -38,6 +38,8 @@ run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 run_unittests_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
 run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 run_unittests_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
+run_unittests_LDADD += $(top_builddir)/src/lib/cache/libcache.la
+run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 
 # Note the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS

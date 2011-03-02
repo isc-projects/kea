@@ -70,12 +70,15 @@ host_lookup(const char* const name, const char* const type) {
     msg.toWire(renderer);
 
     struct addrinfo hints, *res;
-    int e;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = 0; // not using AI_NUMERICHOST in case to bootstrap
-    e = getaddrinfo(server, server_port, &hints, &res);
+    if (getaddrinfo(server, server_port, &hints, &res) != 0) {
+        cerr << "address/port conversion for " << server << ":"
+             << server_port << " failed" << endl;
+        return (1);
+    }
 
     if (verbose) {
         cout << "Trying \"" << name << "\"\n";

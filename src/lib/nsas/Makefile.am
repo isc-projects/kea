@@ -25,6 +25,7 @@ libnsas_la_SOURCES += asiolink.h
 libnsas_la_SOURCES += hash.cc hash.h
 libnsas_la_SOURCES += hash_deleter.h
 libnsas_la_SOURCES += hash_key.cc hash_key.h
+libnsas_la_SOURCES += locks.h
 libnsas_la_SOURCES += hash_table.h
 libnsas_la_SOURCES += lru_list.h
 libnsas_la_SOURCES += nameserver_address_store.cc nameserver_address_store.h

@@ -75,9 +75,6 @@ listenAddresses(Server& server) {
  * back to original.
  *
  * \param server The server object to test against.
- * \todo This tests currently aborts due to #388 (it is impossible to close
- *     sockets, so it is impossible to configure, deconfigure and then
- *     configure them again). Once #388 is solved, enable the tests.
  */
 template<class Server>
 void
@@ -100,9 +97,6 @@ listenAddressConfig(Server& server) {
 
     // As this is example address, the machine should not have it on
     // any interface
-    // FIXME: This test aborts, because it tries to rollback and
-    //     it is impossible, since the sockets are not closed.
-    //     Once #388 is solved, enable this test.
     config = Element::fromJSON("{"
                                "\"listen_on\": ["
                                "   {"

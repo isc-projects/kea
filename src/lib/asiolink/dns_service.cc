@@ -12,13 +12,19 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>             // for some IPC/network system calls
+
+#include <boost/lexical_cast.hpp>
+
 #include <config.h>
 
-// unistd is needed for asio.hpp with SunStudio
-#include <unistd.h>
+#include <log/dummylog.h>
 
 #include <asio.hpp>
-
+#include <asiolink/dns_service.h>
+#include <asiolink/io_service.h>
 #include <asiolink/io_service.h>
 #include <asiolink/tcp_server.h>
 #include <asiolink/udp_server.h>
@@ -26,6 +32,7 @@
 #include <log/dummylog.h>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/foreach.hpp>
 
 using isc::log::dlog;
 
@@ -182,8 +189,9 @@ DNSService::addServer(uint16_t port, const std::string& address) {
 
 void
 DNSService::clearServers() {
-    // FIXME: This does not work, it does not close the socket.
-    // How is it done?
+    BOOST_FOREACH(const DNSServiceImpl::DNSServerPtr& s, impl_->servers_) {
+        s->stop();
+    }
     impl_->servers_.clear();
 }
 
