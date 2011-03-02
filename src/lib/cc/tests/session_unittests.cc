@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: data_unittests.cc 1899 2010-05-21 12:03:59Z jelte $
-
 #include <config.h>
 
 // for some IPC/network system calls in asio/detail/pipe_select_interrupter.hpp 
@@ -76,7 +74,7 @@ public:
     }
 
     void
-    acceptHandler(const asio::error_code&) {
+    acceptHandler(const asio::error_code&) const {
     }
 
     void

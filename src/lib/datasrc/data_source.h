@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __DATA_SOURCE_H
 #define __DATA_SOURCE_H
 
@@ -248,7 +246,7 @@ public:
     void addDataSrc(ConstDataSrcPtr data_src);
     void removeDataSrc(ConstDataSrcPtr data_src);
     size_t dataSrcCount() { return (data_sources.size()); }
-    
+
     void findClosestEnclosure(DataSrcMatch& match) const;
 
     // Actual queries for data should not be sent to a MetaDataSrc object,

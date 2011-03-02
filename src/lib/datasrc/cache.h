@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __CACHE_H
 #define __CACHE_H
 
@@ -81,7 +79,7 @@ class HotCacheImpl;
 /// from the tail of the list.  This operation is not locked.  BIND 10
 /// does not currently use threads, but if it ever does (or if libdatasrc
 /// is ever used by a threaded application), this will need to be
-//revisited.
+/// revisited.
 class HotCache {
 private:
     /// \name Static definitions
@@ -164,7 +162,7 @@ public:
     ///
     /// Retrieves a record from the cache matching the given 
     /// query-tuple.  Returns true if one is found.  If it is a
-    /// posiitve cache entry, then 'rrset' is set to the cached
+    /// positive cache entry, then 'rrset' is set to the cached
     /// RRset.  For both positive and negative cache entries, 'flags'
     /// is set to the query response flags.  The cache entry is 
     /// then promoted to the head of the LRU queue.  (NOTE: Because

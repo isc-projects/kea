@@ -13,8 +13,6 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# $Id$
-
 #
 # Tests for the ConfigData and MultiConfigData classes
 #
@@ -107,6 +105,8 @@ class TestConfigData(unittest.TestCase):
         self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, "a")
         self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, [ 1, 2 ])
         self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, { "a": 1 })
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, 1, "a")
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, { 'somedict': 'somevalue' }, "a")
         
         spec_part = find_spec_part(config_spec, "value2")
         self.assertEqual(1.1, convert_type(spec_part, '1.1'))
@@ -142,6 +142,18 @@ class TestConfigData(unittest.TestCase):
         self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, 1.1)
         self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, True)
         self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, "a")
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, [ "a", "b" ])
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, [ "1", "b" ])
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, { "a": 1 })
+
+        spec_part = find_spec_part(config_spec, "value6")
+        self.assertEqual({}, convert_type(spec_part, '{}'))
+        self.assertEqual({ 'v61': 'a' }, convert_type(spec_part, '{ \'v61\': \'a\' }'))
+
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, 1.1)
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, True)
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, "a")
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, "1")
         self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, [ "a", "b" ])
         self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, [ "1", "b" ])
         self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, { "a": 1 })
@@ -321,6 +333,8 @@ class TestMultiConfigData(unittest.TestCase):
         pass
 
     def test_get_local_value(self):
+        module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
+        self.mcd.set_specification(module_spec)
         value = self.mcd.get_local_value("Spec2/item1")
         self.assertEqual(None, value)
         self.mcd.set_value("Spec2/item1", 2)
@@ -342,6 +356,14 @@ class TestMultiConfigData(unittest.TestCase):
         self.assertEqual(1, value)
         value = self.mcd.get_default_value("/Spec2/item1")
         self.assertEqual(1, value)
+        value = self.mcd.get_default_value("Spec2/item5[0]")
+        self.assertEqual('a', value)
+        value = self.mcd.get_default_value("Spec2/item5[1]")
+        self.assertEqual('b', value)
+        value = self.mcd.get_default_value("Spec2/item5[5]")
+        self.assertEqual(None, value)
+        value = self.mcd.get_default_value("Spec2/item5[0][1]")
+        self.assertEqual(None, value)
         value = self.mcd.get_default_value("Spec2/item6/value1")
         self.assertEqual('default', value)
         value = self.mcd.get_default_value("Spec2/item6/value2")
@@ -353,19 +375,42 @@ class TestMultiConfigData(unittest.TestCase):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
         self.mcd.set_specification(module_spec)
         self.mcd.set_value("Spec2/item1", 2)
-        value,status = self.mcd.get_value("Spec2/item1")
+
+        value, status = self.mcd.get_value("Spec2/item1")
         self.assertEqual(2, value)
         self.assertEqual(MultiConfigData.LOCAL, status)
-        value,status = self.mcd.get_value("Spec2/item2")
+
+        value, status = self.mcd.get_value("Spec2/item2")
         self.assertEqual(1.1, value)
         self.assertEqual(MultiConfigData.DEFAULT, status)
+
         self.mcd._current_config = { "Spec2": { "item3": False } }
-        value,status = self.mcd.get_value("Spec2/item3")
+
+        value, status = self.mcd.get_value("Spec2/item3")
         self.assertEqual(False, value)
         self.assertEqual(MultiConfigData.CURRENT, status)
-        value,status = self.mcd.get_value("Spec2/no_such_item")
+
+        value, status = self.mcd.get_value("Spec2/no_such_item")
         self.assertEqual(None, value)
         self.assertEqual(MultiConfigData.NONE, status)
+
+        value, status = self.mcd.get_value("Spec2/item5")
+        self.assertEqual(['a', 'b'], value)
+        self.assertEqual(MultiConfigData.DEFAULT, status)
+
+        value, status = self.mcd.get_value("Spec2/item5[0]")
+        self.assertEqual("a", value)
+        self.assertEqual(MultiConfigData.DEFAULT, status)
+
+        value, status = self.mcd.get_value("Spec2/item5[0]", False)
+        self.assertEqual(None, value)
+        self.assertEqual(MultiConfigData.NONE, status)
+
+        value, status = self.mcd.get_value("Spec2/item5[1]")
+        self.assertEqual("b", value)
+        self.assertEqual(MultiConfigData.DEFAULT, status)
+
+
 
     def test_get_value_maps(self):
         maps = self.mcd.get_value_maps()
@@ -389,30 +434,34 @@ class TestMultiConfigData(unittest.TestCase):
         self.mcd._set_current_config({ "Spec2": { "item1": 2 } })
         self.mcd.set_value("Spec2/item3", False)
         maps = self.mcd.get_value_maps("/Spec2")
-        self.assertEqual([{'default': False, 'type': 'integer', 'name': 'item1', 'value': 2, 'modified': False},
-                          {'default': False, 'type': 'real', 'name': 'item2', 'value': 1.1, 'modified': False},
-                          {'default': False, 'type': 'boolean', 'name': 'item3', 'value': False, 'modified': True},
-                          {'default': False, 'type': 'string', 'name': 'item4', 'value': 'test', 'modified': False},
-                          {'default': False, 'type': 'list', 'name': 'item5', 'value': ['a', 'b'], 'modified': False},
-                          {'default': False, 'type': 'map', 'name': 'item6', 'value': {}, 'modified': False}], maps)
+        self.assertEqual([{'default': False, 'type': 'integer', 'name': 'Spec2/item1', 'value': 2, 'modified': False},
+                          {'default': True, 'type': 'real', 'name': 'Spec2/item2', 'value': 1.1, 'modified': False},
+                          {'default': False, 'type': 'boolean', 'name': 'Spec2/item3', 'value': False, 'modified': True},
+                          {'default': True, 'type': 'string', 'name': 'Spec2/item4', 'value': 'test', 'modified': False},
+                          {'default': True, 'type': 'list', 'name': 'Spec2/item5', 'value': ['a', 'b'], 'modified': False},
+                          {'default': True, 'type': 'string', 'name': 'Spec2/item6/value1', 'value': 'default', 'modified': False},
+                          {'default': False, 'type': 'integer', 'name': 'Spec2/item6/value2', 'value': None, 'modified': False}], maps)
         maps = self.mcd.get_value_maps("Spec2")
-        self.assertEqual([{'default': False, 'type': 'integer', 'name': 'item1', 'value': 2, 'modified': False},
-                          {'default': False, 'type': 'real', 'name': 'item2', 'value': 1.1, 'modified': False},
-                          {'default': False, 'type': 'boolean', 'name': 'item3', 'value': False, 'modified': True},
-                          {'default': False, 'type': 'string', 'name': 'item4', 'value': 'test', 'modified': False},
-                          {'default': False, 'type': 'list', 'name': 'item5', 'value': ['a', 'b'], 'modified': False},
-                          {'default': False, 'type': 'map', 'name': 'item6', 'value': {}, 'modified': False}], maps)
+        self.assertEqual([{'default': False, 'type': 'integer', 'name': 'Spec2/item1', 'value': 2, 'modified': False},
+                          {'default': True, 'type': 'real', 'name': 'Spec2/item2', 'value': 1.1, 'modified': False},
+                          {'default': False, 'type': 'boolean', 'name': 'Spec2/item3', 'value': False, 'modified': True},
+                          {'default': True, 'type': 'string', 'name': 'Spec2/item4', 'value': 'test', 'modified': False},
+                          {'default': True, 'type': 'list', 'name': 'Spec2/item5', 'value': ['a', 'b'], 'modified': False},
+                          {'default': True, 'type': 'string', 'name': 'Spec2/item6/value1', 'value': 'default', 'modified': False},
+                          {'default': False, 'type': 'integer', 'name': 'Spec2/item6/value2', 'value': None, 'modified': False}], maps)
         maps = self.mcd.get_value_maps("/Spec2/item5")
-        self.assertEqual([{'default': False, 'type': 'string', 'name': 'list_element', 'value': 'a', 'modified': False},
-                          {'default': False, 'type': 'string', 'name': 'list_element', 'value': 'b', 'modified': False}], maps)
+        self.assertEqual([{'default': True, 'type': 'string', 'name': 'Spec2/item5[0]', 'value': 'a', 'modified': False},
+                          {'default': True, 'type': 'string', 'name': 'Spec2/item5[1]', 'value': 'b', 'modified': False}], maps)
+        maps = self.mcd.get_value_maps("/Spec2/item5[0]")
+        self.assertEqual([{'default': True, 'modified': False, 'name': 'Spec2/item5[0]', 'type': 'string', 'value': 'a'}], maps)
         maps = self.mcd.get_value_maps("/Spec2/item1")
-        self.assertEqual([{'default': False, 'type': 'integer', 'name': 'item1', 'value': 2, 'modified': False}], maps)
+        self.assertEqual([{'default': False, 'type': 'integer', 'name': 'Spec2/item1', 'value': 2, 'modified': False}], maps)
         maps = self.mcd.get_value_maps("/Spec2/item2")
-        self.assertEqual([{'default': False, 'type': 'real', 'name': 'item2', 'value': 1.1, 'modified': False}], maps)
+        self.assertEqual([{'default': True, 'type': 'real', 'name': 'Spec2/item2', 'value': 1.1, 'modified': False}], maps)
         maps = self.mcd.get_value_maps("/Spec2/item3")
-        self.assertEqual([{'default': False, 'type': 'boolean', 'name': 'item3', 'value': False, 'modified': True}], maps)
+        self.assertEqual([{'default': False, 'type': 'boolean', 'name': 'Spec2/item3', 'value': False, 'modified': True}], maps)
         maps = self.mcd.get_value_maps("/Spec2/item4")
-        self.assertEqual([{'default': False, 'type': 'string', 'name': 'item4', 'value': 'test', 'modified': False}], maps)
+        self.assertEqual([{'default': True, 'type': 'string', 'name': 'Spec2/item4', 'value': 'test', 'modified': False}], maps)
 
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec24.spec")
         self.mcd.set_specification(module_spec)
@@ -420,16 +469,48 @@ class TestMultiConfigData(unittest.TestCase):
         self.assertEqual([], maps)
         self.mcd._set_current_config({ "Spec24": { "item": [] } })
         maps = self.mcd.get_value_maps("/Spec24/item")
-        self.assertEqual([], maps)
+        self.assertEqual([{'default': False, 'modified': False, 'name': 'Spec24/item', 'type': 'list', 'value': []}], maps)
 
-
+        module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec22.spec")
+        self.mcd.set_specification(module_spec)
+        expected = [{'default': True,
+                     'modified': False,
+                     'name': 'Spec22/value9/v91',
+                     'type': 'string',
+                     'value': 'def'},
+                    {'default': True,
+                     'modified': False,
+                     'name': 'Spec22/value9/v92/v92a',
+                     'type': 'string',
+                     'value': 'Hello'
+                    },
+                    {'default': True,
+                     'modified': False,
+                     'name': 'Spec22/value9/v92/v92b',
+                     'type': 'integer',
+                     'value': 47806
+                    }
+                   ]
+        maps = self.mcd.get_value_maps("/Spec22/value9")
+        self.assertEqual(expected, maps)
 
     def test_set_value(self):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
         self.mcd.set_specification(module_spec)
         self.mcd.set_value("Spec2/item1", 2)
-        self.assertRaises(isc.cc.data.DataTypeError, self.mcd.set_value, "Spec2/item1", "asdf")
-        self.mcd.set_value("Spec2/no_such_item", 4)
+        self.assertRaises(isc.cc.data.DataTypeError,
+                          self.mcd.set_value, "Spec2/item1", "asdf")
+
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.mcd.set_value, "Spec2/no_such_item", 4)
+
+        self.mcd.set_value("Spec2/item5[0]", "c")
+        value, status = self.mcd.get_value("Spec2/item5[0]")
+        self.assertEqual(value, "c")
+        self.assertEqual(MultiConfigData.LOCAL, status)
+
+        self.assertRaises(isc.cc.data.DataTypeError, self.mcd.set_value, "Spec2/item5[a]", "asdf")
+        
 
     def test_get_config_item_list(self):
         config_items = self.mcd.get_config_item_list()
@@ -445,6 +526,8 @@ class TestMultiConfigData(unittest.TestCase):
         config_items = self.mcd.get_config_item_list("Spec2", True)
         self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
         config_items = self.mcd.get_config_item_list("Spec2")
+        self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5', 'Spec2/item6'], config_items)
+        config_items = self.mcd.get_config_item_list("/Spec2")
         self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5', 'Spec2/item6'], config_items)
         config_items = self.mcd.get_config_item_list("Spec2", True)
         self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
