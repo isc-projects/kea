@@ -335,6 +335,7 @@ protected:
             {}
 
             void resume(const bool done) {
+                std::cout << "[XX] RESUME!" << std::endl;
                 *done_ = done;
                 io_.stop();
             }
@@ -664,8 +665,8 @@ TEST_F(RecursiveQueryTest, forwardQueryTimeout) {
     int num = 0;
     bool read_success = tryRead(sock_, recv_options, 3, &num);
 
-    // The query should fail
-    EXPECT_FALSE(done);
+    // The query should 'succeed' with an error response
+    EXPECT_TRUE(done);
     EXPECT_EQ(3, num);
     EXPECT_TRUE(read_success);
 }
@@ -681,8 +682,7 @@ TEST_F(RecursiveQueryTest, forwardClientTimeout) {
 
     // Prepare the server
     bool done1(true);
-    bool done2(true);
-    MockServerStop2 server(*io_service_, &done1, &done2);
+    MockServerStop server(*io_service_, &done1);
 
     MessagePtr answer(new Message(Message::RENDER));
 
@@ -706,15 +706,14 @@ TEST_F(RecursiveQueryTest, forwardClientTimeout) {
     // we know it'll fail, so make it a shorter timeout
     int recv_options = setSocketTimeout(sock_, 1, 0);
 
-    // Try to read 5 times
+    // Try to read 4 times
     int num = 0;
-    bool read_success = tryRead(sock_, recv_options, 5, &num);
+    bool read_success = tryRead(sock_, recv_options, 4, &num);
 
-    // The query should fail, but we should have kept on trying
+    // The query should fail
     EXPECT_TRUE(done1);
-    EXPECT_FALSE(done2);
-    EXPECT_EQ(5, num);
-    EXPECT_TRUE(read_success);
+    EXPECT_EQ(3, num);
+    EXPECT_FALSE(read_success);
 }
 
 // If we set lookup timeout to lower than querytimeout*retries, we should
