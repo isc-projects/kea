@@ -14,6 +14,13 @@ use warnings;
 #
 # Of course, the rest still can contain many uninteresting entries.
 
+# Yes, it's perl even when we use python. I wrote it for myself when
+# I needed to clean the outputs and after it proved useful to me, I
+# thought it might be for others too, so I just included it. It's not
+# that we would be switching to perl. If it should grow in future to
+# include more heuristics and do something more fancy, we should probably
+# rewrite it in python instead.
+
 my ($block, $blockOK);
 
 sub endBlock(_) {
