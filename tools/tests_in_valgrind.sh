@@ -1,5 +1,4 @@
-#!/bin/bash
-# Yes, really bash, there are some bashisms
+#!/bin/sh
 
 ###########################################
 # This script runs all tests in valgrind. Configure and compile bind the way
@@ -44,14 +43,15 @@ eval $(find . -type f -name run_unittests -print | grep -v '\.libs/run_unittests
     chmod +x "$testname.valgrind"
     echo "$testname" >>"$LOGFILE"
     echo "===============" >>"$LOGFILE"
-    pushd $(dirname "$testname") >/dev/null
-    "./run_unittests.valgrind" >&2 &
+    OLDDIR="`pwd`"
+    cd $(dirname "$testname")
+    ./run_unittests.valgrind >&2 &
     PID="$!"
     set +e
     wait "$PID"
     CODE="$?"
     set -e
-    popd >/dev/null
+    cd "$OLDDIR"
     if [ "$CODE" != 0 ] ; then
         echo 'FAILED="$FAILED
 '"$testname"'"'
