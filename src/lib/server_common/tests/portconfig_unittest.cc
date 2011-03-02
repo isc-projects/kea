@@ -74,6 +74,27 @@ TEST_F(ParseAddresses, ipv6) {
     EXPECT_EQ(53, result_[0].second);
 }
 
+// Parse multiple addresses at once
+// (even the ports are different to see they are not mistaken)
+TEST_F(ParseAddresses, multi) {
+    ElementPtr config(Element::fromJSON("["
+                                        "   {"
+                                        "       \"address\": \"2001:db8::1\","
+                                        "       \"port\": 53"
+                                        "   },"
+                                        "   {"
+                                        "       \"address\": \"192.0.2.1\","
+                                        "       \"port\": 54"
+                                        "   }"
+                                        "]"));
+    EXPECT_NO_THROW(result_ = parseAddresses(config, "test"));
+    ASSERT_EQ(2, result_.size());
+    EXPECT_EQ("2001:db8::1", result_[0].first);
+    EXPECT_EQ(53, result_[0].second);
+    EXPECT_EQ("192.0.2.1", result_[1].first);
+    EXPECT_EQ(54, result_[1].second);
+}
+
 // Parse various versions of empty list
 TEST_F(ParseAddresses, empty) {
     empty(Element::fromJSON("[]"), "Empty list");
