@@ -32,6 +32,7 @@
 #include <dns/rcode.h>
 
 #include <asiolink/asiolink_utilities.h>
+#include <asiolink/dns_service.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_endpoint.h>
 #include <asiolink/io_fetch.h>
@@ -63,12 +64,16 @@ using namespace std;
 
 namespace asiolink {
 
-const asio::ip::address TEST_HOST(asio::ip::address::from_string("127.0.0.1"));
-const uint16_t TEST_PORT(5301);
+const std::string TEST_ADDRESS = "127.0.0.1";
+const uint16_t TEST_PORT = 5301;
+const uint16_t DNSSERVICE_PORT = 5302;
+
+const asio::ip::address TEST_HOST(asio::ip::address::from_string(TEST_ADDRESS));
 
 
 /// \brief Test fixture for the asiolink::IOFetch.
-class RecursiveQueryTest2 : public virtual ::testing::Test, public virtual IOFetch::Callback
+class RecursiveQueryTest2 : public virtual ::testing::Test,
+                            public virtual IOFetch::Callback
 {
 public:
 
@@ -84,12 +89,15 @@ public:
         COMPLETE = 5                ///< Query is complete
     };
 
+    // Common stuff
     IOService       service_;                   ///< Service to run everything
+    DNSService      dns_service_;               ///< Resolver is part of "server"
     Question        question_;                  ///< What to ask
     QueryStatus     last_;                      ///< Last state
     QueryStatus     expected_;                  ///< Expected next state
     OutputBufferPtr question_buffer_;           ///< Question we expect to receive
 
+    // Data for TCP Server
     size_t          tcp_cumulative_;            ///< Cumulative TCP data received
     tcp::endpoint   tcp_endpoint_;              ///< Endpoint for TCP receives
     size_t          tcp_length_;                ///< Expected length value
@@ -108,6 +116,8 @@ public:
     /// \brief Constructor
     RecursiveQueryTest2() :
         service_(),
+        dns_service_(service_.get_io_service(), DNSSERVICE_PORT, true, false,
+                     NULL, NULL, NULL),
         question_(Name("www.example.org"), RRClass::IN(), RRType::A()),
         last_(NONE),
         expected_(NONE),
@@ -417,56 +427,104 @@ public:
         EXPECT_EQ(expected, length);    // And that amount sent is as expected
     }
 
-    /// \brief Resolver Callback Completion
+};
+
+/// \brief Resolver Callback Object
+///
+/// Holds the success and failure callback methods for the resolver
+class ResolverCallback : public isc::resolve::resolverInterface::Callback {
+public:
+    /// \brief Constructor
+    ResolverCallback(IOService& service) : service_(service)
+    {}
+
+    /// \brief Destructor
+    virtual ~ResolverCallback()
+    {}
+
+    /// \brief Resolver Callback Success
     ///
-    /// This is the callback's operator() method which is called when the 
-    /// resolution of the query is complete.  It checks that the data received
-    /// is the wire format of the data sent back by the server.
+    /// Called if the resolver detects that the call has succeeded.
     ///
-    /// \param result Result indicated by the callback
-    void operator()(IOFetch::Result result) {
-
-        EXPECT_EQ(COMPLETE, expected_);
-        /*
-        EXPECT_EQ(expected_, result);   // Check correct result returned
-        EXPECT_FALSE(run_);             // Check it is run only once
-        run_ = true;                    // Note success
-
-        // If the expected result for SUCCESS, then this should have been called
-        // when one of the "servers" in this class has sent back the TEST_DATA.
-        // Check the data is as expected/
-        if (expected_ == IOFetch::SUCCESS) {
-            EXPECT_EQ(sizeof(TEST_DATA), result_buff_->getLength());
-
-            const uint8_t* start = static_cast<const uint8_t*>(result_buff_->getData());
-            EXPECT_TRUE(equal(TEST_DATA, (TEST_DATA + sizeof(TEST_DATA) - 1),
-                              start));
-        }
-
-        // ... and cause the run loop to exit.
-         * */
-        service_.stop();
+    /// \param response Answer to the question.
+    virtual void success(const isc::dns::MessagePtr response) {
+        service_.stop();    // Cause run() to exit.
     }
+
+    /// \brief Resolver Failure Completion
+    ///
+    /// Called if the resolver detects that the call has failed.
+    virtual void failure() {
+        FAIL() << "Resolver reported failure on completion";
+        service_.stop();    // Cause run() to exit.
+    }
+
+private:
+    IOService&      service_;       ///< Service handling the run queue
+};
 
 // Sets up the UDP and TCP "servers", then tries a resolution.
 
 TEST_F(RecursiveQueryTest2, Resolve) {
 
-    // Set the state of the 
     // Set up the UDP server and issue the first read.
     udp_socket_.set_option(socket_base::reuse_address(true));
     udp_socket_.bind(udp::endpoint(TEST_HOST, TEST_PORT));
     udp_socket.async_receive_from(asio::buffer(server_buff_, sizeof(server_buff_)),
         remote,
-        boost::bind(&IOFetchTest::udpReceiveHandler, this, &remote, &socket,
+        boost::bind(&RecursiveQuery2::udpReceiveHandler, this, &remote, &socket,
                     _1, _2));
     service_.get_io_service().post(udp_fetch_);
     service_.run();
+
+    // Set up the TCP server and issue the accept.  Acceptance will cause the
+    // read to be issued.
+    tcp::acceptor acceptor(service_.get_io_service(),
+                           tcp::endpoint(tcp::v4(), TEST_PORT));
+    acceptor.async_accept(socket,
+        boost::bind(&RecursiveQuery2::tcpAcceptHandler, this, _1));
+
+    // Set up the RecursiveQuery object.
+    std::vector<std::pair<std::string, uint16_t> > upstream;         // Empty
+    std::vector<std::pair<std::string, uint16_t> > upstream_root;    // Empty
+    RecursiveQuery query(dns_service_, upstream, upstream_root);
+
+    std::pair<std::string, uint16_t> test_server(TEST_ADDRESS, TEST_PORT);
+    query.setTestServer(test_server);
+
+    /// Set up callback for the resolver
+    ResolverInterface::CallbackPtr
+        resolver_callback(new(ResolverCallback(service_)));
+
+
+
 
     socket.close();
 
     EXPECT_TRUE(run_);;
 }
+    protocol_ = IOFetch::TCP;
+    expected_ = IOFetch::SUCCESS;
+
+    // Socket into which the connection will be accepted
+    tcp::socket socket(service_.get_io_service());
+
+    // Acceptor object - called when the connection is made, the handler will
+    // initiate a read on the socket.
+    tcp::acceptor acceptor(service_.get_io_service(),
+                           tcp::endpoint(tcp::v4(), TEST_PORT));
+    acceptor.async_accept(socket,
+        boost::bind(&IOFetchTest::tcpAcceptHandler, this, &socket, _1));
+
+    // Post the TCP fetch object to send the query and receive the response.
+    service_.get_io_service().post(tcp_fetch_);
+
+    // ... and execute all the callbacks.  This exits when the fetch completes.
+    service_.run();
+    EXPECT_TRUE(run_);  // Make sure the callback did execute
+
+    socket.close();
+
 
 // Do the same tests for TCP transport
 
