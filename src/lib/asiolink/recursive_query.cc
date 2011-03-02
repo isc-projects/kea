@@ -237,7 +237,7 @@ private:
         
         isc::resolve::ResponseClassifier::Category category =
             isc::resolve::ResponseClassifier::classify(
-                question_, incoming, cname_target, cname_count_, true);
+                question_, incoming, cname_target, cname_count_);
 
         bool found_ns_address = false;
             
@@ -331,7 +331,7 @@ private:
             if (protocol_ == IOFetch::UDP) {
                 dlog("Response truncated, re-querying over TCP");
                 send(IOFetch::TCP);
-                break;
+                return false;
             }
             // Was a TCP query so we have received a packet over TCP with the TC
             // bit set: drop through to common error processing.

@@ -306,7 +306,7 @@ TCPSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
         // return type.
         assert(endpoint->getProtocol() == IPPROTO_TCP);
         TCPEndpoint* tcp_endpoint = static_cast<TCPEndpoint*>(endpoint);
-        
+
         // Write the endpoint details from the comminications link.  Ideally
         // we should make IOEndpoint assignable, but this runs in to all sorts
         // of problems concerning the management of the underlying Boost
@@ -325,7 +325,7 @@ TCPSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
 
         // ... and kick off the read.
         socket_.async_receive(asio::buffer(buffer_start, length - offset), callback);
-        
+
     } else {
         isc_throw(SocketNotOpen,
             "attempt to receive from a TCP socket that is not open");
