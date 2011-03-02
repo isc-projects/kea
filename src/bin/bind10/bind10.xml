@@ -155,7 +155,11 @@
           <para>The name this process should have in tools like
           <command>ps</command> or <command>top</command>. This
           is handy if you have multiple versions/installations
-          of <command>bind10</command>.</para>
+          of <command>bind10</command>.
+<!-- TODO: only supported with setproctitle feature
+The default is the basename of ARG 0.
+-->
+</para>
         </listitem>
       </varlistentry>
 

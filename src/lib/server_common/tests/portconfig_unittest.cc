@@ -90,17 +90,17 @@ TEST_F(ParseAddresses, invalid) {
                            "   \"address\": \"192.0.2.1\""
                            "}]", "Float port");
     invalidTest<BadValue>("[{"
-                "   \"port\": -5,"
-                "   \"address\": \"192.0.2.1\""
-                "}]", "Negative port");
+                          "   \"port\": -5,"
+                          "   \"address\": \"192.0.2.1\""
+                          "}]", "Negative port");
     invalidTest<BadValue>("[{"
-                "   \"port\": 1000000,"
-                "   \"address\": \"192.0.2.1\""
-                "}]", "Port too big");
+                          "   \"port\": 1000000,"
+                          "   \"address\": \"192.0.2.1\""
+                          "}]", "Port too big");
     invalidTest<IOError>("[{"
-                                   "   \"port\": 53,"
-                                   "   \"address\": \"bad_address\""
-                                   "}]", "Bad address");
+                         "   \"port\": 53,"
+                         "   \"address\": \"bad_address\""
+                         "}]", "Bad address");
 }
 
 // Test fixture for installListenAddresses
@@ -143,12 +143,13 @@ TEST_F(InstallListenAddresses, valid) {
     // Try setting it back to nothing
     EXPECT_NO_THROW(installListenAddresses(AddressList(), store_, dnss_));
     checkAddresses(AddressList(), "No addresses");
-    // TODO: Once #338 is solved, try switching back to valid addresses
+    // Try switching back again
+    EXPECT_NO_THROW(installListenAddresses(valid_, store_, dnss_));
+    checkAddresses(valid_, "Valid addresses");
 }
 
 // Try if rollback works
-// TODO Enable after #338
-TEST_F(InstallListenAddresses, DISABLED_rollback) {
+TEST_F(InstallListenAddresses, rollback) {
     // Set some addresses
     EXPECT_NO_THROW(installListenAddresses(valid_, store_, dnss_));
     checkAddresses(valid_, "Before rollback");

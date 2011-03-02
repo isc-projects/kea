@@ -117,11 +117,10 @@ NSEC3::NSEC3(const string& nsec3_str) :
     memset(bitmap, 0, sizeof(bitmap));
     do { 
         string type;
-        int code;
         iss >> type;
         if (type.length() != 0) {
             try {
-                code = RRType(type).getCode();
+                const int code = RRType(type).getCode();
                 bitmap[code / 8] |= (0x80 >> (code % 8));
             } catch (...) {
                 isc_throw(InvalidRdataText, "Invalid RRtype in NSEC3");

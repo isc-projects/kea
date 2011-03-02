@@ -1,3 +1,42 @@
+  182.	[func]		jinmei
+	Support cppcheck for static code check on C++ code.  If cppcheck
+	is available, 'make cppcheck' on the top source directory will run
+	the checker and should cleanly complete with an exit code of 0
+	(at least with cppcheck 1.47).
+	Note: the suppression list isn't included in the final
+	distributions.  It should be created by hand or retrieved from
+	the git repository.
+	(Trac #613, git b973f67520682b63ef38b1451d309be9f4f4b218)
+
+  181.  [func]      feng
+	Add stop interface into dns server, so we can stop each running
+	server individually. With it, user can reconfigure her running server
+	with different ip address or port.
+	(Trac #388, git 6df94e2db856c1adc020f658cc77da5edc967555)
+
+  180.  [build]     jreed
+	Fix custom DESTDIR for make install. Patch from Jan Engelhardt.
+	(Trac #629, git 5ac67ede03892a5eacf42ce3ace1e4e376164c9f)
+
+bind10-devel-20110224 released on February 24, 2011
+
+  179.  [func]      vorner
+	It is possible to start and stop resolver and authoritative
+	server without restart of the whole system. Change of the
+	configuration (Boss/start_auth and Boss/start_resolver) is
+	enough.
+	(Trac #565, git 0ac0b4602fa30852b0d86cc3c0b4730deb1a58fe)
+
+  178.  [func]      jelte
+	Resolver now makes (limited) use of the cache
+	(Trac #491, git 8b41f77f0099ddc7ca7d34d39ad8c39bb1a8363c)
+
+  177.  [func]      stephen
+	The upstream fetch code in asiolink is now protocol agnostic to
+	allow for the addition of fallback to TCP if a fetch response
+	indicates truncation.
+	(Trac #554, git 9739cbce2eaffc7e80640db58a8513295cf684de)
+
   176.  [func]      zhang likun
 	src/lib/cache: Rename one interface: from lookupClosestRRset()
 	to lookupDeepestNS(), and remove one parameter of it.

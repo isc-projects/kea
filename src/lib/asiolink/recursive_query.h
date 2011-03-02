@@ -18,6 +18,7 @@
 #include <asiolink/dns_service.h>
 #include <asiolink/dns_server.h>
 #include <dns/buffer.h>
+#include <cache/resolver_cache.h>
 
 namespace asiolink {
 /// \brief The \c RecursiveQuery class provides a layer of abstraction around
@@ -107,6 +108,9 @@ private:
     int client_timeout_;
     int lookup_timeout_;
     unsigned retries_;
+    // Cache. TODO: I think we want this initialized in Resolver class,
+    // not here
+    isc::cache::ResolverCache cache_;
 };
 
 }      // namespace asiolink

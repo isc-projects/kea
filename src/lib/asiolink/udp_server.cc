@@ -12,25 +12,26 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>             // for some IPC/network system calls
 
 #include <boost/shared_array.hpp>
 
-// unistd is needed for asio.hpp with SunStudio
-#include <unistd.h>
-
-#include <asio.hpp>
+#include <config.h>
 
 #include <log/dummylog.h>
 
+#include <asio.hpp>
+#include <asiolink/dummy_io_cb.h>
 #include <asiolink/udp_endpoint.h>
+#include <asiolink/udp_server.h>
 #include <asiolink/udp_socket.h>
 
-#include <asiolink/udp_server.h>
+#include <dns/opcode.h>
 
 using namespace asio;
 using asio::ip::udp;
-using asio::ip::tcp;
 using isc::log::dlog;
 
 using namespace std;
@@ -54,8 +55,9 @@ struct UDPServer::Data {
      */
     Data(io_service& io_service, const ip::address& addr, const uint16_t port,
         SimpleCallback* checkin, DNSLookup* lookup, DNSAnswer* answer) :
-        io_(io_service), done_(false), checkin_callback_(checkin),
-        lookup_callback_(lookup), answer_callback_(answer)
+        io_(io_service), done_(false), stopped_by_hand_(false),
+        checkin_callback_(checkin),lookup_callback_(lookup),
+        answer_callback_(answer)
     {
         // We must use different instantiations for v4 and v6;
         // otherwise ASIO will bind to both
@@ -77,6 +79,7 @@ struct UDPServer::Data {
      */
     Data(const Data& other) :
         io_(other.io_), socket_(other.socket_), done_(false),
+        stopped_by_hand_(false),
         checkin_callback_(other.checkin_callback_),
         lookup_callback_(other.lookup_callback_),
         answer_callback_(other.answer_callback_)
@@ -140,6 +143,9 @@ struct UDPServer::Data {
     size_t bytes_;
     bool done_;
 
+    //whether user explicitly stop the server
+    bool stopped_by_hand_;
+
     // Callback functions provided by the caller
     const SimpleCallback* checkin_callback_;
     const DNSLookup* lookup_callback_;
@@ -166,6 +172,12 @@ UDPServer::operator()(error_code ec, size_t length) {
     /// Because the coroutine reeentry block is implemented as
     /// a switch statement, inline variable declarations are not
     /// permitted.  Certain variables used below can be declared here.
+
+    /// if user stopped the server, we won't enter the coroutine body
+    /// just return
+    if (data_->stopped_by_hand_) {
+        return;
+    }
 
     CORO_REENTER (this) {
         do {
@@ -206,7 +218,16 @@ UDPServer::operator()(error_code ec, size_t length) {
         // that would quickly generate an IOMessage object without
         // all these calls to "new".)
         data_->peer_.reset(new UDPEndpoint(*data_->sender_));
-        data_->iosock_.reset(new UDPSocket(*data_->socket_));
+
+        // The UDP socket class has been extended with asynchronous functions
+        // and takes as a template parameter a completion callback class.  As
+        // UDPServer does not use these extended functions (only those defined
+        // in the IOSocket base class) - but needs a UDPSocket to get hold of
+        // the underlying Boost UDP socket - DummyIOCallback is used.  This
+        // provides the appropriate operator() but is otherwise functionless.
+        data_->iosock_.reset(
+            new UDPSocket<DummyIOCallback>(*data_->socket_));
+
         data_->io_message_.reset(new IOMessage(data_->data_.get(),
             data_->bytes_, *data_->iosock_, *data_->peer_));
 
@@ -265,6 +286,16 @@ void
 UDPServer::asyncLookup() {
     (*data_->lookup_callback_)(*data_->io_message_,
         data_->query_message_, data_->answer_message_, data_->respbuf_, this);
+}
+
+/// Stop the UDPServer
+void
+UDPServer::stop() {
+    //server should not be stopped twice
+    if (data_->stopped_by_hand_)
+        return;
+    data_->stopped_by_hand_ = true;
+    data_->socket_->close();
 }
 
 /// Post this coroutine on the ASIO service queue so that it will

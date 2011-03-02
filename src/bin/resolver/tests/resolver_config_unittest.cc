@@ -157,8 +157,8 @@ TEST_F(ResolverConfig, listenAddresses) {
     isc::testutils::portconfig::listenAddresses(server);
 }
 
-// Switch addresses
-TEST_F(ResolverConfig, DISABLED_listenAddressConfig) {
+// Try setting some addresses and a rollback
+TEST_F(ResolverConfig, listenAddressConfig) {
     isc::testutils::portconfig::listenAddressConfig(server);
 }
 
