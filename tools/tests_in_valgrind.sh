@@ -22,7 +22,7 @@
 make
 
 if [ $? = 2 ] ; then
-    echo "Did you run configure? Do you call me from the top bind10 directory?" >&2
+    echo "Did you run configure? Or maybe you're running the script from the tools directory? (you need to run it from the top bind10 build directory)"
     exit 1
 fi
 
@@ -70,6 +70,6 @@ if test -n "$FAILED"; then
 fi
 
 if ! $FOUND_ANY ; then
-    echo "No test was found. It is possible you configured witouth --with-gtest or you run it from wrong directory" >&2
+    echo "No test was found. It is possible you configured without --with-gtest or you run it from wrong directory" >&2
     exit 1
 fi
