@@ -37,9 +37,6 @@ libasiolink_la_SOURCES += udp_socket.h
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
 libasiolink_la_CXXFLAGS = $(AM_CXXFLAGS)
-if USE_GXX
-#libasiolink_la_CXXFLAGS += -Wno-unused-parameter
-endif
 if USE_CLANGPP
 # Same for clang++, but we need to turn off -Werror completely.
 libasiolink_la_CXXFLAGS += -Wno-error
