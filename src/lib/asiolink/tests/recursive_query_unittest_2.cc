@@ -14,8 +14,9 @@
 
 #include <algorithm>
 #include <cstdlib>
-#include <string>
+#include <iomanip>
 #include <iostream>
+#include <string>
 
 #include <gtest/gtest.h>
 #include <boost/bind.hpp>
@@ -30,6 +31,10 @@
 #include <dns/opcode.h>
 #include <dns/name.h>
 #include <dns/rcode.h>
+#include <dns/rrtype.h>
+#include <dns/rrset.h>
+#include <dns/rrttl.h>
+#include <dns/rdata.h>
 
 #include <asiolink/asiolink_utilities.h>
 #include <asiolink/dns_service.h>
@@ -37,43 +42,51 @@
 #include <asiolink/io_endpoint.h>
 #include <asiolink/io_fetch.h>
 #include <asiolink/io_service.h>
+#include <asiolink/recursive_query.h>
+#include <resolve/resolver_interface.h>
 
 using namespace asio;
-using namespace isc::dns;
 using namespace asio::ip;
+using namespace isc::dns;
+using namespace isc::dns::rdata;
+using namespace isc::resolve;
 using namespace std;
 
 /// RecursiveQuery Test - 2
 ///
 /// The second part of the RecursiveQuery unit tests, this attempts to get the
 /// RecursiveQuery object to follow a set of referrals for "www.example.org" to
-/// and to invoke TCP fallback on one of the queries.  In particular, we
-/// expect that the test will do the following in an attempt to resolve
+/// and to invoke TCP fallback on one of the queries.  In particular, we expect
+/// that the test will do the following in an attempt to resolve
 /// www.example.org:
 ///
-/// - Send a question over UDP to the root servers - get referral to "org".
+/// - Send question over UDP to "root" - get referral to "org".
 /// - Send question over UDP to "org" - get referral to "example.org" with TC bit set.
 /// - Send question over TCP to "org" - get referral to "example.org".
 /// - Send question over UDP to "example.org" - get response for www.example.org.
 ///
-/// The order of queries is partly to test that after there is a fallover to TCP,
-/// queries revert to UDP.
+/// (The order of queries is set in this way in order to also test that after a
+/// failover to TCP, queries revert to UDP).
 ///
 /// By using the "test_server_" element of RecursiveQuery, all queries are
-/// directed to one or other of the "servers" in the RecursiveQueryTest2 class.
+/// directed to one or other of the "servers" in the RecursiveQueryTest2 class,
+/// regardless of the glue returned in referrals.
 
 namespace asiolink {
 
-const std::string TEST_ADDRESS = "127.0.0.1";
-const uint16_t TEST_PORT = 5301;
-const uint16_t DNSSERVICE_PORT = 5302;
+const std::string TEST_ADDRESS = "127.0.0.1";   ///< Servers are on this address
+const uint16_t TEST_PORT = 5301;                ///< ... and this port
+const size_t BUFFER_SIZE = 1024;                ///< For all buffers
+const char* WWW_EXAMPLE_ORG = "192.0.2.254";    ///< Answer to question
 
-const asio::ip::address TEST_HOST(asio::ip::address::from_string(TEST_ADDRESS));
+// As the test is fairly long and complex, debugging "print" statements have
+// been left in although they are disabled.  Set the following to "true" to
+// enable them.
 
+const bool DEBUG_PRINT = false;
 
-/// \brief Test fixture for the asiolink::IOFetch.
-class RecursiveQueryTest2 : public virtual ::testing::Test,
-                            public virtual IOFetch::Callback
+/// \brief Test fixture for the RecursiveQuery Test
+class RecursiveQueryTest2 : public virtual ::testing::Test
 {
 public:
 
@@ -90,10 +103,11 @@ public:
     };
 
     // Common stuff
+    bool            debug_;                     ///< Set true for debug print
     IOService       service_;                   ///< Service to run everything
     DNSService      dns_service_;               ///< Resolver is part of "server"
-    Question        question_;                  ///< What to ask
-    QueryStatus     last_;                      ///< Last state
+    QuestionPtr     question_;                  ///< What to ask
+    QueryStatus     last_;                      ///< What was the last state
     QueryStatus     expected_;                  ///< Expected next state
     OutputBufferPtr question_buffer_;           ///< Question we expect to receive
 
@@ -101,42 +115,41 @@ public:
     size_t          tcp_cumulative_;            ///< Cumulative TCP data received
     tcp::endpoint   tcp_endpoint_;              ///< Endpoint for TCP receives
     size_t          tcp_length_;                ///< Expected length value
-    uint8_t         tcp_receive_buffer_[512];   ///< Receive buffer for TCP I/O
+    uint8_t         tcp_receive_buffer_[BUFFER_SIZE];   ///< Receive buffer for TCP I/O
     OutputBufferPtr tcp_send_buffer_;           ///< Send buffer for TCP I/O
     tcp::socket     tcp_socket_;                ///< Socket used by TCP server
 
     /// Data for UDP
-    udp::endpoint   udp_endpoint_;              ///< Endpoint for UDP receives
+    udp::endpoint   udp_remote_;                ///< Endpoint for UDP receives
     size_t          udp_length_;                ///< Expected length value
-    uint8_t         udp_receive_buffer_[512];   ///< Receive buffer for UDP I/O
+    uint8_t         udp_receive_buffer_[BUFFER_SIZE];   ///< Receive buffer for UDP I/O
     OutputBufferPtr udp_send_buffer_;           ///< Send buffer for UDP I/O
     udp::socket     udp_socket_;                ///< Socket used by UDP server
 
 
     /// \brief Constructor
     RecursiveQueryTest2() :
+        debug_(DEBUG_PRINT),
         service_(),
-        dns_service_(service_.get_io_service(), DNSSERVICE_PORT, true, false,
-                     NULL, NULL, NULL),
-        question_(Name("www.example.org"), RRClass::IN(), RRType::A()),
+        dns_service_(service_, NULL, NULL, NULL),
+        question_(new Question(Name("www.example.org"), RRClass::IN(), RRType::A())),
         last_(NONE),
         expected_(NONE),
-        question_buffer_(),
+        question_buffer_(new OutputBuffer(BUFFER_SIZE)),
         tcp_cumulative_(0),
-        tcp_endpoint_(TEST_HOST, TEST_PORT),
+        tcp_endpoint_(asio::ip::address::from_string(TEST_ADDRESS), TEST_PORT),
         tcp_length_(0),
         tcp_receive_buffer_(),
-        tcp_send_buffer_(),
+        tcp_send_buffer_(new OutputBuffer(BUFFER_SIZE)),
         tcp_socket_(service_.get_io_service()),
-        udp_endpoint_(),
+        udp_remote_(),
         udp_length_(0),
         udp_receive_buffer_(),
-        udp_send_buffer_(),
+        udp_send_buffer_(new OutputBuffer(BUFFER_SIZE)),
         udp_socket_(service_.get_io_service(), udp::v4())
     {
 
     }
-
 
     /// \brief Set Common Message Bits
     ///
@@ -150,7 +163,7 @@ public:
         msg.setOpcode(Opcode::QUERY());
         msg.setHeaderFlag(Message::HEADERFLAG_AA);
         msg.setRcode(Rcode::NOERROR());
-        msg.addQuestion(question_);
+        msg.addQuestion(*question_);
     }
 
     /// \brief Set Referral to "org"
@@ -160,21 +173,24 @@ public:
     ///
     /// \param msg Message to update with referral information.
     void setReferralOrg(isc::dns::Message& msg) {
+        if (debug_) {
+            cout << "setReferralOrg(): creating referral to .org nameservers" << endl;
+        }
 
         // Do a referral to org.  We'll define all NS records as "in-zone"
         // nameservers (and so supply glue) to avoid the possibility of
         // the resolver doing another lookup.
-        RRSetPtr org_ns(new RRSet(Name("org."), RRClass::IN(), RRType::NS(), RRTTL(300)));
-        org_ns->addRdata(NS("ns1.org."));
-        org_ns->addRdata(NS("ns2.org."));
+        RRsetPtr org_ns(new RRset(Name("org."), RRClass::IN(), RRType::NS(), RRTTL(300)));
+        org_ns->addRdata(createRdata(RRType::NS(), RRClass::IN(), "ns1.org."));
+        org_ns->addRdata(createRdata(RRType::NS(), RRClass::IN(), "ns2.org."));
         msg.addRRset(Message::SECTION_AUTHORITY, org_ns);
 
-        RRsetPtr org_ns1(new RRSet(Name("ns1.org."), RRClass::IN(), RRType::A(), RRTTL(300)));
-        org_ns1->addRdata(A("192.0.2.1"));
+        RRsetPtr org_ns1(new RRset(Name("ns1.org."), RRClass::IN(), RRType::A(), RRTTL(300)));
+        org_ns1->addRdata(createRdata(RRType::A(), RRClass::IN(), "192.0.2.1"));
         msg.addRRset(Message::SECTION_ADDITIONAL, org_ns1);
 
-        RRsetPtr org_ns1(new RRSet(Name("ns2.org."), RRClass::IN(), RRType::A(), RRTTL(300)));
-        org_ns2->addRdata(A("192.0.2.2"));
+        RRsetPtr org_ns2(new RRset(Name("ns2.org."), RRClass::IN(), RRType::A(), RRTTL(300)));
+        org_ns2->addRdata(createRdata(RRType::A(), RRClass::IN(), "192.0.2.2"));
         msg.addRRset(Message::SECTION_ADDITIONAL, org_ns2);
     }
 
@@ -185,21 +201,24 @@ public:
     ///
     /// \param msg Message to update with referral information.
     void setReferralExampleOrg(isc::dns::Message& msg) {
+        if (debug_) {
+            cout << "setReferralExampleOrg(): creating referral to example.org nameservers" << endl;
+        }
 
         // Do a referral to example.org.  As before, we'll define all NS
         // records as "in-zone" nameservers (and so supply glue) to avoid
         // the possibility of the resolver doing another lookup.
-        RRSetPtr example_org_ns(new RRSet(Name("example.org."), RRClass::IN(), RRType::NS(), RRTTL(300)));
-        example_org_ns->addRdata(NS("ns1.example.org."));
-        example_org_ns->addRdata(NS("ns2.example.org."));
+        RRsetPtr example_org_ns(new RRset(Name("example.org."), RRClass::IN(), RRType::NS(), RRTTL(300)));
+        example_org_ns->addRdata(createRdata(RRType::NS(), RRClass::IN(), "ns1.example.org."));
+        example_org_ns->addRdata(createRdata(RRType::NS(), RRClass::IN(), "ns2.example.org."));
         msg.addRRset(Message::SECTION_AUTHORITY, example_org_ns);
 
-        RRsetPtr example_org_ns1(new RRSet(Name("ns1.example.org."), RRClass::IN(), RRType::A(), RRTTL(300)));
-        example_org_ns1->addRdata(A("192.0.2.11"));
+        RRsetPtr example_org_ns1(new RRset(Name("ns1.example.org."), RRClass::IN(), RRType::A(), RRTTL(300)));
+        example_org_ns1->addRdata(createRdata(RRType::A(), RRClass::IN(), "192.0.2.11"));
         msg.addRRset(Message::SECTION_ADDITIONAL, example_org_ns1);
 
-        RRsetPtr org_ns1(new RRSet(Name("ns2.example.org."), RRClass::IN(), RRType::A(), RRTTL(300)));
-        example_org_ns2->addRdata(A("192.0.2.12"));
+        RRsetPtr example_org_ns2(new RRset(Name("ns2.example.org."), RRClass::IN(), RRType::A(), RRTTL(300)));
+        example_org_ns2->addRdata(createRdata(RRType::A(), RRClass::IN(), "192.0.2.21"));
         msg.addRRset(Message::SECTION_ADDITIONAL, example_org_ns2);
     }
 
@@ -210,11 +229,14 @@ public:
     ///
     /// \param msg Message to update with referral information.
     void setAnswerWwwExampleOrg(isc::dns::Message& msg) {
+        if (debug_) {
+            cout << "setAnswerWwwExampleOrg(): creating answer for www.example.org" << endl;
+        }
 
         // Give a response for www.example.org.
-        RRsetPtr www_example_org_a(new RRSet(Name("www.example.org."), RRClass::IN(), RRType::NS(), RRTTL(300)));
-        www_example_org_a->addRdata(A("192.0.2.21"));
-        msg.addRRset(Message::SECTION_ANSWER, example_org_ns);
+        RRsetPtr www_example_org_a(new RRset(Name("www.example.org."), RRClass::IN(), RRType::A(), RRTTL(300)));
+        www_example_org_a->addRdata(createRdata(RRType::A(), RRClass::IN(), WWW_EXAMPLE_ORG));
+        msg.addRRset(Message::SECTION_ANSWER, www_example_org_a);
 
         // ... and add the Authority and Additional sections. (These are the
         // same as in the referral to example.org from the .org nameserver.)
@@ -227,12 +249,15 @@ public:
     /// Object.  It formats an answer and sends it, with the UdpSendHandler
     /// method being specified as the completion handler.
     ///
-    /// \param remote Endpoint to which to send the answer
-    /// \param socket Socket to use to send the answer
     /// \param ec ASIO error code, completion code of asynchronous I/O issued
     ///        by the "server" to receive data.
     /// \param length Amount of data received.
     void udpReceiveHandler(error_code ec = error_code(), size_t length = 0) {
+        if (debug_) {
+            cout << "udpReceiveHandler(): error = " << ec.value() <<
+                    ", length = " << length << ", last state = " << last_ <<
+                    ", expected state = " << expected_ << endl;
+        }
 
         // Expected state should be one greater than the last state.
         EXPECT_EQ(static_cast<int>(expected_), static_cast<int>(last_) + 1);
@@ -244,11 +269,12 @@ public:
         uint16_t qid = readUint16(udp_receive_buffer_);
         udp_receive_buffer_[0] = udp_receive_buffer_[1] = 0;
 
-        // Check that length of the received data and the expected data are
-        // identical, then check that the data is identical as well.
-        EXPECT_EQ(question_buff_->getLength(), length);
-        EXPECT_TRUE(equal(udp_receive_buffer_, (udp_receive_buffer_ + length - 1),
-                    static_cast<const uint8_t*>(question_buff_->getData())));
+        // Check that question we received is what was expected.
+        Message received_message(Message::PARSE);
+        InputBuffer received_buffer(udp_receive_buffer_, length);
+        received_message.fromWire(received_buffer);
+        Question received_question = **(received_message.beginQuestion());
+        EXPECT_TRUE(received_question == *question_);
 
         // The message returned depends on what state we are in.  Set up
         // common stuff first: bits not mentioned are set to 0.
@@ -268,6 +294,9 @@ public:
             // Return a referral to example.org.  We explicitly set the TC bit to
             // force a repeat query to the .org nameservers over TCP.
             setReferralExampleOrg(msg);
+            if (debug_) {
+                cout << "udpReceiveHandler(): setting TC bit" << endl;
+            }
             msg.setHeaderFlag(Message::HEADERFLAG_TC);
             expected_ = TCP_ORG;
             break;
@@ -283,17 +312,19 @@ public:
         }
 
         // Convert to wire format
+        udp_send_buffer_->clear();
         MessageRenderer renderer(*udp_send_buffer_);
         msg.toWire(renderer);
 
         // Return a message back to the IOFetch object.
-        udp_socket_.send_to(asio::buffer(udp_send_buffer_.getData(),
-                                         udp_send_buffer_.getLength()),
-                            boost::bind(&RecursiveQueryTest2::UdpSendHandler,
-                                        this, _1, _2));
+        udp_socket_.async_send_to(asio::buffer(udp_send_buffer_->getData(),
+                                               udp_send_buffer_->getLength()),
+                                  udp_remote_,
+                                  boost::bind(&RecursiveQueryTest2::udpSendHandler,
+                                              this, _1, _2));
 
         // Set the expected length for the send handler.
-        udp_length_ = udp_send_buffer_.getLength();
+        udp_length_ = udp_send_buffer_->getLength();
     }
 
     /// \brief UDP Send Handler
@@ -302,6 +333,10 @@ public:
     /// being sent to the RecursiveQuery) has completed, this re-issues
     /// a read call.
     void udpSendHandler(error_code ec = error_code(), size_t length = 0) {
+        if (debug_) {
+            cout << "udpSendHandler(): error = " << ec.value() <<
+                    ", length = " << length << endl;
+        }
 
         // Check send was OK
         EXPECT_EQ(0, ec.value());
@@ -310,8 +345,8 @@ public:
         // Reissue the receive.
         udp_socket_.async_receive_from(
             asio::buffer(udp_receive_buffer_, sizeof(udp_receive_buffer_)),
-                udp_endpoint_
-                boost::bind(&recursiveQuery2::udpReceiveHandler, this, _1, _2));
+            udp_remote_,
+            boost::bind(&RecursiveQueryTest2::udpReceiveHandler, this, _1, _2));
     }
 
     /// \brief Completion Handler for Accepting TCP Data
@@ -321,8 +356,12 @@ public:
     ///
     /// \param socket Socket on which data will be received
     /// \param ec Boost error code, value should be zero.
-    void tcpAcceptHandler(error_code ec = error_code(), size_t length = 0)
-    {
+    void tcpAcceptHandler(error_code ec = error_code(), size_t length = 0) {
+        if (debug_) {
+            cout << "tcpAcceptHandler(): error = " << ec.value() <<
+                    ", length = " << length << endl;
+        }
+
         // Expect that the accept completed without a problem.
         EXPECT_EQ(0, ec.value());
 
@@ -331,7 +370,7 @@ public:
         tcp_cumulative_ = 0;
         tcp_socket_.async_receive(
             asio::buffer(tcp_receive_buffer_, sizeof(tcp_receive_buffer_)),
-            boost::bind(&recursiveQuery2::tcpReceiveHandler, this, _1, _2));
+            boost::bind(&RecursiveQueryTest2::tcpReceiveHandler, this, _1, _2));
     }
 
     /// \brief Completion Handler for Receiving TCP Data
@@ -343,8 +382,13 @@ public:
     /// \param ec ASIO error code, completion code of asynchronous I/O issued
     ///        by the "server" to receive data.
     /// \param length Amount of data received.
-    void tcpReceiveHandler(error_code ec = error_code(), size_t length = 0)
-    {
+    void tcpReceiveHandler(error_code ec = error_code(), size_t length = 0) {
+        if (debug_) {
+            cout << "tcpReceiveHandler(): error = " << ec.value() <<
+                    ", length = " << length <<
+                    ", cumulative = " << tcp_cumulative_ << endl;
+        }
+
         // Expect that the receive completed without a problem.
         EXPECT_EQ(0, ec.value());
 
@@ -358,12 +402,16 @@ public:
         }
 
         if (!complete) {
+            if (debug_) {
+                cout << "tcpReceiveHandler(): read not complete, " <<
+                        "issuing another read" << endl;
+            }
 
             // Not complete yet, issue another read.
             tcp_socket_.async_receive(
                 asio::buffer(tcp_receive_buffer_ + tcp_cumulative_,
                              sizeof(tcp_receive_buffer_) - tcp_cumulative_),
-                boost::bind(&recursiveQuery2::tcpReceiveHandler, this, _1, _2));
+                boost::bind(&RecursiveQueryTest2::tcpReceiveHandler, this, _1, _2));
             return;
         }
 
@@ -372,42 +420,47 @@ public:
         EXPECT_EQ(static_cast<int>(expected_), static_cast<int>(last_) + 1);
         last_ = expected_;
 
-        // Check that length of the received data and the expected data are
-        // identical (taking into account the two-byte count), then check that
-        // the data is identical as well (after zeroing the QID).
-        EXPECT_EQ(question_buff_->getLength() + 2, tcp_cumulative_);
-        uint16_t qid = readUint16(&udp_receive_buffer_[2]);
-        tcp_receive_buffer_[2] = tcp_receive_buffer_[3] = 0;
-        EXPECT_TRUE(equal((tcp_receive_buffer_ + 2),
-                          (tcp_receive_buffer_ + tcp_cumulative_),
-                           static_cast<const uint8_t*>(question_buff_->getData())));
-
+        // Check that question we received is what was expected.  Note that we
+        // have to ignore the two-byte header in order to parse the message.
+        Message received_message(Message::PARSE);
+        InputBuffer received_buffer(tcp_receive_buffer_ + 2, tcp_cumulative_ - 2);
+        received_message.fromWire(received_buffer);
+        Question received_question = **(received_message.beginQuestion());
+        EXPECT_TRUE(received_question == *question_);
 
         // Return a message back.  This is a referral to example.org, which
-        // should result in another query over UDP.
+        // should result in another query over UDP.  Note the setting of the
+        // QID in the returned message with what was in the received message.
         Message msg(Message::RENDER);
-        setCommonMessage(msg, qid);
+        setCommonMessage(msg, readUint16(tcp_receive_buffer_));
         setReferralExampleOrg(msg);
 
         // Convert to wire format
+        tcp_send_buffer_->clear();
         MessageRenderer renderer(*tcp_send_buffer_);
         msg.toWire(renderer);
-        
+
         // Expected next state (when checked) is the UDP query to example.org.
+        // Also, take this opportunity to clear the accumulated read count in
+        // readiness for the next read. (If any - at present, there is only
+        // one read in the test,, although extensions to this test suite could
+        // change that.)
         expected_ = UDP_EXAMPLE_ORG;
-        
+
         // We'll write the message in two parts, the count and the message
-        // itself.  When specifying the send handler, the expected size of the
-        // data written is passed as the first parameter.
+        // itself. This saves having to prepend the count onto the start of a
+        // buffer.  When specifying the send handler, the expected size of the
+        // data written is passed as the first parameter so that the handler
+        // can check it.
         uint8_t count[2];
         writeUint16(tcp_send_buffer_->getLength(), count);
-        socket->async_send(asio::buffer(count, 2),
-                           boost::bind(&IOFetchTest::tcpSendHandler, this,
-                                       2, _1, _2));
-        socket->async_send(asio::buffer(tcp_send_buffer_->getData(),
-                                        tcp_send_buffer_->getLength()),
-                           boost::bind(&RecursiveQuery2::tcpSendHandler, this,
-                                       sizeof(TEST_DATA), _1, _2));
+        tcp_socket_.async_send(asio::buffer(count, 2),
+                               boost::bind(&RecursiveQueryTest2::tcpSendHandler, this,
+                                           2, _1, _2));
+        tcp_socket_.async_send(asio::buffer(tcp_send_buffer_->getData(),
+                                            tcp_send_buffer_->getLength()),
+                               boost::bind(&RecursiveQueryTest2::tcpSendHandler, this,
+                                           tcp_send_buffer_->getLength(), _1, _2));
     }
 
     /// \brief Completion Handler for Sending TCP data
@@ -417,14 +470,19 @@ public:
     /// be asynchronous because control needs to return to the caller in order
     /// for the IOService "run()" method to be called to run the handlers.)
     ///
-    /// \param expected Number of bytes that were expected to have been sent.
+    /// \param expected_length Number of bytes that were expected to have been sent.
     /// \param ec Boost error code, value should be zero.
     /// \param length Number of bytes sent.
-    void tcpSendHandler(size_t expected = 0, error_code ec = error_code(),
+    void tcpSendHandler(size_t expected_length = 0, error_code ec = error_code(),
                         size_t length = 0)
     {
+        if (debug_) {
+            cout << "tcpSendHandler(): error = " << ec.value() <<
+                    ", length = " << length <<
+                    ", (expected length = " << expected_length << ")" << endl;
+        }
         EXPECT_EQ(0, ec.value());       // Expect no error
-        EXPECT_EQ(expected, length);    // And that amount sent is as expected
+        EXPECT_EQ(expected_length, length);    // And that amount sent is as expected
     }
 
 };
@@ -432,10 +490,11 @@ public:
 /// \brief Resolver Callback Object
 ///
 /// Holds the success and failure callback methods for the resolver
-class ResolverCallback : public isc::resolve::resolverInterface::Callback {
+class ResolverCallback : public isc::resolve::ResolverInterface::Callback {
 public:
     /// \brief Constructor
-    ResolverCallback(IOService& service) : service_(service)
+    ResolverCallback(IOService& service) :
+        service_(service), run_(false), status_(false), debug_(DEBUG_PRINT)
     {}
 
     /// \brief Destructor
@@ -448,120 +507,119 @@ public:
     ///
     /// \param response Answer to the question.
     virtual void success(const isc::dns::MessagePtr response) {
+        if (debug_) {
+            cout << "ResolverCallback::success(): answer received" << endl;
+        }
+
+        // There should be one RR each  in the question and answer sections, and
+        // two RRs in each of the the authority and additional sections.
+        EXPECT_EQ(1, response->getRRCount(Message::SECTION_QUESTION));
+        EXPECT_EQ(1, response->getRRCount(Message::SECTION_ANSWER));
+        EXPECT_EQ(2, response->getRRCount(Message::SECTION_AUTHORITY));
+        EXPECT_EQ(2, response->getRRCount(Message::SECTION_ADDITIONAL));
+
+        // Check the answer - that the RRset is there...
+        EXPECT_TRUE(response->hasRRset(Message::SECTION_ANSWER,
+                                       RRsetPtr(new RRset(Name("www.example.org."),
+                                                RRClass::IN(),
+                                                RRType::A(),
+                                                RRTTL(300)))));
+        const RRsetIterator rrset_i = response->beginSection(Message::SECTION_ANSWER);
+
+        // ... get iterator into the Rdata of this RRset and point to first
+        // element...
+        const RdataIteratorPtr rdata_i = (*rrset_i)->getRdataIterator();
+        rdata_i->first();
+
+        // ... and check it is what we expect.
+        EXPECT_EQ(string(WWW_EXAMPLE_ORG), rdata_i->getCurrent().toText());
+
+        // Flag completion
+        run_ = true;
+        status_ = true;
+
         service_.stop();    // Cause run() to exit.
     }
 
     /// \brief Resolver Failure Completion
     ///
-    /// Called if the resolver detects that the call has failed.
+    /// Called if the resolver detects that the resolution has failed.
     virtual void failure() {
-        FAIL() << "Resolver reported failure on completion";
+        if (debug_) {
+            cout << "ResolverCallback::success(): resolution failure" << endl;
+        }
+        FAIL() << "Resolver reported completion failure";
+
+        // Flag completion
+        run_ = true;
+        status_ = false;
+
         service_.stop();    // Cause run() to exit.
+    }
+
+    /// \brief Return status of "run" flag
+    bool getRun() const {
+        return (run_);
+    }
+
+    /// \brief Return "status" flag
+    bool getStatus() const {
+        return (status_);
     }
 
 private:
     IOService&      service_;       ///< Service handling the run queue
+    bool            run_;           ///< Set true when completion handler run
+    bool            status_;        ///< Set true for success, false on error
+    bool            debug_;         ///< Debug flag
 };
 
 // Sets up the UDP and TCP "servers", then tries a resolution.
 
 TEST_F(RecursiveQueryTest2, Resolve) {
 
-    // Set up the UDP server and issue the first read.
+    // Set up the UDP server and issue the first read.  The endpoint from which
+    // the query is sent is put in udp_endpoint_ when the read completes, which
+    // is referenced in the callback as the place to which the response is sent.
     udp_socket_.set_option(socket_base::reuse_address(true));
-    udp_socket_.bind(udp::endpoint(TEST_HOST, TEST_PORT));
-    udp_socket.async_receive_from(asio::buffer(server_buff_, sizeof(server_buff_)),
-        remote,
-        boost::bind(&RecursiveQuery2::udpReceiveHandler, this, &remote, &socket,
-                    _1, _2));
-    service_.get_io_service().post(udp_fetch_);
-    service_.run();
+    udp_socket_.bind(udp::endpoint(address::from_string(TEST_ADDRESS), TEST_PORT));
+    udp_socket_.async_receive_from(asio::buffer(udp_receive_buffer_,
+                                                sizeof(udp_receive_buffer_)),
+                                   udp_remote_,
+                                   boost::bind(&RecursiveQueryTest2::udpReceiveHandler,
+                                               this, _1, _2));
 
     // Set up the TCP server and issue the accept.  Acceptance will cause the
     // read to be issued.
     tcp::acceptor acceptor(service_.get_io_service(),
                            tcp::endpoint(tcp::v4(), TEST_PORT));
-    acceptor.async_accept(socket,
-        boost::bind(&RecursiveQuery2::tcpAcceptHandler, this, _1));
+    acceptor.async_accept(tcp_socket_,
+                          boost::bind(&RecursiveQueryTest2::tcpAcceptHandler,
+                                      this, _1, 0));
 
     // Set up the RecursiveQuery object.
     std::vector<std::pair<std::string, uint16_t> > upstream;         // Empty
     std::vector<std::pair<std::string, uint16_t> > upstream_root;    // Empty
     RecursiveQuery query(dns_service_, upstream, upstream_root);
+    query.setTestServer(TEST_ADDRESS, TEST_PORT);
 
-    std::pair<std::string, uint16_t> test_server(TEST_ADDRESS, TEST_PORT);
-    query.setTestServer(test_server);
-
-    /// Set up callback for the resolver
+    // Set up callback for the tor eceive notification that the query has
+    // completed.
     ResolverInterface::CallbackPtr
-        resolver_callback(new(ResolverCallback(service_)));
+        resolver_callback(new ResolverCallback(service_));
 
-
-
-
-    socket.close();
-
-    EXPECT_TRUE(run_);;
-}
-    protocol_ = IOFetch::TCP;
-    expected_ = IOFetch::SUCCESS;
-
-    // Socket into which the connection will be accepted
-    tcp::socket socket(service_.get_io_service());
-
-    // Acceptor object - called when the connection is made, the handler will
-    // initiate a read on the socket.
-    tcp::acceptor acceptor(service_.get_io_service(),
-                           tcp::endpoint(tcp::v4(), TEST_PORT));
-    acceptor.async_accept(socket,
-        boost::bind(&IOFetchTest::tcpAcceptHandler, this, &socket, _1));
-
-    // Post the TCP fetch object to send the query and receive the response.
-    service_.get_io_service().post(tcp_fetch_);
-
-    // ... and execute all the callbacks.  This exits when the fetch completes.
+    // Kick off the resolution process.  We expect the first question to go to
+    // "root".
+    expected_ = UDP_ROOT;
+    query.resolve(question_, resolver_callback);
     service_.run();
-    EXPECT_TRUE(run_);  // Make sure the callback did execute
 
-    socket.close();
-
-
-// Do the same tests for TCP transport
-
-TEST_F(IOFetchTest, TcpStop) {
-    stopTest(IOFetch::TCP, tcp_fetch_);
-}
-
-TEST_F(IOFetchTest, TcpPrematureStop) {
-    prematureStopTest(IOFetch::TCP, tcp_fetch_);
-}
-
-TEST_F(IOFetchTest, TcpTimeout) {
-    timeoutTest(IOFetch::TCP, tcp_fetch_);
-}
-
-TEST_F(IOFetchTest, TcpSendReceive) {
-    protocol_ = IOFetch::TCP;
-    expected_ = IOFetch::SUCCESS;
-
-    // Socket into which the connection will be accepted
-    tcp::socket socket(service_.get_io_service());
-
-    // Acceptor object - called when the connection is made, the handler will
-    // initiate a read on the socket.
-    tcp::acceptor acceptor(service_.get_io_service(),
-                           tcp::endpoint(tcp::v4(), TEST_PORT));
-    acceptor.async_accept(socket,
-        boost::bind(&IOFetchTest::tcpAcceptHandler, this, &socket, _1));
-
-    // Post the TCP fetch object to send the query and receive the response.
-    service_.get_io_service().post(tcp_fetch_);
-
-    // ... and execute all the callbacks.  This exits when the fetch completes.
-    service_.run();
-    EXPECT_TRUE(run_);  // Make sure the callback did execute
-
-    socket.close();
+    // Check what ran. (We have to cast the callback to ResolverCallback as we
+    // lost the information on the derived class when we used a
+    // ResolverInterface::CallbackPtr to store a pointer to it.)
+    ResolverCallback* rc = static_cast<ResolverCallback*>(resolver_callback.get());
+    EXPECT_TRUE(rc->getRun());
+    EXPECT_TRUE(rc->getStatus());
 }
 
 } // namespace asiolink
