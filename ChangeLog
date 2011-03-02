@@ -2,7 +2,7 @@
     src/bin/xfrout: Enable parallel sessions between xfrout server and
 	muti-Auth. The session needs to be created only on the first time
 	or if an error occur.
-	(Trac #419, git TBD)
+	(Trac #419, git 1d60afb59e9606f312caef352ecb2fe488c4e751)
 
   182.	[func]		jinmei
 	Support cppcheck for static code check on C++ code.  If cppcheck
