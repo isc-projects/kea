@@ -14,6 +14,9 @@
 
 #include <resolve/resolve.h>
 
+#include <dns/message.h>
+#include <dns/opcode.h>
+
 using namespace isc::dns;
 
 namespace {
@@ -42,6 +45,23 @@ makeErrorMessage(MessagePtr answer_message,
     answer_message->clearSection(Message::SECTION_ADDITIONAL);
 
     answer_message->setRcode(error_code);
+}
+
+void initResponseMessage(const isc::dns::Message& query_message,
+                         isc::dns::Message& response_message)
+{
+    response_message.setOpcode(query_message.getOpcode());
+    response_message.setQid(query_message.getQid());
+    assert(response_message.getRRCount(Message::SECTION_QUESTION) == 0);
+    response_message.appendSection(Message::SECTION_QUESTION,
+        query_message);
+}
+
+void initResponseMessage(const isc::dns::Question& question,
+                         isc::dns::Message& response_message)
+{
+    response_message.setOpcode(isc::dns::Opcode::QUERY());
+    response_message.addQuestion(question);
 }
 
 void copyResponseMessage(const Message& source, MessagePtr target) {

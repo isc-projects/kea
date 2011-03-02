@@ -201,7 +201,7 @@ MockZone::find(const Name& name, const RRType& type,
         // If not found but we have a target, fill it with all RRsets here
         if (!found_domain->second.empty() && target != NULL) {
             for (found_rrset = found_domain->second.begin();
-                 found_rrset != found_domain->second.end(); found_rrset++) {
+                 found_rrset != found_domain->second.end(); ++found_rrset) {
                 // Insert RRs under the domain name into target
                 target->addRRset(
                     boost::const_pointer_cast<RRset>(found_rrset->second));

@@ -14,18 +14,18 @@
 
 #include <config.h>
 
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>             // for some IPC/network system calls
+
 #include <boost/shared_array.hpp>
-
-// unistd is needed for asio.hpp with SunStudio
-#include <unistd.h>
-
-#include <asio.hpp>
 
 #include <log/dummylog.h>
 
+#include <asio.hpp>
+#include <asiolink/dummy_io_cb.h>
 #include <asiolink/tcp_endpoint.h>
 #include <asiolink/tcp_socket.h>
-
 #include <asiolink/tcp_server.h>
 
 
@@ -46,7 +46,7 @@ TCPServer::TCPServer(io_service& io_service,
                      const SimpleCallback* checkin,
                      const DNSLookup* lookup,
                      const DNSAnswer* answer) :
-    io_(io_service), done_(false),
+    io_(io_service), done_(false), stopped_by_hand_(false),
     checkin_callback_(checkin), lookup_callback_(lookup),
     answer_callback_(answer)
 {
@@ -68,6 +68,13 @@ TCPServer::operator()(error_code ec, size_t length) {
     /// Because the coroutine reeentry block is implemented as
     /// a switch statement, inline variable declarations are not
     /// permitted.  Certain variables used below can be declared here.
+
+    /// If user has stopped the server, we won't enter the
+    /// coroutine body, just return
+    if (stopped_by_hand_) {
+        return;
+    }
+
     boost::array<const_buffer,2> bufs;
     OutputBuffer lenbuf(TCP_MESSAGE_LENGTHSIZE);
 
@@ -118,7 +125,14 @@ TCPServer::operator()(error_code ec, size_t length) {
         // that would quickly generate an IOMessage object without
         // all these calls to "new".)
         peer_.reset(new TCPEndpoint(socket_->remote_endpoint()));
-        iosock_.reset(new TCPSocket(*socket_));
+
+        // The TCP socket class has been extended with asynchronous functions
+        // and takes as a template parameter a completion callback class.  As
+        // TCPServer does not use these extended functions (only those defined
+        // in the IOSocket base class) - but needs a TCPSocket to get hold of
+        // the underlying Boost TCP socket - DummyIOCallback is used.  This
+        // provides the appropriate operator() but is otherwise functionless.
+        iosock_.reset(new TCPSocket<DummyIOCallback>(*socket_));
         io_message_.reset(new IOMessage(data_.get(), length, *iosock_, *peer_));
         bytes_ = length;
 
@@ -181,6 +195,15 @@ TCPServer::asyncLookup() {
                         answer_message_, respbuf_, this);
 }
 
+void TCPServer::stop() {
+    //server should not be stopped twice
+    if (stopped_by_hand_)
+        return;
+
+    stopped_by_hand_ = true;
+    acceptor_->close();
+    socket_->close();
+}
 /// Post this coroutine on the ASIO service queue so that it will
 /// resume processing where it left off.  The 'done' parameter indicates
 /// whether there is an answer to return to the client.

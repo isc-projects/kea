@@ -472,7 +472,7 @@ struct MemoryZone::MemoryZoneImpl {
                      * Otherwise, why would the DOMAINFLAG_WILD be there if
                      * there was no wildcard under it?
                      */
-                    assert(result = DomainTree::EXACTMATCH);
+                    assert(result == DomainTree::EXACTMATCH);
                     /*
                      * We have the wildcard node now. Jump below the switch,
                      * where handling of the common (exact-match) case is.
@@ -515,7 +515,7 @@ struct MemoryZone::MemoryZoneImpl {
         if (target != NULL && !node->getData()->empty()) {
             // Empty domain will be handled as NXRRSET by normal processing
             for (found = node->getData()->begin();
-                 found != node->getData()->end(); found++)
+                 found != node->getData()->end(); ++found)
             {
                 target->addRRset(
                     boost::const_pointer_cast<RRset>(prepareRRset(name,

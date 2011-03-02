@@ -15,7 +15,8 @@
 #include <config.h>
 #include <gtest/gtest.h>
 
-#include <asiolink/asiolink.h>
+#include <asiolink/io_error.h>
+#include <asiolink/io_address.h>
 
 using namespace asiolink;
 
@@ -54,4 +55,9 @@ TEST(IOAddressTest, Equality) {
 
     EXPECT_TRUE(IOAddress("2001:db8::1234") != IOAddress("192.0.2.3"));
     EXPECT_FALSE(IOAddress("2001:db8::1234") == IOAddress("192.0.2.3"));
+}
+
+TEST(IOAddressTest, Family) {
+    EXPECT_EQ(AF_INET, IOAddress("192.0.2.1").getFamily());
+    EXPECT_EQ(AF_INET6, IOAddress("2001:0DB8:0:0::0012").getFamily());
 }

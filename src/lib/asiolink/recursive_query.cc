@@ -12,28 +12,30 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
-
+#include <netinet/in.h>
 #include <stdlib.h>
-
-// unistd is needed for asio.hpp with SunStudio
-#include <unistd.h>
-
-#include <asio.hpp>
-
-#include <asiolink/recursive_query.h>
-#include <asiolink/dns_service.h>
-#include <asiolink/udp_query.h>
-
-#include <log/dummylog.h>
+#include <sys/socket.h>
+#include <unistd.h>             // for some IPC/network system calls
 
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
 
+#include <config.h>
+
+#include <log/dummylog.h>
+
 #include <dns/question.h>
 #include <dns/message.h>
+#include <dns/opcode.h>
 
 #include <resolve/resolve.h>
+#include <cache/resolver_cache.h>
+
+#include <asio.hpp>
+#include <asiolink/dns_service.h>
+#include <asiolink/io_fetch.h>
+#include <asiolink/io_service.h>
+#include <asiolink/recursive_query.h>
 
 using isc::log::dlog;
 using namespace isc::dns;
@@ -68,10 +70,10 @@ typedef std::pair<std::string, uint16_t> addr_t;
  *
  * Used by RecursiveQuery::sendQuery.
  */
-class RunningQuery : public UDPQuery::Callback {
+class RunningQuery : public IOFetch::Callback {
 private:
     // The io service to handle async calls
-    asio::io_service& io_;
+    IOService& io_;
 
     // Info for (re)sending the query (the question and destination)
     Question question_;
@@ -123,7 +125,7 @@ private:
     asio::deadline_timer lookup_timer;
 
     size_t queries_out_;
-
+    
     // If we timed out ourselves (lookup timeout), stop issuing queries
     bool done_;
 
@@ -131,6 +133,26 @@ private:
     // stop. We use this variable to make sure we don't send another
     // answer if we do find one later (or if we have a lookup_timeout)
     bool answer_sent_;
+
+    // Reference to our cache
+    isc::cache::ResolverCache& cache_;
+
+    // perform a single lookup; first we check the cache to see
+    // if we have a response for our query stored already. if
+    // so, call handlerecursiveresponse(), if not, we call send()
+    void doLookup() {
+        dlog("doLookup: try cache");
+        Message cached_message(Message::RENDER);
+        isc::resolve::initResponseMessage(question_, cached_message);
+        if (cache_.lookup(question_.getName(), question_.getType(),
+                          question_.getClass(), cached_message)) {
+            dlog("Message found in cache, returning that");
+            handleRecursiveAnswer(cached_message);
+        } else {
+            send();
+        }
+        
+    }
 
     // (re)send the query to the server.
     void send() {
@@ -141,22 +163,22 @@ private:
             int serverIndex = rand() % uc;
             dlog("Sending upstream query (" + question_.toText() +
                 ") to " + upstream_->at(serverIndex).first);
-            UDPQuery query(io_, question_,
+            IOFetch query(IPPROTO_UDP, io_, question_,
                 upstream_->at(serverIndex).first,
                 upstream_->at(serverIndex).second, buffer_, this,
                 query_timeout_);
             ++queries_out_;
-            io_.post(query);
+            io_.get_io_service().post(query);
         } else if (zs > 0) {
             int serverIndex = rand() % zs;
             dlog("Sending query to zone server (" + question_.toText() +
                 ") to " + zone_servers_.at(serverIndex).first);
-            UDPQuery query(io_, question_,
+            IOFetch query(IPPROTO_UDP, io_, question_,
                 zone_servers_.at(serverIndex).first,
                 zone_servers_.at(serverIndex).second, buffer_, this,
                 query_timeout_);
             ++queries_out_;
-            io_.post(query);
+            io_.get_io_service().post(query);
         } else {
             dlog("Error, no upstream servers to send to.");
         }
@@ -184,6 +206,11 @@ private:
                 question_, incoming, cname_target, cname_count_, true);
 
         bool found_ns_address = false;
+            
+        // If the packet is OK, store it in the cache
+        if (!isc::resolve::ResponseClassifier::error(category)) {
+            cache_.update(incoming);
+        }
 
         switch (category) {
         case isc::resolve::ResponseClassifier::ANSWER:
@@ -213,7 +240,7 @@ private:
                                  question_.getType());
 
             dlog("Following CNAME chain to " + question_.toText());
-            send();
+            doLookup();
             return false;
             break;
         case isc::resolve::ResponseClassifier::NXDOMAIN:
@@ -245,11 +272,16 @@ private:
                         // TODO should use NSAS
                         zone_servers_.push_back(addr_t(addr_str, 53));
                         found_ns_address = true;
+                        break;
                     }
                 }
             }
             if (found_ns_address) {
                 // next resolver round
+                // we do NOT use doLookup() here, but send() (i.e. we
+                // skip the cache), since if we had the final answer
+                // instead of a delegation cached, we would have been
+                // there by now.
                 send();
                 return false;
             } else {
@@ -283,7 +315,7 @@ private:
     }
     
 public:
-    RunningQuery(asio::io_service& io,
+    RunningQuery(IOService& io,
         const Question &question,
         MessagePtr answer_message,
         boost::shared_ptr<AddressVector> upstream,
@@ -291,7 +323,8 @@ public:
         OutputBufferPtr buffer,
         isc::resolve::ResolverInterface::CallbackPtr cb,
         int query_timeout, int client_timeout, int lookup_timeout,
-        unsigned retries) :
+        unsigned retries,
+        isc::cache::ResolverCache& cache) :
         io_(io),
         question_(question),
         answer_message_(answer_message),
@@ -302,11 +335,12 @@ public:
         cname_count_(0),
         query_timeout_(query_timeout),
         retries_(retries),
-        client_timer(io),
-        lookup_timer(io),
+        client_timer(io.get_io_service()),
+        lookup_timer(io.get_io_service()),
         queries_out_(0),
         done_(false),
-        answer_sent_(false)
+        answer_sent_(false),
+        cache_(cache)
     {
         // Setup the timer to stop trying (lookup_timeout)
         if (lookup_timeout >= 0) {
@@ -328,7 +362,7 @@ public:
             setZoneServersToRoot();
         }
 
-        send();
+        doLookup();
     }
 
     void setZoneServersToRoot() {
@@ -369,6 +403,26 @@ public:
         done_ = true;
         if (resume && !answer_sent_) {
             answer_sent_ = true;
+
+            // There are two types of messages we could store in the
+            // cache;
+            // 1. answers to our fetches from authoritative servers,
+            //    exactly as we receive them, and
+            // 2. answers to queries we received from clients, which
+            //    have received additional processing (following CNAME
+            //    chains, for instance)
+            //
+            // Doing only the first would mean we would have to re-do
+            // processing when we get data from our cache, and doing
+            // only the second would miss out on the side-effect of
+            // having nameserver data in our cache.
+            //
+            // So right now we do both. Since the cache (currently)
+            // stores Messages on their question section only, this
+            // does mean that we overwrite the messages we stored in
+            // the previous iteration if we are following a delegation.
+            cache_.update(*answer_message_);
+
             resolvercallback_->success(answer_message_);
         } else {
             resolvercallback_->failure();
@@ -386,10 +440,10 @@ public:
     }
 
     // This function is used as callback from DNSQuery.
-    virtual void operator()(UDPQuery::Result result) {
+    virtual void operator()(IOFetch::Result result) {
         // XXX is this the place for TCP retry?
         --queries_out_;
-        if (!done_ && result != UDPQuery::TIME_OUT) {
+        if (!done_ && result != IOFetch::TIME_OUT) {
             // we got an answer
             Message incoming(Message::PARSE);
             InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
@@ -423,15 +477,29 @@ void
 RecursiveQuery::resolve(const QuestionPtr& question,
     const isc::resolve::ResolverInterface::CallbackPtr callback)
 {
-    asio::io_service& io = dns_service_.get_io_service();
+    IOService& io = dns_service_.getIOService();
 
     MessagePtr answer_message(new Message(Message::RENDER));
+    isc::resolve::initResponseMessage(*question, *answer_message);
+
     OutputBufferPtr buffer(new OutputBuffer(0));
-    
-    // It will delete itself when it is done
-    new RunningQuery(io, *question, answer_message, upstream_,
-                     upstream_root_, buffer, callback, query_timeout_,
-                     client_timeout_, lookup_timeout_, retries_);
+
+    dlog("Try out cache first (direct call to resolve)");
+    // First try to see if we have something cached in the messagecache
+    if (cache_.lookup(question->getName(), question->getType(),
+                      question->getClass(), *answer_message)) {
+        dlog("Message found in cache, returning that");
+        // TODO: err, should cache set rcode as well?
+        answer_message->setRcode(Rcode::NOERROR());
+        callback->success(answer_message);
+    } else {
+        dlog("Message not found in cache, starting recursive query");
+        // It will delete itself when it is done
+        new RunningQuery(io, *question, answer_message, upstream_,
+                         upstream_root_, buffer, callback, query_timeout_,
+                         client_timeout_, lookup_timeout_, retries_,
+                         cache_);
+    }
 }
 
 void
@@ -444,15 +512,30 @@ RecursiveQuery::resolve(const Question& question,
     // the message should be sent via TCP or UDP, or sent initially via
     // UDP and then fall back to TCP on failure, but for the moment
     // we're only going to handle UDP.
-    asio::io_service& io = dns_service_.get_io_service();
+    IOService& io = dns_service_.getIOService();
 
     isc::resolve::ResolverInterface::CallbackPtr crs(
         new isc::resolve::ResolverCallbackServer(server));
+
+    // TODO: general 'prepareinitialanswer'
+    answer_message->setOpcode(isc::dns::Opcode::QUERY());
+    answer_message->addQuestion(question);
     
-    // It will delete itself when it is done
-    new RunningQuery(io, question, answer_message, upstream_, upstream_root_,
-                         buffer, crs, query_timeout_, client_timeout_,
-                         lookup_timeout_, retries_);
+    // First try to see if we have something cached in the messagecache
+    dlog("Try out cache first (started by incoming event)");
+    if (cache_.lookup(question.getName(), question.getType(),
+                      question.getClass(), *answer_message)) {
+        dlog("Message found in cache, returning that");
+        // TODO: err, should cache set rcode as well?
+        answer_message->setRcode(Rcode::NOERROR());
+        crs->success(answer_message);
+    } else {
+        dlog("Message not found in cache, starting recursive query");
+        // It will delete itself when it is done
+        new RunningQuery(io, question, answer_message, upstream_, upstream_root_,
+                             buffer, crs, query_timeout_, client_timeout_,
+                             lookup_timeout_, retries_, cache_);
+    }
 }
 
 
