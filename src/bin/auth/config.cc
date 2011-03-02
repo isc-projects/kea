@@ -16,7 +16,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <memory>
 
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
