@@ -122,10 +122,10 @@ protected:
     ///        negative response. The SOA RRset need to be located and
     ///        stored in a seperate cache
     /// \param msg The message to parse the RRsets from
-    /// \param soa_ttl Get the ttl of soa rrset in the authority section
+    /// \param min_ttl Get the minimum ttl of rrset in the authority section
     /// \param rrset_count the rrset count of the authority section
     void parseNegativeResponseAuthoritySection(const isc::dns::Message& msg,
-            uint32_t& soa_ttl,
+            uint32_t& min_ttl,
             uint16_t& rrset_count);
 
     /// \brief Get RRset Trustworthiness
