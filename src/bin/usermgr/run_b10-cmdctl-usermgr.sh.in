@@ -20,6 +20,8 @@ export PYTHON_EXEC
 
 MYPATH_PATH=@abs_top_builddir@/src/bin/usermgr
 
-cd ${MYPATH_PATH}
-${PYTHON_EXEC} b10-cmdctl-usermgr
+BIND10_MSGQ_SOCKET_FILE=@abs_top_builddir@/msgq_socket
+export BIND10_MSGQ_SOCKET_FILE
 
+cd ${MYPATH_PATH}
+exec ${PYTHON_EXEC} b10-cmdctl-usermgr "$@"

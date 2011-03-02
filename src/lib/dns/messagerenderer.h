@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __MESSAGERENDERER_H
 #define __MESSAGERENDERER_H 1
 
@@ -258,6 +256,7 @@ public:
     /// \param name A \c Name object to be written.
     /// \param compress A boolean indicating whether to enable name compression.
     void writeName(const Name& name, bool compress = true);
+    //@}
 private:
     struct MessageRendererImpl;
     MessageRendererImpl* impl_;

@@ -72,7 +72,7 @@ isc.util.process.rename(sys.argv[0])
 # This is the version that gets displayed to the user.
 # The VERSION string consists of the module name, the module version
 # number, and the overall BIND 10 version number (set in configure.ac).
-VERSION = "bind10 20101129 (BIND 10 @PACKAGE_VERSION@)"
+VERSION = "bind10 20110223 (BIND 10 @PACKAGE_VERSION@)"
 
 # This is for bind10.boottime of stats module
 _BASETIME = time.gmtime()
@@ -194,7 +194,7 @@ class CChannelConnectError(Exception): pass
 class BoB:
     """Boss of BIND class."""
     
-    def __init__(self, msgq_socket_file=None, auth_port=5300, address=None,
+    def __init__(self, msgq_socket_file=None, dns_port=5300, address=None,
                  nocache=False, verbose=False, setuid=None, username=None):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
@@ -204,28 +204,73 @@ class BoB:
             what it is doing.
         """
         self.address = address
-        self.auth_port = auth_port
+        self.dns_port = dns_port
         self.cc_session = None
         self.ccs = None
         self.cfg_start_auth = True
-        self.cfg_start_recurse = False
+        self.cfg_start_resolver = False
+        self.started_auth_family = False
+        self.started_resolver_family = False
         self.curproc = None
         self.dead_processes = {}
         self.msgq_socket_file = msgq_socket_file
         self.nocache = nocache
         self.processes = {}
+        self.expected_shutdowns = {}
         self.runnable = False
         self.uid = setuid
         self.username = username
         self.verbose = verbose
 
     def config_handler(self, new_config):
+        # If this is initial update, don't do anything now, leave it to startup
+        if not self.runnable:
+            return
+        # Now we declare few functions used only internally here. Besides the
+        # benefit of not polluting the name space, they are closures, so we
+        # don't need to pass some variables
+        def start_stop(name, started, start, stop):
+            if not'start_' + name in new_config:
+                return
+            if new_config['start_' + name]:
+                if not started:
+                    if self.uid is not None:
+                        sys.stderr.write("[bind10] Starting " + name + " as " +
+                            "a user, not root. This might fail.\n")
+                    start()
+            else:
+                stop()
+        # These four functions are passed to start_stop (smells like functional
+        # programming little bit)
+        def resolver_on():
+            self.start_resolver(self.c_channel_env)
+            self.started_resolver_family = True
+        def resolver_off():
+            self.stop_resolver()
+            self.started_resolver_family = False
+        def auth_on():
+            self.start_auth(self.c_channel_env)
+            self.start_xfrout(self.c_channel_env)
+            self.start_xfrin(self.c_channel_env)
+            self.start_zonemgr(self.c_channel_env)
+            self.started_auth_family = True
+        def auth_off():
+            self.stop_zonemgr()
+            self.stop_xfrin()
+            self.stop_xfrout()
+            self.stop_auth()
+            self.started_auth_family = False
+
+        # The real code of the config handler function follows here
         if self.verbose:
             sys.stdout.write("[bind10] Handling new configuration: " +
                 str(new_config) + "\n")
+        start_stop('resolver', self.started_resolver_family, resolver_on,
+            resolver_off)
+        start_stop('auth', self.started_auth_family, auth_on, auth_off)
+
         answer = isc.config.ccsession.create_answer(0)
         return answer
-        # TODO
 
     def command_handler(self, command, args):
         if self.verbose:
@@ -272,13 +317,13 @@ class BoB:
 
         config_data = self.ccs.get_full_config()
         self.cfg_start_auth = config_data.get("start_auth")
-        self.cfg_start_recurse = config_data.get("start_recurse")
+        self.cfg_start_resolver = config_data.get("start_resolver")
 
         if self.verbose:
             sys.stdout.write("[bind10] - start_auth: %s\n" %
                 str(self.cfg_start_auth))
-            sys.stdout.write("[bind10] - start_recurse: %s\n" %
-                str(self.cfg_start_recurse))
+            sys.stdout.write("[bind10] - start_resolver: %s\n" %
+                str(self.cfg_start_resolver))
 
     def log_starting(self, process, port = None, address = None):
         """
@@ -314,8 +359,8 @@ class BoB:
             sys.stdout.write("\n")
 
     # The next few methods start the individual processes of BIND-10.  They
-    # are called via start_all_process().  If any fail, an exception is raised
-    # which is caught by the caller of start_all_processes(); this kills
+    # are called via start_all_processes().  If any fail, an exception is
+    # raised which is caught by the caller of start_all_processes(); this kills
     # processes started up to that point before terminating the program.
 
     def start_msgq(self, c_channel_env):
@@ -416,8 +461,8 @@ class BoB:
         """
             Start the Authoritative server
         """
-        # XXX: this must be read from the configuration manager in the future
-        authargs = ['b10-auth', '-p', str(self.auth_port)]
+        authargs = ['b10-auth']
+        authargs += ['-p', str(self.dns_port)]
         if self.address:
             authargs += ['-a', str(self.address)]
         if self.nocache:
@@ -429,24 +474,24 @@ class BoB:
 
         # ... and start
         self.start_process("b10-auth", authargs, c_channel_env,
-            self.auth_port, self.address)
+            self.dns_port, self.address)
 
-    def start_recurse(self, c_channel_env):
+    def start_resolver(self, c_channel_env):
         """
             Start the Resolver.  At present, all these arguments and switches
             are pure speculation.  As with the auth daemon, they should be
             read from the configuration database.
         """
-        self.curproc = "b10-recurse"
+        self.curproc = "b10-resolver"
         # XXX: this must be read from the configuration manager in the future
-        resargs = ['b10-recurse']
+        resargs = ['b10-resolver']
         if self.uid:
             resargs += ['-u', str(self.uid)]
         if self.verbose:
             resargs += ['-v']
 
         # ... and start
-        self.start_process("b10-recurse", resargs, c_channel_env)
+        self.start_process("b10-resolver", resargs, c_channel_env)
 
     def start_xfrout(self, c_channel_env):
         self.start_simple("b10-xfrout", c_channel_env)
@@ -464,11 +509,12 @@ class BoB:
         # XXX: we hardcode port 8080
         self.start_simple("b10-cmdctl", c_channel_env, 8080)
 
-    def start_all_processes(self, c_channel_env):
+    def start_all_processes(self):
         """
             Starts up all the processes.  Any exception generated during the
             starting of the processes is handled by the caller.
         """
+        c_channel_env = self.c_channel_env
         self.start_msgq(c_channel_env)
         self.start_cfgmgr(c_channel_env)
         self.start_ccsession(c_channel_env)
@@ -483,8 +529,9 @@ class BoB:
             self.start_auth(c_channel_env)
 
         # ... and resolver (if selected):
-        if self.cfg_start_recurse:
-            self.start_recurse(c_channel_env)
+        if self.cfg_start_resolver:
+            self.start_resolver(c_channel_env)
+            self.started_resolver_family = True
 
         # Everything after the main components can run as non-root.
         # TODO: this is only temporary - once the privileged socket creator is
@@ -498,6 +545,7 @@ class BoB:
             self.start_xfrout(c_channel_env)
             self.start_xfrin(c_channel_env)
             self.start_zonemgr(c_channel_env)
+            self.started_auth_family = True
 
         # ... and finally start the remaining processes
         self.start_stats(c_channel_env)
@@ -528,7 +576,8 @@ class BoB:
         # Start all processes.  If any one fails to start, kill all started
         # processes and exit with an error indication.
         try:
-            self.start_all_processes(c_channel_env)
+            self.c_channel_env = c_channel_env
+            self.start_all_processes()
         except Exception as e:
             self.kill_started_processes()
             return "Unable to start " + self.curproc + ": " + str(e)
@@ -540,19 +589,45 @@ class BoB:
     def stop_all_processes(self):
         """Stop all processes."""
         cmd = { "command": ['shutdown']}
+
         self.cc_session.group_sendmsg(cmd, 'Cmdctl', 'Cmdctl')
         self.cc_session.group_sendmsg(cmd, "ConfigManager", "ConfigManager")
         self.cc_session.group_sendmsg(cmd, "Auth", "Auth")
-        self.cc_session.group_sendmsg(cmd, "Recurse", "Recurse")
+        self.cc_session.group_sendmsg(cmd, "Resolver", "Resolver")
         self.cc_session.group_sendmsg(cmd, "Xfrout", "Xfrout")
         self.cc_session.group_sendmsg(cmd, "Xfrin", "Xfrin")
         self.cc_session.group_sendmsg(cmd, "Zonemgr", "Zonemgr")
-        self.cc_session.group_sendmsg(cmd, "Boss", "Stats")
+        self.cc_session.group_sendmsg(cmd, "Stats", "Stats")
 
-    def stop_process(self, process):
-        """Stop the given process, friendly-like."""
-        # XXX nothing yet
-        pass
+    def stop_process(self, process, recipient):
+        """
+        Stop the given process, friendly-like. The process is the name it has
+        (in logs, etc), the recipient is the address on msgq.
+        """
+        if self.verbose:
+            sys.stdout.write("[bind10] Asking %s to terminate\n" % process)
+        # TODO: Some timeout to solve processes that don't want to die would
+        # help. We can even store it in the dict, it is used only as a set
+        self.expected_shutdowns[process] = 1
+        # Ask the process to die willingly
+        self.cc_session.group_sendmsg({'command': ['shutdown']}, recipient,
+            recipient)
+
+    # Series of stop_process wrappers
+    def stop_resolver(self):
+        self.stop_process('b10-resolver', 'Resolver')
+
+    def stop_auth(self):
+        self.stop_process('b10-auth', 'Auth')
+
+    def stop_xfrout(self):
+        self.stop_process('b10-xfrout', 'Xfrout')
+
+    def stop_xfrin(self):
+        self.stop_process('b10-xfrin', 'Xfrin')
+
+    def stop_zonemgr(self):
+        self.stop_process('b10-zonemgr', 'Zonemgr')
 
     def shutdown(self):
         """Stop the BoB instance."""
@@ -612,27 +687,44 @@ class BoB:
                 raise
             if pid == 0: break
             if pid in self.processes:
+
+                # One of the processes we know about.  Get information on it.
                 proc_info = self.processes.pop(pid)
                 proc_info.restart_schedule.set_run_stop_time()
                 self.dead_processes[proc_info.pid] = proc_info
-                if self.verbose:
-                    sys.stdout.write("[bind10] Process %s (PID %d) died.\n" % 
-                                     (proc_info.name, proc_info.pid))
-                if proc_info.name == "b10-msgq":
-                    if self.verbose and self.runnable:
+
+                # Write out message, but only if in the running state:
+                # During startup and shutdown, these messages are handled
+                # elsewhere.
+                if self.runnable:
+                    if exit_status is None:
+                        sys.stdout.write(
+                            "[bind10] Process %s (PID %d) died: exit status not available" % 
+                            (proc_info.name, proc_info.pid))
+                    else:
+                        sys.stdout.write(
+                            "[bind10] Process %s (PID %d) terminated, exit status = %d\n" % 
+                            (proc_info.name, proc_info.pid, exit_status))
+
+                    # Was it a special process?
+                    if proc_info.name == "b10-msgq":
                         sys.stdout.write(
                                  "[bind10] The b10-msgq process died, shutting down.\n")
-                    self.runnable = False
+                        self.runnable = False
             else:
                 sys.stdout.write("[bind10] Unknown child pid %d exited.\n" % pid)
 
     def restart_processes(self):
-        """Restart any dead processes.
-        Returns the time when the next process is ready to be restarted. 
-          If the server is shutting down, returns 0.
-          If there are no processes, returns None.
-        The values returned can be safely passed into select() as the 
-        timeout value."""
+        """
+            Restart any dead processes:
+
+            * Returns the time when the next process is ready to be restarted. 
+            * If the server is shutting down, returns 0.
+            * If there are no processes, returns None.
+
+            The values returned can be safely passed into select() as the 
+            timeout value.
+        """
         next_restart = None
         # if we're shutting down, then don't restart
         if not self.runnable:
@@ -641,6 +733,10 @@ class BoB:
         still_dead = {}
         now = time.time()
         for proc_info in self.dead_processes.values():
+            if proc_info.name in self.expected_shutdowns:
+                # We don't restart, we wanted it to die
+                del self.expected_shutdowns[proc_info.name]
+                continue
             restart_time = proc_info.restart_schedule.get_restart_time(now)
             if restart_time > now:
                 if (next_restart is None) or (next_restart > restart_time):
@@ -649,13 +745,12 @@ class BoB:
             else:
                 if self.verbose:
                     sys.stdout.write("[bind10] Resurrecting dead %s process...\n" % 
-                                     proc_info.name)
+                        proc_info.name)
                 try:
                     proc_info.respawn()
                     self.processes[proc_info.pid] = proc_info
-                    if self.verbose:
-                        sys.stdout.write("[bind10] Resurrected %s (PID %d)\n" %
-                                         (proc_info.name, proc_info.pid))
+                    sys.stdout.write("[bind10] Resurrected %s (PID %d)\n" %
+                                     (proc_info.name, proc_info.pid))
                 except:
                     still_dead[proc_info.pid] = proc_info
         # remember any processes that refuse to be resurrected
@@ -697,7 +792,7 @@ def check_port(option, opt_str, value, parser):
     a valid port number. Used by OptionParser() on startup."""
     try:
         if opt_str in ['-p', '--port']:
-            parser.values.auth_port = isc.net.parse.port_parse(value)
+            parser.values.dns_port = isc.net.parse.port_parse(value)
         else:
             raise OptionValueError("Unknown option " + opt_str)
     except ValueError as e:
@@ -728,17 +823,16 @@ def main():
     parser = OptionParser(version=VERSION)
     parser.add_option("-a", "--address", dest="address", type="string",
                       action="callback", callback=check_addr, default=None,
-                      help="address the b10-auth daemon will use (default: listen on all addresses)")
+                      help="address the DNS server will use (default: listen on all addresses)")
     parser.add_option("-m", "--msgq-socket-file", dest="msgq_socket_file",
                       type="string", default=None,
                       help="UNIX domain socket file the b10-msgq daemon will use")
     parser.add_option("-n", "--no-cache", action="store_true", dest="nocache",
-                      default=False, help="disable hot-spot cache in b10-auth")
-    parser.add_option("-p", "--port", dest="auth_port", type="int",
+                      default=False, help="disable hot-spot cache in authoritative DNS server")
+    parser.add_option("-p", "--port", dest="dns_port", type="int",
                       action="callback", callback=check_port, default=5300,
-                      help="port the b10-auth daemon will use (default 5300)")
-    parser.add_option("-u", "--user", dest="user",
-                      type="string", default=None,
+                      help="port the DNS server will use (default 5300)")
+    parser.add_option("-u", "--user", dest="user", type="string", default=None,
                       help="Change user after startup (must run as root)")
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
                       help="display more about what is going on")
@@ -783,10 +877,6 @@ def main():
     if options.verbose:
         sys.stdout.write("%s\n" % VERSION)
 
-    # TODO: set process name, perhaps by:
-    #       http://code.google.com/p/procname/
-    #       http://github.com/lericson/procname/
-
     # Create wakeup pipe for signal handlers
     wakeup_pipe = os.pipe()
     signal.set_wakeup_fd(wakeup_pipe[1])
@@ -802,7 +892,7 @@ def main():
     signal.signal(signal.SIGPIPE, signal.SIG_IGN)
 
     # Go bob!
-    boss_of_bind = BoB(options.msgq_socket_file, options.auth_port,
+    boss_of_bind = BoB(options.msgq_socket_file, options.dns_port,
                        options.address, options.nocache, options.verbose,
                        setuid, username)
     startup_result = boss_of_bind.startup()

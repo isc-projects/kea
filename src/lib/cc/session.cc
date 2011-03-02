@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <config.h>
 #include <cc/session_config.h>
 
@@ -171,7 +169,7 @@ SessionImpl::readData(void* data, size_t datalen) {
         asio::async_read(socket_, asio::buffer(data, datalen),
                          boost::bind(&setResult, &read_result, _1));
         asio::deadline_timer timer(socket_.io_service());
-    
+
         if (getTimeout() != 0) {
             timer.expires_from_now(boost::posix_time::milliseconds(getTimeout()));
             timer.async_wait(boost::bind(&setResult, &timer_result, _1));

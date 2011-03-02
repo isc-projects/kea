@@ -13,8 +13,6 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: cfgmgr_test.py 2126 2010-06-16 14:40:22Z jelte $
-
 #
 # Tests for the configuration manager run script
 #
@@ -58,7 +56,8 @@ class TestConfigManagerStartup(unittest.TestCase):
         self.assertTrue(b.cm.read_config_called)
         self.assertTrue(b.cm.notify_boss_called)
         self.assertTrue(b.cm.run_called)
-        self.assertTrue(b.cm.write_config_called)
+        # if there are no changes, config is not written
+        self.assertFalse(b.cm.write_config_called)
 
         self.assertTrue(b.cm.running)
         b.signal_handler(None, None)

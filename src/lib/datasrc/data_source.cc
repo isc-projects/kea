@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <config.h>
 
 #include <cassert>
@@ -103,14 +101,14 @@ getAdditional(Query& q, ConstRRsetPtr rrset) {
                                new QueryTask(q, ns.getNSName(),
                                              Message::SECTION_ADDITIONAL,
                                              QueryTask::GLUE_QUERY,
-                                             QueryTask::GETADDITIONAL))); 
+                                             QueryTask::GETADDITIONAL)));
         } else if (rrset->getType() == RRType::MX()) {
             const generic::MX& mx = dynamic_cast<const generic::MX&>(rd);
             q.tasks().push(QueryTaskPtr(
                                new QueryTask(q, mx.getMXName(),
                                              Message::SECTION_ADDITIONAL,
                                              QueryTask::NOGLUE_QUERY,
-                                             QueryTask::GETADDITIONAL))); 
+                                             QueryTask::GETADDITIONAL)));
         }
     }
 }
@@ -1159,7 +1157,7 @@ MetaDataSrc::addDataSrc(ConstDataSrcPtr data_src) {
 void
 MetaDataSrc::removeDataSrc(ConstDataSrcPtr data_src) {
     std::vector<ConstDataSrcPtr>::iterator it, itr;
-    for (it = data_sources.begin(); it != data_sources.end(); it++) {
+    for (it = data_sources.begin(); it != data_sources.end(); ++it) {
         if (*it == data_src) {
             itr = it;
         }

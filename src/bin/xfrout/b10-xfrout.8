@@ -69,6 +69,26 @@ The configurable settings are:
 
 \fItransfers_out\fR
 defines the maximum number of outgoing zone transfers that can run concurrently\&. The default is 10\&.
+.PP
+
+\fIlog_name\fR
+.PP
+
+\fIlog_file\fR
+The location of the log file if using a file channel\&. If undefined, then the file channel is closed\&. The default is
+/usr/local/var/bind10\-devel/log/Xfrout\&.log\&.
+.PP
+
+\fIlog_severity\fR
+The default is "debug"\&.
+.PP
+
+\fIlog_versions\fR
+The default is 5\&.
+.PP
+
+\fIlog_max_bytes\fR
+The default is 1048576\&.
 .if n \{\
 .sp
 .\}

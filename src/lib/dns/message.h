@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __MESSAGE_H
 #define __MESSAGE_H 1
 
@@ -462,9 +460,36 @@ public:
     bool hasRRset(const Section section, const Name& name,
                   const RRClass& rrclass, const RRType& rrtype);
 
+    /// \brief Determine whether the given section already has an RRset
+    /// matching the one pointed to by the argumet
+    ///
+    /// \c section must be a valid constant of the \c Section type;
+    /// otherwise, an exception of class \c OutOfRange will be thrown.
+    bool hasRRset(const Section section, const RRsetPtr& rrset);
+
+    /// \brief Remove RRSet from Message
+    ///
+    /// Removes the RRset identified by the section iterator from the message.
+    /// Note: if,.for some reason, the RRset is duplicated in the section, only
+    /// one occurrence is removed.
+    ///
+    /// If the operation is successful, all iterators into the section are
+    /// invalidated.
+    ///
+    /// \param section Section to which the iterator belongs
+    /// \param iterator Iterator pointing to the element to be removed
+    ///
+    /// \return true if the element was removed, false if the iterator was not
+    /// found in the specified section.
+    bool removeRRset(const Section section, RRsetIterator& iterator);
+
+    /// \brief Remove all RRSets from the given Section
+    ///
+    /// \param section Section to remove all rrsets from
+    void clearSection(const Section section);
+
     // The following methods are not currently implemented.
     //void removeQuestion(QuestionPtr question);
-    //void removeRRset(const Section section, RRsetPtr rrset);
     // notyet:
     //void addRR(const Section section, const RR& rr);
     //void removeRR(const Section section, const RR& rr);
@@ -472,6 +497,13 @@ public:
     /// \brief Clear the message content (if any) and reinitialize it in the
     /// specified mode.
     void clear(Mode mode);
+
+    /// \brief Adds all rrsets from the source the given section in the
+    /// source message to the same section of this message
+    ///
+    /// \param section the section to append
+    /// \param target The source Message
+    void appendSection(const Section section, const Message& source);
 
     /// \brief Prepare for making a response from a request.
     ///
@@ -511,11 +543,22 @@ public:
     ///
     /// With EDNS the maximum size can be increased per message.
     static const uint16_t DEFAULT_MAX_UDPSIZE = 512;
+
+    /// \brief The default maximum size of UDP DNS messages we can handle
+    static const uint16_t DEFAULT_MAX_EDNS0_UDPSIZE = 4096;
     //@}
 
 private:
     MessageImpl* impl_;
 };
+
+/// \brief Pointer-like type pointing to a \c Message
+///
+/// This type is expected to be used as an argument in asynchronous
+/// callback functions.  The internal reference-counting will ensure that
+/// that ongoing state information will not be lost if the object
+/// that originated the asynchronous call falls out of scope.
+typedef boost::shared_ptr<Message> MessagePtr;
 
 std::ostream& operator<<(std::ostream& os, const Message& message);
 }

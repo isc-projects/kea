@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __RRSET_H
 #define __RRSET_H 1
 
@@ -231,8 +229,8 @@ public:
 
     /// \brief Updates the owner name of the \c RRset.
     ///
-    /// \param name A reference to a \c RRTTL class object to be copied as the
-    /// new TTL.
+    /// \param name A reference to a \c Name class object to be copied as the
+    /// new name.
     virtual void setName(const Name& name) = 0;
 
     /// \brief Updates the TTL of the \c RRset.
@@ -590,8 +588,8 @@ public:
     /// internal copy of the \c name involves resource allocation and it
     /// fails.
     ///
-    /// \param name A reference to a \c RRTTL class object to be copied as the
-    /// new TTL.
+    /// \param name A reference to a \c Name class object to be copied as the
+    /// new name.
     virtual void setName(const Name& name);
 
     /// \brief Updates the TTL of the \c RRset.
@@ -722,7 +720,7 @@ public:
     void removeRRsig() { rrsig_ = RRsetPtr(); }
 
     /// \brief Return a pointer to this RRset's RRSIG RRset
-    RRsetPtr getRRsig() { return (rrsig_); }
+    RRsetPtr getRRsig() const { return (rrsig_); }
 private:
     RRsetPtr rrsig_;
 };
