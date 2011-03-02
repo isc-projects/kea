@@ -1212,10 +1212,9 @@ TODO
     <title>Incoming Zone Transfers</title>
 
     <para>
-      The <command>b10-xfrin</command> process is started by
-      <command>bind10</command>.
-      It can be manually triggered to request an AXFR zone
-      transfer. When received, it is stored in the BIND 10
+      Incoming zones are transferred using the <command>b10-xfrin</command>
+      process which is started by <command>bind10</command>.
+      When received, the zone is stored in the BIND 10
       data store, and its records can be served by
       <command>b10-auth</command>.
       In combination with <command>b10-zonemgr</command> (for
@@ -1226,7 +1225,21 @@ TODO
     <note><simpara>
      The current development release of BIND 10 only supports
      AXFR. (IXFR is not supported.) 
+
+<!-- TODO: sqlite3 data source only? -->
+
     </simpara></note>
+
+<!-- TODO:
+
+how to tell bind10 you are a secondary?
+
+when will it first attempt to check for new zone? (using REFRESH?)
+what if zonemgr is not running?
+
+what if a NOTIFY is sent?
+
+-->
 
     <para>
        To manually trigger a zone transfer to retrieve a remote zone,
@@ -1235,6 +1248,9 @@ TODO
 
        <screen>&gt; <userinput>Xfrin retransfer zone_name="<option>foo.example.org</option>" master=<option>192.0.2.99</option></userinput></screen>
     </para>
+
+<!-- TODO: can that retransfer be used to identify a new zone? -->
+<!-- TODO: what if doesn't exits at that master IP? -->
 
   </chapter>
 
@@ -1342,28 +1358,34 @@ what is XfroutClient xfr_client??
 
 <!-- TODO: later the above will have some defaults -->
 
-    <para>
-      To enable forwarding, the upstream address and port must be
-      configured to forward queries to, such as:
+    <section>
+      <title>Forwarding</title>
 
-      <screen>
+      <para>
+
+        To enable forwarding, the upstream address and port must be
+        configured to forward queries to, such as:
+
+        <screen>
 &gt; <userinput>config set Resolver/forward_addresses [{ "address": "<replaceable>192.168.1.1</replaceable>", "port": 53 }]</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
 
-      (Replace <replaceable>192.168.1.1</replaceable> to point to your
-      full resolver.)
-    </para>
+        (Replace <replaceable>192.168.1.1</replaceable> to point to your
+        full resolver.)
+      </para>
 
-    <para>
-      Normal iterative name service can be re-enabled by clearing the
-      forwarding address(es); for example:
+      <para>
+        Normal iterative name service can be re-enabled by clearing the
+        forwarding address(es); for example:
 
-      <screen>
+        <screen>
 &gt; <userinput>config set Resolver/forward_addresses []</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
-    </para>
+      </para>
+
+    </section>
 
 <!-- TODO: later try this
 
