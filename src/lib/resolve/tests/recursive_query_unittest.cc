@@ -753,9 +753,52 @@ TEST_F(RecursiveQueryTest, forwardLookupTimeout) {
     int num = 0;
     bool read_success = tryRead(sock_, recv_options, 5, &num);
 
-    // The query should fail
-    EXPECT_FALSE(done);
+    // The query should fail and respond with an error
+    EXPECT_TRUE(done);
     EXPECT_EQ(3, num);
+    EXPECT_FALSE(read_success);
+}
+
+// Set everything very low and see if this doesn't cause weird
+// behaviour
+TEST_F(RecursiveQueryTest, lowtimeouts) {
+    // Prepare the service (we do not use the common setup, we do not answer
+    setDNSService();
+
+    // Prepare the socket
+    sock_ = createTestSocket();
+
+    // Prepare the server
+    bool done(true);
+    MockServerStop server(*io_service_, &done);
+
+    MessagePtr answer(new Message(Message::RENDER));
+
+    // Do the answer
+    const uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
+    // Set up the test so that it will retry 5 times, but the lookup
+    // timeout will fire after only 3 normal timeouts
+    RecursiveQuery query(*dns_service_,
+                         *nsas_, cache_,
+                         singleAddress(TEST_IPV4_ADDR, port),
+                         singleAddress(TEST_IPV4_ADDR, port),
+                         1, 1, 1, 1);
+    Question question(Name("example.net"), RRClass::IN(), RRType::A());
+    OutputBufferPtr buffer(new OutputBuffer(0));
+    query.resolve(question, answer, buffer, &server);
+
+    // Run the test
+    io_service_->run();
+
+    int recv_options = setSocketTimeout(sock_, 1, 0);
+
+    // Try to read 5 times, should stop after 3 reads
+    int num = 0;
+    bool read_success = tryRead(sock_, recv_options, 5, &num);
+
+    // The query should fail and respond with an error
+    EXPECT_TRUE(done);
+    EXPECT_EQ(1, num);
     EXPECT_FALSE(read_success);
 }
 
