@@ -183,7 +183,7 @@ private:
         isc::resolve::initResponseMessage(question_, cached_message);
         if (cache_.lookup(question_.getName(), question_.getType(),
                           question_.getClass(), cached_message)) {
-            dlog("Message found in cache, returning that");
+            dlog("Message found in cache, continuing with that");
             // Should these be set by the cache too?
             cached_message.setOpcode(Opcode::QUERY());
             cached_message.setRcode(Rcode::NOERROR());
@@ -270,13 +270,12 @@ private:
         case isc::resolve::ResponseClassifier::ANSWERCNAME:
             // Done. copy and return.
             dlog("Response is an answer");
-            cache_.update(incoming);
             isc::resolve::copyResponseMessage(incoming, answer_message_);
+            cache_.update(*answer_message_);
             return true;
             break;
         case isc::resolve::ResponseClassifier::CNAME:
             dlog("Response is CNAME!");
-            cache_.update(incoming);
             // (unfinished) CNAME. We set our question_ to the CNAME
             // target, then start over at the beginning (for now, that
             // is, we reset our 'current servers' to the root servers).
@@ -301,10 +300,10 @@ private:
         case isc::resolve::ResponseClassifier::NXRRSET:
             dlog("Response is NXDOMAIN or NXRRSET");
             // NXDOMAIN, just copy and return.
-            // no negcache yet
-            //cache_.update(incoming);
             dlog(incoming.toText());
             isc::resolve::copyResponseMessage(incoming, answer_message_);
+            // no negcache yet
+            //cache_.update(*answer_message_);
             return true;
             break;
         case isc::resolve::ResponseClassifier::REFERRAL:
@@ -357,7 +356,6 @@ private:
         case isc::resolve::ResponseClassifier::RCODE:
         case isc::resolve::ResponseClassifier::TRUNCATED:
             dlog("Error in response, returning SERVFAIL");
-            std::cout << "Error: " << category << std::endl;
             // Should we try a different server rather than SERVFAIL?
             makeSERVFAIL();
             return true;
@@ -467,9 +465,6 @@ public:
             // does mean that we overwrite the messages we stored in
             // the previous iteration if we are following a delegation.
             if (success) {
-                if (answer_message_->getRcode() == Rcode::NOERROR()) {
-                    cache_.update(*answer_message_);
-                }
                 resolvercallback_->success(answer_message_);
             } else {
                 resolvercallback_->failure();
