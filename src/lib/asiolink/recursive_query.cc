@@ -93,6 +93,7 @@ public:
         dlog("Nameservers unreachable");
         // Drop query or send servfail?
         rq_->nsasCallbackCalled();
+        rq_->makeSERVFAIL();
         rq_->stop(false);
     }
 
@@ -284,8 +285,7 @@ private:
             if (cname_count_ >= RESOLVER_MAX_CNAME_CHAIN) {
                 // just give up
                 dlog("CNAME chain too long");
-                isc::resolve::makeErrorMessage(answer_message_,
-                                               Rcode::SERVFAIL());
+                makeSERVFAIL();
                 return true;
             }
 
@@ -360,13 +360,15 @@ private:
         case isc::resolve::ResponseClassifier::TRUNCATED:
             dlog("Error in response, returning SERVFAIL");
             // Should we try a different server rather than SERVFAIL?
-            isc::resolve::makeErrorMessage(answer_message_,
-                                           Rcode::SERVFAIL());
+            makeSERVFAIL();
             return true;
             break;
         }
         // should not be reached. assert here?
-        dlog("[FATAL] unreachable code");
+        // (since we do not have a default in the switch above,
+        // the compiler should have errored on any missing case
+        // statements
+        assert(false);
         return true;
     }
     
@@ -420,17 +422,19 @@ public:
     }
 
     virtual void clientTimeout() {
+        dlog("[XX] client timer fired");
         // Return a SERVFAIL, but do not stop until
         // we have an answer or timeout ourselves
-        isc::resolve::makeErrorMessage(answer_message_,
-                                       Rcode::SERVFAIL());
         if (!answer_sent_) {
+            dlog("[XX] answer not sent yet");
             answer_sent_ = true;
+            makeSERVFAIL();
             resolvercallback_->success(answer_message_);
         }
         // if we got here because we canceled it in stop(), we
         // need to go back to stop()
         if (client_timer_canceled_) {
+            dlog("[XX] fired due to cancellation");
             stop(false);
         }
     }
@@ -445,7 +449,9 @@ public:
         // same goes if we have an outstanding query (can't delete
         // until that one comes back to us)
         done_ = true;
+        dlog("[XX] stop() called1");
         if (!answer_sent_) {
+            dlog("[XX] no answer sent yet");
             answer_sent_ = true;
 
             // There are two types of messages we could store in the
@@ -472,20 +478,27 @@ public:
             } else {
                 resolvercallback_->failure();
             }
+            return;
         }
+        dlog("[XX] stop() called2");
         if (lookup_timer.cancel() != 0) {
             dlog("[XX] lookup timer canceled");
             return;
         }
+        dlog("[XX] stop() called3");
         if (client_timer.cancel() != 0) {
             dlog("[XX] client timer canceled");
             client_timer_canceled_ = true;
             return;
+        } else {
+            dlog("[XX] no client timer anymore");
         }
+        dlog("[XX] continuing");
         if (queries_out_ > 0) {
             dlog("[XX] still one or more queries out");
             return;
         }
+        dlog("[XX] stop() called4");
         if (nsas_callback_out_) {
             nsas_.cancel(cur_zone_, question_.getClass(), nsas_callback_);
             nsas_callback_out_ = false;
@@ -547,10 +560,16 @@ public:
                 current_ns_address.updateRTT(isc::nsas::AddressEntry::UNREACHABLE);
             }
             if (!answer_sent_) {
-                answer_message_->setRcode(Rcode::SERVFAIL());
+                makeSERVFAIL();
             }
             stop(!answer_sent_);
         }
+    }
+    
+    // Clear the answer parts of answer_message, and set the rcode
+    // to servfail
+    void makeSERVFAIL() {
+        isc::resolve::makeErrorMessage(answer_message_, Rcode::SERVFAIL());
     }
     
     // Returns true if we are in 'recursive' mode
