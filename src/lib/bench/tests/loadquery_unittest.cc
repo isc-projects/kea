@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <algorithm>
 #include <utility>
 #include <vector>
@@ -57,7 +55,7 @@ const char* const LoadQueryTest::DATA_DIR = TEST_DATA_DIR;
 class QueryInserter {
 public:
     QueryInserter(stringstream& stream) : stream_(stream) {}
-    void operator()(const QueryParam& query) {
+    void operator()(const QueryParam& query) const {
         stream_ << query.first << " " << query.second << endl;
     }
 private:

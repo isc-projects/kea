@@ -14,15 +14,19 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <exceptions/exceptions.h>
+#include <datasrc/zone.h>
+
 namespace isc {
 namespace dns {
 class Message;
 class Name;
 class RRType;
+class RRset;
 }
 
 namespace datasrc {
-class ZoneTable;
+class MemoryDataSrc;
 }
 
 namespace auth {
@@ -32,11 +36,11 @@ namespace auth {
 ///
 /// Many of the design details for this class are still in flux.
 /// We'll revisit and update them as we add more functionality, for example:
-/// - zone_table parameter of the constructor.  This will eventually be
-///   replaced with a generic DataSrc object, or perhaps a notion of "view".
+/// - memory_datasrc parameter of the constructor.  It is a data source that
+///   uses in memory dedicated backend.
 /// - as a related point, we may have to pass the RR class of the query.
-///   in the initial implementation the RR class is an attribute of zone
-///   table and omitted.  It's not clear if this assumption holds with
+///   in the initial implementation the RR class is an attribute of memory
+///   datasource and omitted.  It's not clear if this assumption holds with
 ///   generic data sources.  On the other hand, it will help keep
 ///   implementation simpler, and we might rather want to modify the design
 ///   of the data source on this point.
@@ -47,8 +51,8 @@ namespace auth {
 ///   separate attribute setter.
 /// - likewise, we'll eventually need to do per zone access control, for which
 ///   we need querier's information such as its IP address.
-/// - zone_table (or DataSrc eventually) and response may better be parameters
-///   to process() instead of the constructor.
+/// - memory_datasrc and response may better be parameters to process() instead
+///   of the constructor.
 ///
 /// <b>Note:</b> The class name is intentionally the same as the one used in
 /// the datasrc library.  This is because the plan is to eventually merge
@@ -60,20 +64,86 @@ namespace auth {
 /// accidentally, and since it's considered a temporary development state,
 /// we keep this name at the moment.
 class Query {
+private:
+
+    /// \brief Adds a SOA.
+    ///
+    /// Adds a SOA of the zone into the authority zone of response_.
+    /// Can throw NoSOA.
+    ///
+    void putSOA(const isc::datasrc::Zone& zone) const;
+
+    /// \brief Look up additional data (i.e., address records for the names
+    /// included in NS or MX records).
+    ///
+    /// Note: Any additional data which has already been provided in the
+    /// answer section (i.e., if the original query happend to be for the
+    /// address of the DNS server), it should be omitted from the additional.
+    ///
+    /// This method may throw a exception because its underlying methods may
+    /// throw exceptions.
+    ///
+    /// \param zone The Zone wherein the additional data to the query is bo be
+    /// found.
+    /// \param rrset The RRset (i.e., NS or MX rrset) which require additional
+    /// processing.
+    void getAdditional(const isc::datasrc::Zone& zone,
+                       const isc::dns::RRset& rrset) const;
+
+    /// \brief Find address records for a specified name.
+    ///
+    /// Search the specified zone for AAAA/A RRs of each of the NS/MX RDATA
+    /// (domain name), and insert the found ones into the additional section
+    /// if address records are available. By default the search will stop
+    /// once it encounters a zone cut.
+    ///
+    /// Note: we need to perform the search in the "GLUE OK" mode for NS RDATA,
+    /// which means that we should include A/AAAA RRs under a zone cut.
+    /// The glue records must exactly match the name in the NS RDATA, without
+    /// CNAME or wildcard processing.
+    ///
+    /// \param zone The \c Zone wherein the address records is to be found.
+    /// \param qname The name in rrset RDATA.
+    /// \param options The search options.
+    void findAddrs(const isc::datasrc::Zone& zone,
+                   const isc::dns::Name& qname,
+                   const isc::datasrc::Zone::FindOptions options
+                   = isc::datasrc::Zone::FIND_DEFAULT) const;
+
+    /// \brief Look up \c Zone's NS and address records for the NS RDATA
+    /// (domain name) for authoritative answer.
+    ///
+    /// On returning an authoritative answer, insert the \c Zone's NS into the
+    /// authority section and AAAA/A RRs of each of the NS RDATA into the
+    /// additional section.
+    ///
+    /// <b>Notes to developer:</b>
+    ///
+    /// We should omit address records which has already been provided in the
+    /// answer section from the additional.
+    ///
+    /// For now, in order to optimize the additional section processing, we
+    /// include AAAA/A RRs under a zone cut in additional section. (BIND 9
+    /// excludes under-cut RRs; NSD include them.)
+    ///
+    /// \param zone The \c Zone wherein the additional data to the query is to
+    /// be found.
+    void getAuthAdditional(const isc::datasrc::Zone& zone) const;
+
 public:
     /// Constructor from query parameters.
     ///
     /// This constructor never throws an exception.
     ///
-    /// \param zone_table The zone table wherein the answer to the query is
+    /// \param memory_datasrc The memory datasource wherein the answer to the query is
     /// to be found.
     /// \param qname The query name
     /// \param qtype The RR type of the query
     /// \param response The response message to store the answer to the query.
-    Query(const isc::datasrc::ZoneTable& zone_table,
+    Query(const isc::datasrc::MemoryDataSrc& memory_datasrc,
           const isc::dns::Name& qname, const isc::dns::RRType& qtype,
           isc::dns::Message& response) :
-        zone_table_(zone_table), qname_(qname), qtype_(qtype),
+        memory_datasrc_(memory_datasrc), qname_(qname), qtype_(qtype),
         response_(response)
     {}
 
@@ -87,7 +157,7 @@ public:
     /// successful search would result in adding a corresponding RRset to
     /// the answer section of the response.
     ///
-    /// If no matching zone is found in the zone table, the RCODE of
+    /// If no matching zone is found in the memory datasource, the RCODE of
     /// SERVFAIL will be set in the response.
     /// <b>Note:</b> this is different from the error code that BIND 9 returns
     /// by default when it's configured as an authoritative-only server (and
@@ -100,12 +170,45 @@ public:
     /// providing compatible behavior may have its own benefit, so this point
     /// should be revisited later.
     ///
-    /// Right now this method never throws an exception, but it may in a
-    /// future version.
+    /// This might throw BadZone or any of its specific subclasses, but that
+    /// shouldn't happen in real-life (as BadZone means wrong data, it should
+    /// have been rejected upon loading).
     void process() const;
 
+    /// \short Bad zone data encountered.
+    ///
+    /// This is thrown when process encounteres misconfigured zone in a way
+    /// it can't continue. This throws, not sets the Rcode, because such
+    /// misconfigured zone should not be present in the data source and
+    /// should have been rejected sooner.
+    struct BadZone : public isc::Exception {
+        BadZone(const char* file, size_t line, const char* what) :
+            Exception(file, line, what)
+        {}
+    };
+
+    /// \short Zone is missing its SOA record.
+    ///
+    /// We tried to add a SOA into the authoritative section, but the zone
+    /// does not contain one.
+    struct NoSOA : public BadZone {
+        NoSOA(const char* file, size_t line, const char* what) :
+            BadZone(file, line, what)
+        {}
+    };
+
+    /// \short Zone is missing its apex NS records.
+    ///
+    /// We tried to add apex NS records into the authority section, but the
+    /// zone does not contain any.
+    struct NoApexNS: public BadZone {
+        NoApexNS(const char* file, size_t line, const char* what) :
+            BadZone(file, line, what)
+        {}
+    };
+
 private:
-    const isc::datasrc::ZoneTable& zone_table_;
+    const isc::datasrc::MemoryDataSrc& memory_datasrc_;
     const isc::dns::Name& qname_;
     const isc::dns::RRType& qtype_;
     isc::dns::Message& response_;

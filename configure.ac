@@ -2,14 +2,34 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20101201, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20110224, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
 AC_PROG_CXX
+
+# Libtool configuration
+#
+# On FreeBSD (and probably some others), clang++ does not meet an autoconf
+# assumption in identifying libtool configuration regarding shared library:
+# the configure script will execute "$CC -shared $CFLAGS/$CXXFLAGS -v" and
+# expect the output contains -Lxxx or -Ryyy.  This is the case for g++, but
+# not for clang++, and, as a result, it will cause various errors in linking
+# programs or running them with a shared object (such as some of our python
+# scripts).
+# To work around this problem we define a temporary variable
+# "CXX_LIBTOOL_LDFLAGS".  It's expected to be defined as, e.g, "-L/usr/lib"
+# to temporarily fake the output so that it will be compatible with that of
+# g++.
+CFLAGS_SAVED=$CFLAGS
+CXXFLAGS_SAVED=$CXXFLAGS
+CFLAGS="$CFLAGS $CXX_LIBTOOL_LDFLAGS"
+CXXFLAGS="$CXXFLAGS $CXX_LIBTOOL_LDFLAGS"
 AC_PROG_LIBTOOL
+CFLAGS=$CFLAGS_SAVED
+CXXFLAGS=$CXXFLAGS_SAVED
 
 # Use C++ language
 AC_LANG([C++])
@@ -50,6 +70,11 @@ if test $enable_shared = no; then
 	AC_MSG_ERROR([BIND 10 requires shared libraries to be built])
 fi
 
+AC_ARG_ENABLE(boost-threads,
+AC_HELP_STRING([--enable-boost-threads],
+  [use boost threads. Currently this only means using its locks instead of dummy locks, in the cache and NSAS]),
+  use_boost_threads=$enableval, use_boost_threads=no)
+
 # allow configuring without setproctitle.
 AC_ARG_ENABLE(setproctitle-check,
 AC_HELP_STRING([--disable-setproctitle-check],
@@ -67,7 +92,7 @@ case "$host" in
 	CPPFLAGS="$CPPFLAGS -D_XPG4_2 -D__EXTENSIONS__"
 	;;
 *-apple-darwin*)
-	# libtool doesn't work pefectly with Darwin: libtool embeds the
+	# libtool doesn't work perfectly with Darwin: libtool embeds the
 	# final install path in dynamic libraries and our loadable python
 	# modules always refer to that path even if it's loaded within the
 	# source tree.  This prevents pre-install tests from working.
@@ -177,8 +202,9 @@ if test "$setproctitle_check" = "yes" ; then
         AC_MSG_RESULT(ok)
     else
         AC_MSG_RESULT(missing)
-        AC_MSG_ERROR([Missing setproctitle module. Either install it or provide --disable-setproctitle-check.
-In that case we will continue, but naming of python processes will not work.])
+        AC_MSG_WARN([Missing setproctitle python module.
+Use --disable-setproctitle-check to skip this check.
+In this case we will continue, but naming of python processes will not work.])
     fi
 fi
 
@@ -186,7 +212,7 @@ fi
 
 # Compiler dependent settings: define some mandatory CXXFLAGS here.
 # We also use a separate variable B10_CXXFLAGS.  This will (and should) be
-# used as the default value for each specifc AM_CXXFLAGS:
+# used as the default value for each specific AM_CXXFLAGS:
 # AM_CXXFLAGS = $(B10_CXXFLAGS)
 # AM_CXXFLAGS += ... # add module specific flags
 # We need this so that we can disable some specific compiler warnings per
@@ -195,17 +221,50 @@ fi
 # specify the default warning flags in CXXFLAGS and let specific modules
 # "override" the default.
 
+# This may be used to try linker flags.
+AC_DEFUN([BIND10_CXX_TRY_FLAG], [
+  AC_MSG_CHECKING([whether $CXX supports $1])
+
+  bind10_save_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS $1"
+
+  AC_LINK_IFELSE([int main(void){ return 0;} ],
+                 [bind10_cxx_flag=yes], [bind10_cxx_flag=no])
+  CXXFLAGS="$bind10_save_CXXFLAGS"
+
+  if test "x$bind10_cxx_flag" = "xyes"; then
+    ifelse([$2], , :, [$2])
+  else
+    ifelse([$3], , :, [$3])
+  fi
+
+  AC_MSG_RESULT([$bind10_cxx_flag])
+])
+
 werror_ok=0
 
 # SunStudio compiler requires special compiler options for boost
 # (http://blogs.sun.com/sga/entry/boost_mini_howto)
 if test "$SUNCXX" = "yes"; then
 CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
+MULTITHREADING_FLAG="-mt"
 fi
+
+BIND10_CXX_TRY_FLAG(-Wno-missing-field-initializers,
+	[WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG="-Wno-missing-field-initializers"])
+AC_SUBST(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 # gcc specific settings:
 if test "X$GXX" = "Xyes"; then
 B10_CXXFLAGS="-Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
+case "$host" in
+*-solaris*)
+	MULTITHREADING_FLAG=-pthreads
+	;;
+*)
+	MULTITHREADING_FLAG=-pthread
+	;;
+esac
 
 # Certain versions of gcc (g++) have a bug that incorrectly warns about
 # the use of anonymous name spaces even if they're closed in a single
@@ -236,6 +295,7 @@ AC_SUBST(B10_CXXFLAGS)
 
 AC_SEARCH_LIBS(inet_pton, [nsl])
 AC_SEARCH_LIBS(recvfrom, [socket])
+AC_SEARCH_LIBS(nanosleep, [rt])
 
 # Checks for header files.
 
@@ -253,6 +313,26 @@ AC_TRY_COMPILE([
         [AC_MSG_RESULT(yes)
         AC_DEFINE(HAVE_SA_LEN, 1, [Define to 1 if sockaddr has a sa_len member, and corresponding sin_len and sun_len])],
         AC_MSG_RESULT(no))
+
+AC_ARG_WITH(pycoverage,
+[  --with-pycoverage[=PROGRAM]         enable python code coverage using the specified coverage], pycoverage="$withval", pycoverage="no")
+if test "$pycoverage" = "no" ; then
+	# just run the tests normally with python
+	PYCOVERAGE_RUN="${PYTHON}"
+	USE_PYCOVERAGE="no"
+elif test "$pycoverage" = "yes" ; then
+	PYCOVERAGE="coverage"
+	PYCOVERAGE_RUN="${PYCOVERAGE} run --branch --append"
+	USE_PYCOVERAGE="yes"
+else
+	PYCOVERAGE="$pycoverage"
+	PYCOVERAGE_RUN="${PYCOVERAGE} run --branch --append"
+	USE_PYCOVERAGE="yes"
+fi
+AM_CONDITIONAL(ENABLE_PYTHON_COVERAGE, test x$USE_PYCOVERAGE != xno)
+AC_SUBST(PYCOVERAGE)
+AC_SUBST(PYCOVERAGE_RUN)
+AC_SUBST(USE_PYCOVERAGE)
 
 AC_ARG_WITH(lcov,
 [  --with-lcov[=PROGRAM]         enable gtest and coverage target using the specified lcov], lcov="$withval", lcov="no")
@@ -318,10 +398,73 @@ if test "${boost_include_path}" ; then
 	BOOST_INCLUDES="-I${boost_include_path}"
 	CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES"
 fi
-AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp],,
+AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync/interprocess_upgradable_mutex.hpp boost/date_time/posix_time/posix_time_types.hpp boost/bind.hpp boost/function.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
 CPPFLAGS="$CPPFLAGS_SAVES"
 AC_SUBST(BOOST_INCLUDES)
+
+
+if test "${use_boost_threads}" = "yes" ; then
+    AC_DEFINE([USE_BOOST_THREADS], [], [Use boost threads])
+
+    # Using boost::mutex can result in requiring libboost_thread with older
+    # versions of Boost.  We'd like to avoid relying on a compiled Boost library
+    # whenever possible, so we need to check for it step by step.
+    #
+    # NOTE: another fix of this problem is to simply require newer versions of
+    # boost.  If we choose that solution we should simplify the following tricky
+    # checks accordingly and all Makefile.am's that refer to NEED_LIBBOOST_THREAD.
+    AC_MSG_CHECKING(for boost::mutex)
+    CPPFLAGS_SAVES="$CPPFLAGS"
+    LIBS_SAVES="$LIBS"
+    CPPFLAGS="$BOOST_INCLUDES $CPPFLAGS $MULTITHREADING_FLAG"
+    need_libboost_thread=0
+    need_sunpro_workaround=0
+    AC_TRY_LINK([
+    #include <boost/thread.hpp>
+    ],[
+    boost::mutex m;
+    ],
+        [ AC_MSG_RESULT(yes (without libboost_thread)) ],
+        # there is one specific problem with SunStudio 5.10
+        # where including boost/thread causes a compilation failure
+        # There is a workaround in boost but it checks the version not being 5.10
+        # This will probably be fixed in the future, in which case this
+        # is only a temporary workaround
+        [ AC_TRY_LINK([
+    #if defined(__SUNPRO_CC) && __SUNPRO_CC == 0x5100
+    #undef __SUNPRO_CC
+    #define __SUNPRO_CC 0x5090
+    #endif
+    #include <boost/thread.hpp>
+    ],[
+    boost::mutex m;
+    ],
+        [ AC_MSG_RESULT(yes (with SUNOS workaround))
+          need_sunpro_workaround=1 ],
+            [ LIBS=" $LIBS -lboost_thread"
+          AC_TRY_LINK([
+    #include <boost/thread.hpp>
+    ],[
+    boost::mutex m;
+    ],
+              [ AC_MSG_RESULT(yes (with libboost_thread))
+                need_libboost_thread=1 ],
+              [ AC_MSG_RESULT(no)
+                AC_MSG_ERROR([boost::mutex cannot be linked in this build environment.
+    Perhaps you are using an older version of Boost that requires libboost_thread for the mutex support, which does not appear to be available.
+    You may want to check the availability of the library or to upgrade Boost.])
+              ])])])
+    CPPFLAGS="$CPPFLAGS_SAVES"
+    LIBS="$LIBS_SAVES"
+    AM_CONDITIONAL(NEED_LIBBOOST_THREAD, test $need_libboost_thread = 1)
+    if test $need_sunpro_workaround = 1; then
+        AC_DEFINE([NEED_SUNPRO_WORKAROUND], [], [Need boost sunstudio workaround])
+    fi
+else
+    AM_CONDITIONAL(NEED_LIBBOOST_THREAD, test "${use_boost_threads}" = "yes")
+fi
+
 
 #
 # Check availability of gtest, which will be used for unit tests.
@@ -388,12 +531,17 @@ PTHREAD_LDFLAGS=
 AC_CHECK_LIB(pthread, pthread_create,[ PTHREAD_LDFLAGS=-lpthread ], [])
 AC_SUBST(PTHREAD_LDFLAGS)
 
+AC_SUBST(MULTITHREADING_FLAG)
+
 #
 # ASIO: we extensively use it as the C++ event management module.
 #
 # Use local ASIO headers from ext
 #
 CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/asio"
+#
+# Use our 'coroutine' header from ext
+CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/coroutine"
 #
 # Disable threads: Currently we don't use them.
 CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_THREADS=1"
@@ -428,7 +576,7 @@ fi
 # So, for the moment, we simply disable the use of /dev/poll.  Unless we
 # implement recursive DNS server with randomized ports, we don't need the
 # scalability that /dev/poll can provide, so this decision wouldn't affect
-# run time performance.  Hpefully we can find a better solution or the ASIO
+# run time performance.  Hopefully we can find a better solution or the ASIO
 # code will be updated by the time we really need it.
 AC_CHECK_HEADERS(sys/devpoll.h, ac_cv_have_devpoll=yes, ac_cv_have_devpoll=no)
 if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GXX" = "Xyes"; then
@@ -447,6 +595,8 @@ AC_ARG_ENABLE(install-configurations,
 AM_CONDITIONAL(INSTALL_CONFIGURATIONS, test x$install_configurations = xyes || test x$install_configurations = xtrue)
 
 AC_CONFIG_FILES([Makefile
+                 doc/Makefile
+                 doc/guide/Makefile
                  src/Makefile
                  src/bin/Makefile
                  src/bin/bind10/Makefile
@@ -465,9 +615,9 @@ AC_CONFIG_FILES([Makefile
                  src/bin/msgq/tests/Makefile
                  src/bin/auth/Makefile
                  src/bin/auth/tests/Makefile
-                 src/bin/auth/tests/testdata/Makefile
                  src/bin/auth/benchmarks/Makefile
-                 src/bin/recurse/Makefile
+                 src/bin/resolver/Makefile
+                 src/bin/resolver/tests/Makefile
                  src/bin/xfrin/Makefile
                  src/bin/xfrin/tests/Makefile
                  src/bin/xfrout/Makefile
@@ -484,6 +634,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/usermgr/Makefile
                  src/bin/tests/Makefile
                  src/lib/Makefile
+                 src/lib/asiolink/Makefile
+                 src/lib/asiolink/tests/Makefile
                  src/lib/bench/Makefile
                  src/lib/bench/example/Makefile
                  src/lib/bench/tests/Makefile
@@ -518,8 +670,20 @@ AC_CONFIG_FILES([Makefile
                  src/lib/datasrc/Makefile
                  src/lib/datasrc/tests/Makefile
                  src/lib/xfr/Makefile
+                 src/lib/log/Makefile
+                 src/lib/log/compiler/Makefile
+                 src/lib/log/tests/Makefile
+                 src/lib/resolve/Makefile
+                 src/lib/resolve/tests/Makefile
+                 src/lib/testutils/Makefile
+                 src/lib/testutils/testdata/Makefile
+                 src/lib/nsas/Makefile
+                 src/lib/nsas/tests/Makefile
+                 src/lib/cache/Makefile
+                 src/lib/cache/tests/Makefile
                ])
-AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
+AC_OUTPUT([doc/version.ent
+           src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cfgmgr/tests/b10-cfgmgr_test.py
            src/bin/cmdctl/cmdctl.py
            src/bin/cmdctl/run_b10-cmdctl.sh
@@ -532,9 +696,8 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/xfrout/xfrout.spec.pre
            src/bin/xfrout/tests/xfrout_test
            src/bin/xfrout/run_b10-xfrout.sh
-           src/bin/recurse/recurse.py
-           src/bin/recurse/recurse.spec.pre
-           src/bin/recurse/run_b10-recurse.sh
+           src/bin/resolver/resolver.spec.pre
+           src/bin/resolver/spec_config.h.pre
            src/bin/zonemgr/zonemgr.py
            src/bin/zonemgr/zonemgr.spec.pre
            src/bin/zonemgr/tests/zonemgr_test
@@ -573,11 +736,11 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/lib/dns/tests/testdata/gen-wiredata.py
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
+           src/lib/log/tests/run_time_init_test.sh
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
-           chmod +x src/bin/recurse/run_b10-recurse.sh
            chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
            chmod +x src/bin/stats/tests/stats_test
            chmod +x src/bin/stats/run_b10-stats.sh
@@ -597,6 +760,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/msgq/tests/msgq_test
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
+           chmod +x src/lib/log/tests/run_time_init_test.sh
           ])
 AC_OUTPUT
 
@@ -632,7 +796,8 @@ Features:
 
 Developer:
   Google Tests:  $gtest_path
-  Code Coverage: $USE_LCOV
+  C++ Code Coverage: $USE_LCOV
+  Python Code Coverage: $USE_PYCOVERAGE
   Generate Manuals:  $enable_man
 
 END

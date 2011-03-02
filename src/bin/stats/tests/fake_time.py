@@ -13,7 +13,6 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# $Id$
 __version__ = "$Revision$"
 
 # This is a dummy time class against a Python standard time class.

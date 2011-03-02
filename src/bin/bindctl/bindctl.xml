@@ -17,11 +17,10 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $Id$ -->
 <refentry>
 
   <refentryinfo>
-    <date>March 18, 2010</date>
+    <date>December 23, 2010</date>
   </refentryinfo>
 
   <refmeta>
@@ -45,6 +44,15 @@
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>bindctl</command>
+      <arg><option>-a <replaceable>address</replaceable></option></arg>
+      <arg><option>-h</option></arg>
+      <arg><option>-c <replaceable>file</replaceable></option></arg>
+      <arg><option>-p <replaceable>number</replaceable></option></arg>
+      <arg><option>--address <replaceable>address</replaceable></option></arg>
+      <arg><option>--help</option></arg>
+      <arg><option>--certificate-chain <replaceable>file</replaceable></option></arg>
+      <arg><option>--port <replaceable>number</replaceable></option></arg>
+      <arg><option>--version</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -60,7 +68,7 @@
     </para>
 
     <para>
-      <command>bindctl</command> communicates over the REST-ful
+      <command>bindctl</command> communicates over a HTTPS REST-ful
       interface provided by
       <citerefentry><refentrytitle>b10-cmdctl</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
       The
@@ -68,12 +76,88 @@
       daemon stores the configurations and defines the commands.
     </para>
 
+  </refsect1>
+
+  <refsect1>
+    <title>ARGUMENTS</title>
+
+    <para>The arguments are as follows:</para>
+
+    <variablelist>
+
+      <varlistentry>
+        <term><option>-a</option> <replaceable>address</replaceable>, <option>--address</option> <replaceable>address</replaceable></term>
+
+        <listitem>
+          <para>The IPv4 or IPv6 address to use to connect to the running
+            <citerefentry><refentrytitle>b10-cmdctl</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+            daemon.
+            The default is 127.0.0.1.
+          </para>
+         </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-c</option> <replaceable>file</replaceable>,
+        <option>--certificate-chain</option> <replaceable>file</replaceable></term>
+
+        <listitem>
+          <para>The PEM formatted server certificate validation chain file.
+          </para>
+<!-- TODO: any default? -->
+<!-- TODO: any way to choose this for cmdctl? -->
+         </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-h</option>,
+          <option>--help</option></term>
+        <listitem><para>
+          Display command usage.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-p</option> <replaceable>number</replaceable>, <option>--port</option> <replaceable>number</replaceable></term>
+
+        <listitem>
+          <para>The port number to use to connect to the running
+            <citerefentry><refentrytitle>b10-cmdctl</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+            daemon.
+            The default is 8080.</para>
+<!-- TODO: -->
+            <note><simpara>This default port number may change.</simpara></note>
+         </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+          <option>--version</option></term>
+        <listitem><para>
+          Display the version number and exit.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </refsect1>
+
+  <refsect1>
+    <title>AUTHENTICATION</title>
+
     <para>
       The tool will authenticate using a username and password.
       On the first successful login, it will save the details to
       <filename>~/.bind10/default_user.csv</filename>
       which will be used for later uses of <command>bindctl</command>.
     </para>
+
+<!-- TODO: mention HTTPS? -->
+
+  </refsect1>
+
+  <refsect1>
+    <title>USAGE</title>
 
     <para>
       The <command>bindctl</command> prompt shows

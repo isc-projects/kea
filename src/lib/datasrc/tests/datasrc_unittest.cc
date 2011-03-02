@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <stdint.h>
 
 #include <iostream>
@@ -877,10 +875,30 @@ TEST_F(DataSrcTest, NSECZonecutOfNonsecureZone) {
     EXPECT_TRUE(it->isLast());
 }
 
-TEST_F(DataSrcTest, RootDSQuery) {
+// Test sending a DS query to root (nonsense, but it should survive)
+TEST_F(DataSrcTest, RootDSQuery1) {
     EXPECT_NO_THROW(createAndProcessQuery(Name("."), RRClass::IN(),
                                           RRType::DS()));
     headerCheck(msg, Rcode::REFUSED(), true, false, true, 0, 0, 0);
+}
+
+// The same, but when we have the root zone
+// (which triggers rfc4035 section 3.1.4.1)
+TEST_F(DataSrcTest, RootDSQuery2) {
+    // The message
+    msg.makeResponse();
+    msg.setOpcode(Opcode::QUERY());
+    msg.addQuestion(Question(Name("."), RRClass::IN(), RRType::DS()));
+    msg.setHeaderFlag(Message::HEADERFLAG_RD);
+    // Prepare the source
+    DataSrcPtr sql3_source = DataSrcPtr(new Sqlite3DataSrc);
+    ConstElementPtr sqlite_root = Element::fromJSON(
+        "{ \"database_file\": \"" TEST_DATA_DIR "/test-root.sqlite3\"}");
+    EXPECT_NO_THROW(sql3_source->init(sqlite_root));
+    // Make the query
+    EXPECT_NO_THROW(performQuery(*sql3_source, cache, msg));
+
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 0, 1, 0);
 }
 
 TEST_F(DataSrcTest, DSQueryFromCache) {

@@ -24,7 +24,7 @@ from hashlib import sha1
 import csv
 import getpass
 import getopt
-import sys
+import sys; sys.path.append ('@@PYTHONPATH@@')
 import isc.util.process
 
 isc.util.process.rename()

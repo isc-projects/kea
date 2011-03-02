@@ -1,5 +1,5 @@
 #
-# A QUERY message with unsupported version of EDNS..
+# A QUERY message with unsupported version of EDNS.
 #
 
 [header]
