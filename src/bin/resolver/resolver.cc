@@ -96,7 +96,7 @@ public:
         }
     }
 
-    void setForwardAddresses(const vector<AddressPair>& upstream,
+    void setForwardAddresses(const AddressList& upstream,
         DNSService *dnss)
     {
         upstream_ = upstream;
@@ -113,7 +113,7 @@ public:
         }
     }
 
-    void setRootAddresses(const vector<AddressPair>& upstream_root,
+    void setRootAddresses(const AddressList& upstream_root,
                           DNSService *dnss)
     {
         upstream_root_ = upstream_root;
@@ -144,11 +144,11 @@ public:
     /// These members are public because Resolver accesses them directly.
     ModuleCCSession* config_session_;
     /// Addresses of the root nameserver(s)
-    vector<AddressPair> upstream_root_;
+    AddressList upstream_root_;
     /// Addresses of the forward nameserver
-    vector<AddressPair> upstream_;
+    AddressList upstream_;
     /// Addresses we listen on
-    vector<AddressPair> listen_;
+    AddressList listen_;
 
     /// Timeout for outgoing queries in milliseconds
     int query_timeout_;
@@ -460,13 +460,13 @@ Resolver::updateConfig(ConstElementPtr config) {
     try {
         // Parse forward_addresses
         ConstElementPtr rootAddressesE(config->get("root_addresses"));
-        vector<AddressPair> rootAddresses(parseAddresses(rootAddressesE,
+        AddressList rootAddresses(parseAddresses(rootAddressesE,
                                                     "root_addresses"));
         ConstElementPtr forwardAddressesE(config->get("forward_addresses"));
-        vector<AddressPair> forwardAddresses(parseAddresses(forwardAddressesE,
-                                                       "forward_addresse"));
+        AddressList forwardAddresses(parseAddresses(forwardAddressesE,
+                                                       "forward_addresses"));
         ConstElementPtr listenAddressesE(config->get("listen_on"));
-        vector<AddressPair> listenAddresses(parseAddresses(listenAddressesE,
+        AddressList listenAddresses(parseAddresses(listenAddressesE,
                                                       "listen_on"));
         bool set_timeouts(false);
         int qtimeout = impl_->query_timeout_;
@@ -540,13 +540,13 @@ Resolver::updateConfig(ConstElementPtr config) {
 }
 
 void
-Resolver::setForwardAddresses(const vector<AddressPair>& addresses)
+Resolver::setForwardAddresses(const AddressList& addresses)
 {
     impl_->setForwardAddresses(addresses, dnss_);
 }
 
 void
-Resolver::setRootAddresses(const vector<AddressPair>& addresses)
+Resolver::setRootAddresses(const AddressList& addresses)
 {
     impl_->setRootAddresses(addresses, dnss_);
 }
@@ -556,18 +556,18 @@ Resolver::isForwarding() const {
     return (!impl_->upstream_.empty());
 }
 
-vector<AddressPair>
+AddressList
 Resolver::getForwardAddresses() const {
     return (impl_->upstream_);
 }
 
-vector<AddressPair>
+AddressList
 Resolver::getRootAddresses() const {
     return (impl_->upstream_root_);
 }
 
 void
-Resolver::setListenAddresses(const vector<AddressPair>& addresses) {
+Resolver::setListenAddresses(const AddressList& addresses) {
     installListenAddresses(addresses, impl_->listen_, *dnss_);
 }
 
@@ -604,7 +604,7 @@ Resolver::getRetries() const {
     return impl_->retries_;
 }
 
-vector<AddressPair>
+AddressList
 Resolver::getListenAddresses() const {
     return (impl_->listen_);
 }
