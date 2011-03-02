@@ -184,6 +184,10 @@ private:
         if (cache_.lookup(question_.getName(), question_.getType(),
                           question_.getClass(), cached_message)) {
             dlog("Message found in cache, returning that");
+            // Should these be set by the cache too?
+            cached_message.setOpcode(Opcode::QUERY());
+            cached_message.setRcode(Rcode::NOERROR());
+            cached_message.setHeaderFlag(Message::HEADERFLAG_QR);
             if (handleRecursiveAnswer(cached_message)) {
                 callCallback(true);
                 stop();
@@ -261,11 +265,6 @@ private:
 
         bool found_ns_address = false;
             
-        // If the packet is OK, store it in the cache
-        //if (!isc::resolve::ResponseClassifier::error(category)) {
-        //    cache_.update(incoming);
-        //}
-
         switch (category) {
         case isc::resolve::ResponseClassifier::ANSWER:
         case isc::resolve::ResponseClassifier::ANSWERCNAME:
@@ -358,6 +357,7 @@ private:
         case isc::resolve::ResponseClassifier::RCODE:
         case isc::resolve::ResponseClassifier::TRUNCATED:
             dlog("Error in response, returning SERVFAIL");
+            std::cout << "Error: " << category << std::endl;
             // Should we try a different server rather than SERVFAIL?
             makeSERVFAIL();
             return true;
@@ -467,6 +467,9 @@ public:
             // does mean that we overwrite the messages we stored in
             // the previous iteration if we are following a delegation.
             if (success) {
+                if (answer_message_->getRcode() == Rcode::NOERROR()) {
+                    cache_.update(*answer_message_);
+                }
                 resolvercallback_->success(answer_message_);
             } else {
                 resolvercallback_->failure();
