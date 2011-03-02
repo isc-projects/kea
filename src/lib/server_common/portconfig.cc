@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "portconfig.h"
+#include <server_common/portconfig.h>
 
 #include <asiolink/io_address.h>
 #include <asiolink/dns_service.h>
