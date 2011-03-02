@@ -17,6 +17,7 @@
 #include <string>
 #include <gtest/gtest.h>
 #include <dns/rrset.h>
+#include <dns/rcode.h>
 #include "resolver_cache.h"
 #include "cache_test_messagefromfile.h"
 
@@ -115,6 +116,23 @@ TEST_F(NegativeCacheTest, testNXDOMAINWithoutSOA){
     EXPECT_FALSE(cache->lookup(non_exist_qname, RRType::A(), RRClass::IN(), msg_nxdomain));
 }
 
+TEST_F(NegativeCacheTest, testNXDOMAINCname){
+    // a.example.org points to b.example.org
+    // b.example.org points to c.example.org
+    // c.example.org does not exist
+    Message msg_nxdomain_cname(Message::PARSE);
+    messageFromFile(msg_nxdomain_cname, "message_nxdomain_cname.wire");
+    cache->update(msg_nxdomain_cname);
+
+    msg_nxdomain_cname.makeResponse();
+
+    Name a_example_org("a.example.org.");
+    // The message should be cached
+    EXPECT_TRUE(cache->lookup(a_example_org, RRType::A(), RRClass::IN(), msg_nxdomain_cname));
+
+    EXPECT_EQ(msg_nxdomain_cname.getRcode().getCode(), Rcode::NXDOMAIN().getCode());
+}
+
 TEST_F(NegativeCacheTest, testNoerrorNodata){
     // NODATA/NOERROR response for MX type query of example.com
     Message msg_nodata(Message::PARSE);
@@ -162,6 +180,21 @@ TEST_F(NegativeCacheTest, testNoerrorNodata){
     // The TTL should equal to the TTL of negative response SOA record
     const RRTTL& nodata_ttl2 = rrset_ptr->getTTL();
     EXPECT_EQ(nodata_ttl2.getValue(), 86400);
+}
+
+TEST_F(NegativeCacheTest, testReferralResponse){
+    // CNAME exist, but it points to out of zone data, so the server give some reference data
+    Message msg_cname_referral(Message::PARSE);
+    messageFromFile(msg_cname_referral, "message_cname_referral.wire");
+    cache->update(msg_cname_referral);
+
+    msg_cname_referral.makeResponse();
+
+    Name x_example_org("x.example.org.");
+    EXPECT_TRUE(cache->lookup(x_example_org, RRType::A(), RRClass::IN(), msg_cname_referral));
+
+    // The Rcode should be NOERROR
+    EXPECT_EQ(msg_cname_referral.getRcode().getCode(), Rcode::NOERROR().getCode());
 }
 
 }
