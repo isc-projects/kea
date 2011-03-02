@@ -40,6 +40,8 @@
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 
+#include <resolve/recursive_query.h>
+
 #include <log/dummylog.h>
 
 #include <resolver/resolver.h>
