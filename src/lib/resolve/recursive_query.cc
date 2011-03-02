@@ -147,12 +147,8 @@ private:
 
     // TODO: replace by our wrapper
     asio::deadline_timer client_timer;
-    bool client_timer_canceled_;
     asio::deadline_timer lookup_timer;
-    bool lookup_timer_canceled_;
 
-    size_t queries_out_;
-    
     // If we timed out ourselves (lookup timeout), stop issuing queries
     bool done_;
 
@@ -204,7 +200,6 @@ private:
         // the RTT
         current_ns_address = address;
         gettimeofday(&current_ns_qsent_time, NULL);
-        ++queries_out_;
         ++outstanding_events_;
         IOFetch query(IPPROTO_UDP, io_, question_,
             current_ns_address.getAddress(),
@@ -221,7 +216,6 @@ private:
             int serverIndex = rand() % uc;
             dlog("Sending upstream query (" + question_.toText() +
                 ") to " + upstream_->at(serverIndex).first);
-            ++queries_out_;
             ++outstanding_events_;
             IOFetch query(IPPROTO_UDP, io_, question_,
                 upstream_->at(serverIndex).first,
@@ -398,10 +392,7 @@ public:
         query_timeout_(query_timeout),
         retries_(retries),
         client_timer(io.get_io_service()),
-        client_timer_canceled_(false),
         lookup_timer(io.get_io_service()),
-        lookup_timer_canceled_(false),
-        queries_out_(0),
         done_(false),
         callback_called_(false),
         nsas_(nsas),
@@ -501,7 +492,6 @@ public:
     // This function is used as callback from DNSQuery.
     virtual void operator()(IOFetch::Result result) {
         // XXX is this the place for TCP retry?
-        --queries_out_;
         --outstanding_events_;
         
         if (!done_ && result != IOFetch::TIME_OUT) {
