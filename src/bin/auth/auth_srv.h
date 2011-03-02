@@ -362,7 +362,7 @@ public:
     const isc::server_common::portconfig::AddressList& getListenAddresses()
         const;
 
-    /// \brief Assign an ASIO DNS Service queue to this Resolver object
+    /// \brief Assign an ASIO DNS Service queue to this Auth object
     void setDNSService(asiolink::DNSService& dnss);
 
 
