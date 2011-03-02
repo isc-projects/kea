@@ -152,7 +152,7 @@ class XfroutSession():
         # specific zone, we need to judge if the zone has an SOA record;
         # if not, we consider the zone has incomplete data, so xfrout can't
         # serve for it.
-        if sqlite3_ds.get_zone_soa(zone, self.server.get_db_file()):
+        if sqlite3_ds.get_zone_soa(zone, self._server.get_db_file()):
             return True
 
         return False
@@ -164,7 +164,7 @@ class XfroutSession():
         # authority for the specific zone.
         # TODO: should get zone's configuration from cfgmgr or other place
         # in future.
-        return sqlite3_ds.zone_exist(zonename, self.server.get_db_file())
+        return sqlite3_ds.zone_exist(zonename, self._server.get_db_file())
 
     def _check_xfrout_available(self, zone_name):
         '''Check if xfr request can be responsed.
