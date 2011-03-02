@@ -39,7 +39,7 @@ FAILED=
 
 # Find all the tests (yes, doing it by a name is a nasty hack)
 # Since the while runs in a subprocess, we need to get the assignments out, done by the eval
-eval $(find . -type f -executable -name run_unittests -print | grep -v '\.libs/run_unittests$' | while read testname ; do
+eval $(find . -type f -name run_unittests -print | grep -v '\.libs/run_unittests$' | while read testname ; do
     sed -e 's#exec "#exec valgrind '"$FLAGS"' "#' "$testname" > "$testname.valgrind"
     chmod +x "$testname.valgrind"
     echo "$testname" >>"$LOGFILE"
@@ -64,7 +64,7 @@ eval $(find . -type f -executable -name run_unittests -print | grep -v '\.libs/r
     echo 'FOUND_ANY=true'
 done)
 
-if [ -n "$FAILED" ] ; then
+if test -n "$FAILED"; then
     echo "These tests failed:" >&2
     echo "$FAILED" >&2
 fi
