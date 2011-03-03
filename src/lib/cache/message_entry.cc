@@ -18,9 +18,9 @@
 
 #include <limits>
 #include <dns/message.h>
-#include <dns/rcode.h>
 #include <nsas/nsas_entry.h>
 #include "message_entry.h"
+#include "message_utility.h"
 #include "rrset_cache.h"
 
 using namespace isc::dns;
@@ -242,8 +242,8 @@ MessageEntry::parseNegativeResponseAuthoritySection(const isc::dns::Message& msg
                                                    Message::SECTION_AUTHORITY);
         boost::shared_ptr<RRsetCache> rrset_cache_ptr = rrset_cache_;
         if (rrset_ptr->getType() == RRType::SOA()) {
-            rrset_cache_ptr.reset(negative_soa_cache_);
-        } 
+            rrset_cache_ptr = negative_soa_cache_;
+        }
 
         RRsetEntryPtr rrset_entry = rrset_cache_ptr->update(*rrset_ptr, level);
         rrsets_.push_back(RRsetRef(rrset_ptr->getName(),
@@ -274,60 +274,17 @@ MessageEntry::initMessageEntry(const isc::dns::Message& msg) {
     query_class_ = (*iter)->getClass().getCode();
 
     uint32_t min_ttl = MAX_UINT32;
-    if (!isNegativeResponse(msg)){
-        parseSection(msg, Message::SECTION_ANSWER, min_ttl, answer_count_);
+
+    parseSection(msg, Message::SECTION_ANSWER, min_ttl, answer_count_);
+    if (!MessageUtility::isNegativeResponse(msg)){
         parseSection(msg, Message::SECTION_AUTHORITY, min_ttl, authority_count_);
-        parseSection(msg, Message::SECTION_ADDITIONAL, min_ttl, additional_count_);
     } else {
-        // For negative response, if no soa RRset is found in authority 
-        // section, don't cache it
-        if (!hasTheRecordInAuthoritySection(msg, RRType::SOA())) {
-            return;
-        }
-
         parseNegativeResponseAuthoritySection(msg, min_ttl, authority_count_);
-        parseSection(msg, Message::SECTION_ANSWER, min_ttl, answer_count_);
-        parseSection(msg, Message::SECTION_ADDITIONAL, min_ttl, additional_count_);
-
     }
+    parseSection(msg, Message::SECTION_ADDITIONAL, min_ttl, additional_count_);
+
     expire_time_ = time(NULL) + min_ttl;
-}
-
-bool
-MessageEntry::isNegativeResponse(const isc::dns::Message& msg)
-{
-    if (msg.getRcode() == Rcode::NXDOMAIN()) {
-        return (true);
-    } else if (msg.getRcode() == Rcode::NOERROR()) {
-        // no data in the answer section
-        if (msg.getRRCount(Message::SECTION_ANSWER) == 0) {
-            // NODATA type 1/ type 2 (ref sec2.2 of RFC2308) 
-            if (hasTheRecordInAuthoritySection(msg, RRType::SOA())) {
-                return (true);
-            } else if (!hasTheRecordInAuthoritySection(msg, RRType::NS())) { // NODATA type 3 (sec2.2 of RFC2308)
-                return (true);
-            }
-        }
-    }
-
-    return (false);
-}
-
-bool
-MessageEntry::hasTheRecordInAuthoritySection(const isc::dns::Message& msg, const isc::dns::RRType& type)
-{
-    for (RRsetIterator iter = msg.beginSection(Message::SECTION_AUTHORITY);
-            iter != msg.endSection(Message::SECTION_AUTHORITY);
-            ++iter) {
-        RRsetPtr rrset_ptr = *iter;
-        if (rrset_ptr->getType() == type) {
-            return (true);
-        }
-    }
-    return (false);
 }
 
 } // namespace cache
 } // namespace isc
-
-
