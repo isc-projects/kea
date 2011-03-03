@@ -35,8 +35,7 @@ ResolverClassCache::ResolverClassCache(const RRClass& cache_class) :
     rrsets_cache_ = RRsetCachePtr(new RRsetCache(RRSET_CACHE_DEFAULT_SIZE,
                                                  cache_class_.getCode()));
     // SOA rrset cache from negative response
-    negative_soa_cache_ = RRsetCachePtr(new
-                        RRsetCache(NEGATIVE_RRSET_CACHE_DEFAULT_SIZE, cache_class_.getCode()));
+    negative_soa_cache_ = RRsetCachePtr(new RRsetCache(NEGATIVE_RRSET_CACHE_DEFAULT_SIZE, cache_class_.getCode()));
 
     messages_cache_ = MessageCachePtr(new MessageCache(rrsets_cache_,
                                       MESSAGE_CACHE_DEFAULT_SIZE,
@@ -52,8 +51,7 @@ ResolverClassCache::ResolverClassCache(CacheSizeInfo cache_info) :
     rrsets_cache_ = RRsetCachePtr(new
                         RRsetCache(cache_info.rrset_cache_size, klass));
     // SOA rrset cache from negative response
-    negative_soa_cache_ = RRsetCachePtr(new
-                        RRsetCache(cache_info.rrset_cache_size, klass));
+    negative_soa_cache_ = RRsetCachePtr(new RRsetCache(cache_info.rrset_cache_size, klass));
 
     messages_cache_ = MessageCachePtr(new MessageCache(rrsets_cache_,
                                       cache_info.message_cache_size,
@@ -62,7 +60,7 @@ ResolverClassCache::ResolverClassCache(CacheSizeInfo cache_info) :
 
 const RRClass&
 ResolverClassCache::getClass() const {
-    return cache_class_;
+    return (cache_class_);
 }
 
 bool
@@ -243,10 +241,10 @@ ResolverClassCache*
 ResolverCache::getClassCache(const isc::dns::RRClass& cache_class) const {
     for (int i = 0; i < class_caches_.size(); ++i) {
         if (class_caches_[i]->getClass() == cache_class) {
-            return class_caches_[i];
+            return (class_caches_[i]);
         }
     }
-    return NULL;
+    return (NULL);
 }
 
 } // namespace cache

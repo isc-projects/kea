@@ -82,7 +82,7 @@ MessageEntry::addRRset(isc::dns::Message& message,
         end_index = start_index + additional_count_;
     }
 
-    for(uint16_t index = start_index; index < end_index; ++index) {
+    for (uint16_t index = start_index; index < end_index; ++index) {
         message.addRRset(section, rrset_entry_vec[index]->getRRset(), dnssec_need);
     }
 }
@@ -235,9 +235,9 @@ MessageEntry::parseNegativeResponseAuthoritySection(const isc::dns::Message& msg
 
     // We found the SOA record, so we can cache the message and RRsets in the cache
     uint16_t count = 0;
-    for(RRsetIterator iter = msg.beginSection(Message::SECTION_AUTHORITY);
+    for (RRsetIterator iter = msg.beginSection(Message::SECTION_AUTHORITY);
             iter != msg.endSection(Message::SECTION_AUTHORITY);
-            ++iter){
+            ++iter) {
         RRsetPtr rrset_ptr = *iter;
         RRsetTrustLevel level = getRRsetTrustLevel(msg, rrset_ptr, Message::SECTION_AUTHORITY);
         uint32_t rrset_ttl = 0;
@@ -283,7 +283,7 @@ MessageEntry::initMessageEntry(const isc::dns::Message& msg) {
         uint16_t rrset_count = 0;
 
         // For negative response, if no soa RRset is found in authority section, dont cache it
-        if(!hasTheRecordInAuthoritySection(msg, RRType::SOA())){
+        if (!hasTheRecordInAuthoritySection(msg, RRType::SOA())) {
             return;
         }
 
@@ -301,35 +301,35 @@ MessageEntry::initMessageEntry(const isc::dns::Message& msg) {
 bool
 MessageEntry::isNegativeResponse(const isc::dns::Message& msg)
 {
-    if(msg.getRcode() == Rcode::NXDOMAIN()){
-        return true;
-    } else if (msg.getRcode() == Rcode::NOERROR()){
+    if (msg.getRcode() == Rcode::NXDOMAIN()) {
+        return (true);
+    } else if (msg.getRcode() == Rcode::NOERROR()) {
         // no data in the answer section
-        if (msg.getRRCount(Message::SECTION_ANSWER) == 0){
+        if (msg.getRRCount(Message::SECTION_ANSWER) == 0) {
             // NODATA type 1/ type 2 (ref sec2.2 of RFC2308) 
-            if(hasTheRecordInAuthoritySection(msg, RRType::SOA())){
-                return true;
-            } else if (!hasTheRecordInAuthoritySection(msg, RRType::NS())){ // NODATA type 3 (sec2.2 of RFC2308)
-                return true;
+            if (hasTheRecordInAuthoritySection(msg, RRType::SOA())) {
+                return (true);
+            } else if (!hasTheRecordInAuthoritySection(msg, RRType::NS())) { // NODATA type 3 (sec2.2 of RFC2308)
+                return (true);
             }
         }
     }
 
-    return false;
+    return (false);
 }
 
 bool
 MessageEntry::hasTheRecordInAuthoritySection(const isc::dns::Message& msg, const isc::dns::RRType& type)
 {
-    for(RRsetIterator iter = msg.beginSection(Message::SECTION_AUTHORITY);
+    for (RRsetIterator iter = msg.beginSection(Message::SECTION_AUTHORITY);
             iter != msg.endSection(Message::SECTION_AUTHORITY);
-            ++iter){
+            ++iter) {
         RRsetPtr rrset_ptr = *iter;
-        if (rrset_ptr->getType() == type){
-            return true;
+        if (rrset_ptr->getType() == type) {
+            return (true);
         }
     }
-    return false;
+    return (false);
 }
 
 } // namespace cache
