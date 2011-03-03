@@ -168,20 +168,6 @@ protected:
     //@}
 
 private:
-    /// \brief Check whetehr the message is a negative response
-    ///        (NXDOMAIN or NOERROR_NODATA)
-    ///
-    /// \param msg The response message
-    bool isNegativeResponse(const isc::dns::Message& msg);
-
-    /// \brief Check whether there is some type of record in
-    ///        Authority section
-    ///
-    /// \param msg The response message to be checked
-    /// \param type The RR type that need to check
-    bool hasTheRecordInAuthoritySection(const isc::dns::Message& msg,
-                                        const isc::dns::RRType& type);
-
     std::string entry_name_; // The name for this entry(name + type)
     HashKey* hash_key_ptr_;  // the key for messag entry in hash table.
 

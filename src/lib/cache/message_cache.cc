@@ -20,14 +20,16 @@
 #include <nsas/hash_table.h>
 #include <nsas/hash_deleter.h>
 #include "message_cache.h"
+#include "message_utility.h"
 #include "cache_entry_key.h"
+
+namespace isc {
+namespace cache {
 
 using namespace isc::nsas;
 using namespace isc::dns;
 using namespace std;
-
-namespace isc {
-namespace cache {
+using namespace MessageUtility;
 
 MessageCache::MessageCache(boost::shared_ptr<RRsetCache> rrset_cache,
     uint32_t cache_size, uint16_t message_class, boost::shared_ptr<RRsetCache> negative_soa_cache):
@@ -58,6 +60,12 @@ MessageCache::lookup(const isc::dns::Name& qname,
 
 bool
 MessageCache::update(const Message& msg) {
+    // If the message is a negative response, but no SOA record is found in
+    // the authority section, the message cannot be cached
+    if (isNegativeResponse(msg) && !hasTheRecordInAuthoritySection(msg, RRType::SOA())){
+        return (false);
+    }
+
     QuestionIterator iter = msg.beginQuestion();
     std::string entry_name = genCacheEntryName((*iter)->getName(), (*iter)->getType());
     HashKey entry_key = HashKey(entry_name, RRClass(message_class_));
