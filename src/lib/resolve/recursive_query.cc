@@ -117,11 +117,11 @@ private:
     // we should differentiate between forwarding and resolving
     boost::shared_ptr<AddressVector> upstream_;
 
-    // Buffer to store the result.
+    // Buffer to store the intermediate results.
     OutputBufferPtr buffer_;
 
-    // Server to notify when we succeed or fail
-    //shared_ptr<DNSServer> server_;
+    // The callback will be called when we have either decided we
+    // are done, or when we give up
     isc::resolve::ResolverInterface::CallbackPtr resolvercallback_;
 
     // To prevent both unreasonably long cname chains and cname loops,
@@ -134,7 +134,7 @@ private:
      * TODO Do something more clever with timeouts. In the long term, some
      *     computation of average RTT, increase with each retry, etc.
      */
-    // Timeout information
+    // Timeout information for outgoing queries
     int query_timeout_;
     unsigned retries_;
 
@@ -152,9 +152,9 @@ private:
     // If we timed out ourselves (lookup timeout), stop issuing queries
     bool done_;
 
-    // If we have a client timeout, we send back an answer, but don't
-    // stop. We use this variable to make sure we don't send another
-    // answer if we do find one later (or if we have a lookup_timeout)
+    // If we have a client timeout, we call back with a failure message,
+    // but we do not stop yet. We use this variable to make sure we 
+    // don't call back a second time later
     bool callback_called_;
 
     // Reference to our NSAS
@@ -163,15 +163,38 @@ private:
     // Reference to our cache
     isc::cache::ResolverCache& cache_;
     
-    // the 'current' nameserver we have a query out to
+    // the 'current' zone we are in (i.e.) we start out at the root,
+    // and for each delegation this gets updated with the zone the
+    // delegation points to
     std::string cur_zone_;
+    
+    // This is the handler we pass on to the NSAS; it is called when
+    // the NSAS has an address for us to query
     boost::shared_ptr<ResolverNSASCallback> nsas_callback_;
+
     // this is set to true if we have asked the nsas to give us
-    // an address and we are waiting for it to call us back
+    // an address and we are waiting for it to call us back.
+    // We use is to cancel the outstanding callback in case we
+    // have a lookup timeout and decide to give up
     bool nsas_callback_out_;
+
+    // This is the nameserver we have an outstanding query to.
+    // It is used to update the RTT once the query returns
     isc::nsas::NameserverAddress current_ns_address;
+
+    // The moment in time we sent a query to the nameserver above.
     struct timeval current_ns_qsent_time;
     
+    // RunningQuery deletes itself when it is done. In order for us
+    // to do this safely, we must make sure that there are no events
+    // that might call back to it. There are two types of events in
+    // this sense; the timers we set ourselves (lookup and client),
+    // and outstanding queries to nameservers. When each of these is
+    // started, we increase this value. When they fire, it is decreased
+    // again. We cannot delete ourselves until this value is back to 0.
+    //
+    // Note that the NSAS callback is *not* seen as an outstanding
+    // event; we can cancel the NSAS callback safely.
     size_t outstanding_events_;
 
     // perform a single lookup; first we check the cache to see
@@ -199,6 +222,7 @@ private:
         
     }
 
+    // Send the current question to the given nameserver address
     void sendTo(const isc::nsas::NameserverAddress& address) {
         // We need to keep track of the Address, so that we can update
         // the RTT
@@ -212,6 +236,9 @@ private:
         io_.get_io_service().post(query);
     }
     
+    // 'general' send; if we are in forwarder mode, send a query to
+    // a random nameserver in our forwarders list. If we are in
+    // recursive mode, ask the NSAS to give us an address.
     void send() {
         // If are in forwarder mode, send it to a random
         // forwarder. If not, ask the NSAS for an address
@@ -238,16 +265,20 @@ private:
         }
     }
     
+    // Called by our NSAS callback handler so we know we do not have
+    // an outstanding NSAS call anymore.
     void nsasCallbackCalled() {
         nsas_callback_out_ = false;
     }
 
-    // This function is called by operator() if there is an actual
-    // answer from a server and we are in recursive mode
-    // depending on the contents, we go on recursing or return
+    // This function is called by operator() and lookup();
+    // We have an answer either from a nameserver or the cache, and
+    // we do not know yet if this is a final answer we can send back or
+    // that more recursive processing needs to be done.
+    // Depending on the content, we go on recursing or return
     //
-    // Note that the footprint may change as this function may
-    // need to append data to the answer we are building later.
+    // This method also updates the cache, depending on the content
+    // of the message
     //
     // returns true if we are done (either we have an answer or an
     //              error message)
@@ -361,10 +392,10 @@ private:
             return true;
             break;
         }
-        // should not be reached. assert here?
-        // (since we do not have a default in the switch above,
+
+        // Since we do not have a default in the switch above,
         // the compiler should have errored on any missing case
-        // statements
+        // statements.
         assert(false);
         return true;
     }
@@ -426,6 +457,7 @@ public:
             makeSERVFAIL();
             callCallback(true);
         }
+        assert(outstanding_events_ > 0);
         --outstanding_events_;
         stop();
     }
@@ -437,7 +469,11 @@ public:
             makeSERVFAIL();
             callCallback(true);
         }
+        assert(outstanding_events_ > 0);
         --outstanding_events_;
+        if (outstanding_events_ == 0) {
+            stop();
+        }
     }
 
     // If the callback has not been called yet, call it now
@@ -472,6 +508,8 @@ public:
         }
     }
 
+    // We are done. If there are no more outstanding events, we delete
+    // ourselves. If there are any, we do not.
     void stop() {
         done_ = true;
         if (nsas_callback_out_) {
@@ -490,6 +528,7 @@ public:
     // This function is used as callback from DNSQuery.
     virtual void operator()(IOFetch::Result result) {
         // XXX is this the place for TCP retry?
+        assert(outstanding_events_ > 0);
         --outstanding_events_;
         
         if (!done_ && result != IOFetch::TIME_OUT) {
@@ -528,16 +567,16 @@ public:
                 stop();
             }
         } else if (!done_ && retries_--) {
-            // We timed out, but we have some retries, so send again
+            // Query timed out, but we have some retries, so send again
             dlog("Timeout for " + question_.toText() + " to " + current_ns_address.getAddress().toText() + ", resending query");
             if (recursive_mode()) {
                 current_ns_address.updateRTT(isc::nsas::AddressEntry::UNREACHABLE);
             }
             send();
         } else {
-            // out of retries, give up for now
-            dlog("Timeout for " + question_.toText() + " to " + current_ns_address.getAddress().toText() + ", giving up");
-            if (recursive_mode()) {
+            // We are either already done, or out of retries
+            if (recursive_mode() && result == IOFetch::TIME_OUT) {
+                dlog("Timeout for " + question_.toText() + " to " + current_ns_address.getAddress().toText() + ", giving up");
                 current_ns_address.updateRTT(isc::nsas::AddressEntry::UNREACHABLE);
             }
             if (!callback_called_) {

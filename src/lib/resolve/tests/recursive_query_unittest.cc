@@ -335,7 +335,6 @@ protected:
             {}
 
             void resume(const bool done) {
-                std::cout << "[XX] RESUME!" << std::endl;
                 *done_ = done;
                 io_.stop();
             }
