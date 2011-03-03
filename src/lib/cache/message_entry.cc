@@ -28,9 +28,9 @@ namespace {
 
 // Get the shortest existing ancestor which is the owner name of
 // one DNAME record for the given query name.
-// Note: there maybe multiple DNAME records(DNAME chain) in answer section,
-// in most case they are in order, but the code can't depends on it, it has to
-// find the starter by iterating the DNAME chain.
+// Note: there may be multiple DNAME records(DNAME chain) in answer
+// section. In most cases they are in order, but the code can't depend
+// on that, it has to find the starter by iterating the DNAME chain.
 Name
 getDNAMEChainStarter(const Message& message, const Name& query_name) {
     Name dname = query_name;
@@ -171,12 +171,12 @@ MessageEntry::getRRsetTrustLevel(const Message& message,
                      name == getDNAMEChainStarter(message, query_name))) {
                     return (RRSET_TRUST_ANSWER_AA);
                 } else {
-                    // If there is one CNAME record whose ower name is same with
-                    // query name in answer section, the left records in answer
+                    // If there is a CNAME record whose ower name is the same as
+                    // the query name in answer section, the other records in answer
                     // section are non-authoritative, except the starter of DNAME
-                    // chain(only checking CNAME is enough, because if the CNAME
-                    // record is synchronized from one DNAME record, that DNAME
-                    // record must be the starter of DNAME chain).
+                    // chain (only checking CNAME is enough, because if the CNAME
+                    // record is synthesized from a DNAME record, that DNAME
+                    // record must be the starter of the DNAME chain).
                     RRsetIterator iter = message.beginSection(Message::SECTION_ANSWER);
                     while(iter != message.endSection(Message::SECTION_ANSWER)) {
                         if ((*iter)->getType() == RRType::CNAME() &&
