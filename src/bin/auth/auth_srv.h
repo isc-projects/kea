@@ -25,6 +25,7 @@
 #include <config/ccsession.h>
 
 #include <asiolink/asiolink.h>
+#include <server_common/portconfig.h>
 #include <auth/statistics.h>
 
 namespace isc {
@@ -353,11 +354,24 @@ public:
     /// \return the value of the counter.
     uint64_t getCounter(const AuthCounters::CounterType type) const;
 
+    /**
+     * \brief Set and get the addresses we listen on.
+     */
+    void setListenAddresses(const isc::server_common::portconfig::AddressList&
+                            addreses);
+    const isc::server_common::portconfig::AddressList& getListenAddresses()
+        const;
+
+    /// \brief Assign an ASIO DNS Service queue to this Auth object
+    void setDNSService(asiolink::DNSService& dnss);
+
+
 private:
     AuthSrvImpl* impl_;
     asiolink::SimpleCallback* checkin_;
     asiolink::DNSLookup* dns_lookup_;
     asiolink::DNSAnswer* dns_answer_;
+    asiolink::DNSService* dnss_;
 };
 
 #endif // __AUTH_SRV_H
