@@ -30,6 +30,16 @@ class TestConfigManagerData(unittest.TestCase):
         self.config_manager_data = ConfigManagerData(self.writable_data_path)
         self.assert_(self.config_manager_data)
 
+    def test_abs_file(self):
+        """
+        Test what happens if we give the config manager an absolute path.
+        It shouldn't append the data path to it.
+        """
+        abs_path = self.data_path + os.sep + "b10-config-imaginary.db"
+        data = ConfigManagerData(os.getcwd(), abs_path)
+        self.assertEqual(abs_path, data.db_filename)
+        self.assertEqual(self.data_path, data.data_path)
+
     def test_init(self):
         self.assertEqual(self.config_manager_data.data['version'],
                          config_data.BIND10_CONFIG_DATA_VERSION)
