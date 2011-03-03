@@ -51,7 +51,7 @@ MessageEntry::getRRsetEntries(vector<RRsetEntryPtr>& rrset_entry_vec,
     uint16_t entry_count = answer_count_ + authority_count_ + additional_count_;
     rrset_entry_vec.reserve(rrset_entry_vec.size() + entry_count);
     for (int index = 0; index < entry_count; ++index) {
-        boost::shared_ptr<RRsetCache> rrset_cache = rrsets_[index].cache_; 
+        boost::shared_ptr<RRsetCache> rrset_cache = rrsets_[index].cache_;
         RRsetEntryPtr rrset_entry = rrset_cache->lookup(rrsets_[index].name_,
                                                         rrsets_[index].type_);
         if (time_now < rrset_entry->getExpireTime()) {
