@@ -48,21 +48,32 @@ class ConfigManagerData:
         """Initialize the data for the configuration manager, and
            set the version and path for the data store. Initializing
            this does not yet read the database, a call to
-           read_from_file is needed for that."""
+           read_from_file is needed for that.
+
+           In case the file_name is absolute, data_path is ignored
+           and the directory where the file_name lives is used instead.
+           """
         self.data = {}
         self.data['version'] = config_data.BIND10_CONFIG_DATA_VERSION
-        self.data_path = data_path
-        self.db_filename = data_path + os.sep + file_name
+        if os.path.isabs(file_name):
+            self.db_filename = file_name
+            self.data_path = os.path.dirname(file_name)
+        else:
+            self.db_filename = data_path + os.sep + file_name
+            self.data_path = data_path
 
     def read_from_file(data_path, file_name = "b10-config.db"):
-        """Read the current configuration found in the file at
-           data_path. If the file does not exist, a
-           ConfigManagerDataEmpty exception is raised. If there is a
-           parse error, or if the data in the file has the wrong
-           version, a ConfigManagerDataReadError is raised. In the first
-           case, it is probably safe to log and ignore. In the case of
-           the second exception, the best way is probably to report the
-           error and stop loading the system."""
+        """Read the current configuration found in the file file_name.
+           If file_name is absolute, data_path is ignored. Otherwise
+           we look for the file_name in data_path directory.
+
+           If the file does not exist, a ConfigManagerDataEmpty exception is
+           raised. If there is a parse error, or if the data in the file has
+           the wrong version, a ConfigManagerDataReadError is raised. In the
+           first case, it is probably safe to log and ignore. In the case of
+           the second exception, the best way is probably to report the error
+           and stop loading the system.
+           """
         config = ConfigManagerData(data_path, file_name)
         file = None
         try:
