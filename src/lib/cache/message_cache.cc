@@ -61,10 +61,7 @@ MessageCache::lookup(const isc::dns::Name& qname,
 
 bool
 MessageCache::update(const Message& msg) {
-    // If the message is a negative response, but no SOA record is found in
-    // the authority section, the message cannot be cached
-    if (isNegativeResponse(msg) &&
-        !hasTheRecordInAuthoritySection(msg, RRType::SOA())){
+    if (!canMessageBeCached(msg)){
         return (false);
     }
 

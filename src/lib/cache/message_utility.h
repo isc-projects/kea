@@ -43,6 +43,11 @@ bool hasTheRecordInAuthoritySection(const isc::dns::Message& msg,
 /// \param msg The response message
 bool isNegativeResponse(const isc::dns::Message& msg);
 
+/// \brief Check whether the message can be cached
+///
+/// \param msg The response message
+bool canMessageBeCached(const isc::dns::Message& msg);
+
 } // namespace MessageUtility
 } // namespace cache
 } // namespace isc
