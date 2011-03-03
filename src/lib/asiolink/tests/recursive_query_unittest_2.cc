@@ -77,12 +77,11 @@ namespace asiolink {
 const std::string TEST_ADDRESS = "127.0.0.1";   ///< Servers are on this address
 const uint16_t TEST_PORT = 5301;                ///< ... and this port
 const size_t BUFFER_SIZE = 1024;                ///< For all buffers
-const char* WWW_EXAMPLE_ORG = "192.0.2.254";    ///< Answer to question
+const char* WWW_EXAMPLE_ORG = "192.0.2.254";    ///< Address of www.example.org
 
 // As the test is fairly long and complex, debugging "print" statements have
 // been left in although they are disabled.  Set the following to "true" to
 // enable them.
-
 const bool DEBUG_PRINT = false;
 
 /// \brief Test fixture for the RecursiveQuery Test
@@ -126,7 +125,6 @@ public:
     OutputBufferPtr udp_send_buffer_;           ///< Send buffer for UDP I/O
     udp::socket     udp_socket_;                ///< Socket used by UDP server
 
-
     /// \brief Constructor
     RecursiveQueryTest2() :
         debug_(DEBUG_PRINT),
@@ -147,9 +145,7 @@ public:
         udp_receive_buffer_(),
         udp_send_buffer_(new OutputBuffer(BUFFER_SIZE)),
         udp_socket_(service_.get_io_service(), udp::v4())
-    {
-
-    }
+    {}
 
     /// \brief Set Common Message Bits
     ///
@@ -178,8 +174,9 @@ public:
         }
 
         // Do a referral to org.  We'll define all NS records as "in-zone"
-        // nameservers (and so supply glue) to avoid the possibility of
-        // the resolver doing another lookup.
+        // nameservers (and supply glue) to avoid the possibility of the
+        // resolver starting another recursive query to resolve the address of
+        // a nameserver.
         RRsetPtr org_ns(new RRset(Name("org."), RRClass::IN(), RRType::NS(), RRTTL(300)));
         org_ns->addRdata(createRdata(RRType::NS(), RRClass::IN(), "ns1.org."));
         org_ns->addRdata(createRdata(RRType::NS(), RRClass::IN(), "ns2.org."));
@@ -206,8 +203,9 @@ public:
         }
 
         // Do a referral to example.org.  As before, we'll define all NS
-        // records as "in-zone" nameservers (and so supply glue) to avoid
-        // the possibility of the resolver doing another lookup.
+        // records as "in-zone" nameservers (and supply glue) to avoid the
+        // possibility of the resolver starting another recursive query to look
+        // up the address of the nameserver.
         RRsetPtr example_org_ns(new RRset(Name("example.org."), RRClass::IN(), RRType::NS(), RRTTL(300)));
         example_org_ns->addRdata(createRdata(RRType::NS(), RRClass::IN(), "ns1.example.org."));
         example_org_ns->addRdata(createRdata(RRType::NS(), RRClass::IN(), "ns2.example.org."));
@@ -224,7 +222,7 @@ public:
 
     /// \brief Set Answer to "www.example.org"
     ///
-    /// Sets up the passed-in message (expected to be in "RENDER" mode to
+    /// Sets up the passed-in message (expected to be in "RENDER" mode) to
     /// indicate an authoritative answer to www.example.org.
     ///
     /// \param msg Message to update with referral information.
@@ -245,9 +243,10 @@ public:
 
     /// \brief UDP Receive Handler
     ///
-    /// This is invoked when a message is received from the RecursiveQuery
-    /// Object.  It formats an answer and sends it, with the UdpSendHandler
-    /// method being specified as the completion handler.
+    /// This is invoked when a message is received over UDP from the
+    /// RecursiveQuery object under test.  It formats an answer and sends it
+    /// asynchronously, with the UdpSendHandler method being specified as the
+    /// completion handler.
     ///
     /// \param ec ASIO error code, completion code of asynchronous I/O issued
     ///        by the "server" to receive data.
@@ -270,11 +269,7 @@ public:
         udp_receive_buffer_[0] = udp_receive_buffer_[1] = 0;
 
         // Check that question we received is what was expected.
-        Message received_message(Message::PARSE);
-        InputBuffer received_buffer(udp_receive_buffer_, length);
-        received_message.fromWire(received_buffer);
-        Question received_question = **(received_message.beginQuestion());
-        EXPECT_TRUE(received_question == *question_);
+        checkReceivedPacket(udp_receive_buffer_, length);
 
         // The message returned depends on what state we are in.  Set up
         // common stuff first: bits not mentioned are set to 0.
@@ -316,15 +311,14 @@ public:
         MessageRenderer renderer(*udp_send_buffer_);
         msg.toWire(renderer);
 
-        // Return a message back to the IOFetch object.
+        // Return a message back to the IOFetch object (after setting the
+        // expected length of data for the check in the send handler).
+        udp_length_ = udp_send_buffer_->getLength();
         udp_socket_.async_send_to(asio::buffer(udp_send_buffer_->getData(),
                                                udp_send_buffer_->getLength()),
                                   udp_remote_,
                                   boost::bind(&RecursiveQueryTest2::udpSendHandler,
                                               this, _1, _2));
-
-        // Set the expected length for the send handler.
-        udp_length_ = udp_send_buffer_->getLength();
     }
 
     /// \brief UDP Send Handler
@@ -332,6 +326,9 @@ public:
     /// Called when a send operation of the UDP server (i.e. a response
     /// being sent to the RecursiveQuery) has completed, this re-issues
     /// a read call.
+    ///
+    /// \param ec Completion error code of the send.
+    /// \param length Actual number of bytes sent.
     void udpSendHandler(error_code ec = error_code(), size_t length = 0) {
         if (debug_) {
             cout << "udpSendHandler(): error = " << ec.value() <<
@@ -342,7 +339,7 @@ public:
         EXPECT_EQ(0, ec.value());
         EXPECT_EQ(udp_length_, length);
 
-        // Reissue the receive.
+        // Reissue the receive call to await the next message.
         udp_socket_.async_receive_from(
             asio::buffer(udp_receive_buffer_, sizeof(udp_receive_buffer_)),
             udp_remote_,
@@ -351,7 +348,7 @@ public:
 
     /// \brief Completion Handler for Accepting TCP Data
     ///
-    /// Called when the remote system connects to the "server".  It issues
+    /// Called when the remote system connects to the "TCP server".  It issues
     /// an asynchronous read on the socket to read data.
     ///
     /// \param socket Socket on which data will be received
@@ -376,7 +373,8 @@ public:
     /// \brief Completion Handler for Receiving TCP Data
     ///
     /// Reads data from the RecursiveQuery object and loops, reissuing reads,
-    /// until all the message has been read.  It then sends
+    /// until all the message has been read.  It then returns an appropriate
+    /// response.
     ///
     /// \param socket Socket to use to send the answer
     /// \param ec ASIO error code, completion code of asynchronous I/O issued
@@ -422,11 +420,7 @@ public:
 
         // Check that question we received is what was expected.  Note that we
         // have to ignore the two-byte header in order to parse the message.
-        Message received_message(Message::PARSE);
-        InputBuffer received_buffer(tcp_receive_buffer_ + 2, tcp_cumulative_ - 2);
-        received_message.fromWire(received_buffer);
-        Question received_question = **(received_message.beginQuestion());
-        EXPECT_TRUE(received_question == *question_);
+        checkReceivedPacket(tcp_receive_buffer_ + 2, length - 2);
 
         // Return a message back.  This is a referral to example.org, which
         // should result in another query over UDP.  Note the setting of the
@@ -443,9 +437,10 @@ public:
         // Expected next state (when checked) is the UDP query to example.org.
         // Also, take this opportunity to clear the accumulated read count in
         // readiness for the next read. (If any - at present, there is only
-        // one read in the test,, although extensions to this test suite could
+        // one read in the test, although extensions to this test suite could
         // change that.)
         expected_ = UDP_EXAMPLE_ORG;
+        tcp_cumulative_ = 0;
 
         // We'll write the message in two parts, the count and the message
         // itself. This saves having to prepend the count onto the start of a
@@ -485,6 +480,28 @@ public:
         EXPECT_EQ(expected_length, length);    // And that amount sent is as expected
     }
 
+    /// \brief Check Received Packet
+    ///
+    /// Checks the packet received from the RecursiveQuery object to ensure
+    /// that the question is what is expected.
+    ///
+    /// \param data Start of data.  This is the start of the received buffer in
+    ///        the case of UDP data, and an offset into the buffer past the
+    ///        count field for TCP data.
+    /// \param length Length of data.
+    void checkReceivedPacket(uint8_t* data, size_t length) {
+
+        // Decode the received buffer.
+        InputBuffer buffer(data, length);
+        Message message(Message::PARSE);
+        message.fromWire(buffer);
+
+        // Check the packet.
+        EXPECT_FALSE(message.getHeaderFlag(Message::HEADERFLAG_QR));
+
+        Question question = **(message.beginQuestion());
+        EXPECT_TRUE(question == *question_);
+    }
 };
 
 /// \brief Resolver Callback Object
