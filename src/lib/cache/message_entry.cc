@@ -242,8 +242,8 @@ MessageEntry::parseNegativeResponseAuthoritySection(const isc::dns::Message& msg
                                                    Message::SECTION_AUTHORITY);
         boost::shared_ptr<RRsetCache> rrset_cache_ptr = rrset_cache_;
         if (rrset_ptr->getType() == RRType::SOA()) {
-            rrset_cache_ptr.reset(negative_soa_cache_);
-        } 
+            rrset_cache_ptr = negative_soa_cache_;
+        }
 
         RRsetEntryPtr rrset_entry = rrset_cache_ptr->update(*rrset_ptr, level);
         rrsets_.push_back(RRsetRef(rrset_ptr->getName(),
