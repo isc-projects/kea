@@ -83,7 +83,8 @@ MessageEntry::addRRset(isc::dns::Message& message,
     }
 
     for (uint16_t index = start_index; index < end_index; ++index) {
-        message.addRRset(section, rrset_entry_vec[index]->getRRset(), dnssec_need);
+        message.addRRset(section, rrset_entry_vec[index]->getRRset(),
+                         dnssec_need);
     }
 }
 
@@ -214,7 +215,8 @@ MessageEntry::parseSection(const isc::dns::Message& msg,
         RRsetPtr rrset_ptr = *iter;
         RRsetTrustLevel level = getRRsetTrustLevel(msg, rrset_ptr, section);
         RRsetEntryPtr rrset_entry = rrset_cache_->update(*rrset_ptr, level);
-        rrsets_.push_back(RRsetRef(rrset_ptr->getName(), rrset_ptr->getType(), rrset_cache_));
+        rrsets_.push_back(RRsetRef(rrset_ptr->getName(), rrset_ptr->getType(),
+                          rrset_cache_));
 
         uint32_t rrset_ttl = rrset_entry->getTTL();
         if (smaller_ttl > rrset_ttl) {
@@ -232,7 +234,6 @@ MessageEntry::parseNegativeResponseAuthoritySection(const isc::dns::Message& msg
         uint32_t& min_ttl,
         uint16_t& rrset_count)
 {
-    // We found the SOA record, so we can cache the message and RRsets in the cache
     uint16_t count = 0;
     for (RRsetIterator iter = msg.beginSection(Message::SECTION_AUTHORITY);
             iter != msg.endSection(Message::SECTION_AUTHORITY);

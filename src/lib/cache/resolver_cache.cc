@@ -40,7 +40,8 @@ ResolverClassCache::ResolverClassCache(const RRClass& cache_class) :
 
     messages_cache_ = MessageCachePtr(new MessageCache(rrsets_cache_,
                                       MESSAGE_CACHE_DEFAULT_SIZE,
-                                      cache_class_.getCode(), negative_soa_cache_));
+                                      cache_class_.getCode(),
+                                      negative_soa_cache_));
 }
 
 ResolverClassCache::ResolverClassCache(CacheSizeInfo cache_info) :

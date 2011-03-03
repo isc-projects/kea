@@ -135,6 +135,11 @@ public:
     /// \note the function doesn't do any message validation check,
     ///       the user should make sure the message is valid, and of
     ///       the right class
+    /// TODO: Share the NXDOMAIN info between different type queries
+    ///       current implementation can only cache for the type that
+    ///       user quired, for example, if user query A record of 
+    ///       a.example. and the server replied with NXDOMAIN, this 
+    ///       should be cached for all the types queries of a.example.
     bool update(const isc::dns::Message& msg);
 
     /// \brief Update the rrset in the cache with the new one.
