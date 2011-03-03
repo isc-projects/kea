@@ -1,7 +1,8 @@
-  184.  [func]      vorner
-	Listening address and port configuration of b10-auth is the same as for
-	b10-resolver now. That means, it is configured trough bindctl at runtime,
-	in the Auth/listen_on list, not trough command line arguments.
+  184.  [func]*      vorner
+	Listening address and port configuration of b10-auth is the same as
+	for b10-resolver now. That means, it is configured through bindctl
+	at runtime, in the Auth/listen_on list, not through command line
+	arguments.
 	(Trac #575, #576, git f06ce638877acf6f8e1994962bf2dbfbab029edf)
 
   183.  [bug]      jerry
