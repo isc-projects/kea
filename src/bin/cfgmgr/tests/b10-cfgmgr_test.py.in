@@ -20,6 +20,7 @@
 import unittest
 import os
 import sys
+from optparse import OptionParser
 
 class MyConfigManager:
     def __init__(self, path):
@@ -88,6 +89,71 @@ class TestConfigManagerStartup(unittest.TestCase):
 
         sys.modules.pop("b10-cfgmgr")
 
+class OptsError(Exception):
+    """To know when OptionParser would exit"""
+    pass
+
+class TestOptParser(OptionParser):
+    """
+    We define our own option parser to push into the parsing routine.
+    This one does not exit the whole application on error, it just raises
+    exception. It doesn't change anything else. The application uses the
+    stock one.
+    """
+    def error(self, message):
+        raise OptsError(message)
+
+class TestParseArgs(unittest.TestCase):
+    """
+    Test for the parsing of command line arguments. We provide a different
+    array to parse instead.
+    """
+
+    def test_defaults(self):
+        """
+        Test the default values when no options are provided.
+        """
+        # Pass it empty array, not our arguments
+        b = __import__("b10-cfgmgr")
+        parsed = b.parse_options([], TestOptParser)
+        self.assertEqual(b.DATA_PATH, parsed.data_path)
+        self.assertEqual("b10-config.db", parsed.file_name)
+
+    def test_wrong_args(self):
+        """
+        Test it fails when we pass invalid option.
+        """
+        b = __import__("b10-cfgmgr")
+        self.assertRaises(OptsError, b.parse_options, (['--wrong-option']),
+                          TestOptParser)
+
+    def test_not_arg(self):
+        """
+        Test it fails when there's an argument that's not option
+        (eg. without -- at the beginning).
+        """
+        b = __import__("b10-cfgmgr")
+        self.assertRaises(OptsError, b.parse_options, (['not-option']),
+                          TestOptParser)
+
+    def test_datapath(self):
+        """
+        Test overwriting the data path.
+        """
+        b = __import__("b10-cfgmgr")
+        parsed = b.parse_options(['--data-path=/path'], TestOptParser)
+        self.assertEqual('/path', parsed.data_path)
+        self.assertEqual("b10-config.db", parsed.file_name)
+
+    def test_db_filename(self):
+        """
+        Test setting the configuration database file.
+        """
+        b = __import__("b10-cfgmgr")
+        parsed = b.parse_options(['--database-filename=filename'],
+                                 TestOptParser)
+        self.assertEqual(b.DATA_PATH, parsed.data_path)
+        self.assertEqual("filename", parsed.file_name)
 
 if __name__ == '__main__':
     unittest.main()
