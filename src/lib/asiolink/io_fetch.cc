@@ -26,6 +26,8 @@
 #include <dns/rcode.h>
 #include <log/dummylog.h>
 
+#include <asiolink/qid_gen.h>
+
 #include <asio.hpp>
 #include <asiolink/io_fetch.h>
 
@@ -34,8 +36,9 @@ using namespace isc::dns;
 using namespace isc::log;
 using namespace std;
 
-namespace asiolink {
 
+
+namespace asiolink {
 /// IOFetch Constructor - just initialize the private data
 
 IOFetch::IOFetch(int protocol, IOService& service,
@@ -65,7 +68,7 @@ IOFetch::operator()(error_code ec, size_t length) {
             Message msg(Message::RENDER);
             
             // TODO: replace with boost::random or some other suitable PRNG
-            msg.setQid(0);
+            msg.setQid(QidGenerator::getInstance()->generateQid());
             msg.setOpcode(Opcode::QUERY());
             msg.setRcode(Rcode::NOERROR());
             msg.setHeaderFlag(Message::HEADERFLAG_RD);
