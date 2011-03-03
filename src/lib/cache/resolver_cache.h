@@ -47,7 +47,7 @@ public:
     /// \param cls The RRClass code
     /// \param msg_cache_size The size for the message cache
     /// \param rst_cache_size The size for the RRset cache
-    CacheSizeInfo(const isc::dns::RRClass& cls, 
+    CacheSizeInfo(const isc::dns::RRClass& cls,
                   uint32_t msg_cache_size,
                   uint32_t rst_cache_size):
                     cclass(cls),

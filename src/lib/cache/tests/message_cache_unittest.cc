@@ -53,8 +53,8 @@ public:
         uint16_t class_ = RRClass::IN().getCode();
         rrset_cache_.reset(new RRsetCache(RRSET_CACHE_DEFAULT_SIZE, class_));
         negative_soa_cache_.reset(new RRsetCache(NEGATIVE_RRSET_CACHE_DEFAULT_SIZE, class_));
-        message_cache_.reset(new DerivedMessageCache(rrset_cache_, 
-                                          MESSAGE_CACHE_DEFAULT_SIZE, class_, 
+        message_cache_.reset(new DerivedMessageCache(rrset_cache_,
+                                          MESSAGE_CACHE_DEFAULT_SIZE, class_,
                                           negative_soa_cache_));
     }
 

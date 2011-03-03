@@ -168,23 +168,27 @@ protected:
     //@}
 
 private:
-    /// \brief Check whetehr the message is a negative response(NXDOMAIN or NOERROR_NODATA)
+    /// \brief Check whetehr the message is a negative response
+    ///        (NXDOMAIN or NOERROR_NODATA)
     ///
     /// \param msg The response message
     bool isNegativeResponse(const isc::dns::Message& msg);
 
-    /// \brief Check whether there is some type of record in Authority section
+    /// \brief Check whether there is some type of record in
+    ///        Authority section
     ///
     /// \param msg The response message to be checked
     /// \param type The RR type that need to check
-    bool hasTheRecordInAuthoritySection(const isc::dns::Message& msg, const isc::dns::RRType& type);
+    bool hasTheRecordInAuthoritySection(const isc::dns::Message& msg,
+                                        const isc::dns::RRType& type);
 
     std::string entry_name_; // The name for this entry(name + type)
     HashKey* hash_key_ptr_;  // the key for messag entry in hash table.
 
     std::vector<RRsetRef> rrsets_;
     boost::shared_ptr<RRsetCache> rrset_cache_; //Normal rrset cache
-    boost::shared_ptr<RRsetCache> negative_soa_cache_; // SOA rrset from negative response
+    // SOA rrset from negative response
+    boost::shared_ptr<RRsetCache> negative_soa_cache_;
 
     std::string query_name_; // query name of the message.
     uint16_t query_class_; // query class of the message.

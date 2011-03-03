@@ -35,7 +35,8 @@ ResolverClassCache::ResolverClassCache(const RRClass& cache_class) :
     rrsets_cache_ = RRsetCachePtr(new RRsetCache(RRSET_CACHE_DEFAULT_SIZE,
                                                  cache_class_.getCode()));
     // SOA rrset cache from negative response
-    negative_soa_cache_ = RRsetCachePtr(new RRsetCache(NEGATIVE_RRSET_CACHE_DEFAULT_SIZE, cache_class_.getCode()));
+    negative_soa_cache_ = RRsetCachePtr(new RRsetCache(NEGATIVE_RRSET_CACHE_DEFAULT_SIZE,
+                                                       cache_class_.getCode()));
 
     messages_cache_ = MessageCachePtr(new MessageCache(rrsets_cache_,
                                       MESSAGE_CACHE_DEFAULT_SIZE,
@@ -51,7 +52,8 @@ ResolverClassCache::ResolverClassCache(CacheSizeInfo cache_info) :
     rrsets_cache_ = RRsetCachePtr(new
                         RRsetCache(cache_info.rrset_cache_size, klass));
     // SOA rrset cache from negative response
-    negative_soa_cache_ = RRsetCachePtr(new RRsetCache(cache_info.rrset_cache_size, klass));
+    negative_soa_cache_ = RRsetCachePtr(new RRsetCache(cache_info.rrset_cache_size,
+                                                       klass));
 
     messages_cache_ = MessageCachePtr(new MessageCache(rrsets_cache_,
                                       cache_info.message_cache_size,
