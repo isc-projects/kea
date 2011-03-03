@@ -24,7 +24,8 @@ namespace cache {
 namespace MessageUtility{
 
 bool
-hasTheRecordInAuthoritySection(const isc::dns::Message& msg, const isc::dns::RRType& type)
+hasTheRecordInAuthoritySection(const isc::dns::Message& msg,
+                               const isc::dns::RRType& type)
 {
     for (RRsetIterator iter = msg.beginSection(Message::SECTION_AUTHORITY);
             iter != msg.endSection(Message::SECTION_AUTHORITY);
@@ -38,8 +39,7 @@ hasTheRecordInAuthoritySection(const isc::dns::Message& msg, const isc::dns::RRT
 }
 
 bool
-isNegativeResponse(const isc::dns::Message& msg)
-{
+isNegativeResponse(const isc::dns::Message& msg) {
     if (msg.getRcode() == Rcode::NXDOMAIN()) {
         return (true);
     } else if (msg.getRcode() == Rcode::NOERROR()) {
@@ -56,6 +56,18 @@ isNegativeResponse(const isc::dns::Message& msg)
     }
 
     return (false);
+}
+
+bool
+canMessageBeCached(const isc::dns::Message& msg) {
+    // If the message is a negative response, but no SOA record is found in
+    // the authority section, the message cannot be cached
+    if (isNegativeResponse(msg) &&
+        !hasTheRecordInAuthoritySection(msg, RRType::SOA())){
+        return (false);
+    }
+
+    return (true);
 }
 
 } // namespace MessageUtility
