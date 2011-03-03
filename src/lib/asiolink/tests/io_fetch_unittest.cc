@@ -19,7 +19,7 @@
 
 #include <gtest/gtest.h>
 #include <boost/bind.hpp>
-
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 
 #include <asio.hpp>
 
@@ -47,7 +47,8 @@ namespace asiolink {
 const asio::ip::address TEST_HOST(asio::ip::address::from_string("127.0.0.1"));
 const uint16_t TEST_PORT(5301);
 // FIXME Shouldn't we send something that is real message?
-const char TEST_DATA[] = "Test response from server to client";
+const char TEST_DATA[] = "Test response from server to client (longer than 30 bytes)";
+const int SEND_INTERVAL = 500;   // Interval in ms between TCP sends
 
 /// \brief Test fixture for the asiolink::IOFetch.
 class IOFetchTest : public virtual ::testing::Test, public virtual IOFetch::Callback
@@ -63,11 +64,15 @@ public:
     IOFetch         tcp_fetch_;     ///< For TCP query test
     IOFetch::Protocol protocol_;    ///< Protocol being tested
     size_t          cumulative_;    ///< Cumulative data received by "server".
+    deadline_timer  timer_;         ///< Timer to measure timeouts
 
     // The next member is the buffer in which the "server" (implemented by the
     // response handler methods in this class) receives the question sent by the
     // fetch object.
-    uint8_t         server_buff_[512];  ///< Server buffer
+    uint8_t         receive_buffer_[512];   ///< Server receive buffer
+    uint8_t         send_buffer_[512];      ///< Server send buffer
+    uint16_t        send_size_;             ///< Amount of data to sent
+    uint16_t        send_cumulative_;       ///< Data sent so far
 
     /// \brief Constructor
     IOFetchTest() :
@@ -80,9 +85,15 @@ public:
         udp_fetch_(IOFetch::UDP, service_, question_, IOAddress(TEST_HOST),
             TEST_PORT, result_buff_, this, 100),
         tcp_fetch_(IOFetch::TCP, service_, question_, IOAddress(TEST_HOST),
-            TEST_PORT, result_buff_, this, 1000),
+            TEST_PORT, result_buff_, this, (4 * SEND_INTERVAL)),
+                                        // Timeout interval chosen to ensure no timeout
         protocol_(IOFetch::TCP),        // for initialization - will be changed
-        cumulative_(0)
+        cumulative_(0),
+        timer_(service_.get_io_service()),
+        receive_buffer_(),
+        send_buffer_(),
+        send_size_(0),
+        send_cumulative_(0)
     {
         // Construct the data buffer for question we expect to receive.
         Message msg(Message::RENDER);
@@ -112,12 +123,12 @@ public:
         // The QID in the incoming data is random so set it to 0 for the
         // data comparison check. (It is set to 0 in the buffer containing
         // the expected data.)
-        server_buff_[0] = server_buff_[1] = 0;
+        receive_buffer_[0] = receive_buffer_[1] = 0;
 
         // Check that length of the received data and the expected data are
         // identical, then check that the data is identical as well.
         EXPECT_EQ(msgbuf_->getLength(), length);
-        EXPECT_TRUE(equal(server_buff_, (server_buff_ + length - 1),
+        EXPECT_TRUE(equal(receive_buffer_, (receive_buffer_ + length - 1),
         static_cast<const uint8_t*>(msgbuf_->getData())));
 
         // Return a message back to the IOFetch object.
@@ -138,7 +149,7 @@ public:
 
         // Initiate a read on the socket.
         cumulative_ = 0;
-        socket->async_receive(asio::buffer(server_buff_, sizeof(server_buff_)),
+        socket->async_receive(asio::buffer(receive_buffer_, sizeof(receive_buffer_)),
             boost::bind(&IOFetchTest::tcpReceiveHandler, this, socket, _1, _2));
     }
 
@@ -163,13 +174,13 @@ public:
         cumulative_ += length;
         bool complete = false;
         if (cumulative_ > 2) {
-            uint16_t dns_length = readUint16(server_buff_);
+            uint16_t dns_length = readUint16(receive_buffer_);
             complete = ((dns_length + 2) == cumulative_);
         }
 
         if (!complete) {
-            socket->async_receive(asio::buffer((server_buff_ + cumulative_),
-                (sizeof(server_buff_) - cumulative_)),
+            socket->async_receive(asio::buffer((receive_buffer_ + cumulative_),
+                (sizeof(receive_buffer_) - cumulative_)),
                 boost::bind(&IOFetchTest::tcpReceiveHandler, this, socket, _1, _2));
             return;
         }
@@ -180,24 +191,44 @@ public:
         // field the QID in the received buffer is in the third and fourth
         // bytes.
         EXPECT_EQ(msgbuf_->getLength() + 2, cumulative_);
-        server_buff_[2] = server_buff_[3] = 0;
-        EXPECT_TRUE(equal((server_buff_ + 2), (server_buff_ + cumulative_ - 2),
+        receive_buffer_[2] = receive_buffer_[3] = 0;
+        EXPECT_TRUE(equal((receive_buffer_ + 2), (receive_buffer_ + cumulative_ - 2),
             static_cast<const uint8_t*>(msgbuf_->getData())));
 
         // ... and return a message back.  This has to be preceded by a two-byte
-        // count field.  It's simpler to do this as two writes - it shouldn't
-        // make any difference to the IOFetch object.
-        //
-        // When specifying the callback handler, the expected size of the
-        // data written is passed as the first parameter.
-        uint8_t count[2];
-        writeUint16(sizeof(TEST_DATA), count);
-        socket->async_send(asio::buffer(count, 2),
+        // count field.  Construct the message.
+        assert(sizeof(send_buffer_) > (sizeof(TEST_DATA) + 2));
+        writeUint16(sizeof(TEST_DATA), send_buffer_);
+        copy(TEST_DATA, TEST_DATA + sizeof(TEST_DATA) - 1, send_buffer_ + 2);
+        send_size_ = sizeof(TEST_DATA) + 2;
+
+        // Send the data.  This is done in multiple writes with a delay between
+        // each to check that the reassembly of TCP packets from fragments works.
+        send_cumulative_ = 0;
+        tcpSendData(socket);
+    }
+
+    /// \brief Sent Data Over TCP
+    ///
+    /// Send the TCP data back to the IOFetch object.  The data is sent in
+    /// three chunks - two of 16 bytes and the remainder, with a 250ms gap
+    /// between each.
+    ///
+    /// \param socket Socket over which send should take place
+    void tcpSendData(tcp::socket* socket) {
+        // Decide what to send based on the cumulative count
+        uint8_t* send_ptr = &send_buffer_[send_cumulative_];
+                                    // Pointer to data to send
+        size_t amount = 16;         // Amount of data to send
+        if (send_cumulative_ > 30) {
+            amount = send_size_ - send_cumulative_;
+        }
+
+        // ... and send it.  The amount sent is also passed as the first argument
+        // of the send callback, as a check.
+        socket->async_send(asio::buffer(send_ptr, amount),
                            boost::bind(&IOFetchTest::tcpSendHandler, this,
-                                       2, _1, _2));
-        socket->async_send(asio::buffer(TEST_DATA, sizeof(TEST_DATA)),
-                           boost::bind(&IOFetchTest::tcpSendHandler, this,
-                                       sizeof(TEST_DATA), _1, _2));
+                                       amount, socket, _1, _2));
     }
 
     /// \brief Completion Handler for Sending TCP data
@@ -207,14 +238,35 @@ public:
     /// be asynchronous because control needs to return to the caller in order
     /// for the IOService "run()" method to be called to run the handlers.)
     ///
+    /// If not all the data has been sent, a short delay is instigated (during
+    /// which control returns to the IOService).  This should force the queued
+    /// data to actually be sent and the IOFetch receive handler to be triggered.
+    /// In this way, the ability of IOFetch to handle fragmented TCP packets
+    /// should be checked.
+    ///
     /// \param expected Number of bytes that were expected to have been sent.
+    /// \param socket Socket over which the send took place.  Only used to
+    ///        pass back to the send method.
     /// \param ec Boost error code, value should be zero.
     /// \param length Number of bytes sent.
-    void tcpSendHandler(size_t expected = 0, error_code ec = error_code(),
-                        size_t length = 0)
+    void tcpSendHandler(size_t expected, tcp::socket* socket,
+                        error_code ec = error_code(), size_t length = 0)
     {
         EXPECT_EQ(0, ec.value());       // Expect no error
         EXPECT_EQ(expected, length);    // And that amount sent is as expected
+
+        // Do we need to send more?
+        send_cumulative_ += length;
+        if (send_cumulative_ < send_size_) {
+
+            // Yes - set up a timer:  the callback handler for the timer is
+            // tcpSendData, which will then send the next chunk.  We pass the
+            // socket over which data should be sent as an argument to that
+            // function.
+            timer_.expires_from_now(boost::posix_time::milliseconds(SEND_INTERVAL));
+            timer_.async_wait(boost::bind(&IOFetchTest::tcpSendData, this,
+                                          socket));
+        }
     }
 
     /// \brief Fetch completion callback
@@ -343,7 +395,7 @@ TEST_F(IOFetchTest, UdpSendReceive) {
     socket.bind(udp::endpoint(TEST_HOST, TEST_PORT));
 
     udp::endpoint remote;
-    socket.async_receive_from(asio::buffer(server_buff_, sizeof(server_buff_)),
+    socket.async_receive_from(asio::buffer(receive_buffer_, sizeof(receive_buffer_)),
         remote,
         boost::bind(&IOFetchTest::udpReceiveHandler, this, &remote, &socket,
                     _1, _2));
