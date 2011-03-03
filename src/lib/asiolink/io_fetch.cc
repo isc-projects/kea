@@ -67,7 +67,6 @@ IOFetch::operator()(error_code ec, size_t length) {
         {
             Message msg(Message::RENDER);
             
-            // TODO: replace with boost::random or some other suitable PRNG
             msg.setQid(QidGenerator::getInstance()->generateQid());
             msg.setOpcode(Opcode::QUERY());
             msg.setRcode(Rcode::NOERROR());
