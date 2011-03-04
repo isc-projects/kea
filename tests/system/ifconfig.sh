@@ -15,8 +15,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: ifconfig.sh,v 1.59 2010/06/11 23:46:49 tbox Exp $
-
 #
 # Set up interface aliases for bind9 system tests.
 #
@@ -25,7 +23,7 @@
 #
 
 config_guess=""
-for f in ./config.guess ../../../config.guess
+for f in ./config.guess ../../config.guess
 do
 	if test -f $f
 	then
@@ -87,7 +85,7 @@ case "$1" in
 			ifconfig lo0:$int 10.53.0.$ns netmask 0xffffffff up
 			;;
 		    *-*-solaris2.[8-9]|*-*-solaris2.1[0-9])
-    			/sbin/ifconfig lo0:$int plumb
+			/sbin/ifconfig lo0:$int plumb
 			/sbin/ifconfig lo0:$int 10.53.0.$ns up
 			if test -n "$int6"
 			then
@@ -153,7 +151,7 @@ case "$1" in
 		then
 			int=`expr $ns + $base - 1`
 		else
-			int=$ns	
+			int=$ns
 		fi
 		case "$sys" in
 		    *-pc-solaris2.5.1)

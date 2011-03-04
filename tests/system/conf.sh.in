@@ -15,63 +15,23 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: conf.sh.in,v 1.59 2011-01-13 04:59:24 tbox Exp $
-
 #
 # Common configuration data for system tests, to be sourced into
 # other shell scripts.
 #
 
-# Find the top of the BIND9 tree.
-TOP=${SYSTEMTESTTOP:=.}/../../..
+# Find the top of the source tree.
+TOP=@abs_top_srcdir@
 
-# Make it absolute so that it continues to work after we cd.
-TOP=`cd $TOP && pwd`
+RUN_BIND10=$TOP/src/bin/bind10/run_bind10.sh
+B10_LOADZONE=$TOP/src/bin/loadzone/run_loadzone.sh
+BIND9_NAMED=$BIND9_TOP/bin/named/named
+DIG=$BIND9_TOP/bin/dig/dig
 
-NAMED=$TOP/bin/named/named
-# We must use "named -l" instead of "lwresd" because argv[0] is lost
-# if the program is libtoolized.
-LWRESD="$TOP/bin/named/named -l"
-DIG=$TOP/bin/dig/dig
-RNDC=$TOP/bin/rndc/rndc
-NSUPDATE=$TOP/bin/nsupdate/nsupdate
-DDNSCONFGEN=$TOP/bin/confgen/ddns-confgen
-KEYGEN=$TOP/bin/dnssec/dnssec-keygen
-KEYFRLAB=$TOP/bin/dnssec/dnssec-keyfromlabel
-SIGNER=$TOP/bin/dnssec/dnssec-signzone
-REVOKE=$TOP/bin/dnssec/dnssec-revoke
-SETTIME=$TOP/bin/dnssec/dnssec-settime
-DSFROMKEY=$TOP/bin/dnssec/dnssec-dsfromkey
-CHECKZONE=$TOP/bin/check/named-checkzone
-CHECKCONF=$TOP/bin/check/named-checkconf
-PK11GEN="$TOP/bin/pkcs11/pkcs11-keygen -s 0 -p 1234"
-PK11LIST="$TOP/bin/pkcs11/pkcs11-list -s 0 -p 1234"
-PK11DEL="$TOP/bin/pkcs11/pkcs11-destroy -s 0 -p 1234"
-JOURNALPRINT=$TOP/bin/tools/named-journalprint
-
-# The "stress" test is not run by default since it creates enough
-# load on the machine to make it unusable to other users.
-# v6synth
-SUBDIRS="acl allow_query addzone autosign cacheclean checkconf checknames
-    dlv @DLZ_SYSTEM_TEST@ dlzexternal dns64 dnssec forward glue gost ixfr limits
-    lwresd masterfile masterformat metadata notify nsupdate pending pkcs11
-    resolver rpz rrsetorder sortlist smartsign staticstub stub tkey
-    tsig tsiggss unknown upforwd views xfer xferquota zonechecks"
+SUBDIRS="glue"
+#SUBDIRS="dnssec glue masterfile xfer"
 
 # PERL will be an empty string if no perl interpreter was found.
 PERL=@PERL@
-if test -n "$PERL"
-then
-	if $PERL -e "use IO::Socket::INET6;" 2> /dev/null
-	then
-		TESTSOCK6="$PERL $TOP/bin/tests/system/testsock6.pl"
-	else
-		TESTSOCK6=false
-	fi
-else
-	TESTSOCK6=false
-fi
 
-export NAMED LWRESD DIG NSUPDATE KEYGEN KEYFRLAB SIGNER KEYSIGNER KEYSETTOOL \
-       PERL SUBDIRS RNDC CHECKZONE PK11GEN PK11LIST PK11DEL TESTSOCK6 \
-       JOURNALPRINT
+export RUN_BIND10 BIND9_NAMED DIG SUBDIRS PERL
