@@ -46,6 +46,7 @@
 
 using namespace asio;
 using namespace asiolink;
+using namespace isc::dns;
 using namespace std;
 
 namespace {
@@ -168,47 +169,43 @@ private:
 // Receive complete method should return true regardless of what is in the first
 // two bytes of a buffer.
 
-TEST(UDPSocket, receiveComplete) {
+TEST(UDPSocket, processReceivedData) {
     IOService               service;        // Used to instantiate socket
     UDPSocket<UDPCallback>  test(service);  // Socket under test
-    uint8_t                 buffer[32];     // Buffer to check
+    uint8_t                 inbuff[32];     // Buffer to check
+    OutputBufferPtr         outbuff(new OutputBuffer(16));
+                                            // Where data is put
+    size_t                  expected;       // Expected amount of data
+    size_t                  offset;         // Where to put next data
+    size_t                  cumulative;     // Cumulative data received
+
+    // Set some dummy values in the buffer to check
+    for (uint8_t i = 0; i < sizeof(inbuff); ++i) {
+        inbuff[i] = i;
+    }
 
     // Expect that the value is true whatever number is written in the first
     // two bytes of the buffer.
     uint16_t count = 0;
     for (uint32_t i = 0; i < (2 << 16); ++i, ++count) {
-        writeUint16(count, buffer);
-        EXPECT_TRUE(test.receiveComplete(buffer, sizeof(buffer)));
-    }
-}
-
-// Check that the normalized data copy copies the entire buffer regardless of
-// the first two bytes.
-
-TEST(UDPSocket, appendNormalizedData) {
-    IOService               service;        // Used to instantiate socket
-    UDPSocket<UDPCallback>  test(service);  // Socket under test
-    uint8_t                 inbuff[32];     // Buffer to check
-    isc::dns::OutputBufferPtr outbuff(new isc::dns::OutputBuffer(sizeof(inbuff)));
-                                            // Where data is written
-
-    // Initialize the input buffer with data.
-    for (uint8_t i = 0; i < sizeof(inbuff); ++i) {
-        inbuff[i] = i + 1;      // An arbitrary number
-    }
-
-    // Loop to ensure that entire buffer is copied on all count values, no
-    // matter what.
-    uint16_t count = 0;
-    for (uint32_t i = 0; i < (2 << 16); ++i, ++count) {
         writeUint16(count, inbuff);
+
+        // Set some random values
+        cumulative = 5;
+        offset = 10;
+        expected = 15;
         outbuff->clear();
-        test.appendNormalizedData(inbuff, sizeof(inbuff), outbuff);
 
-        EXPECT_EQ(sizeof(inbuff), outbuff->getLength());
+        bool completed = test.processReceivedData(inbuff, sizeof(inbuff),
+                                                  cumulative, offset, expected,
+                                                  outbuff);
+        EXPECT_TRUE(completed);
+        EXPECT_EQ(sizeof(inbuff), cumulative);
+        EXPECT_EQ(0, offset);
+        EXPECT_EQ(sizeof(inbuff), expected);
 
-        const uint8_t* outptr = static_cast<const uint8_t*>(outbuff->getData());
-        EXPECT_TRUE(equal(&inbuff[0], &inbuff[sizeof(inbuff) - 1], outptr));
+        const uint8_t* dataptr = static_cast<const uint8_t*>(outbuff->getData());
+        EXPECT_TRUE(equal(inbuff, inbuff + sizeof(inbuff) - 1, dataptr));
     }
 }
 
@@ -234,6 +231,10 @@ TEST(UDPSocket, SequenceTest) {
     UDPCallback client_cb("Client");        // Async I/O callback function
     UDPEndpoint client_remote_endpoint;     // Where client receives message from
     size_t      client_cumulative = 0;      // Cumulative data received
+    size_t      client_offset = 0;          // Offset into buffer where data is put
+    size_t      client_expected = 0;        // Expected amount of data
+    OutputBufferPtr client_buffer(new OutputBuffer(16));
+                                            // Where data is put
 
     // The server - with which the client communicates.  For convenience, we
     // use the same io_service, and use the endpoint object created for
@@ -293,9 +294,9 @@ TEST(UDPSocket, SequenceTest) {
     server.async_send_to(buffer(INBOUND_DATA, sizeof(INBOUND_DATA)),
         server_remote_endpoint.getASIOEndpoint(), server_cb);
 
-    // Expect two callbacks to run
-    service.get_io_service().poll();
-    //service.run_one();
+    // Expect two callbacks to run.
+    service.run_one();
+    service.run_one();
 
     EXPECT_TRUE(client_cb.getCalled());
     EXPECT_EQ(0, client_cb.getCode());
@@ -312,10 +313,19 @@ TEST(UDPSocket, SequenceTest) {
     EXPECT_TRUE(server_address == client_remote_endpoint.getAddress());
     EXPECT_EQ(SERVER_PORT, client_remote_endpoint.getPort());
 
-    // Finally, check that the receive received a complete buffer's worth of data.
-    client_cumulative += client_cb.getLength();
-    EXPECT_TRUE(client.receiveComplete(&data[0], client_cumulative));
+    // Check that the receive received a complete buffer's worth of data.
+    EXPECT_TRUE(client.processReceivedData(&data[0], client_cb.getLength(),
+                                           client_cumulative, client_offset,
+                                           client_expected, client_buffer));
+
     EXPECT_EQ(client_cb.getLength(), client_cumulative);
+    EXPECT_EQ(0, client_offset);
+    EXPECT_EQ(client_cb.getLength(), client_expected);
+    EXPECT_EQ(client_cb.getLength(), client_buffer->getLength());
+
+    // ...and check that the data was copied to the output client buffer.
+    const char* client_char_data = static_cast<const char*>(client_buffer->getData());
+    EXPECT_TRUE(equal(&data[0], &data[client_cb.getLength() - 1], client_char_data));
 
     // Close client and server.
     EXPECT_NO_THROW(client.close());

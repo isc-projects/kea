@@ -203,43 +203,74 @@ public:
     ///
     /// \param data Buffer to receive incoming message
     /// \param length Length of the data buffer
-    /// \param offset Offset into buffer where data is to be put
+    /// \param offset Offset into buffer where data is to be put.  Although the
+    ///        offset could be implied by adjusting "data" and "length"
+    ///        appropriately, using this argument allows data to be specified as
+    ///        "const void*" - the overhead of converting it to a pointer to a
+    ///        set of bytes is hidden away here.
     /// \param endpoint Source of the communication
     /// \param callback Callback object
     virtual void asyncReceive(void* data, size_t length, size_t offset,
                               IOEndpoint* endpoint, C& callback) = 0;
 
-    /// \brief Checks if the data received is complete.
+    /// \brief Processes received data
     ///
-    /// This applies to TCP receives, where the data is a byte stream and a
-    /// receive is not guaranteed to receive the entire message.  DNS messages
-    /// over TCP are prefixed by a two-byte count field.  This method takes the
-    /// amount received so far and checks if the message is complete.
+    /// In the IOFetch code, data is received into a staging buffer before being
+    /// copied into the target buffer.  (This is because (a) we don't know how
+    /// much data we will be receiving, so don't know how to size the output
+    /// buffer and (b) TCP data is preceded by a two-byte count field that needs
+    /// to be discarded before being returned to the user.)
     ///
-    /// For a UDP receive, all the data is received in one I/O, so this is
-    /// effectively a no-op).
+    /// An additional consideration is that TCP data is not received in one
+    /// I/O - it may take a number of I/Os - each receiving any non-zero number
+    /// of bytes - to read the entire message.
     ///
-    /// \param data Data buffer containing data to date
-    /// \param length Total amount of data in the buffer.
+    /// So the IOFetch code has to loop until it determines that all the data
+    /// has been read.  This is where this method comes in.  It has several
+    /// functions:
+    ///
+    /// - It checks if the received data is complete.
+    /// - If data is not complete, decides if the next set of data is to go into
+    ///   the start of the staging buffer or at some offset into it.  (This
+    ///   simplifies the case we could have in a TCP receive where the two-byte
+    ///   count field is received in one-byte chunks: we put off interpreting
+    ///   the count until we have all of it.  The alternative - copying the
+    ///   data to the output buffer and interpreting the count from there -
+    ///   would require moving the data in the output buffer by two bytes before
+    ///   returning it to the caller.)
+    /// - Copies data from the staging buffer into the output buffer.
+    ///
+    /// This functionality mainly applies to TCP receives.  For UDP, all the
+    /// data is received in one I/O, so this just copies the data into the
+    /// output buffer.
+    ///
+    /// \param staging Pointer to the start of the staging buffer.
+    /// \param length Amount of data in the staging buffer.
+    /// \param cumulative Amount of data received before the staging buffer is
+    ///        processed (this includes the TCP count field if appropriate).
+    ///        The value should be set to zero before the receive loop is
+    ///        entered, and it will be updated by this method as required.
+    /// \param offset Offset into the staging buffer where the next read should
+    ///        put the received data.  It should be set to zero before the first
+    ///        call and may be updated by this method.
+    /// \param expected Expected amount of data to be received.  This is
+    ///        really the TCP count field and is set to that value when enough
+    ///        of a TCP message is received.  It should be initialized to -1
+    ///        before the first read is executed.
+    /// \param outbuff Output buffer.  Data in the staging buffer may be copied
+    ///        to this output buffer in the call.
     ///
     /// \return true if the receive is complete, false if another receive is
-    ///         needed.
-    virtual bool receiveComplete(const void* data, size_t length) = 0;
-
-    /// \brief Append Normalized Data
-    ///
-    /// When a UDP buffer is received, the entire buffer contains the data.
-    /// When a TCP buffer is received, the first two bytes of the buffer hold
-    /// a length count.  This method removes those bytes from the buffer.
-    ///
-    /// \param inbuf Input buffer.  This contains the data received over the
-    ///        network connection.
-    /// \param length Amount of data in the input buffer.  If TCP, this includes
-    ///        the two-byte count field.
-    /// \param outbuf Pointer to output buffer to which the data will be
-    ///        appended.
-    virtual void appendNormalizedData(const void* inbuf, size_t length,
-        isc::dns::OutputBufferPtr outbuf) = 0;
+    ///         needed.  This is always true for UDP, but for TCP involves
+    ///         checking the amount of data received so far against the amount
+    ///         expected (as indicated by the two-byte count field).  If this
+    ///         method returns false, another read should be queued and data
+    ///         should be read into the staging buffer at offset given by the
+    ///         "offset" parameter.
+    virtual bool processReceivedData(const void* staging, size_t length,
+                                     size_t& cumulative, size_t& offset,
+                                     size_t& expected,
+                                     isc::dns::OutputBufferPtr& outbuff) = 0;
 
     /// \brief Cancel I/O On AsioSocket
     virtual void cancel() = 0;
@@ -330,23 +361,22 @@ public:
 
     /// \brief Checks if the data received is complete.
     ///
-    /// \param data Unused
+    /// \param staging Unused
     /// \param length Unused
     /// \param cumulative Unused
+    /// \param offset Unused.
+    /// \param expected Unused.
+    /// \param outbuff Unused.
     ///
     /// \return Always true
-    virtual bool receiveComplete(void*, size_t, size_t&) {
+    virtual bool receiveComplete(const void* staging, size_t length,
+                                 size_t& cumulative, size_t& offset,
+                                 size_t& expected,
+                                 isc::dns::OutputBufferPtr& outbuff)
+    {
         return (true);
     }
-    /// \brief Append Normalized Data
-    ///
-    /// \param inbuf Unused.
-    /// \param length Unused.
-    /// \param outbuf unused.
-    virtual void appendNormalizedData(const void*, size_t,
-                                      isc::dns::OutputBufferPtr)
-    {
-    }
+
 
     /// \brief Cancel I/O On AsioSocket
     ///
