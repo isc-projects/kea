@@ -1,5 +1,5 @@
 systest:
-	sh runall.sh
+	sh $(srcdir)/runall.sh
 
 distclean-local:
-	sh cleanall.sh
+	sh $(srcdir)/cleanall.sh

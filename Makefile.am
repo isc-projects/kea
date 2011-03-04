@@ -80,7 +80,7 @@ cppcheck:
 # system tests
 systest:
 	cd tests/system; \
-	sh runall.sh
+	sh $(abs_srcdir)/tests/system/runall.sh
 
 #### include external sources in the distributed tarball:
 EXTRA_DIST = ext/asio/README

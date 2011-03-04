@@ -20,6 +20,13 @@
 # other shell scripts.
 #
 
+# Prerequisite check
+if [ @srcdir@ != @builddir@ ]; then
+	echo "Currently systest doesn't work for a separate build tree."
+	echo "Rebuild BIND 10 on the source tree and run the tests."
+	exit 1
+fi
+
 # Find the top of the source tree.
 TOP=@abs_top_srcdir@
 
