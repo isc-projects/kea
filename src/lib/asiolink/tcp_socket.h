@@ -24,6 +24,8 @@
 #include <sys/socket.h>
 #include <unistd.h>             // for some IPC/network system calls
 
+#include <algorithm>
+#include <cassert>
 #include <cstddef>
 
 #include <boost/bind.hpp>
@@ -135,32 +137,25 @@ public:
     virtual void asyncReceive(void* data, size_t length, size_t offset,
                               IOEndpoint* endpoint, C& callback);
 
-    /// \brief Checks if the data received is complete.
+    /// \brief Process received data packet
     ///
-    /// Checks if all the data has been received by checking that the amount
-    /// of data received is equal to the number in the first two bytes of the
-    /// message plus two (for the count field itself).
+    /// See the description of IOAsioSocket::receiveComplete for a complete
+    /// description of this method.
     ///
-    /// \param data Data buffer containing data to date (ignored)
-    /// \param length Amount of data in the buffer.
+    /// \param staging Pointer to the start of the staging buffer.
+    /// \param length Amount of data in the staging buffer.
+    /// \param cumulative Amount of data received before the staging buffer is
+    ///        processed.
+    /// \param offset Unused.
+    /// \param expected unused.
+    /// \param outbuff Output buffer.  Data in the staging buffer is be copied
+    ///        to this output buffer in the call.
     ///
-    /// \return true if the receive is complete, false if not.
-    virtual bool receiveComplete(const void* data, size_t length);
-
-    /// \brief Append Normalized Data
-    ///
-    /// When a UDP buffer is received, the entire buffer contains the data.
-    /// When a TCP buffer is received, the first two bytes of the buffer hold
-    /// a length count.  This method removes those bytes from the buffer.
-    ///
-    /// \param inbuf Input buffer.  This contains the data received over the
-    ///        network connection.
-    /// \param length Amount of data in the input buffer.  If TCP, this includes
-    ///        the two-byte count field.
-    /// \param outbuf Pointer to output buffer to which the data will be
-    ///        appended
-    virtual void appendNormalizedData(const void* inbuf, size_t length,
-                                      isc::dns::OutputBufferPtr outbuf);
+    /// \return Always true
+    virtual bool processReceivedData(const void* staging, size_t length,
+                                     size_t& cumulative, size_t& offset,
+                                     size_t& expected,
+                                     isc::dns::OutputBufferPtr& outbuff);
 
     /// \brief Cancel I/O On Socket
     virtual void cancel();
@@ -335,32 +330,65 @@ TCPSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
 // Is the receive complete?
 
 template <typename C> bool
-TCPSocket<C>::receiveComplete(const void* data, size_t length) {
+TCPSocket<C>::processReceivedData(const void* staging, size_t length,
+                                  size_t& cumulative, size_t& offset,
+                                  size_t& expected,
+                                  isc::dns::OutputBufferPtr& outbuff)
+{
+    // Point to the data in the staging buffer and note how much there is.
+    const uint8_t* data = static_cast<const uint8_t*>(staging);
+    size_t data_length = length;
 
-    bool complete = false;
+    // Is the number is "expected" valid?  It won't be unless we have received
+    // at least two bytes of data in total for this set of receives.
+    if (cumulative < 2) {
 
-    // If we have read at least two bytes, we can work out how much we should be
-    // reading.
-    if (length >= 2) {
+        // "expected" is not valid.  Did this read give us enough data to
+        // work it out?
+        cumulative += length;
+        if (cumulative < 2) {
 
-        // Convert first two bytes to a count and check that the following data
-        // is that length.
-        // TODO: Should we check to see if we have received too much data?
-        uint16_t expected = readUint16(data);
-        complete = ((expected + 2) == length);
+            // Nope, still not valid.  This must have been the first packet and
+            // was only one byte long.  Tell the fetch code to read the next
+            // packet into the staging buffer beyond the data that is already
+            // there so that the next time we are called we have a complete
+            // TCP count.
+            offset = cumulative;
+            return (false);
+        }
+
+        // Have enough data to interpret the packet count, so do so now.
+        expected = readUint16(data);
+
+        // We have two bytes less of data to process.  Point to the start of the
+        // data and adjust the packet size.  Note that at this point,
+        // "cumulative" is the true amount of data in the staging buffer, not
+        // "length".
+        data += 2;
+        data_length = cumulative - 2;
+    } else {
+
+        // Update total amount of data received.
+        cumulative += length;
     }
 
-    return (complete);
-}
+    // Regardless of anything else, the next read goes into the start of the
+    // staging buffer.
+    offset = 0;
 
-// Copy buffer less leading two bytes to the target buffer.
+    // Work out how much data we still have to put in the output buffer. (This
+    // could be zero if we have just interpreted the TCP count and that was
+    // set to zero.)
+    if (expected >= outbuff->getLength()) {
 
-template <typename C> void
-TCPSocket<C>::appendNormalizedData(const void* inbuf, size_t length,
-                                   isc::dns::OutputBufferPtr outbuf)
-{
-    const uint8_t* bytebuff = static_cast<const uint8_t*>(inbuf);
-    outbuf->writeData(bytebuff + 2, length - 2);
+        // Still need data in the output packet.  Copy what we can from the
+        // staging buffer to the output buffer.
+        size_t copy_amount = std::min(expected - outbuff->getLength(), data_length);
+        outbuff->writeData(data, copy_amount);
+    }
+
+    // We can now say if we have all the data.
+    return (expected == outbuff->getLength());
 }
 
 // Cancel I/O on the socket.  No-op if the socket is not open.
