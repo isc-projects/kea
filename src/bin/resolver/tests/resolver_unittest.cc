@@ -96,6 +96,27 @@ TEST_F(ResolverTest, AXFRFail) {
                 QR_FLAG, 1, 0, 0, 0);
 }
 
+TEST_F(ResolverTest, IXFRFail) {
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                                       Name("example.com"), RRClass::IN(),
+                                       RRType::IXFR());
+    createRequestPacket(request_message, IPPROTO_TCP);
+    // IXFR is not implemented and should always send NOTIMP.
+    server.processMessage(*io_message,
+                          parse_message,
+                          response_message,
+                          response_obuffer,
+                          &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    // the second check is what we'll need in the end (with the values
+    // from the first one), but right now the first one is for what
+    // will actually be returned to the client
+    headerCheck(*parse_message, default_qid, Rcode::NOTIMP(), opcode.getCode(),
+                QR_FLAG, 1, 0, 0, 0);
+    headerCheck(*response_message, default_qid, Rcode::NOTIMP(), opcode.getCode(),
+                0, 0, 0, 0, 0);
+}
+
 TEST_F(ResolverTest, notifyFail) {
     // Notify should always return NOTAUTH
     request_message.clear(Message::RENDER);

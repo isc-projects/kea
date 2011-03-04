@@ -77,7 +77,7 @@ protected:
         dummy_socket(IOSocket::getDummyUDPSocket()),
         dummy_endpoint(IOEndpointPtr(IOEndpoint::create(IPPROTO_UDP,
                                                         IOAddress("192.0.2.1"),
-                                                        5300)))
+                                                        53210)))
     {}
 public:
     unsigned int run() {
