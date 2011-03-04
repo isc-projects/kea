@@ -22,6 +22,7 @@ from isc.cc import SessionError
 import isc.util.process
 import signal
 import os
+from optparse import OptionParser
 
 isc.util.process.rename()
 
@@ -35,6 +36,19 @@ else:
     DATA_PATH = "@localstatedir@/@PACKAGE@".replace("${prefix}", PREFIX)
 
 cm = None
+
+def parse_options(args=sys.argv[1:], Parser=OptionParser):
+    parser = Parser()
+    parser.add_option("-p", "--data-path", dest="data_path",
+                      help="Directory to search for configuration files " +
+                      "(default="+DATA_PATH+")", default=DATA_PATH)
+    parser.add_option("-f", "--database-filename", dest="file_name",
+                      help="Configuration database filename " +
+                      "(default=b10-config.db)", default="b10-config.db")
+    (options, args) = parser.parse_args(args)
+    if args:
+        parser.error("No non-option arguments allowed")
+    return options
 
 def signal_handler(signal, frame):
     global cm
