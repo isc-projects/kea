@@ -19,6 +19,9 @@
 # Ignore "unimportant" differences, like ordering of NS lines, TTL's,
 # etc...
 
+# This is a bare copy of the script used in BIND 9's system test.  It was
+# old and may need cleanups, or we may want to rewrite it in python.
+
 $file1 = $ARGV[0];
 $file2 = $ARGV[1];
 
