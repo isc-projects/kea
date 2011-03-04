@@ -27,6 +27,13 @@ if [ @srcdir@ != @builddir@ ]; then
 	exit 1
 fi
 
+if [ -z $BIND9_TOP ]; then
+	echo "systest assumes there's a compiled tree of BIND 9 which can be"
+	echo "accessed via the BIND9_TOP environment variable."
+	echo "Please make sure this assumption is met."
+	exit 1
+fi
+
 # Find the top of the source tree.
 TOP=@abs_top_srcdir@
 
