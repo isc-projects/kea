@@ -17,6 +17,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>             // for some IPC/network system calls
+#include <errno.h>
 
 #include <boost/shared_array.hpp>
 
@@ -83,11 +84,22 @@ TCPServer::operator()(error_code ec, size_t length) {
             /// Create a socket to listen for connections
             socket_.reset(new tcp::socket(acceptor_->get_io_service()));
 
-            /// Wait for new connections. In the event of error,
+            /// Wait for new connections. In the event of non-fatal error,
             /// try again
             do {
                 CORO_YIELD acceptor_->async_accept(*socket_, *this);
-            } while (!ec);
+                // Abort on fatal errors
+                // TODO: Log error?
+                if (ec) {
+                    if (ec.category() != error::system_category) {
+                        return;
+                    }
+                    if (ec.value() != EWOULDBLOCK && ec.value() != EAGAIN &&
+                        ec.value() != ECONNABORTED && ec.value() != EINTR) {
+                        return;
+                    }
+                }
+            } while (ec);
 
             /// Fork the coroutine by creating a copy of this one and
             /// scheduling it on the ASIO service queue.  The parent
