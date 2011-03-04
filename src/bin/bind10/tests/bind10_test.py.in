@@ -48,7 +48,7 @@ class TestProcessInfo(unittest.TestCase):
 #                                   'FOO': 'BAR' })
 
     def test_setting_null_stdout(self):
-        pi = ProcessInfo('Test Process', [ '/bin/echo', 'foo' ], 
+        pi = ProcessInfo('Test Process', [ '/bin/echo', 'foo' ],
                          dev_null_stdout=True)
         os.dup2(self.old_stdout, sys.stdout.fileno())
         self.assertEqual(pi.dev_null_stdout, True)
