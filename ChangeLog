@@ -1,3 +1,8 @@
+  185.  [bug]        vorner
+	Tests use port from private range (53210), lowering chance of
+	a conflict with something else (eg. running bind 10).
+	(Trac #523, git 301da7d26d41e64d87c0cf72727f3347aa61fb40)
+
   184.  [func]*      vorner
 	Listening address and port configuration of b10-auth is the same as
 	for b10-resolver now. That means, it is configured through bindctl
