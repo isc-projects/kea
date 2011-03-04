@@ -87,7 +87,7 @@ case "$1" in
 			ifconfig lo0:$int 10.53.0.$ns netmask 0xffffffff up
 			;;
 		    *-*-solaris2.[8-9]|*-*-solaris2.1[0-9])
-    			/sbin/ifconfig lo0:$int plumb
+			/sbin/ifconfig lo0:$int plumb
 			/sbin/ifconfig lo0:$int 10.53.0.$ns up
 			if test -n "$int6"
 			then
@@ -153,7 +153,7 @@ case "$1" in
 		then
 			int=`expr $ns + $base - 1`
 		else
-			int=$ns	
+			int=$ns
 		fi
 		case "$sys" in
 		    *-pc-solaris2.5.1)
