@@ -19,7 +19,7 @@ There are multiple test suites, each in a separate subdirectory and
 involving a different DNS setup.  They are:
 
   glue/		Glue handling tests
-(the following test are planned to be added soon)
+(the following tests are planned to be added soon)
   dnssec/	DNSSEC tests
   masterfile/	Master file parser
   xfer/		Zone transfer tests
