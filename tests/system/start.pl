@@ -131,9 +131,9 @@ sub start_server {
 		} else {
 			$command .= "-m record,size,mctx ";
 			$command .= "-T clienttest ";
-			$command .= "-T nosoa " 
+			$command .= "-T nosoa "
 				if (-e "$testdir/$server/named.nosoa");
-			$command .= "-T noaa " 
+			$command .= "-T noaa "
 				if (-e "$testdir/$server/named.noaa");
 			$command .= "-c named.conf -d 99 -g";
 		}
