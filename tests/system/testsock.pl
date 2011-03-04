@@ -15,8 +15,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: testsock.pl,v 1.18 2010/08/17 23:46:46 tbox Exp $
-
 # Test whether the interfaces on 10.53.0.* are up.
 
 require 5.001;
