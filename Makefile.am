@@ -1,4 +1,4 @@
-SUBDIRS = doc src
+SUBDIRS = doc src tests
 USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
 GENHTML=@GENHTML@
@@ -76,6 +76,11 @@ cppcheck:
 		--quiet --error-exitcode=1 \
 		--template '{file}:{line}: check_fail: {message} ({severity},{id})' \
 		src
+
+# system tests
+systest:
+	cd tests/system; \
+	sh runall.sh
 
 #### include external sources in the distributed tarball:
 EXTRA_DIST = ext/asio/README
