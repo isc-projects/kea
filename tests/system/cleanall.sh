@@ -19,19 +19,15 @@
 # Clean up after system tests.
 #
 
-SYSTEMTESTTOP=.
-. $SYSTEMTESTTOP/conf.sh
-
-
 find . -type f \( \
     -name 'K*' -o -name '*~' -o -name '*.core' -o -name '*.log' \
     -o -name '*.pid' -o -name '*.keyset' -o -name named.run \
-    -o name bind10.run -o -name lwresd.run -o -name ans.run \) -print | \
+    -o -name bind10.run -o -name lwresd.run -o -name ans.run \) -print | \
     xargs rm -f
 
 status=0
 
-for d in $SUBDIRS
+for d in `find . -type d -maxdepth 1 -mindepth 1 -print`
 do
    test ! -f $d/clean.sh || ( cd $d && sh clean.sh )
 done
