@@ -48,7 +48,7 @@ MessageEntry::getRRsetEntries(vector<RRsetEntryPtr>& rrset_entry_vec,
     for (int index = 0; index < entry_count; ++index) {
         RRsetEntryPtr rrset_entry = rrset_cache_->lookup(rrsets_[index].name_,
                                                         rrsets_[index].type_);
-        if (time_now < rrset_entry->getExpireTime()) {
+        if (rrset_entry && time_now < rrset_entry->getExpireTime()) {
             rrset_entry_vec.push_back(rrset_entry);
         } else {
             return (false);
