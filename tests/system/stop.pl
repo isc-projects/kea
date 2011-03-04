@@ -15,8 +15,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: stop.pl,v 1.12 2007/06/19 23:47:00 tbox Exp $
-
 # Framework for stopping test servers
 # Based on the type of server specified, signal the server to stop, wait
 # briefly for it to die, and then kill it if it is still alive.
