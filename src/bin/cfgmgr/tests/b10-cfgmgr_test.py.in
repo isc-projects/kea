@@ -23,7 +23,7 @@ import sys
 from optparse import OptionParser
 
 class MyConfigManager:
-    def __init__(self, path):
+    def __init__(self, path, filename):
         self._path = path
         self.read_config_called = False
         self.notify_boss_called = False

@@ -56,9 +56,10 @@ def signal_handler(signal, frame):
         cm.running = False
 
 def main():
+    options = parse_options()
     global cm
     try:
-        cm = ConfigManager(DATA_PATH)
+        cm = ConfigManager(options.data_path, options.file_name)
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
         cm.read_config()
