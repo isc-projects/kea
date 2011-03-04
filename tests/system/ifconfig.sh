@@ -23,7 +23,7 @@
 #
 
 config_guess=""
-for f in ./config.guess ../../../config.guess
+for f in ./config.guess ../../config.guess
 do
 	if test -f $f
 	then

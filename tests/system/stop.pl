@@ -64,7 +64,7 @@ if (defined $server) {
 	my @files = sort readdir DIR;
 	closedir DIR;
 
-	my @ns = grep /^ns[0-9]*$/, @files;
+	my @ns = grep /^nsx?[0-9]*$/, @files;
 	my @lwresd = grep /^lwresd[0-9]*$/, @files;
 	my @ans = grep /^ans[0-9]*$/, @files;
 
@@ -103,7 +103,9 @@ sub server_pid_file {
 	my($server) = @_;
 
 	my $pid_file;
-	if ($server =~ /^ns/) {
+	if ($server =~ /^nsx/) {
+		$pid_file = "bind10.pid";
+	} elsif ($server =~ /^ns/) {
 		$pid_file = "named.pid";
 	} elsif ($server =~ /^lwresd/) {
 		$pid_file = "lwresd.pid";

@@ -26,7 +26,8 @@ SYSTEMTESTTOP=.
 find . -type f \( \
     -name 'K*' -o -name '*~' -o -name '*.core' -o -name '*.log' \
     -o -name '*.pid' -o -name '*.keyset' -o -name named.run \
-    -o -name lwresd.run -o -name ans.run \) -print | xargs rm -f
+    -o name bind10.run -o -name lwresd.run -o -name ans.run \) -print | \
+    xargs rm -f
 
 status=0
 
