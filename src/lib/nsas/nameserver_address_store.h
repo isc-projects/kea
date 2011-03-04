@@ -23,6 +23,7 @@
 #include <resolve/resolver_interface.h>
 
 #include "nsas_types.h"
+#include "glue_hints.h"
 
 namespace isc {
 // Some forward declarations, so we do not need to include so many headers
@@ -85,7 +86,7 @@ public:
     /// \param family Which address is requested.
     void lookup(const std::string& zone, const dns::RRClass& class_code,
         boost::shared_ptr<AddressRequestCallback> callback, AddressFamily
-        family = ANY_OK);
+        family = ANY_OK, const GlueHints = GlueHints());
 
     /// \brief cancel the given lookup action
     ///
