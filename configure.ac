@@ -689,6 +689,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/cache/tests/Makefile
                  src/lib/server_common/Makefile
                  src/lib/server_common/tests/Makefile
+                 tests/Makefile
+                 tests/system/Makefile
                ])
 AC_OUTPUT([doc/version.ent
            src/bin/cfgmgr/b10-cfgmgr.py
@@ -747,6 +749,8 @@ AC_OUTPUT([doc/version.ent
            src/lib/cc/tests/session_unittests_config.h
            src/lib/log/tests/run_time_init_test.sh
            tests/system/conf.sh
+           tests/system/glue/setup.sh
+           tests/system/glue/nsx1/b10-config.db
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
