@@ -1,6 +1,6 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 #PYTESTS = args_test.py bind10_test.py bind10_cmd_test.py
-PYTESTS = bind10_test.py bind10_cmd_test_test.py
+PYTESTS = bind10_test.py bind10_cmd_test.py
 EXTRA_DIST = $(PYTESTS)
 
 # test using command-line arguments, so use check-local target instead of TESTS
@@ -13,5 +13,6 @@ endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/bind10 \
-	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
+        BIND10_MSGQ_SOCKET_FILE=$(abs_top_builddir)/msgq_socket \
+	    $(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
