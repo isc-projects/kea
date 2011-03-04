@@ -583,6 +583,12 @@ if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GXX" = "Xyes"; then
 	CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_DEV_POLL=1"
 fi
 
+#
+# Perl is optional; it is used only by some of the system test scripts.
+#
+AC_PATH_PROGS(PERL, perl5 perl)
+AC_SUBST(PERL)
+
 AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
   [regenerate man pages [default=no]])], enable_man=yes, enable_man=no)
 
@@ -740,6 +746,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
            src/lib/log/tests/run_time_init_test.sh
+           tests/system/conf.sh
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
