@@ -56,7 +56,7 @@ The tests can be run individually like this:
   sh run.sh glue
   etc.
 
-To run all the tests, just type "make test" either on this directory
+To run all the tests, just type "make systest" either on this directory
 or on the top source directory.  Note: currently these tests cannot be
 run when built under a separate build directory.  Everything must be
 run within the original source tree.
