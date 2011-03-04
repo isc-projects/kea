@@ -16,6 +16,9 @@
 #include <cstdlib>
 #include <string>
 #include <iostream>
+#include <iomanip>
+#include <iterator>
+#include <vector>
 
 #include <gtest/gtest.h>
 #include <boost/bind.hpp>
@@ -48,7 +51,11 @@ const asio::ip::address TEST_HOST(asio::ip::address::from_string("127.0.0.1"));
 const uint16_t TEST_PORT(5301);
 // FIXME Shouldn't we send something that is real message?
 const char TEST_DATA[] = "Test response from server to client (longer than 30 bytes)";
-const int SEND_INTERVAL = 500;   // Interval in ms between TCP sends
+const int SEND_INTERVAL = 250;   // Interval in ms between TCP sends
+
+// The tests are complex, so debug output has been left in (although disabled).
+// Set this to true to enable it.
+const bool DEBUG = false;
 
 /// \brief Test fixture for the asiolink::IOFetch.
 class IOFetchTest : public virtual ::testing::Test, public virtual IOFetch::Callback
@@ -70,9 +77,12 @@ public:
     // response handler methods in this class) receives the question sent by the
     // fetch object.
     uint8_t         receive_buffer_[512];   ///< Server receive buffer
-    uint8_t         send_buffer_[512];      ///< Server send buffer
-    uint16_t        send_size_;             ///< Amount of data to sent
+    vector<uint8_t> send_buffer_;           ///< Server send buffer
     uint16_t        send_cumulative_;       ///< Data sent so far
+
+    // Other data.
+    string          return_data_;           ///< Data returned by server
+    bool            debug_;                 ///< true to enable debug output
 
     /// \brief Constructor
     IOFetchTest() :
@@ -92,8 +102,9 @@ public:
         timer_(service_.get_io_service()),
         receive_buffer_(),
         send_buffer_(),
-        send_size_(0),
-        send_cumulative_(0)
+        send_cumulative_(0),
+        return_data_(TEST_DATA),
+        debug_(DEBUG)
     {
         // Construct the data buffer for question we expect to receive.
         Message msg(Message::RENDER);
@@ -119,6 +130,10 @@ public:
     /// \param length Amount of data received.
     void udpReceiveHandler(udp::endpoint* remote, udp::socket* socket,
                     error_code ec = error_code(), size_t length = 0) {
+        if (debug_) {
+            cout << "udpReceiveHandler(): error = " << ec.value() <<
+                    ", length = " << length << endl;
+        }
 
         // The QID in the incoming data is random so set it to 0 for the
         // data comparison check. (It is set to 0 in the buffer containing
@@ -132,7 +147,8 @@ public:
         static_cast<const uint8_t*>(msgbuf_->getData())));
 
         // Return a message back to the IOFetch object.
-        socket->send_to(asio::buffer(TEST_DATA, sizeof TEST_DATA), *remote);
+        socket->send_to(asio::buffer(return_data_.c_str(), return_data_.size()),
+                                     *remote);
     }
 
     /// \brief Completion Handler for accepting TCP data
@@ -144,6 +160,10 @@ public:
     /// \param ec Boost error code, value should be zero.
     void tcpAcceptHandler(tcp::socket* socket, error_code ec = error_code())
     {
+        if (debug_) {
+            cout << "tcpAcceptHandler(): error = " << ec.value() << endl;
+        }
+
         // Expect that the accept completed without a problem.
         EXPECT_EQ(0, ec.value());
 
@@ -167,6 +187,10 @@ public:
     void tcpReceiveHandler(tcp::socket* socket, error_code ec = error_code(),
                            size_t length = 0)
     {
+        if (debug_) {
+            cout << "tcpReceiveHandler(): error = " << ec.value() <<
+                    ", length = " << length << endl;
+        }
         // Expect that the receive completed without a problem.
         EXPECT_EQ(0, ec.value());
 
@@ -196,11 +220,12 @@ public:
             static_cast<const uint8_t*>(msgbuf_->getData())));
 
         // ... and return a message back.  This has to be preceded by a two-byte
-        // count field.  Construct the message.
-        assert(sizeof(send_buffer_) > (sizeof(TEST_DATA) + 2));
-        writeUint16(sizeof(TEST_DATA), send_buffer_);
-        copy(TEST_DATA, TEST_DATA + sizeof(TEST_DATA) - 1, send_buffer_ + 2);
-        send_size_ = sizeof(TEST_DATA) + 2;
+        // count field.
+        send_buffer_.clear();
+        send_buffer_.push_back(0);
+        send_buffer_.push_back(0);
+        writeUint16(return_data_.size(), &send_buffer_[0]);
+        copy(return_data_.begin(), return_data_.end(), back_inserter(send_buffer_));
 
         // Send the data.  This is done in multiple writes with a delay between
         // each to check that the reassembly of TCP packets from fragments works.
@@ -216,12 +241,16 @@ public:
     ///
     /// \param socket Socket over which send should take place
     void tcpSendData(tcp::socket* socket) {
+        if (debug_) {
+            cout << "tcpSendData()" << endl;
+        }
+
         // Decide what to send based on the cumulative count
         uint8_t* send_ptr = &send_buffer_[send_cumulative_];
                                     // Pointer to data to send
         size_t amount = 16;         // Amount of data to send
         if (send_cumulative_ > 30) {
-            amount = send_size_ - send_cumulative_;
+            amount = send_buffer_.size() - send_cumulative_;
         }
 
         // ... and send it.  The amount sent is also passed as the first argument
@@ -252,12 +281,17 @@ public:
     void tcpSendHandler(size_t expected, tcp::socket* socket,
                         error_code ec = error_code(), size_t length = 0)
     {
+        if (debug_) {
+            cout << "tcpSendHandler(): error = " << ec.value() <<
+                    ", length = " << length << endl;
+        }
+
         EXPECT_EQ(0, ec.value());       // Expect no error
         EXPECT_EQ(expected, length);    // And that amount sent is as expected
 
         // Do we need to send more?
         send_cumulative_ += length;
-        if (send_cumulative_ < send_size_) {
+        if (send_cumulative_ < send_buffer_.size()) {
 
             // Yes - set up a timer:  the callback handler for the timer is
             // tcpSendData, which will then send the next chunk.  We pass the
@@ -277,20 +311,22 @@ public:
     ///
     /// \param result Result indicated by the callback
     void operator()(IOFetch::Result result) {
+        if (debug_) {
+            cout << "operator()(): result = " << result << endl;
+        }
 
         EXPECT_EQ(expected_, result);   // Check correct result returned
         EXPECT_FALSE(run_);             // Check it is run only once
         run_ = true;                    // Note success
 
         // If the expected result for SUCCESS, then this should have been called
-        // when one of the "servers" in this class has sent back the TEST_DATA.
+        // when one of the "servers" in this class has sent back return_data_.
         // Check the data is as expected/
         if (expected_ == IOFetch::SUCCESS) {
-            EXPECT_EQ(sizeof(TEST_DATA), result_buff_->getLength());
+            EXPECT_EQ(return_data_.size(), result_buff_->getLength());
 
             const uint8_t* start = static_cast<const uint8_t*>(result_buff_->getData());
-            EXPECT_TRUE(equal(TEST_DATA, (TEST_DATA + sizeof(TEST_DATA) - 1),
-                              start));
+            EXPECT_TRUE(equal(return_data_.begin(), return_data_.end(), start));
         }
 
         // ... and cause the run loop to exit.
@@ -360,6 +396,38 @@ public:
         service_.run();
         EXPECT_TRUE(run_);
     }
+
+    /// \brief Send/Receive Test
+    ///
+    /// Send a query to the server then receives a response.
+    ///
+    /// \param Test data to return to client
+    void tcpSendReturnTest(const std::string& return_data) {
+        return_data_ = return_data;
+        protocol_ = IOFetch::TCP;
+        expected_ = IOFetch::SUCCESS;
+
+        // Socket into which the connection will be accepted
+        tcp::socket socket(service_.get_io_service());
+
+        // Acceptor object - called when the connection is made, the handler
+        // will initiate a read on the socket.
+        tcp::acceptor acceptor(service_.get_io_service(),
+                               tcp::endpoint(tcp::v4(), TEST_PORT));
+        acceptor.async_accept(socket,
+            boost::bind(&IOFetchTest::tcpAcceptHandler, this, &socket, _1));
+
+        // Post the TCP fetch object to send the query and receive the response.
+        service_.get_io_service().post(tcp_fetch_);
+
+        // ... and execute all the callbacks.  This exits when the fetch
+        // completes.
+        service_.run();
+        EXPECT_TRUE(run_);  // Make sure the callback did execute
+
+        // Tidy up
+        socket.close();
+    }
 };
 
 // Check the protocol
@@ -421,28 +489,27 @@ TEST_F(IOFetchTest, TcpTimeout) {
     timeoutTest(IOFetch::TCP, tcp_fetch_);
 }
 
-TEST_F(IOFetchTest, TcpSendReceive) {
-    protocol_ = IOFetch::TCP;
-    expected_ = IOFetch::SUCCESS;
+// Do a send and return with a small amount of data
 
-    // Socket into which the connection will be accepted
-    tcp::socket socket(service_.get_io_service());
+TEST_F(IOFetchTest, TcpSendReceiveShort) {
+    tcpSendReturnTest(TEST_DATA);
+}
 
-    // Acceptor object - called when the connection is made, the handler will
-    // initiate a read on the socket.
-    tcp::acceptor acceptor(service_.get_io_service(),
-                           tcp::endpoint(tcp::v4(), TEST_PORT));
-    acceptor.async_accept(socket,
-        boost::bind(&IOFetchTest::tcpAcceptHandler, this, &socket, _1));
+// Now with at least 16kB of data.
 
-    // Post the TCP fetch object to send the query and receive the response.
-    service_.get_io_service().post(tcp_fetch_);
+TEST_F(IOFetchTest, TcpSendReceiveLong) {
+    const size_t REQUIRED_SIZE = 16 * 1024;
 
-    // ... and execute all the callbacks.  This exits when the fetch completes.
-    service_.run();
-    EXPECT_TRUE(run_);  // Make sure the callback did execute
+    // We could initialize the string with a repeat of a single character, but
+    // we choose to enure that there are different characters as an added test.
+    string data;
+    data.reserve(REQUIRED_SIZE);
+    while (data.size() < REQUIRED_SIZE) {
+        data += "An abritrary message that is returned to the IOFetch object!";
+    }
 
-    socket.close();
+    // ... and do the test with this data.
+    tcpSendReturnTest(data);
 }
 
 } // namespace asiolink

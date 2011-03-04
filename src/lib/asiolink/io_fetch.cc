@@ -78,6 +78,8 @@ struct IOFetchData {
     asio::deadline_timer        timer;      ///< Timer to measure timeouts
     IOFetch::Protocol           protocol;   ///< Protocol being used
     size_t                      cumulative; ///< Cumulative received amount
+    size_t                      expected;   ///< Expected amount of data
+    size_t                      offset;     ///< Offset to receive data
     bool                        stopped;    ///< Have we stopped running?
     int                         timeout;    ///< Timeout in ms
 
@@ -129,6 +131,8 @@ struct IOFetchData {
         timer(service.get_io_service()),
         protocol(proto),
         cumulative(0),
+        expected(0),
+        offset(0),
         stopped(false),
         timeout(wait),
         origin(ASIO_UNKORIGIN)
@@ -182,9 +186,6 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
             msg.addQuestion(data_->question);
             MessageRenderer renderer(*data_->msgbuf);
             msg.toWire(renderer);
-
-            // As this is a new fetch, clear the amount of data received
-            data_->cumulative = 0;
         }
 
         // If we timeout, we stop, which will can cancel outstanding I/Os and
@@ -218,22 +219,29 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
         // we need to yield ... and we *really* don't want to set up another
         // coroutine within that method.)  So after each receive (and yield),
         // we check if the operation is complete and if not, loop to read again.
+        //
+        // Another concession to TCP is that the amount of is contained in the
+        // first two bytes.  This leads to two problems:
+        //
+        // a) We don't want those bytes in the return buffer.
+        // b) They may not both arrive in the first I/O.
+        //
+        // So... we need to loop until we have at least two bytes, then store
+        // the expected amount of data.  Then we need to loop until we have
+        // received all the data before copying it back to the user's buffer.
+        // And we want to minimise the amount of copying...
+
         data_->origin = ASIO_RECVSOCK;
+        data_->cumulative = 0;          // No data yet received
+        data_->offset = 0;              // First data into start of buffer
         do {
             CORO_YIELD data_->socket->asyncReceive(data_->staging.get(),
-                static_cast<size_t>(MIN_LENGTH), data_->cumulative,
-                data_->remote.get(), *this);
-            data_->cumulative += length;
-        } while (!data_->socket->receiveComplete(data_->staging.get(),
-            data_->cumulative));
-
-        /// Copy the answer into the response buffer.  (TODO: If the
-        /// OutputBuffer object were made to meet the requirements of a
-        /// MutableBufferSequence, then it could be written to directly by
-        /// async_receive_from() and this additional copy step would be
-        /// unnecessary.)
-        data_->socket->appendNormalizedData(data_->staging.get(),
-            data_->cumulative, data_->received);
+                                                   static_cast<size_t>(MIN_LENGTH),
+                                                   data_->offset,
+                                                   data_->remote.get(), *this);
+        } while (!data_->socket->processReceivedData(data_->staging.get(), length,
+                                                     data_->cumulative, data_->offset,
+                                                     data_->expected, data_->received));
 
         // Finished with this socket, so close it.  This will not generate an
         // I/O error, but reset the origin to unknown in case we change this.

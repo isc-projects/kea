@@ -123,37 +123,25 @@ public:
     virtual void asyncReceive(void* data, size_t length, size_t offset,
                               IOEndpoint* endpoint, C& callback);
 
-    /// \brief Checks if the data received is complete.
+    /// \brief Process received data
     ///
-    /// For a UDP socket all the data is received in one I/O, so this is
-    /// effectively a no-op (although it does update the amount of data
-    /// received).
+    /// See the description of IOAsioSocket::receiveComplete for a complete
+    /// description of this method.
     ///
-    /// \param data Data buffer containing data to date (ignored)
-    /// \param length Amount of data in the buffer.
+    /// \param staging Pointer to the start of the staging buffer.
+    /// \param length Amount of data in the staging buffer.
+    /// \param cumulative Amount of data received before the staging buffer is
+    ///        processed.
+    /// \param offset Unused.
+    /// \param expected unused.
+    /// \param outbuff Output buffer.  Data in the staging buffer is be copied
+    ///        to this output buffer in the call.
     ///
     /// \return Always true
-    virtual bool receiveComplete(const void*, size_t) {
-        return (true);
-    }
-
-    /// \brief Append Normalized Data
-    ///
-    /// When a UDP buffer is received, the entire buffer contains the data.
-    /// When a TCP buffer is received, the first two bytes of the buffer hold
-    /// a length count.  This method removes those bytes from the buffer.
-    ///
-    /// \param inbuf Input buffer.  This contains the data received over the
-    ///        network connection.
-    /// \param length Amount of data in the input buffer.  If TCP, this includes
-    ///        the two-byte count field.
-    /// \param outbuf Pointer to output buffer to which the data will be
-    ///        appended
-    virtual void appendNormalizedData(const void* inbuf, size_t length,
-                                      isc::dns::OutputBufferPtr outbuf)
-    {
-        outbuf->writeData(inbuf, length);
-    }
+    virtual bool processReceivedData(const void* staging, size_t length,
+                                     size_t& cumulative, size_t& offset,
+                                     size_t& expected,
+                                     isc::dns::OutputBufferPtr& outbuff);
 
     /// \brief Cancel I/O On Socket
     virtual void cancel();
@@ -286,6 +274,27 @@ UDPSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
         isc_throw(SocketNotOpen,
             "attempt to receive from a UDP socket that is not open");
     }
+}
+
+// Receive complete.  Just copy the data across to the output buffer and
+// update arguments as appropriate.
+
+template <typename C> bool
+UDPSocket<C>::processReceivedData(const void* staging, size_t length,
+                                  size_t& cumulative, size_t& offset,
+                                  size_t& expected,
+                                  isc::dns::OutputBufferPtr& outbuff)
+{
+    // Set return values to what we should expect.
+    cumulative = length;
+    expected = length;
+    offset = 0;
+
+    // Copy data across
+    outbuff->writeData(staging, length);
+
+    // ... and mark that we have everything.
+    return (true);
 }
 
 // Cancel I/O on the socket.  No-op if the socket is not open.
