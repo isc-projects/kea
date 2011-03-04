@@ -21,6 +21,11 @@
         "command_name": "shutdown",
         "command_description": "Shut down BIND 10",
         "command_args": []
+      },
+      {
+        "command_name": "ping",
+        "command_description": "Ping the boss process",
+        "command_args": []
       }
     ]
   }
