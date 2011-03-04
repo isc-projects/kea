@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/usr/bin/perl
 #
-# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2010  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,23 +15,35 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-#
-# Clean up after system tests.
-#
+# Test whether the interfaces on 10.53.0.* are up.
 
-SYSTEMTESTTOP=.
-. $SYSTEMTESTTOP/conf.sh
+require 5.001;
 
+use Socket;
+use Getopt::Long;
 
-find . -type f \( \
-    -name 'K*' -o -name '*~' -o -name '*.core' -o -name '*.log' \
-    -o -name '*.pid' -o -name '*.keyset' -o -name named.run \
-    -o name bind10.run -o -name lwresd.run -o -name ans.run \) -print | \
-    xargs rm -f
+my $port = 0;
+my $id = 0;
+GetOptions("p=i" => \$port,
+           "i=i" => \$id);
 
-status=0
+my @ids;
+if ($id != 0) {
+	@ids = ($id);
+} else {
+	@ids = (1..7);
+}
 
-for d in $SUBDIRS
-do
-   test ! -f $d/clean.sh || ( cd $d && sh clean.sh )
-done
+foreach $id (@ids) {
+        my $addr = pack("C4", 10, 53, 0, $id);
+	my $sa = pack_sockaddr_in($port, $addr);
+	socket(SOCK, PF_INET, SOCK_STREAM, getprotobyname("tcp"))
+      		or die "$0: socket: $!\n";
+	setsockopt(SOCK, SOL_SOCKET, SO_REUSEADDR, pack("l", 1));
+
+	bind(SOCK, $sa)
+	    	or die sprintf("$0: bind(%s, %d): $!\n",
+			       inet_ntoa($addr), $port);
+	close(SOCK);
+	sleep(1);
+}
