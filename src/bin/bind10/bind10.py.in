@@ -270,6 +270,14 @@ class BoB:
         answer = isc.config.ccsession.create_answer(0)
         return answer
 
+    def get_processes(self):
+        pids = list(self.processes.keys())
+        pids.sort()
+        process_list = [ ]
+        for pid in pids:
+            process_list.append([ pid, self.processes[pid].name ])
+        return process_list
+
     def command_handler(self, command, args):
         if self.verbose:
             sys.stdout.write("[bind10] Boss got command: " + command + "\n")
@@ -280,7 +288,13 @@ class BoB:
             if command == "shutdown":
                 self.runnable = False
                 answer = isc.config.ccsession.create_answer(0)
+            elif command == "ping":
+                answer = isc.config.ccsession.create_answer(0, "pong")
+            elif command == "show_processes":
+                answer = isc.config.ccsession.create_answer(0, 
+                                                            self.get_processes())
             else:
+                print("should be doing the unknown command thingy")
                 answer = isc.config.ccsession.create_answer(1, 
                                                             "Unknown command")
         return answer
