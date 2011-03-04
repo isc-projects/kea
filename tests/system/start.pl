@@ -52,6 +52,7 @@ if ($server && !-d "$test/$server") {
 # Global variables
 my $topdir = abs_path("$test/..");
 my $testdir = abs_path("$test");
+my $RUN_BIND10 = $ENV{'RUN_BIND10'};
 my $NAMED = $ENV{'NAMED'};
 my $LWRESD = $ENV{'LWRESD'};
 my $DIG = $ENV{'DIG'};
@@ -73,17 +74,17 @@ if ($server) {
 	my @files = sort readdir DIR;
 	closedir DIR;
 
-	my @ns = grep /^ns[0-9]*$/, @files;
+	my @ns = grep /^nsx?[0-9]*$/, @files;
 	my @lwresd = grep /^lwresd[0-9]*$/, @files;
 	my @ans = grep /^ans[0-9]*$/, @files;
 
 	# Start the servers we found.
 	&check_ports();
-	foreach (@ns, @lwresd, @ans) {
-		&start_server($_);
+	foreach my $s (@ns, @lwresd, @ans) {
+		&start_server($s);
 	}
-	foreach (@ns) {
-		&verify_server($_);
+	foreach my $s (@ns) {
+		&verify_server($s);
 	}
 }
 
@@ -121,7 +122,20 @@ sub start_server {
 	my $command;
 	my $pid_file;
 
-	if ($server =~ /^ns/) {
+	if ($server =~ /^nsx/) {
+		$cleanup_files = "{bind10.run}";
+		$command = "B10_FROM_SOURCE_CONFIG_DATA_PATH=$testdir/$server/ ";
+		$command .= "$RUN_BIND10 ";
+		if ($options) {
+			$command .= "$options";
+		} else {
+			$command .= "--msgq-socket-file=$testdir/$server/msgq_socket ";
+			$command .= "--pid-file=$testdir/$server/bind10.pid ";
+			$command .= "-v";
+		}
+		$command .= " >bind10.run 2>&1 &";
+		$pid_file = "bind10.pid";
+	} elsif ($server =~ /^ns/) {
 		$cleanup_files = "{*.jnl,*.bk,*.st,named.run}";
 		$command = "$NAMED ";
 		if ($options) {
@@ -192,7 +206,7 @@ sub start_server {
 sub verify_server {
 	my $server = shift;
 	my $n = $server;
-	$n =~ s/^ns//;
+	$n =~ s/^nsx?//;
 
 	my $tries = 0;
 	while (1) {
