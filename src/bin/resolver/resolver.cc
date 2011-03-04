@@ -185,8 +185,8 @@ public:
 
 // TODO: REMOVE, USE isc::resolve::MakeErrorMessage?
 void
-makeErrorMessage(MessagePtr message, OutputBufferPtr buffer,
-                 const Rcode& rcode)
+makeErrorMessage(MessagePtr message, MessagePtr answer_message,
+                 OutputBufferPtr buffer, const Rcode& rcode)
 {
     // extract the parameters that should be kept.
     // XXX: with the current implementation, it's not easy to set EDNS0
@@ -196,6 +196,12 @@ makeErrorMessage(MessagePtr message, OutputBufferPtr buffer,
     const bool cd = message->getHeaderFlag(Message::HEADERFLAG_CD);
     const Opcode& opcode = message->getOpcode();
     vector<QuestionPtr> questions;
+
+    // answer_message is actually ignored right now,
+    // see the comment in #607
+    answer_message->setRcode(rcode);
+    answer_message->setOpcode(opcode);
+    answer_message->setQid(qid);
 
     // If this is an error to a query or notify, we should also copy the
     // question section.
@@ -385,12 +391,14 @@ Resolver::processMessage(const IOMessage& io_message,
     } catch (const DNSProtocolError& error) {
         dlog(string("returning ") + error.getRcode().toText() + ": " + 
             error.what());
-        makeErrorMessage(query_message, buffer, error.getRcode());
+        makeErrorMessage(query_message, answer_message,
+                         buffer, error.getRcode());
         server->resume(true);
         return;
     } catch (const Exception& ex) {
         dlog(string("returning SERVFAIL: ") + ex.what());
-        makeErrorMessage(query_message, buffer, Rcode::SERVFAIL());
+        makeErrorMessage(query_message, answer_message,
+                         buffer, Rcode::SERVFAIL());
         server->resume(true);
         return;
     } // other exceptions will be handled at a higher layer.
@@ -400,28 +408,34 @@ Resolver::processMessage(const IOMessage& io_message,
     // Perform further protocol-level validation.
     bool sendAnswer = true;
     if (query_message->getOpcode() == Opcode::NOTIFY()) {
-        makeErrorMessage(query_message, buffer, Rcode::NOTAUTH());
+        makeErrorMessage(query_message, answer_message,
+                         buffer, Rcode::NOTAUTH());
         dlog("Notify arrived, but we are not authoritative");
     } else if (query_message->getOpcode() != Opcode::QUERY()) {
         dlog("Unsupported opcode (got: " + query_message->getOpcode().toText() +
             ", expected: " + Opcode::QUERY().toText());
-        makeErrorMessage(query_message, buffer, Rcode::NOTIMP());
+        makeErrorMessage(query_message, answer_message,
+                         buffer, Rcode::NOTIMP());
     } else if (query_message->getRRCount(Message::SECTION_QUESTION) != 1) {
         dlog("The query contained " +
             boost::lexical_cast<string>(query_message->getRRCount(
             Message::SECTION_QUESTION) + " questions, exactly one expected"));
-        makeErrorMessage(query_message, buffer, Rcode::FORMERR());
+        makeErrorMessage(query_message, answer_message,
+                         buffer, Rcode::FORMERR());
     } else {
         ConstQuestionPtr question = *query_message->beginQuestion();
         const RRType &qtype = question->getType();
         if (qtype == RRType::AXFR()) {
             if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
-                makeErrorMessage(query_message, buffer, Rcode::FORMERR());
+                makeErrorMessage(query_message, answer_message,
+                                 buffer, Rcode::FORMERR());
             } else {
-                makeErrorMessage(query_message, buffer, Rcode::NOTIMP());
+                makeErrorMessage(query_message, answer_message,
+                                 buffer, Rcode::NOTIMP());
             }
         } else if (qtype == RRType::IXFR()) {
-            makeErrorMessage(query_message, buffer, Rcode::NOTIMP());
+            makeErrorMessage(query_message, answer_message,
+                             buffer, Rcode::NOTIMP());
         } else {
             // The RecursiveQuery object will post the "resume" event to the
             // DNSServer when an answer arrives, so we don't have to do it now.
