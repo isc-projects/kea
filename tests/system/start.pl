@@ -124,7 +124,7 @@ sub start_server {
 
 	if ($server =~ /^nsx/) {
 		$cleanup_files = "{bind10.run}";
-		$command = "B10_FROM_SOURCE_CONFIG_DATA_PATH=$testdir/$server/ ";
+		$command = "B10_FROM_SOURCE_LOCALSTATEDIR=$testdir/$server/ ";
 		$command .= "$RUN_BIND10 ";
 		if ($options) {
 			$command .= "$options";
