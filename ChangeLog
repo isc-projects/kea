@@ -1,3 +1,9 @@
+  186.  [bug]		jelte
+	b10-resolver could stop with an assertion failure on certain kinds
+	of messages (there was a problem in error message creation). This
+	fixes that.
+	(Trac #607, git 25a5f4ec755bc09b54410fcdff22691283147f32)
+
   185.  [bug]        vorner
 	Tests use port from private range (53210), lowering chance of
 	a conflict with something else (eg. running bind 10).
