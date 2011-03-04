@@ -771,6 +771,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
            chmod +x src/lib/log/tests/run_time_init_test.sh
+           chmod +x tests/system/conf.sh
           ])
 AC_OUTPUT
 
