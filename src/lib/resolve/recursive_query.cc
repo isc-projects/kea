@@ -365,7 +365,15 @@ private:
                 // skip the cache), since if we had the final answer
                 // instead of a delegation cached, we would have been
                 // there by now.
-                send();
+                GlueHints glue_hints(cur_zone_, incoming);
+
+                // Ask the NSAS for an address, or glue.
+                // This will eventually result in either sendTo()
+                // or stop() being called by nsas_callback_
+                assert(!nsas_callback_out_);
+                nsas_callback_out_ = true;
+                nsas_.lookup(cur_zone_, question_.getClass(),
+                             nsas_callback_, ANY_OK, glue_hints);
                 return false;
             } else {
                 dlog("No NS RRset in referral?");
