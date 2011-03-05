@@ -1,3 +1,8 @@
+  187.  [bug]		zhang likun
+	Fix the assert error in class isc::cache::RRsetCache by adding the
+	check for empty pointer and test case for it.
+	(Trac #638, git 54e61304131965c4a1d88c9151f8697dcbb3ce12)
+
   186.  [bug]		jelte
 	b10-resolver could stop with an assertion failure on certain kinds
 	of messages (there was a problem in error message creation). This
