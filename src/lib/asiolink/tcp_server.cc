@@ -65,7 +65,7 @@ TCPServer::TCPServer(io_service& io_service,
 
 void
 TCPServer::operator()(error_code ec, size_t length) {
-    /// Because the coroutine reeentry block is implemented as
+    /// Because the coroutine reentry block is implemented as
     /// a switch statement, inline variable declarations are not
     /// permitted.  Certain variables used below can be declared here.
 
@@ -196,9 +196,10 @@ TCPServer::asyncLookup() {
 }
 
 void TCPServer::stop() {
-    //server should not be stopped twice
-    if (stopped_by_hand_)
+    // server should not be stopped twice
+    if (stopped_by_hand_) {
         return;
+    }
 
     stopped_by_hand_ = true;
     acceptor_->close();
