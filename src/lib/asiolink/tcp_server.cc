@@ -110,7 +110,7 @@ TCPServer::operator()(error_code ec, size_t length) {
         /// Now read the message itself. (This is done in a different scope
         /// to allow inline variable declarations.)
         CORO_YIELD {
-            InputBuffer dnsbuffer((const void *) data_.get(), length);
+            InputBuffer dnsbuffer(data_.get(), length);
             uint16_t msglen = dnsbuffer.readUint16();
             async_read(*socket_, asio::buffer(data_.get(), msglen), *this);
         }
