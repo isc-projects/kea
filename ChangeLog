@@ -1,3 +1,8 @@
+  XXX.  [func]		shane
+    Add the ability to list the running BIND 10 processes using the
+	command channel. To try this, use "Boss show_processes".
+	(Trac #648, git yyy)
+
   184.  [func]*      vorner
 	Listening address and port configuration of b10-auth is the same as
 	for b10-resolver now. That means, it is configured through bindctl
