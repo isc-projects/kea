@@ -803,7 +803,13 @@ def parse_args(args=sys.argv[1:]):
     parser.add_option("--pretty-name", type="string", action="callback",
                       callback=process_rename,
                       help="Set the process name (displayed in ps, top, ...)")
-    (options, args) = parser.parse_args()
+    parser.add_option("-c", "--config-file", action="store",
+                      dest="config_file", default=None,
+                      help="Configuration database filename")
+    parser.add_option("-p", "--data-path", dest="data_path",
+                      help="Directory to search for configuration files",
+                      default=None)
+    (options, args) = parser.parse_args(args)
     if args:
         parser.print_help()
         sys.exit(1)
