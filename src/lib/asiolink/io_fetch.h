@@ -78,7 +78,7 @@ public:
 
     /// \brief Integer Constants
     enum {
-        MIN_LENGTH = 4096   ///< Minimum size of receive buffer
+        STAGING_LENGTH = 8192   ///< Size of staging buffer
     };
 
     /// \brief I/O Fetch Callback

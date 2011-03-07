@@ -49,9 +49,8 @@ namespace asiolink {
 
 const asio::ip::address TEST_HOST(asio::ip::address::from_string("127.0.0.1"));
 const uint16_t TEST_PORT(5301);
-// FIXME Shouldn't we send something that is real message?
-const char TEST_DATA[] = "Test response from server to client (longer than 30 bytes)";
-const int SEND_INTERVAL = 250;   // Interval in ms between TCP sends
+const int SEND_INTERVAL = 250;      // Interval in ms between TCP sends
+const size_t MAX_SIZE = 64 * 1024;  // Should be able to take 64kB
 
 // The tests are complex, so debug output has been left in (although disabled).
 // Set this to true to enable it.
@@ -76,12 +75,13 @@ public:
     // The next member is the buffer in which the "server" (implemented by the
     // response handler methods in this class) receives the question sent by the
     // fetch object.
-    uint8_t         receive_buffer_[512];   ///< Server receive buffer
+    uint8_t         receive_buffer_[MAX_SIZE]; ///< Server receive buffer
     vector<uint8_t> send_buffer_;           ///< Server send buffer
     uint16_t        send_cumulative_;       ///< Data sent so far
 
     // Other data.
     string          return_data_;           ///< Data returned by server
+    string          test_data_;             ///< Large string - here for convenience
     bool            debug_;                 ///< true to enable debug output
 
     /// \brief Constructor
@@ -103,7 +103,8 @@ public:
         receive_buffer_(),
         send_buffer_(),
         send_cumulative_(0),
-        return_data_(TEST_DATA),
+        return_data_(""),
+        test_data_(""),
         debug_(DEBUG)
     {
         // Construct the data buffer for question we expect to receive.
@@ -115,6 +116,20 @@ public:
         msg.addQuestion(question_);
         MessageRenderer renderer(*msgbuf_);
         msg.toWire(renderer);
+
+        // Initialize the test data to be returned: tests will return a
+        // substring of this data. (It's convenient to have this as a member of
+        // the class.)
+        //
+        // We could initialize the data with a single character, but as an added
+        // check we'll make ssre that it has some structure.
+
+        test_data_.clear();
+        test_data_.reserve(MAX_SIZE);
+        while (test_data_.size() < MAX_SIZE) {
+            test_data_ += "A message to be returned to the client that has "
+                          "some sort of structure.";
+        }
     }
 
     /// \brief UDP Response handler (the "remote UDP DNS server")
@@ -237,7 +252,8 @@ public:
     ///
     /// Send the TCP data back to the IOFetch object.  The data is sent in
     /// three chunks - two of 16 bytes and the remainder, with a 250ms gap
-    /// between each.
+    /// between each. (Amounts of data smaller than one 32 bytes are sent in
+    /// one or two packets.)
     ///
     /// \param socket Socket over which send should take place
     void tcpSendData(tcp::socket* socket) {
@@ -245,11 +261,20 @@ public:
             cout << "tcpSendData()" << endl;
         }
 
-        // Decide what to send based on the cumulative count
+        // Decide what to send based on the cumulative count.  At most we'll do
+        // two chunks of 16 bytes (with a 250ms gap between) and then the
+        // remainder.
         uint8_t* send_ptr = &send_buffer_[send_cumulative_];
                                     // Pointer to data to send
         size_t amount = 16;         // Amount of data to send
-        if (send_cumulative_ > 30) {
+        if (send_cumulative_ < (2 * amount)) {
+            
+            // First or second time through, send at most 16 bytes
+            amount = min(amount, (send_buffer_.size() - send_cumulative_));
+
+        } else {
+
+            // Third time through, send the remainder.
             amount = send_buffer_.size() - send_cumulative_;
         }
 
@@ -403,6 +428,9 @@ public:
     ///
     /// \param Test data to return to client
     void tcpSendReturnTest(const std::string& return_data) {
+        if (debug_) {
+            cout << "tcpSendReturnTest(): data size = " << return_data.size() << endl;
+        }
         return_data_ = return_data;
         protocol_ = IOFetch::TCP;
         expected_ = IOFetch::SUCCESS;
@@ -489,27 +517,62 @@ TEST_F(IOFetchTest, TcpTimeout) {
     timeoutTest(IOFetch::TCP, tcp_fetch_);
 }
 
-// Do a send and return with a small amount of data
+// Test with values at or near 0, then at or near the chunk size (16 and 32
+// bytes, the sizes of the first two packets) then up to 65535.  These are done
+// in separate tests because in practice a new IOFetch is created for each
+// query/response exchange and we don't want to confuse matters in the test
+// by running the test with an IOFetch that has already done one exchange.
 
-TEST_F(IOFetchTest, TcpSendReceiveShort) {
-    tcpSendReturnTest(TEST_DATA);
+TEST_F(IOFetchTest, TcpSendReceive0) {
+    tcpSendReturnTest(test_data_.substr(0, 0));
 }
 
-// Now with at least 16kB of data.
+TEST_F(IOFetchTest, TcpSendReceive1) {
+    tcpSendReturnTest(test_data_.substr(0, 1));
+}
 
-TEST_F(IOFetchTest, TcpSendReceiveLong) {
-    const size_t REQUIRED_SIZE = 16 * 1024;
+TEST_F(IOFetchTest, TcpSendReceive15) {
+    tcpSendReturnTest(test_data_.substr(0, 15));
+}
 
-    // We could initialize the string with a repeat of a single character, but
-    // we choose to enure that there are different characters as an added test.
-    string data;
-    data.reserve(REQUIRED_SIZE);
-    while (data.size() < REQUIRED_SIZE) {
-        data += "An abritrary message that is returned to the IOFetch object!";
-    }
+TEST_F(IOFetchTest, TcpSendReceive16) {
+    tcpSendReturnTest(test_data_.substr(0, 16));
+}
 
-    // ... and do the test with this data.
-    tcpSendReturnTest(data);
+TEST_F(IOFetchTest, TcpSendReceive17) {
+    tcpSendReturnTest(test_data_.substr(0, 17));
+}
+
+TEST_F(IOFetchTest, TcpSendReceive31) {
+    tcpSendReturnTest(test_data_.substr(0, 31));
+}
+
+TEST_F(IOFetchTest, TcpSendReceive32) {
+    tcpSendReturnTest(test_data_.substr(0, 32));
+}
+
+TEST_F(IOFetchTest, TcpSendReceive33) {
+    tcpSendReturnTest(test_data_.substr(0, 33));
+}
+
+TEST_F(IOFetchTest, TcpSendReceive4096) {
+    tcpSendReturnTest(test_data_.substr(0, 4096));
+}
+
+TEST_F(IOFetchTest, TcpSendReceive8192) {
+    tcpSendReturnTest(test_data_.substr(0, 8192));
+}
+
+TEST_F(IOFetchTest, TcpSendReceive16384) {
+    tcpSendReturnTest(test_data_.substr(0, 16384));
+}
+
+TEST_F(IOFetchTest, TcpSendReceive32768) {
+    tcpSendReturnTest(test_data_.substr(0, 32768));
+}
+
+TEST_F(IOFetchTest, TcpSendReceive65535) {
+    tcpSendReturnTest(test_data_.substr(0, 65535));
 }
 
 } // namespace asiolink
