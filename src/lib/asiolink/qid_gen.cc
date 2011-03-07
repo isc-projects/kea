@@ -23,27 +23,21 @@
 #include <sys/time.h>
 
 namespace {
-    asiolink::QidGenerator* qid_generator_instance = NULL;
+    asiolink::QidGenerator qid_generator_instance;
 }
 
 namespace asiolink {
-QidGenerator*
+
+QidGenerator&
 QidGenerator::getInstance() {
-    if (!qid_generator_instance) {
-        qid_generator_instance = new QidGenerator();
-        qid_generator_instance->seed();
-    }
-
-    return qid_generator_instance;
+    return (qid_generator_instance);
 }
 
-void
-QidGenerator::cleanInstance() {
-    delete qid_generator_instance;
-    qid_generator_instance = NULL;
+QidGenerator::QidGenerator() : dist_(0, 65535),
+                               vgen_(generator_, dist_)
+{
+    seed();
 }
-
-QidGenerator::QidGenerator() : dist(0, 65535), vgen(generator, dist) {}
 
 void
 QidGenerator::seed() {
@@ -51,12 +45,12 @@ QidGenerator::seed() {
     gettimeofday(&tv, 0);
     long int seed;
     seed = (tv.tv_sec * 1000000) + tv.tv_usec;
-    generator.seed(seed);
+    generator_.seed(seed);
 }
 
 isc::dns::qid_t
 QidGenerator::generateQid() {
-    return vgen();
+    return (vgen_());
 }
 
 } // namespace asiolink

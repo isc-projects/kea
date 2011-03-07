@@ -18,8 +18,8 @@
 // (and other parts where we need randomness, perhaps another thing
 // for a general libutil?)
 
-#ifndef __QID_GEN_
-#define __QID_GEN_
+#ifndef __QID_GEN_H
+#define __QID_GEN_H
 
 #include <dns/message.h>
 #include <boost/random/mersenne_twister.hpp>
@@ -40,15 +40,17 @@ class QidGenerator {
 public:
     /// \brief Returns the singleton instance of the QidGenerator
     ///
-    /// Initializes a new instance if there is none.
-    static QidGenerator* getInstance();
+    /// Returns a reference to the singleton instance of the generator
+    static QidGenerator& getInstance();
 
-    /// \brief Cleans up the singleton instance.
+    /// \brief Default constructor
     ///
-    /// This is added so that we can run memory checkers and
-    /// not get complaints about leaking data. If getInstance()
-    /// is called after cleanInstance, a new one would be created.
-    static void cleanInstance();
+    /// It is recommended that getInstance is used rather than creating
+    /// separate instances of this class.
+    /// 
+    /// The constructor automatically seeds the generator with the
+    /// current time.
+    QidGenerator();
 
     /// Generate a Qid
     ///
@@ -57,18 +59,27 @@ public:
 
     /// \brief Seeds the QidGenerator (based on the current time)
     ///
-    /// This is automatically called when getInstance() is called
-    /// the first time.
+    /// This is automatically called by the constructor
     void seed();
     
 private:
-    QidGenerator();
-    boost::mt19937 generator;
-    boost::uniform_int<> dist;
-    boost::variate_generator<boost::mt19937&, boost::uniform_int<> > vgen;
+    // "Mersenne Twister: A 623-dimensionally equidistributed 
+    // uniform pseudo-random number generator", Makoto Matsumoto and 
+    // Takuji Nishimura, ACM Transactions on Modeling and Computer 
+    // Simulation: Special Issue on Uniform Random Number Generation, 
+    // Vol. 8, No. 1, January 1998, pp. 3-30. 
+    //
+    // mt19937 is an implementation of one of the pseudo random
+    // generators described in this paper.
+    boost::mt19937 generator_;
+    
+    // For qid's we want a uniform distribution
+    boost::uniform_int<> dist_;
+    
+    boost::variate_generator<boost::mt19937&, boost::uniform_int<> > vgen_;
 };
 
 
 } // namespace asiolink
 
-#endif // __QID_GEN_
+#endif // __QID_GEN_H

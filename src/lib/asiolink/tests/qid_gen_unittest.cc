@@ -39,14 +39,10 @@
 
 // Check that getInstance returns a singleton
 TEST(QidGenerator, singleton) {
-    asiolink::QidGenerator* g1 = asiolink::QidGenerator::getInstance();
-    asiolink::QidGenerator* g2 = asiolink::QidGenerator::getInstance();
+    asiolink::QidGenerator& g1 = asiolink::QidGenerator::getInstance();
+    asiolink::QidGenerator& g2 = asiolink::QidGenerator::getInstance();
 
-    EXPECT_TRUE(g1 == g2);
-
-    asiolink::QidGenerator::cleanInstance();
-    // Is there any way to make sure a newly allocated one gets
-    // a new address?
+    EXPECT_TRUE(&g1 == &g2);
 }
 
 TEST(QidGenerator, generate) {
@@ -55,9 +51,9 @@ TEST(QidGenerator, generate) {
     // test (http://xkcd.com/221/), and check if three consecutive
     // generates are not all the same.
     isc::dns::qid_t one, two, three;
-    asiolink::QidGenerator* gen = asiolink::QidGenerator::getInstance();
-    one = gen->generateQid();
-    two = gen->generateQid();
-    three = gen->generateQid();
+    asiolink::QidGenerator& gen = asiolink::QidGenerator::getInstance();
+    one = gen.generateQid();
+    two = gen.generateQid();
+    three = gen.generateQid();
     ASSERT_FALSE((one == two) && (one == three));
 }
