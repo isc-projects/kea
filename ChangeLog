@@ -2,7 +2,7 @@
 	Make the rrset trust level ranking algorithm used by
 	isc::cache::MessageEntry::getRRsetTrustLevel() follow RFC2181
 	section 5.4.1.
-	(Trac #595 git)
+	(Trac #595 git 19197b5bc9f2955bd6a8ca48a2d04472ed696e81)
 
   187.  [bug]		zhang likun
 	Fix the assert error in class isc::cache::RRsetCache by adding the
