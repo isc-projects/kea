@@ -1,3 +1,7 @@
+  189.	[bug]		jreed
+	Do not install the log message compiler.
+	(Trac #634, git eb6441aca464980d00e3ff827cbf4195c5a7afc5)
+
   188.  [bug]		zhang likun
 	Make the rrset trust level ranking algorithm used by
 	isc::cache::MessageEntry::getRRsetTrustLevel() follow RFC2181
