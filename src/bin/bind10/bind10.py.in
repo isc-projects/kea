@@ -795,7 +795,6 @@ def dump_pid(pid_file):
     """
     if pid_file is None:
         return
-    unlink_pid_file(pid_file)
     f = open(pid_file, "w")
     f.write('%d\n' % os.getpid())
     f.close()
