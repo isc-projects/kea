@@ -166,6 +166,9 @@ TCPServer::operator()(error_code ec, size_t length) {
         // The 'done_' flag indicates whether we have an answer
         // to send back.  If not, exit the coroutine permanently.
         if (!done_) {
+            // TODO: should we keep the connection open for a short time
+            // to see if new requests come in?
+            socket_->close();
             CORO_YIELD return;
         }
 
@@ -184,6 +187,10 @@ TCPServer::operator()(error_code ec, size_t length) {
         // (though we have nothing further to do, so the coroutine
         // will simply exit at that time).
         CORO_YIELD async_write(*socket_, bufs, *this);
+        
+        // TODO: should we keep the connection open for a short time
+        // to see if new requests come in?
+        socket_->close();
     }
 }
 
