@@ -1,3 +1,9 @@
+  188.  [bug]		zhang likun
+	Make the rrset trust level ranking algorithm used by
+	isc::cache::MessageEntry::getRRsetTrustLevel() follow RFC2181
+	section 5.4.1.
+	(Trac #595 git)
+
   187.  [bug]		zhang likun
 	Fix the assert error in class isc::cache::RRsetCache by adding the
 	check for empty pointer and test case for it.
