@@ -785,13 +785,11 @@ def process_rename(option, opt_str, value, parser):
     """Function that renames the process if it is requested by a option."""
     isc.util.process.rename(value)
 
-def main():
-    global options
-    global boss_of_bind
-    # Enforce line buffering on stdout, even when not a TTY
-    sys.stdout = io.TextIOWrapper(sys.stdout.detach(), line_buffering=True)
-
-    # Parse any command-line options.
+def parse_args(args=sys.argv[1:]):
+    """
+    Function for parsing command line arguments. Returns the
+    options object from OptionParser.
+    """
     parser = OptionParser(version=VERSION)
     parser.add_option("-m", "--msgq-socket-file", dest="msgq_socket_file",
                       type="string", default=None,
@@ -809,6 +807,16 @@ def main():
     if args:
         parser.print_help()
         sys.exit(1)
+
+    return options
+
+def main():
+    global options
+    global boss_of_bind
+    # Enforce line buffering on stdout, even when not a TTY
+    sys.stdout = io.TextIOWrapper(sys.stdout.detach(), line_buffering=True)
+
+    options = parse_args()
 
     # Check user ID.
     setuid = None
