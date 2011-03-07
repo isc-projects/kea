@@ -802,7 +802,7 @@ def dump_pid(pid_file):
 def unlink_pid_file(pid_file):
     """
     Remove the given file, which is basically expected to be the PID file
-    created by dump_pid().  If the specified may or may not exist; if it
+    created by dump_pid().  The specified may or may not exist; if it
     doesn't this function does nothing.  Other system level errors in removing
     the file will be propagated as the corresponding exception.
     """
