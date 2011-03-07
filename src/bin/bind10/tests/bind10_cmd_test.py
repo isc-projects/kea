@@ -11,17 +11,17 @@ BIND10_EXE="../run_bind10.sh"
 TIMEOUT=3
 
 def _waitForString(bob, s):
-    """Read the input from the Process object until we find the 
+    """Read the input from the Process object until we find the
     string we're looking for or we timeout."""
     found_string = False
     start_time = time.time()
     while time.time() < start_time + TIMEOUT:
-        (r,w,x) = select.select((bob.stdout,), (), (), TIMEOUT) 
+        (r,w,x) = select.select((bob.stdout,), (), (), TIMEOUT)
         if bob.stdout in r:
             s = bob.stdout.readline()
             if s == '':
                 break
-            if s.startswith(s): 
+            if s.startswith(s):
                 found_string = True
                 break
     return found_string
@@ -93,7 +93,7 @@ class TestBossCmd(unittest.TestCase):
         # connect to the command channel
         self.cc = isc.cc.Session()
         self.cc.group_subscribe('Boss')
-    
+
         # send a ping
         cmd = { "command": ['show_processes']}
         seq = self.cc.group_sendmsg(cmd, 'Boss')
@@ -110,7 +110,7 @@ class TestBossCmd(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    # Python 3.2 and later support the setUpClass() and tearDownClass() 
+    # Python 3.2 and later support the setUpClass() and tearDownClass()
     # class methods to unittest, which are what we want to avoid having
     # to start/stop BIND 10 every time we run the test. For versions of
     # unittest that do not support this, we invoke them explicitly

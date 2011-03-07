@@ -1,5 +1,5 @@
   XXX.  [func]		shane
-    Add the ability to list the running BIND 10 processes using the
+	Add the ability to list the running BIND 10 processes using the
 	command channel. To try this, use "Boss show_processes".
 	(Trac #648, git yyy)
 
