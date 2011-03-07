@@ -175,7 +175,7 @@ private:
     // TODO: Remove temporary buffer
     // The current implementation copies the buffer passed to asyncSend() into
     // a temporary buffer and precedes it with a two-byte count field.  As
-    // ASIO should really be just about sendiong and receiving data, the TCP
+    // ASIO should really be just about sending and receiving data, the TCP
     // code should not do this.  If the protocol using this requires a two-byte
     // count, it should add it before calling this code.  (This may be best
     // achieved by altering isc::dns::buffer to have pairs of methods:
@@ -302,7 +302,7 @@ TCPSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
         assert(endpoint->getProtocol() == IPPROTO_TCP);
         TCPEndpoint* tcp_endpoint = static_cast<TCPEndpoint*>(endpoint);
 
-        // Write the endpoint details from the comminications link.  Ideally
+        // Write the endpoint details from the communications link.  Ideally
         // we should make IOEndpoint assignable, but this runs in to all sorts
         // of problems concerning the management of the underlying Boost
         // endpoint (e.g. if it is not self-managed, is the copied one
