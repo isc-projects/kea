@@ -345,17 +345,19 @@ private:
 
             // auth section should have at least one RRset
             // and one of them should be an NS (otherwise
-            // classifier should have error'd)
-            // TODO: should we check if it really is subzone?
+            // classifier should have error'd) to a subdomain
             for (RRsetIterator rrsi = incoming.beginSection(Message::SECTION_AUTHORITY);
                  rrsi != incoming.endSection(Message::SECTION_AUTHORITY) && !found_ns_address;
                  ++rrsi) {
                 ConstRRsetPtr rrs = *rrsi;
                 if (rrs->getType() == RRType::NS()) {
-                    cur_zone_ = rrs->getName().toText();
-                    dlog("Referred to zone " + cur_zone_);
-                    found_ns_address = true;
-                    break;
+                    NameComparisonResult compare(Name(cur_zone_).compare(rrs->getName()));
+                    if (compare.getRelation() == NameComparisonResult::SUPERDOMAIN) {
+                        cur_zone_ = rrs->getName().toText();
+                        dlog("Referred to zone " + cur_zone_);
+                        found_ns_address = true;
+                        break;
+                    }
                 }
             }
 
