@@ -121,7 +121,7 @@ public:
     /// perform very low-level operations that requires the native
     /// representation.  Passing the file descriptor to a different process is
     /// one example.  This method is provided as a necessary evil for such
-    //// limited purposes.
+    /// limited purposes.
     ///
     /// This method never throws an exception.
     ///
