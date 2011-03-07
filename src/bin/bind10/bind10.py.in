@@ -194,14 +194,17 @@ class CChannelConnectError(Exception): pass
 class BoB:
     """Boss of BIND class."""
     
-    def __init__(self, msgq_socket_file=None, nocache=False, verbose=False,
-    setuid=None, username=None):
+    def __init__(self, msgq_socket_file=None, data_path = None,
+    config_filename = None, nocache=False, verbose=False, setuid=None,
+    username=None):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
         
             The msgq_socket_file specifies the UNIX domain socket file that the
             msgq process listens on.  If verbose is True, then the boss reports
             what it is doing.
+
+            Data path and config filename are passed trough to config manager.
         """
         self.cc_session = None
         self.ccs = None
@@ -219,6 +222,8 @@ class BoB:
         self.uid = setuid
         self.username = username
         self.verbose = verbose
+        self.data_path = data_path
+        self.config_filename = config_filename
 
     def config_handler(self, new_config):
         # If this is initial update, don't do anything now, leave it to startup
@@ -390,7 +395,12 @@ class BoB:
             Starts the configuration manager process
         """
         self.log_starting("b10-cfgmgr")
-        bind_cfgd = ProcessInfo("b10-cfgmgr", ["b10-cfgmgr"],
+        opts = ["b10-cfgmgr"]
+        if self.data_path is not None:
+            opts.append("--data-path=" + self.data_path)
+        if self.config_filename is not None:
+            opts.append("--database-filename=" + self.config_filename)
+        bind_cfgd = ProcessInfo("b10-cfgmgr", opts,
                                 c_channel_env, uid=self.uid,
                                 username=self.username)
         self.processes[bind_cfgd.pid] = bind_cfgd
@@ -872,8 +882,9 @@ def main():
     signal.signal(signal.SIGPIPE, signal.SIG_IGN)
 
     # Go bob!
-    boss_of_bind = BoB(options.msgq_socket_file, options.nocache,
-                       options.verbose, setuid, username)
+    boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
+                       options.config_file, options.nocache, options.verbose,
+                       setuid, username)
     startup_result = boss_of_bind.startup()
     if startup_result:
         sys.stderr.write("[bind10] Error on startup: %s\n" % startup_result)
