@@ -275,7 +275,7 @@ class BoB:
         pids.sort()
         process_list = [ ]
         for pid in pids:
-            process_list.append([ pid, self.processes[pid].name ])
+            process_list.append([pid, self.processes[pid].name])
         return process_list
 
     def command_handler(self, command, args):
@@ -291,11 +291,11 @@ class BoB:
             elif command == "ping":
                 answer = isc.config.ccsession.create_answer(0, "pong")
             elif command == "show_processes":
-                answer = isc.config.ccsession.create_answer(0, 
-                                                            self.get_processes())
+                answer = isc.config.ccsession. \
+                    create_answer(0, self.get_processes())
             else:
                 print("should be doing the unknown command thingy")
-                answer = isc.config.ccsession.create_answer(1, 
+                answer = isc.config.ccsession.create_answer(1,
                                                             "Unknown command")
         return answer
 
