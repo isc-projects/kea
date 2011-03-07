@@ -35,7 +35,7 @@ I:
 I:NOTE: Many of the tests were skipped because they require that
 I:      the IP addresses 10.53.0.1 through 10.53.0.7 are configured
 I:	as alias addresses on the loopback interface.  Please run
-I:	"bin/tests/system/ifconfig.sh up" as root to configure them
+I:	"tests/system/ifconfig.sh up" as root to configure them
 I:	and rerun the tests.
 EOF
     exit 0;
