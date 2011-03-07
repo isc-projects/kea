@@ -1,3 +1,8 @@
+  184.	[func]*		jreed
+	Listen on standard domain port 53 for b10-auth and
+	b10-resolver.
+	(Trac #617, #618)
+
   189.	[bug]		jreed
 	Do not install the log message compiler.
 	(Trac #634, git eb6441aca464980d00e3ff827cbf4195c5a7afc5)
