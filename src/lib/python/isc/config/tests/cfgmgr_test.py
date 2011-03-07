@@ -95,10 +95,22 @@ class TestConfigManager(unittest.TestCase):
         self.data_path = os.environ['CONFIG_TESTDATA_PATH']
         self.writable_data_path = os.environ['CONFIG_WR_TESTDATA_PATH']
         self.fake_session = FakeModuleCCSession()
-        self.cm = ConfigManager(self.writable_data_path, self.fake_session)
+        self.cm = ConfigManager(self.writable_data_path,
+                                session=self.fake_session)
         self.name = "TestModule"
         self.spec = isc.config.module_spec_from_file(self.data_path + os.sep + "/spec2.spec")
-    
+
+    def test_paths(self):
+        """
+        Test data_path and database filename is passed trough to
+        underlying ConfigManagerData.
+        """
+        cm = ConfigManager("/data/path", "filename", self.fake_session)
+        self.assertEqual("/data/path/filename", cm.config.db_filename)
+        # It should preserve it while reading
+        cm.read_config()
+        self.assertEqual("/data/path/filename", cm.config.db_filename)
+
     def test_init(self):
         self.assert_(self.cm.module_specs == {})
         self.assert_(self.cm.data_path == self.writable_data_path)

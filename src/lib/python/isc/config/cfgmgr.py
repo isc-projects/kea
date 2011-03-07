@@ -158,15 +158,18 @@ class ConfigManager:
        channel session. If not, a new session will be created.
        The ability to specify a custom session is for testing purposes
        and should not be needed for normal usage."""
-    def __init__(self, data_path, session = None):
+    def __init__(self, data_path, database_filename = "b10-config.db",
+                 session = None):
         """Initialize the configuration manager. The data_path string
            is the path to the directory where the configuration is
-           stored (in <data_path>/b10-config.db). Session is an optional
+           stored (in <data_path>/b10-config.db). The dabase_filename
+           is the config file to load. Session is an optional
            cc-channel session. If this is not given, a new one is
-           created"""
+           created."""
         self.data_path = data_path
+        self.database_filename = database_filename
         self.module_specs = {}
-        self.config = ConfigManagerData(data_path)
+        self.config = ConfigManagerData(data_path, database_filename)
         if session:
             self.cc = session
         else:
@@ -237,10 +240,13 @@ class ConfigManager:
         """Read the current configuration from the b10-config.db file
            at the path specificied at init()"""
         try:
-            self.config = ConfigManagerData.read_from_file(self.data_path)
+            self.config = ConfigManagerData.read_from_file(self.data_path,
+                                                           self.\
+                                                           database_filename)
         except ConfigManagerDataEmpty:
             # ok, just start with an empty config
-            self.config = ConfigManagerData(self.data_path)
+            self.config = ConfigManagerData(self.data_path,
+                                            self.database_filename)
         
     def write_config(self):
         """Write the current configuration to the b10-config.db file
