@@ -113,10 +113,8 @@ public:
     vector<RRsetPtr> rrsets_[NUM_SECTIONS];
     ConstEDNSPtr edns_;
 
-#ifdef notyet
     // tsig/sig0: TODO
-    RRsetsSorter* sorter_;
-#endif
+    // RRsetsSorter* sorter_; : TODO
 
     void init();
     void setOpcode(const Opcode& opcode);

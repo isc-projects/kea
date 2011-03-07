@@ -39,6 +39,7 @@
 #include <dns/rrttl.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
+#include <server_common/portconfig.h>
 
 #include <log/dummylog.h>
 
@@ -52,8 +53,7 @@ using namespace isc::data;
 using namespace isc::config;
 using isc::log::dlog;
 using namespace asiolink;
-
-typedef pair<string, uint16_t> addr_t;
+using namespace isc::server_common::portconfig;
 
 class ResolverImpl {
 private:
@@ -96,14 +96,14 @@ public:
         }
     }
 
-    void setForwardAddresses(const vector<addr_t>& upstream,
+    void setForwardAddresses(const AddressList& upstream,
         DNSService *dnss)
     {
         upstream_ = upstream;
         if (dnss) {
             if (!upstream_.empty()) {
                 dlog("Setting forward addresses:");
-                BOOST_FOREACH(const addr_t& address, upstream) {
+                BOOST_FOREACH(const AddressPair& address, upstream) {
                     dlog(" " + address.first + ":" +
                         boost::lexical_cast<string>(address.second));
                 }
@@ -113,14 +113,14 @@ public:
         }
     }
 
-    void setRootAddresses(const vector<addr_t>& upstream_root,
+    void setRootAddresses(const AddressList& upstream_root,
                           DNSService *dnss)
     {
         upstream_root_ = upstream_root;
         if (dnss) {
             if (!upstream_root_.empty()) {
                 dlog("Setting root addresses:");
-                BOOST_FOREACH(const addr_t& address, upstream_root) {
+                BOOST_FOREACH(const AddressPair& address, upstream_root) {
                     dlog(" " + address.first + ":" +
                         boost::lexical_cast<string>(address.second));
                 }
@@ -144,11 +144,11 @@ public:
     /// These members are public because Resolver accesses them directly.
     ModuleCCSession* config_session_;
     /// Addresses of the root nameserver(s)
-    vector<addr_t> upstream_root_;
+    AddressList upstream_root_;
     /// Addresses of the forward nameserver
-    vector<addr_t> upstream_;
+    AddressList upstream_;
     /// Addresses we listen on
-    vector<addr_t> listen_;
+    AddressList listen_;
 
     /// Timeout for outgoing queries in milliseconds
     int query_timeout_;
@@ -185,8 +185,8 @@ public:
 
 // TODO: REMOVE, USE isc::resolve::MakeErrorMessage?
 void
-makeErrorMessage(MessagePtr message, OutputBufferPtr buffer,
-                 const Rcode& rcode)
+makeErrorMessage(MessagePtr message, MessagePtr answer_message,
+                 OutputBufferPtr buffer, const Rcode& rcode)
 {
     // extract the parameters that should be kept.
     // XXX: with the current implementation, it's not easy to set EDNS0
@@ -196,6 +196,12 @@ makeErrorMessage(MessagePtr message, OutputBufferPtr buffer,
     const bool cd = message->getHeaderFlag(Message::HEADERFLAG_CD);
     const Opcode& opcode = message->getOpcode();
     vector<QuestionPtr> questions;
+
+    // answer_message is actually ignored right now,
+    // see the comment in #607
+    answer_message->setRcode(rcode);
+    answer_message->setOpcode(opcode);
+    answer_message->setQid(qid);
 
     // If this is an error to a query or notify, we should also copy the
     // question section.
@@ -385,12 +391,14 @@ Resolver::processMessage(const IOMessage& io_message,
     } catch (const DNSProtocolError& error) {
         dlog(string("returning ") + error.getRcode().toText() + ": " + 
             error.what());
-        makeErrorMessage(query_message, buffer, error.getRcode());
+        makeErrorMessage(query_message, answer_message,
+                         buffer, error.getRcode());
         server->resume(true);
         return;
     } catch (const Exception& ex) {
         dlog(string("returning SERVFAIL: ") + ex.what());
-        makeErrorMessage(query_message, buffer, Rcode::SERVFAIL());
+        makeErrorMessage(query_message, answer_message,
+                         buffer, Rcode::SERVFAIL());
         server->resume(true);
         return;
     } // other exceptions will be handled at a higher layer.
@@ -400,28 +408,34 @@ Resolver::processMessage(const IOMessage& io_message,
     // Perform further protocol-level validation.
     bool sendAnswer = true;
     if (query_message->getOpcode() == Opcode::NOTIFY()) {
-        makeErrorMessage(query_message, buffer, Rcode::NOTAUTH());
+        makeErrorMessage(query_message, answer_message,
+                         buffer, Rcode::NOTAUTH());
         dlog("Notify arrived, but we are not authoritative");
     } else if (query_message->getOpcode() != Opcode::QUERY()) {
         dlog("Unsupported opcode (got: " + query_message->getOpcode().toText() +
             ", expected: " + Opcode::QUERY().toText());
-        makeErrorMessage(query_message, buffer, Rcode::NOTIMP());
+        makeErrorMessage(query_message, answer_message,
+                         buffer, Rcode::NOTIMP());
     } else if (query_message->getRRCount(Message::SECTION_QUESTION) != 1) {
         dlog("The query contained " +
             boost::lexical_cast<string>(query_message->getRRCount(
             Message::SECTION_QUESTION) + " questions, exactly one expected"));
-        makeErrorMessage(query_message, buffer, Rcode::FORMERR());
+        makeErrorMessage(query_message, answer_message,
+                         buffer, Rcode::FORMERR());
     } else {
         ConstQuestionPtr question = *query_message->beginQuestion();
         const RRType &qtype = question->getType();
         if (qtype == RRType::AXFR()) {
             if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
-                makeErrorMessage(query_message, buffer, Rcode::FORMERR());
+                makeErrorMessage(query_message, answer_message,
+                                 buffer, Rcode::FORMERR());
             } else {
-                makeErrorMessage(query_message, buffer, Rcode::NOTIMP());
+                makeErrorMessage(query_message, answer_message,
+                                 buffer, Rcode::NOTIMP());
             }
         } else if (qtype == RRType::IXFR()) {
-            makeErrorMessage(query_message, buffer, Rcode::NOTIMP());
+            makeErrorMessage(query_message, answer_message,
+                             buffer, Rcode::NOTIMP());
         } else {
             // The RecursiveQuery object will post the "resume" event to the
             // DNSServer when an answer arrives, so we don't have to do it now.
@@ -453,46 +467,6 @@ ResolverImpl::processNormalQuery(const Question& question,
     rec_query_->resolve(question, answer_message, buffer, server);
 }
 
-namespace {
-
-vector<addr_t>
-parseAddresses(ConstElementPtr addresses) {
-    vector<addr_t> result;
-    if (addresses) {
-        if (addresses->getType() == Element::list) {
-            for (size_t i(0); i < addresses->size(); ++ i) {
-                ConstElementPtr addrPair(addresses->get(i));
-                ConstElementPtr addr(addrPair->get("address"));
-                ConstElementPtr port(addrPair->get("port"));
-                if (!addr || ! port) {
-                    isc_throw(BadValue, "Address must contain both the IP"
-                        "address and port");
-                }
-                try {
-                    IOAddress(addr->stringValue());
-                    if (port->intValue() < 0 ||
-                        port->intValue() > 0xffff) {
-                        isc_throw(BadValue, "Bad port value (" <<
-                            port->intValue() << ")");
-                    }
-                    result.push_back(addr_t(addr->stringValue(),
-                        port->intValue()));
-                }
-                catch (const TypeError &e) { // Better error message
-                    isc_throw(TypeError,
-                        "Address must be a string and port an integer");
-                }
-            }
-        } else if (addresses->getType() != Element::null) {
-            isc_throw(TypeError,
-                "root_addresses, forward_addresses, and listen_on config element must be a list");
-        }
-    }
-    return (result);
-}
-
-}
-
 ConstElementPtr
 Resolver::updateConfig(ConstElementPtr config) {
     dlog("New config comes: " + config->toWire());
@@ -500,11 +474,14 @@ Resolver::updateConfig(ConstElementPtr config) {
     try {
         // Parse forward_addresses
         ConstElementPtr rootAddressesE(config->get("root_addresses"));
-        vector<addr_t> rootAddresses(parseAddresses(rootAddressesE));
+        AddressList rootAddresses(parseAddresses(rootAddressesE,
+                                                    "root_addresses"));
         ConstElementPtr forwardAddressesE(config->get("forward_addresses"));
-        vector<addr_t> forwardAddresses(parseAddresses(forwardAddressesE));
+        AddressList forwardAddresses(parseAddresses(forwardAddressesE,
+                                                       "forward_addresses"));
         ConstElementPtr listenAddressesE(config->get("listen_on"));
-        vector<addr_t> listenAddresses(parseAddresses(listenAddressesE));
+        AddressList listenAddresses(parseAddresses(listenAddressesE,
+                                                      "listen_on"));
         bool set_timeouts(false);
         int qtimeout = impl_->query_timeout_;
         int ctimeout = impl_->client_timeout_;
@@ -577,13 +554,13 @@ Resolver::updateConfig(ConstElementPtr config) {
 }
 
 void
-Resolver::setForwardAddresses(const vector<addr_t>& addresses)
+Resolver::setForwardAddresses(const AddressList& addresses)
 {
     impl_->setForwardAddresses(addresses, dnss_);
 }
 
 void
-Resolver::setRootAddresses(const vector<addr_t>& addresses)
+Resolver::setRootAddresses(const AddressList& addresses)
 {
     impl_->setRootAddresses(addresses, dnss_);
 }
@@ -593,58 +570,19 @@ Resolver::isForwarding() const {
     return (!impl_->upstream_.empty());
 }
 
-vector<addr_t>
+AddressList
 Resolver::getForwardAddresses() const {
     return (impl_->upstream_);
 }
 
-vector<addr_t>
+AddressList
 Resolver::getRootAddresses() const {
     return (impl_->upstream_root_);
 }
 
-namespace {
-
 void
-setAddresses(DNSService *service, const vector<addr_t>& addresses) {
-    service->clearServers();
-    BOOST_FOREACH(const addr_t &address, addresses) {
-        service->addServer(address.second, address.first);
-    }
-}
-
-}
-
-void
-Resolver::setListenAddresses(const vector<addr_t>& addresses) {
-    try {
-        dlog("Setting listen addresses:");
-        BOOST_FOREACH(const addr_t& addr, addresses) {
-            dlog(" " + addr.first + ":" +
-                        boost::lexical_cast<string>(addr.second));
-        }
-        setAddresses(dnss_, addresses);
-        impl_->listen_ = addresses;
-    }
-    catch (const exception& e) {
-        /*
-         * We couldn't set it. So return it back. If that fails as well,
-         * we have a problem.
-         *
-         * If that fails, bad luck, but we are useless anyway, so just die
-         * and let boss start us again.
-         */
-        dlog(string("Unable to set new address: ") + e.what(),true);
-        try {
-            setAddresses(dnss_, impl_->listen_);
-        }
-        catch (const exception& e2) {
-            dlog(string("Unable to recover from error;"),true);
-            dlog(string("Rollback failed with: ") + e2.what(),true);
-            abort();
-        }
-        throw e; // Let it fly a little bit further
-    }
+Resolver::setListenAddresses(const AddressList& addresses) {
+    installListenAddresses(addresses, impl_->listen_, *dnss_);
 }
 
 void
@@ -680,7 +618,7 @@ Resolver::getRetries() const {
     return impl_->retries_;
 }
 
-vector<addr_t>
+AddressList
 Resolver::getListenAddresses() const {
     return (impl_->listen_);
 }

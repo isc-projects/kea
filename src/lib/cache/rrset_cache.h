@@ -45,7 +45,7 @@ public:
     /// \param cache_size the size of rrset cache.
     /// \param rrset_class the class of rrset cache.
     RRsetCache(uint32_t cache_size, uint16_t rrset_class);
-    ~RRsetCache() {}
+    virtual ~RRsetCache() {}
     //@}
 
     /// \brief Look up rrset in cache.
@@ -70,6 +70,7 @@ public:
     RRsetEntryPtr update(const isc::dns::RRset& rrset,
                          const RRsetTrustLevel& level);
 
+#if 0
     /// \brief Dump the rrset cache to specified file.
     ///
     /// \param file_name The file to write to
@@ -89,8 +90,10 @@ public:
     /// \param The size to resize to
     /// \return true
     bool resize(uint32_t size);
+#endif
 
-private:
+    /// \short Protected memebers, so they can be accessed by tests.
+protected:
     uint16_t class_; // The class of the rrset cache.
     isc::nsas::HashTable<RRsetEntry> rrset_table_;
     isc::nsas::LruList<RRsetEntry> rrset_lru_;
