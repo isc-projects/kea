@@ -19,8 +19,7 @@
 #include <netinet/in.h>
 
 #include <boost/bind.hpp>
-#include <boost/shared_array.hpp>
-#include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
 #include <dns/message.h>
@@ -67,13 +66,12 @@ struct IOFetchData {
     // actually instantiated depends on whether the fetch is over UDP or TCP,
     // which is not known until construction of the IOFetch.  Use of a shared
     // pointer here is merely to ensure deletion when the data object is deleted.
-    boost::shared_ptr<IOAsioSocket<IOFetch> > socket;
+    boost::scoped_ptr<IOAsioSocket<IOFetch> > socket;
                                             ///< Socket to use for I/O
-    boost::shared_ptr<IOEndpoint> remote;   ///< Where the fetch was sent
+    boost::scoped_ptr<IOEndpoint> remote;   ///< Where the fetch was sent
     isc::dns::Question          question;   ///< Question to be asked
     isc::dns::OutputBufferPtr   msgbuf;     ///< Wire buffer for question
     isc::dns::OutputBufferPtr   received;   ///< Received data put here
-    boost::shared_array<char>   staging;    ///< Temporary array for received data
     IOFetch::Callback*          callback;   ///< Called on I/O Completion
     asio::deadline_timer        timer;      ///< Timer to measure timeouts
     IOFetch::Protocol           protocol;   ///< Protocol being used
@@ -89,6 +87,8 @@ struct IOFetchData {
     // This means that we must make sure that all possible "origins" take the
     // same arguments in their message in the same order.
     isc::log::MessageID         origin;     ///< Origin of last asynchronous I/O
+    uint8_t                     staging[IOFetch::STAGING_LENGTH];
+                                            ///< Temporary array for received data
 
     /// \brief Constructor
     ///
@@ -126,7 +126,7 @@ struct IOFetchData {
         question(query),
         msgbuf(new isc::dns::OutputBuffer(512)),
         received(buff),
-        staging(new char[IOFetch::MIN_LENGTH]),
+
         callback(cb),
         timer(service.get_io_service()),
         protocol(proto),
@@ -135,7 +135,8 @@ struct IOFetchData {
         offset(0),
         stopped(false),
         timeout(wait),
-        origin(ASIO_UNKORIGIN)
+        origin(ASIO_UNKORIGIN),
+        staging()
     {}
 };
 
@@ -235,11 +236,11 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
         data_->cumulative = 0;          // No data yet received
         data_->offset = 0;              // First data into start of buffer
         do {
-            CORO_YIELD data_->socket->asyncReceive(data_->staging.get(),
-                                                   static_cast<size_t>(MIN_LENGTH),
+            CORO_YIELD data_->socket->asyncReceive(data_->staging,
+                                                   static_cast<size_t>(STAGING_LENGTH),
                                                    data_->offset,
                                                    data_->remote.get(), *this);
-        } while (!data_->socket->processReceivedData(data_->staging.get(), length,
+        } while (!data_->socket->processReceivedData(data_->staging, length,
                                                      data_->cumulative, data_->offset,
                                                      data_->expected, data_->received));
 
