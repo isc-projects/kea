@@ -55,8 +55,9 @@ struct UDPServer::Data {
      */
     Data(io_service& io_service, const ip::address& addr, const uint16_t port,
         SimpleCallback* checkin, DNSLookup* lookup, DNSAnswer* answer) :
-        io_(io_service), done_(false), checkin_callback_(checkin),
-        lookup_callback_(lookup), answer_callback_(answer)
+        io_(io_service), done_(false), stopped_by_hand_(false),
+        checkin_callback_(checkin),lookup_callback_(lookup),
+        answer_callback_(answer)
     {
         // We must use different instantiations for v4 and v6;
         // otherwise ASIO will bind to both
@@ -78,6 +79,7 @@ struct UDPServer::Data {
      */
     Data(const Data& other) :
         io_(other.io_), socket_(other.socket_), done_(false),
+        stopped_by_hand_(false),
         checkin_callback_(other.checkin_callback_),
         lookup_callback_(other.lookup_callback_),
         answer_callback_(other.answer_callback_)
@@ -141,6 +143,9 @@ struct UDPServer::Data {
     size_t bytes_;
     bool done_;
 
+    //whether user explicitly stop the server
+    bool stopped_by_hand_;
+
     // Callback functions provided by the caller
     const SimpleCallback* checkin_callback_;
     const DNSLookup* lookup_callback_;
@@ -164,9 +169,15 @@ UDPServer::UDPServer(io_service& io_service, const ip::address& addr,
 /// pattern; see internal/coroutine.h for details.
 void
 UDPServer::operator()(error_code ec, size_t length) {
-    /// Because the coroutine reeentry block is implemented as
+    /// Because the coroutine reentry block is implemented as
     /// a switch statement, inline variable declarations are not
     /// permitted.  Certain variables used below can be declared here.
+
+    /// if user stopped the server, we won't enter the coroutine body
+    /// just return
+    if (data_->stopped_by_hand_) {
+        return;
+    }
 
     CORO_REENTER (this) {
         do {
@@ -275,6 +286,16 @@ void
 UDPServer::asyncLookup() {
     (*data_->lookup_callback_)(*data_->io_message_,
         data_->query_message_, data_->answer_message_, data_->respbuf_, this);
+}
+
+/// Stop the UDPServer
+void
+UDPServer::stop() {
+    //server should not be stopped twice
+    if (data_->stopped_by_hand_)
+        return;
+    data_->stopped_by_hand_ = true;
+    data_->socket_->close();
 }
 
 /// Post this coroutine on the ASIO service queue so that it will

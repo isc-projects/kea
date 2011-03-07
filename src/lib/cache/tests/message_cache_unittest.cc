@@ -43,20 +43,40 @@ public:
     }
 };
 
+/// \brief Derived from base class to make it easy to test
+/// its internals.
+class DerivedRRsetCache: public RRsetCache {
+public:
+    DerivedRRsetCache(uint32_t cache_size, uint16_t rrset_class):
+        RRsetCache(cache_size, rrset_class)
+    {}
+
+    /// \brief Remove one rrset entry from rrset cache.
+    void removeRRsetEntry(Name& name, const RRType& type) {
+        const string entry_name = genCacheEntryName(name, type);
+        HashKey entry_key = HashKey(entry_name, RRClass(class_));
+        RRsetEntryPtr rrset_entry = rrset_table_.get(entry_key);
+        if (rrset_entry) {
+            rrset_lru_.remove(rrset_entry);
+            rrset_table_.remove(entry_key);
+        }
+    }
+};
+
 class MessageCacheTest: public testing::Test {
 public:
     MessageCacheTest(): message_parse(Message::PARSE),
                         message_render(Message::RENDER)
     {
         uint16_t class_ = RRClass::IN().getCode();
-        rrset_cache_.reset(new RRsetCache(RRSET_CACHE_DEFAULT_SIZE, class_));
-        message_cache_.reset(new DerivedMessageCache(rrset_cache_, 
+        rrset_cache_.reset(new DerivedRRsetCache(RRSET_CACHE_DEFAULT_SIZE, class_));
+        message_cache_.reset(new DerivedMessageCache(rrset_cache_,
                                           MESSAGE_CACHE_DEFAULT_SIZE, class_ ));
     }
 
 protected:
     boost::shared_ptr<DerivedMessageCache> message_cache_;
-    RRsetCachePtr rrset_cache_;
+    boost::shared_ptr<DerivedRRsetCache> rrset_cache_;
     Message message_parse;
     Message message_render;
 };
@@ -75,6 +95,11 @@ TEST_F(MessageCacheTest, testLookup) {
 
     Name qname1("test.example.net.");
     EXPECT_TRUE(message_cache_->lookup(qname1, RRType::A(), message_render));
+
+    // Test looking up message which has expired rrsets.
+    // Remove one
+    rrset_cache_->removeRRsetEntry(qname1, RRType::A());
+    EXPECT_FALSE(message_cache_->lookup(qname1, RRType::A(), message_render));
 }
 
 TEST_F(MessageCacheTest, testUpdate) {
