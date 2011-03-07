@@ -26,6 +26,8 @@
 #include <dns/rrttl.h>
 #include <dns/rdataclass.h>
 
+#include <server_common/portconfig.h>
+
 #include <datasrc/memory_datasrc.h>
 #include <auth/auth_srv.h>
 #include <auth/common.h>
@@ -34,6 +36,7 @@
 #include <dns/tests/unittest_util.h>
 #include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
+#include <testutils/portconfig.h>
 
 using namespace std;
 using namespace isc::cc;
@@ -43,6 +46,7 @@ using namespace isc::data;
 using namespace isc::xfr;
 using namespace asiolink;
 using namespace isc::testutils;
+using namespace isc::server_common::portconfig;
 using isc::UnitTestUtil;
 
 namespace {
@@ -55,7 +59,12 @@ const char* const BADCONFIG_TESTDB =
 
 class AuthSrvTest : public SrvTestBase {
 protected:
-    AuthSrvTest() : server(true, xfrout), rrclass(RRClass::IN()) {
+    AuthSrvTest() :
+        dnss_(ios_, NULL, NULL, NULL),
+        server(true, xfrout),
+        rrclass(RRClass::IN())
+    {
+        server.setDNSService(dnss_);
         server.setXfrinSession(&notify_session);
         server.setStatisticsSession(&statistics_session);
     }
@@ -63,6 +72,8 @@ protected:
         server.processMessage(*io_message, parse_message, response_obuffer,
                               &dnsserv);
     }
+    IOService ios_;
+    DNSService dnss_;
     MockSession statistics_session;
     MockXfroutClient xfrout;
     AuthSrv server;
@@ -633,7 +644,7 @@ TEST_F(AuthSrvTest, queryCounterUnexpected) {
     // Modify the message.
     delete io_message;
     endpoint = IOEndpoint::create(IPPROTO_UDP,
-                                  IOAddress(DEFAULT_REMOTE_ADDRESS), 5300);
+                                  IOAddress(DEFAULT_REMOTE_ADDRESS), 53210);
     io_message = new IOMessage(request_renderer.getData(),
                                request_renderer.getLength(),
                                getDummyUnknownSocket(), *endpoint);
@@ -650,4 +661,9 @@ TEST_F(AuthSrvTest, stop) {
     // If/when the interval timer has finer granularity we'll probably add
     // our own tests here, so we keep this empty test case.
 }
+
+TEST_F(AuthSrvTest, listenAddresses) {
+    isc::testutils::portconfig::listenAddresses(server);
+}
+
 }

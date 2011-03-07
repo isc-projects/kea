@@ -52,10 +52,11 @@ b10_auth_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 b10_auth_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 b10_auth_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 b10_auth_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
+b10_auth_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
 b10_auth_LDADD += $(SQLITE_LIBS)
 
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir
 # and can't use @datadir@ because doesn't expand default ${prefix}
-b10_authdir = $(DESTDIR)$(pkgdatadir)
+b10_authdir = $(pkgdatadir)
 b10_auth_DATA = auth.spec
 

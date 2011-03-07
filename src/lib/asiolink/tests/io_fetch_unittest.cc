@@ -16,6 +16,7 @@
 #include <boost/bind.hpp>
 #include <cstdlib>
 #include <string>
+#include <vector>
 
 #include <string.h>
 
@@ -57,7 +58,7 @@ public:
 
     // The next member is the buffer iin which the "server" (implemented by the
     // response handler method) receives the question sent by the fetch object.
-    char            server_buff_[512];  ///< Server buffer
+    std::vector<char>      server_buff_;  ///< Server buffer
 
     /// \brief Constructor
     IOFetchTest() :
@@ -67,7 +68,8 @@ public:
         question_(Name("example.net"), RRClass::IN(), RRType::A()),
         buff_(new OutputBuffer(512)),
         udp_fetch_(IPPROTO_UDP, service_, question_, IOAddress(TEST_HOST),
-            TEST_PORT, buff_, this, 100)
+                   TEST_PORT, buff_, this, 100),
+        server_buff_(512)
         // tcp_fetch_(service_, question_, IOAddress(TEST_HOST), TEST_PORT,
         //    buff_, this, 100, IPPROTO_UDP)
         { }
@@ -105,11 +107,12 @@ public:
         // The QID in the incoming data is random so set it to 0 for the
         // data comparison check. (It was set to 0 when the buffer containing
         // the expected data was constructed above.)
-        server_buff_[0] = server_buff_[1] = 0;
+        server_buff_[0] = 0;
+        server_buff_[1] = 0;
 
         // Check that lengths are identical.
         EXPECT_EQ(msgbuf.getLength(), length);
-        EXPECT_TRUE(memcmp(msgbuf.getData(), server_buff_, length) == 0);
+        EXPECT_TRUE(memcmp(msgbuf.getData(), &server_buff_[0], length) == 0);
 
         // ... and return a message back.
         socket->send_to(asio::buffer(TEST_DATA, sizeof TEST_DATA), *remote);
@@ -172,7 +175,7 @@ TEST_F(IOFetchTest, UdpReceive) {
     socket.bind(udp::endpoint(TEST_HOST, TEST_PORT));
 
     udp::endpoint remote;
-    socket.async_receive_from(asio::buffer(server_buff_, sizeof(server_buff_)),
+    socket.async_receive_from(asio::buffer(server_buff_),
         remote,
         boost::bind(&IOFetchTest::respond, this, &remote, &socket, _1, _2));
     service_.get_io_service().post(udp_fetch_);

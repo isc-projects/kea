@@ -70,6 +70,13 @@ clean-coverage: clean-cpp-coverage clean-python-coverage
 
 report-coverage: report-cpp-coverage report-python-coverage
 
+# for static C++ check using cppcheck (when available)
+cppcheck:
+	cppcheck --enable=all --suppressions src/cppcheck-suppress.lst \
+		--quiet --error-exitcode=1 \
+		--template '{file}:{line}: check_fail: {message} ({severity},{id})' \
+		src
+
 #### include external sources in the distributed tarball:
 EXTRA_DIST = ext/asio/README
 EXTRA_DIST += ext/asio/asio/local/stream_protocol.hpp

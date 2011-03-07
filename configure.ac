@@ -14,18 +14,22 @@ AC_PROG_CXX
 #
 # On FreeBSD (and probably some others), clang++ does not meet an autoconf
 # assumption in identifying libtool configuration regarding shared library:
-# the configure script will execute "$CC -shared $CFLAGS -v -o" and expect
-# the output contains -Lxxx or -Ryyy.  This is the case for g++, but not for
-# clang++, and, as a result, it will cause various errors in linking programs
-# or running them with a shared object (such as some of our python scripts).
+# the configure script will execute "$CC -shared $CFLAGS/$CXXFLAGS -v" and
+# expect the output contains -Lxxx or -Ryyy.  This is the case for g++, but
+# not for clang++, and, as a result, it will cause various errors in linking
+# programs or running them with a shared object (such as some of our python
+# scripts).
 # To work around this problem we define a temporary variable
 # "CXX_LIBTOOL_LDFLAGS".  It's expected to be defined as, e.g, "-L/usr/lib"
 # to temporarily fake the output so that it will be compatible with that of
 # g++.
 CFLAGS_SAVED=$CFLAGS
+CXXFLAGS_SAVED=$CXXFLAGS
 CFLAGS="$CFLAGS $CXX_LIBTOOL_LDFLAGS"
+CXXFLAGS="$CXXFLAGS $CXX_LIBTOOL_LDFLAGS"
 AC_PROG_LIBTOOL
 CFLAGS=$CFLAGS_SAVED
+CXXFLAGS=$CXXFLAGS_SAVED
 
 # Use C++ language
 AC_LANG([C++])
@@ -291,6 +295,7 @@ AC_SUBST(B10_CXXFLAGS)
 
 AC_SEARCH_LIBS(inet_pton, [nsl])
 AC_SEARCH_LIBS(recvfrom, [socket])
+AC_SEARCH_LIBS(nanosleep, [rt])
 
 # Checks for header files.
 
@@ -676,6 +681,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/nsas/tests/Makefile
                  src/lib/cache/Makefile
                  src/lib/cache/tests/Makefile
+                 src/lib/server_common/Makefile
+                 src/lib/server_common/tests/Makefile
                ])
 AC_OUTPUT([doc/version.ent
            src/bin/cfgmgr/b10-cfgmgr.py

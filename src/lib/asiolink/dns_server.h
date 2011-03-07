@@ -75,6 +75,9 @@ public:
         (*self_)(ec, length);
     }
 
+    /// \brief Stop current running server
+    virtual void stop() { self_->stop();}
+
     /// \brief Resume processing of the server coroutine after an 
     /// asynchronous call (e.g., to the DNS Lookup provider) has completed.
     ///
