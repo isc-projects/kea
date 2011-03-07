@@ -1,4 +1,4 @@
-from bind10 import ProcessInfo, BoB
+from bind10 import ProcessInfo, BoB, parse_args
 
 # XXX: environment tests are currently disabled, due to the preprocessor
 #      setup that we have now complicating the environment
@@ -411,6 +411,36 @@ class TestStartStopProcessesBob(unittest.TestCase):
         bob.start_resolver = lambda: self.fail("Started resolver again")
 
         bob.config_handler({'start_auth': True, 'start_resolver': True})
+
+class TestParseArgs(unittest.TestCase):
+    """
+    This tests parsing of arguments of the bind10 master process.
+    """
+    #TODO: Write tests for the original parsing, bad options, etc.
+    def test_no_opts(self):
+        """
+        Test correct default values when no options are passed.
+        """
+        options = parse_args([])
+        self.assertEqual(None, options.data_path)
+        self.assertEqual(None, options.config_file)
+
+    def test_data_path(self):
+        """
+        Test it can parse the data path.
+        """
+        options = parse_args(['-p', '/data/path'])
+        self.assertEqual('/data/path', options.data_path)
+        options = parse_args(['--data-path=/data/path'])
+        self.assertEqual('/data/path', options.data_path)
+    def test_config_filename(self):
+        """
+        Test it can parse the config switch.
+        """
+        options = parse_args(['-c', 'config-file'])
+        self.assertEqual('config-file', options.config_file)
+        options = parse_args(['--config-file=config-file'])
+        self.assertEqual('config-file', options.config_file)
 
 if __name__ == '__main__':
     unittest.main()
