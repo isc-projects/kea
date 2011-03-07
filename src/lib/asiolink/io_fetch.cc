@@ -67,7 +67,7 @@ IOFetch::operator()(error_code ec, size_t length) {
         {
             Message msg(Message::RENDER);
             
-            msg.setQid(QidGenerator::getInstance()->generateQid());
+            msg.setQid(QidGenerator::getInstance().generateQid());
             msg.setOpcode(Opcode::QUERY());
             msg.setRcode(Rcode::NOERROR());
             msg.setHeaderFlag(Message::HEADERFLAG_RD);
