@@ -173,7 +173,7 @@ Symbols are defined to be equal to strings holding the identifier, e.g.
 (The implementation allows symbols to be compared.  However, use of strings
 should not be assumed - a future implementation may change this.)
 
-iIn addition, the file declares an array of identifiers/messages and an object
+In addition, the file declares an array of identifiers/messages and an object
 to add them to the global dictionary:
 
     namespace {
