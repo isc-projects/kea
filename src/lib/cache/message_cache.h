@@ -23,11 +23,10 @@
 #include "message_entry.h"
 #include <nsas/hash_table.h>
 #include <nsas/lru_list.h>
+#include "rrset_cache.h"
 
 namespace isc {
 namespace cache {
-
-class RRsetCache;
 
 /// \brief Message Cache
 /// The object of MessageCache represents the cache for class-specific
@@ -45,9 +44,9 @@ public:
     /// \param message_class The class of the message cache
     /// \param negative_soa_cache The cache that stores the SOA record
     ///        that comes from negative response message
-    MessageCache(boost::shared_ptr<RRsetCache> rrset_cache,
+    MessageCache(const RRsetCachePtr& rrset_cache,
                  uint32_t cache_size, uint16_t message_class,
-                 boost::shared_ptr<RRsetCache> negative_soa_cache);
+                 const RRsetCachePtr& negative_soa_cache);
 
     /// \brief Look up message in cache.
     /// \param message generated response message if the message entry
@@ -87,8 +86,8 @@ protected:
     // Make these variants be protected for easy unittest.
 protected:
     uint16_t message_class_; // The class of the message cache.
-    boost::shared_ptr<RRsetCache> rrset_cache_;
-    boost::shared_ptr<RRsetCache> negative_soa_cache_;
+    RRsetCachePtr rrset_cache_;
+    RRsetCachePtr negative_soa_cache_;
     isc::nsas::HashTable<MessageEntry> message_table_;
     isc::nsas::LruList<MessageEntry> message_lru_;
 };

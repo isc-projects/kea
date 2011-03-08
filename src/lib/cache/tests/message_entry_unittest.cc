@@ -39,8 +39,8 @@ namespace {
 class DerivedMessageEntry: public MessageEntry {
 public:
     DerivedMessageEntry(const isc::dns::Message& message,
-                        boost::shared_ptr<RRsetCache> rrset_cache_,
-                        boost::shared_ptr<RRsetCache> negative_soa_cache_):
+                        const RRsetCachePtr& rrset_cache_,
+                        const RRsetCachePtr& negative_soa_cache_):
              MessageEntry(message, rrset_cache_, negative_soa_cache_)
     {}
 
@@ -76,7 +76,6 @@ public:
                         message_parse(Message::PARSE),
                         message_render(Message::RENDER)
     {
-        
         rrset_cache_.reset(new RRsetCache(RRSET_CACHE_DEFAULT_SIZE, class_));
         negative_soa_cache_.reset(new RRsetCache(NEGATIVE_RRSET_CACHE_DEFAULT_SIZE, class_));
     }
@@ -225,7 +224,7 @@ TEST_F(MessageEntryTest, testGenMessage) {
     message_entry.genMessage(time(NULL), msg);
     // Check whether the generated message is same with cached one.
     
-    EXPECT_TRUE(msg.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_FALSE(msg.getHeaderFlag(Message::HEADERFLAG_AA));
     EXPECT_FALSE(msg.getHeaderFlag(Message::HEADERFLAG_TC));
     EXPECT_EQ(1, sectionRRsetCount(msg, Message::SECTION_ANSWER)); 
     EXPECT_EQ(1, sectionRRsetCount(msg, Message::SECTION_AUTHORITY)); 
@@ -235,6 +234,34 @@ TEST_F(MessageEntryTest, testGenMessage) {
     EXPECT_EQ(1, msg.getRRCount(Message::SECTION_ANSWER));
     EXPECT_EQ(5, msg.getRRCount(Message::SECTION_AUTHORITY));
     EXPECT_EQ(7, msg.getRRCount(Message::SECTION_ADDITIONAL));
+}
+
+TEST_F(MessageEntryTest, testMaxTTL) {
+    messageFromFile(message_parse, "message_large_ttl.wire");
+
+    // The ttl of rrset from Answer and Authority sections are both 604801 seconds
+    RRsetIterator iter = message_parse.beginSection(Message::SECTION_ANSWER);
+    EXPECT_EQ(604801, (*iter)->getTTL().getValue());
+    iter = message_parse.beginSection(Message::SECTION_AUTHORITY);
+    EXPECT_EQ(604801, (*iter)->getTTL().getValue());
+
+    DerivedMessageEntry message_entry(message_parse, rrset_cache_, negative_soa_cache_);
+
+    // The ttl is limited to 604800 seconds (7days)
+    EXPECT_EQ(time(NULL) + 604800, message_entry.getExpireTime());
+}
+
+TEST_F(MessageEntryTest, testMaxNegativeTTL) {
+    messageFromFile(message_parse, "message_nxdomain_large_ttl.wire");
+
+    // The ttl of rrset Authority sections are 10801 seconds
+    RRsetIterator iter = message_parse.beginSection(Message::SECTION_AUTHORITY);
+    EXPECT_EQ(10801, (*iter)->getTTL().getValue());
+
+    DerivedMessageEntry message_entry(message_parse, rrset_cache_, negative_soa_cache_);
+
+    // The ttl is limited to 10800 seconds (3 hours)
+    EXPECT_EQ(time(NULL) + 10800, message_entry.getExpireTime());
 }
 
 }   // namespace

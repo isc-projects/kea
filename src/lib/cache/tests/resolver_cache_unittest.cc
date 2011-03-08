@@ -53,7 +53,7 @@ TEST_F(ResolverCacheTest, testUpdateMessage) {
 
     msg.makeResponse();
     EXPECT_TRUE(cache->lookup(qname, RRType::SOA(), RRClass::IN(), msg));
-    EXPECT_TRUE(msg.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_FALSE(msg.getHeaderFlag(Message::HEADERFLAG_AA));
 
     // Test whether the old message can be updated
     Message new_msg(Message::PARSE);

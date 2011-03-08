@@ -77,6 +77,8 @@ TEST_F(NegativeCacheTest, testNXDOMAIN){
     const RRTTL& soa_ttl = rrset_ptr->getTTL();
     EXPECT_EQ(soa_ttl.getValue(), 172800);
 
+    sleep(1);
+
     // Query nonexist.example.com again
     Message msg_nxdomain2(Message::PARSE);
     messageFromFile(msg_nxdomain2, "message_nxdomain_with_soa.wire");
@@ -88,7 +90,14 @@ TEST_F(NegativeCacheTest, testNXDOMAIN){
 
     // The TTL should equal to the TTL of negative response SOA record
     const RRTTL& nxdomain_ttl2 = rrset_ptr->getTTL();
-    EXPECT_EQ(nxdomain_ttl2.getValue(), 86400);
+    EXPECT_TRUE(86398 <= nxdomain_ttl2.getValue() && nxdomain_ttl2.getValue() <= 86399);
+    // No RRset in ANSWER section
+    EXPECT_TRUE(msg_nxdomain2.getRRCount(Message::SECTION_ANSWER) == 0);
+    // Check that only one SOA record exist in AUTHORITY section
+    EXPECT_TRUE(msg_nxdomain2.getRRCount(Message::SECTION_AUTHORITY) == 1);
+    iter = msg_nxdomain2.beginSection(Message::SECTION_AUTHORITY);
+    rrset_ptr = *iter;
+    EXPECT_TRUE(rrset_ptr->getType() == RRType::SOA());
 
     // Check the normal SOA cache again
     Message msg_example_com_soa2(Message::PARSE);
@@ -100,7 +109,7 @@ TEST_F(NegativeCacheTest, testNXDOMAIN){
     rrset_ptr = *iter;
     const RRTTL& soa_ttl2 = rrset_ptr->getTTL();
     // The TTL should equal to the TTL of SOA record in answer section
-    EXPECT_EQ(soa_ttl2.getValue(), 172800);
+    EXPECT_TRUE(172798 <= soa_ttl2.getValue() && soa_ttl2.getValue() <= 172799);
 }
 
 TEST_F(NegativeCacheTest, testNXDOMAINWithoutSOA){
@@ -131,6 +140,21 @@ TEST_F(NegativeCacheTest, testNXDOMAINCname){
     EXPECT_TRUE(cache->lookup(a_example_org, RRType::A(), RRClass::IN(), msg_nxdomain_cname));
 
     EXPECT_EQ(msg_nxdomain_cname.getRcode().getCode(), Rcode::NXDOMAIN().getCode());
+
+    // It should include 2 CNAME records in Answer section
+    EXPECT_TRUE(msg_nxdomain_cname.getRRCount(Message::SECTION_ANSWER) == 2);
+    RRsetIterator iter = msg_nxdomain_cname.beginSection(Message::SECTION_ANSWER);
+    EXPECT_TRUE((*iter)->getType() == RRType::CNAME());
+    ++iter;
+    EXPECT_TRUE((*iter)->getType() == RRType::CNAME());
+
+    // It should include 1 SOA record in Authority section
+    EXPECT_TRUE(msg_nxdomain_cname.getRRCount(Message::SECTION_AUTHORITY) == 1);
+    iter = msg_nxdomain_cname.beginSection(Message::SECTION_AUTHORITY);
+    EXPECT_TRUE((*iter)->getType() == RRType::SOA());
+
+    const RRTTL& soa_ttl = (*iter)->getTTL();
+    EXPECT_EQ(soa_ttl.getValue(), 600);
 }
 
 TEST_F(NegativeCacheTest, testNoerrorNodata){
@@ -173,13 +197,21 @@ TEST_F(NegativeCacheTest, testNoerrorNodata){
     messageFromFile(msg_nodata2, "message_nodata_with_soa.wire");
     msg_nodata2.makeResponse();
 
+    sleep(1);
+
     EXPECT_TRUE(cache->lookup(example_dot_com, RRType::MX(), RRClass::IN(), msg_nodata2));
+
+    // No answer
+    EXPECT_EQ(msg_nodata2.getRRCount(Message::SECTION_ANSWER), 0);
+    // One SOA record in authority section
+    EXPECT_EQ(msg_nodata2.getRRCount(Message::SECTION_AUTHORITY), 1);
+
     iter = msg_nodata2.beginSection(Message::SECTION_AUTHORITY);
     rrset_ptr = *iter;
 
-    // The TTL should equal to the TTL of negative response SOA record
+    // The TTL should equal to the TTL of negative response SOA record and counted down
     const RRTTL& nodata_ttl2 = rrset_ptr->getTTL();
-    EXPECT_EQ(nodata_ttl2.getValue(), 86400);
+    EXPECT_TRUE(86398 <= nodata_ttl2.getValue() && nodata_ttl2.getValue() <= 86399);
 }
 
 TEST_F(NegativeCacheTest, testReferralResponse){
@@ -195,6 +227,16 @@ TEST_F(NegativeCacheTest, testReferralResponse){
 
     // The Rcode should be NOERROR
     EXPECT_EQ(msg_cname_referral.getRcode().getCode(), Rcode::NOERROR().getCode());
+
+    // One CNAME record in Answer section
+    EXPECT_EQ(msg_cname_referral.getRRCount(Message::SECTION_ANSWER), 1);
+    RRsetIterator iter = msg_cname_referral.beginSection(Message::SECTION_ANSWER);
+    EXPECT_EQ((*iter)->getType(), RRType::CNAME());
+
+    // 13 NS records in Authority section
+    EXPECT_EQ(msg_cname_referral.getRRCount(Message::SECTION_AUTHORITY), 13);
+    iter = msg_cname_referral.beginSection(Message::SECTION_AUTHORITY);
+    EXPECT_EQ((*iter)->getType(), RRType::NS());
 }
 
 }

@@ -21,8 +21,8 @@
 #include <dns/message.h>
 #include <dns/rrset.h>
 #include <nsas/nsas_entry.h>
+#include "rrset_cache.h"
 #include "rrset_entry.h"
-
 
 using namespace isc::nsas;
 
@@ -30,27 +30,6 @@ namespace isc {
 namespace cache {
 
 class RRsetEntry;
-class RRsetCache;
-
-/// \brief Information to refer an RRset.
-///
-/// There is no class information here, since the rrsets are cached in
-/// the class-specific rrset cache.
-struct RRsetRef{
-    /// \brief Constructor
-    ///
-    /// \param name The Name for the RRset
-    /// \param type The RRType for the RRrset
-    /// \param cache Which cache the RRset is stored in
-    RRsetRef(const isc::dns::Name& name, const isc::dns::RRType& type,
-            boost::shared_ptr<RRsetCache> cache):
-            name_(name), type_(type), cache_(cache)
-    {}
-
-    isc::dns::Name name_; // Name of rrset.
-    isc::dns::RRType type_; // Type of rrset.
-    boost::shared_ptr<RRsetCache> cache_; //Which cache the RRset is stored
-};
 
 /// \brief Message Entry
 ///
@@ -61,6 +40,27 @@ class MessageEntry : public NsasEntry<MessageEntry> {
 private:
     MessageEntry(const MessageEntry& source);
     MessageEntry& operator=(const MessageEntry& source);
+
+    /// \brief Information to refer an RRset.
+    ///
+    /// There is no class information here, since the rrsets are cached in
+    /// the class-specific rrset cache.
+    struct RRsetRef{
+        /// \brief Constructor
+        ///
+        /// \param name The Name for the RRset
+        /// \param type The RRType for the RRrset
+        /// \param cache Which cache the RRset is stored in
+        RRsetRef(const isc::dns::Name& name, const isc::dns::RRType& type,
+                RRsetCache* cache):
+                name_(name), type_(type), cache_(cache)
+        {}
+
+        isc::dns::Name name_; // Name of rrset.
+        isc::dns::RRType type_; // Type of rrset.
+        RRsetCache* cache_; //Which cache the RRset is stored
+    };
+
 public:
 
     /// \brief Initialize the message entry object with one dns
@@ -75,8 +75,8 @@ public:
     ///        cache is used only for storing SOA rrset from negative
     ///        response (NXDOMAIN or NOERROR_NODATA)
     MessageEntry(const isc::dns::Message& message,
-                 boost::shared_ptr<RRsetCache> rrset_cache,
-                 boost::shared_ptr<RRsetCache> negative_soa_cache);
+                 const RRsetCachePtr& rrset_cache,
+                 const RRsetCachePtr& negative_soa_cache);
 
     /// \brief generate one dns message according
     ///        the rrsets information of the message.
@@ -172,9 +172,9 @@ private:
     HashKey* hash_key_ptr_;  // the key for messag entry in hash table.
 
     std::vector<RRsetRef> rrsets_;
-    boost::shared_ptr<RRsetCache> rrset_cache_; //Normal rrset cache
+    RRsetCachePtr rrset_cache_; //Normal rrset cache
     // SOA rrset from negative response
-    boost::shared_ptr<RRsetCache> negative_soa_cache_;
+    RRsetCachePtr negative_soa_cache_;
 
     std::string query_name_; // query name of the message.
     uint16_t query_class_; // query class of the message.
