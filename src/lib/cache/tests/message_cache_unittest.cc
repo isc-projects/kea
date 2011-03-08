@@ -70,8 +70,8 @@ public:
     {
         uint16_t class_ = RRClass::IN().getCode();
         rrset_cache_.reset(new DerivedRRsetCache(RRSET_CACHE_DEFAULT_SIZE, class_));
-        message_cache_.reset(new DerivedMessageCache(rrset_cache_,
-                                          MESSAGE_CACHE_DEFAULT_SIZE, class_ ));
+        // Set the message cache size to 1, make it easy for unittest.
+        message_cache_.reset(new DerivedMessageCache(rrset_cache_, 1, class_ ));
     }
 
 protected:
@@ -116,6 +116,32 @@ TEST_F(MessageCacheTest, testUpdate) {
     Message new_msg_render(Message::RENDER);
     EXPECT_TRUE(message_cache_->lookup(qname, RRType::SOA(), new_msg_render));
     EXPECT_TRUE(new_msg_render.getHeaderFlag(Message::HEADERFLAG_AA));
+}
+
+void
+updateMessageCache(const char* message_file,
+                   boost::shared_ptr<DerivedMessageCache> cache)
+{
+    Message msg(Message::PARSE);
+    messageFromFile(msg, message_file);
+    cache->update(msg);
+}
+
+TEST_F(MessageCacheTest, testCacheLruBehavior) {
+    // qname = "test.example.com.", qtype = A
+    updateMessageCache("message_fromWire1", message_cache_);
+    // qname = "test.example.net.", qtype = A
+    updateMessageCache("message_fromWire2", message_cache_);
+    // qname = "example.com.", qtype = SOA
+    updateMessageCache("message_fromWire4", message_cache_);
+
+    Name qname_net("test.example.net.");
+    EXPECT_TRUE(message_cache_->lookup(qname_net, RRType::A(), message_render));
+
+    // qname = "a.example.com.", qtype = A
+    updateMessageCache("message_fromWire5", message_cache_);
+    Name qname_com("test.example.com.");
+    EXPECT_FALSE(message_cache_->lookup(qname_com, RRType::A(), message_render));
 }
 
 }   // namespace
