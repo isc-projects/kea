@@ -1,6 +1,7 @@
   190.	[func]		jelte
 	Resolver now sets random qids on outgoing queries using
 	the boost::mt19937 prng.
+	(Trac #583, git 5222b51a047d8f2352bc9f92fd022baf1681ed81)
 
   189.	[bug]		jreed
 	Do not install the log message compiler.
