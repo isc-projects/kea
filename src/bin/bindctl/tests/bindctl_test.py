@@ -17,6 +17,8 @@
 import unittest
 import isc.cc.data
 import os
+import pwd
+import getpass
 from isc.config.config_data import ConfigData, MultiConfigData
 from isc.config.module_spec import ModuleSpec
 from bindctl import cmdparse
@@ -342,9 +344,22 @@ class TestBindCmdInterpreter(unittest.TestCase):
         writer.writerow(['name2'])
         csvfile.close()
 
+    def test_csv_file_dir(self):
+        # Checking default value
+        if "HOMEE" in os.environ:
+            home_dir = os.environ["HOME"]
+        else:
+            home_dir = pwd.getpwnam(getpass.getuser()).pw_dir
+        self.assertEqual(home_dir + os.sep + '.bind10' + os.sep,
+                         bindcmd.BindCmdInterpreter().csv_file_dir)
+
+        new_csv_dir = '/something/different/'
+        custom_cmd = bindcmd.BindCmdInterpreter(csv_file_dir=new_csv_dir)
+        self.assertEqual(new_csv_dir, custom_cmd.csv_file_dir)
+
     def test_get_saved_user_info(self):
         cmd = bindcmd.BindCmdInterpreter()
-        users = cmd._get_saved_user_info('/notexist', 'cvs_file.cvs')
+        users = cmd._get_saved_user_info('/notexist', 'csv_file.csv')
         self.assertEqual([], users)
         
         csvfilename = 'csv_file.csv'
