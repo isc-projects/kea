@@ -104,6 +104,7 @@ TCPServer::operator()(error_code ec, size_t length) {
         CORO_YIELD async_read(*socket_, asio::buffer(data_.get(),
                               TCP_MESSAGE_LENGTHSIZE), *this);
         if (ec) {
+            socket_->close();
             CORO_YIELD return;
         }
 
@@ -116,6 +117,7 @@ TCPServer::operator()(error_code ec, size_t length) {
         }
 
         if (ec) {
+            socket_->close();
             CORO_YIELD return;
         }
 
@@ -149,6 +151,7 @@ TCPServer::operator()(error_code ec, size_t length) {
         // If we don't have a DNS Lookup provider, there's no point in
         // continuing; we exit the coroutine permanently.
         if (lookup_callback_ == NULL) {
+            socket_->close();
             CORO_YIELD return;
         }
 
