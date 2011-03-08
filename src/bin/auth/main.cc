@@ -176,8 +176,13 @@ main(int argc, char* argv[]) {
         auth_server->setXfrinSession(xfrin_session);
         auth_server->setStatisticsSession(statistics_session);
 
+        // Configure the server.  configureAuthServer() is expected to install
+        // all initial configurations, but as a short term workaround we
+        // handle the traditional "database_file" setup by directly calling
+        // updateConfig().
         auth_server->setConfigSession(config_session);
         configureAuthServer(*auth_server, config_session->getFullConfig());
+        auth_server->updateConfig(ElementPtr());
 
         cout << "[b10-auth] Server started." << endl;
         io_service.run();
