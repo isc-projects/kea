@@ -83,6 +83,7 @@ RRsetCache::update(const isc::dns::RRset& rrset, const RRsetTrustLevel& level) {
     }
 }
 
+#if 0
 void
 RRsetCache::dump(const std::string&) {
     //TODO
@@ -98,6 +99,7 @@ RRsetCache::resize(uint32_t) {
     //TODO
     return (true);
 }
+#endif
 
 } // namespace cache
 } // namespace isc

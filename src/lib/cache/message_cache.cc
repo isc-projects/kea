@@ -57,7 +57,6 @@ bool
 MessageCache::update(const Message& msg) {
     QuestionIterator iter = msg.beginQuestion();
     std::string entry_name = genCacheEntryName((*iter)->getName(), (*iter)->getType());
-    std::cout << msg.toText();
     HashKey entry_key = HashKey(entry_name, RRClass(message_class_));
 
     // The simplest way to update is removing the old message entry directly.
@@ -75,6 +74,7 @@ MessageCache::update(const Message& msg) {
     return (message_table_.add(msg_entry, entry_key, true));
 }
 
+#if 0
 void
 MessageCache::dump(const std::string&) {
     //TODO
@@ -90,6 +90,7 @@ MessageCache::resize(uint32_t) {
     //TODO
     return (true);
 }
+#endif
 
 } // namespace cache
 } // namespace isc

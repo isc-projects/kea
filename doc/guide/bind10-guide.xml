@@ -52,7 +52,8 @@
     <note>
       <para>
         BIND 10 provides a EDNS0- and DNSSEC-capable
-        authoritative DNS server and a forwarding DNS server.
+        authoritative DNS server and a caching recursive name server
+        which also provides forwarding.
       </para>
     </note>
 
@@ -79,9 +80,7 @@
       </para>
 
       <note><para>
-	For this development prototype release, the only supported
-	data source backend is SQLite3. The authoritative server
-	requires SQLite 3.3.9 or newer.
+	The authoritative server requires SQLite 3.3.9 or newer.
 	The <command>b10-xfrin</command>, <command>b10-xfrout</command>,
 	and <command>b10-zonemgr</command> modules require the
 	libpython3 library and the Python _sqlite3.so module.
@@ -1108,9 +1107,10 @@ This may be a temporary setting until then.
 
       <note><para>
         For the development prototype release, <command>b10-auth</command>
-        only supports the SQLite3 data source backend.
+        supports a SQLite3 data source backend and in-memory data source
+        backend.
         Upcoming versions will be able to use multiple different
-        data sources, such as MySQL, Berkeley DB, or in-memory DB.
+        data sources, such as MySQL and Berkeley DB.
       </para></note>
 
 
@@ -1309,12 +1309,6 @@ what is XfroutClient xfr_client??
 -->
     </para>
 
-    <note><simpara>
-      The current version only provides a forwarding DNS server.
-      It does not cache and does not iterate to find answers.
-      It simply forwards the query on to another full resolver.
-    </simpara></note>
-
     <para>
       The main <command>bind10</command> process can be configured
       to select to run either the authoritative or resolver.
@@ -1331,23 +1325,9 @@ what is XfroutClient xfr_client??
 
     </para>
 
-<!-- TODO: -->
-    <note><simpara>
-       In the current version, the master <command>bind10</command>
-       process must be stopped and restarted to start up the resolver.
-    </simpara></note>
-
     <para>
-      Then the upstream address and port must be configured to
-      forward queries to, such as:
-
-      <screen>
-&gt; <userinput>config set Resolver/forward_addresses [{ "address": "<replaceable>192.168.1.1</replaceable>", "port": 53 }]</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
-
-      (Replace <replaceable>192.168.1.1</replaceable> to point to your
-      full resolver.)
+       The master <command>bind10</command> will stop and start
+       the desired services.
     </para>
 
     <para>
@@ -1361,6 +1341,29 @@ what is XfroutClient xfr_client??
     </para>
 
 <!-- TODO: later the above will have some defaults -->
+
+    <para>
+      To enable forwarding, the upstream address and port must be
+      configured to forward queries to, such as:
+
+      <screen>
+&gt; <userinput>config set Resolver/forward_addresses [{ "address": "<replaceable>192.168.1.1</replaceable>", "port": 53 }]</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+
+      (Replace <replaceable>192.168.1.1</replaceable> to point to your
+      full resolver.)
+    </para>
+
+    <para>
+      Normal iterative name service can be re-enabled by clearing the
+      forwarding address(es); for example:
+
+      <screen>
+&gt; <userinput>config set Resolver/forward_addresses []</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+    </para>
 
 <!-- TODO: later try this
 

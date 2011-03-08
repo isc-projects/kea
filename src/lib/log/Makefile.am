@@ -2,7 +2,6 @@ SUBDIRS = . compiler tests
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-# AM_CPPFLAGS += $(LOG4CXX_INCLUDES)
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/log -I$(top_builddir)/src/lib/log
 
 CLEANFILES = *.gcno *.gcda

@@ -24,6 +24,7 @@
 
 #include <dns/tests/unittest_util.h>
 #include <testutils/srv_test.h>
+#include <testutils/portconfig.h>
 
 using namespace std;
 using namespace isc::data;
@@ -42,7 +43,7 @@ class ResolverConfig : public ::testing::Test {
         {
             server.setDNSService(dnss);
         }
-        void invalidTest(const string &JOSN);
+        void invalidTest(const string &JSON, const string& name);
 };
 
 TEST_F(ResolverConfig, forwardAddresses) {
@@ -122,117 +123,48 @@ TEST_F(ResolverConfig, rootAddressConfig) {
 }
 
 void
-ResolverConfig::invalidTest(const string &JOSN) {
-    ElementPtr config(Element::fromJSON(JOSN));
-    EXPECT_FALSE(server.updateConfig(config)->equals(
-        *isc::config::createAnswer())) << "Accepted config " << JOSN << endl;
+ResolverConfig::invalidTest(const string &JSON, const string& name) {
+    isc::testutils::portconfig::configRejected(server, JSON, name);
 }
 
 TEST_F(ResolverConfig, invalidForwardAddresses) {
     // Try torturing it with some invalid inputs
     invalidTest("{"
         "\"forward_addresses\": \"error\""
-        "}");
+        "}", "Invalid type");
     invalidTest("{"
         "\"forward_addresses\": [{}]"
-        "}");
+        "}", "Empty element");
     invalidTest("{"
         "\"forward_addresses\": [{"
         "   \"port\": 1.5,"
         "   \"address\": \"192.0.2.1\""
-        "}]}");
+        "}]}", "Float port");
     invalidTest("{"
         "\"forward_addresses\": [{"
         "   \"port\": -5,"
         "   \"address\": \"192.0.2.1\""
-        "}]}");
+        "}]}", "Negative port");
     invalidTest("{"
         "\"forward_addresses\": [{"
         "   \"port\": 53,"
         "   \"address\": \"bad_address\""
-        "}]}");
+        "}]}", "Bad address");
 }
 
+// Try setting the addresses directly
 TEST_F(ResolverConfig, listenAddresses) {
-    // Default value should be fully recursive
-    EXPECT_TRUE(server.getListenAddresses().empty());
-
-    // Try putting there some addresses
-    vector<pair<string, uint16_t> > addresses;
-    addresses.push_back(pair<string, uint16_t>("127.0.0.1", 5321));
-    addresses.push_back(pair<string, uint16_t>("::1", 5321));
-    server.setListenAddresses(addresses);
-    EXPECT_EQ(2, server.getListenAddresses().size());
-    EXPECT_EQ("::1", server.getListenAddresses()[1].first);
-
-    // Is it independent from what we do with the vector later?
-    addresses.clear();
-    EXPECT_EQ(2, server.getListenAddresses().size());
-
-    // Did it return to fully recursive?
-    server.setListenAddresses(addresses);
-    EXPECT_TRUE(server.getListenAddresses().empty());
+    isc::testutils::portconfig::listenAddresses(server);
 }
 
-TEST_F(ResolverConfig, DISABLED_listenAddressConfig) {
-    // Try putting there some address
-    ElementPtr config(Element::fromJSON("{"
-        "\"listen_on\": ["
-        "   {"
-        "       \"address\": \"127.0.0.1\","
-        "       \"port\": 5321"
-        "   }"
-        "]"
-        "}"));
-    ConstElementPtr result(server.updateConfig(config));
-    EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
-    ASSERT_EQ(1, server.getListenAddresses().size());
-    EXPECT_EQ("127.0.0.1", server.getListenAddresses()[0].first);
-    EXPECT_EQ(5321, server.getListenAddresses()[0].second);
-
-    // As this is example address, the machine should not have it on
-    // any interface
-    // FIXME: This test aborts, because it tries to rollback and
-    //     it is impossible, since the sockets are not closed.
-    //     Once #388 is solved, enable this test.
-    config = Element::fromJSON("{"
-        "\"listen_on\": ["
-        "   {"
-        "       \"address\": \"192.0.2.0\","
-        "       \"port\": 5321"
-        "   }"
-        "]"
-        "}");
-    result = server.updateConfig(config);
-    EXPECT_FALSE(result->equals(*isc::config::createAnswer()));
-    ASSERT_EQ(1, server.getListenAddresses().size());
-    EXPECT_EQ("127.0.0.1", server.getListenAddresses()[0].first);
-    EXPECT_EQ(5321, server.getListenAddresses()[0].second);
+// Try setting some addresses and a rollback
+TEST_F(ResolverConfig, listenAddressConfig) {
+    isc::testutils::portconfig::listenAddressConfig(server);
 }
 
+// Try some invalid configs are rejected
 TEST_F(ResolverConfig, invalidListenAddresses) {
-    // Try torturing it with some invalid inputs
-    invalidTest("{"
-        "\"listen_on\": \"error\""
-        "}");
-    invalidTest("{"
-        "\"listen_on\": [{}]"
-        "}");
-    invalidTest("{"
-        "\"listen_on\": [{"
-        "   \"port\": 1.5,"
-        "   \"address\": \"192.0.2.1\""
-        "}]}");
-    invalidTest("{"
-        "\"listen_on\": [{"
-        "   \"port\": -5,"
-        "   \"address\": \"192.0.2.1\""
-        "}]}");
-    invalidTest("{"
-        "\"listen_on\": [{"
-        "   \"port\": 53,"
-        "   \"address\": \"bad_address\""
-        "}]}");
+    isc::testutils::portconfig::invalidListenAddressConfig(server);
 }
 
 // Just test it sets and gets the values correctly
@@ -267,28 +199,28 @@ TEST_F(ResolverConfig, timeoutsConfig) {
 TEST_F(ResolverConfig, invalidTimeoutsConfig) {
     invalidTest("{"
         "\"timeout_query\": \"error\""
-        "}");
+        "}", "Wrong query element type");
     invalidTest("{"
         "\"timeout_query\": -2"
-        "}");
+        "}", "Negative query timeout");
     invalidTest("{"
         "\"timeout_client\": \"error\""
-        "}");
+        "}", "Wrong client element type");
     invalidTest("{"
         "\"timeout_client\": -2"
-        "}");
+        "}", "Negative client timeout");
     invalidTest("{"
         "\"timeout_lookup\": \"error\""
-        "}");
+        "}", "Wrong lookup element type");
     invalidTest("{"
         "\"timeout_lookup\": -2"
-        "}");
+        "}", "Negative lookup timeout");
     invalidTest("{"
         "\"retries\": \"error\""
-        "}");
+        "}", "Wrong retries element type");
     invalidTest("{"
         "\"retries\": -1"
-        "}");
+        "}", "Negative number of retries");
 }
 
 }

@@ -69,6 +69,7 @@ using namespace isc::data;
 using namespace isc::config;
 using namespace isc::xfr;
 using namespace asiolink;
+using namespace isc::server_common::portconfig;
 
 class AuthSrvImpl {
 private:
@@ -109,6 +110,9 @@ public:
 
     /// Query counters for statistics
     AuthCounters counters_;
+
+    /// Addresses we listen on
+    AddressList listen_addresses_;
 private:
     std::string db_file_;
 
@@ -749,4 +753,19 @@ bool AuthSrv::submitStatistics() const {
 uint64_t
 AuthSrv::getCounter(const AuthCounters::CounterType type) const {
     return (impl_->counters_.getCounter(type));
+}
+
+const AddressList&
+AuthSrv::getListenAddresses() const {
+    return (impl_->listen_addresses_);
+}
+
+void
+AuthSrv::setListenAddresses(const AddressList& addresses) {
+    installListenAddresses(addresses, impl_->listen_addresses_, *dnss_);
+}
+
+void
+AuthSrv::setDNSService(asiolink::DNSService& dnss) {
+    dnss_ = &dnss;
 }

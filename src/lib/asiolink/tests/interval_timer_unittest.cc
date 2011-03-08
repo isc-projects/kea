@@ -33,7 +33,9 @@ using namespace asiolink;
 // or not.
 class IntervalTimerTest : public ::testing::Test {
 protected:
-    IntervalTimerTest() : io_service_() {}
+    IntervalTimerTest() :
+        io_service_(), timer_called_(false), timer_cancel_success_(false)
+    {}
     ~IntervalTimerTest() {}
     class TimerCallBack : public std::unary_function<void, void> {
     public:
@@ -64,7 +66,8 @@ protected:
         TimerCallBackCancelDeleter(IntervalTimerTest* test_obj,
                                    IntervalTimer* timer,
                                    TimerCallBackCounter& counter)
-            : test_obj_(test_obj), timer_(timer), counter_(counter), count_(0)
+            : test_obj_(test_obj), timer_(timer), counter_(counter), count_(0),
+              prev_counter_(-1)
         {}
         void operator()() {
             ++count_;
