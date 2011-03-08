@@ -332,13 +332,6 @@ class TestConfigCommands(unittest.TestCase):
         cmd = cmdparse.BindCmdParse("config set identifier=\"foo/a_list\" value=[1]")
         self.assertRaises(isc.cc.data.DataTypeError, self.tool.apply_config_cmd, cmd)
 
-
-    
-
-class FakeBindCmdInterpreter(bindcmd.BindCmdInterpreter):
-    def __init__(self):
-        pass
-
 class TestBindCmdInterpreter(unittest.TestCase):
 
     def _create_invalid_csv_file(self, csvfilename):
@@ -350,7 +343,7 @@ class TestBindCmdInterpreter(unittest.TestCase):
         csvfile.close()
 
     def test_get_saved_user_info(self):
-        cmd = FakeBindCmdInterpreter()
+        cmd = bindcmd.BindCmdInterpreter()
         users = cmd._get_saved_user_info('/notexist', 'cvs_file.cvs')
         self.assertEqual([], users)
         
