@@ -1,3 +1,8 @@
+  192.	[func]*		jreed
+	Listen on standard domain port 53 for b10-auth and
+	b10-resolver.
+	(Trac #617, #618, git 137a6934a14cf0c5b5c065e910b8b364beb0973f)
+
   191.	[func]		jinmei
 	Imported system test framework of BIND 9.  It can be run by
 	'make systest' at the top source directory.  Notes: currently it
