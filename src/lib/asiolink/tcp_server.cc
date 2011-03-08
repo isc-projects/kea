@@ -91,11 +91,10 @@ TCPServer::operator()(error_code ec, size_t length) {
                 // Abort on fatal errors
                 // TODO: Log error?
                 if (ec) {
-                    if (ec.category() != error::system_category) {
-                        return;
-                    }
-                    if (ec.value() != EWOULDBLOCK && ec.value() != EAGAIN &&
-                        ec.value() != ECONNABORTED && ec.value() != EINTR) {
+                    using namespace asio::error;
+                    if (ec.value() != would_block && ec.value() != try_again &&
+                        ec.value() != connection_aborted &&
+                        ec.value() != interrupted) {
                         return;
                     }
                 }
