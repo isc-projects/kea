@@ -57,6 +57,7 @@ my $NAMED = $ENV{'NAMED'};
 my $LWRESD = $ENV{'LWRESD'};
 my $DIG = $ENV{'DIG'};
 my $PERL = $ENV{'PERL'};
+my $TESTSOCK = $ENV{'TESTSOCK'};
 
 # Start the server(s)
 
@@ -100,7 +101,7 @@ sub check_ports {
 
 	my $tries = 0;
 	while (1) {
-		my $return = system("$PERL $topdir/testsock.pl -p 5300 $options");
+		my $return = system("$PERL $TESTSOCK -p 53210 $options");
 		last if ($return == 0);
 		if (++$tries > 4) {
 			print "$0: could not bind to server addresses, still running?\n";
@@ -160,7 +161,7 @@ sub start_server {
 			$command .= "-m record,size,mctx ";
 			$command .= "-T clienttest ";
 			$command .= "-C resolv.conf -d 99 -g ";
-			$command .= "-i lwresd.pid -P 9210 -p 5300";
+			$command .= "-i lwresd.pid -P 9210 -p 53210";
 		}
 		$command .= " >lwresd.run 2>&1 &";
 		$pid_file = "lwresd.pid";
@@ -210,7 +211,7 @@ sub verify_server {
 
 	my $tries = 0;
 	while (1) {
-		my $return = system("$DIG +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd -p 5300 version.bind. chaos txt \@10.53.0.$n > dig.out");
+		my $return = system("$DIG +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd -p 53210 version.bind. chaos txt \@10.53.0.$n > dig.out");
 		last if ($return == 0);
 		print `grep ";" dig.out`;
 		if (++$tries >= 30) {

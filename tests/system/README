@@ -47,7 +47,7 @@ copy org.isc.bind.system and org.isc.bind.system to
 "launchctl load /Library/LaunchDaemons/org.isc.bind.system.plist" as
 root.
 
-The servers use port 5300 instead of the usual port 53, so they can be
+The servers use port 53210 instead of the usual port 53, so they can be
 run without root privileges once the interfaces have been set up.
 
 The tests can be run individually like this:
