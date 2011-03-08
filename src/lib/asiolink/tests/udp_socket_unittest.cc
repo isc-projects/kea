@@ -127,7 +127,7 @@ public:
     }
 
     /// \brief Get number of bytes transferred in I/O
-    size_t getLength() {
+    size_t getLength() const {
         return (ptr_->length_);
     }
 
@@ -139,7 +139,7 @@ public:
     }
 
     /// \brief Get flag to say when callback was called
-    bool getCalled() {
+    bool getCalled() const {
         return (ptr_->called_);
     }
 
@@ -151,7 +151,7 @@ public:
     }
 
     /// \brief Return instance of callback name
-    std::string getName() {
+    std::string getName() const {
         return (ptr_->name_);
     }
 

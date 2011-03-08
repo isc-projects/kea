@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20110120, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20110224, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -14,18 +14,22 @@ AC_PROG_CXX
 #
 # On FreeBSD (and probably some others), clang++ does not meet an autoconf
 # assumption in identifying libtool configuration regarding shared library:
-# the configure script will execute "$CC -shared $CFLAGS -v -o" and expect
-# the output contains -Lxxx or -Ryyy.  This is the case for g++, but not for
-# clang++, and, as a result, it will cause various errors in linking programs
-# or running them with a shared object (such as some of our python scripts).
+# the configure script will execute "$CC -shared $CFLAGS/$CXXFLAGS -v" and
+# expect the output contains -Lxxx or -Ryyy.  This is the case for g++, but
+# not for clang++, and, as a result, it will cause various errors in linking
+# programs or running them with a shared object (such as some of our python
+# scripts).
 # To work around this problem we define a temporary variable
 # "CXX_LIBTOOL_LDFLAGS".  It's expected to be defined as, e.g, "-L/usr/lib"
 # to temporarily fake the output so that it will be compatible with that of
 # g++.
 CFLAGS_SAVED=$CFLAGS
+CXXFLAGS_SAVED=$CXXFLAGS
 CFLAGS="$CFLAGS $CXX_LIBTOOL_LDFLAGS"
+CXXFLAGS="$CXXFLAGS $CXX_LIBTOOL_LDFLAGS"
 AC_PROG_LIBTOOL
 CFLAGS=$CFLAGS_SAVED
+CXXFLAGS=$CXXFLAGS_SAVED
 
 # Use C++ language
 AC_LANG([C++])
@@ -198,8 +202,9 @@ if test "$setproctitle_check" = "yes" ; then
         AC_MSG_RESULT(ok)
     else
         AC_MSG_RESULT(missing)
-        AC_MSG_ERROR([Missing setproctitle module. Either install it or provide --disable-setproctitle-check.
-In that case we will continue, but naming of python processes will not work.])
+        AC_MSG_WARN([Missing setproctitle python module.
+Use --disable-setproctitle-check to skip this check.
+In this case we will continue, but naming of python processes will not work.])
     fi
 fi
 
@@ -290,6 +295,7 @@ AC_SUBST(B10_CXXFLAGS)
 
 AC_SEARCH_LIBS(inet_pton, [nsl])
 AC_SEARCH_LIBS(recvfrom, [socket])
+AC_SEARCH_LIBS(nanosleep, [rt])
 
 # Checks for header files.
 
@@ -367,57 +373,6 @@ if test "$lcov" != "no"; then
 	AC_SUBST(GENHTML)
 fi
 AC_SUBST(USE_LCOV)
-
-# Configure log4cxx header and library path
-#
-# If explicitly specified, use it.
-
-AC_ARG_WITH([log4cxx],
-  AC_HELP_STRING([--with-log4cxx=PATH],
-    [specify directory where log4cxx is installed]),
-  [
-   log4cxx_include_path="${withval}/include";
-   log4cxx_library_path="${withval}/lib"
-  ])
-
-# This is an urgent fix to avoid regression due to log4cxx on some
-# platforms.  It should be cleaned up with a better fix.
-if test "X$with_log4cxx" != "Xno"; then
-
-# If not specified, try some common paths.  These default to
-# /usr/include and /usr/lib if not found
-
-if test -z "$with_log4cxx"; then
-	log4cxxdirs="/usr/local /usr/pkg /opt /opt/local"
-	for d in $log4cxxdirs
-	do
-		if test -d $d/include/log4cxx; then
-			log4cxx_include_path=$d/include
-			log4cxx_library_path=$d/lib
-			break
-		fi
-	done
-fi
-
-CPPFLAGS_SAVES="$CPPFLAGS"
-if test "${log4cxx_include_path}" ; then
-	LOG4CXX_INCLUDES="-I${log4cxx_include_path}"
-	CPPFLAGS="$CPPFLAGS $LOG4CXX_INCLUDES"
-fi
-AC_CHECK_HEADER([log4cxx/logger.h],, AC_MSG_ERROR([Missing log4cxx header files.]))
-CPPFLAGS="$CPPFLAGS_SAVES"
-AC_SUBST(LOG4CXX_INCLUDES)
-
-LOG4CXX_LDFLAGS="-llog4cxx";
-if test "${log4cxx_library_path}"; then
-    LOG4CXX_LDFLAGS="-L${log4cxx_library_path} -llog4cxx"
-fi
-AC_SUBST(LOG4CXX_LDFLAGS)
-
-# The following two lines are part of the urgent fix, and should be cleaned
-# up with a better fix.
-fi
-AM_CONDITIONAL(USE_LOG4CXX, test "X${with_log4cxx}" != "Xno")
 
 #
 # Configure Boost header path
@@ -726,6 +681,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/nsas/tests/Makefile
                  src/lib/cache/Makefile
                  src/lib/cache/tests/Makefile
+                 src/lib/server_common/Makefile
+                 src/lib/server_common/tests/Makefile
                ])
 AC_OUTPUT([doc/version.ent
            src/bin/cfgmgr/b10-cfgmgr.py
@@ -833,8 +790,6 @@ dnl includes too
                  ${PYTHON_LDFLAGS}
                  ${PYTHON_LIB}
   Boost:         ${BOOST_INCLUDES}
-  log4cxx:       ${LOG4CXX_INCLUDES}
-                 ${LOG4CXX_LDFLAGS}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
 

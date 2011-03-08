@@ -1,3 +1,71 @@
+  189.	[bug]		jreed
+	Do not install the log message compiler.
+	(Trac #634, git eb6441aca464980d00e3ff827cbf4195c5a7afc5)
+
+  188.  [bug]		zhang likun
+	Make the rrset trust level ranking algorithm used by
+	isc::cache::MessageEntry::getRRsetTrustLevel() follow RFC2181
+	section 5.4.1.
+	(Trac #595 git 19197b5bc9f2955bd6a8ca48a2d04472ed696e81)
+
+  187.  [bug]		zhang likun
+	Fix the assert error in class isc::cache::RRsetCache by adding the
+	check for empty pointer and test case for it.
+	(Trac #638, git 54e61304131965c4a1d88c9151f8697dcbb3ce12)
+
+  186.  [bug]		jelte
+	b10-resolver could stop with an assertion failure on certain kinds
+	of messages (there was a problem in error message creation). This
+	fixes that.
+	(Trac #607, git 25a5f4ec755bc09b54410fcdff22691283147f32)
+
+  185.  [bug]        vorner
+	Tests use port from private range (53210), lowering chance of
+	a conflict with something else (eg. running bind 10).
+	(Trac #523, git 301da7d26d41e64d87c0cf72727f3347aa61fb40)
+
+  184.  [func]*      vorner
+	Listening address and port configuration of b10-auth is the same as
+	for b10-resolver now. That means, it is configured through bindctl
+	at runtime, in the Auth/listen_on list, not through command line
+	arguments.
+	(Trac #575, #576, git f06ce638877acf6f8e1994962bf2dbfbab029edf)
+
+  183.  [bug]      jerry
+	src/bin/xfrout: Enable parallel sessions between xfrout server and
+	muti-Auth. The session needs to be created only on the first time
+	or if an error occur.
+	(Trac #419, git 1d60afb59e9606f312caef352ecb2fe488c4e751)
+
+  182.	[func]		jinmei
+	Support cppcheck for static code check on C++ code.  If cppcheck
+	is available, 'make cppcheck' on the top source directory will run
+	the checker and should cleanly complete with an exit code of 0
+	(at least with cppcheck 1.47).
+	Note: the suppression list isn't included in the final
+	distributions.  It should be created by hand or retrieved from
+	the git repository.
+	(Trac #613, git b973f67520682b63ef38b1451d309be9f4f4b218)
+
+  181.  [func]      feng
+	Add stop interface into dns server, so we can stop each running
+	server individually. With it, user can reconfigure her running server
+	with different ip address or port.
+	(Trac #388, git 6df94e2db856c1adc020f658cc77da5edc967555)
+
+  180.  [build]     jreed
+	Fix custom DESTDIR for make install. Patch from Jan Engelhardt.
+	(Trac #629, git 5ac67ede03892a5eacf42ce3ace1e4e376164c9f)
+
+bind10-devel-20110224 released on February 24, 2011
+
+  179.  [func]      vorner
+	It is possible to start and stop resolver and authoritative
+	server without restart of the whole system. Change of the
+	configuration (Boss/start_auth and Boss/start_resolver) is
+	enough.
+	(Trac #565, git 0ac0b4602fa30852b0d86cc3c0b4730deb1a58fe)
+
   178.  [func]      jelte
 	Resolver now makes (limited) use of the cache
 	(Trac #491, git 8b41f77f0099ddc7ca7d34d39ad8c39bb1a8363c)

@@ -170,10 +170,10 @@ ModuleCCSession::readModuleSpecification(const std::string& filename) {
 
     try {
         module_spec = moduleSpecFromFile(file, true);
-    } catch (JSONError pe) {
+    } catch (const JSONError& pe) {
         cout << "Error parsing module specification file: " << pe.what() << endl;
         exit(1);
-    } catch (ModuleSpecError dde) {
+    } catch (const ModuleSpecError& dde) {
         cout << "Error reading module specification file: " << dde.what() << endl;
         exit(1);
     }

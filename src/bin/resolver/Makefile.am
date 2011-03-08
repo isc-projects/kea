@@ -48,6 +48,7 @@ b10_resolver_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/log/liblog.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/cache/libcache.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 b10_resolver_LDADD += $(top_builddir)/src/bin/auth/change_user.o
@@ -55,6 +56,6 @@ b10_resolver_LDFLAGS = -pthread
 
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir
 # and can't use @datadir@ because doesn't expand default ${prefix}
-b10_resolverdir = $(DESTDIR)$(pkgdatadir)
+b10_resolverdir = $(pkgdatadir)
 b10_resolver_DATA = resolver.spec
 

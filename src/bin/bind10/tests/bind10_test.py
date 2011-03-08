@@ -78,8 +78,6 @@ class TestBoB(unittest.TestCase):
         bob = BoB()
         self.assertEqual(bob.verbose, False)
         self.assertEqual(bob.msgq_socket_file, None)
-        self.assertEqual(bob.dns_port, 5300)
-        self.assertEqual(bob.address, None)
         self.assertEqual(bob.cc_session, None)
         self.assertEqual(bob.ccs, None)
         self.assertEqual(bob.processes, {})
@@ -95,8 +93,6 @@ class TestBoB(unittest.TestCase):
         bob = BoB("alt_socket_file")
         self.assertEqual(bob.verbose, False)
         self.assertEqual(bob.msgq_socket_file, "alt_socket_file")
-        self.assertEqual(bob.address, None)
-        self.assertEqual(bob.dns_port, 5300)
         self.assertEqual(bob.cc_session, None)
         self.assertEqual(bob.ccs, None)
         self.assertEqual(bob.processes, {})
@@ -108,47 +104,13 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.cfg_start_auth, True)
         self.assertEqual(bob.cfg_start_resolver, False)
 
-    def test_init_alternate_dns_port(self):
-        bob = BoB(None, 9999)
-        self.assertEqual(bob.verbose, False)
-        self.assertEqual(bob.msgq_socket_file, None)
-        self.assertEqual(bob.dns_port, 9999)
-        self.assertEqual(bob.address, None)
-        self.assertEqual(bob.cc_session, None)
-        self.assertEqual(bob.ccs, None)
-        self.assertEqual(bob.processes, {})
-        self.assertEqual(bob.dead_processes, {})
-        self.assertEqual(bob.runnable, False)
-        self.assertEqual(bob.uid, None)
-        self.assertEqual(bob.username, None)
-        self.assertEqual(bob.nocache, False)
-        self.assertEqual(bob.cfg_start_auth, True)
-        self.assertEqual(bob.cfg_start_resolver, False)
-
-    def test_init_alternate_address(self):
-        bob = BoB(None, 1234, IPAddr('127.127.127.127'))
-        self.assertEqual(bob.verbose, False)
-        self.assertEqual(bob.msgq_socket_file, None)
-        self.assertEqual(bob.dns_port, 1234)
-        self.assertEqual(bob.address.addr, socket.inet_aton('127.127.127.127'))
-        self.assertEqual(bob.cc_session, None)
-        self.assertEqual(bob.ccs, None)
-        self.assertEqual(bob.processes, {})
-        self.assertEqual(bob.dead_processes, {})
-        self.assertEqual(bob.runnable, False)
-        self.assertEqual(bob.uid, None)
-        self.assertEqual(bob.username, None)
-        self.assertEqual(bob.nocache, False)
-        self.assertEqual(bob.cfg_start_auth, True)
-        self.assertEqual(bob.cfg_start_resolver, False)
-
-# Class for testing the Bob.start_all_processes() method call.
+# Class for testing the BoB start/stop components routines.
 #
 # Although testing that external processes start is outside the scope
 # of the unit test, by overriding the process start methods we can check
 # that the right processes are started depending on the configuration
 # options.
-class StartAllProcessesBob(BoB):
+class StartStopCheckBob(BoB):
     def __init__(self):
         BoB.__init__(self)
 
@@ -163,6 +125,7 @@ class StartAllProcessesBob(BoB):
         self.zonemgr = False
         self.stats = False
         self.cmdctl = False
+        self.c_channel_env = {}
 
     def read_bind10_config(self):
         # Configuration options are set directly
@@ -198,118 +161,256 @@ class StartAllProcessesBob(BoB):
     def start_cmdctl(self, c_channel_env):
         self.cmdctl = True
 
-# Check that the start_all_processes method starts the right combination
-# of processes.
-class TestStartAllProcessesBob(unittest.TestCase):
+    # We don't really use all of these stop_ methods. But it might turn out
+    # someone would add some stop_ method to BoB and we want that one overriden
+    # in case he forgets to update the tests.
+    def stop_msgq(self):
+        self.msgq = False
+
+    def stop_cfgmgr(self):
+        self.cfgmgr = False
+
+    def stop_ccsession(self):
+        self.ccsession = False
+
+    def stop_auth(self):
+        self.auth = False
+
+    def stop_resolver(self):
+        self.resolver = False
+
+    def stop_xfrout(self):
+        self.xfrout = False
+
+    def stop_xfrin(self):
+        self.xfrin = False
+
+    def stop_zonemgr(self):
+        self.zonemgr = False
+
+    def stop_stats(self):
+        self.stats = False
+
+    def stop_cmdctl(self):
+        self.cmdctl = False
+
+class TestStartStopProcessesBob(unittest.TestCase):
+    """
+    Check that the start_all_processes method starts the right combination
+    of processes and that the right processes are started and stopped
+    according to changes in configuration.
+    """
+    def check_started(self, bob, core, auth, resolver):
+        """
+        Check that the right sets of services are started. The ones that
+        should be running are specified by the core, auth and resolver parameters
+        (they are groups of processes, eg. auth means b10-auth, -xfrout, -xfrin
+        and -zonemgr).
+        """
+        self.assertEqual(bob.msgq, core)
+        self.assertEqual(bob.cfgmgr, core)
+        self.assertEqual(bob.ccsession, core)
+        self.assertEqual(bob.auth, auth)
+        self.assertEqual(bob.resolver, resolver)
+        self.assertEqual(bob.xfrout, auth)
+        self.assertEqual(bob.xfrin, auth)
+        self.assertEqual(bob.zonemgr, auth)
+        self.assertEqual(bob.stats, core)
+        self.assertEqual(bob.cmdctl, core)
+
     def check_preconditions(self, bob):
-        self.assertEqual(bob.msgq, False)
-        self.assertEqual(bob.cfgmgr, False)
-        self.assertEqual(bob.ccsession, False)
-        self.assertEqual(bob.auth, False)
-        self.assertEqual(bob.resolver, False)
-        self.assertEqual(bob.xfrout, False)
-        self.assertEqual(bob.xfrin, False)
-        self.assertEqual(bob.zonemgr, False)
-        self.assertEqual(bob.stats, False)
-        self.assertEqual(bob.cmdctl, False)
+        self.check_started(bob, False, False, False)
+
+    def check_started_none(self, bob):
+        """
+        Check that the situation is according to configuration where no servers
+        should be started. Some processes still need to be running.
+        """
+        self.check_started(bob, True, False, False)
+
+    def check_started_both(self, bob):
+        """
+        Check the situation is according to configuration where both servers
+        (auth and resolver) are enabled.
+        """
+        self.check_started(bob, True, True, True)
+
+    def check_started_auth(self, bob):
+        """
+        Check the set of processes needed to run auth only is started.
+        """
+        self.check_started(bob, True, True, False)
+
+    def check_started_resolver(self, bob):
+        """
+        Check the set of processes needed to run resolver only is started.
+        """
+        self.check_started(bob, True, False, True)
 
     # Checks the processes started when starting neither auth nor resolver
     # is specified.
     def test_start_none(self):
-        # Created Bob and ensure initialization correct
-        bob = StartAllProcessesBob()
+        # Create BoB and ensure correct initialization
+        bob = StartStopCheckBob()
         self.check_preconditions(bob)
 
         # Start processes and check what was started
-        c_channel_env = {}
         bob.cfg_start_auth = False
         bob.cfg_start_resolver = False
 
-        bob.start_all_processes(c_channel_env)
-
-        self.assertEqual(bob.msgq, True)
-        self.assertEqual(bob.cfgmgr, True)
-        self.assertEqual(bob.ccsession, True)
-        self.assertEqual(bob.auth, False)
-        self.assertEqual(bob.resolver, False)
-        self.assertEqual(bob.xfrout, False)
-        self.assertEqual(bob.xfrin, False)
-        self.assertEqual(bob.zonemgr, False)
-        self.assertEqual(bob.stats, True)
-        self.assertEqual(bob.cmdctl, True)
+        bob.start_all_processes()
+        self.check_started_none(bob)
 
     # Checks the processes started when starting only the auth process
     def test_start_auth(self):
-        # Created Bob and ensure initialization correct
-        bob = StartAllProcessesBob()
+        # Create BoB and ensure correct initialization
+        bob = StartStopCheckBob()
         self.check_preconditions(bob)
 
         # Start processes and check what was started
-        c_channel_env = {}
         bob.cfg_start_auth = True
         bob.cfg_start_resolver = False
 
-        bob.start_all_processes(c_channel_env)
+        bob.start_all_processes()
 
-        self.assertEqual(bob.msgq, True)
-        self.assertEqual(bob.cfgmgr, True)
-        self.assertEqual(bob.ccsession, True)
-        self.assertEqual(bob.auth, True)
-        self.assertEqual(bob.resolver, False)
-        self.assertEqual(bob.xfrout, True)
-        self.assertEqual(bob.xfrin, True)
-        self.assertEqual(bob.zonemgr, True)
-        self.assertEqual(bob.stats, True)
-        self.assertEqual(bob.cmdctl, True)
+        self.check_started_auth(bob)
 
     # Checks the processes started when starting only the resolver process
     def test_start_resolver(self):
-        # Created Bob and ensure initialization correct
-        bob = StartAllProcessesBob()
+        # Create BoB and ensure correct initialization
+        bob = StartStopCheckBob()
         self.check_preconditions(bob)
 
         # Start processes and check what was started
-        c_channel_env = {}
         bob.cfg_start_auth = False
         bob.cfg_start_resolver = True
 
-        bob.start_all_processes(c_channel_env)
+        bob.start_all_processes()
 
-        self.assertEqual(bob.msgq, True)
-        self.assertEqual(bob.cfgmgr, True)
-        self.assertEqual(bob.ccsession, True)
-        self.assertEqual(bob.auth, False)
-        self.assertEqual(bob.resolver, True)
-        self.assertEqual(bob.xfrout, False)
-        self.assertEqual(bob.xfrin, False)
-        self.assertEqual(bob.zonemgr, False)
-        self.assertEqual(bob.stats, True)
-        self.assertEqual(bob.cmdctl, True)
+        self.check_started_resolver(bob)
 
     # Checks the processes started when starting both auth and resolver process
     def test_start_both(self):
-        # Created Bob and ensure initialization correct
-        bob = StartAllProcessesBob()
+        # Create BoB and ensure correct initialization
+        bob = StartStopCheckBob()
         self.check_preconditions(bob)
 
         # Start processes and check what was started
-        c_channel_env = {}
         bob.cfg_start_auth = True
         bob.cfg_start_resolver = True
 
-        bob.start_all_processes(c_channel_env)
+        bob.start_all_processes()
 
-        self.assertEqual(bob.msgq, True)
-        self.assertEqual(bob.cfgmgr, True)
-        self.assertEqual(bob.ccsession, True)
-        self.assertEqual(bob.auth, True)
-        self.assertEqual(bob.resolver, True)
-        self.assertEqual(bob.xfrout, True)
-        self.assertEqual(bob.xfrin, True)
-        self.assertEqual(bob.zonemgr, True)
-        self.assertEqual(bob.stats, True)
-        self.assertEqual(bob.cmdctl, True)
+        self.check_started_both(bob)
 
+    def test_config_start(self):
+        """
+        Test that the configuration starts and stops processes according
+        to configuration changes.
+        """
+
+        # Create BoB and ensure correct initialization
+        bob = StartStopCheckBob()
+        self.check_preconditions(bob)
+
+        # Start processes (nothing much should be started, as in
+        # test_start_none)
+        bob.cfg_start_auth = False
+        bob.cfg_start_resolver = False
+
+        bob.start_all_processes()
+        bob.runnable = True
+        self.check_started_none(bob)
+
+        # Enable both at once
+        bob.config_handler({'start_auth': True, 'start_resolver': True})
+        self.check_started_both(bob)
+
+        # Not touched by empty change
+        bob.config_handler({})
+        self.check_started_both(bob)
+
+        # Not touched by change to the same configuration
+        bob.config_handler({'start_auth': True, 'start_resolver': True})
+        self.check_started_both(bob)
+
+        # Turn them both off again
+        bob.config_handler({'start_auth': False, 'start_resolver': False})
+        self.check_started_none(bob)
+
+        # Not touched by empty change
+        bob.config_handler({})
+        self.check_started_none(bob)
+
+        # Not touched by change to the same configuration
+        bob.config_handler({'start_auth': False, 'start_resolver': False})
+        self.check_started_none(bob)
+
+        # Start and stop auth separately
+        bob.config_handler({'start_auth': True})
+        self.check_started_auth(bob)
+
+        bob.config_handler({'start_auth': False})
+        self.check_started_none(bob)
+
+        # Start and stop resolver separately
+        bob.config_handler({'start_resolver': True})
+        self.check_started_resolver(bob)
+
+        bob.config_handler({'start_resolver': False})
+        self.check_started_none(bob)
+
+        # Alternate
+        bob.config_handler({'start_auth': True})
+        self.check_started_auth(bob)
+
+        bob.config_handler({'start_auth': False, 'start_resolver': True})
+        self.check_started_resolver(bob)
+
+        bob.config_handler({'start_auth': True, 'start_resolver': False})
+        self.check_started_auth(bob)
+
+    def test_config_start_once(self):
+        """
+        Tests that a process is started only once.
+        """
+        # Create BoB and ensure correct initialization
+        bob = StartStopCheckBob()
+        self.check_preconditions(bob)
+
+        # Start processes (both)
+        bob.cfg_start_auth = True
+        bob.cfg_start_resolver = True
+
+        bob.start_all_processes()
+        bob.runnable = True
+        self.check_started_both(bob)
+
+        bob.start_auth = lambda: self.fail("Started auth again")
+        bob.start_xfrout = lambda: self.fail("Started xfrout again")
+        bob.start_xfrin = lambda: self.fail("Started xfrin again")
+        bob.start_zonemgr = lambda: self.fail("Started zonemgr again")
+        bob.start_resolver = lambda: self.fail("Started resolver again")
+
+        # Send again we want to start them. Should not do it, as they are.
+        bob.config_handler({'start_auth': True})
+        bob.config_handler({'start_resolver': True})
+
+    def test_config_not_started_early(self):
+        """
+        Test that processes are not started by the config handler before
+        startup.
+        """
+        bob = StartStopCheckBob()
+        self.check_preconditions(bob)
+
+        bob.start_auth = lambda: self.fail("Started auth again")
+        bob.start_xfrout = lambda: self.fail("Started xfrout again")
+        bob.start_xfrin = lambda: self.fail("Started xfrin again")
+        bob.start_zonemgr = lambda: self.fail("Started zonemgr again")
+        bob.start_resolver = lambda: self.fail("Started resolver again")
+
+        bob.config_handler({'start_auth': True, 'start_resolver': True})
 
 if __name__ == '__main__':
     unittest.main()

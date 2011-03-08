@@ -40,7 +40,7 @@ isc.util.process.rename()
 # This is the version that gets displayed to the user.
 # The VERSION string consists of the module name, the module version
 # number, and the overall BIND 10 version number (set in configure.ac).
-VERSION = "b10-msgq 20100818 (BIND 10 @PACKAGE_VERSION@)"
+VERSION = "b10-msgq 20110127 (BIND 10 @PACKAGE_VERSION@)"
 
 class MsgQReceiveError(Exception): pass
 
