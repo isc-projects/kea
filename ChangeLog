@@ -2,7 +2,7 @@
 	Listen on the IPv6 (::) and IPv4 (0.0.0.0) wildcard addresses
 	for b10-auth. This returns to previous behavior prior to
 	change #184. Document the listen_on configuration in manual.
-	(Trac #649)
+	(Trac #649, git 65a77d8fde64d464c75917a1ab9b6b3f02640ca6)
 
   192.	[func]*		jreed
 	Listen on standard domain port 53 for b10-auth and
