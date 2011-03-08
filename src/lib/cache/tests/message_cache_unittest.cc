@@ -34,9 +34,9 @@ namespace {
 /// its internals.
 class DerivedMessageCache: public MessageCache {
 public:
-    DerivedMessageCache(boost::shared_ptr<RRsetCache> rrset_cache,
+    DerivedMessageCache(const RRsetCachePtr& rrset_cache,
                         uint32_t cache_size, uint16_t message_class,
-                        boost::shared_ptr<RRsetCache> negative_soa_cache):
+                        const RRsetCachePtr& negative_soa_cache):
         MessageCache(rrset_cache, cache_size, message_class, negative_soa_cache)
     {}
 
@@ -95,7 +95,7 @@ TEST_F(MessageCacheTest, testUpdate) {
     EXPECT_TRUE(message_cache_->update(new_msg));
     Message new_msg_render(Message::RENDER);
     EXPECT_TRUE(message_cache_->lookup(qname, RRType::SOA(), new_msg_render));
-    EXPECT_TRUE(new_msg_render.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_FALSE(new_msg_render.getHeaderFlag(Message::HEADERFLAG_AA));
 }
 
 }   // namespace

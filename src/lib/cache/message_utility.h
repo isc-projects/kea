@@ -44,6 +44,16 @@ bool hasTheRecordInAuthoritySection(const isc::dns::Message& msg,
 bool isNegativeResponse(const isc::dns::Message& msg);
 
 /// \brief Check whether the message can be cached
+///        Negative responses without SOA records SHOULD NOT be cached as there
+///        is no way to prevent the negative responses looping forever between a
+///        pair of servers even with a short TTL.
+///        Despite the DNS forming a tree of servers, with various mis-
+///        configurations it is possible to form a loop in the query graph, e.g.
+///        two servers listing each other as forwarders, various lame server
+///        configurations.  Without a TTL count down a cache negative response
+///        when received by the next server would have its TTL reset.  This
+///        negative indication could then live forever circulating between the
+///        servers involved. (Sec 5, RFC2308)
 ///
 /// \param msg The response message
 bool canMessageBeCached(const isc::dns::Message& msg);

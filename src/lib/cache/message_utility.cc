@@ -27,6 +27,11 @@ bool
 hasTheRecordInAuthoritySection(const isc::dns::Message& msg,
                                const isc::dns::RRType& type)
 {
+    // isc::dns::Message provide one function hasRRset() should be used to
+    // determine whether the given section has an RRset matching the given
+    // name and type, but currently it is not const-qualified and cannot be
+    // used here
+    // TODO: use hasRRset() function when it is const qualified
     for (RRsetIterator iter = msg.beginSection(Message::SECTION_AUTHORITY);
             iter != msg.endSection(Message::SECTION_AUTHORITY);
             ++iter) {

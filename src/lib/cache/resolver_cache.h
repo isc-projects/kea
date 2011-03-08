@@ -90,7 +90,7 @@ public:
     /// \brief Construct Function.
     /// \param caches_size cache size information for each
     ///        messages/rrsets of different classes.
-    ResolverClassCache(CacheSizeInfo cache_info);
+    ResolverClassCache(const CacheSizeInfo& cache_info);
 
     /// \name Lookup Interfaces
     //@{
@@ -157,7 +157,7 @@ public:
     ///
     /// \note The class of the RRset must have been checked. It is not
     /// here.
-    bool update(const isc::dns::ConstRRsetPtr rrset_ptr);
+    bool update(const isc::dns::ConstRRsetPtr& rrset_ptr);
 
     /// \brief Get the RRClass this cache is for
     ///
@@ -173,7 +173,7 @@ private:
     /// \return return true if the rrset is updated in the rrset cache,
     ///         or else return false if failed.
     /// \param rrset_cache_ptr The rrset cache need to be updated.
-    bool updateRRsetCache(const isc::dns::ConstRRsetPtr rrset_ptr,
+    bool updateRRsetCache(const isc::dns::ConstRRsetPtr& rrset_ptr,
                           RRsetCachePtr rrset_cache_ptr);
 
     /// \brief Class this cache is for.
@@ -301,7 +301,7 @@ public:
     ///
     /// \overload
     ///
-    bool update(const isc::dns::ConstRRsetPtr rrset_ptr);
+    bool update(const isc::dns::ConstRRsetPtr& rrset_ptr);
 
     /// \name Cache Serialization
     //@{

@@ -44,7 +44,7 @@ ResolverClassCache::ResolverClassCache(const RRClass& cache_class) :
                                       negative_soa_cache_));
 }
 
-ResolverClassCache::ResolverClassCache(CacheSizeInfo cache_info) :
+ResolverClassCache::ResolverClassCache(const CacheSizeInfo& cache_info) :
     cache_class_(cache_info.cclass)
 {
     uint16_t klass = cache_class_.getCode();
@@ -115,7 +115,7 @@ ResolverClassCache::update(const isc::dns::Message& msg) {
 }
 
 bool
-ResolverClassCache::updateRRsetCache(const isc::dns::ConstRRsetPtr rrset_ptr,
+ResolverClassCache::updateRRsetCache(const isc::dns::ConstRRsetPtr& rrset_ptr,
                                 RRsetCachePtr rrset_cache_ptr)
 {
     RRsetTrustLevel level;
@@ -131,7 +131,7 @@ ResolverClassCache::updateRRsetCache(const isc::dns::ConstRRsetPtr rrset_ptr,
 }
 
 bool
-ResolverClassCache::update(const isc::dns::ConstRRsetPtr rrset_ptr) {
+ResolverClassCache::update(const isc::dns::ConstRRsetPtr& rrset_ptr) {
     // First update local zone, then update rrset cache.
     local_zone_data_->update((*rrset_ptr.get()));
     updateRRsetCache(rrset_ptr, rrsets_cache_);
@@ -221,7 +221,7 @@ ResolverCache::update(const isc::dns::Message& msg) {
 }
 
 bool
-ResolverCache::update(const isc::dns::ConstRRsetPtr rrset_ptr) {
+ResolverCache::update(const isc::dns::ConstRRsetPtr& rrset_ptr) {
     ResolverClassCache* cc = getClassCache(rrset_ptr->getClass());
     if (cc) {
         return (cc->update(rrset_ptr));
