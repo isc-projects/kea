@@ -42,11 +42,13 @@ RRsetCache::lookup(const isc::dns::Name& qname,
 {
     const string entry_name = genCacheEntryName(qname, qtype);
     RRsetEntryPtr entry_ptr = rrset_table_.get(HashKey(entry_name, RRClass(class_)));
-    if (entry_ptr) {
+    if (entry_ptr && entry_ptr->getExpireTime() > time(NULL)) {
+        // Only touch the non-expired rrset entries
         rrset_lru_.touch(entry_ptr);
+        return (entry_ptr);
     }
 
-    return (entry_ptr);
+    return (RRsetEntryPtr());
 }
 
 RRsetEntryPtr
@@ -56,8 +58,7 @@ RRsetCache::update(const isc::dns::RRset& rrset, const RRsetTrustLevel& level) {
     RRsetEntryPtr entry_ptr = lookup(rrset.getName(), rrset.getType());
     if (entry_ptr) {
         if (entry_ptr->getTrustLevel() > level) {
-            // existed rrset entry is more authoritative, touch and return it
-            rrset_lru_.touch(entry_ptr);
+            // existed rrset entry is more authoritative, just return it
             return (entry_ptr);
         } else {
             // Remove the old rrset entry from the lru list.
