@@ -41,16 +41,13 @@
     </copyright>
   </docinfo>
 
-<!--
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command></command>
-      <arg><option></option></arg>
-      <arg choice="opt"></arg>
-      <arg choice="opt"></arg>
+      <command>b10-cfgmgr</command>
+      <arg><option>-f<replaceable>config-filename</replaceable></option></arg>
+      <arg><option>-p<replaceable>data_path</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
--->
 
   <refsect1>
     <title>DESCRIPTION</title>
@@ -93,24 +90,36 @@
     </para>
   </refsect1>
 
-<!--
   <refsect1>
     <title>ARGUMENTS</title>
-    <para>
-      <orderedlist numeration="loweralpha">
-        <listitem>
-          <para>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-          </para>
-        </listitem>
-      </orderedlist>
-    </para>
 
+    <para>The arguments are as follows:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term>
+          <option>-f</option><replaceable>config-filename</replaceable>,
+          <option>--database-filename</option> <replaceable>config-filename</replaceable>
+        </term>
+        <listitem>
+          <para>The configuration database filename to use. Can be either
+          absolute or relative to data path.</para>
+          <para>Defaults to b10-config.db</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+          <option>-p</option><replaceable>data-path</replaceable>,
+          <option>--data-path</option> <replaceable>data-path</replaceable>
+        </term>
+        <listitem>
+          <para>The path where bind looks for configuration files.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
   </refsect1>
--->
+
   <refsect1>
     <title>FILES</title>
 <!-- TODO: fix path -->
