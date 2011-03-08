@@ -43,9 +43,7 @@ void
 QidGenerator::seed() {
     struct timeval tv;
     gettimeofday(&tv, 0);
-    long int seed;
-    seed = (tv.tv_sec * 1000000) + tv.tv_usec;
-    generator_.seed(seed);
+    generator_.seed((tv.tv_sec * 1000000) + tv.tv_usec);
 }
 
 isc::dns::qid_t
