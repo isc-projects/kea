@@ -47,7 +47,7 @@ then
     exit 0;
 fi
 
-$PERL testsock.pl || {
+$PERL $TESTSOCK || {
     echo "I:Network interface aliases not set up.  Skipping test." >&2;
     echo "R:UNTESTED" >&2;
     echo "E:$test:`date`" >&2;
