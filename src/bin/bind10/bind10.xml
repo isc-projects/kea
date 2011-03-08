@@ -48,6 +48,8 @@
       <arg><option>-n</option></arg>
       <arg><option>-u <replaceable>user</replaceable></option></arg>
       <arg><option>-v</option></arg>
+      <arg><option>-c<replaceable>config-filename</replaceable></option></arg>
+      <arg><option>-p<replaceable>data_path</replaceable></option></arg>
       <arg><option>--msgq-socket-file <replaceable>file</replaceable></option></arg>
       <arg><option>--no-cache</option></arg>
       <arg><option>--user <replaceable>user</replaceable></option></arg>
@@ -80,6 +82,27 @@
     <para>The arguments are as follows:</para>
 
     <variablelist>
+      <varlistentry>
+        <term>
+          <option>-c</option><replaceable>config-filename</replaceable>,
+          <option>--config-file</option> <replaceable>config-filename</replaceable>
+        </term>
+        <listitem>
+          <para>The configuration filename to use. Can be either absolute or
+          relative to data path.</para>
+          <para>Defaults to b10-config.db</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+          <option>-p</option><replaceable>data-path</replaceable>,
+          <option>--data-path</option> <replaceable>data-path</replaceable>
+        </term>
+        <listitem>
+          <para>The path where bind looks for configuration files.</para>
+        </listitem>
+      </varlistentry>
 
       <varlistentry>
         <term><option>-m</option> <replaceable>file</replaceable>,
