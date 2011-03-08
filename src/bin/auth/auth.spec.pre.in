@@ -64,11 +64,11 @@
         "item_default": [
           {
             "address": "::1",
-            "port": 5300
+            "port": 53
           },
           {
             "address": "127.0.0.1",
-            "port": 5300
+            "port": 53
           }
         ],
         "list_item_spec": {
@@ -87,7 +87,7 @@
               "item_name": "port",
               "item_type": "integer",
               "item_optional": false,
-              "item_default": 5300
+              "item_default": 53
             }
           ]
         }
