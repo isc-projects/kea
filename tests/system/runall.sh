@@ -29,7 +29,7 @@ do
 	sh run.sh $d || status=1
 done
 
-$PERL testsock.pl || {
+$PERL $TESTSOCK || {
     cat <<EOF >&2
 I:
 I:NOTE: Many of the tests were skipped because they require that

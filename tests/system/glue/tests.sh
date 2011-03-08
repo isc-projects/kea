@@ -34,32 +34,32 @@ n=0
 # the other zone and uses the authoritative data in that zone (which is
 # intentionally different from the glue in the root zone).
 echo "I:testing that a TLD referral gets a full glue set from the root zone ($n)"
-$DIG +norec @10.53.0.1 -p 5300 foo.bar.example. A >dig.out.$n || status=1
-$PERL ../digcomp.pl example.good dig.out.$n || status=1
+$DIG +norec @10.53.0.1 -p 53210 foo.bar.example. A >dig.out.$n || status=1
+$PERL $DIGCOMP example.good dig.out.$n || status=1
 n=`expr $n + 1`
 
 echo "I:testing that we find glue A RRs we are authoritative for ($n)"
-$DIG +norec @10.53.0.1 -p 5300 foo.bar.example.org. a >dig.out.$n || status=1
-$PERL ../digcomp.pl auth.good dig.out.$n || status=1
+$DIG +norec @10.53.0.1 -p 53210 foo.bar.example.org. a >dig.out.$n || status=1
+$PERL $DIGCOMP auth.good dig.out.$n || status=1
 n=`expr $n + 1`
 
 # We cannot do this test for BIND 10 because b10-auth doesn't act as a
 # recursive (caching) server (by design)
 # echo "I:testing that we find glue A/AAAA RRs in the cache ($n)"
-# $DIG +norec @10.53.0.1 -p 5300 foo.bar.yy. a >dig.out.$n || status=1
-# $PERL ../digcomp.pl yy.good dig.out.$n || status=1
+# $DIG +norec @10.53.0.1 -p 53210 foo.bar.yy. a >dig.out.$n || status=1
+# $PERL $DIGCOMP yy.good dig.out.$n || status=1
 # n=`expr $n + 1`
 
 echo "I:testing that we don't find out-of-zone glue ($n)"
-$DIG +norec @10.53.0.1 -p 5300 example.net. a > dig.out.$n || status=1
-$PERL ../digcomp.pl noglue.good dig.out.$n || status=1
+$DIG +norec @10.53.0.1 -p 53210 example.net. a > dig.out.$n || status=1
+$PERL $DIGCOMP noglue.good dig.out.$n || status=1
 n=`expr $n + 1`
 
 # This test currently fails (additional section will be empty, which is
 # incorrect).  See Trac ticket #646.
 #echo "I:testing that we are finding partial out-of-zone glue ($n)"
-#$DIG +norec @10.53.0.1 -p 5300 foo.bar.test. a >dig.out.$n || status=1
-#$PERL ../digcomp.pl test.good dig.out.$n || status=1
+#$DIG +norec @10.53.0.1 -p 53210 foo.bar.test. a >dig.out.$n || status=1
+#$PERL $DIGCOMP test.good dig.out.$n || status=1
 #n=`expr $n + 1`
 
 echo "I:exit status: $status"
