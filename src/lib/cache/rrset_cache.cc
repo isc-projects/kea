@@ -42,10 +42,17 @@ RRsetCache::lookup(const isc::dns::Name& qname,
 {
     const string entry_name = genCacheEntryName(qname, qtype);
     RRsetEntryPtr entry_ptr = rrset_table_.get(HashKey(entry_name, RRClass(class_)));
-    if (entry_ptr && entry_ptr->getExpireTime() > time(NULL)) {
-        // Only touch the non-expired rrset entries
-        rrset_lru_.touch(entry_ptr);
-        return (entry_ptr);
+    if (entry_ptr) {
+        if (entry_ptr->getExpireTime() > time(NULL)) {
+            // Only touch the non-expired rrset entries
+            rrset_lru_.touch(entry_ptr);
+            return (entry_ptr);
+        } else {
+            // the rrset entry has expired, so just remove it from
+            // hash table and lru list.
+            rrset_table_.remove(entry_ptr->hashKey());
+            rrset_lru_.remove(entry_ptr);
+        }
     }
 
     return (RRsetEntryPtr());

@@ -145,6 +145,11 @@ protected:
     bool getRRsetEntries(std::vector<RRsetEntryPtr>& rrset_entry_vec,
                          const time_t time_now);
 
+    /// \brief Get  
+    time_t getExpireTime() const {
+        return (expire_time_);
+    }
+
     time_t expire_time_;  // Expiration time of the message.
     //@}
 
