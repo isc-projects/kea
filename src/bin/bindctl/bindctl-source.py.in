@@ -31,7 +31,7 @@ isc.util.process.rename()
 # This is the version that gets displayed to the user.
 # The VERSION string consists of the module name, the module version
 # number, and the overall BIND 10 version number (set in configure.ac).
-VERSION = "bindctl 20101201 (BIND 10 @PACKAGE_VERSION@)"
+VERSION = "bindctl 20110217 (BIND 10 @PACKAGE_VERSION@)"
 
 DEFAULT_IDENTIFIER_DESC = "The identifier specifies the config item. Child elements are separated with the '/' character. List indices can be specified with '[i]', where i is an integer specifying the index, starting with 0. Examples: 'Boss/start_auth', 'Recurse/listen_on[0]/address'. If no identifier is given, shows the item at the current location."
 

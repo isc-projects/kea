@@ -74,7 +74,7 @@ public:
     }
 
     void
-    acceptHandler(const asio::error_code&) {
+    acceptHandler(const asio::error_code&) const {
     }
 
     void

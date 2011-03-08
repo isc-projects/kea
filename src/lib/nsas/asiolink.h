@@ -46,7 +46,7 @@ public:
     }
 
     /// \return true if two addresses are equal
-    bool equal(const IOAddress& address)
+    bool equal(const IOAddress& address) const
     {return (toText() == address.toText());}
 
 private:

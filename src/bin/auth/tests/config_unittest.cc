@@ -30,6 +30,7 @@
 #include <auth/common.h>
 
 #include <testutils/mockups.h>
+#include <testutils/portconfig.h>
 
 using namespace isc::dns;
 using namespace isc::data;
@@ -39,7 +40,15 @@ using namespace asiolink;
 namespace {
 class AuthConfigTest : public ::testing::Test {
 protected:
-    AuthConfigTest() : rrclass(RRClass::IN()), server(true, xfrout) {}
+    AuthConfigTest() :
+        dnss_(ios_, NULL, NULL, NULL),
+        rrclass(RRClass::IN()),
+        server(true, xfrout)
+    {
+        server.setDNSService(dnss_);
+    }
+    IOService ios_;
+    DNSService dnss_;
     const RRClass rrclass;
     MockXfroutClient xfrout;
     AuthSrv server;
@@ -110,6 +119,17 @@ TEST_F(AuthConfigTest, exceptionFromCommit) {
     EXPECT_THROW(configureAuthServer(server, Element::fromJSON(
                                          "{\"_commit_throw\": 10}")),
                  FatalError);
+}
+
+// Test invalid address configs are rejected
+TEST_F(AuthConfigTest, invalidListenAddressConfig) {
+    // This currently passes simply because the config doesn't know listen_on
+    isc::testutils::portconfig::invalidListenAddressConfig(server);
+}
+
+// Try setting addresses trough config
+TEST_F(AuthConfigTest, listenAddressConfig) {
+    isc::testutils::portconfig::listenAddressConfig(server);
 }
 
 class MemoryDatasrcConfigTest : public AuthConfigTest {

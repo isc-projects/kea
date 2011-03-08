@@ -46,7 +46,7 @@ TCPServer::TCPServer(io_service& io_service,
                      const SimpleCallback* checkin,
                      const DNSLookup* lookup,
                      const DNSAnswer* answer) :
-    io_(io_service), done_(false),
+    io_(io_service), done_(false), stopped_by_hand_(false),
     checkin_callback_(checkin), lookup_callback_(lookup),
     answer_callback_(answer)
 {
@@ -65,9 +65,16 @@ TCPServer::TCPServer(io_service& io_service,
 
 void
 TCPServer::operator()(error_code ec, size_t length) {
-    /// Because the coroutine reeentry block is implemented as
+    /// Because the coroutine reentry block is implemented as
     /// a switch statement, inline variable declarations are not
     /// permitted.  Certain variables used below can be declared here.
+
+    /// If user has stopped the server, we won't enter the
+    /// coroutine body, just return
+    if (stopped_by_hand_) {
+        return;
+    }
+
     boost::array<const_buffer,2> bufs;
     OutputBuffer lenbuf(TCP_MESSAGE_LENGTHSIZE);
 
@@ -103,7 +110,7 @@ TCPServer::operator()(error_code ec, size_t length) {
         /// Now read the message itself. (This is done in a different scope
         /// to allow inline variable declarations.)
         CORO_YIELD {
-            InputBuffer dnsbuffer((const void *) data_.get(), length);
+            InputBuffer dnsbuffer(data_.get(), length);
             uint16_t msglen = dnsbuffer.readUint16();
             async_read(*socket_, asio::buffer(data_.get(), msglen), *this);
         }
@@ -188,6 +195,16 @@ TCPServer::asyncLookup() {
                         answer_message_, respbuf_, this);
 }
 
+void TCPServer::stop() {
+    // server should not be stopped twice
+    if (stopped_by_hand_) {
+        return;
+    }
+
+    stopped_by_hand_ = true;
+    acceptor_->close();
+    socket_->close();
+}
 /// Post this coroutine on the ASIO service queue so that it will
 /// resume processing where it left off.  The 'done' parameter indicates
 /// whether there is an answer to return to the client.

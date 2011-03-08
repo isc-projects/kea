@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>July 29, 2010</date>
+    <date>February 22, 2011</date>
   </refentryinfo>
 
   <refmeta>
@@ -36,24 +36,20 @@
 
   <docinfo>
     <copyright>
-      <year>2010</year>
+      <year>2011</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
 
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>bind10</command>    
-      <arg><option>-a <replaceable>address</replaceable></option></arg>
+      <command>bind10</command>
       <arg><option>-m <replaceable>file</replaceable></option></arg>
       <arg><option>-n</option></arg>
-      <arg><option>-p <replaceable>number</replaceable></option></arg>
       <arg><option>-u <replaceable>user</replaceable></option></arg>
       <arg><option>-v</option></arg>
-      <arg><option>--address <replaceable>address</replaceable></option></arg>
       <arg><option>--msgq-socket-file <replaceable>file</replaceable></option></arg>
       <arg><option>--no-cache</option></arg>
-      <arg><option>--port <replaceable>number</replaceable></option></arg>
       <arg><option>--user <replaceable>user</replaceable></option></arg>
       <arg><option>--pretty-name <replaceable>name</replaceable></option></arg>
       <arg><option>--verbose</option></arg>
@@ -86,19 +82,6 @@
     <variablelist>
 
       <varlistentry>
-        <term><option>-a</option> <replaceable>address</replaceable>, <option>--address</option> <replaceable>address</replaceable></term>
-
-        <listitem>
-	  <para>The IPv4 or IPv6 address for the
-	    <citerefentry><refentrytitle>b10-auth</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-            daemon to listen on.
-            The default is to listen on all addresses. 
-            (This is a short term workaround. This argument may change.)
-          </para>
-         </listitem>
-      </varlistentry>
-
-      <varlistentry>
         <term><option>-m</option> <replaceable>file</replaceable>,
            <option>--msgq-socket-file</option> <replaceable>file</replaceable></term>
 
@@ -123,20 +106,6 @@
       </varlistentry>
 
       <varlistentry>
-        <term><option>-p</option> <replaceable>number</replaceable>, <option>--port</option> <replaceable>number</replaceable></term>
-
-        <listitem>
-          <para>The port number for the
-	    <citerefentry><refentrytitle>b10-auth</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-            daemon to listen on.
-            The default is 5300.</para>
-<!-- TODO: -->
-	    <note><simpara>This prototype release uses a non-default
-	    port for domain service.</simpara></note>
-         </listitem>
-      </varlistentry>
-
-      <varlistentry>
         <term><option>-u</option> <replaceable>user</replaceable>, <option>--user</option> <replaceable>name</replaceable></term>
 
         <listitem>
@@ -155,7 +124,11 @@
           <para>The name this process should have in tools like
           <command>ps</command> or <command>top</command>. This
           is handy if you have multiple versions/installations
-          of <command>bind10</command>.</para>
+          of <command>bind10</command>.
+<!-- TODO: only supported with setproctitle feature
+The default is the basename of ARG 0.
+-->
+</para>
         </listitem>
       </varlistentry>
 

@@ -29,6 +29,11 @@
 #include <asiolink/tcp_server.h>
 #include <asiolink/udp_server.h>
 
+#include <log/dummylog.h>
+
+#include <boost/lexical_cast.hpp>
+#include <boost/foreach.hpp>
+
 using isc::log::dlog;
 
 namespace asiolink {
@@ -184,8 +189,9 @@ DNSService::addServer(uint16_t port, const std::string& address) {
 
 void
 DNSService::clearServers() {
-    // FIXME: This does not work, it does not close the socket.
-    // How is it done?
+    BOOST_FOREACH(const DNSServiceImpl::DNSServerPtr& s, impl_->servers_) {
+        s->stop();
+    }
     impl_->servers_.clear();
 }
 
