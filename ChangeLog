@@ -1,3 +1,10 @@
+  194.  [bug]       vorner
+	Solved a 100% CPU usage problem after switching addresses in b10-auth
+	(and possibly, but unconfirmed, in b10-resolver). It was caused by
+	repeated reads/accepts on closed socket (the bug was in the code for a
+	long time, recent changes made it show).
+	(Trac #657, git e0863720a874d75923ea66adcfbf5b2948efb10a)
+
   193.	[func]*		jreed
 	Listen on the IPv6 (::) and IPv4 (0.0.0.0) wildcard addresses
 	for b10-auth. This returns to previous behavior prior to
