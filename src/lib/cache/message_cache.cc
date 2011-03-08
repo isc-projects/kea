@@ -31,9 +31,9 @@ using namespace isc::dns;
 using namespace std;
 using namespace MessageUtility;
 
-MessageCache::MessageCache(boost::shared_ptr<RRsetCache> rrset_cache,
+MessageCache::MessageCache(const RRsetCachePtr& rrset_cache,
                            uint32_t cache_size, uint16_t message_class,
-                           boost::shared_ptr<RRsetCache> negative_soa_cache):
+                           const RRsetCachePtr& negative_soa_cache):
     message_class_(message_class),
     rrset_cache_(rrset_cache),
     negative_soa_cache_(negative_soa_cache),
