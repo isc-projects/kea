@@ -35,6 +35,7 @@ libasiolink_la_SOURCES += tcp_socket.h
 libasiolink_la_SOURCES += udp_endpoint.h
 libasiolink_la_SOURCES += udp_server.h udp_server.cc
 libasiolink_la_SOURCES += udp_socket.h
+libasiolink_la_SOURCES += qid_gen.cc qid_gen.h
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
 libasiolink_la_CXXFLAGS = $(AM_CXXFLAGS)
