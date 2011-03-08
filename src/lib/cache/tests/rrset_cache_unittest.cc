@@ -34,50 +34,87 @@ namespace {
 class RRsetCacheTest : public testing::Test {
 protected:
     RRsetCacheTest():
-        cache(RRSET_CACHE_DEFAULT_SIZE, RRClass::IN().getCode()),
-        name("example.com"),
-        rrset1(name, RRClass::IN(), RRType::A(), RRTTL(20)),
-        rrset2(name, RRClass::IN(), RRType::A(), RRTTL(10)),
-        rrset_entry1(rrset1, RRSET_TRUST_ADDITIONAL_AA),
-        rrset_entry2(rrset2, RRSET_TRUST_PRIM_ZONE_NONGLUE)
+        cache_(1, RRClass::IN().getCode()),
+        name_("example.com"),
+        rrset1_(name_, RRClass::IN(), RRType::A(), RRTTL(20)),
+        rrset2_(name_, RRClass::IN(), RRType::A(), RRTTL(10)),
+        rrset_entry1_(rrset1_, RRSET_TRUST_ADDITIONAL_AA),
+        rrset_entry2_(rrset2_, RRSET_TRUST_PRIM_ZONE_NONGLUE)
     {
     }
 
-    RRsetCache cache;
-    Name name;
-    RRset rrset1;
-    RRset rrset2;
-    RRsetEntry rrset_entry1;
-    RRsetEntry rrset_entry2;
+    RRsetCache cache_;
+    Name name_;
+    RRset rrset1_;
+    RRset rrset2_;
+    RRsetEntry rrset_entry1_;
+    RRsetEntry rrset_entry2_;
 };
 
 TEST_F(RRsetCacheTest, lookup) {
     const RRType& type = RRType::A();
-    EXPECT_TRUE(cache.lookup(name, type) == NULL);
+    EXPECT_TRUE(cache_.lookup(name_, type) == NULL);
 
-    cache.update(rrset1, rrset_entry1.getTrustLevel());
-    RRsetEntryPtr rrset_entry_ptr = cache.lookup(name, type);
-    EXPECT_EQ(rrset_entry_ptr->getTrustLevel(), rrset_entry1.getTrustLevel());
-    EXPECT_EQ(rrset_entry_ptr->getRRset()->getName(), rrset_entry1.getRRset()->getName());
-    EXPECT_EQ(rrset_entry_ptr->getRRset()->getType(), rrset_entry1.getRRset()->getType());
-    EXPECT_EQ(rrset_entry_ptr->getRRset()->getClass(), rrset_entry1.getRRset()->getClass());
+    cache_.update(rrset1_, rrset_entry1_.getTrustLevel());
+    RRsetEntryPtr rrset_entry_ptr = cache_.lookup(name_, type);
+    EXPECT_EQ(rrset_entry_ptr->getTrustLevel(), rrset_entry1_.getTrustLevel());
+    EXPECT_EQ(rrset_entry_ptr->getRRset()->getName(), rrset_entry1_.getRRset()->getName());
+    EXPECT_EQ(rrset_entry_ptr->getRRset()->getType(), rrset_entry1_.getRRset()->getType());
+    EXPECT_EQ(rrset_entry_ptr->getRRset()->getClass(), rrset_entry1_.getRRset()->getClass());
 }
 
 TEST_F(RRsetCacheTest, update) {
     const RRType& type = RRType::A();
 
-    cache.update(rrset1, rrset_entry1.getTrustLevel());
-    RRsetEntryPtr rrset_entry_ptr = cache.lookup(name, type);
-    EXPECT_EQ(rrset_entry_ptr->getTrustLevel(), rrset_entry1.getTrustLevel());
+    cache_.update(rrset1_, rrset_entry1_.getTrustLevel());
+    RRsetEntryPtr rrset_entry_ptr = cache_.lookup(name_, type);
+    EXPECT_EQ(rrset_entry_ptr->getTrustLevel(), rrset_entry1_.getTrustLevel());
 
-    cache.update(rrset2, rrset_entry2.getTrustLevel());
-    rrset_entry_ptr = cache.lookup(name, type);
+    cache_.update(rrset2_, rrset_entry2_.getTrustLevel());
+    rrset_entry_ptr = cache_.lookup(name_, type);
     // The trust level should be updated
-    EXPECT_EQ(rrset_entry_ptr->getTrustLevel(), rrset_entry2.getTrustLevel());
+    EXPECT_EQ(rrset_entry_ptr->getTrustLevel(), rrset_entry2_.getTrustLevel());
 
-    cache.update(rrset1, rrset_entry1.getTrustLevel());
+    cache_.update(rrset1_, rrset_entry1_.getTrustLevel());
     // The trust level should not be updated
-    EXPECT_EQ(rrset_entry_ptr->getTrustLevel(), rrset_entry2.getTrustLevel());
+    EXPECT_EQ(rrset_entry_ptr->getTrustLevel(), rrset_entry2_.getTrustLevel());
+}
+
+void
+updateRRsetCache(RRsetCache& cache, Name& rrset_name,
+                 RRsetTrustLevel level=RRSET_TRUST_ADDITIONAL_AA)
+{
+    RRset rrset(rrset_name, RRClass::IN(), RRType::A(), RRTTL(20));
+    cache.update(rrset, level);
+}
+
+// Test whether the lru list in rrset cache works as expected.
+TEST_F(RRsetCacheTest, cacheLruBehavior) {
+    Name name1("1.example.com.");
+    Name name2("2.example.com.");
+    Name name3("3.example.com.");
+    Name name4("4.example.com.");
+
+    updateRRsetCache(cache_, name1);
+    updateRRsetCache(cache_, name2);
+    updateRRsetCache(cache_, name3);
+
+    EXPECT_TRUE(cache_.lookup(name1, RRType::A()));
+
+    // Now update the fourth rrset, rrset with name "2.example.com."
+    // should has been removed from cache.
+    updateRRsetCache(cache_, name4);
+    EXPECT_FALSE(cache_.lookup(name2, RRType::A()));
+
+    // Test Update rrset with higher trust level
+    updateRRsetCache(cache_, name1, RRSET_TRUST_PRIM_GLUE);
+    // Test update rrset with lower trust level.
+    updateRRsetCache(cache_, name3, RRSET_TRUST_ADDITIONAL_NONAA);
+
+    // When add rrset with name2, rrset with name4
+    // has been removed from the cache.
+    updateRRsetCache(cache_, name2);
+    EXPECT_FALSE(cache_.lookup(name4, RRType::A()));
 }
 
 }
