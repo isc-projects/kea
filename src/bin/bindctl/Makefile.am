@@ -19,8 +19,8 @@ bindctl.1: bindctl.xml
 
 endif
 
-bindctl: bindctl-source.py
+bindctl: bindctl_main.py
 	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" \
 	       -e "s|@@SYSCONFDIR@@|@sysconfdir@|" \
-	       -e "s|@@LIBEXECDIR@@|$(pkglibexecdir)|" bindctl-source.py >$@
+	       -e "s|@@LIBEXECDIR@@|$(pkglibexecdir)|" bindctl_main.py >$@
 	chmod a+x $@
