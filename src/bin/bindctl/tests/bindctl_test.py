@@ -17,6 +17,8 @@
 import unittest
 import isc.cc.data
 import os
+import sys
+import socket
 from isc.config.config_data import ConfigData, MultiConfigData
 from isc.config.module_spec import ModuleSpec
 from bindctl import cmdparse
@@ -271,7 +273,7 @@ class FakeCCSession(MultiConfigData):
                  ]
                }
         self.set_specification(ModuleSpec(spec))
-    
+
 
 class TestConfigCommands(unittest.TestCase):
     def setUp(self):
@@ -279,7 +281,21 @@ class TestConfigCommands(unittest.TestCase):
         mod_info = ModuleInfo(name = "foo")
         self.tool.add_module_info(mod_info)
         self.tool.config_data = FakeCCSession()
-        
+
+    def test_run(self):
+        stdout_backup = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
+        def login_to_cmdctl():
+            return True
+        def loop():
+            self.tool._send_message("/module_spec", None)
+        self.tool.login_to_cmdctl = login_to_cmdctl
+        self.tool.cmdloop = loop
+
+        self.tool.conn.close()
+        self.assertRaises(None, self.tool.run())
+        sys.stdout = stdout_backup
+
     def test_apply_cfg_command_int(self):
         self.tool.location = '/'
 
@@ -332,8 +348,6 @@ class TestConfigCommands(unittest.TestCase):
         cmd = cmdparse.BindCmdParse("config set identifier=\"foo/a_list\" value=[1]")
         self.assertRaises(isc.cc.data.DataTypeError, self.tool.apply_config_cmd, cmd)
 
-
-    
 
 class FakeBindCmdInterpreter(bindcmd.BindCmdInterpreter):
     def __init__(self):
