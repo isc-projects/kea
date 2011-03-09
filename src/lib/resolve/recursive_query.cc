@@ -201,6 +201,7 @@ private:
     // if we have a response for our query stored already. if
     // so, call handlerecursiveresponse(), if not, we call send()
     void doLookup() {
+        cur_zone_ = ".";
         dlog("doLookup: try cache");
         Message cached_message(Message::RENDER);
         isc::resolve::initResponseMessage(question_, cached_message);
@@ -216,7 +217,6 @@ private:
                 stop();
             }
         } else {
-            cur_zone_ = ".";
             send();
         }
         
@@ -436,6 +436,7 @@ public:
         callback_called_(false),
         nsas_(nsas),
         cache_(cache),
+        cur_zone_("."),
         nsas_callback_(boost::shared_ptr<ResolverNSASCallback>(
                                      new ResolverNSASCallback(this))),
         nsas_callback_out_(false),
