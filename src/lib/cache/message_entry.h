@@ -87,6 +87,12 @@ public:
         return (*hash_key_ptr_);
     }
 
+    /// \brief Get expire time of the message entry.
+    /// \return return the expire time of message entry.
+    time_t getExpireTime() const {
+        return (expire_time_);
+    }
+
     /// \short Protected memebers, so they can be accessed by tests.
     //@{
 protected:
@@ -144,11 +150,6 @@ protected:
     ///         otherwise.
     bool getRRsetEntries(std::vector<RRsetEntryPtr>& rrset_entry_vec,
                          const time_t time_now);
-
-    /// \brief Get  
-    time_t getExpireTime() const {
-        return (expire_time_);
-    }
 
     time_t expire_time_;  // Expiration time of the message.
     //@}

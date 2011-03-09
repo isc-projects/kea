@@ -51,6 +51,15 @@ protected:
     RRsetEntry rrset_entry2_;
 };
 
+void
+updateRRsetCache(RRsetCache& cache, Name& rrset_name,
+                 uint32_t ttl = 20,
+                 RRsetTrustLevel level = RRSET_TRUST_ADDITIONAL_AA)
+{
+    RRset rrset(rrset_name, RRClass::IN(), RRType::A(), RRTTL(ttl));
+    cache.update(rrset, level);
+}
+
 TEST_F(RRsetCacheTest, lookup) {
     const RRType& type = RRType::A();
     EXPECT_TRUE(cache_.lookup(name_, type) == NULL);
@@ -61,6 +70,12 @@ TEST_F(RRsetCacheTest, lookup) {
     EXPECT_EQ(rrset_entry_ptr->getRRset()->getName(), rrset_entry1_.getRRset()->getName());
     EXPECT_EQ(rrset_entry_ptr->getRRset()->getType(), rrset_entry1_.getRRset()->getType());
     EXPECT_EQ(rrset_entry_ptr->getRRset()->getClass(), rrset_entry1_.getRRset()->getClass());
+
+    // Check whether the expired rrset entry will be removed automatically
+    // when looking up.
+    Name name_test("test.example.com.");
+    updateRRsetCache(cache_, name_test, 0);
+    EXPECT_FALSE(cache_.lookup(name_test, RRType::A()));
 }
 
 TEST_F(RRsetCacheTest, update) {
@@ -78,14 +93,6 @@ TEST_F(RRsetCacheTest, update) {
     cache_.update(rrset1_, rrset_entry1_.getTrustLevel());
     // The trust level should not be updated
     EXPECT_EQ(rrset_entry_ptr->getTrustLevel(), rrset_entry2_.getTrustLevel());
-}
-
-void
-updateRRsetCache(RRsetCache& cache, Name& rrset_name,
-                 RRsetTrustLevel level=RRSET_TRUST_ADDITIONAL_AA)
-{
-    RRset rrset(rrset_name, RRClass::IN(), RRType::A(), RRTTL(20));
-    cache.update(rrset, level);
 }
 
 // Test whether the lru list in rrset cache works as expected.
