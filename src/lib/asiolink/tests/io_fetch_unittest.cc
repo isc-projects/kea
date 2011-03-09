@@ -166,6 +166,10 @@ public:
         // Return a message back to the IOFetch object.
         socket->send_to(asio::buffer(return_data_.c_str(), return_data_.size()),
                                      *remote);
+        if (debug_) {
+            cout << "udpReceiveHandler(): returned " << return_data_.size() <<
+                    " bytes to the client" << endl;
+        }
     }
 
     /// \brief Completion Handler for accepting TCP data
@@ -510,6 +514,7 @@ TEST_F(IOFetchTest, UdpSendReceive) {
     udp::socket socket(service_.get_io_service(), udp::v4());
     socket.set_option(socket_base::reuse_address(true));
     socket.bind(udp::endpoint(TEST_HOST, TEST_PORT));
+    return_data_ = "Message returned to the client";
 
     udp::endpoint remote;
     socket.async_receive_from(asio::buffer(receive_buffer_, sizeof(receive_buffer_)),
@@ -517,6 +522,10 @@ TEST_F(IOFetchTest, UdpSendReceive) {
         boost::bind(&IOFetchTest::udpReceiveHandler, this, &remote, &socket,
                     _1, _2));
     service_.get_io_service().post(udp_fetch_);
+    if (debug_) {
+        cout << "udpSendReceive: async_receive_from posted, waiting for callback" <<
+                endl;
+    }
     service_.run();
 
     socket.close();
