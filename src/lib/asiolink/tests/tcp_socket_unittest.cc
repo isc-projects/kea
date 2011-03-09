@@ -380,11 +380,12 @@ TEST(TCPSocket, SequenceTest) {
     client_cb.length() = 0;
     client.asyncSend(OUTBOUND_DATA, sizeof(OUTBOUND_DATA), &server_endpoint, client_cb);
 
+    // Wait for the client callback to complete. (Must do this first on
+    // Solaris: if we do the synchronous read first, the test hangs.)
+    service.run_one();
+
     // Synchronously read the data from the server.;
     serverRead(server_socket, server_cb);
-
-    // Wait for the client callback to complete.
-    service.run_one();
 
     // Check the client state
     EXPECT_EQ(TCPCallback::WRITE, client_cb.called());
