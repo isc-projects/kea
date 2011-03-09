@@ -123,8 +123,10 @@ class BindCmdInterpreter(Cmd):
         except FailToLogin as err:
             # error already printed when this was raised, ignoring
             pass
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, socket.error):
             print('\nExit from bindctl')
+        except http.client.CannotSendRequest:
+            print('Failed to send request, the connection is busy')
 
     def _get_saved_user_info(self, dir, file_name):
         ''' Read all the available username and password pairs saved in 
@@ -188,7 +190,9 @@ class BindCmdInterpreter(Cmd):
                 raise FailToLogin()
 
             if response.status == http.client.OK:
-                print(data + ' login as ' + row[0] )
+                # Is interactive?
+                if sys.stdin.isatty():
+                    print(data + ' login as ' + row[0] )
                 return True 
 
         count = 0
