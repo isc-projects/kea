@@ -54,7 +54,7 @@ const size_t MAX_SIZE = 64 * 1024;  // Should be able to take 64kB
 
 // The tests are complex, so debug output has been left in (although disabled).
 // Set this to true to enable it.
-const bool DEBUG = false;
+const bool DEBUG = true;
 
 /// \brief Test fixture for the asiolink::IOFetch.
 class IOFetchTest : public virtual ::testing::Test, public virtual IOFetch::Callback
@@ -83,6 +83,7 @@ public:
     string          return_data_;           ///< Data returned by server
     string          test_data_;             ///< Large string - here for convenience
     bool            debug_;                 ///< true to enable debug output
+    size_t          tcp_send_size_;         ///< Max size of TCP send
 
     /// \brief Constructor
     IOFetchTest() :
@@ -95,7 +96,7 @@ public:
         udp_fetch_(IOFetch::UDP, service_, question_, IOAddress(TEST_HOST),
             TEST_PORT, result_buff_, this, 100),
         tcp_fetch_(IOFetch::TCP, service_, question_, IOAddress(TEST_HOST),
-            TEST_PORT, result_buff_, this, (4 * SEND_INTERVAL)),
+            TEST_PORT, result_buff_, this, (16 * SEND_INTERVAL)),
                                         // Timeout interval chosen to ensure no timeout
         protocol_(IOFetch::TCP),        // for initialization - will be changed
         cumulative_(0),
@@ -105,7 +106,8 @@ public:
         send_cumulative_(0),
         return_data_(""),
         test_data_(""),
-        debug_(DEBUG)
+        debug_(DEBUG),
+        tcp_send_size_(0)
     {
         // Construct the data buffer for question we expect to receive.
         Message msg(Message::RENDER);
@@ -181,6 +183,19 @@ public:
 
         // Expect that the accept completed without a problem.
         EXPECT_EQ(0, ec.value());
+
+        // Work out the maximum size of data we can send over it when we
+        // respond, then subtract 1kB or so for safety.
+        tcp::socket::send_buffer_size send_size;
+        socket->get_option(send_size);
+        if (send_size.value() < (2 * 1024)) {
+            FAIL() << "TCP send size is less than 2kB";
+        } else {
+            tcp_send_size_ = send_size.value() - 1024;
+            if (debug_) {
+                cout << "tcpacceptHandler(): will use send size = " << tcp_send_size_ << endl;
+            }
+        }
 
         // Initiate a read on the socket.
         cumulative_ = 0;
@@ -274,12 +289,18 @@ public:
 
         } else {
 
-            // Third time through, send the remainder.
-            amount = send_buffer_.size() - send_cumulative_;
+            // For all subsequent times, send the remainder, maximised to
+            // whatever we have chosen for the maximum send size.
+            amount = min(tcp_send_size_,
+                        (send_buffer_.size() - send_cumulative_));
+        }
+        if (debug_) {
+            cout << "tcpSendData(): sending " << amount << " bytes" << endl;
         }
 
-        // ... and send it.  The amount sent is also passed as the first argument
-        // of the send callback, as a check.
+
+        // ... and send it.  The amount sent is also passed as the first
+        // argument of the send callback, as a check.
         socket->async_send(asio::buffer(send_ptr, amount),
                            boost::bind(&IOFetchTest::tcpSendHandler, this,
                                        amount, socket, _1, _2));
@@ -435,7 +456,7 @@ public:
         protocol_ = IOFetch::TCP;
         expected_ = IOFetch::SUCCESS;
 
-        // Socket into which the connection will be accepted
+        // Socket into which the connection will be accepted.
         tcp::socket socket(service_.get_io_service());
 
         // Acceptor object - called when the connection is made, the handler
