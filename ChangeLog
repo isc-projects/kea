@@ -1,3 +1,9 @@
+  189.  [bug]		zhang likun
+	Remove expired message and rrset entries when looking up them
+	in cache, touch or remove the rrset entry in cache properly
+	when doing lookup or update.
+	(Trac #661 git )
+
   188.  [bug]		zhang likun
 	Make the rrset trust level ranking algorithm used by
 	isc::cache::MessageEntry::getRRsetTrustLevel() follow RFC2181
