@@ -123,10 +123,13 @@ class BindCmdInterpreter(Cmd):
         except FailToLogin as err:
             # error already printed when this was raised, ignoring
             pass
-        except (KeyboardInterrupt, socket.error):
+        except KeyboardInterrupt:
             print('\nExit from bindctl')
-        except http.client.CannotSendRequest:
-            print('Failed to send request, the connection is busy')
+        except socket.error as err:
+            if sys.stdin.isatty():
+                print("Socket error while sending request:", err)
+            else:
+                print('Exit from bindctl')
 
     def _get_saved_user_info(self, dir, file_name):
         ''' Read all the available username and password pairs saved in 
