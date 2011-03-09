@@ -785,6 +785,35 @@ def process_rename(option, opt_str, value, parser):
     """Function that renames the process if it is requested by a option."""
     isc.util.process.rename(value)
 
+def dump_pid(pid_file):
+    """
+    Dump the PID of the current process to the specified file.  If the given
+    file is None this function does nothing.  If the file already exists,
+    the existing content will be removed.  If a system error happens in
+    creating or writing to the file, the corresponding exception will be
+    propagated to the caller.
+    """
+    if pid_file is None:
+        return
+    f = open(pid_file, "w")
+    f.write('%d\n' % os.getpid())
+    f.close()
+
+def unlink_pid_file(pid_file):
+    """
+    Remove the given file, which is basically expected to be the PID file
+    created by dump_pid().  The specified may or may not exist; if it
+    doesn't this function does nothing.  Other system level errors in removing
+    the file will be propagated as the corresponding exception.
+    """
+    if pid_file is None:
+        return
+    try:
+        os.unlink(pid_file)
+    except OSError as error:
+        if error.errno is not errno.ENOENT:
+            raise
+
 def main():
     global options
     global boss_of_bind
@@ -805,6 +834,9 @@ def main():
     parser.add_option("--pretty-name", type="string", action="callback",
                       callback=process_rename,
                       help="Set the process name (displayed in ps, top, ...)")
+    parser.add_option("--pid-file", dest="pid_file", type="string",
+                      default=None,
+                      help="file to dump the PID of the BIND 10 process")
     (options, args) = parser.parse_args()
     if args:
         parser.print_help()
@@ -865,6 +897,7 @@ def main():
         sys.stderr.write("[bind10] Error on startup: %s\n" % startup_result)
         sys.exit(1)
     sys.stdout.write("[bind10] BIND 10 started\n")
+    dump_pid(options.pid_file)
 
     # send "bind10.boot_time" to b10-stats
     time.sleep(1) # wait a second
@@ -918,6 +951,7 @@ def main():
     signal.signal(signal.SIGCHLD, signal.SIG_DFL)
     boss_of_bind.shutdown()
     sys.stdout.write("[bind10] BIND 10 exiting\n");
+    unlink_pid_file(options.pid_file)
     sys.exit(0)
 
 if __name__ == "__main__":
