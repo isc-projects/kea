@@ -17,10 +17,6 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-#
-# Clean up after glue tests.
-#
-
 rm -f */zone.sqlite3
 ${B10_LOADZONE} -o . -d @builddir@/nsx1/zone.sqlite3 @builddir@/nsx1/root.db
 ${B10_LOADZONE} -o root-servers.nil -d @builddir@/nsx1/zone.sqlite3 \
