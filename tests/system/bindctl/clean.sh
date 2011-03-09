@@ -15,10 +15,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-#
-# Clean up after glue tests.
-#
-
 rm -f */b10-config.db
 rm -f dig.out.* bindctl.out.*
 rm -f */msgq_socket */zone.sqlite3
