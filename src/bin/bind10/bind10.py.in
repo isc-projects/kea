@@ -196,7 +196,7 @@ class BoB:
     
     def __init__(self, msgq_socket_file=None, data_path = None,
     config_filename = None, nocache=False, verbose=False, setuid=None,
-    username=None):
+    username=None, cmdctl_port=None):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
         
@@ -224,6 +224,7 @@ class BoB:
         self.verbose = verbose
         self.data_path = data_path
         self.config_filename = config_filename
+        self.cmdctl_port = cmdctl_port
 
     def config_handler(self, new_config):
         # If this is initial update, don't do anything now, leave it to startup
@@ -510,8 +511,13 @@ class BoB:
         self.start_simple("b10-stats", c_channel_env)
 
     def start_cmdctl(self, c_channel_env):
-        # XXX: we hardcode port 8080
-        self.start_simple("b10-cmdctl", c_channel_env, 8080)
+        """
+            Starts the command control process
+        """
+        opts = ["b10-cmdctl"]
+        if self.cmdctl_port is not None:
+            opts.append("--port=" + str(self.cmdctl_port))
+        self.start_process("b10-cmdctl", opts, c_channel_env, self.cmdctl_port)
 
     def start_all_processes(self):
         """
@@ -891,7 +897,7 @@ def main():
     # Go bob!
     boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
                        options.config_file, options.nocache, options.verbose,
-                       setuid, username)
+                       setuid, username, options.cmdctl_port)
     startup_result = boss_of_bind.startup()
     if startup_result:
         sys.stderr.write("[bind10] Error on startup: %s\n" % startup_result)
