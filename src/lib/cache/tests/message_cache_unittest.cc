@@ -81,9 +81,19 @@ protected:
     Message message_render;
 };
 
+void
+updateMessageCache(const char* message_file,
+                   boost::shared_ptr<DerivedMessageCache> cache)
+{
+    Message msg(Message::PARSE);
+    messageFromFile(msg, message_file);
+    cache->update(msg);
+}
+
 TEST_F(MessageCacheTest, testLookup) {
     messageFromFile(message_parse, "message_fromWire1");
     EXPECT_TRUE(message_cache_->update(message_parse));
+
     Name qname("test.example.com.");
     EXPECT_TRUE(message_cache_->lookup(qname, RRType::A(), message_render));
     EXPECT_EQ(message_cache_->messages_count(), 1);
@@ -96,10 +106,19 @@ TEST_F(MessageCacheTest, testLookup) {
     Name qname1("test.example.net.");
     EXPECT_TRUE(message_cache_->lookup(qname1, RRType::A(), message_render));
 
-    // Test looking up message which has expired rrsets.
-    // Remove one
+    // Test looking up message which has expired rrset or some rrset
+    // has been removed from the rrset cache.
     rrset_cache_->removeRRsetEntry(qname1, RRType::A());
     EXPECT_FALSE(message_cache_->lookup(qname1, RRType::A(), message_render));
+
+    // Update one message entry which has expired to message cache.
+    updateMessageCache("message_fromWire9", message_cache_);
+    EXPECT_EQ(message_cache_->messages_count(), 3);
+    // The message entry has been added, but can't be looked up, since
+    // it has expired and is removed automatically when being looked up.
+    Name qname_org("test.example.org.");
+    EXPECT_FALSE(message_cache_->lookup(qname_org, RRType::A(), message_render));
+    EXPECT_EQ(message_cache_->messages_count(), 2);
 }
 
 TEST_F(MessageCacheTest, testUpdate) {
@@ -116,15 +135,6 @@ TEST_F(MessageCacheTest, testUpdate) {
     Message new_msg_render(Message::RENDER);
     EXPECT_TRUE(message_cache_->lookup(qname, RRType::SOA(), new_msg_render));
     EXPECT_TRUE(new_msg_render.getHeaderFlag(Message::HEADERFLAG_AA));
-}
-
-void
-updateMessageCache(const char* message_file,
-                   boost::shared_ptr<DerivedMessageCache> cache)
-{
-    Message msg(Message::PARSE);
-    messageFromFile(msg, message_file);
-    cache->update(msg);
 }
 
 TEST_F(MessageCacheTest, testCacheLruBehavior) {
