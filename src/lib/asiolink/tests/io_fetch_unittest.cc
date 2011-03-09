@@ -54,7 +54,7 @@ const size_t MAX_SIZE = 64 * 1024;  // Should be able to take 64kB
 
 // The tests are complex, so debug output has been left in (although disabled).
 // Set this to true to enable it.
-const bool DEBUG = true;
+const bool DEBUG = false;
 
 /// \brief Test fixture for the asiolink::IOFetch.
 class IOFetchTest : public virtual ::testing::Test, public virtual IOFetch::Callback
