@@ -266,8 +266,6 @@ UDPServer::operator()(error_code ec, size_t length) {
         // this point.
         CORO_YIELD data_->io_.post(AsyncLookup<UDPServer>(*this));
 
-        dlog("[XX] got an answer");
-
         // The 'done_' flag indicates whether we have an answer
         // to send back.  If not, exit the coroutine permanently.
         if (!data_->done_) {
