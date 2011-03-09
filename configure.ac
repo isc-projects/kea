@@ -751,6 +751,7 @@ AC_OUTPUT([doc/version.ent
            tests/system/conf.sh
            tests/system/glue/setup.sh
            tests/system/glue/nsx1/b10-config.db
+           tests/system/bindctl/nsx1/b10-config.db.template
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
