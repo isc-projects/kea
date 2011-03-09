@@ -5,12 +5,13 @@ man_MANS = bindctl.1
 
 EXTRA_DIST = $(man_MANS) bindctl.xml
 
-python_PYTHON = __init__.py bindcmd.py cmdparse.py exception.py moduleinfo.py mycollections.py
+python_PYTHON = __init__.py bindcmd.py cmdparse.py exception.py moduleinfo.py \
+		mycollections.py
 pythondir = $(pyexecdir)/bindctl
 
 bindctldir = $(pkgdatadir)
 
-CLEANFILES = bindctl
+CLEANFILES = bindctl bindctl_main.pyc
 
 if ENABLE_MAN
 

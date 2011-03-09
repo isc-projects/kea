@@ -22,7 +22,7 @@ import getpass
 from optparse import OptionParser
 from isc.config.config_data import ConfigData, MultiConfigData
 from isc.config.module_spec import ModuleSpec
-from bindctl.bindctl_source import set_bindctl_options
+from bindctl_main import set_bindctl_options
 from bindctl import cmdparse
 from bindctl import bindcmd
 from bindctl.moduleinfo import *
