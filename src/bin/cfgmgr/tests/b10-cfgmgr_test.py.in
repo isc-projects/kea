@@ -20,7 +20,7 @@
 import unittest
 import os
 import sys
-from optparse import OptionParser
+from isc.testutils.parse_args import OptsError, TestOptParser
 
 class MyConfigManager:
     def __init__(self, path, filename):
@@ -88,20 +88,6 @@ class TestConfigManagerStartup(unittest.TestCase):
             os.environ["B10_FROM_SOURCE"] = env_var
 
         sys.modules.pop("b10-cfgmgr")
-
-class OptsError(Exception):
-    """To know when OptionParser would exit"""
-    pass
-
-class TestOptParser(OptionParser):
-    """
-    We define our own option parser to push into the parsing routine.
-    This one does not exit the whole application on error, it just raises
-    exception. It doesn't change anything else. The application uses the
-    stock one.
-    """
-    def error(self, message):
-        raise OptsError(message)
 
 class TestParseArgs(unittest.TestCase):
     """
