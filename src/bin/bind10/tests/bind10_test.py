@@ -9,6 +9,7 @@ import os
 import signal
 import socket
 from isc.net.addr import IPAddr
+from isc.testutils.parse_args import TestOptParser, OptsError
 
 class TestProcessInfo(unittest.TestCase):
     def setUp(self):
@@ -421,26 +422,37 @@ class TestParseArgs(unittest.TestCase):
         """
         Test correct default values when no options are passed.
         """
-        options = parse_args([])
+        options = parse_args([], TestOptParser)
         self.assertEqual(None, options.data_path)
         self.assertEqual(None, options.config_file)
+        self.assertEqual(None, options.cmdctl_port)
 
     def test_data_path(self):
         """
         Test it can parse the data path.
         """
-        options = parse_args(['-p', '/data/path'])
+        options = parse_args(['-p', '/data/path'], TestOptParser)
         self.assertEqual('/data/path', options.data_path)
-        options = parse_args(['--data-path=/data/path'])
+        options = parse_args(['--data-path=/data/path'], TestOptParser)
         self.assertEqual('/data/path', options.data_path)
     def test_config_filename(self):
         """
         Test it can parse the config switch.
         """
-        options = parse_args(['-c', 'config-file'])
+        options = parse_args(['-c', 'config-file'], TestOptParser)
         self.assertEqual('config-file', options.config_file)
-        options = parse_args(['--config-file=config-file'])
+        options = parse_args(['--config-file=config-file'], TestOptParser)
         self.assertEqual('config-file', options.config_file)
+    def test_cmdctl_port(self):
+        """
+        Test it can parse the command control port.
+        """
+        self.assertRaises(OptsError, parse_args, ['--cmdctl-port=abc'],
+                                                TestOptParser)
+        self.assertRaises(OptsError, parse_args, ['--cmdctl-port=100000000'],
+                                                TestOptParser)
+        options = parse_args(['--cmdctl-port=1234'], TestOptParser)
+        self.assertEqual(1234, options.cmdctl_port)
 
 if __name__ == '__main__':
     unittest.main()

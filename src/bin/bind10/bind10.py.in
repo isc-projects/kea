@@ -795,12 +795,12 @@ def process_rename(option, opt_str, value, parser):
     """Function that renames the process if it is requested by a option."""
     isc.util.process.rename(value)
 
-def parse_args(args=sys.argv[1:]):
+def parse_args(args=sys.argv[1:], Parser=OptionParser):
     """
     Function for parsing command line arguments. Returns the
     options object from OptionParser.
     """
-    parser = OptionParser(version=VERSION)
+    parser = Parser(version=VERSION)
     parser.add_option("-m", "--msgq-socket-file", dest="msgq_socket_file",
                       type="string", default=None,
                       help="UNIX domain socket file the b10-msgq daemon will use")
@@ -819,7 +819,14 @@ def parse_args(args=sys.argv[1:]):
     parser.add_option("-p", "--data-path", dest="data_path",
                       help="Directory to search for configuration files",
                       default=None)
+    parser.add_option("--cmdctl-port", dest="cmdctl_port", type="int",
+                      default=None, help="Port of command control")
     (options, args) = parser.parse_args(args)
+    if options.cmdctl_port is not None:
+        try:
+            isc.net.parse.port_parse(options.cmdctl_port)
+        except ValueError as e:
+            parser.error(e)
     if args:
         parser.print_help()
         sys.exit(1)
