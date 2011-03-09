@@ -336,14 +336,6 @@ var/
         </simpara>
       </note>
 
-      <note>
-        <simpara>
-          The development prototype of the b10-auth server listens on
-          0.0.0.0 (all interfaces) port 5300. (This is not the standard
-          domain service port.)
-        </simpara>
-      </note>
-
       <para>
         To quickly get started with BIND 10, follow these steps.
       </para>
@@ -397,7 +389,7 @@ var/
         <listitem>
 
          <para>Test it; for example:
-            <screen>$ <userinput>dig @127.0.0.1 -p 5300 -c CH -t TXT authors.bind</userinput></screen>
+            <screen>$ <userinput>dig @127.0.0.1 -c CH -t TXT authors.bind</userinput></screen>
          </para>
         </listitem>
 
@@ -1043,11 +1035,6 @@ TODO
       Normally it is started by the <command>bind10</command> master
       process.
     </para>
-
-    <note><simpara>
-      This development prototype release listens on all interfaces
-      and the non-standard port 5300.
-    </simpara></note>
 
     <section>
       <title>Server Configurations</title>

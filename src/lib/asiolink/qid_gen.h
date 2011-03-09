@@ -28,7 +28,7 @@
 
 
 namespace asiolink {
-    
+
 /// This class generates Qids for outgoing queries
 ///
 /// It is implemented as a singleton; the public way to access it
@@ -47,7 +47,7 @@ public:
     ///
     /// It is recommended that getInstance is used rather than creating
     /// separate instances of this class.
-    /// 
+    ///
     /// The constructor automatically seeds the generator with the
     /// current time.
     QidGenerator();
@@ -61,21 +61,21 @@ public:
     ///
     /// This is automatically called by the constructor
     void seed();
-    
+
 private:
-    // "Mersenne Twister: A 623-dimensionally equidistributed 
-    // uniform pseudo-random number generator", Makoto Matsumoto and 
-    // Takuji Nishimura, ACM Transactions on Modeling and Computer 
-    // Simulation: Special Issue on Uniform Random Number Generation, 
-    // Vol. 8, No. 1, January 1998, pp. 3-30. 
+    // "Mersenne Twister: A 623-dimensionally equidistributed
+    // uniform pseudo-random number generator", Makoto Matsumoto and
+    // Takuji Nishimura, ACM Transactions on Modeling and Computer
+    // Simulation: Special Issue on Uniform Random Number Generation,
+    // Vol. 8, No. 1, January 1998, pp. 3-30.
     //
     // mt19937 is an implementation of one of the pseudo random
     // generators described in this paper.
     boost::mt19937 generator_;
-    
+
     // For qid's we want a uniform distribution
     boost::uniform_int<> dist_;
-    
+
     boost::variate_generator<boost::mt19937&, boost::uniform_int<> > vgen_;
 };
 
