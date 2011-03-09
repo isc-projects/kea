@@ -31,6 +31,7 @@ run_unittests_SOURCES += tcp_endpoint_unittest.cc
 run_unittests_SOURCES += tcp_socket_unittest.cc
 run_unittests_SOURCES += udp_endpoint_unittest.cc
 run_unittests_SOURCES += udp_socket_unittest.cc
+run_unittests_SOURCES += qid_gen_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 

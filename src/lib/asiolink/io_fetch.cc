@@ -28,6 +28,8 @@
 #include <dns/rcode.h>
 #include <log/logger.h>
 
+#include <asiolink/qid_gen.h>
+
 #include <asio.hpp>
 #include <asio/deadline_timer.hpp>
 
@@ -178,9 +180,7 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
         /// declarations.
         {
             Message msg(Message::RENDER);
-
-            // TODO: replace with boost::random or some other suitable PRNG
-            msg.setQid(0);
+            msg.setQid(QidGenerator::getInstance().generateQid());
             msg.setOpcode(Opcode::QUERY());
             msg.setRcode(Rcode::NOERROR());
             msg.setHeaderFlag(Message::HEADERFLAG_RD);
