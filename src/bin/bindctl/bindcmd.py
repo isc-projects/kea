@@ -192,8 +192,8 @@ class BindCmdInterpreter(Cmd):
             if response.status == http.client.OK:
                 # Is interactive?
                 if sys.stdin.isatty():
-                    print(data + ' login as ' + row[0] )
-                return True 
+                    print(data + ' login as ' + row[0])
+                return True
 
         count = 0
         print("[TEMP MESSAGE]: username :root  password :bind10")
