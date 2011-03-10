@@ -158,8 +158,8 @@ class ConfigManager:
        channel session. If not, a new session will be created.
        The ability to specify a custom session is for testing purposes
        and should not be needed for normal usage."""
-    def __init__(self, data_path, database_filename = "b10-config.db",
-                 session = None):
+    def __init__(self, data_path, database_filename="b10-config.db",
+                 session=None):
         """Initialize the configuration manager. The data_path string
            is the path to the directory where the configuration is
            stored (in <data_path>/b10-config.db). The dabase_filename
