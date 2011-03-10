@@ -1,3 +1,8 @@
+  195.  [func]      stephen
+	Resolver will now re-try a query over TCP if a response to a UDP
+	query has the TC bit set.
+	(Trac #499, git 4c05048ba059b79efeab53498737abe94d37ee07)
+
   194.  [bug]       vorner
 	Solved a 100% CPU usage problem after switching addresses in b10-auth
 	(and possibly, but unconfirmed, in b10-resolver). It was caused by
