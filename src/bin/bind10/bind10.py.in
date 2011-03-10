@@ -194,8 +194,8 @@ class CChannelConnectError(Exception): pass
 class BoB:
     """Boss of BIND class."""
     
-    def __init__(self, msgq_socket_file=None, data_path = None,
-    config_filename = None, nocache=False, verbose=False, setuid=None,
+    def __init__(self, msgq_socket_file=None, data_path=None,
+    config_filename=None, nocache=False, verbose=False, setuid=None,
     username=None, cmdctl_port=None):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).

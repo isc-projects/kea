@@ -435,6 +435,7 @@ class TestParseArgs(unittest.TestCase):
         self.assertEqual('/data/path', options.data_path)
         options = parse_args(['--data-path=/data/path'], TestOptParser)
         self.assertEqual('/data/path', options.data_path)
+
     def test_config_filename(self):
         """
         Test it can parse the config switch.
@@ -443,6 +444,7 @@ class TestParseArgs(unittest.TestCase):
         self.assertEqual('config-file', options.config_file)
         options = parse_args(['--config-file=config-file'], TestOptParser)
         self.assertEqual('config-file', options.config_file)
+
     def test_cmdctl_port(self):
         """
         Test it can parse the command control port.
