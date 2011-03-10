@@ -1,3 +1,9 @@
+  196.	[bug]		jinmei
+	b10-auth, src/lib/datasrc: the backend of the in-memory data
+	source could not handle the root name.  As a result b10-auth could
+	not work as a root server when using the in-memory data source.
+	(Trac #683, git 420ec42bd913fb83da37b26b75faae49c7957c46)
+
   195.  [func]      stephen
 	Resolver will now re-try a query over TCP if a response to a UDP
 	query has the TC bit set.
