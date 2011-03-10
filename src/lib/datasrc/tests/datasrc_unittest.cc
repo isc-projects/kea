@@ -297,6 +297,40 @@ TEST_F(DataSrcTest, Nxdomain) {
     // XXX: check for other authority section answers
 }
 
+TEST_F(DataSrcTest, NxdomainAfterSOAQuery) {
+    // There was a bug where once SOA RR is stored in the hot spot cache
+    // subsequent negative search fails due to "missing SOA".  This test
+    // checks that situation.
+
+    // First, run the scenario with disabling the cache.
+    cache.setEnabled(false);
+    createAndProcessQuery(Name("example.com"), RRClass::IN(),
+                          RRType::SOA());
+    msg.clear(Message::PARSE);
+    createAndProcessQuery(Name("notexistent.example.com"), RRClass::IN(),
+                          RRType::A());
+    {
+        SCOPED_TRACE("NXDOMAIN after SOA, without hot spot cache");
+        headerCheck(msg, qid, Rcode::NXDOMAIN(), opcodeval,
+                    QR_FLAG | AA_FLAG | RD_FLAG, 1, 0, 6, 0);
+    }
+
+    // Then enable the cache and perform the same queries.  This should
+    // produce the same result.
+    cache.setEnabled(true);
+    msg.clear(Message::PARSE);
+    createAndProcessQuery(Name("example.com"), RRClass::IN(),
+                          RRType::SOA());
+    msg.clear(Message::PARSE);
+    createAndProcessQuery(Name("notexistent.example.com"), RRClass::IN(),
+                        RRType::A());
+    {
+        SCOPED_TRACE("NXDOMAIN after SOA, without hot spot cache");
+        headerCheck(msg, qid, Rcode::NXDOMAIN(), opcodeval,
+                    QR_FLAG | AA_FLAG | RD_FLAG, 1, 0, 6, 0);
+    }
+}
+
 TEST_F(DataSrcTest, NxZone) {
     createAndProcessQuery(Name("spork.example"), RRClass::IN(),
                           RRType::A());
