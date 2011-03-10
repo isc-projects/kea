@@ -85,7 +85,3 @@
 /// http://think-async.com/Asio/asio-1.3.1/doc/asio/reference/asio_handler_allocate.html
 
 #endif // __ASIOLINK_H
-
-// Local Variables: 
-// mode: c++
-// End: 
