@@ -69,6 +69,8 @@ public:
     MessageEntry(const isc::dns::Message& message,
                  boost::shared_ptr<RRsetCache> rrset_cache);
 
+    ~MessageEntry() { delete hash_key_ptr_; };
+
     /// \brief generate one dns message according
     ///        the rrsets information of the message.
     ///
