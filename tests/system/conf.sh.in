@@ -34,10 +34,13 @@ if [ -z $BIND9_TOP ]; then
 	exit 1
 fi
 
-# Find the top of the source tree.
+# Find the top of the source and test trees.
 TOP=@abs_top_srcdir@
+TEST_TOP=@abs_builddir@
 
 RUN_BIND10=$TOP/src/bin/bind10/run_bind10.sh
+RUN_BINDCTL=$TOP/src/bin/bindctl/run_bindctl.sh
+BINDCTL_CSV_DIR=@abs_srcdir@/common/
 B10_LOADZONE=$TOP/src/bin/loadzone/run_loadzone.sh
 BIND9_NAMED=$BIND9_TOP/bin/named/named
 DIG=$BIND9_TOP/bin/dig/dig
@@ -45,8 +48,8 @@ DIG=$BIND9_TOP/bin/dig/dig
 TESTSOCK=$BIND9_TOP/bin/tests/system/testsock.pl
 DIGCOMP=$BIND9_TOP/bin/tests/system/digcomp.pl
 
-SUBDIRS="glue"
-#SUBDIRS="dnssec glue masterfile xfer"
+SUBDIRS="bindctl glue"
+#SUBDIRS="dnssec masterfile xfer"
 
 # PERL will be an empty string if no perl interpreter was found.
 PERL=@PERL@
