@@ -21,7 +21,7 @@ namespace asiolink {
 
 /// \brief The \c DNSServer class is a wrapper (and base class) for
 /// classes which provide DNS server functionality.
-/// 
+///
 /// The classes derived from this one, \c TCPServer and \c UDPServer,
 /// act as the interface layer between clients sending queries, and
 /// functions defined elsewhere that provide answers to those queries.
@@ -42,10 +42,10 @@ namespace asiolink {
 /// when "forking", and that instances will be posted as ASIO handler
 /// objects, which are always copied.
 ///
-/// Because these objects are frequently copied, it is recommended 
+/// Because these objects are frequently copied, it is recommended
 /// that derived classes be kept small to reduce copy overhead.
 class DNSServer {
-protected: 
+protected:
     ///
     /// \name Constructors and destructors
     ///
@@ -66,7 +66,7 @@ public:
     /// the ones in the derived class.  This makes it possible to pass
     /// instances of derived classes as references to this base class
     /// without losing access to derived class data.
-    /// 
+    ///
     //@{
     /// \brief The funtion operator
     virtual void operator()(asio::error_code ec = asio::error_code(),
@@ -87,7 +87,7 @@ public:
 
     /// \brief Indicate whether the server is able to send an answer
     /// to a query.
-    /// 
+    ///
     /// This is presently used only for testing purposes.
     virtual bool hasAnswer() { return (self_->hasAnswer()); }
 
