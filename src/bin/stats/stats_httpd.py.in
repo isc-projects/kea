@@ -1,0 +1,502 @@
+#!@PYTHON@
+
+# Copyright (C) 2011  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+import sys; sys.path.append ('@@PYTHONPATH@@')
+import os
+import time
+import errno
+import select
+from optparse import OptionParser, OptionValueError
+import http.server
+import socket
+import string
+import xml.etree.ElementTree
+
+import isc.cc
+import isc.config
+import isc.util.process
+
+# If B10_FROM_SOURCE is set in the environment, we use data files
+# from a directory relative to that, otherwise we use the ones
+# installed on the system
+if "B10_FROM_SOURCE" in os.environ:
+    BASE_LOCATION = os.environ["B10_FROM_SOURCE"]
+else:
+    PREFIX = "@prefix@"
+    DATAROOTDIR = "@datarootdir@"
+    BASE_LOCATION = "@datadir@" + os.sep + "@PACKAGE@"
+    BASE_LOCATION = BASE_LOCATION.replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+SPECFILE_LOCATION = BASE_LOCATION + os.sep + "stats-httpd.spec"
+STATS_SPECFILE_LOCATION = BASE_LOCATION + os.sep + "stats.spec"
+XML_TEMPLATE_LOCATION = BASE_LOCATION + os.sep + "stats-httpd-xml.tpl"
+XSD_TEMPLATE_LOCATION = BASE_LOCATION + os.sep + "stats-httpd-xsd.tpl"
+XSL_TEMPLATE_LOCATION = BASE_LOCATION + os.sep + "stats-httpd-xsl.tpl"
+
+# These variables are paths part of URL.
+# eg. "http://${address}" + XXX_URL_PATH
+XML_URL_PATH = '/bind10/statistics/xml'
+XSD_URL_PATH = '/bind10/statistics/xsd'
+XSL_URL_PATH = '/bind10/statistics/xsl'
+# TODO: This should be considered later.
+XSD_NAMESPACE = 'http://bind10.isc.org' + XSD_URL_PATH
+DEFAULT_CONFIG = dict(listen_on=[('127.0.0.1', 8000)])
+
+# The size of template file should be under 100k. TODO: should be
+# considered later.
+MAX_SIZE_OF_TEMPLATE = 102400
+
+# Assign this process name
+isc.util.process.rename()
+
+class HttpHandler(http.server.BaseHTTPRequestHandler):
+    """HTTP handler class for HttpServer class. The class inhrits the super
+    class http.server.BaseHTTPRequestHandler. It implemets do_GET()
+    and do_HEAD() and orverrides log_message()"""
+    def do_GET(self):
+        body = self.send_head()
+        if body is not None:
+            self.wfile.write(body.encode())
+
+    def do_HEAD(self):
+        self.send_head()
+
+    def send_head(self):
+        assert isinstance(self.server, HttpServer)
+        try:
+            if self.path == XML_URL_PATH:
+                body = self.server.xml_handler()
+            elif self.path == XSD_URL_PATH:
+                body = self.server.xsd_handler()
+            elif self.path == XSL_URL_PATH:
+                body = self.server.xsl_handler()
+            else:
+                if 'Host' in self.headers.keys():
+                    # redirect to XML URL
+                    self.send_response(302)
+                    self.send_header(
+                        "Location",
+                        "http://" + self.headers.get('Host') + XML_URL_PATH)
+                    self.end_headers()
+                    return None
+                else:
+                    # Couldn't find HOST
+                    self.send_error(404)
+                    return None
+        except StatsHttpdError as err:
+            self.send_error(500)
+            if self.server.verbose:
+                self.server.log_writer(
+                    "[b10-stats-httpd] %s\n" % err)
+            return None
+        else:
+            self.send_response(200)
+            self.send_header("Content-type", "text/xml")
+            self.send_header("Content-Length", len(body))
+            self.end_headers()
+            return body
+
+    def log_message(self, format, *args):
+        """Change the default log format"""
+        assert isinstance(self.server, HttpServer)
+        if self.server.verbose:
+            self.server.log_writer(
+                "[b10-stats-httpd] %s - - [%s] %s\n" %
+                (self.address_string(),
+                 self.log_date_time_string(),
+                 format%args))
+
+class HttpServerError(Exception):
+    """Exception class for HttpServer class. It is intended to be
+    passed from the HttpServer object to the StatsHttpd object."""
+    pass
+
+class HttpServer(http.server.HTTPServer):
+    """HTTP Server class. The class inherits the super
+    http.server.HTTPServer. Some parameters are specified as
+    arguments, which are xml_handler, xsd_handler, xsl_handler, and
+    log_writer. These all are parameters which the StatsHttpd object
+    has. The handler parameters are references of functions which
+    return body of each document. The last parameter log_writer is
+    reference of writer function to just write to
+    sys.stderr.write. They are intended to be referred by HttpHandler
+    object."""
+    def __init__(self, server_address, handler,
+                 xml_handler, xsd_handler, xsl_handler, log_writer, verbose=False):
+        self.server_address = server_address
+        self.xml_handler = xml_handler
+        self.xsd_handler = xsd_handler
+        self.xsl_handler = xsl_handler
+        self.log_writer = log_writer
+        self.verbose = verbose
+        http.server.HTTPServer.__init__(self, server_address, handler)
+
+class StatsHttpdError(Exception):
+    """Exception class for StatsHttpd class. It is intended to be
+    thrown from the the StatsHttpd object to the HttpHandler object or
+    main routine."""
+    pass
+
+class StatsHttpd:
+    """The main class of HTTP server of HTTP/XML interface for
+    statistics module. It handles HTTP requests, and command channel
+    and config channel CC session. It uses select.select function
+    while waiting for clients requests."""
+    def __init__(self, verbose=False):
+        self.verbose = verbose
+        self.running = False
+        self.poll_intval = 0.5
+        self.write_log = sys.stderr.write
+        self.mccs = None
+        self.httpd = []
+        self.open_mccs()
+        self.load_config()
+        self.load_templates()
+        self.open_httpd()
+
+    def open_mccs(self):
+        """Opens a ModuleCCSession object"""
+        # create ModuleCCSession
+        if self.verbose:
+            self.write_log("[b10-stats-httpd] Starting CC Session\n")
+        self.mccs = isc.config.ModuleCCSession(
+            SPECFILE_LOCATION, self.config_handler, self.command_handler)
+        self.cc_session = self.mccs._session
+        # read spec file of stats module and subscribe 'Stats'
+        self.stats_module_spec = isc.config.module_spec_from_file(STATS_SPECFILE_LOCATION)
+        self.stats_config_spec = self.stats_module_spec.get_config_spec()
+        self.stats_module_name = self.stats_module_spec.get_module_name()
+        if self.verbose:
+            self.write_log("[b10-stats-httpd] Starts to subscribe stats module\n")
+        self.cc_session.group_subscribe(self.stats_module_name, "*")
+
+    def close_mccs(self):
+        """Closes a ModuleCCSession object"""
+        if self.mccs is None:
+            return
+        if self.verbose:
+            self.write_log("[b10-stats-httpd] Closing CC Session\n")
+        try:
+            self.cc_session.group_unsubscribe(self.stats_module_name, "*")
+        except isc.cc.session.SessionError as se:
+            if self.verbose:
+                self.write_log("[b10-stats-httpd] Failed to unsubscribe stats module\n")
+        self.mccs.close()
+        self.mccs = None
+
+    def load_config(self, new_config={}):
+        """Loads configuration from spec file or new configuration
+        from the config manager"""
+        # load config
+        if len(new_config) > 0:
+            assert type(self.config) is dict
+            assert type(new_config) is dict
+            self.config.update(new_config)
+        else:
+            self.config = DEFAULT_CONFIG
+            self.config.update(
+                dict([
+                        (itm['item_name'], self.mccs.get_value(itm['item_name'])[0])
+                        for itm in self.mccs.get_module_spec().get_config_spec()
+                        ])
+                )
+        assert 'listen_on' in self.config
+        assert type(self.config['listen_on']) is list
+        # remove duplicated element
+        self.http_addrs = list(
+            set([ (cf['address'], cf['port']) for cf in self.config['listen_on'] ])
+                )
+
+    def open_httpd(self):
+        """Opens sockets for HTTP. Iterating each HTTP address to be
+        configured in spec file"""
+        assert type(self.http_addrs) is list
+        for addr in self.http_addrs:
+            self.httpd.append(self._open_httpd(addr))
+
+    def _open_httpd(self, server_address, address_family=None):
+        assert type(server_address) is tuple
+        try:
+            # try IPv6 at first
+            if address_family is not None:
+                HttpServer.address_family = address_family
+            elif socket.has_ipv6:
+                HttpServer.address_family = socket.AF_INET6
+            httpd = HttpServer(
+                server_address, HttpHandler,
+                self.xml_handler, self.xsd_handler, self.xsl_handler,
+                self.write_log, self.verbose)
+        except (socket.gaierror, socket.error,
+                OverflowError, TypeError) as err:
+            # try IPv4 next
+            if HttpServer.address_family == socket.AF_INET6:
+                httpd = self._open_httpd(server_address, socket.AF_INET)
+            else:
+                raise HttpServerError(
+                    "Invalid address %s, port %s: %s: %s" %
+                    (server_address[0], server_address[1],
+                     err.__class__.__name__, err))
+        else:
+            if self.verbose:
+                self.write_log(
+                    "[b10-stats-httpd] Started on address %s, port %s\n" %
+                    server_address)
+        assert isinstance(httpd, HttpServer)
+        return httpd
+
+    def close_httpd(self):
+        """Closes sockets for HTTP"""
+        if len(self.httpd) == 0:
+            return
+        for ht in self.httpd:
+            assert type(ht.server_address) is tuple
+            if self.verbose:
+                self.write_log(
+                    "[b10-stats-httpd] Closing address %s, port %s\n" %
+                    (ht.server_address[0], ht.server_address[1])
+                    )
+            ht.server_close()
+        self.httpd = []
+
+    def start(self):
+        """Starts StatsHttpd objects to run. Waiting for client
+        requests by using select.select functions"""
+        self.mccs.start()
+        self.running = True
+        while self.running:
+            try:
+                (rfd, wfd, xfd) = select.select(
+                    self.get_sockets(), [], [], self.poll_intval)
+            except select.error as err:
+                if err.args[0] == errno.EINTR:
+                    (rfd, wfd, xfd) = ([], [], [])
+                else:
+                    raise select.error(err)
+            for fd in rfd + xfd:
+                if fd == self.mccs.get_socket():
+                    self.mccs.check_command(nonblock=False)
+                    continue
+                for ht in self.httpd:
+                    if fd == ht.socket:
+                        ht.handle_request()
+                        break
+        self.stop()
+
+    def stop(self):
+        """Stops the running StatsHttpd objects. Closes CC session and
+        HTTP handling sockets"""
+        if self.verbose:
+            self.write_log("[b10-stats-httpd] Shutting down\n")
+        self.close_httpd()
+        self.close_mccs()
+
+    def get_sockets(self):
+        """Returns sockets to select.select"""
+        sockets = []
+        if self.mccs is not None:
+            sockets.append(self.mccs.get_socket())
+        if len(self.httpd) > 0:
+            for ht in self.httpd:
+                sockets.append(ht.socket)
+        return sockets
+
+    def config_handler(self, new_config):
+        """Config handler for the ModuleCCSession object. It resets
+        addresses and ports to listen HTTP requests on."""
+        assert type(new_config) is dict
+        if self.verbose:
+            self.write_log("[b10-stats-httpd] Loading config : %s\n" % str(new_config))
+        for key in new_config.keys():
+            if key not in DEFAULT_CONFIG:
+                if self.verbose:
+                    self.write_log(
+                        "[b10-stats-httpd] Unknown known config: %s" % key)
+                return isc.config.ccsession.create_answer(
+                    1, "Unknown known config: %s" % key)
+        # backup old config
+        old_config = self.config.copy()
+        self.close_httpd()
+        self.load_config(new_config)
+        try:
+            self.open_httpd()
+        except HttpServerError as err:
+            if self.verbose:
+                self.write_log("[b10-stats-httpd] %s\n" % err)
+                self.write_log("[b10-stats-httpd] Restoring old config\n")
+            # restore old config
+            self.config_handler(old_config)
+            return isc.config.ccsession.create_answer(
+                1, "[b10-stats-httpd] %s" % err)
+        else:
+            return isc.config.ccsession.create_answer(0)
+
+    def command_handler(self, command, args):
+        """Command handler for the ModuleCCSesson object. It handles
+        "status" and "shutdown" commands."""
+        if command == "status":
+            if self.verbose:
+                self.write_log("[b10-stats-httpd] Received 'status' command\n")
+            return isc.config.ccsession.create_answer(
+                0, "Stats Httpd is up. (PID " + str(os.getpid()) + ")")
+        elif command == "shutdown":
+            if self.verbose:
+                self.write_log("[b10-stats-httpd] Received 'shutdown' command\n")
+            self.running = False
+            return isc.config.ccsession.create_answer(
+                0, "Stats Httpd is shutting down.")
+        else:
+            if self.verbose:
+                self.write_log("[b10-stats-httpd] Received unknown command\n")
+            return isc.config.ccsession.create_answer(
+                1, "Unknown command: " + str(command))
+
+    def get_stats_data(self):
+        """Requests statistics data to the Stats daemon and returns
+        the data which obtains from it"""
+        try:
+            seq = self.cc_session.group_sendmsg(
+                isc.config.ccsession.create_command('show'),
+                self.stats_module_name)
+            (answer, env) = self.cc_session.group_recvmsg(False, seq)
+            if answer:
+                (rcode, value) = isc.config.ccsession.parse_answer(answer)
+                self.cc_session.group_reply(
+                    env, isc.config.ccsession.create_answer(0))
+        except (isc.cc.session.SessionTimeout,
+                isc.cc.session.SessionError) as err:
+            raise StatsHttpdError("%s: %s" %
+                                  (err.__class__.__name__, err))
+        else:
+            if rcode == 0:
+                return value
+            else:
+                raise StatsHttpdError("Stats module: %s" % str(value))
+
+    def get_stats_spec(self):
+        """Just returns spec data"""
+        return self.stats_config_spec
+
+    def load_templates(self):
+        """Setup the bodies of XSD and XSL documents to be responds to
+        HTTP clients. Before that it also creates XML tag structures by
+        using xml.etree.ElementTree.Element class and substitutes
+        concrete strings with parameters embed in the string.Template
+        object."""
+        # for XSD
+        xsd_root = xml.etree.ElementTree.Element("all") # started with "all" tag
+        for item in self.get_stats_spec():
+            element = xml.etree.ElementTree.Element(
+                "element",
+                dict( name=item["item_name"],
+                      type=item["item_type"] if item["item_type"].lower() != 'real' else 'float',
+                      minOccurs="1",
+                      maxOccurs="1" ),
+                )
+            annotation = xml.etree.ElementTree.Element("annotation")
+            appinfo = xml.etree.ElementTree.Element("appinfo")
+            documentation = xml.etree.ElementTree.Element("documentation")
+            appinfo.text = item["item_title"]
+            documentation.text = item["item_description"]
+            annotation.append(appinfo)
+            annotation.append(documentation)
+            element.append(annotation)
+            xsd_root.append(element)
+        xsd_string = xml.etree.ElementTree.tostring(xsd_root)
+        self.xsd_body = self.open_template(XSD_TEMPLATE_LOCATION).substitute(
+            xsd_string=xsd_string,
+            xsd_namespace=XSD_NAMESPACE
+            )
+        assert self.xsd_body is not None
+
+        # for XSL
+        xsd_root = xml.etree.ElementTree.Element(
+            "xsl:template",
+            dict(match="*")) # started with xml:template tag
+        for item in self.get_stats_spec():
+            tr = xml.etree.ElementTree.Element("tr")
+            td1 = xml.etree.ElementTree.Element(
+                "td", { "class" : "title",
+                        "title" : item["item_description"] })
+            td1.text = item["item_title"]
+            td2 = xml.etree.ElementTree.Element("td")
+            xsl_valueof = xml.etree.ElementTree.Element(
+                "xsl:value-of",
+                dict(select=item["item_name"]))
+            td2.append(xsl_valueof)
+            tr.append(td1)
+            tr.append(td2)
+            xsd_root.append(tr)
+        xsl_string = xml.etree.ElementTree.tostring(xsd_root)
+        self.xsl_body = self.open_template(XSL_TEMPLATE_LOCATION).substitute(
+            xsl_string=xsl_string,
+            xsd_namespace=XSD_NAMESPACE)
+        assert self.xsl_body is not None
+
+    def xml_handler(self):
+        """Handler which requests to Stats daemon to obtain statistics
+        data and returns the body of XML document"""
+        xml_list=[]
+        for (k, v) in self.get_stats_data().items():
+            (k, v) = (str(k), str(v))
+            elem = xml.etree.ElementTree.Element(k)
+            elem.text = v
+            xml_list.append(
+                xml.etree.ElementTree.tostring(elem))
+        assert len(xml_list) > 0
+        xml_string = "".join(xml_list)
+        self.xml_body = self.open_template(XML_TEMPLATE_LOCATION).substitute(
+            xml_string=xml_string,
+            xsd_namespace=XSD_NAMESPACE,
+            xsd_url_path=XSD_URL_PATH,
+            xsl_url_path=XSL_URL_PATH)
+        assert self.xml_body is not None
+        return self.xml_body
+
+    def xsd_handler(self):
+        """Handler which just returns the body of XSD document"""
+        return self.xsd_body
+
+    def xsl_handler(self):
+        """Handler which just returns the body of XSL document"""
+        return self.xsl_body
+
+    def open_template(self, file_name):
+        """Opens a template file with size limitation, loads all lines to a
+        string variable and returns string.Template object include the
+        variable."""
+        lines = "".join(
+            open(file_name, 'r').readlines(MAX_SIZE_OF_TEMPLATE))
+        assert lines is not None
+        return string.Template(lines)
+
+if __name__ == "__main__":
+    try:
+        parser = OptionParser()
+        parser.add_option(
+            "-v", "--verbose", dest="verbose", action="store_true",
+            help="display more about what is going on")
+        (options, args) = parser.parse_args()
+        stats_httpd = StatsHttpd(verbose=options.verbose)
+        stats_httpd.start()
+    except OptionValueError:
+        sys.stderr.write("[b10-stats-httpd] Error parsing options\n")
+    except isc.cc.session.SessionError as se:
+        sys.stderr.write("[b10-stats-httpd] Error creating module, "
+                         + "is the command channel daemon running?\n")
+    except HttpServerError as hse:
+        sys.stderr.write("[b10-stats-httpd] %s\n" % hse)
+    except KeyboardInterrupt as kie:
+        sys.stderr.write("[b10-stats-httpd] Interrupted, exiting\n")

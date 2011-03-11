@@ -1,4 +1,4 @@
-# Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2010,2011  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,9 +15,8 @@
 
 # This module is a mock-up class of isc.cc.session
 
-__version__ = "$Revision$"
-
 import sys
+import socket
 
 # set a dummy lname
 _TEST_LNAME = '123abc@xxxx'
@@ -33,12 +32,18 @@ class Queue():
 class SessionError(Exception):
     pass
 
+class SessionTimeout(Exception):
+    pass
+
 class Session:
     def __init__(self, socket_file=None, verbose=False):
         self._lname = _TEST_LNAME
         self.message_queue = []
         self.old_message_queue = []
-        self._socket = True
+        try:
+            self._socket = socket.socket()
+        except socket.error as se:
+            raise SessionError(se)
         self.verbose = verbose
 
     @property
@@ -46,13 +51,17 @@ class Session:
         return self._lname
 
     def close(self):
-        self._socket = False
+        self._socket.close()
+
+    def _clear_ques(self):
+        while len(self.message_queue) > 0:
+            self.dequeue()
 
     def _next_sequence(self, que=None):
         return len(self.message_queue)
 
     def enqueue(self, msg=None, env={}):
-        if not self._socket:
+        if self._socket._closed:
             raise SessionError("Session has been closed.")
         seq = self._next_sequence()
         env.update({"seq": 0}) # fixed here
@@ -63,11 +72,11 @@ class Session:
         return seq
 
     def dequeue(self, seq=0):
-        if not self._socket:
+        if self._socket._closed:
             raise SessionError("Session has been closed.")
         que = None
         try:
-            que = self.message_queue.pop(seq)
+            que = self.message_queue.pop(0) # always pop at index 0
             self.old_message_queue.append(que)
         except IndexError:
             que = Queue()
@@ -76,7 +85,7 @@ class Session:
         return que
 
     def get_queue(self, seq=None):
-        if not self._socket:
+        if self._socket._closed:
             raise SessionError("Session has been closed.")
         if seq is None:
             seq = len(self.message_queue) - 1
@@ -112,7 +121,7 @@ class Session:
                 "reply": routing["seq"] })
 
     def get_message(self, group, to='*'):
-        if not self._socket:
+        if self._socket._closed:
             raise SessionError("Session has been closed.")
         que = Queue()
         for q in self.message_queue:
@@ -124,3 +133,10 @@ class Session:
             sys.stdout.write("[Session] get_message: " + str(que.dump()) + "\n")
         return q.msg
 
+    def group_subscribe(self, group, instance = "*"):
+        if self._socket._closed:
+            raise SessionError("Session has been closed.")
+
+    def group_unsubscribe(self, group, instance = "*"):
+        if self._socket._closed:
+            raise SessionError("Session has been closed.")
