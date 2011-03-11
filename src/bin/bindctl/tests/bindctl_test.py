@@ -17,8 +17,10 @@
 import unittest
 import isc.cc.data
 import os
+import io
 import sys
 import socket
+import http.client
 from isc.config.config_data import ConfigData, MultiConfigData
 from isc.config.module_spec import ModuleSpec
 from bindctl import cmdparse
@@ -275,26 +277,68 @@ class FakeCCSession(MultiConfigData):
         self.set_specification(ModuleSpec(spec))
 
 
+# fake socket
+class FakeSocket():
+    def __init__(self):
+        self.run = True
+
+    def connect(self, to):
+        if not self.run:
+            raise socket.error
+
+    def close(self):
+        self.run = False
+
+    def send(self, data):
+        if not self.run:
+            raise socket.error
+        return len(data)
+
+    def makefile(self, type):
+        return self
+
+    def sendall(self, data):
+        if not self.run:
+            raise socket.error
+        return len(data)
+
+
 class TestConfigCommands(unittest.TestCase):
     def setUp(self):
         self.tool = bindcmd.BindCmdInterpreter()
         mod_info = ModuleInfo(name = "foo")
         self.tool.add_module_info(mod_info)
         self.tool.config_data = FakeCCSession()
+        self.stdout_backup = sys.stdout
 
     def test_run(self):
-        stdout_backup = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
         def login_to_cmdctl():
             return True
-        def loop():
+        def cmd_loop():
             self.tool._send_message("/module_spec", None)
-        self.tool.login_to_cmdctl = login_to_cmdctl
-        self.tool.cmdloop = loop
 
+        self.tool.login_to_cmdctl = login_to_cmdctl
+        # rewrite cmdloop() to avoid interactive mode
+        self.tool.cmdloop = cmd_loop
+
+        self.tool.conn.sock = FakeSocket()
         self.tool.conn.close()
+
+        # validate log message for socket.err
+        socket_err_output = io.StringIO()
+        sys.stdout = socket_err_output
         self.assertRaises(None, self.tool.run())
-        sys.stdout = stdout_backup
+        self.assertEqual("Fail to send request, the connection is closed\n",
+                         socket_err_output.getvalue())
+        socket_err_output.close()
+
+        # validate log messae for http.client.CannotSendRequest
+        cannot_send_output = io.StringIO()
+        sys.stdout = cannot_send_output
+        self.assertRaises(None, self.tool.run())
+        self.assertEqual("Can not send request, the connection is busy\n",
+                         cannot_send_output.getvalue())
+        cannot_send_output.close()
 
     def test_apply_cfg_command_int(self):
         self.tool.location = '/'
@@ -344,9 +388,12 @@ class TestConfigCommands(unittest.TestCase):
         # this should raise a TypeError
         cmd = cmdparse.BindCmdParse("config set identifier=\"foo/a_list\" value=\"a\"")
         self.assertRaises(isc.cc.data.DataTypeError, self.tool.apply_config_cmd, cmd)
-        
+
         cmd = cmdparse.BindCmdParse("config set identifier=\"foo/a_list\" value=[1]")
         self.assertRaises(isc.cc.data.DataTypeError, self.tool.apply_config_cmd, cmd)
+
+    def tearDown(self):
+        sys.stdout = self.stdout_backup
 
 
 class FakeBindCmdInterpreter(bindcmd.BindCmdInterpreter):
@@ -364,15 +411,18 @@ class TestBindCmdInterpreter(unittest.TestCase):
         csvfile.close()
 
     def test_get_saved_user_info(self):
+        old_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
         cmd = FakeBindCmdInterpreter()
         users = cmd._get_saved_user_info('/notexist', 'cvs_file.cvs')
         self.assertEqual([], users)
-        
+
         csvfilename = 'csv_file.csv'
         self._create_invalid_csv_file(csvfilename)
         users = cmd._get_saved_user_info('./', csvfilename)
         self.assertEqual([], users)
         os.remove(csvfilename)
+        sys.stdout = old_stdout
 
 if __name__== "__main__":
     unittest.main()
