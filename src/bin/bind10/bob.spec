@@ -21,6 +21,11 @@
         "command_name": "shutdown",
         "command_description": "Shut down BIND 10",
         "command_args": []
+      },
+      {
+        "command_name": "sendstats",
+        "command_description": "Send data to a statistics module at once",
+        "command_args": []
       }
     ]
   }
