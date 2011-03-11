@@ -15,6 +15,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>             // for some IPC/network system calls
+#include <errno.h>
 
 #include <boost/shared_array.hpp>
 
@@ -169,7 +170,7 @@ UDPServer::UDPServer(io_service& io_service, const ip::address& addr,
 /// pattern; see internal/coroutine.h for details.
 void
 UDPServer::operator()(error_code ec, size_t length) {
-    /// Because the coroutine reeentry block is implemented as
+    /// Because the coroutine reentry block is implemented as
     /// a switch statement, inline variable declarations are not
     /// permitted.  Certain variables used below can be declared here.
 
@@ -195,6 +196,14 @@ UDPServer::operator()(error_code ec, size_t length) {
                 CORO_YIELD data_->socket_->async_receive_from(
                     buffer(data_->data_.get(), MAX_LENGTH), *data_->sender_,
                     *this);
+                // Abort on fatal errors
+                if (ec) {
+                    using namespace asio::error;
+                    if (ec.value() != would_block && ec.value() != try_again &&
+                        ec.value() != interrupted) {
+                        return;
+                    }
+                }
             } while (ec || length == 0);
 
             data_->bytes_ = length;
@@ -256,8 +265,6 @@ UDPServer::operator()(error_code ec, size_t length) {
         // finished, the coroutine will resume immediately after
         // this point.
         CORO_YIELD data_->io_.post(AsyncLookup<UDPServer>(*this));
-
-        dlog("[XX] got an answer");
 
         // The 'done_' flag indicates whether we have an answer
         // to send back.  If not, exit the coroutine permanently.
