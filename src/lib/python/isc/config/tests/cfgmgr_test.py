@@ -49,10 +49,10 @@ class TestConfigManagerData(unittest.TestCase):
                          self.writable_data_path + os.sep + "b10-config.db")
 
     def test_read_from_file(self):
-        ConfigManagerData.read_from_file(self.writable_data_path)
+        ConfigManagerData.read_from_file(self.writable_data_path, "b10-config.db")
         self.assertRaises(ConfigManagerDataEmpty,
                           ConfigManagerData.read_from_file,
-                          "doesnotexist")
+                          "doesnotexist", "b10-config.db")
         self.assertRaises(ConfigManagerDataReadError,
                           ConfigManagerData.read_from_file,
                           self.data_path, "b10-config-bad1.db")
@@ -105,11 +105,13 @@ class TestConfigManager(unittest.TestCase):
         Test data_path and database filename is passed trough to
         underlying ConfigManagerData.
         """
-        cm = ConfigManager("/data/path", "filename", self.fake_session)
-        self.assertEqual("/data/path/filename", cm.config.db_filename)
+        cm = ConfigManager("datapath", "filename", self.fake_session)
+        self.assertEqual("datapath" + os.sep + "filename",
+                         cm.config.db_filename)
         # It should preserve it while reading
         cm.read_config()
-        self.assertEqual("/data/path/filename", cm.config.db_filename)
+        self.assertEqual("datapath" + os.sep + "filename",
+                         cm.config.db_filename)
 
     def test_init(self):
         self.assert_(self.cm.module_specs == {})

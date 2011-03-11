@@ -34,6 +34,7 @@ if "B10_FROM_SOURCE" in os.environ:
 else:
     PREFIX = "@prefix@"
     DATA_PATH = "@localstatedir@/@PACKAGE@".replace("${prefix}", PREFIX)
+DEFAULT_CONFIG_FILE = "b10-config.db"
 
 cm = None
 
@@ -41,10 +42,11 @@ def parse_options(args=sys.argv[1:], Parser=OptionParser):
     parser = Parser()
     parser.add_option("-p", "--data-path", dest="data_path",
                       help="Directory to search for configuration files " +
-                      "(default="+DATA_PATH+")", default=DATA_PATH)
+                      "(default=" + DATA_PATH + ")", default=DATA_PATH)
     parser.add_option("-c", "--config-filename", dest="file_name",
                       help="Configuration database filename " +
-                      "(default=b10-config.db)", default="b10-config.db")
+                      "(default=" + DEFAULT_CONFIG_FILE + ")",
+                      default=DEFAULT_CONFIG_FILE)
     (options, args) = parser.parse_args(args)
     if args:
         parser.error("No non-option arguments allowed")
