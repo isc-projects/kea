@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ASIOLINK_RECURSIVE_QUERY_H
-#define __ASIOLINK_RECURSIVE_QUERY_H 1
+#ifndef __RECURSIVE_QUERY_H
+#define __RECURSIVE_QUERY_H 1
 
 #include <asiolink/dns_service.h>
 #include <asiolink/dns_server.h>
@@ -116,4 +116,4 @@ private:
 };
 
 }      // namespace asiolink
-#endif // __ASIOLINK_RECURSIVE_QUERY_H
+#endif // __RECURSIVE_QUERY_H
