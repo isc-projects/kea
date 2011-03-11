@@ -1,3 +1,55 @@
+  xxx.  [bug]       naokikambe
+	Solved incorrect datetime of "bind10.boot_time" and also added a new
+	command "sendstats" for Bob. This command is to send statistics data to
+	the stats daemon immediately. The solved problem is that statistics
+	data doesn't surely reach to the daemon because Bob sent statistics
+	data to the daemon while it is starting. So the daemon invokes the
+	command for Bob after it starts up. This command is also useful for
+	resending statistics data via bindctl manually.
+	(Trac #521, git tbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbd)
+
+  195.  [func]      stephen
+	Resolver will now re-try a query over TCP if a response to a UDP
+	query has the TC bit set.
+	(Trac #499, git 4c05048ba059b79efeab53498737abe94d37ee07)
+
+  194.  [bug]       vorner
+	Solved a 100% CPU usage problem after switching addresses in b10-auth
+	(and possibly, but unconfirmed, in b10-resolver). It was caused by
+	repeated reads/accepts on closed socket (the bug was in the code for a
+	long time, recent changes made it show).
+	(Trac #657, git e0863720a874d75923ea66adcfbf5b2948efb10a)
+
+  193.	[func]*		jreed
+	Listen on the IPv6 (::) and IPv4 (0.0.0.0) wildcard addresses
+	for b10-auth. This returns to previous behavior prior to
+	change #184. Document the listen_on configuration in manual.
+	(Trac #649, git 65a77d8fde64d464c75917a1ab9b6b3f02640ca6)
+
+  192.	[func]*		jreed
+	Listen on standard domain port 53 for b10-auth and
+	b10-resolver.
+	(Trac #617, #618, git 137a6934a14cf0c5b5c065e910b8b364beb0973f)
+
+  191.	[func]		jinmei
+	Imported system test framework of BIND 9.  It can be run by
+	'make systest' at the top source directory.  Notes: currently it
+	doesn't work when built in a separate tree.  It also requires
+	perl, an inherited dependency from the original framework.
+	Also, mainly for the purpose of tests, a new option "--pid-file"
+	was added to BoB, with which the boss process will dump its PID
+	to the specified file.
+	(Trac #606, git 6ac000df85625f5921e8895a1aafff5e4be3ba9c)
+
+  190.	[func]		jelte
+	Resolver now sets random qids on outgoing queries using
+	the boost::mt19937 prng.
+	(Trac #583, git 5222b51a047d8f2352bc9f92fd022baf1681ed81)
+
+  189.	[bug]		jreed
+	Do not install the log message compiler.
+	(Trac #634, git eb6441aca464980d00e3ff827cbf4195c5a7afc5)
+
   188.  [bug]		zhang likun
 	Make the rrset trust level ranking algorithm used by
 	isc::cache::MessageEntry::getRRsetTrustLevel() follow RFC2181
