@@ -26,8 +26,6 @@
 
 #include <exceptions/exceptions.h>
 
-#include <iostream>
-
 namespace asiolink {
 
 /// \brief The \c IOAddress class represents an IP addresses (version

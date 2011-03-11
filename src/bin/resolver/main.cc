@@ -130,7 +130,7 @@ main(int argc, char* argv[]) {
 
     Session* cc_session = NULL;
     ModuleCCSession* config_session = NULL;
-    //try {
+    try {
         string specfile;
         if (getenv("B10_FROM_BUILD")) {
             specfile = string(getenv("B10_FROM_BUILD")) +
@@ -212,10 +212,10 @@ main(int argc, char* argv[]) {
 
         dlog("Server started.");
         io_service.run();
-    //} catch (const std::exception& ex) {
-    //    dlog(string("Server failed: ") + ex.what(),true);
-    //    ret = 1;
-    //}
+    } catch (const std::exception& ex) {
+        dlog(string("Server failed: ") + ex.what(),true);
+        ret = 1;
+    }
 
     delete config_session;
     delete cc_session;

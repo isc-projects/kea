@@ -91,7 +91,7 @@ public:
     ///
     /// \param callback Callback object that would be called
     void cancel(const std::string& zone, const dns::RRClass& class_code,
-                boost::shared_ptr<AddressRequestCallback> callback,
+                const boost::shared_ptr<AddressRequestCallback>& callback,
                 AddressFamily family = ANY_OK);
 
     /// \brief Protected Members
