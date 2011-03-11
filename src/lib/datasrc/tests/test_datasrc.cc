@@ -154,7 +154,7 @@ const struct RRData example_com_records[] = {
     {"*.wild3.example.com", "RRSIG", "NSEC 5 3 7200 20100410212307 20100311212307 33495 example.com. EuSzh6or8mbvwru2H7fyYeMpW6J8YZ528rabU38V/lMN0TdamghIuCneAvSNaZgwk2MSN1bWpZqB2kAipaM/ZI9/piLlTvVjjOQ8pjk0auwCEqT7Z7Qng3E92O9yVzO+WHT9QZn/fR6t60392In4IvcBGjZyjzQk8njIwbui xGA="},
 
     // foo.example.com
-    {"foo.example.com", "CNAME", "cnametest.flame.org"},
+    {"foo.example.com", "CNAME", "cnametest.example.net"},
     {"foo.example.com", "RRSIG", "CNAME 5 3 3600 20100322084538 20100220084538 33495 example.com. DSqkLnsh0gCeCPVW/Q8viy9GNP+KHmFGfWqyVG1S6koBtGN/VQQ16M4PHZ9Zssmf/JcDVJNIhAChHPE2WJiaPCNGTprsaUshf1Q2vMPVnkrJKgDY8SVRYMptmT8eaT0gGri4KhqRoFpMT5OYfesybwDgfhFSQQAh6ps3bIUsy4o="},
     {"foo.example.com", "NSEC", "mail.example.com. CNAME RRSIG NSEC"},
     {"foo.example.com", "RRSIG", "NSEC 5 3 7200 20100322084538 20100220084538 33495 example.com. RTQwlSqui6StUYye1KCSOEr1d3irndWFqHBpwP7g7n+w8EDXJ8I7lYgwzHvlQt6BLAxe5fUDi7ct8M5hXvsm7FoWPZ5wXH+2/eJUCYxIw4vezKMkMwBP6M/YkJ2CMqY8DppYf60QaLDONQAr7AcK/naSyioeI5h6eaoVitUDMso="},
