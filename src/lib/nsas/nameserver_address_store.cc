@@ -93,5 +93,18 @@ NameserverAddressStore::lookup(const string& zone, const RRClass& class_code,
     zone_obj.second->addCallback(callback, family);
 }
 
+void
+NameserverAddressStore::cancel(const string& zone,
+    const RRClass& class_code,
+    const boost::shared_ptr<AddressRequestCallback>& callback,
+    AddressFamily family)
+{
+    boost::shared_ptr<ZoneEntry> entry(zone_hash_->get(HashKey(zone,
+                                                               class_code)));
+    if (entry) {
+        entry->removeCallback(callback, family);
+    }
+}
+
 } // namespace nsas
 } // namespace isc
