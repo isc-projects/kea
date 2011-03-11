@@ -150,7 +150,7 @@ synthesizeCname(QueryTaskPtr task, RRsetPtr rrset, RRsetList& target) {
     const generic::DNAME& dname = dynamic_cast<const generic::DNAME&>(rd);
     const Name& dname_target(dname.getDname());
 
-    RRsetPtr cname(new RRset(task->qname, task->qclass, RRType::CNAME(),
+    RRsetPtr cname(new RRset(task->qname, rrset->getClass(), RRType::CNAME(),
                              rrset->getTTL()));
 
     const int qnlen = task->qname.getLabelCount();
@@ -577,17 +577,17 @@ hasDelegation(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo) {
         // Found a referral while getting answer data;
         // send a delegation.
         if (found) {
-            RRsetPtr r = ref.findRRset(RRType::DNAME(), q.qclass());
+            RRsetPtr r = findRRsetFromList(ref, RRType::DNAME());
             if (r != NULL) {
                 RRsetList syn;
                 addToMessage(q, Message::SECTION_ANSWER, r);
                 q.message().setHeaderFlag(Message::HEADERFLAG_AA);
                 synthesizeCname(task, r, syn);
                 if (syn.size() == 1) {
-                    addToMessage(q, Message::SECTION_ANSWER,
-                                 syn.findRRset(RRType::CNAME(), q.qclass()));
-                    chaseCname(q, task, syn.findRRset(RRType::CNAME(),
-                                                      q.qclass()));
+                    RRsetPtr cname_rrset = findRRsetFromList(syn,
+                                                             RRType::CNAME());
+                    addToMessage(q, Message::SECTION_ANSWER, cname_rrset);
+                    chaseCname(q, task, cname_rrset);
                     return (true);
                 }
             }
@@ -991,7 +991,7 @@ DataSrc::doQuery(Query& q) {
         } else if ((task->flags & CNAME_FOUND) != 0) {
             // The qname node contains a CNAME.  Add a new task to the
             // queue to look up its target.
-            RRsetPtr rrset = data.findRRset(RRType::CNAME(), q.qclass());
+            RRsetPtr rrset = findRRsetFromList(data, RRType::CNAME());
             if (rrset != NULL) {
                 addToMessage(q, task->section, rrset);
                 chaseCname(q, task, rrset);

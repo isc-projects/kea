@@ -70,7 +70,7 @@ protected:
     }
     void QueryCommon(const RRClass& qclass);
     void createAndProcessQuery(const Name& qname, const RRClass& qclass,
-                               const RRType& qtype);
+                               const RRType& qtype, bool need_dnssec);
 
     HotCache cache;
     MetaDataSrc meta_source;
@@ -82,23 +82,26 @@ protected:
 };
 
 void
-performQuery(DataSrc& data_source, HotCache& cache, Message& message) {
+performQuery(DataSrc& data_source, HotCache& cache, Message& message,
+             bool need_dnssec = true)
+{
     message.setHeaderFlag(Message::HEADERFLAG_AA);
     message.setRcode(Rcode::NOERROR());
-    Query q(message, cache, true);
+    Query q(message, cache, need_dnssec);
     data_source.doQuery(q);
 }
 
 void
 DataSrcTest::createAndProcessQuery(const Name& qname, const RRClass& qclass,
-                                   const RRType& qtype)
+                                   const RRType& qtype,
+                                   bool need_dnssec = true)
 {
     msg.makeResponse();
     msg.setOpcode(Opcode::QUERY());
     msg.addQuestion(Question(qname, qclass, qtype));
     msg.setHeaderFlag(Message::HEADERFLAG_RD);
     qid = msg.getQid();
-    performQuery(meta_source, cache, msg);
+    performQuery(meta_source, cache, msg, need_dnssec);
 }
 
 void
@@ -181,6 +184,31 @@ TEST_F(DataSrcTest, queryClassAnyNegative) {
                           RRType::TXT());
     headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
                 QR_FLAG | AA_FLAG | RD_FLAG, 1, 0, 4, 0);
+}
+
+TEST_F(DataSrcTest, queryClassAnyDNAME) {
+    // Class ANY query that would match a DNAME.  Everything including the
+    // synthesized CNAME should be the same as the response to class IN query.
+    createAndProcessQuery(Name("www.dname.example.com"), RRClass::ANY(),
+                          RRType::A(), false);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 3, 3, 3);
+    rrsetsCheck("dname.example.com. 3600 IN DNAME sql1.example.com.\n"
+                "www.dname.example.com. 3600 IN CNAME www.sql1.example.com.\n"
+                "www.sql1.example.com. 3600 IN A 192.0.2.2\n",
+                msg.beginSection(Message::SECTION_ANSWER),
+                msg.endSection(Message::SECTION_ANSWER));
+}
+
+TEST_F(DataSrcTest, queryClassAnyCNAME) {
+    // Similar test for CNAME
+    createAndProcessQuery(Name("foo.example.com"), RRClass::ANY(),
+                          RRType::A(), false);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 1, 0, 0);
+    rrsetsCheck("foo.example.com. 3600 IN CNAME cnametest.example.net.\n",
+                msg.beginSection(Message::SECTION_ANSWER),
+                msg.endSection(Message::SECTION_ANSWER));
 }
 
 TEST_F(DataSrcTest, NSQuery) {
@@ -651,7 +679,7 @@ TEST_F(DataSrcTest, Cname) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    EXPECT_EQ("cnametest.flame.org.", it->getCurrent().toText());
+    EXPECT_EQ("cnametest.example.net.", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
 }
