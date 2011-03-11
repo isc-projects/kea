@@ -80,8 +80,10 @@ class MessageTest(unittest.TestCase):
                                         "2001:db8::134"))
 
         self.bogus_section = Message.SECTION_ADDITIONAL + 1
+        self.bogus_below_section = Message.SECTION_QUESTION - 1
 
     def test_init(self):
+        self.assertRaises(TypeError, Message, -1)
         self.assertRaises(TypeError, Message, 3)
         self.assertRaises(TypeError, Message, "wrong")
 
@@ -109,20 +111,23 @@ class MessageTest(unittest.TestCase):
         self.assertRaises(InvalidParameter, self.r.set_header_flag, 0)
         self.assertRaises(InvalidParameter, self.r.set_header_flag, 0x7000)
         self.assertRaises(InvalidParameter, self.r.set_header_flag, 0x0800)
-        self.assertRaises(InvalidParameter, self.r.set_header_flag, 0x10000)
         self.assertRaises(TypeError, self.r.set_header_flag, 0x80000000)
-        # this would cause overflow and result in a "valid" flag
         self.assertRaises(TypeError, self.r.set_header_flag,
                           Message.HEADERFLAG_AA | 0x100000000)
-        self.assertRaises(TypeError, self.r.set_header_flag, -1)
+        # this would cause overflow and result in a "valid" flag
+        self.assertRaises(OverflowError, self.r.set_header_flag, 0x10000)
+        self.assertRaises(OverflowError, self.r.set_header_flag, -1)
 
         self.assertRaises(InvalidMessageOperation,
                           self.p.set_header_flag, Message.HEADERFLAG_AA)
 
     def test_set_qid(self):
         self.assertRaises(TypeError, self.r.set_qid, "wrong")
+        self.assertRaises(OverflowError, self.r.set_qid, -1)
+        self.assertRaises(OverflowError, self.r.set_qid, 0x10000)
         self.assertRaises(InvalidMessageOperation,
                           self.p.set_qid, 123)
+
         self.r.set_qid(1234)
         self.assertEqual(1234, self.r.get_qid())
 
@@ -239,6 +244,8 @@ class MessageTest(unittest.TestCase):
                           Message.SECTION_ANSWER, self.rrset_a)
         self.assertRaises(OverflowError, self.r.add_rrset,
                           self.bogus_section, self.rrset_a)
+        self.assertRaises(OverflowError, self.r.add_rrset,
+                          self.bogus_below_section, self.rrset_a)
 
     def test_clear(self):
         self.assertEqual(None, self.r.clear(Message.PARSE))
