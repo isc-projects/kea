@@ -153,7 +153,7 @@ TEST_F(NameserverEntryTest, SetRTT) {
     int matchcount = 0;
     for (NameserverEntry::AddressVectorIterator i = newvec.begin();
         i != newvec.end(); ++i) {
-        if (i->getAddress().equal(first_address)) {
+        if (i->getAddress().equals(first_address)) {
             ++matchcount;
             EXPECT_EQ(i->getAddressEntry().getRTT(), new_rtt);
         }
@@ -188,7 +188,7 @@ TEST_F(NameserverEntryTest, Unreachable) {
     int matchcount = 0;
     for (NameserverEntry::AddressVectorIterator i = newvec.begin();
         i != newvec.end(); ++i) {
-        if (i->getAddress().equal(first_address)) {
+        if (i->getAddress().equals(first_address)) {
             ++matchcount;
             EXPECT_TRUE(i->getAddressEntry().isUnreachable());
         }

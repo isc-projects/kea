@@ -25,7 +25,6 @@
 #include <asiolink/dns_lookup.h>
 #include <asiolink/dns_answer.h>
 #include <asiolink/simple_callback.h>
-#include <asiolink/recursive_query.h>
 #include <asiolink/interval_timer.h>
 
 #include <asiolink/io_address.h>

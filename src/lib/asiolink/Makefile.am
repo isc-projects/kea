@@ -27,10 +27,9 @@ libasiolink_la_SOURCES += io_endpoint.cc io_endpoint.h
 libasiolink_la_SOURCES += io_error.h
 libasiolink_la_SOURCES += io_fetch.cc io_fetch.h
 libasiolink_la_SOURCES += io_message.h
-libasiolink_la_SOURCES += io_service.cc io_service.h
-libasiolink_la_SOURCES += io_socket.cc io_socket.h
 libasiolink_la_SOURCES += qid_gen.cc qid_gen.h
-libasiolink_la_SOURCES += recursive_query.cc recursive_query.h
+libasiolink_la_SOURCES += io_service.h io_service.cc
+libasiolink_la_SOURCES += io_socket.h io_socket.cc
 libasiolink_la_SOURCES += simple_callback.h
 libasiolink_la_SOURCES += tcp_endpoint.h
 libasiolink_la_SOURCES += tcp_server.cc tcp_server.h
@@ -44,9 +43,6 @@ EXTRA_DIST = asiodef.msg
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
 libasiolink_la_CXXFLAGS = $(AM_CXXFLAGS)
-if USE_GXX
-libasiolink_la_CXXFLAGS += -Wno-unused-parameter
-endif
 if USE_CLANGPP
 # Same for clang++, but we need to turn off -Werror completely.
 libasiolink_la_CXXFLAGS += -Wno-error

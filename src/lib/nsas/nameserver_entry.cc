@@ -35,6 +35,8 @@
 #include <dns/question.h>
 #include <resolve/resolver_interface.h>
 
+#include <asiolink/io_address.h>
+
 #include "address_entry.h"
 #include "nameserver_address.h"
 #include "nameserver_entry.h"
@@ -140,7 +142,7 @@ NameserverEntry::setAddressRTT(const IOAddress& address, uint32_t rtt) {
     AddressFamily family(V4_ONLY);
     for (;;) {
         BOOST_FOREACH(AddressEntry& entry, addresses_[family]) {
-            if (entry.getAddress().equal(address)) {
+            if (entry.getAddress().equals(address)) {
                 entry.setRTT(rtt);
                 return;
             }
@@ -181,7 +183,7 @@ NameserverEntry::updateAddressRTT(uint32_t rtt,
 {
     Lock lock(mutex_);
     for (size_t i(0); i < addresses_[family].size(); ++ i) {
-        if (addresses_[family][i].getAddress().equal(address)) {
+        if (addresses_[family][i].getAddress().equals(address)) {
             updateAddressRTTAtIndex(rtt, i, family);
             return;
         }
@@ -226,8 +228,9 @@ class NameserverEntry::ResolverCallback :
                 response_message->getRcode() != isc::dns::Rcode::NOERROR() ||
                 response_message->getRRCount(isc::dns::Message::SECTION_ANSWER) == 0) {
                 failureInternal(lock);
+                return;
             }
-                
+            
             isc::dns::RRsetIterator rrsi =
                 response_message->beginSection(isc::dns::Message::SECTION_ANSWER);
             const isc::dns::RRsetPtr response = *rrsi;
