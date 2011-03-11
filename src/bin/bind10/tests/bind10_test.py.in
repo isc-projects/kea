@@ -1,4 +1,4 @@
-from bind10 import ProcessInfo, BoB, parse_args
+from bind10 import ProcessInfo, BoB, parse_args, dump_pid, unlink_pid_file
 
 # XXX: environment tests are currently disabled, due to the preprocessor
 #      setup that we have now complicating the environment
@@ -49,7 +49,7 @@ class TestProcessInfo(unittest.TestCase):
 #                                   'FOO': 'BAR' })
 
     def test_setting_null_stdout(self):
-        pi = ProcessInfo('Test Process', [ '/bin/echo', 'foo' ], 
+        pi = ProcessInfo('Test Process', [ '/bin/echo', 'foo' ],
                          dev_null_stdout=True)
         os.dup2(self.old_stdout, sys.stdout.fileno())
         self.assertEqual(pi.dev_null_stdout, True)
@@ -463,6 +463,53 @@ class TestParseArgs(unittest.TestCase):
                           TestOptParser)
         options = parse_args(['--cmdctl-port=1234'], TestOptParser)
         self.assertEqual(1234, options.cmdctl_port)
+
+class TestPIDFile(unittest.TestCase):
+    def setUp(self):
+        self.pid_file = '@builddir@' + os.sep + 'bind10.pid'
+        if os.path.exists(self.pid_file):
+            os.unlink(self.pid_file)
+
+    def tearDown(self):
+        if os.path.exists(self.pid_file):
+            os.unlink(self.pid_file)
+
+    def check_pid_file(self):
+        # dump PID to the file, and confirm the content is correct
+        dump_pid(self.pid_file)
+        my_pid = os.getpid()
+        self.assertEqual(my_pid, int(open(self.pid_file, "r").read()))
+
+    def test_dump_pid(self):
+        self.check_pid_file()
+
+        # make sure any existing content will be removed
+        open(self.pid_file, "w").write('dummy data\n')
+        self.check_pid_file()
+
+    def test_unlink_pid_file_notexist(self):
+        dummy_data = 'dummy_data\n'
+        open(self.pid_file, "w").write(dummy_data)
+        unlink_pid_file("no_such_pid_file")
+        # the file specified for unlink_pid_file doesn't exist,
+        # and the original content of the file should be intact.
+        self.assertEqual(dummy_data, open(self.pid_file, "r").read())
+
+    def test_dump_pid_with_none(self):
+        # Check the behavior of dump_pid() and unlink_pid_file() with None.
+        # This should be no-op.
+        dump_pid(None)
+        self.assertFalse(os.path.exists(self.pid_file))
+
+        dummy_data = 'dummy_data\n'
+        open(self.pid_file, "w").write(dummy_data)
+        unlink_pid_file(None)
+        self.assertEqual(dummy_data, open(self.pid_file, "r").read())
+
+    def test_dump_pid_failure(self):
+        # the attempt to open file will fail, which should result in exception.
+        self.assertRaises(IOError, dump_pid,
+                          'nonexistent_dir' + os.sep + 'bind10.pid')
 
 if __name__ == '__main__':
     unittest.main()

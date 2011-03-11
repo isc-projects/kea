@@ -10,11 +10,9 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-pkglibexecdir = $(libexecdir)/@PACKAGE@
-
 CLEANFILES = *.gcno *.gcda
 
-pkglibexec_PROGRAMS = message
+noinst_PROGRAMS = message
 message_SOURCES = message.cc
 message_LDADD  = $(top_builddir)/src/lib/log/liblog.la
 

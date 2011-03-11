@@ -17,6 +17,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>             // for some IPC/network system calls
+#include <errno.h>
 
 #include <boost/shared_array.hpp>
 
@@ -65,7 +66,7 @@ TCPServer::TCPServer(io_service& io_service,
 
 void
 TCPServer::operator()(error_code ec, size_t length) {
-    /// Because the coroutine reeentry block is implemented as
+    /// Because the coroutine reentry block is implemented as
     /// a switch statement, inline variable declarations are not
     /// permitted.  Certain variables used below can be declared here.
 
@@ -83,11 +84,21 @@ TCPServer::operator()(error_code ec, size_t length) {
             /// Create a socket to listen for connections
             socket_.reset(new tcp::socket(acceptor_->get_io_service()));
 
-            /// Wait for new connections. In the event of error,
+            /// Wait for new connections. In the event of non-fatal error,
             /// try again
             do {
                 CORO_YIELD acceptor_->async_accept(*socket_, *this);
-            } while (!ec);
+                // Abort on fatal errors
+                // TODO: Log error?
+                if (ec) {
+                    using namespace asio::error;
+                    if (ec.value() != would_block && ec.value() != try_again &&
+                        ec.value() != connection_aborted &&
+                        ec.value() != interrupted) {
+                        return;
+                    }
+                }
+            } while (ec);
 
             /// Fork the coroutine by creating a copy of this one and
             /// scheduling it on the ASIO service queue.  The parent
@@ -110,7 +121,7 @@ TCPServer::operator()(error_code ec, size_t length) {
         /// Now read the message itself. (This is done in a different scope
         /// to allow inline variable declarations.)
         CORO_YIELD {
-            InputBuffer dnsbuffer((const void *) data_.get(), length);
+            InputBuffer dnsbuffer(data_.get(), length);
             uint16_t msglen = dnsbuffer.readUint16();
             async_read(*socket_, asio::buffer(data_.get(), msglen), *this);
         }
@@ -196,9 +207,10 @@ TCPServer::asyncLookup() {
 }
 
 void TCPServer::stop() {
-    //server should not be stopped twice
-    if (stopped_by_hand_)
+    // server should not be stopped twice
+    if (stopped_by_hand_) {
         return;
+    }
 
     stopped_by_hand_ = true;
     acceptor_->close();

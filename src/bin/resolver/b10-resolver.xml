@@ -141,8 +141,9 @@ once that is merged you can for instance do 'config add Resolver/forward_address
       <command>b10-resolver</command> to listen on.
       The list items are the <varname>address</varname> string
       and <varname>port</varname> number.
-      The defaults are address ::1 port 5300 and
-      address 127.0.0.1 port 5300.
+      The defaults are address ::1 port 53 and
+      address 127.0.0.1 port 53.
+<!-- TODO: but defaults are not used, Trac #518 -->
     </para>
 
     <para>

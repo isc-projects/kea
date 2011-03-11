@@ -1,7 +1,84 @@
-  184.  [func]      vorner
-	Listening address and port configuration of b10-auth is the same as for
-	b10-resolver now. That means, it is configured trough bindctl at runtime,
-	in the Auth/listen_on list, not trough command line arguments.
+  197.  [bug]		zhang likun
+	Remove expired message and rrset entries when looking up them
+	in cache, touch or remove the rrset entry in cache properly
+	when doing lookup or update.
+	(Trac #661, git 9efbe64fe3ff22bb5fba46de409ae058f199c8a7)
+
+  196.	[bug]		jinmei
+	b10-auth, src/lib/datasrc: the backend of the in-memory data
+	source could not handle the root name.  As a result b10-auth could
+	not work as a root server when using the in-memory data source.
+	(Trac #683, git 420ec42bd913fb83da37b26b75faae49c7957c46)
+
+  195.  [func]      stephen
+	Resolver will now re-try a query over TCP if a response to a UDP
+	query has the TC bit set.
+	(Trac #499, git 4c05048ba059b79efeab53498737abe94d37ee07)
+
+  194.  [bug]       vorner
+	Solved a 100% CPU usage problem after switching addresses in b10-auth
+	(and possibly, but unconfirmed, in b10-resolver). It was caused by
+	repeated reads/accepts on closed socket (the bug was in the code for a
+	long time, recent changes made it show).
+	(Trac #657, git e0863720a874d75923ea66adcfbf5b2948efb10a)
+
+  193.	[func]*		jreed
+	Listen on the IPv6 (::) and IPv4 (0.0.0.0) wildcard addresses
+	for b10-auth. This returns to previous behavior prior to
+	change #184. Document the listen_on configuration in manual.
+	(Trac #649, git 65a77d8fde64d464c75917a1ab9b6b3f02640ca6)
+
+  192.	[func]*		jreed
+	Listen on standard domain port 53 for b10-auth and
+	b10-resolver.
+	(Trac #617, #618, git 137a6934a14cf0c5b5c065e910b8b364beb0973f)
+
+  191.	[func]		jinmei
+	Imported system test framework of BIND 9.  It can be run by
+	'make systest' at the top source directory.  Notes: currently it
+	doesn't work when built in a separate tree.  It also requires
+	perl, an inherited dependency from the original framework.
+	Also, mainly for the purpose of tests, a new option "--pid-file"
+	was added to BoB, with which the boss process will dump its PID
+	to the specified file.
+	(Trac #606, git 6ac000df85625f5921e8895a1aafff5e4be3ba9c)
+
+  190.	[func]		jelte
+	Resolver now sets random qids on outgoing queries using
+	the boost::mt19937 prng.
+	(Trac #583, git 5222b51a047d8f2352bc9f92fd022baf1681ed81)
+
+  189.	[bug]		jreed
+	Do not install the log message compiler.
+	(Trac #634, git eb6441aca464980d00e3ff827cbf4195c5a7afc5)
+
+  188.  [bug]		zhang likun
+	Make the rrset trust level ranking algorithm used by
+	isc::cache::MessageEntry::getRRsetTrustLevel() follow RFC2181
+	section 5.4.1.
+	(Trac #595 git 19197b5bc9f2955bd6a8ca48a2d04472ed696e81)
+
+  187.  [bug]		zhang likun
+	Fix the assert error in class isc::cache::RRsetCache by adding the
+	check for empty pointer and test case for it.
+	(Trac #638, git 54e61304131965c4a1d88c9151f8697dcbb3ce12)
+
+  186.  [bug]		jelte
+	b10-resolver could stop with an assertion failure on certain kinds
+	of messages (there was a problem in error message creation). This
+	fixes that.
+	(Trac #607, git 25a5f4ec755bc09b54410fcdff22691283147f32)
+
+  185.  [bug]        vorner
+	Tests use port from private range (53210), lowering chance of
+	a conflict with something else (eg. running bind 10).
+	(Trac #523, git 301da7d26d41e64d87c0cf72727f3347aa61fb40)
+
+  184.  [func]*      vorner
+	Listening address and port configuration of b10-auth is the same as
+	for b10-resolver now. That means, it is configured through bindctl
+	at runtime, in the Auth/listen_on list, not through command line
+	arguments.
 	(Trac #575, #576, git f06ce638877acf6f8e1994962bf2dbfbab029edf)
 
   183.  [bug]      jerry

@@ -64,3 +64,6 @@ EXTRA_DIST += testdata/message_fromWire3
 EXTRA_DIST += testdata/message_fromWire4
 EXTRA_DIST += testdata/message_fromWire5
 EXTRA_DIST += testdata/message_fromWire6
+EXTRA_DIST += testdata/message_fromWire7
+EXTRA_DIST += testdata/message_fromWire8
+EXTRA_DIST += testdata/message_fromWire9
