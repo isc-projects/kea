@@ -26,6 +26,8 @@
 #include <exceptions/exceptions.h>
 #include <coroutine.h>
 
+#include <dns/buffer.h>
+
 #include <asiolink/io_error.h>
 #include <asiolink/io_socket.h>
 
@@ -41,7 +43,24 @@ public:
         IOError(file, line, what) {}
 };
 
+/// \brief Error setting socket options
+///
+/// Thrown if attempt to change socket options fails.
+class SocketSetError : public IOError {
+public:
+    SocketSetError(const char* file, size_t line, const char* what) :
+        IOError(file, line, what) {}
+};
 
+/// \brief Buffer overflow
+///
+/// Thrown if an attempt is made to receive into an area beyond the end of
+/// the receive data buffer.
+class BufferOverflow : public IOError {
+public:
+    BufferOverflow(const char* file, size_t line, const char* what) :
+        IOError(file, line, what) {}
+};
 
 /// Forward declaration of an IOEndpoint
 class IOEndpoint;
@@ -91,24 +110,23 @@ public:
 
     /// \brief Return the "native" representation of the socket.
     ///
-    /// In practice, this is the file descriptor of the socket for
-    /// UNIX-like systems so the current implementation simply uses
-    /// \c int as the type of the return value.
-    /// We may have to need revisit this decision later.
+    /// In practice, this is the file descriptor of the socket for UNIX-like
+    /// systems so the current implementation simply uses \c int as the type of
+    /// the return value. We may have to need revisit this decision later.
     ///
-    /// In general, the application should avoid using this method;
-    /// it essentially discloses an implementation specific "handle" that
-    /// can change the internal state of the socket (consider the
-    /// application closes it, for example).
-    /// But we sometimes need to perform very low-level operations that
-    /// requires the native representation.  Passing the file descriptor
-    /// to a different process is one example.
-    /// This method is provided as a necessary evil for such limited purposes.
+    /// In general, the application should avoid using this method; it
+    /// essentially discloses an implementation specific "handle" that can
+    /// change the internal state of the socket (consider what would happen if
+    /// the application closes it, for example).  But we sometimes need to
+    /// perform very low-level operations that requires the native
+    /// representation.  Passing the file descriptor to a different process is
+    /// one example.  This method is provided as a necessary evil for such
+    /// limited purposes.
     ///
     /// This method never throws an exception.
     ///
     /// \return The native representation of the socket.  This is the socket
-    /// file descriptor for UNIX-like systems.
+    ///         file descriptor for UNIX-like systems.
     virtual int getNative() const = 0;
 
     /// \brief Return the transport protocol of the socket.
@@ -118,36 +136,50 @@ public:
     ///
     /// This method never throws an exception.
     ///
-    /// \return IPPROTO_UDP for UDP sockets
-    /// \return IPPROTO_TCP for TCP sockets
+    /// \return \c IPPROTO_UDP for UDP sockets, \c IPPROTO_TCP for TCP sockets
     virtual int getProtocol() const = 0;
 
-    /// \brief Open AsioSocket
+    /// \brief Is Open() synchronous?
     ///
-    /// Opens the socket for asynchronous I/O.  On a UDP socket, this is merely
-    /// an "open()" on the underlying socket (so completes immediately), but on
-    /// a TCP socket it also connects to the remote end (which is done as an
-    /// asynchronous operation).
+    /// On a TCP socket, an "open" operation is a call to the socket's "open()"
+    /// method followed by a connection to the remote system: it is an
+    /// asynchronous operation.  On a UDP socket, it is just a call to "open()"
+    /// and completes synchronously.
     ///
     /// For TCP, signalling of the completion of the operation is done by
     /// by calling the callback function in the normal way.  This could be done
     /// for UDP (by posting en event on the event queue); however, that will
-    /// incur additional overhead in the most common case.  Instead, the return
-    /// value indicates whether the operation was asynchronous or not. If yes,
-    /// (i.e. TCP) the callback has been posted to the event queue: if no (UDP),
-    /// no callback has been posted (in which case it is up to the caller as to
-    /// whether they want to manually post the callback themself.)
+    /// incur additional overhead in the most common case.  So we give the
+    /// caller the choice for calling this open() method synchronously or
+    /// asynchronously.
+    ///
+    /// Owing to the way that the stackless coroutines are implemented, we need
+    /// to know _before_ executing the "open" function whether or not it is
+    /// asynchronous.  So this method is called to provide that information.
+    ///
+    /// (The reason there is a need to know is because the call to open() passes
+    /// in the state of the coroutine at the time the call is made.  On an
+    /// asynchronous I/O, we need to set the state to point to the statement
+    /// after the call to open() _before_ we pass the corouine to the open()
+    /// call.  Unfortunately, the macros that set the state of the coroutine
+    /// also yield control - which we don't want to do if the open is
+    /// synchronous.  Hence we need to know before we make the call to open()
+    /// whether that call will complete asynchronously.)
+    virtual bool isOpenSynchronous() const = 0;
+
+    /// \brief Open AsioSocket
+    ///
+    /// Opens the socket for asynchronous I/O.  The open will complete
+    /// synchronously on UCP or asynchronously on TCP (in which case a callback
+    /// will be queued).
     ///
     /// \param endpoint Pointer to the endpoint object.  This is ignored for
-    /// a UDP socket (the target is specified in the send call), but should
-    /// be of type TCPEndpoint for a TCP connection.
+    ///        a UDP socket (the target is specified in the send call), but
+    ///        should be of type TCPEndpoint for a TCP connection.
     /// \param callback I/O Completion callback, called when the operation has
-    /// completed, but only if the operation was asynchronous.
-    ///
-    /// \return true if an asynchronous operation was started and the caller
-    /// should yield and wait for completion, false if the operation was
-    /// completed synchronously and no callback was queued.
-    virtual bool open(const IOEndpoint* endpoint, C& callback) = 0;
+    ///        completed, but only if the operation was asynchronous. (It is
+    ///        ignored on a UDP socket.)
+    virtual void open(const IOEndpoint* endpoint, C& callback) = 0;
 
     /// \brief Send Asynchronously
     ///
@@ -160,44 +192,85 @@ public:
     /// \param endpoint Target of the send
     /// \param callback Callback object.
     virtual void asyncSend(const void* data, size_t length,
-        const IOEndpoint* endpoint, C& callback) = 0;
+                           const IOEndpoint* endpoint, C& callback) = 0;
 
     /// \brief Receive Asynchronously
     ///
-    /// This correstponds to async_receive_from() for UDP sockets and
+    /// This corresponds to async_receive_from() for UDP sockets and
     /// async_receive() for TCP.  In both cases, an endpoint argument is
     /// supplied to receive the source of the communication.  For TCP it will
     /// be filled in with details of the connection.
     ///
     /// \param data Buffer to receive incoming message
     /// \param length Length of the data buffer
-    /// \param cumulative Amount of data that should already be in the buffer.
+    /// \param offset Offset into buffer where data is to be put.  Although the
+    ///        offset could be implied by adjusting "data" and "length"
+    ///        appropriately, using this argument allows data to be specified as
+    ///        "const void*" - the overhead of converting it to a pointer to a
+    ///        set of bytes is hidden away here.
     /// \param endpoint Source of the communication
     /// \param callback Callback object
-    virtual void asyncReceive(void* data, size_t length, size_t cumulative,
-        IOEndpoint* endpoint, C& callback) = 0;
+    virtual void asyncReceive(void* data, size_t length, size_t offset,
+                              IOEndpoint* endpoint, C& callback) = 0;
 
-    /// \brief Checks if the data received is complete.
+    /// \brief Processes received data
     ///
-    /// This applies to TCP receives, where the data is a byte stream and a
-    /// receive is not guaranteed to receive the entire message.  DNS messages
-    /// over TCP are prefixed by a two-byte count field.  This method takes the
-    /// amount received so far and the amount received in this I/O and checks
-    /// if the message is complete, returning the appropriate indication.  As
-    /// a side-effect, it also updates the amount received.
+    /// In the IOFetch code, data is received into a staging buffer before being
+    /// copied into the target buffer.  (This is because (a) we don't know how
+    /// much data we will be receiving, so don't know how to size the output
+    /// buffer and (b) TCP data is preceded by a two-byte count field that needs
+    /// to be discarded before being returned to the user.)
     ///
-    /// For a UDP receive, all the data is received in one I/O, so this is
-    /// effectively a no-op (although it does update the amount received).
+    /// An additional consideration is that TCP data is not received in one
+    /// I/O - it may take a number of I/Os - each receiving any non-zero number
+    /// of bytes - to read the entire message.
     ///
-    /// \param data Data buffer containing data to date
-    /// \param length Amount of data received in last asynchronous I/O
-    /// \param cumulative On input, amount of data received before the last
-    /// I/O.  On output, the total amount of data received to date.
+    /// So the IOFetch code has to loop until it determines that all the data
+    /// has been read.  This is where this method comes in.  It has several
+    /// functions:
+    ///
+    /// - It checks if the received data is complete.
+    /// - If data is not complete, decides if the next set of data is to go into
+    ///   the start of the staging buffer or at some offset into it.  (This
+    ///   simplifies the case we could have in a TCP receive where the two-byte
+    ///   count field is received in one-byte chunks: we put off interpreting
+    ///   the count until we have all of it.  The alternative - copying the
+    ///   data to the output buffer and interpreting the count from there -
+    ///   would require moving the data in the output buffer by two bytes before
+    ///   returning it to the caller.)
+    /// - Copies data from the staging buffer into the output buffer.
+    ///
+    /// This functionality mainly applies to TCP receives.  For UDP, all the
+    /// data is received in one I/O, so this just copies the data into the
+    /// output buffer.
+    ///
+    /// \param staging Pointer to the start of the staging buffer.
+    /// \param length Amount of data in the staging buffer.
+    /// \param cumulative Amount of data received before the staging buffer is
+    ///        processed (this includes the TCP count field if appropriate).
+    ///        The value should be set to zero before the receive loop is
+    ///        entered, and it will be updated by this method as required.
+    /// \param offset Offset into the staging buffer where the next read should
+    ///        put the received data.  It should be set to zero before the first
+    ///        call and may be updated by this method.
+    /// \param expected Expected amount of data to be received.  This is
+    ///        really the TCP count field and is set to that value when enough
+    ///        of a TCP message is received.  It should be initialized to -1
+    ///        before the first read is executed.
+    /// \param outbuff Output buffer.  Data in the staging buffer may be copied
+    ///        to this output buffer in the call.
     ///
     /// \return true if the receive is complete, false if another receive is
-    /// needed.
-    virtual bool receiveComplete(void* data, size_t length,
-        size_t& cumulative) = 0;
+    ///         needed.  This is always true for UDP, but for TCP involves
+    ///         checking the amount of data received so far against the amount
+    ///         expected (as indicated by the two-byte count field).  If this
+    ///         method returns false, another read should be queued and data
+    ///         should be read into the staging buffer at offset given by the
+    ///         "offset" parameter.
+    virtual bool processReceivedData(const void* staging, size_t length,
+                                     size_t& cumulative, size_t& offset,
+                                     size_t& expected,
+                                     isc::dns::OutputBufferPtr& outbuff) = 0;
 
     /// \brief Cancel I/O On AsioSocket
     virtual void cancel() = 0;
@@ -244,6 +317,13 @@ public:
     virtual int getProtocol() const { return (protocol_); }
 
 
+    /// \brief Is socket opening synchronous?
+    ///
+    /// \return true - it is for this class.
+    bool isOpenSynchronous() const {
+        return true;
+    }
+
     /// \brief Open AsioSocket
     ///
     /// A call that is a no-op on UDP sockets, this opens a connection to the
@@ -273,20 +353,30 @@ public:
     ///
     /// \param data Unused
     /// \param length Unused
-    /// \param cumulative Unused
+    /// \param offset Unused
     /// \param endpoint Unused
     /// \param callback Unused
-    virtual void asyncReceive(void* data, size_t, size_t, IOEndpoint*, C&) { } 
+    virtual void asyncReceive(void* data, size_t, size_t, IOEndpoint*, C&) {
+    }
+
     /// \brief Checks if the data received is complete.
     ///
-    /// \param data Unused
+    /// \param staging Unused
     /// \param length Unused
     /// \param cumulative Unused
+    /// \param offset Unused.
+    /// \param expected Unused.
+    /// \param outbuff Unused.
     ///
     /// \return Always true
-    virtual bool receiveComplete(void*, size_t, size_t&) {
+    virtual bool receiveComplete(const void* staging, size_t length,
+                                 size_t& cumulative, size_t& offset,
+                                 size_t& expected,
+                                 isc::dns::OutputBufferPtr& outbuff)
+    {
         return (true);
     }
+
 
     /// \brief Cancel I/O On AsioSocket
     ///
