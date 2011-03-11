@@ -89,8 +89,9 @@
         </term>
         <listitem>
           <para>The configuration filename to use. Can be either absolute or
-          relative to data path.</para>
-          <para>Defaults to b10-config.db</para>
+          relative to data path. In case it is absolute, value of data path is
+          not considered.</para>
+          <para>Defaults to b10-config.db.</para>
         </listitem>
       </varlistentry>
 
@@ -100,7 +101,9 @@
           <option>--data-path</option> <replaceable>data-path</replaceable>
         </term>
         <listitem>
-          <para>The path where bind looks for configuration files.</para>
+          <para>The path where BIND looks for configuration files, if their
+          names are not absolute. It might be used for other data files in
+          future as well.</para>
         </listitem>
       </varlistentry>
 
