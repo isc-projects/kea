@@ -22,6 +22,7 @@ import getpass
 from optparse import OptionParser
 from isc.config.config_data import ConfigData, MultiConfigData
 from isc.config.module_spec import ModuleSpec
+from isc.testutils.parse_args import TestOptParser, OptsError
 from bindctl_main import set_bindctl_options
 from bindctl import cmdparse
 from bindctl import bindcmd
@@ -372,23 +373,8 @@ class TestBindCmdInterpreter(unittest.TestCase):
 
 
 class TestCommandLineOptions(unittest.TestCase):
-    class FakeParserError(Exception):
-        """An exception thrown from FakeOptionParser on parser error.
-        """
-        pass
-
-    class FakeOptionParser(OptionParser):
-        """This fake class emulates the OptionParser class with customized
-        error handling for the convenient of tests.
-        """
-        def __init__(self):
-            OptionParser.__init__(self)
-
-        def error(self, msg):
-            raise TestCommandLineOptions.FakeParserError
-
     def setUp(self):
-        self.parser = self.FakeOptionParser()
+        self.parser = TestOptParser()
         set_bindctl_options(self.parser)
 
     def test_csv_file_dir(self):
@@ -401,7 +387,7 @@ class TestCommandLineOptions(unittest.TestCase):
         self.assertEqual('some_dir', options.csv_file_dir)
 
         # missing option arg; should trigger parser error.
-        self.assertRaises(self.FakeParserError, self.parser.parse_args,
+        self.assertRaises(OptsError, self.parser.parse_args,
                           ['--csv-file-dir'])
 
 if __name__== "__main__":
