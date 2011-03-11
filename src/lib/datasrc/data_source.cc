@@ -48,6 +48,27 @@ using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 
+namespace {
+// This is a helper to retrieve a specified RR type of RRset from RRsetList.
+// In our case the data source search logic should ensure that the class is
+// valid.  We use this find logic of our own so that we can support both
+// specific RR class queries (normal case) and class ANY queries.
+RRsetPtr
+findRRsetFromList(RRsetList& list, const RRType rrtype) {
+    struct MatchRRsetForType {
+        MatchRRsetForType(const RRType rrtype) : rrtype_(rrtype) {}
+        bool operator()(RRsetPtr rrset) {
+            return (rrset->getType() == rrtype_);
+        }
+        const RRType rrtype_;
+    };
+
+    RRsetList::iterator it(find_if(list.begin(), list.end(),
+                                   MatchRRsetForType(rrtype)));
+    return (it != list.end() ? *it : RRsetPtr());
+}
+}
+
 namespace isc {
 namespace datasrc {
 
@@ -599,7 +620,7 @@ addSOA(Query& q, ZoneInfo& zoneinfo) {
     }
 
     addToMessage(q, Message::SECTION_AUTHORITY,
-                 soa.findRRset(RRType::SOA(), q.qclass()));
+                 findRRsetFromList(soa, RRType::SOA()));
     return (DataSrc::SUCCESS);
 }
 
@@ -611,7 +632,7 @@ addNSEC(Query& q, const Name& name, ZoneInfo& zoneinfo) {
     RETERR(doQueryTask(newtask, zoneinfo, nsec));
     if (newtask.flags == 0) {
         addToMessage(q, Message::SECTION_AUTHORITY,
-                     nsec.findRRset(RRType::NSEC(), q.qclass()));
+                     findRRsetFromList(nsec, RRType::NSEC()));
     }
 
     return (DataSrc::SUCCESS);
