@@ -152,7 +152,7 @@ static PyTypeObject rrclass_type = {
 static int
 RRClass_init(s_RRClass* self, PyObject* args) {
     const char* s;
-    unsigned int i;
+    long i;
     PyObject* bytes = NULL;
     // The constructor argument can be a string ("IN"), an integer (1),
     // or a sequence of numbers between 0 and 65535 (wire code)
@@ -165,10 +165,11 @@ RRClass_init(s_RRClass* self, PyObject* args) {
         if (PyArg_ParseTuple(args, "s", &s)) {
             self->rrclass = new RRClass(s);
             return (0);
-        } else if (PyArg_ParseTuple(args, "I", &i)) {
-            PyErr_Clear();
-            if (i > 65535) {
-                PyErr_SetString(po_InvalidRRClass, "RR class number too high");
+        } else if (PyArg_ParseTuple(args, "l", &i)) {
+            if (i < 0 || i > 0xffff) {
+                PyErr_Clear();
+                PyErr_SetString(PyExc_OverflowError,
+                                "RR class number out of range");
                 return (-1);
             }
             self->rrclass = new RRClass(i);

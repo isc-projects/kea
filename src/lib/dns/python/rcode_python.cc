@@ -171,16 +171,16 @@ PyTypeObject rcode_type = {
 
 int
 Rcode_init(s_Rcode* const self, PyObject* args) {
-    int code = 0;
-    int ext_code = 0;
+    long code = 0;
+    long ext_code = 0;
 
-    if (PyArg_ParseTuple(args, "i", &code)) {
+    if (PyArg_ParseTuple(args, "l", &code)) {
         if (code < 0 || code > 0xffff) {
             PyErr_SetString(PyExc_OverflowError, "Rcode out of range");
             return (-1);
         }
         ext_code = -1;
-    } else if (PyArg_ParseTuple(args, "ii", &code, &ext_code)) {
+    } else if (PyArg_ParseTuple(args, "ll", &code, &ext_code)) {
         if (code < 0 || code > 0xff || ext_code < 0 || ext_code > 0xff) {
             PyErr_SetString(PyExc_OverflowError, "Rcode out of range");
             return (-1);

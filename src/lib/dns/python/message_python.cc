@@ -226,9 +226,9 @@ static PyTypeObject message_type = {
 
 static int
 Message_init(s_Message* self, PyObject* args) {
-    unsigned int i;
+    long i;
     
-    if (PyArg_ParseTuple(args, "I", &i)) {
+    if (PyArg_ParseTuple(args, "l", &i)) {
         PyErr_Clear();
         if (i == Message::PARSE) {
             self->message = new Message(Message::PARSE);
@@ -274,17 +274,18 @@ Message_getHeaderFlag(s_Message* self, PyObject* args) {
 
 static PyObject*
 Message_setHeaderFlag(s_Message* self, PyObject* args) {
-    int messageflag;
+    long messageflag;
     PyObject *on = Py_True;
 
-    if (!PyArg_ParseTuple(args, "i|O!", &messageflag, &PyBool_Type, &on)) {
+    if (!PyArg_ParseTuple(args, "l|O!", &messageflag, &PyBool_Type, &on)) {
         PyErr_Clear();
         PyErr_SetString(PyExc_TypeError,
                         "no valid type in set_header_flag argument");
         return (NULL);
     }
-    if (messageflag < 0) {
-        PyErr_SetString(PyExc_TypeError, "invalid Message header flag");
+    if (messageflag < 0 || messageflag > 0xffff) {
+        PyErr_Clear();
+        PyErr_SetString(PyExc_OverflowError, "Message header flag out of range");
         return (NULL);
     }
 
@@ -310,10 +311,20 @@ Message_getQid(s_Message* self) {
 
 static PyObject*
 Message_setQid(s_Message* self, PyObject* args) {
-    uint16_t id;
-    if (!PyArg_ParseTuple(args, "H", &id)) {
+    int id;
+    if (!PyArg_ParseTuple(args, "i", &id)) {
+        PyErr_Clear();
+        PyErr_SetString(PyExc_TypeError,
+                        "no valid type in set_qid argument");
         return (NULL);
     }
+    if (id < 0 || id > 0xffff) {
+        PyErr_Clear();
+        PyErr_SetString(PyExc_OverflowError,
+                        "Message id out of range");
+        return (NULL);
+    }
+
     try {
         self->message->setQid(id);
         Py_RETURN_NONE;
@@ -565,10 +576,15 @@ Message_addQuestion(s_Message* self, PyObject* args) {
 static PyObject*
 Message_addRRset(s_Message* self, PyObject* args) {
     PyObject *sign = Py_False;
-    unsigned int section;
+    int section;
     s_RRset* rrset;
-    if (!PyArg_ParseTuple(args, "IO!|O!", &section, &rrset_type, &rrset,
+    if (!PyArg_ParseTuple(args, "iO!|O!", &section, &rrset_type, &rrset,
                           &PyBool_Type, &sign)) {
+        return (NULL);
+    }
+    if (section < 0 || section > 3) {
+        PyErr_Clear();
+        PyErr_SetString(PyExc_OverflowError, "Message section number out of range");
         return (NULL);
     }
 
@@ -591,8 +607,8 @@ Message_addRRset(s_Message* self, PyObject* args) {
 
 static PyObject*
 Message_clear(s_Message* self, PyObject* args) {
-    unsigned int i;
-    if (PyArg_ParseTuple(args, "I", &i)) {
+    long i;
+    if (PyArg_ParseTuple(args, "l", &i)) {
         PyErr_Clear();
         if (i == Message::PARSE) {
             self->message->clear(Message::PARSE);

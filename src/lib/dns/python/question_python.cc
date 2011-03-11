@@ -169,7 +169,7 @@ Question_init(s_Question* self, PyObject* args) {
     }
 
     self->question = QuestionPtr();
-    
+
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
                     "no valid type in constructor argument");
