@@ -328,11 +328,11 @@ class TestConfigCommands(unittest.TestCase):
         socket_err_output = io.StringIO()
         sys.stdout = socket_err_output
         self.assertRaises(None, self.tool.run())
-        self.assertEqual("Fail to send request, the connection is closed\n",
+        self.assertEqual("Failed to send request, the connection is closed\n",
                          socket_err_output.getvalue())
         socket_err_output.close()
 
-        # validate log messae for http.client.CannotSendRequest
+        # validate log message for http.client.CannotSendRequest
         cannot_send_output = io.StringIO()
         sys.stdout = cannot_send_output
         self.assertRaises(None, self.tool.run())
