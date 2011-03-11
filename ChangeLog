@@ -1,3 +1,11 @@
+  198.	[bug]		jinmei
+	b10-auth, src/lib/datasrc: fixed a bug where hot spot cache failed
+	to reuse cached SOA for negative responses.  Due to this bug
+	b10-auth returned SERVFAIL when it was expected to return a
+	negative response immediately after a specific SOA query for
+	the zone.
+	(Trac #626, git 721a53160c15e8218f6798309befe940b9597ba0)
+
   197.  [bug]		zhang likun
 	Remove expired message and rrset entries when looking up them
 	in cache, touch or remove the rrset entry in cache properly
