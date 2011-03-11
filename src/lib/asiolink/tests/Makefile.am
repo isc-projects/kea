@@ -37,9 +37,6 @@ run_unittests_LDADD  = $(GTEST_LDADD)
 run_unittests_LDADD += $(SQLITE_LIBS)
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
-run_unittests_LDADD += $(top_builddir)/src/lib/resolve/libresolve.la
-run_unittests_LDADD += $(top_builddir)/src/lib/cache/libcache.la
-run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 
