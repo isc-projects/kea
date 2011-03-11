@@ -1,3 +1,14 @@
+  nnn.  [func]		naokikambe
+	Added the HTTP/XML interface(b10-stats-httpd) to the statistics feature
+	in BIND 10. b10-stats-httpd is a standalone HTTP server and it requests
+	statistics data to the stats daemon(b10-stats) and sends it to HTTP
+	clients in XML format. Items of the data collected via b10-stats-httpd
+	are almost equivalent to ones which are collected via bindctl. Since it
+	also can send XSL(Extensible Stylessheet Language) document and XSD(XML
+	Schema definition) document, XML document is human-friendly to view
+	through web browsers and its data types are strictly defined.
+	(Trac #547, git tbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdttbd)
+
   197.  [bug]		zhang likun
 	Remove expired message and rrset entries when looking up them
 	in cache, touch or remove the rrset entry in cache properly

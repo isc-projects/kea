@@ -124,6 +124,7 @@ class StartStopCheckBob(BoB):
         self.xfrin = False
         self.zonemgr = False
         self.stats = False
+        self.stats_httpd = False
         self.cmdctl = False
         self.c_channel_env = {}
 
@@ -158,6 +159,9 @@ class StartStopCheckBob(BoB):
     def start_stats(self, c_channel_env):
         self.stats = True
 
+    def start_stats_httpd(self, c_channel_env):
+        self.stats_httpd = True
+
     def start_cmdctl(self, c_channel_env):
         self.cmdctl = True
 
@@ -191,6 +195,9 @@ class StartStopCheckBob(BoB):
     def stop_stats(self):
         self.stats = False
 
+    def stop_stats_httpd(self):
+        self.stats_httpd = False
+
     def stop_cmdctl(self):
         self.cmdctl = False
 
@@ -216,6 +223,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         self.assertEqual(bob.xfrin, auth)
         self.assertEqual(bob.zonemgr, auth)
         self.assertEqual(bob.stats, core)
+        self.assertEqual(bob.stats_httpd, core)
         self.assertEqual(bob.cmdctl, core)
 
     def check_preconditions(self, bob):

@@ -499,6 +499,9 @@ class BoB:
     def start_stats(self, c_channel_env):
         self.start_simple("b10-stats", c_channel_env)
 
+    def start_stats_httpd(self, c_channel_env):
+        self.start_simple("b10-stats-httpd", c_channel_env)
+
     def start_cmdctl(self, c_channel_env):
         # XXX: we hardcode port 8080
         self.start_simple("b10-cmdctl", c_channel_env, 8080)
@@ -543,6 +546,7 @@ class BoB:
 
         # ... and finally start the remaining processes
         self.start_stats(c_channel_env)
+        self.start_stats_httpd(c_channel_env)
         self.start_cmdctl(c_channel_env)
     
     def startup(self):
@@ -592,6 +596,7 @@ class BoB:
         self.cc_session.group_sendmsg(cmd, "Xfrin", "Xfrin")
         self.cc_session.group_sendmsg(cmd, "Zonemgr", "Zonemgr")
         self.cc_session.group_sendmsg(cmd, "Stats", "Stats")
+        self.cc_session.group_sendmsg(cmd, "StatsHttpd", "StatsHttpd")
 
     def stop_process(self, process, recipient):
         """

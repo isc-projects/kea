@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2010, 2011  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,8 +14,6 @@
 # FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-__version__ = "$Revision$"
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import os
@@ -37,15 +35,16 @@ if __name__ == 'stats':					#@@REMOVED@@
 import isc.util.process
 isc.util.process.rename()
 
-# If B10_FROM_BUILD is set in the environment, we use data files
+# If B10_FROM_SOURCE is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
 # installed on the system
-if "B10_FROM_BUILD" in os.environ:
-    SPECFILE_LOCATION = os.environ["B10_FROM_BUILD"] + "/src/bin/stats/stats.spec"
+if "B10_FROM_SOURCE" in os.environ:
+    SPECFILE_LOCATION = os.environ["B10_FROM_SOURCE"] + os.sep + "stats.spec"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
-    SPECFILE_LOCATION = "@datadir@/@PACKAGE@/stats.spec".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+    SPECFILE_LOCATION = "@datadir@" + os.sep + "@PACKAGE@" + os.sep + "stats.spec"
+    SPECFILE_LOCATION = SPECFILE_LOCATION.replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
 
 class Singleton(type):
     """
