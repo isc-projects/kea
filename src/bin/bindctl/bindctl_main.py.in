@@ -111,25 +111,28 @@ def check_addr(option, opt_str, value, parser):
     parser.values.addr = value
 
 def set_bindctl_options(parser):
-    parser.add_option('-p', '--port', dest = 'port', type = 'int',
-                      action = 'callback', callback=check_port,
-                      default = '8080', help = 'port for cmdctl of bind10')
+    parser.add_option('-p', '--port', dest='port', type='int',
+                      action='callback', callback=check_port,
+                      default='8080', help='port for cmdctl of bind10')
 
-    parser.add_option('-a', '--address', dest = 'addr', type = 'string',
-                      action = 'callback', callback=check_addr,
-                      default = '127.0.0.1', help = 'IP address for cmdctl of bind10')
+    parser.add_option('-a', '--address', dest='addr', type='string',
+                      action='callback', callback=check_addr,
+                      default='127.0.0.1', help='IP address for cmdctl of bind10')
 
-    parser.add_option('-c', '--certificate-chain', dest = 'cert_chain', 
-                      type = 'string', action = 'store',
-                      help = 'PEM formatted server certificate validation chain file')
+    parser.add_option('-c', '--certificate-chain', dest='cert_chain',
+                      type='string', action='store',
+                      help='PEM formatted server certificate validation chain file')
+
+    parser.add_option('--csv-file-dir', dest='csv_file_dir', type='string',
+                      default=None, action='store',
+                      help='Directory to store the password CSV file')
 
 if __name__ == '__main__':
     parser = OptionParser(version = VERSION)
     set_bindctl_options(parser)
     (options, args) = parser.parse_args()
     server_addr = options.addr + ':' + str(options.port)
-    tool = BindCmdInterpreter(server_addr, pem_file=options.cert_chain)
+    tool = BindCmdInterpreter(server_addr, pem_file=options.cert_chain,
+                              csv_file_dir=options.csv_file_dir)
     prepare_config_commands(tool)
     tool.run()
-
-

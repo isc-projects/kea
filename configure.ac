@@ -583,6 +583,12 @@ if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GXX" = "Xyes"; then
 	CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_DEV_POLL=1"
 fi
 
+#
+# Perl is optional; it is used only by some of the system test scripts.
+#
+AC_PATH_PROGS(PERL, perl5 perl)
+AC_SUBST(PERL)
+
 AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
   [regenerate man pages [default=no]])], enable_man=yes, enable_man=no)
 
@@ -684,6 +690,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/cache/tests/Makefile
                  src/lib/server_common/Makefile
                  src/lib/server_common/tests/Makefile
+                 tests/Makefile
+                 tests/system/Makefile
                ])
 AC_OUTPUT([doc/version.ent
            src/bin/cfgmgr/b10-cfgmgr.py
@@ -713,9 +721,10 @@ AC_OUTPUT([doc/version.ent
            src/bin/stats/tests/stats_test
            src/bin/bind10/bind10.py
            src/bin/bind10/tests/bind10_test
+           src/bin/bind10/tests/bind10_test.py
            src/bin/bind10/run_bind10.sh
            src/bin/bindctl/run_bindctl.sh
-           src/bin/bindctl/bindctl-source.py
+           src/bin/bindctl/bindctl_main.py
            src/bin/bindctl/tests/bindctl_test
            src/bin/loadzone/run_loadzone.sh
            src/bin/loadzone/tests/correct/correct_test.sh
@@ -740,6 +749,10 @@ AC_OUTPUT([doc/version.ent
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
            src/lib/log/tests/run_time_init_test.sh
+           tests/system/conf.sh
+           tests/system/glue/setup.sh
+           tests/system/glue/nsx1/b10-config.db
+           tests/system/bindctl/nsx1/b10-config.db.template
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
@@ -764,6 +777,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
            chmod +x src/lib/log/tests/run_time_init_test.sh
+           chmod +x tests/system/conf.sh
           ])
 AC_OUTPUT
 

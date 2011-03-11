@@ -98,12 +98,26 @@ public:
                  isc::dns::MessagePtr answer_message,
                  isc::dns::OutputBufferPtr buffer,
                  DNSServer* server);
+
+    /// \brief Set Test Server
+    ///
+    /// This method is *only* for unit testing the class.  If set, it enables
+    /// recursive behaviour but, regardless of responses received, sends every
+    /// query to the test server.
+    ///
+    /// The test server is enabled by setting a non-zero port number.
+    ///
+    /// \param address IP address of the test server.
+    /// \param port Port number of the test server
+    void setTestServer(const std::string& address, uint16_t port);
+    
 private:
     DNSService& dns_service_;
     boost::shared_ptr<std::vector<std::pair<std::string, uint16_t> > >
         upstream_;
     boost::shared_ptr<std::vector<std::pair<std::string, uint16_t> > >
         upstream_root_;
+    std::pair<std::string, uint16_t> test_server_;
     int query_timeout_;
     int client_timeout_;
     int lookup_timeout_;
