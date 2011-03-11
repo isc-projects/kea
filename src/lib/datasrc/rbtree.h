@@ -533,12 +533,9 @@ private:
 
 private:
     // The max label count for one domain name is Name::MAX_LABELS (128).
-    // Since each node in rbtree stores at least one label, and the root
-    // name always shares the same level with some others (which means
-    // all top level nodes except the one for the root name contain at least
-    // two labels), the possible maximum level is MAX_LABELS - 1.
-    // It's also the possible maximum nodes stored in a chain.
-    const static int RBT_MAX_LEVEL = isc::dns::Name::MAX_LABELS - 1;
+    // Since each node in rbtree stores at least one label, it's also equal
+    // to the possible maximum level.
+    const static int RBT_MAX_LEVEL = isc::dns::Name::MAX_LABELS;
 
     int node_count_;
     const RBNode<T>* nodes_[RBT_MAX_LEVEL];
@@ -999,8 +996,15 @@ RBTree<T>::find(const isc::dns::Name& target_name,
             const int common_label_count =
                 node_path.last_comparison_.getCommonLabels();
             // If the common label count is 1, there is no common label between
-            // the two names, except the trailing "dot".
-            if (common_label_count == 1) {
+            // the two names, except the trailing "dot".  In this case the two
+            // sequences of labels have essentially no hierarchical
+            // relationship in terms of matching, so we should continue the
+            // binary search.  One important exception is when the node
+            // represents the root name ("."), in which case the comparison
+            // result must indeed be considered subdomain matching. (We use
+            // getLength() to check if the name is root, which is an equivalent
+            // but cheaper way).
+            if (common_label_count == 1 && node->name_.getLength() != 1) {
                 node = (node_path.last_comparison_.getOrder() < 0) ?
                     node->left_ : node->right_;
             } else if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
@@ -1093,7 +1097,8 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
             return (ALREADYEXISTS);
         } else {
             const int common_label_count = compare_result.getCommonLabels();
-            if (common_label_count == 1) {
+            // Note: see find() for the check of getLength().
+            if (common_label_count == 1 && current->name_.getLength() != 1) {
                 parent = current;
                 order = compare_result.getOrder();
                 current = order < 0 ? current->left_ : current->right_;

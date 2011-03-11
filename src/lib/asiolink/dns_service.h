@@ -26,13 +26,13 @@ class DNSLookup;
 class DNSAnswer;
 class DNSServiceImpl;
 
+/// \brief Handle DNS Queries
 ///
 /// DNSService is the service that handles DNS queries and answers with
 /// a given IOService. This class is mainly intended to hold all the
 /// logic that is shared between the authoritative and the recursive
 /// server implementations. As such, it handles asio, including config
 /// updates (through the 'Checkinprovider'), and listening sockets.
-/// 
 class DNSService {
     ///
     /// \name Constructors and Destructor
