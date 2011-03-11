@@ -98,6 +98,8 @@ class MessageRendererTest(unittest.TestCase):
         renderer.set_length_limit(1024)
         self.assertEqual(1024, renderer.get_length_limit())
         self.assertRaises(TypeError, renderer.set_length_limit, "wrong")
+        self.assertRaises(OverflowError, renderer.set_length_limit, -1)
+        self.assertRaises(OverflowError, renderer.set_length_limit, 0x10000)
 
     def test_messagerenderer_set_compress_mode(self):
         renderer = MessageRenderer()

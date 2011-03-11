@@ -158,8 +158,12 @@ RRTTL_init(s_RRTTL* self, PyObject* args) {
         if (PyArg_ParseTuple(args, "s", &s)) {
             self->rrttl = new RRTTL(s);
             return (0);
-        } else if (PyArg_ParseTuple(args, "I", &i)) {
+        } else if (PyArg_ParseTuple(args, "k", &i)) {
             PyErr_Clear();
+            if (i > 0xffffffff) {
+                PyErr_SetString(po_InvalidRRTTL, "RR TTL number out of range");
+                return (-1);
+            }
             self->rrttl = new RRTTL(i);
             return (0);
         } else if (PyArg_ParseTuple(args, "O", &bytes) &&

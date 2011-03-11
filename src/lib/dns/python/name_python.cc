@@ -321,14 +321,20 @@ Name_init(s_Name* self, PyObject* args) {
     PyObject* bytes_obj;
     const char* bytes;
     Py_ssize_t len;
-    unsigned int position = 0;
+    long position = 0;
 
     // It was not a string (see comment above), so try bytes, and
     // create with buffer object
-    if (PyArg_ParseTuple(args, "O|IO!", &bytes_obj, &position,
+    if (PyArg_ParseTuple(args, "O|lO!", &bytes_obj, &position,
                          &PyBool_Type, &downcase) &&
                          PyObject_AsCharBuffer(bytes_obj, &bytes, &len) != -1) {
         try {
+            if (position < 0 || position > 0xffff) {
+                PyErr_Clear();
+                PyErr_SetString(PyExc_OverflowError,
+                                "Name index out of range");
+                return (-1);
+            }
             InputBuffer buffer(bytes, len);
 
             buffer.setPosition(position);
@@ -363,10 +369,17 @@ Name_destroy(s_Name* self) {
 
 static PyObject*
 Name_at(s_Name* self, PyObject* args) {
-    unsigned int pos;
-    if (!PyArg_ParseTuple(args, "I", &pos)) {
+    long pos;
+    if (!PyArg_ParseTuple(args, "l", &pos)) {
         return (NULL);
     }
+    if (pos < 0 || pos > 0xffff) {
+        PyErr_Clear();
+        PyErr_SetString(PyExc_OverflowError,
+                        "name index out of range");
+        return (NULL);
+    }
+
     try {
         return (Py_BuildValue("I", self->name->at(pos)));
     } catch (const isc::OutOfRange&) {
@@ -459,10 +472,16 @@ Name_equals(s_Name* self, PyObject* args) {
 
 static PyObject* 
 Name_split(s_Name* self, PyObject* args) {
-    unsigned int first, n;
+    long first, n;
     s_Name* ret = NULL;
-    
-    if (PyArg_ParseTuple(args, "II", &first, &n)) {
+
+    if (PyArg_ParseTuple(args, "ll", &first, &n)) {
+        if (first < 0 || first > 0xffff || n < 0 || n > 0xffff) {
+            PyErr_Clear();
+            PyErr_SetString(PyExc_OverflowError,
+                            "name index out of range");
+            return (NULL);
+        }
         ret = PyObject_New(s_Name, &name_type);
         if (ret != NULL) {
             ret->name = NULL;
@@ -477,7 +496,13 @@ Name_split(s_Name* self, PyObject* args) {
                 return (NULL);
             }
         }
-    } else if (PyArg_ParseTuple(args, "I", &n)) {
+    } else if (PyArg_ParseTuple(args, "l", &n)) {
+        if (n < 0 || n > 0xffff) {
+            PyErr_Clear();
+            PyErr_SetString(PyExc_OverflowError,
+                            "name index out of range");
+            return (NULL);
+        }
         ret = PyObject_New(s_Name, &name_type);
         if (ret != NULL) {
             ret->name = NULL;
@@ -493,6 +518,10 @@ Name_split(s_Name* self, PyObject* args) {
             }
         }
     }
+
+    PyErr_Clear();
+    PyErr_SetString(PyExc_TypeError,
+                    "No valid type in split argument");
     return (ret);
 }
 #include <iostream>

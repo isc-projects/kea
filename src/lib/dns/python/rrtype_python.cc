@@ -182,7 +182,7 @@ static PyTypeObject rrtype_type = {
 static int
 RRType_init(s_RRType* self, PyObject* args) {
     const char* s;
-    unsigned int i;
+    long i;
     PyObject* bytes = NULL;
     // The constructor argument can be a string ("A"), an integer (1),
     // or a sequence of numbers between 0 and 65535 (wire code)
@@ -195,10 +195,10 @@ RRType_init(s_RRType* self, PyObject* args) {
         if (PyArg_ParseTuple(args, "s", &s)) {
             self->rrtype = new RRType(s);
             return (0);
-        } else if (PyArg_ParseTuple(args, "I", &i)) {
+        } else if (PyArg_ParseTuple(args, "l", &i)) {
             PyErr_Clear();
-            if (i > 65535) {
-                PyErr_SetString(po_InvalidRRType, "RR Type number too high");
+            if (i < 0 || i > 0xffff) {
+                PyErr_SetString(PyExc_OverflowError, "RR Type number out of range");
                 return (-1);
             }
             self->rrtype = new RRType(i);
