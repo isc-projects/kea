@@ -956,9 +956,8 @@ DataSrc::doQuery(Query& q) {
                     // Add the NS records for the enclosing zone to
                     // the authority section.
                     RRsetList auth;
-                    const DataSrc* ds = zoneinfo.getDataSource();
-                    if (!refQuery(q, Name(*zonename), zoneinfo, auth)  ||
-                        !auth.findRRset(RRType::NS(), ds->getClass())) {
+                    if (!refQuery(q, Name(*zonename), zoneinfo, auth) ||
+                        !findRRsetFromList(auth, RRType::NS())) {
                         isc_throw(DataSourceError,
                                   "NS RR not found in " << *zonename << "/" <<
                                   q.qclass());
