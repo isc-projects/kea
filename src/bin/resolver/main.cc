@@ -56,7 +56,6 @@ using namespace asiolink;
 
 namespace {
 
-// Default port current 5300 for testing purposes
 static const string PROGRAM = "Resolver";
 
 IOService io_service;

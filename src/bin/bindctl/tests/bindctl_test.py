@@ -17,8 +17,12 @@
 import unittest
 import isc.cc.data
 import os
+import pwd
+import getpass
+from optparse import OptionParser
 from isc.config.config_data import ConfigData, MultiConfigData
 from isc.config.module_spec import ModuleSpec
+from bindctl_main import set_bindctl_options
 from bindctl import cmdparse
 from bindctl import bindcmd
 from bindctl.moduleinfo import *
@@ -332,13 +336,6 @@ class TestConfigCommands(unittest.TestCase):
         cmd = cmdparse.BindCmdParse("config set identifier=\"foo/a_list\" value=[1]")
         self.assertRaises(isc.cc.data.DataTypeError, self.tool.apply_config_cmd, cmd)
 
-
-    
-
-class FakeBindCmdInterpreter(bindcmd.BindCmdInterpreter):
-    def __init__(self):
-        pass
-
 class TestBindCmdInterpreter(unittest.TestCase):
 
     def _create_invalid_csv_file(self, csvfilename):
@@ -349,9 +346,22 @@ class TestBindCmdInterpreter(unittest.TestCase):
         writer.writerow(['name2'])
         csvfile.close()
 
+    def test_csv_file_dir(self):
+        # Checking default value
+        if "HOME" in os.environ:
+            home_dir = os.environ["HOME"]
+        else:
+            home_dir = pwd.getpwnam(getpass.getuser()).pw_dir
+        self.assertEqual(home_dir + os.sep + '.bind10' + os.sep,
+                         bindcmd.BindCmdInterpreter().csv_file_dir)
+
+        new_csv_dir = '/something/different/'
+        custom_cmd = bindcmd.BindCmdInterpreter(csv_file_dir=new_csv_dir)
+        self.assertEqual(new_csv_dir, custom_cmd.csv_file_dir)
+
     def test_get_saved_user_info(self):
-        cmd = FakeBindCmdInterpreter()
-        users = cmd._get_saved_user_info('/notexist', 'cvs_file.cvs')
+        cmd = bindcmd.BindCmdInterpreter()
+        users = cmd._get_saved_user_info('/notexist', 'csv_file.csv')
         self.assertEqual([], users)
         
         csvfilename = 'csv_file.csv'
@@ -359,6 +369,40 @@ class TestBindCmdInterpreter(unittest.TestCase):
         users = cmd._get_saved_user_info('./', csvfilename)
         self.assertEqual([], users)
         os.remove(csvfilename)
+
+
+class TestCommandLineOptions(unittest.TestCase):
+    class FakeParserError(Exception):
+        """An exception thrown from FakeOptionParser on parser error.
+        """
+        pass
+
+    class FakeOptionParser(OptionParser):
+        """This fake class emulates the OptionParser class with customized
+        error handling for the convenient of tests.
+        """
+        def __init__(self):
+            OptionParser.__init__(self)
+
+        def error(self, msg):
+            raise TestCommandLineOptions.FakeParserError
+
+    def setUp(self):
+        self.parser = self.FakeOptionParser()
+        set_bindctl_options(self.parser)
+
+    def test_csv_file_dir(self):
+        # by default the option is "undefined"
+        (options, _) = self.parser.parse_args([])
+        self.assertEqual(None, options.csv_file_dir)
+
+        # specify the option, valid case.
+        (options, _) = self.parser.parse_args(['--csv-file-dir', 'some_dir'])
+        self.assertEqual('some_dir', options.csv_file_dir)
+
+        # missing option arg; should trigger parser error.
+        self.assertRaises(self.FakeParserError, self.parser.parse_args,
+                          ['--csv-file-dir'])
 
 if __name__== "__main__":
     unittest.main()
