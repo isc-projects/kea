@@ -109,6 +109,13 @@ public:
     /// \param element Reference to the element to touch.
     virtual void touch(boost::shared_ptr<T>& element);
 
+    /// \brief Drop All the Elements in the List .
+    ///
+    /// All the elements will be dropped from the list container, and their
+    /// drop handler(if there is one) will be called, left the size of list
+    /// to 0.
+    virtual void clear();
+
     /// \brief Return Size of the List
     ///
     /// An independent count is kept of the list size, as list.size() may take
@@ -226,6 +233,25 @@ void LruList<T>::touch(boost::shared_ptr<T>& element) {
         iterator i = lru_.end();
         element->setLruIterator(--i);
     }
+}
+
+// Clear the list-  left the size of list to 0
+template <typename T>
+void LruList<T>::clear() {
+    // Protect list against concurrent access
+    isc::locks::scoped_lock<isc::locks::mutex> lock(mutex_);
+
+    // ... and update the count while we have the mutex.
+    count_ = 0;
+    typename std::list<boost::shared_ptr<T> >::iterator iter;
+    if (dropped_) {
+        for (iter = lru_.begin(); iter != lru_.end(); ++iter) {
+            // Call the drop handler.
+            (*dropped_)(iter->get());
+        }
+    }
+
+    lru_.clear();
 }
 
 }   // namespace nsas
