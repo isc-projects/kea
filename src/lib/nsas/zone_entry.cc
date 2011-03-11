@@ -269,6 +269,11 @@ ZoneEntry::removeCallback(const CallbackPtr& callback, AddressFamily family) {
     for (; i != callbacks_[family].end(); ++i) {
         if (*i == callback) {
             callbacks_[family].erase(i);
+            // At this point, a callback should only be in the list
+            // once (enforced by RunningQuery doing only one at a time)
+            // If that changes, we need to revise this (can't delete
+            // elements from a list we're looping over)
+            return;
         }
     }
 }
