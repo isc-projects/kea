@@ -1,4 +1,4 @@
-# Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2010, 2011  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -12,8 +12,6 @@
 # FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-__version__ = "$Revision$"
 
 #
 # Tests for the stats module
@@ -530,9 +528,9 @@ class TestStats2(unittest.TestCase):
         Test for specfile
         
         """
-        if "B10_FROM_BUILD" in os.environ:
+        if "B10_FROM_SOURCE" in os.environ:
             self.assertEqual(stats.SPECFILE_LOCATION,
-                             os.environ["B10_FROM_BUILD"] + "/src/bin/stats/stats.spec")
+                             os.environ["B10_FROM_SOURCE"] + os.sep + "stats.spec")
         imp.reload(stats)
         # change path of SPECFILE_LOCATION
         stats.SPECFILE_LOCATION = TEST_SPECFILE_LOCATION
@@ -626,13 +624,13 @@ class TestStats2(unittest.TestCase):
 
     def test_osenv(self):
         """
-        test for not having environ "B10_FROM_BUILD"
+        test for not having environ "B10_FROM_SOURCE"
         """
-        if "B10_FROM_BUILD" in os.environ:
-            path = os.environ["B10_FROM_BUILD"]
-            os.environ.pop("B10_FROM_BUILD")
+        if "B10_FROM_SOURCE" in os.environ:
+            path = os.environ["B10_FROM_SOURCE"]
+            os.environ.pop("B10_FROM_SOURCE")
             imp.reload(stats)
-            os.environ["B10_FROM_BUILD"] = path
+            os.environ["B10_FROM_SOURCE"] = path
             imp.reload(stats)
 
 def result_ok(*args):

@@ -1,4 +1,4 @@
-# Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2010,2011  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,14 +15,15 @@
 
 # This module is a mock-up class of isc.cc.session
 
-__version__ = "$Revision$"
-
 import json
+import os
 from isc.cc.session import Session
 
 COMMAND_CONFIG_UPDATE = "config_update"
 
 def parse_answer(msg):
+    assert type(msg) is dict
+    assert 'result' in msg
     try:
         return msg['result'][0], msg['result'][1]
     except IndexError:
@@ -35,6 +36,8 @@ def create_answer(rcode, arg = None):
         return { 'result': [ rcode, arg ] }
 
 def parse_command(msg):
+    assert type(msg) is dict
+    assert 'command' in msg
     try:
         return msg['command'][0], msg['command'][1]
     except IndexError:
@@ -47,9 +50,21 @@ def create_command(command_name, params = None):
         return {"command": [command_name, params]}
 
 def module_spec_from_file(spec_file, check = True):
-    file = open(spec_file)
-    module_spec = json.loads(file.read())
-    return ModuleSpec(module_spec['module_spec'], check)
+    try:
+        file = open(spec_file)
+        json_str = file.read()
+        module_spec = json.loads(json_str)
+        file.close()
+        return ModuleSpec(module_spec['module_spec'], check)
+    except IOError as ioe:
+        raise ModuleSpecError("JSON read error: " + str(ioe))
+    except ValueError as ve:
+        raise ModuleSpecError("JSON parse error: " + str(ve))
+    except KeyError as err:
+        raise ModuleSpecError("Data definition has no module_spec element")
+
+class ModuleSpecError(Exception):
+    pass
 
 class ModuleSpec:
     def __init__(self, module_spec, check = True):
@@ -67,9 +82,45 @@ class ModuleSpec:
 class ModuleCCSessionError(Exception):
     pass
 
+class DataNotFoundError(Exception):
+    pass
+
 class ConfigData:
     def __init__(self, specification):
         self.specification = specification
+
+    def get_value(self, identifier):
+        """Returns a tuple where the first item is the value at the
+           given identifier, and the second item is a bool which is
+           true if the value is an unset default. Raises an
+           DataNotFoundError if the identifier is bad"""
+        def _get_value(config_map):
+                if 'item_default' in config_map:
+                    return config_map['item_default'], False
+                elif 'item_type' in config_map:
+                    if config_map['item_type'] == 'boolean':
+                        return bool(), True
+                    elif config_map['item_type'] == 'string':
+                        return str(), True
+                    elif config_map['item_type'] in set(['number', 'integer']):
+                        return int(), True
+                    elif config_map['item_type'] in set(['float', 'double', 'real']):
+                        return float(), True
+                    elif config_map['item_type'] in set(['list', 'array']):
+                        return [ _get_value(conf)
+                                 for conf in spec['list_item_spec'] ], True
+                    elif config_map['item_type'] in set(['map', 'object']):
+                        return dict(
+                            [ (conf['item_name'], _get_value(conf))
+                              for conf in config_map['map_item_spec'] ]), True
+                return None, True
+        for config_map in self.get_module_spec().get_config_spec():
+            if config_map['item_name'] == identifier:
+                return _get_value(config_map)
+        raise DataNotFoundError("item_name %s is not found in the specfile" % identifier)
+
+    def get_module_spec(self):
+        return self.specification
 
 class ModuleCCSession(ConfigData):
     def __init__(self, spec_file_name, config_handler, command_handler, cc_session = None):
@@ -111,3 +162,7 @@ class ModuleCCSession(ConfigData):
 
     def get_module_spec(self):
         return self.specification
+
+    def get_socket(self):
+        return self._session._socket
+
