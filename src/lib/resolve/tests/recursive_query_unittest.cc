@@ -853,4 +853,7 @@ TEST_F(RecursiveQueryTest, DISABLED_recursiveSendNXDOMAIN) {
     EXPECT_EQ(0, answer->getRRCount(Message::SECTION_ANSWER));
 }
 
+// TODO: add tests that check whether the cache is updated on succesfull
+// responses, and not updated on failures.
+
 }

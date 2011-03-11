@@ -165,7 +165,10 @@ private:
     
     // the 'current' zone we are in (i.e.) we start out at the root,
     // and for each delegation this gets updated with the zone the
-    // delegation points to
+    // delegation points to.
+    // TODO: make this a Name (it is a string right now because most
+    // of the call we use it in take a string, we need update those
+    // too).
     std::string cur_zone_;
     
     // This is the handler we pass on to the NSAS; it is called when
@@ -244,6 +247,7 @@ private:
         // forwarder. If not, ask the NSAS for an address
         const int uc = upstream_->size();
         if (uc > 0) {
+            // TODO: use boost, or rand()-utility function we provide
             int serverIndex = rand() % uc;
             dlog("Sending upstream query (" + question_.toText() +
                 ") to " + upstream_->at(serverIndex).first);
@@ -352,6 +356,9 @@ private:
                  ++rrsi) {
                 ConstRRsetPtr rrs = *rrsi;
                 if (rrs->getType() == RRType::NS()) {
+                    // TODO: make cur_zone_ a Name instead of a string
+                    // (this requires a few API changes in related
+                    // libraries, so as not to need many conversions)
                     cur_zone_ = rrs->getName().toText();
                     dlog("Referred to zone " + cur_zone_);
                     found_ns_address = true;
@@ -426,8 +433,7 @@ public:
         callback_called_(false),
         nsas_(nsas),
         cache_(cache),
-        nsas_callback_(boost::shared_ptr<ResolverNSASCallback>(
-                                     new ResolverNSASCallback(this))),
+        nsas_callback_(new ResolverNSASCallback(this)),
         nsas_callback_out_(false),
         outstanding_events_(0)
     {
@@ -538,7 +544,7 @@ public:
             struct timeval cur_time;
             gettimeofday(&cur_time, NULL);
             uint32_t rtt;
-            if (cur_time.tv_sec >= current_ns_qsent_time.tv_sec &&
+            if (cur_time.tv_sec >= current_ns_qsent_time.tv_sec ||
                 cur_time.tv_usec > current_ns_qsent_time.tv_usec) {
                 rtt = 1000 * (cur_time.tv_sec - current_ns_qsent_time.tv_sec);
                 rtt += (cur_time.tv_usec - current_ns_qsent_time.tv_usec) / 1000;
