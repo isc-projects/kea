@@ -400,7 +400,7 @@ class BoB:
         if self.data_path is not None:
             opts.append("--data-path=" + self.data_path)
         if self.config_filename is not None:
-            opts.append("--database-filename=" + self.config_filename)
+            opts.append("--config-filename=" + self.config_filename)
         bind_cfgd = ProcessInfo("b10-cfgmgr", opts,
                                 c_channel_env, uid=self.uid,
                                 username=self.username)

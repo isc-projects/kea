@@ -139,11 +139,11 @@ class TestParseArgs(unittest.TestCase):
         Test setting the configuration database file.
         """
         b = __import__("b10-cfgmgr")
-        parsed = b.parse_options(['--database-filename=filename'],
+        parsed = b.parse_options(['--config-filename=filename'],
                                  TestOptParser)
         self.assertEqual(b.DATA_PATH, parsed.data_path)
         self.assertEqual("filename", parsed.file_name)
-        parsed = b.parse_options(['-f', 'filename'], TestOptParser)
+        parsed = b.parse_options(['-c', 'filename'], TestOptParser)
         self.assertEqual(b.DATA_PATH, parsed.data_path)
         self.assertEqual("filename", parsed.file_name)
 

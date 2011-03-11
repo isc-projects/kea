@@ -42,7 +42,7 @@ def parse_options(args=sys.argv[1:], Parser=OptionParser):
     parser.add_option("-p", "--data-path", dest="data_path",
                       help="Directory to search for configuration files " +
                       "(default="+DATA_PATH+")", default=DATA_PATH)
-    parser.add_option("-f", "--database-filename", dest="file_name",
+    parser.add_option("-c", "--config-filename", dest="file_name",
                       help="Configuration database filename " +
                       "(default=b10-config.db)", default="b10-config.db")
     (options, args) = parser.parse_args(args)
