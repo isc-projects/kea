@@ -37,6 +37,11 @@ MessageCache::MessageCache(boost::shared_ptr<RRsetCache> rrset_cache,
 {
 }
 
+MessageCache::~MessageCache() {
+    // Destroy all the message entries in the cache.
+    message_lru_.clear();
+}
+
 bool
 MessageCache::lookup(const isc::dns::Name& qname,
                      const isc::dns::RRType& qtype,
