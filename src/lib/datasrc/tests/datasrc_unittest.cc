@@ -1026,6 +1026,15 @@ TEST_F(DataSrcTest, noSOAZone) {
                  DataSourceError);
 }
 
+TEST_F(DataSrcTest, apexCNAMEZone) {
+    // The query name doesn't exist in the best matching zone,
+    // and there's a CNAME at the apex (which is bogus), so query handling
+    // will fail due to missing SOA.
+    EXPECT_THROW(createAndProcessQuery(Name("notexist.apexcname.example"),
+                                       RRClass::IN(), RRType::A()),
+                 DataSourceError);
+}
+
 // currently fails
 TEST_F(DataSrcTest, DISABLED_synthesizedCnameTooLong) {
     // qname has the possible max length (255 octets).  it matches a DNAME,
