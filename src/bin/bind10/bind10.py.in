@@ -204,7 +204,11 @@ class BoB:
             msgq process listens on.  If verbose is True, then the boss reports
             what it is doing.
 
-            Data path and config filename are passed trough to config manager.
+            Data path and config filename are passed trough to config manager
+            (if provided) and specify the config file to be used.
+
+            The cmdctl_port is passed to cmdctl and specify on which port it
+            should listen.
         """
         self.cc_session = None
         self.ccs = None
@@ -396,12 +400,12 @@ class BoB:
             Starts the configuration manager process
         """
         self.log_starting("b10-cfgmgr")
-        opts = ["b10-cfgmgr"]
+        args = ["b10-cfgmgr"]
         if self.data_path is not None:
-            opts.append("--data-path=" + self.data_path)
+            args.append("--data-path=" + self.data_path)
         if self.config_filename is not None:
-            opts.append("--config-filename=" + self.config_filename)
-        bind_cfgd = ProcessInfo("b10-cfgmgr", opts,
+            args.append("--config-filename=" + self.config_filename)
+        bind_cfgd = ProcessInfo("b10-cfgmgr", args,
                                 c_channel_env, uid=self.uid,
                                 username=self.username)
         self.processes[bind_cfgd.pid] = bind_cfgd
@@ -514,10 +518,10 @@ class BoB:
         """
             Starts the command control process
         """
-        opts = ["b10-cmdctl"]
+        args = ["b10-cmdctl"]
         if self.cmdctl_port is not None:
-            opts.append("--port=" + str(self.cmdctl_port))
-        self.start_process("b10-cmdctl", opts, c_channel_env, self.cmdctl_port)
+            args.append("--port=" + str(self.cmdctl_port))
+        self.start_process("b10-cmdctl", args, c_channel_env, self.cmdctl_port)
 
     def start_all_processes(self):
         """

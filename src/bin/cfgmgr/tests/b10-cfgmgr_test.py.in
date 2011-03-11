@@ -103,14 +103,14 @@ class TestParseArgs(unittest.TestCase):
         b = __import__("b10-cfgmgr")
         parsed = b.parse_options([], TestOptParser)
         self.assertEqual(b.DATA_PATH, parsed.data_path)
-        self.assertEqual("b10-config.db", parsed.file_name)
+        self.assertEqual(b.DEFAULT_CONFIG_FILE, parsed.file_name)
 
     def test_wrong_args(self):
         """
         Test it fails when we pass invalid option.
         """
         b = __import__("b10-cfgmgr")
-        self.assertRaises(OptsError, b.parse_options, (['--wrong-option']),
+        self.assertRaises(OptsError, b.parse_options, ['--wrong-option'],
                           TestOptParser)
 
     def test_not_arg(self):
@@ -119,7 +119,7 @@ class TestParseArgs(unittest.TestCase):
         (eg. without -- at the beginning).
         """
         b = __import__("b10-cfgmgr")
-        self.assertRaises(OptsError, b.parse_options, (['not-option']),
+        self.assertRaises(OptsError, b.parse_options, ['not-option'],
                           TestOptParser)
 
     def test_datapath(self):
@@ -129,10 +129,13 @@ class TestParseArgs(unittest.TestCase):
         b = __import__("b10-cfgmgr")
         parsed = b.parse_options(['--data-path=/path'], TestOptParser)
         self.assertEqual('/path', parsed.data_path)
-        self.assertEqual("b10-config.db", parsed.file_name)
+        self.assertEqual(b.DEFAULT_CONFIG_FILE, parsed.file_name)
         parsed = b.parse_options(['-p', '/path'], TestOptParser)
         self.assertEqual('/path', parsed.data_path)
-        self.assertEqual("b10-config.db", parsed.file_name)
+        self.assertEqual(b.DEFAULT_CONFIG_FILE, parsed.file_name)
+        self.assertRaises(OptsError, b.parse_options, ['-p'], TestOptParser)
+        self.assertRaises(OptsError, b.parse_options, ['--data-path'],
+                          TestOptParser)
 
     def test_db_filename(self):
         """
@@ -146,6 +149,9 @@ class TestParseArgs(unittest.TestCase):
         parsed = b.parse_options(['-c', 'filename'], TestOptParser)
         self.assertEqual(b.DATA_PATH, parsed.data_path)
         self.assertEqual("filename", parsed.file_name)
+        self.assertRaises(OptsError, b.parse_options, ['-c'], TestOptParser)
+        self.assertRaises(OptsError, b.parse_options, ['--config-filename'],
+                          TestOptParser)
 
 if __name__ == '__main__':
     unittest.main()

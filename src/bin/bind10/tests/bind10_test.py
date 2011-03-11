@@ -431,6 +431,9 @@ class TestParseArgs(unittest.TestCase):
         """
         Test it can parse the data path.
         """
+        self.assertRaises(OptsError, parse_args, ['-p'], TestOptParser)
+        self.assertRaises(OptsError, parse_args, ['--data-path'],
+                          TestOptParser)
         options = parse_args(['-p', '/data/path'], TestOptParser)
         self.assertEqual('/data/path', options.data_path)
         options = parse_args(['--data-path=/data/path'], TestOptParser)
@@ -440,6 +443,9 @@ class TestParseArgs(unittest.TestCase):
         """
         Test it can parse the config switch.
         """
+        self.assertRaises(OptsError, parse_args, ['-c'], TestOptParser)
+        self.assertRaises(OptsError, parse_args, ['--config-file'],
+                          TestOptParser)
         options = parse_args(['-c', 'config-file'], TestOptParser)
         self.assertEqual('config-file', options.config_file)
         options = parse_args(['--config-file=config-file'], TestOptParser)
@@ -453,6 +459,8 @@ class TestParseArgs(unittest.TestCase):
                                                 TestOptParser)
         self.assertRaises(OptsError, parse_args, ['--cmdctl-port=100000000'],
                                                 TestOptParser)
+        self.assertRaises(OptsError, parse_args, ['--cmdctl-port'],
+                          TestOptParser)
         options = parse_args(['--cmdctl-port=1234'], TestOptParser)
         self.assertEqual(1234, options.cmdctl_port)
 
