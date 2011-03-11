@@ -165,6 +165,24 @@ TEST_F(DataSrcTest, QueryClassAny) {
     QueryCommon(RRClass::ANY());
 }
 
+TEST_F(DataSrcTest, queryClassAnyNegative) {
+    // There was a bug where Class ANY query triggered a crash due to NULL
+    // pointer dereference.  This test checks that condition.
+
+    // NXDOMAIN case
+    createAndProcessQuery(Name("notexistent.example.com"), RRClass::ANY(),
+                          RRType::A());
+    headerCheck(msg, qid, Rcode::NXDOMAIN(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 0, 6, 0);
+
+    // NXRRSET case
+    msg.clear(Message::PARSE);
+    createAndProcessQuery(Name("www.example.com"), RRClass::ANY(),
+                          RRType::TXT());
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 0, 4, 0);
+}
+
 TEST_F(DataSrcTest, NSQuery) {
     createAndProcessQuery(Name("example.com"), RRClass::IN(),
                           RRType::NS());
