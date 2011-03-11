@@ -42,7 +42,7 @@
 #include <asiolink/io_endpoint.h>
 #include <asiolink/io_fetch.h>
 #include <asiolink/io_service.h>
-#include <asiolink/recursive_query.h>
+#include <resolve/recursive_query.h>
 #include <resolve/resolver_interface.h>
 
 using namespace asio;
@@ -84,6 +84,14 @@ const char* WWW_EXAMPLE_ORG = "192.0.2.254";    ///< Address of www.example.org
 // enable them.
 const bool DEBUG_PRINT = false;
 
+class MockResolver : public isc::resolve::ResolverInterface {
+    void resolve(const QuestionPtr& question,
+                 const ResolverInterface::CallbackPtr& callback) {
+    }
+};
+
+
+
 /// \brief Test fixture for the RecursiveQuery Test
 class RecursiveQueryTest2 : public virtual ::testing::Test
 {
@@ -109,6 +117,8 @@ public:
     QueryStatus     last_;                      ///< What was the last state
     QueryStatus     expected_;                  ///< Expected next state
     OutputBufferPtr question_buffer_;           ///< Question we expect to receive
+    isc::nsas::NameserverAddressStore* nsas_;
+    isc::cache::ResolverCache cache_;
 
     // Data for TCP Server
     size_t          tcp_cumulative_;            ///< Cumulative TCP data received
@@ -145,7 +155,10 @@ public:
         udp_receive_buffer_(),
         udp_send_buffer_(new OutputBuffer(BUFFER_SIZE)),
         udp_socket_(service_.get_io_service(), udp::v4())
-    {}
+    {
+        boost::shared_ptr<MockResolver>mock_resolver(new MockResolver());
+        nsas_ = new isc::nsas::NameserverAddressStore(mock_resolver);
+    }
 
     /// \brief Set Common Message Bits
     ///
@@ -617,12 +630,13 @@ TEST_F(RecursiveQueryTest2, Resolve) {
     // Set up the RecursiveQuery object.
     std::vector<std::pair<std::string, uint16_t> > upstream;         // Empty
     std::vector<std::pair<std::string, uint16_t> > upstream_root;    // Empty
-    RecursiveQuery query(dns_service_, upstream, upstream_root);
+    RecursiveQuery query(dns_service_, *nsas_, cache_,
+                         upstream, upstream_root);
     query.setTestServer(TEST_ADDRESS, TEST_PORT);
 
     // Set up callback for the tor eceive notification that the query has
     // completed.
-    ResolverInterface::CallbackPtr
+    isc::resolve::ResolverInterface::CallbackPtr
         resolver_callback(new ResolverCallback(service_));
 
     // Kick off the resolution process.  We expect the first question to go to

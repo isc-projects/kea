@@ -261,6 +261,18 @@ ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family) {
     }
 }
 
+void
+ZoneEntry::removeCallback(const CallbackPtr& callback, AddressFamily family) {
+    Lock lock(mutex_);
+    std::vector<boost::shared_ptr<AddressRequestCallback> >::iterator i = 
+        callbacks_[family].begin();
+    for (; i != callbacks_[family].end(); ++i) {
+        if (*i == callback) {
+            callbacks_[family].erase(i);
+        }
+    }
+}
+
 namespace {
 
 // This just moves items from one container to another
