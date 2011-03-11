@@ -143,7 +143,7 @@ class ZoneEntry::ResolverCallback :
                         Name ns_name(dynamic_cast<const rdata::generic::NS&>(
                             iterator->getCurrent()).getNSName());
                         // Try to find it in the old ones
-                        map<string, NameserverPtr>::iterator old_ns(old.find(
+                        std::map<string, NameserverPtr>::iterator old_ns(old.find(
                             ns_name.toText()));
                         /*
                          * We didn't have this nameserver before. So we just
