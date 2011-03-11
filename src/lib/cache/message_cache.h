@@ -42,7 +42,7 @@ public:
                  uint32_t cache_size, uint16_t message_class);
 
     /// \brief Destructor function
-    virtual ~MessageCache() {}
+    virtual ~MessageCache();
 
     /// \brief Look up message in cache.
     /// \param message generated response message if the message entry
