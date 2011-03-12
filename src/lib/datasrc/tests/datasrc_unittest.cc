@@ -198,6 +198,16 @@ TEST_F(DataSrcTest, queryClassAnyDNAME) {
                 "www.sql1.example.com. 3600 IN A 192.0.2.2\n",
                 msg.beginSection(Message::SECTION_ANSWER),
                 msg.endSection(Message::SECTION_ANSWER));
+
+    // Also check the case of explicit DNAME query.
+    msg.clear(Message::PARSE);
+    createAndProcessQuery(Name("dname.example.com"), RRClass::ANY(),
+                          RRType::DNAME(), false);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 1, 3, 3);
+    rrsetsCheck("dname.example.com. 3600 IN DNAME sql1.example.com.\n",
+                msg.beginSection(Message::SECTION_ANSWER),
+                msg.endSection(Message::SECTION_ANSWER));
 }
 
 TEST_F(DataSrcTest, queryClassAnyCNAME) {
