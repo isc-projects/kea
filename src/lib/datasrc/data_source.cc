@@ -836,7 +836,7 @@ tryWildcard(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo, bool& found) {
         // match the qname), and then continue as if this were a normal
         // answer: if a CNAME, chase the target, otherwise add authority.
         if (cname) {
-            RRsetPtr rrset = wild.findRRset(RRType::CNAME(), q.qclass());
+            RRsetPtr rrset = findRRsetFromList(wild, RRType::CNAME());
             if (rrset != NULL) {
                 rrset->setName(task->qname);
                 addToMessage(q, Message::SECTION_ANSWER, rrset);
