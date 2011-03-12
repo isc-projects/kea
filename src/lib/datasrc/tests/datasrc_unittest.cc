@@ -438,68 +438,36 @@ TEST_F(DataSrcTest, DISABLED_WildcardAgainstMultiLabel) {
 
 TEST_F(DataSrcTest, WildcardCname) {
     // Check that wildcard answers containing CNAMES are followed
-    // correctly
-    createAndProcessQuery(Name("www.wild2.example.com"), RRClass::IN(),
-                          RRType::A());
+    // correctly.  It should result in the same response for both
+    // class IN and ANY queries.
+    const RRClass classes[2] = { RRClass::IN(), RRClass::ANY() };
 
-    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
-                QR_FLAG | AA_FLAG | RD_FLAG, 1, 4, 6, 6);
+    for (int i = 0; i < sizeof(classes) / sizeof(classes[0]); ++i) {
+        SCOPED_TRACE("Wildcard + CNAME test for class " + classes[i].toText());
 
-    RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
-    RRsetPtr rrset = *rit;
-    EXPECT_EQ(Name("www.wild2.example.com"), rrset->getName());
-    EXPECT_EQ(RRType::CNAME(), rrset->getType());
-    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+        msg.clear(Message::PARSE);
 
-    RdataIteratorPtr it = rrset->getRdataIterator();
-    EXPECT_EQ("www.example.com.", it->getCurrent().toText());
-    it->next();
-    EXPECT_TRUE(it->isLast());
+        createAndProcessQuery(Name("www.wild2.example.com"), classes[i],
+                              RRType::A(), false);
 
-    ++rit;
-    ++rit;
-    rrset = *rit;
-    EXPECT_EQ(Name("www.example.com"), rrset->getName());
-    EXPECT_EQ(RRType::A(), rrset->getType());
-    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+        headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                    QR_FLAG | AA_FLAG | RD_FLAG, 1, 2, 3, 3);
 
-    it = rrset->getRdataIterator();
-    EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
-    it->next();
-    EXPECT_TRUE(it->isLast());
-
-    rit = msg.beginSection(Message::SECTION_AUTHORITY);
-    rrset = *rit;
-    EXPECT_EQ(Name("*.wild2.example.com"), rrset->getName());
-    EXPECT_EQ(RRType::NSEC(), rrset->getType());
-    EXPECT_EQ(RRClass::IN(), rrset->getClass());
-    ++rit;
-    ++rit;
-
-    rrset = *rit;
-    EXPECT_EQ(Name("example.com"), rrset->getName());
-    EXPECT_EQ(RRType::NS(), rrset->getType());
-    EXPECT_EQ(RRClass::IN(), rrset->getClass());
-
-    it = rrset->getRdataIterator();
-    EXPECT_EQ("dns01.example.com.", it->getCurrent().toText());
-    it->next();
-    EXPECT_EQ("dns02.example.com.", it->getCurrent().toText());
-    it->next();
-    EXPECT_EQ("dns03.example.com.", it->getCurrent().toText());
-    it->next();
-    EXPECT_TRUE(it->isLast());
-
-    rit = msg.beginSection(Message::SECTION_ADDITIONAL);
-    rrset = *rit;
-    EXPECT_EQ(Name("dns01.example.com"), rrset->getName());
-    EXPECT_EQ(RRType::A(), rrset->getType());
-    EXPECT_EQ(RRClass::IN(), rrset->getClass());
-
-    it = rrset->getRdataIterator();
-    EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
-    it->next();
-    EXPECT_TRUE(it->isLast());
+        rrsetsCheck("www.wild2.example.com. 3600 IN CNAME www.example.com\n"
+                    "www.example.com. 3600 IN A 192.0.2.1\n",
+                    msg.beginSection(Message::SECTION_ANSWER),
+                    msg.endSection(Message::SECTION_ANSWER));
+        rrsetsCheck("example.com. 3600 IN NS dns01.example.com.\n"
+                    "example.com. 3600 IN NS dns02.example.com.\n"
+                    "example.com. 3600 IN NS dns03.example.com.",
+                    msg.beginSection(Message::SECTION_AUTHORITY),
+                    msg.endSection(Message::SECTION_AUTHORITY));
+        rrsetsCheck("dns01.example.com. 3600 IN A 192.0.2.1\n"
+                    "dns02.example.com. 3600 IN A 192.0.2.2\n"
+                    "dns03.example.com. 3600 IN A 192.0.2.3",
+                    msg.beginSection(Message::SECTION_ADDITIONAL),
+                    msg.endSection(Message::SECTION_ADDITIONAL));
+    }
 }
 
 TEST_F(DataSrcTest, WildcardCnameNodata) {
