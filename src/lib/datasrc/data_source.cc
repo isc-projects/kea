@@ -931,7 +931,7 @@ DataSrc::doQuery(Query& q) {
              ((task->qtype == RRType::NSEC() ||
                task->qtype == RRType::DS() ||
                task->qtype == RRType::DNAME()) &&
-              data.findRRset(task->qtype, task->qclass)))) {
+              findRRsetFromList(data, task->qtype)))) {
             task->flags &= ~REFERRAL;
         }
 
