@@ -127,7 +127,7 @@ class BindCmdInterpreter(Cmd):
         except KeyboardInterrupt:
             print('\nExit from bindctl')
         except socket.error as err:
-            print('Fail to send request, the connection is closed')
+            print('Failed to send request, the connection is closed')
         except http.client.CannotSendRequest:
             print('Can not send request, the connection is busy')
 
