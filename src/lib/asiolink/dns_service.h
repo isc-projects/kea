@@ -66,8 +66,8 @@ public:
     ///
     /// \param io_service The IOService to work with
     /// \param port the port to listen on
-    /// \param ipv4 If true, listen on ipv4 'any'
-    /// \param ipv6 If true, listen on ipv6 'any'
+    /// \param use_ipv4 If true, listen on ipv4 'any'
+    /// \param use_ipv6 If true, listen on ipv6 'any'
     /// \param checkin Provider for cc-channel events (see \c SimpleCallback)
     /// \param lookup The lookup provider (see \c DNSLookup)
     /// \param answer The answer provider (see \c DNSAnswer)
