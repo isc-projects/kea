@@ -103,7 +103,7 @@ class TestParseArgs(unittest.TestCase):
         b = __import__("b10-cfgmgr")
         parsed = b.parse_options([], TestOptParser)
         self.assertEqual(b.DATA_PATH, parsed.data_path)
-        self.assertEqual(b.DEFAULT_CONFIG_FILE, parsed.file_name)
+        self.assertEqual(b.DEFAULT_CONFIG_FILE, parsed.config_file)
 
     def test_wrong_args(self):
         """
@@ -129,10 +129,10 @@ class TestParseArgs(unittest.TestCase):
         b = __import__("b10-cfgmgr")
         parsed = b.parse_options(['--data-path=/path'], TestOptParser)
         self.assertEqual('/path', parsed.data_path)
-        self.assertEqual(b.DEFAULT_CONFIG_FILE, parsed.file_name)
+        self.assertEqual(b.DEFAULT_CONFIG_FILE, parsed.config_file)
         parsed = b.parse_options(['-p', '/path'], TestOptParser)
         self.assertEqual('/path', parsed.data_path)
-        self.assertEqual(b.DEFAULT_CONFIG_FILE, parsed.file_name)
+        self.assertEqual(b.DEFAULT_CONFIG_FILE, parsed.config_file)
         self.assertRaises(OptsError, b.parse_options, ['-p'], TestOptParser)
         self.assertRaises(OptsError, b.parse_options, ['--data-path'],
                           TestOptParser)
@@ -145,10 +145,10 @@ class TestParseArgs(unittest.TestCase):
         parsed = b.parse_options(['--config-filename=filename'],
                                  TestOptParser)
         self.assertEqual(b.DATA_PATH, parsed.data_path)
-        self.assertEqual("filename", parsed.file_name)
+        self.assertEqual("filename", parsed.config_file)
         parsed = b.parse_options(['-c', 'filename'], TestOptParser)
         self.assertEqual(b.DATA_PATH, parsed.data_path)
-        self.assertEqual("filename", parsed.file_name)
+        self.assertEqual("filename", parsed.config_file)
         self.assertRaises(OptsError, b.parse_options, ['-c'], TestOptParser)
         self.assertRaises(OptsError, b.parse_options, ['--config-filename'],
                           TestOptParser)
