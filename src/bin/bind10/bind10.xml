@@ -145,6 +145,9 @@ The default is the basename of ARG 0.
   </refsect1>
 
 <!--
+TODO: configuration section
+-->
+<!--
   <refsect1>
     <title>FILES</title>
     <para><filename></filename>
