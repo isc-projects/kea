@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __MESSAGE_ENTRY_H
 #define __MESSAGE_ENTRY_H
 
@@ -94,6 +92,12 @@ public:
     /// \return return hash key
     virtual HashKey hashKey() const {
         return (*hash_key_ptr_);
+    }
+
+    /// \brief Get expire time of the message entry.
+    /// \return return the expire time of message entry.
+    time_t getExpireTime() const {
+        return (expire_time_);
     }
 
     /// \short Protected memebers, so they can be accessed by tests.

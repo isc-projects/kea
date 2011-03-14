@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __MESSAGE_CACHE_H
 #define __MESSAGE_CACHE_H
 
@@ -48,6 +46,9 @@ public:
                  uint32_t cache_size, uint16_t message_class,
                  const RRsetCachePtr& negative_soa_cache);
 
+    /// \brief Destructor function
+    virtual ~MessageCache() {}
+
     /// \brief Look up message in cache.
     /// \param message generated response message if the message entry
     ///        can be found.
@@ -64,6 +65,7 @@ public:
     /// directly.
     bool update(const isc::dns::Message& msg);
 
+#if 0
     /// \brief Dump the message cache to specified file.
     /// \todo It should can be dumped to one configured database.
     void dump(const std::string& file_name);
@@ -74,6 +76,7 @@ public:
 
     /// \brief Resize the size of message cache in runtime.
     bool resize(uint32_t size);
+#endif
 
 protected:
     /// \brief Get the hash key for the message entry in the cache.

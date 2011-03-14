@@ -273,6 +273,18 @@ const struct RRData nosoa_example_records[] = {
 };
 
 //
+// zone data for apexcname.example.
+//
+const struct RRData apexcname_example_records[] = {
+    {"apexcname.example", "CNAME", "canonical.apexcname.example"},
+    {"canonical.apexcname.example", "SOA",
+     "master.apexcname.example "
+     "admin.apexcname.example. 1234 3600 1800 2419200 7200"},
+    {NULL, NULL, NULL}
+};
+
+
+//
 // empty data set, for convenience.
 //
 const struct RRData empty_records[] = {
@@ -288,7 +300,8 @@ const struct ZoneData zone_data[] = {
     { "loop.example", "IN", loop_example_records, empty_records },
     { "nons.example", "IN", nons_example_records, empty_records },
     { "nons-dname.example", "IN", nonsdname_example_records, empty_records },
-    { "nosoa.example", "IN", nosoa_example_records, empty_records }
+    { "nosoa.example", "IN", nosoa_example_records, empty_records },
+    { "apexcname.example", "IN", nosoa_example_records, empty_records }
 };
 const size_t NUM_ZONES = sizeof(zone_data) / sizeof(zone_data[0]);
 

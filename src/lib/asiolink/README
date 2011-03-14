@@ -33,7 +33,7 @@ This is intended to simplify development a bit, since it allows the
 routines to be written in a straightfowrard step-step-step fashion rather
 than as a complex chain of separate handler functions.
 
-Coroutine objects (i.e., UDPServer, TCPServer and UDPQuery) are objects
+Coroutine objects (i.e., UDPServer, TCPServer and IOFetch) are objects
 with reenterable operator() members.  When an instance of one of these
 classes is called as a function, it resumes at the position where it left
 off.  Thus, a UDPServer can issue an asynchronous I/O call and specify
@@ -101,3 +101,82 @@ when the answer has arrived.  In simplified form, the DNSQuery routine is:
 Currently, DNSQuery is only implemented for UDP queries.  In future work
 it will be necessary to write code to fall back to TCP when circumstances
 require it.
+
+
+Upstream Fetches
+================
+Upstream fetches (queries by the resolver on behalf of a client) are made
+using a slightly-modified version of the pattern described above.
+
+Sockets
+-------
+First, it will be useful to understand the class hierarchy used in the
+fetch logic:
+
+        IOSocket
+           |
+      IOAsioSocket
+           |
+     +-----+-----+                
+     |           |
+UDPSocket    TCPSocket
+
+IOSocket is a wrapper class for a socket and is used by the authoritative
+server code.  It is an abstract base class, providing little more that the ability to hold the socket and to return the protocol in use.
+
+Built on this is IOAsioSocket, which adds the open, close, asyncSend and
+asyncReceive methods.  This is a template class, which takes as template
+argument the class of the object that will be used as the callback when the
+asynchronous operation completes. This object can be of any type, but must
+include an operator() method with the signature:
+
+   operator()(asio::error_code ec, size_t length)
+
+... the two arguments being the status of the completed I/O operation and
+the number of bytes transferred. (In the case of the open method, the second
+argument will be zero.)
+
+Finally, the TCPSocket and UDPSocket classes provide the body of the
+asynchronous operations.
+
+Fetch Sequence
+--------------
+The fetch is implemented by the IOFetch class, which takes as argument the
+protocol to use.  The sequence is:
+
+  REENTER:
+    render the question into a wire-format query packet
+    open()                           // Open socket and optionally connect
+    if (! synchronous) {
+        YIELD;
+    }
+    YIELD asyncSend(query)           // Send query 
+    do {
+        YIELD asyncReceive(response) // Read response
+    } while (! complete(response))
+    close()                          // Drop connection and close socket
+    server->resume
+
+The open() method opens a socket for use.  On TCP, it also makes a
+connection to the remote end.  So under UDP the operation will complete
+immediately, but under TCP it could take a long time.  One solution would be
+for the open operation to post an event to the I/O queue; then both cases
+could be regarded as being equivalent, with the completion being signalled
+by the posting of the completion event.  However UDP is the most common case
+and that would involve extra overhead.  So the open() returns a status
+indicating whether the operation completed asynchronously.  If it did, the
+code yields back to the coroutine; if not the yield is bypassed.
+
+The asynchronous send is straightforward, invoking the underlying ASIO
+function.  (Note that the address/port is supplied to both the open() and
+asyncSend() methods - it is used by the TCPSocket in open() and by the
+UDPSocket in asyncSend().)
+
+The asyncReceive() method issues an asynchronous read and waits for completion.
+The fetch object keeps track of the amount of data received so far and when
+the receive completes it calls a method on the socket to determine if the
+entire message has been received.  (This will always be the case for UDP.  On
+TCP though, the message is preceded by a count field as several reads may be
+required to read all the data.)  The fetch loops until all the data is read.
+
+Finally, the socket is closed and the server called to resume operation.

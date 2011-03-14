@@ -60,7 +60,7 @@ SrvTestBase::createDataFromFile(const char* const datafile,
     delete endpoint;
 
     endpoint = IOEndpoint::create(protocol,
-                                  IOAddress(DEFAULT_REMOTE_ADDRESS), 5300);
+                                  IOAddress(DEFAULT_REMOTE_ADDRESS), 53210);
     UnitTestUtil::readWireData(datafile, data);
     io_sock = (protocol == IPPROTO_UDP) ? &IOSocket::getDummyUDPSocket() :
         &IOSocket::getDummyTCPSocket();
@@ -76,7 +76,7 @@ SrvTestBase::createRequestPacket(Message& message,
     delete io_message;
 
     endpoint = IOEndpoint::create(protocol,
-                                  IOAddress(DEFAULT_REMOTE_ADDRESS), 5300);
+                                  IOAddress(DEFAULT_REMOTE_ADDRESS), 53210);
     io_sock = (protocol == IPPROTO_UDP) ? &IOSocket::getDummyUDPSocket() :
         &IOSocket::getDummyTCPSocket();
     io_message = new IOMessage(request_renderer.getData(),

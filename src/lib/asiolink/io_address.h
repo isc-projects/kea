@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __IOADDRESS_H
-#define __IOADDRESS_H 1
+#ifndef __IO_ADDRESS_H
+#define __IO_ADDRESS_H 1
 
 // IMPORTANT NOTE: only very few ASIO headers files can be included in
 // this file.  In particular, asio.hpp should never be included here.
@@ -120,8 +120,4 @@ private:
 };
 
 }      // asiolink
-#endif // __IOADDRESS_H
-
-// Local Variables: 
-// mode: c++
-// End: 
+#endif // __IO_ADDRESS_H
