@@ -70,7 +70,7 @@ public:
                         message_render(Message::RENDER)
     {
         uint16_t class_ = RRClass::IN().getCode();
-        rrset_cache_.reset(new RRsetCache(RRSET_CACHE_DEFAULT_SIZE, class_));
+        rrset_cache_.reset(new DerivedRRsetCache(RRSET_CACHE_DEFAULT_SIZE, class_));
         negative_soa_cache_.reset(new RRsetCache(NEGATIVE_RRSET_CACHE_DEFAULT_SIZE, class_));
         // Set the message cache size to 1, make it easy for unittest.
         message_cache_.reset(new DerivedMessageCache(rrset_cache_, 1, class_,
@@ -79,7 +79,7 @@ public:
 
 protected:
     boost::shared_ptr<DerivedMessageCache> message_cache_;
-    RRsetCachePtr rrset_cache_;
+    boost::shared_ptr<DerivedRRsetCache> rrset_cache_;
     RRsetCachePtr negative_soa_cache_;
     Message message_parse;
     Message message_render;
@@ -109,6 +109,11 @@ TEST_F(MessageCacheTest, testLookup) {
 
     Name qname1("test.example.net.");
     EXPECT_TRUE(message_cache_->lookup(qname1, RRType::A(), message_render));
+
+    // Test looking up message which has expired rrset or some rrset
+    // has been removed from the rrset cache.
+    rrset_cache_->removeRRsetEntry(qname1, RRType::A());
+    EXPECT_FALSE(message_cache_->lookup(qname1, RRType::A(), message_render));
 
     // Update one message entry which has expired to message cache.
     updateMessageCache("message_fromWire9", message_cache_);
