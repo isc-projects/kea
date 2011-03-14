@@ -22,7 +22,7 @@
 bindctl \- control and configure BIND 10
 .SH "SYNOPSIS"
 .HP \w'\fBbindctl\fR\ 'u
-\fBbindctl\fR [\fB\-a\ \fR\fB\fIaddress\fR\fR] [\fB\-h\fR] [\fB\-c\ \fR\fB\fIfile\fR\fR] [\fB\-p\ \fR\fB\fInumber\fR\fR] [\fB\-\-address\ \fR\fB\fIaddress\fR\fR] [\fB\-\-help\fR] [\fB\-\-certificate\-chain\ \fR\fB\fIfile\fR\fR] [\fB\-\-port\ \fR\fB\fInumber\fR\fR] [\fB\-\-version\fR]
+\fBbindctl\fR [\fB\-a\ \fR\fB\fIaddress\fR\fR] [\fB\-h\fR] [\fB\-c\ \fR\fB\fIfile\fR\fR] [\fB\-p\ \fR\fB\fInumber\fR\fR] [\fB\-\-address\ \fR\fB\fIaddress\fR\fR] [\fB\-\-help\fR] [\fB\-\-certificate\-chain\ \fR\fB\fIfile\fR\fR] [\fB\-\-csv\-file\-dir\fR\fB\fIfile\fR\fR] [\fB\-\-port\ \fR\fB\fInumber\fR\fR] [\fB\-\-version\fR]
 .SH "DESCRIPTION"
 .PP
 The
@@ -50,6 +50,11 @@ daemon\&. The default is 127\&.0\&.0\&.1\&.
 \fB\-c\fR \fIfile\fR, \fB\-\-certificate\-chain\fR \fIfile\fR
 .RS 4
 The PEM formatted server certificate validation chain file\&.
+.RE
+.PP
+\fB\-\-csv\-file\-dir\fR\fIfile\fR
+.RS 4
+The directory name in which the user/password CSV file is stored (see AUTHENTICATION)\&. By default this option doesn\'t have any value, in which case the "\&.bind10" directory under the user\'s home directory will be used\&.
 .RE
 .PP
 \fB\-h\fR, \fB\-\-help\fR
@@ -85,10 +90,10 @@ Display the version number and exit\&.
 .RE
 .SH "AUTHENTICATION"
 .PP
-The tool will authenticate using a username and password\&. On the first successful login, it will save the details to
-~/\&.bind10/default_user\&.csv
-which will be used for later uses of
-\fBbindctl\fR\&.
+The tool will authenticate using a username and password\&. On the first successful login, it will save the details to a comma\-separated\-value (CSV) file which will be used for later uses of
+\fBbindctl\fR\&. The file name is
+default_user\&.csv
+located under the directory specified by the \-\-csv\-file\-dir option\&.
 .SH "USAGE"
 .PP
 The
