@@ -31,7 +31,7 @@ using namespace std;
 
 namespace {
 std::string
-ccspecfile(const std::string name) {
+ccspecfile(const std::string& name) {
     return (std::string(TEST_DATA_PATH) + "/" + name);
 }
 

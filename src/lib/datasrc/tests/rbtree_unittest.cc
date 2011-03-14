@@ -12,7 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-
 #include <gtest/gtest.h>
 
 #include <exceptions/exceptions.h>
@@ -57,7 +56,7 @@ const size_t Name::MAX_LABELS;
 namespace {
 class RBTreeTest : public::testing::Test {
 protected:
-    RBTreeTest() : rbtree_expose_empty_node(true) {
+    RBTreeTest() : rbtree_expose_empty_node(true), crbtnode(NULL) {
         const char* const domain_names[] = {
             "c", "b", "a", "x.d.e.f", "z.d.e.f", "g.h", "i.g.h", "o.w.y.d.e.f",
             "j.z.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f"};
@@ -188,6 +187,30 @@ TEST_F(RBTreeTest, findError) {
                  BadValue);
 }
 
+TEST_F(RBTreeTest, flags) {
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("flags.example"),
+                                                  &rbtnode));
+
+    // by default, flags are all off
+    EXPECT_FALSE(rbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
+
+    // set operation, by default it enables the flag
+    rbtnode->setFlag(RBNode<int>::FLAG_CALLBACK);
+    EXPECT_TRUE(rbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
+
+    // try disable the flag explicitly
+    rbtnode->setFlag(RBNode<int>::FLAG_CALLBACK, false);
+    EXPECT_FALSE(rbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
+
+    // try enable the flag explicitly
+    rbtnode->setFlag(RBNode<int>::FLAG_CALLBACK, true);
+    EXPECT_TRUE(rbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
+
+    // setting an unknown flag will trigger an exception
+    EXPECT_THROW(rbtnode->setFlag(static_cast<RBNode<int>::Flags>(2), true),
+                 isc::InvalidParameter);
+}
+
 bool
 testCallback(const RBNode<int>&, bool* callack_checker) {
     *callack_checker = true;
@@ -199,16 +222,16 @@ TEST_F(RBTreeTest, callback) {
     EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("callback.example"),
                                                   &rbtnode));
     rbtnode->setData(RBNode<int>::NodeDataPtr(new int(1)));
-    EXPECT_FALSE(rbtnode->isCallbackEnabled());
+    EXPECT_FALSE(rbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
 
     // enable/re-disable callback
-    rbtnode->enableCallback();
-    EXPECT_TRUE(rbtnode->isCallbackEnabled());
-    rbtnode->disableCallback();
-    EXPECT_FALSE(rbtnode->isCallbackEnabled());
+    rbtnode->setFlag(RBNode<int>::FLAG_CALLBACK);
+    EXPECT_TRUE(rbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
+    rbtnode->setFlag(RBNode<int>::FLAG_CALLBACK, false);
+    EXPECT_FALSE(rbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
 
     // enable again for subsequent tests
-    rbtnode->enableCallback();
+    rbtnode->setFlag(RBNode<int>::FLAG_CALLBACK);
     // add more levels below and above the callback node for partial match.
     RBNode<int>* subrbtnode;
     EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("sub.callback.example"),
@@ -222,9 +245,9 @@ TEST_F(RBTreeTest, callback) {
     // it.
     EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("callback.example"),
                                                    &rbtnode));
-    EXPECT_TRUE(rbtnode->isCallbackEnabled());
-    EXPECT_FALSE(subrbtnode->isCallbackEnabled());
-    EXPECT_FALSE(parentrbtnode->isCallbackEnabled());
+    EXPECT_TRUE(rbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
+    EXPECT_FALSE(subrbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
+    EXPECT_FALSE(parentrbtnode->getFlag(RBNode<int>::FLAG_CALLBACK));
 
     // check if the callback is called from find()
     RBTreeNodeChain<int> node_path1;
@@ -237,7 +260,7 @@ TEST_F(RBTreeTest, callback) {
     // enable callback at the parent node, but it doesn't have data so
     // the callback shouldn't be called.
     RBTreeNodeChain<int> node_path2;
-    parentrbtnode->enableCallback();
+    parentrbtnode->setFlag(RBNode<int>::FLAG_CALLBACK);
     callback_called = false;
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
               rbtree.find(Name("callback.example"), &crbtnode, node_path2,
@@ -261,21 +284,21 @@ TEST_F(RBTreeTest, chainLevel) {
     EXPECT_EQ(1, chain.getLevelCount());
 
     /*
-     * Now creating a possibly deepest tree with MAX_LABELS - 1 levels.
+     * Now creating a possibly deepest tree with MAX_LABELS levels.
      * it should look like:
+     *           (.)
+     *            |
      *            a
-     *           /|
-     *         (.)a
      *            |
      *            a
      *            : (MAX_LABELS - 1) "a"'s
      *
      * then confirm that find() for the deepest name succeeds without any
      * disruption, and the resulting chain has the expected level.
-     * Note that "a." and the root name (".") belong to the same level.
-     * So the possible maximum level is MAX_LABELS - 1, not MAX_LABELS.
+     * Note that the root name (".") solely belongs to a single level,
+     * so the levels begin with 2.
      */
-    for (unsigned int i = 1; i < Name::MAX_LABELS; ++i) {
+    for (unsigned int i = 2; i <= Name::MAX_LABELS; ++i) {
         node_name = Name("a.").concatenate(node_name);
         EXPECT_EQ(RBTree<int>::SUCCESS, tree.insert(node_name, &rbtnode));
         RBTreeNodeChain<int> found_chain;
@@ -342,6 +365,128 @@ TEST_F(RBTreeTest, nextNodeError) {
     EXPECT_THROW(rbtree.nextNode(chain), BadValue);
 }
 
+// A helper function for getLastComparedNode() below.
+void
+comparisonChecks(const RBTreeNodeChain<int>& chain,
+                 int expected_order, int expected_common_labels,
+                 NameComparisonResult::NameRelation expected_reln)
+{
+    if (expected_order > 0) {
+        EXPECT_LT(0, chain.getLastComparisonResult().getOrder());
+    } else if (expected_order < 0) {
+        EXPECT_GT(0, chain.getLastComparisonResult().getOrder());
+    } else {
+        EXPECT_EQ(0, chain.getLastComparisonResult().getOrder());
+    }
+    EXPECT_EQ(expected_common_labels,
+              chain.getLastComparisonResult().getCommonLabels());
+    EXPECT_EQ(expected_reln,
+              chain.getLastComparisonResult().getRelation());
+}
+
+TEST_F(RBTreeTest, getLastComparedNode) {
+    RBTree<int>& tree = rbtree_expose_empty_node; // use the "empty OK" mode
+    RBTreeNodeChain<int> chain;
+
+    // initially there should be no 'last compared'.
+    EXPECT_EQ(static_cast<void*>(NULL), chain.getLastComparedNode());
+
+    // A search for an empty tree should result in no 'last compared', too.
+    RBTree<int> empty_tree;
+    EXPECT_EQ(RBTree<int>::NOTFOUND,
+              empty_tree.find<void*>(Name("a"), &crbtnode, chain, NULL, NULL));
+    EXPECT_EQ(static_cast<void*>(NULL), chain.getLastComparedNode());
+    chain.clear();
+
+    const RBNode<int>* expected_node;
+
+    // Exact match case.  The returned node should be last compared.
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              tree.find<void*>(Name("x.d.e.f"), &expected_node, chain,
+                               NULL, NULL));
+    EXPECT_EQ(expected_node, chain.getLastComparedNode());
+    // 2 = # labels of "x."
+    comparisonChecks(chain, 0, 2, NameComparisonResult::EQUAL);
+    chain.clear();
+
+    // Partial match, search stopped at the matching node, which should be
+    // the last compared node.
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              tree.find(Name("i.g.h"), &expected_node));
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              tree.find<void*>(Name("x.i.g.h"), &crbtnode, chain,
+                                 NULL, NULL));
+    EXPECT_EQ(expected_node, chain.getLastComparedNode());
+    // i.g.h < x.i.g.h, 2 = # labels of "i."
+    comparisonChecks(chain, 1, 2, NameComparisonResult::SUBDOMAIN);
+    chain.clear();
+
+    // Partial match, search stopped in the subtree below the matching node
+    // after following a left branch.
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              tree.find(Name("x.d.e.f"), &expected_node));
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              tree.find<void*>(Name("a.d.e.f"), &crbtnode, chain,
+                                 NULL, NULL));
+    EXPECT_EQ(expected_node, chain.getLastComparedNode());
+    // a < x, 1 = # labels of "." (trailing dot)
+    comparisonChecks(chain, -1, 1, NameComparisonResult::COMMONANCESTOR);
+    chain.clear();
+
+    // Partial match, search stopped in the subtree below the matching node
+    // after following a right branch.
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              tree.find(Name("z.d.e.f"), &expected_node));
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              tree.find<void*>(Name("zz.d.e.f"), &crbtnode, chain,
+                                 NULL, NULL));
+    EXPECT_EQ(expected_node, chain.getLastComparedNode());
+    // zz > z, 1 = # labels of "." (trailing dot)
+    comparisonChecks(chain, 1, 1, NameComparisonResult::COMMONANCESTOR);
+    chain.clear();
+
+    // Partial match, search stopped at a node for a super domain of the
+    // search name in the subtree below the matching node.
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              tree.find(Name("w.y.d.e.f"), &expected_node));
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              tree.find<void*>(Name("y.d.e.f"), &crbtnode, chain,
+                                 NULL, NULL));
+    EXPECT_EQ(expected_node, chain.getLastComparedNode());
+    // y < w.y, 2 = # labels of "y."
+    comparisonChecks(chain, -1, 2, NameComparisonResult::SUPERDOMAIN);
+    chain.clear();
+
+    // Partial match, search stopped at a node that share a common ancestor
+    // with the search name in the subtree below the matching node.
+    // (the expected node is the same as the previous case)
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              tree.find<void*>(Name("z.y.d.e.f"), &crbtnode, chain,
+                                 NULL, NULL));
+    EXPECT_EQ(expected_node, chain.getLastComparedNode());
+    // z.y > w.y, 2 = # labels of "y."
+    comparisonChecks(chain, 1, 2, NameComparisonResult::COMMONANCESTOR);
+    chain.clear();
+
+    // Search stops in the highest level after following a left branch.
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, tree.find(Name("c"), &expected_node));
+    EXPECT_EQ(RBTree<int>::NOTFOUND,
+              tree.find<void*>(Name("bb"), &crbtnode, chain, NULL, NULL));
+    EXPECT_EQ(expected_node, chain.getLastComparedNode());
+    // bb < c, 1 = # labels of "." (trailing dot)
+    comparisonChecks(chain, -1, 1, NameComparisonResult::COMMONANCESTOR);
+    chain.clear();
+
+    // Search stops in the highest level after following a right branch.
+    // (the expected node is the same as the previous case)
+    EXPECT_EQ(RBTree<int>::NOTFOUND,
+              tree.find<void*>(Name("d"), &crbtnode, chain, NULL, NULL));
+    EXPECT_EQ(expected_node, chain.getLastComparedNode());
+    // d > c, 1 = # labels of "." (trailing dot)
+    comparisonChecks(chain, 1, 1, NameComparisonResult::COMMONANCESTOR);
+    chain.clear();
+}
+
 TEST_F(RBTreeTest, dumpTree) {
     std::ostringstream str;
     std::ostringstream str2;
@@ -377,5 +522,45 @@ TEST_F(RBTreeTest, swap) {
     out.str("");
     tree2.dumpTree(out);
     ASSERT_EQ(str1.str(), out.str());
+}
+
+// Matching in the "root zone" may be special (e.g. there's no parent,
+// any domain names should be considered a subdomain of it), so it makes
+// sense to test cases with the root zone explicitly.
+TEST_F(RBTreeTest, root) {
+    RBTree<int> root;
+    root.insert(Name::ROOT_NAME(), &rbtnode);
+    rbtnode->setData(RBNode<int>::NodeDataPtr(new int(1)));
+
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              root.find(Name::ROOT_NAME(), &crbtnode));
+    EXPECT_EQ(rbtnode, crbtnode);
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              root.find(Name("example.com"), &crbtnode));
+    EXPECT_EQ(rbtnode, crbtnode);
+
+    // Insert a new name that better matches the query name.  find() should
+    // find the better one.
+    root.insert(Name("com"), &rbtnode);
+    rbtnode->setData(RBNode<int>::NodeDataPtr(new int(2)));
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              root.find(Name("example.com"), &crbtnode));
+    EXPECT_EQ(rbtnode, crbtnode);
+
+    // Perform the same tests for the tree that allows matching against empty
+    // nodes.
+    RBTree<int> root_emptyok(true);
+    root_emptyok.insert(Name::ROOT_NAME(), &rbtnode);
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              root_emptyok.find(Name::ROOT_NAME(), &crbtnode));
+    EXPECT_EQ(rbtnode, crbtnode);
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              root_emptyok.find(Name("example.com"), &crbtnode));
+    EXPECT_EQ(rbtnode, crbtnode);
+
+    root.insert(Name("com"), &rbtnode);
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              root.find(Name("example.com"), &crbtnode));
+    EXPECT_EQ(rbtnode, crbtnode);
 }
 }

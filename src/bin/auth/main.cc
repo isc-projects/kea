@@ -42,6 +42,7 @@
 #include <auth/change_user.h>
 #include <auth/auth_srv.h>
 #include <asiolink/asiolink.h>
+#include <log/dummylog.h>
 
 using namespace std;
 using namespace isc::data;
@@ -54,9 +55,6 @@ using namespace asiolink;
 namespace {
 
 bool verbose_mode = false;
-
-// Default port current 5300 for testing purposes
-const char* DNSPORT = "5300";
 
 /* need global var for config/command handlers.
  * todo: turn this around, and put handlers in the authserver
@@ -76,13 +74,8 @@ my_command_handler(const string& command, ConstElementPtr args) {
 
 void
 usage() {
-    cerr << "Usage:  b10-auth [-a address] [-p port] [-u user] [-4|-6] [-nv]"
+    cerr << "Usage:  b10-auth [-u user] [-nv]"
          << endl;
-    cerr << "\t-a: specify the address to listen on (default: all) " << endl;
-    cerr << "\t-p: specify the port to listen on (default: " << DNSPORT << ")"
-         << endl;
-    cerr << "\t-4: listen on all IPv4 addresses (incompatible with -a)" << endl;
-    cerr << "\t-6: listen on all IPv6 addresses (incompatible with -a)" << endl;
     cerr << "\t-n: do not cache answers in memory" << endl;
     cerr << "\t-u: change process UID to the specified user" << endl;
     cerr << "\t-v: verbose output" << endl;
@@ -93,38 +86,20 @@ usage() {
 int
 main(int argc, char* argv[]) {
     int ch;
-    const char* port = DNSPORT;
-    const char* address = NULL;
     const char* uid = NULL;
-    bool use_ipv4 = true, use_ipv6 = true, cache = true;
+    bool cache = true;
 
-    while ((ch = getopt(argc, argv, "46a:np:u:v")) != -1) {
+    while ((ch = getopt(argc, argv, ":nu:v")) != -1) {
         switch (ch) {
-        case '4':
-            // Note that -4 means "ipv4 only", we need to set "use_ipv6" here,
-            // not "use_ipv4".  We could use something like "ipv4_only", but
-            // we found the negatively named variable could confuse the code
-            // logic.
-            use_ipv6 = false;
-            break;
-        case '6':
-            // The same note as -4 applies.
-            use_ipv4 = false;
-            break;
         case 'n':
             cache = false;
-            break;
-        case 'a':
-            address = optarg;
-            break;
-        case 'p':
-            port = optarg;
             break;
         case 'u':
             uid = optarg;
             break;
         case 'v':
             verbose_mode = true;
+            isc::log::denabled = true;
             break;
         case '?':
         default:
@@ -133,18 +108,6 @@ main(int argc, char* argv[]) {
     }
 
     if (argc - optind > 0) {
-        usage();
-    }
-
-    if (!use_ipv4 && !use_ipv6) {
-        cerr << "[b10-auth] Error: Cannot specify both -4 and -6 "
-             << "at the same time" << endl;
-        usage();
-    }
-
-    if ((!use_ipv4 || !use_ipv6) && address != NULL) {
-        cerr << "[b10-auth] Error: Cannot specify -4 or -6 "
-             << "at the same time as -a" << endl;
         usage();
     }
 
@@ -159,7 +122,13 @@ main(int argc, char* argv[]) {
     ModuleCCSession* config_session = NULL;
     string xfrout_socket_path;
     if (getenv("B10_FROM_BUILD") != NULL) {
-        xfrout_socket_path = string(getenv("B10_FROM_BUILD")) + "/auth_xfrout_conn";
+        if (getenv("B10_FROM_SOURCE_LOCALSTATEDIR")) {
+            xfrout_socket_path = string("B10_FROM_SOURCE_LOCALSTATEDIR") +
+                "/auth_xfrout_conn";
+        } else {
+            xfrout_socket_path = string(getenv("B10_FROM_BUILD")) +
+                "/auth_xfrout_conn";
+        }
     } else {
         xfrout_socket_path = UNIX_SOCKET_FILE;
     }
@@ -182,21 +151,8 @@ main(int argc, char* argv[]) {
         DNSLookup* lookup = auth_server->getDNSLookupProvider();
         DNSAnswer* answer = auth_server->getDNSAnswerProvider();
 
-        DNSService* dns_service;
-        if (address != NULL) {
-            // XXX: we can only specify at most one explicit address.
-            // This also means the server cannot run in the dual address
-            // family mode if explicit addresses need to be specified.
-            // We don't bother to fix this problem, however.  The -a option
-            // is a short term workaround until we support dynamic listening
-            // port allocation.
-            dns_service = new DNSService(io_service,  *port, *address,
-                                         checkin, lookup, answer);
-        } else {
-            dns_service = new DNSService(io_service, *port, use_ipv4,
-                                         use_ipv6, checkin, lookup,
-                                         answer);
-        }
+        DNSService dns_service(io_service, checkin, lookup, answer);
+        auth_server->setDNSService(dns_service);
         cout << "[b10-auth] DNSServices created." << endl;
 
         cc_session = new Session(io_service.get_io_service());
@@ -237,7 +193,6 @@ main(int argc, char* argv[]) {
         cout << "[b10-auth] Server started." << endl;
         io_service.run();
 
-        delete dns_service;
     } catch (const std::exception& ex) {
         cerr << "[b10-auth] Server failed: " << ex.what() << endl;
         ret = 1;

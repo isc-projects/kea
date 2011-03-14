@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,8 +11,6 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
-
-// $Id: base64_unittest.cc 2549 2010-07-20 19:09:37Z jinmei $
 
 #include <string>
 
@@ -37,8 +35,8 @@ TEST_F(RootLoggerNameTest, SetGet) {
     const std::string name2 = "test2";
 
     // Check that Set/Get works
-    RootLoggerName::setName(name1);
-    EXPECT_EQ(name1, RootLoggerName::getName());
+    setRootLoggerName(name1);
+    EXPECT_EQ(name1, getRootLoggerName());
 
     // We could not test that the root logger name is initialised
     // correctly (as there is one instance of it and we don't know
@@ -47,6 +45,6 @@ TEST_F(RootLoggerNameTest, SetGet) {
     //
     // (There was always the outside chance that the root logger name
     // was initialised with name1 and that setName() has no effect.)
-    RootLoggerName::setName(name2);
-    EXPECT_EQ(name2, RootLoggerName::getName());
+    setRootLoggerName(name2);
+    EXPECT_EQ(name2, getRootLoggerName());
 }

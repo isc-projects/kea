@@ -1,0 +1,57 @@
+#
+# SOA request response for example.com 
+#
+# Transaction ID: 0x7f36
+# Flags: 0x8400 (Standard query response, No error)
+7f 36 84 00
+# Questions: 1
+00 01
+# Answer RRs: 1
+00 01
+# Authority RRs: 2
+00 02
+# Additional RRs: 0
+00 00
+##
+## Query
+##
+# Name: example.com
+07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+# Type: SOA (Start of zone of authority)
+00 06
+# Class: IN (0x0001)
+00 01
+##
+## Answers
+##
+# Name: example.com
+c0 0c
+# Type: SOA (Start of zone of authority)
+00 06
+# Class: IN (0x0001)
+00 01
+# Time to live: 2 days (172800s)
+00 02 a3 00
+# Data length: 49
+00 31
+# Primary name server: dns1.icann.org
+04 64 6e 73 31 05 69 63 61 6e 6e 03 6f 72 67 00
+# Responsible authority's mailbox: hostmaster.icann.org
+0a 68 6f 73 74 6d 61 73 74 65 72 c0 2e
+# Serial number: 2010072301
+77 cf 44 ed
+# Refresh interval: 2 hours
+00 00 1c 20
+# Retry interval: 1 hour
+00 00 0e 10
+# Expiration limit: 14 days
+00 12 75 00
+# Minimum TTL: 1 day
+00 01 51 80
+##
+## Authoritative nameservers
+##
+# example.com: type NS, class IN, ns a.iana-servers.net
+c0 0c 00 02 00 01 00 02 a3 00 00 14 01 61 0c 69 61 6e 61 2d 73 65 72 76 65 72 73 03 6e 65 74 00
+# example.com: type NS, class IN, ns b.iana-servers.net
+c0 0c 00 02 00 01 00 02 a3 00 00 04 01 62 c0 68

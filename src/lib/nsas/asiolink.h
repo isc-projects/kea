@@ -18,41 +18,4 @@
 #include <string>
 #include <sys/socket.h>
 
-namespace asiolink {
-
-/// \brief IO Address Dummy Class
-///
-/// As part of ther resolver, Evan has written the asiolink.h file, which
-/// encapsulates some of the boost::asio classes.  Until these are checked
-/// into trunk and merged with this branch, these dummy classes should fulfill
-/// their function.
-
-class IOAddress {
-public:
-    /// \param address_str String representing the address
-    IOAddress(const std::string& address_str) : address_(address_str)
-    {}
-
-    /// \brief Just a virtual destructor
-    virtual ~ IOAddress() { }
-
-    /// \return Textual representation of the address
-    std::string toText() const
-    {return address_;}
-
-    /// \return Address family of the address
-    virtual short getFamily() const {
-        return ((address_.find(".") != std::string::npos) ? AF_INET : AF_INET6);
-    }
-
-    /// \return true if two addresses are equal
-    bool equal(const IOAddress& address)
-    {return (toText() == address.toText());}
-
-private:
-    std::string     address_;       ///< Address represented
-};
-
-}   // namespace asiolink
-
 #endif // __ASIOLINK_H

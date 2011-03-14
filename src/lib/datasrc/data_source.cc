@@ -189,6 +189,19 @@ checkCache(QueryTask& task, RRsetList& target) {
                 rrsets.addRRset(rrset);
                 target.append(rrsets);
             }
+
+            // Reset the referral flag and treat CNAME as "not found".
+            // This emulates the behavior of the sqlite3 data source.
+            // XXX: this is not ideal in that the responsibility for handling
+            // operation specific cases is spread over various classes at
+            // different abstraction levels.  For longer terms we should
+            // revisit the whole datasource/query design, and clarify this
+            // point better.
+            flags &= ~DataSrc::REFERRAL;
+            if ((flags & DataSrc::CNAME_FOUND) != 0) {
+                flags &= ~DataSrc::CNAME_FOUND;
+                flags |= DataSrc::TYPE_NOT_FOUND;
+            }
             task.flags = flags;
             return (true);
         }
@@ -1157,7 +1170,7 @@ MetaDataSrc::addDataSrc(ConstDataSrcPtr data_src) {
 void
 MetaDataSrc::removeDataSrc(ConstDataSrcPtr data_src) {
     std::vector<ConstDataSrcPtr>::iterator it, itr;
-    for (it = data_sources.begin(); it != data_sources.end(); it++) {
+    for (it = data_sources.begin(); it != data_sources.end(); ++it) {
         if (*it == data_src) {
             itr = it;
         }
