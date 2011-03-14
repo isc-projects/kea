@@ -124,10 +124,16 @@ TEST_F(BufferTest, outputBufferWriteat) {
     obuffer.writeUint32(data32);
     expected_size += sizeof(data32);
 
+    // overwrite 2nd byte
+    obuffer.writeUint8At(4, 1);
+    EXPECT_EQ(expected_size, obuffer.getLength()); // length shouldn't change
+    const uint8_t* cp = static_cast<const uint8_t*>(obuffer.getData());
+    EXPECT_EQ(4, *(cp + 1));
+
     // overwrite 2nd and 3rd bytes
     obuffer.writeUint16At(data16, 1);
     EXPECT_EQ(expected_size, obuffer.getLength()); // length shouldn't change
-    const uint8_t* cp = static_cast<const uint8_t*>(obuffer.getData());
+    cp = static_cast<const uint8_t*>(obuffer.getData());
     EXPECT_EQ(2, *(cp + 1));
     EXPECT_EQ(3, *(cp + 2));
 
@@ -138,6 +144,10 @@ TEST_F(BufferTest, outputBufferWriteat) {
     EXPECT_EQ(2, *(cp + 2));
     EXPECT_EQ(3, *(cp + 3));
 
+    EXPECT_THROW(obuffer.writeUint8At(data16, 5),
+                 isc::dns::InvalidBufferPosition);
+    EXPECT_THROW(obuffer.writeUint8At(data16, 4),
+                 isc::dns::InvalidBufferPosition);
     EXPECT_THROW(obuffer.writeUint16At(data16, 3),
                  isc::dns::InvalidBufferPosition);
     EXPECT_THROW(obuffer.writeUint16At(data16, 4),
