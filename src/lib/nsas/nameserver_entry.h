@@ -15,21 +15,8 @@
 #ifndef __NAMESERVER_ENTRY_H
 #define __NAMESERVER_ENTRY_H
 
-// Workaround for a problem with boost and sunstudio 5.10
-// There is a version check in there that appears wrong,
-// which makes including boost/thread.hpp fail
-// This will probably be fixed in a future version of boost,
-// in which case this part can be removed then
-#ifdef NEED_SUNPRO_WORKAROUND
-#if defined(__SUNPRO_CC) && __SUNPRO_CC == 0x5100
-#undef __SUNPRO_CC
-#define __SUNPRO_CC 0x5090
-#endif
-#endif // NEED_SUNPRO_WORKAROUND
-
 #include <string>
 #include <vector>
-#include <boost/thread.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
 #include <exceptions/exceptions.h>
@@ -118,7 +105,14 @@ public:
         name_(name),
         classCode_(class_code),
         expiration_(0)
-    {}
+    {
+        has_address_[V4_ONLY] = false;
+        has_address_[V6_ONLY] = false;
+        has_address_[ANY_OK] = false;
+        expect_address_[V4_ONLY] = false;
+        expect_address_[V6_ONLY] = false;
+        expect_address_[ANY_OK] = false;
+    }
 
     /*
      * \brief Return Address
@@ -252,7 +246,7 @@ public:
     //@}
 
 private:
-    mutable boost::recursive_mutex    mutex_;     ///< Mutex protecting this object
+    mutable isc::locks::recursive_mutex    mutex_;///< Mutex protecting this object
     std::string     name_;              ///< Canonical name of the nameserver
     isc::dns::RRClass classCode_;       ///< Class of the nameserver
     /**

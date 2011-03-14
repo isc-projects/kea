@@ -23,6 +23,8 @@
 ///     issue, the design and interface are not fixed, and RBTree isn't ready
 ///     to be used as a base data structure by other modules.
 
+#include <exceptions/exceptions.h>
+
 #include <dns/name.h>
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
@@ -110,6 +112,29 @@ public:
     /// \brief Alias for shared pointer to the data.
     typedef boost::shared_ptr<T> NodeDataPtr;
 
+    /// Node flags.
+    ///
+    /// Each flag value defines a non default property for a specific node.
+    /// These are defined as bitmask type values for the convenience of
+    /// internal implementation, but applications are expected to use
+    /// each flag separately via the enum definitions.
+    ///
+    /// All (settable) flags are off by default; they must be explicitly
+    /// set to on by the \c setFlag() method.
+    enum Flags {
+        FLAG_CALLBACK = 1, ///< Callback enabled. See \ref callback
+        FLAG_USER1 = 0x80000000U ///< Application specific flag
+    };
+private:
+    // Some flag values are expected to be used for internal purposes
+    // (e.g., representing the node color) in future versions, so we
+    // limit the settable flags via the \c setFlag() method to those
+    // explicitly defined in \c Flags.  This constant represents all
+    // such flags.
+    static const uint32_t SETTABLE_FLAGS = (FLAG_CALLBACK | FLAG_USER1);
+
+public:
+
     /// \brief Destructor
     ///
     /// It might seem strange that constructors are private and destructor
@@ -153,6 +178,52 @@ public:
     void setData(const NodeDataPtr& data) { data_ = data; }
     //@}
 
+    /// \name Node flag manipulation methods
+    //@{
+    /// Get the status of a node flag.
+    ///
+    /// This method returns whether the given node flag is set (enabled)
+    /// on the node.  The \c flag parameter is expected to be one of the
+    /// defined \c Flags constants.  For simplicity, the method interface
+    /// does not prohibit passing an undefined flag or combined flags, but
+    /// the return value in such a case will be meaningless for the caller
+    /// (an application would have to use an ugly cast for such an unintended
+    /// form of call, which will hopefully avoid accidental misuse).
+    ///
+    /// \exception None
+    /// \param flag The flag to be tested.
+    /// \return \c true if the \c flag is set; \c false otherwise.
+    bool getFlag(Flags flag) const {
+        return ((flags_ & flag) != 0);
+    }
+
+    /// Set or clear a node flag.
+    ///
+    /// This method changes the status of the specified node flag to either
+    /// "on" (enabled) or "off" (disabled).  The new status is specified by
+    /// the \c on parameter.
+    /// Like the \c getFlag() method, \c flag is expected to be one of the
+    /// defined \c Flags constants.  If an undefined or unsettable flag is
+    /// specified, \c isc::InvalidParameter exception will be thrown.
+    ///
+    /// \exception isc::InvalidParameter Unsettable flag is specified
+    /// \exception None otherwise
+    /// \param flag The node flag to be changed.
+    /// \on If \c true, set the flag to on; otherwise set it to off.
+    void setFlag(Flags flag, bool on = true) {
+        if ((flag & ~SETTABLE_FLAGS) != 0) {
+            isc_throw(isc::InvalidParameter,
+                      "Unsettable RBTree flag is being set");
+        }
+        if (on) {
+            flags_ |= flag;
+        } else {
+            flags_ &= ~flag;
+        }
+    }
+    //@}
+
+private:
     /// \name Callback related methods
     ///
     /// See the description of \c RBTree<T>::find() about callbacks.
@@ -160,15 +231,7 @@ public:
     /// These methods never throw an exception.
     //@{
     /// Return if callback is enabled at the node.
-    bool isCallbackEnabled() const { return (callback_required_); }
-
-    /// Enable callback at the node.
-    void enableCallback() { callback_required_ = true; }
-
-    /// Disable callback at the node.
-    void disableCallback() { callback_required_ = false; }
     //@}
-
 
 private:
     /// \brief Define rbnode color
@@ -224,7 +287,7 @@ private:
     /// RBTree::find().
     ///
     /// \todo It might be needed to put it into more general attributes field.
-    bool callback_required_;
+    uint32_t flags_;
 };
 
 
@@ -238,7 +301,7 @@ RBNode<T>::RBNode() :
     // dummy name, the value doesn't matter:
     name_(isc::dns::Name::ROOT_NAME()),
     down_(this),
-    callback_required_(false)
+    flags_(0)
 {
 }
 
@@ -250,7 +313,7 @@ RBNode<T>::RBNode(const isc::dns::Name& name) :
     color_(RED),
     name_(name),
     down_(NULL_NODE()),
-    callback_required_(false)
+    flags_(0)
 {
 }
 
@@ -286,8 +349,19 @@ RBNode<T>::successor() const {
 }
 
 
-/// \brief RBTreeNodeChain is used to keep track of the sequence of
-/// nodes to reach any given node from the root of RBTree.
+/// \brief RBTreeNodeChain stores detailed information of \c RBTree::find()
+/// result.
+///
+/// - The \c RBNode that was last compared with the search name, and
+///   the comparison result at that point in the form of
+///   \c isc::dns::NameComparisonResult.
+/// - A sequence of nodes that forms a path to the found node (which is
+///   not yet implemented).
+///
+/// The comparison result can be used to handle some rare cases such as
+/// empty node processing.
+/// The node sequence keeps track of the nodes to reach any given node from
+/// the root of RBTree.
 ///
 /// Currently, RBNode does not have "up" pointers in them (i.e., back pointers
 /// from the root of one level of tree of trees to the node in the parent
@@ -299,6 +373,10 @@ RBNode<T>::successor() const {
 /// quite likely we want to have that pointer if we want to optimize name
 /// compression by exploiting the structure of the zone.  If and when that
 /// happens we should also revisit the need for the chaining.
+/// Also, the class name may not be appropriate now that it contains other
+/// information than a node "chain", and the chain itself may even be
+/// deprecated.  Something like "RBTreeFindContext" may be a better name.
+/// This point should be revisited later.
 ///
 /// RBTreeNodeChain is constructed and manipulated only inside the \c RBTree
 /// class.
@@ -323,7 +401,11 @@ public:
     /// The default constructor.
     ///
     /// \exception None
-    RBTreeNodeChain() : node_count_(0) {}
+    RBTreeNodeChain() : node_count_(0), last_compared_(NULL),
+                        // XXX: meaningless initial values:
+                        last_comparison_(0, 0,
+                                         isc::dns::NameComparisonResult::EQUAL)
+    {}
 
 private:
     RBTreeNodeChain(const RBTreeNodeChain<T>&);
@@ -331,6 +413,46 @@ private:
     //@}
 
 public:
+    /// Clear the state of the chain.
+    ///
+    /// This method re-initializes the internal state of the chain so that
+    /// it can be reused for subsequent operations.
+    ///
+    /// \exception None
+    void clear() {
+        node_count_ = 0;
+        last_compared_ = NULL;
+    }
+
+    /// Return the \c RBNode that was last compared in \c RBTree::find().
+    ///
+    /// If this chain has been passed to \c RBTree::find() and there has
+    /// been name comparison against the search name, the last compared
+    /// \c RBNode is recorded within the chain.  This method returns that
+    /// node.
+    /// If \c RBTree::find() hasn't been called with this chain or name
+    /// comparison hasn't taken place (which is possible if the tree is empty),
+    /// this method returns \c NULL.
+    ///
+    /// \exception None
+    const RBNode<T>* getLastComparedNode() const {
+        return (last_compared_);
+    }
+
+    /// Return the result of last name comparison in \c RBTree::find().
+    ///
+    /// Like \c getLastComparedNode(), \c RBTree::find() records the result
+    /// of the last name comparison in the chain.  This method returns the
+    /// result.
+    /// The return value of this method is only meaningful when comparison
+    /// has taken place, i.e, when \c getLastComparedNode() would return a
+    /// non \c NULL value.
+    ///
+    /// \exception None
+    const isc::dns::NameComparisonResult& getLastComparisonResult() const {
+        return (last_comparison_);
+    }
+
     /// \brief Return the number of levels stored in the chain.
     ///
     /// It's equal to the number of nodes in the chain; for an empty
@@ -411,15 +533,14 @@ private:
 
 private:
     // The max label count for one domain name is Name::MAX_LABELS (128).
-    // Since each node in rbtree stores at least one label, and the root
-    // name always shares the same level with some others (which means
-    // all top level nodes except the one for the root name contain at least
-    // two labels), the possible maximum level is MAX_LABELS - 1.
-    // It's also the possible maximum nodes stored in a chain.
-    const static int RBT_MAX_LEVEL = isc::dns::Name::MAX_LABELS - 1;
+    // Since each node in rbtree stores at least one label, it's also equal
+    // to the possible maximum level.
+    const static int RBT_MAX_LEVEL = isc::dns::Name::MAX_LABELS;
 
-    const RBNode<T>* nodes_[RBT_MAX_LEVEL];
     int node_count_;
+    const RBNode<T>* nodes_[RBT_MAX_LEVEL];
+    const RBNode<T>* last_compared_;
+    isc::dns::NameComparisonResult last_comparison_;
 };
 
 
@@ -589,7 +710,7 @@ public:
     ///
     /// This version of \c find() calls the callback whenever traversing (on
     /// the way from root down the tree) a marked node on the way down through
-    /// the domain namespace (see RBNode::enableCallback and related
+    /// the domain namespace (see \c RBNode::enableCallback and related
     /// functions).
     ///
     /// If you return true from the callback, the search is stopped and a
@@ -603,12 +724,18 @@ public:
     /// The callbacks are not general functors for the same reason - we don't
     /// expect it to be needed.
     ///
-    /// Another special feature of this version is the ability to provide
-    /// a node chain containing a path to the found node.  The chain will be
-    /// returned via the \c node_path parameter.
+    /// Another special feature of this version is the ability to record
+    /// more detailed information regarding the search result.
+    ///
+    /// This information will be returned via the \c node_path parameter,
+    /// which is an object of class \c RBTreeNodeChain.
     /// The passed parameter must be empty.
-    /// On success, it will contain all the ancestor nodes from the found
-    /// node towards the root.
+    ///
+    /// \note The rest of the description isn't yet implemented.  It will be
+    /// handled in Trac ticket #517.
+    ///
+    /// On success, the node sequence stoed in \c node_path will contain all
+    /// the ancestor nodes from the found node towards the root.
     /// For example, if we look for o.w.y.d.e.f in the example \ref diagram,
     /// \c node_path will contain w.y and d.e.f; the \c top() node of the
     /// chain will be o, w.f and d.e.f will be stored below it.
@@ -622,13 +749,13 @@ public:
     /// node of a given node in the entire RBTree; the \c nextNode() method
     /// takes a node chain as a parameter.
     ///
-    /// \exception isc::BadValue node_path is not empty.
+    /// \exception isc::BadValue node_path is not empty (not yet implemented).
     ///
     /// \param name Target to be found
     /// \param node On success (either \c EXACTMATCH or \c PARTIALMATCH)
     ///     it will store a pointer to the matching node
-    /// \param node_path It will store all the ancestor nodes in the RBTree
-    ///        from the found node to the root.  The found node is stored.
+    /// \param node_path Other search details will be stored (see the
+    ///        description)
     /// \param callback If non \c NULL, a call back function to be called
     ///     at marked nodes (see above).
     /// \param callback_arg A caller supplied argument to be passed to
@@ -853,10 +980,11 @@ RBTree<T>::find(const isc::dns::Name& target_name,
     isc::dns::Name name = target_name;
 
     while (node != NULLNODE) {
-        const isc::dns::NameComparisonResult compare_result =
-            name.compare(node->name_);
+        node_path.last_compared_ = node;
+        node_path.last_comparison_ = name.compare(node->name_);
         const isc::dns::NameComparisonResult::NameRelation relation =
-            compare_result.getRelation();
+            node_path.last_comparison_.getRelation();
+
         if (relation == isc::dns::NameComparisonResult::EQUAL) {
             if (needsReturnEmptyNode_ || !node->isEmpty()) {
                 node_path.push(node);
@@ -865,17 +993,26 @@ RBTree<T>::find(const isc::dns::Name& target_name,
             }
             break;
         } else {
-            const int common_label_count = compare_result.getCommonLabels();
+            const int common_label_count =
+                node_path.last_comparison_.getCommonLabels();
             // If the common label count is 1, there is no common label between
-            // the two names, except the trailing "dot".
-            if (common_label_count == 1) {
-                node = (compare_result.getOrder() < 0) ?
+            // the two names, except the trailing "dot".  In this case the two
+            // sequences of labels have essentially no hierarchical
+            // relationship in terms of matching, so we should continue the
+            // binary search.  One important exception is when the node
+            // represents the root name ("."), in which case the comparison
+            // result must indeed be considered subdomain matching. (We use
+            // getLength() to check if the name is root, which is an equivalent
+            // but cheaper way).
+            if (common_label_count == 1 && node->name_.getLength() != 1) {
+                node = (node_path.last_comparison_.getOrder() < 0) ?
                     node->left_ : node->right_;
             } else if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
                 if (needsReturnEmptyNode_ || !node->isEmpty()) {
                     ret = PARTIALMATCH;
                     *target = node;
-                    if (callback != NULL && node->callback_required_) {
+                    if (callback != NULL &&
+                        node->getFlag(RBNode<T>::FLAG_CALLBACK)) {
                         if ((callback)(*node, callback_arg)) {
                             break;
                         }
@@ -960,7 +1097,8 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
             return (ALREADYEXISTS);
         } else {
             const int common_label_count = compare_result.getCommonLabels();
-            if (common_label_count == 1) {
+            // Note: see find() for the check of getLength().
+            if (common_label_count == 1 && current->name_.getLength() != 1) {
                 parent = current;
                 order = compare_result.getOrder();
                 current = order < 0 ? current->left_ : current->right_;
@@ -1027,7 +1165,7 @@ RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     // consistent behavior (i.e., a weak form of strong exception guarantee)
     // even if code after the call to this function throws an exception.
     std::swap(node.data_, down_node->data_);
-    std::swap(node.callback_required_, down_node->callback_required_);
+    std::swap(node.flags_, down_node->flags_);
     down_node->down_ = node.down_;
     node.down_ = down_node.get();
     // root node of sub tree, the initial color is BLACK

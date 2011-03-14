@@ -113,10 +113,8 @@ public:
     vector<RRsetPtr> rrsets_[NUM_SECTIONS];
     ConstEDNSPtr edns_;
 
-#ifdef notyet
     // tsig/sig0: TODO
-    RRsetsSorter* sorter_;
-#endif
+    // RRsetsSorter* sorter_; : TODO
 
     void init();
     void setOpcode(const Opcode& opcode);
@@ -338,6 +336,14 @@ Message::removeRRset(const Section section, RRsetIterator& iterator) {
     return (removed);
 }
 
+void
+Message::clearSection(const Section section) {
+    if (section >= MessageImpl::NUM_SECTIONS) {
+        isc_throw(OutOfRange, "Invalid message section: " << section);
+    }
+    impl_->rrsets_[section].clear();
+    impl_->counts_[section] = 0;
+}
 
 void
 Message::addQuestion(const QuestionPtr question) {
@@ -766,6 +772,27 @@ void
 Message::clear(Mode mode) {
     impl_->init();
     impl_->mode_ = mode;
+}
+
+void
+Message::appendSection(const Section section, const Message& source) {
+    if (section >= MessageImpl::NUM_SECTIONS) {
+        isc_throw(OutOfRange, "Invalid message section: " << section);
+    }
+
+    if (section == SECTION_QUESTION) {
+        for (QuestionIterator qi = source.beginQuestion();
+             qi != source.endQuestion();
+             ++qi) {
+            addQuestion(*qi);
+        }
+    } else {
+        for (RRsetIterator rrsi = source.beginSection(section);
+             rrsi != source.endSection(section);
+             ++rrsi) {
+            addRRset(section, *rrsi);
+        }
+    }
 }
 
 void

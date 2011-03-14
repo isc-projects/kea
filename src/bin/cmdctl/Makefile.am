@@ -4,7 +4,7 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 
 pkglibexec_SCRIPTS = b10-cmdctl
 
-b10_cmdctldir = $(DESTDIR)$(pkgdatadir)
+b10_cmdctldir = $(pkgdatadir)
 
 # NOTE: this will overwrite on install
 # So these generic copies are placed in share/bind10 instead of to etc
@@ -33,7 +33,6 @@ endif
 cmdctl.spec: cmdctl.spec.pre
 	$(SED) -e "s|@@SYSCONFDIR@@|$(sysconfdir)|" cmdctl.spec.pre >$@
 
-# TODO: does this need $$(DESTDIR) also?
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
 b10-cmdctl: cmdctl.py
 	$(SED) "s|@@PYTHONPATH@@|@pyexecdir@|" cmdctl.py >$@

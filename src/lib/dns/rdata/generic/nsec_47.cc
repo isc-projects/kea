@@ -26,11 +26,13 @@
 #include <dns/rrttl.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+#include <dns/rdata/generic/detail/nsec_bitmap.h>
 
 #include <stdio.h>
 #include <time.h>
 
 using namespace std;
+using namespace isc::dns::rdata::generic::detail::nsec;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -61,10 +63,9 @@ NSEC::NSEC(const string& nsec_str) :
     memset(bitmap, 0, sizeof(bitmap));
     do { 
         string type;
-        int code;
         iss >> type;
         try {
-            code = RRType(type).getCode();
+            const int code = RRType(type).getCode();
             bitmap[code / 8] |= (0x80 >> (code % 8));
         } catch (...) {
             isc_throw(InvalidRdataText, "Invalid RRtype in NSEC");
@@ -103,43 +104,7 @@ NSEC::NSEC(InputBuffer& buffer, size_t rdata_len) {
 
     vector<uint8_t> typebits(rdata_len);
     buffer.readData(&typebits[0], rdata_len);
-
-    int len = 0;
-    bool first = true;
-    unsigned int block, lastblock = 0;
-    for (int i = 0; i < rdata_len; i += len) {
-        if (i + 2 > rdata_len) {
-            isc_throw(DNSMessageFORMERR, "NSEC RDATA from wire: "
-                      "incomplete bit map field");
-        }
-        block = typebits[i];
-        len = typebits[i + 1];
-        // Check that bitmap window blocks are in the correct order.
-        if (!first && block <= lastblock) {
-            isc_throw(DNSMessageFORMERR, "NSEC RDATA from wire: Disordered "
-                      "window blocks found: " << lastblock <<
-                      " then " << block);
-        }
-        // Check for legal length
-        if (len < 1 || len > 32) {
-            isc_throw(DNSMessageFORMERR, "NSEC RDATA from wire: Invalid bitmap "
-                      "length: " << len);
-        }
-        // Check for overflow.
-        i += 2;
-        if (i + len > rdata_len) {
-            isc_throw(DNSMessageFORMERR, "NSEC RDATA from wire: bitmap length "
-                      "too large: " << len);
-        }
-        // The last octet of the bitmap must be non zero.
-        if (typebits[i + len - 1] == 0) {
-            isc_throw(DNSMessageFORMERR, "NSEC RDATA from wire: bitmap ending "
-                      "an all-zero byte");
-        }
-
-        lastblock = block;
-        first = false;
-    }
+    checkRRTypeBitmaps("NSEC", typebits);
 
     impl_ = new NSECImpl(nextname, typebits);
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: $
-
 #include <iostream>
 #include <string>
 
@@ -21,7 +19,7 @@
 
 #include <log4cxx/level.h>
 #include <log/xdebuglevel.h>
-#include <log/dbglevels.h>
+#include <log/debug_levels.h>
 
 /// \brief XDebugLevel (Debug Extension to Level Class)
 ///

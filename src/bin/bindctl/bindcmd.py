@@ -51,7 +51,6 @@ except ImportError:
     my_readline = sys.stdin.readline
 
 CSV_FILE_NAME = 'default_user.csv'
-FAIL_TO_CONNECT_WITH_CMDCTL = "Fail to connect with b10-cmdctl module, is it running?"
 CONFIG_MODULE_NAME = 'config'
 CONST_BINDCTL_HELP = """
 usage: <module name> <command name> [param1 = value1 [, param2 = value2]]
@@ -88,20 +87,29 @@ class ValidatedHTTPSConnection(http.client.HTTPSConnection):
 class BindCmdInterpreter(Cmd):
     """simple bindctl example."""    
 
-    def __init__(self, server_port = 'localhost:8080', pem_file = None):
+    def __init__(self, server_port='localhost:8080', pem_file=None,
+                 csv_file_dir=None):
         Cmd.__init__(self)
         self.location = ""
         self.prompt_end = '> '
-        self.prompt = self.prompt_end
+        if sys.stdin.isatty():
+            self.prompt = self.prompt_end
+        else:
+            self.prompt = ""
         self.ruler = '-'
         self.modules = OrderedDict()
-        self.add_module_info(ModuleInfo("help", desc = "Get help for bindctl"))
+        self.add_module_info(ModuleInfo("help", desc = "Get help for bindctl."))
         self.server_port = server_port
         self.conn = ValidatedHTTPSConnection(self.server_port,
                                              ca_certs=pem_file)
         self.session_id = self._get_session_id()
         self.config_data = None
-        
+        if csv_file_dir is not None:
+            self.csv_file_dir = csv_file_dir
+        else:
+            self.csv_file_dir = pwd.getpwnam(getpass.getuser()).pw_dir + \
+                os.sep + '.bind10' + os.sep
+
     def _get_session_id(self):
         '''Generate one session id for the connection. '''
         rand = os.urandom(16)
@@ -119,8 +127,8 @@ class BindCmdInterpreter(Cmd):
 
             self.cmdloop()
         except FailToLogin as err:
-            print(err)
-            print(FAIL_TO_CONNECT_WITH_CMDCTL)
+            # error already printed when this was raised, ignoring
+            pass
         except KeyboardInterrupt:
             print('\nExit from bindctl')
 
@@ -173,9 +181,7 @@ class BindCmdInterpreter(Cmd):
         time, username and password saved in 'default_user.csv' will be
         used first.
         '''
-        csv_file_dir = pwd.getpwnam(getpass.getuser()).pw_dir
-        csv_file_dir += os.sep + '.bind10' + os.sep
-        users = self._get_saved_user_info(csv_file_dir, CSV_FILE_NAME)
+        users = self._get_saved_user_info(self.csv_file_dir, CSV_FILE_NAME)
         for row in users:
             param = {'username': row[0], 'password' : row[1]}
             try:
@@ -209,7 +215,8 @@ class BindCmdInterpreter(Cmd):
                 raise FailToLogin()
 
             if response.status == http.client.OK:
-                self._save_user_info(username, passwd, csv_file_dir, CSV_FILE_NAME)
+                self._save_user_info(username, passwd, self.csv_file_dir,
+                                     CSV_FILE_NAME)
                 return True
 
     def _update_commands(self):
@@ -270,8 +277,10 @@ class BindCmdInterpreter(Cmd):
         return line 
 
     def postcmd(self, stop, line):
-        '''Update the prompt after every command'''
-        self.prompt = self.location + self.prompt_end
+        '''Update the prompt after every command, but only if we
+           have a tty as output'''
+        if sys.stdin.isatty():
+            self.prompt = self.location + self.prompt_end
         return stop
 
     def _prepare_module_commands(self, module_spec):
@@ -375,7 +384,14 @@ class BindCmdInterpreter(Cmd):
         if cmd.command == "help" or ("help" in cmd.params.keys()):
             self._handle_help(cmd)
         elif cmd.module == CONFIG_MODULE_NAME:
-            self.apply_config_cmd(cmd)
+            try:
+                self.apply_config_cmd(cmd)
+            except isc.cc.data.DataTypeError as dte:
+                print("Error: " + str(dte))
+            except isc.cc.data.DataNotFoundError as dnfe:
+                print("Error: " + str(dnfe))
+            except KeyError as ke:
+                print("Error: missing " + str(ke))
         else:
             self.apply_cmd(cmd)
 
@@ -396,9 +412,24 @@ class BindCmdInterpreter(Cmd):
 
     def do_help(self, name):
         print(CONST_BINDCTL_HELP)
-        for k in self.modules.keys():
-            print("\t", self.modules[k])
-                
+        for k in self.modules.values():
+            n = k.get_name()
+            if len(n) >= CONST_BINDCTL_HELP_INDENT_WIDTH:
+                print("    %s" % n)
+                print(textwrap.fill(k.get_desc(),
+                      initial_indent="            ",
+                      subsequent_indent="    " +
+                      " " * CONST_BINDCTL_HELP_INDENT_WIDTH,
+                      width=70))
+            else:
+                print(textwrap.fill("%s%s%s" %
+                    (k.get_name(),
+                     " "*(CONST_BINDCTL_HELP_INDENT_WIDTH - len(k.get_name())),
+                     k.get_desc()),
+                    initial_indent="    ",
+                    subsequent_indent="    " +
+                    " " * CONST_BINDCTL_HELP_INDENT_WIDTH,
+                    width=70))
     
     def onecmd(self, line):
         if line == 'EOF' or line.lower() == "quit":
@@ -411,7 +442,19 @@ class BindCmdInterpreter(Cmd):
         Cmd.onecmd(self, line)
 
     def remove_prefix(self, list, prefix):
-        return [(val[len(prefix):]) for val in list]
+        """Removes the prefix already entered, and all elements from the
+           list that don't match it"""
+        if prefix.startswith('/'):
+            prefix = prefix[1:]
+
+        new_list = []
+        for val in list:
+            if val.startswith(prefix):
+                new_val = val[len(prefix):]
+                if new_val.startswith("/"):
+                    new_val = new_val[1:]
+                new_list.append(new_val)
+        return new_list
 
     def complete(self, text, state):
         if 0 == state:
@@ -502,8 +545,7 @@ class BindCmdInterpreter(Cmd):
             self._validate_cmd(cmd)
             self._handle_cmd(cmd)
         except (IOError, http.client.HTTPException) as err:
-            print('Error!', err)
-            print(FAIL_TO_CONNECT_WITH_CMDCTL)
+            print('Error: ', err)
         except BindCtlException as err:
             print("Error! ", err)
             self._print_correct_usage(err)
@@ -541,87 +583,115 @@ class BindCmdInterpreter(Cmd):
            Raises a KeyError if the command was not complete
         '''
         identifier = self.location
-        try:
-            if 'identifier' in cmd.params:
-                if not identifier.endswith("/"):
-                    identifier += "/"
-                if cmd.params['identifier'].startswith("/"):
-                    identifier = cmd.params['identifier']
-                else:
-                    identifier += cmd.params['identifier']
+        if 'identifier' in cmd.params:
+            if not identifier.endswith("/"):
+                identifier += "/"
+            if cmd.params['identifier'].startswith("/"):
+                identifier = cmd.params['identifier']
+            else:
+                if cmd.params['identifier'].startswith('['):
+                    identifier = identifier[:-1]
+                identifier += cmd.params['identifier']
 
-                # Check if the module is known; for unknown modules
-                # we currently deny setting preferences, as we have
-                # no way yet to determine if they are ok.
-                module_name = identifier.split('/')[1]
-                if self.config_data is None or \
-                   not self.config_data.have_specification(module_name):
-                    print("Error: Module '" + module_name + "' unknown or not running")
+            # Check if the module is known; for unknown modules
+            # we currently deny setting preferences, as we have
+            # no way yet to determine if they are ok.
+            module_name = identifier.split('/')[1]
+            if module_name != "" and (self.config_data is None or \
+               not self.config_data.have_specification(module_name)):
+                print("Error: Module '" + module_name + "' unknown or not running")
+                return
+
+        if cmd.command == "show":
+            # check if we have the 'all' argument
+            show_all = False
+            if 'argument' in cmd.params:
+                if cmd.params['argument'] == 'all':
+                    show_all = True
+                elif 'identifier' not in cmd.params:
+                    # no 'all', no identifier, assume this is the
+                    #identifier
+                    identifier += cmd.params['argument']
+                else:
+                    print("Error: unknown argument " + cmd.params['argument'] + ", or multiple identifiers given")
                     return
-
-            if cmd.command == "show":
-                values = self.config_data.get_value_maps(identifier)
-                for value_map in values:
-                    line = value_map['name']
-                    if value_map['type'] in [ 'module', 'map', 'list' ]:
-                        line += "/"
-                    else:
-                        line += ":\t" + json.dumps(value_map['value'])
-                    line += "\t" + value_map['type']
-                    line += "\t"
-                    if value_map['default']:
-                        line += "(default)"
-                    if value_map['modified']:
-                        line += "(modified)"
-                    print(line)
-            elif cmd.command == "add":
+            values = self.config_data.get_value_maps(identifier, show_all)
+            for value_map in values:
+                line = value_map['name']
+                if value_map['type'] in [ 'module', 'map' ]:
+                    line += "/"
+                elif value_map['type'] == 'list' \
+                     and value_map['value'] != []:
+                    # do not print content of non-empty lists if
+                    # we have more data to show
+                    line += "/"
+                else:
+                    line += "\t" + json.dumps(value_map['value'])
+                line += "\t" + value_map['type']
+                line += "\t"
+                if value_map['default']:
+                    line += "(default)"
+                if value_map['modified']:
+                    line += "(modified)"
+                print(line)
+        elif cmd.command == "show_json":
+            if identifier == "":
+                print("Need at least the module to show the configuration in JSON format")
+            else:
+                data, default = self.config_data.get_value(identifier)
+                print(json.dumps(data))
+        elif cmd.command == "add":
+            if 'value' in cmd.params:
                 self.config_data.add_value(identifier, cmd.params['value'])
-            elif cmd.command == "remove":
-                if 'value' in cmd.params:
-                    self.config_data.remove_value(identifier, cmd.params['value'])
-                else:
-                    self.config_data.remove_value(identifier, None)
-            elif cmd.command == "set":
-                if 'identifier' not in cmd.params:
-                    print("Error: missing identifier or value")
-                else:
-                    parsed_value = None
-                    try:
-                        parsed_value = json.loads(cmd.params['value'])
-                    except Exception as exc:
-                        # ok could be an unquoted string, interpret as such
-                        parsed_value = cmd.params['value']
-                    self.config_data.set_value(identifier, parsed_value)
-            elif cmd.command == "unset":
-                self.config_data.unset(identifier)
-            elif cmd.command == "revert":
-                self.config_data.clear_local_changes()
-            elif cmd.command == "commit":
-                self.config_data.commit()
-            elif cmd.command == "diff":
-                print(self.config_data.get_local_changes());
-            elif cmd.command == "go":
-                self.go(identifier)
-        except isc.cc.data.DataTypeError as dte:
-            print("Error: " + str(dte))
-        except isc.cc.data.DataNotFoundError as dnfe:
-            print("Error: " + identifier + " not found")
-        except KeyError as ke:
-            print("Error: missing " + str(ke))
-            raise ke
+            else:
+                self.config_data.add_value(identifier)
+        elif cmd.command == "remove":
+            if 'value' in cmd.params:
+                self.config_data.remove_value(identifier, cmd.params['value'])
+            else:
+                self.config_data.remove_value(identifier, None)
+        elif cmd.command == "set":
+            if 'identifier' not in cmd.params:
+                print("Error: missing identifier or value")
+            else:
+                parsed_value = None
+                try:
+                    parsed_value = json.loads(cmd.params['value'])
+                except Exception as exc:
+                    # ok could be an unquoted string, interpret as such
+                    parsed_value = cmd.params['value']
+                self.config_data.set_value(identifier, parsed_value)
+        elif cmd.command == "unset":
+            self.config_data.unset(identifier)
+        elif cmd.command == "revert":
+            self.config_data.clear_local_changes()
+        elif cmd.command == "commit":
+            self.config_data.commit()
+        elif cmd.command == "diff":
+            print(self.config_data.get_local_changes());
+        elif cmd.command == "go":
+            self.go(identifier)
 
     def go(self, identifier):
         '''Handles the config go command, change the 'current' location
-           within the configuration tree'''
-        # this is just to see if it exists
-        self.config_data.get_value(identifier)
-        # some sanitizing
-        identifier = identifier.replace("//", "/")
-        if not identifier.startswith("/"):
-            identifier = "/" + identifier
-        if identifier.endswith("/"):
-            identifier = identifier[:-1]
-        self.location = identifier
+           within the configuration tree. '..' will be interpreted as
+           'up one level'.'''
+        id_parts = isc.cc.data.split_identifier(identifier)
+
+        new_location = ""
+        for id_part in id_parts:
+            if (id_part == ".."):
+                # go 'up' one level
+                new_location, a, b = new_location.rpartition("/")
+            else:
+                new_location += "/" + id_part
+        # check if exists, if not, revert and error
+        v,d = self.config_data.get_value(new_location)
+        if v is None:
+            print("Error: " + identifier + " not found")
+            return
+
+        self.location = new_location
 
     def apply_cmd(self, cmd):
         '''Handles a general module command'''

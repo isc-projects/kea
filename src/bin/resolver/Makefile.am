@@ -37,7 +37,6 @@ spec_config.h: spec_config.h.pre
 BUILT_SOURCES = spec_config.h 
 pkglibexec_PROGRAMS = b10-resolver
 b10_resolver_SOURCES = resolver.cc resolver.h
-b10_resolver_SOURCES += response_classifier.cc response_classifier.h
 b10_resolver_SOURCES += response_scrubber.cc response_scrubber.h
 b10_resolver_SOURCES += $(top_builddir)/src/bin/auth/change_user.h
 b10_resolver_SOURCES += $(top_builddir)/src/bin/auth/common.h
@@ -49,11 +48,15 @@ b10_resolver_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/log/liblog.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/cache/libcache.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/resolve/libresolve.la
 b10_resolver_LDADD += $(top_builddir)/src/bin/auth/change_user.o
 b10_resolver_LDFLAGS = -pthread
 
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir
 # and can't use @datadir@ because doesn't expand default ${prefix}
-b10_resolverdir = $(DESTDIR)$(pkgdatadir)
+b10_resolverdir = $(pkgdatadir)
 b10_resolver_DATA = resolver.spec
 

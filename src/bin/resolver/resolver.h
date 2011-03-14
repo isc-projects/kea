@@ -24,6 +24,9 @@
 
 #include <asiolink/asiolink.h>
 
+#include <nsas/nameserver_address_store.h>
+#include <cache/resolver_cache.h>
+
 #include <resolve/resolver_interface.h>
 
 class ResolverImpl;
@@ -65,8 +68,10 @@ public:
     /// send the reply.
     ///
     /// \param io_message The raw message received
-    /// \param query_message Pointer to the \c Message object TODO
-    /// \param answer_message Pointer to the \c Message object TODO
+    /// \param query_message Pointer to the query Message object we
+    /// received from the client
+    /// \param answer_message Pointer to the anwer Message object we
+    /// shall return to the client
     /// \param buffer Pointer to an \c OutputBuffer for the resposne
     /// \param server Pointer to the \c DNSServer
     void processMessage(const asiolink::IOMessage& io_message,
@@ -84,10 +89,26 @@ public:
 
     /// \brief Assign an ASIO IO Service queue to this Resolver object
     void setDNSService(asiolink::DNSService& dnss);
+    
+    /// \brief Assign a NameserverAddressStore to this Resolver object
+    void setNameserverAddressStore(isc::nsas::NameserverAddressStore &nsas);
+    
+    /// \brief Assign a cache to this Resolver object
+    void setCache(isc::cache::ResolverCache& cache);
 
     /// \brief Return this object's ASIO IO Service queue
     asiolink::DNSService& getDNSService() const { return (*dnss_); }
 
+    /// \brief Returns this object's NSAS
+    isc::nsas::NameserverAddressStore& getNameserverAddressStore() const {
+        return *nsas_;
+    };
+
+    /// \brief Returns this object's ResolverCache
+    isc::cache::ResolverCache& getResolverCache() const {
+        return *cache_;
+    };
+    
     /// \brief Return pointer to the DNS Lookup callback function
     asiolink::DNSLookup* getDNSLookupProvider() { return (dns_lookup_); }
 
@@ -147,10 +168,11 @@ public:
      * \short Set options related to timeouts.
      *
      * This sets the time of timeout and number of retries.
-     * The value -1 disables timeouts.
-     * \param query_timeout The time in milliseconds.TODO
-     * \param client_timeout The time in milliseconds. TODO
-     * \param lookup_timeout The time in milliseconds. TODO
+     * \param query_timeout The timeout we use for queries we send
+     * \param client_timeout The timeout at which point we send back a
+     * SERVFAIL (while continuing to resolve the query)
+     * \param lookup_timeout The timeout at which point we give up and
+     * stop.
      * \param retries The number of retries (0 means try the first time only,
      *     do not retry).
      */
@@ -205,6 +227,8 @@ private:
     asiolink::SimpleCallback* checkin_;
     asiolink::DNSLookup* dns_lookup_;
     asiolink::DNSAnswer* dns_answer_;
+    isc::nsas::NameserverAddressStore* nsas_;
+    isc::cache::ResolverCache* cache_;
 };
 
 #endif // __RESOLVER_H
