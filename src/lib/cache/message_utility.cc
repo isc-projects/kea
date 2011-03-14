@@ -50,7 +50,7 @@ isNegativeResponse(const isc::dns::Message& msg) {
     } else if (msg.getRcode() == Rcode::NOERROR()) {
         // no data in the answer section
         if (msg.getRRCount(Message::SECTION_ANSWER) == 0) {
-            // NODATA type 1/ type 2 (ref sec2.2 of RFC2308) 
+            // NODATA type 1/ type 2 (ref sec2.2 of RFC2308)
             if (hasTheRecordInAuthoritySection(msg, RRType::SOA())) {
                 return (true);
             } else if (!hasTheRecordInAuthoritySection(msg, RRType::NS())) {

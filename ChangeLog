@@ -1,7 +1,7 @@
   199.  [func]           ocean
-        Cache negative responses (NXDOMAIN/NODATA) from authoritative
-        server for recursive resolver.
-        (Trac #493, git f8fb852bc6aef292555063590c361f01cf29e5ca)
+	Cache negative responses (NXDOMAIN/NODATA) from authoritative
+	server for recursive resolver.
+	(Trac #493, git f8fb852bc6aef292555063590c361f01cf29e5ca)
 
   198.	[bug]		jinmei
 	b10-auth, src/lib/datasrc: fixed a bug where hot spot cache failed

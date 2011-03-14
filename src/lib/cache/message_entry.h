@@ -69,7 +69,7 @@ public:
     ///        since some new rrset entries may be inserted into
     ///        rrset cache, or the existed rrset entries need
     ///        to be updated.
-    /// \param negative_soa_cache the pointer of RRsetCAche. This
+    /// \param negative_soa_cache the pointer of RRsetCache. This
     ///        cache is used only for storing SOA rrset from negative
     ///        response (NXDOMAIN or NOERROR_NODATA)
     MessageEntry(const isc::dns::Message& message,

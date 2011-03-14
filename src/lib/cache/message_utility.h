@@ -25,7 +25,7 @@ namespace cache {
 /// \brief Some utility functions to extract info from message
 ///
 /// We need to check the message before cache it, for example, if no SOA
-/// record is found in the Authority section of NXDOMAIN response, the 
+/// record is found in the Authority section of NXDOMAIN response, the
 /// message cannot be cached
 namespace MessageUtility{
 
