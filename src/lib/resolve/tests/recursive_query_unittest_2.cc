@@ -165,7 +165,7 @@ public:
     /// Sets up the common bits of a response message returned by the handlers.
     ///
     /// \param msg Message buffer in RENDER mode.
-    /// \param qid QIT to set the message to
+    /// \param qid QID to set the message to
     void setCommonMessage(isc::dns::Message& msg, uint16_t qid = 0) {
         msg.setQid(qid);
         msg.setHeaderFlag(Message::HEADERFLAG_QR);
@@ -439,7 +439,7 @@ public:
         // should result in another query over UDP.  Note the setting of the
         // QID in the returned message with what was in the received message.
         Message msg(Message::RENDER);
-        setCommonMessage(msg, readUint16(tcp_receive_buffer_));
+        setCommonMessage(msg, readUint16(tcp_receive_buffer_ + 2));
         setReferralExampleOrg(msg);
 
         // Convert to wire format
@@ -502,7 +502,8 @@ public:
     ///        the case of UDP data, and an offset into the buffer past the
     ///        count field for TCP data.
     /// \param length Length of data.
-    void checkReceivedPacket(uint8_t* data, size_t length) {
+    /// \return The QID of the message
+    qid_t checkReceivedPacket(uint8_t* data, size_t length) {
 
         // Decode the received buffer.
         InputBuffer buffer(data, length);
@@ -514,6 +515,8 @@ public:
 
         Question question = **(message.beginQuestion());
         EXPECT_TRUE(question == *question_);
+
+        return message.getQid();
     }
 };
 
