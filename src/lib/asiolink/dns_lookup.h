@@ -63,6 +63,8 @@ public:
     ///
     /// \param io_message The event message to handle
     /// \param message The DNS MessagePtr that needs handling
+    /// \param answer_message The final answer will be constructed in
+    ///                       this MessagePtr
     /// \param buffer The final answer is put here
     /// \param DNSServer DNSServer object to use
     virtual void operator()(const IOMessage& io_message,
