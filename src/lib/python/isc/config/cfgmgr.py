@@ -44,7 +44,7 @@ class ConfigManagerData:
     """This class hold the actual configuration information, and
        reads it from and writes it to persistent storage"""
 
-    def __init__(self, data_path, file_name="b10-config.db"):
+    def __init__(self, data_path, file_name):
         """Initialize the data for the configuration manager, and
            set the version and path for the data store. Initializing
            this does not yet read the database, a call to
@@ -159,8 +159,7 @@ class ConfigManager:
        channel session. If not, a new session will be created.
        The ability to specify a custom session is for testing purposes
        and should not be needed for normal usage."""
-    def __init__(self, data_path, database_filename="b10-config.db",
-                 session=None):
+    def __init__(self, data_path, database_filename, session=None):
         """Initialize the configuration manager. The data_path string
            is the path to the directory where the configuration is
            stored (in <data_path>/<database_filename> or in

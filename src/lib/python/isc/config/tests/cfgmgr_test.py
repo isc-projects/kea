@@ -27,7 +27,8 @@ class TestConfigManagerData(unittest.TestCase):
     def setUp(self):
         self.data_path = os.environ['CONFIG_TESTDATA_PATH']
         self.writable_data_path = os.environ['CONFIG_WR_TESTDATA_PATH']
-        self.config_manager_data = ConfigManagerData(self.writable_data_path)
+        self.config_manager_data = ConfigManagerData(self.writable_data_path,
+                                                     file_name="b10-config.db")
         self.assert_(self.config_manager_data)
 
     def test_abs_file(self):
@@ -78,8 +79,8 @@ class TestConfigManagerData(unittest.TestCase):
         # by equality of the .data element. If data_path or db_filename
         # are different, but the contents are the same, it's still
         # considered equal
-        cfd1 = ConfigManagerData(self.data_path)
-        cfd2 = ConfigManagerData(self.data_path)
+        cfd1 = ConfigManagerData(self.data_path, file_name="b10-config.db")
+        cfd2 = ConfigManagerData(self.data_path, file_name="b10-config.db")
         self.assertEqual(cfd1, cfd2)
         cfd2.data_path = "some/unknown/path"
         self.assertEqual(cfd1, cfd2)
@@ -96,6 +97,7 @@ class TestConfigManager(unittest.TestCase):
         self.writable_data_path = os.environ['CONFIG_WR_TESTDATA_PATH']
         self.fake_session = FakeModuleCCSession()
         self.cm = ConfigManager(self.writable_data_path,
+                                database_filename="b10-config.db",
                                 session=self.fake_session)
         self.name = "TestModule"
         self.spec = isc.config.module_spec_from_file(self.data_path + os.sep + "/spec2.spec")
