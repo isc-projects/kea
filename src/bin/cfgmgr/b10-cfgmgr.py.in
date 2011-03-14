@@ -51,7 +51,7 @@ def parse_options(args=sys.argv[1:], Parser=OptionParser):
     parser.add_option("-p", "--data-path", dest="data_path",
                       help="Directory to search for configuration files " +
                       "(default=" + DATA_PATH + ")", default=DATA_PATH)
-    parser.add_option("-c", "--config-filename", dest="file_name",
+    parser.add_option("-c", "--config-filename", dest="config_file",
                       help="Configuration database filename " +
                       "(default=" + DEFAULT_CONFIG_FILE + ")",
                       default=DEFAULT_CONFIG_FILE)
@@ -69,7 +69,7 @@ def main():
     options = parse_options()
     global cm
     try:
-        cm = ConfigManager(options.data_path, options.file_name)
+        cm = ConfigManager(options.data_path, options.config_file)
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
         cm.read_config()

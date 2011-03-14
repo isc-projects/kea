@@ -101,9 +101,10 @@
           <option>--data-path</option> <replaceable>data-path</replaceable>
         </term>
         <listitem>
-          <para>The path where BIND looks for configuration files, if their
-          names are not absolute. It might be used for other data files in
-          future as well.</para>
+          <para>The path where BIND 10 programs look for various data files.
+          Currently only b10-cfgmgr uses it to locate the configuration file,
+          but the usage might be extended for other programs and other types
+          of files.</para>
         </listitem>
       </varlistentry>
 

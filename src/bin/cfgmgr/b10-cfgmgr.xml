@@ -114,7 +114,9 @@
           <option>--data-path</option> <replaceable>data-path</replaceable>
         </term>
         <listitem>
-          <para>The path where bind looks for configuration files.</para>
+          <para>The path where BIND 10 looks for files. The
+          configuration file is looked for here, if it is relative. If it is
+          absolute, the path is ignored.</para>
         </listitem>
       </varlistentry>
     </variablelist>
