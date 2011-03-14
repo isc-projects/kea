@@ -122,7 +122,7 @@ class ZoneEntry::ResolverCallback :
                  * do), so we can just reuse them instead of looking them up in
                  * the table or creating them.
                  */
-                map<string, NameserverPtr> old;
+                std::map<string, NameserverPtr> old;
                 BOOST_FOREACH(const NameserverPtr& ptr, entry_->nameservers_) {
                     old[ptr->getName()] = ptr;
                 }
