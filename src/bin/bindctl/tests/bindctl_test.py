@@ -311,6 +311,16 @@ class TestConfigCommands(unittest.TestCase):
         self.tool.config_data = FakeCCSession()
         self.stdout_backup = sys.stdout
 
+    def test_precmd(self):
+        def update_all_modules_info():
+            raise socket.error
+        def precmd(line):
+            self.tool.precmd(line)
+        self.tool._update_all_modules_info = update_all_modules_info
+        # If line is equals to 'EOF', _update_all_modules_info() shouldn't be called
+        self.assertRaises(None, precmd('EOF'))
+        self.assertRaises(socket.error, precmd, 'continue')
+
     def test_run(self):
         def login_to_cmdctl():
             return True
