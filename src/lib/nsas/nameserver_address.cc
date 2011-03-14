@@ -23,7 +23,9 @@ namespace nsas {
 void
 NameserverAddress::updateRTT(uint32_t rtt) const {
     // We delegate it to the address entry inside the nameserver entry
-    ns_->updateAddressRTT(rtt, address_.getAddress(), family_);
+    if (ns_) {
+        ns_->updateAddressRTT(rtt, address_.getAddress(), family_);
+    }
 }
 
 } // namespace nsas

@@ -20,7 +20,10 @@
 
 #include <asio.hpp>
 
-#include <asiolink/asiolink.h>
+#include <exceptions/exceptions.h>
+#include <asiolink/io_address.h>
+#include <asiolink/io_error.h>
+
 
 using namespace asio;
 using asio::ip::udp;

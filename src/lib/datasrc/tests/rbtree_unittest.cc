@@ -56,7 +56,7 @@ const size_t Name::MAX_LABELS;
 namespace {
 class RBTreeTest : public::testing::Test {
 protected:
-    RBTreeTest() : rbtree_expose_empty_node(true) {
+    RBTreeTest() : rbtree_expose_empty_node(true), crbtnode(NULL) {
         const char* const domain_names[] = {
             "c", "b", "a", "x.d.e.f", "z.d.e.f", "g.h", "i.g.h", "o.w.y.d.e.f",
             "j.z.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f"};
@@ -284,21 +284,21 @@ TEST_F(RBTreeTest, chainLevel) {
     EXPECT_EQ(1, chain.getLevelCount());
 
     /*
-     * Now creating a possibly deepest tree with MAX_LABELS - 1 levels.
+     * Now creating a possibly deepest tree with MAX_LABELS levels.
      * it should look like:
+     *           (.)
+     *            |
      *            a
-     *           /|
-     *         (.)a
      *            |
      *            a
      *            : (MAX_LABELS - 1) "a"'s
      *
      * then confirm that find() for the deepest name succeeds without any
      * disruption, and the resulting chain has the expected level.
-     * Note that "a." and the root name (".") belong to the same level.
-     * So the possible maximum level is MAX_LABELS - 1, not MAX_LABELS.
+     * Note that the root name (".") solely belongs to a single level,
+     * so the levels begin with 2.
      */
-    for (unsigned int i = 1; i < Name::MAX_LABELS; ++i) {
+    for (unsigned int i = 2; i <= Name::MAX_LABELS; ++i) {
         node_name = Name("a.").concatenate(node_name);
         EXPECT_EQ(RBTree<int>::SUCCESS, tree.insert(node_name, &rbtnode));
         RBTreeNodeChain<int> found_chain;
@@ -522,5 +522,45 @@ TEST_F(RBTreeTest, swap) {
     out.str("");
     tree2.dumpTree(out);
     ASSERT_EQ(str1.str(), out.str());
+}
+
+// Matching in the "root zone" may be special (e.g. there's no parent,
+// any domain names should be considered a subdomain of it), so it makes
+// sense to test cases with the root zone explicitly.
+TEST_F(RBTreeTest, root) {
+    RBTree<int> root;
+    root.insert(Name::ROOT_NAME(), &rbtnode);
+    rbtnode->setData(RBNode<int>::NodeDataPtr(new int(1)));
+
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              root.find(Name::ROOT_NAME(), &crbtnode));
+    EXPECT_EQ(rbtnode, crbtnode);
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              root.find(Name("example.com"), &crbtnode));
+    EXPECT_EQ(rbtnode, crbtnode);
+
+    // Insert a new name that better matches the query name.  find() should
+    // find the better one.
+    root.insert(Name("com"), &rbtnode);
+    rbtnode->setData(RBNode<int>::NodeDataPtr(new int(2)));
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              root.find(Name("example.com"), &crbtnode));
+    EXPECT_EQ(rbtnode, crbtnode);
+
+    // Perform the same tests for the tree that allows matching against empty
+    // nodes.
+    RBTree<int> root_emptyok(true);
+    root_emptyok.insert(Name::ROOT_NAME(), &rbtnode);
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              root_emptyok.find(Name::ROOT_NAME(), &crbtnode));
+    EXPECT_EQ(rbtnode, crbtnode);
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              root_emptyok.find(Name("example.com"), &crbtnode));
+    EXPECT_EQ(rbtnode, crbtnode);
+
+    root.insert(Name("com"), &rbtnode);
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+              root.find(Name("example.com"), &crbtnode));
+    EXPECT_EQ(rbtnode, crbtnode);
 }
 }

@@ -290,7 +290,7 @@ TEST_F(NameTest, assignment) {
 
     // Self assignment
     copy = copy;
-    EXPECT_EQ(copy, example_name);
+    EXPECT_EQ(example_name, copy);
 }
 
 TEST_F(NameTest, toText) {

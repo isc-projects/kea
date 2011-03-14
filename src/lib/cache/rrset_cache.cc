@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <config.h>
 
 #include <string>
@@ -44,47 +42,44 @@ RRsetCache::lookup(const isc::dns::Name& qname,
 {
     const string entry_name = genCacheEntryName(qname, qtype);
     RRsetEntryPtr entry_ptr = rrset_table_.get(HashKey(entry_name, RRClass(class_)));
-
-    //If the rrset entry has expired, return NULL.
-    if(entry_ptr && (time(NULL) > entry_ptr->getExpireTime())) {
-        return (RRsetEntryPtr());
+    if (entry_ptr) {
+        if (entry_ptr->getExpireTime() > time(NULL)) {
+            // Only touch the non-expired rrset entries
+            rrset_lru_.touch(entry_ptr);
+            return (entry_ptr);
+        } else {
+            // the rrset entry has expired, so just remove it from
+            // hash table and lru list.
+            rrset_table_.remove(entry_ptr->hashKey());
+            rrset_lru_.remove(entry_ptr);
+        }
     }
-    return (entry_ptr);
+
+    return (RRsetEntryPtr());
 }
 
 RRsetEntryPtr
 RRsetCache::update(const isc::dns::RRset& rrset, const RRsetTrustLevel& level) {
     // TODO: If the RRset is an NS, we should update the NSAS as well
-    
     // lookup first
     RRsetEntryPtr entry_ptr = lookup(rrset.getName(), rrset.getType());
-    if(!entry_ptr) {
-        // rrset entry doesn't exist, create one rrset entry for the rrset
-        // and add it directly.
-        entry_ptr.reset(new RRsetEntry(rrset, level));
-        // Replace the expired rrset entry if it exists.
-        rrset_table_.add(entry_ptr, entry_ptr->hashKey(), true);
-        //TODO , lru list touch.
-        return (entry_ptr);
-    } else {
-        // there is one rrset entry in the cache, need to check whether
-        // the new rrset is more authoritative.
+    if (entry_ptr) {
         if (entry_ptr->getTrustLevel() > level) {
-            // existed rrset entry is more authoritative, do nothing,
-            // just return it.
-            //TODO, lru list touch
+            // existed rrset entry is more authoritative, just return it
             return (entry_ptr);
         } else {
-            HashKey key = entry_ptr->hashKey();
-            entry_ptr.reset(new RRsetEntry(rrset, level));
-            //TODO, lru list touch.
-            // Replace the expired rrset entry if it exists.
-            rrset_table_.add(entry_ptr, entry_ptr->hashKey(), true);
-            return (entry_ptr);
+            // Remove the old rrset entry from the lru list.
+            rrset_lru_.remove(entry_ptr);
         }
     }
+
+    entry_ptr.reset(new RRsetEntry(rrset, level));
+    rrset_table_.add(entry_ptr, entry_ptr->hashKey(), true);
+    rrset_lru_.add(entry_ptr);
+    return (entry_ptr);
 }
 
+#if 0
 void
 RRsetCache::dump(const std::string&) {
     //TODO
@@ -100,6 +95,7 @@ RRsetCache::resize(uint32_t) {
     //TODO
     return (true);
 }
+#endif
 
 } // namespace cache
 } // namespace isc

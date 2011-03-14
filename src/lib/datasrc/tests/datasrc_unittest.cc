@@ -38,6 +38,7 @@
 #include <datasrc/sqlite3_datasrc.h>
 #include <datasrc/static_datasrc.h>
 
+#include <testutils/dnsmessage_test.h>
 #include <dns/tests/unittest_util.h>
 #include <datasrc/tests/test_datasrc.h>
 
@@ -47,6 +48,7 @@ using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::datasrc;
 using namespace isc::data;
+using namespace isc::testutils;
 
 namespace {
 ConstElementPtr SQLITE_DBFILE_EXAMPLE = Element::fromJSON(
@@ -54,7 +56,9 @@ ConstElementPtr SQLITE_DBFILE_EXAMPLE = Element::fromJSON(
 
 class DataSrcTest : public ::testing::Test {
 protected:
-    DataSrcTest() : obuffer(0), renderer(obuffer), msg(Message::PARSE) {
+    DataSrcTest() : obuffer(0), renderer(obuffer), msg(Message::PARSE),
+                    opcodeval(Opcode::QUERY().getCode()), qid(0)
+    {
         DataSrcPtr sql3_source = DataSrcPtr(new Sqlite3DataSrc); 
         sql3_source->init(SQLITE_DBFILE_EXAMPLE);
         DataSrcPtr test_source = DataSrcPtr(new TestDataSrc);
@@ -73,6 +77,8 @@ protected:
     OutputBuffer obuffer;
     MessageRenderer renderer;
     Message msg;
+    const uint16_t opcodeval;
+    qid_t qid;
 };
 
 void
@@ -91,29 +97,16 @@ DataSrcTest::createAndProcessQuery(const Name& qname, const RRClass& qclass,
     msg.setOpcode(Opcode::QUERY());
     msg.addQuestion(Question(qname, qclass, qtype));
     msg.setHeaderFlag(Message::HEADERFLAG_RD);
+    qid = msg.getQid();
     performQuery(meta_source, cache, msg);
-}
-
-void
-headerCheck(const Message& message, const Rcode& rcode, const bool qrflag,
-            const bool aaflag, const bool rdflag, const unsigned int ancount,
-            const unsigned int nscount, const unsigned int arcount)
-{
-    EXPECT_EQ(rcode, message.getRcode());
-    EXPECT_EQ(qrflag, message.getHeaderFlag(Message::HEADERFLAG_QR));
-    EXPECT_EQ(aaflag, message.getHeaderFlag(Message::HEADERFLAG_AA));
-    EXPECT_EQ(rdflag, message.getHeaderFlag(Message::HEADERFLAG_RD));
-
-    EXPECT_EQ(ancount, message.getRRCount(Message::SECTION_ANSWER));
-    EXPECT_EQ(nscount, message.getRRCount(Message::SECTION_AUTHORITY));
-    EXPECT_EQ(arcount, message.getRRCount(Message::SECTION_ADDITIONAL));
 }
 
 void
 DataSrcTest::QueryCommon(const RRClass& qclass) {
     createAndProcessQuery(Name("www.example.com"), qclass, RRType::A());
 
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 6);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 2, 4, 6);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
@@ -163,12 +156,8 @@ TEST_F(DataSrcTest, Query) {
 // should be the same as "NxZone".
 TEST_F(DataSrcTest, QueryClassMismatch) {
     createAndProcessQuery(Name("www.example.com"), RRClass::CH(), RRType::A());
-    headerCheck(msg, Rcode::REFUSED(), true, false, true, 0, 0, 0);
-
-    EXPECT_EQ(Rcode::REFUSED(), msg.getRcode());
-    EXPECT_TRUE(msg.getHeaderFlag(Message::HEADERFLAG_QR));
-    EXPECT_FALSE(msg.getHeaderFlag(Message::HEADERFLAG_AA));
-    EXPECT_TRUE(msg.getHeaderFlag(Message::HEADERFLAG_RD));
+    headerCheck(msg, qid, Rcode::REFUSED(), opcodeval, QR_FLAG | RD_FLAG,
+                1, 0, 0, 0);
 }
 
 // Query class of any should match the first data source.
@@ -179,7 +168,8 @@ TEST_F(DataSrcTest, QueryClassAny) {
 TEST_F(DataSrcTest, NSQuery) {
     createAndProcessQuery(Name("example.com"), RRClass::IN(),
                           RRType::NS());
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 0, 6);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 4, 0, 6);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
@@ -201,7 +191,8 @@ TEST_F(DataSrcTest, NSQuery) {
 TEST_F(DataSrcTest, DuplicateQuery) {
     createAndProcessQuery(Name("example.com"), RRClass::IN(),
                           RRType::NS());
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 0, 6);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 4, 0, 6);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
@@ -221,7 +212,8 @@ TEST_F(DataSrcTest, DuplicateQuery) {
     msg.clear(Message::PARSE);
     createAndProcessQuery(Name("example.com"), RRClass::IN(),
                           RRType::NS());
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 0, 6);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 4, 0, 6);
 
     rit = msg.beginSection(Message::SECTION_ANSWER);
     rrset = *rit;
@@ -242,7 +234,8 @@ TEST_F(DataSrcTest, DuplicateQuery) {
 TEST_F(DataSrcTest, DNSKEYQuery) {
     createAndProcessQuery(Name("example.com"), RRClass::IN(),
                           RRType::DNSKEY());
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 4, 4, 6);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
@@ -257,7 +250,8 @@ TEST_F(DataSrcTest, DNSKEYQuery) {
 TEST_F(DataSrcTest, DNSKEYDuplicateQuery) {
     createAndProcessQuery(Name("example.com"), RRClass::IN(),
                           RRType::DNSKEY());
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 4, 4, 6);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
@@ -279,7 +273,8 @@ TEST_F(DataSrcTest, NxRRset) {
     createAndProcessQuery(Name("example.com"), RRClass::IN(),
                           RRType::PTR());
 
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 0, 4, 0);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 0, 4, 0);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_AUTHORITY);
     RRsetPtr rrset = *rit;
@@ -291,7 +286,8 @@ TEST_F(DataSrcTest, Nxdomain) {
     createAndProcessQuery(Name("glork.example.com"), RRClass::IN(),
                           RRType::A());
 
-    headerCheck(msg, Rcode::NXDOMAIN(), true, true, true, 0, 6, 0);
+    headerCheck(msg, qid, Rcode::NXDOMAIN(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 0, 6, 0);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_AUTHORITY);
     RRsetPtr rrset = *rit;
@@ -301,11 +297,46 @@ TEST_F(DataSrcTest, Nxdomain) {
     // XXX: check for other authority section answers
 }
 
+TEST_F(DataSrcTest, NxdomainAfterSOAQuery) {
+    // There was a bug where once SOA RR is stored in the hot spot cache
+    // subsequent negative search fails due to "missing SOA".  This test
+    // checks that situation.
+
+    // First, run the scenario with disabling the cache.
+    cache.setEnabled(false);
+    createAndProcessQuery(Name("example.com"), RRClass::IN(),
+                          RRType::SOA());
+    msg.clear(Message::PARSE);
+    createAndProcessQuery(Name("notexistent.example.com"), RRClass::IN(),
+                          RRType::A());
+    {
+        SCOPED_TRACE("NXDOMAIN after SOA, without hot spot cache");
+        headerCheck(msg, qid, Rcode::NXDOMAIN(), opcodeval,
+                    QR_FLAG | AA_FLAG | RD_FLAG, 1, 0, 6, 0);
+    }
+
+    // Then enable the cache and perform the same queries.  This should
+    // produce the same result.
+    cache.setEnabled(true);
+    msg.clear(Message::PARSE);
+    createAndProcessQuery(Name("example.com"), RRClass::IN(),
+                          RRType::SOA());
+    msg.clear(Message::PARSE);
+    createAndProcessQuery(Name("notexistent.example.com"), RRClass::IN(),
+                        RRType::A());
+    {
+        SCOPED_TRACE("NXDOMAIN after SOA, without hot spot cache");
+        headerCheck(msg, qid, Rcode::NXDOMAIN(), opcodeval,
+                    QR_FLAG | AA_FLAG | RD_FLAG, 1, 0, 6, 0);
+    }
+}
+
 TEST_F(DataSrcTest, NxZone) {
     createAndProcessQuery(Name("spork.example"), RRClass::IN(),
                           RRType::A());
 
-    headerCheck(msg, Rcode::REFUSED(), true, false, true, 0, 0, 0);
+    headerCheck(msg, qid, Rcode::REFUSED(), opcodeval,
+                QR_FLAG | RD_FLAG, 1, 0, 0, 0);
 
     EXPECT_EQ(Rcode::REFUSED(), msg.getRcode());
     EXPECT_TRUE(msg.getHeaderFlag(Message::HEADERFLAG_QR));
@@ -317,7 +348,8 @@ TEST_F(DataSrcTest, Wildcard) {
     createAndProcessQuery(Name("www.wild.example.com"), RRClass::IN(),
                           RRType::A());
 
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 6, 6);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 2, 6, 6);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
@@ -369,7 +401,8 @@ TEST_F(DataSrcTest, WildcardNodata) {
     // returns NOERROR
     createAndProcessQuery(Name("www.wild.example.com"), RRClass::IN(),
                           RRType::AAAA());
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 0, 2, 0);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 0, 2, 0);
 }
 
 TEST_F(DataSrcTest, DISABLED_WildcardAgainstMultiLabel) {
@@ -377,7 +410,8 @@ TEST_F(DataSrcTest, DISABLED_WildcardAgainstMultiLabel) {
     // a single label), and it should result in NXDOMAIN.
     createAndProcessQuery(Name("www.xxx.wild.example.com"), RRClass::IN(),
                           RRType::A());
-    headerCheck(msg, Rcode::NXDOMAIN(), true, true, true, 0, 1, 0);
+    headerCheck(msg, qid, Rcode::NXDOMAIN(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 0, 1, 0);
 }
 
 TEST_F(DataSrcTest, WildcardCname) {
@@ -386,7 +420,8 @@ TEST_F(DataSrcTest, WildcardCname) {
     createAndProcessQuery(Name("www.wild2.example.com"), RRClass::IN(),
                           RRType::A());
 
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 6, 6);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 4, 6, 6);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
@@ -450,7 +485,8 @@ TEST_F(DataSrcTest, WildcardCnameNodata) {
     // data of this type.
     createAndProcessQuery(Name("www.wild2.example.com"), RRClass::IN(),
                           RRType::AAAA());
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 0);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 2, 4, 0);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
@@ -481,7 +517,8 @@ TEST_F(DataSrcTest, WildcardCnameNxdomain) {
     // A wildcard containing a CNAME whose target does not exist
     createAndProcessQuery(Name("www.wild3.example.com"), RRClass::IN(),
                           RRType::A());
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 6, 0);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 2, 6, 0);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
@@ -518,7 +555,8 @@ TEST_F(DataSrcTest, AuthDelegation) {
     createAndProcessQuery(Name("www.sql1.example.com"), RRClass::IN(),
                           RRType::A());
 
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 6);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 2, 4, 6);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
@@ -562,7 +600,8 @@ TEST_F(DataSrcTest, Dname) {
     createAndProcessQuery(Name("www.dname.example.com"), RRClass::IN(),
                           RRType::A());
 
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 5, 4, 6);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 5, 4, 6);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
@@ -610,14 +649,16 @@ TEST_F(DataSrcTest, DnameExact) {
     // confuse delegation processing.
     createAndProcessQuery(Name("dname2.foo.example.org"), RRClass::IN(),
                           RRType::A());
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 0, 1, 0);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 0, 1, 0);
 }
 
 TEST_F(DataSrcTest, Cname) {
     createAndProcessQuery(Name("foo.example.com"), RRClass::IN(),
                           RRType::A());
 
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 0, 0);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 2, 0, 0);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
@@ -635,7 +676,8 @@ TEST_F(DataSrcTest, CnameInt) {
     createAndProcessQuery(Name("cname-int.example.com"), RRClass::IN(),
                           RRType::A());
 
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 4, 4, 6);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
@@ -661,7 +703,8 @@ TEST_F(DataSrcTest, CnameExt) {
     createAndProcessQuery(Name("cname-ext.example.com"), RRClass::IN(),
                           RRType::A());
 
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 4, 4, 6);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
@@ -685,7 +728,8 @@ TEST_F(DataSrcTest, Delegation) {
     createAndProcessQuery(Name("www.subzone.example.com"), RRClass::IN(),
                           RRType::A());
 
-    headerCheck(msg, Rcode::NOERROR(), true, false, true, 0, 5, 2);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | RD_FLAG, 1, 0, 5, 2);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_AUTHORITY);
     RRsetPtr rrset = *rit;
@@ -714,7 +758,8 @@ TEST_F(DataSrcTest, NSDelegation) {
     createAndProcessQuery(Name("subzone.example.com"), RRClass::IN(),
                           RRType::NS());
 
-    headerCheck(msg, Rcode::NOERROR(), true, false, true, 0, 5, 2);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | RD_FLAG, 1, 0, 5, 2);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_AUTHORITY);
     RRsetPtr rrset = *rit;
@@ -750,7 +795,8 @@ TEST_F(DataSrcTest, NSECZonecut) {
     createAndProcessQuery(Name("subzone.example.com"), RRClass::IN(),
                           RRType::NSEC());
 
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 6);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 2, 4, 6);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
@@ -778,7 +824,8 @@ TEST_F(DataSrcTest, DNAMEZonecut) {
     createAndProcessQuery(Name("subzone.example.com"), RRClass::IN(),
                           RRType::DNAME());
 
-    headerCheck(msg, Rcode::NOERROR(), true, false, true, 0, 5, 2);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | RD_FLAG, 1, 0, 5, 2);
     RRsetIterator rit = msg.beginSection(Message::SECTION_AUTHORITY);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("subzone.example.com."), rrset->getName());
@@ -806,7 +853,8 @@ TEST_F(DataSrcTest, DS) {
     createAndProcessQuery(Name("subzone.example.com"), RRClass::IN(),
                           RRType::DS());
 
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 3, 4, 6);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 3, 4, 6);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
@@ -847,7 +895,8 @@ TEST_F(DataSrcTest, NSECZonecutOfNonsecureZone) {
     createAndProcessQuery(Name("sub.example.org"), RRClass::IN(),
                           RRType::NSEC());
 
-    headerCheck(msg, Rcode::NOERROR(), true, false, true, 0, 1, 1);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | RD_FLAG, 1, 0, 1, 1);
 
     RRsetIterator rit = msg.beginSection(Message::SECTION_AUTHORITY);
     ConstRRsetPtr rrset = *rit;
@@ -879,7 +928,8 @@ TEST_F(DataSrcTest, NSECZonecutOfNonsecureZone) {
 TEST_F(DataSrcTest, RootDSQuery1) {
     EXPECT_NO_THROW(createAndProcessQuery(Name("."), RRClass::IN(),
                                           RRType::DS()));
-    headerCheck(msg, Rcode::REFUSED(), true, false, true, 0, 0, 0);
+    headerCheck(msg, qid, Rcode::REFUSED(), opcodeval,
+                QR_FLAG | RD_FLAG, 1, 0, 0, 0);
 }
 
 // The same, but when we have the root zone
@@ -898,7 +948,8 @@ TEST_F(DataSrcTest, RootDSQuery2) {
     // Make the query
     EXPECT_NO_THROW(performQuery(*sql3_source, cache, msg));
 
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 0, 1, 0);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 0, 1, 0);
 }
 
 TEST_F(DataSrcTest, DSQueryFromCache) {
@@ -916,7 +967,8 @@ TEST_F(DataSrcTest, DSQueryFromCache) {
 
     // returning refused is probably a bad behavior, but it's a different
     // issue -- see Trac Ticket #306.
-    headerCheck(msg, Rcode::REFUSED(), true, false, true, 0, 0, 0);
+    headerCheck(msg, qid, Rcode::REFUSED(), opcodeval,
+                QR_FLAG | RD_FLAG, 1, 0, 0, 0);
 }
 
 // Non-existent name in the "static" data source.  The purpose of this test
@@ -925,7 +977,8 @@ TEST_F(DataSrcTest, DSQueryFromCache) {
 TEST_F(DataSrcTest, StaticNxDomain) {
     createAndProcessQuery(Name("www.version.bind"), RRClass::CH(),
                           RRType::TXT());
-    headerCheck(msg, Rcode::NXDOMAIN(), true, true, true, 0, 1, 0);
+    headerCheck(msg, qid, Rcode::NXDOMAIN(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 0, 1, 0);
     RRsetIterator rit = msg.beginSection(Message::SECTION_AUTHORITY);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("version.bind"), rrset->getName());
@@ -969,6 +1022,15 @@ TEST_F(DataSrcTest, noNSButDnameZone) {
 
 TEST_F(DataSrcTest, noSOAZone) {
     EXPECT_THROW(createAndProcessQuery(Name("notexist.nosoa.example"),
+                                       RRClass::IN(), RRType::A()),
+                 DataSourceError);
+}
+
+TEST_F(DataSrcTest, apexCNAMEZone) {
+    // The query name doesn't exist in the best matching zone,
+    // and there's a CNAME at the apex (which is bogus), so query handling
+    // will fail due to missing SOA.
+    EXPECT_THROW(createAndProcessQuery(Name("notexist.apexcname.example"),
                                        RRClass::IN(), RRType::A()),
                  DataSourceError);
 }

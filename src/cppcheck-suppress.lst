@@ -1,0 +1,15 @@
+// On some systems cppcheck produces false alarms about 'missing includes'.
+// the following two will suppress, depending on the cppcheck version
+debug
+missingInclude
+// This is a template, and should be excluded from the check
+unreadVariable:src/lib/dns/rdata/template.cc:59
+// These three trigger warnings due to the incomplete implementation.  This is
+// our problem, but we need to suppress the warnings for now.
+functionConst:src/lib/cache/resolver_cache.h
+functionConst:src/lib/cache/message_cache.h
+functionConst:src/lib/cache/rrset_cache.h
+// Intentional self assignment tests.  Suppress warning about them.
+selfAssignment:src/lib/dns/tests/name_unittest.cc:292
+selfAssignment:src/lib/dns/tests/rdata_unittest.cc:227
+selfAssignment:src/lib/dns/tests/tsigkey_unittest.cc:104

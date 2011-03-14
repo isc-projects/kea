@@ -14,20 +14,6 @@
 
 #include <config.h>
 
-// Workaround for a problem with boost and sunstudio 5.10
-// There is a version check in there that appears wrong,
-// which makes including boost/thread.hpp fail
-// This will probably be fixed in a future version of boost,
-// in which case this part can be removed then
-#ifdef NEED_SUNPRO_WORKAROUND
-#if defined(__SUNPRO_CC) && __SUNPRO_CC == 0x5100
-#undef __SUNPRO_CC
-#define __SUNPRO_CC 0x5090
-#endif
-#endif // NEED_SUNPRO_WORKAROUND
-
-
-#include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
@@ -35,6 +21,7 @@
 #include <config.h>
 #include <dns/rdataclass.h>
 
+#include "locks.h"
 #include "hash_table.h"
 #include "lru_list.h"
 #include "hash_deleter.h"
@@ -104,6 +91,19 @@ NameserverAddressStore::lookup(const string& zone, const RRClass& class_code,
         zone_lru_->touch(zone_obj.second);
     }
     zone_obj.second->addCallback(callback, family);
+}
+
+void
+NameserverAddressStore::cancel(const string& zone,
+    const RRClass& class_code,
+    const boost::shared_ptr<AddressRequestCallback>& callback,
+    AddressFamily family)
+{
+    boost::shared_ptr<ZoneEntry> entry(zone_hash_->get(HashKey(zone,
+                                                               class_code)));
+    if (entry) {
+        entry->removeCallback(callback, family);
+    }
 }
 
 } // namespace nsas

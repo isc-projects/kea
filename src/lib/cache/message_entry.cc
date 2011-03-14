@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <config.h>
 
 #include <limits>
@@ -25,6 +23,34 @@
 
 using namespace isc::dns;
 using namespace std;
+
+// Put file scope functions in unnamed namespace.
+namespace {
+
+// Get the shortest existing ancestor which is the owner name of
+// one DNAME record for the given query name.
+// Note: there may be multiple DNAME records(DNAME chain) in answer
+// section. In most cases they are in order, but the code can't depend
+// on that, it has to find the starter by iterating the DNAME chain.
+Name
+getDNAMEChainStarter(const Message& message, const Name& query_name) {
+    Name dname = query_name;
+    RRsetIterator rrset_iter = message.beginSection(Message::SECTION_ANSWER);
+    while(rrset_iter != message.endSection(Message::SECTION_ANSWER)) {
+        if ((*rrset_iter)->getType() == RRType::DNAME()) {
+            const Name& rrname = (*rrset_iter)->getName();
+            if (NameComparisonResult::SUBDOMAIN ==
+                dname.compare(rrname).getRelation()) {
+                dname = rrname;
+            }
+        }
+        ++rrset_iter;
+    }
+
+    return (dname);
+}
+
+} // End of unnamed namespace
 
 namespace isc {
 namespace cache {
@@ -70,7 +96,7 @@ MessageEntry::getRRsetEntries(vector<RRsetEntryPtr>& rrset_entry_vec,
         RRsetCache* rrset_cache = rrsets_[index].cache_;
         RRsetEntryPtr rrset_entry = rrset_cache->lookup(rrsets_[index].name_,
                                                         rrsets_[index].type_);
-        if (time_now < rrset_entry->getExpireTime()) {
+        if (rrset_entry && time_now < rrset_entry->getExpireTime()) {
             rrset_entry_vec.push_back(rrset_entry);
         } else {
             return (false);
@@ -145,48 +171,45 @@ MessageEntry::getRRsetTrustLevel(const Message& message,
     switch(section) {
         case Message::SECTION_ANSWER: {
             if (aa) {
-                RRsetIterator rrset_iter = message.beginSection(section);
-
-                // Make sure we are inspecting the right RRset
-                while((*rrset_iter)->getName() != rrset->getName() &&
-                      (*rrset_iter)->getType() != rrset->getType() &&
-                      rrset_iter != message.endSection(section)) {
-                    ++rrset_iter;
-                }
-                assert(rrset_iter != message.endSection(section));
-
                 // According RFC2181 section 5.4.1, only the record
                 // describing that ailas is necessarily authoritative.
-                // If there is one or more CNAME records in answer section.
-                // CNAME records is assumed as the first rrset.
-                if ((*rrset_iter)->getType() == RRType::CNAME()) {
-                    // TODO: real equals for RRsets?
-                    if ((*rrset_iter).get() == rrset.get()) {
-                        return (RRSET_TRUST_ANSWER_AA);
-                    } else {
-                        return (RRSET_TRUST_ANSWER_NONAA);
+                // If there are CNAME(Not synchronized from DNAME)
+                // records in answer section, only the CNAME record
+                // whose owner name is same with qname is assumed as
+                // authoritative, all the left records are not authoritative.
+                //
+                // If there are DNAME records in answer section,
+                // Only the start DNAME and the synchronized CNAME record
+                // from it are authoritative, any other records in answer
+                // section are non-authoritative.
+                QuestionIterator quest_iter = message.beginQuestion();
+                // Make sure question section is not empty.
+                assert( quest_iter != message.endQuestion());
+
+                const Name& query_name = (*quest_iter)->getName();
+                const RRType& type = rrset->getType();
+                const Name& name = rrset->getName();
+                if ((type == RRType::CNAME() && name == query_name) ||
+                    (type == RRType::DNAME() &&
+                     name == getDNAMEChainStarter(message, query_name))) {
+                    return (RRSET_TRUST_ANSWER_AA);
+                } else {
+                    // If there is a CNAME record whose ower name is the same as
+                    // the query name in answer section, the other records in answer
+                    // section are non-authoritative, except the starter of DNAME
+                    // chain (only checking CNAME is enough, because if the CNAME
+                    // record is synthesized from a DNAME record, that DNAME
+                    // record must be the starter of the DNAME chain).
+                    RRsetIterator iter = message.beginSection(Message::SECTION_ANSWER);
+                    while(iter != message.endSection(Message::SECTION_ANSWER)) {
+                        if ((*iter)->getType() == RRType::CNAME() &&
+                             (*iter)->getName() == query_name) {
+                            return (RRSET_TRUST_ANSWER_NONAA);
+                        }
+                        ++iter;
                     }
                 }
-
-                // Here, if the first rrset is DNAME, then assume the
-                // second rrset is synchronized CNAME record, except
-                // these two records, any other records in answer section
-                // should be treated as non-authoritative.
-                // TODO, this part logic should be revisited later,
-                // since it's not mentioned by RFC2181.
-                if ((*rrset_iter)->getType() == RRType::DNAME()) {
-                    // TODO: real equals for RRsets?
-                    if ((*rrset_iter).get() == rrset.get() ||
-                        ((++rrset_iter) != message.endSection(section) &&
-                                     (*rrset_iter).get() == rrset.get())) {
-                        return (RRSET_TRUST_ANSWER_AA);
-                    } else {
-                        return (RRSET_TRUST_ANSWER_NONAA);
-                    }
-                }
-
                 return (RRSET_TRUST_ANSWER_AA);
-
             } else {
                 return (RRSET_TRUST_ANSWER_NONAA);
             }

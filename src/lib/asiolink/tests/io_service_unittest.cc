@@ -15,6 +15,7 @@
 #include <config.h>
 #include <gtest/gtest.h>
 
+#include <asio.hpp>
 #include <asiolink/asiolink.h>
 
 using namespace asiolink;
@@ -27,7 +28,7 @@ const char* const TEST_IPV4_ADDR = "127.0.0.1";
 TEST(IOServiceTest, badPort) {
     IOService io_service;
     EXPECT_THROW(DNSService(io_service, *"65536", true, false, NULL, NULL, NULL), IOError);
-    EXPECT_THROW(DNSService(io_service, *"5300.0", true, false, NULL, NULL, NULL), IOError);
+    EXPECT_THROW(DNSService(io_service, *"53210.0", true, false, NULL, NULL, NULL), IOError);
     EXPECT_THROW(DNSService(io_service, *"-1", true, false, NULL, NULL, NULL), IOError);
     EXPECT_THROW(DNSService(io_service, *"domain", true, false, NULL, NULL, NULL), IOError);
 }

@@ -14,17 +14,17 @@
 
 #include <config.h>
 
-// unistd is needed for asio.hpp with SunStudio
-#include <unistd.h>
+#include <unistd.h>             // for some IPC/network system calls
+#include <sys/socket.h>
+#include <netinet/in.h>
 
-#include <asio.hpp>
+#include <boost/bind.hpp>
 
 #include <exceptions/exceptions.h>
 
+#include <asio.hpp>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
-
-#include <boost/bind.hpp>
 
 namespace asiolink {
 

@@ -71,7 +71,7 @@ std::string trim(const std::string& instring);
 /// \param delim Delimiter characters
 ///
 /// \return Vector of tokens.
-std::vector<std::string> tokens(const std::string text,
+std::vector<std::string> tokens(const std::string& text,
         const std::string& delim = std::string(" \t\n"));
 
 

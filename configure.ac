@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20110120, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20110224, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -14,18 +14,22 @@ AC_PROG_CXX
 #
 # On FreeBSD (and probably some others), clang++ does not meet an autoconf
 # assumption in identifying libtool configuration regarding shared library:
-# the configure script will execute "$CC -shared $CFLAGS -v -o" and expect
-# the output contains -Lxxx or -Ryyy.  This is the case for g++, but not for
-# clang++, and, as a result, it will cause various errors in linking programs
-# or running them with a shared object (such as some of our python scripts).
+# the configure script will execute "$CC -shared $CFLAGS/$CXXFLAGS -v" and
+# expect the output contains -Lxxx or -Ryyy.  This is the case for g++, but
+# not for clang++, and, as a result, it will cause various errors in linking
+# programs or running them with a shared object (such as some of our python
+# scripts).
 # To work around this problem we define a temporary variable
 # "CXX_LIBTOOL_LDFLAGS".  It's expected to be defined as, e.g, "-L/usr/lib"
 # to temporarily fake the output so that it will be compatible with that of
 # g++.
 CFLAGS_SAVED=$CFLAGS
+CXXFLAGS_SAVED=$CXXFLAGS
 CFLAGS="$CFLAGS $CXX_LIBTOOL_LDFLAGS"
+CXXFLAGS="$CXXFLAGS $CXX_LIBTOOL_LDFLAGS"
 AC_PROG_LIBTOOL
 CFLAGS=$CFLAGS_SAVED
+CXXFLAGS=$CXXFLAGS_SAVED
 
 # Use C++ language
 AC_LANG([C++])
@@ -65,6 +69,11 @@ fi
 if test $enable_shared = no; then
 	AC_MSG_ERROR([BIND 10 requires shared libraries to be built])
 fi
+
+AC_ARG_ENABLE(boost-threads,
+AC_HELP_STRING([--enable-boost-threads],
+  [use boost threads. Currently this only means using its locks instead of dummy locks, in the cache and NSAS]),
+  use_boost_threads=$enableval, use_boost_threads=no)
 
 # allow configuring without setproctitle.
 AC_ARG_ENABLE(setproctitle-check,
@@ -193,8 +202,9 @@ if test "$setproctitle_check" = "yes" ; then
         AC_MSG_RESULT(ok)
     else
         AC_MSG_RESULT(missing)
-        AC_MSG_ERROR([Missing setproctitle module. Either install it or provide --disable-setproctitle-check.
-In that case we will continue, but naming of python processes will not work.])
+        AC_MSG_WARN([Missing setproctitle python module.
+Use --disable-setproctitle-check to skip this check.
+In this case we will continue, but naming of python processes will not work.])
     fi
 fi
 
@@ -285,6 +295,7 @@ AC_SUBST(B10_CXXFLAGS)
 
 AC_SEARCH_LIBS(inet_pton, [nsl])
 AC_SEARCH_LIBS(recvfrom, [socket])
+AC_SEARCH_LIBS(nanosleep, [rt])
 
 # Checks for header files.
 
@@ -363,57 +374,6 @@ if test "$lcov" != "no"; then
 fi
 AC_SUBST(USE_LCOV)
 
-# Configure log4cxx header and library path
-#
-# If explicitly specified, use it.
-
-AC_ARG_WITH([log4cxx],
-  AC_HELP_STRING([--with-log4cxx=PATH],
-    [specify directory where log4cxx is installed]),
-  [
-   log4cxx_include_path="${withval}/include";
-   log4cxx_library_path="${withval}/lib"
-  ])
-
-# This is an urgent fix to avoid regression due to log4cxx on some
-# platforms.  It should be cleaned up with a better fix.
-if test "X$with_log4cxx" != "Xno"; then
-
-# If not specified, try some common paths.  These default to
-# /usr/include and /usr/lib if not found
-
-if test -z "$with_log4cxx"; then
-	log4cxxdirs="/usr/local /usr/pkg /opt /opt/local"
-	for d in $log4cxxdirs
-	do
-		if test -d $d/include/log4cxx; then
-			log4cxx_include_path=$d/include
-			log4cxx_library_path=$d/lib
-			break
-		fi
-	done
-fi
-
-CPPFLAGS_SAVES="$CPPFLAGS"
-if test "${log4cxx_include_path}" ; then
-	LOG4CXX_INCLUDES="-I${log4cxx_include_path}"
-	CPPFLAGS="$CPPFLAGS $LOG4CXX_INCLUDES"
-fi
-AC_CHECK_HEADER([log4cxx/logger.h],, AC_MSG_ERROR([Missing log4cxx header files.]))
-CPPFLAGS="$CPPFLAGS_SAVES"
-AC_SUBST(LOG4CXX_INCLUDES)
-
-LOG4CXX_LDFLAGS="-llog4cxx";
-if test "${log4cxx_library_path}"; then
-    LOG4CXX_LDFLAGS="-L${log4cxx_library_path} -llog4cxx"
-fi
-AC_SUBST(LOG4CXX_LDFLAGS)
-
-# The following two lines are part of the urgent fix, and should be cleaned
-# up with a better fix.
-fi
-AM_CONDITIONAL(USE_LOG4CXX, test "X${with_log4cxx}" != "Xno")
-
 #
 # Configure Boost header path
 #
@@ -443,61 +403,68 @@ AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync
 CPPFLAGS="$CPPFLAGS_SAVES"
 AC_SUBST(BOOST_INCLUDES)
 
-# Using boost::mutex can result in requiring libboost_thread with older
-# versions of Boost.  We'd like to avoid relying on a compiled Boost library
-# whenever possible, so we need to check for it step by step.
-#
-# NOTE: another fix of this problem is to simply require newer versions of
-# boost.  If we choose that solution we should simplify the following tricky
-# checks accordingly and all Makefile.am's that refer to NEED_LIBBOOST_THREAD.
-AC_MSG_CHECKING(for boost::mutex)
-CPPFLAGS_SAVES="$CPPFLAGS"
-LIBS_SAVES="$LIBS"
-CPPFLAGS="$BOOST_INCLUDES $CPPFLAGS $MULTITHREADING_FLAG"
-need_libboost_thread=0
-need_sunpro_workaround=0
-AC_TRY_LINK([
-#include <boost/thread.hpp>
-],[
-boost::mutex m;
-],
-	[ AC_MSG_RESULT(yes (without libboost_thread)) ],
 
-    # there is one specific problem with SunStudio 5.10
-    # where including boost/thread causes a compilation failure
-    # There is a workaround in boost but it checks the version not being 5.10
-    # This will probably be fixed in the future, in which case this
-    # is only a temporary workaround
-    [ AC_TRY_LINK([
-#if defined(__SUNPRO_CC) && __SUNPRO_CC == 0x5100
-#undef __SUNPRO_CC
-#define __SUNPRO_CC 0x5090
-#endif
-#include <boost/thread.hpp>
-],[
-boost::mutex m;
-],
-    [ AC_MSG_RESULT(yes (with SUNOS workaround))
-      need_sunpro_workaround=1 ],
-    	[ LIBS=" $LIBS -lboost_thread"
-	  AC_TRY_LINK([
-#include <boost/thread.hpp>
-],[
-boost::mutex m;
-],
-		  [ AC_MSG_RESULT(yes (with libboost_thread))
-		    need_libboost_thread=1 ],
-		  [ AC_MSG_RESULT(no)
-		    AC_MSG_ERROR([boost::mutex cannot be linked in this build environment.
-Perhaps you are using an older version of Boost that requires libboost_thread for the mutex support, which does not appear to be available.
-You may want to check the availability of the library or to upgrade Boost.])
-   		  ])])])
-CPPFLAGS="$CPPFLAGS_SAVES"
-LIBS="$LIBS_SAVES"
-AM_CONDITIONAL(NEED_LIBBOOST_THREAD, test $need_libboost_thread = 1)
-if test $need_sunpro_workaround = 1; then
-    AC_DEFINE([NEED_SUNPRO_WORKAROUND], [], [Need boost sunstudio workaround])
+if test "${use_boost_threads}" = "yes" ; then
+    AC_DEFINE([USE_BOOST_THREADS], [], [Use boost threads])
+
+    # Using boost::mutex can result in requiring libboost_thread with older
+    # versions of Boost.  We'd like to avoid relying on a compiled Boost library
+    # whenever possible, so we need to check for it step by step.
+    #
+    # NOTE: another fix of this problem is to simply require newer versions of
+    # boost.  If we choose that solution we should simplify the following tricky
+    # checks accordingly and all Makefile.am's that refer to NEED_LIBBOOST_THREAD.
+    AC_MSG_CHECKING(for boost::mutex)
+    CPPFLAGS_SAVES="$CPPFLAGS"
+    LIBS_SAVES="$LIBS"
+    CPPFLAGS="$BOOST_INCLUDES $CPPFLAGS $MULTITHREADING_FLAG"
+    need_libboost_thread=0
+    need_sunpro_workaround=0
+    AC_TRY_LINK([
+    #include <boost/thread.hpp>
+    ],[
+    boost::mutex m;
+    ],
+        [ AC_MSG_RESULT(yes (without libboost_thread)) ],
+        # there is one specific problem with SunStudio 5.10
+        # where including boost/thread causes a compilation failure
+        # There is a workaround in boost but it checks the version not being 5.10
+        # This will probably be fixed in the future, in which case this
+        # is only a temporary workaround
+        [ AC_TRY_LINK([
+    #if defined(__SUNPRO_CC) && __SUNPRO_CC == 0x5100
+    #undef __SUNPRO_CC
+    #define __SUNPRO_CC 0x5090
+    #endif
+    #include <boost/thread.hpp>
+    ],[
+    boost::mutex m;
+    ],
+        [ AC_MSG_RESULT(yes (with SUNOS workaround))
+          need_sunpro_workaround=1 ],
+            [ LIBS=" $LIBS -lboost_thread"
+          AC_TRY_LINK([
+    #include <boost/thread.hpp>
+    ],[
+    boost::mutex m;
+    ],
+              [ AC_MSG_RESULT(yes (with libboost_thread))
+                need_libboost_thread=1 ],
+              [ AC_MSG_RESULT(no)
+                AC_MSG_ERROR([boost::mutex cannot be linked in this build environment.
+    Perhaps you are using an older version of Boost that requires libboost_thread for the mutex support, which does not appear to be available.
+    You may want to check the availability of the library or to upgrade Boost.])
+              ])])])
+    CPPFLAGS="$CPPFLAGS_SAVES"
+    LIBS="$LIBS_SAVES"
+    AM_CONDITIONAL(NEED_LIBBOOST_THREAD, test $need_libboost_thread = 1)
+    if test $need_sunpro_workaround = 1; then
+        AC_DEFINE([NEED_SUNPRO_WORKAROUND], [], [Need boost sunstudio workaround])
+    fi
+else
+    AM_CONDITIONAL(NEED_LIBBOOST_THREAD, test "${use_boost_threads}" = "yes")
 fi
+
 
 #
 # Check availability of gtest, which will be used for unit tests.
@@ -616,6 +583,12 @@ if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GXX" = "Xyes"; then
 	CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_DEV_POLL=1"
 fi
 
+#
+# Perl is optional; it is used only by some of the system test scripts.
+#
+AC_PATH_PROGS(PERL, perl5 perl)
+AC_SUBST(PERL)
+
 AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
   [regenerate man pages [default=no]])], enable_man=yes, enable_man=no)
 
@@ -714,6 +687,10 @@ AC_CONFIG_FILES([Makefile
                  src/lib/nsas/tests/Makefile
                  src/lib/cache/Makefile
                  src/lib/cache/tests/Makefile
+                 src/lib/server_common/Makefile
+                 src/lib/server_common/tests/Makefile
+                 tests/Makefile
+                 tests/system/Makefile
                ])
 AC_OUTPUT([doc/version.ent
            src/bin/cfgmgr/b10-cfgmgr.py
@@ -743,9 +720,10 @@ AC_OUTPUT([doc/version.ent
            src/bin/stats/tests/stats_test
            src/bin/bind10/bind10.py
            src/bin/bind10/tests/bind10_test
+           src/bin/bind10/tests/bind10_test.py
            src/bin/bind10/run_bind10.sh
            src/bin/bindctl/run_bindctl.sh
-           src/bin/bindctl/bindctl-source.py
+           src/bin/bindctl/bindctl_main.py
            src/bin/bindctl/tests/bindctl_test
            src/bin/loadzone/run_loadzone.sh
            src/bin/loadzone/tests/correct/correct_test.sh
@@ -770,6 +748,10 @@ AC_OUTPUT([doc/version.ent
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
            src/lib/log/tests/run_time_init_test.sh
+           tests/system/conf.sh
+           tests/system/glue/setup.sh
+           tests/system/glue/nsx1/b10-config.db
+           tests/system/bindctl/nsx1/b10-config.db.template
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
@@ -794,6 +776,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
            chmod +x src/lib/log/tests/run_time_init_test.sh
+           chmod +x tests/system/conf.sh
           ])
 AC_OUTPUT
 
@@ -821,8 +804,6 @@ dnl includes too
                  ${PYTHON_LDFLAGS}
                  ${PYTHON_LIB}
   Boost:         ${BOOST_INCLUDES}
-  log4cxx:       ${LOG4CXX_INCLUDES}
-                 ${LOG4CXX_LDFLAGS}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
 

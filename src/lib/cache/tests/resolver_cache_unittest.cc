@@ -12,13 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
 #include <config.h>
 #include <string>
 #include <gtest/gtest.h>
 #include <dns/rrset.h>
 #include "resolver_cache.h"
 #include "cache_test_messagefromfile.h"
+#include "cache_test_sectioncount.h"
 
 using namespace isc::cache;
 using namespace isc::dns;
@@ -64,7 +64,7 @@ TEST_F(ResolverCacheTest, testUpdateMessage) {
     EXPECT_TRUE(cache->lookup(qname, RRType::SOA(), RRClass::IN(), new_msg));
     EXPECT_FALSE(new_msg.getHeaderFlag(Message::HEADERFLAG_AA));
 }
-#if 0
+
 TEST_F(ResolverCacheTest, testUpdateRRset) {
     Message msg(Message::PARSE);
     messageFromFile(msg, "message_fromWire3");
@@ -87,7 +87,7 @@ TEST_F(ResolverCacheTest, testUpdateRRset) {
     cache->update(rrset_ptr);
 
     Message new_msg(Message::RENDER);
-    Question question(qname, klass, RRType::NS());
+    Question question(qname, RRClass::IN(), RRType::NS());
     new_msg.addQuestion(question);
     EXPECT_TRUE(cache->lookup(qname, RRType::NS(), RRClass::IN(), new_msg));
     EXPECT_EQ(0, sectionRRsetCount(new_msg, Message::SECTION_AUTHORITY));
@@ -113,26 +113,16 @@ TEST_F(ResolverCacheTest, testLookupClosestRRset) {
 
     Name qname("www.test.example.com.");
 
-    RRsetPtr rrset_ptr = cache->lookupClosestRRset(qname, RRType::NS(),
-                                                  RRClass::IN());
+    RRsetPtr rrset_ptr = cache->lookupDeepestNS(qname, RRClass::IN());
     EXPECT_TRUE(rrset_ptr);
     EXPECT_EQ(rrset_ptr->getName(), Name("example.com."));
 
-    rrset_ptr = cache->lookupClosestRRset(Name("example.com."),
-                                         RRType::NS(), RRClass::IN());
+    rrset_ptr = cache->lookupDeepestNS(Name("example.com."), RRClass::IN());
     EXPECT_TRUE(rrset_ptr);
     EXPECT_EQ(rrset_ptr->getName(), Name("example.com."));
 
-    rrset_ptr = cache->lookupClosestRRset(Name("com."),
-                                         RRType::NS(), RRClass::IN());
+    rrset_ptr = cache->lookupDeepestNS(Name("com."), RRClass::IN());
     EXPECT_FALSE(rrset_ptr);
 }
-
-TEST_F(ResolverCacheTest, testHasClass) {
-    EXPECT_TRUE(cache->getClassCache(RRClass::IN()));
-    EXPECT_TRUE(cache->getClassCache(RRClass::CH()));
-    EXPECT_FALSE(cache->getClassCache(RRClass::ANY()));
-}
-#endif
 
 }

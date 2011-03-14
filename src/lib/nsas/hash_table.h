@@ -15,25 +15,11 @@
 #ifndef __HASH_TABLE_H
 #define __HASH_TABLE_H
 
-// Workaround for a problem with boost and sunstudio 5.10
-// There is a version check in there that appears wrong,
-// which makes including boost/thread.hpp fail
-// This will probably be fixed in a future version of boost,
-// in which case this part can be removed then
-#ifdef NEED_SUNPRO_WORKAROUND
-#if defined(__SUNPRO_CC) && __SUNPRO_CC == 0x5100
-#undef __SUNPRO_CC
-#define __SUNPRO_CC 0x5090
-#endif
-#endif // NEED_SUNPRO_WORKAROUND
-
-#include <boost/shared_ptr.hpp>
-#include <boost/thread.hpp>
-#include <boost/interprocess/sync/sharable_lock.hpp>
-#include <boost/interprocess/sync/scoped_lock.hpp>
-#include <boost/interprocess/sync/interprocess_upgradable_mutex.hpp>
 #include <list>
 
+#include <boost/shared_ptr.hpp>
+
+#include "locks.h"
 #include "hash.h"
 #include "hash_key.h"
 
@@ -61,7 +47,7 @@ struct HashTableSlot {
     typedef typename std::list<boost::shared_ptr<T> >::iterator  iterator;
                                     ///< Iterator over elements with same hash
 
-    typedef boost::interprocess::interprocess_upgradable_mutex mutex_type;
+    typedef isc::locks::upgradable_mutex mutex_type;
                                     ///< Mutex protecting this slot
     //@}
 
@@ -128,11 +114,11 @@ public:
     ///
     //@{
     typedef typename
-    boost::interprocess::sharable_lock<typename HashTableSlot<T>::mutex_type>
+    isc::locks::sharable_lock<typename HashTableSlot<T>::mutex_type>
     sharable_lock;                  ///< Type for a scope-limited read-lock
 
     typedef typename
-    boost::interprocess::scoped_lock<typename HashTableSlot<T>::mutex_type>
+    isc::locks::scoped_lock<typename HashTableSlot<T>::mutex_type>
     scoped_lock;                    ///< Type for a scope-limited write-lock
     //@}
 

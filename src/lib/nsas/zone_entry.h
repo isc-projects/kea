@@ -15,22 +15,9 @@
 #ifndef __ZONE_ENTRY_H
 #define __ZONE_ENTRY_H
 
-// Workaround for a problem with boost and sunstudio 5.10
-// There is a version check in there that appears wrong,
-// which makes including boost/thread.hpp fail
-// This will probably be fixed in a future version of boost,
-// in which case this part can be removed then
-#ifdef NEED_SUNPRO_WORKAROUND
-#if defined(__SUNPRO_CC) && __SUNPRO_CC == 0x5100
-#undef __SUNPRO_CC
-#define __SUNPRO_CC 0x5090
-#endif
-#endif // NEED_SUNPRO_WORKAROUND
-
 #include <string>
 #include <vector>
 #include <set>
-#include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
@@ -38,6 +25,7 @@
 
 #include <resolve/resolver_interface.h>
 
+#include "locks.h"
 #include "hash_key.h"
 #include "nsas_entry.h"
 #include "asiolink.h"
@@ -113,6 +101,15 @@ public:
     void addCallback(boost::shared_ptr<AddressRequestCallback>
         callback, AddressFamily family);
 
+    /**
+     * \short Remove a callback from the list
+     *
+     * \param callback The callback itself.
+     * \param family Which address family is acceptable as an answer?
+     */
+    void removeCallback(const boost::shared_ptr<AddressRequestCallback>&
+                        callback, AddressFamily family);
+
     /// \short Protected members, so they can be accessed by tests.
     //@{
 protected:
@@ -131,7 +128,7 @@ protected:
     time_t          expiry_;    ///< Expiry time of this entry, 0 means not set
     //}@
 private:
-    mutable boost::recursive_mutex    mutex_;     ///< Mutex protecting this zone entry
+    mutable isc::locks::recursive_mutex    mutex_;///< Mutex protecting this zone entry
     std::string     name_;      ///< Canonical zone name
     isc::dns::RRClass        class_code_; ///< Class code
     /**
