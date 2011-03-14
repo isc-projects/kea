@@ -63,44 +63,6 @@ namespace {
             rdi->next();
         }
     }
-
-    // Add the A and AAAA records from the given message for the given
-    // NS name to the relevant address vector
-    // (A rrsets are added to addresses_v4, AAAA rrsets are added to
-    // addresses_v6).
-    void
-    addGlueForName(std::vector<NameserverAddress>& addresses_v4,
-                   std::vector<NameserverAddress>& addresses_v6,
-                   const Name& name, const Message& message)
-    {
-        for (RRsetIterator rssi = message.beginSection(Message::SECTION_ADDITIONAL);
-             rssi != message.endSection(Message::SECTION_ADDITIONAL);
-             ++rssi) {
-            if ((*rssi)->getName() == name) {
-                if ((*rssi)->getType() == RRType::A()) {
-                    addRRset(addresses_v4, *rssi);
-                } else if ((*rssi)->getType() == RRType::AAAA()) {
-                    addRRset(addresses_v6, *rssi);
-                }
-            }
-        }
-    }
-
-    // Add the glue for the given NS RRset in the message to the
-    // relevant vectors.
-    void
-    addGlueForRRset(std::vector<NameserverAddress>& addresses_v4,
-                    std::vector<NameserverAddress>& addresses_v6,
-                    const RRsetPtr rrset, const Message& message)
-    {
-        RdataIteratorPtr rdi = rrset->getRdataIterator();
-        while (!rdi->isLast()) {
-            isc::dns::Name name(dynamic_cast<const rdata::generic::NS&>(
-                            rdi->getCurrent()).getNSName());
-            addGlueForName(addresses_v4, addresses_v6, name, message);
-            rdi->next();
-        }
-    }
 }
 
 namespace isc {
@@ -109,14 +71,12 @@ namespace nsas {
 GlueHints::GlueHints(const std::string& zone_name,
                      const isc::dns::Message& delegation_message)
 {
-    std::cout << delegation_message.toText();
     for (RRsetIterator rssi = delegation_message.beginSection(Message::SECTION_AUTHORITY);
          rssi != delegation_message.endSection(Message::SECTION_AUTHORITY);
          ++rssi) {
         if ((*rssi)->getType() == RRType::NS() &&
             (*rssi)->getName().toText() == zone_name) {
-            addGlueForRRset(addresses_v4, addresses_v6,
-                            *rssi, delegation_message);
+            addGlueForRRset(*rssi, delegation_message);
         }
     }
 }
@@ -164,6 +124,41 @@ GlueHints::getGlue(AddressFamily family) const {
         assert(false);
     }
 }
+
+// Add the A and AAAA records from the given message for the given
+// NS name to the relevant address vector
+// (A rrsets are added to addresses_v4, AAAA rrsets are added to
+// addresses_v6).
+void
+GlueHints::addGlueForName(const Name& name, const Message& message)
+{
+    for (RRsetIterator rssi = message.beginSection(Message::SECTION_ADDITIONAL);
+         rssi != message.endSection(Message::SECTION_ADDITIONAL);
+         ++rssi) {
+        if ((*rssi)->getName() == name) {
+            if ((*rssi)->getType() == RRType::A()) {
+                addRRset(addresses_v4, *rssi);
+            } else if ((*rssi)->getType() == RRType::AAAA()) {
+                addRRset(addresses_v6, *rssi);
+            }
+        }
+    }
+}
+
+// Add the glue for the given NS RRset in the message to the
+// relevant vectors.
+void
+GlueHints::addGlueForRRset(const RRsetPtr rrset, const Message& message)
+{
+    RdataIteratorPtr rdi = rrset->getRdataIterator();
+    while (!rdi->isLast()) {
+        isc::dns::Name name(dynamic_cast<const rdata::generic::NS&>(
+                        rdi->getCurrent()).getNSName());
+        addGlueForName(name, message);
+        rdi->next();
+    }
+}
+
 
 } // namespace nsas
 } // namespace isc

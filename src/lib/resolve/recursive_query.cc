@@ -294,7 +294,7 @@ private:
             isc::resolve::ResponseClassifier::classify(
                 question_, incoming, cname_target, cname_count_, true);
 
-        bool found_ns_address = false;
+        bool found_ns = false;
             
         switch (category) {
         case isc::resolve::ResponseClassifier::ANSWER:
@@ -348,18 +348,18 @@ private:
             // classifier should have error'd)
             // TODO: should we check if it really is subzone?
             for (RRsetIterator rrsi = incoming.beginSection(Message::SECTION_AUTHORITY);
-                 rrsi != incoming.endSection(Message::SECTION_AUTHORITY) && !found_ns_address;
+                 rrsi != incoming.endSection(Message::SECTION_AUTHORITY) && !found_ns;
                  ++rrsi) {
                 ConstRRsetPtr rrs = *rrsi;
                 if (rrs->getType() == RRType::NS()) {
                     cur_zone_ = rrs->getName().toText();
                     dlog("Referred to zone " + cur_zone_);
-                    found_ns_address = true;
+                    found_ns = true;
                     break;
                 }
             }
 
-            if (found_ns_address) {
+            if (found_ns) {
                 // next resolver round
                 // we do NOT use doLookup() here, but send() (i.e. we
                 // skip the cache), since if we had the final answer
