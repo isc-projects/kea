@@ -30,11 +30,13 @@
 #include <dns/rrttl.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+#include <dns/rdata/generic/detail/nsec_bitmap.h>
 
 #include <stdio.h>
 #include <time.h>
 
 using namespace std;
+using namespace isc::dns::rdata::generic::detail::nsec;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -61,50 +63,70 @@ NSEC3::NSEC3(const string& nsec3_str) :
 {
     istringstream iss(nsec3_str);
     unsigned int hashalg, flags, iterations;
-    string salthex;
+    string iterations_str, salthex, nexthash;
 
-    iss >> hashalg >> flags >> iterations >> salthex;
+    iss >> hashalg >> flags >> iterations_str >> salthex >> nexthash;
     if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid NSEC3 text");
+        isc_throw(InvalidRdataText, "Invalid NSEC3 text: " << nsec3_str);
     }
-    if (hashalg > 0xf) {
-        isc_throw(InvalidRdataText, "NSEC3 hash algorithm out of range");
+    if (hashalg > 0xff) {
+        isc_throw(InvalidRdataText,
+                  "NSEC3 hash algorithm out of range: " << hashalg);
     }
     if (flags > 0xff) {
-        isc_throw(InvalidRdataText, "NSEC3 flags out of range");
+        isc_throw(InvalidRdataText, "NSEC3 flags out of range: " << flags);
+    }
+    // Convert iteration.  To reject an invalid case where there's no space
+    // between iteration and salt, we extract this field as string and convert
+    // to integer.
+    try {
+        iterations = boost::lexical_cast<unsigned int>(iterations_str);
+    } catch (const boost::bad_lexical_cast&) {
+        isc_throw(InvalidRdataText, "Bad NSEC3 iteration: " << iterations_str);
     }
     if (iterations > 0xffff) {
-        isc_throw(InvalidRdataText, "NSEC3 iterations out of range");
+        isc_throw(InvalidRdataText, "NSEC3 iterations out of range: " <<
+            iterations);
     }
 
     vector<uint8_t> salt;
-    decodeHex(salthex, salt);
-
-    string nextstr;
-    iss >> setw(32) >> nextstr;
-    vector<uint8_t> next;
-    if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid NSEC3 hash algorithm");
+    if (salthex != "-") {       // "-" means a 0-length salt
+        decodeHex(salthex, salt);
     }
-    decodeBase32Hex(nextstr, next);
+    if (salt.size() > 255) {
+        isc_throw(InvalidRdataText, "NSEC3 salt is too long: "
+                  << salt.size() << " bytes");
+    }
 
-    uint8_t bitmap[8 * 1024];       // 64k bits
+    vector<uint8_t> next;
+    decodeBase32Hex(nexthash, next);
+    if (next.size() > 255) {
+        isc_throw(InvalidRdataText, "NSEC3 hash is too long: "
+                  << next.size() << " bytes");
+    }
+
+    // For NSEC3 empty bitmap is possible and allowed.
+    if (iss.eof()) {
+        impl_ = new NSEC3Impl(hashalg, flags, iterations, salt, next,
+                              vector<uint8_t>());
+        return;
+    }
+
     vector<uint8_t> typebits;
-
+    uint8_t bitmap[8 * 1024];       // 64k bits
     memset(bitmap, 0, sizeof(bitmap));
     do { 
         string type;
-        int code;
         iss >> type;
         if (type.length() != 0) {
             try {
-                code = RRType(type).getCode();
+                const int code = RRType(type).getCode();
                 bitmap[code / 8] |= (0x80 >> (code % 8));
             } catch (...) {
                 isc_throw(InvalidRdataText, "Invalid RRtype in NSEC3");
             }
         }
-    } while(!iss.eof());
+    } while (!iss.eof());
 
     for (int window = 0; window < 256; window++) {
         int octet;
@@ -126,56 +148,46 @@ NSEC3::NSEC3(const string& nsec3_str) :
 }
 
 NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) {
+    // NSEC3 RR must have at least 5 octets:
+    // hash algorithm(1), flags(1), iteration(2), saltlen(1)
     if (rdata_len < 5) {
-        isc_throw(InvalidRdataLength, "NSEC3 too short");
+        isc_throw(DNSMessageFORMERR, "NSEC3 too short, length: " << rdata_len);
     }
 
-    uint8_t hashalg = buffer.readUint8();
-    uint8_t flags = buffer.readUint8();
-    uint16_t iterations = buffer.readUint16();
-    rdata_len -= 4;
+    const uint8_t hashalg = buffer.readUint8();
+    const uint8_t flags = buffer.readUint8();
+    const uint16_t iterations = buffer.readUint16();
 
-    uint8_t saltlen = buffer.readUint8();
-    --rdata_len;
-
+    const uint8_t saltlen = buffer.readUint8();
+    rdata_len -= 5;
     if (rdata_len < saltlen) {
-        isc_throw(InvalidRdataLength, "NSEC3 salt too short");
+        isc_throw(DNSMessageFORMERR, "NSEC3 salt length is too large: " <<
+                  static_cast<unsigned int>(saltlen));
     }
 
     vector<uint8_t> salt(saltlen);
-    buffer.readData(&salt[0], saltlen);
-    rdata_len -= saltlen;
+    if (saltlen > 0) {
+        buffer.readData(&salt[0], saltlen);
+        rdata_len -= saltlen;
+    }
 
-    uint8_t nextlen = buffer.readUint8();
+    const uint8_t nextlen = buffer.readUint8();
     --rdata_len;
-
-    if (rdata_len < nextlen) {
-        isc_throw(InvalidRdataLength, "NSEC3 next hash too short");
+    if (nextlen == 0 || rdata_len < nextlen) {
+        isc_throw(DNSMessageFORMERR, "NSEC3 invalid hash length: " <<
+                  static_cast<unsigned int>(nextlen));
     }
 
     vector<uint8_t> next(nextlen);
     buffer.readData(&next[0], nextlen);
     rdata_len -= nextlen;
 
-    if (rdata_len == 0) {
-        isc_throw(InvalidRdataLength, "NSEC3 type bitmap too short");
-    }
-
     vector<uint8_t> typebits(rdata_len);
-    buffer.readData(&typebits[0], rdata_len);
-
-    int len = 0;
-    for (int i = 0; i < typebits.size(); i += len) {
-        if (i + 2 > typebits.size()) {
-            isc_throw(DNSMessageFORMERR, "Invalid rdata: "
-                                         "bad NSEC3 type bitmap");
-        }
-        len = typebits[i + 1];
-        if (len > 31) {
-            isc_throw(DNSMessageFORMERR, "Invalid rdata: "
-                                         "bad NSEC3 type bitmap");
-        }
-        i += 2;
+    if (rdata_len > 0) {
+        // Read and parse the bitmaps only when they exist; empty bitmap
+        // is possible for NSEC3.
+        buffer.readData(&typebits[0], rdata_len);
+        checkRRTypeBitmaps("NSEC3", typebits);
     }
 
     impl_ = new NSEC3Impl(hashalg, flags, iterations, salt, next, typebits);
@@ -327,9 +339,14 @@ NSEC3::getIterations() const {
     return (impl_->iterations_);
 }
 
-vector<uint8_t>&
+const vector<uint8_t>&
 NSEC3::getSalt() const {
     return (impl_->salt_);
+}
+
+const vector<uint8_t>&
+NSEC3::getNext() const {
+    return (impl_->next_);
 }
 
 // END_RDATA_NAMESPACE

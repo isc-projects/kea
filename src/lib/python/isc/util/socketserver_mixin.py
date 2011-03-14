@@ -64,7 +64,7 @@ class NoPollMixIn:
         called in anther thread.  Note, parameter 'poll_interval' is
         just used for interface compatibility; it's never used in this
         function.
-        '''        
+        '''
         while True:
             # block until the self.socket or self.__read_sock is readable
             try:
@@ -74,11 +74,11 @@ class NoPollMixIn:
                     continue
                 else:
                     break
-            
+
             if self.__read_sock in r:
                 break
             else:
-                self._handle_request_noblock()
+                self._handle_request_noblock();
 
         self._is_shut_down.set()
 

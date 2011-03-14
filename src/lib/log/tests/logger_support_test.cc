@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,12 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: $
-
 /// \brief Example Program
 ///
 /// Simple example program showing how to use the logger.
 
+#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 
@@ -32,12 +31,8 @@
 
 using namespace isc::log;
 
-// Declare root logger and a logger to use an example.
-//RootLoggerName root_name("testing");
-
-RootLoggerName root("alpha");
+// Declare logger to use an example.
 Logger logger_ex("example");
-Logger logger_dlm("dlm");
 
 // The program is invoked:
 //
@@ -47,31 +42,31 @@ Logger logger_dlm("dlm");
 // "level" is the debug level, a number between 0 and 99
 // "local_file" is the name of a local file.
 //
-// The program sets the attributes on the root logger.  Looking
-// at the output determines whether the program worked.e root logger.  Looking
-// at the output determines whether the 
+// The program sets the attributes on the root logger and logs a set of
+// messages.  Looking at the output determines whether the program worked.
 
 int main(int argc, char** argv) {
 
-    Logger::Severity    severity = Logger::INFO;
-    int                 dbglevel = -1;
-    const char*         localfile = NULL;
-    int                 option;
+    isc::log::Severity  severity = isc::log::INFO;  // Default logger severity
+    int                 dbglevel = -1;              // Logger debug level
+    const char*         localfile = NULL;           // Local message file
+    int                 option;                     // For getopt() processing
+    Logger              logger_dlm("dlm", true);    // Another example logger
 
     // Parse options
     while ((option = getopt(argc, argv, "s:d:")) != -1) {
         switch (option) {
             case 's':
                 if (strcmp(optarg, "debug") == 0) {
-                    severity = Logger::DEBUG;
+                    severity = isc::log::DEBUG;
                 } else if (strcmp(optarg, "info") == 0) {
-                    severity = Logger::INFO;
+                    severity = isc::log::INFO;
                 } else if (strcmp(optarg, "warn") == 0) {
-                    severity = Logger::WARN;
+                    severity = isc::log::WARN;
                 } else if (strcmp(optarg, "error") == 0) {
-                    severity = Logger::ERROR;
+                    severity = isc::log::ERROR;
                 } else if (strcmp(optarg, "fatal") == 0) {
-                    severity = Logger::FATAL;
+                    severity = isc::log::FATAL;
                 } else {
                     std::cout << "Unrecognised severity option: " <<
                         optarg << "\n";
@@ -94,16 +89,16 @@ int main(int argc, char** argv) {
     }
 
     // Update the logging parameters
-    runTimeInit(severity, dbglevel, localfile);
+    initLogger("alpha", severity, dbglevel, localfile);
 
     // Log a few messages
-    logger_ex.fatal(MSG_WRITERR, "test1", "42");
+    logger_ex.fatal(MSG_MSGWRTERR, "test1", "42");
     logger_ex.error(MSG_UNRECDIR, "false");
-    logger_dlm.warn(MSG_READERR, "a.txt", "dummy test");
-    logger_dlm.info(MSG_OPENIN, "example.msg", "dummy test");
+    logger_dlm.warn(MSG_MSGRDERR, "a.txt", "dummy test");
+    logger_dlm.info(MSG_OPNMSGIN, "example.msg", "dummy test");
     logger_ex.debug(0, MSG_UNRECDIR, "[abc]");
     logger_ex.debug(24, MSG_UNRECDIR, "[24]");
     logger_ex.debug(25, MSG_UNRECDIR, "[25]");
     logger_ex.debug(26, MSG_UNRECDIR, "[26]");
-    return 0;
+    return (0);
 }

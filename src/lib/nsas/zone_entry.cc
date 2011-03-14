@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <map>
+
 #include <config.h>
 
 #include "zone_entry.h"
@@ -49,7 +51,7 @@ ZoneEntry::ZoneEntry(
 
 namespace {
 // Shorter aliases for frequently used types
-typedef boost::recursive_mutex::scoped_lock Lock; // Local lock, nameservers not locked
+typedef isc::locks::scoped_lock<isc::locks::recursive_mutex> Lock; // Local lock, nameservers not locked
 typedef boost::shared_ptr<AddressRequestCallback> CallbackPtr;
 
 /*
@@ -141,7 +143,7 @@ class ZoneEntry::ResolverCallback :
                         Name ns_name(dynamic_cast<const rdata::generic::NS&>(
                             iterator->getCurrent()).getNSName());
                         // Try to find it in the old ones
-                        map<string, NameserverPtr>::iterator old_ns(old.find(
+                        std::map<string, NameserverPtr>::iterator old_ns(old.find(
                             ns_name.toText()));
                         /*
                          * We didn't have this nameserver before. So we just
@@ -256,6 +258,23 @@ ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family) {
             new ResolverCallback(shared_from_this()));
         resolver_->resolve(question, resolver_callback);
         return;
+    }
+}
+
+void
+ZoneEntry::removeCallback(const CallbackPtr& callback, AddressFamily family) {
+    Lock lock(mutex_);
+    std::vector<boost::shared_ptr<AddressRequestCallback> >::iterator i = 
+        callbacks_[family].begin();
+    for (; i != callbacks_[family].end(); ++i) {
+        if (*i == callback) {
+            callbacks_[family].erase(i);
+            // At this point, a callback should only be in the list
+            // once (enforced by RunningQuery doing only one at a time)
+            // If that changes, we need to revise this (can't delete
+            // elements from a list we're looping over)
+            return;
+        }
     }
 }
 
