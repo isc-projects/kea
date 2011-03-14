@@ -135,8 +135,8 @@ public:
     ///       the right class
     /// TODO: Share the NXDOMAIN info between different type queries
     ///       current implementation can only cache for the type that
-    ///       user quired, for example, if user query A record of 
-    ///       a.example. and the server replied with NXDOMAIN, this 
+    ///       user quired, for example, if user query A record of
+    ///       a.example. and the server replied with NXDOMAIN, this
     ///       should be cached for all the types queries of a.example.
     bool update(const isc::dns::Message& msg);
 
@@ -161,7 +161,7 @@ public:
     ///
     /// \return The RRClass of this cache
     const isc::dns::RRClass& getClass() const;
-    
+
 private:
     /// \brief Update rrset cache.
     ///
