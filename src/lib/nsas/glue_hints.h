@@ -55,6 +55,10 @@ public:
     NameserverAddress getGlue(AddressFamily family) const;
 
 private:
+    void addGlueForName(const isc::dns::Name& name,
+                        const isc::dns::Message& message);
+    void addGlueForRRset(const isc::dns::RRsetPtr rrset,
+                         const isc::dns::Message& message);
 
     std::vector<NameserverAddress> addresses_v4;
     std::vector<NameserverAddress> addresses_v6;
