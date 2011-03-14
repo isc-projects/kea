@@ -1250,7 +1250,7 @@ what if a NOTIFY is sent?
     </para>
 
 <!-- TODO: can that retransfer be used to identify a new zone? -->
-<!-- TODO: what if doesn't exits at that master IP? -->
+<!-- TODO: what if doesn't exist at that master IP? -->
 
   </chapter>
 
