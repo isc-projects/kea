@@ -65,7 +65,7 @@ public:
     /// request is processing.
     /// \param index The address's index in NameserverEntry's addresses vector
     /// \param family Address family, V4_ONLY or V6_ONLY
-    NameserverAddress(const boost::shared_ptr<NameserverEntry> nameserver,
+    NameserverAddress(const boost::shared_ptr<NameserverEntry>& nameserver,
         const AddressEntry& address, AddressFamily family):
         ns_(nameserver), address_(address), family_(family)
     {
