@@ -1,5 +1,3 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
-//
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
 // copyright notice and this permission notice appear in all copies.
@@ -12,7 +10,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
 #include <config.h>
 #include <string>
 #include <gtest/gtest.h>
@@ -30,7 +27,7 @@ using namespace isc;
 using namespace isc::dns;
 using namespace std;
 
-static uint32_t MAX_UINT32 = numeric_limits<uint32_t>::max();    
+static uint32_t MAX_UINT32 = numeric_limits<uint32_t>::max();
 
 namespace {
 
@@ -44,10 +41,10 @@ public:
              MessageEntry(message, rrset_cache_, negative_soa_cache_)
     {}
 
-    /// \brief Wrap the protected function so that it can be tested.   
+    /// \brief Wrap the protected function so that it can be tested.
     void parseSectionForTest(const Message& msg,
                            const Message::Section& section,
-                           uint32_t& smaller_ttl, 
+                           uint32_t& smaller_ttl,
                            uint16_t& rrset_count)
     {
         parseSection(msg, section, smaller_ttl, rrset_count);
@@ -111,7 +108,6 @@ TEST_F(MessageEntryTest, testParseRRset) {
 TEST_F(MessageEntryTest, testGetRRsetTrustLevel_AA) {
     messageFromFile(message_parse, "message_fromWire3");
     DerivedMessageEntry message_entry(message_parse, rrset_cache_, negative_soa_cache_);
-    
 
     RRsetIterator rrset_iter = message_parse.beginSection(Message::SECTION_ANSWER);
     RRsetTrustLevel level = message_entry.getRRsetTrustLevelForTest(message_parse,
@@ -167,7 +163,54 @@ TEST_F(MessageEntryTest, testGetRRsetTrustLevel_CNAME) {
     level = message_entry.getRRsetTrustLevelForTest(message_parse,
                                                     *rrset_iter,
                                                     Message::SECTION_ANSWER);
+    EXPECT_EQ(level, RRSET_TRUST_ANSWER_NONAA);
+}
+
+TEST_F(MessageEntryTest, testGetRRsetTrustLevel_CNAME_and_DNAME) {
+    messageFromFile(message_parse, "message_fromWire7");
+    DerivedMessageEntry message_entry(message_parse, rrset_cache_, negative_soa_cache_);
+    RRsetIterator rrset_iter = message_parse.beginSection(Message::SECTION_ANSWER);
+    RRsetTrustLevel level = message_entry.getRRsetTrustLevelForTest(message_parse,
+                                                                    *rrset_iter,
+                                                                    Message::SECTION_ANSWER);
     EXPECT_EQ(level, RRSET_TRUST_ANSWER_AA);
+    // All the left rrset are non-authoritative
+    ++rrset_iter;
+    while (rrset_iter != message_parse.endSection(Message::SECTION_ANSWER)) {
+        level = message_entry.getRRsetTrustLevelForTest(message_parse,
+                                                        *rrset_iter,
+                                                        Message::SECTION_ANSWER);
+        ++rrset_iter;
+        EXPECT_EQ(level, RRSET_TRUST_ANSWER_NONAA);
+    }
+}
+
+TEST_F(MessageEntryTest, testGetRRsetTrustLevel_DNAME_and_CNAME) {
+    messageFromFile(message_parse, "message_fromWire8");
+    DerivedMessageEntry message_entry(message_parse, rrset_cache_, negative_soa_cache_);
+    RRsetIterator rrset_iter = message_parse.beginSection(Message::SECTION_ANSWER);
+    RRsetTrustLevel level = message_entry.getRRsetTrustLevelForTest(message_parse,
+                                                                    *rrset_iter,
+                                                                    Message::SECTION_ANSWER);
+    // Test the deepest DNAME
+    EXPECT_EQ(level, RRSET_TRUST_ANSWER_AA);
+    ++rrset_iter;
+    // Test the synchronized CNAME
+    level = message_entry.getRRsetTrustLevelForTest(message_parse,
+                                                        *rrset_iter,
+                                                        Message::SECTION_ANSWER);
+    ++rrset_iter;
+    EXPECT_EQ(level, RRSET_TRUST_ANSWER_AA);
+
+    ++rrset_iter;
+    // All the left rrset are non-authoritative
+    while (rrset_iter != message_parse.endSection(Message::SECTION_ANSWER)) {
+        level = message_entry.getRRsetTrustLevelForTest(message_parse,
+                                                        *rrset_iter,
+                                                        Message::SECTION_ANSWER);
+        ++rrset_iter;
+        EXPECT_EQ(level, RRSET_TRUST_ANSWER_NONAA);
+    }
 }
 
 TEST_F(MessageEntryTest, testGetRRsetTrustLevel_DNAME) {
@@ -189,7 +232,7 @@ TEST_F(MessageEntryTest, testGetRRsetTrustLevel_DNAME) {
     level = message_entry.getRRsetTrustLevelForTest(message_parse,
                                                     *rrset_iter,
                                                     Message::SECTION_ANSWER);
-    EXPECT_EQ(level, RRSET_TRUST_ANSWER_AA);
+    EXPECT_EQ(level, RRSET_TRUST_ANSWER_NONAA);
 }
 
 // We only test the expire_time of the message entry.
@@ -207,8 +250,8 @@ TEST_F(MessageEntryTest, testGetRRsetEntries) {
     messageFromFile(message_parse, "message_fromWire3");
     DerivedMessageEntry message_entry(message_parse, rrset_cache_, negative_soa_cache_);
     vector<RRsetEntryPtr> vec;
-    
-    // the time is bigger than the smallest expire time of 
+
+    // the time is bigger than the smallest expire time of
     // the rrset in message.
     time_t expire_time = time(NULL) + 10802;
     EXPECT_FALSE(message_entry.getRRsetEntriesForTest(vec, expire_time));
@@ -218,17 +261,16 @@ TEST_F(MessageEntryTest, testGenMessage) {
     messageFromFile(message_parse, "message_fromWire3");
     DerivedMessageEntry message_entry(message_parse, rrset_cache_, negative_soa_cache_);
     time_t expire_time = message_entry.getExpireTime();
-    
+
     Message msg(Message::RENDER);
     EXPECT_FALSE(message_entry.genMessage(expire_time + 2, msg));
     message_entry.genMessage(time(NULL), msg);
     // Check whether the generated message is same with cached one.
-    
     EXPECT_FALSE(msg.getHeaderFlag(Message::HEADERFLAG_AA));
     EXPECT_FALSE(msg.getHeaderFlag(Message::HEADERFLAG_TC));
-    EXPECT_EQ(1, sectionRRsetCount(msg, Message::SECTION_ANSWER)); 
-    EXPECT_EQ(1, sectionRRsetCount(msg, Message::SECTION_AUTHORITY)); 
-    EXPECT_EQ(5, sectionRRsetCount(msg, Message::SECTION_ADDITIONAL)); 
+    EXPECT_EQ(1, sectionRRsetCount(msg, Message::SECTION_ANSWER));
+    EXPECT_EQ(1, sectionRRsetCount(msg, Message::SECTION_AUTHORITY));
+    EXPECT_EQ(5, sectionRRsetCount(msg, Message::SECTION_ADDITIONAL));
 
     // Check the rrset in answer section.
     EXPECT_EQ(1, msg.getRRCount(Message::SECTION_ANSWER));

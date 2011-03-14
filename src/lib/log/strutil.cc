@@ -62,7 +62,7 @@ trim(const string& instring) {
 // another dependency on a Boost library.
 
 vector<string>
-tokens(const std::string text, const std::string& delim) {
+tokens(const std::string& text, const std::string& delim) {
     vector<string> result;
 
     // Search for the first non-delimiter character

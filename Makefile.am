@@ -1,4 +1,4 @@
-SUBDIRS = doc src
+SUBDIRS = doc src tests
 USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
 GENHTML=@GENHTML@
@@ -69,6 +69,18 @@ coverage: clean-coverage perform-coverage report-coverage
 clean-coverage: clean-cpp-coverage clean-python-coverage
 
 report-coverage: report-cpp-coverage report-python-coverage
+
+# for static C++ check using cppcheck (when available)
+cppcheck:
+	cppcheck --enable=all --suppressions src/cppcheck-suppress.lst \
+		--quiet --error-exitcode=1 \
+		--template '{file}:{line}: check_fail: {message} ({severity},{id})' \
+		src
+
+# system tests
+systest:
+	cd tests/system; \
+	sh $(abs_srcdir)/tests/system/runall.sh
 
 #### include external sources in the distributed tarball:
 EXTRA_DIST = ext/asio/README

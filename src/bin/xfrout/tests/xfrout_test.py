@@ -85,22 +85,11 @@ class TestXfroutSession(unittest.TestCase):
         return msg
 
     def setUp(self):
-        request = MySocket(socket.AF_INET,socket.SOCK_STREAM)
-        self.log = isc.log.NSLogger('xfrout', '',  severity = 'critical', log_to_console = False )
-        (self.write_sock, self.read_sock) = socket.socketpair()
-        self.xfrsess = MyXfroutSession(request, None, None, self.log, self.read_sock)
-        self.xfrsess.server = Dbserver()
-        self.mdata = bytes(b'\xd6=\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01')
         self.sock = MySocket(socket.AF_INET,socket.SOCK_STREAM)
+        self.log = isc.log.NSLogger('xfrout', '',  severity = 'critical', log_to_console = False )
+        self.xfrsess = MyXfroutSession(self.sock, None, Dbserver(), self.log)
+        self.mdata = bytes(b'\xd6=\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01')
         self.soa_record = (4, 3, 'example.com.', 'com.example.', 3600, 'SOA', None, 'master.example.com. admin.example.com. 1234 3600 1800 2419200 7200')
-
-    def test_receive_query_message(self):
-        send_msg = b"\xd6=\x00\x00\x00\x01\x00"
-        msg_len = struct.pack('H', socket.htons(len(send_msg)))
-        self.write_sock.send(msg_len)
-        self.write_sock.send(send_msg)
-        recv_msg = self.xfrsess._receive_query_message(self.read_sock)
-        self.assertEqual(recv_msg, send_msg)
 
     def test_parse_query_message(self):
         [get_rcode, get_msg] = self.xfrsess._parse_query_message(self.mdata)
@@ -121,6 +110,29 @@ class TestXfroutSession(unittest.TestCase):
         get_msg = self.sock.read_msg()
         self.assertEqual(get_msg.get_rcode().to_text(), "NXDOMAIN")
 
+    def test_send_message(self):
+        msg = self.getmsg()
+        msg.make_response()
+        # soa record data with different cases
+        soa_record = (4, 3, 'Example.com.', 'com.Example.', 3600, 'SOA', None, 'master.Example.com. admin.exAmple.com. 1234 3600 1800 2419200 7200')
+        rrset_soa = self.xfrsess._create_rrset_from_db_record(soa_record)
+        msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
+        self.xfrsess._send_message(self.sock, msg)
+        send_out_data = self.sock.readsent()[2:]
+
+        # CASE_INSENSITIVE compression mode
+        render = MessageRenderer();
+        render.set_length_limit(XFROUT_MAX_MESSAGE_SIZE)
+        msg.to_wire(render)
+        self.assertNotEqual(render.get_data(), send_out_data)
+
+        # CASE_SENSITIVE compression mode
+        render.clear()
+        render.set_compress_mode(MessageRenderer.CASE_SENSITIVE)
+        render.set_length_limit(XFROUT_MAX_MESSAGE_SIZE)
+        msg.to_wire(render)
+        self.assertEqual(render.get_data(), send_out_data)
+
     def test_clear_message(self):
         msg = self.getmsg()
         qid = msg.get_qid()
@@ -134,7 +146,6 @@ class TestXfroutSession(unittest.TestCase):
         self.assertTrue(msg.get_header_flag(Message.HEADERFLAG_AA))
 
     def test_reply_query_with_format_error(self):
-
         msg = self.getmsg()
         self.xfrsess._reply_query_with_format_error(msg, self.sock)
         get_msg = self.sock.read_msg()
@@ -249,11 +260,11 @@ class TestXfroutSession(unittest.TestCase):
         self.xfrsess._zone_has_soa = zone_empty
         def false_func():
             return False
-        self.xfrsess.server.increase_transfers_counter = false_func
+        self.xfrsess._server.increase_transfers_counter = false_func
         self.assertEqual(self.xfrsess._check_xfrout_available(True).to_text(), "REFUSED")
         def true_func():
             return True
-        self.xfrsess.server.increase_transfers_counter = true_func
+        self.xfrsess._server.increase_transfers_counter = true_func
         self.assertEqual(self.xfrsess._check_xfrout_available(True).to_text(), "NOERROR")
 
     def test_dns_xfrout_start_formerror(self):
@@ -323,7 +334,16 @@ class MyUnixSockServer(UnixSockServer):
 
 class TestUnixSockServer(unittest.TestCase):
     def setUp(self):
+        self.write_sock, self.read_sock = socket.socketpair()
         self.unix = MyUnixSockServer()
+
+    def test_receive_query_message(self):
+        send_msg = b"\xd6=\x00\x00\x00\x01\x00"
+        msg_len = struct.pack('H', socket.htons(len(send_msg)))
+        self.write_sock.send(msg_len)
+        self.write_sock.send(send_msg)
+        recv_msg = self.unix._receive_query_message(self.read_sock)
+        self.assertEqual(recv_msg, send_msg)
 
     def test_updata_config_data(self):
         self.unix.update_config_data({'transfers_out':10 })

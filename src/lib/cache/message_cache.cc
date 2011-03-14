@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <config.h>
 
 #include <nsas/nsas_entry_compare.h>
@@ -52,8 +50,16 @@ MessageCache::lookup(const isc::dns::Name& qname,
     HashKey entry_key = HashKey(entry_name, RRClass(message_class_));
     MessageEntryPtr msg_entry = message_table_.get(entry_key);
     if(msg_entry) {
-        message_lru_.touch(msg_entry);
-        return (msg_entry->genMessage(time(NULL), response));
+        // Check whether the message entry has expired.
+       if (msg_entry->getExpireTime() > time(NULL)) {
+            message_lru_.touch(msg_entry);
+            return (msg_entry->genMessage(time(NULL), response));
+        } else {
+            // message entry expires, remove it from hash table and lru list.
+            message_table_.remove(entry_key);
+            message_lru_.remove(msg_entry);
+            return (false);
+       }
     }
 
     return (false);
@@ -86,6 +92,7 @@ MessageCache::update(const Message& msg) {
     return (message_table_.add(msg_entry, entry_key, true));
 }
 
+#if 0
 void
 MessageCache::dump(const std::string&) {
     //TODO
@@ -101,6 +108,7 @@ MessageCache::resize(uint32_t) {
     //TODO
     return (true);
 }
+#endif
 
 } // namespace cache
 } // namespace isc

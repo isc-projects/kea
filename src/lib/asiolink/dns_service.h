@@ -26,13 +26,13 @@ class DNSLookup;
 class DNSAnswer;
 class DNSServiceImpl;
 
+/// \brief Handle DNS Queries
 ///
 /// DNSService is the service that handles DNS queries and answers with
 /// a given IOService. This class is mainly intended to hold all the
 /// logic that is shared between the authoritative and the recursive
 /// server implementations. As such, it handles asio, including config
 /// updates (through the 'Checkinprovider'), and listening sockets.
-/// 
 class DNSService {
     ///
     /// \name Constructors and Destructor
@@ -97,6 +97,12 @@ public:
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
     asio::io_service& get_io_service() { return io_service_.get_io_service(); }
+
+    /// \brief Return the IO Service Object
+    ///
+    /// \return IOService object for this DNS service.
+    asiolink::IOService& getIOService() { return (io_service_);}
+
 private:
     DNSServiceImpl* impl_;
     IOService& io_service_;

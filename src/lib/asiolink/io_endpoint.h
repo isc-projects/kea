@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __IOENDPOINT_H
-#define __IOENDPOINT_H 1
+#ifndef __IO_ENDPOINT_H
+#define __IO_ENDPOINT_H 1
 
 // IMPORTANT NOTE: only very few ASIO headers files can be included in
 // this file.  In particular, asio.hpp should never be included here.
@@ -115,8 +115,4 @@ public:
 };
 
 }      // asiolink
-#endif // __IOENDPOINT_H
-
-// Local Variables: 
-// mode: c++
-// End: 
+#endif // __IO_ENDPOINT_H
