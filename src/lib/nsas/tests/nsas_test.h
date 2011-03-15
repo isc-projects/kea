@@ -240,6 +240,18 @@ class TestResolver : public isc::resolve::ResolverInterface {
     public:
         typedef pair<QuestionPtr, CallbackPtr> Request;
         vector<Request> requests;
+
+        /// \brief Destructor
+        ///
+        /// This is important.  All callbacks in the requests vector must be
+        /// called to remove them from internal loops.  Without this, destroying
+        /// the NSAS object will leave memory assigned.
+        ~TestResolver() {
+            for (size_t i = 0; i < requests.size(); ++i) {
+                requests[i].second->failure();
+            }
+        }
+
         virtual void resolve(const QuestionPtr& q, const CallbackPtr& c) {
             PresetAnswers::iterator it(answers_.find(*q));
             if (it == answers_.end()) {
