@@ -14,7 +14,7 @@
 
   203.  [bug]		zhang likun
 	Fix resolver cache memory leak.
-	(Trac643, git aba4c4067da0dc63c97c6356dc3137651755ffce)
+	(Trac #643, git aba4c4067da0dc63c97c6356dc3137651755ffce)
 
   202.  [func]    vorner
 	It is possible to specify a different directory where we look for
@@ -279,7 +279,7 @@ bind10-devel-20110224 released on February 24, 2011
 	timeout_client for sending an answer back to the client
 	timeout_lookup for stopping the resolving
 	(currently 2 and 3 have the same final effect)
-	(Trac 489, git 578ea7f4ba94dc0d8a3d39231dad2be118e125a2)
+	(Trac #489, git 578ea7f4ba94dc0d8a3d39231dad2be118e125a2)
 
   159.	[func]		smann
 	The resolver now has a configurable set of root servers to start
