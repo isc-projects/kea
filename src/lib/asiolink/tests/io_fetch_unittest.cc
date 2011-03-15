@@ -88,6 +88,9 @@ public:
     uint8_t         qid_0;                  ///< First octet of qid
     uint8_t         qid_1;                  ///< Second octet of qid
 
+    bool            tcp_short_send_;        ///< If set to true, we do not send
+                                            ///  all data in the tcp response
+
     /// \brief Constructor
     IOFetchTest() :
         service_(),
@@ -113,7 +116,8 @@ public:
         debug_(DEBUG),
         tcp_send_size_(0),
         qid_0(0),
-        qid_1(0)
+        qid_1(0),
+        tcp_short_send_(false)
     {
         // Construct the data buffer for question we expect to receive.
         Message msg(Message::RENDER);
@@ -337,6 +341,12 @@ public:
             cout << "tcpSendData(): sending " << amount << " bytes" << endl;
         }
 
+		// This is for the short send test; reduce the actual amount of
+		// data we send
+		if (tcp_short_send_) {
+			--amount;
+		}
+
         // ... and send it.  The amount sent is also passed as the first
         // argument of the send callback, as a check.
         socket->async_send(asio::buffer(send_ptr, amount),
@@ -499,13 +509,20 @@ public:
     /// Send a query to the server then receives a response.
     ///
     /// \param Test data to return to client
-    void tcpSendReturnTest(const std::string& return_data) {
+    /// \param short_send If true, do not send all data
+    ///                   (should result in timeout)
+    void tcpSendReturnTest(const std::string& return_data, bool short_send = false) {
         if (debug_) {
             cout << "tcpSendReturnTest(): data size = " << return_data.size() << endl;
         }
         return_data_ = return_data;
         protocol_ = IOFetch::TCP;
-        expected_ = IOFetch::SUCCESS;
+        if (short_send) {
+			tcp_short_send_ = true;
+			expected_ = IOFetch::TIME_OUT;
+		} else {
+			expected_ = IOFetch::SUCCESS;
+		}
 
         // Socket into which the connection will be accepted.
         tcp::socket socket(service_.get_io_service());
@@ -683,5 +700,18 @@ TEST_F(IOFetchTest, TcpSendReceive32768) {
 TEST_F(IOFetchTest, TcpSendReceive65535) {
     tcpSendReturnTest(test_data_.substr(0, 65535));
 }
+
+TEST_F(IOFetchTest, TcpSendReceive2ShortSend) {
+    tcpSendReturnTest(test_data_.substr(0, 2), true);
+}
+
+TEST_F(IOFetchTest, TcpSendReceive15ShortSend) {
+    tcpSendReturnTest(test_data_.substr(0, 15), true);
+}
+
+TEST_F(IOFetchTest, TcpSendReceive8192ShortSend) {
+    tcpSendReturnTest(test_data_.substr(0, 8192), true);
+}
+
 
 } // namespace asiolink
