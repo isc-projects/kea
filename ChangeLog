@@ -1,12 +1,19 @@
+  204.	[bug]		jinmei
+	b10-auth, src/lib/datasrc: class ANY queries were not handled
+	correctly in the generic data source (mainly for sqlite3).  It
+	could crash b10-auth in the worst case, and could result in
+	incorrect responses in some other cases.
+	(Trac #80, git c65637dd41c8d94399bd3e3cee965b694b633339)
+
   203.  [bug]		zhang likun
 	Fix resolver cache memory leak.
 	(Trac643, git aba4c4067da0dc63c97c6356dc3137651755ffce)
 
   202.  [func]    vorner
 	It is possible to specify a different directory where we look for
-	configuration files (by -p) and different configuration file to use (-c).
-	Also, it is possible to specify the port on which cmdctl should listen
-	(--cmdctl-port).
+	configuration files (by -p) and different configuration file to
+	use (-c).  Also, it is possible to specify the port on which
+	cmdctl should listen (--cmdctl-port).
 	(Trac #615, git 5514dd78f2d61a222f3069fc94723ca33fb3200b)
 
   201.  [bug]           jerry
