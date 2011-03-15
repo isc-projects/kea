@@ -27,6 +27,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/thread.hpp>
 
 
 /// The following tests focus on stop interface for udp and
@@ -51,7 +52,8 @@
 /// is based on the fact that if the server is still running, the io
 /// service won't quit since it will wait for some asynchronized event for
 /// server. So if the io service block function run returns we assume
-/// that the server is stopped
+/// that the server is stopped. To avoid stop interface failure which
+/// will block followed tests, another thread is added to stop the io service
 ///
 /// The whole test context including one server and one client, and
 /// five stop checkpoints, we call them ServerStopper exclude the first
@@ -59,73 +61,55 @@
 /// to server, and the stopper may stop the server at the checkpoint, then
 /// we check the client get feedback or not. Since there is no DNS logic
 /// involved so the message sending between client and server is plain text
-/// So the valid checker, question lookup and answer composition is dummy.
+/// And the valid checker, question lookup and answer composition are dummy.
 
 using namespace asiolink;
 using namespace asio;
 namespace {
 static const std::string server_ip = "127.0.0.1";
 const int server_port = 5553;
-static const std::string query_message("BIND10 is awesome");//message client send to
-                                                            //udp server, which is
-                                                            //invalid dns package
-                                                            //just for simple testing
+//message client send to udp server, which isn't dns package
+//just for simple testing
+static const std::string query_message("BIND10 is awesome");
 
 // \brief provide capacity to derived class the ability
 // to stop DNSServer at certern point
 class ServerStopper {
     public:
-        ServerStopper(DNSServer* server_to_stop = NULL) :
-            server_to_stop_(server_to_stop),
-            stop_server_after_process_(false)
-        {
-        }
-
+        ServerStopper() : server_to_stop_(NULL) {}
         virtual ~ServerStopper(){}
 
-        void setServerToStop(DNSServer* server) { server_to_stop_ = server; }
-        void willStopServerAfterProcess() {
-            stop_server_after_process_ = true;
-        }
-        void willResumeServerAfterProcess() {
-            stop_server_after_process_ = false;
+        void setServerToStop(DNSServer* server) {
+            server_to_stop_ = server;
         }
 
-        void process() const {
-            if (server_to_stop_ && stop_server_after_process_) {
+        void stopServer() const {
+            if (server_to_stop_) {
                 server_to_stop_->stop();
             }
         }
 
     private:
         DNSServer* server_to_stop_;
-        bool stop_server_after_process_;
 };
 
 // \brief no check logic at all,just provide a checkpoint to stop the server
 class DummyChecker : public SimpleCallback, public ServerStopper {
     public:
-        DummyChecker() : ServerStopper(){
-        }
-
-        bool isMessageExpected() const { return true;}
-
         virtual void operator()(const IOMessage&) const {
-            process();
+            stopServer();
         }
 };
 
 // \brief no lookup logic at all,just provide a checkpoint to stop the server
 class DummyLookup : public DNSLookup, public ServerStopper{
     public:
-        DummyLookup() : ServerStopper(){}
         void operator()(const IOMessage& io_message,
                 isc::dns::MessagePtr message,
                 isc::dns::MessagePtr answer_message,
                 isc::dns::OutputBufferPtr buffer,
-                DNSServer* server) const
-        {
-            process();
+                DNSServer* server) const {
+            stopServer();
             server->resume(true);
         }
 };
@@ -134,7 +118,6 @@ class DummyLookup : public DNSLookup, public ServerStopper{
 //  provide checkpoint to stop server
 class SimpleAnswer : public DNSAnswer, public ServerStopper {
     public:
-        SimpleAnswer() : ServerStopper() {}
         void operator()(const IOMessage& message,
                 isc::dns::MessagePtr query_message,
                 isc::dns::MessagePtr answer_message,
@@ -142,12 +125,10 @@ class SimpleAnswer : public DNSAnswer, public ServerStopper {
         {
             //copy what we get from user
             buffer->writeData(message.getData(), message.getDataSize());
-            process();
+            stopServer();
         }
 
 };
-
-
 
 // \brief simple client, send one string to server and wait for response
 //  in case, server stopped and client cann't get response, there is a timer wait
@@ -158,8 +139,7 @@ class SimpleClient : public ServerStopper
     public:
     static const size_t MAX_DATA_LEN = 256;
     SimpleClient(asio::io_service& service,
-                 unsigned int wait_server_time_out) :
-        ServerStopper()
+                 unsigned int wait_server_time_out)
     {
         wait_for_response_timer_.reset(new deadline_timer(service));
         received_data_ = new char[MAX_DATA_LEN];
@@ -187,16 +167,18 @@ class SimpleClient : public ServerStopper
                                    this));
     }
 
+    void cancelTimer() { wait_for_response_timer_->cancel(); }
+
     void getResponseCallBack(const asio::error_code& error, size_t
                              received_bytes)
     {
-        wait_for_response_timer_->cancel();
+        cancelTimer();
         if (!error)
             received_data_len_ = received_bytes;
         if (!get_response_call_back_.empty()) {
             get_response_call_back_();
         }
-        process();
+        stopServer();
     }
 
 
@@ -215,8 +197,9 @@ class SimpleClient : public ServerStopper
 class UDPClient : public SimpleClient
 {
     public:
-    static const unsigned int server_time_out = 3;  // after 3 seconds without feedback
-                                                    // client will stop wait
+    //After 1 seconds without feedback client will stop wait
+    static const unsigned int server_time_out = 1;
+
     UDPClient(asio::io_service& service, const ip::udp::endpoint& server) :
         SimpleClient(service, server_time_out)
     {
@@ -238,12 +221,9 @@ class UDPClient : public SimpleClient
     }
 
     virtual std::string getReceivedData() const {
-        if (received_data_len_ == 0)
-            return std::string("");
-        else
-            return std::string(received_data_);
+        return (received_data_len_ == 0 ? std::string("") :
+                                std::string(received_data_));
     }
-
 
     private:
     void stopWaitingforResponse() {
@@ -259,9 +239,9 @@ class UDPClient : public SimpleClient
 class TCPClient : public SimpleClient
 {
     public:
-    static const unsigned int server_time_out = 5; // after 10 seconds without feedback
-                                                    // client will stop wait, this includes
-                                                    // connect, send message and recevice message
+    // after 2 seconds without feedback client will stop wait,
+    // this includes connect, send message and recevice message
+    static const unsigned int server_time_out = 2;
     TCPClient(asio::io_service& service, const ip::tcp::endpoint& server)
         : SimpleClient(service, server_time_out)
     {
@@ -281,11 +261,8 @@ class TCPClient : public SimpleClient
     }
 
     virtual std::string getReceivedData() const {
-        if (received_data_len_ == 0)
-            return std::string("");
-        else
-            // the first two bytes is data length
-            return std::string(received_data_ + 2);
+        return (received_data_len_ == 0 ? std::string("") :
+                                std::string(received_data_ + 2));
     }
 
     private:
@@ -299,6 +276,8 @@ class TCPClient : public SimpleClient
             socket_->async_send(buffer(&data_to_send_len_, 2),
                                 boost::bind(&TCPClient::sendMessageBodyHandler,
                                             this, _1, _2));
+        } else {
+            cancelTimer();
         }
     }
 
@@ -309,6 +288,8 @@ class TCPClient : public SimpleClient
             socket_->async_send(buffer(data_to_send_.c_str(),
                                        data_to_send_.size() + 1),
                     boost::bind(&TCPClient::finishSendHandler, this, _1, _2));
+        } else {
+            cancelTimer();
         }
     }
 
@@ -317,6 +298,8 @@ class TCPClient : public SimpleClient
             socket_->async_receive(buffer(received_data_, MAX_DATA_LEN),
                    boost::bind(&SimpleClient::getResponseCallBack, this, _1,
                                _2));
+        } else {
+            cancelTimer();
         }
     }
 
@@ -332,25 +315,25 @@ class TCPClient : public SimpleClient
 // two server, udp client will only communicate with udp server, same for tcp client
 class DNSServerTest : public::testing::Test {
     protected:
-        DNSServerTest() {
+        void SetUp() {
             ip::address server_address = ip::address::from_string(server_ip);
             checker_ = new DummyChecker();
             lookup_ = new DummyLookup();
             answer_ = new SimpleAnswer();
             udp_server_ = new UDPServer(service_, server_address, server_port,
-                                        checker_, lookup_, answer_);
+                    checker_, lookup_, answer_);
             udp_client_ = new UDPClient(service_,
-                                        ip::udp::endpoint(server_address,
-                                                          server_port));
+                    ip::udp::endpoint(server_address,
+                        server_port));
             tcp_server_ = new TCPServer(service_, server_address, server_port,
-                                        checker_, lookup_, answer_);
+                    checker_, lookup_, answer_);
             tcp_client_ = new TCPClient(service_,
-                                        ip::tcp::endpoint(server_address,
-                                                          server_port));
-       }
+                    ip::tcp::endpoint(server_address,
+                        server_port));
+        }
 
 
-        ~DNSServerTest() {
+        void TearDown() {
             delete checker_;
             delete lookup_;
             delete answer_;
@@ -360,22 +343,44 @@ class DNSServerTest : public::testing::Test {
             delete tcp_client_;
         }
 
-        void prepareTestDNSServer(DNSServer* server) {
-            checker_->setServerToStop(server);
-            lookup_->setServerToStop(server);
-            answer_->setServerToStop(server);
-            udp_client_->setServerToStop(server);
-            tcp_client_->setServerToStop(server);
-        }
 
         void testStopServerByStopper(DNSServer* server, SimpleClient* client,
-                                     ServerStopper* stopper)
+                ServerStopper* stopper)
         {
-            prepareTestDNSServer(server);
-            stopper->willStopServerAfterProcess();
+            static const unsigned int io_service_time_out = 5;
+            cancel_blocked_io_service = true;
+            io_service_is_time_out = false;
+            stopper->setServerToStop(server);
             (*server)();
             client->sendDataThenWaitForFeedback(query_message);
+            // use another thread to make sure after io_service_time_out secs
+            // if io service doesn't quit from run, this function won't block
+            // if io service is stopped by this thread, it means server are
+            // not stopped successfully
+            boost::thread io_sevice_thread =
+                boost::thread(boost::bind(&DNSServerTest::stopIOService,
+                                          this,
+                                          io_service_time_out));
             service_.run();
+            cancel_blocked_io_service = false;
+            io_sevice_thread.join();
+        }
+
+
+        void stopIOService(unsigned int timeout_sec) {
+            for (unsigned int i = 0; i < timeout_sec; ++i) {
+                sleep(1);
+                if (!cancel_blocked_io_service)
+                    return;
+            }
+
+            io_service_is_time_out = true;
+            service_.stop();
+            service_.reset();
+        }
+
+        bool serverStopSucceed() const {
+            return (!io_service_is_time_out);
         }
 
         DummyChecker* checker_;
@@ -386,6 +391,8 @@ class DNSServerTest : public::testing::Test {
         TCPClient*    tcp_client_;
         TCPServer*    tcp_server_;
         asio::io_service service_;
+        bool io_service_is_time_out;
+        bool cancel_blocked_io_service;
 };
 
 
@@ -393,12 +400,10 @@ class DNSServerTest : public::testing::Test {
 // client will send query and start to wait for response, once client
 // get response, udp server will be stopped, the io service won't quit
 // if udp server doesn't stop successfully.
-//
-// \note all the following tests is based on the fact that if the server
-// doesn't stop successfully, io service run will block forever
 TEST_F(DNSServerTest, stopUDPServerAfterOneQuery) {
     testStopServerByStopper(udp_server_, udp_client_, udp_client_);
     EXPECT_EQ(query_message, udp_client_->getReceivedData());
+    EXPECT_TRUE(serverStopSucceed());
 }
 
 // Test whether udp server stopped successfully before server start to serve
@@ -406,6 +411,7 @@ TEST_F(DNSServerTest, stopUDPServerBeforeItStartServing) {
     udp_server_->stop();
     testStopServerByStopper(udp_server_, udp_client_, udp_client_);
     EXPECT_EQ(std::string(""), udp_client_->getReceivedData());
+    EXPECT_TRUE(serverStopSucceed());
 }
 
 
@@ -413,18 +419,21 @@ TEST_F(DNSServerTest, stopUDPServerBeforeItStartServing) {
 TEST_F(DNSServerTest, stopUDPServerDuringMessageCheck) {
     testStopServerByStopper(udp_server_, udp_client_, checker_);
     EXPECT_EQ(std::string(""), udp_client_->getReceivedData());
+    EXPECT_TRUE(serverStopSucceed());
 }
 
 // Test whether udp server stopped successfully during query lookup
 TEST_F(DNSServerTest, stopUDPServerDuringQueryLookup) {
     testStopServerByStopper(udp_server_, udp_client_, lookup_);
     EXPECT_EQ(std::string(""), udp_client_->getReceivedData());
+    EXPECT_TRUE(serverStopSucceed());
 }
 
 // Test whether udp server stopped successfully during composing answer
 TEST_F(DNSServerTest, stopUDPServerDuringPrepareAnswer) {
     testStopServerByStopper(udp_server_, udp_client_, answer_);
     EXPECT_EQ(std::string(""), udp_client_->getReceivedData());
+    EXPECT_TRUE(serverStopSucceed());
 }
 
 static void stopServerManyTimes(DNSServer *server, unsigned int times) {
@@ -443,12 +452,14 @@ TEST_F(DNSServerTest, stopUDPServeMoreThanOnce) {
         testStopServerByStopper(udp_server_, udp_client_, udp_client_);
         EXPECT_EQ(query_message, udp_client_->getReceivedData());
     });
+    EXPECT_TRUE(serverStopSucceed());
 }
 
 
 TEST_F(DNSServerTest, stopTCPServerAfterOneQuery) {
     testStopServerByStopper(tcp_server_, tcp_client_, tcp_client_);
     EXPECT_EQ(query_message, tcp_client_->getReceivedData());
+    EXPECT_TRUE(serverStopSucceed());
 }
 
 
@@ -457,6 +468,7 @@ TEST_F(DNSServerTest, stopTCPServerBeforeItStartServing) {
     tcp_server_->stop();
     testStopServerByStopper(tcp_server_, tcp_client_, tcp_client_);
     EXPECT_EQ(std::string(""), tcp_client_->getReceivedData());
+    EXPECT_TRUE(serverStopSucceed());
 }
 
 
@@ -464,18 +476,21 @@ TEST_F(DNSServerTest, stopTCPServerBeforeItStartServing) {
 TEST_F(DNSServerTest, stopTCPServerDuringMessageCheck) {
     testStopServerByStopper(tcp_server_, tcp_client_, checker_);
     EXPECT_EQ(std::string(""), tcp_client_->getReceivedData());
+    EXPECT_TRUE(serverStopSucceed());
 }
 
 // Test whether tcp server stopped successfully during query lookup
 TEST_F(DNSServerTest, stopTCPServerDuringQueryLookup) {
     testStopServerByStopper(tcp_server_, tcp_client_, lookup_);
     EXPECT_EQ(std::string(""), tcp_client_->getReceivedData());
+    EXPECT_TRUE(serverStopSucceed());
 }
 
 // Test whether tcp server stopped successfully during composing answer
 TEST_F(DNSServerTest, stopTCPServerDuringPrepareAnswer) {
     testStopServerByStopper(tcp_server_, tcp_client_, answer_);
     EXPECT_EQ(std::string(""), tcp_client_->getReceivedData());
+    EXPECT_TRUE(serverStopSucceed());
 }
 
 
@@ -489,6 +504,7 @@ TEST_F(DNSServerTest, stopTCPServeMoreThanOnce) {
         testStopServerByStopper(tcp_server_, tcp_client_, tcp_client_);
         EXPECT_EQ(query_message, tcp_client_->getReceivedData());
     });
+    EXPECT_TRUE(serverStopSucceed());
 }
 
 }
