@@ -131,7 +131,7 @@ protected:
         for (int i = 1; i <= 9; ++i) {
             std::string name = "zone" + boost::lexical_cast<std::string>(i);
             zones_.push_back(boost::shared_ptr<ZoneEntry>(new ZoneEntry(
-                resolver_, name, RRClass(40 + i),
+                resolver_.get(), name, RRClass(40 + i),
                 boost::shared_ptr<HashTable<NameserverEntry> >(),
                 boost::shared_ptr<LruList<NameserverEntry> >())));
         }

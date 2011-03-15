@@ -222,11 +222,6 @@ private:
 
 static const uint32_t HASHTABLE_DEFAULT_SIZE = 1009; ///< First prime above 1000
 
-} // namespace nsas
-} // namespace isc
-
-namespace {
-
 using namespace std;
 
 /*
@@ -420,6 +415,7 @@ protected:
     Name ns_name_;  ///< Nameserver name of ns.example.net
 };
 
-} // Empty namespace
+} // namespace nsas
+} // namespace isc
 
 #endif // __NSAS_TEST_H

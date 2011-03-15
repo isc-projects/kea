@@ -241,7 +241,7 @@ public:
      *     even when there are addresses, if there are no addresses for this
      *     family.
      */
-    void askIP(boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
+    void askIP(isc::resolve::ResolverInterface* resolver,
         boost::shared_ptr<Callback> callback, AddressFamily family);
     //@}
 
@@ -273,7 +273,7 @@ private:
     /// \short Private version that does the actual asking of one address type
     ///
     /// Call unlocked.
-    void askIP(boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
+    void askIP(isc::resolve::ResolverInterface* resolver,
         const isc::dns::RRType&, AddressFamily);
 };
 

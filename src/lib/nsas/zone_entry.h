@@ -68,8 +68,7 @@ public:
      * \todo Move to cc file, include the lookup (if NSAS uses resolver for
      *     everything)
      */
-    ZoneEntry(
-        boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
+    ZoneEntry(isc::resolve::ResolverInterface* resolver,
         const std::string& name, const isc::dns::RRClass& class_code,
         boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table,
         boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru);
@@ -153,7 +152,7 @@ private:
     void process(AddressFamily family,
         const boost::shared_ptr<NameserverEntry>& nameserver);
     // Resolver we use
-    boost::shared_ptr<isc::resolve::ResolverInterface> resolver_;
+    isc::resolve::ResolverInterface* resolver_;
     // We store the nameserver table and lru, so we can look up when there's
     // update
     boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table_;

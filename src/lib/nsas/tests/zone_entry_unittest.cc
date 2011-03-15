@@ -47,7 +47,7 @@ class InheritedZoneEntry : public ZoneEntry {
             const std::string& name, const RRClass& class_code,
             boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table,
             boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru) :
-            ZoneEntry(resolver, name, class_code, nameserver_table,
+            ZoneEntry(resolver.get(), name, class_code, nameserver_table,
                 nameserver_lru)
         { }
         NameserverVector& nameservers() { return nameservers_; }
@@ -569,7 +569,7 @@ TEST_F(ZoneEntryTest, NameserverEntryReady) {
     // Inject the entry
     boost::shared_ptr<NameserverEntry> nse(injectEntry());
     // Fill it with data
-    nse->askIP(resolver_, nseCallback(), ANY_OK);
+    nse->askIP(resolver_.get(), nseCallback(), ANY_OK);
     EXPECT_EQ(Fetchable::IN_PROGRESS, nse->getState());
     EXPECT_TRUE(resolver_->asksIPs(ns_name_, 0, 1));
     EXPECT_NO_THROW(resolver_->answer(0, ns_name_, RRType::A(),
@@ -594,7 +594,7 @@ TEST_F(ZoneEntryTest, NameserverEntryNotAsked) {
 TEST_F(ZoneEntryTest, NameserverEntryInProgress) {
     // Prepare the nameserver entry
     boost::shared_ptr<NameserverEntry> nse(injectEntry());
-    nse->askIP(resolver_, nseCallback(), ANY_OK);
+    nse->askIP(resolver_.get(), nseCallback(), ANY_OK);
     EXPECT_EQ(Fetchable::IN_PROGRESS, nse->getState());
     EXPECT_TRUE(resolver_->asksIPs(ns_name_, 0, 1));
 
@@ -604,7 +604,7 @@ TEST_F(ZoneEntryTest, NameserverEntryInProgress) {
 /// \short Check Zone's reaction to found expired nameserver
 TEST_F(ZoneEntryTest, NameserverEntryExpired) {
     boost::shared_ptr<NameserverEntry> nse(injectEntry());
-    nse->askIP(resolver_, nseCallback(), ANY_OK);
+    nse->askIP(resolver_.get(), nseCallback(), ANY_OK);
     EXPECT_EQ(Fetchable::IN_PROGRESS, nse->getState());
     EXPECT_TRUE(resolver_->asksIPs(ns_name_, 0, 1));
     EXPECT_NO_THROW(resolver_->answer(0, ns_name_, RRType::A(),
@@ -623,7 +623,7 @@ TEST_F(ZoneEntryTest, NameserverEntryExpired) {
 /// \short Check how it reacts to an unreachable zone already in the table
 TEST_F(ZoneEntryTest, NameserverEntryUnreachable) {
     boost::shared_ptr<NameserverEntry> nse(injectEntry());
-    nse->askIP(resolver_, nseCallback(), ANY_OK);
+    nse->askIP(resolver_.get(), nseCallback(), ANY_OK);
     ASSERT_EQ(2, resolver_->requests.size());
     resolver_->requests[0].second->failure();
     resolver_->requests[1].second->failure();
