@@ -1,3 +1,10 @@
+  202.  [func]    vorner
+	It is possible to specify a different directory where we look for
+	configuration files (by -p) and different configuration file to use (-c).
+	Also, it is possible to specify the port on which cmdctl should listen
+	(--cmdctl-port).
+	(Trac #615, git 5514dd78f2d61a222f3069fc94723ca33fb3200b)
+
   201.  [bug]           jerry
 	src/bin/bindctl: bindctl doesn't show traceback on shutdown.
 	(Trac #588, git 662e99ef050d98e86614c4443326568a0b5be437)
