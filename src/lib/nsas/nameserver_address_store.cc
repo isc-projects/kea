@@ -53,7 +53,7 @@ NameserverAddressStore::NameserverAddressStore(
         new HashDeleter<ZoneEntry>(*zone_hash_))),
     nameserver_lru_(new LruList<NameserverEntry>((3 * nshashsize),
         new HashDeleter<NameserverEntry>(*nameserver_hash_))),
-    resolver_(resolver)
+    resolver_(resolver.get())
 { }
 
 namespace {
@@ -66,7 +66,7 @@ namespace {
  */
 boost::shared_ptr<ZoneEntry>
 newZone(
-    const boost::shared_ptr<isc::resolve::ResolverInterface>* resolver,
+    isc::resolve::ResolverInterface** const resolver,
     const string* zone, const RRClass* class_code,
     const boost::shared_ptr<HashTable<NameserverEntry> >* ns_hash,
     const boost::shared_ptr<LruList<NameserverEntry> >* ns_lru)
