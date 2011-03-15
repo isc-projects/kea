@@ -29,6 +29,7 @@ run_unittests_LDADD +=  $(top_builddir)/src/lib/cache/libcache.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/asiolink/libasiolink.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/resolve/libresolve.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/libdns++.la
+run_unittests_LDADD +=  $(top_builddir)/src/lib/log/liblog.la
 
 endif
 
