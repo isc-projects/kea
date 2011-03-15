@@ -1,3 +1,7 @@
+  201.  [bug]           jerry
+	src/bin/bindctl: bindctl doesn't show traceback on shutdown.
+	(Trac #588, git 662e99ef050d98e86614c4443326568a0b5be437)
+
   200.  [bug]           Jelte
 	Fixed a bug where incoming TCP connections were not closed.
 	(Trac #589, git 1d88daaa24e8b1ab27f28be876f40a144241e93b)
