@@ -152,6 +152,10 @@ public:
     /// \param socket Socket to use to send the answer
     /// \param ec ASIO error code, completion code of asynchronous I/O issued
     ///        by the "server" to receive data.
+    /// \param bad_qid If set to true, the QID in the response will be mangled
+    /// \param second_send If set to true, (and bad_qid is too), after the
+    ///        mangled qid response has been sent, a second packet will be
+    ///        sent with the correct QID.
     /// \param length Amount of data received.
     void udpReceiveHandler(udp::endpoint* remote, udp::socket* socket,
                     error_code ec = error_code(), size_t length = 0,
@@ -333,7 +337,6 @@ public:
             cout << "tcpSendData(): sending " << amount << " bytes" << endl;
         }
 
-
         // ... and send it.  The amount sent is also passed as the first
         // argument of the send callback, as a check.
         socket->async_send(asio::buffer(send_ptr, amount),
@@ -408,8 +411,6 @@ public:
             // in the case of TCP, we send back a 'random' string
             if (protocol_ == IOFetch::UDP) {
                 EXPECT_EQ(expected_buffer_->getLength(), result_buff_->getLength());
-                //const uint8_t* start = static_cast<const uint8_t*>(result_buff_->getData());
-                //EXPECT_TRUE(equal(return_data_.begin(), return_data_.end(), start));
                 EXPECT_EQ(0, memcmp(expected_buffer_->getData(), result_buff_->getData(),
                           expected_buffer_->getLength()));
             } else {
@@ -527,6 +528,39 @@ public:
         // Tidy up
         socket.close();
     }
+
+    /// Perform a send/receive test over UDP
+    ///
+    /// \param bad_qid If true, do the test where the QID is mangled
+    ///                in the response
+    /// \param second_send If true, do the test where the QID is
+    ///                    mangled in the response, but a second
+    ///                    (correct) packet is used
+    void udpSendReturnTest(bool bad_qid, bool second_send) {
+		protocol_ = IOFetch::UDP;
+
+	    // Set up the server.
+	    udp::socket socket(service_.get_io_service(), udp::v4());
+	    socket.set_option(socket_base::reuse_address(true));
+	    socket.bind(udp::endpoint(TEST_HOST, TEST_PORT));
+	    return_data_ = "Message returned to the client";
+
+	    udp::endpoint remote;
+	    socket.async_receive_from(asio::buffer(receive_buffer_, sizeof(receive_buffer_)),
+	        remote,
+	        boost::bind(&IOFetchTest::udpReceiveHandler, this, &remote, &socket,
+	                    _1, _2, bad_qid, second_send));
+	    service_.get_io_service().post(udp_fetch_);
+	    if (debug_) {
+	        cout << "udpSendReceive: async_receive_from posted, waiting for callback" <<
+	                endl;
+	    }
+	    service_.run();
+
+	    socket.close();
+
+	    EXPECT_TRUE(run_);;
+	}
 };
 
 // Check the protocol
@@ -553,28 +587,25 @@ TEST_F(IOFetchTest, UdpTimeout) {
 // UDP SendReceive test.  Set up a UDP server then ports a UDP fetch object.
 // This will send question_ to the server and receive the answer back from it.
 TEST_F(IOFetchTest, UdpSendReceive) {
-    protocol_ = IOFetch::UDP;
     expected_ = IOFetch::SUCCESS;
 
-    // Set up the server.
-    udp::socket socket(service_.get_io_service(), udp::v4());
-    socket.set_option(socket_base::reuse_address(true));
-    socket.bind(udp::endpoint(TEST_HOST, TEST_PORT));
-    return_data_ = "Message returned to the client";
+	udpSendReturnTest(false, false);
 
-    udp::endpoint remote;
-    socket.async_receive_from(asio::buffer(receive_buffer_, sizeof(receive_buffer_)),
-        remote,
-        boost::bind(&IOFetchTest::udpReceiveHandler, this, &remote, &socket,
-                    _1, _2, false, false));
-    service_.get_io_service().post(udp_fetch_);
-    if (debug_) {
-        cout << "udpSendReceive: async_receive_from posted, waiting for callback" <<
-                endl;
-    }
-    service_.run();
+    EXPECT_TRUE(run_);;
+}
 
-    socket.close();
+TEST_F(IOFetchTest, UdpSendReceiveBadQid) {
+    expected_ = IOFetch::TIME_OUT;
+
+	udpSendReturnTest(true, false);
+
+    EXPECT_TRUE(run_);;
+}
+
+TEST_F(IOFetchTest, UdpSendReceiveBadQidResend) {
+    expected_ = IOFetch::SUCCESS;
+
+	udpSendReturnTest(true, true);
 
     EXPECT_TRUE(run_);;
 }
