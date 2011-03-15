@@ -163,10 +163,6 @@ main(int argc, char* argv[]) {
                                              my_command_handler);
         cout << "[b10-auth] Configuration channel established." << endl;
 
-        if (uid != NULL) {
-            changeUser(uid);
-        }
-
         xfrin_session = new Session(io_service.get_io_service());
         cout << "[b10-auth] Xfrin session channel created." << endl;
         xfrin_session->establish(NULL);
@@ -189,6 +185,10 @@ main(int argc, char* argv[]) {
         auth_server->setConfigSession(config_session);
         configureAuthServer(*auth_server, config_session->getFullConfig());
         auth_server->updateConfig(ElementPtr());
+
+        if (uid != NULL) {
+            changeUser(uid);
+        }
 
         cout << "[b10-auth] Server started." << endl;
         io_service.run();
