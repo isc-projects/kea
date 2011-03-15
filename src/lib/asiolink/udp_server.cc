@@ -188,10 +188,15 @@ UDPServer::operator()(error_code ec, size_t length) {
                     buffer(data_->data_.get(), MAX_LENGTH), *data_->sender_,
                     *this);
 
-                // If the server is stopped which will close the socket, 
-                // we just return
-                if (ec == asio::error::bad_descriptor)
-                    CORO_YIELD return;
+                //return if we met fatal error
+                //Todo add log
+                if (ec) {
+                    using namespace asio::error;
+                    if (ec.value() != would_block && ec.value() != try_again &&
+                            ec.value() != interrupted) {
+                        return;
+                    }
+                }
 
             } while (ec || length == 0);
 
