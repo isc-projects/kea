@@ -1,8 +1,3 @@
-  194.  [default]   feng
-	Refactor the stop interface for tcp and udp servers which
-	will still running after stop, and add unittest for it.
-
-
   193.	[func]*		jreed
 	Listen on the IPv6 (::) and IPv4 (0.0.0.0) wildcard addresses
 	for b10-auth. This returns to previous behavior prior to
