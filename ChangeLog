@@ -1,3 +1,44 @@
+  200.  [bug]           Jelte
+	Fixed a bug where incoming TCP connections were not closed.
+	(Trac #589, git 1d88daaa24e8b1ab27f28be876f40a144241e93b)
+
+  199.  [func]           ocean
+	Cache negative responses (NXDOMAIN/NODATA) from authoritative
+	server for recursive resolver.
+	(Trac #493, git f8fb852bc6aef292555063590c361f01cf29e5ca)
+
+  198.	[bug]		jinmei
+	b10-auth, src/lib/datasrc: fixed a bug where hot spot cache failed
+	to reuse cached SOA for negative responses.  Due to this bug
+	b10-auth returned SERVFAIL when it was expected to return a
+	negative response immediately after a specific SOA query for
+	the zone.
+	(Trac #626, git 721a53160c15e8218f6798309befe940b9597ba0)
+
+  197.  [bug]		zhang likun
+	Remove expired message and rrset entries when looking up them
+	in cache, touch or remove the rrset entry in cache properly
+	when doing lookup or update.
+	(Trac #661, git 9efbe64fe3ff22bb5fba46de409ae058f199c8a7)
+
+  196.	[bug]		jinmei
+	b10-auth, src/lib/datasrc: the backend of the in-memory data
+	source could not handle the root name.  As a result b10-auth could
+	not work as a root server when using the in-memory data source.
+	(Trac #683, git 420ec42bd913fb83da37b26b75faae49c7957c46)
+
+  195.  [func]      stephen
+	Resolver will now re-try a query over TCP if a response to a UDP
+	query has the TC bit set.
+	(Trac #499, git 4c05048ba059b79efeab53498737abe94d37ee07)
+
+  194.  [bug]       vorner
+	Solved a 100% CPU usage problem after switching addresses in b10-auth
+	(and possibly, but unconfirmed, in b10-resolver). It was caused by
+	repeated reads/accepts on closed socket (the bug was in the code for a
+	long time, recent changes made it show).
+	(Trac #657, git e0863720a874d75923ea66adcfbf5b2948efb10a)
+
   193.	[func]*		jreed
 	Listen on the IPv6 (::) and IPv4 (0.0.0.0) wildcard addresses
 	for b10-auth. This returns to previous behavior prior to

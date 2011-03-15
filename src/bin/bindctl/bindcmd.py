@@ -87,7 +87,8 @@ class ValidatedHTTPSConnection(http.client.HTTPSConnection):
 class BindCmdInterpreter(Cmd):
     """simple bindctl example."""    
 
-    def __init__(self, server_port = 'localhost:8080', pem_file = None):
+    def __init__(self, server_port='localhost:8080', pem_file=None,
+                 csv_file_dir=None):
         Cmd.__init__(self)
         self.location = ""
         self.prompt_end = '> '
@@ -103,7 +104,12 @@ class BindCmdInterpreter(Cmd):
                                              ca_certs=pem_file)
         self.session_id = self._get_session_id()
         self.config_data = None
-        
+        if csv_file_dir is not None:
+            self.csv_file_dir = csv_file_dir
+        else:
+            self.csv_file_dir = pwd.getpwnam(getpass.getuser()).pw_dir + \
+                os.sep + '.bind10' + os.sep
+
     def _get_session_id(self):
         '''Generate one session id for the connection. '''
         rand = os.urandom(16)
@@ -180,9 +186,7 @@ class BindCmdInterpreter(Cmd):
         time, username and password saved in 'default_user.csv' will be
         used first.
         '''
-        csv_file_dir = pwd.getpwnam(getpass.getuser()).pw_dir
-        csv_file_dir += os.sep + '.bind10' + os.sep
-        users = self._get_saved_user_info(csv_file_dir, CSV_FILE_NAME)
+        users = self._get_saved_user_info(self.csv_file_dir, CSV_FILE_NAME)
         for row in users:
             param = {'username': row[0], 'password' : row[1]}
             try:
@@ -218,7 +222,8 @@ class BindCmdInterpreter(Cmd):
                 raise FailToLogin()
 
             if response.status == http.client.OK:
-                self._save_user_info(username, passwd, csv_file_dir, CSV_FILE_NAME)
+                self._save_user_info(username, passwd, self.csv_file_dir,
+                                     CSV_FILE_NAME)
                 return True
 
     def _update_commands(self):
