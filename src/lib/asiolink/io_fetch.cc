@@ -258,6 +258,7 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
             data_->origin = ASIO_RECVSOCK;
             data_->cumulative = 0;          // No data yet received
             data_->offset = 0;              // First data into start of buffer
+            data_->received->clear();       // Clear the receive buffer
             do {
                 CORO_YIELD data_->socket->asyncReceive(data_->staging,
                                                        static_cast<size_t>(STAGING_LENGTH),
