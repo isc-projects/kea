@@ -13,7 +13,6 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <map>
-
 #include <config.h>
 
 #include "zone_entry.h"
@@ -81,7 +80,7 @@ class ZoneEntry::ResolverCallback :
         public isc::resolve::ResolverInterface::Callback {
     public:
         /// \short Constructor. Pass "this" zone entry
-        ResolverCallback(boost::shared_ptr<ZoneEntry> entry) :
+        ResolverCallback(ZoneEntry* entry) :
             entry_(entry)
         { }
         /**
@@ -219,8 +218,9 @@ class ZoneEntry::ResolverCallback :
             // Process all three callback lists and tell them KO
             entry_->process(ADDR_REQ_MAX, NameserverPtr());
         }
-        /// \short The entry we are callback of
-        boost::shared_ptr<ZoneEntry> entry_;
+        // The entry we are callback of.  As this object will hold a
+        // shared pointer to us, a "raw" pointer is fine here.
+        ZoneEntry* entry_;
 };
 
 void
@@ -255,7 +255,7 @@ ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family) {
         QuestionPtr question(new Question(Name(name_), class_code_,
             RRType::NS()));
         boost::shared_ptr<ResolverCallback> resolver_callback(
-            new ResolverCallback(shared_from_this()));
+            new ResolverCallback(this));
         resolver_->resolve(question, resolver_callback);
         return;
     }
@@ -264,7 +264,7 @@ ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family) {
 void
 ZoneEntry::removeCallback(const CallbackPtr& callback, AddressFamily family) {
     Lock lock(mutex_);
-    std::vector<boost::shared_ptr<AddressRequestCallback> >::iterator i = 
+    std::vector<boost::shared_ptr<AddressRequestCallback> >::iterator i =
         callbacks_[family].begin();
     for (; i != callbacks_[family].end(); ++i) {
         if (*i == callback) {
@@ -371,7 +371,7 @@ class ZoneEntry::NameserverCallback : public NameserverEntry::Callback {
          * \param family For which address family this change is, so we
          *     do not process all the nameserves and callbacks there.
          */
-        NameserverCallback(boost::shared_ptr<ZoneEntry> entry, AddressFamily family) :
+        NameserverCallback(ZoneEntry* entry, AddressFamily family) :
             entry_(entry),
             family_(family)
         { }
@@ -386,7 +386,9 @@ class ZoneEntry::NameserverCallback : public NameserverEntry::Callback {
             entry_->process(family_, ns);
         }
     private:
-        boost::shared_ptr<ZoneEntry> entry_;
+        // The entry we are callback of.  As this object will hold a
+        // shared pointer to us, a "raw" pointer is fine here.
+        ZoneEntry* entry_;
         AddressFamily family_;
 };
 
@@ -551,7 +553,7 @@ ZoneEntry::insertCallback(NameserverPtr ns, AddressFamily family) {
         insertCallback(ns, V6_ONLY);
     } else {
         boost::shared_ptr<NameserverCallback> callback(new NameserverCallback(
-            shared_from_this(), family));
+            this, family));
         ns->askIP(resolver_, callback, family);
     }
 }
