@@ -41,6 +41,8 @@
 #include <dns/messagerenderer.h>
 #include <server_common/portconfig.h>
 
+#include <resolve/recursive_query.h>
+
 #include <log/dummylog.h>
 
 #include <resolver/resolver.h>
@@ -74,10 +76,15 @@ public:
         queryShutdown();
     }
 
-    void querySetup(DNSService& dnss) {
+    void querySetup(DNSService& dnss,
+                    isc::nsas::NameserverAddressStore& nsas,
+                    isc::cache::ResolverCache& cache)
+    {
         assert(!rec_query_); // queryShutdown must be called first
         dlog("Query setup");
-        rec_query_ = new RecursiveQuery(dnss, upstream_,
+        rec_query_ = new RecursiveQuery(dnss, 
+                                        nsas, cache,
+                                        upstream_,
                                         upstream_root_,
                                         query_timeout_,
                                         client_timeout_,
@@ -129,7 +136,7 @@ public:
             }
         }
     }
-
+    
     void resolve(const isc::dns::QuestionPtr& question,
         const isc::resolve::ResolverInterface::CallbackPtr& callback);
 
@@ -342,6 +349,19 @@ Resolver::setDNSService(asiolink::DNSService& dnss) {
 }
 
 void
+Resolver::setNameserverAddressStore(isc::nsas::NameserverAddressStore& nsas)
+{
+    nsas_ = &nsas;
+}
+
+void
+Resolver::setCache(isc::cache::ResolverCache& cache)
+{
+    cache_ = &cache;
+}
+
+
+void
 Resolver::setConfigSession(ModuleCCSession* config_session) {
     impl_->config_session_ = config_session;
 }
@@ -544,7 +564,7 @@ Resolver::updateConfig(ConstElementPtr config) {
 
         if (need_query_restart) {
             impl_->queryShutdown();
-            impl_->querySetup(*dnss_);
+            impl_->querySetup(*dnss_, *nsas_, *cache_);
         }
         return (isc::config::createAnswer());
     } catch (const isc::Exception& error) {

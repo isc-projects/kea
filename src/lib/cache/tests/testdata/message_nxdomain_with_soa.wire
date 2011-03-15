@@ -1,0 +1,55 @@
+#
+# NXDOMAIN response with SOA record
+#
+##
+## Header
+##
+# ID = 0x3da0
+# QR = 1 (response), Opcode = 0, AA = 1, RCODE=3 (NXDOMAIN)
+3da0 8403
+# Question : 1
+00 01
+# Answer : 0
+00 00
+# Authority : 1
+00 01
+# Additional : 0
+00 00
+##
+## Query
+##
+#(4) n  o  n  e  x  i  s  t (7) e  x  a  m  p  l  e (3) c  o  m (0)
+  08 6e 6f 6e 65 78 69 73 74 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+# Type:A
+00 01
+# class: IN
+00 01
+##
+## Authority
+## 
+# name: example.com
+c0 15
+# Type:SOA
+00 06
+# Class: IN
+00 01
+# TTL: 86400
+00 01 51 80
+# Data Length: 49
+00 31
+# Name Server:
+#(4) d  n  s  1 (5) i   c a  n  n (3) o  r  g (0)
+  04 64 6e 73 31 05 69 63 61 6e 6e 03 6f 72 67 00
+# MX: 
+# (10) h  o   s  t  m  a  s  t  e  r .icann.org.
+  0a   68 6f 73 74 6d 61 73 74 65 72 c0 37
+# Serial Number:2010072301
+77 cf 44 ed
+# Refresh Interval:2 hours
+00 00 1c 20
+# Retry Interval: 1 hour
+00 00 0e 10
+# Expiration: 14 days
+00 12 75 00
+# Minimum TTL 1 day
+00 01 51 80

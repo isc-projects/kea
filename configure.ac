@@ -723,7 +723,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/bind10/tests/bind10_test.py
            src/bin/bind10/run_bind10.sh
            src/bin/bindctl/run_bindctl.sh
-           src/bin/bindctl/bindctl-source.py
+           src/bin/bindctl/bindctl_main.py
            src/bin/bindctl/tests/bindctl_test
            src/bin/loadzone/run_loadzone.sh
            src/bin/loadzone/tests/correct/correct_test.sh
@@ -751,6 +751,7 @@ AC_OUTPUT([doc/version.ent
            tests/system/conf.sh
            tests/system/glue/setup.sh
            tests/system/glue/nsx1/b10-config.db
+           tests/system/bindctl/nsx1/b10-config.db.template
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh

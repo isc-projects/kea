@@ -19,8 +19,8 @@
 #include <dns/message.h>
 #include <dns/rrset.h>
 #include <nsas/nsas_entry.h>
+#include "rrset_cache.h"
 #include "rrset_entry.h"
-
 
 using namespace isc::nsas;
 
@@ -28,24 +28,6 @@ namespace isc {
 namespace cache {
 
 class RRsetEntry;
-class RRsetCache;
-
-/// \brief Information to refer an RRset.
-///
-/// There is no class information here, since the rrsets are cached in
-/// the class-specific rrset cache.
-struct RRsetRef{
-    /// \brief Constructor
-    ///
-    /// \param name The Name for the RRset
-    /// \param type the RRType for the RRrset
-    RRsetRef(const isc::dns::Name& name, const isc::dns::RRType& type):
-            name_(name), type_(type)
-    {}
-
-    isc::dns::Name name_; // Name of rrset.
-    isc::dns::RRType type_; // Type of rrset.
-};
 
 /// \brief Message Entry
 ///
@@ -56,6 +38,27 @@ class MessageEntry : public NsasEntry<MessageEntry> {
 private:
     MessageEntry(const MessageEntry& source);
     MessageEntry& operator=(const MessageEntry& source);
+
+    /// \brief Information to refer an RRset.
+    ///
+    /// There is no class information here, since the rrsets are cached in
+    /// the class-specific rrset cache.
+    struct RRsetRef{
+        /// \brief Constructor
+        ///
+        /// \param name The Name for the RRset
+        /// \param type The RRType for the RRrset
+        /// \param cache Which cache the RRset is stored in
+        RRsetRef(const isc::dns::Name& name, const isc::dns::RRType& type,
+                RRsetCache* cache):
+                name_(name), type_(type), cache_(cache)
+        {}
+
+        isc::dns::Name name_; // Name of rrset.
+        isc::dns::RRType type_; // Type of rrset.
+        RRsetCache* cache_; //Which cache the RRset is stored
+    };
+
 public:
 
     /// \brief Initialize the message entry object with one dns
@@ -66,8 +69,12 @@ public:
     ///        since some new rrset entries may be inserted into
     ///        rrset cache, or the existed rrset entries need
     ///        to be updated.
+    /// \param negative_soa_cache the pointer of RRsetCache. This
+    ///        cache is used only for storing SOA rrset from negative
+    ///        response (NXDOMAIN or NOERROR_NODATA)
     MessageEntry(const isc::dns::Message& message,
-                 boost::shared_ptr<RRsetCache> rrset_cache);
+                 const RRsetCachePtr& rrset_cache,
+                 const RRsetCachePtr& negative_soa_cache);
 
     /// \brief generate one dns message according
     ///        the rrsets information of the message.
@@ -85,6 +92,12 @@ public:
     /// \return return hash key
     virtual HashKey hashKey() const {
         return (*hash_key_ptr_);
+    }
+
+    /// \brief Get expire time of the message entry.
+    /// \return return the expire time of message entry.
+    time_t getExpireTime() const {
+        return (expire_time_);
     }
 
     /// \short Protected memebers, so they can be accessed by tests.
@@ -108,6 +121,16 @@ protected:
                       const isc::dns::Message::Section& section,
                       uint32_t& smaller_ttl,
                       uint16_t& rrset_count);
+
+    /// \brief Parse the RRsets in the authority section of
+    ///        negative response. The SOA RRset need to be located and
+    ///        stored in a seperate cache
+    /// \param msg The message to parse the RRsets from
+    /// \param min_ttl Get the minimum ttl of rrset in the authority section
+    /// \param rrset_count the rrset count of the authority section
+    void parseNegativeResponseAuthoritySection(const isc::dns::Message& msg,
+            uint32_t& min_ttl,
+            uint16_t& rrset_count);
 
     /// \brief Get RRset Trustworthiness
     ///        The algorithm refers to RFC2181 section 5.4.1
@@ -153,7 +176,9 @@ private:
     HashKey* hash_key_ptr_;  // the key for messag entry in hash table.
 
     std::vector<RRsetRef> rrsets_;
-    boost::shared_ptr<RRsetCache> rrset_cache_;
+    RRsetCachePtr rrset_cache_; //Normal rrset cache
+    // SOA rrset from negative response
+    RRsetCachePtr negative_soa_cache_;
 
     std::string query_name_; // query name of the message.
     uint16_t query_class_; // query class of the message.
