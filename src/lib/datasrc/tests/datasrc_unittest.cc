@@ -70,7 +70,7 @@ protected:
     }
     void QueryCommon(const RRClass& qclass);
     void createAndProcessQuery(const Name& qname, const RRClass& qclass,
-                               const RRType& qtype);
+                               const RRType& qtype, bool need_dnssec);
 
     HotCache cache;
     MetaDataSrc meta_source;
@@ -82,23 +82,26 @@ protected:
 };
 
 void
-performQuery(DataSrc& data_source, HotCache& cache, Message& message) {
+performQuery(DataSrc& data_source, HotCache& cache, Message& message,
+             bool need_dnssec = true)
+{
     message.setHeaderFlag(Message::HEADERFLAG_AA);
     message.setRcode(Rcode::NOERROR());
-    Query q(message, cache, true);
+    Query q(message, cache, need_dnssec);
     data_source.doQuery(q);
 }
 
 void
 DataSrcTest::createAndProcessQuery(const Name& qname, const RRClass& qclass,
-                                   const RRType& qtype)
+                                   const RRType& qtype,
+                                   bool need_dnssec = true)
 {
     msg.makeResponse();
     msg.setOpcode(Opcode::QUERY());
     msg.addQuestion(Question(qname, qclass, qtype));
     msg.setHeaderFlag(Message::HEADERFLAG_RD);
     qid = msg.getQid();
-    performQuery(meta_source, cache, msg);
+    performQuery(meta_source, cache, msg, need_dnssec);
 }
 
 void
@@ -163,6 +166,59 @@ TEST_F(DataSrcTest, QueryClassMismatch) {
 // Query class of any should match the first data source.
 TEST_F(DataSrcTest, QueryClassAny) {
     QueryCommon(RRClass::ANY());
+}
+
+TEST_F(DataSrcTest, queryClassAnyNegative) {
+    // There was a bug where Class ANY query triggered a crash due to NULL
+    // pointer dereference.  This test checks that condition.
+
+    // NXDOMAIN case
+    createAndProcessQuery(Name("notexistent.example.com"), RRClass::ANY(),
+                          RRType::A());
+    headerCheck(msg, qid, Rcode::NXDOMAIN(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 0, 6, 0);
+
+    // NXRRSET case
+    msg.clear(Message::PARSE);
+    createAndProcessQuery(Name("www.example.com"), RRClass::ANY(),
+                          RRType::TXT());
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 0, 4, 0);
+}
+
+TEST_F(DataSrcTest, queryClassAnyDNAME) {
+    // Class ANY query that would match a DNAME.  Everything including the
+    // synthesized CNAME should be the same as the response to class IN query.
+    createAndProcessQuery(Name("www.dname.example.com"), RRClass::ANY(),
+                          RRType::A(), false);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 3, 3, 3);
+    rrsetsCheck("dname.example.com. 3600 IN DNAME sql1.example.com.\n"
+                "www.dname.example.com. 3600 IN CNAME www.sql1.example.com.\n"
+                "www.sql1.example.com. 3600 IN A 192.0.2.2\n",
+                msg.beginSection(Message::SECTION_ANSWER),
+                msg.endSection(Message::SECTION_ANSWER));
+
+    // Also check the case of explicit DNAME query.
+    msg.clear(Message::PARSE);
+    createAndProcessQuery(Name("dname.example.com"), RRClass::ANY(),
+                          RRType::DNAME(), false);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 1, 3, 3);
+    rrsetsCheck("dname.example.com. 3600 IN DNAME sql1.example.com.\n",
+                msg.beginSection(Message::SECTION_ANSWER),
+                msg.endSection(Message::SECTION_ANSWER));
+}
+
+TEST_F(DataSrcTest, queryClassAnyCNAME) {
+    // Similar test for CNAME
+    createAndProcessQuery(Name("foo.example.com"), RRClass::ANY(),
+                          RRType::A(), false);
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | AA_FLAG | RD_FLAG, 1, 1, 0, 0);
+    rrsetsCheck("foo.example.com. 3600 IN CNAME cnametest.example.net.\n",
+                msg.beginSection(Message::SECTION_ANSWER),
+                msg.endSection(Message::SECTION_ANSWER));
 }
 
 TEST_F(DataSrcTest, NSQuery) {
@@ -416,68 +472,36 @@ TEST_F(DataSrcTest, DISABLED_WildcardAgainstMultiLabel) {
 
 TEST_F(DataSrcTest, WildcardCname) {
     // Check that wildcard answers containing CNAMES are followed
-    // correctly
-    createAndProcessQuery(Name("www.wild2.example.com"), RRClass::IN(),
-                          RRType::A());
+    // correctly.  It should result in the same response for both
+    // class IN and ANY queries.
+    const RRClass classes[2] = { RRClass::IN(), RRClass::ANY() };
 
-    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
-                QR_FLAG | AA_FLAG | RD_FLAG, 1, 4, 6, 6);
+    for (int i = 0; i < sizeof(classes) / sizeof(classes[0]); ++i) {
+        SCOPED_TRACE("Wildcard + CNAME test for class " + classes[i].toText());
 
-    RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
-    RRsetPtr rrset = *rit;
-    EXPECT_EQ(Name("www.wild2.example.com"), rrset->getName());
-    EXPECT_EQ(RRType::CNAME(), rrset->getType());
-    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+        msg.clear(Message::PARSE);
 
-    RdataIteratorPtr it = rrset->getRdataIterator();
-    EXPECT_EQ("www.example.com.", it->getCurrent().toText());
-    it->next();
-    EXPECT_TRUE(it->isLast());
+        createAndProcessQuery(Name("www.wild2.example.com"), classes[i],
+                              RRType::A(), false);
 
-    ++rit;
-    ++rit;
-    rrset = *rit;
-    EXPECT_EQ(Name("www.example.com"), rrset->getName());
-    EXPECT_EQ(RRType::A(), rrset->getType());
-    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+        headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                    QR_FLAG | AA_FLAG | RD_FLAG, 1, 2, 3, 3);
 
-    it = rrset->getRdataIterator();
-    EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
-    it->next();
-    EXPECT_TRUE(it->isLast());
-
-    rit = msg.beginSection(Message::SECTION_AUTHORITY);
-    rrset = *rit;
-    EXPECT_EQ(Name("*.wild2.example.com"), rrset->getName());
-    EXPECT_EQ(RRType::NSEC(), rrset->getType());
-    EXPECT_EQ(RRClass::IN(), rrset->getClass());
-    ++rit;
-    ++rit;
-
-    rrset = *rit;
-    EXPECT_EQ(Name("example.com"), rrset->getName());
-    EXPECT_EQ(RRType::NS(), rrset->getType());
-    EXPECT_EQ(RRClass::IN(), rrset->getClass());
-
-    it = rrset->getRdataIterator();
-    EXPECT_EQ("dns01.example.com.", it->getCurrent().toText());
-    it->next();
-    EXPECT_EQ("dns02.example.com.", it->getCurrent().toText());
-    it->next();
-    EXPECT_EQ("dns03.example.com.", it->getCurrent().toText());
-    it->next();
-    EXPECT_TRUE(it->isLast());
-
-    rit = msg.beginSection(Message::SECTION_ADDITIONAL);
-    rrset = *rit;
-    EXPECT_EQ(Name("dns01.example.com"), rrset->getName());
-    EXPECT_EQ(RRType::A(), rrset->getType());
-    EXPECT_EQ(RRClass::IN(), rrset->getClass());
-
-    it = rrset->getRdataIterator();
-    EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
-    it->next();
-    EXPECT_TRUE(it->isLast());
+        rrsetsCheck("www.wild2.example.com. 3600 IN CNAME www.example.com\n"
+                    "www.example.com. 3600 IN A 192.0.2.1\n",
+                    msg.beginSection(Message::SECTION_ANSWER),
+                    msg.endSection(Message::SECTION_ANSWER));
+        rrsetsCheck("example.com. 3600 IN NS dns01.example.com.\n"
+                    "example.com. 3600 IN NS dns02.example.com.\n"
+                    "example.com. 3600 IN NS dns03.example.com.",
+                    msg.beginSection(Message::SECTION_AUTHORITY),
+                    msg.endSection(Message::SECTION_AUTHORITY));
+        rrsetsCheck("dns01.example.com. 3600 IN A 192.0.2.1\n"
+                    "dns02.example.com. 3600 IN A 192.0.2.2\n"
+                    "dns03.example.com. 3600 IN A 192.0.2.3",
+                    msg.beginSection(Message::SECTION_ADDITIONAL),
+                    msg.endSection(Message::SECTION_ADDITIONAL));
+    }
 }
 
 TEST_F(DataSrcTest, WildcardCnameNodata) {
@@ -667,7 +691,7 @@ TEST_F(DataSrcTest, Cname) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    EXPECT_EQ("cnametest.flame.org.", it->getCurrent().toText());
+    EXPECT_EQ("cnametest.example.net.", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
 }
