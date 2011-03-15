@@ -29,6 +29,7 @@
 #include "nameserver_entry.h"
 #include "nameserver_address_store.h"
 #include "zone_entry.h"
+#include "glue_hints.h"
 #include "address_request_callback.h"
 
 using namespace isc::dns;
@@ -80,7 +81,8 @@ newZone(
 
 void
 NameserverAddressStore::lookup(const string& zone, const RRClass& class_code,
-    boost::shared_ptr<AddressRequestCallback> callback, AddressFamily family)
+    boost::shared_ptr<AddressRequestCallback> callback, AddressFamily family,
+    const GlueHints glue_hints)
 {
     pair<bool, boost::shared_ptr<ZoneEntry> > zone_obj(zone_hash_->getOrAdd(HashKey(
         zone, class_code), boost::bind(newZone, &resolver_, &zone, &class_code,
@@ -90,7 +92,8 @@ NameserverAddressStore::lookup(const string& zone, const RRClass& class_code,
     } else {
         zone_lru_->touch(zone_obj.second);
     }
-    zone_obj.second->addCallback(callback, family);
+    
+    zone_obj.second->addCallback(callback, family, glue_hints);
 }
 
 void
