@@ -21,7 +21,7 @@
 /// convenience methods for accessing and updating the information.
 
 #include <stdint.h>
-#include "asiolink.h"
+#include <asiolink/io_address.h>
 
 namespace isc {
 namespace nsas {
@@ -39,7 +39,7 @@ public:
     {}
 
     /// \return Address object
-    asiolink::IOAddress getAddress() const {
+    const asiolink::IOAddress& getAddress() const {
         return address_;
     }
 

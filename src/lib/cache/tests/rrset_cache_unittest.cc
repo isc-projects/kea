@@ -74,7 +74,7 @@ TEST_F(RRsetCacheTest, lookup) {
     // Check whether the expired rrset entry will be removed automatically
     // when looking up.
     Name name_test("test.example.com.");
-    updateRRsetCache(cache_, name_test, 0);
+    updateRRsetCache(cache_, name_test, 0); // Add a rrset with TTL 0 to cache.
     EXPECT_FALSE(cache_.lookup(name_test, RRType::A()));
 }
 
