@@ -111,9 +111,6 @@ class MessageTest(unittest.TestCase):
         self.assertRaises(InvalidParameter, self.r.set_header_flag, 0)
         self.assertRaises(InvalidParameter, self.r.set_header_flag, 0x7000)
         self.assertRaises(InvalidParameter, self.r.set_header_flag, 0x0800)
-        self.assertRaises(TypeError, self.r.set_header_flag, 0x80000000)
-        self.assertRaises(TypeError, self.r.set_header_flag,
-                          Message.HEADERFLAG_AA | 0x100000000)
         # this would cause overflow and result in a "valid" flag
         self.assertRaises(OverflowError, self.r.set_header_flag, 0x10000)
         self.assertRaises(OverflowError, self.r.set_header_flag, -1)
