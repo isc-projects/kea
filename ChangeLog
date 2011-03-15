@@ -1,3 +1,10 @@
+  205.	[bug]		jinmei
+	b10-auth, src/lib/datasrc: fixed a bug where b10-auth could return
+	an empty additional section for delegation even if some glue is
+	crucial when it fails to find some other glue records in its data
+	source.
+	(Trac #646, git 6070acd1c5b2f7a61574eda4035b93b40aab3e2b)
+
   204.	[bug]		jinmei
 	b10-auth, src/lib/datasrc: class ANY queries were not handled
 	correctly in the generic data source (mainly for sqlite3).  It
