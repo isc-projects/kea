@@ -199,6 +199,7 @@ const struct RRData example_com_records[] = {
 
     {NULL, NULL, NULL}
 };
+
 const struct RRData example_com_glue_records[] = {
     {"ns1.subzone.example.com", "A", "192.0.2.1"},
     {"ns2.subzone.example.com", "A", "192.0.2.2"},
@@ -247,6 +248,20 @@ const struct RRData nons_example_records[] = {
      "1234 3600 1800 2419200 7200"},
     {"www.nons.example", "A", "192.0.2.1"},
     {"ns.nons.example", "A", "192.0.2.2"},
+
+    // One of the NS names is intentionally non existent in the zone it belongs
+    // to.  This delegation is used to see if we still return the NS and the
+    // existent glue.
+    // (These are not relevant to test the case for the "no NS" case.  We use
+    // this zone to minimize the number of test zones)
+    {"incompletechild.nons.example", "NS", "ns.incompletechild.nons.example"},
+    {"incompletechild.nons.example", "NS", "nx.nosoa.example"},
+
+    {NULL, NULL, NULL}
+};
+
+const struct RRData nons_example_glue_records[] = {
+    {"ns.incompletechild.nons.example", "A", "192.0.2.1"},
     {NULL, NULL, NULL}
 };
 
@@ -298,7 +313,7 @@ const struct ZoneData zone_data[] = {
     { "example.com", "IN", example_com_records, example_com_glue_records },
     { "sql1.example.com", "IN", sql1_example_com_records, empty_records },
     { "loop.example", "IN", loop_example_records, empty_records },
-    { "nons.example", "IN", nons_example_records, empty_records },
+    { "nons.example", "IN", nons_example_records, nons_example_glue_records },
     { "nons-dname.example", "IN", nonsdname_example_records, empty_records },
     { "nosoa.example", "IN", nosoa_example_records, empty_records },
     { "apexcname.example", "IN", nosoa_example_records, empty_records }
