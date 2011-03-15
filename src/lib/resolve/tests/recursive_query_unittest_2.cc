@@ -21,8 +21,6 @@
 #include <gtest/gtest.h>
 #include <boost/bind.hpp>
 
-#include <log/dummylog.h>
-
 #include <asio.hpp>
 
 #include <dns/buffer.h>
@@ -83,7 +81,7 @@ const char* WWW_EXAMPLE_ORG = "192.0.2.254";    ///< Address of www.example.org
 // As the test is fairly long and complex, debugging "print" statements have
 // been left in although they are disabled.  Set the following to "true" to
 // enable them.
-const bool DEBUG_PRINT = true;
+const bool DEBUG_PRINT = false;
 
 class MockResolver : public isc::resolve::ResolverInterface {
     void resolve(const QuestionPtr& question,
@@ -608,8 +606,6 @@ private:
 // Sets up the UDP and TCP "servers", then tries a resolution.
 
 TEST_F(RecursiveQueryTest2, Resolve) {
-	isc::log::denabled = true;
-	
     // Set up the UDP server and issue the first read.  The endpoint from which
     // the query is sent is put in udp_endpoint_ when the read completes, which
     // is referenced in the callback as the place to which the response is sent.
