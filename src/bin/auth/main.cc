@@ -122,7 +122,13 @@ main(int argc, char* argv[]) {
     ModuleCCSession* config_session = NULL;
     string xfrout_socket_path;
     if (getenv("B10_FROM_BUILD") != NULL) {
-        xfrout_socket_path = string(getenv("B10_FROM_BUILD")) + "/auth_xfrout_conn";
+        if (getenv("B10_FROM_SOURCE_LOCALSTATEDIR")) {
+            xfrout_socket_path = string("B10_FROM_SOURCE_LOCALSTATEDIR") +
+                "/auth_xfrout_conn";
+        } else {
+            xfrout_socket_path = string(getenv("B10_FROM_BUILD")) +
+                "/auth_xfrout_conn";
+        }
     } else {
         xfrout_socket_path = UNIX_SOCKET_FILE;
     }

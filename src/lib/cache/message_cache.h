@@ -21,11 +21,10 @@
 #include "message_entry.h"
 #include <nsas/hash_table.h>
 #include <nsas/lru_list.h>
+#include "rrset_cache.h"
 
 namespace isc {
 namespace cache {
-
-class RRsetCache;
 
 /// \brief Message Cache
 /// The object of MessageCache represents the cache for class-specific
@@ -37,9 +36,15 @@ private:
     MessageCache(const MessageCache& source);
     MessageCache& operator=(const MessageCache& source);
 public:
+    /// \param rrset_cache The cache that stores the RRsets that the
+    ///        message entry will points to
     /// \param cache_size The size of message cache.
-    MessageCache(boost::shared_ptr<RRsetCache> rrset_cache_,
-                 uint32_t cache_size, uint16_t message_class);
+    /// \param message_class The class of the message cache
+    /// \param negative_soa_cache The cache that stores the SOA record
+    ///        that comes from negative response message
+    MessageCache(const RRsetCachePtr& rrset_cache,
+                 uint32_t cache_size, uint16_t message_class,
+                 const RRsetCachePtr& negative_soa_cache);
 
     /// \brief Destructor function
     virtual ~MessageCache();
@@ -84,7 +89,8 @@ protected:
     // Make these variants be protected for easy unittest.
 protected:
     uint16_t message_class_; // The class of the message cache.
-    boost::shared_ptr<RRsetCache> rrset_cache_;
+    RRsetCachePtr rrset_cache_;
+    RRsetCachePtr negative_soa_cache_;
     isc::nsas::HashTable<MessageEntry> message_table_;
     isc::nsas::LruList<MessageEntry> message_lru_;
 };

@@ -39,6 +39,14 @@ public:
     /// \brief Asynchronous I/O callback method
     ///
     /// \param error Unused
+    void operator()(asio::error_code)
+    {
+        // TODO: log an error if this method ever gets called.
+    }
+
+    /// \brief Asynchronous I/O callback method
+    ///
+    /// \param error Unused
     /// \param length Unused
     void operator()(asio::error_code, size_t)
     {

@@ -177,7 +177,7 @@
 /// Qu: www.sub.example.com\n
 /// Zo: example.com
 ///
-/// An: <nothing>
+/// An: (nothing)
 ///
 /// Au(1): sub.example.com NS ns0.sub.example.com\n
 /// Au(2): sub.example.com NS ns1.example.net
@@ -312,7 +312,7 @@ public:
     /// QNAME is equal to or in the supplied relationship with the given name.
     ///
     /// \param section Section of the message to be scrubbed.
-    /// \param zone Names against which RRsets should be checked.  Note that
+    /// \param names Names against which RRsets should be checked.  Note that
     /// this is a vector of pointers to Name objects; they are assumed to
     /// independently exist, and the caller retains ownership of them and is
     /// assumed to destroy them when needed.
