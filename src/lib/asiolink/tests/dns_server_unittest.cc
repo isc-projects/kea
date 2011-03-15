@@ -102,7 +102,7 @@ class DummyChecker : public SimpleCallback, public ServerStopper {
 };
 
 // \brief no lookup logic at all,just provide a checkpoint to stop the server
-class DummyLookup : public DNSLookup, public ServerStopper{
+class DummyLookup : public DNSLookup, public ServerStopper {
     public:
         void operator()(const IOMessage& io_message,
                 isc::dns::MessagePtr message,
@@ -134,8 +134,7 @@ class SimpleAnswer : public DNSAnswer, public ServerStopper {
 //  in case, server stopped and client cann't get response, there is a timer wait
 //  for specified seconds (the value is just a estimate since server process logic is quite
 //  simple, and all the intercommunication is local) then cancel the waiting.
-class SimpleClient : public ServerStopper
-{
+class SimpleClient : public ServerStopper {
     public:
     static const size_t MAX_DATA_LEN = 256;
     SimpleClient(asio::io_service& service,
@@ -194,8 +193,7 @@ class SimpleClient : public ServerStopper
 
 
 
-class UDPClient : public SimpleClient
-{
+class UDPClient : public SimpleClient {
     public:
     //After 1 seconds without feedback client will stop wait
     static const unsigned int server_time_out = 1;
@@ -236,8 +234,7 @@ class UDPClient : public SimpleClient
 };
 
 
-class TCPClient : public SimpleClient
-{
+class TCPClient : public SimpleClient {
     public:
     // after 2 seconds without feedback client will stop wait,
     // this includes connect, send message and recevice message
