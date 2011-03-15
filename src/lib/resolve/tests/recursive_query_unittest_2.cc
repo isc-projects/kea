@@ -443,8 +443,10 @@ public:
         setReferralExampleOrg(msg);
 
         // Convert to wire format
-        tcp_send_buffer_->clear();
-        MessageRenderer renderer(*tcp_send_buffer_);
+        // Use a temporary buffer for the dns wire data (we copy it
+        // to the 'real' buffer below)
+        OutputBuffer msg_buf(BUFFER_SIZE);
+        MessageRenderer renderer(msg_buf);
         msg.toWire(renderer);
 
         // Expected next state (when checked) is the UDP query to example.org.
@@ -455,16 +457,13 @@ public:
         expected_ = UDP_EXAMPLE_ORG;
         tcp_cumulative_ = 0;
 
-        // We'll write the message in two parts, the count and the message
-        // itself. This saves having to prepend the count onto the start of a
-        // buffer.  When specifying the send handler, the expected size of the
-        // data written is passed as the first parameter so that the handler
-        // can check it.
-        uint8_t count[2];
-        writeUint16(tcp_send_buffer_->getLength(), count);
-        tcp_socket_.async_send(asio::buffer(count, 2),
-                               boost::bind(&RecursiveQueryTest2::tcpSendHandler, this,
-                                           2, _1, _2));
+        // Unless we go through a callback loop we cannot simply use
+        // async_send() multiple times, so we cannot send the size first
+        // followed by the actual data. We copy them to a new buffer
+        // first
+        tcp_send_buffer_->clear();
+        tcp_send_buffer_->writeUint16(msg_buf.getLength());
+        tcp_send_buffer_->writeData(msg_buf.getData(), msg_buf.getLength());
         tcp_socket_.async_send(asio::buffer(tcp_send_buffer_->getData(),
                                             tcp_send_buffer_->getLength()),
                                boost::bind(&RecursiveQueryTest2::tcpSendHandler, this,
