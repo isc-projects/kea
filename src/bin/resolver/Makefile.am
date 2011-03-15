@@ -51,6 +51,7 @@ b10_resolver_LDADD += $(top_builddir)/src/lib/log/liblog.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/cache/libcache.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/resolve/libresolve.la
 b10_resolver_LDADD += $(top_builddir)/src/bin/auth/change_user.o
 b10_resolver_LDFLAGS = -pthread
 

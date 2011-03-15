@@ -18,6 +18,7 @@ set to point to the top directory of the source tree.
 There are multiple test suites, each in a separate subdirectory and
 involving a different DNS setup.  They are:
 
+  bindctl/      Some basic management operations using the bindctl tool
   glue/		Glue handling tests
 (the following tests are planned to be added soon)
   dnssec/	DNSSEC tests

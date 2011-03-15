@@ -141,7 +141,7 @@ typedef SectionIterator<RRsetPtr> RRsetIterator;
 /// - We may want to provide an "iterator" for all RRsets/RRs for convenience.
 ///   This will be for applications that do not care about performance much,
 ///   so the implementation can only be moderately efficient.
-/// - may want to provide a "find" method for a specified type
+/// - We may want to provide a "find" method for a specified type
 ///   of RR in the message.
 class Message {
 public:
@@ -155,8 +155,8 @@ public:
     ///
     /// Only the defined constants are valid where a header flag is required
     /// in this library (e.g., in \c Message::setHeaderFlag()).
-    /// Since these are enum constants, however, invalid value could be passed
-    /// via casting without an error at compilation time.
+    /// Since these are enum constants, however, an invalid value could be
+    /// passed via casting without an error at compilation time.
     /// It is generally the callee's responsibility to check and reject invalid
     /// values.
     /// Of course, applications shouldn't pass invalid values even if the
@@ -168,7 +168,7 @@ public:
     /// specified flag in the second 16 bits of the DNS Header section
     /// in order to make the internal implementation simpler.
     /// For example, \c HEADERFLAG_QR is defined to be 0x8000 as the QR
-    /// bit is the most significant bit of the 2nd 16 bits of the header.
+    /// bit is the most significant bit of the second 16 bits of the header.
     /// However, applications should not assume this coincidence and
     /// must solely use the enum representations.
     /// Any usage based on the assumption of the underlying values is invalid
