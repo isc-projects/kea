@@ -1,3 +1,7 @@
+  203.  [bug]		zhang likun
+	Fix resolver cache memory leak.
+	(Trac643, git aba4c4067da0dc63c97c6356dc3137651755ffce)
+
   202.  [func]    vorner
 	It is possible to specify a different directory where we look for
 	configuration files (by -p) and different configuration file to use (-c).
