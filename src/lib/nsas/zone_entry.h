@@ -104,7 +104,7 @@ public:
      */
     void addCallback(boost::shared_ptr<AddressRequestCallback>
         callback, AddressFamily family,
-        const GlueHints glue_hints = GlueHints());
+        const GlueHints& glue_hints = GlueHints());
 
     /**
      * \short Remove a callback from the list

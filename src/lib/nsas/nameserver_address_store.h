@@ -86,7 +86,7 @@ public:
     /// \param family Which address is requested.
     void lookup(const std::string& zone, const dns::RRClass& class_code,
         boost::shared_ptr<AddressRequestCallback> callback, AddressFamily
-        family = ANY_OK, const GlueHints = GlueHints());
+        family = ANY_OK, const GlueHints& = GlueHints());
 
     /// \brief cancel the given lookup action
     ///

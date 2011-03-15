@@ -82,7 +82,7 @@ newZone(
 void
 NameserverAddressStore::lookup(const string& zone, const RRClass& class_code,
     boost::shared_ptr<AddressRequestCallback> callback, AddressFamily family,
-    const GlueHints glue_hints)
+    const GlueHints& glue_hints)
 {
     pair<bool, boost::shared_ptr<ZoneEntry> > zone_obj(zone_hash_->getOrAdd(HashKey(
         zone, class_code), boost::bind(newZone, &resolver_, &zone, &class_code,
