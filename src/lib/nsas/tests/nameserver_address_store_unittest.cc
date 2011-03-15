@@ -232,11 +232,9 @@ TEST_F(NameserverAddressStoreTest, NameserverDeletionCheck) {
     EXPECT_EQ(1, nameservers_[1].use_count());
 }
 
-/**
- * \short Try lookup on empty store.
- *
- * Check if it asks correct questions and it keeps correct internal state.
- */
+/// \brief Try lookup on empty store.
+///
+/// Check if it asks correct questions and it keeps correct internal state.
 TEST_F(NameserverAddressStoreTest, emptyLookup) {
     DerivedNsas nsas(resolver_, 10, 10);
     // Ask it a question
@@ -268,11 +266,9 @@ TEST_F(NameserverAddressStoreTest, emptyLookup) {
     }
 }
 
-/**
- * \short Try looking up a zone that does not have any nameservers.
- *
- * It should not ask anything and say it is unreachable right away.
- */
+/// \brief Try looking up a zone that does not have any nameservers.
+///
+/// It should not ask anything and say it is unreachable right away.
 TEST_F(NameserverAddressStoreTest, zoneWithoutNameservers) {
     DerivedNsas nsas(resolver_, 10, 10);
     // Ask it a question
@@ -285,13 +281,11 @@ TEST_F(NameserverAddressStoreTest, zoneWithoutNameservers) {
     EXPECT_FALSE(NSASCallback::results[0].first);
 }
 
-/**
- * \short Try looking up a zone that has only an unreachable nameserver.
- *
- * It should be unreachable. Furthermore, subsequent questions for that zone
- * or other zone with the same nameserver should be unreachable right away,
- * without further asking.
- */
+/// \brief Try looking up a zone that has only an unreachable nameserver.
+///
+/// It should be unreachable. Furthermore, subsequent questions for that zone
+/// or other zone with the same nameserver should be unreachable right away,
+/// without further asking.
 TEST_F(NameserverAddressStoreTest, unreachableNS) {
     DerivedNsas nsas(resolver_, 10, 10);
     // Ask it a question
@@ -326,12 +320,10 @@ TEST_F(NameserverAddressStoreTest, unreachableNS) {
     }
 }
 
-/**
- * \short Try to stress it little bit by having multiple zones and nameservers.
- *
- * Does some asking, on a set of zones that share some nameservers, with
- * slower answering, evicting data, etc.
- */
+/// \short Try to stress it little bit by having multiple zones and nameservers.
+///
+/// Does some asking, on a set of zones that share some nameservers, with
+/// slower answering, evicting data, etc.
 TEST_F(NameserverAddressStoreTest, CombinedTest) {
     // Create small caches, so we get some evictions
     DerivedNsas nsas(resolver_, 1, 1);
