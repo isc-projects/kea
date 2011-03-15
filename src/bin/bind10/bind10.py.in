@@ -139,7 +139,8 @@ class ProcessInfo:
         self.restart_schedule = RestartSchedule()
         self.uid = uid
         self.username = username
-        self._spawn()
+        self.process = None
+        self.pid = None
 
     def _preexec_work(self):
         """Function used before running a program that needs to run as a
@@ -185,6 +186,11 @@ class ProcessInfo:
                                         preexec_fn=self._preexec_work)
         self.pid = self.process.pid
         self.restart_schedule.set_run_start_time()
+
+    # spawn() and respawn() are the same for now, but in the future they
+    # may have different functionality
+    def spawn(self):
+        self._spawn()
 
     def respawn(self):
         self._spawn()
@@ -383,6 +389,7 @@ class BoB:
         c_channel = ProcessInfo("b10-msgq", ["b10-msgq"], c_channel_env,
                                 True, not self.verbose, uid=self.uid,
                                 username=self.username)
+        c_channel.spawn()
         self.processes[c_channel.pid] = c_channel
         self.log_started(c_channel.pid)
 
@@ -407,6 +414,7 @@ class BoB:
         bind_cfgd = ProcessInfo("b10-cfgmgr", ["b10-cfgmgr"],
                                 c_channel_env, uid=self.uid,
                                 username=self.username)
+        bind_cfgd.spawn()
         self.processes[bind_cfgd.pid] = bind_cfgd
         self.log_started(bind_cfgd.pid)
 
@@ -441,6 +449,7 @@ class BoB:
         """
         self.log_starting(name, port, address)
         newproc = ProcessInfo(name, args, c_channel_env)
+        newproc.spawn()
         self.processes[newproc.pid] = newproc
         self.log_started(newproc.pid)
 

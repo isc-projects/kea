@@ -1,6 +1,6 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
-#PYTESTS = args_test.py bind10_test.py bind10_cmd_test.py
-PYTESTS = bind10_test.py bind10_cmd_test.py
+#PYTESTS = args_test.py bind10_test.py
+PYTESTS = bind10_test.py
 EXTRA_DIST = $(PYTESTS)
 
 # test using command-line arguments, so use check-local target instead of TESTS
