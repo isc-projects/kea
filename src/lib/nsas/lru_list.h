@@ -112,8 +112,8 @@ public:
     /// \brief Drop All the Elements in the List .
     ///
     /// All the elements will be dropped from the list container, and their
-    /// drop handler(if there is one) will be called, left the size of list
-    /// to 0.
+    /// drop handler(if there is one) will be called, when done, the size of
+    /// of list will be 0.
     virtual void clear();
 
     /// \brief Return Size of the List
@@ -235,7 +235,7 @@ void LruList<T>::touch(boost::shared_ptr<T>& element) {
     }
 }
 
-// Clear the list-  left the size of list to 0
+// Clear the list-  when done, the size of list will be 0.
 template <typename T>
 void LruList<T>::clear() {
     // Protect list against concurrent access
