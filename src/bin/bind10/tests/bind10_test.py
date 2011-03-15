@@ -30,6 +30,7 @@ class TestProcessInfo(unittest.TestCase):
 
     def test_init(self):
         pi = ProcessInfo('Test Process', [ '/bin/echo', 'foo' ])
+        pi.spawn()
         os.dup2(self.old_stdout, sys.stdout.fileno())
         self.assertEqual(pi.name, 'Test Process')
         self.assertEqual(pi.args, [ '/bin/echo', 'foo' ])
@@ -50,12 +51,14 @@ class TestProcessInfo(unittest.TestCase):
     def test_setting_null_stdout(self):
         pi = ProcessInfo('Test Process', [ '/bin/echo', 'foo' ], 
                          dev_null_stdout=True)
+        pi.spawn()
         os.dup2(self.old_stdout, sys.stdout.fileno())
         self.assertEqual(pi.dev_null_stdout, True)
         self.assertEqual(os.read(self.pipes[0], 100), b"")
 
     def test_respawn(self):
         pi = ProcessInfo('Test Process', [ '/bin/echo', 'foo' ])
+        pi.spawn()
         # wait for old process to work...
         self.assertEqual(os.read(self.pipes[0], 100), b"foo\n")
         # respawn it
@@ -104,17 +107,19 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.cfg_start_auth, True)
         self.assertEqual(bob.cfg_start_resolver, False)
 
-# Class for testing the BoB start/stop components routines.
+# Class for testing the BoB without actually starting processes.
+# This is used for testing the start/stop components routines and
+# the BoB commands.
 #
-# Although testing that external processes start is outside the scope
+# Testing that external processes start is outside the scope
 # of the unit test, by overriding the process start methods we can check
 # that the right processes are started depending on the configuration
 # options.
-class StartStopCheckBob(BoB):
+class MockBob(BoB):
     def __init__(self):
         BoB.__init__(self)
 
-# Set flags as to which of the overridden methods has been run.
+        # Set flags as to which of the overridden methods has been run.
         self.msgq = False
         self.cfgmgr = False
         self.ccsession = False
@@ -126,6 +131,7 @@ class StartStopCheckBob(BoB):
         self.stats = False
         self.cmdctl = False
         self.c_channel_env = {}
+        self.processes = { }
 
     def read_bind10_config(self):
         # Configuration options are set directly
@@ -133,65 +139,95 @@ class StartStopCheckBob(BoB):
 
     def start_msgq(self, c_channel_env):
         self.msgq = True
+        self.processes[2] = ProcessInfo('b10-msgq', ['/bin/false'])
 
     def start_cfgmgr(self, c_channel_env):
         self.cfgmgr = True
+        self.processes[3] = ProcessInfo('b10-cfgmgr', ['/bin/false'])
 
     def start_ccsession(self, c_channel_env):
         self.ccsession = True
+        self.processes[4] = ProcessInfo('b10-ccsession', ['/bin/false'])
 
     def start_auth(self, c_channel_env):
         self.auth = True
+        self.processes[5] = ProcessInfo('b10-auth', ['/bin/false'])
 
     def start_resolver(self, c_channel_env):
         self.resolver = True
+        self.processes[6] = ProcessInfo('b10-resolver', ['/bin/false'])
 
     def start_xfrout(self, c_channel_env):
         self.xfrout = True
+        self.processes[7] = ProcessInfo('b10-xfrout', ['/bin/false'])
 
     def start_xfrin(self, c_channel_env):
         self.xfrin = True
+        self.processes[8] = ProcessInfo('b10-xfrin', ['/bin/false'])
 
     def start_zonemgr(self, c_channel_env):
         self.zonemgr = True
+        self.processes[9] = ProcessInfo('b10-zonemgr', ['/bin/false'])
 
     def start_stats(self, c_channel_env):
         self.stats = True
+        self.processes[10] = ProcessInfo('b10-stats', ['/bin/false'])
 
     def start_cmdctl(self, c_channel_env):
         self.cmdctl = True
+        self.processes[11] = ProcessInfo('b10-cmdctl', ['/bin/false'])
 
     # We don't really use all of these stop_ methods. But it might turn out
     # someone would add some stop_ method to BoB and we want that one overriden
     # in case he forgets to update the tests.
     def stop_msgq(self):
+        if self.msgq:
+            del self.processes[2]
         self.msgq = False
 
     def stop_cfgmgr(self):
+        if self.cfgmgr:
+            del self.processes[3]
         self.cfgmgr = False
 
     def stop_ccsession(self):
+        if self.ccssession:
+            del self.processes[4]
         self.ccsession = False
 
     def stop_auth(self):
+        if self.auth:
+            del self.processes[5]
         self.auth = False
 
     def stop_resolver(self):
+        if self.resolver:
+            del self.processes[6]
         self.resolver = False
 
     def stop_xfrout(self):
+        if self.xfrout:
+            del self.processes[7]
         self.xfrout = False
 
     def stop_xfrin(self):
+        if self.xfrin:
+            del self.processes[8]
         self.xfrin = False
 
     def stop_zonemgr(self):
+        if self.zonemgr:
+            del self.processes[9]
         self.zonemgr = False
 
     def stop_stats(self):
+        if self.stats:
+            del self.processes[10]
         self.stats = False
 
     def stop_cmdctl(self):
+        if self.cmdctl:
+            del self.processes[11]
         self.cmdctl = False
 
 class TestStartStopProcessesBob(unittest.TestCase):
@@ -251,7 +287,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
     # is specified.
     def test_start_none(self):
         # Create BoB and ensure correct initialization
-        bob = StartStopCheckBob()
+        bob = MockBob()
         self.check_preconditions(bob)
 
         # Start processes and check what was started
@@ -264,7 +300,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
     # Checks the processes started when starting only the auth process
     def test_start_auth(self):
         # Create BoB and ensure correct initialization
-        bob = StartStopCheckBob()
+        bob = MockBob()
         self.check_preconditions(bob)
 
         # Start processes and check what was started
@@ -278,7 +314,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
     # Checks the processes started when starting only the resolver process
     def test_start_resolver(self):
         # Create BoB and ensure correct initialization
-        bob = StartStopCheckBob()
+        bob = MockBob()
         self.check_preconditions(bob)
 
         # Start processes and check what was started
@@ -292,7 +328,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
     # Checks the processes started when starting both auth and resolver process
     def test_start_both(self):
         # Create BoB and ensure correct initialization
-        bob = StartStopCheckBob()
+        bob = MockBob()
         self.check_preconditions(bob)
 
         # Start processes and check what was started
@@ -310,7 +346,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         """
 
         # Create BoB and ensure correct initialization
-        bob = StartStopCheckBob()
+        bob = MockBob()
         self.check_preconditions(bob)
 
         # Start processes (nothing much should be started, as in
@@ -375,7 +411,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         Tests that a process is started only once.
         """
         # Create BoB and ensure correct initialization
-        bob = StartStopCheckBob()
+        bob = MockBob()
         self.check_preconditions(bob)
 
         # Start processes (both)
@@ -401,7 +437,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         Test that processes are not started by the config handler before
         startup.
         """
-        bob = StartStopCheckBob()
+        bob = MockBob()
         self.check_preconditions(bob)
 
         bob.start_auth = lambda: self.fail("Started auth again")
@@ -411,6 +447,41 @@ class TestStartStopProcessesBob(unittest.TestCase):
         bob.start_resolver = lambda: self.fail("Started resolver again")
 
         bob.config_handler({'start_auth': True, 'start_resolver': True})
+
+class TestBossCmd(unittest.TestCase):
+    def test_ping(self):
+        """
+        Confirm simple ping command works.
+        """
+        bob = MockBob()
+        answer = bob.command_handler("ping", None)
+        self.assertEqual(answer, {'result': [0, 'pong']})
+
+    def test_show_processes(self):
+        """
+        Confirm getting a list of processes works.
+        """
+        bob = MockBob()
+        answer = bob.command_handler("show_processes", None)
+        self.assertEqual(answer, {'result': [0, []]})
+
+    def test_show_processes_started(self):
+        """
+        Confirm getting a list of processes works.
+        """
+        bob = MockBob()
+        bob.start_all_processes()
+        answer = bob.command_handler("show_processes", None)
+        processes = [[2, 'b10-msgq'],
+                     [3, 'b10-cfgmgr'], 
+                     [4, 'b10-ccsession'],
+                     [5, 'b10-auth'],
+                     [7, 'b10-xfrout'],
+                     [8, 'b10-xfrin'], 
+                     [9, 'b10-zonemgr'],
+                     [10, 'b10-stats'], 
+                     [11, 'b10-cmdctl']]
+        self.assertEqual(answer, {'result': [0, processes]})
 
 if __name__ == '__main__':
     unittest.main()
