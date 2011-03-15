@@ -254,11 +254,19 @@ private:
         current_ns_address = address;
         gettimeofday(&current_ns_qsent_time, NULL);
         ++outstanding_events_;
-        IOFetch query(protocol_, io_, question_,
-            current_ns_address.getAddress(),
-            53, buffer_, this,
-            query_timeout_);
-        io_.get_io_service().post(query);
+        if (test_server_.second != 0) {
+            IOFetch query(protocol_, io_, question_,
+                test_server_.first,
+                test_server_.second, buffer_, this,
+                query_timeout_);
+            io_.get_io_service().post(query);
+		} else {
+	        IOFetch query(protocol_, io_, question_,
+	            current_ns_address.getAddress(),
+	            53, buffer_, this,
+	            query_timeout_);
+	        io_.get_io_service().post(query);
+		}
     }
     
     // 'general' send; if we are in forwarder mode, send a query to
