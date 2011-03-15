@@ -27,8 +27,19 @@ class TestConfigManagerData(unittest.TestCase):
     def setUp(self):
         self.data_path = os.environ['CONFIG_TESTDATA_PATH']
         self.writable_data_path = os.environ['CONFIG_WR_TESTDATA_PATH']
-        self.config_manager_data = ConfigManagerData(self.writable_data_path)
+        self.config_manager_data = ConfigManagerData(self.writable_data_path,
+                                                     file_name="b10-config.db")
         self.assert_(self.config_manager_data)
+
+    def test_abs_file(self):
+        """
+        Test what happens if we give the config manager an absolute path.
+        It shouldn't append the data path to it.
+        """
+        abs_path = self.data_path + os.sep + "b10-config-imaginary.db"
+        data = ConfigManagerData(os.getcwd(), abs_path)
+        self.assertEqual(abs_path, data.db_filename)
+        self.assertEqual(self.data_path, data.data_path)
 
     def test_init(self):
         self.assertEqual(self.config_manager_data.data['version'],
@@ -39,10 +50,10 @@ class TestConfigManagerData(unittest.TestCase):
                          self.writable_data_path + os.sep + "b10-config.db")
 
     def test_read_from_file(self):
-        ConfigManagerData.read_from_file(self.writable_data_path)
+        ConfigManagerData.read_from_file(self.writable_data_path, "b10-config.db")
         self.assertRaises(ConfigManagerDataEmpty,
                           ConfigManagerData.read_from_file,
-                          "doesnotexist")
+                          "doesnotexist", "b10-config.db")
         self.assertRaises(ConfigManagerDataReadError,
                           ConfigManagerData.read_from_file,
                           self.data_path, "b10-config-bad1.db")
@@ -68,8 +79,8 @@ class TestConfigManagerData(unittest.TestCase):
         # by equality of the .data element. If data_path or db_filename
         # are different, but the contents are the same, it's still
         # considered equal
-        cfd1 = ConfigManagerData(self.data_path)
-        cfd2 = ConfigManagerData(self.data_path)
+        cfd1 = ConfigManagerData(self.data_path, file_name="b10-config.db")
+        cfd2 = ConfigManagerData(self.data_path, file_name="b10-config.db")
         self.assertEqual(cfd1, cfd2)
         cfd2.data_path = "some/unknown/path"
         self.assertEqual(cfd1, cfd2)
@@ -85,10 +96,25 @@ class TestConfigManager(unittest.TestCase):
         self.data_path = os.environ['CONFIG_TESTDATA_PATH']
         self.writable_data_path = os.environ['CONFIG_WR_TESTDATA_PATH']
         self.fake_session = FakeModuleCCSession()
-        self.cm = ConfigManager(self.writable_data_path, self.fake_session)
+        self.cm = ConfigManager(self.writable_data_path,
+                                database_filename="b10-config.db",
+                                session=self.fake_session)
         self.name = "TestModule"
         self.spec = isc.config.module_spec_from_file(self.data_path + os.sep + "/spec2.spec")
-    
+
+    def test_paths(self):
+        """
+        Test data_path and database filename is passed trough to
+        underlying ConfigManagerData.
+        """
+        cm = ConfigManager("datapath", "filename", self.fake_session)
+        self.assertEqual("datapath" + os.sep + "filename",
+                         cm.config.db_filename)
+        # It should preserve it while reading
+        cm.read_config()
+        self.assertEqual("datapath" + os.sep + "filename",
+                         cm.config.db_filename)
+
     def test_init(self):
         self.assert_(self.cm.module_specs == {})
         self.assert_(self.cm.data_path == self.writable_data_path)
