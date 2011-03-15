@@ -32,6 +32,7 @@ class RRsetCache;
 //TODO a better proper default cache size
 #define MESSAGE_CACHE_DEFAULT_SIZE 10000
 #define RRSET_CACHE_DEFAULT_SIZE   20000
+#define NEGATIVE_RRSET_CACHE_DEFAULT_SIZE   10000
 
 /// \brief Cache Size Information.
 ///
@@ -44,7 +45,7 @@ public:
     /// \param cls The RRClass code
     /// \param msg_cache_size The size for the message cache
     /// \param rst_cache_size The size for the RRset cache
-    CacheSizeInfo(const isc::dns::RRClass& cls, 
+    CacheSizeInfo(const isc::dns::RRClass& cls,
                   uint32_t msg_cache_size,
                   uint32_t rst_cache_size):
                     cclass(cls),
@@ -87,7 +88,7 @@ public:
     /// \brief Construct Function.
     /// \param caches_size cache size information for each
     ///        messages/rrsets of different classes.
-    ResolverClassCache(CacheSizeInfo cache_info);
+    ResolverClassCache(const CacheSizeInfo& cache_info);
 
     /// \name Lookup Interfaces
     //@{
@@ -132,6 +133,11 @@ public:
     /// \note the function doesn't do any message validation check,
     ///       the user should make sure the message is valid, and of
     ///       the right class
+    /// TODO: Share the NXDOMAIN info between different type queries
+    ///       current implementation can only cache for the type that
+    ///       user quired, for example, if user query A record of
+    ///       a.example. and the server replied with NXDOMAIN, this
+    ///       should be cached for all the types queries of a.example.
     bool update(const isc::dns::Message& msg);
 
     /// \brief Update the rrset in the cache with the new one.
@@ -149,13 +155,13 @@ public:
     ///
     /// \note The class of the RRset must have been checked. It is not
     /// here.
-    bool update(const isc::dns::ConstRRsetPtr rrset_ptr);
+    bool update(const isc::dns::ConstRRsetPtr& rrset_ptr);
 
     /// \brief Get the RRClass this cache is for
     ///
     /// \return The RRClass of this cache
     const isc::dns::RRClass& getClass() const;
-    
+
 private:
     /// \brief Update rrset cache.
     ///
@@ -165,7 +171,7 @@ private:
     /// \return return true if the rrset is updated in the rrset cache,
     ///         or else return false if failed.
     /// \param rrset_cache_ptr The rrset cache need to be updated.
-    bool updateRRsetCache(const isc::dns::ConstRRsetPtr rrset_ptr,
+    bool updateRRsetCache(const isc::dns::ConstRRsetPtr& rrset_ptr,
                           RRsetCachePtr rrset_cache_ptr);
 
     /// \brief Class this cache is for.
@@ -181,10 +187,13 @@ private:
     /// Cache for rrsets in local zones, rrsets
     /// in it never expire.
     LocalZoneDataPtr local_zone_data_;
+    //@}
 
     /// \brief cache the rrsets parsed from the received message.
     RRsetCachePtr rrsets_cache_;
-    //@}
+
+    /// \brief cache the SOA rrset parsed from the negative response message.
+    RRsetCachePtr negative_soa_cache_;
 };
 
 class ResolverCache {
@@ -289,7 +298,7 @@ public:
     ///
     /// \overload
     ///
-    bool update(const isc::dns::ConstRRsetPtr rrset_ptr);
+    bool update(const isc::dns::ConstRRsetPtr& rrset_ptr);
 
     /// \name Cache Serialization
     //@{

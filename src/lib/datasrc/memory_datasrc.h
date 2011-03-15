@@ -289,7 +289,7 @@ public:
     ///   - \c result::PARTIALMATCH: A zone whose origin is a
     //    super domain of \c name is found (but there is no exact match)
     ///   - \c result::NOTFOUND: For all other cases.
-    /// - \c zone: A <Boost> shared pointer to the found \c Zone object if one
+    /// - \c zone: A "Boost" shared pointer to the found \c Zone object if one
     //  is found; otherwise \c NULL.
     ///
     /// This method never throws an exception.

@@ -194,14 +194,21 @@ class CChannelConnectError(Exception): pass
 class BoB:
     """Boss of BIND class."""
     
-    def __init__(self, msgq_socket_file=None, nocache=False, verbose=False,
-    setuid=None, username=None):
+    def __init__(self, msgq_socket_file=None, data_path=None,
+    config_filename=None, nocache=False, verbose=False, setuid=None,
+    username=None, cmdctl_port=None):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
         
             The msgq_socket_file specifies the UNIX domain socket file that the
             msgq process listens on.  If verbose is True, then the boss reports
             what it is doing.
+
+            Data path and config filename are passed trough to config manager
+            (if provided) and specify the config file to be used.
+
+            The cmdctl_port is passed to cmdctl and specify on which port it
+            should listen.
         """
         self.cc_session = None
         self.ccs = None
@@ -219,6 +226,9 @@ class BoB:
         self.uid = setuid
         self.username = username
         self.verbose = verbose
+        self.data_path = data_path
+        self.config_filename = config_filename
+        self.cmdctl_port = cmdctl_port
 
     def config_handler(self, new_config):
         # If this is initial update, don't do anything now, leave it to startup
@@ -390,7 +400,12 @@ class BoB:
             Starts the configuration manager process
         """
         self.log_starting("b10-cfgmgr")
-        bind_cfgd = ProcessInfo("b10-cfgmgr", ["b10-cfgmgr"],
+        args = ["b10-cfgmgr"]
+        if self.data_path is not None:
+            args.append("--data-path=" + self.data_path)
+        if self.config_filename is not None:
+            args.append("--config-filename=" + self.config_filename)
+        bind_cfgd = ProcessInfo("b10-cfgmgr", args,
                                 c_channel_env, uid=self.uid,
                                 username=self.username)
         self.processes[bind_cfgd.pid] = bind_cfgd
@@ -500,8 +515,13 @@ class BoB:
         self.start_simple("b10-stats", c_channel_env)
 
     def start_cmdctl(self, c_channel_env):
-        # XXX: we hardcode port 8080
-        self.start_simple("b10-cmdctl", c_channel_env, 8080)
+        """
+            Starts the command control process
+        """
+        args = ["b10-cmdctl"]
+        if self.cmdctl_port is not None:
+            args.append("--port=" + str(self.cmdctl_port))
+        self.start_process("b10-cmdctl", args, c_channel_env, self.cmdctl_port)
 
     def start_all_processes(self):
         """
@@ -785,14 +805,12 @@ def process_rename(option, opt_str, value, parser):
     """Function that renames the process if it is requested by a option."""
     isc.util.process.rename(value)
 
-def main():
-    global options
-    global boss_of_bind
-    # Enforce line buffering on stdout, even when not a TTY
-    sys.stdout = io.TextIOWrapper(sys.stdout.detach(), line_buffering=True)
-
-    # Parse any command-line options.
-    parser = OptionParser(version=VERSION)
+def parse_args(args=sys.argv[1:], Parser=OptionParser):
+    """
+    Function for parsing command line arguments. Returns the
+    options object from OptionParser.
+    """
+    parser = Parser(version=VERSION)
     parser.add_option("-m", "--msgq-socket-file", dest="msgq_socket_file",
                       type="string", default=None,
                       help="UNIX domain socket file the b10-msgq daemon will use")
@@ -805,10 +823,69 @@ def main():
     parser.add_option("--pretty-name", type="string", action="callback",
                       callback=process_rename,
                       help="Set the process name (displayed in ps, top, ...)")
-    (options, args) = parser.parse_args()
+    parser.add_option("-c", "--config-file", action="store",
+                      dest="config_file", default=None,
+                      help="Configuration database filename")
+    parser.add_option("-p", "--data-path", dest="data_path",
+                      help="Directory to search for configuration files",
+                      default=None)
+    parser.add_option("--cmdctl-port", dest="cmdctl_port", type="int",
+                      default=None, help="Port of command control")
+    parser.add_option("--pid-file", dest="pid_file", type="string",
+                      default=None,
+                      help="file to dump the PID of the BIND 10 process")
+
+    (options, args) = parser.parse_args(args)
+
+    if options.cmdctl_port is not None:
+        try:
+            isc.net.parse.port_parse(options.cmdctl_port)
+        except ValueError as e:
+            parser.error(e)
+
     if args:
         parser.print_help()
         sys.exit(1)
+
+    return options
+
+def dump_pid(pid_file):
+    """
+    Dump the PID of the current process to the specified file.  If the given
+    file is None this function does nothing.  If the file already exists,
+    the existing content will be removed.  If a system error happens in
+    creating or writing to the file, the corresponding exception will be
+    propagated to the caller.
+    """
+    if pid_file is None:
+        return
+    f = open(pid_file, "w")
+    f.write('%d\n' % os.getpid())
+    f.close()
+
+def unlink_pid_file(pid_file):
+    """
+    Remove the given file, which is basically expected to be the PID file
+    created by dump_pid().  The specified may or may not exist; if it
+    doesn't this function does nothing.  Other system level errors in removing
+    the file will be propagated as the corresponding exception.
+    """
+    if pid_file is None:
+        return
+    try:
+        os.unlink(pid_file)
+    except OSError as error:
+        if error.errno is not errno.ENOENT:
+            raise
+
+
+def main():
+    global options
+    global boss_of_bind
+    # Enforce line buffering on stdout, even when not a TTY
+    sys.stdout = io.TextIOWrapper(sys.stdout.detach(), line_buffering=True)
+
+    options = parse_args()
 
     # Check user ID.
     setuid = None
@@ -858,13 +935,15 @@ def main():
     signal.signal(signal.SIGPIPE, signal.SIG_IGN)
 
     # Go bob!
-    boss_of_bind = BoB(options.msgq_socket_file, options.nocache,
-                       options.verbose, setuid, username)
+    boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
+                       options.config_file, options.nocache, options.verbose,
+                       setuid, username, options.cmdctl_port)
     startup_result = boss_of_bind.startup()
     if startup_result:
         sys.stderr.write("[bind10] Error on startup: %s\n" % startup_result)
         sys.exit(1)
     sys.stdout.write("[bind10] BIND 10 started\n")
+    dump_pid(options.pid_file)
 
     # send "bind10.boot_time" to b10-stats
     time.sleep(1) # wait a second
@@ -918,6 +997,7 @@ def main():
     signal.signal(signal.SIGCHLD, signal.SIG_DFL)
     boss_of_bind.shutdown()
     sys.stdout.write("[bind10] BIND 10 exiting\n");
+    unlink_pid_file(options.pid_file)
     sys.exit(0)
 
 if __name__ == "__main__":

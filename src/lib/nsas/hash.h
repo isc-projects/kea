@@ -59,7 +59,7 @@ public:
     /// sequence could lead to problems in checking results.
     Hash(uint32_t tablesize, uint32_t maxkeylen = 255, bool randomise = true);
 
-    /// \bool Virtual Destructor
+    /// \brief Virtual Destructor
     virtual ~Hash()
     {}
 

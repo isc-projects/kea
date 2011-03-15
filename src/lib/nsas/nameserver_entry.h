@@ -151,7 +151,7 @@ public:
     /// Updates the RTT for a particular address
     ///
     /// \param address Address to update
-    /// \param RTT New RTT for the address
+    /// \param rtt New RTT for the address
     void setAddressRTT(const asiolink::IOAddress& address, uint32_t rtt);
 
     /// \brief Update RTT of the address that corresponding to the index

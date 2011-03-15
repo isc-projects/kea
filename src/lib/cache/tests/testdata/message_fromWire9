@@ -1,4 +1,6 @@
 #
+# The TTL for a record in answer section is 0, so it
+# will expire immediately after being cached.
 #
 # A simple DNS response message
 # ID = 0x1035
@@ -6,7 +8,7 @@
 # QDCOUNT=1, ANCOUNT=2, other COUNTS=0
 # Question: test.example.org. IN A
 # Answer:
-#  test.example.org. 3600 IN A 192.0.2.1
+#  test.example.org. 0000 IN A 192.0.2.1
 #  test.example.org. 7200 IN A 192.0.2.2
 #
 1035 8500

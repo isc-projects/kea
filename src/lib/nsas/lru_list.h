@@ -140,7 +140,7 @@ public:
 
     /// \brief Set Maximum Size
     ///
-    /// \param new_size New maximum list size
+    /// \param max_size New maximum list size
     virtual void setMaxSize(uint32_t max_size) {
         max_size_ = max_size;
     }
