@@ -332,7 +332,7 @@ class TestConfigCommands(unittest.TestCase):
         self.tool.cmdloop = cmd_loop
 
         self.tool.conn.sock = FakeSocket()
-        self.tool.conn.close()
+        self.tool.conn.sock.close()
 
         # validate log message for socket.err
         socket_err_output = io.StringIO()
