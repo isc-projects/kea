@@ -81,10 +81,18 @@ TCPServer::operator()(error_code ec, size_t length) {
             /// try again
             do {
                 CORO_YIELD acceptor_->async_accept(*socket_, *this);
-                /// If user stop the server which will close the acceptor
-                /// we just return
-                if (ec == asio::error::bad_descriptor)
-                    CORO_YIELD return;
+
+                // return if we meet fatal error
+                // Todo add log
+                if (ec) {
+                    using namespace asio::error;
+                    if (ec.value() != would_block && ec.value() != try_again &&
+                            ec.value() != connection_aborted &&
+                            ec.value() != interrupted) {
+                        return;
+                    }
+                }
+
 
             } while (ec);
 
