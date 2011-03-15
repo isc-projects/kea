@@ -22,6 +22,7 @@ from isc.cc import SessionError
 import isc.util.process
 import signal
 import os
+from optparse import OptionParser
 
 isc.util.process.rename()
 
@@ -41,8 +42,23 @@ if "B10_FROM_SOURCE" in os.environ:
 else:
     PREFIX = "@prefix@"
     DATA_PATH = "@localstatedir@/@PACKAGE@".replace("${prefix}", PREFIX)
+DEFAULT_CONFIG_FILE = "b10-config.db"
 
 cm = None
+
+def parse_options(args=sys.argv[1:], Parser=OptionParser):
+    parser = Parser()
+    parser.add_option("-p", "--data-path", dest="data_path",
+                      help="Directory to search for configuration files " +
+                      "(default=" + DATA_PATH + ")", default=DATA_PATH)
+    parser.add_option("-c", "--config-filename", dest="config_file",
+                      help="Configuration database filename " +
+                      "(default=" + DEFAULT_CONFIG_FILE + ")",
+                      default=DEFAULT_CONFIG_FILE)
+    (options, args) = parser.parse_args(args)
+    if args:
+        parser.error("No non-option arguments allowed")
+    return options
 
 def signal_handler(signal, frame):
     global cm
@@ -50,9 +66,10 @@ def signal_handler(signal, frame):
         cm.running = False
 
 def main():
+    options = parse_options()
     global cm
     try:
-        cm = ConfigManager(DATA_PATH)
+        cm = ConfigManager(options.data_path, options.config_file)
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
         cm.read_config()

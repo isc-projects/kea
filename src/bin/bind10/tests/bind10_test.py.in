@@ -1,4 +1,4 @@
-from bind10 import ProcessInfo, BoB, dump_pid, unlink_pid_file
+from bind10 import ProcessInfo, BoB, parse_args, dump_pid, unlink_pid_file
 
 # XXX: environment tests are currently disabled, due to the preprocessor
 #      setup that we have now complicating the environment
@@ -9,6 +9,7 @@ import os
 import signal
 import socket
 from isc.net.addr import IPAddr
+from isc.testutils.parse_args import TestOptParser, OptsError
 
 class TestProcessInfo(unittest.TestCase):
     def setUp(self):
@@ -411,6 +412,57 @@ class TestStartStopProcessesBob(unittest.TestCase):
         bob.start_resolver = lambda: self.fail("Started resolver again")
 
         bob.config_handler({'start_auth': True, 'start_resolver': True})
+
+class TestParseArgs(unittest.TestCase):
+    """
+    This tests parsing of arguments of the bind10 master process.
+    """
+    #TODO: Write tests for the original parsing, bad options, etc.
+    def test_no_opts(self):
+        """
+        Test correct default values when no options are passed.
+        """
+        options = parse_args([], TestOptParser)
+        self.assertEqual(None, options.data_path)
+        self.assertEqual(None, options.config_file)
+        self.assertEqual(None, options.cmdctl_port)
+
+    def test_data_path(self):
+        """
+        Test it can parse the data path.
+        """
+        self.assertRaises(OptsError, parse_args, ['-p'], TestOptParser)
+        self.assertRaises(OptsError, parse_args, ['--data-path'],
+                          TestOptParser)
+        options = parse_args(['-p', '/data/path'], TestOptParser)
+        self.assertEqual('/data/path', options.data_path)
+        options = parse_args(['--data-path=/data/path'], TestOptParser)
+        self.assertEqual('/data/path', options.data_path)
+
+    def test_config_filename(self):
+        """
+        Test it can parse the config switch.
+        """
+        self.assertRaises(OptsError, parse_args, ['-c'], TestOptParser)
+        self.assertRaises(OptsError, parse_args, ['--config-file'],
+                          TestOptParser)
+        options = parse_args(['-c', 'config-file'], TestOptParser)
+        self.assertEqual('config-file', options.config_file)
+        options = parse_args(['--config-file=config-file'], TestOptParser)
+        self.assertEqual('config-file', options.config_file)
+
+    def test_cmdctl_port(self):
+        """
+        Test it can parse the command control port.
+        """
+        self.assertRaises(OptsError, parse_args, ['--cmdctl-port=abc'],
+                                                TestOptParser)
+        self.assertRaises(OptsError, parse_args, ['--cmdctl-port=100000000'],
+                                                TestOptParser)
+        self.assertRaises(OptsError, parse_args, ['--cmdctl-port'],
+                          TestOptParser)
+        options = parse_args(['--cmdctl-port=1234'], TestOptParser)
+        self.assertEqual(1234, options.cmdctl_port)
 
 class TestPIDFile(unittest.TestCase):
     def setUp(self):
