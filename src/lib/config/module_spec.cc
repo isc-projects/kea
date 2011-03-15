@@ -372,9 +372,14 @@ ModuleSpec::validateSpecList(ConstElementPtr spec, ConstElementPtr data,
     
     BOOST_FOREACH(maptype m, data->mapValue()) {
         bool found = false;
-        BOOST_FOREACH(ConstElementPtr cur_spec_el, spec->listValue()) {
-            if (cur_spec_el->get("item_name")->stringValue().compare(m.first) == 0) {
-                found = true;
+        // Ignore 'version' as a config element
+        if (m.first.compare("version") == 0) {
+            found = true;
+        } else {
+            BOOST_FOREACH(ConstElementPtr cur_spec_el, spec->listValue()) {
+                if (cur_spec_el->get("item_name")->stringValue().compare(m.first) == 0) {
+                    found = true;
+                }
             }
         }
         if (!found) {
