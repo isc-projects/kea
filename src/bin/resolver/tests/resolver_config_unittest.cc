@@ -42,6 +42,7 @@ class ResolverConfig : public ::testing::Test {
             dnss(ios, NULL, NULL, NULL)
         {
             server.setDNSService(dnss);
+            server.setConfigured();
         }
         void invalidTest(const string &JSON, const string& name);
 };
