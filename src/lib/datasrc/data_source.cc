@@ -1034,6 +1034,13 @@ DataSrc::doQuery(Query& q) {
             continue;
         } else if ((task->flags & (NAME_NOT_FOUND|TYPE_NOT_FOUND)) != 0) {
             // No data found at this qname/qtype.
+
+            // If we were looking for additional data, we should simply
+            // ignore this result.
+            if (task->state == QueryTask::GETADDITIONAL) {
+                continue;
+            }
+
             // If we were looking for answer data, not additional,
             // and the name was not found, we need to find out whether
             // there are any relevant wildcards.
