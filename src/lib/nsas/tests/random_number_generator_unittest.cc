@@ -59,11 +59,11 @@ private:
 // non-debug environment.
 // Note: the death test is not supported by all platforms.  We need to
 // compile tests using it selectively.
-#if !defined(NDEBUG) && defined(GTEST_HAS_DEATH_TEST)
+#if !defined(NDEBUG)
 // Test of the constructor
 TEST_F(UniformRandomIntegerGeneratorTest, Constructor) {
     // The range must be min<=max
-    ASSERT_DEATH(UniformRandomIntegerGenerator(3, 2), "");
+    ASSERT_THROW(UniformRandomIntegerGenerator(3, 2), InvalidLimits);
 }
 #endif
 
@@ -109,30 +109,32 @@ TEST_F(WeightedRandomIntegerGeneratorTest, Constructor) {
 /// the tests will be failed since assert() is non-op in non-debug version.
 /// The "#ifndef NDEBUG" is added to make the tests be performed only in
 /// non-debug environment.
-#if !defined(NDEBUG) && defined(GTEST_HAS_DEATH_TEST)
+#if !defined(NDEBUG)
     //The probability must be >= 0
     probabilities.push_back(-0.1);
     probabilities.push_back(1.1);
-    ASSERT_DEATH(WeightedRandomIntegerGenerator gen2(probabilities), "");
+    ASSERT_THROW(WeightedRandomIntegerGenerator gen2(probabilities),
+                 InvalidProbValue);
 
     //The probability must be <= 1.0
     probabilities.clear();
     probabilities.push_back(0.1);
     probabilities.push_back(1.1);
-    ASSERT_DEATH(WeightedRandomIntegerGenerator gen3(probabilities), "");
+    ASSERT_THROW(WeightedRandomIntegerGenerator gen3(probabilities),
+                 InvalidProbValue);
 
     //The sum must be equal to 1.0
     probabilities.clear();
     probabilities.push_back(0.2);
     probabilities.push_back(0.9);
-    ASSERT_DEATH(WeightedRandomIntegerGenerator gen4(probabilities), "");
+    ASSERT_THROW(WeightedRandomIntegerGenerator gen4(probabilities), SumNotOne);
 
     //The sum must be equal to 1.0
     probabilities.clear();
     probabilities.push_back(0.3);
     probabilities.push_back(0.2);
     probabilities.push_back(0.1);
-    ASSERT_DEATH(WeightedRandomIntegerGenerator gen5(probabilities), "");
+    ASSERT_THROW(WeightedRandomIntegerGenerator gen5(probabilities), SumNotOne);
 #endif
 }
 

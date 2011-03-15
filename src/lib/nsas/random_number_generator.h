@@ -15,8 +15,12 @@
 #ifndef __NSAS_RANDOM_NUMBER_GENERATOR_H
 #define __NSAS_RANDOM_NUMBER_GENERATOR_H
 
+#include <algorithm>
 #include <cmath>
 #include <numeric>
+
+#include <exceptions/exceptions.h>
+
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int.hpp>
 #include <boost/random/uniform_real.hpp>
@@ -24,6 +28,26 @@
 
 namespace isc {
 namespace nsas {
+
+class InvalidLimits : public Exception {
+public:
+    InvalidLimits(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+class SumNotOne : public Exception {
+public:
+    SumNotOne(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+class InvalidProbValue : public Exception {
+public:
+    InvalidProbValue(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+
 
 /// \brief Uniform random integer generator
 ///
@@ -35,8 +59,17 @@ public:
     /// \param min The minimum number in the range
     /// \param max The maximum number in the range
     UniformRandomIntegerGenerator(int min, int max):
-        min_(min), max_(max), dist_(min, max), generator_(rng_, dist_)
+        min_(std::min(min, max)), max_(std::max(min, max)),
+        dist_(min_, max_), generator_(rng_, dist_)
     {
+        // To preserve the restriction of the underlying uniform_int class (and
+        // to retain compatibility with earlier versions of the class), we will
+        // abort if the minimum and maximum given are the wrong way round.
+        if (min > max) {
+            isc_throw(InvalidLimits, "minimum limit is greater than maximum "
+                      "when initializing UniformRandomIntegerGenerator");
+        }
+
         // Init with the current time
         rng_.seed(time(NULL));
     }
@@ -73,8 +106,10 @@ public:
         size_t min = 0):
         dist_(0, 1.0), uniform_real_gen_(rng_, dist_), min_(min)
     {
-        // The probabilities must be valid
-        assert(isProbabilitiesValid(probabilities));
+        // The probabilities must be valid.  Checking is quite an expensive
+        // operation, so is only done in a debug build.
+        assert(areProbabilitiesValid(probabilities));
+
         // Calculate the partial sum of probabilities
         std::partial_sum(probabilities.begin(), probabilities.end(),
                                      std::back_inserter(cumulative_));
@@ -96,8 +131,8 @@ public:
     /// \param min The minimum integer that generated
     void reset(const std::vector<double>& probabilities, size_t min = 0)
     {
-        // The probabilities must be valid
-        assert(isProbabilitiesValid(probabilities));
+        // The probabilities must be valid.
+        assert(areProbabilitiesValid(probabilities));
 
         // Reset the cumulative sum
         cumulative_.clear();
@@ -120,16 +155,24 @@ public:
 private:
     /// \brief Check the validation of probabilities vector
     ///
-    /// The probability must be in range of [0, 1.0] and the sum must be equal to 1.0
-    /// Empty probabilities is also valid.
-    bool isProbabilitiesValid(const std::vector<double>& probabilities) const
+    /// The probability must be in range of [0, 1.0] and the sum must be equal
+    /// to 1.0.  Empty probabilities are also valid.
+    ///
+    /// Checking the probabilities is quite an expensive operation, so it is
+    /// only done during a debug build (via a call through assert()).  However,
+    /// instead of letting assert() call abort(), if this method encounters an
+    /// error, an exception is thrown.  This makes unit testing somewhat easier.
+    ///
+    /// \param probabilities Vector of probabilities.
+    bool areProbabilitiesValid(const std::vector<double>& probabilities) const
     {
         typedef std::vector<double>::const_iterator Iterator;
         double sum = probabilities.empty() ? 1.0 : 0.0;
         for(Iterator it = probabilities.begin(); it != probabilities.end(); ++it){
             //The probability must be in [0, 1.0]
             if(*it < 0.0 || *it > 1.0) {
-                return false;
+                isc_throw(InvalidProbValue,
+                          "probability must be in the range 0..1");
             }
 
             sum += *it;
@@ -137,12 +180,16 @@ private:
 
         double epsilon = 0.0001;
         // The sum must be equal to 1
-        return std::fabs(sum - 1.0) < epsilon;
+       if (std::fabs(sum - 1.0) >= epsilon) {
+           isc_throw(SumNotOne, "Sum of probabilities is not equal to 1");
+       }
+
+       return true;
     }
 
-    std::vector<double> cumulative_;            ///< The partial sum of the probabilities
-    boost::mt19937 rng_;                        ///< Mersenne Twister: A 623-dimensionally equidistributed uniform pseudo-random number generator 
-    boost::uniform_real<> dist_;                ///< Uniformly distributed real numbers
+    std::vector<double> cumulative_;    ///< Partial sum of the probabilities
+    boost::mt19937 rng_;                ///< Mersenne Twister: A 623-dimensionally equidistributed uniform pseudo-random number generator 
+    boost::uniform_real<> dist_;        ///< Uniformly distributed real numbers
 
     // Shortcut typedef
     // This typedef is placed directly before its use, as the sunstudio
