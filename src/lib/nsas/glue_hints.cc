@@ -14,6 +14,8 @@
 
 #include "glue_hints.h"
 
+#include <stdlib.h>
+
 #include <dns/rrset.h>
 #include <dns/rdata.h>
 #include <dns/rrtype.h>
@@ -122,6 +124,8 @@ GlueHints::getGlue(AddressFamily family) const {
     } else {
         // Unknown family
         assert(false);
+        // Some compilers want something returned anyway
+        return NameserverAddress();
     }
 }
 

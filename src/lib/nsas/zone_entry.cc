@@ -225,7 +225,7 @@ class ZoneEntry::ResolverCallback :
 
 void
 ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family,
-                       const GlueHints glue_hints) {
+                       const GlueHints& glue_hints) {
     Lock lock(mutex_);
 
     bool ask(false);
