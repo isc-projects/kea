@@ -1059,6 +1059,25 @@ TEST_F(DataSrcTest, apexCNAMEZone) {
                  DataSourceError);
 }
 
+TEST_F(DataSrcTest, incompleteGlue) {
+    // One of the NS names belong to a different zone (which is still
+    // authoritative), and the glue is missing in that zone.  We should
+    // still return the existent glue.
+    // (nons.example is also broken in that it doesn't have apex NS, but
+    // that doesn't matter for this test)
+    createAndProcessQuery(Name("www.incompletechild.nons.example"),
+                          RRClass::IN(), RRType::A());
+    headerCheck(msg, qid, Rcode::NOERROR(), opcodeval,
+                QR_FLAG | RD_FLAG, 1, 0, 2, 1);
+    rrsetsCheck("incompletechild.nons.example. 3600 IN NS ns.incompletechild.nons.example.\n"
+                "incompletechild.nons.example. 3600 IN NS nx.nosoa.example.",
+                msg.beginSection(Message::SECTION_AUTHORITY),
+                msg.endSection(Message::SECTION_AUTHORITY));
+    rrsetsCheck("ns.incompletechild.nons.example. 3600 IN A 192.0.2.1",
+                msg.beginSection(Message::SECTION_ADDITIONAL),
+                msg.endSection(Message::SECTION_ADDITIONAL));
+}
+
 // currently fails
 TEST_F(DataSrcTest, DISABLED_synthesizedCnameTooLong) {
     // qname has the possible max length (255 octets).  it matches a DNAME,
