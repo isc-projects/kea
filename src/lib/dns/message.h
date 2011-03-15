@@ -199,8 +199,8 @@ public:
         HEADERFLAG_TC = 0x0200, ///< Truncation
         HEADERFLAG_RD = 0x0100, ///< Recursion desired
         HEADERFLAG_RA = 0x0080, ///< Recursion available
-        HEADERFLAG_AD = 0x0020, ///< DNSSEC checking disabled (RFC4035)
-        HEADERFLAG_CD = 0x0010  ///< Authentic %data (RFC4035)
+        HEADERFLAG_AD = 0x0020, ///< Authentic %data (RFC4035)
+        HEADERFLAG_CD = 0x0010  ///< DNSSEC checking disabled (RFC4035)
     };
 
     /// \brief Constants to specify sections of a DNS message.
