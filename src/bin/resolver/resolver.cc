@@ -333,7 +333,8 @@ Resolver::Resolver() :
     impl_(new ResolverImpl()),
     checkin_(new ConfigCheck(this)),
     dns_lookup_(new MessageLookup(this)),
-    dns_answer_(new MessageAnswer)
+    dns_answer_(new MessageAnswer),
+    configured_(false)
 {}
 
 Resolver::~Resolver() {
@@ -548,6 +549,15 @@ Resolver::updateConfig(ConstElementPtr config) {
         if (listenAddressesE) {
             setListenAddresses(listenAddresses);
             need_query_restart = true;
+        } else {
+            if (!configured_) {
+                // TODO: ModuleSpec needs getDefault()
+                AddressList initial_addresses;
+                initial_addresses.push_back(AddressPair("127.0.0.1", 53));
+                initial_addresses.push_back(AddressPair("::1", 53));
+                setListenAddresses(initial_addresses);
+                need_query_restart = true;
+            }
         }
         if (forwardAddressesE) {
             setForwardAddresses(forwardAddresses);
@@ -566,11 +576,17 @@ Resolver::updateConfig(ConstElementPtr config) {
             impl_->queryShutdown();
             impl_->querySetup(*dnss_, *nsas_, *cache_);
         }
+        setConfigured();
         return (isc::config::createAnswer());
     } catch (const isc::Exception& error) {
         dlog(string("error in config: ") + error.what(),true);
         return (isc::config::createAnswer(1, error.what()));
     }
+}
+
+void
+Resolver::setConfigured() {
+    configured_ = true;
 }
 
 void
