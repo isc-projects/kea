@@ -721,6 +721,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/stats/tests/stats_test
            src/bin/bind10/bind10.py
            src/bin/bind10/run_bind10.sh
+           src/bin/bind10/tests/bind10_test.py
            src/bin/bindctl/run_bindctl.sh
            src/bin/bindctl/bindctl_main.py
            src/bin/bindctl/tests/bindctl_test
