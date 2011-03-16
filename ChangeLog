@@ -1,7 +1,7 @@
   206.  [func]		shane
 	Add the ability to list the running BIND 10 processes using the
 	command channel. To try this, use "Boss show_processes".
-	(Trac #648, git yyy)
+	(Trac #648, git 451bbb67c2b5d544db2f7deca4315165245d2b3b)
 
   205.	[bug]		jinmei
 	b10-auth, src/lib/datasrc: fixed a bug where b10-auth could return
