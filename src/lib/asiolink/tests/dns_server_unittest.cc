@@ -23,11 +23,12 @@
 #include <asiolink/dns_answer.h>
 #include <asiolink/dns_lookup.h>
 #include <string>
+#include <csignal>
+#include <unistd.h> //for alarm
 
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
-#include <boost/thread.hpp>
 
 
 /// The following tests focus on stop interface for udp and
@@ -53,7 +54,8 @@
 /// service won't quit since it will wait for some asynchronized event for
 /// server. So if the io service block function run returns we assume
 /// that the server is stopped. To avoid stop interface failure which
-/// will block followed tests, another thread is added to stop the io service
+/// will block followed tests, using alarm signal to stop the blocking
+/// io service
 ///
 /// The whole test context including one server and one client, and
 /// five stop checkpoints, we call them ServerStopper exclude the first
@@ -313,18 +315,21 @@ class TCPClient : public SimpleClient {
 class DNSServerTest : public::testing::Test {
     protected:
         void SetUp() {
+            //clean up io serice to each test
+            service.stop();
+            service.reset();
             ip::address server_address = ip::address::from_string(server_ip);
             checker_ = new DummyChecker();
             lookup_ = new DummyLookup();
             answer_ = new SimpleAnswer();
-            udp_server_ = new UDPServer(service_, server_address, server_port,
+            udp_server_ = new UDPServer(service, server_address, server_port,
                     checker_, lookup_, answer_);
-            udp_client_ = new UDPClient(service_,
+            udp_client_ = new UDPClient(service,
                     ip::udp::endpoint(server_address,
                         server_port));
-            tcp_server_ = new TCPServer(service_, server_address, server_port,
+            tcp_server_ = new TCPServer(service, server_address, server_port,
                     checker_, lookup_, answer_);
-            tcp_client_ = new TCPClient(service_,
+            tcp_client_ = new TCPClient(service,
                     ip::tcp::endpoint(server_address,
                         server_port));
         }
@@ -345,35 +350,24 @@ class DNSServerTest : public::testing::Test {
                 ServerStopper* stopper)
         {
             static const unsigned int io_service_time_out = 5;
-            cancel_blocked_io_service = true;
             io_service_is_time_out = false;
             stopper->setServerToStop(server);
             (*server)();
             client->sendDataThenWaitForFeedback(query_message);
-            // use another thread to make sure after io_service_time_out secs
-            // if io service doesn't quit from run, this function won't block
-            // if io service is stopped by this thread, it means server are
-            // not stopped successfully
-            boost::thread io_sevice_thread =
-                boost::thread(boost::bind(&DNSServerTest::stopIOService,
-                                          this,
-                                          io_service_time_out));
-            service_.run();
-            cancel_blocked_io_service = false;
-            io_sevice_thread.join();
+            // Since thread hasn't been introduced into the tool box, using signal
+            // to make sure run function will eventually return even server stop
+            // failed
+            void (*prev_handler)(int) = std::signal(SIGALRM, DNSServerTest::stopIOService);
+            alarm(io_service_time_out);
+            service.run();
+            std::signal(SIGALRM, prev_handler);
         }
 
 
-        void stopIOService(unsigned int timeout_sec) {
-            for (unsigned int i = 0; i < timeout_sec; ++i) {
-                sleep(1);
-                if (!cancel_blocked_io_service)
-                    return;
-            }
-
+        static void stopIOService(int _no_use_parameter) {
             io_service_is_time_out = true;
-            service_.stop();
-            service_.reset();
+            service.stop();
+            service.reset();
         }
 
         bool serverStopSucceed() const {
@@ -387,11 +381,15 @@ class DNSServerTest : public::testing::Test {
         UDPClient*    udp_client_;
         TCPClient*    tcp_client_;
         TCPServer*    tcp_server_;
-        asio::io_service service_;
-        bool io_service_is_time_out;
-        bool cancel_blocked_io_service;
+
+        // To access them in signal handle function, the following
+        // variables have to be static.
+        static asio::io_service service;
+        static bool io_service_is_time_out;
 };
 
+bool DNSServerTest::io_service_is_time_out = false;
+asio::io_service DNSServerTest::service;
 
 // Test whether server stopped successfully after client get response
 // client will send query and start to wait for response, once client
