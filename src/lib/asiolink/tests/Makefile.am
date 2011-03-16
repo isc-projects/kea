@@ -18,13 +18,15 @@ TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.h
 run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
+run_unittests_SOURCES += asiolink_utilities_unittest.cc
 run_unittests_SOURCES += io_address_unittest.cc
 run_unittests_SOURCES += io_endpoint_unittest.cc
 run_unittests_SOURCES += io_fetch_unittest.cc
 run_unittests_SOURCES += io_socket_unittest.cc
 run_unittests_SOURCES += io_service_unittest.cc
 run_unittests_SOURCES += interval_timer_unittest.cc
-run_unittests_SOURCES += recursive_query_unittest.cc
+run_unittests_SOURCES += tcp_endpoint_unittest.cc
+run_unittests_SOURCES += tcp_socket_unittest.cc
 run_unittests_SOURCES += udp_endpoint_unittest.cc
 run_unittests_SOURCES += udp_socket_unittest.cc
 run_unittests_SOURCES += dns_server_unittest.cc
@@ -34,12 +36,10 @@ run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 
 run_unittests_LDADD  = $(GTEST_LDADD)
 run_unittests_LDADD += $(SQLITE_LIBS)
-run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/libdns++.la
-run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
-run_unittests_LDADD += $(top_builddir)/src/lib/cache/libcache.la
-run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
+run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS) 
 

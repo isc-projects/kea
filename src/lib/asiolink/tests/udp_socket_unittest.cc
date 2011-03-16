@@ -12,21 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
-//
-// Permission to use, copy, modify, and/or distribute this software for any
-// purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice appear in all copies.
-//
-// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWARE.
-
-
 /// \brief Test of UDPSocket
 ///
 /// Tests the fuctionality of a UDPSocket by working through an open-send-
@@ -50,14 +35,18 @@
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <dns/buffer.h>
+
 #include <asio.hpp>
 
+#include <asiolink/asiolink_utilities.h>
 #include <asiolink/io_service.h>
 #include <asiolink/udp_endpoint.h>
 #include <asiolink/udp_socket.h>
 
 using namespace asio;
 using namespace asiolink;
+using namespace isc::dns;
 using namespace std;
 
 namespace {
@@ -177,6 +166,49 @@ private:
     boost::shared_ptr<PrivateData>  ptr_;   ///< Pointer to private data
 };
 
+// Receive complete method should return true regardless of what is in the first
+// two bytes of a buffer.
+
+TEST(UDPSocket, processReceivedData) {
+    IOService               service;        // Used to instantiate socket
+    UDPSocket<UDPCallback>  test(service);  // Socket under test
+    uint8_t                 inbuff[32];     // Buffer to check
+    OutputBufferPtr         outbuff(new OutputBuffer(16));
+                                            // Where data is put
+    size_t                  expected;       // Expected amount of data
+    size_t                  offset;         // Where to put next data
+    size_t                  cumulative;     // Cumulative data received
+
+    // Set some dummy values in the buffer to check
+    for (uint8_t i = 0; i < sizeof(inbuff); ++i) {
+        inbuff[i] = i;
+    }
+
+    // Expect that the value is true whatever number is written in the first
+    // two bytes of the buffer.
+    uint16_t count = 0;
+    for (uint32_t i = 0; i < (2 << 16); ++i, ++count) {
+        writeUint16(count, inbuff);
+
+        // Set some random values
+        cumulative = 5;
+        offset = 10;
+        expected = 15;
+        outbuff->clear();
+
+        bool completed = test.processReceivedData(inbuff, sizeof(inbuff),
+                                                  cumulative, offset, expected,
+                                                  outbuff);
+        EXPECT_TRUE(completed);
+        EXPECT_EQ(sizeof(inbuff), cumulative);
+        EXPECT_EQ(0, offset);
+        EXPECT_EQ(sizeof(inbuff), expected);
+
+        const uint8_t* dataptr = static_cast<const uint8_t*>(outbuff->getData());
+        EXPECT_TRUE(equal(inbuff, inbuff + sizeof(inbuff) - 1, dataptr));
+    }
+}
+
 // TODO: Need to add a test to check the cancel() method
 
 // Tests the operation of a UDPSocket by opening it, sending an asynchronous
@@ -199,6 +231,10 @@ TEST(UDPSocket, SequenceTest) {
     UDPCallback client_cb("Client");        // Async I/O callback function
     UDPEndpoint client_remote_endpoint;     // Where client receives message from
     size_t      client_cumulative = 0;      // Cumulative data received
+    size_t      client_offset = 0;          // Offset into buffer where data is put
+    size_t      client_expected = 0;        // Expected amount of data
+    OutputBufferPtr client_buffer(new OutputBuffer(16));
+                                            // Where data is put
 
     // The server - with which the client communicates.  For convenience, we
     // use the same io_service, and use the endpoint object created for
@@ -208,11 +244,12 @@ TEST(UDPSocket, SequenceTest) {
     server.set_option(socket_base::reuse_address(true));
 
     // Assertion to ensure that the server buffer is large enough
-    char data[UDPSocket<UDPCallback>::MAX_SIZE];
+    char data[UDPSocket<UDPCallback>::MIN_SIZE];
     ASSERT_GT(sizeof(data), sizeof(OUTBOUND_DATA));
 
     // Open the client socket - the operation should be synchronous
-    EXPECT_FALSE(client.open(&server_endpoint, client_cb));
+    EXPECT_TRUE(client.isOpenSynchronous());
+    client.open(&server_endpoint, client_cb);
 
     // Issue read on the server.  Completion callback should not have run.
     server_cb.setCalled(false);
@@ -257,7 +294,7 @@ TEST(UDPSocket, SequenceTest) {
     server.async_send_to(buffer(INBOUND_DATA, sizeof(INBOUND_DATA)),
         server_remote_endpoint.getASIOEndpoint(), server_cb);
 
-    // Expect the two callbacks to run
+    // Expect two callbacks to run.
     service.run_one();
     service.run_one();
 
@@ -276,10 +313,19 @@ TEST(UDPSocket, SequenceTest) {
     EXPECT_TRUE(server_address == client_remote_endpoint.getAddress());
     EXPECT_EQ(SERVER_PORT, client_remote_endpoint.getPort());
 
-    // Finally, check that the receive received a complete buffer's worth of data.
-    EXPECT_TRUE(client.receiveComplete(&data[0], client_cb.getLength(),
-        client_cumulative));
+    // Check that the receive received a complete buffer's worth of data.
+    EXPECT_TRUE(client.processReceivedData(&data[0], client_cb.getLength(),
+                                           client_cumulative, client_offset,
+                                           client_expected, client_buffer));
+
     EXPECT_EQ(client_cb.getLength(), client_cumulative);
+    EXPECT_EQ(0, client_offset);
+    EXPECT_EQ(client_cb.getLength(), client_expected);
+    EXPECT_EQ(client_cb.getLength(), client_buffer->getLength());
+
+    // ...and check that the data was copied to the output client buffer.
+    const char* client_char_data = static_cast<const char*>(client_buffer->getData());
+    EXPECT_TRUE(equal(&data[0], &data[client_cb.getLength() - 1], client_char_data));
 
     // Close client and server.
     EXPECT_NO_THROW(client.close());

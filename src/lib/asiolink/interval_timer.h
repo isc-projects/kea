@@ -37,7 +37,7 @@ struct IntervalTimerImpl;
 /// The function calls the call back function set by \c setup() and updates
 /// the timer to expire in (now + interval) milliseconds.
 /// The type of call back function is \c void(void).
-/// 
+///
 /// The call back function will not be called if the instance of this class is
 /// destroyed before the timer is expired.
 ///

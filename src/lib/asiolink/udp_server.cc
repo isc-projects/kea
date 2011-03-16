@@ -15,6 +15,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>             // for some IPC/network system calls
+#include <errno.h>
 
 #include <boost/shared_array.hpp>
 
@@ -188,12 +189,12 @@ UDPServer::operator()(error_code ec, size_t length) {
                     buffer(data_->data_.get(), MAX_LENGTH), *data_->sender_,
                     *this);
 
-                //return if we met fatal error
-                //Todo add log
+                // Abort on fatal errors
+                // TODO: add log
                 if (ec) {
                     using namespace asio::error;
                     if (ec.value() != would_block && ec.value() != try_again &&
-                            ec.value() != interrupted) {
+                        ec.value() != interrupted) {
                         return;
                     }
                 }
@@ -259,8 +260,6 @@ UDPServer::operator()(error_code ec, size_t length) {
         // finished, the coroutine will resume immediately after
         // this point.
         CORO_YIELD data_->io_.post(AsyncLookup<UDPServer>(*this));
-
-        dlog("[XX] got an answer");
 
         // The 'done_' flag indicates whether we have an answer
         // to send back.  If not, exit the coroutine permanently.

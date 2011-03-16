@@ -12,12 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ASIOLINK_RECURSIVE_QUERY_H
-#define __ASIOLINK_RECURSIVE_QUERY_H 1
+#ifndef __RECURSIVE_QUERY_H
+#define __RECURSIVE_QUERY_H 1
 
 #include <asiolink/dns_service.h>
 #include <asiolink/dns_server.h>
 #include <dns/buffer.h>
+#include <nsas/nameserver_address_store.h>
 #include <cache/resolver_cache.h>
 
 namespace asiolink {
@@ -52,6 +53,8 @@ public:
     /// \param retries how many times we try again (0 means just send and
     ///     and return if it returs).
     RecursiveQuery(DNSService& dns_service,
+                   isc::nsas::NameserverAddressStore& nsas,
+                   isc::cache::ResolverCache& cache,
                    const std::vector<std::pair<std::string, uint16_t> >&
                    upstream, 
                    const std::vector<std::pair<std::string, uint16_t> >&
@@ -98,20 +101,33 @@ public:
                  isc::dns::MessagePtr answer_message,
                  isc::dns::OutputBufferPtr buffer,
                  DNSServer* server);
+
+    /// \brief Set Test Server
+    ///
+    /// This method is *only* for unit testing the class.  If set, it enables
+    /// recursive behaviour but, regardless of responses received, sends every
+    /// query to the test server.
+    ///
+    /// The test server is enabled by setting a non-zero port number.
+    ///
+    /// \param address IP address of the test server.
+    /// \param port Port number of the test server
+    void setTestServer(const std::string& address, uint16_t port);
+    
 private:
     DNSService& dns_service_;
+    isc::nsas::NameserverAddressStore& nsas_;
+    isc::cache::ResolverCache& cache_;
     boost::shared_ptr<std::vector<std::pair<std::string, uint16_t> > >
         upstream_;
     boost::shared_ptr<std::vector<std::pair<std::string, uint16_t> > >
         upstream_root_;
+    std::pair<std::string, uint16_t> test_server_;
     int query_timeout_;
     int client_timeout_;
     int lookup_timeout_;
     unsigned retries_;
-    // Cache. TODO: I think we want this initialized in Resolver class,
-    // not here
-    isc::cache::ResolverCache cache_;
 };
 
 }      // namespace asiolink
-#endif // __ASIOLINK_RECURSIVE_QUERY_H
+#endif // __RECURSIVE_QUERY_H

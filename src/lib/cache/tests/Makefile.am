@@ -53,6 +53,7 @@ endif
 run_unittests_LDADD += $(top_builddir)/src/lib/cache/libcache.la
 run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
+run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 endif
 
@@ -66,3 +67,4 @@ EXTRA_DIST += testdata/message_fromWire5
 EXTRA_DIST += testdata/message_fromWire6
 EXTRA_DIST += testdata/message_fromWire7
 EXTRA_DIST += testdata/message_fromWire8
+EXTRA_DIST += testdata/message_fromWire9

@@ -33,6 +33,10 @@ run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 run_unittests_LDADD = $(GTEST_LDADD)
 
 run_unittests_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
+run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
+run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.la
+run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
 endif
 
 noinst_PROGRAMS = $(TESTS)
