@@ -226,9 +226,9 @@ static PyTypeObject message_type = {
 
 static int
 Message_init(s_Message* self, PyObject* args) {
-    long i;
-    
-    if (PyArg_ParseTuple(args, "l", &i)) {
+    int i;
+
+    if (PyArg_ParseTuple(args, "i", &i)) {
         PyErr_Clear();
         if (i == Message::PARSE) {
             self->message = new Message(Message::PARSE);
@@ -284,7 +284,6 @@ Message_setHeaderFlag(s_Message* self, PyObject* args) {
         return (NULL);
     }
     if (messageflag < 0 || messageflag > 0xffff) {
-        PyErr_Clear();
         PyErr_SetString(PyExc_OverflowError, "Message header flag out of range");
         return (NULL);
     }
@@ -311,15 +310,14 @@ Message_getQid(s_Message* self) {
 
 static PyObject*
 Message_setQid(s_Message* self, PyObject* args) {
-    int id;
-    if (!PyArg_ParseTuple(args, "i", &id)) {
+    long id;
+    if (!PyArg_ParseTuple(args, "l", &id)) {
         PyErr_Clear();
         PyErr_SetString(PyExc_TypeError,
                         "no valid type in set_qid argument");
         return (NULL);
     }
     if (id < 0 || id > 0xffff) {
-        PyErr_Clear();
         PyErr_SetString(PyExc_OverflowError,
                         "Message id out of range");
         return (NULL);
@@ -582,11 +580,6 @@ Message_addRRset(s_Message* self, PyObject* args) {
                           &PyBool_Type, &sign)) {
         return (NULL);
     }
-    if (section < 0 || section > 3) {
-        PyErr_Clear();
-        PyErr_SetString(PyExc_OverflowError, "Message section number out of range");
-        return (NULL);
-    }
 
     try {
         self->message->addRRset(static_cast<Message::Section>(section),
@@ -607,8 +600,8 @@ Message_addRRset(s_Message* self, PyObject* args) {
 
 static PyObject*
 Message_clear(s_Message* self, PyObject* args) {
-    long i;
-    if (PyArg_ParseTuple(args, "l", &i)) {
+    int i;
+    if (PyArg_ParseTuple(args, "i", &i)) {
         PyErr_Clear();
         if (i == Message::PARSE) {
             self->message->clear(Message::PARSE);
