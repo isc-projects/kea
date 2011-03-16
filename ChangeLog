@@ -1,3 +1,8 @@
+  207.  [func]		jelte
+	Resolver now starts listening on localhost:53 if no configuration
+	is set.
+	(Trac #471, git 1960b5becbba05570b9c7adf5129e64338659f07)
+
   206.  [func]		shane
 	Add the ability to list the running BIND 10 processes using the
 	command channel. To try this, use "Boss show_processes".
