@@ -354,6 +354,8 @@ class DNSServerTest : public::testing::Test {
             alarm(io_service_time_out);
             service.run();
             service.reset();
+            //cancel scheduled alarm
+            alarm(0);
             std::signal(SIGALRM, prev_handler);
         }
 
