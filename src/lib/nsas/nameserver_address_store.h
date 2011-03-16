@@ -23,6 +23,7 @@
 #include <resolve/resolver_interface.h>
 
 #include "nsas_types.h"
+#include "glue_hints.h"
 
 namespace isc {
 // Some forward declarations, so we do not need to include so many headers
@@ -60,7 +61,7 @@ public:
     /// tests) should it use to ask questions.
     /// \param zonehashsize Size of the zone hash table.  The default value of
     /// 1009 is the first prime number above 1000.
-    /// \param nshash size Size of the nameserver hash table.  The default
+    /// \param nshashsize Size of the nameserver hash table.  The default
     /// value of 3001 is the first prime number over 3000, and by implication,
     /// there is an assumption that there will be more nameservers than zones
     /// in the store.
@@ -85,7 +86,7 @@ public:
     /// \param family Which address is requested.
     void lookup(const std::string& zone, const dns::RRClass& class_code,
         boost::shared_ptr<AddressRequestCallback> callback, AddressFamily
-        family = ANY_OK);
+        family = ANY_OK, const GlueHints& = GlueHints());
 
     /// \brief cancel the given lookup action
     ///

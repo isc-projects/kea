@@ -1,3 +1,47 @@
+  206.  [func]		shane
+	Add the ability to list the running BIND 10 processes using the
+	command channel. To try this, use "Boss show_processes".
+	(Trac #648, git 451bbb67c2b5d544db2f7deca4315165245d2b3b)
+
+  205.	[bug]		jinmei
+	b10-auth, src/lib/datasrc: fixed a bug where b10-auth could return
+	an empty additional section for delegation even if some glue is
+	crucial when it fails to find some other glue records in its data
+	source.
+	(Trac #646, git 6070acd1c5b2f7a61574eda4035b93b40aab3e2b)
+
+  204.	[bug]		jinmei
+	b10-auth, src/lib/datasrc: class ANY queries were not handled
+	correctly in the generic data source (mainly for sqlite3).  It
+	could crash b10-auth in the worst case, and could result in
+	incorrect responses in some other cases.
+	(Trac #80, git c65637dd41c8d94399bd3e3cee965b694b633339)
+
+  203.  [bug]		zhang likun
+	Fix resolver cache memory leak: when cache is destructed, rrset
+	and message entries in it are not destructed properly.
+	(Trac #643, git aba4c4067da0dc63c97c6356dc3137651755ffce)
+
+  202.  [func]    vorner
+	It is possible to specify a different directory where we look for
+	configuration files (by -p) and different configuration file to
+	use (-c).  Also, it is possible to specify the port on which
+	cmdctl should listen (--cmdctl-port).
+	(Trac #615, git 5514dd78f2d61a222f3069fc94723ca33fb3200b)
+
+  201.  [bug]           jerry
+	src/bin/bindctl: bindctl doesn't show traceback on shutdown.
+	(Trac #588, git 662e99ef050d98e86614c4443326568a0b5be437)
+
+  200.  [bug]           Jelte
+	Fixed a bug where incoming TCP connections were not closed.
+	(Trac #589, git 1d88daaa24e8b1ab27f28be876f40a144241e93b)
+
+  199.  [func]           ocean
+	Cache negative responses (NXDOMAIN/NODATA) from authoritative
+	server for recursive resolver.
+	(Trac #493, git f8fb852bc6aef292555063590c361f01cf29e5ca)
+
   198.	[bug]		jinmei
 	b10-auth, src/lib/datasrc: fixed a bug where hot spot cache failed
 	to reuse cached SOA for negative responses.  Due to this bug
@@ -241,7 +285,7 @@ bind10-devel-20110224 released on February 24, 2011
 	timeout_client for sending an answer back to the client
 	timeout_lookup for stopping the resolving
 	(currently 2 and 3 have the same final effect)
-	(Trac 489, git 578ea7f4ba94dc0d8a3d39231dad2be118e125a2)
+	(Trac #489, git 578ea7f4ba94dc0d8a3d39231dad2be118e125a2)
 
   159.	[func]		smann
 	The resolver now has a configurable set of root servers to start

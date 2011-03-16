@@ -278,8 +278,6 @@ public:
     /// name when possible in the context of zone dump.  This is a future
     /// TODO item.
     ///
-    /// \param rrset A reference to a (derived class of) \c AbstractRRset object
-    /// whose content is to be converted.
     /// \return A string representation of the RRset.
     virtual std::string toText() const = 0;
 

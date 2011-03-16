@@ -44,4 +44,17 @@ IOEndpoint::create(const int protocol, const IOAddress& address,
               protocol);
 }
 
+bool
+IOEndpoint::operator==(const IOEndpoint& other) const {
+    return (getProtocol() == other.getProtocol() &&
+            getPort() == other.getPort() &&
+            getFamily() == other.getFamily() &&
+            getAddress() == other.getAddress());
+}
+
+bool
+IOEndpoint::operator!=(const IOEndpoint& other) const {
+    return (!operator==(other));
+}
+
 }

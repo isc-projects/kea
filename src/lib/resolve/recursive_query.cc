@@ -226,6 +226,7 @@ private:
     // if we have a response for our query stored already. if
     // so, call handlerecursiveresponse(), if not, we call send()
     void doLookup() {
+        cur_zone_ = ".";
         dlog("doLookup: try cache");
         Message cached_message(Message::RENDER);
         isc::resolve::initResponseMessage(question_, cached_message);
@@ -241,7 +242,6 @@ private:
                 stop();
             }
         } else {
-            cur_zone_ = ".";
             send();
         }
         
@@ -254,11 +254,19 @@ private:
         current_ns_address = address;
         gettimeofday(&current_ns_qsent_time, NULL);
         ++outstanding_events_;
-        IOFetch query(protocol_, io_, question_,
-            current_ns_address.getAddress(),
-            53, buffer_, this,
-            query_timeout_);
-        io_.get_io_service().post(query);
+        if (test_server_.second != 0) {
+            IOFetch query(protocol_, io_, question_,
+                test_server_.first,
+                test_server_.second, buffer_, this,
+                query_timeout_);
+            io_.get_io_service().post(query);
+        } else {
+            IOFetch query(protocol_, io_, question_,
+                current_ns_address.getAddress(),
+                53, buffer_, this,
+                query_timeout_);
+            io_.get_io_service().post(query);
+        }
     }
     
     // 'general' send; if we are in forwarder mode, send a query to
@@ -330,7 +338,7 @@ private:
             isc::resolve::ResponseClassifier::classify(
                 question_, incoming, cname_target, cname_count_);
 
-        bool found_ns_address = false;
+        bool found_ns = false;
             
         switch (category) {
         case isc::resolve::ResponseClassifier::ANSWER:
@@ -381,30 +389,40 @@ private:
 
             // auth section should have at least one RRset
             // and one of them should be an NS (otherwise
-            // classifier should have error'd)
-            // TODO: should we check if it really is subzone?
+            // classifier should have error'd) to a subdomain
             for (RRsetIterator rrsi = incoming.beginSection(Message::SECTION_AUTHORITY);
-                 rrsi != incoming.endSection(Message::SECTION_AUTHORITY) && !found_ns_address;
+                 rrsi != incoming.endSection(Message::SECTION_AUTHORITY) && !found_ns;
                  ++rrsi) {
                 ConstRRsetPtr rrs = *rrsi;
                 if (rrs->getType() == RRType::NS()) {
-                    // TODO: make cur_zone_ a Name instead of a string
-                    // (this requires a few API changes in related
-                    // libraries, so as not to need many conversions)
-                    cur_zone_ = rrs->getName().toText();
-                    dlog("Referred to zone " + cur_zone_);
-                    found_ns_address = true;
-                    break;
+                    NameComparisonResult compare(Name(cur_zone_).compare(rrs->getName()));
+                    if (compare.getRelation() == NameComparisonResult::SUPERDOMAIN) {
+                        // TODO: make cur_zone_ a Name instead of a string
+                        // (this requires a few API changes in related
+                        // libraries, so as not to need many conversions)
+                        cur_zone_ = rrs->getName().toText();
+                        dlog("Referred to zone " + cur_zone_);
+                        found_ns = true;
+                        break;
+                    }
                 }
             }
 
-            if (found_ns_address) {
+            if (found_ns) {
                 // next resolver round
                 // we do NOT use doLookup() here, but send() (i.e. we
                 // skip the cache), since if we had the final answer
                 // instead of a delegation cached, we would have been
                 // there by now.
-                send();
+                GlueHints glue_hints(cur_zone_, incoming);
+
+                // Ask the NSAS for an address, or glue.
+                // This will eventually result in either sendTo()
+                // or stop() being called by nsas_callback_
+                assert(!nsas_callback_out_);
+                nsas_callback_out_ = true;
+                nsas_.lookup(cur_zone_, question_.getClass(),
+                             nsas_callback_, ANY_OK, glue_hints);
                 return false;
             } else {
                 dlog("No NS RRset in referral?");
@@ -478,6 +496,7 @@ public:
         callback_called_(false),
         nsas_(nsas),
         cache_(cache),
+        cur_zone_("."),
         nsas_callback_(new ResolverNSASCallback(this)),
         nsas_callback_out_(false),
         outstanding_events_(0)
