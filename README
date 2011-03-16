@@ -164,8 +164,6 @@ source tree:
 (Which will use the modules and configurations also from the source
 tree.)
 
-The server will listen on port 5300 for DNS requests.
-
 CONFIGURATION
 
 Commands can be given through the bindctl tool.

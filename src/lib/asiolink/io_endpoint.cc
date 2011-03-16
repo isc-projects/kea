@@ -22,6 +22,7 @@
 
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
+#include <asiolink/io_endpoint.h>
 #include <asiolink/tcp_endpoint.h>
 #include <asiolink/udp_endpoint.h>
 
@@ -41,6 +42,19 @@ IOEndpoint::create(const int protocol, const IOAddress& address,
     isc_throw(IOError,
               "IOEndpoint creation attempt for unsupported protocol: " <<
               protocol);
+}
+
+bool
+IOEndpoint::operator==(const IOEndpoint& other) const {
+    return (getProtocol() == other.getProtocol() &&
+            getPort() == other.getPort() &&
+            getFamily() == other.getFamily() &&
+            getAddress() == other.getAddress());
+}
+
+bool
+IOEndpoint::operator!=(const IOEndpoint& other) const {
+    return (!operator==(other));
 }
 
 }

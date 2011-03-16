@@ -34,7 +34,7 @@ extern std::string dprefix;
  * \short Temporary interface to logging.
  *
  * This is a temporary function to do logging. It has wrong interface currently
- * and should be replaced by something else. It's main purpose now is to mark
+ * and should be replaced by something else. Its main purpose now is to mark
  * places where logging should happen. When it is removed, compiler will do
  * our work of finding the places.
  *
@@ -51,6 +51,7 @@ extern std::string dprefix;
  *
  * @param message The message to log. The real interface will probably have
  *     more parameters.
+ * \param error_flag TODO
  */
 void dlog(const std::string& message, bool error_flag=false);
 
