@@ -1,0 +1,36 @@
+#
+# NXDOMAIN response
+# The cname type of a.example.org exist, it points to b.example.org
+# b.example.org points to c.example.org
+# but c.example.org does not exist
+#
+##
+## header
+##
+# Transaction ID: 0xc2aa
+# Flags: 0x8583 (Standard query response, No such name)
+c2aa 8583
+# Questions: 1
+# Answer RRs: 2
+# Authority RRs: 1
+# dditional RRs: 0
+00 01 00 02 00 01 00 00
+##
+## Queries
+##
+# a.example.org: type A, class IN
+01 61 07 65 78 61 6d 70 6c 65 03 6f 72 67 00 00 01 00 01
+##
+## Answers
+##
+# a.example.org: type CNAME, class IN, cname b.example.org
+c0 0c 00 05 00 01 00 00 0e 10 00 04 01 62 c0 0e
+# b.example.org: type CNAME, class IN, cname c.example.org
+c0 2b 00 05 00 01 00 00 0e 10 00 04 01 63 c0 0e
+##
+## Authority
+##
+# example.org: type SOA, class IN, mname ns1.example.org
+c0 0e 00 06 00 01 00 00 02 58 00 22 03 6e 73 31 c0
+0e 05 61 64 6d 69 6e c0 0e 00 00 04 d2 00 00 0e
+10 00 00 07 08 00 24 ea 00 00 00 02 58

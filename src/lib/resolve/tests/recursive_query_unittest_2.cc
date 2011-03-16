@@ -21,7 +21,6 @@
 #include <gtest/gtest.h>
 #include <boost/bind.hpp>
 
-
 #include <asio.hpp>
 
 #include <dns/buffer.h>
@@ -165,7 +164,7 @@ public:
     /// Sets up the common bits of a response message returned by the handlers.
     ///
     /// \param msg Message buffer in RENDER mode.
-    /// \param qid QIT to set the message to
+    /// \param qid QID to set the message to
     void setCommonMessage(isc::dns::Message& msg, uint16_t qid = 0) {
         msg.setQid(qid);
         msg.setHeaderFlag(Message::HEADERFLAG_QR);
@@ -278,11 +277,8 @@ public:
         // The QID in the incoming data is random so set it to 0 for the
         // data comparison check. (It is set to 0 in the buffer containing
         // the expected data.)
-        uint16_t qid = readUint16(udp_receive_buffer_);
-        udp_receive_buffer_[0] = udp_receive_buffer_[1] = 0;
-
-        // Check that question we received is what was expected.
-        checkReceivedPacket(udp_receive_buffer_, length);
+        // And check that question we received is what was expected.
+        uint16_t qid = checkReceivedPacket(udp_receive_buffer_, length);
 
         // The message returned depends on what state we are in.  Set up
         // common stuff first: bits not mentioned are set to 0.
@@ -433,18 +429,20 @@ public:
 
         // Check that question we received is what was expected.  Note that we
         // have to ignore the two-byte header in order to parse the message.
-        checkReceivedPacket(tcp_receive_buffer_ + 2, length - 2);
+        qid_t qid = checkReceivedPacket(tcp_receive_buffer_ + 2, length - 2);
 
         // Return a message back.  This is a referral to example.org, which
         // should result in another query over UDP.  Note the setting of the
         // QID in the returned message with what was in the received message.
         Message msg(Message::RENDER);
-        setCommonMessage(msg, readUint16(tcp_receive_buffer_));
+        setCommonMessage(msg, qid);
         setReferralExampleOrg(msg);
 
         // Convert to wire format
-        tcp_send_buffer_->clear();
-        MessageRenderer renderer(*tcp_send_buffer_);
+        // Use a temporary buffer for the dns wire data (we copy it
+        // to the 'real' buffer below)
+        OutputBuffer msg_buf(BUFFER_SIZE);
+        MessageRenderer renderer(msg_buf);
         msg.toWire(renderer);
 
         // Expected next state (when checked) is the UDP query to example.org.
@@ -455,16 +453,13 @@ public:
         expected_ = UDP_EXAMPLE_ORG;
         tcp_cumulative_ = 0;
 
-        // We'll write the message in two parts, the count and the message
-        // itself. This saves having to prepend the count onto the start of a
-        // buffer.  When specifying the send handler, the expected size of the
-        // data written is passed as the first parameter so that the handler
-        // can check it.
-        uint8_t count[2];
-        writeUint16(tcp_send_buffer_->getLength(), count);
-        tcp_socket_.async_send(asio::buffer(count, 2),
-                               boost::bind(&RecursiveQueryTest2::tcpSendHandler, this,
-                                           2, _1, _2));
+        // Unless we go through a callback loop we cannot simply use
+        // async_send() multiple times, so we cannot send the size first
+        // followed by the actual data. We copy them to a new buffer
+        // first
+        tcp_send_buffer_->clear();
+        tcp_send_buffer_->writeUint16(msg_buf.getLength());
+        tcp_send_buffer_->writeData(msg_buf.getData(), msg_buf.getLength());
         tcp_socket_.async_send(asio::buffer(tcp_send_buffer_->getData(),
                                             tcp_send_buffer_->getLength()),
                                boost::bind(&RecursiveQueryTest2::tcpSendHandler, this,
@@ -502,7 +497,8 @@ public:
     ///        the case of UDP data, and an offset into the buffer past the
     ///        count field for TCP data.
     /// \param length Length of data.
-    void checkReceivedPacket(uint8_t* data, size_t length) {
+    /// \return The QID of the message
+    qid_t checkReceivedPacket(uint8_t* data, size_t length) {
 
         // Decode the received buffer.
         InputBuffer buffer(data, length);
@@ -514,6 +510,8 @@ public:
 
         Question question = **(message.beginQuestion());
         EXPECT_TRUE(question == *question_);
+
+        return message.getQid();
     }
 };
 
@@ -539,6 +537,7 @@ public:
     virtual void success(const isc::dns::MessagePtr response) {
         if (debug_) {
             cout << "ResolverCallback::success(): answer received" << endl;
+            cout << response->toText() << endl;
         }
 
         // There should be one RR each  in the question and answer sections, and
@@ -607,7 +606,6 @@ private:
 // Sets up the UDP and TCP "servers", then tries a resolution.
 
 TEST_F(RecursiveQueryTest2, Resolve) {
-
     // Set up the UDP server and issue the first read.  The endpoint from which
     // the query is sent is put in udp_endpoint_ when the read completes, which
     // is referenced in the callback as the place to which the response is sent.

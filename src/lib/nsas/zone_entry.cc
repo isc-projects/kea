@@ -122,7 +122,7 @@ class ZoneEntry::ResolverCallback :
                  * do), so we can just reuse them instead of looking them up in
                  * the table or creating them.
                  */
-                map<string, NameserverPtr> old;
+                std::map<string, NameserverPtr> old;
                 BOOST_FOREACH(const NameserverPtr& ptr, entry_->nameservers_) {
                     old[ptr->getName()] = ptr;
                 }
@@ -224,7 +224,8 @@ class ZoneEntry::ResolverCallback :
 };
 
 void
-ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family) {
+ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family,
+                       const GlueHints& glue_hints) {
     Lock lock(mutex_);
 
     bool ask(false);
@@ -238,11 +239,18 @@ ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family) {
     if (getState() == EXPIRED || getState() == NOT_ASKED) {
         ask = true;
     }
-
+    
     // We do not have the answer right away, just queue the callback
     bool execute(!ask && getState() != IN_PROGRESS &&
         callbacks_[family].empty());
-    callbacks_[family].push_back(callback);
+
+    // Unless there was glue
+    if (ask && glue_hints.hasGlue(family)) {
+        callback->success(glue_hints.getGlue(family));
+    } else {
+        callbacks_[family].push_back(callback);
+    }
+
     if (execute) {
         // Try to process it right away, store if not possible to handle
         process(family, NameserverPtr());
