@@ -162,6 +162,10 @@ TEST(ModuleSpec, DataValidation) {
     EXPECT_FALSE(dataTest(dd, "data22_8.data"));
     EXPECT_FALSE(dataTest(dd, "data22_9.data"));
 
+    // Test if "version" is allowed in config data
+    // (same data as 22_7, but added "version")
+    EXPECT_TRUE(dataTest(dd, "data22_10.data"));
+
     ElementPtr errors = Element::createList();
     EXPECT_FALSE(dataTestWithErrors(dd, "data22_8.data", errors));
     EXPECT_EQ("[ \"Type mismatch\" ]", errors->str());
