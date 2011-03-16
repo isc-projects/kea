@@ -25,6 +25,32 @@
          "item_type": "real",
          "item_optional": false,
          "item_default": 0.25
+       },
+       {
+         "item_name": "secondary_zones",
+         "item_type": "list",
+         "item_optional": false,
+         "item_default": [],
+         "list_item_spec": {
+           "item_name": "secondary_zone",
+           "item_type": "map",
+           "item_optional": false,
+           "item_default": {},
+           "map_item_spec": [
+             {
+               "item_name": "class",
+               "item_type": "string",
+               "item_optional": false,
+               "item_default": "IN"
+             },
+             {
+               "item_name": "name",
+               "item_type": "string",
+               "item_optional": false,
+               "item_type": ""
+             }
+           ]
+         }
        }
       ],
       "commands": [
