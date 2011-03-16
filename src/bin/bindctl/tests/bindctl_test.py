@@ -17,11 +17,16 @@
 import unittest
 import isc.cc.data
 import os
+import io
+import sys
+import socket
+import http.client
 import pwd
 import getpass
 from optparse import OptionParser
 from isc.config.config_data import ConfigData, MultiConfigData
 from isc.config.module_spec import ModuleSpec
+from isc.testutils.parse_args import TestOptParser, OptsError
 from bindctl_main import set_bindctl_options
 from bindctl import cmdparse
 from bindctl import bindcmd
@@ -275,7 +280,33 @@ class FakeCCSession(MultiConfigData):
                  ]
                }
         self.set_specification(ModuleSpec(spec))
-    
+
+
+# fake socket
+class FakeSocket():
+    def __init__(self):
+        self.run = True
+
+    def connect(self, to):
+        if not self.run:
+            raise socket.error
+
+    def close(self):
+        self.run = False
+
+    def send(self, data):
+        if not self.run:
+            raise socket.error
+        return len(data)
+
+    def makefile(self, type):
+        return self
+
+    def sendall(self, data):
+        if not self.run:
+            raise socket.error
+        return len(data)
+
 
 class TestConfigCommands(unittest.TestCase):
     def setUp(self):
@@ -283,7 +314,47 @@ class TestConfigCommands(unittest.TestCase):
         mod_info = ModuleInfo(name = "foo")
         self.tool.add_module_info(mod_info)
         self.tool.config_data = FakeCCSession()
-        
+        self.stdout_backup = sys.stdout
+
+    def test_precmd(self):
+        def update_all_modules_info():
+            raise socket.error
+        def precmd(line):
+            self.tool.precmd(line)
+        self.tool._update_all_modules_info = update_all_modules_info
+        # If line is equals to 'EOF', _update_all_modules_info() shouldn't be called
+        precmd('EOF')
+        self.assertRaises(socket.error, precmd, 'continue')
+
+    def test_run(self):
+        def login_to_cmdctl():
+            return True
+        def cmd_loop():
+            self.tool._send_message("/module_spec", None)
+
+        self.tool.login_to_cmdctl = login_to_cmdctl
+        # rewrite cmdloop() to avoid interactive mode
+        self.tool.cmdloop = cmd_loop
+
+        self.tool.conn.sock = FakeSocket()
+        self.tool.conn.sock.close()
+
+        # validate log message for socket.err
+        socket_err_output = io.StringIO()
+        sys.stdout = socket_err_output
+        self.assertRaises(None, self.tool.run())
+        self.assertEqual("Failed to send request, the connection is closed\n",
+                         socket_err_output.getvalue())
+        socket_err_output.close()
+
+        # validate log message for http.client.CannotSendRequest
+        cannot_send_output = io.StringIO()
+        sys.stdout = cannot_send_output
+        self.assertRaises(None, self.tool.run())
+        self.assertEqual("Can not send request, the connection is busy\n",
+                         cannot_send_output.getvalue())
+        cannot_send_output.close()
+
     def test_apply_cfg_command_int(self):
         self.tool.location = '/'
 
@@ -332,9 +403,16 @@ class TestConfigCommands(unittest.TestCase):
         # this should raise a TypeError
         cmd = cmdparse.BindCmdParse("config set identifier=\"foo/a_list\" value=\"a\"")
         self.assertRaises(isc.cc.data.DataTypeError, self.tool.apply_config_cmd, cmd)
-        
+
         cmd = cmdparse.BindCmdParse("config set identifier=\"foo/a_list\" value=[1]")
         self.assertRaises(isc.cc.data.DataTypeError, self.tool.apply_config_cmd, cmd)
+
+    def tearDown(self):
+        sys.stdout = self.stdout_backup
+
+class FakeBindCmdInterpreter(bindcmd.BindCmdInterpreter):
+    def __init__(self):
+        pass
 
 class TestBindCmdInterpreter(unittest.TestCase):
 
@@ -360,35 +438,23 @@ class TestBindCmdInterpreter(unittest.TestCase):
         self.assertEqual(new_csv_dir, custom_cmd.csv_file_dir)
 
     def test_get_saved_user_info(self):
+        old_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
         cmd = bindcmd.BindCmdInterpreter()
         users = cmd._get_saved_user_info('/notexist', 'csv_file.csv')
         self.assertEqual([], users)
-        
+
         csvfilename = 'csv_file.csv'
         self._create_invalid_csv_file(csvfilename)
         users = cmd._get_saved_user_info('./', csvfilename)
         self.assertEqual([], users)
         os.remove(csvfilename)
+        sys.stdout = old_stdout
 
 
 class TestCommandLineOptions(unittest.TestCase):
-    class FakeParserError(Exception):
-        """An exception thrown from FakeOptionParser on parser error.
-        """
-        pass
-
-    class FakeOptionParser(OptionParser):
-        """This fake class emulates the OptionParser class with customized
-        error handling for the convenient of tests.
-        """
-        def __init__(self):
-            OptionParser.__init__(self)
-
-        def error(self, msg):
-            raise TestCommandLineOptions.FakeParserError
-
     def setUp(self):
-        self.parser = self.FakeOptionParser()
+        self.parser = TestOptParser()
         set_bindctl_options(self.parser)
 
     def test_csv_file_dir(self):
@@ -401,7 +467,7 @@ class TestCommandLineOptions(unittest.TestCase):
         self.assertEqual('some_dir', options.csv_file_dir)
 
         # missing option arg; should trigger parser error.
-        self.assertRaises(self.FakeParserError, self.parser.parse_args,
+        self.assertRaises(OptsError, self.parser.parse_args,
                           ['--csv-file-dir'])
 
 if __name__== "__main__":

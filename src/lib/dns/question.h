@@ -54,13 +54,13 @@ typedef boost::shared_ptr<const Question> ConstQuestionPtr;
 /// class.
 /// This may look odd in that an "RRset" and "Question" are similar from the
 /// protocol point of view: Both are used as a semantics unit of DNS messages;
-/// both share the same set of components, name, RR type and RR class.
+/// both share the same set of components (name, RR type and RR class).
 ///
 /// In fact, BIND9 didn't introduce a separate data structure for Questions,
 /// and use the same \c "rdataset" structure for both RRsets and Questions.
 /// We could take the same approach, but chose to adopt the different design.
 /// One reason for that is because a Question and an RRset are still
-/// different, and a Question might not be cleanly defined if (e.g.) it were
+/// different, and a Question might not be cleanly defined, e.g., if it were
 /// a derived class of some "RRset-like" class.
 /// For example, we couldn't give a reasonable semantics for \c %getTTL() or
 /// \c %setTTL() methods for a Question, since it's not associated with the
@@ -74,14 +74,14 @@ typedef boost::shared_ptr<const Question> ConstQuestionPtr;
 ///
 /// On the other hand, we do not expect a strong need for customizing the
 /// \c Question class, unlike the RRset.
-/// Handling the Question section of a DNS message is relatively a
+/// Handling the "Question" section of a DNS message is relatively a
 /// simple work comparing to RRset-involved operations, so a unified
 /// straightforward implementation should suffice for any use cases
 /// including performance sensitive ones.
 ///
-/// We may, however, still want to have customized version of Question
+/// We may, however, still want to have a customized version of Question
 /// for, e.g, highly optimized behavior, and may revisit this design choice
-/// as we have more experiences with this implementation.
+/// as we have more experience with this implementation.
 ///
 /// One disadvantage of defining RRsets and Questions as unrelated classes
 /// is that we cannot handle them in a polymorphic way.

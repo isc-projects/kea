@@ -110,6 +110,7 @@ TCPServer::operator()(error_code ec, size_t length) {
         CORO_YIELD async_read(*socket_, asio::buffer(data_.get(),
                               TCP_MESSAGE_LENGTHSIZE), *this);
         if (ec) {
+            socket_->close();
             CORO_YIELD return;
         }
 
@@ -122,6 +123,7 @@ TCPServer::operator()(error_code ec, size_t length) {
         }
 
         if (ec) {
+            socket_->close();
             CORO_YIELD return;
         }
 
@@ -156,6 +158,7 @@ TCPServer::operator()(error_code ec, size_t length) {
         // If we don't have a DNS Lookup provider, there's no point in
         // continuing; we exit the coroutine permanently.
         if (lookup_callback_ == NULL) {
+            socket_->close();
             CORO_YIELD return;
         }
 
@@ -173,6 +176,9 @@ TCPServer::operator()(error_code ec, size_t length) {
         // The 'done_' flag indicates whether we have an answer
         // to send back.  If not, exit the coroutine permanently.
         if (!done_) {
+            // TODO: should we keep the connection open for a short time
+            // to see if new requests come in?
+            socket_->close();
             CORO_YIELD return;
         }
 
@@ -194,6 +200,10 @@ TCPServer::operator()(error_code ec, size_t length) {
         // (though we have nothing further to do, so the coroutine
         // will simply exit at that time).
         CORO_YIELD async_write(*socket_, bufs, *this);
+
+        // TODO: should we keep the connection open for a short time
+        // to see if new requests come in?
+        socket_->close();
     }
 }
 
