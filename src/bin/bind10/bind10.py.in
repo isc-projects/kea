@@ -300,7 +300,6 @@ class BoB:
                 answer = isc.config.ccsession. \
                     create_answer(0, self.get_processes())
             else:
-                print("should be doing the unknown command thingy")
                 answer = isc.config.ccsession.create_answer(1,
                                                             "Unknown command")
         return answer
