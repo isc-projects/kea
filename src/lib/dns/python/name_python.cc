@@ -329,10 +329,9 @@ Name_init(s_Name* self, PyObject* args) {
                          &PyBool_Type, &downcase) &&
                          PyObject_AsCharBuffer(bytes_obj, &bytes, &len) != -1) {
         try {
-            if (position < 0 || position > 0xffff) {
-                PyErr_Clear();
-                PyErr_SetString(PyExc_OverflowError,
-                                "Name index out of range");
+            if (position < 0) {
+                PyErr_SetString(PyExc_TypeError,
+                                "Name index shouldn't be negative");
                 return (-1);
             }
             InputBuffer buffer(bytes, len);
@@ -369,12 +368,11 @@ Name_destroy(s_Name* self) {
 
 static PyObject*
 Name_at(s_Name* self, PyObject* args) {
-    long pos;
-    if (!PyArg_ParseTuple(args, "l", &pos)) {
+    int pos;
+    if (!PyArg_ParseTuple(args, "i", &pos)) {
         return (NULL);
     }
     if (pos < 0 || pos > 0xffff) {
-        PyErr_Clear();
         PyErr_SetString(PyExc_OverflowError,
                         "name index out of range");
         return (NULL);
@@ -470,14 +468,13 @@ Name_equals(s_Name* self, PyObject* args) {
         Py_RETURN_FALSE;
 }
 
-static PyObject* 
+static PyObject*
 Name_split(s_Name* self, PyObject* args) {
-    long first, n;
+    int first, n;
     s_Name* ret = NULL;
 
-    if (PyArg_ParseTuple(args, "ll", &first, &n)) {
+    if (PyArg_ParseTuple(args, "ii", &first, &n)) {
         if (first < 0 || first > 0xffff || n < 0 || n > 0xffff) {
-            PyErr_Clear();
             PyErr_SetString(PyExc_OverflowError,
                             "name index out of range");
             return (NULL);
@@ -496,9 +493,9 @@ Name_split(s_Name* self, PyObject* args) {
                 return (NULL);
             }
         }
-    } else if (PyArg_ParseTuple(args, "l", &n)) {
+    } else if (PyArg_ParseTuple(args, "i", &n)) {
+        PyErr_Clear();
         if (n < 0 || n > 0xffff) {
-            PyErr_Clear();
             PyErr_SetString(PyExc_OverflowError,
                             "name index out of range");
             return (NULL);
