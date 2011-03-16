@@ -32,12 +32,17 @@ ResolverClassCache::ResolverClassCache(const RRClass& cache_class) :
     local_zone_data_ = LocalZoneDataPtr(new LocalZoneData(cache_class_.getCode()));
     rrsets_cache_ = RRsetCachePtr(new RRsetCache(RRSET_CACHE_DEFAULT_SIZE,
                                                  cache_class_.getCode()));
+    // SOA rrset cache from negative response
+    negative_soa_cache_ = RRsetCachePtr(new RRsetCache(NEGATIVE_RRSET_CACHE_DEFAULT_SIZE,
+                                                       cache_class_.getCode()));
+
     messages_cache_ = MessageCachePtr(new MessageCache(rrsets_cache_,
                                       MESSAGE_CACHE_DEFAULT_SIZE,
-                                      cache_class_.getCode()));
+                                      cache_class_.getCode(),
+                                      negative_soa_cache_));
 }
 
-ResolverClassCache::ResolverClassCache(CacheSizeInfo cache_info) :
+ResolverClassCache::ResolverClassCache(const CacheSizeInfo& cache_info) :
     cache_class_(cache_info.cclass)
 {
     uint16_t klass = cache_class_.getCode();
@@ -45,14 +50,18 @@ ResolverClassCache::ResolverClassCache(CacheSizeInfo cache_info) :
     local_zone_data_ = LocalZoneDataPtr(new LocalZoneData(klass));
     rrsets_cache_ = RRsetCachePtr(new
                         RRsetCache(cache_info.rrset_cache_size, klass));
+    // SOA rrset cache from negative response
+    negative_soa_cache_ = RRsetCachePtr(new RRsetCache(cache_info.rrset_cache_size,
+                                                       klass));
+
     messages_cache_ = MessageCachePtr(new MessageCache(rrsets_cache_,
                                       cache_info.message_cache_size,
-                                      klass));
+                                      klass, negative_soa_cache_));
 }
 
 const RRClass&
 ResolverClassCache::getClass() const {
-    return cache_class_;
+    return (cache_class_);
 }
 
 bool
@@ -104,7 +113,7 @@ ResolverClassCache::update(const isc::dns::Message& msg) {
 }
 
 bool
-ResolverClassCache::updateRRsetCache(const isc::dns::ConstRRsetPtr rrset_ptr,
+ResolverClassCache::updateRRsetCache(const isc::dns::ConstRRsetPtr& rrset_ptr,
                                 RRsetCachePtr rrset_cache_ptr)
 {
     RRsetTrustLevel level;
@@ -120,7 +129,7 @@ ResolverClassCache::updateRRsetCache(const isc::dns::ConstRRsetPtr rrset_ptr,
 }
 
 bool
-ResolverClassCache::update(const isc::dns::ConstRRsetPtr rrset_ptr) {
+ResolverClassCache::update(const isc::dns::ConstRRsetPtr& rrset_ptr) {
     // First update local zone, then update rrset cache.
     local_zone_data_->update((*rrset_ptr.get()));
     updateRRsetCache(rrset_ptr, rrsets_cache_);
@@ -209,7 +218,7 @@ ResolverCache::update(const isc::dns::Message& msg) {
 }
 
 bool
-ResolverCache::update(const isc::dns::ConstRRsetPtr rrset_ptr) {
+ResolverCache::update(const isc::dns::ConstRRsetPtr& rrset_ptr) {
     ResolverClassCache* cc = getClassCache(rrset_ptr->getClass());
     if (cc) {
         return (cc->update(rrset_ptr));
@@ -232,10 +241,10 @@ ResolverClassCache*
 ResolverCache::getClassCache(const isc::dns::RRClass& cache_class) const {
     for (int i = 0; i < class_caches_.size(); ++i) {
         if (class_caches_[i]->getClass() == cache_class) {
-            return class_caches_[i];
+            return (class_caches_[i]);
         }
     }
-    return NULL;
+    return (NULL);
 }
 
 } // namespace cache

@@ -22,9 +22,9 @@ using namespace asiolink;
 
 TEST(IOEndpointTest, createUDPv4) {
     const IOEndpoint* ep;
-    ep = IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.1"), 5300);
+    ep = IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.1"), 53210);
     EXPECT_EQ("192.0.2.1", ep->getAddress().toText());
-    EXPECT_EQ(5300, ep->getPort());
+    EXPECT_EQ(53210, ep->getPort());
     EXPECT_EQ(AF_INET, ep->getFamily());
     EXPECT_EQ(AF_INET, ep->getAddress().getFamily());
     EXPECT_EQ(IPPROTO_UDP, ep->getProtocol());
@@ -60,9 +60,65 @@ TEST(IOEndpointTest, createTCPv6) {
     EXPECT_EQ(IPPROTO_TCP, ep->getProtocol());
 }
 
+TEST(IOEndpointTest, equality) {
+    std::vector<const IOEndpoint *> epv;
+    epv.push_back(IOEndpoint::create(IPPROTO_TCP, IOAddress("2001:db8::1234"), 5303));
+    epv.push_back(IOEndpoint::create(IPPROTO_UDP, IOAddress("2001:db8::1234"), 5303));
+    epv.push_back(IOEndpoint::create(IPPROTO_TCP, IOAddress("2001:db8::1234"), 5304));
+    epv.push_back(IOEndpoint::create(IPPROTO_UDP, IOAddress("2001:db8::1234"), 5304));
+    epv.push_back(IOEndpoint::create(IPPROTO_TCP, IOAddress("2001:db8::1235"), 5303));
+    epv.push_back(IOEndpoint::create(IPPROTO_UDP, IOAddress("2001:db8::1235"), 5303));
+    epv.push_back(IOEndpoint::create(IPPROTO_TCP, IOAddress("2001:db8::1235"), 5304));
+    epv.push_back(IOEndpoint::create(IPPROTO_UDP, IOAddress("2001:db8::1235"), 5304));
+    epv.push_back(IOEndpoint::create(IPPROTO_TCP, IOAddress("192.0.2.1"), 5303));
+    epv.push_back(IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.1"), 5303));
+    epv.push_back(IOEndpoint::create(IPPROTO_TCP, IOAddress("192.0.2.1"), 5304));
+    epv.push_back(IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.1"), 5304));
+    epv.push_back(IOEndpoint::create(IPPROTO_TCP, IOAddress("192.0.2.2"), 5303));
+    epv.push_back(IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.2"), 5303));
+    epv.push_back(IOEndpoint::create(IPPROTO_TCP, IOAddress("192.0.2.2"), 5304));
+    epv.push_back(IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.2"), 5304));
+
+    for (size_t i = 0; i < epv.size(); ++i) {
+        for (size_t j = 0; j < epv.size(); ++j) {
+            if (i != j) {
+                // We use EXPECT_TRUE/FALSE instead of _EQ here, since
+                // _EQ requires there is an operator<< as well
+                EXPECT_FALSE(*epv[i] == *epv[j]);
+                EXPECT_TRUE(*epv[i] != *epv[j]);
+            }
+        }
+    }
+
+    // Create a second array with exactly the same values. We use create()
+    // again to make sure we get different endpoints
+    std::vector<const IOEndpoint *> epv2;
+    epv2.push_back(IOEndpoint::create(IPPROTO_TCP, IOAddress("2001:db8::1234"), 5303));
+    epv2.push_back(IOEndpoint::create(IPPROTO_UDP, IOAddress("2001:db8::1234"), 5303));
+    epv2.push_back(IOEndpoint::create(IPPROTO_TCP, IOAddress("2001:db8::1234"), 5304));
+    epv2.push_back(IOEndpoint::create(IPPROTO_UDP, IOAddress("2001:db8::1234"), 5304));
+    epv2.push_back(IOEndpoint::create(IPPROTO_TCP, IOAddress("2001:db8::1235"), 5303));
+    epv2.push_back(IOEndpoint::create(IPPROTO_UDP, IOAddress("2001:db8::1235"), 5303));
+    epv2.push_back(IOEndpoint::create(IPPROTO_TCP, IOAddress("2001:db8::1235"), 5304));
+    epv2.push_back(IOEndpoint::create(IPPROTO_UDP, IOAddress("2001:db8::1235"), 5304));
+    epv2.push_back(IOEndpoint::create(IPPROTO_TCP, IOAddress("192.0.2.1"), 5303));
+    epv2.push_back(IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.1"), 5303));
+    epv2.push_back(IOEndpoint::create(IPPROTO_TCP, IOAddress("192.0.2.1"), 5304));
+    epv2.push_back(IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.1"), 5304));
+    epv2.push_back(IOEndpoint::create(IPPROTO_TCP, IOAddress("192.0.2.2"), 5303));
+    epv2.push_back(IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.2"), 5303));
+    epv2.push_back(IOEndpoint::create(IPPROTO_TCP, IOAddress("192.0.2.2"), 5304));
+    epv2.push_back(IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.2"), 5304));
+
+    for (size_t i = 0; i < epv.size(); ++i) {
+        EXPECT_TRUE(*epv[i] == *epv2[i]);
+        EXPECT_FALSE(*epv[i] != *epv2[i]);
+    }
+}
+
 TEST(IOEndpointTest, createIPProto) {
     EXPECT_THROW(IOEndpoint::create(IPPROTO_IP, IOAddress("192.0.2.1"),
-                                    5300)->getAddress().toText(),
+                                    53210)->getAddress().toText(),
                  IOError);
 }
 

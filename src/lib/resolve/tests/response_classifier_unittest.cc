@@ -80,6 +80,8 @@ public:
             RRType::CNAME(), RRTTL(300))),
         rrs_in_ns_(new RRset(Name("example.com"), RRClass::IN(),
             RRType::NS(), RRTTL(300))),
+        rrs_in_soa_(new RRset(Name("example.com"), RRClass::IN(),
+            RRType::SOA(), RRTTL(300))),
         rrs_in_txt_www(new RRset(Name("www.example.com"), RRClass::IN(),
             RRType::TXT(), RRTTL(300))),
         cname_target("."),
@@ -115,6 +117,9 @@ public:
         // Set up an imaginary NS RRset for an authority section
         rrs_in_ns_->addRdata(ConstRdataPtr(new NS(Name("ns0.isc.org"))));
         rrs_in_ns_->addRdata(ConstRdataPtr(new NS(Name("ns0.example.org"))));
+        
+        // And an imaginary SOA
+        rrs_in_soa_->addRdata(ConstRdataPtr(new SOA(Name("ns0.example.org"), Name("root.example.org"), 1, 2, 3, 4, 5)));
 
         // Set up the records for the www host
         rrs_in_a_www->addRdata(ConstRdataPtr(new A("1.2.3.4")));
@@ -146,6 +151,7 @@ public:
     RRsetPtr    rrs_in_cname_www1;  // www1.example.com IN CNAME
     RRsetPtr    rrs_in_cname_www2;  // www2.example.com IN CNAME
     RRsetPtr    rrs_in_ns_;         // example.com IN NS
+    RRsetPtr    rrs_in_soa_;        // example.com IN SOA
     RRsetPtr    rrs_in_txt_www;     // www.example.com IN TXT
     Name        cname_target;       // Used in response classifier to
                                     // store the target of a possible
@@ -344,6 +350,17 @@ TEST_F(ResponseClassifierTest, EmptyAnswerReferral) {
 
     msg_a.addRRset(Message::SECTION_AUTHORITY, rrs_in_ns_);
     EXPECT_EQ(ResponseClassifier::REFERRAL,
+        ResponseClassifier::classify(qu_in_a_www, msg_a, cname_target,
+                                     cname_count));
+
+}
+
+// Test if we get a NOERROR answer that contains neither an actual
+// answer nor a delegation
+TEST_F(ResponseClassifierTest, NoErrorNoData) {
+
+    msg_a.addRRset(Message::SECTION_AUTHORITY, rrs_in_soa_);
+    EXPECT_EQ(ResponseClassifier::NXRRSET,
         ResponseClassifier::classify(qu_in_a_www, msg_a, cname_target,
                                      cname_count));
 

@@ -51,6 +51,7 @@
       <arg><option>--address <replaceable>address</replaceable></option></arg>
       <arg><option>--help</option></arg>
       <arg><option>--certificate-chain <replaceable>file</replaceable></option></arg>
+      <arg><option>--csv-file-dir<replaceable>file</replaceable></option></arg>
       <arg><option>--port <replaceable>number</replaceable></option></arg>
       <arg><option>--version</option></arg>
     </cmdsynopsis>
@@ -110,6 +111,22 @@
       </varlistentry>
 
       <varlistentry>
+        <term>
+	  <option>--csv-file-dir</option><replaceable>file</replaceable>
+	</term>
+
+        <listitem>
+          <para>
+	    The directory name in which the user/password CSV file
+            is stored (see AUTHENTICATION).
+	    By default this option doesn't have any value,
+	    in which case the ".bind10" directory under the user's
+            home directory will be used.
+          </para>
+         </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><option>-h</option>,
           <option>--help</option></term>
         <listitem><para>
@@ -148,8 +165,10 @@
     <para>
       The tool will authenticate using a username and password.
       On the first successful login, it will save the details to
-      <filename>~/.bind10/default_user.csv</filename>
+      a comma-separated-value (CSV) file
       which will be used for later uses of <command>bindctl</command>.
+      The file name is <filename>default_user.csv</filename>
+      located under the directory specified by the --csv-file-dir option.
     </para>
 
 <!-- TODO: mention HTTPS? -->
