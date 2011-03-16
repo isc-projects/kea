@@ -95,8 +95,7 @@ class NameTest(unittest.TestCase):
         b = bytearray()
         b += b'\x07example'*32 + b'\x03com\x00'
         self.assertRaises(DNSMessageFORMERR, Name, b, 0)
-        self.assertRaises(OverflowError, Name, b, -1)
-        self.assertRaises(OverflowError, Name, b, 0x10000)
+        self.assertRaises(TypeError, Name, b, -1)
 
     def test_at(self):
         self.assertEqual(7, self.name1.at(0))
