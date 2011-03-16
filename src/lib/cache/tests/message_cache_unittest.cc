@@ -33,9 +33,10 @@ namespace {
 /// its internals.
 class DerivedMessageCache: public MessageCache {
 public:
-    DerivedMessageCache(boost::shared_ptr<RRsetCache> rrset_cache_,
-                        uint32_t cache_size, uint16_t message_class):
-        MessageCache(rrset_cache_, cache_size, message_class)
+    DerivedMessageCache(const RRsetCachePtr& rrset_cache,
+                        uint32_t cache_size, uint16_t message_class,
+                        const RRsetCachePtr& negative_soa_cache):
+        MessageCache(rrset_cache, cache_size, message_class, negative_soa_cache)
     {}
 
     uint16_t messages_count() {
@@ -70,13 +71,16 @@ public:
     {
         uint16_t class_ = RRClass::IN().getCode();
         rrset_cache_.reset(new DerivedRRsetCache(RRSET_CACHE_DEFAULT_SIZE, class_));
+        negative_soa_cache_.reset(new RRsetCache(NEGATIVE_RRSET_CACHE_DEFAULT_SIZE, class_));
         // Set the message cache size to 1, make it easy for unittest.
-        message_cache_.reset(new DerivedMessageCache(rrset_cache_, 1, class_ ));
+        message_cache_.reset(new DerivedMessageCache(rrset_cache_, 1, class_,
+                                                     negative_soa_cache_));
     }
 
 protected:
     boost::shared_ptr<DerivedMessageCache> message_cache_;
     boost::shared_ptr<DerivedRRsetCache> rrset_cache_;
+    RRsetCachePtr negative_soa_cache_;
     Message message_parse;
     Message message_render;
 };
@@ -134,7 +138,7 @@ TEST_F(MessageCacheTest, testUpdate) {
     EXPECT_TRUE(message_cache_->update(new_msg));
     Message new_msg_render(Message::RENDER);
     EXPECT_TRUE(message_cache_->lookup(qname, RRType::SOA(), new_msg_render));
-    EXPECT_TRUE(new_msg_render.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_FALSE(new_msg_render.getHeaderFlag(Message::HEADERFLAG_AA));
 }
 
 TEST_F(MessageCacheTest, testCacheLruBehavior) {
