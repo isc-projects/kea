@@ -275,8 +275,6 @@ class TCPClient : public SimpleClient {
             socket_->async_send(buffer(&data_to_send_len_, 2),
                                 boost::bind(&TCPClient::sendMessageBodyHandler,
                                             this, _1, _2));
-        } else {
-            cancelTimer();
         }
     }
 
@@ -287,8 +285,6 @@ class TCPClient : public SimpleClient {
             socket_->async_send(buffer(data_to_send_.c_str(),
                                        data_to_send_.size() + 1),
                     boost::bind(&TCPClient::finishSendHandler, this, _1, _2));
-        } else {
-            cancelTimer();
         }
     }
 
@@ -297,8 +293,6 @@ class TCPClient : public SimpleClient {
             socket_->async_receive(buffer(received_data_, MAX_DATA_LEN),
                    boost::bind(&SimpleClient::getResponseCallBack, this, _1,
                                _2));
-        } else {
-            cancelTimer();
         }
     }
 
@@ -315,9 +309,6 @@ class TCPClient : public SimpleClient {
 class DNSServerTest : public::testing::Test {
     protected:
         void SetUp() {
-            //clean up io serice to each test
-            service.stop();
-            service.reset();
             ip::address server_address = ip::address::from_string(server_ip);
             checker_ = new DummyChecker();
             lookup_ = new DummyLookup();
@@ -336,6 +327,8 @@ class DNSServerTest : public::testing::Test {
 
 
         void TearDown() {
+            udp_server_->stop();
+            tcp_server_->stop();
             delete checker_;
             delete lookup_;
             delete answer_;
@@ -360,6 +353,7 @@ class DNSServerTest : public::testing::Test {
             void (*prev_handler)(int) = std::signal(SIGALRM, DNSServerTest::stopIOService);
             alarm(io_service_time_out);
             service.run();
+            service.reset();
             std::signal(SIGALRM, prev_handler);
         }
 
