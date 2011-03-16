@@ -119,11 +119,11 @@ public:
     asiolink::SimpleCallback* getCheckinProvider() { return (checkin_); }
 
     /**
-     * \brief Tell the Resolver that is should has already been
-     *        configured (used by updateConfig() and tests, so
-     *        that it will only set some defaults the first time
+     * \brief Tell the Resolver that is has already been configured
+     *        so that it will only set some defaults the first time
+     *        (used by updateConfig() and tests)
      */
-    void setConfigured();
+    void setConfigured() { configured_ = true; };
 
     /**
      * \brief Specify the list of upstream servers.
