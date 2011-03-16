@@ -13,7 +13,8 @@
 	(Trac #80, git c65637dd41c8d94399bd3e3cee965b694b633339)
 
   203.  [bug]		zhang likun
-	Fix resolver cache memory leak.
+	Fix resolver cache memory leak: when cache is destructed, rrset
+	and message entries in it are not destructed properly.
 	(Trac #643, git aba4c4067da0dc63c97c6356dc3137651755ffce)
 
   202.  [func]    vorner
