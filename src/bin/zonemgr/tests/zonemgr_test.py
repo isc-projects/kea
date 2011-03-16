@@ -46,20 +46,29 @@ class MySession():
     def group_recvmsg(self, nonblock, seq):
         return None, None
 
+class FakeConfig:
+    def __init__(self):
+        self.zone_list = []
+        self.set_zone_list_from_name_classes([ZONE_NAME_CLASS1_IN,
+                                              ZONE_NAME_CLASS2_CH])
+    def set_zone_list_from_name_classes(self, zones):
+        self.zone_list = map(lambda nc: {"name": nc[0], "class": nc[1]}, zones)
+    def get(self, name):
+        if name == 'lowerbound_refresh':
+            return LOWERBOUND_REFRESH
+        elif name == 'lowerbound_retry':
+            return LOWERBOUND_RETRY
+        elif name == 'max_transfer_timeout':
+            return MAX_TRANSFER_TIMEOUT
+        elif name == 'jitter_scope':
+            return JITTER_SCOPE
+        elif name == 'secondary_zones':
+            return self.zone_list
+        else:
+            raise ValueError('Uknown config option')
+
 class MyZonemgrRefresh(ZonemgrRefresh):
     def __init__(self):
-        class FakeConfig:
-            def get(self, name):
-                if name == 'lowerbound_refresh':
-                    return LOWERBOUND_REFRESH
-                elif name == 'lowerbound_retry':
-                    return LOWERBOUND_RETRY
-                elif name == 'max_transfer_timeout':
-                    return MAX_TRANSFER_TIMEOUT
-                elif name == 'jitter_scope':
-                    return JITTER_SCOPE
-                else:
-                    raise ValueError('Uknown config option')
         self._master_socket, self._slave_socket = socket.socketpair()
         ZonemgrRefresh.__init__(self, MySession(), "initdb.file",
             self._slave_socket, FakeConfig())
@@ -439,6 +448,26 @@ class TestZonemgrRefresh(unittest.TestCase):
         # Shut down the timer thread
         self.zone_refresh.shutdown()
         self.assertFalse(listener.is_alive())
+
+    def test_secondary_zones(self):
+        """Test that we can modify the list of secondary zones"""
+        config = FakeConfig()
+        config.zone_list = []
+        # First, remove everything
+        self.zone_refresh.update_config_data(config)
+        self.assertEqual(self.zone_refresh._zonemgr_refresh_info, {})
+        # Put something in
+        config.set_zone_list_from_name_classes([ZONE_NAME_CLASS1_IN])
+        self.zone_refresh.update_config_data(config)
+        self.assertTrue(("sd.cn.", "IN") in
+                        self.zone_refresh._zonemgr_refresh_info)
+        # This one does not exist
+        config.set_zone_list_from_name_classes(["example.net", "CH"])
+        self.assertRaises(ZonemgrException,
+                          self.zone_refresh.update_config_data, config)
+        # So it should not affect the old ones
+        self.assertTrue(("sd.cn.", "IN") in
+                        self.zone_refresh._zonemgr_refresh_info)
 
     def tearDown(self):
         sys.stderr= self.stderr_backup
