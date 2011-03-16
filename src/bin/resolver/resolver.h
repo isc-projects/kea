@@ -119,6 +119,13 @@ public:
     asiolink::SimpleCallback* getCheckinProvider() { return (checkin_); }
 
     /**
+     * \brief Tell the Resolver that is has already been configured
+     *        so that it will only set some defaults the first time
+     *        (used by updateConfig() and tests)
+     */
+    void setConfigured() { configured_ = true; };
+
+    /**
      * \brief Specify the list of upstream servers.
      *
      * Specify the list off addresses of upstream servers to forward queries
@@ -229,6 +236,10 @@ private:
     asiolink::DNSAnswer* dns_answer_;
     isc::nsas::NameserverAddressStore* nsas_;
     isc::cache::ResolverCache* cache_;
+    // This value is initally false, and will be set to true
+    // when the initial configuration is done (updateConfig
+    // should act a tiny bit different on the very first call)
+    bool configured_;
 };
 
 #endif // __RESOLVER_H
