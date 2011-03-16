@@ -44,25 +44,36 @@ class ConfigManagerData:
     """This class hold the actual configuration information, and
        reads it from and writes it to persistent storage"""
 
-    def __init__(self, data_path, file_name = "b10-config.db"):
+    def __init__(self, data_path, file_name):
         """Initialize the data for the configuration manager, and
            set the version and path for the data store. Initializing
            this does not yet read the database, a call to
-           read_from_file is needed for that."""
+           read_from_file is needed for that.
+
+           In case the file_name is absolute, data_path is ignored
+           and the directory where the file_name lives is used instead.
+           """
         self.data = {}
         self.data['version'] = config_data.BIND10_CONFIG_DATA_VERSION
-        self.data_path = data_path
-        self.db_filename = data_path + os.sep + file_name
+        if os.path.isabs(file_name):
+            self.db_filename = file_name
+            self.data_path = os.path.dirname(file_name)
+        else:
+            self.db_filename = data_path + os.sep + file_name
+            self.data_path = data_path
 
-    def read_from_file(data_path, file_name = "b10-config.db"):
-        """Read the current configuration found in the file at
-           data_path. If the file does not exist, a
-           ConfigManagerDataEmpty exception is raised. If there is a
-           parse error, or if the data in the file has the wrong
-           version, a ConfigManagerDataReadError is raised. In the first
-           case, it is probably safe to log and ignore. In the case of
-           the second exception, the best way is probably to report the
-           error and stop loading the system."""
+    def read_from_file(data_path, file_name):
+        """Read the current configuration found in the file file_name.
+           If file_name is absolute, data_path is ignored. Otherwise
+           we look for the file_name in data_path directory.
+
+           If the file does not exist, a ConfigManagerDataEmpty exception is
+           raised. If there is a parse error, or if the data in the file has
+           the wrong version, a ConfigManagerDataReadError is raised. In the
+           first case, it is probably safe to log and ignore. In the case of
+           the second exception, the best way is probably to report the error
+           and stop loading the system.
+           """
         config = ConfigManagerData(data_path, file_name)
         file = None
         try:
@@ -142,20 +153,24 @@ class ConfigManagerData:
 
 class ConfigManager:
     """Creates a configuration manager. The data_path is the path
-       to the directory containing the b10-config.db file.
+       to the directory containing the configuraton file,
+       database_filename points to the configuration file.
        If session is set, this will be used as the communication
        channel session. If not, a new session will be created.
        The ability to specify a custom session is for testing purposes
        and should not be needed for normal usage."""
-    def __init__(self, data_path, session = None):
+    def __init__(self, data_path, database_filename, session=None):
         """Initialize the configuration manager. The data_path string
            is the path to the directory where the configuration is
-           stored (in <data_path>/b10-config.db). Session is an optional
+           stored (in <data_path>/<database_filename> or in
+           <database_filename>, if it is absolute). The dabase_filename
+           is the config file to load. Session is an optional
            cc-channel session. If this is not given, a new one is
-           created"""
+           created."""
         self.data_path = data_path
+        self.database_filename = database_filename
         self.module_specs = {}
-        self.config = ConfigManagerData(data_path)
+        self.config = ConfigManagerData(data_path, database_filename)
         if session:
             self.cc = session
         else:
@@ -223,17 +238,18 @@ class ConfigManager:
         return commands
 
     def read_config(self):
-        """Read the current configuration from the b10-config.db file
-           at the path specificied at init()"""
+        """Read the current configuration from the file specificied at init()"""
         try:
-            self.config = ConfigManagerData.read_from_file(self.data_path)
+            self.config = ConfigManagerData.read_from_file(self.data_path,
+                                                           self.\
+                                                           database_filename)
         except ConfigManagerDataEmpty:
             # ok, just start with an empty config
-            self.config = ConfigManagerData(self.data_path)
+            self.config = ConfigManagerData(self.data_path,
+                                            self.database_filename)
         
     def write_config(self):
-        """Write the current configuration to the b10-config.db file
-           at the path specificied at init()"""
+        """Write the current configuration to the file specificied at init()"""
         self.config.write_to_file()
 
     def _handle_get_module_spec(self, cmd):

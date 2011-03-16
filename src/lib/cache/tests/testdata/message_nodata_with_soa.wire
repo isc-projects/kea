@@ -1,0 +1,32 @@
+#
+# NOERROR/NODATA response with SOA record
+#
+##
+## header
+##
+#Transaction ID: 0x0284
+#Flags: 0x8500 (Standard query response, No error)
+0284 8500
+#Question:1
+00 01
+#Answer RRs:0
+00 00
+#Authority RRs:1
+00 01
+#Additional RRs:0
+00 00
+##
+## Queries
+##
+# example.com: type MX, class IN
+07 65 78 61 6d 70 6c 65 03 63 6f 6d 00 00 0f 00 01
+##
+## Authoritative nameservers
+##
+# example.com: type SOA, class IN, mname dns1.icann.org
+# TTL:86400
+c0 0c 00
+06 00 01 00 01 51 80 00 31 04 64 6e 73 31 05 69
+63 61 6e 6e 03 6f 72 67 00 0a 68 6f 73 74 6d 61
+73 74 65 72 c0 2e 77 cf 44 ed 00 00 1c 20 00 00
+0e 10 00 12 75 00 00 01 51 80

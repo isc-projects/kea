@@ -37,5 +37,6 @@ libnsas_la_SOURCES += zone_entry.cc zone_entry.h
 libnsas_la_SOURCES += fetchable.h
 libnsas_la_SOURCES += address_request_callback.h
 libnsas_la_SOURCES += random_number_generator.h
+libnsas_la_SOURCES += glue_hints.h glue_hints.cc
 
 CLEANFILES = *.gcno *.gcda

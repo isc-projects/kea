@@ -1,0 +1,56 @@
+#
+# Request A record for x.example.org, the CNAME record exist for x.example.org
+# it poinst to x.example.net, but the server has no idea whether x.example.net exist
+# so it give some NS records for reference
+#
+# Transaction ID: 0xaf71
+# Flags: 0x8480 (Standard query response, No error)
+af71 8480
+# Questions: 1
+# Answer RRs: 1
+# Authority RRs: 13
+# Additional RRs: 0
+00 01 00 01 00 0d 00 00
+##
+## query
+##
+# x.example.org: type A, class IN
+##
+## Answer
+##
+# x.example.org: type CNAME, class IN, cname x.example.net
+# TTL: 360s
+01 78 07 65 78 61 6d 70 6c 65 03 6f 72 67 00 00 01 00 01
+c0 0c 00 05 00 01 00 00 0e 10 00 0f 01 78 07 65 78
+61 6d 70 6c 65 03 6e 65 74 00
+##
+## Authority
+##
+# TTL:518400
+# <Root>: type NS, class IN, ns G.ROOT-SERVERS.net
+# <Root>: type NS, class IN, ns E.ROOT-SERVERS.net
+# <Root>: type NS, class IN, ns J.ROOT-SERVERS.net
+# <Root>: type NS, class IN, ns L.ROOT-SERVERS.net
+# <Root>: type NS, class IN, ns H.ROOT-SERVERS.net
+# <Root>: type NS, class IN, ns I.ROOT-SERVERS.net
+# <Root>: type NS, class IN, ns K.ROOT-SERVERS.net
+# <Root>: type NS, class IN, ns M.ROOT-SERVERS.net
+# <Root>: type NS, class IN, ns F.ROOT-SERVERS.net
+# <Root>: type NS, class IN, ns B.ROOT-SERVERS.net
+# <Root>: type NS, class IN, ns C.ROOT-SERVERS.net
+# <Root>: type NS, class IN, ns D.ROOT-SERVERS.net
+# <Root>: type NS, class IN, ns A.ROOT-SERVERS.net
+00 00 02 00 01 00
+07 e9 00 00 11 01 47 0c 52 4f 4f 54 2d 53 45 52
+56 45 52 53 c0 35 00 00 02 00 01 00 07 e9 00 00
+04 01 45 c0 47 00 00 02 00 01 00 07 e9 00 00 04
+01 4a c0 47 00 00 02 00 01 00 07 e9 00 00 04 01
+4c c0 47 00 00 02 00 01 00 07 e9 00 00 04 01 48
+c0 47 00 00 02 00 01 00 07 e9 00 00 04 01 49 c0
+47 00 00 02 00 01 00 07 e9 00 00 04 01 4b c0 47
+00 00 02 00 01 00 07 e9 00 00 04 01 4d c0 47 00
+00 02 00 01 00 07 e9 00 00 04 01 46 c0 47 00 00
+02 00 01 00 07 e9 00 00 04 01 42 c0 47 00 00 02
+00 01 00 07 e9 00 00 04 01 43 c0 47 00 00 02 00
+01 00 07 e9 00 00 04 01 44 c0 47 00 00 02 00 01
+00 07 e9 00 00 04 01 41 c0 47

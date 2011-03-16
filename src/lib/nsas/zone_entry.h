@@ -32,6 +32,7 @@
 #include "fetchable.h"
 #include "nsas_types.h"
 #include "random_number_generator.h"
+#include "glue_hints.h"
 
 namespace isc {
 namespace nsas {
@@ -96,9 +97,13 @@ public:
      *
      * \param callback The callback itself.
      * \param family Which address family is acceptable as an answer?
+     * \param glue_hints If a non-empty glue-hints object is passed,
+     *        and the NSAS does not have an immediate answer, it will
+     *        call back immediately with one of the glue hints.
      */
     void addCallback(boost::shared_ptr<AddressRequestCallback>
-        callback, AddressFamily family);
+        callback, AddressFamily family,
+        const GlueHints& glue_hints = GlueHints());
 
     /**
      * \short Remove a callback from the list
