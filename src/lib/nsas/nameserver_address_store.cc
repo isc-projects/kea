@@ -54,7 +54,7 @@ NameserverAddressStore::NameserverAddressStore(
         new HashDeleter<ZoneEntry>(*zone_hash_))),
     nameserver_lru_(new LruList<NameserverEntry>((3 * nshashsize),
         new HashDeleter<NameserverEntry>(*nameserver_hash_))),
-    resolver_(resolver)
+    resolver_(resolver.get())
 { }
 
 namespace {
@@ -67,12 +67,12 @@ namespace {
  */
 boost::shared_ptr<ZoneEntry>
 newZone(
-    const boost::shared_ptr<isc::resolve::ResolverInterface>* resolver,
+    isc::resolve::ResolverInterface* resolver,
     const string* zone, const RRClass* class_code,
     const boost::shared_ptr<HashTable<NameserverEntry> >* ns_hash,
     const boost::shared_ptr<LruList<NameserverEntry> >* ns_lru)
 {
-    boost::shared_ptr<ZoneEntry> result(new ZoneEntry(*resolver, *zone, *class_code,
+    boost::shared_ptr<ZoneEntry> result(new ZoneEntry(resolver, *zone, *class_code,
         *ns_hash, *ns_lru));
     return (result);
 }
@@ -84,9 +84,10 @@ NameserverAddressStore::lookup(const string& zone, const RRClass& class_code,
     boost::shared_ptr<AddressRequestCallback> callback, AddressFamily family,
     const GlueHints& glue_hints)
 {
-    pair<bool, boost::shared_ptr<ZoneEntry> > zone_obj(zone_hash_->getOrAdd(HashKey(
-        zone, class_code), boost::bind(newZone, &resolver_, &zone, &class_code,
-        &nameserver_hash_, &nameserver_lru_)));
+    pair<bool, boost::shared_ptr<ZoneEntry> > zone_obj(
+        zone_hash_->getOrAdd(HashKey(zone, class_code),
+                             boost::bind(newZone, resolver_, &zone, &class_code,
+                                         &nameserver_hash_, &nameserver_lru_)));
     if (zone_obj.first) {
         zone_lru_->add(zone_obj.second);
     } else {

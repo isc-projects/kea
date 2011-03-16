@@ -84,9 +84,12 @@ const char* WWW_EXAMPLE_ORG = "192.0.2.254";    ///< Address of www.example.org
 const bool DEBUG_PRINT = false;
 
 class MockResolver : public isc::resolve::ResolverInterface {
-    void resolve(const QuestionPtr& question,
+public:
+    virtual void resolve(const QuestionPtr& question,
                  const ResolverInterface::CallbackPtr& callback) {
     }
+
+    virtual ~MockResolver() {}
 };
 
 
@@ -116,8 +119,9 @@ public:
     QueryStatus     last_;                      ///< What was the last state
     QueryStatus     expected_;                  ///< Expected next state
     OutputBufferPtr question_buffer_;           ///< Question we expect to receive
-    isc::nsas::NameserverAddressStore* nsas_;
-    isc::cache::ResolverCache cache_;
+    boost::shared_ptr<MockResolver> resolver_;  ///< Mock resolver
+    isc::nsas::NameserverAddressStore* nsas_;   ///< Nameserver address store
+    isc::cache::ResolverCache cache_;           ///< Resolver cache
 
     // Data for TCP Server
     size_t          tcp_cumulative_;            ///< Cumulative TCP data received
@@ -143,6 +147,8 @@ public:
         last_(NONE),
         expected_(NONE),
         question_buffer_(new OutputBuffer(BUFFER_SIZE)),
+        resolver_(new MockResolver()),
+        nsas_(new isc::nsas::NameserverAddressStore(resolver_)),
         tcp_cumulative_(0),
         tcp_endpoint_(asio::ip::address::from_string(TEST_ADDRESS), TEST_PORT),
         tcp_length_(0),
@@ -155,8 +161,6 @@ public:
         udp_send_buffer_(new OutputBuffer(BUFFER_SIZE)),
         udp_socket_(service_.get_io_service(), udp::v4())
     {
-        boost::shared_ptr<MockResolver>mock_resolver(new MockResolver());
-        nsas_ = new isc::nsas::NameserverAddressStore(mock_resolver);
     }
 
     /// \brief Set Common Message Bits
@@ -632,8 +636,7 @@ TEST_F(RecursiveQueryTest2, Resolve) {
                          upstream, upstream_root);
     query.setTestServer(TEST_ADDRESS, TEST_PORT);
 
-    // Set up callback for the tor eceive notification that the query has
-    // completed.
+    // Set up callback to receive notification that the query has completed.
     isc::resolve::ResolverInterface::CallbackPtr
         resolver_callback(new ResolverCallback(service_));
 
