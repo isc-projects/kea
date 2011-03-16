@@ -29,22 +29,22 @@
 namespace isc {
 namespace nsas {
 
-class InvalidLimits : public Exception {
+class InvalidLimits : public isc::BadValue {
 public:
     InvalidLimits(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::BadValue(file, line, what) {}
 };
 
-class SumNotOne : public Exception {
+class SumNotOne : public isc::BadValue {
 public:
     SumNotOne(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::BadValue(file, line, what) {}
 };
 
-class InvalidProbValue : public Exception {
+class InvalidProbValue : public isc::BadValue {
 public:
     InvalidProbValue(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::BadValue(file, line, what) {}
 };
 
 
