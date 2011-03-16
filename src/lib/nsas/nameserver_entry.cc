@@ -380,8 +380,7 @@ class NameserverEntry::ResolverCallback :
 };
 
 void
-NameserverEntry::askIP(
-    boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
+NameserverEntry::askIP(isc::resolve::ResolverInterface* resolver,
     const RRType& type, AddressFamily family)
 {
     QuestionPtr question(new Question(Name(getName()), RRClass(getClass()),
@@ -392,8 +391,7 @@ NameserverEntry::askIP(
 }
 
 void
-NameserverEntry::askIP(
-    boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
+NameserverEntry::askIP(isc::resolve::ResolverInterface* resolver,
     boost::shared_ptr<Callback> callback, AddressFamily family)
 {
     Lock lock(mutex_);

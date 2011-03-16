@@ -36,7 +36,7 @@ using namespace dns;
 namespace nsas {
 
 ZoneEntry::ZoneEntry(
-    boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
+    isc::resolve::ResolverInterface* resolver,
     const std::string& name, const isc::dns::RRClass& class_code,
     boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table,
     boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru) :

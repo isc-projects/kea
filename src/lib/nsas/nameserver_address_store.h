@@ -116,7 +116,7 @@ protected:
     boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru_;
     // The resolver we use
 private:
-    boost::shared_ptr<isc::resolve::ResolverInterface> resolver_;
+    isc::resolve::ResolverInterface* resolver_;
     //}@
 };
 
