@@ -112,7 +112,7 @@ GlueHints::getGlue(AddressFamily family) const {
     long int selection = random() % max;
 
     if (family == ANY_OK) {
-        if (selection <= v4s) {
+        if (selection < v4s) {
             return addresses_v4[selection];
         } else {
             return addresses_v6[selection-v4s];
