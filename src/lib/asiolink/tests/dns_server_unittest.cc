@@ -367,7 +367,6 @@ class DNSServerTest : public::testing::Test {
         static void stopIOService(int _no_use_parameter) {
             io_service_is_time_out = true;
             service.stop();
-            service.reset();
         }
 
         bool serverStopSucceed() const {
