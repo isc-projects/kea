@@ -46,8 +46,16 @@ MessageCache::lookup(const isc::dns::Name& qname,
     HashKey entry_key = HashKey(entry_name, RRClass(message_class_));
     MessageEntryPtr msg_entry = message_table_.get(entry_key);
     if(msg_entry) {
-        message_lru_.touch(msg_entry);
-        return (msg_entry->genMessage(time(NULL), response));
+        // Check whether the message entry has expired.
+       if (msg_entry->getExpireTime() > time(NULL)) {
+            message_lru_.touch(msg_entry);
+            return (msg_entry->genMessage(time(NULL), response));
+        } else {
+            // message entry expires, remove it from hash table and lru list.
+            message_table_.remove(entry_key);
+            message_lru_.remove(msg_entry);
+            return (false);
+       }
     }
 
     return (false);

@@ -100,7 +100,7 @@ protected:
 
 // Test that the address is equal to the address in NameserverEntry
 TEST_F(NameserverAddressTest, Address) {
-    EXPECT_TRUE(ns_address_.getAddress().equal( ns_sample_.getAddressAtIndex(TEST_ADDRESS_INDEX)));
+    EXPECT_TRUE(ns_address_.getAddress().equals( ns_sample_.getAddressAtIndex(TEST_ADDRESS_INDEX)));
 
     boost::shared_ptr<NameserverEntry> empty_ne((NameserverEntry*)NULL);
     // It will throw an NullNameserverEntryPointer exception with the empty NameserverEntry shared pointer

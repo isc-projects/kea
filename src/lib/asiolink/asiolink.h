@@ -25,7 +25,6 @@
 #include <asiolink/dns_lookup.h>
 #include <asiolink/dns_answer.h>
 #include <asiolink/simple_callback.h>
-#include <asiolink/recursive_query.h>
 #include <asiolink/interval_timer.h>
 
 #include <asiolink/io_address.h>
@@ -85,7 +84,3 @@
 /// http://think-async.com/Asio/asio-1.3.1/doc/asio/reference/asio_handler_allocate.html
 
 #endif // __ASIOLINK_H
-
-// Local Variables: 
-// mode: c++
-// End: 
