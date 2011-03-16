@@ -26,13 +26,13 @@ class DNSLookup;
 class DNSAnswer;
 class DNSServiceImpl;
 
+/// \brief Handle DNS Queries
 ///
 /// DNSService is the service that handles DNS queries and answers with
 /// a given IOService. This class is mainly intended to hold all the
 /// logic that is shared between the authoritative and the recursive
 /// server implementations. As such, it handles asio, including config
 /// updates (through the 'Checkinprovider'), and listening sockets.
-/// 
 class DNSService {
     ///
     /// \name Constructors and Destructor
@@ -66,8 +66,8 @@ public:
     ///
     /// \param io_service The IOService to work with
     /// \param port the port to listen on
-    /// \param ipv4 If true, listen on ipv4 'any'
-    /// \param ipv6 If true, listen on ipv6 'any'
+    /// \param use_ipv4 If true, listen on ipv4 'any'
+    /// \param use_ipv6 If true, listen on ipv6 'any'
     /// \param checkin Provider for cc-channel events (see \c SimpleCallback)
     /// \param lookup The lookup provider (see \c DNSLookup)
     /// \param answer The answer provider (see \c DNSAnswer)

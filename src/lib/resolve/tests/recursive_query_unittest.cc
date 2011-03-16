@@ -33,6 +33,9 @@
 #include <dns/buffer.h>
 #include <dns/message.h>
 
+#include <nsas/nameserver_address_store.h>
+#include <cache/resolver_cache.h>
+
 // IMPORTANT: We shouldn't directly use ASIO definitions in this test.
 // In particular, we must not include asio.hpp in this file.
 // The asiolink module is primarily intended to be a wrapper that hide the
@@ -41,7 +44,7 @@
 // if we include asio.hpp unless we specify a special compiler option.
 // If we need to test something at the level of underlying ASIO and need
 // their definition, that test should go to asiolink/internal/tests.
-#include <asiolink/recursive_query.h>
+#include <resolve/recursive_query.h>
 #include <asiolink/io_socket.h>
 #include <asiolink/io_service.h>
 #include <asiolink/io_message.h>
@@ -343,6 +346,12 @@ protected:
         private:
             bool* done_;
     };
+    
+    class MockResolver : public isc::resolve::ResolverInterface {
+        void resolve(const QuestionPtr& question,
+                     const ResolverInterface::CallbackPtr& callback) {
+        }
+    };
 
     // This version of mock server just stops the io_service when it is resumed
     // the second time. (Used in the clientTimeout test, where resume
@@ -403,6 +412,8 @@ protected:
     // need to recreate a new one within one onstance of this class
     IOService* io_service_;
     DNSService* dns_service_;
+    isc::nsas::NameserverAddressStore* nsas_;
+    isc::cache::ResolverCache cache_;
     ASIOCallBack* callback_;
     int callback_protocol_;
     int callback_native_;
@@ -418,6 +429,8 @@ RecursiveQueryTest::RecursiveQueryTest() :
 {
     io_service_ = new IOService();
     setDNSService(true, true);
+    boost::shared_ptr<MockResolver>mock_resolver(new MockResolver());
+    nsas_ = new isc::nsas::NameserverAddressStore(mock_resolver);
 }
 
 TEST_F(RecursiveQueryTest, v6UDPSend) {
@@ -519,6 +532,7 @@ TEST_F(RecursiveQueryTest, recursiveSetupV4) {
     setDNSService(true, false);
     uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
     EXPECT_NO_THROW(RecursiveQuery(*dns_service_,
+                                   *nsas_, cache_,
                                    singleAddress(TEST_IPV4_ADDR, port),
                                    singleAddress(TEST_IPV4_ADDR, port)));
 }
@@ -527,6 +541,7 @@ TEST_F(RecursiveQueryTest, recursiveSetupV6) {
     setDNSService(false, true);
     uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
     EXPECT_NO_THROW(RecursiveQuery(*dns_service_,
+                                   *nsas_, cache_,
                                    singleAddress(TEST_IPV6_ADDR, port),
                                    singleAddress(TEST_IPV6_ADDR,port)));
 }
@@ -545,6 +560,7 @@ TEST_F(RecursiveQueryTest, forwarderSend) {
 
     MockServer server(*io_service_);
     RecursiveQuery rq(*dns_service_,
+                      *nsas_, cache_,
                       singleAddress(TEST_IPV4_ADDR, port),
                       singleAddress(TEST_IPV4_ADDR, port));
 
@@ -632,6 +648,7 @@ TEST_F(RecursiveQueryTest, forwardQueryTimeout) {
     // Do the answer
     const uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
     RecursiveQuery query(*dns_service_,
+                         *nsas_, cache_,
                          singleAddress(TEST_IPV4_ADDR, port),
                          singleAddress(TEST_IPV4_ADDR, port),
                          10, 4000, 3000, 2);
@@ -649,8 +666,8 @@ TEST_F(RecursiveQueryTest, forwardQueryTimeout) {
     int num = 0;
     bool read_success = tryRead(sock_, recv_options, 3, &num);
 
-    // The query should fail
-    EXPECT_FALSE(done);
+    // The query should 'succeed' with an error response
+    EXPECT_TRUE(done);
     EXPECT_EQ(3, num);
     EXPECT_TRUE(read_success);
 }
@@ -666,8 +683,7 @@ TEST_F(RecursiveQueryTest, forwardClientTimeout) {
 
     // Prepare the server
     bool done1(true);
-    bool done2(true);
-    MockServerStop2 server(*io_service_, &done1, &done2);
+    MockServerStop server(*io_service_, &done1);
 
     MessagePtr answer(new Message(Message::RENDER));
 
@@ -677,6 +693,7 @@ TEST_F(RecursiveQueryTest, forwardClientTimeout) {
     // Since the lookup timer has not fired, it should retry
     // four times
     RecursiveQuery query(*dns_service_,
+                         *nsas_, cache_,
                          singleAddress(TEST_IPV4_ADDR, port),
                          singleAddress(TEST_IPV4_ADDR, port),
                          200, 480, 4000, 4);
@@ -690,15 +707,14 @@ TEST_F(RecursiveQueryTest, forwardClientTimeout) {
     // we know it'll fail, so make it a shorter timeout
     int recv_options = setSocketTimeout(sock_, 1, 0);
 
-    // Try to read 5 times
+    // Try to read 4 times
     int num = 0;
-    bool read_success = tryRead(sock_, recv_options, 5, &num);
+    bool read_success = tryRead(sock_, recv_options, 4, &num);
 
-    // The query should fail, but we should have kept on trying
+    // The query should fail
     EXPECT_TRUE(done1);
-    EXPECT_FALSE(done2);
-    EXPECT_EQ(5, num);
-    EXPECT_TRUE(read_success);
+    EXPECT_EQ(3, num);
+    EXPECT_FALSE(read_success);
 }
 
 // If we set lookup timeout to lower than querytimeout*retries, we should
@@ -721,6 +737,7 @@ TEST_F(RecursiveQueryTest, forwardLookupTimeout) {
     // Set up the test so that it will retry 5 times, but the lookup
     // timeout will fire after only 3 normal timeouts
     RecursiveQuery query(*dns_service_,
+                         *nsas_, cache_,
                          singleAddress(TEST_IPV4_ADDR, port),
                          singleAddress(TEST_IPV4_ADDR, port),
                          200, 4000, 480, 5);
@@ -737,9 +754,52 @@ TEST_F(RecursiveQueryTest, forwardLookupTimeout) {
     int num = 0;
     bool read_success = tryRead(sock_, recv_options, 5, &num);
 
-    // The query should fail
-    EXPECT_FALSE(done);
+    // The query should fail and respond with an error
+    EXPECT_TRUE(done);
     EXPECT_EQ(3, num);
+    EXPECT_FALSE(read_success);
+}
+
+// Set everything very low and see if this doesn't cause weird
+// behaviour
+TEST_F(RecursiveQueryTest, lowtimeouts) {
+    // Prepare the service (we do not use the common setup, we do not answer
+    setDNSService();
+
+    // Prepare the socket
+    sock_ = createTestSocket();
+
+    // Prepare the server
+    bool done(true);
+    MockServerStop server(*io_service_, &done);
+
+    MessagePtr answer(new Message(Message::RENDER));
+
+    // Do the answer
+    const uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
+    // Set up the test so that it will retry 5 times, but the lookup
+    // timeout will fire after only 3 normal timeouts
+    RecursiveQuery query(*dns_service_,
+                         *nsas_, cache_,
+                         singleAddress(TEST_IPV4_ADDR, port),
+                         singleAddress(TEST_IPV4_ADDR, port),
+                         1, 1, 1, 1);
+    Question question(Name("example.net"), RRClass::IN(), RRType::A());
+    OutputBufferPtr buffer(new OutputBuffer(0));
+    query.resolve(question, answer, buffer, &server);
+
+    // Run the test
+    io_service_->run();
+
+    int recv_options = setSocketTimeout(sock_, 1, 0);
+
+    // Try to read 5 times, should stop after 3 reads
+    int num = 0;
+    bool read_success = tryRead(sock_, recv_options, 5, &num);
+
+    // The query should fail and respond with an error
+    EXPECT_TRUE(done);
+    EXPECT_EQ(1, num);
     EXPECT_FALSE(read_success);
 }
 
@@ -755,7 +815,8 @@ TEST_F(RecursiveQueryTest, DISABLED_recursiveSendOk) {
     
     MockServerStop server(*io_service_, &done);
     vector<pair<string, uint16_t> > empty_vector;
-    RecursiveQuery rq(*dns_service_, empty_vector, empty_vector, 10000, 0);
+    RecursiveQuery rq(*dns_service_, *nsas_, cache_, empty_vector,
+                      empty_vector, 10000, 0);
 
     Question q(Name("www.isc.org"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
@@ -780,7 +841,8 @@ TEST_F(RecursiveQueryTest, DISABLED_recursiveSendNXDOMAIN) {
     
     MockServerStop server(*io_service_, &done);
     vector<pair<string, uint16_t> > empty_vector;
-    RecursiveQuery rq(*dns_service_, empty_vector, empty_vector, 10000, 0);
+    RecursiveQuery rq(*dns_service_, *nsas_, cache_, empty_vector,
+                      empty_vector, 10000, 0);
 
     Question q(Name("wwwdoesnotexist.isc.org"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
@@ -792,5 +854,8 @@ TEST_F(RecursiveQueryTest, DISABLED_recursiveSendNXDOMAIN) {
     EXPECT_EQ(Rcode::NXDOMAIN(), answer->getRcode());
     EXPECT_EQ(0, answer->getRRCount(Message::SECTION_ANSWER));
 }
+
+// TODO: add tests that check whether the cache is updated on succesfull
+// responses, and not updated on failures.
 
 }

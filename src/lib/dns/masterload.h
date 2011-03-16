@@ -110,7 +110,7 @@ typedef boost::function<void(RRsetPtr)> MasterLoadCallback;
 ///  but this is not even though it's valid per RFC1035:
 /// \code example.com. IN 3600 A 192.0.2.1
 /// \endcode
-/// - <TTL>, <RRCLASS>, and <RRTYPE> must be recognizable by the \c RRTTL,
+/// - "TTL", "RRCLASS", and "RRTYPE" must be recognizable by the \c RRTTL,
 ///   RRClass and RRType class implementations of this library.  In particular,
 ///   as of this writing TTL must be a decimal number (a convenient extension
 ///   such as "1H" instead of 3600 cannot be used).  Not all standard RR
@@ -213,7 +213,7 @@ typedef boost::function<void(RRsetPtr)> MasterLoadCallback;
 /// \param filename A path to a master zone file to be loaded.
 /// \param origin The origin name of the zone.
 /// \param zone_class The RR class of the zone.
-/// \param callbck A callback functor or function that is to be called
+/// \param callback A callback functor or function that is to be called
 /// for each RRset.
 void masterLoad(const char* const filename, const Name& origin,
                 const RRClass& zone_class, MasterLoadCallback callback);
@@ -231,7 +231,7 @@ void masterLoad(const char* const filename, const Name& origin,
 /// \param input An input stream object that is to emit zone's RRs.
 /// \param origin The origin name of the zone.
 /// \param zone_class The RR class of the zone.
-/// \param callbck A callback functor or function that is to be called for
+/// \param callback A callback functor or function that is to be called for
 /// each RRset.
 void masterLoad(std::istream& input, const Name& origin,
                 const RRClass& zone_class, MasterLoadCallback callback);
