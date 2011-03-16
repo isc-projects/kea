@@ -164,7 +164,7 @@ public:
     /// Sets up the common bits of a response message returned by the handlers.
     ///
     /// \param msg Message buffer in RENDER mode.
-    /// \param qid QIT to set the message to
+    /// \param qid QID to set the message to
     void setCommonMessage(isc::dns::Message& msg, uint16_t qid = 0) {
         msg.setQid(qid);
         msg.setHeaderFlag(Message::HEADERFLAG_QR);
@@ -277,11 +277,8 @@ public:
         // The QID in the incoming data is random so set it to 0 for the
         // data comparison check. (It is set to 0 in the buffer containing
         // the expected data.)
-        uint16_t qid = readUint16(udp_receive_buffer_);
-        udp_receive_buffer_[0] = udp_receive_buffer_[1] = 0;
-
-        // Check that question we received is what was expected.
-        checkReceivedPacket(udp_receive_buffer_, length);
+        // And check that question we received is what was expected.
+        uint16_t qid = checkReceivedPacket(udp_receive_buffer_, length);
 
         // The message returned depends on what state we are in.  Set up
         // common stuff first: bits not mentioned are set to 0.
@@ -432,13 +429,13 @@ public:
 
         // Check that question we received is what was expected.  Note that we
         // have to ignore the two-byte header in order to parse the message.
-        checkReceivedPacket(tcp_receive_buffer_ + 2, length - 2);
+        qid_t qid = checkReceivedPacket(tcp_receive_buffer_ + 2, length - 2);
 
         // Return a message back.  This is a referral to example.org, which
         // should result in another query over UDP.  Note the setting of the
         // QID in the returned message with what was in the received message.
         Message msg(Message::RENDER);
-        setCommonMessage(msg, readUint16(tcp_receive_buffer_));
+        setCommonMessage(msg, qid);
         setReferralExampleOrg(msg);
 
         // Convert to wire format
@@ -500,7 +497,8 @@ public:
     ///        the case of UDP data, and an offset into the buffer past the
     ///        count field for TCP data.
     /// \param length Length of data.
-    void checkReceivedPacket(uint8_t* data, size_t length) {
+    /// \return The QID of the message
+    qid_t checkReceivedPacket(uint8_t* data, size_t length) {
 
         // Decode the received buffer.
         InputBuffer buffer(data, length);
@@ -512,6 +510,8 @@ public:
 
         Question question = **(message.beginQuestion());
         EXPECT_TRUE(question == *question_);
+
+        return message.getQid();
     }
 };
 
