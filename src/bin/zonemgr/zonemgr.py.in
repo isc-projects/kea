@@ -149,16 +149,13 @@ class ZonemgrRefresh:
 
     def _zone_not_exist(self, zone_name_class):
         """ Zone doesn't belong to zonemgr"""
-        if zone_name_class in self._zonemgr_refresh_info.keys():
-            return False
-        return True
+        return not zone_name_class in self._zonemgr_refresh_info
 
     def zone_refresh_success(self, zone_name_class):
         """Update zone info after zone refresh success"""
         if (self._zone_not_exist(zone_name_class)):
             raise ZonemgrException("[b10-zonemgr] Zone (%s, %s) doesn't "
                                    "belong to zonemgr" % zone_name_class)
-            return
         self.zonemgr_reload_zone(zone_name_class)
         self._set_zone_refresh_timer(zone_name_class)
         self._set_zone_state(zone_name_class, ZONE_OK)
@@ -169,7 +166,6 @@ class ZonemgrRefresh:
         if (self._zone_not_exist(zone_name_class)):
             raise ZonemgrException("[b10-zonemgr] Zone (%s, %s) doesn't "
                                    "belong to zonemgr" % zone_name_class)
-            return
         # Is zone expired?
         if (self._zone_is_expired(zone_name_class)):
             self._set_zone_state(zone_name_class, ZONE_EXPIRED)
@@ -182,7 +178,6 @@ class ZonemgrRefresh:
         if (self._zone_not_exist(zone_name_class)):
             raise ZonemgrException("[b10-zonemgr] Notified zone (%s, %s) "
                                    "doesn't belong to zonemgr" % zone_name_class)
-            return
         self._set_zone_notifier_master(zone_name_class, master)
         self._set_zone_notify_timer(zone_name_class)
 
