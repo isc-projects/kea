@@ -226,6 +226,7 @@ private:
     // if we have a response for our query stored already. if
     // so, call handlerecursiveresponse(), if not, we call send()
     void doLookup() {
+        cur_zone_ = ".";
         dlog("doLookup: try cache");
         Message cached_message(Message::RENDER);
         isc::resolve::initResponseMessage(question_, cached_message);
@@ -241,7 +242,6 @@ private:
                 stop();
             }
         } else {
-            cur_zone_ = ".";
             send();
         }
         
@@ -260,13 +260,13 @@ private:
                 test_server_.second, buffer_, this,
                 query_timeout_);
             io_.get_io_service().post(query);
-		} else {
-	        IOFetch query(protocol_, io_, question_,
-	            current_ns_address.getAddress(),
-	            53, buffer_, this,
-	            query_timeout_);
-	        io_.get_io_service().post(query);
-		}
+        } else {
+            IOFetch query(protocol_, io_, question_,
+                current_ns_address.getAddress(),
+                53, buffer_, this,
+                query_timeout_);
+            io_.get_io_service().post(query);
+        }
     }
     
     // 'general' send; if we are in forwarder mode, send a query to
@@ -389,20 +389,22 @@ private:
 
             // auth section should have at least one RRset
             // and one of them should be an NS (otherwise
-            // classifier should have error'd)
-            // TODO: should we check if it really is subzone?
+            // classifier should have error'd) to a subdomain
             for (RRsetIterator rrsi = incoming.beginSection(Message::SECTION_AUTHORITY);
                  rrsi != incoming.endSection(Message::SECTION_AUTHORITY) && !found_ns;
                  ++rrsi) {
                 ConstRRsetPtr rrs = *rrsi;
                 if (rrs->getType() == RRType::NS()) {
-                    // TODO: make cur_zone_ a Name instead of a string
-                    // (this requires a few API changes in related
-                    // libraries, so as not to need many conversions)
-                    cur_zone_ = rrs->getName().toText();
-                    dlog("Referred to zone " + cur_zone_);
-                    found_ns = true;
-                    break;
+                    NameComparisonResult compare(Name(cur_zone_).compare(rrs->getName()));
+                    if (compare.getRelation() == NameComparisonResult::SUPERDOMAIN) {
+                        // TODO: make cur_zone_ a Name instead of a string
+                        // (this requires a few API changes in related
+                        // libraries, so as not to need many conversions)
+                        cur_zone_ = rrs->getName().toText();
+                        dlog("Referred to zone " + cur_zone_);
+                        found_ns = true;
+                        break;
+                    }
                 }
             }
 
@@ -494,6 +496,7 @@ public:
         callback_called_(false),
         nsas_(nsas),
         cache_(cache),
+        cur_zone_("."),
         nsas_callback_(new ResolverNSASCallback(this)),
         nsas_callback_out_(false),
         outstanding_events_(0)
