@@ -30,6 +30,7 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/buffer.h>
+#include <dns/rcode.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 
@@ -180,6 +181,7 @@ main(int argc, char* argv[]) {
                                                              isc::dns::RRClass::IN(),
                                                              "2001:500:3::42"));
         isc::dns::MessagePtr priming_result(new isc::dns::Message(isc::dns::Message::RENDER));
+        priming_result->setRcode(isc::dns::Rcode::NOERROR());
         priming_result->addQuestion(root_question);
         priming_result->addRRset(isc::dns::Message::SECTION_ANSWER, root_ns_rrset);
         priming_result->addRRset(isc::dns::Message::SECTION_ADDITIONAL, root_a_rrset);

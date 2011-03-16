@@ -1,0 +1,31 @@
+#
+# A response that the TTL is quite large(> 7days)
+#
+##
+## header
+##
+# Transaction ID: 0x0d1f
+# Flags: 0x8580 (Standard query response, No error)
+0d1f 8580
+# Questions: 1
+# Answer RRs: 1
+# Authority RRs: 3
+# Additional RRs: 3
+00 01 00 01 00 01 00 00
+##
+## Query
+##
+# test.example.org: type A, class IN
+04 74 65 73 74 07 65 78 61 6d 70 6c 65 03 6f 72 67 00 00 01 00 01
+##
+## Answer
+##
+# test.example.org: type A, class IN, addr 127.0.0.1
+# TTL: 7 days, 1 second (604801 seconds)
+c0 0c 00 01 00 01 00 09 3a 81 00 04 7f 00 00 01
+##
+## Authority
+##
+# example.org: type NS, class IN, ns ns1.example.org
+# TTL: 7 days, 1 second (604801 seconds)
+c0 11 00 02 00 01 00 09 3a 81 00 06 03 6e 73 31 c0 11

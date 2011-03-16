@@ -29,5 +29,6 @@ libcache_la_SOURCES  += rrset_entry.h rrset_entry.cc
 libcache_la_SOURCES  += cache_entry_key.h cache_entry_key.cc
 libcache_la_SOURCES  += rrset_copy.h rrset_copy.cc
 libcache_la_SOURCES  += local_zone_data.h local_zone_data.cc
+libcache_la_SOURCES  += message_utility.h message_utility.cc
 
 CLEANFILES = *.gcno *.gcda

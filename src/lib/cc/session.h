@@ -99,7 +99,7 @@ namespace isc {
             /// \brief Sets the default timeout for blocking reads
             ///        in this session to the given number of milliseconds
             /// \param milliseconds the timeout for blocking reads in
-            ///        milliseconds, if this is set to 0, reads will block
+            ///        milliseconds; if this is set to 0, reads will block
             ///        forever.
             virtual void setTimeout(size_t milliseconds) = 0;
 
