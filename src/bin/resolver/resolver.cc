@@ -585,11 +585,6 @@ Resolver::updateConfig(ConstElementPtr config) {
 }
 
 void
-Resolver::setConfigured() {
-    configured_ = true;
-}
-
-void
 Resolver::setForwardAddresses(const AddressList& addresses)
 {
     impl_->setForwardAddresses(addresses, dnss_);

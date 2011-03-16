@@ -373,19 +373,17 @@ ModuleSpec::validateSpecList(ConstElementPtr spec, ConstElementPtr data,
     BOOST_FOREACH(maptype m, data->mapValue()) {
         bool found = false;
         // Ignore 'version' as a config element
-        if (m.first.compare("version") == 0) {
-            found = true;
-        } else {
+        if (m.first.compare("version") != 0) {
             BOOST_FOREACH(ConstElementPtr cur_spec_el, spec->listValue()) {
                 if (cur_spec_el->get("item_name")->stringValue().compare(m.first) == 0) {
                     found = true;
                 }
             }
-        }
-        if (!found) {
-            validated = false;
-            if (errors) {
-                errors->add(Element::create("Unknown item " + m.first));
+            if (!found) {
+                validated = false;
+                if (errors) {
+                    errors->add(Element::create("Unknown item " + m.first));
+                }
             }
         }
     }
