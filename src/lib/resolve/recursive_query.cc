@@ -620,9 +620,10 @@ public:
             dlog("RTT: " + boost::lexical_cast<std::string>(rtt));
             current_ns_address.updateRTT(rtt);
             
-            Message incoming(Message::PARSE);
-            InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
             try {
+                Message incoming(Message::PARSE);
+                InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
+
                 incoming.fromWire(ibuf);
 
                 buffer_->clear();
