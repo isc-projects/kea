@@ -281,6 +281,7 @@ private:
         if (test_server_.second != 0) {
             dlog("Sending upstream query (" + question_.toText() +
                  ") to test server at " + test_server_.first);
+            gettimeofday(&current_ns_qsent_time, NULL);
             ++outstanding_events_;
             IOFetch query(protocol, io_, question_,
                 test_server_.first,
@@ -293,6 +294,7 @@ private:
             dlog("Sending upstream query (" + question_.toText() +
                 ") to " + upstream_->at(serverIndex).first);
             ++outstanding_events_;
+            gettimeofday(&current_ns_qsent_time, NULL);
             IOFetch query(protocol, io_, question_,
                 upstream_->at(serverIndex).first,
                 upstream_->at(serverIndex).second, buffer_, this,
