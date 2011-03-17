@@ -22,10 +22,10 @@ import tempfile
 from zonemgr import *
 
 ZONE_NAME_CLASS1_IN = ("sd.cn.", "IN")
-ZONE_NAME_CLASS2_CH = ("tw.cn", "CH")
+ZONE_NAME_CLASS2_CH = ("tw.cn.", "CH")
 ZONE_NAME_CLASS3_IN = ("example.com", "IN")
 ZONE_NAME_CLASS1_CH = ("sd.cn.", "CH")
-ZONE_NAME_CLASS2_IN = ("tw.cn", "IN")
+ZONE_NAME_CLASS2_IN = ("tw.cn.", "IN")
 
 MAX_TRANSFER_TIMEOUT = 14400
 LOWERBOUND_REFRESH = 10
@@ -70,6 +70,19 @@ class FakeConfig:
 class MyZonemgrRefresh(ZonemgrRefresh):
     def __init__(self):
         self._master_socket, self._slave_socket = socket.socketpair()
+        self._zonemgr_refresh_info = {}
+
+        def get_zone_soa(zone_name, db_file):
+            if zone_name == 'sd.cn.':
+                return (1, 2, 'sd.cn.', 'cn.sd.', 21600, 'SOA', None,
+                        'a.dns.cn. root.cnnic.cn. 2009073106 7200 3600 2419200 21600')
+            elif zone_name == 'tw.cn.':
+                return (1, 2, 'tw.cn.', 'cn.sd.', 21600, 'SOA', None,
+                        'a.dns.cn. root.cnnic.cn. 2009073112 7200 3600 2419200 21600')
+            else:
+                return None
+        sqlite3_ds.get_zone_soa = get_zone_soa
+
         ZonemgrRefresh.__init__(self, MySession(), "initdb.file",
             self._slave_socket, FakeConfig())
         current_time = time.time()
@@ -79,7 +92,7 @@ class MyZonemgrRefresh(ZonemgrRefresh):
          'next_refresh_time': current_time + 6500, 
          'zone_soa_rdata': 'a.dns.cn. root.cnnic.cn. 2009073105 7200 3600 2419200 21600', 
          'zone_state': 0},
-         ('tw.cn', 'CH'): {
+         ('tw.cn.', 'CH'): {
          'last_refresh_time': current_time, 
          'next_refresh_time': current_time + 6900, 
          'zone_soa_rdata': 'a.dns.cn. root.cnnic.cn. 2009073112 7200 3600 2419200 21600', 
@@ -365,7 +378,7 @@ class TestZonemgrRefresh(unittest.TestCase):
                     'next_refresh_time': time1 + 7200, 
                     'zone_soa_rdata': 'a.dns.cn. root.cnnic.cn. 2009073105 7200 3600 2419200 21600', 
                     'zone_state': ZONE_OK},
-                ("tw.cn","CH"):{
+                ("tw.cn.","CH"):{
                     'last_refresh_time': time1 - 7200, 
                     'next_refresh_time': time1, 
                     'refresh_timeout': time1 + MAX_TRANSFER_TIMEOUT, 
@@ -433,7 +446,8 @@ class TestZonemgrRefresh(unittest.TestCase):
                     "lowerbound_refresh" : 60,
                     "lowerbound_retry" : 30,
                     "max_transfer_timeout" : 19800,
-                    "jitter_scope" : 0.25
+                    "jitter_scope" : 0.25,
+                    "secondary_zones": []
                 }
         self.zone_refresh.update_config_data(config_data)
         self.assertEqual(60, self.zone_refresh._lowerbound_refresh)
