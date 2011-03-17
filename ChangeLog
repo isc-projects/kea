@@ -1,3 +1,8 @@
+  xxx.  [bug]		naokikambe
+	Fixed that the ModuleCCSession object may group_unsubscribe in the
+	closed CC session in being deleted.
+	(Trac #698, git tbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdttbd)
+
   207.  [func]		jelte
 	Resolver now starts listening on localhost:53 if no configuration
 	is set.
