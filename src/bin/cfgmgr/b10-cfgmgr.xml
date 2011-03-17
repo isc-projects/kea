@@ -84,10 +84,7 @@
 <!-- TODO: does it periodically save configuration? -->
     </para>
 
-    <para>
-      The daemon has no command line options.  It ignores any arguments.
 <!-- TODO: add a verbose or quiet switch so it is not so noisy -->
-    </para>
   </refsect1>
 
   <refsect1>
