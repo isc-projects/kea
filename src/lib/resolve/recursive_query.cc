@@ -27,6 +27,7 @@
 #include <dns/question.h>
 #include <dns/message.h>
 #include <dns/opcode.h>
+#include <dns/exceptions.h>
 
 #include <resolve/resolve.h>
 #include <cache/resolver_cache.h>
@@ -619,22 +620,44 @@ public:
             dlog("RTT: " + boost::lexical_cast<std::string>(rtt));
             current_ns_address.updateRTT(rtt);
             
-            Message incoming(Message::PARSE);
-            InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
-            incoming.fromWire(ibuf);
+            try {
+                Message incoming(Message::PARSE);
+                InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
 
-            buffer_->clear();
-            if (recursive_mode() &&
-                incoming.getRcode() == Rcode::NOERROR()) {
-                done_ = handleRecursiveAnswer(incoming);
-            } else {
-                isc::resolve::copyResponseMessage(incoming, answer_message_);
-                done_ = true;
-            }
-            
-            if (done_) {
-                callCallback(true);
-                stop();
+                incoming.fromWire(ibuf);
+
+                buffer_->clear();
+                if (recursive_mode() &&
+                    incoming.getRcode() == Rcode::NOERROR()) {
+                    done_ = handleRecursiveAnswer(incoming);
+                } else {
+                    isc::resolve::copyResponseMessage(incoming, answer_message_);
+                    done_ = true;
+                }
+                if (done_) {
+                    callCallback(true);
+                    stop();
+                }
+            } catch (const isc::dns::DNSProtocolError& dpe) {
+                dlog("DNS Protocol error in answer for " +
+                     question_.toText() + " " +
+                     question_.getType().toText() + ": " +
+                     dpe.what());
+                // Right now, we treat this similar to timeouts
+                // (except we don't store RTT)
+                // We probably want to make this an integral part
+                // of the fetch data process. (TODO)
+                if (retries_--) {
+                    dlog("Retrying");
+                    send();
+                } else {
+                    dlog("Giving up");
+                    if (!callback_called_) {
+                        makeSERVFAIL();
+                        callCallback(true);
+                    }
+                    stop();
+                }
             }
         } else if (!done_ && retries_--) {
             // Query timed out, but we have some retries, so send again
