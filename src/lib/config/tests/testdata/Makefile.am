@@ -21,6 +21,7 @@ EXTRA_DIST += data22_6.data
 EXTRA_DIST += data22_7.data
 EXTRA_DIST += data22_8.data
 EXTRA_DIST += data22_9.data
+EXTRA_DIST += data22_10.data
 EXTRA_DIST += spec1.spec
 EXTRA_DIST += spec2.spec
 EXTRA_DIST += spec3.spec
