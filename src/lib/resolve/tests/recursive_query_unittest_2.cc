@@ -101,13 +101,13 @@ public:
     /// Set before the query and then by each "server" when responding.
     enum QueryStatus {
         NONE = 0,                   ///< Default
-        UDP_ROOT,                   ///< Query root server over UDP
-        UDP_ORG,                    ///< Query ORG server over UDP
-        TCP_ORG,                    ///< Query ORG server over TCP
-        UDP_EXAMPLE_ORG_BAD,        ///< Query EXAMPLE.ORG server over UDP
+        UDP_ROOT = 1,               ///< Query root server over UDP
+        UDP_ORG = 2,                ///< Query ORG server over UDP
+        TCP_ORG = 3,                ///< Query ORG server over TCP
+        UDP_EXAMPLE_ORG_BAD = 4,    ///< Query EXAMPLE.ORG server over UDP
                                     ///< (return malformed packet)
-        UDP_EXAMPLE_ORG,            ///< Query EXAMPLE.ORG server over UDP
-        COMPLETE                    ///< Query is complete
+        UDP_EXAMPLE_ORG = 5,        ///< Query EXAMPLE.ORG server over UDP
+        COMPLETE = 6                ///< Query is complete
     };
 
     // Common stuff
@@ -287,6 +287,10 @@ public:
         Message msg(Message::RENDER);
         setCommonMessage(msg, qid);
 
+        // In the case of UDP_EXAMPLE_ORG_BAD, we shall mangle the
+        // response
+        bool mangle_response = false;
+
         // Set up state-dependent bits:
         switch (expected_) {
         case UDP_ROOT:
@@ -310,7 +314,9 @@ public:
          case UDP_EXAMPLE_ORG_BAD:
             // Return the answer to the question.
             setAnswerWwwExampleOrg(msg);
-            // Set new expected in check below
+            // Mangle the response to enfore another query
+            mangle_response = true;
+            expected_ = UDP_EXAMPLE_ORG;
             break;
 
          case UDP_EXAMPLE_ORG:
@@ -328,11 +334,10 @@ public:
         MessageRenderer renderer(*udp_send_buffer_);
         msg.toWire(renderer);
 
-        if (expected_ == UDP_EXAMPLE_ORG_BAD) {
+        if (mangle_response) {
             // mangle the packet a bit
             // set additional to one more
             udp_send_buffer_->writeUint8At(3, 11);
-            expected_ = UDP_EXAMPLE_ORG;
         }
 
         // Return a message back to the IOFetch object (after setting the
