@@ -1,3 +1,4 @@
+// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2010  CZ NIC
 //
 // Permission to use, copy, modify, and/or distribute this software for any
