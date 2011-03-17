@@ -1,3 +1,9 @@
+  208.  [bug]*		jelte
+	Resolver now answers REFUSED on queries that are not for class IN.
+	This includes the various CH TXT queries, which will be added
+	later.
+	(git 012f9e78dc611c72ea213f9bd6743172e1a2ca20)
+
   207.  [func]		jelte
 	Resolver now starts listening on localhost:53 if no configuration
 	is set.
