@@ -174,6 +174,9 @@ NameserverEntry::updateAddressRTTAtIndex(uint32_t rtt, size_t index,
     uint32_t old_rtt = addresses_[family][index].getRTT();
     uint32_t new_rtt = (uint32_t)(old_rtt * UPDATE_RTT_ALPHA + rtt *
         (1 - UPDATE_RTT_ALPHA));
+    if (new_rtt == 0) {
+        new_rtt = 1;
+    }
     addresses_[family][index].setRTT(new_rtt);
 }
 

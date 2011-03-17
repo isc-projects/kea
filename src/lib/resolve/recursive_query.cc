@@ -608,18 +608,19 @@ public:
             // Update the NSAS with the time it took
             struct timeval cur_time;
             gettimeofday(&cur_time, NULL);
-            uint32_t rtt;
-            if (cur_time.tv_sec >= current_ns_qsent_time.tv_sec ||
-                cur_time.tv_usec > current_ns_qsent_time.tv_usec) {
+            uint32_t rtt = 0;
+
+            // Only calculate RTT if it is positive
+            if (cur_time.tv_sec > current_ns_qsent_time.tv_sec ||
+                (cur_time.tv_sec == current_ns_qsent_time.tv_sec &&
+                 cur_time.tv_usec > current_ns_qsent_time.tv_usec)) {
                 rtt = 1000 * (cur_time.tv_sec - current_ns_qsent_time.tv_sec);
                 rtt += (cur_time.tv_usec - current_ns_qsent_time.tv_usec) / 1000;
-            } else {
-                rtt = 1;
             }
 
             dlog("RTT: " + boost::lexical_cast<std::string>(rtt));
             current_ns_address.updateRTT(rtt);
-            
+
             try {
                 Message incoming(Message::PARSE);
                 InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
