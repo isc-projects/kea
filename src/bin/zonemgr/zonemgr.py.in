@@ -34,6 +34,7 @@ import threading
 import select
 import socket
 import errno
+import copy
 from isc.datasrc import sqlite3_ds
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
@@ -411,6 +412,28 @@ class ZonemgrRefresh:
 
     def update_config_data(self, new_config):
         """ update ZonemgrRefresh config """
+        backup = copy.copy(self._zonemgr_refresh_info)
+        try:
+            required = {}
+            # Add new zones
+            for secondary_zone in new_config.get('secondary_zones'):
+                name_class = (secondary_zone['name'], secondary_zone['class'])
+                required[name_class] = True
+                # Add it only if it isn't there already
+                if not name_class in self._zonemgr_refresh_info:
+                    self.zonemgr_add_zone(name_class)
+            # Drop the zones that are no longer there
+            # Do it in two phases, python doesn't like deleting while iterating
+            to_drop = []
+            for old_zone in self._zonemgr_refresh_info:
+                if not old_zone in required:
+                    to_drop.append(old_zone)
+            for drop in to_drop:
+                del self._zonemgr_refresh_info[drop]
+        # If we are not able to find it in database, restore the original
+        except:
+            self._zonemgr_refresh_info = backup
+            raise
         self._lowerbound_refresh = new_config.get('lowerbound_refresh')
         self._lowerbound_retry = new_config.get('lowerbound_retry')
         self._max_transfer_timeout = new_config.get('max_transfer_timeout')
@@ -480,13 +503,15 @@ class Zonemgr:
         return answer
 
     def _config_data_check(self, config_data):
-        """Check whether the new config data is valid or 
-        not. """ 
+        """Check whether the new config data is valid or
+        not. It contains only basic logic, not full check against
+        database."""
         # jitter should not be bigger than half of the original value
         if config_data.get('jitter_scope') > 0.5:
             config_data['jitter_scope'] = 0.5
             log_msg("[b10-zonemgr] jitter_scope is too big, its value will "
                       "be set to 0.5") 
+
 
     def _parse_cmd_params(self, args, command):
         zone_name = args.get("zone_name")
