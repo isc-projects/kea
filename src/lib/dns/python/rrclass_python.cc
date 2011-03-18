@@ -168,7 +168,7 @@ RRClass_init(s_RRClass* self, PyObject* args) {
         } else if (PyArg_ParseTuple(args, "l", &i)) {
             if (i < 0 || i > 0xffff) {
                 PyErr_Clear();
-                PyErr_SetString(PyExc_OverflowError,
+                PyErr_SetString(PyExc_ValueError,
                                 "RR class number out of range");
                 return (-1);
             }

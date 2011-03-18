@@ -32,8 +32,8 @@ class RRClassTest(unittest.TestCase):
         b = bytearray(1)
         b[0] = 123
         self.assertRaises(TypeError, RRClass, b)
-        self.assertRaises(OverflowError, RRClass, 65536)
-        self.assertRaises(OverflowError, RRClass, -12)
+        self.assertRaises(ValueError, RRClass, 65536)
+        self.assertRaises(ValueError, RRClass, -12)
         self.assertEqual(self.c1, RRClass(1))
         b = bytearray()
         self.c1.to_wire(b)

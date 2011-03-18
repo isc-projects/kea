@@ -305,7 +305,7 @@ EDNS_setUDPSize(s_EDNS* self, PyObject* args) {
         return (NULL);
     }
     if (size < 0 || size > 0xffff) {
-        PyErr_SetString(PyExc_OverflowError,
+        PyErr_SetString(PyExc_ValueError,
                         "UDP size is not an unsigned 16-bit integer");
         return (NULL);
     }
