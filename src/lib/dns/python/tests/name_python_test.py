@@ -95,15 +95,15 @@ class NameTest(unittest.TestCase):
         b = bytearray()
         b += b'\x07example'*32 + b'\x03com\x00'
         self.assertRaises(DNSMessageFORMERR, Name, b, 0)
-        self.assertRaises(TypeError, Name, b, -1)
+        self.assertRaises(IndexError, Name, b, -1)
 
     def test_at(self):
         self.assertEqual(7, self.name1.at(0))
         self.assertEqual(101, self.name1.at(1))
         self.assertRaises(IndexError, self.name1.at, 100)
+        self.assertRaises(IndexError, self.name1.at, 0x10000)
+        self.assertRaises(IndexError, self.name1.at, -1)
         self.assertRaises(TypeError, self.name1.at, "wrong")
-        self.assertRaises(OverflowError, self.name1.at, -1)
-        self.assertRaises(OverflowError, self.name1.at, 0x10000)
 
     def test_get_length(self):
         self.assertEqual(13, self.name1.get_length())
@@ -156,20 +156,18 @@ class NameTest(unittest.TestCase):
         self.assertRaises(TypeError, self.name1.split, 1, "wrong")
         self.assertRaises(IndexError, self.name1.split, 123, 1)
         self.assertRaises(IndexError, self.name1.split, 1, 123)
-        # Out of range
-        self.assertRaises(OverflowError, self.name1.split, -1, 123)
-        self.assertRaises(OverflowError, self.name1.split, 0, -1)
-        self.assertRaises(OverflowError, self.name1.split, 1, 0x10000)
-        self.assertRaises(OverflowError, self.name1.split, 0x10000, 5)
+        self.assertRaises(IndexError, self.name1.split, 0x10000, 5)
+        self.assertRaises(IndexError, self.name1.split, -1, -1)
+        self.assertRaises(IndexError, self.name1.split, 0, -1)
+        self.assertRaises(IndexError, self.name1.split, -1, 0x10000)
 
         s = self.name1.split(1)
         self.assertEqual("com.", s.to_text())
         s = self.name1.split(0)
         self.assertEqual("example.com.", s.to_text())
         self.assertRaises(IndexError, self.name1.split, 123)
-        # Out of range
-        self.assertRaises(OverflowError, self.name1.split, 0x10000)
-        self.assertRaises(OverflowError, self.name1.split, -123)
+        self.assertRaises(IndexError, self.name1.split, 0x10000)
+        self.assertRaises(IndexError, self.name1.split, -123)
 
     def test_reverse(self):
         self.assertEqual("com.example.", self.name1.reverse().to_text())

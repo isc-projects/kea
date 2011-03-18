@@ -330,7 +330,8 @@ Name_init(s_Name* self, PyObject* args) {
                          PyObject_AsCharBuffer(bytes_obj, &bytes, &len) != -1) {
         try {
             if (position < 0) {
-                PyErr_SetString(PyExc_TypeError,
+                // Throw IndexError here since name index should be unsigned
+                PyErr_SetString(PyExc_IndexError,
                                 "Name index shouldn't be negative");
                 return (-1);
             }
@@ -372,9 +373,10 @@ Name_at(s_Name* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "i", &pos)) {
         return (NULL);
     }
-    if (pos < 0 || pos > 0xffff) {
-        PyErr_SetString(PyExc_OverflowError,
-                        "name index out of range");
+    if (pos < 0) {
+        // Throw IndexError here since name index should be unsigned
+        PyErr_SetString(PyExc_IndexError,
+                        "name index shouldn't be negative");
         return (NULL);
     }
 
@@ -416,10 +418,10 @@ static PyObject*
 Name_toWire(s_Name* self, PyObject* args) {
     PyObject* bytes;
     s_MessageRenderer* mr;
-    
+
     if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
         PyObject* bytes_o = bytes;
-        
+
         OutputBuffer buffer(Name::MAX_WIRE);
         self->name->toWire(buffer);
         PyObject* name_bytes = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()), buffer.getLength());
@@ -474,9 +476,10 @@ Name_split(s_Name* self, PyObject* args) {
     s_Name* ret = NULL;
 
     if (PyArg_ParseTuple(args, "ii", &first, &n)) {
-        if (first < 0 || first > 0xffff || n < 0 || n > 0xffff) {
-            PyErr_SetString(PyExc_OverflowError,
-                            "name index out of range");
+        if (first < 0 || n < 0) {
+            // Throw IndexError here since name index should be unsigned
+            PyErr_SetString(PyExc_IndexError,
+                            "name index shouldn't be negative");
             return (NULL);
         }
         ret = PyObject_New(s_Name, &name_type);
@@ -495,9 +498,10 @@ Name_split(s_Name* self, PyObject* args) {
         }
     } else if (PyArg_ParseTuple(args, "i", &n)) {
         PyErr_Clear();
-        if (n < 0 || n > 0xffff) {
-            PyErr_SetString(PyExc_OverflowError,
-                            "name index out of range");
+        if (n < 0) {
+            // Throw IndexError here since name index should be unsigned
+            PyErr_SetString(PyExc_IndexError,
+                            "name index shouldn't be negative");
             return (NULL);
         }
         ret = PyObject_New(s_Name, &name_type);

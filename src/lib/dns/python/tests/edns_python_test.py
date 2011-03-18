@@ -71,8 +71,8 @@ class EDNSTest(unittest.TestCase):
 
         # Range check.  We need to do this at the binding level, so we need
         # explicit tests for it.
-        self.assertRaises(OverflowError, edns.set_udp_size, 0x10000)
-        self.assertRaises(OverflowError, edns.set_udp_size, -1)
+        self.assertRaises(ValueError, edns.set_udp_size, 0x10000)
+        self.assertRaises(ValueError, edns.set_udp_size, -1)
 
     def test_get_version(self):
         self.assertEqual(EDNS.SUPPORTED_VERSION, EDNS().get_version())

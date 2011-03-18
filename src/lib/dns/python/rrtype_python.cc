@@ -198,7 +198,7 @@ RRType_init(s_RRType* self, PyObject* args) {
         } else if (PyArg_ParseTuple(args, "l", &i)) {
             PyErr_Clear();
             if (i < 0 || i > 0xffff) {
-                PyErr_SetString(PyExc_OverflowError, "RR Type number out of range");
+                PyErr_SetString(PyExc_ValueError, "RR Type number out of range");
                 return (-1);
             }
             self->rrtype = new RRType(i);

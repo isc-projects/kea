@@ -32,7 +32,7 @@ class TestModuleSpec(unittest.TestCase):
 
 
     def test_init(self):
-        self.assertRaises(OverflowError, RRType, 65537)
+        self.assertRaises(ValueError, RRType, 65537)
         b = bytearray(b'\x00\x01')
         self.assertEqual(RRType("A"), RRType(b))
         b = bytearray(b'\x01')

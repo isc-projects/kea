@@ -25,7 +25,7 @@ class RRTTLTest(unittest.TestCase):
     def setUp(self):
         self.t1 = RRTTL(1)
         self.t2 = RRTTL(3600)
-        
+
     def test_init(self):
         self.assertRaises(InvalidRRTTL, RRTTL, "wrong")
         self.assertRaises(TypeError, RRTTL, Exception())
@@ -33,13 +33,15 @@ class RRTTLTest(unittest.TestCase):
         b[0] = 123
         self.assertRaises(IncompleteRRTTL, RRTTL, b)
         self.assertRaises(InvalidRRTTL, RRTTL, "4294967296")
+        self.assertRaises(ValueError, RRTTL, -4)
+        self.assertRaises(ValueError, RRTTL, 4294967296)
         b = bytearray(4)
         b[0] = 0
         b[1] = 0
         b[2] = 0
         b[3] = 15
         self.assertEqual(15, RRTTL(b).get_value())
-        
+
     def test_rrttl_to_text(self):
         self.assertEqual("1", self.t1.to_text())
         self.assertEqual("1", str(self.t1))

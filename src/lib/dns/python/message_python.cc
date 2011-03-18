@@ -284,7 +284,7 @@ Message_setHeaderFlag(s_Message* self, PyObject* args) {
         return (NULL);
     }
     if (messageflag < 0 || messageflag > 0xffff) {
-        PyErr_SetString(PyExc_OverflowError, "Message header flag out of range");
+        PyErr_SetString(PyExc_ValueError, "Message header flag out of range");
         return (NULL);
     }
 
@@ -318,7 +318,7 @@ Message_setQid(s_Message* self, PyObject* args) {
         return (NULL);
     }
     if (id < 0 || id > 0xffff) {
-        PyErr_SetString(PyExc_OverflowError,
+        PyErr_SetString(PyExc_ValueError,
                         "Message id out of range");
         return (NULL);
     }
