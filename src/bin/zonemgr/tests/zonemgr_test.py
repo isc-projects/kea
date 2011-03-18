@@ -507,8 +507,8 @@ class MyZonemgr(Zonemgr):
         self._cc = MySession()
         self._module_cc = MyCCSession()
         self._config_data = {
-                    "lowerbound_refresh" : 10, 
-                    "lowerbound_retry" : 5, 
+                    "lowerbound_refresh" : 10,
+                    "lowerbound_retry" : 5,
                     "max_transfer_timeout" : 14400,
                     "jitter_scope" : 0.1,
                     "secondary_zones": []
@@ -524,13 +524,14 @@ class TestZonemgr(unittest.TestCase):
 
     def test_config_handler(self):
         config_data1 = {
-                    "lowerbound_refresh" : 60, 
-                    "lowerbound_retry" : 30, 
+                    "lowerbound_refresh" : 60,
+                    "lowerbound_retry" : 30,
                     "max_transfer_timeout" : 14400,
                     "jitter_scope" : 0.1,
                     "secondary_zones": []
                     }
-        self.zonemgr.config_handler(config_data1)
+        self.assertEqual(self.zonemgr.config_handler(config_data1),
+                         {"result": [0]})
         self.assertEqual(config_data1, self.zonemgr._config_data)
         config_data2 = {"zone_name" : "sd.cn.", "port" : "53", "master" : "192.168.1.1"}
         self.zonemgr.config_handler(config_data2)
@@ -551,7 +552,7 @@ class TestZonemgr(unittest.TestCase):
 
     def test_get_db_file(self):
         self.assertEqual("initdb.file", self.zonemgr.get_db_file())
-    
+
     def test_parse_cmd_params(self):
         params1 = {"zone_name" : "org.cn", "zone_class" : "CH", "master" : "127.0.0.1"}
         answer1 = (("org.cn", "CH"), "127.0.0.1")

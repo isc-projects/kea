@@ -490,15 +490,24 @@ class Zonemgr:
     def config_handler(self, new_config):
         """ Update config data. """
         answer = create_answer(0)
+        ok = True
+        complete = copy.copy(self._config_data)
         for key in new_config:
-            if key not in self._config_data:
+            if key not in complete:
                 answer = create_answer(1, "Unknown config data: " + str(key))
+                ok = False
                 continue
-            self._config_data[key] = new_config[key]
+            complete[key] = new_config[key]
 
-        self._config_data_check(self._config_data)
+        self._config_data_check(complete)
         if self._zone_refresh is not None:
-            self._zone_refresh.update_config_data(self._config_data)
+            try:
+                self._zone_refresh.update_config_data(complete)
+            except Exception as e:
+                answer = create_answer(1, str(e))
+                ok = False
+        if ok:
+            self._config_data = complete
 
         return answer
 
@@ -510,7 +519,7 @@ class Zonemgr:
         if config_data.get('jitter_scope') > 0.5:
             config_data['jitter_scope'] = 0.5
             log_msg("[b10-zonemgr] jitter_scope is too big, its value will "
-                      "be set to 0.5") 
+                      "be set to 0.5")
 
 
     def _parse_cmd_params(self, args, command):
