@@ -102,8 +102,8 @@ class ZonemgrRefresh:
         self._cc = cc
         self._check_sock = slave_socket
         self._db_file = db_file
-        self.update_config_data(config_data)
         self._zonemgr_refresh_info = {}
+        self.update_config_data(config_data)
         self._build_zonemgr_refresh_info()
         self._running = False
 
@@ -497,7 +497,7 @@ class Zonemgr:
             self._config_data[key] = new_config[key]
 
         self._config_data_check(self._config_data)
-        if (self._zone_refresh):
+        if self._zone_refresh is not None:
             self._zone_refresh.update_config_data(self._config_data)
 
         return answer
