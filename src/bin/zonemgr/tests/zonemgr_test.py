@@ -294,28 +294,6 @@ class TestZonemgrRefresh(unittest.TestCase):
                                          ZONE_NAME_CLASS1_IN)
         sqlite3_ds.get_zone_soa = old_get_zone_soa
 
-    def test_build_zonemgr_refresh_info(self):
-        soa_rdata = 'a.dns.cn. root.cnnic.cn. 2009073106 1800 900 2419200 21600'
-
-        def get_zones_info(db_file):
-            return [("sd.cn.", "IN")] 
-
-        def get_zone_soa(zone_name, db_file):
-            return (1, 2, 'sd.cn.', 'cn.sd.', 21600, 'SOA', None, 
-                    'a.dns.cn. root.cnnic.cn. 2009073106 1800 900 2419200 21600')
-
-        sqlite3_ds.get_zones_info = get_zones_info
-        sqlite3_ds.get_zone_soa = get_zone_soa
-
-        self.zone_refresh._zonemgr_refresh_info = {}
-        self.zone_refresh._build_zonemgr_refresh_info()
-        self.assertEqual(1, len(self.zone_refresh._zonemgr_refresh_info))
-        zone_soa_rdata = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_soa_rdata"]
-        self.assertEqual(soa_rdata, zone_soa_rdata) 
-        self.assertEqual(ZONE_OK, self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"])
-        self.assertTrue("last_refresh_time" in self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN].keys())
-        self.assertTrue("next_refresh_time" in self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN].keys())
-
     def test_zone_handle_notify(self):
         self.zone_refresh.zone_handle_notify(ZONE_NAME_CLASS1_IN,"127.0.0.1")
         notify_master = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["notify_master"]
