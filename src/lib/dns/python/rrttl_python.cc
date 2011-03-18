@@ -145,7 +145,7 @@ static PyTypeObject rrttl_type = {
 static int
 RRTTL_init(s_RRTTL* self, PyObject* args) {
     const char* s;
-    unsigned long i;
+    long long i;
     PyObject* bytes = NULL;
     // The constructor argument can be a string ("1234"), an integer (1),
     // or a sequence of numbers between 0 and 255 (wire code)
@@ -158,10 +158,10 @@ RRTTL_init(s_RRTTL* self, PyObject* args) {
         if (PyArg_ParseTuple(args, "s", &s)) {
             self->rrttl = new RRTTL(s);
             return (0);
-        } else if (PyArg_ParseTuple(args, "k", &i)) {
+        } else if (PyArg_ParseTuple(args, "L", &i)) {
             PyErr_Clear();
-            if (i > 0xffffffff) {
-                PyErr_SetString(po_InvalidRRTTL, "RR TTL number out of range");
+            if (i < 0 || i > 0xffffffff) {
+                PyErr_SetString(PyExc_ValueError, "RR TTL number out of range");
                 return (-1);
             }
             self->rrttl = new RRTTL(i);

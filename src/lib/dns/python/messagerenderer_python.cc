@@ -186,7 +186,7 @@ MessageRenderer_setLengthLimit(s_MessageRenderer* self,
         return (NULL);
     }
     if (lengthlimit < 0 || lengthlimit > 0xffff) {
-        PyErr_SetString(PyExc_OverflowError,
+        PyErr_SetString(PyExc_ValueError,
                         "MessageRenderer length limit out of range");
         return (NULL);
     }

@@ -111,17 +111,17 @@ class MessageTest(unittest.TestCase):
         self.assertRaises(InvalidParameter, self.r.set_header_flag, 0)
         self.assertRaises(InvalidParameter, self.r.set_header_flag, 0x7000)
         self.assertRaises(InvalidParameter, self.r.set_header_flag, 0x0800)
-        # this would cause overflow
-        self.assertRaises(OverflowError, self.r.set_header_flag, 0x10000)
-        self.assertRaises(OverflowError, self.r.set_header_flag, -1)
+        # this would cause out of range 
+        self.assertRaises(ValueError, self.r.set_header_flag, 0x10000)
+        self.assertRaises(ValueError, self.r.set_header_flag, -1)
 
         self.assertRaises(InvalidMessageOperation,
                           self.p.set_header_flag, Message.HEADERFLAG_AA)
 
     def test_set_qid(self):
         self.assertRaises(TypeError, self.r.set_qid, "wrong")
-        self.assertRaises(OverflowError, self.r.set_qid, -1)
-        self.assertRaises(OverflowError, self.r.set_qid, 0x10000)
+        self.assertRaises(ValueError, self.r.set_qid, -1)
+        self.assertRaises(ValueError, self.r.set_qid, 0x10000)
         self.assertRaises(InvalidMessageOperation,
                           self.p.set_qid, 123)
 

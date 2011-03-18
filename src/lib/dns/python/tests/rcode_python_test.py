@@ -23,7 +23,9 @@ from pydnspp import *
 class RcodeTest(unittest.TestCase):
     def test_init(self):
         self.assertRaises(TypeError, Rcode, "wrong")
-        self.assertRaises(OverflowError, Rcode, 65536)
+        self.assertRaises(ValueError, Rcode, 65536)
+        self.assertRaises(ValueError, Rcode, 0x10, 0x100)
+        self.assertRaises(ValueError, Rcode, 0x100, 0x10)
         self.assertEqual(Rcode(0).get_code(), 0)
     
         self.assertEqual(0, Rcode(0).get_code())
