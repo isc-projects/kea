@@ -47,7 +47,7 @@
                "item_name": "name",
                "item_type": "string",
                "item_optional": false,
-               "item_type": ""
+               "item_default": ""
              }
            ]
          }
