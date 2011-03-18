@@ -510,7 +510,8 @@ class MyZonemgr(Zonemgr):
                     "lowerbound_refresh" : 10, 
                     "lowerbound_retry" : 5, 
                     "max_transfer_timeout" : 14400,
-                    "jitter_scope" : 0.1
+                    "jitter_scope" : 0.1,
+                    "secondary_zones": []
                     }
 
     def _start_zone_refresh_timer(self):
@@ -526,7 +527,8 @@ class TestZonemgr(unittest.TestCase):
                     "lowerbound_refresh" : 60, 
                     "lowerbound_retry" : 30, 
                     "max_transfer_timeout" : 14400,
-                    "jitter_scope" : 0.1
+                    "jitter_scope" : 0.1,
+                    "secondary_zones": []
                     }
         self.zonemgr.config_handler(config_data1)
         self.assertEqual(config_data1, self.zonemgr._config_data)
@@ -536,6 +538,15 @@ class TestZonemgr(unittest.TestCase):
         # jitter should not be bigger than half of the original value
         config_data3 = {"jitter_scope" : 0.7}
         self.zonemgr.config_handler(config_data3)
+        self.assertEqual(0.5, self.zonemgr._config_data.get("jitter_scope"))
+        # The zone doesn't exist in database, it should be rejected
+        self.zonemgr._zone_refresh = ZonemgrRefresh(None, "initdb.file", None,
+                                                    config_data1)
+        config_data1["secondary_zones"] = [{"name": "nonexistent.example",
+                                            "class": "IN"}]
+        self.assertNotEqual(self.zonemgr.config_handler(config_data1),
+                            {"result": [0]})
+        # As it is rejected, the old value should be kept
         self.assertEqual(0.5, self.zonemgr._config_data.get("jitter_scope"))
 
     def test_get_db_file(self):
