@@ -38,7 +38,7 @@ extern std::string dprefix;
  * places where logging should happen. When it is removed, compiler will do
  * our work of finding the places.
  *
- * The only thing it does is printing the dprogram prefix, message and
+ * The only thing it does is printing the program prefix, message and
  * a newline if denabled is true.
  *
  * There are no tests for this function, since it is only temporary and

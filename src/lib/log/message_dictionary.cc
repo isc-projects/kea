@@ -109,5 +109,5 @@ MessageDictionary::globalDictionary() {
 
 
 
-} // namspace log
+} // namespace log
 } // namespace isc
