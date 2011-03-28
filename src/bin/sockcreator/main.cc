@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010  CZ NIC
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,21 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <boost/python.hpp>
-#include <boost/python/class.hpp>
-#include <boost/python/module.hpp>
-#include <boost/python/def.hpp>
-#include <boost/python/exception_translator.hpp>
-#include <boost/python/return_internal_reference.hpp>
-#include <boost/python/copy_const_reference.hpp>
-#include <boost/shared_ptr.hpp>
+#include "sockcreator.h"
 
-#include <xfr/fd_share.h>
+using namespace isc::socket_creator;
 
-using namespace isc::xfr;
-using namespace boost::python;
-
-BOOST_PYTHON_MODULE(bind10_xfr) {
-    def("recv_fd", &recv_fd);
-    def("send_fd", &send_fd);
+int
+main() {
+    /*
+     * TODO Maybe use some OS-specific caps interface and drop everything
+     * but ability to bind ports? It would be nice.
+     */
+    return run(0, 1); // Read commands from stdin, output to stdout
 }
