@@ -47,7 +47,8 @@ process_ok(pid_t process) {
     if (sigaction(SIGALRM, &ignored, &original)) {
         return false;
     }
-    alarm(3);
+    // It is long, but if everything is OK, it'll not happen
+    alarm(10);
     int status;
     int result(waitpid(process, &status, 0) == -1);
     // Cancel the alarm and return the original handler
@@ -104,10 +105,13 @@ check_output(int *write_pipe, const void *output, const size_t length)
     *write_pipe = pipes[1];
     pid_t pid(fork());
     if (pid) { // We are in parent
+        close(pipes[0]);
         return pid;
     } else {
         close(pipes[1]);
-        unsigned char buffer[length + 1];
+        // We don't return the memory, but we're in tests and end this process
+        // right away.
+        unsigned char *buffer = new unsigned char[length + 1];
         // Try to read one byte more to see if the output ends here
         size_t got_length(read_data(pipes[0], buffer, length + 1));
         bool ok(true);
@@ -120,7 +124,7 @@ check_output(int *write_pipe, const void *output, const size_t length)
         if(!ok || memcmp(buffer, output, length)) {
             const unsigned char *output_c(static_cast<const unsigned char *>(
                 output));
-            // If the differ, print what we have
+            // If they differ, print what we have
             for(size_t i(0); i != got_length; ++ i) {
                 fprintf(stderr, "%02hhx", buffer[i]);
             }
