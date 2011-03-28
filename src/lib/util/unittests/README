@@ -1,0 +1,5 @@
+This directory contains some code that is useful while writing various
+unittest code. It doesn't contain any code that would actually run in
+bind10.
+
+Because this is a test code, we do not test it explicitly.

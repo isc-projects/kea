@@ -624,6 +624,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/auth/benchmarks/Makefile
                  src/bin/resolver/Makefile
                  src/bin/resolver/tests/Makefile
+                 src/bin/sockcreator/Makefile
+                 src/bin/sockcreator/tests/Makefile
                  src/bin/xfrin/Makefile
                  src/bin/xfrin/tests/Makefile
                  src/bin/xfrout/Makefile
@@ -692,6 +694,10 @@ AC_CONFIG_FILES([Makefile
                  src/lib/server_common/tests/Makefile
                  tests/Makefile
                  tests/system/Makefile
+                 src/lib/util/Makefile
+                 src/lib/util/io/Makefile
+                 src/lib/util/io/tests/Makefile
+                 src/lib/util/unittests/Makefile
                ])
 AC_OUTPUT([doc/version.ent
            src/bin/cfgmgr/b10-cfgmgr.py
