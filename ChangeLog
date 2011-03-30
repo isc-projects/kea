@@ -1,7 +1,7 @@
   210.  [bug]		jerry
 	src/bin/auth: fixed a bug where type ANY queries don't provide
 	additional glue records for ANSWER section.
-	(Trac #699, git TBD)
+	(Trac #699, git 510924ebc57def8085cc0e5413deda990b2abeee)
 
   209.  [func]		jelte
 	Resolver now uses the NSAS when looking for a nameserver to
