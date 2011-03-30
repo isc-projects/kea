@@ -31,7 +31,7 @@ grep 192.0.2.1 dig.out.$n > /dev/null || status=1
 if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
-echo "I:Checking BIND 10 statistics after a pose ($n)"
+echo "I:Checking BIND 10 statistics after a pause ($n)"
 # wait for 2sec to make sure b10-stats gets the latest statistics.
 # note that we set statistics-interval to 1.
 sleep 2
@@ -67,7 +67,7 @@ grep 192.0.2.1 dig.out.$n > /dev/null || status=1
 if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
-echo "I:Rechecking BIND 10 statistics after a pose ($n)"
+echo "I:Rechecking BIND 10 statistics after a pause ($n)"
 sleep 2
 echo 'Stats show
 ' | $RUN_BINDCTL \

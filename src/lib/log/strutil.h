@@ -79,7 +79,7 @@ std::vector<std::string> tokens(const std::string& text,
 ///
 /// Used in uppercase() to pass as an argument to std::transform().  The
 /// function std::toupper() can't be used as it takes an "int" as its argument;
-/// this confuses the template expansion mechanism because defererencing a
+/// this confuses the template expansion mechanism because dereferencing a
 /// string::iterator returns a char.
 ///
 /// \param chr Character to be upper-cased.
@@ -104,7 +104,7 @@ inline void uppercase(std::string& text) {
 ///
 /// Used in lowercase() to pass as an argument to std::transform().  The
 /// function std::tolower() can't be used as it takes an "int" as its argument;
-/// this confuses the template expansion mechanism because defererencing a
+/// this confuses the template expansion mechanism because dereferencing a
 /// string::iterator returns a char.
 ///
 /// \param chr Character to be lower-cased.
