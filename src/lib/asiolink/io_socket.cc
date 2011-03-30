@@ -1,5 +1,3 @@
-// Copyright (C) 2010  CZ NIC
-// Copyed from other version of auth/asiolink.cc which is:
 // Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any

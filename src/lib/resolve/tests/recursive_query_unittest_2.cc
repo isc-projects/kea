@@ -107,8 +107,10 @@ public:
         UDP_ROOT = 1,               ///< Query root server over UDP
         UDP_ORG = 2,                ///< Query ORG server over UDP
         TCP_ORG = 3,                ///< Query ORG server over TCP
-        UDP_EXAMPLE_ORG = 4,        ///< Query EXAMPLE.ORG server over UDP
-        COMPLETE = 5                ///< Query is complete
+        UDP_EXAMPLE_ORG_BAD = 4,    ///< Query EXAMPLE.ORG server over UDP
+                                    ///< (return malformed packet)
+        UDP_EXAMPLE_ORG = 5,        ///< Query EXAMPLE.ORG server over UDP
+        COMPLETE = 6                ///< Query is complete
     };
 
     // Common stuff
@@ -289,6 +291,10 @@ public:
         Message msg(Message::RENDER);
         setCommonMessage(msg, qid);
 
+        // In the case of UDP_EXAMPLE_ORG_BAD, we shall mangle the
+        // response
+        bool mangle_response = false;
+
         // Set up state-dependent bits:
         switch (expected_) {
         case UDP_ROOT:
@@ -309,6 +315,14 @@ public:
             expected_ = TCP_ORG;
             break;
 
+         case UDP_EXAMPLE_ORG_BAD:
+            // Return the answer to the question.
+            setAnswerWwwExampleOrg(msg);
+            // Mangle the response to enfore another query
+            mangle_response = true;
+            expected_ = UDP_EXAMPLE_ORG;
+            break;
+
          case UDP_EXAMPLE_ORG:
             // Return the answer to the question.
             setAnswerWwwExampleOrg(msg);
@@ -323,6 +337,12 @@ public:
         udp_send_buffer_->clear();
         MessageRenderer renderer(*udp_send_buffer_);
         msg.toWire(renderer);
+
+        if (mangle_response) {
+            // mangle the packet a bit
+            // set additional to one more
+            udp_send_buffer_->writeUint8At(3, 11);
+        }
 
         // Return a message back to the IOFetch object (after setting the
         // expected length of data for the check in the send handler).
@@ -454,7 +474,7 @@ public:
         // readiness for the next read. (If any - at present, there is only
         // one read in the test, although extensions to this test suite could
         // change that.)
-        expected_ = UDP_EXAMPLE_ORG;
+        expected_ = UDP_EXAMPLE_ORG_BAD;
         tcp_cumulative_ = 0;
 
         // Unless we go through a callback loop we cannot simply use

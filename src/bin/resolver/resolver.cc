@@ -457,6 +457,9 @@ Resolver::processMessage(const IOMessage& io_message,
         } else if (qtype == RRType::IXFR()) {
             makeErrorMessage(query_message, answer_message,
                              buffer, Rcode::NOTIMP());
+        } else if (question->getClass() != RRClass::IN()) {
+            makeErrorMessage(query_message, answer_message,
+                             buffer, Rcode::REFUSED());
         } else {
             // The RecursiveQuery object will post the "resume" event to the
             // DNSServer when an answer arrives, so we don't have to do it now.

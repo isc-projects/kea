@@ -27,6 +27,7 @@
 #include <dns/question.h>
 #include <dns/message.h>
 #include <dns/opcode.h>
+#include <dns/exceptions.h>
 
 #include <resolve/resolve.h>
 #include <cache/resolver_cache.h>
@@ -280,6 +281,7 @@ private:
         if (test_server_.second != 0) {
             dlog("Sending upstream query (" + question_.toText() +
                  ") to test server at " + test_server_.first);
+            gettimeofday(&current_ns_qsent_time, NULL);
             ++outstanding_events_;
             IOFetch query(protocol, io_, question_,
                 test_server_.first,
@@ -292,6 +294,7 @@ private:
             dlog("Sending upstream query (" + question_.toText() +
                 ") to " + upstream_->at(serverIndex).first);
             ++outstanding_events_;
+            gettimeofday(&current_ns_qsent_time, NULL);
             IOFetch query(protocol, io_, question_,
                 upstream_->at(serverIndex).first,
                 upstream_->at(serverIndex).second, buffer_, this,
@@ -607,34 +610,57 @@ public:
             // Update the NSAS with the time it took
             struct timeval cur_time;
             gettimeofday(&cur_time, NULL);
-            uint32_t rtt;
-            if (cur_time.tv_sec >= current_ns_qsent_time.tv_sec ||
-                cur_time.tv_usec > current_ns_qsent_time.tv_usec) {
+            uint32_t rtt = 0;
+
+            // Only calculate RTT if it is positive
+            if (cur_time.tv_sec > current_ns_qsent_time.tv_sec ||
+                (cur_time.tv_sec == current_ns_qsent_time.tv_sec &&
+                 cur_time.tv_usec > current_ns_qsent_time.tv_usec)) {
                 rtt = 1000 * (cur_time.tv_sec - current_ns_qsent_time.tv_sec);
                 rtt += (cur_time.tv_usec - current_ns_qsent_time.tv_usec) / 1000;
-            } else {
-                rtt = 1;
             }
 
             dlog("RTT: " + boost::lexical_cast<std::string>(rtt));
             current_ns_address.updateRTT(rtt);
-            
-            Message incoming(Message::PARSE);
-            InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
-            incoming.fromWire(ibuf);
 
-            buffer_->clear();
-            if (recursive_mode() &&
-                incoming.getRcode() == Rcode::NOERROR()) {
-                done_ = handleRecursiveAnswer(incoming);
-            } else {
-                isc::resolve::copyResponseMessage(incoming, answer_message_);
-                done_ = true;
-            }
-            
-            if (done_) {
-                callCallback(true);
-                stop();
+            try {
+                Message incoming(Message::PARSE);
+                InputBuffer ibuf(buffer_->getData(), buffer_->getLength());
+
+                incoming.fromWire(ibuf);
+
+                buffer_->clear();
+                if (recursive_mode() &&
+                    incoming.getRcode() == Rcode::NOERROR()) {
+                    done_ = handleRecursiveAnswer(incoming);
+                } else {
+                    isc::resolve::copyResponseMessage(incoming, answer_message_);
+                    done_ = true;
+                }
+                if (done_) {
+                    callCallback(true);
+                    stop();
+                }
+            } catch (const isc::dns::DNSProtocolError& dpe) {
+                dlog("DNS Protocol error in answer for " +
+                     question_.toText() + " " +
+                     question_.getType().toText() + ": " +
+                     dpe.what());
+                // Right now, we treat this similar to timeouts
+                // (except we don't store RTT)
+                // We probably want to make this an integral part
+                // of the fetch data process. (TODO)
+                if (retries_--) {
+                    dlog("Retrying");
+                    send();
+                } else {
+                    dlog("Giving up");
+                    if (!callback_called_) {
+                        makeSERVFAIL();
+                        callCallback(true);
+                    }
+                    stop();
+                }
             }
         } else if (!done_ && retries_--) {
             // Query timed out, but we have some retries, so send again
