@@ -73,7 +73,7 @@ public:
     /// deletion of the underlying log4cxx data structures when the logger is
     /// deleted.  Setting it false for externally-declared loggers inhibits
     /// their deletion; so at program exit the memory is not reclaimed during
-    /// program rundown, only when the process is delected.  Setting it true
+    /// program rundown, only when the process is selected.  Setting it true
     /// for loggers that will be deleted in the normal running of the program
     /// enables their deletion - which causes no issues as the problem only
     /// manifests itself during program rundown.

@@ -144,6 +144,7 @@ class SimpleClient : public ServerStopper {
     {
         wait_for_response_timer_.reset(new deadline_timer(service));
         received_data_ = new char[MAX_DATA_LEN];
+        received_data_len_ = 0;
         wait_server_time_out_ = wait_server_time_out;
     }
 
