@@ -22,7 +22,7 @@
 bind10 \- BIND 10 boss process
 .SH "SYNOPSIS"
 .HP \w'\fBbind10\fR\ 'u
-\fBbind10\fR [\fB\-m\ \fR\fB\fIfile\fR\fR] [\fB\-n\fR] [\fB\-u\ \fR\fB\fIuser\fR\fR] [\fB\-v\fR] [\fB\-\-msgq\-socket\-file\ \fR\fB\fIfile\fR\fR] [\fB\-\-no\-cache\fR] [\fB\-\-user\ \fR\fB\fIuser\fR\fR] [\fB\-\-pretty\-name\ \fR\fB\fIname\fR\fR] [\fB\-\-verbose\fR]
+\fBbind10\fR [\fB\-m\ \fR\fB\fIfile\fR\fR] [\fB\-n\fR] [\fB\-u\ \fR\fB\fIuser\fR\fR] [\fB\-v\fR] [\fB\-\-msgq\-socket\-file\ \fR\fB\fIfile\fR\fR] [\fB\-\-no\-cache\fR] [\fB\-\-user\ \fR\fB\fIuser\fR\fR] [\fB\-\-pretty\-name\ \fR\fB\fIname\fR\fR] [\fB\-\-brittle\fR] [\fB\-\-verbose\fR]
 .SH "DESCRIPTION"
 .PP
 The
@@ -64,6 +64,14 @@ The name this process should have in tools like
 or
 \fBtop\fR\&. This is handy if you have multiple versions/installations of
 \fBbind10\fR\&.
+.RE
+.PP
+\fB\-\-brittle\fR
+.RS 4
+Shutdown if any of the child processes of 
+\fBbind10\fR
+exit\&. This is intended to help developers debug the server, and should
+not be used in production.
 .RE
 .PP
 \fB\-v\fR, \fB\-\-verbose\fR
