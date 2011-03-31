@@ -156,42 +156,52 @@ class MockBob(BoB):
     def start_msgq(self, c_channel_env):
         self.msgq = True
         self.processes[2] = ProcessInfo('b10-msgq', ['/bin/false'])
+        self.processes[2].pid = 2
 
     def start_cfgmgr(self, c_channel_env):
         self.cfgmgr = True
         self.processes[3] = ProcessInfo('b10-cfgmgr', ['/bin/false'])
+        self.processes[3].pid = 3
 
     def start_ccsession(self, c_channel_env):
         self.ccsession = True
         self.processes[4] = ProcessInfo('b10-ccsession', ['/bin/false'])
+        self.processes[4].pid = 4
 
     def start_auth(self, c_channel_env):
         self.auth = True
         self.processes[5] = ProcessInfo('b10-auth', ['/bin/false'])
+        self.processes[5].pid = 5
 
     def start_resolver(self, c_channel_env):
         self.resolver = True
         self.processes[6] = ProcessInfo('b10-resolver', ['/bin/false'])
+        self.processes[6].pid = 6
 
     def start_xfrout(self, c_channel_env):
         self.xfrout = True
         self.processes[7] = ProcessInfo('b10-xfrout', ['/bin/false'])
+        self.processes[7].pid = 7
 
     def start_xfrin(self, c_channel_env):
         self.xfrin = True
         self.processes[8] = ProcessInfo('b10-xfrin', ['/bin/false'])
+        self.processes[8].pid = 8
 
     def start_zonemgr(self, c_channel_env):
         self.zonemgr = True
         self.processes[9] = ProcessInfo('b10-zonemgr', ['/bin/false'])
+        self.processes[9].pid = 9
 
     def start_stats(self, c_channel_env):
         self.stats = True
         self.processes[10] = ProcessInfo('b10-stats', ['/bin/false'])
+        self.processes[10].pid = 10
 
     def start_cmdctl(self, c_channel_env):
         self.cmdctl = True
         self.processes[11] = ProcessInfo('b10-cmdctl', ['/bin/false'])
+        self.processes[11].pid = 11
 
     # We don't really use all of these stop_ methods. But it might turn out
     # someone would add some stop_ method to BoB and we want that one overriden
@@ -605,6 +615,32 @@ class TestPIDFile(unittest.TestCase):
         # the attempt to open file will fail, which should result in exception.
         self.assertRaises(IOError, dump_pid,
                           'nonexistent_dir' + os.sep + 'bind10.pid')
+
+class TestBrittle(unittest.TestCase):
+    def test_brittle_disabled(self):
+        bob = MockBob()
+        bob.start_all_processes()
+        bob.runnable = True
+
+        bob.reap_children()
+        self.assertTrue(bob.runnable)
+
+    def simulated_exit(self):
+        ret_val = self.exit_info
+        self.exit_info = (0, 0)
+        return ret_val
+
+    def test_brittle_enabled(self):
+        bob = MockBob()
+        bob.start_all_processes()
+        bob.runnable = True
+
+        bob.brittle = True
+        self.exit_info = (5, 0)
+        bob._get_process_exit_status = self.simulated_exit
+
+        bob.reap_children()
+        self.assertFalse(bob.runnable)
 
 if __name__ == '__main__':
     unittest.main()

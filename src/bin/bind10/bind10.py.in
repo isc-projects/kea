@@ -202,7 +202,7 @@ class BoB:
     
     def __init__(self, msgq_socket_file=None, data_path=None,
     config_filename=None, nocache=False, verbose=False, setuid=None,
-    username=None, cmdctl_port=None):
+    username=None, cmdctl_port=None, brittle=False):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
         
@@ -235,6 +235,7 @@ class BoB:
         self.data_path = data_path
         self.config_filename = config_filename
         self.cmdctl_port = cmdctl_port
+        self.brittle = brittle
 
     def config_handler(self, new_config):
         # If this is initial update, don't do anything now, leave it to startup
@@ -710,20 +711,22 @@ class BoB:
         if self.verbose:
             sys.stdout.write("[bind10] All processes ended, server done.\n")
 
+    def _get_process_exit_status(self):
+        return os.waitpid(-1, os.WNOHANG)
+
     def reap_children(self):
         """Check to see if any of our child processes have exited, 
         and note this for later handling. 
         """
         while True:
             try:
-                (pid, exit_status) = os.waitpid(-1, os.WNOHANG)
+                (pid, exit_status) = self._get_process_exit_status()
             except OSError as o:
                 if o.errno == errno.ECHILD: break
                 # XXX: should be impossible to get any other error here
                 raise
             if pid == 0: break
             if pid in self.processes:
-
                 # One of the processes we know about.  Get information on it.
                 proc_info = self.processes.pop(pid)
                 proc_info.restart_schedule.set_run_stop_time()
@@ -747,6 +750,11 @@ class BoB:
                         sys.stdout.write(
                                  "[bind10] The b10-msgq process died, shutting down.\n")
                         self.runnable = False
+
+                # If we're in 'brittle' mode, we want to shutdown after
+                # any process dies.
+                if self.brittle:
+                    self.runnable = False
             else:
                 sys.stdout.write("[bind10] Unknown child pid %d exited.\n" % pid)
 
@@ -961,7 +969,7 @@ def main():
     # Go bob!
     boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
                        options.config_file, options.nocache, options.verbose,
-                       setuid, username, options.cmdctl_port)
+                       setuid, username, options.cmdctl_port, options.brittle)
     startup_result = boss_of_bind.startup()
     if startup_result:
         sys.stderr.write("[bind10] Error on startup: %s\n" % startup_result)
