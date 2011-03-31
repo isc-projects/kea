@@ -1,3 +1,8 @@
+  211.  [func]		shane
+	Implement "--brittle" option, which causes the server to exit
+        if any of BIND 10's processes dies.
+	(Trac #788, git xxx)
+
   210.  [bug]		jerry
 	src/bin/auth: fixed a bug where type ANY queries don't provide
 	additional glue records for ANSWER section.
