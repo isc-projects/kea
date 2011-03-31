@@ -550,6 +550,15 @@ class TestParseArgs(unittest.TestCase):
         options = parse_args(['--cmdctl-port=1234'], TestOptParser)
         self.assertEqual(1234, options.cmdctl_port)
 
+    def test_brittle(self):
+        """
+        Test we can use the "brittle" flag.
+        """
+        options = parse_args([], TestOptParser)
+        self.assertFalse(options.brittle)
+        options = parse_args(['--brittle'], TestOptParser)
+        self.assertTrue(options.brittle)
+
 class TestPIDFile(unittest.TestCase):
     def setUp(self):
         self.pid_file = '@builddir@' + os.sep + 'bind10.pid'

@@ -856,6 +856,8 @@ def parse_args(args=sys.argv[1:], Parser=OptionParser):
     parser.add_option("--pid-file", dest="pid_file", type="string",
                       default=None,
                       help="file to dump the PID of the BIND 10 process")
+    parser.add_option("--brittle", dest="brittle", action="store_true",
+                      help="debugging flag: exit if any component dies")
 
     (options, args) = parser.parse_args(args)
 
