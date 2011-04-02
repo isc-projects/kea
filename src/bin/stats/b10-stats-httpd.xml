@@ -54,15 +54,15 @@
       intended for HTTP/XML interface for statistics module. This server
       process runs as a process separated from the process of the BIND 10 Stats
       daemon (<command>b10-stats</command>). The server is initially executed
-      by the BIND 10 boss process (<command>bind10</command>) and finally
-      exited by it.  The server is intended to be requested by HTTP clients
-      like web browsers and third-party modules. When the server is requested,
-      it requests BIND 10 statistics data to <command>b10-stats</command>,
-      and <command>b10-stats</command> sends the data to the server in Python
+      by the BIND 10 boss process (<command>bind10</command>) and eventually
+      exited by it.  The server is intended to be server requests by HTTP
+      clients like web browsers and third-party modules. When the server is
+      asked, it requests BIND 10 statistics data from
+      <command>b10-stats</command>, and it sends the data back in Python
       dictionary format and the server converts it into XML format. The server
       sends it to the HTTP client. The server can send three types of document,
-      which are XML (Extensible Markup Language), XSD(XML Schema definition)
-      and XSL(Extensible Stylesheet Language). The XML document is the
+      which are XML (Extensible Markup Language), XSD (XML Schema definition)
+      and XSL (Extensible Stylesheet Language). The XML document is the
       statistics data of BIND 10, The XSD document is the data schema of it,
       and The XSL document is the style sheet to be showed for the web
       browsers. Please see the manual and the spec file
@@ -100,6 +100,7 @@
     <title>FILES</title>
     <para>
       <filename>/usr/local/share/bind10-devel/stats-httpd.spec</filename>
+      <!--TODO: The filename should be computed from prefix-->
       &mdash; the spec file of <command>b10-stats-httpd</command>. This file
       contains configurable settings
       of <command>b10-stats-httpd</command>. This setting can be configured in
@@ -111,14 +112,17 @@
     </para>
     <para>
       <filename>/usr/local/share/bind10-devel/stats-httpd-xml.tpl</filename>
+      <!--TODO: The filename should be computed from prefix-->
       &mdash; the template file of XML document.
     </para>
     <para>
       <filename>/usr/local/share/bind10-devel/stats-httpd-xsd.tpl</filename>
+      <!--TODO: The filename should be computed from prefix-->
       &mdash; the template file of XSD document.
     </para>
     <para>
       <filename>/usr/local/share/bind10-devel/stats-httpd-xsl.tpl</filename>
+      <!--TODO: The filename should be computed from prefix-->
       &mdash; the template file of XSL document.
     </para>
   </refsect1>
@@ -136,7 +140,7 @@
 	  <para>
       	    a list of pairs of address and port for
 	    <command>b10-stats-httpd</command> to listen HTTP requests on. The
-	    pair is consist of the <varname>address</varname> string
+	    pair consists of the <varname>address</varname> string
 	    and <varname>port</varname> number. The default setting is the list
 	    of address 127.0.0.1 port 8000. If the server is started by the
 	    default setting being left, for example, the URL for XML document
@@ -148,7 +152,7 @@
       </varlistentry>
     </variablelist>
     <para>
-      The configuration commands in <filename>stats-httpd.spec</filename> are:
+      The commands in <filename>stats-httpd.spec</filename> are:
     </para>
     <variablelist>
       <varlistentry>
@@ -156,7 +160,7 @@
         <listitem>
 	  <para>
 	    shows the status of <command>b10-stats-httpd</command> with its
-	    PID on the runtime machine.
+	    PID.
 	  </para>
         </listitem>
       </varlistentry>
