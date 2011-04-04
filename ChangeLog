@@ -1,7 +1,7 @@
   211.  [func]		shane
 	Implement "--brittle" option, which causes the server to exit
         if any of BIND 10's processes dies.
-	(Trac #788, git xxx)
+	(Trac #788, git 88c0d241fe05e5ea91b10f046f307177cc2f5bc5)
 
   210.  [bug]		jerry
 	src/bin/auth: fixed a bug where type ANY queries don't provide
