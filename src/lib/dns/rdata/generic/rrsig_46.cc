@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <string>
 #include <iomanip>
 #include <iostream>
@@ -95,8 +93,8 @@ RRSIG::RRSIG(const string& rrsig_str) :
         isc_throw(InvalidRdataText, "RRSIG labels out of range");
     }
 
-    uint32_t timeexpire = timeFromText(expire_txt);
-    uint32_t timeinception = timeFromText(inception_txt);
+    const uint32_t timeexpire = timeFromText32(expire_txt);
+    const uint32_t timeinception = timeFromText32(inception_txt);
 
     vector<uint8_t> signature;
     decodeBase64(signaturebuf.str(), signature);
@@ -159,15 +157,12 @@ RRSIG::~RRSIG() {
 
 string
 RRSIG::toText() const {
-    string expire = timeToText(impl_->timeexpire_);
-    string inception = timeToText(impl_->timeinception_);
-
     return (impl_->covered_.toText() +
             " " + boost::lexical_cast<string>(static_cast<int>(impl_->algorithm_))
             + " " + boost::lexical_cast<string>(static_cast<int>(impl_->labels_))
             + " " + boost::lexical_cast<string>(impl_->originalttl_)
-            + " " + expire
-            + " " + inception
+            + " " + timeToText32(impl_->timeexpire_)
+            + " " + timeToText32(impl_->timeinception_)
             + " " + boost::lexical_cast<string>(impl_->tag_)
             + " " + impl_->signer_.toText()
             + " " + encodeBase64(impl_->signature_));

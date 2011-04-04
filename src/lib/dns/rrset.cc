@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -44,7 +42,6 @@ AbstractRRset::toText() const {
     string s;
     RdataIteratorPtr it = getRdataIterator();
 
-    it->first();
     if (it->isLast()) {
         isc_throw(EmptyRRset, "ToText() is attempted for an empty RRset");
     }
@@ -66,7 +63,6 @@ rrsetToWire(const AbstractRRset& rrset, T& output, const size_t limit) {
     unsigned int n = 0;
     RdataIteratorPtr it = rrset.getRdataIterator();
 
-    it->first();
     if (it->isLast()) {
         isc_throw(EmptyRRset, "ToWire() is attempted for an empty RRset");
     }
@@ -224,7 +220,8 @@ private:
     BasicRdataIterator() {}
 public:
     BasicRdataIterator(const std::vector<rdata::ConstRdataPtr>& datavector) :
-        datavector_(&datavector) {}
+        datavector_(&datavector), it_(datavector_->begin())
+    {}
     ~BasicRdataIterator() {}
     virtual void first() { it_ = datavector_->begin(); }
     virtual void next() { ++it_; }

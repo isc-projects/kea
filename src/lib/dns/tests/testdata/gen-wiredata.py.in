@@ -19,8 +19,8 @@ import configparser, re, time, sys
 from datetime import datetime
 from optparse import OptionParser
 
-re_hex = re.compile(r'0x[0-9a-fA-F]+')
-re_decimal = re.compile(r'\d+$')
+re_hex = re.compile(r'^0x[0-9a-fA-F]+')
+re_decimal = re.compile(r'^\d+$')
 re_string = re.compile(r"\'(.*)\'$")
 
 dnssec_timefmt = '%Y%m%d%H%M%S'
@@ -48,9 +48,15 @@ dict_rrtype = { 'none' : 0, 'a' : 1, 'ns' : 2, 'md' : 3, 'mf' : 4, 'cname' : 5,
                 'maila' : 254, 'any' : 255 }
 rdict_rrtype = dict([(dict_rrtype[k], k.upper()) for k in dict_rrtype.keys()])
 dict_rrclass = { 'in' : 1, 'ch' : 3, 'hs' : 4, 'any' : 255 }
-rdict_rrclass = dict([(dict_rrclass[k], k.upper()) for k in dict_rrclass.keys()])
-dict_algorithm = { 'rsamd5' : 1, 'dh' : 2, 'dsa' : 3, 'ecc' : 4, 'rsasha1' : 5 }
-rdict_algorithm = dict([(dict_algorithm[k], k.upper()) for k in dict_algorithm.keys()])
+rdict_rrclass = dict([(dict_rrclass[k], k.upper()) for k in \
+                          dict_rrclass.keys()])
+dict_algorithm = { 'rsamd5' : 1, 'dh' : 2, 'dsa' : 3, 'ecc' : 4,
+                   'rsasha1' : 5 }
+dict_nsec3_algorithm = { 'reserved' : 0, 'sha1' : 1 }
+rdict_algorithm = dict([(dict_algorithm[k], k.upper()) for k in \
+                            dict_algorithm.keys()])
+rdict_nsec3_algorithm = dict([(dict_nsec3_algorithm[k], k.upper()) for k in \
+                                  dict_nsec3_algorithm.keys()])
 
 header_xtables = { 'qr' : dict_qr, 'opcode' : dict_opcode,
                    'rcode' : dict_rcode }
@@ -75,13 +81,17 @@ def code_totext(code, dict):
         return dict[code] + '(' + str(code) + ')'
     return str(code)
 
-def encode_name(name, absolute = True):
+def encode_name(name, absolute=True):
     # make sure the name is dot-terminated.  duplicate dots will be ignored
     # below.
     name += '.'
     labels = name.split('.')
     wire = ''
     for l in labels:
+        if len(l) > 4 and l[0:4] == 'ptr=':
+            # special meta-syntax for compression pointer
+            wire += ' %04x' % (0xc000 | int(l[4:]))
+            break
         if absolute or len(l) > 0:
             wire += '%02x' % len(l)
             wire += ''.join(['%02x' % ord(ch) for ch in l])
@@ -89,7 +99,9 @@ def encode_name(name, absolute = True):
             break
     return wire
 
-def encode_string(name):
+def encode_string(name, len=None):
+    if type(name) is int and len is not None:
+        return '%0.*x' % (len * 2, name)
     return ''.join(['%02x' % ord(ch) for ch in name])
 
 def count_namelabels(name):
@@ -121,17 +133,19 @@ def print_header(f, input_file):
 
 class Name:
     name = 'example.com'
-    pointer = -1                # no compression by default
+    pointer = None                # no compression by default
     def dump(self, f):
-        name_wire = encode_name(self.name,
-                                True if self.pointer == -1 else False)
+        name = self.name
+        if self.pointer is not None:
+            if len(name) > 0 and name[-1] != '.':
+                name += '.'
+            name += 'ptr=%d' % self.pointer
+        name_wire = encode_name(name)
         f.write('\n# DNS Name: %s' % self.name)
-        if self.pointer >= 0:
+        if self.pointer is not None:
             f.write(' + compression pointer: %d' % self.pointer)
         f.write('\n')
         f.write('%s' % name_wire)
-        if self.pointer >= 0:
-            f.write(' %04x' % (0xc000 | self.pointer))
         f.write('\n')
 
 class DNSHeader:
@@ -263,14 +277,16 @@ class TXT:
                                     ' ' if len(wirestring_list[i]) > 0 else '',
                                     wirestring_list[i]))
 
-class NSEC:
-    rdlen = -1                  # auto-calculate
-    nextname = 'next.example.com'
+class NSECBASE:
+    '''Implements rendering NSEC/NSEC3 type bitmaps commonly used for
+    these RRs.  The NSEC and NSEC3 classes will be inherited from this
+    class.'''
     nbitmap = 1                 # number of bitmaps
     block = 0
-    maplen = -1                 # default bitmap length, auto-calculate
+    maplen = None              # default bitmap length, auto-calculate
     bitmap = '040000000003'     # an arbtrarily chosen bitmap sample
     def dump(self, f):
+        # first, construct the bitmpa data
         block_list = []
         maplen_list = []
         bitmap_list = []
@@ -285,30 +301,72 @@ class NSEC:
                 maplen_list.append(self.__dict__[key_maplen])
             else:
                 maplen_list.append(self.maplen)
-            if maplen_list[-1] < 0:
+            if maplen_list[-1] is None: # calculate it if not specified
                 maplen_list[-1] = int(len(bitmap_list[-1]) / 2)
             key_block = 'block' + str(i)
             if key_block in self.__dict__:
                block_list.append(self.__dict__[key_block])
             else:
                 block_list.append(self.block)
-        name_wire = encode_name(self.nextname)
-        rdlen = self.rdlen
-        if rdlen < 0:
-            # if rdlen needs to be calculated, it must be based on the bitmap
-            # length, because the configured maplen can be fake.
-            rdlen = int(len(name_wire) / 2) + 2 * self.nbitmap
-            rdlen = rdlen + int(len(''.join(bitmap_list)) / 2)
-        f.write('\n# NSEC RDATA (RDLEN=%d)\n' % rdlen)
-        f.write('%04x\n' % rdlen);
-        f.write('# Next Name=%s (%d bytes)\n' % (self.nextname,
-                                                 int(len(name_wire) / 2)))
-        f.write('%s\n' % name_wire)
+
+        # dump RR-type specific part (NSEC or NSEC3)
+        self.dump_fixedpart(f, 2 * self.nbitmap + \
+                                int(len(''.join(bitmap_list)) / 2))
+
+        # dump the bitmap
         for i in range(0, self.nbitmap):
             f.write('# Bitmap: Block=%d, Length=%d\n' %
                     (block_list[i], maplen_list[i]))
             f.write('%02x %02x %s\n' %
                     (block_list[i], maplen_list[i], bitmap_list[i]))
+
+class NSEC(NSECBASE):
+    rdlen = None                # auto-calculate
+    nextname = 'next.example.com'
+    def dump_fixedpart(self, f, bitmap_totallen):
+        name_wire = encode_name(self.nextname)
+        if self.rdlen is None:
+            # if rdlen needs to be calculated, it must be based on the bitmap
+            # length, because the configured maplen can be fake.
+            self.rdlen = int(len(name_wire) / 2) + bitmap_totallen
+        f.write('\n# NSEC RDATA (RDLEN=%d)\n' % self.rdlen)
+        f.write('%04x\n' % self.rdlen);
+        f.write('# Next Name=%s (%d bytes)\n' % (self.nextname,
+                                                 int(len(name_wire) / 2)))
+        f.write('%s\n' % name_wire)
+
+class NSEC3(NSECBASE):
+    rdlen = None                # auto-calculate
+    hashalg = 1                 # SHA-1
+    optout = False              # opt-out flag
+    mbz = 0                     # other flag fields (none defined yet)
+    iterations = 1
+    saltlen = 5
+    salt = 's' * saltlen
+    hashlen = 20
+    hash = 'h' * hashlen
+    def dump_fixedpart(self, f, bitmap_totallen):
+        if self.rdlen is None:
+            # if rdlen needs to be calculated, it must be based on the bitmap
+            # length, because the configured maplen can be fake.
+            self.rdlen = 4 + 1 + len(self.salt) + 1 + len(self.hash) \
+                + bitmap_totallen
+        f.write('\n# NSEC3 RDATA (RDLEN=%d)\n' % self.rdlen)
+        f.write('%04x\n' % self.rdlen)
+        optout_val = 1 if self.optout else 0
+        f.write('# Hash Alg=%s, Opt-Out=%d, Other Flags=%0x, Iterations=%d\n' %
+                (code_totext(self.hashalg, rdict_nsec3_algorithm),
+                 optout_val, self.mbz, self.iterations))
+        f.write('%02x %02x %04x\n' %
+                (self.hashalg, (self.mbz << 1) | optout_val, self.iterations))
+        f.write("# Salt Len=%d, Salt='%s'\n" % (self.saltlen, self.salt))
+        f.write('%02x%s%s\n' % (self.saltlen,
+                                ' ' if len(self.salt) > 0 else '',
+                                encode_string(self.salt)))
+        f.write("# Hash Len=%d, Hash='%s'\n" % (self.hashlen, self.hash))
+        f.write('%02x%s%s\n' % (self.hashlen,
+                                ' ' if len(self.hash) > 0 else '',
+                                encode_string(self.hash)))
 
 class RRSIG:
     rdlen = -1                  # auto-calculate
@@ -338,20 +396,73 @@ class RRSIG:
                 (code_totext(self.covered, rdict_rrtype),
                  code_totext(self.algorithm, rdict_algorithm), labels,
                  self.originalttl))
-        f.write('%04x %02x %02x %08x\n' % (self.covered, self.algorithm, labels,
-                                           self.originalttl))
+        f.write('%04x %02x %02x %08x\n' % (self.covered, self.algorithm,
+                                           labels, self.originalttl))
         f.write('# Expiration=%s, Inception=%s\n' %
                 (str(self.expiration), str(self.inception)))
         f.write('%08x %08x\n' % (self.expiration, self.inception))
         f.write('# Tag=%d Signer=%s and Signature\n' % (self.tag, self.signer))
         f.write('%04x %s %s\n' % (self.tag, name_wire, sig_wire))
 
+class TSIG:
+    rdlen = None                # auto-calculate
+    algorithm = 'hmac-sha256'
+    time_signed = 1286978795    # arbitrarily chosen default
+    fudge = 300
+    mac_size = None             # use a common value for the algorithm
+    mac = None                  # use 'x' * mac_size
+    original_id = 2845          # arbitrarily chosen default
+    error = 0
+    other_len = None         # 6 if error is BADTIME; otherwise 0
+    other_data = None        # use time_signed + fudge + 1 for BADTIME
+    dict_macsize = { 'hmac-md5' : 16, 'hmac-sha1' : 20, 'hmac-sha256' : 32 }
+    def dump(self, f):
+        if str(self.algorithm) == 'hmac-md5':
+            name_wire = encode_name('hmac-md5.sig-alg.reg.int')
+        else:
+            name_wire = encode_name(self.algorithm)
+        rdlen = self.rdlen
+        mac_size = self.mac_size
+        if mac_size is None:
+            if self.algorithm in self.dict_macsize.keys():
+                mac_size = self.dict_macsize[self.algorithm]
+            else:
+                raise RuntimeError('TSIG Mac Size cannot be determined')
+        mac = encode_string('x' * mac_size) if self.mac is None else \
+            encode_string(self.mac, mac_size)
+        other_len = self.other_len
+        if other_len is None:
+            # 18 = BADTIME
+            other_len = 6 if self.error == 18 else 0
+        other_data = self.other_data
+        if other_data is None:
+            other_data = '%012x' % (self.time_signed + self.fudge + 1) \
+                if self.error == 18 else ''
+        else:
+            other_data = encode_string(self.other_data, other_len)
+        if rdlen is None:
+            rdlen = int(len(name_wire) / 2 + 16 + len(mac) / 2 + \
+                            len(other_data) / 2)
+        f.write('\n# TSIG RDATA (RDLEN=%d)\n' % rdlen)
+        f.write('%04x\n' % rdlen);
+        f.write('# Algorithm=%s Time-Signed=%d Fudge=%d\n' %
+                (self.algorithm, self.time_signed, self.fudge))
+        f.write('%s %012x %04x\n' % (name_wire, self.time_signed, self.fudge))
+        f.write('# MAC Size=%d MAC=(see hex)\n' % mac_size)
+        f.write('%04x%s\n' % (mac_size, ' ' + mac if len(mac) > 0 else ''))
+        f.write('# Original-ID=%d Error=%d\n' % (self.original_id, self.error))
+        f.write('%04x %04x\n' %  (self.original_id, self.error))
+        f.write('# Other-Len=%d Other-Data=(see hex)\n' % other_len)
+        f.write('%04x%s\n' % (other_len,
+                              ' ' + other_data if len(other_data) > 0 else ''))
+
 def get_config_param(section):
     config_param = {'name' : (Name, {}),
                     'header' : (DNSHeader, header_xtables),
                     'question' : (DNSQuestion, question_xtables),
                     'edns' : (EDNS, {}), 'soa' : (SOA, {}), 'txt' : (TXT, {}),
-                    'rrsig' : (RRSIG, {}), 'nsec' : (NSEC, {})}
+                    'rrsig' : (RRSIG, {}), 'nsec' : (NSEC, {}),
+                    'nsec3' : (NSEC3, {}), 'tsig' : (TSIG, {}) }
     s = section
     m = re.match('^([^:]+)/\d+$', section)
     if m:

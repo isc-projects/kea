@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <vector>
 #include <string>
 #include <sstream>
@@ -292,7 +290,7 @@ TEST_F(NameTest, assignment) {
 
     // Self assignment
     copy = copy;
-    EXPECT_EQ(copy, example_name);
+    EXPECT_EQ(example_name, copy);
 }
 
 TEST_F(NameTest, toText) {

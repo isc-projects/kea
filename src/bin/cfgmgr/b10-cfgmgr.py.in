@@ -15,8 +15,6 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# $Id$
-
 import sys; sys.path.append ('@@PYTHONPATH@@')
 
 from isc.config.cfgmgr import ConfigManager, ConfigManagerDataReadError
@@ -24,19 +22,43 @@ from isc.cc import SessionError
 import isc.util.process
 import signal
 import os
+from optparse import OptionParser
 
 isc.util.process.rename()
 
 # If B10_FROM_SOURCE is set in the environment, we use data files
-# from a directory relative to that, otherwise we use the ones
-# installed on the system
+# from a directory relative to the value of that variable, or, if defined,
+# relative to the value of B10_FROM_SOURCE_LOCALSTATEDIR.  Otherwise
+# we use the ones installed on the system.
+# B10_FROM_SOURCE_LOCALSTATEDIR is specifically intended to be used for
+# tests where we want to use variuos types of configuration within the test
+# environment.  (We may want to make it even more generic so that the path is
+# passed from the boss process)
 if "B10_FROM_SOURCE" in os.environ:
-    DATA_PATH = os.environ["B10_FROM_SOURCE"]
+    if "B10_FROM_SOURCE_LOCALSTATEDIR" in os.environ:
+        DATA_PATH = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"]
+    else:
+        DATA_PATH = os.environ["B10_FROM_SOURCE"]
 else:
     PREFIX = "@prefix@"
     DATA_PATH = "@localstatedir@/@PACKAGE@".replace("${prefix}", PREFIX)
+DEFAULT_CONFIG_FILE = "b10-config.db"
 
 cm = None
+
+def parse_options(args=sys.argv[1:], Parser=OptionParser):
+    parser = Parser()
+    parser.add_option("-p", "--data-path", dest="data_path",
+                      help="Directory to search for configuration files " +
+                      "(default=" + DATA_PATH + ")", default=DATA_PATH)
+    parser.add_option("-c", "--config-filename", dest="config_file",
+                      help="Configuration database filename " +
+                      "(default=" + DEFAULT_CONFIG_FILE + ")",
+                      default=DEFAULT_CONFIG_FILE)
+    (options, args) = parser.parse_args(args)
+    if args:
+        parser.error("No non-option arguments allowed")
+    return options
 
 def signal_handler(signal, frame):
     global cm
@@ -44,9 +66,10 @@ def signal_handler(signal, frame):
         cm.running = False
 
 def main():
+    options = parse_options()
     global cm
     try:
-        cm = ConfigManager(DATA_PATH)
+        cm = ConfigManager(options.data_path, options.config_file)
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
         cm.read_config()
@@ -61,8 +84,6 @@ def main():
     except ConfigManagerDataReadError as cmdre:
         print("[b10-cfgmgr] " + str(cmdre))
         return 2
-    if cm:
-        return cm.write_config()
     return 0
 
 if __name__ == "__main__":

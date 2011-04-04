@@ -2,6 +2,8 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
 <!ENTITY mdash  "&#x2014;" >
+<!ENTITY % version SYSTEM "version.ent">
+%version;
 ]>
 <book>
   <?xml-stylesheet href="bind10-guide.css" type="text/css"?>
@@ -15,13 +17,20 @@
     </copyright>
 
     <abstract>
-      <para>This is the reference guide for BIND 10.</para>
-      <para>
-        The most up-to-date version of this document, along with other documents
-        for BIND 10, can be found at
-        <ulink url="http://bind10.isc.org/docs"/>.
+      <para>BIND 10 is a Domain Name System (DNS) suite managed by
+	Internet Systems Consortium (ISC). It includes DNS libraries
+	and modular components for controlling authoritative and
+	recursive DNS servers.
       </para>
-    </abstract>
+      <para>
+        This is the reference guide for BIND 10 version &__VERSION__;.
+	The most up-to-date version of this document, along with
+	other documents for BIND 10, can be found at <ulink
+	url="http://bind10.isc.org/docs"/>.  </para> </abstract>
+
+      <releaseinfo>This is the reference guide for BIND 10 version
+        &__VERSION__;.</releaseinfo>
+
   </bookinfo>
 
   <chapter id="intro">
@@ -35,16 +44,16 @@
 
     <note>
       <para>
-        This guide covers the experimental prototype version of
-        BIND 10.
+        This guide covers the experimental prototype of
+        BIND 10 version &__VERSION__;.
       </para>
     </note>
 
     <note>
       <para>
-        BIND 10, at this time, does not provide a recursive
-        DNS server. It does provide a EDNS0- and DNSSEC-capable
-        authoritative DNS server.
+        BIND 10 provides a EDNS0- and DNSSEC-capable
+        authoritative DNS server and a caching recursive name server
+        which also provides forwarding.
       </para>
     </note>
 
@@ -52,7 +61,7 @@
       <title>Supported Platforms</title>
       <para>
   BIND 10 builds have been tested on Debian GNU/Linux 5,
-  Ubuntu 9.10, NetBSD 5, Solaris 10, FreeBSD 7, and CentOS
+  Ubuntu 9.10, NetBSD 5, Solaris 10, FreeBSD 7 and 8, and CentOS
   Linux 5.3.
 
   It has been tested on Sparc, i386, and amd64 hardware
@@ -71,9 +80,7 @@
       </para>
 
       <note><para>
-	For this development prototype release, the only supported
-	data source backend is SQLite3. The authoritative server
-	requires SQLite 3.3.9 or newer.
+	The authoritative server requires SQLite 3.3.9 or newer.
 	The <command>b10-xfrin</command>, <command>b10-xfrout</command>,
 	and <command>b10-zonemgr</command> modules require the
 	libpython3 library and the Python _sqlite3.so module.
@@ -116,6 +123,7 @@
       <para>
 
         <itemizedlist>
+
           <listitem>
             <simpara>
               <command>b10-msgq</command> &mdash;
@@ -124,6 +132,7 @@
               BIND 10 processes.
             </simpara>
           </listitem>
+
           <listitem>
             <simpara>
               <command>b10-auth</command> &mdash;
@@ -131,6 +140,7 @@
               This process serves DNS requests.
             </simpara>
           </listitem>
+
           <listitem>
             <simpara>
               <command>b10-cfgmgr</command> &mdash;
@@ -138,11 +148,29 @@
               This process maintains all of the configuration for BIND 10.
             </simpara>
           </listitem>
+
           <listitem>
             <simpara>
               <command>b10-cmdctl</command> &mdash;
               Command and control service.
               This process allows external control of the BIND 10 system.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-resolver</command> &mdash;
+              Recursive name server.
+              This process handles incoming queries.
+<!-- TODO: -->
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-stats</command> &mdash;
+              Statistics collection daemon.
+              This process collects and reports statistics data.
             </simpara>
           </listitem>
 
@@ -274,7 +302,7 @@ var/
 
         <para>
           Building from source code requires the Boost
-          build-time headers. At least Boost version 1.34 is required.
+          build-time headers. At least Boost version 1.35 is required.
   <!-- TODO: we don't check for this version -->
   <!-- NOTE: jreed has tested with 1.34, 1.38, and 1.41. -->
         </para>
@@ -305,14 +333,6 @@ var/
           and deploying BIND 10 as an authoritative name server using
           its defaults. For troubleshooting, full customizations and further
           details, see the respective chapters in the BIND 10 guide.
-        </simpara>
-      </note>
-
-      <note>
-        <simpara>
-          The development prototype of the b10-auth server listens on
-          0.0.0.0 (all interfaces) port 5300. (This is not the standard
-          domain service port.)
         </simpara>
       </note>
 
@@ -369,7 +389,7 @@ var/
         <listitem>
 
          <para>Test it; for example:
-            <screen>$ <userinput>dig @127.0.0.1 -p 5300 -c CH -t TXT authors.bind</userinput></screen>
+            <screen>$ <userinput>dig @127.0.0.1 -c CH -t TXT authors.bind</userinput></screen>
          </para>
         </listitem>
 
@@ -394,7 +414,7 @@ var/
       <para>
         BIND 10 is open source software written in C++ and Python.
         It is freely available in source code form from ISC via
-        the Subversion code revision control system or as a downloadable
+        the Git code revision control system or as a downloadable
         tar file. It may also be available in pre-compiled ready-to-use
         packages from operating system vendors.
       </para>
@@ -415,7 +435,7 @@ var/
       </section>
 
       <section>
-        <title>Retrieve from Subversion</title>
+        <title>Retrieve from Git</title>
         <para>
           Downloading this "bleeding edge" code is recommended only for
           developers or advanced users.  Using development code in a production
@@ -424,7 +444,7 @@ var/
 
         <note>
           <para>
-            When using source code retrieved via Subversion additional
+            When using source code retrieved via Git additional
             software will be required:  automake (v1.11 or newer),
             libtoolize, and autoconf (2.59 or newer).
             These may need to be installed.
@@ -434,14 +454,16 @@ var/
         <para>
           The latest development code, including temporary experiments
           and un-reviewed code, is available via the BIND 10 code revision
-          control system. This is powered by Subversion and all the BIND 10
+          control system. This is powered by Git and all the BIND 10
           development is public.
-          The leading development is done in the <quote>trunk</quote>.
+          The leading development is done in the <quote>master</quote>.
         </para>
         <para>
-          The code can be checked out from <filename>svn://bind10.isc.org/svn/bind10</filename>; for example to check out the trunk:
+          The code can be checked out from
+          <filename>git://bind10.isc.org/bind10</filename>;
+          for example:
 
-        <screen>$ <userinput>svn co svn://bind10.isc.org/svn/bind10/trunk</userinput></screen>
+        <screen>$ <userinput>git clone git://bind10.isc.org/bind10</userinput></screen>
         </para>
 
         <para>
@@ -658,7 +680,9 @@ var/
       about other modules.
       The <command>bind10</command> master process will also start up
       <command>b10-cmdctl</command> for admins to communicate with the
-      system, <command>b10-auth</command> for Authoritative DNS service,
+      system, <command>b10-auth</command> for authoritative DNS service or
+      <command>b10-resolver</command> for recursive name service,
+      <command>b10-stats</command> for statistics collection,
       <command>b10-xfrin</command> for inbound DNS zone transfers,
       <command>b10-xfrout</command> for outbound DNS zone transfers,
       and <command>b10-zonemgr</command> for secondary service.
@@ -949,6 +973,8 @@ accounts_file
       <para>
         The control commands are:
 print_settings
+<!-- TODO: remove that -->
+
 shutdown
       </para>
 <!-- TODO -->
@@ -1010,11 +1036,6 @@ TODO
       process.
     </para>
 
-    <note><simpara>
-      This development prototype release listens on all interfaces
-      and the non-standard port 5300.
-    </simpara></note>
-
     <section>
       <title>Server Configurations</title>
 
@@ -1073,9 +1094,10 @@ This may be a temporary setting until then.
 
       <note><para>
         For the development prototype release, <command>b10-auth</command>
-        only supports the SQLite3 data source backend.
+        supports a SQLite3 data source backend and in-memory data source
+        backend.
         Upcoming versions will be able to use multiple different
-        data sources, such as MySQL, Berkeley DB, or in-memory DB.
+        data sources, such as MySQL and Berkeley DB.
       </para></note>
 
 
@@ -1177,10 +1199,9 @@ TODO
     <title>Incoming Zone Transfers</title>
 
     <para>
-      The <command>b10-xfrin</command> process is started by
-      <command>bind10</command>.
-      It can be manually triggered to request an AXFR zone
-      transfer. When received, it is stored in the BIND 10
+      Incoming zones are transferred using the <command>b10-xfrin</command>
+      process which is started by <command>bind10</command>.
+      When received, the zone is stored in the BIND 10
       data store, and its records can be served by
       <command>b10-auth</command>.
       In combination with <command>b10-zonemgr</command> (for
@@ -1191,7 +1212,21 @@ TODO
     <note><simpara>
      The current development release of BIND 10 only supports
      AXFR. (IXFR is not supported.) 
+
+<!-- TODO: sqlite3 data source only? -->
+
     </simpara></note>
+
+<!-- TODO:
+
+how to tell bind10 you are a secondary?
+
+when will it first attempt to check for new zone? (using REFRESH?)
+what if zonemgr is not running?
+
+what if a NOTIFY is sent?
+
+-->
 
     <para>
        To manually trigger a zone transfer to retrieve a remote zone,
@@ -1200,6 +1235,9 @@ TODO
 
        <screen>&gt; <userinput>Xfrin retransfer zone_name="<option>foo.example.org</option>" master=<option>192.0.2.99</option></userinput></screen>
     </para>
+
+<!-- TODO: can that retransfer be used to identify a new zone? -->
+<!-- TODO: what if doesn't exist at that master IP? -->
 
   </chapter>
 
@@ -1259,6 +1297,127 @@ what is XfroutClient xfr_client??
     </simpara></note>
 
 <!-- TODO: lots to describe for zonemgr -->
+
+  </chapter>
+
+  <chapter id="resolverserver">
+    <title>Recursive Name Server</title>
+
+    <para>
+      The <command>b10-resolver</command> process is started by
+      <command>bind10</command>.
+<!-- TODO
+      It provides a resolver so DNS clients can ask it to do recursion
+      and it will return answers.
+-->
+    </para>
+
+    <para>
+      The main <command>bind10</command> process can be configured
+      to select to run either the authoritative or resolver.
+      By default, it starts the authoritative service.
+<!-- TODO: later both -->
+
+      You may change this using <command>bindctl</command>, for example:
+
+      <screen>
+&gt; <userinput>config set Boss/start_auth false</userinput>
+&gt; <userinput>config set Boss/start_resolver true</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+
+    </para>
+
+    <para>
+       The master <command>bind10</command> will stop and start
+       the desired services.
+    </para>
+
+    <para>
+      The resolver also needs to be configured to listen on an address
+      and port:
+
+      <screen>
+&gt; <userinput>config set Resolver/listen_on [{ "address": "127.0.0.1", "port": 53 }]</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+    </para>
+
+<!-- TODO: later the above will have some defaults -->
+
+    <section>
+      <title>Forwarding</title>
+
+      <para>
+
+        To enable forwarding, the upstream address and port must be
+        configured to forward queries to, such as:
+
+        <screen>
+&gt; <userinput>config set Resolver/forward_addresses [{ "address": "<replaceable>192.168.1.1</replaceable>", "port": 53 }]</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+
+        (Replace <replaceable>192.168.1.1</replaceable> to point to your
+        full resolver.)
+      </para>
+
+      <para>
+        Normal iterative name service can be re-enabled by clearing the
+        forwarding address(es); for example:
+
+        <screen>
+&gt; <userinput>config set Resolver/forward_addresses []</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </para>
+
+    </section>
+
+<!-- TODO: later try this
+
+> config set Resolver/forward_addresses[0]/address "192.168.8.8"
+> config set Resolver/forward_addresses[0]/port 53
+then change those defaults with config set Resolver/forward_addresses[0]/address "1.2.3.4"
+> config set Resolver/forward_addresses[0]/address "1.2.3.4"
+-->
+
+  </chapter>
+
+  <chapter id="statistics">
+    <title>Statistics</title>
+
+    <para>
+      The <command>b10-stats</command> process is started by
+      <command>bind10</command>.
+      It periodically collects statistics data from various modules
+      and aggregates it.
+<!-- TODO -->
+    </para>
+
+    <para>
+
+       This stats daemon provides commands to identify if it is running,
+       show specified or all statistics data, set values, remove data,
+       and reset data.
+
+       For example, using <command>bindctl</command>:
+
+       <screen>
+&gt; <userinput>Stats show</userinput>
+{
+    "auth.queries.tcp": 1749,
+    "auth.queries.udp": 867868,
+    "bind10.boot_time": "2011-01-20T16:59:03Z",
+    "report_time": "2011-01-20T17:04:06Z",
+    "stats.boot_time": "2011-01-20T16:59:05Z",
+    "stats.last_update_time": "2011-01-20T17:04:05Z",
+    "stats.lname": "4d3869d9_a@jreed.example.net",
+    "stats.start_time": "2011-01-20T16:59:05Z",
+    "stats.timestamp": 1295543046.823504
+}
+       </screen>
+    </para>
 
   </chapter>
 

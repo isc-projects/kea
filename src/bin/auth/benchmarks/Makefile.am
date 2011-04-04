@@ -8,7 +8,10 @@ CLEANFILES = *.gcno *.gcda
 
 noinst_PROGRAMS = query_bench
 query_bench_SOURCES = query_bench.cc
+query_bench_SOURCES += ../query.h  ../query.cc
 query_bench_SOURCES += ../auth_srv.h ../auth_srv.cc
+query_bench_SOURCES += ../config.h ../config.cc
+query_bench_SOURCES += ../statistics.h ../statistics.cc
 
 query_bench_LDADD = $(top_builddir)/src/lib/dns/libdns++.la
 query_bench_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
@@ -17,5 +20,8 @@ query_bench_LDADD += $(top_builddir)/src/lib/datasrc/libdatasrc.la
 query_bench_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
 query_bench_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 query_bench_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
-query_bench_LDADD += $(top_builddir)/src/bin/auth/libasio_link.a
+query_bench_LDADD += $(top_builddir)/src/lib/log/liblog.la
+query_bench_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
+query_bench_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
+query_bench_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
 query_bench_LDADD += $(SQLITE_LIBS)

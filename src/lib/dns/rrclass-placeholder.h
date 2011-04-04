@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: rrclass.h 530 2010-01-26 22:15:42Z jinmei $
-
 #ifndef __RRCLASS_H
 #define __RRCLASS_H 1
 
@@ -244,14 +242,12 @@ public:
     // END_WELL_KNOWN_CLASS_DECLARATIONS
     
     static const RRClass& NONE();
-    static const RRClass& ANY();
 
 private:
     // \brief Meta-classes
     enum {
         RRCLASS_RESERVED0 = 0,
-        RRCLASS_NONE = 254,
-        RRCLASS_ANY = 255
+        RRCLASS_NONE = 254
     };
     uint16_t classcode_;
 };
@@ -262,13 +258,6 @@ private:
 inline const RRClass&
 RRClass::NONE() {
     static RRClass rrclass(RRCLASS_NONE);
-
-    return (rrclass);
-}
-
-inline const RRClass&
-RRClass::ANY() {
-    static RRClass rrclass(RRCLASS_ANY);
 
     return (rrclass);
 }

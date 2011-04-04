@@ -1,0 +1,26 @@
+#
+# NXDOMAIN response with SOA record
+#
+##
+## Header
+##
+# ID = 0x3da0
+# QR = 1 (response), Opcode = 0, AA = 1, RCODE=3 (NXDOMAIN)
+3da0 8403
+# Question : 1
+00 01
+# Answer : 0
+00 00
+# Authority : 0
+00 00
+# Additional : 0
+00 00
+##
+## Query
+##
+#(4) n  o  n  e  x  i  s  t (7) e  x  a  m  p  l  e (3) c  o  m (0)
+  08 6e 6f 6e 65 78 69 73 74 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+# Type:A
+00 01
+# class: IN
+00 01

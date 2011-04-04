@@ -277,7 +277,7 @@ void
 RdataFieldsTest::constructCommonTestsOPT(const RdataFields& fields) {
     EXPECT_EQ(0, fields.getFieldCount());
     EXPECT_EQ(0, fields.getDataLength());
-    EXPECT_EQ(NULL, fields.getData());
+    EXPECT_EQ((const uint8_t*) NULL, fields.getData());
     fields.toWire(obuffer);
     EXPECT_EQ(0, obuffer.getLength());
     fields.toWire(renderer);

@@ -12,31 +12,31 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __AUTH_SRV_H
 #define __AUTH_SRV_H 1
 
 #include <string>
 
+// For MemoryDataSrcPtr below.  This should be a temporary definition until
+// we reorganize the data source framework.
+#include <boost/shared_ptr.hpp>
+
 #include <cc/data.h>
 #include <config/ccsession.h>
 
-namespace isc {
-namespace dns {
-class InputBuffer;
-class Message;
-class MessageRenderer;
-}
+#include <asiolink/asiolink.h>
+#include <server_common/portconfig.h>
+#include <auth/statistics.h>
 
+namespace isc {
+namespace datasrc {
+class MemoryDataSrc;
+}
 namespace xfr {
 class AbstractXfroutClient;
-};
+}
 }
 
-namespace asio_link {
-class IOMessage;
-}
 
 /// \brief The implementation class for the \c AuthSrv class using the pimpl
 /// idiom.
@@ -62,6 +62,7 @@ class AuthSrvImpl;
 ///
 /// The design of this class is still in flux.  It's quite likely to change
 /// in future versions.
+///
 class AuthSrv {
     ///
     /// \name Constructors, Assignment Operator and Destructor.
@@ -84,11 +85,36 @@ public:
             isc::xfr::AbstractXfroutClient& xfrout_client);
     ~AuthSrv();
     //@}
-    /// \return \c true if the \message contains a response to be returned;
-    /// otherwise \c false.
-    bool processMessage(const asio_link::IOMessage& io_message,
-                        isc::dns::Message& message,
-                        isc::dns::MessageRenderer& response_renderer);
+
+    /// Stop the server.
+    ///
+    /// It stops the internal event loop of the server and subsequently
+    /// returns the control to the top level context.
+    ///
+    /// This method should never throw an exception.
+    void stop();
+
+    /// \brief Process an incoming DNS message, then signal 'server' to resume 
+    ///
+    /// A DNS query (or other message) has been received by a \c DNSServer
+    /// object.  Find an answer, then post the \c DNSServer object on the
+    /// I/O service queue and return.  When the server resumes, it can
+    /// send the reply.
+    ///
+    /// \param io_message The raw message received
+    /// \param message Pointer to the \c Message object
+    /// \param buffer Pointer to an \c OutputBuffer for the resposne
+    /// \param server Pointer to the \c DNSServer
+    ///
+    /// \throw isc::Unexpected Protocol type of \a message is unexpected
+    void processMessage(const asiolink::IOMessage& io_message,
+                        isc::dns::MessagePtr message,
+                        isc::dns::OutputBufferPtr buffer,
+                        asiolink::DNSServer* server);
+
+    /// \brief Set verbose flag
+    ///
+    /// \param on The new value of the verbose flag
 
     /// \brief Enable or disable verbose logging.
     ///
@@ -103,6 +129,8 @@ public:
     /// This method never throws an exception.
     ///
     /// \return \c true if verbose logging is enabled; otherwise \c false.
+
+    /// \brief Get the current value of the verbose flag
     bool getVerbose() const;
 
     /// \brief Updates the data source for the \c AuthSrv object.
@@ -114,9 +142,11 @@ public:
     /// If there is a data source installed, it will be replaced with the
     /// new one.
     ///
-    /// In the current implementation, the SQLite data source is assumed.
-    /// The \c config parameter will simply be passed to the initialization
-    /// routine of the \c Sqlite3DataSrc class.
+    /// In the current implementation, the SQLite data source and MemoryDataSrc
+    /// are assumed.
+    /// We can enable memory data source and get the path of SQLite database by
+    /// the \c config parameter.  If we disabled memory data source, the SQLite
+    /// data source will be used.
     ///
     /// On success this method returns a data \c Element (in the form of a
     /// pointer like object) indicating the successful result,
@@ -138,7 +168,7 @@ public:
     /// containing the result of the update operation.
     isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
 
-    /// \param Returns the command and configuration session for the
+    /// \brief Returns the command and configuration session for the
     /// \c AuthSrv.
     ///
     /// This method never throws an exception.
@@ -161,6 +191,18 @@ public:
     /// \param config_session A pointer to \c ModuleCCSession object to receive
     /// control commands and configuration updates.
     void setConfigSession(isc::config::ModuleCCSession* config_session);
+
+    /// \brief Return this object's ASIO IO Service queue
+    asiolink::IOService& getIOService();
+
+    /// \brief Return pointer to the DNS Lookup callback function
+    asiolink::DNSLookup* getDNSLookupProvider() const { return (dns_lookup_); }
+
+    /// \brief Return pointer to the DNS Answer callback function
+    asiolink::DNSAnswer* getDNSAnswerProvider() const { return (dns_answer_); }
+
+    /// \brief Return pointer to the Checkin callback function
+    asiolink::SimpleCallback* getCheckinProvider() const { return (checkin_); }
 
     /// \brief Set or update the size (number of slots) of hot spot cache.
     ///
@@ -199,8 +241,137 @@ public:
     /// is shutdown.
     ///
     void setXfrinSession(isc::cc::AbstractSession* xfrin_session);
+
+    /// A shared pointer type for \c MemoryDataSrc.
+    ///
+    /// This is defined inside the \c AuthSrv class as it's supposed to be
+    /// a short term interface until we integrate the in-memory and other
+    /// data source frameworks.
+    typedef boost::shared_ptr<isc::datasrc::MemoryDataSrc> MemoryDataSrcPtr;
+
+    /// An immutable shared pointer type for \c MemoryDataSrc.
+    typedef boost::shared_ptr<const isc::datasrc::MemoryDataSrc>
+    ConstMemoryDataSrcPtr;
+
+    /// Returns the in-memory data source configured for the \c AuthSrv,
+    /// if any.
+    ///
+    /// The in-memory data source is configured per RR class.  However,
+    /// the data source may not be available for all RR classes.
+    /// If it is not available for the specified RR class, an exception of
+    /// class \c InvalidParameter will be thrown.
+    /// This method never throws an exception otherwise.
+    ///
+    /// Even for supported RR classes, the in-memory data source is not
+    /// configured by default.  In that case a NULL (shared) pointer will
+    /// be returned.
+    ///
+    /// \param rrclass The RR class of the requested in-memory data source.
+    /// \return A pointer to the in-memory data source, if configured;
+    /// otherwise NULL.
+    MemoryDataSrcPtr getMemoryDataSrc(const isc::dns::RRClass& rrclass);
+
+    /// Sets or replaces the in-memory data source of the specified RR class.
+    ///
+    /// As noted in \c getMemoryDataSrc(), some RR classes may not be
+    /// supported, in which case an exception of class \c InvalidParameter
+    /// will be thrown.
+    /// This method never throws an exception otherwise.
+    ///
+    /// If there is already an in memory data source configured, it will be
+    /// replaced with the newly specified one.
+    /// \c memory_datasrc can be NULL, in which case it will (re)disable the
+    /// in-memory data source.
+    ///
+    /// \param rrclass The RR class of the in-memory data source to be set.
+    /// \param memory_datasrc A (shared) pointer to \c MemoryDataSrc to be set.
+    void setMemoryDataSrc(const isc::dns::RRClass& rrclass,
+                          MemoryDataSrcPtr memory_datasrc);
+
+    /// \brief Set the communication session with Statistics.
+    ///
+    /// This function never throws an exception as far as
+    /// AuthCounters::setStatisticsSession() doesn't throw.
+    ///
+    /// Note: this interface is tentative.  We'll revisit the ASIO and
+    /// session frameworks, at which point the session will probably
+    /// be passed on construction of the server.
+    ///
+    /// \param statistics_session A Session object over which statistics
+    /// information is exchanged with statistics module.
+    /// The session must be established before setting in the server
+    /// object.
+    /// Ownership isn't transferred: the caller is responsible for keeping
+    /// this object to be valid while the server object is working and for
+    /// disconnecting the session and destroying the object when the server
+    /// is shutdown.
+    void setStatisticsSession(isc::cc::AbstractSession* statistics_session);
+
+    /// Return the interval of periodic submission of statistics in seconds.
+    ///
+    /// If the statistics submission is disabled, it returns 0.
+    ///
+    /// This method never throws an exception.
+    uint32_t getStatisticsTimerInterval() const;
+
+    /// Set the interval of periodic submission of statistics.
+    ///
+    /// If the specified value is non 0, the \c AuthSrv object will submit
+    /// its statistics to the statistics module every \c interval seconds.
+    /// If it's 0, and \c AuthSrv currently submits statistics, the submission
+    /// will be disabled. \c interval must be equal to or shorter than 86400
+    /// seconds (1 day).
+    ///
+    /// This method should normally not throw an exception; however, its
+    /// underlying library routines may involve resource allocation, and
+    /// when it fails it would result in a corresponding standard exception.
+    ///
+    /// \param interval The submission interval in seconds if non 0;
+    /// or a value of 0 to disable the submission.
+    void setStatisticsTimerInterval(uint32_t interval);
+
+    /// \brief Submit statistics counters to statistics module.
+    ///
+    /// This function can throw an exception from
+    /// AuthCounters::submitStatistics().
+    ///
+    /// \return true on success, false on failure (e.g. session timeout,
+    /// session error).
+    bool submitStatistics() const;
+
+    /// \brief Get the value of counter in the AuthCounters.
+    /// 
+    /// This function calls AuthCounters::getCounter() and
+    /// returns its return value.
+    ///
+    /// This function never throws an exception as far as
+    /// AuthCounters::getCounter() doesn't throw.
+    /// 
+    /// Note: Currently this function is for testing purpose only.
+    ///
+    /// \param type Type of a counter to get the value of
+    ///
+    /// \return the value of the counter.
+    uint64_t getCounter(const AuthCounters::CounterType type) const;
+
+    /**
+     * \brief Set and get the addresses we listen on.
+     */
+    void setListenAddresses(const isc::server_common::portconfig::AddressList&
+                            addreses);
+    const isc::server_common::portconfig::AddressList& getListenAddresses()
+        const;
+
+    /// \brief Assign an ASIO DNS Service queue to this Auth object
+    void setDNSService(asiolink::DNSService& dnss);
+
+
 private:
     AuthSrvImpl* impl_;
+    asiolink::SimpleCallback* checkin_;
+    asiolink::DNSLookup* dns_lookup_;
+    asiolink::DNSAnswer* dns_answer_;
+    asiolink::DNSService* dnss_;
 };
 
 #endif // __AUTH_SRV_H

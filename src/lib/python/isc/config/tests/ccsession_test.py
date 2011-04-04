@@ -13,8 +13,6 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# $Id$
-
 #
 # Tests for the ConfigData and MultiConfigData classes
 #
@@ -290,7 +288,7 @@ class TestModuleCCSession(unittest.TestCase):
         mccs = self.create_session("spec2.spec", None, None, fake_session)
         mccs.set_config_handler(self.my_config_handler_ok)
         self.assertEqual(len(fake_session.message_queue), 0)
-        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec2': { 'item1': 2 }})
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'item1': 2 })
         fake_session.group_sendmsg(cmd, 'Spec2')
         self.assertEqual(len(fake_session.message_queue), 1)
         mccs.check_command()
@@ -303,12 +301,12 @@ class TestModuleCCSession(unittest.TestCase):
         mccs = self.create_session("spec2.spec", None, None, fake_session)
         mccs.set_config_handler(self.my_config_handler_err)
         self.assertEqual(len(fake_session.message_queue), 0)
-        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec2': { 'item1': 'aaa' }})
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'item1': 'aaa' })
         fake_session.group_sendmsg(cmd, 'Spec2')
         self.assertEqual(len(fake_session.message_queue), 1)
         mccs.check_command()
         self.assertEqual(len(fake_session.message_queue), 1)
-        self.assertEqual({'result': [1, 'just an error']},
+        self.assertEqual({'result': [1, 'aaa should be an integer']},
                          fake_session.get_message('Spec2', None))
         
     def test_check_command5(self):
@@ -316,12 +314,12 @@ class TestModuleCCSession(unittest.TestCase):
         mccs = self.create_session("spec2.spec", None, None, fake_session)
         mccs.set_config_handler(self.my_config_handler_exc)
         self.assertEqual(len(fake_session.message_queue), 0)
-        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec2': { 'item1': 'aaa' }})
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'item1': 'aaa' })
         fake_session.group_sendmsg(cmd, 'Spec2')
         self.assertEqual(len(fake_session.message_queue), 1)
         mccs.check_command()
         self.assertEqual(len(fake_session.message_queue), 1)
-        self.assertEqual({'result': [1, 'just an exception']},
+        self.assertEqual({'result': [1, 'aaa should be an integer']},
                          fake_session.get_message('Spec2', None))
         
     def test_check_command6(self):
@@ -416,7 +414,7 @@ class TestModuleCCSession(unittest.TestCase):
         mccs = self.create_session("spec2.spec", None, None, fake_session)
         mccs.set_config_handler(self.my_config_handler_ok)
         self.assertEqual(len(fake_session.message_queue), 0)
-        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec2': { 'item1': 2 }})
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'item1': 2 })
         self.assertEqual(len(fake_session.message_queue), 0)
         env = { 'group':'Spec2', 'from':None }
         mccs.check_command_without_recvmsg(cmd, env)
@@ -530,7 +528,19 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertTrue("Spec2" in fake_session.subscriptions)
         mccs = None
         self.assertFalse("Spec2" in fake_session.subscriptions)
-        
+
+    def test_remote_module_with_custom_config(self):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        # override the default config value for "item1".  add_remote_config()
+        # should incorporate the overridden value, and we should be abel to
+        # get it via get_remote_config_value().
+        fake_session.group_sendmsg({'result': [0, {"item1": 10}]}, 'Spec2')
+        rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
+        value, default = mccs.get_remote_config_value(rmodname, "item1")
+        self.assertEqual(10, value)
+        self.assertEqual(False, default)
+
     def test_ignore_command_remote_module(self):
         # Create a Spec1 module and subscribe to remote config for Spec2
         fake_session = FakeModuleCCSession()
@@ -560,6 +570,14 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual(len(fake_session.message_queue), 0)
         
 
+class fakeData:
+    def decode(self):
+        return "{}";
+
+class fakeAnswer:
+    def read(self):
+        return fakeData();
+
 class fakeUIConn():
     def __init__(self):
         self.get_answers = {}
@@ -581,7 +599,7 @@ class fakeUIConn():
         if name in self.post_answers:
             return self.post_answers[name]
         else:
-            return None
+            return fakeAnswer()
     
 
 class TestUIModuleCCSession(unittest.TestCase):
@@ -637,6 +655,8 @@ class TestUIModuleCCSession(unittest.TestCase):
         self.assertEqual({'Spec2': {'item5': ['foo']}}, uccs._local_changes)
         uccs.add_value("Spec2/item5", "foo")
         self.assertEqual({'Spec2': {'item5': ['foo']}}, uccs._local_changes)
+        uccs.remove_value("Spec2/item5[0]", None)
+        self.assertEqual({'Spec2': {'item5': []}}, uccs._local_changes)
 
     def test_commit(self):
         fake_conn = fakeUIConn()

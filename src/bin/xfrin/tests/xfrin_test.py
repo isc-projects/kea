@@ -13,8 +13,6 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# $Id$
-
 import unittest
 import socket
 from xfrin import *
@@ -135,9 +133,9 @@ class MockXfrinConnection(XfrinConnection):
         resp.set_opcode(Opcode.QUERY())
         resp.set_rcode(rcode)
         if response:
-            resp.set_header_flag(MessageFlag.QR())
+            resp.set_header_flag(Message.HEADERFLAG_QR)
         [resp.add_question(q) for q in questions]
-        [resp.add_rrset(Section.ANSWER(), a) for a in answers]
+        [resp.add_rrset(Message.SECTION_ANSWER, a) for a in answers]
 
         renderer = MessageRenderer()
         resp.to_wire(renderer)

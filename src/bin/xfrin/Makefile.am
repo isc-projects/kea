@@ -4,7 +4,7 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 
 pkglibexec_SCRIPTS = b10-xfrin
 
-b10_xfrindir = $(DESTDIR)$(pkgdatadir)
+b10_xfrindir = $(pkgdatadir)
 b10_xfrin_DATA = xfrin.spec
 
 CLEANFILES = b10-xfrin xfrin.pyc 
@@ -20,7 +20,6 @@ b10-xfrin.8: b10-xfrin.xml
 
 endif
 
-# TODO: does this need $$(DESTDIR) also?
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
 b10-xfrin: xfrin.py
 	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" \

@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <config.h>
 
 #include <string>
@@ -28,7 +26,7 @@ using namespace std;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-OPT::OPT(const string& type_str UNUSED_PARAM) {
+OPT::OPT(const string&) {
     isc_throw(InvalidRdataText, "OPT RR cannot be constructed from text");
 }
 
@@ -43,7 +41,7 @@ OPT::OPT(InputBuffer& buffer, size_t rdata_len) {
     buffer.setPosition(buffer.getPosition() + rdata_len);
 }
 
-OPT::OPT(const OPT& source UNUSED_PARAM) : Rdata() {
+OPT::OPT(const OPT&) : Rdata() {
     // there's nothing to copy in this simple implementation.
 }
 
@@ -53,12 +51,12 @@ OPT::toText() const {
 }
 
 void
-OPT::toWire(OutputBuffer& buffer UNUSED_PARAM) const {
+OPT::toWire(OutputBuffer&) const {
     // nothing to do, as this simple version doesn't support any options.
 }
 
 void
-OPT::toWire(AbstractMessageRenderer& renderer UNUSED_PARAM) const {
+OPT::toWire(AbstractMessageRenderer&) const {
     // nothing to do, as this simple version doesn't support any options.
 }
 

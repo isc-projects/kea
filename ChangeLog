@@ -1,9 +1,628 @@
+  211.  [func]		shane
+	Implement "--brittle" option, which causes the server to exit
+        if any of BIND 10's processes dies.
+	(Trac #788, git 88c0d241fe05e5ea91b10f046f307177cc2f5bc5)
+
+  210.  [bug]		jerry
+	src/bin/auth: fixed a bug where type ANY queries don't provide
+	additional glue records for ANSWER section.
+	(Trac #699, git 510924ebc57def8085cc0e5413deda990b2abeee)
+
+  209.  [func]		jelte
+	Resolver now uses the NSAS when looking for a nameserver to
+	query for any specific zone. This also includes keeping track of
+	the RTT for that nameserver.
+	(Trac #495, git 76022a7e9f3ff339f0f9f10049aa85e5784d72c5)
+
+  208.  [bug]*		jelte
+	Resolver now answers REFUSED on queries that are not for class IN.
+	This includes the various CH TXT queries, which will be added
+	later.
+	(git 012f9e78dc611c72ea213f9bd6743172e1a2ca20)
+
+  207.  [func]		jelte
+	Resolver now starts listening on localhost:53 if no configuration
+	is set.
+	(Trac #471, git 1960b5becbba05570b9c7adf5129e64338659f07)
+
+  206.  [func]		shane
+	Add the ability to list the running BIND 10 processes using the
+	command channel. To try this, use "Boss show_processes".
+	(Trac #648, git 451bbb67c2b5d544db2f7deca4315165245d2b3b)
+
+  205.	[bug]		jinmei
+	b10-auth, src/lib/datasrc: fixed a bug where b10-auth could return
+	an empty additional section for delegation even if some glue is
+	crucial when it fails to find some other glue records in its data
+	source.
+	(Trac #646, git 6070acd1c5b2f7a61574eda4035b93b40aab3e2b)
+
+  204.	[bug]		jinmei
+	b10-auth, src/lib/datasrc: class ANY queries were not handled
+	correctly in the generic data source (mainly for sqlite3).  It
+	could crash b10-auth in the worst case, and could result in
+	incorrect responses in some other cases.
+	(Trac #80, git c65637dd41c8d94399bd3e3cee965b694b633339)
+
+  203.  [bug]		zhang likun
+	Fix resolver cache memory leak: when cache is destructed, rrset
+	and message entries in it are not destructed properly.
+	(Trac #643, git aba4c4067da0dc63c97c6356dc3137651755ffce)
+
+  202.  [func]    vorner
+	It is possible to specify a different directory where we look for
+	configuration files (by -p) and different configuration file to
+	use (-c).  Also, it is possible to specify the port on which
+	cmdctl should listen (--cmdctl-port).
+	(Trac #615, git 5514dd78f2d61a222f3069fc94723ca33fb3200b)
+
+  201.  [bug]           jerry
+	src/bin/bindctl: bindctl doesn't show traceback on shutdown.
+	(Trac #588, git 662e99ef050d98e86614c4443326568a0b5be437)
+
+  200.  [bug]           Jelte
+	Fixed a bug where incoming TCP connections were not closed.
+	(Trac #589, git 1d88daaa24e8b1ab27f28be876f40a144241e93b)
+
+  199.  [func]           ocean
+	Cache negative responses (NXDOMAIN/NODATA) from authoritative
+	server for recursive resolver.
+	(Trac #493, git f8fb852bc6aef292555063590c361f01cf29e5ca)
+
+  198.	[bug]		jinmei
+	b10-auth, src/lib/datasrc: fixed a bug where hot spot cache failed
+	to reuse cached SOA for negative responses.  Due to this bug
+	b10-auth returned SERVFAIL when it was expected to return a
+	negative response immediately after a specific SOA query for
+	the zone.
+	(Trac #626, git 721a53160c15e8218f6798309befe940b9597ba0)
+
+  197.  [bug]		zhang likun
+	Remove expired message and rrset entries when looking up them
+	in cache, touch or remove the rrset entry in cache properly
+	when doing lookup or update.
+	(Trac #661, git 9efbe64fe3ff22bb5fba46de409ae058f199c8a7)
+
+  196.	[bug]		jinmei
+	b10-auth, src/lib/datasrc: the backend of the in-memory data
+	source could not handle the root name.  As a result b10-auth could
+	not work as a root server when using the in-memory data source.
+	(Trac #683, git 420ec42bd913fb83da37b26b75faae49c7957c46)
+
+  195.  [func]      stephen
+	Resolver will now re-try a query over TCP if a response to a UDP
+	query has the TC bit set.
+	(Trac #499, git 4c05048ba059b79efeab53498737abe94d37ee07)
+
+  194.  [bug]       vorner
+	Solved a 100% CPU usage problem after switching addresses in b10-auth
+	(and possibly, but unconfirmed, in b10-resolver). It was caused by
+	repeated reads/accepts on closed socket (the bug was in the code for a
+	long time, recent changes made it show).
+	(Trac #657, git e0863720a874d75923ea66adcfbf5b2948efb10a)
+
+  193.	[func]*		jreed
+	Listen on the IPv6 (::) and IPv4 (0.0.0.0) wildcard addresses
+	for b10-auth. This returns to previous behavior prior to
+	change #184. Document the listen_on configuration in manual.
+	(Trac #649, git 65a77d8fde64d464c75917a1ab9b6b3f02640ca6)
+
+  192.	[func]*		jreed
+	Listen on standard domain port 53 for b10-auth and
+	b10-resolver.
+	(Trac #617, #618, git 137a6934a14cf0c5b5c065e910b8b364beb0973f)
+
+  191.	[func]		jinmei
+	Imported system test framework of BIND 9.  It can be run by
+	'make systest' at the top source directory.  Notes: currently it
+	doesn't work when built in a separate tree.  It also requires
+	perl, an inherited dependency from the original framework.
+	Also, mainly for the purpose of tests, a new option "--pid-file"
+	was added to BoB, with which the boss process will dump its PID
+	to the specified file.
+	(Trac #606, git 6ac000df85625f5921e8895a1aafff5e4be3ba9c)
+
+  190.	[func]		jelte
+	Resolver now sets random qids on outgoing queries using
+	the boost::mt19937 prng.
+	(Trac #583, git 5222b51a047d8f2352bc9f92fd022baf1681ed81)
+
+  189.	[bug]		jreed
+	Do not install the log message compiler.
+	(Trac #634, git eb6441aca464980d00e3ff827cbf4195c5a7afc5)
+
+  188.  [bug]		zhang likun
+	Make the rrset trust level ranking algorithm used by
+	isc::cache::MessageEntry::getRRsetTrustLevel() follow RFC2181
+	section 5.4.1.
+	(Trac #595 git 19197b5bc9f2955bd6a8ca48a2d04472ed696e81)
+
+  187.  [bug]		zhang likun
+	Fix the assert error in class isc::cache::RRsetCache by adding the
+	check for empty pointer and test case for it.
+	(Trac #638, git 54e61304131965c4a1d88c9151f8697dcbb3ce12)
+
+  186.  [bug]		jelte
+	b10-resolver could stop with an assertion failure on certain kinds
+	of messages (there was a problem in error message creation). This
+	fixes that.
+	(Trac #607, git 25a5f4ec755bc09b54410fcdff22691283147f32)
+
+  185.  [bug]        vorner
+	Tests use port from private range (53210), lowering chance of
+	a conflict with something else (eg. running bind 10).
+	(Trac #523, git 301da7d26d41e64d87c0cf72727f3347aa61fb40)
+
+  184.  [func]*      vorner
+	Listening address and port configuration of b10-auth is the same as
+	for b10-resolver now. That means, it is configured through bindctl
+	at runtime, in the Auth/listen_on list, not through command line
+	arguments.
+	(Trac #575, #576, git f06ce638877acf6f8e1994962bf2dbfbab029edf)
+
+  183.  [bug]      jerry
+	src/bin/xfrout: Enable parallel sessions between xfrout server and
+	muti-Auth. The session needs to be created only on the first time
+	or if an error occur.
+	(Trac #419, git 1d60afb59e9606f312caef352ecb2fe488c4e751)
+
+  182.	[func]		jinmei
+	Support cppcheck for static code check on C++ code.  If cppcheck
+	is available, 'make cppcheck' on the top source directory will run
+	the checker and should cleanly complete with an exit code of 0
+	(at least with cppcheck 1.47).
+	Note: the suppression list isn't included in the final
+	distributions.  It should be created by hand or retrieved from
+	the git repository.
+	(Trac #613, git b973f67520682b63ef38b1451d309be9f4f4b218)
+
+  181.  [func]      feng
+	Add stop interface into dns server, so we can stop each running
+	server individually. With it, user can reconfigure her running server
+	with different ip address or port.
+	(Trac #388, git 6df94e2db856c1adc020f658cc77da5edc967555)
+
+  180.  [build]     jreed
+	Fix custom DESTDIR for make install. Patch from Jan Engelhardt.
+	(Trac #629, git 5ac67ede03892a5eacf42ce3ace1e4e376164c9f)
+
+bind10-devel-20110224 released on February 24, 2011
+
+  179.  [func]      vorner
+	It is possible to start and stop resolver and authoritative
+	server without restart of the whole system. Change of the
+	configuration (Boss/start_auth and Boss/start_resolver) is
+	enough.
+	(Trac #565, git 0ac0b4602fa30852b0d86cc3c0b4730deb1a58fe)
+
+  178.  [func]      jelte
+	Resolver now makes (limited) use of the cache
+	(Trac #491, git 8b41f77f0099ddc7ca7d34d39ad8c39bb1a8363c)
+
+  177.  [func]      stephen
+	The upstream fetch code in asiolink is now protocol agnostic to
+	allow for the addition of fallback to TCP if a fetch response
+	indicates truncation.
+	(Trac #554, git 9739cbce2eaffc7e80640db58a8513295cf684de)
+
+  176.  [func]      zhang likun
+	src/lib/cache: Rename one interface: from lookupClosestRRset()
+	to lookupDeepestNS(), and remove one parameter of it.
+	(Trac #492, git ecbfb7cf929d62a018dd4cdc7a841add3d5a35ae)
+
+  175.	[bug]		jerry
+	src/bin/xfrout: Xfrout use the case-sensitive mode to compress
+	names in an AXFR massage.
+	(Trac #253, git 004e382616150f8a2362e94d3458b59bb2710182)
+
+  174.	[bug]*		jinmei
+	src/lib/dns: revised dnssectime functions so that they don't rely
+	on the time_t type (whose size varies on different systems, which
+	can lead to subtle bugs like some form of "year 2038 problem").
+	Also handled 32-bit wrap around issues more explicitly, with more
+	detailed tests.  The function API has been changed, but the effect
+	should be minimal because these functions are mostly private.
+	(Trac #61, git 09ece8cdd41c0f025e8b897b4883885d88d4ba5d)
+
+  173.	[bug]		jerry
+	python/isc/notify: A notify_out test fails without network
+	connectivity, encapsulate the socket behavior using a mock
+	socket class to fix it.
+	(Trac #346, git 319debfb957641f311102739a15059f8453c54ce)
+
+  172.  [func]      jelte
+	Improved the bindctl cli in various ways, mainly concerning
+	list and map item addressing, the correct display of actual values,
+	and internal help.
+	(Trac #384, git e5fb3bc1ed5f3c0aec6eb40a16c63f3d0fc6a7b2)
+
+  171.  [func]      feng, jerry, jinmei, vorner
+	b10-auth, src/lib/datasrc: in memory data source now works as a
+	complete data source for authoritative DNS servers and b10-auth
+	uses it.  It still misses major features, however, including
+	DNSSEC support and zone transfer.
+	(Last trac #553, but many more,
+	git 6f031a09a248e7684723c000f3e8cc981dcdb349)
+
+  170.	[bug]		jinmei
+	Tightened validity checks in the NSEC3 constructors, both "from
+	"text" and "from wire".  Specifically, wire data containing
+	invalid type bitmaps or invalid lengths of salt or hash is now
+	correctly rejected.
+	(Trac #117, git 9c690982f24fef19c747a72f43c4298333a58f48)
+
+  169.  [func]      zhang likun, jelte
+	Added a basic implementation for a resolver cache (though not
+	used yet).
+	(Trac #449, git 8aa3b2246ae095bbe7f855fd11656ae3bdb98986)
+
+  168.  [bug]       vorner
+	Boss no longer has the -f argument, which was undocumented and
+	stayed as a relict of previous versions, currently causing only
+	strange behaviour.
+	(Trac #572, git 17f237478961005707d649a661cc72a4a0d612d4)
+
+  167.  [bug]           naokikambe
+	Fixed failure of termination of msgq_test.py with python3
+	coverage(3.3.1)
+	(Trac #573, git 0e6a18e12f61cc482e07078776234f32605312e5)
+
+  166.  [func]      jelte
+	The resolver now sends back a SERVFAIL when there is a client
+	timeout (timeout_client config setting), but it will not stop
+	resolving (until there is a lookup timeout or a result).
+	(Trac #497 and #489, git af0e5cd93bebb27cb5c4457f7759d12c8bf953a6)
+
+  165.  [func]      jelte
+	The resolver now handles CNAMEs, it will follow them, and include
+	them in the answer. The maximum length of CNAME chains that is
+	supported is 16.
+	(Trac #497, git af0e5cd93bebb27cb5c4457f7759d12c8bf953a6)
+
+  164.  [bug]           y-aharen
+	IntervalTimer: Modified the interface to accept interval in
+	milliseconds. It shortens the time of the tests of IntervalTimer.
+	(Trac #452, git c9f6acc81e24c4b8f0eb351123dc7b43f64e0914)
+
+  163.  [func]      vorner
+	The pimpl design pattern is used in UDPServer, with a shared
+	pointer. This makes it smaller to copy (which is done a lot as a
+	sideeffect of being coroutine) and speeds applications of this
+	class (notably b10-auth) up by around 10%.
+	(Trac #537, git 94cb95b1d508541201fc064302ba836164d3cbe6)
+
+  162.  [func]		stephen
+	Added C++ logging, allowing logging at different severities.
+	Code specifies the message to be logged via a symbol, and the
+	logging code picks up the message from an in-built dictionary.
+	The contents of the dictionary can be replaced at run-time by
+	locale-specific messages.  A message compiler program is provided
+	to create message header files and supply the default messages.
+	(Trac #438, git 7b1606cea7af15dc71f5ec1d70d958b00aa98af7)
+
+  161.  [func]		stephen
+	Added ResponseScrubber class to examine response from
+	a server and to remove out-of-bailiwick RRsets.  Also
+	does cross-section checks to ensure consistency.
+	(Trac #496, git b9296ca023cc9e76cda48a7eeebb0119166592c5)
+
+  160.  [func]		jelte
+  	Updated the resolver to take 3 different timeout values;
+	timeout_query for outstanding queries we sent while resolving
+	timeout_client for sending an answer back to the client
+	timeout_lookup for stopping the resolving
+	(currently 2 and 3 have the same final effect)
+	(Trac #489, git 578ea7f4ba94dc0d8a3d39231dad2be118e125a2)
+
+  159.	[func]		smann
+	The resolver now has a configurable set of root servers to start
+	resolving at (called root_addresses). By default these are not
+	(yet) filled in. If empty, a hardcoded address for f-root will be
+	used right now.
+	(Trac #483, git a07e078b4feeb01949133fc88c9939254c38aa7c)
+
+  158.	[func]		jelte
+	The Resolver module will now do (very limited) resolving, if not
+	set to forwarding mode (i.e. if the configuration option
+	forward_addresses is left empty). It only supports referrals that
+	contain glue addresses at this point, and does no other processing
+	of authoritative answers.
+	(Trac #484, git 7b84de4c0e11f4a070e038ca4f093486e55622af)
+
+  157.  [bug]       vorner
+	One frozen process no longer freezes the whole b10-msgq. It caused the
+	whole system to stop working.
+	(Trac #420, git 93697f58e4d912fa87bc7f9a591c1febc9e0d139)
+
+  156.	[func]		stephen
+	Added ResponseClassifier class to examine response from
+	a server and classify it into one of several categories.
+	(Trac #487, git 18491370576e7438c7893f8551bbb8647001be9c)
+
+bind10-devel-20110120 released on January 20, 2011
+
+  155.	[doc]		jreed
+	Miscellaneous documentation improvements for man pages and
+	the guide, including auth, resolver, stats, xfrout, and
+	zonemgr.  (git c14c4741b754a1eb226d3bdc3a7abbc4c5d727c0)
+
+  154.	[bug]		jinmei
+	b10-xfrin/b10-zonemgr: Fixed a bug where these programs didn't
+	receive command responses from CC sessions.  Eventually the
+	receive buffer became full, and many other components that rely
+	on CC channels would stall (as noted in #420 and #513).  This is
+	an urgent care fix due to the severity of the problem; we'll need
+	to revisit it for cleaner fix later.
+	(Trac #516, git 62c72fcdf4617e4841e901408f1e7961255b8194)
+
+  153.	[bug]		jelte
+	b10-cfgmgr: Fixed a bug where configuration updates sometimes
+	lost previous settings in the configuration manager.
+	(Trac #427, git 2df894155657754151e0860e2ca9cdbed7317c70)
+
+  152.	[func]*		jinmei
+	b10-auth: Added new configuration variable "statistics-interval"
+	to allow the user to change the timer interval for periodic
+	statistics updates.  The update can also be disabled by setting
+	the value to 0.  Disabling statistics updates will also work as
+	a temporary workaround of a known issue that b10-auth can block in
+	sending statistics and stop responding to queries as a result.
+	(Trac #513, git 285c5ee3d5582ed6df02d1aa00387f92a74e3695)
+
+  151.  [bug]		smann
+	lib/log/dummylog.h: 
+	lib/log/dummylog.cc: Modify dlog so that it takes an optional 2nd
+        argument of type bool (true or false). This flag, if set, will cause
+        the message to be printed whether or not -v is chosen.
+        (trac #432, git 880220478c3e8702d56d761b1e0b21b77d08ee5a)
+
+  150.  [bug]		jelte
+	b10-cfgmgr: No longer save the configuration on exit. Configuration
+	is already saved if it is changed successfully, so writing it on
+	exit (and hence, when nothing has changed too) is unnecessary and
+	may even cause problems.
+	(Trac #435, git fd7baa38c08d54d5b5f84930c1684c436d2776dc)
+
+  149.  [bug]		jelte
+	bindctl: Check if the user session has disappeared (either by a
+	timeout or by a server restart), and reauthenticate if so. This
+	fixes the 'cmdctl not running' problem.
+        (trac #431, git b929be82fec5f92e115d8985552f84b4fdd385b9)
+
+  148.	[func]		jelte
+	bindctl: Command results are now pretty-printed (i.e. printed in
+	a more readable form). Empty results are no longer printed at all
+	(used to print '{}'), and the message
+	'send the command to cmd-ctrl' has also been removed.
+	(git 3954c628c13ec90722a2d8816f52a380e0065bae)
+
+  147.	[bug]		jinmei
+	python/isc/config: Fixed a bug that importing custom configuration
+	(in b10-config.db) of a remote module didn't work.
+	(Trac #478, git ea4a481003d80caf2bff8d0187790efd526d72ca)
+
+  146.	[func]		jelte
+	Command arguments were not validated internally against their
+	specifications. This change fixes that (on the C++ side, Python
+	side depends on an as yet planned addition). Note: this is only
+	an added internal check, the cli already checks format.
+	(Trac #473, git 5474eba181cb2fdd80e2b2200e072cd0a13a4e52)
+
+  145.	[func]*		jinmei
+	b10-auth: added a new command 'loadzone' for (re)loading a
+	specific zone.  The command syntax is generic but it is currently
+	only feasible for class IN in memory data source.  To reload a
+	zone "example.com" via bindctl, execute the command as follows:
+	> Auth loadzone origin = example.com
+	(Trac #467 git 4f7e1f46da1046de527ab129a88f6aad3dba7562
+	from 1d7d3918661ba1c6a8b1e40d8fcbc5640a84df12)
+
+  144.	[build]		jinmei
+	Introduced a workaround for clang++ build on FreeBSD (and probably
+	some other OSes).  If building BIND 10 fails with clang++ due to
+	a link error about "__dso_handle", try again from the configure
+	script with CXX_LIBTOOL_LDFLAGS=-L/usr/lib (the path actually
+	doesn't matter; the important part is the -L flag).  This
+	workaround is not automatically enabled as it's difficult to
+	detect the need for it dynamically, and must be enabled via the
+	variable by hand.
+	(Trac #474, git cfde436fbd7ddf3f49cbbd153999656e8ca2a298)
+
+  143.	[build]		jinmei
+	Fixed build problems with clang++ in unit tests due to recent
+	changes.  No behavior change. (Trac #448, svn r4133)
+
+  142.	[func]		jinmei
+	b10-auth: updated query benchmark so that it can test in memory
+	data source.  Also fixed a bug that the output buffer isn't
+	cleared after query processing, resulting in misleading results
+	or program crash.  This is a regression due to change #135.
+	(Trac #465, svn r4103)
+
+  141.	[bug]		jinmei
+	b10-auth: Fixed a bug that the authoritative server includes
+	trailing garbage data in responses.  This is a regression due to
+	change #135. (Trac #462, svn r4081)
+
+  140.  [func]		y-aharen
+	src/bin/auth: Added a feature to count queries and send counter
+	values to statistics periodically. To support it, added wrapping
+	class of asio::deadline_timer to use as interval timer.
+	The counters can be seen using the "Stats show" command from
+	bindctl.  The result would look like:
+	  ... "auth.queries.tcp": 1, "auth.queries.udp": 1 ...
+	Using the "Auth sendstats" command you can make b10-auth send the
+	counters to b10-stats immediately.
+	(Trac #347, svn r4026)
+
+  139.  [build]		jreed
+	Introduced configure option and make targets for generating
+	Python code coverage report. This adds new make targets:
+	report-python-coverage and clean-python-coverage. The C++
+	code coverage targets were renamed to clean-cpp-coverage
+	and report-cpp-coverage. (Trac #362, svn r4023)
+
+  138.	[func]*		jinmei
+	b10-auth: added a configuration interface to support in memory
+	data sources.  For example, the following command to bindctl
+	will configure a memory data source containing the "example.com"
+	zone with the zone file named "example.com.zone":
+	> config set Auth/datasources/ [{"type": "memory", "zones": \
+	 [{"origin": "example.com", "file": "example.com.zone"}]}]
+	By default, the memory data source is disabled; it must be
+	configured explicitly.  To disable it again, specify a null list
+	for Auth/datasources:
+	> config set Auth/datasources/ []
+	Notes: it's currently for class IN only.  The zone files are not
+	actually loaded into memory yet (which will soon be implemented).
+	This is an experimental feature and the syntax may change in
+	future versions.
+	(Trac #446, svn r3998)
+
+  137.	[bug]		jreed
+	Fix run_*.sh scripts that are used for development testing
+	so they use a msgq socket file in the build tree.
+	(Trac #226, svn r3989)
+
+  136.  [bug]       jelte
+  	bindctl (and the configuration manager in general) now no longer
+	accepts 'unknown' data; i.e. data for modules that it does not know
+	about, or configuration items that are not specified in the .spec
+	files.
+	(Trac #202, svn r3967)
+
+  135.  [func]      each
+	Add b10-resolver. This is an example recursive server that
+	currently does forwarding only and no caching.
+	(Trac #327, svn r3903)
+
+  134.  [func]      vorner
+	b10-resolver supports timeouts and retries in forwarder mode.
+	(Trac #401, svn r3660)
+
+  133.  [func]      vorner
+	New temporary logging function available in isc::log. It is used by
+	b10-resolver.
+	(Trac #393, r3602)
+
+  132.  [func]      vorner
+	The b10-resolver is configured through config manager.
+	It has "listen_on" and "forward_addresses" options.
+	(Trac #389, r3448)
+
+  131.  [func]    feng, jerry
+	src/lib/datasrc: Introduced two template classes RBTree and RBNode
+	to provide the generic map with domain name as key and anything as
+	the value. Because of some unresolved design issue, the new classes
+	are only intended to be used by memory zone and zone table.
+	(Trac #397, svn r3890)
+
+  130.	[func]		jerry
+	src/lib/datasrc: Introduced a new class MemoryDataSrc to provide
+	the general interface for memory data source.  For the initial
+	implementation, we don't make it a derived class of AbstractDataSrc
+	because the interface is so different(we'll eventually consider this
+	as part of the generalization work).
+	(Trac #422, svn r3866)
+
+  129.	[func]		jinmei
+	src/lib/dns: Added new functions masterLoad() for loading master
+	zone files.  The initial implementation can only parse a limited
+	form of master files, but BIND 9's named-compilezone can convert
+	any valid zone file into the acceptable form.
+	(Trac #423, svn r3857)
+
+  128.  [build]     vorner
+	Test for query name = '.', type = DS to authoritative nameserver
+	for root zone was added.
+	(Trac #85, svn r3836)
+
+  127.  [bug]       stephen
+	During normal operation process termination and resurrection messages
+	are now output regardless of the state of the verbose flag.
+	(Trac #229, svn r3828)
+
+  126.  [func]      stephen, vorner, ocean
+	The Nameserver Address Store (NSAS) component has been added. It takes
+	care of choosing an IP address of a nameserver when a zone needs to be
+	contacted.
+	(Trac #356, Trac #408, svn r3823)
+
+bind10-devel-20101201 released on December 01, 2010
+
+  125.  [func]		jelte
+	Added support for addressing individual list items in bindctl
+	configuration commands; If you have an element that is a list, you
+	can use foo[X] to address a specific item, where X is an integer
+	(starting at 0)
+	(Trac #405, svn r3739)
+
+  124.  [bug]		jreed
+	Fix some wrong version reporting. Now also show the version
+	for the component and BIND 10 suite. (Trac #302, svn r3696)
+
+  123.  [bug]		jelte
+	src/bin/bindctl printed values had the form of python literals
+	(e.g. 'True'), while the input requires valid JSON (e.g. 'true').
+	Output changed to JSON format for consistency. (svn r3694)
+
+  122.  [func]		stephen
+	src/bin/bind10: Added configuration options to Boss to determine
+	whether to start the authoritative server, recursive server (or
+	both). A dummy program has been provided for test purposes.
+	(Trac #412, svn r3676)
+
+  121.  [func]		jinmei
+	src/lib/dns: Added support for TSIG RDATA.  At this moment this is
+	not much of real use, however, because no protocol support was
+	added yet.  It will soon be added. (Trac #372, svn r3649)
+
+  120.  [func]		jinmei
+	src/lib/dns: introduced two new classes, TSIGKey and TSIGKeyRing,
+	to manage TSIG keys. (Trac #381, svn r3622)
+
+  119.	[bug]		jinmei
+	The master file parser of the python datasrc module incorrectly
+	regarded a domain name beginning with a decimal number as a TTL
+	specification.  This confused b10-loadzone and had it reject to
+	load a zone file that contains such a name.
+	Note: this fix is incomplete and the loadzone would still be
+	confused if the owner name is a syntactically indistinguishable
+	from a TTL specification.  This is part of a more general issue
+	and will be addressed in Trac #413. (Trac #411, svn r3599)
+
+  118.	[func]		jinmei
+	src/lib/dns: changed the interface of
+	AbstractRRset::getRdataIterator() so that the internal
+	cursor would point to the first RDATA automatically.  This
+	will be a more intuitive and less error prone behavior.
+	This is a backward compatible change. (Trac #410, r3595)
+
+  117.  [func]		jinmei
+	src/lib/datasrc: added new zone and zone table classes for the
+	support of in memory data source.  This is an intermediate step to
+	the bigger feature, and is not yet actually usable in practice.
+	(Trac #399, svn r3590)
+
+  116.	[bug]		jerry
+	src/bin/xfrout: Xfrout and Auth will communicate by long tcp
+	connection, Auth needs to make a new connection only on the first
+	time or if an error occurred.
+	(Trac #299, svn r3482)
+
+  115.	[func]*		jinmei
+	src/lib/dns: Changed DNS message flags and section names from
+	separate classes to simpler enums, considering the balance between
+	type safety and usability.  API has been changed accordingly.
+	More documentation and tests were provided with these changes.
+	(Trac #358, r3439)
+
   114.	[build]		jinmei
 	Supported clang++.  Note: Boost >= 1.44 is required.
 	(Trac #365, svn r3383)
 
   113.	[func]*		zhanglikun
-	Folder name 'utils'(the folder in /src/lib/python/isc/) has been 
+	Folder name 'utils'(the folder in /src/lib/python/isc/) has been
 	renamed	to 'util'. Programs that used 'import isc.utils.process'
 	now need to use 'import isc.util.process'. The folder
 	/src/lib/python/isc/Util is removed since it isn't used by any
@@ -11,17 +630,15 @@
 
   112.	[func]		zhang likun
 	Add one mixin class to override the naive serve_forever() provided
-	in python library socketserver. Instead of polling for shutdwon
+	in python library socketserver. Instead of polling for shutdown
 	every poll_interval seconds, one socketpair is used to wake up
-	the waiting server.(Trac #352, svn r3366)
+	the waiting server. (Trac #352, svn r3366)
 
   111.	[bug]*   zhanglikun, Michal Vaner
-	Make sure process xfrin/xfrout/zonemgr/cmdctl can be stoped
+	Make sure process xfrin/xfrout/zonemgr/cmdctl can be stopped
 	properly when user enter "ctrl+c" or 'Boss shutdown' command
-	through	bindctl.
-
-	The ZonemgrRefresh.run_timer and NotifyOut.dispatcher spawn
-	a thread themselves.
+	through bindctl.  The ZonemgrRefresh.run_timer and
+	NotifyOut.dispatcher spawn a thread themselves.
 	(Trac #335, svn r3273)
 
   110.  [func]      Michal Vaner
@@ -33,7 +650,7 @@
   109.  [func]		naokikambe
 	Added the initial version of the stats module for the statistics
 	feature of BIND 10, which supports the restricted features and
-	items and reports via bindctl command (Trac #191, r3218)
+	items and reports via bindctl command. (Trac #191, r3218)
 	Added the document of the stats module, which is about how stats
 	module collects the data (Trac #170, [wiki:StatsModule])
 
@@ -60,11 +677,11 @@
   104.	[bug]		jerry
 	bin/zonemgr: zonemgr should be attempting to refresh expired zones.
 	(Trac #336, r3139)
-				   
+ 
   103.	[bug]		jerry
 	lib/python/isc/log: Fixed an issue with python logging,
-	python log shouldn't die with OSError.(Trac #267, r3137)
-				   
+	python log shouldn't die with OSError. (Trac #267, r3137)
+ 
   102.	[build]		jinmei
 	Disable threads in ASIO to minimize build time dependency.
 	(Trac #345, r3100)
@@ -117,7 +734,7 @@ bind10-devel-20100917 released on September 17, 2010
   93.	[bug]		jinmei
 	lib/datasrc: A DS query could crash the library (and therefore,
 	e.g. the authoritative server) if some RR of the same apex name
-	is stored in the hot spot cache.  (Trac #307, svn r2923)
+	is stored in the hot spot cache. (Trac #307, svn r2923)
 
   92.	[func]*		jelte
 	libdns_python (the python wrappers for libdns++) has been renamed
@@ -297,7 +914,7 @@ bind10-devel-20100701 released on July 1, 2010
   66.  [bug]		each
 	Check for duplicate RRsets before inserting data into a message
 	section; this, among other things, will prevent multiple copies
-	of the same CNAME from showing up when there's a loop.  (Trac #69,
+	of the same CNAME from showing up when there's a loop. (Trac #69,
 	svn r2350)
     
   65.  [func]		shentingting
@@ -419,7 +1036,7 @@ bind10-devel-20100602 released on June 2, 2010
 	#205, svn r1957)
 
   44.   [build]         jreed
-	Install headers for libdns and libexception.  (Trac #68,
+	Install headers for libdns and libexception. (Trac #68,
 	svn r1941)
 
   43.   [func]          jelte
@@ -427,7 +1044,7 @@ bind10-devel-20100602 released on June 2, 2010
 
   42.   [func]          jelte
 	lib/python/isc/config:      Make temporary file with python
-	tempfile module instead of manual with fixed name.  (Trac
+	tempfile module instead of manual with fixed name. (Trac
 	#184, svn r1859)
 
   41.   [func]          jelte
@@ -435,7 +1052,7 @@ bind10-devel-20100602 released on June 2, 2010
 
   40.   [build]         jreed
 	Report detected features and configure settings at end of
-	configure output.  (svn r1836)
+	configure output. (svn r1836)
 
   39.   [func]*         each
 	Renamed libauth to libdatasrc.
@@ -448,7 +1065,7 @@ bind10-devel-20100602 released on June 2, 2010
 	(Trac #135, #151, #134, svn r1797)
 
   37.   [build]         jinmei
-	Check for the availability of python-config.  (Trac #159,
+	Check for the availability of python-config. (Trac #159,
 	svn r1794)
 
   36.	[func]		shane
@@ -493,7 +1110,7 @@ bind10-devel-20100421 released on April 21, 2010
 
   27.	[build]
 	Add missing copyright license statements to various source
-	files.  (svn r1750)
+	files. (svn r1750)
 
   26.	[func]
 	Use PACKAGE_STRING (name + version) from config.h instead
@@ -594,8 +1211,12 @@ bind10-devel-20100421 released on April 21, 2010
 bind10-devel-20100319 released on March 19, 2010
 
 For complete code revision history, see http://bind10.isc.org/browser
-Specific subversion changesets can be accessed at:
-	http://bind10.isc.org/changeset/rrrr
+Specific git changesets can be accessed at:
+	http://bind10.isc.org/changeset/?reponame=&old=rrrr^&new=rrrr
+or after cloning the original git repository by executing:
+	% git diff rrrr^ rrrr
+Subversion changesets are not accessible any more.  The subversion
+revision numbers will be replaced with corresponding git revisions.
 Trac tickets can be accessed at: https://bind10.isc.org/ticket/nnn
 
 LEGEND

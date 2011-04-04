@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 //
 // Declaration of the custom exceptions
 // Initialization and addition of these go in the module init at the
@@ -50,7 +48,7 @@ public:
     isc::dns::NameComparisonResult* ncr;
 };
 
-static int NameComparisonResult_init(s_NameComparisonResult* self UNUSED_PARAM, PyObject* args UNUSED_PARAM);
+static int NameComparisonResult_init(s_NameComparisonResult*, PyObject*);
 static void NameComparisonResult_destroy(s_NameComparisonResult* self);
 static PyObject* NameComparisonResult_getOrder(s_NameComparisonResult* self);
 static PyObject* NameComparisonResult_getCommonLabels(s_NameComparisonResult* self);
@@ -123,9 +121,7 @@ static PyTypeObject name_comparison_result_type = {
 };
 
 static int
-NameComparisonResult_init(s_NameComparisonResult* self UNUSED_PARAM,
-                          PyObject* args UNUSED_PARAM)
-{
+NameComparisonResult_init(s_NameComparisonResult*, PyObject*) {
     PyErr_SetString(PyExc_NotImplementedError,
                     "NameComparisonResult can't be built directly");
     return (-1);

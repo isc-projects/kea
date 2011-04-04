@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <stdint.h>
 
 #include <algorithm>
@@ -244,7 +242,6 @@ checkRRset(RRsetPtr rrset, const Name& expected_name,
     EXPECT_EQ(expected_rrttl, rrset->getTTL());
 
     RdataIteratorPtr rdata_iterator = rrset->getRdataIterator();
-    rdata_iterator->first();
     vector<string>::const_iterator data_it = expected_data.begin();
     for (; data_it != expected_data.end(); ++data_it) {
         EXPECT_FALSE(rdata_iterator->isLast());

@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <config.h>
 
 #include <cassert>
@@ -72,6 +70,7 @@ StaticDataSrcImpl::StaticDataSrcImpl() :
                                  RRType::TXT(), RRTTL(0)));
     authors->addRdata(generic::TXT("Chen Zhengzhang")); // Jerry
     authors->addRdata(generic::TXT("Evan Hunt"));
+    authors->addRdata(generic::TXT("Haidong Wang")); // Ocean
     authors->addRdata(generic::TXT("Han Feng"));
     authors->addRdata(generic::TXT("Jelte Jansen"));
     authors->addRdata(generic::TXT("Jeremy C. Reed")); 
@@ -79,10 +78,12 @@ StaticDataSrcImpl::StaticDataSrcImpl() :
     authors->addRdata(generic::TXT("JINMEI Tatuya"));
     authors->addRdata(generic::TXT("Kazunori Fujiwara"));
     authors->addRdata(generic::TXT("Michael Graff"));
+    authors->addRdata(generic::TXT("Michal Vaner"));
     authors->addRdata(generic::TXT("Naoki Kambe"));
     authors->addRdata(generic::TXT("Shane Kerr"));
     authors->addRdata(generic::TXT("Shen Tingting"));
     authors->addRdata(generic::TXT("Stephen Morris"));
+    authors->addRdata(generic::TXT("Yoshitaka Aharen"));
     authors->addRdata(generic::TXT("Zhang Likun"));
 
     authors_ns = RRsetPtr(new RRset(authors_name, RRClass::CH(),
@@ -235,18 +236,12 @@ StaticDataSrc::findExactRRset(const Name& qname,
 }
 
 DataSrc::Result
-StaticDataSrc::findPreviousName(const Name& qname UNUSED_PARAM,
-                                Name& target UNUSED_PARAM,
-                                const Name* zonename UNUSED_PARAM) const
-{
+StaticDataSrc::findPreviousName(const Name&, Name&, const Name*) const {
     return (NOT_IMPLEMENTED);
 }
 
 DataSrc::Result
-StaticDataSrc::findCoveringNSEC3(const Name& zonename UNUSED_PARAM,
-                                 string& hash UNUSED_PARAM,
-                                 RRsetList& target UNUSED_PARAM) const
-{
+StaticDataSrc::findCoveringNSEC3(const Name&, string&, RRsetList&) const {
    return (NOT_IMPLEMENTED);
 }
 
@@ -258,7 +253,7 @@ StaticDataSrc::init() {
 // Static data source is "configuration less", so the \c config parameter
 // is intentionally ignored.
 DataSrc::Result
-StaticDataSrc::init(isc::data::ConstElementPtr config UNUSED_PARAM) {
+StaticDataSrc::init(isc::data::ConstElementPtr) {
     return (init());
 }
 

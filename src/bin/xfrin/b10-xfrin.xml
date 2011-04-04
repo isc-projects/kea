@@ -17,7 +17,6 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $Id$ -->
 <refentry>
 
   <refentryinfo>
@@ -64,7 +63,7 @@
     </para>
 
     <note><simpara>
-      The Y1 prototype release only supports AXFR. IXFR is not implemented.
+      This prototype release only supports AXFR. IXFR is not implemented.
     </simpara></note>
 
     <para>
@@ -149,7 +148,6 @@
       the authoritative server to transfer from,
       and <varname>port</varname> to define the port number on the
       authoritative server (defaults to 53).
-<!-- TODO: note: not documenting db_file since that will be removed. -->
      </para>
 <!-- TODO: later hostname for master? -->
 

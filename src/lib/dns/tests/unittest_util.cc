@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <config.h>
 
 #include <iostream>
@@ -25,13 +23,15 @@
 
 #include <gtest/gtest.h>
 
+#include <dns/rcode.h>
 #include <dns/name.h>
+#include <dns/message.h>
 #include <dns/tests/unittest_util.h>
 
 using namespace std;
+using namespace isc::dns;
 
 using isc::UnitTestUtil;
-using isc::dns::NameComparisonResult;
 
 namespace {
 class UnitTestUtilConfig {
@@ -132,10 +132,7 @@ UnitTestUtil::readWireData(const string& datastr,
 }
 
 ::testing::AssertionResult
-UnitTestUtil::matchWireData(const char* dataexp1 UNUSED_PARAM,
-                            const char* lenexp1 UNUSED_PARAM,
-                            const char* dataexp2 UNUSED_PARAM,
-                            const char* lenexp2 UNUSED_PARAM,
+UnitTestUtil::matchWireData(const char*, const char*, const char*, const char*,
                             const void* data1, size_t len1,
                             const void* data2, size_t len2)
 {
@@ -162,8 +159,7 @@ UnitTestUtil::matchWireData(const char* dataexp1 UNUSED_PARAM,
 }
 
 ::testing::AssertionResult
-UnitTestUtil::matchName(const char* nameexp1 UNUSED_PARAM,
-                        const char* nameexp2 UNUSED_PARAM,
+UnitTestUtil::matchName(const char*, const char*,
                         const isc::dns::Name& name1,
                         const isc::dns::Name& name2)
 {
@@ -179,3 +175,19 @@ UnitTestUtil::matchName(const char* nameexp1 UNUSED_PARAM,
     }
     return (::testing::AssertionSuccess());
 }
+
+void
+UnitTestUtil::createRequestMessage(Message& message,
+                                   const Opcode& opcode,
+                                   const uint16_t qid,
+                                   const Name& name,
+                                   const RRClass& rrclass,
+                                   const RRType& rrtype)
+{
+    message.clear(Message::RENDER);
+    message.setOpcode(opcode);
+    message.setRcode(Rcode::NOERROR());
+    message.setQid(qid);
+    message.addQuestion(Question(name, rrclass, rrtype));
+}
+

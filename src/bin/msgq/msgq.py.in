@@ -38,7 +38,9 @@ import isc.cc
 isc.util.process.rename()
 
 # This is the version that gets displayed to the user.
-__version__ = "v20091030 (Paving the DNS Parking Lot)"
+# The VERSION string consists of the module name, the module version
+# number, and the overall BIND 10 version number (set in configure.ac).
+VERSION = "b10-msgq 20110127 (BIND 10 @PACKAGE_VERSION@)"
 
 class MsgQReceiveError(Exception): pass
 
@@ -125,6 +127,7 @@ class MsgQ:
         self.hostname = socket.gethostname()
         self.subs = SubscriptionManager()
         self.lnames = {}
+        self.sendbuffs = {}
 
     def setup_poller(self):
         """Set up the poll thing.  Internal function."""
@@ -133,12 +136,29 @@ class MsgQ:
         except AttributeError:
             self.kqueue = select.kqueue()
     
-    def add_kqueue_socket(self, socket):
-        event = select.kevent(socket.fileno(),
-                              select.KQ_FILTER_READ,
+    def add_kqueue_socket(self, socket, write_filter=False):
+        """Add a kquque filter for a socket.  By default the read
+        filter is used; if write_filter is set to True, the write
+        filter is used.  We use a boolean value instead of a specific
+        filter constant, because kqueue filter values do not seem to
+        be defined on some systems.  The use of boolean makes the
+        interface restrictive because there are other filters, but this
+        method is mostly only for our internal use, so it should be
+        acceptable at least for now."""
+        filter_type = select.KQ_FILTER_WRITE if write_filter else \
+            select.KQ_FILTER_READ
+        event = select.kevent(socket.fileno(), filter_type,
                               select.KQ_EV_ADD | select.KQ_EV_ENABLE)
         self.kqueue.control([event], 0)
 
+    def delete_kqueue_socket(self, socket, write_filter=False):
+        """Delete a kqueue filter for socket.  See add_kqueue_socket()
+        for the semantics and notes about write_filter."""
+        filter_type = select.KQ_FILTER_WRITE if write_filter else \
+            select.KQ_FILTER_READ
+        event = select.kevent(socket.fileno(), filter_type,
+                              select.KQ_EV_DELETE)
+        self.kqueue.control([event], 0)
 
     def setup_listener(self):
         """Set up the listener socket.  Internal function."""
@@ -185,6 +205,12 @@ class MsgQ:
         # TODO: When we have logging, we might want
         # to add a debug message here that a new connection
         # was made
+        self.register_socket(newsocket)
+
+    def register_socket(self, newsocket):
+        """
+        Internal function to insert a socket. Used by process_accept and some tests.
+        """
         self.sockets[newsocket.fileno()] = newsocket
         lname = self.newlname()
         self.lnames[lname] = newsocket
@@ -196,10 +222,10 @@ class MsgQ:
 
     def process_socket(self, fd):
         """Process a read on a socket."""
-        sock = self.sockets[fd]
-        if sock == None:
+        if not fd in self.sockets:
             sys.stderr.write("[b10-msgq] Got read on Strange Socket fd %d\n" % fd)
             return
+        sock = self.sockets[fd]
 #        sys.stderr.write("[b10-msgq] Got read on fd %d\n" %fd)
         self.process_packet(fd, sock)
 
@@ -211,7 +237,9 @@ class MsgQ:
         lname = [ k for k, v in self.lnames.items() if v == sock ][0]
         del self.lnames[lname]
         sock.close()
-        self.sockets[fd] = None
+        del self.sockets[fd]
+        if fd in self.sendbuffs:
+            del self.sendbuffs[fd]
         sys.stderr.write("[b10-msgq] Closing socket fd %d\n" % fd)
 
     def getbytes(self, fd, sock, length):
@@ -285,6 +313,9 @@ class MsgQ:
             self.process_command_unsubscribe(sock, routing, data)
         elif cmd == 'getlname':
             self.process_command_getlname(sock, routing, data)
+        elif cmd == 'ping':
+            # Command for testing purposes
+            self.process_command_ping(sock, routing, data)
         else:
             sys.stderr.write("[b10-msgq] Invalid command: %s\n" % cmd)
 
@@ -303,10 +334,67 @@ class MsgQ:
         return ret
 
     def sendmsg(self, sock, env, msg = None):
-        sock.send(self.preparemsg(env, msg))
+        self.send_prepared_msg(sock, self.preparemsg(env, msg))
+
+    def __send_data(self, sock, data):
+        try:
+            # We set the socket nonblocking, MSG_DONTWAIT doesn't exist
+            # on some OSes
+            sock.setblocking(0)
+            return sock.send(data)
+        except socket.error as e:
+            if e.errno == errno.EAGAIN or e.errno == errno.EWOULDBLOCK:
+                return 0
+            else:
+                raise e
+        finally:
+            # And set it back again
+            sock.setblocking(1)
 
     def send_prepared_msg(self, sock, msg):
-        sock.send(msg)
+        # Try to send the data, but only if there's nothing waiting
+        fileno = sock.fileno()
+        if fileno in self.sendbuffs:
+            amount_sent = 0
+        else:
+            amount_sent = self.__send_data(sock, msg)
+
+        # Still something to send
+        if amount_sent < len(msg):
+            now = time.clock()
+            # Append it to buffer (but check the data go away)
+            if fileno in self.sendbuffs:
+                (last_sent, buff) = self.sendbuffs[fileno]
+                if now - last_sent > 0.1:
+                    self.kill_socket(fileno, sock)
+                    return
+                buff += msg
+            else:
+                buff = msg[amount_sent:]
+                last_sent = now
+                if self.poller:
+                    self.poller.register(fileno, select.POLLIN |
+                        select.POLLOUT)
+                else:
+                    self.add_kqueue_socket(sock, True)
+            self.sendbuffs[fileno] = (last_sent, buff)
+
+    def __process_write(self, fileno):
+        # Try to send some data from the buffer
+        (_, msg) = self.sendbuffs[fileno]
+        sock = self.sockets[fileno]
+        amount_sent = self.__send_data(sock, msg)
+        # Keep the rest
+        msg = msg[amount_sent:]
+        if len(msg) == 0:
+            # If there's no more, stop requesting for write availability
+            if self.poller:
+                self.poller.register(fileno, select.POLLIN)
+            else:
+                self.delete_kqueue_socket(sock, True)
+            del self.sendbuffs[fileno]
+        else:
+            self.sendbuffs[fileno] = (time.clock(), msg)
 
     def newlname(self):
         """Generate a unique connection identifier for this socket.
@@ -314,6 +402,9 @@ class MsgQ:
         time."""
         self.connection_counter += 1
         return "%x_%x@%s" % (time.time(), self.connection_counter, self.hostname)
+
+    def process_command_ping(self, sock, routing, data):
+        self.sendmsg(sock, { "type" : "pong" }, data)
 
     def process_command_getlname(self, sock, routing, data):
         lname = [ k for k, v in self.lnames.items() if v == sock ][0]
@@ -377,22 +468,29 @@ class MsgQ:
                 if fd == self.listen_socket.fileno():
                     self.process_accept()
                 else:
-                    self.process_socket(fd)
+                    if event & select.POLLOUT:
+                        self.__process_write(fd)
+                    if event & select.POLLIN:
+                        self.process_socket(fd)
 
     def run_kqueue(self):
         while True:
             events = self.kqueue.control(None, 10)
             if not events:
                 raise RuntimeError('serve: kqueue returned no events')
-            
+
             for event in events:
                 if event.ident == self.listen_socket.fileno():
                     self.process_accept()
                 else:
-                    if event.flags & select.KQ_FILTER_READ and event.data > 0:
+                    if event.filter == select.KQ_FILTER_WRITE:
+                        self.__process_write(event.ident)
+                    if event.filter == select.KQ_FILTER_READ and \
+                            event.data > 0:
                         self.process_socket(event.ident)
                     elif event.flags & select.KQ_EV_EOF:
-                        self.kill_socket(event.ident, self.sockets[event.ident])
+                        self.kill_socket(event.ident,
+                                         self.sockets[event.ident])
 
     def shutdown(self):
         """Stop the MsgQ master."""
@@ -421,7 +519,7 @@ if __name__ == "__main__":
         parser.values.msgq_port = intval
 
     # Parse any command-line options.
-    parser = OptionParser(version=__version__)
+    parser = OptionParser(version=VERSION)
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
                       help="display more about what is going on")
     parser.add_option("-s", "--socket-file", dest="msgq_socket_file",
@@ -433,7 +531,7 @@ if __name__ == "__main__":
 
     # Announce startup.
     if options.verbose:
-        sys.stdout.write("[b10-msgq] MsgQ %s\n" % __version__)
+        sys.stdout.write("[b10-msgq] %s\n" % VERSION)
 
     msgq = MsgQ(options.msgq_socket_file, options.verbose)
 
