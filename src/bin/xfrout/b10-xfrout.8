@@ -2,12 +2,12 @@
 .\"     Title: b10-xfrout
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: September 8, 2010
+.\"      Date: December 1, 2010
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
-.TH "B10\-XFROUT" "8" "September 8, 2010" "BIND10" "BIND10"
+.TH "B10\-XFROUT" "8" "December 1, 2010" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -67,13 +67,28 @@ receives its configurations from
 The configurable settings are:
 .PP
 
-\fIdb_file\fR
-defines the path to the SQLite3 data store file\&. The default is
-/usr/local/var/bind10\-devel/zone\&.sqlite3\&.
-.PP
-
 \fItransfers_out\fR
 defines the maximum number of outgoing zone transfers that can run concurrently\&. The default is 10\&.
+.PP
+
+\fIlog_name\fR
+.PP
+
+\fIlog_file\fR
+The location of the log file if using a file channel\&. If undefined, then the file channel is closed\&. The default is
+/usr/local/var/bind10\-devel/log/Xfrout\&.log\&.
+.PP
+
+\fIlog_severity\fR
+The default is "debug"\&.
+.PP
+
+\fIlog_versions\fR
+The default is 5\&.
+.PP
+
+\fIlog_max_bytes\fR
+The default is 1048576\&.
 .if n \{\
 .sp
 .\}

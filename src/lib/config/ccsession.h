@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __CCSESSION_H
 #define __CCSESSION_H 1
 
@@ -91,11 +89,36 @@ isc::data::ConstElementPtr createCommand(const std::string& command,
 /// \brief Parses the given command into a string containing the actual
 ///        command and an ElementPtr containing the optional argument.
 ///
+/// Raises a CCSessionError if this is not a well-formed command
+///
+/// Example code: (command_message is a ConstElementPtr that is
+/// passed here)
+/// \code
+/// ElementPtr command_message = Element::fromJSON("{ \"command\": [\"foo\", { \"bar\": 123 } ] }");
+/// try {
+///     ConstElementPtr args;
+///     std::string command_str = parseCommand(args, command_message);
+///     if (command_str == "foo") {
+///         std::cout << "The command 'foo' was given" << std::endl;
+///         if (args->contains("bar")) {
+///             std::cout << "It had argument name 'bar' set, which has"
+///                       << "value " 
+///                       << args->get("bar")->intValue();
+///         }
+///     } else {
+///         std::cout << "Unknown command '" << command_str << std::endl;
+///     }
+/// } catch (CCSessionError cse) {
+///     std::cerr << "Bad command in CC Session: "
+///     << cse.what() << std::endl;
+/// }
+/// \endcode
+/// 
 /// \param arg This value will be set to the ElementPtr pointing to
-///        the argument, or to an empty ElementPtr if there was none.
+///        the argument, or to an empty Map (ElementPtr) if there was none.
 /// \param command The command message containing the command (as made
 ///        by createCommand()
-/// \return The command string
+/// \return The command name
 std::string parseCommand(isc::data::ConstElementPtr& arg,
                          isc::data::ConstElementPtr command);
 
@@ -243,6 +266,15 @@ private:
     ModuleSpec module_specification_;
     isc::data::ConstElementPtr handleConfigUpdate(
         isc::data::ConstElementPtr new_config);
+
+    isc::data::ConstElementPtr checkConfigUpdateCommand(
+        const std::string& target_module,
+        isc::data::ConstElementPtr arg);
+
+    isc::data::ConstElementPtr checkModuleCommand(
+        const std::string& cmd_str,
+        const std::string& target_module,
+        isc::data::ConstElementPtr arg) const;
 
     isc::data::ConstElementPtr(*config_handler_)(
         isc::data::ConstElementPtr new_config);

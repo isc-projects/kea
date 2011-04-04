@@ -23,5 +23,8 @@ MYPATH_PATH=@abs_top_builddir@/src/bin/msgq
 PYTHONPATH=@abs_top_srcdir@/src/lib/python
 export PYTHONPATH
 
+BIND10_MSGQ_SOCKET_FILE=@abs_top_builddir@/msgq_socket
+export BIND10_MSGQ_SOCKET_FILE
+
 cd ${MYPATH_PATH}
-exec ${PYTHON_EXEC} -O b10-msgq $*
+exec ${PYTHON_EXEC} -O b10-msgq "$@"

@@ -23,8 +23,6 @@
 //
 // And of course care has to be taken that all identifiers be unique
 
-// $Id$
-
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
@@ -57,6 +55,7 @@ static PyObject* po_DNSMessageBADVERS;
 #include <dns/python/rrset_python.cc>          // needs Rdata, RRTTL
 #include <dns/python/question_python.cc>       // needs RRClass, RRType, RRTTL,
                                                // Name
+#include <dns/python/tsigkey_python.cc>        // needs Name
 #include <dns/python/opcode_python.cc>
 #include <dns/python/rcode_python.cc>
 #include <dns/python/edns_python.cc>           // needs Messagerenderer, Rcode
@@ -143,6 +142,14 @@ PyInit_pydnspp(void) {
     }
 
     if (!initModulePart_EDNS(mod)) {
+        return (NULL);
+    }
+
+    if (!initModulePart_TSIGKey(mod)) {
+        return (NULL);
+    }
+
+    if (!initModulePart_TSIGKeyRing(mod)) {
         return (NULL);
     }
 

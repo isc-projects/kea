@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __BUFFER_H
 #define __BUFFER_H 1
 
@@ -24,6 +22,8 @@
 #include <stdint.h>
 
 #include <exceptions/exceptions.h>
+
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dns {
@@ -356,6 +356,21 @@ public:
     /// \param data The 8-bit integer to be written into the buffer.
     void writeUint8(uint8_t data) { data_.push_back(data); }
 
+    /// \brief Write an unsigned 8-bit integer into the buffer.
+    ///
+    /// The position must be lower than the size of the buffer,
+    /// otherwise an exception of class \c isc::dns::InvalidBufferPosition
+    /// will be thrown.
+    ///
+    /// \param data The 8-bit integer to be written into the buffer.
+    /// \param pos The position in the buffer to write the data.
+    void writeUint8At(uint8_t data, size_t pos) {
+        if (pos + sizeof(data) > data_.size()) {
+            isc_throw(InvalidBufferPosition, "write at invalid position");
+        }
+        data_[pos] = data;
+    }
+
     /// \brief Write an unsigned 16-bit integer in host byte order into the
     /// buffer in network byte order.
     ///
@@ -412,6 +427,16 @@ public:
 private:
     std::vector<uint8_t> data_;
 };
+
+/// \brief Pointer-like types pointing to \c InputBuffer or \c OutputBuffer
+///
+/// These types are expected to be used as an argument in asynchronous
+/// callback functions.  The internal reference-counting will ensure that
+/// that ongoing state information will not be lost if the object
+/// that originated the asynchronous call falls out of scope.
+typedef boost::shared_ptr<InputBuffer> InputBufferPtr;
+typedef boost::shared_ptr<OutputBuffer> OutputBufferPtr;
+
 }
 }
 #endif  // __BUFFER_H

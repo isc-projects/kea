@@ -121,7 +121,7 @@ void
 check_module_specification(ConstElementPtr def) {
     try {
         check_data_specification(def);
-    } catch (TypeError te) {
+    } catch (const TypeError& te) {
         throw ModuleSpecError(te.what());
     }
 }
@@ -177,17 +177,47 @@ ModuleSpec::getModuleDescription() const {
 }
 
 bool
-ModuleSpec::validate_config(ConstElementPtr data, const bool full) const {
+ModuleSpec::validateConfig(ConstElementPtr data, const bool full) const {
     ConstElementPtr spec = module_specification->find("config_data");
-    return (validate_spec_list(spec, data, full, ElementPtr()));
+    return (validateSpecList(spec, data, full, ElementPtr()));
 }
 
 bool
-ModuleSpec::validate_config(ConstElementPtr data, const bool full,
+ModuleSpec::validateCommand(const std::string& command,
+                             ConstElementPtr args,
+                             ElementPtr errors) const
+{
+    if (args->getType() != Element::map) {
+        errors->add(Element::create("args for command " +
+                                    command + " is not a map"));
+        return (false);
+    }
+
+    ConstElementPtr commands_spec = module_specification->find("commands");
+    if (!commands_spec) {
+        // there are no commands according to the spec.
+        errors->add(Element::create("The given module has no commands"));
+        return (false);
+    }
+
+    BOOST_FOREACH(ConstElementPtr cur_command, commands_spec->listValue()) {
+        if (cur_command->get("command_name")->stringValue() == command) {
+            return (validateSpecList(cur_command->get("command_args"),
+                                       args, true, errors));
+        }
+    }
+
+    // this command is unknown
+    errors->add(Element::create("Unknown command " + command));
+    return (false);
+}
+
+bool
+ModuleSpec::validateConfig(ConstElementPtr data, const bool full,
                             ElementPtr errors) const
 {
     ConstElementPtr spec = module_specification->find("config_data");
-    return (validate_spec_list(spec, data, full, errors));
+    return (validateSpecList(spec, data, full, errors));
 }
 
 ModuleSpec
@@ -264,7 +294,7 @@ check_type(ConstElementPtr spec, ConstElementPtr element) {
 }
 
 bool
-ModuleSpec::validate_item(ConstElementPtr spec, ConstElementPtr data,
+ModuleSpec::validateItem(ConstElementPtr spec, ConstElementPtr data,
                           const bool full, ElementPtr errors) const
 {
     if (!check_type(spec, data)) {
@@ -286,14 +316,14 @@ ModuleSpec::validate_item(ConstElementPtr spec, ConstElementPtr data,
                 return (false);
             }
             if (list_spec->get("item_type")->stringValue() == "map") {
-                if (!validate_item(list_spec, list_el, full, errors)) {
+                if (!validateItem(list_spec, list_el, full, errors)) {
                     return (false);
                 }
             }
         }
     }
     if (data->getType() == Element::map) {
-        if (!validate_spec_list(spec->get("map_item_spec"), data, full, errors)) {
+        if (!validateSpecList(spec->get("map_item_spec"), data, full, errors)) {
             return (false);
         }
     }
@@ -302,7 +332,7 @@ ModuleSpec::validate_item(ConstElementPtr spec, ConstElementPtr data,
 
 // spec is a map with item_name etc, data is a map
 bool
-ModuleSpec::validate_spec(ConstElementPtr spec, ConstElementPtr data,
+ModuleSpec::validateSpec(ConstElementPtr spec, ConstElementPtr data,
                           const bool full, ElementPtr errors) const
 {
     std::string item_name = spec->get("item_name")->stringValue();
@@ -311,7 +341,7 @@ ModuleSpec::validate_spec(ConstElementPtr spec, ConstElementPtr data,
     data_el = data->get(item_name);
     
     if (data_el) {
-        if (!validate_item(spec, data_el, full, errors)) {
+        if (!validateItem(spec, data_el, full, errors)) {
             return (false);
         }
     } else {
@@ -327,16 +357,38 @@ ModuleSpec::validate_spec(ConstElementPtr spec, ConstElementPtr data,
 
 // spec is a list of maps, data is a map
 bool
-ModuleSpec::validate_spec_list(ConstElementPtr spec, ConstElementPtr data,
+ModuleSpec::validateSpecList(ConstElementPtr spec, ConstElementPtr data,
                                const bool full, ElementPtr errors) const
 {
+    bool validated = true;
     std::string cur_item_name;
     BOOST_FOREACH(ConstElementPtr cur_spec_el, spec->listValue()) {
-        if (!validate_spec(cur_spec_el, data, full, errors)) {
-            return (false);
+        if (!validateSpec(cur_spec_el, data, full, errors)) {
+            validated = false;
         }
     }
-    return (true);
+
+    typedef std::pair<std::string, ConstElementPtr> maptype;
+    
+    BOOST_FOREACH(maptype m, data->mapValue()) {
+        bool found = false;
+        // Ignore 'version' as a config element
+        if (m.first.compare("version") != 0) {
+            BOOST_FOREACH(ConstElementPtr cur_spec_el, spec->listValue()) {
+                if (cur_spec_el->get("item_name")->stringValue().compare(m.first) == 0) {
+                    found = true;
+                }
+            }
+            if (!found) {
+                validated = false;
+                if (errors) {
+                    errors->add(Element::create("Unknown item " + m.first));
+                }
+            }
+        }
+    }
+
+    return (validated);
 }
 
 }

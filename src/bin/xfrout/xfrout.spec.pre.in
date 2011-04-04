@@ -9,12 +9,6 @@
          "item_default": 10
        },
        {
-         "item_name": "db_file",
-         "item_type": "string",
-         "item_optional": false,
-         "item_default": "@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3"
-       },
-       {
          "item_name": "log_name",
          "item_type": "string",
          "item_optional": false,
@@ -54,4 +48,4 @@
       ]
   }
 }
-     
+

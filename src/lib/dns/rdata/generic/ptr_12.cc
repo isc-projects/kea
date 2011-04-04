@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <config.h>
 
 #include <string>
@@ -33,7 +31,7 @@ PTR::PTR(const string& type_str) :
     ptr_name_(type_str)
 {}
 
-PTR::PTR(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) :
+PTR::PTR(InputBuffer& buffer, size_t) :
     ptr_name_(buffer)
 {
     // we don't need rdata_len for parsing.  if necessary, the caller will

@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 //
 // Sample Datasource implementation; this datasource only returns
 // static content for the queries
@@ -76,9 +74,9 @@ public:
                             isc::dns::Name& target,
                             const isc::dns::Name* zonename) const;
 
-   Result findCoveringNSEC3(const isc::dns::Name& zonename,
-                            std::string& hash,
-                            isc::dns::RRsetList& target) const;
+    Result findCoveringNSEC3(const isc::dns::Name& zonename,
+                             std::string& hash,
+                             isc::dns::RRsetList& target) const;
 
     Result init();
     Result init(isc::data::ConstElementPtr config);

@@ -2,12 +2,12 @@
 .\"     Title: bindctl
 .\"    Author: [see the "AUTHORS" section]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: March 18, 2010
+.\"      Date: December 23, 2010
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
-.TH "BINDCTL" "1" "March 18, 2010" "BIND10" "BIND10"
+.TH "BINDCTL" "1" "December 23, 2010" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -22,7 +22,7 @@
 bindctl \- control and configure BIND 10
 .SH "SYNOPSIS"
 .HP \w'\fBbindctl\fR\ 'u
-\fBbindctl\fR
+\fBbindctl\fR [\fB\-a\ \fR\fB\fIaddress\fR\fR] [\fB\-h\fR] [\fB\-c\ \fR\fB\fIfile\fR\fR] [\fB\-p\ \fR\fB\fInumber\fR\fR] [\fB\-\-address\ \fR\fB\fIaddress\fR\fR] [\fB\-\-help\fR] [\fB\-\-certificate\-chain\ \fR\fB\fIfile\fR\fR] [\fB\-\-csv\-file\-dir\fR\fB\fIfile\fR\fR] [\fB\-\-port\ \fR\fB\fInumber\fR\fR] [\fB\-\-version\fR]
 .SH "DESCRIPTION"
 .PP
 The
@@ -32,15 +32,69 @@ via its interactive command interpreter\&.
 .PP
 
 \fBbindctl\fR
-communicates over the REST\-ful interface provided by
+communicates over a HTTPS REST\-ful interface provided by
 \fBb10-cmdctl\fR(8)\&. The
 \fBb10-cfgmgr\fR(8)
 daemon stores the configurations and defines the commands\&.
+.SH "ARGUMENTS"
 .PP
-The tool will authenticate using a username and password\&. On the first successful login, it will save the details to
-~/\&.bind10/default_user\&.csv
-which will be used for later uses of
-\fBbindctl\fR\&.
+The arguments are as follows:
+.PP
+\fB\-a\fR \fIaddress\fR, \fB\-\-address\fR \fIaddress\fR
+.RS 4
+The IPv4 or IPv6 address to use to connect to the running
+\fBb10-cmdctl\fR(8)
+daemon\&. The default is 127\&.0\&.0\&.1\&.
+.RE
+.PP
+\fB\-c\fR \fIfile\fR, \fB\-\-certificate\-chain\fR \fIfile\fR
+.RS 4
+The PEM formatted server certificate validation chain file\&.
+.RE
+.PP
+\fB\-\-csv\-file\-dir\fR\fIfile\fR
+.RS 4
+The directory name in which the user/password CSV file is stored (see AUTHENTICATION)\&. By default this option doesn\'t have any value, in which case the "\&.bind10" directory under the user\'s home directory will be used\&.
+.RE
+.PP
+\fB\-h\fR, \fB\-\-help\fR
+.RS 4
+Display command usage\&.
+.RE
+.PP
+\fB\-p\fR \fInumber\fR, \fB\-\-port\fR \fInumber\fR
+.RS 4
+The port number to use to connect to the running
+\fBb10-cmdctl\fR(8)
+daemon\&. The default is 8080\&.
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+This default port number may change\&.
+.sp .5v
+.RE
+.RE
+.PP
+\fB\-\-version\fR
+.RS 4
+Display the version number and exit\&.
+.RE
+.SH "AUTHENTICATION"
+.PP
+The tool will authenticate using a username and password\&. On the first successful login, it will save the details to a comma\-separated\-value (CSV) file which will be used for later uses of
+\fBbindctl\fR\&. The file name is
+default_user\&.csv
+located under the directory specified by the \-\-csv\-file\-dir option\&.
+.SH "USAGE"
 .PP
 The
 \fBbindctl\fR

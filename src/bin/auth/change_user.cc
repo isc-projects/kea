@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <errno.h>
 #include <string.h>
 #include <pwd.h>
@@ -26,6 +24,7 @@
 #include <auth/common.h>
 
 using namespace boost;
+using namespace std;
 
 void
 changeUser(const char* const username) {
@@ -42,14 +41,14 @@ changeUser(const char* const username) {
         }
     }
     if (runas_pw == NULL) {
-        isc_throw(FatalError, "Unknown user name or UID:" << username);
+        throw FatalError("Unknown user name or UID:" + string(username));
     }
 
     if (setgid(runas_pw->pw_gid) < 0) {
-        isc_throw(FatalError, "setgid() failed: " << strerror(errno));
+        throw FatalError("setgid() failed: " + string(strerror(errno)));
     }
 
     if (setuid(runas_pw->pw_uid) < 0) {
-        isc_throw(FatalError, "setuid() failed: " << strerror(errno));
+        throw FatalError("setuid() failed: " + string(strerror(errno)));
     }
 }

@@ -1,7 +1,6 @@
 #!@PYTHON@
 
 # Copyright (C) 2010  Internet Systems Consortium.
-# Copyright (C) 2010  CZ NIC
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +14,6 @@
 # FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-# $Id$
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import os
@@ -240,7 +237,7 @@ class XfrinConnection(asyncore.dispatcher):
         if msg_rcode != Rcode.NOERROR():
             raise XfrinException('error response: %s' % msg_rcode.to_text())
 
-        if not msg.get_header_flag(MessageFlag.QR()):
+        if not msg.get_header_flag(Message.HEADERFLAG_QR):
             raise XfrinException('response is not a response ')
 
         if msg.get_qid() != self._query_id:
@@ -251,10 +248,10 @@ class XfrinConnection(asyncore.dispatcher):
 
         self._check_response_header(msg)
 
-        if msg.get_rr_count(Section.ANSWER()) == 0:
+        if msg.get_rr_count(Message.SECTION_ANSWER) == 0:
             raise XfrinException('answer section is empty')
 
-        if msg.get_rr_count(Section.QUESTION()) > 1:
+        if msg.get_rr_count(Message.SECTION_QUESTION) > 1:
             raise XfrinException('query section count greater than 1')
 
     def _handle_answer_section(self, answer_section):
@@ -294,7 +291,7 @@ class XfrinConnection(asyncore.dispatcher):
             msg.from_wire(recvdata)
             self._check_response_status(msg)
             
-            answer_section = msg.get_section(Section.ANSWER())
+            answer_section = msg.get_section(Message.SECTION_ANSWER)
             for rr in self._handle_answer_section(answer_section):
                 yield rr
 
@@ -521,8 +518,19 @@ class Xfrin:
             msg = create_command(notify_out.ZONE_NEW_DATA_READY_CMD, param)
             # catch the exception, in case msgq has been killed.
             try:
-                self._send_cc_session.group_sendmsg(msg, XFROUT_MODULE_NAME)
-                self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME)
+                seq = self._send_cc_session.group_sendmsg(msg,
+                                                          XFROUT_MODULE_NAME)
+                try:
+                    answer, env = self._send_cc_session.group_recvmsg(False,
+                                                                      seq)
+                except isc.cc.session.SessionTimeout:
+                    pass        # for now we just ignore the failure
+                seq = self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME)
+                try:
+                    answer, env = self._send_cc_session.group_recvmsg(False,
+                                                                      seq)
+                except isc.cc.session.SessionTimeout:
+                    pass        # for now we just ignore the failure
             except socket.error as err: 
                 log_error("Fail to send message to %s and %s, msgq may has been killed" 
                           % (XFROUT_MODULE_NAME, ZONE_MANAGER_MODULE_NAME))
@@ -530,7 +538,12 @@ class Xfrin:
             msg = create_command(ZONE_XFRIN_FAILED, param)
             # catch the exception, in case msgq has been killed.
             try:
-                self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME)
+                seq = self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME)
+                try:
+                    answer, env = self._send_cc_session.group_recvmsg(False,
+                                                                      seq)
+                except isc.cc.session.SessionTimeout:
+                    pass        # for now we just ignore the failure
             except socket.error as err:
                 log_error("Fail to send message to %s, msgq may has been killed" 
                           % ZONE_MANAGER_MODULE_NAME)

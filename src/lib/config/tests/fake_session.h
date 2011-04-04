@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: session.h 1250 2010-03-09 22:52:15Z jinmei $
-
 #ifndef _ISC_FAKESESSION_H
 #define _ISC_FAKESESSION_H 1
 
@@ -63,7 +61,7 @@ public:
     virtual int reply(isc::data::ConstElementPtr envelope,
                       isc::data::ConstElementPtr newmsg);
     virtual bool hasQueuedMsgs() const;
-    virtual void setTimeout(size_t milliseconds) {}
+    virtual void setTimeout(size_t) {}
     virtual size_t getTimeout() const { return (0); }
     isc::data::ConstElementPtr getFirstMessage(std::string& group,
                                                std::string& to) const;

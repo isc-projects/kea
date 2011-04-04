@@ -13,8 +13,6 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# $Id$
-
 #
 # Tests for the module_spec module
 #
@@ -109,6 +107,9 @@ class TestModuleSpec(unittest.TestCase):
         return dd.validate_command(cmd_name, params)
 
     def test_command_validation(self):
+        # tests for a command that doesn't take an argument
+        self.assertEqual(True, self.read_spec_file("spec2.spec").validate_command("shutdown", None));
+        self.assertEqual(False, self.read_spec_file("spec2.spec").validate_command("shutdown", '{"val": 1}'));
         self.assertEqual(True, self.validate_command_params("spec27.spec", "data22_1.data", 'cmd1'))
         self.assertEqual(False, self.validate_command_params("spec27.spec", "data22_2.data",'cmd1'))
         self.assertEqual(False, self.validate_command_params("spec27.spec", "data22_3.data", 'cmd1'))
@@ -312,6 +313,19 @@ class TestModuleSpec(unittest.TestCase):
         self.assertEqual(False, isc.config.module_spec._validate_spec(spec, True, {}, None))
         self.assertEqual(False, isc.config.module_spec._validate_spec(spec, True, {}, errors))
         self.assertEqual(['non-optional item an_item missing'], errors)
+
+    def test_validate_unknown_items(self):
+        spec = [{ 'item_name': "an_item",
+                 'item_type': "string",
+                 'item_optional': True,
+                 'item_default': "asdf"
+               }]
+
+        errors = []
+        self.assertEqual(True, isc.config.module_spec._validate_spec_list(spec, True, None, None))
+        self.assertEqual(False, isc.config.module_spec._validate_spec_list(spec, True, { 'does_not_exist': 1 }, None))
+        self.assertEqual(False, isc.config.module_spec._validate_spec_list(spec, True, { 'does_not_exist': 1 }, errors))
+        self.assertEqual(['unknown item does_not_exist'], errors)
         
 
 

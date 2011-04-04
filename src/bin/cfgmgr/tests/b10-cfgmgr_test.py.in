@@ -13,8 +13,6 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: cfgmgr_test.py 2126 2010-06-16 14:40:22Z jelte $
-
 #
 # Tests for the configuration manager run script
 #
@@ -22,9 +20,10 @@
 import unittest
 import os
 import sys
+from isc.testutils.parse_args import OptsError, TestOptParser
 
 class MyConfigManager:
-    def __init__(self, path):
+    def __init__(self, path, filename):
         self._path = path
         self.read_config_called = False
         self.notify_boss_called = False
@@ -58,7 +57,8 @@ class TestConfigManagerStartup(unittest.TestCase):
         self.assertTrue(b.cm.read_config_called)
         self.assertTrue(b.cm.notify_boss_called)
         self.assertTrue(b.cm.run_called)
-        self.assertTrue(b.cm.write_config_called)
+        # if there are no changes, config is not written
+        self.assertFalse(b.cm.write_config_called)
 
         self.assertTrue(b.cm.running)
         b.signal_handler(None, None)
@@ -89,6 +89,69 @@ class TestConfigManagerStartup(unittest.TestCase):
 
         sys.modules.pop("b10-cfgmgr")
 
+class TestParseArgs(unittest.TestCase):
+    """
+    Test for the parsing of command line arguments. We provide a different
+    array to parse instead.
+    """
+
+    def test_defaults(self):
+        """
+        Test the default values when no options are provided.
+        """
+        # Pass it empty array, not our arguments
+        b = __import__("b10-cfgmgr")
+        parsed = b.parse_options([], TestOptParser)
+        self.assertEqual(b.DATA_PATH, parsed.data_path)
+        self.assertEqual(b.DEFAULT_CONFIG_FILE, parsed.config_file)
+
+    def test_wrong_args(self):
+        """
+        Test it fails when we pass invalid option.
+        """
+        b = __import__("b10-cfgmgr")
+        self.assertRaises(OptsError, b.parse_options, ['--wrong-option'],
+                          TestOptParser)
+
+    def test_not_arg(self):
+        """
+        Test it fails when there's an argument that's not option
+        (eg. without -- at the beginning).
+        """
+        b = __import__("b10-cfgmgr")
+        self.assertRaises(OptsError, b.parse_options, ['not-option'],
+                          TestOptParser)
+
+    def test_datapath(self):
+        """
+        Test overwriting the data path.
+        """
+        b = __import__("b10-cfgmgr")
+        parsed = b.parse_options(['--data-path=/path'], TestOptParser)
+        self.assertEqual('/path', parsed.data_path)
+        self.assertEqual(b.DEFAULT_CONFIG_FILE, parsed.config_file)
+        parsed = b.parse_options(['-p', '/path'], TestOptParser)
+        self.assertEqual('/path', parsed.data_path)
+        self.assertEqual(b.DEFAULT_CONFIG_FILE, parsed.config_file)
+        self.assertRaises(OptsError, b.parse_options, ['-p'], TestOptParser)
+        self.assertRaises(OptsError, b.parse_options, ['--data-path'],
+                          TestOptParser)
+
+    def test_db_filename(self):
+        """
+        Test setting the configuration database file.
+        """
+        b = __import__("b10-cfgmgr")
+        parsed = b.parse_options(['--config-filename=filename'],
+                                 TestOptParser)
+        self.assertEqual(b.DATA_PATH, parsed.data_path)
+        self.assertEqual("filename", parsed.config_file)
+        parsed = b.parse_options(['-c', 'filename'], TestOptParser)
+        self.assertEqual(b.DATA_PATH, parsed.data_path)
+        self.assertEqual("filename", parsed.config_file)
+        self.assertRaises(OptsError, b.parse_options, ['-c'], TestOptParser)
+        self.assertRaises(OptsError, b.parse_options, ['--config-filename'],
+                          TestOptParser)
 
 if __name__ == '__main__':
     unittest.main()

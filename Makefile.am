@@ -1,4 +1,4 @@
-SUBDIRS = src
+SUBDIRS = doc src tests
 USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
 GENHTML=@GENHTML@
@@ -8,20 +8,30 @@ DISTCLEANFILES = config.report
 # When running distcheck target, do not install the configurations
 DISTCHECK_CONFIGURE_FLAGS = --disable-install-configurations
 
-clean-coverage:
+clean-cpp-coverage:
 	@if [ $(USE_LCOV) = yes ] ; then \
 		$(LCOV) --directory . --zerocounters; \
 		rm -rf coverage/; \
 	else \
-		echo "Code coverage not enabled at configuration time"; \
-		exit 1; \
+		echo "C++ code coverage not enabled at configuration time." ; \
+		echo "Use: ./configure --with-lcov" ; \
+	fi
+
+clean-python-coverage:
+	@if [ $(USE_PYCOVERAGE) = yes ] ; then \
+		rm -f $(abs_top_srcdir)/.coverage ; \
+		rm -rf $(abs_top_srcdir)/py-coverage-html ; \
+	else \
+		echo "Python code coverage not enabled at configuration time." ; \
+		echo "Use: ./configure --with-pycoverage" ; \
 	fi
 
 perform-coverage: check
 
-report-coverage:
-	$(LCOV) --capture --directory . --output-file all.info
-	$(LCOV) --remove all.info \
+report-cpp-coverage:
+	@if [ $(USE_LCOV) = yes ] ; then \
+		$(LCOV) --capture --directory . --output-file all.info ; \
+		$(LCOV) --remove all.info \
 			c++/4.4\*/\* \
 			c++/4.4\*/backward/\* \
 			c++/4.4\*/bits/\* \
@@ -36,10 +46,41 @@ report-coverage:
 			\*_unittests.cc \
 			\*_unittest.cc \
 			\*_unittests.h \
-		--output report.info
-	$(GENHTML) -o coverage report.info 
+			--output report.info ; \
+		$(GENHTML) --legend -o $(abs_top_builddir)/coverage-cpp-html report.info ; \
+		echo "Generated C++ Code Coverage report in HTML at $(abs_top_builddir)/coverage-cpp-html" ; \
+	else \
+		echo "C++ code coverage not enabled at configuration time." ; \
+		echo "Use: ./configure --with-lcov" ; \
+	fi
 
+report-python-coverage:
+	@if [ $(USE_PYCOVERAGE) = yes ] ; then \
+		$(PYCOVERAGE) html -d $(abs_top_builddir)/coverage-python-html --omit=src/bin/bind10/tests/,src/bin/bindctl/tests/,src/bin/cfgmgr/tests/,src/bin/cmdctl/tests/,src/bin/loadzone/tests/,src/bin/msgq/tests/,src/bin/stats/tests/,src/bin/tests/,src/bin/xfrin/tests/,src/bin/xfrout/tests/,src/bin/zonemgr/tests/,src/lib/dns/python/tests/,src/lib/dns/tests/,src/lib/python/isc/cc/tests/,src/lib/python/isc/config/tests/,src/lib/python/isc/datasrc/tests/,src/lib/python/isc/log/tests/,src/lib/python/isc/net/tests/,src/lib/python/isc/notify/tests/,src/lib/python/isc/util/tests/ ; \
+		echo "Generated Python Code Coverage report in HTML at $(abs_top_builddir)/coverage-python-html" ; \
+	else \
+		echo "Python code coverage not enabled at configuration time." ; \
+		echo "Use: ./configure --with-pycoverage" ; \
+	fi
+
+# for python and c++ test coverage
 coverage: clean-coverage perform-coverage report-coverage
+
+clean-coverage: clean-cpp-coverage clean-python-coverage
+
+report-coverage: report-cpp-coverage report-python-coverage
+
+# for static C++ check using cppcheck (when available)
+cppcheck:
+	cppcheck --enable=all --suppressions src/cppcheck-suppress.lst \
+		--quiet --error-exitcode=1 \
+		--template '{file}:{line}: check_fail: {message} ({severity},{id})' \
+		src
+
+# system tests
+systest:
+	cd tests/system; \
+	sh $(abs_srcdir)/tests/system/runall.sh
 
 #### include external sources in the distributed tarball:
 EXTRA_DIST = ext/asio/README
@@ -253,9 +294,4 @@ EXTRA_DIST += ext/asio/asio/is_write_buffered.hpp
 EXTRA_DIST += ext/asio/asio/buffered_read_stream_fwd.hpp
 EXTRA_DIST += ext/asio/asio/socket_acceptor_service.hpp
 EXTRA_DIST += ext/asio/asio.hpp
-
-## include the guide in tarball, later will include the other parts there
-## but they cleanup.
-EXTRA_DIST += doc/guide/bind10-guide.css
-EXTRA_DIST += doc/guide/bind10-guide.html
-EXTRA_DIST += doc/guide/bind10-guide.xml
+EXTRA_DIST += ext/coroutine/coroutine.h

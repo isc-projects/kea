@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <gtest/gtest.h>
 
 #include <config/module_spec.h>
@@ -25,12 +23,12 @@
 using namespace isc::data;
 using namespace isc::config;
 
-std::string specfile(const std::string name) {
+std::string specfile(const std::string& name) {
     return (std::string(TEST_DATA_PATH) + "/" + name);
 }
 
 void
-module_spec_error(const std::string& file,
+moduleSpecError(const std::string& file,
                const std::string& error1,
                const std::string& error2 = "",
                const std::string& error3 = "")
@@ -38,7 +36,7 @@ module_spec_error(const std::string& file,
     EXPECT_THROW(moduleSpecFromFile(specfile(file)), ModuleSpecError);
     try {
         ModuleSpec dd = moduleSpecFromFile(specfile(file));
-    } catch (ModuleSpecError dde) {
+    } catch (const ModuleSpecError& dde) {
         std::string ddew = dde.what();
         EXPECT_EQ(error1 + error2 + error3, ddew);
     }
@@ -52,7 +50,7 @@ TEST(ModuleSpec, ReadingSpecfiles) {
                               ->stringValue(), "Spec1");
     dd = moduleSpecFromFile(specfile("spec2.spec"));
     EXPECT_EQ(dd.getFullSpec()->get("config_data")->size(), 6);
-    module_spec_error("doesnotexist",
+    moduleSpecError("doesnotexist",
                    "Error opening ",
                    specfile("doesnotexist"),
                    ": No such file or directory");
@@ -81,69 +79,65 @@ TEST(ModuleSpec, ReadingSpecfiles) {
 }
 
 TEST(ModuleSpec, SpecfileItems) {
-    module_spec_error("spec3.spec",
+    moduleSpecError("spec3.spec",
                    "item_name missing in { \"item_default\": 1, \"item_optional\": false, \"item_type\": \"integer\" }");
-    module_spec_error("spec4.spec",
+    moduleSpecError("spec4.spec",
                    "item_type missing in { \"item_default\": 1, \"item_name\": \"item1\", \"item_optional\": false }");
-    module_spec_error("spec5.spec",
+    moduleSpecError("spec5.spec",
                    "item_optional missing in { \"item_default\": 1, \"item_name\": \"item1\", \"item_type\": \"integer\" }");
-    module_spec_error("spec6.spec",
+    moduleSpecError("spec6.spec",
                    "item_default missing in { \"item_name\": \"item1\", \"item_optional\": false, \"item_type\": \"integer\" }");
-    module_spec_error("spec9.spec",
+    moduleSpecError("spec9.spec",
                    "item_default not of type integer");
-    module_spec_error("spec10.spec",
+    moduleSpecError("spec10.spec",
                    "item_default not of type real");
-    module_spec_error("spec11.spec",
+    moduleSpecError("spec11.spec",
                    "item_default not of type boolean");
-    module_spec_error("spec12.spec",
+    moduleSpecError("spec12.spec",
                    "item_default not of type string");
-    module_spec_error("spec13.spec",
+    moduleSpecError("spec13.spec",
                    "item_default not of type list");
-    module_spec_error("spec14.spec",
+    moduleSpecError("spec14.spec",
                    "item_default not of type map");
-    module_spec_error("spec15.spec",
+    moduleSpecError("spec15.spec",
                    "badname is not a valid type name");
 }
 
 TEST(ModuleSpec, SpecfileConfigData) {
-    module_spec_error("spec7.spec",
+    moduleSpecError("spec7.spec",
                    "module_name missing in {  }");
-    module_spec_error("spec8.spec",
+    moduleSpecError("spec8.spec",
                    "No module_spec in specification");
-    module_spec_error("spec16.spec",
+    moduleSpecError("spec16.spec",
                    "config_data is not a list of elements");
-    module_spec_error("spec21.spec",
+    moduleSpecError("spec21.spec",
                    "commands is not a list of elements");
 }
 
 TEST(ModuleSpec, SpecfileCommands) {
-    module_spec_error("spec17.spec",
+    moduleSpecError("spec17.spec",
                    "command_name missing in { \"command_args\": [ { \"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": false, \"item_type\": \"string\" } ], \"command_description\": \"Print the given message to stdout\" }");
-    module_spec_error("spec18.spec",
+    moduleSpecError("spec18.spec",
                    "command_args missing in { \"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\" }");
-    module_spec_error("spec19.spec",
+    moduleSpecError("spec19.spec",
                    "command_args not of type list");
-    module_spec_error("spec20.spec",
+    moduleSpecError("spec20.spec",
                    "somethingbad is not a valid type name");
-/*
-    module_spec_error("spec22.spec",
-                   "");
-*/
 }
 
 bool
-data_test(const ModuleSpec& dd, const std::string& data_file_name) {
+dataTest(const ModuleSpec& dd, const std::string& data_file_name) {
     std::ifstream data_file;
 
     data_file.open(specfile(data_file_name).c_str());
     ConstElementPtr data = Element::fromJSON(data_file, data_file_name);
     data_file.close();
 
-    return (dd.validate_config(data));
+    return (dd.validateConfig(data));
 }
 
 bool
-data_test_with_errors(const ModuleSpec& dd, const std::string& data_file_name,
+dataTestWithErrors(const ModuleSpec& dd, const std::string& data_file_name,
                       ElementPtr errors)
 {
     std::ifstream data_file;
@@ -152,22 +146,68 @@ data_test_with_errors(const ModuleSpec& dd, const std::string& data_file_name,
     ConstElementPtr data = Element::fromJSON(data_file, data_file_name);
     data_file.close();
 
-    return (dd.validate_config(data, true, errors));
+    return (dd.validateConfig(data, true, errors));
 }
 
 TEST(ModuleSpec, DataValidation) {
     ModuleSpec dd = moduleSpecFromFile(specfile("spec22.spec"));
 
-    EXPECT_TRUE(data_test(dd, "data22_1.data"));
-    EXPECT_FALSE(data_test(dd, "data22_2.data"));
-    EXPECT_FALSE(data_test(dd, "data22_3.data"));
-    EXPECT_FALSE(data_test(dd, "data22_4.data"));
-    EXPECT_FALSE(data_test(dd, "data22_5.data"));
-    EXPECT_TRUE(data_test(dd, "data22_6.data"));
-    EXPECT_TRUE(data_test(dd, "data22_7.data"));
-    EXPECT_FALSE(data_test(dd, "data22_8.data"));
+    EXPECT_TRUE(dataTest(dd, "data22_1.data"));
+    EXPECT_FALSE(dataTest(dd, "data22_2.data"));
+    EXPECT_FALSE(dataTest(dd, "data22_3.data"));
+    EXPECT_FALSE(dataTest(dd, "data22_4.data"));
+    EXPECT_FALSE(dataTest(dd, "data22_5.data"));
+    EXPECT_TRUE(dataTest(dd, "data22_6.data"));
+    EXPECT_TRUE(dataTest(dd, "data22_7.data"));
+    EXPECT_FALSE(dataTest(dd, "data22_8.data"));
+    EXPECT_FALSE(dataTest(dd, "data22_9.data"));
+
+    // Test if "version" is allowed in config data
+    // (same data as 22_7, but added "version")
+    EXPECT_TRUE(dataTest(dd, "data22_10.data"));
 
     ElementPtr errors = Element::createList();
-    EXPECT_FALSE(data_test_with_errors(dd, "data22_8.data", errors));
+    EXPECT_FALSE(dataTestWithErrors(dd, "data22_8.data", errors));
     EXPECT_EQ("[ \"Type mismatch\" ]", errors->str());
+
+    errors = Element::createList();
+    EXPECT_FALSE(dataTestWithErrors(dd, "data22_9.data", errors));
+    EXPECT_EQ("[ \"Unknown item value_does_not_exist\" ]", errors->str());
+}
+
+TEST(ModuleSpec, CommandValidation) {
+    ModuleSpec dd = moduleSpecFromFile(specfile("spec2.spec"));
+    ConstElementPtr arg = Element::fromJSON("{}");
+    ElementPtr errors = Element::createList();
+
+    EXPECT_TRUE(dd.validateCommand("shutdown", arg, errors));
+    EXPECT_EQ(errors->size(), 0);
+
+    errors = Element::createList();
+    EXPECT_FALSE(dd.validateCommand("unknowncommand", arg, errors));
+    EXPECT_EQ(errors->size(), 1);
+    EXPECT_EQ(errors->get(0)->stringValue(), "Unknown command unknowncommand");
+
+    errors = Element::createList();
+    EXPECT_FALSE(dd.validateCommand("print_message", arg, errors));
+    EXPECT_EQ(errors->size(), 1);
+    EXPECT_EQ(errors->get(0)->stringValue(), "Non-optional value missing");
+
+    errors = Element::createList();
+    arg = Element::fromJSON("{ \"message\": \"Hello\" }");
+    EXPECT_TRUE(dd.validateCommand("print_message", arg, errors));
+    EXPECT_EQ(errors->size(), 0);
+
+    errors = Element::createList();
+    arg = Element::fromJSON("{ \"message\": \"Hello\", \"unknown_second_arg\": 1 }");
+    EXPECT_FALSE(dd.validateCommand("print_message", arg, errors));
+    EXPECT_EQ(errors->size(), 1);
+    EXPECT_EQ(errors->get(0)->stringValue(), "Unknown item unknown_second_arg");
+
+    errors = Element::createList();
+    arg = Element::fromJSON("{ \"message\": 1 }");
+    EXPECT_FALSE(dd.validateCommand("print_message", arg, errors));
+    EXPECT_EQ(errors->size(), 1);
+    EXPECT_EQ(errors->get(0)->stringValue(), "Type mismatch");
+
 }

@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <dns/buffer.h>
 #include <dns/name.h>
 #include <dns/rrset.h>
@@ -29,27 +27,31 @@ namespace isc {
 namespace datasrc {
 
 QueryTask::QueryTask(const Query& qry, const isc::dns::Name& n,
-                     const isc::dns::RRType& t, const isc::dns::Section& sect) :
+                     const isc::dns::RRType& t,
+                     const isc::dns::Message::Section sect) :
     q(qry), qname(n), qclass(qry.qclass()), qtype(t), section(sect),
     op(AUTH_QUERY), state(GETANSWER), flags(0)
 {}
 
 QueryTask::QueryTask(const Query& qry, const isc::dns::Name& n, 
-                     const isc::dns::RRType& t, const isc::dns::Section& sect,
+                     const isc::dns::RRType& t,
+                     const isc::dns::Message::Section sect,
                      const Op o) :
     q(qry), qname(n), qclass(qry.qclass()), qtype(t), section(sect), op(o),
     state(GETANSWER), flags(0)
 {}
 
 QueryTask::QueryTask(const Query& qry, const isc::dns::Name& n,
-                     const isc::dns::RRType& t, const isc::dns::Section& sect,
+                     const isc::dns::RRType& t,
+                     const isc::dns::Message::Section sect,
                      const State st) :
     q(qry), qname(n), qclass(qry.qclass()), qtype(t), section(sect),
     op(AUTH_QUERY), state(st), flags(0)
 {}
 
 QueryTask::QueryTask(const Query& qry, const isc::dns::Name& n,
-                     const isc::dns::RRType& t, const isc::dns::Section& sect,
+                     const isc::dns::RRType& t,
+                     const isc::dns::Message::Section sect,
                      const Op o, const State st) :
     q(qry), qname(n), qclass(qry.qclass()), qtype(t), section(sect), op(o),
     state(st), flags(0) 
@@ -58,7 +60,7 @@ QueryTask::QueryTask(const Query& qry, const isc::dns::Name& n,
 QueryTask::QueryTask(const Query& qry, const isc::dns::Name& n, 
                      const isc::dns::RRType& t, const Op o) :
     q(qry), qname(n), qclass(qry.qclass()), qtype(t),
-    section(Section::ANSWER()), op(o), state(GETANSWER), flags(0)
+    section(Message::SECTION_ANSWER), op(o), state(GETANSWER), flags(0)
 {
     if (op != SIMPLE_QUERY) {
         isc_throw(Unexpected, "invalid constructor for this task operation");
@@ -68,7 +70,7 @@ QueryTask::QueryTask(const Query& qry, const isc::dns::Name& n,
 // A referral query doesn't need to specify section, state, or type.
 QueryTask::QueryTask(const Query& qry, const isc::dns::Name& n, const Op o) :
     q(qry), qname(n), qclass(qry.qclass()), qtype(RRType::ANY()),
-    section(Section::ANSWER()), op(o), state(GETANSWER), flags(0)
+    section(Message::SECTION_ANSWER), op(o), state(GETANSWER), flags(0)
 {
     if (op != REF_QUERY) {
         isc_throw(Unexpected, "invalid constructor for this task operation");
@@ -76,7 +78,7 @@ QueryTask::QueryTask(const Query& qry, const isc::dns::Name& n, const Op o) :
 }
 
 QueryTask::QueryTask(const Query& qry, const isc::dns::Name& n,
-                     const isc::dns::Section& sect, const Op o,
+                     const isc::dns::Message::Section sect, const Op o,
                      const State st) :
         q(qry), qname(n), qclass(qry.qclass()), qtype(RRType::ANY()),
         section(sect), op(o), state(st), flags(0)
@@ -93,7 +95,7 @@ Query::Query(Message& m, HotCache& c, bool dnssec) :
     cache_(&c), message_(&m), want_additional_(true), want_dnssec_(dnssec)
 {
     // Check message formatting
-    if (message_->getRRCount(Section::QUESTION()) != 1) {
+    if (message_->getRRCount(Message::SECTION_QUESTION) != 1) {
         isc_throw(Unexpected, "malformed message: too many questions");
     }
 
@@ -105,7 +107,7 @@ Query::Query(Message& m, HotCache& c, bool dnssec) :
     restarts_ = 0;
 
     querytasks_.push(QueryTaskPtr(new QueryTask(*this, *qname_, *qtype_,
-                                                Section::ANSWER())));
+                                                Message::SECTION_ANSWER)));
 }
 
 Query::~Query() {}

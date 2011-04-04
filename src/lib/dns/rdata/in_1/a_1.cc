@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: rdata.cc 545 2010-01-27 00:33:28Z jinmei $
-
 #include <stdint.h>
 #include <string.h>
 

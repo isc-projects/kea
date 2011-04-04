@@ -14,8 +14,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id$ */
-
 /*
  * This file is provided for reference purpose only.  A broken DB file, named
  * "brokendb.sqlite3" in this directory was created using this program.

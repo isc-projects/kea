@@ -17,11 +17,10 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $Id$ -->
 <refentry>
 
   <refentryinfo>
-    <date>September 8, 2010</date>
+    <date>December 1, 2010</date>
   </refentryinfo>
 
   <refmeta>
@@ -94,16 +93,36 @@
       The configurable settings are:
     </para>
     <para>
-      <varname>db_file</varname>
-      defines the path to the SQLite3 data store file.
-      The default is
-      <filename>/usr/local/var/bind10-devel/zone.sqlite3</filename>.
-<!-- TODO: db_file will be removed -->
-    </para>
-    <para>
       <varname>transfers_out</varname>
       defines the maximum number of outgoing zone transfers
       that can run concurrently. The default is 10.
+    </para>
+    <para>
+      <varname>log_name</varname>
+<!-- TODO -->
+    </para>
+    <para>
+      <varname>log_file</varname>
+<!-- TODO -->
+      The location of the log file if using a file channel.
+      If undefined, then the file channel is closed.
+      The default is
+      <filename>/usr/local/var/bind10-devel/log/Xfrout.log</filename>.
+    </para>
+    <para>
+      <varname>log_severity</varname>
+<!-- TODO -->
+      The default is "debug".
+    </para>
+    <para>
+      <varname>log_versions</varname>
+<!-- TODO -->
+      The default is 5.
+    </para>
+    <para>
+      <varname>log_max_bytes</varname>
+<!-- TODO -->
+      The default is 1048576.
     </para>
 
 <!-- TODO: log configurations not documented yet in here. jreed

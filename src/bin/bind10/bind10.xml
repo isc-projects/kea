@@ -17,11 +17,10 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $Id$ -->
 <refentry>
 
   <refentryinfo>
-    <date>July 29, 2010</date>
+    <date>February 22, 2011</date>
   </refentryinfo>
 
   <refmeta>
@@ -37,24 +36,22 @@
 
   <docinfo>
     <copyright>
-      <year>2010</year>
+      <year>2011</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
 
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>bind10</command>    
-      <arg><option>-a <replaceable>address</replaceable></option></arg>
+      <command>bind10</command>
       <arg><option>-m <replaceable>file</replaceable></option></arg>
       <arg><option>-n</option></arg>
-      <arg><option>-p <replaceable>number</replaceable></option></arg>
       <arg><option>-u <replaceable>user</replaceable></option></arg>
       <arg><option>-v</option></arg>
-      <arg><option>--address <replaceable>address</replaceable></option></arg>
+      <arg><option>-c<replaceable>config-filename</replaceable></option></arg>
+      <arg><option>-p<replaceable>data_path</replaceable></option></arg>
       <arg><option>--msgq-socket-file <replaceable>file</replaceable></option></arg>
       <arg><option>--no-cache</option></arg>
-      <arg><option>--port <replaceable>number</replaceable></option></arg>
       <arg><option>--user <replaceable>user</replaceable></option></arg>
       <arg><option>--pretty-name <replaceable>name</replaceable></option></arg>
       <arg><option>--verbose</option></arg>
@@ -85,18 +82,30 @@
     <para>The arguments are as follows:</para>
 
     <variablelist>
+      <varlistentry>
+        <term>
+          <option>-c</option><replaceable>config-filename</replaceable>,
+          <option>--config-file</option> <replaceable>config-filename</replaceable>
+        </term>
+        <listitem>
+          <para>The configuration filename to use. Can be either absolute or
+          relative to data path. In case it is absolute, value of data path is
+          not considered.</para>
+          <para>Defaults to b10-config.db.</para>
+        </listitem>
+      </varlistentry>
 
       <varlistentry>
-        <term><option>-a</option> <replaceable>address</replaceable>, <option>--address</option> <replaceable>address</replaceable></term>
-
+        <term>
+          <option>-p</option><replaceable>data-path</replaceable>,
+          <option>--data-path</option> <replaceable>data-path</replaceable>
+        </term>
         <listitem>
-	  <para>The IPv4 or IPv6 address for the
-	    <citerefentry><refentrytitle>b10-auth</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-            daemon to listen on.
-            The default is to listen on all addresses. 
-            (This is a short term workaround. This argument may change.)
-          </para>
-         </listitem>
+          <para>The path where BIND 10 programs look for various data files.
+          Currently only b10-cfgmgr uses it to locate the configuration file,
+          but the usage might be extended for other programs and other types
+          of files.</para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
@@ -124,20 +133,6 @@
       </varlistentry>
 
       <varlistentry>
-        <term><option>-p</option> <replaceable>number</replaceable>, <option>--port</option> <replaceable>number</replaceable></term>
-
-        <listitem>
-          <para>The port number for the
-	    <citerefentry><refentrytitle>b10-auth</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-            daemon to listen on.
-            The default is 5300.</para>
-<!-- TODO: -->
-	    <note><simpara>The Y1 prototype release uses a non-default
-	    port for domain service.</simpara></note>
-         </listitem>
-      </varlistentry>
-
-      <varlistentry>
         <term><option>-u</option> <replaceable>user</replaceable>, <option>--user</option> <replaceable>name</replaceable></term>
 
         <listitem>
@@ -156,7 +151,11 @@
           <para>The name this process should have in tools like
           <command>ps</command> or <command>top</command>. This
           is handy if you have multiple versions/installations
-          of <command>bind10</command>.</para>
+          of <command>bind10</command>.
+<!-- TODO: only supported with setproctitle feature
+The default is the basename of ARG 0.
+-->
+</para>
         </listitem>
       </varlistentry>
 
@@ -172,6 +171,9 @@
     </variablelist>
   </refsect1>
 
+<!--
+TODO: configuration section
+-->
 <!--
   <refsect1>
     <title>FILES</title>
