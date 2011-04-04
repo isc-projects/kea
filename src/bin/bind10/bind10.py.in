@@ -272,7 +272,7 @@ class BoB:
 
     def command_handler(self, command, args):
         if self.verbose:
-            sys.stdout.write("[bind10] Boss got command: " + command + "\n")
+            sys.stdout.write("[bind10] Boss got command: " + str(command) + "\n")
         answer = isc.config.ccsession.create_answer(1, "command not implemented")
         if type(command) != str:
             answer = isc.config.ccsession.create_answer(1, "bad command")
