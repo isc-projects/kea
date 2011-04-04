@@ -207,6 +207,12 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
             msg.setRcode(Rcode::NOERROR());
             msg.setHeaderFlag(Message::HEADERFLAG_RD);
             msg.addQuestion(data_->question);
+            EDNSPtr edns_response(new EDNS());
+            edns_response->setDNSSECAwareness(true);
+
+            // TODO: We should make our own edns bufsize length configurable
+            edns_response->setUDPSize(Message::DEFAULT_MAX_EDNS0_UDPSIZE);
+            msg.setEDNS(edns_response);
             MessageRenderer renderer(*data_->msgbuf);
             msg.toWire(renderer);
         }
