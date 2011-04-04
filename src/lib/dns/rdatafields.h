@@ -320,8 +320,16 @@ public:
     /// \brief Return a pointer to a sequence of \c FieldSpec for the
     /// \c RdataFields.
     ///
+    /// The data is just opaque internal representation, as a sequence
+    /// of bytes (unsigned char * because of C/C++ aliasing rules).
+    ///
     /// This method never throws an exception.
-    const void* getFieldSpecData() const { return (fields_); } 
+    const uint8_t* getFieldSpecData() const {
+        // Nasty cast, because C++ authors didn't read the C specification
+        // about pointers. We can't return void* from it, that would break
+        // aliasing rules.
+        return ((const uint8_t*) fields_);
+    }
 
     /// \brief Return the specification of the field identified by the given
     /// index.
@@ -373,7 +381,8 @@ private:
     const uint8_t* data_;
     size_t data_length_;
 
-    // hide further details within the implementation
+    // hide further details within the implementation and don't create vectors
+    // every time we don't need them.
     struct RdataFieldsDetail;
     RdataFieldsDetail* detail_;
 };
