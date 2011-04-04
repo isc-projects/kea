@@ -75,6 +75,8 @@ public:
 
         data_length_ = fields.getDataLength();
         data_store_.assign(fields.getData(), fields.getData() + data_length_);
+        // Vector guarantees that the elements are stored in continuous array
+        // in memory, so this is actually correct by the standard
         data_ptr_ = &data_store_[0];
     }
     void toWire(MessageRenderer& renderer) const {
