@@ -95,7 +95,7 @@ class FakeModuleCCSession:
 
     def close(self):
         # need to pass along somehow that this function has been called,
-        self._socket = "closed"
+        self._socket = None
         self._closed = True
 
     def set_timeout(self, timeout):
