@@ -37,16 +37,14 @@ namespace rdata {
 ///
 /// It manages a local storage for the data when \c RdataFields is constructed
 /// from an \c Rdata.
-/// The implementation is hidden here to hide non portable details such as
-/// std::vector.
 /// To minimize construction overhead in the other case, an instance of
-/// this class is instantiated only when necessary.
+/// this class is instantiated only when necessary - we don't need the vectors
+/// when only rendering.
 struct RdataFields::RdataFieldsDetail {
     RdataFieldsDetail(const vector<FieldSpec>& fields,
-                      const void* data, size_t data_length) :
+                      const uint8_t* data, size_t data_length) :
         allocated_fields_(fields),
-        allocated_data_(static_cast<const uint8_t*>(data),
-                        static_cast<const uint8_t*>(data) + data_length)
+        allocated_data_(data, data + data_length)
     {}
     const vector<FieldSpec> allocated_fields_;
     const vector<uint8_t> allocated_data_;
@@ -84,11 +82,42 @@ public:
     virtual void setTruncated() { truncated_ = true; }
     virtual void setLengthLimit(size_t len) { length_limit_ = len; }
     virtual void setCompressMode(CompressMode mode) { mode_ = mode; }
-    virtual void writeUint8(uint8_t data);
-    virtual void writeUint16(uint16_t data);
-    virtual void writeUint32(uint32_t data);
-    virtual void writeData(const void *data, size_t len);
-    virtual void writeName(const Name& name, bool compress);
+    virtual void writeUint8(uint8_t data) {
+        buffer_.writeUint8(data);
+        if (fields_.empty() || fields_.back().type != RdataFields::DATA) {
+            fields_.push_back(RdataFields::FieldSpec(RdataFields::DATA, 0));
+        }
+        fields_.back().len += sizeof(data);
+    }
+    virtual void writeUint16(uint16_t data) {
+        buffer_.writeUint16(data);
+        if (fields_.empty() || fields_.back().type != RdataFields::DATA) {
+            fields_.push_back(RdataFields::FieldSpec(RdataFields::DATA, 0));
+        }
+        fields_.back().len += sizeof(data);
+    }
+    virtual void writeUint32(uint32_t data) {
+        buffer_.writeUint32(data);
+        if (fields_.empty() || fields_.back().type != RdataFields::DATA) {
+            fields_.push_back(RdataFields::FieldSpec(RdataFields::DATA, 0));
+        }
+        fields_.back().len += sizeof(data);
+    }
+    virtual void writeData(const void *data, size_t len) {
+        buffer_.writeData(data, len);
+        if (fields_.empty() || fields_.back().type != RdataFields::DATA) {
+            fields_.push_back(RdataFields::FieldSpec(RdataFields::DATA, 0));
+        }
+        fields_.back().len += len;
+    }
+    virtual void writeName(const Name& name, bool compress) {
+        const RdataFields::Type field_type =
+            compress ? RdataFields::COMPRESSIBLE_NAME :
+            RdataFields::INCOMPRESSIBLE_NAME;
+        name.toWire(buffer_);
+        fields_.push_back(RdataFields::FieldSpec(field_type,
+                                                 name.getLength()));
+    }
 
     virtual void clear() {
         isc_throw(Unexpected, "unexpected clear() for RdataFieldComposer");
@@ -110,50 +139,6 @@ public:
     vector<RdataFields::FieldSpec> fields_;
 };
 
-void
-RdataFieldComposer::writeUint8(uint8_t data) {
-    buffer_.writeUint8(data);
-    if (fields_.empty() || fields_.back().type != RdataFields::DATA) {
-        fields_.push_back(RdataFields::FieldSpec(RdataFields::DATA, 0));
-    }
-    fields_.back().len += sizeof(data);
-}
-
-void
-RdataFieldComposer::writeUint16(uint16_t data) {
-    buffer_.writeUint16(data);
-    if (fields_.empty() || fields_.back().type != RdataFields::DATA) {
-        fields_.push_back(RdataFields::FieldSpec(RdataFields::DATA, 0));
-    }
-    fields_.back().len += sizeof(data);
-}
-
-void
-RdataFieldComposer::writeUint32(uint32_t data) {
-    buffer_.writeUint32(data);
-    if (fields_.empty() || fields_.back().type != RdataFields::DATA) {
-        fields_.push_back(RdataFields::FieldSpec(RdataFields::DATA, 0));
-    }
-    fields_.back().len += sizeof(data);
-}
-
-void
-RdataFieldComposer::writeData(const void *data, size_t len) {
-    buffer_.writeData(data, len);
-    if (fields_.empty() || fields_.back().type != RdataFields::DATA) {
-        fields_.push_back(RdataFields::FieldSpec(RdataFields::DATA, 0));
-    }
-    fields_.back().len += len;
-}
-
-void
-RdataFieldComposer::writeName(const Name& name, bool compress) {
-    const RdataFields::Type field_type =
-        compress ? RdataFields::COMPRESSIBLE_NAME :
-        RdataFields::INCOMPRESSIBLE_NAME;
-    name.toWire(buffer_);
-    fields_.push_back(RdataFields::FieldSpec(field_type, name.getLength()));
-}
 }
 
 RdataFields::RdataFields(const Rdata& rdata) {
@@ -165,7 +150,8 @@ RdataFields::RdataFields(const Rdata& rdata) {
     if (nfields_ > 0) {
         assert(data_length_ > 0);
         detail_ = new RdataFieldsDetail(field_composer.fields_,
-                                        field_composer.getData(),
+                                        static_cast<const uint8_t*>
+                                        (field_composer.getData()),
                                         field_composer.getLength());
         data_ = &detail_->allocated_data_[0];
         fields_ = &detail_->allocated_fields_[0];
@@ -233,8 +219,7 @@ RdataFields::toWire(AbstractMessageRenderer& renderer) const {
             // This should be improved in a future version.
             InputBuffer buffer(data_ + offset, fields_[i].len);
             renderer.writeName(Name(buffer),
-                               fields_[i].type == COMPRESSIBLE_NAME ?
-                               true : false);
+                               fields_[i].type == COMPRESSIBLE_NAME);
         }
         offset += fields_[i].len;
     }
