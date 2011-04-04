@@ -1,4 +1,4 @@
-from bind10 import ProcessInfo, BoB, dump_pid, unlink_pid_file
+from bind10 import ProcessInfo, BoB, dump_pid, unlink_pid_file, _BASETIME
 
 # XXX: environment tests are currently disabled, due to the preprocessor
 #      setup that we have now complicating the environment
@@ -9,6 +9,8 @@ import os
 import signal
 import socket
 from isc.net.addr import IPAddr
+import time
+import isc
 
 class TestProcessInfo(unittest.TestCase):
     def setUp(self):
@@ -103,6 +105,29 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.nocache, False)
         self.assertEqual(bob.cfg_start_auth, True)
         self.assertEqual(bob.cfg_start_resolver, False)
+
+    def test_command_handler(self):
+        class DummySession():
+            def group_sendmsg(self, msg, group):
+                (self.msg, self.group) = (msg, group)
+            def group_recvmsg(self, nonblock, seq): pass
+        bob = BoB()
+        bob.cc_session = DummySession()
+        self.assertEqual(bob.command_handler(-1, None),
+                         isc.config.ccsession.create_answer(1, "bad command"))
+        self.assertEqual(bob.command_handler("shutdown", None),
+                         isc.config.ccsession.create_answer(0))
+        self.assertFalse(bob.runnable)
+        self.assertEqual(bob.command_handler("sendstats", None),
+                         isc.config.ccsession.create_answer(0))
+        self.assertEqual(bob.cc_session.group, "Stats")
+        self.assertEqual(bob.cc_session.msg,
+                         isc.config.ccsession.create_command(
+                'set', { "stats_data": {
+                        'bind10.boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
+                        }}))
+        self.assertEqual(bob.command_handler("__UNKNOWN__", None),
+                         isc.config.ccsession.create_answer(1, "Unknown command"))
 
 # Class for testing the BoB start/stop components routines.
 #
