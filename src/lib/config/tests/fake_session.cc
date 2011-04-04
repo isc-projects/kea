@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: session.cc 1250 2010-03-09 22:52:15Z jinmei $
-
 #include <config.h>
 
 #include <stdint.h>
@@ -87,17 +85,15 @@ FakeSession::disconnect() {
 }
 
 void
-FakeSession::startRead(boost::function<void()> read_callback UNUSED_PARAM) {
+FakeSession::startRead(boost::function<void()>) {
 }
 
 void
-FakeSession::establish(const char* socket_file) {
+FakeSession::establish(const char*) {
 }
 
 bool
-FakeSession::recvmsg(ConstElementPtr& msg, bool nonblock UNUSED_PARAM,
-                     int seq UNUSED_PARAM)
-{
+FakeSession::recvmsg(ConstElementPtr& msg, bool, int) {
     //cout << "[XX] client asks for message " << endl;
     if (messages_ &&
         messages_->getType() == Element::list &&
@@ -111,10 +107,7 @@ FakeSession::recvmsg(ConstElementPtr& msg, bool nonblock UNUSED_PARAM,
 }
 
 bool
-FakeSession::recvmsg(ConstElementPtr& env, ConstElementPtr& msg,
-                     bool nonblock UNUSED_PARAM,
-                     int seq UNUSED_PARAM)
-{
+FakeSession::recvmsg(ConstElementPtr& env, ConstElementPtr& msg, bool, int) {
     //cout << "[XX] client asks for message and env" << endl;
     env = ElementPtr();
     if (messages_ &&
@@ -172,7 +165,7 @@ FakeSession::unsubscribe(std::string group, std::string instance) {
 
 int
 FakeSession::group_sendmsg(ConstElementPtr msg, std::string group,
-                           std::string to, std::string instance UNUSED_PARAM)
+                           std::string to, std::string)
 {
     //cout << "[XX] client sends message: " << msg << endl;
     //cout << "[XX] to: " << group << " . " << instance << "." << to << endl;

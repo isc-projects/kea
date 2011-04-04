@@ -58,7 +58,7 @@ host_lookup(const char* const name, const char* const type) {
     msg.setOpcode(Opcode::QUERY());
     msg.setRcode(Rcode::NOERROR());
     if (recursive_bit) {
-        msg.setHeaderFlag(MessageFlag::RD());    // set recursive bit
+        msg.setHeaderFlag(Message::HEADERFLAG_RD); // set recursive bit
     }
 
     msg.addQuestion(Question(Name(name),
@@ -70,12 +70,15 @@ host_lookup(const char* const name, const char* const type) {
     msg.toWire(renderer);
 
     struct addrinfo hints, *res;
-    int e;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = 0; // not using AI_NUMERICHOST in case to bootstrap
-    e = getaddrinfo(server, server_port, &hints, &res);
+    if (getaddrinfo(server, server_port, &hints, &res) != 0) {
+        cerr << "address/port conversion for " << server << ":"
+             << server_port << " failed" << endl;
+        return (1);
+    }
 
     if (verbose) {
         cout << "Trying \"" << name << "\"\n";
@@ -122,15 +125,16 @@ host_lookup(const char* const name, const char* const type) {
 
             rmsg.fromWire(ibuffer);
             if (!verbose) {
-                  for (RRsetIterator it = rmsg.beginSection(Section::ANSWER());
-                       it != rmsg.endSection(Section::ANSWER());
-                       ++it) {
+                for (RRsetIterator it =
+                         rmsg.beginSection(Message::SECTION_ANSWER);
+                     it != rmsg.endSection(Message::SECTION_ANSWER);
+                     ++it) {
                       if ((*it)->getType() != RRType::A()) {
                           continue;
                       }
 
                       RdataIteratorPtr rit = (*it)->getRdataIterator();
-                      for (rit->first(); !rit->isLast(); rit->next()) {
+                      for (; !rit->isLast(); rit->next()) {
                           // instead of using my name, maybe use returned label?
                           cout << name << " has address " <<
                               (*rit).getCurrent().toText() << endl;

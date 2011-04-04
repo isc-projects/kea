@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __RRTTL_H
 #define __RRTTL_H 1
 
@@ -120,7 +118,8 @@ public:
     /// If resource allocation in rendering process fails, a corresponding
     /// standard exception will be thrown.
     ///
-    /// \param buffer An output buffer to store the wire data.
+    /// \param renderer DNS message rendering context that encapsulates the
+    /// output buffer in which the RRTTL is to be stored.
     void toWire(MessageRenderer& renderer) const;
     /// \brief Render the \c RRTTL in the wire format.
     ///
@@ -130,8 +129,7 @@ public:
     /// If resource allocation in rendering process fails, a corresponding
     /// standard exception will be thrown.
     ///
-    /// \param renderer DNS message rendering context that encapsulates the
-    /// output buffer in which the RRTTL is to be stored.
+    /// \param buffer An output buffer to store the wire data.
     void toWire(OutputBuffer& buffer) const;
     //@}
 

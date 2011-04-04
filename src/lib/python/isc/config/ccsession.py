@@ -1,5 +1,4 @@
 # Copyright (C) 2009  Internet Systems Consortium.
-# Copyright (C) 2010  CZ NIC
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -24,17 +23,17 @@
 # made there as well
 """Classes and functions for handling configuration and commands
 
-   This module provides the ModuleCCSession and UICCSession classes,
-   as well as a set of utility functions to create and parse messages
-   related to commands and configuration
+   This module provides the ModuleCCSession and UIModuleCCSession
+   classes, as well as a set of utility functions to create and parse
+   messages related to commands and configuration
 
    Modules should use the ModuleCCSession class to connect to the
    configuration manager, and receive updates and commands from
    other modules.
 
-   Configuration user interfaces should use the UICCSession to connect
-   to b10-cmdctl, and receive and send configuration and commands
-   through that to the configuration manager.
+   Configuration user interfaces should use the UIModuleCCSession
+   to connect to b10-cmdctl, and receive and send configuration and
+   commands through that to the configuration manager.
 """
 
 from isc.cc import Session
@@ -224,7 +223,7 @@ class ModuleCCSession(ConfigData):
                     if not self._config_handler:
                         answer = create_answer(2, self._module_name + " has no config handler")
                     elif not self.get_module_spec().validate_config(False, new_config, errors):
-                        answer = create_answer(1, " ".join(errors))
+                        answer = create_answer(1, ", ".join(errors))
                     else:
                         isc.cc.data.remove_identical(new_config, self.get_local_config())
                         answer = self._config_handler(new_config)
@@ -285,7 +284,7 @@ class ModuleCCSession(ConfigData):
         if answer:
             rcode, value = parse_answer(answer)
             if rcode == 0:
-                if value != None and self.get_module_spec().validate_config(False, value):
+                if value != None and module_spec.validate_config(False, value):
                     module_cfg.set_local_config(value);
 
         # all done, add it
@@ -374,20 +373,34 @@ class UIModuleCCSession(MultiConfigData):
         self._set_current_config(config)
 
 
-    def add_value(self, identifier, value_str):
+    def add_value(self, identifier, value_str = None):
         """Add a value to a configuration list. Raises a DataTypeError
            if the value does not conform to the list_item_spec field
-           of the module config data specification"""
+           of the module config data specification. If value_str is
+           not given, we add the default as specified by the .spec
+           file."""
         module_spec = self.find_spec_part(identifier)
         if (type(module_spec) != dict or "list_item_spec" not in module_spec):
             raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list")
-        value = isc.cc.data.parse_value_str(value_str)
+
         cur_list, status = self.get_value(identifier)
         if not cur_list:
             cur_list = []
+
+        # Hmm. Do we need to check for duplicates?
+        value = None
+        if value_str is not None:
+            value = isc.cc.data.parse_value_str(value_str)
+        else:
+            if "item_default" in module_spec["list_item_spec"]:
+                value = module_spec["list_item_spec"]["item_default"]
+
+        if value is None:
+            raise isc.cc.data.DataNotFoundError("No value given and no default for " + str(identifier))
+            
         if value not in cur_list:
             cur_list.append(value)
-        self.set_value(identifier, cur_list)
+            self.set_value(identifier, cur_list)
 
     def remove_value(self, identifier, value_str):
         """Remove a value from a configuration list. The value string
@@ -398,22 +411,40 @@ class UIModuleCCSession(MultiConfigData):
         module_spec = self.find_spec_part(identifier)
         if (type(module_spec) != dict or "list_item_spec" not in module_spec):
             raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list")
-        value = isc.cc.data.parse_value_str(value_str)
-        isc.config.config_data.check_type(module_spec, [value])
-        cur_list, status = self.get_value(identifier)
-        #if not cur_list:
-        #    cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
-        if not cur_list:
-            cur_list = []
-        if value in cur_list:
-            cur_list.remove(value)
-        self.set_value(identifier, cur_list)
+
+        if value_str is None:
+            # we are directly removing an list index
+            id, list_indices = isc.cc.data.split_identifier_list_indices(identifier)
+            if list_indices is None:
+                raise DataTypeError("identifier in remove_value() does not contain a list index, and no value to remove")
+            else:
+                self.set_value(identifier, None)
+        else:
+            value = isc.cc.data.parse_value_str(value_str)
+            isc.config.config_data.check_type(module_spec, [value])
+            cur_list, status = self.get_value(identifier)
+            #if not cur_list:
+            #    cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
+            if not cur_list:
+                cur_list = []
+            if value in cur_list:
+                cur_list.remove(value)
+            self.set_value(identifier, cur_list)
 
     def commit(self):
         """Commit all local changes, send them through b10-cmdctl to
            the configuration manager"""
         if self.get_local_changes():
-            self._conn.send_POST('/ConfigManager/set_config', [ self.get_local_changes() ])
-            # todo: check result
-            self.request_current_config()
-            self.clear_local_changes()
+            response = self._conn.send_POST('/ConfigManager/set_config',
+                                            [ self.get_local_changes() ])
+            answer = isc.cc.data.parse_value_str(response.read().decode())
+            # answer is either an empty dict (on success), or one
+            # containing errors
+            if answer == {}:
+                self.request_current_config()
+                self.clear_local_changes()
+            elif "error" in answer:
+                print("Error: " + answer["error"])
+                print("Configuration not committed")
+            else:
+                raise ModuleCCSessionError("Unknown format of answer in commit(): " + str(answer))

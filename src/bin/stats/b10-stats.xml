@@ -17,7 +17,6 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $Id$ -->
 <refentry>
 
   <refentryinfo>
@@ -90,7 +89,8 @@
     <para><filename>/usr/local/share/bind10-devel/stats.spec</filename>
       &mdash; This is a spec file for <command>b10-stats</command>. It
       contains definitions of statistics items of BIND 10 and commands
-      received vi bindctl.
+      received via
+      <refentrytitle>bindctl</refentrytitle><manvolnum>1</manvolnum>.
     </para>
   </refsect1>
 

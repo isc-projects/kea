@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <dns/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
@@ -76,12 +74,9 @@ TEST_F(Rdata_MX_Test, toWireRenderer) {
 TEST_F(Rdata_MX_Test, toWireBuffer) {
     renderer.writeName(Name("example.com"));
     rdata_mx.toWire(obuffer);
-}
 
-TEST_F(Rdata_MX_Test, DISABLED_toWireBuffer) {
-// XXX: does not pass
     vector<unsigned char> data;
-    UnitTestUtil::readWireData("rdata_mx_toWire1", data);
+    UnitTestUtil::readWireData("rdata_mx_toWire2", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
                         obuffer.getLength(), &data[0], data.size());
 }

@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -69,7 +67,7 @@ XfroutClient::disconnect() {
     }
 }
 
-int 
+int
 XfroutClient::sendXfroutRequestInfo(const int tcp_sock,
                                     const void* const msg_data,
                                     const uint16_t msg_len)
@@ -92,12 +90,6 @@ XfroutClient::sendXfroutRequestInfo(const int tcp_sock,
     if (send(impl_->socket_.native(), msg_data, msg_len, 0) != msg_len) {
         isc_throw(XfroutError,
                   "failed to send XFR request data to xfrout module");
-    }
-    
-    int databuf = 0;
-    if (recv(impl_->socket_.native(), &databuf, sizeof(int), 0) != 0) {
-        isc_throw(XfroutError,
-                  "xfr query hasn't been processed properly by xfrout module");
     }
 
     return (0);

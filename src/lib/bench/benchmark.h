@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef __BENCHMARK_H
 #define __BENCHMARK_H 1
 
@@ -200,7 +198,7 @@ private:
     BenchMark(const BenchMark& source);
     BenchMark& operator=(const BenchMark& source);
 public:
-    /// \bench Constructor for immediate run.
+    /// \brief Constructor for immediate run.
     ///
     /// This is the constructor that is expected to be used normally.
     /// It runs the benchmark within the constructor and prints the result,
@@ -217,7 +215,7 @@ public:
         initialize(true);
     }
 
-    /// \bench Constructor for finer-grained control.
+    /// \brief Constructor for finer-grained control.
     ///
     /// This constructor takes the third parameter, \c immediate, to control
     /// whether to run the benchmark within the constructor.

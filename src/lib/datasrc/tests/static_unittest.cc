@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -53,9 +51,10 @@ protected:
         // (defined as PACKAGE_STRING in config.h)
         version_data.push_back(PACKAGE_STRING);
 
-        // XXX: in addition, the order the following items matter.
+        // NOTE: in addition, the order of the following items matter.
         authors_data.push_back("Chen Zhengzhang");
         authors_data.push_back("Evan Hunt");
+        authors_data.push_back("Haidong Wang");
         authors_data.push_back("Han Feng");
         authors_data.push_back("Jelte Jansen");
         authors_data.push_back("Jeremy C. Reed"); 
@@ -63,10 +62,12 @@ protected:
         authors_data.push_back("JINMEI Tatuya");
         authors_data.push_back("Kazunori Fujiwara");
         authors_data.push_back("Michael Graff");
+        authors_data.push_back("Michal Vaner");
         authors_data.push_back("Naoki Kambe");
         authors_data.push_back("Shane Kerr");
         authors_data.push_back("Shen Tingting");
         authors_data.push_back("Stephen Morris");
+        authors_data.push_back("Yoshitaka Aharen");
         authors_data.push_back("Zhang Likun");
 
         version_ns_data.push_back("version.bind.");
@@ -109,7 +110,6 @@ checkRRset(ConstRRsetPtr rrset, const Name& expected_name,
     EXPECT_EQ(rrttl, rrset->getTTL());
 
     RdataIteratorPtr rdata_iterator = rrset->getRdataIterator();
-    rdata_iterator->first();
     vector<string>::const_iterator data_it = expected_data.begin();
     for (; data_it != expected_data.end(); ++data_it) {
         EXPECT_FALSE(rdata_iterator->isLast());

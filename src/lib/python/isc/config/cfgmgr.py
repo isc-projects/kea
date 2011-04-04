@@ -26,6 +26,7 @@ import os
 import copy
 import tempfile
 import json
+import errno
 from isc.cc import data
 from isc.config import ccsession, config_data
 
@@ -43,25 +44,36 @@ class ConfigManagerData:
     """This class hold the actual configuration information, and
        reads it from and writes it to persistent storage"""
 
-    def __init__(self, data_path, file_name = "b10-config.db"):
+    def __init__(self, data_path, file_name):
         """Initialize the data for the configuration manager, and
            set the version and path for the data store. Initializing
            this does not yet read the database, a call to
-           read_from_file is needed for that."""
+           read_from_file is needed for that.
+
+           In case the file_name is absolute, data_path is ignored
+           and the directory where the file_name lives is used instead.
+           """
         self.data = {}
         self.data['version'] = config_data.BIND10_CONFIG_DATA_VERSION
-        self.data_path = data_path
-        self.db_filename = data_path + os.sep + file_name
+        if os.path.isabs(file_name):
+            self.db_filename = file_name
+            self.data_path = os.path.dirname(file_name)
+        else:
+            self.db_filename = data_path + os.sep + file_name
+            self.data_path = data_path
 
-    def read_from_file(data_path, file_name = "b10-config.db"):
-        """Read the current configuration found in the file at
-           data_path. If the file does not exist, a
-           ConfigManagerDataEmpty exception is raised. If there is a
-           parse error, or if the data in the file has the wrong
-           version, a ConfigManagerDataReadError is raised. In the first
-           case, it is probably safe to log and ignore. In the case of
-           the second exception, the best way is probably to report the
-           error and stop loading the system."""
+    def read_from_file(data_path, file_name):
+        """Read the current configuration found in the file file_name.
+           If file_name is absolute, data_path is ignored. Otherwise
+           we look for the file_name in data_path directory.
+
+           If the file does not exist, a ConfigManagerDataEmpty exception is
+           raised. If there is a parse error, or if the data in the file has
+           the wrong version, a ConfigManagerDataReadError is raised. In the
+           first case, it is probably safe to log and ignore. In the case of
+           the second exception, the best way is probably to report the error
+           and stop loading the system.
+           """
         config = ConfigManagerData(data_path, file_name)
         file = None
         try:
@@ -87,7 +99,12 @@ class ConfigManagerData:
             else:
                 raise ConfigManagerDataReadError("No version information in configuration file " + config.db_filename)
         except IOError as ioe:
-            raise ConfigManagerDataEmpty("No configuration file found")
+            # if IOError is 'no such file or directory', then continue
+            # (raise empty), otherwise fail (raise error)
+            if ioe.errno == errno.ENOENT:
+                raise ConfigManagerDataEmpty("No configuration file found")
+            else:
+                raise ConfigManagerDataReadError("Can't read configuration file: " + str(ioe))
         except ValueError:
             raise ConfigManagerDataReadError("Configuration file out of date or corrupt, please update or remove " + config.db_filename)
         finally:
@@ -136,20 +153,24 @@ class ConfigManagerData:
 
 class ConfigManager:
     """Creates a configuration manager. The data_path is the path
-       to the directory containing the b10-config.db file.
+       to the directory containing the configuraton file,
+       database_filename points to the configuration file.
        If session is set, this will be used as the communication
        channel session. If not, a new session will be created.
        The ability to specify a custom session is for testing purposes
        and should not be needed for normal usage."""
-    def __init__(self, data_path, session = None):
+    def __init__(self, data_path, database_filename, session=None):
         """Initialize the configuration manager. The data_path string
            is the path to the directory where the configuration is
-           stored (in <data_path>/b10-config.db). Session is an optional
+           stored (in <data_path>/<database_filename> or in
+           <database_filename>, if it is absolute). The dabase_filename
+           is the config file to load. Session is an optional
            cc-channel session. If this is not given, a new one is
-           created"""
+           created."""
         self.data_path = data_path
+        self.database_filename = database_filename
         self.module_specs = {}
-        self.config = ConfigManagerData(data_path)
+        self.config = ConfigManagerData(data_path, database_filename)
         if session:
             self.cc = session
         else:
@@ -217,17 +238,18 @@ class ConfigManager:
         return commands
 
     def read_config(self):
-        """Read the current configuration from the b10-config.db file
-           at the path specificied at init()"""
+        """Read the current configuration from the file specificied at init()"""
         try:
-            self.config = ConfigManagerData.read_from_file(self.data_path)
+            self.config = ConfigManagerData.read_from_file(self.data_path,
+                                                           self.\
+                                                           database_filename)
         except ConfigManagerDataEmpty:
             # ok, just start with an empty config
-            self.config = ConfigManagerData(self.data_path)
+            self.config = ConfigManagerData(self.data_path,
+                                            self.database_filename)
         
     def write_config(self):
-        """Write the current configuration to the b10-config.db file
-           at the path specificied at init()"""
+        """Write the current configuration to the file specificied at init()"""
         self.config.write_to_file()
 
     def _handle_get_module_spec(self, cmd):
@@ -270,16 +292,15 @@ class ConfigManager:
         else:
             return ccsession.create_answer(0, self.config.data)
 
-    def _handle_set_config_module(self, cmd):
+    def _handle_set_config_module(self, module_name, cmd):
         # the answer comes (or does not come) from the relevant module
         # so we need a variable to see if we got it
         answer = None
         # todo: use api (and check the data against the definition?)
         old_data = copy.deepcopy(self.config.data)
-        module_name = cmd[0]
         conf_part = data.find_no_exc(self.config.data, module_name)
         if conf_part:
-            data.merge(conf_part, cmd[1])
+            data.merge(conf_part, cmd)
             update_cmd = ccsession.create_command(ccsession.COMMAND_CONFIG_UPDATE,
                                                   conf_part)
             seq = self.cc.group_sendmsg(update_cmd, module_name)
@@ -289,7 +310,7 @@ class ConfigManager:
                 answer = ccsession.create_answer(1, "Timeout waiting for answer from " + module_name)
         else:
             conf_part = data.set(self.config.data, module_name, {})
-            data.merge(conf_part[module_name], cmd[1])
+            data.merge(conf_part[module_name], cmd)
             # send out changed info
             update_cmd = ccsession.create_command(ccsession.COMMAND_CONFIG_UPDATE,
                                                   conf_part[module_name])
@@ -309,29 +330,21 @@ class ConfigManager:
 
     def _handle_set_config_all(self, cmd):
         old_data = copy.deepcopy(self.config.data)
-        data.merge(self.config.data, cmd[0])
-        # send out changed info
         got_error = False
         err_list = []
-        for module in self.config.data:
-            if module != "version" and \
-               (module not in old_data or self.config.data[module] != old_data[module]):
-                update_cmd = ccsession.create_command(ccsession.COMMAND_CONFIG_UPDATE,
-                                                      self.config.data[module])
-                seq = self.cc.group_sendmsg(update_cmd, module)
-                try:
-                    answer, env = self.cc.group_recvmsg(False, seq)
-                    if answer == None:
-                        got_error = True
-                        err_list.append("No answer message from " + module)
-                    else:
-                        rcode, val = ccsession.parse_answer(answer)
-                        if rcode != 0:
-                            got_error = True
-                            err_list.append(val)
-                except isc.cc.SessionTimeout:
+        # The format of the command is a dict with module->newconfig
+        # sets, so we simply call set_config_module for each of those
+        for module in cmd:
+            if module != "version":
+                answer = self._handle_set_config_module(module, cmd[module])
+                if answer == None:
                     got_error = True
-                    err_list.append("CC Timeout waiting on answer message from " + module)
+                    err_list.append("No answer message from " + module)
+                else:
+                    rcode, val = ccsession.parse_answer(answer)
+                    if rcode != 0:
+                        got_error = True
+                        err_list.append(val)
         if not got_error:
             self.write_config()
             return ccsession.create_answer(0)
@@ -343,12 +356,13 @@ class ConfigManager:
     def _handle_set_config(self, cmd):
         """Private function that handles the 'set_config' command"""
         answer = None
+
         if cmd == None:
             return ccsession.create_answer(1, "Wrong number of arguments")
         if len(cmd) == 2:
-            answer = self._handle_set_config_module(cmd)
+            answer = self._handle_set_config_module(cmd[0], cmd[1])
         elif len(cmd) == 1:
-            answer = self._handle_set_config_all(cmd)
+            answer = self._handle_set_config_all(cmd[0])
         else:
             answer = ccsession.create_answer(1, "Wrong number of arguments")
         if not answer:

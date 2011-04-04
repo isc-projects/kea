@@ -1,12 +1,18 @@
+PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
+#PYTESTS = args_test.py bind10_test.py
 PYTESTS = bind10_test.py
 EXTRA_DIST = $(PYTESTS)
 
-# later will have configure option to choose this, like: coverage run --branch
-PYCOVERAGE = $(PYTHON)
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
+if ENABLE_PYTHON_COVERAGE
+	touch $(abs_top_srcdir)/.coverage 
+	rm -f .coverage
+	${LN_S} $(abs_top_srcdir)/.coverage .coverage
+endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/bind10 \
-	$(PYCOVERAGE) $(abs_srcdir)/$$pytest || exit ; \
+	BIND10_MSGQ_SOCKET_FILE=$(abs_top_builddir)/msgq_socket \
+		$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done

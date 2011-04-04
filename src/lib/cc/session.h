@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #ifndef _ISC_SESSION_H
 #define _ISC_SESSION_H 1
 
@@ -101,7 +99,7 @@ namespace isc {
             /// \brief Sets the default timeout for blocking reads
             ///        in this session to the given number of milliseconds
             /// \param milliseconds the timeout for blocking reads in
-            ///        milliseconds, if this is set to 0, reads will block
+            ///        milliseconds; if this is set to 0, reads will block
             ///        forever.
             virtual void setTimeout(size_t milliseconds) = 0;
 
