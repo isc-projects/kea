@@ -44,6 +44,11 @@ class FakeModuleCCSession:
             self.subscriptions[group_name].append(instance_name)
             
     def group_unsubscribe(self, group_name, instance_name = None):
+
+        # raises SessionError if the session has been already closed.
+        if self._closed:
+            raise isc.cc.SessionError("Session has been closed.")        
+
         if group_name in self.subscriptions:
             if instance_name:
                 if len(self.subscriptions[group_name]) > 1:
