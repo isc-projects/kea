@@ -639,7 +639,10 @@ class TestBrittle(unittest.TestCase):
         self.exit_info = (5, 0)
         bob._get_process_exit_status = self.simulated_exit
 
+        old_stdout = sys.stdout
+        sys.stdout = open("/dev/null", "w")
         bob.reap_children()
+        sys.stdout = old_stdout
         self.assertFalse(bob.runnable)
 
 if __name__ == '__main__':
