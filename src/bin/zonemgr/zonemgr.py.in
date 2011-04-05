@@ -34,7 +34,6 @@ import threading
 import select
 import socket
 import errno
-import copy
 from isc.datasrc import sqlite3_ds
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
@@ -404,7 +403,7 @@ class ZonemgrRefresh:
 
     def update_config_data(self, new_config):
         """ update ZonemgrRefresh config """
-        backup = copy.copy(self._zonemgr_refresh_info)
+        backup = self._zonemgr_refresh_info.copy()
         try:
             required = {}
             # Add new zones
@@ -483,7 +482,7 @@ class Zonemgr:
         """ Update config data. """
         answer = create_answer(0)
         ok = True
-        complete = copy.copy(self._config_data)
+        complete = self._config_data.copy()
         for key in new_config:
             if key not in complete:
                 answer = create_answer(1, "Unknown config data: " + str(key))
