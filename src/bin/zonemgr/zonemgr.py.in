@@ -408,7 +408,11 @@ class ZonemgrRefresh:
             required = {}
             # Add new zones
             for secondary_zone in new_config.get('secondary_zones'):
-                name_class = (secondary_zone['name'], secondary_zone['class'])
+                name = secondary_zone['name']
+                # Be tolerant to sclerotic users who forget the final dot
+                if name[-1] != '.':
+                    name = name + '.'
+                name_class = (name, secondary_zone['class'])
                 required[name_class] = True
                 # Add it only if it isn't there already
                 if not name_class in self._zonemgr_refresh_info:
