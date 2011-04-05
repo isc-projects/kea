@@ -1,7 +1,7 @@
   212.  [bug]		naokikambe
 	Fixed that the ModuleCCSession object may group_unsubscribe in the
 	closed CC session in being deleted.
-	(Trac #698, git tbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdttbd)
+	(Trac #698, git 0355bddc92f6df66ef50b920edd6ec3b27920d61)
 
   211.  [func]		shane
 	Implement "--brittle" option, which causes the server to exit
