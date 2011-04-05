@@ -234,7 +234,18 @@ class TestModuleCCSession(unittest.TestCase):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec1.spec", None, None, fake_session)
         mccs.close()
-        self.assertEqual("closed", fake_session._socket)
+        self.assertEqual(None, fake_session._socket)
+
+    def test_del_opened(self):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        mccs.__del__() # with opened fake_session
+
+    def test_del_closed(self):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        fake_session.close()
+        mccs.__del__() # with closed fake_session
 
     def my_config_handler_ok(self, new_config):
         return isc.config.ccsession.create_answer(0)
