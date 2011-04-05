@@ -107,9 +107,6 @@ private:
     size_t bytes_;
     bool done_;
 
-    // whether user has stopped the server
-    bool stopped_by_hand_;
-
     // Callback functions provided by the caller
     const SimpleCallback* checkin_callback_;
     const DNSLookup* lookup_callback_;

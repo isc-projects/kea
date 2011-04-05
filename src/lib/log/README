@@ -158,7 +158,7 @@ The symbols define the keys in the global message dictionary.
 The namespace enclosing the symbols is set by the $NAMESPACE directive.
 
 The "PREFIX_" part of the symbol name is the string defined in the $PREFIX
-the argument to the directive.  So "$PREFIX MSG_" would prefix the identifer
+the argument to the directive.  So "$PREFIX MSG_" would prefix the identifier
 ABC with "MSG_" to give the symbol MSG_ABC.  Similarly "$PREFIX E" would
 prefix it with "E" to give the symbol EABC.  If no $PREFIX is given, no
 prefix appears (so the symbol in this example would be ABC).
@@ -330,7 +330,7 @@ When logging events, make a distinction between events related to the server
 and events related to DNS messages received.  Caution needs to be exercised
 with the latter as, if the logging is enabled in the normal course of events,
 such logging could be a denial of service vector. For example, suppose that
-the main authoritiative service logger were to log both zone loading and
+the main authoritative service logger were to log both zone loading and
 unloading as INFO and a warning message if it received an invalid packet. An
 attacker could make the INFO messages unusable by flooding the server with
 malformed packets.

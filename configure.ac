@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20110224, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20110322, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -663,6 +663,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/net/tests/Makefile
                  src/lib/python/isc/notify/Makefile
                  src/lib/python/isc/notify/tests/Makefile
+                 src/lib/python/isc/testutils/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/testdata/Makefile
@@ -719,9 +720,8 @@ AC_OUTPUT([doc/version.ent
            src/bin/stats/run_b10-stats_stub.sh
            src/bin/stats/tests/stats_test
            src/bin/bind10/bind10.py
-           src/bin/bind10/tests/bind10_test
-           src/bin/bind10/tests/bind10_test.py
            src/bin/bind10/run_bind10.sh
+           src/bin/bind10/tests/bind10_test.py
            src/bin/bindctl/run_bindctl.sh
            src/bin/bindctl/bindctl_main.py
            src/bin/bindctl/tests/bindctl_test

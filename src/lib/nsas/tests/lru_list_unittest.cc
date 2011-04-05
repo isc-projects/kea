@@ -251,6 +251,35 @@ TEST_F(LruListTest, Dropped) {
     EXPECT_EQ(0, (entry3_->getClass().getCode() & 0x8000));
 }
 
+// Clear functor tests: tests whether all the elements in
+// the list are dropped properly and the size of list is
+// set to 0.
+TEST_F(LruListTest, Clear) {
+    // Create an object with an expiration handler.
+    LruList<TestEntry> lru(3, new Dropped());
+
+    // Fill the list
+    lru.add(entry1_);
+    lru.add(entry2_);
+    lru.add(entry3_);
+
+    EXPECT_EQ(RRClass::IN(), entry1_->getClass());
+    EXPECT_EQ(RRClass::CH(), entry2_->getClass());
+    EXPECT_EQ(RRClass::HS(), entry3_->getClass());
+
+    EXPECT_EQ(0, (entry1_->getClass().getCode() & 0x8000));
+    EXPECT_EQ(0, (entry2_->getClass().getCode() & 0x8000));
+    EXPECT_EQ(0, (entry3_->getClass().getCode() & 0x8000));
+
+    // Clear the lru list, and check the drop handler run
+    lru.clear();
+    EXPECT_NE(0, (entry1_->getClass().getCode() & 0x8000));
+    EXPECT_NE(0, (entry2_->getClass().getCode() & 0x8000));
+    EXPECT_NE(0, (entry3_->getClass().getCode() & 0x8000));
+ 
+    EXPECT_EQ(0, lru.size());
+}
+
 // Miscellaneous tests - pathological conditions
 TEST_F(LruListTest, Miscellaneous) {
 

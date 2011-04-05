@@ -356,6 +356,21 @@ public:
     /// \param data The 8-bit integer to be written into the buffer.
     void writeUint8(uint8_t data) { data_.push_back(data); }
 
+    /// \brief Write an unsigned 8-bit integer into the buffer.
+    ///
+    /// The position must be lower than the size of the buffer,
+    /// otherwise an exception of class \c isc::dns::InvalidBufferPosition
+    /// will be thrown.
+    ///
+    /// \param data The 8-bit integer to be written into the buffer.
+    /// \param pos The position in the buffer to write the data.
+    void writeUint8At(uint8_t data, size_t pos) {
+        if (pos + sizeof(data) > data_.size()) {
+            isc_throw(InvalidBufferPosition, "write at invalid position");
+        }
+        data_[pos] = data;
+    }
+
     /// \brief Write an unsigned 16-bit integer in host byte order into the
     /// buffer in network byte order.
     ///

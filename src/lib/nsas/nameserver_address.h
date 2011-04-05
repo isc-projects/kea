@@ -60,10 +60,10 @@ public:
     /// pointed to NameserverEntry which contains the address as well as it's
     /// corresponding index. The user can update it's RTT with the index later.
     ///
-    /// \param namerserver A shared_ptr that points to a NameserverEntry object
+    /// \param nameserver A shared_ptr that points to a NameserverEntry object
     /// the shared_ptr can avoid the NameserverEntry object being dropped while the
     /// request is processing.
-    /// \param index The address's index in NameserverEntry's addresses vector
+    /// \param address The address's index in NameserverEntry's addresses vector
     /// \param family Address family, V4_ONLY or V6_ONLY
     NameserverAddress(const boost::shared_ptr<NameserverEntry>& nameserver,
         const AddressEntry& address, AddressFamily family):

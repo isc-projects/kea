@@ -38,6 +38,7 @@ run_unittests_SOURCES  += message_cache_unittest.cc
 run_unittests_SOURCES  += message_entry_unittest.cc
 run_unittests_SOURCES  += local_zone_data_unittest.cc
 run_unittests_SOURCES  += resolver_cache_unittest.cc
+run_unittests_SOURCES  += negative_cache_unittest.cc
 run_unittests_SOURCES  += cache_test_messagefromfile.h
 run_unittests_SOURCES  += cache_test_sectioncount.h
 
@@ -53,12 +54,15 @@ endif
 run_unittests_LDADD += $(top_builddir)/src/lib/cache/libcache.la
 run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
+run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 endif
 
 noinst_PROGRAMS = $(TESTS)
 
-EXTRA_DIST = testdata/message_fromWire1
+EXTRA_DIST = testdata/message_cname_referral.wire
+EXTRA_DIST += testdata/message_example_com_soa.wire
+EXTRA_DIST += testdata/message_fromWire1
 EXTRA_DIST += testdata/message_fromWire2
 EXTRA_DIST += testdata/message_fromWire3
 EXTRA_DIST += testdata/message_fromWire4
@@ -67,3 +71,10 @@ EXTRA_DIST += testdata/message_fromWire6
 EXTRA_DIST += testdata/message_fromWire7
 EXTRA_DIST += testdata/message_fromWire8
 EXTRA_DIST += testdata/message_fromWire9
+EXTRA_DIST += testdata/message_large_ttl.wire
+EXTRA_DIST += testdata/message_nodata_with_soa.wire
+EXTRA_DIST += testdata/message_nxdomain_cname.wire
+EXTRA_DIST += testdata/message_nxdomain_large_ttl.wire
+EXTRA_DIST += testdata/message_nxdomain_no_soa.wire
+EXTRA_DIST += testdata/message_nxdomain_with_soa.wire
+EXTRA_DIST += testdata/message_referral.wire
