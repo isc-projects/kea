@@ -460,6 +460,11 @@ class TestZonemgrRefresh(unittest.TestCase):
         # So it should not affect the old ones
         self.assertTrue(("sd.cn.", "IN") in
                         self.zone_refresh._zonemgr_refresh_info)
+        # Make sure it works even when we "accidentally" forget the final dot
+        config.set_zone_list_from_name_classes([("sd.cn", "IN")])
+        self.zone_refresh.update_config_data(config)
+        self.assertTrue(("sd.cn.", "IN") in
+                        self.zone_refresh._zonemgr_refresh_info)
 
     def tearDown(self):
         sys.stderr= self.stderr_backup
