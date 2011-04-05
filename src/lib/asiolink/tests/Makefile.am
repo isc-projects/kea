@@ -25,12 +25,11 @@ run_unittests_SOURCES += io_fetch_unittest.cc
 run_unittests_SOURCES += io_socket_unittest.cc
 run_unittests_SOURCES += io_service_unittest.cc
 run_unittests_SOURCES += interval_timer_unittest.cc
-run_unittests_SOURCES += recursive_query_unittest.cc
-run_unittests_SOURCES += recursive_query_unittest_2.cc
 run_unittests_SOURCES += tcp_endpoint_unittest.cc
 run_unittests_SOURCES += tcp_socket_unittest.cc
 run_unittests_SOURCES += udp_endpoint_unittest.cc
 run_unittests_SOURCES += udp_socket_unittest.cc
+run_unittests_SOURCES += dns_server_unittest.cc
 run_unittests_SOURCES += qid_gen_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
@@ -39,13 +38,10 @@ run_unittests_LDADD  = $(GTEST_LDADD)
 run_unittests_LDADD += $(SQLITE_LIBS)
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
-run_unittests_LDADD += $(top_builddir)/src/lib/resolve/libresolve.la
-run_unittests_LDADD += $(top_builddir)/src/lib/cache/libcache.la
-run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 
-run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
+run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS) 
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)

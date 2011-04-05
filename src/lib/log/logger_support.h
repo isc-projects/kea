@@ -34,7 +34,7 @@ namespace log {
 ///
 /// \param root Name of the root logger
 /// \param severity Severity at which to log
-/// \param dbglevel Debug severiy (ignored if "severity" is not "DEBUG")
+/// \param dbglevel Debug severity (ignored if "severity" is not "DEBUG")
 /// \param file Name of the local message file.
 void initLogger(const std::string& root, isc::log::Severity severity,
     int dbglevel, const char* file);

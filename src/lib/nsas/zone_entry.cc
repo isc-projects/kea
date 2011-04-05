@@ -1,4 +1,4 @@
-// Copyright (C) 2010  CZ NIC
+// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -36,7 +36,7 @@ using namespace dns;
 namespace nsas {
 
 ZoneEntry::ZoneEntry(
-    boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
+    isc::resolve::ResolverInterface* resolver,
     const std::string& name, const isc::dns::RRClass& class_code,
     boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table,
     boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru) :
@@ -122,7 +122,7 @@ class ZoneEntry::ResolverCallback :
                  * do), so we can just reuse them instead of looking them up in
                  * the table or creating them.
                  */
-                map<string, NameserverPtr> old;
+                std::map<string, NameserverPtr> old;
                 BOOST_FOREACH(const NameserverPtr& ptr, entry_->nameservers_) {
                     old[ptr->getName()] = ptr;
                 }
@@ -143,7 +143,7 @@ class ZoneEntry::ResolverCallback :
                         Name ns_name(dynamic_cast<const rdata::generic::NS&>(
                             iterator->getCurrent()).getNSName());
                         // Try to find it in the old ones
-                        map<string, NameserverPtr>::iterator old_ns(old.find(
+                        std::map<string, NameserverPtr>::iterator old_ns(old.find(
                             ns_name.toText()));
                         /*
                          * We didn't have this nameserver before. So we just
@@ -224,7 +224,8 @@ class ZoneEntry::ResolverCallback :
 };
 
 void
-ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family) {
+ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family,
+                       const GlueHints& glue_hints) {
     Lock lock(mutex_);
 
     bool ask(false);
@@ -238,11 +239,18 @@ ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family) {
     if (getState() == EXPIRED || getState() == NOT_ASKED) {
         ask = true;
     }
-
+    
     // We do not have the answer right away, just queue the callback
     bool execute(!ask && getState() != IN_PROGRESS &&
         callbacks_[family].empty());
-    callbacks_[family].push_back(callback);
+
+    // Unless there was glue
+    if (ask && glue_hints.hasGlue(family)) {
+        callback->success(glue_hints.getGlue(family));
+    } else {
+        callbacks_[family].push_back(callback);
+    }
+
     if (execute) {
         // Try to process it right away, store if not possible to handle
         process(family, NameserverPtr());
@@ -258,6 +266,23 @@ ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family) {
             new ResolverCallback(shared_from_this()));
         resolver_->resolve(question, resolver_callback);
         return;
+    }
+}
+
+void
+ZoneEntry::removeCallback(const CallbackPtr& callback, AddressFamily family) {
+    Lock lock(mutex_);
+    std::vector<boost::shared_ptr<AddressRequestCallback> >::iterator i = 
+        callbacks_[family].begin();
+    for (; i != callbacks_[family].end(); ++i) {
+        if (*i == callback) {
+            callbacks_[family].erase(i);
+            // At this point, a callback should only be in the list
+            // once (enforced by RunningQuery doing only one at a time)
+            // If that changes, we need to revise this (can't delete
+            // elements from a list we're looping over)
+            return;
+        }
     }
 }
 

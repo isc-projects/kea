@@ -89,6 +89,9 @@ public:
     /// \brief Returns the address family of the endpoint.
     virtual short getFamily() const = 0;
 
+    bool operator==(const IOEndpoint& other) const;
+    bool operator!=(const IOEndpoint& other) const;
+
     /// \brief A polymorphic factory of endpoint from address and port.
     ///
     /// This method creates a new instance of (a derived class of)

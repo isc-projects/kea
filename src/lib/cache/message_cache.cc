@@ -18,23 +18,32 @@
 #include <nsas/hash_table.h>
 #include <nsas/hash_deleter.h>
 #include "message_cache.h"
+#include "message_utility.h"
 #include "cache_entry_key.h"
-
-using namespace isc::nsas;
-using namespace isc::dns;
-using namespace std;
 
 namespace isc {
 namespace cache {
 
-MessageCache::MessageCache(boost::shared_ptr<RRsetCache> rrset_cache,
-    uint32_t cache_size, uint16_t message_class):
+using namespace isc::nsas;
+using namespace isc::dns;
+using namespace std;
+using namespace MessageUtility;
+
+MessageCache::MessageCache(const RRsetCachePtr& rrset_cache,
+                           uint32_t cache_size, uint16_t message_class,
+                           const RRsetCachePtr& negative_soa_cache):
     message_class_(message_class),
     rrset_cache_(rrset_cache),
+    negative_soa_cache_(negative_soa_cache),
     message_table_(new NsasEntryCompare<MessageEntry>, cache_size),
     message_lru_((3 * cache_size),
                   new HashDeleter<MessageEntry>(message_table_))
 {
+}
+
+MessageCache::~MessageCache() {
+    // Destroy all the message entries in the cache.
+    message_lru_.clear();
 }
 
 bool
@@ -63,8 +72,13 @@ MessageCache::lookup(const isc::dns::Name& qname,
 
 bool
 MessageCache::update(const Message& msg) {
+    if (!canMessageBeCached(msg)){
+        return (false);
+    }
+
     QuestionIterator iter = msg.beginQuestion();
-    std::string entry_name = genCacheEntryName((*iter)->getName(), (*iter)->getType());
+    std::string entry_name = genCacheEntryName((*iter)->getName(),
+                                               (*iter)->getType());
     HashKey entry_key = HashKey(entry_name, RRClass(message_class_));
 
     // The simplest way to update is removing the old message entry directly.
@@ -77,7 +91,8 @@ MessageCache::update(const Message& msg) {
         message_lru_.remove(old_msg_entry);
     }
 
-    MessageEntryPtr msg_entry(new MessageEntry(msg, rrset_cache_));
+    MessageEntryPtr msg_entry(new MessageEntry(msg, rrset_cache_,
+                                               negative_soa_cache_));
     message_lru_.add(msg_entry);
     return (message_table_.add(msg_entry, entry_key, true));
 }

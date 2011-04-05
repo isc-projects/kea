@@ -186,7 +186,7 @@ MessageReader::parseNamespace(const vector<string>& tokens) {
 
 // Process message.  By the time this method is called, the line has been
 // stripped of leading and trailing spaces, and we believe that it is a line
-// defining a message.  The first token on the line is convered to uppercase
+// defining a message.  The first token on the line is converted to uppercase
 // and becomes the message ID; the rest of the line is the message text.
 
 void

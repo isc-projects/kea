@@ -48,6 +48,28 @@ using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 
+namespace {
+
+struct MatchRRsetForType {
+    MatchRRsetForType(const RRType rrtype) : rrtype_(rrtype) {}
+    bool operator()(RRsetPtr rrset) {
+        return (rrset->getType() == rrtype_);
+    }
+    const RRType rrtype_;
+};
+
+// This is a helper to retrieve a specified RR type of RRset from RRsetList.
+// In our case the data source search logic should ensure that the class is
+// valid.  We use this find logic of our own so that we can support both
+// specific RR class queries (normal case) and class ANY queries.
+RRsetPtr
+findRRsetFromList(RRsetList& list, const RRType rrtype) {
+    RRsetList::iterator it(find_if(list.begin(), list.end(),
+                                   MatchRRsetForType(rrtype)));
+    return (it != list.end() ? *it : RRsetPtr());
+}
+}
+
 namespace isc {
 namespace datasrc {
 
@@ -129,7 +151,7 @@ synthesizeCname(QueryTaskPtr task, RRsetPtr rrset, RRsetList& target) {
     const generic::DNAME& dname = dynamic_cast<const generic::DNAME&>(rd);
     const Name& dname_target(dname.getDname());
 
-    RRsetPtr cname(new RRset(task->qname, task->qclass, RRType::CNAME(),
+    RRsetPtr cname(new RRset(task->qname, rrset->getClass(), RRType::CNAME(),
                              rrset->getTTL()));
 
     const int qnlen = task->qname.getLabelCount();
@@ -188,6 +210,19 @@ checkCache(QueryTask& task, RRsetList& target) {
             if (rrset) {
                 rrsets.addRRset(rrset);
                 target.append(rrsets);
+            }
+
+            // Reset the referral flag and treat CNAME as "not found".
+            // This emulates the behavior of the sqlite3 data source.
+            // XXX: this is not ideal in that the responsibility for handling
+            // operation specific cases is spread over various classes at
+            // different abstraction levels.  For longer terms we should
+            // revisit the whole datasource/query design, and clarify this
+            // point better.
+            flags &= ~DataSrc::REFERRAL;
+            if ((flags & DataSrc::CNAME_FOUND) != 0) {
+                flags &= ~DataSrc::CNAME_FOUND;
+                flags |= DataSrc::TYPE_NOT_FOUND;
             }
             task.flags = flags;
             return (true);
@@ -556,17 +591,17 @@ hasDelegation(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo) {
         // Found a referral while getting answer data;
         // send a delegation.
         if (found) {
-            RRsetPtr r = ref.findRRset(RRType::DNAME(), q.qclass());
+            RRsetPtr r = findRRsetFromList(ref, RRType::DNAME());
             if (r != NULL) {
                 RRsetList syn;
                 addToMessage(q, Message::SECTION_ANSWER, r);
                 q.message().setHeaderFlag(Message::HEADERFLAG_AA);
                 synthesizeCname(task, r, syn);
                 if (syn.size() == 1) {
-                    addToMessage(q, Message::SECTION_ANSWER,
-                                 syn.findRRset(RRType::CNAME(), q.qclass()));
-                    chaseCname(q, task, syn.findRRset(RRType::CNAME(),
-                                                      q.qclass()));
+                    RRsetPtr cname_rrset = findRRsetFromList(syn,
+                                                             RRType::CNAME());
+                    addToMessage(q, Message::SECTION_ANSWER, cname_rrset);
+                    chaseCname(q, task, cname_rrset);
                     return (true);
                 }
             }
@@ -599,7 +634,7 @@ addSOA(Query& q, ZoneInfo& zoneinfo) {
     }
 
     addToMessage(q, Message::SECTION_AUTHORITY,
-                 soa.findRRset(RRType::SOA(), q.qclass()));
+                 findRRsetFromList(soa, RRType::SOA()));
     return (DataSrc::SUCCESS);
 }
 
@@ -611,7 +646,7 @@ addNSEC(Query& q, const Name& name, ZoneInfo& zoneinfo) {
     RETERR(doQueryTask(newtask, zoneinfo, nsec));
     if (newtask.flags == 0) {
         addToMessage(q, Message::SECTION_AUTHORITY,
-                     nsec.findRRset(RRType::NSEC(), q.qclass()));
+                     findRRsetFromList(nsec, RRType::NSEC()));
     }
 
     return (DataSrc::SUCCESS);
@@ -815,7 +850,7 @@ tryWildcard(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo, bool& found) {
         // match the qname), and then continue as if this were a normal
         // answer: if a CNAME, chase the target, otherwise add authority.
         if (cname) {
-            RRsetPtr rrset = wild.findRRset(RRType::CNAME(), q.qclass());
+            RRsetPtr rrset = findRRsetFromList(wild, RRType::CNAME());
             if (rrset != NULL) {
                 rrset->setName(task->qname);
                 addToMessage(q, Message::SECTION_ANSWER, rrset);
@@ -910,7 +945,7 @@ DataSrc::doQuery(Query& q) {
              ((task->qtype == RRType::NSEC() ||
                task->qtype == RRType::DS() ||
                task->qtype == RRType::DNAME()) &&
-              data.findRRset(task->qtype, task->qclass)))) {
+              findRRsetFromList(data, task->qtype)))) {
             task->flags &= ~REFERRAL;
         }
 
@@ -935,9 +970,8 @@ DataSrc::doQuery(Query& q) {
                     // Add the NS records for the enclosing zone to
                     // the authority section.
                     RRsetList auth;
-                    const DataSrc* ds = zoneinfo.getDataSource();
-                    if (!refQuery(q, Name(*zonename), zoneinfo, auth)  ||
-                        !auth.findRRset(RRType::NS(), ds->getClass())) {
+                    if (!refQuery(q, Name(*zonename), zoneinfo, auth) ||
+                        !findRRsetFromList(auth, RRType::NS())) {
                         isc_throw(DataSourceError,
                                   "NS RR not found in " << *zonename << "/" <<
                                   q.qclass());
@@ -970,7 +1004,7 @@ DataSrc::doQuery(Query& q) {
         } else if ((task->flags & CNAME_FOUND) != 0) {
             // The qname node contains a CNAME.  Add a new task to the
             // queue to look up its target.
-            RRsetPtr rrset = data.findRRset(RRType::CNAME(), q.qclass());
+            RRsetPtr rrset = findRRsetFromList(data, RRType::CNAME());
             if (rrset != NULL) {
                 addToMessage(q, task->section, rrset);
                 chaseCname(q, task, rrset);
@@ -1000,6 +1034,13 @@ DataSrc::doQuery(Query& q) {
             continue;
         } else if ((task->flags & (NAME_NOT_FOUND|TYPE_NOT_FOUND)) != 0) {
             // No data found at this qname/qtype.
+
+            // If we were looking for additional data, we should simply
+            // ignore this result.
+            if (task->state == QueryTask::GETADDITIONAL) {
+                continue;
+            }
+
             // If we were looking for answer data, not additional,
             // and the name was not found, we need to find out whether
             // there are any relevant wildcards.

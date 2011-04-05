@@ -53,6 +53,7 @@ public:
         ANSWERCNAME,        ///< Response was a CNAME chain ending in an answer
         CNAME,              ///< Response was a CNAME
         NXDOMAIN,           ///< Response was an NXDOMAIN
+        NXRRSET,            ///< Response was name exists, but type does not
         REFERRAL,           ///< Response contains a referral
 
         // Codes indicating that a message is invalid.  Note that the error()

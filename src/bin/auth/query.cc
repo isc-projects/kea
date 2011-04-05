@@ -210,6 +210,8 @@ Query::process() const {
                     // into answer section.
                     BOOST_FOREACH(RRsetPtr rrset, *target) {
                         response_.addRRset(Message::SECTION_ANSWER, rrset);
+                        // Handle additional for answer section
+                        getAdditional(*result.zone, *rrset.get());
                     }
                 } else {
                     response_.addRRset(Message::SECTION_ANSWER,

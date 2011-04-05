@@ -1,6 +1,4 @@
-#! /bin/sh
-
-# Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2011  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,18 +13,18 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
-export PYTHON_EXEC
+from optparse import OptionParser
 
-BIND10_PATH=@abs_top_srcdir@/src/bin/bind10
+class OptsError(Exception):
+    """To know when OptionParser would exit"""
+    pass
 
-PATH=@abs_top_srcdir@/src/bin/msgq:@abs_top_srcdir@/src/bin/auth:@abs_top_srcdir@/src/bin/bind-cfgd:$PATH
-export PATH
-
-PYTHONPATH=@abs_top_srcdir@/src/lib/python:@abs_top_srcdir@/src/bin/bind10
-export PYTHONPATH
-
-cd ${BIND10_PATH}/tests
-${PYTHON_EXEC} -O bind10_test.py $*
-exec ${PYTHON_EXEC} -O args_test.py $*
-
+class TestOptParser(OptionParser):
+    """
+    We define our own option parser to push into the parsing routine.
+    This one does not exit the whole application on error, it just raises
+    exception. It doesn't change anything else. The application uses the
+    stock one.
+    """
+    def error(self, message):
+        raise OptsError(message)

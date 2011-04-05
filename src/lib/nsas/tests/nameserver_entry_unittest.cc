@@ -86,7 +86,7 @@ protected:
         boost::shared_ptr<TestResolver> resolver(new TestResolver);
         boost::shared_ptr<Callback> callback(new Callback);
         // Let it ask for data
-        entry->askIP(resolver, callback, ANY_OK);
+        entry->askIP(resolver.get(), callback, ANY_OK);
         // Check it really asked and sort the queries
         EXPECT_TRUE(resolver->asksIPs(Name(entry->getName()), 0, 1));
         // Respond with answers
@@ -153,7 +153,7 @@ TEST_F(NameserverEntryTest, SetRTT) {
     int matchcount = 0;
     for (NameserverEntry::AddressVectorIterator i = newvec.begin();
         i != newvec.end(); ++i) {
-        if (i->getAddress().equal(first_address)) {
+        if (i->getAddress().equals(first_address)) {
             ++matchcount;
             EXPECT_EQ(i->getAddressEntry().getRTT(), new_rtt);
         }
@@ -188,7 +188,7 @@ TEST_F(NameserverEntryTest, Unreachable) {
     int matchcount = 0;
     for (NameserverEntry::AddressVectorIterator i = newvec.begin();
         i != newvec.end(); ++i) {
-        if (i->getAddress().equal(first_address)) {
+        if (i->getAddress().equals(first_address)) {
             ++matchcount;
             EXPECT_TRUE(i->getAddressEntry().isUnreachable());
         }
@@ -266,7 +266,7 @@ TEST_F(NameserverEntryTest, IPCallbacks) {
     boost::shared_ptr<Callback> callback(new Callback);
     boost::shared_ptr<TestResolver> resolver(new TestResolver);
 
-    entry->askIP(resolver, callback, ANY_OK);
+    entry->askIP(resolver.get(), callback, ANY_OK);
     // Ensure it becomes IN_PROGRESS
     EXPECT_EQ(Fetchable::IN_PROGRESS, entry->getState());
     // Now, there should be two queries in the resolver
@@ -274,12 +274,12 @@ TEST_F(NameserverEntryTest, IPCallbacks) {
     ASSERT_TRUE(resolver->asksIPs(Name(EXAMPLE_CO_UK), 0, 1));
 
     // Another one might ask
-    entry->askIP(resolver, callback, V4_ONLY);
+    entry->askIP(resolver.get(), callback, V4_ONLY);
     // There should still be only two queries in the resolver
     ASSERT_EQ(2, resolver->requests.size());
 
     // Another one, with need of IPv6 address
-    entry->askIP(resolver, callback, V6_ONLY);
+    entry->askIP(resolver.get(), callback, V6_ONLY);
 
     // Answer one and see that the callbacks are called
     resolver->answer(0, Name(EXAMPLE_CO_UK), RRType::A(),
@@ -316,7 +316,7 @@ TEST_F(NameserverEntryTest, IPCallbacksUnreachable) {
     boost::shared_ptr<TestResolver> resolver(new TestResolver);
 
     // Ask for its IP
-    entry->askIP(resolver, callback, ANY_OK);
+    entry->askIP(resolver.get(), callback, ANY_OK);
     // Check it asks the resolver
     EXPECT_EQ(2, resolver->requests.size());
     ASSERT_TRUE(resolver->asksIPs(Name(EXAMPLE_CO_UK), 0, 1));
@@ -352,7 +352,7 @@ TEST_F(NameserverEntryTest, DirectAnswer) {
         RRType::AAAA()), RRsetPtr());
 
     // A successfull test first
-    entry->askIP(resolver, callback, ANY_OK);
+    entry->askIP(resolver.get(), callback, ANY_OK);
     EXPECT_EQ(0, resolver->requests.size());
     EXPECT_EQ(1, callback->count);
     NameserverEntry::AddressVector addresses;
@@ -362,7 +362,7 @@ TEST_F(NameserverEntryTest, DirectAnswer) {
     // An unsuccessfull test
     callback->count = 0;
     entry.reset(new NameserverEntry(EXAMPLE_NET, RRClass::IN()));
-    entry->askIP(resolver, callback, ANY_OK);
+    entry->askIP(resolver.get(), callback, ANY_OK);
     EXPECT_EQ(0, resolver->requests.size());
     EXPECT_EQ(1, callback->count);
     addresses.clear();
@@ -381,8 +381,8 @@ TEST_F(NameserverEntryTest, ChangedExpired) {
     boost::shared_ptr<TestResolver> resolver(new TestResolver);
 
     // Ask the first time
-    entry->askIP(resolver, callback, V4_ONLY);
-    entry->askIP(resolver, callback, V6_ONLY);
+    entry->askIP(resolver.get(), callback, V4_ONLY);
+    entry->askIP(resolver.get(), callback, V6_ONLY);
     EXPECT_TRUE(resolver->asksIPs(Name(EXAMPLE_CO_UK), 0, 1));
     EXPECT_EQ(Fetchable::IN_PROGRESS, entry->getState());
     resolver->answer(0, Name(EXAMPLE_CO_UK), RRType::A(),
@@ -402,8 +402,8 @@ TEST_F(NameserverEntryTest, ChangedExpired) {
 
     // Ask the second time. The callbacks should not fire right away and it
     // should request the addresses again
-    entry->askIP(resolver, callback, V4_ONLY);
-    entry->askIP(resolver, callback, V6_ONLY);
+    entry->askIP(resolver.get(), callback, V4_ONLY);
+    entry->askIP(resolver.get(), callback, V6_ONLY);
     EXPECT_EQ(2, callback->count);
     EXPECT_TRUE(resolver->asksIPs(Name(EXAMPLE_CO_UK), 2, 3));
     EXPECT_EQ(Fetchable::IN_PROGRESS, entry->getState());
@@ -431,8 +431,8 @@ TEST_F(NameserverEntryTest, KeepRTT) {
     boost::shared_ptr<TestResolver> resolver(new TestResolver);
 
     // Ask the first time
-    entry->askIP(resolver, callback, V4_ONLY);
-    entry->askIP(resolver, callback, V6_ONLY);
+    entry->askIP(resolver.get(), callback, V4_ONLY);
+    entry->askIP(resolver.get(), callback, V6_ONLY);
     EXPECT_TRUE(resolver->asksIPs(Name(EXAMPLE_CO_UK), 0, 1));
     EXPECT_EQ(Fetchable::IN_PROGRESS, entry->getState());
     resolver->answer(0, Name(EXAMPLE_CO_UK), RRType::A(),
@@ -455,8 +455,8 @@ TEST_F(NameserverEntryTest, KeepRTT) {
 
     // Ask the second time. The callbacks should not fire right away and it
     // should request the addresses again
-    entry->askIP(resolver, callback, V4_ONLY);
-    entry->askIP(resolver, callback, V6_ONLY);
+    entry->askIP(resolver.get(), callback, V4_ONLY);
+    entry->askIP(resolver.get(), callback, V6_ONLY);
     EXPECT_EQ(2, callback->count);
     EXPECT_TRUE(resolver->asksIPs(Name(EXAMPLE_CO_UK), 2, 3));
     EXPECT_EQ(Fetchable::IN_PROGRESS, entry->getState());
