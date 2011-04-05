@@ -40,12 +40,14 @@ private:
     RRsetCache(const RRsetCache&);
     RRsetCache& operator=(const RRsetCache&);
 public:
-    /// \brief Constructor
+    /// \brief Constructor and Destructor
     ///
     /// \param cache_size the size of rrset cache.
     /// \param rrset_class the class of rrset cache.
     RRsetCache(uint32_t cache_size, uint16_t rrset_class);
-    virtual ~RRsetCache() {}
+    virtual ~RRsetCache() {
+        rrset_lru_.clear(); // Clear the rrset entries in the list.
+    }
     //@}
 
     /// \brief Look up rrset in cache.

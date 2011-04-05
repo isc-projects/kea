@@ -47,7 +47,7 @@ TCPServer::TCPServer(io_service& io_service,
                      const SimpleCallback* checkin,
                      const DNSLookup* lookup,
                      const DNSAnswer* answer) :
-    io_(io_service), done_(false), stopped_by_hand_(false),
+    io_(io_service), done_(false),
     checkin_callback_(checkin), lookup_callback_(lookup),
     answer_callback_(answer)
 {
@@ -70,12 +70,6 @@ TCPServer::operator()(error_code ec, size_t length) {
     /// a switch statement, inline variable declarations are not
     /// permitted.  Certain variables used below can be declared here.
 
-    /// If user has stopped the server, we won't enter the
-    /// coroutine body, just return
-    if (stopped_by_hand_) {
-        return;
-    }
-
     boost::array<const_buffer,2> bufs;
     OutputBuffer lenbuf(TCP_MESSAGE_LENGTHSIZE);
 
@@ -88,6 +82,7 @@ TCPServer::operator()(error_code ec, size_t length) {
             /// try again
             do {
                 CORO_YIELD acceptor_->async_accept(*socket_, *this);
+
                 // Abort on fatal errors
                 // TODO: Log error?
                 if (ec) {
@@ -115,6 +110,7 @@ TCPServer::operator()(error_code ec, size_t length) {
         CORO_YIELD async_read(*socket_, asio::buffer(data_.get(),
                               TCP_MESSAGE_LENGTHSIZE), *this);
         if (ec) {
+            socket_->close();
             CORO_YIELD return;
         }
 
@@ -127,8 +123,10 @@ TCPServer::operator()(error_code ec, size_t length) {
         }
 
         if (ec) {
+            socket_->close();
             CORO_YIELD return;
         }
+
 
         // Create an \c IOMessage object to store the query.
         //
@@ -160,6 +158,7 @@ TCPServer::operator()(error_code ec, size_t length) {
         // If we don't have a DNS Lookup provider, there's no point in
         // continuing; we exit the coroutine permanently.
         if (lookup_callback_ == NULL) {
+            socket_->close();
             CORO_YIELD return;
         }
 
@@ -177,9 +176,15 @@ TCPServer::operator()(error_code ec, size_t length) {
         // The 'done_' flag indicates whether we have an answer
         // to send back.  If not, exit the coroutine permanently.
         if (!done_) {
+            // TODO: should we keep the connection open for a short time
+            // to see if new requests come in?
+            socket_->close();
             CORO_YIELD return;
         }
 
+        if (ec) {
+            CORO_YIELD return;
+        }
         // Call the DNS answer provider to render the answer into
         // wire format
         (*answer_callback_)(*io_message_, query_message_,
@@ -195,6 +200,10 @@ TCPServer::operator()(error_code ec, size_t length) {
         // (though we have nothing further to do, so the coroutine
         // will simply exit at that time).
         CORO_YIELD async_write(*socket_, bufs, *this);
+
+        // TODO: should we keep the connection open for a short time
+        // to see if new requests come in?
+        socket_->close();
     }
 }
 
@@ -207,14 +216,15 @@ TCPServer::asyncLookup() {
 }
 
 void TCPServer::stop() {
-    // server should not be stopped twice
-    if (stopped_by_hand_) {
-        return;
-    }
+    /// we use close instead of cancel, with the same reason
+    /// with udp server stop, refer to the udp server code
 
-    stopped_by_hand_ = true;
     acceptor_->close();
-    socket_->close();
+    // User may stop the server even when it hasn't started to
+    // run, in that that socket_ is empty
+    if (socket_) {
+        socket_->close();
+    }
 }
 /// Post this coroutine on the ASIO service queue so that it will
 /// resume processing where it left off.  The 'done' parameter indicates

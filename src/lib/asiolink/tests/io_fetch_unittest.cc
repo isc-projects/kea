@@ -76,6 +76,7 @@ public:
     // response handler methods in this class) receives the question sent by the
     // fetch object.
     uint8_t         receive_buffer_[MAX_SIZE]; ///< Server receive buffer
+    OutputBufferPtr expected_buffer_;          ///< Data we expect to receive
     vector<uint8_t> send_buffer_;           ///< Server send buffer
     uint16_t        send_cumulative_;       ///< Data sent so far
 
@@ -84,6 +85,11 @@ public:
     string          test_data_;             ///< Large string - here for convenience
     bool            debug_;                 ///< true to enable debug output
     size_t          tcp_send_size_;         ///< Max size of TCP send
+    uint8_t         qid_0;                  ///< First octet of qid
+    uint8_t         qid_1;                  ///< Second octet of qid
+
+    bool            tcp_short_send_;        ///< If set to true, we do not send
+                                            ///  all data in the tcp response
 
     /// \brief Constructor
     IOFetchTest() :
@@ -102,12 +108,16 @@ public:
         cumulative_(0),
         timer_(service_.get_io_service()),
         receive_buffer_(),
+        expected_buffer_(new OutputBuffer(512)),
         send_buffer_(),
         send_cumulative_(0),
         return_data_(""),
         test_data_(""),
         debug_(DEBUG),
-        tcp_send_size_(0)
+        tcp_send_size_(0),
+        qid_0(0),
+        qid_1(0),
+        tcp_short_send_(false)
     {
         // Construct the data buffer for question we expect to receive.
         Message msg(Message::RENDER);
@@ -118,6 +128,8 @@ public:
         msg.addQuestion(question_);
         MessageRenderer renderer(*msgbuf_);
         msg.toWire(renderer);
+        MessageRenderer renderer2(*expected_buffer_);
+        msg.toWire(renderer2);
 
         // Initialize the test data to be returned: tests will return a
         // substring of this data. (It's convenient to have this as a member of
@@ -144,9 +156,14 @@ public:
     /// \param socket Socket to use to send the answer
     /// \param ec ASIO error code, completion code of asynchronous I/O issued
     ///        by the "server" to receive data.
+    /// \param bad_qid If set to true, the QID in the response will be mangled
+    /// \param second_send If set to true, (and bad_qid is too), after the
+    ///        mangled qid response has been sent, a second packet will be
+    ///        sent with the correct QID.
     /// \param length Amount of data received.
     void udpReceiveHandler(udp::endpoint* remote, udp::socket* socket,
-                    error_code ec = error_code(), size_t length = 0) {
+                    error_code ec = error_code(), size_t length = 0,
+                    bool bad_qid = false, bool second_send = false) {
         if (debug_) {
             cout << "udpReceiveHandler(): error = " << ec.value() <<
                     ", length = " << length << endl;
@@ -155,6 +172,8 @@ public:
         // The QID in the incoming data is random so set it to 0 for the
         // data comparison check. (It is set to 0 in the buffer containing
         // the expected data.)
+        qid_0 = receive_buffer_[0];
+        qid_1 = receive_buffer_[1];
         receive_buffer_[0] = receive_buffer_[1] = 0;
 
         // Check that length of the received data and the expected data are
@@ -164,10 +183,23 @@ public:
         static_cast<const uint8_t*>(msgbuf_->getData())));
 
         // Return a message back to the IOFetch object.
-        socket->send_to(asio::buffer(return_data_.c_str(), return_data_.size()),
-                                     *remote);
+        if (!bad_qid) {
+            expected_buffer_->writeUint8At(qid_0, 0);
+            expected_buffer_->writeUint8At(qid_1, 1);
+        } else {
+            expected_buffer_->writeUint8At(qid_0 + 1, 0);
+            expected_buffer_->writeUint8At(qid_1 + 1, 1);
+        }
+        socket->send_to(asio::buffer(expected_buffer_->getData(), length), *remote);
+
+        if (bad_qid && second_send) {
+            expected_buffer_->writeUint8At(qid_0, 0);
+            expected_buffer_->writeUint8At(qid_1, 1);
+            socket->send_to(asio::buffer(expected_buffer_->getData(),
+                            expected_buffer_->getLength()), *remote);
+        }
         if (debug_) {
-            cout << "udpReceiveHandler(): returned " << return_data_.size() <<
+            cout << "udpReceiveHandler(): returned " << expected_buffer_->getLength() <<
                     " bytes to the client" << endl;
         }
     }
@@ -249,18 +281,25 @@ public:
         // field the QID in the received buffer is in the third and fourth
         // bytes.
         EXPECT_EQ(msgbuf_->getLength() + 2, cumulative_);
+        qid_0 = receive_buffer_[2];
+        qid_1 = receive_buffer_[3];
+
         receive_buffer_[2] = receive_buffer_[3] = 0;
         EXPECT_TRUE(equal((receive_buffer_ + 2), (receive_buffer_ + cumulative_ - 2),
             static_cast<const uint8_t*>(msgbuf_->getData())));
 
         // ... and return a message back.  This has to be preceded by a two-byte
         // count field.
+
         send_buffer_.clear();
         send_buffer_.push_back(0);
         send_buffer_.push_back(0);
         writeUint16(return_data_.size(), &send_buffer_[0]);
         copy(return_data_.begin(), return_data_.end(), back_inserter(send_buffer_));
-
+        if (return_data_.size() >= 2) {
+            send_buffer_[2] = qid_0;
+            send_buffer_[3] = qid_1;
+        }
         // Send the data.  This is done in multiple writes with a delay between
         // each to check that the reassembly of TCP packets from fragments works.
         send_cumulative_ = 0;
@@ -298,10 +337,21 @@ public:
             amount = min(tcp_send_size_,
                         (send_buffer_.size() - send_cumulative_));
         }
-        if (debug_) {
-            cout << "tcpSendData(): sending " << amount << " bytes" << endl;
-        }
 
+        // This is for the short send test; reduce the actual amount of
+        // data we send
+        if (tcp_short_send_) {
+            if (debug_) {
+                cout << "tcpSendData(): sending incomplete data (" <<
+                        (amount - 1) << " of " << amount << " bytes)" <<
+                        endl;
+            }
+            --amount;
+        } else {
+            if (debug_) {
+                cout << "tcpSendData(): sending " << amount << " bytes" << endl;
+            }
+        }
 
         // ... and send it.  The amount sent is also passed as the first
         // argument of the send callback, as a check.
@@ -373,10 +423,23 @@ public:
         // when one of the "servers" in this class has sent back return_data_.
         // Check the data is as expected/
         if (expected_ == IOFetch::SUCCESS) {
-            EXPECT_EQ(return_data_.size(), result_buff_->getLength());
-
-            const uint8_t* start = static_cast<const uint8_t*>(result_buff_->getData());
-            EXPECT_TRUE(equal(return_data_.begin(), return_data_.end(), start));
+            // In the case of UDP, we actually send back a real looking packet
+            // in the case of TCP, we send back a 'random' string
+            if (protocol_ == IOFetch::UDP) {
+                EXPECT_EQ(expected_buffer_->getLength(), result_buff_->getLength());
+                EXPECT_EQ(0, memcmp(expected_buffer_->getData(), result_buff_->getData(),
+                          expected_buffer_->getLength()));
+            } else {
+                EXPECT_EQ(return_data_.size(), result_buff_->getLength());
+                // Overwrite the random qid with our own data for the
+                // comparison to succeed
+                if (result_buff_->getLength() >= 2) {
+                    result_buff_->writeUint8At(return_data_[0], 0);
+                    result_buff_->writeUint8At(return_data_[1], 1);
+                }
+                const uint8_t* start = static_cast<const uint8_t*>(result_buff_->getData());
+                EXPECT_TRUE(equal(return_data_.begin(), return_data_.end(), start));
+            }
         }
 
         // ... and cause the run loop to exit.
@@ -452,13 +515,20 @@ public:
     /// Send a query to the server then receives a response.
     ///
     /// \param Test data to return to client
-    void tcpSendReturnTest(const std::string& return_data) {
+    /// \param short_send If true, do not send all data
+    ///                   (should result in timeout)
+    void tcpSendReturnTest(const std::string& return_data, bool short_send = false) {
         if (debug_) {
             cout << "tcpSendReturnTest(): data size = " << return_data.size() << endl;
         }
         return_data_ = return_data;
         protocol_ = IOFetch::TCP;
-        expected_ = IOFetch::SUCCESS;
+        if (short_send) {
+            tcp_short_send_ = true;
+            expected_ = IOFetch::TIME_OUT;
+        } else {
+            expected_ = IOFetch::SUCCESS;
+        }
 
         // Socket into which the connection will be accepted.
         tcp::socket socket(service_.get_io_service());
@@ -480,6 +550,39 @@ public:
 
         // Tidy up
         socket.close();
+    }
+
+    /// Perform a send/receive test over UDP
+    ///
+    /// \param bad_qid If true, do the test where the QID is mangled
+    ///                in the response
+    /// \param second_send If true, do the test where the QID is
+    ///                    mangled in the response, but a second
+    ///                    (correct) packet is used
+    void udpSendReturnTest(bool bad_qid, bool second_send) {
+        protocol_ = IOFetch::UDP;
+
+        // Set up the server.
+        udp::socket socket(service_.get_io_service(), udp::v4());
+        socket.set_option(socket_base::reuse_address(true));
+        socket.bind(udp::endpoint(TEST_HOST, TEST_PORT));
+        return_data_ = "Message returned to the client";
+
+        udp::endpoint remote;
+        socket.async_receive_from(asio::buffer(receive_buffer_, sizeof(receive_buffer_)),
+            remote,
+            boost::bind(&IOFetchTest::udpReceiveHandler, this, &remote, &socket,
+                        _1, _2, bad_qid, second_send));
+        service_.get_io_service().post(udp_fetch_);
+        if (debug_) {
+            cout << "udpSendReceive: async_receive_from posted, waiting for callback" <<
+                    endl;
+        }
+        service_.run();
+
+        socket.close();
+
+        EXPECT_TRUE(run_);;
     }
 };
 
@@ -507,28 +610,25 @@ TEST_F(IOFetchTest, UdpTimeout) {
 // UDP SendReceive test.  Set up a UDP server then ports a UDP fetch object.
 // This will send question_ to the server and receive the answer back from it.
 TEST_F(IOFetchTest, UdpSendReceive) {
-    protocol_ = IOFetch::UDP;
     expected_ = IOFetch::SUCCESS;
 
-    // Set up the server.
-    udp::socket socket(service_.get_io_service(), udp::v4());
-    socket.set_option(socket_base::reuse_address(true));
-    socket.bind(udp::endpoint(TEST_HOST, TEST_PORT));
-    return_data_ = "Message returned to the client";
+    udpSendReturnTest(false, false);
 
-    udp::endpoint remote;
-    socket.async_receive_from(asio::buffer(receive_buffer_, sizeof(receive_buffer_)),
-        remote,
-        boost::bind(&IOFetchTest::udpReceiveHandler, this, &remote, &socket,
-                    _1, _2));
-    service_.get_io_service().post(udp_fetch_);
-    if (debug_) {
-        cout << "udpSendReceive: async_receive_from posted, waiting for callback" <<
-                endl;
-    }
-    service_.run();
+    EXPECT_TRUE(run_);;
+}
 
-    socket.close();
+TEST_F(IOFetchTest, UdpSendReceiveBadQid) {
+    expected_ = IOFetch::TIME_OUT;
+
+    udpSendReturnTest(true, false);
+
+    EXPECT_TRUE(run_);;
+}
+
+TEST_F(IOFetchTest, UdpSendReceiveBadQidResend) {
+    expected_ = IOFetch::SUCCESS;
+
+    udpSendReturnTest(true, true);
 
     EXPECT_TRUE(run_);;
 }
@@ -547,18 +647,20 @@ TEST_F(IOFetchTest, TcpTimeout) {
     timeoutTest(IOFetch::TCP, tcp_fetch_);
 }
 
-// Test with values at or near 0, then at or near the chunk size (16 and 32
+// Test with values at or near 2, then at or near the chunk size (16 and 32
 // bytes, the sizes of the first two packets) then up to 65535.  These are done
 // in separate tests because in practice a new IOFetch is created for each
 // query/response exchange and we don't want to confuse matters in the test
 // by running the test with an IOFetch that has already done one exchange.
-
-TEST_F(IOFetchTest, TcpSendReceive0) {
-    tcpSendReturnTest(test_data_.substr(0, 0));
+//
+// Don't do 0 or 1; the server would not accept the packet
+// (since the length is too short to check the qid)
+TEST_F(IOFetchTest, TcpSendReceive2) {
+    tcpSendReturnTest(test_data_.substr(0, 2));
 }
 
-TEST_F(IOFetchTest, TcpSendReceive1) {
-    tcpSendReturnTest(test_data_.substr(0, 1));
+TEST_F(IOFetchTest, TcpSendReceive3) {
+    tcpSendReturnTest(test_data_.substr(0, 3));
 }
 
 TEST_F(IOFetchTest, TcpSendReceive15) {
@@ -604,5 +706,18 @@ TEST_F(IOFetchTest, TcpSendReceive32768) {
 TEST_F(IOFetchTest, TcpSendReceive65535) {
     tcpSendReturnTest(test_data_.substr(0, 65535));
 }
+
+TEST_F(IOFetchTest, TcpSendReceive2ShortSend) {
+    tcpSendReturnTest(test_data_.substr(0, 2), true);
+}
+
+TEST_F(IOFetchTest, TcpSendReceive15ShortSend) {
+    tcpSendReturnTest(test_data_.substr(0, 15), true);
+}
+
+TEST_F(IOFetchTest, TcpSendReceive8192ShortSend) {
+    tcpSendReturnTest(test_data_.substr(0, 8192), true);
+}
+
 
 } // namespace asiolink

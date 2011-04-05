@@ -1,4 +1,4 @@
-// Copyright (C) 2010  CZ NIC
+// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,7 +23,9 @@ namespace nsas {
 void
 NameserverAddress::updateRTT(uint32_t rtt) const {
     // We delegate it to the address entry inside the nameserver entry
-    ns_->updateAddressRTT(rtt, address_.getAddress(), family_);
+    if (ns_) {
+        ns_->updateAddressRTT(rtt, address_.getAddress(), family_);
+    }
 }
 
 } // namespace nsas

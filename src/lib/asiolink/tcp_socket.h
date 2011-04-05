@@ -255,8 +255,8 @@ TCPSocket<C>::open(const IOEndpoint* endpoint, C& callback) {
 // an exception if this is the case.
 
 template <typename C> void
-TCPSocket<C>::asyncSend(const void* data, size_t length, const IOEndpoint*,
-                        C& callback)
+TCPSocket<C>::asyncSend(const void* data, size_t length,
+    const IOEndpoint*, C& callback)
 {
     if (isopen_) {
 

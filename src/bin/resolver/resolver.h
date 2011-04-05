@@ -24,6 +24,9 @@
 
 #include <asiolink/asiolink.h>
 
+#include <nsas/nameserver_address_store.h>
+#include <cache/resolver_cache.h>
+
 #include <resolve/resolver_interface.h>
 
 class ResolverImpl;
@@ -86,10 +89,26 @@ public:
 
     /// \brief Assign an ASIO IO Service queue to this Resolver object
     void setDNSService(asiolink::DNSService& dnss);
+    
+    /// \brief Assign a NameserverAddressStore to this Resolver object
+    void setNameserverAddressStore(isc::nsas::NameserverAddressStore &nsas);
+    
+    /// \brief Assign a cache to this Resolver object
+    void setCache(isc::cache::ResolverCache& cache);
 
     /// \brief Return this object's ASIO IO Service queue
     asiolink::DNSService& getDNSService() const { return (*dnss_); }
 
+    /// \brief Returns this object's NSAS
+    isc::nsas::NameserverAddressStore& getNameserverAddressStore() const {
+        return *nsas_;
+    };
+
+    /// \brief Returns this object's ResolverCache
+    isc::cache::ResolverCache& getResolverCache() const {
+        return *cache_;
+    };
+    
     /// \brief Return pointer to the DNS Lookup callback function
     asiolink::DNSLookup* getDNSLookupProvider() { return (dns_lookup_); }
 
@@ -98,6 +117,13 @@ public:
 
     /// \brief Return pointer to the Checkin callback function
     asiolink::SimpleCallback* getCheckinProvider() { return (checkin_); }
+
+    /**
+     * \brief Tell the Resolver that is has already been configured
+     *        so that it will only set some defaults the first time
+     *        (used by updateConfig() and tests)
+     */
+    void setConfigured() { configured_ = true; };
 
     /**
      * \brief Specify the list of upstream servers.
@@ -208,6 +234,12 @@ private:
     asiolink::SimpleCallback* checkin_;
     asiolink::DNSLookup* dns_lookup_;
     asiolink::DNSAnswer* dns_answer_;
+    isc::nsas::NameserverAddressStore* nsas_;
+    isc::cache::ResolverCache* cache_;
+    // This value is initally false, and will be set to true
+    // when the initial configuration is done (updateConfig
+    // should act a tiny bit different on the very first call)
+    bool configured_;
 };
 
 #endif // __RESOLVER_H

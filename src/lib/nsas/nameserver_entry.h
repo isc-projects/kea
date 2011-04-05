@@ -151,7 +151,7 @@ public:
     /// Updates the RTT for a particular address
     ///
     /// \param address Address to update
-    /// \param RTT New RTT for the address
+    /// \param rtt New RTT for the address
     void setAddressRTT(const asiolink::IOAddress& address, uint32_t rtt);
 
     /// \brief Update RTT of the address that corresponding to the index
@@ -241,7 +241,7 @@ public:
      *     even when there are addresses, if there are no addresses for this
      *     family.
      */
-    void askIP(boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
+    void askIP(isc::resolve::ResolverInterface* resolver,
         boost::shared_ptr<Callback> callback, AddressFamily family);
     //@}
 
@@ -273,7 +273,7 @@ private:
     /// \short Private version that does the actual asking of one address type
     ///
     /// Call unlocked.
-    void askIP(boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
+    void askIP(isc::resolve::ResolverInterface* resolver,
         const isc::dns::RRType&, AddressFamily);
 };
 
