@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-from bind10 import ProcessInfo, BoB, parse_args, dump_pid, unlink_pid_file
+from bind10 import ProcessInfo, BoB, parse_args, dump_pid, unlink_pid_file, _BASETIME
 
 # XXX: environment tests are currently disabled, due to the preprocessor
 #      setup that we have now complicating the environment
@@ -24,6 +24,9 @@ import os
 import signal
 import socket
 from isc.net.addr import IPAddr
+import time
+import isc
+
 from isc.testutils.parse_args import TestOptParser, OptsError
 
 class TestProcessInfo(unittest.TestCase):
@@ -122,6 +125,41 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.nocache, False)
         self.assertEqual(bob.cfg_start_auth, True)
         self.assertEqual(bob.cfg_start_resolver, False)
+
+    def test_command_handler(self):
+        class DummySession():
+            def group_sendmsg(self, msg, group):
+                (self.msg, self.group) = (msg, group)
+            def group_recvmsg(self, nonblock, seq): pass
+        bob = BoB()
+        bob.verbose = True
+        bob.cc_session = DummySession()
+        # a bad command
+        self.assertEqual(bob.command_handler(-1, None),
+                         isc.config.ccsession.create_answer(1, "bad command"))
+        # "shutdown" command
+        self.assertEqual(bob.command_handler("shutdown", None),
+                         isc.config.ccsession.create_answer(0))
+        self.assertFalse(bob.runnable)
+        # "sendstats" command
+        self.assertEqual(bob.command_handler("sendstats", None),
+                         isc.config.ccsession.create_answer(0))
+        self.assertEqual(bob.cc_session.group, "Stats")
+        self.assertEqual(bob.cc_session.msg,
+                         isc.config.ccsession.create_command(
+                'set', { "stats_data": {
+                        'bind10.boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
+                        }}))
+        # "ping" command
+        self.assertEqual(bob.command_handler("ping", None),
+                         isc.config.ccsession.create_answer(0, "pong"))
+        # "show_processes" command
+        self.assertEqual(bob.command_handler("show_processes", None),
+                         isc.config.ccsession.create_answer(0,
+                                                            bob.get_processes()))
+        # an unknown command
+        self.assertEqual(bob.command_handler("__UNKNOWN__", None),
+                         isc.config.ccsession.create_answer(1, "Unknown command"))
 
 # Class for testing the BoB without actually starting processes.
 # This is used for testing the start/stop components routines and
