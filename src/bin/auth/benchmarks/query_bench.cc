@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <stdlib.h>
 
 #include <iostream>
@@ -31,7 +33,7 @@
 #include <xfr/xfrout_client.h>
 
 #include <auth/auth_srv.h>
-#include <auth/config.h>
+#include <auth/auth_config.h>
 #include <auth/query.h>
 
 #include <asiolink/asiolink.h>

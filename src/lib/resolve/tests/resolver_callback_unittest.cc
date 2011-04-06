@@ -13,8 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <gtest/gtest.h>
+#include <asiolink/dns_server.h>
 #include <resolve/resolver_callback.h>
-#include <asiolink/asiolink.h>
 
 using namespace isc::resolve;
 

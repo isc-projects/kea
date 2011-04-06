@@ -23,6 +23,15 @@
 
 #include <cc/data.h>
 #include <config/ccsession.h>
+#include <dns/message.h>
+#include <dns/buffer.h>
+
+#include <asiolink/io_message.h>
+#include <asiolink/io_service.h>
+#include <asiolink/dns_server.h>
+#include <asiolink/dns_lookup.h>
+#include <asiolink/dns_answer.h>
+#include <asiolink/simple_callback.h>
 
 #include <asiolink/asiolink.h>
 #include <server_common/portconfig.h>
