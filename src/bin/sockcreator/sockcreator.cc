@@ -41,15 +41,6 @@ get_sock(const int type, struct sockaddr *bind_addr, const socklen_t addr_len)
     return sock;
 }
 
-int
-send_fd(const int, const int) {
-    return 0;
-}
-
-int
-run(const int input_fd, const int output_fd, const get_sock_t get_sock,
-    const send_fd_t send_fd)
-{
 // These are macros so they can exit the function
 #define READ(WHERE, HOW_MANY) do { \
         size_t how_many = (HOW_MANY); \
@@ -57,15 +48,22 @@ run(const int input_fd, const int output_fd, const get_sock_t get_sock,
             return 1; \
         } \
     } while (0)
+
 #define WRITE(WHAT, HOW_MANY) do { \
         if (!write_data(output_fd, (WHAT), (HOW_MANY))) { \
             return 2; \
         } \
     } while (0)
+
 #define DEFAULT \
     default: /* Unrecognized part of protocol */ \
         WRITE("FI", 2); \
         return 3;
+
+int
+run(const int input_fd, const int output_fd, const get_sock_t get_sock,
+    const send_fd_t send_fd)
+{
     for (;;) {
         // Read the command
         char command;
