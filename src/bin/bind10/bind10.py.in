@@ -297,13 +297,22 @@ class BoB:
 
     def command_handler(self, command, args):
         if self.verbose:
-            sys.stdout.write("[bind10] Boss got command: " + command + "\n")
+            sys.stdout.write("[bind10] Boss got command: " + str(command) + "\n")
         answer = isc.config.ccsession.create_answer(1, "command not implemented")
         if type(command) != str:
             answer = isc.config.ccsession.create_answer(1, "bad command")
         else:
             if command == "shutdown":
                 self.runnable = False
+                answer = isc.config.ccsession.create_answer(0)
+            elif command == "sendstats":
+                # send statistics data to the stats daemon immediately
+                cmd = isc.config.ccsession.create_command(
+                    'set', { "stats_data": {
+                            'bind10.boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
+                            }})
+                seq = self.cc_session.group_sendmsg(cmd, 'Stats')
+                self.cc_session.group_recvmsg(True, seq)
                 answer = isc.config.ccsession.create_answer(0)
             elif command == "ping":
                 answer = isc.config.ccsession.create_answer(0, "pong")
@@ -976,17 +985,6 @@ def main():
         sys.exit(1)
     sys.stdout.write("[bind10] BIND 10 started\n")
     dump_pid(options.pid_file)
-
-    # send "bind10.boot_time" to b10-stats
-    time.sleep(1) # wait a second
-    if options.verbose:
-        sys.stdout.write("[bind10] send \"bind10.boot_time\" to b10-stats\n")
-    cmd = isc.config.ccsession.create_command('set', 
-            { "stats_data": {
-              'bind10.boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
-              }
-            })
-    boss_of_bind.cc_session.group_sendmsg(cmd, 'Stats')
 
     # In our main loop, we check for dead processes or messages 
     # on the c-channel.
