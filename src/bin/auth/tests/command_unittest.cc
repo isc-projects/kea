@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <cassert>
 #include <cstdlib>
 #include <string>
@@ -32,7 +34,7 @@
 #include <datasrc/memory_datasrc.h>
 
 #include <auth/auth_srv.h>
-#include <auth/config.h>
+#include <auth/auth_config.h>
 #include <auth/command.h>
 
 #include <asiolink/asiolink.h>
