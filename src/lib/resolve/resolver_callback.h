@@ -15,8 +15,10 @@
 #ifndef _ISC_RESOLVER_CALLBACK_H
 #define _ISC_RESOLVER_CALLBACK_H 1
 
-#include <asiolink/asiolink.h>
+#include <asiolink/dns_server.h>
 #include <dns/message.h>
+
+#include <resolve/resolver_interface.h>
 
 namespace isc {
 namespace resolve {
