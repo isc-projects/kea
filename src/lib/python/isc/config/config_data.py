@@ -461,8 +461,8 @@ class MultiConfigData:
                 spec_part_list = spec_part['list_item_spec']
                 list_value, status = self.get_value(identifier)
                 if list_value is None:
-                    print("Error: identifier '%s' not found" % identifier)
-                    return
+                    raise isc.cc.data.DataNotFoundError(identifier)
+
                 if type(list_value) != list:
                     # the identifier specified a single element
                     self._append_value_item(result, spec_part_list, identifier, all)
