@@ -21,12 +21,16 @@ using std::string;
 string getXfroutSocketPath() {
     if (getenv("B10_FROM_BUILD") != NULL) {
         if (getenv("B10_FROM_SOURCE_LOCALSTATEDIR")) {
-            return (string("B10_FROM_SOURCE_LOCALSTATEDIR") +
+            return (string(getenv("B10_FROM_SOURCE_LOCALSTATEDIR")) +
                     "/auth_xfrout_conn");
         } else {
             return (string(getenv("B10_FROM_BUILD")) + "/auth_xfrout_conn");
         }
     } else {
-        return (UNIX_SOCKET_FILE);
+        if (getenv("BIND10_XFROUT_SOCKET_FILE")) {
+            return (getenv("BIND10_XFROUT_SOCKET_FILE"));
+        } else {
+            return (UNIX_SOCKET_FILE);
+        }
     }
 }
