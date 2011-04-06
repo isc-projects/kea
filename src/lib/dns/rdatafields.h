@@ -203,6 +203,12 @@ public:
     /// and does something special for selected fields like the above example.
     /// In that case the application can easily and efficiently identify the
     /// necessary offset, again, as shown in the above code example.
+    ///
+    /// \todo We might find that 16bits per field is generally too much and
+    ///     squeeze the two bit type into it as well, having 14bit length
+    ///     (in the rare case of having too long field, it could be split into
+    ///     multiple ones). That would save 2 bytes per item (one for the type,
+    ///     one for padding).
     struct FieldSpec {
         FieldSpec(Type type_param, uint16_t len_param) :
             type(type_param), len(len_param)
