@@ -1,4 +1,4 @@
-  xxx.  [bug]       naokikambe
+  213.  [bug]       naokikambe
 	Solved incorrect datetime of "bind10.boot_time" and also added a new
 	command "sendstats" for Bob. This command is to send statistics data to
 	the stats daemon immediately. The solved problem is that statistics
@@ -6,7 +6,7 @@
 	data to the daemon while it is starting. So the daemon invokes the
 	command for Bob after it starts up. This command is also useful for
 	resending statistics data via bindctl manually.
-	(Trac #521, git tbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbd)
+	(Trac #521, git 1c269cbdc76f5dc2baeb43387c4d7ccc6dc863d2)
 
   212.  [bug]		naokikambe
 	Fixed that the ModuleCCSession object may group_unsubscribe in the
