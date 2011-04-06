@@ -15,10 +15,11 @@
 #ifndef __MESSAGERENDERER_H
 #define __MESSAGERENDERER_H 1
 
+#include <dns/buffer.h>
+
 namespace isc {
 namespace dns {
 // forward declarations
-class OutputBuffer;
 class Name;
 
 /// \brief The \c AbstractMessageRenderer class is an abstract base class
@@ -89,7 +90,15 @@ protected:
     ///
     /// This is intentionally defined as \c protected as this base class should
     /// never be instantiated (except as part of a derived class).
-    AbstractMessageRenderer() {}
+    AbstractMessageRenderer(OutputBuffer& buffer) :
+        buffer_(buffer)
+    {}
+    /// \short Buffer to store data
+    ///
+    /// It was decided that there's no need to have this in every subclass,
+    /// at last not now, and this reduces code size and gives compiler a better
+    /// chance to optimise.
+    OutputBuffer& buffer_;
 public:
     /// \brief The destructor.
     virtual ~AbstractMessageRenderer() {}
@@ -104,10 +113,14 @@ public:
     ///
     /// This method works exactly same as the same method of the \c OutputBuffer
     /// class; all notes for \c OutputBuffer apply.
-    virtual const void* getData() const = 0;
+    const void* getData() const {
+        return (buffer_.getData());
+    }
 
     /// \brief Return the length of data written in the internal buffer.
-    virtual size_t getLength() const = 0;
+    size_t getLength() const {
+        return (buffer_.getLength());
+    }
 
     /// \brief Return whether truncation has occurred while rendering.
     ///
@@ -196,13 +209,17 @@ public:
     /// \brief Write an unsigned 8-bit integer into the internal buffer.
     ///
     /// \param data The 8-bit integer to be written into the internal buffer.
-    virtual void writeUint8(uint8_t data) = 0;
+    void writeUint8(const uint8_t data) {
+        buffer_.writeUint8(data);
+    }
 
     /// \brief Write an unsigned 16-bit integer in host byte order into the
     /// internal buffer in network byte order.
     ///
     /// \param data The 16-bit integer to be written into the buffer.
-    virtual void writeUint16(uint16_t data) = 0;
+    void writeUint16(uint16_t data) {
+        buffer_.writeUint16(data);
+    }
 
     /// \brief Write an unsigned 16-bit integer in host byte order at the
     /// specified position of the internal buffer in network byte order.
@@ -215,13 +232,17 @@ public:
     ///
     /// \param data The 16-bit integer to be written into the internal buffer.
     /// \param pos The beginning position in the buffer to write the data.
-    virtual void writeUint16At(uint16_t data, size_t pos) = 0;
+    void writeUint16At(uint16_t data, size_t pos) {
+        buffer_.writeUint16At(data, pos);
+    }
 
     /// \brief Write an unsigned 32-bit integer in host byte order into the
     /// internal buffer in network byte order.
     ///
     /// \param data The 32-bit integer to be written into the buffer.
-    virtual void writeUint32(uint32_t data) = 0;
+    void writeUint32(uint32_t data) {
+        buffer_.writeUint32(data);
+    }
 
     /// \brief Copy an arbitrary length of data into the internal buffer
     /// of the renderer object.
@@ -230,7 +251,9 @@ public:
     ///
     /// \param data A pointer to the data to be copied into the internal buffer.
     /// \param len The length of the data in bytes.
-    virtual void writeData(const void *data, size_t len) = 0;
+    void writeData(const void *data, size_t len) {
+        buffer_.writeData(data, len);
+    }
 
     /// \brief Write a \c Name object into the internal buffer in wire format,
     /// with or without name compression.
@@ -273,8 +296,6 @@ public:
     MessageRenderer(OutputBuffer& buffer);
 
     virtual ~MessageRenderer();
-    virtual const void* getData() const;
-    virtual size_t getLength() const;
     virtual bool isTruncated() const;
     virtual size_t getLengthLimit() const;
     virtual CompressMode getCompressMode() const;
@@ -284,11 +305,6 @@ public:
     virtual void skip(size_t len);
     virtual void trim(size_t len);
     virtual void clear();
-    virtual void writeUint8(uint8_t data);
-    virtual void writeUint16(uint16_t data);
-    virtual void writeUint16At(uint16_t data, size_t pos);
-    virtual void writeUint32(uint32_t data);
-    virtual void writeData(const void *data, size_t len);
     virtual void writeName(const Name& name, bool compress = true);
 private:
     struct MessageRendererImpl;

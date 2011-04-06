@@ -70,8 +70,9 @@ namespace {
 class RdataFieldComposer : public AbstractMessageRenderer {
 public:
     RdataFieldComposer(OutputBuffer& buffer) :
-        buffer_(buffer), truncated_(false), length_limit_(65535),
-        mode_(CASE_INSENSITIVE)
+        AbstractMessageRenderer(buffer),
+        truncated_(false), length_limit_(65535),
+        mode_(CASE_INSENSITIVE), last_data_pos_(0)
     {}
     virtual ~RdataFieldComposer() {}
     virtual const void* getData() const { return (buffer_.getData()); }
@@ -82,41 +83,15 @@ public:
     virtual void setTruncated() { truncated_ = true; }
     virtual void setLengthLimit(size_t len) { length_limit_ = len; }
     virtual void setCompressMode(CompressMode mode) { mode_ = mode; }
-    virtual void writeUint8(uint8_t data) {
-        buffer_.writeUint8(data);
-        if (fields_.empty() || fields_.back().type != RdataFields::DATA) {
-            fields_.push_back(RdataFields::FieldSpec(RdataFields::DATA, 0));
-        }
-        fields_.back().len += sizeof(data);
-    }
-    virtual void writeUint16(uint16_t data) {
-        buffer_.writeUint16(data);
-        if (fields_.empty() || fields_.back().type != RdataFields::DATA) {
-            fields_.push_back(RdataFields::FieldSpec(RdataFields::DATA, 0));
-        }
-        fields_.back().len += sizeof(data);
-    }
-    virtual void writeUint32(uint32_t data) {
-        buffer_.writeUint32(data);
-        if (fields_.empty() || fields_.back().type != RdataFields::DATA) {
-            fields_.push_back(RdataFields::FieldSpec(RdataFields::DATA, 0));
-        }
-        fields_.back().len += sizeof(data);
-    }
-    virtual void writeData(const void *data, size_t len) {
-        buffer_.writeData(data, len);
-        if (fields_.empty() || fields_.back().type != RdataFields::DATA) {
-            fields_.push_back(RdataFields::FieldSpec(RdataFields::DATA, 0));
-        }
-        fields_.back().len += len;
-    }
     virtual void writeName(const Name& name, bool compress) {
+        extendData();
         const RdataFields::Type field_type =
             compress ? RdataFields::COMPRESSIBLE_NAME :
             RdataFields::INCOMPRESSIBLE_NAME;
         name.toWire(buffer_);
         fields_.push_back(RdataFields::FieldSpec(field_type,
                                                  name.getLength()));
+        last_data_pos_ = buffer_.getLength();
     }
 
     virtual void clear() {
@@ -132,11 +107,31 @@ public:
         isc_throw(Unexpected,
                   "unexpected writeUint16At() for RdataFieldComposer");
     }
-    OutputBuffer buffer_;
     bool truncated_;
     size_t length_limit_;
     CompressMode mode_;
     vector<RdataFields::FieldSpec> fields_;
+    vector<RdataFields::FieldSpec>& getFields() {
+        extendData();
+        return (fields_);
+    }
+    // We use generict write* methods, with the exception of writeName.
+    // So new data can arriwe without us knowing it, this considers all new
+    // data to be just data and extends the fields to take it into account.
+    size_t last_data_pos_;
+    void extendData() {
+        // No news, return to work
+        if (buffer_.getLength() == last_data_pos_) {
+            return;
+        }
+        // The new bytes are just ordinary uninteresting data
+        if (fields_.empty() || fields_.back().type != RdataFields::DATA) {
+            fields_.push_back(RdataFields::FieldSpec(RdataFields::DATA, 0));
+        }
+        // We added this much data from last time
+        fields_.back().len += buffer_.getLength() - last_data_pos_;
+        last_data_pos_ = buffer_.getLength();
+    }
 };
 
 }
@@ -145,11 +140,11 @@ RdataFields::RdataFields(const Rdata& rdata) {
     OutputBuffer buffer(0);
     RdataFieldComposer field_composer(buffer);
     rdata.toWire(field_composer);
-    nfields_ = field_composer.fields_.size();
+    nfields_ = field_composer.getFields().size();
     data_length_ = field_composer.getLength();
     if (nfields_ > 0) {
         assert(data_length_ > 0);
-        detail_ = new RdataFieldsDetail(field_composer.fields_,
+        detail_ = new RdataFieldsDetail(field_composer.getFields(),
                                         static_cast<const uint8_t*>
                                         (field_composer.getData()),
                                         field_composer.getLength());
