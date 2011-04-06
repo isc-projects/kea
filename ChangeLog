@@ -1,10 +1,11 @@
-  214.  [func]*     vorner
-    Zone manager no longer thinks it is secondary master for all zones in the
-	database They are listed in Zonemgr/secondary_zones configuration variable
-	(in the form [{"name": "example.com", "class": "IN"}]).
+  214.  [func]*		vorner
+	Zone manager no longer thinks it is secondary master for
+	all zones in the database. They are listed in
+	Zonemgr/secondary_zones configuration variable (in the form
+	[{"name": "example.com", "class": "IN"}]).
 	(Trac #670, 7c1e4d5e1e28e556b1d10a8df8d9486971a3f052)
 
-  213.  [bug]       naokikambe
+  213.  [bug]		naokikambe
 	Solved incorrect datetime of "bind10.boot_time" and also added a new
 	command "sendstats" for Bob. This command is to send statistics data to
 	the stats daemon immediately. The solved problem is that statistics
