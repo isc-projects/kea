@@ -16,7 +16,6 @@
 #include <cassert>
 #include <set>
 
-#include <dns/buffer.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 
@@ -150,12 +149,10 @@ struct MessageRenderer::MessageRendererImpl {
     ///
     /// \param buffer An \c OutputBuffer object to which wire format data is
     /// written.
-    MessageRendererImpl(OutputBuffer& buffer) :
-        buffer_(buffer), nbuffer_(Name::MAX_WIRE), msglength_limit_(512),
+    MessageRendererImpl() :
+        nbuffer_(Name::MAX_WIRE), msglength_limit_(512),
         truncated_(false), compress_mode_(MessageRenderer::CASE_INSENSITIVE)
     {}
-    /// The buffer that holds the entire DNS message.
-    OutputBuffer& buffer_;
     /// A local working buffer to convert each given name into wire format.
     /// This could be a local variable of the \c writeName() method, but
     /// we keep it in the class so that we can reuse it and avoid construction
@@ -174,7 +171,8 @@ struct MessageRenderer::MessageRendererImpl {
 };
 
 MessageRenderer::MessageRenderer(OutputBuffer& buffer) :
-    impl_(new MessageRendererImpl(buffer))
+    AbstractMessageRenderer(buffer),
+    impl_(new MessageRendererImpl)
 {}
 
 MessageRenderer::~MessageRenderer() {
@@ -183,57 +181,22 @@ MessageRenderer::~MessageRenderer() {
 
 void
 MessageRenderer::skip(const size_t len) {
-    impl_->buffer_.skip(len);
+    buffer_.skip(len);
 }
 
 void
 MessageRenderer::trim(const size_t len) {
-    impl_->buffer_.trim(len);
+    buffer_.trim(len);
 }
 
 void
 MessageRenderer::clear() {
-    impl_->buffer_.clear();
+    buffer_.clear();
     impl_->nbuffer_.clear();
     impl_->nodeset_.clear();
     impl_->msglength_limit_ = 512;
     impl_->truncated_ = false;
     impl_->compress_mode_ = CASE_INSENSITIVE;
-}
-
-void
-MessageRenderer::writeUint8(const uint8_t data) {
-    impl_->buffer_.writeUint8(data);
-}
-
-void
-MessageRenderer::writeUint16(const uint16_t data) {
-    impl_->buffer_.writeUint16(data);
-}
-
-void
-MessageRenderer::writeUint16At(const uint16_t data, const size_t pos) {
-    impl_->buffer_.writeUint16At(data, pos);
-}
-
-void
-MessageRenderer::writeUint32(const uint32_t data) {
-    impl_->buffer_.writeUint32(data);
-}
-
-void
-MessageRenderer::writeData(const void* const data, const size_t len) {
-    impl_->buffer_.writeData(data, len);
-}
-
-const void*
-MessageRenderer::getData() const {
-    return (impl_->buffer_.getData());
-}
-
-size_t
-MessageRenderer::getLength() const {
-    return (impl_->buffer_.getLength());
 }
 
 size_t
@@ -291,15 +254,15 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
     }
 
     // Record the current offset before extending the buffer.
-    const size_t offset = impl_->buffer_.getLength();
+    const size_t offset = buffer_.getLength();
     // Write uncompress part...
-    impl_->buffer_.writeData(impl_->nbuffer_.getData(),
+    buffer_.writeData(impl_->nbuffer_.getData(),
                              compress ? i : impl_->nbuffer_.getLength());
     if (compress && n != notfound) {
         // ...and compression pointer if available.
         uint16_t pointer = (*n).pos_;
         pointer |= Name::COMPRESS_POINTER_MARK16;
-        impl_->buffer_.writeUint16(pointer);
+        buffer_.writeUint16(pointer);
     }
 
     // Finally, add to the set the newly rendered name and its ancestors that
@@ -311,7 +274,7 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
         if (offset + j > Name::MAX_COMPRESS_POINTER) {
             break;
         }
-        impl_->nodeset_.insert(NameCompressNode(*this, impl_->buffer_,
+        impl_->nodeset_.insert(NameCompressNode(*this, buffer_,
                                                 offset + j,
                                                 impl_->nbuffer_.getLength() -
                                                 j));

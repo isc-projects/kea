@@ -337,7 +337,7 @@ TEST_F(RdataFieldsTest, getFieldSpecWithBadFieldId) {
 // tested via other tests above.
 class DummyRdata : public Rdata {
 public:
-    enum Mode { CLEAR, SKIP, TRIM, WRITEUINT16AT };
+    enum Mode { CLEAR, SKIP, TRIM };
     explicit DummyRdata(Mode mode) : mode_(mode) {}
     DummyRdata(const DummyRdata& source) : Rdata(), mode_(source.mode_) {}
     virtual ~DummyRdata() {}
@@ -353,9 +353,6 @@ public:
             break;
         case TRIM:
             renderer.trim(2);
-            break;
-        case WRITEUINT16AT:
-            renderer.writeUint16At(0, 0);
             break;
         }
     }
@@ -373,7 +370,5 @@ TEST(RdataFieldComposerTest, unusedMethods) {
     EXPECT_THROW(RdataFields(DummyRdata(DummyRdata::CLEAR)), isc::Unexpected);
     EXPECT_THROW(RdataFields(DummyRdata(DummyRdata::SKIP)), isc::Unexpected);
     EXPECT_THROW(RdataFields(DummyRdata(DummyRdata::TRIM)), isc::Unexpected);
-    EXPECT_THROW(RdataFields(DummyRdata(DummyRdata::WRITEUINT16AT)),
-                 isc::Unexpected);
 }
 }
