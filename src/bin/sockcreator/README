@@ -33,10 +33,10 @@ must be a socket, not pipe.
   like hton called on them).
 
   The answer to this is either 'S' and then the socket is passed using sendmsg
-  if it is successful. If it fails, 'E' is returned, followed by either
-  'S' or 'B' (either socket() or bind() call failed). Then there is one int
-  (architecture-dependent length and endianess), which is the errno value
-  after the failure.
+  if it is successful (it uses our send_fd, you can use recv_fd to read it).
+  If it fails, 'E' is returned, followed by either 'S' or 'B' (either socket()
+  or bind() call failed). Then there is one int (architecture-dependent length
+  and endianess), which is the errno value after the failure.
 
 The creator may also send these messages at any time (but not in the middle
 of another message):
