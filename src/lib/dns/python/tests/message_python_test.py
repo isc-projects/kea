@@ -111,7 +111,7 @@ class MessageTest(unittest.TestCase):
         self.assertRaises(InvalidParameter, self.r.set_header_flag, 0)
         self.assertRaises(InvalidParameter, self.r.set_header_flag, 0x7000)
         self.assertRaises(InvalidParameter, self.r.set_header_flag, 0x0800)
-        # this would cause out of range 
+        # this would cause out of range
         self.assertRaises(ValueError, self.r.set_header_flag, 0x10000)
         self.assertRaises(ValueError, self.r.set_header_flag, -1)
 
