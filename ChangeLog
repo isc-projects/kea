@@ -1,3 +1,9 @@
+  216.  [func]     vorner
+	The BIND10_XFROUT_SOCKET_FILE environment variable can be used to specify
+	which socket should be used for communication between b10-auth and
+	b10-xfrout. Mostly for testing reasons.
+	(Trac #615, git 28b01ad5bf72472c824a7b8fc4a8dc394e22e462)
+
   215.  [func]      vorner
 	A new process, b10-sockcreator, is added, which will create sockets for
 	the rest of the system.  It is the only part which will need to keep the
@@ -29,7 +35,7 @@
 
   211.  [func]		shane
 	Implement "--brittle" option, which causes the server to exit
-        if any of BIND 10's processes dies.
+	if any of BIND 10's processes dies.
 	(Trac #788, git 88c0d241fe05e5ea91b10f046f307177cc2f5bc5)
 
   210.  [bug]		jerry
