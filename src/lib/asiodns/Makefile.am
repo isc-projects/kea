@@ -17,6 +17,8 @@ libasiodns_la_SOURCES = dns_answer.h
 libasiodns_la_SOURCES += dns_lookup.h
 libasiodns_la_SOURCES += dns_server.h
 libasiodns_la_SOURCES += dns_service.cc dns_service.h
+libasiodns_la_SOURCES += tcp_server.cc tcp_server.h
+libasiodns_la_SOURCES += udp_server.cc udp_server.h
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
