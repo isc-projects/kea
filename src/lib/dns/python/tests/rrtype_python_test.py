@@ -22,7 +22,7 @@ import os
 from pydnspp import *
 
 class TestModuleSpec(unittest.TestCase):
-    
+
     rrtype_1 = RRType(1)
     rrtype_0x80 = RRType(0x80);
     rrtype_0x800 = RRType(0x800);
@@ -32,24 +32,28 @@ class TestModuleSpec(unittest.TestCase):
 
 
     def test_init(self):
-        self.assertRaises(ValueError, RRType, 65537)
         b = bytearray(b'\x00\x01')
         self.assertEqual(RRType("A"), RRType(b))
         b = bytearray(b'\x01')
         self.assertRaises(IncompleteRRType, RRType, b)
         self.assertRaises(TypeError, RRType, Exception)
-    
+        # Range check.  We need to do this at the binding level, so we need
+        # explicit tests for it.
+        self.assertRaises(ValueError, RRType, 65536)
+        self.assertRaises(TypeError, RRType, -1)
+        self.assertEqual("TYPE65535", RRType(65535).to_text());
+        self.assertEqual("TYPE0", RRType(0).to_text());
+
     def test_init_from_text(self):
         self.assertEqual("A", RRType("A").to_text())
         self.assertEqual("NS", RRType("NS").to_text());
         self.assertEqual("NS", str(RRType("NS")));
-    
         self.assertEqual("TYPE65535", RRType("TYPE65535").to_text());
-    
+
         self.assertEqual(53, RRType("TYPE00053").get_code());
 
         self.assertRaises(InvalidRRType, RRType, "TYPE000053");
-    
+
         self.assertRaises(InvalidRRType, RRType, "TYPE");
         self.assertRaises(InvalidRRType, RRType, "TYPE-1");
         self.assertRaises(InvalidRRType, RRType, "TYPExxx");

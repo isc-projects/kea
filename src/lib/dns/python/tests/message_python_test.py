@@ -111,22 +111,28 @@ class MessageTest(unittest.TestCase):
         self.assertRaises(InvalidParameter, self.r.set_header_flag, 0)
         self.assertRaises(InvalidParameter, self.r.set_header_flag, 0x7000)
         self.assertRaises(InvalidParameter, self.r.set_header_flag, 0x0800)
-        # this would cause out of range
-        self.assertRaises(ValueError, self.r.set_header_flag, 0x10000)
-        self.assertRaises(ValueError, self.r.set_header_flag, -1)
-
         self.assertRaises(InvalidMessageOperation,
                           self.p.set_header_flag, Message.HEADERFLAG_AA)
 
+        # Range check.  We need to do this at the binding level, so we need
+        # explicit tests for it.
+        self.assertRaises(ValueError, self.r.set_header_flag, 0x10000)
+        self.assertRaises(ValueError, self.r.set_header_flag, -1)
+
     def test_set_qid(self):
         self.assertRaises(TypeError, self.r.set_qid, "wrong")
-        self.assertRaises(ValueError, self.r.set_qid, -1)
-        self.assertRaises(ValueError, self.r.set_qid, 0x10000)
         self.assertRaises(InvalidMessageOperation,
                           self.p.set_qid, 123)
-
         self.r.set_qid(1234)
         self.assertEqual(1234, self.r.get_qid())
+        # Range check.  We need to do this at the binding level, so we need
+        # explicit tests for it.
+        self.r.set_qid(0)
+        self.assertEqual(0, self.r.get_qid())
+        self.r.set_qid(0xffff)
+        self.assertEqual(0xffff, self.r.get_qid())
+        self.assertRaises(ValueError, self.r.set_qid, -1)
+        self.assertRaises(ValueError, self.r.set_qid, 0x10000)
 
     def test_set_rcode(self):
         self.assertRaises(TypeError, self.r.set_rcode, "wrong")
@@ -137,7 +143,7 @@ class MessageTest(unittest.TestCase):
 
         self.assertRaises(InvalidMessageOperation,
                           self.p.set_rcode, rcode)
-        
+
         self.assertRaises(InvalidMessageOperation, self.p.get_rcode)
 
     def test_set_opcode(self):
@@ -199,7 +205,7 @@ class MessageTest(unittest.TestCase):
 
         self.assertRaises(InvalidMessageOperation, self.p.add_rrset,
                           Message.SECTION_ANSWER, self.rrset_a)
-        
+
         self.assertFalse(compare_rrset_list(section_rrset, self.r.get_section(Message.SECTION_ANSWER)))
         self.assertEqual(0, self.r.get_rr_count(Message.SECTION_ANSWER))
         self.r.add_rrset(Message.SECTION_ANSWER, self.rrset_a)

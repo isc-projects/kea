@@ -23,14 +23,8 @@ from pydnspp import *
 class RcodeTest(unittest.TestCase):
     def test_init(self):
         self.assertRaises(TypeError, Rcode, "wrong")
-        self.assertRaises(ValueError, Rcode, 65536)
-        self.assertRaises(ValueError, Rcode, 0x10, 0x100)
-        self.assertRaises(ValueError, Rcode, 0x100, 0x10)
-        self.assertEqual(Rcode(0).get_code(), 0)
-    
-        self.assertEqual(0, Rcode(0).get_code())
         self.assertEqual(0xfff, Rcode(0xfff).get_code()) # possible max code
-    
+
         # should fail on attempt of construction with an out of range code
         self.assertRaises(OverflowError, Rcode, 0x1000)
         self.assertRaises(OverflowError, Rcode, 0xffff)
@@ -40,7 +34,16 @@ class RcodeTest(unittest.TestCase):
         self.assertEqual(Rcode.BADVERS_CODE, Rcode(0, 1).get_code())
         self.assertEqual(0xfff, Rcode(0xf, 0xff).get_code())
         self.assertRaises(OverflowError, Rcode, 0x10, 0xff)
-        
+
+        # Range check.  We need to do this at the binding level, so we need
+        # explicit tests for it.
+        self.assertEqual(Rcode(0).get_code(), 0)
+        self.assertEqual(Rcode(0, 0).get_code(), 0)
+        self.assertEqual(Rcode(0, 0).get_extended_code(), 0)
+        self.assertRaises(ValueError, Rcode, 65536)
+        self.assertRaises(ValueError, Rcode, 0x10, 0x100)
+        self.assertRaises(ValueError, Rcode, 0x100, 0x10)
+
     def test_constants(self):
         self.assertEqual(Rcode.NOERROR_CODE, Rcode(0).get_code())
         self.assertEqual(Rcode.FORMERR_CODE, Rcode(1).get_code())
