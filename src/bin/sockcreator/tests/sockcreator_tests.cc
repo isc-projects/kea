@@ -57,7 +57,7 @@ namespace {
         /* Provide even nice error message. */ \
         ASSERT_GE(socket, 0) << "Couldn't create a socket of type " \
             #SOCK_TYPE " and family " #ADDR_FAMILY ", failed with " \
-            << socket << " and errno " << errno; \
+            << socket << " and error " << strerror(errno); \
         CHECK_SOCK(ADDR_TYPE, socket); \
         EXPECT_EQ(0, close(socket)); \
     } while (0)
@@ -79,9 +79,13 @@ namespace {
         \
         socklen_t len = sizeof addr; \
         ASSERT_EQ(0, getsockname(SOCKET, addr_ptr, &len)); \
-        ASSERT_EQ(5, sendto(SOCKET, "test", 5, 0, addr_ptr, sizeof addr)); \
+        ASSERT_EQ(5, sendto(SOCKET, "test", 5, 0, addr_ptr, sizeof addr)) << \
+            "Send failed with error " << strerror(errno) << " on socket " << \
+            SOCKET; \
         char buffer[5]; \
-        ASSERT_EQ(5, recv(SOCKET, buffer, 5, 0)); \
+        ASSERT_EQ(5, recv(SOCKET, buffer, 5, 0)) << \
+            "Recv failed with error " << strerror(errno) << " on socket " << \
+            SOCKET; \
         EXPECT_STREQ("test", buffer); \
     } while (0)
 
