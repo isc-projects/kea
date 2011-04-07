@@ -667,6 +667,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/testdata/Makefile
+                 src/lib/crypto/Makefile
+                 src/lib/crypto/tests/Makefile
                  src/lib/dns/Makefile
                  src/lib/dns/tests/Makefile
                  src/lib/dns/tests/testdata/Makefile
