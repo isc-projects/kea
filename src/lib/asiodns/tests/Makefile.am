@@ -15,7 +15,9 @@ CLEANFILES = *.gcno *.gcda
 TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
-run_unittests_SOURCES  = 
+run_unittests_SOURCES  = run_unittests.cc
+run_unittests_SOURCES += io_service_unittest.cc
+run_unittests_SOURCES += dns_server_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 
