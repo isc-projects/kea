@@ -296,7 +296,7 @@ public:
         // We use malloc and free instead of C++ new[] and delete[].
         // This way we can use realloc, which may in fact do it without a copy.
         buffer_ = static_cast<uint8_t*>(malloc(allocated_));
-        if (buffer_ == NULL) {
+        if (buffer_ == NULL && len != 0) {
             throw std::bad_alloc();
         }
     }
@@ -308,7 +308,7 @@ public:
         allocated_(other.allocated_)
     {
         buffer_ = static_cast<uint8_t*>(malloc(allocated_));
-        if (buffer_ == NULL) {
+        if (buffer_ == NULL && allocated_ != 0) {
             throw std::bad_alloc();
         }
         memcpy(buffer_, other.buffer_, size_);
