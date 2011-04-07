@@ -259,10 +259,10 @@ static PyObject*
 RRType_toWire(s_RRType* self, PyObject* args) {
     PyObject* bytes;
     s_MessageRenderer* mr;
-    
+
     if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
         PyObject* bytes_o = bytes;
-        
+
         OutputBuffer buffer(2);
         self->rrtype->toWire(buffer);
         PyObject* n = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()), buffer.getLength());

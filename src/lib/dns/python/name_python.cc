@@ -532,7 +532,7 @@ Name_split(s_Name* self, PyObject* args) {
 // It is translated to a function that gets 3 arguments, an object,
 // an object to compare to, and an operator.
 //
-static PyObject* 
+static PyObject*
 Name_richcmp(s_Name* self, s_Name* other, int op) {
     bool c;
 

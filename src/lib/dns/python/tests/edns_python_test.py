@@ -62,15 +62,14 @@ class EDNSTest(unittest.TestCase):
         edns = EDNS()
         edns.set_udp_size(511)
         self.assertEqual(511, edns.get_udp_size())
-        edns.set_udp_size(0)
-        self.assertEqual(0, edns.get_udp_size())
-        edns.set_udp_size(65535)
-        self.assertEqual(65535, edns.get_udp_size())
-
         self.assertRaises(TypeError, edns.set_udp_size, "wrong")
 
         # Range check.  We need to do this at the binding level, so we need
         # explicit tests for it.
+        edns.set_udp_size(0)
+        self.assertEqual(0, edns.get_udp_size())
+        edns.set_udp_size(65535)
+        self.assertEqual(65535, edns.get_udp_size())
         self.assertRaises(ValueError, edns.set_udp_size, 0x10000)
         self.assertRaises(ValueError, edns.set_udp_size, -1)
 
