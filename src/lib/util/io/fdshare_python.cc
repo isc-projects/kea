@@ -18,7 +18,7 @@
 
 #include <config.h>
 
-#include <xfr/fd_share.h>
+#include "fd_share.h"
 
 
 static PyObject*
@@ -27,7 +27,7 @@ fdshare_recv_fd(PyObject*, PyObject* args) {
     if (!PyArg_ParseTuple(args, "i", &sock)) {
         return (NULL);
     }
-    fd = isc::xfr::recv_fd(sock);
+    fd = isc::util::io::recv_fd(sock);
     return (Py_BuildValue("i", fd));
 }
 
@@ -37,7 +37,7 @@ fdshare_send_fd(PyObject*, PyObject* args) {
     if (!PyArg_ParseTuple(args, "ii", &sock, &fd)) {
         return (NULL);
     }
-    result = isc::xfr::send_fd(sock, fd);
+    result = isc::util::io::send_fd(sock, fd);
     return (Py_BuildValue("i", result));
 }
 
@@ -61,20 +61,33 @@ static PyModuleDef bind10_fdshare_python = {
 };
 
 PyMODINIT_FUNC
-PyInit_libxfr_python(void) {
-    PyObject* mod = PyModule_Create(&bind10_fdshare_python);
+PyInit_libutil_io_python(void) {
+    PyObject *mod = PyModule_Create(&bind10_fdshare_python);
     if (mod == NULL) {
         return (NULL);
     }
 
-    PyObject* XFR_FD_RECEIVE_FAIL = Py_BuildValue("i", isc::xfr::XFR_FD_RECEIVE_FAIL);
-    if (XFR_FD_RECEIVE_FAIL == NULL) {
+    PyObject* FD_COMM_ERROR = Py_BuildValue("i", isc::util::io::FD_COMM_ERROR);
+    if (FD_COMM_ERROR == NULL) {
         Py_XDECREF(mod);
         return (NULL);
     }
-    int ret = PyModule_AddObject(mod, "XFR_FD_RECEIVE_FAIL", XFR_FD_RECEIVE_FAIL);
+    int ret = PyModule_AddObject(mod, "FD_COMM_ERROR", FD_COMM_ERROR);
     if (-1 == ret) {
-        Py_XDECREF(XFR_FD_RECEIVE_FAIL);
+        Py_XDECREF(FD_COMM_ERROR);
+        Py_XDECREF(mod);
+        return (NULL);
+    }
+
+    PyObject* FD_OTHER_ERROR = Py_BuildValue("i",
+                                             isc::util::io::FD_OTHER_ERROR);
+    if (FD_OTHER_ERROR == NULL) {
+        Py_XDECREF(mod);
+        return (NULL);
+    }
+    ret = PyModule_AddObject(mod, "FD_OTHER_ERROR", FD_OTHER_ERROR);
+    if (-1 == ret) {
+        Py_XDECREF(FD_OTHER_ERROR);
         Py_XDECREF(mod);
         return (NULL);
     }
