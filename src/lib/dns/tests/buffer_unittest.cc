@@ -224,6 +224,8 @@ TEST_F(BufferTest, outputBufferZeroSize) {
     EXPECT_NO_THROW({
         OutputBuffer first(0);
         OutputBuffer copy(first);
+        OutputBuffer second(0);
+        second = first;
     });
 }
 
