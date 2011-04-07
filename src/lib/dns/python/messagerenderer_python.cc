@@ -185,7 +185,7 @@ MessageRenderer_setLengthLimit(s_MessageRenderer* self,
                         "No valid type in set_length_limit argument");
         return (NULL);
     }
-    if (lengthlimit < 0 || lengthlimit > 0xffff) {
+    if (lengthlimit < 0) {
         PyErr_SetString(PyExc_ValueError,
                         "MessageRenderer length limit out of range");
         return (NULL);

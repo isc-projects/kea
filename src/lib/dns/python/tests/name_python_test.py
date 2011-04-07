@@ -154,6 +154,14 @@ class NameTest(unittest.TestCase):
         self.assertEqual("completely.different.", s.to_text())
         self.assertRaises(TypeError, self.name1.split, "wrong", 1)
         self.assertRaises(TypeError, self.name1.split, 1, "wrong")
+
+        s = self.name1.split(0)
+        self.assertEqual("example.com.", s.to_text())
+        s = self.name1.split(1)
+        self.assertEqual("com.", s.to_text())
+
+        # Range check.  We need to do this at the binding level, so we need
+        # explicit tests for it.
         self.assertRaises(IndexError, self.name1.split, 123, 1)
         self.assertRaises(IndexError, self.name1.split, 1, 123)
         self.assertRaises(IndexError, self.name1.split, 0x10000, 5)
@@ -161,13 +169,12 @@ class NameTest(unittest.TestCase):
         self.assertRaises(IndexError, self.name1.split, 0, -1)
         self.assertRaises(IndexError, self.name1.split, -1, 0x10000)
 
-        s = self.name1.split(1)
-        self.assertEqual("com.", s.to_text())
         s = self.name1.split(0)
         self.assertEqual("example.com.", s.to_text())
         self.assertRaises(IndexError, self.name1.split, 123)
         self.assertRaises(IndexError, self.name1.split, 0x10000)
         self.assertRaises(IndexError, self.name1.split, -123)
+        self.assertRaises(TypeError, self.name1.split, -1)
 
     def test_reverse(self):
         self.assertEqual("com.example.", self.name1.reverse().to_text())

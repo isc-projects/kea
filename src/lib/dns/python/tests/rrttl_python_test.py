@@ -33,14 +33,18 @@ class RRTTLTest(unittest.TestCase):
         b[0] = 123
         self.assertRaises(IncompleteRRTTL, RRTTL, b)
         self.assertRaises(InvalidRRTTL, RRTTL, "4294967296")
-        self.assertRaises(ValueError, RRTTL, -4)
-        self.assertRaises(ValueError, RRTTL, 4294967296)
         b = bytearray(4)
         b[0] = 0
         b[1] = 0
         b[2] = 0
         b[3] = 15
         self.assertEqual(15, RRTTL(b).get_value())
+        # Range check.  We need to do this at the binding level, so we need
+        # explicit tests for it.
+        self.assertRaises(TypeError, RRTTL, -1)
+        self.assertRaises(ValueError, RRTTL, 4294967296)
+        self.assertEqual(0, RRTTL(0).get_value())
+        self.assertEqual(4294967295, RRTTL(4294967295).get_value())
 
     def test_rrttl_to_text(self):
         self.assertEqual("1", self.t1.to_text())
