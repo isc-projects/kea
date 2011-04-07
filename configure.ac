@@ -712,6 +712,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/xfrout/xfrout.py
            src/bin/xfrout/xfrout.spec.pre
            src/bin/xfrout/tests/xfrout_test
+           src/bin/xfrout/tests/xfrout_test.py
            src/bin/xfrout/run_b10-xfrout.sh
            src/bin/resolver/resolver.spec.pre
            src/bin/resolver/spec_config.h.pre
