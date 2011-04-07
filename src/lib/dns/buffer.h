@@ -323,7 +323,7 @@ public:
     /// \brief Assignment operator
     OutputBuffer& operator =(const OutputBuffer& other) {
         uint8_t* newbuff(static_cast<uint8_t*>(malloc(other.allocated_)));
-        if (newbuff == NULL) {
+        if (newbuff == NULL && other.allocated_ != 0) {
             throw std::bad_alloc();
         }
         free(buffer_);
