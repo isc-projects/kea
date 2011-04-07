@@ -416,10 +416,10 @@ public:
     /// \param data The 8-bit integer to be written into the buffer.
     /// \param pos The position in the buffer to write the data.
     void writeUint8At(uint8_t data, size_t pos) {
-        if (pos + sizeof(data) > data_.size()) {
+        if (pos + sizeof(data) > size_) {
             isc_throw(InvalidBufferPosition, "write at invalid position");
         }
-        data_[pos] = data;
+        buffer_[pos] = data;
     }
 
     /// \brief Write an unsigned 16-bit integer in host byte order into the
