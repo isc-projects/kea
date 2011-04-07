@@ -219,4 +219,12 @@ TEST_F(BufferTest, outputBufferAssign) {
     });
 }
 
+TEST_F(BufferTest, outputBufferZeroSize) {
+    // Some OSes might return NULL on malloc for 0 size, so check it works
+    EXPECT_NO_THROW({
+        OutputBuffer first(0);
+        OutputBuffer copy(first);
+    });
+}
+
 }
