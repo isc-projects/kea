@@ -190,4 +190,53 @@ TEST_F(BufferTest, outputBufferClear) {
     obuffer.clear();
     EXPECT_EQ(0, obuffer.getLength());
 }
+
+TEST_F(BufferTest, outputBufferCopy) {
+    obuffer.writeData(testdata, sizeof(testdata));
+
+    EXPECT_NO_THROW({
+        OutputBuffer copy(obuffer);
+        ASSERT_EQ(sizeof(testdata), copy.getLength());
+        for (int i = 0; i < sizeof(testdata); i ++) {
+            EXPECT_EQ(testdata[i], copy[i]);
+            if (i + 1 < sizeof(testdata)) {
+                obuffer.writeUint16At(0, i);
+            }
+            EXPECT_EQ(testdata[i], copy[i]);
+        }
+        obuffer.clear();
+        ASSERT_EQ(sizeof(testdata), copy.getLength());
+    });
+}
+
+TEST_F(BufferTest, outputBufferAssign) {
+    OutputBuffer another(0);
+    another.clear();
+    obuffer.writeData(testdata, sizeof(testdata));
+
+    EXPECT_NO_THROW({
+        another = obuffer;
+        ASSERT_EQ(sizeof(testdata), another.getLength());
+        for (int i = 0; i < sizeof(testdata); i ++) {
+            EXPECT_EQ(testdata[i], another[i]);
+            if (i + 1 < sizeof(testdata)) {
+                obuffer.writeUint16At(0, i);
+            }
+            EXPECT_EQ(testdata[i], another[i]);
+        }
+        obuffer.clear();
+        ASSERT_EQ(sizeof(testdata), another.getLength());
+    });
+}
+
+TEST_F(BufferTest, outputBufferZeroSize) {
+    // Some OSes might return NULL on malloc for 0 size, so check it works
+    EXPECT_NO_THROW({
+        OutputBuffer first(0);
+        OutputBuffer copy(first);
+        OutputBuffer second(0);
+        second = first;
+    });
+}
+
 }
