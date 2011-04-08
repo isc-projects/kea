@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <gtest/gtest.h>
-#include <asiolink/dns_server.h>
+#include <asiodns/dns_server.h>
 #include <resolve/resolver_callback.h>
 
 using namespace isc::resolve;
@@ -22,7 +22,7 @@ using namespace isc::resolve;
 // We want to check if resume is called
 // Since the server will get cloned(), we want the clones to share
 // our bools for whether resume got called and with what value
-class DummyServer : public asiolink::DNSServer {
+class DummyServer : public isc::asiodns::DNSServer {
 public:
     DummyServer(DummyServer* orig) {
         resume_called_ = orig->getResumeCalled();
@@ -31,10 +31,10 @@ public:
     DummyServer(bool* resume_called, bool* resume_value) :
         resume_called_(resume_called), resume_value_(resume_value)
     {}
-    
+
     bool* getResumeCalled() { return resume_called_; }
     bool* getResumeValue() { return resume_value_; }
-    
+
     DNSServer* clone() {
         DummyServer* n = new DummyServer(this);
         return n;

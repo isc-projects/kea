@@ -36,16 +36,17 @@
 #include <dns/rdata.h>
 
 #include <asiolink/asiolink_utilities.h>
-#include <asiolink/dns_service.h>
+#include <asiodns/dns_service.h>
+#include <asiodns/io_fetch.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_endpoint.h>
-#include <asiolink/io_fetch.h>
 #include <asiolink/io_service.h>
 #include <resolve/recursive_query.h>
 #include <resolve/resolver_interface.h>
 
 using namespace asio;
 using namespace asio::ip;
+using namespace isc::asiolink;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::resolve;
@@ -71,7 +72,8 @@ using namespace std;
 /// directed to one or other of the "servers" in the RecursiveQueryTest2 class,
 /// regardless of the glue returned in referrals.
 
-namespace asiolink {
+namespace isc {
+namespace asiodns {
 
 const std::string TEST_ADDRESS = "127.0.0.1";   ///< Servers are on this address
 const uint16_t TEST_PORT = 5301;                ///< ... and this port
@@ -674,4 +676,5 @@ TEST_F(RecursiveQueryTest2, Resolve) {
     EXPECT_TRUE(rc->getStatus());
 }
 
-} // namespace asiolink
+} // namespace asiodns
+} // namespace isc

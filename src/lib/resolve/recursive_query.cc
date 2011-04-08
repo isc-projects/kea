@@ -35,15 +35,17 @@
 #include <nsas/nameserver_address.h>
 
 #include <asio.hpp>
-#include <asiolink/dns_service.h>
-#include <asiolink/io_fetch.h>
+#include <asiodns/dns_service.h>
+#include <asiodns/io_fetch.h>
 #include <asiolink/io_service.h>
 #include <resolve/recursive_query.h>
 
 using isc::log::dlog;
 using namespace isc::dns;
+using namespace isc::asiolink;
 
-namespace asiolink {
+namespace isc {
+namespace asiodns {
 
 typedef std::vector<std::pair<std::string, uint16_t> > AddressVector;
 
@@ -797,6 +799,5 @@ RecursiveQuery::resolve(const Question& question,
     }
 }
 
-
-
-} // namespace asiolink
+} // namespace asiodns
+} // namespace isc

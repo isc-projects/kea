@@ -99,7 +99,7 @@ AuthConmmandTest::stopServer() {
 }
 
 TEST_F(AuthConmmandTest, shutdown) {
-    asiolink::IntervalTimer itimer(server.getIOService());
+    isc::asiolink::IntervalTimer itimer(server.getIOService());
     itimer.setup(boost::bind(&AuthConmmandTest::stopServer, this), 1);
     server.getIOService().run();
     EXPECT_EQ(0, rcode);

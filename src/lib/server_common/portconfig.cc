@@ -15,7 +15,7 @@
 #include <server_common/portconfig.h>
 
 #include <asiolink/io_address.h>
-#include <asiolink/dns_service.h>
+#include <asiodns/dns_service.h>
 #include <log/dummylog.h>
 
 #include <boost/foreach.hpp>
@@ -23,7 +23,8 @@
 
 using namespace std;
 using namespace isc::data;
-using namespace asiolink;
+using namespace isc::asiolink;
+using namespace isc::asiodns;
 using isc::log::dlog;
 
 namespace isc {
@@ -82,7 +83,7 @@ setAddresses(DNSService& service, const AddressList& addresses) {
 void
 installListenAddresses(const AddressList& newAddresses,
                        AddressList& addressStore,
-                       asiolink::DNSService& service)
+                       isc::asiodns::DNSService& service)
 {
     try {
         dlog("Setting listen addresses:");

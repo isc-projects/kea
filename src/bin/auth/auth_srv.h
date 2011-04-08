@@ -26,11 +26,11 @@
 #include <dns/message.h>
 #include <dns/buffer.h>
 
+#include <asiodns/dns_server.h>
+#include <asiodns/dns_lookup.h>
+#include <asiodns/dns_answer.h>
 #include <asiolink/io_message.h>
 #include <asiolink/io_service.h>
-#include <asiolink/dns_server.h>
-#include <asiolink/dns_lookup.h>
-#include <asiolink/dns_answer.h>
 #include <asiolink/simple_callback.h>
 
 #include <asiolink/asiolink.h>
@@ -116,10 +116,10 @@ public:
     /// \param server Pointer to the \c DNSServer
     ///
     /// \throw isc::Unexpected Protocol type of \a message is unexpected
-    void processMessage(const asiolink::IOMessage& io_message,
+    void processMessage(const isc::asiolink::IOMessage& io_message,
                         isc::dns::MessagePtr message,
                         isc::dns::OutputBufferPtr buffer,
-                        asiolink::DNSServer* server);
+                        isc::asiodns::DNSServer* server);
 
     /// \brief Set verbose flag
     ///
@@ -202,16 +202,16 @@ public:
     void setConfigSession(isc::config::ModuleCCSession* config_session);
 
     /// \brief Return this object's ASIO IO Service queue
-    asiolink::IOService& getIOService();
+    isc::asiolink::IOService& getIOService();
 
     /// \brief Return pointer to the DNS Lookup callback function
-    asiolink::DNSLookup* getDNSLookupProvider() const { return (dns_lookup_); }
+    isc::asiodns::DNSLookup* getDNSLookupProvider() const { return (dns_lookup_); }
 
     /// \brief Return pointer to the DNS Answer callback function
-    asiolink::DNSAnswer* getDNSAnswerProvider() const { return (dns_answer_); }
+    isc::asiodns::DNSAnswer* getDNSAnswerProvider() const { return (dns_answer_); }
 
     /// \brief Return pointer to the Checkin callback function
-    asiolink::SimpleCallback* getCheckinProvider() const { return (checkin_); }
+    isc::asiolink::SimpleCallback* getCheckinProvider() const { return (checkin_); }
 
     /// \brief Set or update the size (number of slots) of hot spot cache.
     ///
@@ -372,15 +372,15 @@ public:
         const;
 
     /// \brief Assign an ASIO DNS Service queue to this Auth object
-    void setDNSService(asiolink::DNSService& dnss);
+    void setDNSService(isc::asiodns::DNSService& dnss);
 
 
 private:
     AuthSrvImpl* impl_;
-    asiolink::SimpleCallback* checkin_;
-    asiolink::DNSLookup* dns_lookup_;
-    asiolink::DNSAnswer* dns_answer_;
-    asiolink::DNSService* dnss_;
+    isc::asiolink::SimpleCallback* checkin_;
+    isc::asiodns::DNSLookup* dns_lookup_;
+    isc::asiodns::DNSAnswer* dns_answer_;
+    isc::asiodns::DNSService* dnss_;
 };
 
 #endif // __AUTH_SRV_H
