@@ -64,6 +64,17 @@ public:
         asio_endpoint_placeholder_(NULL), asio_endpoint_(asio_endpoint)
     {}
 
+    /// \brief Constructor from an ASIO UDP endpoint.
+    ///
+    /// This constructor is designed to be an efficient wrapper for the
+    /// corresponding ASIO class, \c udp::endpoint.
+    ///
+    /// \param asio_endpoint The ASIO representation of the TCP endpoint.
+    UDPEndpoint(const asio::ip::udp::endpoint& asio_endpoint) :
+        asio_endpoint_placeholder_(new asio::ip::udp::endpoint(asio_endpoint)),
+        asio_endpoint_(*asio_endpoint_placeholder_)
+    {}
+
     /// \brief The destructor.
     virtual ~UDPEndpoint() { delete asio_endpoint_placeholder_; }
     //@}

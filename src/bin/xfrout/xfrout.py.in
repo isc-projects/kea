@@ -1,7 +1,6 @@
 #!@PYTHON@
 
 # Copyright (C) 2010  Internet Systems Consortium.
-# Copyright (C) 2010  CZ NIC
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -38,29 +37,38 @@ from optparse import OptionParser, OptionValueError
 from isc.util import socketserver_mixin
 
 try:
-    from libxfr_python import *
+    from libutil_io_python import *
     from pydnspp import *
 except ImportError as e:
     # C++ loadable module may not be installed; even so the xfrout process
     # must keep running, so we warn about it and move forward.
-    sys.stderr.write('[b10-xfrout] failed to import DNS or XFR module: %s\n' % str(e))
+    sys.stderr.write('[b10-xfrout] failed to import DNS or isc.util.io module: %s\n' % str(e))
 
 isc.util.process.rename()
 
-if "B10_FROM_BUILD" in os.environ:
-    SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/xfrout"
-    AUTH_SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/auth"
-    if "B10_FROM_SOURCE_LOCALSTATEDIR" in os.environ:
-        UNIX_SOCKET_FILE = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"] + \
-            "/auth_xfrout_conn"
+def init_paths():
+    global SPECFILE_PATH
+    global AUTH_SPECFILE_PATH
+    global UNIX_SOCKET_FILE
+    if "B10_FROM_BUILD" in os.environ:
+        SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/xfrout"
+        AUTH_SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/auth"
+        if "B10_FROM_SOURCE_LOCALSTATEDIR" in os.environ:
+            UNIX_SOCKET_FILE = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"] + \
+                "/auth_xfrout_conn"
+        else:
+            UNIX_SOCKET_FILE = os.environ["B10_FROM_BUILD"] + "/auth_xfrout_conn"
     else:
-        UNIX_SOCKET_FILE = os.environ["B10_FROM_BUILD"] + "/auth_xfrout_conn"
-else:
-    PREFIX = "@prefix@"
-    DATAROOTDIR = "@datarootdir@"
-    SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
-    AUTH_SPECFILE_PATH = SPECFILE_PATH
-    UNIX_SOCKET_FILE = "@@LOCALSTATEDIR@@/auth_xfrout_conn"
+        PREFIX = "@prefix@"
+        DATAROOTDIR = "@datarootdir@"
+        SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+        AUTH_SPECFILE_PATH = SPECFILE_PATH
+        if "BIND10_XFROUT_SOCKET_FILE" in os.environ:
+            UNIX_SOCKET_FILE = os.environ["BIND10_XFROUT_SOCKET_FILE"]
+        else:
+            UNIX_SOCKET_FILE = "@@LOCALSTATEDIR@@/auth_xfrout_conn"
+
+init_paths()
 
 SPECFILE_LOCATION = SPECFILE_PATH + "/xfrout.spec"
 AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + os.sep + "auth.spec"
@@ -377,7 +385,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
             # This may happen when one xfrout process try to connect to
             # xfrout unix socket server, to check whether there is another
             # xfrout running.
-            if sock_fd == XFR_FD_RECEIVE_FAIL:
+            if sock_fd == FD_COMM_ERROR:
                 self._log.log_message("error", "Failed to receive the file descriptor for XFR connection")
             return
 

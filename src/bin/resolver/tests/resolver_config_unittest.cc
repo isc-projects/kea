@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <string>
 
 #include <gtest/gtest.h>
@@ -42,6 +44,7 @@ class ResolverConfig : public ::testing::Test {
             dnss(ios, NULL, NULL, NULL)
         {
             server.setDNSService(dnss);
+            server.setConfigured();
         }
         void invalidTest(const string &JSON, const string& name);
 };

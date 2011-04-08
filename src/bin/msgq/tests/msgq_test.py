@@ -117,7 +117,7 @@ class SendNonblock(unittest.TestCase):
     Tests that the whole thing will not get blocked if someone does not read.
     """
 
-    def terminate_check(self, task, timeout = 10):
+    def terminate_check(self, task, timeout=30):
         """
         Runs task in separate process (task is a function) and checks
         it terminates sooner than timeout.
@@ -194,7 +194,7 @@ class SendNonblock(unittest.TestCase):
             length = len(data)
             queue_pid = os.fork()
             if queue_pid == 0:
-                signal.alarm(30)
+                signal.alarm(120)
                 msgq.setup_poller()
                 msgq.register_socket(queue)
                 msgq.run()

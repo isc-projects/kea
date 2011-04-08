@@ -341,12 +341,20 @@ TEST_F(QueryTest, apexAnyMatch) {
     // in the answer section from the additional.
     EXPECT_NO_THROW(Query(memory_datasrc, Name("example.com"),
                           RRType::ANY(), response).process());
-    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 4, 0, 0,
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 4, 0, 3,
                   "example.com. 3600 IN SOA . . 0 0 0 0 0\n"
                   "example.com. 3600 IN NS glue.delegation.example.com.\n"
                   "example.com. 3600 IN NS noglue.example.com.\n"
                   "example.com. 3600 IN NS example.net.\n",
-                  NULL, NULL, mock_zone->getOrigin());
+                  NULL, ns_addrs_txt, mock_zone->getOrigin());
+}
+
+TEST_F(QueryTest, mxANYMatch) {
+    EXPECT_NO_THROW(Query(memory_datasrc, Name("mx.example.com"),
+                          RRType::ANY(), response).process());
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 3, 3, 4,
+                  mx_txt, zone_ns_txt,
+                  (string(ns_addrs_txt) + string(www_a_txt)).c_str());
 }
 
 TEST_F(QueryTest, glueANYMatch) {

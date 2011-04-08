@@ -37,12 +37,12 @@ DUPMSGID  duplicate message ID (%s) in compiled code
 DUPLNS    duplicate $NAMESPACE directive found
 + When reading a message file, more than one $NAMESPACE directive was found.  In
 + this version of the code, such a condition is regarded as an error and the
-+ read will be abandonded.
++ read will be abandoned.
 
 DUPLPRFX    duplicate $PREFIX directive found
 + When reading a message file, more than one $PREFIX directive was found.  In
 + this version of the code, such a condition is regarded as an error and the
-+ read will be abandonded.
++ read will be abandoned.
 
 IDNOTFND    could not replace message for '%s': no such message identification
 + During start-up a local message file was read.  A line with the listed
@@ -53,7 +53,7 @@ IDNOTFND    could not replace message for '%s': no such message identification
 + identification has been removed.
 +
 + This message may appear a number of times in the file, once for every such
-+ unknown mnessage identification.
++ unknown message identification.
 
 MSGRDERR    error reading from message file %s: %s
 + The specified error was encountered reading from the named message file.
@@ -69,9 +69,9 @@ NSEXTRARG  $NAMESPACE directive has too many arguments
 
 NSINVARG    $NAMESPACE directive has an invalid argument ('%s')
 + The $NAMESPACE argument should be a valid C++ namespace.  The reader does a
-+ cursory check on its validity, checking that the characters in the namspace
++ cursory check on its validity, checking that the characters in the namespace
 + are correct.  The error is generated when the reader finds an invalid
-+ character. (Valid are alphanumeric characters, underscroes and colons.)
++ character. (Valid are alphanumeric characters, underscores and colons.)
 
 NOMSGTXT    a line containing a message ID ('%s') and nothing else was found
 + Message definitions comprise lines starting with a message identification (a

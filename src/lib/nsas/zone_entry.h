@@ -32,6 +32,7 @@
 #include "fetchable.h"
 #include "nsas_types.h"
 #include "random_number_generator.h"
+#include "glue_hints.h"
 
 namespace isc {
 namespace nsas {
@@ -68,8 +69,7 @@ public:
      * \todo Move to cc file, include the lookup (if NSAS uses resolver for
      *     everything)
      */
-    ZoneEntry(
-        boost::shared_ptr<isc::resolve::ResolverInterface> resolver,
+    ZoneEntry(isc::resolve::ResolverInterface* resolver,
         const std::string& name, const isc::dns::RRClass& class_code,
         boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table,
         boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru);
@@ -97,9 +97,22 @@ public:
      *
      * \param callback The callback itself.
      * \param family Which address family is acceptable as an answer?
+     * \param glue_hints If a non-empty glue-hints object is passed,
+     *        and the NSAS does not have an immediate answer, it will
+     *        call back immediately with one of the glue hints.
      */
     void addCallback(boost::shared_ptr<AddressRequestCallback>
-        callback, AddressFamily family);
+        callback, AddressFamily family,
+        const GlueHints& glue_hints = GlueHints());
+
+    /**
+     * \short Remove a callback from the list
+     *
+     * \param callback The callback itself.
+     * \param family Which address family is acceptable as an answer?
+     */
+    void removeCallback(const boost::shared_ptr<AddressRequestCallback>&
+                        callback, AddressFamily family);
 
     /// \short Protected members, so they can be accessed by tests.
     //@{
@@ -144,7 +157,7 @@ private:
     void process(AddressFamily family,
         const boost::shared_ptr<NameserverEntry>& nameserver);
     // Resolver we use
-    boost::shared_ptr<isc::resolve::ResolverInterface> resolver_;
+    isc::resolve::ResolverInterface* resolver_;
     // We store the nameserver table and lru, so we can look up when there's
     // update
     boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table_;

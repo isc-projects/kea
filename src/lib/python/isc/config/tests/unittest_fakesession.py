@@ -35,6 +35,7 @@ class FakeModuleCCSession:
         # the message_queue is empty when receive is called, throw
         # a SessionTimeout
         self._timeout = 0
+        self._closed = False
 
     def group_subscribe(self, group_name, instance_name = None):
         if not group_name in self.subscriptions:
@@ -43,6 +44,11 @@ class FakeModuleCCSession:
             self.subscriptions[group_name].append(instance_name)
             
     def group_unsubscribe(self, group_name, instance_name = None):
+
+        # raises SessionError if the session has been already closed.
+        if self._closed:
+            raise isc.cc.SessionError("Session has been closed.")        
+
         if group_name in self.subscriptions:
             if instance_name:
                 if len(self.subscriptions[group_name]) > 1:
@@ -94,7 +100,8 @@ class FakeModuleCCSession:
 
     def close(self):
         # need to pass along somehow that this function has been called,
-        self._socket = "closed"
+        self._socket = None
+        self._closed = True
 
     def set_timeout(self, timeout):
         self._timeout = timeout

@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -37,7 +39,7 @@
 
 #include <auth/spec_config.h>
 #include <auth/common.h>
-#include <auth/config.h>
+#include <auth/auth_config.h>
 #include <auth/command.h>
 #include <auth/change_user.h>
 #include <auth/auth_srv.h>
@@ -120,19 +122,7 @@ main(int argc, char* argv[]) {
     bool xfrin_session_established = false; // XXX (see Trac #287)
     bool statistics_session_established = false; // XXX (see Trac #287)
     ModuleCCSession* config_session = NULL;
-    string xfrout_socket_path;
-    if (getenv("B10_FROM_BUILD") != NULL) {
-        if (getenv("B10_FROM_SOURCE_LOCALSTATEDIR")) {
-            xfrout_socket_path = string("B10_FROM_SOURCE_LOCALSTATEDIR") +
-                "/auth_xfrout_conn";
-        } else {
-            xfrout_socket_path = string(getenv("B10_FROM_BUILD")) +
-                "/auth_xfrout_conn";
-        }
-    } else {
-        xfrout_socket_path = UNIX_SOCKET_FILE;
-    }
-    XfroutClient xfrout_client(xfrout_socket_path);
+    XfroutClient xfrout_client(getXfroutSocketPath());
     try {
         string specfile;
         if (getenv("B10_FROM_BUILD")) {
@@ -163,10 +153,6 @@ main(int argc, char* argv[]) {
                                              my_command_handler);
         cout << "[b10-auth] Configuration channel established." << endl;
 
-        if (uid != NULL) {
-            changeUser(uid);
-        }
-
         xfrin_session = new Session(io_service.get_io_service());
         cout << "[b10-auth] Xfrin session channel created." << endl;
         xfrin_session->establish(NULL);
@@ -189,6 +175,10 @@ main(int argc, char* argv[]) {
         auth_server->setConfigSession(config_session);
         configureAuthServer(*auth_server, config_session->getFullConfig());
         auth_server->updateConfig(ElementPtr());
+
+        if (uid != NULL) {
+            changeUser(uid);
+        }
 
         cout << "[b10-auth] Server started." << endl;
         io_service.run();

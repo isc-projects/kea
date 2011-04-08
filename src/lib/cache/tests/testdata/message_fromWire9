@@ -1,0 +1,25 @@
+#
+# The TTL for a record in answer section is 0, so it
+# will expire immediately after being cached.
+#
+# A simple DNS response message
+# ID = 0x1035
+# QR=1 (response), Opcode=0, AA=1, RD=1 (other fields are 0)
+# QDCOUNT=1, ANCOUNT=2, other COUNTS=0
+# Question: test.example.org. IN A
+# Answer:
+#  test.example.org. 0000 IN A 192.0.2.1
+#  test.example.org. 7200 IN A 192.0.2.2
+#
+1035 8500
+0001 0002 0000 0000
+#(4) t  e  s  t (7) e  x  a  m  p  l  e (3) o  r  g  .
+ 04 74 65 73 74 07 65 78 61 6d 70 6c 65 03 6f 72 67 00
+0001 0001
+# same name, fully compressed
+c0 0c
+# TTL=3600, A, IN, RDLENGTH=4, RDATA
+0001 0001 00000000 0004 c0 00 02 01
+# mostly same, with the slight difference in RDATA and TTL
+c0 0c
+0001 0001 00001c20 0004 c0 00 02 02

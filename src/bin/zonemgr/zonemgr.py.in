@@ -1,7 +1,6 @@
 #!@PYTHON@
 
 # Copyright (C) 2010  Internet Systems Consortium.
-# Copyright (C) 2010  CZ NIC
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -101,9 +100,8 @@ class ZonemgrRefresh:
         self._cc = cc
         self._check_sock = slave_socket
         self._db_file = db_file
-        self.update_config_data(config_data)
         self._zonemgr_refresh_info = {}
-        self._build_zonemgr_refresh_info()
+        self.update_config_data(config_data)
         self._running = False
 
     def _random_jitter(self, max, jitter):
@@ -149,16 +147,13 @@ class ZonemgrRefresh:
 
     def _zone_not_exist(self, zone_name_class):
         """ Zone doesn't belong to zonemgr"""
-        if zone_name_class in self._zonemgr_refresh_info.keys():
-            return False
-        return True
+        return not zone_name_class in self._zonemgr_refresh_info
 
     def zone_refresh_success(self, zone_name_class):
         """Update zone info after zone refresh success"""
         if (self._zone_not_exist(zone_name_class)):
             raise ZonemgrException("[b10-zonemgr] Zone (%s, %s) doesn't "
                                    "belong to zonemgr" % zone_name_class)
-            return
         self.zonemgr_reload_zone(zone_name_class)
         self._set_zone_refresh_timer(zone_name_class)
         self._set_zone_state(zone_name_class, ZONE_OK)
@@ -169,7 +164,6 @@ class ZonemgrRefresh:
         if (self._zone_not_exist(zone_name_class)):
             raise ZonemgrException("[b10-zonemgr] Zone (%s, %s) doesn't "
                                    "belong to zonemgr" % zone_name_class)
-            return
         # Is zone expired?
         if (self._zone_is_expired(zone_name_class)):
             self._set_zone_state(zone_name_class, ZONE_EXPIRED)
@@ -182,7 +176,6 @@ class ZonemgrRefresh:
         if (self._zone_not_exist(zone_name_class)):
             raise ZonemgrException("[b10-zonemgr] Notified zone (%s, %s) "
                                    "doesn't belong to zonemgr" % zone_name_class)
-            return
         self._set_zone_notifier_master(zone_name_class, master)
         self._set_zone_notify_timer(zone_name_class)
 
@@ -193,6 +186,7 @@ class ZonemgrRefresh:
 
     def zonemgr_add_zone(self, zone_name_class):
         """ Add a zone into zone manager."""
+        log_msg("Loading zone (%s, %s)" % zone_name_class)
         zone_info = {}
         zone_soa = sqlite3_ds.get_zone_soa(str(zone_name_class[0]), self._db_file)
         if not zone_soa:
@@ -203,14 +197,6 @@ class ZonemgrRefresh:
         zone_info["next_refresh_time"] = self._get_current_time() + \
                                          float(zone_soa[7].split(" ")[REFRESH_OFFSET])
         self._zonemgr_refresh_info[zone_name_class] = zone_info
-
-    def _build_zonemgr_refresh_info(self):
-        """ Build zonemgr refresh info map."""
-        log_msg("Start loading zone into zonemgr.")
-        for zone_name, zone_class in sqlite3_ds.get_zones_info(self._db_file):
-            zone_name_class = (zone_name, zone_class)
-            self.zonemgr_add_zone(zone_name_class)
-        log_msg("Finish loading zone into zonemgr.")
 
     def _zone_is_expired(self, zone_name_class):
         """Judge whether a zone is expired or not."""
@@ -416,6 +402,32 @@ class ZonemgrRefresh:
 
     def update_config_data(self, new_config):
         """ update ZonemgrRefresh config """
+        backup = self._zonemgr_refresh_info.copy()
+        try:
+            required = {}
+            # Add new zones
+            for secondary_zone in new_config.get('secondary_zones'):
+                name = secondary_zone['name']
+                # Be tolerant to sclerotic users who forget the final dot
+                if name[-1] != '.':
+                    name = name + '.'
+                name_class = (name, secondary_zone['class'])
+                required[name_class] = True
+                # Add it only if it isn't there already
+                if not name_class in self._zonemgr_refresh_info:
+                    self.zonemgr_add_zone(name_class)
+            # Drop the zones that are no longer there
+            # Do it in two phases, python doesn't like deleting while iterating
+            to_drop = []
+            for old_zone in self._zonemgr_refresh_info:
+                if not old_zone in required:
+                    to_drop.append(old_zone)
+            for drop in to_drop:
+                del self._zonemgr_refresh_info[drop]
+        # If we are not able to find it in database, restore the original
+        except:
+            self._zonemgr_refresh_info = backup
+            raise
         self._lowerbound_refresh = new_config.get('lowerbound_refresh')
         self._lowerbound_retry = new_config.get('lowerbound_retry')
         self._max_transfer_timeout = new_config.get('max_transfer_timeout')
@@ -472,26 +484,37 @@ class Zonemgr:
     def config_handler(self, new_config):
         """ Update config data. """
         answer = create_answer(0)
+        ok = True
+        complete = self._config_data.copy()
         for key in new_config:
-            if key not in self._config_data:
+            if key not in complete:
                 answer = create_answer(1, "Unknown config data: " + str(key))
+                ok = False
                 continue
-            self._config_data[key] = new_config[key]
+            complete[key] = new_config[key]
 
-        self._config_data_check(self._config_data)
-        if (self._zone_refresh):
-            self._zone_refresh.update_config_data(self._config_data)
+        self._config_data_check(complete)
+        if self._zone_refresh is not None:
+            try:
+                self._zone_refresh.update_config_data(complete)
+            except Exception as e:
+                answer = create_answer(1, str(e))
+                ok = False
+        if ok:
+            self._config_data = complete
 
         return answer
 
     def _config_data_check(self, config_data):
-        """Check whether the new config data is valid or 
-        not. """ 
+        """Check whether the new config data is valid or
+        not. It contains only basic logic, not full check against
+        database."""
         # jitter should not be bigger than half of the original value
         if config_data.get('jitter_scope') > 0.5:
             config_data['jitter_scope'] = 0.5
             log_msg("[b10-zonemgr] jitter_scope is too big, its value will "
-                      "be set to 0.5") 
+                      "be set to 0.5")
+
 
     def _parse_cmd_params(self, args, command):
         zone_name = args.get("zone_name")
