@@ -30,6 +30,7 @@ class MyConfigManager:
         self.run_called = False
         self.write_config_called = False
         self.running = True
+        self.virtual_modules = []
 
     def read_config(self):
         self.read_config_called = True
@@ -42,6 +43,24 @@ class MyConfigManager:
 
     def write_config(self):
         self.write_config_called = True
+
+    def set_virtual_module(self, spec, function):
+        self.virtual_modules.append((spec, function))
+
+class TestPlugins(unittest.TestCase):
+    def test_load_plugins(self):
+        """Test we can successfully find and load the mock plugin."""
+        # Let it load the plugin
+        b = __import__("b10-cfgmgr")
+        # The parameters aren't important for this test
+        cm = MyConfigManager(None, None)
+        b.load_plugins(os.environ['TESTDATA_PATH'] + os.sep + 'plugins', cm)
+        # Check exactly one plugin was loaded and the right data were fed into
+        # the cm
+        self.assertEqual(len(cm.virtual_modules), 1)
+        (spec, check) = cm.virtual_modules[0]
+        self.assertEqual(spec.get_module_name(), "mock_config_plugin")
+        self.assertEqual(check(None), "Mock config plugin")
 
 class TestConfigManagerStartup(unittest.TestCase):
     def test_cfgmgr(self):
