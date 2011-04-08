@@ -4,27 +4,27 @@
 	overflows.
 	(Trac #363, git ce281e646be9f0f273229d94ccd75bf7e08d17cf)
 
-216.  [func]     vorner
+216.	[func]		vorner
 	The BIND10_XFROUT_SOCKET_FILE environment variable can be used to specify
 	which socket should be used for communication between b10-auth and
 	b10-xfrout. Mostly for testing reasons.
 	(Trac #615, git 28b01ad5bf72472c824a7b8fc4a8dc394e22e462)
 
-215.  [func]      vorner
+215.	[func]		vorner
 	A new process, b10-sockcreator, is added, which will create sockets for
 	the rest of the system.  It is the only part which will need to keep the
 	root privileges. However, only the process exists, nothing can talk to it
 	yet.
 	(Trac #366, git b509cbb77d31e388df68dfe52709d6edef93df3f)
 
-214.  [func]*		vorner
+214.	[func]*		vorner
 	Zone manager no longer thinks it is secondary master for
 	all zones in the database. They are listed in
 	Zonemgr/secondary_zones configuration variable (in the form
 	[{"name": "example.com", "class": "IN"}]).
 	(Trac #670, git 7c1e4d5e1e28e556b1d10a8df8d9486971a3f052)
 
-213.  [bug]		naokikambe
+213.	[bug]		naokikambe
 	Solved incorrect datetime of "bind10.boot_time" and also added a new
 	command "sendstats" for Bob. This command is to send statistics data to
 	the stats daemon immediately. The solved problem is that statistics
@@ -34,39 +34,39 @@
 	resending statistics data via bindctl manually.
 	(Trac #521, git 1c269cbdc76f5dc2baeb43387c4d7ccc6dc863d2)
 
-212.  [bug]		naokikambe
+212.	[bug]		naokikambe
 	Fixed that the ModuleCCSession object may group_unsubscribe in the
 	closed CC session in being deleted.
 	(Trac #698, git 0355bddc92f6df66ef50b920edd6ec3b27920d61)
 
-211.  [func]		shane
+211.	[func]		shane
 	Implement "--brittle" option, which causes the server to exit
 	if any of BIND 10's processes dies.
 	(Trac #788, git 88c0d241fe05e5ea91b10f046f307177cc2f5bc5)
 
-210.  [bug]		jerry
+210.	[bug]		jerry
 	src/bin/auth: fixed a bug where type ANY queries don't provide
 	additional glue records for ANSWER section.
 	(Trac #699, git 510924ebc57def8085cc0e5413deda990b2abeee)
 
-209.  [func]		jelte
+209.	[func]		jelte
 	Resolver now uses the NSAS when looking for a nameserver to
 	query for any specific zone. This also includes keeping track of
 	the RTT for that nameserver.
 	(Trac #495, git 76022a7e9f3ff339f0f9f10049aa85e5784d72c5)
 
-208.  [bug]*		jelte
+208.	[bug]*		jelte
 	Resolver now answers REFUSED on queries that are not for class IN.
 	This includes the various CH TXT queries, which will be added
 	later.
 	(git 012f9e78dc611c72ea213f9bd6743172e1a2ca20)
 
-207.  [func]		jelte
+207.	[func]		jelte
 	Resolver now starts listening on localhost:53 if no configuration
 	is set.
 	(Trac #471, git 1960b5becbba05570b9c7adf5129e64338659f07)
 
-206.  [func]		shane
+206.	[func]		shane
 	Add the ability to list the running BIND 10 processes using the
 	command channel. To try this, use "Boss show_processes".
 	(Trac #648, git 451bbb67c2b5d544db2f7deca4315165245d2b3b)
@@ -85,27 +85,27 @@
 	incorrect responses in some other cases.
 	(Trac #80, git c65637dd41c8d94399bd3e3cee965b694b633339)
 
-203.  [bug]		zhang likun
+203.	[bug]		zhang likun
 	Fix resolver cache memory leak: when cache is destructed, rrset
 	and message entries in it are not destructed properly.
 	(Trac #643, git aba4c4067da0dc63c97c6356dc3137651755ffce)
 
-202.  [func]    vorner
+202.	[func]		vorner
 	It is possible to specify a different directory where we look for
 	configuration files (by -p) and different configuration file to
 	use (-c).  Also, it is possible to specify the port on which
 	cmdctl should listen (--cmdctl-port).
 	(Trac #615, git 5514dd78f2d61a222f3069fc94723ca33fb3200b)
 
-201.  [bug]           jerry
+201.	[bug]		jerry
 	src/bin/bindctl: bindctl doesn't show traceback on shutdown.
 	(Trac #588, git 662e99ef050d98e86614c4443326568a0b5be437)
 
-200.  [bug]           Jelte
+200.	[bug]		Jelte
 	Fixed a bug where incoming TCP connections were not closed.
 	(Trac #589, git 1d88daaa24e8b1ab27f28be876f40a144241e93b)
 
-199.  [func]           ocean
+199.	[func]		ocean
 	Cache negative responses (NXDOMAIN/NODATA) from authoritative
 	server for recursive resolver.
 	(Trac #493, git f8fb852bc6aef292555063590c361f01cf29e5ca)
@@ -118,7 +118,7 @@
 	the zone.
 	(Trac #626, git 721a53160c15e8218f6798309befe940b9597ba0)
 
-197.  [bug]		zhang likun
+197.	[bug]		zhang likun
 	Remove expired message and rrset entries when looking up them
 	in cache, touch or remove the rrset entry in cache properly
 	when doing lookup or update.
@@ -130,12 +130,12 @@
 	not work as a root server when using the in-memory data source.
 	(Trac #683, git 420ec42bd913fb83da37b26b75faae49c7957c46)
 
-195.  [func]      stephen
+195.	[func]		stephen
 	Resolver will now re-try a query over TCP if a response to a UDP
 	query has the TC bit set.
 	(Trac #499, git 4c05048ba059b79efeab53498737abe94d37ee07)
 
-194.  [bug]       vorner
+194.	[bug]		vorner
 	Solved a 100% CPU usage problem after switching addresses in b10-auth
 	(and possibly, but unconfirmed, in b10-resolver). It was caused by
 	repeated reads/accepts on closed socket (the bug was in the code for a
@@ -172,36 +172,36 @@
 	Do not install the log message compiler.
 	(Trac #634, git eb6441aca464980d00e3ff827cbf4195c5a7afc5)
 
-188.  [bug]		zhang likun
+188.	[bug]		zhang likun
 	Make the rrset trust level ranking algorithm used by
 	isc::cache::MessageEntry::getRRsetTrustLevel() follow RFC2181
 	section 5.4.1.
 	(Trac #595 git 19197b5bc9f2955bd6a8ca48a2d04472ed696e81)
 
-187.  [bug]		zhang likun
+187.	[bug]		zhang likun
 	Fix the assert error in class isc::cache::RRsetCache by adding the
 	check for empty pointer and test case for it.
 	(Trac #638, git 54e61304131965c4a1d88c9151f8697dcbb3ce12)
 
-186.  [bug]		jelte
+186.	[bug]		jelte
 	b10-resolver could stop with an assertion failure on certain kinds
 	of messages (there was a problem in error message creation). This
 	fixes that.
 	(Trac #607, git 25a5f4ec755bc09b54410fcdff22691283147f32)
 
-185.  [bug]        vorner
+185.	[bug]		vorner
 	Tests use port from private range (53210), lowering chance of
 	a conflict with something else (eg. running bind 10).
 	(Trac #523, git 301da7d26d41e64d87c0cf72727f3347aa61fb40)
 
-184.  [func]*      vorner
+184.	[func]*		vorner
 	Listening address and port configuration of b10-auth is the same as
 	for b10-resolver now. That means, it is configured through bindctl
 	at runtime, in the Auth/listen_on list, not through command line
 	arguments.
 	(Trac #575, #576, git f06ce638877acf6f8e1994962bf2dbfbab029edf)
 
-183.  [bug]      jerry
+183.	[bug]		jerry
 	src/bin/xfrout: Enable parallel sessions between xfrout server and
 	muti-Auth. The session needs to be created only on the first time
 	or if an error occur.
@@ -217,36 +217,36 @@
 	the git repository.
 	(Trac #613, git b973f67520682b63ef38b1451d309be9f4f4b218)
 
-181.  [func]      feng
+181.	[func]		feng
 	Add stop interface into dns server, so we can stop each running
 	server individually. With it, user can reconfigure her running server
 	with different ip address or port.
 	(Trac #388, git 6df94e2db856c1adc020f658cc77da5edc967555)
 
-180.  [build]     jreed
+180.	[build]		jreed
 	Fix custom DESTDIR for make install. Patch from Jan Engelhardt.
 	(Trac #629, git 5ac67ede03892a5eacf42ce3ace1e4e376164c9f)
 
 bind10-devel-20110224 released on February 24, 2011
 
-179.  [func]      vorner
+179.	[func]		vorner
 	It is possible to start and stop resolver and authoritative
 	server without restart of the whole system. Change of the
 	configuration (Boss/start_auth and Boss/start_resolver) is
 	enough.
 	(Trac #565, git 0ac0b4602fa30852b0d86cc3c0b4730deb1a58fe)
 
-178.  [func]      jelte
+178.	[func]		jelte
 	Resolver now makes (limited) use of the cache
 	(Trac #491, git 8b41f77f0099ddc7ca7d34d39ad8c39bb1a8363c)
 
-177.  [func]      stephen
+177.	[func]		stephen
 	The upstream fetch code in asiolink is now protocol agnostic to
 	allow for the addition of fallback to TCP if a fetch response
 	indicates truncation.
 	(Trac #554, git 9739cbce2eaffc7e80640db58a8513295cf684de)
 
-176.  [func]      zhang likun
+176.	[func]		likun
 	src/lib/cache: Rename one interface: from lookupClosestRRset()
 	to lookupDeepestNS(), and remove one parameter of it.
 	(Trac #492, git ecbfb7cf929d62a018dd4cdc7a841add3d5a35ae)
@@ -271,13 +271,13 @@ bind10-devel-20110224 released on February 24, 2011
 	socket class to fix it.
 	(Trac #346, git 319debfb957641f311102739a15059f8453c54ce)
 
-172.  [func]      jelte
+172.	[func]		jelte
 	Improved the bindctl cli in various ways, mainly concerning
 	list and map item addressing, the correct display of actual values,
 	and internal help.
 	(Trac #384, git e5fb3bc1ed5f3c0aec6eb40a16c63f3d0fc6a7b2)
 
-171.  [func]      feng, jerry, jinmei, vorner
+171.	[func]		vorner
 	b10-auth, src/lib/datasrc: in memory data source now works as a
 	complete data source for authoritative DNS servers and b10-auth
 	uses it.  It still misses major features, however, including
@@ -292,47 +292,47 @@ bind10-devel-20110224 released on February 24, 2011
 	correctly rejected.
 	(Trac #117, git 9c690982f24fef19c747a72f43c4298333a58f48)
 
-169.  [func]      zhang likun, jelte
+169.	[func]		jelte
 	Added a basic implementation for a resolver cache (though not
 	used yet).
 	(Trac #449, git 8aa3b2246ae095bbe7f855fd11656ae3bdb98986)
 
-168.  [bug]       vorner
+168.	[bug]		vorner
 	Boss no longer has the -f argument, which was undocumented and
 	stayed as a relict of previous versions, currently causing only
 	strange behaviour.
 	(Trac #572, git 17f237478961005707d649a661cc72a4a0d612d4)
 
-167.  [bug]           naokikambe
+167.	[bug]		naokikambe
 	Fixed failure of termination of msgq_test.py with python3
 	coverage(3.3.1)
 	(Trac #573, git 0e6a18e12f61cc482e07078776234f32605312e5)
 
-166.  [func]      jelte
+166.	[func]		jelte
 	The resolver now sends back a SERVFAIL when there is a client
 	timeout (timeout_client config setting), but it will not stop
 	resolving (until there is a lookup timeout or a result).
 	(Trac #497 and #489, git af0e5cd93bebb27cb5c4457f7759d12c8bf953a6)
 
-165.  [func]      jelte
+165.	[func]		jelte
 	The resolver now handles CNAMEs, it will follow them, and include
 	them in the answer. The maximum length of CNAME chains that is
 	supported is 16.
 	(Trac #497, git af0e5cd93bebb27cb5c4457f7759d12c8bf953a6)
 
-164.  [bug]           y-aharen
+164.	[bug]		y-aharen
 	IntervalTimer: Modified the interface to accept interval in
 	milliseconds. It shortens the time of the tests of IntervalTimer.
 	(Trac #452, git c9f6acc81e24c4b8f0eb351123dc7b43f64e0914)
 
-163.  [func]      vorner
+163.	[func]		vorner
 	The pimpl design pattern is used in UDPServer, with a shared
 	pointer. This makes it smaller to copy (which is done a lot as a
 	sideeffect of being coroutine) and speeds applications of this
 	class (notably b10-auth) up by around 10%.
 	(Trac #537, git 94cb95b1d508541201fc064302ba836164d3cbe6)
 
-162.  [func]		stephen
+162.	[func]		stephen
 	Added C++ logging, allowing logging at different severities.
 	Code specifies the message to be logged via a symbol, and the
 	logging code picks up the message from an in-built dictionary.
@@ -341,13 +341,13 @@ bind10-devel-20110224 released on February 24, 2011
 	to create message header files and supply the default messages.
 	(Trac #438, git 7b1606cea7af15dc71f5ec1d70d958b00aa98af7)
 
-161.  [func]		stephen
+161.	[func]		stephen
 	Added ResponseScrubber class to examine response from
 	a server and to remove out-of-bailiwick RRsets.  Also
 	does cross-section checks to ensure consistency.
 	(Trac #496, git b9296ca023cc9e76cda48a7eeebb0119166592c5)
 
-160.  [func]		jelte
+160.	[func]		jelte
   	Updated the resolver to take 3 different timeout values;
 	timeout_query for outstanding queries we sent while resolving
 	timeout_client for sending an answer back to the client
@@ -370,7 +370,7 @@ bind10-devel-20110224 released on February 24, 2011
 	of authoritative answers.
 	(Trac #484, git 7b84de4c0e11f4a070e038ca4f093486e55622af)
 
-157.  [bug]       vorner
+157.	[bug]		vorner
 	One frozen process no longer freezes the whole b10-msgq. It caused the
 	whole system to stop working.
 	(Trac #420, git 93697f58e4d912fa87bc7f9a591c1febc9e0d139)
@@ -410,21 +410,21 @@ bind10-devel-20110120 released on January 20, 2011
 	sending statistics and stop responding to queries as a result.
 	(Trac #513, git 285c5ee3d5582ed6df02d1aa00387f92a74e3695)
 
-151.  [bug]		smann
+151.	[bug]		smann
 	lib/log/dummylog.h: 
 	lib/log/dummylog.cc: Modify dlog so that it takes an optional 2nd
         argument of type bool (true or false). This flag, if set, will cause
         the message to be printed whether or not -v is chosen.
         (trac #432, git 880220478c3e8702d56d761b1e0b21b77d08ee5a)
 
-150.  [bug]		jelte
+150.	[bug]		jelte
 	b10-cfgmgr: No longer save the configuration on exit. Configuration
 	is already saved if it is changed successfully, so writing it on
 	exit (and hence, when nothing has changed too) is unnecessary and
 	may even cause problems.
 	(Trac #435, git fd7baa38c08d54d5b5f84930c1684c436d2776dc)
 
-149.  [bug]		jelte
+149.	[bug]		jelte
 	bindctl: Check if the user session has disappeared (either by a
 	timeout or by a server restart), and reauthenticate if so. This
 	fixes the 'cmdctl not running' problem.
@@ -485,7 +485,7 @@ bind10-devel-20110120 released on January 20, 2011
 	trailing garbage data in responses.  This is a regression due to
 	change #135. (Trac #462, svn r4081)
 
-140.  [func]		y-aharen
+140.	[func]		y-aharen
 	src/bin/auth: Added a feature to count queries and send counter
 	values to statistics periodically. To support it, added wrapping
 	class of asio::deadline_timer to use as interval timer.
@@ -496,7 +496,7 @@ bind10-devel-20110120 released on January 20, 2011
 	counters to b10-stats immediately.
 	(Trac #347, svn r4026)
 
-139.  [build]		jreed
+139.	[build]		jreed
 	Introduced configure option and make targets for generating
 	Python code coverage report. This adds new make targets:
 	report-python-coverage and clean-python-coverage. The C++
@@ -525,33 +525,33 @@ bind10-devel-20110120 released on January 20, 2011
 	so they use a msgq socket file in the build tree.
 	(Trac #226, svn r3989)
 
-136.  [bug]       jelte
+136.	[bug]		jelte
   	bindctl (and the configuration manager in general) now no longer
 	accepts 'unknown' data; i.e. data for modules that it does not know
 	about, or configuration items that are not specified in the .spec
 	files.
 	(Trac #202, svn r3967)
 
-135.  [func]      each
+135.	[func]		each
 	Add b10-resolver. This is an example recursive server that
 	currently does forwarding only and no caching.
 	(Trac #327, svn r3903)
 
-134.  [func]      vorner
+134.	[func]		vorner
 	b10-resolver supports timeouts and retries in forwarder mode.
 	(Trac #401, svn r3660)
 
-133.  [func]      vorner
+133.	[func]		vorner
 	New temporary logging function available in isc::log. It is used by
 	b10-resolver.
 	(Trac #393, r3602)
 
-132.  [func]      vorner
+132.	[func]		vorner
 	The b10-resolver is configured through config manager.
 	It has "listen_on" and "forward_addresses" options.
 	(Trac #389, r3448)
 
-131.  [func]    feng, jerry
+131.	[func]		jerry
 	src/lib/datasrc: Introduced two template classes RBTree and RBNode
 	to provide the generic map with domain name as key and anything as
 	the value. Because of some unresolved design issue, the new classes
@@ -573,17 +573,17 @@ bind10-devel-20110120 released on January 20, 2011
 	any valid zone file into the acceptable form.
 	(Trac #423, svn r3857)
 
-128.  [build]     vorner
+128.	[build]		vorner
 	Test for query name = '.', type = DS to authoritative nameserver
 	for root zone was added.
 	(Trac #85, svn r3836)
 
-127.  [bug]       stephen
+127.	[bug]		stephen
 	During normal operation process termination and resurrection messages
 	are now output regardless of the state of the verbose flag.
 	(Trac #229, svn r3828)
 
-126.  [func]      stephen, vorner, ocean
+126.	[func]		ocean
 	The Nameserver Address Store (NSAS) component has been added. It takes
 	care of choosing an IP address of a nameserver when a zone needs to be
 	contacted.
@@ -591,34 +591,34 @@ bind10-devel-20110120 released on January 20, 2011
 
 bind10-devel-20101201 released on December 01, 2010
 
-125.  [func]		jelte
+125.	[func]		jelte
 	Added support for addressing individual list items in bindctl
 	configuration commands; If you have an element that is a list, you
-	can use foo[X] to address a specific item, where X is an integer
+	can use foo[X]		integer
 	(starting at 0)
 	(Trac #405, svn r3739)
 
-124.  [bug]		jreed
+124.	[bug]		jreed
 	Fix some wrong version reporting. Now also show the version
 	for the component and BIND 10 suite. (Trac #302, svn r3696)
 
-123.  [bug]		jelte
+123.	[bug]		jelte
 	src/bin/bindctl printed values had the form of python literals
 	(e.g. 'True'), while the input requires valid JSON (e.g. 'true').
 	Output changed to JSON format for consistency. (svn r3694)
 
-122.  [func]		stephen
+122.	[func]		stephen
 	src/bin/bind10: Added configuration options to Boss to determine
 	whether to start the authoritative server, recursive server (or
 	both). A dummy program has been provided for test purposes.
 	(Trac #412, svn r3676)
 
-121.  [func]		jinmei
+121.	[func]		jinmei
 	src/lib/dns: Added support for TSIG RDATA.  At this moment this is
 	not much of real use, however, because no protocol support was
 	added yet.  It will soon be added. (Trac #372, svn r3649)
 
-120.  [func]		jinmei
+120.	[func]		jinmei
 	src/lib/dns: introduced two new classes, TSIGKey and TSIGKeyRing,
 	to manage TSIG keys. (Trac #381, svn r3622)
 
@@ -639,7 +639,7 @@ bind10-devel-20101201 released on December 01, 2010
 	will be a more intuitive and less error prone behavior.
 	This is a backward compatible change. (Trac #410, r3595)
 
-117.  [func]		jinmei
+117.	[func]		jinmei
 	src/lib/datasrc: added new zone and zone table classes for the
 	support of in memory data source.  This is an intermediate step to
 	the bigger feature, and is not yet actually usable in practice.
@@ -675,20 +675,20 @@ bind10-devel-20101201 released on December 01, 2010
 	every poll_interval seconds, one socketpair is used to wake up
 	the waiting server. (Trac #352, svn r3366)
 
-111.	[bug]*   zhanglikun, Michal Vaner
+111.	[bug]*		Vaner
 	Make sure process xfrin/xfrout/zonemgr/cmdctl can be stopped
 	properly when user enter "ctrl+c" or 'Boss shutdown' command
 	through bindctl.  The ZonemgrRefresh.run_timer and
 	NotifyOut.dispatcher spawn a thread themselves.
 	(Trac #335, svn r3273)
 
-110.  [func]      Michal Vaner
+110.	[func]		Vaner
 	Added isc.net.check module to check ip addresses and ports for
 	correctness and isc.net.addr to hold IP address. The bind10, xfrin
 	and cmdctl programs are modified to use it.
 	(Trac #353, svn r3240)
 
-109.  [func]		naokikambe
+109.	[func]		naokikambe
 	Added the initial version of the stats module for the statistics
 	feature of BIND 10, which supports the restricted features and
 	items and reports via bindctl command. (Trac #191, r3218)
@@ -700,17 +700,17 @@ bind10-devel-20101201 released on December 01, 2010
 	lowerbound_refresh, lowerbound_retry, max_transfer_timeout and
 	jitter_scope. (Trac #340, r3205)
 
-107.  [func]       zhang likun
+107.	[func]		likun
 	Remove the parameter 'db_file' for command 'retransfer' of
 	xfrin module. xfrin.spec will not be generated by script.
 	(Trac #329, r3171)
 
-106.  [bug]       zhang likun
+106.	[bug]		likun
 	When xfrin can't connect with one zone's master, it should tell
 	the bad news to zonemgr, so that zonemgr can reset the timer for
 	that zone. (Trac #329, r3170)
 
-105.  [bug]       Michal Vaner
+105.	[bug]		Vaner
 	Python processes: they no longer take 100% CPU while idle
 	due to a busy loop in reading command session in a nonblocking way.
 	(Trac #349, svn r3153), (Trac #382, svn r3294)
@@ -732,7 +732,7 @@ bind10-devel-20101201 released on December 01, 2010
 	tests and documentation.  API is mostly the same but the
 	validation was a bit tightened. (Trac #351, svn r3056)
 
-100.  [func]      Michal Vaner
+100.	[func]		Vaner
 	Python processes: support naming of python processes so
 	they're not all called python3.
 	(Trac #322, svn r3052)
@@ -802,14 +802,14 @@ bind10-devel-20100917 released on September 17, 2010
 	Generate b10-config.db for tests at build time so that the source
 	tree does not have to be writable. (Trac #315, r2776)
 
-88.   [func]		jelte
+88.	[func]		jelte
 	Blocking reads on the msgq command channel now have a timeout
 	(defaults to 4 seconds, modifiable as needed by modules).
 	Because of this, modules will no longer block indefinitely
 	if they are waiting for a message that is not sent for whatever
 	reason. (Trac #296, r2761)
 
-87.   [func]		zhanglikun
+87.	[func]		zhanglikun
 	lib/python/isc/notifyout: Add the feature of notify-out, when 
 	zone axfr/ixfr finishing, the server will notify its slaves.
 	(Trac #289, svn r2737)
@@ -912,11 +912,11 @@ bind10-devel-20100812 released on August 12, 2010
 	libpython whose path is unknown to run-time loader.  NetBSD is a
 	known such platform. (Trac #148, r2427)
 
-71.  [func]		each
+71.	[func]		each
   	Add "-a" (address) option to bind10 to specify an address for
 	the auth server to listen on.
 
-70.  [func]		each
+70.	[func]		each
   	Added a hot-spot cache to libdatasrc to speed up access to
 	repeatedly-queried data and reduce the number of queries to
 	the underlying database; this should substantially improve
@@ -926,14 +926,14 @@ bind10-devel-20100812 released on August 12, 2010
 
 bind10-devel-20100701 released on July 1, 2010
 
-69.  [func]*		jelte
+69.	[func]*		jelte
 	Added python wrappers for libdns++ (isc::dns), and libxfr. This
 	removes the dependency on Boost.Python. The wrappers don't
 	completely implement all functionality, but the high-level API
 	is wrapped, and current modules use it now.
 	(Trac #181, svn r2361)
 
-68.  [func]		zhanglikun
+68.	[func]		zhanglikun
 	Add options -c(--certificate-chain) to bindctl. Override class
 	HTTPSConnection to support server certificate validation.
 	Add support to cmdctl.spec file, now there are three configurable 
@@ -941,7 +941,7 @@ bind10-devel-20100701 released on July 1, 2010
 	all of them can be changed in runtime.
 	(Trac #127, svn r2357)
 
-67.  [func]		zhanglikun
+67.	[func]		zhanglikun
 	Make bindctl's command parser only do minimal check.
 	Parameter value can be a sequence of non-space characters,
 	or a string surrounded by quotation marks (these marks can
@@ -952,13 +952,13 @@ bind10-devel-20100701 released on July 1, 2010
 	avoid using Exception to catch all exceptions.
 	(Trac #220, svn r2356)
 
-66.  [bug]		each
+66.	[bug]		each
 	Check for duplicate RRsets before inserting data into a message
 	section; this, among other things, will prevent multiple copies
 	of the same CNAME from showing up when there's a loop. (Trac #69,
 	svn r2350)
     
-65.  [func]		shentingting
+65.	[func]		shentingting
 	Various loadzone improvements: allow optional comment for
 	$TTL, allow optional origin and comment for $INCLUDE, allow
 	optional comment for $ORIGIN, support BIND9 extension of
@@ -969,24 +969,24 @@ bind10-devel-20100701 released on July 1, 2010
 	formats to load.
 	(Trac #197, #199, #244, #161, #198, #174, #175, svn r2340)
 
-64.  [func]		jerry
+64.	[func]		jerry
 	Added python logging framework. It is for testing and
 	experimenting with logging ideas. Currently, it supports
 	three channels (file, syslog and stderr) and five levels
 	(debug, info, warning, error and critical).
 	(Trac #176, svn r2338)
 
-63.  [func]		shane
+63.	[func]		shane
 	Added initial support for setuid(), using the "-u" flag. This will
 	be replaced in the future, but for now provides a reasonable 
 	starting point.
 	(Trac #180, svn r2330)
 
-62.  [func]		jelte
+62.	[func]		jelte
 	bin/xfrin: Use the database_file as configured in Auth to transfers
 	bin/xfrout: Use the database_file as configured in Auth to transfers
 
-61.  [bug]		jelte
+61.	[bug]		jelte
 	bin/auth: Enable b10-auth to be launched in source tree
 	(i.e. use a zone database file relative to that)
 
@@ -1043,7 +1043,7 @@ bind10-devel-20100701 released on July 1, 2010
 
 bind10-devel-20100602 released on June 2, 2010
 
-51.   [build]		jelte
+51.	[build]		jelte
 	lib/python: Add bind10_config.py module for paths and
 	possibly other configure-time variables. Allow some components
 	to find spec files in build tree when ran from source.
@@ -1076,36 +1076,36 @@ bind10-devel-20100602 released on June 2, 2010
 	bin/bind10: Pass verbose option to more modules. (Trac
 	#205, svn r1957)
 
-44.   [build]         jreed
+44.	[build]		jreed
 	Install headers for libdns and libexception. (Trac #68,
 	svn r1941)
 
-43.   [func]          jelte
+43.	[func]		jelte
 	lib/cc: Message queuing on cc channel. (Trac #58, svn r1870)
 
-42.   [func]          jelte
+42.	[func]		jelte
 	lib/python/isc/config:      Make temporary file with python
 	tempfile module instead of manual with fixed name. (Trac
 	#184, svn r1859)
 
-41.   [func]          jelte
+41.	[func]		jelte
 	Module descriptions in spec files. (Trac #90, svn r1856)
 
-40.   [build]         jreed
+40.	[build]		jreed
 	Report detected features and configure settings at end of
 	configure output. (svn r1836)
 
-39.   [func]*         each
+39.	[func]*		each
 	Renamed libauth to libdatasrc.
 
-38.   [bug]           zhanglikun
+38.	[bug]		zhanglikun
 	Send command 'shutdown' to Xfrin and Xfrout when boss receive SIGINT.
 	Remove unused socket file when Xfrout process exits. Make sure Xfrout
 	exit by itself when it receives SIGINT, instead of being killed by the
 	signal SIGTERM or SIGKILL sent from boss.
 	(Trac #135, #151, #134, svn r1797)
 
-37.   [build]         jinmei
+37.	[build]		jinmei
 	Check for the availability of python-config. (Trac #159,
 	svn r1794)
 
@@ -1122,7 +1122,7 @@ bind10-devel-20100602 released on June 2, 2010
 	tests.  Fixes include: IPv6 transport support, resource leak,
 	and non IN class support. (Trac #185, svn r2000)
 
-33.   [bug]           each
+33.	[bug]		each
 	bin/auth: output now prepended with "[b10-auth]" (Trac
 	#109, svn r1985)
 
