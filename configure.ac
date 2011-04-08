@@ -692,6 +692,9 @@ AC_CONFIG_FILES([Makefile
                  src/lib/server_common/tests/Makefile
                  tests/Makefile
                  tests/system/Makefile
+                 tests/tools/Makefile
+                 tests/tools/badpacket/Makefile
+                 tests/tools/badpacket/tests/Makefile
                ])
 AC_OUTPUT([doc/version.ent
            src/bin/cfgmgr/b10-cfgmgr.py
