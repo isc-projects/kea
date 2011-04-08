@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20110224, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20110322, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -624,6 +624,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/auth/benchmarks/Makefile
                  src/bin/resolver/Makefile
                  src/bin/resolver/tests/Makefile
+                 src/bin/sockcreator/Makefile
+                 src/bin/sockcreator/tests/Makefile
                  src/bin/xfrin/Makefile
                  src/bin/xfrin/tests/Makefile
                  src/bin/xfrout/Makefile
@@ -663,6 +665,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/net/tests/Makefile
                  src/lib/python/isc/notify/Makefile
                  src/lib/python/isc/notify/tests/Makefile
+                 src/lib/python/isc/testutils/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/testdata/Makefile
@@ -691,6 +694,10 @@ AC_CONFIG_FILES([Makefile
                  src/lib/server_common/tests/Makefile
                  tests/Makefile
                  tests/system/Makefile
+                 src/lib/util/Makefile
+                 src/lib/util/io/Makefile
+                 src/lib/util/io/tests/Makefile
+                 src/lib/util/unittests/Makefile
                ])
 AC_OUTPUT([doc/version.ent
            src/bin/cfgmgr/b10-cfgmgr.py
@@ -705,6 +712,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/xfrout/xfrout.py
            src/bin/xfrout/xfrout.spec.pre
            src/bin/xfrout/tests/xfrout_test
+           src/bin/xfrout/tests/xfrout_test.py
            src/bin/xfrout/run_b10-xfrout.sh
            src/bin/resolver/resolver.spec.pre
            src/bin/resolver/spec_config.h.pre
@@ -719,11 +727,10 @@ AC_OUTPUT([doc/version.ent
            src/bin/stats/run_b10-stats_stub.sh
            src/bin/stats/tests/stats_test
            src/bin/bind10/bind10.py
-           src/bin/bind10/tests/bind10_test
-           src/bin/bind10/tests/bind10_test.py
            src/bin/bind10/run_bind10.sh
+           src/bin/bind10/tests/bind10_test.py
            src/bin/bindctl/run_bindctl.sh
-           src/bin/bindctl/bindctl-source.py
+           src/bin/bindctl/bindctl_main.py
            src/bin/bindctl/tests/bindctl_test
            src/bin/loadzone/run_loadzone.sh
            src/bin/loadzone/tests/correct/correct_test.sh
@@ -751,6 +758,7 @@ AC_OUTPUT([doc/version.ent
            tests/system/conf.sh
            tests/system/glue/setup.sh
            tests/system/glue/nsx1/b10-config.db
+           tests/system/bindctl/nsx1/b10-config.db.template
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh

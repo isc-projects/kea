@@ -52,7 +52,7 @@
 #include <xfr/xfrout_client.h>
 
 #include <auth/common.h>
-#include <auth/config.h>
+#include <auth/auth_config.h>
 #include <auth/auth_srv.h>
 #include <auth/query.h>
 #include <auth/statistics.h>

@@ -41,6 +41,8 @@
 #include <dns/messagerenderer.h>
 #include <server_common/portconfig.h>
 
+#include <resolve/recursive_query.h>
+
 #include <log/dummylog.h>
 
 #include <resolver/resolver.h>
@@ -74,10 +76,15 @@ public:
         queryShutdown();
     }
 
-    void querySetup(DNSService& dnss) {
+    void querySetup(DNSService& dnss,
+                    isc::nsas::NameserverAddressStore& nsas,
+                    isc::cache::ResolverCache& cache)
+    {
         assert(!rec_query_); // queryShutdown must be called first
         dlog("Query setup");
-        rec_query_ = new RecursiveQuery(dnss, upstream_,
+        rec_query_ = new RecursiveQuery(dnss, 
+                                        nsas, cache,
+                                        upstream_,
                                         upstream_root_,
                                         query_timeout_,
                                         client_timeout_,
@@ -129,7 +136,7 @@ public:
             }
         }
     }
-
+    
     void resolve(const isc::dns::QuestionPtr& question,
         const isc::resolve::ResolverInterface::CallbackPtr& callback);
 
@@ -326,7 +333,8 @@ Resolver::Resolver() :
     impl_(new ResolverImpl()),
     checkin_(new ConfigCheck(this)),
     dns_lookup_(new MessageLookup(this)),
-    dns_answer_(new MessageAnswer)
+    dns_answer_(new MessageAnswer),
+    configured_(false)
 {}
 
 Resolver::~Resolver() {
@@ -340,6 +348,19 @@ void
 Resolver::setDNSService(asiolink::DNSService& dnss) {
     dnss_ = &dnss;
 }
+
+void
+Resolver::setNameserverAddressStore(isc::nsas::NameserverAddressStore& nsas)
+{
+    nsas_ = &nsas;
+}
+
+void
+Resolver::setCache(isc::cache::ResolverCache& cache)
+{
+    cache_ = &cache;
+}
+
 
 void
 Resolver::setConfigSession(ModuleCCSession* config_session) {
@@ -436,6 +457,9 @@ Resolver::processMessage(const IOMessage& io_message,
         } else if (qtype == RRType::IXFR()) {
             makeErrorMessage(query_message, answer_message,
                              buffer, Rcode::NOTIMP());
+        } else if (question->getClass() != RRClass::IN()) {
+            makeErrorMessage(query_message, answer_message,
+                             buffer, Rcode::REFUSED());
         } else {
             // The RecursiveQuery object will post the "resume" event to the
             // DNSServer when an answer arrives, so we don't have to do it now.
@@ -528,6 +552,15 @@ Resolver::updateConfig(ConstElementPtr config) {
         if (listenAddressesE) {
             setListenAddresses(listenAddresses);
             need_query_restart = true;
+        } else {
+            if (!configured_) {
+                // TODO: ModuleSpec needs getDefault()
+                AddressList initial_addresses;
+                initial_addresses.push_back(AddressPair("127.0.0.1", 53));
+                initial_addresses.push_back(AddressPair("::1", 53));
+                setListenAddresses(initial_addresses);
+                need_query_restart = true;
+            }
         }
         if (forwardAddressesE) {
             setForwardAddresses(forwardAddresses);
@@ -544,8 +577,9 @@ Resolver::updateConfig(ConstElementPtr config) {
 
         if (need_query_restart) {
             impl_->queryShutdown();
-            impl_->querySetup(*dnss_);
+            impl_->querySetup(*dnss_, *nsas_, *cache_);
         }
+        setConfigured();
         return (isc::config::createAnswer());
     } catch (const isc::Exception& error) {
         dlog(string("error in config: ") + error.what(),true);

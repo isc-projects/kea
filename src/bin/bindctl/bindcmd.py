@@ -87,7 +87,8 @@ class ValidatedHTTPSConnection(http.client.HTTPSConnection):
 class BindCmdInterpreter(Cmd):
     """simple bindctl example."""    
 
-    def __init__(self, server_port = 'localhost:8080', pem_file = None):
+    def __init__(self, server_port='localhost:8080', pem_file=None,
+                 csv_file_dir=None):
         Cmd.__init__(self)
         self.location = ""
         self.prompt_end = '> '
@@ -103,7 +104,12 @@ class BindCmdInterpreter(Cmd):
                                              ca_certs=pem_file)
         self.session_id = self._get_session_id()
         self.config_data = None
-        
+        if csv_file_dir is not None:
+            self.csv_file_dir = csv_file_dir
+        else:
+            self.csv_file_dir = pwd.getpwnam(getpass.getuser()).pw_dir + \
+                os.sep + '.bind10' + os.sep
+
     def _get_session_id(self):
         '''Generate one session id for the connection. '''
         rand = os.urandom(16)
@@ -117,14 +123,19 @@ class BindCmdInterpreter(Cmd):
         '''Parse commands from user and send them to cmdctl. '''
         try:
             if not self.login_to_cmdctl():
-                return 
+                return
 
             self.cmdloop()
+            print('\nExit from bindctl')
         except FailToLogin as err:
             # error already printed when this was raised, ignoring
             pass
         except KeyboardInterrupt:
             print('\nExit from bindctl')
+        except socket.error as err:
+            print('Failed to send request, the connection is closed')
+        except http.client.CannotSendRequest:
+            print('Can not send request, the connection is busy')
 
     def _get_saved_user_info(self, dir, file_name):
         ''' Read all the available username and password pairs saved in 
@@ -175,9 +186,7 @@ class BindCmdInterpreter(Cmd):
         time, username and password saved in 'default_user.csv' will be
         used first.
         '''
-        csv_file_dir = pwd.getpwnam(getpass.getuser()).pw_dir
-        csv_file_dir += os.sep + '.bind10' + os.sep
-        users = self._get_saved_user_info(csv_file_dir, CSV_FILE_NAME)
+        users = self._get_saved_user_info(self.csv_file_dir, CSV_FILE_NAME)
         for row in users:
             param = {'username': row[0], 'password' : row[1]}
             try:
@@ -188,8 +197,10 @@ class BindCmdInterpreter(Cmd):
                 raise FailToLogin()
 
             if response.status == http.client.OK:
-                print(data + ' login as ' + row[0] )
-                return True 
+                # Is interactive?
+                if sys.stdin.isatty():
+                    print(data + ' login as ' + row[0])
+                return True
 
         count = 0
         print("[TEMP MESSAGE]: username :root  password :bind10")
@@ -211,7 +222,8 @@ class BindCmdInterpreter(Cmd):
                 raise FailToLogin()
 
             if response.status == http.client.OK:
-                self._save_user_info(username, passwd, csv_file_dir, CSV_FILE_NAME)
+                self._save_user_info(username, passwd, self.csv_file_dir,
+                                     CSV_FILE_NAME)
                 return True
 
     def _update_commands(self):
@@ -268,8 +280,9 @@ class BindCmdInterpreter(Cmd):
         self._update_commands()
 
     def precmd(self, line):
-        self._update_all_modules_info()
-        return line 
+        if line != 'EOF':
+            self._update_all_modules_info()
+        return line
 
     def postcmd(self, stop, line):
         '''Update the prompt after every command, but only if we

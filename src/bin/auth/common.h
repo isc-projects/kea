@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -28,6 +28,15 @@ public:
     FatalError(const std::string& what) : std::runtime_error(what)
     {}
 };
+
+/// \short Get the path of socket to talk to xfrout
+///
+/// It takes some environment variables into account (B10_FROM_BUILD,
+/// B10_FROM_SOURCE_LOCALSTATEDIR and BIND10_XFROUT_SOCKET_FILE). It
+/// also considers the installation prefix.
+///
+/// The logic should be the same as in b10-xfrout, so they find each other.
+std::string getXfroutSocketPath();
 
 #endif // __COMMON_H
 

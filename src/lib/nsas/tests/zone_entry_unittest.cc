@@ -47,7 +47,7 @@ class InheritedZoneEntry : public ZoneEntry {
             const std::string& name, const RRClass& class_code,
             boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table,
             boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru) :
-            ZoneEntry(resolver, name, class_code, nameserver_table,
+            ZoneEntry(resolver.get(), name, class_code, nameserver_table,
                 nameserver_lru)
         { }
         NameserverVector& nameservers() { return nameservers_; }
@@ -165,9 +165,9 @@ protected:
         EXPECT_EQ(failure_count, callback_->unreachable_count_);
         EXPECT_EQ(success_count, callback_->successes_.size());
         for (size_t i = 0; i < callback_->successes_.size(); ++ i) {
-            EXPECT_TRUE(IOAddress("192.0.2.1").equal(
+            EXPECT_TRUE(IOAddress("192.0.2.1").equals(
                 callback_->successes_[i].getAddress()) ||
-                IOAddress("2001:db8::1").equal(
+                IOAddress("2001:db8::1").equals(
                 callback_->successes_[i].getAddress()));
         }
     }
@@ -234,7 +234,7 @@ TEST_F(ZoneEntryTest, ChangedNS) {
     EXPECT_NO_THROW(resolver_->answer(1, ns_name_, RRType::A(),
         rdata::in::A("192.0.2.1")));
     ASSERT_EQ(1, callback_->successes_.size());
-    EXPECT_TRUE(IOAddress("192.0.2.1").equal(
+    EXPECT_TRUE(IOAddress("192.0.2.1").equals(
         callback_->successes_[0].getAddress()));
     EXPECT_NO_THROW(resolver_->answer(2, ns_name_, RRType::AAAA(),
         rdata::in::AAAA("2001:db8::1")));
@@ -257,7 +257,7 @@ TEST_F(ZoneEntryTest, ChangedNS) {
     EXPECT_NO_THROW(resolver_->answer(4, different_name, RRType::A(),
         rdata::in::A("192.0.2.2")));
     ASSERT_EQ(2, callback_->successes_.size());
-    EXPECT_TRUE(IOAddress("192.0.2.2").equal(
+    EXPECT_TRUE(IOAddress("192.0.2.2").equals(
         callback_->successes_[1].getAddress()));
 
     // And now, switch back, as it timed out again
@@ -270,7 +270,7 @@ TEST_F(ZoneEntryTest, ChangedNS) {
     EXPECT_EQ(7, resolver_->requests.size());
     EXPECT_EQ(Fetchable::READY, zone->getState());
     ASSERT_EQ(3, callback_->successes_.size());
-    EXPECT_TRUE(IOAddress("192.0.2.1").equal(
+    EXPECT_TRUE(IOAddress("192.0.2.1").equals(
         callback_->successes_[0].getAddress()));
 }
 
@@ -306,9 +306,9 @@ TEST_F(ZoneEntryTest, CallbacksAnswered) {
          rdata::in::A("192.0.2.1")));
     // Two are answered (ANY and V4)
     ASSERT_EQ(2, callback_->successes_.size());
-    EXPECT_TRUE(IOAddress("192.0.2.1").equal(
+    EXPECT_TRUE(IOAddress("192.0.2.1").equals(
         callback_->successes_[0].getAddress()));
-    EXPECT_TRUE(IOAddress("192.0.2.1").equal(
+    EXPECT_TRUE(IOAddress("192.0.2.1").equals(
         callback_->successes_[1].getAddress()));
     // None are rejected
     EXPECT_EQ(0, callback_->unreachable_count_);
@@ -318,7 +318,7 @@ TEST_F(ZoneEntryTest, CallbacksAnswered) {
     // This should answer the third callback
     EXPECT_EQ(0, callback_->unreachable_count_);
     ASSERT_EQ(3, callback_->successes_.size());
-    EXPECT_TRUE(IOAddress("2001:db8::1").equal(
+    EXPECT_TRUE(IOAddress("2001:db8::1").equals(
         callback_->successes_[2].getAddress()));
     // It should think it is ready
     EXPECT_EQ(Fetchable::READY, zone->getState());
@@ -326,7 +326,7 @@ TEST_F(ZoneEntryTest, CallbacksAnswered) {
     zone->addCallback(callback_, V4_ONLY);
     EXPECT_EQ(3, resolver_->requests.size());
     ASSERT_EQ(4, callback_->successes_.size());
-    EXPECT_TRUE(IOAddress("192.0.2.1").equal(
+    EXPECT_TRUE(IOAddress("192.0.2.1").equals(
         callback_->successes_[3].getAddress()));
     EXPECT_EQ(0, callback_->unreachable_count_);
 }
@@ -366,9 +366,9 @@ TEST_F(ZoneEntryTest, CallbacksAOnly) {
     EXPECT_NO_THROW(resolver_->answer(1, ns_name_, RRType::A(),
         rdata::in::A("192.0.2.1")));
     ASSERT_EQ(2, callback_->successes_.size());
-    EXPECT_TRUE(IOAddress("192.0.2.1").equal(
+    EXPECT_TRUE(IOAddress("192.0.2.1").equals(
         callback_->successes_[0].getAddress()));
-    EXPECT_TRUE(IOAddress("192.0.2.1").equal(
+    EXPECT_TRUE(IOAddress("192.0.2.1").equals(
         callback_->successes_[1].getAddress()));
     EXPECT_EQ(1, callback_->unreachable_count_);
     // Everything arriwed, so we are ready
@@ -377,7 +377,7 @@ TEST_F(ZoneEntryTest, CallbacksAOnly) {
     zone->addCallback(callback_, V4_ONLY);
     EXPECT_EQ(3, resolver_->requests.size());
     ASSERT_EQ(3, callback_->successes_.size());
-    EXPECT_TRUE(IOAddress("192.0.2.1").equal(
+    EXPECT_TRUE(IOAddress("192.0.2.1").equals(
         callback_->successes_[2].getAddress()));
     EXPECT_EQ(1, callback_->unreachable_count_);
 
@@ -439,9 +439,9 @@ TEST_F(ZoneEntryTest, CallbackTwoNS) {
     // The other callbacks should be answered now
     EXPECT_EQ(2, callback_->unreachable_count_);
     ASSERT_EQ(2, callback_->successes_.size());
-    EXPECT_TRUE(IOAddress("2001:db8::1").equal(
+    EXPECT_TRUE(IOAddress("2001:db8::1").equals(
         callback_->successes_[0].getAddress()));
-    EXPECT_TRUE(IOAddress("2001:db8::1").equal(
+    EXPECT_TRUE(IOAddress("2001:db8::1").equals(
         callback_->successes_[1].getAddress()));
 }
 
@@ -534,7 +534,7 @@ TEST_F(ZoneEntryTest, AddressTimeout) {
          rdata::in::A("192.0.2.1"), 0));
     // It answers, not rejects
     ASSERT_EQ(1, callback_->successes_.size());
-    EXPECT_TRUE(IOAddress("192.0.2.1").equal(
+    EXPECT_TRUE(IOAddress("192.0.2.1").equals(
         callback_->successes_[0].getAddress()));
     EXPECT_EQ(0, callback_->unreachable_count_);
     // As well with IPv6
@@ -551,7 +551,7 @@ TEST_F(ZoneEntryTest, AddressTimeout) {
          rdata::in::A("192.0.2.1"), 0));
     EXPECT_EQ(0, callback_->unreachable_count_);
     ASSERT_EQ(2, callback_->successes_.size());
-    EXPECT_TRUE(IOAddress("192.0.2.1").equal(
+    EXPECT_TRUE(IOAddress("192.0.2.1").equals(
         callback_->successes_[1].getAddress()));
 }
 
@@ -569,7 +569,7 @@ TEST_F(ZoneEntryTest, NameserverEntryReady) {
     // Inject the entry
     boost::shared_ptr<NameserverEntry> nse(injectEntry());
     // Fill it with data
-    nse->askIP(resolver_, nseCallback(), ANY_OK);
+    nse->askIP(resolver_.get(), nseCallback(), ANY_OK);
     EXPECT_EQ(Fetchable::IN_PROGRESS, nse->getState());
     EXPECT_TRUE(resolver_->asksIPs(ns_name_, 0, 1));
     EXPECT_NO_THROW(resolver_->answer(0, ns_name_, RRType::A(),
@@ -594,7 +594,7 @@ TEST_F(ZoneEntryTest, NameserverEntryNotAsked) {
 TEST_F(ZoneEntryTest, NameserverEntryInProgress) {
     // Prepare the nameserver entry
     boost::shared_ptr<NameserverEntry> nse(injectEntry());
-    nse->askIP(resolver_, nseCallback(), ANY_OK);
+    nse->askIP(resolver_.get(), nseCallback(), ANY_OK);
     EXPECT_EQ(Fetchable::IN_PROGRESS, nse->getState());
     EXPECT_TRUE(resolver_->asksIPs(ns_name_, 0, 1));
 
@@ -604,7 +604,7 @@ TEST_F(ZoneEntryTest, NameserverEntryInProgress) {
 /// \short Check Zone's reaction to found expired nameserver
 TEST_F(ZoneEntryTest, NameserverEntryExpired) {
     boost::shared_ptr<NameserverEntry> nse(injectEntry());
-    nse->askIP(resolver_, nseCallback(), ANY_OK);
+    nse->askIP(resolver_.get(), nseCallback(), ANY_OK);
     EXPECT_EQ(Fetchable::IN_PROGRESS, nse->getState());
     EXPECT_TRUE(resolver_->asksIPs(ns_name_, 0, 1));
     EXPECT_NO_THROW(resolver_->answer(0, ns_name_, RRType::A(),
@@ -623,7 +623,7 @@ TEST_F(ZoneEntryTest, NameserverEntryExpired) {
 /// \short Check how it reacts to an unreachable zone already in the table
 TEST_F(ZoneEntryTest, NameserverEntryUnreachable) {
     boost::shared_ptr<NameserverEntry> nse(injectEntry());
-    nse->askIP(resolver_, nseCallback(), ANY_OK);
+    nse->askIP(resolver_.get(), nseCallback(), ANY_OK);
     ASSERT_EQ(2, resolver_->requests.size());
     resolver_->requests[0].second->failure();
     resolver_->requests[1].second->failure();

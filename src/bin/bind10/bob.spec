@@ -21,6 +21,21 @@
         "command_name": "shutdown",
         "command_description": "Shut down BIND 10",
         "command_args": []
+      },
+      {
+        "command_name": "sendstats",
+        "command_description": "Send data to a statistics module at once",
+        "command_args": []
+      },
+      {
+        "command_name": "ping",
+        "command_description": "Ping the boss process",
+        "command_args": []
+      },
+      {
+        "command_name": "show_processes",
+        "command_description": "List the running BIND 10 processes",
+        "command_args": []
       }
     ]
   }

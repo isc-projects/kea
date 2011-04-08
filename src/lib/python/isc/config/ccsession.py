@@ -1,5 +1,4 @@
 # Copyright (C) 2009  Internet Systems Consortium.
-# Copyright (C) 2010  CZ NIC
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -152,6 +151,9 @@ class ModuleCCSession(ConfigData):
         self._remote_module_configs = {}
 
     def __del__(self):
+        # If the CC Session obejct has been closed, it returns
+        # immediately.
+        if self._session._closed: return
         self._session.group_unsubscribe(self._module_name, "*")
         for module_name in self._remote_module_configs:
             self._session.group_unsubscribe(module_name)
