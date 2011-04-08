@@ -21,7 +21,7 @@
 /// appropriate).
 /// b) Reads in the local message file is one has been supplied.
 ///
-/// These functions will be replaced once the code has bneen written to obtain
+/// These functions will be replaced once the code has been written to obtain
 /// the logging parameters from the configuration database.
 
 #include <algorithm>

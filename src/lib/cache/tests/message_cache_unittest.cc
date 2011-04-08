@@ -33,9 +33,10 @@ namespace {
 /// its internals.
 class DerivedMessageCache: public MessageCache {
 public:
-    DerivedMessageCache(boost::shared_ptr<RRsetCache> rrset_cache_,
-                        uint32_t cache_size, uint16_t message_class):
-        MessageCache(rrset_cache_, cache_size, message_class)
+    DerivedMessageCache(const RRsetCachePtr& rrset_cache,
+                        uint32_t cache_size, uint16_t message_class,
+                        const RRsetCachePtr& negative_soa_cache):
+        MessageCache(rrset_cache, cache_size, message_class, negative_soa_cache)
     {}
 
     uint16_t messages_count() {
@@ -70,20 +71,33 @@ public:
     {
         uint16_t class_ = RRClass::IN().getCode();
         rrset_cache_.reset(new DerivedRRsetCache(RRSET_CACHE_DEFAULT_SIZE, class_));
-        message_cache_.reset(new DerivedMessageCache(rrset_cache_,
-                                          MESSAGE_CACHE_DEFAULT_SIZE, class_ ));
+        negative_soa_cache_.reset(new RRsetCache(NEGATIVE_RRSET_CACHE_DEFAULT_SIZE, class_));
+        // Set the message cache size to 1, make it easy for unittest.
+        message_cache_.reset(new DerivedMessageCache(rrset_cache_, 1, class_,
+                                                     negative_soa_cache_));
     }
 
 protected:
     boost::shared_ptr<DerivedMessageCache> message_cache_;
     boost::shared_ptr<DerivedRRsetCache> rrset_cache_;
+    RRsetCachePtr negative_soa_cache_;
     Message message_parse;
     Message message_render;
 };
 
+void
+updateMessageCache(const char* message_file,
+                   boost::shared_ptr<DerivedMessageCache> cache)
+{
+    Message msg(Message::PARSE);
+    messageFromFile(msg, message_file);
+    cache->update(msg);
+}
+
 TEST_F(MessageCacheTest, testLookup) {
     messageFromFile(message_parse, "message_fromWire1");
     EXPECT_TRUE(message_cache_->update(message_parse));
+
     Name qname("test.example.com.");
     EXPECT_TRUE(message_cache_->lookup(qname, RRType::A(), message_render));
     EXPECT_EQ(message_cache_->messages_count(), 1);
@@ -96,10 +110,19 @@ TEST_F(MessageCacheTest, testLookup) {
     Name qname1("test.example.net.");
     EXPECT_TRUE(message_cache_->lookup(qname1, RRType::A(), message_render));
 
-    // Test looking up message which has expired rrsets.
-    // Remove one
+    // Test looking up message which has expired rrset or some rrset
+    // has been removed from the rrset cache.
     rrset_cache_->removeRRsetEntry(qname1, RRType::A());
     EXPECT_FALSE(message_cache_->lookup(qname1, RRType::A(), message_render));
+
+    // Update one message entry which has expired to message cache.
+    updateMessageCache("message_fromWire9", message_cache_);
+    EXPECT_EQ(message_cache_->messages_count(), 3);
+    // The message entry has been added, but can't be looked up, since
+    // it has expired and is removed automatically when being looked up.
+    Name qname_org("test.example.org.");
+    EXPECT_FALSE(message_cache_->lookup(qname_org, RRType::A(), message_render));
+    EXPECT_EQ(message_cache_->messages_count(), 2);
 }
 
 TEST_F(MessageCacheTest, testUpdate) {
@@ -115,7 +138,24 @@ TEST_F(MessageCacheTest, testUpdate) {
     EXPECT_TRUE(message_cache_->update(new_msg));
     Message new_msg_render(Message::RENDER);
     EXPECT_TRUE(message_cache_->lookup(qname, RRType::SOA(), new_msg_render));
-    EXPECT_TRUE(new_msg_render.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_FALSE(new_msg_render.getHeaderFlag(Message::HEADERFLAG_AA));
+}
+
+TEST_F(MessageCacheTest, testCacheLruBehavior) {
+    // qname = "test.example.com.", qtype = A
+    updateMessageCache("message_fromWire1", message_cache_);
+    // qname = "test.example.net.", qtype = A
+    updateMessageCache("message_fromWire2", message_cache_);
+    // qname = "example.com.", qtype = SOA
+    updateMessageCache("message_fromWire4", message_cache_);
+
+    Name qname_net("test.example.net.");
+    EXPECT_TRUE(message_cache_->lookup(qname_net, RRType::A(), message_render));
+
+    // qname = "a.example.com.", qtype = A
+    updateMessageCache("message_fromWire5", message_cache_);
+    Name qname_com("test.example.com.");
+    EXPECT_FALSE(message_cache_->lookup(qname_com, RRType::A(), message_render));
 }
 
 }   // namespace

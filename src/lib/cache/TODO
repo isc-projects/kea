@@ -11,4 +11,8 @@
   to expire.
 * When the rrset beging updated is an NS rrset, NSAS should be updated
   together.
+* Share the NXDOMAIN info between different type queries. current implementation
+  can only cache for the type that user quired, for example, if user query A 
+  record of a.example. and the server replied with NXDOMAIN, this should be
+  cached for all the types queries of a.example.
 

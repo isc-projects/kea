@@ -20,6 +20,9 @@
 .\" -----------------------------------------------------------------
 .SH "NAME"
 b10-cfgmgr \- Configuration manager
+.SH "SYNOPSIS"
+.HP \w'\fBb10\-cfgmgr\fR\ 'u
+\fBb10\-cfgmgr\fR [\fB\-c\fR\fB\fIconfig\-filename\fR\fR] [\fB\-p\fR\fB\fIdata_path\fR\fR]
 .SH "DESCRIPTION"
 .PP
 The
@@ -43,8 +46,21 @@ The daemon may be cleanly stopped by sending the SIGTERM signal to the process\&
 When it exits, it saves its current configuration to
 /usr/local/var/bind10\-devel/b10\-config\&.db\&.
 
+.SH "ARGUMENTS"
 .PP
-The daemon has no command line options\&. It ignores any arguments\&.
+The arguments are as follows:
+.PP
+\fB\-c\fR\fIconfig\-filename\fR, \fB\-\-config\-filename\fR \fIconfig\-filename\fR
+.RS 4
+The configuration database filename to use\&. Can be either absolute or relative to data path\&.
+.sp
+Defaults to b10\-config\&.db
+.RE
+.PP
+\fB\-p\fR\fIdata\-path\fR, \fB\-\-data\-path\fR \fIdata\-path\fR
+.RS 4
+The path where BIND 10 looks for files\&. The configuration file is looked for here, if it is relative\&. If it is absolute, the path is ignored\&.
+.RE
 .SH "FILES"
 .PP
 /usr/local/var/bind10\-devel/b10\-config\&.db

@@ -124,10 +124,16 @@ TEST_F(BufferTest, outputBufferWriteat) {
     obuffer.writeUint32(data32);
     expected_size += sizeof(data32);
 
+    // overwrite 2nd byte
+    obuffer.writeUint8At(4, 1);
+    EXPECT_EQ(expected_size, obuffer.getLength()); // length shouldn't change
+    const uint8_t* cp = static_cast<const uint8_t*>(obuffer.getData());
+    EXPECT_EQ(4, *(cp + 1));
+
     // overwrite 2nd and 3rd bytes
     obuffer.writeUint16At(data16, 1);
     EXPECT_EQ(expected_size, obuffer.getLength()); // length shouldn't change
-    const uint8_t* cp = static_cast<const uint8_t*>(obuffer.getData());
+    cp = static_cast<const uint8_t*>(obuffer.getData());
     EXPECT_EQ(2, *(cp + 1));
     EXPECT_EQ(3, *(cp + 2));
 
@@ -138,6 +144,10 @@ TEST_F(BufferTest, outputBufferWriteat) {
     EXPECT_EQ(2, *(cp + 2));
     EXPECT_EQ(3, *(cp + 3));
 
+    EXPECT_THROW(obuffer.writeUint8At(data16, 5),
+                 isc::dns::InvalidBufferPosition);
+    EXPECT_THROW(obuffer.writeUint8At(data16, 4),
+                 isc::dns::InvalidBufferPosition);
     EXPECT_THROW(obuffer.writeUint16At(data16, 3),
                  isc::dns::InvalidBufferPosition);
     EXPECT_THROW(obuffer.writeUint16At(data16, 4),
@@ -180,4 +190,53 @@ TEST_F(BufferTest, outputBufferClear) {
     obuffer.clear();
     EXPECT_EQ(0, obuffer.getLength());
 }
+
+TEST_F(BufferTest, outputBufferCopy) {
+    obuffer.writeData(testdata, sizeof(testdata));
+
+    EXPECT_NO_THROW({
+        OutputBuffer copy(obuffer);
+        ASSERT_EQ(sizeof(testdata), copy.getLength());
+        for (int i = 0; i < sizeof(testdata); i ++) {
+            EXPECT_EQ(testdata[i], copy[i]);
+            if (i + 1 < sizeof(testdata)) {
+                obuffer.writeUint16At(0, i);
+            }
+            EXPECT_EQ(testdata[i], copy[i]);
+        }
+        obuffer.clear();
+        ASSERT_EQ(sizeof(testdata), copy.getLength());
+    });
+}
+
+TEST_F(BufferTest, outputBufferAssign) {
+    OutputBuffer another(0);
+    another.clear();
+    obuffer.writeData(testdata, sizeof(testdata));
+
+    EXPECT_NO_THROW({
+        another = obuffer;
+        ASSERT_EQ(sizeof(testdata), another.getLength());
+        for (int i = 0; i < sizeof(testdata); i ++) {
+            EXPECT_EQ(testdata[i], another[i]);
+            if (i + 1 < sizeof(testdata)) {
+                obuffer.writeUint16At(0, i);
+            }
+            EXPECT_EQ(testdata[i], another[i]);
+        }
+        obuffer.clear();
+        ASSERT_EQ(sizeof(testdata), another.getLength());
+    });
+}
+
+TEST_F(BufferTest, outputBufferZeroSize) {
+    // Some OSes might return NULL on malloc for 0 size, so check it works
+    EXPECT_NO_THROW({
+        OutputBuffer first(0);
+        OutputBuffer copy(first);
+        OutputBuffer second(0);
+        second = first;
+    });
+}
+
 }

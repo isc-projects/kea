@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2010, 2011  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,8 +14,6 @@
 # FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-__version__ = "$Revision$"
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import os
@@ -220,7 +218,13 @@ class CCSessionListener(Listener):
         self.stats_data['stats.start_time'] = get_datetime()
         self.stats_data['stats.last_update_time'] = get_datetime()
         self.stats_data['stats.lname'] = self.session.lname
-        return self.cc_session.start()
+        self.cc_session.start()
+        # request Bob to send statistics data
+        if self.verbose:
+            sys.stdout.write("[b10-stats] request Bob to send statistics data\n")
+        cmd = isc.config.ccsession.create_command("sendstats", None)
+        seq = self.session.group_sendmsg(cmd, 'Boss')
+        self.session.group_recvmsg(True, seq)
 
     def stop(self):
         """

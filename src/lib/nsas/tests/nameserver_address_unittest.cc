@@ -39,7 +39,9 @@ class NameserverEntrySample {
 public:
     NameserverEntrySample():
         name_("example.org"),
-        rrv4_(new RRset(name_, RRClass::IN(), RRType::A(), RRTTL(1200)))
+        rrv4_(new RRset(name_, RRClass::IN(), RRType::A(), RRTTL(1200))),
+        ns_(new NameserverEntry(name_.toText(), RRClass::IN())),
+        resolver_(new TestResolver())
     {
         // Add some sample A records
         rrv4_->addRdata(ConstRdataPtr(new RdataTest<A>("1.2.3.4")));
@@ -47,10 +49,9 @@ public:
         rrv4_->addRdata(ConstRdataPtr(new RdataTest<A>("9.10.11.12")));
 
         ns_.reset(new NameserverEntry(name_.toText(), RRClass::IN()));
-        boost::shared_ptr<TestResolver> resolver(new TestResolver);
-        ns_->askIP(resolver, boost::shared_ptr<Callback>(new Callback), ANY_OK);
-        resolver->asksIPs(name_, 0, 1);
-        resolver->requests[0].second->success(createResponseMessage(rrv4_));
+        ns_->askIP(resolver_.get(), boost::shared_ptr<Callback>(new Callback), ANY_OK);
+        resolver_->asksIPs(name_, 0, 1);
+        resolver_->requests[0].second->success(createResponseMessage(rrv4_));
     }
 
     // Return the sample NameserverEntry
@@ -75,6 +76,7 @@ private:
     Name name_;                             ///< Name of the sample
     RRsetPtr rrv4_;           ///< Standard RRSet - IN, A, lowercase name
     boost::shared_ptr<NameserverEntry> ns_; ///< Shared_ptr that points to a NameserverEntry object
+    boost::shared_ptr<TestResolver> resolver_;
 
     class Callback : public NameserverEntry::Callback {
         public:
@@ -100,7 +102,7 @@ protected:
 
 // Test that the address is equal to the address in NameserverEntry
 TEST_F(NameserverAddressTest, Address) {
-    EXPECT_TRUE(ns_address_.getAddress().equal( ns_sample_.getAddressAtIndex(TEST_ADDRESS_INDEX)));
+    EXPECT_TRUE(ns_address_.getAddress().equals( ns_sample_.getAddressAtIndex(TEST_ADDRESS_INDEX)));
 
     boost::shared_ptr<NameserverEntry> empty_ne((NameserverEntry*)NULL);
     // It will throw an NullNameserverEntryPointer exception with the empty NameserverEntry shared pointer

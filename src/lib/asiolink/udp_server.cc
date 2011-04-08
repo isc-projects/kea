@@ -15,6 +15,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>             // for some IPC/network system calls
+#include <errno.h>
 
 #include <boost/shared_array.hpp>
 
@@ -23,6 +24,7 @@
 #include <log/dummylog.h>
 
 #include <asio.hpp>
+#include <asio/error.hpp>
 #include <asiolink/dummy_io_cb.h>
 #include <asiolink/udp_endpoint.h>
 #include <asiolink/udp_server.h>
@@ -55,7 +57,7 @@ struct UDPServer::Data {
      */
     Data(io_service& io_service, const ip::address& addr, const uint16_t port,
         SimpleCallback* checkin, DNSLookup* lookup, DNSAnswer* answer) :
-        io_(io_service), done_(false), stopped_by_hand_(false),
+        io_(io_service), done_(false),
         checkin_callback_(checkin),lookup_callback_(lookup),
         answer_callback_(answer)
     {
@@ -79,7 +81,6 @@ struct UDPServer::Data {
      */
     Data(const Data& other) :
         io_(other.io_), socket_(other.socket_), done_(false),
-        stopped_by_hand_(false),
         checkin_callback_(other.checkin_callback_),
         lookup_callback_(other.lookup_callback_),
         answer_callback_(other.answer_callback_)
@@ -143,8 +144,6 @@ struct UDPServer::Data {
     size_t bytes_;
     bool done_;
 
-    //whether user explicitly stop the server
-    bool stopped_by_hand_;
 
     // Callback functions provided by the caller
     const SimpleCallback* checkin_callback_;
@@ -173,12 +172,6 @@ UDPServer::operator()(error_code ec, size_t length) {
     /// a switch statement, inline variable declarations are not
     /// permitted.  Certain variables used below can be declared here.
 
-    /// if user stopped the server, we won't enter the coroutine body
-    /// just return
-    if (data_->stopped_by_hand_) {
-        return;
-    }
-
     CORO_REENTER (this) {
         do {
             /*
@@ -195,6 +188,17 @@ UDPServer::operator()(error_code ec, size_t length) {
                 CORO_YIELD data_->socket_->async_receive_from(
                     buffer(data_->data_.get(), MAX_LENGTH), *data_->sender_,
                     *this);
+
+                // Abort on fatal errors
+                // TODO: add log
+                if (ec) {
+                    using namespace asio::error;
+                    if (ec.value() != would_block && ec.value() != try_again &&
+                        ec.value() != interrupted) {
+                        return;
+                    }
+                }
+
             } while (ec || length == 0);
 
             data_->bytes_ = length;
@@ -257,8 +261,6 @@ UDPServer::operator()(error_code ec, size_t length) {
         // this point.
         CORO_YIELD data_->io_.post(AsyncLookup<UDPServer>(*this));
 
-        dlog("[XX] got an answer");
-
         // The 'done_' flag indicates whether we have an answer
         // to send back.  If not, exit the coroutine permanently.
         if (!data_->done_) {
@@ -291,10 +293,14 @@ UDPServer::asyncLookup() {
 /// Stop the UDPServer
 void
 UDPServer::stop() {
-    //server should not be stopped twice
-    if (data_->stopped_by_hand_)
-        return;
-    data_->stopped_by_hand_ = true;
+    /// Using close instead of cancel, because cancel
+    /// will only cancel the asynchornized event already submitted
+    /// to io service, the events post to io service after
+    /// cancel still can be scheduled by io service, if
+    /// the socket is cloesed, all the asynchronized event
+    /// for it won't be scheduled by io service not matter it is
+    /// submit to io serice before or after close call. And we will
+    //. get bad_descriptor error
     data_->socket_->close();
 }
 
