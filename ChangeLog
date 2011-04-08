@@ -5,16 +5,16 @@
 	(Trac #363, git ce281e646be9f0f273229d94ccd75bf7e08d17cf)
 
 216.	[func]		vorner
-	The BIND10_XFROUT_SOCKET_FILE environment variable can be used to specify
-	which socket should be used for communication between b10-auth and
-	b10-xfrout. Mostly for testing reasons.
+	The BIND10_XFROUT_SOCKET_FILE environment variable can be
+	used to specify which socket should be used for communication
+	between b10-auth and b10-xfrout. Mostly for testing reasons.
 	(Trac #615, git 28b01ad5bf72472c824a7b8fc4a8dc394e22e462)
 
 215.	[func]		vorner
-	A new process, b10-sockcreator, is added, which will create sockets for
-	the rest of the system.  It is the only part which will need to keep the
-	root privileges. However, only the process exists, nothing can talk to it
-	yet.
+	A new process, b10-sockcreator, is added, which will create
+	sockets for the rest of the system.  It is the only part
+	which will need to keep the root privileges. However, only
+	the process exists, nothing can talk to it yet.
 	(Trac #366, git b509cbb77d31e388df68dfe52709d6edef93df3f)
 
 214.	[func]*		vorner
@@ -25,13 +25,14 @@
 	(Trac #670, git 7c1e4d5e1e28e556b1d10a8df8d9486971a3f052)
 
 213.	[bug]		naokikambe
-	Solved incorrect datetime of "bind10.boot_time" and also added a new
-	command "sendstats" for Bob. This command is to send statistics data to
-	the stats daemon immediately. The solved problem is that statistics
-	data doesn't surely reach to the daemon because Bob sent statistics
-	data to the daemon while it is starting. So the daemon invokes the
-	command for Bob after it starts up. This command is also useful for
-	resending statistics data via bindctl manually.
+	Solved incorrect datetime of "bind10.boot_time" and also
+	added a new command "sendstats" for Bob. This command is
+	to send statistics data to the stats daemon immediately.
+	The solved problem is that statistics data doesn't surely
+	reach to the daemon because Bob sent statistics data to
+	the daemon while it is starting. So the daemon invokes the
+	command for Bob after it starts up. This command is also
+	useful for resending statistics data via bindctl manually.
 	(Trac #521, git 1c269cbdc76f5dc2baeb43387c4d7ccc6dc863d2)
 
 212.	[bug]		naokikambe
@@ -412,9 +413,10 @@ bind10-devel-20110120 released on January 20, 2011
 
 151.	[bug]		smann
 	lib/log/dummylog.h: 
-	lib/log/dummylog.cc: Modify dlog so that it takes an optional 2nd
-        argument of type bool (true or false). This flag, if set, will cause
-        the message to be printed whether or not -v is chosen.
+	lib/log/dummylog.cc: Modify dlog so that it takes an optional
+	2nd argument of type bool (true or false). This flag, if
+	set, will cause the message to be printed whether or not
+	-v is chosen.
         (trac #432, git 880220478c3e8702d56d761b1e0b21b77d08ee5a)
 
 150.	[bug]		jelte
@@ -1265,10 +1267,10 @@ LEGEND
 	unless it's deemed to be impossible or very hard to keep
 	compatibility to fix the bug.
 [build] compilation and installation infrastructure change.
-[doc] update to documentation.  This shouldn't change run time behavior.
+[doc] update to documentation. This shouldn't change run time behavior.
 [func] new feature.  In some cases this may be a backward incompatible
 	change, which would require a bump of major version.
-[security] security hole fix.  This is no different than a general bug fix
-	except that it will be handled as confidential and will cause 
+[security] security hole fix. This is no different than a general bug
+	fix except that it will be handled as confidential and will cause
 	security patch releases.
 *: Backward incompatible or operational change.
