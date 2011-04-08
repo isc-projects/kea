@@ -2,7 +2,7 @@
 	src/lib/dns/python: Use a signed version of larger size of integer and
 	perform more strict range checks with PyArg_ParseTuple() in case of
 	overflows.
-	(Trac #363, git TBD)
+	(Trac #363, git ce281e646be9f0f273229d94ccd75bf7e08d17cf)
 
   216.  [func]     vorner
 	The BIND10_XFROUT_SOCKET_FILE environment variable can be used to specify
