@@ -6,6 +6,7 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
 
-lib_LTLIBRARIES = libcrypto.la
+lib_LTLIBRARIES = libbcrypto.la
 
-libcrypto_la_SOURCES = crypto.h
+libbcrypto_la_SOURCES = crypto.h crypto.cc
+libbcrypto_la_SOURCES += crypto_botan.h crypto_botan.cc
