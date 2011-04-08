@@ -33,6 +33,7 @@
 #include <asiolink/io_service.h>
 #include <asiolink/udp_endpoint.h>
 
+namespace isc {
 namespace asiolink {
 
 /// \brief The \c UDPSocket class is a concrete derived class of \c IOAsioSocket
@@ -318,5 +319,6 @@ UDPSocket<C>::close() {
 }
 
 } // namespace asiolink
+} // namespace isc
 
 #endif // __UDP_SOCKET_H

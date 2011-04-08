@@ -25,6 +25,7 @@
 
 #include <exceptions/exceptions.h>
 
+namespace isc {
 namespace asiolink {
 
 /// \brief The \c IOSocket class is an abstract base class to represent
@@ -120,5 +121,6 @@ public:
 };
 
 } // namespace asiolink
+} // namespace isc
 
 #endif // __IO_SOCKET_H

@@ -21,7 +21,6 @@ run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
 run_unittests_SOURCES += asiolink_utilities_unittest.cc
 run_unittests_SOURCES += io_address_unittest.cc
 run_unittests_SOURCES += io_endpoint_unittest.cc
-run_unittests_SOURCES += io_fetch_unittest.cc
 run_unittests_SOURCES += io_socket_unittest.cc
 run_unittests_SOURCES += interval_timer_unittest.cc
 run_unittests_SOURCES += tcp_endpoint_unittest.cc

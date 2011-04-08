@@ -20,6 +20,7 @@
 #include <asio/error.hpp>
 #include <asio/error_code.hpp>
 
+namespace isc {
 namespace asiolink {
 
 /// \brief Asynchronous I/O Completion Callback
@@ -55,5 +56,6 @@ public:
 };
 
 } // namespace asiolink
+} // namespace isc
 
 #endif // __DUMMY_IO_CB_H

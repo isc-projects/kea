@@ -31,6 +31,7 @@ using asio::ip::tcp;
 
 using namespace std;
 
+namespace isc {
 namespace asiolink {
 
 // XXX: we cannot simply construct the address in the initialization list,
@@ -62,4 +63,5 @@ IOAddress::getFamily() const {
     }
 }
 
-}
+} // namespace asiolink
+} // namespace isc

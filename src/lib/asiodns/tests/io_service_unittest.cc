@@ -17,8 +17,10 @@
 
 #include <asio.hpp>
 #include <asiolink/asiolink.h>
+#include <asiodns/asiodns.h>
 
-using namespace asiolink;
+using namespace isc::asiolink;
+using namespace isc::asiodns;
 
 const char* const TEST_SERVER_PORT = "53535";
 const char* const TEST_CLIENT_PORT = "53536";

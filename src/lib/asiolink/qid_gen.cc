@@ -23,9 +23,10 @@
 #include <sys/time.h>
 
 namespace {
-    asiolink::QidGenerator qid_generator_instance;
+    isc::asiolink::QidGenerator qid_generator_instance;
 }
 
+namespace isc {
 namespace asiolink {
 
 QidGenerator&
@@ -52,3 +53,4 @@ QidGenerator::generateQid() {
 }
 
 } // namespace asiolink
+} // namespace isc

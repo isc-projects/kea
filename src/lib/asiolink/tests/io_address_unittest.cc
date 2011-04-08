@@ -18,7 +18,7 @@
 #include <asiolink/io_error.h>
 #include <asiolink/io_address.h>
 
-using namespace asiolink;
+using namespace isc::asiolink;
 
 TEST(IOAddressTest, fromText) {
     IOAddress io_address_v4("192.0.2.1");

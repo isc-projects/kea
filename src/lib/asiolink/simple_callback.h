@@ -17,6 +17,7 @@
 
 #include <asiolink/io_message.h>
 
+namespace isc {
 namespace asiolink {
 
 /// \brief The \c SimpleCallback class is an abstract base class for a
@@ -67,5 +68,6 @@ private:
     SimpleCallback* self_;
 };
 
-}      // namespace asiolink
+} // namespace asiolink
+} // namespace isc
 #endif // __ASIOLINK_SIMPLE_CALLBACK_H

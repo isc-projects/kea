@@ -28,6 +28,7 @@
 
 using namespace std;
 
+namespace isc {
 namespace asiolink {
 
 const IOEndpoint*
@@ -57,4 +58,5 @@ IOEndpoint::operator!=(const IOEndpoint& other) const {
     return (!operator==(other));
 }
 
-}
+} // namespace asiolink
+} // namespace isc

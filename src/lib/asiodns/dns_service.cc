@@ -23,11 +23,11 @@
 #include <log/dummylog.h>
 
 #include <asio.hpp>
-#include <asiolink/dns_service.h>
+#include <dns_service.h>
 #include <asiolink/io_service.h>
 #include <asiolink/io_service.h>
-#include <asiolink/tcp_server.h>
-#include <asiolink/udp_server.h>
+#include <tcp_server.h>
+#include <udp_server.h>
 
 #include <log/dummylog.h>
 
@@ -36,9 +36,11 @@
 
 using isc::log::dlog;
 
-namespace asiolink {
+using namespace isc::asiolink;
 
-class SimpleCallback;
+namespace isc {
+namespace asiodns {
+
 class DNSLookup;
 class DNSAnswer;
 
@@ -195,6 +197,5 @@ DNSService::clearServers() {
     impl_->servers_.clear();
 }
 
-
-
-} // namespace asiolink
+} // namespace asiodns
+} // namespace isc

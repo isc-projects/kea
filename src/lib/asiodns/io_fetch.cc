@@ -37,7 +37,6 @@
 #include <asiolink/io_address.h>
 #include <asiolink/io_asio_socket.h>
 #include <asiolink/io_endpoint.h>
-#include <asiolink/io_fetch.h>
 #include <asiolink/io_service.h>
 #include <asiolink/tcp_endpoint.h>
 #include <asiolink/tcp_socket.h>
@@ -45,18 +44,22 @@
 #include <asiolink/udp_socket.h>
 #include <asiolink/qid_gen.h>
 
+#include "io_fetch.h"
+
 #include <stdint.h>
 
 using namespace asio;
+using namespace isc::asiolink;
 using namespace isc::dns;
 using namespace isc::log;
 using namespace std;
 
-namespace asiolink {
+namespace isc {
+namespace asiodns {
 
 /// Use the ASIO logger
 
-isc::log::Logger logger("asiolink");
+isc::log::Logger logger("asiodns");
 
 /// \brief IOFetch Data
 ///
@@ -376,5 +379,6 @@ void IOFetch::logIOFailure(asio::error_code ec) {
                  static_cast<int>(data_->remote_snd->getPort()));
 }
 
-} // namespace asiolink
+} // namespace asiodns
+} // namespace isc
 

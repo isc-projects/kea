@@ -18,7 +18,7 @@
 #include <asiolink/io_endpoint.h>
 #include <asiolink/io_error.h>
 
-using namespace asiolink;
+using namespace isc::asiolink;
 
 TEST(IOEndpointTest, createUDPv4) {
     const IOEndpoint* ep;

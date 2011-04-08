@@ -37,15 +37,17 @@
 #include <asiolink/asiolink_utilities.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_endpoint.h>
-#include <asiolink/io_fetch.h>
 #include <asiolink/io_service.h>
+#include <asiodns/io_fetch.h>
 
 using namespace asio;
 using namespace isc::dns;
 using namespace asio::ip;
 using namespace std;
+using namespace isc::asiolink;
 
-namespace asiolink {
+namespace isc {
+namespace asiodns {
 
 const asio::ip::address TEST_HOST(asio::ip::address::from_string("127.0.0.1"));
 const uint16_t TEST_PORT(5301);
@@ -720,4 +722,5 @@ TEST_F(IOFetchTest, TcpSendReceive8192ShortSend) {
 }
 
 
-} // namespace asiolink
+} // namespace asiodns
+} // namespace isc

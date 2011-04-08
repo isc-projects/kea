@@ -39,8 +39,8 @@
 
 // Check that getInstance returns a singleton
 TEST(QidGenerator, singleton) {
-    asiolink::QidGenerator& g1 = asiolink::QidGenerator::getInstance();
-    asiolink::QidGenerator& g2 = asiolink::QidGenerator::getInstance();
+    isc::asiolink::QidGenerator& g1 = isc::asiolink::QidGenerator::getInstance();
+    isc::asiolink::QidGenerator& g2 = isc::asiolink::QidGenerator::getInstance();
 
     EXPECT_TRUE(&g1 == &g2);
 }
@@ -51,7 +51,7 @@ TEST(QidGenerator, generate) {
     // test (http://xkcd.com/221/), and check if three consecutive
     // generates are not all the same.
     isc::dns::qid_t one, two, three;
-    asiolink::QidGenerator& gen = asiolink::QidGenerator::getInstance();
+    isc::asiolink::QidGenerator& gen = isc::asiolink::QidGenerator::getInstance();
     one = gen.generateQid();
     two = gen.generateQid();
     three = gen.generateQid();

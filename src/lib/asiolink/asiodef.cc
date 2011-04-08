@@ -4,6 +4,7 @@
 #include <log/message_types.h>
 #include <log/message_initializer.h>
 
+namespace isc {
 namespace asiolink {
 
 extern const isc::log::MessageID ASIO_FETCHCOMP = "FETCHCOMP";
@@ -16,6 +17,7 @@ extern const isc::log::MessageID ASIO_UNKORIGIN = "UNKORIGIN";
 extern const isc::log::MessageID ASIO_UNKRESULT = "UNKRESULT";
 
 } // namespace asiolink
+} // namespace isc
 
 namespace {
 
