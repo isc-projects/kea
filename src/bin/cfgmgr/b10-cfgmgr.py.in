@@ -65,6 +65,9 @@ def signal_handler(signal, frame):
     if cm:
         cm.running = False
 
+def load_plugins(path, cm):
+    pass
+
 def main():
     options = parse_options()
     global cm
