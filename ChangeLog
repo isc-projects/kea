@@ -820,7 +820,7 @@ bind10-devel-20100917 released on September 17, 2010
 	timers and other information necessary for BIND10 to act as a 
 	slave. (Trac #215, svn r2737)
 
-85.	[build]*	jinmei
+85.	[build]*		jinmei
 	Build programs using dynamic link by default.  A new configure
 	option --enable-static-link is provided to force static link for
 	executable programs.  Statically linked programs can be run on a
@@ -834,7 +834,7 @@ bind10-devel-20100812 released on August 12, 2010
 	time because of connection problems. xfrout client will make
 	a new connection every time. (Trac #299, svn r2697)
 
-83.	[build]*	jreed
+83.	[build]*		jreed
 	The configure --with-boost-lib option is removed. It was not
 	used since the build included ASIO. (svn r2684)
 
