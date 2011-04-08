@@ -38,24 +38,45 @@ namespace badpacket {
 void
 CommandOptions::parse(int argc, char* const argv[]) {
 
-    // Set up options for processing
+    // Set up options for processing.  The declaration of the string constants
+    // as mutable arrays and putting the string variable into the "option"
+    // structure (as opposed to just putting a string literal there) is
+    // occasioned by a version of solaris which declares the first field
+    // as "char*" (instead of the correct "const char*").
+
+    char HELP[] = {"help"};
+    char VERSION[] = {"version"};
+    char ADDRESS[] = {"address"};
+    char PORT[] = {"port"};
+    char TIMEOUT[] = {"timeout"};
+    char QR[] = {"qr"};
+    char OP[] = {"op"};
+    char AA[] = {"aa"};
+    char TC[] = {"tc"};
+    char RD[] = {"rd"};
+    char RA[] = {"ra"};
+    char Z[]  = {"z"};
+    char AD[] = {"ad"};
+    char CD[] = {"cd"};
+    char RC[] = {"rc"};
+
     const struct option longopts[] = {
-        {"help",    0, NULL, 'h'},  // Print usage message and exit
-        {"version", 0, NULL, 'v'},  // Print program version and exit
-        {"address", 1, NULL, 'a'},  // Specify target server address
-        {"port",    1, NULL, 'p'},  // Specify target port
-        {"timeout", 1, NULL, 't'},  // Time to wait before timing out (ms)
-        {"qr",      1, NULL, 'Q'},  // Query/response flag
-        {"op",      1, NULL, 'O'},  // Opcode
-        {"aa",      1, NULL, 'A'},  // Authoritative answer
-        {"tc",      1, NULL, 'T'},  // Truncated
-        {"rd",      1, NULL, 'D'},  // recursion Desired
-        {"ra",      1, NULL, 'R'},  // Recursion available
-        {"z",       1, NULL, 'Z'},  // Must be Zero (reserved bit)
-        {"ad",      1, NULL, 'U'},  // aUthenticated data
-        {"cd",      1, NULL, 'C'},  // Checking disabled
-        {"rc",      1, NULL, 'E'},  // rEsult code
-        {NULL,      0, NULL, 0  }
+        {HELP,    0, NULL, 'h'},  // Print usage message and exit
+        {VERSION, 0, NULL, 'v'},  // Print program version and exit
+        {ADDRESS, 1, NULL, 'a'},  // Specify target server address
+        {PORT,    1, NULL, 'p'},  // Specify target port
+        {TIMEOUT, 1, NULL, 't'},  // Time to wait before timing out (ms)
+        {QR,      1, NULL, 'Q'},  // Query/response flag
+        {OP,      1, NULL, 'O'},  // Opcode
+        {AA,      1, NULL, 'A'},  // Authoritative answer
+        {TC,      1, NULL, 'T'},  // Truncated
+        {RD,      1, NULL, 'D'},  // recursion Desired
+        {RA,      1, NULL, 'R'},  // Recursion available
+        {Z,       1, NULL, 'Z'},  // Must be Zero (reserved bit)
+        {AD,      1, NULL, 'U'},  // aUthenticated data
+        {CD,      1, NULL, 'C'},  // Checking disabled
+        {RC,      1, NULL, 'E'},  // rEsult code
+        {NULL,    0, NULL, 0  }
     };
     const char* shortopts = "hva:p:t:Q:O:A:T:D:R:Z:U:C:E:";
 
