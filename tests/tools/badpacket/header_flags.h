@@ -65,7 +65,7 @@ public:
     uint16_t getValue() const {
         return flags_.value;
     }
-    
+
     /// \brief Get QR Bit
     uint16_t getQR() const {
         return flags_.fields.qr;
@@ -78,7 +78,7 @@ public:
     void setQR(uint16_t value) {
         flags_.fields.qr = (value > 1) ? 1 : value;
     }
-    
+
     /// \brief Get OP Value
     uint16_t getOP() const {
         return flags_.fields.op;
@@ -91,7 +91,7 @@ public:
     void setOP(uint16_t value) {
         flags_.fields.op = (value > 15) ? 15 : value;
     }
-    
+
     /// \brief Get AA Bit
     uint16_t getAA() const {
         return flags_.fields.aa;
@@ -104,7 +104,7 @@ public:
     void setAA(uint16_t value) {
         flags_.fields.aa = (value > 1) ? 1 : value;
     }
-    
+
     /// \brief Get TC Bit
     uint16_t getTC() const {
         return flags_.fields.tc;
@@ -117,7 +117,7 @@ public:
     void setTC(uint16_t value) {
         flags_.fields.tc = (value > 1) ? 1 : value;
     }
-    
+
     /// \brief Get RD Bit
     uint16_t getRD() const {
         return flags_.fields.rd;
@@ -130,7 +130,7 @@ public:
     void setRD(uint16_t value) {
         flags_.fields.rd = (value > 1) ? 1 : value;
     }
-    
+
     /// \brief Get RA Bit
     uint16_t getRA() const {
         return flags_.fields.ra;
@@ -143,7 +143,7 @@ public:
     void setRA(uint16_t value) {
         flags_.fields.ra = (value > 1) ? 1 : value;
     }
-    
+
     /// \brief Get Z Bit
     uint16_t getZ() const {
         return flags_.fields.z;
@@ -156,7 +156,7 @@ public:
     void setZ(uint16_t value) {
         flags_.fields.z = (value > 1) ? 1 : value;
     }
-    
+
     /// \brief Get AD Bit
     uint16_t getAD() const {
         return flags_.fields.ad;
@@ -169,7 +169,7 @@ public:
     void setAD(uint16_t value) {
         flags_.fields.ad = (value > 1) ? 1 : value;
     }
-    
+
     /// \brief Get CD Bit
     uint16_t getCD() const {
         return flags_.fields.cd;
@@ -182,7 +182,7 @@ public:
     void setCD(uint16_t value) {
         flags_.fields.cd = (value > 1) ? 1 : value;
     }
-    
+
     /// \brief Get RC Value
     uint16_t getRC() const {
         return flags_.fields.rc;
