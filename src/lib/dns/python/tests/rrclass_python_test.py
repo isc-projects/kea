@@ -40,6 +40,8 @@ class RRClassTest(unittest.TestCase):
         # explicit tests for it.
         self.assertRaises(ValueError, RRClass, 65536)
         self.assertRaises(TypeError, RRClass, -1)
+        self.assertEqual(RRClass(65535).get_code(), 65535)
+        self.assertEqual(RRClass(0).get_code(), 0)
 
     def test_rrclass_to_text(self):
         self.assertEqual("IN", self.c1.to_text())
