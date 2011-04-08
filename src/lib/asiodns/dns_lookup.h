@@ -16,11 +16,12 @@
 #define __ASIOLINK_DNS_LOOKUP_H 1
 
 #include <asiolink/io_message.h>
-#include <asiolink/dns_server.h>
+#include <asiodns/dns_server.h>
 #include <dns/buffer.h>
 #include <dns/message.h>
 
-namespace asiolink {
+namespace isc {
+namespace asiodns {
 
 /// \brief The \c DNSLookup class is an abstract base class for a DNS
 /// Lookup provider function.
@@ -67,7 +68,7 @@ public:
     ///                       this MessagePtr
     /// \param buffer The final answer is put here
     /// \param server DNSServer object to use
-    virtual void operator()(const IOMessage& io_message,
+    virtual void operator()(const asiolink::IOMessage& io_message,
                             isc::dns::MessagePtr message,
                             isc::dns::MessagePtr answer_message,
                             isc::dns::OutputBufferPtr buffer,
@@ -79,5 +80,6 @@ private:
     DNSLookup* self_;
 };
 
-}      // namespace asiolink
+}      // namespace asiodns
+}      // namespace isc
 #endif // __ASIOLINK_DNS_LOOKUP_H

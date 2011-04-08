@@ -41,6 +41,7 @@
 #include <asiolink/io_service.h>
 #include <asiolink/tcp_endpoint.h>
 
+namespace isc {
 namespace asiolink {
 
 /// \brief Buffer Too Large
@@ -412,5 +413,6 @@ TCPSocket<C>::close() {
 }
 
 } // namespace asiolink
+} // namespace isc
 
 #endif // __TCP_SOCKET_H

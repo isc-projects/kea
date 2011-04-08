@@ -26,6 +26,7 @@
 #include <exceptions/exceptions.h>
 #include <asiolink/io_address.h>
 
+namespace isc {
 namespace asiolink {
 
 /// \brief The \c IOEndpoint class is an abstract base class to represent
@@ -117,5 +118,6 @@ public:
                                     const unsigned short port);
 };
 
-}      // asiolink
+} // namespace asiolink
+} // namespace isc
 #endif // __IO_ENDPOINT_H

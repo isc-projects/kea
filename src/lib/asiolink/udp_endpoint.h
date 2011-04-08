@@ -21,6 +21,7 @@
 
 #include <asiolink/io_endpoint.h>
 
+namespace isc {
 namespace asiolink {
 
 /// \brief The \c UDPEndpoint class is a concrete derived class of
@@ -109,5 +110,6 @@ private:
     asio::ip::udp::endpoint& asio_endpoint_;
 };
 
-}      // namespace asiolink
+} // namespace asiolink
+} // namespace isc
 #endif // __UDP_ENDPOINT_H

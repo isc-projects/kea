@@ -21,7 +21,6 @@ libasiolink_la_SOURCES += io_address.cc io_address.h
 libasiolink_la_SOURCES += io_asio_socket.h
 libasiolink_la_SOURCES += io_endpoint.cc io_endpoint.h
 libasiolink_la_SOURCES += io_error.h
-libasiolink_la_SOURCES += io_fetch.cc io_fetch.h
 libasiolink_la_SOURCES += io_message.h
 libasiolink_la_SOURCES += qid_gen.cc qid_gen.h
 libasiolink_la_SOURCES += io_service.h io_service.cc

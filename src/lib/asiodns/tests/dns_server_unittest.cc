@@ -18,10 +18,10 @@
 #include <asio.hpp>
 #include <asiolink/io_endpoint.h>
 #include <asiolink/io_error.h>
-#include <asiolink/udp_server.h>
-#include <asiolink/tcp_server.h>
-#include <asiolink/dns_answer.h>
-#include <asiolink/dns_lookup.h>
+#include <asiodns/udp_server.h>
+#include <asiodns/tcp_server.h>
+#include <asiodns/dns_answer.h>
+#include <asiodns/dns_lookup.h>
 #include <string>
 #include <csignal>
 #include <unistd.h> //for alarm
@@ -65,7 +65,8 @@
 /// involved so the message sending between client and server is plain text
 /// And the valid checker, question lookup and answer composition are dummy.
 
-using namespace asiolink;
+using namespace isc::asiolink;
+using namespace isc::asiodns;
 using namespace asio;
 namespace {
 static const std::string server_ip = "127.0.0.1";

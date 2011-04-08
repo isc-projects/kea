@@ -17,7 +17,8 @@
 
 #include <asiolink/io_message.h>
 
-namespace asiolink {
+namespace isc {
+namespace asiodns {
 
 /// \brief The \c DNSServer class is a wrapper (and base class) for
 /// classes which provide DNS server functionality.
@@ -34,7 +35,7 @@ namespace asiolink {
 /// instantiated through a base class) are sometimes passed by
 /// reference (as this superclass); calls to methods in the base
 /// class are then rerouted via this pointer to methods in the derived
-/// class.  This allows code from outside asiolink, with no specific
+/// class.  This allows code from outside asiodns, with no specific
 /// knowledge of \c TCPServer or \c UDPServer, to access their methods.
 ///
 /// This class is both assignable and copy-constructable.  Its subclasses
@@ -151,5 +152,6 @@ private:
 };
 
 
-}      // asiolink
+} // namespace asiodns
+} // namespace isc
 #endif // __ASIOLINK_DNS_SERVER_H
