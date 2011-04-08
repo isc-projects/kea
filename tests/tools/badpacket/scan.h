@@ -48,7 +48,7 @@ public:
     ///
     /// \param options Command-line options
     void scan(const CommandOptions& options);
-    
+
     /// \brief Callback
     ///
     /// This class is derived from the IOFetch::Callback class as it acts as the
