@@ -25,8 +25,10 @@
 /*
  * Some forward declarations.
  */
-namespace asiolink {
+namespace isc {
+namespace asiodns {
 class DNSService;
+}
 }
 
 namespace isc {
@@ -112,7 +114,7 @@ parseAddresses(isc::data::ConstElementPtr addresses,
 void
 installListenAddresses(const AddressList& newAddresses,
                        AddressList& addressStore,
-                       asiolink::DNSService& dnsService);
+                       asiodns::DNSService& dnsService);
 
 }
 }

@@ -9,9 +9,6 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
 
-# This is a wrapper library solely used for b10-auth.  The ASIO header files
-# have some code fragments that would hit gcc's unused-parameter warning,
-# which would make the build fail with -Werror (our default setting).
 lib_LTLIBRARIES = libasiodns.la
 libasiodns_la_SOURCES = dns_answer.h
 libasiodns_la_SOURCES += dns_lookup.h

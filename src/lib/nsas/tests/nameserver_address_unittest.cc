@@ -58,7 +58,7 @@ public:
     boost::shared_ptr<NameserverEntry>& getNameserverEntry() { return ns_; }
 
     // Return the IOAddress corresponding to the index in rrv4_
-    asiolink::IOAddress getAddressAtIndex(uint32_t index) {
+    isc::asiolink::IOAddress getAddressAtIndex(uint32_t index) {
         return ns_.get()->getAddressAtIndex(index, V4_ONLY);
     }
 
@@ -107,7 +107,7 @@ TEST_F(NameserverAddressTest, Address) {
     boost::shared_ptr<NameserverEntry> empty_ne((NameserverEntry*)NULL);
     // It will throw an NullNameserverEntryPointer exception with the empty NameserverEntry shared pointer
     ASSERT_THROW({NameserverAddress empty_ns_address(empty_ne,
-        asiolink::IOAddress("127.0.0.1"), V4_ONLY);},
+        isc::asiolink::IOAddress("127.0.0.1"), V4_ONLY);},
         NullNameserverEntryPointer);
 }
 

@@ -41,6 +41,7 @@
 // Class for endpoint checks.  The family of the endpoint is set in the
 // constructor; the address family by the string provided for the address.
 
+namespace isc {
 namespace asiolink {
 
 class GenericEndpoint : public IOEndpoint {
@@ -73,13 +74,14 @@ private:
     short       protocol_;      // Protocol of the endpoint
     };
 }
+}
 
 using namespace asio::ip;
 using namespace isc::dns;
 using namespace rdata;
 using namespace isc::dns::rdata::generic;
 using namespace isc::dns::rdata::in;
-using namespace asiolink;
+using namespace isc::asiolink;
 
 // Test class
 
