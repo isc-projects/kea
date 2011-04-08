@@ -27,6 +27,7 @@ run_unittests_LDADD +=  $(top_builddir)/src/lib/exceptions/libexceptions.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/nsas/libnsas.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/cache/libcache.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/asiolink/libasiolink.la
+run_unittests_LDADD +=  $(top_builddir)/src/lib/asiodns/libasiodns.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/resolve/libresolve.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/libdns++.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/log/liblog.la

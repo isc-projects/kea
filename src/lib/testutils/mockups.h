@@ -19,7 +19,7 @@
 
 #include <xfr/xfrout_client.h>
 
-#include <asiolink/asiolink.h>
+#include <asiodns/asiodns.h>
 
 // A minimal mock configuration session.  Most the methods are
 // stubbed out, except for a very basic group_sendmsg() and
@@ -94,7 +94,7 @@ private:
 };
 
 // A nonoperative DNSServer object to be used in calls to processMessage().
-class MockServer : public asiolink::DNSServer {
+class MockServer : public isc::asiodns::DNSServer {
 public:
     MockServer() : done_(false) {}
     void operator()(asio::error_code, size_t) {}

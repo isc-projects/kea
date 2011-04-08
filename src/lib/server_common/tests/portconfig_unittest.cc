@@ -17,6 +17,7 @@
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 #include <asiolink/asiolink.h>
+#include <asiodns/asiodns.h>
 
 #include <gtest/gtest.h>
 #include <string>
@@ -25,7 +26,8 @@ using namespace isc::server_common::portconfig;
 using namespace isc::data;
 using namespace isc;
 using namespace std;
-using namespace asiolink;
+using namespace isc::asiolink;
+using namespace isc::asiodns;
 
 namespace {
 

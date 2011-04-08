@@ -58,7 +58,7 @@ namespace {
         const std::string ns_name = rrset->getName().toText();
         RdataIteratorPtr rdi = rrset->getRdataIterator();
         while (!rdi->isLast()) {
-            AddressEntry entry(asiolink::IOAddress(rdi->getCurrent().toText()));
+            AddressEntry entry(isc::asiolink::IOAddress(rdi->getCurrent().toText()));
             boost::shared_ptr<NameserverEntry> ns_entry(new NameserverEntry(ns_name, rrset->getClass()));
             NameserverAddress ns_address(ns_entry, entry, V4_ONLY);
             addresses.push_back(ns_address);
