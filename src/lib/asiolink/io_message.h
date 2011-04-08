@@ -28,6 +28,7 @@
 #include <asiolink/io_endpoint.h>
 #include <asiolink/io_socket.h>
 
+namespace isc {
 namespace asiolink {
 
 /// \brief The \c IOMessage class encapsulates an incoming message received
@@ -96,5 +97,6 @@ private:
 };
 
 
-}      // asiolink
+} // namespace asiolink
+} // namespace isc
 #endif // __IO_MESSAGE_H

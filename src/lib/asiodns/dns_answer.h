@@ -16,8 +16,11 @@
 #define __ASIOLINK_DNS_ANSWER_H 1
 
 #include <asiolink/io_message.h>
+#include <dns/buffer.h>
+#include <dns/message.h>
 
-namespace asiolink {
+namespace isc {
+namespace asiodns {
 
 /// \brief The \c DNSAnswer class is an abstract base class for a DNS
 /// Answer provider function.
@@ -63,11 +66,12 @@ public:
     /// \param answer_message The DNS MessagePtr of the answer we are
     /// building
     /// \param buffer Intermediate data results are put here
-    virtual void operator()(const IOMessage& io_message,
+    virtual void operator()(const asiolink::IOMessage& io_message,
                             isc::dns::MessagePtr query_message,
                             isc::dns::MessagePtr answer_message,
                             isc::dns::OutputBufferPtr buffer) const = 0;
 };
 
-}      // namespace asiolink
+}      // namespace asiodns
+}      // namespace isc
 #endif // __ASIOLINK_DNS_ANSWER_H

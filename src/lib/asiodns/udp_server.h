@@ -19,14 +19,15 @@
 #error "asio.hpp must be included before including this, see asiolink.h as to why"
 #endif
 
-#include <asiolink/dns_server.h>
 #include <asiolink/simple_callback.h>
-#include <asiolink/dns_lookup.h>
-#include <asiolink/dns_answer.h>
+#include <asiodns/dns_answer.h>
+#include <asiodns/dns_lookup.h>
+#include <asiodns/dns_server.h>
 
 #include <coroutine.h>
 
-namespace asiolink {
+namespace isc {
+namespace asiodns {
 
 //
 // Asynchronous UDP server coroutine
@@ -47,7 +48,7 @@ public:
     /// \param answer the callbackprovider for DNS answer events
     explicit UDPServer(asio::io_service& io_service,
                        const asio::ip::address& addr, const uint16_t port,
-                       SimpleCallback* checkin = NULL,
+                       isc::asiolink::SimpleCallback* checkin = NULL,
                        DNSLookup* lookup = NULL,
                        DNSAnswer* answer = NULL);
 
@@ -102,5 +103,6 @@ private:
     boost::shared_ptr<Data> data_;
 };
 
-}      // namespace asiolink
+} // namespace asiodns
+} // namespace isc
 #endif // __UDP_SERVER_H

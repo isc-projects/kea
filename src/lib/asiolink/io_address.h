@@ -26,6 +26,7 @@
 
 #include <exceptions/exceptions.h>
 
+namespace isc {
 namespace asiolink {
 
 /// \brief The \c IOAddress class represents an IP addresses (version
@@ -119,5 +120,6 @@ private:
     asio::ip::address asio_address_;
 };
 
-}      // asiolink
+} // namespace asiolink
+} // namespace isc
 #endif // __IO_ADDRESS_H

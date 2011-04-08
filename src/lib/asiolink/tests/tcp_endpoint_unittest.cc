@@ -22,7 +22,7 @@
 #include <asiolink/io_address.h>
 #include <asiolink/tcp_endpoint.h>
 
-using namespace asiolink;
+using namespace isc::asiolink;
 using namespace std;
 
 // This test checks that the endpoint can manage its own internal

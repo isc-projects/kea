@@ -21,6 +21,7 @@
 
 #include <asiolink/io_endpoint.h>
 
+namespace isc {
 namespace asiolink {
 
 /// \brief The \c TCPEndpoint class is a concrete derived class of
@@ -109,5 +110,6 @@ private:
     asio::ip::tcp::endpoint& asio_endpoint_;
 };
 
-}      // namespace asiolink
+} // namespace asiolink
+} // namespace isc
 #endif // __TCP_ENDPOINT_H

@@ -24,16 +24,17 @@
 #include <coroutine.h>
 
 #include <asio/error_code.hpp>
+#include <asiolink/io_service.h>
+#include <asiolink/io_address.h>
 
 #include <dns/buffer.h>
 #include <dns/question.h>
 
-namespace asiolink {
+namespace isc {
+namespace asiodns {
 
 // Forward declarations
-class IOAddress;
 class IOFetchData;
-class IOService;
 
 /// \brief Upstream Fetch Processing
 ///
@@ -132,8 +133,9 @@ public:
     /// (default = 53)
     /// \param wait Timeout for the fetch (in ms).  The default value of
     ///     -1 indicates no timeout.
-    IOFetch(Protocol protocol, IOService& service,
-        const isc::dns::Question& question, const IOAddress& address,
+    IOFetch(Protocol protocol, isc::asiolink::IOService& service,
+        const isc::dns::Question& question,
+        const isc::asiolink::IOAddress& address,
         uint16_t port, isc::dns::OutputBufferPtr& buff, Callback* cb,
         int wait = -1);
 
@@ -174,6 +176,7 @@ private:
 
 };
 
-} // namespace asiolink
+} // namespace asiodns
+} // namespace isc
 
 #endif // __IO_FETCH_H

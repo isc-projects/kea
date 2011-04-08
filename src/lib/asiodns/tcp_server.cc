@@ -27,7 +27,7 @@
 #include <asiolink/dummy_io_cb.h>
 #include <asiolink/tcp_endpoint.h>
 #include <asiolink/tcp_socket.h>
-#include <asiolink/tcp_server.h>
+#include <tcp_server.h>
 
 
 using namespace asio;
@@ -36,8 +36,10 @@ using asio::ip::tcp;
 
 using namespace std;
 using namespace isc::dns;
+using namespace isc::asiolink;
 
-namespace asiolink {
+namespace isc {
+namespace asiodns {
 
 /// The following functions implement the \c TCPServer class.
 ///
@@ -235,5 +237,5 @@ TCPServer::resume(const bool done) {
     io_.post(*this);
 }
 
-} // namespace asiolink
-
+} // namespace asiodns
+} // namespace isc
