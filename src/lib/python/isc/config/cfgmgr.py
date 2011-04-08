@@ -170,6 +170,10 @@ class ConfigManager:
         self.data_path = data_path
         self.database_filename = database_filename
         self.module_specs = {}
+        # Virtual modules are the ones which have no process running. The
+        # checking of validity is done by functions presented here instead
+        # of some other process
+        self.virtual_modules = {}
         self.config = ConfigManagerData(data_path, database_filename)
         if session:
             self.cc = session
@@ -187,11 +191,20 @@ class ConfigManager:
         """Adds a ModuleSpec"""
         self.module_specs[spec.get_module_name()] = spec
 
+    def set_virtual_module(self, spec, check_func):
+        """Adds a virtual module with its spec and checking function."""
+        self.module_specs[spec.get_module_name()] = spec
+        self.virtual_modules[spec.get_module_name()] = check_func
+
     def remove_module_spec(self, module_name):
         """Removes the full ModuleSpec for the given module_name.
+           Also removes the virtual module check function if it
+           was present.
            Does nothing if the module was not present."""
         if module_name in self.module_specs:
             del self.module_specs[module_name]
+        if module_name in self.virtual_modules:
+            del self.virtual_modules[module_name]
 
     def get_module_spec(self, module_name = None):
         """Returns the full ModuleSpec for the module with the given
