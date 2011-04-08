@@ -374,6 +374,38 @@ if test "$lcov" != "no"; then
 fi
 AC_SUBST(USE_LCOV)
 
+# Check for Botan
+botan_path=""
+AC_ARG_WITH([botan],
+  AC_HELP_STRING([--with-botan=PATH],
+    [specify exact directory of Botan library]),
+    [botan_path="$withval"])
+# If not specificed, try some common paths
+if test -z "$with_botan"; then
+    botandirs="/usr/local /usr/pkg /opt /opt/local /usr"
+    for d in $botandirs
+    do
+        if test -f $d/include/botan/botan.h; then
+            botan_path=$d
+            break
+        fi
+    done
+fi
+if test "${botan_path}" ; then
+    CPPFLAGS="$CPPFLAGS -I${botan_path}/include"
+    LDFLAGS="$LDFLAGS -L${botan_path}/lib -lbotan"
+fi
+AC_CHECK_HEADERS([botan/botan.h],,AC_MSG_ERROR([Missing required header files.]))
+AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM([#include <botan/botan.h>],
+                         [using namespace Botan;
+                          LibraryInitializer::initialize();
+                         ])],
+        [AC_MSG_RESULT([checking for Botan library... yes])],
+        [AC_MSG_RESULT([checking for Botan library... no])
+         AC_MSG_ERROR([Missing Botan library])]
+)
+
 #
 # Configure Boost header path
 #
