@@ -135,6 +135,8 @@ class TestConfigManager(unittest.TestCase):
         self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
         self.cm.set_module_spec(module_spec)
         self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        self.assert_(module_spec.get_module_name() not in
+                     self.cm.virtual_modules)
 
     def test_remove_module_spec(self):
         module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
@@ -143,6 +145,30 @@ class TestConfigManager(unittest.TestCase):
         self.assert_(module_spec.get_module_name() in self.cm.module_specs)
         self.cm.remove_module_spec(module_spec.get_module_name())
         self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.assert_(module_spec.get_module_name() not in
+                     self.cm.virtual_modules)
+
+    def test_add_remove_virtual_module(self):
+        module_spec = isc.config.module_spec.module_spec_from_file(
+            self.data_path + os.sep + "spec1.spec")
+        check_func = lambda: True
+        # Make sure it's not in there before
+        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.assert_(module_spec.get_module_name() not in
+                     self.cm.virtual_modules)
+        # Add it there
+        self.cm.set_virtual_module(module_spec, check_func)
+        # Check it's in there
+        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        self.assertEqual(self.cm.module_specs[module_spec.get_module_name()],
+                      module_spec)
+        self.assertEqual(self.cm.virtual_modules[module_spec.get_module_name()],
+                      check_func)
+        # Remove it again
+        self.cm.remove_module_spec(module_spec.get_module_name())
+        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.assert_(module_spec.get_module_name() not in
+                     self.cm.virtual_modules)
 
     def test_get_module_spec(self):
         module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
