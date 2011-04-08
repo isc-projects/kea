@@ -29,9 +29,9 @@ public:
     // The following declaration describes the various fields in the DNS
     // packet header.
     enum FieldParameter {
-        QR_MASK = 0x8000,   // To get the value
-        QR_OFF  = 15,       // Shift this number of bits left to set the value
-        OP_MASK = 0x7800,
+        QR_MASK = 0x8000,   // Maskd efining the field
+        QR_OFF  = 15,       // Offset of field in the flags word (i.e. shift
+        OP_MASK = 0x7800,   //    ... this number of bits to the left)
         OP_OFF  = 11,
         AA_MASK = 0x0400,
         AA_OFF  = 10,
