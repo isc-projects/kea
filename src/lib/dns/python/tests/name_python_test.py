@@ -155,8 +155,6 @@ class NameTest(unittest.TestCase):
         self.assertRaises(TypeError, self.name1.split, "wrong", 1)
         self.assertRaises(TypeError, self.name1.split, 1, "wrong")
 
-        s = self.name1.split(0)
-        self.assertEqual("example.com.", s.to_text())
         s = self.name1.split(1)
         self.assertEqual("com.", s.to_text())
 
