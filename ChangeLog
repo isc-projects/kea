@@ -1,3 +1,9 @@
+  217.	[bug]		jerry
+	src/lib/dns/python: Use a signed version of larger size of integer and
+	perform more strict range checks with PyArg_ParseTuple() in case of
+	overflows.
+	(Trac #363, git TBD)
+
   216.  [func]     vorner
 	The BIND10_XFROUT_SOCKET_FILE environment variable can be used to specify
 	which socket should be used for communication between b10-auth and
