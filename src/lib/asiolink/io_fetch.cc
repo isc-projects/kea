@@ -86,6 +86,7 @@ struct IOFetchData {
     size_t                      offset;      ///< Offset to receive data
     bool                        stopped;     ///< Have we stopped running?
     int                         timeout;     ///< Timeout in ms
+    bool                        packet;      ///< true if packet was supplied
 
     // In case we need to log an error, the origin of the last asynchronous
     // I/O is recorded.  To save time and simplify the code, this is recorded
@@ -146,6 +147,7 @@ struct IOFetchData {
         offset(0),
         stopped(false),
         timeout(wait),
+        packet(false),
         origin(ASIO_UNKORIGIN),
         staging(),
         qid(QidGenerator::getInstance().generateQid())
@@ -175,6 +177,18 @@ IOFetch::IOFetch(Protocol protocol, IOService& service,
 {
 }
 
+IOFetch::IOFetch(Protocol protocol, IOService& service,
+    OutputBufferPtr& outpkt, const IOAddress& address, uint16_t port,
+    OutputBufferPtr& buff, Callback* cb, int wait)
+    :
+    data_(new IOFetchData(protocol, service,
+          isc::dns::Question(isc::dns::Name("dummy.example.org"), isc::dns::RRClass::IN(), isc::dns::RRType::A()),
+          address, port, buff, cb, wait))
+{
+    data_->msgbuf = outpkt;
+    data_->packet = true;
+}
+
 // Return protocol in use.
 
 IOFetch::Protocol
@@ -201,14 +215,22 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
         /// This is done in a different scope to allow inline variable
         /// declarations.
         {
-            Message msg(Message::RENDER);
-            msg.setQid(data_->qid);
-            msg.setOpcode(Opcode::QUERY());
-            msg.setRcode(Rcode::NOERROR());
-            msg.setHeaderFlag(Message::HEADERFLAG_RD);
-            msg.addQuestion(data_->question);
-            MessageRenderer renderer(*data_->msgbuf);
-            msg.toWire(renderer);
+            if (data_->packet) {
+                // A packet was given, overwrite the QID (which is in the
+                // first two bytes of the packet).
+                data_->msgbuf->writeUint16At(data_->qid, 0);
+
+            } else {
+                // A question was given, construct the packet
+                Message msg(Message::RENDER);
+                msg.setQid(data_->qid);
+                msg.setOpcode(Opcode::QUERY());
+                msg.setRcode(Rcode::NOERROR());
+                msg.setHeaderFlag(Message::HEADERFLAG_RD);
+                msg.addQuestion(data_->question);
+                MessageRenderer renderer(*data_->msgbuf);
+                msg.toWire(renderer);
+            }
         }
 
         // If we timeout, we stop, which will can cancel outstanding I/Os and
