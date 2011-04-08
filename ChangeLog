@@ -50,6 +50,8 @@
 	additional glue records for ANSWER section.
 	(Trac #699, git 510924ebc57def8085cc0e5413deda990b2abeee)
 
+bind10-devel-20110322 released on March 22, 2011
+
 209.	[func]		jelte
 	Resolver now uses the NSAS when looking for a nameserver to
 	query for any specific zone. This also includes keeping track of
