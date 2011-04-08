@@ -64,7 +64,7 @@ namespace {
 
 // Just helper macros
 #define INADDR_SET(WHAT) do { WHAT.sin_addr.s_addr = INADDR_ANY; } while (0)
-#define IN6ADDR_SET(WHAT) do { WHAT.sin6_addr = in6addr_any; } while (0)
+#define IN6ADDR_SET(WHAT) do { WHAT.sin6_addr = in6addr_loopback; } while (0)
 // If the get_sock returned something useful, listen must work
 #define TCP_CHECK(UNUSED, SOCKET) do { \
         EXPECT_EQ(0, listen(SOCKET, 1)); \
