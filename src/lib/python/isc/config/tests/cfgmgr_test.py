@@ -338,6 +338,41 @@ class TestConfigManager(unittest.TestCase):
                                 },
                                 {'result': [0]})
 
+    def test_set_config_virtual(self):
+        """Test that if the module is virtual, we don't send it over the
+           message bus, but call the checking function.
+           """
+        # We run the same three times, with different return values
+        def single_test(value, returnFunc, expectedResult):
+            # Because closures can't assign to closed-in variables, we pass
+            # it trough self
+            self.called_with = None
+            def check_test(new_data):
+                self.called_with = new_data
+                return returnFunc()
+
+            # Register our virtual module
+            self.cm.set_virtual_module(self.spec, check_test)
+            # The fake session will throw now if it is touched, as there's no
+            # message or answer ready. Handy, we don't need any code about it
+            # to check explicitly.
+            result = self.cm._handle_set_config_module(self.spec.
+                                                       get_module_name(),
+                                                       {'item1': value})
+            # Check the correct result is passed and our function was called
+            # With correct data
+            self.assertEqual(self.called_with['item1'], value)
+            self.assertEqual(result, {'result': expectedResult})
+
+        # Success
+        single_test(5, lambda: None, [0])
+        # Graceful error
+        single_test(6, lambda: "Just error", [1, "Just error"])
+        # Exception from the checker
+        def raiser():
+            raise Exception("Just exception")
+        single_test(7, raiser, [1, "Exception: Just exception"])
+
     def test_set_config_all(self):
         my_ok_answer = { 'result': [ 0 ] }
 
