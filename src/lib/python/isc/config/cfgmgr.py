@@ -312,24 +312,36 @@ class ConfigManager:
         # todo: use api (and check the data against the definition?)
         old_data = copy.deepcopy(self.config.data)
         conf_part = data.find_no_exc(self.config.data, module_name)
+        update_cmd = None
+        use_part = None
         if conf_part:
             data.merge(conf_part, cmd)
-            update_cmd = ccsession.create_command(ccsession.COMMAND_CONFIG_UPDATE,
-                                                  conf_part)
-            seq = self.cc.group_sendmsg(update_cmd, module_name)
-            try:
-                answer, env = self.cc.group_recvmsg(False, seq)
-            except isc.cc.SessionTimeout:
-                answer = ccsession.create_answer(1, "Timeout waiting for answer from " + module_name)
+            use_part = conf_part
         else:
             conf_part = data.set(self.config.data, module_name, {})
             data.merge(conf_part[module_name], cmd)
-            # send out changed info
-            update_cmd = ccsession.create_command(ccsession.COMMAND_CONFIG_UPDATE,
-                                                  conf_part[module_name])
-            seq = self.cc.group_sendmsg(update_cmd, module_name)
-            # replace 'our' answer with that of the module
+            use_part = conf_part[module_name]
+
+        if module_name in self.virtual_modules:
+            # The module is virtual, so call it to get the answer
             try:
+                error = self.virtual_modules[module_name](use_part)
+                if error is None:
+                    answer = ccsession.create_answer(0)
+                else:
+                    answer = ccsession.create_answer(1, error)
+            # Make sure just a validating plugin don't kill the whole manager
+            except Exception as excp:
+                # Provide answer
+                answer = ccsession.create_answer(1, "Exception: " + str(excp))
+        else:
+            # Real module, send it over the wire to it
+            # send out changed info
+            update_cmd = ccsession.create_command(
+                ccsession.COMMAND_CONFIG_UPDATE, use_part)
+            seq = self.cc.group_sendmsg(update_cmd, module_name)
+            try:
+                # replace 'our' answer with that of the module
                 answer, env = self.cc.group_recvmsg(False, seq)
             except isc.cc.SessionTimeout:
                 answer = ccsession.create_answer(1, "Timeout waiting for answer from " + module_name)
