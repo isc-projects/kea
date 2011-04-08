@@ -283,7 +283,7 @@ bind10-devel-20110224 released on February 24, 2011
 	complete data source for authoritative DNS servers and b10-auth
 	uses it.  It still misses major features, however, including
 	DNSSEC support and zone transfer.
-	(Last trac #553, but many more,
+	(Last Trac #553, but many more,
 	git 6f031a09a248e7684723c000f3e8cc981dcdb349)
 
 170.	[bug]		jinmei
@@ -306,7 +306,7 @@ bind10-devel-20110224 released on February 24, 2011
 
 167.	[bug]		naokikambe
 	Fixed failure of termination of msgq_test.py with python3
-	coverage(3.3.1)
+	coverage (3.3.1).
 	(Trac #573, git 0e6a18e12f61cc482e07078776234f32605312e5)
 
 166.	[func]		jelte
@@ -417,7 +417,7 @@ bind10-devel-20110120 released on January 20, 2011
 	2nd argument of type bool (true or false). This flag, if
 	set, will cause the message to be printed whether or not
 	-v is chosen.
-        (trac #432, git 880220478c3e8702d56d761b1e0b21b77d08ee5a)
+        (Trac #432, git 880220478c3e8702d56d761b1e0b21b77d08ee5a)
 
 150.	[bug]		jelte
 	b10-cfgmgr: No longer save the configuration on exit. Configuration
@@ -430,7 +430,7 @@ bind10-devel-20110120 released on January 20, 2011
 	bindctl: Check if the user session has disappeared (either by a
 	timeout or by a server restart), and reauthenticate if so. This
 	fixes the 'cmdctl not running' problem.
-        (trac #431, git b929be82fec5f92e115d8985552f84b4fdd385b9)
+        (Trac #431, git b929be82fec5f92e115d8985552f84b4fdd385b9)
 
 148.	[func]		jelte
 	bindctl: Command results are now pretty-printed (i.e. printed in
@@ -564,8 +564,8 @@ bind10-devel-20110120 released on January 20, 2011
 	src/lib/datasrc: Introduced a new class MemoryDataSrc to provide
 	the general interface for memory data source.  For the initial
 	implementation, we don't make it a derived class of AbstractDataSrc
-	because the interface is so different(we'll eventually consider this
-	as part of the generalization work).
+	because the interface is so different (we'll eventually
+	consider this as part of the generalization work).
 	(Trac #422, svn r3866)
 
 129.	[func]		jinmei
@@ -883,7 +883,7 @@ bind10-devel-20100812 released on August 12, 2010
 
 77.	[func]		zhanglikun
 	Make error message be more friendly when running cmdctl and it's 
-	already running(listening on same port)(Trac #277, r2540)
+	already running (listening on same port)(Trac #277, r2540)
 
 76.	[bug]		jelte
 	Fixed a bug in the handling of 'remote' config modules (i.e.
@@ -936,7 +936,7 @@ bind10-devel-20100701 released on July 1, 2010
 	(Trac #181, svn r2361)
 
 68.	[func]		zhanglikun
-	Add options -c(--certificate-chain) to bindctl. Override class
+	Add options -c (--certificate-chain) to bindctl. Override class
 	HTTPSConnection to support server certificate validation.
 	Add support to cmdctl.spec file, now there are three configurable 
 	items for cmdctl: 'key_file', 'cert_file' and 'accounts_file', 
