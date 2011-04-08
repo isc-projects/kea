@@ -38,8 +38,10 @@ class RcodeTest(unittest.TestCase):
         # Range check.  We need to do this at the binding level, so we need
         # explicit tests for it.
         self.assertEqual(Rcode(0).get_code(), 0)
+        self.assertEqual(Rcode(4095).get_code(), 4095)
         self.assertEqual(Rcode(0, 0).get_code(), 0)
         self.assertEqual(Rcode(0, 0).get_extended_code(), 0)
+        self.assertEqual(Rcode(15, 255).get_code(), 4095)
         self.assertRaises(ValueError, Rcode, 65536)
         self.assertRaises(ValueError, Rcode, 0x10, 0x100)
         self.assertRaises(ValueError, Rcode, 0x100, 0x10)
