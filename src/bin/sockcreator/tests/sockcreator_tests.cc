@@ -256,7 +256,7 @@ TEST(run, bad_sockets) {
     // We need to construct the answer, but it depends on int length.
     size_t int_len(sizeof(int));
     size_t result_len(4 + 2 * int_len);
-    char result[result_len];
+    char result[4 + sizeof(int) * 2];
     // Both errno parts should be 0
     memset(result, 0, result_len);
     // Fill the 2 control parts
