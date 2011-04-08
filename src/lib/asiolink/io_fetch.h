@@ -137,6 +137,32 @@ public:
         uint16_t port, isc::dns::OutputBufferPtr& buff, Callback* cb,
         int wait = -1);
 
+    /// \brief Constructor.
+    ///
+    /// Creates the object that will handle the upstream fetch.
+    ///
+    /// TODO: Need to randomise the source port
+    ///
+    /// \param protocol Fetch protocol, either IOFetch::TCP or IOFetch::UDP
+    /// \param service I/O Service object to handle the asynchronous
+    ///     operations.
+    /// \param outpkt Packet to send to upstream server.  Note that the
+    ///     QID (first two bytes of the packet) may be altered in the sending.
+    /// \param buff Output buffer into which the response (in wire format)
+    ///     is written (if a response is received).
+    /// \param cb Callback object containing the callback to be called
+    ///     when we terminate.  The caller is responsible for managing this
+    ///     object and deleting it if necessary.
+    /// \param address IP address of upstream server
+    /// \param port Port to which to connect on the upstream server
+    /// (default = 53)
+    /// \param wait Timeout for the fetch (in ms).  The default value of
+    ///     -1 indicates no timeout.
+    IOFetch(Protocol protocol, IOService& service,
+        isc::dns::OutputBufferPtr& outpkt, const IOAddress& address,
+        uint16_t port, isc::dns::OutputBufferPtr& buff, Callback* cb,
+        int wait = -1);
+
     /// \brief Return Current Protocol
     ///
     /// \return Protocol associated with this IOFetch object.
