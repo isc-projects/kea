@@ -1143,110 +1143,110 @@ bind10-devel-20100602 released on June 2, 2010
 
 bind10-devel-20100421 released on April 21, 2010
 
-29.	[build]
+29.	[build]		jreed
 	Enable Python unit tests for "make check". (svn r1762)
 
-28.	[bug]
+28.	[bug]		jreed
 	Fix msgq CC test so it can find its module. (svn r1751)
 
-27.	[build]
+27.	[build]		jelte
 	Add missing copyright license statements to various source
 	files. (svn r1750)
 
-26.	[func]
+26.	[func]		jelte
 	Use PACKAGE_STRING (name + version) from config.h instead
 	of hard-coded value in CH TXT version.bind replies (Trac
 	#114, svn r1749)
 
-25.	[func]*
+25.	[func]*		jreed
 	Renamed msgq to b10-msgq. (Trac #25, svn r1747, r1748)
 
-24.	[func]
+24.	[func]		jinmei
 	Support case-sensitive name compression in MessageRenderer.
 	(Trac #142, svn r1704)
 
-23.	[func]
+23.	[func]		jinmei
 	Support a simple name with possible compression. (svn r1701)
 
-22.	[func]
+22.	[func]		zhanglikun
 	b10-xfrout for AXFR-out support added. (svn r1629, r1630)
 
-21.	[bug]
+21.	[bug]		zhanglikun
 	Make log message more readable when xfrin failed. (svn
 	r1697)
 
-20.	[bug]
+20.	[bug]		jinmei
 	Keep stderr for child processes if -v is specified. (svn
 	r1690, r1698)
 
-19.	[bug]
+19.	[bug]		jinmei
 	Allow bind10 boss to pass environment variables from parent.
 	(svn r1689)
 
-18.	[bug]
+18.	[bug]		jinmei
 	Xfrin warn if bind10_dns load failed. (svn r1688)
 
-17.	[bug]
+17.	[bug]		jinmei
 	Use sqlite3_ds.load() in xfrin module and catch Sqlite3DSError
 	explicitly. (svn r1684)
 
-16.	[func]*
+16.	[func]*		zhanglikun
 	Removed print_message and print_settings configuration
 	commands from Xfrin. (Trac #136, svn r1682)
 
-15.	[func]*
+15.	[func]*		jinmei
 	Changed zone loader/updater so trailing dot is not required.
 	(svn r1681)
 
-14.	[bug]
+14.	[bug]		shane
 	Change shutdown to actually SIGKILL properly. (svn r1675)
 
-13.	[bug]
+13.	[bug]		jinmei
 	Don't ignore other RRs than SOA even if the second SOA is
 	found. (svn r1674)
 
-12.	[build]
+12.	[build]		jreed
 	Fix tests and testdata so can be used from a read-only
 	source directory.
 
-11.	[build]
+11.	[build]		jreed
 	Make sure python tests scripts are included in tarball.
 	(svn r1648)
 
-10.	[build]
+10.	[build]		jinmei
 	Improve python detection for configure. (svn r1622)
 
-9.	[build]
+9.	[build]		jinmei
 	Automake the python binding of libdns. (svn r1617)
 
-8.	[bug]
+8.	[bug]		zhanglikun
 	Fix log errors which may cause xfrin module to crash. (svn
 	r1613)
 
-7.	[func]
+7.	[func]		zhanglikun
 	New API for inserting zone data to sqlite3 database for
 	AXFR-in. (svn r1612, r1613)
 
-6.	[bug]
+6.	[bug]		jreed
 	More code review, miscellaneous cleanups, style guidelines,
 	and new and improved unit tests added.
 
-5.	[doc]
+5.	[doc]		jreed
 	Manual page cleanups and improvements.
 
-4.	[bug]
+4.	[bug]		jinmei
 	NSEC RDATA fixes for buffer overrun lookups, incorrect
 	boundary checks, spec-non-conformant behaviors. (svn r1611)
 
-3.	[bug]
+3.	[bug]		jelte
 	Remove a re-raise of an exception that should only have
 	been included in an error answer on the cc channel. (svn
 	r1601)
 
-2.	[bug]
+2.	[bug]		mgraff
 	Removed unnecessary sleep() from ccsession.cc. (svn r1528)
 
-1.	[build]*
+1.	[build]*		jreed
 	The configure --with-boostlib option changed to --with-boost-lib.
 
 bind10-devel-20100319 released on March 19, 2010
