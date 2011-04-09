@@ -41,9 +41,11 @@ if "B10_FROM_SOURCE" in os.environ:
         DATA_PATH = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"]
     else:
         DATA_PATH = os.environ["B10_FROM_SOURCE"]
+    PLUGIN_PATH = [] #FIXME Where should plugins come from? And how to find it?
 else:
     PREFIX = "@prefix@"
     DATA_PATH = "@localstatedir@/@PACKAGE@".replace("${prefix}", PREFIX)
+    PLUGIN_PATHS = ["@prefix@/share/@PACKAGE@/config_plugins"]
 DEFAULT_CONFIG_FILE = "b10-config.db"
 
 cm = None
@@ -97,6 +99,8 @@ def main():
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
         cm.read_config()
+        for ppath in PLUGIN_PATHS:
+            load_plugins(ppath, cm)
         cm.notify_boss()
         cm.run()
     except SessionError as se:
