@@ -69,13 +69,24 @@ class TestConfigManagerStartup(unittest.TestCase):
         # this also gives us the chance to override the imported
         # module ConfigManager in it.
         b = __import__("b10-cfgmgr")
+        orig_load = b.load_plugins
+        b.PLUGIN_PATHS = ["/plugin/path"]
+        self.loaded_plugins = False
+        def load_plugins(path, cm):
+            # Check it's called with proper arguments
+            self.assertEqual(path, "/plugin/path")
+            self.assertTrue(isinstance(cm, MyConfigManager))
+            self.loaded_plugins = True
+        b.load_plugins = load_plugins
         b.ConfigManager = MyConfigManager
 
         b.main()
+        b.load_plugins = orig_load
 
         self.assertTrue(b.cm.read_config_called)
         self.assertTrue(b.cm.notify_boss_called)
         self.assertTrue(b.cm.run_called)
+        self.assertTrue(self.loaded_plugins)
         # if there are no changes, config is not written
         self.assertFalse(b.cm.write_config_called)
 
@@ -100,6 +111,7 @@ class TestConfigManagerStartup(unittest.TestCase):
 
         os.environ["B10_FROM_SOURCE"] = tmp_env_var
         b = __import__("b10-cfgmgr", globals(), locals())
+        b.PLUGIN_PATH = [] # It's enough to test plugins in one test
         b.ConfigManager = MyConfigManager
         self.assertEqual(tmp_env_var, b.DATA_PATH)
 
