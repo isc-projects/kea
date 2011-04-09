@@ -119,7 +119,10 @@ TEST_F(Rdata_RP_Test, toWireBuffer) {
 }
 
 TEST_F(Rdata_RP_Test, toWireRenderer) {
-    // similar to toWireBuffer, but names in RDATA should be compressed.
+    // similar to toWireBuffer, but names in RDATA could be compressed due to
+    // preceding names.  Actually they must not be compressed according to
+    // RFC3597, and this test checks that.
+
     UnitTestUtil::readWireData("rdata_rp_toWire2.wire", expected_wire);
 
     renderer.writeName(Name("a.example.com"));
