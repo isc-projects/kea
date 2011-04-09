@@ -23,7 +23,7 @@ class MockSpec:
     def get_module_name(self):
         return "mock_config_plugin"
 
-def mock_check_config(config)
+def mock_check_config(config):
     """Mock function to check config. Does nothing, only returns
        an "error" string to indicate it's this one."""
     return "Mock config plugin"
