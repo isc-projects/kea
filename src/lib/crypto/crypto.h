@@ -35,8 +35,8 @@
 namespace isc {
 namespace crypto {
 
-void doHMAC(const isc::dns::OutputBuffer& data, char* key, size_t key_len, isc::dns::OutputBuffer& result);
-bool verifyHMAC(const isc::dns::OutputBuffer& data, char* key, size_t key_len, const isc::dns::OutputBuffer& mac);
+void doHMAC(const isc::dns::OutputBuffer& data, isc::dns::TSIGKey key, isc::dns::OutputBuffer& result);
+bool verifyHMAC(const isc::dns::OutputBuffer& data, isc::dns::TSIGKey key, const isc::dns::OutputBuffer& mac);
 isc::dns::TSIGKey TSIGKeyFromString(const std::string& str);
 std::string TSIGKeyToString(const isc::dns::TSIGKey& key);
 

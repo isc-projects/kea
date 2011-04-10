@@ -87,7 +87,7 @@ TSIGKey::getSecretLength() {
 }
 */
 
-void doHMAC(const OutputBuffer& data, char* key, size_t key_len, isc::dns::OutputBuffer& result) {
+void doHMAC(const OutputBuffer& data, TSIGKey key, isc::dns::OutputBuffer& result) {
 
     // needs to be in global scope; can we make a generalized
     // subclassable singleton? (for hsm we'll need more initialization)
@@ -103,7 +103,7 @@ void doHMAC(const OutputBuffer& data, char* key, size_t key_len, isc::dns::Outpu
     hmac.update(reinterpret_cast<const byte*>(data.getData()), data.getLength());
 
     // Take the 'secret' from the key
-    hmac.set_key(reinterpret_cast<byte*>(key), key_len);
+    hmac.set_key(reinterpret_cast<const byte*>(key.getSecret()), key.getSecretLength());
 
     // And generate the mac
     SecureVector<byte> b_result(hmac.final());
@@ -121,11 +121,11 @@ void doHMAC(const OutputBuffer& data, char* key, size_t key_len, isc::dns::Outpu
     std::cout << "HMAC SIG LEN2: " << result.getLength() << std::endl;
 }
 
-bool verifyHMAC(const OutputBuffer& data, char* key, size_t key_len, const isc::dns::OutputBuffer& result) {
+bool verifyHMAC(const OutputBuffer& data, TSIGKey key, const isc::dns::OutputBuffer& result) {
     HashFunction* hash = get_hash("MD5");
     HMAC::HMAC hmac(hash);
     hmac.update(reinterpret_cast<const byte*>(data.getData()), data.getLength());
-    hmac.set_key(reinterpret_cast<byte*>(key), key_len);
+    hmac.set_key(reinterpret_cast<const byte*>(key.getSecret()), key.getSecretLength());
 
     SecureVector<byte> b_result(hmac.final());
     for(byte* i = b_result.begin(); i != b_result.end(); ++i) {
@@ -143,7 +143,6 @@ TSIGKeyFromString(const std::string& str) {
 	size_t pos = str.find(':');
 	if (pos == 0 || pos == str.npos) {
 		// error, TODO: raise
-		std::cout << "[XX] error bad key string" << std::endl;
 		isc_throw(InvalidParameter, "Invalid TSIG key string");
 	}
 	Name key_name(str.substr(0, pos));
@@ -153,8 +152,10 @@ TSIGKeyFromString(const std::string& str) {
 	// optional algorithm part
 	size_t pos2 = str.find(':', pos+1);
 	if (pos2 != str.npos) {
+		if (pos2 == pos + 1) {
+			isc_throw(InvalidParameter, "Invalid TSIG key string");
+		}
 		algo_name = Name(str.substr(pos2+1));
-		//pos2 = str.size() - pos - pos2;
 	} else {
 		pos2 = str.size() - pos;
 	}
