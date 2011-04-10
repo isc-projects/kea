@@ -27,15 +27,18 @@
 
 #include <string>
 #include <dns/buffer.h>
+#include <dns/tsigkey.h>
 
 #ifndef _ISC_CRYPTO_H
 #define _ISC_CRYPTO_H
 
-void doHMAC(const isc::dns::OutputBuffer& data, char* key, isc::dns::OutputBuffer& result);
-bool verifyHMAC(const isc::dns::OutputBuffer& data, char* key, const isc::dns::OutputBuffer& mac);
-
 namespace isc {
 namespace crypto {
+
+void doHMAC(const isc::dns::OutputBuffer& data, char* key, size_t key_len, isc::dns::OutputBuffer& result);
+bool verifyHMAC(const isc::dns::OutputBuffer& data, char* key, size_t key_len, const isc::dns::OutputBuffer& mac);
+isc::dns::TSIGKey TSIGKeyFromString(const std::string& str);
+std::string TSIGKeyToString(const isc::dns::TSIGKey& key);
 
 class Crypto {
     static Crypto& getInstance();
@@ -43,6 +46,7 @@ class Crypto {
     virtual void cleanup() = 0;
 };
 
+/*
 class TSIGKeyImpl;
 
 class TSIGKey {
@@ -61,16 +65,7 @@ public:
 private:
     TSIGKeyImpl* impl_;
 };
-
-class Context {
-    virtual ~Context();
-    
-    virtual void update(void *data, size_t length) = 0;
-    virtual void signTSIG(void *result, TSIGKey* key) = 0;
-    virtual void verifyTSIG(void *signature, TSIGKey* key) = 0;
-    virtual void digest(void *result) = 0;
-};
-
+*/
 } // namespace crypto
 } // namespace isc
 
