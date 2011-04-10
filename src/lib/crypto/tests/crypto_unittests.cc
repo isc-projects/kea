@@ -41,7 +41,7 @@ namespace {
 	    
 	    TSIGKey key = TSIGKeyFromString(key_str);
 	    
-	    doHMAC(data_buf, key, hmac_sig);
+	    signHMAC(data_buf, key, hmac_sig);
 	    checkBuffer(hmac_sig, expected_hmac, hmac_len);
 	}
 }

@@ -46,41 +46,43 @@ HashFunction* getHash(const Name& hash_name) {
 	}
 }
 
+    // Library needs to have been inited during the entire program
+    // should we make this a singleton? (for hsm we'll need more
+    // initialization, and dynamic loading)
+    LibraryInitializer init;
+
 } // local namespace
 
 namespace isc {
 namespace crypto {
 
-void doHMAC(const OutputBuffer& data, TSIGKey key, isc::dns::OutputBuffer& result) {
-
-    // needs to be in global scope; can we make a generalized
-    // subclassable singleton? (for hsm we'll need more initialization)
-    LibraryInitializer init;
-
-    // not used here, but we'd need a ctx
-
+void
+signHMAC(const OutputBuffer& data, TSIGKey key,
+         isc::dns::OutputBuffer& result)
+{
     // get algorithm from key, then 'translate' to Botan-specific algo
     HashFunction* hash = getHash(key.getAlgorithmName());
     HMAC::HMAC hmac(hash);
 
     // Take the 'secret' from the key
-    hmac.set_key(static_cast<const byte*>(key.getSecret()), key.getSecretLength());
+    hmac.set_key(static_cast<const byte*>(key.getSecret()),
+                 key.getSecretLength());
 
     // update the data from whatever we get (probably as a buffer)
-    hmac.update(static_cast<const byte*>(data.getData()), data.getLength());
+    hmac.update(static_cast<const byte*>(data.getData()),
+                data.getLength());
 
     // And generate the mac
     SecureVector<byte> b_result(hmac.final());
 
-
     // write mac to result
     result.writeData(b_result.begin(), b_result.size());
-
-    //std::cout << "HMAC SIG LEN: " << b_result.size() << std::endl;
-    //std::cout << "HMAC SIG LEN2: " << result.getLength() << std::endl;
 }
 
-bool verifyHMAC(const OutputBuffer& data, TSIGKey key, const isc::dns::OutputBuffer& result) {
+bool
+verifyHMAC(const OutputBuffer& data, TSIGKey key,
+           const isc::dns::OutputBuffer& result)
+{
     HashFunction* hash = getHash(key.getAlgorithmName());
     HMAC::HMAC hmac(hash);
     hmac.set_key(static_cast<const byte*>(key.getSecret()), key.getSecretLength());
@@ -113,11 +115,6 @@ TSIGKeyFromString(const std::string& str) {
 	
 	std::string secret_str = str.substr(pos + 1, pos2 - pos - 1);
 
-	/*
-	std::cout << "[XX] KEY NAME: " << key_name << std::endl;
-	std::cout << "[XX] KEY ALGO: " << algo_name << std::endl;
-	std::cout << "[XX] SECRET:   " << secret_str << std::endl;
-	*/
 	vector<uint8_t> secret;
 	decodeBase64(secret_str, secret);
 	unsigned char secret_b[secret.size()];
