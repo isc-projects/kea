@@ -133,9 +133,9 @@ void doHMAC(const OutputBuffer& data, TSIGKey key, isc::dns::OutputBuffer& resul
     std::cout << "KEY (" << (int)key.getSecretLength() << "): ";
     const uint8_t *k = static_cast<const uint8_t*>(key.getSecret());
     for(size_t s = 0; s < key.getSecretLength(); ++s) {
-		std::cout << s << ": ";
+		//std::cout << s << ": ";
         std::cout << hex << setfill('0') << setw(2) << nouppercase << (unsigned int)k[s] << " ";
-		std::cout << std::endl;
+		//std::cout << std::endl;
     }
     std::cout << std::endl;
     std::cout << "HASH: ";
