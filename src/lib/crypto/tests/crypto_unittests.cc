@@ -19,15 +19,30 @@
 #include <crypto/crypto_botan.h>
 #include <dns/buffer.h>
 
+using namespace isc::dns;
+using namespace isc::crypto;
+
 TEST(CryptoTest, HMAC_SIGN) {
-    char data_b[] = { 0xff, 0x21, 0x56 };
-    isc::dns::OutputBuffer data(3);
-    data.writeData(data_b, 3);
-    char key[] = { 0x02, 0x03, 0x04 };
-    isc::dns::OutputBuffer hmac_sig(1);
+    char data_b[] = "Hi there";
+    OutputBuffer data(8);
+    data.writeData(data_b, 8);
+    char key[] = { 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b  };
+    OutputBuffer hmac_sig(1);
     
 
-    doHMAC(data, key, hmac_sig);
-    bool result = verifyHMAC(data, key, hmac_sig);
+    doHMAC(data, key, 16, hmac_sig);
+    bool result = verifyHMAC(data, key, 16, hmac_sig);
     EXPECT_TRUE(result);
+}
+
+TEST(CryptoText, TSIGKeyFromString) {
+	TSIGKey k1 = TSIGKeyFromString("test.example:MSG6Ng==:hmac-md5.sig-alg.reg.int");
+	TSIGKeyFromString("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.");
+	TSIGKeyFromString("test.example:MSG6Ng==");
+	//TSIGKeyFromString("test.example:");
+	//TSIGKeyFromString("::");
+	//TSIGKeyFromString("test.example:MSG6Ng==:hmac-md5.sig-alg.reg.int");
+	
+	std::string k1_str = TSIGKeyToString(k1);
+	std::cout << k1_str << std::endl;
 }
