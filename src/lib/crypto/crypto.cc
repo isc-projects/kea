@@ -46,61 +46,10 @@ HashFunction* getHash(const Name& hash_name) {
 	}
 }
 
-}
+} // local namespace
 
 namespace isc {
 namespace crypto {
-
-/*
-class TSIGKeyImpl {
-public:
-    TSIGKeyImpl(const std::string& str) {
-        (void) str;
-        name_ = new Name("");
-        secret_ = NULL;
-        secret_length_ = 0;
-    };
-
-    TSIGKeyImpl(const isc::dns::Name& name, TSIGKey::algorithms alg,
-                const char* secret, size_t secret_length) :
-                    name_(new Name(name)), algorithm_(alg),
-                    secret_length_(secret_length)
-    {
-        secret_ = (char*)malloc(secret_length_);
-        memcpy(secret_, secret, secret_length_);
-    }
-    ~TSIGKeyImpl() { delete secret_; delete name_; };
-
-    TSIGKey::algorithms getAlgorithm() { return algorithm_; }
-    const char* getSecret() const { return secret_; }
-    size_t getSecretLength() const { return secret_length_; }
-    
-private:
-    isc::dns::Name* name_;
-    TSIGKey::algorithms algorithm_;
-    char* secret_;
-    size_t secret_length_;
-};
-
-TSIGKey::TSIGKey(const std::string& str) {
-    impl_ = new TSIGKeyImpl(str);
-}
-
-TSIGKey::algorithms
-TSIGKey::getAlgorithm() {
-    return impl_->getAlgorithm();
-}
-
-const char*
-TSIGKey::getSecret() {
-    return impl_->getSecret();
-}
-
-size_t
-TSIGKey::getSecretLength() {
-    return impl_->getSecretLength();
-}
-*/
 
 void doHMAC(const OutputBuffer& data, TSIGKey key, isc::dns::OutputBuffer& result) {
 
@@ -110,7 +59,7 @@ void doHMAC(const OutputBuffer& data, TSIGKey key, isc::dns::OutputBuffer& resul
 
     // not used here, but we'd need a ctx
 
-    // should get algorithm from key, then 'translate' to Botan-specific algo
+    // get algorithm from key, then 'translate' to Botan-specific algo
     HashFunction* hash = getHash(key.getAlgorithmName());
     HMAC::HMAC hmac(hash);
 
@@ -123,32 +72,12 @@ void doHMAC(const OutputBuffer& data, TSIGKey key, isc::dns::OutputBuffer& resul
     // And generate the mac
     SecureVector<byte> b_result(hmac.final());
 
-    // just some debug
-    std::cout << "DATA (" << data.getLength() << "): ";
-    const uint8_t *d= static_cast<const uint8_t*>(data.getData());
-    for(size_t s = 0; s < data.getLength(); ++s) {
-        std::cout << hex << setfill('0') << setw(2) << nouppercase << (unsigned int)d[s] << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "KEY (" << (int)key.getSecretLength() << "): ";
-    const uint8_t *k = static_cast<const uint8_t*>(key.getSecret());
-    for(size_t s = 0; s < key.getSecretLength(); ++s) {
-		//std::cout << s << ": ";
-        std::cout << hex << setfill('0') << setw(2) << nouppercase << (unsigned int)k[s] << " ";
-		//std::cout << std::endl;
-    }
-    std::cout << std::endl;
-    std::cout << "HASH: ";
-    for(byte* i = b_result.begin(); i != b_result.end(); ++i) {
-        std::cout << hex << setfill('0') << setw(2) << nouppercase << (unsigned int)(*i);
-    }
-    std::cout << std::endl;
 
     // write mac to result
     result.writeData(b_result.begin(), b_result.size());
 
-    std::cout << "HMAC SIG LEN: " << b_result.size() << std::endl;
-    std::cout << "HMAC SIG LEN2: " << result.getLength() << std::endl;
+    //std::cout << "HMAC SIG LEN: " << b_result.size() << std::endl;
+    //std::cout << "HMAC SIG LEN2: " << result.getLength() << std::endl;
 }
 
 bool verifyHMAC(const OutputBuffer& data, TSIGKey key, const isc::dns::OutputBuffer& result) {
@@ -184,11 +113,11 @@ TSIGKeyFromString(const std::string& str) {
 	
 	std::string secret_str = str.substr(pos + 1, pos2 - pos - 1);
 
-	///*
+	/*
 	std::cout << "[XX] KEY NAME: " << key_name << std::endl;
 	std::cout << "[XX] KEY ALGO: " << algo_name << std::endl;
 	std::cout << "[XX] SECRET:   " << secret_str << std::endl;
-	//*/
+	*/
 	vector<uint8_t> secret;
 	decodeBase64(secret_str, secret);
 	unsigned char secret_b[secret.size()];
