@@ -35,37 +35,18 @@
 namespace isc {
 namespace crypto {
 
-void doHMAC(const isc::dns::OutputBuffer& data, isc::dns::TSIGKey key, isc::dns::OutputBuffer& result);
-bool verifyHMAC(const isc::dns::OutputBuffer& data, isc::dns::TSIGKey key, const isc::dns::OutputBuffer& mac);
+void signHMAC(const isc::dns::OutputBuffer& data,
+              isc::dns::TSIGKey key,
+              isc::dns::OutputBuffer& result);
+
+bool verifyHMAC(const isc::dns::OutputBuffer& data,
+                isc::dns::TSIGKey key,
+                const isc::dns::OutputBuffer& mac);
+
 isc::dns::TSIGKey TSIGKeyFromString(const std::string& str);
+
 std::string TSIGKeyToString(const isc::dns::TSIGKey& key);
 
-class Crypto {
-    static Crypto& getInstance();
-    virtual void init() = 0;
-    virtual void cleanup() = 0;
-};
-
-/*
-class TSIGKeyImpl;
-
-class TSIGKey {
-public:
-    enum algorithms {
-        TSIG_HMAC_MD5 = 1,
-        TSIG_HMAC_SHA256 = 2
-    };
-
-    TSIGKey(const std::string& str);
-    ~TSIGKey();
-    algorithms getAlgorithm();
-    const char* getSecret();
-    size_t getSecretLength();
-    
-private:
-    TSIGKeyImpl* impl_;
-};
-*/
 } // namespace crypto
 } // namespace isc
 

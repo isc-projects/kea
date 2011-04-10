@@ -22,13 +22,6 @@
 namespace isc {
 namespace crypto {
 
-class CryptoBotan : public Crypto {
-    void init() {};
-    void cleanup() {};
-};
-
-
-
 } // namespace crypto
 } // namespace isc
 
