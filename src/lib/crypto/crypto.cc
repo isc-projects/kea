@@ -33,6 +33,21 @@ using namespace Botan;
 using namespace std;
 using namespace isc::dns;
 
+namespace {
+HashFunction* getHash(const Name& hash_name) {
+	if (hash_name == TSIGKey::HMACMD5_NAME()) {
+		return get_hash("MD5");
+	} else if (hash_name == TSIGKey::HMACSHA1_NAME()) {
+		return get_hash("SHA-1");
+	} else if (hash_name == TSIGKey::HMACSHA256_NAME()) {
+		return get_hash("SHA-256");
+	} else {
+		isc_throw(isc::InvalidParameter, "Unknown Hash type");
+	}
+}
+
+}
+
 namespace isc {
 namespace crypto {
 
@@ -96,19 +111,34 @@ void doHMAC(const OutputBuffer& data, TSIGKey key, isc::dns::OutputBuffer& resul
     // not used here, but we'd need a ctx
 
     // should get algorithm from key, then 'translate' to Botan-specific algo
-    HashFunction* hash = get_hash("MD5");
+    HashFunction* hash = getHash(key.getAlgorithmName());
     HMAC::HMAC hmac(hash);
 
-    // update the data from whatever we get (probably as a buffer)
-    hmac.update(reinterpret_cast<const byte*>(data.getData()), data.getLength());
-
     // Take the 'secret' from the key
-    hmac.set_key(reinterpret_cast<const byte*>(key.getSecret()), key.getSecretLength());
+    hmac.set_key(static_cast<const byte*>(key.getSecret()), key.getSecretLength());
+
+    // update the data from whatever we get (probably as a buffer)
+    hmac.update(static_cast<const byte*>(data.getData()), data.getLength());
 
     // And generate the mac
     SecureVector<byte> b_result(hmac.final());
 
     // just some debug
+    std::cout << "DATA (" << data.getLength() << "): ";
+    const uint8_t *d= static_cast<const uint8_t*>(data.getData());
+    for(size_t s = 0; s < data.getLength(); ++s) {
+        std::cout << hex << setfill('0') << setw(2) << nouppercase << (unsigned int)d[s] << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "KEY (" << (int)key.getSecretLength() << "): ";
+    const uint8_t *k = static_cast<const uint8_t*>(key.getSecret());
+    for(size_t s = 0; s < key.getSecretLength(); ++s) {
+		std::cout << s << ": ";
+        std::cout << hex << setfill('0') << setw(2) << nouppercase << (unsigned int)k[s] << " ";
+		std::cout << std::endl;
+    }
+    std::cout << std::endl;
+    std::cout << "HASH: ";
     for(byte* i = b_result.begin(); i != b_result.end(); ++i) {
         std::cout << hex << setfill('0') << setw(2) << nouppercase << (unsigned int)(*i);
     }
@@ -122,24 +152,16 @@ void doHMAC(const OutputBuffer& data, TSIGKey key, isc::dns::OutputBuffer& resul
 }
 
 bool verifyHMAC(const OutputBuffer& data, TSIGKey key, const isc::dns::OutputBuffer& result) {
-    HashFunction* hash = get_hash("MD5");
+    HashFunction* hash = getHash(key.getAlgorithmName());
     HMAC::HMAC hmac(hash);
-    hmac.update(reinterpret_cast<const byte*>(data.getData()), data.getLength());
-    hmac.set_key(reinterpret_cast<const byte*>(key.getSecret()), key.getSecretLength());
+    hmac.set_key(static_cast<const byte*>(key.getSecret()), key.getSecretLength());
+    hmac.update(static_cast<const byte*>(data.getData()), data.getLength());
 
-    SecureVector<byte> b_result(hmac.final());
-    for(byte* i = b_result.begin(); i != b_result.end(); ++i) {
-        std::cout << hex << setfill('0') << setw(2) << nouppercase << (unsigned int)(*i);
-    }
-    std::cout << std::endl;
-
-    std::cout << "HMAC SIG LEN3: " << result.getLength() << std::endl;
-    return hmac.verify_mac(reinterpret_cast<const byte*>(result.getData()), result.getLength());
+    return hmac.verify_mac(static_cast<const byte*>(result.getData()), result.getLength());
 }
 
 isc::dns::TSIGKey
 TSIGKeyFromString(const std::string& str) {
-	std::cout << "[XX] key string: " << str << std::endl;
 	size_t pos = str.find(':');
 	if (pos == 0 || pos == str.npos) {
 		// error, TODO: raise
@@ -162,9 +184,11 @@ TSIGKeyFromString(const std::string& str) {
 	
 	std::string secret_str = str.substr(pos + 1, pos2 - pos - 1);
 
+	///*
 	std::cout << "[XX] KEY NAME: " << key_name << std::endl;
 	std::cout << "[XX] KEY ALGO: " << algo_name << std::endl;
 	std::cout << "[XX] SECRET:   " << secret_str << std::endl;
+	//*/
 	vector<uint8_t> secret;
 	decodeBase64(secret_str, secret);
 	unsigned char secret_b[secret.size()];
