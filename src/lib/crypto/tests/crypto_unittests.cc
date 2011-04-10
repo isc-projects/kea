@@ -18,6 +18,7 @@
 #include <crypto/crypto.h>
 #include <crypto/crypto_botan.h>
 #include <dns/buffer.h>
+#include <exceptions/exceptions.h>
 
 using namespace isc::dns;
 using namespace isc::crypto;
@@ -26,23 +27,30 @@ TEST(CryptoTest, HMAC_SIGN) {
     char data_b[] = "Hi there";
     OutputBuffer data(8);
     data.writeData(data_b, 8);
-    char key[] = { 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b  };
+
+	TSIGKey key = TSIGKeyFromString("test.example:MSG6Ng==:hmac-md5.sig-alg.reg.int");
+
     OutputBuffer hmac_sig(1);
     
-
-    doHMAC(data, key, 16, hmac_sig);
-    bool result = verifyHMAC(data, key, 16, hmac_sig);
+    doHMAC(data, key, hmac_sig);
+    bool result = verifyHMAC(data, key, hmac_sig);
     EXPECT_TRUE(result);
 }
 
 TEST(CryptoText, TSIGKeyFromString) {
 	TSIGKey k1 = TSIGKeyFromString("test.example:MSG6Ng==:hmac-md5.sig-alg.reg.int");
-	TSIGKeyFromString("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.");
-	TSIGKeyFromString("test.example:MSG6Ng==");
-	//TSIGKeyFromString("test.example:");
-	//TSIGKeyFromString("::");
-	//TSIGKeyFromString("test.example:MSG6Ng==:hmac-md5.sig-alg.reg.int");
+	TSIGKey k2 = TSIGKeyFromString("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.");
+	TSIGKey k3 = TSIGKeyFromString("test.example:MSG6Ng==");
 	
-	std::string k1_str = TSIGKeyToString(k1);
-	std::cout << k1_str << std::endl;
+	EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.",
+	          TSIGKeyToString(k1));
+	EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.",
+	          TSIGKeyToString(k2));
+	EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.",
+	          TSIGKeyToString(k3));
+
+	EXPECT_THROW(TSIGKeyFromString(""), isc::InvalidParameter);
+	EXPECT_THROW(TSIGKeyFromString("::"), isc::InvalidParameter);
+	EXPECT_THROW(TSIGKeyFromString("test.example.::"), isc::InvalidParameter);
+	EXPECT_THROW(TSIGKeyFromString("test.example.:MSG6Ng==:unknown"), isc::InvalidParameter);
 }
