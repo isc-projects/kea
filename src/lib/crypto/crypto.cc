@@ -24,6 +24,9 @@
 
 #include <dns/buffer.h>
 #include <dns/name.h>
+#include <dns/tsigkey.h>
+#include <dns/util/base64.h>
+
 #include <string>
 
 using namespace Botan;
@@ -33,6 +36,7 @@ using namespace isc::dns;
 namespace isc {
 namespace crypto {
 
+/*
 class TSIGKeyImpl {
 public:
     TSIGKeyImpl(const std::string& str) {
@@ -81,11 +85,9 @@ size_t
 TSIGKey::getSecretLength() {
     return impl_->getSecretLength();
 }
+*/
 
-} // namespace crypto
-} // namespace isc
-
-void doHMAC(const OutputBuffer& data, char* key, isc::dns::OutputBuffer& result) {
+void doHMAC(const OutputBuffer& data, char* key, size_t key_len, isc::dns::OutputBuffer& result) {
 
     // needs to be in global scope; can we make a generalized
     // subclassable singleton? (for hsm we'll need more initialization)
@@ -94,14 +96,14 @@ void doHMAC(const OutputBuffer& data, char* key, isc::dns::OutputBuffer& result)
     // not used here, but we'd need a ctx
 
     // should get algorithm from key, then 'translate' to Botan-specific algo
-    HashFunction* hash = get_hash("SHA-256");
+    HashFunction* hash = get_hash("MD5");
     HMAC::HMAC hmac(hash);
 
     // update the data from whatever we get (probably as a buffer)
     hmac.update(reinterpret_cast<const byte*>(data.getData()), data.getLength());
 
     // Take the 'secret' from the key
-    hmac.set_key(reinterpret_cast<byte*>(key), 3);
+    hmac.set_key(reinterpret_cast<byte*>(key), key_len);
 
     // And generate the mac
     SecureVector<byte> b_result(hmac.final());
@@ -119,11 +121,11 @@ void doHMAC(const OutputBuffer& data, char* key, isc::dns::OutputBuffer& result)
     std::cout << "HMAC SIG LEN2: " << result.getLength() << std::endl;
 }
 
-bool verifyHMAC(const OutputBuffer& data, char* key, const isc::dns::OutputBuffer& result) {
-    HashFunction* hash = get_hash("SHA-256");
+bool verifyHMAC(const OutputBuffer& data, char* key, size_t key_len, const isc::dns::OutputBuffer& result) {
+    HashFunction* hash = get_hash("MD5");
     HMAC::HMAC hmac(hash);
     hmac.update(reinterpret_cast<const byte*>(data.getData()), data.getLength());
-    hmac.set_key(reinterpret_cast<byte*>(key), 3);
+    hmac.set_key(reinterpret_cast<byte*>(key), key_len);
 
     SecureVector<byte> b_result(hmac.final());
     for(byte* i = b_result.begin(); i != b_result.end(); ++i) {
@@ -134,3 +136,56 @@ bool verifyHMAC(const OutputBuffer& data, char* key, const isc::dns::OutputBuffe
     std::cout << "HMAC SIG LEN3: " << result.getLength() << std::endl;
     return hmac.verify_mac(reinterpret_cast<const byte*>(result.getData()), result.getLength());
 }
+
+isc::dns::TSIGKey
+TSIGKeyFromString(const std::string& str) {
+	std::cout << "[XX] key string: " << str << std::endl;
+	size_t pos = str.find(':');
+	if (pos == 0 || pos == str.npos) {
+		// error, TODO: raise
+		std::cout << "[XX] error bad key string" << std::endl;
+		isc_throw(InvalidParameter, "Invalid TSIG key string");
+	}
+	Name key_name(str.substr(0, pos));
+	
+	Name algo_name("hmac-md5.sig-alg.reg.int");
+	
+	// optional algorithm part
+	size_t pos2 = str.find(':', pos+1);
+	if (pos2 != str.npos) {
+		algo_name = Name(str.substr(pos2+1));
+		//pos2 = str.size() - pos - pos2;
+	} else {
+		pos2 = str.size() - pos;
+	}
+	
+	std::string secret_str = str.substr(pos + 1, pos2 - pos - 1);
+
+	std::cout << "[XX] KEY NAME: " << key_name << std::endl;
+	std::cout << "[XX] KEY ALGO: " << algo_name << std::endl;
+	std::cout << "[XX] SECRET:   " << secret_str << std::endl;
+	vector<uint8_t> secret;
+	decodeBase64(secret_str, secret);
+	unsigned char secret_b[secret.size()];
+	for (size_t i=0; i < secret.size(); ++i) {
+		secret_b[i] = secret[i];
+	}
+	return isc::dns::TSIGKey(key_name, algo_name, secret_b, secret.size());
+}
+
+std::string
+TSIGKeyToString(const isc::dns::TSIGKey& key) {
+	const uint8_t* secret_b = static_cast<const uint8_t*>(key.getSecret());
+	vector<uint8_t> secret_v;
+	for (size_t i=0; i < key.getSecretLength(); ++i) {
+		secret_v.push_back(secret_b[i]);
+	}
+	std::string secret_str = encodeBase64(secret_v);
+	
+	return key.getKeyName().toText() + ":" + secret_str + ":" + key.getAlgorithmName().toText();
+}
+
+
+} // namespace crypto
+} // namespace isc
+
