@@ -24,11 +24,12 @@ using namespace isc::dns;
 using namespace isc::crypto;
 
 TEST(CryptoTest, HMAC_SIGN) {
-    char data_b[] = "Hi there";
+    char data_b[] = "Hi There";
+    //char data_b[] = "asdasdasd";
     OutputBuffer data(8);
     data.writeData(data_b, 8);
-
-	TSIGKey key = TSIGKeyFromString("test.example:MSG6Ng==:hmac-md5.sig-alg.reg.int");
+	// 0x0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b = CwsLCwsLCwsLCwsLCwsLCw==
+	TSIGKey key = TSIGKeyFromString("test.example:CwsLCwsLCwsLCwsLCwsLCw==:hmac-md5.sig-alg.reg.int");
 
     OutputBuffer hmac_sig(1);
     
