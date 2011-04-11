@@ -16,7 +16,6 @@
 #include <gtest/gtest.h>
 
 #include <crypto/crypto.h>
-#include <crypto/crypto_botan.h>
 #include <dns/buffer.h>
 #include <dns/name.h>
 #include <exceptions/exceptions.h>
