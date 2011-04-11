@@ -16,9 +16,9 @@
 
 #include <exceptions/exceptions.h>
 
-#include <dns/util/base32hex.h>
-#include <dns/buffer.h>
-#include <dns/util/hex.h>
+#include <util/base32hex.h>
+#include <util/buffer.h>
+#include <util/hex.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
@@ -34,6 +34,7 @@ using isc::UnitTestUtil;
 using namespace std;
 using namespace isc;
 using namespace isc::dns;
+using namespace isc::util;
 using namespace isc::dns::rdata;
 
 namespace {

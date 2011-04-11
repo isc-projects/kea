@@ -26,7 +26,8 @@
 #include <log/message_dictionary.h>
 #include <log/message_types.h>
 #include <log/root_logger_name.h>
-#include <log/strutil.h>
+
+#include <util/strutil.h>
 
 using namespace std;
 

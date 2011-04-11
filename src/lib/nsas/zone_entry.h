@@ -25,13 +25,14 @@
 
 #include <resolve/resolver_interface.h>
 
-#include "locks.h"
+#include <util/locks.h>
+#include <util/random_number_generator.h>
+
 #include "hash_key.h"
 #include "nsas_entry.h"
 #include "asiolink.h"
 #include "fetchable.h"
 #include "nsas_types.h"
-#include "random_number_generator.h"
 #include "glue_hints.h"
 
 namespace isc {
@@ -72,7 +73,7 @@ public:
     ZoneEntry(isc::resolve::ResolverInterface* resolver,
         const std::string& name, const isc::dns::RRClass& class_code,
         boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table,
-        boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru);
+        boost::shared_ptr<isc::util::LruList<NameserverEntry> > nameserver_lru);
 
     /// \return Name of the zone
     std::string getName() const {
@@ -161,7 +162,7 @@ private:
     // We store the nameserver table and lru, so we can look up when there's
     // update
     boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table_;
-    boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru_;
+    boost::shared_ptr<isc::util::LruList<NameserverEntry> > nameserver_lru_;
     // Resolver callback class, documentation with the class declaration
     class ResolverCallback;
     // It has direct access to us
@@ -182,7 +183,7 @@ private:
     void insertCallback(NameserverPtr nameserver, AddressFamily family);
     // A random generator for this zone entry
     // TODO: A more global one? Per thread one?
-    WeightedRandomIntegerGenerator address_selector;
+    isc::util::WeightedRandomIntegerGenerator address_selector;
 };
 
 } // namespace nsas

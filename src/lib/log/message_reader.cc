@@ -21,7 +21,7 @@
 #include <log/message_exception.h>
 #include <log/messagedef.h>
 #include <log/message_reader.h>
-#include <log/strutil.h>
+#include <util/strutil.h>
 
 using namespace std;
 

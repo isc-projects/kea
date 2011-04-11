@@ -25,11 +25,12 @@
 
 #include <resolve/resolver_interface.h>
 
+#include <util/lru_list.h>
+
 #include "address_entry.h"
 #include "asiolink.h"
 #include "nsas_types.h"
 #include "hash_key.h"
-#include "lru_list.h"
 #include "fetchable.h"
 #include "nsas_entry.h"
 #include "nameserver_address.h"

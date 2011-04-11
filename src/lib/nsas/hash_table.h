@@ -19,7 +19,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "locks.h"
+#include <util/locks.h>
+
 #include "hash.h"
 #include "hash_key.h"
 

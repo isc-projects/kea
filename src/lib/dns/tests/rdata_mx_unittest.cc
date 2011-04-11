@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
@@ -27,6 +27,7 @@
 using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
+using namespace isc::util;
 using namespace isc::dns::rdata;
 
 namespace {

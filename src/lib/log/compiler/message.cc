@@ -25,17 +25,19 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <log/filename.h>
+#include <util/filename.h>
+#include <util/strutil.h>
+
 #include <log/message_dictionary.h>
 #include <log/message_exception.h>
 #include <log/message_reader.h>
 #include <log/messagedef.h>
-#include <log/strutil.h>
 
 #include <log/logger.h>
 
 using namespace std;
 using namespace isc::log;
+using namespace isc::util;
 
 static const char* VERSION = "1.0-0";
 

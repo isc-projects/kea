@@ -31,7 +31,8 @@
 
 #include <exceptions/exceptions.h>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
+
 #include <dns/edns.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
@@ -63,6 +64,7 @@ using namespace isc;
 using namespace isc::cc;
 using namespace isc::datasrc;
 using namespace isc::dns;
+using namespace isc::util;
 using namespace isc::auth;
 using namespace isc::dns::rdata;
 using namespace isc::data;

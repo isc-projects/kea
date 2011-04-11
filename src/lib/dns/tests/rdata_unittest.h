@@ -15,13 +15,15 @@
 #ifndef __RDATA_UNITTEST_H
 #define __RDATA_UNITTEST_H 1
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 #include <dns/rdata.h>
 
 #include <gtest/gtest.h>
+
+using namespace isc::util;
 
 namespace isc {
 namespace dns {

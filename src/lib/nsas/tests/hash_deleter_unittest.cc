@@ -22,11 +22,11 @@
 #include <boost/lexical_cast.hpp>
 
 #include <dns/rrclass.h>
+#include <util/lru_list.h>
 
 #include "../nsas_entry.h"
 #include "../hash_table.h"
 #include "../hash_key.h"
-#include "../lru_list.h"
 #include "../hash_deleter.h"
 
 #include "nsas_test.h"
@@ -34,6 +34,7 @@
 
 using namespace std;
 using namespace isc::dns;
+using namespace isc::util;
 
 namespace isc {
 namespace nsas {

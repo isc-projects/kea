@@ -27,7 +27,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
@@ -36,6 +36,7 @@
 
 using namespace std;
 using namespace boost;
+using namespace isc::util;
 
 namespace isc {
 namespace dns {
