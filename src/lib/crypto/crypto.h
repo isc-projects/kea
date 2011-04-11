@@ -28,6 +28,7 @@
 #include <string>
 #include <dns/buffer.h>
 #include <dns/tsigkey.h>
+#include <exceptions/exceptions.h>
 
 #ifndef _ISC_CRYPTO_H
 #define _ISC_CRYPTO_H
@@ -35,10 +36,50 @@
 namespace isc {
 namespace crypto {
 
+class CryptoError : public Exception {
+public:
+    CryptoError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+class UnsupportedAlgorithm : public CryptoError {
+public:
+    UnsupportedAlgorithm(const char* file, size_t line, const char* what) :
+        CryptoError(file, line, what) {}
+};
+
+// The underlying library could not handle this key
+class BadKey : public CryptoError {
+public:
+    BadKey(const char* file, size_t line, const char* what) :
+        CryptoError(file, line, what) {}
+};
+
+/// \brief Create an HMAC signature for the given data
+///
+/// Raises an UnsupportedAlgorithm if we do not support the given
+/// algorithm. Raises a BadKey exception if the underlying library
+/// cannot handle the given TSIGKey (for instance if it has a bad
+/// length).
+///
+/// \param data The data to sign
+/// \param key The TSIGKey to sign with
+/// \param result The signature will be written to the end of this buffer
 void signHMAC(const isc::dns::OutputBuffer& data,
               isc::dns::TSIGKey key,
               isc::dns::OutputBuffer& result);
 
+/// \brief Verify an HMAC signature for the given data
+///
+/// Raises an UnsupportedAlgorithm if we do not support the given
+/// algorithm. Raises a BadKey exception if the underlying library
+/// cannot handle the given TSIGKey (for instance if it has a bad
+/// length).
+///
+/// \param data The data to verify
+/// \param key The TSIGKey to verify with
+/// \param mac The signature to verify
+/// \return True if the signature verifies, false if not
 bool verifyHMAC(const isc::dns::OutputBuffer& data,
                 isc::dns::TSIGKey key,
                 const isc::dns::OutputBuffer& mac);
