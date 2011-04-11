@@ -17,7 +17,6 @@
 #include <iostream>
 #include <iomanip>
 
-#include "crypto_botan.h"
 #include <botan/botan.h>
 #include <botan/hmac.h>
 #include <botan/hash.h>
