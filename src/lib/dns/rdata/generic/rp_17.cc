@@ -74,6 +74,14 @@ RP::RP(const std::string& rp_str) :
 RP::RP(InputBuffer& buffer, size_t) : mailbox_(buffer), text_(buffer) {
 }
 
+/// \brief Copy constructor.
+///
+/// \exception std::bad_alloc Memory allocation fails in copying internal
+/// member variables (this should be very rare).
+RP::RP(const RP& other) :
+    Rdata(), mailbox_(other.mailbox_), text_(other.text_)
+{}
+
 /// \brief Convert the \c RP to a string.
 ///
 /// The output of this method is formatted as described in the "from string"
