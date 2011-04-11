@@ -28,7 +28,6 @@ namespace {
         ASSERT_EQ(buf.getLength(), len);
         const uint8_t* buf_d = static_cast<const uint8_t*>(buf.getData());
         for (size_t i = 0; i < len; ++i) {
-            //std::cout << "[XX] I: " << i << ", buf: " << buf_d[i] << ", dat: " << data[i] << std::endl;
             ASSERT_EQ(buf_d[i], data[i]);
         }
     }
@@ -39,7 +38,7 @@ namespace {
         data_buf.writeData(data.c_str(), data.size());
         OutputBuffer hmac_sig(1);
         
-        TSIGKey key = TSIGKeyFromString(key_str);
+        TSIGKey key(key_str);
         
         signHMAC(data_buf, key, hmac_sig);
         checkBuffer(hmac_sig, expected_hmac, hmac_len);
@@ -51,7 +50,6 @@ namespace {
 // Test values taken from RFC 2202
 //
 TEST(CryptoTest, HMAC_MD5_RFC2202_SIGN) {
-    // 0x0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b = CwsLCwsLCwsLCwsLCwsLCw==
     uint8_t hmac_expected[] = { 0x92, 0x94, 0x72, 0x7a, 0x36, 0x38,
                                 0xbb, 0x1c, 0x13, 0xf4, 0x8e, 0xf8,
                                 0x15, 0x8b, 0xfc, 0x9d };
@@ -98,14 +96,19 @@ TEST(CryptoTest, HMAC_MD5_RFC2202_SIGN) {
                                  0xbf, 0x8f, 0x0b, 0x62, 0xe6, 0xce,
                                  0x61, 0xb9, 0xd0, 0xcd };
     doHMACTest("Test Using Larger Than Block-Size Key - Hash Key First",
-               "test.example:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqo=:hmac-md5.sig-alg.reg.int",
+               "test.example:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
+               "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
+               "qqqqqqqqqo=:hmac-md5.sig-alg.reg.int",
                hmac_expected6, 16);
 
     uint8_t hmac_expected7[] = { 0x6f, 0x63, 0x0f, 0xad, 0x67, 0xcd,
                                  0xa0, 0xee, 0x1f, 0xb1, 0xf5, 0x62,
                                  0xdb, 0x3a, 0xa5, 0x3e };
-    doHMACTest("Test Using Larger Than Block-Size Key and Larger Than One Block-Size Data",
-               "test.example:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqo=:hmac-md5.sig-alg.reg.int",
+    doHMACTest("Test Using Larger Than Block-Size Key and Larger Than "
+               "One Block-Size Data",
+               "test.example:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
+               "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
+               "qqqqqqqqqo=:hmac-md5.sig-alg.reg.int",
                hmac_expected7, 16);
 
 }
@@ -167,15 +170,20 @@ TEST(CryptoTest, HMAC_SHA1_RFC2202_SIGN) {
                                  0xce, 0x8a, 0x3b, 0x55, 0xed, 0x40,
                                  0x21, 0x12 };
     doHMACTest("Test Using Larger Than Block-Size Key - Hash Key First",
-               "test.example:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqo=:hmac-sha1",
+               "test.example:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
+               "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
+               "qqqqqqqqqo=:hmac-sha1",
                hmac_expected6, 20);
 
     uint8_t hmac_expected7[] = { 0xe8, 0xe9, 0x9d, 0x0f, 0x45, 0x23,
                                  0x7d, 0x78, 0x6d, 0x6b, 0xba, 0xa7,
                                  0x96, 0x5c, 0x78, 0x08, 0xbb, 0xff,
                                  0x1a, 0x91 };
-    doHMACTest("Test Using Larger Than Block-Size Key and Larger Than One Block-Size Data",
-               "test.example:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqo=:hmac-sha1",
+    doHMACTest("Test Using Larger Than Block-Size Key and Larger Than "
+               "One Block-Size Data",
+               "test.example:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
+               "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
+               "qqqqqqqqqo=:hmac-sha1",
                hmac_expected7, 20);
 }
 
@@ -244,7 +252,10 @@ TEST(CryptoTest, HMAC_SHA256_RFC2202_SIGN) {
                                  0x05, 0x46, 0x04, 0x0f, 0x0e, 0xe3,
                                  0x7f, 0x54 };
     doHMACTest("Test Using Larger Than Block-Size Key - Hash Key First",
-               "test.example:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqo=:hmac-sha256",
+               "test.example:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
+               "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
+               "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
+               "qqqqqqqqqqqqqqqqqqqqqqo=:hmac-sha256",
                hmac_expected6, 32);
 
     uint8_t hmac_expected7[] = { 0x9b, 0x09, 0xff, 0xa7, 0x1b, 0x94,
@@ -254,55 +265,13 @@ TEST(CryptoTest, HMAC_SHA256_RFC2202_SIGN) {
                                  0x8a, 0x7f, 0x51, 0x53, 0x5c, 0x3a,
                                  0x35, 0xe2 };
     doHMACTest("This is a test using a larger than block-size key and a larger than block-size data. The key needs to be hashed before being used by the HMAC algorithm.",
-               "test.example:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqo=:hmac-sha256",
+               "test.example:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
+               "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
+               "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
+               "qqqqqqqqqqqqqqqqqqqqqqo=:hmac-sha256",
                hmac_expected7, 32);
 }
-/*
-TEST(CryptoTest, HMAC_SHA256_RFC2202_SIGN) {
-    uint8_t hmac_expected[] = {  };
-    doHMACTest("Hi There",
-               "test.example:CwsLCwsLCwsLCwsLCwsLCwsLCws=:hmac-sha1",
-               hmac_expected, 20);
 
-    uint8_t hmac_expected2[] = {  };
-    doHMACTest("what do ya want for nothing?",
-               "test.example:SmVmZQ==:hmac-sha1",
-               hmac_expected2, 20);
-
-    std::string data3;
-    for (int i = 0; i < 50; ++i) {
-        data3.push_back(0xdd);
-    }
-    uint8_t hmac_expected3[] = {  };
-    doHMACTest(data3,
-               "test.example:qqqqqqqqqqqqqqqqqqqqqqqqqqo=:hmac-sha1",
-               hmac_expected3, 20);
-
-    std::string data4;
-    for (int i = 0; i < 50; ++i) {
-        data4.push_back(0xcd);
-    }
-    uint8_t hmac_expected4[] = {  };
-    doHMACTest(data4,
-               "test.example:AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGQ==:hmac-sha1",
-               hmac_expected4, 20);
-
-    uint8_t hmac_expected5[] = {  };
-    doHMACTest("Test With Truncation",
-               "test.example:DAwMDAwMDAwMDAwMDAwMDAwMDAw=:hmac-sha1",
-               hmac_expected5, 20);
-               
-    uint8_t hmac_expected6[] = {  };
-    doHMACTest("Test Using Larger Than Block-Size Key - Hash Key First",
-               "test.example:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqo=:hmac-sha1",
-               hmac_expected6, 20);
-
-    uint8_t hmac_expected7[] = {  };
-    doHMACTest("Test Using Larger Than Block-Size Key and Larger Than One Block-Size Data",
-               "test.example:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqo=:hmac-sha1",
-               hmac_expected7, 20);
-}
-*/
 TEST(CryptoTest, BadKey) {
     TSIGKey bad_key = TSIGKey(Name("test.example."), Name("hmac-sha1."),
                               NULL, 0);
@@ -312,27 +281,4 @@ TEST(CryptoTest, BadKey) {
     
     EXPECT_THROW(signHMAC(data_buf, bad_key, hmac_sig), BadKey);
     EXPECT_THROW(verifyHMAC(data_buf, bad_key, hmac_sig), BadKey);
-}
-
-TEST(CryptoTest, TSIGKeyFromToString) {
-    TSIGKey k1 = TSIGKeyFromString("test.example:MSG6Ng==:hmac-md5.sig-alg.reg.int");
-    TSIGKey k2 = TSIGKeyFromString("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.");
-    TSIGKey k3 = TSIGKeyFromString("test.example:MSG6Ng==");
-    TSIGKey k4 = TSIGKey(Name("test.example."), Name("hmac-sha1."), NULL, 0);
-    
-    EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.",
-              TSIGKeyToString(k1));
-    EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.",
-              TSIGKeyToString(k2));
-    EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.",
-              TSIGKeyToString(k3));
-    EXPECT_EQ("test.example.::hmac-sha1.", TSIGKeyToString(k4));
-
-    EXPECT_THROW(TSIGKeyFromString(""), isc::InvalidParameter);
-    EXPECT_THROW(TSIGKeyFromString("::"), isc::InvalidParameter);
-    EXPECT_THROW(TSIGKeyFromString("..:aa:"), isc::InvalidParameter);
-    EXPECT_THROW(TSIGKeyFromString("test.example:xxxx:"), isc::InvalidParameter);
-    EXPECT_THROW(TSIGKeyFromString("test.example.::"), isc::InvalidParameter);
-    EXPECT_THROW(TSIGKeyFromString("test.example.:MSG6Ng==:unknown"), isc::InvalidParameter);
-
 }
