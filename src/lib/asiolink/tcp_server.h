@@ -91,7 +91,7 @@ private:
     boost::shared_ptr<asio::ip::tcp::socket> socket_;
 
     // The buffer into which the response is written
-    boost::shared_ptr<isc::dns::OutputBuffer> respbuf_;
+    boost::shared_ptr<isc::util::OutputBuffer> respbuf_;
 
     // \c IOMessage and \c Message objects to be passed to the
     // DNS lookup and answer providers

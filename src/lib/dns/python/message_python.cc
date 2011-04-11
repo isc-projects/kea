@@ -15,6 +15,7 @@
 #include <exceptions/exceptions.h>
 #include <dns/message.h>
 using namespace isc::dns;
+using namespace isc::util;
 
 //
 // Declaration of the custom exceptions

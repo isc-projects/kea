@@ -17,12 +17,13 @@
 #include <sstream>
 #include <ostream>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rrttl.h>
 
 using namespace std;
 using namespace isc::dns;
+using namespace isc::util;
 
 namespace isc {
 namespace dns {

@@ -35,11 +35,11 @@
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
+#include <util/asiolink_utilities.h>
 
 #include <asio.hpp>
 
-#include <asiolink/asiolink_utilities.h>
 #include <asiolink/io_service.h>
 #include <asiolink/tcp_endpoint.h>
 #include <asiolink/tcp_socket.h>
@@ -47,7 +47,7 @@
 using namespace asio;
 using namespace asio::ip;
 using namespace asiolink;
-using namespace isc::dns;
+using namespace isc::util;
 using namespace std;
 
 namespace {

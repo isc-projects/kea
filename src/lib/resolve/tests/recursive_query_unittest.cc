@@ -30,7 +30,7 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/rcode.h>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/message.h>
 
 #include <nsas/nameserver_address_store.h>
@@ -56,6 +56,7 @@ using isc::UnitTestUtil;
 using namespace std;
 using namespace asiolink;
 using namespace isc::dns;
+using namespace isc::util;
 
 namespace {
 const char* const TEST_SERVER_PORT = "53535";
@@ -319,7 +320,7 @@ protected:
         boost::shared_ptr<asiolink::IOMessage> io_message_;
         isc::dns::MessagePtr message_;
         isc::dns::MessagePtr answer_message_;
-        isc::dns::OutputBufferPtr respbuf_;
+        isc::util::OutputBufferPtr respbuf_;
 
         // Callback functions provided by the caller
         const SimpleCallback* checkin_;

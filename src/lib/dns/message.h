@@ -28,6 +28,10 @@
 #include <dns/rrset.h>
 
 namespace isc {
+namespace util {
+class InputBuffer;
+}
+
 namespace dns {
 
 ///
@@ -76,7 +80,6 @@ public:
 
 typedef uint16_t qid_t;
 
-class InputBuffer;
 class MessageRenderer;
 class Message;
 class MessageImpl;
@@ -529,10 +532,10 @@ public:
     void toWire(MessageRenderer& renderer);
 
     /// \brief Parse the header section of the \c Message.
-    void parseHeader(InputBuffer& buffer);
+    void parseHeader(isc::util::InputBuffer& buffer);
 
     /// \brief Parse the \c Message.
-    void fromWire(InputBuffer& buffer);
+    void fromWire(isc::util::InputBuffer& buffer);
 
     ///
     /// \name Protocol constants

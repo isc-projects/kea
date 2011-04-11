@@ -13,7 +13,6 @@ CLEANFILES = *.gcno *.gcda
 # which would make the build fail with -Werror (our default setting).
 lib_LTLIBRARIES = libasiolink.la
 libasiolink_la_SOURCES  = asiolink.h
-libasiolink_la_SOURCES += asiolink_utilities.h
 libasiolink_la_SOURCES += asiodef.cc asiodef.h
 libasiolink_la_SOURCES += dns_answer.h
 libasiolink_la_SOURCES += dns_lookup.h
@@ -27,7 +26,6 @@ libasiolink_la_SOURCES += io_endpoint.cc io_endpoint.h
 libasiolink_la_SOURCES += io_error.h
 libasiolink_la_SOURCES += io_fetch.cc io_fetch.h
 libasiolink_la_SOURCES += io_message.h
-libasiolink_la_SOURCES += qid_gen.cc qid_gen.h
 libasiolink_la_SOURCES += io_service.h io_service.cc
 libasiolink_la_SOURCES += io_socket.h io_socket.cc
 libasiolink_la_SOURCES += simple_callback.h

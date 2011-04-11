@@ -25,7 +25,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/edns.h>
 #include <dns/exceptions.h>
 #include <dns/message.h>
@@ -43,6 +43,7 @@
 using namespace std;
 using namespace boost;
 using namespace isc::dns::rdata;
+using namespace isc::util;
 
 namespace isc {
 namespace dns {

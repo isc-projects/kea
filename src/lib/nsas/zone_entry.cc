@@ -31,7 +31,8 @@ using namespace std;
 
 namespace isc {
 
-using namespace dns;
+using namespace isc::dns;
+using namespace isc::util;
 
 namespace nsas {
 
