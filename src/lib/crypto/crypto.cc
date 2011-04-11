@@ -20,6 +20,7 @@
 #include "crypto_botan.h"
 #include <botan/botan.h>
 #include <botan/hmac.h>
+#include <botan/hash.h>
 #include <botan/types.h>
 
 #include <dns/buffer.h>
@@ -66,9 +67,18 @@ signHMAC(const OutputBuffer& data, TSIGKey key,
     HMAC::HMAC hmac(hash);
 
     // Take the 'secret' from the key
+    // If the key length is larger than the block size, we hash the
+    // key itself first.
     try {
-        hmac.set_key(static_cast<const byte*>(key.getSecret()),
-                    key.getSecretLength());
+        if (key.getSecretLength() > hash->HASH_BLOCK_SIZE) {
+            SecureVector<byte> hashed_key =
+                hash->process(static_cast<const byte*>(key.getSecret()),
+                              key.getSecretLength());
+            hmac.set_key(hashed_key.begin(), hashed_key.size());
+        } else {
+            hmac.set_key(static_cast<const byte*>(key.getSecret()),
+                         key.getSecretLength());
+        }
     } catch (Invalid_Key_Length ikl) {
         isc_throw(BadKey, ikl.what());
     }
@@ -90,14 +100,27 @@ verifyHMAC(const OutputBuffer& data, TSIGKey key,
 {
     HashFunction* hash = getHash(key.getAlgorithmName());
     HMAC::HMAC hmac(hash);
+    // If the key length is larger than the block size, we hash the
+    // key itself first.
     try {
-        hmac.set_key(static_cast<const byte*>(key.getSecret()), key.getSecretLength());
+        if (key.getSecretLength() > hash->HASH_BLOCK_SIZE) {
+            SecureVector<byte> hashed_key =
+                hash->process(static_cast<const byte*>(key.getSecret()),
+                              key.getSecretLength());
+            hmac.set_key(hashed_key.begin(), hashed_key.size());
+        } else {
+            hmac.set_key(static_cast<const byte*>(key.getSecret()),
+                         key.getSecretLength());
+        }
     } catch (Invalid_Key_Length ikl) {
         isc_throw(BadKey, ikl.what());
     }
-    hmac.update(static_cast<const byte*>(data.getData()), data.getLength());
 
-    return hmac.verify_mac(static_cast<const byte*>(result.getData()), result.getLength());
+    hmac.update(static_cast<const byte*>(data.getData()),
+                data.getLength());
+
+    return hmac.verify_mac(static_cast<const byte*>(result.getData()),
+                           result.getLength());
 }
 
 isc::dns::TSIGKey
