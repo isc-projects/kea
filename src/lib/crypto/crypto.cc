@@ -47,10 +47,10 @@ HashFunction* getHash(const Name& hash_name) {
     }
 }
 
-    // Library needs to have been inited during the entire program
-    // should we make this a singleton? (for hsm we'll need more
-    // initialization, and dynamic loading)
-    LibraryInitializer init;
+// Library needs to have been inited during the entire program
+// should we make this a singleton? (for hsm we'll need more
+// initialization, and dynamic loading)
+LibraryInitializer init;
 
 } // local namespace
 
