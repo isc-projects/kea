@@ -36,6 +36,7 @@
 using namespace std;
 using namespace boost;
 using namespace isc::dns::rdata;
+using namespace isc::util;
 
 namespace isc {
 namespace dns {

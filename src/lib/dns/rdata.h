@@ -22,9 +22,11 @@
 #include <exceptions/exceptions.h>
 
 namespace isc {
-namespace dns {
+namespace util {
 class InputBuffer;
 class OutputBuffer;
+}
+namespace dns {
 class MessageRenderer;
 class RRType;
 class RRClass;
@@ -168,7 +170,7 @@ public:
     /// should be explicitly defined in the derived class.
     ///
     /// \param buffer An output buffer to store the wire data.
-    virtual void toWire(OutputBuffer& buffer) const = 0;
+    virtual void toWire(isc::util::OutputBuffer& buffer) const = 0;
     /// \brief Render the \c Rdata in the wire format into a
     /// \c MessageRenderer object.
     ///
@@ -272,7 +274,7 @@ public:
     /// \param buffer A reference to an \c InputBuffer object storing the
     /// \c Rdata to parse.
     /// \param rdata_len The length in buffer of the \c Rdata.  In bytes.
-    Generic(InputBuffer& buffer, size_t rdata_len);
+    Generic(isc::util::InputBuffer& buffer, size_t rdata_len);
     ///
     /// \brief The destructor.
     virtual ~Generic();
@@ -316,7 +318,7 @@ public:
     /// be thrown.
     ///
     /// \param buffer An output buffer to store the wire data.
-    virtual void toWire(OutputBuffer& buffer) const;
+    virtual void toWire(isc::util::OutputBuffer& buffer) const;
     /// \brief Render the \c generic::Generic in the wire format into a
     /// \c MessageRenderer object.
     ///
@@ -443,7 +445,7 @@ RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
 /// \return An \c RdataPtr object pointing to the created \c Rdata
 /// object.
 RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
-                     InputBuffer& buffer, size_t len);
+                     isc::util::InputBuffer& buffer, size_t len);
 /// \brief Create RDATA of a given pair of RR type and class, copying
 /// of another RDATA of same kind.
 ///

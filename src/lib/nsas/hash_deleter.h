@@ -16,8 +16,9 @@
 #define __HASH_DELETER_H
 
 #include <boost/shared_ptr.hpp>
+#include <util/lru_list.h>
+
 #include "hash_table.h"
-#include "lru_list.h"
 
 namespace isc {
 namespace nsas {
@@ -31,7 +32,7 @@ namespace nsas {
 /// hash table without the need to be declared as "friend" or the need
 /// to define accessor methods.
 template <typename T>
-class HashDeleter : public LruList<T>::Dropped {
+class HashDeleter : public isc::util::LruList<T>::Dropped {
 public:
 
     /// \brief Constructor

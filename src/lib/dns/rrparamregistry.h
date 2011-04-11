@@ -102,7 +102,7 @@ public:
     /// \c Rdata to parse.
     /// \param rdata_len The length in buffer of the \c Rdata.  In bytes.
     /// \return An \c RdataPtr object pointing to the created \c Rdata object.
-    virtual RdataPtr create(InputBuffer& buffer, size_t rdata_len) const = 0;
+    virtual RdataPtr create(isc::util::InputBuffer& buffer, size_t rdata_len) const = 0;
     ///
     /// \brief Create RDATA from another \c Rdata object of the same type.
     ///
@@ -473,7 +473,7 @@ public:
     /// \return An \c rdata::RdataPtr object pointing to the created \c Rdata
     /// object.
     rdata::RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
-                                InputBuffer& buffer, size_t len);
+                                isc::util::InputBuffer& buffer, size_t len);
     /// \brief Create RDATA of a given pair of RR type and class, copying
     /// of another RDATA of same kind.
     ///

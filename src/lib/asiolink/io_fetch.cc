@@ -22,13 +22,16 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
+#include <util/buffer.h>
+
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/opcode.h>
 #include <dns/rcode.h>
 #include <log/logger.h>
 
-#include <asiolink/qid_gen.h>
+#include <util/qid_gen.h>
+#include <util/qid_gen.h>
 
 #include <asio.hpp>
 #include <asio/deadline_timer.hpp>
@@ -43,12 +46,12 @@
 #include <asiolink/tcp_socket.h>
 #include <asiolink/udp_endpoint.h>
 #include <asiolink/udp_socket.h>
-#include <asiolink/qid_gen.h>
 
 #include <stdint.h>
 
 using namespace asio;
 using namespace isc::dns;
+using namespace isc::util;
 using namespace isc::log;
 using namespace std;
 
@@ -76,8 +79,8 @@ struct IOFetchData {
     boost::scoped_ptr<IOEndpoint> remote_snd;///< Where the fetch is sent
     boost::scoped_ptr<IOEndpoint> remote_rcv;///< Where the response came from
     isc::dns::Question          question;    ///< Question to be asked
-    isc::dns::OutputBufferPtr   msgbuf;      ///< Wire buffer for question
-    isc::dns::OutputBufferPtr   received;    ///< Received data put here
+    OutputBufferPtr   msgbuf;      ///< Wire buffer for question
+    OutputBufferPtr   received;    ///< Received data put here
     IOFetch::Callback*          callback;    ///< Called on I/O Completion
     asio::deadline_timer        timer;       ///< Timer to measure timeouts
     IOFetch::Protocol           protocol;    ///< Protocol being used
@@ -117,8 +120,7 @@ struct IOFetchData {
     /// TODO: May need to alter constructor (see comment 4 in Trac ticket #554)
     IOFetchData(IOFetch::Protocol proto, IOService& service,
         const isc::dns::Question& query, const IOAddress& address,
-        uint16_t port, isc::dns::OutputBufferPtr& buff, IOFetch::Callback* cb,
-        int wait)
+        uint16_t port, OutputBufferPtr& buff, IOFetch::Callback* cb, int wait)
         :
         socket((proto == IOFetch::UDP) ?
             static_cast<IOAsioSocket<IOFetch>*>(
@@ -135,7 +137,7 @@ struct IOFetchData {
             static_cast<IOEndpoint*>(new TCPEndpoint(address, port))
             ),
         question(query),
-        msgbuf(new isc::dns::OutputBuffer(512)),
+        msgbuf(new OutputBuffer(512)),
         received(buff),
 
         callback(cb),

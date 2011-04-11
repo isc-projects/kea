@@ -3,6 +3,7 @@ SUBDIRS = testdata .
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
+AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
 AM_CPPFLAGS += -DTEST_DATA_SRCDIR=\"$(srcdir)/testdata\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/dns/tests/testdata\"
 AM_CXXFLAGS = $(B10_CXXFLAGS)
@@ -17,12 +18,10 @@ TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES = unittest_util.h unittest_util.cc
-run_unittests_SOURCES += buffer_unittest.cc name_unittest.cc
 run_unittests_SOURCES += edns_unittest.cc
 run_unittests_SOURCES += messagerenderer_unittest.cc
 run_unittests_SOURCES += rrclass_unittest.cc rrtype_unittest.cc
 run_unittests_SOURCES += rrttl_unittest.cc
-run_unittests_SOURCES += dnssectime_unittest.cc
 run_unittests_SOURCES += opcode_unittest.cc
 run_unittests_SOURCES += rcode_unittest.cc
 run_unittests_SOURCES += rdata_unittest.h rdata_unittest.cc
@@ -45,10 +44,6 @@ run_unittests_SOURCES += question_unittest.cc
 run_unittests_SOURCES += rrparamregistry_unittest.cc
 run_unittests_SOURCES += masterload_unittest.cc
 run_unittests_SOURCES += message_unittest.cc
-run_unittests_SOURCES += base32hex_unittest.cc
-run_unittests_SOURCES += base64_unittest.cc
-run_unittests_SOURCES += hex_unittest.cc
-run_unittests_SOURCES += sha1_unittest.cc
 run_unittests_SOURCES += tsigkey_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
@@ -56,6 +51,7 @@ run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 run_unittests_LDADD = $(GTEST_LDADD)
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
 endif
 
 noinst_PROGRAMS = $(TESTS)
