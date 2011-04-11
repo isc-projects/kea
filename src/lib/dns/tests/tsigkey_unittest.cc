@@ -227,4 +227,28 @@ TEST_F(TSIGKeyRingTest, findFromSome) {
               keyring.find(Name("noexist.example")).key);
 }
 
+TEST(TSIGTest, TSIGKeyFromToString) {
+    TSIGKey k1 = TSIGKey("test.example:MSG6Ng==:hmac-md5.sig-alg.reg.int");
+    TSIGKey k2 = TSIGKey("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.");
+    TSIGKey k3 = TSIGKey("test.example:MSG6Ng==");
+    TSIGKey k4 = TSIGKey(Name("test.example."), Name("hmac-sha1."), NULL, 0);
+    
+    EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.",
+              k1.toText());
+    EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.",
+              k2.toText());
+    EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.",
+              k3.toText());
+    EXPECT_EQ("test.example.::hmac-sha1.", k4.toText());
+
+    EXPECT_THROW(TSIGKey(""), isc::InvalidParameter);
+    EXPECT_THROW(TSIGKey("::"), isc::InvalidParameter);
+    EXPECT_THROW(TSIGKey("..:aa:"), isc::InvalidParameter);
+    EXPECT_THROW(TSIGKey("test.example:xxxx:"), isc::InvalidParameter);
+    EXPECT_THROW(TSIGKey("test.example.::"), isc::InvalidParameter);
+    EXPECT_THROW(TSIGKey("test.example.:MSG6Ng==:unknown"), isc::InvalidParameter);
+
+}
+
+
 } // end namespace

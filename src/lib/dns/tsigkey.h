@@ -90,6 +90,21 @@ public:
     TSIGKey(const Name& key_name, const Name& algorithm_name,
             const void* secret, size_t secret_len);
 
+    /// \brief Constructor from an input string
+    ///
+    /// The string must be of the form:
+    /// <name>:<secret>[:<algorithm>]
+    /// Where <name> is a domain name for the key, <secret> is a
+    /// base64 representation of the key secret, and the optional
+    /// algorithm is an algorithm identifier as specified in RFC4635
+    ///
+    /// Raises an InvalidParameter exception if the input string is
+    /// invalid.
+    ///
+    /// \param str The string to make a TSIGKey from
+    /// \return The TSIGKey build from the string
+    TSIGKey(const std::string& str);
+
     /// \brief The copy constructor.
     ///
     /// It internally allocates a resource, and if it fails a corresponding
@@ -138,6 +153,18 @@ public:
     /// region.
     const void* getSecret() const;
     //@}
+
+    /// \brief Converts the TSIGKey to a string value
+    ///
+    /// The resulting string will be of the form
+    /// name:secret:algorithm
+    /// Where <name> is a domain name for the key, <secret> is a
+    /// base64 representation of the key secret, and algorithm is
+    /// an algorithm identifier as specified in RFC4635
+    ///
+    /// \param key the TSIG key to convert
+    /// \return The string representation of the given TSIGKey.
+    std::string toText() const;
 
     ///
     /// \name Well known algorithm names as defined in RFC2845 and RFC4635.

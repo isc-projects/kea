@@ -19,6 +19,7 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/name.h>
+#include <dns/util/base64.h>
 #include <dns/tsigkey.h>
 
 using namespace std;
@@ -59,6 +60,53 @@ TSIGKey::TSIGKey(const Name& key_name, const Name& algorithm_name,
     impl_ = new TSIGKeyImpl(key_name, algorithm_name, secret, secret_len);
 }
 
+TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
+    size_t pos = str.find(':');
+    if (pos == 0 || pos == str.npos) {
+        // error
+        isc_throw(InvalidParameter, "Invalid TSIG key string");
+    }
+    try {
+        Name key_name(str.substr(0, pos));
+        Name algo_name("hmac-md5.sig-alg.reg.int");
+
+        // optional algorithm part
+        size_t pos2 = str.find(':', pos+1);
+        if (pos2 != str.npos) {
+            if (pos2 == pos + 1) {
+                isc_throw(InvalidParameter, "Invalid TSIG key string");
+            }
+            algo_name = Name(str.substr(pos2+1));
+        } else {
+            pos2 = str.size() - pos;
+        }
+
+        std::string secret_str = str.substr(pos + 1, pos2 - pos - 1);
+    
+        vector<uint8_t> secret;
+        decodeBase64(secret_str, secret);
+        unsigned char secret_b[secret.size()];
+        for (size_t i=0; i < secret.size(); ++i) {
+            secret_b[i] = secret[i];
+        }
+
+        if (algo_name != HMACMD5_NAME() &&
+            algo_name != HMACSHA1_NAME() &&
+            algo_name != HMACSHA256_NAME()) {
+            isc_throw(InvalidParameter, "Unknown TSIG algorithm is specified: " <<
+                      algo_name);
+        }
+
+        impl_ = new TSIGKeyImpl(key_name, algo_name, secret_b,
+                                secret.size());
+    } catch (Exception e) {
+        // 'reduce' the several types of exceptions name parsing and
+        // Base64 decoding can throw to just the InvalidParameter
+        isc_throw(InvalidParameter, e.what());
+    }
+}
+
+
 TSIGKey::TSIGKey(const TSIGKey& source) : impl_(new TSIGKeyImpl(*source.impl_))
 {}
 
@@ -97,6 +145,19 @@ TSIGKey::getSecret() const {
 size_t
 TSIGKey::getSecretLength() const {
     return (impl_->secret_.size());
+}
+
+std::string
+TSIGKey::toText() const {
+    const uint8_t* secret_b = static_cast<const uint8_t*>(getSecret());
+    vector<uint8_t> secret_v;
+    for (size_t i=0; i < getSecretLength(); ++i) {
+        secret_v.push_back(secret_b[i]);
+    }
+    std::string secret_str = encodeBase64(secret_v);
+    
+    return getKeyName().toText() + ":" + secret_str + ":" +
+           getAlgorithmName().toText();
 }
 
 const
