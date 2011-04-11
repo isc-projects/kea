@@ -84,34 +84,6 @@ bool verifyHMAC(const isc::dns::OutputBuffer& data,
                 isc::dns::TSIGKey key,
                 const isc::dns::OutputBuffer& mac);
 
-/// \brief Create a TSIGKey from an input string
-///
-/// This function takes an input string and creates a TSIG key
-/// from it. The string must be of the form:
-/// <name>:<secret>[:<algorithm>]
-/// Where <name> is a domain name for the key, <secret> is a
-/// base64 representation of the key secret, and the optional
-/// algorithm is an algorithm identifier as specified in RFC4635
-///
-/// Raises an InvalidParameter exception if the input string is
-/// invalid.
-///
-/// \param str The string to make a TSIGKey from
-/// \return The TSIGKey build from the string
-isc::dns::TSIGKey TSIGKeyFromString(const std::string& str);
-
-/// \brief Converts the given TSIGKey to a string value
-///
-/// The resulting string will be of the form
-/// name:secret:algorithm
-/// Where <name> is a domain name for the key, <secret> is a
-/// base64 representation of the key secret, and algorithm is
-/// an algorithm identifier as specified in RFC4635
-///
-/// \param key the TSIG key to convert
-/// \return The string representation of the given TSIGKey.
-std::string TSIGKeyToString(const isc::dns::TSIGKey& key);
-
 } // namespace crypto
 } // namespace isc
 
