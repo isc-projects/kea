@@ -1,3 +1,7 @@
+218.	[func]		jinmei
+	src/lib/dns: added support for RP RDATA.
+	(Trac #806, git 4e47d5f6b692c63c907af6681a75024450884a88)
+
 217.	[bug]		jerry
 	src/lib/dns/python: Use a signed version of larger size of integer and
 	perform more strict range checks with PyArg_ParseTuple() in case of
