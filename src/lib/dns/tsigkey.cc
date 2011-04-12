@@ -82,7 +82,7 @@ TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
         }
 
         std::string secret_str = str.substr(pos + 1, pos2 - pos - 1);
-    
+
         vector<uint8_t> secret;
         decodeBase64(secret_str, secret);
         unsigned char secret_b[secret.size()];
@@ -155,9 +155,9 @@ TSIGKey::toText() const {
         secret_v.push_back(secret_b[i]);
     }
     std::string secret_str = encodeBase64(secret_v);
-    
-    return getKeyName().toText() + ":" + secret_str + ":" +
-           getAlgorithmName().toText();
+
+    return (getKeyName().toText() + ":" + secret_str + ":" +
+            getAlgorithmName().toText());
 }
 
 const
