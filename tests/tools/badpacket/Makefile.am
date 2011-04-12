@@ -16,6 +16,7 @@ noinst_PROGRAMS  = badpacket
 badpacket_SOURCES  = badpacket.cc
 badpacket_SOURCES += command_options.cc command_options.h
 badpacket_SOURCES += header_flags.h
+badpacket_SOURCES += option_info.cc option_info.h
 badpacket_SOURCES += scan.cc scan.h
 badpacket_SOURCES += version.h
 

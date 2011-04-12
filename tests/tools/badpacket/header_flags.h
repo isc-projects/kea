@@ -15,6 +15,9 @@
 #ifndef __HEADER_FLAGS_H
 #define __HEADER_FLAGS_H
 
+#include <exceptions/exceptions.h>
+#include "option_info.h"
+
 namespace isc {
 namespace badpacket {
 
@@ -25,31 +28,6 @@ namespace badpacket {
 
 class HeaderFlags {
 public:
-
-    // The following declaration describes the various fields in the DNS
-    // packet header.
-    enum FieldParameter {
-        QR_MASK = 0x8000,   // Maskd efining the field
-        QR_OFF  = 15,       // Offset of field in the flags word (i.e. shift
-        OP_MASK = 0x7800,   //    ... this number of bits to the left)
-        OP_OFF  = 11,
-        AA_MASK = 0x0400,
-        AA_OFF  = 10,
-        TC_MASK = 0x0200,
-        TC_OFF  = 9,
-        RD_MASK = 0x0100,
-        RD_OFF  = 8,
-        RA_MASK = 0x0080,
-        RA_OFF  = 7,
-        Z_MASK  = 0x0040,
-        Z_OFF   = 6,
-        AD_MASK = 0x0020,
-        AD_OFF  = 5,
-        CD_MASK = 0x0010,
-        CD_OFF  = 4,
-        RC_MASK = 0x000F,
-        RC_OFF  = 0
-    };
 
     /// \brief Constructor
     HeaderFlags() {
@@ -76,169 +54,45 @@ public:
         flags_ = value;
     }
 
-    /// \brief Get QR Bit
-    uint16_t getQR() const {
-        return (getField(QR_MASK, QR_OFF));
-    }
-
-    /// \brief Set QR Bit
-    ///
-    /// \param value New value of the field, which must be 0 or 1: values
-    ///        outside that range are coerced to the nearest boundary.
-    void setQR(uint16_t value) {
-        setField(value, QR_MASK, QR_OFF);
-    }
-
-    /// \brief Get OP Value
-    uint16_t getOP() const {
-        return (getField(OP_MASK, OP_OFF));
-    }
-
-    /// \brief Set OP Value
-    ///
-    /// \param value New value of the field, which must in the range 0 to 15:
-    ///        values outside that range are coerced to the nearest boundary.
-    void setOP(uint16_t value) {
-        setField(value, OP_MASK, OP_OFF);
-    }
-
-    /// \brief Get AA Bit
-    uint16_t getAA() const {
-        return (getField(AA_MASK, AA_OFF));
-    }
-
-    /// \brief Set AA Bit
-    ///
-    /// \param value New value of the field, which must be 0 or 1: values
-    ///        outside that range are coerced to the nearest boundary.
-    void setAA(uint16_t value) {
-        setField(value, AA_MASK, AA_OFF);
-    }
-
-    /// \brief Get TC Bit
-    uint16_t getTC() const {
-        return (getField(TC_MASK, TC_OFF));
-    }
-
-    /// \brief Set TC Bit
-    ///
-    /// \param value New value of the field, which must be 0 or 1: values
-    ///        outside that range are coerced to the nearest boundary.
-    void setTC(uint16_t value) {
-        setField(value, TC_MASK, TC_OFF);
-    }
-
-    /// \brief Get RD Bit
-    uint16_t getRD() const {
-        return (getField(RD_MASK, RD_OFF));
-    }
-
-    /// \brief Set RD Bit
-    ///
-    /// \param value New value of the field, which must be 0 or 1: values
-    ///        outside that range are coerced to the nearest boundary.
-    void setRD(uint16_t value) {
-        setField(value, RD_MASK, RD_OFF);
-    }
-
-    /// \brief Get RA Bit
-    uint16_t getRA() const {
-        return (getField(RA_MASK, RA_OFF));
-    }
-
-    /// \brief Set RA Bit
-    ///
-    /// \param value New value of the field, which must be 0 or 1: values
-    ///        outside that range are coerced to the nearest boundary.
-    void setRA(uint16_t value) {
-        setField(value, RA_MASK, RA_OFF);
-    }
-
-    /// \brief Get Z Bit
-    uint16_t getZ() const {
-        return (getField(Z_MASK, Z_OFF));
-    }
-
-    /// \brief Set Z Bit
-    ///
-    /// \param value New value of the field, which must be 0 or 1: values
-    ///        outside that range are coerced to the nearest boundary.
-    void setZ(uint16_t value) {
-        setField(value, Z_MASK, Z_OFF);
-    }
-
-    /// \brief Get AD Bit
-    uint16_t getAD() const {
-        return (getField(AD_MASK, AD_OFF));
-    }
-
-    /// \brief Set AD Bit
-    ///
-    /// \param value New value of the field, which must be 0 or 1: values
-    ///        outside that range are coerced to the nearest boundary.
-    void setAD(uint16_t value) {
-        setField(value, AD_MASK, AD_OFF);
-    }
-
-    /// \brief Get CD Bit
-    uint16_t getCD() const {
-        return (getField(CD_MASK, CD_OFF));
-    }
-
-    /// \brief Set CD Bit
-    ///
-    /// \param value New value of the field, which must be 0 or 1: values
-    ///        outside that range are coerced to the nearest boundary.
-    void setCD(uint16_t value) {
-        setField(value, CD_MASK, CD_OFF);
-    }
-
-    /// \brief Get RC Value
-    uint16_t getRC() const {
-        return (getField(RC_MASK, RC_OFF));
-    }
-
-    /// \brief Set RC Value
-    ///
-    /// \param value New value of the field, which must be in the range 0 to 15:
-    ///        values outside that range are coerced to the nearest boundary.
-    void setRC(uint16_t value) {
-        setField(value, RC_MASK, RC_OFF);
-    }
-
-private:
-
     /// \brief Get Field
     ///
     /// Return the value of a bit field in the flags word.
     ///
-    /// \param mask Bit mask identifying the field.
-    /// \param offset Offset of the field in the flags word.
+    /// \param int Index of the bit field in the OptionInfo data structure
     ///
     /// \return Value of the field.
-    uint16_t getField(FieldParameter mask, FieldParameter offset) const {
-        return ((flags_ & mask) >> offset);
+    uint16_t get(int index) const {
+        OptionInfo::checkIndex(index);
+        return ((flags_ & OptionInfo::mask(index)) >> OptionInfo::offset(index));
     }
 
     /// \brief Set Field
     ///
     /// Sets the value of a bit field.
     ///
+    /// \param int Index of the bit field in the OptionInfo data structure
     /// \param value Value to set.  If the value is more than the field can
     ///        hold, it is set to the maximum.
-    /// \param mask Bit mask identifying the field.
-    /// \param offset Offset of the field in the flags word.
-    void setField(uint16_t value, FieldParameter mask, FieldParameter offset) {
+    void set(int index, uint16_t value) {
+        // Declare an OptionInfo object for brevity
+        OptionInfo o;
 
-        // Ensure the value is within limits.
-        uint16_t maxval = mask >> offset;
-        uint16_t val = (value > maxval) ? maxval : value;
+        // Ensure in range
+        o.checkIndex(index);
+
+        // Ensure the value is within limits and throw an exception if not. (This
+        // should not really be needed, as the command line parsing should have
+        // checked the limits.  But be safe.)
+        if ((value < o.minval(index)) || (value > o.maxval(index))) {
+            isc_throw(isc::BadValue, "value of index " << index << " is out of range");
+        }
 
         // Clear the field then set it with the value.
-        flags_ &= ~mask;
-        flags_ |= (val << offset);
+        flags_ &= ~o.mask(index);
+        flags_ |= (value << o.offset(index));
     }
 
+private:
     uint16_t        flags_;     ///< Variable holding field values
 };
 
