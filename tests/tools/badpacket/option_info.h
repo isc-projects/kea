@@ -70,8 +70,8 @@ public:
         int             word;           // Byte offset of word in the header
         uint16_t        mask;           // Bit mask of field in the flags word
         int             offset;         // Offset of field in flags word
-        uint32_t        minval;         // Minimum valid value for this field
         uint32_t        defval;         // Default value
+        uint32_t        minval;         // Minimum valid value for this field
         uint32_t        maxval;         // Maximum valid value for this field
     };
 
