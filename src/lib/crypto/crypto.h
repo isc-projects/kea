@@ -36,19 +36,24 @@
 namespace isc {
 namespace crypto {
 
+/// General exception class that is the base for all crypto-related
+/// exceptions
 class CryptoError : public Exception {
 public:
     CryptoError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
+/// This exception is thrown when a cryptographic action is requested
+/// for an algorithm that is not supported by the underlying algorithm.
 class UnsupportedAlgorithm : public CryptoError {
 public:
     UnsupportedAlgorithm(const char* file, size_t line, const char* what) :
         CryptoError(file, line, what) {}
 };
 
-// The underlying library could not handle this key
+/// This exception is thrown when the underlying library could not
+/// handle this key
 class BadKey : public CryptoError {
 public:
     BadKey(const char* file, size_t line, const char* what) :
