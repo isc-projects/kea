@@ -42,29 +42,36 @@ public:
     /// The data for the flags options are held in an array.  Although an enum,
     /// only the numeric values are used - they are indexes into arrays.
     enum Index {
-        QR = 0,
-        OP = 1,
-        AA = 2,
-        TC = 3,
-        RD = 4,
-        RA = 5,
-        Z  = 6,
-        AD = 7,
-        CD = 8,
-        RC = 9,
-        SIZE = 10   // Number of index values
+        QR = 0,     // Query/response
+        OP = 1,     // Opcode
+        AA = 2,     // Authoritative answer
+        TC = 3,     // Truncated
+        RD = 4,     // Recursion desired
+        RA = 5,     // Recursion available
+        Z  = 6,     // Zero (reserved)
+        AD = 7,     // Authenticated data
+        CD = 8,     // Checking disabled
+        RC = 9,     // Response code
+        QC = 10,    // Query count
+        AC = 11,    // Answer count
+        UC = 12,    // Authority count
+        DC = 13,    // Additional count
+        SIZE = 14   // Number of index values
     };
 
     /// \brief Option Parameters
     ///
     /// Defines a structure that holds information associated with each of the
-    /// flags field command options.
+    /// flags field command options.  Note all members of the structure are
+    /// relevant to all options
     struct Parameter {
         const char      short_form;     // Short form of the command switch
         const char*     long_form;      // Long form of the command switch
-        uint16_t        mask;           // Bit mask of the field in the flags word
+        int             word;           // Byte offset of word in the header
+        uint16_t        mask;           // Bit mask of field in the flags word
         int             offset;         // Offset of field in flags word
         uint32_t        minval;         // Minimum valid value for this field
+        uint32_t        defval;         // Default value
         uint32_t        maxval;         // Maximum valid value for this field
     };
 
@@ -87,11 +94,22 @@ public:
     /// \return The long option name (e.q. "qr" for the Query/Response field).
     static const char* name(int index);
 
+    /// \brief Return header word offset
+    ///
+    /// Returns the byte offset in the DNS message header of the two-byte word 
+    /// holding the data in question.
+    ///
+    /// \param index A valid index (one of the values in the 'Index' enum).
+    ///
+    /// \return The offset in the header foe this datum.
+    static int word(int index);
+
     /// \brief Return mask associated with switch field
     ///
     /// \param index A valid index (one of the values in the 'Index' enum).
     ///
-    /// \return The mask for this particular option in the DNS message flags field.
+    /// \return The mask for this particular option in the DNS message flags
+    ///         field.
     static uint16_t mask(int index);
 
     /// \brief Return offset associated with switch field
@@ -108,6 +126,13 @@ public:
     ///
     /// \return Minimum allowed value for this option.  This is usually 0.
     static uint32_t minval(int index);
+
+    /// \brief Return default value of a field
+    ///
+    /// \param index A valid index (one of the values in the 'Index' enum).
+    ///
+    /// \return Default value for this option
+    static uint32_t defval(int index);
 
     /// \brief Return maximum allowed value of field
     ///
