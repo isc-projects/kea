@@ -44,6 +44,15 @@ class TSIGKeyTest(unittest.TestCase):
                           TSIGKey.HMACMD5_NAME,
                           'should be binary') # signature mismatch
 
+    def test_str(self):
+        k1 = TSIGKey('test.example:CwsLCwsLCwsLCwsLCwsLCw==:hmac-md5.sig-alg.reg.int')
+        self.assertEqual(Name('test.example.'), k1.get_key_name())
+        self.assertEqual(Name('hmac-md5.sig-alg.reg.int.'), k1.get_algorithm_name())
+        self.assertEqual(b'\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b',
+                         k1.get_secret())
+        self.assertEqual('test.example.:CwsLCwsLCwsLCwsLCwsLCw==:hmac-md5.sig-alg.reg.int.',
+                         k1.to_text())
+
 class TSIGKeyRingTest(unittest.TestCase):
     key_name = Name('example.com')
     secret = b'someRandomData'
