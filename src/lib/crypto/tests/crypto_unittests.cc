@@ -31,15 +31,15 @@ namespace {
             ASSERT_EQ(buf_d[i], data[i]);
         }
     }
-    
+
     void doHMACTest(std::string data, std::string key_str,
                     uint8_t* expected_hmac, size_t hmac_len) {
         OutputBuffer data_buf(data.size());
         data_buf.writeData(data.c_str(), data.size());
         OutputBuffer hmac_sig(1);
-        
+
         TSIGKey key(key_str);
-        
+
         signHMAC(data_buf, key, hmac_sig);
         checkBuffer(hmac_sig, expected_hmac, hmac_len);
         EXPECT_TRUE(verifyHMAC(data_buf, key, hmac_sig));
@@ -91,7 +91,7 @@ TEST(CryptoTest, HMAC_MD5_RFC2202_SIGN) {
     doHMACTest("Test With Truncation",
                "test.example:DAwMDAwMDAwMDAwMDAwMDA==:hmac-md5.sig-alg.reg.int",
                hmac_expected5, 16);
-               
+
     uint8_t hmac_expected6[] = { 0x6b, 0x1a, 0xb7, 0xfe, 0x4b, 0xd7,
                                  0xbf, 0x8f, 0x0b, 0x62, 0xe6, 0xce,
                                  0x61, 0xb9, 0xd0, 0xcd };
@@ -164,7 +164,7 @@ TEST(CryptoTest, HMAC_SHA1_RFC2202_SIGN) {
     doHMACTest("Test With Truncation",
                "test.example:DAwMDAwMDAwMDAwMDAwMDAwMDAw=:hmac-sha1",
                hmac_expected5, 20);
-               
+
     uint8_t hmac_expected6[] = { 0xaa, 0x4a, 0xe5, 0xe1, 0x52, 0x72,
                                  0xd0, 0x0e, 0x95, 0x70, 0x56, 0x37,
                                  0xce, 0x8a, 0x3b, 0x55, 0xed, 0x40,
@@ -239,12 +239,6 @@ TEST(CryptoTest, HMAC_SHA256_RFC2202_SIGN) {
                "test.example:AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGQ==:hmac-sha256",
                hmac_expected4, 32);
 
-/*
-    uint8_t hmac_expected5[] = {  };
-    doHMACTest("Test With Truncation",
-               "test.example:DAwMDAwMDAwMDAwMDAwMDAwMDAw=:hmac-sha256",
-               hmac_expected5, 32);
-*/
     uint8_t hmac_expected6[] = { 0x60, 0xe4, 0x31, 0x59, 0x1e, 0xe0,
                                  0xb6, 0x7f, 0x0d, 0x8a, 0x26, 0xaa,
                                  0xcb, 0xf5, 0xb7, 0x7f, 0x8e, 0x0b,
@@ -278,7 +272,7 @@ TEST(CryptoTest, BadKey) {
 
     OutputBuffer data_buf(0);
     OutputBuffer hmac_sig(1);
-    
+
     EXPECT_THROW(signHMAC(data_buf, bad_key, hmac_sig), BadKey);
     EXPECT_THROW(verifyHMAC(data_buf, bad_key, hmac_sig), BadKey);
 }

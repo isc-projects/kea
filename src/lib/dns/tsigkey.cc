@@ -62,7 +62,7 @@ TSIGKey::TSIGKey(const Name& key_name, const Name& algorithm_name,
 
 TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
     size_t pos = str.find(':');
-    if (pos == 0 || pos == str.npos) {
+    if (pos == 0 || pos == str.npos || pos == str.size()-1) {
         // error
         isc_throw(InvalidParameter, "Invalid TSIG key string");
     }
@@ -82,7 +82,7 @@ TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
         }
 
         std::string secret_str = str.substr(pos + 1, pos2 - pos - 1);
-    
+
         vector<uint8_t> secret;
         decodeBase64(secret_str, secret);
         unsigned char secret_b[secret.size()];
@@ -155,7 +155,7 @@ TSIGKey::toText() const {
         secret_v.push_back(secret_b[i]);
     }
     std::string secret_str = encodeBase64(secret_v);
-    
+
     return getKeyName().toText() + ":" + secret_str + ":" +
            getAlgorithmName().toText();
 }
