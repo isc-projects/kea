@@ -23,8 +23,8 @@
 
 #include <asio.hpp>
 
-#include <util/buffer.h>
-#include <util/asiolink_utilities.h>
+#include <util/io/buffer.h>
+#include <util/io/io_utilities.h>
 
 #include <dns/question.h>
 #include <dns/message.h>
@@ -49,7 +49,7 @@ using namespace asio;
 using namespace asio::ip;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
-using namespace isc::util;
+using namespace isc::util::io;
 using namespace isc::resolve;
 using namespace std;
 

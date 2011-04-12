@@ -29,7 +29,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/buffer.h>
+#include <util/io/buffer.h>
 #include <dns/rcode.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>

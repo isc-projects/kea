@@ -15,7 +15,7 @@
 #include <gtest/gtest.h>
 #include <dns/tests/unittest_util.h>
 #include <dns/message.h>
-#include <util/buffer.h>
+#include <util/io/buffer.h>
 #include "../message_entry.h"
 #include "../rrset_cache.h"
 #include "../resolver_cache.h"

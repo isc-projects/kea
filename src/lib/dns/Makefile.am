@@ -64,7 +64,6 @@ lib_LTLIBRARIES = libdns++.la
 libdns___la_SOURCES =
 libdns___la_SOURCES += edns.h edns.cc
 libdns___la_SOURCES += exceptions.h exceptions.cc
-libdns___la_SOURCES += util/hex.h
 libdns___la_SOURCES += masterload.h masterload.cc
 libdns___la_SOURCES += message.h message.cc
 libdns___la_SOURCES += messagerenderer.h messagerenderer.cc

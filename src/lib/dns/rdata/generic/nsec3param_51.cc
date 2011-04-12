@@ -19,8 +19,8 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <util/buffer.h>
-#include <util/hex.h>
+#include <util/io/buffer.h>
+#include <util/compat/hex.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rdata.h>
@@ -30,7 +30,8 @@
 #include <time.h>
 
 using namespace std;
-using namespace isc::util;
+using namespace isc::util::io;
+using namespace isc::util::compat;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE

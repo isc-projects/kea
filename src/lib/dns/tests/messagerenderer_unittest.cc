@@ -14,7 +14,7 @@
 
 #include <vector>
 
-#include <util/buffer.h>
+#include <util/io/buffer.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 
@@ -25,7 +25,7 @@
 using isc::UnitTestUtil;
 using isc::dns::Name;
 using isc::dns::MessageRenderer;
-using isc::util::OutputBuffer;
+using isc::util::io::OutputBuffer;
 
 namespace {
 class MessageRendererTest : public ::testing::Test {

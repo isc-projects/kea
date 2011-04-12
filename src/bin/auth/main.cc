@@ -25,7 +25,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/buffer.h>
+#include <util/io/buffer.h>
 
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -50,7 +50,7 @@ using namespace isc::data;
 using namespace isc::cc;
 using namespace isc::config;
 using namespace isc::dns;
-using namespace isc::util;
+using namespace isc::util::io;
 using namespace isc::xfr;
 using namespace asiolink;
 
