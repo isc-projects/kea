@@ -22,16 +22,14 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
-#include <util/buffer.h>
-
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/opcode.h>
 #include <dns/rcode.h>
 #include <log/logger.h>
 
-#include <util/qid_gen.h>
-#include <util/qid_gen.h>
+#include <util/io/buffer.h>
+#include <util/random/qid_gen.h>
 
 #include <asio.hpp>
 #include <asio/deadline_timer.hpp>
@@ -51,7 +49,8 @@
 
 using namespace asio;
 using namespace isc::dns;
-using namespace isc::util;
+using namespace isc::util::io;
+using namespace isc::util::random;
 using namespace isc::log;
 using namespace std;
 

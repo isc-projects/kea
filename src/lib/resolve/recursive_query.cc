@@ -42,7 +42,7 @@
 
 using isc::log::dlog;
 using namespace isc::dns;
-using namespace isc::util;
+using namespace isc::util::io;
 
 namespace asiolink {
 

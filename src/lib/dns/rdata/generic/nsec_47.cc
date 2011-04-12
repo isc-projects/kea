@@ -17,8 +17,8 @@
 #include <sstream>
 #include <vector>
 
-#include <util/base64.h>
-#include <util/buffer.h>
+#include <util/compat/base64.h>
+#include <util/io/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
@@ -32,7 +32,8 @@
 #include <time.h>
 
 using namespace std;
-using namespace isc::util;
+using namespace isc::util::io;
+using namespace isc::util::compat;
 using namespace isc::dns::rdata::generic::detail::nsec;
 
 // BEGIN_ISC_NAMESPACE

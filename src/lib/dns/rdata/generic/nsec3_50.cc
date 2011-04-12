@@ -20,11 +20,11 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <util/base32hex.h>
-#include <util/buffer.h>
-#include <util/hex.h>
-#include <dns/exceptions.h>
+#include <util/compat/base32hex.h>
+#include <util/compat/hex.h>
+#include <util/io/buffer.h>
 
+#include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rrtype.h>
@@ -38,7 +38,8 @@
 
 using namespace std;
 using namespace isc::dns::rdata::generic::detail::nsec;
-using namespace isc::util;
+using namespace isc::util::comapt;
+using namespace isc::util::io;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE

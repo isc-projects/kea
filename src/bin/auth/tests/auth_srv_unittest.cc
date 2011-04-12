@@ -41,7 +41,7 @@
 using namespace std;
 using namespace isc::cc;
 using namespace isc::dns;
-using namespace isc::util;
+using namespace isc::util::io;
 using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::xfr;

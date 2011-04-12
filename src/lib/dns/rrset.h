@@ -27,7 +27,9 @@
 
 namespace isc {
 namespace util {
+namespace io {
 class OututBuffer;
+}
 }
 
 namespace dns {
@@ -319,7 +321,7 @@ public:
     ///
     /// \param buffer An output buffer to store the wire data.
     /// \return The number of RRs rendered.
-    virtual unsigned int toWire(isc::util::OutputBuffer& buffer) const = 0;
+    virtual unsigned int toWire(isc::util::io::OutputBuffer& buffer) const = 0;
     //@}
 
     ///
@@ -623,7 +625,7 @@ public:
     ///
     /// This method simply uses the default implementation.
     /// See \c AbstractRRset::toWire(OutputBuffer&)const.
-    virtual unsigned int toWire(isc::util::OutputBuffer& buffer) const;
+    virtual unsigned int toWire(isc::util::io::OutputBuffer& buffer) const;
     //@}
 
     ///

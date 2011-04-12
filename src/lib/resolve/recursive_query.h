@@ -17,7 +17,7 @@
 
 #include <asiolink/dns_service.h>
 #include <asiolink/dns_server.h>
-#include <util/buffer.h>
+#include <util/io/buffer.h>
 #include <nsas/nameserver_address_store.h>
 #include <cache/resolver_cache.h>
 
@@ -99,7 +99,7 @@ public:
     /// \param server A pointer to the \c DNSServer object handling the client
     void resolve(const isc::dns::Question& question,
                  isc::dns::MessagePtr answer_message,
-                 isc::util::OutputBufferPtr buffer,
+                 isc::util::io::OutputBufferPtr buffer,
                  DNSServer* server);
 
     /// \brief Set Test Server

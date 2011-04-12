@@ -66,7 +66,7 @@ public:
     virtual void operator()(const IOMessage& io_message,
                             isc::dns::MessagePtr query_message,
                             isc::dns::MessagePtr answer_message,
-                            isc::util::OutputBufferPtr buffer) const = 0;
+                            isc::util::io::OutputBufferPtr buffer) const = 0;
 };
 
 }      // namespace asiolink

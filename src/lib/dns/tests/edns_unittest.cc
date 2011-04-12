@@ -16,7 +16,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/buffer.h>
+#include <util/io/buffer.h>
 #include <dns/edns.h>
 #include <dns/exceptions.h>
 #include <dns/message.h>
@@ -35,7 +35,7 @@
 using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
-using namespace isc::util;
+using namespace isc::util::io;
 using namespace isc::dns::rdata;
 
 const uint8_t EDNS::SUPPORTED_VERSION;

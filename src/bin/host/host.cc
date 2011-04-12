@@ -24,7 +24,7 @@
 #include <string>
 #include <iostream>
 
-#include <util/buffer.h>
+#include <util/io/buffer.h>
 
 #include <dns/name.h>
 #include <dns/message.h>
@@ -38,7 +38,7 @@
 
 using namespace std;
 using namespace isc::dns;
-using namespace isc::util;
+using namespace isc::util::io;
 
 namespace {
 char* dns_type = NULL;    // not set, so A, AAAA, MX

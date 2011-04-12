@@ -26,7 +26,7 @@
 #include <resolve/resolver_interface.h>
 
 #include <util/locks.h>
-#include <util/random_number_generator.h>
+#include <util/random/random_number_generator.h>
 
 #include "hash_key.h"
 #include "nsas_entry.h"
@@ -183,7 +183,7 @@ private:
     void insertCallback(NameserverPtr nameserver, AddressFamily family);
     // A random generator for this zone entry
     // TODO: A more global one? Per thread one?
-    isc::util::WeightedRandomIntegerGenerator address_selector;
+    isc::util::random::WeightedRandomIntegerGenerator address_selector;
 };
 
 } // namespace nsas

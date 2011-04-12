@@ -19,7 +19,7 @@
 #include <limits>
 #include <stdexcept>
 
-#include <util/buffer.h>
+#include <util/io/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
@@ -31,7 +31,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::dns;
-using namespace isc::util;
+using namespace isc::util::io;
 
 //
 // XXX: these are defined as class static constants, but some compilers

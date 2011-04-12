@@ -22,7 +22,7 @@
 #include <bench/benchmark.h>
 #include <bench/benchmark_util.h>
 
-#include <util/buffer.h>
+#include <util/io/buffer.h>
 #include <dns/message.h>
 #include <dns/name.h>
 #include <dns/question.h>
@@ -41,7 +41,7 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::auth;
 using namespace isc::dns;
-using namespace isc::util;
+using namespace isc::util::io;
 using namespace isc::xfr;
 using namespace isc::bench;
 using namespace asiolink;
