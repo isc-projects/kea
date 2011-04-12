@@ -19,8 +19,6 @@
 #include <stdint.h>
 #include <utility>
 
-#include <boost/program_options.hpp>
-
 namespace isc {
 namespace badpacket {
 
@@ -53,7 +51,6 @@ public:
     /// variables are two-ewlement arrays: element 0 of the array holds the low
     /// value in the range given, and element 1 the high value.  If only a
     /// single value is given, both elements hold the same value.
-
     struct FlagValues {
         uint32_t qr[2];         // QR bit
         uint32_t op[2];         // OPCODE field
@@ -160,12 +157,13 @@ protected:
     /// placing it in the appropriate location.  On error a BadValue exception
     /// is thrown.
     ///
-    /// \param arg flag argument read from the command line
+    /// \param what (Long) name of the command switch being parsed
+    /// \param arg Switch argument read from the command line
     /// \param where Two-element uint32_t array into which the data is put
     /// \param minval Minimum allowed value
     /// \param maxval Maximum allowed value
-    void processOptionValue(const char* arg, uint32_t* where, uint32_t minval,
-                     uint32_t maxval);
+    void processOptionValue(const char* what, const char* arg, uint32_t* where,
+                            uint32_t minval,  uint32_t maxval);
 
     // Member variables
 
