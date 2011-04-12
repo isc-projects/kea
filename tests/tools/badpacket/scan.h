@@ -72,6 +72,23 @@ private:
     void iterateFlagsFields(isc::dns::OutputBufferPtr& msgbuf,
                  const CommandOptions& options);
 
+    /// \brief Set Count Fields Options
+    ///
+    /// Iterates through all combinations of the count fields specified on the
+    /// command line.
+    ///
+    /// The count fields are set by default to question count = 1, all the rest
+    /// zero.  Command-line options allow these values to be altered, although
+    /// the actual contents of the sections are not changed.
+    ///
+    /// \param msgbuf Message that will be sent to the remote nameserver.  The
+    ///        QID given will be ignored - the value used will be determined by
+    ///        the sending code
+    /// \param options Command-line options (the important ones being address,
+    ///        port and timeout).
+    void iterateCountFields(isc::dns::OutputBufferPtr& msgbuf,
+                 const CommandOptions& options);
+
     /// \brief Scan One Value
     ///
     /// Performs one exchange of packets with the remote nameserver, sending

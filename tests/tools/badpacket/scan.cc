@@ -114,8 +114,9 @@ Scan::iterateFlagsFields(OutputBufferPtr& msgbuf, const CommandOptions& options)
                                             // Set the flags in the message.
                                             msgbuf->writeUint16At(flags.getValue(), 2);
 
-                                            // Do the I/O.
-                                            scanOne(msgbuf, options);
+                                            // And for this flag combination, iterate over the section
+                                            // count fields.
+                                            iterateCountFields(msgbuf, options);
                                         }
                                     }
                                 }
@@ -128,7 +129,35 @@ Scan::iterateFlagsFields(OutputBufferPtr& msgbuf, const CommandOptions& options)
     }
 }
 
-// Perform the message exchange for a single combination of flags.
+// Iterate through the various count fields
+void
+Scan::iterateCountFields(OutputBufferPtr& msgbuf, const CommandOptions& options) {
+    for (uint32_t qc =  options.minimum(OptionInfo::QC);
+                  qc <= options.maximum(OptionInfo::QC); ++qc) {
+        msgbuf->writeUint16At(qc, OptionInfo::word(OptionInfo::QC));
+
+        for (uint32_t ac =  options.minimum(OptionInfo::AC);
+                      ac <= options.maximum(OptionInfo::AC); ++ac) {
+            msgbuf->writeUint16At(ac, OptionInfo::word(OptionInfo::AC));
+
+            for (uint32_t uc =  options.minimum(OptionInfo::UC);
+                          uc <= options.maximum(OptionInfo::UC); ++uc) {
+                msgbuf->writeUint16At(uc, OptionInfo::word(OptionInfo::UC));
+
+                for (uint32_t dc =  options.minimum(OptionInfo::DC);
+                              dc <= options.maximum(OptionInfo::DC); ++dc) {
+                    msgbuf->writeUint16At(dc, OptionInfo::word(OptionInfo::DC));
+
+                    // Do the I/O.
+                    scanOne(msgbuf, options);
+
+                }
+            }
+        }
+    }
+}
+
+// Perform the message exchange for a single combination command options.
 void
 Scan::scanOne(isc::dns::OutputBufferPtr& msgbuf, const CommandOptions& options) {
 
@@ -178,7 +207,7 @@ Scan::getFields(isc::dns::OutputBufferPtr& msgbuf) {
 
     // Extract the flags field from the buffer
     InputBuffer inbuf(msgbuf->getData(), msgbuf->getLength());
-    inbuf.setPosition(2);
+    inbuf.setPosition(OptionInfo::word(OptionInfo::QR));
     flags.setValue(inbuf.readUint16());
 
     std::ostringstream os;
@@ -193,6 +222,26 @@ Scan::getFields(isc::dns::OutputBufferPtr& msgbuf) {
         "AD:" << flags.get(OptionInfo::AD) << " " <<
         "CD:" << flags.get(OptionInfo::CD) << " " <<
         "RC:" << flags.get(OptionInfo::RC);
+
+    // Section count fields
+    os << " ";
+
+    inbuf.setPosition(OptionInfo::word(OptionInfo::QC));
+    os << std::hex << std::uppercase <<
+        "QC:" << inbuf.readUint16() << " ";
+
+    inbuf.setPosition(OptionInfo::word(OptionInfo::AC));
+    os << std::hex << std::uppercase <<
+        "AC:" << inbuf.readUint16() << " ";
+
+    inbuf.setPosition(OptionInfo::word(OptionInfo::UC));
+    os << std::hex << std::uppercase <<
+        "UC:" << inbuf.readUint16() << " ";
+
+    inbuf.setPosition(OptionInfo::word(OptionInfo::DC));
+    os << std::hex << std::uppercase <<
+        "DC:" << inbuf.readUint16();
+
     return (os.str());
 }
 
