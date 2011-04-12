@@ -24,6 +24,7 @@
 #include "log/strutil.h"
 
 #include "command_options.h"
+#include "option_info.h"
 #include "version.h"
 
 using namespace std;
@@ -108,43 +109,16 @@ CommandOptions::parse(int argc, char* const argv[]) {
                 break;
 
             case 'Q':   // --qr (query/response)
-                processOptionValue("qr", optarg, values_.qr, 0, 1);
-                break;
-
             case 'O':   // --op (operation code)
-                processOptionValue("op", optarg, values_.op, 0, 15);
-                break;
-
             case 'A':   // --aa (authoritative answer)
-                processOptionValue("aa", optarg, values_.aa, 0, 1);
-                break;
-
             case 'T':   // --tc (truncated)
-                processOptionValue("tc", optarg, values_.tc, 0, 1);
-                break;
-
             case 'D':   // --rd (recursion desired)
-                processOptionValue("rd", optarg, values_.rd, 0, 1);
-                break;
-
             case 'R':   // --ra (recursion available)
-                processOptionValue("ra", optarg, values_.ra, 0, 1);
-                break;
-
             case 'Z':   // --z (zero: reserved bit)
-                processOptionValue("z", optarg, values_.z, 0, 1);
-                break;
-
             case 'U':   // --ad (authenticated data)
-                processOptionValue("ad", optarg, values_.ad, 0, 1);
-                break;
-
             case 'C':   // --cd (checking disabled)
-                processOptionValue("cd", optarg, values_.cd, 0, 1);
-                break;
-
             case 'E':   // --rc (result code)
-                processOptionValue("rc", optarg, values_.rc, 0, 15);
+                processOptionValue(c, optarg);
                 break;
 
             default:
@@ -212,13 +186,18 @@ CommandOptions::version() {
 
 // Process single flag
 void
-CommandOptions::processOptionValue(const char* what, const char* arg,
-                                   uint32_t* where, uint32_t minval, uint32_t maxval)
-{
+CommandOptions::processOptionValue(int c, const char* value) {
+
+    // Get values for this option
+    int index = OptionInfo::getIndex(c);
+    const char* name = OptionInfo::name(index);
+    uint32_t minval = OptionInfo::minval(index);
+    uint32_t maxval = OptionInfo::maxval(index);
+
     // Split the string up into one or two tokens
-    vector<string> values = isc::strutil::tokens(string(arg), "-");
-    if ((values.size() < 1) || (values.size() > 2)) {
-        isc_throw(isc::BadValue, "value given for " << what << " is '" << arg <<
+    vector<string> tokens = isc::strutil::tokens(string(value), "-");
+    if ((tokens.size() < 1) || (tokens.size() > 2)) {
+        isc_throw(isc::BadValue, "value given for " << name << " is '" << value <<
                   "': it must be in the form 'int' or 'int1-int2'");
     }
 
@@ -226,35 +205,49 @@ CommandOptions::processOptionValue(const char* what, const char* arg,
     int i = 0;
     try {
         do {
-            where[i] = boost::lexical_cast<uint32_t>(values[i]);
+            limits_[index][i] = boost::lexical_cast<uint32_t>(tokens[i]);
             ++i;
-        } while (i < values.size());
+        } while (i < tokens.size());
     } catch (boost::bad_lexical_cast) {
-        isc_throw(isc::BadValue, "value given for " << what << " is '" << arg <<
+        isc_throw(isc::BadValue, "value given for " << name << " is '" << value <<
                   "': it must be in the form 'int' or 'int1-int2'");
     }
 
     // Set the limits in the correct order.
-    if (values.size() == 1) {
-        where[1] = where[0];
-    } else if (where[0] > where[1]) {
-        swap(where[0], where[1]);
+    if (tokens.size() == 1) {
+        limits_[index][1] = limits_[index][0];
+    } else if (limits_[index][0] > limits_[index][1]) {
+        swap(limits_[index][0], limits_[index][1]);
     }
 
-    // Coerce values into the desired range
-    if ((values.size() == 1) && ((where[0] < minval) || (where[0] > maxval))) {
-        isc_throw(isc::BadValue, "the values of " << where[0] <<
-                  " given for " << what << " is outside the range of " <<
+    // Check that tokens lie inside the allowed ranges
+    if ((tokens.size() == 1) &&
+        ((limits_[index][0] < OptionInfo::minval(index)) || (limits_[index][0] > maxval))) {
+        isc_throw(isc::BadValue, "the tokens of " << limits_[index][0] <<
+                  " given for " << name << " is outside the range of " <<
                   minval << " to " << maxval);
-    } else if (where[0] < minval) {
-        isc_throw(isc::BadValue, "the lower limit of " << where[0] <<
-                  " given for " << what << " is below the minimum permitted"
+    } else if (limits_[index][0] < minval) {
+        isc_throw(isc::BadValue, "the lower limit of " << limits_[index][0] <<
+                  " given for " << name << " is below the minimum permitted"
                   " value of " << minval);
-    } else if (where[1] > maxval) {
-        isc_throw(isc::BadValue, "the upper limit of " << where[1] <<
-                  " given for " << what << " is above the maximum permitted"
+    } else if (limits_[index][1] > maxval) {
+        isc_throw(isc::BadValue, "the upper limit of " << limits_[index][1] <<
+                  " given for " << name << " is above the maximum permitted"
                   " value of " << maxval);
     }
+}
+
+// Minimum and maximum value of the flag
+uint32_t
+CommandOptions::minimum(int index) const {
+    OptionInfo::checkIndex(index);
+    return (limits_[index][0]);
+}
+
+uint32_t
+CommandOptions::maximum(int index) const {
+    OptionInfo::checkIndex(index);
+    return (limits_[index][1]);
 }
 
 } // namespace badpacket
