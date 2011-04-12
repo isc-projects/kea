@@ -23,16 +23,20 @@ namespace {
 // processing.
 
 isc::badpacket::OptionInfo::Parameter option_information[] = {
-    {'Q', "qr", 0x8000, 15, 0,  1},
-    {'O', "op", 0x7800, 11, 0, 15},
-    {'A', "aa", 0x0400, 10, 0,  1},
-    {'T', "tc", 0x0200,  9, 0,  1},
-    {'D', "rd", 0x0100,  8, 0,  1},
-    {'R', "ra", 0x0080,  7, 0,  1},
-    {'Z', "z",  0x0040,  6, 0,  1},
-    {'U', "ad", 0x0020,  5, 0,  1},
-    {'C', "cd", 0x0010,  4, 0,  1},
-    {'E', "rc", 0x000F,  0, 0, 15}
+    {'Q', "qr",  2, 0x8000,  15,  0, 0,      1},
+    {'O', "op",  2, 0x7800,  11,  0, 0,     15},
+    {'A', "aa",  2, 0x0400,  10,  0, 0,      1},
+    {'T', "tc",  2, 0x0200,   9,  0, 0,      1},
+    {'D', "rd",  2, 0x0100,   8,  0, 0,      1},
+    {'R', "ra",  2, 0x0080,   7,  0, 0,      1},
+    {'Z', "z",   2, 0x0040,   6,  0, 0,      1},
+    {'U', "ad",  2, 0x0020,   5,  0, 0,      1},
+    {'C', "cd",  2, 0x0010,   4,  0, 0,      1},
+    {'E', "rc",  2, 0x000F,   0,  0, 0,     15},
+    {'Y', "qc",  4,      0,   0,  1, 0, 0xFFFF},
+    {'W', "ac",  6,      0,   0,  0, 0, 0xFFFF},
+    {'H', "uc",  8,      0,   0,  0, 0, 0xFFFF},
+    {'I', "dc", 10,      0,   0,  0, 0, 0xFFFF}
 };
 
 }   // Anonymous namespace
@@ -66,6 +70,12 @@ OptionInfo::mask(int i) {
 }
 
 int
+OptionInfo::word(int i) {
+    checkIndex(i);
+    return (option_information[i].word);
+}
+
+int
 OptionInfo::offset(int i) {
     checkIndex(i);
     return (option_information[i].offset);
@@ -75,6 +85,12 @@ uint32_t
 OptionInfo::minval(int i) {
     checkIndex(i);
     return (option_information[i].minval);
+}
+
+uint32_t
+OptionInfo::defval(int i) {
+    checkIndex(i);
+    return (option_information[i].defval);
 }
 
 uint32_t

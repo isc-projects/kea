@@ -48,6 +48,8 @@ CommandOptions::parse(int argc, char* const argv[]) {
     char ADDRESS[] = {"address"};
     char PORT[] = {"port"};
     char TIMEOUT[] = {"timeout"};
+
+    // Settings for options in the flags field
     char QR[] = {"qr"};
     char OP[] = {"op"};
     char AA[] = {"aa"};
@@ -58,6 +60,12 @@ CommandOptions::parse(int argc, char* const argv[]) {
     char AD[] = {"ad"};
     char CD[] = {"cd"};
     char RC[] = {"rc"};
+
+    // Settings for the count fields
+    char QC[] = {"qc"};
+    char AC[] = {"ac"};
+    char UC[] = {"uc"};
+    char DC[] = {"dc"};
 
     const struct option longopts[] = {
         {HELP,    0, NULL, 'h'},  // Print usage message and exit
@@ -75,9 +83,13 @@ CommandOptions::parse(int argc, char* const argv[]) {
         {AD,      1, NULL, 'U'},  // aUthenticated data
         {CD,      1, NULL, 'C'},  // Checking disabled
         {RC,      1, NULL, 'E'},  // rEsult code
+        {QC,      1, NULL, 'Y'},  // querY section count
+        {AC,      1, NULL, 'W'},  // ansWer section count
+        {UC,      1, NULL, 'H'},  // autHority section count
+        {DC,      1, NULL, 'I'},  // addItional section count
         {NULL,    0, NULL, 0  }
     };
-    const char* shortopts = "hva:p:t:Q:O:A:T:D:R:Z:U:C:E:";
+    const char* shortopts = "hva:p:t:Q:O:A:T:D:R:Z:U:C:E:Y:W:H:I:";
 
 
     // Set variables to defaults before parsing
@@ -118,6 +130,10 @@ CommandOptions::parse(int argc, char* const argv[]) {
             case 'U':   // --ad (authenticated data)
             case 'C':   // --cd (checking disabled)
             case 'E':   // --rc (result code)
+            case 'Y':   // --qc (query count)
+            case 'W':   // --ac (answer count)
+            case 'H':   // --uc (authority count)
+            case 'I':   // --dc (additional count)
                 processOptionValue(c, optarg);
                 break;
 
@@ -164,14 +180,27 @@ CommandOptions::usage() {
             "--port <port>       [-p] Port to which to send query.  Defaults to 53.\n"
             "--timeout <value>   [-t] Timeout value for the query.  Specified in ms, it\n"
             "                         defaults to 500ms.\n"
-            "--qr <range>        [-Q] Set query/response bit.  Valid <range> is 0-1\n"
-            "--op <range>        [-O] Set opcode.  Valid <range> is 0-15\n"
-            "--aa <range>        [-A] Set authoritative answer bit.  Valid <range> is 0-1\n"
-            "--tc <range>        [-T] Set truncated bit.  Valid <range> is 0-1\n"
-            "--z <range>         [-Z] Set zero (reserved) bit.  Valid <range> is 0-1\n"
-            "--ad <range>        [-U] Set authentiacted data bit.  Valid <range> is 0-1\n"
-            "--cd <range>        [-C] Set checking disabled bit.  Valid <range> is 0-1\n"
+            "\n"
+            "The following options set fields in the outgoing DNS message flags word\n"
+            "\n"
+            "--qr <range>        [-Q] Set query/response bit.  Valid <range> is 0-1.\n"
+            "--op <range>        [-O] Set opcode.  Valid <range> is 0-15.\n"
+            "--aa <range>        [-A] Set authoritative answer bit.  Valid <range> is 0-1.\n"
+            "--tc <range>        [-T] Set truncated bit.  Valid <range> is 0-1.\n"
+            "--rd <range>        [-T] Set recursion desired bit.  Valid <range> is 0-1.\n"
+            "--ra <range>        [-T] Set recursion available bit.  Valid <range> is 0-1.\n"
+            "--z <range>         [-Z] Set zero (reserved) bit.  Valid <range> is 0-1.\n"
+            "--ad <range>        [-U] Set authenticated data bit.  Valid <range> is 0-1.\n"
+            "--cd <range>        [-C] Set checking disabled bit.  Valid <range> is 0-1.\n"
             "--rc <range>        [-E] Set rcode value.  Valid <range> is 0-15\n"
+            "\n"
+            "The following options set the various section counts (independent of what is\n"
+            "actually in the section)\n"
+            "\n"
+            "--qc <range>        [-Q] Set the query count.  Valid range is 0-65535.\n"
+            "--ac <range>        [-Q] Set the answer count.  Valid range is 0-65535.\n"
+            "--uc <range>        [-Q] Set the authority count.  Valid range is 0-65535.\n"
+            "--dc <range>        [-Q] Set the additional count.  Valid range is 0-65535.\n"
             "\n"
             "query               Name to query for.  The query is for an 'IN' A record.\n"
             "                    If not given, the name 'www.example.com' is used.\n"

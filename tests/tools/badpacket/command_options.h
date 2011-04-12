@@ -97,8 +97,8 @@ public:
         qname_ = "www.example.com";
 
         for (int i = 0; i < OptionInfo::SIZE; ++i) {
-            limits_[i][0] = limits_[i][1] = 0;
-            }
+            limits_[i][0] = limits_[i][1] = OptionInfo::defval(i);
+        }
     }
 
     /// \brief Parse Command Line
