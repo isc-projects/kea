@@ -38,7 +38,7 @@
 
 using namespace std;
 using namespace isc::dns::rdata::generic::detail::nsec;
-using namespace isc::util::comapt;
+using namespace isc::util::compat;
 using namespace isc::util::io;
 
 // BEGIN_ISC_NAMESPACE
