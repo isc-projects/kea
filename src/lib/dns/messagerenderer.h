@@ -106,7 +106,7 @@ protected:
     /// \short Buffer to store data
     ///
     /// It was decided that there's no need to have this in every subclass,
-    /// at last not now, and this reduces code size and gives compiler a better
+    /// at least not now, and this reduces code size and gives compiler a better
     /// chance to optimise.
     OutputBuffer& buffer_;
 public:
