@@ -15,8 +15,10 @@ if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += command_options_unittest.cc
+run_unittests_SOURCES += option_info_unittest.cc
 run_unittests_SOURCES += header_flags_unittest.cc
 run_unittests_SOURCES += $(top_builddir)/tests/tools/badpacket/command_options.cc
+run_unittests_SOURCES += $(top_builddir)/tests/tools/badpacket/option_info.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)

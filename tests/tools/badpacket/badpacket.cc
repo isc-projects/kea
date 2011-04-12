@@ -13,9 +13,11 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <unistd.h>
+#include <iostream>
 
 #include <config.h>
 
+#include <exceptions/exceptions.h>
 #include "command_options.h"
 #include "scan.h"
 
@@ -41,12 +43,17 @@ using namespace isc::badpacket;
 /// \brief Main Program
 int main(int argc, char* argv[]) {
 
-    CommandOptions command_line;
-    command_line.parse(argc, argv);
+    try {
+        CommandOptions options;
+        options.parse(argc, argv);
 
-    // Construct the scan object and perform the scan.
-    Scan scanner;
-    scanner.scan(command_line);
+        // Construct the scan object and perform the scan.
+        Scan scanner;
+        scanner.scan(options);
+    } catch (isc::Exception& e) {
+        std::cout << "ERROR: " << e.what() << "\n";
+        return 1;
+    }
 
     return 0;
 }

@@ -41,54 +41,47 @@ TEST_F(CommandOptionsTest, processOptionValue) {
     uint32_t    result[2];
 
     // Check valid data
-    processOptionValue("1", result, 0, 1);
+    processOptionValue("dummy", "1", result, 0, 1);
     EXPECT_EQ(1, result[0]);
     EXPECT_EQ(1, result[1]);
 
-    processOptionValue("0-2", result, 0, 5);
+    processOptionValue("dummy", "0-2", result, 0, 5);
     EXPECT_EQ(0, result[0]);
     EXPECT_EQ(2, result[1]);
 
-    processOptionValue("4-8", result, 0, 10);
+    processOptionValue("dummy", "4-8", result, 0, 10);
     EXPECT_EQ(4, result[0]);
     EXPECT_EQ(8, result[1]);
 
-    processOptionValue("172-103", result, 0, 200);
+    processOptionValue("dummy", "172-103", result, 0, 200);
     EXPECT_EQ(103, result[0]);
     EXPECT_EQ(172, result[1]);
 
-    // Check coercion is as expected
-    processOptionValue("1", result, 3, 4);    // Single value below range
-    EXPECT_EQ(3, result[0]);
-    EXPECT_EQ(3, result[1]);
+    // Check out of range values cause a BadValue exception
+    EXPECT_THROW(processOptionValue("dummy", "1", result, 3, 4),
+                 isc::BadValue);    // Single value below range
+    EXPECT_THROW(processOptionValue("dummy", "7", result, 3, 6),
+                 isc::BadValue);    // Single value above range
+    EXPECT_THROW(processOptionValue("dummy", "2-6", result, 5, 10),
+                 isc::BadValue);    // Range overlaps valid range on low side
+    EXPECT_THROW(processOptionValue("dummy", "4-7", result, 5, 9),
+                 isc::BadValue);   // Range overlaps valid range on high side
+    EXPECT_THROW(processOptionValue("dummy", "9-1", result, 4, 8),
+                 isc::BadValue);   // Range overlaps valid range
 
-    processOptionValue("7", result, 3, 6);    // Single value above range
-    EXPECT_EQ(6, result[0]);
-    EXPECT_EQ(6, result[1]);
-
-    processOptionValue("2-6", result, 5, 10); // Range overlaps valid range on low side
-    EXPECT_EQ(5, result[0]);
-    EXPECT_EQ(6, result[1]);
-
-    processOptionValue("4-7", result, 5, 9);  // Range overlaps valid range on high side
-    EXPECT_EQ(5, result[0]);
-    EXPECT_EQ(7, result[1]);
-
-    processOptionValue("9-1", result, 4, 8);  // Range overlaps valid range
-    EXPECT_EQ(4, result[0]);
-    EXPECT_EQ(8, result[1]);
-
-    processOptionValue("4-8", result, 1, 9);  // Range inside valid range
-    EXPECT_EQ(4, result[0]);
-    EXPECT_EQ(8, result[1]);
-
-    // Now the invalid ones.
-    EXPECT_ANY_THROW(processOptionValue("", result, 0, 1));
-    EXPECT_ANY_THROW(processOptionValue(" ", result, 0, 1));
-    EXPECT_ANY_THROW(processOptionValue("abc", result, 0, 1));
-    EXPECT_ANY_THROW(processOptionValue("xyz-def", result, 0, 1));
-    EXPECT_ANY_THROW(processOptionValue("0.7", result, 0, 1));
-    EXPECT_ANY_THROW(processOptionValue("0.7-2.3", result, 0, 1));
+    // ... and that any invalid string does the same
+    EXPECT_THROW(processOptionValue("dummy", "", result, 0, 1),
+                 isc::BadValue);
+    EXPECT_THROW(processOptionValue("dummy", " ", result, 0, 1),
+                 isc::BadValue);
+    EXPECT_THROW(processOptionValue("dummy", "abc", result, 0, 1),
+                 isc::BadValue);
+    EXPECT_THROW(processOptionValue("dummy", "xyz-def", result, 0, 1),
+                 isc::BadValue);
+    EXPECT_THROW(processOptionValue("dummy", "0.7", result, 0, 1),
+                 isc::BadValue);
+    EXPECT_THROW(processOptionValue("dummy", "0.7-2.3", result, 0, 1),
+                 isc::BadValue);
 }
 
 
@@ -253,16 +246,15 @@ TEST_F(CommandOptionsTest, op) {
     checkValuePair(values.cd);
     checkValuePair(values.rc);
 
-    // Check that a range is accepted (in this case, specified backwards and
-    // outside the range - so it should be truncated).
-    const char* argv3[] = {"badpacket",  "--op", "21-0"};
+    // Check that a range is accepted (in this case, specified backwards)
+    const char* argv3[] = {"badpacket",  "--op", "14-2"};
     int argc3 = sizeof(argv3) / sizeof(const char*);
 
     parse(argc3, const_cast<char**>(argv3));
     checkDefaultOtherValues(*this);
     values = getFlagValues();
     checkValuePair(values.qr);
-    checkValuePair(values.op, 0, 15);
+    checkValuePair(values.op, 2, 14);
     checkValuePair(values.aa);
     checkValuePair(values.tc);
     checkValuePair(values.z);
@@ -298,9 +290,8 @@ TEST_F(CommandOptionsTest, aa) {
     checkValuePair(values.cd);
     checkValuePair(values.rc);
 
-    // Check that a range is accepted (in this case, specified backwards and
-    // outside the range - so it should be truncated).
-    const char* argv3[] = {"badpacket",  "--aa", "21-0"};
+    // Check that a range is accepted.
+    const char* argv3[] = {"badpacket",  "--aa", "1-0"};
     int argc3 = sizeof(argv3) / sizeof(const char*);
 
     parse(argc3, const_cast<char**>(argv3));
@@ -343,9 +334,8 @@ TEST_F(CommandOptionsTest, tc) {
     checkValuePair(values.cd);
     checkValuePair(values.rc);
 
-    // Check that a range is accepted (in this case, specified backwards and
-    // outside the range - so it should be truncated).
-    const char* argv3[] = {"badpacket",  "--tc", "21-0"};
+    // Check that a range is accepted.
+    const char* argv3[] = {"badpacket",  "--tc", "1-0"};
     int argc3 = sizeof(argv3) / sizeof(const char*);
 
     parse(argc3, const_cast<char**>(argv3));
@@ -388,9 +378,8 @@ TEST_F(CommandOptionsTest, z) {
     checkValuePair(values.cd);
     checkValuePair(values.rc);
 
-    // Check that a range is accepted (in this case, specified backwards and
-    // outside the range - so it should be truncated).
-    const char* argv3[] = {"badpacket",  "--z", "21-0"};
+    // Check that a range is accepted.
+    const char* argv3[] = {"badpacket",  "--z", "1-0"};
     int argc3 = sizeof(argv3) / sizeof(const char*);
 
     parse(argc3, const_cast<char**>(argv3));
@@ -433,9 +422,8 @@ TEST_F(CommandOptionsTest, ad) {
     checkValuePair(values.cd);
     checkValuePair(values.rc);
 
-    // Check that a range is accepted (in this case, specified backwards and
-    // outside the range - so it should be truncated).
-    const char* argv3[] = {"badpacket",  "--ad", "21-0"};
+    // Check that a range is accepted.
+    const char* argv3[] = {"badpacket",  "--ad", "0-1"};
     int argc3 = sizeof(argv3) / sizeof(const char*);
 
     parse(argc3, const_cast<char**>(argv3));
@@ -478,9 +466,8 @@ TEST_F(CommandOptionsTest, cd) {
     checkValuePair(values.cd, 1, 1);
     checkValuePair(values.rc);
 
-    // Check that a range is accepted (in this case, specified backwards and
-    // outside the range - so it should be truncated).
-    const char* argv3[] = {"badpacket",  "--cd", "21-0"};
+    // Check that a range is accepted.
+    const char* argv3[] = {"badpacket",  "--cd", "1-0"};
     int argc3 = sizeof(argv3) / sizeof(const char*);
 
     parse(argc3, const_cast<char**>(argv3));
@@ -507,8 +494,8 @@ TEST_F(CommandOptionsTest, rc) {
     FlagValues values = getFlagValues();
     checkDefaultFlagValues(values);
 
-    // Check that a value of 1 is accepted
-    const char* argv2[] = {"badpacket",  "--rc", "21"};
+    // Check that a valid value is accepted.
+    const char* argv2[] = {"badpacket",  "--rc", "15"};
     int argc2 = sizeof(argv2) / sizeof(const char*);
 
     parse(argc2, const_cast<char**>(argv2));
@@ -525,7 +512,7 @@ TEST_F(CommandOptionsTest, rc) {
 
     // Check that a range is accepted (in this case, specified backwards and
     // outside the range - so it should be truncated).
-    const char* argv3[] = {"badpacket",  "--rc", "21-0"};
+    const char* argv3[] = {"badpacket",  "--rc", "8-4"};
     int argc3 = sizeof(argv3) / sizeof(const char*);
 
     parse(argc3, const_cast<char**>(argv3));
@@ -538,8 +525,5 @@ TEST_F(CommandOptionsTest, rc) {
     checkValuePair(values.z);
     checkValuePair(values.ad);
     checkValuePair(values.cd);
-    checkValuePair(values.rc, 0, 15);
+    checkValuePair(values.rc, 4, 8);
 }
-
-
-// Check that the other flags work

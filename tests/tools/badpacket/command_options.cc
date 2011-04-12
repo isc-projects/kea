@@ -28,7 +28,6 @@
 
 using namespace std;
 using namespace isc;
-namespace po = boost::program_options;
 
 namespace isc {
 namespace badpacket {
@@ -43,7 +42,6 @@ CommandOptions::parse(int argc, char* const argv[]) {
     // structure (as opposed to just putting a string literal there) is
     // occasioned by a version of solaris which declares the first field
     // as "char*" (instead of the correct "const char*").
-
     char HELP[] = {"help"};
     char VERSION[] = {"version"};
     char ADDRESS[] = {"address"};
@@ -72,7 +70,7 @@ CommandOptions::parse(int argc, char* const argv[]) {
         {TC,      1, NULL, 'T'},  // Truncated
         {RD,      1, NULL, 'D'},  // recursion Desired
         {RA,      1, NULL, 'R'},  // Recursion available
-        {Z,       1, NULL, 'Z'},  // Must be Zero (reserved bit)
+        {Z,       1, NULL, 'Z'},  // must be Zero (reserved bit)
         {AD,      1, NULL, 'U'},  // aUthenticated data
         {CD,      1, NULL, 'C'},  // Checking disabled
         {RC,      1, NULL, 'E'},  // rEsult code
@@ -110,47 +108,48 @@ CommandOptions::parse(int argc, char* const argv[]) {
                 break;
 
             case 'Q':   // --qr (query/response)
-                processOptionValue(optarg, values_.qr, 0, 1);
+                processOptionValue("qr", optarg, values_.qr, 0, 1);
                 break;
 
             case 'O':   // --op (operation code)
-                processOptionValue(optarg, values_.op, 0, 15);
+                processOptionValue("op", optarg, values_.op, 0, 15);
                 break;
 
             case 'A':   // --aa (authoritative answer)
-                processOptionValue(optarg, values_.aa, 0, 1);
+                processOptionValue("aa", optarg, values_.aa, 0, 1);
                 break;
 
             case 'T':   // --tc (truncated)
-                processOptionValue(optarg, values_.tc, 0, 1);
+                processOptionValue("tc", optarg, values_.tc, 0, 1);
                 break;
 
             case 'D':   // --rd (recursion desired)
-                processOptionValue(optarg, values_.rd, 0, 1);
+                processOptionValue("rd", optarg, values_.rd, 0, 1);
                 break;
 
             case 'R':   // --ra (recursion available)
-                processOptionValue(optarg, values_.ra, 0, 1);
+                processOptionValue("ra", optarg, values_.ra, 0, 1);
                 break;
 
             case 'Z':   // --z (zero: reserved bit)
-                processOptionValue(optarg, values_.z, 0, 1);
+                processOptionValue("z", optarg, values_.z, 0, 1);
                 break;
 
             case 'U':   // --ad (authenticated data)
-                processOptionValue(optarg, values_.ad, 0, 1);
+                processOptionValue("ad", optarg, values_.ad, 0, 1);
                 break;
 
             case 'C':   // --cd (checking disabled)
-                processOptionValue(optarg, values_.cd, 0, 1);
+                processOptionValue("cd", optarg, values_.cd, 0, 1);
                 break;
 
             case 'E':   // --rc (result code)
-                processOptionValue(optarg, values_.rc, 0, 15);
+                processOptionValue("rc", optarg, values_.rc, 0, 15);
                 break;
 
             default:
-                isc_throw(isc::InvalidParameter, "Unknown switch");
+                isc_throw(isc::InvalidParameter,
+                          "unknown option '" << argv[optind] << "' given on the command line");
         }
     }
 
@@ -213,29 +212,49 @@ CommandOptions::version() {
 
 // Process single flag
 void
-CommandOptions::processOptionValue(const char* arg, uint32_t* where, uint32_t minval,
-                     uint32_t maxval)
+CommandOptions::processOptionValue(const char* what, const char* arg,
+                                   uint32_t* where, uint32_t minval, uint32_t maxval)
 {
     // Split the string up into one or two tokens
     vector<string> values = isc::strutil::tokens(string(arg), "-");
     if ((values.size() < 1) || (values.size() > 2)) {
-        isc_throw(isc::BadValue, "command argument is '" << arg << "': it must "
-                  "be in the form 'int' or 'int1-int2'");
+        isc_throw(isc::BadValue, "value given for " << what << " is '" << arg <<
+                  "': it must be in the form 'int' or 'int1-int2'");
     }
 
     // Convert to uint32.
-    uint32_t start = boost::lexical_cast<uint32_t>(values[0]);
-    uint32_t end = start;
-    if (values.size() == 2) {
-        end = boost::lexical_cast<uint32_t>(values[1]);
+    int i = 0;
+    try {
+        do {
+            where[i] = boost::lexical_cast<uint32_t>(values[i]);
+            ++i;
+        } while (i < values.size());
+    } catch (boost::bad_lexical_cast) {
+        isc_throw(isc::BadValue, "value given for " << what << " is '" << arg <<
+                  "': it must be in the form 'int' or 'int1-int2'");
     }
-    if (start > end) {
-        swap(start, end);
+
+    // Set the limits in the correct order.
+    if (values.size() == 1) {
+        where[1] = where[0];
+    } else if (where[0] > where[1]) {
+        swap(where[0], where[1]);
     }
 
     // Coerce values into the desired range
-    where[0] = max(minval, min(start, maxval));
-    where[1] = min(maxval, max(end, minval));
+    if ((values.size() == 1) && ((where[0] < minval) || (where[0] > maxval))) {
+        isc_throw(isc::BadValue, "the values of " << where[0] <<
+                  " given for " << what << " is outside the range of " <<
+                  minval << " to " << maxval);
+    } else if (where[0] < minval) {
+        isc_throw(isc::BadValue, "the lower limit of " << where[0] <<
+                  " given for " << what << " is below the minimum permitted"
+                  " value of " << minval);
+    } else if (where[1] > maxval) {
+        isc_throw(isc::BadValue, "the upper limit of " << where[1] <<
+                  " given for " << what << " is above the maximum permitted"
+                  " value of " << maxval);
+    }
 }
 
 } // namespace badpacket
