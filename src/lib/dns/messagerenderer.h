@@ -53,6 +53,16 @@ class Name;
 /// renderer class for specific purposes.  For example, a high performance
 /// DNS server may want to use an optimized renderer class assuming some
 /// specific underlying data representation.
+///
+/// \note Some functions (like writeUint8) are not virtual. It is because
+///     it is hard to imagine any version of message renderer that would
+///     do anything else than just putting the data into a buffer, so we
+///     provide a default implementation and having them virtual would only
+///     hurt the performance with no real gain. If it would happen a different
+///     implementation is really needed, we can make them virtual in future.
+///     The only one that is virtual is writeName and it's because this
+///     function is much more complicated, therefore there's a lot of space
+///     for different implementations or behaviours.
 class AbstractMessageRenderer {
 public:
     /// \brief Compression mode constants.
