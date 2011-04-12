@@ -232,7 +232,7 @@ TEST(TSIGTest, TSIGKeyFromToString) {
     TSIGKey k2 = TSIGKey("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.");
     TSIGKey k3 = TSIGKey("test.example:MSG6Ng==");
     TSIGKey k4 = TSIGKey(Name("test.example."), Name("hmac-sha1."), NULL, 0);
-    
+
     EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.",
               k1.toText());
     EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.",
