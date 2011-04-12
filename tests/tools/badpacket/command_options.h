@@ -19,6 +19,8 @@
 #include <stdint.h>
 #include <utility>
 
+#include "option_info.h"
+
 namespace isc {
 namespace badpacket {
 
@@ -34,8 +36,8 @@ namespace badpacket {
 /// - \c --option value1-value2
 ///
 /// Either way, two values are extracted the low value and the high value (in
-/// the former case, bost are the same).  The values are stored in a
-/// "FlagValues" structure, which can be returned on request.
+/// the former case, both are the same).  The values are stored in an array
+/// and can be returned on request.
 ///
 /// For simplicity, the class also takes care of the --help and --version flags,
 /// each of which will cause a message to be printed to stdout and the program
@@ -44,47 +46,6 @@ namespace badpacket {
 class CommandOptions {
 public:
 
-    /// \brief Flags Word Values
-    ///
-    /// Structure holding the values for the flag settings.  Each variable in
-    /// the structure corresponds to one of the fields in the flags word.  The
-    /// variables are two-ewlement arrays: element 0 of the array holds the low
-    /// value in the range given, and element 1 the high value.  If only a
-    /// single value is given, both elements hold the same value.
-    struct FlagValues {
-        uint32_t qr[2];         // QR bit
-        uint32_t op[2];         // OPCODE field
-        uint32_t aa[2];         // AA bit
-        uint32_t tc[2];         // TC bit
-        uint32_t rd[2];         // RD bit
-        uint32_t ra[2];         // RA bit
-        uint32_t z[2];          // Z bit (reserved bit)
-        uint32_t ad[2];         // AD bit
-        uint32_t cd[2];         // CD bit
-        uint32_t rc[2];         // RCODE field
-
-        /// \brief Default Constructor
-        ///
-        /// Sets everything to zero.
-        FlagValues() {
-            reset();
-        }
-
-        /// \brief Reset All Values to Zero
-        void reset() {
-            qr[0] = qr[1] = 0;
-            op[0] = op[1] = 0;
-            aa[0] = aa[1] = 0;
-            tc[0] = tc[1] = 0;
-            rd[0] = rd[1] = 0;
-            ra[0] = ra[1] = 0;
-            z[0] = z[1] = 0;
-            ad[0] = ad[1] = 0;
-            cd[0] = cd[1] = 0;
-            rc[0] = rc[1] = 0;
-        }
-    };
-
     /// \brief CommandOptions Constructor
     ///
     /// Set values to defaults.
@@ -92,15 +53,21 @@ public:
         reset();
     }
 
-    /// \brief Return Flags Word Values
+    /// \brief Return minimum value for option
     ///
-    /// Returns a copy of the flags word structure for use by the caller.  This
-    /// structure holds the flags field settings specified on the command line.
+    /// \param index Index of the command-line option.
     ///
-    /// \return Copy of the values specified on the command line.
-    FlagValues getFlagValues() const {
-        return values_;
-    }
+    /// \return uint32_t holding the minimum value given (or the default if
+    ///         the option was not specified on the command line).
+    uint32_t minimum(int index) const;
+
+    /// \brief Return maximum value for option
+    ///
+    /// \param index Index of the command-line option.
+    ///
+    /// \return uint32_t holding the maximum value given (or the default if
+    ///         the option was not specified on the command line).
+    uint32_t maximum(int index) const;
 
     /// \brief Return Target Address
     std::string getAddress() const {
@@ -124,11 +91,14 @@ public:
 
     /// \brief Reset To Defaults
     void reset() {
-        values_.reset();
         address_ = "127.0.0.1";
         port_ = 53;
         timeout_ = 500;
         qname_ = "www.example.com";
+
+        for (int i = 0; i < OptionInfo::SIZE; ++i) {
+            limits_[i][0] = limits_[i][1] = 0;
+            }
     }
 
     /// \brief Parse Command Line
@@ -142,10 +112,10 @@ public:
     /// \param argv Argument value array passed to main().
     void parse(int argc, char* const argv[]);
 
-    /// \brief Print Usage Information
+    /// \brief Print Usage Information And Exit Program
     void usage();
 
-    /// \brief Print Version Information
+    /// \brief Print Version Information And Exit Program
     void version();
 
     // The following are protected to aid testing
@@ -157,18 +127,15 @@ protected:
     /// placing it in the appropriate location.  On error a BadValue exception
     /// is thrown.
     ///
-    /// \param what (Long) name of the command switch being parsed
-    /// \param arg Switch argument read from the command line
-    /// \param where Two-element uint32_t array into which the data is put
-    /// \param minval Minimum allowed value
-    /// \param maxval Maximum allowed value
-    void processOptionValue(const char* what, const char* arg, uint32_t* where,
-                            uint32_t minval,  uint32_t maxval);
+    /// \param c Short form option character from the command line
+    /// \param value Value of the option read from the command line
+    void processOptionValue(int c, const char* value);
 
     // Member variables
 
 private:
-    FlagValues      values_;        ///< Values read from command line
+    uint32_t        limits_[OptionInfo::SIZE][2];
+                                    ///< Value of options (minimum and maximum)
     std::string     address_;       ///< Address to where query is sent
     uint16_t        port_;          ///< Target port
     int             timeout_;       ///< Timeout for query

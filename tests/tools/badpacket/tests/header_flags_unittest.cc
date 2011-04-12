@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <gtest/gtest.h>
 
+#include "../option_info.h"
 #include "../header_flags.h"
 
 using namespace isc::badpacket;
@@ -31,16 +32,16 @@ public:
 // Convenience function to check that all values are zero
 void
 checkZero(const HeaderFlags& flags) {
-    EXPECT_EQ(0, flags.getQR());
-    EXPECT_EQ(0, flags.getOP());
-    EXPECT_EQ(0, flags.getAA());
-    EXPECT_EQ(0, flags.getTC());
-    EXPECT_EQ(0, flags.getRD());
-    EXPECT_EQ(0, flags.getRA());
-    EXPECT_EQ(0, flags.getZ());
-    EXPECT_EQ(0, flags.getAD());
-    EXPECT_EQ(0, flags.getCD());
-    EXPECT_EQ(0, flags.getRC());
+    EXPECT_EQ(0, flags.get(OptionInfo::QR));
+    EXPECT_EQ(0, flags.get(OptionInfo::OP));
+    EXPECT_EQ(0, flags.get(OptionInfo::AA));
+    EXPECT_EQ(0, flags.get(OptionInfo::TC));
+    EXPECT_EQ(0, flags.get(OptionInfo::RD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RA));
+    EXPECT_EQ(0, flags.get(OptionInfo::Z));
+    EXPECT_EQ(0, flags.get(OptionInfo::AD));
+    EXPECT_EQ(0, flags.get(OptionInfo::CD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RC));
 
     EXPECT_EQ(0, flags.getValue());
 }
@@ -53,20 +54,20 @@ TEST_F(HeaderFlagsTest, QRfield) {
     HeaderFlags flags;
     checkZero(flags);
 
-    flags.setQR(1);
-    EXPECT_EQ(1, flags.getQR());
-    EXPECT_EQ(0, flags.getOP());
-    EXPECT_EQ(0, flags.getAA());
-    EXPECT_EQ(0, flags.getTC());
-    EXPECT_EQ(0, flags.getRD());
-    EXPECT_EQ(0, flags.getRA());
-    EXPECT_EQ(0, flags.getZ());
-    EXPECT_EQ(0, flags.getAD());
-    EXPECT_EQ(0, flags.getCD());
-    EXPECT_EQ(0, flags.getRC());
+    flags.set(OptionInfo::QR, 1);
+    EXPECT_EQ(1, flags.get(OptionInfo::QR));
+    EXPECT_EQ(0, flags.get(OptionInfo::OP));
+    EXPECT_EQ(0, flags.get(OptionInfo::AA));
+    EXPECT_EQ(0, flags.get(OptionInfo::TC));
+    EXPECT_EQ(0, flags.get(OptionInfo::RD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RA));
+    EXPECT_EQ(0, flags.get(OptionInfo::Z));
+    EXPECT_EQ(0, flags.get(OptionInfo::AD));
+    EXPECT_EQ(0, flags.get(OptionInfo::CD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RC));
     EXPECT_NE(0, flags.getValue());
 
-    flags.setQR(0);
+    flags.set(OptionInfo::QR, 0);
     checkZero(flags);
 }
 
@@ -74,20 +75,20 @@ TEST_F(HeaderFlagsTest, OPfield) {
     HeaderFlags flags;
     checkZero(flags);
 
-    flags.setOP(15);
-    EXPECT_EQ(0, flags.getQR());
-    EXPECT_EQ(15, flags.getOP());
-    EXPECT_EQ(0, flags.getAA());
-    EXPECT_EQ(0, flags.getTC());
-    EXPECT_EQ(0, flags.getRD());
-    EXPECT_EQ(0, flags.getRA());
-    EXPECT_EQ(0, flags.getZ());
-    EXPECT_EQ(0, flags.getAD());
-    EXPECT_EQ(0, flags.getCD());
-    EXPECT_EQ(0, flags.getRC());
+    flags.set(OptionInfo::OP, 15);
+    EXPECT_EQ(0, flags.get(OptionInfo::QR));
+    EXPECT_EQ(15, flags.get(OptionInfo::OP));
+    EXPECT_EQ(0, flags.get(OptionInfo::AA));
+    EXPECT_EQ(0, flags.get(OptionInfo::TC));
+    EXPECT_EQ(0, flags.get(OptionInfo::RD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RA));
+    EXPECT_EQ(0, flags.get(OptionInfo::Z));
+    EXPECT_EQ(0, flags.get(OptionInfo::AD));
+    EXPECT_EQ(0, flags.get(OptionInfo::CD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RC));
     EXPECT_NE(0, flags.getValue());
 
-    flags.setOP(0);
+    flags.set(OptionInfo::OP, 0);
     checkZero(flags);
 }
 
@@ -95,20 +96,20 @@ TEST_F(HeaderFlagsTest, AAfield) {
     HeaderFlags flags;
     checkZero(flags);
 
-    flags.setAA(1);
-    EXPECT_EQ(0, flags.getQR());
-    EXPECT_EQ(0, flags.getOP());
-    EXPECT_EQ(1, flags.getAA());
-    EXPECT_EQ(0, flags.getTC());
-    EXPECT_EQ(0, flags.getRD());
-    EXPECT_EQ(0, flags.getRA());
-    EXPECT_EQ(0, flags.getZ());
-    EXPECT_EQ(0, flags.getAD());
-    EXPECT_EQ(0, flags.getCD());
-    EXPECT_EQ(0, flags.getRC());
+    flags.set(OptionInfo::AA, 1);
+    EXPECT_EQ(0, flags.get(OptionInfo::QR));
+    EXPECT_EQ(0, flags.get(OptionInfo::OP));
+    EXPECT_EQ(1, flags.get(OptionInfo::AA));
+    EXPECT_EQ(0, flags.get(OptionInfo::TC));
+    EXPECT_EQ(0, flags.get(OptionInfo::RD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RA));
+    EXPECT_EQ(0, flags.get(OptionInfo::Z));
+    EXPECT_EQ(0, flags.get(OptionInfo::AD));
+    EXPECT_EQ(0, flags.get(OptionInfo::CD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RC));
     EXPECT_NE(0, flags.getValue());
 
-    flags.setAA(0);
+    flags.set(OptionInfo::AA, 0);
     checkZero(flags);
 }
 
@@ -116,20 +117,20 @@ TEST_F(HeaderFlagsTest, TCfield) {
     HeaderFlags flags;
     checkZero(flags);
 
-    flags.setTC(1);
-    EXPECT_EQ(0, flags.getQR());
-    EXPECT_EQ(0, flags.getOP());
-    EXPECT_EQ(0, flags.getAA());
-    EXPECT_EQ(1, flags.getTC());
-    EXPECT_EQ(0, flags.getRD());
-    EXPECT_EQ(0, flags.getRA());
-    EXPECT_EQ(0, flags.getZ());
-    EXPECT_EQ(0, flags.getAD());
-    EXPECT_EQ(0, flags.getCD());
-    EXPECT_EQ(0, flags.getRC());
+    flags.set(OptionInfo::TC, 1);
+    EXPECT_EQ(0, flags.get(OptionInfo::QR));
+    EXPECT_EQ(0, flags.get(OptionInfo::OP));
+    EXPECT_EQ(0, flags.get(OptionInfo::AA));
+    EXPECT_EQ(1, flags.get(OptionInfo::TC));
+    EXPECT_EQ(0, flags.get(OptionInfo::RD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RA));
+    EXPECT_EQ(0, flags.get(OptionInfo::Z));
+    EXPECT_EQ(0, flags.get(OptionInfo::AD));
+    EXPECT_EQ(0, flags.get(OptionInfo::CD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RC));
     EXPECT_NE(0, flags.getValue());
 
-    flags.setTC(0);
+    flags.set(OptionInfo::TC, 0);
     checkZero(flags);
 }
 
@@ -137,20 +138,20 @@ TEST_F(HeaderFlagsTest, RDfield) {
     HeaderFlags flags;
     checkZero(flags);
 
-    flags.setRD(1);
-    EXPECT_EQ(0, flags.getQR());
-    EXPECT_EQ(0, flags.getOP());
-    EXPECT_EQ(0, flags.getAA());
-    EXPECT_EQ(0, flags.getTC());
-    EXPECT_EQ(1, flags.getRD());
-    EXPECT_EQ(0, flags.getRA());
-    EXPECT_EQ(0, flags.getZ());
-    EXPECT_EQ(0, flags.getAD());
-    EXPECT_EQ(0, flags.getCD());
-    EXPECT_EQ(0, flags.getRC());
+    flags.set(OptionInfo::RD, 1);
+    EXPECT_EQ(0, flags.get(OptionInfo::QR));
+    EXPECT_EQ(0, flags.get(OptionInfo::OP));
+    EXPECT_EQ(0, flags.get(OptionInfo::AA));
+    EXPECT_EQ(0, flags.get(OptionInfo::TC));
+    EXPECT_EQ(1, flags.get(OptionInfo::RD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RA));
+    EXPECT_EQ(0, flags.get(OptionInfo::Z));
+    EXPECT_EQ(0, flags.get(OptionInfo::AD));
+    EXPECT_EQ(0, flags.get(OptionInfo::CD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RC));
     EXPECT_NE(0, flags.getValue());
 
-    flags.setRD(0);
+    flags.set(OptionInfo::RD, 0);
     checkZero(flags);
 }
 
@@ -158,20 +159,20 @@ TEST_F(HeaderFlagsTest, RAfield) {
     HeaderFlags flags;
     checkZero(flags);
 
-    flags.setRA(1);
-    EXPECT_EQ(0, flags.getQR());
-    EXPECT_EQ(0, flags.getOP());
-    EXPECT_EQ(0, flags.getAA());
-    EXPECT_EQ(0, flags.getTC());
-    EXPECT_EQ(0, flags.getRD());
-    EXPECT_EQ(1, flags.getRA());
-    EXPECT_EQ(0, flags.getZ());
-    EXPECT_EQ(0, flags.getAD());
-    EXPECT_EQ(0, flags.getCD());
-    EXPECT_EQ(0, flags.getRC());
+    flags.set(OptionInfo::RA, 1);
+    EXPECT_EQ(0, flags.get(OptionInfo::QR));
+    EXPECT_EQ(0, flags.get(OptionInfo::OP));
+    EXPECT_EQ(0, flags.get(OptionInfo::AA));
+    EXPECT_EQ(0, flags.get(OptionInfo::TC));
+    EXPECT_EQ(0, flags.get(OptionInfo::RD));
+    EXPECT_EQ(1, flags.get(OptionInfo::RA));
+    EXPECT_EQ(0, flags.get(OptionInfo::Z));
+    EXPECT_EQ(0, flags.get(OptionInfo::AD));
+    EXPECT_EQ(0, flags.get(OptionInfo::CD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RC));
     EXPECT_NE(0, flags.getValue());
 
-    flags.setRA(0);
+    flags.set(OptionInfo::RA, 0);
     checkZero(flags);
 }
 
@@ -179,20 +180,20 @@ TEST_F(HeaderFlagsTest, Zfield) {
     HeaderFlags flags;
     checkZero(flags);
 
-    flags.setZ(1);
-    EXPECT_EQ(0, flags.getQR());
-    EXPECT_EQ(0, flags.getOP());
-    EXPECT_EQ(0, flags.getAA());
-    EXPECT_EQ(0, flags.getTC());
-    EXPECT_EQ(0, flags.getRD());
-    EXPECT_EQ(0, flags.getRA());
-    EXPECT_EQ(1, flags.getZ());
-    EXPECT_EQ(0, flags.getAD());
-    EXPECT_EQ(0, flags.getCD());
-    EXPECT_EQ(0, flags.getRC());
+    flags.set(OptionInfo::Z, 1);
+    EXPECT_EQ(0, flags.get(OptionInfo::QR));
+    EXPECT_EQ(0, flags.get(OptionInfo::OP));
+    EXPECT_EQ(0, flags.get(OptionInfo::AA));
+    EXPECT_EQ(0, flags.get(OptionInfo::TC));
+    EXPECT_EQ(0, flags.get(OptionInfo::RD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RA));
+    EXPECT_EQ(1, flags.get(OptionInfo::Z));
+    EXPECT_EQ(0, flags.get(OptionInfo::AD));
+    EXPECT_EQ(0, flags.get(OptionInfo::CD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RC));
     EXPECT_NE(0, flags.getValue());
 
-    flags.setZ(0);
+    flags.set(OptionInfo::Z, 0);
     checkZero(flags);
 }
 
@@ -200,20 +201,20 @@ TEST_F(HeaderFlagsTest, ADfield) {
     HeaderFlags flags;
     checkZero(flags);
 
-    flags.setAD(1);
-    EXPECT_EQ(0, flags.getQR());
-    EXPECT_EQ(0, flags.getOP());
-    EXPECT_EQ(0, flags.getAA());
-    EXPECT_EQ(0, flags.getTC());
-    EXPECT_EQ(0, flags.getRD());
-    EXPECT_EQ(0, flags.getRA());
-    EXPECT_EQ(0, flags.getZ());
-    EXPECT_EQ(1, flags.getAD());
-    EXPECT_EQ(0, flags.getCD());
-    EXPECT_EQ(0, flags.getRC());
+    flags.set(OptionInfo::AD, 1);
+    EXPECT_EQ(0, flags.get(OptionInfo::QR));
+    EXPECT_EQ(0, flags.get(OptionInfo::OP));
+    EXPECT_EQ(0, flags.get(OptionInfo::AA));
+    EXPECT_EQ(0, flags.get(OptionInfo::TC));
+    EXPECT_EQ(0, flags.get(OptionInfo::RD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RA));
+    EXPECT_EQ(0, flags.get(OptionInfo::Z));
+    EXPECT_EQ(1, flags.get(OptionInfo::AD));
+    EXPECT_EQ(0, flags.get(OptionInfo::CD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RC));
     EXPECT_NE(0, flags.getValue());
 
-    flags.setAD(0);
+    flags.set(OptionInfo::AD, 0);
     checkZero(flags);
 }
 
@@ -221,20 +222,20 @@ TEST_F(HeaderFlagsTest, CDfield) {
     HeaderFlags flags;
     checkZero(flags);
 
-    flags.setCD(1);
-    EXPECT_EQ(0, flags.getQR());
-    EXPECT_EQ(0, flags.getOP());
-    EXPECT_EQ(0, flags.getAA());
-    EXPECT_EQ(0, flags.getTC());
-    EXPECT_EQ(0, flags.getRD());
-    EXPECT_EQ(0, flags.getRA());
-    EXPECT_EQ(0, flags.getZ());
-    EXPECT_EQ(0, flags.getAD());
-    EXPECT_EQ(1, flags.getCD());
-    EXPECT_EQ(0, flags.getRC());
+    flags.set(OptionInfo::CD, 1);
+    EXPECT_EQ(0, flags.get(OptionInfo::QR));
+    EXPECT_EQ(0, flags.get(OptionInfo::OP));
+    EXPECT_EQ(0, flags.get(OptionInfo::AA));
+    EXPECT_EQ(0, flags.get(OptionInfo::TC));
+    EXPECT_EQ(0, flags.get(OptionInfo::RD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RA));
+    EXPECT_EQ(0, flags.get(OptionInfo::Z));
+    EXPECT_EQ(0, flags.get(OptionInfo::AD));
+    EXPECT_EQ(1, flags.get(OptionInfo::CD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RC));
     EXPECT_NE(0, flags.getValue());
 
-    flags.setCD(0);
+    flags.set(OptionInfo::CD, 0);
     checkZero(flags);
 }
 
@@ -242,20 +243,20 @@ TEST_F(HeaderFlagsTest, RCfield) {
     HeaderFlags flags;
     checkZero(flags);
 
-    flags.setRC(7);
-    EXPECT_EQ(0, flags.getQR());
-    EXPECT_EQ(0, flags.getOP());
-    EXPECT_EQ(0, flags.getAA());
-    EXPECT_EQ(0, flags.getTC());
-    EXPECT_EQ(0, flags.getRD());
-    EXPECT_EQ(0, flags.getRA());
-    EXPECT_EQ(0, flags.getZ());
-    EXPECT_EQ(0, flags.getAD());
-    EXPECT_EQ(0, flags.getCD());
-    EXPECT_EQ(7, flags.getRC());
+    flags.set(OptionInfo::RC, 15);
+    EXPECT_EQ(0, flags.get(OptionInfo::QR));
+    EXPECT_EQ(0, flags.get(OptionInfo::OP));
+    EXPECT_EQ(0, flags.get(OptionInfo::AA));
+    EXPECT_EQ(0, flags.get(OptionInfo::TC));
+    EXPECT_EQ(0, flags.get(OptionInfo::RD));
+    EXPECT_EQ(0, flags.get(OptionInfo::RA));
+    EXPECT_EQ(0, flags.get(OptionInfo::Z));
+    EXPECT_EQ(0, flags.get(OptionInfo::AD));
+    EXPECT_EQ(0, flags.get(OptionInfo::CD));
+    EXPECT_EQ(15, flags.get(OptionInfo::RC));
     EXPECT_NE(0, flags.getValue());
 
-    flags.setRC(0);
+    flags.set(OptionInfo::RC, 0);
     checkZero(flags);
 }
 
@@ -265,42 +266,42 @@ TEST_F(HeaderFlagsTest, bitValues) {
     HeaderFlags flags;
     checkZero(flags);
 
-    flags.setQR(1);
+    flags.set(OptionInfo::QR, 1);
     EXPECT_EQ(0x8000, flags.getValue());
 
-    flags.setQR(0);
-    flags.setOP(15);
+    flags.set(OptionInfo::QR, 0);
+    flags.set(OptionInfo::OP, 15);
     EXPECT_EQ(0x7800, flags.getValue());
 
-    flags.setOP(0);
-    flags.setAA(1);
+    flags.set(OptionInfo::OP, 0);
+    flags.set(OptionInfo::AA, 1);
     EXPECT_EQ(0x0400, flags.getValue());
 
-    flags.setAA(0);
-    flags.setTC(1);
+    flags.set(OptionInfo::AA, 0);
+    flags.set(OptionInfo::TC, 1);
     EXPECT_EQ(0x0200, flags.getValue());
 
-    flags.setTC(0);
-    flags.setRD(1);
+    flags.set(OptionInfo::TC, 0);
+    flags.set(OptionInfo::RD, 1);
     EXPECT_EQ(0x0100, flags.getValue());
 
-    flags.setRD(0);
-    flags.setRA(1);
+    flags.set(OptionInfo::RD, 0);
+    flags.set(OptionInfo::RA, 1);
     EXPECT_EQ(0x0080, flags.getValue());
 
-    flags.setRA(0);
-    flags.setZ(1);
+    flags.set(OptionInfo::RA, 0);
+    flags.set(OptionInfo::Z, 1);
     EXPECT_EQ(0x0040, flags.getValue());
 
-    flags.setZ(0);
-    flags.setAD(1);
+    flags.set(OptionInfo::Z, 0);
+    flags.set(OptionInfo::AD, 1);
     EXPECT_EQ(0x0020, flags.getValue());
 
-    flags.setAD(0);
-    flags.setCD(1);
+    flags.set(OptionInfo::AD, 0);
+    flags.set(OptionInfo::CD, 1);
     EXPECT_EQ(0x0010, flags.getValue());
 
-    flags.setCD(0);
-    flags.setRC(15);
+    flags.set(OptionInfo::CD, 0);
+    flags.set(OptionInfo::RC, 15);
     EXPECT_EQ(0x000F, flags.getValue());
 }

@@ -60,34 +60,61 @@ Scan::scan(const CommandOptions& options) {
     MessageRenderer renderer(*msgbuf);
     message.toWire(renderer);
 
-    // Now loop through the flags setting data.  This is quite deep nesting,
+    iterateFlagsFields(msgbuf, options);
+}
+
+// Iterate through the various settings in the flags fields
+void
+Scan::iterateFlagsFields(OutputBufferPtr& msgbuf, const CommandOptions& options) {
+
+    // Loop through the flags setting data.  This is quite deep nesting,
     // but we will continue to indent so as to make things clear (for those
     // readers lucky enough to have a wide screen).
-    CommandOptions::FlagValues values = options.getFlagValues();
     HeaderFlags flags;
-    for (uint16_t qr = values.qr[0]; qr <= values.qr[1]; ++qr) {
-        flags.setQR(qr);
-        for (uint16_t op = values.op[0]; op <= values.op[1]; ++op) {
-            flags.setOP(op);
-            for (uint16_t aa = values.aa[0]; aa <= values.aa[1]; ++aa) {
-                flags.setAA(aa);
-                for (uint16_t tc = values.tc[0]; tc <= values.tc[1]; ++tc) {
-                    flags.setTC(tc);
-                    for (uint16_t rd = values.rd[0]; rd <= values.rd[1]; ++rd) {
-                        flags.setRD(rd);
-                        for (uint16_t ra = values.ra[0]; ra <= values.ra[1]; ++ra) {
-                            flags.setRA(ra);
-                            for (uint16_t z = values.z[0]; z <= values.z[1]; ++z) {
-                                flags.setZ(z);
-                                for (uint16_t ad = values.ad[0]; ad <= values.ad[1]; ++ad) {
-                                    flags.setAD(ad);
-                                    for (uint16_t cd = values.cd[0]; cd <= values.cd[1]; ++cd) {
-                                        flags.setCD(cd);
-                                        for (uint16_t rc = values.rc[0]; rc <= values.rc[1]; ++rc) {
-                                            flags.setRC(rc);
+    for (uint32_t qr =  options.minimum(OptionInfo::QR);
+                  qr <= options.maximum(OptionInfo::QR); ++qr) {
+        flags.set(OptionInfo::QR, qr);
 
-                                            // Set the flags in the message and do the I/O.
+        for (uint32_t op =  options.minimum(OptionInfo::OP);
+                      op <= options.maximum(OptionInfo::OP); ++op) {
+            flags.set(OptionInfo::OP, op);
+
+            for (uint32_t aa =  options.minimum(OptionInfo::AA);
+                          aa <= options.maximum(OptionInfo::AA); ++aa) {
+                flags.set(OptionInfo::AA, aa);
+
+                for (uint32_t tc =  options.minimum(OptionInfo::TC);
+                              tc <= options.maximum(OptionInfo::TC); ++tc) {
+                    flags.set(OptionInfo::TC, tc);
+
+                    for (uint32_t rd =  options.minimum(OptionInfo::RD);
+                                  rd <= options.maximum(OptionInfo::RD); ++rd) {
+                        flags.set(OptionInfo::RD, rd);
+
+                        for (uint32_t ra =  options.minimum(OptionInfo::RA);
+                                      ra <= options.maximum(OptionInfo::RA); ++ra) {
+                            flags.set(OptionInfo::RA, ra);
+
+                            for (uint32_t z =  options.minimum(OptionInfo::Z);
+                                          z <= options.maximum(OptionInfo::Z); ++z) {
+                                flags.set(OptionInfo::Z, z);
+
+                                for (uint32_t ad =  options.minimum(OptionInfo::AD);
+                                              ad <= options.maximum(OptionInfo::AD); ++ad) {
+                                    flags.set(OptionInfo::AD, ad);
+
+                                    for (uint32_t cd =  options.minimum(OptionInfo::CD);
+                                                  cd <= options.maximum(OptionInfo::CD); ++cd) {
+                                        flags.set(OptionInfo::CD, cd);
+
+                                        for (uint32_t rc =  options.minimum(OptionInfo::RC);
+                                                      rc <= options.maximum(OptionInfo::RC); ++rc) {
+                                            flags.set(OptionInfo::RC, rc);
+
+                                            // Set the flags in the message.
                                             msgbuf->writeUint16At(flags.getValue(), 2);
+
+                                            // Do the I/O.
                                             scanOne(msgbuf, options);
                                         }
                                     }
@@ -156,16 +183,16 @@ Scan::getFields(isc::dns::OutputBufferPtr& msgbuf) {
 
     std::ostringstream os;
     os << std::hex << std::uppercase <<
-        "QR:" << flags.getQR() << " " <<
-        "OP:" << flags.getOP() << " " <<
-        "AA:" << flags.getAA() << " " <<
-        "TC:" << flags.getTC() << " " <<
-        "RD:" << flags.getRD() << " " <<
-        "RA:" << flags.getRA() << " " <<
-         "Z:" << flags.getZ()  << " " <<
-        "AD:" << flags.getAD() << " " <<
-        "CD:" << flags.getCD() << " " <<
-        "RC:" << flags.getRC();
+        "QR:" << flags.get(OptionInfo::QR) << " " <<
+        "OP:" << flags.get(OptionInfo::OP) << " " <<
+        "AA:" << flags.get(OptionInfo::AA) << " " <<
+        "TC:" << flags.get(OptionInfo::TC) << " " <<
+        "RD:" << flags.get(OptionInfo::RD) << " " <<
+        "RA:" << flags.get(OptionInfo::RA) << " " <<
+         "Z:" << flags.get(OptionInfo::Z)  << " " <<
+        "AD:" << flags.get(OptionInfo::AD) << " " <<
+        "CD:" << flags.get(OptionInfo::CD) << " " <<
+        "RC:" << flags.get(OptionInfo::RC);
     return (os.str());
 }
 
