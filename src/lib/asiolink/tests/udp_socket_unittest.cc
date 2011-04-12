@@ -35,8 +35,8 @@
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <util/buffer.h>
-#include <util/asiolink_utilities.h>
+#include <util/io/buffer.h>
+#include <util/io/io_utilities.h>
 
 #include <asio.hpp>
 
@@ -46,7 +46,7 @@
 
 using namespace asio;
 using namespace asiolink;
-using namespace isc::util;
+using namespace isc::util::io;
 using namespace std;
 
 namespace {

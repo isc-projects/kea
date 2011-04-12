@@ -109,7 +109,7 @@ public:
     /// \throw isc::Unexpected Protocol type of \a message is unexpected
     void processMessage(const asiolink::IOMessage& io_message,
                         isc::dns::MessagePtr message,
-                        isc::util::OutputBufferPtr buffer,
+                        isc::util::io::OutputBufferPtr buffer,
                         asiolink::DNSServer* server);
 
     /// \brief Set verbose flag

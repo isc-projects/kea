@@ -14,7 +14,7 @@
 
 #include <dns/rrclass.h>
 using namespace isc::dns;
-using namespace isc::util;
+using namespace isc::util::io;
 
 //
 // Declaration of the custom exceptions

@@ -15,7 +15,7 @@
 #ifndef __RDATA_UNITTEST_H
 #define __RDATA_UNITTEST_H 1
 
-#include <util/buffer.h>
+#include <util/io/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
@@ -23,7 +23,7 @@
 
 #include <gtest/gtest.h>
 
-using namespace isc::util;
+using namespace isc::util::io;
 
 namespace isc {
 namespace dns {

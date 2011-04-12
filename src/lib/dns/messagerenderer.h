@@ -17,7 +17,9 @@
 
 namespace isc {
 namespace util {
+namespace io {
 class OutputBuffer;
+}
 }
 
 namespace dns {
@@ -104,7 +106,7 @@ public:
     ///
     /// \param buffer An \c OutputBuffer object to which wire format data is
     /// written.
-    MessageRenderer(isc::util::OutputBuffer& buffer);
+    MessageRenderer(isc::util::io::OutputBuffer& buffer);
     /// \brief The destructor.
     ///
     /// The destructor does nothing on the given \c buffer on construction;

@@ -41,7 +41,7 @@ static PyObject* po_NameRelation;
 // and static wrappers around the methods we export), a list of methods,
 // and a type description
 using namespace isc::dns;
-using namespace isc::util;
+using namespace isc::util::io;
 
 // NameComparisonResult
 class s_NameComparisonResult : public PyObject {

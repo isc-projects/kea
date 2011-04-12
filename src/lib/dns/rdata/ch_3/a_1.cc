@@ -16,13 +16,13 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/buffer.h>
+#include <util/io/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
 using namespace std;
-using namespace isc::util;
+using namespace isc::util::io;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE

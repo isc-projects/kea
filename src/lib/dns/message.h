@@ -29,7 +29,9 @@
 
 namespace isc {
 namespace util {
+namespace io {
 class InputBuffer;
+}
 }
 
 namespace dns {
@@ -532,10 +534,10 @@ public:
     void toWire(MessageRenderer& renderer);
 
     /// \brief Parse the header section of the \c Message.
-    void parseHeader(isc::util::InputBuffer& buffer);
+    void parseHeader(isc::util::io::InputBuffer& buffer);
 
     /// \brief Parse the \c Message.
-    void fromWire(isc::util::InputBuffer& buffer);
+    void fromWire(isc::util::io::InputBuffer& buffer);
 
     ///
     /// \name Protocol constants

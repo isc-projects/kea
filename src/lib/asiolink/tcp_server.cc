@@ -23,7 +23,7 @@
 
 #include <log/dummylog.h>
 
-#include <util/buffer.h>
+#include <util/io/buffer.h>
 
 #include <asio.hpp>
 #include <asiolink/dummy_io_cb.h>
@@ -38,7 +38,7 @@ using asio::ip::tcp;
 
 using namespace std;
 using namespace isc::dns;
-using namespace isc::util;
+using namespace isc::util::io;
 
 namespace asiolink {
 

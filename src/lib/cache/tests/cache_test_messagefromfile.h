@@ -14,7 +14,7 @@
 
 #include <vector>
 #include <dns/tests/unittest_util.h>
-#include <util/buffer.h>
+#include <util/io/buffer.h>
 #include <dns/message.h>
 
 using namespace isc;
@@ -31,7 +31,7 @@ messageFromFile(Message& message, const char* datafile) {
     std::vector<unsigned char> data;
     UnitTestUtil::readWireData(datafile, data);
 
-    isc::util::InputBuffer buffer(&data[0], data.size());
+    isc::util::io::InputBuffer buffer(&data[0], data.size());
     message.fromWire(buffer);
 }
 

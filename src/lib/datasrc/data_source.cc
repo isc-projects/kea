@@ -26,9 +26,9 @@
 #include <datasrc/data_source.h>
 #include <datasrc/query.h>
 
-#include <util/base32hex.h>
-#include <util/buffer.h>
-#include <util/sha1.h>
+#include <util/compat/base32hex.h>
+#include <util/compat/sha1.h>
+#include <util/io/buffer.h>
 
 #include <dns/message.h>
 #include <dns/name.h>
@@ -46,7 +46,8 @@
                       } while (0)
 
 using namespace std;
-using namespace isc::util;
+using namespace isc::util::io;
+using namespace isc::util::compat;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 

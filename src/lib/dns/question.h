@@ -26,8 +26,10 @@
 
 namespace isc {
 namespace util {
+namespace io {
 class InputBuffer;
 class OutputBuffer;
+}
 }
 
 namespace dns {
@@ -122,7 +124,7 @@ public:
     /// classes fails.
     ///
     /// \param buffer A buffer storing the wire format data.
-    Question(isc::util::InputBuffer& buffer);
+    Question(isc::util::io::InputBuffer& buffer);
 
     /// \brief Constructor from fixed parameters of the \c Question.
     ///
@@ -228,7 +230,7 @@ public:
     ///
     /// \param buffer An output buffer to store the wire data.
     /// \return 1
-    unsigned int toWire(isc::util::OutputBuffer& buffer) const;
+    unsigned int toWire(isc::util::io::OutputBuffer& buffer) const;
     //@}
 
     ///
