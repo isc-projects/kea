@@ -152,3 +152,10 @@ TEST_F(OptionInfoTest, CountValues) {
     EXPECT_EQ(0,       OptionInfo::minval(OptionInfo::DC));
     EXPECT_EQ(0xFFFF,  OptionInfo::maxval(OptionInfo::DC));
 }
+
+TEST_F(OptionInfoTest, OtherValues) {
+    EXPECT_STREQ("ms", OptionInfo::name(OptionInfo::MS));
+    EXPECT_STREQ("ms", OptionInfo::name(OptionInfo::getIndex('M')));
+    EXPECT_EQ(1,       OptionInfo::minval(OptionInfo::MS));
+    EXPECT_EQ(65536,   OptionInfo::maxval(OptionInfo::MS));
+}

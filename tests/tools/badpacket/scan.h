@@ -26,6 +26,7 @@
 #include <dns/buffer.h>
 
 #include "command_options.h"
+#include "header_flags.h"
 
 namespace isc {
 namespace badpacket {
@@ -59,35 +60,93 @@ public:
     virtual void operator()(asiolink::IOFetch::Result result);
 
 private:
-    /// \brief Set Flags Fields Options
+    /// \brief Iterate over flags fields options
     ///
-    /// Iterates through all combinations of the DNS message flags fields specified
-    /// on the command line and calls scanOne for each combination.
+    /// This method relies on the fact that data concerning the settings for
+    /// the fields in the flags word of the DNS message are held at adjacent
+    /// elements in the various data arrays and so can be accessed by a set
+    /// of contiguous index values.
+    ///
+    /// The method is passed an index value and the maximum valid index value.
+    /// If a set of values for the field at the given index was specified on
+    /// the command line, it loops through those values and sets the appropriate
+    /// value in the a copy of the DNS message header flags.  It then calls
+    /// itself with an incremented index.  If the value was not given, it just
+    /// sets a default value calls itself (with the incremented index).  When
+    /// called with an index above the maximum valid index, the header flags
+    /// in the message buffer are set and the next stage of processing called.
+    ///
+    /// In this way, all fields can be cycled through without the need for a
+    /// single function to nest loops very deeply.
     ///
     /// \param msgbuf Message that will be sent to the remote nameserver.  The
     ///        QID given will be ignored - the value used will be determined by
     ///        the sending code
     /// \param options Command-line options (the important ones being address,
     ///        port and timeout).
-    void iterateFlagsFields(isc::dns::OutputBufferPtr& msgbuf,
-                 const CommandOptions& options);
+    /// \param flags Header flags
+    /// \param index Index of the current field to be processed.
+    /// \param maxindex Maximum valid index value
+    void iterateFlags(isc::dns::OutputBufferPtr& msgbuf,
+                 const CommandOptions& options, HeaderFlags& flags,
+                 int index, int maxindex);
 
-    /// \brief Set Count Fields Options
+    /// \brief Start iterating over flags field options
     ///
-    /// Iterates through all combinations of the count fields specified on the
-    /// command line.
-    ///
-    /// The count fields are set by default to question count = 1, all the rest
-    /// zero.  Command-line options allow these values to be altered, although
-    /// the actual contents of the sections are not changed.
+    /// Kicks off the call to \c iterateFlags by calling it with the initial
+    /// index value.
     ///
     /// \param msgbuf Message that will be sent to the remote nameserver.  The
     ///        QID given will be ignored - the value used will be determined by
     ///        the sending code
     /// \param options Command-line options (the important ones being address,
     ///        port and timeout).
-    void iterateCountFields(isc::dns::OutputBufferPtr& msgbuf,
-                 const CommandOptions& options);
+    void iterateFlagsStart(isc::dns::OutputBufferPtr& msgbuf,
+                           const CommandOptions& options);
+
+    /// \brief Iterate over count fields
+    ///
+    /// In a manner similar to iterateFlags, this iterates over all specified
+    /// values for each count field, recursively calling itself to process the
+    /// next field.  When all fields have been processed, it chains to the
+    /// next stage of packet processing.
+    ///
+    /// \param msgbuf Message that will be sent to the remote nameserver.  The
+    ///        QID given will be ignored - the value used will be determined by
+    ///        the sending code
+    /// \param options Command-line options (the important ones being address,
+    ///        port and timeout).
+    /// \param index Index of the current field to be processed.
+    /// \param maxindex Maximum valid index value
+    void iterateCount(isc::dns::OutputBufferPtr& msgbuf,
+                      const CommandOptions& options, int index, int maxindex);
+
+    /// \brief Start iterating over count fields
+    ///
+    /// Kicks off the call to \c iterateCount by calling it with the initial
+    /// index value.
+    ///
+    /// \param msgbuf Message that will be sent to the remote nameserver.  The
+    ///        QID given will be ignored - the value used will be determined by
+    ///        the sending code
+    /// \param options Command-line options (the important ones being address,
+    ///        port and timeout).
+    void iterateCountStart(isc::dns::OutputBufferPtr& msgbuf,
+                           const CommandOptions& options);
+
+    /// \brief Iterate over message sizes
+    ///
+    /// If the message size option is given on the command line, the message
+    /// sent to the remote system is either truncated or extended (with zeroes)
+    /// before being set.
+    ///
+    /// \param msgbuf Message that will be sent to the remote nameserver.  The
+    ///        QID given will be ignored - the value used will be determined by
+    ///        the sending code
+    /// \param options Command-line options (the important ones being address,
+    ///        port and timeout).
+    void sizeMessage(isc::dns::OutputBufferPtr& msgbuf,
+                     const CommandOptions& options);
 
     /// \brief Scan One Value
     ///
@@ -117,7 +176,7 @@ private:
     /// \brief Get Fields
     ///
     /// Interprets the flags fields in a DNS message and converts them to a
-    /// terxtual format.
+    /// textual format.
     ///
     /// \param msg Message for which the header is value
     ///

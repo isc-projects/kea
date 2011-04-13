@@ -21,6 +21,16 @@ namespace {
 // information is duplicated here and where the long options are specified for
 // getopt_long, but this inconvenience is outweighed by the simplified command
 // processing.
+//
+// Fields are:
+// * Short option name
+// * Long option name
+// * Offset of 16-bit word holding datum in DNS message (if applicable)
+// * Bit mask for the data (if applicable)
+// * Offset of the bit field in the word (if applicable)
+// * Default value (this can be ignored if applicable)
+// * Minimum value specified on command line
+// * Maximum value specified on command line
 
 isc::badpacket::OptionInfo::Parameter option_information[] = {
     {'Q', "qr",  2, 0x8000,  15,  0, 0,      1},
@@ -36,7 +46,8 @@ isc::badpacket::OptionInfo::Parameter option_information[] = {
     {'Y', "qc",  4,      0,   0,  1, 0, 0xFFFF},
     {'W', "ac",  6,      0,   0,  0, 0, 0xFFFF},
     {'H', "uc",  8,      0,   0,  0, 0, 0xFFFF},
-    {'I', "dc", 10,      0,   0,  0, 0, 0xFFFF}
+    {'I', "dc", 10,      0,   0,  0, 0, 0xFFFF},
+    {'M', "ms",  0,      0,   0,  0, 1,  65536}
 };
 
 }   // Anonymous namespace

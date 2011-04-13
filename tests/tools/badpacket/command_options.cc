@@ -67,6 +67,9 @@ CommandOptions::parse(int argc, char* const argv[]) {
     char UC[] = {"uc"};
     char DC[] = {"dc"};
 
+    // Message size
+    char MS[] = {"ms"};
+
     const struct option longopts[] = {
         {HELP,    0, NULL, 'h'},  // Print usage message and exit
         {VERSION, 0, NULL, 'v'},  // Print program version and exit
@@ -87,9 +90,10 @@ CommandOptions::parse(int argc, char* const argv[]) {
         {AC,      1, NULL, 'W'},  // ansWer section count
         {UC,      1, NULL, 'H'},  // autHority section count
         {DC,      1, NULL, 'I'},  // addItional section count
+        {MS,      1, NULL, 'M'},  // Message size
         {NULL,    0, NULL, 0  }
     };
-    const char* shortopts = "hva:p:t:Q:O:A:T:D:R:Z:U:C:E:Y:W:H:I:";
+    const char* shortopts = "hva:p:t:Q:O:A:T:D:R:Z:U:C:E:Y:W:H:I:M:";
 
 
     // Set variables to defaults before parsing
@@ -134,6 +138,7 @@ CommandOptions::parse(int argc, char* const argv[]) {
             case 'W':   // --ac (answer count)
             case 'H':   // --uc (authority count)
             case 'I':   // --dc (additional count)
+            case 'M':   // --ms (message size)
                 processOptionValue(c, optarg);
                 break;
 
@@ -154,14 +159,15 @@ void
 CommandOptions::usage() {
     cout << "Usage: badpacket [options] query\n"
              "\n"
-            "Sends a sequence of packets to the specified nameserver and prints the results.\n"
-            "The packets are valid query packets but the flags field (third and fourth bytes\n"
-            "of the packet) can be set to arbitrary values using the command-line switches.\n"
+            "Sends a sequence of DNS messages to the specified nameserver and prints the\n"
+            " results.  The packets are valid query packets but certain aspects of the\n"
+            " packets (such as the flags fields, section count fields and message size) can\n"
+            "be set to arbitrary values using the command-line switches.\n"
             "\n"
             "In the following list of command-line switches, '<range>' indicates a range of\n"
             "values specified as either <integer> or <integer1>-<integer2> (e.g. both '42'\n"
             "and '0-1' would be valid values for range).  The program sends a sequence of\n"
-            "packets that contain all combinations of the flag values.  For example,\n"
+            "messages that contain all combinations of the flag values.  For example,\n"
             "specifying:\n"
             "\n"
             "--tc 0-1 --op 1-4 --aa 1 --rd 0-1\n"
@@ -174,6 +180,8 @@ CommandOptions::usage() {
             "The long form of the option is given.  It can also be specified as a single-\n"
             "character short-form, which is listed in sqare brackets in the description.\n"
             "\n"
+            "General options are:\n"
+            "\n"
             "--help              [-h] Prints this message and exits.\n"
             "--version           [-v] Prints the program version number.\n"
             "--address <address> [-a] Address of nameserver, which defaults to 127.0.0.1\n"
@@ -181,29 +189,40 @@ CommandOptions::usage() {
             "--timeout <value>   [-t] Timeout value for the query.  Specified in ms, it\n"
             "                         defaults to 500ms.\n"
             "\n"
-            "The following options set fields in the outgoing DNS message flags word\n"
+            "The following options set fields in the outgoing DNS message flags word:\n"
             "\n"
             "--qr <range>        [-Q] Set query/response bit.  Valid <range> is 0-1.\n"
             "--op <range>        [-O] Set opcode.  Valid <range> is 0-15.\n"
             "--aa <range>        [-A] Set authoritative answer bit.  Valid <range> is 0-1.\n"
             "--tc <range>        [-T] Set truncated bit.  Valid <range> is 0-1.\n"
-            "--rd <range>        [-T] Set recursion desired bit.  Valid <range> is 0-1.\n"
-            "--ra <range>        [-T] Set recursion available bit.  Valid <range> is 0-1.\n"
+            "--rd <range>        [-D] Set recursion desired bit.  Valid <range> is 0-1.\n"
+            "--ra <range>        [-D] Set recursion available bit.  Valid <range> is 0-1.\n"
             "--z <range>         [-Z] Set zero (reserved) bit.  Valid <range> is 0-1.\n"
             "--ad <range>        [-U] Set authenticated data bit.  Valid <range> is 0-1.\n"
             "--cd <range>        [-C] Set checking disabled bit.  Valid <range> is 0-1.\n"
             "--rc <range>        [-E] Set rcode value.  Valid <range> is 0-15\n"
             "\n"
             "The following options set the various section counts (independent of what is\n"
-            "actually in the section)\n"
+            "actually in the section):\n"
             "\n"
-            "--qc <range>        [-Q] Set the query count.  Valid range is 0-65535.\n"
-            "--ac <range>        [-Q] Set the answer count.  Valid range is 0-65535.\n"
-            "--uc <range>        [-Q] Set the authority count.  Valid range is 0-65535.\n"
-            "--dc <range>        [-Q] Set the additional count.  Valid range is 0-65535.\n"
+            "--qc <range>        [-Y] Set the query count.  Valid range is 0-65535.\n"
+            "--ac <range>        [-W] Set the answer count.  Valid range is 0-65535.\n"
+            "--uc <range>        [-H] Set the authority count.  Valid range is 0-65535.\n"
+            "--dc <range>        [-I] Set the additional count.  Valid range is 0-65535.\n"
             "\n"
-            "query               Name to query for.  The query is for an 'IN' A record.\n"
-            "                    If not given, the name 'www.example.com' is used.\n"
+            "Other options are:\n"
+            "\n"
+            "--ms <range>        [-M] Set the size of the message.  If the specified size\n"
+            "                         smaller than the natural message size, it is truncated.\n"
+            "                         If longer, the packet is extended with random values.\n"
+            "                         Valid range is 2 to 65536\n"
+            "\n"
+            "query               Name to query for.  The query is for an 'IN' A record.  If\n"
+            "                    not given, the name 'www.example.com' is used.\n"
+            "\n"
+            "The output is a single (very long) line containing the settings of the various\n"
+            "fields.  The settings for the outgoing packet are reported in uppercase letters\n"
+            "and that of the returned packet in lowercase.\n"
             ;
 }
 
@@ -231,52 +250,60 @@ CommandOptions::processOptionValue(int c, const char* value) {
     }
 
     // Convert to uint32.
-    int i = 0;
     try {
-        do {
-            limits_[index][i] = boost::lexical_cast<uint32_t>(tokens[i]);
-            ++i;
-        } while (i < tokens.size());
+        options_[index].minimum = boost::lexical_cast<uint32_t>(tokens[0]);
+        if (tokens.size() == 2) {
+            options_[index].maximum = boost::lexical_cast<uint32_t>(tokens[1]);
+        } else {
+            options_[index].maximum = options_[index].minimum;
+        }
     } catch (boost::bad_lexical_cast) {
         isc_throw(isc::BadValue, "value given for " << name << " is '" << value <<
                   "': it must be in the form 'int' or 'int1-int2'");
     }
 
     // Set the limits in the correct order.
-    if (tokens.size() == 1) {
-        limits_[index][1] = limits_[index][0];
-    } else if (limits_[index][0] > limits_[index][1]) {
-        swap(limits_[index][0], limits_[index][1]);
+    if (options_[index].minimum > options_[index].maximum) {
+        swap(options_[index].minimum, options_[index].maximum);
     }
 
     // Check that tokens lie inside the allowed ranges
-    if ((tokens.size() == 1) &&
-        ((limits_[index][0] < OptionInfo::minval(index)) || (limits_[index][0] > maxval))) {
-        isc_throw(isc::BadValue, "the value of " << limits_[index][0] <<
+    if ((tokens.size() == 2) &&
+        ((options_[index].minimum < OptionInfo::minval(index)) || (options_[index].maximum > maxval))) {
+        isc_throw(isc::BadValue, "the value of " << options_[index].minimum <<
                   " given for " << name << " is outside the range of " <<
                   minval << " to " << maxval);
-    } else if (limits_[index][0] < minval) {
-        isc_throw(isc::BadValue, "the lower limit of " << limits_[index][0] <<
+    } else if (options_[index].minimum < minval) {
+        isc_throw(isc::BadValue, "the lower limit of " << options_[index].minimum <<
                   " given for " << name << " is below the minimum permitted"
                   " value of " << minval);
-    } else if (limits_[index][1] > maxval) {
-        isc_throw(isc::BadValue, "the upper limit of " << limits_[index][1] <<
+    } else if (options_[index].maximum > maxval) {
+        isc_throw(isc::BadValue, "the upper limit of " << options_[index].maximum <<
                   " given for " << name << " is above the maximum permitted"
                   " value of " << maxval);
     }
+
+    // And finally note that the option was specified on the command line
+    options_[index].present = true;
 }
 
 // Minimum and maximum value of the flag
 uint32_t
 CommandOptions::minimum(int index) const {
     OptionInfo::checkIndex(index);
-    return (limits_[index][0]);
+    return (options_[index].minimum);
 }
 
 uint32_t
 CommandOptions::maximum(int index) const {
     OptionInfo::checkIndex(index);
-    return (limits_[index][1]);
+    return (options_[index].maximum);
+}
+
+bool
+CommandOptions::present(int index) const {
+    OptionInfo::checkIndex(index);
+    return (options_[index].present);
 }
 
 } // namespace badpacket
