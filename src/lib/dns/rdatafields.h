@@ -107,20 +107,20 @@ getFieldSpecData()-> { compressible name { compressible name { other data
 /// scenario:
 /// \code // assume "rdata" is a reference type to Rdata
 /// const RdataFields fields(rdata);
-/// const unsigned int nfields = fields.getFieldCount();
-/// memcpy(some_place, fields.getFieldSpecData(), nfields*sizeof(FieldSpec));
+/// const unsigned int fields_size = fields.getFieldDataSize();
+/// memcpy(some_place, fields.getFieldSpecData(), fields_size);
 /// const size_t data_length = fields.getDataLength();
 /// memcpy(other_place, fields.getData(), data_length);
-/// // (nfields and data_length should be stored somewhere, too)
+/// // (fields_size and data_length should be stored somewhere, too)
 /// \endcode
 ///
 /// Another typical usage is to render the stored data in the wire format
 /// as efficiently as possible.  The following code is an example of such
 /// usage:
 /// \code // assume "renderer" is of type MessageRenderer
-/// // retrieve data_length and nfields from the storage
-/// RdataFields(static_cast<const FieldSpec*>(some_place),
-///             nfields, other_place, data_length).toWire(renderer);
+/// // retrieve data_length and fields_size from the storage
+/// RdataFields(some_place, fields_size, other_place,
+///             data_length).toWire(renderer);
 /// \endcode
 ///
 /// <b>Notes to Users</b>
@@ -128,7 +128,7 @@ getFieldSpecData()-> { compressible name { compressible name { other data
 /// The main purposes of this class is to help efficient operation
 /// for some (limited classes of) performance sensitive application.
 /// For this reason the interface and implementation rely on relatively
-/// lower-level, riskier primitives such as passing around bear pointers.
+/// lower-level, riskier primitives such as passing around bare pointers.
 ///
 /// It is therefore discouraged to use this class for general purpose
 /// applications that do not need to maximize performance in terms of either
@@ -278,7 +278,9 @@ public:
     /// memory region is a valid representation of domain name.
     /// Otherwise, a subsequent method call such as
     /// <code>toWire(AbstractMessageRenderer&) const</code>
-    /// may trigger an unexpected exception.
+    /// may trigger an unexpected exception. It also expects the fields reside
+    /// on address that is valid for them (eg. it has valid alignment), see
+    /// getFieldSpecData() for details.
     ///
     /// It is the caller's responsibility to ensure this assumption.
     /// In general, this constructor is expected to be used for serialized data
@@ -296,8 +298,8 @@ public:
     /// \param data A pointer to memory region for the entire RDATA.  This can
     /// be NULL.
     /// \param data_length The length of \c data in bytes.
-    RdataFields(const FieldSpec* fields, const unsigned int nfields,
-                const uint8_t* data, const size_t data_length);
+    RdataFields(const void* fields, const unsigned int fields_length,
+                const void* data, const size_t data_length);
 
     /// The destructor.
     ~RdataFields();
@@ -315,26 +317,40 @@ public:
 
     /// \brief Return a pointer to the RDATA encoded in the \c RdataFields.
     ///
-    /// This method never throws an exception.
-    const uint8_t* getData() const { return (data_); }
-
-    /// \brief Return the number of fields encoded in the RdataFields.
+    /// The RdataFields holds ownership of the data.
     ///
     /// This method never throws an exception.
-    unsigned int getFieldCount() const { return (nfields_); }
+    const void* getData() const { return (data_); }
+
+    /// \brief Return the number of bytes the buffer returned by
+    ///      getFieldSpecData() will occupy.
+    ///
+    /// This method never throws an exception.
+    unsigned int getFieldDataSize() const { return (nfields_ *
+                                                    sizeof *fields_); }
 
     /// \brief Return a pointer to a sequence of \c FieldSpec for the
     /// \c RdataFields.
     ///
-    /// The data is just opaque internal representation, as a sequence
-    /// of bytes (unsigned char * because of C/C++ aliasing rules).
+    /// This should be treated as an opaque internal representation you can
+    /// just store off somewhere and use it to construct a new RdataFields.
+    /// from it. If you are really interested, you can typecast it to
+    /// FieldSpec * (which is what it really is internally).
+    ///
+    /// The RdataFields holds ownership of the data.
+    ///
+    /// \note You should, however, be aware of alignment issues. The pointer
+    ///     you pass to the constructor must be an address where the FieldSpec
+    ///     can live. If you store it at a wrong address (eg. even one with
+    ///     current implementation on most architectures), it might lead bad
+    ///     things from slow access to SIGBUS. The easiest way is not to
+    ///     interleave the fields with data from getData(). It is OK to place
+    ///     all the fields first (even from multiple RdataFields) and then
+    ///     place all the data after them.
     ///
     /// This method never throws an exception.
-    const uint8_t* getFieldSpecData() const {
-        // Nasty cast, because C++ authors didn't read the C specification
-        // about pointers. We can't return void* from it, that would break
-        // aliasing rules.
-        return ((const uint8_t*) fields_);
+    const void* getFieldSpecData() const {
+        return (fields_);
     }
 
     /// \brief Return the specification of the field identified by the given

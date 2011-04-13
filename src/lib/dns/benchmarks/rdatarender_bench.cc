@@ -67,28 +67,30 @@ public:
     RdataFieldsStore(ConstRdataPtr rdata) {
         const RdataFields fields(*rdata);
 
-        nspecs_ = fields.getFieldCount();
-        spec_store_.resize(nspecs_ * sizeof(RdataFields::FieldSpec));
+        spec_size_ = fields.getFieldDataSize();
+        spec_store_.resize(spec_size_);
         void* cp_spec = &spec_store_[0];
         memcpy(cp_spec, fields.getFieldSpecData(), spec_store_.size());
-        spec_ptr_ = static_cast<RdataFields::FieldSpec*>(cp_spec);
+        spec_ptr_ = cp_spec;
 
         data_length_ = fields.getDataLength();
-        data_store_.assign(fields.getData(), fields.getData() + data_length_);
+        data_store_.resize(data_length_);
+        void* cp_data = &data_store_[0];
+        memcpy(cp_data, fields.getData(), data_store_.size());
         // Vector guarantees that the elements are stored in continuous array
         // in memory, so this is actually correct by the standard
-        data_ptr_ = &data_store_[0];
+        data_ptr_ = cp_data;
     }
     void toWire(MessageRenderer& renderer) const {
-        RdataFields(spec_ptr_, nspecs_,
+        RdataFields(spec_ptr_, spec_size_,
                     data_ptr_, data_length_).toWire(renderer);
     }
 private:
     vector<unsigned char> spec_store_;
-    const RdataFields::FieldSpec* spec_ptr_;
-    unsigned int nspecs_;
-    vector<uint8_t> data_store_;
-    const uint8_t* data_ptr_;
+    vector<unsigned char> data_store_;
+    const void* spec_ptr_;
+    const void* data_ptr_;
+    unsigned int spec_size_;
     size_t data_length_;
 };
 
