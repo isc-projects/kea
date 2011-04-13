@@ -71,7 +71,7 @@ RdataFieldsTest::constructCommonTests(const RdataFields& fields,
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, expected_data,
                         expected_data_len, fields.getData(),
                         fields.getDataLength());
-    EXPECT_EQ(1, fields.getFieldCount());
+    EXPECT_EQ(sizeof(RdataFields::FieldSpec), fields.getFieldDataSize());
     EXPECT_EQ(RdataFields::DATA, fields.getFieldSpec(0).type);
     EXPECT_EQ(4, fields.getFieldSpec(0).len);
 
@@ -93,7 +93,8 @@ TEST_F(RdataFieldsTest, constructFromRdata) {
 
 TEST_F(RdataFieldsTest, constructFromParams) {
     const RdataFields::FieldSpec spec(RdataFields::DATA, 4);
-    const RdataFields fields(&spec, 1, in_a_data, sizeof(in_a_data));
+    const RdataFields fields(&spec, sizeof(spec), in_a_data,
+                             sizeof(in_a_data));
     constructCommonTests(fields, in_a_data, sizeof(in_a_data));
 }
 
@@ -102,7 +103,7 @@ TEST_F(RdataFieldsTest, constructFromParams) {
 //
 void
 RdataFieldsTest::constructCommonTestsNS(const RdataFields& fields) {
-    EXPECT_EQ(1, fields.getFieldCount());
+    EXPECT_EQ(sizeof(RdataFields::FieldSpec), fields.getFieldDataSize());
     EXPECT_EQ(RdataFields::COMPRESSIBLE_NAME, fields.getFieldSpec(0).type);
     EXPECT_EQ(ns_name.getLength(), fields.getFieldSpec(0).len);
 
@@ -131,7 +132,7 @@ TEST_F(RdataFieldsTest, constructFromRdataNS) {
 TEST_F(RdataFieldsTest, constructFromParamsNS) {
     const RdataFields::FieldSpec spec(RdataFields::COMPRESSIBLE_NAME,
                                       sizeof(ns_data));
-    const RdataFields fields_ns(&spec, 1, ns_data, sizeof(ns_data));
+    const RdataFields fields_ns(&spec, sizeof(spec), ns_data, sizeof(ns_data));
     constructCommonTestsNS(fields_ns);
 }
 
@@ -142,7 +143,7 @@ void
 RdataFieldsTest::constructCommonTestsTXT(const RdataFields& fields) {
     // Since all fields are plain data, they are handled as a single data
     // field.
-    EXPECT_EQ(1, fields.getFieldCount());
+    EXPECT_EQ(sizeof(RdataFields::FieldSpec), fields.getFieldDataSize());
     EXPECT_EQ(RdataFields::DATA, fields.getFieldSpec(0).type);
     EXPECT_EQ(expected_wire.size(), fields.getFieldSpec(0).len);
 
@@ -173,8 +174,8 @@ TEST_F(RdataFieldsTest, constructFromParamsTXT) {
     UnitTestUtil::readWireData("rdatafields3.wire", expected_wire);
     expected_wire.erase(expected_wire.begin(), expected_wire.begin() + 2);
     const RdataFields::FieldSpec spec(RdataFields::DATA, expected_wire.size());
-    const RdataFields fields(&spec, 1, &expected_wire[0],
-                             expected_wire.size()); 
+    const RdataFields fields(&spec, sizeof(spec), &expected_wire[0],
+                             expected_wire.size());
     constructCommonTestsTXT(fields);
 }
 
@@ -189,7 +190,7 @@ RdataFieldsTest::constructCommonTestsRRSIG(const RdataFields& fields) {
     //   this is a variable length field.  In this test it's a 13-byte field.
     // - a variable-length data field for the signature.  In this tests
     //   it's a 15-byte field.
-    ASSERT_EQ(3, fields.getFieldCount());
+    ASSERT_EQ(3 * sizeof(RdataFields::FieldSpec), fields.getFieldDataSize());
     EXPECT_EQ(RdataFields::DATA, fields.getFieldSpec(0).type);
     EXPECT_EQ(18, fields.getFieldSpec(0).len);
     EXPECT_EQ(RdataFields::INCOMPRESSIBLE_NAME, fields.getFieldSpec(1).type);
@@ -239,7 +240,8 @@ TEST_F(RdataFieldsTest, constructFromParamsRRSIG) {
         RdataFields::FieldSpec(RdataFields::INCOMPRESSIBLE_NAME, 13),
         RdataFields::FieldSpec(RdataFields::DATA, 15)
     };
-    const RdataFields fields(specs, 3, &fields_wire[0], fields_wire.size());
+    const RdataFields fields(specs, sizeof(specs), &fields_wire[0],
+                             fields_wire.size());
     constructCommonTestsRRSIG(fields);
 }
 
@@ -254,17 +256,15 @@ TEST_F(RdataFieldsTest, convertRdatatoParams) {
     expected_wire.erase(expected_wire.begin(), expected_wire.begin() + 2);
 
     // Copy the data in separate storage
-    vector<uint8_t> spec_store(fields.getFieldCount() *
-                               sizeof(RdataFields::FieldSpec));
+    vector<uint8_t> spec_store(fields.getFieldDataSize());
     void* cp_spec = &spec_store[0];
     memcpy(cp_spec, fields.getFieldSpecData(), spec_store.size());
     vector<uint8_t> data_store(fields.getDataLength());
     memcpy(&data_store[0], fields.getData(), fields.getDataLength());
 
     // Restore the data in the form of RdataFields
-    const RdataFields fields_byparams(
-        static_cast<const RdataFields::FieldSpec*>(cp_spec),
-        fields.getFieldCount(), &data_store[0], fields.getDataLength());
+    const RdataFields fields_byparams(cp_spec, fields.getFieldDataSize(),
+                                      &data_store[0], fields.getDataLength());
 
     // Check it's valid
     constructCommonTestsRRSIG(fields_byparams);
@@ -275,7 +275,7 @@ TEST_F(RdataFieldsTest, convertRdatatoParams) {
 //
 void
 RdataFieldsTest::constructCommonTestsOPT(const RdataFields& fields) {
-    EXPECT_EQ(0, fields.getFieldCount());
+    EXPECT_EQ(0, fields.getFieldDataSize());
     EXPECT_EQ(0, fields.getDataLength());
     EXPECT_EQ((const uint8_t*) NULL, fields.getData());
     fields.toWire(obuffer);
