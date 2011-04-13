@@ -5,18 +5,18 @@
 #include <log/message_initializer.h>
 
 namespace isc {
-namespace asiolink {
+namespace asiodns {
 
-extern const isc::log::MessageID ASIO_FETCHCOMP = "FETCHCOMP";
-extern const isc::log::MessageID ASIO_FETCHSTOP = "FETCHSTOP";
-extern const isc::log::MessageID ASIO_OPENSOCK = "OPENSOCK";
-extern const isc::log::MessageID ASIO_RECVSOCK = "RECVSOCK";
-extern const isc::log::MessageID ASIO_RECVTMO = "RECVTMO";
-extern const isc::log::MessageID ASIO_SENDSOCK = "SENDSOCK";
-extern const isc::log::MessageID ASIO_UNKORIGIN = "UNKORIGIN";
-extern const isc::log::MessageID ASIO_UNKRESULT = "UNKRESULT";
+extern const isc::log::MessageID ASIODNS_FETCHCOMP = "FETCHCOMP";
+extern const isc::log::MessageID ASIODNS_FETCHSTOP = "FETCHSTOP";
+extern const isc::log::MessageID ASIODNS_OPENSOCK = "OPENSOCK";
+extern const isc::log::MessageID ASIODNS_RECVSOCK = "RECVSOCK";
+extern const isc::log::MessageID ASIODNS_RECVTMO = "RECVTMO";
+extern const isc::log::MessageID ASIODNS_SENDSOCK = "SENDSOCK";
+extern const isc::log::MessageID ASIODNS_UNKORIGIN = "UNKORIGIN";
+extern const isc::log::MessageID ASIODNS_UNKRESULT = "UNKRESULT";
 
-} // namespace asiolink
+} // namespace asiodns
 } // namespace isc
 
 namespace {

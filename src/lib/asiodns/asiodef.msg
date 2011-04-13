@@ -12,8 +12,8 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-$PREFIX ASIO_
-$NAMESPACE asiolink
+$PREFIX ASIODNS_
+$NAMESPACE asiodns
 
 FETCHCOMP   upstream fetch to %s(%d) has now completed
 + A debug message, this records the the upstream fetch (a query made by the
