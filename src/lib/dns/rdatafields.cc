@@ -158,16 +158,19 @@ RdataFields::RdataFields(const Rdata& rdata) {
     }
 }
 
-RdataFields::RdataFields(const FieldSpec* fields, const unsigned int nfields,
-                         const uint8_t* data, const size_t data_length) :
-    fields_(fields), nfields_(nfields), data_(data), data_length_(data_length),
+RdataFields::RdataFields(const void* fields, const unsigned int fields_length,
+                         const void* data, const size_t data_length) :
+    fields_(static_cast<const FieldSpec*>(fields)),
+    nfields_(fields_length / sizeof(*fields_)),
+    data_(static_cast<const uint8_t*>(data)),
+    data_length_(data_length),
     detail_(NULL)
 {
     if ((fields_ == NULL && nfields_ > 0) ||
         (fields_ != NULL && nfields_ == 0)) {
         isc_throw(InvalidParameter,
-                  "Inconsistent parameters for RdataFields: nfields ("
-                  << nfields_ << ") and fields conflict each other");
+                  "Inconsistent parameters for RdataFields: fields_length ("
+                  << fields_length << ") and fields conflict each other");
     }
     if ((data_ == NULL && data_length_ > 0) ||
         (data_ != NULL && data_length_ == 0)) {
