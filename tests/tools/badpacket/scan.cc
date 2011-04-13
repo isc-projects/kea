@@ -99,7 +99,9 @@ Scan::iterateFlags(OutputBufferPtr& msgbuf, const CommandOptions& options,
     } else {
 
         // Index is not valid, so we have recursed enough to process all the
-        // flags fields.  Set the value in the message header and recurse.
+        // flags fields.  Set the value in the message header and call the next
+        // stage in the processing.
+        //
         // (In the next statement, the "word" offset of in the header is the
         // same for all flags options, so the value for an arbitrary field
         // (QR) has been used.)
@@ -140,8 +142,8 @@ Scan::iterateCount(OutputBufferPtr& msgbuf, const CommandOptions& options,
             }
         } else {
 
-            // Not specified on command line, so leave the default value and
-            // and process the next index.
+            // Not specified on command line, so do change anything and process
+            // the next index.
             iterateCount(msgbuf, options, (index + 1), maxindex);
         }
     } else {
@@ -152,7 +154,7 @@ Scan::iterateCount(OutputBufferPtr& msgbuf, const CommandOptions& options,
     }
 }
 
-// Size the message
+// Alter the message size.
 void
 Scan::sizeMessage(OutputBufferPtr& msgbuf, const CommandOptions& options) {
 
@@ -185,9 +187,8 @@ Scan::sizeMessage(OutputBufferPtr& msgbuf, const CommandOptions& options) {
 // Perform the message exchange for a single combination command options.
 void
 Scan::scanOne(isc::dns::OutputBufferPtr& msgbuf, const CommandOptions& options) {
-
-    // Store the interpretation of the flags field.
-    string fields = getFields(msgbuf);
+    // Store the interpretation of outgoing message.
+    string fields = string("(") + getFields(msgbuf) + string(")");
 
     // Do the I/O, waiting for a reply
     OutputBufferPtr replybuf(new OutputBuffer(512));
@@ -201,7 +202,7 @@ Scan::scanOne(isc::dns::OutputBufferPtr& msgbuf, const CommandOptions& options) 
             status = "SUCCESS";
 
             // Parse the reply and get the fields
-            returned = getFields(replybuf);
+            returned = string("(") + getFields(replybuf) + string(")");
             lowercase(returned);
         }
         break;
@@ -219,18 +220,17 @@ Scan::scanOne(isc::dns::OutputBufferPtr& msgbuf, const CommandOptions& options) 
     }
 
     // ... and output the result
-    cout << status << ": (" << fields << ") (" << returned << ")\n";
+    cout << status << ": " << fields << " " << returned << "\n";
 }
 
 // Get interpretation of the message fields.
-//
-// This takes the second and third bytes of the passed buffer and interprets
-// the values.  A summary string listing them is returned.
 std::string
 Scan::getFields(isc::dns::OutputBufferPtr& msgbuf) {
-    HeaderFlags flags;
 
-    // Extract the flags field from the buffer
+    // Header flags. (Note that all come from the same word in the message, so
+    // using the word offset for the QR flag as the position in the buffer from
+    // which to extract the values is valid.)
+    HeaderFlags flags;
     InputBuffer inbuf(msgbuf->getData(), msgbuf->getLength());
     inbuf.setPosition(OptionInfo::word(OptionInfo::QR));
     flags.setValue(inbuf.readUint16());
@@ -248,8 +248,7 @@ Scan::getFields(isc::dns::OutputBufferPtr& msgbuf) {
         " CD:" << flags.get(OptionInfo::CD) <<
         " RC:" << flags.get(OptionInfo::RC);
 
-    // Section count fields
-
+    // Section count fields.
     inbuf.setPosition(OptionInfo::word(OptionInfo::QC));
     os << std::dec << std::uppercase <<
         " QC:" << inbuf.readUint16();
@@ -266,14 +265,14 @@ Scan::getFields(isc::dns::OutputBufferPtr& msgbuf) {
     os << std::dec << std::uppercase <<
         " DC:" << inbuf.readUint16();
 
-    // ... and message size
+    // ... and message size.
     os << std::dec << std::uppercase <<
         " MS:" << msgbuf->getLength();
 
     return (os.str());
 }
 
-// Perform the I/O.
+// Perform the I/O to the nameserver.
 void
 Scan::performIO(OutputBufferPtr& sendbuf, OutputBufferPtr& recvbuf,
                 const CommandOptions& options)
@@ -293,7 +292,7 @@ Scan::performIO(OutputBufferPtr& sendbuf, OutputBufferPtr& recvbuf,
     service_->run();
 }
 
-// I/O Callback.  Called when the message exchange compltes or times out.
+// I/O Callback.  Called when the message exchange completes or times out.
 void
 Scan::operator()(IOFetch::Result result) {
 
@@ -304,8 +303,6 @@ Scan::operator()(IOFetch::Result result) {
     // Stop the I/O service.  This will cause the call to run() to return.
     service_->stop();
 }
-
-
 
 } // namespace test
 } // namespace isc

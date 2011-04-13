@@ -33,10 +33,9 @@ namespace badpacket {
 
 /// \brief Field Scan
 ///
-/// This class implements a field scan.  Given a CommandOptions object, it
-/// will cycle through combinations of the given options, sending and
-/// receiving packets.  For each packet exchange, a summary is written to
-/// stdout.
+/// This class implements a field scan.  Given a CommandOptions object, it will
+/// cycle through combinations of the given options, sending and receiving
+/// messages. For each packet exchange, a summary is written to stdout.
 
 class Scan : public asiolink::IOFetch::Callback {
 public:
@@ -46,6 +45,8 @@ public:
     {}
 
     /// \brief Run Scan
+    ///
+    /// Actually performs the scan for the combination of options.
     ///
     /// \param options Command-line options
     void scan(const CommandOptions& options);
@@ -150,7 +151,7 @@ private:
 
     /// \brief Scan One Value
     ///
-    /// Performs one exchange of packets with the remote nameserver, sending
+    /// Performs one exchange of messages with the remote nameserver, sending
     /// the specified message.
     ///
     /// \param msgbuf Message that will be sent to the remote nameserver.  The
@@ -175,7 +176,7 @@ private:
 
     /// \brief Get Fields
     ///
-    /// Interprets the flags fields in a DNS message and converts them to a
+    /// Interprets the fields in a DNS message and converts them to a brief
     /// textual format.
     ///
     /// \param msg Message for which the header is value

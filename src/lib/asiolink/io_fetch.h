@@ -116,22 +116,19 @@ public:
     ///
     /// Creates the object that will handle the upstream fetch.
     ///
-    /// TODO: Need to randomise the source port
-    ///
     /// \param protocol Fetch protocol, either IOFetch::TCP or IOFetch::UDP
     /// \param service I/O Service object to handle the asynchronous
-    ///     operations.
+    ///        operations.
     /// \param question DNS question to send to the upstream server.
-    /// \param buff Output buffer into which the response (in wire format)
-    ///     is written (if a response is received).
-    /// \param cb Callback object containing the callback to be called
-    ///     when we terminate.  The caller is responsible for managing this
-    ///     object and deleting it if necessary.
     /// \param address IP address of upstream server
     /// \param port Port to which to connect on the upstream server
-    /// (default = 53)
+    /// \param buff Output buffer into which the response (in wire format)
+    ///        is written (if a response is received).
+    /// \param cb Callback object containing the callback to be called when we
+    ///        terminate.  The caller is responsible for managing this object
+    ///        and deleting it if necessary.
     /// \param wait Timeout for the fetch (in ms).  The default value of
-    ///     -1 indicates no timeout.
+    ///     -  1 indicates no timeout.
     IOFetch(Protocol protocol, IOService& service,
         const isc::dns::Question& question, const IOAddress& address,
         uint16_t port, isc::dns::OutputBufferPtr& buff, Callback* cb,
@@ -140,8 +137,6 @@ public:
     /// \brief Constructor.
     ///
     /// Creates the object that will handle the upstream fetch.
-    ///
-    /// TODO: Need to randomise the source port
     ///
     /// \param protocol Fetch protocol, either IOFetch::TCP or IOFetch::UDP
     /// \param service I/O Service object to handle the asynchronous

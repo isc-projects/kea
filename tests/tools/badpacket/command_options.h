@@ -29,24 +29,25 @@ namespace badpacket {
 /// This class is responsible for parsing the command-line and storing the
 /// specified options.
 ///
-/// Each option setting the state of one of the fields in the flags word in the
-/// DNS packet can be specified as either:
+/// Some of the options perform general control (like setting the address of the
+/// nameserver under test, while the rest set values in the DNS message being
+/// sent.  Each of the latter options can be specified as either:
 ///
 /// - \c --option value
 /// - \c --option value1-value2
 ///
 /// Either way, two values are extracted the low value and the high value (in
-/// the former case, both are the same).  The values are stored in an array
-/// and can be returned on request.
+/// the former case, both are the same).  The values are stored and can be
+/// returned on request.
 ///
-/// For simplicity, the class also takes care of the --help and --version flags,
+/// For simplicity, the class takes care of the --help and --version flags,
 /// each of which will cause a message to be printed to stdout and the program
 /// to terminate.
 
 class CommandOptions {
 public:
 
-    /// \brief CommandOptions Constructor
+    /// \brief Default Constructor
     ///
     /// Set values to defaults.
     CommandOptions() {
@@ -54,6 +55,12 @@ public:
     }
 
     /// \brief Return minimum value for option
+    ///
+    /// Applicable only to an option affecting a field in the message, this
+    /// method returns the minimum value that was given on the command line.
+    /// (If only a single value was given, it will be that value returned.)
+    /// If the option was not specified on the command line, the default value
+    /// set in the OptionsInfo class will be returned.
     ///
     /// \param index Index of the command-line option.
     ///
@@ -63,13 +70,19 @@ public:
 
     /// \brief Return maximum value for option
     ///
+    /// Applicable only to an option affecting a field in the message, this
+    /// method returns the maximum value that was given on the command line.
+    /// (If only a single value was given, it will be that value returned.)
+    /// If the option was not specified on the command line, the default value
+    /// set in the OptionsInfo class will be returned.
+    ///
     /// \param index Index of the command-line option.
     ///
     /// \return uint32_t holding the maximum value given (or the default if
     ///         the option was not specified on the command line).
     uint32_t maximum(int index) const;
 
-    /// \brief Return if option was given on command line
+    /// \brief Reports if option was given on command line
     ///
     /// \param index Index of the command-line option.
     ///
@@ -77,17 +90,17 @@ public:
     bool present(int index) const;
 
 
-    /// \brief Return Target Address
+    /// \brief Return target address
     std::string getAddress() const {
         return address_;
     }
 
-    /// \brief Return Target Port
+    /// \brief Return target port
     uint16_t getPort() const {
         return port_;
     }
 
-    /// \brief Return Timeout
+    /// \brief Return timeout
     int getTimeout() const {
         return timeout_;
     }
@@ -97,21 +110,12 @@ public:
         return qname_;
     }
 
-    /// \brief Reset To Defaults
-    void reset() {
-        address_ = "127.0.0.1";
-        port_ = 53;
-        timeout_ = 500;
-        qname_ = "www.example.com";
+    /// \brief Reset to defaults
+    ///
+    /// Resets the CommandOptions object to default values.
+    void reset();
 
-        for (int i = 0; i < OptionInfo::SIZE; ++i) {
-            options_[i].minimum = OptionInfo::defval(i);
-            options_[i].maximum = OptionInfo::defval(i);
-            options_[i].present = false;
-        }
-    }
-
-    /// \brief Parse Command Line
+    /// \brief Parse command line
     ///
     /// Parses the command line and stores the selected options.  The parsing
     /// also handles the --help and --version commands: both of these will cause
@@ -122,15 +126,13 @@ public:
     /// \param argv Argument value array passed to main().
     void parse(int argc, char* const argv[]);
 
-    /// \brief Print Usage Information And Exit Program
+    /// \brief Print usage information and exit program
     void usage();
 
-    /// \brief Print Version Information And Exit Program
+    /// \brief Print version information and exit program
     void version();
 
-    // The following are protected to aid testing
-
-protected:
+private:
     /// \brief Process Option Value
     ///
     /// Processes a specific command-line option, interpreting the value and
@@ -143,13 +145,11 @@ protected:
 
     // Member variables
 
-private:
     struct {
         uint32_t    minimum;        ///< Minimum value specified
         uint32_t    maximum;        ///< Maximum value specified
         bool        present;        ///< true if specified on command line
     } options_[OptionInfo::SIZE];   ///< Information about command options
-                                    ///< Value of options (minimum and maximum)
     std::string     address_;       ///< Address to where query is sent
     uint16_t        port_;          ///< Target port
     int             timeout_;       ///< Timeout for query
