@@ -156,8 +156,8 @@ TSIGKey::toText() const {
     }
     std::string secret_str = encodeBase64(secret_v);
 
-    return getKeyName().toText() + ":" + secret_str + ":" +
-           getAlgorithmName().toText();
+    return (getKeyName().toText() + ":" + secret_str + ":" +
+            getAlgorithmName().toText());
 }
 
 const
