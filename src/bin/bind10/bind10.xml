@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>February 22, 2011</date>
+    <date>March 31, 2011</date>
   </refentryinfo>
 
   <refmeta>
@@ -44,16 +44,21 @@
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>bind10</command>
+      <arg><option>-c <replaceable>config-filename</replaceable></option></arg>
       <arg><option>-m <replaceable>file</replaceable></option></arg>
       <arg><option>-n</option></arg>
+      <arg><option>-p <replaceable>data_path</replaceable></option></arg>
       <arg><option>-u <replaceable>user</replaceable></option></arg>
       <arg><option>-v</option></arg>
-      <arg><option>-c<replaceable>config-filename</replaceable></option></arg>
-      <arg><option>-p<replaceable>data_path</replaceable></option></arg>
+      <arg><option>--brittle</option></arg>
+      <arg><option>--cmdctl-port</option> <replaceable>port</replaceable></arg>
+      <arg><option>--config-file</option> <replaceable>config-filename</replaceable></arg>
+      <arg><option>--data-path</option> <replaceable>directory</replaceable></arg>
       <arg><option>--msgq-socket-file <replaceable>file</replaceable></option></arg>
       <arg><option>--no-cache</option></arg>
-      <arg><option>--user <replaceable>user</replaceable></option></arg>
+      <arg><option>--pid-file</option> <replaceable>filename</replaceable></arg>
       <arg><option>--pretty-name <replaceable>name</replaceable></option></arg>
+      <arg><option>--user <replaceable>user</replaceable></option></arg>
       <arg><option>--verbose</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -82,9 +87,24 @@
     <para>The arguments are as follows:</para>
 
     <variablelist>
+
       <varlistentry>
         <term>
-          <option>-c</option><replaceable>config-filename</replaceable>,
+          <option>--brittle</option>
+        </term>
+        <listitem>
+          <para>
+	    Shutdown if any of the child processes of
+	    <command>bind10</command> exit.  This is intended to
+	    help developers debug the server, and should not be
+	    used in production.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+          <option>-c</option> <replaceable>config-filename</replaceable>,
           <option>--config-file</option> <replaceable>config-filename</replaceable>
         </term>
         <listitem>
@@ -97,8 +117,22 @@
 
       <varlistentry>
         <term>
-          <option>-p</option><replaceable>data-path</replaceable>,
-          <option>--data-path</option> <replaceable>data-path</replaceable>
+          <option>--cmdctl-port</option> <replaceable>port</replaceable>
+        </term>
+        <listitem>
+	  <para>The <command>b10-cmdctl</command> daemon will listen
+	    on this port.
+	    (See
+	    <refentrytitle>b10-cmdctl</refentrytitle><manvolnum>8</manvolnum>
+            for the default.)
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+          <option>-p</option> <replaceable>directory</replaceable>,
+          <option>--data-path</option> <replaceable>directory</replaceable>
         </term>
         <listitem>
           <para>The path where BIND 10 programs look for various data files.
@@ -134,13 +168,22 @@
 
       <varlistentry>
         <term><option>-u</option> <replaceable>user</replaceable>, <option>--user</option> <replaceable>name</replaceable></term>
-
         <listitem>
           <para>The username for <command>bind10</command> to run as.
 <!-- TODO: example more detail. -->
             <command>bind10</command> must be initially ran as the
             root user to use this option.
             The default is to run as the current user.</para>
+         </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--pid-file</option> <replaceable>filename</replaceable></term>
+        <listitem>
+          <para>If defined, the PID of the <command>bind10</command> is stored
+             in this file.
+             This is used for testing purposes.
+          </para>
          </listitem>
       </varlistentry>
 
