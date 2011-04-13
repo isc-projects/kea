@@ -27,16 +27,18 @@
 /// printing the packet settings and the response received.  The principle
 /// raison d'etre for this is to check if a bad packet will cause a crash.
 ///
-/// This particular version of the code allows a set of ranges to be set for
-/// each field in the "flags" word (the third and fourth bytes) of a DNS
-/// message. (Most of the flags are single-bit values, so the range is just 0-1.
-/// The OPCODE and RCODE are both four bits wide, so the range is 0-15.)  The
-/// program then sends packets containing each combination of values.
+/// This particular version of the code allows a set of ranges to be set for:
+/// - The flags fields in the message.
+/// - The section count fields, regardless of what is in the section.
+/// - The message size: the message can be truncated or extended.
 ///
-/// TODO: Extend the program to other bad values.
-/// Examples of this would be to make the count fields invalid, to add data
-/// to sections that should be empty, and to deliberately mangle the names in
-/// these sections.
+/// The program then sends a set of packets corresponding to all combinations
+/// of values in the ranges selected.
+
+// TODO: Extend to cover:
+// - Mangling the QNAME
+// - Adding names to the message sections
+// - Adding EDNS0 RR and magling the fields there
 
 using namespace isc::badpacket;
 
@@ -44,10 +46,11 @@ using namespace isc::badpacket;
 int main(int argc, char* argv[]) {
 
     try {
+        // Parse command
         CommandOptions options;
         options.parse(argc, argv);
 
-        // Construct the scan object and perform the scan.
+        // Send the sequence of messages
         Scan scanner;
         scanner.scan(options);
     } catch (isc::Exception& e) {

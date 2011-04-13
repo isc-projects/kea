@@ -50,7 +50,7 @@ public:
     /// \brief Checks the minimum and maximum value specified for an option
     ///
     /// Checks the values for one of the options whose values are stored in the
-    /// class's options_) array.
+    /// class's options_ array.
     ///
     /// \param index Index of the option in the limits_ array
     /// \param minval Expected minimum value
@@ -62,8 +62,8 @@ public:
 
     /// \brief Checks that all options are at default values
     ///
-    /// Checks that all options have both their maximum and minimum set
-    /// to the default values.
+    /// Checks that all options have both their maximum and minimum set to the
+    /// default values.
     ///
     /// \param except Index not to check. (This allows options not being tested
     ///        to be checked to see that they are at the default value.)  As all
@@ -100,7 +100,7 @@ public:
 
         // Check the results.  Everything should be at the defaults except for
         // the specified option, where the minimum and maximum should be as
-        // given.
+        // specified.
         checkDefaultOtherValues();
         checkDefaultLimitsValues(index);
         checkValuePair(index, minval, maxval);
@@ -108,7 +108,7 @@ public:
 
     /// \brief Check invalid command option
     ///
-    /// Passed a command with an invalid value, which that the parsing throws
+    /// Passed a command with an invalid value, checks that the parsing throws
     /// a BadValue exception.
     ///
     /// \param optflag Option flag (in the form '--option')
@@ -177,7 +177,7 @@ public:
     }
 };
 
-// Check that each of the options will be recognised
+// Check that each of the non-message options will be recognised
 
 TEST_F(CommandOptionsTest, address) {
     const char* argv[] = {"badpacket",  "--address", "192.0.2.1"};
@@ -231,7 +231,8 @@ TEST_F(CommandOptionsTest, parameter) {
     checkDefaultLimitsValues();
 }
 
-// The various tests of the different flags
+// Test options representing the flags fields.
+
 TEST_F(CommandOptionsTest, qr) {
     checkOneBitField(OptionInfo::QR, "--qr");
 }

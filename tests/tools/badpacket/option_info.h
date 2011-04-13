@@ -27,20 +27,22 @@ namespace badpacket {
 /// that require values and which control data put in the DNS message sent to
 /// the remote system.
 ///
-/// Currently all of these options correspond to fields in the flags word of the
-/// DNS message header, so the information includes details about the position
-/// of the fields and an appropriate bit mask.
+/// Some of the fields are no applicable to all options.  For example, some of
+/// the options correspond to fields in the flags word of the DNS message
+/// header, so the information includes details about the position of the fields
+/// and an appropriate bit mask.
 ///
 /// Note that the class does not hold values specified on the command line - it
-/// only holds information about command-line options.
+/// only holds information about the available options.
 
 class OptionInfo {
 public:
 
     /// \brief Array Indexes
     ///
-    /// The data for the flags options are held in an array.  Although an enum,
-    /// only the numeric values are used - they are indexes into arrays.
+    /// The data for the flags options are held in an array.  Although declared
+    /// as an enum, only the numeric values are used as they are the indexes
+    /// into the array.
     enum Index {
         FLAGS_START = 0,    // Start of flags field codes
         QR = 0,             // Query/response
@@ -66,15 +68,15 @@ public:
         SIZE = 15           // Number of index values
     };
 
-    /// \brief Option Parameters
+    /// \brief Option parameters
     ///
     /// Defines a structure that holds information associated with each of the
-    /// flags field command options.  Note all members of the structure are
-    /// relevant to all options
+    /// flags field command options.  Not all members of the structure are
+    /// relevant to all options.
     struct Parameter {
         const char      short_form;     // Short form of the command switch
         const char*     long_form;      // Long form of the command switch
-        int             word;           // Byte offset of word in the header
+        int             word;           // Byte offset of word in message header
         uint16_t        mask;           // Bit mask of field in the flags word
         int             offset;         // Offset of field in flags word
         uint32_t        defval;         // Default value
@@ -84,14 +86,15 @@ public:
 
     /// \brief Return index for command option
     ///
-    /// Given the short form of a switch, return the index into the options
-    /// array.
+    /// Given the short form of a command-line option, return the index in the
+    /// options array corresponding to that option.
     ///
     /// \param c The character that is the short form of the command line option.
-    ///        An 'int' is used as the value passed will be the return vaue from
-    ///        'getopt()' (or equivalent) which is an int.
+    ///        An 'int' is used as the value passed will be the return value
+    ///        from 'getopt()' (or equivalent) which is an int.  If the
+    ///        character is not found, an exception will be thrown.
     ///
-    /// \return A valid index value (else an exception is thrown).
+    /// \return A valid index value.
     static int getIndex(int c);
 
     /// \brief Return long form of command switch for this field
@@ -108,7 +111,7 @@ public:
     ///
     /// \param index A valid index (one of the values in the 'Index' enum).
     ///
-    /// \return The offset in the header foe this datum.
+    /// \return The offset in the header for this datum.
     static int word(int index);
 
     /// \brief Return mask associated with switch field
@@ -116,32 +119,34 @@ public:
     /// \param index A valid index (one of the values in the 'Index' enum).
     ///
     /// \return The mask for this particular option in the DNS message flags
-    ///         field.
+    ///         word.  The returned value is only valid for options that
+    ///         correspond to fields in the flags word.
     static uint16_t mask(int index);
 
-    /// \brief Return offset associated with switch field
+    /// \brief Return offset associated with option field
     ///
     /// \param index A valid index (one of the values in the 'Index' enum).
     ///
     /// \return The offset of the field corresponding to this option in the DNS
-    ///         message flags field.
+    ///         message flags field.  The returned value is only valid for
+    ///         options that correpond to fields in the flags word.
     static int offset(int index);
 
-    /// \brief Return minimum allowed value of field
+    /// \brief Return minimum allowed value of an option
     ///
     /// \param index A valid index (one of the values in the 'Index' enum).
     ///
-    /// \return Minimum allowed value for this option.  This is usually 0.
+    /// \return Minimum allowed value for this option.
     static uint32_t minval(int index);
 
-    /// \brief Return default value of a field
+    /// \brief Return default value of an option
     ///
     /// \param index A valid index (one of the values in the 'Index' enum).
     ///
     /// \return Default value for this option
     static uint32_t defval(int index);
 
-    /// \brief Return maximum allowed value of field
+    /// \brief Return maximum allowed value of an option
     ///
     /// \param index A valid index (one of the values in the 'Index' enum).
     ///
@@ -155,7 +160,6 @@ public:
     /// correspond to one of the valid indexes in the 'Index' enum.
     ///
     /// \param index An index value.
-    ///
     static void checkIndex(int i) {
         if ((i < 0) || (i >= SIZE)) {
             isc_throw(isc::OutOfRange, "option index must be in the range "

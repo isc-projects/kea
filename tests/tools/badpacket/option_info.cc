@@ -59,7 +59,7 @@ namespace badpacket {
 int
 OptionInfo::getIndex(int c) {
     for (int i = 0; i < SIZE; ++i) {
-        if (c == option_information[i].short_form) {
+        if (option_information[i].short_form == c) {
             return (i);
         }
     }
