@@ -82,7 +82,7 @@
 
   <refsect1>
     <title>OPTIONS</title>
-    <para>The arguments are as follows:</para>
+    <para>The argument is as follow:</para>
     <variablelist>
       <varlistentry>
         <term><option>-v</option>, <option>--verbose</option></term>
