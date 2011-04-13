@@ -42,21 +42,28 @@ public:
     /// The data for the flags options are held in an array.  Although an enum,
     /// only the numeric values are used - they are indexes into arrays.
     enum Index {
-        QR = 0,     // Query/response
-        OP = 1,     // Opcode
-        AA = 2,     // Authoritative answer
-        TC = 3,     // Truncated
-        RD = 4,     // Recursion desired
-        RA = 5,     // Recursion available
-        Z  = 6,     // Zero (reserved)
-        AD = 7,     // Authenticated data
-        CD = 8,     // Checking disabled
-        RC = 9,     // Response code
-        QC = 10,    // Query count
-        AC = 11,    // Answer count
-        UC = 12,    // Authority count
-        DC = 13,    // Additional count
-        SIZE = 14   // Number of index values
+        FLAGS_START = 0,    // Start of flags field codes
+        QR = 0,             // Query/response
+        OP = 1,             // Opcode
+        AA = 2,             // Authoritative answer
+        TC = 3,             // Truncated
+        RD = 4,             // Recursion desired
+        RA = 5,             // Recursion available
+        Z  = 6,             // Zero (reserved)
+        AD = 7,             // Authenticated data
+        CD = 8,             // Checking disabled
+        RC = 9,             // Response code
+        FLAGS_END = 9,      // End of flags field codes
+        COUNT_START = 10,   // Start of count fields
+        QC = 10,            // Query count
+        AC = 11,            // Answer count
+        UC = 12,            // Authority count
+        DC = 13,            // Additional count
+        COUNT_END = 13,     // End of count fields
+        OTHER_START = 14,   // Start of other fields
+        MS = 14,            // Message size
+        OTHER_END = 14,     // End of other fields
+        SIZE = 15           // Number of index values
     };
 
     /// \brief Option Parameters

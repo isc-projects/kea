@@ -33,47 +33,147 @@ class CommandOptionsTest : public virtual ::testing::Test,
 public:
 
     /// \brief Default Constructor
-    CommandOptionsTest() {}
-
-    /// \brief Checks the minimum and maximum () specified for an option
-    ///
-    /// Checks the () for one of the options whose values are stored in the
-    /// class's limits) array.
-    ///
-    /// \param index Index of the option in the limits_ array
-    /// \param minval Expected minimum value
-    /// \param maxval Expected maximum value
-    void checkValuePair(int index, uint32_t minval = 0, uint32_t maxval = 0)
-    {
-        EXPECT_EQ(minimum(index), minval);
-        EXPECT_EQ(maximum(index), maxval);
-    }
-
-    /// \brief Checks that all options giving flags () are zero.
-    ///
-    /// Checks that all options whose () are stored in the class's limits_
-    /// array have both their maximum and minimum () set to zero.
-    void checkDefaultLimitsValues() {
-        checkValuePair(OptionInfo::QR);
-        checkValuePair(OptionInfo::OP);
-        checkValuePair(OptionInfo::AA);
-        checkValuePair(OptionInfo::TC);
-        checkValuePair(OptionInfo::Z);
-        checkValuePair(OptionInfo::AD);
-        checkValuePair(OptionInfo::CD);
-        checkValuePair(OptionInfo::RC);
-    }
+    CommandOptionsTest()
+    {}
 
     /// \brief Check Non-Limit Options
     ///
-    /// Checks that the options whose () are NOT stored in the limits_
-    /// array are set to their default ().
-    void
-    checkDefaultOtherValues() {
+    /// Checks that the options that are NOT related to the message are set to
+    /// their default values.
+    void checkDefaultOtherValues() {
         EXPECT_EQ("127.0.0.1", getAddress());
         EXPECT_EQ(53, getPort());
         EXPECT_EQ(500, getTimeout());
         EXPECT_EQ("www.example.com", getQname());
+    }
+
+    /// \brief Checks the minimum and maximum value specified for an option
+    ///
+    /// Checks the values for one of the options whose values are stored in the
+    /// class's options_) array.
+    ///
+    /// \param index Index of the option in the limits_ array
+    /// \param minval Expected minimum value
+    /// \param maxval Expected maximum value
+    void checkValuePair(int index, uint32_t minval = 0, uint32_t maxval = 0) {
+        EXPECT_EQ(minimum(index), minval);
+        EXPECT_EQ(maximum(index), maxval);
+    }
+
+    /// \brief Checks that all options are at default values
+    ///
+    /// Checks that all options have both their maximum and minimum set
+    /// to the default values.
+    ///
+    /// \param except Index not to check. (This allows options not being tested
+    ///        to be checked to see that they are at the default value.)  As all
+    ///        index values are positive, a negative value means check
+    ///        everything.
+    void checkDefaultLimitsValues(int except = -1) {
+        for (int i = 0; i < OptionInfo::SIZE; ++i) {
+            if (i != except) {
+                checkValuePair(i, OptionInfo::defval(i),
+                               OptionInfo::defval(i));
+            }
+        }
+    }
+
+    /// \brief Check valid command option
+    ///
+    /// Checks that the command line specification of one of the options taking
+    /// a value correctly processes the option.
+    ///
+    /// \param index Option index
+    /// \param optflag Option flag (in the form '--option')
+    /// \param optval Value to be passed to the option.
+    /// \param minval Expected minimum value
+    /// \param maxval Expected maximum value
+    void checkCommandValid(int index, const char* optflag, const char* optval,
+                           uint32_t minval, uint32_t maxval) {
+
+        // Set up the command line and parse it.
+        const char* argv[] = {"badpacket", NULL, NULL};
+        argv[1] = optflag;
+        argv[2] = optval;
+        int argc = 3;
+        parse(argc, const_cast<char**>(argv));
+
+        // Check the results.  Everything should be at the defaults except for
+        // the specified option, where the minimum and maximum should be as
+        // given.
+        checkDefaultOtherValues();
+        checkDefaultLimitsValues(index);
+        checkValuePair(index, minval, maxval);
+    }
+
+    /// \brief Check invalid command option
+    ///
+    /// Passed a command with an invalid value, which that the parsing throws
+    /// a BadValue exception.
+    ///
+    /// \param optflag Option flag (in the form '--option')
+    /// \param optval Value to be passed to the option.
+    void checkCommandInvalid(const char* optflag, const char* optval) {
+
+        // Set up the command line and parse it.
+        const char* argv[] = {"badpacket", NULL, NULL};
+        argv[1] = optflag;
+        argv[2] = optval;
+        int argc = 3;
+        EXPECT_THROW(parse(argc, const_cast<char**>(argv)), isc::BadValue);
+    }
+
+    /// \brief Check one-bit field
+    ///
+    /// Explicitly for those fields in the flags word that are one bit wide,
+    /// perform a series of tests to check that they accept valid values and
+    /// reject invalid ones.
+    ///
+    /// \param index Option index
+    /// \param optflag Option flag (in the form '--option')
+    void checkOneBitField(int index, const char* optflag) {
+        checkCommandValid(index, optflag, "0", 0, 0);
+        checkCommandValid(index, optflag, "1", 1, 1);
+        checkCommandValid(index, optflag, "0-1", 0, 1);
+        checkCommandValid(index, optflag, "1-0", 0, 1);
+        checkCommandInvalid(optflag, "0-3");
+        checkCommandInvalid(optflag, "4");
+        checkCommandInvalid(optflag, "xyz");
+    }
+
+    /// \brief Check four-bit field
+    ///
+    /// Explicitly for those fields in the flags word that are four bits wide,
+    /// perform a series of tests to check that they accept valid values and
+    /// reject invalid ones.
+    ///
+    /// \param index Option index
+    /// \param optflag Option flag (in the form '--option')
+    void checkFourBitField(int index, const char* optflag) {
+        checkCommandValid(index, optflag, "0", 0, 0);
+        checkCommandValid(index, optflag, "15", 15, 15);
+        checkCommandValid(index, optflag, "0-15", 0, 15);
+        checkCommandValid(index, optflag, "15-0", 0, 15);
+        checkCommandInvalid(optflag, "0-17");
+        checkCommandInvalid(optflag, "24");
+        checkCommandInvalid(optflag, "xyz");
+    }
+
+    /// \brief Check sixteen-bit field
+    ///
+    /// Explicitly test the parsing of the fields that can take a 16-bit
+    /// value ranging from 0 to 65535.
+    ///
+    /// \param index Option index
+    /// \param optflag Option flag (in the form '--option')
+    void checkSixteenBitField(int index, const char* optflag) {
+        checkCommandValid(index, optflag, "0", 0, 0);
+        checkCommandValid(index, optflag, "65535", 65535, 65535);
+        checkCommandValid(index, optflag, "0-65535", 0, 65535);
+        checkCommandValid(index, optflag, "65535-0", 0, 65535);
+        checkCommandInvalid(optflag, "0-65536");
+        checkCommandInvalid(optflag, "65537");
+        checkCommandInvalid(optflag, "xyz");
     }
 };
 
@@ -133,351 +233,67 @@ TEST_F(CommandOptionsTest, parameter) {
 
 // The various tests of the different flags
 TEST_F(CommandOptionsTest, qr) {
-
-    // Specifying a value of zero, we expect all flag () to be zero
-    const char* argv1[] = {"badpacket",  "--qr", "0"};
-    int argc1 = sizeof(argv1) / sizeof(const char*);
-
-    parse(argc1, const_cast<char**>(argv1));
-    checkDefaultOtherValues();
-    checkDefaultLimitsValues();
-
-    // Check that a value of 1 is accepted
-    const char* argv2[] = {"badpacket",  "--qr", "1"};
-    int argc2 = sizeof(argv2) / sizeof(const char*);
-
-    parse(argc2, const_cast<char**>(argv2));
-    checkDefaultOtherValues();
-    checkValuePair(OptionInfo::QR, 1, 1);
-    checkValuePair(OptionInfo::OP);
-    checkValuePair(OptionInfo::AA);
-    checkValuePair(OptionInfo::TC);
-    checkValuePair(OptionInfo::Z);
-    checkValuePair(OptionInfo::AD);
-    checkValuePair(OptionInfo::CD);
-    checkValuePair(OptionInfo::RC);
-
-    // Check that a range is accepted (in this case, specified backwards)
-    const char* argv3[] = {"badpacket",  "--qr", "1-0"};
-    int argc3 = sizeof(argv3) / sizeof(const char*);
-
-    parse(argc3, const_cast<char**>(argv3));
-    checkDefaultOtherValues();
-    checkValuePair(OptionInfo::QR, 0, 1);
-    checkValuePair(OptionInfo::OP);
-    checkValuePair(OptionInfo::AA);
-    checkValuePair(OptionInfo::TC);
-    checkValuePair(OptionInfo::Z);
-    checkValuePair(OptionInfo::AD);
-    checkValuePair(OptionInfo::CD);
-    checkValuePair(OptionInfo::RC);
+    checkOneBitField(OptionInfo::QR, "--qr");
 }
 
-// The following are cut-and-pasted from the "qr" test.  (It is awkward to put
-// the test into a general function because of differing string () and
-// variables.)
-
 TEST_F(CommandOptionsTest, op) {
-
-    // Specifying a value of zero, we expect all flag () to be zero
-    const char* argv1[] = {"badpacket",  "--op", "0"};
-    int argc1 = sizeof(argv1) / sizeof(const char*);
-
-    parse(argc1, const_cast<char**>(argv1));
-    checkDefaultOtherValues();
-    checkDefaultLimitsValues();
-
-    // Check that a value of 1 is accepted
-    const char* argv2[] = {"badpacket",  "--op", "8"};
-    int argc2 = sizeof(argv2) / sizeof(const char*);
-
-    parse(argc2, const_cast<char**>(argv2));
-    checkDefaultOtherValues();
-    checkValuePair(OptionInfo::QR);
-    checkValuePair(OptionInfo::OP, 8, 8);
-    checkValuePair(OptionInfo::AA);
-    checkValuePair(OptionInfo::TC);
-    checkValuePair(OptionInfo::Z);
-    checkValuePair(OptionInfo::AD);
-    checkValuePair(OptionInfo::CD);
-    checkValuePair(OptionInfo::RC);
-
-    // Check that a range is accepted (in this case, specified backwards)
-    const char* argv3[] = {"badpacket",  "--op", "14-2"};
-    int argc3 = sizeof(argv3) / sizeof(const char*);
-
-    parse(argc3, const_cast<char**>(argv3));
-    checkDefaultOtherValues();
-    checkValuePair(OptionInfo::QR);
-    checkValuePair(OptionInfo::OP, 2, 14);
-    checkValuePair(OptionInfo::AA);
-    checkValuePair(OptionInfo::TC);
-    checkValuePair(OptionInfo::Z);
-    checkValuePair(OptionInfo::AD);
-    checkValuePair(OptionInfo::CD);
-    checkValuePair(OptionInfo::RC);
+    checkFourBitField(OptionInfo::OP, "--op");
 }
 
 TEST_F(CommandOptionsTest, aa) {
-
-    // Specifying a value of zero, we expect all flag () to be zero
-    const char* argv1[] = {"badpacket",  "--aa", "0"};
-    int argc1 = sizeof(argv1) / sizeof(const char*);
-
-    parse(argc1, const_cast<char**>(argv1));
-    checkDefaultOtherValues();
-    checkDefaultLimitsValues();
-
-    // Check that a value of 1 is accepted
-    const char* argv2[] = {"badpacket",  "--aa", "1"};
-    int argc2 = sizeof(argv2) / sizeof(const char*);
-
-    parse(argc2, const_cast<char**>(argv2));
-    checkDefaultOtherValues();
-    checkValuePair(OptionInfo::QR);
-    checkValuePair(OptionInfo::OP);
-    checkValuePair(OptionInfo::AA, 1, 1);
-    checkValuePair(OptionInfo::TC);
-    checkValuePair(OptionInfo::Z);
-    checkValuePair(OptionInfo::AD);
-    checkValuePair(OptionInfo::CD);
-    checkValuePair(OptionInfo::RC);
-
-    // Check that a range is accepted.
-    const char* argv3[] = {"badpacket",  "--aa", "1-0"};
-    int argc3 = sizeof(argv3) / sizeof(const char*);
-
-    parse(argc3, const_cast<char**>(argv3));
-    checkDefaultOtherValues();
-    checkValuePair(OptionInfo::QR);
-    checkValuePair(OptionInfo::OP);
-    checkValuePair(OptionInfo::AA, 0, 1);
-    checkValuePair(OptionInfo::TC);
-    checkValuePair(OptionInfo::Z);
-    checkValuePair(OptionInfo::AD);
-    checkValuePair(OptionInfo::CD);
-    checkValuePair(OptionInfo::RC);
+    checkOneBitField(OptionInfo::AA, "--aa");
 }
 
 TEST_F(CommandOptionsTest, tc) {
-
-    // Specifying a value of zero, we expect all flag () to be zero
-    const char* argv1[] = {"badpacket",  "--tc", "0"};
-    int argc1 = sizeof(argv1) / sizeof(const char*);
-
-    parse(argc1, const_cast<char**>(argv1));
-    checkDefaultOtherValues();
-    checkDefaultLimitsValues();
-
-    // Check that a value of 1 is accepted
-    const char* argv2[] = {"badpacket",  "--tc", "1"};
-    int argc2 = sizeof(argv2) / sizeof(const char*);
-
-    parse(argc2, const_cast<char**>(argv2));
-    checkDefaultOtherValues();
-    checkValuePair(OptionInfo::QR);
-    checkValuePair(OptionInfo::OP);
-    checkValuePair(OptionInfo::AA);
-    checkValuePair(OptionInfo::TC, 1, 1);
-    checkValuePair(OptionInfo::Z);
-    checkValuePair(OptionInfo::AD);
-    checkValuePair(OptionInfo::CD);
-    checkValuePair(OptionInfo::RC);
-
-    // Check that a range is accepted.
-    const char* argv3[] = {"badpacket",  "--tc", "1-0"};
-    int argc3 = sizeof(argv3) / sizeof(const char*);
-
-    parse(argc3, const_cast<char**>(argv3));
-    checkDefaultOtherValues();
-    checkValuePair(OptionInfo::QR);
-    checkValuePair(OptionInfo::OP);
-    checkValuePair(OptionInfo::AA);
-    checkValuePair(OptionInfo::TC, 0, 1);
-    checkValuePair(OptionInfo::Z);
-    checkValuePair(OptionInfo::AD);
-    checkValuePair(OptionInfo::CD);
-    checkValuePair(OptionInfo::RC);
+    checkOneBitField(OptionInfo::TC, "--tc");
 }
 
 TEST_F(CommandOptionsTest, z) {
-
-    // Specifying a value of zero, we expect all flag () to be zero
-    const char* argv1[] = {"badpacket",  "--z", "0"};
-    int argc1 = sizeof(argv1) / sizeof(const char*);
-
-    parse(argc1, const_cast<char**>(argv1));
-    checkDefaultOtherValues();
-    checkDefaultLimitsValues();
-
-    // Check that a value of 1 is accepted
-    const char* argv2[] = {"badpacket",  "--z", "1"};
-    int argc2 = sizeof(argv2) / sizeof(const char*);
-
-    parse(argc2, const_cast<char**>(argv2));
-    checkDefaultOtherValues();
-    checkValuePair(OptionInfo::QR);
-    checkValuePair(OptionInfo::OP);
-    checkValuePair(OptionInfo::AA);
-    checkValuePair(OptionInfo::TC);
-    checkValuePair(OptionInfo::Z, 1, 1);
-    checkValuePair(OptionInfo::AD);
-    checkValuePair(OptionInfo::CD);
-    checkValuePair(OptionInfo::RC);
-
-    // Check that a range is accepted.
-    const char* argv3[] = {"badpacket",  "--z", "1-0"};
-    int argc3 = sizeof(argv3) / sizeof(const char*);
-
-    parse(argc3, const_cast<char**>(argv3));
-    checkDefaultOtherValues();
-    checkValuePair(OptionInfo::QR);
-    checkValuePair(OptionInfo::OP);
-    checkValuePair(OptionInfo::AA);
-    checkValuePair(OptionInfo::TC);
-    checkValuePair(OptionInfo::Z, 0, 1);
-    checkValuePair(OptionInfo::AD);
-    checkValuePair(OptionInfo::CD);
-    checkValuePair(OptionInfo::RC);
+    checkOneBitField(OptionInfo::Z, "--z");
 }
 
 TEST_F(CommandOptionsTest, ad) {
-
-    // Specifying a value of zero, we expect all flag () to be zero
-    const char* argv1[] = {"badpacket",  "--ad", "0"};
-    int argc1 = sizeof(argv1) / sizeof(const char*);
-
-    parse(argc1, const_cast<char**>(argv1));
-    checkDefaultOtherValues();
-    checkDefaultLimitsValues();
-
-    // Check that a value of 1 is accepted
-    const char* argv2[] = {"badpacket",  "--ad", "1"};
-    int argc2 = sizeof(argv2) / sizeof(const char*);
-
-    parse(argc2, const_cast<char**>(argv2));
-    checkDefaultOtherValues();
-    checkValuePair(OptionInfo::QR);
-    checkValuePair(OptionInfo::OP);
-    checkValuePair(OptionInfo::AA);
-    checkValuePair(OptionInfo::TC);
-    checkValuePair(OptionInfo::Z);
-    checkValuePair(OptionInfo::AD, 1, 1);
-    checkValuePair(OptionInfo::CD);
-    checkValuePair(OptionInfo::RC);
-
-    // Check that a range is accepted.
-    const char* argv3[] = {"badpacket",  "--ad", "0-1"};
-    int argc3 = sizeof(argv3) / sizeof(const char*);
-
-    parse(argc3, const_cast<char**>(argv3));
-    checkDefaultOtherValues();
-    checkValuePair(OptionInfo::QR);
-    checkValuePair(OptionInfo::OP);
-    checkValuePair(OptionInfo::AA);
-    checkValuePair(OptionInfo::TC);
-    checkValuePair(OptionInfo::Z);
-    checkValuePair(OptionInfo::AD, 0, 1);
-    checkValuePair(OptionInfo::CD);
-    checkValuePair(OptionInfo::RC);
+    checkOneBitField(OptionInfo::AD, "--ad");
 }
 
 TEST_F(CommandOptionsTest, cd) {
-
-    // Specifying a value of zero, we expect all flag () to be zero
-    const char* argv1[] = {"badpacket",  "--cd", "0"};
-    int argc1 = sizeof(argv1) / sizeof(const char*);
-
-    parse(argc1, const_cast<char**>(argv1));
-    checkDefaultOtherValues();
-    checkDefaultLimitsValues();
-
-    // Check that a value of 1 is accepted
-    const char* argv2[] = {"badpacket",  "--cd", "1"};
-    int argc2 = sizeof(argv2) / sizeof(const char*);
-
-    parse(argc2, const_cast<char**>(argv2));
-    checkDefaultOtherValues();
-    checkValuePair(OptionInfo::QR);
-    checkValuePair(OptionInfo::OP);
-    checkValuePair(OptionInfo::AA);
-    checkValuePair(OptionInfo::TC);
-    checkValuePair(OptionInfo::Z);
-    checkValuePair(OptionInfo::AD);
-    checkValuePair(OptionInfo::CD, 1, 1);
-    checkValuePair(OptionInfo::RC);
-
-    // Check that a range is accepted.
-    const char* argv3[] = {"badpacket",  "--cd", "1-0"};
-    int argc3 = sizeof(argv3) / sizeof(const char*);
-
-    parse(argc3, const_cast<char**>(argv3));
-    checkDefaultOtherValues();
-    checkValuePair(OptionInfo::QR);
-    checkValuePair(OptionInfo::OP);
-    checkValuePair(OptionInfo::AA);
-    checkValuePair(OptionInfo::TC);
-    checkValuePair(OptionInfo::Z);
-    checkValuePair(OptionInfo::AD);
-    checkValuePair(OptionInfo::CD, 0, 1);
-    checkValuePair(OptionInfo::RC);
+    checkOneBitField(OptionInfo::CD, "--cd");
 }
 
 TEST_F(CommandOptionsTest, rc) {
-
-    // Specifying a value of zero, we expect all flag () to be zero
-    const char* argv1[] = {"badpacket",  "--rc", "0"};
-    int argc1 = sizeof(argv1) / sizeof(const char*);
-
-    parse(argc1, const_cast<char**>(argv1));
-    checkDefaultOtherValues();
-    checkDefaultLimitsValues();
-
-    // Check that a valid value is accepted.
-    const char* argv2[] = {"badpacket",  "--rc", "15"};
-    int argc2 = sizeof(argv2) / sizeof(const char*);
-
-    parse(argc2, const_cast<char**>(argv2));
-    checkDefaultOtherValues();
-    checkValuePair(OptionInfo::QR);
-    checkValuePair(OptionInfo::OP);
-    checkValuePair(OptionInfo::AA);
-    checkValuePair(OptionInfo::TC);
-    checkValuePair(OptionInfo::Z);
-    checkValuePair(OptionInfo::AD);
-    checkValuePair(OptionInfo::CD);
-    checkValuePair(OptionInfo::RC, 15, 15);
-
-    // Check that a range is accepted (in this case, specified backwards and
-    // outside the range - so it should be truncated).
-    const char* argv3[] = {"badpacket",  "--rc", "8-4"};
-    int argc3 = sizeof(argv3) / sizeof(const char*);
-
-    parse(argc3, const_cast<char**>(argv3));
-    checkDefaultOtherValues();
-    checkValuePair(OptionInfo::QR);
-    checkValuePair(OptionInfo::OP);
-    checkValuePair(OptionInfo::AA);
-    checkValuePair(OptionInfo::TC);
-    checkValuePair(OptionInfo::Z);
-    checkValuePair(OptionInfo::AD);
-    checkValuePair(OptionInfo::CD);
-    checkValuePair(OptionInfo::RC, 4, 8);
+    checkFourBitField(OptionInfo::RC, "--rc");
 }
 
-// Check that invalid () are caught.
-TEST_F(CommandOptionsTest, processOptionValue) {
+// Section count options
 
-    // Check out of range () cause a BadValue exception
-    EXPECT_THROW(processOptionValue('Q', "2"), isc::BadValue);      // Single value above range
-    EXPECT_THROW(processOptionValue('O', "0-17"), isc::BadValue);   // Range overlapping valid range
+TEST_F(CommandOptionsTest, qc) {
+    checkSixteenBitField(OptionInfo::QC, "--qc");
+}
 
-    // ... and that any invalid string does the same
-    EXPECT_THROW(processOptionValue('O', ""), isc::BadValue);
-    EXPECT_THROW(processOptionValue('O', " "), isc::BadValue);
-    EXPECT_THROW(processOptionValue('O', "1-2-3"), isc::BadValue);
-    EXPECT_THROW(processOptionValue('O', "abc"), isc::BadValue);
-    EXPECT_THROW(processOptionValue('O', "abc-xyz"), isc::BadValue);
-    EXPECT_THROW(processOptionValue('O', "0.7"), isc::BadValue);
-    EXPECT_THROW(processOptionValue('O', "0.7-2.3"), isc::BadValue);
+TEST_F(CommandOptionsTest, ac) {
+    checkSixteenBitField(OptionInfo::AC, "--ac");
+}
+
+TEST_F(CommandOptionsTest, uc) {
+    checkSixteenBitField(OptionInfo::UC, "--uc");
+}
+
+TEST_F(CommandOptionsTest, dc) {
+    checkSixteenBitField(OptionInfo::DC, "--dc");
+}
+
+// ... and the message size option
+
+TEST_F(CommandOptionsTest, ms) {
+    int index = OptionInfo::MS;
+    const char* optflag = "--ms";
+
+    checkCommandValid(index, optflag, "1", 1, 1);
+    checkCommandValid(index, optflag, "65536", 65536, 65536);
+    checkCommandValid(index, optflag, "1-65536", 1, 65536);
+    checkCommandValid(index, optflag, "65536-1", 1, 65536);
+    checkCommandInvalid(optflag, "0");
+    checkCommandInvalid(optflag, "1-65537");
+    checkCommandInvalid(optflag, "65538");
+    checkCommandInvalid(optflag, "xyz");
 }
