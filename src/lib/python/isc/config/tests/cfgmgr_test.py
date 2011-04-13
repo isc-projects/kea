@@ -353,9 +353,8 @@ class TestConfigManager(unittest.TestCase):
 
             # Register our virtual module
             self.cm.set_virtual_module(self.spec, check_test)
-            # The fake session will throw now if it is touched, as there's no
-            # message or answer ready. Handy, we don't need any code about it
-            # to check explicitly.
+            # The fake session will throw now if it tries to read a response.
+            # Handy, we don't need to find a complicated way to check for it.
             result = self.cm._handle_set_config_module(self.spec.
                                                        get_module_name(),
                                                        {'item1': value})
@@ -363,6 +362,17 @@ class TestConfigManager(unittest.TestCase):
             # With correct data
             self.assertEqual(self.called_with['item1'], value)
             self.assertEqual(result, {'result': expectedResult})
+            if expectedResult[0] == 0:
+                # Check it provided the correct notification
+                self.assertEqual(len(self.fake_session.message_queue), 1)
+                self.assertEqual({'command': [ 'config_update',
+                                 {'item1': value}]},
+                                 self.fake_session.get_message('Spec2', None))
+                # and the queue should now be empty again
+                self.assertEqual(len(self.fake_session.message_queue), 0)
+            else:
+                # It shouldn't send anything on error
+                self.assertEqual(len(self.fake_session.message_queue), 0)
 
         # Success
         single_test(5, lambda: None, [0])
