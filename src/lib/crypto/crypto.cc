@@ -29,18 +29,17 @@
 
 #include <string>
 
-using namespace Botan;
 using namespace std;
 using namespace isc::dns;
 
 namespace {
-HashFunction* getHash(const Name& hash_name) {
+Botan::HashFunction* getHash(const Name& hash_name) {
     if (hash_name == TSIGKey::HMACMD5_NAME()) {
-        return get_hash("MD5");
+        return Botan::get_hash("MD5");
     } else if (hash_name == TSIGKey::HMACSHA1_NAME()) {
-        return get_hash("SHA-1");
+        return Botan::get_hash("SHA-1");
     } else if (hash_name == TSIGKey::HMACSHA256_NAME()) {
-        return get_hash("SHA-256");
+        return Botan::get_hash("SHA-256");
     } else {
         isc_throw(isc::crypto::UnsupportedAlgorithm,
                   "Unknown Hash type " + hash_name.toText());
@@ -50,76 +49,100 @@ HashFunction* getHash(const Name& hash_name) {
 // Library needs to have been inited during the entire program
 // should we make this a singleton? (for hsm we'll need more
 // initialization, and dynamic loading)
-LibraryInitializer init;
+Botan::LibraryInitializer init;
 
 } // local namespace
 
 namespace isc {
 namespace crypto {
 
+class HMACImpl {
+public:
+    explicit HMACImpl(const TSIGKey& key) {
+        Botan::HashFunction* hash = getHash(key.getAlgorithmName());
+        hmac_ = new Botan::HMAC::HMAC(hash);
+
+        // Take the 'secret' from the key
+        // If the key length is larger than the block size, we hash the
+        // key itself first.
+        try {
+            if (key.getSecretLength() > hash->HASH_BLOCK_SIZE) {
+                Botan::SecureVector<Botan::byte> hashed_key =
+                    hash->process(static_cast<const Botan::byte*>(key.getSecret()),
+                                  key.getSecretLength());
+                hmac_->set_key(hashed_key.begin(), hashed_key.size());
+            } else {
+                hmac_->set_key(static_cast<const Botan::byte*>(key.getSecret()),
+                             key.getSecretLength());
+            }
+        } catch (Botan::Invalid_Key_Length ikl) {
+            isc_throw(BadKey, ikl.what());
+        }
+    }
+
+    ~HMACImpl() { delete hmac_; }
+
+    void update(const void* data, size_t len) {
+        // update the data from whatever we get (probably as a buffer)
+        hmac_->update(static_cast<const Botan::byte*>(data), len);
+    }
+
+    void sign(isc::dns::OutputBuffer& result) {
+        // And generate the mac
+        Botan::SecureVector<Botan::byte> b_result(hmac_->final());
+    
+        // write mac to result
+        result.writeData(b_result.begin(), b_result.size());
+    }
+    
+    bool verify(const void* sig, size_t len) {
+        return hmac_->verify_mac(static_cast<const Botan::byte*>(sig), len);
+    }
+
+private:
+    Botan::HMAC* hmac_;
+};
+
+HMAC::HMAC(const TSIGKey& key) {
+    impl_ = new HMACImpl(key);
+}
+
+HMAC::~HMAC() {
+    delete impl_;
+}
+
+void
+HMAC::update(const void* data, size_t len) {
+    impl_->update(data, len);
+}
+
+void
+HMAC::sign(isc::dns::OutputBuffer& result) {
+    impl_->sign(result);
+}
+
+bool
+HMAC::verify(const void* sig, size_t len) {
+    return impl_->verify(sig, len);
+}
+
 void
 signHMAC(const OutputBuffer& data, TSIGKey key,
          isc::dns::OutputBuffer& result)
 {
-    // get algorithm from key, then 'translate' to Botan-specific algo
-    HashFunction* hash = getHash(key.getAlgorithmName());
-    HMAC::HMAC hmac(hash);
-
-    // Take the 'secret' from the key
-    // If the key length is larger than the block size, we hash the
-    // key itself first.
-    try {
-        if (key.getSecretLength() > hash->HASH_BLOCK_SIZE) {
-            SecureVector<byte> hashed_key =
-                hash->process(static_cast<const byte*>(key.getSecret()),
-                              key.getSecretLength());
-            hmac.set_key(hashed_key.begin(), hashed_key.size());
-        } else {
-            hmac.set_key(static_cast<const byte*>(key.getSecret()),
-                         key.getSecretLength());
-        }
-    } catch (Invalid_Key_Length ikl) {
-        isc_throw(BadKey, ikl.what());
-    }
-
-    // update the data from whatever we get (probably as a buffer)
-    hmac.update(static_cast<const byte*>(data.getData()),
-                data.getLength());
-
-    // And generate the mac
-    SecureVector<byte> b_result(hmac.final());
-
-    // write mac to result
-    result.writeData(b_result.begin(), b_result.size());
+    HMAC hmac(key);
+    hmac.update(data.getData(), data.getLength());
+    hmac.sign(result);
 }
+
 
 bool
 verifyHMAC(const OutputBuffer& data, TSIGKey key,
            const isc::dns::OutputBuffer& result)
 {
-    HashFunction* hash = getHash(key.getAlgorithmName());
-    HMAC::HMAC hmac(hash);
-    // If the key length is larger than the block size, we hash the
-    // key itself first.
-    try {
-        if (key.getSecretLength() > hash->HASH_BLOCK_SIZE) {
-            SecureVector<byte> hashed_key =
-                hash->process(static_cast<const byte*>(key.getSecret()),
-                              key.getSecretLength());
-            hmac.set_key(hashed_key.begin(), hashed_key.size());
-        } else {
-            hmac.set_key(static_cast<const byte*>(key.getSecret()),
-                         key.getSecretLength());
-        }
-    } catch (Invalid_Key_Length ikl) {
-        isc_throw(BadKey, ikl.what());
-    }
-
-    hmac.update(static_cast<const byte*>(data.getData()),
-                data.getLength());
-
-    return hmac.verify_mac(static_cast<const byte*>(result.getData()),
-                           result.getLength());
+    HMAC hmac(key);
+    hmac.update(data.getData(), data.getLength());
+    return hmac.verify(result.getData(), result.getLength());
 }
 
 } // namespace crypto
