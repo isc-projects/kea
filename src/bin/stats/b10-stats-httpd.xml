@@ -71,12 +71,10 @@
       with <command>b10-stats</command>. CC session is provided
       by <command>b10-msgq</command> which is started
       by <command>bind10</command> in advance. The server is implemented by
-      HTTP-server libraries included in Python 3. The parameter of the server
-      is a list of pairs of the listening address and the port number specified
-      in the spec file of it. The server obtains the configuration from the
-      config manager (<command>b10-cfgmgr</command>) in runtime. Please see
-      below for more details about this spec file and configuration of the
-      server.
+      HTTP-server libraries included in Python 3. The server obtains the
+      configuration from the config manager (<command>b10-cfgmgr</command>) in
+      runtime. Please see below for more details about this spec file and
+      configuration of the server.
     </para>
   </refsect1>
 
