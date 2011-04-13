@@ -60,6 +60,19 @@ public:
         CryptoError(file, line, what) {}
 };
 
+class HMACImpl;
+
+class HMAC {
+public:
+    explicit HMAC(const isc::dns::TSIGKey& key);
+    ~HMAC();
+    void update(const void* data, size_t len);
+    void sign(isc::dns::OutputBuffer& result);
+    bool verify(const void* sig, size_t len);
+private:
+    HMACImpl* impl_;
+};
+
 /// \brief Create an HMAC signature for the given data
 ///
 /// Raises an UnsupportedAlgorithm if we do not support the given
