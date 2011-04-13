@@ -322,12 +322,19 @@ class ConfigManager:
             data.merge(conf_part[module_name], cmd)
             use_part = conf_part[module_name]
 
+        # The command to send
+        update_cmd = ccsession.create_command(ccsession.COMMAND_CONFIG_UPDATE,
+                                              use_part)
+
         if module_name in self.virtual_modules:
             # The module is virtual, so call it to get the answer
             try:
                 error = self.virtual_modules[module_name](use_part)
                 if error is None:
                     answer = ccsession.create_answer(0)
+                    # OK, it is successful, send the notify, but don't wait
+                    # for answer
+                    seq = self.cc.group_sendmsg(update_cmd, module_name)
                 else:
                     answer = ccsession.create_answer(1, error)
             # Make sure just a validating plugin don't kill the whole manager
@@ -336,9 +343,7 @@ class ConfigManager:
                 answer = ccsession.create_answer(1, "Exception: " + str(excp))
         else:
             # Real module, send it over the wire to it
-            # send out changed info
-            update_cmd = ccsession.create_command(
-                ccsession.COMMAND_CONFIG_UPDATE, use_part)
+            # send out changed info and wait for answer
             seq = self.cc.group_sendmsg(update_cmd, module_name)
             try:
                 # replace 'our' answer with that of the module
