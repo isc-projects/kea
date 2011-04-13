@@ -146,7 +146,8 @@
 	    default setting being left, for example, the URL for XML document
 	    is http://127.0.0.1:8000/bind10/statistics/xml. And also IPv6
 	    addresses can be configured and they works in the runtime
-	    environment for dual stack.
+	    environment for dual stack. You can change the settings
+	    trough <refentrytitle>bindctl</refentrytitle><manvolnum>8</manvolnum>
 	  </para>
         </listitem>
       </varlistentry>
