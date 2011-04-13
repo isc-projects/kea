@@ -100,6 +100,12 @@ protected:
     ///
     /// This is intentionally defined as \c protected as this base class should
     /// never be instantiated (except as part of a derived class).
+    /// \param buffer The buffer where the data should be rendered into.
+    /// \todo We might want to revisit this API at some point and remove the
+    ///     buffer parameter. In that case it would create it's own buffer and
+    ///     a function to extract the data would be available instead. It seems
+    ///     like a cleaner design, but it's left undone until we would actually
+    ///     benefit from the change.
     AbstractMessageRenderer(OutputBuffer& buffer) :
         buffer_(buffer)
     {}
