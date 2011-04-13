@@ -33,23 +33,39 @@ using namespace isc;
 namespace isc {
 namespace badpacket {
 
-/// Parses the command-line options and returns the results in an Options
-/// structure.  If the 
+// Reset stored values to the defaults.
+void
+CommandOptions::reset() {
+    address_ = "127.0.0.1";
+    port_ = 53;
+    timeout_ = 500;
+    qname_ = "www.example.com";
+
+    for (int i = 0; i < OptionInfo::SIZE; ++i) {
+        options_[i].minimum = OptionInfo::defval(i);
+        options_[i].maximum = OptionInfo::defval(i);
+        options_[i].present = false;
+    }
+}
+
+/// Parses the command-line options and records the results.
 void
 CommandOptions::parse(int argc, char* const argv[]) {
 
     // Set up options for processing.  The declaration of the string constants
-    // as mutable arrays and putting the string variable into the "option"
+    // as mutable arrays and putting the string variable into the "longopts"
     // structure (as opposed to just putting a string literal there) is
-    // occasioned by a version of solaris which declares the first field
-    // as "char*" (instead of the correct "const char*").
+    // occasioned by a version of solaris which declares the first field as
+    // "char*" (instead of the correct "const char*").
+
+    // General options.
     char HELP[] = {"help"};
     char VERSION[] = {"version"};
     char ADDRESS[] = {"address"};
     char PORT[] = {"port"};
     char TIMEOUT[] = {"timeout"};
 
-    // Settings for options in the flags field
+    // Settings for options in the flags field.
     char QR[] = {"qr"};
     char OP[] = {"op"};
     char AA[] = {"aa"};
@@ -96,7 +112,7 @@ CommandOptions::parse(int argc, char* const argv[]) {
     const char* shortopts = "hva:p:t:Q:O:A:T:D:R:Z:U:C:E:Y:W:H:I:M:";
 
 
-    // Set variables to defaults before parsing
+    // Set record of options to defaults before parsing
     reset();
 
     // Process command line
@@ -148,13 +164,18 @@ CommandOptions::parse(int argc, char* const argv[]) {
         }
     }
 
-    // Pick up a parameter if there is one (and ignore excess parameters).
+    // Pick up a parameter if there is one (and report excess).
     if (optind < argc) {
         qname_ = argv[optind++];
     }
+
+    if (optind < argc) {
+        isc_throw(isc::InvalidParameter,
+                  "only a single (optional) parameter may be specified on the command line");
+    }
 }
 
-/// \brief Print usage information
+// Print usage information.
 void
 CommandOptions::usage() {
     cout << "Usage: badpacket [options] query\n"
@@ -226,23 +247,23 @@ CommandOptions::usage() {
             ;
 }
 
-/// \brief Print version information
+// Print version information,
 void
 CommandOptions::version() {
     cout << BADPACKET_VERSION << "\n";
 }
 
-// Process single flag
+// Process single flag that can be stored in the options_ member.
 void
 CommandOptions::processOptionValue(int c, const char* value) {
 
-    // Get values for this option
+    // Get values for this option.
     int index = OptionInfo::getIndex(c);
     const char* name = OptionInfo::name(index);
     uint32_t minval = OptionInfo::minval(index);
     uint32_t maxval = OptionInfo::maxval(index);
 
-    // Split the string up into one or two tokens
+    // Split the string up into one or two tokens.
     vector<string> tokens = isc::strutil::tokens(string(value), "-");
     if ((tokens.size() < 1) || (tokens.size() > 2)) {
         isc_throw(isc::BadValue, "value given for " << name << " is '" << value <<
@@ -267,7 +288,7 @@ CommandOptions::processOptionValue(int c, const char* value) {
         swap(options_[index].minimum, options_[index].maximum);
     }
 
-    // Check that tokens lie inside the allowed ranges
+    // Check that tokens lie inside the allowed ranges.
     if ((tokens.size() == 2) &&
         ((options_[index].minimum < OptionInfo::minval(index)) || (options_[index].maximum > maxval))) {
         isc_throw(isc::BadValue, "the value of " << options_[index].minimum <<
@@ -287,7 +308,9 @@ CommandOptions::processOptionValue(int c, const char* value) {
     options_[index].present = true;
 }
 
-// Minimum and maximum value of the flag
+// Return information about the option - minimum and maximum values and whether
+// it was actually specified. (Note that if it wasn't, the maximum and minimum
+// values will have been set to the default recorded in the OptionInfo class.)
 uint32_t
 CommandOptions::minimum(int index) const {
     OptionInfo::checkIndex(index);

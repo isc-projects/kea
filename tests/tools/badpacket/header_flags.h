@@ -34,19 +34,19 @@ public:
         reset();
     }
 
-    /// \brief Reset Values to Zero
+    /// \brief Reset values to zero
     ///
     /// Clears all flags.
     void reset() {
         setValue(0);
     }
 
-    /// \brief Get Header Flags as 16-bit Value
+    /// \brief Get header flags as 16-bit value
     uint16_t getValue() const {
         return (flags_);
     }
 
-    /// \brief Set Header Flags as 16-Bit Value
+    /// \brief Set header flags as 16-bit value
     ///
     /// \param value 16-bit value to put into object as representing the
     ///        header flags.
@@ -54,7 +54,7 @@ public:
         flags_ = value;
     }
 
-    /// \brief Get Field
+    /// \brief Get field
     ///
     /// Return the value of a bit field in the flags word.
     ///
@@ -66,18 +66,18 @@ public:
         return ((flags_ & OptionInfo::mask(index)) >> OptionInfo::offset(index));
     }
 
-    /// \brief Set Field
+    /// \brief Set field
     ///
     /// Sets the value of a bit field.
     ///
     /// \param int Index of the bit field in the OptionInfo data structure
     /// \param value Value to set.  If the value is more than the field can
-    ///        hold, it is set to the maximum.
+    ///        hold, a BadValue exception is thrown.
     void set(int index, uint16_t value) {
-        // Declare an OptionInfo object for brevity
-        OptionInfo o;
 
-        // Ensure in range
+        // Declare an OptionInfo object for brevity and check the index is
+        // valid.
+        OptionInfo o;
         o.checkIndex(index);
 
         // Ensure the value is within limits and throw an exception if not. (This
