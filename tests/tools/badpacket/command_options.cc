@@ -160,7 +160,7 @@ CommandOptions::parse(int argc, char* const argv[]) {
 
             default:
                 isc_throw(isc::InvalidParameter,
-                          "unknown option '" << argv[optind] << "' given on the command line");
+                          "unknown option given on the command line");
         }
     }
 
