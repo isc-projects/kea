@@ -289,7 +289,7 @@ CommandOptions::processOptionValue(int c, const char* value) {
     }
 
     // Check that tokens lie inside the allowed ranges.
-    if ((tokens.size() == 2) &&
+    if ((tokens.size() == 1) &&
         ((options_[index].minimum < OptionInfo::minval(index)) || (options_[index].maximum > maxval))) {
         isc_throw(isc::BadValue, "the value of " << options_[index].minimum <<
                   " given for " << name << " is outside the range of " <<
