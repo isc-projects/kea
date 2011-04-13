@@ -368,7 +368,5 @@ private:
 
 TEST(RdataFieldComposerTest, unusedMethods) {
     EXPECT_THROW(RdataFields(DummyRdata(DummyRdata::CLEAR)), isc::Unexpected);
-    EXPECT_THROW(RdataFields(DummyRdata(DummyRdata::SKIP)), isc::Unexpected);
-    EXPECT_THROW(RdataFields(DummyRdata(DummyRdata::TRIM)), isc::Unexpected);
 }
 }

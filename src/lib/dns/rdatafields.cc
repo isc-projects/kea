@@ -62,8 +62,7 @@ namespace {
 // Technically, this use of inheritance may be considered a violation of
 // Liskov Substitution Principle in that it doesn't actually compress domain
 // names, and some of the methods are not expected to be used.
-// In fact, skip() or trim() may not be well defined for the purpose of this
-// class.
+// In fact, skip() or trim() may not be make much sense in this context.
 // Nevertheless we keep this idea at the moment.  Since the usage is limited
 // (it's only used within this file, and only used with \c Rdata variants),
 // it's hopefully an acceptable practice.
@@ -75,8 +74,8 @@ public:
         mode_(CASE_INSENSITIVE), last_data_pos_(0)
     {}
     virtual ~RdataFieldComposer() {}
-    virtual const void* getData() const { return (buffer_.getData()); }
-    virtual size_t getLength() const { return (buffer_.getLength()); }
+    virtual const void* getData() const { return (getBuffer().getData()); }
+    virtual size_t getLength() const { return (getBuffer().getLength()); }
     virtual bool isTruncated() const { return (truncated_); }
     virtual size_t getLengthLimit() const { return (length_limit_); }
     virtual CompressMode getCompressMode() const { return (mode_); }
@@ -88,24 +87,14 @@ public:
         const RdataFields::Type field_type =
             compress ? RdataFields::COMPRESSIBLE_NAME :
             RdataFields::INCOMPRESSIBLE_NAME;
-        name.toWire(buffer_);
+        name.toWire(getBuffer());
         fields_.push_back(RdataFields::FieldSpec(field_type,
                                                  name.getLength()));
-        last_data_pos_ = buffer_.getLength();
+        last_data_pos_ = getBuffer().getLength();
     }
 
     virtual void clear() {
         isc_throw(Unexpected, "unexpected clear() for RdataFieldComposer");
-    }
-    virtual void skip(size_t) {
-        isc_throw(Unexpected, "unexpected skip() for RdataFieldComposer");
-    }
-    virtual void trim(size_t) {
-        isc_throw(Unexpected, "unexpected trim() for RdataFieldComposer");
-    }
-    virtual void writeUint16At(uint16_t, size_t) {
-        isc_throw(Unexpected,
-                  "unexpected writeUint16At() for RdataFieldComposer");
     }
     bool truncated_;
     size_t length_limit_;
@@ -121,7 +110,7 @@ public:
     size_t last_data_pos_;
     void extendData() {
         // No news, return to work
-        if (buffer_.getLength() == last_data_pos_) {
+        if (getBuffer().getLength() == last_data_pos_) {
             return;
         }
         // The new bytes are just ordinary uninteresting data
@@ -129,8 +118,8 @@ public:
             fields_.push_back(RdataFields::FieldSpec(RdataFields::DATA, 0));
         }
         // We added this much data from last time
-        fields_.back().len += buffer_.getLength() - last_data_pos_;
-        last_data_pos_ = buffer_.getLength();
+        fields_.back().len += getBuffer().getLength() - last_data_pos_;
+        last_data_pos_ = getBuffer().getLength();
     }
 };
 
