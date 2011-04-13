@@ -180,18 +180,8 @@ MessageRenderer::~MessageRenderer() {
 }
 
 void
-MessageRenderer::skip(const size_t len) {
-    buffer_.skip(len);
-}
-
-void
-MessageRenderer::trim(const size_t len) {
-    buffer_.trim(len);
-}
-
-void
 MessageRenderer::clear() {
-    buffer_.clear();
+    AbstractMessageRenderer::clear();
     impl_->nbuffer_.clear();
     impl_->nodeset_.clear();
     impl_->msglength_limit_ = 512;
@@ -254,15 +244,15 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
     }
 
     // Record the current offset before extending the buffer.
-    const size_t offset = buffer_.getLength();
+    const size_t offset = getBuffer().getLength();
     // Write uncompress part...
-    buffer_.writeData(impl_->nbuffer_.getData(),
-                             compress ? i : impl_->nbuffer_.getLength());
+    writeData(impl_->nbuffer_.getData(),
+              compress ? i : impl_->nbuffer_.getLength());
     if (compress && n != notfound) {
         // ...and compression pointer if available.
         uint16_t pointer = (*n).pos_;
         pointer |= Name::COMPRESS_POINTER_MARK16;
-        buffer_.writeUint16(pointer);
+        writeUint16(pointer);
     }
 
     // Finally, add to the set the newly rendered name and its ancestors that
@@ -274,11 +264,17 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
         if (offset + j > Name::MAX_COMPRESS_POINTER) {
             break;
         }
-        impl_->nodeset_.insert(NameCompressNode(*this, buffer_,
+        impl_->nodeset_.insert(NameCompressNode(*this, getBuffer(),
                                                 offset + j,
                                                 impl_->nbuffer_.getLength() -
                                                 j));
     }
 }
+
+void
+AbstractMessageRenderer::clear() {
+    buffer_.clear();
+}
+
 }
 }
