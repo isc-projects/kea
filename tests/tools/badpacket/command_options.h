@@ -69,6 +69,14 @@ public:
     ///         the option was not specified on the command line).
     uint32_t maximum(int index) const;
 
+    /// \brief Return if option was given on command line
+    ///
+    /// \param index Index of the command-line option.
+    ///
+    /// \return true if the option was present, false if not.
+    bool present(int index) const;
+
+
     /// \brief Return Target Address
     std::string getAddress() const {
         return address_;
@@ -97,7 +105,9 @@ public:
         qname_ = "www.example.com";
 
         for (int i = 0; i < OptionInfo::SIZE; ++i) {
-            limits_[i][0] = limits_[i][1] = OptionInfo::defval(i);
+            options_[i].minimum = OptionInfo::defval(i);
+            options_[i].maximum = OptionInfo::defval(i);
+            options_[i].present = false;
         }
     }
 
@@ -134,7 +144,11 @@ protected:
     // Member variables
 
 private:
-    uint32_t        limits_[OptionInfo::SIZE][2];
+    struct {
+        uint32_t    minimum;        ///< Minimum value specified
+        uint32_t    maximum;        ///< Maximum value specified
+        bool        present;        ///< true if specified on command line
+    } options_[OptionInfo::SIZE];   ///< Information about command options
                                     ///< Value of options (minimum and maximum)
     std::string     address_;       ///< Address to where query is sent
     uint16_t        port_;          ///< Target port

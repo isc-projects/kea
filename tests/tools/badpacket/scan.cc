@@ -17,7 +17,7 @@
 #include <sstream>
 #include <string>
 
-#include <boost/scoped_ptr.hpp>
+#include <stdlib.h>
 
 #include <asio.hpp>
 
@@ -60,100 +60,125 @@ Scan::scan(const CommandOptions& options) {
     MessageRenderer renderer(*msgbuf);
     message.toWire(renderer);
 
-    iterateFlagsFields(msgbuf, options);
+    iterateFlagsStart(msgbuf, options);
 }
 
-// Iterate through the various settings in the flags fields
+// Iterate through the various settings in the flags fields.
 void
-Scan::iterateFlagsFields(OutputBufferPtr& msgbuf, const CommandOptions& options) {
-
-    // Loop through the flags setting data.  This is quite deep nesting,
-    // but we will continue to indent so as to make things clear (for those
-    // readers lucky enough to have a wide screen).
+Scan::iterateFlagsStart(OutputBufferPtr& msgbuf, const CommandOptions& options) {
     HeaderFlags flags;
-    for (uint32_t qr =  options.minimum(OptionInfo::QR);
-                  qr <= options.maximum(OptionInfo::QR); ++qr) {
-        flags.set(OptionInfo::QR, qr);
+    iterateFlags(msgbuf, options, flags, OptionInfo::FLAGS_START,
+                 OptionInfo::FLAGS_END);
+}
+void
+Scan::iterateFlags(OutputBufferPtr& msgbuf, const CommandOptions& options,
+                   HeaderFlags& flags, int index, int maxindex)
+{
+    // Is the index valid?
+    if (index <= maxindex) {
 
-        for (uint32_t op =  options.minimum(OptionInfo::OP);
-                      op <= options.maximum(OptionInfo::OP); ++op) {
-            flags.set(OptionInfo::OP, op);
+        // Index is valid, did the command line specify a range of values for
+        // this field?
+        if (options.present(index)) {
 
-            for (uint32_t aa =  options.minimum(OptionInfo::AA);
-                          aa <= options.maximum(OptionInfo::AA); ++aa) {
-                flags.set(OptionInfo::AA, aa);
+            // It did, so loop between minimum and maximum values given.
+            for (uint32_t i = options.minimum(index);
+                          i <= options.maximum(index); ++i) {
+                flags.set(index, i);
 
-                for (uint32_t tc =  options.minimum(OptionInfo::TC);
-                              tc <= options.maximum(OptionInfo::TC); ++tc) {
-                    flags.set(OptionInfo::TC, tc);
-
-                    for (uint32_t rd =  options.minimum(OptionInfo::RD);
-                                  rd <= options.maximum(OptionInfo::RD); ++rd) {
-                        flags.set(OptionInfo::RD, rd);
-
-                        for (uint32_t ra =  options.minimum(OptionInfo::RA);
-                                      ra <= options.maximum(OptionInfo::RA); ++ra) {
-                            flags.set(OptionInfo::RA, ra);
-
-                            for (uint32_t z =  options.minimum(OptionInfo::Z);
-                                          z <= options.maximum(OptionInfo::Z); ++z) {
-                                flags.set(OptionInfo::Z, z);
-
-                                for (uint32_t ad =  options.minimum(OptionInfo::AD);
-                                              ad <= options.maximum(OptionInfo::AD); ++ad) {
-                                    flags.set(OptionInfo::AD, ad);
-
-                                    for (uint32_t cd =  options.minimum(OptionInfo::CD);
-                                                  cd <= options.maximum(OptionInfo::CD); ++cd) {
-                                        flags.set(OptionInfo::CD, cd);
-
-                                        for (uint32_t rc =  options.minimum(OptionInfo::RC);
-                                                      rc <= options.maximum(OptionInfo::RC); ++rc) {
-                                            flags.set(OptionInfo::RC, rc);
-
-                                            // Set the flags in the message.
-                                            msgbuf->writeUint16At(flags.getValue(), 2);
-
-                                            // And for this flag combination, iterate over the section
-                                            // count fields.
-                                            iterateCountFields(msgbuf, options);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                // Recurse to set the next option.
+                iterateFlags(msgbuf, options, flags, (index + 1), maxindex);
             }
+        } else {
+
+            // Not specified on command line, so set the default value in the
+            // flags and process the next index.
+            flags.set(index, OptionInfo::defval(index));
+            iterateFlags(msgbuf, options, flags, (index + 1), maxindex);
         }
+    } else {
+
+        // Index is not valid, so we have recursed enough to process all the
+        // flags fields.  Set the value in the message header and recurse.
+        // (In the next statement, the "word" offset of in the header is the
+        // same for all flags options, so the value for an arbitrary field
+        // (QR) has been used.)
+        msgbuf->writeUint16At(flags.getValue(),
+                              OptionInfo::word(OptionInfo::QR));
+        iterateCountStart(msgbuf, options);
     }
 }
 
 // Iterate through the various count fields
 void
-Scan::iterateCountFields(OutputBufferPtr& msgbuf, const CommandOptions& options) {
-    for (uint32_t qc =  options.minimum(OptionInfo::QC);
-                  qc <= options.maximum(OptionInfo::QC); ++qc) {
-        msgbuf->writeUint16At(qc, OptionInfo::word(OptionInfo::QC));
+Scan::iterateCountStart(OutputBufferPtr& msgbuf, const CommandOptions& options)
+{
+    iterateCount(msgbuf, options, OptionInfo::COUNT_START,
+                 OptionInfo::COUNT_END);
+}
 
-        for (uint32_t ac =  options.minimum(OptionInfo::AC);
-                      ac <= options.maximum(OptionInfo::AC); ++ac) {
-            msgbuf->writeUint16At(ac, OptionInfo::word(OptionInfo::AC));
+void
+Scan::iterateCount(OutputBufferPtr& msgbuf, const CommandOptions& options,
+                   int index, int maxindex)
+{
+    // If the index is valid, process the iteration over the range for this
+    // flags field.
+    if (index <= maxindex) {
 
-            for (uint32_t uc =  options.minimum(OptionInfo::UC);
-                          uc <= options.maximum(OptionInfo::UC); ++uc) {
-                msgbuf->writeUint16At(uc, OptionInfo::word(OptionInfo::UC));
+        // Index is valid, did the command line specify a range of values for
+        // this field?
+        if (options.present(index)) {
 
-                for (uint32_t dc =  options.minimum(OptionInfo::DC);
-                              dc <= options.maximum(OptionInfo::DC); ++dc) {
-                    msgbuf->writeUint16At(dc, OptionInfo::word(OptionInfo::DC));
+            // It did, so loop between minimum and maximum values given.
+            for (uint32_t i = options.minimum(index);
+                          i <= options.maximum(index); ++i) {
 
-                    // Do the I/O.
-                    scanOne(msgbuf, options);
-
-                }
+                // Set the value in the message buffer header and recurse to
+                // the next option.
+                msgbuf->writeUint16At(i, OptionInfo::word(index));
+                iterateCount(msgbuf, options, (index + 1), maxindex);
             }
+        } else {
+
+            // Not specified on command line, so leave the default value and
+            // and process the next index.
+            iterateCount(msgbuf, options, (index + 1), maxindex);
         }
+    } else {
+
+        // Index is not valid, so we have recursed enough to process all the
+        // flags fields.  Do the next stage of the processing.
+        sizeMessage(msgbuf, options);
+    }
+}
+
+// Size the message
+void
+Scan::sizeMessage(OutputBufferPtr& msgbuf, const CommandOptions& options) {
+
+    if (options.present(OptionInfo::MS)) {
+
+        // Iterate over the range of message sizes
+        for (size_t i = options.minimum(OptionInfo::MS);
+                    i <= options.maximum(OptionInfo::MS); ++i) {
+
+            // Copy the data into a new buffer.
+            OutputBufferPtr newbuf(new OutputBuffer(i));
+            newbuf->writeData(msgbuf->getData(), min(msgbuf->getLength(), i));
+
+            // Pad with junk (actually pseudo-random data) if the new buffer is
+            // longer than the old.
+            for (size_t j = newbuf->getLength(); j < i; ++j) {
+                newbuf->writeUint8(static_cast<uint8_t>(rand() & 0xFFU));
+            }
+
+            // ... and process.
+            scanOne(newbuf, options);
+        }
+    } else {
+
+        // No packet size given, just process the message as it.
+        scanOne(msgbuf, options);
     }
 }
 
@@ -212,35 +237,38 @@ Scan::getFields(isc::dns::OutputBufferPtr& msgbuf) {
 
     std::ostringstream os;
     os << std::hex << std::uppercase <<
-        "QR:" << flags.get(OptionInfo::QR) << " " <<
-        "OP:" << flags.get(OptionInfo::OP) << " " <<
-        "AA:" << flags.get(OptionInfo::AA) << " " <<
-        "TC:" << flags.get(OptionInfo::TC) << " " <<
-        "RD:" << flags.get(OptionInfo::RD) << " " <<
-        "RA:" << flags.get(OptionInfo::RA) << " " <<
-         "Z:" << flags.get(OptionInfo::Z)  << " " <<
-        "AD:" << flags.get(OptionInfo::AD) << " " <<
-        "CD:" << flags.get(OptionInfo::CD) << " " <<
-        "RC:" << flags.get(OptionInfo::RC);
+         "QR:" << flags.get(OptionInfo::QR) <<
+        " OP:" << flags.get(OptionInfo::OP) <<
+        " AA:" << flags.get(OptionInfo::AA) <<
+        " TC:" << flags.get(OptionInfo::TC) <<
+        " RD:" << flags.get(OptionInfo::RD) <<
+        " RA:" << flags.get(OptionInfo::RA) <<
+        " Z:"  << flags.get(OptionInfo::Z)  <<
+        " AD:" << flags.get(OptionInfo::AD) <<
+        " CD:" << flags.get(OptionInfo::CD) <<
+        " RC:" << flags.get(OptionInfo::RC);
 
     // Section count fields
-    os << " ";
 
     inbuf.setPosition(OptionInfo::word(OptionInfo::QC));
-    os << std::hex << std::uppercase <<
-        "QC:" << inbuf.readUint16() << " ";
+    os << std::dec << std::uppercase <<
+        " QC:" << inbuf.readUint16();
 
     inbuf.setPosition(OptionInfo::word(OptionInfo::AC));
-    os << std::hex << std::uppercase <<
-        "AC:" << inbuf.readUint16() << " ";
+    os << std::dec << std::uppercase <<
+        " AC:" << inbuf.readUint16();
 
     inbuf.setPosition(OptionInfo::word(OptionInfo::UC));
-    os << std::hex << std::uppercase <<
-        "UC:" << inbuf.readUint16() << " ";
+    os << std::dec << std::uppercase <<
+        " UC:" << inbuf.readUint16();
 
     inbuf.setPosition(OptionInfo::word(OptionInfo::DC));
-    os << std::hex << std::uppercase <<
-        "DC:" << inbuf.readUint16();
+    os << std::dec << std::uppercase <<
+        " DC:" << inbuf.readUint16();
+
+    // ... and message size
+    os << std::dec << std::uppercase <<
+        " MS:" << msgbuf->getLength();
 
     return (os.str());
 }
