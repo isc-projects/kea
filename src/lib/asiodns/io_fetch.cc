@@ -27,13 +27,10 @@
 #include <dns/opcode.h>
 #include <dns/rcode.h>
 #include <log/logger.h>
-
-#include <asiolink/qid_gen.h>
-
 #include <asio.hpp>
 #include <asio/deadline_timer.hpp>
-
-#include <asiolink/asiodef.h>
+#include <asiodns/qid_gen.h>
+#include <asiodns/asiodef.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_asio_socket.h>
 #include <asiolink/io_endpoint.h>
@@ -42,7 +39,6 @@
 #include <asiolink/tcp_socket.h>
 #include <asiolink/udp_endpoint.h>
 #include <asiolink/udp_socket.h>
-#include <asiolink/qid_gen.h>
 
 #include "io_fetch.h"
 
@@ -149,7 +145,7 @@ struct IOFetchData {
         offset(0),
         stopped(false),
         timeout(wait),
-        origin(ASIO_UNKORIGIN),
+        origin(ASIODNS_UNKORIGIN),
         staging(),
         qid(QidGenerator::getInstance().generateQid())
     {}
@@ -225,7 +221,7 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
 
         // Open a connection to the target system.  For speed, if the operation
         // is synchronous (i.e. UDP operation) we bypass the yield.
-        data_->origin = ASIO_OPENSOCK;
+        data_->origin = ASIODNS_OPENSOCK;
         if (data_->socket->isOpenSynchronous()) {
             data_->socket->open(data_->remote_snd.get(), *this);
         } else {
@@ -235,10 +231,10 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
         do {
             // Begin an asynchronous send, and then yield.  When the send completes,
             // we will resume immediately after this point.
-            data_->origin = ASIO_SENDSOCK;
+            data_->origin = ASIODNS_SENDSOCK;
             CORO_YIELD data_->socket->asyncSend(data_->msgbuf->getData(),
                 data_->msgbuf->getLength(), data_->remote_snd.get(), *this);
-    
+
             // Now receive the response.  Since TCP may not receive the entire
             // message in one operation, we need to loop until we have received
             // it. (This can't be done within the asyncReceive() method because
@@ -257,8 +253,8 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
             // the expected amount of data.  Then we need to loop until we have
             // received all the data before copying it back to the user's buffer.
             // And we want to minimise the amount of copying...
-    
-            data_->origin = ASIO_RECVSOCK;
+
+            data_->origin = ASIODNS_RECVSOCK;
             data_->cumulative = 0;          // No data yet received
             data_->offset = 0;              // First data into start of buffer
             data_->received->clear();       // Clear the receive buffer
@@ -274,7 +270,7 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
 
         // Finished with this socket, so close it.  This will not generate an
         // I/O error, but reset the origin to unknown in case we change this.
-        data_->origin = ASIO_UNKORIGIN;
+        data_->origin = ASIODNS_UNKORIGIN;
         data_->socket->close();
 
         /// We are done
@@ -317,7 +313,7 @@ IOFetch::stop(Result result) {
         switch (result) {
             case TIME_OUT:
                 if (logger.isDebugEnabled(1)) {
-                    logger.debug(20, ASIO_RECVTMO,
+                    logger.debug(20, ASIODNS_RECVTMO,
                                  data_->remote_snd->getAddress().toText().c_str(),
                                  static_cast<int>(data_->remote_snd->getPort()));
                 }
@@ -325,7 +321,7 @@ IOFetch::stop(Result result) {
 
             case SUCCESS:
                 if (logger.isDebugEnabled(50)) {
-                    logger.debug(30, ASIO_FETCHCOMP,
+                    logger.debug(30, ASIODNS_FETCHCOMP,
                                  data_->remote_rcv->getAddress().toText().c_str(),
                                  static_cast<int>(data_->remote_rcv->getPort()));
                 }
@@ -335,13 +331,13 @@ IOFetch::stop(Result result) {
                 // Fetch has been stopped for some other reason.  This is
                 // allowed but as it is unusual it is logged, but with a lower
                 // debug level than a timeout (which is totally normal).
-                logger.debug(1, ASIO_FETCHSTOP,
+                logger.debug(1, ASIODNS_FETCHSTOP,
                              data_->remote_snd->getAddress().toText().c_str(),
                              static_cast<int>(data_->remote_snd->getPort()));
                 break;
 
             default:
-                logger.error(ASIO_UNKRESULT, static_cast<int>(result),
+                logger.error(ASIODNS_UNKRESULT, static_cast<int>(result),
                              data_->remote_snd->getAddress().toText().c_str(),
                              static_cast<int>(data_->remote_snd->getPort()));
         }
@@ -365,10 +361,10 @@ IOFetch::stop(Result result) {
 void IOFetch::logIOFailure(asio::error_code ec) {
 
     // Should only get here with a known error code.
-    assert((data_->origin == ASIO_OPENSOCK) ||
-           (data_->origin == ASIO_SENDSOCK) ||
-           (data_->origin == ASIO_RECVSOCK) ||
-           (data_->origin == ASIO_UNKORIGIN));
+    assert((data_->origin == ASIODNS_OPENSOCK) ||
+           (data_->origin == ASIODNS_SENDSOCK) ||
+           (data_->origin == ASIODNS_RECVSOCK) ||
+           (data_->origin == ASIODNS_UNKORIGIN));
 
     static const char* PROTOCOL[2] = {"TCP", "UDP"};
     logger.error(data_->origin,

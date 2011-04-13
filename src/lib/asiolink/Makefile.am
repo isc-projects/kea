@@ -14,7 +14,6 @@ CLEANFILES = *.gcno *.gcda
 lib_LTLIBRARIES = libasiolink.la
 libasiolink_la_SOURCES  = asiolink.h
 libasiolink_la_SOURCES += asiolink_utilities.h
-libasiolink_la_SOURCES += asiodef.cc asiodef.h
 libasiolink_la_SOURCES += dummy_io_cb.h
 libasiolink_la_SOURCES += interval_timer.cc interval_timer.h
 libasiolink_la_SOURCES += io_address.cc io_address.h
@@ -22,7 +21,6 @@ libasiolink_la_SOURCES += io_asio_socket.h
 libasiolink_la_SOURCES += io_endpoint.cc io_endpoint.h
 libasiolink_la_SOURCES += io_error.h
 libasiolink_la_SOURCES += io_message.h
-libasiolink_la_SOURCES += qid_gen.cc qid_gen.h
 libasiolink_la_SOURCES += io_service.h io_service.cc
 libasiolink_la_SOURCES += io_socket.h io_socket.cc
 libasiolink_la_SOURCES += simple_callback.h
@@ -30,8 +28,6 @@ libasiolink_la_SOURCES += tcp_endpoint.h
 libasiolink_la_SOURCES += tcp_socket.h
 libasiolink_la_SOURCES += udp_endpoint.h
 libasiolink_la_SOURCES += udp_socket.h
-
-EXTRA_DIST = asiodef.msg
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)

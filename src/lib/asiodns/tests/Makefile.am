@@ -21,6 +21,7 @@ run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
 run_unittests_SOURCES += io_service_unittest.cc
 run_unittests_SOURCES += dns_server_unittest.cc
 run_unittests_SOURCES += io_fetch_unittest.cc
+run_unittests_SOURCES += qid_gen_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 

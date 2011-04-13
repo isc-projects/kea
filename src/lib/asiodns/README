@@ -1,0 +1,157 @@
+The asiodns library is intended to provide an abstraction layer between
+BIND10 modules and asiolink library.
+
+These DNS server and client routines are written using the "stackless
+coroutine" pattern invented by Chris Kohlhoff and described at
+http://blog.think-async.com/2010/03/potted-guide-to-stackless-coroutines.html.
+This is intended to simplify development a bit, since it allows the
+routines to be written in a straightfowrard step-step-step fashion rather
+than as a complex chain of separate handler functions.
+
+Coroutine objects (i.e., UDPServer, TCPServer and IOFetch) are objects
+with reenterable operator() members.  When an instance of one of these
+classes is called as a function, it resumes at the position where it left
+off.  Thus, a UDPServer can issue an asynchronous I/O call and specify
+itself as the handler object; when the call completes, the UDPServer
+carries on at the same position.  As a result, the code can look as
+if it were using synchronous, not asynchronous, I/O, providing some of
+the benefit of threading but with minimal switching overhead.
+
+So, in simplified form, the behavior of a DNS Server is:
+
+  REENTER:
+    while true:
+      YIELD packet = read_packet
+      FORK
+      if not parent:
+        break
+
+    # This callback informs the caller that a packet has arrived, and
+    # gives it a chance to update configuration, etc
+    SimpleCallback(packet)
+    YIELD answer = DNSLookup(packet, this)
+    response = DNSAnswer(answer)
+    YIELD send(response)
+
+At each "YIELD" point, the coroutine initiates an asynchronous operation,
+then pauses and turns over control to some other task on the ASIO service
+queue.  When the operation completes, the coroutine resumes.
+
+DNSLookup, DNSAnswer and SimpleCallback define callback methods
+used by a DNS Server to communicate with the module that called it.
+They are abstract-only classes whose concrete implementations
+are supplied by the calling module.
+
+The DNSLookup callback always runs asynchronously.  Concrete
+implementations must be sure to call the server's "resume" method when
+it is finished.
+
+In an authoritative server, the DNSLookup implementation would examine
+the query, look up the answer, then call "resume".  (See the diagram
+in doc/auth_process.jpg.)
+
+In a recursive server, the DNSLookup impelemtation would initiate a
+DNSQuery, which in turn would be responsible for calling the server's
+"resume" method.  (See the diagram in doc/recursive_process.jpg.)
+
+A DNSQuery object is intended to handle resolution of a query over
+the network when the local authoritative data sources or cache are not
+sufficient.  The plan is that it will make use of subsidiary DNSFetch
+calls to get data from particular authoritative servers, and when it has
+gotten a complete answer, it calls "resume".
+
+In current form, however, DNSQuery is much simpler; it forwards queries
+to a single upstream resolver and passes the answers back to the client.
+It is constructed with the address of the forward server.  Queries are
+initiated with the question to ask the forward server, a buffer into
+which to write the answer, and a pointer to the coroutine to be resumed
+when the answer has arrived.  In simplified form, the DNSQuery routine is:
+
+  REENTER:
+    render the question into a wire-format query packet
+    YIELD send(query)
+    YIELD response = read_packet
+    server->resume
+
+Currently, DNSQuery is only implemented for UDP queries.  In future work
+it will be necessary to write code to fall back to TCP when circumstances
+require it.
+
+
+Upstream Fetches
+================
+Upstream fetches (queries by the resolver on behalf of a client) are made
+using a slightly-modified version of the pattern described above.
+
+Sockets
+-------
+First, it will be useful to understand the class hierarchy used in the
+fetch logic:
+
+        IOSocket
+           |
+      IOAsioSocket
+           |
+     +-----+-----+                
+     |           |
+UDPSocket    TCPSocket
+
+IOSocket is a wrapper class for a socket and is used by the authoritative
+server code.  It is an abstract base class, providing little more that the ability to hold the socket and to return the protocol in use.
+
+Built on this is IOAsioSocket, which adds the open, close, asyncSend and
+asyncReceive methods.  This is a template class, which takes as template
+argument the class of the object that will be used as the callback when the
+asynchronous operation completes. This object can be of any type, but must
+include an operator() method with the signature:
+
+   operator()(asio::error_code ec, size_t length)
+
+... the two arguments being the status of the completed I/O operation and
+the number of bytes transferred. (In the case of the open method, the second
+argument will be zero.)
+
+Finally, the TCPSocket and UDPSocket classes provide the body of the
+asynchronous operations.
+
+Fetch Sequence
+--------------
+The fetch is implemented by the IOFetch class, which takes as argument the
+protocol to use.  The sequence is:
+
+  REENTER:
+    render the question into a wire-format query packet
+    open()                           // Open socket and optionally connect
+    if (! synchronous) {
+        YIELD;
+    }
+    YIELD asyncSend(query)           // Send query 
+    do {
+        YIELD asyncReceive(response) // Read response
+    } while (! complete(response))
+    close()                          // Drop connection and close socket
+    server->resume
+
+The open() method opens a socket for use.  On TCP, it also makes a
+connection to the remote end.  So under UDP the operation will complete
+immediately, but under TCP it could take a long time.  One solution would be
+for the open operation to post an event to the I/O queue; then both cases
+could be regarded as being equivalent, with the completion being signalled
+by the posting of the completion event.  However UDP is the most common case
+and that would involve extra overhead.  So the open() returns a status
+indicating whether the operation completed asynchronously.  If it did, the
+code yields back to the coroutine; if not the yield is bypassed.
+
+The asynchronous send is straightforward, invoking the underlying ASIO
+function.  (Note that the address/port is supplied to both the open() and
+asyncSend() methods - it is used by the TCPSocket in open() and by the
+UDPSocket in asyncSend().)
+
+The asyncReceive() method issues an asynchronous read and waits for completion.
+The fetch object keeps track of the amount of data received so far and when
+the receive completes it calls a method on the socket to determine if the
+entire message has been received.  (This will always be the case for UDP.  On
+TCP though, the message is preceded by a count field as several reads may be
+required to read all the data.)  The fetch loops until all the data is read.
+
+Finally, the socket is closed and the server called to resume operation.
