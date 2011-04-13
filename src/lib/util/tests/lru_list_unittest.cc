@@ -14,6 +14,7 @@
 
 #include <config.h>
 
+#include <stdint.h>
 #include <iostream>
 #include <algorithm>
 #include <string>

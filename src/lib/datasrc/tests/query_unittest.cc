@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 
-#include <dns/buffer.h>
+#include <util/io/buffer.h>
 #include <dns/message.h>
 #include <dns/name.h>
 #include <dns/opcode.h>
