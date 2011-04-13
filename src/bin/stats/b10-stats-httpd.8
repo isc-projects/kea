@@ -36,20 +36,18 @@ b10-stats-httpd \- BIND 10 HTTP server for HTTP/XML interface of statistics
 .PP
 
 \fBb10\-stats\-httpd\fR
-is a stand\-alone HTTP server\&. It is intended for HTTP/XML interface for statistics module\&. This server process runs as a process separated from the process of the BIND 10 Stats daemon (\fBb10\-stats\fR)\&. The server is initially executed by the BIND 10 boss process (\fBbind10\fR) and finally exited by it\&. The server is intended to be requested by HTTP clients like web browsers and third\-party modules\&. When the server is requested, it requests BIND 10 statistics data to
-\fBb10\-stats\fR, and
-\fBb10\-stats\fR
-sends the data to the server in Python dictionary format and the server converts it into XML format\&. The server sends it to the HTTP client\&. The server can send three types of document, which are XML (Extensible Markup Language), XSD(XML Schema definition) and XSL(Extensible Stylesheet Language)\&. The XML document is the statistics data of BIND 10, The XSD document is the data schema of it, and The XSL document is the style sheet to be showed for the web browsers\&. Please see the manual and the spec file of
+is a standalone HTTP server\&. It is intended for HTTP/XML interface for statistics module\&. This server process runs as a process separated from the process of the BIND 10 Stats daemon (\fBb10\-stats\fR)\&. The server is initially executed by the BIND 10 boss process (\fBbind10\fR) and eventually exited by it\&. The server is intended to be server requests by HTTP clients like web browsers and third\-party modules\&. When the server is asked, it requests BIND 10 statistics data from
+\fBb10\-stats\fR, and it sends the data back in Python dictionary format and the server converts it into XML format\&. The server sends it to the HTTP client\&. The server can send three types of document, which are XML (Extensible Markup Language), XSD (XML Schema definition) and XSL (Extensible Stylesheet Language)\&. The XML document is the statistics data of BIND 10, The XSD document is the data schema of it, and The XSL document is the style sheet to be showed for the web browsers\&. Please see the manual and the spec file of
 \fBb10\-stats\fR
 for more details about the items of BIND 10 statistics\&. The server uses CC session in communication with
 \fBb10\-stats\fR\&. CC session is provided by
 \fBb10\-msgq\fR
 which is started by
 \fBbind10\fR
-in advance\&. The server is implemented by HTTP\-server libraries included in Python 3\&. The parameter of the server is a list of pairs of the listening address and the port number specified in the spec file of it\&. The server obtains the configuration from the config manager (\fBb10\-cfgmgr\fR) in runtime\&. Please see below for more details about this spec file and configuration of the server\&.
+in advance\&. The server is implemented by HTTP\-server libraries included in Python 3\&. The server obtains the configuration from the config manager (\fBb10\-cfgmgr\fR) in runtime\&. Please see below for more details about this spec file and configuration of the server\&.
 .SH "OPTIONS"
 .PP
-The arguments are as follows:
+The argument is as follow:
 .PP
 \fB\-v\fR, \fB\-\-verbose\fR
 .RS 4
@@ -89,14 +87,15 @@ is:
 .RS 4
 a list of pairs of address and port for
 \fBb10\-stats\-httpd\fR
-to listen HTTP requests on\&. The pair is consist of the
+to listen HTTP requests on\&. The pair consists of the
 \fIaddress\fR
 string and
 \fIport\fR
-number\&. The default setting is the list of address 127\&.0\&.0\&.1 port 8000\&. If the server is started by the default setting being left, for example, the URL for XML document is http://127\&.0\&.0\&.1:8000/bind10/statistics/xml\&. And also IPv6 addresses can be configured and they works in the runtime environment for dual stack\&.
+number\&. The default setting is the list of address 127\&.0\&.0\&.1 port 8000\&. If the server is started by the default setting being left, for example, the URL for XML document is http://127\&.0\&.0\&.1:8000/bind10/statistics/xml\&. And also IPv6 addresses can be configured and they works in the runtime environment for dual stack\&. You can change the settings through
+bindctl(8)
 .RE
 .PP
-The configuration commands in
+The commands in
 stats\-httpd\&.spec
 are:
 .PP
@@ -104,7 +103,7 @@ are:
 .RS 4
 shows the status of
 \fBb10\-stats\-httpd\fR
-with its PID on the runtime machine\&.
+with its PID\&.
 .RE
 .PP
 \fBshutdown\fR
