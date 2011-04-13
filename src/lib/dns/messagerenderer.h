@@ -103,6 +103,15 @@ protected:
     AbstractMessageRenderer(OutputBuffer& buffer) :
         buffer_(buffer)
     {}
+public:
+    /// \brief The destructor.
+    virtual ~AbstractMessageRenderer() {}
+    //@}
+protected:
+    /// \brief Return the output buffer we render into.
+    const OutputBuffer& getBuffer() const { return (buffer_); }
+    OutputBuffer& getBuffer() { return (buffer_); }
+private:
     /// \short Buffer to store data
     ///
     /// It was decided that there's no need to have this in every subclass,
@@ -110,10 +119,6 @@ protected:
     /// chance to optimise.
     OutputBuffer& buffer_;
 public:
-    /// \brief The destructor.
-    virtual ~AbstractMessageRenderer() {}
-    //@}
-
     ///
     /// \name Getter Methods
     ///
@@ -196,7 +201,9 @@ public:
     /// that is to be filled in later, e.g, by \ref writeUint16At().
     ///
     /// \param len The length of the gap to be inserted in bytes.
-    virtual void skip(size_t len) = 0;
+    void skip(size_t len) {
+        buffer_.skip(len);
+    }
 
     /// \brief Trim the specified length of data from the end of the internal
     /// buffer.
@@ -208,13 +215,15 @@ public:
     /// be thrown.
     ///
     /// \param len The length of data that should be trimmed.
-    virtual void trim(size_t len) = 0;
+    void trim(size_t len) {
+        buffer_.trim(len);
+    }
 
     /// \brief Clear the internal buffer and other internal resources.
     ///
     /// This method can be used to re-initialize and reuse the renderer
     /// without constructing a new one.
-    virtual void clear() = 0;
+    virtual void clear();
 
     /// \brief Write an unsigned 8-bit integer into the internal buffer.
     ///
@@ -312,8 +321,6 @@ public:
     virtual void setTruncated();
     virtual void setLengthLimit(size_t len);
     virtual void setCompressMode(CompressMode mode);
-    virtual void skip(size_t len);
-    virtual void trim(size_t len);
     virtual void clear();
     virtual void writeName(const Name& name, bool compress = true);
 private:
