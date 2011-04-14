@@ -1090,6 +1090,22 @@ TEST_F(DataSrcTest, DISABLED_synthesizedCnameTooLong) {
         RRClass::IN(), RRType::A());
 }
 
+TEST_F(DataSrcTest, cacheDataInNonexistentZone) {
+    // This test emulates the situation where an RRset in some zone of some
+    // data source is cached and then the zone is removed from the data source.
+    // When there is such a substantial inconsistency between the cache and
+    // the real data source, we should honor the latter.  More important,
+    // the inconsistency shouldn't cause any disruption such as a crash.
+
+    const Name qname("nosuchzone.example");
+    RRsetPtr rrset(new RRset(qname, RRClass::IN(), RRType::A(), RRTTL(0)));
+    cache.addPositive(rrset, DataSrc::REFERRAL);
+
+    createAndProcessQuery(qname, RRClass::IN(), RRType::A(), false);
+    headerCheck(msg, qid, Rcode::REFUSED(), opcodeval, QR_FLAG | RD_FLAG,
+                1, 0, 0, 0);
+}
+
 // Tests of the DataSrcMatch class start here
 class DataSrcMatchTest : public ::testing::Test {
 protected:
