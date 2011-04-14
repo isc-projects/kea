@@ -15,7 +15,7 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
-#include <util/coder/time_utilities.h>
+#include <util/time_utilities.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
@@ -32,7 +32,6 @@ using namespace std;
 using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
-using namespace isc::util::coder;
 using namespace isc::dns::rdata;
 
 namespace {

@@ -15,18 +15,15 @@
 #include <stdint.h>
 #include <string>
 
-#include <util/coder/sha1.h>
+#include <util/hash/sha1.h>
 
 #include <gtest/gtest.h>
 
-//#include <dns/tests/unittest_util.h>
-
-//using isc::UnitTestUtil;
 using namespace std;
 
 namespace isc {
 namespace util {
-namespace coder {
+namespace hash {
 class Sha1Test : public ::testing::Test {
 protected:
     Sha1Test() {}
@@ -106,7 +103,7 @@ TEST_F(Sha1Test, Test4) {
     }
 }
 
-} // namespace coder
+} // namespace hash
 } // namespace util
 } // namespace isc
 

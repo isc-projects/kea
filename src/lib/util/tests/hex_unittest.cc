@@ -19,13 +19,13 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/coder/hex.h>
+#include <util/encode/hex.h>
 
 #include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;
-using namespace isc::util::coder;
+using namespace isc::util::encode;
 
 namespace {
 const string hex_txt("DEADBEEFDECADE");

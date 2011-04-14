@@ -37,7 +37,7 @@
 
 namespace isc {
 namespace util {
-namespace coder {
+namespace hash {
 /*
  * If you do not have the ISO standard stdint.h header file, then you
  * must typdef the following:
@@ -85,7 +85,7 @@ extern int SHA1FinalBits(SHA1Context *, const uint8_t bits,
                          unsigned int bitcount);
 extern int SHA1Result(SHA1Context *, uint8_t Message_Digest[SHA1_HASHSIZE]);
 
-} // namespace coder
+} // namespace hash
 } // namespace util
 } // namespace isc
 #endif

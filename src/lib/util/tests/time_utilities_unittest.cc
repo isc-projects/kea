@@ -16,20 +16,18 @@
 
 #include <time.h>
 
-#include <util/coder/time_utilities.h>
+#include <util/time_utilities.h>
 
 #include <gtest/gtest.h>
 
 using namespace std;
-using namespace isc::util::coder;
+using namespace isc::util;
 
 // See time_utilities.cc
 namespace isc {
 namespace util {
-namespace coder {
 namespace detail {
 extern int64_t (*gettimeFunction)();
-}
 }
 }
 }

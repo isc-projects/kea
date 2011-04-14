@@ -16,8 +16,8 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/coder/base32hex.h>
-#include <util/coder/hex.h>
+#include <util/encode/base32hex.h>
+#include <util/encode/hex.h>
 #include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
@@ -35,7 +35,7 @@ using namespace std;
 using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
-using namespace isc::util::coder;
+using namespace isc::util::encode;
 using namespace isc::dns::rdata;
 
 namespace {
