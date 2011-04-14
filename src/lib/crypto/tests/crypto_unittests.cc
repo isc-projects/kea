@@ -40,9 +40,22 @@ namespace {
 
         TSIGKey key(key_str);
 
-        signHMAC(data_buf, key, hmac_sig);
+        // Sign it
+        signHMAC(data_buf.getData(), data_buf.getLength(), key,
+                 hmac_sig);
+
+        // Check if the signature is what we expect
         checkBuffer(hmac_sig, expected_hmac, hmac_len);
-        EXPECT_TRUE(verifyHMAC(data_buf, key, hmac_sig));
+
+        // Check whether we can verify it ourselves
+        EXPECT_TRUE(verifyHMAC(data_buf.getData(), data_buf.getLength(),
+                               key, hmac_sig));
+
+        // Change the sig by flipping the first octet, and check
+        // whether verification fails then
+        hmac_sig.writeUint8At(~hmac_sig[0], 0);
+        EXPECT_FALSE(verifyHMAC(data_buf.getData(), data_buf.getLength(),
+                               key, hmac_sig));
     }
 }
 
@@ -258,7 +271,9 @@ TEST(CryptoTest, HMAC_SHA256_RFC2202_SIGN) {
                                  0x63, 0x64, 0x4f, 0x07, 0x13, 0x93,
                                  0x8a, 0x7f, 0x51, 0x53, 0x5c, 0x3a,
                                  0x35, 0xe2 };
-    doHMACTest("This is a test using a larger than block-size key and a larger than block-size data. The key needs to be hashed before being used by the HMAC algorithm.",
+    doHMACTest("This is a test using a larger than block-size key and a"
+               " larger than block-size data. The key needs to be hashe"
+               "d before being used by the HMAC algorithm.",
                "test.example:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
                "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
                "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
@@ -273,6 +288,8 @@ TEST(CryptoTest, BadKey) {
     OutputBuffer data_buf(0);
     OutputBuffer hmac_sig(1);
 
-    EXPECT_THROW(signHMAC(data_buf, bad_key, hmac_sig), BadKey);
-    EXPECT_THROW(verifyHMAC(data_buf, bad_key, hmac_sig), BadKey);
+    EXPECT_THROW(signHMAC(data_buf.getData(), data_buf.getLength(),
+                          bad_key, hmac_sig), BadKey);
+    EXPECT_THROW(verifyHMAC(data_buf.getData(), data_buf.getLength(),
+                            bad_key, hmac_sig), BadKey);
 }
