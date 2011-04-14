@@ -350,7 +350,19 @@ doQueryTask(QueryTask& task, ZoneInfo& zoneinfo, RRsetList& target) {
     HotCache& cache = task.q.getCache();
     RRsetPtr rrset;
 
-    // First, check the cache for matching data
+    // First off, make sure at least we have a matching zone in some data
+    // source.  We must do this before checking the cache, because it can
+    // happen that the matching zone has been removed after an RRset of that
+    // zone is cached.  Such inconsistency will cause various problems,
+    // including a crash.
+    const DataSrc* ds = zoneinfo.getDataSource();
+    const Name* const zonename = zoneinfo.getEnclosingZone();
+    if (ds == NULL) {
+        task.flags |= DataSrc::NO_SUCH_ZONE;
+        return (DataSrc::SUCCESS);
+    }
+
+    // Then check the cache for matching data
     if (checkCache(task, target)) {
         return (DataSrc::SUCCESS);
     }
@@ -358,13 +370,6 @@ doQueryTask(QueryTask& task, ZoneInfo& zoneinfo, RRsetList& target) {
     // Requested data weren't in the cache (or were, but had expired),
     // so now we proceed with the low-level data source lookup, and cache
     // whatever we find.
-    const DataSrc* ds = zoneinfo.getDataSource();
-    const Name* const zonename = zoneinfo.getEnclosingZone();
-
-    if (ds == NULL) {
-        task.flags |= DataSrc::NO_SUCH_ZONE;
-        return (DataSrc::SUCCESS);
-    }
 
     DataSrc::Result result;
     switch (task.op) {
