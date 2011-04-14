@@ -175,7 +175,7 @@ TEST_F(InstallListenAddresses, rollback) {
     EXPECT_NO_THROW(installListenAddresses(valid_, store_, dnss_));
     checkAddresses(valid_, "Before rollback");
     // This should not bind them, but should leave the original addresses
-    EXPECT_THROW(installListenAddresses(invalid_, store_, dnss_), IOError);
+    EXPECT_NO_THROW(installListenAddresses(invalid_, store_, dnss_));
     checkAddresses(valid_, "After rollback");
 }
 
