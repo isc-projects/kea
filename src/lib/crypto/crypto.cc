@@ -138,11 +138,11 @@ signHMAC(const void* data, size_t data_len, TSIGKey key,
 
 bool
 verifyHMAC(const void* data, size_t data_len, TSIGKey key,
-           const isc::dns::OutputBuffer& result)
+           const void* sig, size_t sig_len)
 {
     HMAC hmac(key);
     hmac.update(data, data_len);
-    return (hmac.verify(result.getData(), result.getLength()));
+    return (hmac.verify(sig, sig_len));
 }
 
 } // namespace crypto
