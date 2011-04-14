@@ -77,21 +77,21 @@ public:
     ///
     /// \param data The data to add
     /// \param len The size of the data
-    void update(const void* data, size_t len);
+    void update(const void* data, const size_t len);
 
     /// \brief Calculate the final signature
     ///
     /// The result will be appended to the given outputbuffer
     ///
     /// \param result The OutputBuffer to append the result to
-    void sign(isc::dns::OutputBuffer& result);
+    void sign(isc::dns::OutputBuffer& result) const;
 
     /// \brief Verify an existing signature
     ///
     /// \param sig The signature to verify
     /// \param len The length of the sig
     /// \return true if the signature is correct, false otherwise
-    bool verify(const void* sig, size_t len);
+    bool verify(const void* sig, size_t len) const;
 
 private:
     HMACImpl* impl_;
@@ -114,8 +114,8 @@ private:
 /// \param key The TSIGKey to sign with
 /// \param result The signature will be appended to this buffer
 void signHMAC(const void* data,
-              size_t data_len,
-              isc::dns::TSIGKey key,
+              const size_t data_len,
+              const isc::dns::TSIGKey& key,
               isc::dns::OutputBuffer& result);
 
 /// \brief Verify an HMAC signature for the given data
@@ -136,10 +136,10 @@ void signHMAC(const void* data,
 /// \param mac The signature to verify
 /// \return True if the signature verifies, false if not
 bool verifyHMAC(const void* data,
-                size_t data_len,
-                isc::dns::TSIGKey key,
+                const size_t data_len,
+                const isc::dns::TSIGKey& key,
                 const void* sig,
-                size_t sig_len);
+                const size_t sig_len);
 
 } // namespace crypto
 } // namespace isc
