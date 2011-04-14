@@ -128,7 +128,7 @@ public:
     ///        terminate.  The caller is responsible for managing this object
     ///        and deleting it if necessary.
     /// \param wait Timeout for the fetch (in ms).  The default value of
-    ///     -  1 indicates no timeout.
+    ///        -1 indicates no timeout.
     IOFetch(Protocol protocol, IOService& service,
         const isc::dns::Question& question, const IOAddress& address,
         uint16_t port, isc::dns::OutputBufferPtr& buff, Callback* cb,
