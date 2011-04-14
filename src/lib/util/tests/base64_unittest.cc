@@ -18,13 +18,13 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/coder/base64.h>
+#include <util/encode/base64.h>
 
 #include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;
-using namespace isc::util::coder;
+using namespace isc::util::encode;
 
 namespace {
 

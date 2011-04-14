@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __HEX_H
-#define __HEX_H 1
+#ifndef __BASE32HEX_H
+#define __BASE32HEX_H 1
 
 #include <stdint.h>
 #include <string>
@@ -27,39 +27,38 @@
 
 namespace isc {
 namespace util {
-namespace coder {
-/// \brief Encode binary data in the base16 ('hex') format.
+namespace encode {
+
+/// \brief Encode binary data in the base32hex format.
 ///
-/// The underlying implementation is shared with \c encodeBase64, and most of
-/// the description except the format (base16) equally applies.
-/// Another notable exception is that the base16 encoding doesn't require
-/// padding, so padding related considerations and the notion of canonical
-/// encoding don't apply.
+/// The underlying implementation is shared with \c encodeBase64, and all
+/// description except the format (base32hex) equally applies.
+///
+/// Note: the encoding format is base32hex, not base32.
 ///
 /// \param binary A vector object storing the data to be encoded. 
-/// \return A newly created string that stores base16 encoded value for
+/// \return A newly created string that stores base32hex encoded value for
 /// binary.
-std::string encodeHex(const std::vector<uint8_t>& binary);
+std::string encodeBase32Hex(const std::vector<uint8_t>& binary);
 
-/// \brief Decode a text encoded in the base16 ('hex') format into the
+/// \brief Decode a text encoded in the base32hex format into the
 /// original %data.
 ///
-/// The underlying implementation is shared with \c decodeBase64, and most
-/// of the description except the format (base16) equally applies.
-/// Another notable exception is that the base16 encoding doesn't require
-/// padding, so padding related considerations and the notion of canonical
-/// encoding don't apply.
+/// The underlying implementation is shared with \c decodeBase64, and all
+/// description except the format (base32hex) equally applies.
 ///
-/// \param input A text encoded in the base16 format.
+/// Note: the encoding format is base32hex, not base32.
+///
+/// \param input A text encoded in the base32hex format.
 /// \param result A vector in which the decoded %data is to be stored.
-void decodeHex(const std::string& input, std::vector<uint8_t>& result);
+void decodeBase32Hex(const std::string& input, std::vector<uint8_t>& result);
 
-} // namespace coder
+} // namespace encode 
 } // namespace util
 } // namespace isc
 
-#endif  // __HEX_H
+#endif  // __BASE32HEX_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

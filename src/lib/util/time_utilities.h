@@ -28,7 +28,6 @@
 
 namespace isc {
 namespace util {
-namespace coder {
 
 ///
 /// \brief A standard DNS (or ISC) module exception that is thrown if 
@@ -138,10 +137,9 @@ timeToText32(const uint32_t value);
 //@}
 }
 }
-}
 
 #endif  // __DNSSECTIME_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

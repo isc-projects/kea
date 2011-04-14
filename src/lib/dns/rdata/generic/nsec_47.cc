@@ -17,7 +17,7 @@
 #include <sstream>
 #include <vector>
 
-#include <util/coder/base64.h>
+#include <util/encode/base64.h>
 #include <util/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
@@ -33,7 +33,7 @@
 
 using namespace std;
 using namespace isc::util;
-using namespace isc::util::coder;
+using namespace isc::util::encode;
 using namespace isc::dns::rdata::generic::detail::nsec;
 
 // BEGIN_ISC_NAMESPACE

@@ -20,7 +20,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <util/buffer.h>
-#include <util/coder/hex.h>
+#include <util/encode/hex.h>
 
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
@@ -32,7 +32,7 @@
 
 using namespace std;
 using namespace isc::util;
-using namespace isc::util::coder;
+using namespace isc::util::encode;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
