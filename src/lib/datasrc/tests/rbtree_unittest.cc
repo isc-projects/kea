@@ -398,7 +398,7 @@ TEST_F(RBTreeTest, getLastComparedNode) {
     EXPECT_EQ(static_cast<void*>(NULL), chain.getLastComparedNode());
     chain.clear();
 
-    const RBNode<int>* expected_node;
+    const RBNode<int>* expected_node = NULL;
 
     // Exact match case.  The returned node should be last compared.
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
