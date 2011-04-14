@@ -20,8 +20,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 
-#include <util/compat/base64.h>
-#include <util/io/buffer.h>
+#include <util/coder/base64.h>
+#include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rdata.h>
@@ -31,8 +31,8 @@
 #include <time.h>
 
 using namespace std;
-using namespace isc::util::io;
-using namespace isc::util::compat;
+using namespace isc::util;
+using namespace isc::util::coder;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE

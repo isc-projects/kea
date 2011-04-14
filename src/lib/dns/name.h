@@ -24,10 +24,8 @@
 
 namespace isc {
 namespace util {
-namespace io {
 class InputBuffer;
 class OutputBuffer;
-}
 }
 
 namespace dns {
@@ -252,7 +250,7 @@ public:
     ///
     /// \param buffer A buffer storing the wire format %data.
     /// \param downcase Whether to convert upper case alphabets to lower case.
-    explicit Name(isc::util::io::InputBuffer& buffer, bool downcase = false);
+    explicit Name(isc::util::InputBuffer& buffer, bool downcase = false);
     ///
     /// We use the default copy constructor intentionally.
     //@}
@@ -364,7 +362,7 @@ public:
     /// then this method should not throw an exception.
     ///
     /// \param buffer An output buffer to store the wire %data.
-    void toWire(isc::util::io::OutputBuffer& buffer) const;
+    void toWire(isc::util::OutputBuffer& buffer) const;
     //@}
 
     ///

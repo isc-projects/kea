@@ -29,7 +29,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/io/buffer.h>
+#include <util/buffer.h>
 
 #include <dns/opcode.h>
 #include <dns/rcode.h>
@@ -51,7 +51,7 @@
 using namespace std;
 
 using namespace isc;
-using namespace isc::util::io;
+using namespace isc::util;
 using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::config;

@@ -90,9 +90,9 @@ Filename::expandWithDefault(const string& defname) const {
     string def_extension("");
 
     // Normalize the input string.
-    string copy_defname = isc::strutil::trim(defname);
+    string copy_defname = isc::util::str::trim(defname);
 #ifdef WIN32
-    isc::strutil::normalizeSlash(copy_defname);
+    isc::util::str::normalizeSlash(copy_defname);
 #endif
 
     // Split into the components
@@ -116,9 +116,9 @@ Filename::useAsDefault(const string& name) const {
     string name_extension("");
 
     // Normalize the input string.
-    string copy_name = isc::strutil::trim(name);
+    string copy_name = isc::util::str::trim(name);
 #ifdef WIN32
-    isc::strutil::normalizeSlash(copy_name);
+    isc::util::str::normalizeSlash(copy_name);
 #endif
 
     // Split into the components

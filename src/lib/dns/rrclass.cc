@@ -18,14 +18,14 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/io/buffer.h>
+#include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rrparamregistry.h>
 #include <dns/rrclass.h>
 
 using namespace std;
 using namespace isc::dns;
-using namespace isc::util::io;
+using namespace isc::util;
 
 namespace isc {
 namespace dns {

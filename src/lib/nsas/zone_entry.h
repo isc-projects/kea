@@ -133,7 +133,7 @@ protected:
     time_t          expiry_;    ///< Expiry time of this entry, 0 means not set
     //}@
 private:
-    mutable isc::locks::recursive_mutex    mutex_;///< Mutex protecting this zone entry
+    mutable isc::util::locks::recursive_mutex    mutex_;///< Mutex protecting this zone entry
     std::string     name_;      ///< Canonical zone name
     isc::dns::RRClass        class_code_; ///< Class code
     /**

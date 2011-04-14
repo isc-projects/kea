@@ -50,7 +50,11 @@
  *      without express or implied warranty of any kind.
  *      
  */
-#include <util/compat/sha1.h>
+#include <util/coder/sha1.h>
+
+namespace isc {
+namespace util {
+namespace coder {
 
 /* Local Function Prototyptes */
 static void SHA1Finalize(SHA1Context *, uint8_t Pad_Byte);
@@ -482,3 +486,7 @@ SHA1ProcessMessageBlock(SHA1Context *context) {
 
     context->Message_Block_Index = 0;
 }
+
+} // namespace coder
+} // namespace util
+} // namespace isc

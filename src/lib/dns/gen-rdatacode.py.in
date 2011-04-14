@@ -87,11 +87,9 @@ def import_classheader(class_txt, type_txt, type_code, file):
         if re.match('// BEGIN_ISC_NAMESPACE', line):
             content += 'namespace isc {\n'
             content += 'namespace util {\n'
-            content += 'namespace io {'
             content += '''
 class InputBuffer;
 class OutputBuffer;\n'''
-            content += '}\n'
             content += '}\n\n'
             content += 'namespace dns {\n'
             continue
@@ -116,10 +114,10 @@ class MessageRenderer;\n\n'''
         if re.match('\s+// BEGIN_COMMON_MEMBERS$', line):
             content += '''
     explicit ''' + type_utxt + '''(const std::string& type_str);
-    ''' + type_utxt + '''(isc::util::io::InputBuffer& buffer, size_t rdata_len);
+    ''' + type_utxt + '''(isc::util::InputBuffer& buffer, size_t rdata_len);
     ''' + type_utxt + '''(const ''' + type_utxt + '''& other);
     virtual std::string toText() const;
-    virtual void toWire(isc::util::io::OutputBuffer& buffer) const;
+    virtual void toWire(isc::util::OutputBuffer& buffer) const;
     virtual void toWire(MessageRenderer& renderer) const;
     virtual int compare(const Rdata& other) const;\n\n'''
     rdata_header.close()

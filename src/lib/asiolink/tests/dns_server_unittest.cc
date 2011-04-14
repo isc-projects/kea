@@ -110,7 +110,7 @@ class DummyLookup : public DNSLookup, public ServerStopper {
         void operator()(const IOMessage& io_message,
                 isc::dns::MessagePtr message,
                 isc::dns::MessagePtr answer_message,
-                isc::util::io::OutputBufferPtr buffer,
+                isc::util::OutputBufferPtr buffer,
                 DNSServer* server) const {
             stopServer();
             server->resume(true);
@@ -124,7 +124,7 @@ class SimpleAnswer : public DNSAnswer, public ServerStopper {
         void operator()(const IOMessage& message,
                 isc::dns::MessagePtr query_message,
                 isc::dns::MessagePtr answer_message,
-                isc::util::io::OutputBufferPtr buffer) const
+                isc::util::OutputBufferPtr buffer) const
         {
             //copy what we get from user
             buffer->writeData(message.getData(), message.getDataSize());

@@ -16,7 +16,7 @@
 #include <string>
 #include <gtest/gtest.h>
 #include <dns/tests/unittest_util.h>
-#include <util/io/buffer.h>
+#include <util/buffer.h>
 #include "../message_cache.h"
 #include "../rrset_cache.h"
 #include "../resolver_cache.h"
@@ -25,7 +25,7 @@
 using namespace isc::cache;
 using namespace isc;
 using namespace isc::dns;
-using namespace isc::util::io;
+using namespace isc::util;
 using namespace std;
 
 namespace {

@@ -146,7 +146,7 @@ public:
     }
 
 private:
-    isc::locks::mutex                   mutex_;     ///< List protection
+    locks::mutex                   mutex_;     ///< List protection
     std::list<boost::shared_ptr<T> >    lru_;       ///< The LRU list itself
     uint32_t                            max_size_;  ///< Max size of the list
     uint32_t                            count_;     ///< Count of elements
@@ -158,7 +158,7 @@ template <typename T>
 void LruList<T>::add(boost::shared_ptr<T>& element) {
 
     // Protect list against concurrent access
-    isc::locks::scoped_lock<isc::locks::mutex> lock(mutex_);
+    locks::scoped_lock<locks::mutex> lock(mutex_);
 
     // Add the entry and set its pointer field to point into the list.
     // insert() is used to get the pointer.
@@ -207,7 +207,7 @@ void LruList<T>::remove(boost::shared_ptr<T>& element) {
     if (element->iteratorValid()) {
 
         // Is valid, so protect list against concurrent access
-        isc::locks::scoped_lock<isc::locks::mutex> lock(mutex_);
+        locks::scoped_lock<locks::mutex> lock(mutex_);
 
         lru_.erase(element->getLruIterator());  // Remove element from list
         element->invalidateIterator();          // Invalidate pointer
@@ -223,7 +223,7 @@ void LruList<T>::touch(boost::shared_ptr<T>& element) {
     if (element->iteratorValid()) {
 
         // Protect list against concurrent access
-        isc::locks::scoped_lock<isc::locks::mutex> lock(mutex_);
+        locks::scoped_lock<locks::mutex> lock(mutex_);
 
         // Move the element to the end of the list.
         lru_.splice(lru_.end(), lru_, element->getLruIterator());
@@ -239,7 +239,7 @@ void LruList<T>::touch(boost::shared_ptr<T>& element) {
 template <typename T>
 void LruList<T>::clear() {
     // Protect list against concurrent access
-    isc::locks::scoped_lock<isc::locks::mutex> lock(mutex_);
+    locks::scoped_lock<locks::mutex> lock(mutex_);
 
     // ... and update the count while we have the mutex.
     count_ = 0;

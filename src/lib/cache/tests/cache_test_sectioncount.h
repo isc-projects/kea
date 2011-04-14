@@ -14,7 +14,7 @@
 
 #include <vector>
 #include <dns/tests/unittest_util.h>
-#include <util/io/buffer.h>
+#include <util/buffer.h>
 #include <dns/message.h>
 
 using namespace isc;

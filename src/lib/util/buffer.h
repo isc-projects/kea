@@ -27,7 +27,6 @@
 
 namespace isc {
 namespace util {
-namespace io {
 
 ///
 /// \brief A standard DNS module exception that is thrown if an out-of-range
@@ -438,7 +437,6 @@ private:
 typedef boost::shared_ptr<InputBuffer> InputBufferPtr;
 typedef boost::shared_ptr<OutputBuffer> OutputBufferPtr;
 
-} // namespace io
 } // namespace util
 } // namespace isc
 #endif  // __BUFFER_H

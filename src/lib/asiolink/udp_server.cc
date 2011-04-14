@@ -38,7 +38,7 @@ using isc::log::dlog;
 
 using namespace std;
 using namespace isc::dns;
-using namespace isc::util::io;
+using namespace isc::util;
 
 namespace asiolink {
 
@@ -135,7 +135,7 @@ struct UDPServer::Data {
     isc::dns::MessagePtr answer_message_;
 
     // The buffer into which the response is written
-    isc::util::io::OutputBufferPtr respbuf_;
+    isc::util::OutputBufferPtr respbuf_;
 
     // The buffer into which the query packet is written
     boost::shared_array<char> data_;

@@ -107,7 +107,7 @@ currentTime() {
 
     // Convert to string and strip out the trailing newline
     string current_time = buffer;
-    return isc::strutil::trim(current_time);
+    return isc::util::str::trim(current_time);
 }
 
 
@@ -127,7 +127,7 @@ sentinel(Filename& file) {
     string name = file.name();
     string ext = file.extension();
     string sentinel_text = "__" + name + "_" + ext.substr(1);
-    isc::strutil::uppercase(sentinel_text);
+    isc::util::str::uppercase(sentinel_text);
     return sentinel_text;
 }
 
@@ -208,7 +208,7 @@ splitNamespace(string ns) {
 
     // ... and return the vector of namespace components split on the single
     // colon.
-    return isc::strutil::tokens(ns, ":");
+    return isc::util::str::tokens(ns, ":");
 }
 
 
@@ -537,7 +537,7 @@ main(int argc, char* argv[]) {
         text += global.getText(e.id());
 
         // Format with arguments
-        text = isc::strutil::format(text, e.arguments());
+        text = isc::util::str::format(text, e.arguments());
         cerr << text << "\n";
 
         return 1;

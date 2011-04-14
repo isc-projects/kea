@@ -25,7 +25,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/io/buffer.h>
+#include <util/buffer.h>
 
 #include <dns/edns.h>
 #include <dns/exceptions.h>
@@ -44,7 +44,7 @@
 using namespace std;
 using namespace boost;
 using namespace isc::dns::rdata;
-using namespace isc::util::io;
+using namespace isc::util;
 
 namespace isc {
 namespace dns {
