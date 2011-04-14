@@ -1,4 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/bin
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
 AM_CPPFLAGS += $(BOOST_INCLUDES)
@@ -16,10 +17,6 @@ CLEANFILES = *.gcno *.gcda
 
 TESTS =
 if HAVE_GTEST
-../spec_config.h: ../spec_config.h.pre
-	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
-
-CLEANFILES += ../spec_config.h
 
 BUILT_SOURCES = ../spec_config.h
 TESTS += run_unittests
