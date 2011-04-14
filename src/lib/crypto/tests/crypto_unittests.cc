@@ -49,13 +49,15 @@ namespace {
 
         // Check whether we can verify it ourselves
         EXPECT_TRUE(verifyHMAC(data_buf.getData(), data_buf.getLength(),
-                               key, hmac_sig));
+                               key, hmac_sig.getData(),
+                               hmac_sig.getLength()));
 
         // Change the sig by flipping the first octet, and check
         // whether verification fails then
         hmac_sig.writeUint8At(~hmac_sig[0], 0);
         EXPECT_FALSE(verifyHMAC(data_buf.getData(), data_buf.getLength(),
-                               key, hmac_sig));
+                               key, hmac_sig.getData(),
+                               hmac_sig.getLength()));
     }
 }
 
@@ -291,5 +293,6 @@ TEST(CryptoTest, BadKey) {
     EXPECT_THROW(signHMAC(data_buf.getData(), data_buf.getLength(),
                           bad_key, hmac_sig), BadKey);
     EXPECT_THROW(verifyHMAC(data_buf.getData(), data_buf.getLength(),
-                            bad_key, hmac_sig), BadKey);
+                            bad_key, hmac_sig.getData(),
+                            hmac_sig.getLength()), BadKey);
 }
