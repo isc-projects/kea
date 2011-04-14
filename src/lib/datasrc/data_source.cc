@@ -26,8 +26,8 @@
 #include <datasrc/data_source.h>
 #include <datasrc/query.h>
 
-#include <util/coder/base32hex.h>
-#include <util/coder/sha1.h>
+#include <util/encode/base32hex.h>
+#include <util/hash/sha1.h>
 #include <util/buffer.h>
 
 #include <dns/message.h>
@@ -47,7 +47,8 @@
 
 using namespace std;
 using namespace isc::util;
-using namespace isc::util::coder;
+using namespace isc::util::encode;
+using namespace isc::util::hash;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 

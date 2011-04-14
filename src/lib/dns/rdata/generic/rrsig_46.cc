@@ -20,9 +20,9 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <util/coder/base64.h>
+#include <util/encode/base64.h>
 #include <util/buffer.h>
-#include <util/coder/time_utilities.h>
+#include <util/time_utilities.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rrtype.h>
@@ -35,8 +35,7 @@
 
 using namespace std;
 using namespace isc::util;
-using namespace isc::util;
-using namespace isc::util::coder;
+using namespace isc::util::encode;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
