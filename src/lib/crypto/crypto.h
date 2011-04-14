@@ -138,7 +138,8 @@ void signHMAC(const void* data,
 bool verifyHMAC(const void* data,
                 size_t data_len,
                 isc::dns::TSIGKey key,
-                const isc::dns::OutputBuffer& mac);
+                const void* sig,
+                size_t sig_len);
 
 } // namespace crypto
 } // namespace isc
