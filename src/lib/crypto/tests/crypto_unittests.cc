@@ -32,8 +32,9 @@ namespace {
         }
     }
 
-    void doHMACTest(std::string data, std::string key_str,
-                    uint8_t* expected_hmac, size_t hmac_len) {
+    // Sign and verify with the convenience functions
+    void doHMACTestConv(std::string data, std::string key_str,
+                        uint8_t* expected_hmac, size_t hmac_len) {
         OutputBuffer data_buf(data.size());
         data_buf.writeData(data.c_str(), data.size());
         OutputBuffer hmac_sig(1);
@@ -58,6 +59,42 @@ namespace {
         EXPECT_FALSE(verifyHMAC(data_buf.getData(), data_buf.getLength(),
                                key, hmac_sig.getData(),
                                hmac_sig.getLength()));
+    }
+
+    // Sign and verify with an instantiation of an HMAC object
+    void doHMACTestDirect(std::string data, std::string key_str,
+                          uint8_t* expected_hmac, size_t hmac_len) {
+        OutputBuffer data_buf(data.size());
+        data_buf.writeData(data.c_str(), data.size());
+        OutputBuffer hmac_sig(1);
+
+        TSIGKey key(key_str);
+
+        // Sign it
+        HMAC hmac_sign(key);
+        hmac_sign.update(data_buf.getData(), data_buf.getLength());
+        hmac_sign.sign(hmac_sig);
+
+        // Check if the signature is what we expect
+        checkBuffer(hmac_sig, expected_hmac, hmac_len);
+
+        // Check whether we can verify it ourselves
+        HMAC hmac_verify(key);
+        hmac_verify.update(data_buf.getData(), data_buf.getLength());
+        EXPECT_TRUE(hmac_verify.verify(hmac_sig.getData(),
+                                       hmac_sig.getLength()));
+
+        // Change the sig by flipping the first octet, and check
+        // whether verification fails then
+        hmac_sig.writeUint8At(~hmac_sig[0], 0);
+        EXPECT_FALSE(hmac_verify.verify(hmac_sig.getData(),
+                                        hmac_sig.getLength()));
+    }
+
+    void doHMACTest(std::string data, std::string key_str,
+                    uint8_t* expected_hmac, size_t hmac_len) {
+        doHMACTestConv(data, key_str, expected_hmac, hmac_len);
+        doHMACTestDirect(data, key_str, expected_hmac, hmac_len);
     }
 }
 

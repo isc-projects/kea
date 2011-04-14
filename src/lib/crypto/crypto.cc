@@ -82,12 +82,12 @@ public:
 
     ~HMACImpl() { delete hmac_; }
 
-    void update(const void* data, size_t len) {
+    void update(const void* data, const size_t len) {
         // update the data from whatever we get (probably as a buffer)
         hmac_->update(static_cast<const Botan::byte*>(data), len);
     }
 
-    void sign(isc::dns::OutputBuffer& result) {
+    void sign(isc::dns::OutputBuffer& result) const {
         // And generate the mac
         Botan::SecureVector<Botan::byte> b_result(hmac_->final());
     
@@ -95,7 +95,7 @@ public:
         result.writeData(b_result.begin(), b_result.size());
     }
     
-    bool verify(const void* sig, size_t len) {
+    bool verify(const void* sig, const size_t len) const {
         return (hmac_->verify_mac(static_cast<const Botan::byte*>(sig), len));
     }
 
@@ -112,22 +112,22 @@ HMAC::~HMAC() {
 }
 
 void
-HMAC::update(const void* data, size_t len) {
+HMAC::update(const void* data, const size_t len) {
     impl_->update(data, len);
 }
 
 void
-HMAC::sign(isc::dns::OutputBuffer& result) {
+HMAC::sign(isc::dns::OutputBuffer& result) const {
     impl_->sign(result);
 }
 
 bool
-HMAC::verify(const void* sig, size_t len) {
+HMAC::verify(const void* sig, const size_t len) const {
     return (impl_->verify(sig, len));
 }
 
 void
-signHMAC(const void* data, size_t data_len, TSIGKey key,
+signHMAC(const void* data, size_t data_len, const TSIGKey& key,
          isc::dns::OutputBuffer& result)
 {
     HMAC hmac(key);
@@ -137,8 +137,8 @@ signHMAC(const void* data, size_t data_len, TSIGKey key,
 
 
 bool
-verifyHMAC(const void* data, size_t data_len, TSIGKey key,
-           const void* sig, size_t sig_len)
+verifyHMAC(const void* data, const size_t data_len, const TSIGKey& key,
+           const void* sig, const size_t sig_len)
 {
     HMAC hmac(key);
     hmac.update(data, data_len);
