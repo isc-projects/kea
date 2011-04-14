@@ -53,7 +53,7 @@ ZoneEntry::ZoneEntry(
 
 namespace {
 // Shorter aliases for frequently used types
-typedef isc::locks::scoped_lock<isc::locks::recursive_mutex> Lock; // Local lock, nameservers not locked
+typedef isc::util::locks::scoped_lock<isc::util::locks::recursive_mutex> Lock; // Local lock, nameservers not locked
 typedef boost::shared_ptr<AddressRequestCallback> CallbackPtr;
 
 /*

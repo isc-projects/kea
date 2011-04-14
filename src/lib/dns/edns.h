@@ -25,9 +25,7 @@
 
 namespace isc {
 namespace util {
-namespace io {
 class OutputBuffer;
-}
 }
 
 namespace dns {
@@ -325,7 +323,7 @@ public:
     /// except it renders the OPT RR in an \c OutputBuffer and therefore
     /// does not care about message size limit.
     /// As a consequence it always returns 1.
-    unsigned int toWire(isc::util::io::OutputBuffer& buffer,
+    unsigned int toWire(isc::util::OutputBuffer& buffer,
                         const uint8_t extended_rcode) const;
 
     /// \brief Convert the EDNS to a string.

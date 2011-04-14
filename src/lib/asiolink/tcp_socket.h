@@ -33,8 +33,8 @@
 
 #include <config.h>
 
-#include <util/io/buffer.h>
-#include <util/io/io_utilities.h>
+#include <util/buffer.h>
+#include <util/io_utilities.h>
 
 #include <asiolink/io_asio_socket.h>
 #include <asiolink/io_endpoint.h>
@@ -155,7 +155,7 @@ public:
     virtual bool processReceivedData(const void* staging, size_t length,
                                      size_t& cumulative, size_t& offset,
                                      size_t& expected,
-                                     isc::util::io::OutputBufferPtr& outbuff);
+                                     isc::util::OutputBufferPtr& outbuff);
 
     /// \brief Cancel I/O On Socket
     virtual void cancel();
@@ -185,7 +185,7 @@ private:
     // The option of sending the data in two operations, the count followed by
     // the data was discounted as that would lead to two callbacks which would
     // cause problems with the stackless coroutine code.
-    isc::util::io::OutputBufferPtr   send_buffer_;   ///< Send buffer
+    isc::util::OutputBufferPtr   send_buffer_;   ///< Send buffer
 };
 
 // Constructor - caller manages socket
@@ -268,7 +268,7 @@ TCPSocket<C>::asyncSend(const void* data, size_t length,
             uint16_t count = boost::numeric_cast<uint16_t>(length);
 
             // Copy data into a buffer preceded by the count field.
-            send_buffer_.reset(new isc::util::io::OutputBuffer(length + 2));
+            send_buffer_.reset(new isc::util::OutputBuffer(length + 2));
             send_buffer_->writeUint16(count);
             send_buffer_->writeData(data, length);
 
@@ -333,7 +333,7 @@ template <typename C> bool
 TCPSocket<C>::processReceivedData(const void* staging, size_t length,
                                   size_t& cumulative, size_t& offset,
                                   size_t& expected,
-                                  isc::util::io::OutputBufferPtr& outbuff)
+                                  isc::util::OutputBufferPtr& outbuff)
 {
     // Point to the data in the staging buffer and note how much there is.
     const uint8_t* data = static_cast<const uint8_t*>(staging);
@@ -358,7 +358,7 @@ TCPSocket<C>::processReceivedData(const void* staging, size_t length,
         }
 
         // Have enough data to interpret the packet count, so do so now.
-        expected = isc::util::io::readUint16(data);
+        expected = isc::util::readUint16(data);
 
         // We have two bytes less of data to process.  Point to the start of the
         // data and adjust the packet size.  Note that at this point,

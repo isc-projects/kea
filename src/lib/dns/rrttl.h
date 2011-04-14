@@ -21,10 +21,8 @@
 
 namespace isc {
 namespace util {
-namespace io {
 class InputBuffer;
 class OutputBuffer;
-}
 }
 
 namespace dns {
@@ -96,7 +94,7 @@ public:
     /// an exception of class \c IncompleteRRTTL will be thrown.
     ///
     /// \param buffer A buffer storing the wire format data.
-    explicit RRTTL(isc::util::io::InputBuffer& buffer);
+    explicit RRTTL(isc::util::InputBuffer& buffer);
     ///
     //@}
 
@@ -135,7 +133,7 @@ public:
     /// standard exception will be thrown.
     ///
     /// \param buffer An output buffer to store the wire data.
-    void toWire(isc::util::io::OutputBuffer& buffer) const;
+    void toWire(isc::util::OutputBuffer& buffer) const;
     //@}
 
     ///

@@ -19,7 +19,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/io/buffer.h>
+#include <util/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/name.h>
 #include <dns/message.h>
@@ -35,7 +35,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::dns;
-using namespace isc::util::io;
+using namespace isc::util;
 
 namespace isc {
 namespace bench {

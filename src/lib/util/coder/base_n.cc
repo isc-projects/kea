@@ -23,12 +23,12 @@
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/math/common_factor.hpp>
 
-#include <util/compat/base32hex_from_binary.h>
-#include <util/compat/binary_from_base32hex.h>
-#include <util/compat/base16_from_binary.h>
-#include <util/compat/binary_from_base16.h>
-#include <util/compat/base32hex.h>
-#include <util/compat/base64.h>
+#include <util/coder/base32hex_from_binary.h>
+#include <util/coder/binary_from_base32hex.h>
+#include <util/coder/base16_from_binary.h>
+#include <util/coder/binary_from_base16.h>
+#include <util/coder/base32hex.h>
+#include <util/coder/base64.h>
 
 #include <exceptions/exceptions.h>
 
@@ -37,7 +37,7 @@ using namespace boost::archive::iterators;
 
 namespace isc {
 namespace util {
-namespace compat {
+namespace coder {
 
 // In the following anonymous namespace, we provide a generic framework
 // to encode/decode baseN format.  We use the following tools:
@@ -393,6 +393,6 @@ decodeHex(const string& input, vector<uint8_t>& result) {
     Base16Transformer::decode("base16", input, result);
 }
 
-} // namespace compat
+} // namespace coder
 } // namespace util
 } // namespace isc

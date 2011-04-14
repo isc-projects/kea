@@ -23,7 +23,7 @@
 
 #include <datasrc/data_source.h>
 
-#include <util/io/buffer.h>
+#include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rdata.h>

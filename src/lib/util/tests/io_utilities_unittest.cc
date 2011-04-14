@@ -21,10 +21,10 @@
 
 #include <gtest/gtest.h>
 
-#include <util/io/buffer.h>
-#include <util/io/io_utilities.h>
+#include <util/buffer.h>
+#include <util/io_utilities.h>
 
-using namespace isc::util::io;
+using namespace isc::util;
 
 TEST(asioutil, readUint16) {
 

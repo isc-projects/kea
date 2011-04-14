@@ -28,7 +28,7 @@
 #include <dns/rcode.h>
 #include <log/logger.h>
 
-#include <util/io/buffer.h>
+#include <util/buffer.h>
 #include <util/random/qid_gen.h>
 
 #include <asio.hpp>
@@ -49,7 +49,7 @@
 
 using namespace asio;
 using namespace isc::dns;
-using namespace isc::util::io;
+using namespace isc::util;
 using namespace isc::util::random;
 using namespace isc::log;
 using namespace std;

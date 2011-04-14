@@ -24,10 +24,8 @@
 
 namespace isc {
 namespace util {
-namespace io {
 class InputBuffer;
 class OutputBuffer;
-}
 }
 
 namespace dns {
@@ -150,7 +148,7 @@ public:
     /// an exception of class \c IncompleteRRType will be thrown.
     ///
     /// \param buffer A buffer storing the wire format data.
-    explicit RRType(isc::util::io::InputBuffer& buffer);
+    explicit RRType(isc::util::InputBuffer& buffer);
     ///
     /// We use the default copy constructor intentionally.
     //@}
@@ -194,7 +192,7 @@ public:
     ///
     /// \param renderer DNS message rendering context that encapsulates the
     /// output buffer in which the RRType is to be stored.
-    void toWire(isc::util::io::OutputBuffer& buffer) const;
+    void toWire(isc::util::OutputBuffer& buffer) const;
     //@}
 
     ///

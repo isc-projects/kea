@@ -25,7 +25,7 @@
 
 #include <asio/error_code.hpp>
 
-#include <util/io/buffer.h>
+#include <util/buffer.h>
 #include <dns/question.h>
 
 namespace asiolink {
@@ -134,7 +134,7 @@ public:
     ///     -1 indicates no timeout.
     IOFetch(Protocol protocol, IOService& service,
         const isc::dns::Question& question, const IOAddress& address,
-        uint16_t port, isc::util::io::OutputBufferPtr& buff, Callback* cb,
+        uint16_t port, isc::util::OutputBufferPtr& buff, Callback* cb,
         int wait = -1);
 
     /// \brief Return Current Protocol

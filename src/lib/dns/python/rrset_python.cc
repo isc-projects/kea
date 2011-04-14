@@ -29,7 +29,7 @@ static PyObject* po_EmptyRRset;
 // and static wrappers around the methods we export), a list of methods,
 // and a type description
 using namespace isc::dns;
-using namespace isc::util::io;
+using namespace isc::util;
 
 // RRset
 

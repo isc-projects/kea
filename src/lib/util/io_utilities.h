@@ -19,7 +19,6 @@
 
 namespace isc {
 namespace util {
-namespace io {
 
 /// \brief Read Unsigned 16-Bit Integer from Buffer
 ///
@@ -58,7 +57,6 @@ writeUint16(uint16_t value, void* buffer) {
     byte_buffer[1] = static_cast<uint8_t>(value & 0x00ffU);
 }
 
-} // namespace io
 } // namespace util
 } // namespace isc
 

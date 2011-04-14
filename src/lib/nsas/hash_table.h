@@ -48,7 +48,7 @@ struct HashTableSlot {
     typedef typename std::list<boost::shared_ptr<T> >::iterator  iterator;
                                     ///< Iterator over elements with same hash
 
-    typedef isc::locks::upgradable_mutex mutex_type;
+    typedef isc::util::locks::upgradable_mutex mutex_type;
                                     ///< Mutex protecting this slot
     //@}
 
@@ -115,11 +115,11 @@ public:
     ///
     //@{
     typedef typename
-    isc::locks::sharable_lock<typename HashTableSlot<T>::mutex_type>
+    isc::util::locks::sharable_lock<typename HashTableSlot<T>::mutex_type>
     sharable_lock;                  ///< Type for a scope-limited read-lock
 
     typedef typename
-    isc::locks::scoped_lock<typename HashTableSlot<T>::mutex_type>
+    isc::util::locks::scoped_lock<typename HashTableSlot<T>::mutex_type>
     scoped_lock;                    ///< Type for a scope-limited write-lock
     //@}
 

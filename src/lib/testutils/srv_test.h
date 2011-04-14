@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/io/buffer.h>
+#include <util/buffer.h>
 #include <dns/name.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -99,9 +99,9 @@ protected:
     asiolink::IOSocket* io_sock;
     asiolink::IOMessage* io_message;
     const asiolink::IOEndpoint* endpoint;
-    isc::util::io::OutputBuffer request_obuffer;
+    isc::util::OutputBuffer request_obuffer;
     isc::dns::MessageRenderer request_renderer;
-    isc::util::io::OutputBufferPtr response_obuffer;
+    isc::util::OutputBufferPtr response_obuffer;
     std::vector<uint8_t> data;
 };
 } // end of namespace testutils

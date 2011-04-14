@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/io/buffer.h>
+#include <util/buffer.h>
 #include <dns/name.h>
 #include <dns/rrset.h>
 #include <dns/message.h>

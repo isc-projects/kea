@@ -16,11 +16,11 @@
 #include <cassert>
 #include <set>
 
-#include <util/io/buffer.h>
+#include <util/buffer.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 
-using namespace isc::util::io;
+using namespace isc::util;
 
 namespace isc {
 namespace dns {

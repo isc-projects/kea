@@ -77,7 +77,7 @@ public:
     void processMessage(const asiolink::IOMessage& io_message,
                         isc::dns::MessagePtr query_message,
                         isc::dns::MessagePtr answer_message,
-                        isc::util::io::OutputBufferPtr buffer,
+                        isc::util::OutputBufferPtr buffer,
                         asiolink::DNSServer* server);
 
     /// \brief Set and get the config session

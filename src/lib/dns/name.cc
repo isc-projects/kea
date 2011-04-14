@@ -20,13 +20,13 @@
 #include <iostream>
 #include <algorithm>
 
-#include <util/io/buffer.h>
+#include <util/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 
 using namespace std;
-using namespace isc::util::io;
+using namespace isc::util;
 using isc::dns::NameComparisonResult;
 using isc::dns::MessageRenderer;
 

@@ -28,7 +28,7 @@
 
 namespace isc {
 namespace util {
-namespace compat {
+namespace coder {
 
 ///
 /// \brief A standard DNS (or ISC) module exception that is thrown if 

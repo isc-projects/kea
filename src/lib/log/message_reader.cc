@@ -69,7 +69,7 @@ void
 MessageReader::processLine(const string& line, MessageReader::Mode mode) {
 
     // Get rid of leading and trailing spaces
-    string text = isc::strutil::trim(line);
+    string text = isc::util::str::trim(line);
 
     if (text.empty()) {
         ;                           // Ignore blank lines
@@ -93,10 +93,10 @@ MessageReader::parseDirective(const std::string& text) {
 
 
     // Break into tokens
-    vector<string> tokens = isc::strutil::tokens(text);
+    vector<string> tokens = isc::util::str::tokens(text);
 
     // Uppercase directive and branch on valid ones
-    isc::strutil::uppercase(tokens[0]);
+    isc::util::str::uppercase(tokens[0]);
     if (tokens[0] == string("$PREFIX")) {
         parsePrefix(tokens);
     } else if (tokens[0] == string("$NAMESPACE")) {
@@ -123,7 +123,7 @@ MessageReader::parsePrefix(const vector<string>& tokens) {
 
     // As a style, we are going to have the symbols in uppercase
     string prefix = tokens[1];
-    isc::strutil::uppercase(prefix);
+    isc::util::str::uppercase(prefix);
 
     // Token is potentially valid providing it only contains alphabetic
     // and numeric characters (and underscores) and does not start with a

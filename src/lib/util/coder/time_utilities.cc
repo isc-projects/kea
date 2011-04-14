@@ -26,7 +26,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/compat/time_utilities.h>
+#include <util/coder/time_utilities.h>
 
 using namespace std;
 
@@ -51,7 +51,7 @@ monthSecs(const int month, const int year) {
 
 namespace isc {
 namespace util {
-namespace compat {
+namespace coder {
 
 string
 timeToText64(uint64_t value) {

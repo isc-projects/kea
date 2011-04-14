@@ -27,7 +27,7 @@
 
 namespace isc {
 namespace util {
-namespace compat {
+namespace coder {
 
 /// \brief Encode binary data in the base64 format.
 ///
@@ -68,7 +68,7 @@ std::string encodeBase64(const std::vector<uint8_t>& binary);
 /// \param result A vector in which the decoded %data is to be stored.
 void decodeBase64(const std::string& input, std::vector<uint8_t>& result);
 
-} // namespace compat
+} // namespace coder
 } // namespace util
 } // namespace isc
 

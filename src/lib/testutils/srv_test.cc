@@ -26,7 +26,7 @@
 
 using namespace isc::dns;
 using namespace asiolink;
-using namespace isc::util::io;
+using namespace isc::util;
 
 namespace isc {
 namespace testutils {
