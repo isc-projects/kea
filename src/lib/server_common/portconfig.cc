@@ -95,11 +95,17 @@ installListenAddresses(const AddressList& newAddresses,
     }
     catch (const exception& e) {
         /*
-         * We couldn't set it. So return it back. If that fails as well,
-         * we have a problem.
+         * If one of the addresses isn't set successfully, we will restore
+         * the old addresses, the behavior is that either all address are
+         * set successuflly or none of them will be used. whether this
+         * behavior is user desired, maybe we need revisited it later. And
+         * if address setting is more smarter, it should check whether some
+         * part of the new address already in used to avoid interuption the
+         * service.
          *
-         * If that fails, bad luck, but we are useless anyway, so just die
-         * and let boss start us again.
+         * If the address setting still failed, we can live with it, since
+         * user will get error info, command control can be used to set new
+         * address. So we just catch the exception without propagating outside
          */
         dlog(string("Unable to set new address: ") + e.what(), true);
         try {
@@ -108,9 +114,7 @@ installListenAddresses(const AddressList& newAddresses,
         catch (const exception& e2) {
             dlog("Unable to recover from error;", true);
             dlog(string("Rollback failed with: ") + e2.what(), true);
-            abort();
         }
-        throw; // Let it fly a little bit further
     }
 }
 
