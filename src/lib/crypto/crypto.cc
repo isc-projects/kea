@@ -96,7 +96,7 @@ public:
     }
     
     bool verify(const void* sig, size_t len) {
-        return hmac_->verify_mac(static_cast<const Botan::byte*>(sig), len);
+        return (hmac_->verify_mac(static_cast<const Botan::byte*>(sig), len));
     }
 
 private:
@@ -123,26 +123,26 @@ HMAC::sign(isc::dns::OutputBuffer& result) {
 
 bool
 HMAC::verify(const void* sig, size_t len) {
-    return impl_->verify(sig, len);
+    return (impl_->verify(sig, len));
 }
 
 void
-signHMAC(const OutputBuffer& data, TSIGKey key,
+signHMAC(const void* data, size_t data_len, TSIGKey key,
          isc::dns::OutputBuffer& result)
 {
     HMAC hmac(key);
-    hmac.update(data.getData(), data.getLength());
+    hmac.update(data, data_len);
     hmac.sign(result);
 }
 
 
 bool
-verifyHMAC(const OutputBuffer& data, TSIGKey key,
+verifyHMAC(const void* data, size_t data_len, TSIGKey key,
            const isc::dns::OutputBuffer& result)
 {
     HMAC hmac(key);
-    hmac.update(data.getData(), data.getLength());
-    return hmac.verify(result.getData(), result.getLength());
+    hmac.update(data, data_len);
+    return (hmac.verify(result.getData(), result.getLength()));
 }
 
 } // namespace crypto
