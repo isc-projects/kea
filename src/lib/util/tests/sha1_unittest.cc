@@ -15,7 +15,7 @@
 #include <stdint.h>
 #include <string>
 
-#include <util/compat/sha1.h>
+#include <util/coder/sha1.h>
 
 #include <gtest/gtest.h>
 
@@ -24,7 +24,9 @@
 //using isc::UnitTestUtil;
 using namespace std;
 
-namespace {
+namespace isc {
+namespace util {
+namespace coder {
 class Sha1Test : public ::testing::Test {
 protected:
     Sha1Test() {}
@@ -103,5 +105,8 @@ TEST_F(Sha1Test, Test4) {
         EXPECT_EQ(digest[i], expected[i]);
     }
 }
-}
+
+} // namespace coder
+} // namespace util
+} // namespace isc
 

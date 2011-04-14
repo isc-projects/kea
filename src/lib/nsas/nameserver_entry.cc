@@ -52,7 +52,7 @@ namespace nsas {
 namespace {
 
 // Just shorter type alias
-typedef isc::locks::scoped_lock<isc::locks::recursive_mutex> Lock;
+typedef isc::util::locks::scoped_lock<isc::util::locks::recursive_mutex> Lock;
 
 }
 

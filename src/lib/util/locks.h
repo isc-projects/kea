@@ -38,6 +38,7 @@
 #ifndef USE_BOOST_THREADS
 
 namespace isc {
+namespace util {
 namespace locks {
 
 class mutex {
@@ -64,8 +65,9 @@ public:
     void unlock() {}
 };
 
-}
-}
+} // namespace locks
+} // namespace util
+} // namespace isc
 
 #else // USE_BOOST_THREADS
 
@@ -88,6 +90,7 @@ public:
 #include <boost/interprocess/sync/interprocess_recursive_mutex.hpp>
 
 namespace isc {
+namespace util {
 namespace locks {
 
 typedef boost::mutex mutex;
@@ -107,8 +110,9 @@ public:
     scoped_lock(T& mtype) : boost::interprocess::scoped_lock<T>(mtype) { }
 };
 
-}
-}
+} // namespace locks
+} // namespace util
+} // namespace isc
 
 
 #endif // USE_BOOST_THREADS

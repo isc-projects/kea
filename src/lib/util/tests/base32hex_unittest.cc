@@ -21,13 +21,13 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/compat/base32hex.h>
+#include <util/coder/base32hex.h>
 
 #include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;
-using namespace isc::util::compat;
+using namespace isc::util::coder;
 
 namespace {
 

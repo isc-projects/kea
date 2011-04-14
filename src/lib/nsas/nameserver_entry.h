@@ -247,7 +247,7 @@ public:
     //@}
 
 private:
-    mutable isc::locks::recursive_mutex    mutex_;///< Mutex protecting this object
+    mutable isc::util::locks::recursive_mutex    mutex_;///< Mutex protecting this object
     std::string     name_;              ///< Canonical name of the nameserver
     isc::dns::RRClass classCode_;       ///< Class of the nameserver
     /**

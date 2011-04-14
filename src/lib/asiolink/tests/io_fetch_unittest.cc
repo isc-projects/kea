@@ -26,8 +26,8 @@
 
 #include <asio.hpp>
 
-#include <util/io/buffer.h>
-#include <util/io/io_utilities.h>
+#include <util/buffer.h>
+#include <util/io_utilities.h>
 
 #include <dns/question.h>
 #include <dns/message.h>
@@ -43,7 +43,7 @@
 
 using namespace asio;
 using namespace isc::dns;
-using namespace isc::util::io;
+using namespace isc::util;
 using namespace asio::ip;
 using namespace std;
 

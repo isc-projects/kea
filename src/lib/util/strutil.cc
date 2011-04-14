@@ -20,7 +20,8 @@
 using namespace std;
 
 namespace isc {
-namespace strutil {
+namespace util {
+namespace str {
 
 // Normalize slashes
 
@@ -131,5 +132,6 @@ format(const std::string& format, const std::vector<std::string>& args) {
     return (result);
 }
 
-} // namespace strutil
+} // namespace str
+} // namespace util
 } // namespace isc

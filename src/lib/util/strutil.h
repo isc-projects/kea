@@ -21,7 +21,8 @@
 #include <vector>
 
 namespace isc {
-namespace strutil {
+namespace util {
+namespace str {
 
 /// \brief A Set of C++ Utilities for Manipulating Strings
 
@@ -97,7 +98,7 @@ inline char toUpper(char chr) {
 /// \param text String to be upper-cased.
 inline void uppercase(std::string& text) {
     std::transform(text.begin(), text.end(), text.begin(),
-        isc::strutil::toUpper);
+        isc::util::str::toUpper);
 }
 
 /// \brief Lowercase Character
@@ -121,7 +122,7 @@ inline char toLower(char chr) {
 /// \param text String to be lower-cased.
 inline void lowercase(std::string& text) {
     std::transform(text.begin(), text.end(), text.begin(),
-        isc::strutil::toLower);
+        isc::util::str::toLower);
 }
 
 
@@ -139,7 +140,8 @@ std::string format(const std::string& format,
     const std::vector<std::string>& args);
 
 
-} // namespace strutil
+} // namespace str
+} // namespace util
 } // namespace isc
 
 #endif // __STRUTIL_H
