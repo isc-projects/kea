@@ -13,7 +13,13 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# This module is a mock-up class of isc.cc.session
+"""
+A mock-up module of isc.cc.session
+
+*** NOTE ***
+It is only for testing stats_httpd module and not reusable for
+external module.
+"""
 
 import json
 import os

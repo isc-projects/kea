@@ -13,10 +13,16 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# This module is a mock-up class of isc.cc.session
+"""
+A mock-up module of isc.cc.session
+
+*** NOTE ***
+It is only for testing stats_httpd module and not reusable for
+external module.
+"""
 
 import sys
-import socket
+import fake_socket
 
 # set a dummy lname
 _TEST_LNAME = '123abc@xxxx'
@@ -41,8 +47,8 @@ class Session:
         self.message_queue = []
         self.old_message_queue = []
         try:
-            self._socket = socket.socket()
-        except socket.error as se:
+            self._socket = fake_socket.socket()
+        except fake_socket.error as se:
             raise SessionError(se)
         self.verbose = verbose
 
