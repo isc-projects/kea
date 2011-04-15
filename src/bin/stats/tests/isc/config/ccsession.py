@@ -96,8 +96,21 @@ class ConfigData:
     def get_value(self, identifier):
         """Returns a tuple where the first item is the value at the
            given identifier, and the second item is a bool which is
-           true if the value is an unset default. Raises an
-           DataNotFoundError if the identifier is bad"""
+           False if the identifier has the default value in the spec
+           file. If the identifier has no default value the spec file,
+           it returns a tuple where first item is an empty value of
+           each type, and the second item is True. It raises an
+           DataNotFoundError if the identifier is not found in the
+           spec file.
+           *** NOTE ***
+           This method is strictly not same as the original method in
+           isc.config.config_data.ConfigData, so this method is
+           limited with only internal use to test the statistics
+           modules. This method never handles the local variables and
+           is different from the original method at this point.
+           However there is no issue in testing it. Because the
+           statistics modules never call the method after they call it
+           at first."""
         def _get_value(config_map):
                 if 'item_default' in config_map:
                     return config_map['item_default'], False
