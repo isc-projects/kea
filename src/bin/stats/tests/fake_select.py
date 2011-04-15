@@ -13,21 +13,26 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-import socket
+"""
+A mock-up module of select
+
+*** NOTE ***
+It is only for testing stats_httpd module and not reusable for
+external module.
+"""
+
+import fake_socket
 import errno
 
 class error(Exception):
     pass
 
 def select(rlst, wlst, xlst, timeout):
-    """
-    This module is a mock-up function of select.select
-    """
     if type(timeout) != int and type(timeout) != float:
             raise TypeError("Error: %s must be integer or float"
                             % timeout.__class__.__name__)
     for s in rlst + wlst + xlst:
-        if type(s) != socket.socket:
+        if type(s) != fake_socket.socket:
             raise TypeError("Error: %s must be a dummy socket"
                             % s.__class__.__name__)
         s._called = s._called + 1
