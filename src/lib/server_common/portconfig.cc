@@ -115,6 +115,9 @@ installListenAddresses(const AddressList& newAddresses,
             dlog("Unable to recover from error;", true);
             dlog(string("Rollback failed with: ") + e2.what(), true);
         }
+        //Anyway the new configure has problem, we need to notify configure
+        //manager the new configure doesn't work
+        throw;
     }
 }
 

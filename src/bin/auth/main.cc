@@ -172,9 +172,15 @@ main(int argc, char* argv[]) {
         // all initial configurations, but as a short term workaround we
         // handle the traditional "database_file" setup by directly calling
         // updateConfig().
+        // if server load configure failed, we won't exit, give user second chance
+        // to correct the configure.
         auth_server->setConfigSession(config_session);
-        configureAuthServer(*auth_server, config_session->getFullConfig());
-        auth_server->updateConfig(ElementPtr());
+        try {
+            configureAuthServer(*auth_server, config_session->getFullConfig());
+            auth_server->updateConfig(ElementPtr());
+        } catch (const isc::Exception& ex) {
+            cout << "[bin10-auth] Server load config failed:" << ex.what() << endl;
+        }
 
         if (uid != NULL) {
             changeUser(uid);
