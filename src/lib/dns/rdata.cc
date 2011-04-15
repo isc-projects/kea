@@ -66,7 +66,8 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
                                                    len);
                                                    
     if (buffer.getPosition() - old_pos != len) {
-        isc_throw(InvalidRdataLength, "RDLENGTH mismatch");
+        isc_throw(InvalidRdataLength, "RDLENGTH mismatch: " <<
+                  buffer.getPosition() - old_pos << " != " << len);
     }
 
     return (rdata);

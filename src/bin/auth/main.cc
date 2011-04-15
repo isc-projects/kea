@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -122,19 +122,7 @@ main(int argc, char* argv[]) {
     bool xfrin_session_established = false; // XXX (see Trac #287)
     bool statistics_session_established = false; // XXX (see Trac #287)
     ModuleCCSession* config_session = NULL;
-    string xfrout_socket_path;
-    if (getenv("B10_FROM_BUILD") != NULL) {
-        if (getenv("B10_FROM_SOURCE_LOCALSTATEDIR")) {
-            xfrout_socket_path = string("B10_FROM_SOURCE_LOCALSTATEDIR") +
-                "/auth_xfrout_conn";
-        } else {
-            xfrout_socket_path = string(getenv("B10_FROM_BUILD")) +
-                "/auth_xfrout_conn";
-        }
-    } else {
-        xfrout_socket_path = UNIX_SOCKET_FILE;
-    }
-    XfroutClient xfrout_client(xfrout_socket_path);
+    XfroutClient xfrout_client(getXfroutSocketPath());
     try {
         string specfile;
         if (getenv("B10_FROM_BUILD")) {

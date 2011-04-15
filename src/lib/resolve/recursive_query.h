@@ -22,11 +22,42 @@
 #include <cache/resolver_cache.h>
 
 namespace asiolink {
-/// \brief The \c RecursiveQuery class provides a layer of abstraction around
-/// the ASIO code that carries out an upstream query.
+
+
+/// \brief RTT Recorder
 ///
-/// This design is very preliminary; currently it is only capable of
-/// handling simple forward requests to a single resolver.
+/// Used for testing, this class will hold the set of round-trip times to
+/// nameservers for the current recursive query.
+///
+/// A pointer to an object of this class is passed to RecursiveQuery which in
+/// turn passes it to the created RunningQuery class.  When a running query
+/// completes, its RTT is passed to the RTT Recorder object.
+class RttRecorder {
+public:
+    /// \brief Record Time
+    ///
+    /// Adds a round-trip time to the internal vector of times.
+    ///
+    /// \param RTT to record.
+    void addRtt(uint32_t rtt) {
+        rtt_.push_back(rtt);
+    }
+
+    /// \brief Return RTT Vector
+    std::vector<uint32_t> getRtt() const {
+        return rtt_;
+    }
+
+private:
+    std::vector<uint32_t>   rtt_;   ///< Stored round-trip times
+};
+
+
+/// \brief Recursive Query
+///
+/// The \c RecursiveQuery class provides a layer of abstraction around
+/// the ASIO code that carries out an upstream query.
+
 class RecursiveQuery {
     ///
     /// \name Constructors
@@ -64,6 +95,14 @@ public:
                    int lookup_timeout = 30000,
                    unsigned retries = 3);
     //@}
+
+    /// \brief Set Round-Trip Time Recorder
+    ///
+    /// Sets the RTT recorder object.  This is not accessed directly, instead
+    /// it is passed to created RunningQuery objects.
+    ///
+    /// \param recorder Pointer to the RTT recorder object used to hold RTTs.
+    void setRttRecorder(boost::shared_ptr<RttRecorder>& recorder);
 
     /// \brief Initiate resolving
     /// 
@@ -127,6 +166,7 @@ private:
     int client_timeout_;
     int lookup_timeout_;
     unsigned retries_;
+    boost::shared_ptr<RttRecorder>  rtt_recorder_;  ///< Round-trip time recorder
 };
 
 }      // namespace asiolink
