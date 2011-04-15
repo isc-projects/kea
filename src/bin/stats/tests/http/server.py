@@ -22,7 +22,6 @@ class DummyHttpResponse:
         self.log = ""
 
     def _write_log(self, msg):
-        assert type(msg) is str
         self.log = self.log + msg
 
 class HTTPServer:
@@ -85,6 +84,5 @@ class BaseHTTPRequestHandler:
     def _write(self, obj):
         if self.path != self.response.path:
             self.response = DummyHttpResponse(path=self.path)
-        assert type(obj) is bytes
         self.response.body = obj.decode()
 
