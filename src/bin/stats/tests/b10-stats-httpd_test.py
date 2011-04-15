@@ -87,11 +87,11 @@ class TestHttpHandler(unittest.TestCase):
         self.assertEqual(handler.response.headers["Content-type"], "text/xml")
         self.assertTrue(handler.response.headers["Content-Length"] > 0)
         self.assertTrue(handler.response.wrote_headers)
-        self.assertRegexpMatches(handler.response.body, stats_httpd.XSD_NAMESPACE)
-        self.assertRegexpMatches(handler.response.body, stats_httpd.XSD_URL_PATH)
+        self.assertTrue(handler.response.body.find(stats_httpd.XSD_NAMESPACE)>0)
+        self.assertTrue(handler.response.body.find(stats_httpd.XSD_URL_PATH)>0)
         for (k, v) in DUMMY_DATA.items():
-            self.assertRegexpMatches(handler.response.body, str(k))
-            self.assertRegexpMatches(handler.response.body, str(v))
+            self.assertTrue(handler.response.body.find(str(k))>0)
+            self.assertTrue(handler.response.body.find(str(v))>0)
 
         # URL is '/bind10/statitics/xsd'
         handler.path = stats_httpd.XSD_URL_PATH
@@ -100,9 +100,9 @@ class TestHttpHandler(unittest.TestCase):
         self.assertEqual(handler.response.headers["Content-type"], "text/xml")
         self.assertTrue(handler.response.headers["Content-Length"] > 0)
         self.assertTrue(handler.response.wrote_headers)
-        self.assertRegexpMatches(handler.response.body, stats_httpd.XSD_NAMESPACE)
+        self.assertTrue(handler.response.body.find(stats_httpd.XSD_NAMESPACE)>0)
         for (k, v) in DUMMY_DATA.items():
-            self.assertRegexpMatches(handler.response.body, str(k))
+            self.assertTrue(handler.response.body.find(str(k))>0)
 
         # URL is '/bind10/statitics/xsl'
         handler.path = stats_httpd.XSL_URL_PATH
@@ -111,9 +111,9 @@ class TestHttpHandler(unittest.TestCase):
         self.assertEqual(handler.response.headers["Content-type"], "text/xml")
         self.assertTrue(handler.response.headers["Content-Length"] > 0)
         self.assertTrue(handler.response.wrote_headers)
-        self.assertRegexpMatches(handler.response.body, stats_httpd.XSD_NAMESPACE)
+        self.assertTrue(handler.response.body.find(stats_httpd.XSD_NAMESPACE)>0)
         for (k, v) in DUMMY_DATA.items():
-            self.assertRegexpMatches(handler.response.body, str(k))
+            self.assertTrue(handler.response.body.find(str(k))>0)
 
         # 404 NotFound with Host header
         handler.path = '/'
