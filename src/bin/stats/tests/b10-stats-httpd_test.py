@@ -364,23 +364,42 @@ class TestStatsHttpd(unittest.TestCase):
                 1, "Unknown command: __UNKNOWN_COMMAND__"))
 
     def test_config(self):
-        d = dict(_UNKNOWN_KEY_=None)
         self.assertEqual(
-            self.stats_httpd.config_handler(d),
+            self.stats_httpd.config_handler(dict(_UNKNOWN_KEY_=None)),
             isc.config.ccsession.create_answer(
                     1, "Unknown known config: _UNKNOWN_KEY_"))
         self.assertEqual(
             self.stats_httpd.config_handler(
                         dict(listen_on=[dict(address="::2",port=8000)])),
             isc.config.ccsession.create_answer(0))
+        self.assertTrue("listen_on" in self.stats_httpd.config)
+        for addr in self.stats_httpd.config["listen_on"]:
+            self.assertTrue("address" in addr)
+            self.assertTrue("port" in addr)
+            self.assertTrue(addr["address"] == "::2")
+            self.assertTrue(addr["port"] == 8000)
+
         self.assertEqual(
             self.stats_httpd.config_handler(
                         dict(listen_on=[dict(address="::1",port=80)])),
             isc.config.ccsession.create_answer(0))
+        self.assertTrue("listen_on" in self.stats_httpd.config)
+        for addr in self.stats_httpd.config["listen_on"]:
+            self.assertTrue("address" in addr)
+            self.assertTrue("port" in addr)
+            self.assertTrue(addr["address"] == "::1")
+            self.assertTrue(addr["port"] == 80)
+
         self.assertEqual(
             self.stats_httpd.config_handler(
                         dict(listen_on=[dict(address="1.2.3.4",port=54321)])),
             isc.config.ccsession.create_answer(0))
+        self.assertTrue("listen_on" in self.stats_httpd.config)
+        for addr in self.stats_httpd.config["listen_on"]:
+            self.assertTrue("address" in addr)
+            self.assertTrue("port" in addr)
+            self.assertTrue(addr["address"] == "1.2.3.4")
+            self.assertTrue(addr["port"] == 54321)
         (ret, arg) = isc.config.ccsession.parse_answer(
             self.stats_httpd.config_handler(
                 dict(listen_on=[dict(address="1.2.3.4",port=543210)]))
