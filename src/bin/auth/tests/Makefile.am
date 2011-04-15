@@ -1,4 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/bin
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
 AM_CPPFLAGS += $(BOOST_INCLUDES)
@@ -16,6 +17,8 @@ CLEANFILES = *.gcno *.gcda
 
 TESTS =
 if HAVE_GTEST
+
+BUILT_SOURCES = ../spec_config.h
 TESTS += run_unittests
 run_unittests_SOURCES = $(top_srcdir)/src/lib/dns/tests/unittest_util.h
 run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
@@ -24,10 +27,13 @@ run_unittests_SOURCES += ../query.h ../query.cc
 run_unittests_SOURCES += ../change_user.h ../change_user.cc
 run_unittests_SOURCES += ../auth_config.h ../auth_config.cc
 run_unittests_SOURCES += ../command.h ../command.cc
+run_unittests_SOURCES += ../common.h ../common.cc
+run_unittests_SOURCES += ../spec_config.h
 run_unittests_SOURCES += ../statistics.h ../statistics.cc
 run_unittests_SOURCES += auth_srv_unittest.cc
 run_unittests_SOURCES += config_unittest.cc
 run_unittests_SOURCES += command_unittest.cc
+run_unittests_SOURCES += common_unittest.cc
 run_unittests_SOURCES += query_unittest.cc
 run_unittests_SOURCES += change_user_unittest.cc
 run_unittests_SOURCES += statistics_unittest.cc
