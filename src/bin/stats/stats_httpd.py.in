@@ -15,6 +15,10 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+"""
+A standalone HTTP server for HTTP/XML interface of statistics in BIND 10
+
+"""
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import os
 import time
