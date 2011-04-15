@@ -1,7 +1,7 @@
 220.	[func]		stephen
 	Added the 'badpacket' program for testing; it sends a set of
 	(potentially) bad packets to a nameserver and prints the responses.
-	(Trac #703, git 17106327efdf114e15b21cf8079f9191ab073648)
+	(Trac #703, git 1b666838b6c0fe265522b30971e878d9f0d21fde)
 
 219.    [func]          ocean
 	src/lib: move some dns related code out of asiolink library to
