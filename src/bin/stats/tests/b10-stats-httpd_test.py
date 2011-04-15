@@ -362,7 +362,6 @@ class TestStatsHttpd(unittest.TestCase):
 
     def test_config(self):
         d = dict(_UNKNOWN_KEY_=None)
-        assert type(d) is dict
         self.assertEqual(
             self.stats_httpd.config_handler(d),
             isc.config.ccsession.create_answer(
