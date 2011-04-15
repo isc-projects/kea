@@ -55,10 +55,6 @@ XSL_URL_PATH = '/bind10/statistics/xsl'
 XSD_NAMESPACE = 'http://bind10.isc.org' + XSD_URL_PATH
 DEFAULT_CONFIG = dict(listen_on=[('127.0.0.1', 8000)])
 
-# The size of template file should be under 100k. TODO: should be
-# considered later.
-MAX_SIZE_OF_TEMPLATE = 102400
-
 # Assign this process name
 isc.util.process.rename()
 
@@ -474,11 +470,11 @@ class StatsHttpd:
         return self.xsl_body
 
     def open_template(self, file_name):
-        """Opens a template file with size limitation, loads all lines to a
-        string variable and returns string.Template object include the
-        variable."""
+        """It opens a template file, and it loads all lines to a
+        string variable and returns string. Template object includes
+        the variable. Limitation of a file size isn't needed there."""
         lines = "".join(
-            open(file_name, 'r').readlines(MAX_SIZE_OF_TEMPLATE))
+            open(file_name, 'r').readlines())
         assert lines is not None
         return string.Template(lines)
 
