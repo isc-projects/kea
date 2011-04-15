@@ -18,15 +18,16 @@
 // (and other parts where we need randomness, perhaps another thing
 // for a general libutil?)
 
-#include <asiolink/qid_gen.h>
+#include <asiodns/qid_gen.h>
 
 #include <sys/time.h>
 
 namespace {
-    asiolink::QidGenerator qid_generator_instance;
+    isc::asiodns::QidGenerator qid_generator_instance;
 }
 
-namespace asiolink {
+namespace isc {
+namespace asiodns {
 
 QidGenerator&
 QidGenerator::getInstance() {
@@ -51,4 +52,5 @@ QidGenerator::generateQid() {
     return (vgen_());
 }
 
-} // namespace asiolink
+} // namespace asiodns
+} // namespace isc

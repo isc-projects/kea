@@ -15,14 +15,14 @@
 #ifndef __RECURSIVE_QUERY_H
 #define __RECURSIVE_QUERY_H 1
 
-#include <asiolink/dns_service.h>
-#include <asiolink/dns_server.h>
+#include <asiodns/dns_service.h>
+#include <asiodns/dns_server.h>
 #include <dns/buffer.h>
 #include <nsas/nameserver_address_store.h>
 #include <cache/resolver_cache.h>
 
-namespace asiolink {
-
+namespace isc {
+namespace asiodns {
 
 /// \brief RTT Recorder
 ///
@@ -87,9 +87,9 @@ public:
                    isc::nsas::NameserverAddressStore& nsas,
                    isc::cache::ResolverCache& cache,
                    const std::vector<std::pair<std::string, uint16_t> >&
-                   upstream, 
+                   upstream,
                    const std::vector<std::pair<std::string, uint16_t> >&
-                   upstream_root, 
+                   upstream_root,
                    int query_timeout = 2000,
                    int client_timeout = 4000,
                    int lookup_timeout = 30000,
@@ -105,7 +105,7 @@ public:
     void setRttRecorder(boost::shared_ptr<RttRecorder>& recorder);
 
     /// \brief Initiate resolving
-    /// 
+    ///
     /// When sendQuery() is called, a (set of) message(s) is sent
     /// asynchronously. If upstream servers are set, one is chosen
     /// and the response (if any) from that server will be returned.
@@ -152,7 +152,7 @@ public:
     /// \param address IP address of the test server.
     /// \param port Port number of the test server
     void setTestServer(const std::string& address, uint16_t port);
-    
+
 private:
     DNSService& dns_service_;
     isc::nsas::NameserverAddressStore& nsas_;
@@ -169,5 +169,6 @@ private:
     boost::shared_ptr<RttRecorder>  rtt_recorder_;  ///< Round-trip time recorder
 };
 
-}      // namespace asiolink
+}      // namespace asiodns
+}      // namespace isc
 #endif // __RECURSIVE_QUERY_H

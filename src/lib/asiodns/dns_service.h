@@ -18,10 +18,11 @@
 #include <resolve/resolver_interface.h>
 
 #include <asiolink/io_service.h>
+#include <asiolink/simple_callback.h>
 
-namespace asiolink {
+namespace isc {
+namespace asiodns {
 
-class SimpleCallback;
 class DNSLookup;
 class DNSAnswer;
 class DNSServiceImpl;
@@ -54,8 +55,8 @@ public:
     /// \param checkin Provider for cc-channel events (see \c SimpleCallback)
     /// \param lookup The lookup provider (see \c DNSLookup)
     /// \param answer The answer provider (see \c DNSAnswer)
-    DNSService(IOService& io_service, const char& port,
-               const char& address, SimpleCallback* checkin,
+    DNSService(asiolink::IOService& io_service, const char& port,
+               const char& address, isc::asiolink::SimpleCallback* checkin,
                DNSLookup* lookup, DNSAnswer* answer);
     /// \brief The constructor with a specific port on which the services
     /// listen on.
@@ -71,14 +72,14 @@ public:
     /// \param checkin Provider for cc-channel events (see \c SimpleCallback)
     /// \param lookup The lookup provider (see \c DNSLookup)
     /// \param answer The answer provider (see \c DNSAnswer)
-    DNSService(IOService& io_service, const char& port,
+    DNSService(asiolink::IOService& io_service, const char& port,
                const bool use_ipv4, const bool use_ipv6,
-               SimpleCallback* checkin, DNSLookup* lookup,
+               isc::asiolink::SimpleCallback* checkin, DNSLookup* lookup,
                DNSAnswer* answer);
     /// \brief The constructor without any servers.
     ///
     /// Use addServer() to add some servers.
-    DNSService(IOService& io_service, SimpleCallback* checkin,
+    DNSService(asiolink::IOService& io_service, isc::asiolink::SimpleCallback* checkin,
                DNSLookup* lookup, DNSAnswer* answer);
     /// \brief The destructor.
     ~DNSService();
@@ -105,8 +106,9 @@ public:
 
 private:
     DNSServiceImpl* impl_;
-    IOService& io_service_;
+    asiolink::IOService& io_service_;
 };
 
-}      // namespace asiolink
+} // namespace asiodns
+} // namespace isc
 #endif // __ASIOLINK_DNS_SERVICE_H

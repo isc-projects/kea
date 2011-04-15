@@ -20,10 +20,6 @@
 // See the description of the namespace below.
 
 #include <asiolink/io_service.h>
-#include <asiolink/dns_service.h>
-#include <asiolink/dns_server.h>
-#include <asiolink/dns_lookup.h>
-#include <asiolink/dns_answer.h>
 #include <asiolink/simple_callback.h>
 #include <asiolink/interval_timer.h>
 
@@ -61,11 +57,6 @@
 /// switch, but generality for that purpose is not the primary goal of
 /// this module.  The resulting interfaces are thus straightforward mapping
 /// to the ASIO counterparts.
-///
-/// Notes to developers:
-/// Currently the wrapper interface is fairly specific to use by a
-/// DNS server, i.e., b10-auth or b10-resolver.  But the plan is to
-/// generalize it and have other modules use it as well.
 ///
 /// One obvious drawback of this approach is performance overhead
 /// due to the additional layer.  We should eventually evaluate the cost

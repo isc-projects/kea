@@ -68,7 +68,8 @@ using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::config;
 using namespace isc::xfr;
-using namespace asiolink;
+using namespace isc::asiolink;
+using namespace isc::asiodns;
 using namespace isc::server_common::portconfig;
 
 class AuthSrvImpl {
@@ -766,6 +767,6 @@ AuthSrv::setListenAddresses(const AddressList& addresses) {
 }
 
 void
-AuthSrv::setDNSService(asiolink::DNSService& dnss) {
+AuthSrv::setDNSService(isc::asiodns::DNSService& dnss) {
     dnss_ = &dnss;
 }

@@ -22,7 +22,7 @@
 #include <asio.hpp>
 
 #include <asiolink/io_address.h>
-#include <asiolink/io_fetch.h>
+#include <asiodns/io_fetch.h>
 #include <dns/buffer.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -38,7 +38,8 @@
 #include "scan.h"
 
 using namespace std;
-using namespace asiolink;
+using namespace isc::asiolink;
+using namespace isc::asiodns;
 using namespace isc::dns;
 using namespace isc::strutil;
 
@@ -286,7 +287,7 @@ Scan::performIO(OutputBufferPtr& sendbuf, OutputBufferPtr& recvbuf,
                   IOAddress(options.getAddress()), options.getPort(), recvbuf,
                   this, options.getTimeout());
 
-    // Execute the message exhange.  The call to run() will return when a
+    // Execute the message exchange.  The call to run() will return when a
     // response is received or when the I/O times out.
     (service_->get_io_service()).post(fetch); 
     service_->run();

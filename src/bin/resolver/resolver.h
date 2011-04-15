@@ -24,12 +24,12 @@
 #include <dns/message.h>
 #include <dns/buffer.h>
 
+#include <asiodns/dns_server.h>
+#include <asiodns/dns_service.h>
+#include <asiodns/dns_lookup.h>
+#include <asiodns/dns_answer.h>
 #include <asiolink/io_message.h>
 #include <asiolink/io_service.h>
-#include <asiolink/dns_server.h>
-#include <asiolink/dns_service.h>
-#include <asiolink/dns_lookup.h>
-#include <asiolink/dns_answer.h>
 #include <asiolink/simple_callback.h>
 
 #include <nsas/nameserver_address_store.h>
@@ -82,11 +82,11 @@ public:
     /// shall return to the client
     /// \param buffer Pointer to an \c OutputBuffer for the resposne
     /// \param server Pointer to the \c DNSServer
-    void processMessage(const asiolink::IOMessage& io_message,
+    void processMessage(const isc::asiolink::IOMessage& io_message,
                         isc::dns::MessagePtr query_message,
                         isc::dns::MessagePtr answer_message,
                         isc::dns::OutputBufferPtr buffer,
-                        asiolink::DNSServer* server);
+                        isc::asiodns::DNSServer* server);
 
     /// \brief Set and get the config session
     isc::config::ModuleCCSession* getConfigSession() const;
@@ -96,16 +96,16 @@ public:
     isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
 
     /// \brief Assign an ASIO IO Service queue to this Resolver object
-    void setDNSService(asiolink::DNSService& dnss);
-    
+    void setDNSService(isc::asiodns::DNSService& dnss);
+
     /// \brief Assign a NameserverAddressStore to this Resolver object
     void setNameserverAddressStore(isc::nsas::NameserverAddressStore &nsas);
-    
+
     /// \brief Assign a cache to this Resolver object
     void setCache(isc::cache::ResolverCache& cache);
 
     /// \brief Return this object's ASIO IO Service queue
-    asiolink::DNSService& getDNSService() const { return (*dnss_); }
+    isc::asiodns::DNSService& getDNSService() const { return (*dnss_); }
 
     /// \brief Returns this object's NSAS
     isc::nsas::NameserverAddressStore& getNameserverAddressStore() const {
@@ -116,15 +116,15 @@ public:
     isc::cache::ResolverCache& getResolverCache() const {
         return *cache_;
     };
-    
+
     /// \brief Return pointer to the DNS Lookup callback function
-    asiolink::DNSLookup* getDNSLookupProvider() { return (dns_lookup_); }
+    isc::asiodns::DNSLookup* getDNSLookupProvider() { return (dns_lookup_); }
 
     /// \brief Return pointer to the DNS Answer callback function
-    asiolink::DNSAnswer* getDNSAnswerProvider() { return (dns_answer_); }
+    isc::asiodns::DNSAnswer* getDNSAnswerProvider() { return (dns_answer_); }
 
     /// \brief Return pointer to the Checkin callback function
-    asiolink::SimpleCallback* getCheckinProvider() { return (checkin_); }
+    isc::asiolink::SimpleCallback* getCheckinProvider() { return (checkin_); }
 
     /**
      * \brief Tell the Resolver that is has already been configured
@@ -238,10 +238,10 @@ public:
 
 private:
     ResolverImpl* impl_;
-    asiolink::DNSService* dnss_;
-    asiolink::SimpleCallback* checkin_;
-    asiolink::DNSLookup* dns_lookup_;
-    asiolink::DNSAnswer* dns_answer_;
+    isc::asiodns::DNSService* dnss_;
+    isc::asiolink::SimpleCallback* checkin_;
+    isc::asiodns::DNSLookup* dns_lookup_;
+    isc::asiodns::DNSAnswer* dns_answer_;
     isc::nsas::NameserverAddressStore* nsas_;
     isc::cache::ResolverCache* cache_;
     // This value is initally false, and will be set to true
@@ -252,6 +252,6 @@ private:
 
 #endif // __RESOLVER_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:
