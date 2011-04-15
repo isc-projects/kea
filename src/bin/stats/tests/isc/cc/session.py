@@ -53,7 +53,7 @@ class Session:
     def close(self):
         self._socket.close()
 
-    def _clear_ques(self):
+    def _clear_queues(self):
         while len(self.message_queue) > 0:
             self.dequeue()
 

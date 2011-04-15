@@ -135,7 +135,7 @@ class TestHttpHandler(unittest.TestCase):
         handler.do_GET()
         self.stats_httpd.cc_session._socket._closed = False
         self.assertEqual(handler.response.code, 500)
-        self.stats_httpd.cc_session._clear_ques()
+        self.stats_httpd.cc_session._clear_queues()
 
         # failure case(Stats module returns err)
         handler.path = stats_httpd.XML_URL_PATH
@@ -145,7 +145,7 @@ class TestHttpHandler(unittest.TestCase):
         self.stats_httpd.cc_session._socket._closed = False
         handler.do_GET()
         self.assertEqual(handler.response.code, 500)
-        self.stats_httpd.cc_session._clear_ques()
+        self.stats_httpd.cc_session._clear_queues()
 
     def test_do_HEAD(self):
         for ht in self.httpd:
