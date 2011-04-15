@@ -33,13 +33,14 @@ using namespace std;
 using namespace isc::dns;
 
 namespace {
-Botan::HashFunction* getHash(const Name& hash_name) {
+Botan::HashFunction*
+getHash(const Name& hash_name) {
     if (hash_name == TSIGKey::HMACMD5_NAME()) {
-        return Botan::get_hash("MD5");
+        return (Botan::get_hash("MD5"));
     } else if (hash_name == TSIGKey::HMACSHA1_NAME()) {
-        return Botan::get_hash("SHA-1");
+        return (Botan::get_hash("SHA-1"));
     } else if (hash_name == TSIGKey::HMACSHA256_NAME()) {
-        return Botan::get_hash("SHA-256");
+        return (Botan::get_hash("SHA-256"));
     } else {
         isc_throw(isc::crypto::UnsupportedAlgorithm,
                   "Unknown Hash type " + hash_name.toText());
@@ -73,9 +74,9 @@ public:
                 hmac_->set_key(hashed_key.begin(), hashed_key.size());
             } else {
                 hmac_->set_key(static_cast<const Botan::byte*>(key.getSecret()),
-                             key.getSecretLength());
+                               key.getSecretLength());
             }
-        } catch (Botan::Invalid_Key_Length ikl) {
+        } catch (const Botan::Invalid_Key_Length& ikl) {
             isc_throw(BadKey, ikl.what());
         }
     }
@@ -90,11 +91,11 @@ public:
     void sign(isc::dns::OutputBuffer& result) const {
         // And generate the mac
         Botan::SecureVector<Botan::byte> b_result(hmac_->final());
-    
+
         // write mac to result
         result.writeData(b_result.begin(), b_result.size());
     }
-    
+
     bool verify(const void* sig, const size_t len) const {
         return (hmac_->verify_mac(static_cast<const Botan::byte*>(sig), len));
     }
