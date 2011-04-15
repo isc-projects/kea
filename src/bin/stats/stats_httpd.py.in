@@ -195,10 +195,8 @@ class StatsHttpd:
                         for itm in self.mccs.get_module_spec().get_config_spec()
                         ])
                 )
-        # remove duplicated element
-        self.http_addrs = list(
-            set([ (cf['address'], cf['port']) for cf in self.config['listen_on'] ])
-                )
+        # set addresses and ports for HTTP
+        self.http_addrs = [ (cf['address'], cf['port']) for cf in self.config['listen_on'] ]
 
     def open_httpd(self):
         """Opens sockets for HTTP. Iterating each HTTP address to be
