@@ -183,19 +183,19 @@ class TestHttpServerError(unittest.TestCase):
 class TestHttpServer(unittest.TestCase):
     """Tests for HttpServer class"""
 
-    def setUp(self):
+    def test_httpserver(self):
         self.verbose = True
         self.stats_httpd = stats_httpd.StatsHttpd(self.verbose)
         self.stats_httpd.cc_session.verbose = False
         for ht in self.stats_httpd.httpd:
             self.assertTrue(ht.server_address in self.stats_httpd.http_addrs)
-            self.assertEqual(self.ht.verbose, self.verbose)
-            self.assertEqual(self.ht.xml_handler, self.stats_httpd.xml_handler)
-            self.assertEqual(self.ht.xsd_handler, self.stats_httpd.xsd_handler)
-            self.assertEqual(self.ht.xsl_handler, self.stats_httpd.xsl_handler)
-            self.assertEqual(self.ht.log_writer, self.stats_httpd.write_log)
-            self.assertTrue(isinstance(self.ht._handler, stats_httpd.HttpHandler))
-            self.assertTrue(isinstance(self.ht.socket, socket.socket))
+            self.assertEqual(ht.verbose, self.verbose)
+            self.assertEqual(ht.xml_handler, self.stats_httpd.xml_handler)
+            self.assertEqual(ht.xsd_handler, self.stats_httpd.xsd_handler)
+            self.assertEqual(ht.xsl_handler, self.stats_httpd.xsl_handler)
+            self.assertEqual(ht.log_writer, self.stats_httpd.write_log)
+            self.assertTrue(isinstance(ht._handler, stats_httpd.HttpHandler))
+            self.assertTrue(isinstance(ht.socket, socket.socket))
 
 class TestStatsHttpdError(unittest.TestCase):
     """Tests for StatsHttpdError exception"""
