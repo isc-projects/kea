@@ -99,7 +99,7 @@ TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
 
         impl_ = new TSIGKeyImpl(key_name, algo_name, secret_b,
                                 secret.size());
-    } catch (Exception e) {
+    } catch (const Exception& e) {
         // 'reduce' the several types of exceptions name parsing and
         // Base64 decoding can throw to just the InvalidParameter
         isc_throw(InvalidParameter, e.what());
