@@ -71,7 +71,7 @@ class Session:
             sys.stdout.write("[Session] enqueue: " + str(que.dump()) + "\n")
         return seq
 
-    def dequeue(self, seq=0):
+    def dequeue(self):
         if self._socket._closed:
             raise SessionError("Session has been closed.")
         que = None
@@ -108,7 +108,7 @@ class Session:
                 "instance": instance })
 
     def group_recvmsg(self, nonblock=True, seq=0):
-        que = self.dequeue(seq)
+        que = self.dequeue()
         return que.msg, que.env
         
     def group_reply(self, routing, msg):
