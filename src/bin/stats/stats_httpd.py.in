@@ -261,6 +261,9 @@ class StatsHttpd:
                     (rfd, wfd, xfd) = ([], [], [])
                 else:
                     raise
+            # FIXME: This module can handle only one request at a
+            # time, but it isn't so big issue for administration
+            # purposes.
             for fd in rfd + xfd:
                 if fd == self.mccs.get_socket():
                     self.mccs.check_command(nonblock=False)
