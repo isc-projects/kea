@@ -11,6 +11,7 @@ CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libasiodns.la
 libasiodns_la_SOURCES = dns_answer.h
+libasiodns_la_SOURCES += asiodns.h
 libasiodns_la_SOURCES += asiodef.cc asiodef.h
 libasiodns_la_SOURCES += dns_lookup.h
 libasiodns_la_SOURCES += dns_server.h
