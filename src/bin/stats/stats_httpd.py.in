@@ -255,10 +255,12 @@ class StatsHttpd:
                 (rfd, wfd, xfd) = select.select(
                     self.get_sockets(), [], [], self.poll_intval)
             except select.error as err:
+                # select.error exception is caught only in the case of
+                # EINTR, or in other cases it is just thrown.
                 if err.args[0] == errno.EINTR:
                     (rfd, wfd, xfd) = ([], [], [])
                 else:
-                    raise select.error(err)
+                    raise
             for fd in rfd + xfd:
                 if fd == self.mccs.get_socket():
                     self.mccs.check_command(nonblock=False)
