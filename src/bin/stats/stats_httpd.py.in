@@ -478,4 +478,4 @@ if __name__ == "__main__":
     except HttpServerError as hse:
         sys.exit("[b10-stats-httpd] %s" % hse)
     except KeyboardInterrupt as kie:
-        sys.exit("[b10-stats-httpd] Interrupted, exiting\n")
+        sys.exit("[b10-stats-httpd] Interrupted, exiting")
