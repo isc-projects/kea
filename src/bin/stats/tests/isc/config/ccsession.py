@@ -22,7 +22,6 @@ from isc.cc.session import Session
 COMMAND_CONFIG_UPDATE = "config_update"
 
 def parse_answer(msg):
-    assert type(msg) is dict
     assert 'result' in msg
     try:
         return msg['result'][0], msg['result'][1]
@@ -36,7 +35,6 @@ def create_answer(rcode, arg = None):
         return { 'result': [ rcode, arg ] }
 
 def parse_command(msg):
-    assert type(msg) is dict
     assert 'command' in msg
     try:
         return msg['command'][0], msg['command'][1]

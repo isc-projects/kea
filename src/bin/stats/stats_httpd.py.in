@@ -71,7 +71,6 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
         self.send_head()
 
     def send_head(self):
-        assert isinstance(self.server, HttpServer)
         try:
             if self.path == XML_URL_PATH:
                 body = self.server.xml_handler()
@@ -107,7 +106,6 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
 
     def log_message(self, format, *args):
         """Change the default log format"""
-        assert isinstance(self.server, HttpServer)
         if self.server.verbose:
             self.server.log_writer(
                 "[b10-stats-httpd] %s - - [%s] %s\n" %
@@ -198,8 +196,6 @@ class StatsHttpd:
         from the config manager"""
         # load config
         if len(new_config) > 0:
-            assert type(self.config) is dict
-            assert type(new_config) is dict
             self.config.update(new_config)
         else:
             self.config = DEFAULT_CONFIG
@@ -209,8 +205,6 @@ class StatsHttpd:
                         for itm in self.mccs.get_module_spec().get_config_spec()
                         ])
                 )
-        assert 'listen_on' in self.config
-        assert type(self.config['listen_on']) is list
         # remove duplicated element
         self.http_addrs = list(
             set([ (cf['address'], cf['port']) for cf in self.config['listen_on'] ])
@@ -219,12 +213,10 @@ class StatsHttpd:
     def open_httpd(self):
         """Opens sockets for HTTP. Iterating each HTTP address to be
         configured in spec file"""
-        assert type(self.http_addrs) is list
         for addr in self.http_addrs:
             self.httpd.append(self._open_httpd(addr))
 
     def _open_httpd(self, server_address, address_family=None):
-        assert type(server_address) is tuple
         try:
             # try IPv6 at first
             if address_family is not None:
@@ -250,7 +242,6 @@ class StatsHttpd:
                 self.write_log(
                     "[b10-stats-httpd] Started on address %s, port %s\n" %
                     server_address)
-        assert isinstance(httpd, HttpServer)
         return httpd
 
     def close_httpd(self):
@@ -258,7 +249,6 @@ class StatsHttpd:
         if len(self.httpd) == 0:
             return
         for ht in self.httpd:
-            assert type(ht.server_address) is tuple
             if self.verbose:
                 self.write_log(
                     "[b10-stats-httpd] Closing address %s, port %s\n" %
@@ -312,7 +302,6 @@ class StatsHttpd:
     def config_handler(self, new_config):
         """Config handler for the ModuleCCSession object. It resets
         addresses and ports to listen HTTP requests on."""
-        assert type(new_config) is dict
         if self.verbose:
             self.write_log("[b10-stats-httpd] Loading config : %s\n" % str(new_config))
         for key in new_config.keys():
