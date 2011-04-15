@@ -14,7 +14,11 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 """
-This module is a mock-up classes of socket module
+A mock-up module of socket
+
+*** NOTE ***
+It is only for testing stats_httpd module and not reusable for
+external module.
 """
 
 import re

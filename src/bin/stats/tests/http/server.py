@@ -13,7 +13,15 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-import socket
+"""
+A mock-up module of http.server
+
+*** NOTE ***
+It is only for testing stats_httpd module and not reusable for
+external module.
+"""
+
+import fake_socket
 
 class DummyHttpResponse:
     def __init__(self, path):
@@ -26,11 +34,11 @@ class DummyHttpResponse:
 
 class HTTPServer:
     """
-    This module is a mock-up class of http.server.HTTPServer
+    A mock-up class of http.server.HTTPServer
     """
-    address_family = socket.AF_INET
+    address_family = fake_socket.AF_INET
     def __init__(self, server_class, handler_class):
-        self.socket = socket.socket(self.address_family)
+        self.socket = fake_socket.socket(self.address_family)
         self.server_class = server_class
         self.socket.bind(self.server_class)
         self._handler = handler_class(None, None, self)
@@ -43,7 +51,7 @@ class HTTPServer:
 
 class BaseHTTPRequestHandler:
     """
-    This module is a mock-up class of http.server.BaseHTTPRequestHandler
+    A mock-up class of http.server.BaseHTTPRequestHandler
     """
 
     def __init__(self, request, client_address, server):

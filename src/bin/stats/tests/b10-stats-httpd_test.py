@@ -17,14 +17,16 @@ import unittest
 import os
 import http.server
 import string
-import select
+import fake_select
 import imp
 import sys
-import socket
+import fake_socket
 
 import isc.cc
 
 import stats_httpd
+stats_httpd.socket = fake_socket
+stats_httpd.select = fake_select
 
 DUMMY_DATA = {
     "auth.queries.tcp": 10000,
@@ -195,7 +197,7 @@ class TestHttpServer(unittest.TestCase):
             self.assertEqual(ht.xsl_handler, self.stats_httpd.xsl_handler)
             self.assertEqual(ht.log_writer, self.stats_httpd.write_log)
             self.assertTrue(isinstance(ht._handler, stats_httpd.HttpHandler))
-            self.assertTrue(isinstance(ht.socket, socket.socket))
+            self.assertTrue(isinstance(ht.socket, fake_socket.socket))
 
 class TestStatsHttpdError(unittest.TestCase):
     """Tests for StatsHttpdError exception"""
@@ -211,8 +213,8 @@ class TestStatsHttpd(unittest.TestCase):
 
     def setUp(self):
         self.verbose = True
-        socket._CLOSED = False
-        socket.has_ipv6 = True
+        fake_socket._CLOSED = False
+        fake_socket.has_ipv6 = True
         self.stats_httpd = stats_httpd.StatsHttpd(self.verbose)
         self.stats_httpd.cc_session.verbose = False
 
@@ -227,15 +229,15 @@ class TestStatsHttpd(unittest.TestCase):
         for ht in self.stats_httpd.httpd:
             self.assertFalse(ht.socket._closed)
             self.assertEqual(ht.socket.fileno(), id(ht.socket))
-        socket._CLOSED = True
+        fake_socket._CLOSED = True
         self.assertRaises(isc.cc.session.SessionError,
                           stats_httpd.StatsHttpd)
-        socket._CLOSED = False
+        fake_socket._CLOSED = False
 
     def test_mccs(self):
         self.stats_httpd.open_mccs()
         self.assertTrue(
-            isinstance(self.stats_httpd.mccs.get_socket(), socket.socket))
+            isinstance(self.stats_httpd.mccs.get_socket(), fake_socket.socket))
         self.assertTrue(
             isinstance(self.stats_httpd.cc_session, isc.cc.session.Session))
         self.assertTrue(
@@ -251,42 +253,42 @@ class TestStatsHttpd(unittest.TestCase):
 
     def test_httpd(self):
         # dual stack (addresses is ipv4 and ipv6)
-        socket.has_ipv6 = True
+        fake_socket.has_ipv6 = True
         self.assertTrue(('127.0.0.1', 8000) in set(self.stats_httpd.http_addrs))
         self.stats_httpd.http_addrs = [ ('::1', 8000), ('127.0.0.1', 8000) ]
         self.assertTrue(
-            stats_httpd.HttpServer.address_family in set([socket.AF_INET, socket.AF_INET6]))
+            stats_httpd.HttpServer.address_family in set([fake_socket.AF_INET, fake_socket.AF_INET6]))
         self.stats_httpd.open_httpd()
         for ht in self.stats_httpd.httpd:
-            self.assertTrue(isinstance(ht.socket, socket.socket))
+            self.assertTrue(isinstance(ht.socket, fake_socket.socket))
         self.stats_httpd.close_httpd()
 
         # dual stack (address is ipv6)
-        socket.has_ipv6 = True
+        fake_socket.has_ipv6 = True
         self.stats_httpd.http_addrs = [ ('::1', 8000) ]
         self.stats_httpd.open_httpd()
         for ht in self.stats_httpd.httpd:
-            self.assertTrue(isinstance(ht.socket, socket.socket))
+            self.assertTrue(isinstance(ht.socket, fake_socket.socket))
         self.stats_httpd.close_httpd()
 
         # dual stack (address is ipv4)
-        socket.has_ipv6 = True
+        fake_socket.has_ipv6 = True
         self.stats_httpd.http_addrs = [ ('127.0.0.1', 8000) ]
         self.stats_httpd.open_httpd()
         for ht in self.stats_httpd.httpd:
-            self.assertTrue(isinstance(ht.socket, socket.socket))
+            self.assertTrue(isinstance(ht.socket, fake_socket.socket))
         self.stats_httpd.close_httpd()
 
         # only-ipv4 single stack
-        socket.has_ipv6 = False
+        fake_socket.has_ipv6 = False
         self.stats_httpd.http_addrs = [ ('127.0.0.1', 8000) ]
         self.stats_httpd.open_httpd()
         for ht in self.stats_httpd.httpd:
-            self.assertTrue(isinstance(ht.socket, socket.socket))
+            self.assertTrue(isinstance(ht.socket, fake_socket.socket))
         self.stats_httpd.close_httpd()
 
         # only-ipv4 single stack (force set ipv6 )
-        socket.has_ipv6 = False
+        fake_socket.has_ipv6 = False
         self.stats_httpd.http_addrs = [ ('::1', 8000) ]
         self.assertRaises(stats_httpd.HttpServerError,
             self.stats_httpd.open_httpd)
@@ -295,13 +297,13 @@ class TestStatsHttpd(unittest.TestCase):
         self.stats_httpd.http_addrs = [ ('localhost', 8000) ]
         self.stats_httpd.open_httpd()
         for ht in self.stats_httpd.httpd:
-            self.assertTrue(isinstance(ht.socket, socket.socket))
+            self.assertTrue(isinstance(ht.socket, fake_socket.socket))
         self.stats_httpd.close_httpd()
 
         self.stats_httpd.http_addrs = [ ('my.host.domain', 8000) ]
         self.stats_httpd.open_httpd()
         for ht in self.stats_httpd.httpd:
-            self.assertTrue(isinstance(ht.socket, socket.socket))
+            self.assertTrue(isinstance(ht.socket, fake_socket.socket))
         self.stats_httpd.close_httpd()
 
         # over flow of port number
@@ -321,11 +323,11 @@ class TestStatsHttpd(unittest.TestCase):
         self.stats_httpd = stats_httpd.StatsHttpd(self.verbose)
         self.stats_httpd.cc_session.verbose = False
         self.assertRaises(
-            select.error, self.stats_httpd.start)
+            fake_select.error, self.stats_httpd.start)
 
     def test_stop(self):
         # success case
-        socket._CLOSED = False
+        fake_socket._CLOSED = False
         self.stats_httpd.stop()
         self.assertFalse(self.stats_httpd.running)
         self.assertIsNone(self.stats_httpd.mccs)
@@ -413,6 +415,8 @@ class TestStatsHttpd(unittest.TestCase):
             imp.reload(stats_httpd)
             os.environ["B10_FROM_SOURCE"] = tmppath
             imp.reload(stats_httpd)
+            stats_httpd.socket = fake_socket
+            stats_httpd.select = fake_select
 
 if __name__ == "__main__":
     unittest.main()
