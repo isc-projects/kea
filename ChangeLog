@@ -1,3 +1,8 @@
+219.    [func]          ocean
+        src/lib: move some dns related code out of asiolink library to
+        asiodns library
+        (Trac #751, git 262ac6c6fc61224d54705ed4c700dadb606fcb1c)
+
 218.	[func]		jinmei
 	src/lib/dns: added support for RP RDATA.
 	(Trac #806, git 4e47d5f6b692c63c907af6681a75024450884a88)
