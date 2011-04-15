@@ -90,7 +90,7 @@ def encode_name(name, absolute=True):
     for l in labels:
         if len(l) > 4 and l[0:4] == 'ptr=':
             # special meta-syntax for compression pointer
-            wire += ' %04x' % (0xc000 | int(l[4:]))
+            wire += '%04x' % (0xc000 | int(l[4:]))
             break
         if absolute or len(l) > 0:
             wire += '%02x' % len(l)
@@ -277,6 +277,34 @@ class TXT:
                                     ' ' if len(wirestring_list[i]) > 0 else '',
                                     wirestring_list[i]))
 
+class RP:
+    '''Implements rendering RP RDATA in the wire format.
+    Configurable parameters are as follows:
+    - rdlen: 16-bit RDATA length.  If omitted, the accurate value is auto
+      calculated and used; if negative, the RDLEN field will be omitted from
+      the output data.
+    - mailbox: The mailbox field.
+    - text: The text field.
+    All of these parameters have the default values and can be omitted.
+    '''
+    rdlen = None                # auto-calculate
+    mailbox = 'root.example.com'
+    text = 'rp-text.example.com'
+    def dump(self, f):
+        mailbox_wire = encode_name(self.mailbox)
+        text_wire = encode_name(self.text)
+        if self.rdlen is None:
+            self.rdlen = (len(mailbox_wire) + len(text_wire)) / 2
+        else:
+            self.rdlen = int(self.rdlen)
+        if self.rdlen >= 0:
+            f.write('\n# RP RDATA (RDLEN=%d)\n' % self.rdlen)
+            f.write('%04x\n' % self.rdlen)
+        else:
+            f.write('\n# RP RDATA (RDLEN omitted)\n')
+        f.write('# MAILBOX=%s TEXT=%s\n' % (self.mailbox, self.text))
+        f.write('%s %s\n' % (mailbox_wire, text_wire))
+
 class NSECBASE:
     '''Implements rendering NSEC/NSEC3 type bitmaps commonly used for
     these RRs.  The NSEC and NSEC3 classes will be inherited from this
@@ -461,8 +489,9 @@ def get_config_param(section):
                     'header' : (DNSHeader, header_xtables),
                     'question' : (DNSQuestion, question_xtables),
                     'edns' : (EDNS, {}), 'soa' : (SOA, {}), 'txt' : (TXT, {}),
-                    'rrsig' : (RRSIG, {}), 'nsec' : (NSEC, {}),
-                    'nsec3' : (NSEC3, {}), 'tsig' : (TSIG, {}) }
+                    'rp' : (RP, {}), 'rrsig' : (RRSIG, {}),
+                    'nsec' : (NSEC, {}), 'nsec3' : (NSEC3, {}),
+                    'tsig' : (TSIG, {}) }
     s = section
     m = re.match('^([^:]+)/\d+$', section)
     if m:

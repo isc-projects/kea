@@ -19,10 +19,11 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <stdlib.h>             // for malloc and free
-#include <xfr/fd_share.h>
+#include "fd_share.h"
 
 namespace isc {
-namespace xfr {
+namespace util {
+namespace io {
 
 namespace {
 // Not all OSes support advanced CMSG macros: CMSG_LEN and CMSG_SPACE.
@@ -86,15 +87,15 @@ recv_fd(const int sock) {
     msghdr.msg_controllen = cmsg_space(sizeof(int));
     msghdr.msg_control = malloc(msghdr.msg_controllen);
     if (msghdr.msg_control == NULL) {
-        return (-1);
+        return (FD_OTHER_ERROR);
     }
 
     if (recvmsg(sock, &msghdr, 0) < 0) {
         free(msghdr.msg_control);
-        return (XFR_FD_RECEIVE_FAIL);
+        return (FD_COMM_ERROR);
     }
     const struct cmsghdr* cmsg = CMSG_FIRSTHDR(&msghdr);
-    int fd = -1;
+    int fd = FD_OTHER_ERROR;
     if (cmsg != NULL && cmsg->cmsg_len == cmsg_len(sizeof(int)) &&
         cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_RIGHTS) {
         fd = *(const int*)CMSG_DATA(cmsg);
@@ -119,7 +120,7 @@ send_fd(const int sock, const int fd) {
     msghdr.msg_controllen = cmsg_space(sizeof(int));
     msghdr.msg_control = malloc(msghdr.msg_controllen);
     if (msghdr.msg_control == NULL) {
-        return (-1);
+        return (FD_OTHER_ERROR);
     }
 
     struct cmsghdr* cmsg = CMSG_FIRSTHDR(&msghdr);
@@ -130,8 +131,9 @@ send_fd(const int sock, const int fd) {
 
     const int ret = sendmsg(sock, &msghdr, 0);
     free(msghdr.msg_control);
-    return (ret >= 0 ? 0 : -1);
+    return (ret >= 0 ? 0 : FD_COMM_ERROR);
 }
 
-} // End for namespace xfr
+} // End for namespace io
+} // End for namespace util
 } // End for namespace isc
