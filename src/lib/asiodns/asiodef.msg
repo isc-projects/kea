@@ -13,7 +13,7 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 $PREFIX ASIODNS_
-$NAMESPACE asiodns
+$NAMESPACE isc::asiodns
 
 FETCHCOMP   upstream fetch to %s(%d) has now completed
 + A debug message, this records the the upstream fetch (a query made by the
