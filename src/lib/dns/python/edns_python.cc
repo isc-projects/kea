@@ -297,12 +297,15 @@ EDNS_getUDPSize(const s_EDNS* const self) {
 
 PyObject*
 EDNS_setUDPSize(s_EDNS* self, PyObject* args) {
-    unsigned int size;
-    if (!PyArg_ParseTuple(args, "I", &size)) {
+    long size;
+    if (!PyArg_ParseTuple(args, "l", &size)) {
+        PyErr_Clear();
+        PyErr_SetString(PyExc_TypeError,
+                        "No valid type in set_udp_size argument");
         return (NULL);
     }
-    if (size > 65535) {
-        PyErr_SetString(PyExc_OverflowError,
+    if (size < 0 || size > 0xffff) {
+        PyErr_SetString(PyExc_ValueError,
                         "UDP size is not an unsigned 16-bit integer");
         return (NULL);
     }

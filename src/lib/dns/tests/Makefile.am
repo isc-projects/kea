@@ -39,6 +39,7 @@ run_unittests_SOURCES += rdata_nsec3_unittest.cc
 run_unittests_SOURCES += rdata_nsecbitmap_unittest.cc
 run_unittests_SOURCES += rdata_nsec3param_unittest.cc
 run_unittests_SOURCES += rdata_rrsig_unittest.cc
+run_unittests_SOURCES += rdata_rp_unittest.cc
 run_unittests_SOURCES += rdata_tsig_unittest.cc
 run_unittests_SOURCES += rrset_unittest.cc rrsetlist_unittest.cc
 run_unittests_SOURCES += question_unittest.cc

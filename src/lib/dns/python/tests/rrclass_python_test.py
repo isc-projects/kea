@@ -32,12 +32,17 @@ class RRClassTest(unittest.TestCase):
         b = bytearray(1)
         b[0] = 123
         self.assertRaises(TypeError, RRClass, b)
-        self.assertRaises(InvalidRRClass, RRClass, 65536)
         self.assertEqual(self.c1, RRClass(1))
         b = bytearray()
         self.c1.to_wire(b)
         self.assertEqual(self.c1, RRClass(b))
-        
+        # Range check.  We need to do this at the binding level, so we need
+        # explicit tests for it.
+        self.assertRaises(ValueError, RRClass, 65536)
+        self.assertRaises(TypeError, RRClass, -1)
+        self.assertEqual(RRClass(65535).get_code(), 65535)
+        self.assertEqual(RRClass(0).get_code(), 0)
+
     def test_rrclass_to_text(self):
         self.assertEqual("IN", self.c1.to_text())
         self.assertEqual("IN", str(self.c1))
