@@ -24,7 +24,7 @@
 #include <dns/buffer.h>
 #include <asiolink/asiolink_utilities.h>
 
-using namespace asiolink;
+using namespace isc::asiolink;
 using namespace isc::dns;
 
 TEST(asioutil, readUint16) {

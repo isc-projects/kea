@@ -27,7 +27,7 @@
 #include <testutils/srv_test.h>
 
 using namespace isc::dns;
-using namespace asiolink;
+using namespace isc::asiolink;
 
 namespace isc {
 namespace testutils {

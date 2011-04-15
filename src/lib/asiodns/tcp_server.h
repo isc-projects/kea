@@ -24,9 +24,12 @@
 
 #include <asiolink/asiolink.h>
 #include <coroutine.h>
+#include "dns_server.h"
+#include "dns_lookup.h"
+#include "dns_answer.h"
 
-
-namespace asiolink {
+namespace isc {
+namespace asiodns {
 
 /// \brief A TCP-specific \c DNSServer object.
 ///
@@ -36,7 +39,7 @@ class TCPServer : public virtual DNSServer, public virtual coroutine {
 public:
     explicit TCPServer(asio::io_service& io_service,
                        const asio::ip::address& addr, const uint16_t port, 
-                       const SimpleCallback* checkin = NULL,
+                       const isc::asiolink::SimpleCallback* checkin = NULL,
                        const DNSLookup* lookup = NULL,
                        const DNSAnswer* answer = NULL);
 
@@ -95,7 +98,7 @@ private:
 
     // \c IOMessage and \c Message objects to be passed to the
     // DNS lookup and answer providers
-    boost::shared_ptr<asiolink::IOMessage> io_message_;
+    boost::shared_ptr<isc::asiolink::IOMessage> io_message_;
     isc::dns::MessagePtr query_message_;
     isc::dns::MessagePtr answer_message_;
 
@@ -108,13 +111,14 @@ private:
     bool done_;
 
     // Callback functions provided by the caller
-    const SimpleCallback* checkin_callback_;
+    const isc::asiolink::SimpleCallback* checkin_callback_;
     const DNSLookup* lookup_callback_;
     const DNSAnswer* answer_callback_;
 
-    boost::shared_ptr<IOEndpoint> peer_;
-    boost::shared_ptr<IOSocket> iosock_;
+    boost::shared_ptr<isc::asiolink::IOEndpoint> peer_;
+    boost::shared_ptr<isc::asiolink::IOSocket> iosock_;
 };
 
-}      // namespace asiolink
+} // namespace asiodns
+} // namespace isc
 #endif // __TCP_SERVER_H

@@ -21,8 +21,8 @@
 
 #include <config.h>
 
-#include <asiolink/io_fetch.h>
 #include <asiolink/io_service.h>
+#include <asiodns/io_fetch.h>
 #include <dns/buffer.h>
 
 #include "command_options.h"
@@ -37,7 +37,7 @@ namespace badpacket {
 /// cycle through combinations of the given options, sending and receiving
 /// messages. For each packet exchange, a summary is written to stdout.
 
-class Scan : public asiolink::IOFetch::Callback {
+class Scan : public isc::asiodns::IOFetch::Callback {
 public:
 
     /// \brief Constructor
@@ -58,7 +58,7 @@ public:
     /// will be called.
     ///
     /// \param result Result of the asynchronous I/O.  Zero implies success.
-    virtual void operator()(asiolink::IOFetch::Result result);
+    virtual void operator()(isc::asiodns::IOFetch::Result result);
 
 private:
     /// \brief Iterate over flags fields options
@@ -187,8 +187,9 @@ private:
 
     // Member variables
 
-    boost::scoped_ptr<asiolink::IOService> service_;///< Service to run the scan
-    asiolink::IOFetch::Result   result_;            ///< Result of the I/O
+    boost::scoped_ptr<isc::asiolink::IOService> service_;
+                                                    ///< Service to run the scan
+    isc::asiodns::IOFetch::Result   result_;        ///< Result of the I/O
 };
 
 } // namespace test

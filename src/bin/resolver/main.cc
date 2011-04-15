@@ -27,6 +27,7 @@
 
 #include <boost/foreach.hpp>
 
+#include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
 
 #include <exceptions/exceptions.h>
@@ -58,7 +59,8 @@ using namespace isc::cc;
 using namespace isc::config;
 using namespace isc::data;
 using isc::log::dlog;
-using namespace asiolink;
+using namespace isc::asiodns;
+using namespace isc::asiolink;
 
 namespace {
 

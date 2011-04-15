@@ -33,7 +33,7 @@
 #include "nsas_test.h"
 
 using namespace isc::nsas;
-using namespace asiolink;
+using namespace isc::asiolink;
 using namespace std;
 using namespace isc::dns;
 

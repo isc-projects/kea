@@ -27,8 +27,8 @@
 #include <asio/error.hpp>
 #include <asiolink/dummy_io_cb.h>
 #include <asiolink/udp_endpoint.h>
-#include <asiolink/udp_server.h>
 #include <asiolink/udp_socket.h>
+#include "udp_server.h"
 
 #include <dns/opcode.h>
 
@@ -38,8 +38,10 @@ using isc::log::dlog;
 
 using namespace std;
 using namespace isc::dns;
+using namespace isc::asiolink;
 
-namespace asiolink {
+namespace isc {
+namespace asiodns {
 
 /*
  * Some of the member variables here are shared_ptrs and some are
@@ -318,4 +320,5 @@ UDPServer::hasAnswer() {
     return (data_->done_);
 }
 
-} // namespace asiolink
+} // namespace asiodns
+} // namespace isc

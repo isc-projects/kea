@@ -27,7 +27,8 @@
 #include <boost/random/variate_generator.hpp>
 
 
-namespace asiolink {
+namespace isc {
+namespace asiodns {
 
 /// This class generates Qids for outgoing queries
 ///
@@ -80,6 +81,7 @@ private:
 };
 
 
-} // namespace asiolink
+} // namespace asiodns
+} // namespace isc
 
 #endif // __QID_GEN_H

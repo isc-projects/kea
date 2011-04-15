@@ -43,6 +43,7 @@
 #include <auth/command.h>
 #include <auth/change_user.h>
 #include <auth/auth_srv.h>
+#include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
 #include <log/dummylog.h>
 
@@ -52,7 +53,8 @@ using namespace isc::cc;
 using namespace isc::config;
 using namespace isc::dns;
 using namespace isc::xfr;
-using namespace asiolink;
+using namespace isc::asiolink;
+using namespace isc::asiodns;
 
 namespace {
 
