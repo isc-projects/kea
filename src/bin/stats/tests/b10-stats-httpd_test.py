@@ -340,6 +340,11 @@ class TestStatsHttpd(unittest.TestCase):
         self.stats_httpd.cc_session._socket._closed = False
 
     def test_open_template(self):
+        # successful conditions
+        self.stats_httpd.open_template(stats_httpd.XML_TEMPLATE_LOCATION)
+        self.stats_httpd.open_template(stats_httpd.XSD_TEMPLATE_LOCATION)
+        self.stats_httpd.open_template(stats_httpd.XSL_TEMPLATE_LOCATION)
+        # unsuccessful condition
         self.assertRaises(
             IOError,
             self.stats_httpd.open_template, '/path/to/foo/bar')
