@@ -1,3 +1,8 @@
+219.	[func]		stephen
+	Added the 'badpacket' program for testing; it sends a set of
+	(potentially) bad packets to a nameserver and prints the responses.
+	(Trac #703, git 3b42967a83f4e15e1b1d07a159a600cb67628039)
+
 218.	[func]		jinmei
 	src/lib/dns: added support for RP RDATA.
 	(Trac #806, git 4e47d5f6b692c63c907af6681a75024450884a88)
