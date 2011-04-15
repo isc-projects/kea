@@ -178,8 +178,16 @@ static PyObject*
 MessageRenderer_setLengthLimit(s_MessageRenderer* self,
                                PyObject* args)
 {
-    unsigned int lengthlimit;
-    if (!PyArg_ParseTuple(args, "I", &lengthlimit)) {
+    long lengthlimit;
+    if (!PyArg_ParseTuple(args, "l", &lengthlimit)) {
+        PyErr_Clear();
+        PyErr_SetString(PyExc_TypeError,
+                        "No valid type in set_length_limit argument");
+        return (NULL);
+    }
+    if (lengthlimit < 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "MessageRenderer length limit out of range");
         return (NULL);
     }
     self->messagerenderer->setLengthLimit(lengthlimit);
@@ -190,8 +198,8 @@ static PyObject*
 MessageRenderer_setCompressMode(s_MessageRenderer* self,
                                PyObject* args)
 {
-    unsigned int mode;
-    if (!PyArg_ParseTuple(args, "I", &mode)) {
+    int mode;
+    if (!PyArg_ParseTuple(args, "i", &mode)) {
         return (NULL);
     }
 
