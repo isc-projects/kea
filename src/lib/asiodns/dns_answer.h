@@ -12,18 +12,18 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ASIOLINK_DNS_LOOKUP_H
-#define __ASIOLINK_DNS_LOOKUP_H 1
+#ifndef __ASIOLINK_DNS_ANSWER_H
+#define __ASIOLINK_DNS_ANSWER_H 1
 
 #include <asiolink/io_message.h>
-#include <asiolink/dns_server.h>
 #include <dns/buffer.h>
 #include <dns/message.h>
 
-namespace asiolink {
+namespace isc {
+namespace asiodns {
 
-/// \brief The \c DNSLookup class is an abstract base class for a DNS
-/// Lookup provider function.
+/// \brief The \c DNSAnswer class is an abstract base class for a DNS
+/// Answer provider function.
 ///
 /// Specific derived class implementations are hidden within the
 /// implementation.  Instances of the derived classes can be called
@@ -31,11 +31,11 @@ namespace asiolink {
 /// instances can then be provided to the \c IOService class
 /// via its constructor.
 ///
-/// A DNS Lookup provider function obtains the data needed to answer
-/// a DNS query (e.g., from authoritative data source, cache, or upstream
-/// query).  After it has run, the OutputBuffer object passed to it
-/// should contain the answer to the query, in an internal representation.
-class DNSLookup {
+/// A DNS Answer provider function takes answer data that has been obtained
+/// from a DNS Lookup provider functon and readies it to be sent to the
+/// client.  After it has run, the OutputBuffer object passed to it should
+/// contain the answer to the query rendered into wire format.
+class DNSAnswer {
     ///
     /// \name Constructors and Destructor
     ///
@@ -43,17 +43,17 @@ class DNSLookup {
     /// intentionally defined as private, making this class non-copyable.
     //@{
 private:
-    DNSLookup(const DNSLookup& source);
-    DNSLookup& operator=(const DNSLookup& source);
+    DNSAnswer(const DNSAnswer& source);
+    DNSAnswer& operator=(const DNSAnswer& source);
 protected:
     /// \brief The default constructor.
     ///
     /// This is intentionally defined as \c protected as this base class
     /// should never be instantiated (except as part of a derived class).
-    DNSLookup() : self_(this) {}
+    DNSAnswer() {}
 public:
     /// \brief The destructor
-    virtual ~DNSLookup() {}
+    virtual ~DNSAnswer() {}
     //@}
     /// \brief The function operator
     ///
@@ -62,22 +62,16 @@ public:
     /// class.
     ///
     /// \param io_message The event message to handle
-    /// \param message The DNS MessagePtr that needs handling
-    /// \param answer_message The final answer will be constructed in
-    ///                       this MessagePtr
-    /// \param buffer The final answer is put here
-    /// \param server DNSServer object to use
-    virtual void operator()(const IOMessage& io_message,
-                            isc::dns::MessagePtr message,
+    /// \param query_message The DNS MessagePtr of the original query
+    /// \param answer_message The DNS MessagePtr of the answer we are
+    /// building
+    /// \param buffer Intermediate data results are put here
+    virtual void operator()(const asiolink::IOMessage& io_message,
+                            isc::dns::MessagePtr query_message,
                             isc::dns::MessagePtr answer_message,
-                            isc::dns::OutputBufferPtr buffer,
-                            DNSServer* server) const
-    {
-        (*self_)(io_message, message, answer_message, buffer, server);
-    }
-private:
-    DNSLookup* self_;
+                            isc::dns::OutputBufferPtr buffer) const = 0;
 };
 
-}      // namespace asiolink
-#endif // __ASIOLINK_DNS_LOOKUP_H
+}      // namespace asiodns
+}      // namespace isc
+#endif // __ASIOLINK_DNS_ANSWER_H

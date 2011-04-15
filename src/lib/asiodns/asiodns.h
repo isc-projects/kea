@@ -12,21 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
-#include <gtest/gtest.h>
+#ifndef __ASIODNS_H
+#define __ASIODNS_H 1
 
-#include <netinet/in.h>
+#include <asiodns/dns_service.h>
+#include <asiodns/dns_server.h>
+#include <asiodns/dns_lookup.h>
+#include <asiodns/dns_answer.h>
 
-#include <asio.hpp>
-#include <asiolink/io_socket.h>
-
-using namespace isc::asiolink;
-
-TEST(IOSocketTest, dummySockets) {
-    EXPECT_EQ(IPPROTO_UDP, IOSocket::getDummyUDPSocket().getProtocol());
-    EXPECT_EQ(IPPROTO_TCP, IOSocket::getDummyTCPSocket().getProtocol());
-    EXPECT_EQ(-1, IOSocket::getDummyUDPSocket().getNative());
-    EXPECT_EQ(-1, IOSocket::getDummyTCPSocket().getNative());
-}
-
-
+#endif // __ASIODNS_H

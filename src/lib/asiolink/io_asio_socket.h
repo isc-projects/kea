@@ -31,7 +31,7 @@
 #include <asiolink/io_error.h>
 #include <asiolink/io_socket.h>
 
-
+namespace isc {
 namespace asiolink {
 
 /// \brief Socket not open
@@ -395,5 +395,6 @@ private:
 };
 
 } // namespace asiolink
+} // namespace isc
 
 #endif // __IO_ASIO_SOCKET_H

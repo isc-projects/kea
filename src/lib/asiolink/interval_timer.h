@@ -19,6 +19,7 @@
 
 #include <asiolink/io_service.h>
 
+namespace isc {
 namespace asiolink {
 
 struct IntervalTimerImpl;
@@ -129,5 +130,6 @@ private:
     IntervalTimerImpl* impl_;
 };
 
-}      // namespace asiolink
+} // namespace asiolink
+} // namespace isc
 #endif // __ASIOLINK_INTERVAL_TIMER_H

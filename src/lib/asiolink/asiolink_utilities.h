@@ -17,6 +17,7 @@
 
 #include <cstddef>
 
+namespace isc {
 namespace asiolink {
 
 /// \brief Read Unsigned 16-Bit Integer from Buffer
@@ -57,5 +58,6 @@ writeUint16(uint16_t value, void* buffer) {
 }
 
 } // namespace asiolink
+} // namespace isc
 
 #endif // __ASIOLINK_UTILITIES_H

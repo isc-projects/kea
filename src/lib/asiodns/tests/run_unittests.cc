@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,21 +12,17 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
 #include <gtest/gtest.h>
 
-#include <netinet/in.h>
+#include <log/root_logger_name.h>
+#include <dns/tests/unittest_util.h>
 
-#include <asio.hpp>
-#include <asiolink/io_socket.h>
+int
+main(int argc, char* argv[])
+{
+    ::testing::InitGoogleTest(&argc, argv);         // Initialize Google test
+    isc::log::setRootLoggerName("unittest");        // Set a root logger name
+    isc::UnitTestUtil::addDataPath(TEST_DATA_DIR);  // Add location of test data
 
-using namespace isc::asiolink;
-
-TEST(IOSocketTest, dummySockets) {
-    EXPECT_EQ(IPPROTO_UDP, IOSocket::getDummyUDPSocket().getProtocol());
-    EXPECT_EQ(IPPROTO_TCP, IOSocket::getDummyTCPSocket().getProtocol());
-    EXPECT_EQ(-1, IOSocket::getDummyUDPSocket().getNative());
-    EXPECT_EQ(-1, IOSocket::getDummyTCPSocket().getNative());
+    return (RUN_ALL_TESTS());
 }
-
-

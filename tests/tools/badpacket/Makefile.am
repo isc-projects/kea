@@ -20,8 +20,9 @@ badpacket_SOURCES += option_info.cc option_info.h
 badpacket_SOURCES += scan.cc scan.h
 badpacket_SOURCES += version.h
 
-badpacket_LDADD  = $(top_builddir)/src/lib/asiolink/libasiolink.la
+badpacket_LDADD  = $(top_builddir)/src/lib/asiodns/libasiodns.la
 badpacket_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
+badpacket_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 badpacket_LDADD += $(top_builddir)/src/lib/log/liblog.la
 badpacket_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 
