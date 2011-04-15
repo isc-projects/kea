@@ -471,11 +471,11 @@ if __name__ == "__main__":
         stats_httpd = StatsHttpd(verbose=options.verbose)
         stats_httpd.start()
     except OptionValueError:
-        sys.stderr.write("[b10-stats-httpd] Error parsing options\n")
+        sys.exit("[b10-stats-httpd] Error parsing options")
     except isc.cc.session.SessionError as se:
-        sys.stderr.write("[b10-stats-httpd] Error creating module, "
-                         + "is the command channel daemon running?\n")
+        sys.exit("[b10-stats-httpd] Error creating module, "
+                 + "is the command channel daemon running?")
     except HttpServerError as hse:
-        sys.stderr.write("[b10-stats-httpd] %s\n" % hse)
+        sys.exit("[b10-stats-httpd] %s" % hse)
     except KeyboardInterrupt as kie:
-        sys.stderr.write("[b10-stats-httpd] Interrupted, exiting\n")
+        sys.exit("[b10-stats-httpd] Interrupted, exiting\n")
