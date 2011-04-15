@@ -57,19 +57,19 @@ RecursiveQuery::RecursiveQuery(DNSService& dns_service,
     const std::vector<std::pair<std::string, uint16_t> >& upstream,
     const std::vector<std::pair<std::string, uint16_t> >& upstream_root,
     int query_timeout, int client_timeout, int lookup_timeout,
-    unsigned retries) :
+    unsigned retries)
+    :
     dns_service_(dns_service),
     nsas_(nsas), cache_(cache),
     upstream_(new AddressVector(upstream)),
     upstream_root_(new AddressVector(upstream_root)),
     test_server_("", 0),
     query_timeout_(query_timeout), client_timeout_(client_timeout),
-    lookup_timeout_(lookup_timeout), retries_(retries)
+    lookup_timeout_(lookup_timeout), retries_(retries), rtt_recorder_()
 {
 }
 
 // Set the test server - only used for unit testing.
-
 void
 RecursiveQuery::setTestServer(const std::string& address, uint16_t port) {
     dlog("Setting test server to " + address + "(" +
@@ -78,6 +78,11 @@ RecursiveQuery::setTestServer(const std::string& address, uint16_t port) {
     test_server_.second = port;
 }
 
+// Set the RTT recorder - only used for testing
+void
+RecursiveQuery::setRttRecorder(boost::shared_ptr<RttRecorder>& recorder) {
+    rtt_recorder_ = recorder;
+}
 
 namespace {
 
@@ -222,6 +227,10 @@ private:
     // Note that the NSAS callback is *not* seen as an outstanding
     // event; we can cancel the NSAS callback safely.
     size_t outstanding_events_;
+
+    // RTT Recorder.  Used for testing, the RTTs of queries are
+    // sent to this object as well as being used to update the NSAS.
+    boost::shared_ptr<RttRecorder> rtt_recorder_;
 
     // perform a single lookup; first we check the cache to see
     // if we have a response for our query stored already. if
@@ -481,7 +490,9 @@ public:
         int query_timeout, int client_timeout, int lookup_timeout,
         unsigned retries,
         isc::nsas::NameserverAddressStore& nsas,
-        isc::cache::ResolverCache& cache) :
+        isc::cache::ResolverCache& cache,
+        boost::shared_ptr<RttRecorder>& recorder)
+        :
         io_(io),
         question_(question),
         answer_message_(answer_message),
@@ -502,7 +513,8 @@ public:
         cur_zone_("."),
         nsas_callback_(new ResolverNSASCallback(this)),
         nsas_callback_out_(false),
-        outstanding_events_(0)
+        outstanding_events_(0),
+        rtt_recorder_(recorder)
     {
         // Setup the timer to stop trying (lookup_timeout)
         if (lookup_timeout >= 0) {
@@ -619,9 +631,11 @@ public:
                 rtt = 1000 * (cur_time.tv_sec - current_ns_qsent_time.tv_sec);
                 rtt += (cur_time.tv_usec - current_ns_qsent_time.tv_usec) / 1000;
             }
-
             dlog("RTT: " + boost::lexical_cast<std::string>(rtt));
             current_ns_address.updateRTT(rtt);
+            if (rtt_recorder_) {
+                rtt_recorder_->addRtt(rtt);
+            }
 
             try {
                 Message incoming(Message::PARSE);
@@ -739,7 +753,8 @@ RecursiveQuery::resolve(const QuestionPtr& question,
             new RunningQuery(io, *question, answer_message, upstream_,
                              test_server_, buffer, callback,
                              query_timeout_, client_timeout_,
-                             lookup_timeout_, retries_, nsas_, cache_);
+                             lookup_timeout_, retries_, nsas_,
+                             cache_, rtt_recorder_);
         }
     }
 }
@@ -792,7 +807,7 @@ RecursiveQuery::resolve(const Question& question,
             new RunningQuery(io, question, answer_message, upstream_,
                              test_server_, buffer, crs, query_timeout_,
                              client_timeout_, lookup_timeout_, retries_,
-                             nsas_, cache_);
+                             nsas_, cache_, rtt_recorder_);
         }
     }
 }

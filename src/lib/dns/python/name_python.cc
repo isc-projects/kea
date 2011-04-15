@@ -321,14 +321,20 @@ Name_init(s_Name* self, PyObject* args) {
     PyObject* bytes_obj;
     const char* bytes;
     Py_ssize_t len;
-    unsigned int position = 0;
+    long position = 0;
 
     // It was not a string (see comment above), so try bytes, and
     // create with buffer object
-    if (PyArg_ParseTuple(args, "O|IO!", &bytes_obj, &position,
+    if (PyArg_ParseTuple(args, "O|lO!", &bytes_obj, &position,
                          &PyBool_Type, &downcase) &&
                          PyObject_AsCharBuffer(bytes_obj, &bytes, &len) != -1) {
         try {
+            if (position < 0) {
+                // Throw IndexError here since name index should be unsigned
+                PyErr_SetString(PyExc_IndexError,
+                                "Name index shouldn't be negative");
+                return (-1);
+            }
             InputBuffer buffer(bytes, len);
 
             buffer.setPosition(position);
@@ -363,10 +369,17 @@ Name_destroy(s_Name* self) {
 
 static PyObject*
 Name_at(s_Name* self, PyObject* args) {
-    unsigned int pos;
-    if (!PyArg_ParseTuple(args, "I", &pos)) {
+    int pos;
+    if (!PyArg_ParseTuple(args, "i", &pos)) {
         return (NULL);
     }
+    if (pos < 0) {
+        // Throw IndexError here since name index should be unsigned
+        PyErr_SetString(PyExc_IndexError,
+                        "name index shouldn't be negative");
+        return (NULL);
+    }
+
     try {
         return (Py_BuildValue("I", self->name->at(pos)));
     } catch (const isc::OutOfRange&) {
@@ -405,10 +418,10 @@ static PyObject*
 Name_toWire(s_Name* self, PyObject* args) {
     PyObject* bytes;
     s_MessageRenderer* mr;
-    
+
     if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
         PyObject* bytes_o = bytes;
-        
+
         OutputBuffer buffer(Name::MAX_WIRE);
         self->name->toWire(buffer);
         PyObject* name_bytes = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()), buffer.getLength());
@@ -457,12 +470,18 @@ Name_equals(s_Name* self, PyObject* args) {
         Py_RETURN_FALSE;
 }
 
-static PyObject* 
+static PyObject*
 Name_split(s_Name* self, PyObject* args) {
-    unsigned int first, n;
+    int first, n;
     s_Name* ret = NULL;
-    
-    if (PyArg_ParseTuple(args, "II", &first, &n)) {
+
+    if (PyArg_ParseTuple(args, "ii", &first, &n)) {
+        if (first < 0 || n < 0) {
+            // Throw IndexError here since name index should be unsigned
+            PyErr_SetString(PyExc_IndexError,
+                            "name index shouldn't be negative");
+            return (NULL);
+        }
         ret = PyObject_New(s_Name, &name_type);
         if (ret != NULL) {
             ret->name = NULL;
@@ -477,7 +496,14 @@ Name_split(s_Name* self, PyObject* args) {
                 return (NULL);
             }
         }
-    } else if (PyArg_ParseTuple(args, "I", &n)) {
+    } else if (PyArg_ParseTuple(args, "i", &n)) {
+        PyErr_Clear();
+        if (n < 0) {
+            // Throw IndexError here since name index should be unsigned
+            PyErr_SetString(PyExc_IndexError,
+                            "name index shouldn't be negative");
+            return (NULL);
+        }
         ret = PyObject_New(s_Name, &name_type);
         if (ret != NULL) {
             ret->name = NULL;
@@ -493,6 +519,10 @@ Name_split(s_Name* self, PyObject* args) {
             }
         }
     }
+
+    PyErr_Clear();
+    PyErr_SetString(PyExc_TypeError,
+                    "No valid type in split argument");
     return (ret);
 }
 #include <iostream>
@@ -502,7 +532,7 @@ Name_split(s_Name* self, PyObject* args) {
 // It is translated to a function that gets 3 arguments, an object,
 // an object to compare to, and an operator.
 //
-static PyObject* 
+static PyObject*
 Name_richcmp(s_Name* self, s_Name* other, int op) {
     bool c;
 

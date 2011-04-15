@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,21 +12,25 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <boost/python.hpp>
-#include <boost/python/class.hpp>
-#include <boost/python/module.hpp>
-#include <boost/python/def.hpp>
-#include <boost/python/exception_translator.hpp>
-#include <boost/python/return_internal_reference.hpp>
-#include <boost/python/copy_const_reference.hpp>
-#include <boost/shared_ptr.hpp>
+#include <auth/common.h>
+#include <auth/spec_config.h>
+#include <stdlib.h>
 
-#include <xfr/fd_share.h>
+using std::string;
 
-using namespace isc::xfr;
-using namespace boost::python;
-
-BOOST_PYTHON_MODULE(bind10_xfr) {
-    def("recv_fd", &recv_fd);
-    def("send_fd", &send_fd);
+string getXfroutSocketPath() {
+    if (getenv("B10_FROM_BUILD") != NULL) {
+        if (getenv("B10_FROM_SOURCE_LOCALSTATEDIR")) {
+            return (string(getenv("B10_FROM_SOURCE_LOCALSTATEDIR")) +
+                    "/auth_xfrout_conn");
+        } else {
+            return (string(getenv("B10_FROM_BUILD")) + "/auth_xfrout_conn");
+        }
+    } else {
+        if (getenv("BIND10_XFROUT_SOCKET_FILE")) {
+            return (getenv("BIND10_XFROUT_SOCKET_FILE"));
+        } else {
+            return (UNIX_SOCKET_FILE);
+        }
+    }
 }

@@ -21,6 +21,7 @@ import os
 from isc.cc.session import *
 from pydnspp import *
 from xfrout import *
+import xfrout
 
 # our fake socket, where we can read and insert messages
 class MySocket():
@@ -432,6 +433,37 @@ class TestUnixSockServer(unittest.TestCase):
 
         sys.stdout = old_stdout
         os.rmdir(dir_name)
+
+class TestInitialization(unittest.TestCase):
+    def setEnv(self, name, value):
+        if value is None:
+            if name in os.environ:
+                del os.environ[name]
+        else:
+            os.environ[name] = value
+
+    def setUp(self):
+        self._oldSocket = os.getenv("BIND10_XFROUT_SOCKET_FILE")
+        self._oldFromBuild = os.getenv("B10_FROM_BUILD")
+
+    def tearDown(self):
+        self.setEnv("B10_FROM_BUILD", self._oldFromBuild)
+        self.setEnv("BIND10_XFROUT_SOCKET_FILE", self._oldSocket)
+        # Make sure even the computed values are back
+        xfrout.init_paths()
+
+    def testNoEnv(self):
+        self.setEnv("B10_FROM_BUILD", None)
+        self.setEnv("BIND10_XFROUT_SOCKET_FILE", None)
+        xfrout.init_paths()
+        self.assertEqual(xfrout.UNIX_SOCKET_FILE,
+                         "@@LOCALSTATEDIR@@/auth_xfrout_conn")
+
+    def testProvidedSocket(self):
+        self.setEnv("B10_FROM_BUILD", None)
+        self.setEnv("BIND10_XFROUT_SOCKET_FILE", "The/Socket/File")
+        xfrout.init_paths()
+        self.assertEqual(xfrout.UNIX_SOCKET_FILE, "The/Socket/File")
 
 if __name__== "__main__":
     unittest.main()

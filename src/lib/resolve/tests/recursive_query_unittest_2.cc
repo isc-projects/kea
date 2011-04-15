@@ -17,6 +17,7 @@
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include <gtest/gtest.h>
 #include <boost/bind.hpp>
@@ -649,12 +650,16 @@ TEST_F(RecursiveQueryTest2, Resolve) {
                           boost::bind(&RecursiveQueryTest2::tcpAcceptHandler,
                                       this, _1, 0));
 
-    // Set up the RecursiveQuery object.
+    // Set up the RecursiveQuery object. We will also test that it correctly records
+    // RTT times by setting up a RTT recorder object as well.
     std::vector<std::pair<std::string, uint16_t> > upstream;         // Empty
     std::vector<std::pair<std::string, uint16_t> > upstream_root;    // Empty
     RecursiveQuery query(dns_service_, *nsas_, cache_,
                          upstream, upstream_root);
     query.setTestServer(TEST_ADDRESS, TEST_PORT);
+
+    boost::shared_ptr<RttRecorder> recorder(new RttRecorder());
+    query.setRttRecorder(recorder);
 
     // Set up callback to receive notification that the query has completed.
     isc::resolve::ResolverInterface::CallbackPtr
@@ -672,6 +677,16 @@ TEST_F(RecursiveQueryTest2, Resolve) {
     ResolverCallback* rc = static_cast<ResolverCallback*>(resolver_callback.get());
     EXPECT_TRUE(rc->getRun());
     EXPECT_TRUE(rc->getStatus());
+
+    // Finally, check that all the RTTs were "reasonable" (defined here as
+    // being below 2 seconds).  This is an explicit check to test that the
+    // variables in the RTT calculation are at least being initialized; if they
+    // weren't, we would expect some absurdly high answers.
+    vector<uint32_t> rtt = recorder->getRtt();
+    EXPECT_GT(rtt.size(), 0);
+    for (int i = 0; i < rtt.size(); ++i) {
+        EXPECT_LT(rtt[i], 2000);
+    }
 }
 
 } // namespace asiolink
