@@ -79,18 +79,8 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
             elif self.path == XSL_URL_PATH:
                 body = self.server.xsl_handler()
             else:
-                if 'Host' in self.headers.keys():
-                    # redirect to XML URL
-                    self.send_response(302)
-                    self.send_header(
-                        "Location",
-                        "http://" + self.headers.get('Host') + XML_URL_PATH)
-                    self.end_headers()
-                    return None
-                else:
-                    # Couldn't find HOST
-                    self.send_error(404)
-                    return None
+                self.send_error(404)
+                return None
         except StatsHttpdError as err:
             self.send_error(500)
             if self.server.verbose:
