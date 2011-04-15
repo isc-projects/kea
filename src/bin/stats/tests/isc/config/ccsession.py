@@ -93,12 +93,12 @@ class ConfigData:
     def __init__(self, specification):
         self.specification = specification
 
-    def get_default_value(self, identifier):
+    def get_value(self, identifier):
         """Returns a tuple where the first item is the value at the
            given identifier, and the second item is a bool which is
            true if the value is an unset default. Raises an
            DataNotFoundError if the identifier is bad"""
-        def _get_default_value(config_map):
+        def _get_value(config_map):
                 if 'item_default' in config_map:
                     return config_map['item_default'], False
                 elif 'item_type' in config_map:
@@ -111,16 +111,16 @@ class ConfigData:
                     elif config_map['item_type'] in set(['float', 'double', 'real']):
                         return float(), True
                     elif config_map['item_type'] in set(['list', 'array']):
-                        return [ _get_default_value(conf)
+                        return [ _get_value(conf)
                                  for conf in spec['list_item_spec'] ], True
                     elif config_map['item_type'] in set(['map', 'object']):
                         return dict(
-                            [ (conf['item_name'], _get_default_value(conf))
+                            [ (conf['item_name'], _get_value(conf))
                               for conf in config_map['map_item_spec'] ]), True
                 return None, True
         for config_map in self.get_module_spec().get_config_spec():
             if config_map['item_name'] == identifier:
-                return _get_default_value(config_map)
+                return _get_value(config_map)
         raise DataNotFoundError("item_name %s is not found in the specfile" % identifier)
 
     def get_module_spec(self):
