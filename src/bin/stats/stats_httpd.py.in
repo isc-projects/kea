@@ -195,7 +195,7 @@ class StatsHttpd:
             self.config = DEFAULT_CONFIG
             self.config.update(
                 dict([
-                        (itm['item_name'], self.mccs.get_default_value(itm['item_name'])[0])
+                        (itm['item_name'], self.mccs.get_value(itm['item_name'])[0])
                         for itm in self.mccs.get_module_spec().get_config_spec()
                         ])
                 )
