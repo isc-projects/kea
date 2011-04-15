@@ -435,7 +435,6 @@ class StatsHttpd:
             elem.text = v
             xml_list.append(
                 xml.etree.ElementTree.tostring(elem))
-        assert len(xml_list) > 0
         xml_string = "".join(xml_list)
         self.xml_body = self.open_template(XML_TEMPLATE_LOCATION).substitute(
             xml_string=xml_string,
