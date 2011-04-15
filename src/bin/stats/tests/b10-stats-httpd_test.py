@@ -406,10 +406,7 @@ class TestStatsHttpd(unittest.TestCase):
             )
         self.assertEqual(ret, 1)
 
-    def test_no_buildpath(self):
-        """
-        test for no "B10_FROM_SOURCE"
-        """
+    def test_for_without_B10_FROM_SOURCE(self):
         if "B10_FROM_SOURCE" in os.environ:
             tmppath = os.environ["B10_FROM_SOURCE"]
             os.environ.pop("B10_FROM_SOURCE")
