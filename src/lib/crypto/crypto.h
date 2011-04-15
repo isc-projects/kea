@@ -66,7 +66,7 @@ public:
     /// Notes: if the key is longer than the block size of its
     /// algorithm, the constructor will run it through the hash
     /// algorithm, and use the digest as a key for this HMAC operation
-    /// 
+    ///
     /// \param key The key to use
     explicit HMAC(const isc::dns::TSIGKey& key);
 
