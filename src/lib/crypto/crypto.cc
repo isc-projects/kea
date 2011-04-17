@@ -35,15 +35,20 @@ using namespace isc::dns;
 namespace {
 Botan::HashFunction*
 getHash(const Name& hash_name) {
-    if (hash_name == TSIGKey::HMACMD5_NAME()) {
-        return (Botan::get_hash("MD5"));
-    } else if (hash_name == TSIGKey::HMACSHA1_NAME()) {
-        return (Botan::get_hash("SHA-1"));
-    } else if (hash_name == TSIGKey::HMACSHA256_NAME()) {
-        return (Botan::get_hash("SHA-256"));
-    } else {
+    try {
+        if (hash_name == TSIGKey::HMACMD5_NAME()) {
+            return (Botan::get_hash("MD5"));
+        } else if (hash_name == TSIGKey::HMACSHA1_NAME()) {
+            return (Botan::get_hash("SHA-1"));
+        } else if (hash_name == TSIGKey::HMACSHA256_NAME()) {
+            return (Botan::get_hash("SHA-256"));
+        } else {
+            isc_throw(isc::crypto::UnsupportedAlgorithm,
+                      "Unknown Hash type " + hash_name.toText());
+        }
+    } catch (const Botan::Algorithm_Not_Found) {
         isc_throw(isc::crypto::UnsupportedAlgorithm,
-                  "Unknown Hash type " + hash_name.toText());
+                  "Algorithm not supported by boost: " + hash_name.toText());
     }
 }
 
@@ -77,6 +82,7 @@ public:
                                key.getSecretLength());
             }
         } catch (const Botan::Invalid_Key_Length& ikl) {
+            delete hmac_;
             isc_throw(BadKey, ikl.what());
         }
     }
@@ -88,7 +94,7 @@ public:
         hmac_->update(static_cast<const Botan::byte*>(data), len);
     }
 
-    void sign(isc::dns::OutputBuffer& result) const {
+    void sign(isc::dns::OutputBuffer& result) {
         // And generate the mac
         Botan::SecureVector<Botan::byte> b_result(hmac_->final());
 
@@ -96,7 +102,7 @@ public:
         result.writeData(b_result.begin(), b_result.size());
     }
 
-    bool verify(const void* sig, const size_t len) const {
+    bool verify(const void* sig, const size_t len) {
         return (hmac_->verify_mac(static_cast<const Botan::byte*>(sig), len));
     }
 
@@ -118,12 +124,12 @@ HMAC::update(const void* data, const size_t len) {
 }
 
 void
-HMAC::sign(isc::dns::OutputBuffer& result) const {
+HMAC::sign(isc::dns::OutputBuffer& result) {
     impl_->sign(result);
 }
 
 bool
-HMAC::verify(const void* sig, const size_t len) const {
+HMAC::verify(const void* sig, const size_t len) {
     return (impl_->verify(sig, len));
 }
 

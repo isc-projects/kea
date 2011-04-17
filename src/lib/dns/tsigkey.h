@@ -97,12 +97,16 @@ public:
     /// Where <name> is a domain name for the key, <secret> is a
     /// base64 representation of the key secret, and the optional
     /// algorithm is an algorithm identifier as specified in RFC4635
+    /// The default algorithm is hmac-md5.sig-alg.reg.int.
     ///
-    /// Raises an InvalidParameter exception if the input string is
+    /// Since ':' is used as a separator here, it is not possible to
+    /// use this constructor to create keys with a ':' character in
+    /// their name.
+    ///
+    /// \exception InvalidParameter exception if the input string is
     /// invalid.
     ///
     /// \param str The string to make a TSIGKey from
-    /// \return The TSIGKey build from the string
     TSIGKey(const std::string& str);
 
     /// \brief The copy constructor.

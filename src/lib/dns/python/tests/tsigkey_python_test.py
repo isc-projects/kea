@@ -53,6 +53,19 @@ class TSIGKeyTest(unittest.TestCase):
         self.assertEqual('test.example.:CwsLCwsLCwsLCwsLCwsLCw==:hmac-md5.sig-alg.reg.int.',
                          k1.to_text())
 
+        self.assertRaises(InvalidParameter, TSIGKey,
+                          'test.example:CwsLCwsLCwsLCwsLCwsLCw==:unsupported')
+        self.assertRaises(InvalidParameter, TSIGKey,
+                          '::')
+        self.assertRaises(InvalidParameter, TSIGKey,
+                          'test.example:')
+        self.assertRaises(InvalidParameter, TSIGKey,
+                          'test.example:%bad_base_64%')
+        self.assertRaises(InvalidParameter, TSIGKey,
+                          'test.example:CwsLCwsLCwsLCwsLCwsLCw==:')
+        self.assertRaises(InvalidParameter, TSIGKey,
+                          'test.:example:CwsLCwsLCwsLCwsLCwsLCw==')
+
 class TSIGKeyRingTest(unittest.TestCase):
     key_name = Name('example.com')
     secret = b'someRandomData'
