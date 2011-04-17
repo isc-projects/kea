@@ -83,13 +83,6 @@ TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
 
         std::string secret_str = str.substr(pos + 1, pos2 - pos - 1);
 
-        vector<uint8_t> secret;
-        decodeBase64(secret_str, secret);
-        unsigned char secret_b[secret.size()];
-        for (size_t i=0; i < secret.size(); ++i) {
-            secret_b[i] = secret[i];
-        }
-
         if (algo_name != HMACMD5_NAME() &&
             algo_name != HMACSHA1_NAME() &&
             algo_name != HMACSHA256_NAME()) {
@@ -97,7 +90,10 @@ TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
                       algo_name);
         }
 
-        impl_ = new TSIGKeyImpl(key_name, algo_name, secret_b,
+        vector<uint8_t> secret;
+        decodeBase64(secret_str, secret);
+
+        impl_ = new TSIGKeyImpl(key_name, algo_name, &secret[0],
                                 secret.size());
     } catch (const Exception& e) {
         // 'reduce' the several types of exceptions name parsing and
@@ -149,11 +145,9 @@ TSIGKey::getSecretLength() const {
 
 std::string
 TSIGKey::toText() const {
-    const uint8_t* secret_b = static_cast<const uint8_t*>(getSecret());
-    vector<uint8_t> secret_v;
-    for (size_t i=0; i < getSecretLength(); ++i) {
-        secret_v.push_back(secret_b[i]);
-    }
+    const vector<uint8_t> secret_v(static_cast<const uint8_t*>(getSecret()),
+                                   static_cast<const uint8_t*>(getSecret()) +
+                                   getSecretLength());
     std::string secret_str = encodeBase64(secret_v);
 
     return (getKeyName().toText() + ":" + secret_str + ":" +

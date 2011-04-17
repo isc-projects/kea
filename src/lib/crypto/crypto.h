@@ -17,6 +17,8 @@
 #include <dns/tsigkey.h>
 #include <exceptions/exceptions.h>
 
+#include <boost/noncopyable.hpp>
+
 #ifndef _ISC_CRYPTO_H
 #define _ISC_CRYPTO_H
 
@@ -54,14 +56,14 @@ class HMACImpl;
 ///
 /// This class is used to create and verify HMAC signatures
 ///
-class HMAC {
+class HMAC : public boost::noncopyable {
 public:
     /// \brief Constructor from a key
     ///
-    /// Raises an UnsupportedAlgorithmException if the given key
+    /// \exception UnsupportedAlgorithmException if the given key
     /// is for an algorithm that is not supported by the underlying
     /// library
-    /// Raises an InvalidKeyLength if the given key has a bad length
+    /// \exception InvalidKeyLength if the given key has a bad length
     ///
     /// Notes: if the key is longer than the block size of its
     /// algorithm, the constructor will run it through the hash
@@ -84,14 +86,14 @@ public:
     /// The result will be appended to the given outputbuffer
     ///
     /// \param result The OutputBuffer to append the result to
-    void sign(isc::dns::OutputBuffer& result) const;
+    void sign(isc::dns::OutputBuffer& result);
 
     /// \brief Verify an existing signature
     ///
     /// \param sig The signature to verify
     /// \param len The length of the sig
     /// \return true if the signature is correct, false otherwise
-    bool verify(const void* sig, size_t len) const;
+    bool verify(const void* sig, size_t len);
 
 private:
     HMACImpl* impl_;
@@ -104,10 +106,10 @@ private:
 /// creating an HMAC object, feeding it the data, and calculating the
 /// resulting signature.
 ///
-/// Raises an UnsupportedAlgorithm if we do not support the given
-/// algorithm. Raises a BadKey exception if the underlying library
-/// cannot handle the given TSIGKey (for instance if it has a bad
-/// length).
+/// \exception UnsupportedAlgorithm if we do not support the given
+/// algorithm.
+/// \exception BadKey if the underlying library cannot handle the
+/// given TSIGKey (for instance if it has a bad length).
 ///
 /// \param data The data to sign
 /// \param data_len The length of the data
@@ -125,10 +127,10 @@ void signHMAC(const void* data,
 /// creating an HMAC object, feeding it the data, and checking the
 /// resulting signature.
 ///
-/// Raises an UnsupportedAlgorithm if we do not support the given
-/// algorithm. Raises a BadKey exception if the underlying library
-/// cannot handle the given TSIGKey (for instance if it has a bad
-/// length).
+/// \exception UnsupportedAlgorithm if we do not support the given
+/// algorithm.
+/// \exception BadKey exception if the underlying library cannot
+/// handle the given TSIGKey (for instance if it has a bad length).
 ///
 /// \param data The data to verify
 /// \param data_len The length of the data

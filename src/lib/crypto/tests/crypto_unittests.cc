@@ -25,16 +25,18 @@ using namespace isc::crypto;
 
 namespace {
     void checkBuffer(const OutputBuffer& buf, uint8_t *data, size_t len) {
-        ASSERT_EQ(buf.getLength(), len);
+        ASSERT_EQ(len, buf.getLength());
         const uint8_t* buf_d = static_cast<const uint8_t*>(buf.getData());
         for (size_t i = 0; i < len; ++i) {
-            ASSERT_EQ(buf_d[i], data[i]);
+            ASSERT_EQ(data[i], buf_d[i]);
         }
     }
 
     // Sign and verify with the convenience functions
-    void doHMACTestConv(std::string data, std::string key_str,
-                        uint8_t* expected_hmac, size_t hmac_len) {
+    void doHMACTestConv(const std::string& data,
+                        const std::string& key_str,
+                        uint8_t* expected_hmac,
+                        size_t hmac_len) {
         OutputBuffer data_buf(data.size());
         data_buf.writeData(data.c_str(), data.size());
         OutputBuffer hmac_sig(1);
@@ -62,8 +64,10 @@ namespace {
     }
 
     // Sign and verify with an instantiation of an HMAC object
-    void doHMACTestDirect(std::string data, std::string key_str,
-                          uint8_t* expected_hmac, size_t hmac_len) {
+    void doHMACTestDirect(const std::string& data,
+                          const std::string& key_str,
+                          uint8_t* expected_hmac,
+                          size_t hmac_len) {
         OutputBuffer data_buf(data.size());
         data_buf.writeData(data.c_str(), data.size());
         OutputBuffer hmac_sig(1);
@@ -91,8 +95,10 @@ namespace {
                                         hmac_sig.getLength()));
     }
 
-    void doHMACTest(std::string data, std::string key_str,
-                    uint8_t* expected_hmac, size_t hmac_len) {
+    void doHMACTest(const std::string& data,
+                    const std::string& key_str,
+                    uint8_t* expected_hmac,
+                    size_t hmac_len) {
         doHMACTestConv(data, key_str, expected_hmac, hmac_len);
         doHMACTestDirect(data, key_str, expected_hmac, hmac_len);
     }
@@ -325,8 +331,9 @@ TEST(CryptoTest, BadKey) {
                               NULL, 0);
 
     OutputBuffer data_buf(0);
-    OutputBuffer hmac_sig(1);
+    OutputBuffer hmac_sig(0);
 
+    EXPECT_THROW(new HMAC(bad_key), BadKey);
     EXPECT_THROW(signHMAC(data_buf.getData(), data_buf.getLength(),
                           bad_key, hmac_sig), BadKey);
     EXPECT_THROW(verifyHMAC(data_buf.getData(), data_buf.getLength(),
