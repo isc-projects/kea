@@ -14,9 +14,6 @@
 
 #include "crypto.h"
 
-#include <iostream>
-#include <iomanip>
-
 #include <botan/botan.h>
 #include <botan/hmac.h>
 #include <botan/hash.h>
@@ -24,7 +21,6 @@
 
 #include <dns/buffer.h>
 #include <dns/name.h>
-#include <dns/tsigkey.h>
 #include <dns/util/base64.h>
 
 #include <string>
@@ -33,23 +29,25 @@ using namespace std;
 using namespace isc::dns;
 
 namespace {
-Botan::HashFunction*
-getHash(const Name& hash_name) {
-    try {
-        if (hash_name == TSIGKey::HMACMD5_NAME()) {
-            return (Botan::get_hash("MD5"));
-        } else if (hash_name == TSIGKey::HMACSHA1_NAME()) {
-            return (Botan::get_hash("SHA-1"));
-        } else if (hash_name == TSIGKey::HMACSHA256_NAME()) {
-            return (Botan::get_hash("SHA-256"));
-        } else {
-            isc_throw(isc::crypto::UnsupportedAlgorithm,
-                      "Unknown Hash type " + hash_name.toText());
-        }
-    } catch (const Botan::Algorithm_Not_Found) {
-        isc_throw(isc::crypto::UnsupportedAlgorithm,
-                  "Algorithm not supported by boost: " + hash_name.toText());
+const char*
+getBotanHashAlgorithmName(isc::crypto::HMAC::HashAlgorithm algorithm) {
+    switch (algorithm) {
+    case isc::crypto::HMAC::MD5:
+        return "MD5";
+        break;
+    case isc::crypto::HMAC::SHA1:
+        return "SHA-1";
+        break;
+    case isc::crypto::HMAC::SHA256:
+        return "SHA-256";
+        break;
+    case isc::crypto::HMAC::UNKNOWN:
+        return "Unknown";
+        break;
     }
+    // compiler should have prevented us to reach this, since we have
+    // no default. But we need a return value anyway
+    return "Unknown";
 }
 
 // Library needs to have been inited during the entire program
@@ -64,22 +62,31 @@ namespace crypto {
 
 class HMACImpl {
 public:
-    explicit HMACImpl(const TSIGKey& key) {
-        Botan::HashFunction* hash = getHash(key.getAlgorithmName());
+    explicit HMACImpl(const void* secret, size_t secret_len,
+                      const HMAC::HashAlgorithm hash_algorithm) {
+        Botan::HashFunction* hash;
+        try {
+            hash = Botan::get_hash(
+                getBotanHashAlgorithmName(hash_algorithm));
+        } catch (const Botan::Algorithm_Not_Found) {
+            isc_throw(isc::crypto::UnsupportedAlgorithm,
+                      "Unknown hash algorithm: " + hash_algorithm);
+        }
+
         hmac_ = new Botan::HMAC::HMAC(hash);
 
         // Take the 'secret' from the key
         // If the key length is larger than the block size, we hash the
         // key itself first.
         try {
-            if (key.getSecretLength() > hash->HASH_BLOCK_SIZE) {
+            if (secret_len > hash->HASH_BLOCK_SIZE) {
                 Botan::SecureVector<Botan::byte> hashed_key =
-                    hash->process(static_cast<const Botan::byte*>(key.getSecret()),
-                                  key.getSecretLength());
+                    hash->process(static_cast<const Botan::byte*>(secret),
+                                  secret_len);
                 hmac_->set_key(hashed_key.begin(), hashed_key.size());
             } else {
-                hmac_->set_key(static_cast<const Botan::byte*>(key.getSecret()),
-                               key.getSecretLength());
+                hmac_->set_key(static_cast<const Botan::byte*>(secret),
+                               secret_len);
             }
         } catch (const Botan::Invalid_Key_Length& ikl) {
             delete hmac_;
@@ -110,8 +117,10 @@ private:
     Botan::HMAC* hmac_;
 };
 
-HMAC::HMAC(const TSIGKey& key) {
-    impl_ = new HMACImpl(key);
+HMAC::HMAC(const void* secret, size_t secret_length,
+           const HashAlgorithm hash_algorithm)
+{
+    impl_ = new HMACImpl(secret, secret_length, hash_algorithm);
 }
 
 HMAC::~HMAC() {
@@ -134,20 +143,22 @@ HMAC::verify(const void* sig, const size_t len) {
 }
 
 void
-signHMAC(const void* data, size_t data_len, const TSIGKey& key,
+signHMAC(const void* data, size_t data_len, const void* secret,
+         size_t secret_len, const HMAC::HashAlgorithm hash_algorithm,
          isc::dns::OutputBuffer& result)
 {
-    HMAC hmac(key);
+    HMAC hmac(secret, secret_len, hash_algorithm);
     hmac.update(data, data_len);
     hmac.sign(result);
 }
 
 
 bool
-verifyHMAC(const void* data, const size_t data_len, const TSIGKey& key,
+verifyHMAC(const void* data, const size_t data_len, const void* secret,
+           size_t secret_len, const HMAC::HashAlgorithm hash_algorithm,
            const void* sig, const size_t sig_len)
 {
-    HMAC hmac(key);
+    HMAC hmac(secret, secret_len, hash_algorithm);
     hmac.update(data, data_len);
     return (hmac.verify(sig, sig_len));
 }

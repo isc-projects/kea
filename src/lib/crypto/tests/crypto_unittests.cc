@@ -18,12 +18,27 @@
 #include <crypto/crypto.h>
 #include <dns/buffer.h>
 #include <dns/name.h>
+#include <dns/tsigkey.h>
 #include <exceptions/exceptions.h>
 
 using namespace isc::dns;
 using namespace isc::crypto;
 
 namespace {
+    isc::crypto::HMAC::HashAlgorithm
+    getHashAlgorithm(isc::dns::TSIGKey key) {
+        if (key.getAlgorithmName() == TSIGKey::HMACMD5_NAME()) {
+            return isc::crypto::HMAC::MD5;
+        } else if (key.getAlgorithmName() == TSIGKey::HMACSHA1_NAME()) {
+            return isc::crypto::HMAC::SHA1;
+        } else if (key.getAlgorithmName() == TSIGKey::HMACSHA256_NAME()) {
+            return isc::crypto::HMAC::SHA256;
+        } else {
+            return isc::crypto::HMAC::UNKNOWN;
+        }
+    }
+
+    
     void checkBuffer(const OutputBuffer& buf, uint8_t *data, size_t len) {
         ASSERT_EQ(len, buf.getLength());
         const uint8_t* buf_d = static_cast<const uint8_t*>(buf.getData());
@@ -44,22 +59,27 @@ namespace {
         TSIGKey key(key_str);
 
         // Sign it
-        signHMAC(data_buf.getData(), data_buf.getLength(), key,
-                 hmac_sig);
+        signHMAC(data_buf.getData(), data_buf.getLength(),
+                 key.getSecret(), key.getSecretLength(),
+                 getHashAlgorithm(key), hmac_sig);
 
         // Check if the signature is what we expect
         checkBuffer(hmac_sig, expected_hmac, hmac_len);
 
         // Check whether we can verify it ourselves
         EXPECT_TRUE(verifyHMAC(data_buf.getData(), data_buf.getLength(),
-                               key, hmac_sig.getData(),
+                               key.getSecret(), key.getSecretLength(),
+                               getHashAlgorithm(key),
+                               hmac_sig.getData(),
                                hmac_sig.getLength()));
 
         // Change the sig by flipping the first octet, and check
         // whether verification fails then
         hmac_sig.writeUint8At(~hmac_sig[0], 0);
         EXPECT_FALSE(verifyHMAC(data_buf.getData(), data_buf.getLength(),
-                               key, hmac_sig.getData(),
+                               key.getSecret(), key.getSecretLength(),
+                               getHashAlgorithm(key),
+                               hmac_sig.getData(),
                                hmac_sig.getLength()));
     }
 
@@ -75,7 +95,7 @@ namespace {
         TSIGKey key(key_str);
 
         // Sign it
-        HMAC hmac_sign(key);
+        HMAC hmac_sign(key.getSecret(), key.getSecretLength(), getHashAlgorithm(key));
         hmac_sign.update(data_buf.getData(), data_buf.getLength());
         hmac_sign.sign(hmac_sig);
 
@@ -83,7 +103,7 @@ namespace {
         checkBuffer(hmac_sig, expected_hmac, hmac_len);
 
         // Check whether we can verify it ourselves
-        HMAC hmac_verify(key);
+        HMAC hmac_verify(key.getSecret(), key.getSecretLength(), getHashAlgorithm(key));
         hmac_verify.update(data_buf.getData(), data_buf.getLength());
         EXPECT_TRUE(hmac_verify.verify(hmac_sig.getData(),
                                        hmac_sig.getLength()));
@@ -327,16 +347,23 @@ TEST(CryptoTest, HMAC_SHA256_RFC2202_SIGN) {
 }
 
 TEST(CryptoTest, BadKey) {
-    TSIGKey bad_key = TSIGKey(Name("test.example."), Name("hmac-sha1."),
-                              NULL, 0);
-
     OutputBuffer data_buf(0);
     OutputBuffer hmac_sig(0);
 
-    EXPECT_THROW(new HMAC(bad_key), BadKey);
+    EXPECT_THROW(new HMAC(NULL, 0, HMAC::MD5), BadKey);
+    EXPECT_THROW(new HMAC(NULL, 0, HMAC::UNKNOWN), UnsupportedAlgorithm);
+
     EXPECT_THROW(signHMAC(data_buf.getData(), data_buf.getLength(),
-                          bad_key, hmac_sig), BadKey);
+                          NULL, 0, HMAC::MD5, hmac_sig), BadKey);
+    EXPECT_THROW(signHMAC(data_buf.getData(), data_buf.getLength(),
+                          NULL, 0, HMAC::UNKNOWN, hmac_sig),
+                          UnsupportedAlgorithm);
+
     EXPECT_THROW(verifyHMAC(data_buf.getData(), data_buf.getLength(),
-                            bad_key, hmac_sig.getData(),
+                            NULL, 0, HMAC::MD5, hmac_sig.getData(),
                             hmac_sig.getLength()), BadKey);
+    EXPECT_THROW(verifyHMAC(data_buf.getData(), data_buf.getLength(),
+                            NULL, 0, HMAC::UNKNOWN, hmac_sig.getData(),
+                            hmac_sig.getLength()),
+                            UnsupportedAlgorithm);
 }

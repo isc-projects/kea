@@ -14,7 +14,6 @@
 
 #include <string>
 #include <dns/buffer.h>
-#include <dns/tsigkey.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/noncopyable.hpp>
@@ -58,19 +57,29 @@ class HMACImpl;
 ///
 class HMAC : public boost::noncopyable {
 public:
-    /// \brief Constructor from a key
+    enum HashAlgorithm {
+        MD5 = 0,
+        SHA1 = 1,
+        SHA256 = 2,
+        UNKNOWN = 3
+    };
+
+    /// \brief Constructor from a secret and a hash algorithm
     ///
-    /// \exception UnsupportedAlgorithmException if the given key
-    /// is for an algorithm that is not supported by the underlying
-    /// library
-    /// \exception InvalidKeyLength if the given key has a bad length
+    /// \exception UnsupportedAlgorithmException if the given algorithm
+    ///            is unknown or not supported by the underlying library
+    /// \exception InvalidKeyLength if the given key secret_len is bad
     ///
-    /// Notes: if the key is longer than the block size of its
+    /// Notes: if the secret is longer than the block size of its
     /// algorithm, the constructor will run it through the hash
-    /// algorithm, and use the digest as a key for this HMAC operation
+    /// algorithm, and use the digest as the secret for this HMAC
+    /// operation
     ///
-    /// \param key The key to use
-    explicit HMAC(const isc::dns::TSIGKey& key);
+    /// \param secret The secret to sign with
+    /// \param len The length of the secret
+    /// \param hash_algorithm The hash algorithm
+    explicit HMAC(const void* secret, size_t secret_len,
+                  const HashAlgorithm hash_algorithm);
 
     /// \brief Destructor
     ~HMAC();
@@ -106,18 +115,26 @@ private:
 /// creating an HMAC object, feeding it the data, and calculating the
 /// resulting signature.
 ///
-/// \exception UnsupportedAlgorithm if we do not support the given
-/// algorithm.
-/// \exception BadKey if the underlying library cannot handle the
-/// given TSIGKey (for instance if it has a bad length).
+/// \exception UnsupportedAlgorithm if the given algorithm is unknown
+///            or not supported by the underlying library
+/// \exception BadKey if the given key secret_len is bad
+///
+/// Notes: if the secret is longer than the block size of its
+/// algorithm, the constructor will run it through the hash
+/// algorithm, and use the digest as the secret for this HMAC
+/// operation
 ///
 /// \param data The data to sign
 /// \param data_len The length of the data
-/// \param key The TSIGKey to sign with
+/// \param secret The secret to sign with
+/// \param secret_len The length of the secret
+/// \param hash_algorithm The hash algorithm
 /// \param result The signature will be appended to this buffer
 void signHMAC(const void* data,
               const size_t data_len,
-              const isc::dns::TSIGKey& key,
+              const void* secret,
+              size_t secret_len,
+              const HMAC::HashAlgorithm hash_algorithm,
               isc::dns::OutputBuffer& result);
 
 /// \brief Verify an HMAC signature for the given data
@@ -127,10 +144,14 @@ void signHMAC(const void* data,
 /// creating an HMAC object, feeding it the data, and checking the
 /// resulting signature.
 ///
-/// \exception UnsupportedAlgorithm if we do not support the given
-/// algorithm.
-/// \exception BadKey exception if the underlying library cannot
-/// handle the given TSIGKey (for instance if it has a bad length).
+/// \exception UnsupportedAlgorithm if the given algorithm is unknown
+///            or not supported by the underlying library
+/// \exception BadKey if the given key secret_len is bad
+///
+/// Notes: if the secret is longer than the block size of its
+/// algorithm, the constructor will run it through the hash
+/// algorithm, and use the digest as the secret for this HMAC
+/// operation
 ///
 /// \param data The data to verify
 /// \param data_len The length of the data
@@ -139,7 +160,9 @@ void signHMAC(const void* data,
 /// \return True if the signature verifies, false if not
 bool verifyHMAC(const void* data,
                 const size_t data_len,
-                const isc::dns::TSIGKey& key,
+                const void* secret,
+                size_t secret_len,
+                const HMAC::HashAlgorithm hash_algorithm,
                 const void* sig,
                 const size_t sig_len);
 
