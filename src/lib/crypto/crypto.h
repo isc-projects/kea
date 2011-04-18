@@ -48,6 +48,25 @@ public:
         CryptoError(file, line, what) {}
 };
 
+class CryptoImpl;
+
+/// \brief Initializer object
+///
+/// This object represents 'global' state for the backend crypto
+/// library, and must be initialized before any cryptographic calls
+/// are made. It may not be destroyed until all cryptographic objects
+/// are.
+/// Preferably, this object is created in the program's main() function
+// Internal note: we can use this class later to initialize and manage
+// dynamic (PKCS#11) libs
+class Crypto {
+public:
+    Crypto();
+    ~Crypto();
+private:
+    CryptoImpl* impl_;
+};
+
 /// Forward declaration, pimpl style
 class HMACImpl;
 

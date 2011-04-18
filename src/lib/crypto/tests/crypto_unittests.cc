@@ -23,7 +23,6 @@ using namespace isc::dns;
 using namespace isc::crypto;
 
 namespace {
-    
     void checkBuffer(const OutputBuffer& buf, uint8_t *data, size_t len) {
         ASSERT_EQ(len, buf.getLength());
         const uint8_t* buf_d = static_cast<const uint8_t*>(buf.getData());
