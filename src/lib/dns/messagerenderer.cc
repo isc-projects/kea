@@ -244,7 +244,7 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
     }
 
     // Record the current offset before extending the buffer.
-    const size_t offset = getBuffer().getLength();
+    const size_t offset = getLength();
     // Write uncompress part...
     writeData(impl_->nbuffer_.getData(),
               compress ? i : impl_->nbuffer_.getLength());
