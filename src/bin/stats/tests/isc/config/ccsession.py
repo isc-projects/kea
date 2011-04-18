@@ -95,32 +95,20 @@ class ConfigData:
 
     def get_value(self, identifier):
         """Returns a tuple where the first item is the value at the
-           given identifier, and the second item is a bool which is
-           true if the value is an unset default. Raises an
-           DataNotFoundError if the identifier is bad"""
-        def _get_value(config_map):
-                if 'item_default' in config_map:
-                    return config_map['item_default'], False
-                elif 'item_type' in config_map:
-                    if config_map['item_type'] == 'boolean':
-                        return bool(), True
-                    elif config_map['item_type'] == 'string':
-                        return str(), True
-                    elif config_map['item_type'] in set(['number', 'integer']):
-                        return int(), True
-                    elif config_map['item_type'] in set(['float', 'double', 'real']):
-                        return float(), True
-                    elif config_map['item_type'] in set(['list', 'array']):
-                        return [ _get_value(conf)
-                                 for conf in spec['list_item_spec'] ], True
-                    elif config_map['item_type'] in set(['map', 'object']):
-                        return dict(
-                            [ (conf['item_name'], _get_value(conf))
-                              for conf in config_map['map_item_spec'] ]), True
-                return None, True
+           given identifier, and the second item is absolutely False
+           even if the value is an unset default or not. Raises an
+           DataNotFoundError if the identifier is not found in the
+           specification file.
+           *** NOTE ***
+           There are some differences from the original method. This
+           method never handles local settings like the original
+           method. But these different behaviors aren't so big issues
+           for a mock-up method of stats_httpd because stats_httpd
+           calls this method at only first."""
         for config_map in self.get_module_spec().get_config_spec():
             if config_map['item_name'] == identifier:
-                return _get_value(config_map)
+                if 'item_default' in config_map:
+                    return config_map['item_default'], False
         raise DataNotFoundError("item_name %s is not found in the specfile" % identifier)
 
     def get_module_spec(self):
