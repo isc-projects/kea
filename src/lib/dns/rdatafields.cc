@@ -74,8 +74,6 @@ public:
         mode_(CASE_INSENSITIVE), last_data_pos_(0)
     {}
     virtual ~RdataFieldComposer() {}
-    virtual const void* getData() const { return (getBuffer().getData()); }
-    virtual size_t getLength() const { return (getBuffer().getLength()); }
     virtual bool isTruncated() const { return (truncated_); }
     virtual size_t getLengthLimit() const { return (length_limit_); }
     virtual CompressMode getCompressMode() const { return (mode_); }
@@ -87,10 +85,12 @@ public:
         const RdataFields::Type field_type =
             compress ? RdataFields::COMPRESSIBLE_NAME :
             RdataFields::INCOMPRESSIBLE_NAME;
+        // TODO: When we get rid of need for getBuffer, we can output the name
+        // to a buffer and then write the buffer inside
         name.toWire(getBuffer());
         fields_.push_back(RdataFields::FieldSpec(field_type,
                                                  name.getLength()));
-        last_data_pos_ = getBuffer().getLength();
+        last_data_pos_ = getLength();
     }
 
     virtual void clear() {
@@ -110,7 +110,7 @@ public:
     size_t last_data_pos_;
     void extendData() {
         // No news, return to work
-        if (getBuffer().getLength() == last_data_pos_) {
+        if (getLength() == last_data_pos_) {
             return;
         }
         // The new bytes are just ordinary uninteresting data
@@ -118,8 +118,8 @@ public:
             fields_.push_back(RdataFields::FieldSpec(RdataFields::DATA, 0));
         }
         // We added this much data from last time
-        fields_.back().len += getBuffer().getLength() - last_data_pos_;
-        last_data_pos_ = getBuffer().getLength();
+        fields_.back().len += getLength() - last_data_pos_;
+        last_data_pos_ = getLength();
     }
 };
 
