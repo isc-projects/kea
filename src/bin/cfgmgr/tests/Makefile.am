@@ -1,7 +1,7 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 PYTESTS = b10-cfgmgr_test.py
 
-EXTRA_DIST = $(PYTESTS)
+EXTRA_DIST = $(PYTESTS) testdata/plugins/testplugin.py
 
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
