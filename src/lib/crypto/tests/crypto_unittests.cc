@@ -23,12 +23,15 @@ using namespace isc::dns;
 using namespace isc::crypto;
 
 namespace {
+    void checkData(const uint8_t* data1, const uint8_t* data2, size_t len) {
+        for (size_t i = 0; i < len; ++i) {
+            ASSERT_EQ(data1[i], data2[i]);
+        }
+    }
+    
     void checkBuffer(const OutputBuffer& buf, uint8_t *data, size_t len) {
         ASSERT_EQ(len, buf.getLength());
-        const uint8_t* buf_d = static_cast<const uint8_t*>(buf.getData());
-        for (size_t i = 0; i < len; ++i) {
-            ASSERT_EQ(data[i], buf_d[i]);
-        }
+        checkData(static_cast<const uint8_t*>(buf.getData()), data, len);
     }
 
     // Sign and verify with the convenience functions
@@ -40,11 +43,11 @@ namespace {
                         size_t hmac_len) {
         OutputBuffer data_buf(data.size());
         data_buf.writeData(data.c_str(), data.size());
-        OutputBuffer hmac_sig(1);
+        OutputBuffer hmac_sig(0);
 
         // Sign it
         signHMAC(data_buf.getData(), data_buf.getLength(),
-                 secret, secret_len, hash_algorithm, hmac_sig);
+                 secret, secret_len, hash_algorithm, hmac_sig, hmac_len);
 
         // Check if the signature is what we expect
         checkBuffer(hmac_sig, expected_hmac, hmac_len);
@@ -78,7 +81,7 @@ namespace {
         // Sign it
         HMAC hmac_sign(secret, secret_len, hash_algorithm);
         hmac_sign.update(data_buf.getData(), data_buf.getLength());
-        hmac_sign.sign(hmac_sig);
+        hmac_sign.sign(hmac_sig, hmac_len);
 
         // Check if the signature is what we expect
         checkBuffer(hmac_sig, expected_hmac, hmac_len);
@@ -96,6 +99,48 @@ namespace {
                                         hmac_sig.getLength()));
     }
 
+    void doHMACTestVector(const std::string& data,
+                          const void* secret,
+                          size_t secret_len,
+                          const HMAC::HashAlgorithm hash_algorithm,
+                          uint8_t* expected_hmac,
+                          size_t hmac_len) {
+        HMAC hmac_sign(secret, secret_len, hash_algorithm);
+        hmac_sign.update(data.c_str(), data.size());
+        std::vector<uint8_t> sig = hmac_sign.sign(hmac_len);
+        ASSERT_EQ(hmac_len, sig.size());
+        checkData(&sig[0], expected_hmac, hmac_len);
+
+        HMAC hmac_verify(secret, secret_len, hash_algorithm);
+        hmac_verify.update(data.c_str(), data.size());
+        EXPECT_TRUE(hmac_verify.verify(&sig[0], sig.size()));
+
+        sig[0] = ~sig[0];
+        EXPECT_FALSE(hmac_verify.verify(&sig[0], sig.size()));
+    }
+
+    void doHMACTestArray(const std::string& data,
+                         const void* secret,
+                         size_t secret_len,
+                         const HMAC::HashAlgorithm hash_algorithm,
+                         uint8_t* expected_hmac,
+                         size_t hmac_len) {
+        HMAC hmac_sign(secret, secret_len, hash_algorithm);
+        hmac_sign.update(data.c_str(), data.size());
+        
+        uint8_t sig[hmac_len];
+
+        hmac_sign.sign(sig, hmac_len);
+        checkData(sig, expected_hmac, hmac_len);
+
+        HMAC hmac_verify(secret, secret_len, hash_algorithm);
+        hmac_verify.update(data.c_str(), data.size());
+        EXPECT_TRUE(hmac_verify.verify(sig, hmac_len));
+
+        sig[0] = ~sig[0];
+        EXPECT_FALSE(hmac_verify.verify(sig, hmac_len));
+    }
+
     void doHMACTest(const std::string& data,
                     const void* secret,
                     size_t secret_len,
@@ -106,6 +151,10 @@ namespace {
                        expected_hmac, hmac_len);
         doHMACTestDirect(data, secret, secret_len, hash_algorithm,
                          expected_hmac, hmac_len);
+        doHMACTestVector(data, secret, secret_len, hash_algorithm,
+                         expected_hmac, hmac_len);
+        doHMACTestArray(data, secret, secret_len, hash_algorithm,
+                        expected_hmac, hmac_len);
     }
 }
 
@@ -160,6 +209,8 @@ TEST(CryptoTest, HMAC_MD5_RFC2202_SIGN) {
                                  0x69, 0x0e, 0xfd, 0x4c };
     doHMACTest("Test With Truncation", secret5, 16, HMAC::MD5,
                hmac_expected5, 16);
+    doHMACTest("Test With Truncation", secret5, 16, HMAC::MD5,
+               hmac_expected5, 12);
 
     std::string secret6;
     for (int i = 0; i < 80; ++i) {
@@ -236,6 +287,8 @@ TEST(CryptoTest, HMAC_SHA1_RFC2202_SIGN) {
                                  0x5a, 0x04 };
     doHMACTest("Test With Truncation", secret5, 20, HMAC::SHA1,
                hmac_expected5, 20);
+    doHMACTest("Test With Truncation", secret5, 20, HMAC::SHA1,
+               hmac_expected5, 12);
 
     std::string secret6;
     for (int i = 0; i < 80; ++i) {
@@ -312,6 +365,15 @@ TEST(CryptoTest, HMAC_SHA256_RFC2202_SIGN) {
                                  0x7a, 0x2e, 0x3f, 0xf4, 0x67, 0x29,
                                  0x66, 0x5b };
     doHMACTest(data4, secret4, 25, HMAC::SHA256, hmac_expected4, 32);
+
+    uint8_t secret5[] = { 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
+                          0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
+                          0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c };
+    uint8_t hmac_expected5[] = { 0xa3, 0xb6, 0x16, 0x74, 0x73, 0x10,
+                                 0x0e, 0xe0, 0x6e, 0x0c, 0x79, 0x6c,
+                                 0x29, 0x55, 0x55, 0x2b };
+    doHMACTest("Test With Truncation", secret5, 20, HMAC::SHA256,
+               hmac_expected5, 16);
 
     std::string secret6;
     for (int i = 0; i < 131; ++i) {

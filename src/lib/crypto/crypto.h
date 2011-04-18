@@ -32,6 +32,14 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// This exception is thrown if there was a problem initializing the
+/// crypto library
+class InitializationError : public CryptoError {
+public:
+    InitializationError(const char* file, size_t line, const char* what) :
+        CryptoError(file, line, what) {}
+};
+
 /// This exception is thrown when a cryptographic action is requested
 /// for an algorithm that is not supported by the underlying algorithm.
 class UnsupportedAlgorithm : public CryptoError {
@@ -103,6 +111,11 @@ public:
     /// \brief Destructor
     ~HMAC();
 
+    /// \brief Returns the output size of the digest
+    ///
+    /// \return output size of the digest
+    size_t getOutputLength();
+
     /// \brief Add data to digest
     ///
     /// \param data The data to add
@@ -114,12 +127,39 @@ public:
     /// The result will be appended to the given outputbuffer
     ///
     /// \param result The OutputBuffer to append the result to
-    void sign(isc::dns::OutputBuffer& result);
+    /// \param len The number of bytes from the result to copy. If this
+    ///        value is smaller than the algorithms output size, the
+    ///        result will be truncated. If this value is larger, or 0
+    ///        (the default), it will be ignored
+    void sign(isc::dns::OutputBuffer& result, size_t len = 0);
+
+    /// \brief Calculate the final signature
+    ///
+    /// len bytes of data from the result will be copied to *result
+    /// If len is larger than the output size, only output_size bytes
+    /// will be copied. If it is smaller, the output will be truncated
+    ///
+    /// At least len bytes of data must be available for writing at
+    /// result
+    void sign(void* result, size_t len);
+
+    /// \brief Calculate the final signatre
+    ///
+    /// The result will be returned as a std::vector<uint8_t>
+    ///
+    /// \param len The number of bytes from the result to copy. If this
+    ///        value is smaller than the algorithms output size, the
+    ///        result will be truncated. If this value is larger, or 0
+    ///        (the default), it will be ignored
+    /// \return a vector containing the signature
+    std::vector<uint8_t> sign(size_t len = 0);
 
     /// \brief Verify an existing signature
     ///
     /// \param sig The signature to verify
-    /// \param len The length of the sig
+    /// \param len The length of the signature. If this is non-zero,
+    ///            and smaller than the output length of the algorithm,
+    ///            only len bytes will be checked
     /// \return true if the signature is correct, false otherwise
     bool verify(const void* sig, size_t len);
 
@@ -149,12 +189,15 @@ private:
 /// \param secret_len The length of the secret
 /// \param hash_algorithm The hash algorithm
 /// \param result The signature will be appended to this buffer
+/// \param len If this is non-zero and less than the output size,
+///            the result will be truncated to len bytes
 void signHMAC(const void* data,
               const size_t data_len,
               const void* secret,
               size_t secret_len,
               const HMAC::HashAlgorithm hash_algorithm,
-              isc::dns::OutputBuffer& result);
+              isc::dns::OutputBuffer& result,
+              size_t len = 0);
 
 /// \brief Verify an HMAC signature for the given data
 ///
