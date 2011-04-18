@@ -21,6 +21,6 @@ int
 main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
     isc::crypto::Crypto crypto;
-    
+
     return (RUN_ALL_TESTS());
 }

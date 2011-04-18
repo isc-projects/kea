@@ -60,7 +60,7 @@ class CryptoImpl {
 public:
     CryptoImpl() {}
     ~CryptoImpl() {};
-        
+
 private:
     Botan::LibraryInitializer _botan_init;
 };
@@ -68,7 +68,7 @@ private:
 Crypto::Crypto() {
     try {
         impl_ = new CryptoImpl();
-    } catch (Botan::Exception ex) {
+    } catch (const Botan::Exception& ex) {
         isc_throw(InitializationError, ex.what());
     }
 }
@@ -86,7 +86,7 @@ public:
         try {
             hash = Botan::get_hash(
                 getBotanHashAlgorithmName(hash_algorithm));
-        } catch (const Botan::Algorithm_Not_Found) {
+        } catch (const Botan::Algorithm_Not_Found&) {
             isc_throw(isc::crypto::UnsupportedAlgorithm,
                       "Unknown hash algorithm: " + hash_algorithm);
         }
@@ -113,7 +113,7 @@ public:
 
     ~HMACImpl() { delete hmac_; }
 
-    size_t getOutputLength() {
+    size_t getOutputLength() const {
         return (hmac_->OUTPUT_LENGTH);
     }
 
@@ -177,8 +177,8 @@ HMAC::~HMAC() {
 }
 
 size_t
-HMAC::getOutputLength() {
-    return impl_->getOutputLength();
+HMAC::getOutputLength() const {
+    return (impl_->getOutputLength());
 }
 
 void

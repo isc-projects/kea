@@ -63,27 +63,27 @@ TSIGKey::TSIGKey(const Name& key_name, const Name& algorithm_name,
 }
 
 TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
-    size_t pos = str.find(':');
-    if (pos == 0 || pos == str.npos || pos == str.size()-1) {
+    const size_t pos = str.find(':');
+    if (pos == 0 || pos == str.npos || pos == str.size() - 1) {
         // error
         isc_throw(InvalidParameter, "Invalid TSIG key string");
     }
     try {
-        Name key_name(str.substr(0, pos));
+        const Name key_name(str.substr(0, pos));
         Name algo_name("hmac-md5.sig-alg.reg.int");
 
         // optional algorithm part
-        size_t pos2 = str.find(':', pos+1);
+        size_t pos2 = str.find(':', pos + 1);
         if (pos2 != str.npos) {
             if (pos2 == pos + 1) {
                 isc_throw(InvalidParameter, "Invalid TSIG key string");
             }
-            algo_name = Name(str.substr(pos2+1));
+            algo_name = Name(str.substr(pos2 + 1));
         } else {
             pos2 = str.size() - pos;
         }
 
-        std::string secret_str = str.substr(pos + 1, pos2 - pos - 1);
+        const std::string secret_str = str.substr(pos + 1, pos2 - pos - 1);
 
         if (algo_name != HMACMD5_NAME() &&
             algo_name != HMACSHA1_NAME() &&

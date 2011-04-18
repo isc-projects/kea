@@ -114,7 +114,7 @@ public:
     /// \brief Returns the output size of the digest
     ///
     /// \return output size of the digest
-    size_t getOutputLength();
+    size_t getOutputLength() const;
 
     /// \brief Add data to digest
     ///
