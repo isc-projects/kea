@@ -67,7 +67,7 @@ public:
     RdataFieldsStore(ConstRdataPtr rdata) {
         const RdataFields fields(*rdata);
 
-        spec_size_ = fields.getFieldDataSize();
+        spec_size_ = fields.getFieldSpecDataSize();
         spec_store_.resize(spec_size_);
         void* cp_spec = &spec_store_[0];
         memcpy(cp_spec, fields.getFieldSpecData(), spec_store_.size());

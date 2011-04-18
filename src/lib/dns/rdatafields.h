@@ -326,8 +326,15 @@ public:
     ///      getFieldSpecData() will occupy.
     ///
     /// This method never throws an exception.
-    unsigned int getFieldDataSize() const { return (nfields_ *
+    unsigned int getFieldSpecDataSize() const { return (nfields_ *
                                                     sizeof *fields_); }
+
+    /// \brief Return the number of specs fields.
+    ///
+    /// It specifies the range of parameter for getFieldSpec().
+    ///
+    /// This method never throws.
+    unsigned int getFieldCount() const { return (nfields_); }
 
     /// \brief Return a pointer to a sequence of \c FieldSpec for the
     /// \c RdataFields.
