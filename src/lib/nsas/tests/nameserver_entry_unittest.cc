@@ -513,6 +513,11 @@ TEST_F(NameserverEntryTest, UpdateRTT) {
 
     // The rtt should be close to stable rtt value
     EXPECT_TRUE((stable_rtt - new_rtt) < (new_rtt - init_rtt));
+
+    // Finally, try updating the RTT to a very large value (large enough for
+    // RTT^2 - used in the internal calculation - to exceed a 32-bit value).
+    EXPECT_NO_THROW(vec[0].updateRTT(1000000000));  // 10^9
+
 }
 
 }   // namespace
