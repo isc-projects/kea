@@ -50,15 +50,29 @@ getBotanHashAlgorithmName(isc::crypto::HMAC::HashAlgorithm algorithm) {
     return "Unknown";
 }
 
-// Library needs to have been inited during the entire program
-// should we make this a singleton? (for hsm we'll need more
-// initialization, and dynamic loading)
-Botan::LibraryInitializer init;
-
 } // local namespace
 
 namespace isc {
 namespace crypto {
+
+// For Botan, we use the Crypto class object in RAII style
+class CryptoImpl {
+public:
+    CryptoImpl() { _botan_init.initialize(); };
+    ~CryptoImpl() { _botan_init.deinitialize(); };
+        
+private:
+    Botan::LibraryInitializer _botan_init;
+};
+
+Crypto::Crypto() {
+    impl_ = new CryptoImpl();
+}
+
+Crypto::~Crypto() {
+    delete impl_;
+}
+
 
 class HMACImpl {
 public:
@@ -75,7 +89,6 @@ public:
 
         hmac_ = new Botan::HMAC::HMAC(hash);
 
-        // Take the 'secret' from the key
         // If the key length is larger than the block size, we hash the
         // key itself first.
         try {
