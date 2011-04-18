@@ -28,8 +28,10 @@ namespace {
             ASSERT_EQ(data1[i], data2[i]);
         }
     }
-    
-    void checkBuffer(const OutputBuffer& buf, uint8_t *data, size_t len) {
+
+    void checkBuffer(const OutputBuffer& buf, const uint8_t* data,
+                     size_t len)
+    {
         ASSERT_EQ(len, buf.getLength());
         checkData(static_cast<const uint8_t*>(buf.getData()), data, len);
     }
@@ -39,7 +41,7 @@ namespace {
                         const void* secret,
                         size_t secret_len,
                         const HMAC::HashAlgorithm hash_algorithm,
-                        uint8_t* expected_hmac,
+                        const uint8_t* expected_hmac,
                         size_t hmac_len) {
         OutputBuffer data_buf(data.size());
         data_buf.writeData(data.c_str(), data.size());
@@ -72,7 +74,7 @@ namespace {
                           const void* secret,
                           size_t secret_len,
                           const HMAC::HashAlgorithm hash_algorithm,
-                          uint8_t* expected_hmac,
+                          const uint8_t* expected_hmac,
                           size_t hmac_len) {
         OutputBuffer data_buf(data.size());
         data_buf.writeData(data.c_str(), data.size());
@@ -103,7 +105,7 @@ namespace {
                           const void* secret,
                           size_t secret_len,
                           const HMAC::HashAlgorithm hash_algorithm,
-                          uint8_t* expected_hmac,
+                          const uint8_t* expected_hmac,
                           size_t hmac_len) {
         HMAC hmac_sign(secret, secret_len, hash_algorithm);
         hmac_sign.update(data.c_str(), data.size());
@@ -123,11 +125,11 @@ namespace {
                          const void* secret,
                          size_t secret_len,
                          const HMAC::HashAlgorithm hash_algorithm,
-                         uint8_t* expected_hmac,
+                         const uint8_t* expected_hmac,
                          size_t hmac_len) {
         HMAC hmac_sign(secret, secret_len, hash_algorithm);
         hmac_sign.update(data.c_str(), data.size());
-        
+
         uint8_t sig[hmac_len];
 
         hmac_sign.sign(sig, hmac_len);
@@ -145,7 +147,7 @@ namespace {
                     const void* secret,
                     size_t secret_len,
                     const HMAC::HashAlgorithm hash_algorithm,
-                    uint8_t* expected_hmac,
+                    const uint8_t* expected_hmac,
                     size_t hmac_len) {
         doHMACTestConv(data, secret, secret_len, hash_algorithm,
                        expected_hmac, hmac_len);
@@ -169,7 +171,7 @@ TEST(CryptoTest, HMAC_MD5_RFC2202_SIGN) {
                                 0xbb, 0x1c, 0x13, 0xf4, 0x8e, 0xf8,
                                 0x15, 0x8b, 0xfc, 0x9d };
     doHMACTest("Hi There", secret, 16, HMAC::MD5, hmac_expected, 16);
-    
+
     uint8_t hmac_expected2[] = { 0x75, 0x0c, 0x78, 0x3e, 0x6a, 0xb0,
                                  0xb5, 0x03, 0xea, 0xa8, 0x6e, 0x31,
                                  0x0a, 0x5d, 0xb7, 0x38 };
