@@ -217,8 +217,11 @@ void signHMAC(const void* data,
 ///
 /// \param data The data to verify
 /// \param data_len The length of the data
-/// \param key The TSIGKey to verify with
-/// \param mac The signature to verify
+/// \param secret The secret to sign with
+/// \param secret_len The length of the secret
+/// \param hash_algorithm The hash algorithm
+/// \param sig The signature to verify
+/// \param sig_len The length of the signature
 /// \return True if the signature verifies, false if not
 bool verifyHMAC(const void* data,
                 const size_t data_len,
