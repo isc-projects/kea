@@ -33,21 +33,21 @@ const char*
 getBotanHashAlgorithmName(isc::crypto::HMAC::HashAlgorithm algorithm) {
     switch (algorithm) {
     case isc::crypto::HMAC::MD5:
-        return "MD5";
+        return ("MD5");
         break;
     case isc::crypto::HMAC::SHA1:
-        return "SHA-1";
+        return ("SHA-1");
         break;
     case isc::crypto::HMAC::SHA256:
-        return "SHA-256";
+        return ("SHA-256");
         break;
     case isc::crypto::HMAC::UNKNOWN:
-        return "Unknown";
+        return ("Unknown");
         break;
     }
     // compiler should have prevented us to reach this, since we have
     // no default. But we need a return value anyway
-    return "Unknown";
+    return ("Unknown");
 }
 
 } // local namespace
@@ -58,15 +58,19 @@ namespace crypto {
 // For Botan, we use the Crypto class object in RAII style
 class CryptoImpl {
 public:
-    CryptoImpl() { _botan_init.initialize(); };
-    ~CryptoImpl() { _botan_init.deinitialize(); };
+    CryptoImpl() {}
+    ~CryptoImpl() {};
         
 private:
     Botan::LibraryInitializer _botan_init;
 };
 
 Crypto::Crypto() {
-    impl_ = new CryptoImpl();
+    try {
+        impl_ = new CryptoImpl();
+    } catch (Botan::Exception ex) {
+        isc_throw(InitializationError, ex.what());
+    }
 }
 
 Crypto::~Crypto() {
@@ -109,21 +113,53 @@ public:
 
     ~HMACImpl() { delete hmac_; }
 
+    size_t getOutputLength() {
+        return (hmac_->OUTPUT_LENGTH);
+    }
+
     void update(const void* data, const size_t len) {
-        // update the data from whatever we get (probably as a buffer)
         hmac_->update(static_cast<const Botan::byte*>(data), len);
     }
 
-    void sign(isc::dns::OutputBuffer& result) {
-        // And generate the mac
+    void sign(isc::dns::OutputBuffer& result, size_t len) {
         Botan::SecureVector<Botan::byte> b_result(hmac_->final());
 
-        // write mac to result
-        result.writeData(b_result.begin(), b_result.size());
+        if (len == 0 || len > b_result.size()) {
+            len = b_result.size();
+        }
+        result.writeData(b_result.begin(), len);
     }
 
-    bool verify(const void* sig, const size_t len) {
-        return (hmac_->verify_mac(static_cast<const Botan::byte*>(sig), len));
+    void sign(void* result, size_t len) {
+        Botan::SecureVector<Botan::byte> b_result(hmac_->final());
+        size_t output_size = getOutputLength();
+        if (output_size > len) {
+            output_size = len;
+        }
+        memcpy(result, b_result.begin(), output_size);
+    }
+
+    std::vector<uint8_t> sign(size_t len) {
+        Botan::SecureVector<Botan::byte> b_result(hmac_->final());
+        if (len == 0 || len > b_result.size()) {
+            return(std::vector<uint8_t>(b_result.begin(), b_result.end()));
+        } else {
+            return(std::vector<uint8_t>(b_result.begin(), &b_result[len]));
+        }
+    }
+
+
+    bool verify(const void* sig, size_t len) {
+        // Botan's verify_mac checks if len matches the output_length,
+        // which causes it to fail for truncated signatures, so we do
+        // the check ourselves
+        Botan::SecureVector<Botan::byte> our_mac = hmac_->final();
+        if (len == 0 || len > getOutputLength()) {
+            len = getOutputLength();
+        }
+        return (Botan::same_mem(&our_mac[0],
+                                static_cast<const unsigned char*>(sig),
+                                len));
     }
 
 private:
@@ -140,14 +176,29 @@ HMAC::~HMAC() {
     delete impl_;
 }
 
+size_t
+HMAC::getOutputLength() {
+    return impl_->getOutputLength();
+}
+
 void
 HMAC::update(const void* data, const size_t len) {
     impl_->update(data, len);
 }
 
 void
-HMAC::sign(isc::dns::OutputBuffer& result) {
-    impl_->sign(result);
+HMAC::sign(isc::dns::OutputBuffer& result, size_t len) {
+    impl_->sign(result, len);
+}
+
+void
+HMAC::sign(void* result, size_t len) {
+    impl_->sign(result, len);
+}
+
+std::vector<uint8_t>
+HMAC::sign(size_t len) {
+    return impl_->sign(len);
 }
 
 bool
@@ -158,11 +209,11 @@ HMAC::verify(const void* sig, const size_t len) {
 void
 signHMAC(const void* data, size_t data_len, const void* secret,
          size_t secret_len, const HMAC::HashAlgorithm hash_algorithm,
-         isc::dns::OutputBuffer& result)
+         isc::dns::OutputBuffer& result, size_t len)
 {
     HMAC hmac(secret, secret_len, hash_algorithm);
     hmac.update(data, data_len);
-    hmac.sign(result);
+    hmac.sign(result, len);
 }
 
 
