@@ -19,6 +19,8 @@
 
 #include <stdlib.h>
 
+#include <config.h>
+
 #include <asio.hpp>
 
 #include <asiolink/io_address.h>
