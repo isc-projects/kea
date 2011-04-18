@@ -41,7 +41,7 @@ if "B10_FROM_SOURCE" in os.environ:
         DATA_PATH = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"]
     else:
         DATA_PATH = os.environ["B10_FROM_SOURCE"]
-    PLUGIN_PATH = [] #FIXME Where should plugins come from? And how to find it?
+    PLUGIN_PATH = [DATA_PATH + '/src/bin/cfgmgr/plugins']
 else:
     PREFIX = "@prefix@"
     DATA_PATH = "@localstatedir@/@PACKAGE@".replace("${prefix}", PREFIX)
