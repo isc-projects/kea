@@ -404,12 +404,20 @@ TEST(CryptoTest, HMAC_SHA256_RFC2202_SIGN) {
 }
 
 namespace {
-    std::vector<uint8_t>
-    createSigForLengthCheck(HMAC::HashAlgorithm alg,
-                            size_t len) {
+    size_t
+    sigVectorLength(HMAC::HashAlgorithm alg, size_t len) {
         HMAC hmac_sign("asdf", 4, alg);
         hmac_sign.update("asdf", 4);
-        return hmac_sign.sign(len);
+        std::vector<uint8_t> sig = hmac_sign.sign(len);
+        return sig.size();
+    }
+    size_t
+    sigBufferLength(HMAC::HashAlgorithm alg, size_t len) {
+        HMAC hmac_sign("asdf", 4, alg);
+        hmac_sign.update("asdf", 4);
+        OutputBuffer sig(0);
+        hmac_sign.sign(sig, len);
+        return sig.getLength();
     }
 }
 
@@ -417,40 +425,41 @@ TEST(CryptoTest, HMACSigLengthArgument)
 {
     std::vector<uint8_t> sig;
 
-    // Default size
-    sig = createSigForLengthCheck(HMAC::MD5, 0);
-    EXPECT_EQ(16, sig.size());
-    sig = createSigForLengthCheck(HMAC::MD5, 12);
-    EXPECT_EQ(12, sig.size());
-    sig = createSigForLengthCheck(HMAC::MD5, 16);
-    EXPECT_EQ(16, sig.size());
-    sig = createSigForLengthCheck(HMAC::MD5, 24);
-    EXPECT_EQ(16, sig.size());
-    sig = createSigForLengthCheck(HMAC::MD5, 12345);
-    EXPECT_EQ(16, sig.size());
+    EXPECT_EQ(16, sigVectorLength(HMAC::MD5, 0));
+    EXPECT_EQ(8, sigVectorLength(HMAC::MD5, 8));
+    EXPECT_EQ(16, sigVectorLength(HMAC::MD5, 16));
+    EXPECT_EQ(16, sigVectorLength(HMAC::MD5, 40));
+    EXPECT_EQ(16, sigVectorLength(HMAC::MD5, 2000));
 
-    sig = createSigForLengthCheck(HMAC::SHA1, 0);
-    EXPECT_EQ(20, sig.size());
-    sig = createSigForLengthCheck(HMAC::SHA1, 12);
-    EXPECT_EQ(12, sig.size());
-    sig = createSigForLengthCheck(HMAC::SHA1, 20);
-    EXPECT_EQ(20, sig.size());
-    sig = createSigForLengthCheck(HMAC::SHA1, 24);
-    EXPECT_EQ(20, sig.size());
-    sig = createSigForLengthCheck(HMAC::SHA1, 12345);
-    EXPECT_EQ(20, sig.size());
+    EXPECT_EQ(20, sigBufferLength(HMAC::SHA1, 0));
+    EXPECT_EQ(8, sigBufferLength(HMAC::SHA1, 8));
+    EXPECT_EQ(20, sigBufferLength(HMAC::SHA1, 20));
+    EXPECT_EQ(20, sigBufferLength(HMAC::SHA1, 40));
+    EXPECT_EQ(20, sigBufferLength(HMAC::SHA1, 2000));
 
-    sig = createSigForLengthCheck(HMAC::SHA256, 0);
-    EXPECT_EQ(32, sig.size());
-    sig = createSigForLengthCheck(HMAC::SHA256, 12);
-    EXPECT_EQ(12, sig.size());
-    sig = createSigForLengthCheck(HMAC::SHA256, 32);
-    EXPECT_EQ(32, sig.size());
-    sig = createSigForLengthCheck(HMAC::SHA256, 36);
-    EXPECT_EQ(32, sig.size());
-    sig = createSigForLengthCheck(HMAC::SHA256, 12345);
-    EXPECT_EQ(32, sig.size());
+    EXPECT_EQ(32, sigBufferLength(HMAC::SHA256, 0));
+    EXPECT_EQ(8, sigBufferLength(HMAC::SHA256, 8));
+    EXPECT_EQ(32, sigBufferLength(HMAC::SHA256, 32));
+    EXPECT_EQ(32, sigBufferLength(HMAC::SHA256, 40));
+    EXPECT_EQ(32, sigBufferLength(HMAC::SHA256, 3200));
 
+    EXPECT_EQ(16, sigBufferLength(HMAC::MD5, 0));
+    EXPECT_EQ(8, sigBufferLength(HMAC::MD5, 8));
+    EXPECT_EQ(16, sigBufferLength(HMAC::MD5, 16));
+    EXPECT_EQ(16, sigBufferLength(HMAC::MD5, 40));
+    EXPECT_EQ(16, sigBufferLength(HMAC::MD5, 2000));
+
+    EXPECT_EQ(20, sigBufferLength(HMAC::SHA1, 0));
+    EXPECT_EQ(8, sigBufferLength(HMAC::SHA1, 8));
+    EXPECT_EQ(20, sigBufferLength(HMAC::SHA1, 20));
+    EXPECT_EQ(20, sigBufferLength(HMAC::SHA1, 40));
+    EXPECT_EQ(20, sigBufferLength(HMAC::SHA1, 2000));
+
+    EXPECT_EQ(32, sigBufferLength(HMAC::SHA256, 0));
+    EXPECT_EQ(8, sigBufferLength(HMAC::SHA256, 8));
+    EXPECT_EQ(32, sigBufferLength(HMAC::SHA256, 32));
+    EXPECT_EQ(32, sigBufferLength(HMAC::SHA256, 40));
+    EXPECT_EQ(32, sigBufferLength(HMAC::SHA256, 3200));
 }
 
 TEST(CryptoTest, BadKey) {
