@@ -142,9 +142,9 @@ public:
     std::vector<uint8_t> sign(size_t len) {
         Botan::SecureVector<Botan::byte> b_result(hmac_->final());
         if (len == 0 || len > b_result.size()) {
-            return(std::vector<uint8_t>(b_result.begin(), b_result.end()));
+            return (std::vector<uint8_t>(b_result.begin(), b_result.end()));
         } else {
-            return(std::vector<uint8_t>(b_result.begin(), &b_result[len]));
+            return (std::vector<uint8_t>(b_result.begin(), &b_result[len]));
         }
     }
 
