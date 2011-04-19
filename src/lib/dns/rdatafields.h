@@ -327,7 +327,7 @@ public:
     ///
     /// This method never throws an exception.
     unsigned int getFieldSpecDataSize() const { return (nfields_ *
-                                                    sizeof *fields_); }
+                                                    sizeof (*fields_)); }
 
     /// \brief Return the number of specs fields.
     ///
