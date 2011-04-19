@@ -54,7 +54,7 @@ PTR::toWire(OutputBuffer& buffer) const {
 }
 
 void
-PTR::toWire(MessageRenderer& renderer) const {
+PTR::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeName(ptr_name_);
 }
 
