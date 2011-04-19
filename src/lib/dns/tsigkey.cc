@@ -63,28 +63,31 @@ TSIGKey::TSIGKey(const Name& key_name, const Name& algorithm_name,
 }
 
 TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
-    const size_t pos = str.find(':');
-    if (pos == 0 || pos == str.npos || pos == str.size() - 1) {
-        // error
-        isc_throw(InvalidParameter, "Invalid TSIG key string");
-    }
     try {
-        const Name key_name(str.substr(0, pos));
-        Name algo_name("hmac-md5.sig-alg.reg.int");
+        istringstream iss(str);
 
-        // optional algorithm part
-        size_t pos2 = str.find(':', pos + 1);
-        if (pos2 != str.npos) {
-            if (pos2 == pos + 1) {
-                isc_throw(InvalidParameter, "Invalid TSIG key string");
-            }
-            algo_name = Name(str.substr(pos2 + 1));
-        } else {
-            pos2 = str.size() - pos;
+        string keyname_str;
+        getline(iss, keyname_str, ':');
+        if (iss.fail() || iss.bad() || iss.eof()) {
+            isc_throw(InvalidParameter, "Invalid TSIG key string: " << str);
         }
 
-        const std::string secret_str = str.substr(pos + 1, pos2 - pos - 1);
+        string secret_str;
+        getline(iss, secret_str, ':');
+        if (iss.fail() || iss.bad()) {
+            isc_throw(InvalidParameter, "Invalid TSIG key string: " << str);
+        }
 
+        string algo_str;
+        if (!iss.eof()) {
+            getline(iss, algo_str);
+        }
+        if (iss.fail() || iss.bad()) {
+            isc_throw(InvalidParameter, "Invalid TSIG key string: " << str);
+        }
+
+        const Name algo_name(algo_str.empty() ? "hmac-md5.sig-alg.reg.int" :
+                             algo_str);
         if (algo_name != HMACMD5_NAME() &&
             algo_name != HMACSHA1_NAME() &&
             algo_name != HMACSHA256_NAME()) {
@@ -95,7 +98,7 @@ TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
         vector<uint8_t> secret;
         decodeBase64(secret_str, secret);
 
-        impl_ = new TSIGKeyImpl(key_name, algo_name, &secret[0],
+        impl_ = new TSIGKeyImpl(Name(keyname_str), algo_name, &secret[0],
                                 secret.size());
     } catch (const Exception& e) {
         // 'reduce' the several types of exceptions name parsing and
