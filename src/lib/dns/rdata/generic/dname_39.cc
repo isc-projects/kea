@@ -53,7 +53,7 @@ DNAME::toWire(OutputBuffer& buffer) const {
 }
 
 void
-DNAME::toWire(MessageRenderer& renderer) const {
+DNAME::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeName(dname_);
 }
 
