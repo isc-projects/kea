@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+SUBDIRS = . plugins tests
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
