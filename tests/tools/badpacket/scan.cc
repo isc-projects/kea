@@ -21,6 +21,10 @@
 
 #include <config.h>
 
+// on sunstudio, asio.hpp needs unistd.h for pipe() to be defined
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #include <asio.hpp>
 
 #include <asiolink/io_address.h>
