@@ -11,7 +11,7 @@ if USE_GXX
 # avoid the error.  As a short term workaround we suppress this warning
 # for the entire this module.  See also src/bin/auth/Makefile.am.
 AM_CXXFLAGS += -Wno-unused-parameter
-AM_CXXFLAGS += -Wno-strict-aliasing
+AM_CXXFLAGS += -fno-strict-aliasing
 endif
 if USE_CLANGPP
 # Likewise, ASIO header files will trigger various warnings with clang++.
