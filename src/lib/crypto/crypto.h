@@ -85,10 +85,15 @@ class HMACImpl;
 class HMAC : private boost::noncopyable {
 public:
     enum HashAlgorithm {
-        MD5 = 0,
-        SHA1 = 1,
-        SHA256 = 2,
-        UNKNOWN = 3
+        MD5 = 0,            ///< MD5
+        SHA1 = 1,           ///< SHA-1
+        SHA256 = 2,         ///< SHA-256
+        UNKNOWN = 3         ///< This value can be used in conversion
+                            ///  functions, to be returned when the
+                            ///  input is unknown (but a value MUST be
+                            ///  returned), for instance when the input
+                            ///  is a Name or a string, and the return
+                            ///  value is a HashAlgorithm.
     };
 
     /// \brief Constructor from a secret and a hash algorithm
