@@ -612,6 +612,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/bindctl/Makefile
                  src/bin/bindctl/tests/Makefile
                  src/bin/cfgmgr/Makefile
+                 src/bin/cfgmgr/plugins/Makefile
                  src/bin/cfgmgr/tests/Makefile
                  src/bin/host/Makefile
                  src/bin/loadzone/Makefile
