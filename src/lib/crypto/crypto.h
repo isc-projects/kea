@@ -82,7 +82,7 @@ class HMACImpl;
 ///
 /// This class is used to create and verify HMAC signatures
 ///
-class HMAC : public boost::noncopyable {
+class HMAC : private boost::noncopyable {
 public:
     enum HashAlgorithm {
         MD5 = 0,
