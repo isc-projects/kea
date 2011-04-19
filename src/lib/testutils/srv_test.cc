@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <netinet/in.h>
 
 #include <dns/message.h>
@@ -25,8 +27,8 @@
 #include <testutils/srv_test.h>
 
 using namespace isc::dns;
-using namespace asiolink;
 using namespace isc::util;
+using namespace isc::asiolink;
 
 namespace isc {
 namespace testutils {

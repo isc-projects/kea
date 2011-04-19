@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/select.h>
@@ -25,6 +27,7 @@
 
 #include <boost/foreach.hpp>
 
+#include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
 
 #include <exceptions/exceptions.h>
@@ -56,7 +59,8 @@ using namespace isc::cc;
 using namespace isc::config;
 using namespace isc::data;
 using isc::log::dlog;
-using namespace asiolink;
+using namespace isc::asiodns;
+using namespace isc::asiolink;
 
 namespace {
 

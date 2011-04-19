@@ -624,6 +624,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/auth/benchmarks/Makefile
                  src/bin/resolver/Makefile
                  src/bin/resolver/tests/Makefile
+                 src/bin/sockcreator/Makefile
+                 src/bin/sockcreator/tests/Makefile
                  src/bin/xfrin/Makefile
                  src/bin/xfrin/tests/Makefile
                  src/bin/xfrout/Makefile
@@ -642,6 +644,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/Makefile
                  src/lib/asiolink/Makefile
                  src/lib/asiolink/tests/Makefile
+                 src/lib/asiodns/Makefile
+                 src/lib/asiodns/tests/Makefile
                  src/lib/bench/Makefile
                  src/lib/bench/example/Makefile
                  src/lib/bench/tests/Makefile
@@ -667,6 +671,11 @@ AC_CONFIG_FILES([Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/testdata/Makefile
+                 src/lib/util/Makefile
+                 src/lib/util/io/Makefile
+                 src/lib/util/io/tests/Makefile
+                 src/lib/util/unittests/Makefile
+                 src/lib/util/tests/Makefile
                  src/lib/dns/Makefile
                  src/lib/dns/tests/Makefile
                  src/lib/dns/tests/testdata/Makefile
@@ -677,8 +686,6 @@ AC_CONFIG_FILES([Makefile
                  src/lib/datasrc/Makefile
                  src/lib/datasrc/tests/Makefile
                  src/lib/xfr/Makefile
-                 src/lib/util/Makefile
-                 src/lib/util/tests/Makefile
                  src/lib/log/Makefile
                  src/lib/log/compiler/Makefile
                  src/lib/log/tests/Makefile
@@ -694,6 +701,9 @@ AC_CONFIG_FILES([Makefile
                  src/lib/server_common/tests/Makefile
                  tests/Makefile
                  tests/system/Makefile
+                 tests/tools/Makefile
+                 tests/tools/badpacket/Makefile
+                 tests/tools/badpacket/tests/Makefile
                ])
 AC_OUTPUT([doc/version.ent
            src/bin/cfgmgr/b10-cfgmgr.py
@@ -708,6 +718,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/xfrout/xfrout.py
            src/bin/xfrout/xfrout.spec.pre
            src/bin/xfrout/tests/xfrout_test
+           src/bin/xfrout/tests/xfrout_test.py
            src/bin/xfrout/run_b10-xfrout.sh
            src/bin/resolver/resolver.spec.pre
            src/bin/resolver/spec_config.h.pre

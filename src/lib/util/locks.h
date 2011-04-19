@@ -26,11 +26,6 @@
 /// Note that we need to include <config.h> in our .cc files for that
 /// to be set. we might want to enfore this at compile time with a check
 /// (TODO)
-/// Note that this also contains a workaround for Sunstudio; which
-/// probably won't completely work right now (that is, if the TODO
-/// above is completed), since that would also require some changes
-/// in most (at first glance unrelated) Makefiles
-/// (TODO2)
 
 #ifndef __LOCKS_
 #define __LOCKS_

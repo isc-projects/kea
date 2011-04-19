@@ -16,8 +16,7 @@
 
 #include <asio.hpp>
 
-using namespace asio;
-
+namespace isc {
 namespace asiolink {
 
 /// \brief The \c DummySocket class is a concrete derived class of
@@ -62,4 +61,5 @@ IOSocket::getDummyTCPSocket() {
     return (socket);
 }
 
-}
+} // namespace asiolink
+} // namespace isc

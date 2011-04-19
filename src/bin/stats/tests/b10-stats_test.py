@@ -1,4 +1,4 @@
-# Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2010,2011  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -12,8 +12,6 @@
 # FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-__version__ = "$Revision$"
 
 #
 # Tests for the stats module
@@ -503,6 +501,13 @@ class TestStats(unittest.TestCase):
         self.subject.check()
         self.assertEqual(result_ok(),
                          self.session.get_message("Stats", None))
+
+    def test_for_boss(self):
+        last_queue = self.session.old_message_queue.pop()
+        self.assertEqual(
+            last_queue.msg, {'command': ['sendstats']})
+        self.assertEqual(
+            last_queue.env['group'], 'Boss')
 
 class TestStats2(unittest.TestCase):
 
