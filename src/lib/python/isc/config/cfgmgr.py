@@ -326,6 +326,13 @@ class ConfigManager:
         update_cmd = ccsession.create_command(ccsession.COMMAND_CONFIG_UPDATE,
                                               use_part)
 
+        # TODO: This design might need some revisiting. We might want some
+        # polymorphism instead of branching. But it just might turn out it
+        # will get solved by itself when we move everything to virtual modules
+        # (which is possible solution to the offline configuration problem)
+        # or when we solve the incorect behaviour here when a config is
+        # rejected (spying modules don't know it was rejected and some modules
+        # might have been commited already).
         if module_name in self.virtual_modules:
             # The module is virtual, so call it to get the answer
             try:
