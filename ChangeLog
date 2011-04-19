@@ -1,6 +1,6 @@
 221.	[func]*		jerry
 	src/lib/util: Create C++ utility library.
-	(Trac #749, git TBD)
+	(Trac #749, git 084d1285d038d31067f8cdbb058d626acf03566d)
 
 220.	[func]		stephen
 	Added the 'badpacket' program for testing; it sends a set of
