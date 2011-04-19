@@ -1,7 +1,7 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/bin
-AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
+AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc  -I$(top_builddir)/src/lib/util
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(srcdir)/testdata\"
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
@@ -21,13 +21,13 @@ run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
 run_unittests_SOURCES += io_service_unittest.cc
 run_unittests_SOURCES += dns_server_unittest.cc
 run_unittests_SOURCES += io_fetch_unittest.cc
-run_unittests_SOURCES += qid_gen_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 
 run_unittests_LDADD  = $(GTEST_LDADD)
 run_unittests_LDADD += $(SQLITE_LIBS)
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la

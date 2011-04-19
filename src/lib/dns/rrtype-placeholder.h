@@ -23,11 +23,14 @@
 #include <exceptions/exceptions.h>
 
 namespace isc {
+namespace util {
+class InputBuffer;
+class OutputBuffer;
+}
+
 namespace dns {
 
 // forward declarations
-class InputBuffer;
-class OutputBuffer;
 class MessageRenderer;
 
 ///
@@ -145,7 +148,7 @@ public:
     /// an exception of class \c IncompleteRRType will be thrown.
     ///
     /// \param buffer A buffer storing the wire format data.
-    explicit RRType(InputBuffer& buffer);
+    explicit RRType(isc::util::InputBuffer& buffer);
     ///
     /// We use the default copy constructor intentionally.
     //@}
@@ -189,7 +192,7 @@ public:
     ///
     /// \param renderer DNS message rendering context that encapsulates the
     /// output buffer in which the RRType is to be stored.
-    void toWire(OutputBuffer& buffer) const;
+    void toWire(isc::util::OutputBuffer& buffer) const;
     //@}
 
     ///

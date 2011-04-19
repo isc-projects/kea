@@ -25,7 +25,7 @@
 
 #include <asiolink/io_address.h>
 #include <asiodns/io_fetch.h>
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/opcode.h>
@@ -33,7 +33,7 @@
 #include <dns/rcode.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
-#include <log/strutil.h>
+#include <util/strutil.h>
 
 #include "command_options.h"
 #include "header_flags.h"
@@ -43,7 +43,8 @@ using namespace std;
 using namespace isc::asiolink;
 using namespace isc::asiodns;
 using namespace isc::dns;
-using namespace isc::strutil;
+using namespace isc::util;
+using namespace isc::util::str;
 
 namespace isc {
 namespace badpacket {
@@ -189,7 +190,7 @@ Scan::sizeMessage(OutputBufferPtr& msgbuf, const CommandOptions& options) {
 
 // Perform the message exchange for a single combination command options.
 void
-Scan::scanOne(isc::dns::OutputBufferPtr& msgbuf, const CommandOptions& options) {
+Scan::scanOne(isc::util::OutputBufferPtr& msgbuf, const CommandOptions& options) {
     // Store the interpretation of outgoing message.
     string fields = string("(") + getFields(msgbuf) + string(")");
 
@@ -228,7 +229,7 @@ Scan::scanOne(isc::dns::OutputBufferPtr& msgbuf, const CommandOptions& options) 
 
 // Get interpretation of the message fields.
 std::string
-Scan::getFields(isc::dns::OutputBufferPtr& msgbuf) {
+Scan::getFields(isc::util::OutputBufferPtr& msgbuf) {
 
     // Header flags. (Note that all come from the same word in the message, so
     // using the word offset for the QR flag as the position in the buffer from

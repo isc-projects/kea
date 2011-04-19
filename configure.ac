@@ -671,6 +671,11 @@ AC_CONFIG_FILES([Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/testdata/Makefile
+                 src/lib/util/Makefile
+                 src/lib/util/io/Makefile
+                 src/lib/util/io/tests/Makefile
+                 src/lib/util/unittests/Makefile
+                 src/lib/util/tests/Makefile
                  src/lib/dns/Makefile
                  src/lib/dns/tests/Makefile
                  src/lib/dns/tests/testdata/Makefile
@@ -694,10 +699,6 @@ AC_CONFIG_FILES([Makefile
                  src/lib/cache/tests/Makefile
                  src/lib/server_common/Makefile
                  src/lib/server_common/tests/Makefile
-                 src/lib/util/Makefile
-                 src/lib/util/io/Makefile
-                 src/lib/util/io/tests/Makefile
-                 src/lib/util/unittests/Makefile
                  tests/Makefile
                  tests/system/Makefile
                  tests/tools/Makefile

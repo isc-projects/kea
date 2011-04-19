@@ -13,7 +13,6 @@ CLEANFILES = *.gcno *.gcda
 # which would make the build fail with -Werror (our default setting).
 lib_LTLIBRARIES = libasiolink.la
 libasiolink_la_SOURCES  = asiolink.h
-libasiolink_la_SOURCES += asiolink_utilities.h
 libasiolink_la_SOURCES += dummy_io_cb.h
 libasiolink_la_SOURCES += interval_timer.cc interval_timer.h
 libasiolink_la_SOURCES += io_address.cc io_address.h

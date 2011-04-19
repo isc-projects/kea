@@ -27,7 +27,7 @@
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/question.h>
 
 namespace isc {
@@ -133,7 +133,7 @@ public:
     IOFetch(Protocol protocol, isc::asiolink::IOService& service,
         const isc::dns::Question& question,
         const isc::asiolink::IOAddress& address,
-        uint16_t port, isc::dns::OutputBufferPtr& buff, Callback* cb,
+        uint16_t port, isc::util::OutputBufferPtr& buff, Callback* cb,
         int wait = -1);
 
     /// \brief Constructor.
@@ -156,9 +156,9 @@ public:
     /// \param wait Timeout for the fetch (in ms).  The default value of
     ///     -1 indicates no timeout.
     IOFetch(Protocol protocol, isc::asiolink::IOService& service,
-        isc::dns::OutputBufferPtr& outpkt,
+        isc::util::OutputBufferPtr& outpkt,
         const isc::asiolink::IOAddress& address,
-        uint16_t port, isc::dns::OutputBufferPtr& buff, Callback* cb,
+        uint16_t port, isc::util::OutputBufferPtr& buff, Callback* cb,
         int wait = -1);
 
     /// \brief Return Current Protocol
