@@ -25,6 +25,8 @@
 
 #include <string>
 
+#include <boost/scoped_ptr.hpp>
+
 using namespace std;
 using namespace isc::dns;
 
@@ -91,7 +93,7 @@ public:
                       "Unknown hash algorithm: " + hash_algorithm);
         }
 
-        hmac_ = new Botan::HMAC::HMAC(hash);
+        hmac_.reset(new Botan::HMAC::HMAC(hash));
 
         // If the key length is larger than the block size, we hash the
         // key itself first.
@@ -106,12 +108,11 @@ public:
                                secret_len);
             }
         } catch (const Botan::Invalid_Key_Length& ikl) {
-            delete hmac_;
             isc_throw(BadKey, ikl.what());
         }
     }
 
-    ~HMACImpl() { delete hmac_; }
+    ~HMACImpl() { }
 
     size_t getOutputLength() const {
         return (hmac_->OUTPUT_LENGTH);
@@ -163,7 +164,7 @@ public:
     }
 
 private:
-    Botan::HMAC* hmac_;
+    boost::scoped_ptr<Botan::HMAC> hmac_;
 };
 
 HMAC::HMAC(const void* secret, size_t secret_length,
