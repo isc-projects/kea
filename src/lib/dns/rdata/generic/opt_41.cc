@@ -57,7 +57,7 @@ OPT::toWire(OutputBuffer&) const {
 }
 
 void
-OPT::toWire(MessageRenderer&) const {
+OPT::toWire(AbstractMessageRenderer&) const {
     // nothing to do, as this simple version doesn't support any options.
 }
 
