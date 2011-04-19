@@ -465,8 +465,8 @@ class TestMultiConfigData(unittest.TestCase):
 
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec24.spec")
         self.mcd.set_specification(module_spec)
-        maps = self.mcd.get_value_maps("/Spec24/item")
-        self.assertEqual([], maps)
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.mcd.get_value_maps, "/Spec24/item", 4)
         self.mcd._set_current_config({ "Spec24": { "item": [] } })
         maps = self.mcd.get_value_maps("/Spec24/item")
         self.assertEqual([{'default': False, 'modified': False, 'name': 'Spec24/item', 'type': 'list', 'value': []}], maps)

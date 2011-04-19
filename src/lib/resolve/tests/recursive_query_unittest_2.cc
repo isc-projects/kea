@@ -17,6 +17,7 @@
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include <gtest/gtest.h>
 #include <boost/bind.hpp>
@@ -37,16 +38,18 @@
 #include <dns/rrttl.h>
 #include <dns/rdata.h>
 
-#include <asiolink/dns_service.h>
+#include <util/io_utilities.h>
+#include <asiodns/dns_service.h>
+#include <asiodns/io_fetch.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_endpoint.h>
-#include <asiolink/io_fetch.h>
 #include <asiolink/io_service.h>
 #include <resolve/recursive_query.h>
 #include <resolve/resolver_interface.h>
 
 using namespace asio;
 using namespace asio::ip;
+using namespace isc::asiolink;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::util;
@@ -73,7 +76,8 @@ using namespace std;
 /// directed to one or other of the "servers" in the RecursiveQueryTest2 class,
 /// regardless of the glue returned in referrals.
 
-namespace asiolink {
+namespace isc {
+namespace asiodns {
 
 const std::string TEST_ADDRESS = "127.0.0.1";   ///< Servers are on this address
 const uint16_t TEST_PORT = 5301;                ///< ... and this port
@@ -651,12 +655,16 @@ TEST_F(RecursiveQueryTest2, Resolve) {
                           boost::bind(&RecursiveQueryTest2::tcpAcceptHandler,
                                       this, _1, 0));
 
-    // Set up the RecursiveQuery object.
+    // Set up the RecursiveQuery object. We will also test that it correctly records
+    // RTT times by setting up a RTT recorder object as well.
     std::vector<std::pair<std::string, uint16_t> > upstream;         // Empty
     std::vector<std::pair<std::string, uint16_t> > upstream_root;    // Empty
     RecursiveQuery query(dns_service_, *nsas_, cache_,
                          upstream, upstream_root);
     query.setTestServer(TEST_ADDRESS, TEST_PORT);
+
+    boost::shared_ptr<RttRecorder> recorder(new RttRecorder());
+    query.setRttRecorder(recorder);
 
     // Set up callback to receive notification that the query has completed.
     isc::resolve::ResolverInterface::CallbackPtr
@@ -674,6 +682,17 @@ TEST_F(RecursiveQueryTest2, Resolve) {
     ResolverCallback* rc = static_cast<ResolverCallback*>(resolver_callback.get());
     EXPECT_TRUE(rc->getRun());
     EXPECT_TRUE(rc->getStatus());
+
+    // Finally, check that all the RTTs were "reasonable" (defined here as
+    // being below 2 seconds).  This is an explicit check to test that the
+    // variables in the RTT calculation are at least being initialized; if they
+    // weren't, we would expect some absurdly high answers.
+    vector<uint32_t> rtt = recorder->getRtt();
+    EXPECT_GT(rtt.size(), 0);
+    for (int i = 0; i < rtt.size(); ++i) {
+        EXPECT_LT(rtt[i], 2000);
+    }
 }
 
-} // namespace asiolink
+} // namespace asiodns
+} // namespace isc

@@ -45,7 +45,7 @@ class QuestionTest(unittest.TestCase):
     # tests below based on cpp unit tests
     # also tests get_name, get_class and get_type
     def test_from_wire(self):
-        
+
         q = question_from_wire("question_fromWire")
 
         self.assertEqual(self.example_name1, q.get_name())
