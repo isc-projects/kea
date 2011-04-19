@@ -1,3 +1,7 @@
+221.	[func]*		jerry
+	src/lib/util: Create C++ utility library.
+	(Trac #749, git TBD)
+
 220.	[func]		stephen
 	Added the 'badpacket' program for testing; it sends a set of
 	(potentially) bad packets to a nameserver and prints the responses.
