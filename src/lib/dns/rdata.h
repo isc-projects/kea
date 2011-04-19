@@ -163,6 +163,7 @@ public:
     ///
     /// \return A string representation of \c Rdata.
     virtual std::string toText() const = 0;
+
     /// \brief Render the \c Rdata in the wire format into a buffer.
     ///
     /// This is a pure virtual method without the definition; the actual
@@ -171,6 +172,7 @@ public:
     ///
     /// \param buffer An output buffer to store the wire data.
     virtual void toWire(isc::util::OutputBuffer& buffer) const = 0;
+
     /// \brief Render the \c Rdata in the wire format into a
     /// \c MessageRenderer object.
     ///
@@ -253,6 +255,7 @@ public:
     /// \param rdata_string A string of textual representation of generic
     /// RDATA.
     explicit Generic(const std::string& rdata_string);
+
     ///
     /// \brief Constructor from wire-format data.
     ///
@@ -275,6 +278,7 @@ public:
     /// \c Rdata to parse.
     /// \param rdata_len The length in buffer of the \c Rdata.  In bytes.
     Generic(isc::util::InputBuffer& buffer, size_t rdata_len);
+
     ///
     /// \brief The destructor.
     virtual ~Generic();
@@ -286,6 +290,7 @@ public:
     ///
     /// \param source A reference to a \c generic::Generic object to copy from.
     Generic(const Generic& source);
+
     ///
     /// \brief The assignment operator.
     ///
@@ -295,6 +300,7 @@ public:
     /// \param source A reference to a \c generic::Generic object to copy from.
     Generic& operator=(const Generic& source);
     //@}
+
     ///
     /// \name Converter methods
     ///
@@ -309,6 +315,7 @@ public:
     ///
     /// \return A string representation of \c generic::Generic.
     virtual std::string toText() const;
+
     ///
     /// \brief Render the \c generic::Generic in the wire format into a buffer.
     ///
@@ -319,6 +326,7 @@ public:
     ///
     /// \param buffer An output buffer to store the wire data.
     virtual void toWire(isc::util::OutputBuffer& buffer) const;
+
     /// \brief Render the \c generic::Generic in the wire format into a
     /// \c MessageRenderer object.
     ///
@@ -331,6 +339,7 @@ public:
     /// output buffer in which the \c Generic object is to be stored.
     virtual void toWire(MessageRenderer& renderer) const;
     //@}
+
     ///
     /// \name Comparison method
     ///
@@ -423,6 +432,7 @@ std::ostream& operator<<(std::ostream& os, const Generic& rdata);
 /// object.
 RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
                      const std::string& rdata_string);
+
 /// \brief Create RDATA of a given pair of RR type and class from
 /// wire-format data.
 ///
@@ -446,6 +456,7 @@ RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
 /// object.
 RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
                      isc::util::InputBuffer& buffer, size_t len);
+
 /// \brief Create RDATA of a given pair of RR type and class, copying
 /// of another RDATA of same kind.
 ///

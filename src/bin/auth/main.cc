@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -38,10 +40,11 @@
 
 #include <auth/spec_config.h>
 #include <auth/common.h>
-#include <auth/config.h>
+#include <auth/auth_config.h>
 #include <auth/command.h>
 #include <auth/change_user.h>
 #include <auth/auth_srv.h>
+#include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
 #include <log/dummylog.h>
 
@@ -52,7 +55,8 @@ using namespace isc::config;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::xfr;
-using namespace asiolink;
+using namespace isc::asiolink;
+using namespace isc::asiodns;
 
 namespace {
 
@@ -122,19 +126,7 @@ main(int argc, char* argv[]) {
     bool xfrin_session_established = false; // XXX (see Trac #287)
     bool statistics_session_established = false; // XXX (see Trac #287)
     ModuleCCSession* config_session = NULL;
-    string xfrout_socket_path;
-    if (getenv("B10_FROM_BUILD") != NULL) {
-        if (getenv("B10_FROM_SOURCE_LOCALSTATEDIR")) {
-            xfrout_socket_path = string("B10_FROM_SOURCE_LOCALSTATEDIR") +
-                "/auth_xfrout_conn";
-        } else {
-            xfrout_socket_path = string(getenv("B10_FROM_BUILD")) +
-                "/auth_xfrout_conn";
-        }
-    } else {
-        xfrout_socket_path = UNIX_SOCKET_FILE;
-    }
-    XfroutClient xfrout_client(xfrout_socket_path);
+    XfroutClient xfrout_client(getXfroutSocketPath());
     try {
         string specfile;
         if (getenv("B10_FROM_BUILD")) {

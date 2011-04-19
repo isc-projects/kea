@@ -12,7 +12,7 @@ endif
 # Some versions of GCC warn about some versions of Boost regarding
 # missing initializer for members in its posix_time.
 # https://svn.boost.org/trac/boost/ticket/3477
-# But older GCC compilers don't have the flag.     
+# But older GCC compilers don't have the flag.
 AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 if USE_CLANGPP
@@ -35,6 +35,7 @@ run_unittests_LDADD = $(GTEST_LDADD)
 run_unittests_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
+run_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
 endif
