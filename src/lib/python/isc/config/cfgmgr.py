@@ -170,6 +170,10 @@ class ConfigManager:
         self.data_path = data_path
         self.database_filename = database_filename
         self.module_specs = {}
+        # Virtual modules are the ones which have no process running. The
+        # checking of validity is done by functions presented here instead
+        # of some other process
+        self.virtual_modules = {}
         self.config = ConfigManagerData(data_path, database_filename)
         if session:
             self.cc = session
@@ -187,11 +191,20 @@ class ConfigManager:
         """Adds a ModuleSpec"""
         self.module_specs[spec.get_module_name()] = spec
 
+    def set_virtual_module(self, spec, check_func):
+        """Adds a virtual module with its spec and checking function."""
+        self.module_specs[spec.get_module_name()] = spec
+        self.virtual_modules[spec.get_module_name()] = check_func
+
     def remove_module_spec(self, module_name):
         """Removes the full ModuleSpec for the given module_name.
+           Also removes the virtual module check function if it
+           was present.
            Does nothing if the module was not present."""
         if module_name in self.module_specs:
             del self.module_specs[module_name]
+        if module_name in self.virtual_modules:
+            del self.virtual_modules[module_name]
 
     def get_module_spec(self, module_name = None):
         """Returns the full ModuleSpec for the module with the given
@@ -299,24 +312,48 @@ class ConfigManager:
         # todo: use api (and check the data against the definition?)
         old_data = copy.deepcopy(self.config.data)
         conf_part = data.find_no_exc(self.config.data, module_name)
+        update_cmd = None
+        use_part = None
         if conf_part:
             data.merge(conf_part, cmd)
-            update_cmd = ccsession.create_command(ccsession.COMMAND_CONFIG_UPDATE,
-                                                  conf_part)
-            seq = self.cc.group_sendmsg(update_cmd, module_name)
-            try:
-                answer, env = self.cc.group_recvmsg(False, seq)
-            except isc.cc.SessionTimeout:
-                answer = ccsession.create_answer(1, "Timeout waiting for answer from " + module_name)
+            use_part = conf_part
         else:
             conf_part = data.set(self.config.data, module_name, {})
             data.merge(conf_part[module_name], cmd)
-            # send out changed info
-            update_cmd = ccsession.create_command(ccsession.COMMAND_CONFIG_UPDATE,
-                                                  conf_part[module_name])
-            seq = self.cc.group_sendmsg(update_cmd, module_name)
-            # replace 'our' answer with that of the module
+            use_part = conf_part[module_name]
+
+        # The command to send
+        update_cmd = ccsession.create_command(ccsession.COMMAND_CONFIG_UPDATE,
+                                              use_part)
+
+        # TODO: This design might need some revisiting. We might want some
+        # polymorphism instead of branching. But it just might turn out it
+        # will get solved by itself when we move everything to virtual modules
+        # (which is possible solution to the offline configuration problem)
+        # or when we solve the incorect behaviour here when a config is
+        # rejected (spying modules don't know it was rejected and some modules
+        # might have been commited already).
+        if module_name in self.virtual_modules:
+            # The module is virtual, so call it to get the answer
             try:
+                error = self.virtual_modules[module_name](use_part)
+                if error is None:
+                    answer = ccsession.create_answer(0)
+                    # OK, it is successful, send the notify, but don't wait
+                    # for answer
+                    seq = self.cc.group_sendmsg(update_cmd, module_name)
+                else:
+                    answer = ccsession.create_answer(1, error)
+            # Make sure just a validating plugin don't kill the whole manager
+            except Exception as excp:
+                # Provide answer
+                answer = ccsession.create_answer(1, "Exception: " + str(excp))
+        else:
+            # Real module, send it over the wire to it
+            # send out changed info and wait for answer
+            seq = self.cc.group_sendmsg(update_cmd, module_name)
+            try:
+                # replace 'our' answer with that of the module
                 answer, env = self.cc.group_recvmsg(False, seq)
             except isc.cc.SessionTimeout:
                 answer = ccsession.create_answer(1, "Timeout waiting for answer from " + module_name)
