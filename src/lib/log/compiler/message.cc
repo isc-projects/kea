@@ -25,17 +25,19 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <log/filename.h>
+#include <util/filename.h>
+#include <util/strutil.h>
+
 #include <log/message_dictionary.h>
 #include <log/message_exception.h>
 #include <log/message_reader.h>
 #include <log/messagedef.h>
-#include <log/strutil.h>
 
 #include <log/logger.h>
 
 using namespace std;
 using namespace isc::log;
+using namespace isc::util;
 
 static const char* VERSION = "1.0-0";
 
@@ -105,7 +107,7 @@ currentTime() {
 
     // Convert to string and strip out the trailing newline
     string current_time = buffer;
-    return isc::strutil::trim(current_time);
+    return isc::util::str::trim(current_time);
 }
 
 
@@ -125,7 +127,7 @@ sentinel(Filename& file) {
     string name = file.name();
     string ext = file.extension();
     string sentinel_text = "__" + name + "_" + ext.substr(1);
-    isc::strutil::uppercase(sentinel_text);
+    isc::util::str::uppercase(sentinel_text);
     return sentinel_text;
 }
 
@@ -206,7 +208,7 @@ splitNamespace(string ns) {
 
     // ... and return the vector of namespace components split on the single
     // colon.
-    return isc::strutil::tokens(ns, ":");
+    return isc::util::str::tokens(ns, ":");
 }
 
 
@@ -535,7 +537,7 @@ main(int argc, char* argv[]) {
         text += global.getText(e.id());
 
         // Format with arguments
-        text = isc::strutil::format(text, e.arguments());
+        text = isc::util::str::format(text, e.arguments());
         cerr << text << "\n";
 
         return 1;

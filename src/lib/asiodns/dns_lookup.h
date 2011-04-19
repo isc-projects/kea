@@ -17,8 +17,8 @@
 
 #include <asiolink/io_message.h>
 #include <asiodns/dns_server.h>
-#include <dns/buffer.h>
 #include <dns/message.h>
+#include <util/buffer.h>
 
 namespace isc {
 namespace asiodns {
@@ -71,7 +71,7 @@ public:
     virtual void operator()(const asiolink::IOMessage& io_message,
                             isc::dns::MessagePtr message,
                             isc::dns::MessagePtr answer_message,
-                            isc::dns::OutputBufferPtr buffer,
+                            isc::util::OutputBufferPtr buffer,
                             DNSServer* server) const
     {
         (*self_)(io_message, message, answer_message, buffer, server);

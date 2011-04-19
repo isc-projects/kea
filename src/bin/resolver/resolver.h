@@ -22,7 +22,7 @@
 #include <cc/data.h>
 #include <config/ccsession.h>
 #include <dns/message.h>
-#include <dns/buffer.h>
+#include <util/buffer.h>
 
 #include <asiodns/dns_server.h>
 #include <asiodns/dns_service.h>
@@ -85,7 +85,7 @@ public:
     void processMessage(const isc::asiolink::IOMessage& io_message,
                         isc::dns::MessagePtr query_message,
                         isc::dns::MessagePtr answer_message,
-                        isc::dns::OutputBufferPtr buffer,
+                        isc::util::OutputBufferPtr buffer,
                         isc::asiodns::DNSServer* server);
 
     /// \brief Set and get the config session

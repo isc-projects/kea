@@ -27,6 +27,7 @@
 #include <testutils/srv_test.h>
 
 using namespace isc::dns;
+using namespace isc::util;
 using namespace isc::asiolink;
 
 namespace isc {
@@ -205,7 +206,7 @@ SrvTestBase::ednsBadVers() {
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 1);
     EXPECT_FALSE(parse_message->getEDNS()); // EDNS isn't added at this point
 
-    isc::dns::InputBuffer ib(response_obuffer->getData(),
+    InputBuffer ib(response_obuffer->getData(),
                              response_obuffer->getLength());
     isc::dns::Message parsed(isc::dns::Message::PARSE);
     parsed.fromWire(ib);

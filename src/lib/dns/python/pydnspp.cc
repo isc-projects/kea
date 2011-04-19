@@ -31,7 +31,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>

@@ -42,6 +42,7 @@
 
 using isc::log::dlog;
 using namespace isc::dns;
+using namespace isc::util;
 using namespace isc::asiolink;
 
 namespace isc {

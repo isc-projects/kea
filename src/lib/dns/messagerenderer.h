@@ -16,9 +16,12 @@
 #define __MESSAGERENDERER_H 1
 
 namespace isc {
+namespace util {
+class OutputBuffer;
+}
+
 namespace dns {
 // forward declarations
-class OutputBuffer;
 class Name;
 
 ///
@@ -101,7 +104,7 @@ public:
     ///
     /// \param buffer An \c OutputBuffer object to which wire format data is
     /// written.
-    MessageRenderer(OutputBuffer& buffer);
+    MessageRenderer(isc::util::OutputBuffer& buffer);
     /// \brief The destructor.
     ///
     /// The destructor does nothing on the given \c buffer on construction;

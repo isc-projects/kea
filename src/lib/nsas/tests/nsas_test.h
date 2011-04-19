@@ -26,8 +26,8 @@
 
 #include <config.h>
 
+#include <util/buffer.h>
 #include <dns/message.h>
-#include <dns/buffer.h>
 #include <dns/rdata.h>
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
@@ -40,6 +40,7 @@
 
 using namespace isc::dns::rdata;
 using namespace isc::dns;
+using namespace isc::util;
 
 namespace {
     MessagePtr

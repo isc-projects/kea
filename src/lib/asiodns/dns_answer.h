@@ -16,7 +16,7 @@
 #define __ASIOLINK_DNS_ANSWER_H 1
 
 #include <asiolink/io_message.h>
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/message.h>
 
 namespace isc {
@@ -69,7 +69,7 @@ public:
     virtual void operator()(const asiolink::IOMessage& io_message,
                             isc::dns::MessagePtr query_message,
                             isc::dns::MessagePtr answer_message,
-                            isc::dns::OutputBufferPtr buffer) const = 0;
+                            isc::util::OutputBufferPtr buffer) const = 0;
 };
 
 }      // namespace asiodns

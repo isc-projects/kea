@@ -24,7 +24,7 @@
 #include <cc/data.h>
 #include <config/ccsession.h>
 #include <dns/message.h>
-#include <dns/buffer.h>
+#include <util/buffer.h>
 
 #include <asiodns/dns_server.h>
 #include <asiodns/dns_lookup.h>
@@ -118,7 +118,7 @@ public:
     /// \throw isc::Unexpected Protocol type of \a message is unexpected
     void processMessage(const isc::asiolink::IOMessage& io_message,
                         isc::dns::MessagePtr message,
-                        isc::dns::OutputBufferPtr buffer,
+                        isc::util::OutputBufferPtr buffer,
                         isc::asiodns::DNSServer* server);
 
     /// \brief Set verbose flag
