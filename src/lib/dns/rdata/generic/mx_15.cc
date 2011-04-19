@@ -20,7 +20,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
@@ -28,6 +28,7 @@
 
 using namespace std;
 using namespace boost;
+using namespace isc::util;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE

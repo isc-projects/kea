@@ -15,7 +15,8 @@
 #include <string>
 #include <sstream>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
+
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rdata.h>

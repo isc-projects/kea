@@ -35,18 +35,18 @@
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
+#include <util/io_utilities.h>
 
 #include <asio.hpp>
 
-#include <asiolink/asiolink_utilities.h>
 #include <asiolink/io_service.h>
 #include <asiolink/udp_endpoint.h>
 #include <asiolink/udp_socket.h>
 
 using namespace asio;
+using namespace isc::util;
 using namespace isc::asiolink;
-using namespace isc::dns;
 using namespace std;
 
 namespace {

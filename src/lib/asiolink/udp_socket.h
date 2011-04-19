@@ -142,7 +142,7 @@ public:
     virtual bool processReceivedData(const void* staging, size_t length,
                                      size_t& cumulative, size_t& offset,
                                      size_t& expected,
-                                     isc::dns::OutputBufferPtr& outbuff);
+                                     isc::util::OutputBufferPtr& outbuff);
 
     /// \brief Cancel I/O On Socket
     virtual void cancel();
@@ -284,7 +284,7 @@ template <typename C> bool
 UDPSocket<C>::processReceivedData(const void* staging, size_t length,
                                   size_t& cumulative, size_t& offset,
                                   size_t& expected,
-                                  isc::dns::OutputBufferPtr& outbuff)
+                                  isc::util::OutputBufferPtr& outbuff)
 {
     // Set return values to what we should expect.
     cumulative = length;

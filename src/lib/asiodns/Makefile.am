@@ -4,6 +4,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/asiolink -I$(top_builddir)/src/lib/asiolink
+AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
@@ -19,7 +20,6 @@ libasiodns_la_SOURCES += dns_service.cc dns_service.h
 libasiodns_la_SOURCES += tcp_server.cc tcp_server.h
 libasiodns_la_SOURCES += udp_server.cc udp_server.h
 libasiodns_la_SOURCES += io_fetch.cc io_fetch.h
-libasiodns_la_SOURCES += qid_gen.cc qid_gen.h
 
 EXTRA_DIST = asiodef.msg
 

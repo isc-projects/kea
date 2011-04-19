@@ -36,6 +36,7 @@
 using namespace std;
 using namespace boost;
 using namespace isc::dns::rdata;
+using namespace isc::util;
 
 namespace isc {
 namespace dns {
@@ -143,8 +144,8 @@ EDNS::toWire(MessageRenderer& renderer, const uint8_t extended_rcode) const {
 }
 
 unsigned int
-EDNS::toWire(OutputBuffer& buffer, const uint8_t extended_rcode) const {
-    return (toWire<OutputBuffer>(buffer, extended_rcode));
+EDNS::toWire(isc::util::OutputBuffer& buffer, const uint8_t extended_rcode) const {
+    return (toWire<isc::util::OutputBuffer>(buffer, extended_rcode));
 }
 
 EDNS*

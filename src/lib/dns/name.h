@@ -23,9 +23,12 @@
 #include <exceptions/exceptions.h>
 
 namespace isc {
-namespace dns {
+namespace util {
 class InputBuffer;
 class OutputBuffer;
+}
+
+namespace dns {
 class MessageRenderer;
 
 ///
@@ -247,7 +250,7 @@ public:
     ///
     /// \param buffer A buffer storing the wire format %data.
     /// \param downcase Whether to convert upper case alphabets to lower case.
-    explicit Name(InputBuffer& buffer, bool downcase = false);
+    explicit Name(isc::util::InputBuffer& buffer, bool downcase = false);
     ///
     /// We use the default copy constructor intentionally.
     //@}
@@ -359,7 +362,7 @@ public:
     /// then this method should not throw an exception.
     ///
     /// \param buffer An output buffer to store the wire %data.
-    void toWire(OutputBuffer& buffer) const;
+    void toWire(isc::util::OutputBuffer& buffer) const;
     //@}
 
     ///

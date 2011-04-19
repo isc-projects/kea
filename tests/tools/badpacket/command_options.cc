@@ -21,7 +21,7 @@
 #include <getopt.h>
 
 #include "exceptions/exceptions.h"
-#include "log/strutil.h"
+#include "util/strutil.h"
 
 #include "command_options.h"
 #include "option_info.h"
@@ -264,7 +264,7 @@ CommandOptions::processOptionValue(int c, const char* value) {
     uint32_t maxval = OptionInfo::maxval(index);
 
     // Split the string up into one or two tokens.
-    vector<string> tokens = isc::strutil::tokens(string(value), "-");
+    vector<string> tokens = isc::util::str::tokens(string(value), "-");
     if ((tokens.size() < 1) || (tokens.size() > 2)) {
         isc_throw(isc::BadValue, "value given for " << name << " is '" << value <<
                   "': it must be in the form 'int' or 'int1-int2'");

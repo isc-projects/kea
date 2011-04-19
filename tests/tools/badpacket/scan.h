@@ -23,7 +23,7 @@
 
 #include <asiolink/io_service.h>
 #include <asiodns/io_fetch.h>
-#include <dns/buffer.h>
+#include <util/buffer.h>
 
 #include "command_options.h"
 #include "header_flags.h"
@@ -88,7 +88,7 @@ private:
     /// \param flags Header flags
     /// \param index Index of the current field to be processed.
     /// \param maxindex Maximum valid index value
-    void iterateFlags(isc::dns::OutputBufferPtr& msgbuf,
+    void iterateFlags(isc::util::OutputBufferPtr& msgbuf,
                  const CommandOptions& options, HeaderFlags& flags,
                  int index, int maxindex);
 
@@ -102,7 +102,7 @@ private:
     ///        the sending code
     /// \param options Command-line options (the important ones being address,
     ///        port and timeout).
-    void iterateFlagsStart(isc::dns::OutputBufferPtr& msgbuf,
+    void iterateFlagsStart(isc::util::OutputBufferPtr& msgbuf,
                            const CommandOptions& options);
 
     /// \brief Iterate over count fields
@@ -119,7 +119,7 @@ private:
     ///        port and timeout).
     /// \param index Index of the current field to be processed.
     /// \param maxindex Maximum valid index value
-    void iterateCount(isc::dns::OutputBufferPtr& msgbuf,
+    void iterateCount(isc::util::OutputBufferPtr& msgbuf,
                       const CommandOptions& options, int index, int maxindex);
 
     /// \brief Start iterating over count fields
@@ -132,7 +132,7 @@ private:
     ///        the sending code
     /// \param options Command-line options (the important ones being address,
     ///        port and timeout).
-    void iterateCountStart(isc::dns::OutputBufferPtr& msgbuf,
+    void iterateCountStart(isc::util::OutputBufferPtr& msgbuf,
                            const CommandOptions& options);
 
     /// \brief Iterate over message sizes
@@ -146,7 +146,7 @@ private:
     ///        the sending code
     /// \param options Command-line options (the important ones being address,
     ///        port and timeout).
-    void sizeMessage(isc::dns::OutputBufferPtr& msgbuf,
+    void sizeMessage(isc::util::OutputBufferPtr& msgbuf,
                      const CommandOptions& options);
 
     /// \brief Scan One Value
@@ -159,7 +159,7 @@ private:
     ///        the sending code
     /// \param options Command-line options (the important ones being address,
     ///        port and timeout).
-    void scanOne(isc::dns::OutputBufferPtr& msgbuf,
+    void scanOne(isc::util::OutputBufferPtr& msgbuf,
                  const CommandOptions& options);
 
     /// \brief Perform I/O
@@ -170,8 +170,8 @@ private:
     /// \param sendbuf Buffer sent to the nameserver
     /// \param recvbuf Buffer to hold reply from the nameserver
     /// \param options Command-line options
-    void performIO(isc::dns::OutputBufferPtr& sendbuf,
-                   isc::dns::OutputBufferPtr& recvbuf,
+    void performIO(isc::util::OutputBufferPtr& sendbuf,
+                   isc::util::OutputBufferPtr& recvbuf,
                    const CommandOptions& options);
 
     /// \brief Get Fields
@@ -183,7 +183,7 @@ private:
     ///
     /// \return A string that holds a textual interpretation of all the fields
     ///         in the header.
-    std::string getFields(isc::dns::OutputBufferPtr& msgbuf);
+    std::string getFields(isc::util::OutputBufferPtr& msgbuf);
 
     // Member variables
 
