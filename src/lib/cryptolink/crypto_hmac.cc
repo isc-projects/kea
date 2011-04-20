@@ -89,7 +89,7 @@ public:
     void sign(isc::dns::OutputBuffer& result, size_t len) {
         try {
             Botan::SecureVector<Botan::byte> b_result(hmac_->final());
-    
+
             if (len == 0 || len > b_result.size()) {
                 len = b_result.size();
             }
