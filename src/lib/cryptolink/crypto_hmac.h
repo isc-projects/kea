@@ -18,13 +18,13 @@
 
 #include <boost/noncopyable.hpp>
 
-#include <crypto/crypto.h>
+#include <cryptolink/crypto.h>
 
 #ifndef _ISC_CRYPTO_HMAC_H
 #define _ISC_CRYPTO_HMAC_H
 
 namespace isc {
-namespace crypto {
+namespace cryptolink {
 
 /// Forward declaration, pimpl style
 class HMACImpl;
@@ -48,7 +48,7 @@ public:
     };
 
 private:
-    friend class Crypto;
+    friend class CryptoLink;
 
     /// \brief Constructor from a secret and a hash algorithm
     ///
@@ -127,7 +127,7 @@ private:
     HMACImpl* impl_;
 };
 
-} // namespace crypto
+} // namespace cryptolink
 } // namespace isc
 
 #endif // __ISC_CRYPTO_HMAC
