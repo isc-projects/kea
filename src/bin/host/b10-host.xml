@@ -1,0 +1,89 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	       [<!ENTITY mdash "&#8212;">]>
+<!--
+ - Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<!-- $Id$ -->
+<refentry>
+
+  <refentryinfo>
+    <date>May 24, 2010</date>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>b10-host</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo>BIND10</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>b10-host</refname>
+    <refpurpose>DNS lookup utility</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2010</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>b10-host</command>
+      <arg><option>-v</option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>
+    </para>
+  </refsect1>
+
+<!--
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <para>The arguments are as follows:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term><option></option></term>
+        <listitem><para>
+        </para></listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </refsect1>
+-->
+
+  <refsect1>
+    <title>HISTORY</title>
+    <para>
+      The C++ version of <command>b10-host</command> was started in
+      October 2009 by Jeremy C. Reed of ISC.
+      Its usage and output are based on the standard <command>host</command>
+      command.
+    </para>
+  </refsect1>
+</refentry><!--
+ - Local variables:
+ - mode: sgml
+ - End:
+-->
