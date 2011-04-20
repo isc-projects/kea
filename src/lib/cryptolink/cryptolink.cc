@@ -12,22 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "crypto.h"
+#include "cryptolink.h"
 
 #include <botan/botan.h>
-#include <botan/hmac.h>
-#include <botan/hash.h>
-#include <botan/types.h>
-
-#include <dns/buffer.h>
-#include <dns/name.h>
-#include <dns/util/base64.h>
-
-#include <string>
 
 #include <boost/scoped_ptr.hpp>
-
-#include <iostream>
 
 using namespace std;
 using namespace isc::dns;

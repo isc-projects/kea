@@ -15,7 +15,6 @@
 #include <gtest/gtest.h>
 
 #include <dns/tests/unittest_util.h>
-#include <cryptolink/crypto.h>
 
 int
 main(int argc, char* argv[]) {

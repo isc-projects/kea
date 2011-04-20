@@ -15,7 +15,7 @@
 #include <config.h>
 #include <gtest/gtest.h>
 
-#include <cryptolink/crypto.h>
+#include <cryptolink/cryptolink.h>
 #include <dns/buffer.h>
 #include <exceptions/exceptions.h>
 
