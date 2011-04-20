@@ -18,7 +18,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <cryptolink/crypto.h>
+#include <cryptolink/cryptolink.h>
 
 #include <dns/name.h>
 #include <dns/util/base64.h>

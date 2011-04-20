@@ -12,13 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <string>
 #include <dns/buffer.h>
-#include <exceptions/exceptions.h>
 
 #include <boost/noncopyable.hpp>
 
-#include <cryptolink/crypto.h>
+#include <cryptolink/cryptolink.h>
 
 #ifndef _ISC_CRYPTO_HMAC_H
 #define _ISC_CRYPTO_HMAC_H
