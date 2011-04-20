@@ -2,7 +2,7 @@
 	src/lib/zonemgr: Fix a bug that xfrin not checking for new copy of
 	zone on startup.  Imposes some random jitters to avoid many zones
 	need to do refresh at the same time.
-	(Trac #387, svn rTBD)
+	(Trac #387, svn 9140fab9bab5f6502bd15d391fd51ac078b0b89b)
 
 221.	[func]*		jerry
 	src/lib/util: Create C++ utility library.
