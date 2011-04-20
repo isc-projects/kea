@@ -484,3 +484,9 @@ TEST(CryptoTest, BadKey) {
                             hmac_sig.getLength()),
                             UnsupportedAlgorithm);
 }
+
+TEST(CryptoTest, Singleton) {
+    Crypto& c1 = Crypto::getCrypto();
+    Crypto& c2 = Crypto::getCrypto();
+    ASSERT_EQ(&c1, &c2);
+}
