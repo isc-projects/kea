@@ -178,7 +178,7 @@ main(int argc, char* argv[]) {
         try {
             configureAuthServer(*auth_server, config_session->getFullConfig());
             auth_server->updateConfig(ElementPtr());
-        } catch (const isc::Exception& ex) {
+        } catch (const AuthConfigError& ex) {
             cout << "[bin10-auth] Server load config failed:" << ex.what() << endl;
         }
 
