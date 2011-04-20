@@ -26,15 +26,16 @@
 #include <datasrc/data_source.h>
 #include <datasrc/query.h>
 
-#include <dns/util/base32hex.h>
-#include <dns/buffer.h>
+#include <util/encode/base32hex.h>
+#include <util/hash/sha1.h>
+#include <util/buffer.h>
+
 #include <dns/message.h>
 #include <dns/name.h>
 #include <dns/rcode.h>
 #include <dns/rdataclass.h>
 #include <dns/rrset.h>
 #include <dns/rrsetlist.h>
-#include <dns/util/sha1.h>
 
 #include <cc/data.h>
 
@@ -45,6 +46,9 @@
                       } while (0)
 
 using namespace std;
+using namespace isc::util;
+using namespace isc::util::encode;
+using namespace isc::util::hash;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 

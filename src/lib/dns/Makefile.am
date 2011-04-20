@@ -1,6 +1,8 @@
-SUBDIRS = . tests python
+SUBDIRS = . tests python benchmarks
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
+AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
@@ -60,15 +62,9 @@ BUILT_SOURCES = rrclass.h rrtype.h rrparamregistry.cc
 
 lib_LTLIBRARIES = libdns++.la
 
-libdns___la_SOURCES = util/base32hex.h util/base64.h util/base_n.cc
-libdns___la_SOURCES += util/base32hex_from_binary.h
-libdns___la_SOURCES += util/binary_from_base32hex.h
-libdns___la_SOURCES += util/base16_from_binary.h util/binary_from_base16.h
-libdns___la_SOURCES += buffer.h
-libdns___la_SOURCES += dnssectime.h dnssectime.cc
+libdns___la_SOURCES =
 libdns___la_SOURCES += edns.h edns.cc
 libdns___la_SOURCES += exceptions.h exceptions.cc
-libdns___la_SOURCES += util/hex.h
 libdns___la_SOURCES += masterload.h masterload.cc
 libdns___la_SOURCES += message.h message.cc
 libdns___la_SOURCES += messagerenderer.h messagerenderer.cc
@@ -76,6 +72,7 @@ libdns___la_SOURCES += name.h name.cc
 libdns___la_SOURCES += opcode.h opcode.cc
 libdns___la_SOURCES += rcode.h rcode.cc
 libdns___la_SOURCES += rdata.h rdata.cc
+libdns___la_SOURCES += rdatafields.h rdatafields.cc
 libdns___la_SOURCES += rrclass.cc
 libdns___la_SOURCES += rrparamregistry.h
 libdns___la_SOURCES += rrset.h rrset.cc
@@ -83,10 +80,12 @@ libdns___la_SOURCES += rrsetlist.h rrsetlist.cc
 libdns___la_SOURCES += rrttl.h rrttl.cc
 libdns___la_SOURCES += rrtype.cc
 libdns___la_SOURCES += question.h question.cc
-libdns___la_SOURCES += util/sha1.h util/sha1.cc
 libdns___la_SOURCES += tsigkey.h tsigkey.cc
 libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.h
 libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.cc
+
+libdns___la_CPPFLAGS = $(AM_CPPFLAGS)
+libdns___la_LIBADD = $(top_builddir)/src/lib/util/libutil.la
 
 nodist_libdns___la_SOURCES = rdataclass.cc rrclass.h rrtype.h
 nodist_libdns___la_SOURCES += rrparamregistry.cc
@@ -99,8 +98,6 @@ rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc: Makefile
 
 libdns___includedir = $(includedir)/dns
 libdns___include_HEADERS = \
-	buffer.h \
-	dnssectime.h \
 	edns.h \
 	exceptions.h \
 	message.h \

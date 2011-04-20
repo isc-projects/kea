@@ -19,8 +19,9 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <dns/buffer.h>
-#include <dns/util/hex.h>
+#include <util/buffer.h>
+#include <util/encode/hex.h>
+
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rdata.h>
@@ -30,6 +31,8 @@
 #include <time.h>
 
 using namespace std;
+using namespace isc::util;
+using namespace isc::util::encode;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -130,7 +133,7 @@ DS::toWire(OutputBuffer& buffer) const {
 }
 
 void
-DS::toWire(MessageRenderer& renderer) const {
+DS::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint16(impl_->tag_);
     renderer.writeUint8(impl_->algorithm_);
     renderer.writeUint8(impl_->digest_type_);

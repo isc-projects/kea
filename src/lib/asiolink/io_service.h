@@ -19,6 +19,7 @@ namespace asio {
     class io_service;
 }
 
+namespace isc {
 namespace asiolink {
 
 struct IOServiceImpl;
@@ -73,5 +74,6 @@ private:
     IOServiceImpl* io_impl_;
 };
 
-}      // namespace asiolink
+} // namespace asiolink
+} // namespace isc
 #endif // __ASIOLINK_IO_SERVICE_H

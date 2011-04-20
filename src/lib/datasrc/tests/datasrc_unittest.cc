@@ -20,7 +20,8 @@
 
 #include <gtest/gtest.h>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
+
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/question.h>
@@ -44,6 +45,7 @@
 
 using isc::UnitTestUtil;
 using namespace std;
+using namespace isc::util;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::datasrc;

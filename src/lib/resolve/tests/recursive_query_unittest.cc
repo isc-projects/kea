@@ -30,7 +30,7 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/rcode.h>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/message.h>
 
 #include <nsas/nameserver_address_store.h>
@@ -45,17 +45,19 @@
 // If we need to test something at the level of underlying ASIO and need
 // their definition, that test should go to asiolink/internal/tests.
 #include <resolve/recursive_query.h>
+#include <asiodns/dns_lookup.h>
 #include <asiolink/io_socket.h>
 #include <asiolink/io_service.h>
 #include <asiolink/io_message.h>
 #include <asiolink/io_error.h>
-#include <asiolink/dns_lookup.h>
 #include <asiolink/simple_callback.h>
 
 using isc::UnitTestUtil;
 using namespace std;
-using namespace asiolink;
+using namespace isc::asiodns;
+using namespace isc::asiolink;
 using namespace isc::dns;
+using namespace isc::util;
 
 namespace {
 const char* const TEST_SERVER_PORT = "53535";
@@ -316,10 +318,10 @@ protected:
     private:
         // Currently unused; these will be used for testing
         // asynchronous lookup calls via the asyncLookup() method
-        boost::shared_ptr<asiolink::IOMessage> io_message_;
+        boost::shared_ptr<isc::asiolink::IOMessage> io_message_;
         isc::dns::MessagePtr message_;
         isc::dns::MessagePtr answer_message_;
-        isc::dns::OutputBufferPtr respbuf_;
+        isc::util::OutputBufferPtr respbuf_;
 
         // Callback functions provided by the caller
         const SimpleCallback* checkin_;

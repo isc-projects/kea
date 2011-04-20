@@ -31,7 +31,8 @@
 
 #include <exceptions/exceptions.h>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
+
 #include <dns/edns.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
@@ -63,12 +64,14 @@ using namespace isc;
 using namespace isc::cc;
 using namespace isc::datasrc;
 using namespace isc::dns;
+using namespace isc::util;
 using namespace isc::auth;
 using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::config;
 using namespace isc::xfr;
-using namespace asiolink;
+using namespace isc::asiolink;
+using namespace isc::asiodns;
 using namespace isc::server_common::portconfig;
 
 class AuthSrvImpl {
@@ -766,6 +769,6 @@ AuthSrv::setListenAddresses(const AddressList& addresses) {
 }
 
 void
-AuthSrv::setDNSService(asiolink::DNSService& dnss) {
+AuthSrv::setDNSService(isc::asiodns::DNSService& dnss) {
     dnss_ = &dnss;
 }

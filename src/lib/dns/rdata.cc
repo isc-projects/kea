@@ -27,7 +27,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
@@ -36,6 +36,7 @@
 
 using namespace std;
 using namespace boost;
+using namespace isc::util;
 
 namespace isc {
 namespace dns {
@@ -53,7 +54,7 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
 
 RdataPtr
 createRdata(const RRType& rrtype, const RRClass& rrclass,
-            InputBuffer& buffer, size_t len)
+            isc::util::InputBuffer& buffer, size_t len)
 {
     if (len > MAX_RDLENGTH) {
         isc_throw(InvalidRdataLength, "RDLENGTH too large");
@@ -105,7 +106,7 @@ struct GenericImpl {
     vector<uint8_t> data_;
 };
 
-Generic::Generic(InputBuffer& buffer, size_t rdata_len) {
+Generic::Generic(isc::util::InputBuffer& buffer, size_t rdata_len) {
     if (rdata_len > MAX_RDLENGTH) {
         isc_throw(InvalidRdataLength, "RDLENGTH too large");
     }
@@ -224,12 +225,12 @@ Generic::toText() const {
 }
 
 void
-Generic::toWire(OutputBuffer& buffer) const {
+Generic::toWire(isc::util::OutputBuffer& buffer) const {
     buffer.writeData(&impl_->data_[0], impl_->data_.size());
 }
 
 void
-Generic::toWire(MessageRenderer& renderer) const {
+Generic::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeData(&impl_->data_[0], impl_->data_.size());
 }
 
