@@ -125,7 +125,7 @@ public:
     virtual void toWire(OutputBuffer& buffer) const;
 
     /// \brief render the \Rdata in the wire format to a \c MessageRenderer
-    virtual void toWire(MessageRenderer& renderer) const;
+    virtual void toWire(AbstractMessageRenderer& renderer) const;
     
     /// \brief Comparison Method
     virtual int compare(const Rdata& other) const;
@@ -141,7 +141,7 @@ void RdataTest<T>::toWire(OutputBuffer&) const {
 }
 
 template <typename T>
-void RdataTest<T>::toWire(MessageRenderer&) const {
+void RdataTest<T>::toWire(AbstractMessageRenderer&) const {
 }
 
 template <typename T>

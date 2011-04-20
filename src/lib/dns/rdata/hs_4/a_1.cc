@@ -45,7 +45,7 @@ A::toWire(OutputBuffer&) const {
 }
 
 void
-A::toWire(MessageRenderer&) const {
+A::toWire(AbstractMessageRenderer&) const {
     // TBD
 }
 

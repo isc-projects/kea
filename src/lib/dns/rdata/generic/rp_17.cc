@@ -103,7 +103,7 @@ RP::toWire(OutputBuffer& buffer) const {
 }
 
 void
-RP::toWire(MessageRenderer& renderer) const {
+RP::toWire(AbstractMessageRenderer& renderer) const {
     // Type RP is not "well-known", and name compression must be disabled
     // per RFC3597.
     renderer.writeName(mailbox_, false);
