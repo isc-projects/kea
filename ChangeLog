@@ -1,3 +1,7 @@
+219.  [bug]     feng
+  If ip address or port isn't usable for name server, name server process
+	won't exist and give end user chance to reconfigure them.
+
 218.	[func]		jinmei
 	src/lib/dns: added support for RP RDATA.
 	(Trac #806, git 4e47d5f6b692c63c907af6681a75024450884a88)
