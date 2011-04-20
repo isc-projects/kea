@@ -18,6 +18,8 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <crypto/crypto.h>
+
 #ifndef _ISC_CRYPTO_HMAC_H
 #define _ISC_CRYPTO_HMAC_H
 
@@ -45,6 +47,9 @@ public:
                             ///  value is a HashAlgorithm.
     };
 
+private:
+    friend class Crypto;
+
     /// \brief Constructor from a secret and a hash algorithm
     ///
     /// \exception UnsupportedAlgorithmException if the given algorithm
@@ -59,9 +64,10 @@ public:
     /// \param secret The secret to sign with
     /// \param len The length of the secret
     /// \param hash_algorithm The hash algorithm
-    explicit HMAC(const void* secret, size_t secret_len,
-                  const HashAlgorithm hash_algorithm);
+    HMAC(const void* secret, size_t secret_len,
+         const HashAlgorithm hash_algorithm);
 
+public:
     /// \brief Destructor
     ~HMAC();
 

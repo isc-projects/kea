@@ -38,10 +38,6 @@ namespace crypto {
 
 // For Botan, we use the Crypto class object in RAII style
 class CryptoImpl {
-public:
-    CryptoImpl() {}
-    ~CryptoImpl() {};
-
 private:
     Botan::LibraryInitializer _botan_init;
 };
@@ -86,9 +82,9 @@ signHMAC(const void* data, size_t data_len, const void* secret,
          size_t secret_len, const HMAC::HashAlgorithm hash_algorithm,
          isc::dns::OutputBuffer& result, size_t len)
 {
-    HMAC hmac(secret, secret_len, hash_algorithm);
-    hmac.update(data, data_len);
-    hmac.sign(result, len);
+    boost::scoped_ptr<HMAC> hmac(Crypto::getCrypto().createHMAC(secret, secret_len, hash_algorithm));
+    hmac->update(data, data_len);
+    hmac->sign(result, len);
 }
 
 
@@ -97,9 +93,9 @@ verifyHMAC(const void* data, const size_t data_len, const void* secret,
            size_t secret_len, const HMAC::HashAlgorithm hash_algorithm,
            const void* sig, const size_t sig_len)
 {
-    HMAC hmac(secret, secret_len, hash_algorithm);
-    hmac.update(data, data_len);
-    return (hmac.verify(sig, sig_len));
+    boost::scoped_ptr<HMAC> hmac(Crypto::getCrypto().createHMAC(secret, secret_len, hash_algorithm));
+    hmac->update(data, data_len);
+    return (hmac->verify(sig, sig_len));
 }
 
 } // namespace crypto
