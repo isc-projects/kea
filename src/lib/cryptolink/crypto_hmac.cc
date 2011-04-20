@@ -47,6 +47,8 @@ public:
         } catch (const Botan::Algorithm_Not_Found&) {
             isc_throw(isc::cryptolink::UnsupportedAlgorithm,
                       "Unknown hash algorithm: " + hash_algorithm);
+        } catch (const Botan::Exception& exc) {
+            isc_throw(isc::cryptolink::LibraryError, exc.what());
         }
 
         hmac_.reset(new Botan::HMAC::HMAC(hash));
@@ -65,6 +67,8 @@ public:
             }
         } catch (const Botan::Invalid_Key_Length& ikl) {
             isc_throw(BadKey, ikl.what());
+        } catch (const Botan::Exception& exc) {
+            isc_throw(isc::cryptolink::LibraryError, exc.what());
         }
     }
 
@@ -75,33 +79,49 @@ public:
     }
 
     void update(const void* data, const size_t len) {
-        hmac_->update(static_cast<const Botan::byte*>(data), len);
+        try {
+            hmac_->update(static_cast<const Botan::byte*>(data), len);
+        } catch (const Botan::Exception& exc) {
+            isc_throw(isc::cryptolink::LibraryError, exc.what());
+        }
     }
 
     void sign(isc::dns::OutputBuffer& result, size_t len) {
-        Botan::SecureVector<Botan::byte> b_result(hmac_->final());
-
-        if (len == 0 || len > b_result.size()) {
-            len = b_result.size();
+        try {
+            Botan::SecureVector<Botan::byte> b_result(hmac_->final());
+    
+            if (len == 0 || len > b_result.size()) {
+                len = b_result.size();
+            }
+            result.writeData(b_result.begin(), len);
+        } catch (const Botan::Exception& exc) {
+            isc_throw(isc::cryptolink::LibraryError, exc.what());
         }
-        result.writeData(b_result.begin(), len);
     }
 
     void sign(void* result, size_t len) {
-        Botan::SecureVector<Botan::byte> b_result(hmac_->final());
-        size_t output_size = getOutputLength();
-        if (output_size > len) {
-            output_size = len;
+        try {
+            Botan::SecureVector<Botan::byte> b_result(hmac_->final());
+            size_t output_size = getOutputLength();
+            if (output_size > len) {
+                output_size = len;
+            }
+            memcpy(result, b_result.begin(), output_size);
+        } catch (const Botan::Exception& exc) {
+            isc_throw(isc::cryptolink::LibraryError, exc.what());
         }
-        memcpy(result, b_result.begin(), output_size);
     }
 
     std::vector<uint8_t> sign(size_t len) {
-        Botan::SecureVector<Botan::byte> b_result(hmac_->final());
-        if (len == 0 || len > b_result.size()) {
-            return (std::vector<uint8_t>(b_result.begin(), b_result.end()));
-        } else {
-            return (std::vector<uint8_t>(b_result.begin(), &b_result[len]));
+        try {
+            Botan::SecureVector<Botan::byte> b_result(hmac_->final());
+            if (len == 0 || len > b_result.size()) {
+                return (std::vector<uint8_t>(b_result.begin(), b_result.end()));
+            } else {
+                return (std::vector<uint8_t>(b_result.begin(), &b_result[len]));
+            }
+        } catch (const Botan::Exception& exc) {
+            isc_throw(isc::cryptolink::LibraryError, exc.what());
         }
     }
 
@@ -110,13 +130,17 @@ public:
         // Botan's verify_mac checks if len matches the output_length,
         // which causes it to fail for truncated signatures, so we do
         // the check ourselves
-        Botan::SecureVector<Botan::byte> our_mac = hmac_->final();
-        if (len == 0 || len > getOutputLength()) {
-            len = getOutputLength();
+        try {
+            Botan::SecureVector<Botan::byte> our_mac = hmac_->final();
+            if (len == 0 || len > getOutputLength()) {
+                len = getOutputLength();
+            }
+            return (Botan::same_mem(&our_mac[0],
+                                    static_cast<const unsigned char*>(sig),
+                                    len));
+        } catch (const Botan::Exception& exc) {
+            isc_throw(isc::cryptolink::LibraryError, exc.what());
         }
-        return (Botan::same_mem(&our_mac[0],
-                                static_cast<const unsigned char*>(sig),
-                                len));
     }
 
 private:

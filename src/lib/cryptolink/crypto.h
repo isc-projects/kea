@@ -59,6 +59,16 @@ public:
         CryptoLinkError(file, line, what) {}
 };
 
+/// This exception is raised when a general error that was not
+/// specifically caught is thrown by the underlying library. It
+/// is replaced by this one so as not have 'external' exceptions
+/// bubbling up
+class LibraryError : public CryptoLinkError {
+public:
+    LibraryError(const char* file, size_t line, const char* what) :
+        CryptoLinkError(file, line, what) {}
+};
+
 /// Forward declaration for pimpl
 class CryptoLinkImpl;
 
@@ -106,6 +116,7 @@ public:
     /// the current implementation.
     ///
     /// \exception InitializationError if initialization fails
+    ///
     static void initialize();
 
     /// \brief Factory function for HMAC objects
@@ -126,6 +137,8 @@ public:
     /// \exception UnsupportedAlgorithmException if the given algorithm
     ///            is unknown or not supported by the underlying library
     /// \exception InvalidKeyLength if the given key secret_len is bad
+    /// \exception LibraryError if there was any unexpected exception
+    ///                         in the underlying library
     ///
     /// \param secret The secret to sign with
     /// \param secret_len The length of the secret
