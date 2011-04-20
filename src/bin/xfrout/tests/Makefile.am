@@ -6,7 +6,7 @@ EXTRA_DIST = $(PYTESTS)
 # required by loadable python modules.
 LIBRARY_PATH_PLACEHOLDER =
 if SET_ENV_LIBRARY_PATH
-LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/dns/.libs:$(abs_top_builddir)/src/lib/exceptions/.libs:$(abs_top_builddir)/src/lib/util/io/.libs:$$$(ENV_LIBRARY_PATH)
+LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/dns/.libs:$(abs_top_builddir)/src/lib/util/.libs:$(abs_top_builddir)/src/lib/exceptions/.libs:$(abs_top_builddir)/src/lib/util/io/.libs:$$$(ENV_LIBRARY_PATH)
 endif
 
 # test using command-line arguments, so use check-local target instead of TESTS

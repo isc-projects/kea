@@ -380,9 +380,9 @@ TSIG::toWire(OutputBuffer& buffer) const {
 /// \param renderer DNS message rendering context that encapsulates the
 /// output buffer and name compression information.
 void
-TSIG::toWire(MessageRenderer& renderer) const {
+TSIG::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeName(impl_->algorithm_, false);
-    impl_->toWireCommon<MessageRenderer>(renderer);
+    impl_->toWireCommon<AbstractMessageRenderer>(renderer);
 }
 
 // A helper function commonly used for TSIG::compare().
