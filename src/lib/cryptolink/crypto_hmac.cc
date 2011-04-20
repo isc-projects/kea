@@ -1,6 +1,5 @@
 
 #include <crypto.h>
-#include <crypto/crypto_hmac.h>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -11,18 +10,18 @@
 
 namespace {
 const char*
-getBotanHashAlgorithmName(isc::crypto::HMAC::HashAlgorithm algorithm) {
+getBotanHashAlgorithmName(isc::cryptolink::HMAC::HashAlgorithm algorithm) {
     switch (algorithm) {
-    case isc::crypto::HMAC::MD5:
+    case isc::cryptolink::HMAC::MD5:
         return ("MD5");
         break;
-    case isc::crypto::HMAC::SHA1:
+    case isc::cryptolink::HMAC::SHA1:
         return ("SHA-1");
         break;
-    case isc::crypto::HMAC::SHA256:
+    case isc::cryptolink::HMAC::SHA256:
         return ("SHA-256");
         break;
-    case isc::crypto::HMAC::UNKNOWN:
+    case isc::cryptolink::HMAC::UNKNOWN:
         return ("Unknown");
         break;
     }
@@ -35,7 +34,7 @@ getBotanHashAlgorithmName(isc::crypto::HMAC::HashAlgorithm algorithm) {
 
 
 namespace isc {
-namespace crypto {
+namespace cryptolink {
 
 class HMACImpl {
 public:
@@ -46,7 +45,7 @@ public:
             hash = Botan::get_hash(
                 getBotanHashAlgorithmName(hash_algorithm));
         } catch (const Botan::Algorithm_Not_Found&) {
-            isc_throw(isc::crypto::UnsupportedAlgorithm,
+            isc_throw(isc::cryptolink::UnsupportedAlgorithm,
                       "Unknown hash algorithm: " + hash_algorithm);
         }
 
@@ -164,5 +163,5 @@ HMAC::verify(const void* sig, const size_t len) {
     return (impl_->verify(sig, len));
 }
 
-} // namespace crypto
+} // namespace cryptolink
 } // namespace isc
