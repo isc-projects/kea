@@ -58,6 +58,8 @@ private:
     /// \exception UnsupportedAlgorithmException if the given algorithm
     ///            is unknown or not supported by the underlying library
     /// \exception InvalidKeyLength if the given key secret_len is bad
+    /// \exception LibraryError if there was any unexpected exception
+    ///                         in the underlying library
     ///
     /// Notes: if the secret is longer than the block size of its
     /// algorithm, the constructor will run it through the hash
@@ -81,6 +83,9 @@ public:
 
     /// \brief Add data to digest
     ///
+    /// \exception LibraryError if there was any unexpected exception
+    ///                         in the underlying library
+    ///
     /// \param data The data to add
     /// \param len The size of the data
     void update(const void* data, const size_t len);
@@ -88,6 +93,9 @@ public:
     /// \brief Calculate the final signature
     ///
     /// The result will be appended to the given outputbuffer
+    ///
+    /// \exception LibraryError if there was any unexpected exception
+    ///                         in the underlying library
     ///
     /// \param result The OutputBuffer to append the result to
     /// \param len The number of bytes from the result to copy. If this
@@ -102,6 +110,9 @@ public:
     /// If len is larger than the output size, only output_size bytes
     /// will be copied. If it is smaller, the output will be truncated
     ///
+    /// \exception LibraryError if there was any unexpected exception
+    ///                         in the underlying library
+    ///
     /// At least len bytes of data must be available for writing at
     /// result
     void sign(void* result, size_t len);
@@ -109,6 +120,9 @@ public:
     /// \brief Calculate the final signatre
     ///
     /// The result will be returned as a std::vector<uint8_t>
+    ///
+    /// \exception LibraryError if there was any unexpected exception
+    ///                         in the underlying library
     ///
     /// \param len The number of bytes from the result to copy. If this
     ///        value is smaller than the algorithms output size, the
@@ -118,6 +132,9 @@ public:
     std::vector<uint8_t> sign(size_t len = 0);
 
     /// \brief Verify an existing signature
+    ///
+    /// \exception LibraryError if there was any unexpected exception
+    ///                         in the underlying library
     ///
     /// \param sig The signature to verify
     /// \param len The length of the signature. If this is non-zero,
@@ -140,6 +157,8 @@ private:
 /// \exception UnsupportedAlgorithm if the given algorithm is unknown
 ///            or not supported by the underlying library
 /// \exception BadKey if the given key secret_len is bad
+/// \exception LibraryError if there was any unexpected exception
+///                         in the underlying library
 ///
 /// Notes: if the secret is longer than the block size of its
 /// algorithm, the constructor will run it through the hash
@@ -172,6 +191,8 @@ void signHMAC(const void* data,
 /// \exception UnsupportedAlgorithm if the given algorithm is unknown
 ///            or not supported by the underlying library
 /// \exception BadKey if the given key secret_len is bad
+/// \exception LibraryError if there was any unexpected exception
+///                         in the underlying library
 ///
 /// Notes: if the secret is longer than the block size of its
 /// algorithm, the constructor will run it through the hash
