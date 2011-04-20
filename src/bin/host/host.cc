@@ -67,7 +67,7 @@ host_lookup(const char* const name, const char* const dns_class,
     }
 
     msg.addQuestion(Question(Name(name),
-                             RRClass(dns_class),    // IN class only for now
+                             RRClass(dns_class),
                              any ? RRType::ANY() : RRType(type)));  // if NULL then:
 
     OutputBuffer obuffer(512);
