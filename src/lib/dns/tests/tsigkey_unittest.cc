@@ -227,7 +227,7 @@ TEST_F(TSIGKeyRingTest, findFromSome) {
               keyring.find(Name("noexist.example")).key);
 }
 
-TEST(TSIGTest, TSIGKeyFromToString) {
+TEST(TSIGStringTest, TSIGKeyFromToString) {
     TSIGKey k1 = TSIGKey("test.example:MSG6Ng==:hmac-md5.sig-alg.reg.int");
     TSIGKey k2 = TSIGKey("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.");
     TSIGKey k3 = TSIGKey("test.example:MSG6Ng==");
