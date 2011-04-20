@@ -1,3 +1,9 @@
+222.	[bug] 		jerry
+	src/lib/zonemgr: Fix a bug that xfrin not checking for new copy of
+	zone on startup.  Imposes some random jitters to avoid many zones
+	need to do refresh at the same time.
+	(Trac #387, svn rTBD)
+
 221.	[func]*		jerry
 	src/lib/util: Create C++ utility library.
 	(Trac #749, git 084d1285d038d31067f8cdbb058d626acf03566d)
