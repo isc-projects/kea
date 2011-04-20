@@ -31,7 +31,8 @@ class HMACImpl;
 
 /// \brief HMAC support
 ///
-/// This class is used to create and verify HMAC signatures
+/// This class is used to create and verify HMAC signatures. Instances
+/// can be created with CryptoLink::createHMAC()
 ///
 class HMAC : private boost::noncopyable {
 public:
@@ -48,6 +49,8 @@ public:
     };
 
 private:
+    /// Since HMAC objects cannot be created directly, the factory
+    /// class CryptoLink is a friend
     friend class CryptoLink;
 
     /// \brief Constructor from a secret and a hash algorithm
@@ -126,6 +129,70 @@ public:
 private:
     HMACImpl* impl_;
 };
+
+/// \brief Create an HMAC signature for the given data
+///
+/// This is a convenience function that calculates the hmac signature,
+/// given a fixed amount of data. Internally it does the same as
+/// creating an HMAC object, feeding it the data, and calculating the
+/// resulting signature.
+///
+/// \exception UnsupportedAlgorithm if the given algorithm is unknown
+///            or not supported by the underlying library
+/// \exception BadKey if the given key secret_len is bad
+///
+/// Notes: if the secret is longer than the block size of its
+/// algorithm, the constructor will run it through the hash
+/// algorithm, and use the digest as the secret for this HMAC
+/// operation
+///
+/// \param data The data to sign
+/// \param data_len The length of the data
+/// \param secret The secret to sign with
+/// \param secret_len The length of the secret
+/// \param hash_algorithm The hash algorithm
+/// \param result The signature will be appended to this buffer
+/// \param len If this is non-zero and less than the output size,
+///            the result will be truncated to len bytes
+void signHMAC(const void* data,
+              const size_t data_len,
+              const void* secret,
+              size_t secret_len,
+              const HMAC::HashAlgorithm hash_algorithm,
+              isc::dns::OutputBuffer& result,
+              size_t len = 0);
+
+/// \brief Verify an HMAC signature for the given data
+///
+/// This is a convenience function that verifies an hmac signature,
+/// given a fixed amount of data. Internally it does the same as
+/// creating an HMAC object, feeding it the data, and checking the
+/// resulting signature.
+///
+/// \exception UnsupportedAlgorithm if the given algorithm is unknown
+///            or not supported by the underlying library
+/// \exception BadKey if the given key secret_len is bad
+///
+/// Notes: if the secret is longer than the block size of its
+/// algorithm, the constructor will run it through the hash
+/// algorithm, and use the digest as the secret for this HMAC
+/// operation
+///
+/// \param data The data to verify
+/// \param data_len The length of the data
+/// \param secret The secret to sign with
+/// \param secret_len The length of the secret
+/// \param hash_algorithm The hash algorithm
+/// \param sig The signature to verify
+/// \param sig_len The length of the signature
+/// \return True if the signature verifies, false if not
+bool verifyHMAC(const void* data,
+                const size_t data_len,
+                const void* secret,
+                size_t secret_len,
+                const HMAC::HashAlgorithm hash_algorithm,
+                const void* sig,
+                const size_t sig_len);
 
 } // namespace cryptolink
 } // namespace isc
