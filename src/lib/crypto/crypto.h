@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef _ISC_CRYPTO_H
+#define _ISC_CRYPTO_H
+
 #include <string>
 #include <dns/buffer.h>
 #include <exceptions/exceptions.h>
@@ -20,8 +23,6 @@
 
 #include <crypto/crypto_hmac.h>
 
-#ifndef _ISC_CRYPTO_H
-#define _ISC_CRYPTO_H
 
 namespace isc {
 namespace crypto {
@@ -76,7 +77,8 @@ public:
 
     bool initialized() { return (impl_ != NULL); }
     HMAC* createHMAC(const void* secret, size_t secret_len,
-                    const HMAC::HashAlgorithm hash_algorithm);
+                     const HMAC::HashAlgorithm hash_algorithm);
+
 private:
     static Crypto& getCryptoInternal();
     Crypto() : impl_(NULL) {};
