@@ -1,4 +1,4 @@
-SUBDIRS = . tests python
+SUBDIRS = . tests python benchmarks
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
@@ -72,6 +72,7 @@ libdns___la_SOURCES += name.h name.cc
 libdns___la_SOURCES += opcode.h opcode.cc
 libdns___la_SOURCES += rcode.h rcode.cc
 libdns___la_SOURCES += rdata.h rdata.cc
+libdns___la_SOURCES += rdatafields.h rdatafields.cc
 libdns___la_SOURCES += rrclass.cc
 libdns___la_SOURCES += rrparamregistry.h
 libdns___la_SOURCES += rrset.h rrset.cc

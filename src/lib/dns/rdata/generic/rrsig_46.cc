@@ -184,7 +184,7 @@ RRSIG::toWire(OutputBuffer& buffer) const {
 }
 
 void
-RRSIG::toWire(MessageRenderer& renderer) const {
+RRSIG::toWire(AbstractMessageRenderer& renderer) const {
     impl_->covered_.toWire(renderer);
     renderer.writeUint8(impl_->algorithm_);
     renderer.writeUint8(impl_->labels_);
