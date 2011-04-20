@@ -41,7 +41,7 @@
 #include "nameserver_address.h"
 #include "nameserver_entry.h"
 
-using namespace asiolink;
+using namespace isc::asiolink;
 using namespace isc::nsas;
 using namespace isc::dns;
 using namespace std;
@@ -52,7 +52,7 @@ namespace nsas {
 namespace {
 
 // Just shorter type alias
-typedef isc::locks::scoped_lock<isc::locks::recursive_mutex> Lock;
+typedef isc::util::locks::scoped_lock<isc::util::locks::recursive_mutex> Lock;
 
 }
 

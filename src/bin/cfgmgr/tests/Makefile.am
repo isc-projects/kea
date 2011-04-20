@@ -1,7 +1,7 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 PYTESTS = b10-cfgmgr_test.py
 
-EXTRA_DIST = $(PYTESTS)
+EXTRA_DIST = $(PYTESTS) testdata/plugins/testplugin.py
 
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
@@ -12,6 +12,7 @@ if ENABLE_PYTHON_COVERAGE
 endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
+	env TESTDATA_PATH=$(abs_srcdir)/testdata \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/cfgmgr \
 	$(PYCOVERAGE_RUN) $(abs_builddir)/$$pytest || exit ; \
 	done

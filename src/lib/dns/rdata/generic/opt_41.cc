@@ -16,12 +16,13 @@
 
 #include <string>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
 using namespace std;
+using namespace isc::util;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -56,7 +57,7 @@ OPT::toWire(OutputBuffer&) const {
 }
 
 void
-OPT::toWire(MessageRenderer&) const {
+OPT::toWire(AbstractMessageRenderer&) const {
     // nothing to do, as this simple version doesn't support any options.
 }
 

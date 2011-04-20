@@ -19,10 +19,10 @@
 #include <iostream>
 
 #include <exceptions/exceptions.h>
+#include <util/lru_list.h>
 
 #include "hash_key.h"
 #include "hash_table.h"
-#include "lru_list.h"
 
 namespace isc {
 namespace nsas {
@@ -66,7 +66,7 @@ public:
 /// This class is inherited from boost::enable_shared_from_this class
 /// So within a member function a shared_ptr to current object can be obtained
 template <typename T>
-class NsasEntry : public boost::enable_shared_from_this <T>  {
+class NsasEntry : public boost::enable_shared_from_this <T> {
 public:
 
     /// \brief Default Constructor
@@ -93,7 +93,7 @@ public:
     /// Sets the iterator of an object and, as a side effect, marks it as valid.
     ///
     /// \param iterator Iterator of this element in the list
-    virtual void setLruIterator(typename LruList<T>::iterator iterator) {
+    virtual void setLruIterator(typename isc::util::LruList<T>::iterator iterator) {
         iterator_ = iterator;
         valid_ = true;
     }
@@ -103,7 +103,7 @@ public:
     /// \return iterator Iterator of this element in the list.
     ///
     /// \exception InvalidLruIterator Thrown if the iterator is not valid.
-    virtual typename LruList<T>::iterator getLruIterator() const {
+    virtual typename isc::util::LruList<T>::iterator getLruIterator() const {
         if (! valid_) {
             isc_throw(InvalidLruIterator,
                 "pointer of element into LRU list was not valid");
@@ -127,7 +127,7 @@ public:
     }
 
 private:
-    typename LruList<T>::iterator  iterator_;  ///< Handle into the LRU List
+    typename isc::util::LruList<T>::iterator  iterator_;  ///< Handle into the LRU List
     bool                           valid_;     ///< true if handle is valid
 };
 

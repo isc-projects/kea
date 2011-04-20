@@ -1,7 +1,27 @@
-219.  [bug]     feng
+223.  [bug]     feng
 	If ip address or port isn't usable for name server, name server process
 	won't exist and give end user chance to reconfigure them.
 	(Trac #775, git 572ac2cf62e18f7eb69d670b890e2a3443bfd6e7)
+
+222.	[bug] 		jerry
+	src/lib/zonemgr: Fix a bug that xfrin not checking for new copy of
+	zone on startup.  Imposes some random jitters to avoid many zones
+	need to do refresh at the same time.
+	(Trac #387, svn 9140fab9bab5f6502bd15d391fd51ac078b0b89b)
+
+221.	[func]*		jerry
+	src/lib/util: Create C++ utility library.
+	(Trac #749, git 084d1285d038d31067f8cdbb058d626acf03566d)
+
+220.	[func]		stephen
+	Added the 'badpacket' program for testing; it sends a set of
+	(potentially) bad packets to a nameserver and prints the responses.
+	(Trac #703, git 1b666838b6c0fe265522b30971e878d9f0d21fde)
+
+219.    [func]          ocean
+	src/lib: move some dns related code out of asiolink library to
+	asiodns library
+	(Trac #751, git 262ac6c6fc61224d54705ed4c700dadb606fcb1c)
 
 218.	[func]		jinmei
 	src/lib/dns: added support for RP RDATA.

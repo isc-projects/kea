@@ -26,6 +26,10 @@
 #include <dns/rrtype.h>
 
 namespace isc {
+namespace util {
+class OututBuffer;
+}
+
 namespace dns {
 
 ///
@@ -43,7 +47,6 @@ class Name;
 class RRType;
 class RRClass;
 class RRTTL;
-class OututBuffer;
 class MessageRenderer;
 class AbstractRRset;
 class BasicRRset;
@@ -316,7 +319,7 @@ public:
     ///
     /// \param buffer An output buffer to store the wire data.
     /// \return The number of RRs rendered.
-    virtual unsigned int toWire(OutputBuffer& buffer) const = 0;
+    virtual unsigned int toWire(isc::util::OutputBuffer& buffer) const = 0;
     //@}
 
     ///
@@ -620,7 +623,7 @@ public:
     ///
     /// This method simply uses the default implementation.
     /// See \c AbstractRRset::toWire(OutputBuffer&)const.
-    virtual unsigned int toWire(OutputBuffer& buffer) const;
+    virtual unsigned int toWire(isc::util::OutputBuffer& buffer) const;
     //@}
 
     ///

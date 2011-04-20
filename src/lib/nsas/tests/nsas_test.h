@@ -26,8 +26,8 @@
 
 #include <config.h>
 
+#include <util/buffer.h>
 #include <dns/message.h>
-#include <dns/buffer.h>
 #include <dns/rdata.h>
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
@@ -40,6 +40,7 @@
 
 using namespace isc::dns::rdata;
 using namespace isc::dns;
+using namespace isc::util;
 
 namespace {
     MessagePtr
@@ -124,7 +125,7 @@ public:
     virtual void toWire(OutputBuffer& buffer) const;
 
     /// \brief render the \Rdata in the wire format to a \c MessageRenderer
-    virtual void toWire(MessageRenderer& renderer) const;
+    virtual void toWire(AbstractMessageRenderer& renderer) const;
     
     /// \brief Comparison Method
     virtual int compare(const Rdata& other) const;
@@ -140,7 +141,7 @@ void RdataTest<T>::toWire(OutputBuffer&) const {
 }
 
 template <typename T>
-void RdataTest<T>::toWire(MessageRenderer&) const {
+void RdataTest<T>::toWire(AbstractMessageRenderer&) const {
 }
 
 template <typename T>
@@ -320,19 +321,25 @@ class TestResolver : public isc::resolve::ResolverInterface {
 
         /*
          * Sends a simple answer to a query.
-         * Provide index of a query and the address to pass.
+         * 1) Provide index of a query and the address(es) to pass.
+         * 2) Provide index of query and components of address to pass.
          */
-        void answer(size_t index, const Name& name, const RRType& type,
-            const rdata::Rdata& rdata, size_t TTL = 100)
-        {
+        void answer(size_t index, RRsetPtr& set) {
             if (index >= requests.size()) {
                 throw NoSuchRequest();
             }
+            requests[index].second->success(createResponseMessage(set));
+        }
+
+        void answer(size_t index, const Name& name, const RRType& type,
+            const rdata::Rdata& rdata, size_t TTL = 100)
+        {
             RRsetPtr set(new RRset(name, RRClass::IN(),
                 type, RRTTL(TTL)));
             set->addRdata(rdata);
-            requests[index].second->success(createResponseMessage(set));
+            answer(index, set);
         }
+
 
         void provideNS(size_t index,
             RRsetPtr nameservers)

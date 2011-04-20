@@ -20,6 +20,7 @@
 #include <vector>
 #include <cassert>
 
+#include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
 
 #include <boost/foreach.hpp>
@@ -29,9 +30,10 @@
 
 #include <exceptions/exceptions.h>
 
+#include <util/buffer.h>
+
 #include <dns/opcode.h>
 #include <dns/rcode.h>
-#include <dns/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/name.h>
 #include <dns/question.h>
@@ -50,11 +52,13 @@
 using namespace std;
 
 using namespace isc;
+using namespace isc::util;
 using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::config;
 using isc::log::dlog;
-using namespace asiolink;
+using namespace isc::asiodns;
+using namespace isc::asiolink;
 using namespace isc::server_common::portconfig;
 
 class ResolverImpl {
@@ -295,7 +299,7 @@ public:
             edns_response->setUDPSize(Message::DEFAULT_MAX_EDNS0_UDPSIZE);
             answer_message->setEDNS(edns_response);
         }
-        
+
         if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
             if (edns) {
                 renderer.setLengthLimit(edns->getUDPSize());
@@ -345,7 +349,7 @@ Resolver::~Resolver() {
 }
 
 void
-Resolver::setDNSService(asiolink::DNSService& dnss) {
+Resolver::setDNSService(isc::asiodns::DNSService& dnss) {
     dnss_ = &dnss;
 }
 

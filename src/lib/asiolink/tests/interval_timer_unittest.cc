@@ -26,7 +26,7 @@ const boost::posix_time::time_duration TIMER_MARGIN_MSEC =
     boost::posix_time::milliseconds(50);
 }
 
-using namespace asiolink;
+using namespace isc::asiolink;
 
 // This fixture is for testing IntervalTimer. Some callback functors are 
 // registered as callback function of the timer to test if they are called

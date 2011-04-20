@@ -20,8 +20,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 
-#include <dns/util/base64.h>
-#include <dns/buffer.h>
+#include <util/encode/base64.h>
+#include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rdata.h>
@@ -31,6 +31,8 @@
 #include <time.h>
 
 using namespace std;
+using namespace isc::util;
+using namespace isc::util::encode;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -134,7 +136,7 @@ DNSKEY::toWire(OutputBuffer& buffer) const {
 }
 
 void
-DNSKEY::toWire(MessageRenderer& renderer) const {
+DNSKEY::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint16(impl_->flags_);
     renderer.writeUint8(impl_->protocol_);
     renderer.writeUint8(impl_->algorithm_);

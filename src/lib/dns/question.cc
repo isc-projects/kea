@@ -15,7 +15,7 @@
 #include <iostream>
 #include <string>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/question.h>
@@ -23,6 +23,7 @@
 #include <dns/rrtype.h>
 
 using namespace std;
+using namespace isc::util;
 
 namespace isc {
 namespace dns {
