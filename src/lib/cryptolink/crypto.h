@@ -70,11 +70,13 @@ class CryptoLinkImpl;
 /// There is only one way to access it, through getCryptoLink(), which
 /// returns a reference to the initialized library. On the first call,
 /// it will be initialized automatically. You can however initialize it
-/// manually through a call to the initalize(). Any subsequent call to
-/// initialize() will be a noop.
+/// manually through a call to the initalize(), before your first call
+/// to getCryptoLink. Any subsequent call to initialize() will be a
+/// noop.
 ///
-/// All other classes within cryptolink should have private
-/// constructors, and should have a factory function from this class.
+/// \note All other classes within cryptolink should have private
+/// constructors as well, and should have a factory function from this
+/// class.
 ///
 // Internal note: we can use this class later to initialize and manage
 // dynamic (PKCS#11) libs
@@ -116,10 +118,6 @@ private:
 
     CryptoLinkImpl* impl_;
 };
-
-/// Entry point for the API
-/// If the library has not been initialized, this will automatically
-/// initialize it with default values
 
 /// \brief Create an HMAC signature for the given data
 ///
