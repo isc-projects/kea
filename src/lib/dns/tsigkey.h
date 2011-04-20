@@ -107,7 +107,7 @@ public:
     /// invalid.
     ///
     /// \param str The string to make a TSIGKey from
-    TSIGKey(const std::string& str);
+    explicit TSIGKey(const std::string& str);
 
     /// \brief The copy constructor.
     ///
