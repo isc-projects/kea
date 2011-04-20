@@ -44,7 +44,7 @@ public:
 };
 
 /// This exception is thrown when a cryptographic action is requested
-/// for an algorithm that is not supported by the underlying algorithm.
+/// for an algorithm that is not supported by the underlying library.
 class UnsupportedAlgorithm : public CryptoLinkError {
 public:
     UnsupportedAlgorithm(const char* file, size_t line, const char* what) :
@@ -52,13 +52,14 @@ public:
 };
 
 /// This exception is thrown when the underlying library could not
-/// handle this key
+/// handle the key data.
 class BadKey : public CryptoLinkError {
 public:
     BadKey(const char* file, size_t line, const char* what) :
         CryptoLinkError(file, line, what) {}
 };
 
+/// Forward declaration for pimpl
 class CryptoLinkImpl;
 
 /// \brief 
@@ -86,12 +87,25 @@ public:
     ///
     /// If the library has not been initialized yet, it will be
     /// initialized with some default values.
+    ///
+    /// Since this class is noncopyable, you must use the return
+    /// value directly, or store it in a reference variable.
+    ///
+    /// \exception InitializationError if initialization fails
+    ///
+    /// \return Reference to the singleton instance
     static CryptoLink& getCryptoLink();
 
     /// \brief Initialize the library manually
     ///
+    /// If the library has already been initialized (either by a call
+    /// to initialize() or automatically in getCryptoLink()), this
+    /// function does nothing.
+    ///
     /// \note A call to initialize() is not strictly necessary with
     /// the current implementation.
+    ///
+    /// \exception InitializationError if initialization fails
     static void initialize();
 
     /// \brief Factory function for HMAC objects
@@ -100,9 +114,22 @@ public:
     /// function creates a new HMAC object usable for signing or
     /// verification.
     ///
-    /// The caller is responsible for deleting the object later, and
-    /// it is therefore highly recommended to place the return value
-    /// of this function in a scoped_ptr or shared_ptr.
+    /// The caller is responsible for deleting the object, and it is
+    /// therefore highly recommended to place the return value of this
+    /// function in a scoped_ptr or shared_ptr.
+    ///
+    /// Notes: if the secret is longer than the block size of its
+    /// algorithm, the constructor will run it through the hash
+    /// algorithm, and use the digest as the secret for this HMAC
+    /// operation
+    ///
+    /// \exception UnsupportedAlgorithmException if the given algorithm
+    ///            is unknown or not supported by the underlying library
+    /// \exception InvalidKeyLength if the given key secret_len is bad
+    ///
+    /// \param secret The secret to sign with
+    /// \param secret_len The length of the secret
+    /// \param hash_algorithm The hash algorithm
     HMAC* createHMAC(const void* secret, size_t secret_len,
                      const HMAC::HashAlgorithm hash_algorithm);
 
@@ -118,70 +145,6 @@ private:
 
     CryptoLinkImpl* impl_;
 };
-
-/// \brief Create an HMAC signature for the given data
-///
-/// This is a convenience function that calculates the hmac signature,
-/// given a fixed amount of data. Internally it does the same as
-/// creating an HMAC object, feeding it the data, and calculating the
-/// resulting signature.
-///
-/// \exception UnsupportedAlgorithm if the given algorithm is unknown
-///            or not supported by the underlying library
-/// \exception BadKey if the given key secret_len is bad
-///
-/// Notes: if the secret is longer than the block size of its
-/// algorithm, the constructor will run it through the hash
-/// algorithm, and use the digest as the secret for this HMAC
-/// operation
-///
-/// \param data The data to sign
-/// \param data_len The length of the data
-/// \param secret The secret to sign with
-/// \param secret_len The length of the secret
-/// \param hash_algorithm The hash algorithm
-/// \param result The signature will be appended to this buffer
-/// \param len If this is non-zero and less than the output size,
-///            the result will be truncated to len bytes
-void signHMAC(const void* data,
-              const size_t data_len,
-              const void* secret,
-              size_t secret_len,
-              const HMAC::HashAlgorithm hash_algorithm,
-              isc::dns::OutputBuffer& result,
-              size_t len = 0);
-
-/// \brief Verify an HMAC signature for the given data
-///
-/// This is a convenience function that verifies an hmac signature,
-/// given a fixed amount of data. Internally it does the same as
-/// creating an HMAC object, feeding it the data, and checking the
-/// resulting signature.
-///
-/// \exception UnsupportedAlgorithm if the given algorithm is unknown
-///            or not supported by the underlying library
-/// \exception BadKey if the given key secret_len is bad
-///
-/// Notes: if the secret is longer than the block size of its
-/// algorithm, the constructor will run it through the hash
-/// algorithm, and use the digest as the secret for this HMAC
-/// operation
-///
-/// \param data The data to verify
-/// \param data_len The length of the data
-/// \param secret The secret to sign with
-/// \param secret_len The length of the secret
-/// \param hash_algorithm The hash algorithm
-/// \param sig The signature to verify
-/// \param sig_len The length of the signature
-/// \return True if the signature verifies, false if not
-bool verifyHMAC(const void* data,
-                const size_t data_len,
-                const void* secret,
-                size_t secret_len,
-                const HMAC::HashAlgorithm hash_algorithm,
-                const void* sig,
-                const size_t sig_len);
 
 } // namespace cryptolink
 } // namespace isc
