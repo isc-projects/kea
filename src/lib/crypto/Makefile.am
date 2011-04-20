@@ -9,3 +9,4 @@ CLEANFILES = *.gcno *.gcda
 lib_LTLIBRARIES = libb10crypto.la
 
 libb10crypto_la_SOURCES = crypto.h crypto.cc
+libb10crypto_la_SOURCES += crypto_hmac.h crypto_hmac.cc
