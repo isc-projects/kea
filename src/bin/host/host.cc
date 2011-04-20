@@ -145,6 +145,9 @@ host_lookup(const char* const name, const char* const dns_class,
                       else if ((*it)->getType() == RRType::MX()) {
                           description = "mail is handled by";
                       }
+                      else if ((*it)->getType() == RRType::TXT()) {
+                          description = "descriptive text";
+                      }
 
                       RdataIteratorPtr rit = (*it)->getRdataIterator();
                       for (; !rit->isLast(); rit->next()) {
