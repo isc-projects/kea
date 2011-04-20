@@ -26,6 +26,14 @@
 
 using namespace std;
 
+namespace {
+    bool isValidAlgorithmName(const isc::dns::Name& name) {
+        return (name == isc::dns::TSIGKey::HMACMD5_NAME() ||
+                name == isc::dns::TSIGKey::HMACSHA1_NAME() ||
+                name == isc::dns::TSIGKey::HMACSHA256_NAME());
+    }
+}
+
 namespace isc {
 namespace dns {
 struct
@@ -47,9 +55,7 @@ TSIGKey::TSIGKeyImpl {
 TSIGKey::TSIGKey(const Name& key_name, const Name& algorithm_name,
                  const void* secret, size_t secret_len) : impl_(NULL)
 {
-    if (algorithm_name != HMACMD5_NAME() &&
-        algorithm_name != HMACSHA1_NAME() &&
-        algorithm_name != HMACSHA256_NAME()) {
+    if (!isValidAlgorithmName(algorithm_name)) {
         isc_throw(InvalidParameter, "Unknown TSIG algorithm is specified: " <<
                   algorithm_name);
     }
@@ -88,9 +94,7 @@ TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
 
         const Name algo_name(algo_str.empty() ? "hmac-md5.sig-alg.reg.int" :
                              algo_str);
-        if (algo_name != HMACMD5_NAME() &&
-            algo_name != HMACSHA1_NAME() &&
-            algo_name != HMACSHA256_NAME()) {
+        if (!isValidAlgorithmName(algo_name)) {
             isc_throw(InvalidParameter, "Unknown TSIG algorithm is specified: " <<
                       algo_name);
         }
