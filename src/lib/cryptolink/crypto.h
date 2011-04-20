@@ -153,7 +153,7 @@ private:
 
     // To prevent people constructing their own, we make the constructor
     // private too.
-    CryptoLink() : impl_(NULL) {};
+    CryptoLink() : impl_(NULL) {}
     ~CryptoLink();
 
     CryptoLinkImpl* impl_;
