@@ -18,7 +18,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rrclass.h>
@@ -28,6 +28,7 @@
 
 using namespace std;
 using namespace isc::dns;
+using namespace isc::util;
 using namespace isc::dns::rdata;
 
 namespace isc {

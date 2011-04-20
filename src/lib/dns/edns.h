@@ -24,6 +24,10 @@
 #include <dns/rdata.h>
 
 namespace isc {
+namespace util {
+class OutputBuffer;
+}
+
 namespace dns {
 
 class EDNS;
@@ -319,7 +323,7 @@ public:
     /// except it renders the OPT RR in an \c OutputBuffer and therefore
     /// does not care about message size limit.
     /// As a consequence it always returns 1.
-    unsigned int toWire(OutputBuffer& buffer,
+    unsigned int toWire(isc::util::OutputBuffer& buffer,
                         const uint8_t extended_rcode) const;
 
     /// \brief Convert the EDNS to a string.

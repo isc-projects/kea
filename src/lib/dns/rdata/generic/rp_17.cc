@@ -15,7 +15,8 @@
 #include <string>
 #include <sstream>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
+
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rdata.h>
@@ -102,7 +103,7 @@ RP::toWire(OutputBuffer& buffer) const {
 }
 
 void
-RP::toWire(MessageRenderer& renderer) const {
+RP::toWire(AbstractMessageRenderer& renderer) const {
     // Type RP is not "well-known", and name compression must be disabled
     // per RFC3597.
     renderer.writeName(mailbox_, false);

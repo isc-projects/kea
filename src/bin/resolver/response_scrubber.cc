@@ -26,7 +26,7 @@ using namespace std;
 // Compare addresses etc.
 
 ResponseScrubber::Category ResponseScrubber::addressCheck(
-    const asiolink::IOEndpoint& to, const asiolink::IOEndpoint& from)
+    const isc::asiolink::IOEndpoint& to, const isc::asiolink::IOEndpoint& from)
 {
     if (from.getProtocol() == to.getProtocol()) {
         if (from.getAddress() == to.getAddress()) {

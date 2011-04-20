@@ -24,7 +24,7 @@
 #include <bench/benchmark.h>
 #include <bench/benchmark_util.h>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/message.h>
 #include <dns/name.h>
 #include <dns/question.h>
@@ -36,6 +36,7 @@
 #include <auth/auth_config.h>
 #include <auth/query.h>
 
+#include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
 
 using namespace std;
@@ -43,9 +44,11 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::auth;
 using namespace isc::dns;
+using namespace isc::util;
 using namespace isc::xfr;
 using namespace isc::bench;
-using namespace asiolink;
+using namespace isc::asiodns;
+using namespace isc::asiolink;
 
 namespace {
 // Commonly used constant:

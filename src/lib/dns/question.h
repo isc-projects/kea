@@ -25,9 +25,13 @@
 #include <dns/rrtype.h>
 
 namespace isc {
+namespace util {
+class InputBuffer;
+class OutputBuffer;
+}
+
 namespace dns {
 
-class InputBuffer;
 class MessageRenderer;
 class Question;
 
@@ -118,7 +122,7 @@ public:
     /// classes fails.
     ///
     /// \param buffer A buffer storing the wire format data.
-    Question(InputBuffer& buffer);
+    Question(isc::util::InputBuffer& buffer);
 
     /// \brief Constructor from fixed parameters of the \c Question.
     ///
@@ -224,7 +228,7 @@ public:
     ///
     /// \param buffer An output buffer to store the wire data.
     /// \return 1
-    unsigned int toWire(OutputBuffer& buffer) const;
+    unsigned int toWire(isc::util::OutputBuffer& buffer) const;
     //@}
 
     ///

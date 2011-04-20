@@ -32,11 +32,14 @@ namespace dns {
 class RRClass;
 }
 
+namespace util {
+template<class T> class LruList;
+}
+
 namespace nsas {
 
 class ResolverInterface;
 template<class T> class HashTable;
-template<class T> class LruList;
 class ZoneEntry;
 class NameserverEntry;
 class AddressRequestCallback;
@@ -112,8 +115,8 @@ protected:
     boost::shared_ptr<HashTable<NameserverEntry> > nameserver_hash_;
 
     // ... and the LRU lists
-    boost::shared_ptr<LruList<ZoneEntry> > zone_lru_;
-    boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru_;
+    boost::shared_ptr<isc::util::LruList<ZoneEntry> > zone_lru_;
+    boost::shared_ptr<isc::util::LruList<NameserverEntry> > nameserver_lru_;
     // The resolver we use
 private:
     isc::resolve::ResolverInterface* resolver_;

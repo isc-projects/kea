@@ -18,15 +18,18 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
+#include <util/encode/base64.h>
+
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
-#include <dns/util/base64.h>
 
 using namespace std;
 using namespace boost;
+using namespace isc::util;
+using namespace isc::util::encode;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -377,9 +380,9 @@ TSIG::toWire(OutputBuffer& buffer) const {
 /// \param renderer DNS message rendering context that encapsulates the
 /// output buffer and name compression information.
 void
-TSIG::toWire(MessageRenderer& renderer) const {
+TSIG::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeName(impl_->algorithm_, false);
-    impl_->toWireCommon<MessageRenderer>(renderer);
+    impl_->toWireCommon<AbstractMessageRenderer>(renderer);
 }
 
 // A helper function commonly used for TSIG::compare().

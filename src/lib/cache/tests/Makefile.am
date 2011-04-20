@@ -2,6 +2,7 @@ SUBDIRS = .
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(MULTITHREADING_FLAG)
+AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/cache -I$(top_builddir)/src/lib/cache
 AM_CPPFLAGS += -DTEST_DATA_SRCDIR=\"$(srcdir)/testdata\"
@@ -54,6 +55,7 @@ endif
 run_unittests_LDADD += $(top_builddir)/src/lib/cache/libcache.la
 run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 endif

@@ -26,12 +26,12 @@
 #include <exceptions/exceptions.h>
 #include <coroutine.h>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 
 #include <asiolink/io_error.h>
 #include <asiolink/io_socket.h>
 
-
+namespace isc {
 namespace asiolink {
 
 /// \brief Socket not open
@@ -270,7 +270,7 @@ public:
     virtual bool processReceivedData(const void* staging, size_t length,
                                      size_t& cumulative, size_t& offset,
                                      size_t& expected,
-                                     isc::dns::OutputBufferPtr& outbuff) = 0;
+                                     isc::util::OutputBufferPtr& outbuff) = 0;
 
     /// \brief Cancel I/O On AsioSocket
     virtual void cancel() = 0;
@@ -372,7 +372,7 @@ public:
     virtual bool receiveComplete(const void* staging, size_t length,
                                  size_t& cumulative, size_t& offset,
                                  size_t& expected,
-                                 isc::dns::OutputBufferPtr& outbuff)
+                                 isc::util::OutputBufferPtr& outbuff)
     {
         return (true);
     }
@@ -395,5 +395,6 @@ private:
 };
 
 } // namespace asiolink
+} // namespace isc
 
 #endif // __IO_ASIO_SOCKET_H
