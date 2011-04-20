@@ -34,45 +34,47 @@ using namespace isc::dns;
 
 
 namespace isc {
-namespace crypto {
+namespace cryptolink {
 
-// For Botan, we use the Crypto class object in RAII style
-class CryptoImpl {
+// For Botan, we use the CryptoLink class object in RAII style
+class CryptoLinkImpl {
 private:
     Botan::LibraryInitializer _botan_init;
 };
 
-Crypto::~Crypto() {
+CryptoLink::~CryptoLink() {
     delete impl_;
 }
 
-Crypto&
-Crypto::getCrypto() {
-    Crypto &c = getCryptoInternal();
+CryptoLink&
+CryptoLink::getCryptoLink() {
+    CryptoLink &c = getCryptoLinkInternal();
     if (!c.impl_) {
         c.initialize();
     }
     return c;
 }
 
-Crypto&
-Crypto::getCryptoInternal() {
-    static Crypto instance;
+CryptoLink&
+CryptoLink::getCryptoLinkInternal() {
+    static CryptoLink instance;
     return (instance);
 }
 
 void
-Crypto::initialize() {
-    Crypto& c = getCryptoInternal();
-    try {
-        c.impl_ = new CryptoImpl();
-    } catch (const Botan::Exception& ex) {
-        isc_throw(InitializationError, ex.what());
+CryptoLink::initialize() {
+    CryptoLink& c = getCryptoLinkInternal();
+    if (!c.impl_) {
+        try {
+            c.impl_ = new CryptoLinkImpl();
+        } catch (const Botan::Exception& ex) {
+            isc_throw(InitializationError, ex.what());
+        }
     }
 }
 
 HMAC*
-Crypto::createHMAC(const void* secret, size_t secret_len,
+CryptoLink::createHMAC(const void* secret, size_t secret_len,
                    const HMAC::HashAlgorithm hash_algorithm) {
     return new HMAC(secret, secret_len, hash_algorithm);
 }
@@ -82,7 +84,7 @@ signHMAC(const void* data, size_t data_len, const void* secret,
          size_t secret_len, const HMAC::HashAlgorithm hash_algorithm,
          isc::dns::OutputBuffer& result, size_t len)
 {
-    boost::scoped_ptr<HMAC> hmac(Crypto::getCrypto().createHMAC(secret, secret_len, hash_algorithm));
+    boost::scoped_ptr<HMAC> hmac(CryptoLink::getCryptoLink().createHMAC(secret, secret_len, hash_algorithm));
     hmac->update(data, data_len);
     hmac->sign(result, len);
 }
@@ -93,11 +95,11 @@ verifyHMAC(const void* data, const size_t data_len, const void* secret,
            size_t secret_len, const HMAC::HashAlgorithm hash_algorithm,
            const void* sig, const size_t sig_len)
 {
-    boost::scoped_ptr<HMAC> hmac(Crypto::getCrypto().createHMAC(secret, secret_len, hash_algorithm));
+    boost::scoped_ptr<HMAC> hmac(CryptoLink::getCryptoLink().createHMAC(secret, secret_len, hash_algorithm));
     hmac->update(data, data_len);
     return (hmac->verify(sig, sig_len));
 }
 
-} // namespace crypto
+} // namespace cryptolink
 } // namespace isc
 
