@@ -20,9 +20,11 @@
 #include <exceptions/exceptions.h>
 
 #include <boost/noncopyable.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <cryptolink/crypto_hmac.h>
 
+#include <memory>
 
 namespace isc {
 namespace cryptolink {
@@ -72,9 +74,9 @@ public:
 /// Forward declaration for pimpl
 class CryptoLinkImpl;
 
-/// \brief 
+/// \brief Singleton entry point and factory class
 ///
-/// This is singleton class that serves as the entry point to
+/// This is a singleton class that serves as the entry point to
 /// the underlying cryptography library, and as a factory for objects
 /// within the cryptolink library.
 ///
@@ -85,9 +87,21 @@ class CryptoLinkImpl;
 /// to getCryptoLink. Any subsequent call to initialize() will be a
 /// noop.
 ///
+/// In order for the CryptoLink library to be sure that the underlying
+/// library has been initialized, and because we do not want to add
+/// such a check to every class and function within it, we have made
+/// the constructors of all classes within cryptolink private. This way
+/// a caller cannot instantiate an object before the library is
+/// initialized, but must use CryptoLink's create method (e.g.
+/// createHMAC()), which enforces (automatic) initialization.
+///
+/// In order for the CryptoLink class to be able to create objects that
+/// have private constructors, it is declared a friend class of these
+/// classes.
+///
 /// \note All other classes within cryptolink should have private
-/// constructors as well, and should have a factory function from this
-/// class.
+/// constructors as well, and should have a factory function from
+/// CryptoLink.
 ///
 // Internal note: we can use this class later to initialize and manage
 // dynamic (PKCS#11) libs
@@ -144,6 +158,8 @@ public:
     /// \param secret_len The length of the secret
     /// \param hash_algorithm The hash algorithm
     HMAC* createHMAC(const void* secret, size_t secret_len,
+                     const HMAC::HashAlgorithm hash_algorithm);
+    std::auto_ptr<HMAC> createHMAC2(const void* secret, size_t secret_len,
                      const HMAC::HashAlgorithm hash_algorithm);
 
 private:

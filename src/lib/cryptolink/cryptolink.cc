@@ -69,6 +69,17 @@ CryptoLink::createHMAC(const void* secret, size_t secret_len,
     return (new HMAC(secret, secret_len, hash_algorithm));
 }
 
+auto_ptr<HMAC>
+CryptoLink::createHMAC2(const void* secret, size_t secret_len,
+                        const HMAC::HashAlgorithm hash_algorithm)
+{
+    std::auto_ptr<HMAC> asdf(new HMAC(secret, secret_len, hash_algorithm));
+    return asdf;
+    //return asdf;
+    //HMAC* h = createHMAC(secret, secret_len, hash_algorithm);
+    //return (boost::scoped_ptr<HMAC>(h));
+}
+
 } // namespace cryptolink
 } // namespace isc
 
