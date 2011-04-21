@@ -28,7 +28,7 @@ namespace cryptolink {
 // For Botan, we use the CryptoLink class object in RAII style
 class CryptoLinkImpl {
 private:
-    Botan::LibraryInitializer _botan_init;
+    Botan::LibraryInitializer botan_init_;
 };
 
 CryptoLink::~CryptoLink() {
@@ -37,11 +37,11 @@ CryptoLink::~CryptoLink() {
 
 CryptoLink&
 CryptoLink::getCryptoLink() {
-    CryptoLink &c = getCryptoLinkInternal();
-    if (!c.impl_) {
+    CryptoLink& c = getCryptoLinkInternal();
+    if (c.impl_ == NULL) {
         c.initialize();
     }
-    return c;
+    return (c);
 }
 
 CryptoLink&
@@ -53,7 +53,7 @@ CryptoLink::getCryptoLinkInternal() {
 void
 CryptoLink::initialize() {
     CryptoLink& c = getCryptoLinkInternal();
-    if (!c.impl_) {
+    if (c.impl_ == NULL) {
         try {
             c.impl_ = new CryptoLinkImpl();
         } catch (const Botan::Exception& ex) {
@@ -64,7 +64,8 @@ CryptoLink::initialize() {
 
 HMAC*
 CryptoLink::createHMAC(const void* secret, size_t secret_len,
-                   const HMAC::HashAlgorithm hash_algorithm) {
+                       const HMAC::HashAlgorithm hash_algorithm)
+{
     return (new HMAC(secret, secret_len, hash_algorithm));
 }
 
