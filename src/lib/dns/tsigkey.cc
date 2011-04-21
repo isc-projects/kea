@@ -15,6 +15,7 @@
 #include <map>
 #include <utility>
 #include <vector>
+#include <sstream>
 
 #include <exceptions/exceptions.h>
 
