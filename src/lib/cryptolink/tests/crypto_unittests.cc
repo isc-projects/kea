@@ -107,7 +107,7 @@ namespace {
         // whether verification fails then
         hmac_sig.writeUint8At(~hmac_sig[0], 0);
         EXPECT_FALSE(hmac_verify->verify(hmac_sig.getData(),
-                                        hmac_sig.getLength()));
+                                         hmac_sig.getLength()));
     }
 
     void doHMACTestVector(const std::string& data,
@@ -428,7 +428,7 @@ namespace {
             CryptoLink::getCryptoLink().createHMAC("asdf", 4, alg));
         hmac_sign->update("asdf", 4);
         const std::vector<uint8_t> sig = hmac_sign->sign(len);
-        return sig.size();
+        return (sig.size());
     }
 
     size_t
@@ -438,12 +438,11 @@ namespace {
         hmac_sign->update("asdf", 4);
         OutputBuffer sig(0);
         hmac_sign->sign(sig, len);
-        return sig.getLength();
+        return (sig.getLength());
     }
 }
 
-TEST(CryptoLinkTest, HMACSigLengthArgument)
-{
+TEST(CryptoLinkTest, HMACSigLengthArgument) {
     std::vector<uint8_t> sig;
 
     EXPECT_EQ(16, sigVectorLength(HMAC::MD5, 0));
@@ -507,7 +506,7 @@ TEST(CryptoLinkTest, BadKey) {
 }
 
 TEST(CryptoLinkTest, Singleton) {
-    CryptoLink& c1 = CryptoLink::getCryptoLink();
-    CryptoLink& c2 = CryptoLink::getCryptoLink();
+    const CryptoLink& c1 = CryptoLink::getCryptoLink();
+    const CryptoLink& c2 = CryptoLink::getCryptoLink();
     ASSERT_EQ(&c1, &c2);
 }
