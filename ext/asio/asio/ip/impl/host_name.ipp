@@ -26,6 +26,7 @@
 namespace asio {
 namespace ip {
 
+ASIO_DECL
 std::string host_name()
 {
   char name[1024];
@@ -38,6 +39,7 @@ std::string host_name()
   return std::string(name);
 }
 
+ASIO_DECL
 std::string host_name(asio::error_code& ec)
 {
   char name[1024];

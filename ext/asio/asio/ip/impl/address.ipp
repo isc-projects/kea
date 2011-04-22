@@ -28,6 +28,7 @@
 namespace asio {
 namespace ip {
 
+ASIO_DECL
 address::address()
   : type_(ipv4),
     ipv4_address_(),
@@ -35,6 +36,7 @@ address::address()
 {
 }
 
+ASIO_DECL
 address::address(const asio::ip::address_v4& ipv4_address)
   : type_(ipv4),
     ipv4_address_(ipv4_address),
@@ -42,6 +44,7 @@ address::address(const asio::ip::address_v4& ipv4_address)
 {
 }
 
+ASIO_DECL
 address::address(const asio::ip::address_v6& ipv6_address)
   : type_(ipv6),
     ipv4_address_(),
@@ -49,6 +52,7 @@ address::address(const asio::ip::address_v6& ipv6_address)
 {
 }
 
+ASIO_DECL
 address::address(const address& other)
   : type_(other.type_),
     ipv4_address_(other.ipv4_address_),
@@ -56,6 +60,7 @@ address::address(const address& other)
 {
 }
 
+ASIO_DECL
 address& address::operator=(const address& other)
 {
   type_ = other.type_;
@@ -64,6 +69,7 @@ address& address::operator=(const address& other)
   return *this;
 }
 
+ASIO_DECL
 address& address::operator=(const asio::ip::address_v4& ipv4_address)
 {
   type_ = ipv4;
@@ -72,6 +78,7 @@ address& address::operator=(const asio::ip::address_v4& ipv4_address)
   return *this;
 }
 
+ASIO_DECL
 address& address::operator=(const asio::ip::address_v6& ipv6_address)
 {
   type_ = ipv6;
@@ -80,6 +87,7 @@ address& address::operator=(const asio::ip::address_v6& ipv6_address)
   return *this;
 }
 
+ASIO_DECL
 asio::ip::address_v4 address::to_v4() const
 {
   if (type_ != ipv4)
@@ -90,6 +98,7 @@ asio::ip::address_v4 address::to_v4() const
   return ipv4_address_;
 }
 
+ASIO_DECL
 asio::ip::address_v6 address::to_v6() const
 {
   if (type_ != ipv6)
@@ -100,6 +109,7 @@ asio::ip::address_v6 address::to_v6() const
   return ipv6_address_;
 }
 
+ASIO_DECL
 std::string address::to_string() const
 {
   if (type_ == ipv6)
@@ -107,6 +117,7 @@ std::string address::to_string() const
   return ipv4_address_.to_string();
 }
 
+ASIO_DECL
 std::string address::to_string(asio::error_code& ec) const
 {
   if (type_ == ipv6)
@@ -114,6 +125,7 @@ std::string address::to_string(asio::error_code& ec) const
   return ipv4_address_.to_string(ec);
 }
 
+ASIO_DECL
 address address::from_string(const char* str)
 {
   asio::error_code ec;
@@ -122,6 +134,7 @@ address address::from_string(const char* str)
   return addr;
 }
 
+ASIO_DECL
 address address::from_string(const char* str, asio::error_code& ec)
 {
   asio::ip::address_v6 ipv6_address =
@@ -147,17 +160,20 @@ address address::from_string(const char* str, asio::error_code& ec)
   return address();
 }
 
+ASIO_DECL
 address address::from_string(const std::string& str)
 {
   return from_string(str.c_str());
 }
 
+ASIO_DECL
 address address::from_string(const std::string& str,
     asio::error_code& ec)
 {
   return from_string(str.c_str(), ec);
 }
 
+ASIO_DECL
 bool operator==(const address& a1, const address& a2)
 {
   if (a1.type_ != a2.type_)
@@ -167,6 +183,7 @@ bool operator==(const address& a1, const address& a2)
   return a1.ipv4_address_ == a2.ipv4_address_;
 }
 
+ASIO_DECL
 bool operator<(const address& a1, const address& a2)
 {
   if (a1.type_ < a2.type_)

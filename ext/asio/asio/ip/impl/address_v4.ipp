@@ -29,6 +29,7 @@
 namespace asio {
 namespace ip {
 
+ASIO_DECL
 address_v4::address_v4(const address_v4::bytes_type& bytes)
 {
 #if UCHAR_MAX > 0xFF
@@ -44,6 +45,7 @@ address_v4::address_v4(const address_v4::bytes_type& bytes)
   memcpy(&addr_.s_addr, bytes.elems, 4);
 }
 
+ASIO_DECL
 address_v4::address_v4(unsigned long addr)
 {
 #if ULONG_MAX > 0xFFFFFFFF
@@ -57,6 +59,7 @@ address_v4::address_v4(unsigned long addr)
   addr_.s_addr = asio::detail::socket_ops::host_to_network_long(addr);
 }
 
+ASIO_DECL
 address_v4::bytes_type address_v4::to_bytes() const
 {
   using namespace std; // For memcpy.
@@ -65,11 +68,13 @@ address_v4::bytes_type address_v4::to_bytes() const
   return bytes;
 }
 
+ASIO_DECL
 unsigned long address_v4::to_ulong() const
 {
   return asio::detail::socket_ops::network_to_host_long(addr_.s_addr);
 }
 
+ASIO_DECL
 std::string address_v4::to_string() const
 {
   asio::error_code ec;
@@ -78,6 +83,7 @@ std::string address_v4::to_string() const
   return addr;
 }
 
+ASIO_DECL
 std::string address_v4::to_string(asio::error_code& ec) const
 {
   char addr_str[asio::detail::max_addr_v4_str_len];
@@ -89,6 +95,7 @@ std::string address_v4::to_string(asio::error_code& ec) const
   return addr;
 }
 
+ASIO_DECL
 address_v4 address_v4::from_string(const char* str)
 {
   asio::error_code ec;
@@ -97,6 +104,7 @@ address_v4 address_v4::from_string(const char* str)
   return addr;
 }
 
+ASIO_DECL
 address_v4 address_v4::from_string(
     const char* str, asio::error_code& ec)
 {
@@ -107,42 +115,50 @@ address_v4 address_v4::from_string(
   return tmp;
 }
 
+ASIO_DECL
 address_v4 address_v4::from_string(const std::string& str)
 {
   return from_string(str.c_str());
 }
 
+ASIO_DECL
 address_v4 address_v4::from_string(
     const std::string& str, asio::error_code& ec)
 {
   return from_string(str.c_str(), ec);
 }
 
+ASIO_DECL
 bool address_v4::is_class_a() const
 {
   return IN_CLASSA(to_ulong());
 }
 
+ASIO_DECL
 bool address_v4::is_class_b() const
 {
   return IN_CLASSB(to_ulong());
 }
 
+ASIO_DECL
 bool address_v4::is_class_c() const
 {
   return IN_CLASSC(to_ulong());
 }
 
+ASIO_DECL
 bool address_v4::is_multicast() const
 {
   return IN_MULTICAST(to_ulong());
 }
 
+ASIO_DECL
 address_v4 address_v4::broadcast(const address_v4& addr, const address_v4& mask)
 {
   return address_v4(addr.to_ulong() | (mask.to_ulong() ^ 0xFFFFFFFF));
 }
 
+ASIO_DECL
 address_v4 address_v4::netmask(const address_v4& addr)
 {
   if (addr.is_class_a())

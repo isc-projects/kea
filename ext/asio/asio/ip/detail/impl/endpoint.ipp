@@ -31,6 +31,7 @@ namespace asio {
 namespace ip {
 namespace detail {
 
+ASIO_DECL
 endpoint::endpoint()
   : data_()
 {
@@ -39,6 +40,7 @@ endpoint::endpoint()
   data_.v4.sin_addr.s_addr = INADDR_ANY;
 }
 
+ASIO_DECL
 endpoint::endpoint(int family, unsigned short port_num)
   : data_()
 {
@@ -62,6 +64,7 @@ endpoint::endpoint(int family, unsigned short port_num)
   }
 }
 
+ASIO_DECL
 endpoint::endpoint(const asio::ip::address& addr,
     unsigned short port_num)
   : data_()
@@ -89,6 +92,7 @@ endpoint::endpoint(const asio::ip::address& addr,
   }
 }
 
+ASIO_DECL
 void endpoint::resize(std::size_t size)
 {
   if (size > sizeof(asio::detail::sockaddr_storage_type))
@@ -98,6 +102,7 @@ void endpoint::resize(std::size_t size)
   }
 }
 
+ASIO_DECL
 unsigned short endpoint::port() const
 {
   if (is_v4())
@@ -112,6 +117,7 @@ unsigned short endpoint::port() const
   }
 }
 
+ASIO_DECL
 void endpoint::port(unsigned short port_num)
 {
   if (is_v4())
@@ -126,6 +132,7 @@ void endpoint::port(unsigned short port_num)
   }
 }
 
+ASIO_DECL
 asio::ip::address endpoint::address() const
 {
   using namespace std; // For memcpy.
@@ -143,17 +150,20 @@ asio::ip::address endpoint::address() const
   }
 }
 
+ASIO_DECL
 void endpoint::address(const asio::ip::address& addr)
 {
   endpoint tmp_endpoint(addr, port());
   data_ = tmp_endpoint.data_;
 }
 
+ASIO_DECL
 bool operator==(const endpoint& e1, const endpoint& e2)
 {
   return e1.address() == e2.address() && e1.port() == e2.port();
 }
 
+ASIO_DECL
 bool operator<(const endpoint& e1, const endpoint& e2)
 {
   if (e1.address() < e2.address())
@@ -164,6 +174,7 @@ bool operator<(const endpoint& e1, const endpoint& e2)
 }
 
 #if !defined(BOOST_NO_IOSTREAM)
+ASIO_DECL
 std::string endpoint::to_string(asio::error_code& ec) const
 {
   std::string a = address().to_string(ec);
