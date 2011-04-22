@@ -37,7 +37,7 @@ b10-stats-httpd \- BIND 10 HTTP server for HTTP/XML interface of statistics
 
 \fBb10\-stats\-httpd\fR
 is a standalone HTTP server\&. It is intended for HTTP/XML interface for statistics module\&. This server process runs as a process separated from the process of the BIND 10 Stats daemon (\fBb10\-stats\fR)\&. The server is initially executed by the BIND 10 boss process (\fBbind10\fR) and eventually exited by it\&. The server is intended to be server requests by HTTP clients like web browsers and third\-party modules\&. When the server is asked, it requests BIND 10 statistics data from
-\fBb10\-stats\fR, and it sends the data back in Python dictionary format and the server converts it into XML format\&. The server sends it to the HTTP client\&. The server can send three types of document, which are XML (Extensible Markup Language), XSD (XML Schema definition) and XSL (Extensible Stylesheet Language)\&. The XML document is the statistics data of BIND 10, The XSD document is the data schema of it, and The XSL document is the style sheet to be showed for the web browsers\&. Please see the manual and the spec file of
+\fBb10\-stats\fR, and it sends the data back in Python dictionary format and the server converts it into XML format\&. The server sends it to the HTTP client\&. The server can send three types of document, which are XML (Extensible Markup Language), XSD (XML Schema definition) and XSL (Extensible Stylesheet Language)\&. The XML document is the statistics data of BIND 10, The XSD document is the data schema of it, and The XSL document is the style sheet to be showed for the web browsers\&. There is different URL for each document\&. But please note that you would be redirected to the URL of XML document if you request the URL of the root document\&. For example, you would be redirected to http://127\&.0\&.0\&.1:8000/bind10/statistics/xml if you request http://127\&.0\&.0\&.1:8000/\&. Please see the manual and the spec file of
 \fBb10\-stats\fR
 for more details about the items of BIND 10 statistics\&. The server uses CC session in communication with
 \fBb10\-stats\fR\&. CC session is provided by
@@ -92,7 +92,7 @@ to listen HTTP requests on\&. The pair consists of the
 string and
 \fIport\fR
 number\&. The default setting is the list of address 127\&.0\&.0\&.1 port 8000\&. If the server is started by the default setting being left, for example, the URL for XML document is http://127\&.0\&.0\&.1:8000/bind10/statistics/xml\&. And also IPv6 addresses can be configured and they works in the runtime environment for dual stack\&. You can change the settings through
-bindctl(8)
+bindctl(8)\&.
 .RE
 .PP
 The commands in
