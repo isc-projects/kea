@@ -28,6 +28,7 @@
 #include <dns/message.h>
 #include <dns/opcode.h>
 #include <dns/exceptions.h>
+#include <dns/rdataclass.h>
 
 #include <resolve/resolve.h>
 #include <cache/resolver_cache.h>
@@ -47,6 +48,23 @@ using namespace isc::asiolink;
 
 namespace isc {
 namespace asiodns {
+
+namespace {
+// Function to check if the given name/class has any address in the cache
+bool
+hasAddress(const Name& name, const RRClass& rrClass,
+      const isc::cache::ResolverCache& cache)
+{
+    // FIXME: If we are single-stack and we get only the other type of
+    // address, what should we do? In that case, it will be considered
+    // unreachable, which is most probably true, because A and AAAA will
+    // usually have the same RTT, so we should have both or none from the
+    // glue.
+    return (cache.lookup(name, RRType::A(), rrClass) != RRsetPtr() ||
+            cache.lookup(name, RRType::AAAA(), rrClass) != RRsetPtr());
+}
+
+}
 
 typedef std::vector<std::pair<std::string, uint16_t> > AddressVector;
 
@@ -239,7 +257,6 @@ private:
     // if we have a response for our query stored already. if
     // so, call handlerecursiveresponse(), if not, we call send()
     void doLookup() {
-        cur_zone_ = ".";
         dlog("doLookup: try cache");
         Message cached_message(Message::RENDER);
         isc::resolve::initResponseMessage(question_, cached_message);
@@ -255,6 +272,41 @@ private:
                 stop();
             }
         } else {
+            dlog("doLookup: get lowest usable delegation from cache");
+            cur_zone_ = ".";
+            bool foundAddress(false);
+            RRsetPtr cachedNS;
+            Name tryName(question_.getName());
+            // Look for delegation point from bottom, until we find one with
+            // IP address or get to root.
+            //
+            // We need delegation with IP address so we can ask it right away.
+            // If we don't have the IP address, we would need to ask above it
+            // anyway in the best case, and the NS could be inside the zone,
+            // and we could get all loopy with the NSAS in the worst case.
+            while (!foundAddress && tryName.getLabelCount() > 1 &&
+                   (cachedNS = cache_.lookupDeepestNS(tryName,
+                                                     question_.getClass())) !=
+                   RRsetPtr()) {
+                // Look if we have an IP address for the NS
+                for (RdataIteratorPtr ns(cachedNS->getRdataIterator());
+                     !ns->isLast(); ns->next()) {
+                    // Do we have IP for this specific NS?
+                    if (hasAddress(dynamic_cast<const rdata::generic::NS&>(
+                                  ns->getCurrent()).getNSName(),
+                              question_.getClass(), cache_)) {
+                        // Found one, stop checking and use this zone
+                        // (there may be more addresses, that's only better)
+                        foundAddress = true;
+                        cur_zone_ = cachedNS->getName().toText();
+                        break;
+                    }
+                }
+                // We don't have anything for this one, so try something higher
+                if (!foundAddress && tryName.getLabelCount() > 1) {
+                    tryName = tryName.split(1);
+                }
+            }
             send();
         }
         
