@@ -338,9 +338,32 @@ class TestStatsHttpd(unittest.TestCase):
 
     def test_open_template(self):
         # successful conditions
-        self.stats_httpd.open_template(stats_httpd.XML_TEMPLATE_LOCATION)
-        self.stats_httpd.open_template(stats_httpd.XSD_TEMPLATE_LOCATION)
-        self.stats_httpd.open_template(stats_httpd.XSL_TEMPLATE_LOCATION)
+        tmpl = self.stats_httpd.open_template(stats_httpd.XML_TEMPLATE_LOCATION)
+        self.assertTrue(isinstance(tmpl, string.Template))
+        opts = dict(
+            xml_string="<dummy></dummy>",
+            xsd_namespace="http://host/path/to/",
+            xsd_url_path="/path/to/",
+            xsl_url_path="/path/to/")
+        lines = tmpl.substitute(opts)
+        for n in opts:
+            self.assertTrue(lines.find(opts[n])>0)
+        tmpl = self.stats_httpd.open_template(stats_httpd.XSD_TEMPLATE_LOCATION)
+        self.assertTrue(isinstance(tmpl, string.Template))
+        opts = dict(
+            xsd_string="<dummy></dummy>",
+            xsd_namespace="http://host/path/to/")
+        lines = tmpl.substitute(opts)
+        for n in opts:
+            self.assertTrue(lines.find(opts[n])>0)
+        tmpl = self.stats_httpd.open_template(stats_httpd.XSL_TEMPLATE_LOCATION)
+        self.assertTrue(isinstance(tmpl, string.Template))
+        opts = dict(
+            xsl_string="<dummy></dummy>",
+            xsd_namespace="http://host/path/to/")
+        lines = tmpl.substitute(opts)
+        for n in opts:
+            self.assertTrue(lines.find(opts[n])>0)
         # unsuccessful condition
         self.assertRaises(
             IOError,
