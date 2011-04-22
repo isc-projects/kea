@@ -112,13 +112,15 @@ class TestHttpHandler(unittest.TestCase):
         for (k, v) in DUMMY_DATA.items():
             self.assertTrue(handler.response.body.find(str(k))>0)
 
-        # 404 NotFound with Host header
+        # 302 redirect
         handler.path = '/'
         handler.headers = {'Host': 'my.host.domain'}
         handler.do_GET()
-        self.assertEqual(handler.response.code, 404)
+        self.assertEqual(handler.response.code, 302)
+        self.assertEqual(handler.response.headers["Location"],
+                         "http://my.host.domain%s" % stats_httpd.XML_URL_PATH)
 
-        # 404 NotFound without Host header
+        # 404 NotFound
         handler.path = '/path/to/foo/bar'
         handler.headers = {}
         handler.do_GET()
