@@ -562,6 +562,7 @@ private:
 /// that ongoing state information will not be lost if the object
 /// that originated the asynchronous call falls out of scope.
 typedef boost::shared_ptr<Message> MessagePtr;
+typedef boost::shared_ptr<const Message> ConstMessagePtr;
 
 std::ostream& operator<<(std::ostream& os, const Message& message);
 }
