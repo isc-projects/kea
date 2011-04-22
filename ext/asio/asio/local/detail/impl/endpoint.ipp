@@ -32,22 +32,26 @@ namespace asio {
 namespace local {
 namespace detail {
 
+ASIO_DECL
 endpoint::endpoint()
 {
   init("", 0);
 }
 
+ASIO_DECL
 endpoint::endpoint(const char* path)
 {
   using namespace std; // For strlen.
   init(path, strlen(path));
 }
 
+ASIO_DECL
 endpoint::endpoint(const std::string& path)
 {
   init(path.data(), path.length());
 }
 
+ASIO_DECL
 void endpoint::resize(std::size_t size)
 {
   if (size > sizeof(asio::detail::sockaddr_un_type))
@@ -70,32 +74,38 @@ void endpoint::resize(std::size_t size)
   }
 }
 
+ASIO_DECL
 std::string endpoint::path() const
 {
   return std::string(data_.local.sun_path, path_length_);
 }
 
+ASIO_DECL
 void endpoint::path(const char* p)
 {
   using namespace std; // For strlen.
   init(p, strlen(p));
 }
 
+ASIO_DECL
 void endpoint::path(const std::string& p)
 {
   init(p.data(), p.length());
 }
 
+ASIO_DECL
 bool operator==(const endpoint& e1, const endpoint& e2)
 {
   return e1.path() == e2.path();
 }
 
+ASIO_DECL
 bool operator<(const endpoint& e1, const endpoint& e2)
 {
   return e1.path() < e2.path();
 }
 
+ASIO_DECL
 void endpoint::init(const char* path, std::size_t path_length)
 {
   if (path_length > sizeof(data_.local.sun_path) - 1)

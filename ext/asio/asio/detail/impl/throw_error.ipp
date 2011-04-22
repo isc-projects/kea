@@ -25,12 +25,14 @@
 namespace asio {
 namespace detail {
 
+ASIO_DECL
 void do_throw_error(const asio::error_code& err)
 {
   asio::system_error e(err);
   boost::throw_exception(e);
 }
 
+ASIO_DECL
 void do_throw_error(const asio::error_code& err, const char* location)
 {
   asio::system_error e(err, location);

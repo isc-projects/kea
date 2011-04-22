@@ -30,6 +30,7 @@
 namespace asio {
 namespace ip {
 
+ASIO_DECL
 address_v6::address_v6()
   : scope_id_(0)
 {
@@ -37,6 +38,7 @@ address_v6::address_v6()
   addr_ = tmp_addr;
 }
 
+ASIO_DECL
 address_v6::address_v6(const address_v6::bytes_type& bytes,
     unsigned long scope_id)
   : scope_id_(scope_id)
@@ -56,12 +58,14 @@ address_v6::address_v6(const address_v6::bytes_type& bytes,
   memcpy(addr_.s6_addr, bytes.elems, 16);
 }
 
+ASIO_DECL
 address_v6::address_v6(const address_v6& other)
   : addr_(other.addr_),
     scope_id_(other.scope_id_)
 {
 }
 
+ASIO_DECL
 address_v6& address_v6::operator=(const address_v6& other)
 {
   addr_ = other.addr_;
@@ -69,6 +73,7 @@ address_v6& address_v6::operator=(const address_v6& other)
   return *this;
 }
 
+ASIO_DECL
 address_v6::bytes_type address_v6::to_bytes() const
 {
   using namespace std; // For memcpy.
@@ -77,6 +82,7 @@ address_v6::bytes_type address_v6::to_bytes() const
   return bytes;
 }
 
+ASIO_DECL
 std::string address_v6::to_string() const
 {
   asio::error_code ec;
@@ -85,6 +91,7 @@ std::string address_v6::to_string() const
   return addr;
 }
 
+ASIO_DECL
 std::string address_v6::to_string(asio::error_code& ec) const
 {
   char addr_str[asio::detail::max_addr_v6_str_len];
@@ -96,6 +103,7 @@ std::string address_v6::to_string(asio::error_code& ec) const
   return addr;
 }
 
+ASIO_DECL
 address_v6 address_v6::from_string(const char* str)
 {
   asio::error_code ec;
@@ -104,6 +112,7 @@ address_v6 address_v6::from_string(const char* str)
   return addr;
 }
 
+ASIO_DECL
 address_v6 address_v6::from_string(
     const char* str, asio::error_code& ec)
 {
@@ -114,17 +123,20 @@ address_v6 address_v6::from_string(
   return tmp;
 }
 
+ASIO_DECL
 address_v6 address_v6::from_string(const std::string& str)
 {
   return from_string(str.c_str());
 }
 
+ASIO_DECL
 address_v6 address_v6::from_string(
     const std::string& str, asio::error_code& ec)
 {
   return from_string(str.c_str(), ec);
 }
 
+ASIO_DECL
 address_v4 address_v6::to_v4() const
 {
   if (!is_v4_mapped() && !is_v4_compatible())
@@ -138,6 +150,7 @@ address_v4 address_v6::to_v4() const
   return address_v4(v4_bytes);
 }
 
+ASIO_DECL
 bool address_v6::is_loopback() const
 {
 #if defined(__BORLANDC__)
@@ -155,6 +168,7 @@ bool address_v6::is_loopback() const
 #endif
 }
 
+ASIO_DECL
 bool address_v6::is_unspecified() const
 {
 #if defined(__BORLANDC__)
@@ -172,66 +186,77 @@ bool address_v6::is_unspecified() const
 #endif
 }
 
+ASIO_DECL
 bool address_v6::is_link_local() const
 {
   using namespace asio::detail;
   return IN6_IS_ADDR_LINKLOCAL(&addr_) != 0;
 }
 
+ASIO_DECL
 bool address_v6::is_site_local() const
 {
   using namespace asio::detail;
   return IN6_IS_ADDR_SITELOCAL(&addr_) != 0;
 }
 
+ASIO_DECL
 bool address_v6::is_v4_mapped() const
 {
   using namespace asio::detail;
   return IN6_IS_ADDR_V4MAPPED(&addr_) != 0;
 }
 
+ASIO_DECL
 bool address_v6::is_v4_compatible() const
 {
   using namespace asio::detail;
   return IN6_IS_ADDR_V4COMPAT(&addr_) != 0;
 }
 
+ASIO_DECL
 bool address_v6::is_multicast() const
 {
   using namespace asio::detail;
   return IN6_IS_ADDR_MULTICAST(&addr_) != 0;
 }
 
+ASIO_DECL
 bool address_v6::is_multicast_global() const
 {
   using namespace asio::detail;
   return IN6_IS_ADDR_MC_GLOBAL(&addr_) != 0;
 }
 
+ASIO_DECL
 bool address_v6::is_multicast_link_local() const
 {
   using namespace asio::detail;
   return IN6_IS_ADDR_MC_LINKLOCAL(&addr_) != 0;
 }
 
+ASIO_DECL
 bool address_v6::is_multicast_node_local() const
 {
   using namespace asio::detail;
   return IN6_IS_ADDR_MC_NODELOCAL(&addr_) != 0;
 }
 
+ASIO_DECL
 bool address_v6::is_multicast_org_local() const
 {
   using namespace asio::detail;
   return IN6_IS_ADDR_MC_ORGLOCAL(&addr_) != 0;
 }
 
+ASIO_DECL
 bool address_v6::is_multicast_site_local() const
 {
   using namespace asio::detail;
   return IN6_IS_ADDR_MC_SITELOCAL(&addr_) != 0;
 }
 
+ASIO_DECL
 bool operator==(const address_v6& a1, const address_v6& a2)
 {
   using namespace std; // For memcmp.
@@ -240,6 +265,7 @@ bool operator==(const address_v6& a1, const address_v6& a2)
     && a1.scope_id_ == a2.scope_id_;
 }
 
+ASIO_DECL
 bool operator<(const address_v6& a1, const address_v6& a2)
 {
   using namespace std; // For memcmp.
@@ -252,6 +278,7 @@ bool operator<(const address_v6& a1, const address_v6& a2)
   return a1.scope_id_ < a2.scope_id_;
 }
 
+ASIO_DECL
 address_v6 address_v6::loopback()
 {
   address_v6 tmp;
@@ -260,6 +287,7 @@ address_v6 address_v6::loopback()
   return tmp;
 }
 
+ASIO_DECL
 address_v6 address_v6::v4_mapped(const address_v4& addr)
 {
   address_v4::bytes_type v4_bytes = addr.to_bytes();
@@ -268,6 +296,7 @@ address_v6 address_v6::v4_mapped(const address_v4& addr)
   return address_v6(v6_bytes);
 }
 
+ASIO_DECL
 address_v6 address_v6::v4_compatible(const address_v4& addr)
 {
   address_v4::bytes_type v4_bytes = addr.to_bytes();
