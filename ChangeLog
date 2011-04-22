@@ -1,4 +1,4 @@
-223.  [bug]     feng
+223.	[bug]		feng
 	If ip address or port isn't usable for name server, name server process
 	won't exist and give end user chance to reconfigure them.
 	(Trac #775, git 572ac2cf62e18f7eb69d670b890e2a3443bfd6e7)
