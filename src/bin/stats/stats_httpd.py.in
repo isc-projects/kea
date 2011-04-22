@@ -167,9 +167,6 @@ class StatsHttpd:
         self.stats_module_spec = isc.config.module_spec_from_file(STATS_SPECFILE_LOCATION)
         self.stats_config_spec = self.stats_module_spec.get_config_spec()
         self.stats_module_name = self.stats_module_spec.get_module_name()
-        if self.verbose:
-            self.write_log("[b10-stats-httpd] Starts to subscribe stats module\n")
-        self.cc_session.group_subscribe(self.stats_module_name, "*")
 
     def close_mccs(self):
         """Closes a ModuleCCSession object"""
@@ -177,11 +174,6 @@ class StatsHttpd:
             return
         if self.verbose:
             self.write_log("[b10-stats-httpd] Closing CC Session\n")
-        try:
-            self.cc_session.group_unsubscribe(self.stats_module_name, "*")
-        except isc.cc.session.SessionError as se:
-            if self.verbose:
-                self.write_log("[b10-stats-httpd] Failed to unsubscribe stats module\n")
         self.mccs.close()
         self.mccs = None
 
