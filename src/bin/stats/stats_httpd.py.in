@@ -83,8 +83,8 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
             elif self.path == XSL_URL_PATH:
                 body = self.server.xsl_handler()
             else:
-                if 'Host' in self.headers.keys():
-                    # redirect to XML URL
+                if self.path == '/' and 'Host' in self.headers.keys():
+                    # redirect to XML URL only when requested with '/'
                     self.send_response(302)
                     self.send_header(
                         "Location",
