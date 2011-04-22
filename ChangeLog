@@ -1,3 +1,11 @@
+224.	[bug]		jinmei
+	b10-auth, src/lib/datasrc: inconsistency between the hot spot
+	cache and actual data source could cause a crash while query
+	processing.  The crash could happen, e.g., when an sqlite3 DB file
+	is being updated after a zone transfer while b10-auth handles a
+	query using the corresponding sqlite3 data source.
+	(Trac #851, git 2463b96680bb3e9a76e50c38a4d7f1d38d810643)
+
 223.	[bug]		feng
 	If ip address or port isn't usable for name server, name server process
 	won't exist and give end user chance to reconfigure them.
