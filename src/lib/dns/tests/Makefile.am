@@ -20,6 +20,7 @@ TESTS += run_unittests
 run_unittests_SOURCES = unittest_util.h unittest_util.cc
 run_unittests_SOURCES += edns_unittest.cc
 run_unittests_SOURCES += messagerenderer_unittest.cc
+run_unittests_SOURCES += name_unittest.cc
 run_unittests_SOURCES += rrclass_unittest.cc rrtype_unittest.cc
 run_unittests_SOURCES += rrttl_unittest.cc
 run_unittests_SOURCES += opcode_unittest.cc
