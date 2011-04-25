@@ -107,7 +107,7 @@ ResponseScrubber::scrubSection(Message& message,
         }
     }
 
-    return count;
+    return (count);
 }
 
 // Perform the scrubbing of all sections of the message.
@@ -126,7 +126,7 @@ ResponseScrubber::scrubAllSections(Message& message, const Name& bailiwick) {
     count += scrubSection(message, bailiwick_names,
             NameComparisonResult::SUBDOMAIN, Message::SECTION_ADDITIONAL);
 
-    return count;
+    return (count);
 }
 
 // Scrub across sections.
@@ -171,7 +171,6 @@ ResponseScrubber::scrubCrossSections(isc::dns::Message& message) {
     // superdomain of the names in the question/answer section.
     return (scrubSection(message, source,
         NameComparisonResult::SUPERDOMAIN, Message::SECTION_AUTHORITY));
-
 }
 
 // Scrub a message
@@ -183,7 +182,7 @@ ResponseScrubber::scrub(const isc::dns::MessagePtr& message,
     unsigned int sections_removed = scrubAllSections(*message, bailiwick);
     sections_removed += scrubCrossSections(*message);
 
-    return sections_removed;
+    return (sections_removed);
 }
 
 
