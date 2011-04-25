@@ -1,4 +1,3 @@
-
 // Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
@@ -50,7 +49,7 @@ ResponseScrubber::Category ResponseScrubber::addressCheck(
 unsigned int
 ResponseScrubber::scrubSection(Message& message,
     const vector<const Name*>& names,
-    const NameComparisonResult::NameRelation connection, 
+    const NameComparisonResult::NameRelation connection,
     const Message::Section section)
 {
     unsigned int count = 0;     // Count of RRsets removed
@@ -74,22 +73,23 @@ ResponseScrubber::scrubSection(Message& message,
 
         // Start looking at the remaining entries in the section.
         removed = false;
-        for (; (i != message.endSection(section)) && (!removed); ++i) {
+        for (; i != message.endSection(section); ++i) {
 
             // Loop through the list of names given and see if any are in the
             // given relationship with the QNAME of this RRset
             bool nomatch = true;
             for (vector<const Name*>::const_iterator n = names.begin();
-                ((n != names.end()) && nomatch); ++n) {
+                ((n != names.end())); ++n) {
                 NameComparisonResult result = (*i)->getName().compare(**n);
                 NameComparisonResult::NameRelation relationship =
                     result.getRelation();
                 if ((relationship == NameComparisonResult::EQUAL) ||
                    (relationship == connection)) {
-                    
+
                     // RRset in the specified relationship, so a match has
                     // been found
                     nomatch = false;
+                    break;
                 }
             }
 
@@ -98,6 +98,7 @@ ResponseScrubber::scrubSection(Message& message,
                 message.removeRRset(section, i);
                 ++count;            // One more RRset removed
                 removed = true;     // Something was removed
+                break; // It invalidated the iterators, start again
              } else {
 
                 // There was a match so this is one more entry we can skip next
