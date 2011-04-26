@@ -224,6 +224,12 @@ public:
     /// (RR), even though this value should be stored in the first two octets
     /// (in wire format) of the given data.
     ///
+    /// \note This method still checks and rejects empty data (\c NULL pointer
+    /// data or the specified data length is 0) in order to avoid catastrophic
+    /// effect such as program crash.  Empty data is not necessarily invalid
+    /// for HMAC computation, but obviously it doesn't make sense for a DNS
+    /// message.
+    ///
     /// This method can throw exceptions (see the list), but does not provide
     /// the strong exception guarantee.  That is, if an exception is thrown,
     /// the internal state of the \c TSIGContext object can be changed, in
@@ -232,6 +238,7 @@ public:
     /// to catch the exception and try to recover from it, it must drop the
     /// TSIG session and start a new session with a new context.
     ///
+    /// \exception InvalidParameter \c data is NULL or \c data_len is 0
     /// \exception cryptolink::LibraryError Some unexpected error in the
     /// underlying crypto operation
     /// \exception std::bad_alloc Temporary resource allocation failure
