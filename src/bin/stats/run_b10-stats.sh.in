@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2010, 2011  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -24,8 +24,8 @@ export PYTHONPATH
 BIND10_MSGQ_SOCKET_FILE=@abs_top_builddir@/msgq_socket
 export BIND10_MSGQ_SOCKET_FILE
 
-B10_FROM_BUILD=@abs_top_builddir@
-export B10_FROM_BUILD
+B10_FROM_SOURCE=@abs_top_srcdir@/src/bin/stats
+export B10_FROM_SOURCE
 
 STATS_PATH=@abs_top_builddir@/src/bin/stats
 

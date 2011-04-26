@@ -640,6 +640,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/stats/tests/isc/config/Makefile
                  src/bin/stats/tests/isc/util/Makefile
                  src/bin/stats/tests/testdata/Makefile
+                 src/bin/stats/tests/http/Makefile
                  src/bin/usermgr/Makefile
                  src/bin/tests/Makefile
                  src/lib/Makefile
@@ -729,10 +730,14 @@ AC_OUTPUT([doc/version.ent
            src/bin/zonemgr/tests/zonemgr_test
            src/bin/zonemgr/run_b10-zonemgr.sh
            src/bin/stats/stats.py
-           src/bin/stats/stats_stub.py
-           src/bin/stats/stats.spec.pre
+           src/bin/stats/stats_httpd.py
+           src/bin/stats/stats.spec
+           src/bin/stats/stats-httpd.spec
+           src/bin/stats/stats-httpd-xml.tpl
+           src/bin/stats/stats-httpd-xsd.tpl
+           src/bin/stats/stats-httpd-xsl.tpl
            src/bin/stats/run_b10-stats.sh
-           src/bin/stats/run_b10-stats_stub.sh
+           src/bin/stats/run_b10-stats-httpd.sh
            src/bin/stats/tests/stats_test
            src/bin/bind10/bind10.py
            src/bin/bind10/run_bind10.sh
@@ -774,7 +779,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
            chmod +x src/bin/stats/tests/stats_test
            chmod +x src/bin/stats/run_b10-stats.sh
-           chmod +x src/bin/stats/run_b10-stats_stub.sh
+           chmod +x src/bin/stats/run_b10-stats-httpd.sh
            chmod +x src/bin/bind10/run_bind10.sh
            chmod +x src/bin/cmdctl/tests/cmdctl_test
            chmod +x src/bin/xfrin/tests/xfrin_test
