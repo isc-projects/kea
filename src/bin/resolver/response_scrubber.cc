@@ -77,7 +77,7 @@ ResponseScrubber::scrubSection(Message& message,
 
             // Loop through the list of names given and see if any are in the
             // given relationship with the QNAME of this RRset
-            bool nomatch = true;
+            bool match = false;
             for (vector<const Name*>::const_iterator n = names.begin();
                 ((n != names.end())); ++n) {
                 NameComparisonResult result = (*i)->getName().compare(**n);
@@ -88,13 +88,13 @@ ResponseScrubber::scrubSection(Message& message,
 
                     // RRset in the specified relationship, so a match has
                     // been found
-                    nomatch = false;
+                    match = true;
                     break;
                 }
             }
 
             // Remove the RRset if there was no match to one of the given names.
-            if (nomatch) {
+            if (!match) {
                 message.removeRRset(section, i);
                 ++count;            // One more RRset removed
                 removed = true;     // Something was removed
