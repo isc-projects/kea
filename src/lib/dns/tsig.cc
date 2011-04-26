@@ -108,6 +108,10 @@ ConstTSIGRecordPtr
 TSIGContext::sign(const uint16_t qid, const void* const data,
                   const size_t data_len)
 {
+    if (data == NULL || data_len == 0) {
+        isc_throw(InvalidParameter, "TSIG sign error: empty data is given");
+    }
+
     TSIGError error(TSIGError::NOERROR());
     const uint64_t now = (gettimeofdayWrapper() & 0x0000ffffffffffffULL);
 

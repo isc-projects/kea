@@ -38,6 +38,7 @@
 #include <dns/tests/unittest_util.h>
 
 using namespace std;
+using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::util::encode;
@@ -269,6 +270,13 @@ TEST_F(TSIGTest, signAtActualTime) {
         EXPECT_LE(now, tsig_rdata.getTimeSigned());
         EXPECT_GE(now + 5, tsig_rdata.getTimeSigned());
     }
+}
+
+TEST_F(TSIGTest, signBadData) {
+    // some specific bad data should be rejected proactively.
+    const unsigned char dummy_data = 0;
+    EXPECT_THROW(tsig_ctx->sign(0, NULL, 10), InvalidParameter);
+    EXPECT_THROW(tsig_ctx->sign(0, &dummy_data, 0), InvalidParameter);
 }
 
 // Same test as "sign" but use a different algorithm just to confirm we don't
