@@ -61,6 +61,18 @@ using namespace isc::asiolink;
 using namespace isc::dns;
 using namespace isc::util;
 
+namespace isc {
+namespace asiodns {
+
+// This is defined in recursive_query.cc, but not in header (it's not public
+// function). So bring it in to be tested.
+std::string
+deepestDelegation(Name name, RRClass rrclass,
+                  isc::cache::ResolverCache& cache);
+
+}
+}
+
 namespace {
 const char* const TEST_SERVER_PORT = "53535";
 const char* const TEST_CLIENT_PORT = "53536";
@@ -861,6 +873,11 @@ TEST_F(RecursiveQueryTest, DISABLED_recursiveSendNXDOMAIN) {
 TEST_F(RecursiveQueryTest, CachedNS) {
     setDNSService(true, true);
 
+    // Check we have a reasonable fallback - if there's nothing of interest
+    // in the cache, start at root.
+    EXPECT_EQ(".", deepestDelegation(Name("www.somewhere.deep.example.org"),
+                                     RRClass::IN(), cache_));
+
     // Prefill the cache. There's a zone with a NS and IP address for one
     // of them (to see that one is enough) and another deeper one, with NS,
     // but without IP.
@@ -889,6 +906,22 @@ TEST_F(RecursiveQueryTest, CachedNS) {
     ASSERT_NE(RRsetPtr(), deepest);
     ASSERT_EQ(nsLower->getName(), deepest->getName());
 
+    // Direct check of the function that chooses the delegation point
+    // It should not use nsLower, because we don't have IP address for
+    // that one. But it can choose nsUpper.
+    EXPECT_EQ("example.org.",
+              deepestDelegation(Name("www.somewhere.deep.example.org"),
+              RRClass::IN(), cache_));
+
+    // Now more complex and indirect test:
+    // We ask it to resolve the name for us. It will pick up a delegation
+    // point and ask NSAS for it. NSAS will in turn ask resolver for NS record
+    // of the delegation point. We then pick it up from the fake resolver
+    // and check it is the correct one. This checks the delegation point
+    // travels safely trough the whole path there (it would be enough to check
+    // it up to NSAS, but replacing NSAS is more complicated, so we just
+    // include in the test as well for simplicity).
+
     // Prepare the recursive query
     vector<pair<string, uint16_t> > roots;
     roots.push_back(pair<string, uint16_t>("192.0.2.2", 53));
@@ -909,14 +942,7 @@ TEST_F(RecursiveQueryTest, CachedNS) {
     // We don't need to run the service in this test. We are interested only
     // in the place it starts resolving at
 
-    // Now, it should not start at the nsLower, because we don't have IP
-    // address for it and that could cause a loop. But it can be the nsUpper,
-    // we don't need to go to root.
-    //
-    // We use the trick that NSAS asks the resolver for the NS record, because
-    // it doesn't know it. This isn't the best way to write a unittest, but
-    // it isn't easy to replace the NSAS with something else, so this is the
-    // least painfull way.
+    // Look what is asked by NSAS - it should be our delegation point.
     EXPECT_NO_THROW(EXPECT_EQ(nsUpper->getName(),
                               (*resolver_)[0]->getName()) <<
                     "It starts resolving at the wrong place") <<
