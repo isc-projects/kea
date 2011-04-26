@@ -33,24 +33,7 @@ class HMACImpl;
 /// can be created with CryptoLink::createHMAC()
 ///
 class HMAC : private boost::noncopyable {
-public:
-    enum HashAlgorithm {
-        MD5 = 0,            ///< MD5
-        SHA1 = 1,           ///< SHA-1
-        SHA256 = 2,         ///< SHA-256
-        UNKNOWN = 3         ///< This value can be used in conversion
-                            ///  functions, to be returned when the
-                            ///  input is unknown (but a value MUST be
-                            ///  returned), for instance when the input
-                            ///  is a Name or a string, and the return
-                            ///  value is a HashAlgorithm.
-    };
-
 private:
-    /// Since HMAC objects cannot be created directly, the factory
-    /// class CryptoLink is a friend
-    friend class CryptoLink;
-
     /// \brief Constructor from a secret and a hash algorithm
     ///
     /// \exception UnsupportedAlgorithmException if the given algorithm
@@ -69,6 +52,9 @@ private:
     /// \param hash_algorithm The hash algorithm
     HMAC(const void* secret, size_t secret_len,
          const HashAlgorithm hash_algorithm);
+
+    friend HMAC* CryptoLink::createHMAC(const void*, size_t,
+                                        const HashAlgorithm);
 
 public:
     /// \brief Destructor
@@ -175,7 +161,7 @@ void signHMAC(const void* data,
               const size_t data_len,
               const void* secret,
               size_t secret_len,
-              const HMAC::HashAlgorithm hash_algorithm,
+              const HashAlgorithm hash_algorithm,
               isc::dns::OutputBuffer& result,
               size_t len = 0);
 
@@ -209,7 +195,7 @@ bool verifyHMAC(const void* data,
                 const size_t data_len,
                 const void* secret,
                 size_t secret_len,
-                const HMAC::HashAlgorithm hash_algorithm,
+                const HashAlgorithm hash_algorithm,
                 const void* sig,
                 const size_t sig_len);
 

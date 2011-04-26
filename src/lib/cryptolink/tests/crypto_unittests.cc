@@ -16,6 +16,8 @@
 #include <gtest/gtest.h>
 
 #include <cryptolink/cryptolink.h>
+#include <cryptolink/crypto_hmac.h>
+
 #include <dns/buffer.h>
 #include <exceptions/exceptions.h>
 
@@ -44,7 +46,7 @@ namespace {
     void doHMACTestConv(const std::string& data,
                         const void* secret,
                         size_t secret_len,
-                        const HMAC::HashAlgorithm hash_algorithm,
+                        const HashAlgorithm hash_algorithm,
                         const uint8_t* expected_hmac,
                         size_t hmac_len) {
         OutputBuffer data_buf(data.size());
@@ -77,7 +79,7 @@ namespace {
     void doHMACTestDirect(const std::string& data,
                           const void* secret,
                           size_t secret_len,
-                          const HMAC::HashAlgorithm hash_algorithm,
+                          const HashAlgorithm hash_algorithm,
                           const uint8_t* expected_hmac,
                           size_t hmac_len) {
         OutputBuffer data_buf(data.size());
@@ -113,7 +115,7 @@ namespace {
     void doHMACTestVector(const std::string& data,
                           const void* secret,
                           size_t secret_len,
-                          const HMAC::HashAlgorithm hash_algorithm,
+                          const HashAlgorithm hash_algorithm,
                           const uint8_t* expected_hmac,
                           size_t hmac_len) {
         CryptoLink& crypto = CryptoLink::getCryptoLink();
@@ -138,7 +140,7 @@ namespace {
     void doHMACTestArray(const std::string& data,
                          const void* secret,
                          size_t secret_len,
-                         const HMAC::HashAlgorithm hash_algorithm,
+                         const HashAlgorithm hash_algorithm,
                          const uint8_t* expected_hmac,
                          size_t hmac_len) {
         CryptoLink& crypto = CryptoLink::getCryptoLink();
@@ -170,7 +172,7 @@ namespace {
     void doHMACTest(const std::string& data,
                     const void* secret,
                     size_t secret_len,
-                    const HMAC::HashAlgorithm hash_algorithm,
+                    const HashAlgorithm hash_algorithm,
                     const uint8_t* expected_hmac,
                     size_t hmac_len) {
         doHMACTestConv(data, secret, secret_len, hash_algorithm,
@@ -195,13 +197,13 @@ TEST(CryptoLinkTest, HMAC_MD5_RFC2202_SIGN) {
                                       0x38, 0xbb, 0x1c, 0x13, 0xf4,
                                       0x8e, 0xf8, 0x15, 0x8b, 0xfc,
                                       0x9d };
-    doHMACTest("Hi There", secret, 16, HMAC::MD5, hmac_expected, 16);
+    doHMACTest("Hi There", secret, 16, MD5, hmac_expected, 16);
 
     const uint8_t hmac_expected2[] = { 0x75, 0x0c, 0x78, 0x3e, 0x6a,
                                        0xb0, 0xb5, 0x03, 0xea, 0xa8,
                                        0x6e, 0x31, 0x0a, 0x5d, 0xb7,
                                        0x38 };
-    doHMACTest("what do ya want for nothing?", "Jefe", 4, HMAC::MD5,
+    doHMACTest("what do ya want for nothing?", "Jefe", 4, MD5,
                hmac_expected2, 16);
 
     const uint8_t secret3[] = { 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
@@ -211,7 +213,7 @@ TEST(CryptoLinkTest, HMAC_MD5_RFC2202_SIGN) {
                                        0x14, 0x4c, 0x88, 0xdb, 0xb8,
                                        0xc7, 0x33, 0xf0, 0xe8, 0xb3,
                                        0xf6};
-    doHMACTest(std::string(50, 0xdd), secret3, 16, HMAC::MD5, hmac_expected3, 16);
+    doHMACTest(std::string(50, 0xdd), secret3, 16, MD5, hmac_expected3, 16);
 
     const std::string data4(50, 0xcd);
     const uint8_t secret4[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
@@ -223,7 +225,7 @@ TEST(CryptoLinkTest, HMAC_MD5_RFC2202_SIGN) {
                                        0x3a, 0x3a, 0xea, 0x3a, 0x75,
                                        0x16, 0x47, 0x46, 0xff, 0xaa,
                                        0x79 };
-    doHMACTest(data4, secret4, 25, HMAC::MD5, hmac_expected4, 16);
+    doHMACTest(data4, secret4, 25, MD5, hmac_expected4, 16);
 
     const uint8_t secret5[] = { 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
                                 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
@@ -232,9 +234,9 @@ TEST(CryptoLinkTest, HMAC_MD5_RFC2202_SIGN) {
                                        0x2e, 0xdc, 0x00, 0xf9, 0xba,
                                        0xb9, 0x95, 0x69, 0x0e, 0xfd,
                                        0x4c };
-    doHMACTest("Test With Truncation", secret5, 16, HMAC::MD5,
+    doHMACTest("Test With Truncation", secret5, 16, MD5,
                hmac_expected5, 16);
-    doHMACTest("Test With Truncation", secret5, 16, HMAC::MD5,
+    doHMACTest("Test With Truncation", secret5, 16, MD5,
                hmac_expected5, 12);
 
     const uint8_t hmac_expected6[] = { 0x6b, 0x1a, 0xb7, 0xfe, 0x4b,
@@ -242,7 +244,7 @@ TEST(CryptoLinkTest, HMAC_MD5_RFC2202_SIGN) {
                                        0xe6, 0xce, 0x61, 0xb9, 0xd0,
                                        0xcd };
     doHMACTest("Test Using Larger Than Block-Size Key - Hash Key First",
-               std::string(80, 0xaa).c_str(), 80, HMAC::MD5, hmac_expected6, 16);
+               std::string(80, 0xaa).c_str(), 80, MD5, hmac_expected6, 16);
 
     const uint8_t hmac_expected7[] = { 0x6f, 0x63, 0x0f, 0xad, 0x67,
                                        0xcd, 0xa0, 0xee, 0x1f, 0xb1,
@@ -250,7 +252,7 @@ TEST(CryptoLinkTest, HMAC_MD5_RFC2202_SIGN) {
                                        0x3e };
     doHMACTest("Test Using Larger Than Block-Size Key and Larger Than "
                "One Block-Size Data",
-               std::string(80, 0xaa).c_str(), 80, HMAC::MD5, hmac_expected7, 16);
+               std::string(80, 0xaa).c_str(), 80, MD5, hmac_expected7, 16);
 }
 
 //
@@ -264,13 +266,13 @@ TEST(CryptoLinkTest, HMAC_SHA1_RFC2202_SIGN) {
                                       0x05, 0x72, 0x64, 0xe2, 0x8b,
                                       0xc0, 0xb6, 0xfb, 0x37, 0x8c,
                                       0x8e, 0xf1, 0x46, 0xbe, 0x00 };
-    doHMACTest("Hi There", secret, 20, HMAC::SHA1, hmac_expected, 20);
+    doHMACTest("Hi There", secret, 20, SHA1, hmac_expected, 20);
 
     const uint8_t hmac_expected2[] = { 0xef, 0xfc, 0xdf, 0x6a, 0xe5,
                                        0xeb, 0x2f, 0xa2, 0xd2, 0x74,
                                        0x16, 0xd5, 0xf1, 0x84, 0xdf,
                                        0x9c, 0x25, 0x9a, 0x7c, 0x79 };
-    doHMACTest("what do ya want for nothing?", "Jefe", 4, HMAC::SHA1,
+    doHMACTest("what do ya want for nothing?", "Jefe", 4, SHA1,
                hmac_expected2, 20);
 
     const uint8_t secret3[] = { 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
@@ -281,7 +283,7 @@ TEST(CryptoLinkTest, HMAC_SHA1_RFC2202_SIGN) {
                                        0xac, 0x11, 0xcd, 0x91, 0xa3,
                                        0x9a, 0xf4, 0x8a, 0xa1, 0x7b,
                                        0x4f, 0x63, 0xf1, 0x75, 0xd3 };
-    doHMACTest(std::string(50, 0xdd), secret3, 20, HMAC::SHA1, hmac_expected3, 20);
+    doHMACTest(std::string(50, 0xdd), secret3, 20, SHA1, hmac_expected3, 20);
 
     const uint8_t secret4[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
                                 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c,
@@ -292,7 +294,7 @@ TEST(CryptoLinkTest, HMAC_SHA1_RFC2202_SIGN) {
                                        0x62, 0x50, 0xc6, 0xbc, 0x84,
                                        0x14, 0xf9, 0xbf, 0x50, 0xc8,
                                        0x6c, 0x2d, 0x72, 0x35, 0xda };
-    doHMACTest(std::string(50, 0xcd), secret4, 25, HMAC::SHA1, hmac_expected4, 20);
+    doHMACTest(std::string(50, 0xcd), secret4, 25, SHA1, hmac_expected4, 20);
 
     const uint8_t secret5[] = { 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
                                 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
@@ -302,9 +304,9 @@ TEST(CryptoLinkTest, HMAC_SHA1_RFC2202_SIGN) {
                                        0x55, 0xe0, 0x7f, 0xe7, 0xf2,
                                        0x7b, 0xe1, 0xd5, 0x8b, 0xb9,
                                        0x32, 0x4a, 0x9a, 0x5a, 0x04 };
-    doHMACTest("Test With Truncation", secret5, 20, HMAC::SHA1,
+    doHMACTest("Test With Truncation", secret5, 20, SHA1,
                hmac_expected5, 20);
-    doHMACTest("Test With Truncation", secret5, 20, HMAC::SHA1,
+    doHMACTest("Test With Truncation", secret5, 20, SHA1,
                hmac_expected5, 12);
 
     const uint8_t hmac_expected6[] = { 0xaa, 0x4a, 0xe5, 0xe1, 0x52,
@@ -312,7 +314,7 @@ TEST(CryptoLinkTest, HMAC_SHA1_RFC2202_SIGN) {
                                        0x56, 0x37, 0xce, 0x8a, 0x3b,
                                        0x55, 0xed, 0x40, 0x21, 0x12 };
     doHMACTest("Test Using Larger Than Block-Size Key - Hash Key First",
-               std::string(80, 0xaa).c_str(), 80, HMAC::SHA1, hmac_expected6, 20);
+               std::string(80, 0xaa).c_str(), 80, SHA1, hmac_expected6, 20);
 
     const uint8_t hmac_expected7[] = { 0xe8, 0xe9, 0x9d, 0x0f, 0x45,
                                        0x23, 0x7d, 0x78, 0x6d, 0x6b,
@@ -320,7 +322,7 @@ TEST(CryptoLinkTest, HMAC_SHA1_RFC2202_SIGN) {
                                        0x08, 0xbb, 0xff, 0x1a, 0x91 };
     doHMACTest("Test Using Larger Than Block-Size Key and Larger Than "
                "One Block-Size Data",
-               std::string(80, 0xaa).c_str(), 80, HMAC::SHA1, hmac_expected7, 20);
+               std::string(80, 0xaa).c_str(), 80, SHA1, hmac_expected7, 20);
 }
 
 //
@@ -337,7 +339,7 @@ TEST(CryptoLinkTest, HMAC_SHA256_RFC2202_SIGN) {
                                       0xc9, 0x83, 0x3d, 0xa7, 0x26,
                                       0xe9, 0x37, 0x6c, 0x2e, 0x32,
                                       0xcf, 0xf7 };
-    doHMACTest("Hi There", secret, 20, HMAC::SHA256, hmac_expected, 32);
+    doHMACTest("Hi There", secret, 20, SHA256, hmac_expected, 32);
 
     const uint8_t hmac_expected2[] = { 0x5b, 0xdc, 0xc1, 0x46, 0xbf,
                                        0x60, 0x75, 0x4e, 0x6a, 0x04,
@@ -346,7 +348,7 @@ TEST(CryptoLinkTest, HMAC_SHA256_RFC2202_SIGN) {
                                        0x9d, 0x27, 0x39, 0x83, 0x9d,
                                        0xec, 0x58, 0xb9, 0x64, 0xec,
                                        0x38, 0x43 };
-    doHMACTest("what do ya want for nothing?", "Jefe", 4, HMAC::SHA256,
+    doHMACTest("what do ya want for nothing?", "Jefe", 4, SHA256,
                hmac_expected2, 32);
 
     const uint8_t secret3[] = { 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
@@ -360,7 +362,7 @@ TEST(CryptoLinkTest, HMAC_SHA256_RFC2202_SIGN) {
                                        0x3e, 0xf8, 0xc1, 0x22, 0xd9,
                                        0x63, 0x55, 0x14, 0xce, 0xd5,
                                        0x65, 0xfe };
-    doHMACTest(std::string(50, 0xdd), secret3, 20, HMAC::SHA256, hmac_expected3, 32);
+    doHMACTest(std::string(50, 0xdd), secret3, 20, SHA256, hmac_expected3, 32);
 
     const uint8_t secret4[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
                                 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c,
@@ -374,7 +376,7 @@ TEST(CryptoLinkTest, HMAC_SHA256_RFC2202_SIGN) {
                                        0xe5, 0x78, 0xf8, 0x07, 0x7a,
                                        0x2e, 0x3f, 0xf4, 0x67, 0x29,
                                        0x66, 0x5b };
-    doHMACTest(std::string(50, 0xcd), secret4, 25, HMAC::SHA256, hmac_expected4, 32);
+    doHMACTest(std::string(50, 0xcd), secret4, 25, SHA256, hmac_expected4, 32);
 
     const uint8_t secret5[] = { 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
                                 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
@@ -384,7 +386,7 @@ TEST(CryptoLinkTest, HMAC_SHA256_RFC2202_SIGN) {
                                        0x10, 0x0e, 0xe0, 0x6e, 0x0c,
                                        0x79, 0x6c, 0x29, 0x55, 0x55,
                                        0x2b };
-    doHMACTest("Test With Truncation", secret5, 20, HMAC::SHA256,
+    doHMACTest("Test With Truncation", secret5, 20, SHA256,
                hmac_expected5, 16);
 
     const uint8_t hmac_expected6[] = { 0x60, 0xe4, 0x31, 0x59, 0x1e,
@@ -395,7 +397,7 @@ TEST(CryptoLinkTest, HMAC_SHA256_RFC2202_SIGN) {
                                        0x46, 0x04, 0x0f, 0x0e, 0xe3,
                                        0x7f, 0x54 };
     doHMACTest("Test Using Larger Than Block-Size Key - Hash Key First",
-               std::string(131, 0xaa).c_str(), 131, HMAC::SHA256, hmac_expected6, 32);
+               std::string(131, 0xaa).c_str(), 131, SHA256, hmac_expected6, 32);
 
     const uint8_t hmac_expected7[] = { 0x9b, 0x09, 0xff, 0xa7, 0x1b,
                                        0x94, 0x2f, 0xcb, 0x27, 0x63,
@@ -407,12 +409,12 @@ TEST(CryptoLinkTest, HMAC_SHA256_RFC2202_SIGN) {
     doHMACTest("This is a test using a larger than block-size key and a"
                " larger than block-size data. The key needs to be hashe"
                "d before being used by the HMAC algorithm.",
-               std::string(131, 0xaa).c_str(), 131, HMAC::SHA256, hmac_expected7, 32);
+               std::string(131, 0xaa).c_str(), 131, SHA256, hmac_expected7, 32);
 }
 
 namespace {
     size_t
-    sigVectorLength(HMAC::HashAlgorithm alg, size_t len) {
+    sigVectorLength(HashAlgorithm alg, size_t len) {
         std::auto_ptr<HMAC> hmac_sign(
             CryptoLink::getCryptoLink().createHMAC("asdf", 4, alg));
         //boost::scoped_ptr<HMAC> hmac_sign(
@@ -423,7 +425,7 @@ namespace {
     }
 
     size_t
-    sigBufferLength(HMAC::HashAlgorithm alg, size_t len) {
+    sigBufferLength(HashAlgorithm alg, size_t len) {
         boost::scoped_ptr<HMAC> hmac_sign(
             CryptoLink::getCryptoLink().createHMAC("asdf", 4, alg));
         hmac_sign->update("asdf", 4);
@@ -436,41 +438,41 @@ namespace {
 TEST(CryptoLinkTest, HMACSigLengthArgument) {
     std::vector<uint8_t> sig;
 
-    EXPECT_EQ(16, sigVectorLength(HMAC::MD5, 0));
-    EXPECT_EQ(8, sigVectorLength(HMAC::MD5, 8));
-    EXPECT_EQ(16, sigVectorLength(HMAC::MD5, 16));
-    EXPECT_EQ(16, sigVectorLength(HMAC::MD5, 40));
-    EXPECT_EQ(16, sigVectorLength(HMAC::MD5, 2000));
+    EXPECT_EQ(16, sigVectorLength(MD5, 0));
+    EXPECT_EQ(8, sigVectorLength(MD5, 8));
+    EXPECT_EQ(16, sigVectorLength(MD5, 16));
+    EXPECT_EQ(16, sigVectorLength(MD5, 40));
+    EXPECT_EQ(16, sigVectorLength(MD5, 2000));
 
-    EXPECT_EQ(20, sigBufferLength(HMAC::SHA1, 0));
-    EXPECT_EQ(8, sigBufferLength(HMAC::SHA1, 8));
-    EXPECT_EQ(20, sigBufferLength(HMAC::SHA1, 20));
-    EXPECT_EQ(20, sigBufferLength(HMAC::SHA1, 40));
-    EXPECT_EQ(20, sigBufferLength(HMAC::SHA1, 2000));
+    EXPECT_EQ(20, sigBufferLength(SHA1, 0));
+    EXPECT_EQ(8, sigBufferLength(SHA1, 8));
+    EXPECT_EQ(20, sigBufferLength(SHA1, 20));
+    EXPECT_EQ(20, sigBufferLength(SHA1, 40));
+    EXPECT_EQ(20, sigBufferLength(SHA1, 2000));
 
-    EXPECT_EQ(32, sigBufferLength(HMAC::SHA256, 0));
-    EXPECT_EQ(8, sigBufferLength(HMAC::SHA256, 8));
-    EXPECT_EQ(32, sigBufferLength(HMAC::SHA256, 32));
-    EXPECT_EQ(32, sigBufferLength(HMAC::SHA256, 40));
-    EXPECT_EQ(32, sigBufferLength(HMAC::SHA256, 3200));
+    EXPECT_EQ(32, sigBufferLength(SHA256, 0));
+    EXPECT_EQ(8, sigBufferLength(SHA256, 8));
+    EXPECT_EQ(32, sigBufferLength(SHA256, 32));
+    EXPECT_EQ(32, sigBufferLength(SHA256, 40));
+    EXPECT_EQ(32, sigBufferLength(SHA256, 3200));
 
-    EXPECT_EQ(16, sigBufferLength(HMAC::MD5, 0));
-    EXPECT_EQ(8, sigBufferLength(HMAC::MD5, 8));
-    EXPECT_EQ(16, sigBufferLength(HMAC::MD5, 16));
-    EXPECT_EQ(16, sigBufferLength(HMAC::MD5, 40));
-    EXPECT_EQ(16, sigBufferLength(HMAC::MD5, 2000));
+    EXPECT_EQ(16, sigBufferLength(MD5, 0));
+    EXPECT_EQ(8, sigBufferLength(MD5, 8));
+    EXPECT_EQ(16, sigBufferLength(MD5, 16));
+    EXPECT_EQ(16, sigBufferLength(MD5, 40));
+    EXPECT_EQ(16, sigBufferLength(MD5, 2000));
 
-    EXPECT_EQ(20, sigBufferLength(HMAC::SHA1, 0));
-    EXPECT_EQ(8, sigBufferLength(HMAC::SHA1, 8));
-    EXPECT_EQ(20, sigBufferLength(HMAC::SHA1, 20));
-    EXPECT_EQ(20, sigBufferLength(HMAC::SHA1, 40));
-    EXPECT_EQ(20, sigBufferLength(HMAC::SHA1, 2000));
+    EXPECT_EQ(20, sigBufferLength(SHA1, 0));
+    EXPECT_EQ(8, sigBufferLength(SHA1, 8));
+    EXPECT_EQ(20, sigBufferLength(SHA1, 20));
+    EXPECT_EQ(20, sigBufferLength(SHA1, 40));
+    EXPECT_EQ(20, sigBufferLength(SHA1, 2000));
 
-    EXPECT_EQ(32, sigBufferLength(HMAC::SHA256, 0));
-    EXPECT_EQ(8, sigBufferLength(HMAC::SHA256, 8));
-    EXPECT_EQ(32, sigBufferLength(HMAC::SHA256, 32));
-    EXPECT_EQ(32, sigBufferLength(HMAC::SHA256, 40));
-    EXPECT_EQ(32, sigBufferLength(HMAC::SHA256, 3200));
+    EXPECT_EQ(32, sigBufferLength(SHA256, 0));
+    EXPECT_EQ(8, sigBufferLength(SHA256, 8));
+    EXPECT_EQ(32, sigBufferLength(SHA256, 32));
+    EXPECT_EQ(32, sigBufferLength(SHA256, 40));
+    EXPECT_EQ(32, sigBufferLength(SHA256, 3200));
 }
 
 TEST(CryptoLinkTest, BadKey) {
@@ -478,20 +480,20 @@ TEST(CryptoLinkTest, BadKey) {
     OutputBuffer hmac_sig(0);
     CryptoLink& crypto = CryptoLink::getCryptoLink();
 
-    EXPECT_THROW(crypto.createHMAC(NULL, 0, HMAC::MD5), BadKey);
-    EXPECT_THROW(crypto.createHMAC(NULL, 0, HMAC::UNKNOWN), UnsupportedAlgorithm);
+    EXPECT_THROW(crypto.createHMAC(NULL, 0, MD5), BadKey);
+    EXPECT_THROW(crypto.createHMAC(NULL, 0, UNKNOWN_HASH), UnsupportedAlgorithm);
 
     EXPECT_THROW(signHMAC(data_buf.getData(), data_buf.getLength(),
-                          NULL, 0, HMAC::MD5, hmac_sig), BadKey);
+                          NULL, 0, MD5, hmac_sig), BadKey);
     EXPECT_THROW(signHMAC(data_buf.getData(), data_buf.getLength(),
-                          NULL, 0, HMAC::UNKNOWN, hmac_sig),
+                          NULL, 0, UNKNOWN_HASH, hmac_sig),
                           UnsupportedAlgorithm);
 
     EXPECT_THROW(verifyHMAC(data_buf.getData(), data_buf.getLength(),
-                            NULL, 0, HMAC::MD5, hmac_sig.getData(),
+                            NULL, 0, MD5, hmac_sig.getData(),
                             hmac_sig.getLength()), BadKey);
     EXPECT_THROW(verifyHMAC(data_buf.getData(), data_buf.getLength(),
-                            NULL, 0, HMAC::UNKNOWN, hmac_sig.getData(),
+                            NULL, 0, UNKNOWN_HASH, hmac_sig.getData(),
                             hmac_sig.getLength()),
                             UnsupportedAlgorithm);
 }
