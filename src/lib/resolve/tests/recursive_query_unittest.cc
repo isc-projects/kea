@@ -353,12 +353,6 @@ protected:
         private:
             bool* done_;
     };
-    
-    class MockResolver : public isc::resolve::ResolverInterface {
-        void resolve(const QuestionPtr& question,
-                     const ResolverInterface::CallbackPtr& callback) {
-        }
-    };
 
     // This version of mock server just stops the io_service when it is resumed
     // the second time. (Used in the clientTimeout test, where resume
