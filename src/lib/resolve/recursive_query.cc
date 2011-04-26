@@ -309,7 +309,7 @@ private:
             }
             send();
         }
-        
+
     }
 
     // Send the current question to the given nameserver address
