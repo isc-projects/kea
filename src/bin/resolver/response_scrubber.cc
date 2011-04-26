@@ -79,7 +79,7 @@ ResponseScrubber::scrubSection(Message& message,
             // given relationship with the QNAME of this RRset
             bool match = false;
             for (vector<const Name*>::const_iterator n = names.begin();
-                ((n != names.end())); ++n) {
+                 n != names.end(); ++n) {
                 NameComparisonResult result = (*i)->getName().compare(**n);
                 NameComparisonResult::NameRelation relationship =
                     result.getRelation();
