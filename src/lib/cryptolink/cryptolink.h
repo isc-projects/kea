@@ -112,9 +112,16 @@ class CryptoLinkImpl;
 /// have private constructors, it is declared a friend class of these
 /// classes.
 ///
+/// Since these factory functions return bare pointers, we also provide
+/// deleter functions for them (e.g. deleteHMAC()), so that a caller
+/// can use that to make sure it uses the correct delete operator (the
+/// one defined at compilation time of this library). A way to make
+/// sure you do not forget this, is to place the result of the create
+/// functions in a shared_ptr with the corresponding deleter function.
+///
 /// \note All other classes within cryptolink should have private
 /// constructors as well, and should have a factory function from
-/// CryptoLink.
+/// CryptoLink, and a deleter function.
 ///
 // Internal note: we can use this class later to initialize and manage
 // dynamic (PKCS#11) libs
@@ -160,6 +167,10 @@ public:
     /// algorithm, the constructor will run it through the hash
     /// algorithm, and use the digest as the secret for this HMAC
     /// operation
+    ///
+    /// If you want to safely delete objects created with this method,
+    /// you can use the function deleteHMAC() as defined in
+    /// crypto_hmac.h
     ///
     /// \exception UnsupportedAlgorithmException if the given algorithm
     ///            is unknown or not supported by the underlying library

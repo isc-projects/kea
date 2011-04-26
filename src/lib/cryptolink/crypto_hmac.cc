@@ -228,5 +228,10 @@ verifyHMAC(const void* data, const size_t data_len, const void* secret,
     return (hmac->verify(sig, sig_len));
 }
 
+void
+deleteHMAC(HMAC* hmac) {
+    delete hmac;
+}
+
 } // namespace cryptolink
 } // namespace isc
