@@ -52,15 +52,13 @@ listContains(ConstElementPtr list, ConstElementPtr el) {
 
 void
 listRemove(ElementPtr list, ConstElementPtr el) {
-    int i = -1;
+    int i = 0;
     BOOST_FOREACH(ConstElementPtr s_el, list->listValue()) {
         if (*el == *s_el) {
-            i = 0;
+            list->remove(i);
+            return;
         }
         i++;
-    }
-    if (i >= 0) {
-        list->remove(i);
     }
 }
 // endwant
