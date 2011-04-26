@@ -7,7 +7,7 @@
 	also can send XSL(Extensible Stylessheet Language) document and XSD(XML
 	Schema definition) document, XML document is human-friendly to view
 	through web browsers and its data types are strictly defined.
-	(Trac #547, git tbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdtbdttbd)
+	(Trac #547, git 1cbd51919237a6e65983be46e4f5a63d1877b1d3)
 
 224.	[bug]		jinmei
 	b10-auth, src/lib/datasrc: inconsistency between the hot spot
