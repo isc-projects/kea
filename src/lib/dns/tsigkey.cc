@@ -45,10 +45,11 @@ TSIGKey::TSIGKeyImpl {
         secret_(static_cast<const uint8_t*>(secret),
                 static_cast<const uint8_t*>(secret) + secret_len)
     {
-        // Convert the name to the canonical form.
+        // Convert the key and algorithm names to the canonical form.
+        key_name_.downcase();
         algorithm_name_.downcase();
     }
-    const Name key_name_;
+    Name key_name_;
     Name algorithm_name_;
     const vector<uint8_t> secret_;
 };
