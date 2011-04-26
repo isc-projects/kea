@@ -58,6 +58,11 @@ TEST_F(TSIGKeyTest, construct) {
                       secret.c_str(),
                       secret.size()).getAlgorithmName().toText());
 
+    EXPECT_EQ("example.com.",
+              TSIGKey(Name("EXAMPLE.CoM."), TSIGKey::HMACSHA256_NAME(),
+                      secret.c_str(),
+                      secret.size()).getKeyName().toText());
+
     // Invalid combinations of secret and secret_len:
     EXPECT_THROW(TSIGKey(key_name, TSIGKey::HMACSHA1_NAME(), secret.c_str(), 0),
                  isc::InvalidParameter);
