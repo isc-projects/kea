@@ -16,7 +16,7 @@
 #define _ISC_CRYPTO_H
 
 #include <string>
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/noncopyable.hpp>

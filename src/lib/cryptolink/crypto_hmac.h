@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 
 #include <boost/noncopyable.hpp>
 
@@ -86,7 +86,7 @@ public:
     ///        value is smaller than the algorithms output size, the
     ///        result will be truncated. If this value is larger, or 0
     ///        (the default), it will be ignored
-    void sign(isc::dns::OutputBuffer& result, size_t len = 0);
+    void sign(isc::util::OutputBuffer& result, size_t len = 0);
 
     /// \brief Calculate the final signature
     ///
@@ -162,7 +162,7 @@ void signHMAC(const void* data,
               const void* secret,
               size_t secret_len,
               const HashAlgorithm hash_algorithm,
-              isc::dns::OutputBuffer& result,
+              isc::util::OutputBuffer& result,
               size_t len = 0);
 
 /// \brief Verify an HMAC signature for the given data

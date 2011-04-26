@@ -17,12 +17,6 @@
 
 #include <botan/botan.h>
 
-#include <boost/scoped_ptr.hpp>
-
-using namespace std;
-using namespace isc::dns;
-
-
 namespace isc {
 namespace cryptolink {
 
