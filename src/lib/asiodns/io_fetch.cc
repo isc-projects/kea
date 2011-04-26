@@ -192,10 +192,11 @@ IOFetch::IOFetch(Protocol protocol, IOService& service,
     OutputBufferPtr& buff, Callback* cb, int wait)
 {
     MessagePtr msg(new Message(Message::RENDER));
-    Message::HeaderFlag flag = Message::HEADERFLAG_RD;
-    msg->setHeaderFlag(flag, query_message->getHeaderFlag(flag));
-    flag = Message::HEADERFLAG_CD;
-    msg->setHeaderFlag(flag, query_message->getHeaderFlag(flag));
+
+    msg->setHeaderFlag(Message::HEADERFLAG_RD,
+                       query_message->getHeaderFlag(Message::HEADERFLAG_RD));
+    msg->setHeaderFlag(Message::HEADERFLAG_CD,
+                       query_message->getHeaderFlag(Message::HEADERFLAG_CD));
 
     ConstEDNSPtr edns(query_message->getEDNS());
     const bool dnssec_ok = edns && edns->getDNSSECAwareness();
