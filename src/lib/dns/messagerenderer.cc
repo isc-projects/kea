@@ -228,8 +228,9 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
     name.toWire(impl_->nbuffer_);
 
     unsigned int i;
-    std::set<NameCompressNode>::const_iterator notfound = impl_->nodeset_.end();
-    std::set<NameCompressNode>::const_iterator n = notfound;
+    std::set<NameCompressNode, NameCompare>::const_iterator notfound =
+        impl_->nodeset_.end();
+    std::set<NameCompressNode, NameCompare>::const_iterator n = notfound;
 
     // Find the longest ancestor name in the rendered set that matches the
     // given name.
