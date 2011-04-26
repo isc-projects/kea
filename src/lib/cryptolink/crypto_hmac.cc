@@ -100,7 +100,7 @@ public:
         }
     }
 
-    void sign(isc::dns::OutputBuffer& result, size_t len) {
+    void sign(isc::util::OutputBuffer& result, size_t len) {
         try {
             Botan::SecureVector<Botan::byte> b_result(hmac_->final());
 
@@ -182,7 +182,7 @@ HMAC::update(const void* data, const size_t len) {
 }
 
 void
-HMAC::sign(isc::dns::OutputBuffer& result, size_t len) {
+HMAC::sign(isc::util::OutputBuffer& result, size_t len) {
     impl_->sign(result, len);
 }
 
@@ -204,7 +204,7 @@ HMAC::verify(const void* sig, const size_t len) {
 void
 signHMAC(const void* data, size_t data_len, const void* secret,
          size_t secret_len, const HashAlgorithm hash_algorithm,
-         isc::dns::OutputBuffer& result, size_t len)
+         isc::util::OutputBuffer& result, size_t len)
 {
     boost::scoped_ptr<HMAC> hmac(
         CryptoLink::getCryptoLink().createHMAC(secret,
