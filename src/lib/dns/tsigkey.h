@@ -15,6 +15,8 @@
 #ifndef __TSIGKEY_H
 #define __TSIGKEY_H 1
 
+#include <cryptolink/cryptolink.h>
+
 namespace isc {
 namespace dns {
 
@@ -141,6 +143,9 @@ public:
 
     /// Return the algorithm name.
     const Name& getAlgorithmName() const;
+
+    /// Return the hash algorithm name in the form of cryptolink::HashAlgorithm
+    isc::cryptolink::HashAlgorithm getCryptoAlgorithm() const;
 
     /// Return the length of the TSIG secret in bytes.
     size_t getSecretLength() const;
