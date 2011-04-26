@@ -199,6 +199,9 @@ bool verifyHMAC(const void* data,
                 const void* sig,
                 const size_t sig_len);
 
+/// \brief Delete an HMAC object
+void deleteHMAC(HMAC* hmac);
+
 } // namespace cryptolink
 } // namespace isc
 
