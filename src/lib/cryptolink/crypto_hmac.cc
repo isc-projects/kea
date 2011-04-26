@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <cryptolink.h>
+#include <cryptolink/crypto_hmac.h>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -23,18 +24,18 @@
 
 namespace {
 const char*
-getBotanHashAlgorithmName(isc::cryptolink::HMAC::HashAlgorithm algorithm) {
+getBotanHashAlgorithmName(isc::cryptolink::HashAlgorithm algorithm) {
     switch (algorithm) {
-    case isc::cryptolink::HMAC::MD5:
+    case isc::cryptolink::MD5:
         return ("MD5");
         break;
-    case isc::cryptolink::HMAC::SHA1:
+    case isc::cryptolink::SHA1:
         return ("SHA-1");
         break;
-    case isc::cryptolink::HMAC::SHA256:
+    case isc::cryptolink::SHA256:
         return ("SHA-256");
         break;
-    case isc::cryptolink::HMAC::UNKNOWN:
+    case isc::cryptolink::UNKNOWN_HASH:
         return ("Unknown");
         break;
     }
@@ -52,7 +53,7 @@ namespace cryptolink {
 class HMACImpl {
 public:
     explicit HMACImpl(const void* secret, size_t secret_len,
-                      const HMAC::HashAlgorithm hash_algorithm) {
+                      const HashAlgorithm hash_algorithm) {
         Botan::HashFunction* hash;
         try {
             hash = Botan::get_hash(
@@ -202,7 +203,7 @@ HMAC::verify(const void* sig, const size_t len) {
 
 void
 signHMAC(const void* data, size_t data_len, const void* secret,
-         size_t secret_len, const HMAC::HashAlgorithm hash_algorithm,
+         size_t secret_len, const HashAlgorithm hash_algorithm,
          isc::dns::OutputBuffer& result, size_t len)
 {
     boost::scoped_ptr<HMAC> hmac(
@@ -216,7 +217,7 @@ signHMAC(const void* data, size_t data_len, const void* secret,
 
 bool
 verifyHMAC(const void* data, const size_t data_len, const void* secret,
-           size_t secret_len, const HMAC::HashAlgorithm hash_algorithm,
+           size_t secret_len, const HashAlgorithm hash_algorithm,
            const void* sig, const size_t sig_len)
 {
     boost::scoped_ptr<HMAC> hmac(
