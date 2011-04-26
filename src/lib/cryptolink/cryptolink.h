@@ -22,12 +22,25 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include <cryptolink/crypto_hmac.h>
-
 #include <memory>
 
 namespace isc {
 namespace cryptolink {
+
+enum HashAlgorithm {
+    MD5 = 0,            ///< MD5
+    SHA1 = 1,           ///< SHA-1
+    SHA256 = 2,         ///< SHA-256
+    UNKNOWN_HASH = 3    ///< This value can be used in conversion
+                        ///  functions, to be returned when the
+                        ///  input is unknown (but a value MUST be
+                        ///  returned), for instance when the input
+                        ///  is a Name or a string, and the return
+                        ///  value is a HashAlgorithm.
+};
+
+// Forward declaration for createHMAC()
+class HMAC;
 
 /// General exception class that is the base for all crypto-related
 /// exceptions
@@ -158,9 +171,7 @@ public:
     /// \param secret_len The length of the secret
     /// \param hash_algorithm The hash algorithm
     HMAC* createHMAC(const void* secret, size_t secret_len,
-                     const HMAC::HashAlgorithm hash_algorithm);
-    std::auto_ptr<HMAC> createHMAC2(const void* secret, size_t secret_len,
-                     const HMAC::HashAlgorithm hash_algorithm);
+                     const HashAlgorithm hash_algorithm);
 
 private:
     // To enable us to use an optional explicit initialization call,
