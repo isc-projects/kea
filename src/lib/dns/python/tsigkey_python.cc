@@ -55,6 +55,7 @@ void TSIGKey_destroy(s_TSIGKey* self);
 PyObject* TSIGKey_getKeyName(const s_TSIGKey* self);
 PyObject* TSIGKey_getAlgorithmName(const s_TSIGKey* self);
 PyObject* TSIGKey_getSecret(const s_TSIGKey* self);
+PyObject* TSIGKey_toText(const s_TSIGKey* self);
 
 // This list contains the actual set of functions we have in
 // python. Each entry has
@@ -72,6 +73,8 @@ PyMethodDef TSIGKey_methods[] = {
     { "get_secret",
       reinterpret_cast<PyCFunction>(TSIGKey_getSecret), METH_NOARGS,
       "Return the value of the TSIG secret." },
+    { "to_text", reinterpret_cast<PyCFunction>(TSIGKey_toText), METH_NOARGS,
+      "Returns the string representation (name:secret:algorithm)" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -148,27 +151,33 @@ createNameObject(const Name& source) {
 
 int
 TSIGKey_init(s_TSIGKey* self, PyObject* args) {
+    const char* str;
+
     const s_Name* key_name;
     const s_Name* algorithm_name;
     PyObject* bytes_obj;
     const char* secret;
     Py_ssize_t secret_len;
 
-    if (PyArg_ParseTuple(args, "O!O!O", &name_type, &key_name,
+
+    try {
+        if (PyArg_ParseTuple(args, "s", &str)) {
+            self->tsigkey = new TSIGKey(str);
+            return (0);
+        } else if (PyArg_ParseTuple(args, "O!O!O", &name_type, &key_name,
                          &name_type, &algorithm_name, &bytes_obj) &&
-        PyObject_AsCharBuffer(bytes_obj, &secret, &secret_len) != -1) {
-        try {
-            self->tsigkey = new TSIGKey(*key_name->name,
-                                        *algorithm_name->name,
-                                        secret, secret_len);
-        } catch (const isc::InvalidParameter& ex) {
-            PyErr_SetString(po_InvalidParameter, ex.what());
-            return (-1);
-        } catch (...) {
-            PyErr_SetString(po_IscException, "Unexpected exception");
-            return (-1);
+            PyObject_AsCharBuffer(bytes_obj, &secret, &secret_len) != -1) {
+                self->tsigkey = new TSIGKey(*key_name->name,
+                                            *algorithm_name->name,
+                                            secret, secret_len);
+            return (0);
         }
-        return (0);
+    } catch (const isc::InvalidParameter& ex) {
+        PyErr_SetString(po_InvalidParameter, ex.what());
+        return (-1);
+    } catch (...) {
+        PyErr_SetString(po_IscException, "Unexpected exception");
+        return (-1);
     }
 
     PyErr_Clear();
@@ -199,6 +208,11 @@ PyObject*
 TSIGKey_getSecret(const s_TSIGKey* const self) {
     return (Py_BuildValue("y#", self->tsigkey->getSecret(),
                           self->tsigkey->getSecretLength()));
+}
+
+PyObject*
+TSIGKey_toText(const s_TSIGKey* self) {
+    return (Py_BuildValue("s", self->tsigkey->toText().c_str()));
 }
 
 // Module Initialization, all statics are initialized here
