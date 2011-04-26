@@ -18,12 +18,12 @@
 #include <cryptolink/cryptolink.h>
 #include <cryptolink/crypto_hmac.h>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/scoped_ptr.hpp>
 
-using namespace isc::dns;
+using namespace isc::util;
 using namespace isc::cryptolink;
 
 namespace {

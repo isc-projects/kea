@@ -22,7 +22,7 @@
 #include <cryptolink/cryptolink.h>
 
 #include <dns/name.h>
-#include <dns/util/base64.h>
+#include <util/encode/base64.h>
 #include <dns/tsigkey.h>
 
 using namespace std;
@@ -101,7 +101,7 @@ TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
         }
 
         vector<uint8_t> secret;
-        decodeBase64(secret_str, secret);
+        util::encode::decodeBase64(secret_str, secret);
 
         impl_ = new TSIGKeyImpl(Name(keyname_str), algo_name, &secret[0],
                                 secret.size());
@@ -158,7 +158,7 @@ TSIGKey::toText() const {
     const vector<uint8_t> secret_v(static_cast<const uint8_t*>(getSecret()),
                                    static_cast<const uint8_t*>(getSecret()) +
                                    getSecretLength());
-    std::string secret_str = encodeBase64(secret_v);
+    std::string secret_str = util::encode::encodeBase64(secret_v);
 
     return (getKeyName().toText() + ":" + secret_str + ":" +
             getAlgorithmName().toText());
