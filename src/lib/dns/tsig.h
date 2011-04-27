@@ -106,22 +106,22 @@ typedef boost::shared_ptr<const TSIGRecord> ConstTSIGRecordPtr;
 /// This class supports all these cases.
 ///
 /// A \c TSIGContext object is generally constructed with a TSIG key to be
-/// used for the session, and keeps truck of various kinds of session specific
+/// used for the session, and keeps track of various kinds of session specific
 /// information, such as the original digest while waiting for a response or
 /// verification error information that is to be used for a subsequent
 /// response.
 ///
 /// This class has two main methods, \c sign() and \c verify().
 /// The \c sign() method signs given data (which is supposed to be a complete
-/// DNS message to be signed) using the TSIG key and other related information
-/// associated with the \c TSIGContext object.
+/// DNS message without the TSIG itself) using the TSIG key and other
+/// related information associated with the \c TSIGContext object.
 /// The \c verify() method verifies a given DNS message that contains a TSIG
 /// RR using the key and other internal information.
 ///
 /// In general, a DNS client that wants to send a signed query will construct
 /// a \c TSIGContext object with the TSIG key that the client is intending to
-/// use, and sign the query with the context.  The client keeps the context,
-/// and verifies the response with it.
+/// use, and sign the query with the context.  The client will keeps the
+/// context, and verify the response with it.
 ///
 /// On the other hand, a DNS server will construct a \c TSIGContext object
 /// with the information of the TSIG RR included in a query with a set of
@@ -134,7 +134,7 @@ typedef boost::shared_ptr<const TSIGRecord> ConstTSIGRecordPtr;
 ///
 /// When multiple messages belong to the same TSIG session, either side
 /// (signer or verifier) will keep using the same context.  It records
-/// the latest session state (such as the previous digest) so that continues
+/// the latest session state (such as the previous digest) so that repeated
 /// calls to \c sign() or \c verify() work correctly in terms of the TSIG
 /// protocol.
 ///
@@ -204,7 +204,8 @@ public:
     /// generally expected to be a complete, wire-format DNS message
     /// that doesn't contain a TSIG RR, based on the TSIG key and
     /// other context information of \c TSIGContext, and returns a
-    /// result in the form of an \c rdata::any::TSIG object.
+    /// result in the form of a (pointer object pointing to)
+    /// \c TSIGRecord object.
     ///
     /// The caller of this method will use the returned value to render a
     /// complete TSIG RR into the message that has been signed so that it
@@ -220,9 +221,9 @@ public:
     /// description), and doesn't inspect it in any way.  For example, it
     /// doesn't check whether the data length is sane for a valid DNS message.
     /// This is also the reason why this method takes the \c qid parameter,
-    /// which will be used as the original ID of the resulting \c TSIG object
-    /// (RR), even though this value should be stored in the first two octets
-    /// (in wire format) of the given data.
+    /// which will be used as the original ID of the resulting
+    /// \c TSIGRecordx object, even though this value should be stored in the
+    /// first two octets (in wire format) of the given data.
     ///
     /// \note This method still checks and rejects empty data (\c NULL pointer
     /// data or the specified data length is 0) in order to avoid catastrophic
@@ -230,13 +231,9 @@ public:
     /// for HMAC computation, but obviously it doesn't make sense for a DNS
     /// message.
     ///
-    /// This method can throw exceptions (see the list), but does not provide
-    /// the strong exception guarantee.  That is, if an exception is thrown,
-    /// the internal state of the \c TSIGContext object can be changed, in
-    /// which case it's unlikely that the context can be used for (re)signing
-    /// or (re)verifying subsequent messages any more.  If the caller wants
-    /// to catch the exception and try to recover from it, it must drop the
-    /// TSIG session and start a new session with a new context.
+    /// This method provides the strong exception guarantee; unless the method
+    /// returns (without an exception being thrown), the internal state of
+    /// the \c TSIGContext won't be modified.
     ///
     /// \exception InvalidParameter \c data is NULL or \c data_len is 0
     /// \exception cryptolink::LibraryError Some unexpected error in the
@@ -244,7 +241,7 @@ public:
     /// \exception std::bad_alloc Temporary resource allocation failure
     ///
     /// \param qid The QID to be as the value of the original ID field of
-    /// the resulting TSIG
+    /// the resulting TSIG record
     /// \param data Points to the wire-format data to be signed
     /// \param data_len The length of \c data in bytes
     ///

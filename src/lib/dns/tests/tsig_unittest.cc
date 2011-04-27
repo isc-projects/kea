@@ -14,6 +14,7 @@
 
 #include <time.h>
 #include <string>
+#include <stdexcept>
 #include <vector>
 
 #include <boost/scoped_ptr.hpp>
@@ -24,6 +25,7 @@
 
 #include <util/buffer.h>
 #include <util/encode/base64.h>
+#include <util/unittests/newhook.h>
 
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -278,6 +280,40 @@ TEST_F(TSIGTest, signBadData) {
     EXPECT_THROW(tsig_ctx->sign(0, NULL, 10), InvalidParameter);
     EXPECT_THROW(tsig_ctx->sign(0, &dummy_data, 0), InvalidParameter);
 }
+
+#ifdef ENABLE_CUSTOM_OPERATOR_NEW
+// We enable this test only when we enable custom new/delete at build time
+// We could enable/disable the test runtime using the gtest filter, but
+// we'd basically like to minimize the number of disabled tests (they
+// should generally be considered tests that temporarily fail and should
+// be fixed).
+TEST_F(TSIGTest, signExceptionSafety) {
+    // Check sign() provides the strong exception guarantee for the simpler
+    // case (with a key error and empty MAC).  The general case is more
+    // complicated and involves more memory allocation, so the test result
+    // won't be reliable.
+
+    tsig_verify_ctx->verifyTentative(createMessageAndSign(qid, test_name,
+                                                          tsig_ctx.get()),
+                                     TSIGError::BAD_KEY());
+    // At this point the state should be changed to "CHECKED"
+    ASSERT_EQ(TSIGContext::CHECKED, tsig_verify_ctx->getState());
+    try {
+        int dummydata;
+        isc::util::unittests::force_throw_on_new = true;
+        isc::util::unittests::throw_size_on_new = sizeof(TSIGRecord);
+        tsig_verify_ctx->sign(0, &dummydata, sizeof(dummydata));
+        isc::util::unittests::force_throw_on_new = false;
+        ASSERT_FALSE(true) << "Expected throw on new, but it didn't happen";
+    } catch (const std::bad_alloc&) {
+        isc::util::unittests::force_throw_on_new = false;
+
+        // sign() threw, so the state should still be "CHECKED".
+        EXPECT_EQ(TSIGContext::CHECKED, tsig_verify_ctx->getState());
+    }
+    isc::util::unittests::force_throw_on_new = false;
+}
+#endif  // ENABLE_CUSTOM_OPERATOR_NEW
 
 // Same test as "sign" but use a different algorithm just to confirm we don't
 // naively hardcode constants specific to a particular algorithm.
