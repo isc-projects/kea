@@ -19,7 +19,6 @@
 #include <cassert>              // for the tentative verifyTentative()
 #include <vector>
 
-#include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <exceptions/exceptions.h>
@@ -67,6 +66,12 @@ gettimeofdayWrapper() {
 
 namespace {
 typedef boost::shared_ptr<HMAC> HMACPtr;
+}
+
+const RRClass&
+TSIGRecord::getClass() {
+    return (RRClass::ANY());
+}
 
 struct TSIGContext::TSIGContextImpl {
     TSIGContextImpl(const TSIGKey& key) :
@@ -79,12 +84,6 @@ struct TSIGContext::TSIGContextImpl {
     TSIGError error_;
     uint64_t previous_timesigned_; // only meaningful for response with BADTIME
 };
-}
-
-const RRClass&
-TSIGRecord::getClass() {
-    return (RRClass::ANY());
-}
 
 TSIGContext::TSIGContext(const TSIGKey& key) : impl_(new TSIGContextImpl(key))
 {
@@ -123,12 +122,12 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
     // For errors related to key or MAC, return an unsigned response as
     // specified in Section 4.3 of RFC2845.
     if (error == TSIGError::BAD_SIG() || error == TSIGError::BAD_KEY()) {
-        impl_->previous_digest_.clear();
-        impl_->state_ = SIGNED;
         ConstTSIGRecordPtr tsig(new TSIGRecord(
                                     any::TSIG(impl_->key_.getAlgorithmName(),
                                               now, DEFAULT_FUDGE, NULL, 0,
                                               qid, error.getCode(), 0, NULL)));
+        impl_->previous_digest_.clear();
+        impl_->state_ = SIGNED;
         return (tsig);
     }
 
@@ -191,16 +190,17 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
     const uint16_t otherlen = variables.getLength();
 
     // Get the final digest, update internal state, then finish.
-    impl_->previous_digest_ = hmac->sign();
-    impl_->state_ = SIGNED;
+    vector<uint8_t> digest = hmac->sign();
     ConstTSIGRecordPtr tsig(new TSIGRecord(
                                 any::TSIG(impl_->key_.getAlgorithmName(),
                                           time_signed, DEFAULT_FUDGE,
-                                          impl_->previous_digest_.size(),
-                                          &impl_->previous_digest_[0],
+                                          digest.size(), &digest[0],
                                           qid, error.getCode(), otherlen,
                                           otherlen == 0 ?
                                           NULL : variables.getData())));
+    // Exception free from now on.
+    impl_->previous_digest_.swap(digest);
+    impl_->state_ = SIGNED;
     return (tsig);
 }
 
@@ -221,31 +221,6 @@ TSIGContext::verifyTentative(ConstTSIGRecordPtr tsig, TSIGError error) {
         tsig_rdata.getMACSize());
 
     impl_->state_ = CHECKED;
-}
-
-namespace {
-const char* const tsigerror_text[] = {
-    "BADSIG",
-    "BADKEY",
-    "BADTIME"
-};
-}
-
-TSIGError::TSIGError(Rcode rcode) : code_(rcode.getCode()) {
-    if (code_ > MAX_RCODE_FOR_TSIGERROR) {
-        isc_throw(OutOfRange, "Invalid RCODE for TSIG Error: " << rcode);
-    }
-}
-
-string
-TSIGError::toText() const {
-    if (code_ <= MAX_RCODE_FOR_TSIGERROR) {
-        return (Rcode(code_).toText());
-    } else if (code_ <= BAD_TIME_CODE) {
-        return (tsigerror_text[code_ - (MAX_RCODE_FOR_TSIGERROR + 1)]);
-    } else {
-        return (boost::lexical_cast<string>(code_));
-    }
 }
 } // namespace dns
 } // namespace isc

@@ -13,11 +13,42 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <ostream>
+#include <string>
 
+#include <boost/lexical_cast.hpp>
+
+#include <exceptions/exceptions.h>
+
+#include <dns/rcode.h>
 #include <dns/tsigerror.h>
 
 namespace isc {
 namespace dns {
+namespace {
+const char* const tsigerror_text[] = {
+    "BADSIG",
+    "BADKEY",
+    "BADTIME"
+};
+}
+
+TSIGError::TSIGError(Rcode rcode) : code_(rcode.getCode()) {
+    if (code_ > MAX_RCODE_FOR_TSIGERROR) {
+        isc_throw(OutOfRange, "Invalid RCODE for TSIG Error: " << rcode);
+    }
+}
+
+std::string
+TSIGError::toText() const {
+    if (code_ <= MAX_RCODE_FOR_TSIGERROR) {
+        return (Rcode(code_).toText());
+    } else if (code_ <= BAD_TIME_CODE) {
+        return (tsigerror_text[code_ - (MAX_RCODE_FOR_TSIGERROR + 1)]);
+    } else {
+        return (boost::lexical_cast<std::string>(code_));
+    }
+}
+
 std::ostream&
 operator<<(std::ostream& os, const TSIGError& error) {
     return (os << error.toText());
