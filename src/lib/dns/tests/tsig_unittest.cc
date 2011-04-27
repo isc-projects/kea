@@ -36,6 +36,7 @@
 #include <dns/rrtype.h>
 #include <dns/tsig.h>
 #include <dns/tsigkey.h>
+#include <dns/tsigrecord.h>
 
 #include <dns/tests/unittest_util.h>
 

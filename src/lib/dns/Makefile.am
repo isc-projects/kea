@@ -83,6 +83,7 @@ libdns___la_SOURCES += question.h question.cc
 libdns___la_SOURCES += tsig.h tsig.cc
 libdns___la_SOURCES += tsigerror.h tsigerror.cc
 libdns___la_SOURCES += tsigkey.h tsigkey.cc
+libdns___la_SOURCES += tsigrecord.h tsigrecord.cc
 libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.h
 libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.cc
 
