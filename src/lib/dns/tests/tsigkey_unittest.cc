@@ -18,6 +18,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <cryptolink/cryptolink.h>
+
 #include <dns/tsigkey.h>
 
 #include <dns/tests/unittest_util.h>
@@ -38,6 +40,15 @@ TEST_F(TSIGKeyTest, algorithmNames) {
     EXPECT_EQ(Name("hmac-md5.sig-alg.reg.int"), TSIGKey::HMACMD5_NAME());
     EXPECT_EQ(Name("hmac-sha1"), TSIGKey::HMACSHA1_NAME());
     EXPECT_EQ(Name("hmac-sha256"), TSIGKey::HMACSHA256_NAME());
+
+    // Also check conversion to cryptolink definitions
+    EXPECT_EQ(isc::cryptolink::MD5, TSIGKey(key_name, TSIGKey::HMACMD5_NAME(),
+                                            NULL, 0).getCryptoAlgorithm());
+    EXPECT_EQ(isc::cryptolink::SHA1, TSIGKey(key_name, TSIGKey::HMACSHA1_NAME(),
+                                             NULL, 0).getCryptoAlgorithm());
+    EXPECT_EQ(isc::cryptolink::SHA256, TSIGKey(key_name,
+                                               TSIGKey::HMACSHA256_NAME(),
+                                               NULL, 0).getCryptoAlgorithm());
 }
 
 TEST_F(TSIGKeyTest, construct) {
@@ -57,6 +68,11 @@ TEST_F(TSIGKeyTest, construct) {
               TSIGKey(key_name, Name("HMAC-sha1"),
                       secret.c_str(),
                       secret.size()).getAlgorithmName().toText());
+
+    EXPECT_EQ("example.com.",
+              TSIGKey(Name("EXAMPLE.CoM."), TSIGKey::HMACSHA256_NAME(),
+                      secret.c_str(),
+                      secret.size()).getKeyName().toText());
 
     // Invalid combinations of secret and secret_len:
     EXPECT_THROW(TSIGKey(key_name, TSIGKey::HMACSHA1_NAME(), secret.c_str(), 0),
@@ -226,5 +242,32 @@ TEST_F(TSIGKeyRingTest, findFromSome) {
     EXPECT_EQ(static_cast<const TSIGKey*>(NULL),
               keyring.find(Name("noexist.example")).key);
 }
+
+TEST(TSIGStringTest, TSIGKeyFromToString) {
+    TSIGKey k1 = TSIGKey("test.example:MSG6Ng==:hmac-md5.sig-alg.reg.int");
+    TSIGKey k2 = TSIGKey("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.");
+    TSIGKey k3 = TSIGKey("test.example:MSG6Ng==");
+    TSIGKey k4 = TSIGKey(Name("test.example."), Name("hmac-sha1."), NULL, 0);
+
+    EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.",
+              k1.toText());
+    EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.",
+              k2.toText());
+    EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.",
+              k3.toText());
+    EXPECT_EQ("test.example.::hmac-sha1.", k4.toText());
+
+    EXPECT_THROW(TSIGKey(""), isc::InvalidParameter);
+    EXPECT_THROW(TSIGKey(":"), isc::InvalidParameter);
+    EXPECT_THROW(TSIGKey("::"), isc::InvalidParameter);
+    EXPECT_THROW(TSIGKey("..:aa:"), isc::InvalidParameter);
+    EXPECT_THROW(TSIGKey("test.example:xxxx:"), isc::InvalidParameter);
+    EXPECT_THROW(TSIGKey("test.example.::"), isc::InvalidParameter);
+    EXPECT_THROW(TSIGKey("test.example.:"), isc::InvalidParameter);
+    EXPECT_THROW(TSIGKey("test.example.:MSG6Ng==:"), isc::InvalidParameter);
+    EXPECT_THROW(TSIGKey("test.example.:MSG6Ng==:unknown"), isc::InvalidParameter);
+
+}
+
 
 } // end namespace
