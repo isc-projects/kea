@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,14 +14,9 @@
 
 #include <gtest/gtest.h>
 
-#include <log/root_logger_name.h>
-#include <dns/tests/unittest_util.h>
-
 int
-main(int argc, char* argv[])
-{
-    ::testing::InitGoogleTest(&argc, argv);         // Initialize Google test
-    isc::log::setRootLoggerName("unittest");        // Set a root logger name
+main(int argc, char* argv[]) {
+    ::testing::InitGoogleTest(&argc, argv);
 
     return (RUN_ALL_TESTS());
 }
