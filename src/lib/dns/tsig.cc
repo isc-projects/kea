@@ -68,11 +68,6 @@ namespace {
 typedef boost::shared_ptr<HMAC> HMACPtr;
 }
 
-const RRClass&
-TSIGRecord::getClass() {
-    return (RRClass::ANY());
-}
-
 struct TSIGContext::TSIGContextImpl {
     TSIGContextImpl(const TSIGKey& key) :
         state_(INIT), key_(key), error_(Rcode::NOERROR()),
