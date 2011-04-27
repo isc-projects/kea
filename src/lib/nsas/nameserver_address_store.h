@@ -38,7 +38,6 @@ template<class T> class LruList;
 
 namespace nsas {
 
-class ResolverInterface;
 template<class T> class HashTable;
 class ZoneEntry;
 class NameserverEntry;
