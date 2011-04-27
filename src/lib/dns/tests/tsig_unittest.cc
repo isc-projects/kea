@@ -71,7 +71,7 @@ protected:
     TSIGTest() :
         tsig_ctx(NULL), qid(0x2d65), test_name("www.example.com"),
         test_class(RRClass::IN()), test_ttl(86400), message(Message::RENDER),
-        buffer(0), renderer(buffer) 
+        buffer(0), renderer(buffer)
     {
         // Make sure we use the system time by default so that we won't be
         // confused due to other tests that tweak the time.
@@ -407,7 +407,7 @@ TEST_F(TSIGTest, signContinuation) {
     // Create and sign the second response message
     const uint8_t expected_mac[] = {
         0x10, 0x24, 0x58, 0xf7, 0xf6, 0x2d, 0xdd, 0x7d,
-        0x63, 0x8d, 0x74, 0x60, 0x34, 0x13, 0x09, 0x68 
+        0x63, 0x8d, 0x74, 0x60, 0x34, 0x13, 0x09, 0x68
     };
     {
         SCOPED_TRACE("Sign test for continued response in TCP stream");
@@ -455,7 +455,7 @@ TEST_F(TSIGTest, badtimeResponse) {
     const uint8_t expected_otherdata[] = { 0, 0, 0x4d, 0xa8, 0xbe, 0x86 };
     const uint8_t expected_mac[] = {
         0xd4, 0xb0, 0x43, 0xf6, 0xf4, 0x44, 0x95, 0xec,
-        0x8a, 0x01, 0x26, 0x0e, 0x39, 0x15, 0x9d, 0x76 
+        0x8a, 0x01, 0x26, 0x0e, 0x39, 0x15, 0x9d, 0x76
     };
     {
         SCOPED_TRACE("Sign test for response with BADTIME");
