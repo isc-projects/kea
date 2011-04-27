@@ -27,6 +27,7 @@
 namespace isc {
 namespace cryptolink {
 
+/// \brief Hash algorithm identifiers
 enum HashAlgorithm {
     MD5 = 0,            ///< MD5
     SHA1 = 1,           ///< SHA-1
