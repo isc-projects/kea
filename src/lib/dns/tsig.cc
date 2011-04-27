@@ -112,6 +112,12 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
     }
 
     TSIGError error(TSIGError::NOERROR());
+    // TSIG uses 48-bit unsigned integer to represent time signed.
+    // Since gettimeofdayWrapper() returns a 64-bit *signed* integer, we
+    // make sure it's stored in an unsigned 64-bit integer variable and
+    // represents a value in the expected range.  (In reality, however,
+    // gettimeofdayWrapper() will return a positive integer that will fit
+    // in 48 bits)
     const uint64_t now = (gettimeofdayWrapper() & 0x0000ffffffffffffULL);
 
     // For responses adjust the error code.
