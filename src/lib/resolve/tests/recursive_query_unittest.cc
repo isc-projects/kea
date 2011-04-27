@@ -935,7 +935,6 @@ TEST_F(RecursiveQueryTest, CachedNS) {
                RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
-    bool done;
     // The server is here so we have something to pass there
     MockServer server(*io_service_);
     rq.resolve(q, answer, buffer, &server);
