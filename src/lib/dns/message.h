@@ -33,6 +33,7 @@ class InputBuffer;
 }
 
 namespace dns {
+class TSIGContext;
 
 ///
 /// \brief A standard DNS module exception that is thrown if a wire format
@@ -530,6 +531,9 @@ public:
     /// \c Rcode must have been set beforehand; otherwise, an exception of
     /// class \c InvalidMessageOperation will be thrown.
     void toWire(MessageRenderer& renderer);
+
+    // TBD
+    void toWire(MessageRenderer& renderer, TSIGContext& tsig_ctx);
 
     /// \brief Parse the header section of the \c Message.
     void parseHeader(isc::util::InputBuffer& buffer);

@@ -118,8 +118,9 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
     // specified in Section 4.3 of RFC2845.
     if (error == TSIGError::BAD_SIG() || error == TSIGError::BAD_KEY()) {
         ConstTSIGRecordPtr tsig(new TSIGRecord(
+                                    impl_->key_.getKeyName(),
                                     any::TSIG(impl_->key_.getAlgorithmName(),
-                                              now, DEFAULT_FUDGE, NULL, 0,
+                                              now, DEFAULT_FUDGE, 0, NULL,
                                               qid, error.getCode(), 0, NULL)));
         impl_->previous_digest_.clear();
         impl_->state_ = SIGNED;
@@ -187,6 +188,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
     // Get the final digest, update internal state, then finish.
     vector<uint8_t> digest = hmac->sign();
     ConstTSIGRecordPtr tsig(new TSIGRecord(
+                                impl_->key_.getKeyName(),
                                 any::TSIG(impl_->key_.getAlgorithmName(),
                                           time_signed, DEFAULT_FUDGE,
                                           digest.size(), &digest[0],
