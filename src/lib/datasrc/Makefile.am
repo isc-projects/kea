@@ -20,3 +20,8 @@ libdatasrc_la_SOURCES += zonetable.h zonetable.cc
 libdatasrc_la_SOURCES += memory_datasrc.h memory_datasrc.cc
 libdatasrc_la_SOURCES += zone.h
 libdatasrc_la_SOURCES += result.h
+libdatasrc_la_SOURCES += messagedef.h messagedef.cc
+
+BUILT_SOURCES = messagedef.h messagedef.cc
+messagedef.h messagedef.cc: Makefile messagedef.mes
+	$(top_builddir)/src/lib/log/compiler/message messagedef.mes
