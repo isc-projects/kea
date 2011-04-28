@@ -2,7 +2,8 @@
 	Introduced an API for cryptographic operations. Currently it only
 	supports HMAC, intended for use with TSIG. The current
 	implementation uses Botan as the backend library.
-	This introduces a new dependency, on Botan.
+	This introduces a new dependency, on Botan.  Currently only Botan
+	1.8.x works; older or newer versions don't.
 	(Trac#781, git 9df42279a47eb617f586144dce8cce680598558a)
 
 225.	[func]		naokikambe
