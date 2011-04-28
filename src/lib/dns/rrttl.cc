@@ -63,7 +63,7 @@ RRTTL::toWire(OutputBuffer& buffer) const {
 }
 
 void
-RRTTL::toWire(MessageRenderer& renderer) const {
+RRTTL::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint32(ttlval_);
 }
 

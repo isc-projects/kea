@@ -125,7 +125,7 @@ public:
     void setRcode(const Rcode& rcode);
     int parseQuestion(InputBuffer& buffer);
     int parseSection(const Message::Section section, InputBuffer& buffer);
-    void toWire(MessageRenderer& renderer, TSIGContext* tsig_ctx);
+    void toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx);
 };
 
 MessageImpl::MessageImpl(Message::Mode mode) :
@@ -170,7 +170,7 @@ MessageImpl::setRcode(const Rcode& rcode) {
 namespace {
 template <typename T>
 struct RenderSection {
-    RenderSection(MessageRenderer& renderer, const bool partial_ok) :
+    RenderSection(AbstractMessageRenderer& renderer, const bool partial_ok) :
         counter_(0), renderer_(renderer), partial_ok_(partial_ok),
         truncated_(false)
     {}
@@ -191,14 +191,14 @@ struct RenderSection {
     }
     unsigned int getTotalCount() { return (counter_); }
     unsigned int counter_;
-    MessageRenderer& renderer_;
+    AbstractMessageRenderer& renderer_;
     const bool partial_ok_;
     bool truncated_;
 };
 }
 
 void
-MessageImpl::toWire(MessageRenderer& renderer, TSIGContext* tsig_ctx) {
+MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
     if (mode_ != Message::RENDER) {
         isc_throw(InvalidMessageOperation,
                   "Message rendering attempted in non render mode");
@@ -500,12 +500,12 @@ Message::addQuestion(const Question& question) {
 }
 
 void
-Message::toWire(MessageRenderer& renderer) {
+Message::toWire(AbstractMessageRenderer& renderer) {
     impl_->toWire(renderer, NULL);
 }
 
 void
-Message::toWire(MessageRenderer& renderer, TSIGContext& tsig_ctx) {
+Message::toWire(AbstractMessageRenderer& renderer, TSIGContext& tsig_ctx) {
     impl_->toWire(renderer, &tsig_ctx);
 }
 

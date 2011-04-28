@@ -32,7 +32,7 @@ class OutputBuffer;
 
 namespace dns {
 
-class MessageRenderer;
+class AbstractMessageRenderer;
 class Question;
 
 /// \brief A pointer-like type pointing to an \c Question object.
@@ -218,13 +218,13 @@ public:
     /// \param renderer DNS message rendering context that encapsulates the
     /// output buffer and name compression information.
     /// \return 1
-    unsigned int toWire(MessageRenderer& renderer) const;
+    unsigned int toWire(AbstractMessageRenderer& renderer) const;
 
     /// \brief Render the Question in the wire format without name compression.
     ///
     /// This method behaves like the render version except it doesn't compress
     /// the owner name.
-    /// See \c toWire(MessageRenderer& renderer)const.
+    /// See \c toWire(AbstractMessageRenderer& renderer)const.
     ///
     /// \param buffer An output buffer to store the wire data.
     /// \return 1
