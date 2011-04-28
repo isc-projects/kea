@@ -395,7 +395,15 @@ fi
 
 if test -x "${BOTAN_CONFIG}" ; then
     BOTAN_LDFLAGS=`${BOTAN_CONFIG} --libs`
+    # We expect botan-config --libs to contain -L<path_to_libbotan>, but
+    # this is not always the case.  As a heuristics workaround we add
+    # -L`botan-config --prefix/lib` in this case.  Same for BOTAN_INCLUDES
+    # (but using include instead of lib) below.
+    echo ${BOTAN_LDFLAGS} | grep -- -L > /dev/null || \
+	    BOTAN_LDFLAGS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LDFLAGS}"
     BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
+    echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
+	    BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
     # See python_rpath for some info on why we do this
     if test $rpath_available = yes; then
         BOTAN_RPATH=
