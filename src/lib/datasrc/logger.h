@@ -28,9 +28,15 @@
 namespace isc {
 namespace datasrc {
 
-/// \brief Get the logger
-isc::log::Logger&
-logger();
+/// \brief The logger for this library
+extern isc::log::Logger logger;
+
+enum {
+    /// \brief Trace basic operations
+    DBG_TRACE_BASIC = 10,
+    /// \brief Trace data changes and lookups as well
+    DBG_TRACE_DATA = 20
+};
 
 }
 }

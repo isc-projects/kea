@@ -23,7 +23,9 @@ namespace {
 TEST(CacheLogger, name) {
     // This does not check the name only, but the fact the logger is created
     // The dot is because of empty root logger
-    EXPECT_EQ(".datasrc", logger().getName());
+    std::string name(logger.getName());
+    EXPECT_EQ(name.size() - 8, name.rfind(".datasrc")) <<
+        "Wrong logger name: " << name;
 }
 
 }

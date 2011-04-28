@@ -17,11 +17,7 @@
 namespace isc {
 namespace datasrc {
 
-isc::log::Logger &
-logger() {
-    static isc::log::Logger theLogger("datasrc");
-    return (theLogger);
-}
+isc::log::Logger logger("datasrc");
 
 }
 }

@@ -17,4 +17,54 @@ $NAMESPACE isc::datasrc
 
 # \brief Messages for the data source library
 
+CACHE_CREAT Creating the hotspot cache
++ Debug information that the hotspot cache was created at startup.
 
+CACHE_DESTROY Destroying the hotspot cache
++ Debug information. The hotspot cache is being destroyed.
+
+CACHE_INSERT Inserting item '%s' into the cache
++ Debug information. It means a new item is being inserted into the hotspot
++ cache.
+
+CACHE_OLD_FOUND Older instance of cache item found, replacing
++ Debug information. While inserting an item into the hotspot cache, an older
++ instance of an item with the same name was found. The old instance will be
++ removed. This should be directly followed by CACHE_REMOVE.
+
+CACHE_FULL Cache is full, dropping oldest
++ Debug information. After inserting an item into the hotspot cache, the
++ maximum number of items was exceeded, so the least recently used item will
++ be dropped. This should be directly followed by CACHE_REMOVE.
+
+CACHE_REMOVE Removing '%s' from the cache
++ Debug information. An item is being removed from the hotspot cache.
+
+CACHE_LOOKUP Looking up '%s' in the cache
++ Debug information. We are trying to look up an item in the hotspot cache.
++ Further progress and result will follow.
+
+CACHE_NOT_FOUND The item was not found
++ Debug information. The item we tried to look in the last CACHE_LOOKUP was
++ not found in the hotspot cache.
+
+CACHE_FOUND The item was found
++ Debug information. The last CACHE_LOOKUP was successful, eg. we have found
++ the requested item in the hotspot cache.
+
+CACHE_EXPIRED The item is expired
++ Debug information. The item requested in the last CACHE_LOOKUP was in the
++ hotspot cache, but it was old. We're going to remove it and report we don't
++ have it (the external result will be the same as with CACHE_NOT_FOUND).
+
+CACHE_SLOTS Setting the cache size to '%d'
++ The maximum allowed number of items of the hotspot cache is set to the given
++ number. If there are too many, we're going to drop them right now. The size
++ of 0 means no limit.
+
+CACHE_ENABLE Enabling the cache
++ The hotspot cache is enabled from now on.
+
+CACHE_DISABLE Disabling the cache
++ The hotspot cache is disabled from now on. It is not going to store
++ information or return anything.
