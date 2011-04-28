@@ -24,7 +24,7 @@
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
-
+#include <dns/tsigerror.h>
 
 using namespace std;
 using namespace boost;
@@ -313,15 +313,7 @@ TSIG::toText() const {
         result += encodeBase64(impl_->mac_) + " ";
     }
     result += lexical_cast<string>(impl_->original_id_) + " ";
-    if (impl_->error_ == 16) {  // XXX: we'll soon introduce generic converter.
-        result += "BADSIG ";
-    } else if (impl_->error_ == 17) {
-        result += "BADKEY ";
-    } else if (impl_->error_ == 18) {
-        result += "BADTIME ";
-    } else {
-        result += lexical_cast<string>(impl_->error_) + " ";
-    }
+    result += TSIGError(impl_->error_).toText() + " ";
     result += lexical_cast<string>(impl_->other_data_.size());
     if (impl_->other_data_.size() > 0) {
         result += " " + encodeBase64(impl_->other_data_);

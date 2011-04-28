@@ -1,10 +1,13 @@
 #
-# A simple TSIG RR (some of the parameters are taken from a live example
-# and don't have a specific meaning)
+# TSIG RR after some names that could (unexpectedly) cause name compression
 #
 
 [custom]
-sections: tsig
+sections: name/1:name/2:tsig
+[name/1]
+name: hmac-md5.sig-alg.reg.int
+[name/2]
+name: foo.example.com
 [tsig]
 as_rr: True
 # TSIG QNAME won't be compressed
