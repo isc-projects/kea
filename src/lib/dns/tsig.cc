@@ -24,6 +24,7 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
+#include <util/time_utilities.h>
 
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
@@ -41,29 +42,6 @@ using namespace isc::dns::rdata;
 
 namespace isc {
 namespace dns {
-
-// Borrowed from dnssectime.cc.  This trick should be unified somewhere.
-namespace tsig {
-namespace detail {
-int64_t (*gettimeFunction)() = NULL;
-}
-}
-
-namespace {
-int64_t
-gettimeofdayWrapper() {
-    using namespace tsig::detail;
-    if (gettimeFunction != NULL) {
-        return (gettimeFunction());
-    }
-
-    struct timeval now;
-    gettimeofday(&now, NULL);
-
-    return (static_cast<int64_t>(now.tv_sec));
-}
-}
-
 namespace {
 typedef boost::shared_ptr<HMAC> HMACPtr;
 }
@@ -107,7 +85,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
     }
 
     TSIGError error(TSIGError::NOERROR());
-    const uint64_t now = (gettimeofdayWrapper() & 0x0000ffffffffffffULL);
+    const uint64_t now = (detail::gettimeWrapper() & 0x0000ffffffffffffULL);
 
     // For responses adjust the error code.
     if (impl_->state_ == CHECKED) {

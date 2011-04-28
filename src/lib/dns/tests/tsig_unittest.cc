@@ -26,6 +26,7 @@
 #include <util/buffer.h>
 #include <util/encode/base64.h>
 #include <util/unittests/newhook.h>
+#include <util/time_utilities.h>
 
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -50,11 +51,9 @@ using isc::UnitTestUtil;
 
 // See dnssectime.cc
 namespace isc {
-namespace dns {
-namespace tsig {
+namespace util {
 namespace detail {
 extern int64_t (*gettimeFunction)();
-}
 }
 }
 }
@@ -76,7 +75,7 @@ protected:
     {
         // Make sure we use the system time by default so that we won't be
         // confused due to other tests that tweak the time.
-        tsig::detail::gettimeFunction = NULL;
+        isc::util::detail::gettimeFunction = NULL;
 
         decodeBase64("SFuWd/q99SzF8Yzd1QbB9g==", secret);
         tsig_ctx.reset(new TSIGContext(TSIGKey(test_name,
@@ -88,7 +87,7 @@ protected:
                                                       secret.size())));
     }
     ~TSIGTest() {
-        tsig::detail::gettimeFunction = NULL;
+        isc::util::detail::gettimeFunction = NULL;
     }
 
     // Many of the tests below create some DNS message and sign it under
@@ -210,7 +209,7 @@ const uint8_t common_expected_mac[] = {
     0x21, 0xce, 0x6c, 0x6f, 0xff, 0x1e, 0x9e, 0xf3
 };
 TEST_F(TSIGTest, sign) {
-    tsig::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
 
     {
         SCOPED_TRACE("Sign test for query");
@@ -224,7 +223,7 @@ TEST_F(TSIGTest, sign) {
 // non canonical) characters.  The digest must be the same.  It should actually
 // be ensured at the level of TSIGKey, but we confirm that at this level, too.
 TEST_F(TSIGTest, signUsingUpperCasedKeyName) {
-    tsig::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
 
     TSIGContext cap_ctx(TSIGKey(Name("WWW.EXAMPLE.COM"),
                                 TSIGKey::HMACMD5_NAME(),
@@ -240,7 +239,7 @@ TEST_F(TSIGTest, signUsingUpperCasedKeyName) {
 
 // Same as the previous test, but for the algorithm name.
 TEST_F(TSIGTest, signUsingUpperCasedAlgorithmName) {
-    tsig::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
 
     TSIGContext cap_ctx(TSIGKey(test_name,
                                 Name("HMAC-md5.SIG-alg.REG.int"),
@@ -326,7 +325,7 @@ TEST_F(TSIGTest, signExceptionSafety) {
 //   HMAC Size: 20
 //   HMAC: 415340c7daf824ed684ee586f7b5a67a2febc0d3
 TEST_F(TSIGTest, signUsingHMACSHA1) {
-    tsig::detail::gettimeFunction = testGetTime<0x4dae7d5f>;
+    isc::util::detail::gettimeFunction = testGetTime<0x4dae7d5f>;
 
     secret.clear();
     decodeBase64("MA+QDhXbyqUak+qnMFyTyEirzng=", secret);
@@ -351,7 +350,7 @@ TEST_F(TSIGTest, signUsingHMACSHA1) {
 // Answer: www.example.com. 86400 IN A 192.0.2.1
 // MAC: 8fcda66a7cd1a3b9948eb1869d384a9f
 TEST_F(TSIGTest, signResponse) {
-    tsig::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
 
     ConstTSIGRecordPtr tsig = createMessageAndSign(qid, test_name,
                                                    tsig_ctx.get());
@@ -386,7 +385,7 @@ TEST_F(TSIGTest, signResponse) {
 //    Answer: example.com. 86400 IN NS ns.example.com.
 //    MAC: 102458f7f62ddd7d638d746034130968
 TEST_F(TSIGTest, signContinuation) {
-    tsig::detail::gettimeFunction = testGetTime<0x4da8e951>;
+    isc::util::detail::gettimeFunction = testGetTime<0x4da8e951>;
 
     const uint16_t axfr_qid = 0x3410;
     const Name zone_name("example.com");
@@ -436,7 +435,7 @@ TEST_F(TSIGTest, signContinuation) {
 //   Error: 0x12 (BADTIME), Other Len: 6
 //   Other data: 00004da8be86
 TEST_F(TSIGTest, badtimeResponse) {
-    tsig::detail::gettimeFunction = testGetTime<0x4da8b9d6>;
+    isc::util::detail::gettimeFunction = testGetTime<0x4da8b9d6>;
 
     const uint16_t test_qid = 0x7fc4;
     ConstTSIGRecordPtr tsig = createMessageAndSign(test_qid, test_name,
@@ -445,7 +444,7 @@ TEST_F(TSIGTest, badtimeResponse) {
 
     // "advance the clock" and try validating, which should fail due to BADTIME
     // (verifyTentative actually doesn't check the time, though)
-    tsig::detail::gettimeFunction = testGetTime<0x4da8be86>;
+    isc::util::detail::gettimeFunction = testGetTime<0x4da8be86>;
     tsig_verify_ctx->verifyTentative(tsig, TSIGError::BAD_TIME());
     EXPECT_EQ(TSIGError::BAD_TIME(), tsig_verify_ctx->getError());
 
@@ -469,7 +468,7 @@ TEST_F(TSIGTest, badtimeResponse) {
 }
 
 TEST_F(TSIGTest, badsigResponse) {
-    tsig::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
 
     // Sign a simple message, and force the verification to fail with
     // BADSIG.
@@ -490,7 +489,7 @@ TEST_F(TSIGTest, badsigResponse) {
 
 TEST_F(TSIGTest, badkeyResponse) {
     // A similar test as badsigResponse but for BADKEY
-    tsig::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
     tsig_verify_ctx->verifyTentative(createMessageAndSign(qid, test_name,
                                                           tsig_ctx.get()),
                                      TSIGError::BAD_KEY());
