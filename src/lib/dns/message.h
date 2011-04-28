@@ -81,7 +81,7 @@ public:
 
 typedef uint16_t qid_t;
 
-class MessageRenderer;
+class AbstractMessageRenderer;
 class Message;
 class MessageImpl;
 class Opcode;
@@ -524,16 +524,31 @@ public:
     /// class \c InvalidMessageOperation will be thrown.
     std::string toText() const;
 
-    /// \brief Render the message in wire formant into a \c MessageRenderer
+    /// \brief Render the message in wire formant into a message renderer
     /// object.
     ///
     /// This \c Message must be in the \c RENDER mode and both \c Opcode and
     /// \c Rcode must have been set beforehand; otherwise, an exception of
     /// class \c InvalidMessageOperation will be thrown.
-    void toWire(MessageRenderer& renderer);
+    ///
+    /// \param renderer DNS message rendering context that encapsulates the
+    /// output buffer and name compression information.
+    void toWire(AbstractMessageRenderer& renderer);
 
-    // TBD
-    void toWire(MessageRenderer& renderer, TSIGContext& tsig_ctx);
+    /// \brief Render the message in wire formant into a message renderer
+    /// object with TSIG.
+    ///
+    /// This method is similar to the other version of \c toWire(), but
+    /// it will also add a TSIG RR with (in many cases) the TSIG MAC for
+    /// the message along with the given TSIG context (\c tsig_ctx).
+    /// The TSIG RR will be placed at the end of \c renderer.
+    /// \c tsig_ctx will be updated based on the fact it was used for signing
+    /// and with the latest MAC.
+    ///
+    /// \param renderer See the other version
+    /// \param tsig_ctx A TSIG context that is to be used for signing the
+    /// message
+    void toWire(AbstractMessageRenderer& renderer, TSIGContext& tsig_ctx);
 
     /// \brief Parse the header section of the \c Message.
     void parseHeader(isc::util::InputBuffer& buffer);
