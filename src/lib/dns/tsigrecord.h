@@ -15,15 +15,21 @@
 #ifndef __TSIGRECORD_H
 #define __TSIGRECORD_H 1
 
-#include <boost/shared_ptr.hpp>
+#include <ostream>
+#include <string>
 
-#include <util/buffer.h>
+#include <boost/shared_ptr.hpp>
 
 #include <dns/name.h>
 #include <dns/rdataclass.h>
 
 namespace isc {
+namespace util {
+class OutputBuffer;
+}
 namespace dns {
+class AbstractMessageRenderer;
+
 /// TSIG resource record.
 ///
 /// A \c TSIGRecord class object represents a TSIG resource record and is
@@ -33,9 +39,8 @@ namespace dns {
 /// TSIG without knowing protocol details of TSIG, such as that it uses a
 /// fixed constant of TTL.
 ///
-/// \note So the plan is to eventually provide a \c toWire() method and
-/// the "from wire" constructor.  They are not yet provided in this initial
-/// step.
+/// \todo So the plan is to eventually provide  the "from wire" constructor.
+/// It's not yet provided in the current phase of development.
 ///
 /// \note
 /// This class could be a derived class of \c AbstractRRset.  That way
@@ -54,13 +59,13 @@ namespace dns {
 /// similar to why \c EDNS is a separate class.
 class TSIGRecord {
 public:
-    /// Constructor from TSIG RDATA
+    /// Constructor from TSIG key name and RDATA
     ///
-    /// \exception std::bad_alloc Resource allocation for copying the RDATA
-    /// fails
-    explicit TSIGRecord(const rdata::any::TSIG& tsig_rdata) :
-        rdata_(tsig_rdata)
-    {}
+    /// \exception std::bad_alloc Resource allocation for copying the name or
+    /// RDATA fails
+    TSIGRecord(const Name& key_name, const rdata::any::TSIG& tsig_rdata);
+
+    const Name& getName() const { return (key_name_); }
 
     /// Return the RDATA of the TSIG RR
     ///
@@ -79,12 +84,23 @@ public:
     /// \exception None
     static const RRClass& getClass();
 
+    // Note: More important for the "from wire" case.
+    size_t getLength() const { return (length_); }
+
+    void toWire(AbstractMessageRenderer& renderer) const;
+
+    void toWire(isc::util::OutputBuffer& buffer) const;
+
+    std::string toText() const;
+
     /// The TTL value to be used in TSIG RRs.
     static const uint32_t TSIG_TTL = 0;
     //@}
 
 private:
+    const Name key_name_;
     const rdata::any::TSIG rdata_;
+    const size_t length_;
 };
 
 /// A pointer-like type pointing to a \c TSIGRecord object.
@@ -92,6 +108,18 @@ typedef boost::shared_ptr<TSIGRecord> TSIGRecordPtr;
 
 /// A pointer-like type pointing to an immutable \c TSIGRecord object.
 typedef boost::shared_ptr<const TSIGRecord> ConstTSIGRecordPtr;
+
+/// Insert the \c TSIGRecord as a string into stream.
+///
+/// This method convert \c record into a string and inserts it into the
+/// output stream \c os.
+///
+/// \param os A \c std::ostream object on which the insertion operation is
+/// performed.
+/// \param record An \c TSIGRecord object output by the operation.
+/// \return A reference to the same \c std::ostream object referenced by
+/// parameter \c os after the insertion operation.
+std::ostream& operator<<(std::ostream& os, const TSIGRecord& record);
 }
 }
 
