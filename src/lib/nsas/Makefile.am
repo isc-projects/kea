@@ -26,7 +26,8 @@ nsasdef.h nsasdef.cc: nsasdef.msg
 	$(top_builddir)/src/lib/log/compiler/message nsasdef.msg
 
 lib_LTLIBRARIES = libnsas.la
-libnsas_la_SOURCES  = address_entry.h address_entry.cc
+libnsas_la_SOURCES  = nsasdef.h nsasdef.cc
+libnsas_la_SOURCES += address_entry.h address_entry.cc
 libnsas_la_SOURCES += asiolink.h
 libnsas_la_SOURCES += hash.cc hash.h
 libnsas_la_SOURCES += hash_deleter.h
@@ -35,10 +36,9 @@ libnsas_la_SOURCES += hash_table.h
 libnsas_la_SOURCES += nameserver_address_store.cc nameserver_address_store.h
 libnsas_la_SOURCES += nameserver_address.h nameserver_address.cc
 libnsas_la_SOURCES += nameserver_entry.cc nameserver_entry.h
-libnsas_la_SOURCES += nsasdef.h nsasdef.cc
 libnsas_la_SOURCES += nsas_entry_compare.h
 libnsas_la_SOURCES += nsas_entry.h nsas_types.h
-libnsas_la_SOURCES += nsas_levels.h
+libnsas_la_SOURCES += nsas_log.cc nsas_log.h
 libnsas_la_SOURCES += zone_entry.cc zone_entry.h
 libnsas_la_SOURCES += fetchable.h
 libnsas_la_SOURCES += address_request_callback.h
