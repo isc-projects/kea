@@ -21,6 +21,10 @@ if USE_CLANGPP
 AM_CXXFLAGS += -Wno-unused-parameter
 endif
 
+# Build the logging source files from the message definition
+nsasdef.h nsasdef.cc: nsasdef.msg
+	$(top_builddir)/src/lib/log/compiler/message nsasdef.msg
+
 lib_LTLIBRARIES = libnsas.la
 libnsas_la_SOURCES  = address_entry.h address_entry.cc
 libnsas_la_SOURCES += asiolink.h
