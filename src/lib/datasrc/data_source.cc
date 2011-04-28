@@ -25,6 +25,7 @@
 #include <datasrc/cache.h>
 #include <datasrc/data_source.h>
 #include <datasrc/query.h>
+#include <datasrc/logger.h>
 
 #include <util/encode/base32hex.h>
 #include <util/hash/sha1.h>
@@ -83,7 +84,7 @@ class ZoneInfo {
 public:
     ZoneInfo(DataSrc* ts,
              const isc::dns::Name& n,
-             const isc::dns::RRClass& c, 
+             const isc::dns::RRClass& c,
              const isc::dns::RRType& t = isc::dns::RRType::ANY()) :
         top_source_(ts),
         dsm_(((t == RRType::DS() && n.getLabelCount() != 1)
@@ -123,6 +124,11 @@ getAdditional(Query& q, ConstRRsetPtr rrset) {
         const Rdata& rd(it->getCurrent());
         if (rrset->getType() == RRType::NS()) {
             const generic::NS& ns = dynamic_cast<const generic::NS&>(rd);
+            if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
+                logger.debug(DBG_TRACE_DATA, DATASRC_QUERY_GET_NS_ADDITIONAL,
+                             ns.getNSName().toText().c_str(),
+                             rrset->getName().toText().c_str());
+            }
             q.tasks().push(QueryTaskPtr(
                                new QueryTask(q, ns.getNSName(),
                                              Message::SECTION_ADDITIONAL,
@@ -130,6 +136,11 @@ getAdditional(Query& q, ConstRRsetPtr rrset) {
                                              QueryTask::GETADDITIONAL)));
         } else if (rrset->getType() == RRType::MX()) {
             const generic::MX& mx = dynamic_cast<const generic::MX&>(rd);
+            if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
+                logger.debug(DBG_TRACE_DATA, DATASRC_QUERY_GET_MX_ADDITIONAL,
+                             mx.getMXName().toText().c_str(),
+                             rrset->getName().toText().c_str());
+            }
             q.tasks().push(QueryTaskPtr(
                                new QueryTask(q, mx.getMXName(),
                                              Message::SECTION_ADDITIONAL,
@@ -143,11 +154,17 @@ getAdditional(Query& q, ConstRRsetPtr rrset) {
 // understand DNAME
 void
 synthesizeCname(QueryTaskPtr task, RRsetPtr rrset, RRsetList& target) {
+    if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
+        logger.debug(DBG_TRACE_DATA, DATASRC_QUERY_SYNTH_CNAME,
+                     rrset->getName().toText().c_str());
+    }
     RdataIteratorPtr it = rrset->getRdataIterator();
 
     // More than one DNAME RR in the RRset is illegal, so we only have
     // to process the first one.
     if (it->isLast()) {
+        logger.error(DATASRC_QUERY_EMPTY_DNAME,
+                     rrset->getName().toText().c_str());
         return;
     }
 
@@ -171,16 +188,24 @@ synthesizeCname(QueryTaskPtr task, RRsetPtr rrset, RRsetList& target) {
 // to by a CNAME record
 void
 chaseCname(Query& q, QueryTaskPtr task, RRsetPtr rrset) {
+    if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
+        logger.debug(DBG_TRACE_DATA, DATASRC_QUERY_FOLLOW_CNAME,
+                     rrset->getName().toText().c_str());
+    }
     RdataIteratorPtr it = rrset->getRdataIterator();
 
     // More than one CNAME RR in the RRset is illegal, so we only have
     // to process the first one.
     if (it->isLast()) {
+        logger.error(DATASRC_QUERY_EMPTY_CNAME,
+                     rrset->getName().toText().c_str());
         return;
     }
 
     // Stop chasing CNAMES after 16 lookups, to prevent loops
     if (q.tooMany()) {
+        logger.error(DATASRC_QUERY_TOO_MANY_CNAMES,
+                     rrset->getName().toText().c_str());
         return;
     }
 
