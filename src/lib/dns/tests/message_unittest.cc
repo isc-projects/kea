@@ -17,6 +17,8 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
+#include <util/time_utilities.h>
+
 #include <dns/edns.h>
 #include <dns/exceptions.h>
 #include <dns/message.h>
@@ -57,13 +59,10 @@ using namespace isc::dns::rdata;
 const uint16_t Message::DEFAULT_MAX_UDPSIZE;
 const Name test_name("test.example.com");
 
-// See dnssectime.cc
 namespace isc {
-namespace dns {
-namespace tsig {
+namespace util {
 namespace detail {
 extern int64_t (*gettimeFunction)();
-}
 }
 }
 }
@@ -569,7 +568,7 @@ TEST_F(MessageTest, toWireWithTSIG) {
     // TSIG are tested in the tsig tests.  We only check the message contains
     // a TSIG at the end and the ARCOUNT of the header is updated.
 
-    tsig::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
 
     message_render.setQid(0x2d65);
 
@@ -583,7 +582,7 @@ TEST_F(MessageTest, toWireWithTSIG) {
 TEST_F(MessageTest, toWireWithEDNSAndTSIG) {
     // Similar to the previous test, but with an EDNS before TSIG.
     // The wire data check will confirm the ordering.
-    tsig::detail::gettimeFunction = testGetTime<0x4db60d1f>;
+    isc::util::detail::gettimeFunction = testGetTime<0x4db60d1f>;
 
     message_render.setQid(0x6cd);
 
