@@ -375,25 +375,37 @@ fi
 AC_SUBST(USE_LCOV)
 
 # Check for Botan
-botan_path=""
+botan_path="yes"
 AC_ARG_WITH([botan],
   AC_HELP_STRING([--with-botan=PATH],
     [specify exact directory of Botan library]),
     [botan_path="$withval"])
-# If not specificed, try some common paths
-if test -z "$with_botan"; then
-    botandirs="/usr/local /usr/pkg /opt /opt/local /usr"
-    for d in $botandirs
-    do
-        if test -f $d/include/botan/botan.h; then
-            botan_path=$d
-            break
-        fi
-    done
+if test "${botan_path}" == "no" ; then
+    AC_MSG_ERROR([Need botan for libcryptolink])
 fi
-if test "${botan_path}" ; then
-    BOTAN_LDFLAGS="-L${botan_path}/lib -lbotan"
-    BOTAN_INCLUDES="-I${botan_path}/include"
+if test "${botan_path}" != "yes" ; then
+    if test -x "${botan_path}/bin/botan-config" ; then
+        BOTAN_CONFIG="${botan_path}/bin/botan-config"
+    else
+        AC_MSG_ERROR([${botan_path}/bin/botan-config not found])
+    fi
+else
+        AC_PATH_PROG([BOTAN_CONFIG], [botan-config])
+fi
+
+if test -x "${BOTAN_CONFIG}" ; then
+    BOTAN_LDFLAGS=`${BOTAN_CONFIG} --libs`
+    BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
+    # See python_rpath for some info on why we do this
+    if test $rpath_available = yes; then
+        BOTAN_RPATH=
+        for flag in ${BOTAN_LDFLAGS}; do
+                BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne 's/^\(\-L\)/-R/p'`"
+        done
+        BOTAN_RPATH="${PYTHON_LDFLAGS} ${python_rpath}"
+        AC_SUBST(BOTAN_RPATH)
+    fi
+
     AC_SUBST(BOTAN_LDFLAGS)
     AC_SUBST(BOTAN_INCLUDES)
 fi
@@ -871,6 +883,8 @@ dnl includes too
                  ${PYTHON_LDFLAGS}
                  ${PYTHON_LIB}
   Boost:         ${BOOST_INCLUDES}
+  Botan:         ${BOTAN_INCLUDES}
+                 ${BOTAN_LDFLAGS}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
 
