@@ -392,9 +392,17 @@ if test -z "$with_botan"; then
     done
 fi
 if test "${botan_path}" ; then
-    CPPFLAGS="$CPPFLAGS -I${botan_path}/include"
-    LDFLAGS="$LDFLAGS -L${botan_path}/lib -lbotan"
+    BOTAN_LDFLAGS="-L${botan_path}/lib -lbotan"
+    BOTAN_INCLUDES="-I${botan_path}/include"
+    AC_SUBST(BOTAN_LDFLAGS)
+    AC_SUBST(BOTAN_INCLUDES)
 fi
+
+CPPFLAGS_SAVED=$CPPFLAGS
+CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
+LDFLAGS_SAVED=$LDFLAGS
+LDFLAGS="$BOTAN_LDFLAGS $LDFLAGS"
+
 AC_CHECK_HEADERS([botan/botan.h],,AC_MSG_ERROR([Missing required header files.]))
 AC_LINK_IFELSE(
         [AC_LANG_PROGRAM([#include <botan/botan.h>
@@ -408,6 +416,8 @@ AC_LINK_IFELSE(
         [AC_MSG_RESULT([checking for Botan library... no])
          AC_MSG_ERROR([Needs Botan library 1.8 or higher])]
 )
+CPPFLAGS=$CPPFLAGS_SAVED
+LDFLAGS=$LDFLAGS_SAVED
 
 #
 # Configure Boost header path
