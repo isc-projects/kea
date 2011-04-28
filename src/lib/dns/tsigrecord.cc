@@ -73,18 +73,25 @@ toWireCommon(OUTPUT& output, const rdata::any::TSIG& rdata) {
 }
 }
 
-void
+int
 TSIGRecord::toWire(AbstractMessageRenderer& renderer) const {
+    // If adding the TSIG would exceed the size limit, don't do it.
+    if (renderer.getLength() + length_ > renderer.getLengthLimit()) {
+        renderer.setTruncated();
+        return (0);
+    }
+
     // key name = owner.  note that we disable compression.
     renderer.writeName(key_name_, false);
-
     toWireCommon(renderer, rdata_);
+    return (1);
 }
 
-void
+int
 TSIGRecord::toWire(OutputBuffer& buffer) const {
     key_name_.toWire(buffer);
     toWireCommon(buffer, rdata_);
+    return (1);
 }
 
 std::string

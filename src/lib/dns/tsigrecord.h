@@ -65,6 +65,9 @@ public:
     /// RDATA fails
     TSIGRecord(const Name& key_name, const rdata::any::TSIG& tsig_rdata);
 
+    /// Return the owner name of the TSIG RR, which is the TSIG key name
+    ///
+    /// \exception None
     const Name& getName() const { return (key_name_); }
 
     /// Return the RDATA of the TSIG RR
@@ -84,13 +87,71 @@ public:
     /// \exception None
     static const RRClass& getClass();
 
-    // Note: More important for the "from wire" case.
+    /// Return the length of the TSIG record
+    ///
+    /// When constructed from the key name and RDATA, it is the length of
+    /// the record when it is rendered by the \c toWire() method.
+    ///
+    /// \note When constructed "from wire", that will mean the length of
+    /// the wire format data for the TSIG RR.  The length will be necessary
+    /// to verify the message once parse is completed.  But this part is not
+    /// implemented yet.
+    ///
+    /// \exception None
     size_t getLength() const { return (length_); }
 
-    void toWire(AbstractMessageRenderer& renderer) const;
+    /// \brief Render the \c TSIG RR in the wire format.
+    ///
+    /// This method renders the TSIG record as a form of a DNS TSIG RR
+    /// via \c renderer, which encapsulates output buffer and other rendering
+    /// contexts.
+    ///
+    /// Normally this version of \c toWire() method tries to compress the
+    /// owner name of the RR whenever possible, but this method intentionally
+    /// skips owner name compression.  This is due to a report that some
+    /// Windows clients refuse a TSIG if its owner name is compressed
+    /// (See http://marc.info/?l=bind-workers&m=126637138430819&w=2).
+    /// Reportedly this seemed to be specific to GSS-TSIG, but this
+    /// implementation skip compression regardless of the algorithm.
+    ///
+    /// If by adding the TSIG RR the message size would exceed the limit
+    /// maintained in \c renderer, this method skips rendering the RR
+    /// and returns 0 and mark \c renderer as "truncated" (so that a
+    /// subsequent call to \c isTruncated() on \c renderer will result in
+    /// \c true); otherwise it returns 1, which is the number of RR
+    /// rendered.
+    ///
+    /// \note If the caller follows the specification of adding TSIG
+    /// as described in RFC2845, this should not happen; the caller is
+    /// generally expected to leave a sufficient room in the message for
+    /// the TSIG.  But this method checks the unexpected case nevertheless.
+    ///
+    /// \exception std::bad_alloc Internal resource allocation fails (this
+    /// should be rare).
+    ///
+    /// \param renderer DNS message rendering context that encapsulates the
+    /// output buffer and name compression information.
+    /// \return 1 if the TSIG RR fits in the message size limit; otherwise 0.
+    int toWire(AbstractMessageRenderer& renderer) const;
 
-    void toWire(isc::util::OutputBuffer& buffer) const;
+    /// \brief Render the \c TSIG RR in the wire format.
+    ///
+    /// This method is same as \c toWire(AbstractMessageRenderer&)const
+    /// except it renders the RR in an \c OutputBuffer and therefore
+    /// does not care about message size limit.
+    /// As a consequence it always returns 1.
+    int toWire(isc::util::OutputBuffer& buffer) const;
 
+    /// Convert the TSIG record to a string.
+    ///
+    /// The output format is the same as the result of \c toText() for
+    /// other normal types of RRsets (with always using the same RR class
+    /// and TTL).  It also ends with a newline.
+    ///
+    /// \exception std::bad_alloc Internal resource allocation fails (this
+    /// should be rare).
+    ///
+    /// \return A string representation of \c TSIG record
     std::string toText() const;
 
     /// The TTL value to be used in TSIG RRs.
