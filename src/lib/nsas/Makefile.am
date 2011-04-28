@@ -4,6 +4,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(MULTITHREADING_FLAG)
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
+AM_CPPFLAGS += -I$(top_srcdir)/src/lib/log -I$(top_builddir)/src/lib/log
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/nsas -I$(top_builddir)/src/lib/nsas
 AM_CPPFLAGS += $(SQLITE_CFLAGS)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
@@ -30,11 +31,15 @@ libnsas_la_SOURCES += hash_table.h
 libnsas_la_SOURCES += nameserver_address_store.cc nameserver_address_store.h
 libnsas_la_SOURCES += nameserver_address.h nameserver_address.cc
 libnsas_la_SOURCES += nameserver_entry.cc nameserver_entry.h
+libnsas_la_SOURCES += nsasdef.h nsasdef.cc
 libnsas_la_SOURCES += nsas_entry_compare.h
 libnsas_la_SOURCES += nsas_entry.h nsas_types.h
+libnsas_la_SOURCES += nsas_levels.h
 libnsas_la_SOURCES += zone_entry.cc zone_entry.h
 libnsas_la_SOURCES += fetchable.h
 libnsas_la_SOURCES += address_request_callback.h
 libnsas_la_SOURCES += glue_hints.h glue_hints.cc
+
+EXTRA_DIST = nsasdef.msg
 
 CLEANFILES = *.gcno *.gcda
