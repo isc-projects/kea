@@ -22,6 +22,7 @@
 #include <dns/rdataclass.h>
 #include <util/locks.h>
 #include <util/lru_list.h>
+#include <log/logger.h>
 
 #include "hash_table.h"
 #include "hash_deleter.h"
@@ -31,12 +32,19 @@
 #include "zone_entry.h"
 #include "glue_hints.h"
 #include "address_request_callback.h"
+#include "nsasdef.h"
+#include "nsas_levels.h"
 
 using namespace isc::dns;
 using namespace std;
 
 namespace isc {
 namespace nsas {
+
+// Define logger for messages (local to this file)
+namespace {
+isc::log::Logger logger("nsas");
+}
 
 // Constructor.
 //
@@ -84,6 +92,8 @@ NameserverAddressStore::lookup(const string& zone, const RRClass& class_code,
     boost::shared_ptr<AddressRequestCallback> callback, AddressFamily family,
     const GlueHints& glue_hints)
 {
+    logger.debug(NSAS_DBG_TRACE, NSAS_LOOKUPZONE, zone.c_str());
+
     pair<bool, boost::shared_ptr<ZoneEntry> > zone_obj(
         zone_hash_->getOrAdd(HashKey(zone, class_code),
                              boost::bind(newZone, resolver_, &zone, &class_code,
@@ -103,6 +113,8 @@ NameserverAddressStore::cancel(const string& zone,
     const boost::shared_ptr<AddressRequestCallback>& callback,
     AddressFamily family)
 {
+    logger.debug(NSAS_DBG_TRACE, NSAS_LOOKUPCANCEL, zone.c_str());
+
     boost::shared_ptr<ZoneEntry> entry(zone_hash_->get(HashKey(zone,
                                                                class_code)));
     if (entry) {
