@@ -397,13 +397,16 @@ if test "${botan_path}" ; then
 fi
 AC_CHECK_HEADERS([botan/botan.h],,AC_MSG_ERROR([Missing required header files.]))
 AC_LINK_IFELSE(
-        [AC_LANG_PROGRAM([#include <botan/botan.h>],
+        [AC_LANG_PROGRAM([#include <botan/botan.h>
+                          #include <botan/hash.h>
+                         ],
                          [using namespace Botan;
                           LibraryInitializer::initialize();
+                          HashFunction *h = get_hash("MD5");
                          ])],
         [AC_MSG_RESULT([checking for Botan library... yes])],
         [AC_MSG_RESULT([checking for Botan library... no])
-         AC_MSG_ERROR([Missing Botan library])]
+         AC_MSG_ERROR([Needs Botan library 1.8 or higher])]
 )
 
 #
