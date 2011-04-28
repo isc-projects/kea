@@ -26,7 +26,7 @@ export BIND10_MSGQ_SOCKET_FILE
 
 STATS_PATH=@abs_top_builddir@/src/bin/stats
 
-B10_FROM_SOURCE=@abs_top_srcdir@/src/bin/stats
+B10_FROM_SOURCE=@abs_top_srcdir@
 export B10_FROM_SOURCE
 
 cd ${STATS_PATH}
