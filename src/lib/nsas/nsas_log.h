@@ -12,14 +12,42 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __NSAS_LEVELS_H
-#define __NSAS_LEVELS_H
+#ifndef __NSAS_LOG__H
+#define __NSAS_LOG__H
 
-/// \brief NSAS Debug Levels
+#include <log/logger.h>
+#include "nsasdef.h"
+
+namespace isc {
+namespace nsas {
+
+/// \brief NSAS Logging
 ///
 /// Defines the levels used to output debug messages in the NSAS.  Note that
 /// higher numbers equate to more verbose (and detailed) output.
 
-const int NSAS_DBG_TRACE = 10;  // Trace of normal operations
+// The first level traces normal operations - asking the NSAS for an address,
+// and cancelling a lookup.  It also records when the NSAS calls back to the
+// resolver to resolve something.
+const int NSAS_DBG_TRACE = 10;
 
-#endif // __NSAS_LEVELS_H
+// The next level extends the normal operations and records the results of the
+// lookups.
+const int NSAS_DBG_RESULTS = 20;
+
+// Additional information on the usage of the names - the RTT values obtained
+// when queries were done.
+const int NSAS_DBG_RTT = 30;
+
+
+/// \brief NSAS Logger
+///
+/// Define the logger used to log messages.  We could define it in multiple
+/// modules, but defining in a single module and linking to it saves time and
+/// space.
+extern isc::log::Logger nsas_logger;    // isc::nsas::logger is the NSAS logger
+
+} // namespace nsas
+} // namespace isc
+
+#endif // __NSAS_LOG__H

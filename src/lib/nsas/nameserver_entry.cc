@@ -40,6 +40,7 @@
 #include "address_entry.h"
 #include "nameserver_address.h"
 #include "nameserver_entry.h"
+#include "nsas_log.h"
 
 using namespace isc::asiolink;
 using namespace isc::nsas;
@@ -178,6 +179,9 @@ NameserverEntry::updateAddressRTTAtIndex(uint32_t rtt, size_t index,
         new_rtt = 1;
     }
     addresses_[family][index].setRTT(new_rtt);
+    nsas_logger.debug(NSAS_DBG_RTT, NSAS_SETRTT,
+                      addresses_[family][index].getAddress().toText().c_str(),
+                      old_rtt, new_rtt);
 }
 
 void
@@ -203,7 +207,7 @@ NameserverEntry::setAddressUnreachable(const IOAddress& address) {
  * \short A callback into the resolver.
  *
  * Whenever we ask the resolver something, this is created and the answer is
- * fed back trough this. It holds a shared pointer to the entry so it is not
+ * fed back through this. It holds a shared pointer to the entry so it is not
  * destroyed too soon.
  */
 class NameserverEntry::ResolverCallback :
@@ -230,6 +234,7 @@ class NameserverEntry::ResolverCallback :
             if (!response_message ||
                 response_message->getRcode() != isc::dns::Rcode::NOERROR() ||
                 response_message->getRRCount(isc::dns::Message::SECTION_ANSWER) == 0) {
+                nsas_logger.error(NSAS_INVRESPSTR, entry_->getName().c_str());
                 failureInternal(lock);
                 return;
             }
@@ -243,7 +248,13 @@ class NameserverEntry::ResolverCallback :
             if (response->getType() != type_ ||
                 response->getClass() != RRClass(entry_->getClass()))
             {
-                // TODO Log we got answer of different type
+                // Invalid response type or class
+                nsas_logger.error(NSAS_INVRESPTC, entry_->getName().c_str(),
+                                  type_.toText().c_str(),
+                                  RRClass(entry_->getClass()).toText().c_str(),
+                                  response->getType().toText().c_str(),
+                                  response->getClass().toText().c_str());
+
                 failureInternal(lock);
                 return;
             }
@@ -264,8 +275,10 @@ class NameserverEntry::ResolverCallback :
                     }
                 }
                 // If we found it, use it. If not, create a new one.
-                entries.push_back(found ? *found : AddressEntry(IOAddress(
-                    i->getCurrent().toText()), 1));
+                entries.push_back(found ? *found : AddressEntry(
+                                                   IOAddress(address), 1));
+                nsas_logger.debug(NSAS_DBG_RESULTS, NSAS_NSLKUPSUCC,
+                                  address.c_str(), entry_->getName().c_str());
             }
 
             // We no longer need the previous set of addresses, we have
@@ -310,6 +323,9 @@ class NameserverEntry::ResolverCallback :
          * So mark the current address family as unreachable.
          */
         virtual void failure() {
+            nsas_logger.debug(NSAS_DBG_RESULTS, NSAS_NSLKUPFAIL,
+                              type_.toText().c_str(),
+                              entry_->getName().c_str());
             Lock lock(entry_->mutex_);
             failureInternal(lock);
         }
@@ -422,6 +438,8 @@ NameserverEntry::askIP(isc::resolve::ResolverInterface* resolver,
         // Ask for both types of addresses
         // We are unlocked here, as the callback from that might want to lock
         lock.unlock();
+
+        nsas_logger.debug(NSAS_DBG_TRACE, NSAS_NSADDR, getName().c_str());
         askIP(resolver, RRType::A(), V4_ONLY);
         askIP(resolver, RRType::AAAA(), V6_ONLY);
         // Make sure we end the routine when we are not locked
