@@ -68,3 +68,37 @@ CACHE_ENABLE Enabling the cache
 CACHE_DISABLE Disabling the cache
 + The hotspot cache is disabled from now on. It is not going to store
 + information or return anything.
+
+QUERY_SYNTH_CNAME Synthesizing CNAME from DNAME on '%s'
++ Debug info. While answering a query, we met a DNAME. We'll return the DNAME,
++ but we're creating a CNAME for clients that don't understand DNAMEs.
+
+QUERY_EMPTY_DNAME The DNAME on '%s' is empty
++ We tried to synthesize a CNAME from this DNAME, but it contains no records.
++ This indicates problem with supplied data.
+
+QUERY_GET_NS_ADDITIONAL Addition of A/AAAA for '%s' requested by NS '%s'
++ Debug information. While processing a query, we met a NS record. It
++ references the mentioned address, so we want to look up A/AAAA records for it
++ and put it into the additional section.
+
+QUERY_GET_MX_ADDITIONAL Addition of A/AAAA for '%s' requested by MX '%s'
++ Debug information. While processing a query, we met a MX record. It
++ references the mentioned address, so we want to look up A/AAAA records for it
++ and put it into the additional section.
+
+QUERY_FOLLOW_CNAME Following CNAME at '%s'
++ Debug information. The domain is a CNAME (or a DNAME and we created a CNAME
++ for it already), so we're following it.
+
+QUERY_EMPTY_CNAME CNAME at '%s' is empty
++ We tried to follow a CNAME, but contains no records. We have nothing to
++ follow, so we will have nothing in the answer. This indicates a problem with
++ supplied data.
+
+QUERY_TOO_MANY_CNAMES CNAME chain limit exceeded at '%s'
++ While answering a query, we followed a CNAME. Then another one. And after 16
++ CNAMEs we decided it's enough and we won't follow more. Long CNAME chains
++ are discouraged, and this might be a loop as well. Note that some of the
++ CNAMEs might have been synthesised from DNAMEs internally. This indicates
++ a problem with supplied data.
