@@ -65,7 +65,7 @@ public:
             isc_throw(isc::cryptolink::LibraryError, exc.what());
         }
 
-        hmac_.reset(new Botan::HMAC::HMAC(hash));
+        hmac_.reset(new Botan::HMAC(hash));
 
         // If the key length is larger than the block size, we hash the
         // key itself first.
