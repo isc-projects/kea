@@ -145,7 +145,7 @@ public:
     const Name& getAlgorithmName() const;
 
     /// Return the hash algorithm name in the form of cryptolink::HashAlgorithm
-    isc::cryptolink::HashAlgorithm getCryptoAlgorithm() const;
+    isc::cryptolink::HashAlgorithm getAlgorithm() const;
 
     /// Return the length of the TSIG secret in bytes.
     size_t getSecretLength() const;
