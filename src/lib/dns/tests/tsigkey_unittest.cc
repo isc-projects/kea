@@ -43,12 +43,12 @@ TEST_F(TSIGKeyTest, algorithmNames) {
 
     // Also check conversion to cryptolink definitions
     EXPECT_EQ(isc::cryptolink::MD5, TSIGKey(key_name, TSIGKey::HMACMD5_NAME(),
-                                            NULL, 0).getCryptoAlgorithm());
+                                            NULL, 0).getAlgorithm());
     EXPECT_EQ(isc::cryptolink::SHA1, TSIGKey(key_name, TSIGKey::HMACSHA1_NAME(),
-                                             NULL, 0).getCryptoAlgorithm());
+                                             NULL, 0).getAlgorithm());
     EXPECT_EQ(isc::cryptolink::SHA256, TSIGKey(key_name,
                                                TSIGKey::HMACSHA256_NAME(),
-                                               NULL, 0).getCryptoAlgorithm());
+                                               NULL, 0).getAlgorithm());
 }
 
 TEST_F(TSIGKeyTest, construct) {

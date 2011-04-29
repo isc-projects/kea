@@ -141,7 +141,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
     HMACPtr hmac(CryptoLink::getCryptoLink().createHMAC(
                      impl_->key_.getSecret(),
                      impl_->key_.getSecretLength(),
-                     impl_->key_.getCryptoAlgorithm()),
+                     impl_->key_.getAlgorithm()),
                  deleteHMAC);
 
     // If the context has previous MAC (either the Request MAC or its own

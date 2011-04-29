@@ -152,7 +152,7 @@ TSIGKey::getAlgorithmName() const {
 }
 
 isc::cryptolink::HashAlgorithm
-TSIGKey::getCryptoAlgorithm() const {
+TSIGKey::getAlgorithm() const {
     return (impl_->algorithm_);
 }
 
