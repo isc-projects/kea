@@ -21,7 +21,7 @@
 #include <util/buffer.h>
 #include <exceptions/exceptions.h>
 
-#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 
 using namespace isc::util;
 using namespace isc::cryptolink;
@@ -88,9 +88,10 @@ namespace {
         CryptoLink& crypto = CryptoLink::getCryptoLink();
 
         // Sign it
-        boost::scoped_ptr<HMAC> hmac_sign(crypto.createHMAC(secret,
+        boost::shared_ptr<HMAC> hmac_sign(crypto.createHMAC(secret,
                                                             secret_len,
-                                                            hash_algorithm));
+                                                            hash_algorithm),
+                                          deleteHMAC);
         hmac_sign->update(data_buf.getData(), data_buf.getLength());
         hmac_sign->sign(hmac_sig, hmac_len);
 
@@ -98,9 +99,10 @@ namespace {
         checkBuffer(hmac_sig, expected_hmac, hmac_len);
 
         // Check whether we can verify it ourselves
-        boost::scoped_ptr<HMAC> hmac_verify(crypto.createHMAC(secret,
+        boost::shared_ptr<HMAC> hmac_verify(crypto.createHMAC(secret,
                                                               secret_len,
-                                                              hash_algorithm));
+                                                              hash_algorithm),
+                                            deleteHMAC);
         hmac_verify->update(data_buf.getData(), data_buf.getLength());
         EXPECT_TRUE(hmac_verify->verify(hmac_sig.getData(),
                                         hmac_sig.getLength()));
@@ -119,17 +121,19 @@ namespace {
                           const uint8_t* expected_hmac,
                           size_t hmac_len) {
         CryptoLink& crypto = CryptoLink::getCryptoLink();
-        boost::scoped_ptr<HMAC> hmac_sign(crypto.createHMAC(secret,
+        boost::shared_ptr<HMAC> hmac_sign(crypto.createHMAC(secret,
                                                             secret_len,
-                                                            hash_algorithm));
+                                                            hash_algorithm),
+                                          deleteHMAC);
         hmac_sign->update(data.c_str(), data.size());
         std::vector<uint8_t> sig = hmac_sign->sign(hmac_len);
         ASSERT_EQ(hmac_len, sig.size());
         checkData(&sig[0], expected_hmac, hmac_len);
 
-        boost::scoped_ptr<HMAC> hmac_verify(crypto.createHMAC(secret,
+        boost::shared_ptr<HMAC> hmac_verify(crypto.createHMAC(secret,
                                                               secret_len,
-                                                              hash_algorithm));
+                                                              hash_algorithm),
+                                            deleteHMAC);
         hmac_verify->update(data.c_str(), data.size());
         EXPECT_TRUE(hmac_verify->verify(&sig[0], sig.size()));
 
@@ -144,9 +148,10 @@ namespace {
                          const uint8_t* expected_hmac,
                          size_t hmac_len) {
         CryptoLink& crypto = CryptoLink::getCryptoLink();
-        boost::scoped_ptr<HMAC> hmac_sign(crypto.createHMAC(secret,
+        boost::shared_ptr<HMAC> hmac_sign(crypto.createHMAC(secret,
                                                             secret_len,
-                                                            hash_algorithm));
+                                                            hash_algorithm),
+                                          deleteHMAC);
         hmac_sign->update(data.c_str(), data.size());
 
         // note: this is not exception-safe, and can leak, but
@@ -157,9 +162,10 @@ namespace {
         hmac_sign->sign(sig, hmac_len);
         checkData(sig, expected_hmac, hmac_len);
 
-        boost::scoped_ptr<HMAC> hmac_verify(crypto.createHMAC(secret,
+        boost::shared_ptr<HMAC> hmac_verify(crypto.createHMAC(secret,
                                                               secret_len,
-                                                              hash_algorithm));
+                                                              hash_algorithm),
+                                            deleteHMAC);
         hmac_verify->update(data.c_str(), data.size());
         EXPECT_TRUE(hmac_verify->verify(sig, hmac_len));
 
@@ -415,10 +421,9 @@ TEST(CryptoLinkTest, HMAC_SHA256_RFC2202_SIGN) {
 namespace {
     size_t
     sigVectorLength(HashAlgorithm alg, size_t len) {
-        std::auto_ptr<HMAC> hmac_sign(
-            CryptoLink::getCryptoLink().createHMAC("asdf", 4, alg));
-        //boost::scoped_ptr<HMAC> hmac_sign(
-        //    CryptoLink::getCryptoLink().createHMAC("asdf", 4, alg));
+        boost::shared_ptr<HMAC> hmac_sign(
+            CryptoLink::getCryptoLink().createHMAC("asdf", 4, alg),
+            deleteHMAC);
         hmac_sign->update("asdf", 4);
         const std::vector<uint8_t> sig = hmac_sign->sign(len);
         return (sig.size());
@@ -426,8 +431,9 @@ namespace {
 
     size_t
     sigBufferLength(HashAlgorithm alg, size_t len) {
-        boost::scoped_ptr<HMAC> hmac_sign(
-            CryptoLink::getCryptoLink().createHMAC("asdf", 4, alg));
+        boost::shared_ptr<HMAC> hmac_sign(
+            CryptoLink::getCryptoLink().createHMAC("asdf", 4, alg),
+            deleteHMAC);
         hmac_sign->update("asdf", 4);
         OutputBuffer sig(0);
         hmac_sign->sign(sig, len);

@@ -36,7 +36,7 @@ operator new(size_t size) throw(std::bad_alloc) {
 void
 operator delete(void* p) throw() {
     if (p != NULL) {
-        free (p);
+        free(p);
     }
 }
 #endif
