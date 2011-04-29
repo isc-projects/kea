@@ -25,7 +25,6 @@ EXTRA_DIST += rrttl_python.cc
 EXTRA_DIST += rdata_python.cc
 EXTRA_DIST += rrtype_python.cc
 EXTRA_DIST += tsigkey_python.cc
-EXTRA_DIST += tsig_python.cc
 
 # Python prefers .so, while some OSes (specifically MacOS) use a different
 # suffix for dynamic objects.  -module is necessary to work this around.

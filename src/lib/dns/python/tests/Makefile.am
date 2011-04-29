@@ -11,7 +11,6 @@ PYTESTS += rrclass_python_test.py
 PYTESTS += rrset_python_test.py
 PYTESTS += rrttl_python_test.py
 PYTESTS += rrtype_python_test.py
-PYTESTS += tsig_python_test.py
 PYTESTS += tsigkey_python_test.py
 
 EXTRA_DIST = $(PYTESTS)
