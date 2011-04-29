@@ -102,3 +102,174 @@ QUERY_TOO_MANY_CNAMES CNAME chain limit exceeded at '%s'
 + are discouraged, and this might be a loop as well. Note that some of the
 + CNAMEs might have been synthesised from DNAMEs internally. This indicates
 + a problem with supplied data.
+
+QUERY_CHECK_CACHE Checking cache for '%s/%s'
++ Debug information. While processing a query we're looking into the hotspot
++ cache.
+
+QUERY_NO_CACHE_ANY_SIMPLE Ignoring cache for ANY query
++ Debug information. We don't really want to use cache for simple ANY query
++ (ANY as the type or class).
+
+QUERY_NO_CACHE_ANY_AUTH Ignoring cache for ANY query
++ Debug information. We don't really want to use cache for authoritative ANY
++ query (ANY as the type or class).
+
+DO_QUERY Handling query for '%s/%s'
++ Debug information. We're processing some internal query for given name and
++ type.
+
+QUERY_NO_ZONE No zone containing '%s' in class '%s'
++ We tried to get the domain but there's no zone in our data that encloses
++ the name. Maybe someone sent a query to wrong server for some reason.
+
+QUERY_CACHED Data found in cache
++ Debug information. We found the requested data in cache, so we're not
++ querying the real data source.
+
+QUERY_IS_SIMPLE Simple query
++ Debug information. The last DO_QUERY is a simple query.
+
+QUERY_IS_AUTH Auth query
++ Debug information. The last DO_QUERY is an auth query.
+
+QUERY_IS_GLUE Glue query
++ Debug information. The last DO_QUERY is query for glue addresses.
+
+QUERY_IS_NOGLUE Query for non-glue addresses
++ Debug information. The last DO_QUERY is query for addresses that are not
++ glue.
+
+QUERY_IS_REF Query for referral
++ Debug information. The last DO_QUERY is query for referral information.
+
+QUERY_SIMPLE_FAIL The underlying data source failed with %u
++ We queried the data source to answer a simple query and it returned error
++ (1 is some error, 2 is not implemented). The data source should have log
++ the specific error already.
+
+QUERY_AUTH_FAIL The underlying data source failed with %u
++ We queried the data source to answer authoritative query and it returned
++ error (1 is some error, 2 is not implemented). The data source should have
++ log the specific error already.
+
+QUERY_GLUE_FAIL The underlying data source failed with %u
++ We queried the data source to answer query for glue addresses and it returned
++ error (1 is some error, 2 is not implemented). The data source should have
++ log the specific error already.
+
+QUERY_NOGLUE_FAIL The underlying data source failed with %u
++ We queried the data source to answer query for non-glue addresses and it
++ returned error (1 is some error, 2 is not implemented). The data source
++ should have log the specific error already.
+
+QUERY_REF_FAIL The underlying data source failed with %u
++ We queried the data source to answer query for referral and it
++ returned error (1 is some error, 2 is not implemented). The data source
++ should have log the specific error already.
+
+QUERY_INVALID_OP Invalid query operation requested
++ This indicates a programmer error. The DO_QUERY was called with unknown
++ operation code.
+
+QUERY_ADD_RRSET Adding RRset '%s/%s' to message
++ Debug information. We're adding the rrset to answer message.
+
+QUERY_COPY_AUTH Copying authoritative section into message
++ Debug information. We're copying referral information into authoritative
++ section of the response message.
+
+QUERY_DELEGATION Looking for delegation on the path to '%s'
++ Debug information. We're looking if there's a delegation point on the way
++ down to the given domain.
+
+QUERY_ADD_SOA Adding SOA of '%s'
++ Debug information. We're adding a SOA record for the given zone into the
++ authority section.
+
+QUERY_ADD_NSEC Adding NSEC record for '%s'
++ Debug information. We're adding NSEC record for this domain.
+
+QUERY_ADD_NSEC3 Adding NSEC3 record of zone '%s'
++ Debug information. We're adding an NSEC3 record for this zone.
+
+QUERY_NO_DS_NSEC3 There's no DS record in the '%s' zone
++ We tried to insert a NSEC3 record into the message. But we didn't find a DS
++ record for this zone.
+
+QUERY_NO_DS_NSEC There's no DS record in the '%s' zone
++ We tried to insert a NSEC record into the message. But we didn't find a DS
++ record for this zone.
+
+QUERY_WILDCARD Looking for a wildcard covering '%s'
++ Debug information. We didn't find a direct match, so we're trying to find if
++ there's a wildcard we could use to answer the query.
+
+QUERY_WILDCARD_PROVENX_FAIL Unable to prove nonexistence of '%s' (%u)
++ While processing a wildcard, we tried to prove nonexistence of the given
++ domain or record. The code is 1 for error and 2 for not implemented.
+
+QUERY_WILDCARD_REFERRAL Unable to find referral info for '%s' (%u)
++ While processing a wildcard we met a referral. But we were not able to get
++ information for it. The code is 1 for error, 2 for not implemented.
+
+QUERY_PROCESS Processing query '%s/%s' in the '%s' class
++ Debug information. We're starting to process a user query.
+
+QUERY_RRSIG Unable to answer RRSIG query
++ The server is unable to answer a direct query for RRSIG type, but was asked
++ to do so.
+
+QUERY_MISPLACED_TASK Task of this type should not be here
++ This indicates a programming error. We found a task in the internal task
++ queue which wasn't supposed to ever be put into the queue, but handled
++ directly.
+
+QUERY_TASK_FAIL Task failed with %u
++ The query subtask failed. The reason should have been reported by the subtask
++ already. The code is 1 for error, 2 for not implemented.
+
+QUERY_MISSING_NS Missing NS records for '%s'
++ We wanted to put the nameserver records into the authority section, but we
++ discovered the zone doesn't have them. This indicates problem with provided
++ data.
+
+UNEXPECTED_QUERY_STATE Unexpected query state
++ This indicates a programming error. We generated an internal task of type
++ unknown to us.
+
+QUERY_FAIL Query failed
++ Some subtask of query processing failed. The reason should have been reported
++ already. We are returning SERVFAIL.
+
+QUERY_BAD_REFERRAL Bad referral to '%s'
++ We discovered that the domain lives in another zone. But we are not able to
++ generate referral information to it.
+
+QUERY_WILDCARD_FAIL Error processing wildcard for '%s'
++ We tried to find a wildcard to cover the domain, but there happened to be
++ some (hopefully already reported) error for it.
+
+QUERY_MISSING_SOA The zone '%s' has no SOA
++ We tried to answer negatively, but there's no SOA record in the zone.
+
+QUERY_PROVENX_FAIL Unable to prove nonexistence of '%s'
++ The user wants DNSSEC and we discovered the entity doesn't exist (either
++ domain or the record). But there was an error getting NSEC/NSEC3 record
++ to prove the nonexistence.
+
+QUERY_UNKNOWN_RESULT Unknown result of subtask
++ This indicates a programmer error. The answer of subtask doesn't look like
++ anything we would know.
+
+META_ADD Adding a data source into meta data source
++ Debug information. We add yet another data source into the meta data source
++ (probably at startup or reconfiguration).
+
+META_ADD_CLASS_MISMATCH Mismatch between classes '%s' and '%s'
++ We tried to add a data source of one class into a meta data source of a
++ different type. The types must be the same.
+
+META_REMOVE Removing data source from meta data source
++ Debug information. We take a data source out of meta data source (probably
++ at shutdown or reconfiguration).
