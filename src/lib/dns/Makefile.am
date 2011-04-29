@@ -80,12 +80,18 @@ libdns___la_SOURCES += rrsetlist.h rrsetlist.cc
 libdns___la_SOURCES += rrttl.h rrttl.cc
 libdns___la_SOURCES += rrtype.cc
 libdns___la_SOURCES += question.h question.cc
+libdns___la_SOURCES += tsig.h tsig.cc
+libdns___la_SOURCES += tsigerror.h tsigerror.cc
 libdns___la_SOURCES += tsigkey.h tsigkey.cc
 libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.h
 libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.cc
 
 libdns___la_CPPFLAGS = $(AM_CPPFLAGS)
-libdns___la_LIBADD = $(top_builddir)/src/lib/util/libutil.la
+# Most applications of libdns++ will only implicitly rely on libcryptolink,
+# so we add the dependency here so that the applications don't have to link
+# libcryptolink explicitly.
+libdns___la_LIBADD = $(top_builddir)/src/lib/cryptolink/libcryptolink.la
+libdns___la_LIBADD += $(top_builddir)/src/lib/util/libutil.la
 
 nodist_libdns___la_SOURCES = rdataclass.cc rrclass.h rrtype.h
 nodist_libdns___la_SOURCES += rrparamregistry.cc
