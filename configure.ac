@@ -375,36 +375,68 @@ fi
 AC_SUBST(USE_LCOV)
 
 # Check for Botan
-botan_path=""
+botan_path="yes"
 AC_ARG_WITH([botan],
   AC_HELP_STRING([--with-botan=PATH],
     [specify exact directory of Botan library]),
     [botan_path="$withval"])
-# If not specificed, try some common paths
-if test -z "$with_botan"; then
-    botandirs="/usr/local /usr/pkg /opt /opt/local /usr"
-    for d in $botandirs
-    do
-        if test -f $d/include/botan/botan.h; then
-            botan_path=$d
-            break
-        fi
-    done
+if test "${botan_path}" == "no" ; then
+    AC_MSG_ERROR([Need botan for libcryptolink])
 fi
-if test "${botan_path}" ; then
-    CPPFLAGS="$CPPFLAGS -I${botan_path}/include"
-    LDFLAGS="$LDFLAGS -L${botan_path}/lib -lbotan"
+if test "${botan_path}" != "yes" ; then
+    if test -x "${botan_path}/bin/botan-config" ; then
+        BOTAN_CONFIG="${botan_path}/bin/botan-config"
+    else
+        AC_MSG_ERROR([${botan_path}/bin/botan-config not found])
+    fi
+else
+        AC_PATH_PROG([BOTAN_CONFIG], [botan-config])
 fi
+
+if test -x "${BOTAN_CONFIG}" ; then
+    BOTAN_LDFLAGS=`${BOTAN_CONFIG} --libs`
+    # We expect botan-config --libs to contain -L<path_to_libbotan>, but
+    # this is not always the case.  As a heuristics workaround we add
+    # -L`botan-config --prefix/lib` in this case.  Same for BOTAN_INCLUDES
+    # (but using include instead of lib) below.
+    echo ${BOTAN_LDFLAGS} | grep -- -L > /dev/null || \
+	    BOTAN_LDFLAGS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LDFLAGS}"
+    BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
+    echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
+	    BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
+    # See python_rpath for some info on why we do this
+    if test $rpath_available = yes; then
+        BOTAN_RPATH=
+        for flag in ${BOTAN_LDFLAGS}; do
+                BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne 's/^\(\-L\)/-R/p'`"
+        done
+        AC_SUBST(BOTAN_RPATH)
+    fi
+
+    AC_SUBST(BOTAN_LDFLAGS)
+    AC_SUBST(BOTAN_INCLUDES)
+fi
+
+CPPFLAGS_SAVED=$CPPFLAGS
+CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
+LDFLAGS_SAVED=$LDFLAGS
+LDFLAGS="$BOTAN_LDFLAGS $LDFLAGS"
+
 AC_CHECK_HEADERS([botan/botan.h],,AC_MSG_ERROR([Missing required header files.]))
 AC_LINK_IFELSE(
-        [AC_LANG_PROGRAM([#include <botan/botan.h>],
+        [AC_LANG_PROGRAM([#include <botan/botan.h>
+                          #include <botan/hash.h>
+                         ],
                          [using namespace Botan;
                           LibraryInitializer::initialize();
+                          HashFunction *h = get_hash("MD5");
                          ])],
         [AC_MSG_RESULT([checking for Botan library... yes])],
         [AC_MSG_RESULT([checking for Botan library... no])
-         AC_MSG_ERROR([Missing Botan library])]
+         AC_MSG_ERROR([Needs Botan library 1.8 or higher])]
 )
+CPPFLAGS=$CPPFLAGS_SAVED
+LDFLAGS=$LDFLAGS_SAVED
 
 #
 # Configure Boost header path
@@ -717,11 +749,6 @@ AC_CONFIG_FILES([Makefile
                  src/lib/exceptions/tests/Makefile
                  src/lib/datasrc/Makefile
                  src/lib/datasrc/tests/Makefile
-                 src/lib/util/Makefile
-                 src/lib/util/io/Makefile
-                 src/lib/util/io/tests/Makefile
-                 src/lib/util/unittests/Makefile
-                 src/lib/util/tests/Makefile
                  src/lib/xfr/Makefile
                  src/lib/log/Makefile
                  src/lib/log/compiler/Makefile
@@ -736,6 +763,11 @@ AC_CONFIG_FILES([Makefile
                  src/lib/cache/tests/Makefile
                  src/lib/server_common/Makefile
                  src/lib/server_common/tests/Makefile
+                 src/lib/util/Makefile
+                 src/lib/util/io/Makefile
+                 src/lib/util/io/tests/Makefile
+                 src/lib/util/unittests/Makefile
+                 src/lib/util/tests/Makefile
                  tests/Makefile
                  tests/system/Makefile
                  tests/tools/Makefile
@@ -858,6 +890,8 @@ dnl includes too
                  ${PYTHON_LDFLAGS}
                  ${PYTHON_LIB}
   Boost:         ${BOOST_INCLUDES}
+  Botan:         ${BOTAN_INCLUDES}
+                 ${BOTAN_LDFLAGS}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
 

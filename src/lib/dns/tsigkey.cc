@@ -109,7 +109,7 @@ TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
         const HashAlgorithm algorithm = convertAlgorithmName(algo_name);
 
         vector<uint8_t> secret;
-        util::encode::decodeBase64(secret_str, secret);
+        isc::util::encode::decodeBase64(secret_str, secret);
 
         impl_ = new TSIGKeyImpl(Name(keyname_str), algo_name, algorithm,
                                 &secret[0], secret.size());
@@ -152,7 +152,7 @@ TSIGKey::getAlgorithmName() const {
 }
 
 isc::cryptolink::HashAlgorithm
-TSIGKey::getCryptoAlgorithm() const {
+TSIGKey::getAlgorithm() const {
     return (impl_->algorithm_);
 }
 
@@ -171,7 +171,7 @@ TSIGKey::toText() const {
     const vector<uint8_t> secret_v(static_cast<const uint8_t*>(getSecret()),
                                    static_cast<const uint8_t*>(getSecret()) +
                                    getSecretLength());
-    std::string secret_str = util::encode::encodeBase64(secret_v);
+    std::string secret_str = isc::util::encode::encodeBase64(secret_v);
 
     return (getKeyName().toText() + ":" + secret_str + ":" +
             getAlgorithmName().toText());

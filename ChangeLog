@@ -1,3 +1,11 @@
+226.	[func]*		jelte
+	Introduced an API for cryptographic operations. Currently it only
+	supports HMAC, intended for use with TSIG. The current
+	implementation uses Botan as the backend library.
+	This introduces a new dependency, on Botan.  Currently only Botan
+	1.8.x works; older or newer versions don't.
+	(Trac#781, git 9df42279a47eb617f586144dce8cce680598558a)
+
 225.	[func]		naokikambe
 	Added the HTTP/XML interface(b10-stats-httpd) to the statistics feature
 	in BIND 10. b10-stats-httpd is a standalone HTTP server and it requests

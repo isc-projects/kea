@@ -72,7 +72,8 @@ private:
         RRsetPtr set)
     {
         if (set) {
-            resolver->requests[index].second->success(createResponseMessage(set));
+            resolver->requests[index].second->success(
+                isc::util::unittests::createResponseMessage(set));
         } else {
             resolver->requests[index].second->failure();
         }
