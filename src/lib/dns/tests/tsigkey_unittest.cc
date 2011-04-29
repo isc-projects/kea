@@ -18,6 +18,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <cryptolink/cryptolink.h>
+
 #include <dns/tsigkey.h>
 
 #include <dns/tests/unittest_util.h>
@@ -38,6 +40,15 @@ TEST_F(TSIGKeyTest, algorithmNames) {
     EXPECT_EQ(Name("hmac-md5.sig-alg.reg.int"), TSIGKey::HMACMD5_NAME());
     EXPECT_EQ(Name("hmac-sha1"), TSIGKey::HMACSHA1_NAME());
     EXPECT_EQ(Name("hmac-sha256"), TSIGKey::HMACSHA256_NAME());
+
+    // Also check conversion to cryptolink definitions
+    EXPECT_EQ(isc::cryptolink::MD5, TSIGKey(key_name, TSIGKey::HMACMD5_NAME(),
+                                            NULL, 0).getCryptoAlgorithm());
+    EXPECT_EQ(isc::cryptolink::SHA1, TSIGKey(key_name, TSIGKey::HMACSHA1_NAME(),
+                                             NULL, 0).getCryptoAlgorithm());
+    EXPECT_EQ(isc::cryptolink::SHA256, TSIGKey(key_name,
+                                               TSIGKey::HMACSHA256_NAME(),
+                                               NULL, 0).getCryptoAlgorithm());
 }
 
 TEST_F(TSIGKeyTest, construct) {
@@ -57,6 +68,11 @@ TEST_F(TSIGKeyTest, construct) {
               TSIGKey(key_name, Name("HMAC-sha1"),
                       secret.c_str(),
                       secret.size()).getAlgorithmName().toText());
+
+    EXPECT_EQ("example.com.",
+              TSIGKey(Name("EXAMPLE.CoM."), TSIGKey::HMACSHA256_NAME(),
+                      secret.c_str(),
+                      secret.size()).getKeyName().toText());
 
     // Invalid combinations of secret and secret_len:
     EXPECT_THROW(TSIGKey(key_name, TSIGKey::HMACSHA1_NAME(), secret.c_str(), 0),
