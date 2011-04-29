@@ -31,3 +31,5 @@ libdatasrc_la_LIBADD += $(top_builddir)/src/lib/cc/libcc.la
 BUILT_SOURCES = messagedef.h messagedef.cc
 messagedef.h messagedef.cc: Makefile messagedef.mes
 	$(top_builddir)/src/lib/log/compiler/message messagedef.mes
+
+EXTRA_DIST = messagedef.mes
