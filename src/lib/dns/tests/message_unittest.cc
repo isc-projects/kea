@@ -12,9 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <boost/scoped_ptr.hpp>
+
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
+#include <util/time_utilities.h>
+
 #include <dns/edns.h>
 #include <dns/exceptions.h>
 #include <dns/message.h>
@@ -26,6 +30,8 @@
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
 #include <dns/rrtype.h>
+#include <dns/tsig.h>
+#include <dns/tsigkey.h>
 
 #include <gtest/gtest.h>
 
@@ -53,6 +59,14 @@ using namespace isc::dns::rdata;
 const uint16_t Message::DEFAULT_MAX_UDPSIZE;
 const Name test_name("test.example.com");
 
+namespace isc {
+namespace util {
+namespace detail {
+extern int64_t (*gettimeFunction)();
+}
+}
+}
+
 namespace {
 class MessageTest : public ::testing::Test {
 protected:
@@ -60,7 +74,9 @@ protected:
                     message_parse(Message::PARSE),
                     message_render(Message::RENDER),
                     bogus_section(static_cast<Message::Section>(
-                                      Message::SECTION_ADDITIONAL + 1))
+                                      Message::SECTION_ADDITIONAL + 1)),
+                    tsig_ctx(TSIGKey("www.example.com:"
+                                     "SFuWd/q99SzF8Yzd1QbB9g=="))
     {
         rrset_a = RRsetPtr(new RRset(test_name, RRClass::IN(),
                                      RRType::A(), RRTTL(3600)));
@@ -88,6 +104,9 @@ protected:
     RRsetPtr rrset_a;           // A RRset with two RDATAs
     RRsetPtr rrset_aaaa;        // AAAA RRset with one RDATA with RRSIG
     RRsetPtr rrset_rrsig;       // RRSIG for the AAAA RRset
+    TSIGContext tsig_ctx;
+    vector<unsigned char> expected_data;
+
     static void factoryFromFile(Message& message, const char* datafile);
 };
 
@@ -517,6 +536,65 @@ TEST_F(MessageTest, toWire) {
 TEST_F(MessageTest, toWireInParseMode) {
     // toWire() isn't allowed in the parse mode.
     EXPECT_THROW(message_parse.toWire(renderer), InvalidMessageOperation);
+}
+
+// See dnssectime_unittest.cc
+template <int64_t NOW>
+int64_t
+testGetTime() {
+    return (NOW);
+}
+
+void
+commonTSIGToWireCheck(Message& message, MessageRenderer& renderer,
+                      TSIGContext& tsig_ctx, const char* const expected_file)
+{
+    message.setOpcode(Opcode::QUERY());
+    message.setRcode(Rcode::NOERROR());
+    message.setHeaderFlag(Message::HEADERFLAG_RD, true);
+    message.addQuestion(Question(Name("www.example.com"), RRClass::IN(),
+                                 RRType::A()));
+
+    message.toWire(renderer, tsig_ctx);
+    vector<unsigned char> expected_data;
+    UnitTestUtil::readWireData(expected_file, expected_data);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(),
+                        &expected_data[0], expected_data.size());
+}
+
+TEST_F(MessageTest, toWireWithTSIG) {
+    // Rendering a message with TSIG.  Various special cases specific to
+    // TSIG are tested in the tsig tests.  We only check the message contains
+    // a TSIG at the end and the ARCOUNT of the header is updated.
+
+    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+
+    message_render.setQid(0x2d65);
+
+    {
+        SCOPED_TRACE("Message sign with TSIG");
+        commonTSIGToWireCheck(message_render, renderer, tsig_ctx,
+                              "message_toWire2.wire");
+    }
+}
+
+TEST_F(MessageTest, toWireWithEDNSAndTSIG) {
+    // Similar to the previous test, but with an EDNS before TSIG.
+    // The wire data check will confirm the ordering.
+    isc::util::detail::gettimeFunction = testGetTime<0x4db60d1f>;
+
+    message_render.setQid(0x6cd);
+
+    EDNSPtr edns(new EDNS());
+    edns->setUDPSize(4096);
+    message_render.setEDNS(edns);
+
+    {
+        SCOPED_TRACE("Message sign with TSIG and EDNS");
+        commonTSIGToWireCheck(message_render, renderer, tsig_ctx,
+                              "message_toWire3.wire");
+    }
 }
 
 TEST_F(MessageTest, toWireWithoutOpcode) {

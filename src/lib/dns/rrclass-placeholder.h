@@ -31,7 +31,7 @@ class OutputBuffer;
 namespace dns {
 
 // forward declarations
-class MessageRenderer;
+class AbstractMessageRenderer;
 
 ///
 /// \brief A standard DNS module exception that is thrown if an RRClass object
@@ -169,7 +169,7 @@ public:
     /// standard exception will be thrown.
     ///
     /// \param buffer An output buffer to store the wire data.
-    void toWire(MessageRenderer& renderer) const;
+    void toWire(AbstractMessageRenderer& renderer) const;
     /// \brief Render the \c RRClass in the wire format.
     ///
     /// This method renders the class code in network byte order into the
