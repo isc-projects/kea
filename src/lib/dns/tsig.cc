@@ -24,6 +24,7 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
+#include <util/time_utilities.h>
 
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
@@ -41,36 +42,8 @@ using namespace isc::dns::rdata;
 
 namespace isc {
 namespace dns {
-
-// Borrowed from dnssectime.cc.  This trick should be unified somewhere.
-namespace tsig {
-namespace detail {
-int64_t (*gettimeFunction)() = NULL;
-}
-}
-
-namespace {
-int64_t
-gettimeofdayWrapper() {
-    using namespace tsig::detail;
-    if (gettimeFunction != NULL) {
-        return (gettimeFunction());
-    }
-
-    struct timeval now;
-    gettimeofday(&now, NULL);
-
-    return (static_cast<int64_t>(now.tv_sec));
-}
-}
-
 namespace {
 typedef boost::shared_ptr<HMAC> HMACPtr;
-}
-
-const RRClass&
-TSIGRecord::getClass() {
-    return (RRClass::ANY());
 }
 
 struct TSIGContext::TSIGContextImpl {
@@ -118,7 +91,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
     // represents a value in the expected range.  (In reality, however,
     // gettimeofdayWrapper() will return a positive integer that will fit
     // in 48 bits)
-    const uint64_t now = (gettimeofdayWrapper() & 0x0000ffffffffffffULL);
+    const uint64_t now = (detail::gettimeWrapper() & 0x0000ffffffffffffULL);
 
     // For responses adjust the error code.
     if (impl_->state_ == CHECKED) {
@@ -129,6 +102,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
     // specified in Section 4.3 of RFC2845.
     if (error == TSIGError::BAD_SIG() || error == TSIGError::BAD_KEY()) {
         ConstTSIGRecordPtr tsig(new TSIGRecord(
+                                    impl_->key_.getKeyName(),
                                     any::TSIG(impl_->key_.getAlgorithmName(),
                                               now, DEFAULT_FUDGE, 0, NULL,
                                               qid, error.getCode(), 0, NULL)));
@@ -198,6 +172,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
     // Get the final digest, update internal state, then finish.
     vector<uint8_t> digest = hmac->sign();
     ConstTSIGRecordPtr tsig(new TSIGRecord(
+                                impl_->key_.getKeyName(),
                                 any::TSIG(impl_->key_.getAlgorithmName(),
                                           time_signed, DEFAULT_FUDGE,
                                           digest.size(), &digest[0],
