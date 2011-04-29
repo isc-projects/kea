@@ -78,7 +78,7 @@ TEST_F(TSIGRecordTest, recordToWire) {
     EXPECT_EQ(1, test_record.toWire(buffer));
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         buffer.getData(), buffer.getLength(),
-                        &data[0], data.size());    
+                        &data[0], data.size());
 }
 
 TEST_F(TSIGRecordTest, recordToOLongToWire) {
