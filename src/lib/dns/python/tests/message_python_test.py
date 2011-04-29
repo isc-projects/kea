@@ -62,12 +62,6 @@ def create_message():
     message_render.add_rrset(Message.SECTION_ANSWER, rrset)
     return message_render
 
-def strip_mutable_tsig_data(data):
-    # Unfortunately we cannot easily compare TSIG RR because we can't tweak
-    # current time.  As a work around this helper function strips off the time
-    # dependent part of TSIG RDATA, i.e., the MAC (assuming HMAC-MD5) and
-    # Time Signed.
-    return data[0:-32] + data[-26:-22] + data[-6:]
 
 class MessageTest(unittest.TestCase):
 
@@ -87,8 +81,6 @@ class MessageTest(unittest.TestCase):
 
         self.bogus_section = Message.SECTION_ADDITIONAL + 1
         self.bogus_below_section = Message.SECTION_QUESTION - 1
-        self.tsig_key = TSIGKey("www.example.com:SFuWd/q99SzF8Yzd1QbB9g==")
-        self.tsig_ctx = TSIGContext(self.tsig_key)
 
     def test_init(self):
         self.assertRaises(TypeError, Message, -1)
@@ -284,33 +276,6 @@ class MessageTest(unittest.TestCase):
         self.r.set_opcode(Opcode.QUERY())
         self.assertRaises(InvalidMessageOperation, self.r.to_wire,
                           MessageRenderer())
-
-    def __common_tsigquery_setup(self):
-        self.r.set_opcode(Opcode.QUERY())
-        self.r.set_rcode(Rcode.NOERROR())
-        self.r.set_header_flag(Message.HEADERFLAG_RD)
-        self.r.add_question(Question(Name("www.example.com"),
-                                     RRClass("IN"), RRType("A")))
-
-    def __common_tsig_checks(self, expected_file):
-        renderer = MessageRenderer()
-        self.r.to_wire(renderer, self.tsig_ctx)
-        actual_wire = strip_mutable_tsig_data(renderer.get_data())
-        expected_wire = strip_mutable_tsig_data(read_wire_data(expected_file))
-        self.assertEqual(expected_wire, actual_wire)
-
-    def test_to_wire_with_tsig(self):
-        self.r.set_qid(0x2d65)
-        self.__common_tsigquery_setup()
-        self.__common_tsig_checks("message_toWire2.wire")
-
-    def test_to_wire_with_edns_tsig(self):
-        self.r.set_qid(0x6cd)
-        self.__common_tsigquery_setup()
-        edns = EDNS()
-        edns.set_udp_size(4096)
-        self.r.set_edns(edns)
-        self.__common_tsig_checks("message_toWire3.wire")
 
     def test_to_text(self):
         message_render = create_message()
