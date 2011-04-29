@@ -130,7 +130,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
     if (error == TSIGError::BAD_SIG() || error == TSIGError::BAD_KEY()) {
         ConstTSIGRecordPtr tsig(new TSIGRecord(
                                     any::TSIG(impl_->key_.getAlgorithmName(),
-                                              now, DEFAULT_FUDGE, NULL, 0,
+                                              now, DEFAULT_FUDGE, 0, NULL,
                                               qid, error.getCode(), 0, NULL)));
         impl_->previous_digest_.clear();
         impl_->state_ = SIGNED;
