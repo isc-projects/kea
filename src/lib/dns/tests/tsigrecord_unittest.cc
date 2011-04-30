@@ -58,12 +58,12 @@ TEST_F(TSIGRecordTest, getName) {
 }
 
 TEST_F(TSIGRecordTest, getLength) {
-    // 83 = 17 + 26 + 16 + 24
+    // 85 = 17 + 26 + 16 + 24
     // len(www.example.com) = 17
     // len(hmac-md5.sig-alg.reg.int) = 26
     // len(MAC) = 16
-    // the rest are fixed length fields (24 in total)
-    EXPECT_EQ(83, test_record.getLength());
+    // the rest are fixed length fields (26 in total)
+    EXPECT_EQ(85, test_record.getLength());
 }
 
 TEST_F(TSIGRecordTest, recordToWire) {
@@ -82,10 +82,10 @@ TEST_F(TSIGRecordTest, recordToWire) {
 }
 
 TEST_F(TSIGRecordTest, recordToOLongToWire) {
-    // Rendering the test record requires a room of 83 bytes (see the
-    // getLength test).  By setting the limit to 82, it will fail, and
+    // Rendering the test record requires a room of 85 bytes (see the
+    // getLength test).  By setting the limit to 84, it will fail, and
     // the renderer will be marked as "truncated".
-    renderer.setLengthLimit(82);
+    renderer.setLengthLimit(84);
     EXPECT_FALSE(renderer.isTruncated()); // not marked before render attempt
     EXPECT_EQ(0, test_record.toWire(renderer));
     EXPECT_TRUE(renderer.isTruncated());
