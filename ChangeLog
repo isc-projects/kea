@@ -1,3 +1,9 @@
+227.	[build]		jreed
+	Add missing libdns++ rdata files for the distribution (this
+	fixes distcheck error). Change three generated libdns++
+	headers to "nodist" so they aren't included in the distribution
+	(they were mistakenly included in last tarball).
+
 226.	[func]*		jelte
 	Introduced an API for cryptographic operations. Currently it only
 	supports HMAC, intended for use with TSIG. The current
