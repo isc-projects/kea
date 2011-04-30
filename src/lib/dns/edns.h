@@ -386,7 +386,7 @@ private:
 ///
 /// The intended usage of this function is to parse an OPT RR of an incoming
 /// DNS message, while updating the RCODE of the message.
-/// One common usage patter is as follows:
+/// One common usage pattern is as follows:
 ///
 /// \code Message msg;
 /// ...
