@@ -27,8 +27,8 @@ using namespace isc::util;
 namespace {
 // Internally used constants:
 
-// Size in octets for the RR type, class TTL fields.
-const size_t RR_COMMON_LEN = 8;
+// Size in octets for the RR type, class TTL, RDLEN fields.
+const size_t RR_COMMON_LEN = 10;
 
 // Size in octets for the fixed part of TSIG RDATAs.
 // - Time Signed (6)
