@@ -435,7 +435,7 @@ class RRSIG:
 class TSIG:
     as_rr = False
     rr_name = 'example.com' # only when as_rr is True, same for class/TTL
-    rr_class = parse_value('ANY', dict_rrclass)
+    rr_class = 'ANY'
     rr_ttl = 0
 
     rdlen = None                # auto-calculate
@@ -477,12 +477,13 @@ class TSIG:
             rdlen = int(len(name_wire) / 2 + 16 + len(mac) / 2 + \
                             len(other_data) / 2)
         if self.as_rr:
+            rrclass = parse_value(self.rr_class, dict_rrclass)
             f.write('\n# TSIG RR (QNAME=%s Class=%s TTL=%d RDLEN=%d)\n' %
-                    (self.rr_name, rdict_rrclass[self.rr_class],
+                    (self.rr_name, code_totext(rrclass, rdict_rrclass),
                      self.rr_ttl, rdlen))
             f.write('%s %04x %04x %08x %04x\n' %
                     (encode_name(self.rr_name), dict_rrtype['tsig'],
-                     self.rr_class, self.rr_ttl, rdlen))
+                     rrclass, self.rr_ttl, rdlen))
         else:
             f.write('\n# TSIG RDATA (RDLEN=%d)\n' % rdlen)
             f.write('%04x\n' % rdlen);
