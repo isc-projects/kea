@@ -34,6 +34,7 @@ class InputBuffer;
 
 namespace dns {
 class TSIGContext;
+class TSIGRecord;
 
 ///
 /// \brief A standard DNS module exception that is thrown if a wire format
@@ -368,6 +369,8 @@ public:
     /// \param edns A shared pointer to an \c EDNS object to be set in
     /// \c Message.
     void setEDNS(ConstEDNSPtr edns);
+
+    const TSIGRecord* getTSIGRecord() const;
 
     /// \brief Returns the number of RRs contained in the given section.
     ///

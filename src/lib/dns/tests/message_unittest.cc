@@ -67,6 +67,10 @@ extern int64_t (*gettimeFunction)();
 }
 }
 
+// XXX: this is defined as class static constants, but some compilers
+// seemingly cannot find the symbol when used in the EXPECT_xxx macros.
+const uint16_t TSIGContext::DEFAULT_FUDGE;
+
 namespace {
 class MessageTest : public ::testing::Test {
 protected:
@@ -183,6 +187,70 @@ TEST_F(MessageTest, setEDNS) {
     EDNSPtr edns = EDNSPtr(new EDNS());
     message_render.setEDNS(edns);
     EXPECT_EQ(edns, message_render.getEDNS());
+}
+
+TEST_F(MessageTest, fromWireWithTSIG) {
+    // Initially there should be no TSIG
+    EXPECT_EQ(static_cast<void*>(NULL), message_parse.getTSIGRecord());
+
+    // getTSIGRecord() is only valid in the parse mode.
+    EXPECT_THROW(message_render.getTSIGRecord(), InvalidMessageOperation);
+
+    factoryFromFile(message_parse, "message_toWire2.wire");
+    const char expected_mac[] = {
+        0x22, 0x70, 0x26, 0xad, 0x29, 0x7b, 0xee, 0xe7,
+        0x21, 0xce, 0x6c, 0x6f, 0xff, 0x1e, 0x9e, 0xf3
+    };
+    const TSIGRecord* tsig_rr = message_parse.getTSIGRecord();
+    ASSERT_NE(static_cast<void*>(NULL), tsig_rr);
+    EXPECT_EQ(Name("www.example.com"), tsig_rr->getName());
+    EXPECT_EQ(85, tsig_rr->getLength()); // see TSIGRecordTest.getLength
+    EXPECT_EQ(TSIGKey::HMACMD5_NAME(), tsig_rr->getRdata().getAlgorithm());
+    EXPECT_EQ(0x4da8877a, tsig_rr->getRdata().getTimeSigned());
+    EXPECT_EQ(TSIGContext::DEFAULT_FUDGE, tsig_rr->getRdata().getFudge());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        tsig_rr->getRdata().getMAC(),
+                        tsig_rr->getRdata().getMACSize(),
+                        expected_mac, sizeof(expected_mac));
+    EXPECT_EQ(0, tsig_rr->getRdata().getError());
+    EXPECT_EQ(0, tsig_rr->getRdata().getOtherLen());
+    EXPECT_EQ(static_cast<void*>(NULL), tsig_rr->getRdata().getOtherData());
+
+    // If we clear the message for reuse, the recorded TSIG will be cleared.
+    message_parse.clear(Message::PARSE);
+    EXPECT_EQ(static_cast<void*>(NULL), message_parse.getTSIGRecord());
+}
+
+TEST_F(MessageTest, fromWireWithTSIGCompressed) {
+    // Mostly same as fromWireWithTSIG, but the TSIG owner name is compressed.
+    factoryFromFile(message_parse, "message_fromWire12.wire");
+    const TSIGRecord* tsig_rr = message_parse.getTSIGRecord();
+    ASSERT_NE(static_cast<void*>(NULL), tsig_rr);
+    EXPECT_EQ(Name("www.example.com"), tsig_rr->getName());
+    // len(www.example.com) = 17, but when fully compressed, the length is
+    // 2 bytes.  So the length of the record should be 15 bytes shorter.
+    EXPECT_EQ(70, tsig_rr->getLength());
+}
+
+TEST_F(MessageTest, fromWireWithBadTSIG) {
+    // Multiple TSIG RRs
+    EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire13.wire"),
+                 DNSMessageFORMERR);
+    message_parse.clear(Message::PARSE);
+
+    // TSIG in the answer section (must be in additional)
+    EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire14.wire"),
+                 DNSMessageFORMERR);
+    message_parse.clear(Message::PARSE);
+
+    // TSIG is not the last record.
+    EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire15.wire"),
+                 DNSMessageFORMERR);
+    message_parse.clear(Message::PARSE);
+
+    // Unexpected RR Class (this will fail in constructing TSIGRecord)
+    EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire16.wire"),
+                 DNSMessageFORMERR);
 }
 
 TEST_F(MessageTest, getRRCount) {
