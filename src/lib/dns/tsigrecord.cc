@@ -17,18 +17,20 @@
 
 #include <util/buffer.h>
 
+#include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
 #include <dns/tsigrecord.h>
 
 using namespace isc::util;
+using namespace isc::dns::rdata;
 
 namespace {
 // Internally used constants:
 
-// Size in octets for the RR type, class TTL fields.
-const size_t RR_COMMON_LEN = 8;
+// Size in octets for the RR type, class TTL, RDLEN fields.
+const size_t RR_COMMON_LEN = 10;
 
 // Size in octets for the fixed part of TSIG RDATAs.
 // - Time Signed (6)
@@ -50,9 +52,43 @@ TSIGRecord::TSIGRecord(const Name& key_name,
             rdata_.getMACSize() + rdata_.getOtherLen())
 {}
 
+namespace {
+// This is a straightforward wrapper of dynamic_cast<const any::TSIG&>.
+// We use this so that we can throw the DNSMessageFORMERR exception when
+// unexpected type of RDATA is detected in the member initialization list
+// of the constructor below.
+const any::TSIG&
+castToTSIGRdata(const rdata::Rdata& rdata) {
+    try {
+        return (dynamic_cast<const any::TSIG&>(rdata));
+    } catch (std::bad_cast&) {
+        isc_throw(DNSMessageFORMERR,
+                  "TSIG record is being constructed from "
+                  "incompatible RDATA:" << rdata.toText());
+    }
+}
+}
+
+TSIGRecord::TSIGRecord(const Name& name, const RRClass& rrclass,
+                       const RRTTL&, // we ignore TTL
+                       const rdata::Rdata& rdata,
+                       size_t length) :
+    key_name_(name), rdata_(castToTSIGRdata(rdata)), length_(length)
+{
+    if (rrclass != getClass()) {
+        isc_throw(DNSMessageFORMERR, "Unexpected TSIG RR class: " << rrclass);
+    }
+}
+
 const RRClass&
 TSIGRecord::getClass() {
     return (RRClass::ANY());
+}
+
+const RRTTL&
+TSIGRecord::getTTL() {
+    static RRTTL ttl(TSIG_TTL);
+    return (ttl);
 }
 
 namespace {
