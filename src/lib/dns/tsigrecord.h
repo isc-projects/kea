@@ -20,6 +20,8 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <util/buffer.h>
+
 #include <dns/name.h>
 #include <dns/rdataclass.h>
 
@@ -65,6 +67,12 @@ public:
     /// RDATA fails
     TSIGRecord(const Name& key_name, const rdata::any::TSIG& tsig_rdata);
 
+    /// Constructor from resource record (RR) parameters.
+    ///
+    /// \exception DNSMessageFORMERR
+    TSIGRecord(const Name& name, const RRClass& rrclass, const RRTTL& ttl,
+               const rdata::Rdata& rdata, size_t length);
+
     /// Return the owner name of the TSIG RR, which is the TSIG key name
     ///
     /// \exception None
@@ -86,6 +94,15 @@ public:
     ///
     /// \exception None
     static const RRClass& getClass();
+
+    /// Return the TTL value of TSIG
+    ///
+    /// TSIG always uses 0 TTL.  This static method returns it,
+    /// when, though unlikely, an application wants to know the TTL TSIG
+    /// is supposed to use.
+    ///
+    /// \exception None
+    static const RRTTL& getTTL();
 
     /// Return the length of the TSIG record
     ///
