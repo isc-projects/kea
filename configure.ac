@@ -410,7 +410,7 @@ if test -x "${BOTAN_CONFIG}" ; then
         for flag in ${BOTAN_LDFLAGS}; do
                 BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne 's/^\(\-L\)/-R/p'`"
         done
-        AC_SUBST(BOTAN_RPATH)
+        LDFLAGS="$BOTAN_RPATH $LDFLAGS"
     fi
 
     AC_SUBST(BOTAN_LDFLAGS)
@@ -419,7 +419,7 @@ fi
 
 CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
-LDFLAGS_SAVED=$LDFLAGS
+LDFLAGS_SAVED="$LDFLAGS"
 LDFLAGS="$BOTAN_LDFLAGS $LDFLAGS"
 
 AC_CHECK_HEADERS([botan/botan.h],,AC_MSG_ERROR([Missing required header files.]))
@@ -884,6 +884,7 @@ Flags:
   DEFS:          $DEFS
   CPPFLAGS:      $CPPFLAGS
   CXXFLAGS:      $CXXFLAGS
+  LDFLAGS:       $LDFLAGS
   B10_CXXFLAGS:  $B10_CXXFLAGS
 dnl includes too
   Python:        ${PYTHON_INCLUDES}
