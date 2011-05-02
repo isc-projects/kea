@@ -410,6 +410,7 @@ if test -x "${BOTAN_CONFIG}" ; then
         for flag in ${BOTAN_LDFLAGS}; do
                 BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne 's/^\(\-L\)/-R/p'`"
         done
+	AC_SUBST(BOTAN_RPATH)
         LDFLAGS="$BOTAN_RPATH $LDFLAGS"
     fi
 
