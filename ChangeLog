@@ -1,3 +1,9 @@
+XXX.	[bug]		naokikambe
+	Removed too repeated verbose messages in two cases of:
+	 - when auth sends statistics data to stats
+	 - when stats receives statistics data from other modules
+	(Trac#620, git xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)
+
 227.	[build]		jreed
 	Add missing libdns++ rdata files for the distribution (this
 	fixes distcheck error). Change three generated libdns++
