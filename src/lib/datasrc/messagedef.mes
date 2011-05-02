@@ -406,3 +406,15 @@ MEM_ADD_ZONE Adding zone '%s/%s'
 
 MEM_FIND_ZONE Looking for zone '%s'
 + Debug information. We're looking for a zone in the in-memory data source.
+
+STATIC_CREATE Creating the static datasource
++ Debug information. We're creating the static data source (the one holding
++ stuff like version.bind).
+
+STATIC_BAD_CLASS Static data source can handle CH only
++ For some reason, someone asked the static data source a query that is not in
++ the CH class.
+
+STATIC_FIND Looking for '%s/%s'
++ Debug information. We're looking for this resource record set in the static
++ data source.
