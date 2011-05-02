@@ -411,6 +411,14 @@ if test -x "${BOTAN_CONFIG}" ; then
                 BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne 's/^\(\-L\)/-R/p'`"
         done
 	AC_SUBST(BOTAN_RPATH)
+
+	# According to the libtool manual, it should be sufficient if we
+	# specify the "-R libdir" in our wrapper library of botan (no other
+	# programs will need libbotan directly); "libdir" should be added to
+	# the program's binary image.  But we've seen in our build environments
+	# that (some versions of?) libtool doesn't propagate -R as documented,
+	# and it caused a linker error at run time.  To work around this, we
+	# also add the rpath to the global LDFLAGS.
         LDFLAGS="$BOTAN_RPATH $LDFLAGS"
     fi
 
