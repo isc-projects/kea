@@ -228,6 +228,10 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
                             RRsetList& target, const Name* zonename,
                             const Mode mode, uint32_t& flags) const
 {
+    if (logger.isDebugEnabled(DBG_TRACE_DETAILED)) {
+        logger.debug(DBG_TRACE_DETAILED, DATASRC_SQLITE_FINDREC,
+                     name.toText().c_str(), rdtype.toText().c_str());
+    }
     flags = 0;
     int zone_id = (zonename == NULL) ? findClosest(name, NULL) :
         findClosest(*zonename, NULL);
@@ -378,8 +382,7 @@ Sqlite3DataSrc::findPreviousName(const Name& qname,
     const int zone_id = (zonename == NULL) ?
         findClosest(qname, NULL) : findClosest(*zonename, NULL);
     if (zone_id < 0) {
-        logger.error(DBG_TRACE_DATA, DATASRC_SQLITE_PREVIOUS_NO_ZONE,
-                     qname.toText().c_str());
+        logger.error(DATASRC_SQLITE_PREVIOUS_NO_ZONE, qname.toText().c_str());
         return (ERROR);
     }
     
@@ -511,8 +514,7 @@ Sqlite3DataSrc::findRRset(const Name& qname,
     }
     if (qclass != getClass() && qclass != RRClass::ANY()) {
         logger.error(DATASRC_SQLITE_FIND_BAD_CLASS,
-                     getClass().toText().c_str(),
-                     qclass.toText().c_str());
+                     getClass().toText().c_str(), qclass.toText().c_str());
         return (ERROR);
     }
     findRecords(qname, qtype, target, zonename, NORMAL, flags);
@@ -527,7 +529,13 @@ Sqlite3DataSrc::findExactRRset(const Name& qname,
                                uint32_t& flags,
                                const Name* zonename) const
 {
+    if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
+        logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FINDEXACT,
+                     qname.toText().c_str(), qtype.toText().c_str());
+    }
     if (qclass != getClass() && qclass != RRClass::ANY()) {
+        logger.error(DATASRC_SQLITE_FINDEXACT_BAD_CLASS,
+                     getClass().toText().c_str(), qclass.toText().c_str());
         return (ERROR);
     }
     findRecords(qname, qtype, target, zonename, NORMAL, flags);
@@ -551,7 +559,13 @@ Sqlite3DataSrc::findAddrs(const Name& qname,
                           uint32_t& flags,
                           const Name* zonename) const
 {
+    if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
+        logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FINDADDRS,
+                     qname.toText().c_str());
+    }
     if (qclass != getClass() && qclass != RRClass::ANY()) {
+        logger.error(DATASRC_SQLITE_FINDADDRS_BAD_CLASS,
+                     getClass().toText().c_str(), qclass.toText().c_str());
         return (ERROR);
     }
     findRecords(qname, RRType::ANY(), target, zonename, ADDRESS, flags);
@@ -565,8 +579,14 @@ Sqlite3DataSrc::findReferral(const Name& qname,
                              uint32_t& flags,
                              const Name* zonename) const
 {
+    if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
+        logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FINDREF,
+                     qname.toText().c_str());
+    }
     if (qclass != getClass() && qclass != RRClass::ANY()) {
-            return (ERROR);
+        logger.error(DATASRC_SQLITE_FINDREF_BAD_CLASS,
+                     getClass().toText().c_str(), qclass.toText().c_str());
+        return (ERROR);
     }
     findRecords(qname, RRType::ANY(), target, zonename, DELEGATION, flags);
     return (SUCCESS);
@@ -574,9 +594,12 @@ Sqlite3DataSrc::findReferral(const Name& qname,
 
 Sqlite3DataSrc::Sqlite3DataSrc() :
     dbparameters(new Sqlite3Parameters)
-{}
+{
+    logger.debug(DBG_TRACE_BASIC, DATASRC_SQLITE_CREATE);
+}
 
 Sqlite3DataSrc::~Sqlite3DataSrc() {
+    logger.debug(DBG_TRACE_BASIC, DATASRC_SQLITE_DESTROY);
     if (dbparameters->db_ != NULL) {
         close();
     }
@@ -663,6 +686,7 @@ checkAndSetupSchema(Sqlite3Initializer* initializer) {
         initializer->params_.version_ = sqlite3_column_int(prepared, 0);
         sqlite3_finalize(prepared);
     } else {
+        logger.info(DATASRC_SQLITE_SETUP);
         if (prepared != NULL) {
             sqlite3_finalize(prepared);
         }
@@ -692,6 +716,7 @@ checkAndSetupSchema(Sqlite3Initializer* initializer) {
 //
 void
 Sqlite3DataSrc::open(const string& name) {
+    logger.debug(DBG_TRACE_BASIC, DATASRC_SQLITE_OPEN, name.c_str());
     if (dbparameters->db_ != NULL) {
         isc_throw(DataSourceError, "Duplicate SQLite open with " << name);
     }
@@ -711,6 +736,7 @@ Sqlite3DataSrc::open(const string& name) {
 //
 DataSrc::Result
 Sqlite3DataSrc::close(void) {
+    logger.debug(DBG_TRACE_BASIC, DATASRC_SQLITE_CLOSE);
     if (dbparameters->db_ == NULL) {
         isc_throw(DataSourceError,
                   "SQLite data source is being closed before open");
