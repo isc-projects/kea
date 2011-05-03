@@ -322,7 +322,7 @@ public:
     /// \param key_name The name of the key to be found.
     /// \param algorithm_name The name of the algorithm of the found key.
     /// \return A \c FindResult object enclosing the search result (see above).
-    FindResult find(const Name& key_name, const Name& algorithm_name);
+    FindResult find(const Name& key_name, const Name& algorithm_name) const;
 private:
     struct TSIGKeyRingImpl;
     TSIGKeyRingImpl* impl_;
