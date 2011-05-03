@@ -686,7 +686,10 @@ TEST_F(MessageTest, toText) {
     ifstream ifs;
     unittests::openTestData("message_toText1.txt", ifs);
     factoryFromFile(message_parse, "message_toText1.wire");
-    unittests::matchTextData(ifs, message_parse.toText());
+    {
+        SCOPED_TRACE("Message toText test (basic case)");
+        unittests::matchTextData(ifs, message_parse.toText());
+    }
 
     // Another example with EDNS.  The expected data was slightly modified
     // from the dig output (other than replacing tabs with a space): adding
@@ -696,7 +699,23 @@ TEST_F(MessageTest, toText) {
     message_parse.clear(Message::PARSE);
     unittests::openTestData("message_toText2.txt", ifs);
     factoryFromFile(message_parse, "message_toText2.wire");
-    unittests::matchTextData(ifs, message_parse.toText());
+    {
+        SCOPED_TRACE("Message toText test with EDNS");
+        unittests::matchTextData(ifs, message_parse.toText());
+    }
+
+    // Another example with TSIG.  The expected data was slightly modified
+    // from the dig output (other than replacing tabs with a space): removing
+    // a redundant white space at the end of TSIG RDATA.  We'd rather consider
+    // it a dig's defect than a feature.
+    ifs.close();
+    message_parse.clear(Message::PARSE);
+    unittests::openTestData("message_toText3.txt", ifs);
+    factoryFromFile(message_parse, "message_toText3.wire");
+    {
+        SCOPED_TRACE("Message toText test with TSIG");
+        unittests::matchTextData(ifs, message_parse.toText());
+    }
 }
 
 TEST_F(MessageTest, toTextWithoutOpcode) {
