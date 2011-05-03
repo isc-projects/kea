@@ -418,3 +418,84 @@ STATIC_BAD_CLASS Static data source can handle CH only
 STATIC_FIND Looking for '%s/%s'
 + Debug information. We're looking for this resource record set in the static
 + data source.
+
+SQLITE_FINDREC Looking for record '%s/%s'
++ Debug information. The SQLite data source is looking up records of given name
++ and type in the database.
+
+SQLITE_ENCLOSURE Looking for zone containing '%s'
++ Debug information. The SQLite data source is trying to identify, which zone
++ should hold this domain.
+
+SQLITE_ENCLOSURE_BAD_CLASS Class mismatch looking for a zone ('%s' and '%s')
++ The SQLite data source can handle only one class at a time and it was asked
++ to identify which zone is holding data of a different class.
+
+SQLITE_ENCLOSURE_NOTFOUND No zone contains it
++ Debug information. The last SQLITE_ENCLOSURE query was unsuccessful, there's
++ no such zone in our data.
+
+SQLITE_PREVIOUS Looking for name previous to '%s'
++ Debug information. We're trying to look up name preceding the supplied one.
+
+SQLITE_PREVIOUS_NO_ZONE No zone containing '%s'
++ The SQLite data source tried to identify name preceding this one. But this
++ one is not contained in any zone in the data source.
+
+SQLITE_FIND_NSEC3 Looking for NSEC3 in zone '%s' for hash '%s'
++ Debug information. We're trying to look up a NSEC3 record in the SQLite data
++ source.
+
+SQLITE_FIND_NSEC3_NO_ZONE No such zone '%s'
++ The SQLite data source was asked to provide a NSEC3 record for given zone.
++ But it doesn't contain that zone.
+
+SQLITE_FIND Looking for RRset '%s/%s'
++ Debug information. The SQLite data source is looking up a resource record
++ set.
+
+SQLITE_FIND_BAD_CLASS Class mismatch looking for an rrset ('%s' and '%s')
++ The SQLite data source was looking up an RRset, but the data source contains
++ different class than the query was for.
+
+SQLITE_FINDEXACT Looking for exact RRset '%s/%s'
++ Debug information. The SQLite data source is looking up an exact resource
++ record.
+
+SQLITE_FINDEXACT_BAD_CLASS Class mismatch looking for an rrset ('%s' and '%s')
++ The SQLite data source was looking up an exact RRset, but the data source
++ contains different class than the query was for.
+
+SQLITE_FINDADDRS Looking for A/AAAA addresses for '%s'
++ Debug information. The data source is looking up the addresses for given
++ domain name.
+
+SQLITE_FINDADDRS_BAD_CLASS Class mismatch looking for addresses ('%s' and '%s')
++ The SQLite data source was looking up A/AAAA addresses, but the data source
++ contains different class than the query was for.
+
+SQLITE_FINDREF Looking for referral at '%s'
++ Debug information. The SQLite data source is identifying if this domain is
++ a referral and where it goes.
+
+SQLITE_FINDREF_BAD_CLASS Class mismatch looking for referral ('%s' and '%s')
++ The SQLite data source was trying to identify, if there's a referral. But the
++ but it contains different class than the query was for.
+
+SQLITE_CREATE SQLite data source created
++ Debug information. We're creating an instance of the SQLite data source.
+
+SQLITE_DESTROY SQLite data source destroyed
++ Debug information. We're destroying an instance of SQLite data source.
+
+SQLITE_SETUP Setting up SQLite database
++ The database for SQLite data source was found empty. So we're assuming this
++ is the first run and we initialize it with current schema. It'll still
++ contain no data, but it will be ready for use.
+
+SQLITE_OPEN Opening SQLite database '%s'
++ Debug information. The SQLite data source is loading an SQLite database in
++ the provide file.
+
+SQLITE_CLOSE Closing SQLite database
++ Debug information. The SQLite data source is closing the database file.
