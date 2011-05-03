@@ -370,6 +370,23 @@ public:
     /// \c Message.
     void setEDNS(ConstEDNSPtr edns);
 
+    /// \brief Return, if any, the TSIG record contained in the received
+    /// message.
+    ///
+    /// Currently, this method is only intended to return a TSIG record
+    /// for an incoming message built via the \c fromWire() method in the
+    /// PARSE mode.  A call to this method in the RENDER mode is invalid and
+    /// result in an exception.  Also, calling this method is meaningless
+    /// unless \c fromWire() is performed.
+    ///
+    /// The returned pointer is valid only during the lifetime of the
+    /// \c Message object and until \c clear() is called.  The \c Message
+    /// object retains the ownership of \c TSIGRecord; the caller must not
+    /// try to delete it.
+    ///
+    /// \exception InvalidMessageOperation Message is not in the PARSE mode.
+    ///
+    /// \return A pointer to the stored \c TSIGRecord or \c NULL.
     const TSIGRecord* getTSIGRecord() const;
 
     /// \brief Returns the number of RRs contained in the given section.
@@ -585,6 +602,16 @@ private:
 /// that originated the asynchronous call falls out of scope.
 typedef boost::shared_ptr<Message> MessagePtr;
 
+/// Insert the \c Message as a string into stream.
+///
+/// This method convert \c message into a string and inserts it into the
+/// output stream \c os.
+///
+/// \param os A \c std::ostream object on which the insertion operation is
+/// performed.
+/// \param record A \c Message object output by the operation.
+/// \return A reference to the same \c std::ostream object referenced by
+/// parameter \c os after the insertion operation.
 std::ostream& operator<<(std::ostream& os, const Message& message);
 }
 }

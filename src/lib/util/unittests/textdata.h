@@ -53,7 +53,7 @@ matchTextData(EXPECTED_STREAM& expected, ACTUAL_STREAM& actual) {
             expected.bad() || expected.fail()) {
             throw std::runtime_error("Unexpected error in data streams");
         }
-        EXPECT_EQ(expected_line, actual_line); 
+        EXPECT_EQ(expected_line, actual_line);
     }
     while (std::getline(expected, expected_line), !expected.eof()) {
         EXPECT_FALSE(true) << "Missing line in actual output: "
