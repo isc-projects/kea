@@ -44,6 +44,16 @@ namespace isc {
 namespace dns {
 namespace {
 typedef boost::shared_ptr<HMAC> HMACPtr;
+
+// This singleton key is used when the TSIG context is constructed with no
+// matching key.  The key name and algorithm won't be used in subsequent
+// sign/verify, so the their values don't matter.
+const TSIGKey&
+getDummyTSIGKey() {
+    static TSIGKey dummy_key(Name::ROOT_NAME(), TSIGKey::HMACMD5_NAME(), NULL,
+                             0);
+    return (dummy_key);
+}
 }
 
 struct TSIGContext::TSIGContextImpl {
@@ -52,7 +62,7 @@ struct TSIGContext::TSIGContextImpl {
         previous_timesigned_(0)
     {}
     State state_;
-    TSIGKey key_;
+    const TSIGKey key_;
     vector<uint8_t> previous_digest_;
     TSIGError error_;
     uint64_t previous_timesigned_; // only meaningful for response with BADTIME
@@ -60,6 +70,19 @@ struct TSIGContext::TSIGContextImpl {
 
 TSIGContext::TSIGContext(const TSIGKey& key) : impl_(new TSIGContextImpl(key))
 {
+}
+
+TSIGContext::TSIGContext(const Name& key_name, const Name& algorithm_name,
+                         const TSIGKeyRing& keyring) : impl_(NULL)
+{
+    const TSIGKeyRing::FindResult result(keyring.find(key_name,
+                                                      algorithm_name));
+    if (result.code == TSIGKeyRing::NOTFOUND) {
+        impl_ = new TSIGContextImpl(getDummyTSIGKey());
+        impl_->error_ = TSIGError::BAD_KEY();
+    } else {
+        impl_ = new TSIGContextImpl(*result.key);
+    }
 }
 
 TSIGContext::~TSIGContext() {
