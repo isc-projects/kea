@@ -18,6 +18,7 @@
 #include <sqlite3.h>
 
 #include <datasrc/sqlite3_datasrc.h>
+#include <datasrc/logger.h>
 
 #include <dns/rrttl.h>
 #include <dns/rdata.h>
@@ -345,12 +346,20 @@ Sqlite3DataSrc::findClosest(const Name& name, unsigned int* position) const {
 
 void
 Sqlite3DataSrc::findClosestEnclosure(DataSrcMatch& match) const {
+    if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
+        logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_ENCLOSURE,
+                     match.getName().toText().c_str());
+    }
     if (match.getClass() != getClass() && match.getClass() != RRClass::ANY()) {
+        logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_ENCLOSURE_BAD_CLASS,
+                     getClass().toText().c_str(),
+                     match.getClass().toText().c_str());
         return;
     }
 
     unsigned int position;
     if (findClosest(match.getName(), &position) == -1) {
+        logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_ENCLOSURE_NOTFOUND);
         return;
     }
 
@@ -362,9 +371,15 @@ Sqlite3DataSrc::findPreviousName(const Name& qname,
                                  Name& target,
                                  const Name* zonename) const
 {
+    if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
+        logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_PREVIOUS,
+                     qname.toText().c_str());
+    }
     const int zone_id = (zonename == NULL) ?
         findClosest(qname, NULL) : findClosest(*zonename, NULL);
     if (zone_id < 0) {
+        logger.error(DBG_TRACE_DATA, DATASRC_SQLITE_PREVIOUS_NO_ZONE,
+                     qname.toText().c_str());
         return (ERROR);
     }
     
@@ -402,8 +417,14 @@ Sqlite3DataSrc::findCoveringNSEC3(const Name& zonename,
                                   string& hashstr,
                                   RRsetList& target) const
 {
+    if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
+        logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FIND_NSEC3,
+                     zonename.toText().c_str(), hashstr.c_str());
+    }
     const int zone_id = findClosest(zonename, NULL);
     if (zone_id < 0) {
+        logger.error(DATASRC_SQLITE_FIND_NSEC3_NO_ZONE,
+                     zonename.toText().c_str());
         return (ERROR);
     }
 
@@ -484,7 +505,14 @@ Sqlite3DataSrc::findRRset(const Name& qname,
                           uint32_t& flags,
                           const Name* zonename) const
 {
+    if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
+        logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FIND,
+                     qname.toText().c_str(), qtype.toText().c_str());
+    }
     if (qclass != getClass() && qclass != RRClass::ANY()) {
+        logger.error(DATASRC_SQLITE_FIND_BAD_CLASS,
+                     getClass().toText().c_str(),
+                     qclass.toText().c_str());
         return (ERROR);
     }
     findRecords(qname, qtype, target, zonename, NORMAL, flags);
