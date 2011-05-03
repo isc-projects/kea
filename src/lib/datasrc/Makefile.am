@@ -7,7 +7,7 @@ AM_CPPFLAGS += $(SQLITE_CFLAGS)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
-CLEANFILES = *.gcno *.gcda
+CLEANFILES = *.gcno *.gcda messagedef.h messagedef.cc
 
 lib_LTLIBRARIES = libdatasrc.la
 libdatasrc_la_SOURCES = data_source.h data_source.cc
@@ -30,6 +30,6 @@ libdatasrc_la_LIBADD += $(top_builddir)/src/lib/cc/libcc.la
 
 BUILT_SOURCES = messagedef.h messagedef.cc
 messagedef.h messagedef.cc: Makefile messagedef.mes
-	$(top_builddir)/src/lib/log/compiler/message messagedef.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/datasrc/messagedef.mes
 
 EXTRA_DIST = messagedef.mes

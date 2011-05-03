@@ -261,7 +261,7 @@ writeHeaderFile(const string& file, const string& prefix,
         const vector<string>& ns_components, MessageDictionary& dictionary)
 {
     Filename message_file(file);
-    Filename header_file(message_file.useAsDefault(".h"));
+    Filename header_file(Filename(message_file.name()).useAsDefault(".h"));
 
     // Text to use as the sentinels.
     string sentinel_text = sentinel(header_file);
@@ -358,7 +358,7 @@ writeProgramFile(const string& file, const string& prefix,
     const vector<string>& ns_components, MessageDictionary& dictionary)
 {
     Filename message_file(file);
-    Filename program_file(message_file.useAsDefault(".cc"));
+    Filename program_file(Filename(message_file.name()).useAsDefault(".cc"));
 
     // Open the output file for writing
     ofstream ccfile(program_file.fullName().c_str());
