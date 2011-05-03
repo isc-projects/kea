@@ -526,7 +526,7 @@ TEST_F(TSIGTest, badkeyResponse) {
         commonTSIGChecks(createMessageAndSign(qid, test_name,
                                               tsig_verify_ctx.get()),
                          message.getQid(), 0x4da8877a, NULL, 0,
-                         17);   // 17: BADKEYSIG
+                         17);   // 17: BADKEY
     }
 }
 
