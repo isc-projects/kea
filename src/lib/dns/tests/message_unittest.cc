@@ -681,9 +681,21 @@ TEST_F(MessageTest, toWireWithoutRcode) {
 }
 
 TEST_F(MessageTest, toText) {
+    // Check toText() output for a typical DNS response with records in
+    // all sections
     ifstream ifs;
     unittests::openTestData("message_toText1.txt", ifs);
     factoryFromFile(message_parse, "message_toText1.wire");
+    unittests::matchTextData(ifs, message_parse.toText());
+
+    // Another example with EDNS.  The expected data was slightly modified
+    // from the dig output (other than replacing tabs with a space): adding
+    // a newline after the "OPT PSEUDOSECTION".  This is an intentional change
+    // in our version for better readability.
+    ifs.close();
+    message_parse.clear(Message::PARSE);
+    unittests::openTestData("message_toText2.txt", ifs);
+    factoryFromFile(message_parse, "message_toText2.wire");
     unittests::matchTextData(ifs, message_parse.toText());
 }
 
