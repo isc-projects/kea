@@ -424,16 +424,17 @@ protected:
     vector<uint8_t> callback_data_;
     int sock_;
     struct addrinfo* res_;
+    boost::shared_ptr<MockResolver> mock_resolver_;
 };
 
 RecursiveQueryTest::RecursiveQueryTest() :
     dns_service_(NULL), callback_(NULL), callback_protocol_(0),
-    callback_native_(-1), sock_(-1), res_(NULL)
+    callback_native_(-1), sock_(-1), res_(NULL),
+    mock_resolver_(new MockResolver())
 {
     io_service_ = new IOService();
     setDNSService(true, true);
-    boost::shared_ptr<MockResolver>mock_resolver(new MockResolver());
-    nsas_ = new isc::nsas::NameserverAddressStore(mock_resolver);
+    nsas_ = new isc::nsas::NameserverAddressStore(mock_resolver_);
 }
 
 TEST_F(RecursiveQueryTest, v6UDPSend) {
