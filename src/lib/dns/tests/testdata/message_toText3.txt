@@ -1,0 +1,17 @@
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 10140
+;; flags: qr aa; QUERY: 1, ANSWER: 1, AUTHORITY: 1, ADDITIONAL: 2
+
+;; QUESTION SECTION:
+;www.example.com. IN A
+
+;; ANSWER SECTION:
+www.example.com. 86400 IN A 192.0.2.80
+
+;; AUTHORITY SECTION:
+example.com. 86400 IN NS ns.example.com.
+
+;; ADDITIONAL SECTION:
+ns.example.com. 86400 IN A 192.0.2.1
+
+;; TSIG PSEUDOSECTION:
+www.example.com. 0 ANY TSIG hmac-md5.sig-alg.reg.int. 1304384318 300 16 UlfIA5by+pWyDHeummUvsg== 10140 NOERROR 0
