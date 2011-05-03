@@ -59,9 +59,13 @@ TEST_F(TSIGKeyTest, construct) {
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, secret.c_str(),
                         secret.size(), key.getSecret(), key.getSecretLength());
 
+    // "unknown" algorithm is only accepted with empty secret.
     EXPECT_THROW(TSIGKey(key_name, Name("unknown-alg"),
                          secret.c_str(), secret.size()),
                  isc::InvalidParameter);
+    TSIGKey key2(key_name, Name("unknown-alg"), NULL, 0);
+    EXPECT_EQ(key_name, key2.getKeyName());
+    EXPECT_EQ(Name("unknown-alg"), key2.getAlgorithmName());
 
     // The algorithm name should be converted to the canonical form.
     EXPECT_EQ("hmac-sha1.",
@@ -69,6 +73,7 @@ TEST_F(TSIGKeyTest, construct) {
                       secret.c_str(),
                       secret.size()).getAlgorithmName().toText());
 
+    // Same for key name
     EXPECT_EQ("example.com.",
               TSIGKey(Name("EXAMPLE.CoM."), TSIGKey::HMACSHA256_NAME(),
                       secret.c_str(),
@@ -270,6 +275,8 @@ TEST(TSIGStringTest, TSIGKeyFromToString) {
     TSIGKey k2 = TSIGKey("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.");
     TSIGKey k3 = TSIGKey("test.example:MSG6Ng==");
     TSIGKey k4 = TSIGKey(Name("test.example."), Name("hmac-sha1."), NULL, 0);
+    // "Unknown" key with empty secret is okay
+    TSIGKey k5 = TSIGKey("test.example.::unknown");
 
     EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.",
               k1.toText());
@@ -278,6 +285,8 @@ TEST(TSIGStringTest, TSIGKeyFromToString) {
     EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.",
               k3.toText());
     EXPECT_EQ("test.example.::hmac-sha1.", k4.toText());
+    EXPECT_EQ(Name("test.example."), k5.getKeyName());
+    EXPECT_EQ(Name("unknown"), k5.getAlgorithmName());
 
     EXPECT_THROW(TSIGKey(""), isc::InvalidParameter);
     EXPECT_THROW(TSIGKey(":"), isc::InvalidParameter);
@@ -288,7 +297,6 @@ TEST(TSIGStringTest, TSIGKeyFromToString) {
     EXPECT_THROW(TSIGKey("test.example.:"), isc::InvalidParameter);
     EXPECT_THROW(TSIGKey("test.example.:MSG6Ng==:"), isc::InvalidParameter);
     EXPECT_THROW(TSIGKey("test.example.:MSG6Ng==:unknown"), isc::InvalidParameter);
-
 }
 
 
