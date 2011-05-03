@@ -123,6 +123,9 @@ public:
         if (in_pad_) {
             return (BINARY_ZERO_CODE);
         } else {
+            if (base_ == base_end_) {
+                isc_throw(BadValue, "end of input");
+            }
             return (*base_);
         }
     }
