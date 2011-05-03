@@ -304,7 +304,9 @@ public:
     /// Find a \c TSIGKey for the given name in the \c TSIGKeyRing.
     ///
     /// It searches the internal storage for a \c TSIGKey whose name is
-    /// \c key_name, and returns the result in the form of a \c FindResult
+    /// \c key_name and that uses the hash algorithm identified by
+    /// \c algorithm_name.
+    /// It returns the result in the form of a \c FindResult
     /// object as follows:
     /// - \c code: \c SUCCESS if a key is found; otherwise \c NOTFOUND.
     /// - \c key: A pointer to the found \c TSIGKey object if one is found;
@@ -318,8 +320,9 @@ public:
     /// This method never throws an exception.
     ///
     /// \param key_name The name of the key to be found.
+    /// \param algorithm_name The name of the algorithm of the found key.
     /// \return A \c FindResult object enclosing the search result (see above).
-    FindResult find(const Name& key_name);
+    FindResult find(const Name& key_name, const Name& algorithm_name);
 private:
     struct TSIGKeyRingImpl;
     TSIGKeyRingImpl* impl_;

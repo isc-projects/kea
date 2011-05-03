@@ -33,7 +33,7 @@ class TSIGKeyTest : public ::testing::Test {
 protected:
     TSIGKeyTest() : secret("someRandomData"), key_name("example.com") {}
     string secret;
-    Name key_name;
+    const Name key_name;
 };
 
 TEST_F(TSIGKeyTest, algorithmNames) {
@@ -125,12 +125,18 @@ class TSIGKeyRingTest : public ::testing::Test {
 protected:
     TSIGKeyRingTest() :
         key_name("example.com"),
+        md5_name("hmac-md5.sig-alg.reg.int"),
+        sha1_name("hmac-sha1"),
+        sha256_name("hmac-sha256"),
         secretstring("anotherRandomData"),
         secret(secretstring.c_str()),
         secret_len(secretstring.size())
     {}
     TSIGKeyRing keyring;
-    Name key_name;
+    const Name key_name;
+    const Name md5_name;
+    const Name sha1_name;
+    const Name sha256_name;
 private:
     const string secretstring;
 protected:
@@ -203,44 +209,60 @@ TEST_F(TSIGKeyRingTest, removeFromSome) {
 }
 
 TEST_F(TSIGKeyRingTest, find) {
-    EXPECT_EQ(TSIGKeyRing::NOTFOUND, keyring.find(key_name).code);
-    EXPECT_EQ(static_cast<const TSIGKey*>(NULL), keyring.find(key_name).key);
+    // If the keyring is empty the search should fail.
+    EXPECT_EQ(TSIGKeyRing::NOTFOUND, keyring.find(key_name, md5_name).code);
+    EXPECT_EQ(static_cast<const TSIGKey*>(NULL),
+              keyring.find(key_name, md5_name).key);
 
-    EXPECT_EQ(TSIGKeyRing::SUCCESS, keyring.add(
-                  TSIGKey(key_name, TSIGKey::HMACSHA256_NAME(),
-                          secret, secret_len)));
-    const TSIGKeyRing::FindResult result(keyring.find(key_name));
-    EXPECT_EQ(TSIGKeyRing::SUCCESS, result.code);
-    EXPECT_EQ(key_name, result.key->getKeyName());
-    EXPECT_EQ(TSIGKey::HMACSHA256_NAME(), result.key->getAlgorithmName());
+    // Add a key and try to find it.  Should succeed.
+    EXPECT_EQ(TSIGKeyRing::SUCCESS, keyring.add(TSIGKey(key_name, sha256_name,
+                                                        secret, secret_len)));
+    const TSIGKeyRing::FindResult result1(keyring.find(key_name, sha256_name));
+    EXPECT_EQ(TSIGKeyRing::SUCCESS, result1.code);
+    EXPECT_EQ(key_name, result1.key->getKeyName());
+    EXPECT_EQ(TSIGKey::HMACSHA256_NAME(), result1.key->getAlgorithmName());
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, secret, secret_len,
-                        result.key->getSecret(),
-                        result.key->getSecretLength());
+                        result1.key->getSecret(),
+                        result1.key->getSecretLength());
+
+    // If either key name or algorithm doesn't match, search should fail.
+    const TSIGKeyRing::FindResult result2 =
+        keyring.find(Name("different-key.example"), sha256_name);
+    EXPECT_EQ(TSIGKeyRing::NOTFOUND, result2.code);
+    EXPECT_EQ(static_cast<const TSIGKey*>(NULL), result2.key);
+
+    const TSIGKeyRing::FindResult result3 = keyring.find(key_name, md5_name);
+    EXPECT_EQ(TSIGKeyRing::NOTFOUND, result3.code);
+    EXPECT_EQ(static_cast<const TSIGKey*>(NULL), result3.key);
 }
 
 TEST_F(TSIGKeyRingTest, findFromSome) {
     // essentially the same test, but search a larger set
 
-    EXPECT_EQ(TSIGKeyRing::SUCCESS, keyring.add(
-                  TSIGKey(key_name, TSIGKey::HMACSHA256_NAME(),
-                          secret, secret_len)));
-    EXPECT_EQ(TSIGKeyRing::SUCCESS, keyring.add(
-                  TSIGKey(Name("another.example"), TSIGKey::HMACMD5_NAME(),
-                          secret, secret_len)));
-    EXPECT_EQ(TSIGKeyRing::SUCCESS, keyring.add(
-                  TSIGKey(Name("more.example"), TSIGKey::HMACSHA1_NAME(),
-                          secret, secret_len)));
+    EXPECT_EQ(TSIGKeyRing::SUCCESS, keyring.add(TSIGKey(key_name, sha256_name,
+                                                        secret, secret_len)));
+    EXPECT_EQ(TSIGKeyRing::SUCCESS, keyring.add(TSIGKey(Name("another.example"),
+                                                        md5_name,
+                                                        secret, secret_len)));
+    EXPECT_EQ(TSIGKeyRing::SUCCESS, keyring.add(TSIGKey(Name("more.example"),
+                                                        sha1_name,
+                                                        secret, secret_len)));
 
     const TSIGKeyRing::FindResult result(
-        keyring.find(Name("another.example")));
+        keyring.find(Name("another.example"), md5_name));
     EXPECT_EQ(TSIGKeyRing::SUCCESS, result.code);
     EXPECT_EQ(Name("another.example"), result.key->getKeyName());
     EXPECT_EQ(TSIGKey::HMACMD5_NAME(), result.key->getAlgorithmName());
 
     EXPECT_EQ(TSIGKeyRing::NOTFOUND,
-              keyring.find(Name("noexist.example")).code);
+              keyring.find(Name("noexist.example"), sha1_name).code);
     EXPECT_EQ(static_cast<const TSIGKey*>(NULL),
-              keyring.find(Name("noexist.example")).key);
+              keyring.find(Name("noexist.example"), sha256_name).key);
+
+    EXPECT_EQ(TSIGKeyRing::NOTFOUND,
+              keyring.find(Name("another.example"), sha1_name).code);
+    EXPECT_EQ(static_cast<const TSIGKey*>(NULL),
+              keyring.find(Name("another.example"), sha256_name).key);
 }
 
 TEST(TSIGStringTest, TSIGKeyFromToString) {

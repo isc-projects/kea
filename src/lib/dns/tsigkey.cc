@@ -230,10 +230,11 @@ TSIGKeyRing::remove(const Name& key_name) {
 }
 
 TSIGKeyRing::FindResult
-TSIGKeyRing::find(const Name& key_name) {
+TSIGKeyRing::find(const Name& key_name, const Name& algorithm_name) {
     TSIGKeyRingImpl::TSIGKeyMap::const_iterator found =
         impl_->keys.find(key_name);
-    if (found == impl_->keys.end()) {
+    if (found == impl_->keys.end() ||
+        (*found).second.getAlgorithmName() != algorithm_name) {
         return (FindResult(NOTFOUND, NULL));
     }
     return (FindResult(SUCCESS, &((*found).second)));
