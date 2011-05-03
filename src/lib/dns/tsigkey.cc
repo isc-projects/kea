@@ -42,8 +42,7 @@ namespace {
         if (name == TSIGKey::HMACSHA256_NAME()) {
             return (isc::cryptolink::SHA256);
         }
-        isc_throw(InvalidParameter,
-                  "Unknown TSIG algorithm is specified: " << name);
+        return (isc::cryptolink::UNKNOWN_HASH);
     }
 }
 
@@ -74,7 +73,13 @@ TSIGKey::TSIGKey(const Name& key_name, const Name& algorithm_name,
     if ((secret != NULL && secret_len == 0) ||
         (secret == NULL && secret_len != 0)) {
         isc_throw(InvalidParameter,
-                  "TSIGKey secret and its length are inconsistent");
+                  "TSIGKey secret and its length are inconsistent: " <<
+                  key_name << ":" << algorithm_name);
+    }
+    if (algorithm == isc::cryptolink::UNKNOWN_HASH && secret_len != 0) {
+        isc_throw(InvalidParameter,
+                  "TSIGKey with unknown algorithm has non empty secret: " <<
+                  key_name << ":" << algorithm_name);
     }
     impl_ = new TSIGKeyImpl(key_name, algorithm_name, algorithm, secret,
                             secret_len);
@@ -111,8 +116,15 @@ TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
         vector<uint8_t> secret;
         isc::util::encode::decodeBase64(secret_str, secret);
 
+        if (algorithm == isc::cryptolink::UNKNOWN_HASH && !secret.empty()) {
+            isc_throw(InvalidParameter,
+                      "TSIG key with unknown algorithm has non empty secret: "
+                      << str);
+        }
+
         impl_ = new TSIGKeyImpl(Name(keyname_str), algo_name, algorithm,
-                                &secret[0], secret.size());
+                                secret.empty() ? NULL : &secret[0],
+                                secret.size());
     } catch (const Exception& e) {
         // 'reduce' the several types of exceptions name parsing and
         // Base64 decoding can throw to just the InvalidParameter

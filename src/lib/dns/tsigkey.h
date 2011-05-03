@@ -68,12 +68,21 @@ public:
     //@{
     /// \brief Constructor from key parameters
     ///
-    /// In the current implementation, \c algorithm_name must be a known
-    /// algorithm to this implementation, which are defined via the
-    /// <code>static const</code> member functions.  For other names
-    /// an exception of class \c InvalidParameter will be thrown.
-    /// Note: This restriction may be too strict, and we may revisit it
-    /// later.
+    /// \c algorithm_name should generally be a known algorithm to this
+    /// implementation, which are defined via the
+    /// <code>static const</code> member functions.
+    ///
+    /// Other names are still accepted as long as the secret is empty
+    /// (\c secret is \c NULL and \c secret_len is 0), however; in some cases
+    /// we might want to treat just the pair of key name and algorithm name
+    /// opaquely, e.g., when generating a response TSIG with a BADKEY error.
+    /// It is unlikely that a TSIG key with an unknown algorithm is of any
+    /// use with actual crypto operation, so care must be taken when dealing
+    /// with such keys. (The restriction for the secret will prevent
+    /// accidental creation of such a dangerous key, e.g., due to misspelling
+    /// in a configuration file).
+    /// If the given algorithm name is unknown and non empty secret is
+    /// specified, an exception of type \c InvalidParameter will be thrown.
     ///
     /// \c secret and \c secret_len must be consistent in that the latter
     /// is 0 if and only if the former is \c NULL;
@@ -98,8 +107,11 @@ public:
     /// <name>:<secret>[:<algorithm>]
     /// Where <name> is a domain name for the key, <secret> is a
     /// base64 representation of the key secret, and the optional
-    /// algorithm is an algorithm identifier as specified in RFC4635
+    /// algorithm is an algorithm identifier as specified in RFC4635.
     /// The default algorithm is hmac-md5.sig-alg.reg.int.
+    ///
+    /// The same restriction about the algorithm name (and secret) as that
+    /// for the other constructor applies.
     ///
     /// Since ':' is used as a separator here, it is not possible to
     /// use this constructor to create keys with a ':' character in
