@@ -12,12 +12,17 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <fstream>
+
 #include <boost/scoped_ptr.hpp>
 
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
 #include <util/time_utilities.h>
+
+#include <util/unittests/testdata.h>
+#include <util/unittests/textdata.h>
 
 #include <dns/edns.h>
 #include <dns/exceptions.h>
@@ -673,6 +678,15 @@ TEST_F(MessageTest, toWireWithoutOpcode) {
 TEST_F(MessageTest, toWireWithoutRcode) {
     message_render.setOpcode(Opcode::QUERY());
     EXPECT_THROW(message_render.toWire(renderer), InvalidMessageOperation);
+}
+
+TEST_F(MessageTest, toText) {
+    ifstream ifs;
+    unittests::openTestData("message_toText1.txt", ifs);
+
+    factoryFromFile(message_parse, "message_toText1.wire");
+
+    unittests::matchTextData(ifs, message_parse.toText());
 }
 
 TEST_F(MessageTest, toTextWithoutOpcode) {
