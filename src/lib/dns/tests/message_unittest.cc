@@ -683,9 +683,7 @@ TEST_F(MessageTest, toWireWithoutRcode) {
 TEST_F(MessageTest, toText) {
     ifstream ifs;
     unittests::openTestData("message_toText1.txt", ifs);
-
     factoryFromFile(message_parse, "message_toText1.wire");
-
     unittests::matchTextData(ifs, message_parse.toText());
 }
 
