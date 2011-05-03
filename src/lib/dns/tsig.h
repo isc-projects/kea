@@ -124,6 +124,10 @@ public:
     /// \param key The TSIG key to be used for TSIG sessions with this context.
     explicit TSIGContext(const TSIGKey& key);
 
+    /// Constructor from key parameters and key ring.
+    TSIGContext(const Name& key_name, const Name& algorithm_name,
+                const TSIGKeyRing& keyring);
+
     /// The destructor.
     ~TSIGContext();
     //@}
