@@ -815,6 +815,9 @@ Message::toText() const {
     if (impl_->edns_ != NULL) {
         ++arcount;
     }
+    if (impl_->tsig_rr_ != NULL) {
+        ++arcount;
+    }
     s += ", ADDITIONAL: " + lexical_cast<string>(arcount) + "\n";
 
     if (impl_->edns_ != NULL) {
@@ -849,6 +852,11 @@ Message::toText() const {
         for_each(impl_->rrsets_[SECTION_ADDITIONAL].begin(),
                  impl_->rrsets_[SECTION_ADDITIONAL].end(),
                  SectionFormatter<RRsetPtr>(SECTION_ADDITIONAL, s));
+    }
+
+    if (impl_->tsig_rr_ != NULL) {
+        s += "\n;; TSIG PSEUDOSECTION:\n";
+        s += impl_->tsig_rr_->toText();
     }
 
     return (s);

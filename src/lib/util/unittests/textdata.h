@@ -56,7 +56,7 @@ matchTextData(EXPECTED_STREAM& expected, ACTUAL_STREAM& actual) {
         EXPECT_EQ(expected_line, actual_line); 
     }
     while (std::getline(expected, expected_line), !expected.eof()) {
-        ASSERT_FALSE(true) << "Missing line in actual output: "
+        EXPECT_FALSE(true) << "Missing line in actual output: "
                            << expected_line;
     }
 }
