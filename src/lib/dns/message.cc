@@ -83,7 +83,7 @@ const unsigned int HEADERFLAG_MASK = 0x87b0;
 const uint16_t MESSAGE_REPLYPRESERVE = (Message::HEADERFLAG_RD |
                                         Message::HEADERFLAG_CD);
 
-const char *sectiontext[] = {
+const char* const sectiontext[] = {
     "QUESTION",
     "ANSWER",
     "AUTHORITY",
@@ -780,31 +780,31 @@ Message::toText() const {
     // for simplicity we don't consider extended rcode (unlike BIND9)
     s += ", status: " + impl_->rcode_->toText();
     s += ", id: " + boost::lexical_cast<string>(impl_->qid_);
-    s += "\n;; flags: ";
+    s += "\n;; flags:";
     if (getHeaderFlag(HEADERFLAG_QR)) {
-        s += "qr ";
+        s += " qr";
     }
     if (getHeaderFlag(HEADERFLAG_AA)) {
-        s += "aa ";
+        s += " aa";
     }
     if (getHeaderFlag(HEADERFLAG_TC)) {
-        s += "tc ";
+        s += " tc";
     }
     if (getHeaderFlag(HEADERFLAG_RD)) {
-        s += "rd ";
+        s += " rd";
     }
     if (getHeaderFlag(HEADERFLAG_RA)) {
-        s += "ra ";
+        s += " ra";
     }
     if (getHeaderFlag(HEADERFLAG_AD)) {
-        s += "ad ";
+        s += " ad";
     }
     if (getHeaderFlag(HEADERFLAG_CD)) {
-        s += "cd ";
+        s += " cd";
     }
 
     // for simplicity, don't consider the update case for now
-    s += "; QUESTION: " +
+    s += "; QUERY: " + // note: not "QUESTION" to be compatible with BIND 9 dig
         lexical_cast<string>(impl_->counts_[SECTION_QUESTION]);
     s += ", ANSWER: " +
         lexical_cast<string>(impl_->counts_[SECTION_ANSWER]);
