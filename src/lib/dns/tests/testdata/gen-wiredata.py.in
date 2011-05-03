@@ -515,6 +515,7 @@ class TSIG(RR):
 
     # TSIG has some special defaults
     def __init__(self):
+        super().__init__()
         self.rr_class = 'ANY'
         self.rr_ttl = 0
 
