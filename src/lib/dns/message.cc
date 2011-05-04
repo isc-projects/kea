@@ -168,6 +168,22 @@ MessageImpl::setRcode(const Rcode& rcode) {
 }
 
 namespace {
+// This helper class is used by MessageImpl::toWire() to render a set of
+// RRsets of a specific section of message to a given MessageRenderer.
+//
+// A RenderSection object is expected to be used with a QuestionIterator or
+// SectionIterator.  Its operator() is called for each RRset as the iterator
+// iterates over the corresponding section, and it renders the RRset to
+// the given MessageRenderer, while counting the number of RRs (note: not
+// RRsets) successfully rendered.  If the MessageRenderer reports the need
+// for truncation (via its isTruncated() method), the RenderSection object
+// stops rendering further RRsets.  In addition, unless partial_ok (given on
+// construction) is true, it removes any RRs that are partially rendered
+// from the MessageRenderer.
+//
+// On the completion of rendering the entire section, the owner of the
+// RenderSection object can get the number of rendered RRs via the
+// getTotalCount() method.
 template <typename T>
 struct RenderSection {
     RenderSection(AbstractMessageRenderer& renderer, const bool partial_ok) :
