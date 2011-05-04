@@ -48,10 +48,14 @@ namespace log {
 ///
 /// User of logging code should not really care much about this class, only
 /// call the .arg method to generate the correct output.
+///
+/// The class is a template to allow easy testing. Also, we want everything
+/// here in the header anyway and it doesn't depend on the details of what
+/// Logger really is, so it doesn't hurt anything.
 template<class Logger> class Formatter {
 private:
     /// \brief The logger we will use to output the final message
-    Logger& logger_;
+    Logger* logger_;
     /// \brief Prefix (eg. "ERROR", "DEBUG" or like that)
     const char* prefix_;
     /// \brief The messages with %1, %2... placeholders
@@ -74,15 +78,15 @@ public:
     /// \param logger The logger where the final output will go.
     Formatter(const char* prefix, const std::string& message,
               const unsigned& nextPlaceholder, Logger& logger) :
-        prefix_(prefix), message_(message),
-        nextPlaceholder_(nextPlaceholder), logger_(logger),
-        active_(true)
+        logger_(&logger), prefix_(prefix), message_(message),
+        nextPlaceholder_(nextPlaceholder), active_(true)
     {
     }
     /// \brief Constructor of "inactive" formatter
     ///
     /// This will create a formatter that produces no output.
     Formatter() :
+        nextPlaceholder_(0),
         active_(false)
     {
     }
@@ -90,7 +94,9 @@ public:
     //
     /// This is the place where output happens if the formatter is active.
     ~ Formatter() {
-
+        if (active_) {
+            logger_->output(prefix_, message_);
+        }
     }
     /// \brief Replaces another placeholder
     ///
