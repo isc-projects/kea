@@ -77,7 +77,7 @@ public:
     ///
     /// This constructor is intended to be used in the context of parsing
     /// an incoming DNS message that contains a TSIG.  The parser would
-    /// first extract the owner name, RR type (which TSIG) class, TTL and
+    /// first extract the owner name, RR type (which is TSIG) class, TTL and
     /// the TSIG RDATA from the message.  This constructor is expected to
     /// be given these RR parameters (except the RR type, because it must be
     /// TSIG).
@@ -113,7 +113,7 @@ public:
     /// the MAC computation must be performed for the original data without
     /// TSIG, so, to avoid parsing the entire data in the verify process
     /// again, it's necessary to record information that can identify the
-    /// length to be digested for the MAC.  This parameter servers for that
+    /// length to be digested for the MAC.  This parameter serves for that
     /// purpose.
     ///
     /// \note Since the constructor doesn't take the wire format data per se,

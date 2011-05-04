@@ -121,7 +121,7 @@ TEST_F(TSIGRecordTest, recordToWire) {
                         &data[0], data.size());
 }
 
-TEST_F(TSIGRecordTest, recordToOLongToWire) {
+TEST_F(TSIGRecordTest, recordTooLongToWire) {
     // Rendering the test record requires a room of 85 bytes (see the
     // getLength test).  By setting the limit to 84, it will fail, and
     // the renderer will be marked as "truncated".

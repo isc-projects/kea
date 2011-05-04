@@ -45,8 +45,7 @@ matchTextData(EXPECTED_STREAM& expected, ACTUAL_STREAM& actual) {
     while (std::getline(actual, actual_line), !actual.eof()) {
         std::getline(expected, expected_line);
         if (expected.eof()) {
-            ASSERT_FALSE(true) << "Redundant line in actual output: "
-                               << actual_line;
+            FAIL() << "Redundant line in actual output: " << actual_line;
             break;
         }
         if (actual.bad() || actual.fail() ||
@@ -56,8 +55,7 @@ matchTextData(EXPECTED_STREAM& expected, ACTUAL_STREAM& actual) {
         EXPECT_EQ(expected_line, actual_line);
     }
     while (std::getline(expected, expected_line), !expected.eof()) {
-        EXPECT_FALSE(true) << "Missing line in actual output: "
-                           << expected_line;
+        ADD_FAILURE() << "Missing line in actual output: " << expected_line;
     }
 }
 
