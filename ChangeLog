@@ -1,3 +1,16 @@
+229.	[doc]		jreed
+	Add manual page for b10-host.
+	(git a437d4e26b81bb07181ff35a625c540703eee845)
+
+228.	[func]*		jreed
+	The host tool is renamed to b10-host. While the utility is
+	a work in progress, it is expected to now be shipped with
+	tarballs. Its initial goal was to be a host(1) clone,
+	rewritten in C++ from scratch and using BIND 10's libdns++.
+	It now supports the -a (any), -c class, -d (verbose) switches
+	and has improved output.
+	(Trac #872, git d846851699d5c76937533adf9ff9d948dfd593ca)
+
 227.	[build]		jreed
 	Add missing libdns++ rdata files for the distribution (this
 	fixes distcheck error). Change three generated libdns++
