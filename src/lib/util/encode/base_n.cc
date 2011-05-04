@@ -166,7 +166,7 @@ public:
     {}
     DecodeNormalizer& operator++() {
         ++base_;
-        while (base_ != base_end_ && isspace(*base_)) {
+        while (base_ != base_end_ && (*base_ > 0) && isspace(*base_)) {
             ++base_;
         }
         if (base_ == base_beginpad_) {
@@ -271,7 +271,7 @@ BaseNTransformer<BitsPerChunk, BaseZeroCode, Encoder, Decoder>::decode(
                 isc_throw(BadValue, "Too many " << algorithm
                           << " padding characters: " << input);
             }
-        } else if (!isspace(ch)) {
+        } else if (ch < 0 || !isspace(ch)) {
             break;
         }
         ++srit;
