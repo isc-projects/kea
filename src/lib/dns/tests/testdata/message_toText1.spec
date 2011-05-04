@@ -1,5 +1,5 @@
 #
-# A standard DNS message (taken from an invokation of dig)
+# A standard DNS message (taken from an invocation of dig)
 #
 
 [custom]
