@@ -219,7 +219,7 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
         for_each(questions_.begin(), questions_.end(),
                  RenderSection<QuestionPtr>(renderer, false)).getTotalCount();
 
-    // TBD: sort RRsets in each section based on configuration policy.
+    // TODO: sort RRsets in each section based on configuration policy.
     uint16_t ancount = 0;
     if (!renderer.isTruncated()) {
         ancount =
@@ -278,7 +278,7 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
     codes_and_flags |= (flags_ & HEADERFLAG_MASK);
     renderer.writeUint16At(codes_and_flags, header_pos);
     header_pos += sizeof(uint16_t);
-    // XXX: should avoid repeated pattern (TODO)
+    // TODO: should avoid repeated pattern
     renderer.writeUint16At(qdcount, header_pos);
     header_pos += sizeof(uint16_t);
     renderer.writeUint16At(ancount, header_pos);
@@ -288,7 +288,7 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
     renderer.writeUint16At(arcount, header_pos);
 
     // Add TSIG, if necessary, at the end of the message.
-    // TBD: truncate case consideration
+    // TODO: truncate case consideration
     if (tsig_ctx != NULL) {
         tsig_ctx->sign(qid_, renderer.getData(),
                        renderer.getLength())->toWire(renderer);
