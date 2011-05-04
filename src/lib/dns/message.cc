@@ -309,10 +309,9 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
         tsig_ctx->sign(qid_, renderer.getData(),
                        renderer.getLength())->toWire(renderer);
 
-        // update the ARCOUNT for the TSIG RR
-        ++arcount;
-        assert(arcount != 0);   // this should never happen for a sane message
-        renderer.writeUint16At(arcount, header_pos);
+        // update the ARCOUNT for the TSIG RR.  Note that for a sane DNS
+        // message arcount should never overflow to 0.
+        renderer.writeUint16At(++arcount, header_pos);
     }
 }
 
