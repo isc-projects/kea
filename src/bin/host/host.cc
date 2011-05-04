@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -44,13 +44,16 @@ namespace {
 char* dns_type = NULL;    // not set, so A, AAAA, MX
 const char* server = "127.0.0.1";
 const char* server_port = "53";
-int   verbose = 0;
-int   first_time = 1;
-bool  recursive_bit = true;
+const char* dns_class  = "IN";
+bool verbose = false;
+bool dns_any = false;
+int first_time = 1;
+bool recursive_bit = true;
 struct timeval before_time, after_time;
 
 int
-host_lookup(const char* const name, const char* const type) {
+host_lookup(const char* const name, const char* const dns_class,
+            const char* const type, bool any) {
 
     Message msg(Message::RENDER);
 
@@ -64,8 +67,8 @@ host_lookup(const char* const name, const char* const type) {
     }
 
     msg.addQuestion(Question(Name(name),
-                             RRClass::IN(),    // IN class only for now
-                             RRType(type)));  // if NULL then:
+                             RRClass(dns_class),
+                             any ? RRType::ANY() : RRType(type)));  // if NULL then:
 
     OutputBuffer obuffer(512);
     MessageRenderer renderer(obuffer);
@@ -127,18 +130,29 @@ host_lookup(const char* const name, const char* const type) {
 
             rmsg.fromWire(ibuffer);
             if (!verbose) {
+                string description = "";
                 for (RRsetIterator it =
                          rmsg.beginSection(Message::SECTION_ANSWER);
                      it != rmsg.endSection(Message::SECTION_ANSWER);
                      ++it) {
-                      if ((*it)->getType() != RRType::A()) {
-                          continue;
+
+                      if ((*it)->getType() == RRType::A()) {
+                          description = "has address";
+                      }
+                      else if ((*it)->getType() == RRType::AAAA()) {
+                          description = "has IPv6 address";
+                      }
+                      else if ((*it)->getType() == RRType::MX()) {
+                          description = "mail is handled by";
+                      }
+                      else if ((*it)->getType() == RRType::TXT()) {
+                          description = "descriptive text";
                       }
 
                       RdataIteratorPtr rit = (*it)->getRdataIterator();
                       for (; !rit->isLast(); rit->next()) {
                           // instead of using my name, maybe use returned label?
-                          cout << name << " has address " <<
+                          cout << name << " "  << description << " " <<
                               (*rit).getCurrent().toText() << endl;
                       }
                   }
@@ -159,13 +173,19 @@ host_lookup(const char* const name, const char* const type) {
 
                 // TODO: if NXDOMAIN, host(1) doesn't show HEADER
                 // Host hsdjkfhksjhdfkj not found: 3(NXDOMAIN)
-                // TODO: figure out the new libdns way to test if NXDOMAIN
+                // TODO: test if NXDOMAIN
 
                 std::cout << "Received " << cc <<
                     " bytes in " << elapsed_time << " ms\n";
                 // TODO: " bytes from 127.0.0.1#53 in 0 ms
 
             } //verbose
+/*
+TODO: handle InvalidRRClass
+TODO: handle invalid type exception
+        } catch (InvalidType ivt) {
+            std::cerr << "invalid type:" << ivt.what();
+*/
         } catch (const exception& ex) {
             std::cerr << "parse failed for " <<
                 string(name) << "/" << type << ": " << ex.what() << std::endl;
@@ -184,26 +204,36 @@ int
 main(int argc, char* argv[]) {
     int c;
 
-    while ((c = getopt(argc, argv, "p:rt:v")) != -1)
+    while ((c = getopt(argc, argv, "ac:dp:rt:v")) != -1)
         switch (c) {
+        case 'a':
+            dns_any = true;
+            verbose = true;
+            break;
+        case 'c':
+            dns_class = optarg;
+            break;
+	// p for port is a non-standard switch
+        case 'p':
+            server_port = optarg;
+            break;
         case 'r':
             recursive_bit = false;
             break;
         case 't':
             dns_type = optarg;
             break;
-        case 'p':
-            server_port = optarg;
-            break;
+        case 'd':
+            // drop through to v, because debug and verbose are equivalent
         case 'v':
-            verbose = 1;
+            verbose = true;
             break;
     }
     argc -= optind;
     argv += optind;
 
     if (argc < 1) {
-        cout << "Usage: host [-vr] [-t type] hostname [server]\n";
+        cout << "Usage: host [-adprv] [-c class] [-t type] hostname [server]\n";
         exit(1);
     }
 
@@ -212,12 +242,13 @@ main(int argc, char* argv[]) {
     }
 
     if (dns_type == NULL) {
-        host_lookup(argv[0], "A");
+        host_lookup(argv[0], dns_class, "A", dns_any);
         // TODO: don't do next if A doesn't exist
-        host_lookup(argv[0], "AAAA");
-        host_lookup(argv[0], "MX");
+        host_lookup(argv[0], dns_class, "AAAA", dns_any);
+        host_lookup(argv[0], dns_class, "MX", dns_any);
     } else {
-        host_lookup(argv[0], dns_type); 
+        // -t overrides -a, regardless of order
+        host_lookup(argv[0], dns_class, dns_type, false);
     }
     return (0);
 }
