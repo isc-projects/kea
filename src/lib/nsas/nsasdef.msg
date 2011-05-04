@@ -30,7 +30,7 @@ INVRESPTC       queried for %s RR of type/class %s/%s, received response %s/%s
 
 LOOKUPCANCEL    lookup for zone %s has been cancelled
 + A debug message, this is output when a NSAS (nameserver address store -
-+ part of the resolver) lookup for a zone has been + cancelled.
++ part of the resolver) lookup for a zone has been cancelled.
 
 LOOKUPZONE      searching NSAS for nameservers for zone %s
 + A debug message, this is output when a call is made to the nameserver address
