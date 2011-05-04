@@ -64,6 +64,8 @@ private:
     const unsigned nextPlaceholder_;
     /// \brief Should we do output?
     bool active_;
+    Formatter& operator =(const Formatter& other);
+    Formatter(const Formatter& other);
 public:
     /// \brief Constructor of "active" formatter
     ///
@@ -77,7 +79,7 @@ public:
     ///     are used internally in the chain.
     /// \param logger The logger where the final output will go.
     Formatter(const char* prefix, const std::string& message,
-              const unsigned& nextPlaceholder, Logger& logger) :
+              const unsigned nextPlaceholder, Logger& logger) :
         logger_(&logger), prefix_(prefix), message_(message),
         nextPlaceholder_(nextPlaceholder), active_(true)
     {
@@ -103,8 +105,16 @@ public:
     /// Replaces another placeholder and returns a new formatter with it.
     /// Deactivates the current formatter. In case the formatter is not active,
     /// only produces another inactive formatter.
-    template<class Arg> Formatter arg(const Arg& arg) {
-
+    ///
+    /// \param arg The argument to place into the placeholder.
+    template<class Arg> Formatter arg(const Arg&) {
+        if (active_) {
+            active_ = false;
+            return (Formatter<Logger>(prefix_, message_, nextPlaceholder_ + 1,
+                                      *logger_));
+        } else {
+            return (Formatter<Logger>());
+        }
     }
 };
 
