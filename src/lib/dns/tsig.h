@@ -17,12 +17,27 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <exceptions/exceptions.h>
+
 #include <dns/tsigerror.h>
 #include <dns/tsigkey.h>
 #include <dns/tsigrecord.h>
 
 namespace isc {
 namespace dns {
+
+/// An exception that is thrown for logic errors identified in TSIG
+/// sign/verify operations.
+///
+/// Note that this exception is not thrown for TSIG protocol errors such as
+/// verification failures.  In general, this exception indicates an internal
+/// program bug.
+class TSIGContextError : public isc::Exception {
+public:
+    TSIGContextError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 /// TSIG session context.
 ///
 /// The \c TSIGContext class maintains a context of a signed session of
@@ -110,8 +125,10 @@ public:
     /// directly.
     enum State {
         INIT,                   ///< Initial state
-        SIGNED,                 ///< Sign completed
-        CHECKED ///< Verification completed (may or may not successfully)
+        WAIT_RESPONSE,          /// TODO: document update
+        RECEIVED_REQUEST,
+        SENT_RESPONSE,
+        VERIFIED_RESPONSE
     };
 
     /// \name Constructors and destructor
@@ -169,6 +186,7 @@ public:
     /// returns (without an exception being thrown), the internal state of
     /// the \c TSIGContext won't be modified.
     ///
+    /// \exception TSIGContextError Context already verified a response.
     /// \exception InvalidParameter \c data is NULL or \c data_len is 0
     /// \exception cryptolink::LibraryError Some unexpected error in the
     /// underlying crypto operation
@@ -182,6 +200,19 @@ public:
     /// \return A TSIG record for the given data along with the context.
     ConstTSIGRecordPtr sign(const uint16_t qid, const void* const data,
                             const size_t data_len);
+
+    /// record can be NULL so that we can transparently check the case where
+    /// we sent a signed request but have received an unsigned response.
+    ///
+    /// One unexpected case that is not covered by this method:
+    /// receive a signed reply to an unsigned query
+    ///
+    /// TODO: Note about the overflow + BADTIME case.
+    ///
+    /// \exception TSIGContextError Context already signed a response.
+    /// \exception InvalidParameter
+    TSIGError verify(const TSIGRecord* const record, const void* const data,
+                     const size_t data_len);
 
     /// Return the current state of the context
     ///
@@ -199,18 +230,6 @@ public:
     ///
     /// \exception None
     TSIGError getError() const;
-
-    // This method is tentatively added for testing until a complete
-    // verify() method is implemented.  Once it's done this should be
-    // removed, and corresponding tests should be updated.
-    //
-    // This tentative "verify" method changes the internal state of
-    // the TSIGContext to the CHECKED as if it were verified (though possibly
-    // unsuccessfully) with given tsig_rdata.  If the error parameter is
-    // given and not NOERROR, it's recorded inside the context so that the
-    // subsequent sign() will behave accordingly.
-    void verifyTentative(ConstTSIGRecordPtr tsig,
-                         TSIGError error = TSIGError::NOERROR());
 
     /// \name Protocol constants and defaults
     ///
