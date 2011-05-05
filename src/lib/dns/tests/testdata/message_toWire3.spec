@@ -1,5 +1,5 @@
 #
-# A simple DNS response message with EDNS and TSIG
+# A simple DNS query message with EDNS and TSIG
 #
 
 [custom]

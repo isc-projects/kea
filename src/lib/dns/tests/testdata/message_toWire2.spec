@@ -1,5 +1,5 @@
 #
-# A simple DNS response message with TSIG signed
+# A simple DNS query message with TSIG signed
 #
 
 [custom]
