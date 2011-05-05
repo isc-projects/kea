@@ -317,7 +317,7 @@ class MessageTest(unittest.TestCase):
         
         msg_str =\
 """;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 4149
-;; flags: qr aa rd ; QUESTION: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 0
+;; flags: qr aa rd; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 0
 
 ;; QUESTION SECTION:
 ;test.example.com. IN A

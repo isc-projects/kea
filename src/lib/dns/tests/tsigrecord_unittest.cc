@@ -19,8 +19,10 @@
 
 #include <util/buffer.h>
 
+#include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
+#include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/tsig.h>
 #include <dns/tsigkey.h>
@@ -39,14 +41,16 @@ class TSIGRecordTest : public ::testing::Test {
 protected:
     TSIGRecordTest() :
         test_name("www.example.com"), test_mac(16, 0xda),
-        test_record(test_name, any::TSIG(TSIGKey::HMACMD5_NAME(), 0x4da8877a,
-                                         TSIGContext::DEFAULT_FUDGE,
-                                         test_mac.size(), &test_mac[0],
-                                         0x2d65, 0, 0, NULL)),
+        test_rdata(any::TSIG(TSIGKey::HMACMD5_NAME(), 0x4da8877a,
+                             TSIGContext::DEFAULT_FUDGE,
+                             test_mac.size(), &test_mac[0],
+                             0x2d65, 0, 0, NULL)),
+        test_record(test_name, test_rdata),
         buffer(0), renderer(buffer)
     {}
     const Name test_name;
     vector<unsigned char> test_mac;
+    const any::TSIG test_rdata;
     const TSIGRecord test_record;
     OutputBuffer buffer;
     MessageRenderer renderer;
@@ -64,6 +68,43 @@ TEST_F(TSIGRecordTest, getLength) {
     // len(MAC) = 16
     // the rest are fixed length fields (26 in total)
     EXPECT_EQ(85, test_record.getLength());
+}
+
+TEST_F(TSIGRecordTest, fromParams) {
+    // Construct the same TSIG RR as test_record from parameters.
+    // See the getLength test for the magic number of 85 (although it
+    // actually doesn't matter)
+    const TSIGRecord record(test_name, TSIGRecord::getClass(),
+                            TSIGRecord::getTTL(), test_rdata, 85);
+    // Perform straight sanity checks
+    EXPECT_EQ(test_name, record.getName());
+    EXPECT_EQ(85, record.getLength());
+    EXPECT_EQ(0, test_rdata.compare(record.getRdata()));
+
+    // The constructor doesn't check the length...
+    EXPECT_NO_THROW(TSIGRecord(test_name, TSIGRecord::getClass(),
+                               TSIGRecord::getTTL(), test_rdata, 82));
+    // ...even for impossibly small values...
+    EXPECT_NO_THROW(TSIGRecord(test_name, TSIGRecord::getClass(),
+                               TSIGRecord::getTTL(), test_rdata, 1));
+    // ...or too large values.
+    EXPECT_NO_THROW(TSIGRecord(test_name, TSIGRecord::getClass(),
+                               TSIGRecord::getTTL(), test_rdata, 65536));
+
+    // RDATA must indeed be TSIG
+    EXPECT_THROW(TSIGRecord(test_name, TSIGRecord::getClass(),
+                            TSIGRecord::getTTL(), in::A("192.0.2.1"), 85),
+                 DNSMessageFORMERR);
+
+    // Unexpected class
+    EXPECT_THROW(TSIGRecord(test_name, RRClass::IN(), TSIGRecord::getTTL(),
+                            test_rdata, 85),
+                 DNSMessageFORMERR);
+
+    // Unexpected TTL (simply ignored)
+    EXPECT_NO_THROW(TSIGRecord(test_name, TSIGRecord::getClass(),
+                               RRTTL(3600), test_rdata, 85));
+>>>>>>> trac813
 }
 
 TEST_F(TSIGRecordTest, recordToWire) {
