@@ -26,8 +26,9 @@ namespace log {
 /// This is used internally by the Formatter. Replaces a placeholder
 /// in the message by replacement. If the placeholder is not found,
 /// it adds a complain at the end.
-void replacePlaceholder(std::string* message, const std::string& replacement,
-                        const unsigned placeholder);
+void
+replacePlaceholder(std::string* message, const std::string& replacement,
+                   const unsigned placeholder);
 
 ///
 /// \brief The log message formatter
