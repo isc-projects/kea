@@ -652,10 +652,17 @@ Message_str(PyObject* self) {
 static PyObject*
 Message_toWire(s_Message* self, PyObject* args) {
     s_MessageRenderer* mr;
+    s_TSIGContext* tsig_ctx = NULL;
     
-    if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
+    if (PyArg_ParseTuple(args, "O!|O!", &messagerenderer_type, &mr,
+                         &tsig_context_type, &tsig_ctx)) {
         try {
-            self->message->toWire(*mr->messagerenderer);
+            if (tsig_ctx == NULL) {
+                self->message->toWire(*mr->messagerenderer);
+            } else {
+                self->message->toWire(*mr->messagerenderer,
+                                      *tsig_ctx->tsig_ctx);
+            }
             // If we return NULL it is seen as an error, so use this for
             // None returns
             Py_RETURN_NONE;
