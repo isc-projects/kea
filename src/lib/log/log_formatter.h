@@ -16,9 +16,18 @@
 #define __LOG_FORMMATER_H
 
 #include <string>
+#include <boost/lexical_cast.hpp>
 
 namespace isc {
 namespace log {
+
+/// \brief The internal replacement routine
+///
+/// This is used internally by the Formatter. Replaces a placeholder
+/// in the message by replacement. If the placeholder is not found,
+/// it adds a complain at the end.
+void replacePlaceholder(std::string* message, const std::string& replacement,
+                        const unsigned placeholder);
 
 ///
 /// \brief The log message formatter
@@ -59,7 +68,7 @@ private:
     /// \brief Prefix (eg. "ERROR", "DEBUG" or like that)
     const char* prefix_;
     /// \brief The messages with %1, %2... placeholders
-    const std::string message_;
+    std::string* message_;
     /// \brief Which will be the next placeholder to replace
     const unsigned nextPlaceholder_;
     /// \brief Should we do output?
@@ -72,13 +81,17 @@ public:
     /// This will create a formatter in active mode -- the one when it
     /// will generate output.
     ///
+    /// It is not expected to be called by user of logging system directly.
+    ///
     /// \param prefix The prefix, like "ERROR" or "DEBUG"
-    /// \param message The message with placeholders
+    /// \param message The message with placeholders. We take ownership of
+    ///     it and we will modify the string. Must not be NULL and it's
+    ///     not checked.
     /// \param nextPlaceholder It is the number of next placeholder which
     ///     should be replaced. It should be called with 1, higher numbers
     ///     are used internally in the chain.
     /// \param logger The logger where the final output will go.
-    Formatter(const char* prefix, const std::string& message,
+    Formatter(const char* prefix, std::string* message,
               const unsigned nextPlaceholder, Logger& logger) :
         logger_(&logger), prefix_(prefix), message_(message),
         nextPlaceholder_(nextPlaceholder), active_(true)
@@ -86,8 +99,11 @@ public:
     }
     /// \brief Constructor of "inactive" formatter
     ///
+    /// It is not expected to be called by user of the logging system directly.
+    ///
     /// This will create a formatter that produces no output.
     Formatter() :
+        message_(NULL),
         nextPlaceholder_(0),
         active_(false)
     {
@@ -97,8 +113,9 @@ public:
     /// This is the place where output happens if the formatter is active.
     ~ Formatter() {
         if (active_) {
-            logger_->output(prefix_, message_);
+            logger_->output(prefix_, *message_);
         }
+        delete message_;
     }
     /// \brief Replaces another placeholder
     ///
@@ -107,11 +124,29 @@ public:
     /// only produces another inactive formatter.
     ///
     /// \param arg The argument to place into the placeholder.
-    template<class Arg> Formatter arg(const Arg&) {
+    template<class Arg> Formatter arg(const Arg& value) {
+        return (arg(boost::lexical_cast<std::string>(value)));
+    }
+    /// \brief String version of arg.
+    Formatter arg(const std::string& arg) {
         if (active_) {
+            // FIXME: This logic has a problem. If we had a message like
+            // "%1 %2" and called .arg("%2").arg(42), we would get "42 %2".
+            // But we consider this to be rare enough not to complicate
+            // matters.
             active_ = false;
-            return (Formatter<Logger>(prefix_, message_, nextPlaceholder_ + 1,
-                                      *logger_));
+            replacePlaceholder(message_, arg, nextPlaceholder_);
+            std::string *message(message_);
+            message_ = NULL;
+            try {
+                return (Formatter<Logger>(prefix_, message,
+                                          nextPlaceholder_ + 1, *logger_));
+            }
+            // Make sure the memory is not leaked on stuff like bad_alloc
+            catch (...) {
+                delete message;
+                throw;
+            }
         } else {
             return (Formatter<Logger>());
         }
