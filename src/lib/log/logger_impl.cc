@@ -215,28 +215,5 @@ LoggerImpl::outputRaw(const char* sevText, const string& message) {
         message << endl;
 }
 
-void
-LoggerImpl::output(const char* sev_text, const MessageID& ident,
-    va_list ap)
-{
-    char message[512];      // Should be large enough for any message
-
-    // Obtain text of the message and substitute arguments.
-    const string format = MessageDictionary::globalDictionary().getText(ident);
-    vsnprintf(message, sizeof(message), format.c_str(), ap);
-
-    // Get the time in a struct tm format, and convert to text
-    time_t t_time;
-    time(&t_time);
-    struct tm* tm_time = localtime(&t_time);
-
-    char chr_time[32];
-    (void) strftime(chr_time, sizeof(chr_time), "%Y-%m-%d %H:%M:%S", tm_time);
-
-    // Now output.
-    std::cout << chr_time << " " << sev_text << " [" << getName() << "] " <<
-        ident << ", " << message << "\n";
-}
-
 } // namespace log
 } // namespace isc
