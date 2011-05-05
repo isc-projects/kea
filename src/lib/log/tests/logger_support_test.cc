@@ -92,13 +92,13 @@ int main(int argc, char** argv) {
     initLogger("alpha", severity, dbglevel, localfile);
 
     // Log a few messages
-    logger_ex.fatal(MSG_MSGWRTERR, "test1", "42");
-    logger_ex.error(MSG_UNRECDIR, "false");
-    logger_dlm.warn(MSG_MSGRDERR, "a.txt", "dummy test");
-    logger_dlm.info(MSG_OPNMSGIN, "example.msg", "dummy test");
-    logger_ex.debug(0, MSG_UNRECDIR, "[abc]");
-    logger_ex.debug(24, MSG_UNRECDIR, "[24]");
-    logger_ex.debug(25, MSG_UNRECDIR, "[25]");
-    logger_ex.debug(26, MSG_UNRECDIR, "[26]");
+    logger_ex.fatal(MSG_MSGWRTERR).arg("test1").arg("42");
+    logger_ex.error(MSG_UNRECDIR).arg("false");
+    logger_dlm.warn(MSG_MSGRDERR).arg("a.txt").arg("dummy test");
+    logger_dlm.info(MSG_OPNMSGIN).arg("example.msg").arg("dummy test");
+    logger_ex.debug(0, MSG_UNRECDIR).arg("[abc]");
+    logger_ex.debug(24, MSG_UNRECDIR).arg("[24]");
+    logger_ex.debug(25, MSG_UNRECDIR).arg("[25]");
+    logger_ex.debug(26, MSG_UNRECDIR).arg("[26]");
     return (0);
 }

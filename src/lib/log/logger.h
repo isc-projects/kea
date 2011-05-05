@@ -21,6 +21,7 @@
 #include <log/debug_levels.h>
 #include <log/logger_levels.h>
 #include <log/message_types.h>
+#include <log/log_formatter.h>
 
 namespace isc {
 namespace log {
@@ -47,6 +48,9 @@ class LoggerImpl;   // Forward declaration of the implementation class
 
 class Logger {
 public:
+
+    typedef isc::log::Formatter<Logger> Formatter;
+    void output(const char* sevText, const std::string& message);
 
     /// \brief Constructor
     ///
@@ -157,36 +161,31 @@ public:
     /// \param dbglevel Debug level, ranging between 0 and 99.  Higher numbers
     /// are used for more verbose output.
     /// \param ident Message identification.
-    /// \param ... Optional arguments for the message.
-    void debug(int dbglevel, const MessageID& ident, ...);
+    Formatter debug(int dbglevel, const MessageID& ident);
 
 
     /// \brief Output Informational Message
     ///
     /// \param ident Message identification.
-    /// \param ... Optional arguments for the message.
-    void info(const MessageID& ident, ...);
+    Formatter info(const MessageID& ident);
 
 
     /// \brief Output Warning Message
     ///
     /// \param ident Message identification.
-    /// \param ... Optional arguments for the message.
-    void warn(const MessageID& ident, ...);
+    Formatter warn(const MessageID& ident);
 
 
     /// \brief Output Error Message
     ///
     /// \param ident Message identification.
-    /// \param ... Optional arguments for the message.
-    void error(const MessageID& ident, ...);
+    Formatter error(const MessageID& ident);
 
 
     /// \brief Output Fatal Message
     ///
     /// \param ident Message identification.
-    /// \param ... Optional arguments for the message.
-    void fatal(const MessageID& ident, ...);
+    Formatter fatal(const MessageID& ident);
 
     /// \brief Equality
     ///
