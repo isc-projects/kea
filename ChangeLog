@@ -1,3 +1,16 @@
+229.	[doc]		jreed
+	Add manual page for b10-host.
+	(git a437d4e26b81bb07181ff35a625c540703eee845)
+
+228.	[func]*		jreed
+	The host tool is renamed to b10-host. While the utility is
+	a work in progress, it is expected to now be shipped with
+	tarballs. Its initial goal was to be a host(1) clone,
+	rewritten in C++ from scratch and using BIND 10's libdns++.
+	It now supports the -a (any), -c class, -d (verbose) switches
+	and has improved output.
+	(Trac #872, git d846851699d5c76937533adf9ff9d948dfd593ca)
+
 227.	[build]		jreed
 	Add missing libdns++ rdata files for the distribution (this
 	fixes distcheck error). Change three generated libdns++
@@ -10,17 +23,19 @@
 	implementation uses Botan as the backend library.
 	This introduces a new dependency, on Botan.  Currently only Botan
 	1.8.x works; older or newer versions don't.
-	(Trac#781, git 9df42279a47eb617f586144dce8cce680598558a)
+	(Trac #781, git 9df42279a47eb617f586144dce8cce680598558a)
 
 225.	[func]		naokikambe
-	Added the HTTP/XML interface(b10-stats-httpd) to the statistics feature
-	in BIND 10. b10-stats-httpd is a standalone HTTP server and it requests
-	statistics data to the stats daemon(b10-stats) and sends it to HTTP
-	clients in XML format. Items of the data collected via b10-stats-httpd
-	are almost equivalent to ones which are collected via bindctl. Since it
-	also can send XSL(Extensible Stylessheet Language) document and XSD(XML
-	Schema definition) document, XML document is human-friendly to view
-	through web browsers and its data types are strictly defined.
+	Added the HTTP/XML interface(b10-stats-httpd) to the
+	statistics feature in BIND 10. b10-stats-httpd is a standalone
+	HTTP server and it requests statistics data to the stats
+	daemon(b10-stats) and sends it to HTTP clients in XML
+	format. Items of the data collected via b10-stats-httpd
+	are almost equivalent to ones which are collected via
+	bindctl. Since it also can send XSL(Extensible Stylessheet
+	Language) document and XSD(XML Schema definition) document,
+	XML document is human-friendly to view through web browsers
+	and its data types are strictly defined.
 	(Trac #547, git 1cbd51919237a6e65983be46e4f5a63d1877b1d3)
 
 224.	[bug]		jinmei
@@ -32,11 +47,12 @@
 	(Trac #851, git 2463b96680bb3e9a76e50c38a4d7f1d38d810643)
 
 223.	[bug]		feng
-	If ip address or port isn't usable for name server, name server process
-	won't exist and give end user chance to reconfigure them.
+	If ip address or port isn't usable for name server, name
+	server process won't exist and give end user chance to
+	reconfigure them.
 	(Trac #775, git 572ac2cf62e18f7eb69d670b890e2a3443bfd6e7)
 
-222.	[bug] 		jerry
+222.	[bug]		jerry
 	src/lib/zonemgr: Fix a bug that xfrin not checking for new copy of
 	zone on startup.  Imposes some random jitters to avoid many zones
 	need to do refresh at the same time.
@@ -51,7 +67,7 @@
 	(potentially) bad packets to a nameserver and prints the responses.
 	(Trac #703, git 1b666838b6c0fe265522b30971e878d9f0d21fde)
 
-219.    [func]          ocean
+219.	[func]		ocean
 	src/lib: move some dns related code out of asiolink library to
 	asiodns library
 	(Trac #751, git 262ac6c6fc61224d54705ed4c700dadb606fcb1c)
@@ -61,9 +77,9 @@
 	(Trac #806, git 4e47d5f6b692c63c907af6681a75024450884a88)
 
 217.	[bug]		jerry
-	src/lib/dns/python: Use a signed version of larger size of integer and
-	perform more strict range checks with PyArg_ParseTuple() in case of
-	overflows.
+	src/lib/dns/python: Use a signed version of larger size of
+	integer and perform more strict range checks with
+	PyArg_ParseTuple() in case of overflows.
 	(Trac #363, git ce281e646be9f0f273229d94ccd75bf7e08d17cf)
 
 216.	[func]		vorner
@@ -1085,7 +1101,7 @@ bind10-devel-20100701 released on July 1, 2010
 55.	[bug]		shane
 	bin/xfrout: xfrout exception on Ctrl-C now no longer generates
 	exception for 'Interrupted system call'
-	(Track #136, svn r2147)
+	(Trac #136, svn r2147)
 
 54.	[bug]		zhanglikun
 	bin/xfrout: Enable b10-xfrout can be launched in source
