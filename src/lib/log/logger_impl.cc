@@ -194,6 +194,26 @@ LoggerImpl::isDebugEnabled(int dbglevel) {
 }
 
 // Output a general message
+string*
+LoggerImpl::lookupMessage(const MessageID& ident) {
+    return (new string(string(ident) + ", " +
+                       MessageDictionary::globalDictionary().getText(ident)));
+}
+
+void
+LoggerImpl::outputRaw(const char* sevText, const string& message) {
+    // Get the time in a struct tm format, and convert to text
+    time_t t_time;
+    time(&t_time);
+    struct tm* tm_time = localtime(&t_time);
+
+    char chr_time[32];
+    (void) strftime(chr_time, sizeof(chr_time), "%Y-%m-%d %H:%M:%S", tm_time);
+
+    // Now output.
+    cout << chr_time << " " << sevText << " [" << getName() << "] " <<
+        message << endl;
+}
 
 void
 LoggerImpl::output(const char* sev_text, const MessageID& ident,
