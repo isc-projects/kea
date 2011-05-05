@@ -49,9 +49,6 @@ class LoggerImpl;   // Forward declaration of the implementation class
 class Logger {
 public:
 
-    typedef isc::log::Formatter<Logger> Formatter;
-    void output(const char* sevText, const std::string& message);
-
     /// \brief Constructor
     ///
     /// Creates/attaches to a logger of a specific name.
@@ -87,10 +84,11 @@ public:
         loggerptr_(NULL), name_(name), infunc_(infunc)
     {}
 
-
     /// \brief Destructor
     virtual ~Logger();
 
+    /// \brief The formatter used to replace placeholders
+    typedef isc::log::Formatter<Logger> Formatter;
 
     /// \brief Get Name of Logger
     ///
@@ -204,6 +202,12 @@ protected:
     static void reset();
 
 private:
+    friend class isc::log::Formatter<Logger>;
+    /// \brief Raw output function
+    ///
+    /// This is used by the formatter to output formatted output.
+    void output(const char* sevText, const std::string& message);
+
     /// \brief Copy Constructor
     ///
     /// Disabled (marked private) as it makes no sense to copy the logger -
