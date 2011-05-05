@@ -73,9 +73,8 @@ private:
     /// \brief Which will be the next placeholder to replace
     const unsigned nextPlaceholder_;
     /// \brief Should we do output?
-    bool active_;
+    mutable bool active_;
     Formatter& operator =(const Formatter& other);
-    Formatter(const Formatter& other);
 public:
     /// \brief Constructor of "active" formatter
     ///
@@ -108,6 +107,14 @@ public:
         nextPlaceholder_(0),
         active_(false)
     {
+    }
+
+    Formatter(const Formatter& other) :
+        logger_(other.logger_), prefix_(other.prefix_),
+        message_(other.message_), nextPlaceholder_(other.nextPlaceholder_),
+        active_(other.active_)
+    {
+        other.active_ = false;
     }
     /// \brief Destructor.
     //

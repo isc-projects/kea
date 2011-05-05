@@ -30,8 +30,8 @@ passfail() {
 
 cat > $localmes << .
 NOTHERE     this message is not in the global dictionary
-MSGRDERR    replacement read error, parameters: '%s' and '%s'
-UNRECDIR    replacement unrecognised directive message, parameter is '%s'
+MSGRDERR    replacement read error, parameters: '%1' and '%2'
+UNRECDIR    replacement unrecognised directive message, parameter is '%1'
 .
 
 echo -n "1. runInitTest default parameters: "
