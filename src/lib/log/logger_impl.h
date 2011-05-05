@@ -179,6 +179,8 @@ public:
     void output(const char* sev_text, const MessageID& ident,
         va_list ap);
 
+    void outputRaw(const char* sev_text, const std::string& message);
+    std::string* lookupMessage(const MessageID& id);
 
     /// \brief Output Debug Message
     ///
