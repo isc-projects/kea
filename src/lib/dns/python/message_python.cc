@@ -17,15 +17,16 @@
 using namespace isc::dns;
 using namespace isc::util;
 
+namespace {
 //
 // Declaration of the custom exceptions
 // Initialization and addition of these go in the initModulePart
 // function at the end of this file
 //
-static PyObject* po_MessageTooShort;
-static PyObject* po_InvalidMessageSection;
-static PyObject* po_InvalidMessageOperation;
-static PyObject* po_InvalidMessageUDPSize;
+PyObject* po_MessageTooShort;
+PyObject* po_InvalidMessageSection;
+PyObject* po_InvalidMessageOperation;
+PyObject* po_InvalidMessageUDPSize;
 
 //
 // Definition of the classes
@@ -34,10 +35,6 @@ static PyObject* po_InvalidMessageUDPSize;
 // For each class, we need a struct, a helper functions (init, destroy,
 // and static wrappers around the methods we export), a list of methods,
 // and a type description
-
-//
-// Section
-//
 
 //
 // Message
@@ -55,36 +52,36 @@ public:
 //
 
 // General creation and destruction
-static int Message_init(s_Message* self, PyObject* args);
-static void Message_destroy(s_Message* self);
+int Message_init(s_Message* self, PyObject* args);
+void Message_destroy(s_Message* self);
 
-static PyObject* Message_getHeaderFlag(s_Message* self, PyObject* args);
-static PyObject* Message_setHeaderFlag(s_Message* self, PyObject* args);
-static PyObject* Message_getQid(s_Message* self);
-static PyObject* Message_setQid(s_Message* self, PyObject* args);
-static PyObject* Message_getRcode(s_Message* self);
-static PyObject* Message_setRcode(s_Message* self, PyObject* args);
-static PyObject* Message_getOpcode(s_Message* self);
-static PyObject* Message_setOpcode(s_Message* self, PyObject* args);
-static PyObject* Message_getEDNS(s_Message* self);
-static PyObject* Message_setEDNS(s_Message* self, PyObject* args);
-static PyObject* Message_getRRCount(s_Message* self, PyObject* args);
+PyObject* Message_getHeaderFlag(s_Message* self, PyObject* args);
+PyObject* Message_setHeaderFlag(s_Message* self, PyObject* args);
+PyObject* Message_getQid(s_Message* self);
+PyObject* Message_setQid(s_Message* self, PyObject* args);
+PyObject* Message_getRcode(s_Message* self);
+PyObject* Message_setRcode(s_Message* self, PyObject* args);
+PyObject* Message_getOpcode(s_Message* self);
+PyObject* Message_setOpcode(s_Message* self, PyObject* args);
+PyObject* Message_getEDNS(s_Message* self);
+PyObject* Message_setEDNS(s_Message* self, PyObject* args);
+PyObject* Message_getRRCount(s_Message* self, PyObject* args);
 // use direct iterators for these? (or simply lists for now?)
-static PyObject* Message_getQuestion(s_Message* self);
-static PyObject* Message_getSection(s_Message* self, PyObject* args);
+PyObject* Message_getQuestion(s_Message* self);
+PyObject* Message_getSection(s_Message* self, PyObject* args);
 //static PyObject* Message_beginQuestion(s_Message* self, PyObject* args);
 //static PyObject* Message_endQuestion(s_Message* self, PyObject* args);
 //static PyObject* Message_beginSection(s_Message* self, PyObject* args);
 //static PyObject* Message_endSection(s_Message* self, PyObject* args);
 
-static PyObject* Message_addQuestion(s_Message* self, PyObject* args);
-static PyObject* Message_addRRset(s_Message* self, PyObject* args);
-static PyObject* Message_clear(s_Message* self, PyObject* args);
-static PyObject* Message_makeResponse(s_Message* self);
-static PyObject* Message_toText(s_Message* self);
-static PyObject* Message_str(PyObject* self);
-static PyObject* Message_toWire(s_Message* self, PyObject* args);
-static PyObject* Message_fromWire(s_Message* self, PyObject* args);
+PyObject* Message_addQuestion(s_Message* self, PyObject* args);
+PyObject* Message_addRRset(s_Message* self, PyObject* args);
+PyObject* Message_clear(s_Message* self, PyObject* args);
+PyObject* Message_makeResponse(s_Message* self);
+PyObject* Message_toText(s_Message* self);
+PyObject* Message_str(PyObject* self);
+PyObject* Message_toWire(s_Message* self, PyObject* args);
+PyObject* Message_fromWire(s_Message* self, PyObject* args);
 
 // This list contains the actual set of functions we have in
 // python. Each entry has
@@ -92,7 +89,7 @@ static PyObject* Message_fromWire(s_Message* self, PyObject* args);
 // 2. Our static function here
 // 3. Argument type
 // 4. Documentation
-static PyMethodDef Message_methods[] = {
+PyMethodDef Message_methods[] = {
     { "get_header_flag", reinterpret_cast<PyCFunction>(Message_getHeaderFlag),
       METH_VARARGS,
       "Return whether the specified header flag bit is set in the "
@@ -175,7 +172,7 @@ static PyMethodDef Message_methods[] = {
 // This defines the complete type for reflection in python and
 // parsing of PyObject* to s_Message
 // Most of the functions are not actually implemented and NULL here.
-static PyTypeObject message_type = {
+PyTypeObject message_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "pydnspp.Message",
     sizeof(s_Message),                  // tp_basicsize
@@ -225,7 +222,7 @@ static PyTypeObject message_type = {
     0                                   // tp_version_tag
 };
 
-static int
+int
 Message_init(s_Message* self, PyObject* args) {
     int i;
 
@@ -248,14 +245,14 @@ Message_init(s_Message* self, PyObject* args) {
     return (-1);
 }
 
-static void
+void
 Message_destroy(s_Message* self) {
     delete self->message;
     self->message = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
-static PyObject*
+PyObject*
 Message_getHeaderFlag(s_Message* self, PyObject* args) {
     unsigned int messageflag;
     if (!PyArg_ParseTuple(args, "I", &messageflag)) {
@@ -273,7 +270,7 @@ Message_getHeaderFlag(s_Message* self, PyObject* args) {
     }
 }
 
-static PyObject*
+PyObject*
 Message_setHeaderFlag(s_Message* self, PyObject* args) {
     long messageflag;
     PyObject *on = Py_True;
@@ -304,12 +301,12 @@ Message_setHeaderFlag(s_Message* self, PyObject* args) {
     }
 }
 
-static PyObject*
+PyObject*
 Message_getQid(s_Message* self) {
     return (Py_BuildValue("I", self->message->getQid()));
 }
 
-static PyObject*
+PyObject*
 Message_setQid(s_Message* self, PyObject* args) {
     long id;
     if (!PyArg_ParseTuple(args, "l", &id)) {
@@ -333,7 +330,7 @@ Message_setQid(s_Message* self, PyObject* args) {
     }
 }
 
-static PyObject*
+PyObject*
 Message_getRcode(s_Message* self) {
     s_Rcode* rcode;
 
@@ -356,7 +353,7 @@ Message_getRcode(s_Message* self) {
     return (rcode);
 }
 
-static PyObject*
+PyObject*
 Message_setRcode(s_Message* self, PyObject* args) {
     s_Rcode* rcode;
     if (!PyArg_ParseTuple(args, "O!", &rcode_type, &rcode)) {
@@ -371,7 +368,7 @@ Message_setRcode(s_Message* self, PyObject* args) {
     }
 }
 
-static PyObject*
+PyObject*
 Message_getOpcode(s_Message* self) {
     s_Opcode* opcode;
 
@@ -394,7 +391,7 @@ Message_getOpcode(s_Message* self) {
     return (opcode);
 }
 
-static PyObject*
+PyObject*
 Message_setOpcode(s_Message* self, PyObject* args) {
     s_Opcode* opcode;
     if (!PyArg_ParseTuple(args, "O!", &opcode_type, &opcode)) {
@@ -409,7 +406,7 @@ Message_setOpcode(s_Message* self, PyObject* args) {
     }
 }
 
-static PyObject*
+PyObject*
 Message_getEDNS(s_Message* self) {
     s_EDNS* edns;
     EDNS* edns_body;
@@ -429,7 +426,7 @@ Message_getEDNS(s_Message* self) {
     return (edns);
 }
 
-static PyObject*
+PyObject*
 Message_setEDNS(s_Message* self, PyObject* args) {
     s_EDNS* edns;
     if (!PyArg_ParseTuple(args, "O!", &edns_type, &edns)) {
@@ -444,7 +441,7 @@ Message_setEDNS(s_Message* self, PyObject* args) {
     }
 }
 
-static PyObject*
+PyObject*
 Message_getRRCount(s_Message* self, PyObject* args) {
     unsigned int section;
     if (!PyArg_ParseTuple(args, "I", &section)) {
@@ -463,7 +460,7 @@ Message_getRRCount(s_Message* self, PyObject* args) {
 }
 
 // TODO use direct iterators for these? (or simply lists for now?)
-static PyObject*
+PyObject*
 Message_getQuestion(s_Message* self) {
     QuestionIterator qi, qi_end;
     try {
@@ -502,7 +499,7 @@ Message_getQuestion(s_Message* self) {
     return (list);
 }
 
-static PyObject*
+PyObject*
 Message_getSection(s_Message* self, PyObject* args) {
     unsigned int section;
     if (!PyArg_ParseTuple(args, "I", &section)) {
@@ -559,7 +556,7 @@ Message_getSection(s_Message* self, PyObject* args) {
 //static PyObject* Message_beginSection(s_Message* self, PyObject* args);
 //static PyObject* Message_endSection(s_Message* self, PyObject* args);
 //static PyObject* Message_addQuestion(s_Message* self, PyObject* args);
-static PyObject*
+PyObject*
 Message_addQuestion(s_Message* self, PyObject* args) {
     s_Question *question;
 
@@ -572,7 +569,7 @@ Message_addQuestion(s_Message* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
-static PyObject*
+PyObject*
 Message_addRRset(s_Message* self, PyObject* args) {
     PyObject *sign = Py_False;
     int section;
@@ -599,7 +596,7 @@ Message_addRRset(s_Message* self, PyObject* args) {
     }
 }
 
-static PyObject*
+PyObject*
 Message_clear(s_Message* self, PyObject* args) {
     int i;
     if (PyArg_ParseTuple(args, "i", &i)) {
@@ -620,13 +617,13 @@ Message_clear(s_Message* self, PyObject* args) {
     }
 }
 
-static PyObject*
+PyObject*
 Message_makeResponse(s_Message* self) {
     self->message->makeResponse();
     Py_RETURN_NONE;
 }
 
-static PyObject*
+PyObject*
 Message_toText(s_Message* self) {
     // Py_BuildValue makes python objects from native data
     try {
@@ -641,7 +638,7 @@ Message_toText(s_Message* self) {
     }
 }
 
-static PyObject*
+PyObject*
 Message_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return (PyObject_CallMethod(self,
@@ -649,7 +646,7 @@ Message_str(PyObject* self) {
                                 const_cast<char*>("")));
 }
 
-static PyObject*
+PyObject*
 Message_toWire(s_Message* self, PyObject* args) {
     s_MessageRenderer* mr;
     s_TSIGContext* tsig_ctx = NULL;
@@ -678,7 +675,7 @@ Message_toWire(s_Message* self, PyObject* args) {
     return (NULL);
 }
 
-static PyObject*
+PyObject*
 Message_fromWire(s_Message* self, PyObject* args) {
     const char* b;
     Py_ssize_t len;
@@ -772,3 +769,4 @@ initModulePart_Message(PyObject* mod) {
 
     return (true);
 }
+} // end of unnamed namespace
