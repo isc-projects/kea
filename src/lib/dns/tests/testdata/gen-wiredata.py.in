@@ -433,6 +433,11 @@ class RRSIG:
         f.write('%04x %s %s\n' % (self.tag, name_wire, sig_wire))
 
 class TSIG:
+    as_rr = False
+    rr_name = 'example.com' # only when as_rr is True, same for class/TTL
+    rr_class = parse_value('ANY', dict_rrclass)
+    rr_ttl = 0
+
     rdlen = None                # auto-calculate
     algorithm = 'hmac-sha256'
     time_signed = 1286978795    # arbitrarily chosen default
@@ -471,8 +476,16 @@ class TSIG:
         if rdlen is None:
             rdlen = int(len(name_wire) / 2 + 16 + len(mac) / 2 + \
                             len(other_data) / 2)
-        f.write('\n# TSIG RDATA (RDLEN=%d)\n' % rdlen)
-        f.write('%04x\n' % rdlen);
+        if self.as_rr:
+            f.write('\n# TSIG RR (QNAME=%s Class=%s TTL=%d RDLEN=%d)\n' %
+                    (self.rr_name, rdict_rrclass[self.rr_class],
+                     self.rr_ttl, rdlen))
+            f.write('%s %04x %04x %08x %04x\n' %
+                    (encode_name(self.rr_name), dict_rrtype['tsig'],
+                     self.rr_class, self.rr_ttl, rdlen))
+        else:
+            f.write('\n# TSIG RDATA (RDLEN=%d)\n' % rdlen)
+            f.write('%04x\n' % rdlen);
         f.write('# Algorithm=%s Time-Signed=%d Fudge=%d\n' %
                 (self.algorithm, self.time_signed, self.fudge))
         f.write('%s %012x %04x\n' % (name_wire, self.time_signed, self.fudge))
