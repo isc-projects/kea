@@ -123,9 +123,6 @@ public:
         if (in_pad_) {
             return (BINARY_ZERO_CODE);
         } else {
-            if (base_ == base_end_) {
-                isc_throw(BadValue, "end of input");
-            }
             return (*base_);
         }
     }
@@ -175,6 +172,10 @@ public:
         return (*this);
     }
     const char& operator*() const {
+        if (base_ == base_end_) {
+            isc_throw(BadValue, "dereference the end iterator");
+        }
+
         if (in_pad_ && *base_ == BASE_PADDING_CHAR) {
             return (base_zero_code_);
         } else {
