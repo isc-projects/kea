@@ -83,7 +83,7 @@ const unsigned int HEADERFLAG_MASK = 0x87b0;
 const uint16_t MESSAGE_REPLYPRESERVE = (Message::HEADERFLAG_RD |
                                         Message::HEADERFLAG_CD);
 
-const char *sectiontext[] = {
+const char* const sectiontext[] = {
     "QUESTION",
     "ANSWER",
     "AUTHORITY",
@@ -116,8 +116,8 @@ public:
     vector<QuestionPtr> questions_;
     vector<RRsetPtr> rrsets_[NUM_SECTIONS];
     ConstEDNSPtr edns_;
+    ConstTSIGRecordPtr tsig_rr_;
 
-    // tsig/sig0: TODO
     // RRsetsSorter* sorter_; : TODO
 
     void init();
@@ -125,6 +125,16 @@ public:
     void setRcode(const Rcode& rcode);
     int parseQuestion(InputBuffer& buffer);
     int parseSection(const Message::Section section, InputBuffer& buffer);
+    void addRR(Message::Section section, const Name& name,
+               const RRClass& rrclass, const RRType& rrtype,
+               const RRTTL& ttl, ConstRdataPtr rdata);
+    void addEDNS(Message::Section section, const Name& name,
+                 const RRClass& rrclass, const RRType& rrtype,
+                 const RRTTL& ttl, const Rdata& rdata);
+    void addTSIG(Message::Section section, unsigned int count,
+                 const InputBuffer& buffer, size_t start_position,
+                 const Name& name, const RRClass& rrclass,
+                 const RRTTL& ttl, const Rdata& rdata);
     void toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx);
 };
 
@@ -143,6 +153,7 @@ MessageImpl::init() {
     rcode_ = NULL;
     opcode_ = NULL;
     edns_ = EDNSPtr();
+    tsig_rr_ = ConstTSIGRecordPtr();
 
     for (int i = 0; i < NUM_SECTIONS; ++i) {
         counts_[i] = 0;
@@ -413,6 +424,16 @@ Message::setEDNS(ConstEDNSPtr edns) {
     impl_->edns_ = edns;
 }
 
+const TSIGRecord*
+Message::getTSIGRecord() const {
+    if (impl_->mode_ != Message::PARSE) {
+        isc_throw(InvalidMessageOperation,
+                  "getTSIGRecord performed in non-parse mode");
+    }
+
+    return (impl_->tsig_rr_.get());
+}
+
 unsigned int
 Message::getRRCount(const Section section) const {
     if (section >= MessageImpl::NUM_SECTIONS) {
@@ -649,6 +670,9 @@ MessageImpl::parseSection(const Message::Section section,
     unsigned int added = 0;
 
     for (unsigned int count = 0; count < counts_[section]; ++count) {
+        // We need to remember the start position for TSIG processing
+        const size_t start_position = buffer.getPosition();
+
         const Name name(buffer);
 
         // buffer must store at least RR TYPE, RR CLASS, TTL, and RDLEN.
@@ -666,37 +690,76 @@ MessageImpl::parseSection(const Message::Section section,
         ConstRdataPtr rdata = createRdata(rrtype, rrclass, buffer, rdlen);
 
         if (rrtype == RRType::OPT()) {
-            if (section != Message::SECTION_ADDITIONAL) {
-                isc_throw(DNSMessageFORMERR,
-                          "EDNS OPT RR found in an invalid section");
-            }
-            if (edns_) {
-                isc_throw(DNSMessageFORMERR, "multiple EDNS OPT RR found");
-            }
-
-            uint8_t extended_rcode;
-            edns_ = ConstEDNSPtr(createEDNSFromRR(name, rrclass, rrtype, ttl,
-                                                  *rdata, extended_rcode));
-            setRcode(Rcode(rcode_->getCode(), extended_rcode));
-            continue;
+            addEDNS(section, name, rrclass, rrtype, ttl, *rdata);
+        } else if (rrtype == RRType::TSIG()) {
+            addTSIG(section, count, buffer, start_position, name, rrclass, ttl,
+                    *rdata);
         } else {
-            vector<RRsetPtr>::iterator it =
-                find_if(rrsets_[section].begin(), rrsets_[section].end(),
-                        MatchRR(name, rrtype, rrclass));
-            if (it != rrsets_[section].end()) {
-                (*it)->setTTL(min((*it)->getTTL(), ttl));
-                (*it)->addRdata(rdata);
-            } else {
-                RRsetPtr rrset =
-                    RRsetPtr(new RRset(name, rrclass, rrtype, ttl)); 
-                rrset->addRdata(rdata);
-                rrsets_[section].push_back(rrset);
-            }
+            addRR(section, name, rrclass, rrtype, ttl, rdata);
             ++added;
         }
     }
 
     return (added);
+}
+
+void
+MessageImpl::addRR(Message::Section section, const Name& name,
+                   const RRClass& rrclass, const RRType& rrtype,
+                   const RRTTL& ttl, ConstRdataPtr rdata)
+{
+    vector<RRsetPtr>::iterator it =
+        find_if(rrsets_[section].begin(), rrsets_[section].end(),
+                MatchRR(name, rrtype, rrclass));
+    if (it != rrsets_[section].end()) {
+        (*it)->setTTL(min((*it)->getTTL(), ttl));
+        (*it)->addRdata(rdata);
+    } else {
+        RRsetPtr rrset(new RRset(name, rrclass, rrtype, ttl));
+        rrset->addRdata(rdata);
+        rrsets_[section].push_back(rrset);
+    }
+}
+
+void
+MessageImpl::addEDNS(Message::Section section,  const Name& name,
+                     const RRClass& rrclass, const RRType& rrtype,
+                     const RRTTL& ttl, const Rdata& rdata)
+{
+    if (section != Message::SECTION_ADDITIONAL) {
+        isc_throw(DNSMessageFORMERR,
+                  "EDNS OPT RR found in an invalid section");
+    }
+    if (edns_) {
+        isc_throw(DNSMessageFORMERR, "multiple EDNS OPT RR found");
+    }
+
+    uint8_t extended_rcode;
+    edns_ = ConstEDNSPtr(createEDNSFromRR(name, rrclass, rrtype, ttl, rdata,
+                                          extended_rcode));
+    setRcode(Rcode(rcode_->getCode(), extended_rcode));
+}
+
+void
+MessageImpl::addTSIG(Message::Section section, unsigned int count,
+                     const InputBuffer& buffer, size_t start_position,
+                     const Name& name, const RRClass& rrclass,
+                     const RRTTL& ttl, const Rdata& rdata)
+{
+    if (section != Message::SECTION_ADDITIONAL) {
+        isc_throw(DNSMessageFORMERR,
+                  "TSIG RR found in an invalid section");
+    }
+    if (count != counts_[section] - 1) {
+        isc_throw(DNSMessageFORMERR, "TSIG RR is not the last record");
+    }
+    if (tsig_rr_) {
+        isc_throw(DNSMessageFORMERR, "multiple TSIG RRs found");
+    }
+    tsig_rr_ = ConstTSIGRecordPtr(new TSIGRecord(name, rrclass,
+                                                 ttl, rdata,
+                                                 buffer.getPosition() -
+                                                 start_position));
 }
 
 namespace {
@@ -732,31 +795,31 @@ Message::toText() const {
     // for simplicity we don't consider extended rcode (unlike BIND9)
     s += ", status: " + impl_->rcode_->toText();
     s += ", id: " + boost::lexical_cast<string>(impl_->qid_);
-    s += "\n;; flags: ";
+    s += "\n;; flags:";
     if (getHeaderFlag(HEADERFLAG_QR)) {
-        s += "qr ";
+        s += " qr";
     }
     if (getHeaderFlag(HEADERFLAG_AA)) {
-        s += "aa ";
+        s += " aa";
     }
     if (getHeaderFlag(HEADERFLAG_TC)) {
-        s += "tc ";
+        s += " tc";
     }
     if (getHeaderFlag(HEADERFLAG_RD)) {
-        s += "rd ";
+        s += " rd";
     }
     if (getHeaderFlag(HEADERFLAG_RA)) {
-        s += "ra ";
+        s += " ra";
     }
     if (getHeaderFlag(HEADERFLAG_AD)) {
-        s += "ad ";
+        s += " ad";
     }
     if (getHeaderFlag(HEADERFLAG_CD)) {
-        s += "cd ";
+        s += " cd";
     }
 
     // for simplicity, don't consider the update case for now
-    s += "; QUESTION: " +
+    s += "; QUERY: " + // note: not "QUESTION" to be compatible with BIND 9 dig
         lexical_cast<string>(impl_->counts_[SECTION_QUESTION]);
     s += ", ANSWER: " +
         lexical_cast<string>(impl_->counts_[SECTION_ANSWER]);
@@ -765,6 +828,9 @@ Message::toText() const {
 
     unsigned int arcount = impl_->counts_[SECTION_ADDITIONAL];
     if (impl_->edns_ != NULL) {
+        ++arcount;
+    }
+    if (impl_->tsig_rr_ != NULL) {
         ++arcount;
     }
     s += ", ADDITIONAL: " + lexical_cast<string>(arcount) + "\n";
@@ -801,6 +867,11 @@ Message::toText() const {
         for_each(impl_->rrsets_[SECTION_ADDITIONAL].begin(),
                  impl_->rrsets_[SECTION_ADDITIONAL].end(),
                  SectionFormatter<RRsetPtr>(SECTION_ADDITIONAL, s));
+    }
+
+    if (impl_->tsig_rr_ != NULL) {
+        s += "\n;; TSIG PSEUDOSECTION:\n";
+        s += impl_->tsig_rr_->toText();
     }
 
     return (s);

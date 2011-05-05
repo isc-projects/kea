@@ -12,12 +12,17 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <fstream>
+
 #include <boost/scoped_ptr.hpp>
 
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
 #include <util/time_utilities.h>
+
+#include <util/unittests/testdata.h>
+#include <util/unittests/textdata.h>
 
 #include <dns/edns.h>
 #include <dns/exceptions.h>
@@ -66,6 +71,10 @@ extern int64_t (*gettimeFunction)();
 }
 }
 }
+
+// XXX: this is defined as class static constants, but some compilers
+// seemingly cannot find the symbol when used in the EXPECT_xxx macros.
+const uint16_t TSIGContext::DEFAULT_FUDGE;
 
 namespace {
 class MessageTest : public ::testing::Test {
@@ -183,6 +192,70 @@ TEST_F(MessageTest, setEDNS) {
     EDNSPtr edns = EDNSPtr(new EDNS());
     message_render.setEDNS(edns);
     EXPECT_EQ(edns, message_render.getEDNS());
+}
+
+TEST_F(MessageTest, fromWireWithTSIG) {
+    // Initially there should be no TSIG
+    EXPECT_EQ(static_cast<void*>(NULL), message_parse.getTSIGRecord());
+
+    // getTSIGRecord() is only valid in the parse mode.
+    EXPECT_THROW(message_render.getTSIGRecord(), InvalidMessageOperation);
+
+    factoryFromFile(message_parse, "message_toWire2.wire");
+    const char expected_mac[] = {
+        0x22, 0x70, 0x26, 0xad, 0x29, 0x7b, 0xee, 0xe7,
+        0x21, 0xce, 0x6c, 0x6f, 0xff, 0x1e, 0x9e, 0xf3
+    };
+    const TSIGRecord* tsig_rr = message_parse.getTSIGRecord();
+    ASSERT_NE(static_cast<void*>(NULL), tsig_rr);
+    EXPECT_EQ(Name("www.example.com"), tsig_rr->getName());
+    EXPECT_EQ(85, tsig_rr->getLength()); // see TSIGRecordTest.getLength
+    EXPECT_EQ(TSIGKey::HMACMD5_NAME(), tsig_rr->getRdata().getAlgorithm());
+    EXPECT_EQ(0x4da8877a, tsig_rr->getRdata().getTimeSigned());
+    EXPECT_EQ(TSIGContext::DEFAULT_FUDGE, tsig_rr->getRdata().getFudge());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        tsig_rr->getRdata().getMAC(),
+                        tsig_rr->getRdata().getMACSize(),
+                        expected_mac, sizeof(expected_mac));
+    EXPECT_EQ(0, tsig_rr->getRdata().getError());
+    EXPECT_EQ(0, tsig_rr->getRdata().getOtherLen());
+    EXPECT_EQ(static_cast<void*>(NULL), tsig_rr->getRdata().getOtherData());
+
+    // If we clear the message for reuse, the recorded TSIG will be cleared.
+    message_parse.clear(Message::PARSE);
+    EXPECT_EQ(static_cast<void*>(NULL), message_parse.getTSIGRecord());
+}
+
+TEST_F(MessageTest, fromWireWithTSIGCompressed) {
+    // Mostly same as fromWireWithTSIG, but the TSIG owner name is compressed.
+    factoryFromFile(message_parse, "message_fromWire12.wire");
+    const TSIGRecord* tsig_rr = message_parse.getTSIGRecord();
+    ASSERT_NE(static_cast<void*>(NULL), tsig_rr);
+    EXPECT_EQ(Name("www.example.com"), tsig_rr->getName());
+    // len(www.example.com) = 17, but when fully compressed, the length is
+    // 2 bytes.  So the length of the record should be 15 bytes shorter.
+    EXPECT_EQ(70, tsig_rr->getLength());
+}
+
+TEST_F(MessageTest, fromWireWithBadTSIG) {
+    // Multiple TSIG RRs
+    EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire13.wire"),
+                 DNSMessageFORMERR);
+    message_parse.clear(Message::PARSE);
+
+    // TSIG in the answer section (must be in additional)
+    EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire14.wire"),
+                 DNSMessageFORMERR);
+    message_parse.clear(Message::PARSE);
+
+    // TSIG is not the last record.
+    EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire15.wire"),
+                 DNSMessageFORMERR);
+    message_parse.clear(Message::PARSE);
+
+    // Unexpected RR Class (this will fail in constructing TSIGRecord)
+    EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire16.wire"),
+                 DNSMessageFORMERR);
 }
 
 TEST_F(MessageTest, getRRCount) {
@@ -605,6 +678,44 @@ TEST_F(MessageTest, toWireWithoutOpcode) {
 TEST_F(MessageTest, toWireWithoutRcode) {
     message_render.setOpcode(Opcode::QUERY());
     EXPECT_THROW(message_render.toWire(renderer), InvalidMessageOperation);
+}
+
+TEST_F(MessageTest, toText) {
+    // Check toText() output for a typical DNS response with records in
+    // all sections
+    ifstream ifs;
+    unittests::openTestData("message_toText1.txt", ifs);
+    factoryFromFile(message_parse, "message_toText1.wire");
+    {
+        SCOPED_TRACE("Message toText test (basic case)");
+        unittests::matchTextData(ifs, message_parse.toText());
+    }
+
+    // Another example with EDNS.  The expected data was slightly modified
+    // from the dig output (other than replacing tabs with a space): adding
+    // a newline after the "OPT PSEUDOSECTION".  This is an intentional change
+    // in our version for better readability.
+    ifs.close();
+    message_parse.clear(Message::PARSE);
+    unittests::openTestData("message_toText2.txt", ifs);
+    factoryFromFile(message_parse, "message_toText2.wire");
+    {
+        SCOPED_TRACE("Message toText test with EDNS");
+        unittests::matchTextData(ifs, message_parse.toText());
+    }
+
+    // Another example with TSIG.  The expected data was slightly modified
+    // from the dig output (other than replacing tabs with a space): removing
+    // a redundant white space at the end of TSIG RDATA.  We'd rather consider
+    // it a dig's defect than a feature.
+    ifs.close();
+    message_parse.clear(Message::PARSE);
+    unittests::openTestData("message_toText3.txt", ifs);
+    factoryFromFile(message_parse, "message_toText3.wire");
+    {
+        SCOPED_TRACE("Message toText test with TSIG");
+        unittests::matchTextData(ifs, message_parse.toText());
+    }
 }
 
 TEST_F(MessageTest, toTextWithoutOpcode) {

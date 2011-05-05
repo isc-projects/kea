@@ -20,6 +20,8 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <util/buffer.h>
+
 #include <dns/name.h>
 #include <dns/rdataclass.h>
 
@@ -59,11 +61,94 @@ class AbstractMessageRenderer;
 /// similar to why \c EDNS is a separate class.
 class TSIGRecord {
 public:
+    ///
+    /// \name Constructors
+    ///
+    /// We use the default copy constructor, default copy assignment operator,
+    /// (and default destructor) intentionally.
+    //@{
     /// Constructor from TSIG key name and RDATA
     ///
     /// \exception std::bad_alloc Resource allocation for copying the name or
     /// RDATA fails
     TSIGRecord(const Name& key_name, const rdata::any::TSIG& tsig_rdata);
+
+    /// Constructor from resource record (RR) parameters.
+    ///
+    /// This constructor is intended to be used in the context of parsing
+    /// an incoming DNS message that contains a TSIG.  The parser would
+    /// first extract the owner name, RR type (which is TSIG) class, TTL and
+    /// the TSIG RDATA from the message.  This constructor is expected to
+    /// be given these RR parameters (except the RR type, because it must be
+    /// TSIG).
+    ///
+    /// According to RFC2845, a TSIG RR uses fixed RR class (ANY) and TTL (0).
+    /// If the RR class is different from the expected one, this
+    /// implementation considers it an invalid record and throws an exception
+    /// of class \c DNSMessageFORMERR.  On the other hand, the TTL is simply
+    /// ignored (in that sense we could even omit that parameter, but it's
+    /// still included if and when we want to change the policy).  RFC2845
+    /// is silent about what the receiver should do if it sees an unexpected
+    /// RR class or TTL in a TSIG RR.  This implementation simply follows what
+    /// BIND 9 does (it is not clear why BIND 9 employs the "inconsistent"
+    /// policy).
+    ///
+    /// Likewise, if \c rdata is not of type \c any::TSIG, an exception of
+    /// class DNSMessageFORMERR will be thrown.  When the caller is a
+    /// DNS message parser and builds \c rdata from incoming wire format
+    /// data as described above, this case happens when the RR class is
+    /// different from ANY (in the implementation, the type check takes place
+    /// before the explicit check against the RR class explained in the
+    /// previous paragraph).
+    ///
+    /// The \c length parameter is intended to be the length of the TSIG RR
+    /// (from the beginning of the owner name to the end of the RDATA) when
+    /// the caller is a DNS message parser.  Note that it is the actual length
+    /// for the RR in the format; if the owner name or the algorithm name
+    /// (in the RDATA) is compressed (although the latter should not be
+    /// compressed according to RFC3597), the length must be the size of the
+    /// compressed data.  The length is recorded inside the class and will
+    /// be returned via subsequent calls to \c getLength().  It's intended to
+    /// be used in the context TSIG verification; in the verify process
+    /// the MAC computation must be performed for the original data without
+    /// TSIG, so, to avoid parsing the entire data in the verify process
+    /// again, it's necessary to record information that can identify the
+    /// length to be digested for the MAC.  This parameter serves for that
+    /// purpose.
+    ///
+    /// \note Since the constructor doesn't take the wire format data per se,
+    /// it doesn't (and cannot) check the validity of \c length, and simply
+    /// accepts any given value.  It even accepts obviously invalid values
+    /// such as 0.  It's caller's responsibility to provide a valid value of
+    /// length, and, the verifier's responsibility to use the length safely.
+    ///
+    /// <b>DISCUSSION:</b> this design is fragile in that it introduces
+    /// a tight coupling between message parsing and TSIG verification via
+    /// the \c TSIGRecord class.  In terms of responsibility decoupling,
+    /// the ideal way to have \c TSIGRecord remember the entire wire data
+    /// along with the length of the TSIG.  Then in the TSIG verification
+    /// we could refer to the necessary potion of data solely from a
+    /// \c TSIGRecord object.  However, this approach would require expensive
+    /// heavy copy of the original data or introduce another kind of coupling
+    /// between the data holder and this class (if the original data is freed
+    /// while a \c TSIGRecord object referencing the data still exists, the
+    /// result will be catastrophic).  As a "best current compromise", we
+    /// use the current design.  We may reconsider it if it turns out to
+    /// cause a big problem or we come up with a better idea.
+    ///
+    /// \exception DNSMessageFORMERR Given RR parameters are invalid for TSIG.
+    /// \exception std::bad_alloc Internal resource allocation fails.
+    ///
+    /// \param name The owner name of the TSIG RR
+    /// \param rrclass The RR class of the RR.  Must be \c RRClass::ANY()
+    /// (see above)
+    /// \param ttl The TTL of the RR.  Expected to be a zero TTL, but
+    /// actually ignored in this implementation.
+    /// \param rdata The RDATA of the RR.  Must be of type \c any::TSIG.
+    /// \param length The size of the RR (see above)
+    TSIGRecord(const Name& name, const RRClass& rrclass, const RRTTL& ttl,
+               const rdata::Rdata& rdata, size_t length);
+    //@}
 
     /// Return the owner name of the TSIG RR, which is the TSIG key name
     ///
@@ -87,6 +172,16 @@ public:
     /// \exception None
     static const RRClass& getClass();
 
+    /// Return the TTL value of TSIG
+    ///
+    /// TSIG always uses 0 TTL.  This static method returns it,
+    /// when, though unlikely, an application wants to know the TTL TSIG
+    /// is supposed to use.
+    ///
+    /// \exception None
+    static const RRTTL& getTTL();
+    //@}
+
     /// Return the length of the TSIG record
     ///
     /// When constructed from the key name and RDATA, it is the length of
@@ -94,8 +189,7 @@ public:
     ///
     /// \note When constructed "from wire", that will mean the length of
     /// the wire format data for the TSIG RR.  The length will be necessary
-    /// to verify the message once parse is completed.  But this part is not
-    /// implemented yet.
+    /// to verify the message once parse is completed.
     ///
     /// \exception None
     size_t getLength() const { return (length_); }
@@ -177,7 +271,7 @@ typedef boost::shared_ptr<const TSIGRecord> ConstTSIGRecordPtr;
 ///
 /// \param os A \c std::ostream object on which the insertion operation is
 /// performed.
-/// \param record An \c TSIGRecord object output by the operation.
+/// \param record A \c TSIGRecord object output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
 std::ostream& operator<<(std::ostream& os, const TSIGRecord& record);
