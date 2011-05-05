@@ -40,6 +40,7 @@
 #include <dns/opcode.h>
 #include <dns/rcode.h>
 #include <log/logger.h>
+#include <log/macros.h>
 
 #include <asiodns/asiodef.h>
 #include <asiodns/io_fetch.h>
@@ -339,34 +340,30 @@ IOFetch::stop(Result result) {
         data_->stopped = true;
         switch (result) {
             case TIME_OUT:
-                if (logger.isDebugEnabled(1)) {
-                    logger.debug(20, ASIODNS_RECVTMO,
-                                 data_->remote_snd->getAddress().toText().c_str(),
-                                 static_cast<int>(data_->remote_snd->getPort()));
-                }
+                LOG_DEBUG(logger, 20, ASIODNS_RECVTMO).
+                    arg(data_->remote_snd->getAddress().toText()).
+                    arg(data_->remote_snd->getPort());
                 break;
 
             case SUCCESS:
-                if (logger.isDebugEnabled(50)) {
-                    logger.debug(30, ASIODNS_FETCHCOMP,
-                                 data_->remote_rcv->getAddress().toText().c_str(),
-                                 static_cast<int>(data_->remote_rcv->getPort()));
-                }
+                LOG_DEBUG(logger, 50, ASIODNS_FETCHCOMP).
+                    arg(data_->remote_rcv->getAddress().toText()).
+                    arg(data_->remote_rcv->getPort());
                 break;
 
             case STOPPED:
                 // Fetch has been stopped for some other reason.  This is
                 // allowed but as it is unusual it is logged, but with a lower
                 // debug level than a timeout (which is totally normal).
-                logger.debug(1, ASIODNS_FETCHSTOP,
-                             data_->remote_snd->getAddress().toText().c_str(),
-                             static_cast<int>(data_->remote_snd->getPort()));
+                LOG_DEBUG(logger, 1, ASIODNS_FETCHSTOP).
+                    arg(data_->remote_snd->getAddress().toText()).
+                    arg(data_->remote_snd->getPort());
                 break;
 
             default:
-                logger.error(ASIODNS_UNKRESULT, static_cast<int>(result),
-                             data_->remote_snd->getAddress().toText().c_str(),
-                             static_cast<int>(data_->remote_snd->getPort()));
+                LOG_ERROR(logger, ASIODNS_UNKRESULT).
+                    arg(data_->remote_snd->getAddress().toText()).
+                    arg(data_->remote_snd->getPort());
         }
 
         // Stop requested, cancel and I/O's on the socket and shut it down,
@@ -394,12 +391,11 @@ void IOFetch::logIOFailure(asio::error_code ec) {
            (data_->origin == ASIODNS_UNKORIGIN));
 
     static const char* PROTOCOL[2] = {"TCP", "UDP"};
-    logger.error(data_->origin,
-                 ec.value(),
-                 ((data_->remote_snd->getProtocol() == IPPROTO_TCP) ?
-                     PROTOCOL[0] : PROTOCOL[1]),
-                 data_->remote_snd->getAddress().toText().c_str(),
-                 static_cast<int>(data_->remote_snd->getPort()));
+    LOG_ERROR(logger, data_->origin).arg(ec.value()).
+        arg((data_->remote_snd->getProtocol() == IPPROTO_TCP) ?
+                     PROTOCOL[0] : PROTOCOL[1]).
+        arg(data_->remote_snd->getAddress().toText()).
+        arg(data_->remote_snd->getPort());
 }
 
 } // namespace asiodns
