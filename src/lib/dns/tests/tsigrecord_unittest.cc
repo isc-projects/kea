@@ -104,7 +104,6 @@ TEST_F(TSIGRecordTest, fromParams) {
     // Unexpected TTL (simply ignored)
     EXPECT_NO_THROW(TSIGRecord(test_name, TSIGRecord::getClass(),
                                RRTTL(3600), test_rdata, 85));
->>>>>>> trac813
 }
 
 TEST_F(TSIGRecordTest, recordToWire) {
