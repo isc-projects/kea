@@ -360,6 +360,7 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
     }
 
     // TODO: signature length check based on RFC4635
+    // (Right now we enforce the standard signature length in libcryptolink)
 
     // Handling empty MAC.  While RFC2845 doesn't explicitly prohibit other
     // cases, it can only reasonably happen in a response with BADSIG or

@@ -889,4 +889,19 @@ TEST_F(TSIGTest, signAterVerified) {
                  TSIGContextError);
 }
 
+TEST_F(TSIGTest, tooShortMAC) {
+    // Too short MAC should be rejected.
+    // Note: when we implement RFC4635-based checks, the error code will
+    // (probably) be FORMERR.
+
+    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    createMessageFromFile("tsig_verify10.wire");
+    {
+        SCOPED_TRACE("Verify test for request");
+        commonVerifyChecks(*tsig_verify_ctx, message.getTSIGRecord(),
+                           &received_data[0], received_data.size(),
+                           TSIGError::BAD_SIG(), TSIGContext::RECEIVED_REQUEST);
+    }
+}
+
 } // end namespace

@@ -43,6 +43,7 @@ BUILT_SOURCES += tsigrecord_toWire1.wire tsigrecord_toWire2.wire
 BUILT_SOURCES += tsig_verify1.wire tsig_verify2.wire tsig_verify3.wire
 BUILT_SOURCES += tsig_verify4.wire tsig_verify5.wire tsig_verify6.wire
 BUILT_SOURCES += tsig_verify7.wire tsig_verify8.wire tsig_verify9.wire
+BUILT_SOURCES += tsig_verify10.wire
 
 # NOTE: keep this in sync with real file listing
 # so is included in tarball
@@ -114,6 +115,7 @@ EXTRA_DIST += tsigrecord_toWire1.spec tsigrecord_toWire2.spec
 EXTRA_DIST += tsig_verify1.spec tsig_verify2.spec tsig_verify3.spec
 EXTRA_DIST += tsig_verify4.spec tsig_verify5.spec tsig_verify6.spec
 EXTRA_DIST += tsig_verify7.spec tsig_verify8.spec tsig_verify9.spec
+EXTRA_DIST += tsig_verify10.spec
 
 .spec.wire:
 	./gen-wiredata.py -o $@ $<
