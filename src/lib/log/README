@@ -55,7 +55,7 @@ The steps in using the system are:
    mnemonic for the message, typically 6-12 characters long - and a message.
    The file is described in more detail below.
 
-   Ideally the file should have a file type of ".msg".
+   Ideally the file should have a file type of ".mes".
 
 2. Run it through the message compiler to produce the .h and .cc files.  It
    is intended that this step be included in the build process.  However,

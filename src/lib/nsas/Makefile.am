@@ -9,25 +9,35 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/lib/nsas -I$(top_builddir)/src/lib/nsas
 AM_CPPFLAGS += $(SQLITE_CFLAGS)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
-# Some versions of GCC warn about some versions of Boost regarding
-# missing initializer for members in its posix_time.
+# Some versions of GCC warn about some versions of Boost regarding missing
+# initializer for members in its posix_time.
 # https://svn.boost.org/trac/boost/ticket/3477
 # But older GCC compilers don't have the flag.
 AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
-if USE_CLANGPP
 # clang++ complains about unused function parameters in some boost header
 # files.
+if USE_CLANGPP
 AM_CXXFLAGS += -Wno-unused-parameter
 endif
 
-# Build the logging source files from the message definition
-nsasdef.h nsasdef.cc: nsasdef.msg
-	$(top_builddir)/src/lib/log/compiler/message nsasdef.msg
+# Define rule to build logging source files from message file
+nsasdef.h nsasdef.cc: nsasdef.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/nsas/nsasdef.mes
 
+# What is being built.
 lib_LTLIBRARIES = libnsas.la
-libnsas_la_SOURCES  = nsasdef.h nsasdef.cc
-libnsas_la_SOURCES += address_entry.h address_entry.cc
+
+# Tell Automake that the nsasdef.{cc,h} source files are created in the build
+# process, so it must create these before doing anything else.  Although they
+# are a dependency of the library (so will be created from the message file
+# anyway), there is no guarantee as to exactly _when_ in the build they will be
+# created.  As the .h file is included in other sources file (so must be
+# present when they are compiled), the safest option is to create it first.
+BUILT_SOURCES = nsasdef.h nsasdef.cc
+
+# Library sources. The generated files will not be in the distribution.
+libnsas_la_SOURCES  = address_entry.h address_entry.cc
 libnsas_la_SOURCES += asiolink.h
 libnsas_la_SOURCES += hash.cc hash.h
 libnsas_la_SOURCES += hash_deleter.h
@@ -44,6 +54,10 @@ libnsas_la_SOURCES += fetchable.h
 libnsas_la_SOURCES += address_request_callback.h
 libnsas_la_SOURCES += glue_hints.h glue_hints.cc
 
-EXTRA_DIST = nsasdef.msg
+nodist_libnsas_la_SOURCES  = nsasdef.h nsasdef.cc
 
-CLEANFILES = *.gcno *.gcda
+# The message file should be in the distribution.
+EXTRA_DIST = nsasdef.mes
+
+# Make sure that the generated files are got rid of in a clean operation
+CLEANFILES = *.gcno *.gcda nsasdef.h nsasdef.cc
