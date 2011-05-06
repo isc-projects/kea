@@ -800,7 +800,7 @@ TEST_F(TSIGTest, nosigThenValidate) {
 TEST_F(TSIGTest, badtimeThenValidate) {
     // Similar to the previous test, but the first response results in BADTIME.
     isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
-    
+
     ConstTSIGRecordPtr tsig = createMessageAndSign(qid, test_name,
                                                    tsig_ctx.get());
 
