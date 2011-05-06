@@ -144,8 +144,17 @@ public:
         // Botan's verify_mac checks if len matches the output_length,
         // which causes it to fail for truncated signatures, so we do
         // the check ourselves
+        // SEE BELOW FOR TEMPORARY CHANGE
         try {
             Botan::SecureVector<Botan::byte> our_mac = hmac_->final();
+            if (len < getOutputLength()) {
+                // Currently we don't support truncated signature.  To avoid
+                // validating too short signature accidently, we enforce the
+                // standard signature size for the moment.
+                // Once we support truncation correctly, this if-clause should
+                // (and the capitalized comment above) be removed.
+                len = getOutputLength();
+            }
             if (len == 0 || len > getOutputLength()) {
                 len = getOutputLength();
             }

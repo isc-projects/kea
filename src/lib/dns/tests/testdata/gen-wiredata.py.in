@@ -283,9 +283,8 @@ class NS(RR):
         f.write('# NS name=%s\n' % (self.nsname))
         f.write('%s\n' % nsname_wire)
 
-class SOA:
-    # this currently doesn't support name compression within the RDATA.
-    rdlen = -1                  # auto-calculate
+class SOA(RR):
+    rdlen = None                  # auto-calculate
     mname = 'ns.example.com'
     rname = 'root.example.com'
     serial = 2010012601
@@ -296,11 +295,9 @@ class SOA:
     def dump(self, f):
         mname_wire = encode_name(self.mname)
         rname_wire = encode_name(self.rname)
-        rdlen = self.rdlen
-        if rdlen < 0:
-            rdlen = int(20 + len(mname_wire) / 2 + len(str(rname_wire)) / 2)
-        f.write('\n# SOA RDATA (RDLEN=%d)\n' % rdlen)
-        f.write('%04x\n' % rdlen);
+        if self.rdlen is None:
+            self.rdlen = int(20 + len(mname_wire) / 2 + len(str(rname_wire)) / 2)
+        self.dump_header(f, self.rdlen)
         f.write('# NNAME=%s RNAME=%s\n' % (self.mname, self.rname))
         f.write('%s %s\n' % (mname_wire, rname_wire))
         f.write('# SERIAL(%d) REFRESH(%d) RETRY(%d) EXPIRE(%d) MINIMUM(%d)\n' %
