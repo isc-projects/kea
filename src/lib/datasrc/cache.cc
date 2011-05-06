@@ -207,7 +207,7 @@ public:
 HotCacheImpl::HotCacheImpl(int slots, bool enabled) :
     enabled_(enabled), slots_(slots), count_(0)
 {
-    logger.debug(DBG_TRACE_BASIC, DATASRC_CACHE_CREAT);
+    logger.debug(DBG_TRACE_BASIC, DATASRC_CACHE_CREATE);
 }
 
 // Insert a cache node into the cache

@@ -17,7 +17,7 @@ $NAMESPACE isc::datasrc
 
 # \brief Messages for the data source library
 
-CACHE_CREAT creating the hotspot cache
+CACHE_CREATE creating the hotspot cache
 + Debug information that the hotspot cache was created at startup.
 
 CACHE_DESTROY destroying the hotspot cache
@@ -70,8 +70,8 @@ CACHE_DISABLE disabling the cache
 + information or return anything.
 
 QUERY_SYNTH_CNAME synthesizing CNAME from DNAME on '%1'
-+ Debug info. While answering a query, we met a DNAME. We'll return the DNAME,
-+ but we're creating a CNAME for clients that don't understand DNAMEs.
++ Debug information. While answering a query, we met a DNAME. We'll return the
++ DNAME, but we're creating a CNAME for clients that don't understand DNAMEs.
 
 QUERY_EMPTY_DNAME the DNAME on '%1' is empty
 + We tried to synthesize a CNAME from this DNAME, but it contains no records.
@@ -145,7 +145,7 @@ QUERY_IS_REF query for referral
 
 QUERY_SIMPLE_FAIL the underlying data source failed with %1
 + We queried the data source to answer a simple query and it returned error
-+ (1 is some error, 2 is not implemented). The data source should have log
++ (1 is some error, 2 is not implemented). The data source should have logged
 + the specific error already.
 
 QUERY_AUTH_FAIL the underlying data source failed with %1
@@ -173,7 +173,7 @@ QUERY_INVALID_OP invalid query operation requested
 + operation code.
 
 QUERY_ADD_RRSET adding RRset '%1/%2' to message
-+ Debug information. We're adding the rrset to answer message.
++ Debug information. We're adding the RRset to answer message.
 
 QUERY_COPY_AUTH copying authoritative section into message
 + Debug information. We're copying referral information into authoritative
@@ -304,20 +304,20 @@ MEM_OUT_OF_ZONE domain '%1' doesn't belong to zone '%2'
 MEM_WILDCARD_NS nS record in wildcard domain '%1'
 + We refuse to load NS record into a wildcard domain. It is'n explicitly
 + forbidden, but the protocol is ambiguous about how this should behave and
-+ bind 9 refuses that as well. We don't like your zone, please describe it
++ BIND 9 refuses that as well. We don't like your zone, please describe it
 + using different tools.
 
 MEM_WILDCARD_DNAME dNAME record in wildcard domain '%1'
 + We refuse to load DNAME record into a wildcard domain. It is'n explicitly
 + forbidden, but the protocol is ambiguous about how this should behave and
-+ bind 9 refuses that as well. We don't like your zone, please describe it
++ BIND 9 refuses that as well. We don't like your zone, please describe it
 + using different tools.
 
 MEM_ADD_RRSET adding RRset '%1/%2' into zone '%3'
 + Debug information. We're adding an RRset to the zone of in-memory data
 + source.
 
-MEM_DUP_RRSET duplicate rrset '%1/%2'
+MEM_DUP_RRSET duplicate RRset '%1/%2'
 + An RRset is being inserted into in-memory data source for a second time.
 + The original version must be removed first. Note that we don't support
 + loading master files where an RRset is split into multiple locations yet.
@@ -331,7 +331,7 @@ MEM_NS_ENCOUNTERED encountered a NS
 + Debug information. While searching for the requested domain, we encountered
 + a NS on the way (a delegation). This may lead to stop of the search.
 
-MEM_RENAME renaming rrset from '%1' to '%2'
+MEM_RENAME renaming RRset from '%1' to '%2'
 + Debug information. We generate an RRset from a different RRset (most probably
 + a wildcard). So we need to rename it to whatever the user asked for. In fact,
 + we can't rename RRset (it's not possible with our libraries), so we create
@@ -454,7 +454,7 @@ SQLITE_FIND looking for RRset '%1/%2'
 + Debug information. The SQLite data source is looking up a resource record
 + set.
 
-SQLITE_FIND_BAD_CLASS class mismatch looking for an rrset ('%1' and '%2')
+SQLITE_FIND_BAD_CLASS class mismatch looking for an RRset ('%1' and '%2')
 + The SQLite data source was looking up an RRset, but the data source contains
 + different class than the query was for.
 
@@ -462,7 +462,7 @@ SQLITE_FINDEXACT looking for exact RRset '%1/%2'
 + Debug information. The SQLite data source is looking up an exact resource
 + record.
 
-SQLITE_FINDEXACT_BAD_CLASS class mismatch looking for an rrset ('%1' and '%2')
+SQLITE_FINDEXACT_BAD_CLASS class mismatch looking for an RRset ('%1' and '%2')
 + The SQLite data source was looking up an exact RRset, but the data source
 + contains different class than the query was for.
 
