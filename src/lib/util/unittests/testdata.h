@@ -34,6 +34,14 @@ void addTestDataPath(const std::string& path);
 /// addTestDataPath().  On success, ifs will be ready for reading the data
 /// stored in 'datafile'.  If the data file cannot be open with any of the
 /// registered paths, a runtime_error exception will be thrown.
+///
+/// \note Care should be taken if you want to reuse the same single \c ifs
+/// for multiple input data.  Some standard C++ library implementations retain
+/// the failure bit if the first stream reaches the end of the first file,
+/// and make the second call to \c ifstream::open() fail.  The safest way
+/// is to use a different \c ifstream object for a new call to this function;
+/// alternatively make sure you explicitly clear the error bit by calling
+/// \c ifstream::clear() on \c ifs.
 void openTestData(const char* const datafile, std::ifstream& ifs);
 }
 }
