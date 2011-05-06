@@ -171,7 +171,7 @@ TSIGTest::createMessageAndSign(uint16_t id, const Name& qname,
 
     TSIGContext::State expected_new_state =
         (ctx->getState() == TSIGContext::INIT) ?
-        TSIGContext::WAIT_RESPONSE : TSIGContext::SENT_RESPONSE;
+        TSIGContext::SENT_REQUEST : TSIGContext::SENT_RESPONSE;
     ConstTSIGRecordPtr tsig = ctx->sign(id, renderer.getData(),
                                         renderer.getLength());
     EXPECT_EQ(expected_new_state, ctx->getState());
@@ -729,7 +729,7 @@ TEST_F(TSIGTest, badkeyForResponse) {
         SCOPED_TRACE("Verify a response resulting in BADKEY");
         commonVerifyChecks(*tsig_ctx, &dummy_record, &dummy_data[0],
                            dummy_data.size(), TSIGError::BAD_KEY(),
-                           TSIGContext::WAIT_RESPONSE);
+                           TSIGContext::SENT_REQUEST);
     }
 
     // A similar case with a different algorithm
@@ -742,7 +742,7 @@ TEST_F(TSIGTest, badkeyForResponse) {
         SCOPED_TRACE("Verify a response resulting in BADKEY due to bad alg");
         commonVerifyChecks(*tsig_ctx, &dummy_record2, &dummy_data[0],
                            dummy_data.size(), TSIGError::BAD_KEY(),
-                           TSIGContext::WAIT_RESPONSE);
+                           TSIGContext::SENT_REQUEST);
     }
 }
 
@@ -760,7 +760,7 @@ TEST_F(TSIGTest, badsigThenValidate) {
         SCOPED_TRACE("Verify a response that should fail due to BADSIG");
         commonVerifyChecks(*tsig_ctx, message.getTSIGRecord(),
                            &received_data[0], received_data.size(),
-                           TSIGError::BAD_SIG(), TSIGContext::WAIT_RESPONSE);
+                           TSIGError::BAD_SIG(), TSIGContext::SENT_REQUEST);
     }
 
     createMessageFromFile("tsig_verify5.wire");
@@ -784,7 +784,7 @@ TEST_F(TSIGTest, nosigThenValidate) {
         SCOPED_TRACE("Verify a response without TSIG that should exist");
         commonVerifyChecks(*tsig_ctx, NULL, &dummy_data[0],
                            dummy_data.size(), TSIGError::FORMERR(),
-                           TSIGContext::WAIT_RESPONSE);
+                           TSIGContext::SENT_REQUEST);
     }
 
     createMessageFromFile("tsig_verify5.wire");
@@ -810,7 +810,7 @@ TEST_F(TSIGTest, badtimeThenValidate) {
         SCOPED_TRACE("Verify resulting in BADTIME due to expired SIG");
         commonVerifyChecks(*tsig_ctx, tsig.get(), &dummy_data[0],
                            dummy_data.size(), TSIGError::BAD_TIME(),
-                           TSIGContext::WAIT_RESPONSE);
+                           TSIGContext::SENT_REQUEST);
     }
 
     // revert the clock again.
