@@ -8,7 +8,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
-CLEANFILES = *.gcno *.gcda
+CLEANFILES = *.gcno *.gcda asiodef.h asiodef.cc
 
 # Define rule to build logging source files from message file
 asiodef.h asiodef.cc: asiodef.msg
