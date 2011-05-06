@@ -342,10 +342,6 @@ IOFetch::stop(Result result) {
         // numbers indicating the most important information.  The relative
         // values are somewhat arbitrary.
         //
-        // Although Logger::debug checks the debug flag internally, doing it
-        // below before calling Logger::debug avoids the overhead of a string
-        // conversion in the common case when debug is not enabled.
-        //
         // TODO: Update testing of stopped_ if threads are used.
         data_->stopped = true;
         switch (result) {
