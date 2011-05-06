@@ -276,9 +276,6 @@ class CCSessionListener(Listener):
         """
         handle set command
         """
-        if self.verbose:
-            sys.stdout.write("[b10-stats] 'set' command received, args: "+str(args)+"\n")
-
         # 'args' must be dictionary type
         self.stats_data.update(args['stats_data'])
 
