@@ -96,7 +96,7 @@ An example file could be:
 
 $PREFIX TEST_
 $NAMESPACE isc::log
-TEST1       message %s is much too large
+TEST1       message %1 is much too large
 + This message is a test for the general message code
 
 UNKNOWN     unknown message
@@ -131,8 +131,8 @@ Points to note:
   part of the line.
 
 * Message lines.  These comprise a symbol name and a message, which may
-  include zero or more printf-style tokens.  Symbol names will be upper-cased
-  by the compiler.
+  include zero or more %1, %2...  placeholder tokens.  Symbol names will be
+  upper-cased by the compiler.
 
 
 Message Compiler
@@ -252,14 +252,14 @@ To use the current version of the logging:
 
 4. Issue logging calls using methods on logger, e.g.
 
-       logger.error(DPS_NSTIMEOUT, "isc.org");
+       logger.error(DPS_NSTIMEOUT).arg("isc.org");
 
    (where, in the example above we might have defined the symbol in the message
    file with something along the lines of:
 
        $PREFIX DPS_
            :
-       NSTIMEOUT  queries to all nameservers for %s have timed out
+       NSTIMEOUT  queries to all nameservers for %1 have timed out
 
    At present, the only logging is to the console.
 
