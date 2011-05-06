@@ -399,11 +399,8 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
     // continuation of the same TCP stream and skip digesting them except
     // for time related variables (RFC2845 4.4).
     // Note: we use the constant values for RR class and TTL specified
-    // in RFC2845.  For the RR class the effect should be the same
-    // because we reject an unexpected RR class; for TTL, the RFC
-    // isn't clear.  BIND 9 uses the received TTL, but we use the
-    // constant for simplicity (in practice it's quite unlikely to see
-    // a non 0 TTL, so probably this doesn't matter).
+    // in RFC2845, not received values (we reject other values in constructing
+    // the TSIGRecord).
     impl_->digestTSIGVariables(variables, hmac,
                                TSIGRecord::getClass().getCode(),
                                TSIGRecord::TSIG_TTL,
