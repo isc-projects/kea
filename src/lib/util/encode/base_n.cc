@@ -160,23 +160,34 @@ public:
         base_zero_code_(base_zero_code),
         base_(base), base_beginpad_(base_beginpad), base_end_(base_end),
         in_pad_(false)
-    {}
+    {
+        // Skip beginning spaces, if any.  We need do it here because
+        // otherwise the first call to operator*() would be confused.
+        skipSpaces();
+    }
     DecodeNormalizer& operator++() {
         ++base_;
-        while (base_ != base_end_ && (*base_ > 0) && isspace(*base_)) {
-            ++base_;
-        }
+        skipSpaces();
         if (base_ == base_beginpad_) {
             in_pad_ = true;
         }
         return (*this);
     }
+    void skipSpaces() {
+        while (base_ != base_end_ && (*base_ > 0) && isspace(*base_)) {
+            ++base_;
+        }
+    }
     const char& operator*() const {
         if (base_ == base_end_) {
-            isc_throw(BadValue, "dereference the end iterator");
+            // binary_from_baseX calls this operator when it needs more bits
+            // even if the internal iterator (base_) has reached its end
+            // (if that happens it means the input is an incomplete baseX
+            // string and should be rejected).  So this is the only point
+            // we can catch and reject this type of invalid input.
+            isc_throw(BadValue, "Unexpected end of input in BASE decoder");
         }
-
-        if (in_pad_ && *base_ == BASE_PADDING_CHAR) {
+        if (in_pad_) {
             return (base_zero_code_);
         } else {
             return (*base_);
