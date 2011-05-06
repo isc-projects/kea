@@ -110,12 +110,9 @@ timeToText64(uint64_t value) {
 // library, it's not even declared in a header file.
 namespace detail {
 int64_t (*gettimeFunction)() = NULL;
-}
 
-namespace {
 int64_t
-gettimeofdayWrapper() {
-    using namespace detail;
+gettimeWrapper() {
     if (gettimeFunction != NULL) {
         return (gettimeFunction());
     }
@@ -132,7 +129,7 @@ timeToText32(const uint32_t value) {
     // We first adjust the time to the closest epoch based on the current time.
     // Note that the following variables must be signed in order to handle
     // time until year 2038 correctly.
-    const int64_t start = gettimeofdayWrapper() - 0x7fffffff;
+    const int64_t start = detail::gettimeWrapper() - 0x7fffffff;
     int64_t base = 0;
     int64_t t;
     while ((t = (base + value)) < start) {
