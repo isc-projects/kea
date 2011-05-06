@@ -3,6 +3,12 @@ CLEANFILES = *.wire
 BUILT_SOURCES = edns_toWire1.wire edns_toWire2.wire edns_toWire3.wire
 BUILT_SOURCES += edns_toWire4.wire
 BUILT_SOURCES += message_fromWire10.wire message_fromWire11.wire
+BUILT_SOURCES += message_fromWire12.wire message_fromWire13.wire
+BUILT_SOURCES += message_fromWire14.wire message_fromWire15.wire
+BUILT_SOURCES += message_fromWire16.wire
+BUILT_SOURCES += message_toWire2.wire message_toWire3.wire
+BUILT_SOURCES += message_toText1.wire message_toText2.wire
+BUILT_SOURCES += message_toText3.wire
 BUILT_SOURCES += name_toWire5.wire name_toWire6.wire
 BUILT_SOURCES += rdatafields1.wire rdatafields2.wire rdatafields3.wire
 BUILT_SOURCES += rdatafields4.wire rdatafields5.wire rdatafields6.wire
@@ -33,6 +39,7 @@ BUILT_SOURCES += rdata_tsig_fromWire9.wire
 BUILT_SOURCES += rdata_tsig_toWire1.wire rdata_tsig_toWire2.wire
 BUILT_SOURCES += rdata_tsig_toWire3.wire rdata_tsig_toWire4.wire
 BUILT_SOURCES += rdata_tsig_toWire5.wire
+BUILT_SOURCES += tsigrecord_toWire1.wire tsigrecord_toWire2.wire
 
 # NOTE: keep this in sync with real file listing
 # so is included in tarball
@@ -45,8 +52,13 @@ EXTRA_DIST += message_fromWire3 message_fromWire4
 EXTRA_DIST += message_fromWire5 message_fromWire6
 EXTRA_DIST += message_fromWire7 message_fromWire8
 EXTRA_DIST += message_fromWire9 message_fromWire10.spec
-EXTRA_DIST += message_fromWire11.spec
-EXTRA_DIST += message_toWire1
+EXTRA_DIST += message_fromWire11.spec message_fromWire12.spec
+EXTRA_DIST += message_fromWire13.spec message_fromWire14.spec
+EXTRA_DIST += message_fromWire15.spec message_fromWire16.spec
+EXTRA_DIST += message_toWire1 message_toWire2.spec message_toWire3.spec
+EXTRA_DIST += message_toText1.txt message_toText1.spec
+EXTRA_DIST += message_toText2.txt message_toText2.spec
+EXTRA_DIST += message_toText3.txt message_toText3.spec
 EXTRA_DIST += name_fromWire1 name_fromWire2 name_fromWire3_1 name_fromWire3_2
 EXTRA_DIST += name_fromWire4 name_fromWire6 name_fromWire7 name_fromWire8
 EXTRA_DIST += name_fromWire9 name_fromWire10 name_fromWire11 name_fromWire12
@@ -66,7 +78,8 @@ EXTRA_DIST += rdata_nsec_fromWire6.spec rdata_nsec_fromWire7.spec
 EXTRA_DIST += rdata_nsec_fromWire8.spec rdata_nsec_fromWire9.spec
 EXTRA_DIST += rdata_nsec_fromWire10.spec
 EXTRA_DIST += rdata_nsec3param_fromWire1
-EXTRA_DIST += rdata_nsec3_fromWire1 rdata_nsec3_fromWire3
+EXTRA_DIST += rdata_nsec3_fromWire1
+EXTRA_DIST += rdata_nsec3_fromWire2.spec rdata_nsec3_fromWire3
 EXTRA_DIST += rdata_nsec3_fromWire4.spec rdata_nsec3_fromWire5.spec
 EXTRA_DIST += rdata_nsec3_fromWire6.spec rdata_nsec3_fromWire7.spec
 EXTRA_DIST += rdata_nsec3_fromWire8.spec rdata_nsec3_fromWire9.spec
@@ -94,7 +107,7 @@ EXTRA_DIST += rdata_tsig_fromWire9.spec
 EXTRA_DIST += rdata_tsig_toWire1.spec rdata_tsig_toWire2.spec
 EXTRA_DIST += rdata_tsig_toWire3.spec rdata_tsig_toWire4.spec
 EXTRA_DIST += rdata_tsig_toWire5.spec
-EXTRA_DIST += rdata_nsec3_fromWire2.spec
+EXTRA_DIST += tsigrecord_toWire1.spec tsigrecord_toWire2.spec
 
 .spec.wire:
 	./gen-wiredata.py -o $@ $<

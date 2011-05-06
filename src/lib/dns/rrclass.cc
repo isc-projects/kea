@@ -52,7 +52,7 @@ RRClass::toWire(OutputBuffer& buffer) const {
 }
 
 void
-RRClass::toWire(MessageRenderer& renderer) const {
+RRClass::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint16(classcode_);
 }
 

@@ -47,7 +47,7 @@ class Name;
 class RRType;
 class RRClass;
 class RRTTL;
-class MessageRenderer;
+class AbstractMessageRenderer;
 class AbstractRRset;
 class BasicRRset;
 class RdataIterator;
@@ -311,7 +311,7 @@ public:
     /// \return The number of RRs rendered.  If the truncation is necessary
     /// this value may be different from the number of RDATA objects contained
     /// in the RRset.
-    virtual unsigned int toWire(MessageRenderer& renderer) const = 0;
+    virtual unsigned int toWire(AbstractMessageRenderer& renderer) const = 0;
 
     /// \brief Render the RRset in the wire format without any compression.
     ///
@@ -617,7 +617,7 @@ public:
     ///
     /// This method simply uses the default implementation.
     /// See \c AbstractRRset::toWire(MessageRenderer&)const.
-    virtual unsigned int toWire(MessageRenderer& renderer) const;
+    virtual unsigned int toWire(AbstractMessageRenderer& renderer) const;
 
     /// \brief Render the RRset in the wire format without any compression.
     ///

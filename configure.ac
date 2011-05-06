@@ -410,7 +410,16 @@ if test -x "${BOTAN_CONFIG}" ; then
         for flag in ${BOTAN_LDFLAGS}; do
                 BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne 's/^\(\-L\)/-R/p'`"
         done
-        AC_SUBST(BOTAN_RPATH)
+	AC_SUBST(BOTAN_RPATH)
+
+	# According to the libtool manual, it should be sufficient if we
+	# specify the "-R libdir" in our wrapper library of botan (no other
+	# programs will need libbotan directly); "libdir" should be added to
+	# the program's binary image.  But we've seen in our build environments
+	# that (some versions of?) libtool doesn't propagate -R as documented,
+	# and it caused a linker error at run time.  To work around this, we
+	# also add the rpath to the global LDFLAGS.
+        LDFLAGS="$BOTAN_RPATH $LDFLAGS"
     fi
 
     AC_SUBST(BOTAN_LDFLAGS)
@@ -419,7 +428,7 @@ fi
 
 CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
-LDFLAGS_SAVED=$LDFLAGS
+LDFLAGS_SAVED="$LDFLAGS"
 LDFLAGS="$BOTAN_LDFLAGS $LDFLAGS"
 
 AC_CHECK_HEADERS([botan/botan.h],,AC_MSG_ERROR([Missing required header files.]))
@@ -878,6 +887,7 @@ Flags:
   DEFS:          $DEFS
   CPPFLAGS:      $CPPFLAGS
   CXXFLAGS:      $CXXFLAGS
+  LDFLAGS:       $LDFLAGS
   B10_CXXFLAGS:  $B10_CXXFLAGS
 dnl includes too
   Python:        ${PYTHON_INCLUDES}
