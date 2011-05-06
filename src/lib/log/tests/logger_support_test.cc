@@ -23,6 +23,7 @@
 #include <iostream>
 
 #include <log/logger.h>
+#include <log/macros.h>
 #include <log/logger_support.h>
 #include <log/root_logger_name.h>
 
@@ -92,13 +93,13 @@ int main(int argc, char** argv) {
     initLogger("alpha", severity, dbglevel, localfile);
 
     // Log a few messages
-    logger_ex.fatal(MSG_MSGWRTERR, "test1", "42");
-    logger_ex.error(MSG_UNRECDIR, "false");
-    logger_dlm.warn(MSG_MSGRDERR, "a.txt", "dummy test");
-    logger_dlm.info(MSG_OPNMSGIN, "example.msg", "dummy test");
-    logger_ex.debug(0, MSG_UNRECDIR, "[abc]");
-    logger_ex.debug(24, MSG_UNRECDIR, "[24]");
-    logger_ex.debug(25, MSG_UNRECDIR, "[25]");
-    logger_ex.debug(26, MSG_UNRECDIR, "[26]");
+    LOG_FATAL(logger_ex, MSG_MSGWRTERR).arg("test1").arg("42");
+    LOG_ERROR(logger_ex, MSG_UNRECDIR).arg("false");
+    LOG_WARN(logger_dlm, MSG_MSGRDERR).arg("a.txt").arg("dummy test");
+    LOG_INFO(logger_dlm, MSG_OPNMSGIN).arg("example.msg").arg("dummy test");
+    LOG_DEBUG(logger_ex, 0, MSG_UNRECDIR).arg("[abc]");
+    LOG_DEBUG(logger_ex, 24, MSG_UNRECDIR).arg("[24]");
+    LOG_DEBUG(logger_ex, 25, MSG_UNRECDIR).arg("[25]");
+    LOG_DEBUG(logger_ex, 26, MSG_UNRECDIR).arg("[26]");
     return (0);
 }

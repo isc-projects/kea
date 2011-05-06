@@ -194,17 +194,14 @@ LoggerImpl::isDebugEnabled(int dbglevel) {
 }
 
 // Output a general message
+string*
+LoggerImpl::lookupMessage(const MessageID& ident) {
+    return (new string(string(ident) + ", " +
+                       MessageDictionary::globalDictionary().getText(ident)));
+}
 
 void
-LoggerImpl::output(const char* sev_text, const MessageID& ident,
-    va_list ap)
-{
-    char message[512];      // Should be large enough for any message
-
-    // Obtain text of the message and substitute arguments.
-    const string format = MessageDictionary::globalDictionary().getText(ident);
-    vsnprintf(message, sizeof(message), format.c_str(), ap);
-
+LoggerImpl::outputRaw(const char* sevText, const string& message) {
     // Get the time in a struct tm format, and convert to text
     time_t t_time;
     time(&t_time);
@@ -214,8 +211,8 @@ LoggerImpl::output(const char* sev_text, const MessageID& ident,
     (void) strftime(chr_time, sizeof(chr_time), "%Y-%m-%d %H:%M:%S", tm_time);
 
     // Now output.
-    std::cout << chr_time << " " << sev_text << " [" << getName() << "] " <<
-        ident << ", " << message << "\n";
+    cout << chr_time << " " << sevText << " [" << getName() << "] " <<
+        message << endl;
 }
 
 } // namespace log
