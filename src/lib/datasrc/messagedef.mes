@@ -23,7 +23,7 @@ CACHE_CREAT Creating the hotspot cache
 CACHE_DESTROY Destroying the hotspot cache
 + Debug information. The hotspot cache is being destroyed.
 
-CACHE_INSERT Inserting item '%s' into the cache
+CACHE_INSERT Inserting item '%1' into the cache
 + Debug information. It means a new item is being inserted into the hotspot
 + cache.
 
@@ -37,10 +37,10 @@ CACHE_FULL Cache is full, dropping oldest
 + maximum number of items was exceeded, so the least recently used item will
 + be dropped. This should be directly followed by CACHE_REMOVE.
 
-CACHE_REMOVE Removing '%s' from the cache
+CACHE_REMOVE Removing '%1' from the cache
 + Debug information. An item is being removed from the hotspot cache.
 
-CACHE_LOOKUP Looking up '%s' in the cache
+CACHE_LOOKUP Looking up '%1' in the cache
 + Debug information. We are trying to look up an item in the hotspot cache.
 + Further progress and result will follow.
 
@@ -57,7 +57,7 @@ CACHE_EXPIRED The item is expired
 + hotspot cache, but it was old. We're going to remove it and report we don't
 + have it (the external result will be the same as with CACHE_NOT_FOUND).
 
-CACHE_SLOTS Setting the cache size to '%d'
+CACHE_SLOTS Setting the cache size to '%1'
 + The maximum allowed number of items of the hotspot cache is set to the given
 + number. If there are too many, we're going to drop them right now. The size
 + of 0 means no limit.
@@ -69,41 +69,41 @@ CACHE_DISABLE Disabling the cache
 + The hotspot cache is disabled from now on. It is not going to store
 + information or return anything.
 
-QUERY_SYNTH_CNAME Synthesizing CNAME from DNAME on '%s'
+QUERY_SYNTH_CNAME Synthesizing CNAME from DNAME on '%1'
 + Debug info. While answering a query, we met a DNAME. We'll return the DNAME,
 + but we're creating a CNAME for clients that don't understand DNAMEs.
 
-QUERY_EMPTY_DNAME The DNAME on '%s' is empty
+QUERY_EMPTY_DNAME The DNAME on '%1' is empty
 + We tried to synthesize a CNAME from this DNAME, but it contains no records.
 + This indicates problem with supplied data.
 
-QUERY_GET_NS_ADDITIONAL Addition of A/AAAA for '%s' requested by NS '%s'
+QUERY_GET_NS_ADDITIONAL Addition of A/AAAA for '%1' requested by NS '%2'
 + Debug information. While processing a query, we met a NS record. It
 + references the mentioned address, so we want to look up A/AAAA records for it
 + and put it into the additional section.
 
-QUERY_GET_MX_ADDITIONAL Addition of A/AAAA for '%s' requested by MX '%s'
+QUERY_GET_MX_ADDITIONAL Addition of A/AAAA for '%1' requested by MX '%2'
 + Debug information. While processing a query, we met a MX record. It
 + references the mentioned address, so we want to look up A/AAAA records for it
 + and put it into the additional section.
 
-QUERY_FOLLOW_CNAME Following CNAME at '%s'
+QUERY_FOLLOW_CNAME Following CNAME at '%1'
 + Debug information. The domain is a CNAME (or a DNAME and we created a CNAME
 + for it already), so we're following it.
 
-QUERY_EMPTY_CNAME CNAME at '%s' is empty
+QUERY_EMPTY_CNAME CNAME at '%1' is empty
 + We tried to follow a CNAME, but contains no records. We have nothing to
 + follow, so we will have nothing in the answer. This indicates a problem with
 + supplied data.
 
-QUERY_TOO_MANY_CNAMES CNAME chain limit exceeded at '%s'
+QUERY_TOO_MANY_CNAMES CNAME chain limit exceeded at '%1'
 + While answering a query, we followed a CNAME. Then another one. And after 16
 + CNAMEs we decided it's enough and we won't follow more. Long CNAME chains
 + are discouraged, and this might be a loop as well. Note that some of the
 + CNAMEs might have been synthesised from DNAMEs internally. This indicates
 + a problem with supplied data.
 
-QUERY_CHECK_CACHE Checking cache for '%s/%s'
+QUERY_CHECK_CACHE Checking cache for '%1/%2'
 + Debug information. While processing a query we're looking into the hotspot
 + cache.
 
@@ -115,11 +115,11 @@ QUERY_NO_CACHE_ANY_AUTH Ignoring cache for ANY query
 + Debug information. We don't really want to use cache for authoritative ANY
 + query (ANY as the type or class).
 
-DO_QUERY Handling query for '%s/%s'
+DO_QUERY Handling query for '%1/%2'
 + Debug information. We're processing some internal query for given name and
 + type.
 
-QUERY_NO_ZONE No zone containing '%s' in class '%s'
+QUERY_NO_ZONE No zone containing '%1' in class '%2'
 + We tried to get the domain but there's no zone in our data that encloses
 + the name. Maybe someone sent a query to wrong server for some reason.
 
@@ -143,27 +143,27 @@ QUERY_IS_NOGLUE Query for non-glue addresses
 QUERY_IS_REF Query for referral
 + Debug information. The last DO_QUERY is query for referral information.
 
-QUERY_SIMPLE_FAIL The underlying data source failed with %u
+QUERY_SIMPLE_FAIL The underlying data source failed with %1
 + We queried the data source to answer a simple query and it returned error
 + (1 is some error, 2 is not implemented). The data source should have log
 + the specific error already.
 
-QUERY_AUTH_FAIL The underlying data source failed with %u
+QUERY_AUTH_FAIL The underlying data source failed with %1
 + We queried the data source to answer authoritative query and it returned
 + error (1 is some error, 2 is not implemented). The data source should have
 + log the specific error already.
 
-QUERY_GLUE_FAIL The underlying data source failed with %u
+QUERY_GLUE_FAIL The underlying data source failed with %1
 + We queried the data source to answer query for glue addresses and it returned
 + error (1 is some error, 2 is not implemented). The data source should have
 + log the specific error already.
 
-QUERY_NOGLUE_FAIL The underlying data source failed with %u
+QUERY_NOGLUE_FAIL The underlying data source failed with %1
 + We queried the data source to answer query for non-glue addresses and it
 + returned error (1 is some error, 2 is not implemented). The data source
 + should have log the specific error already.
 
-QUERY_REF_FAIL The underlying data source failed with %u
+QUERY_REF_FAIL The underlying data source failed with %1
 + We queried the data source to answer query for referral and it
 + returned error (1 is some error, 2 is not implemented). The data source
 + should have log the specific error already.
@@ -172,48 +172,48 @@ QUERY_INVALID_OP Invalid query operation requested
 + This indicates a programmer error. The DO_QUERY was called with unknown
 + operation code.
 
-QUERY_ADD_RRSET Adding RRset '%s/%s' to message
+QUERY_ADD_RRSET Adding RRset '%1/%2' to message
 + Debug information. We're adding the rrset to answer message.
 
 QUERY_COPY_AUTH Copying authoritative section into message
 + Debug information. We're copying referral information into authoritative
 + section of the response message.
 
-QUERY_DELEGATION Looking for delegation on the path to '%s'
+QUERY_DELEGATION Looking for delegation on the path to '%1'
 + Debug information. We're looking if there's a delegation point on the way
 + down to the given domain.
 
-QUERY_ADD_SOA Adding SOA of '%s'
+QUERY_ADD_SOA Adding SOA of '%1'
 + Debug information. We're adding a SOA record for the given zone into the
 + authority section.
 
-QUERY_ADD_NSEC Adding NSEC record for '%s'
+QUERY_ADD_NSEC Adding NSEC record for '%1'
 + Debug information. We're adding NSEC record for this domain.
 
-QUERY_ADD_NSEC3 Adding NSEC3 record of zone '%s'
+QUERY_ADD_NSEC3 Adding NSEC3 record of zone '%1'
 + Debug information. We're adding an NSEC3 record for this zone.
 
-QUERY_NO_DS_NSEC3 There's no DS record in the '%s' zone
+QUERY_NO_DS_NSEC3 There's no DS record in the '%1' zone
 + We tried to insert a NSEC3 record into the message. But we didn't find a DS
 + record for this zone.
 
-QUERY_NO_DS_NSEC There's no DS record in the '%s' zone
+QUERY_NO_DS_NSEC There's no DS record in the '%1' zone
 + We tried to insert a NSEC record into the message. But we didn't find a DS
 + record for this zone.
 
-QUERY_WILDCARD Looking for a wildcard covering '%s'
+QUERY_WILDCARD Looking for a wildcard covering '%1'
 + Debug information. We didn't find a direct match, so we're trying to find if
 + there's a wildcard we could use to answer the query.
 
-QUERY_WILDCARD_PROVENX_FAIL Unable to prove nonexistence of '%s' (%u)
+QUERY_WILDCARD_PROVENX_FAIL Unable to prove nonexistence of '%1' (%2)
 + While processing a wildcard, we tried to prove nonexistence of the given
 + domain or record. The code is 1 for error and 2 for not implemented.
 
-QUERY_WILDCARD_REFERRAL Unable to find referral info for '%s' (%u)
+QUERY_WILDCARD_REFERRAL Unable to find referral info for '%1' (%2)
 + While processing a wildcard we met a referral. But we were not able to get
 + information for it. The code is 1 for error, 2 for not implemented.
 
-QUERY_PROCESS Processing query '%s/%s' in the '%s' class
+QUERY_PROCESS Processing query '%1/%2' in the '%3' class
 + Debug information. We're starting to process a user query.
 
 QUERY_RRSIG Unable to answer RRSIG query
@@ -225,11 +225,11 @@ QUERY_MISPLACED_TASK Task of this type should not be here
 + queue which wasn't supposed to ever be put into the queue, but handled
 + directly.
 
-QUERY_TASK_FAIL Task failed with %u
+QUERY_TASK_FAIL Task failed with %1
 + The query subtask failed. The reason should have been reported by the subtask
 + already. The code is 1 for error, 2 for not implemented.
 
-QUERY_MISSING_NS Missing NS records for '%s'
+QUERY_MISSING_NS Missing NS records for '%1'
 + We wanted to put the nameserver records into the authority section, but we
 + discovered the zone doesn't have them. This indicates problem with provided
 + data.
@@ -242,18 +242,18 @@ QUERY_FAIL Query failed
 + Some subtask of query processing failed. The reason should have been reported
 + already. We are returning SERVFAIL.
 
-QUERY_BAD_REFERRAL Bad referral to '%s'
+QUERY_BAD_REFERRAL Bad referral to '%1'
 + We discovered that the domain lives in another zone. But we are not able to
 + generate referral information to it.
 
-QUERY_WILDCARD_FAIL Error processing wildcard for '%s'
+QUERY_WILDCARD_FAIL Error processing wildcard for '%1'
 + We tried to find a wildcard to cover the domain, but there happened to be
 + some (hopefully already reported) error for it.
 
-QUERY_MISSING_SOA The zone '%s' has no SOA
+QUERY_MISSING_SOA The zone '%1' has no SOA
 + We tried to answer negatively, but there's no SOA record in the zone.
 
-QUERY_PROVENX_FAIL Unable to prove nonexistence of '%s'
+QUERY_PROVENX_FAIL Unable to prove nonexistence of '%1'
 + The user wants DNSSEC and we discovered the entity doesn't exist (either
 + domain or the record). But there was an error getting NSEC/NSEC3 record
 + to prove the nonexistence.
@@ -266,7 +266,7 @@ META_ADD Adding a data source into meta data source
 + Debug information. We add yet another data source into the meta data source
 + (probably at startup or reconfiguration).
 
-META_ADD_CLASS_MISMATCH Mismatch between classes '%s' and '%s'
+META_ADD_CLASS_MISMATCH Mismatch between classes '%1' and '%2'
 + We tried to add a data source of one class into a meta data source of a
 + different type. The types must be the same.
 
@@ -274,50 +274,50 @@ META_REMOVE Removing data source from meta data source
 + Debug information. We take a data source out of meta data source (probably
 + at shutdown or reconfiguration).
 
-MEM_ADD_WILDCARD Adding wildcards for '%s'
+MEM_ADD_WILDCARD Adding wildcards for '%1'
 + Debug information. We need some special marks above each * in wildcard name
 + in the in-memory data source. We are adding the marks for this name now.
 
-MEM_CNAME_TO_NONEMPTY Can't add CNAME to domain with other data in '%s'
+MEM_CNAME_TO_NONEMPTY Can't add CNAME to domain with other data in '%1'
 + Someone or something tried to add a CNAME into a domain that already contains
 + some other data. But the protocol forbids coexistence of CNAME with anything
 + (RFC 1034, section 3.6.2). This indicates a problem with provided data.
 
-MEM_CNAME_COEXIST Can't add data to CNAME in domain '%s'
+MEM_CNAME_COEXIST Can't add data to CNAME in domain '%1'
 + This is the same problem as in MEM_CNAME_TO_NONEMPTY, but it happened the
 + other way around -- adding some outher data to CNAME.
 
-MEM_DNAME_NS DNAME and NS can't coexist in non-apex domain '%s'
+MEM_DNAME_NS DNAME and NS can't coexist in non-apex domain '%1'
 + It was requested for DNAME and NS records to be put into the same domain
 + which is not the apex (the top of the zone). This is forbidden by RFC
 + 2672, section 3. This indicates a problem with provided data.
 
-MEM_SINGLETON Trying to add multiple RRs for domain '%s' and type '%s'
+MEM_SINGLETON Trying to add multiple RRs for domain '%1' and type '%2'
 + Some resource types are singletons -- only one is allowed in a domain
 + (for example CNAME or SOA). This indicates a problem with provided data.
 
-MEM_OUT_OF_ZONE Domain '%s' doesn't belong to zone '%s'
+MEM_OUT_OF_ZONE Domain '%1' doesn't belong to zone '%2'
 + It was attempted to add the domain into a zone that shouldn't have it
 + (eg. the domain is not subdomain of the zone origin). This indicates a
 + problem with provided data.
 
-MEM_WILDCARD_NS NS record in wildcard domain '%s'
+MEM_WILDCARD_NS NS record in wildcard domain '%1'
 + We refuse to load NS record into a wildcard domain. It is'n explicitly
 + forbidden, but the protocol is ambiguous about how this should behave and
 + bind 9 refuses that as well. We don't like your zone, please describe it
 + using different tools.
 
-MEM_WILDCARD_DNAME DNAME record in wildcard domain '%s'
+MEM_WILDCARD_DNAME DNAME record in wildcard domain '%1'
 + We refuse to load DNAME record into a wildcard domain. It is'n explicitly
 + forbidden, but the protocol is ambiguous about how this should behave and
 + bind 9 refuses that as well. We don't like your zone, please describe it
 + using different tools.
 
-MEM_ADD_RRSET Adding RRset '%s/%s' into zone '%s'
+MEM_ADD_RRSET Adding RRset '%1/%2' into zone '%3'
 + Debug information. We're adding an RRset to the zone of in-memory data
 + source.
 
-MEM_DUP_RRSET Duplicate rrset '%s/%s'
+MEM_DUP_RRSET Duplicate rrset '%1/%2'
 + An RRset is being inserted into in-memory data source for a second time.
 + The original version must be removed first. Note that we don't support
 + loading master files where an RRset is split into multiple locations yet.
@@ -331,20 +331,20 @@ MEM_NS_ENCOUNTERED Encountered a NS
 + Debug information. While searching for the requested domain, we encountered
 + a NS on the way (a delegation). This may lead to stop of the search.
 
-MEM_RENAME Renaming rrset from '%s' to '%s'
+MEM_RENAME Renaming rrset from '%1' to '%2'
 + Debug information. We generate an RRset from a different RRset (most probably
 + a wildcard). So we need to rename it to whatever the user asked for. In fact,
 + we can't rename RRset (it's not possible with our libraries), so we create
 + a new one and copy everything.
 
-MEM_FIND Find '%s/%s'
+MEM_FIND Find '%1/%2'
 + Debug information. We're going to search the in-memory data source to find
 + requestet RRset.
 
-MEM_DNAME_FOUND DNAME found at '%s'
+MEM_DNAME_FOUND DNAME found at '%1'
 + Debug information. We found a DNAME instead of the requested record.
 
-MEM_DELEG_FOUND Delegation found at '%s'
+MEM_DELEG_FOUND Delegation found at '%1'
 + Debug information. We found a delegation point above the requested record.
 
 MEM_SUPER_STOP Stopped at superdomain, domain is empty
@@ -384,27 +384,27 @@ MEM_NXRRSET No such type
 + Debug information. The domain exists, but it doesn't hold any record of the
 + requested type.
 
-MEM_CREATE Creating zone '%s' in '%s' class
+MEM_CREATE Creating zone '%1' in '%2' class
 + Debug information. We're creating representation of a zone for the in-memory
 + data source.
 
-MEM_DESTROY Destroying zone '%s' in '%s' class
+MEM_DESTROY Destroying zone '%1' in '%2' class
 + Debug information. We're destroying the representation of zone in the
 + in-memory data source.
 
-MEM_LOAD Loading zone '%s' from file '%s'
+MEM_LOAD Loading zone '%1' from file '%2'
 + Debug information. We're loading the content of zone from a master file.
 
-MEM_SWAP Swapping contents of two zone representations ('%s' and '%s')
+MEM_SWAP Swapping contents of two zone representations ('%1' and '%2')
 + Debug information. We exchange contents of the zones. This is usual practice
 + to do some manipulation in exception-safe manner -- we prepare the new data
 + in a different zone object and when it works, we swap it with the old, then
 + we can safely destroy the old one.
 
-MEM_ADD_ZONE Adding zone '%s/%s'
+MEM_ADD_ZONE Adding zone '%1/%2'
 + Debug information. We're adding this zone into the in-memory data source.
 
-MEM_FIND_ZONE Looking for zone '%s'
+MEM_FIND_ZONE Looking for zone '%1'
 + Debug information. We're looking for a zone in the in-memory data source.
 
 STATIC_CREATE Creating the static datasource
@@ -415,19 +415,19 @@ STATIC_BAD_CLASS Static data source can handle CH only
 + For some reason, someone asked the static data source a query that is not in
 + the CH class.
 
-STATIC_FIND Looking for '%s/%s'
+STATIC_FIND Looking for '%1/%2'
 + Debug information. We're looking for this resource record set in the static
 + data source.
 
-SQLITE_FINDREC Looking for record '%s/%s'
+SQLITE_FINDREC Looking for record '%1/%2'
 + Debug information. The SQLite data source is looking up records of given name
 + and type in the database.
 
-SQLITE_ENCLOSURE Looking for zone containing '%s'
+SQLITE_ENCLOSURE Looking for zone containing '%1'
 + Debug information. The SQLite data source is trying to identify, which zone
 + should hold this domain.
 
-SQLITE_ENCLOSURE_BAD_CLASS Class mismatch looking for a zone ('%s' and '%s')
+SQLITE_ENCLOSURE_BAD_CLASS Class mismatch looking for a zone ('%1' and '%2')
 + The SQLite data source can handle only one class at a time and it was asked
 + to identify which zone is holding data of a different class.
 
@@ -435,50 +435,50 @@ SQLITE_ENCLOSURE_NOTFOUND No zone contains it
 + Debug information. The last SQLITE_ENCLOSURE query was unsuccessful, there's
 + no such zone in our data.
 
-SQLITE_PREVIOUS Looking for name previous to '%s'
+SQLITE_PREVIOUS Looking for name previous to '%1'
 + Debug information. We're trying to look up name preceding the supplied one.
 
-SQLITE_PREVIOUS_NO_ZONE No zone containing '%s'
+SQLITE_PREVIOUS_NO_ZONE No zone containing '%1'
 + The SQLite data source tried to identify name preceding this one. But this
 + one is not contained in any zone in the data source.
 
-SQLITE_FIND_NSEC3 Looking for NSEC3 in zone '%s' for hash '%s'
+SQLITE_FIND_NSEC3 Looking for NSEC3 in zone '%1' for hash '%2'
 + Debug information. We're trying to look up a NSEC3 record in the SQLite data
 + source.
 
-SQLITE_FIND_NSEC3_NO_ZONE No such zone '%s'
+SQLITE_FIND_NSEC3_NO_ZONE No such zone '%1'
 + The SQLite data source was asked to provide a NSEC3 record for given zone.
 + But it doesn't contain that zone.
 
-SQLITE_FIND Looking for RRset '%s/%s'
+SQLITE_FIND Looking for RRset '%1/%2'
 + Debug information. The SQLite data source is looking up a resource record
 + set.
 
-SQLITE_FIND_BAD_CLASS Class mismatch looking for an rrset ('%s' and '%s')
+SQLITE_FIND_BAD_CLASS Class mismatch looking for an rrset ('%1' and '%2')
 + The SQLite data source was looking up an RRset, but the data source contains
 + different class than the query was for.
 
-SQLITE_FINDEXACT Looking for exact RRset '%s/%s'
+SQLITE_FINDEXACT Looking for exact RRset '%1/%2'
 + Debug information. The SQLite data source is looking up an exact resource
 + record.
 
-SQLITE_FINDEXACT_BAD_CLASS Class mismatch looking for an rrset ('%s' and '%s')
+SQLITE_FINDEXACT_BAD_CLASS Class mismatch looking for an rrset ('%1' and '%2')
 + The SQLite data source was looking up an exact RRset, but the data source
 + contains different class than the query was for.
 
-SQLITE_FINDADDRS Looking for A/AAAA addresses for '%s'
+SQLITE_FINDADDRS Looking for A/AAAA addresses for '%1'
 + Debug information. The data source is looking up the addresses for given
 + domain name.
 
-SQLITE_FINDADDRS_BAD_CLASS Class mismatch looking for addresses ('%s' and '%s')
+SQLITE_FINDADDRS_BAD_CLASS Class mismatch looking for addresses ('%1' and '%2')
 + The SQLite data source was looking up A/AAAA addresses, but the data source
 + contains different class than the query was for.
 
-SQLITE_FINDREF Looking for referral at '%s'
+SQLITE_FINDREF Looking for referral at '%1'
 + Debug information. The SQLite data source is identifying if this domain is
 + a referral and where it goes.
 
-SQLITE_FINDREF_BAD_CLASS Class mismatch looking for referral ('%s' and '%s')
+SQLITE_FINDREF_BAD_CLASS Class mismatch looking for referral ('%1' and '%2')
 + The SQLite data source was trying to identify, if there's a referral. But the
 + but it contains different class than the query was for.
 
@@ -493,7 +493,7 @@ SQLITE_SETUP Setting up SQLite database
 + is the first run and we initialize it with current schema. It'll still
 + contain no data, but it will be ready for use.
 
-SQLITE_OPEN Opening SQLite database '%s'
+SQLITE_OPEN Opening SQLite database '%1'
 + Debug information. The SQLite data source is loading an SQLite database in
 + the provide file.
 
