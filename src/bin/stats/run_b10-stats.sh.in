@@ -24,7 +24,7 @@ export PYTHONPATH
 BIND10_MSGQ_SOCKET_FILE=@abs_top_builddir@/msgq_socket
 export BIND10_MSGQ_SOCKET_FILE
 
-B10_FROM_SOURCE=@abs_top_srcdir@/src/bin/stats
+B10_FROM_SOURCE=@abs_top_srcdir@
 export B10_FROM_SOURCE
 
 STATS_PATH=@abs_top_builddir@/src/bin/stats

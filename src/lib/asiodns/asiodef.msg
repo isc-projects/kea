@@ -15,42 +15,42 @@
 $PREFIX ASIODNS_
 $NAMESPACE isc::asiodns
 
-FETCHCOMP   upstream fetch to %s(%d) has now completed
+FETCHCOMP   upstream fetch to %1(%2) has now completed
 + A debug message, this records the the upstream fetch (a query made by the
 + resolver on behalf of its client) to the specified address has completed.
 
-FETCHSTOP   upstream fetch to %s(%d) has been stopped
+FETCHSTOP   upstream fetch to %1(%2) has been stopped
 + An external component has requested the halting of an upstream fetch.  This
 + is an allowed operation, and the message should only appear if debug is
 + enabled.
 
-OPENSOCK    error %d opening %s socket to %s(%d)
+OPENSOCK    error %1 opening %2 socket to %3(%4)
 + The asynchronous I/O code encountered an error when trying to open a socket
 + of the specified protocol in order to send a message to the target address.
 + The the number of the system error that cause the problem is given in the
 + message.
 
-RECVSOCK    error %d reading %s data from %s(%d)
+RECVSOCK    error %1 reading %2 data from %3(%4)
 + The asynchronous I/O code encountered an error when trying read data from
 + the specified address on the given protocol.  The the number of the system
 + error that cause the problem is given in the message.
 
-SENDSOCK    error %d sending data using %s to %s(%d)
+SENDSOCK    error %1 sending data using %2 to %3(%4)
 + The asynchronous I/O code encountered an error when trying send data to
 + the specified address on the given protocol.  The the number of the system
 + error that cause the problem is given in the message.
 
-RECVTMO     receive timeout while waiting for data from %s(%d)
+RECVTMO     receive timeout while waiting for data from %1(%2)
 + An upstream fetch from the specified address timed out.  This may happen for
 + any number of reasons and is most probably a problem at the remote server
 + or a problem on the network.  The message will only appear if debug is
 + enabled.
 
-UNKORIGIN  unknown origin for ASIO error code %d (protocol: %s, address %s)
+UNKORIGIN  unknown origin for ASIO error code %1 (protocol: %2, address %3)
 + This message should not appear and indicates an internal error if it does.
 + Please enter a bug report.
 
-UNKRESULT  unknown result (%d) when IOFetch::stop() was executed for I/O to %s(%d)
+UNKRESULT  unknown result (%1) when IOFetch::stop() was executed for I/O to %2(%3)
 + The termination method of the resolver's upstream fetch class was called with
 + an unknown result code (which is given in the message).  This message should
 + not appear and may indicate an internal error.  Please enter a bug report.
