@@ -16,7 +16,6 @@
 
 #include <stdint.h>
 
-#include <cassert>              // for the tentative verifyTentative()
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
@@ -44,6 +43,17 @@ namespace isc {
 namespace dns {
 namespace {
 typedef boost::shared_ptr<HMAC> HMACPtr;
+
+// TSIG uses 48-bit unsigned integer to represent time signed.
+// Since gettimeWrapper() returns a 64-bit *signed* integer, we
+// make sure it's stored in an unsigned 64-bit integer variable and
+// represents a value in the expected range.  (In reality, however,
+// gettimeWrapper() will return a positive integer that will fit
+// in 48 bits)
+uint64_t
+getTSIGTime() {
+    return (detail::gettimeWrapper() & 0x0000ffffffffffffULL);
+}
 }
 
 struct TSIGContext::TSIGContextImpl {
@@ -51,15 +61,161 @@ struct TSIGContext::TSIGContextImpl {
         state_(INIT), key_(key), error_(Rcode::NOERROR()),
         previous_timesigned_(0)
     {}
+
+    // This helper method is used from verify().  It's expected to be called
+    // just before verify() returns.  It updates internal state based on
+    // the verification result and return the TSIGError to be returned to
+    // the caller of verify(), so that verify() can call this method within
+    // its 'return' statement.
+    TSIGError postVerifyUpdate(TSIGError error, const void* digest,
+                               size_t digest_len)
+    {
+        if (state_ == INIT) {
+            state_ = RECEIVED_REQUEST;
+        } else if (state_ == SENT_REQUEST && error == TSIGError::NOERROR()) {
+            state_ = VERIFIED_RESPONSE;
+        }
+        if (digest != NULL) {
+            previous_digest_.assign(static_cast<const uint8_t*>(digest),
+                                    static_cast<const uint8_t*>(digest) +
+                                    digest_len);
+        }
+        error_ = error;
+        return (error);
+    }
+
+    // The following three are helper methods to compute the digest for
+    // TSIG sign/verify in order to unify the common code logic for sign()
+    // and verify() and to keep these callers concise.
+    // All methods take OutputBuffer as a local work space, which will be
+    // cleared at the beginning of the methods (and the resulting content
+    // of the buffer is not expected to be used by the caller), so it could
+    // be instantiated inside the method.  We reuse the same instance just
+    // for efficiency reasons.
+    // The methods also take an HMAC object, which will be updated with the
+    // calculated digest.
+    void digestPreviousMAC(OutputBuffer& buffer, HMACPtr hmac) const;
+    void digestTSIGVariables(OutputBuffer& buffer, HMACPtr hmac,
+                             uint16_t rrclass, uint32_t rrttl,
+                             uint64_t time_signed, uint16_t fudge,
+                             uint16_t error, uint16_t otherlen,
+                             const void* otherdata,
+                             bool time_variables_only) const;
+    void digestDNSMessage(OutputBuffer& buffer, HMACPtr hmac,
+                          uint16_t qid, const void* data,
+                          size_t data_len) const;
     State state_;
-    TSIGKey key_;
+    const TSIGKey key_;
     vector<uint8_t> previous_digest_;
     TSIGError error_;
     uint64_t previous_timesigned_; // only meaningful for response with BADTIME
 };
 
+void
+TSIGContext::TSIGContextImpl::digestPreviousMAC(OutputBuffer& buffer,
+                                                HMACPtr hmac) const
+{
+    buffer.clear();
+
+    const uint16_t previous_digest_len(previous_digest_.size());
+    buffer.writeUint16(previous_digest_len);
+    if (previous_digest_len != 0) {
+        buffer.writeData(&previous_digest_[0], previous_digest_len);
+    }
+    hmac->update(buffer.getData(), buffer.getLength());
+}
+
+void
+TSIGContext::TSIGContextImpl::digestTSIGVariables(
+    OutputBuffer& buffer, HMACPtr hmac, uint16_t rrclass, uint32_t rrttl,
+    uint64_t time_signed, uint16_t fudge, uint16_t error, uint16_t otherlen,
+    const void* otherdata, bool time_variables_only) const
+{
+    buffer.clear();
+
+    if (!time_variables_only) {
+        key_.getKeyName().toWire(buffer);
+        buffer.writeUint16(rrclass);
+        buffer.writeUint32(rrttl);
+        key_.getAlgorithmName().toWire(buffer);
+    }
+    buffer.writeUint16(time_signed >> 32);
+    buffer.writeUint32(time_signed & 0xffffffff);
+    buffer.writeUint16(fudge);
+    hmac->update(buffer.getData(), buffer.getLength());
+
+    if (!time_variables_only) {
+        buffer.clear();
+        buffer.writeUint16(error);
+        buffer.writeUint16(otherlen);
+        hmac->update(buffer.getData(), buffer.getLength());
+        if (otherlen > 0) {
+            hmac->update(otherdata, otherlen);
+        }
+    }
+}
+
+// In digestDNSMessage, we exploit some minimum knowledge of DNS message
+// format:
+// - the header section has a fixed length of 12 octets (MESSAGE_HEADER_LEN)
+// - the offset in the header section to the ID field is 0
+// - the offset in the header section to the ARCOUNT field is 10 (and the field
+//   length is 2 octets)
+// We could construct a separate Message object from the given data, adjust
+// fields via the Message interfaces and then render it back to a separate
+// buffer, but that would be overkilling.  The DNS message header has a
+// fixed length and necessary modifications are quite straightforward, so
+// we do the job using lower level interfaces.
+namespace {
+const size_t MESSAGE_HEADER_LEN = 12;
+}
+void
+TSIGContext::TSIGContextImpl::digestDNSMessage(OutputBuffer& buffer,
+                                               HMACPtr hmac,
+                                               uint16_t qid, const void* data,
+                                               size_t data_len) const
+{
+    buffer.clear();
+    const uint8_t* msgptr = static_cast<const uint8_t*>(data);
+
+    // Install the original ID
+    buffer.writeUint16(qid);
+    msgptr += sizeof(uint16_t);
+
+    // Copy the rest of the header except the ARCOUNT field.
+    buffer.writeData(msgptr, 8);
+    msgptr += 8;
+
+    // Install the adjusted ARCOUNT (we don't care even if the value is bogus
+    // and it underflows; it would simply result in verification failure)
+    buffer.writeUint16(InputBuffer(msgptr, sizeof(uint16_t)).readUint16() - 1);
+    msgptr += 2;
+
+    // Digest the header and the rest of the DNS message
+    hmac->update(buffer.getData(), buffer.getLength());
+    hmac->update(msgptr, data_len - MESSAGE_HEADER_LEN);
+}
+
 TSIGContext::TSIGContext(const TSIGKey& key) : impl_(new TSIGContextImpl(key))
 {
+}
+
+TSIGContext::TSIGContext(const Name& key_name, const Name& algorithm_name,
+                         const TSIGKeyRing& keyring) : impl_(NULL)
+{
+    const TSIGKeyRing::FindResult result(keyring.find(key_name,
+                                                      algorithm_name));
+    if (result.code == TSIGKeyRing::NOTFOUND) {
+        // If not key is found, create a dummy key with the specified key
+        // parameters and empty secret.  In the common scenario this will
+        // be used in subsequent response with a TSIG indicating a BADKEY
+        // error.
+        impl_ = new TSIGContextImpl(TSIGKey(key_name, algorithm_name,
+                                            NULL, 0));
+        impl_->error_ = TSIGError::BAD_KEY();
+    } else {
+        impl_ = new TSIGContextImpl(*result.key);
+    }
 }
 
 TSIGContext::~TSIGContext() {
@@ -80,21 +236,20 @@ ConstTSIGRecordPtr
 TSIGContext::sign(const uint16_t qid, const void* const data,
                   const size_t data_len)
 {
+    if (impl_->state_ == VERIFIED_RESPONSE) {
+        isc_throw(TSIGContextError,
+                  "TSIG sign attempt after verifying a response");
+    }
+
     if (data == NULL || data_len == 0) {
         isc_throw(InvalidParameter, "TSIG sign error: empty data is given");
     }
 
     TSIGError error(TSIGError::NOERROR());
-    // TSIG uses 48-bit unsigned integer to represent time signed.
-    // Since gettimeofdayWrapper() returns a 64-bit *signed* integer, we
-    // make sure it's stored in an unsigned 64-bit integer variable and
-    // represents a value in the expected range.  (In reality, however,
-    // gettimeofdayWrapper() will return a positive integer that will fit
-    // in 48 bits)
-    const uint64_t now = (detail::gettimeWrapper() & 0x0000ffffffffffffULL);
+    const uint64_t now = getTSIGTime();
 
     // For responses adjust the error code.
-    if (impl_->state_ == CHECKED) {
+    if (impl_->state_ == RECEIVED_REQUEST) {
         error = impl_->error_;
     }
 
@@ -107,7 +262,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
                                               now, DEFAULT_FUDGE, 0, NULL,
                                               qid, error.getCode(), 0, NULL)));
         impl_->previous_digest_.clear();
-        impl_->state_ = SIGNED;
+        impl_->state_ = SENT_RESPONSE;
         return (tsig);
     }
 
@@ -121,53 +276,35 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
     // If the context has previous MAC (either the Request MAC or its own
     // previous MAC), digest it.
     if (impl_->state_ != INIT) {
-        const uint16_t previous_digest_len(impl_->previous_digest_.size());
-        variables.writeUint16(previous_digest_len);
-        if (previous_digest_len != 0) {
-            variables.writeData(&impl_->previous_digest_[0],
-                                previous_digest_len);
-        }
-        hmac->update(variables.getData(), variables.getLength());
+        impl_->digestPreviousMAC(variables, hmac);
     }
 
     // Digest the message (without TSIG)
     hmac->update(data, data_len);
 
-    //
-    // Digest TSIG variables.  If state_ is SIGNED we skip digesting them
-    // except for time related variables (RFC2845 4.4).
-    //
-    variables.clear();
-    if (impl_->state_ != SIGNED) {
-        impl_->key_.getKeyName().toWire(variables);
-        TSIGRecord::getClass().toWire(variables);
-        variables.writeUint32(TSIGRecord::TSIG_TTL);
-        impl_->key_.getAlgorithmName().toWire(variables);
-    }
+    // Digest TSIG variables.
+    // First, prepare some non constant variables.
     const uint64_t time_signed = (error == TSIGError::BAD_TIME()) ?
         impl_->previous_timesigned_ : now;
-    variables.writeUint16(time_signed >> 32);
-    variables.writeUint32(time_signed & 0xffffffff);
-    variables.writeUint16(DEFAULT_FUDGE);
-    hmac->update(variables.getData(), variables.getLength());
-    variables.clear();
-
-    if (impl_->state_ != SIGNED) {
-        variables.writeUint16(error.getCode());
-
-        // For BADTIME error, digest 6 bytes of other data.
-        // (6 bytes = size of time signed value)
-        variables.writeUint16((error == TSIGError::BAD_TIME()) ? 6 : 0);
-        hmac->update(variables.getData(), variables.getLength());
-
-        variables.clear();
-        if (error == TSIGError::BAD_TIME()) {
-            variables.writeUint16(now >> 32);
-            variables.writeUint32(now & 0xffffffff);
-            hmac->update(variables.getData(), variables.getLength());
-        }
+    // For BADTIME error, we include 6 bytes of other data.
+    // (6 bytes = size of time signed value)
+    const uint16_t otherlen = (error == TSIGError::BAD_TIME()) ? 6 : 0;
+    OutputBuffer otherdatabuf(otherlen);
+    if (error == TSIGError::BAD_TIME()) {
+            otherdatabuf.writeUint16(now >> 32);
+            otherdatabuf.writeUint32(now & 0xffffffff);
     }
-    const uint16_t otherlen = variables.getLength();
+    const void* const otherdata =
+        (otherlen == 0) ? NULL : otherdatabuf.getData();
+    // Then calculate the digest.  If state_ is SENT_RESPONSE we are sending
+    // a continued message in the same TCP stream so skip digesting
+    // variables except for time related variables (RFC2845 4.4).
+    impl_->digestTSIGVariables(variables, hmac,
+                               TSIGRecord::getClass().getCode(),
+                               TSIGRecord::TSIG_TTL, time_signed,
+                               DEFAULT_FUDGE, error.getCode(),
+                               otherlen, otherdata,
+                               impl_->state_ == SENT_RESPONSE);
 
     // Get the final digest, update internal state, then finish.
     vector<uint8_t> digest = hmac->sign();
@@ -177,31 +314,133 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
                                           time_signed, DEFAULT_FUDGE,
                                           digest.size(), &digest[0],
                                           qid, error.getCode(), otherlen,
-                                          otherlen == 0 ?
-                                          NULL : variables.getData())));
+                                          otherdata)));
     // Exception free from now on.
     impl_->previous_digest_.swap(digest);
-    impl_->state_ = SIGNED;
+    impl_->state_ = (impl_->state_ == INIT) ? SENT_REQUEST : SENT_RESPONSE;
     return (tsig);
 }
 
-void
-TSIGContext::verifyTentative(ConstTSIGRecordPtr tsig, TSIGError error) {
-    const any::TSIG tsig_rdata = tsig->getRdata();
-
-    impl_->error_ = error;
-    if (error == TSIGError::BAD_TIME()) {
-        impl_->previous_timesigned_ = tsig_rdata.getTimeSigned();
+TSIGError
+TSIGContext::verify(const TSIGRecord* const record, const void* const data,
+                    const size_t data_len)
+{
+    if (impl_->state_ == SENT_RESPONSE) {
+        isc_throw(TSIGContextError,
+                  "TSIG verify attempt after sending a response");
     }
 
-    // For simplicity we assume non empty digests.
-    assert(tsig_rdata.getMACSize() != 0);
-    impl_->previous_digest_.assign(
-        static_cast<const uint8_t*>(tsig_rdata.getMAC()),
-        static_cast<const uint8_t*>(tsig_rdata.getMAC()) +
-        tsig_rdata.getMACSize());
+    // This case happens when we sent a signed request and have received an
+    // unsigned response.  According to RFC2845 Section 4.6 this case should be
+    // considered a "format error" (although the specific error code
+    // wouldn't matter much for the caller).
+    if (record == NULL) {
+        return (impl_->postVerifyUpdate(TSIGError::FORMERR(), NULL, 0));
+    }
 
-    impl_->state_ = CHECKED;
+    const any::TSIG& tsig_rdata = record->getRdata();
+
+    // Reject some obviously invalid data
+    if (data_len < MESSAGE_HEADER_LEN + record->getLength()) {
+        isc_throw(InvalidParameter,
+                  "TSIG verify: data length is invalid: " << data_len);
+    }
+    if (data == NULL) {
+        isc_throw(InvalidParameter, "TSIG verify: empty data is invalid");
+    }
+
+    // Check key: whether we first verify it with a known key or we verify
+    // it using the consistent key in the context.  If the check fails we are
+    // done with BADKEY.
+    if (impl_->state_ == INIT && impl_->error_ == TSIGError::BAD_KEY()) {
+        return (impl_->postVerifyUpdate(TSIGError::BAD_KEY(), NULL, 0));
+    }
+    if (impl_->key_.getKeyName() != record->getName() ||
+        impl_->key_.getAlgorithmName() != tsig_rdata.getAlgorithm()) {
+        return (impl_->postVerifyUpdate(TSIGError::BAD_KEY(), NULL, 0));
+    }
+
+    // Check time: the current time must be in the range of
+    // [time signed - fudge, time signed + fudge].  Otherwise verification
+    // fails with BADTIME. (RFC2845 Section 4.6.2)
+    // Note: for simplicity we don't explicitly catch the case of too small
+    // current time causing underflow.  With the fact that fudge is quite
+    // small and (for now) non configurable, it shouldn't be a real concern
+    // in practice.
+    const uint64_t now = getTSIGTime();
+    if (tsig_rdata.getTimeSigned() + DEFAULT_FUDGE < now ||
+        tsig_rdata.getTimeSigned() - DEFAULT_FUDGE > now) {
+        const void* digest = NULL;
+        size_t digest_len = 0;
+        if (impl_->state_ == INIT) {
+            digest = tsig_rdata.getMAC();
+            digest_len = tsig_rdata.getMACSize();
+            impl_->previous_timesigned_ = tsig_rdata.getTimeSigned();
+        }
+        return (impl_->postVerifyUpdate(TSIGError::BAD_TIME(), digest,
+                                        digest_len));
+    }
+
+    // TODO: signature length check based on RFC4635
+    // (Right now we enforce the standard signature length in libcryptolink)
+
+    // Handling empty MAC.  While RFC2845 doesn't explicitly prohibit other
+    // cases, it can only reasonably happen in a response with BADSIG or
+    // BADKEY.  We reject other cases as if it were BADSIG to avoid unexpected
+    // acceptance of a bogus signature.  This behavior follows the BIND 9
+    // implementation.
+    if (tsig_rdata.getMACSize() == 0) {
+        TSIGError error = TSIGError(tsig_rdata.getError());
+        if (error != TSIGError::BAD_SIG() && error != TSIGError::BAD_KEY()) {
+            error = TSIGError::BAD_SIG();
+        }
+        return (impl_->postVerifyUpdate(error, NULL, 0));
+    }
+
+    OutputBuffer variables(0);
+    HMACPtr hmac(CryptoLink::getCryptoLink().createHMAC(
+                     impl_->key_.getSecret(),
+                     impl_->key_.getSecretLength(),
+                     impl_->key_.getAlgorithm()),
+                 deleteHMAC);
+
+    // If the context has previous MAC (either the Request MAC or its own
+    // previous MAC), digest it.
+    if (impl_->state_ != INIT) {
+        impl_->digestPreviousMAC(variables, hmac);
+    }
+
+    //
+    // Digest DNS message (excluding the trailing TSIG RR and adjusting the
+    // QID and ARCOUNT header fields)
+    //
+    impl_->digestDNSMessage(variables, hmac, tsig_rdata.getOriginalID(),
+                            data, data_len - record->getLength());
+
+    // Digest TSIG variables.  If state_ is VERIFIED_RESPONSE, it's a
+    // continuation of the same TCP stream and skip digesting them except
+    // for time related variables (RFC2845 4.4).
+    // Note: we use the constant values for RR class and TTL specified
+    // in RFC2845, not received values (we reject other values in constructing
+    // the TSIGRecord).
+    impl_->digestTSIGVariables(variables, hmac,
+                               TSIGRecord::getClass().getCode(),
+                               TSIGRecord::TSIG_TTL,
+                               tsig_rdata.getTimeSigned(),
+                               tsig_rdata.getFudge(), tsig_rdata.getError(),
+                               tsig_rdata.getOtherLen(),
+                               tsig_rdata.getOtherData(),
+                               impl_->state_ == VERIFIED_RESPONSE);
+
+    // Verify the digest with the received signature.
+    if (hmac->verify(tsig_rdata.getMAC(), tsig_rdata.getMACSize())) {
+        return (impl_->postVerifyUpdate(TSIGError::NOERROR(),
+                                        tsig_rdata.getMAC(),
+                                        tsig_rdata.getMACSize()));
+    }
+
+    return (impl_->postVerifyUpdate(TSIGError::BAD_SIG(), NULL, 0));
 }
+
 } // namespace dns
 } // namespace isc

@@ -70,13 +70,15 @@ castToTSIGRdata(const rdata::Rdata& rdata) {
 }
 
 TSIGRecord::TSIGRecord(const Name& name, const RRClass& rrclass,
-                       const RRTTL&, // we ignore TTL
-                       const rdata::Rdata& rdata,
+                       const RRTTL& ttl, const rdata::Rdata& rdata,
                        size_t length) :
     key_name_(name), rdata_(castToTSIGRdata(rdata)), length_(length)
 {
     if (rrclass != getClass()) {
         isc_throw(DNSMessageFORMERR, "Unexpected TSIG RR class: " << rrclass);
+    }
+    if (ttl != RRTTL(TSIG_TTL)) {
+        isc_throw(DNSMessageFORMERR, "Unexpected TSIG TTL: " << ttl);
     }
 }
 
