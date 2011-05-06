@@ -2,7 +2,7 @@
 	Removed too repeated verbose messages in two cases of:
 	 - when auth sends statistics data to stats
 	 - when stats receives statistics data from other modules
-	(Trac#620, git #TBD)
+	(Trac#620, git 0ecb807011196eac01f281d40bc7c9d44565b364)
 
 229.	[doc]		jreed
 	Add manual page for b10-host.
