@@ -62,7 +62,17 @@ namespace asiodns {
 
 /// Use the ASIO logger
 
+namespace {
+
 isc::log::Logger logger("asiolink");
+// Log debug verbosity
+enum {
+    DBG_IMPORTANT = 1,
+    DBG_COMMON = 20,
+    DBG_ALL = 50
+};
+
+}
 
 /// \brief IOFetch Data
 ///
@@ -340,13 +350,13 @@ IOFetch::stop(Result result) {
         data_->stopped = true;
         switch (result) {
             case TIME_OUT:
-                LOG_DEBUG(logger, 20, ASIODNS_RECVTMO).
+                LOG_DEBUG(logger, DBG_COMMON, ASIODNS_RECVTMO).
                     arg(data_->remote_snd->getAddress().toText()).
                     arg(data_->remote_snd->getPort());
                 break;
 
             case SUCCESS:
-                LOG_DEBUG(logger, 50, ASIODNS_FETCHCOMP).
+                LOG_DEBUG(logger, DBG_ALL, ASIODNS_FETCHCOMP).
                     arg(data_->remote_rcv->getAddress().toText()).
                     arg(data_->remote_rcv->getPort());
                 break;
@@ -355,7 +365,7 @@ IOFetch::stop(Result result) {
                 // Fetch has been stopped for some other reason.  This is
                 // allowed but as it is unusual it is logged, but with a lower
                 // debug level than a timeout (which is totally normal).
-                LOG_DEBUG(logger, 1, ASIODNS_FETCHSTOP).
+                LOG_DEBUG(logger, DBG_IMPORTANT, ASIODNS_FETCHSTOP).
                     arg(data_->remote_snd->getAddress().toText()).
                     arg(data_->remote_snd->getPort());
                 break;
