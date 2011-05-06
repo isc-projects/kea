@@ -27,7 +27,10 @@ replacePlaceholder(string* message, const string& arg,
     string mark("%" + lexical_cast<string>(placeholder));
     size_t pos(message->find(mark));
     if (pos != string::npos) {
-        message->replace(pos, mark.size(), arg);
+        do {
+            message->replace(pos, mark.size(), arg);
+            pos = message->find(mark, pos + arg.size());
+        } while (pos != string::npos);
     } else {
         // We're missing the placeholder, so add some complain
         message->append(" @@Missing placeholder " + mark + " for '" + arg +
