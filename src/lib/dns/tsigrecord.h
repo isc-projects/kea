@@ -83,15 +83,39 @@ public:
     /// TSIG).
     ///
     /// According to RFC2845, a TSIG RR uses fixed RR class (ANY) and TTL (0).
-    /// If the RR class is different from the expected one, this
+    /// If the RR class or TTL is different from the expected one, this
     /// implementation considers it an invalid record and throws an exception
-    /// of class \c DNSMessageFORMERR.  On the other hand, the TTL is simply
-    /// ignored (in that sense we could even omit that parameter, but it's
-    /// still included if and when we want to change the policy).  RFC2845
-    /// is silent about what the receiver should do if it sees an unexpected
-    /// RR class or TTL in a TSIG RR.  This implementation simply follows what
-    /// BIND 9 does (it is not clear why BIND 9 employs the "inconsistent"
-    /// policy).
+    /// of class \c DNSMessageFORMERR.
+    ///
+    /// \note This behavior is not specified in the protocol specification,
+    /// but this implementation rejects unexpected values for the following
+    /// reasons (but in any case, this won't matter much in practice as
+    /// RFC2848 clearly states these fields always have the fixed values and
+    /// any sane implementation of TSIG signer will follow that):
+    /// According to the RFC editor (in a private communication), the intended
+    /// use of the TSIG TTL field is to signal protocol extensions (currently
+    /// no such extension is defined), so this field may actually be
+    /// validly non 0 in future.  However, until the implementation supports
+    /// that extension it may not always be able to handle the extended
+    /// TSIG as intended; the extension may even affect digest computation.
+    /// There's a related issue on this point.  Different implementations
+    /// interpret the RFC in different ways on the received TTL when
+    /// digesting the message: BIND 9 uses the received value (even if
+    /// it's not 0) as part of the TSIG variables; NLnet Labs' LDNS and NSD
+    /// always use a fixed constant of 0 regardless of the received TTL value.
+    /// This means if and when an extension with non 0 TTL is introduced
+    /// there will be interoperability problems in the form of verification
+    /// failure.  By explicitly rejecting it (and subsequently returning
+    /// a response with a format error) we can indicate the source of the
+    /// problem more clearly than a "bad signature" TSIG error, which can
+    /// happen for various reasons.  On the other hand, rejecting unexpected
+    /// RR classes is mostly for consistency; the RFC lists these two fields
+    /// in the same way, so it makes more sense to handle them equally.
+    /// (BIND 9 rejects unexpected RR classes for TSIG, but that is part of
+    /// general check on RR classes on received RRs; it generally requests
+    /// all classes are the same, and if the protocol specifies the use of
+    /// a particular class for a particular type of RR, it requests that
+    /// class be used).
     ///
     /// Likewise, if \c rdata is not of type \c any::TSIG, an exception of
     /// class DNSMessageFORMERR will be thrown.  When the caller is a
@@ -142,8 +166,7 @@ public:
     /// \param name The owner name of the TSIG RR
     /// \param rrclass The RR class of the RR.  Must be \c RRClass::ANY()
     /// (see above)
-    /// \param ttl The TTL of the RR.  Expected to be a zero TTL, but
-    /// actually ignored in this implementation.
+    /// \param ttl The TTL of the RR.  Must be 0 (see above)
     /// \param rdata The RDATA of the RR.  Must be of type \c any::TSIG.
     /// \param length The size of the RR (see above)
     TSIGRecord(const Name& name, const RRClass& rrclass, const RRTTL& ttl,
