@@ -311,26 +311,24 @@ HotCache::retrieve(const Name& n, const RRClass& c, const RRType& t,
         return (false);
     }
 
-    logger.debug(DBG_TRACE_DATA, DATASRC_CACHE_LOOKUP).arg(n);
-
     std::map<Question, CacheNodePtr>::const_iterator iter;
     iter = impl_->map_.find(Question(n, c, t));
     if (iter == impl_->map_.end()) {
-        logger.debug(DBG_TRACE_DATA, DATASRC_CACHE_NOT_FOUND);
+        logger.debug(DBG_TRACE_DATA, DATASRC_CACHE_NOT_FOUND).arg(n);
         return (false);
     }
 
     CacheNodePtr node = iter->second;
 
     if (node->isValid()) {
-        logger.debug(DBG_TRACE_DATA, DATASRC_CACHE_FOUND);
+        logger.debug(DBG_TRACE_DATA, DATASRC_CACHE_FOUND).arg(n);
         impl_->promote(node);
         rrset = node->getRRset();
         flags = node->getFlags();
         return (true);
     }
 
-    logger.debug(DBG_TRACE_DATA, DATASRC_CACHE_EXPIRED);
+    logger.debug(DBG_TRACE_DATA, DATASRC_CACHE_EXPIRED).arg(n);
     impl_->remove(node);
     return (false);
 }
@@ -344,7 +342,8 @@ HotCache::setSlots(const int slots) {
         return;
     }
 
-    logger.info(DATASRC_CACHE_SLOTS).arg(slots);
+    logger.info(DATASRC_CACHE_SLOTS).arg(slots).arg(max(0, impl_->count_ -
+                                                        slots));
 
     while (impl_->slots_ != 0 && impl_->count_ > impl_->slots_) {
         impl_->remove(impl_->lru_.back());

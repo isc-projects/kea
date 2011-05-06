@@ -44,20 +44,19 @@ CACHE_LOOKUP looking up '%1' in the cache
 + Debug information. We are trying to look up an item in the hotspot cache.
 + Further progress and result will follow.
 
-CACHE_NOT_FOUND the item was not found
-+ Debug information. The item we tried to look in the last CACHE_LOOKUP was
-+ not found in the hotspot cache.
+CACHE_NOT_FOUND the item '%1' was not found
++ Debug information. We tried to look up an item in the hotspot cache, but
++ it is not there.
 
-CACHE_FOUND the item was found
-+ Debug information. The last CACHE_LOOKUP was successful, eg. we have found
-+ the requested item in the hotspot cache.
+CACHE_FOUND the item '%1' was found
++ Debug information. We successfully looked up an item in the hotspot cache.
 
-CACHE_EXPIRED the item is expired
-+ Debug information. The item requested in the last CACHE_LOOKUP was in the
-+ hotspot cache, but it was old. We're going to remove it and report we don't
-+ have it (the external result will be the same as with CACHE_NOT_FOUND).
+CACHE_EXPIRED the item '%1' is expired
++ Debug information. We tried to find an item in the hotspot cache and in fact
++ we did, but it was too old. So we pretend we didn't find it at all (the
++ external effect is the same as CACHE_NOT_FOUND).
 
-CACHE_SLOTS setting the cache size to '%1'
+CACHE_SLOTS setting the cache size to '%1', dropping '%2' items
 + The maximum allowed number of items of the hotspot cache is set to the given
 + number. If there are too many, we're going to drop them right now. The size
 + of 0 means no limit.
