@@ -16,7 +16,6 @@
 
 #include <stdint.h>
 
-#include <cassert>              // for the tentative verifyTentative()
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
@@ -62,12 +61,18 @@ struct TSIGContext::TSIGContextImpl {
         state_(INIT), key_(key), error_(Rcode::NOERROR()),
         previous_timesigned_(0)
     {}
+
+    // This helper method is used from verify().  It's expected to be called
+    // just before verify() returns.  It updates internal state based on
+    // the verification result and return the TSIGError to be returned to
+    // the caller of verify(), so that verify() can call this method within
+    // its 'return' statement.
     TSIGError postVerifyUpdate(TSIGError error, const void* digest,
                                size_t digest_len)
     {
         if (state_ == INIT) {
             state_ = RECEIVED_REQUEST;
-        } else if (state_ == WAIT_RESPONSE && error == TSIGError::NOERROR()) {
+        } else if (state_ == SENT_REQUEST && error == TSIGError::NOERROR()) {
             state_ = VERIFIED_RESPONSE;
         }
         if (digest != NULL) {
@@ -78,6 +83,17 @@ struct TSIGContext::TSIGContextImpl {
         error_ = error;
         return (error);
     }
+
+    // The following three are helper methods to compute the digest for
+    // TSIG sign/verify in order to unify the common code logic for sign()
+    // and verify() and to keep these callers concise.
+    // All methods take OutputBuffer as a local work space, which will be
+    // cleared at the beginning of the methods (and the resulting content
+    // of the buffer is not expected to be used by the caller), so it could
+    // be instantiated inside the method.  We reuse the same instance just
+    // for efficiency reasons.
+    // The methods also take an HMAC object, which will be updated with the
+    // calculated digest.
     void digestPreviousMAC(OutputBuffer& buffer, HMACPtr hmac) const;
     void digestTSIGVariables(OutputBuffer& buffer, HMACPtr hmac,
                              uint16_t rrclass, uint32_t rrttl,
@@ -139,16 +155,20 @@ TSIGContext::TSIGContextImpl::digestTSIGVariables(
     }
 }
 
+// In digestDNSMessage, we exploit some minimum knowledge of DNS message
+// format:
+// - the header section has a fixed length of 12 octets (MESSAGE_HEADER_LEN)
+// - the offset in the header section to the ID field is 0
+// - the offset in the header section to the ARCOUNT field is 10 (and the field
+//   length is 2 octets)
+// We could construct a separate Message object from the given data, adjust
+// fields via the Message interfaces and then render it back to a separate
+// buffer, but that would be overkilling.  The DNS message header has a
+// fixed length and necessary modifications are quite straightforward, so
+// we do the job using lower level interfaces.
 namespace {
-// We exploit some minimum knowledge of DNS message format:
-// the header section has a fixed length of 12 octets
-// the offset in the header section to the ID field is 0 (and the field length
-// is 2 octets)
-// the offset in the header section to the ARCOUNT field is 10 (and the field
-// length is 2 octets)
 const size_t MESSAGE_HEADER_LEN = 12;
 }
-
 void
 TSIGContext::TSIGContextImpl::digestDNSMessage(OutputBuffer& buffer,
                                                HMACPtr hmac,
@@ -168,9 +188,7 @@ TSIGContext::TSIGContextImpl::digestDNSMessage(OutputBuffer& buffer,
 
     // Install the adjusted ARCOUNT (we don't care even if the value is bogus
     // and it underflows; it would simply result in verification failure)
-    InputBuffer b(msgptr, sizeof(uint16_t));
-    const uint16_t arcount = b.readUint16();
-    buffer.writeUint16(arcount - 1);
+    buffer.writeUint16(InputBuffer(msgptr, sizeof(uint16_t)).readUint16() - 1);
     msgptr += 2;
 
     // Digest the header and the rest of the DNS message
@@ -299,7 +317,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
                                           otherdata)));
     // Exception free from now on.
     impl_->previous_digest_.swap(digest);
-    impl_->state_ = (impl_->state_ == INIT) ? WAIT_RESPONSE : SENT_RESPONSE;
+    impl_->state_ = (impl_->state_ == INIT) ? SENT_REQUEST : SENT_RESPONSE;
     return (tsig);
 }
 
@@ -345,6 +363,10 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
     // Check time: the current time must be in the range of
     // [time signed - fudge, time signed + fudge].  Otherwise verification
     // fails with BADTIME. (RFC2845 Section 4.6.2)
+    // Note: for simplicity we don't explicitly catch the case of too small
+    // current time causing underflow.  With the fact that fudge is quite
+    // small and (for now) non configurable, it shouldn't be a real concern
+    // in practice.
     const uint64_t now = getTSIGTime();
     if (tsig_rdata.getTimeSigned() + DEFAULT_FUDGE < now ||
         tsig_rdata.getTimeSigned() - DEFAULT_FUDGE > now) {
