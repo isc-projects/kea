@@ -228,10 +228,8 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
                             RRsetList& target, const Name* zonename,
                             const Mode mode, uint32_t& flags) const
 {
-    if (logger.isDebugEnabled(DBG_TRACE_DETAILED)) {
-        logger.debug(DBG_TRACE_DETAILED, DATASRC_SQLITE_FINDREC,
-                     name.toText().c_str(), rdtype.toText().c_str());
-    }
+    logger.debug(DBG_TRACE_DETAILED, DATASRC_SQLITE_FINDREC).arg(name).
+        arg(rdtype);
     flags = 0;
     int zone_id = (zonename == NULL) ? findClosest(name, NULL) :
         findClosest(*zonename, NULL);
@@ -350,14 +348,11 @@ Sqlite3DataSrc::findClosest(const Name& name, unsigned int* position) const {
 
 void
 Sqlite3DataSrc::findClosestEnclosure(DataSrcMatch& match) const {
-    if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
-        logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_ENCLOSURE,
-                     match.getName().toText().c_str());
-    }
+    logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_ENCLOSURE).
+        arg(match.getName());
     if (match.getClass() != getClass() && match.getClass() != RRClass::ANY()) {
-        logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_ENCLOSURE_BAD_CLASS,
-                     getClass().toText().c_str(),
-                     match.getClass().toText().c_str());
+        logger.error(DATASRC_SQLITE_ENCLOSURE_BAD_CLASS).arg(getClass()).
+            arg(match.getClass());
         return;
     }
 
@@ -375,14 +370,11 @@ Sqlite3DataSrc::findPreviousName(const Name& qname,
                                  Name& target,
                                  const Name* zonename) const
 {
-    if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
-        logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_PREVIOUS,
-                     qname.toText().c_str());
-    }
+    logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_PREVIOUS).arg(qname);
     const int zone_id = (zonename == NULL) ?
         findClosest(qname, NULL) : findClosest(*zonename, NULL);
     if (zone_id < 0) {
-        logger.error(DATASRC_SQLITE_PREVIOUS_NO_ZONE, qname.toText().c_str());
+        logger.error(DATASRC_SQLITE_PREVIOUS_NO_ZONE).arg(qname.toText());
         return (ERROR);
     }
     
@@ -420,14 +412,11 @@ Sqlite3DataSrc::findCoveringNSEC3(const Name& zonename,
                                   string& hashstr,
                                   RRsetList& target) const
 {
-    if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
-        logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FIND_NSEC3,
-                     zonename.toText().c_str(), hashstr.c_str());
-    }
+    logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FIND_NSEC3).
+        arg(zonename).arg(hashstr);
     const int zone_id = findClosest(zonename, NULL);
     if (zone_id < 0) {
-        logger.error(DATASRC_SQLITE_FIND_NSEC3_NO_ZONE,
-                     zonename.toText().c_str());
+        logger.error(DATASRC_SQLITE_FIND_NSEC3_NO_ZONE).arg(zonename);
         return (ERROR);
     }
 
@@ -508,13 +497,11 @@ Sqlite3DataSrc::findRRset(const Name& qname,
                           uint32_t& flags,
                           const Name* zonename) const
 {
-    if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
-        logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FIND,
-                     qname.toText().c_str(), qtype.toText().c_str());
-    }
+    logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FIND).arg(qname).
+        arg(qtype);
     if (qclass != getClass() && qclass != RRClass::ANY()) {
-        logger.error(DATASRC_SQLITE_FIND_BAD_CLASS,
-                     getClass().toText().c_str(), qclass.toText().c_str());
+        logger.error(DATASRC_SQLITE_FIND_BAD_CLASS).arg(getClass()).
+            arg(qclass);
         return (ERROR);
     }
     findRecords(qname, qtype, target, zonename, NORMAL, flags);
@@ -529,13 +516,11 @@ Sqlite3DataSrc::findExactRRset(const Name& qname,
                                uint32_t& flags,
                                const Name* zonename) const
 {
-    if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
-        logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FINDEXACT,
-                     qname.toText().c_str(), qtype.toText().c_str());
-    }
+    logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FINDEXACT).arg(qname).
+        arg(qtype);
     if (qclass != getClass() && qclass != RRClass::ANY()) {
-        logger.error(DATASRC_SQLITE_FINDEXACT_BAD_CLASS,
-                     getClass().toText().c_str(), qclass.toText().c_str());
+        logger.error(DATASRC_SQLITE_FINDEXACT_BAD_CLASS).arg(getClass()).
+            arg(qclass);
         return (ERROR);
     }
     findRecords(qname, qtype, target, zonename, NORMAL, flags);
@@ -559,13 +544,10 @@ Sqlite3DataSrc::findAddrs(const Name& qname,
                           uint32_t& flags,
                           const Name* zonename) const
 {
-    if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
-        logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FINDADDRS,
-                     qname.toText().c_str());
-    }
+    logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FINDADDRS).arg(qname);
     if (qclass != getClass() && qclass != RRClass::ANY()) {
-        logger.error(DATASRC_SQLITE_FINDADDRS_BAD_CLASS,
-                     getClass().toText().c_str(), qclass.toText().c_str());
+        logger.error(DATASRC_SQLITE_FINDADDRS_BAD_CLASS).arg(getClass()).
+            arg(qclass);
         return (ERROR);
     }
     findRecords(qname, RRType::ANY(), target, zonename, ADDRESS, flags);
@@ -579,13 +561,10 @@ Sqlite3DataSrc::findReferral(const Name& qname,
                              uint32_t& flags,
                              const Name* zonename) const
 {
-    if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
-        logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FINDREF,
-                     qname.toText().c_str());
-    }
+    logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FINDREF).arg(qname);
     if (qclass != getClass() && qclass != RRClass::ANY()) {
-        logger.error(DATASRC_SQLITE_FINDREF_BAD_CLASS,
-                     getClass().toText().c_str(), qclass.toText().c_str());
+        logger.error(DATASRC_SQLITE_FINDREF_BAD_CLASS).arg(getClass()).
+            arg(qclass);
         return (ERROR);
     }
     findRecords(qname, RRType::ANY(), target, zonename, DELEGATION, flags);
@@ -716,7 +695,7 @@ checkAndSetupSchema(Sqlite3Initializer* initializer) {
 //
 void
 Sqlite3DataSrc::open(const string& name) {
-    logger.debug(DBG_TRACE_BASIC, DATASRC_SQLITE_OPEN, name.c_str());
+    logger.debug(DBG_TRACE_BASIC, DATASRC_SQLITE_OPEN).arg(name);
     if (dbparameters->db_ != NULL) {
         isc_throw(DataSourceError, "Duplicate SQLite open with " << name);
     }
