@@ -25,6 +25,7 @@
 
 #include <datasrc/cache.h>
 #include <datasrc/logger.h>
+#include <log/macros.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -212,10 +213,8 @@ HotCacheImpl::HotCacheImpl(int slots, bool enabled) :
 // Insert a cache node into the cache
 inline void
 HotCacheImpl::insert(const CacheNodePtr node) {
-    if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
-        logger.debug(DBG_TRACE_DATA, DATASRC_CACHE_INSERT,
-                       node->getRRset()->getName().toText().c_str());
-    }
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_CACHE_INSERT).
+        arg(node->getRRset()->getName());
     std::map<Question, CacheNodePtr>::const_iterator iter;
     iter = map_.find(node->question);
     if (iter != map_.end()) {
@@ -254,10 +253,8 @@ HotCacheImpl::promote(CacheNodePtr node) {
 // Remove a node from the LRU list and the map
 void
 HotCacheImpl::remove(ConstCacheNodePtr node) {
-    if (logger.isDebugEnabled(DBG_TRACE_DATA)) {
-        logger.debug(DBG_TRACE_DATA, DATASRC_CACHE_REMOVE,
-                       node->getRRset()->getName().toText().c_str());
-    }
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_CACHE_REMOVE).
+        arg(node->getRRset()->getName());
     lru_.erase(node->lru_entry_);
     map_.erase(node->question);
     --count_;
@@ -314,7 +311,7 @@ HotCache::retrieve(const Name& n, const RRClass& c, const RRType& t,
         return (false);
     }
 
-    logger.debug(DBG_TRACE_DATA, DATASRC_CACHE_LOOKUP, n.toText().c_str());
+    logger.debug(DBG_TRACE_DATA, DATASRC_CACHE_LOOKUP).arg(n);
 
     std::map<Question, CacheNodePtr>::const_iterator iter;
     iter = impl_->map_.find(Question(n, c, t));
@@ -347,7 +344,7 @@ HotCache::setSlots(const int slots) {
         return;
     }
 
-    logger.info(DATASRC_CACHE_SLOTS, slots);
+    logger.info(DATASRC_CACHE_SLOTS).arg(slots);
 
     while (impl_->slots_ != 0 && impl_->count_ > impl_->slots_) {
         impl_->remove(impl_->lru_.back());
