@@ -174,7 +174,9 @@ public:
         return (*this);
     }
     void skipSpaces() {
-        while (base_ != base_end_ && (*base_ > 0) && isspace(*base_)) {
+        while (base_ != base_end_ &&
+               isspace(static_cast<unsigned char>(*base_)))
+        {
             ++base_;
         }
     }
