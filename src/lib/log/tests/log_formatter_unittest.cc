@@ -109,4 +109,25 @@ TEST_F(FormatterTest, missingPlace) {
               "@@Missing placeholder %1 for 'missing'@@", outputs[0].second);
 }
 
+// Can replace multiple placeholders
+TEST_F(FormatterTest, multiPlaceholder) {
+    Formatter("TEST", s("The %1 is the %1"), 1, *this).
+        arg("first rule of tautology club");
+    ASSERT_LE(1, outputs.size());
+    EXPECT_EQ(1, outputs.size());
+    EXPECT_STREQ("TEST", outputs[0].first);
+    EXPECT_EQ("The first rule of tautology club is "
+              "the first rule of tautology club", outputs[0].second);
+}
+
+// Test we can cope with replacement containing the placeholder
+TEST_F(FormatterTest, noRecurse) {
+    // If we recurse, this will probably eat all the memory and crash
+    Formatter("TEST", s("%1"), 1, *this).arg("%1 %1");
+    ASSERT_LE(1, outputs.size());
+    EXPECT_EQ(1, outputs.size());
+    EXPECT_STREQ("TEST", outputs[0].first);
+    EXPECT_EQ("%1 %1", outputs[0].second);
+}
+
 }
