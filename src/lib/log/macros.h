@@ -15,6 +15,8 @@
 #ifndef __LOG_MACROS_H
 #define __LOG_MACROS_H
 
+#include <log/logger.h>
+
 /// \brief Macro to conveniently test debug output and log it
 #define LOG_DEBUG(LOGGER, LEVEL, MESSAGE) \
     if (!(LOGGER).isDebugEnabled((LEVEL))) { \

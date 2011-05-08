@@ -45,16 +45,12 @@ replacePlaceholder(std::string* message, const std::string& replacement,
 /// no .arg call on the object, it is destroyed right away and we use the
 /// destructor to output the text (but only in case we should output anything).
 ///
-/// If there's an .arg call, it replaces a placeholder with the argument
-/// converted to string and produces another Formatter. We mark the current
-/// Formatter so it won't output anything in it's destructor and the task
-/// to do the output is moved onto the new object. Again, the last one in
-/// the chain is destroyed without any modification and does the real output.
+/// If there's an .arg call, we return reference to the same object, so another
+/// .arg can be called on it. After the last .arg call is done, the object is
+/// destroyed and, again, we can produce the output.
 ///
 /// Of course, if the logging is turned off, we don't bother with any replacing
-/// and just return new empty Formatter. As everything here is in the header
-/// file, compiler should be able to easily optimise most of the work with
-/// creating and destroying objects and simply do the replacing only.
+/// and just return.
 ///
 /// User of logging code should not really care much about this class, only
 /// call the .arg method to generate the correct output.
@@ -62,6 +58,15 @@ replacePlaceholder(std::string* message, const std::string& replacement,
 /// The class is a template to allow easy testing. Also, we want everything
 /// here in the header anyway and it doesn't depend on the details of what
 /// Logger really is, so it doesn't hurt anything.
+///
+/// Also, if you are interested in the internals, you might find the copy
+/// constructor a bit strange. It deactivates the original formatter. We don't
+/// really want to support copying of the Formatter by user, but C++ needs a
+/// copy constructor when returning from the logging functions, so we need one.
+/// And if we did not deactivate the original Formatter, that one would get
+/// destroyed before any call to .arg, producing an output, and then the one
+/// the .arg calls are called on would get destroyed as well, producing output
+/// again. So, think of this behaviour as soul moving from one to another.
 template<class Logger> class Formatter {
 private:
     /// \brief The logger we will use to output the final message
@@ -71,7 +76,7 @@ private:
     /// \brief The messages with %1, %2... placeholders
     std::string* message_;
     /// \brief Which will be the next placeholder to replace
-    const unsigned nextPlaceholder_;
+    unsigned nextPlaceholder_;
     /// \brief Should we do output?
     mutable bool active_;
     Formatter& operator =(const Formatter& other);
@@ -122,8 +127,8 @@ public:
     ~ Formatter() {
         if (active_) {
             logger_->output(prefix_, *message_);
+            delete message_;
         }
-        delete message_;
     }
     /// \brief Replaces another placeholder
     ///
@@ -132,32 +137,19 @@ public:
     /// only produces another inactive formatter.
     ///
     /// \param arg The argument to place into the placeholder.
-    template<class Arg> Formatter arg(const Arg& value) {
+    template<class Arg> Formatter& arg(const Arg& value) {
         return (arg(boost::lexical_cast<std::string>(value)));
     }
     /// \brief String version of arg.
-    Formatter arg(const std::string& arg) {
+    Formatter& arg(const std::string& arg) {
         if (active_) {
             // FIXME: This logic has a problem. If we had a message like
             // "%1 %2" and called .arg("%2").arg(42), we would get "42 %2".
             // But we consider this to be rare enough not to complicate
             // matters.
-            active_ = false;
-            replacePlaceholder(message_, arg, nextPlaceholder_);
-            std::string *message(message_);
-            message_ = NULL;
-            try {
-                return (Formatter<Logger>(prefix_, message,
-                                          nextPlaceholder_ + 1, *logger_));
-            }
-            // Make sure the memory is not leaked on stuff like bad_alloc
-            catch (...) {
-                delete message;
-                throw;
-            }
-        } else {
-            return (Formatter<Logger>());
+            replacePlaceholder(message_, arg, nextPlaceholder_ ++);
         }
+        return (*this);
     }
 };
 
