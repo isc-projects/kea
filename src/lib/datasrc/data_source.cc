@@ -222,7 +222,8 @@ checkCache(QueryTask& task, RRsetList& target) {
         // ANY queries must be handled by the low-level data source,
         // or the results won't be guaranteed to be complete
         if (task.qtype == RRType::ANY() || task.qclass == RRClass::ANY()) {
-            logger.debug(DBG_TRACE_DATA, DATASRC_QUERY_NO_CACHE_ANY_SIMPLE);
+            logger.debug(DBG_TRACE_DATA, DATASRC_QUERY_NO_CACHE_ANY_SIMPLE).
+                arg(task.qname).arg(task.qtype).arg(task.qclass);
             break;
         }
 
@@ -252,7 +253,8 @@ checkCache(QueryTask& task, RRsetList& target) {
 
     case QueryTask::AUTH_QUERY:         // Find exact RRset or CNAME
         if (task.qtype == RRType::ANY() || task.qclass == RRClass::ANY()) {
-            logger.debug(DBG_TRACE_DATA, DATASRC_QUERY_NO_CACHE_ANY_AUTH);
+            logger.debug(DBG_TRACE_DATA, DATASRC_QUERY_NO_CACHE_ANY_AUTH).
+                arg(task.qname).arg(task.qtype).arg(task.qclass);
             break;
         }
 
@@ -389,7 +391,8 @@ doQueryTask(QueryTask& task, ZoneInfo& zoneinfo, RRsetList& target) {
 
     // Then check the cache for matching data
     if (checkCache(task, target)) {
-        logger.debug(DBG_TRACE_DATA, DATASRC_QUERY_CACHED);
+        logger.debug(DBG_TRACE_DATA, DATASRC_QUERY_CACHED).arg(task.qname).
+            arg(task.qtype);
         return (DataSrc::SUCCESS);
     }
 
@@ -400,7 +403,8 @@ doQueryTask(QueryTask& task, ZoneInfo& zoneinfo, RRsetList& target) {
     DataSrc::Result result;
     switch (task.op) {
     case QueryTask::SIMPLE_QUERY:
-        logger.debug(DBG_TRACE_DATA, DATASRC_QUERY_IS_SIMPLE);
+        logger.debug(DBG_TRACE_DATA, DATASRC_QUERY_IS_SIMPLE).arg(task.qname).
+            arg(task.qtype);
         result = ds->findExactRRset(task.qname, task.qclass, task.qtype,
                                     target, task.flags, zonename);
 
@@ -427,7 +431,8 @@ doQueryTask(QueryTask& task, ZoneInfo& zoneinfo, RRsetList& target) {
         return (result);
 
     case QueryTask::AUTH_QUERY:
-        logger.debug(DBG_TRACE_DATA, DATASRC_QUERY_IS_AUTH);
+        logger.debug(DBG_TRACE_DATA, DATASRC_QUERY_IS_AUTH).arg(task.qname).
+            arg(task.qtype);
         result = ds->findRRset(task.qname, task.qclass, task.qtype,
                                target, task.flags, zonename);
 
@@ -466,7 +471,8 @@ doQueryTask(QueryTask& task, ZoneInfo& zoneinfo, RRsetList& target) {
     case QueryTask::GLUE_QUERY:
     case QueryTask::NOGLUE_QUERY:
         logger.debug(DBG_TRACE_DATA, task.op == QueryTask::GLUE_QUERY ?
-                     DATASRC_QUERY_IS_GLUE : DATASRC_QUERY_IS_NOGLUE);
+                     DATASRC_QUERY_IS_GLUE : DATASRC_QUERY_IS_NOGLUE).
+            arg(task.qname).arg(task.qtype);
         result = ds->findAddrs(task.qname, task.qclass, target,
                                task.flags, zonename);
 
@@ -499,7 +505,8 @@ doQueryTask(QueryTask& task, ZoneInfo& zoneinfo, RRsetList& target) {
         return (result);
 
     case QueryTask::REF_QUERY:
-        logger.debug(DBG_TRACE_DATA, DATASRC_QUERY_IS_REF);
+        logger.debug(DBG_TRACE_DATA, DATASRC_QUERY_IS_REF).arg(task.qname).
+            arg(task.qtype);
         result = ds->findReferral(task.qname, task.qclass, target,
                                  task.flags, zonename);
 
