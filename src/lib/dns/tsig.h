@@ -89,6 +89,8 @@ public:
 ///
 /// \code
 ///    // "renderer" is of MessageRenderer to render the message.
+///    // (TSIGKey would be configured from config or command line in real app)
+///    TSIGContext ctx(TSIGKey("key.example:MSG6Ng=="));
 ///    Message message(Message::RENDER);
 ///    message.addQuestion(Question(Name("www.example.com"), RRClass::IN(),
 ///                                 RRType::A()));
@@ -107,7 +109,8 @@ public:
 ///    } else if (message.getRcode() == Rcode::NOTAUTH()) {
 ///        // hard error.  give up this transaction per RFC2845 4.6.
 ///    } else {
-///        // keep waiting for further response with the same ctx.
+///        // Other error: discard response keep waiting with the same ctx
+///        // for another (again, RFC2845 4.6).
 ///    } \endcode
 ///
 /// And this is a typical server application that authenticates a signed
