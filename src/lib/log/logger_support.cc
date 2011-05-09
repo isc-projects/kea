@@ -24,6 +24,7 @@
 /// These functions will be replaced once the code has been written to obtain
 /// the logging parameters from the configuration database.
 
+#include <iostream>
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -85,8 +86,12 @@ readLocalMessageFile(const char* file) {
             logger.error(ident, args[0].c_str());
             break;
 
-        default:    // 2 or more (2 should be the maximum)
+        case 2:
             logger.error(ident, args[0].c_str(), args[1].c_str());
+            break;
+
+        default:    // 3 or more (3 should be the maximum)
+            logger.error(ident, args[0].c_str(), args[1].c_str(), args[2].c_str());
         }
     }
 }
@@ -117,7 +122,7 @@ initLogger(const string& root, isc::log::Severity severity, int dbglevel,
         vector<string>::iterator new_end =
             unique(duplicates.begin(), duplicates.end());
         for (vector<string>::iterator i = duplicates.begin(); i != new_end; ++i) {
-            logger.warn(MSG_DUPMSGID, i->c_str());
+            logger.warn(MSG_DUPMSGID, (*i).c_str());
         }
 
     }
