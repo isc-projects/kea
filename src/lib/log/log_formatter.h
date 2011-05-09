@@ -69,63 +69,50 @@ replacePlaceholder(std::string* message, const std::string& replacement,
 /// again. So, think of this behaviour as soul moving from one to another.
 template<class Logger> class Formatter {
 private:
-    /// \brief The logger we will use to output the final message
-    Logger* logger_;
+    /// \brief The logger we will use to output the final message.
+    ///
+    /// If NULL, we are not active and should not produce anything.
+    mutable Logger* logger_;
     /// \brief Prefix (eg. "ERROR", "DEBUG" or like that)
     const char* prefix_;
     /// \brief The messages with %1, %2... placeholders
     std::string* message_;
     /// \brief Which will be the next placeholder to replace
     unsigned nextPlaceholder_;
-    /// \brief Should we do output?
-    mutable bool active_;
     Formatter& operator =(const Formatter& other);
 public:
     /// \brief Constructor of "active" formatter
     ///
-    /// This will create a formatter in active mode -- the one when it
-    /// will generate output.
+    /// This will create a formatter. If the arguments are set, it
+    /// will be active (will produce output). If you leave them all as NULL,
+    /// it will create an inactive Formatter -- one that'll produce no output.
     ///
     /// It is not expected to be called by user of logging system directly.
     ///
-    /// \param prefix The prefix, like "ERROR" or "DEBUG"
+    /// \param prefix The severity prefix, like "ERROR" or "DEBUG"
     /// \param message The message with placeholders. We take ownership of
-    ///     it and we will modify the string. Must not be NULL and it's
-    ///     not checked.
-    /// \param nextPlaceholder It is the number of next placeholder which
-    ///     should be replaced. It should be called with 1, higher numbers
-    ///     are used internally in the chain.
-    /// \param logger The logger where the final output will go.
-    Formatter(const char* prefix, std::string* message,
-              const unsigned nextPlaceholder, Logger& logger) :
-        logger_(&logger), prefix_(prefix), message_(message),
-        nextPlaceholder_(nextPlaceholder), active_(true)
-    {
-    }
-    /// \brief Constructor of "inactive" formatter
-    ///
-    /// It is not expected to be called by user of the logging system directly.
-    ///
-    /// This will create a formatter that produces no output.
-    Formatter() :
-        message_(NULL),
-        nextPlaceholder_(0),
-        active_(false)
+    ///     it and we will modify the string. Must not be NULL unless
+    ///     logger is also NULL, but it's not checked.
+    /// \param logger The logger where the final output will go, or NULL
+    ///     if no output is wanted.
+    Formatter(const char* prefix = NULL, std::string* message = NULL,
+              Logger* logger = NULL) :
+        logger_(logger), prefix_(prefix), message_(message),
+        nextPlaceholder_(1)
     {
     }
 
     Formatter(const Formatter& other) :
         logger_(other.logger_), prefix_(other.prefix_),
-        message_(other.message_), nextPlaceholder_(other.nextPlaceholder_),
-        active_(other.active_)
+        message_(other.message_), nextPlaceholder_(other.nextPlaceholder_)
     {
-        other.active_ = false;
+        other.logger_ = false;
     }
     /// \brief Destructor.
     //
     /// This is the place where output happens if the formatter is active.
     ~ Formatter() {
-        if (active_) {
+        if (logger_) {
             logger_->output(prefix_, *message_);
             delete message_;
         }
@@ -142,7 +129,7 @@ public:
     }
     /// \brief String version of arg.
     Formatter& arg(const std::string& arg) {
-        if (active_) {
+        if (logger_) {
             // FIXME: This logic has a problem. If we had a message like
             // "%1 %2" and called .arg("%2").arg(42), we would get "42 %2".
             // But we consider this to be rare enough not to complicate
