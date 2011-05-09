@@ -31,8 +31,8 @@ passfail() {
 cat > $localmes << .
 \$PREFIX MSG_
 % NOTHERE     this message is not in the global dictionary
-% READERR     replacement read error, parameters: '%s' and '%s'
-% RDLOCMES    replacement read local message file, parameter is '%s'
+% READERR     replacement read error, parameters: '%1' and '%2'
+% RDLOCMES    replacement read local message file, parameter is '%1'
 .
 
 echo -n "1. runInitTest default parameters: "
