@@ -11,8 +11,8 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 CLEANFILES = *.gcno *.gcda asiodef.h asiodef.cc
 
 # Define rule to build logging source files from message file
-asiodef.h asiodef.cc: asiodef.msg
-	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/asiodns/asiodef.msg
+asiodef.h asiodef.cc: asiodef.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/asiodns/asiodef.mes
 
 BUILT_SOURCES = asiodef.h asiodef.cc
 
