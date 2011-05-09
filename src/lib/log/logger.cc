@@ -119,8 +119,8 @@ Logger::output(const char* sevText, const string& message) {
 Logger::Formatter
 Logger::debug(int dbglevel, const isc::log::MessageID& ident) {
     if (isDebugEnabled(dbglevel)) {
-        return (Formatter("DEBUG", getLoggerPtr()->lookupMessage(ident), 1,
-                          *this));
+        return (Formatter("DEBUG", getLoggerPtr()->lookupMessage(ident),
+                          this));
     } else {
         return (Formatter());
     }
@@ -129,8 +129,8 @@ Logger::debug(int dbglevel, const isc::log::MessageID& ident) {
 Logger::Formatter
 Logger::info(const isc::log::MessageID& ident) {
     if (isInfoEnabled()) {
-        return (Formatter("INFO ", getLoggerPtr()->lookupMessage(ident), 1,
-                          *this));
+        return (Formatter("INFO ", getLoggerPtr()->lookupMessage(ident),
+                          this));
     } else {
         return (Formatter());
     }
@@ -139,8 +139,8 @@ Logger::info(const isc::log::MessageID& ident) {
 Logger::Formatter
 Logger::warn(const isc::log::MessageID& ident) {
     if (isWarnEnabled()) {
-        return (Formatter("WARN ", getLoggerPtr()->lookupMessage(ident), 1,
-                          *this));
+        return (Formatter("WARN ", getLoggerPtr()->lookupMessage(ident),
+                          this));
     } else {
         return (Formatter());
     }
@@ -149,8 +149,8 @@ Logger::warn(const isc::log::MessageID& ident) {
 Logger::Formatter
 Logger::error(const isc::log::MessageID& ident) {
     if (isErrorEnabled()) {
-        return (Formatter("ERROR", getLoggerPtr()->lookupMessage(ident), 1,
-                          *this));
+        return (Formatter("ERROR", getLoggerPtr()->lookupMessage(ident),
+                          this));
     } else {
         return (Formatter());
     }
@@ -159,8 +159,8 @@ Logger::error(const isc::log::MessageID& ident) {
 Logger::Formatter
 Logger::fatal(const isc::log::MessageID& ident) {
     if (isFatalEnabled()) {
-        return (Formatter("FATAL", getLoggerPtr()->lookupMessage(ident), 1,
-                          *this));
+        return (Formatter("FATAL", getLoggerPtr()->lookupMessage(ident),
+                          this));
     } else {
         return (Formatter());
     }

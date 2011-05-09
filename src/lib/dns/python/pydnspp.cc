@@ -56,6 +56,7 @@ static PyObject* po_DNSMessageBADVERS;
 #include <dns/python/question_python.cc>       // needs RRClass, RRType, RRTTL,
                                                // Name
 #include <dns/python/tsigkey_python.cc>        // needs Name
+#include <dns/python/tsig_python.cc>           // needs tsigkey
 #include <dns/python/opcode_python.cc>
 #include <dns/python/rcode_python.cc>
 #include <dns/python/edns_python.cc>           // needs Messagerenderer, Rcode
@@ -150,6 +151,10 @@ PyInit_pydnspp(void) {
     }
 
     if (!initModulePart_TSIGKeyRing(mod)) {
+        return (NULL);
+    }
+
+    if (!initModulePart_TSIGContext(mod)) {
         return (NULL);
     }
 
