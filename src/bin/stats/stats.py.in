@@ -24,12 +24,6 @@ from optparse import OptionParser, OptionValueError
 from collections import defaultdict
 from isc.config.ccsession import ModuleCCSession, create_answer
 from isc.cc import Session, SessionError
-# Note: Following lines are removed in b10-stats	#@@REMOVED@@
-if __name__ == 'stats':					#@@REMOVED@@
-    try:						#@@REMOVED@@
-        from fake_time import time, strftime, gmtime	#@@REMOVED@@
-    except ImportError:					#@@REMOVED@@
-        pass						#@@REMOVED@@
 
 # for setproctitle
 import isc.util.process
