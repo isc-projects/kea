@@ -15,6 +15,7 @@
 #include <cassert>
 #include <errno.h>
 #include <string.h>
+#include <iostream>
 
 #include <iostream>
 #include <fstream>
@@ -27,51 +28,49 @@
 using namespace std;
 
 namespace {
-
 const char DIRECTIVE_FLAG = '$';    // Starts each directive
 const char MESSAGE_FLAG = '%';      // Starts each message
-
 }
 
 
 namespace isc {
 namespace log {
 
-
 // Read the file.
 
 void
 MessageReader::readFile(const string& file, MessageReader::Mode mode) {
 
-    // Ensure the non-added collection is empty: this object might be
-    // being reused.
+    // Ensure the non-added collection is empty: we could be re-using this
+    // object.
     not_added_.clear();
 
-    // Open the file and store the name (in case we need it elsewhere).
+    // Open the file.
     ifstream infile(file.c_str());
     if (infile.fail()) {
-        throw MessageException(MSG_OPNMSGIN, file, strerror(errno));
+        throw MessageException(MSG_OPENIN, file, strerror(errno));
     }
 
-    // Loop round reading it.  Keep a track of line number of aid diagnosis
-    // of problems.
+    // Loop round reading it.  As we process the file one line at a time,
+    // keep a track of line number of aid diagnosis of problems.
     string line;
     getline(infile, line);
-    lineno_ = 1;
+    lineno_ = 0;
+
     while (infile.good()) {
+        ++lineno_;
         processLine(line, mode);
         getline(infile, line);
-        ++lineno_;
     }
 
     // Why did the loop terminate?
     if (!infile.eof()) {
-        throw MessageException(MSG_MSGRDERR, file, strerror(errno));
+        throw MessageException(MSG_READERR, file, strerror(errno));
     }
     infile.close();
 }
 
-// Parse a line of the file
+// Parse a line of the file.
 
 void
 MessageReader::processLine(const string& line, MessageReader::Mode mode) {
@@ -91,7 +90,7 @@ MessageReader::processLine(const string& line, MessageReader::Mode mode) {
 
     } else {
         ;                           // Other lines are extended message
-                                    // description and are ignored
+                                    // description so are ignored
     }
 }
 
@@ -113,8 +112,9 @@ MessageReader::parseDirective(const std::string& text) {
         parseNamespace(tokens);
 
     } else {
-        throw MessageException(MSG_UNRECDIR, tokens[0], lineno_);
 
+        // Unrecognised directive
+        throw MessageException(MSG_UNRECDIR, tokens[0], lineno_);
     }
 }
 
@@ -126,8 +126,8 @@ MessageReader::parsePrefix(const vector<string>& tokens) {
     assert(tokens.size() > 0);
 
     // Process $PREFIX.  With no arguments, the prefix is set to the empty
-    // string.  One argument sets the prefix to the (upper-case) value of
-    // it, and more than one argument is invalid.
+    // string.  One argument sets the prefix to the to its value and more than
+    // one argument is invalid.
     if (tokens.size() == 1) {
         prefix_ = "";
 
