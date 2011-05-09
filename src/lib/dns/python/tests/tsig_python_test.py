@@ -1,6 +1,4 @@
-#! /bin/sh
-
-# Copyright (C) 2011  Internet Systems Consortium.
+# Copyright (C) 2010  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,19 +13,17 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
-export PYTHON_EXEC
+import unittest
+from pydnspp import *
 
-PYTHONPATH=@abs_top_builddir@/src/lib/python
-export PYTHONPATH
+class TSIGContextTest(unittest.TestCase):
+    tsig_key = TSIGKey('www.example.com:SFuWd/q99SzF8Yzd1QbB9g==')
 
-BIND10_MSGQ_SOCKET_FILE=@abs_top_builddir@/msgq_socket
-export BIND10_MSGQ_SOCKET_FILE
+    def setUp(self):
+        # In the minimal implementation, we simply check constructing a
+        # TSIGContext doesn't cause any disruption.  We can add more tests
+        # later.
+        self.tsig_ctx = TSIGContext(self.tsig_key)
 
-STATS_PATH=@abs_top_builddir@/src/bin/stats
-
-B10_FROM_SOURCE=@abs_top_srcdir@
-export B10_FROM_SOURCE
-
-cd ${STATS_PATH}
-exec ${PYTHON_EXEC} -O b10-stats-httpd "$@"
+if __name__ == '__main__':
+    unittest.main()

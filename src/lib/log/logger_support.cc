@@ -24,6 +24,7 @@
 /// These functions will be replaced once the code has been written to obtain
 /// the logging parameters from the configuration database.
 
+#include <iostream>
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -85,8 +86,12 @@ readLocalMessageFile(const char* file) {
             logger.error(ident).arg(args[0]);
             break;
 
-        default:    // 2 or more (2 should be the maximum)
+        case 2:
             logger.error(ident).arg(args[0]).arg(args[1]);
+            break;
+
+        default:    // 3 or more (3 should be the maximum)
+            logger.error(ident).arg(args[0]).arg(args[1]).arg(args[2]);
         }
     }
 }
