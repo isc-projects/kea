@@ -1,3 +1,11 @@
+231.	[func]*
+	The logging interface changed slightly. We use
+	logger.foo(MESSAGE_ID).arg(bar); instead of logger.foo(MESSAGE_ID, bar);
+	internally. The message definitions use '%1,%2,...' instead of '%s,%d',
+	which allows us to cope better with mismatched placeholders and allows
+	reordering of them in case of translation.
+	(Trac901, git 4903410e45670b30d7283f5d69dc28c2069237d6)
+
 230.	[bug]		naokikambe
 	Removed too repeated verbose messages in two cases of:
 	 - when auth sends statistics data to stats
