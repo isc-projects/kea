@@ -67,15 +67,16 @@ DEFAULT_MASTER = '127.0.0.1'
 def log_error(msg):
     sys.stderr.write("[b10-xfrin] %s\n" % str(msg))
 
-class XfrinException(Exception): 
+class XfrinException(Exception):
     pass
 
 class XfrinConnection(asyncore.dispatcher):
-    '''Do xfrin in this class. '''    
+    '''Do xfrin in this class. '''
 
     def __init__(self,
                  sock_map, zone_name, rrclass, db_file, shutdown_event,
-                 master_addrinfo, verbose = False, idle_timeout = 60): 
+                 master_addrinfo, tsig_key_str = None, verbose = False,
+                 idle_timeout = 60):
         ''' idle_timeout: max idle time for read data from socket.
             db_file: specify the data source file.
             check_soa: when it's true, check soa first before sending xfr query
@@ -93,6 +94,9 @@ class XfrinConnection(asyncore.dispatcher):
         self._shutdown_event = shutdown_event
         self._verbose = verbose
         self._master_address = master_addrinfo[2]
+        self._tsig_ctx = None
+        if tsig_key_str:
+            self._tsig_ctx = TSIGContext(TSIGKey(tsig_key_str))
 
     def connect_to_master(self):
         '''Connect to master in TCP.'''
@@ -130,9 +134,12 @@ class XfrinConnection(asyncore.dispatcher):
 
         msg = self._create_query(query_type)
         render = MessageRenderer()
-        msg.to_wire(render)
-        header_len = struct.pack('H', socket.htons(render.get_length()))
+        if self._tsig_ctx:
+            msg.to_wire(render, self._tsig_ctx)
+        else:
+            msg.to_wire(render)
 
+        header_len = struct.pack('H', socket.htons(render.get_length()))
         self._send_data(header_len)
         self._send_data(render.get_data())
 
@@ -142,7 +149,7 @@ class XfrinConnection(asyncore.dispatcher):
         _get_request_response so that we can test the rest of the code without
         involving actual communication with a remote server.'''
         asyncore.loop(self._idle_timeout, map=self._sock_map, count=1)
-    
+
     def _get_request_response(self, size):
         recv_size = 0
         data = b''
@@ -176,7 +183,7 @@ class XfrinConnection(asyncore.dispatcher):
         # strict we should be (see the comment in _check_response_header())
         self._check_response_header(msg)
 
-        # TODO, need select soa record from data source then compare the two 
+        # TODO, need select soa record from data source then compare the two
         # serial, current just return OK, since this function hasn't been used
         # now.
         return XFRIN_OK
@@ -290,14 +297,14 @@ class XfrinConnection(asyncore.dispatcher):
             msg = Message(Message.PARSE)
             msg.from_wire(recvdata)
             self._check_response_status(msg)
-            
+
             answer_section = msg.get_section(Message.SECTION_ANSWER)
             for rr in self._handle_answer_section(answer_section):
                 yield rr
 
             if self._soa_rr_count == 2:
                 break
-            
+
             if self._shutdown_event.is_set():
                 raise XfrinException('xfrin is forced to stop')
 
@@ -322,16 +329,18 @@ class XfrinConnection(asyncore.dispatcher):
             sys.stdout.write('[b10-xfrin] %s\n' % str(msg))
 
 
-def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file, 
-                  shutdown_event, master_addrinfo, check_soa, verbose):
+def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
+                  shutdown_event, master_addrinfo, check_soa, verbose,
+                  tsig_key_str):
     xfrin_recorder.increment(zone_name)
     sock_map = {}
     conn = XfrinConnection(sock_map, zone_name, rrclass, db_file,
-                           shutdown_event, master_addrinfo, verbose)
+                           shutdown_event, master_addrinfo,
+                           tsig_key_str, verbose)
     ret = XFRIN_FAIL
     if conn.connect_to_master():
         ret = conn.do_xfrin(check_soa)
-    
+
     # Publish the zone transfer result news, so zonemgr can reset the
     # zone timer, and xfrout can notify the zone's slaves if the result
     # is success.
@@ -379,11 +388,11 @@ class Xfrin:
         self._verbose = verbose
 
     def _cc_setup(self):
-        '''This method is used only as part of initialization, but is 
-        implemented separately for convenience of unit tests; by letting 
-        the test code override this method we can test most of this class 
+        '''This method is used only as part of initialization, but is
+        implemented separately for convenience of unit tests; by letting
+        the test code override this method we can test most of this class
         without requiring a command channel.'''
-        # Create one session for sending command to other modules, because the 
+        # Create one session for sending command to other modules, because the
         # listening session will block the send operation.
         self._send_cc_session = isc.cc.Session()
         self._module_cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
@@ -394,15 +403,17 @@ class Xfrin:
         self._max_transfers_in = config_data.get("transfers_in")
         self._master_addr = config_data.get('master_addr') or self._master_addr
         self._master_port = config_data.get('master_port') or self._master_port
+        self._tsig_key_str = config_data.get('tsig_key') or None
 
     def _cc_check_command(self):
-        '''This is a straightforward wrapper for cc.check_command, 
-        but provided as a separate method for the convenience 
+        '''This is a straightforward wrapper for cc.check_command,
+        but provided as a separate method for the convenience
         of unit tests.'''
         self._module_cc.check_command(False)
 
     def config_handler(self, new_config):
         self._max_transfers_in = new_config.get("transfers_in") or self._max_transfers_in
+        self._tsig_key_str = new_config.get('tsig_key') or None
         if ('master_addr' in new_config) or ('master_port' in new_config):
             # User should change the port and address together.
             try:
@@ -420,7 +431,7 @@ class Xfrin:
         return create_answer(0)
 
     def shutdown(self):
-        ''' shutdown the xfrin process. the thread which is doing xfrin should be 
+        ''' shutdown the xfrin process. the thread which is doing xfrin should be
         terminated.
         '''
         self._shutdown_event.set()
@@ -436,30 +447,32 @@ class Xfrin:
             if command == 'shutdown':
                 self._shutdown_event.set()
             elif command == 'notify' or command == REFRESH_FROM_ZONEMGR:
-                # Xfrin receives the refresh/notify command from zone manager. 
-                # notify command maybe has the parameters which 
+                # Xfrin receives the refresh/notify command from zone manager.
+                # notify command maybe has the parameters which
                 # specify the notifyfrom address and port, according the RFC1996, zone
                 # transfer should starts first from the notifyfrom, but now, let 'TODO' it.
                 (zone_name, rrclass) = self._parse_zone_name_and_class(args)
                 (master_addr) = build_addr_info(self._master_addr, self._master_port)
-                ret = self.xfrin_start(zone_name, 
-                                       rrclass, 
+                ret = self.xfrin_start(zone_name,
+                                       rrclass,
                                        self._get_db_file(),
                                        master_addr,
+                                       self._tsig_key_str,
                                        True)
                 answer = create_answer(ret[0], ret[1])
 
             elif command == 'retransfer' or command == 'refresh':
                 # Xfrin receives the retransfer/refresh from cmdctl(sent by bindctl).
-                # If the command has specified master address, do transfer from the 
-                # master address, or else do transfer from the configured masters.                
+                # If the command has specified master address, do transfer from the
+                # master address, or else do transfer from the configured masters.
                 (zone_name, rrclass) = self._parse_zone_name_and_class(args)
                 master_addr = self._parse_master_and_port(args)
                 db_file = args.get('db_file') or self._get_db_file()
-                ret = self.xfrin_start(zone_name, 
-                                       rrclass, 
-                                       db_file, 
+                ret = self.xfrin_start(zone_name,
+                                       rrclass,
+                                       db_file,
                                        master_addr,
+                                       self._tsig_key_str,
                                        (False if command == 'retransfer' else True))
                 answer = create_answer(ret[0], ret[1])
 
@@ -483,14 +496,14 @@ class Xfrin:
                 rrclass = RRClass(rrclass)
             except InvalidRRClass as e:
                 raise XfrinException('invalid RRClass: ' + rrclass)
-        
+
         return zone_name, rrclass
 
     def _parse_master_and_port(self, args):
         port = args.get('port') or self._master_port
         master = args.get('master') or self._master_addr
         return build_addr_info(master, port)
- 
+
     def _get_db_file(self):
         #TODO, the db file path should be got in auth server's configuration
         # if we need access to this configuration more often, we
@@ -506,12 +519,12 @@ class Xfrin:
             db_file = os.environ["B10_FROM_BUILD"] + os.sep + "bind10_zones.sqlite3"
         self._module_cc.remove_remote_config(AUTH_SPECFILE_LOCATION)
         return db_file
-       
+
     def publish_xfrin_news(self, zone_name, zone_class,  xfr_result):
         '''Send command to xfrout/zone manager module.
-        If xfrin has finished successfully for one zone, tell the good 
+        If xfrin has finished successfully for one zone, tell the good
         news(command: zone_new_data_ready) to zone manager and xfrout.
-        if xfrin failed, just tell the bad news to zone manager, so that 
+        if xfrin failed, just tell the bad news to zone manager, so that
         it can reset the refresh timer for that zone. '''
         param = {'zone_name': zone_name, 'zone_class': zone_class.to_text()}
         if xfr_result == XFRIN_OK:
@@ -531,8 +544,8 @@ class Xfrin:
                                                                       seq)
                 except isc.cc.session.SessionTimeout:
                     pass        # for now we just ignore the failure
-            except socket.error as err: 
-                log_error("Fail to send message to %s and %s, msgq may has been killed" 
+            except socket.error as err:
+                log_error("Fail to send message to %s and %s, msgq may has been killed"
                           % (XFROUT_MODULE_NAME, ZONE_MANAGER_MODULE_NAME))
         else:
             msg = create_command(ZONE_XFRIN_FAILED, param)
@@ -545,14 +558,14 @@ class Xfrin:
                 except isc.cc.session.SessionTimeout:
                     pass        # for now we just ignore the failure
             except socket.error as err:
-                log_error("Fail to send message to %s, msgq may has been killed" 
+                log_error("Fail to send message to %s, msgq may has been killed"
                           % ZONE_MANAGER_MODULE_NAME)
 
     def startup(self):
         while not self._shutdown_event.is_set():
             self._cc_check_command()
 
-    def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo,
+    def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo, tsig_key_str,
                     check_soa = True):
         if "pydnspp" not in sys.modules:
             return (1, "xfrin failed, can't load dns message python library: 'pydnspp'")
@@ -571,7 +584,8 @@ class Xfrin:
                                                 db_file,
                                                 self._shutdown_event,
                                                 master_addrinfo, check_soa,
-                                                self._verbose))
+                                                self._verbose,
+                                                tsig_key_str))
 
         xfrin_thread.start()
         return (0, 'zone xfrin is started')
