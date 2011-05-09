@@ -540,9 +540,14 @@ class TestStats2(unittest.TestCase):
                              os.environ["B10_FROM_SOURCE"] + os.sep + \
                                  "src" + os.sep + "bin" + os.sep + "stats" + \
                                  os.sep + "stats.spec")
+            self.assertEqual(stats.SCHEMA_SPECFILE_LOCATION,
+                             os.environ["B10_FROM_SOURCE"] + os.sep + \
+                                 "src" + os.sep + "bin" + os.sep + "stats" + \
+                                 os.sep + "stats-schema.spec")
         imp.reload(stats)
         # change path of SPECFILE_LOCATION
         stats.SPECFILE_LOCATION = TEST_SPECFILE_LOCATION
+        stats.SCHEMA_SPECFILE_LOCATION = TEST_SPECFILE_LOCATION
         self.assertEqual(stats.SPECFILE_LOCATION, TEST_SPECFILE_LOCATION)
         self.subject = stats.SessionSubject(session=self.session, verbose=True)
         self.session = self.subject.session
