@@ -153,7 +153,7 @@ public:
                 // standard signature size for the moment.
                 // Once we support truncation correctly, this if-clause should
                 // (and the capitalized comment above) be removed.
-                len = getOutputLength();
+                return (false);
             }
             if (len == 0 || len > getOutputLength()) {
                 len = getOutputLength();
