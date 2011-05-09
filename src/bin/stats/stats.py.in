@@ -39,13 +39,15 @@ isc.util.process.rename()
 # from a directory relative to that, otherwise we use the ones
 # installed on the system
 if "B10_FROM_SOURCE" in os.environ:
-    SPECFILE_LOCATION = os.environ["B10_FROM_SOURCE"] + os.sep + \
-        "src" + os.sep + "bin" + os.sep + "stats" + os.sep + "stats.spec"
+    BASE_LOCATION = os.environ["B10_FROM_SOURCE"] + os.sep + \
+        "src" + os.sep + "bin" + os.sep + "stats"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
-    SPECFILE_LOCATION = "@datadir@" + os.sep + "@PACKAGE@" + os.sep + "stats.spec"
-    SPECFILE_LOCATION = SPECFILE_LOCATION.replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+    BASE_LOCATION = "@datadir@" + os.sep + "@PACKAGE@"
+    BASE_LOCATION = BASE_LOCATION.replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+SPECFILE_LOCATION = BASE_LOCATION + os.sep + "stats.spec"
+SCHEMA_SPECFILE_LOCATION = BASE_LOCATION + os.sep + "stats-schema.spec"
 
 class Singleton(type):
     """
@@ -184,8 +186,7 @@ class CCSessionListener(Listener):
         self.session = self.subject.session = self.cc_session._session
 
         # initialize internal data
-        self.config_spec = self.cc_session.get_module_spec().get_config_spec()
-        self.stats_spec = self.config_spec
+        self.stats_spec = isc.config.module_spec_from_file(SCHEMA_SPECFILE_LOCATION).get_config_spec()
         self.stats_data = self.initialize_data(self.stats_spec)
 
         # add event handler invoked via SessionSubject object
