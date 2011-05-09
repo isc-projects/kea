@@ -266,7 +266,7 @@ writeHeaderFile(const string& file, const vector<string>& ns_components,
 
     try {
         if (hfile.fail()) {
-            throw MessageException(MSG_OPNMSGOUT, header_file.fullName(),
+            throw MessageException(MSG_OPENOUT, header_file.fullName(),
                 strerror(errno));
         }
 
@@ -300,7 +300,7 @@ writeHeaderFile(const string& file, const vector<string>& ns_components,
 
         // Report errors (if any) and exit
         if (hfile.fail()) {
-            throw MessageException(MSG_MSGWRTERR, header_file.fullName(),
+            throw MessageException(MSG_WRITERR, header_file.fullName(),
                 strerror(errno));
         }
 
@@ -359,7 +359,7 @@ writeProgramFile(const string& file, const vector<string>& ns_components,
     ofstream ccfile(program_file.fullName().c_str());
     try {
         if (ccfile.fail()) {
-            throw MessageException(MSG_OPNMSGOUT, program_file.fullName(),
+            throw MessageException(MSG_OPENOUT, program_file.fullName(),
                 strerror(errno));
         }
 
@@ -417,7 +417,7 @@ writeProgramFile(const string& file, const vector<string>& ns_components,
 
         // Report errors (if any) and exit
         if (ccfile.fail()) {
-            throw MessageException(MSG_MSGWRTERR, program_file.fullName(),
+            throw MessageException(MSG_WRITERR, program_file.fullName(),
                 strerror(errno));
         }
 
