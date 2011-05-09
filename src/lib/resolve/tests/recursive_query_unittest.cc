@@ -792,8 +792,6 @@ TEST_F(RecursiveQueryTest, lowtimeouts) {
 
     // Do the answer
     const uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    // Set up the test so that it will retry 5 times, but the lookup
-    // timeout will fire after only 3 normal timeouts
     RecursiveQuery query(*dns_service_,
                          *nsas_, cache_,
                          singleAddress(TEST_IPV4_ADDR, port),
@@ -801,21 +799,15 @@ TEST_F(RecursiveQueryTest, lowtimeouts) {
                          1, 1, 1, 1);
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
-    query.resolve(question, answer, buffer, &server);
 
+    Message query_message(Message::RENDER);
+    isc::resolve::initResponseMessage(question, query_message);
+
+    boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
+    query.forward(ConstMessagePtr(&query_message), answer, buffer, &server, callback);
     // Run the test
     io_service_->run();
-
-    int recv_options = setSocketTimeout(sock_, 1, 0);
-
-    // Try to read 5 times, should stop after 3 reads
-    int num = 0;
-    bool read_success = tryRead(sock_, recv_options, 5, &num);
-
-    // The query should fail and respond with an error
-    EXPECT_TRUE(done);
-    EXPECT_EQ(1, num);
-    EXPECT_FALSE(read_success);
+    EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
 }
 
 // as mentioned above, we need a more better framework for this,
