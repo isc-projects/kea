@@ -16,6 +16,7 @@
 
 #include <stdint.h>
 
+#include <cassert>
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
@@ -68,7 +69,7 @@ struct TSIGContext::TSIGContextImpl {
     // the caller of verify(), so that verify() can call this method within
     // its 'return' statement.
     TSIGError postVerifyUpdate(TSIGError error, const void* digest,
-                               size_t digest_len)
+                               uint16_t digest_len)
     {
         if (state_ == INIT) {
             state_ = RECEIVED_REQUEST;
@@ -116,6 +117,10 @@ TSIGContext::TSIGContextImpl::digestPreviousMAC(OutputBuffer& buffer,
                                                 HMACPtr hmac) const
 {
     buffer.clear();
+
+    // We should have ensured the digest size fits 16 bits within this class
+    // implementation.
+    assert(previous_digest_.size() <= 0xffff);
 
     const uint16_t previous_digest_len(previous_digest_.size());
     buffer.writeUint16(previous_digest_len);
@@ -308,6 +313,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
 
     // Get the final digest, update internal state, then finish.
     vector<uint8_t> digest = hmac->sign();
+    assert(digest.size() <= 0xffff); // cryptolink API should have ensured it.
     ConstTSIGRecordPtr tsig(new TSIGRecord(
                                 impl_->key_.getKeyName(),
                                 any::TSIG(impl_->key_.getAlgorithmName(),
