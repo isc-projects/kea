@@ -1,4 +1,4 @@
-// File created from messagedef.mes on Mon Feb 14 11:07:45 2011
+// File created from messagedef.mes on Thu May  5 16:57:11 2011
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -33,21 +33,21 @@ namespace {
 const char* values[] = {
     "DUPLNS", "duplicate $NAMESPACE directive found",
     "DUPLPRFX", "duplicate $PREFIX directive found",
-    "DUPMSGID", "duplicate message ID (%s) in compiled code",
-    "IDNOTFND", "could not replace message for '%s': no such message identification",
-    "MSGRDERR", "error reading from message file %s: %s",
-    "MSGWRTERR", "error writing to %s: %s",
-    "NOMSGTXT", "a line containing a message ID ('%s') and nothing else was found",
+    "DUPMSGID", "duplicate message ID (%1) in compiled code",
+    "IDNOTFND", "could not replace message for '%1': no such message identification",
+    "MSGRDERR", "error reading from message file %1: %2",
+    "MSGWRTERR", "error writing to %1: %2",
+    "NOMSGTXT", "a line containing a message ID ('%1') and nothing else was found",
     "NSEXTRARG", "$NAMESPACE directive has too many arguments",
-    "NSINVARG", "$NAMESPACE directive has an invalid argument ('%s')",
+    "NSINVARG", "$NAMESPACE directive has an invalid argument ('%1')",
     "NSNOARG", "no arguments were given to the $NAMESPACE directive",
-    "OPNMSGIN", "unable to open message file %s for input: %s",
-    "OPNMSGOUT", "unable to open %s for output: %s",
+    "OPNMSGIN", "unable to open message file %1 for input: %2",
+    "OPNMSGOUT", "unable to open %1 for output: %2",
     "PRFEXTRARG", "$PREFIX directive has too many arguments",
-    "PRFINVARG", "$PREFIX directive has an invalid argument ('%s')",
+    "PRFINVARG", "$PREFIX directive has an invalid argument ('%1')",
     "PRFNOARG", "no arguments were given to the $PREFIX directive",
-    "RDLOCMES", "reading local message file %s",
-    "UNRECDIR", "unrecognised directive '%s'",
+    "RDLOCMES", "reading local message file %1",
+    "UNRECDIR", "unrecognised directive '%1'",
     NULL
 };
 

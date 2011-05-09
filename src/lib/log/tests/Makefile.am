@@ -22,6 +22,7 @@ run_unittests_SOURCES += message_reader_unittest.cc
 run_unittests_SOURCES += message_initializer_unittest.cc
 run_unittests_SOURCES += message_initializer_unittest_2.cc
 run_unittests_SOURCES += run_unittests.cc
+run_unittests_SOURCES += log_formatter_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
