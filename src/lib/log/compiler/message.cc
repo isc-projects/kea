@@ -527,9 +527,12 @@ main(int argc, char* argv[]) {
         string text = e.id();
         text += ", ";
         text += global.getText(e.id());
-
         // Format with arguments
-        text = isc::util::str::format(text, e.arguments());
+        vector<string> args(e.arguments());
+        for (size_t i(0); i < args.size(); ++ i) {
+            replacePlaceholder(&text, args[i], i + 1);
+        }
+
         cerr << text << "\n";
 
         return 1;

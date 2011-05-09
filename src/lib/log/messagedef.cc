@@ -1,4 +1,4 @@
-// File created from messagedef.mes on Mon May  9 12:54:57 2011
+// File created from messagedef.mes on Mon May  9 13:52:54 2011
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -31,23 +31,23 @@ extern const isc::log::MessageID MSG_WRITERR = "MSG_WRITERR";
 namespace {
 
 const char* values[] = {
-    "MSG_DUPLNS", "line %s: duplicate $NAMESPACE directive found",
-    "MSG_DUPMSGID", "duplicate message ID (%s) in compiled code",
-    "MSG_IDNOTFND", "could not replace message text for '%s': no such message",
-    "MSG_INVMSGID", "line %s: invalid message identification '%s'",
-    "MSG_NOMSGID", "line %s: message definition line found without a message ID",
-    "MSG_NOMSGTXT", "line %s: line found containing a message ID ('%s') and no text",
-    "MSG_NSEXTRARG", "line %s: $NAMESPACE directive has too many arguments",
-    "MSG_NSINVARG", "line %s: $NAMESPACE directive has an invalid argument ('%s')",
-    "MSG_NSNOARG", "line %s: no arguments were given to the $NAMESPACE directive",
-    "MSG_OPENIN", "unable to open message file %s for input: %s",
-    "MSG_OPENOUT", "unable to open %s for output: %s",
-    "MSG_PRFEXTRARG", "line %s: $PREFIX directive has too many arguments",
-    "MSG_PRFINVARG", "line %s: $PREFIX directive has an invalid argument ('%s')",
-    "MSG_RDLOCMES", "reading local message file %s",
-    "MSG_READERR", "error reading from message file %s: %s",
-    "MSG_UNRECDIR", "line %s: unrecognised directive '%s'",
-    "MSG_WRITERR", "error writing to %s: %s",
+    "MSG_DUPLNS", "line %1: duplicate $NAMESPACE directive found",
+    "MSG_DUPMSGID", "duplicate message ID (%1) in compiled code",
+    "MSG_IDNOTFND", "could not replace message text for '%1': no such message",
+    "MSG_INVMSGID", "line %1: invalid message identification '%2'",
+    "MSG_NOMSGID", "line %1: message definition line found without a message ID",
+    "MSG_NOMSGTXT", "line %1: line found containing a message ID ('%2') and no text",
+    "MSG_NSEXTRARG", "line %1: $NAMESPACE directive has too many arguments",
+    "MSG_NSINVARG", "line %1: $NAMESPACE directive has an invalid argument ('%2')",
+    "MSG_NSNOARG", "line %1: no arguments were given to the $NAMESPACE directive",
+    "MSG_OPENIN", "unable to open message file %1 for input: %2",
+    "MSG_OPENOUT", "unable to open %1 for output: %2",
+    "MSG_PRFEXTRARG", "line %1: $PREFIX directive has too many arguments",
+    "MSG_PRFINVARG", "line %1: $PREFIX directive has an invalid argument ('%2')",
+    "MSG_RDLOCMES", "reading local message file %1",
+    "MSG_READERR", "error reading from message file %1: %2",
+    "MSG_UNRECDIR", "line %1: unrecognised directive '%2'",
+    "MSG_WRITERR", "error writing to %1: %2",
     NULL
 };
 

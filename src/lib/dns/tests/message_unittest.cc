@@ -683,11 +683,12 @@ TEST_F(MessageTest, toWireWithoutRcode) {
 TEST_F(MessageTest, toText) {
     // Check toText() output for a typical DNS response with records in
     // all sections
-    ifstream ifs;
-    unittests::openTestData("message_toText1.txt", ifs);
+    
     factoryFromFile(message_parse, "message_toText1.wire");
     {
         SCOPED_TRACE("Message toText test (basic case)");
+        ifstream ifs;
+        unittests::openTestData("message_toText1.txt", ifs);
         unittests::matchTextData(ifs, message_parse.toText());
     }
 
@@ -695,12 +696,12 @@ TEST_F(MessageTest, toText) {
     // from the dig output (other than replacing tabs with a space): adding
     // a newline after the "OPT PSEUDOSECTION".  This is an intentional change
     // in our version for better readability.
-    ifs.close();
     message_parse.clear(Message::PARSE);
-    unittests::openTestData("message_toText2.txt", ifs);
     factoryFromFile(message_parse, "message_toText2.wire");
     {
         SCOPED_TRACE("Message toText test with EDNS");
+        ifstream ifs;
+        unittests::openTestData("message_toText2.txt", ifs);
         unittests::matchTextData(ifs, message_parse.toText());
     }
 
@@ -708,12 +709,12 @@ TEST_F(MessageTest, toText) {
     // from the dig output (other than replacing tabs with a space): removing
     // a redundant white space at the end of TSIG RDATA.  We'd rather consider
     // it a dig's defect than a feature.
-    ifs.close();
     message_parse.clear(Message::PARSE);
-    unittests::openTestData("message_toText3.txt", ifs);
     factoryFromFile(message_parse, "message_toText3.wire");
     {
         SCOPED_TRACE("Message toText test with TSIG");
+        ifstream ifs;
+        unittests::openTestData("message_toText3.txt", ifs);
         unittests::matchTextData(ifs, message_parse.toText());
     }
 }
