@@ -28,7 +28,7 @@ libasiodns_la_SOURCES += io_fetch.cc io_fetch.h
 
 nodist_libasiodns_la_SOURCES = asiodef.cc asiodef.h
 
-EXTRA_DIST = asiodef.msg
+EXTRA_DIST = asiodef.mes
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
