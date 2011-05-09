@@ -46,9 +46,8 @@ TEST_F(FormatterTest, inactive) {
 // Create an active formatter and check it produces output. Does no arg
 // substitution yet
 TEST_F(FormatterTest, active) {
-    Formatter("TEST", s("Text of message"), 1, *this);
-    ASSERT_LE(1, outputs.size());
-    EXPECT_EQ(1, outputs.size());
+    Formatter("TEST", s("Text of message"), this);
+    ASSERT_EQ(1, outputs.size());
     EXPECT_STREQ("TEST", outputs[0].first);
     EXPECT_EQ("Text of message", outputs[0].second);
 }
@@ -63,17 +62,15 @@ TEST_F(FormatterTest, inactiveArg) {
 TEST_F(FormatterTest, stringArg) {
     {
         SCOPED_TRACE("C++ string");
-        Formatter("TEST", s("Hello %1"), 1, *this).arg(string("World"));
-        ASSERT_LE(1, outputs.size());
-        EXPECT_EQ(1, outputs.size());
+        Formatter("TEST", s("Hello %1"), this).arg(string("World"));
+        ASSERT_EQ(1, outputs.size());
         EXPECT_STREQ("TEST", outputs[0].first);
         EXPECT_EQ("Hello World", outputs[0].second);
     }
     {
         SCOPED_TRACE("C++ string");
-        Formatter("TEST", s("Hello %1"), 1, *this).arg(string("Internet"));
-        ASSERT_LE(2, outputs.size());
-        EXPECT_EQ(2, outputs.size());
+        Formatter("TEST", s("Hello %1"), this).arg(string("Internet"));
+        ASSERT_EQ(2, outputs.size());
         EXPECT_STREQ("TEST", outputs[1].first);
         EXPECT_EQ("Hello Internet", outputs[1].second);
     }
@@ -81,32 +78,48 @@ TEST_F(FormatterTest, stringArg) {
 
 // Can convert to string
 TEST_F(FormatterTest, intArg) {
-    Formatter("TEST", s("The answer is %1"), 1, *this).arg(42);
-    ASSERT_LE(1, outputs.size());
-    EXPECT_EQ(1, outputs.size());
+    Formatter("TEST", s("The answer is %1"), this).arg(42);
+    ASSERT_EQ(1, outputs.size());
     EXPECT_STREQ("TEST", outputs[0].first);
     EXPECT_EQ("The answer is 42", outputs[0].second);
 }
 
 // Can use multiple arguments at different places
 TEST_F(FormatterTest, multiArg) {
-    Formatter("TEST", s("The %2 are %1"), 1, *this).arg("switched").
+    Formatter("TEST", s("The %2 are %1"), this).arg("switched").
         arg("arguments");
-    ASSERT_LE(1, outputs.size());
-    EXPECT_EQ(1, outputs.size());
+    ASSERT_EQ(1, outputs.size());
     EXPECT_STREQ("TEST", outputs[0].first);
     EXPECT_EQ("The arguments are switched", outputs[0].second);
 }
 
 // Can survive and complains if placeholder is missing
 TEST_F(FormatterTest, missingPlace) {
-    EXPECT_NO_THROW(Formatter("TEST", s("Missing the first %2"), 1, *this).
+    EXPECT_NO_THROW(Formatter("TEST", s("Missing the first %2"), this).
                     arg("missing").arg("argument"));
-    ASSERT_LE(1, outputs.size());
-    EXPECT_EQ(1, outputs.size());
+    ASSERT_EQ(1, outputs.size());
     EXPECT_STREQ("TEST", outputs[0].first);
     EXPECT_EQ("Missing the first argument "
               "@@Missing placeholder %1 for 'missing'@@", outputs[0].second);
+}
+
+// Can replace multiple placeholders
+TEST_F(FormatterTest, multiPlaceholder) {
+    Formatter("TEST", s("The %1 is the %1"), this).
+        arg("first rule of tautology club");
+    ASSERT_EQ(1, outputs.size());
+    EXPECT_STREQ("TEST", outputs[0].first);
+    EXPECT_EQ("The first rule of tautology club is "
+              "the first rule of tautology club", outputs[0].second);
+}
+
+// Test we can cope with replacement containing the placeholder
+TEST_F(FormatterTest, noRecurse) {
+    // If we recurse, this will probably eat all the memory and crash
+    Formatter("TEST", s("%1"), this).arg("%1 %1");
+    ASSERT_EQ(1, outputs.size());
+    EXPECT_STREQ("TEST", outputs[0].first);
+    EXPECT_EQ("%1 %1", outputs[0].second);
 }
 
 }

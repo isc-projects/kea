@@ -811,9 +811,6 @@ AC_OUTPUT([doc/version.ent
            src/bin/stats/stats-httpd-xml.tpl
            src/bin/stats/stats-httpd-xsd.tpl
            src/bin/stats/stats-httpd-xsl.tpl
-           src/bin/stats/run_b10-stats.sh
-           src/bin/stats/run_b10-stats-httpd.sh
-           src/bin/stats/tests/stats_test
            src/bin/bind10/bind10.py
            src/bin/bind10/run_bind10.sh
            src/bin/bind10/tests/bind10_test.py
@@ -852,9 +849,6 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
            chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
-           chmod +x src/bin/stats/tests/stats_test
-           chmod +x src/bin/stats/run_b10-stats.sh
-           chmod +x src/bin/stats/run_b10-stats-httpd.sh
            chmod +x src/bin/bind10/run_bind10.sh
            chmod +x src/bin/cmdctl/tests/cmdctl_test
            chmod +x src/bin/xfrin/tests/xfrin_test

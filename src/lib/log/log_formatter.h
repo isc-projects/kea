@@ -45,16 +45,12 @@ replacePlaceholder(std::string* message, const std::string& replacement,
 /// no .arg call on the object, it is destroyed right away and we use the
 /// destructor to output the text (but only in case we should output anything).
 ///
-/// If there's an .arg call, it replaces a placeholder with the argument
-/// converted to string and produces another Formatter. We mark the current
-/// Formatter so it won't output anything in it's destructor and the task
-/// to do the output is moved onto the new object. Again, the last one in
-/// the chain is destroyed without any modification and does the real output.
+/// If there's an .arg call, we return reference to the same object, so another
+/// .arg can be called on it. After the last .arg call is done, the object is
+/// destroyed and, again, we can produce the output.
 ///
 /// Of course, if the logging is turned off, we don't bother with any replacing
-/// and just return new empty Formatter. As everything here is in the header
-/// file, compiler should be able to easily optimise most of the work with
-/// creating and destroying objects and simply do the replacing only.
+/// and just return.
 ///
 /// User of logging code should not really care much about this class, only
 /// call the .arg method to generate the correct output.
@@ -62,68 +58,64 @@ replacePlaceholder(std::string* message, const std::string& replacement,
 /// The class is a template to allow easy testing. Also, we want everything
 /// here in the header anyway and it doesn't depend on the details of what
 /// Logger really is, so it doesn't hurt anything.
+///
+/// Also, if you are interested in the internals, you might find the copy
+/// constructor a bit strange. It deactivates the original formatter. We don't
+/// really want to support copying of the Formatter by user, but C++ needs a
+/// copy constructor when returning from the logging functions, so we need one.
+/// And if we did not deactivate the original Formatter, that one would get
+/// destroyed before any call to .arg, producing an output, and then the one
+/// the .arg calls are called on would get destroyed as well, producing output
+/// again. So, think of this behaviour as soul moving from one to another.
 template<class Logger> class Formatter {
 private:
-    /// \brief The logger we will use to output the final message
-    Logger* logger_;
+    /// \brief The logger we will use to output the final message.
+    ///
+    /// If NULL, we are not active and should not produce anything.
+    mutable Logger* logger_;
     /// \brief Prefix (eg. "ERROR", "DEBUG" or like that)
     const char* prefix_;
     /// \brief The messages with %1, %2... placeholders
     std::string* message_;
     /// \brief Which will be the next placeholder to replace
-    const unsigned nextPlaceholder_;
-    /// \brief Should we do output?
-    mutable bool active_;
+    unsigned nextPlaceholder_;
     Formatter& operator =(const Formatter& other);
 public:
     /// \brief Constructor of "active" formatter
     ///
-    /// This will create a formatter in active mode -- the one when it
-    /// will generate output.
+    /// This will create a formatter. If the arguments are set, it
+    /// will be active (will produce output). If you leave them all as NULL,
+    /// it will create an inactive Formatter -- one that'll produce no output.
     ///
     /// It is not expected to be called by user of logging system directly.
     ///
-    /// \param prefix The prefix, like "ERROR" or "DEBUG"
+    /// \param prefix The severity prefix, like "ERROR" or "DEBUG"
     /// \param message The message with placeholders. We take ownership of
-    ///     it and we will modify the string. Must not be NULL and it's
-    ///     not checked.
-    /// \param nextPlaceholder It is the number of next placeholder which
-    ///     should be replaced. It should be called with 1, higher numbers
-    ///     are used internally in the chain.
-    /// \param logger The logger where the final output will go.
-    Formatter(const char* prefix, std::string* message,
-              const unsigned nextPlaceholder, Logger& logger) :
-        logger_(&logger), prefix_(prefix), message_(message),
-        nextPlaceholder_(nextPlaceholder), active_(true)
-    {
-    }
-    /// \brief Constructor of "inactive" formatter
-    ///
-    /// It is not expected to be called by user of the logging system directly.
-    ///
-    /// This will create a formatter that produces no output.
-    Formatter() :
-        message_(NULL),
-        nextPlaceholder_(0),
-        active_(false)
+    ///     it and we will modify the string. Must not be NULL unless
+    ///     logger is also NULL, but it's not checked.
+    /// \param logger The logger where the final output will go, or NULL
+    ///     if no output is wanted.
+    Formatter(const char* prefix = NULL, std::string* message = NULL,
+              Logger* logger = NULL) :
+        logger_(logger), prefix_(prefix), message_(message),
+        nextPlaceholder_(1)
     {
     }
 
     Formatter(const Formatter& other) :
         logger_(other.logger_), prefix_(other.prefix_),
-        message_(other.message_), nextPlaceholder_(other.nextPlaceholder_),
-        active_(other.active_)
+        message_(other.message_), nextPlaceholder_(other.nextPlaceholder_)
     {
-        other.active_ = false;
+        other.logger_ = false;
     }
     /// \brief Destructor.
     //
     /// This is the place where output happens if the formatter is active.
     ~ Formatter() {
-        if (active_) {
+        if (logger_) {
             logger_->output(prefix_, *message_);
+            delete message_;
         }
-        delete message_;
     }
     /// \brief Replaces another placeholder
     ///
@@ -132,36 +124,23 @@ public:
     /// only produces another inactive formatter.
     ///
     /// \param arg The argument to place into the placeholder.
-    template<class Arg> Formatter arg(const Arg& value) {
-        if (active_) {
+    template<class Arg> Formatter& arg(const Arg& value) {
+        if (logger_) {
             return (arg(boost::lexical_cast<std::string>(value)));
         } else {
-            return (Formatter<Logger>());
+            return (*this);
         }
     }
     /// \brief String version of arg.
-    Formatter arg(const std::string& arg) {
-        if (active_) {
+    Formatter& arg(const std::string& arg) {
+        if (logger_) {
             // FIXME: This logic has a problem. If we had a message like
             // "%1 %2" and called .arg("%2").arg(42), we would get "42 %2".
             // But we consider this to be rare enough not to complicate
             // matters.
-            active_ = false;
-            replacePlaceholder(message_, arg, nextPlaceholder_);
-            std::string *message(message_);
-            message_ = NULL;
-            try {
-                return (Formatter<Logger>(prefix_, message,
-                                          nextPlaceholder_ + 1, *logger_));
-            }
-            // Make sure the memory is not leaked on stuff like bad_alloc
-            catch (...) {
-                delete message;
-                throw;
-            }
-        } else {
-            return (Formatter<Logger>());
+            replacePlaceholder(message_, arg, nextPlaceholder_ ++);
         }
+        return (*this);
     }
 };
 
