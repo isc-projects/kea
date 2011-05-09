@@ -324,7 +324,7 @@ public:
     /// One unexpected case that is not covered by this method is that a
     /// client receives a signed response to an unsigned request.  RFC2845 is
     /// silent about such cases; BIND 9 explicitly identifies the case and
-    /// reject it.  With this implementation, the client can know that the
+    /// rejects it.  With this implementation, the client can know that the
     /// response contains a TSIG via the result of
     /// \c Message::getTSIGRecord() and that it is an unexpected TSIG due to
     /// the fact that it doesn't have a corresponding \c TSIGContext.
