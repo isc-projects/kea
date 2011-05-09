@@ -167,64 +167,16 @@ public:
         }
     }
 
-
-    /// \brief Output General Message
+    /// \brief Raw output
     ///
-    /// The message is formatted to include the date and time, the severity
-    /// and the logger generating the message.
+    /// Writes the message with time into the log. Used by the Formatter
+    /// to produce output.
+    void outputRaw(const char* sev_text, const std::string& message);
+
+    /// \brief Look up message text in dictionary
     ///
-    /// \param sev_text Severity level as a text string
-    /// \param ident Message identification
-    /// \param ap Variable argument list holding message arguments
-    void output(const char* sev_text, const MessageID& ident,
-        va_list ap);
-
-
-    /// \brief Output Debug Message
-    ///
-    /// \param ident Message identification.
-    /// \param text Text to log
-    /// \param ap Variable argument list holding message arguments
-    void debug(const MessageID& ident, va_list ap) {
-        output("DEBUG", ident, ap);
-    }
-
-
-    /// \brief Output Informational Message
-    ///
-    /// \param ident Message identification.
-    /// \param text Text to log
-    /// \param ap Variable argument list holding message arguments
-    void info(const MessageID& ident, va_list ap) {
-        output("INFO ", ident, ap);
-    }
-
-    /// \brief Output Warning Message
-    ///
-    /// \param ident Message identification.
-    /// \param text Text to log
-    /// \param ap Variable argument list holding message arguments
-    void warn(const MessageID& ident, va_list ap) {
-        output("WARN ", ident, ap);
-    }
-
-    /// \brief Output Error Message
-    ///
-    /// \param ident Message identification.
-    /// \param text Text to log
-    /// \param ap Variable argument list holding message arguments
-    void error(const MessageID& ident, va_list ap) {
-        output("ERROR", ident, ap);
-    }
-
-    /// \brief Output Fatal Message
-    ///
-    /// \param ident Message identification.
-    /// \param text Text to log
-    /// \param ap Variable argument list holding message arguments
-    void fatal(const MessageID& ident, va_list ap) {
-        output("FATAL", ident, ap);
-    }
+    /// This gets you the unformatted text of message for given ID.
+    std::string* lookupMessage(const MessageID& id);
 
     /// \brief Equality
     ///

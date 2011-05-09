@@ -94,6 +94,7 @@ An example file could be:
 
 $PREFIX TEST_
 $NAMESPACE isc::log
+
 % TEST1       message %1 is much too large
 This message is a test for the general message code
 
@@ -140,7 +141,6 @@ Points to note:
 * Remaining lines indicate an explanation for the preceding message.  These
   are intended to be processed by a separate program and used to generate
   an error messages manual.  They are ignored by the message compiler.
-
 
 Message Compiler
 ----------------
@@ -264,7 +264,7 @@ To use the current version of the logging:
 
 4. Issue logging calls using methods on logger, e.g.
 
-       logger.error(DPS_NSTIMEOUT).arg("isc.org")
+       logger.error(DPS_NSTIMEOUT).arg("isc.org");
 
    (where, in the example above we might have defined the symbol in the message
    file with something along the lines of:
