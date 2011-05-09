@@ -23,7 +23,11 @@ import unittest
 import imp
 from isc.cc.session import Session, SessionError
 from isc.config.ccsession import ModuleCCSession, ModuleCCSessionError
+from fake_time import time, strftime, gmtime
 import stats
+stats.time = time
+stats.strftime = strftime
+stats.gmtime = gmtime
 from stats import SessionSubject, CCSessionListener, get_timestamp, get_datetime
 from fake_time import _TEST_TIME_SECS, _TEST_TIME_STRF
 

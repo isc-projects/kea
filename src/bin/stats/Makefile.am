@@ -28,8 +28,7 @@ endif
 
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
 b10-stats: stats.py
-	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" \
-	       -e "s|.*#@@REMOVED@@$$||"  stats.py >$@
+	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|"  stats.py >$@
 	chmod a+x $@
 
 b10-stats-httpd: stats_httpd.py
