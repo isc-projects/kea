@@ -51,6 +51,13 @@ default_answers = [soa_rrset]
 class XfrinTestException(Exception):
     pass
 
+def strip_mutable_tsig_data(data):
+    # Unfortunately we cannot easily compare TSIG RR because we can't tweak
+    # current time.  As a work around this helper function strips off the time
+    # dependent part of TSIG RDATA, i.e., the MAC (assuming HMAC-MD5) and
+    # Time Signed.
+    return data[0:-32] + data[-26:-22] + data[-6:]
+
 class MockXfrin(Xfrin):
     # This is a class attribute of a callable object that specifies a non
     # default behavior triggered in _cc_check_command().  Specific test methods
@@ -60,6 +67,7 @@ class MockXfrin(Xfrin):
     check_command_hook = None
 
     def _cc_setup(self):
+        self._tsig_key_str = None
         pass
 
     def _get_db_file(self):
@@ -195,6 +203,36 @@ class TestXfrinConnection(unittest.TestCase):
         self.assertEqual(axfrmsg.get_question()[0].get_class(),
                          RRClass.CH())
         c.close()
+
+    def test_send_query(self):
+        def create_msg(query_type):
+            msg = Message(Message.RENDER)
+            query_id = 0x1035
+            msg.set_qid(query_id)
+            msg.set_opcode(Opcode.QUERY())
+            msg.set_rcode(Rcode.NOERROR())
+            query_question = Question(Name("example.com."), RRClass.IN(), query_type)
+            msg.add_question(query_question)
+            return msg
+        self.conn._create_query = create_msg
+        # soa request
+        self.conn._send_query(RRType.SOA())
+        self.assertEqual(self.conn.query_data, b'\x00\x1d\x105\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\x06\x00\x01')
+        # axfr request
+        self.conn._send_query(RRType.AXFR())
+        self.assertEqual(self.conn.query_data, b'\x00\x1d\x105\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01')
+
+        # soa request with tsig
+        tsig_key = TSIGKey("example.com:SFuWd/q99SzF8Yzd1QbB9g==")
+        self.conn._tsig_ctx = TSIGContext(tsig_key)
+        self.conn._send_query(RRType.SOA())
+        tsig_soa_data = strip_mutable_tsig_data(self.conn.query_data)
+        self.assertEqual(tsig_soa_data, b'\x00n\x105\x00\x00\x00\x01\x00\x00\x00\x00\x00\x01\x07example\x03com\x00\x00\x06\x00\x01\x07example\x03com\x00\x00\xfa\x00\xff\x00\x00\x00\x00\x00:\x08hmac-md5\x07sig-alg\x03reg\x03int\x00\x01,\x00\x10\x105\x00\x00\x00\x00')
+
+        # axfr request with tsig
+        self.conn._send_query(RRType.AXFR())
+        tsig_axfr_data = strip_mutable_tsig_data(self.conn.query_data)
+        self.assertEqual(tsig_axfr_data, b'\x00n\x105\x00\x00\x00\x01\x00\x00\x00\x00\x00\x01\x07example\x03com\x00\x00\xfc\x00\x01\x07example\x03com\x00\x00\xfa\x00\xff\x00\x00\x00\x00\x00:\x08hmac-md5\x07sig-alg\x03reg\x03int\x00\x01,\x00\x10\x105\x00\x00\x00\x00')
 
     def test_response_with_invalid_msg(self):
         self.conn.reply_data = b'aaaxxxx'
@@ -399,15 +437,20 @@ class TestXfrinRecorder(unittest.TestCase):
 
 class TestXfrin(unittest.TestCase):
     def setUp(self):
+        # redirect output
+        self.stderr_backup = sys.stderr
+        sys.stderr = open(os.devnull, 'w')
         self.xfr = MockXfrin()
         self.args = {}
         self.args['zone_name'] = TEST_ZONE_NAME
         self.args['port'] = TEST_MASTER_PORT
         self.args['master'] = TEST_MASTER_IPV4_ADDRESS
         self.args['db_file'] = TEST_DB_FILE
+        self.args['tsig_key'] = ''
 
     def tearDown(self):
         self.xfr.shutdown()
+        sys.stderr= self.stderr_backup
 
     def _do_parse_zone_name_class(self):
         return self.xfr._parse_zone_name_and_class(self.args)
