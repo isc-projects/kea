@@ -343,40 +343,40 @@ Debug information. A DNAME was found instead of the requested information.
 % MEM_DELEG_FOUND delegation found at '%1'
 Debug information. A delegation point was found above the requested record.
 
-% MEM_SUPER_STOP stopped at superdomain, domain is empty
+% MEM_SUPER_STOP stopped at superdomain '%1', domain '%2' is empty
 Debug information. The search stopped at a superdomain of the requested
 domain. The domain is a empty nonterminal, therefore it is treated  as NXRRSET
 case (eg. the domain exists, but it doesn't have the requested record type).
 
-% MEM_WILDCARD_CANCEL wildcard match canceled
+% MEM_WILDCARD_CANCEL wildcard match canceled for '%1'
 Debug information. A domain above wildcard was reached, but there's something
 below the requested domain. Therefore the wildcard doesn't apply here.  This
 behaviour is specified by RFC 1034, section 4.3.3
 
-% MEM_NOTFOUND requested domain not found
+% MEM_NOTFOUND requested domain '%1' not found
 Debug information. The requested domain does not exist.
 
-% MEM_DOMAIN_EMPTY requested domain is empty
+% MEM_DOMAIN_EMPTY requested domain '%1' is empty
 Debug information. The requested domain exists in the tree of domains, but
 it is empty. Therefore it doesn't contain the requested resource type.
 
-% MEM_EXACT_DELEGATION delegation at the exact domain
+% MEM_EXACT_DELEGATION delegation at the exact domain '%1'
 Debug information. There's a NS record at the requested domain. This means
 this zone is not authoritative for the requested domain, but a delegation
 should be followed. The requested domain is an apex of some zone.
 
-% MEM_ANY_SUCCESS ANY query successful
+% MEM_ANY_SUCCESS ANY query for '%1' successful
 Debug information. The domain was found and an ANY type query is being answered
 by providing everything found inside the domain.
 
-% MEM_SUCCESS query successful
+% MEM_SUCCESS query for '%1/%2' successful
 Debug information. The requested record was found.
 
-% MEM_CNAME cNAME at the domain
+% MEM_CNAME CNAME at the domain '%1'
 Debug information. The requested domain is an alias to a different domain,
 returning the CNAME instead.
 
-% MEM_NXRRSET no such type
+% MEM_NXRRSET no such type '%1' at '%2'
 Debug information. The domain exists, but it doesn't hold any record of the
 requested type.
 

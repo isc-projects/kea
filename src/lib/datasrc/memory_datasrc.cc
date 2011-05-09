@@ -454,7 +454,8 @@ struct MemoryZone::MemoryZoneImpl {
                 // the zone but is empty.  Treat it as NXRRSET.
                 if (node_path.getLastComparisonResult().getRelation() ==
                     NameComparisonResult::SUPERDOMAIN) {
-                    logger.debug(DBG_TRACE_DATA, DATASRC_MEM_SUPER_STOP);
+                    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUPER_STOP).
+                        arg(node_path.getAbsoluteName()).arg(name);
                     return (FindResult(NXRRSET, ConstRRsetPtr()));
                 }
 
@@ -493,7 +494,7 @@ struct MemoryZone::MemoryZoneImpl {
                         NameComparisonResult::COMMONANCESTOR && node_path.
                         getLastComparisonResult().getCommonLabels() > 1) {
                         logger.debug(DBG_TRACE_DATA,
-                                     DATASRC_MEM_WILDCARD_CANCEL);
+                                     DATASRC_MEM_WILDCARD_CANCEL).arg(name);
                         return (FindResult(NXDOMAIN, ConstRRsetPtr()));
                     }
                     Name wildcard(Name("*").concatenate(
@@ -516,7 +517,7 @@ struct MemoryZone::MemoryZoneImpl {
 
                 // fall through
             case DomainTree::NOTFOUND:
-                logger.debug(DBG_TRACE_DATA, DATASRC_MEM_NOTFOUND);
+                logger.debug(DBG_TRACE_DATA, DATASRC_MEM_NOTFOUND).arg(name);
                 return (FindResult(NXDOMAIN, ConstRRsetPtr()));
             case DomainTree::EXACTMATCH: // This one is OK, handle it
                 break;
@@ -528,7 +529,7 @@ struct MemoryZone::MemoryZoneImpl {
         // If there is an exact match but the node is empty, it's equivalent
         // to NXRRSET.
         if (node->isEmpty()) {
-            logger.debug(DBG_TRACE_DATA, DATASRC_MEM_DOMAIN_EMPTY);
+            logger.debug(DBG_TRACE_DATA, DATASRC_MEM_DOMAIN_EMPTY).arg(name);
             return (FindResult(NXRRSET, ConstRRsetPtr()));
         }
 
@@ -539,7 +540,8 @@ struct MemoryZone::MemoryZoneImpl {
         if (node->getFlag(DomainNode::FLAG_CALLBACK) && node != origin_data_) {
             found = node->getData()->find(RRType::NS());
             if (found != node->getData()->end()) {
-                logger.debug(DBG_TRACE_DATA, DATASRC_MEM_EXACT_DELEGATION);
+                logger.debug(DBG_TRACE_DATA, DATASRC_MEM_EXACT_DELEGATION).
+                    arg(name);
                 return (FindResult(DELEGATION, prepareRRset(name,
                     found->second, rename)));
             }
@@ -555,27 +557,28 @@ struct MemoryZone::MemoryZoneImpl {
                     boost::const_pointer_cast<RRset>(prepareRRset(name,
                     found->second, rename)));
             }
-            logger.debug(DBG_TRACE_DATA, DATASRC_MEM_ANY_SUCCESS);
+            logger.debug(DBG_TRACE_DATA, DATASRC_MEM_ANY_SUCCESS).arg(name);
             return (FindResult(SUCCESS, ConstRRsetPtr()));
         }
 
         found = node->getData()->find(type);
         if (found != node->getData()->end()) {
             // Good, it is here
-            logger.debug(DBG_TRACE_DATA, DATASRC_MEM_SUCCESS);
+            logger.debug(DBG_TRACE_DATA, DATASRC_MEM_SUCCESS).arg(name).
+                arg(type);
             return (FindResult(SUCCESS, prepareRRset(name, found->second,
                 rename)));
         } else {
             // Next, try CNAME.
             found = node->getData()->find(RRType::CNAME());
             if (found != node->getData()->end()) {
-                logger.debug(DBG_TRACE_DATA, DATASRC_MEM_CNAME);
+                logger.debug(DBG_TRACE_DATA, DATASRC_MEM_CNAME).arg(name);
                 return (FindResult(CNAME, prepareRRset(name, found->second,
                     rename)));
             }
         }
         // No exact match or CNAME.  Return NXRRSET.
-        logger.debug(DBG_TRACE_DATA, DATASRC_MEM_NXRRSET);
+        logger.debug(DBG_TRACE_DATA, DATASRC_MEM_NXRRSET).arg(type).arg(name);
         return (FindResult(NXRRSET, ConstRRsetPtr()));
     }
 };
