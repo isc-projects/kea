@@ -104,6 +104,7 @@ int
         const string ex_what = "Failed to construct @CPPCLASS@ object: " +
             string(ex.what());
         PyErr_SetString(po_IscException, ex_what.c_str());
+        return (-1);
     } catch (...) {
         PyErr_SetString(po_IscException,
                         "Unexpected exception in constructing @CPPCLASS@");
