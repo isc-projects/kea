@@ -125,6 +125,22 @@ public:
     /// \return A string representation of the \c TSIGError.
     std::string toText() const;
 
+    /// \brief Convert the \c TSIGError to a \c Rcode
+    ///
+    /// This method returns an \c Rcode object that is corresponding to
+    /// the TSIG error.  The returned \c Rcode is expected to be used
+    /// by a verifying server to specify the RCODE of a response when
+    /// TSIG verification fails.
+    ///
+    /// Specifically, this method returns \c Rcode::NOTAUTH() for the
+    /// TSIG specific errors, BADSIG, BADKEY, BADTIME, as described in
+    /// RFC2845.  For errors derived from the standard Rcode (code 0-15),
+    /// it returns the corresponding \c Rcode.  For others, this method
+    /// returns \c Rcode::SERVFAIL() as a last resort.
+    ///
+    /// \exception None
+    Rcode toRcode() const;
+
     /// A constant TSIG error object derived from \c Rcode::NOERROR()
     static const TSIGError& NOERROR();
 
