@@ -12,9 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <exceptions/exceptions.h>
+
 #include <dns/rcode.h>
 
+#include "pydnspp_common.h"
+#include "rcode_python.h"
+
 using namespace isc::dns;
+using namespace isc::dns::python;
 
 //
 // Declaration of the custom exceptions (None for this class)
@@ -27,25 +33,14 @@ using namespace isc::dns;
 // and static wrappers around the methods we export), a list of methods,
 // and a type description
 
-namespace {
 //
 // Rcode
 //
 
-// We added a helper variable static_code here
-// Since we can create Rcodes dynamically with Rcode(int), but also
-// use the static globals (Rcode::NOERROR() etc), we use this
-// variable to see if the code came from one of the latter, in which
-// case Rcode_destroy should not free it (the other option is to
-// allocate new Rcodes for every use of the static ones, but this
-// seems more efficient).
-class s_Rcode : public PyObject {
-public:
-    s_Rcode() : rcode(NULL), static_code(false) {}
-    const Rcode* rcode;
-    bool static_code;
-};
+// Trivial constructor.
+s_Rcode::s_Rcode() : cppobj(NULL), static_code(false) {}
 
+namespace {
 int Rcode_init(s_Rcode* const self, PyObject* args);
 void Rcode_destroy(s_Rcode* const self);
 
@@ -118,57 +113,6 @@ PyMethodDef Rcode_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
-PyTypeObject rcode_type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    "pydnspp.Rcode",
-    sizeof(s_Rcode),                    // tp_basicsize
-    0,                                  // tp_itemsize
-    (destructor)Rcode_destroy,          // tp_dealloc
-    NULL,                               // tp_print
-    NULL,                               // tp_getattr
-    NULL,                               // tp_setattr
-    NULL,                               // tp_reserved
-    NULL,                               // tp_repr
-    NULL,                               // tp_as_number
-    NULL,                               // tp_as_sequence
-    NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
-    NULL,                               // tp_call
-    Rcode_str,                          // tp_str
-    NULL,                               // tp_getattro
-    NULL,                               // tp_setattro
-    NULL,                               // tp_as_buffer
-    Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The Rcode class objects represent standard RCODEs"
-    "of the header section of DNS messages.",
-    NULL,                               // tp_traverse
-    NULL,                               // tp_clear
-    (richcmpfunc)Rcode_richcmp,         // tp_richcompare
-    0,                                  // tp_weaklistoffset
-    NULL,                               // tp_iter
-    NULL,                               // tp_iternext
-    Rcode_methods,                      // tp_methods
-    NULL,                               // tp_members
-    NULL,                               // tp_getset
-    NULL,                               // tp_base
-    NULL,                               // tp_dict
-    NULL,                               // tp_descr_get
-    NULL,                               // tp_descr_set
-    0,                                  // tp_dictoffset
-    (initproc)Rcode_init,               // tp_init
-    NULL,                               // tp_alloc
-    PyType_GenericNew,                  // tp_new
-    NULL,                               // tp_free
-    NULL,                               // tp_is_gc
-    NULL,                               // tp_bases
-    NULL,                               // tp_mro
-    NULL,                               // tp_cache
-    NULL,                               // tp_subclasses
-    NULL,                               // tp_weaklist
-    NULL,                               // tp_del
-    0                                   // tp_version_tag
-};
-
 int
 Rcode_init(s_Rcode* const self, PyObject* args) {
     long code = 0;
@@ -193,9 +137,9 @@ Rcode_init(s_Rcode* const self, PyObject* args) {
     }
     try {
         if (ext_code == -1) {
-            self->rcode = new Rcode(code);
+            self->cppobj = new Rcode(code);
         } else {
-            self->rcode = new Rcode(code, ext_code);
+            self->cppobj = new Rcode(code, ext_code);
         }
         self->static_code = false;
     } catch (const isc::OutOfRange& ex) {
@@ -211,27 +155,27 @@ Rcode_init(s_Rcode* const self, PyObject* args) {
 void
 Rcode_destroy(s_Rcode* const self) {
     // Depending on whether we created the rcode or are referring
-    // to a global one, we do or do not delete self->rcode here
+    // to a global one, we do or do not delete self->cppobj here
     if (!self->static_code) {
-        delete self->rcode;
+        delete self->cppobj;
     }
-    self->rcode = NULL;
+    self->cppobj = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
 PyObject*
 Rcode_getCode(const s_Rcode* const self) {
-    return (Py_BuildValue("I", self->rcode->getCode()));
+    return (Py_BuildValue("I", self->cppobj->getCode()));
 }
 
 PyObject*
 Rcode_getExtendedCode(const s_Rcode* const self) {
-    return (Py_BuildValue("I", self->rcode->getExtendedCode()));
+    return (Py_BuildValue("I", self->cppobj->getExtendedCode()));
 }
 
 PyObject*
 Rcode_toText(const s_Rcode* const self) {
-    return (Py_BuildValue("s", self->rcode->toText().c_str()));
+    return (Py_BuildValue("s", self->cppobj->toText().c_str()));
 }
 
 PyObject*
@@ -245,7 +189,7 @@ PyObject*
 Rcode_createStatic(const Rcode& rcode) {
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
-        ret->rcode = &rcode;
+        ret->cppobj = &rcode;
         ret->static_code = true;
     }
     return (ret);
@@ -357,10 +301,10 @@ Rcode_richcmp(const s_Rcode* const self, const s_Rcode* const other,
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Rcode");
         return (NULL);
     case Py_EQ:
-        c = (*self->rcode == *other->rcode);
+        c = (*self->cppobj == *other->cppobj);
         break;
     case Py_NE:
-        c = (*self->rcode != *other->rcode);
+        c = (*self->cppobj != *other->cppobj);
         break;
     case Py_GT:
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Rcode");
@@ -374,6 +318,61 @@ Rcode_richcmp(const s_Rcode* const self, const s_Rcode* const other,
     else
         Py_RETURN_FALSE;
 }
+} // end of unnamed namespace
+
+namespace isc {
+namespace dns {
+namespace python {
+PyTypeObject rcode_type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "pydnspp.Rcode",
+    sizeof(s_Rcode),                    // tp_basicsize
+    0,                                  // tp_itemsize
+    (destructor)Rcode_destroy,          // tp_dealloc
+    NULL,                               // tp_print
+    NULL,                               // tp_getattr
+    NULL,                               // tp_setattr
+    NULL,                               // tp_reserved
+    NULL,                               // tp_repr
+    NULL,                               // tp_as_number
+    NULL,                               // tp_as_sequence
+    NULL,                               // tp_as_mapping
+    NULL,                               // tp_hash
+    NULL,                               // tp_call
+    Rcode_str,                          // tp_str
+    NULL,                               // tp_getattro
+    NULL,                               // tp_setattro
+    NULL,                               // tp_as_buffer
+    Py_TPFLAGS_DEFAULT,                 // tp_flags
+    "The Rcode class objects represent standard RCODEs"
+    "of the header section of DNS messages.",
+    NULL,                               // tp_traverse
+    NULL,                               // tp_clear
+    reinterpret_cast<richcmpfunc>(Rcode_richcmp),         // tp_richcompare
+    0,                                  // tp_weaklistoffset
+    NULL,                               // tp_iter
+    NULL,                               // tp_iternext
+    Rcode_methods,                      // tp_methods
+    NULL,                               // tp_members
+    NULL,                               // tp_getset
+    NULL,                               // tp_base
+    NULL,                               // tp_dict
+    NULL,                               // tp_descr_get
+    NULL,                               // tp_descr_set
+    0,                                  // tp_dictoffset
+    (initproc)Rcode_init,               // tp_init
+    NULL,                               // tp_alloc
+    PyType_GenericNew,                  // tp_new
+    NULL,                               // tp_free
+    NULL,                               // tp_is_gc
+    NULL,                               // tp_bases
+    NULL,                               // tp_mro
+    NULL,                               // tp_cache
+    NULL,                               // tp_subclasses
+    NULL,                               // tp_weaklist
+    NULL,                               // tp_del
+    0                                   // tp_version_tag
+};
 
 // Module Initialization, all statics are initialized here
 bool
@@ -428,4 +427,6 @@ initModulePart_Rcode(PyObject* mod) {
 
     return (true);
 }
-} // end of unnamed namespace
+} // namespace python
+} // namespace dns
+} // namespace isc
