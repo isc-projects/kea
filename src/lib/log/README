@@ -44,7 +44,7 @@ stored definitions; this updated text is logged.  However, to aid support,
 the message identifier so in the example above, the message finally logged
 would be something like:
 
-    OPENIN, unable to open a.txt for input
+    FAC_OPENIN, unable to open a.txt for input
 
 
 Using The System
@@ -57,15 +57,13 @@ The steps in using the system are:
 
    Ideally the file should have a file type of ".mes".
 
-2. Run it through the message compiler to produce the .h and .cc files.  It
-   is intended that this step be included in the build process.  However,
-   for now run the compiler (found in the "compiler" subdirectory) manually.
-   The only argument is the name of the message file: it will produce as
-   output two files, having the same name as the input file but with file
-   types of ".h" and ".cc".
-
-   The compiler is built in the "compiler" subdirectory of the "src/lib/log"
-   directory.
+2. Run it through the message compiler to produce the .h and .cc files.  This
+   step should be included in the build process. (For an example of how to
+   do this, see src/lib/nsas/Makefile.am.) During development though, the
+   message compiler (found in the "src/lib/log/compiler" directory) will need
+   to be run manually.  The only argument is the name of the message file: it
+   will produce as output two files in the default directory, having the same
+   name as the input file but with file types of ".h" and ".cc".
 
 3. Include the .h file in your source code to define message symbols, and
    make sure that the .cc file is compiled and linked into your program -
@@ -96,11 +94,12 @@ An example file could be:
 
 $PREFIX TEST_
 $NAMESPACE isc::log
-TEST1       message %s is much too large
-+ This message is a test for the general message code
 
-UNKNOWN     unknown message
-+ Issued when the message is unknown.
+% TEST1       message %1 is much too large
+This message is a test for the general message code
+
+% UNKNOWN     unknown message
+Issued when the message is unknown.
 
 -- END --
 
@@ -117,23 +116,31 @@ Points to note:
 
 * Lines starting $ are directives.  At present, two directives are recognised:
 
-  * $PREFIX, which has one argument: the string used to prefix symbols.  If
-    absent, there is no prefix to the symbols. (Prefixes are explained below.)
+  * $PREFIX, which has one optional argument: the string used to prefix symbols.
+    If absent, there is no prefix to the symbols. (Prefixes are explained below.)
+
   * $NAMESPACE, which has one argument: the namespace in which the symbols are
-    created.  In the absence of a $NAMESPACE directive, symbols will be put
-    in the global namespace.
+    created.  In the absence of a $NAMESPACE directive, symbols will be put in
+    the anonymous namespace.
 
-* Lines starting + indicate an explanation for the preceding message.  These
+* Message lines.  These start with a "%" and are followed by the message
+  identification and the message text, the latter including zero or more
+  replacement tokens, e.g.
+
+     % TEST  message %1 is larger than the permitted length of %2
+
+  * There may be zero or more spaces between the leading "%" and the message
+    identification (which, in the example above, is the word "TEST").
+
+  * The replacement tokens are the strings "%1", "%2" etc.  When a message
+    is logged, these are replaced with the arguments passed to the logging
+    call: %1 refers to the first argument, %2 to the second etc.  Within the
+    message text, the placeholders can appear in any order, and placeholders
+    can be repeated.
+     
+* Remaining lines indicate an explanation for the preceding message.  These
   are intended to be processed by a separate program and used to generate
-  an error messages manual.  However they are treated like comments by the
-  message compiler.  As with comments, these must be on a line by themselves;
-  if inline, the text (including the leading "+") will be interpreted as
-  part of the line.
-
-* Message lines.  These comprise a symbol name and a message, which may
-  include zero or more printf-style tokens.  Symbol names will be upper-cased
-  by the compiler.
-
+  an error messages manual.  They are ignored by the message compiler.
 
 Message Compiler
 ----------------
@@ -153,9 +160,8 @@ the form:
       :
    }
 
-The symbols define the keys in the global message dictionary.
-
-The namespace enclosing the symbols is set by the $NAMESPACE directive.
+The symbols define the keys in the global message dictionary, with the
+namespace enclosing the symbols set by the $NAMESPACE directive.
 
 The "PREFIX_" part of the symbol name is the string defined in the $PREFIX
 the argument to the directive.  So "$PREFIX MSG_" would prefix the identifier
@@ -163,12 +169,20 @@ ABC with "MSG_" to give the symbol MSG_ABC.  Similarly "$PREFIX E" would
 prefix it with "E" to give the symbol EABC.  If no $PREFIX is given, no
 prefix appears (so the symbol in this example would be ABC).
 
+The prefix is "syntactic sugar".  Generally all symbols in a given message file
+will be prefixed with the same set of letters.  By extracting these into
+a separate prefix, it becomes easier to disambiguate the different symbols.
+
+There may be multiple $PREFIX directives in a file.  A $PREFIX directive applies
+to all message definitions between it an the next $PREFIX directive.  A $PREFIX
+directive with no arguments clears the current prefix.
+
 2) A C++ source file (called <message-file-name>.cc) that holds the definitions
 of the global symbols and code to insert the symbols and messages into the map.
 
 Symbols are defined to be equal to strings holding the identifier, e.g.
 
-   extern const isc::log::MessageID MSG_DUPLNS = "DUPLNS";
+   extern const isc::log::MessageID MSG_DUPLNS = "MSG_DUPLNS";
 
 (The implementation allows symbols to be compared.  However, use of strings
 should not be assumed - a future implementation may change this.)
@@ -243,25 +257,47 @@ To use the current version of the logging:
       highest-level debug messages and 99 for the lowest-level (and typically
       more verbose) messages.
 
-   c) Name of an external message file.  This is the same as a standard message
-      file, although it should not include any directives. (A single directive
-      of a particular type will be ignored; multiple directives will cause the
-      read of the file to fail with an error.)  If a message is replaced, the
-      message should include the same printf-format directives in the same order
-      as the original message.
+   c) The external message file.  If present, this is the same as a standard
+      message file, although it should not include any directives. (A single
+      directive of a particular type will be ignored; multiple directives will
+      cause the read of the file to fail with an error.)
 
 4. Issue logging calls using methods on logger, e.g.
 
-       logger.error(DPS_NSTIMEOUT, "isc.org");
+       logger.error(DPS_NSTIMEOUT).arg("isc.org");
 
    (where, in the example above we might have defined the symbol in the message
    file with something along the lines of:
 
        $PREFIX DPS_
            :
-       NSTIMEOUT  queries to all nameservers for %s have timed out
+       NSTIMEOUT  queries to all nameservers for %1 have timed out
 
    At present, the only logging is to the console.
+
+
+Efficiency Considerations
+-------------------------
+A common pattern in logging is a debug call of the form:
+
+   logger.debug(dbglevel, MSGID).arg(expensive_call()).arg(...
+
+... where "expensive_call()" is a function call to obtain logging information
+that may be computationally intensive.  Although the cost may be justified
+when debugging is enabled, the cost is still incurred even if debugging is
+disabled and the debug() method returns without outputting anything.  (The
+same may be true of other logging levels, although there are likely to be
+fewer calls to logger.info(), logger.error() etc. throughout the code and
+they are less likely to be disabled.)
+
+For this reason, a set of macros is provided and are called using the
+construct:
+
+   LOG_DEBUG(logger, dbglevel, MSGID).arg(expensive_call()).arg(...
+   LOG_INFO(logger, MSGID).arg(expensive_call()...)
+
+If these are used, the arguments passed to the arg() method are not evaluated
+if the relevant logging level is disabled.
 
 
 Severity Guidelines
@@ -361,9 +397,6 @@ is only one piece of code that does this functionality.
 Outstanding Issues
 ==================
 * Ability to configure system according to configuration database.
-* Update the build procedure to create .cc and .h files from the .msg file
-  during the build process. (Requires that the message compiler is built
-  first.)
 
 
 log4cxx Issues

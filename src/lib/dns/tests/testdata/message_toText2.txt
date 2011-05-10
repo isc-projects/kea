@@ -1,0 +1,8 @@
+;; ->>HEADER<<- opcode: QUERY, status: REFUSED, id: 45981
+;; flags: qr; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags: do; udp: 4096
+
+;; QUESTION SECTION:
+;example.com. IN A

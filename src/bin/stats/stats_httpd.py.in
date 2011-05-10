@@ -38,7 +38,8 @@ import isc.util.process
 # from a directory relative to that, otherwise we use the ones
 # installed on the system
 if "B10_FROM_SOURCE" in os.environ:
-    BASE_LOCATION = os.environ["B10_FROM_SOURCE"]
+    BASE_LOCATION = os.environ["B10_FROM_SOURCE"] + os.sep + \
+        "src" + os.sep + "bin" + os.sep + "stats"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"

@@ -18,7 +18,6 @@ CLEANFILES = *.gcno *.gcda
 TESTS =
 if HAVE_GTEST
 
-BUILT_SOURCES = ../spec_config.h
 TESTS += run_unittests
 run_unittests_SOURCES = $(top_srcdir)/src/lib/dns/tests/unittest_util.h
 run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
@@ -28,7 +27,6 @@ run_unittests_SOURCES += ../change_user.h ../change_user.cc
 run_unittests_SOURCES += ../auth_config.h ../auth_config.cc
 run_unittests_SOURCES += ../command.h ../command.cc
 run_unittests_SOURCES += ../common.h ../common.cc
-run_unittests_SOURCES += ../spec_config.h
 run_unittests_SOURCES += ../statistics.h ../statistics.cc
 run_unittests_SOURCES += auth_srv_unittest.cc
 run_unittests_SOURCES += config_unittest.cc
