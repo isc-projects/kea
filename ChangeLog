@@ -1,7 +1,7 @@
 234.	[func]      jerry
 	src/bin/xfrin: update xfrin to use TSIG. Currently it only supports
 	sending a signed TSIG request or SOA request.
-	(Trac #815, git TBD)
+	(Trac #815, git a892818fb13a1839c82104523cb6cb359c970e88)
 
 233.	[func]      stephen
 	Added new-style logging statements to the NSAS code.
