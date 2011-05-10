@@ -50,17 +50,13 @@ static const char* VERSION = "1.0-0";
 /// \li A .cc file containing code that adds the messages to the program's
 /// message dictionary at start-up time.
 ///
-/// Alternatively, the program can produce a .py file that contains the
-/// message definitions.
-///
-
 /// \b Invocation<BR>
 /// The program is invoked with the command:
 ///
 /// <tt>message [-v | -h | \<message-file\>]</tt>
 ///
-/// It reads the message file and writes out two files of the same name but with
-/// extensions of .h and .cc.
+/// It reads the message file and writes out two files of the same name in the
+/// default directory but with extensions of .h and .cc.
 ///
 /// \-v causes it to print the version number and exit. \-h prints a help
 /// message (and exits).
@@ -251,17 +247,16 @@ writeClosingNamespace(ostream& output, const vector<string>& ns) {
 ///
 /// \param file Name of the message file.  The header file is written to a
 /// file of the same name but with a .h suffix.
-/// \param prefix Prefix string to use in symbols
 /// \param ns Namespace in which the definitions are to be placed.  An empty
 /// string indicates no namespace.
 /// \param dictionary Dictionary holding the message definitions.
 
 void
-writeHeaderFile(const string& file, const string& prefix,
-        const vector<string>& ns_components, MessageDictionary& dictionary)
+writeHeaderFile(const string& file, const vector<string>& ns_components,
+                MessageDictionary& dictionary)
 {
     Filename message_file(file);
-    Filename header_file(message_file.useAsDefault(".h"));
+    Filename header_file(Filename(message_file.name()).useAsDefault(".h"));
 
     // Text to use as the sentinels.
     string sentinel_text = sentinel(header_file);
@@ -271,7 +266,7 @@ writeHeaderFile(const string& file, const string& prefix,
 
     try {
         if (hfile.fail()) {
-            throw MessageException(MSG_OPNMSGOUT, header_file.fullName(),
+            throw MessageException(MSG_OPENOUT, header_file.fullName(),
                 strerror(errno));
         }
 
@@ -294,7 +289,7 @@ writeHeaderFile(const string& file, const string& prefix,
         vector<string> idents = sortedIdentifiers(dictionary);
         for (vector<string>::const_iterator j = idents.begin();
             j != idents.end(); ++j) {
-            hfile << "extern const isc::log::MessageID " << prefix << *j << ";\n";
+            hfile << "extern const isc::log::MessageID " << *j << ";\n";
         }
         hfile << "\n";
 
@@ -305,7 +300,7 @@ writeHeaderFile(const string& file, const string& prefix,
 
         // Report errors (if any) and exit
         if (hfile.fail()) {
-            throw MessageException(MSG_MSGWRTERR, header_file.fullName(),
+            throw MessageException(MSG_WRITERR, header_file.fullName(),
                 strerror(errno));
         }
 
@@ -354,17 +349,17 @@ replaceNonAlphaNum(char c) {
 /// to it.  But until BIND-10 is ported to Windows, we won't know.
 
 void
-writeProgramFile(const string& file, const string& prefix,
-    const vector<string>& ns_components, MessageDictionary& dictionary)
+writeProgramFile(const string& file, const vector<string>& ns_components,
+                 MessageDictionary& dictionary)
 {
     Filename message_file(file);
-    Filename program_file(message_file.useAsDefault(".cc"));
+    Filename program_file(Filename(message_file.name()).useAsDefault(".cc"));
 
     // Open the output file for writing
     ofstream ccfile(program_file.fullName().c_str());
     try {
         if (ccfile.fail()) {
-            throw MessageException(MSG_OPNMSGOUT, program_file.fullName(),
+            throw MessageException(MSG_OPENOUT, program_file.fullName(),
                 strerror(errno));
         }
 
@@ -387,7 +382,7 @@ writeProgramFile(const string& file, const string& prefix,
         vector<string> idents = sortedIdentifiers(dictionary);
         for (vector<string>::const_iterator j = idents.begin();
             j != idents.end(); ++j) {
-            ccfile << "extern const isc::log::MessageID " << prefix << *j <<
+            ccfile << "extern const isc::log::MessageID " << *j <<
                 " = \"" << *j << "\";\n";
         }
         ccfile << "\n";
@@ -422,7 +417,7 @@ writeProgramFile(const string& file, const string& prefix,
 
         // Report errors (if any) and exit
         if (ccfile.fail()) {
-            throw MessageException(MSG_MSGWRTERR, program_file.fullName(),
+            throw MessageException(MSG_WRITERR, program_file.fullName(),
                 strerror(errno));
         }
 
@@ -518,13 +513,10 @@ main(int argc, char* argv[]) {
         vector<string> ns_components = splitNamespace(reader.getNamespace());
 
         // Write the header file.
-        writeHeaderFile(message_file, reader.getPrefix(), ns_components,
-            dictionary);
+        writeHeaderFile(message_file, ns_components, dictionary);
 
         // Write the file that defines the message symbols and text
-        writeProgramFile(message_file, reader.getPrefix(), ns_components,
-            dictionary);
-
+        writeProgramFile(message_file, ns_components, dictionary);
 
         // Finally, warn of any duplicates encountered.
         warnDuplicates(reader);
@@ -535,9 +527,12 @@ main(int argc, char* argv[]) {
         string text = e.id();
         text += ", ";
         text += global.getText(e.id());
-
         // Format with arguments
-        text = isc::util::str::format(text, e.arguments());
+        vector<string> args(e.arguments());
+        for (size_t i(0); i < args.size(); ++ i) {
+            replacePlaceholder(&text, args[i], i + 1);
+        }
+
         cerr << text << "\n";
 
         return 1;
