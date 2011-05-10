@@ -17,12 +17,27 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <exceptions/exceptions.h>
+
 #include <dns/tsigerror.h>
 #include <dns/tsigkey.h>
 #include <dns/tsigrecord.h>
 
 namespace isc {
 namespace dns {
+
+/// An exception that is thrown for logic errors identified in TSIG
+/// sign/verify operations.
+///
+/// Note that this exception is not thrown for TSIG protocol errors such as
+/// verification failures.  In general, this exception indicates an internal
+/// program bug.
+class TSIGContextError : public isc::Exception {
+public:
+    TSIGContextError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 /// TSIG session context.
 ///
 /// The \c TSIGContext class maintains a context of a signed session of
@@ -59,8 +74,7 @@ namespace dns {
 /// in this mode will identify the appropriate TSIG key (or internally record
 /// an error if it doesn't find a key).  The server will then verify the
 /// query with the context, and generate a signed response using the same
-/// same context.  (Note: this mode is not yet implemented and may change,
-/// see below).
+/// same context.
 ///
 /// When multiple messages belong to the same TSIG session, either side
 /// (signer or verifier) will keep using the same context.  It records
@@ -68,8 +82,65 @@ namespace dns {
 /// calls to \c sign() or \c verify() work correctly in terms of the TSIG
 /// protocol.
 ///
-/// \note The \c verify() method is not yet implemented.  The implementation
-/// and documentation should be updated in the corresponding task.
+/// \b Examples
+///
+/// This is a typical client application that sends a TSIG signed query
+/// and verifies the response.
+///
+/// \code
+///    // "renderer" is of MessageRenderer to render the message.
+///    Message message(Message::RENDER);
+///    message.addQuestion(Question(Name("www.example.com"), RRClass::IN(),
+///                                 RRType::A()));
+///    message.toWire(renderer, ctx);
+///
+///    // sendto, then recvfrom.  received result in (data, data_len)
+///
+///    message.clear(Message::PARSE);
+///    InputBuffer buffer(data, data_len);
+///    message.fromWire(buffer);
+///    TSIGError tsig_error = ctx.verify(message.getTSIGRecord(),
+///                                      data, data_len);
+///    if (tsig_error == TSIGError::NOERROR()) {
+///        // okay.  ctx can be continuously used if it's receiving subsequent
+///        // signed responses from a TCP stream.
+///    } else if (message.getRcode() == Rcode::NOTAUTH()) {
+///        // hard error.  give up this transaction per RFC2845 4.6.
+///    } else {
+///        // keep waiting for further response with the same ctx.
+///    } \endcode
+///
+/// And this is a typical server application that authenticates a signed
+/// query and returns a response according to the result.
+///
+/// \code
+///    // Assume "message" is of type Message for query handling and
+///    // "renderer" is of MessageRenderer to render responses.
+///    Message message(Message::RENDER);
+///
+///    TSIGKeyRing keyring; // this must be configured with keys somewhere
+///
+///    // Receive a query and store it in (data, data_len)
+///    InputBuffer buffer(data, data_len);
+///    message.clear(Message::PARSE);
+///    message.fromWire(buffer);
+///
+///    const TSIGRecord* tsig = message.getTSIGRecord();
+///    if (tsig != NULL) {
+///        TSIGContext ctx(tsig->getName(), tsig->getRdata().getAlgorithm(),
+///                        keyring);
+///        ctx.verify(tsig, data, data_len);
+///
+///        // prepare response
+///        message.makeResponse();
+///        //...
+///        message.toWire(renderer, ctx);
+///
+///        // send the response data back to the client.
+///        // If this is a beginning of a signed session over a TCP and
+///        // server has more data to send to the client, this ctx
+///        // will be used to sign subsequent messages.
+///    } \endcode
 ///
 /// <b>TCP Consideration</b>
 ///
@@ -110,8 +181,10 @@ public:
     /// directly.
     enum State {
         INIT,                   ///< Initial state
-        SIGNED,                 ///< Sign completed
-        CHECKED ///< Verification completed (may or may not successfully)
+        SENT_REQUEST, ///< Client sent a signed request, waiting response
+        RECEIVED_REQUEST,       ///< Server received a signed request
+        SENT_RESPONSE,          ///< Server sent a signed response
+        VERIFIED_RESPONSE       ///< Client successfully verified a response
     };
 
     /// \name Constructors and destructor
@@ -123,6 +196,10 @@ public:
     ///
     /// \param key The TSIG key to be used for TSIG sessions with this context.
     explicit TSIGContext(const TSIGKey& key);
+
+    /// Constructor from key parameters and key ring.
+    TSIGContext(const Name& key_name, const Name& algorithm_name,
+                const TSIGKeyRing& keyring);
 
     /// The destructor.
     ~TSIGContext();
@@ -140,6 +217,13 @@ public:
     /// The caller of this method will use the returned value to render a
     /// complete TSIG RR into the message that has been signed so that it
     /// will become a complete TSIG-signed message.
+    ///
+    /// In general, this method is called once by a client to send a
+    /// signed request or one more times by a server to sign
+    /// response(s) to a signed request.  To avoid allowing accidental
+    /// misuse, if this method is called after a "client" validates a
+    /// response, an exception of class \c TSIGContextError will be
+    /// thrown.
     ///
     /// \note Normal applications are not expected to call this method
     /// directly; they will usually use the \c Message::toWire() method
@@ -165,6 +249,7 @@ public:
     /// returns (without an exception being thrown), the internal state of
     /// the \c TSIGContext won't be modified.
     ///
+    /// \exception TSIGContextError Context already verified a response.
     /// \exception InvalidParameter \c data is NULL or \c data_len is 0
     /// \exception cryptolink::LibraryError Some unexpected error in the
     /// underlying crypto operation
@@ -178,6 +263,92 @@ public:
     /// \return A TSIG record for the given data along with the context.
     ConstTSIGRecordPtr sign(const uint16_t qid, const void* const data,
                             const size_t data_len);
+
+    /// Verify a DNS message.
+    ///
+    /// This method verifies given data along with the context and a given
+    /// TSIG in the form of a \c TSIGRecord object.  The data to be verified
+    /// is generally expected to be a complete, wire-format DNS message,
+    /// exactly as received by the host, and ending with a TSIG RR.
+    /// After verification process this method updates its internal state,
+    /// and returns the result in the form of a \c TSIGError object.
+    /// Possible return values are (see the \c TSIGError class description
+    /// for the mnemonics):
+    ///
+    /// - \c NOERROR: The data has been verified correctly.
+    /// - \c FORMERR: \c TSIGRecord is not given (see below).
+    /// - \c BAD_KEY: Appropriate key is not found or specified key doesn't
+    ///               match for the data.
+    /// - \c BAD_TIME: The current time doesn't fall in the range specified
+    ///                in the TSIG.
+    /// - \c BAD_SIG: The signature given in the TSIG doesn't match against
+    ///               the locally computed digest or is the signature is
+    ///               invalid in other way.
+    ///
+    /// If this method is called by a DNS client waiting for a signed
+    /// response and the result is not \c NOERROR, the context can be used
+    /// to try validating another signed message as described in RFC2845
+    /// Section 4.6.
+    ///
+    /// If this method is called by a DNS server that tries to authenticate
+    /// a signed request, and if the result is not \c NOERROR, the
+    /// corresponding error condition is recorded in the context so that
+    /// the server can return a response indicating what was wrong by calling
+    /// \c sign() with the updated context.
+    ///
+    /// In general, this method is called once by a server for
+    /// authenticating a signed request or one more times by a client to
+    /// validate signed response(s) to a signed request.  To avoid allowing
+    /// accidental misuse, if this method is called after a "server" signs
+    /// a response, an exception of class \c TSIGContextError will be thrown.
+    ///
+    /// The \c record parameter can be NULL; in that case this method simply
+    /// returns \c FORMERR as the case described in Section 4.6 of RFC2845,
+    /// i.e., receiving an unsigned response to a signed request.  This way
+    /// a client can transparently pass the result of
+    /// \c Message::getTSIGRecord() without checking whether it's non NULL
+    /// and take an appropriate action based on the result of this method.
+    ///
+    /// This method handles the given data mostly as opaque.  It digests
+    /// the data assuming it begins with a DNS header and ends with a TSIG
+    /// RR whose length is given by calling \c TSIGRecord::getLength() on
+    /// \c record, but otherwise it doesn't parse the data to confirm the
+    /// assumption.  It's caller's responsibility to ensure the data is
+    /// valid and consistent with \c record.  To avoid disruption, this
+    /// method performs minimal validation on the given \c data and \c record:
+    /// \c data must not be NULL; \c data_len must not be smaller than the
+    /// sum of the DNS header length (fixed, 12 octets) and the length of
+    /// the TSIG RR.  If this check fails it throws an \c InvalidParameter
+    /// exception.
+    ///
+    /// One unexpected case that is not covered by this method is that a
+    /// client receives a signed response to an unsigned request.  RFC2845 is
+    /// silent about such cases; BIND 9 explicitly identifies the case and
+    /// reject it.  With this implementation, the client can know that the
+    /// response contains a TSIG via the result of
+    /// \c Message::getTSIGRecord() and that it is an unexpected TSIG due to
+    /// the fact that it doesn't have a corresponding \c TSIGContext.
+    /// It's up to the client implementation whether to react to such a case
+    /// explicitly (for example, it could either ignore the TSIG and accept
+    /// the response or drop it).
+    ///
+    /// This method provides the strong exception guarantee; unless the method
+    /// returns (without an exception being thrown), the internal state of
+    /// the \c TSIGContext won't be modified.
+    ///
+    /// \todo Support intermediate TCP DNS messages without TSIG (RFC2845 4.4)
+    /// \todo Signature truncation support based on RFC4635
+    ///
+    /// \exception TSIGContextError Context already signed a response.
+    /// \exception InvalidParameter \c data is NULL or \c data_len is too small.
+    ///
+    /// \param record The \c TSIGRecord to be verified with \c data
+    /// \param data Points to the wire-format data (exactly as received) to
+    /// be verified
+    /// \param data_len The length of \c data in bytes
+    /// \return The \c TSIGError that indicates verification result
+    TSIGError verify(const TSIGRecord* const record, const void* const data,
+                     const size_t data_len);
 
     /// Return the current state of the context
     ///
@@ -195,18 +366,6 @@ public:
     ///
     /// \exception None
     TSIGError getError() const;
-
-    // This method is tentatively added for testing until a complete
-    // verify() method is implemented.  Once it's done this should be
-    // removed, and corresponding tests should be updated.
-    //
-    // This tentative "verify" method changes the internal state of
-    // the TSIGContext to the CHECKED as if it were verified (though possibly
-    // unsuccessfully) with given tsig_rdata.  If the error parameter is
-    // given and not NOERROR, it's recorded inside the context so that the
-    // subsequent sign() will behave accordingly.
-    void verifyTentative(ConstTSIGRecordPtr tsig,
-                         TSIGError error = TSIGError::NOERROR());
 
     /// \name Protocol constants and defaults
     ///
