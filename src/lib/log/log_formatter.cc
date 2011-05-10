@@ -12,15 +12,31 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-/// \brief Body of Virtual Destructor
+#include <log/log_formatter.h>
 
-#include <log/message_exception.h>
+using namespace std;
+using namespace boost;
 
 namespace isc {
 namespace log {
 
-MessageException::~MessageException() throw() {
+void
+replacePlaceholder(string* message, const string& arg,
+                   const unsigned placeholder)
+{
+    string mark("%" + lexical_cast<string>(placeholder));
+    size_t pos(message->find(mark));
+    if (pos != string::npos) {
+        do {
+            message->replace(pos, mark.size(), arg);
+            pos = message->find(mark, pos + arg.size());
+        } while (pos != string::npos);
+    } else {
+        // We're missing the placeholder, so add some complain
+        message->append(" @@Missing placeholder " + mark + " for '" + arg +
+                        "'@@");
+    }
 }
 
-} // namespace log
-} // namespace isc
+}
+}
