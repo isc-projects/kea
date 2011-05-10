@@ -19,6 +19,11 @@
         "item_type": "integer",
         "item_optional": false,
         "item_default": 53
+      },
+      { "item_name": "tsig_key",
+        "item_type": "string",
+        "item_optional": true,
+        "item_default": ""
       }
     ],
     "commands": [
