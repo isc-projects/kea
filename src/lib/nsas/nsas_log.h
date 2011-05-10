@@ -15,7 +15,7 @@
 #ifndef __NSAS_LOG__H
 #define __NSAS_LOG__H
 
-#include <log/logger.h>
+#include <log/macros.h>
 #include "nsasdef.h"
 
 namespace isc {
