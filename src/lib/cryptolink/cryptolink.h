@@ -32,7 +32,11 @@ enum HashAlgorithm {
     MD5 = 0,            ///< MD5
     SHA1 = 1,           ///< SHA-1
     SHA256 = 2,         ///< SHA-256
-    UNKNOWN_HASH = 3    ///< This value can be used in conversion
+    SHA224 = 3,         ///< SHA-224
+    SHA384 = 4,         ///< SHA-384
+    SHA512 = 5,         ///< SHA-512
+
+    UNKNOWN_HASH = 6    ///< This value can be used in conversion
                         ///  functions, to be returned when the
                         ///  input is unknown (but a value MUST be
                         ///  returned), for instance when the input
