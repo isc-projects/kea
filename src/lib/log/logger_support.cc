@@ -24,6 +24,7 @@
 /// These functions will be replaced once the code has been written to obtain
 /// the logging parameters from the configuration database.
 
+#include <iostream>
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -62,7 +63,7 @@ readLocalMessageFile(const char* file) {
     MessageDictionary& dictionary = MessageDictionary::globalDictionary();
     MessageReader reader(&dictionary);
     try {
-        logger.info(MSG_RDLOCMES, file);
+        logger.info(MSG_RDLOCMES).arg(file);
         reader.readFile(file, MessageReader::REPLACE);
 
         // File successfully read, list the duplicates
@@ -70,7 +71,7 @@ readLocalMessageFile(const char* file) {
         for (MessageReader::MessageIDCollection::const_iterator
             i = unknown.begin(); i != unknown.end(); ++i) {
             string message_id = boost::lexical_cast<string>(*i);
-                logger.warn(MSG_IDNOTFND, message_id.c_str());
+                logger.warn(MSG_IDNOTFND).arg(message_id);
         }
     }
     catch (MessageException& e) {
@@ -82,11 +83,15 @@ readLocalMessageFile(const char* file) {
             break;
 
         case 1:
-            logger.error(ident, args[0].c_str());
+            logger.error(ident).arg(args[0]);
             break;
 
-        default:    // 2 or more (2 should be the maximum)
-            logger.error(ident, args[0].c_str(), args[1].c_str());
+        case 2:
+            logger.error(ident).arg(args[0]).arg(args[1]);
+            break;
+
+        default:    // 3 or more (3 should be the maximum)
+            logger.error(ident).arg(args[0]).arg(args[1]).arg(args[2]);
         }
     }
 }
@@ -117,7 +122,7 @@ initLogger(const string& root, isc::log::Severity severity, int dbglevel,
         vector<string>::iterator new_end =
             unique(duplicates.begin(), duplicates.end());
         for (vector<string>::iterator i = duplicates.begin(); i != new_end; ++i) {
-            logger.warn(MSG_DUPMSGID, i->c_str());
+            logger.warn(MSG_DUPMSGID).arg(*i);
         }
 
     }

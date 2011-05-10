@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include <boost/lexical_cast.hpp>
 #include <log/message_types.h>
 
 namespace isc {
@@ -35,33 +36,47 @@ public:
 
     /// \brief Constructor
     ///
-    /// \param id Message identification
-    MessageException(MessageID id) : id_(id)
-    {}
+    /// \param id Message identification.
+    /// \param lineno Line number on which error occurred (if > 0).
+    MessageException(MessageID id, int lineno = 0) : id_(id)
+    {
+        if (lineno > 0) {
+            args_.push_back(boost::lexical_cast<std::string>(lineno));
+        }
+    }
 
     /// \brief Constructor
     ///
-    /// \param id Message identification
-    /// \param arg1 First message argument
-    MessageException(MessageID id, const std::string& arg1) : id_(id)
+    /// \param id Message identification.
+    /// \param arg1 First message argument.
+    /// \param lineno Line number on which error occurred (if > 0).
+    MessageException(MessageID id, const std::string& arg1, int lineno = 0)
+        : id_(id)
     {
+        if (lineno > 0) {
+            args_.push_back(boost::lexical_cast<std::string>(lineno));
+        }
         args_.push_back(arg1);
     }
 
     /// \brief Constructor
     ///
-    /// \param id Message identification
-    /// \param arg1 First message argument
-    /// \param arg2 Second message argument
+    /// \param id Message identification.
+    /// \param arg1 First message argument.
+    /// \param arg2 Second message argument.
+    /// \param lineno Line number on which error occurred (if > 0).
     MessageException(MessageID id, const std::string& arg1,
-        const std::string& arg2) : id_(id)
+        const std::string& arg2, int lineno = 0) : id_(id)
     {
+        if (lineno > 0) {
+            args_.push_back(boost::lexical_cast<std::string>(lineno));
+        }
         args_.push_back(arg1);
         args_.push_back(arg2);
     }
 
     /// \brief Destructor
-    virtual ~MessageException() throw();
+    ~MessageException() throw() {}
 
     /// \brief Return Message ID
     ///
