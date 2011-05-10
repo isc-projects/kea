@@ -35,6 +35,15 @@ getBotanHashAlgorithmName(isc::cryptolink::HashAlgorithm algorithm) {
     case isc::cryptolink::SHA256:
         return ("SHA-256");
         break;
+    case isc::cryptolink::SHA224:
+        return ("SHA-224");
+        break;
+    case isc::cryptolink::SHA384:
+        return ("SHA-384");
+        break;
+    case isc::cryptolink::SHA512:
+        return ("SHA-512");
+        break;
     case isc::cryptolink::UNKNOWN_HASH:
         return ("Unknown");
         break;
