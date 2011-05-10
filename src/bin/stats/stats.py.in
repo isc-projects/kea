@@ -39,7 +39,8 @@ isc.util.process.rename()
 # from a directory relative to that, otherwise we use the ones
 # installed on the system
 if "B10_FROM_SOURCE" in os.environ:
-    SPECFILE_LOCATION = os.environ["B10_FROM_SOURCE"] + os.sep + "stats.spec"
+    SPECFILE_LOCATION = os.environ["B10_FROM_SOURCE"] + os.sep + \
+        "src" + os.sep + "bin" + os.sep + "stats" + os.sep + "stats.spec"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
@@ -275,9 +276,6 @@ class CCSessionListener(Listener):
         """
         handle set command
         """
-        if self.verbose:
-            sys.stdout.write("[b10-stats] 'set' command received, args: "+str(args)+"\n")
-
         # 'args' must be dictionary type
         self.stats_data.update(args['stats_data'])
 

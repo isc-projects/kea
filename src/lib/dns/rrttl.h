@@ -28,7 +28,7 @@ class OutputBuffer;
 namespace dns {
 
 // forward declarations
-class MessageRenderer;
+class AbstractMessageRenderer;
 
 ///
 /// \brief A standard DNS module exception that is thrown if an RRTTL object
@@ -123,7 +123,7 @@ public:
     ///
     /// \param renderer DNS message rendering context that encapsulates the
     /// output buffer in which the RRTTL is to be stored.
-    void toWire(MessageRenderer& renderer) const;
+    void toWire(AbstractMessageRenderer& renderer) const;
     /// \brief Render the \c RRTTL in the wire format.
     ///
     /// This method renders the TTL value in network byte order into the

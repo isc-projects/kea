@@ -91,10 +91,6 @@ AuthCountersImpl::submitStatistics() const {
         const int seq =
             statistics_session_->group_sendmsg(statistics_element, "Stats");
         isc::data::ConstElementPtr env, answer;
-        if (verbose_mode_) {
-            std::cerr << "[b10-auth] "
-                      << "send statistics data" << std::endl;
-        }
         // TODO: parse and check response from statistics module
         // currently it just returns empty message
         statistics_session_->group_recvmsg(env, answer, false, seq);
