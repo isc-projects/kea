@@ -181,8 +181,7 @@ NameserverEntry::updateAddressRTTAtIndex(uint32_t rtt, size_t index,
     addresses_[family][index].setRTT(new_rtt);
     LOG_DEBUG(nsas_logger, NSAS_DBG_RTT, NSAS_SETRTT)
               .arg(addresses_[family][index].getAddress().toText())
-              .arg(old_rtt)
-              .arg(new_rtt);
+              .arg(old_rtt).arg(new_rtt);
 }
 
 void
@@ -251,11 +250,9 @@ class NameserverEntry::ResolverCallback :
             {
                 // Invalid response type or class
                 LOG_ERROR(nsas_logger, NSAS_INVRESPTC)
-                          .arg(entry_->getName())
-                          .arg(type_.toText())
-                          .arg(RRClass(entry_->getClass()).toText())
-                          .arg(response->getType().toText())
-                          .arg(response->getClass().toText());
+                          .arg(entry_->getName()).arg(type_)
+                          .arg(entry_->getClass()).arg(response->getType())
+                          .arg(response->getClass());
 
                 failureInternal(lock);
                 return;
@@ -280,8 +277,7 @@ class NameserverEntry::ResolverCallback :
                 entries.push_back(found ? *found : AddressEntry(
                                                    IOAddress(address), 1));
                 LOG_DEBUG(nsas_logger, NSAS_DBG_RESULTS, NSAS_NSLKUPSUCC)
-                          .arg(address)
-                          .arg(entry_->getName());
+                          .arg(address).arg(entry_->getName());
             }
 
             // We no longer need the previous set of addresses, we have
@@ -327,8 +323,7 @@ class NameserverEntry::ResolverCallback :
          */
         virtual void failure() {
             LOG_DEBUG(nsas_logger, NSAS_DBG_RESULTS, NSAS_NSLKUPFAIL)
-                      .arg(type_.toText())
-                      .arg(entry_->getName());
+                      .arg(type_).arg(entry_->getName());
             Lock lock(entry_->mutex_);
             failureInternal(lock);
         }
