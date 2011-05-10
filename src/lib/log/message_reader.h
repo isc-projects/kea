@@ -64,6 +64,9 @@ public:
         dictionary_(dictionary)
     {}
 
+    /// \brief Virtual Destructor
+    virtual ~MessageReader()
+    {}
 
     /// \brief Get Dictionary
     ///
