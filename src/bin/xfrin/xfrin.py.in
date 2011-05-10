@@ -134,6 +134,8 @@ class XfrinConnection(asyncore.dispatcher):
 
         msg = self._create_query(query_type)
         render = MessageRenderer()
+        # XXX Currently, python wrapper doesn't accept 'None' parameter in this case,
+        # we should remove the if statement and use a universal interface later.
         if self._tsig_ctx is not None:
             msg.to_wire(render, self._tsig_ctx)
         else:
