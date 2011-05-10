@@ -336,15 +336,15 @@ Message_getRcode(s_Message* self) {
 
     rcode = static_cast<s_Rcode*>(rcode_type.tp_alloc(&rcode_type, 0));
     if (rcode != NULL) {
-        rcode->rcode = NULL;
+        rcode->cppobj = NULL;
         try {
-            rcode->rcode = new Rcode(self->message->getRcode());
+            rcode->cppobj = new Rcode(self->message->getRcode());
         } catch (const InvalidMessageOperation& imo) {
             PyErr_SetString(po_InvalidMessageOperation, imo.what());
         } catch (...) {
             PyErr_SetString(po_IscException, "Unexpected exception");
         }
-        if (rcode->rcode == NULL) {
+        if (rcode->cppobj == NULL) {
             Py_DECREF(rcode);
             return (NULL);
         }
@@ -360,7 +360,7 @@ Message_setRcode(s_Message* self, PyObject* args) {
         return (NULL);
     }
     try {
-        self->message->setRcode(*rcode->rcode);
+        self->message->setRcode(*rcode->cppobj);
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
