@@ -95,7 +95,7 @@ class XfrinConnection(asyncore.dispatcher):
         self._verbose = verbose
         self._master_address = master_addrinfo[2]
         self._tsig_ctx = None
-        if tsig_key_str:
+        if tsig_key_str is not None:
             self._tsig_ctx = TSIGContext(TSIGKey(tsig_key_str))
 
     def connect_to_master(self):
@@ -134,7 +134,7 @@ class XfrinConnection(asyncore.dispatcher):
 
         msg = self._create_query(query_type)
         render = MessageRenderer()
-        if self._tsig_ctx:
+        if self._tsig_ctx is not None:
             msg.to_wire(render, self._tsig_ctx)
         else:
             msg.to_wire(render)
