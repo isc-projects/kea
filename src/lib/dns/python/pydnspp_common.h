@@ -15,9 +15,22 @@
 #ifndef __LIBDNS_PYTHON_COMMON_H
 #define __LIBDNS_PYTHON_COMMON_H 1
 
-//
-// Shared functions for python/c API
-//
+#include <Python.h>
+
+#include <stdexcept>
+#include <string>
+
+#include <util/python/pycppwrapper_util.h>
+
+namespace isc {
+namespace dns {
+namespace python {
+// For our 'general' isc::Exceptions
+extern PyObject* po_IscException;
+extern PyObject* po_InvalidParameter;
+
+// For our own isc::dns::Exception
+extern PyObject* po_DNSMessageBADVERS;
 
 // This function reads 'bytes' from a sequence
 // This sequence can be anything that implements the Sequence interface,
@@ -31,6 +44,12 @@
 // case nothing is removed
 int readDataFromSequence(uint8_t *data, size_t len, PyObject* sequence);
 
-void addClassVariable(PyTypeObject& c, const char* name, PyObject* obj);
-
+int addClassVariable(PyTypeObject& c, const char* name, PyObject* obj);
+} // namespace python
+} // namespace dns
+} // namespace isc
 #endif // __LIBDNS_PYTHON_COMMON_H
+
+// Local Variables:
+// mode: c++
+// End:
