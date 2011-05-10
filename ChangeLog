@@ -1,3 +1,7 @@
+233.	[func]      stephen
+	Added new-style logging statements to the NSAS code.
+	(Trac #745, git ceef68cd1223ae14d8412adbe18af2812ade8c2d)
+
 232.	[func]      stephen
 	To facilitate the writing of extended descriptions in message files,
 	altered the message file format.  The message is now flagged with a "%"
