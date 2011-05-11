@@ -13,3 +13,11 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+# TODO: Put the real spec definition here
+spec = None
+
+def check():
+    pass
+
+def load():
+    return (spec, check)
