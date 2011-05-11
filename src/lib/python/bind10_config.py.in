@@ -17,7 +17,34 @@
 # variables to python scripts and libraries.
 import os
 
-BIND10_MSGQ_SOCKET_FILE = os.path.join("@localstatedir@",
-                                       "@PACKAGE_NAME@",
-                                       "msgq_socket").replace("${prefix}",
-                                                              "@prefix@")
+def reload():
+    # In a function, for testing purposes
+    global BIND10_MSGQ_SOCKET_FILE
+    global DATA_PATH
+    global PLUGIN_PATHS
+    global PREFIX
+    BIND10_MSGQ_SOCKET_FILE = os.path.join("@localstatedir@",
+                                           "@PACKAGE_NAME@",
+                                           "msgq_socket").replace("${prefix}",
+                                                                  "@prefix@")
+
+    # If B10_FROM_SOURCE is set in the environment, we use data files
+    # from a directory relative to the value of that variable, or, if defined,
+    # relative to the value of B10_FROM_SOURCE_LOCALSTATEDIR.  Otherwise
+    # we use the ones installed on the system.
+    # B10_FROM_SOURCE_LOCALSTATEDIR is specifically intended to be used for
+    # tests where we want to use variuos types of configuration within the test
+    # environment.  (We may want to make it even more generic so that the path is
+    # passed from the boss process)
+    if "B10_FROM_SOURCE" in os.environ:
+        if "B10_FROM_SOURCE_LOCALSTATEDIR" in os.environ:
+            DATA_PATH = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"]
+        else:
+            DATA_PATH = os.environ["B10_FROM_SOURCE"]
+        PLUGIN_PATHS = [DATA_PATH + '/src/bin/cfgmgr/plugins']
+    else:
+        PREFIX = "@prefix@"
+        DATA_PATH = "@localstatedir@/@PACKAGE@".replace("${prefix}", PREFIX)
+        PLUGIN_PATHS = ["@prefix@/share/@PACKAGE@/config_plugins"]
+
+reload()
