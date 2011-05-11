@@ -574,9 +574,9 @@ class TestXfrin(unittest.TestCase):
     def test_command_handler_notify(self):
         # at this level, refresh is no different than retransfer.
         self.args['master'] = TEST_MASTER_IPV6_ADDRESS
-        # ...but right now we disable the feature due to security concerns.
+        # ...but the zone is unknown so this would return an error
         self.assertEqual(self.xfr.command_handler("notify",
-                                                  self.args)['result'][0], 0)
+                                                  self.args)['result'][0], 1)
 
     def test_command_handler_unknown(self):
         self.assertEqual(self.xfr.command_handler("xxx", None)['result'][0], 1)
@@ -586,21 +586,21 @@ class TestXfrin(unittest.TestCase):
         self.assertEqual(self.xfr.config_handler({'transfers_in': 3})['result'][0], 0)
         self.assertEqual(self.xfr._max_transfers_in, 3)
 
-    def test_command_handler_masters(self):
-        master_info = {'master_addr': '1.1.1.1', 'master_port':53}
-        self.assertEqual(self.xfr.config_handler(master_info)['result'][0], 0)
+    def test_command_handler_zones(self):
+        zones = { 'zones': [
+                  { 'name': 'test.com',
+                    'master_addr': '1.1.1.1',
+                    'master_port': 53
+                  }
+                ]}
+        self.assertEqual(self.xfr.config_handler(zones)['result'][0], 0)
 
-        master_info = {'master_addr': '1111.1.1.1', 'master_port':53 }
-        self.assertEqual(self.xfr.config_handler(master_info)['result'][0], 1)
-
-        master_info = {'master_addr': '2.2.2.2', 'master_port':530000 }
-        self.assertEqual(self.xfr.config_handler(master_info)['result'][0], 1)
-
-        master_info = {'master_addr': '2.2.2.2', 'master_port':53 } 
-        self.xfr.config_handler(master_info)
-        self.assertEqual(self.xfr._master_addr, '2.2.2.2')
-        self.assertEqual(self.xfr._master_port, 53)
-
+        zones = { 'zones': [
+                  { 'master_addr': '1.1.1.1',
+                    'master_port': 53
+                  }
+                ]}
+        self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
 
 def raise_interrupt():
     raise KeyboardInterrupt()
