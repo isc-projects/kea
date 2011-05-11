@@ -15,7 +15,7 @@
 #ifndef __DATASRC_LOGGER_H
 #define __DATASRC_LOGGER_H
 
-#include <log/logger.h>
+#include <log/macros.h>
 #include <datasrc/messagedef.h>
 
 /// \file logger.h
