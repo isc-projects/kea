@@ -51,5 +51,53 @@ class TSigKeysTest(unittest.TestCase):
         # There's some nonempty configuration
         self.assertNotEqual({}, spec.get_config_spec())
 
+    def test_missing_keys(self):
+        """
+        Test that missing keys doesn't kill us. There are just no keys there.
+        """
+        self.assertEqual(None, tsig_keys.check({}))
+
+    def test_data_empty(self):
+        """Check we accept valid config with empty set of tsig keys."""
+        self.assertEqual(None, tsig_keys.check({'keys': []}))
+
+    def test_keys_valid(self):
+        """
+        Check we accept some valid keys (we don't check all the algorithms,
+        that's the job of isc.dns.TSIGKey).
+        """
+        self.assertEqual(None, tsig_keys.check({'keys':
+            ['testkey:QklORCAxMCBpcyBjb29sCg==',
+             'test.key:QklORCAxMCBpcyBjb29sCg==:hmac-sha1']}))
+
+    def test_keys_same_name(self):
+        """
+        Test we reject when we have multiple keys with the same name.
+        """
+        self.assertEqual("Multiple TSIG keys with name 'test.key'",
+                         tsig_keys.check({'keys':
+                                         ['test.key:QklORCAxMCBpcyBjb29sCg==',
+                                          'test.key:b3RoZXIK']}))
+
+    def test_invalid_key(self):
+        """
+        Test we reject invalid key.
+        """
+        self.assertEqual("TSIG: Invalid TSIG key string: invalid.key",
+                         tsig_keys.check({'keys': ['invalid.key']}))
+        self.assertEqual(
+            "TSIG: attempt to decode a value not in base64 char set",
+            tsig_keys.check({'keys': ['invalid.key:123']}))
+
+    def test_bad_format(self):
+        """
+        Test we fail on bad format. We don't really care much how here, though,
+        as this should not get in trough config manager anyway.
+        """
+        self.assertNotEqual(None, tsig_keys.check({'bad_name': {}}))
+        self.assertNotEqual(None, tsig_keys.check({'keys': 'not_list'}))
+        self.assertNotEqual(None, tsig_keys.check({'keys': 42}))
+        self.assertNotEqual(None, tsig_keys.check({'keys': {}}))
+
 if __name__ == '__main__':
         unittest.main()

@@ -18,7 +18,7 @@ from isc.util.file import path_search
 from bind10_config import PLUGIN_PATHS
 spec = module_spec_from_file(path_search('tsig_keys.spec', PLUGIN_PATHS))
 
-def check():
+def check(config):
     pass
 
 def load():
