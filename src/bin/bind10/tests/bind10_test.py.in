@@ -183,6 +183,7 @@ class MockBob(BoB):
         self.xfrin = False
         self.zonemgr = False
         self.stats = False
+        self.stats_httpd = False
         self.cmdctl = False
         self.c_channel_env = {}
         self.processes = { }
@@ -236,10 +237,15 @@ class MockBob(BoB):
         self.processes[10] = ProcessInfo('b10-stats', ['/bin/false'])
         self.processes[10].pid = 10
 
+    def start_stats_httpd(self, c_channel_env):
+        self.stats_httpd = True
+        self.processes[11] = ProcessInfo('b10-stats-httpd', ['/bin/false'])
+        self.processes[11].pid = 11
+
     def start_cmdctl(self, c_channel_env):
         self.cmdctl = True
-        self.processes[11] = ProcessInfo('b10-cmdctl', ['/bin/false'])
-        self.processes[11].pid = 11
+        self.processes[12] = ProcessInfo('b10-cmdctl', ['/bin/false'])
+        self.processes[12].pid = 12
 
     # We don't really use all of these stop_ methods. But it might turn out
     # someone would add some stop_ method to BoB and we want that one overriden
@@ -289,9 +295,14 @@ class MockBob(BoB):
             del self.processes[10]
         self.stats = False
 
+    def stop_stats_httpd(self):
+        if self.stats_httpd:
+            del self.processes[11]
+        self.stats_httpd = False
+
     def stop_cmdctl(self):
         if self.cmdctl:
-            del self.processes[11]
+            del self.processes[12]
         self.cmdctl = False
 
 class TestStartStopProcessesBob(unittest.TestCase):
@@ -316,6 +327,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         self.assertEqual(bob.xfrin, auth)
         self.assertEqual(bob.zonemgr, auth)
         self.assertEqual(bob.stats, core)
+        self.assertEqual(bob.stats_httpd, core)
         self.assertEqual(bob.cmdctl, core)
 
     def check_preconditions(self, bob):
@@ -544,7 +556,8 @@ class TestBossCmd(unittest.TestCase):
                      [8, 'b10-xfrin'], 
                      [9, 'b10-zonemgr'],
                      [10, 'b10-stats'], 
-                     [11, 'b10-cmdctl']]
+                     [11, 'b10-stats-httpd'], 
+                     [12, 'b10-cmdctl']]
         self.assertEqual(answer, {'result': [0, processes]})
 
 class TestParseArgs(unittest.TestCase):
