@@ -75,7 +75,16 @@ public:
     /// Other names are still accepted as long as the secret is empty
     /// (\c secret is \c NULL and \c secret_len is 0), however; in some cases
     /// we might want to treat just the pair of key name and algorithm name
-    /// opaquely, e.g., when generating a response TSIG with a BADKEY error.
+    /// opaquely, e.g., when generating a response TSIG with a BADKEY error
+    /// because the algorithm is unknown as specified in Section 3.2 of
+    /// RFC2845 (in which case the algorithm name would be copied from the
+    /// request to the response, and for that purpose it would be convenient
+    /// if a \c TSIGKey object can hold a name for an "unknown" algorithm).
+    ///
+    /// \note RFC2845 does not specify which algorithm name should be used
+    /// in such a BADKEY response.  The behavior of using the same algorithm
+    /// is derived from the BIND 9 implementation.
+    ///
     /// It is unlikely that a TSIG key with an unknown algorithm is of any
     /// use with actual crypto operation, so care must be taken when dealing
     /// with such keys. (The restriction for the secret will prevent
