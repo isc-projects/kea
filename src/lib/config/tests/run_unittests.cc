@@ -23,6 +23,6 @@ main(int argc, char* argv[]) {
     // (this is the call we want in master, but branch point does not
     // have this yet)
     //isc::log::initLogger();
-    
+
     return (RUN_ALL_TESTS());
 }

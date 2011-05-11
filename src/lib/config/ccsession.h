@@ -164,8 +164,9 @@ public:
      * Note: the design decision on who is responsible for establishing the
      * session is in flux, and may change in near future.
      *
-     * \exception CCSessionInitError when the given spec_file_name cannot
-     *            be read successfully
+     * \exception CCSessionInitError when the initialization fails,
+     *            either because the file cannot be read or there is
+     *            a communication problem with the config manager.
      *
      * @param command_handler A callback function pointer to be called when
      * a control command from a remote agent needs to be performed on the
