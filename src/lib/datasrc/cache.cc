@@ -25,7 +25,6 @@
 
 #include <datasrc/cache.h>
 #include <datasrc/logger.h>
-#include <log/macros.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -207,7 +206,7 @@ public:
 HotCacheImpl::HotCacheImpl(int slots, bool enabled) :
     enabled_(enabled), slots_(slots), count_(0)
 {
-    logger.debug(DBG_TRACE_BASIC, DATASRC_CACHE_CREATE);
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_CACHE_CREATE);
 }
 
 // Insert a cache node into the cache
@@ -220,7 +219,7 @@ HotCacheImpl::insert(const CacheNodePtr node) {
     if (iter != map_.end()) {
         CacheNodePtr old = iter->second;
         if (old && old->isValid()) {
-            logger.debug(DBG_TRACE_DATA, DATASRC_CACHE_OLD_FOUND);
+            LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_CACHE_OLD_FOUND);
             remove(old);
         }
     }
@@ -232,7 +231,7 @@ HotCacheImpl::insert(const CacheNodePtr node) {
     ++count_;
 
     if (slots_ != 0 && count_ > slots_) {
-        logger.debug(DBG_TRACE_DATA, DATASRC_CACHE_FULL);
+        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_CACHE_FULL);
         remove(lru_.back());
     }
 }
@@ -267,7 +266,7 @@ HotCache::HotCache(const int slots) {
 
 // HotCache destructor
 HotCache::~HotCache() {
-    logger.debug(DBG_TRACE_BASIC, DATASRC_CACHE_DESTROY);
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_CACHE_DESTROY);
     delete impl_;
 }
 
@@ -314,21 +313,21 @@ HotCache::retrieve(const Name& n, const RRClass& c, const RRType& t,
     std::map<Question, CacheNodePtr>::const_iterator iter;
     iter = impl_->map_.find(Question(n, c, t));
     if (iter == impl_->map_.end()) {
-        logger.debug(DBG_TRACE_DATA, DATASRC_CACHE_NOT_FOUND).arg(n);
+        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_CACHE_NOT_FOUND).arg(n);
         return (false);
     }
 
     CacheNodePtr node = iter->second;
 
     if (node->isValid()) {
-        logger.debug(DBG_TRACE_DATA, DATASRC_CACHE_FOUND).arg(n);
+        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_CACHE_FOUND).arg(n);
         impl_->promote(node);
         rrset = node->getRRset();
         flags = node->getFlags();
         return (true);
     }
 
-    logger.debug(DBG_TRACE_DATA, DATASRC_CACHE_EXPIRED).arg(n);
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_CACHE_EXPIRED).arg(n);
     impl_->remove(node);
     return (false);
 }
