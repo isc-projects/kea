@@ -74,7 +74,7 @@ class TSigKeysTest(unittest.TestCase):
         """
         Test we reject when we have multiple keys with the same name.
         """
-        self.assertEqual("Multiple TSIG keys with name 'test.key'",
+        self.assertEqual("Multiple TSIG keys with name 'test.key.'",
                          tsig_keys.check({'keys':
                                          ['test.key:QklORCAxMCBpcyBjb29sCg==',
                                           'test.key:b3RoZXIK']}))

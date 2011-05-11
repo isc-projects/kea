@@ -15,11 +15,30 @@
 
 from isc.config.module_spec import module_spec_from_file
 from isc.util.file import path_search
+from isc.dns import TSIGKey
+import pydnspp
 from bind10_config import PLUGIN_PATHS
 spec = module_spec_from_file(path_search('tsig_keys.spec', PLUGIN_PATHS))
 
 def check(config):
-    pass
+    # Check the data layout first
+    errors=[]
+    if not spec.validate_config(False, config, errors):
+        return ' '.join(errors)
+    # Get the list of keys, if any
+    keys = config.get('keys', [])
+    # Run trough them, check they can be constructed and there are no dupes
+    keyNames = set()
+    for key in keys:
+        try:
+            name = str(TSIGKey(key).get_key_name())
+        except pydnspp.InvalidParameter as e:
+            return "TSIG: " + str(e)
+        if name in keyNames:
+            return "Multiple TSIG keys with name '" + name + "'"
+        keyNames.add(name)
+    # No error found, so let's assume it's OK
+    return None
 
 def load():
     return (spec, check)
