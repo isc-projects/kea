@@ -10,7 +10,7 @@ if ENABLE_PYTHON_COVERAGE
 endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
-	env PLUGIN_DIR=$(abs_srcdir)/.. \
+	env B10_TEST_PLUGIN_DIR=$(abs_srcdir)/..:$(abs_builddir)/.. \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/cfgmgr \
 	$(PYCOVERAGE_RUN) $(abs_builddir)/$$pytest || exit ; \
 	done

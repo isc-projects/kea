@@ -16,7 +16,7 @@
 # Make sure we can load the module, put it into path
 import sys
 import os
-sys.path.append(os.environ["PLUGIN_DIR"])
+sys.path.extend(os.environ["B10_TEST_PLUGIN_DIR"].split(':'))
 
 import tsig_keys
 import unittest
@@ -47,7 +47,7 @@ class TSigKeysTest(unittest.TestCase):
         # Correct name
         self.assertEqual("tsig_keys", spec.get_module_name())
         # There are no commands, nobody would handle them anyway
-        self.assertEqual({}, spec.get_commands_spec())
+        self.assertEqual([], spec.get_commands_spec())
         # There's some nonempty configuration
         self.assertNotEqual({}, spec.get_config_spec())
 
