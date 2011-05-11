@@ -2,35 +2,36 @@ SUBDIRS = tests
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
-pkglibexec_SCRIPTS = b10-stats
-noinst_SCRIPTS = b10-stats_stub
+pkglibexec_SCRIPTS = b10-stats b10-stats-httpd
 
 b10_statsdir = $(pkgdatadir)
-b10_stats_DATA = stats.spec
+b10_stats_DATA = stats.spec stats-httpd.spec
+b10_stats_DATA += stats-httpd-xml.tpl stats-httpd-xsd.tpl stats-httpd-xsl.tpl
 
-CLEANFILES = stats.spec b10-stats stats.pyc stats.pyo b10-stats_stub stats_stub.pyc stats_stub.pyo
+CLEANFILES = b10-stats stats.pyc
+CLEANFILES += b10-stats-httpd stats_httpd.pyc
 
-man_MANS = b10-stats.8
-EXTRA_DIST = $(man_MANS) b10-stats.xml
+man_MANS = b10-stats.8 b10-stats-httpd.8
+EXTRA_DIST = $(man_MANS) b10-stats.xml b10-stats-httpd.xml
+EXTRA_DIST += stats.spec stats-httpd.spec
+EXTRA_DIST += stats-httpd-xml.tpl stats-httpd-xsd.tpl stats-httpd-xsl.tpl
 
 if ENABLE_MAN
 
 b10-stats.8: b10-stats.xml
 	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-stats.xml
 
-endif
+b10-stats-httpd.8: b10-stats-httpd.xml
+	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-stats-httpd.xml
 
-stats.spec: stats.spec.pre
-	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" stats.spec.pre >$@
+endif
 
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
 b10-stats: stats.py
 	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" \
-	       -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" \
 	       -e "s|.*#@@REMOVED@@$$||"  stats.py >$@
 	chmod a+x $@
 
-b10-stats_stub: stats_stub.py stats.py
-	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" \
-	       -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" stats_stub.py >$@
+b10-stats-httpd: stats_httpd.py
+	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" stats_httpd.py >$@
 	chmod a+x $@

@@ -31,7 +31,9 @@
 #include <dns/rcode.h>
 
 #include <util/buffer.h>
+#include <util/unittests/resolver.h>
 #include <dns/message.h>
+#include <dns/rdataclass.h>
 
 #include <nsas/nameserver_address_store.h>
 #include <cache/resolver_cache.h>
@@ -59,6 +61,18 @@ using namespace isc::asiodns;
 using namespace isc::asiolink;
 using namespace isc::dns;
 using namespace isc::util;
+
+namespace isc {
+namespace asiodns {
+
+// This is defined in recursive_query.cc, but not in header (it's not public
+// function). So bring it in to be tested.
+std::string
+deepestDelegation(Name name, RRClass rrclass,
+                  isc::cache::ResolverCache& cache);
+
+}
+}
 
 namespace {
 const char* const TEST_SERVER_PORT = "53535";
@@ -111,6 +125,9 @@ class RecursiveQueryTest : public ::testing::Test {
 protected:
     RecursiveQueryTest();
     ~RecursiveQueryTest() {
+        // It would delete itself, but after the io_service_, which could
+        // segfailt in case there were unhandled requests
+        resolver_.reset();
         if (res_ != NULL) {
             freeaddrinfo(res_);
         }
@@ -349,12 +366,6 @@ protected:
         private:
             bool* done_;
     };
-    
-    class MockResolver : public isc::resolve::ResolverInterface {
-        void resolve(const QuestionPtr& question,
-                     const ResolverInterface::CallbackPtr& callback) {
-        }
-    };
 
     // This version of mock server just stops the io_service when it is resumed
     // the second time. (Used in the clientTimeout test, where resume
@@ -424,17 +435,17 @@ protected:
     vector<uint8_t> callback_data_;
     int sock_;
     struct addrinfo* res_;
-    boost::shared_ptr<MockResolver> mock_resolver_;
+    boost::shared_ptr<isc::util::unittests::TestResolver> resolver_;
 };
 
 RecursiveQueryTest::RecursiveQueryTest() :
     dns_service_(NULL), callback_(NULL), callback_protocol_(0),
     callback_native_(-1), sock_(-1), res_(NULL),
-    mock_resolver_(new MockResolver())
+    resolver_(new isc::util::unittests::TestResolver())
 {
     io_service_ = new IOService();
     setDNSService(true, true);
-    nsas_ = new isc::nsas::NameserverAddressStore(mock_resolver_);
+    nsas_ = new isc::nsas::NameserverAddressStore(resolver_);
 }
 
 TEST_F(RecursiveQueryTest, v6UDPSend) {
@@ -862,7 +873,88 @@ TEST_F(RecursiveQueryTest, DISABLED_recursiveSendNXDOMAIN) {
     EXPECT_EQ(0, answer->getRRCount(Message::SECTION_ANSWER));
 }
 
+// Test that we don't start at root when we have a lower NS cached.
+TEST_F(RecursiveQueryTest, CachedNS) {
+    setDNSService(true, true);
+
+    // Check we have a reasonable fallback - if there's nothing of interest
+    // in the cache, start at root.
+    EXPECT_EQ(".", deepestDelegation(Name("www.somewhere.deep.example.org"),
+                                     RRClass::IN(), cache_));
+
+    // Prefill the cache. There's a zone with a NS and IP address for one
+    // of them (to see that one is enough) and another deeper one, with NS,
+    // but without IP.
+    RRsetPtr nsUpper(new RRset(Name("example.org"), RRClass::IN(),
+                               RRType::NS(), RRTTL(300)));
+    nsUpper->addRdata(rdata::generic::NS(Name("ns.example.org")));
+    nsUpper->addRdata(rdata::generic::NS(Name("ns2.example.org")));
+
+    RRsetPtr nsLower(new RRset(Name("somewhere.deep.example.org"),
+                               RRClass::IN(), RRType::NS(), RRTTL(300)));
+    nsLower->addRdata(rdata::generic::NS(Name("ns.somewhere.deep.example.org"))
+                      );
+
+    RRsetPtr nsIp(new RRset(Name("ns2.example.org"), RRClass::IN(),
+                            RRType::A(), RRTTL(300)));
+    nsIp->addRdata(rdata::in::A("192.0.2.1"));
+
+    // Make sure the test runs in the correct environment (we don't test
+    // the cache, but we need it to unswer this way for the test, so we
+    // just make sure)
+    ASSERT_TRUE(cache_.update(nsUpper));
+    ASSERT_TRUE(cache_.update(nsLower));
+    ASSERT_TRUE(cache_.update(nsIp));
+    RRsetPtr deepest(cache_.lookupDeepestNS(Name(
+        "www.somewhere.deep.example.org"), RRClass::IN()));
+    ASSERT_NE(RRsetPtr(), deepest);
+    ASSERT_EQ(nsLower->getName(), deepest->getName());
+
+    // Direct check of the function that chooses the delegation point
+    // It should not use nsLower, because we don't have IP address for
+    // that one. But it can choose nsUpper.
+    EXPECT_EQ("example.org.",
+              deepestDelegation(Name("www.somewhere.deep.example.org"),
+              RRClass::IN(), cache_));
+
+    // Now more complex and indirect test:
+    // We ask it to resolve the name for us. It will pick up a delegation
+    // point and ask NSAS for it. NSAS will in turn ask resolver for NS record
+    // of the delegation point. We then pick it up from the fake resolver
+    // and check it is the correct one. This checks the delegation point
+    // travels safely trough the whole path there (it would be enough to check
+    // it up to NSAS, but replacing NSAS is more complicated, so we just
+    // include in the test as well for simplicity).
+
+    // Prepare the recursive query
+    vector<pair<string, uint16_t> > roots;
+    roots.push_back(pair<string, uint16_t>("192.0.2.2", 53));
+
+    RecursiveQuery rq(*dns_service_, *nsas_, cache_,
+                      vector<pair<string, uint16_t> >(), roots);
+    // Ask a question at the bottom. It should not use the lower NS, because
+    // it would lead to a loop in NS. But it can use the nsUpper one, it has
+    // an IP address and we can avoid asking root.
+    Question q(Name("www.somewhere.deep.example.org"), RRClass::IN(),
+               RRType::A());
+    OutputBufferPtr buffer(new OutputBuffer(0));
+    MessagePtr answer(new Message(Message::RENDER));
+    // The server is here so we have something to pass there
+    MockServer server(*io_service_);
+    rq.resolve(q, answer, buffer, &server);
+    // We don't need to run the service in this test. We are interested only
+    // in the place it starts resolving at
+
+    // Look what is asked by NSAS - it should be our delegation point.
+    EXPECT_NO_THROW(EXPECT_EQ(nsUpper->getName(),
+                              (*resolver_)[0]->getName()) <<
+                    "It starts resolving at the wrong place") <<
+        "It does not ask NSAS anything, how does it know where to send?";
+}
+
 // TODO: add tests that check whether the cache is updated on succesfull
 // responses, and not updated on failures.
+
+
 
 }

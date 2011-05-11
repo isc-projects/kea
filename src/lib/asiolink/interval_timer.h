@@ -22,7 +22,7 @@
 namespace isc {
 namespace asiolink {
 
-struct IntervalTimerImpl;
+class IntervalTimerImpl;
 
 /// \brief The \c IntervalTimer class is a wrapper for the ASIO
 /// \c asio::deadline_timer class.
