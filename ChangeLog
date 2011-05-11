@@ -1,3 +1,7 @@
+232.	[func]*		feng
+	Add optional hmac algorithm SHA224/384/812.
+	(Trac#782).
+	
 231.	[func]*
 	The logging interface changed slightly. We use
 	logger.foo(MESSAGE_ID).arg(bar); instead of logger.foo(MESSAGE_ID, bar);
