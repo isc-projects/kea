@@ -416,10 +416,12 @@ TSIGKeyRing_remove(const s_TSIGKeyRing* self, PyObject* args) {
 PyObject*
 TSIGKeyRing_find(const s_TSIGKeyRing* self, PyObject* args) {
     s_Name* key_name;
+    s_Name* algorithm_name;
 
-    if (PyArg_ParseTuple(args, "O!", &name_type, &key_name)) {
+    if (PyArg_ParseTuple(args, "O!O!", &name_type, &key_name,
+                         &name_type, &algorithm_name)) {
         const TSIGKeyRing::FindResult result =
-            self->keyring->find(*key_name->name);
+            self->keyring->find(*key_name->name, *algorithm_name->name);
         if (result.key != NULL) {
             s_TSIGKey* key = PyObject_New(s_TSIGKey, &tsigkey_type);
             if (key == NULL) {

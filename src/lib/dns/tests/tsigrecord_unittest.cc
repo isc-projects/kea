@@ -98,12 +98,11 @@ TEST_F(TSIGRecordTest, fromParams) {
 
     // Unexpected class
     EXPECT_THROW(TSIGRecord(test_name, RRClass::IN(), TSIGRecord::getTTL(),
-                            test_rdata, 85),
-                 DNSMessageFORMERR);
+                            test_rdata, 85), DNSMessageFORMERR);
 
-    // Unexpected TTL (simply ignored)
-    EXPECT_NO_THROW(TSIGRecord(test_name, TSIGRecord::getClass(),
-                               RRTTL(3600), test_rdata, 85));
+    // Unexpected TTL
+    EXPECT_THROW(TSIGRecord(test_name, TSIGRecord::getClass(),
+                            RRTTL(3600), test_rdata, 85), DNSMessageFORMERR);
 }
 
 TEST_F(TSIGRecordTest, recordToWire) {
