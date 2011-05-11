@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <gtest/gtest.h>
+#include <util/unittests/run_all.h>
 
 #include <dns/tests/unittest_util.h>
 
@@ -20,5 +21,5 @@ int
 main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
 
-    return (RUN_ALL_TESTS());
+    return (isc::util::unittests::run_all());
 }
