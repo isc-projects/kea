@@ -49,6 +49,17 @@ TSIGError::toText() const {
     }
 }
 
+Rcode
+TSIGError::toRcode() const {
+    if (code_ <= MAX_RCODE_FOR_TSIGERROR) {
+        return (Rcode(code_));
+    }
+    if (code_ > BAD_TIME_CODE) {
+        return (Rcode::SERVFAIL());
+    }
+    return (Rcode::NOTAUTH());
+}
+
 std::ostream&
 operator<<(std::ostream& os, const TSIGError& error) {
     return (os << error.toText());
