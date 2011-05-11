@@ -13,8 +13,10 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# TODO: Put the real spec definition here
-spec = None
+from isc.config.module_spec import module_spec_from_file
+from isc.util.file import path_search
+from bind10_config import PLUGIN_PATHS
+spec = module_spec_from_file(path_search('tsig_keys.spec', PLUGIN_PATHS))
 
 def check():
     pass
