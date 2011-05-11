@@ -9,10 +9,17 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 configdef.h configdef.cc: configdef.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/config/configdef.mes
 
+BUILT_SOURCES = configdef.h configdef.cc
+
 lib_LTLIBRARIES = libcfgclient.la
 libcfgclient_la_SOURCES = config_data.h config_data.cc
 libcfgclient_la_SOURCES += module_spec.h module_spec.cc
 libcfgclient_la_SOURCES += ccsession.cc ccsession.h
-libcfgclient_la_SOURCES += configdef.h configdef.cc
+libcfgclient_la_SOURCES += config_log.h config_log.cc
 
-CLEANFILES = *.gcno *.gcda
+nodist_libcfgclient_la_SOURCES  = configdef.h configdef.cc
+
+# The message file should be in the distribution.
+EXTRA_DIST = configdef.mes
+
+CLEANFILES = *.gcno *.gcda configdef.h configdef.cc

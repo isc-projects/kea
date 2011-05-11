@@ -135,6 +135,15 @@ public:
 };
 
 ///
+/// \brief This exception is thrown if the constructor fails
+///
+class CCSessionInitError : public isc::Exception {
+public:
+    CCSessionInitError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+///
 /// \brief This module keeps a connection to the command channel,
 /// holds configuration information, and handles messages from
 /// the command channel
@@ -154,6 +163,10 @@ public:
      * AbstractSession without establishing the session.
      * Note: the design decision on who is responsible for establishing the
      * session is in flux, and may change in near future.
+     *
+     * \exception CCSessionInitError when the given spec_file_name cannot
+     *            be read successfully
+     *
      * @param command_handler A callback function pointer to be called when
      * a control command from a remote agent needs to be performed on the
      * local module.
