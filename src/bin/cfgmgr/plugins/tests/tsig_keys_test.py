@@ -20,6 +20,36 @@ sys.path.append(os.environ["PLUGIN_DIR"])
 
 import tsig_keys
 import unittest
+import isc.config.module_spec
+
+class TSigKeysTest(unittest.TestCase):
+    def test_load(self):
+        """
+        Checks the entry point returns the correct values.
+        """
+        (spec, check) = tsig_keys.load()
+        # It returns the checking function
+        self.assertEqual(check, tsig_keys.check)
+        # The plugin stores it's spec
+        self.assertEqual(spec, tsig_keys.spec)
+
+    def test_spec(self):
+        """
+        Checks the spec is looking sane (doesn't do really deep check here).
+        """
+        spec = tsig_keys.spec
+        # In python, we don't generally check the type of something, because
+        # of the duck typing.
+        # But this is unittest, so we check it does what we intend and
+        # supplying that's behaving the same but is different is not our
+        # intention
+        self.assertTrue(isinstance(spec, isc.config.module_spec.ModuleSpec))
+        # Correct name
+        self.assertEqual("tsig_keys", spec.get_module_name())
+        # There are no commands, nobody would handle them anyway
+        self.assertEqual({}, spec.get_commands_spec())
+        # There's some nonempty configuration
+        self.assertNotEqual({}, spec.get_config_spec())
 
 if __name__ == '__main__':
         unittest.main()
