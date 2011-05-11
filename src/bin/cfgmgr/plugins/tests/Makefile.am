@@ -11,7 +11,7 @@ endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	env B10_TEST_PLUGIN_DIR=$(abs_srcdir)/..:$(abs_builddir)/.. \
-	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/cfgmgr \
+	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/cfgmgr:$(abs_top_builddir)/src/lib/dns/python/.libs \
 	$(PYCOVERAGE_RUN) $(abs_builddir)/$$pytest || exit ; \
 	done
 
