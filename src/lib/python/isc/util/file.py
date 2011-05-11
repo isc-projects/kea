@@ -26,4 +26,4 @@ def path_search(filename, paths):
         f = join(p, filename)
         if exists(f):
             return f
-    raise IOError("'" + filename + "' not found")
+    raise IOError("'" + filename + "' not found in " + str(paths))

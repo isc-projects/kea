@@ -46,5 +46,8 @@ def reload():
         PREFIX = "@prefix@"
         DATA_PATH = "@localstatedir@/@PACKAGE@".replace("${prefix}", PREFIX)
         PLUGIN_PATHS = ["@prefix@/share/@PACKAGE@/config_plugins"]
+    # For testing the plugins so they can find their own spec files
+    if "B10_TEST_PLUGIN_DIR" in os.environ:
+        PLUGIN_PATHS = os.environ["B10_TEST_PLUGIN_DIR"].split(':')
 
 reload()
