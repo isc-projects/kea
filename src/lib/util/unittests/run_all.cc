@@ -18,6 +18,7 @@
 #include <iomanip>
 
 #include <gtest/gtest.h>
+#include <exceptions/exceptions.h>
 #include <util/unittests/run_all.h>
 
 namespace isc {
@@ -31,10 +32,18 @@ run_all() {
     if (getenv("B10TEST_CATCH_EXCEPTION")) {
         try {
             ret = RUN_ALL_TESTS();
+        } catch (const isc::Exception& ex) {
+             std::cerr << "*** isc::exception of class '" << typeid(ex).name()
+                          << "' was thrown:\n"
+                       << "    file: " << ex.getFile() << "\n"
+                       << "    line: " << ex.getLine() << "\n"
+                       << "    what: " << ex.what() << std::endl;
+            throw;
         } catch (const std::exception& ex) {
-            std::cerr << "***EXCEPTION: an exception of class '"
-                      << typeid(ex).name() << "' was thrown, what(): "
-                      << ex.what() << std::endl;
+             std::cerr << "*** std::exception of class '"
+                          << typeid(ex).name()
+                          << "' was thrown:\n"
+                       << "    what: " << ex.what() << std::endl;
             throw;
         }
     } else {
