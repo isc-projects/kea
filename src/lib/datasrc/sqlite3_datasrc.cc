@@ -228,7 +228,7 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
                             RRsetList& target, const Name* zonename,
                             const Mode mode, uint32_t& flags) const
 {
-    logger.debug(DBG_TRACE_DETAILED, DATASRC_SQLITE_FINDREC).arg(name).
+    LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_SQLITE_FINDREC).arg(name).
         arg(rdtype);
     flags = 0;
     int zone_id = (zonename == NULL) ? findClosest(name, NULL) :
@@ -348,17 +348,17 @@ Sqlite3DataSrc::findClosest(const Name& name, unsigned int* position) const {
 
 void
 Sqlite3DataSrc::findClosestEnclosure(DataSrcMatch& match) const {
-    logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_ENCLOSURE).
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_SQLITE_ENCLOSURE).
         arg(match.getName());
     if (match.getClass() != getClass() && match.getClass() != RRClass::ANY()) {
-        logger.error(DATASRC_SQLITE_ENCLOSURE_BAD_CLASS).arg(getClass()).
+        LOG_ERROR(logger, DATASRC_SQLITE_ENCLOSURE_BAD_CLASS).arg(getClass()).
             arg(match.getClass());
         return;
     }
 
     unsigned int position;
     if (findClosest(match.getName(), &position) == -1) {
-        logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_ENCLOSURE_NOTFOUND);
+        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_SQLITE_ENCLOSURE_NOTFOUND);
         return;
     }
 
@@ -370,11 +370,11 @@ Sqlite3DataSrc::findPreviousName(const Name& qname,
                                  Name& target,
                                  const Name* zonename) const
 {
-    logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_PREVIOUS).arg(qname);
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_SQLITE_PREVIOUS).arg(qname);
     const int zone_id = (zonename == NULL) ?
         findClosest(qname, NULL) : findClosest(*zonename, NULL);
     if (zone_id < 0) {
-        logger.error(DATASRC_SQLITE_PREVIOUS_NO_ZONE).arg(qname.toText());
+        LOG_ERROR(logger, DATASRC_SQLITE_PREVIOUS_NO_ZONE).arg(qname.toText());
         return (ERROR);
     }
     
@@ -412,11 +412,11 @@ Sqlite3DataSrc::findCoveringNSEC3(const Name& zonename,
                                   string& hashstr,
                                   RRsetList& target) const
 {
-    logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FIND_NSEC3).
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_SQLITE_FIND_NSEC3).
         arg(zonename).arg(hashstr);
     const int zone_id = findClosest(zonename, NULL);
     if (zone_id < 0) {
-        logger.error(DATASRC_SQLITE_FIND_NSEC3_NO_ZONE).arg(zonename);
+        LOG_ERROR(logger, DATASRC_SQLITE_FIND_NSEC3_NO_ZONE).arg(zonename);
         return (ERROR);
     }
 
@@ -497,10 +497,10 @@ Sqlite3DataSrc::findRRset(const Name& qname,
                           uint32_t& flags,
                           const Name* zonename) const
 {
-    logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FIND).arg(qname).
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_SQLITE_FIND).arg(qname).
         arg(qtype);
     if (qclass != getClass() && qclass != RRClass::ANY()) {
-        logger.error(DATASRC_SQLITE_FIND_BAD_CLASS).arg(getClass()).
+        LOG_ERROR(logger, DATASRC_SQLITE_FIND_BAD_CLASS).arg(getClass()).
             arg(qclass);
         return (ERROR);
     }
@@ -516,10 +516,10 @@ Sqlite3DataSrc::findExactRRset(const Name& qname,
                                uint32_t& flags,
                                const Name* zonename) const
 {
-    logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FINDEXACT).arg(qname).
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_SQLITE_FINDEXACT).arg(qname).
         arg(qtype);
     if (qclass != getClass() && qclass != RRClass::ANY()) {
-        logger.error(DATASRC_SQLITE_FINDEXACT_BAD_CLASS).arg(getClass()).
+        LOG_ERROR(logger, DATASRC_SQLITE_FINDEXACT_BAD_CLASS).arg(getClass()).
             arg(qclass);
         return (ERROR);
     }
@@ -544,9 +544,9 @@ Sqlite3DataSrc::findAddrs(const Name& qname,
                           uint32_t& flags,
                           const Name* zonename) const
 {
-    logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FINDADDRS).arg(qname);
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_SQLITE_FINDADDRS).arg(qname);
     if (qclass != getClass() && qclass != RRClass::ANY()) {
-        logger.error(DATASRC_SQLITE_FINDADDRS_BAD_CLASS).arg(getClass()).
+        LOG_ERROR(logger, DATASRC_SQLITE_FINDADDRS_BAD_CLASS).arg(getClass()).
             arg(qclass);
         return (ERROR);
     }
@@ -561,9 +561,9 @@ Sqlite3DataSrc::findReferral(const Name& qname,
                              uint32_t& flags,
                              const Name* zonename) const
 {
-    logger.debug(DBG_TRACE_DATA, DATASRC_SQLITE_FINDREF).arg(qname);
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_SQLITE_FINDREF).arg(qname);
     if (qclass != getClass() && qclass != RRClass::ANY()) {
-        logger.error(DATASRC_SQLITE_FINDREF_BAD_CLASS).arg(getClass()).
+        LOG_ERROR(logger, DATASRC_SQLITE_FINDREF_BAD_CLASS).arg(getClass()).
             arg(qclass);
         return (ERROR);
     }
@@ -574,11 +574,11 @@ Sqlite3DataSrc::findReferral(const Name& qname,
 Sqlite3DataSrc::Sqlite3DataSrc() :
     dbparameters(new Sqlite3Parameters)
 {
-    logger.debug(DBG_TRACE_BASIC, DATASRC_SQLITE_CREATE);
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_CREATE);
 }
 
 Sqlite3DataSrc::~Sqlite3DataSrc() {
-    logger.debug(DBG_TRACE_BASIC, DATASRC_SQLITE_DESTROY);
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_DESTROY);
     if (dbparameters->db_ != NULL) {
         close();
     }
@@ -695,7 +695,7 @@ checkAndSetupSchema(Sqlite3Initializer* initializer) {
 //
 void
 Sqlite3DataSrc::open(const string& name) {
-    logger.debug(DBG_TRACE_BASIC, DATASRC_SQLITE_OPEN).arg(name);
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_OPEN).arg(name);
     if (dbparameters->db_ != NULL) {
         isc_throw(DataSourceError, "Duplicate SQLite open with " << name);
     }
@@ -715,7 +715,7 @@ Sqlite3DataSrc::open(const string& name) {
 //
 DataSrc::Result
 Sqlite3DataSrc::close(void) {
-    logger.debug(DBG_TRACE_BASIC, DATASRC_SQLITE_CLOSE);
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_CLOSE);
     if (dbparameters->db_ == NULL) {
         isc_throw(DataSourceError,
                   "SQLite data source is being closed before open");
