@@ -17,6 +17,10 @@
 #ifndef __RUN_ALL_H
 #define __RUN_ALL_H
 
+// Avoid need for user to include this header file.
+
+#include <gtest/gtest.h>
+
 namespace isc {
 namespace util {
 namespace unittests {
