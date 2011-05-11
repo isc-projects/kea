@@ -91,7 +91,7 @@ public:
 /// By default, the destructor of this class releases the reference to the
 /// PyObject.  If this behavior is desirable, you can extract the original
 /// bare pointer to the PyObject by the \c get() method.  If you don't want
-/// the reference to be decrease, the original bare pointer should be
+/// the reference to be decreased, the original bare pointer should be
 /// extracted using the \c release() method.
 ///
 /// There are two convenience methods for commonly used operations:
