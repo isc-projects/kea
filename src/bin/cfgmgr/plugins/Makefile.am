@@ -1,1 +1,2 @@
+SUBDIRS = tests
 EXTRA_DIST = README
