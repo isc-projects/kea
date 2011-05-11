@@ -33,17 +33,17 @@ run_all() {
         try {
             ret = RUN_ALL_TESTS();
         } catch (const isc::Exception& ex) {
-             std::cerr << "*** isc::exception of class '" << typeid(ex).name()
-                          << "' was thrown:\n"
-                       << "    file: " << ex.getFile() << "\n"
-                       << "    line: " << ex.getLine() << "\n"
-                       << "    what: " << ex.what() << std::endl;
+            // Could output more information with typeid(), but there is no
+            // guarantee that all compilers will support it without an explicit
+            // flag on the command line.
+            std::cerr << "*** Exception derived from isc::exception thrown:\n"
+                      << "    file: " << ex.getFile() << "\n"
+                      << "    line: " << ex.getLine() << "\n"
+                      << "    what: " << ex.what() << std::endl;
             throw;
         } catch (const std::exception& ex) {
-             std::cerr << "*** std::exception of class '"
-                          << typeid(ex).name()
-                          << "' was thrown:\n"
-                       << "    what: " << ex.what() << std::endl;
+            std::cerr << "*** Exception derived from std::exception thrown:\n"
+                      << "    what: " << ex.what() << std::endl;
             throw;
         }
     } else {
