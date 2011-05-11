@@ -9,21 +9,38 @@
         "item_optional": false,
         "item_default": 10
       },
-      {
-        "item_name": "master_addr",
-        "item_type": "string",
+      { "item_name": "zones",
+        "item_type": "list",
         "item_optional": false,
-        "item_default": ""
-      },
-      { "item_name": "master_port",
-        "item_type": "integer",
-        "item_optional": false,
-        "item_default": 53
-      },
-      { "item_name": "tsig_key",
-        "item_type": "string",
-        "item_optional": true,
-        "item_default": ""
+        "item_default": [],
+        "list_item_spec":
+        { "item_type": "map",
+          "item_name": "zone_info",
+          "item_optional": false,
+          "item_default": {},
+          "map_item_spec": [
+          { "item_name": "name",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": ""
+          },
+          {
+            "item_name": "master_addr",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": ""
+          },
+          { "item_name": "master_port",
+            "item_type": "integer",
+            "item_optional": false,
+            "item_default": 53
+          },
+          { "item_name": "tsig_key",
+            "item_type": "string",
+            "item_optional": true
+          }
+          ]
+        }
       }
     ],
     "commands": [

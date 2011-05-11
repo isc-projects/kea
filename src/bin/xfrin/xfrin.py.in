@@ -70,6 +70,9 @@ def log_error(msg):
 class XfrinException(Exception):
     pass
 
+class XfrinConfigException(Exception):
+    pass
+
 class XfrinConnection(asyncore.dispatcher):
     '''Do xfrin in this class. '''
 
@@ -378,12 +381,38 @@ class XfrinRecorder:
         self._lock.release()
         return ret
 
+class ZoneInfo:
+    def __init__(self, config_data):
+        """Creates a zone_info with the config data element as
+           specified by the 'zones' list in xfrin.spec"""
+        self.name = config_data.get('name')
+        if self.name is None:
+            raise XfrinConfigException("Configuration zones list "
+                                       "element does not contain "
+                                       "'name' attribute")
+
+        # add the root dot if the user forgot
+        if len(self.name) > 0 and self.name[-1] != '.':
+            self.name += '.'
+        self.master_addr = config_data.get('master_addr') or DEFAULT_MASTER
+        try:
+            addr = config_data.get('master_addr') or DEFAULT_MASTER
+            port = config_data.get('master_port') or DEFAULT_MASTER_PORT
+            isc.net.parse.addr_parse(addr)
+            isc.net.parse.port_parse(port)
+            self.master_addr = addr
+            self.master_port = port
+        except ValueError:
+            errmsg = "bad format for zone's master: " + str(new_config)
+            log_error(errmsg)
+            raise XfrinConfigException(errmsg)
+
+        self.tsig_key_str = config_data.get('tsig_key') or None
+
 class Xfrin:
     def __init__(self, verbose = False):
         self._max_transfers_in = 10
-        #TODO, this is the temp way to set the zone's master.
-        self._master_addr = DEFAULT_MASTER
-        self._master_port = DEFAULT_MASTER_PORT
+        self._zones = {}
         self._cc_setup()
         self.recorder = XfrinRecorder()
         self._shutdown_event = threading.Event()
@@ -402,10 +431,7 @@ class Xfrin:
                                               self.command_handler)
         self._module_cc.start()
         config_data = self._module_cc.get_full_config()
-        self._max_transfers_in = config_data.get("transfers_in")
-        self._master_addr = config_data.get('master_addr') or self._master_addr
-        self._master_port = config_data.get('master_port') or self._master_port
-        self._tsig_key_str = config_data.get('tsig_key') or None
+        self.config_handler(config_data)
 
     def _cc_check_command(self):
         '''This is a straightforward wrapper for cc.check_command,
@@ -413,22 +439,28 @@ class Xfrin:
         of unit tests.'''
         self._module_cc.check_command(False)
 
+    def _get_zone_info(self, name):
+        """Returns the ZoneInfo object containing the configured data
+           for the given zone name. If the zone name did not have any
+           data, returns None"""
+        # add the root dot if the user forgot
+        if len(name) > 0 and name[-1] != '.':
+            name += '.'
+        if name in self._zones:
+            return self._zones[name]
+        else:
+            return None
+
     def config_handler(self, new_config):
         self._max_transfers_in = new_config.get("transfers_in") or self._max_transfers_in
-        self._tsig_key_str = new_config.get('tsig_key') or None
-        if ('master_addr' in new_config) or ('master_port' in new_config):
-            # User should change the port and address together.
-            try:
-                addr = new_config.get('master_addr') or self._master_addr
-                port = new_config.get('master_port') or self._master_port
-                isc.net.parse.addr_parse(addr)
-                isc.net.parse.port_parse(port)
-                self._master_addr = addr
-                self._master_port = port
-            except ValueError:
-                errmsg = "bad format for zone's master: " + str(new_config)
-                log_error(errmsg)
-                return create_answer(1, errmsg)
+        if 'zones' in new_config:
+            self._zones = {}
+            for zone_config in new_config.get('zones'):
+                try:
+                    zone_info = ZoneInfo(zone_config)
+                    self._zones[zone_info.name] = zone_info
+                except XfrinConfigException as xce:
+                    return create_answer(1, str(xce))
 
         return create_answer(0)
 
@@ -454,14 +486,21 @@ class Xfrin:
                 # specify the notifyfrom address and port, according the RFC1996, zone
                 # transfer should starts first from the notifyfrom, but now, let 'TODO' it.
                 (zone_name, rrclass) = self._parse_zone_name_and_class(args)
-                (master_addr) = build_addr_info(self._master_addr, self._master_port)
-                ret = self.xfrin_start(zone_name,
-                                       rrclass,
-                                       self._get_db_file(),
-                                       master_addr,
-                                       self._tsig_key_str,
-                                       True)
-                answer = create_answer(ret[0], ret[1])
+                zone_info = self._get_zone_info(zone_name)
+                if zone_info is None:
+                    # TODO what to do? no info known about zone. defaults?
+                    errmsg = "Got notification to retransfer unknown zone " + zone_name
+                    log_error(errmsg)
+                    answer = create_answer(1, errmsg)
+                else:
+                    (master_addr) = build_addr_info(zone_info.master_addr, zone_info.master_port)
+                    ret = self.xfrin_start(zone_name,
+                                           rrclass,
+                                           self._get_db_file(),
+                                           master_addr,
+                                           zone_info.tsig_key_str,
+                                           True)
+                    answer = create_answer(ret[0], ret[1])
 
             elif command == 'retransfer' or command == 'refresh':
                 # Xfrin receives the retransfer/refresh from cmdctl(sent by bindctl).
@@ -469,12 +508,16 @@ class Xfrin:
                 # master address, or else do transfer from the configured masters.
                 (zone_name, rrclass) = self._parse_zone_name_and_class(args)
                 master_addr = self._parse_master_and_port(args)
+                zone_info = self._get_zone_info(zone_name)
+                tsig_key_str = None
+                if zone_info:
+                    tsig_key_str = zone_info.tsig_key_str
                 db_file = args.get('db_file') or self._get_db_file()
                 ret = self.xfrin_start(zone_name,
                                        rrclass,
                                        db_file,
                                        master_addr,
-                                       self._tsig_key_str,
+                                       tsig_key_str,
                                        (False if command == 'retransfer' else True))
                 answer = create_answer(ret[0], ret[1])
 
@@ -502,8 +545,24 @@ class Xfrin:
         return zone_name, rrclass
 
     def _parse_master_and_port(self, args):
-        port = args.get('port') or self._master_port
-        master = args.get('master') or self._master_addr
+        # check if we have configured info about this zone, in case
+        # port or master are not specified
+        zone_info = self._get_zone_info(args.get('zone_name'))
+
+        port = args.get('port')
+        if port is None:
+            if zone_info is not None:
+                port = zone_info.master_port
+            else:
+                port = DEFAULT_MASTER_PORT
+
+        master = args.get('master')
+        if master is None:
+            if zone_info is not None:
+                master = zone_info.master_addr
+            else:
+                master = DEFAULT_MASTER
+
         return build_addr_info(master, port)
 
     def _get_db_file(self):
