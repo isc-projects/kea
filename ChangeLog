@@ -1,3 +1,14 @@
+235.	[func]		jinmei
+	libdns++: added support for TSIG signing and verification.  It can
+	be done using a newly introduced TSIGContext class.
+	Note: we temporarily disabled support for truncated signature
+	and modified some part of the code introduced in #226 accordingly.
+	We plan to fix this pretty soon.
+	(Trac #812, git ebe0c4b1e66d359227bdd1bd47395fee7b957f14)
+	(Trac #871, git 7c54055c0e47c7a0e36fcfab4b47ff180c0ca8c8)
+	(Trac #813, git ffa2f0672084c1f16e5784cdcdd55822f119feaa)
+	(Trac #893, git 5aaa6c0f628ed7c2093ecdbac93a2c8cf6c94349)
+
 234.	[func]      jerry
 	src/bin/xfrin: update xfrin to use TSIG. Currently it only supports
 	sending a signed TSIG request or SOA request.
