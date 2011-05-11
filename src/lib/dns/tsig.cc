@@ -88,22 +88,23 @@ struct TSIGContext::TSIGContextImpl {
     // The following three are helper methods to compute the digest for
     // TSIG sign/verify in order to unify the common code logic for sign()
     // and verify() and to keep these callers concise.
-    // All methods take OutputBuffer as a local work space, which will be
-    // cleared at the beginning of the methods (and the resulting content
-    // of the buffer is not expected to be used by the caller), so it could
-    // be instantiated inside the method.  We reuse the same instance just
-    // for efficiency reasons.
-    // The methods also take an HMAC object, which will be updated with the
+    // These methods take an HMAC object, which will be updated with the
     // calculated digest.
-    void digestPreviousMAC(OutputBuffer& buffer, HMACPtr hmac) const;
-    void digestTSIGVariables(OutputBuffer& buffer, HMACPtr hmac,
-                             uint16_t rrclass, uint32_t rrttl,
+    // Note: All methods construct a local OutputBuffer as a work space with a
+    // fixed initial buffer size to avoid intermediate buffer extension.
+    // This should be efficient enough, especially for fundamentally expensive
+    // operation like cryptographic sign/verify, but if the creation of the
+    // buffer in each helper method is still identified to be a severe
+    // performance bottleneck, we could have this class a buffer as a member
+    // variable and reuse it throughout the object's lifetime.  Right now,
+    // we prefer keeping the scope for local things as small as possible.
+    void digestPreviousMAC(HMACPtr hmac) const;
+    void digestTSIGVariables(HMACPtr hmac, uint16_t rrclass, uint32_t rrttl,
                              uint64_t time_signed, uint16_t fudge,
                              uint16_t error, uint16_t otherlen,
                              const void* otherdata,
                              bool time_variables_only) const;
-    void digestDNSMessage(OutputBuffer& buffer, HMACPtr hmac,
-                          uint16_t qid, const void* data,
+    void digestDNSMessage(HMACPtr hmac, uint16_t qid, const void* data,
                           size_t data_len) const;
     State state_;
     const TSIGKey key_;
@@ -113,15 +114,12 @@ struct TSIGContext::TSIGContextImpl {
 };
 
 void
-TSIGContext::TSIGContextImpl::digestPreviousMAC(OutputBuffer& buffer,
-                                                HMACPtr hmac) const
-{
-    buffer.clear();
-
+TSIGContext::TSIGContextImpl::digestPreviousMAC(HMACPtr hmac) const {
     // We should have ensured the digest size fits 16 bits within this class
     // implementation.
     assert(previous_digest_.size() <= 0xffff);
 
+    OutputBuffer buffer(sizeof(uint16_t) + previous_digest_.size());
     const uint16_t previous_digest_len(previous_digest_.size());
     buffer.writeUint16(previous_digest_len);
     if (previous_digest_len != 0) {
@@ -132,11 +130,20 @@ TSIGContext::TSIGContextImpl::digestPreviousMAC(OutputBuffer& buffer,
 
 void
 TSIGContext::TSIGContextImpl::digestTSIGVariables(
-    OutputBuffer& buffer, HMACPtr hmac, uint16_t rrclass, uint32_t rrttl,
-    uint64_t time_signed, uint16_t fudge, uint16_t error, uint16_t otherlen,
-    const void* otherdata, bool time_variables_only) const
+    HMACPtr hmac, uint16_t rrclass, uint32_t rrttl, uint64_t time_signed,
+    uint16_t fudge, uint16_t error, uint16_t otherlen, const void* otherdata,
+    bool time_variables_only) const
 {
-    buffer.clear();
+    // It's bit complicated, but we can still predict the necessary size of
+    // the data to be digested.  So we precompute it to avoid possible
+    // reallocation inside OutputBuffer (not absolutely necessary, but this
+    // is a bit more efficient)
+    size_t data_size = 8;
+    if (!time_variables_only) {
+        data_size += 10 + key_.getKeyName().getLength() +
+            key_.getAlgorithmName().getLength();
+    }
+    OutputBuffer buffer(data_size);
 
     if (!time_variables_only) {
         key_.getKeyName().toWire(buffer);
@@ -147,16 +154,15 @@ TSIGContext::TSIGContextImpl::digestTSIGVariables(
     buffer.writeUint16(time_signed >> 32);
     buffer.writeUint32(time_signed & 0xffffffff);
     buffer.writeUint16(fudge);
-    hmac->update(buffer.getData(), buffer.getLength());
 
     if (!time_variables_only) {
-        buffer.clear();
         buffer.writeUint16(error);
         buffer.writeUint16(otherlen);
-        hmac->update(buffer.getData(), buffer.getLength());
-        if (otherlen > 0) {
-            hmac->update(otherdata, otherlen);
-        }
+    }
+
+    hmac->update(buffer.getData(), buffer.getLength());
+    if (!time_variables_only && otherlen > 0) {
+        hmac->update(otherdata, otherlen);
     }
 }
 
@@ -175,12 +181,11 @@ namespace {
 const size_t MESSAGE_HEADER_LEN = 12;
 }
 void
-TSIGContext::TSIGContextImpl::digestDNSMessage(OutputBuffer& buffer,
-                                               HMACPtr hmac,
+TSIGContext::TSIGContextImpl::digestDNSMessage(HMACPtr hmac,
                                                uint16_t qid, const void* data,
                                                size_t data_len) const
 {
-    buffer.clear();
+    OutputBuffer buffer(MESSAGE_HEADER_LEN);
     const uint8_t* msgptr = static_cast<const uint8_t*>(data);
 
     // Install the original ID
@@ -271,7 +276,6 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
         return (tsig);
     }
 
-    OutputBuffer variables(0);
     HMACPtr hmac(CryptoLink::getCryptoLink().createHMAC(
                      impl_->key_.getSecret(),
                      impl_->key_.getSecretLength(),
@@ -281,7 +285,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
     // If the context has previous MAC (either the Request MAC or its own
     // previous MAC), digest it.
     if (impl_->state_ != INIT) {
-        impl_->digestPreviousMAC(variables, hmac);
+        impl_->digestPreviousMAC(hmac);
     }
 
     // Digest the message (without TSIG)
@@ -304,8 +308,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
     // Then calculate the digest.  If state_ is SENT_RESPONSE we are sending
     // a continued message in the same TCP stream so skip digesting
     // variables except for time related variables (RFC2845 4.4).
-    impl_->digestTSIGVariables(variables, hmac,
-                               TSIGRecord::getClass().getCode(),
+    impl_->digestTSIGVariables(hmac, TSIGRecord::getClass().getCode(),
                                TSIGRecord::TSIG_TTL, time_signed,
                                DEFAULT_FUDGE, error.getCode(),
                                otherlen, otherdata,
@@ -403,7 +406,6 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
         return (impl_->postVerifyUpdate(error, NULL, 0));
     }
 
-    OutputBuffer variables(0);
     HMACPtr hmac(CryptoLink::getCryptoLink().createHMAC(
                      impl_->key_.getSecret(),
                      impl_->key_.getSecretLength(),
@@ -413,14 +415,14 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
     // If the context has previous MAC (either the Request MAC or its own
     // previous MAC), digest it.
     if (impl_->state_ != INIT) {
-        impl_->digestPreviousMAC(variables, hmac);
+        impl_->digestPreviousMAC(hmac);
     }
 
     //
     // Digest DNS message (excluding the trailing TSIG RR and adjusting the
     // QID and ARCOUNT header fields)
     //
-    impl_->digestDNSMessage(variables, hmac, tsig_rdata.getOriginalID(),
+    impl_->digestDNSMessage(hmac, tsig_rdata.getOriginalID(),
                             data, data_len - record->getLength());
 
     // Digest TSIG variables.  If state_ is VERIFIED_RESPONSE, it's a
@@ -429,8 +431,7 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
     // Note: we use the constant values for RR class and TTL specified
     // in RFC2845, not received values (we reject other values in constructing
     // the TSIGRecord).
-    impl_->digestTSIGVariables(variables, hmac,
-                               TSIGRecord::getClass().getCode(),
+    impl_->digestTSIGVariables(hmac, TSIGRecord::getClass().getCode(),
                                TSIGRecord::TSIG_TTL,
                                tsig_rdata.getTimeSigned(),
                                tsig_rdata.getFudge(), tsig_rdata.getError(),
