@@ -12,8 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <cassert>
 #include <errno.h>
 #include <string.h>
+#include <iostream>
 
 #include <iostream>
 #include <fstream>
@@ -25,45 +27,50 @@
 
 using namespace std;
 
-namespace isc {
-namespace log {
-
-// Virtual destructor.
-MessageReader::~MessageReader() {
+namespace {
+const char DIRECTIVE_FLAG = '$';    // Starts each directive
+const char MESSAGE_FLAG = '%';      // Starts each message
 }
 
+
+namespace isc {
+namespace log {
 
 // Read the file.
 
 void
 MessageReader::readFile(const string& file, MessageReader::Mode mode) {
 
-    // Ensure the non-added collection is empty: this object might be
-    // being reused.
+    // Ensure the non-added collection is empty: we could be re-using this
+    // object.
     not_added_.clear();
 
-    // Open the file
+    // Open the file.
     ifstream infile(file.c_str());
     if (infile.fail()) {
-        throw MessageException(MSG_OPNMSGIN, file, strerror(errno));
+        throw MessageException(MSG_OPENIN, file, strerror(errno));
     }
 
-    // Loop round reading it.
+    // Loop round reading it.  As we process the file one line at a time,
+    // keep a track of line number of aid diagnosis of problems.
     string line;
     getline(infile, line);
+    lineno_ = 0;
+
     while (infile.good()) {
+        ++lineno_;
         processLine(line, mode);
         getline(infile, line);
     }
 
     // Why did the loop terminate?
     if (!infile.eof()) {
-        throw MessageException(MSG_MSGRDERR, file, strerror(errno));
+        throw MessageException(MSG_READERR, file, strerror(errno));
     }
     infile.close();
 }
 
-// Parse a line of the file
+// Parse a line of the file.
 
 void
 MessageReader::processLine(const string& line, MessageReader::Mode mode) {
@@ -74,15 +81,16 @@ MessageReader::processLine(const string& line, MessageReader::Mode mode) {
     if (text.empty()) {
         ;                           // Ignore blank lines
 
-    } else if ((text[0] == '#') || (text[0] == '+')) {
-        ;                           // Ignore comments or descriptions
-
-    } else if (text[0] == '$') {
+    } else if (text[0] == DIRECTIVE_FLAG) {
         parseDirective(text);       // Process directives
 
-    } else {
-        parseMessage(text, mode);   // Process other lines
 
+    } else if (text[0] == MESSAGE_FLAG) {
+        parseMessage(text, mode);   // Process message definition line
+
+    } else {
+        ;                           // Other lines are extended message
+                                    // description so are ignored
     }
 }
 
@@ -99,130 +107,162 @@ MessageReader::parseDirective(const std::string& text) {
     isc::util::str::uppercase(tokens[0]);
     if (tokens[0] == string("$PREFIX")) {
         parsePrefix(tokens);
+
     } else if (tokens[0] == string("$NAMESPACE")) {
         parseNamespace(tokens);
+
     } else {
-        throw MessageException(MSG_UNRECDIR, tokens[0]);
+
+        // Unrecognised directive
+        throw MessageException(MSG_UNRECDIR, tokens[0], lineno_);
     }
 }
 
 // Process $PREFIX
-
 void
 MessageReader::parsePrefix(const vector<string>& tokens) {
 
-    // Check argument count
+    // Should not get here unless there is something in the tokens array.
+    assert(tokens.size() > 0);
 
-    static string valid = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
-    if (tokens.size() < 2) {
-        throw MessageException(MSG_PRFNOARG);
-    } else if (tokens.size() > 2) {
-        throw MessageException(MSG_PRFEXTRARG);
+    // Process $PREFIX.  With no arguments, the prefix is set to the empty
+    // string.  One argument sets the prefix to the to its value and more than
+    // one argument is invalid.
+    if (tokens.size() == 1) {
+        prefix_ = "";
 
+    } else if (tokens.size() == 2) {
+        prefix_ = tokens[1];
+
+        // Token is potentially valid providing it only contains alphabetic
+        // and numeric characters (and underscores) and does not start with a
+        // digit.
+        if (invalidSymbol(prefix_)) {
+            throw MessageException(MSG_PRFINVARG, prefix_, lineno_);
+        }
+
+    } else {
+
+        // Too many arguments
+        throw MessageException(MSG_PRFEXTRARG, lineno_);
     }
+}
 
-    // As a style, we are going to have the symbols in uppercase
-    string prefix = tokens[1];
-    isc::util::str::uppercase(prefix);
-
-    // Token is potentially valid providing it only contains alphabetic
-    // and numeric characters (and underscores) and does not start with a
-    // digit.
-    if ((prefix.find_first_not_of(valid) != string::npos) ||
-        (std::isdigit(prefix[0]))) {
-
-        // Invalid character in string or it starts with a digit.
-        throw MessageException(MSG_PRFINVARG, tokens[1]);
-    }
-
-    // All OK - unless the prefix has already been set.
-
-    if (prefix_.size() != 0) {
-        throw MessageException(MSG_DUPLPRFX);
-    }
-
-    // Prefix has not been set, so set it and return success.
-
-    prefix_ = prefix;
+// Check if string is an invalid C++ symbol.  It is valid if comprises only
+// alphanumeric characters and underscores, and does not start with a digit.
+// (Owing to the logic of the rest of the code, we check for its invalidity,
+// not its validity.)
+bool
+MessageReader::invalidSymbol(const string& symbol) {
+    static const string valid_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                      "abcdefghijklmnopqrstuvwxyz"
+                                      "0123456789_";
+    return ( symbol.empty() ||
+            (symbol.find_first_not_of(valid_chars) != string::npos) ||
+            (std::isdigit(symbol[0])));
 }
 
 // Process $NAMESPACE.  A lot of the processing is similar to that of $PREFIX,
 // except that only limited checks will be done on the namespace (to avoid a
-// lot of parsing and separating out of the namespace components.)
+// lot of parsing and separating out of the namespace components.)  Also, unlike
+// $PREFIX, there can only be one $NAMESPACE in a file.
 
 void
 MessageReader::parseNamespace(const vector<string>& tokens) {
 
     // Check argument count
-
-    static string valid = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_:"
-        "abcdefghijklmnopqrstuvwxyz";
-
     if (tokens.size() < 2) {
-        throw MessageException(MSG_NSNOARG);
+        throw MessageException(MSG_NSNOARG, lineno_);
 
     } else if (tokens.size() > 2) {
-        throw MessageException(MSG_NSEXTRARG);
+        throw MessageException(MSG_NSEXTRARG, lineno_);
 
     }
 
     // Token is potentially valid providing it only contains alphabetic
-    // and numeric characters (and underscores and colons).
-    if (tokens[1].find_first_not_of(valid) != string::npos) {
-
-        // Invalid character in string or it starts with a digit.
-        throw MessageException(MSG_NSINVARG, tokens[1]);
+    // and numeric characters (and underscores and colons).  As noted above,
+    // we won't be exhaustive - after all, and code containing the resultant
+    // namespace will have to be compiled, and the compiler will catch errors.
+    static const string valid_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                      "abcdefghijklmnopqrstuvwxyz"
+                                      "0123456789_:";
+    if (tokens[1].find_first_not_of(valid_chars) != string::npos) {
+        throw MessageException(MSG_NSINVARG, tokens[1], lineno_);
     }
 
     // All OK - unless the namespace has already been set.
     if (ns_.size() != 0) {
-        throw MessageException(MSG_DUPLNS);
+        throw MessageException(MSG_DUPLNS, lineno_);
     }
 
     // Prefix has not been set, so set it and return success.
-
     ns_ = tokens[1];
 }
 
 // Process message.  By the time this method is called, the line has been
-// stripped of leading and trailing spaces, and we believe that it is a line
-// defining a message.  The first token on the line is converted to uppercase
-// and becomes the message ID; the rest of the line is the message text.
+// stripped of leading and trailing spaces.  The first character of the string
+// is the message introducer, so we can get rid of that.  The remainder is
+// a line defining a message.
+//
+// The first token on the line, when concatenated to the prefix and converted to
+// upper-case, is the message ID.  The first of the line from the next token
+// on is the message text.
 
 void
 MessageReader::parseMessage(const std::string& text, MessageReader::Mode mode) {
 
     static string delimiters("\t\n ");   // Delimiters
 
+    // The line passed should be at least one character long and start with the
+    // message introducer (else we should not have got here).
+    assert((text.size() >= 1) && (text[0] == MESSAGE_FLAG));
+
+    // A line comprising just the message introducer is not valid.
+    if (text.size() == 1) {
+        throw MessageException(MSG_NOMSGID, text, lineno_);
+    }
+
+    // Strip off the introducer and any leading space after that.
+    string message_line = isc::util::str::trim(text.substr(1));
+
     // Look for the first delimiter.
-    size_t first_delim = text.find_first_of(delimiters);
+    size_t first_delim = message_line.find_first_of(delimiters);
     if (first_delim == string::npos) {
 
         // Just a single token in the line - this is not valid
-        throw MessageException(MSG_NOMSGTXT, text);
+        throw MessageException(MSG_NOMSGTXT, message_line, lineno_);
     }
 
-    // Extract the first token into the message ID
-    string ident = text.substr(0, first_delim);
+    // Extract the first token into the message ID, preceding it with the
+    // current prefix, then convert to upper-case.  If the prefix is not set,
+    // perform the valid character check now - the string will become a C++
+    // symbol so we may as well identify problems early.
+    string ident = prefix_ + message_line.substr(0, first_delim);
+    if (prefix_.empty()) {
+        if (invalidSymbol(ident)) {
+            throw MessageException(MSG_INVMSGID, ident, lineno_);
+        }
+    }
+    isc::util::str::uppercase(ident);
 
     // Locate the start of the message text
-    size_t first_text = text.find_first_not_of(delimiters, first_delim);
+    size_t first_text = message_line.find_first_not_of(delimiters, first_delim);
     if (first_text == string::npos) {
 
         // ?? This happens if there are trailing delimiters, which should not
         // occur as we have stripped trailing spaces off the line.  Just treat
         // this as a single-token error for simplicity's sake.
-        throw MessageException(MSG_NOMSGTXT, text);
+        throw MessageException(MSG_NOMSGTXT, message_line, lineno_);
     }
 
     // Add the result to the dictionary and to the non-added list if the add to
     // the dictionary fails.
     bool added;
     if (mode == ADD) {
-        added = dictionary_->add(ident, text.substr(first_text));
+        added = dictionary_->add(ident, message_line.substr(first_text));
     }
     else {
-        added = dictionary_->replace(ident, text.substr(first_text));
+        added = dictionary_->replace(ident, message_line.substr(first_text));
     }
     if (!added) {
         not_added_.push_back(ident);

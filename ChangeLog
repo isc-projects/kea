@@ -1,3 +1,93 @@
+234.	[func]      jerry
+	src/bin/xfrin: update xfrin to use TSIG. Currently it only supports
+	sending a signed TSIG request or SOA request.
+	(Trac #815, git a892818fb13a1839c82104523cb6cb359c970e88)
+
+233.	[func]      stephen
+	Added new-style logging statements to the NSAS code.
+	(Trac #745, git ceef68cd1223ae14d8412adbe18af2812ade8c2d)
+
+232.	[func]      stephen
+	To facilitate the writing of extended descriptions in message files,
+	altered the message file format.  The message is now flagged with a "%"
+	as the first non-blank character in the line and the lines in the
+	extended description are no longer preceded by a "+".
+	(Trac #900, git b395258c708b49a5da8d0cffcb48d83294354ba3)
+
+231.	[func]*
+	The logging interface changed slightly. We use
+	logger.foo(MESSAGE_ID).arg(bar); instead of logger.foo(MESSAGE_ID, bar);
+	internally. The message definitions use '%1,%2,...' instead of '%s,%d',
+	which allows us to cope better with mismatched placeholders and allows
+	reordering of them in case of translation.
+	(Trac901, git 4903410e45670b30d7283f5d69dc28c2069237d6)
+
+230.	[bug]		naokikambe
+	Removed too repeated verbose messages in two cases of:
+	 - when auth sends statistics data to stats
+	 - when stats receives statistics data from other modules
+	(Trac#620, git 0ecb807011196eac01f281d40bc7c9d44565b364)
+
+229.	[doc]		jreed
+	Add manual page for b10-host.
+	(git a437d4e26b81bb07181ff35a625c540703eee845)
+
+228.	[func]*		jreed
+	The host tool is renamed to b10-host. While the utility is
+	a work in progress, it is expected to now be shipped with
+	tarballs. Its initial goal was to be a host(1) clone,
+	rewritten in C++ from scratch and using BIND 10's libdns++.
+	It now supports the -a (any), -c class, -d (verbose) switches
+	and has improved output.
+	(Trac #872, git d846851699d5c76937533adf9ff9d948dfd593ca)
+
+227.	[build]		jreed
+	Add missing libdns++ rdata files for the distribution (this
+	fixes distcheck error). Change three generated libdns++
+	headers to "nodist" so they aren't included in the distribution
+	(they were mistakenly included in last tarball).
+
+226.	[func]*		jelte
+	Introduced an API for cryptographic operations. Currently it only
+	supports HMAC, intended for use with TSIG. The current
+	implementation uses Botan as the backend library.
+	This introduces a new dependency, on Botan.  Currently only Botan
+	1.8.x works; older or newer versions don't.
+	(Trac #781, git 9df42279a47eb617f586144dce8cce680598558a)
+
+225.	[func]		naokikambe
+	Added the HTTP/XML interface(b10-stats-httpd) to the
+	statistics feature in BIND 10. b10-stats-httpd is a standalone
+	HTTP server and it requests statistics data to the stats
+	daemon(b10-stats) and sends it to HTTP clients in XML
+	format. Items of the data collected via b10-stats-httpd
+	are almost equivalent to ones which are collected via
+	bindctl. Since it also can send XSL(Extensible Stylessheet
+	Language) document and XSD(XML Schema definition) document,
+	XML document is human-friendly to view through web browsers
+	and its data types are strictly defined.
+	(Trac #547, git 1cbd51919237a6e65983be46e4f5a63d1877b1d3)
+
+224.	[bug]		jinmei
+	b10-auth, src/lib/datasrc: inconsistency between the hot spot
+	cache and actual data source could cause a crash while query
+	processing.  The crash could happen, e.g., when an sqlite3 DB file
+	is being updated after a zone transfer while b10-auth handles a
+	query using the corresponding sqlite3 data source.
+	(Trac #851, git 2463b96680bb3e9a76e50c38a4d7f1d38d810643)
+
+223.	[bug]		feng
+	If ip address or port isn't usable for name server, name
+	server process won't exist and give end user chance to
+	reconfigure them.
+	(Trac #775, git 572ac2cf62e18f7eb69d670b890e2a3443bfd6e7)
+
+222.	[bug]		jerry
+	src/lib/zonemgr: Fix a bug that xfrin not checking for new copy of
+	zone on startup.  Imposes some random jitters to avoid many zones
+	need to do refresh at the same time.
+	(Trac #387, svn 9140fab9bab5f6502bd15d391fd51ac078b0b89b)
+
 221.	[func]*		jerry
 	src/lib/util: Create C++ utility library.
 	(Trac #749, git 084d1285d038d31067f8cdbb058d626acf03566d)
@@ -7,7 +97,7 @@
 	(potentially) bad packets to a nameserver and prints the responses.
 	(Trac #703, git 1b666838b6c0fe265522b30971e878d9f0d21fde)
 
-219.    [func]          ocean
+219.	[func]		ocean
 	src/lib: move some dns related code out of asiolink library to
 	asiodns library
 	(Trac #751, git 262ac6c6fc61224d54705ed4c700dadb606fcb1c)
@@ -17,9 +107,9 @@
 	(Trac #806, git 4e47d5f6b692c63c907af6681a75024450884a88)
 
 217.	[bug]		jerry
-	src/lib/dns/python: Use a signed version of larger size of integer and
-	perform more strict range checks with PyArg_ParseTuple() in case of
-	overflows.
+	src/lib/dns/python: Use a signed version of larger size of
+	integer and perform more strict range checks with
+	PyArg_ParseTuple() in case of overflows.
 	(Trac #363, git ce281e646be9f0f273229d94ccd75bf7e08d17cf)
 
 216.	[func]		vorner
@@ -1041,7 +1131,7 @@ bind10-devel-20100701 released on July 1, 2010
 55.	[bug]		shane
 	bin/xfrout: xfrout exception on Ctrl-C now no longer generates
 	exception for 'Interrupted system call'
-	(Track #136, svn r2147)
+	(Trac #136, svn r2147)
 
 54.	[bug]		zhanglikun
 	bin/xfrout: Enable b10-xfrout can be launched in source

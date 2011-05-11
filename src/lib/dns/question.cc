@@ -56,7 +56,7 @@ Question::toWire(OutputBuffer& buffer) const {
 }
 
 unsigned int
-Question::toWire(MessageRenderer& renderer) const {
+Question::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeName(name_);
     rrtype_.toWire(renderer);
     rrclass_.toWire(renderer);

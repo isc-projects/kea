@@ -15,6 +15,8 @@
 #ifndef __TIME_UTILITIES_H
 #define __TIME_UTILITIES_H 1
 
+#include <string>
+
 #include <sys/types.h>
 #include <stdint.h>
 
@@ -38,6 +40,32 @@ public:
     InvalidTime(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
+
+namespace detail {
+/// Return the current time in seconds
+///
+/// This function returns the "current" time in seconds from epoch
+/// (00:00:00 January 1, 1970) as a 64-bit signed integer.  The return
+/// value can represent a point of time before epoch as a negative number.
+///
+/// This function is provided to help test time conscious implementations
+/// such as DNSSEC and TSIG signatures.  It is difficult to test them with
+/// an unusual or a specifically chosen "current" via system-provided
+/// library functions to get time.  This function acts as a straightforward
+/// wrapper of such a library function, but provides test code with a hook
+/// to return an arbitrary time value: if \c isc::util::detail::gettimeFunction
+/// is set to a pointer of function that returns 64-bit signed integer,
+/// \c gettimeWrapper() calls that function instead of the system library.
+///
+/// This hook variable is specifically intended for testing purposes, so,
+/// even if it's visible outside of this library, it's not even declared in a
+/// header file.
+///
+/// If the implementation doesn't need to be tested with faked current time,
+/// it should simply use the system supplied library function instead of
+/// this one.
+int64_t gettimeWrapper();
+}
 
 ///
 /// \name DNSSEC time conversion functions.
