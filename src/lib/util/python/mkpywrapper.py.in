@@ -70,7 +70,7 @@ def dump_wrappers(class_name, output, module):
         if output == "-":
             impl_file = sys.stdout
         else:
-            impl_file = open(class_name.lower() + "_python.cc", "w")
+            impl_file = open(output + "_python.cc", "w")
         impl_template_file = open("wrapper_template.cc", "r")
     except:
         sys.stderr.write('Failed to open C++ file(s)\n')
