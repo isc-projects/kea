@@ -15,8 +15,7 @@
 
 from isc.config.module_spec import module_spec_from_file
 from isc.util.file import path_search
-from isc.dns import TSIGKey
-import pydnspp
+from pydnspp import TSIGKey, InvalidParameter
 from bind10_config import PLUGIN_PATHS
 spec = module_spec_from_file(path_search('tsig_keys.spec', PLUGIN_PATHS))
 
@@ -32,7 +31,7 @@ def check(config):
     for key in keys:
         try:
             name = str(TSIGKey(key).get_key_name())
-        except pydnspp.InvalidParameter as e:
+        except InvalidParameter as e:
             return "TSIG: " + str(e)
         if name in keyNames:
             return "Multiple TSIG keys with name '" + name + "'"
