@@ -25,6 +25,9 @@ run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 run_unittests_LDFLAGS += $(top_builddir)/src/lib/log/liblog.la
 run_unittests_LDFLAGS += $(top_builddir)/src/lib/exceptions/libexceptions.la
 run_unittests_LDFLAGS += $(top_builddir)/src/lib/util/libutil.la
+run_unittests_LDFLAGS += $(top_builddir)/src/lib/util/io/libutil_io.la
+run_unittests_LDFLAGS += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+run_unittests_LDFLAGS += $(top_builddir)/src/lib/util/libutil.la
 
 run_unittests_LDADD  = $(GTEST_LDADD)
 endif
