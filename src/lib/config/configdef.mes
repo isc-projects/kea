@@ -23,26 +23,26 @@ There was a parse error in the JSON file. The given file does not appear
 to be in valid JSON format. Please verify that the filename is correct
 and that the contents are valid JSON.
 
-% MODULE_SPEC   Module specification error in %1: %2
+% MODULE_SPEC   module specification error in %1: %2
 The given file does not appear to be a valid specification file. Please
 verify that the filename is correct and that its contents are a valid
 BIND10 module specification.
 
-% MANAGER_MOD_SPEC    Module specification not accepted by cfgmgr: %1
+% MANAGER_MOD_SPEC    module specification not accepted by cfgmgr: %1
 The module specification file for this module was rejected by the
 configuration manager. The full error message answer from the
 configuration manager is appended to the log error. The most likely
 cause is that the module is of a different (specification file) version
 than the running configuration manager.
 
-% MANAGER_CONFIG    Error getting configuration from cfgmgr: %1
+% MANAGER_CONFIG    error getting configuration from cfgmgr: %1
 The configuration manager returned an error when this module requested
 the configuration. The full error message answer from the configuration
 manager is appended to the log error. The most likely cause is that
 the module is of a different (command specification) version than the
 running configuration manager.
 
-% CCSESSION_MSG Error in CC session message: %1
+% CCSESSION_MSG error in CC session message: %1
 There was a problem with an incoming message on the command and control
 channel. The message does not appear to be a valid command, and is
 missing a required element or contains an unknown data format. This
