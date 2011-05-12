@@ -12,26 +12,16 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-//
-// Declaration of the custom exceptions
-// Initialization and addition of these go in the module init at the
-// end
-//
-static PyObject* po_EmptyLabel;
-static PyObject* po_TooLongName;
-static PyObject* po_TooLongLabel;
-static PyObject* po_BadLabelType;
-static PyObject* po_BadEscape;
-static PyObject* po_IncompleteName;
-static PyObject* po_InvalidBufferPosition;
-static PyObject* po_DNSMessageFORMERR;
+#include <util/buffer.h>
+#include <util/python/pycppwrapper_util.h>
 
-//
-// Declaration of enums
-// Initialization and addition of these go in the module init at the
-// end
-//
-static PyObject* po_NameRelation;
+#include <dns/exceptions.h>
+#include <dns/messagerenderer.h>
+#include <dns/name.h>
+
+#include "pydnspp_common.h"
+#include "messagerenderer_python.h"
+#include "name_python.h"
 
 //
 // Definition of the classes
@@ -41,21 +31,20 @@ static PyObject* po_NameRelation;
 // and static wrappers around the methods we export), a list of methods,
 // and a type description
 using namespace isc::dns;
+using namespace isc::dns::python;
 using namespace isc::util;
+using namespace isc::util::python;
 
+namespace {
 // NameComparisonResult
-class s_NameComparisonResult : public PyObject {
-public:
-    isc::dns::NameComparisonResult* ncr;
-};
 
-static int NameComparisonResult_init(s_NameComparisonResult*, PyObject*);
-static void NameComparisonResult_destroy(s_NameComparisonResult* self);
-static PyObject* NameComparisonResult_getOrder(s_NameComparisonResult* self);
-static PyObject* NameComparisonResult_getCommonLabels(s_NameComparisonResult* self);
-static PyObject* NameComparisonResult_getRelation(s_NameComparisonResult* self);
+int NameComparisonResult_init(s_NameComparisonResult*, PyObject*);
+void NameComparisonResult_destroy(s_NameComparisonResult* self);
+PyObject* NameComparisonResult_getOrder(s_NameComparisonResult* self);
+PyObject* NameComparisonResult_getCommonLabels(s_NameComparisonResult* self);
+PyObject* NameComparisonResult_getRelation(s_NameComparisonResult* self);
 
-static PyMethodDef NameComparisonResult_methods[] = {
+PyMethodDef NameComparisonResult_methods[] = {
     { "get_order", reinterpret_cast<PyCFunction>(NameComparisonResult_getOrder), METH_NOARGS,
       "Returns the order" },
     { "get_common_labels", reinterpret_cast<PyCFunction>(NameComparisonResult_getCommonLabels), METH_NOARGS,
@@ -65,122 +54,61 @@ static PyMethodDef NameComparisonResult_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
-static PyTypeObject name_comparison_result_type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    "pydnspp.NameComparisonResult",
-    sizeof(s_NameComparisonResult),           // tp_basicsize
-    0,                                        // tp_itemsize
-    (destructor)NameComparisonResult_destroy, // tp_dealloc
-    NULL,                                     // tp_print
-    NULL,                                     // tp_getattr
-    NULL,                                     // tp_setattr
-    NULL,                                     // tp_reserved
-    NULL,                                     // tp_repr
-    NULL,                                     // tp_as_number
-    NULL,                                     // tp_as_sequence
-    NULL,                                     // tp_as_mapping
-    NULL,                                     // tp_hash 
-    NULL,                                     // tp_call
-    NULL,                                     // tp_str
-    NULL,                                     // tp_getattro
-    NULL,                                     // tp_setattro
-    NULL,                                     // tp_as_buffer
-    Py_TPFLAGS_DEFAULT,                       // tp_flags
-    "This is a supplemental class used only as a return value of Name.compare(). "
-    "It encapsulate a tuple of the comparison: ordering, number of common labels, "
-    "and relationship as follows:\n"
-    "- ordering: relative ordering under the DNSSEC order relation\n"
-    "- labels: the number of common significant labels of the two names being"
-    "  compared\n"
-    "- relationship: see NameComparisonResult.NameRelation\n",
-    NULL,                                     // tp_traverse
-    NULL,                                     // tp_clear
-    NULL,                                     // tp_richcompare
-    0,                                        // tp_weaklistoffset
-    NULL,                                     // tp_iter
-    NULL,                                     // tp_iternext
-    NameComparisonResult_methods,             // tp_methods
-    NULL,                                     // tp_members
-    NULL,                                     // tp_getset
-    NULL,                                     // tp_base
-    NULL,                                     // tp_dict
-    NULL,                                     // tp_descr_get
-    NULL,                                     // tp_descr_set
-    0,                                        // tp_dictoffset
-    (initproc)NameComparisonResult_init,      // tp_init
-    NULL,                                     // tp_alloc
-    PyType_GenericNew,                        // tp_new
-    NULL,                                     // tp_free
-    NULL,                                     // tp_is_gc
-    NULL,                                     // tp_bases
-    NULL,                                     // tp_mro
-    NULL,                                     // tp_cache
-    NULL,                                     // tp_subclasses
-    NULL,                                     // tp_weaklist
-    NULL,                                     // tp_del
-    0                                         // tp_version_tag
-};
-
-static int
+int
 NameComparisonResult_init(s_NameComparisonResult*, PyObject*) {
     PyErr_SetString(PyExc_NotImplementedError,
                     "NameComparisonResult can't be built directly");
     return (-1);
 }
 
-static void
+void
 NameComparisonResult_destroy(s_NameComparisonResult* self) {
-    delete self->ncr;
-    self->ncr = NULL;
+    delete self->cppobj;
+    self->cppobj = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
-static PyObject* 
+PyObject*
 NameComparisonResult_getOrder(s_NameComparisonResult* self) {
-    return (Py_BuildValue("i", self->ncr->getOrder()));
+    return (Py_BuildValue("i", self->cppobj->getOrder()));
 }
 
-static PyObject* 
+PyObject*
 NameComparisonResult_getCommonLabels(s_NameComparisonResult* self) {
-    return (Py_BuildValue("I", self->ncr->getCommonLabels()));
+    return (Py_BuildValue("I", self->cppobj->getCommonLabels()));
 }
 
-static PyObject* 
+PyObject*
 NameComparisonResult_getRelation(s_NameComparisonResult* self) {
-    return (Py_BuildValue("I", self->ncr->getRelation()));
+    return (Py_BuildValue("I", self->cppobj->getRelation()));
 }
-
 // end of NameComparisonResult
 
 // Name
+// Shortcut type which would be convenient for adding class variables safely.
+typedef CPPPyObjectContainer<s_Name, Name> NameContainer;
 
-class s_Name : public PyObject {
-public:
-    isc::dns::Name* name;
-    size_t position;
-};
+int Name_init(s_Name* self, PyObject* args);
+void Name_destroy(s_Name* self);
 
-static int Name_init(s_Name* self, PyObject* args);
-static void Name_destroy(s_Name* self);
+PyObject* Name_toWire(s_Name* self, PyObject* args);
+PyObject* Name_toText(s_Name* self);
+PyObject* Name_str(PyObject* self);
+PyObject* Name_getLabelCount(s_Name* self);
+PyObject* Name_at(s_Name* self, PyObject* args);
+PyObject* Name_getLength(s_Name* self);
 
-static PyObject* Name_toWire(s_Name* self, PyObject* args);
-static PyObject* Name_toText(s_Name* self);
-static PyObject* Name_str(PyObject* self);
-static PyObject* Name_getLabelCount(s_Name* self);
-static PyObject* Name_at(s_Name* self, PyObject* args);
-static PyObject* Name_getLength(s_Name* self);
+PyObject* Name_compare(s_Name* self, PyObject* args);
+PyObject* Name_equals(s_Name* self, PyObject* args);
 
-static PyObject* Name_compare(s_Name* self, PyObject* args);
-static PyObject* Name_equals(s_Name* self, PyObject* args);
+PyObject* Name_richcmp(s_Name* self, s_Name* other, int op);
+PyObject* Name_split(s_Name* self, PyObject* args);
+PyObject* Name_reverse(s_Name* self);
+PyObject* Name_concatenate(s_Name* self, PyObject* args);
+PyObject* Name_downcase(s_Name* self);
+PyObject* Name_isWildCard(s_Name* self);
 
-static PyObject* Name_richcmp(s_Name* self, s_Name* other, int op);
-static PyObject* Name_split(s_Name* self, PyObject* args);
-static PyObject* Name_reverse(s_Name* self);
-static PyObject* Name_concatenate(s_Name* self, PyObject* args);
-static PyObject* Name_downcase(s_Name* self);
-static PyObject* Name_isWildCard(s_Name* self);
-
-static PyMethodDef Name_methods[] = {
+PyMethodDef Name_methods[] = {
     { "at", reinterpret_cast<PyCFunction>(Name_at), METH_VARARGS,
       "Returns the integer value of the name data at the specified position" },
     { "get_length", reinterpret_cast<PyCFunction>(Name_getLength), METH_NOARGS,
@@ -217,63 +145,7 @@ static PyMethodDef Name_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
-static PyTypeObject name_type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    "pydnspp.Name",
-    sizeof(s_Name),                     // tp_basicsize
-    0,                                  // tp_itemsize
-    (destructor)Name_destroy,           // tp_dealloc
-    NULL,                               // tp_print
-    NULL,                               // tp_getattr
-    NULL,                               // tp_setattr
-    NULL,                               // tp_reserved
-    NULL,                               // tp_repr
-    NULL,                               // tp_as_number
-    NULL,                               // tp_as_sequence
-    NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
-    NULL,                               // tp_call
-    Name_str,                           // tp_str
-    NULL,                               // tp_getattro
-    NULL,                               // tp_setattro
-    NULL,                               // tp_as_buffer
-    Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The Name class encapsulates DNS names.\n"
-    "It provides interfaces to construct a name from string or wire-format data, "
-    "transform a name into a string or wire-format data, compare two names, get "
-    "access to various properties of a name, etc.",
-    NULL,                               // tp_traverse
-    NULL,                               // tp_clear
-    (richcmpfunc)Name_richcmp,          // tp_richcompare
-    0,                                  // tp_weaklistoffset
-    NULL,                               // tp_iter
-    NULL,                               // tp_iternext
-    Name_methods,                       // tp_methods
-    NULL,                               // tp_members
-    NULL,                               // tp_getset
-    NULL,                               // tp_base
-    NULL,                               // tp_dict
-    NULL,                               // tp_descr_get
-    NULL,                               // tp_descr_set
-    0,                                  // tp_dictoffset
-    (initproc)Name_init,                // tp_init
-    NULL,                               // tp_alloc
-    PyType_GenericNew,                  // tp_new
-    NULL,                               // tp_free
-    NULL,                               // tp_is_gc
-    NULL,                               // tp_bases
-    NULL,                               // tp_mro
-    NULL,                               // tp_cache
-    NULL,                               // tp_subclasses
-    NULL,                               // tp_weaklist
-    // Note: not sure if the following are correct.  Added them just to
-    // make the compiler happy.
-    NULL,                               // tp_del
-    0                                   // tp_version_tag
-};
-
-
-static int
+int
 Name_init(s_Name* self, PyObject* args) {
     const char* s;
     PyObject* downcase = Py_False;
@@ -286,7 +158,7 @@ Name_init(s_Name* self, PyObject* args) {
         try {
             const std::string n(s);
 
-            self->name = new Name(n, downcase == Py_True);
+            self->cppobj = new Name(n, downcase == Py_True);
             self->position = 0;
         } catch (const EmptyLabel&) {
             PyErr_SetString(po_EmptyLabel, "EmptyLabel");
@@ -339,7 +211,7 @@ Name_init(s_Name* self, PyObject* args) {
             InputBuffer buffer(bytes, len);
 
             buffer.setPosition(position);
-            self->name = new Name(buffer, downcase == Py_True);
+            self->cppobj = new Name(buffer, downcase == Py_True);
             self->position = buffer.getPosition();
         } catch (const InvalidBufferPosition&) {
             PyErr_SetString(po_InvalidBufferPosition,
@@ -361,14 +233,14 @@ Name_init(s_Name* self, PyObject* args) {
     return (-1);
 }
 
-static void
+void
 Name_destroy(s_Name* self) {
-    delete self->name;
-    self->name = NULL;
+    delete self->cppobj;
+    self->cppobj = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
-static PyObject*
+PyObject*
 Name_at(s_Name* self, PyObject* args) {
     int pos;
     if (!PyArg_ParseTuple(args, "i", &pos)) {
@@ -382,7 +254,7 @@ Name_at(s_Name* self, PyObject* args) {
     }
 
     try {
-        return (Py_BuildValue("I", self->name->at(pos)));
+        return (Py_BuildValue("I", self->cppobj->at(pos)));
     } catch (const isc::OutOfRange&) {
         PyErr_SetString(PyExc_IndexError,
                         "name index out of range");
@@ -390,22 +262,22 @@ Name_at(s_Name* self, PyObject* args) {
     }
 }
 
-static PyObject*
+PyObject*
 Name_getLength(s_Name* self) {
-    return (Py_BuildValue("i", self->name->getLength()));
+    return (Py_BuildValue("i", self->cppobj->getLength()));
 }
 
-static PyObject*
+PyObject*
 Name_getLabelCount(s_Name* self) {
-    return (Py_BuildValue("i", self->name->getLabelCount()));
+    return (Py_BuildValue("i", self->cppobj->getLabelCount()));
 }
 
-static PyObject*
+PyObject*
 Name_toText(s_Name* self) {
-    return (Py_BuildValue("s", self->name->toText().c_str()));
+    return (Py_BuildValue("s", self->cppobj->toText().c_str()));
 }
 
-static PyObject*
+PyObject*
 Name_str(PyObject* self) {
     // Simply call the to_text method we already defined
     // str() is not defined in the c++ version, only to_text
@@ -415,7 +287,7 @@ Name_str(PyObject* self) {
                                 const_cast<char*>("")));
 }
 
-static PyObject*
+PyObject*
 Name_toWire(s_Name* self, PyObject* args) {
     PyObject* bytes;
     s_MessageRenderer* mr;
@@ -424,7 +296,7 @@ Name_toWire(s_Name* self, PyObject* args) {
         PyObject* bytes_o = bytes;
 
         OutputBuffer buffer(Name::MAX_WIRE);
-        self->name->toWire(buffer);
+        self->cppobj->toWire(buffer);
         PyObject* name_bytes = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()), buffer.getLength());
         PyObject* result = PySequence_InPlaceConcat(bytes_o, name_bytes);
         // We need to release the object we temporarily created here
@@ -432,7 +304,7 @@ Name_toWire(s_Name* self, PyObject* args) {
         Py_DECREF(name_bytes);
         return (result);
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
-        self->name->toWire(*mr->messagerenderer);
+        self->cppobj->toWire(*mr->messagerenderer);
         // If we return NULL it is seen as an error, so use this for
         // None returns
         Py_RETURN_NONE;
@@ -443,7 +315,7 @@ Name_toWire(s_Name* self, PyObject* args) {
     return (NULL);
 }
 
-static PyObject*
+PyObject*
 Name_compare(s_Name* self, PyObject* args) {
     s_Name* other;
 
@@ -452,26 +324,26 @@ Name_compare(s_Name* self, PyObject* args) {
 
     s_NameComparisonResult* ret = PyObject_New(s_NameComparisonResult, &name_comparison_result_type);
     if (ret != NULL) {
-        ret->ncr = new NameComparisonResult(
-            self->name->compare(*other->name));
+        ret->cppobj = new NameComparisonResult(
+            self->cppobj->compare(*other->cppobj));
     }
     return (ret);
 }
 
-static PyObject* 
+PyObject*
 Name_equals(s_Name* self, PyObject* args) {
     s_Name* other;
 
     if (!PyArg_ParseTuple(args, "O!", &name_type, &other))
         return (NULL);
 
-    if (self->name->equals(*other->name))
+    if (self->cppobj->equals(*other->cppobj))
         Py_RETURN_TRUE;
     else
         Py_RETURN_FALSE;
 }
 
-static PyObject*
+PyObject*
 Name_split(s_Name* self, PyObject* args) {
     int first, n;
     s_Name* ret = NULL;
@@ -485,14 +357,14 @@ Name_split(s_Name* self, PyObject* args) {
         }
         ret = PyObject_New(s_Name, &name_type);
         if (ret != NULL) {
-            ret->name = NULL;
+            ret->cppobj = NULL;
             try {
-                ret->name = new Name(self->name->split(first, n));
+                ret->cppobj = new Name(self->cppobj->split(first, n));
             } catch(const isc::OutOfRange& oor) {
                 PyErr_SetString(PyExc_IndexError, oor.what());
-                ret->name = NULL;
+                ret->cppobj = NULL;
             }
-            if (ret->name == NULL) {
+            if (ret->cppobj == NULL) {
                 Py_DECREF(ret);
                 return (NULL);
             }
@@ -507,14 +379,14 @@ Name_split(s_Name* self, PyObject* args) {
         }
         ret = PyObject_New(s_Name, &name_type);
         if (ret != NULL) {
-            ret->name = NULL;
+            ret->cppobj = NULL;
             try {
-                ret->name = new Name(self->name->split(n));
+                ret->cppobj = new Name(self->cppobj->split(n));
             } catch(const isc::OutOfRange& oor) {
                 PyErr_SetString(PyExc_IndexError, oor.what());
-                ret->name = NULL;
+                ret->cppobj = NULL;
             }
-            if (ret->name == NULL) {
+            if (ret->cppobj == NULL) {
                 Py_DECREF(ret);
                 return (NULL);
             }
@@ -526,14 +398,13 @@ Name_split(s_Name* self, PyObject* args) {
                     "No valid type in split argument");
     return (ret);
 }
-#include <iostream>
 
 //
 // richcmp defines the ==, !=, >, <, >= and <= operators in python
 // It is translated to a function that gets 3 arguments, an object,
 // an object to compare to, and an operator.
 //
-static PyObject*
+PyObject*
 Name_richcmp(s_Name* self, s_Name* other, int op) {
     bool c;
 
@@ -545,22 +416,22 @@ Name_richcmp(s_Name* self, s_Name* other, int op) {
 
     switch (op) {
     case Py_LT:
-        c = *self->name < *other->name;
+        c = *self->cppobj < *other->cppobj;
         break;
     case Py_LE:
-        c = *self->name <= *other->name;
+        c = *self->cppobj <= *other->cppobj;
         break;
     case Py_EQ:
-        c = *self->name == *other->name;
+        c = *self->cppobj == *other->cppobj;
         break;
     case Py_NE:
-        c = *self->name != *other->name;
+        c = *self->cppobj != *other->cppobj;
         break;
     case Py_GT:
-        c = *self->name > *other->name;
+        c = *self->cppobj > *other->cppobj;
         break;
     case Py_GE:
-        c = *self->name >= *other->name;
+        c = *self->cppobj >= *other->cppobj;
         break;
     default:
         PyErr_SetString(PyExc_IndexError,
@@ -574,13 +445,13 @@ Name_richcmp(s_Name* self, s_Name* other, int op) {
     }
 }
 
-static PyObject*
+PyObject*
 Name_reverse(s_Name* self) {
     s_Name* ret = PyObject_New(s_Name, &name_type);
 
     if (ret != NULL) {
-        ret->name = new Name(self->name->reverse());
-        if (ret->name == NULL) {
+        ret->cppobj = new Name(self->cppobj->reverse());
+        if (ret->cppobj == NULL) {
             Py_DECREF(ret);
             return (NULL);
         }
@@ -588,7 +459,7 @@ Name_reverse(s_Name* self) {
     return (ret);
 }
 
-static PyObject*
+PyObject*
 Name_concatenate(s_Name* self, PyObject* args) {
     s_Name* other;
 
@@ -598,7 +469,7 @@ Name_concatenate(s_Name* self, PyObject* args) {
     s_Name* ret = PyObject_New(s_Name, &name_type);
     if (ret != NULL) {
         try {
-            ret->name = new Name(self->name->concatenate(*other->name));
+            ret->cppobj = new Name(self->cppobj->concatenate(*other->cppobj));
         } catch (const TooLongName& tln) {
             PyErr_SetString(po_TooLongName, tln.what());
             return (NULL);
@@ -607,23 +478,159 @@ Name_concatenate(s_Name* self, PyObject* args) {
     return (ret);
 }
 
-static PyObject*
+PyObject*
 Name_downcase(s_Name* self) {
-    self->name->downcase();
+    self->cppobj->downcase();
     Py_INCREF(self);
     return (self);
 }
 
-static PyObject*
+PyObject*
 Name_isWildCard(s_Name* self) {
-    if (self->name->isWildcard()) {
+    if (self->cppobj->isWildcard()) {
         Py_RETURN_TRUE;
     } else {
         Py_RETURN_FALSE;
     }
 }
 // end of Name
+} // end of unnamed namespace
 
+namespace isc {
+namespace dns {
+namespace python {
+
+//
+// Definition of the custom exceptions
+// Initialization and addition of these go in the module init at the
+// end
+//
+PyObject* po_EmptyLabel;
+PyObject* po_TooLongName;
+PyObject* po_TooLongLabel;
+PyObject* po_BadLabelType;
+PyObject* po_BadEscape;
+PyObject* po_IncompleteName;
+PyObject* po_InvalidBufferPosition;
+PyObject* po_DNSMessageFORMERR;
+
+//
+// Definition of enums
+// Initialization and addition of these go in the module init at the
+// end
+//
+PyObject* po_NameRelation;
+
+PyTypeObject name_comparison_result_type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "pydnspp.NameComparisonResult",
+    sizeof(s_NameComparisonResult),           // tp_basicsize
+    0,                                        // tp_itemsize
+    (destructor)NameComparisonResult_destroy, // tp_dealloc
+    NULL,                                     // tp_print
+    NULL,                                     // tp_getattr
+    NULL,                                     // tp_setattr
+    NULL,                                     // tp_reserved
+    NULL,                                     // tp_repr
+    NULL,                                     // tp_as_number
+    NULL,                                     // tp_as_sequence
+    NULL,                                     // tp_as_mapping
+    NULL,                                     // tp_hash
+    NULL,                                     // tp_call
+    NULL,                                     // tp_str
+    NULL,                                     // tp_getattro
+    NULL,                                     // tp_setattro
+    NULL,                                     // tp_as_buffer
+    Py_TPFLAGS_DEFAULT,                       // tp_flags
+    "This is a supplemental class used only as a return value of Name.compare(). "
+    "It encapsulate a tuple of the comparison: ordering, number of common labels, "
+    "and relationship as follows:\n"
+    "- ordering: relative ordering under the DNSSEC order relation\n"
+    "- labels: the number of common significant labels of the two names being"
+    "  compared\n"
+    "- relationship: see NameComparisonResult.NameRelation\n",
+    NULL,                                     // tp_traverse
+    NULL,                                     // tp_clear
+    NULL,                                     // tp_richcompare
+    0,                                        // tp_weaklistoffset
+    NULL,                                     // tp_iter
+    NULL,                                     // tp_iternext
+    NameComparisonResult_methods,             // tp_methods
+    NULL,                                     // tp_members
+    NULL,                                     // tp_getset
+    NULL,                                     // tp_base
+    NULL,                                     // tp_dict
+    NULL,                                     // tp_descr_get
+    NULL,                                     // tp_descr_set
+    0,                                        // tp_dictoffset
+    (initproc)NameComparisonResult_init,      // tp_init
+    NULL,                                     // tp_alloc
+    PyType_GenericNew,                        // tp_new
+    NULL,                                     // tp_free
+    NULL,                                     // tp_is_gc
+    NULL,                                     // tp_bases
+    NULL,                                     // tp_mro
+    NULL,                                     // tp_cache
+    NULL,                                     // tp_subclasses
+    NULL,                                     // tp_weaklist
+    NULL,                                     // tp_del
+    0                                         // tp_version_tag
+};
+
+PyTypeObject name_type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "pydnspp.Name",
+    sizeof(s_Name),                     // tp_basicsize
+    0,                                  // tp_itemsize
+    (destructor)Name_destroy,           // tp_dealloc
+    NULL,                               // tp_print
+    NULL,                               // tp_getattr
+    NULL,                               // tp_setattr
+    NULL,                               // tp_reserved
+    NULL,                               // tp_repr
+    NULL,                               // tp_as_number
+    NULL,                               // tp_as_sequence
+    NULL,                               // tp_as_mapping
+    NULL,                               // tp_hash
+    NULL,                               // tp_call
+    Name_str,                           // tp_str
+    NULL,                               // tp_getattro
+    NULL,                               // tp_setattro
+    NULL,                               // tp_as_buffer
+    Py_TPFLAGS_DEFAULT,                 // tp_flags
+    "The Name class encapsulates DNS names.\n"
+    "It provides interfaces to construct a name from string or wire-format data, "
+    "transform a name into a string or wire-format data, compare two names, get "
+    "access to various properties of a name, etc.",
+    NULL,                               // tp_traverse
+    NULL,                               // tp_clear
+    (richcmpfunc)Name_richcmp,          // tp_richcompare
+    0,                                  // tp_weaklistoffset
+    NULL,                               // tp_iter
+    NULL,                               // tp_iternext
+    Name_methods,                       // tp_methods
+    NULL,                               // tp_members
+    NULL,                               // tp_getset
+    NULL,                               // tp_base
+    NULL,                               // tp_dict
+    NULL,                               // tp_descr_get
+    NULL,                               // tp_descr_set
+    0,                                  // tp_dictoffset
+    (initproc)Name_init,                // tp_init
+    NULL,                               // tp_alloc
+    PyType_GenericNew,                  // tp_new
+    NULL,                               // tp_free
+    NULL,                               // tp_is_gc
+    NULL,                               // tp_bases
+    NULL,                               // tp_mro
+    NULL,                               // tp_cache
+    NULL,                               // tp_subclasses
+    NULL,                               // tp_weaklist
+    // Note: not sure if the following are correct.  Added them just to
+    // make the compiler happy.
+    NULL,                               // tp_del
+    0                                   // tp_version_tag
+};
 
 // Module Initialization, all statics are initialized here
 bool
@@ -669,7 +676,7 @@ initModulePart_Name(PyObject* mod) {
     addClassVariable(name_type, "COMPRESS_POINTER_MARK16", Py_BuildValue("I", Name::COMPRESS_POINTER_MARK16));
 
     s_Name* root_name = PyObject_New(s_Name, &name_type);
-    root_name->name = new Name(Name::ROOT_NAME());
+    root_name->cppobj = new Name(Name::ROOT_NAME());
     PyObject* po_ROOT_NAME = root_name;
     addClassVariable(name_type, "ROOT_NAME", po_ROOT_NAME);
 
@@ -706,3 +713,13 @@ initModulePart_Name(PyObject* mod) {
 
     return (true);
 }
+
+PyObject*
+createNameObject(const Name& source) {
+    NameContainer container = PyObject_New(s_Name, &name_type);
+    container.set(new Name(source));
+    return (container.release());
+}
+} // namespace python
+} // namespace dns
+} // namespace isc
