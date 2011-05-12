@@ -125,7 +125,11 @@ public:
     ///
     /// \param arg The argument to place into the placeholder.
     template<class Arg> Formatter& arg(const Arg& value) {
-        return (arg(boost::lexical_cast<std::string>(value)));
+        if (logger_) {
+            return (arg(boost::lexical_cast<std::string>(value)));
+        } else {
+            return (*this);
+        }
     }
     /// \brief String version of arg.
     Formatter& arg(const std::string& arg) {
