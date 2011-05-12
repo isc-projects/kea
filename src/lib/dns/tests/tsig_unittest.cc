@@ -871,7 +871,7 @@ TEST_F(TSIGTest, verifyAfterSendResponse) {
                  TSIGContextError);
 }
 
-TEST_F(TSIGTest, signAterVerified) {
+TEST_F(TSIGTest, signAfterVerified) {
     // Likewise, once the context verifies a response, it shouldn't for
     // signing any more.
 

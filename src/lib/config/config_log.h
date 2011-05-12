@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,17 +12,27 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <gtest/gtest.h>
-#include <log/logger_support.h>
+#ifndef __CONFIG_LOG__H
+#define __CONFIG_LOG__H
 
-int
-main(int argc, char* argv[]) {
-    ::testing::InitGoogleTest(&argc, argv);
+#include <log/macros.h>
+#include "configdef.h"
 
-    // TODO: UNCOMMENT ON MERGE
-    // (this is the call we want in master, but branch point does not
-    // have this yet)
-    //isc::log::initLogger();
+namespace isc {
+namespace config {
 
-    return (RUN_ALL_TESTS());
-}
+/// \brief Config Logging
+///
+/// Defines logger object for config log messages
+
+/// \brief Config Logger
+///
+/// Define the logger used to log messages.  We could define it in multiple
+/// modules, but defining in a single module and linking to it saves time and
+/// space.
+extern isc::log::Logger config_logger;    // isc::config::config_logger is the CONFIG logger
+
+} // namespace config
+} // namespace isc
+
+#endif // __CONFIG_LOG__H
