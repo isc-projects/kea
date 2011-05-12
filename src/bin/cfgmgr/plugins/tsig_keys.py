@@ -13,6 +13,12 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+# This is the plugin for tsig_keys configuration section. The TSIG keyring
+# lives there (eg. all the shared secrets, with some exceptions where there
+# are some TSIG keys elsewhere, but these should be removed soon). We do
+# sanity checking of user configuration here, simply by trying to construct
+# all the keys here.
+
 from isc.config.module_spec import module_spec_from_file
 from isc.util.file import path_search
 from pydnspp import TSIGKey, InvalidParameter
@@ -26,7 +32,8 @@ def check(config):
         return ' '.join(errors)
     # Get the list of keys, if any
     keys = config.get('keys', [])
-    # Run trough them, check they can be constructed and there are no dupes
+    # Run through them, check they can be constructed and there are no
+    # duplicates
     keyNames = set()
     for key in keys:
         try:
