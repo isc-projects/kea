@@ -288,6 +288,14 @@ initModulePart_@CPPCLASS@(PyObject* mod) {
 
     return (true);
 }
+
+PyObject*
+create@CPPCLASS@Object(const @CPPCLASS@& source) {
+    @CPPCLASS@Container container =
+        PyObject_New(s_@CPPCLASS@, &@cppclass@_type);
+    container.set(new @CPPCLASS@(source));
+    return (container.release());
+}
 } // namespace python
 } // namespace @MODULE@
 } // namespace isc
