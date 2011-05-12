@@ -1,6 +1,7 @@
 {
     "module_spec": {
         "module_name": "tsig_keys",
+        "module_description": "The TSIG keyring is stored here",
         "config_data": [
             {
                 "item_name": "keys",
