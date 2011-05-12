@@ -5,7 +5,7 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 pkglibexec_SCRIPTS = b10-stats b10-stats-httpd
 
 b10_statsdir = $(pkgdatadir)
-b10_stats_DATA = stats.spec stats-httpd.spec
+b10_stats_DATA = stats.spec stats-httpd.spec stats-schema.spec
 b10_stats_DATA += stats-httpd-xml.tpl stats-httpd-xsd.tpl stats-httpd-xsl.tpl
 
 CLEANFILES = b10-stats stats.pyc
@@ -13,7 +13,7 @@ CLEANFILES += b10-stats-httpd stats_httpd.pyc
 
 man_MANS = b10-stats.8 b10-stats-httpd.8
 EXTRA_DIST = $(man_MANS) b10-stats.xml b10-stats-httpd.xml
-EXTRA_DIST += stats.spec stats-httpd.spec
+EXTRA_DIST += stats.spec stats-httpd.spec stats-schema.spec
 EXTRA_DIST += stats-httpd-xml.tpl stats-httpd-xsd.tpl stats-httpd-xsl.tpl
 
 if ENABLE_MAN
@@ -28,8 +28,7 @@ endif
 
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
 b10-stats: stats.py
-	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" \
-	       -e "s|.*#@@REMOVED@@$$||"  stats.py >$@
+	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|"  stats.py >$@
 	chmod a+x $@
 
 b10-stats-httpd: stats_httpd.py
