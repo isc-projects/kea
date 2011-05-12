@@ -847,14 +847,20 @@ public:
     }
 
     virtual void lookupTimeout() {
-        callCallback(false);
+        if (!callback_called_) {
+            makeSERVFAIL();
+            callCallback(false);
+        }
         assert(outstanding_events_ > 0);
         --outstanding_events_;
         stop();
     }
 
     virtual void clientTimeout() {
-        callCallback(false);
+        if (!callback_called_) {
+            makeSERVFAIL();
+            callCallback(false);
+        }
         assert(outstanding_events_ > 0);
         --outstanding_events_;
         stop();
@@ -866,7 +872,6 @@ public:
     void callCallback(bool success) {
         if (!callback_called_) {
             callback_called_ = true;
-            isc::resolve::makeErrorMessage(answer_message_, Rcode::SERVFAIL());
             if (success) {
                 resolvercallback_->success(answer_message_);
             } else {
@@ -907,6 +912,12 @@ public:
         }
 
         stop();
+    }
+
+    // Clear the answer parts of answer_message, and set the rcode
+    // to servfail
+    void makeSERVFAIL() {
+        isc::resolve::makeErrorMessage(answer_message_, Rcode::SERVFAIL());
     }
 };
 
