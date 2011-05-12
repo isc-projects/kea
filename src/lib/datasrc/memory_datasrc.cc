@@ -24,6 +24,7 @@
 
 #include <datasrc/memory_datasrc.h>
 #include <datasrc/rbtree.h>
+#include <datasrc/logger.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -94,6 +95,8 @@ struct MemoryZone::MemoryZoneImpl {
              l > origin_labels;
              --l, wname = wname.split(1)) {
             if (wname.isWildcard()) {
+                LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ADD_WILDCARD).
+                    arg(name);
                 // Ensure a separate level exists for the "wildcarding" name,
                 // and mark the node as "wild".
                 DomainNode* node;
@@ -130,10 +133,13 @@ struct MemoryZone::MemoryZoneImpl {
             // (depending on how we support DNSSEC).  We should revisit it
             // at that point.
             if (!domain->empty()) {
+                LOG_ERROR(logger, DATASRC_MEM_CNAME_TO_NONEMPTY).
+                    arg(rrset->getName());
                 isc_throw(AddError, "CNAME can't be added with other data for "
                           << rrset->getName());
             }
         } else if (domain->find(RRType::CNAME()) != domain->end()) {
+            LOG_ERROR(logger, DATASRC_MEM_CNAME_COEXIST).arg(rrset->getName());
             isc_throw(AddError, "CNAME and " << rrset->getType() <<
                       " can't coexist for " << rrset->getName());
         }
@@ -151,6 +157,7 @@ struct MemoryZone::MemoryZoneImpl {
             (rrset->getType() == RRType::NS() &&
             domain->find(RRType::DNAME()) != domain->end())))
         {
+            LOG_ERROR(logger, DATASRC_MEM_DNAME_NS).arg(rrset->getName());
             isc_throw(AddError, "DNAME can't coexist with NS in non-apex "
                 "domain " << rrset->getName());
         }
@@ -172,6 +179,8 @@ struct MemoryZone::MemoryZoneImpl {
             // XXX: this is not only for CNAME or DNAME. We should generalize
             // this code for all other "singleton RR types" (such as SOA) in a
             // separate task.
+            LOG_ERROR(logger, DATASRC_MEM_SINGLETON).arg(rrset->getName()).
+                arg(rrset->getType());
             isc_throw(AddError, "multiple RRs of singleton type for "
                       << rrset->getName());
         }
@@ -180,6 +189,8 @@ struct MemoryZone::MemoryZoneImpl {
         if (compare.getRelation() != NameComparisonResult::SUPERDOMAIN &&
             compare.getRelation() != NameComparisonResult::EQUAL)
         {
+            LOG_ERROR(logger, DATASRC_MEM_OUT_OF_ZONE).arg(rrset->getName()).
+                arg(origin_);
             isc_throw(OutOfZone, "The name " << rrset->getName() <<
                 " is not contained in zone " << origin_);
         }
@@ -194,10 +205,14 @@ struct MemoryZone::MemoryZoneImpl {
         // behavior.
         if (rrset->getName().isWildcard()) {
             if (rrset->getType() == RRType::NS()) {
+                LOG_ERROR(logger, DATASRC_MEM_WILDCARD_NS).
+                    arg(rrset->getName());
                 isc_throw(AddError, "Invalid NS owner name (wildcard): " <<
                           rrset->getName());
             }
             if (rrset->getType() == RRType::DNAME()) {
+                LOG_ERROR(logger, DATASRC_MEM_WILDCARD_DNAME).
+                    arg(rrset->getName());
                 isc_throw(AddError, "Invalid DNAME owner name (wildcard): " <<
                           rrset->getName());
             }
@@ -210,6 +225,8 @@ struct MemoryZone::MemoryZoneImpl {
      */
     // Implementation of MemoryZone::add
     result::Result add(const ConstRRsetPtr& rrset, DomainTree* domains) {
+        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ADD_RRSET).
+            arg(rrset->getName()).arg(rrset->getType()).arg(origin_);
         // Sanitize input
         addValidation(rrset);
 
@@ -271,6 +288,8 @@ struct MemoryZone::MemoryZoneImpl {
     void addFromLoad(const ConstRRsetPtr& set, DomainTree* domains) {
             switch (add(set, domains)) {
                 case result::EXIST:
+                    LOG_ERROR(logger, DATASRC_MEM_DUP_RRSET).
+                        arg(set->getName()).arg(set->getType());
                     isc_throw(dns::MasterLoadError, "Duplicate rrset: " <<
                         set->toText());
                 case result::SUCCESS:
@@ -307,6 +326,8 @@ struct MemoryZone::MemoryZoneImpl {
         const Domain::const_iterator foundDNAME(node.getData()->find(
             RRType::DNAME()));
         if (foundDNAME != node.getData()->end()) {
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                      DATASRC_MEM_DNAME_ENCOUNTERED);
             state->dname_node_ = &node;
             state->rrset_ = foundDNAME->second;
             // No more processing below the DNAME (RFC 2672, section 3
@@ -327,6 +348,8 @@ struct MemoryZone::MemoryZoneImpl {
             if (state->zonecut_node_ != NULL) {
                 return (false);
             }
+
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_MEM_NS_ENCOUNTERED);
 
             // BIND 9 checks if this node is not the origin.  That's probably
             // because it can support multiple versions for dynamic updates
@@ -363,6 +386,8 @@ struct MemoryZone::MemoryZoneImpl {
         rrset, bool rename)
     {
         if (rename) {
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_MEM_RENAME).
+                arg(rrset->getName()).arg(name);
             /*
              * We lose a signature here. But it would be wrong anyway, because
              * the name changed. This might turn out to be unimportant in
@@ -385,6 +410,8 @@ struct MemoryZone::MemoryZoneImpl {
     FindResult find(const Name& name, RRType type,
                     RRsetList* target, const FindOptions options) const
     {
+        LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FIND).arg(name).
+            arg(type);
         // Get the node
         DomainNode* node(NULL);
         FindState state(options);
@@ -411,12 +438,16 @@ struct MemoryZone::MemoryZoneImpl {
                  * is NULL.
                  */
                 if (state.dname_node_ != NULL) {
+                    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DNAME_FOUND).
+                        arg(state.rrset_->getName());
                     // We were traversing a DNAME node (and wanted to go
                     // lower below it), so return the DNAME
                     return (FindResult(DNAME, prepareRRset(name, state.rrset_,
                         rename)));
                 }
                 if (state.zonecut_node_ != NULL) {
+                    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DELEG_FOUND).
+                        arg(state.rrset_->getName());
                     return (FindResult(DELEGATION, prepareRRset(name,
                         state.rrset_, rename)));
                 }
@@ -426,6 +457,8 @@ struct MemoryZone::MemoryZoneImpl {
                 // the zone but is empty.  Treat it as NXRRSET.
                 if (node_path.getLastComparisonResult().getRelation() ==
                     NameComparisonResult::SUPERDOMAIN) {
+                    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUPER_STOP).
+                        arg(node_path.getAbsoluteName()).arg(name);
                     return (FindResult(NXRRSET, ConstRRsetPtr()));
                 }
 
@@ -463,6 +496,8 @@ struct MemoryZone::MemoryZoneImpl {
                     if (node_path.getLastComparisonResult().getRelation() ==
                         NameComparisonResult::COMMONANCESTOR && node_path.
                         getLastComparisonResult().getCommonLabels() > 1) {
+                        LOG_DEBUG(logger, DBG_TRACE_DATA,
+                                     DATASRC_MEM_WILDCARD_CANCEL).arg(name);
                         return (FindResult(NXDOMAIN, ConstRRsetPtr()));
                     }
                     Name wildcard(Name("*").concatenate(
@@ -485,6 +520,8 @@ struct MemoryZone::MemoryZoneImpl {
 
                 // fall through
             case DomainTree::NOTFOUND:
+                LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOTFOUND).
+                    arg(name);
                 return (FindResult(NXDOMAIN, ConstRRsetPtr()));
             case DomainTree::EXACTMATCH: // This one is OK, handle it
                 break;
@@ -496,6 +533,8 @@ struct MemoryZone::MemoryZoneImpl {
         // If there is an exact match but the node is empty, it's equivalent
         // to NXRRSET.
         if (node->isEmpty()) {
+            LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DOMAIN_EMPTY).
+                arg(name);
             return (FindResult(NXRRSET, ConstRRsetPtr()));
         }
 
@@ -506,6 +545,8 @@ struct MemoryZone::MemoryZoneImpl {
         if (node->getFlag(DomainNode::FLAG_CALLBACK) && node != origin_data_) {
             found = node->getData()->find(RRType::NS());
             if (found != node->getData()->end()) {
+                LOG_DEBUG(logger, DBG_TRACE_DATA,
+                          DATASRC_MEM_EXACT_DELEGATION).arg(name);
                 return (FindResult(DELEGATION, prepareRRset(name,
                     found->second, rename)));
             }
@@ -521,23 +562,30 @@ struct MemoryZone::MemoryZoneImpl {
                     boost::const_pointer_cast<RRset>(prepareRRset(name,
                     found->second, rename)));
             }
+            LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ANY_SUCCESS).
+                arg(name);
             return (FindResult(SUCCESS, ConstRRsetPtr()));
         }
 
         found = node->getData()->find(type);
         if (found != node->getData()->end()) {
             // Good, it is here
+            LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUCCESS).arg(name).
+                arg(type);
             return (FindResult(SUCCESS, prepareRRset(name, found->second,
                 rename)));
         } else {
             // Next, try CNAME.
             found = node->getData()->find(RRType::CNAME());
             if (found != node->getData()->end()) {
+                LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_CNAME).arg(name);
                 return (FindResult(CNAME, prepareRRset(name, found->second,
                     rename)));
             }
         }
         // No exact match or CNAME.  Return NXRRSET.
+        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NXRRSET).arg(type).
+            arg(name);
         return (FindResult(NXRRSET, ConstRRsetPtr()));
     }
 };
@@ -545,9 +593,13 @@ struct MemoryZone::MemoryZoneImpl {
 MemoryZone::MemoryZone(const RRClass& zone_class, const Name& origin) :
     impl_(new MemoryZoneImpl(zone_class, origin))
 {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_CREATE).arg(origin).
+        arg(zone_class);
 }
 
 MemoryZone::~MemoryZone() {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_DESTROY).arg(getOrigin()).
+        arg(getClass());
     delete impl_;
 }
 
@@ -576,6 +628,8 @@ MemoryZone::add(const ConstRRsetPtr& rrset) {
 
 void
 MemoryZone::load(const string& filename) {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_LOAD).arg(getOrigin()).
+        arg(filename);
     // Load it into a temporary tree
     MemoryZoneImpl::DomainTree tmp;
     masterLoad(filename.c_str(), getOrigin(), getClass(),
@@ -588,6 +642,8 @@ MemoryZone::load(const string& filename) {
 
 void
 MemoryZone::swap(MemoryZone& zone) {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_SWAP).arg(getOrigin()).
+        arg(zone.getOrigin());
     std::swap(impl_, zone.impl_);
 }
 
@@ -628,6 +684,9 @@ MemoryDataSrc::addZone(ZonePtr zone) {
                   "Null pointer is passed to MemoryDataSrc::addZone()");
     }
 
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_ADD_ZONE).
+        arg(zone->getOrigin()).arg(zone->getClass().toText());
+
     const result::Result result = impl_->zone_table.addZone(zone);
     if (result == result::SUCCESS) {
         ++impl_->zone_count;
@@ -637,6 +696,7 @@ MemoryDataSrc::addZone(ZonePtr zone) {
 
 MemoryDataSrc::FindResult
 MemoryDataSrc::findZone(const isc::dns::Name& name) const {
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_FIND_ZONE).arg(name);
     return (FindResult(impl_->zone_table.findZone(name).code,
                        impl_->zone_table.findZone(name).zone));
 }
