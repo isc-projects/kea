@@ -1,3 +1,17 @@
+236.	[bug]		naokikambe
+	Resolved that the stats module wasn't configurable in bindctl in
+	spite of its having configuration items. The configuration part
+	was removed from the original spec file "stats.spec" and was
+	placed in a new spec file "stats-schema.spec". Because it means
+	definitions of statistics items. The command part is still
+	there. Thus stats module currently has no its own configuration,
+	and the items in "stats-schema.spec" are neither visible nor
+	configurable through bindctl. "stats-schema.spec" is shared with
+	stats module and stats-httpd module, and maybe with other
+	statistical modules in future. "stats.spec" has own configuration
+	and commands of stats module, if it requires.
+	(Trac#719, git xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)
+
 235.	[func]		jinmei
 	libdns++: added support for TSIG signing and verification.  It can
 	be done using a newly introduced TSIGContext class.
