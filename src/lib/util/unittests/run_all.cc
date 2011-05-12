@@ -47,6 +47,12 @@ run_all() {
             throw;
         }
     } else {
+        // This is a separate path for the case where the exception is not
+        // being caught.  Although the other code path re-throws the exception
+        // after catching it, there is no guarantee that the state of the
+        // stack is preserved - a compiler might have unwound the stack to
+        // the point at which the exception is caught.  This would prove
+        // awkward if trying to debug the program using a debugger.
         ret = RUN_ALL_TESTS();
     }
 
