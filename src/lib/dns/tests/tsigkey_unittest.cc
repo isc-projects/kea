@@ -161,8 +161,8 @@ TEST_F(TSIGKeyRingTest, add) {
     EXPECT_EQ(TSIGKeyRing::EXIST, keyring.add(
                   TSIGKey(key_name, TSIGKey::HMACSHA256_NAME(),
                           secret, secret_len)));
-    // keys are identified their names, the same name of key with a different
-    // algorithm would be considered a duplicate.
+    // keys are identified by their names, the same name of key with a
+    // different algorithm would be considered a duplicate.
     EXPECT_EQ(TSIGKeyRing::EXIST, keyring.add(
                   TSIGKey(Name("example.com"), TSIGKey::HMACSHA1_NAME(),
                           secret, secret_len)));
