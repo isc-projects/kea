@@ -1,3 +1,9 @@
+236.	[func]		jelte
+	C++ client side of configuration now uses BIND10 logging system.
+	It also has improved error handling when communicating with the
+	rest of the system.
+	(Trac #743, git 86632c12308c3ed099d75eb828f740c526dd7ec0)
+
 235.	[func]		jinmei
 	libdns++: added support for TSIG signing and verification.  It can
 	be done using a newly introduced TSIGContext class.
