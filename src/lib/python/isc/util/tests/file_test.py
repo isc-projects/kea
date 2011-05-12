@@ -19,8 +19,8 @@ import unittest
 class FileTest(unittest.TestCase):
     def test_search_path_find(self):
         """Test it returns the first occurence of the file"""
-        self.assertEqual('./file_test.py',
-                         isc.util.file.path_search('file_test.py',
+        self.assertEqual('./Makefile',
+                         isc.util.file.path_search('Makefile',
                                                   ['/no/such/directory/', '.',
                                                   '../tests/']))
 
