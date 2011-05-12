@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <Python.h>
+
 #include <string>
 #include <stdexcept>
 
@@ -99,6 +101,7 @@ TSIGError_init(s_TSIGError* self, PyObject* args) {
             return (0);
         }
 
+        PyErr_Clear();
         s_Rcode* py_rcode;
         if (PyArg_ParseTuple(args, "O!", &rcode_type, &py_rcode)) {
             self->cppobj = new TSIGError(*py_rcode->cppobj);
@@ -351,6 +354,13 @@ initModulePart_TSIGError(PyObject* mod) {
     }
 
     return (true);
+}
+
+PyObject*
+createTSIGErrorObject(const TSIGError& source) {
+    TSIGErrorContainer container = PyObject_New(s_TSIGError, &tsigerror_type);
+    container.set(new TSIGError(source));
+    return (container.release());
 }
 } // namespace python
 } // namespace dns
