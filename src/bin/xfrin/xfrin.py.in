@@ -403,7 +403,7 @@ class ZoneInfo:
             self.master_addr = addr
             self.master_port = port
         except ValueError:
-            errmsg = "bad format for zone's master: " + str(new_config)
+            errmsg = "bad format for zone's master: " + str(config_data)
             log_error(errmsg)
             raise XfrinConfigException(errmsg)
 
