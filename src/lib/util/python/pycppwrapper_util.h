@@ -67,7 +67,7 @@ public:
 
 /// This helper class is similar to the standard autoptr and manages PyObject
 /// using some kind of RAII techniques.  It is, however, customized for the
-/// the python C API.
+/// python C API.
 ///
 /// A PyObjectContainer object is constructed with a pointer to PyObject,
 /// which is often just created dynamically.  The caller will eventually
