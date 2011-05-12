@@ -10,7 +10,7 @@
 	stats module and stats-httpd module, and maybe with other
 	statistical modules in future. "stats.spec" has own configuration
 	and commands of stats module, if it requires.
-	(Trac#719, git xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)
+	(Trac#719, git a234b20dc6617392deb8a1e00eb0eed0ff353c0a)
 
 236.	[func]		jelte
 	C++ client side of configuration now uses BIND10 logging system.
