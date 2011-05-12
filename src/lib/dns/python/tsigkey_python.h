@@ -12,40 +12,41 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_TSIGERROR_H
-#define __PYTHON_TSIGERROR_H 1
+#ifndef __PYTHON_TSIGKEY_H
+#define __PYTHON_TSIGKEY_H 1
 
 #include <Python.h>
 
 namespace isc {
 namespace dns {
-class TSIGError;
+class TSIGKey;
+class TSIGKeyRing;
 
 namespace python {
 
 // The s_* Class simply covers one instantiation of the object
-class s_TSIGError : public PyObject {
+class s_TSIGKey : public PyObject {
 public:
-    s_TSIGError();
-    const TSIGError* cppobj;
+    s_TSIGKey();
+    TSIGKey* cppobj;
 };
 
-extern PyTypeObject tsigerror_type;
+class s_TSIGKeyRing : public PyObject {
+public:
+    s_TSIGKeyRing();
+    TSIGKeyRing* cppobj;
+};
 
-bool initModulePart_TSIGError(PyObject* mod);
+extern PyTypeObject tsigkey_type;
+extern PyTypeObject tsigkeyring_type;
 
-/// This is A simple shortcut to create a python TSIGError object (in the
-/// form of a pointer to PyObject) with minimal exception safety.
-/// On success, it returns a valid pointer to PyObject with a reference
-/// counter of 1; if something goes wrong it throws an exception (it never
-/// returns a NULL pointer).
-/// This function is expected to be called with in a try block
-/// followed by necessary setup for python exception.
-PyObject* createTSIGErrorObject(const TSIGError& source);
+bool initModulePart_TSIGKey(PyObject* mod);
+bool initModulePart_TSIGKeyRing(PyObject* mod);
+
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_TSIGERROR_H
+#endif // __PYTHON_TSIGKEY_H
 
 // Local Variables:
 // mode: c++
