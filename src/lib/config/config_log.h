@@ -23,29 +23,14 @@ namespace config {
 
 /// \brief Config Logging
 ///
-/// Defines the levels used to output debug messages in the CONFIG.  Note that
-/// higher numbers equate to more verbose (and detailed) output.
-
-// The first level traces normal operations - asking the CONFIG for an address,
-// and cancelling a lookup.  It also records when the CONFIG calls back to the
-// resolver to resolve something.
-//const int CONFIG_DBG_TRACE = 10;
-
-// The next level extends the normal operations and records the results of the
-// lookups.
-//const int CONFIG_DBG_RESULTS = 20;
-
-// Additional information on the usage of the names - the RTT values obtained
-// when queries were done.
-//const int CONFIG_DBG_RTT = 30;
-
+/// Defines logger object for config log messages
 
 /// \brief Config Logger
 ///
 /// Define the logger used to log messages.  We could define it in multiple
 /// modules, but defining in a single module and linking to it saves time and
 /// space.
-extern isc::log::Logger config_logger;    // isc::config::logger is the CONFIG logger
+extern isc::log::Logger config_logger;    // isc::config::config_logger is the CONFIG logger
 
 } // namespace config
 } // namespace isc
