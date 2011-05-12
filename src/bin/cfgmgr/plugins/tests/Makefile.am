@@ -1,6 +1,8 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 PYTESTS = tsig_keys_test.py
 
+EXTRA_DIST = $(PYTESTS)
+
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
 if ENABLE_PYTHON_COVERAGE
@@ -12,6 +14,6 @@ endif
 	echo Running test: $$pytest ; \
 	env B10_TEST_PLUGIN_DIR=$(abs_srcdir)/..:$(abs_builddir)/.. \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/cfgmgr:$(abs_top_builddir)/src/lib/dns/python/.libs \
-	$(PYCOVERAGE_RUN) $(abs_builddir)/$$pytest || exit ; \
+	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
 
