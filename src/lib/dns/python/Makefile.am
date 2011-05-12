@@ -5,9 +5,15 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 pyexec_LTLIBRARIES = pydnspp.la
-pydnspp_la_SOURCES = pydnspp.cc pydnspp_common.cc
+pydnspp_la_SOURCES = pydnspp.cc pydnspp_common.cc pydnspp_towire.h
+pydnspp_la_SOURCES += name_python.cc name_python.h
+pydnspp_la_SOURCES += messagerenderer_python.cc messagerenderer_python.h
 pydnspp_la_SOURCES += rcode_python.cc rcode_python.h
+pydnspp_la_SOURCES += tsigkey_python.cc tsigkey_python.h
 pydnspp_la_SOURCES += tsigerror_python.cc tsigerror_python.h
+pydnspp_la_SOURCES += tsig_rdata_python.cc tsig_rdata_python.h
+pydnspp_la_SOURCES += tsigrecord_python.cc tsigrecord_python.h
+pydnspp_la_SOURCES += tsig_python.cc tsig_python.h
 pydnspp_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 pydnspp_la_LDFLAGS = $(PYTHON_LDFLAGS)
 
