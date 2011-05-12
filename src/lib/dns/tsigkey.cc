@@ -42,6 +42,16 @@ namespace {
         if (name == TSIGKey::HMACSHA256_NAME()) {
             return (isc::cryptolink::SHA256);
         }
+        if (name == TSIGKey::HMACSHA224_NAME()) {
+            return (isc::cryptolink::SHA224);
+        }
+        if (name == TSIGKey::HMACSHA384_NAME()) {
+            return (isc::cryptolink::SHA384);
+        }
+        if (name == TSIGKey::HMACSHA512_NAME()) {
+            return (isc::cryptolink::SHA512);
+        }
+ 
         isc_throw(InvalidParameter,
                   "Unknown TSIG algorithm is specified: " << name);
     }
@@ -192,6 +202,24 @@ Name& TSIGKey::HMACSHA1_NAME() {
 const
 Name& TSIGKey::HMACSHA256_NAME() {
     static Name alg_name("hmac-sha256");
+    return (alg_name);
+}
+
+const
+Name& TSIGKey::HMACSHA224_NAME() {
+    static Name alg_name("hmac-sha224");
+    return (alg_name);
+}
+
+const
+Name& TSIGKey::HMACSHA384_NAME() {
+    static Name alg_name("hmac-sha384");
+    return (alg_name);
+}
+
+const
+Name& TSIGKey::HMACSHA512_NAME() {
+    static Name alg_name("hmac-sha512");
     return (alg_name);
 }
 
