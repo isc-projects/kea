@@ -824,7 +824,8 @@ public:
         query_timeout_(query_timeout),
         client_timer(io.get_io_service()),
         lookup_timer(io.get_io_service()),
-        outstanding_events_(0)
+        outstanding_events_(0),
+        callback_called_(false)
     {
         // Setup the timer to stop trying (lookup_timeout)
         if (lookup_timeout >= 0) {
