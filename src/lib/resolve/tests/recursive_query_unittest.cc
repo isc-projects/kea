@@ -748,7 +748,7 @@ TEST_F(RecursiveQueryTest, forwardClientTimeout) {
     query.forward(ConstMessagePtr(&query_message), answer, buffer, &server, callback);
     // Run the test
     io_service_->run();
-    EXPECT_EQ(callback->result, MockResolverCallback::SUCCESS);
+    EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
 }
 
 // If we set lookup timeout to lower than querytimeout, the lookup
