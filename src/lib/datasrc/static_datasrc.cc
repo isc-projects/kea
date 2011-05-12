@@ -26,6 +26,7 @@
 
 #include <datasrc/data_source.h>
 #include <datasrc/static_datasrc.h>
+#include <datasrc/logger.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -112,6 +113,7 @@ StaticDataSrcImpl::StaticDataSrcImpl() :
 }
 
 StaticDataSrc::StaticDataSrc() {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_STATIC_CREATE);
     setClass(RRClass::CH());
     impl_ = new StaticDataSrcImpl;
 }
@@ -155,8 +157,11 @@ StaticDataSrc::findRRset(const Name& qname,
                          RRsetList& target, uint32_t& flags,
                          const Name* const zonename) const
 {
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_STATIC_FIND).arg(qname).
+        arg(qtype);
     flags = 0;
     if (qclass != getClass() && qclass != RRClass::ANY()) {
+        LOG_ERROR(logger, DATASRC_STATIC_BAD_CLASS);
         return (ERROR);
     }
 
