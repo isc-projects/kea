@@ -19,7 +19,7 @@ resolvedef.h resolvedef.cc: resolvedef.mes
 # present when they are compiled), the safest option is to create it first.
 BUILT_SOURCES = resolvedef.h resolvedef.cc
 
-CLEANFILES = *.gcno *.gcda
+CLEANFILES = *.gcno *.gcda resolvedef.cc resolvedef.h
 
 lib_LTLIBRARIES = libresolve.la
 libresolve_la_SOURCES = resolve.h resolve.cc
