@@ -184,7 +184,7 @@ namespace python {
 // Most of the functions are not actually implemented and NULL here.
 PyTypeObject tsigkey_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.TSIGKey",
+    "pydnspp.TSIGKey",
     sizeof(s_TSIGKey),                  // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)TSIGKey_destroy,        // tp_dealloc
@@ -418,7 +418,7 @@ namespace dns {
 namespace python {
 PyTypeObject tsigkeyring_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.TSIGKeyRing",
+    "pydnspp.TSIGKeyRing",
     sizeof(s_TSIGKeyRing),              // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)TSIGKeyRing_destroy,    // tp_dealloc
