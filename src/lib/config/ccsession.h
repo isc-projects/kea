@@ -234,24 +234,38 @@ public:
     /**
      * Gives access to the configuration values of a different module
      * Once this function has been called with the name of the specification
-     * file of the module you want the configuration of, you can use
+     * file or the module you want the configuration of, you can use
      * \c getRemoteConfigValue() to get a specific setting.
-     * Changes are automatically updated, but you cannot specify handlers
-     * for those changes, must use \c getRemoteConfigValue() to get a value
-     * This function will subscribe to the relevant module channel.
+     * Changes are automatically updated, and you can specify handlers
+     * for those changes. This function will subscribe to the relevant module
+     * channel.
      *
-     * \param spec_file_name The path to the specification file of
-     *                       the module we want to have configuration
-     *                       values from
+     * \param spec_name This specifies the module to add. It is either a
+     *                  filename of the spec file to use or a name of module
+     *                  (in case it's a module name, the spec data is
+     *                  downloaded from the configuration manager, therefore
+     *                  the configuration manager must know it). A heuristic
+     *                  is used to guess which should be used - if it contains
+     *                  a slash or dot, filename is assumed, otherwise
+     *                  name of module is assumed.
+     * \param handler The handler function called whenever there's a change.
+     *                Called once initally from this function. May be NULL
+     *                if you don't want any handler to be called and you're
+     *                fine with requesting the data through
+     *                getRemoteConfigValue() each time.
      * \return The name of the module specified in the given specification
      *         file
      */
-    std::string addRemoteConfig(const std::string& spec_file_name);
+    std::string addRemoteConfig(const std::string& spec_name,
+                                void (*handler)(const std::string& module_name,
+                                                isc::data::ConstElementPtr
+                                                update) = NULL);
 
     /**
      * Removes the module with the given name from the remote config
      * settings. If the module was not added with \c addRemoteConfig(),
-     * nothing happens.
+     * nothing happens. If there was a handler for this config, it is
+     * removed as well.
      */
     void removeRemoteConfig(const std::string& module_name);
 
