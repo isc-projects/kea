@@ -22,9 +22,6 @@
 
 namespace isc {
 namespace dns {
-
-class RRClass;
-
 /// TSIG errors
 ///
 /// The \c TSIGError class objects represent standard errors related to
