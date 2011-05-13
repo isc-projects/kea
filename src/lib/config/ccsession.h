@@ -310,7 +310,11 @@ private:
         const std::string& command,
         isc::data::ConstElementPtr args);
 
+    typedef void (*RemoteHandler)(const std::string&,
+                                  isc::data::ConstElementPtr);
     std::map<std::string, ConfigData> remote_module_configs_;
+    std::map<std::string, RemoteHandler> remote_module_handlers_;
+
     void updateRemoteConfig(const std::string& module_name,
                             isc::data::ConstElementPtr new_config);
 };
