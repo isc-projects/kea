@@ -89,16 +89,26 @@
   <refsect1>
     <title>FILES</title>
     <para><filename>/usr/local/share/bind10-devel/stats.spec</filename>
+      <!--TODO: The filename should be computed from prefix-->
       &mdash; This is a spec file for <command>b10-stats</command>. It
-      contains definitions of statistics items of BIND 10 and commands
-      received via
-      <refentrytitle>bindctl</refentrytitle><manvolnum>1</manvolnum>.
+      contains commands for <command>b10-stats</command>. They can be
+      invoked
+      via <refentrytitle>bindctl</refentrytitle><manvolnum>1</manvolnum>.
+    </para>
+    <para><filename>/usr/local/share/bind10-devel/stats-schema.spec</filename>
+      <!--TODO: The filename should be computed from prefix-->
+      &mdash; This is a spec file for data schema of
+      of BIND 10 statistics. This schema cannot be configured 
+      via <refentrytitle>bindctl</refentrytitle><manvolnum>1</manvolnum>.
     </para>
   </refsect1>
 
   <refsect1>
     <title>SEE ALSO</title>
     <para>
+      <citerefentry>
+        <refentrytitle>b10-stats-httpd</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
       <citerefentry>
         <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,

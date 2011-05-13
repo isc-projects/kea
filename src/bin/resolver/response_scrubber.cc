@@ -1,4 +1,3 @@
-
 // Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
@@ -26,7 +25,7 @@ using namespace std;
 // Compare addresses etc.
 
 ResponseScrubber::Category ResponseScrubber::addressCheck(
-    const asiolink::IOEndpoint& to, const asiolink::IOEndpoint& from)
+    const isc::asiolink::IOEndpoint& to, const isc::asiolink::IOEndpoint& from)
 {
     if (from.getProtocol() == to.getProtocol()) {
         if (from.getAddress() == to.getAddress()) {
@@ -50,7 +49,7 @@ ResponseScrubber::Category ResponseScrubber::addressCheck(
 unsigned int
 ResponseScrubber::scrubSection(Message& message,
     const vector<const Name*>& names,
-    const NameComparisonResult::NameRelation connection, 
+    const NameComparisonResult::NameRelation connection,
     const Message::Section section)
 {
     unsigned int count = 0;     // Count of RRsets removed
@@ -74,30 +73,32 @@ ResponseScrubber::scrubSection(Message& message,
 
         // Start looking at the remaining entries in the section.
         removed = false;
-        for (; (i != message.endSection(section)) && (!removed); ++i) {
+        for (; i != message.endSection(section); ++i) {
 
             // Loop through the list of names given and see if any are in the
             // given relationship with the QNAME of this RRset
-            bool nomatch = true;
+            bool match = false;
             for (vector<const Name*>::const_iterator n = names.begin();
-                ((n != names.end()) && nomatch); ++n) {
+                 n != names.end(); ++n) {
                 NameComparisonResult result = (*i)->getName().compare(**n);
                 NameComparisonResult::NameRelation relationship =
                     result.getRelation();
                 if ((relationship == NameComparisonResult::EQUAL) ||
                    (relationship == connection)) {
-                    
+
                     // RRset in the specified relationship, so a match has
                     // been found
-                    nomatch = false;
+                    match = true;
+                    break;
                 }
             }
 
             // Remove the RRset if there was no match to one of the given names.
-            if (nomatch) {
+            if (!match) {
                 message.removeRRset(section, i);
                 ++count;            // One more RRset removed
                 removed = true;     // Something was removed
+                break; // It invalidated the iterators, start again
              } else {
 
                 // There was a match so this is one more entry we can skip next
@@ -107,7 +108,7 @@ ResponseScrubber::scrubSection(Message& message,
         }
     }
 
-    return count;
+    return (count);
 }
 
 // Perform the scrubbing of all sections of the message.
@@ -126,7 +127,7 @@ ResponseScrubber::scrubAllSections(Message& message, const Name& bailiwick) {
     count += scrubSection(message, bailiwick_names,
             NameComparisonResult::SUBDOMAIN, Message::SECTION_ADDITIONAL);
 
-    return count;
+    return (count);
 }
 
 // Scrub across sections.
@@ -171,7 +172,6 @@ ResponseScrubber::scrubCrossSections(isc::dns::Message& message) {
     // superdomain of the names in the question/answer section.
     return (scrubSection(message, source,
         NameComparisonResult::SUPERDOMAIN, Message::SECTION_AUTHORITY));
-
 }
 
 // Scrub a message
@@ -183,7 +183,7 @@ ResponseScrubber::scrub(const isc::dns::MessagePtr& message,
     unsigned int sections_removed = scrubAllSections(*message, bailiwick);
     sections_removed += scrubCrossSections(*message);
 
-    return sections_removed;
+    return (sections_removed);
 }
 
 

@@ -15,64 +15,64 @@
 #ifndef __MESSAGERENDERER_H
 #define __MESSAGERENDERER_H 1
 
+#include <util/buffer.h>
+
 namespace isc {
+
 namespace dns {
 // forward declarations
-class OutputBuffer;
 class Name;
 
+/// \brief The \c AbstractMessageRenderer class is an abstract base class
+/// that provides common interfaces for rendering a DNS message into a buffer
+/// in wire format.
 ///
-/// \brief The \c MessageRenderer class encapsulates implementation details
-/// of rendering a DNS message into a buffer in wire format.
+/// A specific derived class of \c AbstractMessageRenderer (we call it
+/// a renderer class hereafter) is simply responsible for name compression at
+/// least in the current design.  A renderer class object (conceptually)
+/// manages the positions of names rendered in some sort of buffer and uses
+/// that information to render subsequent names with compression.
 ///
-/// In effect, it's simply responsible for name compression at least in the
-/// current implementation.  A \c MessageRenderer class object manages the
-/// positions of names rendered in a buffer and uses that information to render
-/// subsequent names with compression.
-///
-/// This class is mainly intended to be used as a helper for a more
+/// A renderer class is mainly intended to be used as a helper for a more
 /// comprehensive \c Message class internally; normal applications won't have
-/// to care about this class.
+/// to care about details of this class.
 ///
-/// A \c MessageRenderer class object is constructed with a \c OutputBuffer
-/// object, which is the buffer into which the rendered %data will be written.
-/// Normally the buffer is expected to be empty on construction, but it doesn't
-/// have to be so; the \c MessageRenderer object will start rendering from the
-/// end of the buffer at the time of construction.  However, if the
-/// pre-existing portion of the buffer contains DNS names, these names won't
-/// be considered for name compression.
-///
-/// Once a \c MessageRenderer object is constructed with a buffer, it is
-/// generally expected that all rendering operations are performed via the
-/// \c MessageRenderer object.  If the application modifies the buffer in
-/// parallel with the \c MessageRenderer, the result will be undefined.
+/// Once a renderer class object is constructed with a buffer, it is
+/// generally expected that all rendering operations are performed via that
+/// object.  If the application modifies the buffer in
+/// parallel with the renderer, the result will be undefined.
 ///
 /// Note to developers: we introduced a separate class for name compression
 /// because previous benchmark with BIND9 showed compression affects overall
 /// response performance very much.  By having a separate class dedicated for
 /// this purpose, we'll be able to change the internal implementation of name
 /// compression in the future without affecting other part of the API and
-/// implementation.  For the same reason, we adopt the "pimpl" idiom in the
-/// class definition (i.e., using a pointer to a \c MessageRendererImpl class,
-/// which is defined with the class implementation, not in the header file):
-/// we may want to modify the compression implementation without modifying the
-/// header file thereby requesting rebuild the package.
+/// implementation.
 ///
-/// Furthermore, we may eventually want to allow other developers to develop
-/// and use their own compression implementation.  Should such a case become
-/// realistic, we may want to make the \c MessageRendererImpl class an abstract
-/// base class and let concrete derived classes have their own implementations.
-/// At the moment we don't the strong need for it, so we rather avoid over
-/// abstraction and keep the definition simpler.
-class MessageRenderer {
+/// In addition, by introducing a class hierarchy from
+/// \c AbstractMessageRenderer, we allow an application to use a customized
+/// renderer class for specific purposes.  For example, a high performance
+/// DNS server may want to use an optimized renderer class assuming some
+/// specific underlying data representation.
+///
+/// \note Some functions (like writeUint8) are not virtual. It is because
+///     it is hard to imagine any version of message renderer that would
+///     do anything else than just putting the data into a buffer, so we
+///     provide a default implementation and having them virtual would only
+///     hurt the performance with no real gain. If it would happen a different
+///     implementation is really needed, we can make them virtual in future.
+///     The only one that is virtual is writeName and it's because this
+///     function is much more complicated, therefore there's a lot of space
+///     for different implementations or behaviours.
+class AbstractMessageRenderer {
 public:
     /// \brief Compression mode constants.
     ///
     /// The \c CompressMode enum type represents the name compression mode
-    /// for the \c MessageRenderer.
+    /// for renderer classes.
     /// \c CASE_INSENSITIVE means compress names in case-insensitive manner;
     /// \c CASE_SENSITIVE means compress names in case-sensitive manner.
-    /// By default, \c MessageRenderer compresses names in case-insensitive
+    /// By default, a renderer compresses names in case-insensitive
     /// manner.
     /// Compression mode can be dynamically modified by the
     /// \c setCompressMode() method.
@@ -80,7 +80,7 @@ public:
     /// is not an intended usage.  In this case the names already compressed
     /// are intact; only names being compressed after the mode change are
     /// affected by the change.
-    /// If the internal \c MessageRenderer is reinitialized by the \c clear()
+    /// If a renderer class object is reinitialized by the \c clear()
     /// method, the compression mode will be reset to the default, which is
     /// \c CASE_INSENSITIVE
     ///
@@ -93,25 +93,39 @@ public:
         CASE_INSENSITIVE,  //!< Compress names case-insensitive manner (default)
         CASE_SENSITIVE     //!< Compress names case-sensitive manner
     };
-public:
+protected:
     ///
     /// \name Constructors and Destructor
     //@{
-    /// \brief Constructor from an output buffer.
+    /// \brief The default constructor.
     ///
-    /// \param buffer An \c OutputBuffer object to which wire format data is
-    /// written.
-    MessageRenderer(OutputBuffer& buffer);
+    /// This is intentionally defined as \c protected as this base class should
+    /// never be instantiated (except as part of a derived class).
+    /// \param buffer The buffer where the data should be rendered into.
+    /// \todo We might want to revisit this API at some point and remove the
+    ///     buffer parameter. In that case it would create it's own buffer and
+    ///     a function to extract the data would be available instead. It seems
+    ///     like a cleaner design, but it's left undone until we would actually
+    ///     benefit from the change.
+    AbstractMessageRenderer(isc::util::OutputBuffer& buffer) :
+        buffer_(buffer)
+    {}
+public:
     /// \brief The destructor.
-    ///
-    /// The destructor does nothing on the given \c buffer on construction;
-    /// in fact, it is expected that the user will use the resulting buffer
-    /// for some post rendering purposes (e.g., send the data to the network).
-    /// It's the user's responsibility to do any necessary cleanup for the
-    /// \c buffer.
-    ~MessageRenderer();
+    virtual ~AbstractMessageRenderer() {}
     //@}
-
+protected:
+    /// \brief Return the output buffer we render into.
+    const isc::util::OutputBuffer& getBuffer() const { return (buffer_); }
+    isc::util::OutputBuffer& getBuffer() { return (buffer_); }
+private:
+    /// \short Buffer to store data
+    ///
+    /// It was decided that there's no need to have this in every subclass,
+    /// at least not now, and this reduces code size and gives compiler a better
+    /// chance to optimise.
+    isc::util::OutputBuffer& buffer_;
+public:
     ///
     /// \name Getter Methods
     ///
@@ -121,9 +135,15 @@ public:
     ///
     /// This method works exactly same as the same method of the \c OutputBuffer
     /// class; all notes for \c OutputBuffer apply.
-    const void* getData() const;
+    const void* getData() const {
+        return (buffer_.getData());
+    }
+
     /// \brief Return the length of data written in the internal buffer.
-    size_t getLength() const;
+    size_t getLength() const {
+        return (buffer_.getLength());
+    }
+
     /// \brief Return whether truncation has occurred while rendering.
     ///
     /// Once the return value of this method is \c true, it doesn't make sense
@@ -133,20 +153,22 @@ public:
     /// This method never throws an exception.
     ///
     /// \return true if truncation has occurred; otherwise \c false.
-    bool isTruncated() const;
+    virtual bool isTruncated() const = 0;
+
     /// \brief Return the maximum length of rendered data that can fit in the
     /// corresponding DNS message without truncation.
     ///
     /// This method never throws an exception.
     ///
     /// \return The maximum length in bytes.
-    size_t getLengthLimit() const;
-    /// \brief Return the compression mode of the \c MessageRenderer.
+    virtual size_t getLengthLimit() const = 0;
+
+    /// \brief Return the compression mode of the renderer class object.
     ///
     /// This method never throws an exception.
     ///
     /// \return The current compression mode.
-    CompressMode getCompressMode() const;
+    virtual CompressMode getCompressMode() const = 0;
     //@}
 
     ///
@@ -157,20 +179,22 @@ public:
     /// rendering.
     ///
     /// This method never throws an exception.
-    void setTruncated();
+    virtual void setTruncated() = 0;
+
     /// \brief Set the maximum length of rendered data that can fit in the
     /// corresponding DNS message without truncation.
     ///
     /// This method never throws an exception.
     ///
     /// \param len The maximum length in bytes.
-    void setLengthLimit(size_t len);
-    /// \brief Set the compression mode of the \c MessageRenderer.
+    virtual void setLengthLimit(size_t len) = 0;
+
+    /// \brief Set the compression mode of the renderer class object.
     ///
     /// This method never throws an exception.
     ///
     /// \param mode A \c CompressMode value representing the compression mode.
-    void setCompressMode(CompressMode mode);
+    virtual void setCompressMode(CompressMode mode) = 0;
     //@}
 
     ///
@@ -184,7 +208,10 @@ public:
     /// that is to be filled in later, e.g, by \ref writeUint16At().
     ///
     /// \param len The length of the gap to be inserted in bytes.
-    void skip(size_t len);
+    void skip(size_t len) {
+        buffer_.skip(len);
+    }
+
     /// \brief Trim the specified length of data from the end of the internal
     /// buffer.
     ///
@@ -195,21 +222,31 @@ public:
     /// be thrown.
     ///
     /// \param len The length of data that should be trimmed.
-    void trim(size_t len);
+    void trim(size_t len) {
+        buffer_.trim(len);
+    }
+
     /// \brief Clear the internal buffer and other internal resources.
     ///
     /// This method can be used to re-initialize and reuse the renderer
     /// without constructing a new one.
-    void clear();
+    virtual void clear();
+
     /// \brief Write an unsigned 8-bit integer into the internal buffer.
     ///
     /// \param data The 8-bit integer to be written into the internal buffer.
-    void writeUint8(uint8_t data);
+    void writeUint8(const uint8_t data) {
+        buffer_.writeUint8(data);
+    }
+
     /// \brief Write an unsigned 16-bit integer in host byte order into the
     /// internal buffer in network byte order.
     ///
     /// \param data The 16-bit integer to be written into the buffer.
-    void writeUint16(uint16_t data);
+    void writeUint16(uint16_t data) {
+        buffer_.writeUint16(data);
+    }
+
     /// \brief Write an unsigned 16-bit integer in host byte order at the
     /// specified position of the internal buffer in network byte order.
     ///
@@ -221,26 +258,29 @@ public:
     ///
     /// \param data The 16-bit integer to be written into the internal buffer.
     /// \param pos The beginning position in the buffer to write the data.
-    void writeUint16At(uint16_t data, size_t pos);
+    void writeUint16At(uint16_t data, size_t pos) {
+        buffer_.writeUint16At(data, pos);
+    }
+
     /// \brief Write an unsigned 32-bit integer in host byte order into the
     /// internal buffer in network byte order.
     ///
     /// \param data The 32-bit integer to be written into the buffer.
-    void writeUint32(uint32_t data);
+    void writeUint32(uint32_t data) {
+        buffer_.writeUint32(data);
+    }
+
     /// \brief Copy an arbitrary length of data into the internal buffer
-    /// of the \c MessageRenderer.
+    /// of the renderer object.
     ///
     /// No conversion on the copied data is performed.
     ///
     /// \param data A pointer to the data to be copied into the internal buffer.
     /// \param len The length of the data in bytes.
-    void writeData(const void *data, size_t len);
-    //@}
+    void writeData(const void *data, size_t len) {
+        buffer_.writeData(data, len);
+    }
 
-    ///
-    /// \name Rendering Methods
-    ///
-    //@{
     /// \brief Write a \c Name object into the internal buffer in wire format,
     /// with or without name compression.
     ///
@@ -255,8 +295,41 @@ public:
     ///
     /// \param name A \c Name object to be written.
     /// \param compress A boolean indicating whether to enable name compression.
-    void writeName(const Name& name, bool compress = true);
+    virtual void writeName(const Name& name, bool compress = true) = 0;
     //@}
+};
+
+/// The \c MessageRenderer is a concrete derived class of
+/// \c AbstractMessageRenderer as a general purpose implementation of the
+/// renderer interfaces.
+///
+/// A \c MessageRenderer object is constructed with a \c OutputBuffer
+/// object, which is the buffer into which the rendered %data will be written.
+/// Normally the buffer is expected to be empty on construction, but it doesn't
+/// have to be so; the renderer object will start rendering from the
+/// end of the buffer at the time of construction.  However, if the
+/// pre-existing portion of the buffer contains DNS names, these names won't
+/// be considered for name compression.
+class MessageRenderer : public AbstractMessageRenderer {
+public:
+    using AbstractMessageRenderer::CASE_INSENSITIVE;
+    using AbstractMessageRenderer::CASE_SENSITIVE;
+
+    /// \brief Constructor from an output buffer.
+    ///
+    /// \param buffer An \c OutputBuffer object to which wire format data is
+    /// written.
+    MessageRenderer(isc::util::OutputBuffer& buffer);
+
+    virtual ~MessageRenderer();
+    virtual bool isTruncated() const;
+    virtual size_t getLengthLimit() const;
+    virtual CompressMode getCompressMode() const;
+    virtual void setTruncated();
+    virtual void setLengthLimit(size_t len);
+    virtual void setCompressMode(CompressMode mode);
+    virtual void clear();
+    virtual void writeName(const Name& name, bool compress = true);
 private:
     struct MessageRendererImpl;
     MessageRendererImpl* impl_;

@@ -20,7 +20,8 @@
 #include <log/message_dictionary.h>
 #include <log/message_types.h>
 #include <log/root_logger_name.h>
-#include <log/strutil.h>
+
+#include <util/strutil.h>
 
 using namespace std;
 
@@ -111,52 +112,57 @@ Logger::isFatalEnabled() {
 // Output methods
 
 void
-Logger::debug(int dbglevel, const isc::log::MessageID& ident, ...) {
+Logger::output(const char* sevText, const string& message) {
+    getLoggerPtr()->outputRaw(sevText, message);
+}
+
+Logger::Formatter
+Logger::debug(int dbglevel, const isc::log::MessageID& ident) {
     if (isDebugEnabled(dbglevel)) {
-        va_list ap;
-        va_start(ap, ident);
-        getLoggerPtr()->debug(ident, ap);
-        va_end(ap);
+        return (Formatter("DEBUG", getLoggerPtr()->lookupMessage(ident),
+                          this));
+    } else {
+        return (Formatter());
     }
 }
 
-void
-Logger::info(const isc::log::MessageID& ident, ...) {
+Logger::Formatter
+Logger::info(const isc::log::MessageID& ident) {
     if (isInfoEnabled()) {
-        va_list ap;
-        va_start(ap, ident);
-        getLoggerPtr()->info(ident, ap);
-        va_end(ap);
+        return (Formatter("INFO ", getLoggerPtr()->lookupMessage(ident),
+                          this));
+    } else {
+        return (Formatter());
     }
 }
 
-void
-Logger::warn(const isc::log::MessageID& ident, ...) {
+Logger::Formatter
+Logger::warn(const isc::log::MessageID& ident) {
     if (isWarnEnabled()) {
-        va_list ap;
-        va_start(ap, ident);
-        getLoggerPtr()->warn(ident, ap);
-        va_end(ap);
+        return (Formatter("WARN ", getLoggerPtr()->lookupMessage(ident),
+                          this));
+    } else {
+        return (Formatter());
     }
 }
 
-void
-Logger::error(const isc::log::MessageID& ident, ...) {
+Logger::Formatter
+Logger::error(const isc::log::MessageID& ident) {
     if (isErrorEnabled()) {
-        va_list ap;
-        va_start(ap, ident);
-        getLoggerPtr()->error(ident, ap);
-        va_end(ap);
+        return (Formatter("ERROR", getLoggerPtr()->lookupMessage(ident),
+                          this));
+    } else {
+        return (Formatter());
     }
 }
 
-void
-Logger::fatal(const isc::log::MessageID& ident, ...) {
+Logger::Formatter
+Logger::fatal(const isc::log::MessageID& ident) {
     if (isFatalEnabled()) {
-        va_list ap;
-        va_start(ap, ident);
-        getLoggerPtr()->fatal(ident, ap);
-        va_end(ap);
+        return (Formatter("FATAL", getLoggerPtr()->lookupMessage(ident),
+                          this));
+    } else {
+        return (Formatter());
     }
 }
 

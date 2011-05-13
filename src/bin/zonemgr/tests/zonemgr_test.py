@@ -31,7 +31,8 @@ ZONE_NAME_CLASS3_CH = ("example.com.", "CH")
 MAX_TRANSFER_TIMEOUT = 14400
 LOWERBOUND_REFRESH = 10
 LOWERBOUND_RETRY = 5
-JITTER_SCOPE = 0.10
+REFRESH_JITTER = 0.10
+RELOAD_JITTER = 0.75
 
 class ZonemgrTestException(Exception):
     pass
@@ -61,8 +62,10 @@ class FakeConfig:
             return LOWERBOUND_RETRY
         elif name == 'max_transfer_timeout':
             return MAX_TRANSFER_TIMEOUT
-        elif name == 'jitter_scope':
-            return JITTER_SCOPE
+        elif name == 'refresh_jitter':
+            return REFRESH_JITTER
+        elif name == 'reload_jitter':
+            return RELOAD_JITTER
         elif name == 'secondary_zones':
             return self.zone_list
         else:
@@ -72,6 +75,10 @@ class MyZonemgrRefresh(ZonemgrRefresh):
     def __init__(self):
         self._master_socket, self._slave_socket = socket.socketpair()
         self._zonemgr_refresh_info = {}
+        self._lowerbound_refresh = 10
+        self._lowerbound_retry = 5
+        self._reload_jitter = 0.75
+        self._refresh_jitter = 0.25
 
         def get_zone_soa(zone_name, db_file):
             if zone_name == 'example.net.':
@@ -110,9 +117,9 @@ class TestZonemgrRefresh(unittest.TestCase):
         max = 100025.120
         jitter = 0
         self.assertEqual(max, self.zone_refresh._random_jitter(max, jitter))
-        jitter = max / 4
+        jitter = 0.3 * max
         for i in range (0, 150):
-            self.assertTrue((3 * max / 4) <= self.zone_refresh._random_jitter(max, jitter))
+            self.assertTrue((max - jitter) <= self.zone_refresh._random_jitter(max, jitter))
             self.assertTrue(self.zone_refresh._random_jitter(max, jitter) <= max)
             i += 1;
 
@@ -134,7 +141,7 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.zone_refresh._set_zone_refresh_timer(ZONE_NAME_CLASS1_IN)
         zone_timeout = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["next_refresh_time"]
         time2 = time.time()
-        self.assertTrue((time1 + 7200 * 3 / 4) <= zone_timeout)
+        self.assertTrue((time1 + 7200 * (1 - self.zone_refresh._refresh_jitter)) <= zone_timeout)
         self.assertTrue(zone_timeout <= time2 + 7200)
 
     def test_set_zone_retry_timer(self):
@@ -142,7 +149,7 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.zone_refresh._set_zone_retry_timer(ZONE_NAME_CLASS1_IN)
         zone_timeout = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["next_refresh_time"]
         time2 = time.time()
-        self.assertTrue((time1 + 3600 * 3 / 4) <= zone_timeout)
+        self.assertTrue((time1 + 3600 * (1 - self.zone_refresh._refresh_jitter)) <= zone_timeout)
         self.assertTrue(zone_timeout <= time2 + 3600)
 
     def test_zone_not_exist(self):
@@ -273,6 +280,7 @@ class TestZonemgrRefresh(unittest.TestCase):
         # This needs to be restored. The following test actually failed if we left
         # this unclean
         old_get_zone_soa = sqlite3_ds.get_zone_soa
+        time1 = time.time()
 
         def get_zone_soa(zone_name, db_file):
             return (1, 2, 'example.net.', 'example.net.sd.', 21600, 'SOA', None,
@@ -288,6 +296,10 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.assertEqual(ZONE_OK, self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"])
         self.assertTrue("last_refresh_time" in self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN].keys())
         self.assertTrue("next_refresh_time" in self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN].keys())
+        time2 = time.time()
+        zone_timeout = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["next_refresh_time"]
+        self.assertTrue((time1 + 900 * (1 - self.zone_refresh._reload_jitter)) <= zone_timeout)
+        self.assertTrue(zone_timeout <= time2 + 900)
 
         def get_zone_soa2(zone_name, db_file):
             return None
@@ -321,7 +333,7 @@ class TestZonemgrRefresh(unittest.TestCase):
         zone_soa_rdata = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_soa_rdata"]
         self.assertEqual(soa_rdata, zone_soa_rdata)
         next_refresh_time = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["next_refresh_time"]
-        self.assertTrue((time1 + 3 * 1800 / 4) <= next_refresh_time)
+        self.assertTrue((time1 + 1800 * (1 - self.zone_refresh._refresh_jitter)) <= next_refresh_time)
         self.assertTrue(next_refresh_time <= time2 + 1800)
         self.assertEqual(ZONE_OK, self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"])
         last_refresh_time = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["last_refresh_time"]
@@ -339,7 +351,7 @@ class TestZonemgrRefresh(unittest.TestCase):
         zone_soa_rdata = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_soa_rdata"]
         self.assertEqual(soa_rdata, zone_soa_rdata)
         next_refresh_time = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["next_refresh_time"]
-        self.assertTrue((time1 + 3 * 3600 / 4) <= next_refresh_time)
+        self.assertTrue(((time1 + 3600 * (1 - self.zone_refresh._refresh_jitter))) <= next_refresh_time)
         self.assertTrue(next_refresh_time <= time2 + 3600)
         self.assertEqual(ZONE_OK, self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"])
 
@@ -426,14 +438,16 @@ class TestZonemgrRefresh(unittest.TestCase):
                     "lowerbound_refresh" : 60,
                     "lowerbound_retry" : 30,
                     "max_transfer_timeout" : 19800,
-                    "jitter_scope" : 0.25,
+                    "refresh_jitter" : 0.25,
+                    "reload_jitter" : 0.75,
                     "secondary_zones": []
                 }
         self.zone_refresh.update_config_data(config_data)
         self.assertEqual(60, self.zone_refresh._lowerbound_refresh)
         self.assertEqual(30, self.zone_refresh._lowerbound_retry)
         self.assertEqual(19800, self.zone_refresh._max_transfer_timeout)
-        self.assertEqual(0.25, self.zone_refresh._jitter_scope)
+        self.assertEqual(0.25, self.zone_refresh._refresh_jitter)
+        self.assertEqual(0.75, self.zone_refresh._reload_jitter)
 
     def test_shutdown(self):
         self.zone_refresh._check_sock = self.zone_refresh._master_socket
@@ -495,7 +509,8 @@ class MyZonemgr(Zonemgr):
                     "lowerbound_refresh" : 10,
                     "lowerbound_retry" : 5,
                     "max_transfer_timeout" : 14400,
-                    "jitter_scope" : 0.1,
+                    "refresh_jitter" : 0.1,
+                    "reload_jitter" : 0.75,
                     "secondary_zones": []
                     }
 
@@ -512,7 +527,8 @@ class TestZonemgr(unittest.TestCase):
                     "lowerbound_refresh" : 60,
                     "lowerbound_retry" : 30,
                     "max_transfer_timeout" : 14400,
-                    "jitter_scope" : 0.1,
+                    "refresh_jitter" : 0.1,
+                    "reload_jitter" : 0.75,
                     "secondary_zones": []
                     }
         self.assertEqual(self.zonemgr.config_handler(config_data1),
@@ -522,9 +538,9 @@ class TestZonemgr(unittest.TestCase):
         self.zonemgr.config_handler(config_data2)
         self.assertEqual(config_data1, self.zonemgr._config_data)
         # jitter should not be bigger than half of the original value
-        config_data3 = {"jitter_scope" : 0.7}
+        config_data3 = {"refresh_jitter" : 0.7}
         self.zonemgr.config_handler(config_data3)
-        self.assertEqual(0.5, self.zonemgr._config_data.get("jitter_scope"))
+        self.assertEqual(0.5, self.zonemgr._config_data.get("refresh_jitter"))
         # The zone doesn't exist in database, it should be rejected
         self.zonemgr._zone_refresh = ZonemgrRefresh(None, "initdb.file", None,
                                                     config_data1)
@@ -533,7 +549,7 @@ class TestZonemgr(unittest.TestCase):
         self.assertNotEqual(self.zonemgr.config_handler(config_data1),
                             {"result": [0]})
         # As it is rejected, the old value should be kept
-        self.assertEqual(0.5, self.zonemgr._config_data.get("jitter_scope"))
+        self.assertEqual(0.5, self.zonemgr._config_data.get("refresh_jitter"))
 
     def test_get_db_file(self):
         self.assertEqual("initdb.file", self.zonemgr.get_db_file())
@@ -551,12 +567,12 @@ class TestZonemgr(unittest.TestCase):
 
     def test_config_data_check(self):
         # jitter should not be bigger than half of the original value
-        config_data2 = {"jitter_scope" : 0.2}
-        config_data3 = {"jitter_scope" : 0.6}
+        config_data2 = {"refresh_jitter" : 0.2}
+        config_data3 = {"refresh_jitter" : 0.6}
         self.zonemgr._config_data_check(config_data2)
-        self.assertEqual(0.2, config_data2.get("jitter_scope"))
+        self.assertEqual(0.2, config_data2.get("refresh_jitter"))
         self.zonemgr._config_data_check(config_data3)
-        self.assertEqual(0.5, config_data3.get("jitter_scope"))
+        self.assertEqual(0.5, config_data3.get("refresh_jitter"))
 
     def tearDown(self):
         pass

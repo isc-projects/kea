@@ -24,11 +24,15 @@
 #include <dns/rdata.h>
 
 namespace isc {
+namespace util {
+class OutputBuffer;
+}
+
 namespace dns {
 
 class EDNS;
 class Name;
-class MessageRenderer;
+class AbstractMessageRenderer;
 class RRClass;
 class RRTTL;
 class RRType;
@@ -310,7 +314,7 @@ public:
     /// \param extended_rcode Upper 8 bits of extended RCODE to be rendered as
     /// part of the EDNS OPT RR.
     /// \return 1 if the OPT RR fits in the message size limit; otherwise 0.
-    unsigned int toWire(MessageRenderer& renderer,
+    unsigned int toWire(AbstractMessageRenderer& renderer,
                         const uint8_t extended_rcode) const;
 
     /// \brief Render the \c EDNS in the wire format.
@@ -319,7 +323,7 @@ public:
     /// except it renders the OPT RR in an \c OutputBuffer and therefore
     /// does not care about message size limit.
     /// As a consequence it always returns 1.
-    unsigned int toWire(OutputBuffer& buffer,
+    unsigned int toWire(isc::util::OutputBuffer& buffer,
                         const uint8_t extended_rcode) const;
 
     /// \brief Convert the EDNS to a string.
@@ -350,12 +354,6 @@ public:
     // something like this.
     //void addOption();
 
-private:
-    /// Helper method to define unified implementation for the public versions
-    /// of toWire().
-    template <typename Output>
-    int toWire(Output& output, const uint8_t extended_rcode) const;
-
 public:
     /// \brief The highest EDNS version this implementation supports.
     static const uint8_t SUPPORTED_VERSION = 0;
@@ -382,7 +380,7 @@ private:
 ///
 /// The intended usage of this function is to parse an OPT RR of an incoming
 /// DNS message, while updating the RCODE of the message.
-/// One common usage patter is as follows:
+/// One common usage pattern is as follows:
 ///
 /// \code Message msg;
 /// ...

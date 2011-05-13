@@ -20,10 +20,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <signal.h>
-#include <cstring>
+#include <string.h>
 #include <cerrno>
-#include <cstdlib>
-#include <cstdio>
+#include <stdlib.h>
+#include <stdio.h>
 
 using namespace isc::util::io;
 

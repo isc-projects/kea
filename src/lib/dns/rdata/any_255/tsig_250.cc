@@ -18,15 +18,18 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
+#include <util/encode/base64.h>
+
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
-
-#include <dns/util/base64.h>
+#include <dns/tsigerror.h>
 
 using namespace std;
 using namespace boost;
+using namespace isc::util;
+using namespace isc::util::encode;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -310,15 +313,7 @@ TSIG::toText() const {
         result += encodeBase64(impl_->mac_) + " ";
     }
     result += lexical_cast<string>(impl_->original_id_) + " ";
-    if (impl_->error_ == 16) {  // XXX: we'll soon introduce generic converter.
-        result += "BADSIG ";
-    } else if (impl_->error_ == 17) {
-        result += "BADKEY ";
-    } else if (impl_->error_ == 18) {
-        result += "BADTIME ";
-    } else {
-        result += lexical_cast<string>(impl_->error_) + " ";
-    }
+    result += TSIGError(impl_->error_).toText() + " ";
     result += lexical_cast<string>(impl_->other_data_.size());
     if (impl_->other_data_.size() > 0) {
         result += " " + encodeBase64(impl_->other_data_);
@@ -377,9 +372,9 @@ TSIG::toWire(OutputBuffer& buffer) const {
 /// \param renderer DNS message rendering context that encapsulates the
 /// output buffer and name compression information.
 void
-TSIG::toWire(MessageRenderer& renderer) const {
+TSIG::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeName(impl_->algorithm_, false);
-    impl_->toWireCommon<MessageRenderer>(renderer);
+    impl_->toWireCommon<AbstractMessageRenderer>(renderer);
 }
 
 // A helper function commonly used for TSIG::compare().

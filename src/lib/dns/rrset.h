@@ -26,6 +26,10 @@
 #include <dns/rrtype.h>
 
 namespace isc {
+namespace util {
+class OututBuffer;
+}
+
 namespace dns {
 
 ///
@@ -43,8 +47,7 @@ class Name;
 class RRType;
 class RRClass;
 class RRTTL;
-class OututBuffer;
-class MessageRenderer;
+class AbstractMessageRenderer;
 class AbstractRRset;
 class BasicRRset;
 class RdataIterator;
@@ -308,7 +311,7 @@ public:
     /// \return The number of RRs rendered.  If the truncation is necessary
     /// this value may be different from the number of RDATA objects contained
     /// in the RRset.
-    virtual unsigned int toWire(MessageRenderer& renderer) const = 0;
+    virtual unsigned int toWire(AbstractMessageRenderer& renderer) const = 0;
 
     /// \brief Render the RRset in the wire format without any compression.
     ///
@@ -316,7 +319,7 @@ public:
     ///
     /// \param buffer An output buffer to store the wire data.
     /// \return The number of RRs rendered.
-    virtual unsigned int toWire(OutputBuffer& buffer) const = 0;
+    virtual unsigned int toWire(isc::util::OutputBuffer& buffer) const = 0;
     //@}
 
     ///
@@ -614,13 +617,13 @@ public:
     ///
     /// This method simply uses the default implementation.
     /// See \c AbstractRRset::toWire(MessageRenderer&)const.
-    virtual unsigned int toWire(MessageRenderer& renderer) const;
+    virtual unsigned int toWire(AbstractMessageRenderer& renderer) const;
 
     /// \brief Render the RRset in the wire format without any compression.
     ///
     /// This method simply uses the default implementation.
     /// See \c AbstractRRset::toWire(OutputBuffer&)const.
-    virtual unsigned int toWire(OutputBuffer& buffer) const;
+    virtual unsigned int toWire(isc::util::OutputBuffer& buffer) const;
     //@}
 
     ///

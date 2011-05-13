@@ -15,18 +15,49 @@
 #ifndef __RECURSIVE_QUERY_H
 #define __RECURSIVE_QUERY_H 1
 
-#include <asiolink/dns_service.h>
-#include <asiolink/dns_server.h>
-#include <dns/buffer.h>
+#include <util/buffer.h>
+#include <asiodns/dns_service.h>
+#include <asiodns/dns_server.h>
 #include <nsas/nameserver_address_store.h>
 #include <cache/resolver_cache.h>
 
-namespace asiolink {
-/// \brief The \c RecursiveQuery class provides a layer of abstraction around
-/// the ASIO code that carries out an upstream query.
+namespace isc {
+namespace asiodns {
+
+/// \brief RTT Recorder
 ///
-/// This design is very preliminary; currently it is only capable of
-/// handling simple forward requests to a single resolver.
+/// Used for testing, this class will hold the set of round-trip times to
+/// nameservers for the current recursive query.
+///
+/// A pointer to an object of this class is passed to RecursiveQuery which in
+/// turn passes it to the created RunningQuery class.  When a running query
+/// completes, its RTT is passed to the RTT Recorder object.
+class RttRecorder {
+public:
+    /// \brief Record Time
+    ///
+    /// Adds a round-trip time to the internal vector of times.
+    ///
+    /// \param RTT to record.
+    void addRtt(uint32_t rtt) {
+        rtt_.push_back(rtt);
+    }
+
+    /// \brief Return RTT Vector
+    std::vector<uint32_t> getRtt() const {
+        return rtt_;
+    }
+
+private:
+    std::vector<uint32_t>   rtt_;   ///< Stored round-trip times
+};
+
+
+/// \brief Recursive Query
+///
+/// The \c RecursiveQuery class provides a layer of abstraction around
+/// the ASIO code that carries out an upstream query.
+
 class RecursiveQuery {
     ///
     /// \name Constructors
@@ -56,17 +87,25 @@ public:
                    isc::nsas::NameserverAddressStore& nsas,
                    isc::cache::ResolverCache& cache,
                    const std::vector<std::pair<std::string, uint16_t> >&
-                   upstream, 
+                   upstream,
                    const std::vector<std::pair<std::string, uint16_t> >&
-                   upstream_root, 
+                   upstream_root,
                    int query_timeout = 2000,
                    int client_timeout = 4000,
                    int lookup_timeout = 30000,
                    unsigned retries = 3);
     //@}
 
+    /// \brief Set Round-Trip Time Recorder
+    ///
+    /// Sets the RTT recorder object.  This is not accessed directly, instead
+    /// it is passed to created RunningQuery objects.
+    ///
+    /// \param recorder Pointer to the RTT recorder object used to hold RTTs.
+    void setRttRecorder(boost::shared_ptr<RttRecorder>& recorder);
+
     /// \brief Initiate resolving
-    /// 
+    ///
     /// When sendQuery() is called, a (set of) message(s) is sent
     /// asynchronously. If upstream servers are set, one is chosen
     /// and the response (if any) from that server will be returned.
@@ -99,7 +138,7 @@ public:
     /// \param server A pointer to the \c DNSServer object handling the client
     void resolve(const isc::dns::Question& question,
                  isc::dns::MessagePtr answer_message,
-                 isc::dns::OutputBufferPtr buffer,
+                 isc::util::OutputBufferPtr buffer,
                  DNSServer* server);
 
     /// \brief Set Test Server
@@ -113,7 +152,7 @@ public:
     /// \param address IP address of the test server.
     /// \param port Port number of the test server
     void setTestServer(const std::string& address, uint16_t port);
-    
+
 private:
     DNSService& dns_service_;
     isc::nsas::NameserverAddressStore& nsas_;
@@ -127,7 +166,9 @@ private:
     int client_timeout_;
     int lookup_timeout_;
     unsigned retries_;
+    boost::shared_ptr<RttRecorder>  rtt_recorder_;  ///< Round-trip time recorder
 };
 
-}      // namespace asiolink
+}      // namespace asiodns
+}      // namespace isc
 #endif // __RECURSIVE_QUERY_H

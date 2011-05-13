@@ -20,6 +20,7 @@
 
 #include <cc/data.h>
 
+#include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
 
 #include <resolver/resolver.h>
@@ -31,7 +32,8 @@
 using namespace std;
 using namespace isc::data;
 using namespace isc::testutils;
-using namespace asiolink;
+using namespace isc::asiodns;
+using namespace isc::asiolink;
 using isc::UnitTestUtil;
 
 namespace {

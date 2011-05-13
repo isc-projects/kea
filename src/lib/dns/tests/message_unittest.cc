@@ -12,9 +12,18 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <fstream>
+
+#include <boost/scoped_ptr.hpp>
+
 #include <exceptions/exceptions.h>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
+#include <util/time_utilities.h>
+
+#include <util/unittests/testdata.h>
+#include <util/unittests/textdata.h>
+
 #include <dns/edns.h>
 #include <dns/exceptions.h>
 #include <dns/message.h>
@@ -26,6 +35,8 @@
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
 #include <dns/rrtype.h>
+#include <dns/tsig.h>
+#include <dns/tsigkey.h>
 
 #include <gtest/gtest.h>
 
@@ -35,6 +46,7 @@ using isc::UnitTestUtil;
 using namespace std;
 using namespace isc;
 using namespace isc::dns;
+using namespace isc::util;
 using namespace isc::dns::rdata;
 
 //
@@ -52,6 +64,18 @@ using namespace isc::dns::rdata;
 const uint16_t Message::DEFAULT_MAX_UDPSIZE;
 const Name test_name("test.example.com");
 
+namespace isc {
+namespace util {
+namespace detail {
+extern int64_t (*gettimeFunction)();
+}
+}
+}
+
+// XXX: this is defined as class static constants, but some compilers
+// seemingly cannot find the symbol when used in the EXPECT_xxx macros.
+const uint16_t TSIGContext::DEFAULT_FUDGE;
+
 namespace {
 class MessageTest : public ::testing::Test {
 protected:
@@ -59,7 +83,9 @@ protected:
                     message_parse(Message::PARSE),
                     message_render(Message::RENDER),
                     bogus_section(static_cast<Message::Section>(
-                                      Message::SECTION_ADDITIONAL + 1))
+                                      Message::SECTION_ADDITIONAL + 1)),
+                    tsig_ctx(TSIGKey("www.example.com:"
+                                     "SFuWd/q99SzF8Yzd1QbB9g=="))
     {
         rrset_a = RRsetPtr(new RRset(test_name, RRClass::IN(),
                                      RRType::A(), RRTTL(3600)));
@@ -87,6 +113,9 @@ protected:
     RRsetPtr rrset_a;           // A RRset with two RDATAs
     RRsetPtr rrset_aaaa;        // AAAA RRset with one RDATA with RRSIG
     RRsetPtr rrset_rrsig;       // RRSIG for the AAAA RRset
+    TSIGContext tsig_ctx;
+    vector<unsigned char> expected_data;
+
     static void factoryFromFile(Message& message, const char* datafile);
 };
 
@@ -163,6 +192,70 @@ TEST_F(MessageTest, setEDNS) {
     EDNSPtr edns = EDNSPtr(new EDNS());
     message_render.setEDNS(edns);
     EXPECT_EQ(edns, message_render.getEDNS());
+}
+
+TEST_F(MessageTest, fromWireWithTSIG) {
+    // Initially there should be no TSIG
+    EXPECT_EQ(static_cast<void*>(NULL), message_parse.getTSIGRecord());
+
+    // getTSIGRecord() is only valid in the parse mode.
+    EXPECT_THROW(message_render.getTSIGRecord(), InvalidMessageOperation);
+
+    factoryFromFile(message_parse, "message_toWire2.wire");
+    const char expected_mac[] = {
+        0x22, 0x70, 0x26, 0xad, 0x29, 0x7b, 0xee, 0xe7,
+        0x21, 0xce, 0x6c, 0x6f, 0xff, 0x1e, 0x9e, 0xf3
+    };
+    const TSIGRecord* tsig_rr = message_parse.getTSIGRecord();
+    ASSERT_NE(static_cast<void*>(NULL), tsig_rr);
+    EXPECT_EQ(Name("www.example.com"), tsig_rr->getName());
+    EXPECT_EQ(85, tsig_rr->getLength()); // see TSIGRecordTest.getLength
+    EXPECT_EQ(TSIGKey::HMACMD5_NAME(), tsig_rr->getRdata().getAlgorithm());
+    EXPECT_EQ(0x4da8877a, tsig_rr->getRdata().getTimeSigned());
+    EXPECT_EQ(TSIGContext::DEFAULT_FUDGE, tsig_rr->getRdata().getFudge());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        tsig_rr->getRdata().getMAC(),
+                        tsig_rr->getRdata().getMACSize(),
+                        expected_mac, sizeof(expected_mac));
+    EXPECT_EQ(0, tsig_rr->getRdata().getError());
+    EXPECT_EQ(0, tsig_rr->getRdata().getOtherLen());
+    EXPECT_EQ(static_cast<void*>(NULL), tsig_rr->getRdata().getOtherData());
+
+    // If we clear the message for reuse, the recorded TSIG will be cleared.
+    message_parse.clear(Message::PARSE);
+    EXPECT_EQ(static_cast<void*>(NULL), message_parse.getTSIGRecord());
+}
+
+TEST_F(MessageTest, fromWireWithTSIGCompressed) {
+    // Mostly same as fromWireWithTSIG, but the TSIG owner name is compressed.
+    factoryFromFile(message_parse, "message_fromWire12.wire");
+    const TSIGRecord* tsig_rr = message_parse.getTSIGRecord();
+    ASSERT_NE(static_cast<void*>(NULL), tsig_rr);
+    EXPECT_EQ(Name("www.example.com"), tsig_rr->getName());
+    // len(www.example.com) = 17, but when fully compressed, the length is
+    // 2 bytes.  So the length of the record should be 15 bytes shorter.
+    EXPECT_EQ(70, tsig_rr->getLength());
+}
+
+TEST_F(MessageTest, fromWireWithBadTSIG) {
+    // Multiple TSIG RRs
+    EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire13.wire"),
+                 DNSMessageFORMERR);
+    message_parse.clear(Message::PARSE);
+
+    // TSIG in the answer section (must be in additional)
+    EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire14.wire"),
+                 DNSMessageFORMERR);
+    message_parse.clear(Message::PARSE);
+
+    // TSIG is not the last record.
+    EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire15.wire"),
+                 DNSMessageFORMERR);
+    message_parse.clear(Message::PARSE);
+
+    // Unexpected RR Class (this will fail in constructing TSIGRecord)
+    EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire16.wire"),
+                 DNSMessageFORMERR);
 }
 
 TEST_F(MessageTest, getRRCount) {
@@ -518,6 +611,65 @@ TEST_F(MessageTest, toWireInParseMode) {
     EXPECT_THROW(message_parse.toWire(renderer), InvalidMessageOperation);
 }
 
+// See dnssectime_unittest.cc
+template <int64_t NOW>
+int64_t
+testGetTime() {
+    return (NOW);
+}
+
+void
+commonTSIGToWireCheck(Message& message, MessageRenderer& renderer,
+                      TSIGContext& tsig_ctx, const char* const expected_file)
+{
+    message.setOpcode(Opcode::QUERY());
+    message.setRcode(Rcode::NOERROR());
+    message.setHeaderFlag(Message::HEADERFLAG_RD, true);
+    message.addQuestion(Question(Name("www.example.com"), RRClass::IN(),
+                                 RRType::A()));
+
+    message.toWire(renderer, tsig_ctx);
+    vector<unsigned char> expected_data;
+    UnitTestUtil::readWireData(expected_file, expected_data);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(),
+                        &expected_data[0], expected_data.size());
+}
+
+TEST_F(MessageTest, toWireWithTSIG) {
+    // Rendering a message with TSIG.  Various special cases specific to
+    // TSIG are tested in the tsig tests.  We only check the message contains
+    // a TSIG at the end and the ARCOUNT of the header is updated.
+
+    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+
+    message_render.setQid(0x2d65);
+
+    {
+        SCOPED_TRACE("Message sign with TSIG");
+        commonTSIGToWireCheck(message_render, renderer, tsig_ctx,
+                              "message_toWire2.wire");
+    }
+}
+
+TEST_F(MessageTest, toWireWithEDNSAndTSIG) {
+    // Similar to the previous test, but with an EDNS before TSIG.
+    // The wire data check will confirm the ordering.
+    isc::util::detail::gettimeFunction = testGetTime<0x4db60d1f>;
+
+    message_render.setQid(0x6cd);
+
+    EDNSPtr edns(new EDNS());
+    edns->setUDPSize(4096);
+    message_render.setEDNS(edns);
+
+    {
+        SCOPED_TRACE("Message sign with TSIG and EDNS");
+        commonTSIGToWireCheck(message_render, renderer, tsig_ctx,
+                              "message_toWire3.wire");
+    }
+}
+
 TEST_F(MessageTest, toWireWithoutOpcode) {
     message_render.setRcode(Rcode::NOERROR());
     EXPECT_THROW(message_render.toWire(renderer), InvalidMessageOperation);
@@ -526,6 +678,45 @@ TEST_F(MessageTest, toWireWithoutOpcode) {
 TEST_F(MessageTest, toWireWithoutRcode) {
     message_render.setOpcode(Opcode::QUERY());
     EXPECT_THROW(message_render.toWire(renderer), InvalidMessageOperation);
+}
+
+TEST_F(MessageTest, toText) {
+    // Check toText() output for a typical DNS response with records in
+    // all sections
+    
+    factoryFromFile(message_parse, "message_toText1.wire");
+    {
+        SCOPED_TRACE("Message toText test (basic case)");
+        ifstream ifs;
+        unittests::openTestData("message_toText1.txt", ifs);
+        unittests::matchTextData(ifs, message_parse.toText());
+    }
+
+    // Another example with EDNS.  The expected data was slightly modified
+    // from the dig output (other than replacing tabs with a space): adding
+    // a newline after the "OPT PSEUDOSECTION".  This is an intentional change
+    // in our version for better readability.
+    message_parse.clear(Message::PARSE);
+    factoryFromFile(message_parse, "message_toText2.wire");
+    {
+        SCOPED_TRACE("Message toText test with EDNS");
+        ifstream ifs;
+        unittests::openTestData("message_toText2.txt", ifs);
+        unittests::matchTextData(ifs, message_parse.toText());
+    }
+
+    // Another example with TSIG.  The expected data was slightly modified
+    // from the dig output (other than replacing tabs with a space): removing
+    // a redundant white space at the end of TSIG RDATA.  We'd rather consider
+    // it a dig's defect than a feature.
+    message_parse.clear(Message::PARSE);
+    factoryFromFile(message_parse, "message_toText3.wire");
+    {
+        SCOPED_TRACE("Message toText test with TSIG");
+        ifstream ifs;
+        unittests::openTestData("message_toText3.txt", ifs);
+        unittests::matchTextData(ifs, message_parse.toText());
+    }
 }
 
 TEST_F(MessageTest, toTextWithoutOpcode) {

@@ -20,12 +20,15 @@
 #include <exceptions/exceptions.h>
 
 namespace isc {
+namespace util {
+class InputBuffer;
+class OutputBuffer;
+}
+
 namespace dns {
 
 // forward declarations
-class InputBuffer;
-class OutputBuffer;
-class MessageRenderer;
+class AbstractMessageRenderer;
 
 ///
 /// \brief A standard DNS module exception that is thrown if an RRTTL object
@@ -91,7 +94,7 @@ public:
     /// an exception of class \c IncompleteRRTTL will be thrown.
     ///
     /// \param buffer A buffer storing the wire format data.
-    explicit RRTTL(InputBuffer& buffer);
+    explicit RRTTL(isc::util::InputBuffer& buffer);
     ///
     //@}
 
@@ -120,7 +123,7 @@ public:
     ///
     /// \param renderer DNS message rendering context that encapsulates the
     /// output buffer in which the RRTTL is to be stored.
-    void toWire(MessageRenderer& renderer) const;
+    void toWire(AbstractMessageRenderer& renderer) const;
     /// \brief Render the \c RRTTL in the wire format.
     ///
     /// This method renders the TTL value in network byte order into the
@@ -130,7 +133,7 @@ public:
     /// standard exception will be thrown.
     ///
     /// \param buffer An output buffer to store the wire data.
-    void toWire(OutputBuffer& buffer) const;
+    void toWire(isc::util::OutputBuffer& buffer) const;
     //@}
 
     ///

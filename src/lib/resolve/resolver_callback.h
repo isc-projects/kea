@@ -15,7 +15,7 @@
 #ifndef _ISC_RESOLVER_CALLBACK_H
 #define _ISC_RESOLVER_CALLBACK_H 1
 
-#include <asiolink/dns_server.h>
+#include <asiodns/dns_server.h>
 #include <dns/message.h>
 
 #include <resolve/resolver_interface.h>
@@ -33,7 +33,7 @@ namespace resolve {
 /// as the server itself should also have a reference.
 class ResolverCallbackServer : public ResolverInterface::Callback {
 public:
-    ResolverCallbackServer(asiolink::DNSServer* server) :
+    ResolverCallbackServer(asiodns::DNSServer* server) :
         server_(server->clone()) {}
     ~ResolverCallbackServer() { delete server_; };
     
@@ -41,7 +41,7 @@ public:
     void failure();
 
 private:
-    asiolink::DNSServer* server_;
+    asiodns::DNSServer* server_;
 };
 
 } //namespace resolve

@@ -35,7 +35,8 @@
 using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::datasrc;
-using namespace asiolink;
+using namespace isc::asiodns;
+using namespace isc::asiolink;
 
 namespace {
 class AuthConfigTest : public ::testing::Test {
