@@ -44,6 +44,9 @@ using namespace isc::dns::python;
 s_TSIGError::s_TSIGError() : cppobj(NULL) {
 }
 
+// Import pydoc text
+#include "tsigerror_python_inc.cc"
+
 namespace {
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_TSIGError, TSIGError> TSIGErrorContainer;
@@ -77,12 +80,12 @@ PyObject* TSIGError_richcmp(const s_TSIGError* const self,
 PyMethodDef TSIGError_methods[] = {
     { "get_code", reinterpret_cast<PyCFunction>(TSIGError_getCode),
       METH_NOARGS,
-      "Returns the code value" },
+      TSIGError_getCode_doc },
     { "to_text", reinterpret_cast<PyCFunction>(TSIGError_toText), METH_NOARGS,
-      "Returns the text representation" },
+      TSIGError_toText_doc },
     { "to_rcode", reinterpret_cast<PyCFunction>(TSIGError_toRcode),
       METH_NOARGS,
-      "Convert the TSIGError to a Rcode" },
+      TSIGError_toRcode_doc },
     { NULL, NULL, 0, NULL }
 };
 
@@ -252,9 +255,7 @@ PyTypeObject tsigerror_type = {
     NULL,                               // tp_setattro
     NULL,                               // tp_as_buffer
     Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The TSIGError class objects represent standard errors related to "
-    "TSIG protocol operations as defined in related specifications, mainly "
-    "in RFC2845.",
+    TSIGError_doc,
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
     // THIS MAY HAVE TO BE CHANGED TO NULL:
