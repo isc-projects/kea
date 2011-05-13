@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,17 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <gtest/gtest.h>
-#include <log/logger_support.h>
+/// Defines the logger used by the config lib
 
-int
-main(int argc, char* argv[]) {
-    ::testing::InitGoogleTest(&argc, argv);
+#include "config/config_log.h"
 
-    // TODO: UNCOMMENT ON MERGE
-    // (this is the call we want in master, but branch point does not
-    // have this yet)
-    //isc::log::initLogger();
+namespace isc {
+namespace config {
 
-    return (RUN_ALL_TESTS());
-}
+isc::log::Logger config_logger("config");
+
+} // namespace nsas
+} // namespace isc
+
