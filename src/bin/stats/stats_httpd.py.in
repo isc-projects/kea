@@ -46,7 +46,7 @@ else:
     BASE_LOCATION = "@datadir@" + os.sep + "@PACKAGE@"
     BASE_LOCATION = BASE_LOCATION.replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
 SPECFILE_LOCATION = BASE_LOCATION + os.sep + "stats-httpd.spec"
-STATS_SPECFILE_LOCATION = BASE_LOCATION + os.sep + "stats.spec"
+SCHEMA_SPECFILE_LOCATION = BASE_LOCATION + os.sep + "stats-schema.spec"
 XML_TEMPLATE_LOCATION = BASE_LOCATION + os.sep + "stats-httpd-xml.tpl"
 XSD_TEMPLATE_LOCATION = BASE_LOCATION + os.sep + "stats-httpd-xsd.tpl"
 XSL_TEMPLATE_LOCATION = BASE_LOCATION + os.sep + "stats-httpd-xsl.tpl"
@@ -175,7 +175,7 @@ class StatsHttpd:
             SPECFILE_LOCATION, self.config_handler, self.command_handler)
         self.cc_session = self.mccs._session
         # read spec file of stats module and subscribe 'Stats'
-        self.stats_module_spec = isc.config.module_spec_from_file(STATS_SPECFILE_LOCATION)
+        self.stats_module_spec = isc.config.module_spec_from_file(SCHEMA_SPECFILE_LOCATION)
         self.stats_config_spec = self.stats_module_spec.get_config_spec()
         self.stats_module_name = self.stats_module_spec.get_module_name()
 
