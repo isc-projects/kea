@@ -357,7 +357,7 @@ ModuleCCSession::checkCommand() {
 
 std::string
 ModuleCCSession::addRemoteConfig(const std::string& spec_name,
-                                 void (*)(const std::string& module,
+                                 void (*handler)(const std::string& module,
                                           ConstElementPtr))
 {
     std::string module_name;
@@ -399,8 +399,9 @@ ModuleCCSession::addRemoteConfig(const std::string& spec_name,
     session_.group_recvmsg(env, answer, false, seq);
     int rcode;
     ConstElementPtr new_config = parseAnswer(rcode, answer);
+    ElementPtr local_config;
     if (rcode == 0 && new_config) {
-        ElementPtr local_config = rmod_config.getLocalConfig();
+        local_config = rmod_config.getLocalConfig();
         isc::data::merge(local_config, new_config);
         rmod_config.setLocalConfig(local_config);
     } else {
@@ -409,6 +410,10 @@ ModuleCCSession::addRemoteConfig(const std::string& spec_name,
 
     // all ok, add it
     remote_module_configs_[module_name] = rmod_config;
+    if (handler) {
+        remote_module_handlers_[module_name] = handler;
+        handler(module_name, local_config);
+    }
     return (module_name);
 }
 
@@ -419,6 +424,7 @@ ModuleCCSession::removeRemoteConfig(const std::string& module_name) {
     it = remote_module_configs_.find(module_name);
     if (it != remote_module_configs_.end()) {
         remote_module_configs_.erase(it);
+        remote_module_handlers_.erase(module_name);
         session_.unsubscribe(module_name);
     }
 }
@@ -448,6 +454,11 @@ ModuleCCSession::updateRemoteConfig(const std::string& module_name,
     if (it != remote_module_configs_.end()) {
         ElementPtr rconf = (*it).second.getLocalConfig();
         isc::data::merge(rconf, new_config);
+        std::map<std::string, RemoteHandler>::iterator hit =
+            remote_module_handlers_.find(module_name);
+        if (hit != remote_module_handlers_.end()) {
+            hit->second(module_name, new_config);
+        }
     }
 }
 
