@@ -24,6 +24,11 @@
             "item_optional": false,
             "item_default": ""
           },
+          { "item_name": "class",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": "IN"
+          },
           {
             "item_name": "master_addr",
             "item_type": "string",
