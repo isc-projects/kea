@@ -15,6 +15,7 @@
 
 import unittest
 import socket
+from isc.testutils.tsigctx_mock import MockTSIGContext
 from xfrin import *
 
 #
@@ -225,7 +226,7 @@ class TestXfrinConnection(unittest.TestCase):
         self.assertEqual(self.conn.query_data, b'\x00\x1d\x105\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01')
 
         # soa request with tsig
-        self.conn._tsig_ctx = TSIGContext(TSIG_KEY)
+        self.conn._tsig_ctx = MockTSIGContext(TSIG_KEY)
         self.conn._send_query(RRType.SOA())
         tsig_soa_data = strip_mutable_tsig_data(self.conn.query_data)
         self.assertEqual(tsig_soa_data, b'\x00n\x105\x00\x00\x00\x01\x00\x00\x00\x00\x00\x01\x07example\x03com\x00\x00\x06\x00\x01\x07example\x03com\x00\x00\xfa\x00\xff\x00\x00\x00\x00\x00:\x08hmac-md5\x07sig-alg\x03reg\x03int\x00\x01,\x00\x10\x105\x00\x00\x00\x00')
@@ -240,7 +241,7 @@ class TestXfrinConnection(unittest.TestCase):
         self.assertRaises(XfrinTestException, self._handle_xfrin_response)
 
     def test_response_with_tsig(self):
-        self.conn._tsig_ctx = TSIGContext(TSIG_KEY)
+        self.conn._tsig_ctx = MockTSIGContext(TSIG_KEY)
         # server tsig check fail, return with RCODE 9 (NOTAUTH)
         self.conn._send_query(RRType.SOA())
         self.conn.reply_data = self.conn.create_response_data(rcode=Rcode.NOTAUTH())
