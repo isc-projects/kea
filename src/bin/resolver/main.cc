@@ -58,7 +58,6 @@ using namespace std;
 using namespace isc::cc;
 using namespace isc::config;
 using namespace isc::data;
-using isc::log::dlog;
 using namespace isc::asiodns;
 using namespace isc::asiolink;
 
@@ -127,7 +126,7 @@ main(int argc, char* argv[]) {
         for (int i = 0; i < argc; ++ i) {
             cmdline = cmdline + " " + argv[i];
         }
-        dlog(cmdline);
+        LOG_INFO(resolver_logger, RESOLVER_STARTING).arg(cmdline);
     }
 
     int ret = 0;
@@ -144,7 +143,7 @@ main(int argc, char* argv[]) {
         }
 
         resolver = boost::shared_ptr<Resolver>(new Resolver());
-        dlog("Server created.");
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CREATED);
 
         SimpleCallback* checkin = resolver->getCheckinProvider();
         DNSLookup* lookup = resolver->getDNSLookupProvider();
@@ -197,15 +196,13 @@ main(int argc, char* argv[]) {
         
         DNSService dns_service(io_service, checkin, lookup, answer);
         resolver->setDNSService(dns_service);
-        dlog("IOService created.");
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_SERVICE);
 
         cc_session = new Session(io_service.get_io_service());
-        dlog("Configuration session channel created.");
-
         config_session = new ModuleCCSession(specfile, *cc_session,
                                              my_config_handler,
                                              my_command_handler);
-        dlog("Configuration channel established.");
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CONFIGCHAN);
 
         // FIXME: This does not belong here, but inside Boss
         if (uid != NULL) {
@@ -213,17 +210,18 @@ main(int argc, char* argv[]) {
         }
 
         resolver->setConfigSession(config_session);
-        dlog("Config loaded");
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CONFIGLOAD);
 
-        dlog("Server started.");
+        LOG_INFO(resolver_logger, RESOLVER_STARTED);
         io_service.run();
     } catch (const std::exception& ex) {
-        dlog(string("Server failed: ") + ex.what(),true);
+        LOG_FATAL(resolver_logger, RESOLVER_FAILED).arg(ex.what());
         ret = 1;
     }
 
     delete config_session;
     delete cc_session;
 
+    LOG_INFO(resolver_logger, RESOLVER_SHUTDOWN);
     return (ret);
 }

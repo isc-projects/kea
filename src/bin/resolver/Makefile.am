@@ -18,10 +18,12 @@ endif
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
-CLEANFILES = *.gcno *.gcda resolver.spec spec_config.h
+CLEANFILES  = *.gcno *.gcda
+CLEANFILES += resolver.spec spec_config.h
+CLEANFILES += resolverdef.cc resolverdef.h
 
 man_MANS = b10-resolver.8
-EXTRA_DIST = $(man_MANS) b10-resolver.xml
+EXTRA_DIST = $(man_MANS) b10-resolver.xml resolverdef.mes
 
 if ENABLE_MAN
 
@@ -36,13 +38,23 @@ resolver.spec: resolver.spec.pre
 spec_config.h: spec_config.h.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
 
-BUILT_SOURCES = spec_config.h 
+# Define rule to build logging source files from message file
+resolverdef.h resolverdef.cc: resolverdef.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/resolver/resolverdef.mes
+
+
+BUILT_SOURCES = spec_config.h resolverdef.cc resolverdef.h
+
 pkglibexec_PROGRAMS = b10-resolver
 b10_resolver_SOURCES = resolver.cc resolver.h
 b10_resolver_SOURCES += response_scrubber.cc response_scrubber.h
 b10_resolver_SOURCES += $(top_builddir)/src/bin/auth/change_user.h
 b10_resolver_SOURCES += $(top_builddir)/src/bin/auth/common.h
 b10_resolver_SOURCES += main.cc
+
+nodist_b10_resolver_SOURCES = resolverdef.cc resolverdef.h
+
+
 b10_resolver_LDADD =  $(top_builddir)/src/lib/dns/libdns++.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/cc/libcc.la

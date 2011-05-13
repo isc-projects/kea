@@ -85,7 +85,7 @@ public:
                     isc::cache::ResolverCache& cache)
     {
         assert(!rec_query_); // queryShutdown must be called first
-        dlog("Query setup");
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_QUSETUP);
         rec_query_ = new RecursiveQuery(dnss, 
                                         nsas, cache,
                                         upstream_,
@@ -101,7 +101,7 @@ public:
         // (this is not a safety check, just to prevent logging of
         // actions that are not performed
         if (rec_query_) {
-            dlog("Query shutdown");
+            LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_QUSHUT);
             delete rec_query_;
             rec_query_ = NULL;
         }
@@ -113,13 +113,12 @@ public:
         upstream_ = upstream;
         if (dnss) {
             if (!upstream_.empty()) {
-                dlog("Setting forward addresses:");
                 BOOST_FOREACH(const AddressPair& address, upstream) {
-                    dlog(" " + address.first + ":" +
-                        boost::lexical_cast<string>(address.second));
+                    LOG_INFO(resolver_logger, RESOLVER_FWDADDR)
+                             .arg(address.first).arg(address.second);
                 }
             } else {
-                dlog("No forward addresses, running in recursive mode");
+                LOG_INFO(resolver_logger, RESOLVER_RECURSIVE);
             }
         }
     }
@@ -130,13 +129,12 @@ public:
         upstream_root_ = upstream_root;
         if (dnss) {
             if (!upstream_root_.empty()) {
-                dlog("Setting root addresses:");
                 BOOST_FOREACH(const AddressPair& address, upstream_root) {
-                    dlog(" " + address.first + ":" +
-                        boost::lexical_cast<string>(address.second));
+                    LOG_INFO(resolver_logger, RESOLVER_ROOTADDR)
+                             .arg(address.first).arg(address.second);
                 }
             } else {
-                dlog("No root addresses");
+                LOG_WARN(resolver_logger, RESOLVER_NOROOTADDR);
             }
         }
     }
@@ -391,7 +389,6 @@ Resolver::processMessage(const IOMessage& io_message,
                          OutputBufferPtr buffer,
                          DNSServer* server)
 {
-    dlog("Got a DNS message");
     InputBuffer request_buffer(io_message.getData(), io_message.getDataSize());
     // First, check the header part.  If we fail even for the base header,
     // just drop the message.
@@ -400,12 +397,15 @@ Resolver::processMessage(const IOMessage& io_message,
 
         // Ignore all responses.
         if (query_message->getHeaderFlag(Message::HEADERFLAG_QR)) {
-            dlog("Received unexpected response, ignoring");
+            LOG_DEBUG(resolver_logger, RESOLVER_DBG_RECVMSG, RESOLVER_UNEXRESP);
             server->resume(false);
             return;
         }
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_RECVMSG, RESOLVER_RECVMSG);
+
     } catch (const Exception& ex) {
-        dlog(string("DNS packet exception: ") + ex.what(),true);
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_RECVMSG, RESOLVER_PKTEXCEPT)
+                  .arg(ex.what());
         server->resume(false);
         return;
     }
