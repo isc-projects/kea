@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -13,16 +13,19 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <gtest/gtest.h>
-#include <log/logger_support.h>
 
-int
-main(int argc, char* argv[]) {
-    ::testing::InitGoogleTest(&argc, argv);
+#include <datasrc/logger.h>
 
-    // TODO: UNCOMMENT ON MERGE
-    // (this is the call we want in master, but branch point does not
-    // have this yet)
-    //isc::log::initLogger();
+using namespace isc::datasrc;
 
-    return (RUN_ALL_TESTS());
+namespace {
+
+TEST(CacheLogger, name) {
+    // This does not check the name only, but the fact the logger is created
+    // The dot is because of empty root logger
+    std::string name(logger.getName());
+    EXPECT_EQ(name.size() - 8, name.rfind(".datasrc")) <<
+        "Wrong logger name: " << name;
+}
+
 }

@@ -68,12 +68,30 @@ public:
     //@{
     /// \brief Constructor from key parameters
     ///
-    /// In the current implementation, \c algorithm_name must be a known
-    /// algorithm to this implementation, which are defined via the
-    /// <code>static const</code> member functions.  For other names
-    /// an exception of class \c InvalidParameter will be thrown.
-    /// Note: This restriction may be too strict, and we may revisit it
-    /// later.
+    /// \c algorithm_name should generally be a known algorithm to this
+    /// implementation, which are defined via the
+    /// <code>static const</code> member functions.
+    ///
+    /// Other names are still accepted as long as the secret is empty
+    /// (\c secret is \c NULL and \c secret_len is 0), however; in some cases
+    /// we might want to treat just the pair of key name and algorithm name
+    /// opaquely, e.g., when generating a response TSIG with a BADKEY error
+    /// because the algorithm is unknown as specified in Section 3.2 of
+    /// RFC2845 (in which case the algorithm name would be copied from the
+    /// request to the response, and for that purpose it would be convenient
+    /// if a \c TSIGKey object can hold a name for an "unknown" algorithm).
+    ///
+    /// \note RFC2845 does not specify which algorithm name should be used
+    /// in such a BADKEY response.  The behavior of using the same algorithm
+    /// is derived from the BIND 9 implementation.
+    ///
+    /// It is unlikely that a TSIG key with an unknown algorithm is of any
+    /// use with actual crypto operation, so care must be taken when dealing
+    /// with such keys. (The restriction for the secret will prevent
+    /// accidental creation of such a dangerous key, e.g., due to misspelling
+    /// in a configuration file).
+    /// If the given algorithm name is unknown and non empty secret is
+    /// specified, an exception of type \c InvalidParameter will be thrown.
     ///
     /// \c secret and \c secret_len must be consistent in that the latter
     /// is 0 if and only if the former is \c NULL;
@@ -98,8 +116,11 @@ public:
     /// <name>:<secret>[:<algorithm>]
     /// Where <name> is a domain name for the key, <secret> is a
     /// base64 representation of the key secret, and the optional
-    /// algorithm is an algorithm identifier as specified in RFC4635
+    /// algorithm is an algorithm identifier as specified in RFC4635.
     /// The default algorithm is hmac-md5.sig-alg.reg.int.
+    ///
+    /// The same restriction about the algorithm name (and secret) as that
+    /// for the other constructor applies.
     ///
     /// Since ':' is used as a separator here, it is not possible to
     /// use this constructor to create keys with a ':' character in
@@ -304,7 +325,9 @@ public:
     /// Find a \c TSIGKey for the given name in the \c TSIGKeyRing.
     ///
     /// It searches the internal storage for a \c TSIGKey whose name is
-    /// \c key_name, and returns the result in the form of a \c FindResult
+    /// \c key_name and that uses the hash algorithm identified by
+    /// \c algorithm_name.
+    /// It returns the result in the form of a \c FindResult
     /// object as follows:
     /// - \c code: \c SUCCESS if a key is found; otherwise \c NOTFOUND.
     /// - \c key: A pointer to the found \c TSIGKey object if one is found;
@@ -318,8 +341,9 @@ public:
     /// This method never throws an exception.
     ///
     /// \param key_name The name of the key to be found.
+    /// \param algorithm_name The name of the algorithm of the found key.
     /// \return A \c FindResult object enclosing the search result (see above).
-    FindResult find(const Name& key_name);
+    FindResult find(const Name& key_name, const Name& algorithm_name) const;
 private:
     struct TSIGKeyRingImpl;
     TSIGKeyRingImpl* impl_;
