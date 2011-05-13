@@ -386,6 +386,8 @@ class ZoneInfo:
         """Creates a zone_info with the config data element as
            specified by the 'zones' list in xfrin.spec"""
         self.name = config_data.get('name')
+        self.class_str = config_data.get('class') or 'IN'
+
         if self.name is None:
             raise XfrinConfigException("Configuration zones list "
                                        "element does not contain "
@@ -394,20 +396,21 @@ class ZoneInfo:
         # add the root dot if the user forgot
         if len(self.name) > 0 and self.name[-1] != '.':
             self.name += '.'
-        self.master_addr = config_data.get('master_addr') or DEFAULT_MASTER
+        self.master_addr_str = config_data.get('master_addr') or DEFAULT_MASTER
+        self.master_port_str = config_data.get('master_port') or DEFAULT_MASTER_PORT
         try:
-            addr = config_data.get('master_addr') or DEFAULT_MASTER
-            port = config_data.get('master_port') or DEFAULT_MASTER_PORT
-            isc.net.parse.addr_parse(addr)
-            isc.net.parse.port_parse(port)
-            self.master_addr = addr
-            self.master_port = port
+            self.master_addr = isc.net.parse.addr_parse(self.master_addr_str)
+            self.master_port = isc.net.parse.port_parse(self.master_port_str)
         except ValueError:
             errmsg = "bad format for zone's master: " + str(config_data)
             log_error(errmsg)
             raise XfrinConfigException(errmsg)
 
         self.tsig_key_str = config_data.get('tsig_key') or None
+
+    def get_master_addr_info(self):
+        return (self.master_addr.family, socket.SOCK_STREAM,
+                (self.master_addr_str, self.master_port))
 
 class Xfrin:
     def __init__(self, verbose = False):
@@ -439,26 +442,32 @@ class Xfrin:
         of unit tests.'''
         self._module_cc.check_command(False)
 
-    def _get_zone_info(self, name):
+    def _get_zone_info(self, name, class_str = "IN"):
         """Returns the ZoneInfo object containing the configured data
            for the given zone name. If the zone name did not have any
            data, returns None"""
         # add the root dot if the user forgot
         if len(name) > 0 and name[-1] != '.':
             name += '.'
-        if name in self._zones:
-            return self._zones[name]
+        if (name, class_str) in self._zones:
+            return self._zones[(name, class_str)]
         else:
             return None
+
+    def _clear_zone_info(self):
+        self._zones = {}
+
+    def _add_zone_info(self, zone_info):
+        self._zones[(zone_info.name, zone_info.class_str)] = zone_info
 
     def config_handler(self, new_config):
         self._max_transfers_in = new_config.get("transfers_in") or self._max_transfers_in
         if 'zones' in new_config:
-            self._zones = {}
+            self._clear_zone_info()
             for zone_config in new_config.get('zones'):
                 try:
                     zone_info = ZoneInfo(zone_config)
-                    self._zones[zone_info.name] = zone_info
+                    self._add_zone_info(zone_info)
                 except XfrinConfigException as xce:
                     return create_answer(1, str(xce))
 
@@ -493,7 +502,7 @@ class Xfrin:
                     log_error(errmsg)
                     answer = create_answer(1, errmsg)
                 else:
-                    (master_addr) = build_addr_info(zone_info.master_addr, zone_info.master_port)
+                    master_addr = zone_info.get_master_addr_info()
                     ret = self.xfrin_start(zone_name,
                                            rrclass,
                                            self._get_db_file(),
@@ -552,14 +561,14 @@ class Xfrin:
         port = args.get('port')
         if port is None:
             if zone_info is not None:
-                port = zone_info.master_port
+                port = zone_info.master_port_str
             else:
                 port = DEFAULT_MASTER_PORT
 
         master = args.get('master')
         if master is None:
             if zone_info is not None:
-                master = zone_info.master_addr
+                master = zone_info.master_addr_str
             else:
                 master = DEFAULT_MASTER
 

@@ -607,6 +607,20 @@ class TestXfrin(unittest.TestCase):
         self.assertEqual(self.xfr.command_handler("notify",
                                                   self.args)['result'][0], 1)
 
+    def test_command_handler_notify_known_zone(self):
+        # try it with a known zone
+        self.args['master'] = TEST_MASTER_IPV6_ADDRESS
+
+        zones = { 'zones': [
+                  { 'name': TEST_ZONE_NAME,
+                    'master_addr': TEST_MASTER_IPV4_ADDRESS,
+                    'master_port': TEST_MASTER_PORT
+                  }
+                ]}
+        self.xfr.config_handler(zones)
+        self.assertEqual(self.xfr.command_handler("notify",
+                                                  self.args)['result'][0], 0)
+
     def test_command_handler_unknown(self):
         self.assertEqual(self.xfr.command_handler("xxx", None)['result'][0], 1)
 
