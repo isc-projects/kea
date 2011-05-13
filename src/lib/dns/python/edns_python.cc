@@ -108,7 +108,7 @@ PyMethodDef EDNS_methods[] = {
 // Most of the functions are not actually implemented and NULL here.
 PyTypeObject edns_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.EDNS",
+    "pydnspp.EDNS",
     sizeof(s_EDNS),                     // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)EDNS_destroy,           // tp_dealloc

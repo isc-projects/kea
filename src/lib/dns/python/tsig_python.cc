@@ -252,7 +252,7 @@ PyObject* po_TSIGContextError;
 // Most of the functions are not actually implemented and NULL here.
 PyTypeObject tsigcontext_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.TSIGContext",
+    "pydnspp.TSIGContext",
     sizeof(s_TSIGContext),                 // tp_basicsize
     0,                                  // tp_itemsize
     reinterpret_cast<destructor>(TSIGContext_destroy),       // tp_dealloc
