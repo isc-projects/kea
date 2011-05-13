@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,15 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <gtest/gtest.h>
+/// Defines the logger used by the NSAS
 
-#include <dns/tests/unittest_util.h>
-#include <log/logger_support.h>
+#include <resolve/resolve_log.h>
 
-int
-main(int argc, char* argv[]) {
-    ::testing::InitGoogleTest(&argc, argv);
-    isc::log::initLogger();
+namespace isc {
+namespace resolve {
 
-    return (RUN_ALL_TESTS());
-}
+isc::log::Logger logger("reslib");  // Distinct from "resolver"
+
+} // namespace resolve
+} // namespace isc
+
