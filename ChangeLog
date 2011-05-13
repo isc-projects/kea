@@ -1,3 +1,8 @@
+238.	[func]		zhang likun
+	Implement the simplest forwarder, which pass everything throught
+	except QID, port number. The response will not be cached.
+	(Trac #598_new, git 8e28187a582820857ef2dae9b13637a3881f13ba)
+
 237.	[bug]		naokikambe
 	Resolved that the stats module wasn't configurable in bindctl in
 	spite of its having configuration items. The configuration part
