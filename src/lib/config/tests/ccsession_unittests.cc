@@ -392,6 +392,24 @@ TEST_F(CCSessionTest, remoteConfig) {
     
     session.getMessages()->add(createAnswer());
     EXPECT_THROW(mccs.addRemoteConfig(ccspecfile("spec2.spec")), CCSessionError);
+
+    {
+        SCOPED_TRACE("With module name");
+        // Try adding it with downloading the spec from config manager
+        ModuleSpec spec(moduleSpecFromFile(ccspecfile("spec2.spec")));
+        session.getMessages()->add(createAnswer(0, spec.getFullSpec()));
+        session.getMessages()->add(createAnswer(0, el("{}")));
+
+        EXPECT_NO_THROW(module_name = mccs.addRemoteConfig("Spec2"));
+
+        EXPECT_EQ("Spec2", module_name);
+        EXPECT_NO_THROW(item1 =
+                        mccs.getRemoteConfigValue(module_name,
+                                                  "item1")->intValue());
+        EXPECT_EQ(1, item1);
+
+        mccs.removeRemoteConfig(module_name);
+    }
 }
 
 TEST_F(CCSessionTest, ignoreRemoteConfigCommands) {
