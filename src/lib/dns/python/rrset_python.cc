@@ -168,7 +168,7 @@ RRset_init(s_RRset* self, PyObject* args) {
                                            &rrtype_type, &rrtype,
                                            &rrttl_type, &rrttl
        )) {
-        self->rrset = RRsetPtr(new RRset(*name->name, *rrclass->rrclass,
+        self->rrset = RRsetPtr(new RRset(*name->cppobj, *rrclass->rrclass,
                                 *rrtype->rrtype, *rrttl->rrttl));
         return (0);
     }
@@ -197,8 +197,8 @@ RRset_getName(s_RRset* self) {
     // is this the best way to do this?
     name = static_cast<s_Name*>(name_type.tp_alloc(&name_type, 0));
     if (name != NULL) {
-        name->name = new Name(self->rrset->getName());
-        if (name->name == NULL)
+        name->cppobj = new Name(self->rrset->getName());
+        if (name->cppobj == NULL)
           {
             Py_DECREF(name);
             return (NULL);
@@ -265,7 +265,7 @@ RRset_setName(s_RRset* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "O!", &name_type, &name)) {
         return (NULL);
     }
-    self->rrset->setName(*name->name);
+    self->rrset->setName(*name->cppobj);
     Py_RETURN_NONE;
 }
 

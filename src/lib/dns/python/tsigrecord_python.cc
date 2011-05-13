@@ -1,4 +1,4 @@
-// Copyright (C) @YEAR@  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,25 +12,23 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// Enable this if you use s# variants with PyArg_ParseTuple(), see
-// http://docs.python.org/py3k/c-api/arg.html#strings-and-buffers
-//#define PY_SSIZE_T_CLEAN
-
-// Python.h needs to be placed at the head of the program file, see:
-// http://docs.python.org/py3k/extending/extending.html#a-simple-example
-#include <Python.h>
-
 #include <string>
 #include <stdexcept>
 
 #include <util/python/pycppwrapper_util.h>
 
-#include "@cppclass@_python.h"
+#include <dns/tsigrecord.h>
+
+#include "pydnspp_common.h"
+#include "pydnspp_towire.h"
+#include "name_python.h"
+#include "tsig_rdata_python.h"
+#include "tsigrecord_python.h"
 
 using namespace std;
 using namespace isc::util::python;
-using namespace isc::@MODULE@;
-using namespace isc::@MODULE@::python;
+using namespace isc::dns;
+using namespace isc::dns::python;
 
 //
 // Definition of the classes
@@ -41,16 +39,16 @@ using namespace isc::@MODULE@::python;
 // and a type description
 
 //
-// @CPPCLASS@
+// TSIGRecord
 //
 
 // Trivial constructor.
-s_@CPPCLASS@::s_@CPPCLASS@() : cppobj(NULL) {
+s_TSIGRecord::s_TSIGRecord() : cppobj(NULL) {
 }
 
 namespace {
 // Shortcut type which would be convenient for adding class variables safely.
-typedef CPPPyObjectContainer<s_@CPPCLASS@, @CPPCLASS@> @CPPCLASS@Container;
+typedef CPPPyObjectContainer<s_TSIGRecord, TSIGRecord> TSIGRecordContainer;
 
 //
 // We declare the functions here, the definitions are below
@@ -58,20 +56,14 @@ typedef CPPPyObjectContainer<s_@CPPCLASS@, @CPPCLASS@> @CPPCLASS@Container;
 //
 
 // General creation and destruction
-int @CPPCLASS@_init(s_@CPPCLASS@* self, PyObject* args);
-void @CPPCLASS@_destroy(s_@CPPCLASS@* self);
-
-// These are the functions we export
-// ADD/REMOVE/MODIFY THE FOLLOWING AS APPROPRIATE FOR THE ACTUAL CLASS.
-//
-PyObject* @CPPCLASS@_toText(const s_@CPPCLASS@* const self);
-PyObject* @CPPCLASS@_str(PyObject* self);
-PyObject* @CPPCLASS@_richcmp(const s_@CPPCLASS@* const self,
-                            const s_@CPPCLASS@* const other, int op);
-
-// This is quite specific pydnspp.  For other wrappers this should probably
-// be removed.
-PyObject* @CPPCLASS@_toWire(const s_@CPPCLASS@* self, PyObject* args);
+int TSIGRecord_init(s_TSIGRecord* self, PyObject* args);
+void TSIGRecord_destroy(s_TSIGRecord* self);
+PyObject* TSIGRecord_toText(const s_TSIGRecord* const self);
+PyObject* TSIGRecord_str(PyObject* self);
+PyObject* TSIGRecord_toWire(const s_TSIGRecord* self, PyObject* args);
+PyObject* TSIGRecord_getName(const s_TSIGRecord* self);
+PyObject* TSIGRecord_getLength(const s_TSIGRecord* self);
+PyObject* TSIGRecord_getRdata(const s_TSIGRecord* self);
 
 // These are the functions we export
 // For a minimal support, we don't need them.
@@ -82,13 +74,21 @@ PyObject* @CPPCLASS@_toWire(const s_@CPPCLASS@* self, PyObject* args);
 // 2. Our static function here
 // 3. Argument type
 // 4. Documentation
-PyMethodDef @CPPCLASS@_methods[] = {
-    { "to_text", reinterpret_cast<PyCFunction>(@CPPCLASS@_toText), METH_NOARGS,
+PyMethodDef TSIGRecord_methods[] = {
+    { "get_name", reinterpret_cast<PyCFunction>(TSIGRecord_getName),
+      METH_NOARGS,
+      "Return the owner name of the TSIG RR, which is the TSIG key name" },
+    { "get_length", reinterpret_cast<PyCFunction>(TSIGRecord_getLength),
+      METH_NOARGS,
+      "Return the length of the TSIG record" },
+    { "get_rdata", reinterpret_cast<PyCFunction>(TSIGRecord_getRdata),
+      METH_NOARGS,
+      "Return the RDATA of the TSIG RR" },
+    { "to_text", reinterpret_cast<PyCFunction>(TSIGRecord_toText), METH_NOARGS,
       "Returns the text representation" },
-    // This is quite specific pydnspp.  For other wrappers this should probably
-    // be removed:
-    { "to_wire", reinterpret_cast<PyCFunction>(@CPPCLASS@_toWire), METH_VARARGS,
-      "Converts the @CPPCLASS@ object to wire format.\n"
+    { "to_wire", reinterpret_cast<PyCFunction>(TSIGRecord_toWire),
+      METH_VARARGS,
+      "Converts the TSIGRecord object to wire format.\n"
       "The argument can be either a MessageRenderer or an object that "
       "implements the sequence interface. If the object is mutable "
       "(for instance a bytearray()), the wire data is added in-place.\n"
@@ -97,30 +97,29 @@ PyMethodDef @CPPCLASS@_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
-// This is a template of typical code logic of python class initialization
-// with C++ backend.  You'll need to adjust it according to details of the
-// actual C++ class.
 int
-@CPPCLASS@_init(s_@CPPCLASS@* self, PyObject* args) {
+TSIGRecord_init(s_TSIGRecord* self, PyObject* args) {
     try {
-        if (PyArg_ParseTuple(args, "REPLACE ME")) {
-            // YOU'LL NEED SOME VALIDATION, PREPARATION, ETC, HERE.
-            self->cppobj = new @CPPCLASS@(/*NECESSARY PARAMS*/);
+        const s_Name* py_name;
+        const s_TSIG* py_tsig;
+        if (PyArg_ParseTuple(args, "O!O!", &name_type, &py_name,
+                             &tsig_type, &py_tsig)) {
+            self->cppobj = new TSIGRecord(*py_name->cppobj, *py_tsig->cppobj);
             return (0);
         }
     } catch (const exception& ex) {
-        const string ex_what = "Failed to construct @CPPCLASS@ object: " +
+        const string ex_what = "Failed to construct TSIGRecord object: " +
             string(ex.what());
         PyErr_SetString(po_IscException, ex_what.c_str());
         return (-1);
     } catch (...) {
         PyErr_SetString(po_IscException,
-                        "Unexpected exception in constructing @CPPCLASS@");
+                        "Unexpected exception in constructing TSIGRecord");
         return (-1);
     }
 
     PyErr_SetString(PyExc_TypeError,
-                    "Invalid arguments to @CPPCLASS@ constructor");
+                    "Invalid arguments to TSIGRecord constructor");
 
     return (-1);
 }
@@ -128,7 +127,7 @@ int
 // This is a template of typical code logic of python object destructor.
 // In many cases you can use it without modification, but check that carefully.
 void
-@CPPCLASS@_destroy(s_@CPPCLASS@* const self) {
+TSIGRecord_destroy(s_TSIGRecord* const self) {
     delete self->cppobj;
     self->cppobj = NULL;
     Py_TYPE(self)->tp_free(self);
@@ -137,83 +136,86 @@ void
 // This should be able to be used without modification as long as the
 // underlying C++ class has toText().
 PyObject*
-@CPPCLASS@_toText(const s_@CPPCLASS@* const self) {
+TSIGRecord_toText(const s_TSIGRecord* const self) {
     try {
         // toText() could throw, so we need to catch any exceptions below.
         return (Py_BuildValue("s", self->cppobj->toText().c_str()));
     } catch (const exception& ex) {
         const string ex_what =
-            "Failed to convert @CPPCLASS@ object to text: " +
+            "Failed to convert TSIGRecord object to text: " +
             string(ex.what());
         PyErr_SetString(po_IscException, ex_what.c_str());
     } catch (...) {
         PyErr_SetString(PyExc_SystemError, "Unexpected failure in "
-                        "converting @CPPCLASS@ object to text");
+                        "converting TSIGRecord object to text");
     }
     return (NULL);
 }
 
 PyObject*
-@CPPCLASS@_str(PyObject* self) {
+TSIGRecord_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return (PyObject_CallMethod(self, const_cast<char*>("to_text"),
                                 const_cast<char*>("")));
 }
 
-PyObject* 
-@CPPCLASS@_richcmp(const s_@CPPCLASS@* const self,
-                   const s_@CPPCLASS@* const other,
-                   const int op)
-{
-    bool c = false;
-
-    // Check for null and if the types match. If different type,
-    // simply return False
-    if (other == NULL || (self->ob_type != other->ob_type)) {
-        Py_RETURN_FALSE;
-    }
-
-    // Only equals and not equals here, unorderable type
-    switch (op) {
-    case Py_LT:
-        PyErr_SetString(PyExc_TypeError, "Unorderable type; @CPPCLASS@");
-        return (NULL);
-    case Py_LE:
-        PyErr_SetString(PyExc_TypeError, "Unorderable type; @CPPCLASS@");
-        return (NULL);
-    case Py_EQ:
-        c = (*self->cppobj == *other->cppobj);
-        break;
-    case Py_NE:
-        c = (*self->cppobj != *other->cppobj);
-        break;
-    case Py_GT:
-        PyErr_SetString(PyExc_TypeError, "Unorderable type; @CPPCLASS@");
-        return (NULL);
-    case Py_GE:
-        PyErr_SetString(PyExc_TypeError, "Unorderable type; @CPPCLASS@");
-        return (NULL);
-    }
-    if (c) {
-        Py_RETURN_TRUE;
-    } else {
-        Py_RETURN_FALSE;
-    }
+PyObject*
+TSIGRecord_toWire(const s_TSIGRecord* const self, PyObject* args) {
+    typedef ToWireCallInt<const TSIGRecord> ToWireCall;
+    PyObject* (*towire_fn)(const s_TSIGRecord* const, PyObject*) =
+        toWireWrapper<s_TSIGRecord, TSIGRecord, ToWireCall>;
+    return (towire_fn(self, args));
 }
+
+PyObject*
+TSIGRecord_getName(const s_TSIGRecord* const self) {
+    try {
+        return (createNameObject(self->cppobj->getName()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Failed to get TSIGRecord name: " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError, "Unexpected failure in "
+                        "getting TSIGRecord name");
+    }
+    return (NULL);
+}
+
+PyObject*
+TSIGRecord_getLength(const s_TSIGRecord* const self) {
+    return (Py_BuildValue("H", self->cppobj->getLength()));
+}
+
+PyObject*
+TSIGRecord_getRdata(const s_TSIGRecord* const self) {
+    try {
+        return (createTSIGObject(self->cppobj->getRdata()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Failed to get TSIGRecord RDATA: " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError, "Unexpected failure in "
+                        "getting TSIGRecord RDATA");
+    }
+    return (NULL);
+}
+
 } // end of unnamed namespace
 
 namespace isc {
-namespace @MODULE@ {
+namespace dns {
 namespace python {
 // This defines the complete type for reflection in python and
-// parsing of PyObject* to s_@CPPCLASS@
+// parsing of PyObject* to s_TSIGRecord
 // Most of the functions are not actually implemented and NULL here.
-PyTypeObject @cppclass@_type = {
+PyTypeObject tsigrecord_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.@CPPCLASS@",
-    sizeof(s_@CPPCLASS@),                 // tp_basicsize
+    "libdns_python.TSIGRecord",
+    sizeof(s_TSIGRecord),                 // tp_basicsize
     0,                                  // tp_itemsize
-    reinterpret_cast<destructor>(@CPPCLASS@_destroy),       // tp_dealloc
+    reinterpret_cast<destructor>(TSIGRecord_destroy),       // tp_dealloc
     NULL,                               // tp_print
     NULL,                               // tp_getattr
     NULL,                               // tp_setattr
@@ -224,21 +226,19 @@ PyTypeObject @cppclass@_type = {
     NULL,                               // tp_as_mapping
     NULL,                               // tp_hash 
     NULL,                               // tp_call
-    // THIS MAY HAVE TO BE CHANGED TO NULL:
-    @CPPCLASS@_str,                       // tp_str
+    TSIGRecord_str,                       // tp_str
     NULL,                               // tp_getattro
     NULL,                               // tp_setattro
     NULL,                               // tp_as_buffer
     Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The @CPPCLASS@ class objects is...(COMPLETE THIS)",
+    "The TSIGRecord class objects is...(COMPLETE THIS)",
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
-    // THIS MAY HAVE TO BE CHANGED TO NULL:
-    reinterpret_cast<richcmpfunc>(@CPPCLASS@_richcmp), // tp_richcompare
+    NULL,                               // tp_richcompare
     0,                                  // tp_weaklistoffset
     NULL,                               // tp_iter
     NULL,                               // tp_iternext
-    @CPPCLASS@_methods,                   // tp_methods
+    TSIGRecord_methods,                   // tp_methods
     NULL,                               // tp_members
     NULL,                               // tp_getset
     NULL,                               // tp_base
@@ -246,7 +246,7 @@ PyTypeObject @cppclass@_type = {
     NULL,                               // tp_descr_get
     NULL,                               // tp_descr_set
     0,                                  // tp_dictoffset
-    reinterpret_cast<initproc>(@CPPCLASS@_init),            // tp_init
+    reinterpret_cast<initproc>(TSIGRecord_init),            // tp_init
     NULL,                               // tp_alloc
     PyType_GenericNew,                  // tp_new
     NULL,                               // tp_free
@@ -262,35 +262,35 @@ PyTypeObject @cppclass@_type = {
 
 // Module Initialization, all statics are initialized here
 bool
-initModulePart_@CPPCLASS@(PyObject* mod) {
+initModulePart_TSIGRecord(PyObject* mod) {
     // We initialize the static description object with PyType_Ready(),
     // then add it to the module. This is not just a check! (leaving
     // this out results in segmentation faults)
-    if (PyType_Ready(&@cppclass@_type) < 0) {
+    if (PyType_Ready(&tsigrecord_type) < 0) {
         return (false);
     }
-    void* p = &@cppclass@_type;
-    if (PyModule_AddObject(mod, "@CPPCLASS@", static_cast<PyObject*>(p)) < 0) {
+    void* p = &tsigrecord_type;
+    if (PyModule_AddObject(mod, "TSIGRecord", static_cast<PyObject*>(p)) < 0) {
         return (false);
     }
-    Py_INCREF(&@cppclass@_type);
+    Py_INCREF(&tsigrecord_type);
 
     // The following template is the typical procedure for installing class
     // variables.  If the class doesn't have a class variable, remove the
     // entire try-catch clauses.
     try {
         // Constant class variables
-        installClassVariable(@cppclass@_type, "REPLACE_ME",
-                             Py_BuildValue("REPLACE ME"));
+        installClassVariable(tsigrecord_type, "TSIG_TTL",
+                             Py_BuildValue("I", 0));
     } catch (const exception& ex) {
         const string ex_what =
-            "Unexpected failure in @CPPCLASS@ initialization: " +
+            "Unexpected failure in TSIGRecord initialization: " +
             string(ex.what());
         PyErr_SetString(po_IscException, ex_what.c_str());
         return (false);
     } catch (...) {
         PyErr_SetString(PyExc_SystemError,
-                        "Unexpected failure in @CPPCLASS@ initialization");
+                        "Unexpected failure in TSIGRecord initialization");
         return (false);
     }
 
@@ -298,12 +298,12 @@ initModulePart_@CPPCLASS@(PyObject* mod) {
 }
 
 PyObject*
-create@CPPCLASS@Object(const @CPPCLASS@& source) {
-    @CPPCLASS@Container container =
-        PyObject_New(s_@CPPCLASS@, &@cppclass@_type);
-    container.set(new @CPPCLASS@(source));
+createTSIGRecordObject(const TSIGRecord& source) {
+    TSIGRecordContainer container = PyObject_New(s_TSIGRecord,
+                                                 &tsigrecord_type);
+    container.set(new TSIGRecord(source));
     return (container.release());
 }
 } // namespace python
-} // namespace @MODULE@
+} // namespace dns
 } // namespace isc

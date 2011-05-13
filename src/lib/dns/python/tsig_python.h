@@ -12,40 +12,35 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_TSIGERROR_H
-#define __PYTHON_TSIGERROR_H 1
+#ifndef __PYTHON_TSIGCONTEXT_H
+#define __PYTHON_TSIGCONTEXT_H 1
 
 #include <Python.h>
 
 namespace isc {
 namespace dns {
-class TSIGError;
+class TSIGContext;
 
 namespace python {
 
 // The s_* Class simply covers one instantiation of the object
-class s_TSIGError : public PyObject {
+class s_TSIGContext : public PyObject {
 public:
-    s_TSIGError();
-    const TSIGError* cppobj;
+    s_TSIGContext();
+    TSIGContext* cppobj;
 };
 
-extern PyTypeObject tsigerror_type;
+extern PyTypeObject tsigcontext_type;
 
-bool initModulePart_TSIGError(PyObject* mod);
+// Class specific exceptions
+extern PyObject* po_TSIGContextError;
 
-/// This is A simple shortcut to create a python TSIGError object (in the
-/// form of a pointer to PyObject) with minimal exception safety.
-/// On success, it returns a valid pointer to PyObject with a reference
-/// counter of 1; if something goes wrong it throws an exception (it never
-/// returns a NULL pointer).
-/// This function is expected to be called with in a try block
-/// followed by necessary setup for python exception.
-PyObject* createTSIGErrorObject(const TSIGError& source);
+bool initModulePart_TSIGContext(PyObject* mod);
+
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_TSIGERROR_H
+#endif // __PYTHON_TSIGCONTEXT_H
 
 // Local Variables:
 // mode: c++
