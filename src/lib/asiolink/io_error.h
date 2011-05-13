@@ -18,6 +18,7 @@
 
 #include <exceptions/exceptions.h>
 
+namespace isc {
 namespace asiolink {
 
 /// \brief An exception that is thrown if an error occurs within the IO
@@ -30,6 +31,7 @@ public:
 };
 
 
-}      // asiolink
+} // namespace asiolink
+} // namespace isc
 
 #endif // __IO_ERROR_H

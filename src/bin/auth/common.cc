@@ -14,7 +14,7 @@
 
 #include <auth/common.h>
 #include <auth/spec_config.h>
-#include <cstdlib>
+#include <stdlib.h>
 
 using std::string;
 

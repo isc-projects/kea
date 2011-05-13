@@ -28,6 +28,7 @@
 #include <dns/message.h>
 #include <dns/opcode.h>
 #include <dns/exceptions.h>
+#include <dns/rdataclass.h>
 
 #include <resolve/resolve.h>
 #include <cache/resolver_cache.h>
@@ -35,15 +36,77 @@
 #include <nsas/nameserver_address.h>
 
 #include <asio.hpp>
-#include <asiolink/dns_service.h>
-#include <asiolink/io_fetch.h>
+#include <asiodns/dns_service.h>
+#include <asiodns/io_fetch.h>
 #include <asiolink/io_service.h>
 #include <resolve/recursive_query.h>
 
 using isc::log::dlog;
 using namespace isc::dns;
+using namespace isc::util;
+using namespace isc::asiolink;
 
-namespace asiolink {
+namespace isc {
+namespace asiodns {
+
+namespace {
+// Function to check if the given name/class has any address in the cache
+bool
+hasAddress(const Name& name, const RRClass& rrClass,
+      const isc::cache::ResolverCache& cache)
+{
+    // FIXME: If we are single-stack and we get only the other type of
+    // address, what should we do? In that case, it will be considered
+    // unreachable, which is most probably true, because A and AAAA will
+    // usually have the same RTT, so we should have both or none from the
+    // glue.
+    return (cache.lookup(name, RRType::A(), rrClass) != RRsetPtr() ||
+            cache.lookup(name, RRType::AAAA(), rrClass) != RRsetPtr());
+}
+
+}
+
+/// \brief Find deepest usable delegation in the cache
+///
+/// This finds the deepest delegation we have in cache and is safe to use.
+/// It is not public function, therefore it's not in header. But it's not
+/// in anonymous namespace, so we can call it from unittests.
+/// \param name The name we want to delegate to.
+/// \param cache The place too look for known delegations.
+std::string
+deepestDelegation(Name name, RRClass rrclass,
+                  isc::cache::ResolverCache& cache)
+{
+    RRsetPtr cachedNS;
+    // Look for delegation point from bottom, until we find one with
+    // IP address or get to root.
+    //
+    // We need delegation with IP address so we can ask it right away.
+    // If we don't have the IP address, we would need to ask above it
+    // anyway in the best case, and the NS could be inside the zone,
+    // and we could get all loopy with the NSAS in the worst case.
+    while (name.getLabelCount() > 1 &&
+           (cachedNS = cache.lookupDeepestNS(name, rrclass)) != RRsetPtr()) {
+        // Look if we have an IP address for the NS
+        for (RdataIteratorPtr ns(cachedNS->getRdataIterator());
+             !ns->isLast(); ns->next()) {
+            // Do we have IP for this specific NS?
+            if (hasAddress(dynamic_cast<const rdata::generic::NS&>(
+                               ns->getCurrent()).getNSName(), rrclass,
+                           cache)) {
+                // Found one, stop checking and use this zone
+                // (there may be more addresses, that's only better)
+                return (cachedNS->getName().toText());
+            }
+        }
+        // We don't have anything for this one, so try something higher
+        if (name.getLabelCount() > 1) {
+            name = name.split(1);
+        }
+    }
+    // Fallback, nothing found, start at root
+    return (".");
+}
 
 typedef std::vector<std::pair<std::string, uint16_t> > AddressVector;
 
@@ -57,19 +120,19 @@ RecursiveQuery::RecursiveQuery(DNSService& dns_service,
     const std::vector<std::pair<std::string, uint16_t> >& upstream,
     const std::vector<std::pair<std::string, uint16_t> >& upstream_root,
     int query_timeout, int client_timeout, int lookup_timeout,
-    unsigned retries) :
+    unsigned retries)
+    :
     dns_service_(dns_service),
     nsas_(nsas), cache_(cache),
     upstream_(new AddressVector(upstream)),
     upstream_root_(new AddressVector(upstream_root)),
     test_server_("", 0),
     query_timeout_(query_timeout), client_timeout_(client_timeout),
-    lookup_timeout_(lookup_timeout), retries_(retries)
+    lookup_timeout_(lookup_timeout), retries_(retries), rtt_recorder_()
 {
 }
 
 // Set the test server - only used for unit testing.
-
 void
 RecursiveQuery::setTestServer(const std::string& address, uint16_t port) {
     dlog("Setting test server to " + address + "(" +
@@ -78,6 +141,11 @@ RecursiveQuery::setTestServer(const std::string& address, uint16_t port) {
     test_server_.second = port;
 }
 
+// Set the RTT recorder - only used for testing
+void
+RecursiveQuery::setRttRecorder(boost::shared_ptr<RttRecorder>& recorder) {
+    rtt_recorder_ = recorder;
+}
 
 namespace {
 
@@ -223,11 +291,14 @@ private:
     // event; we can cancel the NSAS callback safely.
     size_t outstanding_events_;
 
+    // RTT Recorder.  Used for testing, the RTTs of queries are
+    // sent to this object as well as being used to update the NSAS.
+    boost::shared_ptr<RttRecorder> rtt_recorder_;
+
     // perform a single lookup; first we check the cache to see
     // if we have a response for our query stored already. if
     // so, call handlerecursiveresponse(), if not, we call send()
     void doLookup() {
-        cur_zone_ = ".";
         dlog("doLookup: try cache");
         Message cached_message(Message::RENDER);
         isc::resolve::initResponseMessage(question_, cached_message);
@@ -243,9 +314,12 @@ private:
                 stop();
             }
         } else {
+            dlog("doLookup: get lowest usable delegation from cache");
+            cur_zone_ = deepestDelegation(question_.getName(),
+                                          question_.getClass(), cache_);
             send();
         }
-        
+
     }
 
     // Send the current question to the given nameserver address
@@ -481,7 +555,9 @@ public:
         int query_timeout, int client_timeout, int lookup_timeout,
         unsigned retries,
         isc::nsas::NameserverAddressStore& nsas,
-        isc::cache::ResolverCache& cache) :
+        isc::cache::ResolverCache& cache,
+        boost::shared_ptr<RttRecorder>& recorder)
+        :
         io_(io),
         question_(question),
         answer_message_(answer_message),
@@ -502,7 +578,8 @@ public:
         cur_zone_("."),
         nsas_callback_(new ResolverNSASCallback(this)),
         nsas_callback_out_(false),
-        outstanding_events_(0)
+        outstanding_events_(0),
+        rtt_recorder_(recorder)
     {
         // Setup the timer to stop trying (lookup_timeout)
         if (lookup_timeout >= 0) {
@@ -619,9 +696,11 @@ public:
                 rtt = 1000 * (cur_time.tv_sec - current_ns_qsent_time.tv_sec);
                 rtt += (cur_time.tv_usec - current_ns_qsent_time.tv_usec) / 1000;
             }
-
             dlog("RTT: " + boost::lexical_cast<std::string>(rtt));
             current_ns_address.updateRTT(rtt);
+            if (rtt_recorder_) {
+                rtt_recorder_->addRtt(rtt);
+            }
 
             try {
                 Message incoming(Message::PARSE);
@@ -739,7 +818,8 @@ RecursiveQuery::resolve(const QuestionPtr& question,
             new RunningQuery(io, *question, answer_message, upstream_,
                              test_server_, buffer, callback,
                              query_timeout_, client_timeout_,
-                             lookup_timeout_, retries_, nsas_, cache_);
+                             lookup_timeout_, retries_, nsas_,
+                             cache_, rtt_recorder_);
         }
     }
 }
@@ -792,11 +872,10 @@ RecursiveQuery::resolve(const Question& question,
             new RunningQuery(io, question, answer_message, upstream_,
                              test_server_, buffer, crs, query_timeout_,
                              client_timeout_, lookup_timeout_, retries_,
-                             nsas_, cache_);
+                             nsas_, cache_, rtt_recorder_);
         }
     }
 }
 
-
-
-} // namespace asiolink
+} // namespace asiodns
+} // namespace isc

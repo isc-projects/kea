@@ -264,10 +264,7 @@ TEST_F(CCSessionTest, checkCommand) {
 
     session.addMessage(el("{ \"command\": \"bad_command\" }"), "Spec29", "*");
     result = mccs.checkCommand();
-    EXPECT_EQ(1, session.getMsgQueue()->size());
-    msg = session.getFirstMessage(group, to);
-    EXPECT_EQ("{ \"result\": [ 1, \"Command part in command message missing, empty, or not a list\" ] }", msg->str());
-    EXPECT_EQ(0, result);
+    EXPECT_EQ(0, session.getMsgQueue()->size());
 
     session.addMessage(el("{ \"command\": [ \"bad_command\" ] }"),
                        "Spec29", "*");
@@ -430,6 +427,26 @@ TEST_F(CCSessionTest, ignoreRemoteConfigCommands) {
     EXPECT_EQ(1, session.getMsgQueue()->size());
     result = mccs.checkCommand();
     EXPECT_EQ(0, session.getMsgQueue()->size());
+}
+
+TEST_F(CCSessionTest, initializationFail) {
+    // bad specification
+    EXPECT_THROW(ModuleCCSession(ccspecfile("spec8.spec"), session,
+                                 NULL, NULL), CCSessionInitError);
+
+    // file that does not exist
+    EXPECT_THROW(ModuleCCSession(ccspecfile("does_not_exist_spec"),
+                                 session, NULL, NULL),
+                                 CCSessionInitError);
+
+
+    session.getMessages()->add(createAnswer(1, el("\"just an error\"")));
+
+    EXPECT_FALSE(session.haveSubscription("Spec29", "*"));
+    EXPECT_THROW(ModuleCCSession(ccspecfile("spec29.spec"), session,
+                                 my_config_handler, my_command_handler),
+                                 CCSessionInitError);
+    EXPECT_TRUE(session.haveSubscription("Spec29", "*"));
 }
 
 }

@@ -17,6 +17,7 @@
 #include <dns/edns.h>
 
 using namespace isc::dns;
+using namespace isc::util;
 using namespace isc::dns::rdata;
 
 //

@@ -64,7 +64,7 @@ namespace {
 
 // Just helper macros
 #define INADDR_SET(WHAT) do { WHAT.sin_addr.s_addr = INADDR_ANY; } while (0)
-#define IN6ADDR_SET(WHAT) do { WHAT.sin6_addr = in6addr_any; } while (0)
+#define IN6ADDR_SET(WHAT) do { WHAT.sin6_addr = in6addr_loopback; } while (0)
 // If the get_sock returned something useful, listen must work
 #define TCP_CHECK(UNUSED, SOCKET) do { \
         EXPECT_EQ(0, listen(SOCKET, 1)); \
@@ -256,7 +256,7 @@ TEST(run, bad_sockets) {
     // We need to construct the answer, but it depends on int length.
     size_t int_len(sizeof(int));
     size_t result_len(4 + 2 * int_len);
-    char result[result_len];
+    char result[4 + sizeof(int) * 2];
     // Both errno parts should be 0
     memset(result, 0, result_len);
     // Fill the 2 control parts

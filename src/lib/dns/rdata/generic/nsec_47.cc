@@ -17,8 +17,8 @@
 #include <sstream>
 #include <vector>
 
-#include <dns/util/base64.h>
-#include <dns/buffer.h>
+#include <util/encode/base64.h>
+#include <util/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
@@ -32,6 +32,8 @@
 #include <time.h>
 
 using namespace std;
+using namespace isc::util;
+using namespace isc::util::encode;
 using namespace isc::dns::rdata::generic::detail::nsec;
 
 // BEGIN_ISC_NAMESPACE
@@ -171,7 +173,7 @@ NSEC::toWire(OutputBuffer& buffer) const {
 }
 
 void
-NSEC::toWire(MessageRenderer& renderer) const {
+NSEC::toWire(AbstractMessageRenderer& renderer) const {
     impl_->nextname_.toWire(renderer);
     renderer.writeData(&impl_->typebits_[0], impl_->typebits_.size());
 }

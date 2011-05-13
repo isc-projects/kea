@@ -13,6 +13,9 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# A dummy function of isc.util.process.rename()
+"""
+A dummy function of isc.util.process.rename()
+"""
+
 def rename(name=None):
     pass

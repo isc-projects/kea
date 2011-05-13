@@ -17,12 +17,13 @@
 #include <sstream>
 #include <ostream>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rrttl.h>
 
 using namespace std;
 using namespace isc::dns;
+using namespace isc::util;
 
 namespace isc {
 namespace dns {
@@ -62,7 +63,7 @@ RRTTL::toWire(OutputBuffer& buffer) const {
 }
 
 void
-RRTTL::toWire(MessageRenderer& renderer) const {
+RRTTL::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint32(ttlval_);
 }
 
