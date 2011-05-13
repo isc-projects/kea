@@ -33,6 +33,7 @@ nodist_libresolve_la_SOURCES = resolvedef.h resolvedef.cc
 
 libresolve_la_LIBADD = $(top_builddir)/src/lib/dns/libdns++.la
 libresolve_la_LIBADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+libresolve_la_LIBADD += $(top_builddir)/src/lib/log/liblog.la
 
 # The message file should be in the distribution.
 EXTRA_DIST = resolvedef.mes
