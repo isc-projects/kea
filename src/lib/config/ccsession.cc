@@ -356,12 +356,38 @@ ModuleCCSession::checkCommand() {
 }
 
 std::string
-ModuleCCSession::addRemoteConfig(const std::string& spec_file_name,
+ModuleCCSession::addRemoteConfig(const std::string& spec_name,
                                  void (*)(const std::string& module,
                                           ConstElementPtr))
 {
-    ModuleSpec rmod_spec = readModuleSpecification(spec_file_name);
-    std::string module_name = rmod_spec.getFullSpec()->get("module_name")->stringValue();
+    std::string module_name;
+    ModuleSpec rmod_spec;
+    if (spec_name.find_first_of("./") != std::string::npos) {
+        // It's a file name, so load it
+        rmod_spec = readModuleSpecification(spec_name);
+        module_name =
+            rmod_spec.getFullSpec()->get("module_name")->stringValue();
+    } else {
+        // It's module name, request it from config manager
+        ConstElementPtr cmd = Element::fromJSON("{ \"command\": ["
+                                                "\"get_module_spec\","
+                                                "{\"module_name\": \"" +
+                                                module_name + "\"} ] }");
+        unsigned int seq = session_.group_sendmsg(cmd, "ConfigManager");
+        ConstElementPtr env, answer;
+        session_.group_recvmsg(env, answer, false, seq);
+        int rcode;
+        ConstElementPtr spec_data = parseAnswer(rcode, answer);
+        if (rcode == 0 && spec_data) {
+            rmod_spec = ModuleSpec(spec_data);
+            module_name = spec_name;
+            if (module_name != rmod_spec.getModuleName()) {
+                isc_throw(CCSessionError, "Module name mismatch");
+            }
+        } else {
+            isc_throw(CCSessionError, "Error getting config for " + module_name + ": " + answer->str());
+        }
+    }
     ConfigData rmod_config = ConfigData(rmod_spec);
     session_.subscribe(module_name);
 
