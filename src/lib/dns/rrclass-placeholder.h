@@ -23,12 +23,15 @@
 #include <exceptions/exceptions.h>
 
 namespace isc {
+namespace util {
+class InputBuffer;
+class OutputBuffer;
+}
+
 namespace dns {
 
 // forward declarations
-class InputBuffer;
-class OutputBuffer;
-class MessageRenderer;
+class AbstractMessageRenderer;
 
 ///
 /// \brief A standard DNS module exception that is thrown if an RRClass object
@@ -132,7 +135,7 @@ public:
     /// an exception of class \c IncompleteRRClass will be thrown.
     ///
     /// \param buffer A buffer storing the wire format data.
-    explicit RRClass(InputBuffer& buffer);
+    explicit RRClass(isc::util::InputBuffer& buffer);
     ///
     /// We use the default copy constructor intentionally.
     //@}
@@ -166,7 +169,7 @@ public:
     /// standard exception will be thrown.
     ///
     /// \param buffer An output buffer to store the wire data.
-    void toWire(MessageRenderer& renderer) const;
+    void toWire(AbstractMessageRenderer& renderer) const;
     /// \brief Render the \c RRClass in the wire format.
     ///
     /// This method renders the class code in network byte order into the
@@ -177,7 +180,7 @@ public:
     ///
     /// \param renderer DNS message rendering context that encapsulates the
     /// output buffer in which the RRClass is to be stored.
-    void toWire(OutputBuffer& buffer) const;
+    void toWire(isc::util::OutputBuffer& buffer) const;
     //@}
 
     ///

@@ -27,7 +27,8 @@
 
 #include <exceptions/exceptions.h>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
+
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 
@@ -43,6 +44,7 @@
 #include <auth/command.h>
 #include <auth/change_user.h>
 #include <auth/auth_srv.h>
+#include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
 #include <log/dummylog.h>
 
@@ -51,8 +53,10 @@ using namespace isc::data;
 using namespace isc::cc;
 using namespace isc::config;
 using namespace isc::dns;
+using namespace isc::util;
 using namespace isc::xfr;
-using namespace asiolink;
+using namespace isc::asiolink;
+using namespace isc::asiodns;
 
 namespace {
 
@@ -172,9 +176,15 @@ main(int argc, char* argv[]) {
         // all initial configurations, but as a short term workaround we
         // handle the traditional "database_file" setup by directly calling
         // updateConfig().
+        // if server load configure failed, we won't exit, give user second chance
+        // to correct the configure.
         auth_server->setConfigSession(config_session);
-        configureAuthServer(*auth_server, config_session->getFullConfig());
-        auth_server->updateConfig(ElementPtr());
+        try {
+            configureAuthServer(*auth_server, config_session->getFullConfig());
+            auth_server->updateConfig(ElementPtr());
+        } catch (const AuthConfigError& ex) {
+            cout << "[bin10-auth] Server load config failed:" << ex.what() << endl;
+        }
 
         if (uid != NULL) {
             changeUser(uid);

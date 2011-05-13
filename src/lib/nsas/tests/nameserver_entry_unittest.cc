@@ -39,7 +39,7 @@
 #include "nsas_test.h"
 
 using namespace isc::nsas;
-using namespace asiolink;
+using namespace isc::asiolink;
 using namespace std;
 using namespace isc::dns;
 using namespace rdata;
@@ -72,7 +72,8 @@ private:
         RRsetPtr set)
     {
         if (set) {
-            resolver->requests[index].second->success(createResponseMessage(set));
+            resolver->requests[index].second->success(
+                isc::util::unittests::createResponseMessage(set));
         } else {
             resolver->requests[index].second->failure();
         }
@@ -513,6 +514,11 @@ TEST_F(NameserverEntryTest, UpdateRTT) {
 
     // The rtt should be close to stable rtt value
     EXPECT_TRUE((stable_rtt - new_rtt) < (new_rtt - init_rtt));
+
+    // Finally, try updating the RTT to a very large value (large enough for
+    // RTT^2 - used in the internal calculation - to exceed a 32-bit value).
+    EXPECT_NO_THROW(vec[0].updateRTT(1000000000));  // 10^9
+
 }
 
 }   // namespace

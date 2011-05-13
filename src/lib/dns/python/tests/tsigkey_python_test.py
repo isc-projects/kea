@@ -44,8 +44,33 @@ class TSIGKeyTest(unittest.TestCase):
                           TSIGKey.HMACMD5_NAME,
                           'should be binary') # signature mismatch
 
+    def test_str(self):
+        k1 = TSIGKey('test.example:CwsLCwsLCwsLCwsLCwsLCw==:hmac-md5.sig-alg.reg.int')
+        self.assertEqual(Name('test.example.'), k1.get_key_name())
+        self.assertEqual(Name('hmac-md5.sig-alg.reg.int.'), k1.get_algorithm_name())
+        self.assertEqual(b'\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b',
+                         k1.get_secret())
+        self.assertEqual('test.example.:CwsLCwsLCwsLCwsLCwsLCw==:hmac-md5.sig-alg.reg.int.',
+                         k1.to_text())
+
+        self.assertRaises(InvalidParameter, TSIGKey,
+                          'test.example:CwsLCwsLCwsLCwsLCwsLCw==:unsupported')
+        self.assertRaises(InvalidParameter, TSIGKey,
+                          '::')
+        self.assertRaises(InvalidParameter, TSIGKey,
+                          'test.example:')
+        self.assertRaises(InvalidParameter, TSIGKey,
+                          'test.example:%bad_base_64%')
+        self.assertRaises(InvalidParameter, TSIGKey,
+                          'test.example:CwsLCwsLCwsLCwsLCwsLCw==:')
+        self.assertRaises(InvalidParameter, TSIGKey,
+                          'test.:example:CwsLCwsLCwsLCwsLCwsLCw==')
+
 class TSIGKeyRingTest(unittest.TestCase):
     key_name = Name('example.com')
+    md5_name = Name('hmac-md5.sig-alg.reg.int')
+    sha1_name = Name('hmac-sha1')
+    sha256_name = Name('hmac-sha256')
     secret = b'someRandomData'
 
     def setUp(self):
@@ -130,17 +155,25 @@ class TSIGKeyRingTest(unittest.TestCase):
 
     def test_find(self):
         self.assertEqual((TSIGKeyRing.NOTFOUND, None),
-                         self.keyring.find(self.key_name))
+                         self.keyring.find(self.key_name, self.md5_name))
 
         self.assertEqual(TSIGKeyRing.SUCCESS,
                          self.keyring.add(TSIGKey(self.key_name,
-                                                  TSIGKey.HMACSHA256_NAME,
+                                                  self.sha256_name,
                                                   self.secret)))
-        (code, key) = self.keyring.find(self.key_name)
+        (code, key) = self.keyring.find(self.key_name, self.sha256_name)
         self.assertEqual(TSIGKeyRing.SUCCESS, code)
         self.assertEqual(self.key_name, key.get_key_name())
         self.assertEqual(TSIGKey.HMACSHA256_NAME, key.get_algorithm_name())
         self.assertEqual(self.secret, key.get_secret())
+
+        (code, key) = self.keyring.find(Name('different-key.example'),
+                                        self.sha256_name)
+        self.assertEqual(TSIGKeyRing.NOTFOUND, code)
+        self.assertEqual(None, key)
+        (code, key) = self.keyring.find(self.key_name, self.md5_name)
+        self.assertEqual(TSIGKeyRing.NOTFOUND, code)
+        self.assertEqual(None, key)
 
         self.assertRaises(TypeError, self.keyring.find, 1)
         self.assertRaises(TypeError, self.keyring.find, 'should be a name')
@@ -149,24 +182,28 @@ class TSIGKeyRingTest(unittest.TestCase):
     def test_find_from_some(self):
         self.assertEqual(TSIGKeyRing.SUCCESS,
                          self.keyring.add(TSIGKey(self.key_name,
-                                                  TSIGKey.HMACSHA256_NAME,
+                                                  self.sha256_name,
                                                   self.secret)))
         self.assertEqual(TSIGKeyRing.SUCCESS,
                          self.keyring.add(TSIGKey(Name('another.example'),
-                                                  TSIGKey.HMACMD5_NAME,
+                                                  self.md5_name,
                                                   self.secret)))
         self.assertEqual(TSIGKeyRing.SUCCESS,
                          self.keyring.add(TSIGKey(Name('more.example'),
-                                                  TSIGKey.HMACSHA1_NAME,
+                                                  self.sha1_name,
                                                   self.secret)))
 
-        (code, key) = self.keyring.find(Name('another.example'))
+        (code, key) = self.keyring.find(Name('another.example'), self.md5_name)
         self.assertEqual(TSIGKeyRing.SUCCESS, code)
         self.assertEqual(Name('another.example'), key.get_key_name())
         self.assertEqual(TSIGKey.HMACMD5_NAME, key.get_algorithm_name())
 
         self.assertEqual((TSIGKeyRing.NOTFOUND, None),
-                         self.keyring.find(Name('noexist.example')))
+                         self.keyring.find(Name('noexist.example'),
+                                           self.sha1_name))
+        self.assertEqual((TSIGKeyRing.NOTFOUND, None),
+                         self.keyring.find(Name('another.example'),
+                                           self.sha1_name))
 
 if __name__ == '__main__':
     unittest.main()

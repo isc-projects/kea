@@ -22,13 +22,14 @@
 
 #include <exceptions/exceptions.h>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
 using namespace std;
+using namespace isc::util;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -69,7 +70,7 @@ A::toWire(OutputBuffer& buffer) const {
 }
 
 void
-A::toWire(MessageRenderer& renderer) const {
+A::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeData(&addr_, sizeof(addr_));
 }
 

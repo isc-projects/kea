@@ -19,9 +19,10 @@
 
 #include <asiolink/io_service.h>
 
+namespace isc {
 namespace asiolink {
 
-struct IntervalTimerImpl;
+class IntervalTimerImpl;
 
 /// \brief The \c IntervalTimer class is a wrapper for the ASIO
 /// \c asio::deadline_timer class.
@@ -129,5 +130,6 @@ private:
     IntervalTimerImpl* impl_;
 };
 
-}      // namespace asiolink
+} // namespace asiolink
+} // namespace isc
 #endif // __ASIOLINK_INTERVAL_TIMER_H

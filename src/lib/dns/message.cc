@@ -15,6 +15,7 @@
 #include <stdint.h>
 
 #include <algorithm>
+#include <cassert>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -25,7 +26,8 @@
 
 #include <exceptions/exceptions.h>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
+
 #include <dns/edns.h>
 #include <dns/exceptions.h>
 #include <dns/message.h>
@@ -39,10 +41,12 @@
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
 #include <dns/rrset.h>
+#include <dns/tsig.h>
 
 using namespace std;
 using namespace boost;
 using namespace isc::dns::rdata;
+using namespace isc::util;
 
 namespace isc {
 namespace dns {
@@ -79,7 +83,7 @@ const unsigned int HEADERFLAG_MASK = 0x87b0;
 const uint16_t MESSAGE_REPLYPRESERVE = (Message::HEADERFLAG_RD |
                                         Message::HEADERFLAG_CD);
 
-const char *sectiontext[] = {
+const char* const sectiontext[] = {
     "QUESTION",
     "ANSWER",
     "AUTHORITY",
@@ -112,8 +116,8 @@ public:
     vector<QuestionPtr> questions_;
     vector<RRsetPtr> rrsets_[NUM_SECTIONS];
     ConstEDNSPtr edns_;
+    ConstTSIGRecordPtr tsig_rr_;
 
-    // tsig/sig0: TODO
     // RRsetsSorter* sorter_; : TODO
 
     void init();
@@ -121,6 +125,17 @@ public:
     void setRcode(const Rcode& rcode);
     int parseQuestion(InputBuffer& buffer);
     int parseSection(const Message::Section section, InputBuffer& buffer);
+    void addRR(Message::Section section, const Name& name,
+               const RRClass& rrclass, const RRType& rrtype,
+               const RRTTL& ttl, ConstRdataPtr rdata);
+    void addEDNS(Message::Section section, const Name& name,
+                 const RRClass& rrclass, const RRType& rrtype,
+                 const RRTTL& ttl, const Rdata& rdata);
+    void addTSIG(Message::Section section, unsigned int count,
+                 const InputBuffer& buffer, size_t start_position,
+                 const Name& name, const RRClass& rrclass,
+                 const RRTTL& ttl, const Rdata& rdata);
+    void toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx);
 };
 
 MessageImpl::MessageImpl(Message::Mode mode) :
@@ -138,6 +153,7 @@ MessageImpl::init() {
     rcode_ = NULL;
     opcode_ = NULL;
     edns_ = EDNSPtr();
+    tsig_rr_ = ConstTSIGRecordPtr();
 
     for (int i = 0; i < NUM_SECTIONS; ++i) {
         counts_[i] = 0;
@@ -160,6 +176,154 @@ void
 MessageImpl::setRcode(const Rcode& rcode) {
     rcode_placeholder_ = rcode;
     rcode_ = &rcode_placeholder_;
+}
+
+namespace {
+// This helper class is used by MessageImpl::toWire() to render a set of
+// RRsets of a specific section of message to a given MessageRenderer.
+//
+// A RenderSection object is expected to be used with a QuestionIterator or
+// SectionIterator.  Its operator() is called for each RRset as the iterator
+// iterates over the corresponding section, and it renders the RRset to
+// the given MessageRenderer, while counting the number of RRs (note: not
+// RRsets) successfully rendered.  If the MessageRenderer reports the need
+// for truncation (via its isTruncated() method), the RenderSection object
+// stops rendering further RRsets.  In addition, unless partial_ok (given on
+// construction) is true, it removes any RRs that are partially rendered
+// from the MessageRenderer.
+//
+// On the completion of rendering the entire section, the owner of the
+// RenderSection object can get the number of rendered RRs via the
+// getTotalCount() method.
+template <typename T>
+struct RenderSection {
+    RenderSection(AbstractMessageRenderer& renderer, const bool partial_ok) :
+        counter_(0), renderer_(renderer), partial_ok_(partial_ok),
+        truncated_(false)
+    {}
+    void operator()(const T& entry) {
+        // If it's already truncated, ignore the rest of the section.
+        if (truncated_) {
+            return;
+        }
+        const size_t pos0 = renderer_.getLength();
+        counter_ += entry->toWire(renderer_);
+        if (renderer_.isTruncated()) {
+            truncated_ = true;
+            if (!partial_ok_) {
+                // roll back to the end of the previous RRset.
+                renderer_.trim(renderer_.getLength() - pos0);
+            }
+        }
+    }
+    unsigned int getTotalCount() { return (counter_); }
+    unsigned int counter_;
+    AbstractMessageRenderer& renderer_;
+    const bool partial_ok_;
+    bool truncated_;
+};
+}
+
+void
+MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
+    if (mode_ != Message::RENDER) {
+        isc_throw(InvalidMessageOperation,
+                  "Message rendering attempted in non render mode");
+    }
+    if (rcode_ == NULL) {
+        isc_throw(InvalidMessageOperation,
+                  "Message rendering attempted without Rcode set");
+    }
+    if (opcode_ == NULL) {
+        isc_throw(InvalidMessageOperation,
+                  "Message rendering attempted without Opcode set");
+    }
+
+    // reserve room for the header
+    renderer.skip(HEADERLEN);
+
+    uint16_t qdcount =
+        for_each(questions_.begin(), questions_.end(),
+                 RenderSection<QuestionPtr>(renderer, false)).getTotalCount();
+
+    // TODO: sort RRsets in each section based on configuration policy.
+    uint16_t ancount = 0;
+    if (!renderer.isTruncated()) {
+        ancount =
+            for_each(rrsets_[Message::SECTION_ANSWER].begin(),
+                     rrsets_[Message::SECTION_ANSWER].end(),
+                     RenderSection<RRsetPtr>(renderer, true)).getTotalCount();
+    }
+    uint16_t nscount = 0;
+    if (!renderer.isTruncated()) {
+        nscount =
+            for_each(rrsets_[Message::SECTION_AUTHORITY].begin(),
+                     rrsets_[Message::SECTION_AUTHORITY].end(),
+                     RenderSection<RRsetPtr>(renderer, true)).getTotalCount();
+    }
+    uint16_t arcount = 0;
+    if (renderer.isTruncated()) {
+        flags_ |= Message::HEADERFLAG_TC;
+    } else {
+        arcount =
+            for_each(rrsets_[Message::SECTION_ADDITIONAL].begin(),
+                     rrsets_[Message::SECTION_ADDITIONAL].end(),
+                     RenderSection<RRsetPtr>(renderer, false)).getTotalCount();
+    }
+
+    // Add EDNS OPT RR if necessary.  Basically, we add it only when EDNS
+    // has been explicitly set.  However, if the RCODE would require it and
+    // no EDNS has been set we generate a temporary local EDNS and use it.
+    if (!renderer.isTruncated()) {
+        ConstEDNSPtr local_edns = edns_;
+        if (!local_edns && rcode_->getExtendedCode() != 0) {
+            local_edns = ConstEDNSPtr(new EDNS());
+        }
+        if (local_edns) {
+            arcount += local_edns->toWire(renderer, rcode_->getExtendedCode());
+        }
+    }
+
+    // Adjust the counter buffer.
+    // XXX: these may not be equal to the number of corresponding entries
+    // in rrsets_[] or questions_ if truncation occurred or an EDNS OPT RR
+    // was inserted.  This is not good, and we should revisit the entire
+    // design.
+    counts_[Message::SECTION_QUESTION] = qdcount;
+    counts_[Message::SECTION_ANSWER] = ancount;
+    counts_[Message::SECTION_AUTHORITY] = nscount;
+    counts_[Message::SECTION_ADDITIONAL] = arcount;
+
+    // fill in the header
+    size_t header_pos = 0;
+    renderer.writeUint16At(qid_, header_pos);
+    header_pos += sizeof(uint16_t);
+
+    uint16_t codes_and_flags =
+        (opcode_->getCode() << OPCODE_SHIFT) & OPCODE_MASK;
+    codes_and_flags |= (rcode_->getCode() & RCODE_MASK);
+    codes_and_flags |= (flags_ & HEADERFLAG_MASK);
+    renderer.writeUint16At(codes_and_flags, header_pos);
+    header_pos += sizeof(uint16_t);
+    // TODO: should avoid repeated pattern
+    renderer.writeUint16At(qdcount, header_pos);
+    header_pos += sizeof(uint16_t);
+    renderer.writeUint16At(ancount, header_pos);
+    header_pos += sizeof(uint16_t);
+    renderer.writeUint16At(nscount, header_pos);
+    header_pos += sizeof(uint16_t);
+    renderer.writeUint16At(arcount, header_pos);
+
+    // Add TSIG, if necessary, at the end of the message.
+    // TODO: truncate case consideration
+    if (tsig_ctx != NULL) {
+        tsig_ctx->sign(qid_, renderer.getData(),
+                       renderer.getLength())->toWire(renderer);
+
+        // update the ARCOUNT for the TSIG RR.  Note that for a sane DNS
+        // message arcount should never overflow to 0.
+        renderer.writeUint16At(++arcount, header_pos);
+    }
 }
 
 Message::Message(Mode mode) :
@@ -258,6 +422,16 @@ Message::setEDNS(ConstEDNSPtr edns) {
                   "setEDNS performed in non-render mode");
     }
     impl_->edns_ = edns;
+}
+
+const TSIGRecord*
+Message::getTSIGRecord() const {
+    if (impl_->mode_ != Message::PARSE) {
+        isc_throw(InvalidMessageOperation,
+                  "getTSIGRecord performed in non-parse mode");
+    }
+
+    return (impl_->tsig_rr_.get());
 }
 
 unsigned int
@@ -361,129 +535,14 @@ Message::addQuestion(const Question& question) {
     addQuestion(QuestionPtr(new Question(question)));
 }
 
-namespace {
-template <typename T>
-struct RenderSection {
-    RenderSection(MessageRenderer& renderer, const bool partial_ok) :
-        counter_(0), renderer_(renderer), partial_ok_(partial_ok),
-        truncated_(false)
-    {}
-    void operator()(const T& entry) {
-        // If it's already truncated, ignore the rest of the section.
-        if (truncated_) {
-            return;
-        }
-        const size_t pos0 = renderer_.getLength();
-        counter_ += entry->toWire(renderer_);
-        if (renderer_.isTruncated()) {
-            truncated_ = true;
-            if (!partial_ok_) {
-                // roll back to the end of the previous RRset.
-                renderer_.trim(renderer_.getLength() - pos0);
-            }
-        }
-    }
-    unsigned int getTotalCount() { return (counter_); }
-    unsigned int counter_;
-    MessageRenderer& renderer_;
-    const bool partial_ok_;
-    bool truncated_;
-};
+void
+Message::toWire(AbstractMessageRenderer& renderer) {
+    impl_->toWire(renderer, NULL);
 }
 
 void
-Message::toWire(MessageRenderer& renderer) {
-    if (impl_->mode_ != Message::RENDER) {
-        isc_throw(InvalidMessageOperation,
-                  "Message rendering attempted in non render mode");
-    }
-    if (impl_->rcode_ == NULL) {
-        isc_throw(InvalidMessageOperation,
-                  "Message rendering attempted without Rcode set");
-    }
-    if (impl_->opcode_ == NULL) {
-        isc_throw(InvalidMessageOperation,
-                  "Message rendering attempted without Opcode set");
-    }
-
-    // reserve room for the header
-    renderer.skip(HEADERLEN);
-
-    uint16_t qdcount =
-        for_each(impl_->questions_.begin(), impl_->questions_.end(),
-                 RenderSection<QuestionPtr>(renderer, false)).getTotalCount();
-
-    // TBD: sort RRsets in each section based on configuration policy.
-    uint16_t ancount = 0;
-    if (!renderer.isTruncated()) {
-        ancount =
-            for_each(impl_->rrsets_[SECTION_ANSWER].begin(),
-                     impl_->rrsets_[SECTION_ANSWER].end(),
-                     RenderSection<RRsetPtr>(renderer, true)).getTotalCount();
-    }
-    uint16_t nscount = 0;
-    if (!renderer.isTruncated()) {
-        nscount =
-            for_each(impl_->rrsets_[SECTION_AUTHORITY].begin(),
-                     impl_->rrsets_[SECTION_AUTHORITY].end(),
-                     RenderSection<RRsetPtr>(renderer, true)).getTotalCount();
-    }
-    uint16_t arcount = 0;
-    if (renderer.isTruncated()) {
-        setHeaderFlag(HEADERFLAG_TC, true);
-    } else {
-        arcount =
-            for_each(impl_->rrsets_[SECTION_ADDITIONAL].begin(),
-                     impl_->rrsets_[SECTION_ADDITIONAL].end(),
-                     RenderSection<RRsetPtr>(renderer, false)).getTotalCount();
-    }
-
-    // Add EDNS OPT RR if necessary.  Basically, we add it only when EDNS
-    // has been explicitly set.  However, if the RCODE would require it and
-    // no EDNS has been set we generate a temporary local EDNS and use it.
-    if (!renderer.isTruncated()) {
-        ConstEDNSPtr local_edns = impl_->edns_;
-        if (!local_edns && impl_->rcode_->getExtendedCode() != 0) {
-            local_edns = ConstEDNSPtr(new EDNS());
-        }
-        if (local_edns) {
-            arcount += local_edns->toWire(renderer,
-                                          impl_->rcode_->getExtendedCode());
-        }
-    }
- 
-    // Adjust the counter buffer.
-    // XXX: these may not be equal to the number of corresponding entries
-    // in rrsets_[] or questions_ if truncation occurred or an EDNS OPT RR
-    // was inserted.  This is not good, and we should revisit the entire
-    // design.
-    impl_->counts_[SECTION_QUESTION] = qdcount;
-    impl_->counts_[SECTION_ANSWER] = ancount;
-    impl_->counts_[SECTION_AUTHORITY] = nscount;
-    impl_->counts_[SECTION_ADDITIONAL] = arcount;
-
-    // TBD: TSIG, SIG(0) etc.
-
-    // fill in the header
-    size_t header_pos = 0;
-    renderer.writeUint16At(impl_->qid_, header_pos);
-    header_pos += sizeof(uint16_t);
-
-    uint16_t codes_and_flags =
-        (impl_->opcode_->getCode() << OPCODE_SHIFT) & OPCODE_MASK;
-    codes_and_flags |= (impl_->rcode_->getCode() & RCODE_MASK);
-    codes_and_flags |= (impl_->flags_ & HEADERFLAG_MASK);
-    renderer.writeUint16At(codes_and_flags, header_pos);
-    header_pos += sizeof(uint16_t);
-    // XXX: should avoid repeated pattern (TODO)
-    renderer.writeUint16At(qdcount, header_pos);
-    header_pos += sizeof(uint16_t);
-    renderer.writeUint16At(ancount, header_pos);
-    header_pos += sizeof(uint16_t);
-    renderer.writeUint16At(nscount, header_pos);
-    header_pos += sizeof(uint16_t);
-    renderer.writeUint16At(arcount, header_pos);
-    header_pos += sizeof(uint16_t);
+Message::toWire(AbstractMessageRenderer& renderer, TSIGContext& tsig_ctx) {
+    impl_->toWire(renderer, &tsig_ctx);
 }
 
 void
@@ -611,6 +670,9 @@ MessageImpl::parseSection(const Message::Section section,
     unsigned int added = 0;
 
     for (unsigned int count = 0; count < counts_[section]; ++count) {
+        // We need to remember the start position for TSIG processing
+        const size_t start_position = buffer.getPosition();
+
         const Name name(buffer);
 
         // buffer must store at least RR TYPE, RR CLASS, TTL, and RDLEN.
@@ -628,37 +690,76 @@ MessageImpl::parseSection(const Message::Section section,
         ConstRdataPtr rdata = createRdata(rrtype, rrclass, buffer, rdlen);
 
         if (rrtype == RRType::OPT()) {
-            if (section != Message::SECTION_ADDITIONAL) {
-                isc_throw(DNSMessageFORMERR,
-                          "EDNS OPT RR found in an invalid section");
-            }
-            if (edns_) {
-                isc_throw(DNSMessageFORMERR, "multiple EDNS OPT RR found");
-            }
-
-            uint8_t extended_rcode;
-            edns_ = ConstEDNSPtr(createEDNSFromRR(name, rrclass, rrtype, ttl,
-                                                  *rdata, extended_rcode));
-            setRcode(Rcode(rcode_->getCode(), extended_rcode));
-            continue;
+            addEDNS(section, name, rrclass, rrtype, ttl, *rdata);
+        } else if (rrtype == RRType::TSIG()) {
+            addTSIG(section, count, buffer, start_position, name, rrclass, ttl,
+                    *rdata);
         } else {
-            vector<RRsetPtr>::iterator it =
-                find_if(rrsets_[section].begin(), rrsets_[section].end(),
-                        MatchRR(name, rrtype, rrclass));
-            if (it != rrsets_[section].end()) {
-                (*it)->setTTL(min((*it)->getTTL(), ttl));
-                (*it)->addRdata(rdata);
-            } else {
-                RRsetPtr rrset =
-                    RRsetPtr(new RRset(name, rrclass, rrtype, ttl)); 
-                rrset->addRdata(rdata);
-                rrsets_[section].push_back(rrset);
-            }
+            addRR(section, name, rrclass, rrtype, ttl, rdata);
             ++added;
         }
     }
 
     return (added);
+}
+
+void
+MessageImpl::addRR(Message::Section section, const Name& name,
+                   const RRClass& rrclass, const RRType& rrtype,
+                   const RRTTL& ttl, ConstRdataPtr rdata)
+{
+    vector<RRsetPtr>::iterator it =
+        find_if(rrsets_[section].begin(), rrsets_[section].end(),
+                MatchRR(name, rrtype, rrclass));
+    if (it != rrsets_[section].end()) {
+        (*it)->setTTL(min((*it)->getTTL(), ttl));
+        (*it)->addRdata(rdata);
+    } else {
+        RRsetPtr rrset(new RRset(name, rrclass, rrtype, ttl));
+        rrset->addRdata(rdata);
+        rrsets_[section].push_back(rrset);
+    }
+}
+
+void
+MessageImpl::addEDNS(Message::Section section,  const Name& name,
+                     const RRClass& rrclass, const RRType& rrtype,
+                     const RRTTL& ttl, const Rdata& rdata)
+{
+    if (section != Message::SECTION_ADDITIONAL) {
+        isc_throw(DNSMessageFORMERR,
+                  "EDNS OPT RR found in an invalid section");
+    }
+    if (edns_) {
+        isc_throw(DNSMessageFORMERR, "multiple EDNS OPT RR found");
+    }
+
+    uint8_t extended_rcode;
+    edns_ = ConstEDNSPtr(createEDNSFromRR(name, rrclass, rrtype, ttl, rdata,
+                                          extended_rcode));
+    setRcode(Rcode(rcode_->getCode(), extended_rcode));
+}
+
+void
+MessageImpl::addTSIG(Message::Section section, unsigned int count,
+                     const InputBuffer& buffer, size_t start_position,
+                     const Name& name, const RRClass& rrclass,
+                     const RRTTL& ttl, const Rdata& rdata)
+{
+    if (section != Message::SECTION_ADDITIONAL) {
+        isc_throw(DNSMessageFORMERR,
+                  "TSIG RR found in an invalid section");
+    }
+    if (count != counts_[section] - 1) {
+        isc_throw(DNSMessageFORMERR, "TSIG RR is not the last record");
+    }
+    if (tsig_rr_) {
+        isc_throw(DNSMessageFORMERR, "multiple TSIG RRs found");
+    }
+    tsig_rr_ = ConstTSIGRecordPtr(new TSIGRecord(name, rrclass,
+                                                 ttl, rdata,
+                                                 buffer.getPosition() -
+                                                 start_position));
 }
 
 namespace {
@@ -694,31 +795,31 @@ Message::toText() const {
     // for simplicity we don't consider extended rcode (unlike BIND9)
     s += ", status: " + impl_->rcode_->toText();
     s += ", id: " + boost::lexical_cast<string>(impl_->qid_);
-    s += "\n;; flags: ";
+    s += "\n;; flags:";
     if (getHeaderFlag(HEADERFLAG_QR)) {
-        s += "qr ";
+        s += " qr";
     }
     if (getHeaderFlag(HEADERFLAG_AA)) {
-        s += "aa ";
+        s += " aa";
     }
     if (getHeaderFlag(HEADERFLAG_TC)) {
-        s += "tc ";
+        s += " tc";
     }
     if (getHeaderFlag(HEADERFLAG_RD)) {
-        s += "rd ";
+        s += " rd";
     }
     if (getHeaderFlag(HEADERFLAG_RA)) {
-        s += "ra ";
+        s += " ra";
     }
     if (getHeaderFlag(HEADERFLAG_AD)) {
-        s += "ad ";
+        s += " ad";
     }
     if (getHeaderFlag(HEADERFLAG_CD)) {
-        s += "cd ";
+        s += " cd";
     }
 
     // for simplicity, don't consider the update case for now
-    s += "; QUESTION: " +
+    s += "; QUERY: " + // note: not "QUESTION" to be compatible with BIND 9 dig
         lexical_cast<string>(impl_->counts_[SECTION_QUESTION]);
     s += ", ANSWER: " +
         lexical_cast<string>(impl_->counts_[SECTION_ANSWER]);
@@ -727,6 +828,9 @@ Message::toText() const {
 
     unsigned int arcount = impl_->counts_[SECTION_ADDITIONAL];
     if (impl_->edns_ != NULL) {
+        ++arcount;
+    }
+    if (impl_->tsig_rr_ != NULL) {
         ++arcount;
     }
     s += ", ADDITIONAL: " + lexical_cast<string>(arcount) + "\n";
@@ -763,6 +867,11 @@ Message::toText() const {
         for_each(impl_->rrsets_[SECTION_ADDITIONAL].begin(),
                  impl_->rrsets_[SECTION_ADDITIONAL].end(),
                  SectionFormatter<RRsetPtr>(SECTION_ADDITIONAL, s));
+    }
+
+    if (impl_->tsig_rr_ != NULL) {
+        s += "\n;; TSIG PSEUDOSECTION:\n";
+        s += impl_->tsig_rr_->toText();
     }
 
     return (s);

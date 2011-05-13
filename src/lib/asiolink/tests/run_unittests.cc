@@ -22,7 +22,6 @@ main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest(&argc, argv);         // Initialize Google test
     isc::log::setRootLoggerName("unittest");        // Set a root logger name
-    isc::UnitTestUtil::addDataPath(TEST_DATA_DIR);  // Add location of test data
 
     return (RUN_ALL_TESTS());
 }
