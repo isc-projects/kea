@@ -356,7 +356,10 @@ ModuleCCSession::checkCommand() {
 }
 
 std::string
-ModuleCCSession::addRemoteConfig(const std::string& spec_file_name) {
+ModuleCCSession::addRemoteConfig(const std::string& spec_file_name,
+                                 void (*)(const std::string& module,
+                                          ConstElementPtr))
+{
     ModuleSpec rmod_spec = readModuleSpecification(spec_file_name);
     std::string module_name = rmod_spec.getFullSpec()->get("module_name")->stringValue();
     ConfigData rmod_config = ConfigData(rmod_spec);
