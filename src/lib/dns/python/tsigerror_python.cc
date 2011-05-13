@@ -235,7 +235,7 @@ namespace python {
 // Most of the functions are not actually implemented and NULL here.
 PyTypeObject tsigerror_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.TSIGError",
+    "pydnspp.TSIGError",
     sizeof(s_TSIGError),                 // tp_basicsize
     0,                                  // tp_itemsize
     reinterpret_cast<destructor>(TSIGError_destroy),       // tp_dealloc

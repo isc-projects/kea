@@ -212,7 +212,7 @@ namespace python {
 // Most of the functions are not actually implemented and NULL here.
 PyTypeObject tsigrecord_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.TSIGRecord",
+    "pydnspp.TSIGRecord",
     sizeof(s_TSIGRecord),                 // tp_basicsize
     0,                                  // tp_itemsize
     reinterpret_cast<destructor>(TSIGRecord_destroy),       // tp_dealloc

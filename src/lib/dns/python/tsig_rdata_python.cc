@@ -290,7 +290,7 @@ namespace python {
 // Most of the functions are not actually implemented and NULL here.
 PyTypeObject tsig_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.TSIG",
+    "pydnspp.TSIG",
     sizeof(s_TSIG),                 // tp_basicsize
     0,                                  // tp_itemsize
     reinterpret_cast<destructor>(TSIG_destroy),       // tp_dealloc
