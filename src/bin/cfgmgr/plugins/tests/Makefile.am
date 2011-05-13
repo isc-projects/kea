@@ -1,16 +1,19 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
-PYTESTS = process_test.py socketserver_mixin_test.py file_test.py
+PYTESTS = tsig_keys_test.py
+
 EXTRA_DIST = $(PYTESTS)
 
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
 if ENABLE_PYTHON_COVERAGE
-	touch $(abs_top_srcdir)/.coverage 
+	touch $(abs_top_srcdir)/.coverage
 	rm -f .coverage
 	${LN_S} $(abs_top_srcdir)/.coverage .coverage
 endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
-	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/lib/dns/python/.libs \
+	env B10_TEST_PLUGIN_DIR=$(abs_srcdir)/..:$(abs_builddir)/.. \
+	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/cfgmgr:$(abs_top_builddir)/src/lib/dns/python/.libs \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
+

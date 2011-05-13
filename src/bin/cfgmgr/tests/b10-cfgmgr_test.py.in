@@ -20,6 +20,7 @@
 import unittest
 import os
 import sys
+import bind10_config
 from isc.testutils.parse_args import OptsError, TestOptParser
 
 class MyConfigManager:
@@ -110,6 +111,7 @@ class TestConfigManagerStartup(unittest.TestCase):
             env_var = os.environ["B10_FROM_SOURCE"]
 
         os.environ["B10_FROM_SOURCE"] = tmp_env_var
+        bind10_config.reload()
         b = __import__("b10-cfgmgr", globals(), locals())
         b.PLUGIN_PATH = [] # It's enough to test plugins in one test
         b.ConfigManager = MyConfigManager
@@ -117,6 +119,7 @@ class TestConfigManagerStartup(unittest.TestCase):
 
         if env_var != None:
             os.environ["B10_FROM_SOURCE"] = env_var
+        bind10_config.reload()
 
         sys.modules.pop("b10-cfgmgr")
 
