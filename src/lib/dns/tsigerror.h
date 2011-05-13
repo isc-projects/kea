@@ -30,9 +30,6 @@ class RRClass;
 /// The \c TSIGError class objects represent standard errors related to
 /// TSIG protocol operations as defined in related specifications, mainly
 /// in RFC2845.
-///
-/// (RCODEs) of the header section of DNS messages, and extended response
-/// codes as defined in the EDNS specification.
 class TSIGError {
 public:
     /// Constants for pre-defined TSIG error values.
@@ -58,7 +55,7 @@ public:
     ///
     /// \exception None
     ///
-    /// \param code The underlying 16-bit error code value of the \c TSIGError.
+    /// \param error_code The underlying 16-bit error code value of the \c TSIGError.
     explicit TSIGError(uint16_t error_code) : code_(error_code) {}
 
     /// Constructor from \c Rcode.
