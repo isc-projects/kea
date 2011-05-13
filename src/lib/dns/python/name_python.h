@@ -12,40 +12,72 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_TSIGERROR_H
-#define __PYTHON_TSIGERROR_H 1
+#ifndef __PYTHON_NAME_H
+#define __PYTHON_NAME_H 1
 
 #include <Python.h>
 
+#include <util/python/pycppwrapper_util.h>
+
 namespace isc {
 namespace dns {
-class TSIGError;
+class NameComparisonResult;
+class Name;
 
 namespace python {
 
-// The s_* Class simply covers one instantiation of the object
-class s_TSIGError : public PyObject {
+//
+// Declaration of the custom exceptions
+// Initialization and addition of these go in the module init at the
+// end
+//
+extern PyObject* po_EmptyLabel;
+extern PyObject* po_TooLongName;
+extern PyObject* po_TooLongLabel;
+extern PyObject* po_BadLabelType;
+extern PyObject* po_BadEscape;
+extern PyObject* po_IncompleteName;
+extern PyObject* po_InvalidBufferPosition;
+extern PyObject* po_DNSMessageFORMERR;
+
+//
+// Declaration of enums
+// Initialization and addition of these go in the module init at the
+// end
+//
+extern PyObject* po_NameRelation;
+
+// The s_* Class simply covers one instantiation of the object.
+class s_NameComparisonResult : public PyObject {
 public:
-    s_TSIGError();
-    const TSIGError* cppobj;
+    s_NameComparisonResult() : cppobj(NULL) {}
+    NameComparisonResult* cppobj;
 };
 
-extern PyTypeObject tsigerror_type;
+class s_Name : public PyObject {
+public:
+    s_Name() : cppobj(NULL) {}
+    Name* cppobj;
+    size_t position;
+};
 
-bool initModulePart_TSIGError(PyObject* mod);
+extern PyTypeObject name_comparison_result_type;
+extern PyTypeObject name_type;
 
-/// This is A simple shortcut to create a python TSIGError object (in the
+bool initModulePart_Name(PyObject* mod);
+
+/// This is A simple shortcut to create a python Name object (in the
 /// form of a pointer to PyObject) with minimal exception safety.
 /// On success, it returns a valid pointer to PyObject with a reference
 /// counter of 1; if something goes wrong it throws an exception (it never
 /// returns a NULL pointer).
 /// This function is expected to be called with in a try block
 /// followed by necessary setup for python exception.
-PyObject* createTSIGErrorObject(const TSIGError& source);
+PyObject* createNameObject(const Name& source);
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_TSIGERROR_H
+#endif // __PYTHON_NAME_H
 
 // Local Variables:
 // mode: c++

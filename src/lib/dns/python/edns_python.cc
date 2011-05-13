@@ -203,7 +203,7 @@ EDNS_init(s_EDNS* self, PyObject* args) {
         // in this context so that we can share the try-catch logic with
         // EDNS_createFromRR() (see below).
         uint8_t extended_rcode;
-        self->edns = createFromRR(*name->name, *rrclass->rrclass,
+        self->edns = createFromRR(*name->cppobj, *rrclass->rrclass,
                                   *rrtype->rrtype, *rrttl->rrttl,
                                   *rdata->rdata, extended_rcode);
         return (self->edns != NULL ? 0 : -1);
@@ -334,7 +334,7 @@ EDNS_createFromRR(const s_EDNS* null_self, PyObject* args) {
             return (NULL);
         }
 
-        edns_obj->edns = createFromRR(*name->name, *rrclass->rrclass,
+        edns_obj->edns = createFromRR(*name->cppobj, *rrclass->rrclass,
                                       *rrtype->rrtype, *rrttl->rrttl,
                                       *rdata->rdata, extended_rcode);
         if (edns_obj->edns != NULL) {

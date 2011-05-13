@@ -12,12 +12,24 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <new>
+#include <Python.h>
 
+#include <stdexcept>
+
+#include <util/python/pycppwrapper_util.h>
+
+#include <dns/name.h>
 #include <dns/tsigkey.h>
+#include <dns/rdata.h>
 
+#include "pydnspp_common.h"
+#include "name_python.h"
+#include "tsigkey_python.h"
+
+using namespace std;
+using namespace isc::util::python;
 using namespace isc::dns;
-using namespace isc::dns::rdata;
+using namespace isc::dns::python;
 
 //
 // Definition of the classes
@@ -27,19 +39,15 @@ using namespace isc::dns::rdata;
 // and static wrappers around the methods we export), a list of methods,
 // and a type description
 
-namespace {
 //
 // TSIGKey
 //
 
 // The s_* Class simply covers one instantiation of the object
 
-class s_TSIGKey : public PyObject {
-public:
-    s_TSIGKey() : tsigkey(NULL) {}
-    TSIGKey* tsigkey;
-};
+s_TSIGKey::s_TSIGKey() : cppobj(NULL) {}
 
+namespace {
 //
 // We declare the functions here, the definitions are below
 // the type definition of the object, since both can use the other
@@ -78,6 +86,99 @@ PyMethodDef TSIGKey_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
+int
+TSIGKey_init(s_TSIGKey* self, PyObject* args) {
+    try {
+        const char* str;
+        if (PyArg_ParseTuple(args, "s", &str)) {
+            self->cppobj = new TSIGKey(str);
+            return (0);
+        }
+
+        PyErr_Clear();
+        const s_Name* key_name;
+        const s_Name* algorithm_name;
+        PyObject* bytes_obj;
+        const char* secret;
+        Py_ssize_t secret_len;
+        if (PyArg_ParseTuple(args, "O!O!O", &name_type, &key_name,
+                             &name_type, &algorithm_name, &bytes_obj) &&
+            PyObject_AsCharBuffer(bytes_obj, &secret, &secret_len) == 0) {
+            if (secret_len == 0) {
+                secret = NULL;
+            }
+            self->cppobj = new TSIGKey(*key_name->cppobj,
+                                       *algorithm_name->cppobj,
+                                       secret, secret_len);
+            return (0);
+        }
+    } catch (const isc::InvalidParameter& ex) {
+        PyErr_SetString(po_InvalidParameter, ex.what());
+        return (-1);
+    } catch (...) {
+        PyErr_SetString(po_IscException, "Unexpected exception");
+        return (-1);
+    }
+
+    PyErr_Clear();
+    PyErr_SetString(PyExc_TypeError,
+                    "Invalid arguments to TSIGKey constructor");
+
+    return (-1);
+}
+
+void
+TSIGKey_destroy(s_TSIGKey* const self) {
+    delete self->cppobj;
+    self->cppobj = NULL;
+    Py_TYPE(self)->tp_free(self);
+}
+
+PyObject*
+TSIGKey_getKeyName(const s_TSIGKey* const self) {
+    try {
+        return (createNameObject(self->cppobj->getKeyName()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Failed to get key name of TSIGKey: " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError, "Unexpected failure in "
+                        "getting key name of TSIGKey");
+    }
+    return (NULL);
+}
+
+PyObject*
+TSIGKey_getAlgorithmName(const s_TSIGKey* const self) {
+    try {
+        return (createNameObject(self->cppobj->getAlgorithmName()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Failed to get algorithm name of TSIGKey: " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError, "Unexpected failure in "
+                        "getting algorithm name of TSIGKey");
+    }
+    return (NULL);
+}
+
+PyObject*
+TSIGKey_getSecret(const s_TSIGKey* const self) {
+    return (Py_BuildValue("y#", self->cppobj->getSecret(),
+                          self->cppobj->getSecretLength()));
+}
+
+PyObject*
+TSIGKey_toText(const s_TSIGKey* self) {
+    return (Py_BuildValue("s", self->cppobj->toText().c_str()));
+}
+} // end of unnamed namespace
+
+namespace isc {
+namespace dns {
+namespace python {
 // This defines the complete type for reflection in python and
 // parsing of PyObject* to s_EDNS
 // Most of the functions are not actually implemented and NULL here.
@@ -132,89 +233,6 @@ PyTypeObject tsigkey_type = {
     0                                   // tp_version_tag
 };
 
-// A helper function to build a python "Name" object with error handling
-// encapsulated.
-s_Name*
-createNameObject(const Name& source) {
-    s_Name* name = PyObject_New(s_Name, &name_type);
-    if (name == NULL) {
-        return (NULL);
-    }
-    name->name = new(nothrow) Name(source);
-    if (name->name == NULL) {
-        Py_DECREF(name);
-        PyErr_SetString(po_IscException, "Allocating Name object failed");
-        return (NULL);
-    }
-    return (name);
-}
-
-int
-TSIGKey_init(s_TSIGKey* self, PyObject* args) {
-    const char* str;
-
-    const s_Name* key_name;
-    const s_Name* algorithm_name;
-    PyObject* bytes_obj;
-    const char* secret;
-    Py_ssize_t secret_len;
-
-
-    try {
-        if (PyArg_ParseTuple(args, "s", &str)) {
-            self->tsigkey = new TSIGKey(str);
-            return (0);
-        } else if (PyArg_ParseTuple(args, "O!O!O", &name_type, &key_name,
-                         &name_type, &algorithm_name, &bytes_obj) &&
-            PyObject_AsCharBuffer(bytes_obj, &secret, &secret_len) != -1) {
-                self->tsigkey = new TSIGKey(*key_name->name,
-                                            *algorithm_name->name,
-                                            secret, secret_len);
-            return (0);
-        }
-    } catch (const isc::InvalidParameter& ex) {
-        PyErr_SetString(po_InvalidParameter, ex.what());
-        return (-1);
-    } catch (...) {
-        PyErr_SetString(po_IscException, "Unexpected exception");
-        return (-1);
-    }
-
-    PyErr_Clear();
-    PyErr_SetString(PyExc_TypeError,
-                    "Invalid arguments to TSIGKey constructor");
-
-    return (-1);
-}
-
-void
-TSIGKey_destroy(s_TSIGKey* const self) {
-    delete self->tsigkey;
-    self->tsigkey = NULL;
-    Py_TYPE(self)->tp_free(self);
-}
-
-PyObject*
-TSIGKey_getKeyName(const s_TSIGKey* const self) {
-    return (createNameObject(self->tsigkey->getKeyName()));
-}
-
-PyObject*
-TSIGKey_getAlgorithmName(const s_TSIGKey* const self) {
-    return (createNameObject(self->tsigkey->getAlgorithmName()));
-}
-
-PyObject*
-TSIGKey_getSecret(const s_TSIGKey* const self) {
-    return (Py_BuildValue("y#", self->tsigkey->getSecret(),
-                          self->tsigkey->getSecretLength()));
-}
-
-PyObject*
-TSIGKey_toText(const s_TSIGKey* self) {
-    return (Py_BuildValue("s", self->tsigkey->toText().c_str()));
-}
-
 // Module Initialization, all statics are initialized here
 bool
 initModulePart_TSIGKey(PyObject* mod) {
@@ -224,33 +242,37 @@ initModulePart_TSIGKey(PyObject* mod) {
     if (PyType_Ready(&tsigkey_type) < 0) {
         return (false);
     }
-    Py_INCREF(&tsigkey_type);
     void* p = &tsigkey_type;
     if (PyModule_AddObject(mod, "TSIGKey", static_cast<PyObject*>(p)) != 0) {
-        Py_DECREF(&tsigkey_type);
+        return (false);
+    }
+    Py_INCREF(&tsigkey_type);
+
+    try {
+        // Constant class variables
+        installClassVariable(tsigkey_type, "HMACMD5_NAME",
+                             createNameObject(TSIGKey::HMACMD5_NAME()));
+        installClassVariable(tsigkey_type, "HMACSHA1_NAME",
+                             createNameObject(TSIGKey::HMACSHA1_NAME()));
+        installClassVariable(tsigkey_type, "HMACSHA256_NAME",
+                             createNameObject(TSIGKey::HMACSHA256_NAME()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure in TSIGKey initialization: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (false);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure in TSIGKey initialization");
         return (false);
     }
 
-    s_Name* name;
-    if ((name = createNameObject(TSIGKey::HMACMD5_NAME())) == NULL) {
-        goto cleanup;
-    }
-    addClassVariable(tsigkey_type, "HMACMD5_NAME", name);
-    if ((name = createNameObject(TSIGKey::HMACSHA1_NAME())) == NULL) {
-        goto cleanup;
-    }
-    addClassVariable(tsigkey_type, "HMACSHA1_NAME", name);
-    if ((name = createNameObject(TSIGKey::HMACSHA256_NAME())) == NULL) {
-        goto cleanup;
-    }
-    addClassVariable(tsigkey_type, "HMACSHA256_NAME", name);
-
     return (true);
-
-  cleanup:
-    Py_DECREF(&tsigkey_type);
-    return (false);
 }
+} // namespace python
+} // namespace dns
+} // namespace isc
 //
 // End of TSIGKey
 //
@@ -263,12 +285,9 @@ initModulePart_TSIGKey(PyObject* mod) {
 
 // The s_* Class simply covers one instantiation of the object
 
-class s_TSIGKeyRing : public PyObject {
-public:
-    s_TSIGKeyRing() : keyring(NULL) {}
-    TSIGKeyRing* keyring;
-};
+s_TSIGKeyRing::s_TSIGKeyRing() : cppobj(NULL) {}
 
+namespace {
 //
 // We declare the functions here, the definitions are below
 // the type definition of the object, since both can use the other
@@ -296,6 +315,107 @@ PyMethodDef TSIGKeyRing_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
+int
+TSIGKeyRing_init(s_TSIGKeyRing* self, PyObject* args) {
+    if (!PyArg_ParseTuple(args, "")) {
+        PyErr_Clear();
+        PyErr_SetString(PyExc_TypeError,
+                        "Invalid arguments to TSIGKeyRing constructor");
+        return (-1);
+    }
+    
+    self->cppobj = new(nothrow) TSIGKeyRing();
+    if (self->cppobj == NULL) {
+        PyErr_SetString(po_IscException, "Allocating TSIGKeyRing failed");
+        return (-1);
+    }
+
+    return (0);
+}
+
+void
+TSIGKeyRing_destroy(s_TSIGKeyRing* self) {
+    delete self->cppobj;
+    self->cppobj = NULL;
+    Py_TYPE(self)->tp_free(self);
+}
+
+PyObject*
+TSIGKeyRing_size(const s_TSIGKeyRing* const self) {
+    return (Py_BuildValue("I", self->cppobj->size()));
+}
+
+PyObject*
+TSIGKeyRing_add(const s_TSIGKeyRing* const self, PyObject* args) {
+    s_TSIGKey* tsigkey;
+    
+    if (PyArg_ParseTuple(args, "O!", &tsigkey_type, &tsigkey)) {
+        try {
+            const TSIGKeyRing::Result result =
+                self->cppobj->add(*tsigkey->cppobj);
+            return (Py_BuildValue("I", result));
+        } catch (...) {
+            PyErr_SetString(po_IscException, "Unexpected exception");
+            return (NULL);
+        }
+    }
+
+    PyErr_Clear();
+    PyErr_SetString(PyExc_TypeError, "Invalid arguments to TSIGKeyRing.add");
+
+    return (NULL);
+}
+
+PyObject*
+TSIGKeyRing_remove(const s_TSIGKeyRing* self, PyObject* args) {
+    s_Name* key_name;
+
+    if (PyArg_ParseTuple(args, "O!", &name_type, &key_name)) {
+        const TSIGKeyRing::Result result =
+            self->cppobj->remove(*key_name->cppobj);
+        return (Py_BuildValue("I", result));
+    }
+
+    PyErr_Clear();
+    PyErr_SetString(PyExc_TypeError, "Invalid arguments to TSIGKeyRing.add");
+
+    return (NULL);
+}
+
+PyObject*
+TSIGKeyRing_find(const s_TSIGKeyRing* self, PyObject* args) {
+    s_Name* key_name;
+    s_Name* algorithm_name;
+
+    if (PyArg_ParseTuple(args, "O!O!", &name_type, &key_name,
+                         &name_type, &algorithm_name)) {
+        const TSIGKeyRing::FindResult result =
+            self->cppobj->find(*key_name->cppobj, *algorithm_name->cppobj);
+        if (result.key != NULL) {
+            s_TSIGKey* key = PyObject_New(s_TSIGKey, &tsigkey_type);
+            if (key == NULL) {
+                return (NULL);
+            }
+            key->cppobj = new(nothrow) TSIGKey(*result.key);
+            if (key->cppobj == NULL) {
+                Py_DECREF(key);
+                PyErr_SetString(po_IscException,
+                                "Allocating TSIGKey object failed");
+                return (NULL);
+            }
+            return (Py_BuildValue("IN", result.code, key));
+        } else {
+            return (Py_BuildValue("Is", result.code, NULL));
+        }
+    }
+
+    return (NULL);
+}
+} // end of unnamed namespace
+
+namespace isc {
+namespace dns {
+namespace python {
 PyTypeObject tsigkeyring_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "libdns_python.TSIGKeyRing",
@@ -346,103 +466,6 @@ PyTypeObject tsigkeyring_type = {
     0                                   // tp_version_tag
 };
 
-int
-TSIGKeyRing_init(s_TSIGKeyRing* self, PyObject* args) {
-    if (!PyArg_ParseTuple(args, "")) {
-        PyErr_Clear();
-        PyErr_SetString(PyExc_TypeError,
-                        "Invalid arguments to TSIGKeyRing constructor");
-        return (-1);
-    }
-    
-    self->keyring = new(nothrow) TSIGKeyRing();
-    if (self->keyring == NULL) {
-        PyErr_SetString(po_IscException, "Allocating TSIGKeyRing failed");
-        return (-1);
-    }
-
-    return (0);
-}
-
-void
-TSIGKeyRing_destroy(s_TSIGKeyRing* self) {
-    delete self->keyring;
-    self->keyring = NULL;
-    Py_TYPE(self)->tp_free(self);
-}
-
-PyObject*
-TSIGKeyRing_size(const s_TSIGKeyRing* const self) {
-    return (Py_BuildValue("I", self->keyring->size()));
-}
-
-PyObject*
-TSIGKeyRing_add(const s_TSIGKeyRing* const self, PyObject* args) {
-    s_TSIGKey* tsigkey;
-    
-    if (PyArg_ParseTuple(args, "O!", &tsigkey_type, &tsigkey)) {
-        try {
-            const TSIGKeyRing::Result result =
-                self->keyring->add(*tsigkey->tsigkey);
-            return (Py_BuildValue("I", result));
-        } catch (...) {
-            PyErr_SetString(po_IscException, "Unexpected exception");
-            return (NULL);
-        }
-    }
-
-    PyErr_Clear();
-    PyErr_SetString(PyExc_TypeError, "Invalid arguments to TSIGKeyRing.add");
-
-    return (NULL);
-}
-
-PyObject*
-TSIGKeyRing_remove(const s_TSIGKeyRing* self, PyObject* args) {
-    s_Name* key_name;
-
-    if (PyArg_ParseTuple(args, "O!", &name_type, &key_name)) {
-        const TSIGKeyRing::Result result =
-            self->keyring->remove(*key_name->name);
-        return (Py_BuildValue("I", result));
-    }
-
-    PyErr_Clear();
-    PyErr_SetString(PyExc_TypeError, "Invalid arguments to TSIGKeyRing.add");
-
-    return (NULL);
-}
-
-PyObject*
-TSIGKeyRing_find(const s_TSIGKeyRing* self, PyObject* args) {
-    s_Name* key_name;
-    s_Name* algorithm_name;
-
-    if (PyArg_ParseTuple(args, "O!O!", &name_type, &key_name,
-                         &name_type, &algorithm_name)) {
-        const TSIGKeyRing::FindResult result =
-            self->keyring->find(*key_name->name, *algorithm_name->name);
-        if (result.key != NULL) {
-            s_TSIGKey* key = PyObject_New(s_TSIGKey, &tsigkey_type);
-            if (key == NULL) {
-                return (NULL);
-            }
-            key->tsigkey = new(nothrow) TSIGKey(*result.key);
-            if (key->tsigkey == NULL) {
-                Py_DECREF(key);
-                PyErr_SetString(po_IscException,
-                                "Allocating TSIGKey object failed");
-                return (NULL);
-            }
-            return (Py_BuildValue("IN", result.code, key));
-        } else {
-            return (Py_BuildValue("Is", result.code, NULL));
-        }
-    }
-
-    return (NULL);
-}
-
 bool
 initModulePart_TSIGKeyRing(PyObject* mod) {
     if (PyType_Ready(&tsigkeyring_type) < 0) {
@@ -465,5 +488,6 @@ initModulePart_TSIGKeyRing(PyObject* mod) {
 
     return (true);
 }
-
-} // end of unnamed namespace
+} // namespace python
+} // namespace dns
+} // namespace isc

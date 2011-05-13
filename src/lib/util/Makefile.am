@@ -1,4 +1,4 @@
-SUBDIRS = . tests unittests io
+SUBDIRS = . tests unittests io pyunittests
 # The io/tests is hack, because otherwise we can not order these directories
 # properly. Unittests use io and io/tests use unittest.
 
