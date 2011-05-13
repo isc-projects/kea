@@ -185,6 +185,9 @@ public:
     static const Name& HMACMD5_NAME();    ///< HMAC-MD5 (RFC2845)
     static const Name& HMACSHA1_NAME();   ///< HMAC-SHA1 (RFC4635)
     static const Name& HMACSHA256_NAME(); ///< HMAC-SHA256 (RFC4635)
+    static const Name& HMACSHA224_NAME(); ///< HMAC-SHA256 (RFC4635)
+    static const Name& HMACSHA384_NAME(); ///< HMAC-SHA256 (RFC4635)
+    static const Name& HMACSHA512_NAME(); ///< HMAC-SHA256 (RFC4635)
     //@}
 
 private:

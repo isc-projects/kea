@@ -244,6 +244,19 @@ initModulePart_TSIGKey(PyObject* mod) {
         goto cleanup;
     }
     addClassVariable(tsigkey_type, "HMACSHA256_NAME", name);
+    if ((name = createNameObject(TSIGKey::HMACSHA224_NAME())) == NULL) {
+        goto cleanup;
+    }
+    addClassVariable(tsigkey_type, "HMACSHA224_NAME", name);
+    if ((name = createNameObject(TSIGKey::HMACSHA384_NAME())) == NULL) {
+        goto cleanup;
+    }
+    addClassVariable(tsigkey_type, "HMACSHA384_NAME", name);
+    if ((name = createNameObject(TSIGKey::HMACSHA512_NAME())) == NULL) {
+        goto cleanup;
+    }
+    addClassVariable(tsigkey_type, "HMACSHA512_NAME", name);
+
 
     return (true);
 
