@@ -92,6 +92,7 @@ PyMethodDef TSIGError_methods[] = {
 int
 TSIGError_init(s_TSIGError* self, PyObject* args) {
     try {
+        // Constructor from the code value
         long code = 0;
         if (PyArg_ParseTuple(args, "l", &code)) {
             if (code < 0 || code > 0xffff) {
@@ -102,6 +103,7 @@ TSIGError_init(s_TSIGError* self, PyObject* args) {
             return (0);
         }
 
+        // Constructor from Rcode
         s_Rcode* py_rcode;
         if (PyArg_ParseTuple(args, "O!", &rcode_type, &py_rcode)) {
             self->cppobj = new TSIGError(*py_rcode->cppobj);
