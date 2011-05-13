@@ -301,6 +301,11 @@ class XfroutSession():
 
         self._send_message_with_last_soa(msg, sock_fd, rrset_soa, message_upper_len)
 
+class ZoneInfo:
+    def __init__(self, zone_config):
+        self.name = zone_config.get('name')
+        self.tsig_key_str = zone_config.get('tsig_key')
+
 class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
     '''The unix domain socket server which accept xfr query sent from auth server.'''
 
@@ -450,6 +455,11 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         self._lock.acquire()
         self._max_transfers_out = new_config.get('transfers_out')
         self._log.log_message('info', 'max transfer out : %d', self._max_transfers_out)
+        zones = new_config.get('zones')
+        if zones is not None:
+            for zone_config in zones:
+                zone_info = ZoneInfo(zone_config)
+                self.zones[zone_info.name] = zone_info
         self._lock.release()
         self._log.log_message('info', 'update config data complete.')
 
