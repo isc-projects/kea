@@ -270,7 +270,14 @@ PyTypeObject tsigcontext_type = {
     NULL,                               // tp_getattro
     NULL,                               // tp_setattro
     NULL,                               // tp_as_buffer
-    Py_TPFLAGS_DEFAULT,                 // tp_flags
+
+    // We allow the python version of TSIGContext to act as a base class.
+    // From pure design point of view, this is wrong because it's not intended
+    // to be inherited.  However, cryptographic operations are generally
+    // difficult to test, so it would be very advantageous if we can define
+    // a mock context class.
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, // tp_flags
+
     "The TSIGContext class objects is...(COMPLETE THIS)",
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
