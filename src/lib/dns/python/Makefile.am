@@ -21,19 +21,14 @@ pydnspp_la_LDFLAGS = $(PYTHON_LDFLAGS)
 # rules
 EXTRA_DIST = pydnspp_common.h
 EXTRA_DIST += edns_python.cc
-EXTRA_DIST += messagerenderer_python.cc
 EXTRA_DIST += message_python.cc
 EXTRA_DIST += rrclass_python.cc
-EXTRA_DIST += name_python.cc
 EXTRA_DIST += opcode_python.cc
-EXTRA_DIST += rcode_python.cc
 EXTRA_DIST += rrset_python.cc
 EXTRA_DIST += question_python.cc
 EXTRA_DIST += rrttl_python.cc
 EXTRA_DIST += rdata_python.cc
 EXTRA_DIST += rrtype_python.cc
-EXTRA_DIST += tsigkey_python.cc
-EXTRA_DIST += tsig_python.cc
 
 # Python prefers .so, while some OSes (specifically MacOS) use a different
 # suffix for dynamic objects.  -module is necessary to work this around.
