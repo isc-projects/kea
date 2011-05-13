@@ -534,6 +534,35 @@ class TestXfrin(unittest.TestCase):
         self.assertEqual(self.xfr.command_handler("retransfer",
                                                   self.args)['result'][0], 0)
 
+    def test_command_handler_retransfer_short_command1(self):
+        # try it when only specifying the zone name (of unknown zone)
+        short_args = {}
+        short_args['zone_name'] = TEST_ZONE_NAME
+        self.assertEqual(self.xfr.command_handler("retransfer",
+                                                  short_args)['result'][0], 0)
+
+    def test_command_handler_retransfer_short_command2(self):
+        # try it when only specifying the zone name (of unknown zone)
+        short_args = {}
+        short_args['zone_name'] = TEST_ZONE_NAME + "."
+        self.assertEqual(self.xfr.command_handler("retransfer",
+                                                  short_args)['result'][0], 0)
+
+    def test_command_handler_retransfer_short_command3(self):
+        # try it when only specifying the zone name (of known zone)
+        short_args = {}
+        short_args['zone_name'] = TEST_ZONE_NAME
+
+        zones = { 'zones': [
+                  { 'name': TEST_ZONE_NAME,
+                    'master_addr': TEST_MASTER_IPV4_ADDRESS,
+                    'master_port': TEST_MASTER_PORT
+                  }
+                ]}
+        self.xfr.config_handler(zones)
+        self.assertEqual(self.xfr.command_handler("retransfer",
+                                                  short_args)['result'][0], 0)
+
     def test_command_handler_retransfer_badcommand(self):
         self.args['master'] = 'invalid'
         self.assertEqual(self.xfr.command_handler("retransfer",
@@ -574,7 +603,21 @@ class TestXfrin(unittest.TestCase):
     def test_command_handler_notify(self):
         # at this level, refresh is no different than retransfer.
         self.args['master'] = TEST_MASTER_IPV6_ADDRESS
-        # ...but right now we disable the feature due to security concerns.
+        # ...but the zone is unknown so this would return an error
+        self.assertEqual(self.xfr.command_handler("notify",
+                                                  self.args)['result'][0], 1)
+
+    def test_command_handler_notify_known_zone(self):
+        # try it with a known zone
+        self.args['master'] = TEST_MASTER_IPV6_ADDRESS
+
+        zones = { 'zones': [
+                  { 'name': TEST_ZONE_NAME,
+                    'master_addr': TEST_MASTER_IPV4_ADDRESS,
+                    'master_port': TEST_MASTER_PORT
+                  }
+                ]}
+        self.xfr.config_handler(zones)
         self.assertEqual(self.xfr.command_handler("notify",
                                                   self.args)['result'][0], 0)
 
@@ -586,20 +629,37 @@ class TestXfrin(unittest.TestCase):
         self.assertEqual(self.xfr.config_handler({'transfers_in': 3})['result'][0], 0)
         self.assertEqual(self.xfr._max_transfers_in, 3)
 
-    def test_command_handler_masters(self):
-        master_info = {'master_addr': '1.1.1.1', 'master_port':53}
-        self.assertEqual(self.xfr.config_handler(master_info)['result'][0], 0)
+    def test_command_handler_zones(self):
+        zones = { 'zones': [
+                  { 'name': 'test.com.',
+                    'master_addr': '1.1.1.1',
+                    'master_port': 53
+                  }
+                ]}
+        self.assertEqual(self.xfr.config_handler(zones)['result'][0], 0)
 
-        master_info = {'master_addr': '1111.1.1.1', 'master_port':53 }
-        self.assertEqual(self.xfr.config_handler(master_info)['result'][0], 1)
+        zones = { 'zones': [
+                  { 'master_addr': '1.1.1.1',
+                    'master_port': 53
+                  }
+                ]}
+        self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
 
-        master_info = {'master_addr': '2.2.2.2', 'master_port':530000 }
-        self.assertEqual(self.xfr.config_handler(master_info)['result'][0], 1)
+        zones = { 'zones': [
+                  { 'name': 'test.com',
+                    'master_addr': 'badaddress',
+                    'master_port': 53
+                  }
+                ]}
+        self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
 
-        master_info = {'master_addr': '2.2.2.2', 'master_port':53 } 
-        self.xfr.config_handler(master_info)
-        self.assertEqual(self.xfr._master_addr, '2.2.2.2')
-        self.assertEqual(self.xfr._master_port, 53)
+        zones = { 'zones': [
+                  { 'name': 'test.com',
+                    'master_addr': '1.1.1.1',
+                    'master_port': 'bad_port'
+                  }
+                ]}
+        self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
 
 
 def raise_interrupt():
