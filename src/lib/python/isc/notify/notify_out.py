@@ -300,7 +300,7 @@ class NotifyOut:
         try:
             r_fds, w, e = select.select(valid_socks, [], [], block_timeout)
         except select.error as err:
-            if err.args[0] != EINTR:
+            if err.args[0] != errno.EINTR:
                 return {}, {}
 
         if self._read_sock in r_fds: # user has called shutdown()
