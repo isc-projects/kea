@@ -8,6 +8,7 @@ pyexec_LTLIBRARIES = pydnspp.la
 pydnspp_la_SOURCES = pydnspp.cc pydnspp_common.cc
 pydnspp_la_SOURCES += rcode_python.cc rcode_python.h
 pydnspp_la_SOURCES += tsigerror_python.cc tsigerror_python.h
+pydnspp_la_SOURCES += tsigerror_python_inc.cc
 pydnspp_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 pydnspp_la_LDFLAGS = $(PYTHON_LDFLAGS)
 
