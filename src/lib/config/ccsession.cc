@@ -389,7 +389,6 @@ ModuleCCSession::addRemoteConfig(const std::string& spec_name,
         }
     }
     ConfigData rmod_config = ConfigData(rmod_spec);
-    session_.subscribe(module_name);
 
     // Get the current configuration values for that module
     ConstElementPtr cmd = Element::fromJSON("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name + "\"} ] }");
@@ -414,6 +413,7 @@ ModuleCCSession::addRemoteConfig(const std::string& spec_name,
         remote_module_handlers_[module_name] = handler;
         handler(module_name, local_config);
     }
+    session_.subscribe(module_name);
     return (module_name);
 }
 
