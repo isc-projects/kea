@@ -82,6 +82,10 @@ initKeyring(config::ModuleCCSession& session);
  * This does nothing if the key ring is not loaded currently.
  *
  * \param session The configuration session used to talk to the config manager.
+ *
+ * \todo What do we do when the data that come are invalid? Should we ignore it,
+ *     as walidity should have been checked already in the config manager, or
+ *     throw? What about when we get an update and it's invalid?
  */
 void
 deinitKeyring(config::ModuleCCSession& session);
