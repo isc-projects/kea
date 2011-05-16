@@ -16,11 +16,4 @@
 
 #include "resolver_log.h"
 
-namespace isc {
-namespace resolver {
-
 isc::log::Logger resolver_logger("resolver");
-
-} // namespace resolver
-} // namespace isc
-
