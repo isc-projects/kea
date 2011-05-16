@@ -27,7 +27,7 @@ run_unittests_SOURCES += resolver_config_unittest.cc
 run_unittests_SOURCES += response_scrubber_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 
-noinst_run_unittests_SOURCES = ../resolverdef.h ../resolverdef.cc
+nodist_run_unittests_SOURCES = ../resolverdef.h ../resolverdef.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
