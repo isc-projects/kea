@@ -26,7 +26,6 @@ using namespace isc::dns;
 
 namespace {
 // The s_* Class simply covers one instantiation of the object
-
 class s_TSIGContext : public PyObject {
 public:
     TSIGContext* tsig_ctx;
