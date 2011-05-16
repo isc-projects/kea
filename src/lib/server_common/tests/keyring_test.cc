@@ -51,7 +51,7 @@ public:
                                                 "/tsig_keys.spec").
                              getFullSpec()));
         session.getMessages()->add(createAnswer(0, Element::fromJSON(
-            "{\"keys\": [\"key:MTIzNAo=:sha1\"]}")));
+            "{\"keys\": [\"key:MTIzNAo=:hmac-sha1\"]}")));
         // Now load it
         EXPECT_NO_THROW(initKeyring(*mccs));
         EXPECT_NE(keyring, boost::shared_ptr<TSIGKeyRing>()) <<
@@ -74,9 +74,9 @@ TEST_F(KeyringTest, keyring) {
 
     {
         SCOPED_TRACE("Update");
-        session.getMessages()->add(createCommand("config_update",
-                                                 Element::fromJSON(
-            "{\"keys\": [\"another:MTIzNAo=:sha256\"]}")));
+        session.addMessage(createCommand("config_update", Element::fromJSON(
+            "{\"keys\": [\"another:MTIzNAo=:hmac-sha256\"]}")),
+                           "tsig_keys", "*");
         mccs->checkCommand();
 
         // Make sure it no longer contains the original key
@@ -114,12 +114,13 @@ TEST_F(KeyringTest, initTwice) {
             "it even throws at it";
     }
     EXPECT_EQ(backup, keyring) << "The second init replaced the data";
+    deinitKeyring(*mccs);
 }
 
 // deinit when not initialized
 TEST_F(KeyringTest, extraDeinit) {
     // It is NULL before
-    EXPECT_EQ(keyring, boost::shared_ptr<TSIGKeyRing>()) <<
+    EXPECT_EQ(boost::shared_ptr<TSIGKeyRing>(), keyring) <<
         "Someone forgot to deinit it before";
     // Check that it doesn't get confused when we do not have it initialized
     EXPECT_NO_THROW(deinitKeyring(*mccs));
