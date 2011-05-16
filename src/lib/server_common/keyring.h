@@ -49,7 +49,7 @@ namespace server_common {
  * but you need to call initKeyring first, otherwise you'll find a NULL pointer
  * here only.
  */
-boost::shared_ptr<dns::TSIGKeyRing> keyring;
+extern boost::shared_ptr<dns::TSIGKeyRing> keyring;
 
 /**
  * \brief Load the key ring for the first time
@@ -65,7 +65,8 @@ boost::shared_ptr<dns::TSIGKeyRing> keyring;
  *
  * \param session The configuration session used to talk to the config manager.
  */
-void initKeyring(config::ModuleCCSession& session);
+void
+initKeyring(config::ModuleCCSession& session);
 
 /**
  * \brief Unload the key ring
@@ -82,7 +83,8 @@ void initKeyring(config::ModuleCCSession& session);
  *
  * \param session The configuration session used to talk to the config manager.
  */
-void deinitKeyring(config::ModuleCCSession& session);
+void
+deinitKeyring(config::ModuleCCSession& session);
 
 }
 }
