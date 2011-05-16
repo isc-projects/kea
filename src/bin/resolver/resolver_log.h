@@ -18,9 +18,6 @@
 #include <log/macros.h>
 #include "resolverdef.h"
 
-namespace isc {
-namespace resolver {
-
 /// \brief Resolver Logging
 ///
 /// Defines the levels used to output debug messages in the resolver.  Note that
@@ -31,7 +28,7 @@ const int RESOLVER_DBG_INIT = 10;
 
 // Configuration messages
 const int RESOLVER_DBG_CONFIG = 30;
-I'm nore really sure how you could get round that.
+
 // Trace sending and receiving of messages
 const int RESOLVER_DBG_IO = 50;
 
@@ -48,8 +45,5 @@ const int RESOLVER_DBG_DETAIL = 90;
 /// modules, but defining in a single module and linking to it saves time and
 /// space.
 extern isc::log::Logger resolver_logger;
-
-} // namespace resolver
-} // namespace isc
 
 #endif // __RESOLVER_LOG__H
