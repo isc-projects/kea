@@ -252,6 +252,10 @@ public:
      *                if you don't want any handler to be called and you're
      *                fine with requesting the data through
      *                getRemoteConfigValue() each time.
+     *
+     *                The handler should not throw, or it'll fall trough and
+     *                the exception will get into strange places, probably
+     *                aborting the application.
      * \param spec_is_filename Says if spec_name is filename or module name.
      * \return The name of the module specified in the given specification
      *         file
