@@ -27,6 +27,7 @@ def reload():
                                            "@PACKAGE_NAME@",
                                            "msgq_socket").replace("${prefix}",
                                                                   "@prefix@")
+    PREFIX = "@prefix@"
 
     # If B10_FROM_SOURCE is set in the environment, we use data files
     # from a directory relative to the value of that variable, or, if defined,
@@ -43,7 +44,6 @@ def reload():
             DATA_PATH = os.environ["B10_FROM_SOURCE"]
         PLUGIN_PATHS = [DATA_PATH + '/src/bin/cfgmgr/plugins']
     else:
-        PREFIX = "@prefix@"
         DATA_PATH = "@localstatedir@/@PACKAGE@".replace("${prefix}", PREFIX)
         PLUGIN_PATHS = ["@prefix@/share/@PACKAGE@/config_plugins"]
     # For testing the plugins so they can find their own spec files
