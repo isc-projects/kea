@@ -358,11 +358,12 @@ ModuleCCSession::checkCommand() {
 std::string
 ModuleCCSession::addRemoteConfig(const std::string& spec_name,
                                  void (*handler)(const std::string& module,
-                                          ConstElementPtr))
+                                          ConstElementPtr),
+                                 bool spec_is_filename)
 {
     std::string module_name;
     ModuleSpec rmod_spec;
-    if (spec_name.find_first_of("./") != std::string::npos) {
+    if (spec_is_filename) {
         // It's a file name, so load it
         rmod_spec = readModuleSpecification(spec_name);
         module_name =
