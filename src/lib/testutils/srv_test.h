@@ -84,7 +84,8 @@ protected:
     /// form of \c IOMessage in \c io_message.
     /// The existing content of \c io_message, if any, will be deleted.
     void createRequestPacket(isc::dns::Message& message,
-                             const int protocol = IPPROTO_UDP);
+                             const int protocol = IPPROTO_UDP,
+                             isc::dns::TSIGContext* context = NULL);
 
     MockSession notify_session;
     MockServer dnsserv;
