@@ -40,13 +40,14 @@ spec_config.h: spec_config.h.pre
 
 # Define rule to build logging source files from message file
 resolverdef.h resolverdef.cc: resolverdef.mes
-	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/resolver/resolverdef.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/bin/resolver/resolverdef.mes
 
 
 BUILT_SOURCES = spec_config.h resolverdef.cc resolverdef.h
 
 pkglibexec_PROGRAMS = b10-resolver
 b10_resolver_SOURCES = resolver.cc resolver.h
+b10_resolver_SOURCES += resolver_log.cc resolver_log.h
 b10_resolver_SOURCES += response_scrubber.cc response_scrubber.h
 b10_resolver_SOURCES += $(top_builddir)/src/bin/auth/change_user.h
 b10_resolver_SOURCES += $(top_builddir)/src/bin/auth/common.h
