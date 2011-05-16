@@ -16,10 +16,19 @@
 from pydnspp import *
 
 class MockTSIGContext(TSIGContext):
-    """Tthis is a mock of TSIGContext class for testing"""
+    """Tthis is a mock of TSIGContext class for testing.
+    Via its "error" attribute, you can fake the result of verify(), thereby
+    you can test many of TSIG related tests without requiring actual crypto
+    setups.  "error" should be either a TSIGError type value or a callable
+    object (typically a function).  In the latter case, the callable object
+    will take the context as a parameter, and is expected to return a
+    TSIGError object.
+    """
 
     def __init__(self, tsig_key):
         super().__init__(tsig_key)
+        self.error = None
+        self.verify_called = 0  # number of verify() called
 
     def sign(self, qid, data):
         """Transparently delegate the processing to the super class.
@@ -28,3 +37,17 @@ class MockTSIGContext(TSIGContext):
         directly.
         """
         return super().sign(qid, data)
+
+    def verify(self, tsig_record, data):
+        self.verify_called += 1
+        # call real "verify" so that we can notice any misue (which would
+        # result in exception.
+        super().verify(tsig_record, data)
+        return self.get_error()
+
+    def get_error(self):
+        if self.error is None:
+            return super().get_error()
+        if hasattr(self.error, '__call__'):
+            return self.error(self)
+        return self.error
