@@ -412,7 +412,8 @@ TEST_F(CCSessionTest, remoteConfig) {
         session.getMessages()->add(createAnswer(0, spec.getFullSpec()));
         session.getMessages()->add(createAnswer(0, el("{}")));
 
-        EXPECT_NO_THROW(module_name = mccs.addRemoteConfig("Spec2"));
+        EXPECT_NO_THROW(module_name = mccs.addRemoteConfig("Spec2", NULL,
+                                                           false));
 
         EXPECT_EQ("Spec2", module_name);
         EXPECT_NO_THROW(item1 =
