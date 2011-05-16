@@ -170,6 +170,22 @@ class XfrinConnection(asyncore.dispatcher):
 
         return data
 
+    def _check_response_tsig(self, msg, response_data):
+        tsig_record = msg.get_tsig_record()
+        if self._tsig_ctx is not None:
+            tsig_error = self._tsig_ctx.verify(tsig_record, response_data)
+            if tsig_error != TSIGError.NOERROR:
+                raise XfrinException('TSIG verify fail: %s' % str(tsig_error))
+        elif tsig_record is not None:
+            # If the response includes a TSIG while we didn't sign the query,
+            # we treat it as an error.  RFC doesn't say anything about this
+            # case, but it clearly states the server must not sign a response
+            # to an unsigned request.  Although we could be flexible, no sane
+            # implementation would return such a response, and since this is
+            # part of security mechanism, it's probably better to be more
+            # strict.
+            raise XfrinException('Unexpected TSIG in response')
+
     def _check_soa_serial(self):
         ''' Compare the soa serial, if soa serial in master is less than
         the soa serial in local, Finish xfrin.
@@ -177,7 +193,7 @@ class XfrinConnection(asyncore.dispatcher):
         True: soa serial in master is bigger
         '''
 
-        self._send_query(RRType("SOA"))
+        self._send_query(RRType.SOA())
         data_len = self._get_request_response(2)
         msg_len = socket.htons(struct.unpack('H', data_len)[0])
         soa_response = self._get_request_response(msg_len)
@@ -187,6 +203,9 @@ class XfrinConnection(asyncore.dispatcher):
         # perform some minimal level validation.  It's an open issue how
         # strict we should be (see the comment in _check_response_header())
         self._check_response_header(msg)
+
+        # TSIG related checks, including an expected signed response
+        self._check_response_tsig(msg, soa_response)
 
         # TODO, need select soa record from data source then compare the two
         # serial, current just return OK, since this function hasn't been used
@@ -205,8 +224,7 @@ class XfrinConnection(asyncore.dispatcher):
             logstr = 'transfer of \'%s\': AXFR ' % self._zone_name
             if ret == XFRIN_OK:
                 self.log_msg(logstr + 'started')
-                # TODO: .AXFR() RRType.AXFR()
-                self._send_query(RRType(252))
+                self._send_query(RRType.AXFR())
                 isc.datasrc.sqlite3_ds.load(self._db_file, self._zone_name,
                                             self._handle_xfrin_response)
 
@@ -277,7 +295,7 @@ class XfrinConnection(asyncore.dispatcher):
 
             for rdata in rrset.get_rdata():
                 # Count the soa record count
-                if rrset.get_type() == RRType("SOA"):
+                if rrset.get_type() == RRType.SOA():
                     self._soa_rr_count += 1
 
                     # XXX: the current DNS message parser can't preserve the
@@ -302,6 +320,9 @@ class XfrinConnection(asyncore.dispatcher):
             msg = Message(Message.PARSE)
             msg.from_wire(recvdata)
             self._check_response_status(msg)
+
+            # TSIG related checks, including an expected signed response
+            self._check_response_tsig(msg, recvdata)
 
             answer_section = msg.get_section(Message.SECTION_ANSWER)
             for rr in self._handle_answer_section(answer_section):
