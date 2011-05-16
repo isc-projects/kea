@@ -25,8 +25,10 @@
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
 #include <dns/rdataclass.h>
+#include <dns/tsig.h>
 
 #include <server_common/portconfig.h>
+#include <server_common/keyring.h>
 
 #include <datasrc/memory_datasrc.h>
 #include <auth/auth_srv.h>
@@ -240,6 +242,104 @@ TEST_F(AuthSrvTest, AXFRSuccess) {
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
     EXPECT_FALSE(dnsserv.hasAnswer());
     EXPECT_TRUE(xfrout.isConnected());
+}
+
+// Try giving the server a TSIG signed request and see it can anwer signed as
+// well
+TEST_F(AuthSrvTest, TSIGSigned) {
+    // Prepare key, the client message, etc
+    TSIGKey key("key:c2VjcmV0Cg==:hmac-sha1");
+    TSIGContext context(key);
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                         Name("version.bind"), RRClass::CH(), RRType::TXT());
+    createRequestPacket(request_message, IPPROTO_UDP, &context);
+
+    // Run the message trough the server
+    isc::server_common::keyring.reset(new TSIGKeyRing);
+    isc::server_common::keyring->add(key);
+    server.processMessage(*io_message, parse_message, response_obuffer,
+                          &dnsserv);
+    isc::server_common::keyring.reset();
+
+    // What did we get?
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    // TODO Is the TSIG counted here?
+    headerCheck(*parse_message, default_qid, Rcode::NOERROR(),
+                opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 1, 0);
+    // We need to parse the message ourself, or getTSIGRecord won't work
+    InputBuffer ib(response_obuffer->getData(), response_obuffer->getLength());
+    Message m(Message::PARSE);
+
+    const TSIGRecord* tsig = m.getTSIGRecord();
+    ASSERT_TRUE(tsig) << "Missing TSIG signature";
+    TSIGError error(context.verify(tsig, response_obuffer->getData(),
+                                   response_obuffer->getLength()));
+    EXPECT_EQ(TSIGError::NOERROR(), error) <<
+        "The server signed the response, but it doesn't seem to be valid";
+}
+
+// Give the server a signed request, but don't give it the key. It will
+// not be able to verify it, returning BADKEY
+TEST_F(AuthSrvTest, TSIGSignedNoKey) {
+    TSIGKey key("key:c2VjcmV0Cg==:hmac-sha1");
+    TSIGContext context(key);
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                         Name("version.bind"), RRClass::CH(), RRType::TXT());
+    // Make sure we get the extended error code as well
+    request_message.setEDNS(ConstEDNSPtr(new EDNS));
+    createRequestPacket(request_message, IPPROTO_UDP, &context);
+
+    // Process the message, but use a different key there
+    isc::server_common::keyring.reset(new TSIGKeyRing);
+    isc::server_common::keyring->add(TSIGKey("key:QkFECg==:hmac-sha1"));
+    server.processMessage(*io_message, parse_message, response_obuffer,
+                          &dnsserv);
+    isc::server_common::keyring.reset();
+
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    // TODO Is the TSIG counted here?
+    headerCheck(*parse_message, default_qid, TSIGError::BAD_KEY().toRcode(),
+                opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
+    // We need to parse the message ourself, or getTSIGRecord won't work
+    InputBuffer ib(response_obuffer->getData(), response_obuffer->getLength());
+    Message m(Message::PARSE);
+
+    const TSIGRecord* tsig = m.getTSIGRecord();
+    ASSERT_TRUE(tsig) <<
+        "Missing TSIG signature (we should have one even at error)";
+    // TODO It should have been signed by zero-length key. Should we
+    // check that somehow?
+}
+
+// Give the server a signed request, but signed by a different key
+// (with the same name). It should return BADSIG
+TEST_F(AuthSrvTest, TSIGBadSig) {
+    TSIGKey key("key:c2VjcmV0Cg==:hmac-sha1");
+    TSIGContext context(key);
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                         Name("version.bind"), RRClass::CH(), RRType::TXT());
+    // Make sure we get the extended error code as well
+    request_message.setEDNS(ConstEDNSPtr(new EDNS));
+    createRequestPacket(request_message, IPPROTO_UDP, &context);
+
+    isc::server_common::keyring.reset(new TSIGKeyRing);
+    server.processMessage(*io_message, parse_message, response_obuffer,
+                          &dnsserv);
+    isc::server_common::keyring.reset();
+
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    // TODO Is the TSIG counted here?
+    headerCheck(*parse_message, default_qid, TSIGError::BAD_KEY().toRcode(),
+                opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
+    // We need to parse the message ourself, or getTSIGRecord won't work
+    InputBuffer ib(response_obuffer->getData(), response_obuffer->getLength());
+    Message m(Message::PARSE);
+
+    const TSIGRecord* tsig = m.getTSIGRecord();
+    ASSERT_TRUE(tsig) <<
+        "Missing TSIG signature (we should have one even at error)";
+    // TODO It should have been signed by zero-length key. Should we
+    // check that somehow?
 }
 
 TEST_F(AuthSrvTest, AXFRConnectFail) {
