@@ -16,9 +16,12 @@ CLEANFILES = *.gcno *.gcda
 TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
+
 run_unittests_SOURCES = $(top_srcdir)/src/lib/dns/tests/unittest_util.h
 run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
 run_unittests_SOURCES += ../resolver.h ../resolver.cc
+run_unittests_SOURCES += ../resolver_log.h ../resolver_log.cc
+run_unittests_SOURCES += ../resolverdef.h ../resolverdef.cc
 run_unittests_SOURCES += ../response_scrubber.h ../response_scrubber.cc
 run_unittests_SOURCES += resolver_unittest.cc
 run_unittests_SOURCES += resolver_config_unittest.cc

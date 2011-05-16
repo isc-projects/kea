@@ -52,7 +52,10 @@
 #include <cache/resolver_cache.h>
 #include <nsas/nameserver_address_store.h>
 
-#include <log/dummylog.h>
+#include <log/macros.h>
+#include <log/logger_support.h>
+#include <log/debug_levels.h>
+#include "resolver_log.h"
 
 using namespace std;
 using namespace isc::cc;
@@ -78,7 +81,7 @@ my_command_handler(const string& command, ConstElementPtr args) {
     ConstElementPtr answer = createAnswer();
 
     if (command == "print_message") {
-        cout << args << endl;
+        LOG_INFO(resolver_logger, RESOLVER_PRINTMSG).arg(args);
         /* let's add that message to our answer as well */
         answer = createAnswer(0, args);
     } else if (command == "shutdown") {
@@ -99,7 +102,7 @@ usage() {
 
 int
 main(int argc, char* argv[]) {
-    isc::log::dprefix = "b10-resolver";
+    bool verbose = false;
     int ch;
     const char* uid = NULL;
 
@@ -109,7 +112,7 @@ main(int argc, char* argv[]) {
             uid = optarg;
             break;
         case 'v':
-            isc::log::denabled = true;
+            verbose = true;
             break;
         case '?':
         default:
@@ -121,13 +124,18 @@ main(int argc, char* argv[]) {
         usage();
     }
 
-    if (isc::log::denabled) { // Show the command line
-        string cmdline("Command line:");
-        for (int i = 0; i < argc; ++ i) {
-            cmdline = cmdline + " " + argv[i];
-        }
-        LOG_INFO(resolver_logger, RESOLVER_STARTING).arg(cmdline);
+    // Until proper logging comes along, initialize the logging with the
+    // temporary initLogger() code.  If verbose, we'll use maximum verbosity.
+    isc::log::initLogger("b10-resolver",
+                         (verbose ? isc::log::DEBUG : isc::log::INFO),
+                         MAX_DEBUG_LEVEL, NULL);
+
+    // Print the starting message
+    string cmdline = argv[0];
+    for (int i = 1; i < argc; ++ i) {
+        cmdline = cmdline + " " + argv[i];
     }
+    LOG_INFO(resolver_logger, RESOLVER_STARTING).arg(cmdline);
 
     int ret = 0;
 
