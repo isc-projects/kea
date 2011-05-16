@@ -14,21 +14,47 @@
 
 #include <server_common/keyring.h>
 
+using namespace isc::dns;
+using namespace isc::data;
+
 namespace isc {
 namespace server_common {
 
-boost::shared_ptr<dns::TSIGKeyRing> keyring;
+typedef boost::shared_ptr<TSIGKeyRing> KeyringPtr;
+
+KeyringPtr keyring;
+
+namespace {
+
+void
+updateKeyring(const std::string&, ConstElementPtr data) {
+    ConstElementPtr list(data->get("keys"));
+    KeyringPtr load(new TSIGKeyRing);
+    for (size_t i(0); i < list->size(); ++ i) {
+        load->add(TSIGKey(list->get(i)->stringValue()));
+    }
+    keyring.swap(load);
+}
+
+}
 
 void
 initKeyring(config::ModuleCCSession& session) {
-    // TODO
-    (void) session;
+    if (keyring) {
+        // We are already initialized
+        return;
+    }
+    session.addRemoteConfig("tsig_keys", updateKeyring);
 }
 
 void
 deinitKeyring(config::ModuleCCSession& session) {
-    // TODO
-    (void) session;
+    if (!keyring) {
+        // Not initialized, ignore it
+        return;
+    }
+    keyring.reset();
+    session.removeRemoteConfig("tsig_keys");
 }
 
 }
