@@ -842,6 +842,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
            src/lib/log/tests/run_time_init_test.sh
+           src/lib/util/python/mkpywrapper.py
            tests/system/conf.sh
            tests/system/glue/setup.sh
            tests/system/glue/nsx1/b10-config.db
@@ -867,6 +868,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
            chmod +x src/lib/log/tests/run_time_init_test.sh
+           chmod +x src/lib/util/python/mkpywrapper.py
            chmod +x tests/system/conf.sh
           ])
 AC_OUTPUT
