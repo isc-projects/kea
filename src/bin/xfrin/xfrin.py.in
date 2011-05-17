@@ -77,8 +77,8 @@ class XfrinException(Exception):
 
 class XfrinZoneInfoException(Exception):
     """This exception is raised if there is an error in the given
-       configuration (part), or when a command does not have the
-       required or bad arguments, for instance when the zone's master
+       configuration (part), or when a command does not have a required
+       argument or has bad arguments, for instance when the zone's master
        address is not a valid IP address, when the zone does not
        have a name, or when multiple settings are given for the same
        zone."""
@@ -88,7 +88,12 @@ def _check_zone_name(zone_name_str):
     """Checks if the given zone name is a valid domain name, and returns
     it as a Name object. Raises an XfrinException if it is not."""
     try:
-        return Name(zone_name_str)
+        # In the _zones dict, part of the key is the zone name,
+        # but due to a limitation in the Name class, we
+        # cannot directly use it as a dict key, and we use to_text()
+        #
+        # Downcase the name here for that reason.
+        return Name(zone_name_str, True)
     except (EmptyLabel, TooLongLabel, BadLabelType, BadEscape,
             TooLongName, IncompleteName) as ne:
         raise XfrinZoneInfoException("bad zone name: " + zone_name_str + " (" + str(ne) + ")")
@@ -430,8 +435,6 @@ class ZoneInfo:
         """Set the name for this zone given a name string.
            Raises XfrinZoneInfoException if name_str is None or if it
            cannot be parsed."""
-        #TODO: remove name_str
-        self.name_str = name_str
         if name_str is None:
             raise XfrinZoneInfoException("Configuration zones list "
                                          "element does not contain "
