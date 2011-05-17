@@ -269,6 +269,7 @@ TEST_F(AuthSrvTest, TSIGSigned) {
     // We need to parse the message ourself, or getTSIGRecord won't work
     InputBuffer ib(response_obuffer->getData(), response_obuffer->getLength());
     Message m(Message::PARSE);
+    m.fromWire(ib);
 
     const TSIGRecord* tsig = m.getTSIGRecord();
     ASSERT_TRUE(tsig) << "Missing TSIG signature";
@@ -303,6 +304,7 @@ TEST_F(AuthSrvTest, TSIGSignedNoKey) {
     // We need to parse the message ourself, or getTSIGRecord won't work
     InputBuffer ib(response_obuffer->getData(), response_obuffer->getLength());
     Message m(Message::PARSE);
+    m.fromWire(ib);
 
     const TSIGRecord* tsig = m.getTSIGRecord();
     ASSERT_TRUE(tsig) <<
@@ -334,6 +336,7 @@ TEST_F(AuthSrvTest, TSIGBadSig) {
     // We need to parse the message ourself, or getTSIGRecord won't work
     InputBuffer ib(response_obuffer->getData(), response_obuffer->getLength());
     Message m(Message::PARSE);
+    m.fromWire(ib);
 
     const TSIGRecord* tsig = m.getTSIGRecord();
     ASSERT_TRUE(tsig) <<
