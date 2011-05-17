@@ -309,8 +309,8 @@ TEST_F(AuthSrvTest, TSIGSignedNoKey) {
     const TSIGRecord* tsig = m.getTSIGRecord();
     ASSERT_TRUE(tsig) <<
         "Missing TSIG signature (we should have one even at error)";
-    // TODO It should have been signed by zero-length key. Should we
-    // check that somehow?
+    EXPECT_EQ(0, tsig->getRdata().getMACSize()) <<
+        "It should be unsigned with this error";
 }
 
 // Give the server a signed request, but signed by a different key
@@ -341,8 +341,8 @@ TEST_F(AuthSrvTest, TSIGBadSig) {
     const TSIGRecord* tsig = m.getTSIGRecord();
     ASSERT_TRUE(tsig) <<
         "Missing TSIG signature (we should have one even at error)";
-    // TODO It should have been signed by zero-length key. Should we
-    // check that somehow?
+    EXPECT_EQ(0, tsig->getRdata().getMACSize()) <<
+        "It should be unsigned with this error";
 }
 
 TEST_F(AuthSrvTest, AXFRConnectFail) {
