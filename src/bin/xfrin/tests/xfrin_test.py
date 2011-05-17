@@ -90,8 +90,8 @@ class MockXfrin(Xfrin):
         if MockXfrin.check_command_hook:
             MockXfrin.check_command_hook()
 
-    def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo, tsig_key_str,
-                    check_soa = True):
+    def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo,
+                    tsig_key_str, check_soa=True):
         # store some of the arguments for verification, then call this
         # method in the superclass
         self.xfrin_started_zone_name = zone_name
@@ -101,7 +101,7 @@ class MockXfrin(Xfrin):
         self.xfrin_started_tsig_key_str = tsig_key_str
         return Xfrin.xfrin_start(self, zone_name, rrclass, db_file,
                                  master_addrinfo, tsig_key_str,
-                                 check_soa = True)
+                                 check_soa=True)
 
 class MockXfrinConnection(XfrinConnection):
     def __init__(self, sock_map, zone_name, rrclass, db_file, shutdown_event,
@@ -560,6 +560,7 @@ class TestXfrin(unittest.TestCase):
 
     def test_command_handler_retransfer_short_command1(self):
         # try it when only specifying the zone name (of unknown zone)
+        # this should fail because master address is not specified.
         short_args = {}
         short_args['zone_name'] = TEST_ZONE_NAME_STR
         self.assertEqual(self.xfr.command_handler("retransfer",
@@ -567,6 +568,7 @@ class TestXfrin(unittest.TestCase):
 
     def test_command_handler_retransfer_short_command2(self):
         # try it when only specifying the zone name (of unknown zone)
+        # this should fail because master address is not specified.
         short_args = {}
         short_args['zone_name'] = TEST_ZONE_NAME_STR
         self.assertEqual(self.xfr.command_handler("retransfer",
@@ -773,6 +775,18 @@ class TestXfrin(unittest.TestCase):
                   { 'name': 'test.example',
                     'master_addr': '192.0.2.7',
                     'master_port': 'bad_port'
+                  }
+                ]}
+        self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
+        # since this has failed, we should still have the previous config
+        self._check_zones_config(zones2)
+
+        zones = { 'zones': [
+                  { 'name': 'test.example',
+                    'master_addr': '192.0.2.7',
+                    'master_port': 53,
+                    # using a bad TSIG key spec
+                    'tsig_key': "bad..example.com:SFuWd/q99SzF8Yzd1QbB9g=="
                   }
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
