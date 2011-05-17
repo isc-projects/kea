@@ -561,7 +561,7 @@ class Xfrin:
         # data)
         old_max_transfers_in = self._max_transfers_in
         old_zones = self._zones
-        
+
         self._max_transfers_in = new_config.get("transfers_in") or self._max_transfers_in
 
         if 'zones' in new_config:
@@ -676,7 +676,7 @@ class Xfrin:
             except ValueError as err:
                 raise XfrinException("failed to resolve master address %s: %s" %
                                      (addr_str, str(err)))
-            
+
         port_str = args.get('port')
         if port_str is None:
             if zone_info is not None:
