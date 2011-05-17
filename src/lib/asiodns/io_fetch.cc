@@ -35,11 +35,11 @@
 #include <asiolink/udp_endpoint.h>
 #include <asiolink/udp_socket.h>
 
-#include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/opcode.h>
 #include <dns/rcode.h>
 #include <log/logger.h>
+#include <log/macros.h>
 
 #include <asiodns/asiodef.h>
 #include <asiodns/io_fetch.h>
@@ -61,7 +61,17 @@ namespace asiodns {
 
 /// Use the ASIO logger
 
+namespace {
+
 isc::log::Logger logger("asiolink");
+// Log debug verbosity
+enum {
+    DBG_IMPORTANT = 1,
+    DBG_COMMON = 20,
+    DBG_ALL = 50
+};
+
+}
 
 /// \brief IOFetch Data
 ///
@@ -80,7 +90,6 @@ struct IOFetchData {
                                              ///< Socket to use for I/O
     boost::scoped_ptr<IOEndpoint> remote_snd;///< Where the fetch is sent
     boost::scoped_ptr<IOEndpoint> remote_rcv;///< Where the response came from
-    isc::dns::Question          question;    ///< Question to be asked
     OutputBufferPtr   msgbuf;      ///< Wire buffer for question
     OutputBufferPtr   received;    ///< Received data put here
     IOFetch::Callback*          callback;    ///< Called on I/O Completion
@@ -110,7 +119,6 @@ struct IOFetchData {
     /// \param proto Either IOFetch::TCP or IOFetch::UDP.
     /// \param service I/O Service object to handle the asynchronous
     ///        operations.
-    /// \param query DNS question to send to the upstream server.
     /// \param address IP address of upstream server
     /// \param port Port to use for the query
     /// \param buff Output buffer into which the response (in wire format)
@@ -122,8 +130,8 @@ struct IOFetchData {
     ///
     /// TODO: May need to alter constructor (see comment 4 in Trac ticket #554)
     IOFetchData(IOFetch::Protocol proto, IOService& service,
-        const isc::dns::Question& query, const IOAddress& address,
-        uint16_t port, OutputBufferPtr& buff, IOFetch::Callback* cb, int wait)
+        const IOAddress& address, uint16_t port, OutputBufferPtr& buff,
+        IOFetch::Callback* cb, int wait)
         :
         socket((proto == IOFetch::UDP) ?
             static_cast<IOAsioSocket<IOFetch>*>(
@@ -139,7 +147,6 @@ struct IOFetchData {
             static_cast<IOEndpoint*>(new UDPEndpoint(address, port)) :
             static_cast<IOEndpoint*>(new TCPEndpoint(address, port))
             ),
-        question(query),
         msgbuf(new OutputBuffer(512)),
         received(buff),
         callback(cb),
@@ -174,10 +181,10 @@ struct IOFetchData {
 IOFetch::IOFetch(Protocol protocol, IOService& service,
     const isc::dns::Question& question, const IOAddress& address, uint16_t port,
     OutputBufferPtr& buff, Callback* cb, int wait)
-    :
-    data_(new IOFetchData(protocol, service, question, address,
-        port, buff, cb, wait))
 {
+    MessagePtr query_msg(new Message(Message::RENDER));
+    initIOFetch(query_msg, protocol, service, question, address, port, buff,
+                cb, wait);
 }
 
 IOFetch::IOFetch(Protocol protocol, IOService& service,
@@ -185,12 +192,54 @@ IOFetch::IOFetch(Protocol protocol, IOService& service,
     OutputBufferPtr& buff, Callback* cb, int wait)
     :
     data_(new IOFetchData(protocol, service,
-          isc::dns::Question(isc::dns::Name("dummy.example.org"),
-                             isc::dns::RRClass::IN(), isc::dns::RRType::A()),
           address, port, buff, cb, wait))
 {
     data_->msgbuf = outpkt;
     data_->packet = true;
+}
+
+IOFetch::IOFetch(Protocol protocol, IOService& service,
+    ConstMessagePtr query_message, const IOAddress& address, uint16_t port,
+    OutputBufferPtr& buff, Callback* cb, int wait)
+{
+    MessagePtr msg(new Message(Message::RENDER));
+
+    msg->setHeaderFlag(Message::HEADERFLAG_RD,
+                       query_message->getHeaderFlag(Message::HEADERFLAG_RD));
+    msg->setHeaderFlag(Message::HEADERFLAG_CD,
+                       query_message->getHeaderFlag(Message::HEADERFLAG_CD));
+
+    ConstEDNSPtr edns(query_message->getEDNS());
+    const bool dnssec_ok = edns && edns->getDNSSECAwareness();
+    if (edns) {
+        EDNSPtr edns_response(new EDNS());
+        edns_response->setDNSSECAwareness(dnssec_ok);
+        // TODO: We should make our own edns bufsize length configurable
+        edns_response->setUDPSize(Message::DEFAULT_MAX_EDNS0_UDPSIZE);
+        msg->setEDNS(edns_response);
+    }
+
+    initIOFetch(msg, protocol, service,
+                **(query_message->beginQuestion()),
+                address, port, buff, cb, wait);
+}
+
+void
+IOFetch::initIOFetch(MessagePtr& query_msg, Protocol protocol, IOService& service,
+                     const isc::dns::Question& question,
+                     const IOAddress& address, uint16_t port,
+                     OutputBufferPtr& buff, Callback* cb, int wait)
+{
+    data_ = boost::shared_ptr<IOFetchData>(new IOFetchData(
+        protocol, service, address, port, buff, cb, wait));
+
+    query_msg->setQid(data_->qid);
+    query_msg->setOpcode(Opcode::QUERY());
+    query_msg->setRcode(Rcode::NOERROR());
+    query_msg->setHeaderFlag(Message::HEADERFLAG_RD);
+    query_msg->addQuestion(question);
+    MessageRenderer renderer(*data_->msgbuf);
+    query_msg->toWire(renderer);
 }
 
 // Return protocol in use.
@@ -224,17 +273,7 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
                 // first two bytes of the packet).
                 data_->msgbuf->writeUint16At(data_->qid, 0);
 
-            } else {
-                // A question was given, construct the packet
-                Message msg(Message::RENDER);
-                msg.setQid(data_->qid);
-                msg.setOpcode(Opcode::QUERY());
-                msg.setRcode(Rcode::NOERROR());
-                msg.setHeaderFlag(Message::HEADERFLAG_RD);
-                msg.addQuestion(data_->question);
-                MessageRenderer renderer(*data_->msgbuf);
-                msg.toWire(renderer);
-            }
+            } 
         }
 
         // If we timeout, we stop, which will can cancel outstanding I/Os and
@@ -331,42 +370,34 @@ IOFetch::stop(Result result) {
         // numbers indicating the most important information.  The relative
         // values are somewhat arbitrary.
         //
-        // Although Logger::debug checks the debug flag internally, doing it
-        // below before calling Logger::debug avoids the overhead of a string
-        // conversion in the common case when debug is not enabled.
-        //
         // TODO: Update testing of stopped_ if threads are used.
         data_->stopped = true;
         switch (result) {
             case TIME_OUT:
-                if (logger.isDebugEnabled(1)) {
-                    logger.debug(20, ASIODNS_RECVTMO,
-                                 data_->remote_snd->getAddress().toText().c_str(),
-                                 static_cast<int>(data_->remote_snd->getPort()));
-                }
+                LOG_DEBUG(logger, DBG_COMMON, ASIODNS_RECVTMO).
+                    arg(data_->remote_snd->getAddress().toText()).
+                    arg(data_->remote_snd->getPort());
                 break;
 
             case SUCCESS:
-                if (logger.isDebugEnabled(50)) {
-                    logger.debug(30, ASIODNS_FETCHCOMP,
-                                 data_->remote_rcv->getAddress().toText().c_str(),
-                                 static_cast<int>(data_->remote_rcv->getPort()));
-                }
+                LOG_DEBUG(logger, DBG_ALL, ASIODNS_FETCHCOMP).
+                    arg(data_->remote_rcv->getAddress().toText()).
+                    arg(data_->remote_rcv->getPort());
                 break;
 
             case STOPPED:
                 // Fetch has been stopped for some other reason.  This is
                 // allowed but as it is unusual it is logged, but with a lower
                 // debug level than a timeout (which is totally normal).
-                logger.debug(1, ASIODNS_FETCHSTOP,
-                             data_->remote_snd->getAddress().toText().c_str(),
-                             static_cast<int>(data_->remote_snd->getPort()));
+                LOG_DEBUG(logger, DBG_IMPORTANT, ASIODNS_FETCHSTOP).
+                    arg(data_->remote_snd->getAddress().toText()).
+                    arg(data_->remote_snd->getPort());
                 break;
 
             default:
-                logger.error(ASIODNS_UNKRESULT, static_cast<int>(result),
-                             data_->remote_snd->getAddress().toText().c_str(),
-                             static_cast<int>(data_->remote_snd->getPort()));
+                LOG_ERROR(logger, ASIODNS_UNKRESULT).
+                    arg(data_->remote_snd->getAddress().toText()).
+                    arg(data_->remote_snd->getPort());
         }
 
         // Stop requested, cancel and I/O's on the socket and shut it down,
@@ -394,14 +425,12 @@ void IOFetch::logIOFailure(asio::error_code ec) {
            (data_->origin == ASIODNS_UNKORIGIN));
 
     static const char* PROTOCOL[2] = {"TCP", "UDP"};
-    logger.error(data_->origin,
-                 ec.value(),
-                 ((data_->remote_snd->getProtocol() == IPPROTO_TCP) ?
-                     PROTOCOL[0] : PROTOCOL[1]),
-                 data_->remote_snd->getAddress().toText().c_str(),
-                 static_cast<int>(data_->remote_snd->getPort()));
+    LOG_ERROR(logger, data_->origin).arg(ec.value()).
+        arg((data_->remote_snd->getProtocol() == IPPROTO_TCP) ?
+                     PROTOCOL[0] : PROTOCOL[1]).
+        arg(data_->remote_snd->getAddress().toText()).
+        arg(data_->remote_snd->getPort());
 }
 
 } // namespace asiodns
 } // namespace isc {
-

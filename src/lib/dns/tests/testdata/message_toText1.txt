@@ -1,0 +1,14 @@
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 29174
+;; flags: qr aa; QUERY: 1, ANSWER: 1, AUTHORITY: 1, ADDITIONAL: 1
+
+;; QUESTION SECTION:
+;www.example.com. IN A
+
+;; ANSWER SECTION:
+www.example.com. 86400 IN A 192.0.2.80
+
+;; AUTHORITY SECTION:
+example.com. 86400 IN NS ns.example.com.
+
+;; ADDITIONAL SECTION:
+ns.example.com. 86400 IN A 192.0.2.1

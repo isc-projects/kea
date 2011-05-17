@@ -1,5 +1,10 @@
 ASIO library header files
-Version 1.4.5 (2010-05-12)
+Version 1.4.8 (2011-04-19)
 Downloaded from http://sourceforge.net/projects/asio/files
 Project page: http://think-async.com/Asio
-No local modifications.
+
+Local modifications:
+Added ASIO_DECL to a number of function definitions
+git commit c32718be9f5409b6f72d98ddcd0b1ccd4c5c2293
+See also the bug report at:
+http://sourceforge.net/tracker/?func=detail&aid=3291113&group_id=122478&atid=694037

@@ -144,7 +144,7 @@ public:
     void resolve(const isc::dns::QuestionPtr& question,
         const isc::resolve::ResolverInterface::CallbackPtr& callback);
 
-    void processNormalQuery(const Question& question,
+    void processNormalQuery(ConstMessagePtr query_message,
                             MessagePtr answer_message,
                             OutputBufferPtr buffer,
                             DNSServer* server);
@@ -468,7 +468,7 @@ Resolver::processMessage(const IOMessage& io_message,
             // The RecursiveQuery object will post the "resume" event to the
             // DNSServer when an answer arrives, so we don't have to do it now.
             sendAnswer = false;
-            impl_->processNormalQuery(*question, answer_message,
+            impl_->processNormalQuery(query_message, answer_message,
                                       buffer, server);
         }
     }
@@ -486,13 +486,19 @@ ResolverImpl::resolve(const QuestionPtr& question,
 }
 
 void
-ResolverImpl::processNormalQuery(const Question& question,
+ResolverImpl::processNormalQuery(ConstMessagePtr query_message,
                                  MessagePtr answer_message,
                                  OutputBufferPtr buffer,
                                  DNSServer* server)
 {
-    dlog("Processing normal query");
-    rec_query_->resolve(question, answer_message, buffer, server);
+    if (upstream_.empty()) {
+        dlog("Processing normal query");
+        ConstQuestionPtr question = *query_message->beginQuestion();
+        rec_query_->resolve(*question, answer_message, buffer, server);
+    } else {
+        dlog("Processing forward query");
+        rec_query_->forward(query_message, answer_message, buffer, server);
+    }
 }
 
 ConstElementPtr

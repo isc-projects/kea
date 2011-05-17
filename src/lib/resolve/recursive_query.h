@@ -141,6 +141,20 @@ public:
                  isc::util::OutputBufferPtr buffer,
                  DNSServer* server);
 
+    /// \brief Initiates forwarding for the given query.
+    ///
+    ///  Others parameters are same with the parameters of
+    ///  function resolve().
+    ///
+    /// \param query_message the full query got from client.
+    /// \param callback callback object
+    void forward(isc::dns::ConstMessagePtr query_message,
+                 isc::dns::MessagePtr answer_message,
+                 isc::util::OutputBufferPtr buffer,
+                 DNSServer* server,
+                 isc::resolve::ResolverInterface::CallbackPtr callback =
+                     isc::resolve::ResolverInterface::CallbackPtr());
+
     /// \brief Set Test Server
     ///
     /// This method is *only* for unit testing the class.  If set, it enables

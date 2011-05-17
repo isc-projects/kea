@@ -15,7 +15,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-import configparser, re, time, sys
+import configparser, re, time, socket, sys
 from datetime import datetime
 from optparse import OptionParser
 
@@ -215,9 +215,76 @@ class EDNS:
         f.write('# RDLEN=%d\n' % self.rdlen)
         f.write('%04x\n' % self.rdlen)
 
-class SOA:
-    # this currently doesn't support name compression within the RDATA.
-    rdlen = -1                  # auto-calculate
+class RR:
+    '''This is a base class for various types of RR test data.
+    For each RR type (A, AAAA, NS, etc), we define a derived class of RR
+    to dump type specific RDATA parameters.  This class defines parameters
+    common to all types of RDATA, namely the owner name, RR class and TTL.
+    The dump() method of derived classes are expected to call dump_header(),
+    whose default implementation is provided in this class.  This method
+    decides whether to dump the test data as an RR (with name, type, class)
+    or only as RDATA (with its length), and dumps the corresponding data
+    via the specified file object.
+
+    By convention we assume derived classes are named after the common
+    standard mnemonic of the corresponding RR types.  For example, the
+    derived class for the RR type SOA should be named "SOA".
+
+    Configurable parameters are as follows:
+    - as_rr (bool): Whether or not the data is to be dumped as an RR.  False
+      by default.
+    - rr_class (string): The RR class of the data.  Only meaningful when the
+      data is dumped as an RR.  Default is 'IN'.
+    - rr_ttl (integer): The TTL value of the RR.  Only meaningful when the
+      data is dumped as an RR.  Default is 86400 (1 day).
+    '''
+
+    def __init__(self):
+        self.as_rr = False
+        # only when as_rr is True, same for class/TTL:
+        self.rr_name = 'example.com'
+        self.rr_class = 'IN'
+        self.rr_ttl = 86400
+    def dump_header(self, f, rdlen):
+        type_txt = self.__class__.__name__
+        type_code = parse_value(type_txt, dict_rrtype)
+        if self.as_rr:
+            rrclass = parse_value(self.rr_class, dict_rrclass)
+            f.write('\n# %s RR (QNAME=%s Class=%s TTL=%d RDLEN=%d)\n' %
+                    (type_txt, self.rr_name,
+                     code_totext(rrclass, rdict_rrclass), self.rr_ttl, rdlen))
+            f.write('%s %04x %04x %08x %04x\n' %
+                    (encode_name(self.rr_name), type_code, rrclass,
+                     self.rr_ttl, rdlen))
+        else:
+            f.write('\n# %s RDATA (RDLEN=%d)\n' % (type_txt, rdlen))
+            f.write('%04x\n' % rdlen)
+
+class A(RR):
+    rdlen = 4                   # fixed by default
+    address = '192.0.2.1'
+
+    def dump(self, f):
+        self.dump_header(f, self.rdlen)
+        f.write('# Address=%s\n' % (self.address))
+        bin_address = socket.inet_aton(self.address)
+        f.write('%02x%02x%02x%02x\n' % (bin_address[0], bin_address[1],
+                                        bin_address[2], bin_address[3]))
+
+class NS(RR):
+    rdlen = None                   # auto calculate
+    nsname = 'ns.example.com'
+
+    def dump(self, f):
+        nsname_wire = encode_name(self.nsname)
+        if self.rdlen is None:
+            self.rdlen = len(nsname_wire) / 2
+        self.dump_header(f, self.rdlen)
+        f.write('# NS name=%s\n' % (self.nsname))
+        f.write('%s\n' % nsname_wire)
+
+class SOA(RR):
+    rdlen = None                  # auto-calculate
     mname = 'ns.example.com'
     rname = 'root.example.com'
     serial = 2010012601
@@ -228,11 +295,9 @@ class SOA:
     def dump(self, f):
         mname_wire = encode_name(self.mname)
         rname_wire = encode_name(self.rname)
-        rdlen = self.rdlen
-        if rdlen < 0:
-            rdlen = int(20 + len(mname_wire) / 2 + len(str(rname_wire)) / 2)
-        f.write('\n# SOA RDATA (RDLEN=%d)\n' % rdlen)
-        f.write('%04x\n' % rdlen);
+        if self.rdlen is None:
+            self.rdlen = int(20 + len(mname_wire) / 2 + len(str(rname_wire)) / 2)
+        self.dump_header(f, self.rdlen)
         f.write('# NNAME=%s RNAME=%s\n' % (self.mname, self.rname))
         f.write('%s %s\n' % (mname_wire, rname_wire))
         f.write('# SERIAL(%d) REFRESH(%d) RETRY(%d) EXPIRE(%d) MINIMUM(%d)\n' %
@@ -432,7 +497,7 @@ class RRSIG:
         f.write('# Tag=%d Signer=%s and Signature\n' % (self.tag, self.signer))
         f.write('%04x %s %s\n' % (self.tag, name_wire, sig_wire))
 
-class TSIG:
+class TSIG(RR):
     rdlen = None                # auto-calculate
     algorithm = 'hmac-sha256'
     time_signed = 1286978795    # arbitrarily chosen default
@@ -444,12 +509,18 @@ class TSIG:
     other_len = None         # 6 if error is BADTIME; otherwise 0
     other_data = None        # use time_signed + fudge + 1 for BADTIME
     dict_macsize = { 'hmac-md5' : 16, 'hmac-sha1' : 20, 'hmac-sha256' : 32 }
+
+    # TSIG has some special defaults
+    def __init__(self):
+        super().__init__()
+        self.rr_class = 'ANY'
+        self.rr_ttl = 0
+
     def dump(self, f):
         if str(self.algorithm) == 'hmac-md5':
             name_wire = encode_name('hmac-md5.sig-alg.reg.int')
         else:
             name_wire = encode_name(self.algorithm)
-        rdlen = self.rdlen
         mac_size = self.mac_size
         if mac_size is None:
             if self.algorithm in self.dict_macsize.keys():
@@ -468,11 +539,10 @@ class TSIG:
                 if self.error == 18 else ''
         else:
             other_data = encode_string(self.other_data, other_len)
-        if rdlen is None:
-            rdlen = int(len(name_wire) / 2 + 16 + len(mac) / 2 + \
-                            len(other_data) / 2)
-        f.write('\n# TSIG RDATA (RDLEN=%d)\n' % rdlen)
-        f.write('%04x\n' % rdlen);
+        if self.rdlen is None:
+            self.rdlen = int(len(name_wire) / 2 + 16 + len(mac) / 2 + \
+                                 len(other_data) / 2)
+        self.dump_header(f, self.rdlen)
         f.write('# Algorithm=%s Time-Signed=%d Fudge=%d\n' %
                 (self.algorithm, self.time_signed, self.fudge))
         f.write('%s %012x %04x\n' % (name_wire, self.time_signed, self.fudge))
@@ -488,7 +558,8 @@ def get_config_param(section):
     config_param = {'name' : (Name, {}),
                     'header' : (DNSHeader, header_xtables),
                     'question' : (DNSQuestion, question_xtables),
-                    'edns' : (EDNS, {}), 'soa' : (SOA, {}), 'txt' : (TXT, {}),
+                    'edns' : (EDNS, {}), 'a' : (A, {}), 'ns' : (NS, {}),
+                    'soa' : (SOA, {}), 'txt' : (TXT, {}),
                     'rp' : (RP, {}), 'rrsig' : (RRSIG, {}),
                     'nsec' : (NSEC, {}), 'nsec3' : (NSEC3, {}),
                     'tsig' : (TSIG, {}) }

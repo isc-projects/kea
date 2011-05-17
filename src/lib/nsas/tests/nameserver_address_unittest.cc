@@ -51,7 +51,8 @@ public:
         ns_.reset(new NameserverEntry(name_.toText(), RRClass::IN()));
         ns_->askIP(resolver_.get(), boost::shared_ptr<Callback>(new Callback), ANY_OK);
         resolver_->asksIPs(name_, 0, 1);
-        resolver_->requests[0].second->success(createResponseMessage(rrv4_));
+        resolver_->requests[0].second->success(
+            isc::util::unittests::createResponseMessage(rrv4_));
     }
 
     // Return the sample NameserverEntry

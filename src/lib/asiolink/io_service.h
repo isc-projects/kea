@@ -22,7 +22,7 @@ namespace asio {
 namespace isc {
 namespace asiolink {
 
-struct IOServiceImpl;
+class IOServiceImpl;
 
 /// \brief The \c IOService class is a wrapper for the ASIO \c io_service
 /// class.

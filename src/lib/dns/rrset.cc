@@ -104,8 +104,8 @@ AbstractRRset::toWire(OutputBuffer& buffer) const {
 }
 
 unsigned int
-AbstractRRset::toWire(MessageRenderer& renderer) const {
-    const unsigned int rrs_written = rrsetToWire<MessageRenderer>(
+AbstractRRset::toWire(AbstractMessageRenderer& renderer) const {
+    const unsigned int rrs_written = rrsetToWire<AbstractMessageRenderer>(
         *this, renderer, renderer.getLengthLimit());
     if (getRdataCount() > rrs_written) {
         renderer.setTruncated();
@@ -202,7 +202,7 @@ BasicRRset::toWire(OutputBuffer& buffer) const {
 }
 
 unsigned int
-BasicRRset::toWire(MessageRenderer& renderer) const {
+BasicRRset::toWire(AbstractMessageRenderer& renderer) const {
     return (AbstractRRset::toWire(renderer));
 }
 

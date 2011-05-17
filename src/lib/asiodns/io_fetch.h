@@ -29,6 +29,7 @@
 
 #include <util/buffer.h>
 #include <dns/question.h>
+#include <dns/message.h>
 
 namespace isc {
 namespace asiodns {
@@ -136,6 +137,20 @@ public:
         uint16_t port, isc::util::OutputBufferPtr& buff, Callback* cb,
         int wait = -1);
 
+    /// \brief Constructor
+    ///  This constructor has one parameter "query_message", which
+    ///  is the shared_ptr to a full query message. It's different
+    ///  with above contructor which has only question section. All
+    ///  other parameters are same.
+    ///
+    /// \param query_message the shared_ptr to a full query message
+    ///        got from a query client.
+    IOFetch(Protocol protocol, isc::asiolink::IOService& service,
+        isc::dns::ConstMessagePtr query_message,
+        const isc::asiolink::IOAddress& address,
+        uint16_t port, isc::util::OutputBufferPtr& buff, Callback* cb,
+        int wait = -1);
+
     /// \brief Constructor.
     ///
     /// Creates the object that will handle the upstream fetch.
@@ -184,6 +199,15 @@ public:
     void stop(Result reason = STOPPED);
 
 private:
+    /// \brief IOFetch Initialization Function.
+    /// All the parameters are same with the constructor, except
+    /// parameter "query_message"
+    /// \param query_message the message to be sent out.
+    void initIOFetch(isc::dns::MessagePtr& query_message, Protocol protocol,
+            isc::asiolink::IOService& service, const isc::dns::Question& question,
+            const isc::asiolink::IOAddress& address, uint16_t port,
+            isc::util::OutputBufferPtr& buff, Callback* cb, int wait);
+
     /// \brief Log I/O Failure
     ///
     /// Records an I/O failure to the log file
