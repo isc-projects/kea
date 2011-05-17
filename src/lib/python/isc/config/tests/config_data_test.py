@@ -240,6 +240,7 @@ class TestConfigData(unittest.TestCase):
     def test_get_default_value(self):
         self.assertEqual(1, self.cd.get_default_value("item1"))
         self.assertEqual('default', self.cd.get_default_value("item6/value1"))
+        self.assertEqual(None, self.cd.get_default_value("item6/value2"))
 
         # set some local values to something else, and see if we
         # still get the default
