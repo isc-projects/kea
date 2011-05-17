@@ -12,12 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// 
-// todo: generalize this and make it into a specific API for all modules
-//       to use (i.e. connect to cc, send config and commands, get config,
-//               react on config change announcements)
-//
-
 #include <config.h>
 
 #include <stdexcept>
@@ -38,6 +32,7 @@
 #include <cc/session.h>
 #include <exceptions/exceptions.h>
 
+#include <config/config_log.h>
 #include <config/ccsession.h>
 
 using namespace std;
@@ -164,18 +159,18 @@ ModuleCCSession::readModuleSpecification(const std::string& filename) {
     // this file should be declared in a @something@ directive
     file.open(filename.c_str());
     if (!file) {
-        cout << "error opening " << filename << ": " << strerror(errno) << endl;
-        exit(1);
+        LOG_ERROR(config_logger, CONFIG_FOPEN_ERR).arg(filename).arg(strerror(errno));
+        isc_throw(CCSessionInitError, strerror(errno));
     }
 
     try {
         module_spec = moduleSpecFromFile(file, true);
     } catch (const JSONError& pe) {
-        cout << "Error parsing module specification file: " << pe.what() << endl;
-        exit(1);
+        LOG_ERROR(config_logger, CONFIG_JSON_PARSE).arg(filename).arg(pe.what());
+        isc_throw(CCSessionInitError, pe.what());
     } catch (const ModuleSpecError& dde) {
-        cout << "Error reading module specification file: " << dde.what() << endl;
-        exit(1);
+        LOG_ERROR(config_logger, CONFIG_MODULE_SPEC).arg(filename).arg(dde.what());
+        isc_throw(CCSessionInitError, dde.what());
     }
     file.close();
     return (module_spec);
@@ -223,7 +218,8 @@ ModuleCCSession::ModuleCCSession(
     int rcode;
     ConstElementPtr err = parseAnswer(rcode, answer);
     if (rcode != 0) {
-        std::cerr << "[" << module_name_ << "] Error in specification: " << answer << std::endl;
+        LOG_ERROR(config_logger, CONFIG_MANAGER_MOD_SPEC).arg(answer->str());
+        isc_throw(CCSessionInitError, answer->str());
     }
     
     setLocalConfig(Element::fromJSON("{}"));
@@ -236,7 +232,8 @@ ModuleCCSession::ModuleCCSession(
         if (rcode == 0) {
             handleConfigUpdate(new_config);
         } else {
-            std::cerr << "[" << module_name_ << "] Error getting config: " << new_config << std::endl;
+            LOG_ERROR(config_logger, CONFIG_MANAGER_CONFIG).arg(new_config->str());
+            isc_throw(CCSessionInitError, answer->str());
         }
     }
 
@@ -348,15 +345,13 @@ ModuleCCSession::checkCommand() {
                 answer = checkModuleCommand(cmd_str, target_module, arg);
             }
         } catch (const CCSessionError& re) {
-            // TODO: Once we have logging and timeouts, we should not
-            // answer here (potential interference)
-            answer = createAnswer(1, re.what());
+            LOG_ERROR(config_logger, CONFIG_CCSESSION_MSG).arg(re.what());
         }
         if (!isNull(answer)) {
             session_.reply(routing, answer);
         }
     }
-    
+
     return (0);
 }
 

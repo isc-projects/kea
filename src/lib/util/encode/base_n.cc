@@ -138,7 +138,7 @@ private:
 // DecodeNormalizer is an input iterator intended to be used as a filter
 // between the encoded baseX stream and binary_from_baseXX.
 // A DecodeNormalizer object is configured with three string iterators
-// (base, base_beinpad, and base_beginpad), specifying the head of the string,
+// (base, base_beginpad, and base_end), specifying the head of the string,
 // the beginning position of baseX padding (when there's padding), and
 // end of the string, respectively.  It internally iterators over the original
 // stream, and return each character of the encoded string via its dereference

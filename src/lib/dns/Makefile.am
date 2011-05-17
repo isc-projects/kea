@@ -17,48 +17,52 @@ EXTRA_DIST += rrtype-placeholder.h
 # NOTE: when an rdata file is added, please also add to this list:
 EXTRA_DIST += rdata/any_255/tsig_250.cc
 EXTRA_DIST += rdata/any_255/tsig_250.h
-EXTRA_DIST += rdata/in_1/aaaa_28.cc
-EXTRA_DIST += rdata/in_1/aaaa_28.h
-EXTRA_DIST += rdata/in_1/a_1.cc
-EXTRA_DIST += rdata/in_1/a_1.h
 EXTRA_DIST += rdata/ch_3/a_1.cc
 EXTRA_DIST += rdata/ch_3/a_1.h
-EXTRA_DIST += rdata/generic/mx_15.h
-EXTRA_DIST += rdata/generic/rrsig_46.cc
-EXTRA_DIST += rdata/generic/dname_39.cc
-EXTRA_DIST += rdata/generic/rrsig_46.h
-EXTRA_DIST += rdata/generic/dname_39.h
-EXTRA_DIST += rdata/generic/ns_2.cc
-EXTRA_DIST += rdata/generic/nsec_47.cc
-EXTRA_DIST += rdata/generic/ns_2.h
-EXTRA_DIST += rdata/generic/nsec_47.h
-EXTRA_DIST += rdata/generic/opt_41.cc
-EXTRA_DIST += rdata/generic/soa_6.cc
 EXTRA_DIST += rdata/generic/cname_5.cc
-EXTRA_DIST += rdata/generic/dnskey_48.cc
-EXTRA_DIST += rdata/generic/opt_41.h
-EXTRA_DIST += rdata/generic/soa_6.h
 EXTRA_DIST += rdata/generic/cname_5.h
+EXTRA_DIST += rdata/generic/detail/nsec_bitmap.cc
+EXTRA_DIST += rdata/generic/detail/nsec_bitmap.h
+EXTRA_DIST += rdata/generic/dname_39.cc
+EXTRA_DIST += rdata/generic/dname_39.h
+EXTRA_DIST += rdata/generic/dnskey_48.cc
 EXTRA_DIST += rdata/generic/dnskey_48.h
 EXTRA_DIST += rdata/generic/ds_43.cc
 EXTRA_DIST += rdata/generic/ds_43.h
-EXTRA_DIST += rdata/generic/txt_16.cc
-EXTRA_DIST += rdata/generic/txt_16.h
 EXTRA_DIST += rdata/generic/mx_15.cc
-EXTRA_DIST += rdata/generic/nsec3param_51.h
-EXTRA_DIST += rdata/generic/nsec3param_51.cc
+EXTRA_DIST += rdata/generic/mx_15.h
+EXTRA_DIST += rdata/generic/ns_2.cc
+EXTRA_DIST += rdata/generic/ns_2.h
 EXTRA_DIST += rdata/generic/nsec3_50.cc
 EXTRA_DIST += rdata/generic/nsec3_50.h
+EXTRA_DIST += rdata/generic/nsec3param_51.cc
+EXTRA_DIST += rdata/generic/nsec3param_51.h
+EXTRA_DIST += rdata/generic/nsec_47.cc
+EXTRA_DIST += rdata/generic/nsec_47.h
+EXTRA_DIST += rdata/generic/opt_41.cc
+EXTRA_DIST += rdata/generic/opt_41.h
 EXTRA_DIST += rdata/generic/ptr_12.cc
 EXTRA_DIST += rdata/generic/ptr_12.h
+EXTRA_DIST += rdata/generic/rp_17.cc
+EXTRA_DIST += rdata/generic/rp_17.h
+EXTRA_DIST += rdata/generic/rrsig_46.cc
+EXTRA_DIST += rdata/generic/rrsig_46.h
+EXTRA_DIST += rdata/generic/soa_6.cc
+EXTRA_DIST += rdata/generic/soa_6.h
+EXTRA_DIST += rdata/generic/txt_16.cc
+EXTRA_DIST += rdata/generic/txt_16.h
 EXTRA_DIST += rdata/hs_4/a_1.cc
 EXTRA_DIST += rdata/hs_4/a_1.h
+EXTRA_DIST += rdata/in_1/a_1.cc
+EXTRA_DIST += rdata/in_1/a_1.h
+EXTRA_DIST += rdata/in_1/aaaa_28.cc
+EXTRA_DIST += rdata/in_1/aaaa_28.h
 #EXTRA_DIST += rdata/template.cc
 #EXTRA_DIST += rdata/template.h
 
 # auto-generate by gen-rdatacode.py:
 BUILT_SOURCES = rrclass.h rrtype.h rrparamregistry.cc
-#TODO: check this###BUILT_SOURCES = rdataclass.h rdataclass.cc
+BUILT_SOURCES += rdataclass.h rdataclass.cc
 
 lib_LTLIBRARIES = libdns++.la
 
@@ -80,15 +84,22 @@ libdns___la_SOURCES += rrsetlist.h rrsetlist.cc
 libdns___la_SOURCES += rrttl.h rrttl.cc
 libdns___la_SOURCES += rrtype.cc
 libdns___la_SOURCES += question.h question.cc
+libdns___la_SOURCES += tsig.h tsig.cc
+libdns___la_SOURCES += tsigerror.h tsigerror.cc
 libdns___la_SOURCES += tsigkey.h tsigkey.cc
+libdns___la_SOURCES += tsigrecord.h tsigrecord.cc
 libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.h
 libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.cc
 
 libdns___la_CPPFLAGS = $(AM_CPPFLAGS)
-libdns___la_LIBADD = $(top_builddir)/src/lib/util/libutil.la
+# Most applications of libdns++ will only implicitly rely on libcryptolink,
+# so we add the dependency here so that the applications don't have to link
+# libcryptolink explicitly.
+libdns___la_LIBADD = $(top_builddir)/src/lib/cryptolink/libcryptolink.la
+libdns___la_LIBADD += $(top_builddir)/src/lib/util/libutil.la
 
-nodist_libdns___la_SOURCES = rdataclass.cc rrclass.h rrtype.h
-nodist_libdns___la_SOURCES += rrparamregistry.cc
+nodist_libdns___include_HEADERS = rdataclass.h rrclass.h rrtype.h
+nodist_libdns___la_SOURCES = rdataclass.cc rrparamregistry.cc
 
 rrclass.h: rrclass-placeholder.h
 rrtype.h: rrtype-placeholder.h
@@ -106,13 +117,10 @@ libdns___include_HEADERS = \
 	question.h \
 	rcode.h \
 	rdata.h \
-	rdataclass.h \
-	rrclass.h \
 	rrparamregistry.h \
 	rrset.h \
 	rrsetlist.h \
 	rrttl.h \
-	rrtype.h \
 	tsigkey.h
 # Purposely not installing these headers:
 # util/*.h: used only internally, and not actually DNS specific
