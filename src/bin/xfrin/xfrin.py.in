@@ -620,7 +620,8 @@ class Xfrin:
                 # If the command has specified master address, do transfer from the
                 # master address, or else do transfer from the configured masters.
                 (zone_name, rrclass) = self._parse_zone_name_and_class(args)
-                master_addr = self._parse_master_and_port(args)
+                master_addr = self._parse_master_and_port(args, zone_name,
+                                                          rrclass)
                 zone_info = self._get_zone_info(zone_name, rrclass)
                 tsig_key = None
                 if zone_info:
@@ -648,7 +649,7 @@ class Xfrin:
 
         return (_check_zone_name(zone_name_str), _check_zone_class(args.get('zone_class')))
 
-    def _parse_master_and_port(self, args):
+    def _parse_master_and_port(self, args, zone_name, zone_class):
         """
         Return tuple (family, socktype, sockaddr) for address and port in given
         args dict.
@@ -657,8 +658,6 @@ class Xfrin:
         """
         # check if we have configured info about this zone, in case
         # port or master are not specified
-        zone_name = _check_zone_name(args.get('zone_name'))
-        zone_class = _check_zone_class(args.get('zone_class'))
         zone_info = self._get_zone_info(zone_name, zone_class)
 
         addr_str = args.get('master')

@@ -485,7 +485,8 @@ class TestXfrin(unittest.TestCase):
         return self.xfr._parse_zone_name_and_class(self.args)
 
     def _do_parse_master_port(self):
-        return self.xfr._parse_master_and_port(self.args)
+        name, rrclass = self._do_parse_zone_name_class()
+        return self.xfr._parse_master_and_port(self.args, name, rrclass)
 
     def test_parse_cmd_params(self):
         name, rrclass = self._do_parse_zone_name_class()
