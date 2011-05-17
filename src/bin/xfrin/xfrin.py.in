@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2011  Internet Systems Consortium.
+# Copyright (C) 2009-2011  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -56,7 +56,14 @@ XFROUT_MODULE_NAME = 'Xfrout'
 ZONE_MANAGER_MODULE_NAME = 'Zonemgr'
 REFRESH_FROM_ZONEMGR = 'refresh_from_zonemgr'
 ZONE_XFRIN_FAILED = 'zone_xfrin_failed'
+
+# These two default are currently hard-coded. For config this isn't
+# necessary, but we need these defaults for optional command arguments
+# (TODO: have similar support to get default values for command
+# arguments as we do for config options)
 DEFAULT_MASTER_PORT = 53
+DEFAULT_ZONE_CLASS = RRClass.IN()
+
 __version__ = 'BIND10'
 # define xfrin rcode
 XFRIN_OK = 0
@@ -68,9 +75,10 @@ def log_error(msg):
 class XfrinException(Exception):
     pass
 
-class XfrinConfigException(Exception):
+class XfrinZoneInfoException(Exception):
     """This exception is raised if there is an error in the given
-       configuration (part), for instance when the zone's master
+       configuration (part), or when a command does not have the
+       required or bad arguments, for instance when the zone's master
        address is not a valid IP address, when the zone does not
        have a name, or when multiple settings are given for the same
        zone."""
@@ -83,26 +91,26 @@ def _check_zone_name(zone_name_str):
         return Name(zone_name_str)
     except (EmptyLabel, TooLongLabel, BadLabelType, BadEscape,
             TooLongName, IncompleteName) as ne:
-        raise XfrinConfigException("bad zone name: " + zone_name_str + " (" + str(ne) + ")")
+        raise XfrinZoneInfoException("bad zone name: " + zone_name_str + " (" + str(ne) + ")")
 
 def _check_zone_class(zone_class_str):
     """If the given argument is a string: checks if the given class is
        a valid one, and returns an RRClass object if so.
-       Raises XfrinConfigException if not.
+       Raises XfrinZoneInfoException if not.
        If it is None, this function returns the default RRClass.IN()"""
     if zone_class_str is None:
-        return RRClass.IN()
+        return DEFAULT_ZONE_CLASS
     try:
         return RRClass(zone_class_str)
     except InvalidRRClass as irce:
-        raise XfrinConfigException("bad zone class: " + zone_class_str + " (" + str(irce) + ")")
+        raise XfrinZoneInfoException("bad zone class: " + zone_class_str + " (" + str(irce) + ")")
 
 class XfrinConnection(asyncore.dispatcher):
     '''Do xfrin in this class. '''
 
     def __init__(self,
                  sock_map, zone_name, rrclass, db_file, shutdown_event,
-                 master_addrinfo, tsig_key_str = None, verbose = False,
+                 master_addrinfo, tsig_key = None, verbose = False,
                  idle_timeout = 60):
         ''' idle_timeout: max idle time for read data from socket.
             db_file: specify the data source file.
@@ -122,8 +130,8 @@ class XfrinConnection(asyncore.dispatcher):
         self._verbose = verbose
         self._master_address = master_addrinfo[2]
         self._tsig_ctx = None
-        if tsig_key_str is not None:
-            self._tsig_ctx = TSIGContext(TSIGKey(tsig_key_str))
+        if tsig_key is not None:
+            self._tsig_ctx = TSIGContext(tsig_key)
 
     def connect_to_master(self):
         '''Connect to master in TCP.'''
@@ -360,12 +368,12 @@ class XfrinConnection(asyncore.dispatcher):
 
 def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
                   shutdown_event, master_addrinfo, check_soa, verbose,
-                  tsig_key_str):
+                  tsig_key):
     xfrin_recorder.increment(zone_name)
     sock_map = {}
     conn = XfrinConnection(sock_map, zone_name, rrclass, db_file,
                            shutdown_event, master_addrinfo,
-                           tsig_key_str, verbose)
+                           tsig_key, verbose)
     ret = XFRIN_FAIL
     if conn.connect_to_master():
         ret = conn.do_xfrin(check_soa)
@@ -406,58 +414,96 @@ class XfrinRecorder:
         return ret
 
 class ZoneInfo:
-    def __init__(self, config_data, module_cc=None):
+    def __init__(self, config_data, module_cc):
         """Creates a zone_info with the config data element as
            specified by the 'zones' list in xfrin.spec. Module_cc is
            needed to get the defaults from the specification"""
-        self.name_str = config_data.get('name')
-        self.class_str = config_data.get('class') or \
-            module_cc.get_default_value("zones/class")
+        self._module_cc = module_cc
+        self.set_name(config_data.get('name'))
+        self.set_master_addr(config_data.get('master_addr'))
 
-        if self.name_str is None:
-            raise XfrinConfigException("Configuration zones list "
-                                       "element does not contain "
-                                       "'name' attribute")
+        self.set_master_port(config_data.get('master_port'))
+        self.set_zone_class(config_data.get('class'))
+        self.set_tsig_key(config_data.get('tsig_key'))
 
-        self.master_addr_str = config_data.get('master_addr')
-        self.master_port_str = config_data.get('master_port') or \
-            str(module_cc.get_default_value("zones/master_port"))
+    def set_name(self, name_str):
+        """Set the name for this zone given a name string.
+           Raises XfrinZoneInfoException if name_str is None or if it
+           cannot be parsed."""
+        #TODO: remove name_str
+        self.name_str = name_str
+        if name_str is None:
+            raise XfrinZoneInfoException("Configuration zones list "
+                                         "element does not contain "
+                                         "'name' attribute")
+        else:
+            self.name = _check_zone_name(name_str)
 
-        try:
-            self.name = Name(self.name_str)
-        except (EmptyLabel, TooLongLabel, BadLabelType, BadEscape,
-                TooLongName, IncompleteName) as ne:
-            errmsg = "bad zone name: " + self.name_str + " (" + str(ne) + ")"
-            log_error(errmsg)
-            raise XfrinConfigException(errmsg)
-
-        try:
-            self.master_addr = isc.net.parse.addr_parse(self.master_addr_str)
-            self.master_port = isc.net.parse.port_parse(self.master_port_str)
-        except ValueError:
-            errmsg = "bad format for zone's master: " + str(config_data)
-            log_error(errmsg)
-            raise XfrinConfigException(errmsg)
-
-        try:
-            self.rrclass = RRClass(self.class_str)
-        except InvalidRRClass:
-            errmsg = "invalid class: " + self.class_str
-            log_error(errmsg)
-            raise XfrinConfigException(errmsg)
-
-        self.tsig_key_str = config_data.get('tsig_key') or None
-        if self.tsig_key_str is not None:
+    def set_master_addr(self, master_addr_str):
+        """Set the master address for this zone given an IP address
+           string. Raises XfrinZoneInfoException if master_addr_str is
+           None or if it cannot be parsed."""
+        if master_addr_str is None:
+            raise XfrinZoneInfoException("master address missing from config data")
+        else:
             try:
-                tsig_key = TSIGKey(self.tsig_key_str)
-            except InvalidParameter as ipe:
-                errmsg = "bad TSIG key string: " + self.tsig_key_str
+                self.master_addr = isc.net.parse.addr_parse(master_addr_str)
+            except ValueError:
+                errmsg = "bad format for zone's master: " + master_addr_str
                 log_error(errmsg)
-                raise XfrinConfigException(errmsg)
+                raise XfrinZoneInfoException(errmsg)
+
+    def set_master_port(self, master_port_str):
+        """Set the master port given a port number string. If
+           master_port_str is None, the default from the specification
+           for this module will be used. Raises XfrinZoneInfoException if
+           the string contains an invalid port number"""
+        if master_port_str is None:
+            self.master_port = self._module_cc.get_default_value("zones/master_port")
+        else:
+            try:
+                self.master_port = isc.net.parse.port_parse(master_port_str)
+            except ValueError:
+                errmsg = "bad format for zone's master port: " + master_port_str
+                log_error(errmsg)
+                raise XfrinZoneInfoException(errmsg)
+
+    def set_zone_class(self, zone_class_str):
+        """Set the zone class given an RR class str (e.g. "IN"). If
+           zone_class_str is None, it will default to what is specified
+           in the specification file for this module. Raises
+           XfrinZoneInfoException if the string cannot be parsed."""
+        # TODO: remove _str
+        self.class_str = zone_class_str or self._module_cc.get_default_value("zones/class")
+        if zone_class_str == None:
+            #TODO rrclass->zone_class
+            self.rrclass = RRClass(self._module_cc.get_default_value("zones/class"))
+        else:
+            try:
+                self.rrclass = RRClass(zone_class_str)
+            except InvalidRRClass:
+                errmsg = "invalid zone class: " + zone_class_str
+                log_error(errmsg)
+                raise XfrinZoneInfoException(errmsg)
+
+    def set_tsig_key(self, tsig_key_str):
+        """Set the tsig_key for this zone, given a TSIG key string
+           representation. If tsig_key_str is None, no TSIG key will
+           be set. Raises XfrinZoneInfoException if tsig_key_str cannot
+           be parsed."""
+        if tsig_key_str is None:
+            self.tsig_key = None
+        else:
+            try:
+                self.tsig_key = TSIGKey(tsig_key_str)
+            except InvalidParameter as ipe:
+                errmsg = "bad TSIG key string: " + tsig_key_str
+                log_error(errmsg)
+                raise XfrinZoneInfoException(errmsg)
 
     def get_master_addr_info(self):
         return (self.master_addr.family, socket.SOCK_STREAM,
-                (self.master_addr_str, self.master_port))
+                (str(self.master_addr), self.master_port))
 
 class Xfrin:
     def __init__(self, verbose = False):
@@ -493,46 +539,37 @@ class Xfrin:
         """Returns the ZoneInfo object containing the configured data
            for the given zone name. If the zone name did not have any
            data, returns None"""
-        key = (name.to_text(), rrclass.to_text())
-        if key in self._zones:
-            return self._zones[key]
-        else:
-            return None
-
-    def _get_all_zone_info(self):
-        """Returns the structure used to store ZoneInfo objects. This
-           method can be used (together with _set_all_zone_info()) to
-           revert to the previous zone info configuration when one
-           of the new config items turns out to be bad"""
-        return self._zones
+        return self._zones.get((name.to_text(), rrclass.to_text()))
 
     def _add_zone_info(self, zone_info):
-        """Add the zone info. Raises a XfrinConfigException if a zone
+        """Add the zone info. Raises a XfrinZoneInfoException if a zone
            with the same name and class is already configured"""
         key = (zone_info.name.to_text(), zone_info.class_str)
         if key in self._zones:
-            raise XfrinConfigException("zone " + str(key) +
+            raise XfrinZoneInfoException("zone " + str(key) +
                                        " configured multiple times")
         self._zones[key] = zone_info
-
-    def _set_all_zone_info(self, zones):
-        self._zones = zones
 
     def _clear_zone_info(self):
         self._zones = {}
 
     def config_handler(self, new_config):
+        # backup all config data (should there be a problem in the new
+        # data)
+        old_max_transfers_in = self._max_transfers_in
+        old_zones = self._zones
+        
         self._max_transfers_in = new_config.get("transfers_in") or self._max_transfers_in
 
         if 'zones' in new_config:
-            zones_backup = self._get_all_zone_info()
             self._clear_zone_info()
             for zone_config in new_config.get('zones'):
                 try:
                     zone_info = ZoneInfo(zone_config, self._module_cc)
                     self._add_zone_info(zone_info)
-                except XfrinConfigException as xce:
-                    self._set_all_zone_info(zones_backup)
+                except XfrinZoneInfoException as xce:
+                    self._zones = old_zones
+                    self._max_transfers_in = old_max_transfers_in
                     return create_answer(1, str(xce))
 
         return create_answer(0)
@@ -574,7 +611,7 @@ class Xfrin:
                                            rrclass,
                                            self._get_db_file(),
                                            master_addr,
-                                           zone_info.tsig_key_str,
+                                           zone_info.tsig_key,
                                            True)
                     answer = create_answer(ret[0], ret[1])
 
@@ -585,15 +622,15 @@ class Xfrin:
                 (zone_name, rrclass) = self._parse_zone_name_and_class(args)
                 master_addr = self._parse_master_and_port(args)
                 zone_info = self._get_zone_info(zone_name, rrclass)
-                tsig_key_str = None
+                tsig_key = None
                 if zone_info:
-                    tsig_key_str = zone_info.tsig_key_str
+                    tsig_key = zone_info.tsig_key
                 db_file = args.get('db_file') or self._get_db_file()
                 ret = self.xfrin_start(zone_name,
                                        rrclass,
                                        db_file,
                                        master_addr,
-                                       tsig_key_str,
+                                       tsig_key,
                                        (False if command == 'retransfer' else True))
                 answer = create_answer(ret[0], ret[1])
 
@@ -609,28 +646,20 @@ class Xfrin:
         if not zone_name_str:
             raise XfrinException('zone name should be provided')
 
-        rrclass = args.get('zone_class')
-        if not rrclass:
-            rrclass = RRClass.IN()
-        else:
-            try:
-                rrclass = RRClass(rrclass)
-            except InvalidRRClass as e:
-                raise XfrinException('invalid RRClass: ' + rrclass)
-
-        return _check_zone_name(zone_name_str), rrclass
+        return (_check_zone_name(zone_name_str), _check_zone_class(args.get('zone_class')))
 
     def _parse_master_and_port(self, args):
         # check if we have configured info about this zone, in case
         # port or master are not specified
         zone_name = _check_zone_name(args.get('zone_name'))
-        zone_class = _check_zone_class(args.get('class'))
+        zone_class = _check_zone_class(args.get('zone_class'))
         zone_info = self._get_zone_info(zone_name, zone_class)
 
         master = args.get('master')
         if master is None:
             if zone_info is not None:
-                master = zone_info.master_addr_str
+                # TODO [XX]
+                master = str(zone_info.master_addr)
             else:
                 raise XfrinException("Master address not given or "
                                      "configured for " + zone_name.to_text())
@@ -638,7 +667,8 @@ class Xfrin:
         port = args.get('port')
         if port is None:
             if zone_info is not None:
-                port = zone_info.master_port_str
+                # TODO [XX]
+                port = str(zone_info.master_port)
             else:
                 port = DEFAULT_MASTER_PORT
 
@@ -705,7 +735,7 @@ class Xfrin:
         while not self._shutdown_event.is_set():
             self._cc_check_command()
 
-    def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo, tsig_key_str,
+    def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo, tsig_key,
                     check_soa = True):
         if "pydnspp" not in sys.modules:
             return (1, "xfrin failed, can't load dns message python library: 'pydnspp'")
@@ -726,7 +756,7 @@ class Xfrin:
                                                 self._shutdown_event,
                                                 master_addrinfo, check_soa,
                                                 self._verbose,
-                                                tsig_key_str))
+                                                tsig_key))
 
         xfrin_thread.start()
         return (0, 'zone xfrin is started')
