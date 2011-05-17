@@ -374,6 +374,79 @@ if test "$lcov" != "no"; then
 fi
 AC_SUBST(USE_LCOV)
 
+# Check for Botan
+botan_path="yes"
+AC_ARG_WITH([botan],
+  AC_HELP_STRING([--with-botan=PATH],
+    [specify exact directory of Botan library]),
+    [botan_path="$withval"])
+if test "${botan_path}" == "no" ; then
+    AC_MSG_ERROR([Need botan for libcryptolink])
+fi
+if test "${botan_path}" != "yes" ; then
+    if test -x "${botan_path}/bin/botan-config" ; then
+        BOTAN_CONFIG="${botan_path}/bin/botan-config"
+    else
+        AC_MSG_ERROR([${botan_path}/bin/botan-config not found])
+    fi
+else
+        AC_PATH_PROG([BOTAN_CONFIG], [botan-config])
+fi
+
+if test -x "${BOTAN_CONFIG}" ; then
+    BOTAN_LDFLAGS=`${BOTAN_CONFIG} --libs`
+    # We expect botan-config --libs to contain -L<path_to_libbotan>, but
+    # this is not always the case.  As a heuristics workaround we add
+    # -L`botan-config --prefix/lib` in this case.  Same for BOTAN_INCLUDES
+    # (but using include instead of lib) below.
+    echo ${BOTAN_LDFLAGS} | grep -- -L > /dev/null || \
+	    BOTAN_LDFLAGS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LDFLAGS}"
+    BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
+    echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
+	    BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
+    # See python_rpath for some info on why we do this
+    if test $rpath_available = yes; then
+        BOTAN_RPATH=
+        for flag in ${BOTAN_LDFLAGS}; do
+                BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne 's/^\(\-L\)/-R/p'`"
+        done
+	AC_SUBST(BOTAN_RPATH)
+
+	# According to the libtool manual, it should be sufficient if we
+	# specify the "-R libdir" in our wrapper library of botan (no other
+	# programs will need libbotan directly); "libdir" should be added to
+	# the program's binary image.  But we've seen in our build environments
+	# that (some versions of?) libtool doesn't propagate -R as documented,
+	# and it caused a linker error at run time.  To work around this, we
+	# also add the rpath to the global LDFLAGS.
+        LDFLAGS="$BOTAN_RPATH $LDFLAGS"
+    fi
+
+    AC_SUBST(BOTAN_LDFLAGS)
+    AC_SUBST(BOTAN_INCLUDES)
+fi
+
+CPPFLAGS_SAVED=$CPPFLAGS
+CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
+LDFLAGS_SAVED="$LDFLAGS"
+LDFLAGS="$BOTAN_LDFLAGS $LDFLAGS"
+
+AC_CHECK_HEADERS([botan/botan.h],,AC_MSG_ERROR([Missing required header files.]))
+AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM([#include <botan/botan.h>
+                          #include <botan/hash.h>
+                         ],
+                         [using namespace Botan;
+                          LibraryInitializer::initialize();
+                          HashFunction *h = get_hash("MD5");
+                         ])],
+        [AC_MSG_RESULT([checking for Botan library... yes])],
+        [AC_MSG_RESULT([checking for Botan library... no])
+         AC_MSG_ERROR([Needs Botan library 1.8 or higher])]
+)
+CPPFLAGS=$CPPFLAGS_SAVED
+LDFLAGS=$LDFLAGS_SAVED
+
 #
 # Configure Boost header path
 #
@@ -613,6 +686,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/bindctl/tests/Makefile
                  src/bin/cfgmgr/Makefile
                  src/bin/cfgmgr/plugins/Makefile
+                 src/bin/cfgmgr/plugins/tests/Makefile
                  src/bin/cfgmgr/tests/Makefile
                  src/bin/host/Makefile
                  src/bin/loadzone/Makefile
@@ -640,6 +714,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/stats/tests/isc/config/Makefile
                  src/bin/stats/tests/isc/util/Makefile
                  src/bin/stats/tests/testdata/Makefile
+                 src/bin/stats/tests/http/Makefile
                  src/bin/usermgr/Makefile
                  src/bin/tests/Makefile
                  src/lib/Makefile
@@ -672,11 +747,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/testdata/Makefile
-                 src/lib/util/Makefile
-                 src/lib/util/io/Makefile
-                 src/lib/util/io/tests/Makefile
-                 src/lib/util/unittests/Makefile
-                 src/lib/util/tests/Makefile
+                 src/lib/cryptolink/Makefile
+                 src/lib/cryptolink/tests/Makefile
                  src/lib/dns/Makefile
                  src/lib/dns/tests/Makefile
                  src/lib/dns/tests/testdata/Makefile
@@ -701,6 +773,11 @@ AC_CONFIG_FILES([Makefile
                  src/lib/cache/tests/Makefile
                  src/lib/server_common/Makefile
                  src/lib/server_common/tests/Makefile
+                 src/lib/util/Makefile
+                 src/lib/util/io/Makefile
+                 src/lib/util/io/tests/Makefile
+                 src/lib/util/unittests/Makefile
+                 src/lib/util/tests/Makefile
                  tests/Makefile
                  tests/system/Makefile
                  tests/tools/Makefile
@@ -729,11 +806,13 @@ AC_OUTPUT([doc/version.ent
            src/bin/zonemgr/tests/zonemgr_test
            src/bin/zonemgr/run_b10-zonemgr.sh
            src/bin/stats/stats.py
-           src/bin/stats/stats_stub.py
-           src/bin/stats/stats.spec.pre
-           src/bin/stats/run_b10-stats.sh
-           src/bin/stats/run_b10-stats_stub.sh
-           src/bin/stats/tests/stats_test
+           src/bin/stats/stats_httpd.py
+           src/bin/stats/stats.spec
+           src/bin/stats/stats-schema.spec
+           src/bin/stats/stats-httpd.spec
+           src/bin/stats/stats-httpd-xml.tpl
+           src/bin/stats/stats-httpd-xsd.tpl
+           src/bin/stats/stats-httpd-xsl.tpl
            src/bin/bind10/bind10.py
            src/bin/bind10/run_bind10.sh
            src/bin/bind10/tests/bind10_test.py
@@ -763,6 +842,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
            src/lib/log/tests/run_time_init_test.sh
+           src/lib/util/python/mkpywrapper.py
            tests/system/conf.sh
            tests/system/glue/setup.sh
            tests/system/glue/nsx1/b10-config.db
@@ -772,9 +852,6 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
            chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
-           chmod +x src/bin/stats/tests/stats_test
-           chmod +x src/bin/stats/run_b10-stats.sh
-           chmod +x src/bin/stats/run_b10-stats_stub.sh
            chmod +x src/bin/bind10/run_bind10.sh
            chmod +x src/bin/cmdctl/tests/cmdctl_test
            chmod +x src/bin/xfrin/tests/xfrin_test
@@ -791,6 +868,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
            chmod +x src/lib/log/tests/run_time_init_test.sh
+           chmod +x src/lib/util/python/mkpywrapper.py
            chmod +x tests/system/conf.sh
           ])
 AC_OUTPUT
@@ -813,12 +891,15 @@ Flags:
   DEFS:          $DEFS
   CPPFLAGS:      $CPPFLAGS
   CXXFLAGS:      $CXXFLAGS
+  LDFLAGS:       $LDFLAGS
   B10_CXXFLAGS:  $B10_CXXFLAGS
 dnl includes too
   Python:        ${PYTHON_INCLUDES}
                  ${PYTHON_LDFLAGS}
                  ${PYTHON_LIB}
   Boost:         ${BOOST_INCLUDES}
+  Botan:         ${BOTAN_INCLUDES}
+                 ${BOTAN_LDFLAGS}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
 

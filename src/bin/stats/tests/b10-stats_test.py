@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011  Internet Systems Consortium.
+# Copyright (C) 2010, 2011  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -23,7 +23,11 @@ import unittest
 import imp
 from isc.cc.session import Session, SessionError
 from isc.config.ccsession import ModuleCCSession, ModuleCCSessionError
+from fake_time import time, strftime, gmtime
 import stats
+stats.time = time
+stats.strftime = strftime
+stats.gmtime = gmtime
 from stats import SessionSubject, CCSessionListener, get_timestamp, get_datetime
 from fake_time import _TEST_TIME_SECS, _TEST_TIME_STRF
 
@@ -535,12 +539,19 @@ class TestStats2(unittest.TestCase):
         Test for specfile
         
         """
-        if "B10_FROM_BUILD" in os.environ:
+        if "B10_FROM_SOURCE" in os.environ:
             self.assertEqual(stats.SPECFILE_LOCATION,
-                             os.environ["B10_FROM_BUILD"] + "/src/bin/stats/stats.spec")
+                             os.environ["B10_FROM_SOURCE"] + os.sep + \
+                                 "src" + os.sep + "bin" + os.sep + "stats" + \
+                                 os.sep + "stats.spec")
+            self.assertEqual(stats.SCHEMA_SPECFILE_LOCATION,
+                             os.environ["B10_FROM_SOURCE"] + os.sep + \
+                                 "src" + os.sep + "bin" + os.sep + "stats" + \
+                                 os.sep + "stats-schema.spec")
         imp.reload(stats)
         # change path of SPECFILE_LOCATION
         stats.SPECFILE_LOCATION = TEST_SPECFILE_LOCATION
+        stats.SCHEMA_SPECFILE_LOCATION = TEST_SPECFILE_LOCATION
         self.assertEqual(stats.SPECFILE_LOCATION, TEST_SPECFILE_LOCATION)
         self.subject = stats.SessionSubject(session=self.session, verbose=True)
         self.session = self.subject.session
@@ -631,13 +642,13 @@ class TestStats2(unittest.TestCase):
 
     def test_osenv(self):
         """
-        test for not having environ "B10_FROM_BUILD"
+        test for not having environ "B10_FROM_SOURCE"
         """
-        if "B10_FROM_BUILD" in os.environ:
-            path = os.environ["B10_FROM_BUILD"]
-            os.environ.pop("B10_FROM_BUILD")
+        if "B10_FROM_SOURCE" in os.environ:
+            path = os.environ["B10_FROM_SOURCE"]
+            os.environ.pop("B10_FROM_SOURCE")
             imp.reload(stats)
-            os.environ["B10_FROM_BUILD"] = path
+            os.environ["B10_FROM_SOURCE"] = path
             imp.reload(stats)
 
 def result_ok(*args):

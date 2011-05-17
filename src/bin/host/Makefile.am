@@ -10,17 +10,20 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
-bin_PROGRAMS = host
-host_SOURCES = host.cc
-host_LDADD = $(top_builddir)/src/lib/dns/libdns++.la
-host_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+bin_PROGRAMS = b10-host
+b10_host_SOURCES = host.cc
+b10_host_LDADD = $(top_builddir)/src/lib/dns/libdns++.la
+b10_host_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 
-#man_MANS = host.1
-#EXTRA_DIST = $(man_MANS) host.xml
-#
-#if ENABLE_MAN
-#
-#host.1: host.xml
-#	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/host.xml
-#
-#endif
+man_MANS = b10-host.1
+EXTRA_DIST = $(man_MANS) b10-host.xml
+
+.PHONY: man
+if ENABLE_MAN
+
+man: b10-host.1
+
+b10-host.1: b10-host.xml
+	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-host.xml
+
+endif

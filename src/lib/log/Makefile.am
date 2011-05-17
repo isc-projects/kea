@@ -16,11 +16,13 @@ liblog_la_SOURCES += logger_impl.cc logger_impl.h
 liblog_la_SOURCES += logger_support.cc logger_support.h
 liblog_la_SOURCES += messagedef.cc messagedef.h
 liblog_la_SOURCES += message_dictionary.cc message_dictionary.h
-liblog_la_SOURCES += message_exception.h message_exception.cc
+liblog_la_SOURCES += message_exception.h
 liblog_la_SOURCES += message_initializer.cc message_initializer.h
 liblog_la_SOURCES += message_reader.cc message_reader.h
 liblog_la_SOURCES += message_types.h
 liblog_la_SOURCES += root_logger_name.cc root_logger_name.h
+liblog_la_SOURCES += log_formatter.h log_formatter.cc
+liblog_la_SOURCES += macros.h
 
 EXTRA_DIST  = README
 EXTRA_DIST += messagedef.mes

@@ -63,11 +63,17 @@ switches to verbose mode\&. It sends verbose messages to STDOUT\&.
 .PP
 /usr/local/share/bind10\-devel/stats\&.spec
 \(em This is a spec file for
-\fBb10\-stats\fR\&. It contains definitions of statistics items of BIND 10 and commands received via
+\fBb10\-stats\fR\&. It contains commands for
+\fBb10\-stats\fR\&. They can be invoked via
+bindctl(1)\&.
+.PP
+/usr/local/share/bind10\-devel/stats\-schema\&.spec
+\(em This is a spec file for data schema of of BIND 10 statistics\&. This schema cannot be configured via
 bindctl(1)\&.
 .SH "SEE ALSO"
 .PP
 
+\fBb10-stats-httpd\fR(8),
 \fBbind10\fR(8),
 \fBbindctl\fR(1),
 \fBb10-auth\fR(8),
