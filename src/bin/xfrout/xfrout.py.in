@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2010-2011  Internet Systems Consortium.
+# Copyright (C) 2010  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -301,38 +301,6 @@ class XfroutSession():
 
         self._send_message_with_last_soa(msg, sock_fd, rrset_soa, message_upper_len)
 
-class XfroutZoneInfoException(Exception):
-    """This exception if raised if the given information for ZoneInfo
-       contains an error (i.e. if the given name or tsig key data does
-       not parse correctly, or if information for a zone is found
-       multiple times"""
-    pass
-
-class ZoneInfo:
-    def __init__(self, zone_config):
-        self.set_zone_name(zone_config.get('name'))
-        self.set_tsig_key(zone_config.get('tsig_key'))
-
-    def set_zone_name(self, name_str):
-        if name_str is None:
-            raise XfroutZoneInfoException("Must have zone name for xfrout zone info")
-        else:
-            try:
-                self.name = Name(name_str)
-            except (EmptyLabel, TooLongLabel, BadLabelType, BadEscape,
-                    TooLongName, IncompleteName) as ne:
-                raise XfroutZoneInfoException("bad zone name: " + name_str
-                                              + " (" + str(ne) + ")")
-
-    def set_tsig_key(self, tsig_key_str):
-        if tsig_key_str is None:
-            self.tsig_key = None
-        else:
-            try:
-                self.tsig_key = TSIGKey(tsig_key_str)
-            except InvalidParameter as ipe:
-                raise XfroutZoneInfoException("bad TSIG key string: " + tsig_key_str)
-
 class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
     '''The unix domain socket server which accept xfr query sent from auth server.'''
 
@@ -346,11 +314,6 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         self._shutdown_event = shutdown_event
         self._write_sock, self._read_sock = socket.socketpair()
         self._log = log
-        # these values are directly (re)set by update_config_data,
-        # but the general error recovery there needs something to
-        # be set
-        self._zones = {}
-        self._max_transfers_out = 10
         self.update_config_data(config_data)
         self._cc = cc
 
@@ -483,39 +446,12 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
 
     def update_config_data(self, new_config):
         '''Apply the new config setting of xfrout module. '''
-        old_max_transfers_out = self._max_transfers_out
-        old_zones = self._zones
-        err_msg = None
-
         self._log.log_message('info', 'update config data start.')
         self._lock.acquire()
         self._max_transfers_out = new_config.get('transfers_out')
-        zones = new_config.get('zones')
-        if zones is not None:
-            self._zones = {}
-            try:
-                for zone_config in zones:
-                    zone_info = ZoneInfo(zone_config)
-                    key = zone_info.name.to_text()
-                    if key in self._zones:
-                        raise XfroutZoneInfoException("zone " + key +
-                                                      " configured multiple times")
-                    self._zones[zone_info.name.to_text()] = zone_info
-            except XfroutZoneInfoException as xzie:
-                err_msg = "Bad zone information: " + str(xzie)
-
-        if err_msg is not None:
-            # restore previous config
-            self._max_transfers_out = old_max_transfers_out
-            self._zones = old_zones
-            answer = create_answer(1, err_msg)
-        else:
-            self._log.log_message('info', 'update config data complete.')
-            self._log.log_message('info', 'max transfer out : %d', self._max_transfers_out)
-            answer = create_answer(0)
-
+        self._log.log_message('info', 'max transfer out : %d', self._max_transfers_out)
         self._lock.release()
-        return answer
+        self._log.log_message('info', 'update config data complete.')
 
     def get_db_file(self):
         file, is_default = self._cc.get_remote_config_value("Auth", "database_file")
@@ -577,7 +513,7 @@ class XfroutServer:
         self._notifier.send_notify(zone_name, zone_class)
 
     def config_handler(self, new_config):
-        '''Update config data. TODO. Do error check for log_update_config'''
+        '''Update config data. TODO. Do error check'''
         answer = create_answer(0)
         for key in new_config:
             if key not in self._config_data:
@@ -589,7 +525,7 @@ class XfroutServer:
             self._log.update_config(new_config)
 
         if self._unix_socket_server:
-            answer = self._unix_socket_server.update_config_data(self._config_data)
+            self._unix_socket_server.update_config_data(self._config_data)
 
         return answer
 
