@@ -191,7 +191,7 @@ main(int argc, char* argv[]) {
             changeUser(uid);
         }
 
-        cout << "[b10-aut] Loading TSIG keys" << endl;
+        cout << "[b10-auth] Loading TSIG keys" << endl;
         isc::server_common::initKeyring(*config_session);
 
         cout << "[b10-auth] Server started." << endl;
