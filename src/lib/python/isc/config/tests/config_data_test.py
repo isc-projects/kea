@@ -237,6 +237,26 @@ class TestConfigData(unittest.TestCase):
         self.assertEqual(None, value)
         self.assertEqual(False, default)
 
+    def test_get_default_value(self):
+        self.assertEqual(1, self.cd.get_default_value("item1"))
+        self.assertEqual('default', self.cd.get_default_value("item6/value1"))
+
+        # set some local values to something else, and see if we
+        # still get the default
+        self.cd.set_local_config({"item1": 2, "item6": { "value1": "asdf" } })
+
+        self.assertEqual((2, False), self.cd.get_value("item1"))
+        self.assertEqual(1, self.cd.get_default_value("item1"))
+        self.assertEqual(('asdf', False), self.cd.get_value("item6/value1"))
+        self.assertEqual('default', self.cd.get_default_value("item6/value1"))
+
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.cd.get_default_value,
+                          "does_not_exist/value1")
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.cd.get_default_value,
+                          "item6/doesnotexist")
+
     def test_set_local_config(self):
         self.cd.set_local_config({"item1": 2})
         value, default = self.cd.get_value("item1")
