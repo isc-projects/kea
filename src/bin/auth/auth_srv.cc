@@ -478,9 +478,8 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
 
     bool sendAnswer = true;
     if (tsig_error != TSIGError::NOERROR()) {
-        // TODO We need to add a TSIG but with 0-length signature
         makeErrorMessage(message, buffer, tsig_error.toRcode(),
-                         impl_->verbose_mode_);
+                         impl_->verbose_mode_, tsig_context);
     } else if (message->getOpcode() == Opcode::NOTIFY()) {
         sendAnswer = impl_->processNotify(io_message, message, buffer,
                                           tsig_context);
