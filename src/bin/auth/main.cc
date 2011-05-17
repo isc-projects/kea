@@ -47,6 +47,7 @@
 #include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
 #include <log/dummylog.h>
+#include <server_common/keyring.h>
 
 using namespace std;
 using namespace isc::data;
@@ -189,6 +190,9 @@ main(int argc, char* argv[]) {
         if (uid != NULL) {
             changeUser(uid);
         }
+
+        cout << "[b10-aut] Loading TSIG keys" << endl;
+        isc::server_common::initKeyring(*config_session);
 
         cout << "[b10-auth] Server started." << endl;
         io_service.run();
