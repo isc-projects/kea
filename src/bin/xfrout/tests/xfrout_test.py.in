@@ -1,4 +1,4 @@
-# Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2010-2011  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -330,6 +330,7 @@ class MyUnixSockServer(UnixSockServer):
         self._transfers_counter = 0
         self._shutdown_event = threading.Event()
         self._max_transfers_out = 10
+        self._zones = {}
         self._cc = MyCCSession()
         self._log = isc.log.NSLogger('xfrout', '', severity = 'critical', log_to_console = False )
 
@@ -346,9 +347,87 @@ class TestUnixSockServer(unittest.TestCase):
         recv_msg = self.unix._receive_query_message(self.read_sock)
         self.assertEqual(recv_msg, send_msg)
 
+    def _check_config(self, config_data):
+        if 'transfers_out' in config_data:
+            self.assertEqual(config_data['transfers_out'],
+                             self.unix._max_transfers_out)
+        if 'zones' in config_data:
+            for zone_config in config_data['zones']:
+                self.assertIn(zone_config['name'], self.unix._zones)
+                zone_info = self.unix._zones[zone_config['name']]
+                if 'tsig_key' in zone_config:
+                    self.assertEqual(TSIGKey(zone_config['tsig_key']).to_text(),
+                                     zone_info.tsig_key.to_text())
+
     def test_updata_config_data(self):
-        self.unix.update_config_data({'transfers_out':10 })
-        self.assertEqual(self.unix._max_transfers_out, 10)
+        good_config1 = { 'transfers_out': 10,
+                        'zones': [
+                        { 'name': 'example.com.',
+                          'tsig_key': 'example.com:SFuWd/q99SzF8Yzd1QbB9g=='
+                        }
+                        ]
+                      }
+        answer = self.unix.update_config_data(good_config1)
+        self.assertEqual(0, parse_answer(answer)[0])
+        self._check_config(good_config1)
+
+        good_config2 = { 'transfers_out': 11,
+                        'zones': [
+                        { 'name': 'example.com.'
+                        },
+                        { 'name': 'example2.com.',
+                          'tsig_key': 'example2.com:SFuWd/q99SzF8Yzd1QbB9g=='
+                        }
+                        ]
+                      }
+        answer = self.unix.update_config_data(good_config2)
+        self.assertEqual(0, parse_answer(answer)[0])
+        self._check_config(good_config2)
+
+        bad_config = { 'transfers_out': 12,
+                        'zones': [
+                        {}
+                        ]
+                      }
+        answer = self.unix.update_config_data(bad_config)
+        self.assertEqual(1, parse_answer(answer)[0])
+        # Should still have the previous config
+        self._check_config(good_config2)
+
+        bad_config = { 'transfers_out': 13,
+                        'zones': [ { 'name': 'example..com.' } ]
+                      }
+        answer = self.unix.update_config_data(bad_config)
+        self.assertEqual(1, parse_answer(answer)[0])
+        # Should still have the previous config
+        self._check_config(good_config2)
+
+        bad_config = { 'transfers_out': 14,
+                        'zones': [
+                        { 'name': 'example.com.',
+                          'tsig_key': '::'
+                        }
+                        ]
+                      }
+        answer = self.unix.update_config_data(bad_config)
+        self.assertEqual(1, parse_answer(answer)[0])
+        # Should still have the previous config
+        self._check_config(good_config2)
+
+        bad_config = { 'transfers_out': 15,
+                        'zones': [
+                        { 'name': 'example.com.',
+                          'tsig_key': 'example.com:SFuWd/q99SzF8Yzd1QbB9g=='
+                        },
+                        { 'name': 'example.com.',
+                          'tsig_key': 'example.com:SFuWd/q99SzF8Yzd1QbB9g=='
+                        }
+                        ]
+                      }
+        answer = self.unix.update_config_data(bad_config)
+        self.assertEqual(1, parse_answer(answer)[0])
+        # Should still have the previous config
+        self._check_config(good_config2)
 
     def test_get_db_file(self):
         self.assertEqual(self.unix.get_db_file(), "initdb.file")

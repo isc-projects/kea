@@ -1,4 +1,4 @@
-# Copyright (C) 2011  Internet Systems Consortium.
+# Copyright (C) 2009-2011  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -67,7 +67,7 @@ class MockCC():
         if identifier == "zones/master_port":
             return TEST_MASTER_PORT
         if identifier == "zones/class":
-            return 'IN'
+            return TEST_RRCLASS_STR
 
 class MockXfrin(Xfrin):
     # This is a class attribute of a callable object that specifies a non
@@ -78,7 +78,7 @@ class MockXfrin(Xfrin):
     check_command_hook = None
 
     def _cc_setup(self):
-        self._tsig_key_str = None
+        self._tsig_key = None
         self._module_cc = MockCC()
         pass
 
@@ -91,17 +91,14 @@ class MockXfrin(Xfrin):
             MockXfrin.check_command_hook()
 
     def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo,
-                    tsig_key_str, check_soa=True):
+                    tsig_key, check_soa=True):
         # store some of the arguments for verification, then call this
         # method in the superclass
-        self.xfrin_started_zone_name = zone_name
-        self.xfrin_started_rrclass = rrclass
         self.xfrin_started_master_addr = master_addrinfo[2][0]
         self.xfrin_started_master_port = master_addrinfo[2][1]
-        self.xfrin_started_tsig_key_str = tsig_key_str
         return Xfrin.xfrin_start(self, zone_name, rrclass, db_file,
-                                 master_addrinfo, tsig_key_str,
-                                 check_soa=True)
+                                 master_addrinfo, tsig_key,
+                                 check_soa)
 
 class MockXfrinConnection(XfrinConnection):
     def __init__(self, sock_map, zone_name, rrclass, db_file, shutdown_event,
@@ -474,6 +471,7 @@ class TestXfrin(unittest.TestCase):
         self.xfr = MockXfrin()
         self.args = {}
         self.args['zone_name'] = TEST_ZONE_NAME_STR
+        self.args['class'] = TEST_RRCLASS_STR
         self.args['port'] = TEST_MASTER_PORT
         self.args['master'] = TEST_MASTER_IPV4_ADDRESS
         self.args['db_file'] = TEST_DB_FILE
@@ -515,7 +513,7 @@ class TestXfrin(unittest.TestCase):
 
     def test_parse_cmd_params_bogusclass(self):
         self.args['zone_class'] = 'XXX'
-        self.assertRaises(XfrinException, self._do_parse_zone_name_class)
+        self.assertRaises(XfrinZoneInfoException, self._do_parse_zone_name_class)
 
     def test_parse_cmd_params_nozone(self):
         # zone name is mandatory.
@@ -567,17 +565,29 @@ class TestXfrin(unittest.TestCase):
                                                   short_args)['result'][0], 1)
 
     def test_command_handler_retransfer_short_command2(self):
-        # try it when only specifying the zone name (of unknown zone)
-        # this should fail because master address is not specified.
+        # try it when only specifying the zone name (of known zone)
         short_args = {}
         short_args['zone_name'] = TEST_ZONE_NAME_STR
+
+        zones = { 'zones': [
+                  { 'name': TEST_ZONE_NAME_STR,
+                    'master_addr': TEST_MASTER_IPV4_ADDRESS,
+                    'master_port': TEST_MASTER_PORT
+                  }
+                ]}
+        self.xfr.config_handler(zones)
         self.assertEqual(self.xfr.command_handler("retransfer",
-                                                  short_args)['result'][0], 1)
+                                                  short_args)['result'][0], 0)
+        self.assertEqual(TEST_MASTER_IPV4_ADDRESS,
+                         self.xfr.xfrin_started_master_addr)
+        self.assertEqual(int(TEST_MASTER_PORT),
+                         self.xfr.xfrin_started_master_port)
 
     def test_command_handler_retransfer_short_command3(self):
         # try it when only specifying the zone name (of known zone)
         short_args = {}
-        short_args['zone_name'] = TEST_ZONE_NAME_STR
+        # test it without the trailing root dot
+        short_args['zone_name'] = TEST_ZONE_NAME_STR[:-1]
 
         zones = { 'zones': [
                   { 'name': TEST_ZONE_NAME_STR,
@@ -599,7 +609,7 @@ class TestXfrin(unittest.TestCase):
                                                   self.args)['result'][0], 1)
 
     def test_command_handler_retransfer_quota(self):
-        self.args['master'] = '127.0.0.1'
+        self.args['master'] = TEST_MASTER_IPV4_ADDRESS
 
         for i in range(self.xfr._max_transfers_in - 1):
             self.xfr.recorder.increment(Name(str(i) + TEST_ZONE_NAME_STR))
@@ -662,7 +672,7 @@ class TestXfrin(unittest.TestCase):
         # the config
         # This is actually NOT the address given in the command, which
         # would at this point not make sense, see the TODO in
-        # xfrin.py.in:542)
+        # xfrin.py.in Xfrin.command_handler())
         self.assertEqual(TEST_MASTER_IPV4_ADDRESS,
                          self.xfr.xfrin_started_master_addr)
         self.assertEqual(int(TEST_MASTER_PORT),
@@ -677,38 +687,44 @@ class TestXfrin(unittest.TestCase):
         self.assertEqual(self.xfr._max_transfers_in, 3)
 
     def _check_zones_config(self, config_given):
+        if 'transfers_in' in config_given:
+            self.assertEqual(config_given['transfers_in'],
+                             self.xfr._max_transfers_in)
         for zone_config in config_given['zones']:
             zone_name = zone_config['name']
             zone_info = self.xfr._get_zone_info(Name(zone_name), RRClass.IN())
-            self.assertEqual(zone_info.master_addr_str, zone_config['master_addr'])
-            self.assertEqual(zone_info.master_port_str, zone_config['master_port'])
+            self.assertEqual(str(zone_info.master_addr), zone_config['master_addr'])
+            self.assertEqual(zone_info.master_port, zone_config['master_port'])
             if 'tsig_key' in zone_config:
-                self.assertEqual(zone_info.tsig_key_str, zone_config['tsig_key'])
+                self.assertEqual(zone_info.tsig_key.to_text(), TSIGKey(zone_config['tsig_key']).to_text())
             else:
-                self.assertIsNone(zone_info.tsig_key_str)
+                self.assertIsNone(zone_info.tsig_key)
 
     def test_command_handler_zones(self):
-        zones1 = { 'zones': [
-                  { 'name': 'test.example.',
+        zones1 = { 'transfers_in': 3,
+                   'zones': [
+                   { 'name': 'test.example.',
                     'master_addr': '192.0.2.1',
                     'master_port': 53
-                  }
-                ]}
+                   }
+                 ]}
         self.assertEqual(self.xfr.config_handler(zones1)['result'][0], 0)
         self._check_zones_config(zones1)
 
-        zones2 = { 'zones': [
-                  { 'name': 'test.example.',
+        zones2 = { 'transfers_in': 4,
+                   'zones': [
+                   { 'name': 'test.example.',
                     'master_addr': '192.0.2.2',
                     'master_port': 53,
                     'tsig_key': "example.com:SFuWd/q99SzF8Yzd1QbB9g=="
-                  }
-                ]}
+                   }
+                 ]}
         self.assertEqual(self.xfr.config_handler(zones2)['result'][0], 0)
         self._check_zones_config(zones2)
 
         # test that configuring the zone multiple times fails
-        zones = { 'zones': [
+        zones = { 'transfers_in': 5,
+                  'zones': [
                   { 'name': 'test.example.',
                     'master_addr': '192.0.2.1',
                     'master_port': 53
