@@ -1,3 +1,9 @@
+239.	[bug]		jerry
+	src/bin/xfrout: If a zone doesn't have notify slaves(only has
+	one apex ns record - the primary master name server) will cause
+	b10-xfrout uses 100% of CPU.
+	(Trac #684, git d11b5e89203a5340d4e5ca51c4c02db17c33dc1f)
+
 238.	[func]		zhang likun
 	Implement the simplest forwarder, which pass everything throught
 	except QID, port number. The response will not be cached.
