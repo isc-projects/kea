@@ -77,8 +77,8 @@ class XfrinConfigException(Exception):
     pass
 
 def _check_zone_name(zone_name_str):
-    """Checks if the given zone name is a valid domain name, and returns it as a Name object.
-       Raises an XfrinException if it is not."""
+    """Checks if the given zone name is a valid domain name, and returns
+    it as a Name object. Raises an XfrinException if it is not."""
     try:
         return Name(zone_name_str)
     except (EmptyLabel, TooLongLabel, BadLabelType, BadEscape,
@@ -406,7 +406,7 @@ class XfrinRecorder:
         return ret
 
 class ZoneInfo:
-    def __init__(self, config_data, module_cc = None):
+    def __init__(self, config_data, module_cc=None):
         """Creates a zone_info with the config data element as
            specified by the 'zones' list in xfrin.spec. Module_cc is
            needed to get the defaults from the specification"""
