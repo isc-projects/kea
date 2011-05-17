@@ -66,6 +66,12 @@ TEST_F(Base64Test, decode) {
     decodeCheck("Zm 9v\tYmF\ny", decoded_data, "foobar");
     decodeCheck("Zm9vYg==", decoded_data, "foob");
     decodeCheck("Zm9vYmE=\n", decoded_data, "fooba");
+    decodeCheck(" Zm9vYmE=\n", decoded_data, "fooba");
+    decodeCheck(" ", decoded_data, "");
+    decodeCheck("\n\t", decoded_data, "");
+
+    // incomplete input
+    EXPECT_THROW(decodeBase64("Zm9vYmF", decoded_data), BadValue);
 
     // only up to 2 padding characters are allowed
     EXPECT_THROW(decodeBase64("A===", decoded_data), BadValue);
