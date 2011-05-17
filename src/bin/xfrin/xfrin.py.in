@@ -643,36 +643,52 @@ class Xfrin:
 
     def _parse_zone_name_and_class(self, args):
         zone_name_str = args.get('zone_name')
-        if not zone_name_str:
+        if zone_name_str is None:
             raise XfrinException('zone name should be provided')
 
         return (_check_zone_name(zone_name_str), _check_zone_class(args.get('zone_class')))
 
     def _parse_master_and_port(self, args):
+        """
+        Return tuple (family, socktype, sockaddr) for address and port in given
+        args dict.
+        IPv4 and IPv6 are the only supported addresses now, so sockaddr will be
+        (address, port). The socktype is socket.SOCK_STREAM for now.
+        """
         # check if we have configured info about this zone, in case
         # port or master are not specified
         zone_name = _check_zone_name(args.get('zone_name'))
         zone_class = _check_zone_class(args.get('zone_class'))
         zone_info = self._get_zone_info(zone_name, zone_class)
 
-        master = args.get('master')
-        if master is None:
+        addr_str = args.get('master')
+        if addr_str is None:
             if zone_info is not None:
-                # TODO [XX]
-                master = str(zone_info.master_addr)
+                addr = zone_info.master_addr
             else:
                 raise XfrinException("Master address not given or "
                                      "configured for " + zone_name.to_text())
-
-        port = args.get('port')
-        if port is None:
+        else:
+            try:
+                addr = isc.net.parse.addr_parse(addr_str)
+            except ValueError as err:
+                raise XfrinException("failed to resolve master address %s: %s" %
+                                     (addr_str, str(err)))
+            
+        port_str = args.get('port')
+        if port_str is None:
             if zone_info is not None:
-                # TODO [XX]
-                port = str(zone_info.master_port)
+                port = zone_info.master_port
             else:
                 port = DEFAULT_MASTER_PORT
+        else:
+            try:
+                port = isc.net.parse.port_parse(port_str)
+            except ValueError as err:
+                raise XfrinException("failed to parse port=%s: %s" %
+                                     (port_str, str(err)))
 
-        return build_addr_info(master, port)
+        return (addr.family, socket.SOCK_STREAM, (str(addr), port))
 
     def _get_db_file(self):
         #TODO, the db file path should be got in auth server's configuration
@@ -772,20 +788,6 @@ def signal_handler(signal, frame):
 def set_signal_handler():
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
-
-def build_addr_info(addrstr, portstr):
-    """
-    Return tuple (family, socktype, sockaddr) for given address and port.
-    IPv4 and IPv6 are the only supported addresses now, so sockaddr will be
-    (address, port). The socktype is socket.SOCK_STREAM for now.
-    """
-    try:
-        port = isc.net.parse.port_parse(portstr)
-        addr = isc.net.parse.addr_parse(addrstr)
-        return (addr.family, socket.SOCK_STREAM, (addrstr, port))
-    except ValueError as err:
-        raise XfrinException("failed to resolve master address/port=%s/%s: %s" %
-                             (addrstr, portstr, str(err)))
 
 def set_cmd_options(parser):
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
