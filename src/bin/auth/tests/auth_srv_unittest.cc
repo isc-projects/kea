@@ -248,13 +248,13 @@ TEST_F(AuthSrvTest, AXFRSuccess) {
 // well
 TEST_F(AuthSrvTest, TSIGSigned) {
     // Prepare key, the client message, etc
-    TSIGKey key("key:c2VjcmV0Cg==:hmac-sha1");
+    const TSIGKey key("key:c2VjcmV0Cg==:hmac-sha1");
     TSIGContext context(key);
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
                          Name("version.bind"), RRClass::CH(), RRType::TXT());
     createRequestPacket(request_message, IPPROTO_UDP, &context);
 
-    // Run the message trough the server
+    // Run the message through the server
     isc::server_common::keyring.reset(new TSIGKeyRing);
     isc::server_common::keyring->add(key);
     server.processMessage(*io_message, parse_message, response_obuffer,

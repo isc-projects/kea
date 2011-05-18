@@ -467,7 +467,7 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
 
     // Do we do TSIG?
     // The keyring can be null if we're in test
-    if (server_common::keyring && tsig_record) {
+    if (server_common::keyring != NULL && tsig_record != NULL) {
         tsig_context.reset(new TSIGContext(tsig_record->getName(),
                                            tsig_record->getRdata().
                                                 getAlgorithm(),
