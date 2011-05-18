@@ -1,3 +1,14 @@
+242.	[func]		jinmei
+	xfrin: added support for TSIG verify.  This change completes TSIG
+	support in b10-xfrin.
+	(Trac #914, git 78502c021478d97672232015b7df06a7d52e531b)
+
+241.	[func]		jinmei
+	pydnspp: added python extension for the TSIG API introduced in
+	change 235.
+	(Trac #905, git 081891b38f05f9a186814ab7d1cd5c572b8f777f)
+	(Trac #915, git 0555ab65d0e43d03b2d40c95d833dd050eea6c23)
+
 240.	[func]*		jelte
 	Updated configuration options to Xfrin, so that you can specify
 	a master address, port, and TSIG key per zone. Still only one per
