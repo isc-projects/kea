@@ -87,6 +87,13 @@
       </para></note>
 <!-- TODO: this will change ... -->
 
+<!--
+TODO
+document botan requirements
+Debian and Ubuntu:
+ libgmp3-dev and libbz2-dev required for botan too
+-->
+
 <!-- TODO: list where to get these from -->
 
       <note>

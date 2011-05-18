@@ -62,6 +62,12 @@
       the zone in a BIND 10 zone data store.
     </para>
 
+<!-- TODO:
+xfrin only does the transfer to make it as simple as possible.
+The logic for handling transfer triggers or zone management is handled
+in separate zonemgr process.
+-->
+
     <note><simpara>
       This prototype release only supports AXFR. IXFR is not implemented.
     </simpara></note>
