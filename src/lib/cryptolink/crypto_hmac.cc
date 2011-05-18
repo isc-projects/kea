@@ -88,13 +88,11 @@ public:
                                   secret_len);
                 hmac_->set_key(hashed_key.begin(), hashed_key.size());
             } else {
-                // Apparently 1.9 considers 0 a valid secret length.
-                // We do not.
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,9,0)
+                // Botan 1.8 considers len 0 a bad key. 1.9 does not,
+                // but we won't accept it anyway, and fail early
                 if (secret_len == 0) {
                     isc_throw(BadKey, "Bad HMAC secret length: 0");
                 }
-#endif
                 hmac_->set_key(static_cast<const Botan::byte*>(secret),
                                secret_len);
             }
