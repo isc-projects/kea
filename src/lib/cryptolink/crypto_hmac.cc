@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <cryptolink.h>
 #include <cryptolink/crypto_hmac.h>
 
@@ -22,6 +24,8 @@
 #include <botan/hash.h>
 #include <botan/types.h>
 
+// [XX] remove
+#include <iostream>
 namespace {
 const char*
 getBotanHashAlgorithmName(isc::cryptolink::HashAlgorithm algorithm) {
@@ -70,12 +74,32 @@ public:
         // If the key length is larger than the block size, we hash the
         // key itself first.
         try {
-            if (secret_len > hash->HASH_BLOCK_SIZE) {
+            // use a temp var so we don't have blocks spanning
+            // preprocessor directives
+            size_t block_length;
+#if (BOTAN_API_VERSION >= 100900)
+            block_length = hash->hash_block_size();
+#elif (BOTAN_API_VERSION >= 100800)
+            block_length = hash->HASH_BLOCK_SIZE;
+#else
+#error "Unsupported BOTAN_API_VERSION"
+            // added to suppress irrelevant compiler errors
+            block_length = 0;
+#endif
+
+            if (secret_len > block_length) {
                 Botan::SecureVector<Botan::byte> hashed_key =
                     hash->process(static_cast<const Botan::byte*>(secret),
                                   secret_len);
                 hmac_->set_key(hashed_key.begin(), hashed_key.size());
             } else {
+                // Apparently 1.9 considers 0 a valid secret length.
+                // We do not.
+#if (BOTAN_API_VERSION >= 100900)
+                if (secret_len == 0) {
+                    isc_throw(BadKey, "Bad HMAC secret length: 0");
+                }
+#endif
                 hmac_->set_key(static_cast<const Botan::byte*>(secret),
                                secret_len);
             }
@@ -89,7 +113,15 @@ public:
     ~HMACImpl() { }
 
     size_t getOutputLength() const {
+#if (BOTAN_API_VERSION >= 100900)
+        return (hmac_->output_length());
+#elif (BOTAN_API_VERSION >= 100800)
         return (hmac_->OUTPUT_LENGTH);
+#else
+#error "Unsupported BOTAN_API_VERSION"
+        // added to suppress irrelevant compiler errors
+        return 0;
+#endif
     }
 
     void update(const void* data, const size_t len) {
