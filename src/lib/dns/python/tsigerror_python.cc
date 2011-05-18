@@ -106,6 +106,7 @@ TSIGError_init(s_TSIGError* self, PyObject* args) {
         }
 
         // Constructor from Rcode
+        PyErr_Clear();
         s_Rcode* py_rcode;
         if (PyArg_ParseTuple(args, "O!", &rcode_type, &py_rcode)) {
             self->cppobj = new TSIGError(*py_rcode->cppobj);
@@ -239,7 +240,7 @@ namespace python {
 // Most of the functions are not actually implemented and NULL here.
 PyTypeObject tsigerror_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.TSIGError",
+    "pydnspp.TSIGError",
     sizeof(s_TSIGError),                 // tp_basicsize
     0,                                  // tp_itemsize
     reinterpret_cast<destructor>(TSIGError_destroy),       // tp_dealloc
@@ -356,6 +357,13 @@ initModulePart_TSIGError(PyObject* mod) {
     }
 
     return (true);
+}
+
+PyObject*
+createTSIGErrorObject(const TSIGError& source) {
+    TSIGErrorContainer container = PyObject_New(s_TSIGError, &tsigerror_type);
+    container.set(new TSIGError(source));
+    return (container.release());
 }
 } // namespace python
 } // namespace dns

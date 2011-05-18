@@ -777,6 +777,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/util/io/Makefile
                  src/lib/util/io/tests/Makefile
                  src/lib/util/unittests/Makefile
+                 src/lib/util/pyunittests/Makefile
                  src/lib/util/tests/Makefile
                  tests/Makefile
                  tests/system/Makefile
