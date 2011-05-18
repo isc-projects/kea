@@ -432,20 +432,6 @@ LDFLAGS_SAVED="$LDFLAGS"
 LDFLAGS="$BOTAN_LDFLAGS $LDFLAGS"
 
 AC_CHECK_HEADERS([botan/botan.h],,AC_MSG_ERROR([Missing required header files.]))
-
-# Find out which API version we have
-# We use this in cyptolink implementations
-# The defined value will have six numbers, XXYYZZ, where XX is major
-# version, YY is minor version, and ZZ is patch level
-# We do not ask for the specific function, but try out a specific
-# api call known to belong to a specific function. Therefore ZZ should,
-# at least in theory, not be relevant (and always 0). But you never know.
-# (We do assume that none of the version parts will be higher than 99)
-
-# Set to 0 so we can error if we find no compatible versions
-BOTAN_API_VERSION=0
-
-# API for 1.8
 AC_LINK_IFELSE(
         [AC_LANG_PROGRAM([#include <botan/botan.h>
                           #include <botan/hash.h>
@@ -453,46 +439,11 @@ AC_LINK_IFELSE(
                          [using namespace Botan;
                           LibraryInitializer::initialize();
                           HashFunction *h = get_hash("MD5");
-                          // 1.8 has HASH_BLOCK_SIZE
-                          size_t s = h->HASH_BLOCK_SIZE;
-                         ])
-        ],
-        [
-            AC_MSG_RESULT([checking for Botan library 1.8... yes])
-            BOTAN_API_VERSION="1.8"
-            AC_DEFINE(BOTAN_API_VERSION, [100800], [Botan API version 1.8])
-        ],
-        [
-            AC_MSG_RESULT([checking for Botan library 1.8... no])
-        ]
+                         ])],
+        [AC_MSG_RESULT([checking for Botan library... yes])],
+        [AC_MSG_RESULT([checking for Botan library... no])
+         AC_MSG_ERROR([Needs Botan library 1.8 or higher])]
 )
-
-# API for 1.9
-AC_LINK_IFELSE(
-        [AC_LANG_PROGRAM([#include <botan/botan.h>
-                          #include <botan/hash.h>
-                         ],
-                         [using namespace Botan;
-                          LibraryInitializer::initialize();
-                          HashFunction *h = get_hash("MD5");
-                          // 1.9 has hash_block_size()
-                          size_t s = h->hash_block_size();
-                         ])
-        ],
-        [
-            AC_MSG_RESULT([checking for Botan library 1.9... yes])
-            BOTAN_API_VERSION="1.9"
-            AC_DEFINE(BOTAN_API_VERSION, [100900], [Botan API version 1.9 (or higher)])
-        ],
-        [
-            AC_MSG_RESULT([checking for Botan library 1.9... no])
-        ]
-)
-
-if test "$BOTAN_API_VERSION" = "0"; then
-    AC_MSG_ERROR([Botan linking failed, need botan-1.8 or higher, and the libraries it links to])
-fi
-
 CPPFLAGS=$CPPFLAGS_SAVED
 LDFLAGS=$LDFLAGS_SAVED
 
