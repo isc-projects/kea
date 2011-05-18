@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
-
 #include <cryptolink.h>
 #include <cryptolink/crypto_hmac.h>
 
@@ -80,7 +78,7 @@ public:
 #elif BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,8,0)
             size_t block_length = hash->HASH_BLOCK_SIZE;
 #else
-#error "Unsupported BOTAN_API_VERSION (need 1.8 or higher)"
+#error "Unsupported Botan version (need 1.8 or higher)"
             // added to suppress irrelevant compiler errors
             size_t block_length = 0;
 #endif
@@ -115,7 +113,7 @@ public:
 #elif BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,8,0)
         return (hmac_->OUTPUT_LENGTH);
 #else
-#error "Unsupported BOTAN_API_VERSION (need 1.8 or higher)"
+#error "Unsupported Botan version (need 1.8 or higher)"
         // added to suppress irrelevant compiler errors
         return 0;
 #endif
