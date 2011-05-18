@@ -422,7 +422,54 @@ test.example.com. 3600 IN A 192.0.2.2
                           factoryFromFile,
                           message_parse,
                           "message_fromWire9")
-    
+
+    def test_from_wire_with_tsig(self):
+        # Initially there should be no TSIG
+        self.assertEqual(None, self.p.get_tsig_record())
+
+        # getTSIGRecord() is only valid in the parse mode.
+        self.assertRaises(InvalidMessageOperation, self.r.get_tsig_record)
+
+        factoryFromFile(self.p, "message_toWire2.wire")
+        tsig_rr = self.p.get_tsig_record()
+        self.assertEqual(Name("www.example.com"), tsig_rr.get_name())
+        self.assertEqual(85, tsig_rr.get_length())
+        self.assertEqual(TSIGKey.HMACMD5_NAME,
+                         tsig_rr.get_rdata().get_algorithm())
+
+        # If we clear the message for reuse, the recorded TSIG will be cleared.
+        self.p.clear(Message.PARSE)
+        self.assertEqual(None, self.p.get_tsig_record())
+
+    def test_from_wire_with_tsigcompressed(self):
+        # Mostly same as fromWireWithTSIG, but the TSIG owner name is
+        # compressed.
+        factoryFromFile(self.p, "message_fromWire12.wire");
+        tsig_rr = self.p.get_tsig_record()
+        self.assertEqual(Name("www.example.com"), tsig_rr.get_name())
+        # len(www.example.com) = 17, but when fully compressed, the length is
+        # 2 bytes.  So the length of the record should be 15 bytes shorter.
+        self.assertEqual(70, tsig_rr.get_length())
+
+    def test_from_wire_with_badtsig(self):
+        # Multiple TSIG RRs
+        self.assertRaises(DNSMessageFORMERR, factoryFromFile,
+                          self.p, "message_fromWire13.wire")
+        self.p.clear(Message.PARSE)
+
+        # TSIG in the answer section (must be in additional)
+        self.assertRaises(DNSMessageFORMERR, factoryFromFile,
+                          self.p, "message_fromWire14.wire")
+        self.p.clear(Message.PARSE)
+
+        # TSIG is not the last record.
+        self.assertRaises(DNSMessageFORMERR, factoryFromFile,
+                          self.p, "message_fromWire15.wire")
+        self.p.clear(Message.PARSE)
+
+        # Unexpected RR Class (this will fail in constructing TSIGRecord)
+        self.assertRaises(DNSMessageFORMERR, factoryFromFile,
+                          self.p, "message_fromWire16.wire")
 
 if __name__ == '__main__':
     unittest.main()
