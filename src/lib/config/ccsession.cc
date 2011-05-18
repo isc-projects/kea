@@ -372,7 +372,7 @@ ModuleCCSession::addRemoteConfig(const std::string& spec_name,
         ConstElementPtr cmd = Element::fromJSON("{ \"command\": ["
                                                 "\"get_module_spec\","
                                                 "{\"module_name\": \"" +
-                                                module_name + "\"} ] }");
+                                                spec_name + "\"} ] }");
         unsigned int seq = session_.group_sendmsg(cmd, "ConfigManager");
         ConstElementPtr env, answer;
         session_.group_recvmsg(env, answer, false, seq);

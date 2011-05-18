@@ -414,6 +414,13 @@ TEST_F(CCSessionTest, remoteConfig) {
 
         EXPECT_NO_THROW(module_name = mccs.addRemoteConfig("Spec2"));
 
+        size_t qsize(session.getMsgQueue()->size());
+        EXPECT_TRUE(session.getMsgQueue()->get(qsize - 2)->equals(*el(
+            "[ \"ConfigManager\", \"*\", { \"command\": ["
+            "\"get_module_spec\", { \"module_name\": \"Spec2\" } ] } ]")));
+        EXPECT_TRUE(session.getMsgQueue()->get(qsize - 1)->equals(*el(
+            "[ \"ConfigManager\", \"*\", { \"command\": [ \"get_config\","
+            "{ \"module_name\": \"Spec2\" } ] } ]")));
         EXPECT_EQ("Spec2", module_name);
         EXPECT_NO_THROW(item1 =
                         mccs.getRemoteConfigValue(module_name,
