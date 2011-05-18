@@ -15,6 +15,7 @@
 
 import unittest
 import socket
+from isc.testutils.tsigctx_mock import MockTSIGContext
 from xfrin import *
 
 #
@@ -54,13 +55,6 @@ default_answers = [soa_rrset]
 
 class XfrinTestException(Exception):
     pass
-
-def strip_mutable_tsig_data(data):
-    # Unfortunately we cannot easily compare TSIG RR because we can't tweak
-    # current time.  As a work around this helper function strips off the time
-    # dependent part of TSIG RDATA, i.e., the MAC (assuming HMAC-MD5) and
-    # Time Signed.
-    return data[0:-32] + data[-26:-22] + data[-6:]
 
 class MockCC():
     def get_default_value(self, identifier):
@@ -151,10 +145,11 @@ class MockXfrinConnection(XfrinConnection):
                 self.response_generator()
         return len(data)
 
-    def create_response_data(self, response = True, bad_qid = False,
-                             rcode = Rcode.NOERROR(),
-                             questions = default_questions,
-                             answers = default_answers):
+    def create_response_data(self, response=True, bad_qid=False,
+                             rcode=Rcode.NOERROR(),
+                             questions=default_questions,
+                             answers=default_answers,
+                             tsig=False):
         resp = Message(Message.RENDER)
         qid = self.qid
         if bad_qid:
@@ -168,7 +163,13 @@ class MockXfrinConnection(XfrinConnection):
         [resp.add_rrset(Message.SECTION_ANSWER, a) for a in answers]
 
         renderer = MessageRenderer()
-        resp.to_wire(renderer)
+        if tsig:
+            # for now, we don't need a valid SIG.  We only need to include
+            # TSIG RR.  So how to add it and which key is used don't matter.
+            tsig_ctx = TSIGContext(TSIG_KEY)
+            resp.to_wire(renderer, tsig_ctx)
+        else:
+            resp.to_wire(renderer)
         reply_data = struct.pack('H', socket.htons(renderer.get_length()))
         reply_data += renderer.get_data()
 
@@ -183,13 +184,17 @@ class TestXfrinConnection(unittest.TestCase):
                                         TEST_RRCLASS, TEST_DB_FILE,
                                         threading.Event(),
                                         TEST_MASTER_IPV4_ADDRINFO)
-        self.axfr_after_soa = False
         self.soa_response_params = {
             'questions': [example_soa_question],
             'bad_qid': False,
             'response': True,
             'rcode': Rcode.NOERROR(),
+            'tsig': False,
             'axfr_after_soa': self._create_normal_response_data
+            }
+        self.axfr_response_params = {
+            'tsig_1st': False,
+            'tsig_2nd': False
             }
 
     def tearDown(self):
@@ -236,6 +241,15 @@ class TestXfrinConnection(unittest.TestCase):
             query_question = Question(Name("example.com."), RRClass.IN(), query_type)
             msg.add_question(query_question)
             return msg
+
+        def message_has_tsig(data):
+            # a simple check if the actual data contains a TSIG RR.
+            # At our level this simple check should suffice; other detailed
+            # tests regarding the TSIG protocol are done in pydnspp.
+            msg = Message(Message.PARSE)
+            msg.from_wire(data)
+            return msg.get_tsig_record() is not None
+
         self.conn._create_query = create_msg
         # soa request
         self.conn._send_query(RRType.SOA())
@@ -245,22 +259,20 @@ class TestXfrinConnection(unittest.TestCase):
         self.assertEqual(self.conn.query_data, b'\x00\x1d\x105\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01')
 
         # soa request with tsig
-        self.conn._tsig_ctx = TSIGContext(TSIG_KEY)
+        self.conn._tsig_ctx = MockTSIGContext(TSIG_KEY)
         self.conn._send_query(RRType.SOA())
-        tsig_soa_data = strip_mutable_tsig_data(self.conn.query_data)
-        self.assertEqual(tsig_soa_data, b'\x00n\x105\x00\x00\x00\x01\x00\x00\x00\x00\x00\x01\x07example\x03com\x00\x00\x06\x00\x01\x07example\x03com\x00\x00\xfa\x00\xff\x00\x00\x00\x00\x00:\x08hmac-md5\x07sig-alg\x03reg\x03int\x00\x01,\x00\x10\x105\x00\x00\x00\x00')
+        self.assertTrue(message_has_tsig(self.conn.query_data[2:]))
 
         # axfr request with tsig
         self.conn._send_query(RRType.AXFR())
-        tsig_axfr_data = strip_mutable_tsig_data(self.conn.query_data)
-        self.assertEqual(tsig_axfr_data, b'\x00n\x105\x00\x00\x00\x01\x00\x00\x00\x00\x00\x01\x07example\x03com\x00\x00\xfc\x00\x01\x07example\x03com\x00\x00\xfa\x00\xff\x00\x00\x00\x00\x00:\x08hmac-md5\x07sig-alg\x03reg\x03int\x00\x01,\x00\x10\x105\x00\x00\x00\x00')
+        self.assertTrue(message_has_tsig(self.conn.query_data[2:]))
 
     def test_response_with_invalid_msg(self):
         self.conn.reply_data = b'aaaxxxx'
         self.assertRaises(XfrinTestException, self._handle_xfrin_response)
 
-    def test_response_with_tsig(self):
-        self.conn._tsig_ctx = TSIGContext(TSIG_KEY)
+    def test_response_with_tsigfail(self):
+        self.conn._tsig_ctx = MockTSIGContext(TSIG_KEY)
         # server tsig check fail, return with RCODE 9 (NOTAUTH)
         self.conn._send_query(RRType.SOA())
         self.conn.reply_data = self.conn.create_response_data(rcode=Rcode.NOTAUTH())
@@ -330,6 +342,52 @@ class TestXfrinConnection(unittest.TestCase):
         self.conn.response_generator = self._create_soa_response_data
         self.assertRaises(XfrinException, self.conn._check_soa_serial)
 
+    def test_soacheck_with_tsig(self):
+        self.conn._tsig_ctx = MockTSIGContext(TSIG_KEY)
+        self.conn.response_generator = self._create_soa_response_data
+        # emulate a validly signed response
+        self.conn._tsig_ctx.error = TSIGError.NOERROR
+        self.assertEqual(self.conn._check_soa_serial(), XFRIN_OK)
+        self.assertEqual(self.conn._tsig_ctx.get_error(), TSIGError.NOERROR)
+
+    def test_soacheck_with_tsig_notauth(self):
+        self.conn._tsig_ctx = MockTSIGContext(TSIG_KEY)
+
+        # emulate a valid error response
+        self.soa_response_params['rcode'] = Rcode.NOTAUTH()
+        self.conn.response_generator = self._create_soa_response_data
+        self.conn._tsig_ctx.error = TSIGError.BAD_SIG
+
+        self.assertRaises(XfrinException, self.conn._check_soa_serial)
+
+    def test_soacheck_with_tsig_noerror_badsig(self):
+        self.conn._tsig_ctx = MockTSIGContext(TSIG_KEY)
+
+        # emulate a normal response bad verification failure due to BADSIG.
+        # According RFC2845, in this case we should ignore it and keep
+        # waiting for a valid response until a timeout.  But we immediately
+        # treat this as a final failure (just as BIND 9 does).
+        self.conn.response_generator = self._create_soa_response_data
+        self.conn._tsig_ctx.error = TSIGError.BAD_SIG
+
+        self.assertRaises(XfrinException, self.conn._check_soa_serial)
+
+    def test_soacheck_with_tsig_unsigned_response(self):
+        # we can use a real TSIGContext for this.  the response doesn't
+        # contain a TSIG while we sent a signed query.  RFC2845 states
+        # we should wait for a valid response in this case, but we treat
+        # it as a fatal transaction failure, too.
+        self.conn._tsig_ctx = TSIGContext(TSIG_KEY)
+        self.conn.response_generator = self._create_soa_response_data
+        self.assertRaises(XfrinException, self.conn._check_soa_serial)
+
+    def test_soacheck_with_unexpected_tsig_response(self):
+        # we reject unexpected TSIG in responses (following BIND 9's
+        # behavior)
+        self.soa_response_params['tsig'] = True
+        self.conn.response_generator = self._create_soa_response_data
+        self.assertRaises(XfrinException, self.conn._check_soa_serial)
+
     def test_response_shutdown(self):
         self.conn.response_generator = self._create_normal_response_data
         self.conn._shutdown_event.set()
@@ -362,6 +420,81 @@ class TestXfrinConnection(unittest.TestCase):
     def test_do_xfrin(self):
         self.conn.response_generator = self._create_normal_response_data
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
+
+    def test_do_xfrin_with_tsig(self):
+        # use TSIG with a mock context.  we fake all verify results to
+        # emulate successful verification.
+        self.conn._tsig_ctx = MockTSIGContext(TSIG_KEY)
+        self.conn._tsig_ctx.error = TSIGError.NOERROR
+        self.conn.response_generator = self._create_normal_response_data
+        self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
+        # We use two messages in the tests.  The same context should have been
+        # usef for both.
+        self.assertEqual(2, self.conn._tsig_ctx.verify_called)
+
+    def test_do_xfrin_with_tsig_fail(self):
+        # TSIG verify will fail for the first message.  xfrin should fail
+        # immediately.
+        self.conn._tsig_ctx = MockTSIGContext(TSIG_KEY)
+        self.conn._tsig_ctx.error = TSIGError.BAD_SIG
+        self.conn.response_generator = self._create_normal_response_data
+        self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
+        self.assertEqual(1, self.conn._tsig_ctx.verify_called)
+
+    def test_do_xfrin_with_tsig_fail_for_second_message(self):
+        # Similar to the previous test, but first verify succeeds.  There
+        # should be a second verify attempt, which will fail, which should
+        # make xfrin fail.
+        def fake_tsig_error(ctx):
+            if self.conn._tsig_ctx.verify_called == 1:
+                return TSIGError.NOERROR
+            return TSIGError.BAD_SIG
+        self.conn._tsig_ctx = MockTSIGContext(TSIG_KEY)
+        self.conn._tsig_ctx.error = fake_tsig_error
+        self.conn.response_generator = self._create_normal_response_data
+        self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
+        self.assertEqual(2, self.conn._tsig_ctx.verify_called)
+
+    def test_do_xfrin_with_missing_tsig(self):
+        # XFR request sent with TSIG, but the response doesn't have TSIG.
+        # xfr should fail.
+        self.conn._tsig_ctx = MockTSIGContext(TSIG_KEY)
+        self.conn.response_generator = self._create_normal_response_data
+        self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
+        self.assertEqual(1, self.conn._tsig_ctx.verify_called)
+
+    def test_do_xfrin_with_missing_tsig_for_second_message(self):
+        # Similar to the previous test, but firt one contains TSIG and verify
+        # succeeds (due to fake).  The second message lacks TSIG.
+        #
+        # Note: this test case is actually not that trivial:  Skipping
+        # intermediate TSIG is allowed.  In this case, however, the second
+        # message is the last one, which must contain TSIG anyway, so the
+        # expected result is correct.  If/when we support skipping
+        # intermediate TSIGs, we'll need additional test cases.
+        def fake_tsig_error(ctx):
+            if self.conn._tsig_ctx.verify_called == 1:
+                return TSIGError.NOERROR
+            return TSIGError.FORMERR
+        self.conn._tsig_ctx = MockTSIGContext(TSIG_KEY)
+        self.conn._tsig_ctx.error = fake_tsig_error
+        self.conn.response_generator = self._create_normal_response_data
+        self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
+        self.assertEqual(2, self.conn._tsig_ctx.verify_called)
+
+    def test_do_xfrin_with_unexpected_tsig(self):
+        # XFR request wasn't signed, but response includes TSIG.  Like BIND 9,
+        # we reject that.
+        self.axfr_response_params['tsig_1st'] = True
+        self.conn.response_generator = self._create_normal_response_data
+        self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
+
+    def test_do_xfrin_with_unexpected_tsig_for_second_message(self):
+        # similar to the previous test, but the first message is normal.
+        # the second one contains an unexpected TSIG.  should be rejected.
+        self.axfr_response_params['tsig_2nd'] = True
+        self.conn.response_generator = self._create_normal_response_data
+        self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
 
     def test_do_xfrin_empty_response(self):
         # skipping the creation of response data, so the transfer will fail.
@@ -408,8 +541,10 @@ class TestXfrinConnection(unittest.TestCase):
         # This helper method creates a simple sequence of DNS messages that
         # forms a valid XFR transaction.  It consists of two messages, each
         # containing just a single SOA RR.
-        self.conn.reply_data = self.conn.create_response_data()
-        self.conn.reply_data += self.conn.create_response_data()
+        tsig_1st = self.axfr_response_params['tsig_1st']
+        tsig_2nd = self.axfr_response_params['tsig_2nd']
+        self.conn.reply_data = self.conn.create_response_data(tsig=tsig_1st)
+        self.conn.reply_data += self.conn.create_response_data(tsig=tsig_2nd)
 
     def _create_soa_response_data(self):
         # This helper method creates a DNS message that is supposed to be
@@ -420,7 +555,8 @@ class TestXfrinConnection(unittest.TestCase):
             bad_qid=self.soa_response_params['bad_qid'],
             response=self.soa_response_params['response'],
             rcode=self.soa_response_params['rcode'],
-            questions=self.soa_response_params['questions'])
+            questions=self.soa_response_params['questions'],
+            tsig=self.soa_response_params['tsig'])
         if self.soa_response_params['axfr_after_soa'] != None:
             self.conn.response_generator = self.soa_response_params['axfr_after_soa']
 

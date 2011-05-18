@@ -56,7 +56,7 @@ public:
 
 class s_Name : public PyObject {
 public:
-    s_Name() : cppobj(NULL) {}
+    s_Name() : cppobj(NULL), position(0) {}
     Name* cppobj;
     size_t position;
 };
