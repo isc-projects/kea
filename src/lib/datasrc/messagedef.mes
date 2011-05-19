@@ -424,10 +424,6 @@ and type in the database.
 Debug information. The SQLite data source is trying to identify, which zone
 should hold this domain.
 
-% SQLITE_ENCLOSURE_BAD_CLASS class mismatch looking for a zone ('%1' and '%2')
-The SQLite data source can handle only one class at a time and it was asked
-to identify which zone is holding data of a different class.
-
 % SQLITE_ENCLOSURE_NOTFOUND no zone contains it
 Debug information. The last SQLITE_ENCLOSURE query was unsuccessful, there's
 no such zone in our data.
