@@ -37,10 +37,7 @@ class TestLogger : public Logger {
 public:
     /// \brief constructor
     TestLogger(const string& name) : Logger(name, true)
-    {}
-
-    static void reset() {
-        Logger::reset();
+    {
     }
 };
 
@@ -55,7 +52,6 @@ protected:
     }
 
     ~LoggerTest() {
-        TestLogger::reset();
     }
 };
 

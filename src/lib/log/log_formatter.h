@@ -17,7 +17,7 @@
 
 #include <string>
 #include <boost/lexical_cast.hpp>
-#include <log/logger_levels.h>
+#include <log/logger_level.h>
 
 namespace isc {
 namespace log {
