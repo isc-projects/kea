@@ -415,9 +415,7 @@ class ZonemgrRefresh:
         # TODO2: We also don't use get_default_value yet
         backup = self._zonemgr_refresh_info.copy()
 
-        # store the values so we can restore them if there is a problem
-        lowerbound_refresh_backup = self._lowerbound_refresh
-        # Get a new value, but only if it is defined
+        # Get a new value, but only if it is defined (commonly used below)
         # We don't use "value or default", because if value would be
         # 0, we would take default
         def val_or_default(value, default):
@@ -426,6 +424,8 @@ class ZonemgrRefresh:
             else:
                 return default
 
+        # store the values so we can restore them if there is a problem
+        lowerbound_refresh_backup = self._lowerbound_refresh
         self._lowerbound_refresh = val_or_default(
             new_config.get('lowerbound_refresh'), self._lowerbound_refresh)
 
