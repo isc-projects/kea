@@ -15,6 +15,7 @@
 #include <exceptions/exceptions.h>
 #include <dns/message.h>
 #include <dns/rcode.h>
+#include <dns/tsig.h>
 
 using namespace isc::dns;
 using namespace isc::util;
@@ -696,6 +697,11 @@ Message_toWire(s_Message* self, PyObject* args) {
         } catch (const InvalidMessageOperation& imo) {
             PyErr_Clear();
             PyErr_SetString(po_InvalidMessageOperation, imo.what());
+            return (NULL);
+        } catch (const TSIGContextError& ex) {
+            // toWire() with a TSIG context can fail due to this if the
+            // python program has a bug.
+            PyErr_SetString(po_TSIGContextError, ex.what());
             return (NULL);
         }
     }
