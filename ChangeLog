@@ -144,11 +144,13 @@
 	reconfigure them.
 	(Trac #775, git 572ac2cf62e18f7eb69d670b890e2a3443bfd6e7)
 
-222.	[bug]		jerry
-	src/lib/zonemgr: Fix a bug that xfrin not checking for new copy of
-	zone on startup.  Imposes some random jitters to avoid many zones
-	need to do refresh at the same time.
-	(Trac #387, svn 9140fab9bab5f6502bd15d391fd51ac078b0b89b)
+222.	[bug]*		jerry
+	src/lib/zonemgr: Fix a bug that xfrin not checking for new
+	copy of zone on startup.  Imposes some random jitters to
+	avoid many zones need to do refresh at the same time. This
+	removed the Zonemgr/jitter_scope setting and introduced
+	Zonemgr/refresh_jitter and Zonemgr/reload_jitter.
+	(Trac #387, git 1241ddcffa16285d0a7bb01d6a8526e19fbb70cb)
 
 221.	[func]*		jerry
 	src/lib/util: Create C++ utility library.
