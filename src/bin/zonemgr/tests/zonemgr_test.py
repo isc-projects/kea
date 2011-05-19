@@ -488,6 +488,22 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.assertEqual(0.25, self.zone_refresh._refresh_jitter)
         self.assertEqual(0.35, self.zone_refresh._reload_jitter)
 
+        # Make sure we accept 0 as a value
+        config_data = {
+                    "lowerbound_refresh" : 60,
+                    "lowerbound_retry" : 30,
+                    "max_transfer_timeout" : 19800,
+                    "refresh_jitter" : 0,
+                    "reload_jitter" : 0.75,
+                    "secondary_zones": []
+                }
+        self.zone_refresh.update_config_data(config_data)
+        self.assertEqual(60, self.zone_refresh._lowerbound_refresh)
+        self.assertEqual(30, self.zone_refresh._lowerbound_retry)
+        self.assertEqual(19800, self.zone_refresh._max_transfer_timeout)
+        self.assertEqual(0, self.zone_refresh._refresh_jitter)
+        self.assertEqual(0.75, self.zone_refresh._reload_jitter)
+
     def test_shutdown(self):
         self.zone_refresh._check_sock = self.zone_refresh._master_socket
         listener = self.zone_refresh.run_timer()
