@@ -263,7 +263,6 @@ TEST_F(AuthSrvTest, TSIGSigned) {
 
     // What did we get?
     EXPECT_TRUE(dnsserv.hasAnswer());
-    // TODO Is the TSIG counted here?
     headerCheck(*parse_message, default_qid, Rcode::NOERROR(),
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 1, 0);
     // We need to parse the message ourself, or getTSIGRecord won't work
@@ -272,7 +271,7 @@ TEST_F(AuthSrvTest, TSIGSigned) {
     m.fromWire(ib);
 
     const TSIGRecord* tsig = m.getTSIGRecord();
-    ASSERT_TRUE(tsig) << "Missing TSIG signature";
+    ASSERT_TRUE(tsig != NULL) << "Missing TSIG signature";
     TSIGError error(context.verify(tsig, response_obuffer->getData(),
                                    response_obuffer->getLength()));
     EXPECT_EQ(TSIGError::NOERROR(), error) <<
@@ -281,24 +280,20 @@ TEST_F(AuthSrvTest, TSIGSigned) {
 
 // Give the server a signed request, but don't give it the key. It will
 // not be able to verify it, returning BADKEY
-TEST_F(AuthSrvTest, TSIGSignedNoKey) {
+TEST_F(AuthSrvTest, TSIGSignedBadKey) {
     TSIGKey key("key:c2VjcmV0Cg==:hmac-sha1");
     TSIGContext context(key);
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
                          Name("version.bind"), RRClass::CH(), RRType::TXT());
-    // Make sure we get the extended error code as well
-    request_message.setEDNS(ConstEDNSPtr(new EDNS));
     createRequestPacket(request_message, IPPROTO_UDP, &context);
 
     // Process the message, but use a different key there
     isc::server_common::keyring.reset(new TSIGKeyRing);
-    isc::server_common::keyring->add(TSIGKey("key:QkFECg==:hmac-sha1"));
     server.processMessage(*io_message, parse_message, response_obuffer,
                           &dnsserv);
     isc::server_common::keyring.reset();
 
     EXPECT_TRUE(dnsserv.hasAnswer());
-    // TODO Is the TSIG counted here?
     headerCheck(*parse_message, default_qid, TSIGError::BAD_KEY().toRcode(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
     // We need to parse the message ourself, or getTSIGRecord won't work
@@ -307,8 +302,9 @@ TEST_F(AuthSrvTest, TSIGSignedNoKey) {
     m.fromWire(ib);
 
     const TSIGRecord* tsig = m.getTSIGRecord();
-    ASSERT_TRUE(tsig) <<
+    ASSERT_TRUE(tsig != NULL) <<
         "Missing TSIG signature (we should have one even at error)";
+    EXPECT_EQ(TSIGError::BAD_KEY_CODE, tsig->getRdata().getError());
     EXPECT_EQ(0, tsig->getRdata().getMACSize()) <<
         "It should be unsigned with this error";
 }
@@ -320,18 +316,16 @@ TEST_F(AuthSrvTest, TSIGBadSig) {
     TSIGContext context(key);
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
                          Name("version.bind"), RRClass::CH(), RRType::TXT());
-    // Make sure we get the extended error code as well
-    request_message.setEDNS(ConstEDNSPtr(new EDNS));
     createRequestPacket(request_message, IPPROTO_UDP, &context);
 
     isc::server_common::keyring.reset(new TSIGKeyRing);
+    isc::server_common::keyring->add(TSIGKey("key:QkFECg==:hmac-sha1"));
     server.processMessage(*io_message, parse_message, response_obuffer,
                           &dnsserv);
     isc::server_common::keyring.reset();
 
     EXPECT_TRUE(dnsserv.hasAnswer());
-    // TODO Is the TSIG counted here?
-    headerCheck(*parse_message, default_qid, TSIGError::BAD_KEY().toRcode(),
+    headerCheck(*parse_message, default_qid, TSIGError::BAD_SIG().toRcode(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
     // We need to parse the message ourself, or getTSIGRecord won't work
     InputBuffer ib(response_obuffer->getData(), response_obuffer->getLength());
@@ -339,8 +333,9 @@ TEST_F(AuthSrvTest, TSIGBadSig) {
     m.fromWire(ib);
 
     const TSIGRecord* tsig = m.getTSIGRecord();
-    ASSERT_TRUE(tsig) <<
+    ASSERT_TRUE(tsig != NULL) <<
         "Missing TSIG signature (we should have one even at error)";
+    EXPECT_EQ(TSIGError::BAD_SIG_CODE, tsig->getRdata().getError());
     EXPECT_EQ(0, tsig->getRdata().getMACSize()) <<
         "It should be unsigned with this error";
 }
