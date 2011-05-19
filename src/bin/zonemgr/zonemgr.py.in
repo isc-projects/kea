@@ -101,6 +101,11 @@ class ZonemgrRefresh:
         self._check_sock = slave_socket
         self._db_file = db_file
         self._zonemgr_refresh_info = {}
+        self._lowerbound_refresh = None
+        self._lowerbound_retry = None
+        self._max_transfer_timeout = None
+        self._refresh_jitter = None
+        self._reload_jitter = None
         self.update_config_data(config_data)
         self._running = False
 
@@ -404,37 +409,59 @@ class ZonemgrRefresh:
 
     def update_config_data(self, new_config):
         """ update ZonemgrRefresh config """
+        # TODO: we probably want to store all this info in a nice
+        # class, so that we don't have to backup and restore every
+        # single value.
+        # TODO2: We also don't use get_default_value yet
         backup = self._zonemgr_refresh_info.copy()
+
+        # store the values so we can restore them if there is a problem
+        lowerbound_refresh_backup = self._lowerbound_refresh
+        self._lowerbound_refresh = new_config.get('lowerbound_refresh') or self._lowerbound_refresh
+
+        lowerbound_retry_backup = self._lowerbound_retry
+        self._lowerbound_retry = new_config.get('lowerbound_retry') or self._lowerbound_retry
+
+        max_transfer_timeout_backup = self._max_transfer_timeout
+        self._max_transfer_timeout = new_config.get('max_transfer_timeout') or self._max_transfer_timeout
+
+        refresh_jitter_backup = self._refresh_jitter
+        self._refresh_jitter = new_config.get('refresh_jitter') or self._refresh_jitter
+
+        reload_jitter_backup = self._reload_jitter
+        self._reload_jitter = new_config.get('reload_jitter') or self._reload_jitter
         try:
             required = {}
-            # Add new zones
-            for secondary_zone in new_config.get('secondary_zones'):
-                name = secondary_zone['name']
-                # Be tolerant to sclerotic users who forget the final dot
-                if name[-1] != '.':
-                    name = name + '.'
-                name_class = (name, secondary_zone['class'])
-                required[name_class] = True
-                # Add it only if it isn't there already
-                if not name_class in self._zonemgr_refresh_info:
-                    self.zonemgr_add_zone(name_class)
-            # Drop the zones that are no longer there
-            # Do it in two phases, python doesn't like deleting while iterating
-            to_drop = []
-            for old_zone in self._zonemgr_refresh_info:
-                if not old_zone in required:
-                    to_drop.append(old_zone)
-            for drop in to_drop:
-                del self._zonemgr_refresh_info[drop]
+            secondary_zones = new_config.get('secondary_zones')
+            if secondary_zones is not None:
+                # Add new zones
+                for secondary_zone in new_config.get('secondary_zones'):
+                    name = secondary_zone['name']
+                    # Be tolerant to sclerotic users who forget the final dot
+                    if name[-1] != '.':
+                        name = name + '.'
+                    name_class = (name, secondary_zone['class'])
+                    required[name_class] = True
+                    # Add it only if it isn't there already
+                    if not name_class in self._zonemgr_refresh_info:
+                        self.zonemgr_add_zone(name_class)
+                # Drop the zones that are no longer there
+                # Do it in two phases, python doesn't like deleting while iterating
+                to_drop = []
+                for old_zone in self._zonemgr_refresh_info:
+                    if not old_zone in required:
+                        to_drop.append(old_zone)
+                for drop in to_drop:
+                    del self._zonemgr_refresh_info[drop]
         # If we are not able to find it in database, restore the original
         except:
             self._zonemgr_refresh_info = backup
+            self._lowerbound_refresh = lowerbound_refresh_backup
+            self._lowerbound_retry = lowerbound_retry_backup
+            self._max_transfer_timeout = max_transfer_timeout_backup
+            self._refresh_jitter = refresh_jitter_backup
+            self._reload_jitter = reload_jitter_backup
             raise
-        self._lowerbound_refresh = new_config.get('lowerbound_refresh')
-        self._lowerbound_retry = new_config.get('lowerbound_retry')
-        self._max_transfer_timeout = new_config.get('max_transfer_timeout')
-        self._refresh_jitter = new_config.get('refresh_jitter')
-        self._reload_jitter = new_config.get('reload_jitter')
 
 class Zonemgr:
     """Zone manager class."""
