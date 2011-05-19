@@ -95,7 +95,6 @@ public:
     /// \return The full name of the logger (including the root name)
     virtual std::string getName();
 
-
     /// \brief Set Severity Level for Logger
     ///
     /// Sets the level at which this logger will log messages.  If none is set,
@@ -107,13 +106,11 @@ public:
     /// outside these limits is silently coerced to the nearest boundary.
     virtual void setSeverity(isc::log::Severity severity, int dbglevel = 1);
 
-
     /// \brief Get Severity Level for Logger
     ///
     /// \return The current logging level of this logger.  In most cases though,
     /// the effective logging level is what is required.
     virtual isc::log::Severity getSeverity();
-
 
     /// \brief Get Effective Severity Level for Logger
     ///
@@ -122,13 +119,11 @@ public:
     /// is the severity of the parent.
     virtual isc::log::Severity getEffectiveSeverity();
 
-
     /// \brief Return DEBUG Level
     ///
     /// \return Current setting of debug level.  This is returned regardless of
     /// whether the severity is set to debug.
     virtual int getDebugLevel();
-
 
     /// \brief Returns if Debug Message Should Be Output
     ///
@@ -137,22 +132,17 @@ public:
     /// checked is less than or equal to the debug level set for the logger.
     virtual bool isDebugEnabled(int dbglevel = MIN_DEBUG_LEVEL);
 
-
     /// \brief Is INFO Enabled?
     virtual bool isInfoEnabled();
-
 
     /// \brief Is WARNING Enabled?
     virtual bool isWarnEnabled();
 
-
     /// \brief Is ERROR Enabled?
     virtual bool isErrorEnabled();
 
-
     /// \brief Is FATAL Enabled?
     virtual bool isFatalEnabled();
-
 
     /// \brief Output Debug Message
     ///
@@ -161,24 +151,20 @@ public:
     /// \param ident Message identification.
     Formatter debug(int dbglevel, const MessageID& ident);
 
-
     /// \brief Output Informational Message
     ///
     /// \param ident Message identification.
     Formatter info(const MessageID& ident);
-
 
     /// \brief Output Warning Message
     ///
     /// \param ident Message identification.
     Formatter warn(const MessageID& ident);
 
-
     /// \brief Output Error Message
     ///
     /// \param ident Message identification.
     Formatter error(const MessageID& ident);
-
 
     /// \brief Output Fatal Message
     ///
@@ -203,10 +189,14 @@ protected:
 
 private:
     friend class isc::log::Formatter<Logger>;
+
     /// \brief Raw output function
     ///
     /// This is used by the formatter to output formatted output.
-    void output(const char* sevText, const std::string& message);
+    ///
+    /// \param severity Severity of the message being output.
+    /// \param message Text of the message to be output.
+    void output(const Severity& severity, const std::string& message);
 
     /// \brief Copy Constructor
     ///

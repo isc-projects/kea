@@ -17,6 +17,7 @@
 
 #include <string>
 #include <boost/lexical_cast.hpp>
+#include <log/logger_levels.h>
 
 namespace isc {
 namespace log {
@@ -73,13 +74,18 @@ private:
     ///
     /// If NULL, we are not active and should not produce anything.
     mutable Logger* logger_;
-    /// \brief Prefix (eg. "ERROR", "DEBUG" or like that)
-    const char* prefix_;
+
+    /// \brief Message severity
+    Severity severity_;
+
     /// \brief The messages with %1, %2... placeholders
     std::string* message_;
+
     /// \brief Which will be the next placeholder to replace
     unsigned nextPlaceholder_;
+
     Formatter& operator =(const Formatter& other);
+
 public:
     /// \brief Constructor of "active" formatter
     ///
@@ -89,21 +95,21 @@ public:
     ///
     /// It is not expected to be called by user of logging system directly.
     ///
-    /// \param prefix The severity prefix, like "ERROR" or "DEBUG"
+    /// \param severity The severity of the message (DEBUG, ERROR etc.)
     /// \param message The message with placeholders. We take ownership of
     ///     it and we will modify the string. Must not be NULL unless
     ///     logger is also NULL, but it's not checked.
     /// \param logger The logger where the final output will go, or NULL
     ///     if no output is wanted.
-    Formatter(const char* prefix = NULL, std::string* message = NULL,
+    Formatter(const Severity& severity = NONE, std::string* message = NULL,
               Logger* logger = NULL) :
-        logger_(logger), prefix_(prefix), message_(message),
-        nextPlaceholder_(1)
+        logger_(logger), severity_(severity), message_(message),
+        nextPlaceholder_(0)
     {
     }
 
     Formatter(const Formatter& other) :
-        logger_(other.logger_), prefix_(other.prefix_),
+        logger_(other.logger_), severity_(other.severity_),
         message_(other.message_), nextPlaceholder_(other.nextPlaceholder_)
     {
         other.logger_ = false;
@@ -113,7 +119,7 @@ public:
     /// This is the place where output happens if the formatter is active.
     ~ Formatter() {
         if (logger_) {
-            logger_->output(prefix_, *message_);
+            logger_->output(severity_, *message_);
             delete message_;
         }
     }
@@ -134,11 +140,10 @@ public:
     /// \brief String version of arg.
     Formatter& arg(const std::string& arg) {
         if (logger_) {
-            // FIXME: This logic has a problem. If we had a message like
-            // "%1 %2" and called .arg("%2").arg(42), we would get "42 %2".
-            // But we consider this to be rare enough not to complicate
-            // matters.
-            replacePlaceholder(message_, arg, nextPlaceholder_ ++);
+            // Note that if we had a message like "%1 %2" and called
+            // .arg(42).arg("%1"), we would get "42 %1" (i.e. no recursive
+            // replacements).  This is a limitation but not a problem.
+            replacePlaceholder(message_, arg, ++nextPlaceholder_ );
         }
         return (*this);
     }
