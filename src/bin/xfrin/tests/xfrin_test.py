@@ -532,7 +532,7 @@ class TestXfrinConnection(unittest.TestCase):
         # We are going to have a SOA query/response transaction, followed by
         # AXFR, all TSIG signed.  xfrin should use a new TSIG context for
         # AXFR.  We are not interested in whether verify works correctly in
-        # this tests, so we simply fake the results (they need to success for
+        # this test, so we simply fake the results (they need to succeed for
         # this test)
         self.conn._tsig_key = TSIG_KEY
         self.conn._tsig_ctx_creator = \
