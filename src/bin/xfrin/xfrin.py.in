@@ -134,9 +134,14 @@ class XfrinConnection(asyncore.dispatcher):
         self._shutdown_event = shutdown_event
         self._verbose = verbose
         self._master_address = master_addrinfo[2]
+        self._tsig_key = tsig_key
         self._tsig_ctx = None
-        if tsig_key is not None:
-            self._tsig_ctx = TSIGContext(tsig_key)
+        # tsig_ctx_creator is introduced to allow tests to use a mock class for
+        # easier tests (in normal case we always use the default)
+        self._tsig_ctx_creator = self.__create_tsig_ctx
+
+    def __create_tsig_ctx(self, key):
+        return TSIGContext(key)
 
     def connect_to_master(self):
         '''Connect to master in TCP.'''
@@ -176,7 +181,8 @@ class XfrinConnection(asyncore.dispatcher):
         render = MessageRenderer()
         # XXX Currently, python wrapper doesn't accept 'None' parameter in this case,
         # we should remove the if statement and use a universal interface later.
-        if self._tsig_ctx is not None:
+        if self._tsig_key is not None:
+            self._tsig_ctx = self._tsig_ctx_creator(self._tsig_key)
             msg.to_wire(render, self._tsig_ctx)
         else:
             msg.to_wire(render)
