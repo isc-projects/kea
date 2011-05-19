@@ -18,6 +18,7 @@
 #include <stdarg.h>
 #include <time.h>
 
+#include <iostream>
 #include <cstdlib>
 #include <string>
 #include <map>
@@ -28,10 +29,8 @@
 #include <log4cplus/logger.h>
 
 // BIND-10 logger files
-#include <log/debug_levels.h>
-#include <log/logger.h>
+#include <log/logger_level_impl.h>
 #include <log/message_types.h>
-#include <log/root_logger_name.h>
 
 namespace isc {
 namespace log {
@@ -40,36 +39,23 @@ namespace log {
 ///
 /// The logger uses a "pimpl" idiom for implementation, where the base logger
 /// class contains little more than a pointer to the implementation class, and
-/// all actions are carried out by the latter.  This class is an implementation
-/// class that just outputs to stdout.
+/// all actions are carried out by the latter.
+///
+/// This particular implementation is based on log4cplus (from sourceforge:
+/// http://log4cplus.sourceforge.net).  Particular items of note:
+///
+/// a) BIND 10 loggers have names of the form "root.sublogger".  Log4cplus
+/// loggers are always subloggers of a "root" logger.  In this implementation,
+/// the name of the logger is checked.  If it is the root name (as evidenced
+/// by the setting of the BIND 10 root logger name), the log4cplus root logger
+/// is used.  Otherwise the name is used as the name of a logger and a log4cplus
+/// sub-logger created.
+///
+/// b) The idea of debug levels is implemented.  Seee logger_level.h and
+/// logger_level_impl.h for more details on this.
 
 class LoggerImpl {
 public:
-
-    /// \brief Information About Logger
-    ///
-    /// Holds a information about a logger, namely its severity and its debug
-    /// level.  This could be a std::pair, except that it gets confusing when
-    /// accessing the LoggerInfoMap: that returns a pair, so we to reference
-    /// elements we would use constructs like ((i->first).second);
-    struct LoggerInfo {
-        isc::log::Severity  severity;
-        int                 dbglevel;
-
-        LoggerInfo(isc::log::Severity sev = isc::log::INFO,
-            int dbg = MIN_DEBUG_LEVEL) : severity(sev), dbglevel(dbg)
-        {}
-    };
-
-
-    /// \brief Information About All Loggers
-    ///
-    /// Information about all loggers in the system - except the root logger -
-    /// is held in a map, linking name of the logger (excluding the root
-    /// name component) and its set severity and debug levels.  The root
-    /// logger information is held separately.
-    typedef std::map<std::string, LoggerInfo>   LoggerInfoMap;
-
 
     /// \brief Constructor
     ///
@@ -99,16 +85,16 @@ public:
     ///
     /// \param severity Severity level to log
     /// \param dbglevel If the severity is DEBUG, this is the debug level.
-    /// This can be in the range 1 to 100 and controls the verbosity.  A value
+    /// This can be in the range 0 to 99 and controls the verbosity.  A value
     /// outside these limits is silently coerced to the nearest boundary.
-    virtual void setSeverity(isc::log::Severity severity, int dbglevel = 1);
+    virtual void setSeverity(Severity severity, int dbglevel = 1);
 
 
     /// \brief Get Severity Level for Logger
     ///
     /// \return The current logging level of this logger.  In most cases though,
     /// the effective logging level is what is required.
-    virtual isc::log::Severity getSeverity();
+    virtual Severity getSeverity();
 
 
     /// \brief Get Effective Severity Level for Logger
@@ -116,14 +102,21 @@ public:
     /// \return The effective severity level of the logger.  This is the same
     /// as getSeverity() if the logger has a severity level set, but otherwise
     /// is the severity of the parent.
-    virtual isc::log::Severity getEffectiveSeverity();
+    virtual Severity getEffectiveSeverity();
 
 
-    /// \brief Return DEBUG Level
+    /// \brief Return debug level
     ///
-    /// \return Current setting of debug level.  This is returned regardless of
-    /// whether the
+    /// \return Current setting of debug level.  This will be zero if the
+    ///         the current severity level is not DEBUG.
     virtual int getDebugLevel();
+
+
+    /// \brief Return effective debug level
+    ///
+    /// \return Current setting of effective debug level.  This will be zero if
+    ///         the current effective severity level is not DEBUG.
+    virtual int getEffectiveDebugLevel();
 
 
     /// \brief Returns if Debug Message Should Be Output
@@ -131,8 +124,10 @@ public:
     /// \param dbglevel Level for which debugging is checked.  Debugging is
     /// enabled only if the logger has DEBUG enabled and if the dbglevel
     /// checked is less than or equal to the debug level set for the logger.
-    virtual bool
-    isDebugEnabled(int dbglevel = MIN_DEBUG_LEVEL);
+    virtual bool isDebugEnabled(int dbglevel = MIN_DEBUG_LEVEL) {
+        Level level(DEBUG, dbglevel);
+        return logger_.isEnabledFor(LoggerLevelImpl::convertFromBindLevel(level));
+    }
 
     /// \brief Is INFO Enabled?
     virtual bool isInfoEnabled() {
@@ -180,36 +175,7 @@ public:
     }
 
 
-    /// \brief Reset Global Data
-    ///
-    /// Only used for testing, this clears all the logger information and
-    /// resets it back to default values.
-    static void reset() {
-        //root_logger_info_ = LoggerInfo(isc::log::INFO, MIN_DEBUG_LEVEL);
-        //logger_info_.clear();
-    }
-
-
 private:
-    /// \brief Convert Log Levels
-    ///
-    /// Converts a BIND 10 log level to a log4cplus log level.
-    ///
-    /// \param inlevel BIND 10 log level.
-    ///
-    /// \return Log4cplus log level.
-    log4cplus::LogLevel convertFromBindSeverity(
-        const isc::log::Severity& inlevel);
-
-    /// \brief Convert Log Levels
-    ///
-    /// Converts a log4cplus log level to a BIND 10 log level.
-    ///
-    /// \param inlevel log4cplus log level.
-    ///
-    /// \return BIND 10 log level.
-    isc::log::Severity convertToBindSeverity(
-        const log4cplus::LogLevel& inlevel);
 
     /// \brief Initialize log4cplus
     ///
@@ -219,9 +185,8 @@ private:
 
     bool                is_root_;           ///< Is this BIND 10 root logger?
     std::string         name_;              ///< Full name of this logger
-    std::string         fmt_name_;          ///< Formatted name
+    std::string         fmt_name_;          ///< Formatted name for output
     log4cplus::Logger   logger_;            ///< Underlying log4cplus logger
-
 };
 
 } // namespace log

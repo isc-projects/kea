@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __LOGGER_LEVELS_H
-#define __LOGGER_LEVELS_H
+#ifndef __LOGGER_LEVEL_H
+#define __LOGGER_LEVEL_H
 
 namespace isc {
 namespace log {
@@ -36,7 +36,27 @@ typedef enum {
     NONE = 6    // Disable logging
 } Severity;
 
+/// Minimum/maximum debug levels.  These are defined wi
+
+const int MIN_DEBUG_LEVEL = 0;
+const int MAX_DEBUG_LEVEL = 99;
+
+/// \brief Log level structure
+///
+/// A simple pair structure that provides suitable names for the members.  It
+/// holds a combination of logging severity and debug level.
+struct Level {
+    Severity    severity;   ///< Logging severity
+    int         dbglevel;   ///< Debug level
+
+    Level(Severity sev = DEFAULT, int dbg = MIN_DEBUG_LEVEL) :
+        severity(sev), dbglevel(dbg)
+    {}
+
+    // Default assignment and copy constructor is appropriate
+};
+
 }   // namespace log
 }   // namespace isc
 
-#endif // __LOGGER_LEVELS_H
+#endif // __LOGGER_LEVEL_H

@@ -112,7 +112,7 @@ Logger::isFatalEnabled() {
 // Output methods
 
 void
-Logger::output(const Severity& severity, const string& message) {
+Logger::output(const Severity& severity, const std::string& message) {
     getLoggerPtr()->outputRaw(severity, message);
 }
 
@@ -168,13 +168,6 @@ Logger::fatal(const isc::log::MessageID& ident) {
 
 bool Logger::operator==(Logger& other) {
     return (*getLoggerPtr() == *other.getLoggerPtr());
-}
-
-// Protected methods (used for testing)
-
-void
-Logger::reset() {
-    LoggerImpl::reset();
 }
 
 } // namespace log
