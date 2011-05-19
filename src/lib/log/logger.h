@@ -18,8 +18,7 @@
 #include <cstdlib>
 #include <string>
 
-#include <log/debug_levels.h>
-#include <log/logger_levels.h>
+#include <log/logger_level.h>
 #include <log/message_types.h>
 #include <log/log_formatter.h>
 
@@ -178,14 +177,6 @@ public:
     ///
     /// \return true if the logger objects are instances of the same logger.
     bool operator==(Logger& other);
-
-protected:
-
-    /// \brief Reset Global Data
-    ///
-    /// Used for testing, this calls upon the underlying logger implementation
-    /// to clear any global data.
-    static void reset();
 
 private:
     friend class isc::log::Formatter<Logger>;

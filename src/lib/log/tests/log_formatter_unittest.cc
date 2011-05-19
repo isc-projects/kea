@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 #include <log/log_formatter.h>
-#include <log/logger_levels.h>
+#include <log/logger_level.h>
 
 #include <vector>
 #include <string>
