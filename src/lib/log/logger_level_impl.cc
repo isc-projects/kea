@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <string.h>
+#include <iostream>
 #include <boost/lexical_cast.hpp>
 
 #include <log4cplus/logger.h>
@@ -85,12 +86,16 @@ LoggerLevelImpl::convertToBindLevel(const log4cplus::LogLevel loglevel) {
 
     } else if (loglevel <= log4cplus::DEBUG_LOG_LEVEL) {
 
-        // Debug severity, so extract the debug level from the numeric value
-        // and coerce to the allowed limits
+        // Debug severity, so extract the debug level from the numeric value.
+        // If outside the limits, change the severity to the level above or below.
         int dbglevel = MIN_DEBUG_LEVEL +
                        static_cast<int>(log4cplus::DEBUG_LOG_LEVEL) -
                        static_cast<int>(loglevel);
-        dbglevel = max(MIN_DEBUG_LEVEL, min(dbglevel, MAX_DEBUG_LEVEL));
+        if (dbglevel > MAX_DEBUG_LEVEL) {
+            return (Level(DEFAULT));
+        } else if (dbglevel < MIN_DEBUG_LEVEL) {
+            return (Level(INFO));
+        }
         return (Level(DEBUG, dbglevel));
 
     } else if (loglevel <= log4cplus::INFO_LOG_LEVEL) {
