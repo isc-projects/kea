@@ -13,7 +13,9 @@
 	Updated configuration options to Xfrin, so that you can specify
 	a master address, port, and TSIG key per zone. Still only one per
 	zone at this point, and TSIG keys are (currently) only specified
-	by their full string representation.
+	by their full string representation. This replaces the
+	Xfrin/master_addr, Xfrin/master_port, and short-lived
+	Xfrin/tsig_key configurations with a Xfrin/zones list.
 	(Trac #811, git 88504d121c5e08fff947b92e698a54d24d14c375)
 
 239.	[bug]		jerry
