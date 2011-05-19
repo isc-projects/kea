@@ -1,7 +1,7 @@
 SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 if USE_STATIC_LINK
@@ -15,6 +15,8 @@ if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES  = root_logger_name_unittest.cc
 run_unittests_SOURCES += logger_unittest.cc
+run_unittests_SOURCES += logger_level_unittest.cc
+run_unittests_SOURCES += logger_level_impl_unittest.cc
 run_unittests_SOURCES += message_dictionary_unittest.cc
 run_unittests_SOURCES += message_reader_unittest.cc
 run_unittests_SOURCES += message_initializer_unittest.cc
