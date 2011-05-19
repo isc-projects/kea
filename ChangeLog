@@ -21,13 +21,13 @@ bind10-devel-20110519 released on May 19, 2011
 	(Trac #811, git 88504d121c5e08fff947b92e698a54d24d14c375)
 
 239.	[bug]		jerry
-	src/bin/xfrout: If a zone doesn't have notify slaves(only has
+	src/bin/xfrout: If a zone doesn't have notify slaves (only has
 	one apex ns record - the primary master name server) will cause
 	b10-xfrout uses 100% of CPU.
 	(Trac #684, git d11b5e89203a5340d4e5ca51c4c02db17c33dc1f)
 
 238.	[func]		zhang likun
-	Implement the simplest forwarder, which pass everything throught
+	Implement the simplest forwarder, which pass everything through
 	except QID, port number. The response will not be cached.
 	(Trac #598_new, git 8e28187a582820857ef2dae9b13637a3881f13ba)
 
@@ -122,14 +122,14 @@ bind10-devel-20110519 released on May 19, 2011
 	(Trac #781, git 9df42279a47eb617f586144dce8cce680598558a)
 
 225.	[func]		naokikambe
-	Added the HTTP/XML interface(b10-stats-httpd) to the
+	Added the HTTP/XML interface (b10-stats-httpd) to the
 	statistics feature in BIND 10. b10-stats-httpd is a standalone
 	HTTP server and it requests statistics data to the stats
-	daemon(b10-stats) and sends it to HTTP clients in XML
+	daemon (b10-stats) and sends it to HTTP clients in XML
 	format. Items of the data collected via b10-stats-httpd
 	are almost equivalent to ones which are collected via
-	bindctl. Since it also can send XSL(Extensible Stylessheet
-	Language) document and XSD(XML Schema definition) document,
+	bindctl. Since it also can send XSL (Extensible Stylesheet
+	Language) document and XSD (XML Schema definition) document,
 	XML document is human-friendly to view through web browsers
 	and its data types are strictly defined.
 	(Trac #547, git 1cbd51919237a6e65983be46e4f5a63d1877b1d3)
