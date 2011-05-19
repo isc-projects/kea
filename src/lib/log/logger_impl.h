@@ -23,6 +23,11 @@
 #include <map>
 #include <utility>
 
+
+// log4cplus logger header file
+#include <log4cplus/logger.h>
+
+// BIND-10 logger files
 #include <log/debug_levels.h>
 #include <log/logger.h>
 #include <log/message_types.h>
@@ -131,47 +136,33 @@ public:
 
     /// \brief Is INFO Enabled?
     virtual bool isInfoEnabled() {
-        return (isEnabled(isc::log::INFO));
+        return (logger_.isEnabledFor(log4cplus::INFO_LOG_LEVEL));
     }
 
     /// \brief Is WARNING Enabled?
     virtual bool isWarnEnabled() {
-        return (isEnabled(isc::log::WARN));
+        return (logger_.isEnabledFor(log4cplus::WARN_LOG_LEVEL));
     }
 
     /// \brief Is ERROR Enabled?
     virtual bool isErrorEnabled() {
-        return (isEnabled(isc::log::ERROR));
+        return (logger_.isEnabledFor(log4cplus::ERROR_LOG_LEVEL));
     }
 
     /// \brief Is FATAL Enabled?
     virtual bool isFatalEnabled() {
-        return (isEnabled(isc::log::FATAL));
-    }
-
-
-    /// \brief Common Severity check
-    ///
-    /// Implements the common severity check.  As an optimisation, this checks
-    /// to see if any logger-specific levels have been set (a quick check as it
-    /// just involves seeing if the collection of logger information is empty).
-    /// if not, it returns the information for the root level; if so, it has
-    /// to take longer and look up the information in the map holding the
-    /// logging details.
-    virtual bool isEnabled(isc::log::Severity severity) {
-        if (logger_info_.empty()) {
-            return (root_logger_info_.severity <= severity);
-        }
-        else {
-            return (getSeverity() <= severity);
-        }
+        return (logger_.isEnabledFor(log4cplus::FATAL_LOG_LEVEL));
     }
 
     /// \brief Raw output
     ///
     /// Writes the message with time into the log. Used by the Formatter
     /// to produce output.
-    void outputRaw(const char* sev_text, const std::string& message);
+    ///
+    /// \param severity Severity of the message. (This controls the prefix
+    ///        label output with the message text.)
+    /// \param message Text of the message.
+    void outputRaw(const Severity& severity, const std::string& message);
 
     /// \brief Look up message text in dictionary
     ///
@@ -194,22 +185,43 @@ public:
     /// Only used for testing, this clears all the logger information and
     /// resets it back to default values.
     static void reset() {
-        root_logger_info_ = LoggerInfo(isc::log::INFO, MIN_DEBUG_LEVEL);
-        logger_info_.clear();
+        //root_logger_info_ = LoggerInfo(isc::log::INFO, MIN_DEBUG_LEVEL);
+        //logger_info_.clear();
     }
 
 
 private:
-    bool                is_root_;           ///< true if a root logger
-    std::string         name_;              ///< Name of this logger
+    /// \brief Convert Log Levels
+    ///
+    /// Converts a BIND 10 log level to a log4cplus log level.
+    ///
+    /// \param inlevel BIND 10 log level.
+    ///
+    /// \return Log4cplus log level.
+    log4cplus::LogLevel convertFromBindSeverity(
+        const isc::log::Severity& inlevel);
 
-    // Split the status of the root logger from this logger.  If - is will
-    // probably be the usual case - no per-logger setting is enabled, a
-    // quick check of logger_info_.empty() will return true and we can quickly
-    // return the root logger status without a length lookup in the map.
+    /// \brief Convert Log Levels
+    ///
+    /// Converts a log4cplus log level to a BIND 10 log level.
+    ///
+    /// \param inlevel log4cplus log level.
+    ///
+    /// \return BIND 10 log level.
+    isc::log::Severity convertToBindSeverity(
+        const log4cplus::LogLevel& inlevel);
 
-    static LoggerInfo       root_logger_info_;  ///< Status of root logger
-    static LoggerInfoMap    logger_info_;       ///< Store of debug levels etc.
+    /// \brief Initialize log4cplus
+    ///
+    /// Static method to perform one-time initialization of the log4cplus
+    /// system.
+    static void initLog4cplus();
+
+    bool                is_root_;           ///< Is this BIND 10 root logger?
+    std::string         name_;              ///< Full name of this logger
+    std::string         fmt_name_;          ///< Formatted name
+    log4cplus::Logger   logger_;            ///< Underlying log4cplus logger
+
 };
 
 } // namespace log
