@@ -152,10 +152,9 @@
     <para>
       <varname>secondary_zones</varname> is a list of slave zones
       that the <command>b10-zonemgr</command> should keep timers for.
-      The list item is the <varname>secondary_zone</varname>
-      which defines the <varname>class</varname> (which defaults to
-      <quote>IN</quote>) and the <varname>name</varname> which contains
-      the zone name.
+      The list items include the <varname>name</varname> (which
+      defines the zone name) and the <varname>class</varname>
+      (which defaults to <quote>IN</quote>).
     </para>
 
     <para>
