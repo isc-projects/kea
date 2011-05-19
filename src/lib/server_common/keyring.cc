@@ -30,7 +30,7 @@ void
 updateKeyring(const std::string&, ConstElementPtr data) {
     ConstElementPtr list(data->get("keys"));
     KeyringPtr load(new TSIGKeyRing);
-    for (size_t i(0); i < list->size(); ++ i) {
+    for (size_t i(0); list && i < list->size(); ++ i) {
         load->add(TSIGKey(list->get(i)->stringValue()));
     }
     keyring.swap(load);

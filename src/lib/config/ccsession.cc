@@ -192,8 +192,10 @@ ModuleCCSession::ModuleCCSession(
     isc::data::ConstElementPtr(*config_handler)(
         isc::data::ConstElementPtr new_config),
     isc::data::ConstElementPtr(*command_handler)(
-        const std::string& command, isc::data::ConstElementPtr args)
+        const std::string& command, isc::data::ConstElementPtr args),
+    bool start_immediately
     ) :
+    started_(false),
     session_(session)
 {
     module_specification_ = readModuleSpecification(spec_file_name);
@@ -235,6 +237,17 @@ ModuleCCSession::ModuleCCSession(
             LOG_ERROR(config_logger, CONFIG_MANAGER_CONFIG).arg(new_config->str());
             isc_throw(CCSessionInitError, answer->str());
         }
+    }
+
+    if (start_immediately) {
+        start();
+    }
+}
+
+void
+ModuleCCSession::start() {
+    if (started_) {
+        isc_throw(CCSessionError, "Module CC session already started");
     }
 
     // register callback for asynchronous read
