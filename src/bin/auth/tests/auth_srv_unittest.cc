@@ -16,6 +16,8 @@
 
 #include <vector>
 
+#include <boost/shared_ptr.hpp>
+
 #include <gtest/gtest.h>
 
 #include <dns/message.h>
@@ -52,6 +54,7 @@ using namespace isc::asiolink;
 using namespace isc::testutils;
 using namespace isc::server_common::portconfig;
 using isc::UnitTestUtil;
+using boost::shared_ptr;
 
 namespace {
 const char* const CONFIG_TESTDB =
@@ -255,11 +258,11 @@ TEST_F(AuthSrvTest, TSIGSigned) {
     createRequestPacket(request_message, IPPROTO_UDP, &context);
 
     // Run the message through the server
-    isc::server_common::keyring.reset(new TSIGKeyRing);
-    isc::server_common::keyring->add(key);
+    shared_ptr<TSIGKeyRing> keyring(new TSIGKeyRing);
+    keyring->add(key);
+    server.setTSIGKeyRing(&keyring);
     server.processMessage(*io_message, parse_message, response_obuffer,
                           &dnsserv);
-    isc::server_common::keyring.reset();
 
     // What did we get?
     EXPECT_TRUE(dnsserv.hasAnswer());
@@ -288,10 +291,10 @@ TEST_F(AuthSrvTest, TSIGSignedBadKey) {
     createRequestPacket(request_message, IPPROTO_UDP, &context);
 
     // Process the message, but use a different key there
-    isc::server_common::keyring.reset(new TSIGKeyRing);
+    shared_ptr<TSIGKeyRing> keyring(new TSIGKeyRing);
+    server.setTSIGKeyRing(&keyring);
     server.processMessage(*io_message, parse_message, response_obuffer,
                           &dnsserv);
-    isc::server_common::keyring.reset();
 
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, TSIGError::BAD_KEY().toRcode(),
@@ -318,11 +321,12 @@ TEST_F(AuthSrvTest, TSIGBadSig) {
                          Name("version.bind"), RRClass::CH(), RRType::TXT());
     createRequestPacket(request_message, IPPROTO_UDP, &context);
 
-    isc::server_common::keyring.reset(new TSIGKeyRing);
-    isc::server_common::keyring->add(TSIGKey("key:QkFECg==:hmac-sha1"));
+    // Process the message, but use a different key there
+    shared_ptr<TSIGKeyRing> keyring(new TSIGKeyRing);
+    keyring->add(TSIGKey("key:QkFECg==:hmac-sha1"));
+    server.setTSIGKeyRing(&keyring);
     server.processMessage(*io_message, parse_message, response_obuffer,
                           &dnsserv);
-    isc::server_common::keyring.reset();
 
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, TSIGError::BAD_SIG().toRcode(),
@@ -353,11 +357,12 @@ TEST_F(AuthSrvTest, TSIGCheckFirst) {
                                        RRClass::CH(), RRType::TXT());
     createRequestPacket(request_message, IPPROTO_UDP, &context);
 
-    isc::server_common::keyring.reset(new TSIGKeyRing);
-    isc::server_common::keyring->add(TSIGKey("key:QkFECg==:hmac-sha1"));
+    // Process the message, but use a different key there
+    shared_ptr<TSIGKeyRing> keyring(new TSIGKeyRing);
+    keyring->add(TSIGKey("key:QkFECg==:hmac-sha1"));
+    server.setTSIGKeyRing(&keyring);
     server.processMessage(*io_message, parse_message, response_obuffer,
                           &dnsserv);
-    isc::server_common::keyring.reset();
 
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, TSIGError::BAD_SIG().toRcode(),
