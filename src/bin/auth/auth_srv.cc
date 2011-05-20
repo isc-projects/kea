@@ -60,8 +60,6 @@
 #include <auth/query.h>
 #include <auth/statistics.h>
 
-#include <server_common/keyring.h>
-
 using namespace std;
 
 using namespace isc;
@@ -77,6 +75,7 @@ using namespace isc::xfr;
 using namespace isc::asiolink;
 using namespace isc::asiodns;
 using namespace isc::server_common::portconfig;
+using boost::shared_ptr;
 
 class AuthSrvImpl {
 private:
@@ -123,6 +122,9 @@ public:
 
     /// Addresses we listen on
     AddressList listen_addresses_;
+
+    /// The TSIG keyring
+    const shared_ptr<TSIGKeyRing>* keyring_;
 private:
     std::string db_file_;
 
@@ -146,6 +148,7 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
     memory_datasrc_class_(RRClass::IN()),
     statistics_timer_(io_service_),
     counters_(verbose_mode_),
+    keyring_(NULL),
     xfrout_connected_(false),
     xfrout_client_(xfrout_client)
 {
@@ -467,11 +470,11 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
 
     // Do we do TSIG?
     // The keyring can be null if we're in test
-    if (server_common::keyring != NULL && tsig_record != NULL) {
+    if (impl_->keyring_ != NULL && tsig_record != NULL) {
         tsig_context.reset(new TSIGContext(tsig_record->getName(),
                                            tsig_record->getRdata().
                                                 getAlgorithm(),
-                                           *server_common::keyring));
+                                           **impl_->keyring_));
         tsig_error = tsig_context->verify(tsig_record, io_message.getData(),
                                           io_message.getDataSize());
     }
@@ -821,4 +824,9 @@ AuthSrv::setListenAddresses(const AddressList& addresses) {
 void
 AuthSrv::setDNSService(isc::asiodns::DNSService& dnss) {
     dnss_ = &dnss;
+}
+
+void
+AuthSrv::setTSIGKeyRing(const shared_ptr<TSIGKeyRing>* keyring) {
+    impl_->keyring_ = keyring;
 }

@@ -198,6 +198,7 @@ main(int argc, char* argv[]) {
 
         cout << "[b10-auth] Loading TSIG keys" << endl;
         isc::server_common::initKeyring(*config_session);
+        auth_server->setTSIGKeyRing(&isc::server_common::keyring);
 
         // Now start asynchronous read.
         config_session->start();
