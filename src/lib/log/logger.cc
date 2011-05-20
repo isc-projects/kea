@@ -166,8 +166,18 @@ Logger::fatal(const isc::log::MessageID& ident) {
     }
 }
 
-bool Logger::operator==(Logger& other) {
+// Comparison (testing only)
+
+bool
+Logger::operator==(Logger& other) {
     return (*getLoggerPtr() == *other.getLoggerPtr());
+}
+
+// Reset (used in testing only).  This is a static method.
+
+void
+Logger::reset() {
+    LoggerImpl::reset();
 }
 
 } // namespace log
