@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <asio.hpp>
+#include <boost/bind.hpp>
+
 #include <config.h>
 
 #include <gtest/gtest.h>
@@ -23,6 +26,8 @@
 #include <fstream>
 
 #include <config/tests/data_def_unittests_config.h>
+
+#include <unistd.h>
 
 using namespace isc::data;
 using namespace isc::config;
@@ -550,6 +555,101 @@ TEST_F(CCSessionTest, initializationFail) {
                                  my_config_handler, my_command_handler),
                                  CCSessionInitError);
     EXPECT_TRUE(session.haveSubscription("Spec29", "*"));
+}
+
+void
+dumpSocket(unsigned char* data, asio::local::stream_protocol::socket* socket,
+           asio::error_code)
+{
+    asio::async_read(*socket, asio::buffer(data, 1),
+                     boost::bind(&dumpSocket, data, socket, _1));
+}
+
+// Format the wire data for send
+void
+putTestData(size_t& length, unsigned char* data, ConstElementPtr routing,
+            ConstElementPtr msg)
+{
+    std::string r(routing->str());
+    std::string m(msg->str());
+    uint32_t l(r.size() + m.size() + 2);
+    l = htonl(l);
+    uint16_t h(r.size());
+    h = htons(h);
+    memcpy(data + length, &l, 4);
+    length += 4;
+    memcpy(data + length, &h, 2);
+    length += 2;
+    memcpy(data + length, r.c_str(), r.size());
+    length += r.size();
+    memcpy(data + length, m.c_str(), m.size());
+    length += m.size();
+}
+
+void
+emptyHandler(asio::error_code, size_t) {}
+
+TEST_F(CCSessionTest, delayedStart) {
+    // There's a problem when mixing synchronous and asynchronous
+    // reads, because both will read 4 bytes as length and mess it
+    // up.
+    //
+    // This tests our workaround for it, starting the asynchronous
+    // calls later.
+
+    // FIXME Is this OK in a test? Using asio directly?
+    // The cc library seems to do the same, we don't have
+    // asiolink wrappers for local sockets
+    //
+    // We use separate service for each process, just to make sure
+    // nothing bad happens
+    asio::io_service forkService;
+    ::unlink(TEST_SOCKET_PATH);
+    asio::local::stream_protocol::endpoint ep(TEST_SOCKET_PATH);
+    asio::local::stream_protocol::acceptor acceptor(forkService, ep);
+
+    // We fork and we'll do the feeding with data from there.
+    pid_t child(fork());
+    ASSERT_NE(-1, child);
+    if (!child) {
+        asio::local::stream_protocol::socket socket(forkService);
+        acceptor.accept(socket);
+        // We just empty everything from the socket
+        unsigned char dump;
+        dumpSocket(&dump, &socket, asio::error_code());
+        // And schedule writing of the data
+        size_t length(0);
+        // That is enough for our tests, no need for dynamic allocation
+        unsigned char data[4096];
+        putTestData(length, data, el("{}"), el("{\"lname\": \"mock\"}"));
+        putTestData(length, data, el("{\"reply\": 0}"), createAnswer());
+        putTestData(length, data, el("{\"reply\": 3}"), el("{\"a\": 42}"));
+        asio::async_write(socket, asio::buffer(data, length), &emptyHandler);
+        forkService.run();
+    } else {
+        try {
+            asio::io_service sessionService;
+            asio::io_service::work w(sessionService);
+            Session session(sessionService);
+            // Start the session, but defer the reads
+            ModuleCCSession mccs(ccspecfile("spec2.spec"), session,
+                                 NULL, NULL, false, TEST_SOCKET_PATH);
+            ConstElementPtr env, answer;
+            // Ask for the data there
+            // If there are two scheduled reads, this'll probably fail
+            session.group_recvmsg(env, answer, false, 3);
+            // Check that we received what we shoud have
+            EXPECT_TRUE(el("{\"a\": 42}")->equals(*answer));
+            kill(child, SIGTERM);
+        }
+        catch (...) {
+            // Just make sure the child is killed no matter what
+            kill(child, SIGTERM);
+            throw;
+        }
+    }
+
+
 }
 
 }
