@@ -340,6 +340,41 @@ TEST_F(AuthSrvTest, TSIGBadSig) {
         "It should be unsigned with this error";
 }
 
+// Give the server a signed unsupported request with a bad signature.
+// This checks the server first verifies the signature before anything
+// else.
+TEST_F(AuthSrvTest, TSIGCheckFirst) {
+    TSIGKey key("key:c2VjcmV0Cg==:hmac-sha1");
+    TSIGContext context(key);
+    // Pass a wrong opcode there. The server shouldn't know what to do
+    // about it.
+    UnitTestUtil::createRequestMessage(request_message, Opcode::RESERVED14(),
+                                       default_qid, Name("version.bind"),
+                                       RRClass::CH(), RRType::TXT());
+    createRequestPacket(request_message, IPPROTO_UDP, &context);
+
+    isc::server_common::keyring.reset(new TSIGKeyRing);
+    isc::server_common::keyring->add(TSIGKey("key:QkFECg==:hmac-sha1"));
+    server.processMessage(*io_message, parse_message, response_obuffer,
+                          &dnsserv);
+    isc::server_common::keyring.reset();
+
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, TSIGError::BAD_SIG().toRcode(),
+                Opcode::RESERVED14().getCode(), QR_FLAG, 0, 0, 0, 0);
+    // We need to parse the message ourself, or getTSIGRecord won't work
+    InputBuffer ib(response_obuffer->getData(), response_obuffer->getLength());
+    Message m(Message::PARSE);
+    m.fromWire(ib);
+
+    const TSIGRecord* tsig = m.getTSIGRecord();
+    ASSERT_TRUE(tsig != NULL) <<
+        "Missing TSIG signature (we should have one even at error)";
+    EXPECT_EQ(TSIGError::BAD_SIG_CODE, tsig->getRdata().getError());
+    EXPECT_EQ(0, tsig->getRdata().getMACSize()) <<
+        "It should be unsigned with this error";
+}
+
 TEST_F(AuthSrvTest, AXFRConnectFail) {
     EXPECT_FALSE(xfrout.isConnected()); // check prerequisite
     xfrout.disableConnect();
