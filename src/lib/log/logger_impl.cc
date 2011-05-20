@@ -43,19 +43,17 @@ namespace log {
 
 
 // Constructor
-LoggerImpl::LoggerImpl(const std::string& name, bool)
+LoggerImpl::LoggerImpl(const std::string& name)
 {
     // Initialize log4cplus if not already done
     initLog4cplus();
 
     // Are we the root logger?
     if (name == getRootLoggerName()) {
-        is_root_ = true;
         name_ = name;
         logger_ = log4cplus::Logger::getRoot();
 
     } else {
-        is_root_ = false;
         name_ = getRootLoggerName() + "." + name;
         logger_ = log4cplus::Logger::getInstance(name_);
     }

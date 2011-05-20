@@ -55,32 +55,7 @@ public:
     /// \param name Name of the logger.  If the name is that of the root name,
     /// this creates an instance of the root logger; otherwise it creates a
     /// child of the root logger.
-    ///
-    /// \param infunc This argument is present to get round a bug in some
-    /// implementations of the logging system.  If the logger is declared in
-    /// a function (such that it will be deleted when the function exits,
-    /// before the program ends), set this true.  If declared outside a
-    /// function (such that it gets deleted during program rundown), set false
-    /// (the default).\n
-    /// \n
-    /// The problems encountered was that during program rundown, one logging
-    /// implementation (log4cxx) threw a MutexException (this is described in
-    /// https://issues.apache.org/jira/browse/LOGCXX-322).  As this only occurs
-    /// during program rundown, the issue is not serious - it just looks bad to
-    /// have the program crash instead of shut down cleanly.\n
-    /// \n
-    /// If log4cxx is chosen as the implementation, this flag controls the
-    /// deletion of the underlying log4cxx data structures when the logger is
-    /// deleted.  Setting it false for externally-declared loggers inhibits
-    /// their deletion; so at program exit the memory is not reclaimed during
-    /// program rundown, only when the process is selected.  Setting it true
-    /// for loggers that will be deleted in the normal running of the program
-    /// enables their deletion - which causes no issues as the problem only
-    /// manifests itself during program rundown.
-    /// \n
-    /// The flag has no effect on non-log4cxx implementations.
-    Logger(const std::string& name, bool infunc = false) :
-        loggerptr_(NULL), name_(name), infunc_(infunc)
+    Logger(const std::string& name) : loggerptr_(NULL), name_(name)
     {}
 
     /// \brief Destructor
@@ -226,7 +201,6 @@ private:
 
     LoggerImpl*     loggerptr_;     ///< Pointer to the underlying logger
     std::string     name_;          ///< Copy of the logger name
-    bool            infunc_;        ///< Copy of the infunc argument
 };
 
 } // namespace log

@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
     int                 dbglevel = -1;              // Logger debug level
     const char*         localfile = NULL;           // Local message file
     int                 option;                     // For getopt() processing
-    Logger              logger_dlm("dlm", true);    // Another example logger
+    Logger              logger_dlm("dlm");          // Another example logger
 
     // Parse options
     while ((option = getopt(argc, argv, "s:d:")) != -1) {
