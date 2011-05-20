@@ -32,7 +32,7 @@ namespace unittests {
 /// B10TEST_CATCH_EXCEPTION is defined, and calls the macro directly if not.
 ///
 /// The catch block catches exceptions of types isc::Exception and
-/// std::Exception and prints some information about them to stderr. (In the
+/// std::exception and prints some information about them to stderr. (In the
 /// case of isc::Exception, this includes the file and line number from which
 /// the exception was raised.)  It then re-throws the exception.
 ///
