@@ -6,12 +6,12 @@ AM_CPPFLAGS += $(BOOST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = liblog.la
-liblog_la_SOURCES  = b.cc
-liblog_la_SOURCES += logger_level.h
+liblog_la_SOURCES  =
 liblog_la_SOURCES += dummylog.h dummylog.cc
 liblog_la_SOURCES += log_formatter.h log_formatter.cc
 liblog_la_SOURCES += logger.cc logger.h
 liblog_la_SOURCES += logger_impl.cc logger_impl.h
+liblog_la_SOURCES += logger_level.h
 liblog_la_SOURCES += logger_level.h
 liblog_la_SOURCES += logger_level_impl.cc logger_level_impl.h
 liblog_la_SOURCES += logger_support.cc logger_support.h
@@ -26,8 +26,6 @@ liblog_la_SOURCES += root_logger_name.cc root_logger_name.h
 
 EXTRA_DIST  = README
 EXTRA_DIST += messagedef.mes
-EXTRA_DIST += logger_impl_log4cxx.cc logger_impl_log4cxx.h
-EXTRA_DIST += logger_impl_simple.cc logger_impl_simple.h
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
