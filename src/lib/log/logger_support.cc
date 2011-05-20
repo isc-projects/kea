@@ -107,7 +107,7 @@ initLogger(const string& root, isc::log::Severity severity, int dbglevel,
     // debug level.  This is the logger that has the name of the application.
     // All other loggers created in this application will be its children.
     setRootLoggerName(root);
-    Logger root_logger(isc::log::getRootLoggerName(), true);
+    Logger root_logger(isc::log::getRootLoggerName());
 
     // Set the severity associated with it.  If no other logger has a severity,
     // this will be the default.

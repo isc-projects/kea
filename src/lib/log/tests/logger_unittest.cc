@@ -25,34 +25,17 @@ using namespace isc;
 using namespace isc::log;
 using namespace std;
 
-namespace isc {
-namespace log {
-
-/// \brief Test Logger
+/// \brief Logger Test
 ///
-/// This logger is a subclass of the logger class under test, but makes
-/// protected methods public (for testing)
-
-class TestLogger : public Logger {
-public:
-    /// \brief constructor
-    TestLogger(const string& name) : Logger(name, true)
-    {
-    }
-};
-
-} // namespace log
-} // namespace isc
-
+/// As the logger is only a shell around the implementation, this tests also
+/// checks the logger implementation class as well.
 
 class LoggerTest : public ::testing::Test {
 protected:
     LoggerTest()
-    {
-    }
-
-    ~LoggerTest() {
-    }
+    {}
+    ~LoggerTest()
+    {}
 };
 
 
@@ -81,14 +64,14 @@ TEST_F(LoggerTest, GetLogger) {
     const string name2 = "beta";
 
     // Instantiate two loggers that should be the same
-    TestLogger logger1(name1);
-    TestLogger logger2(name1);
+    Logger logger1(name1);
+    Logger logger2(name1);
     // And check they equal
     EXPECT_TRUE(logger1 == logger2);
 
     // Instantiate another logger with another name and check that it
     // is different to the previously instantiated ones.
-    TestLogger logger3(name2);
+    Logger logger3(name2);
     EXPECT_FALSE(logger1 == logger3);
 }
 
@@ -98,7 +81,7 @@ TEST_F(LoggerTest, Severity) {
 
     // Create a logger
     setRootLoggerName("test3");
-    TestLogger logger("alpha");
+    Logger logger("alpha");
 
     // Now check the levels
     logger.setSeverity(isc::log::NONE);
@@ -129,7 +112,7 @@ TEST_F(LoggerTest, DebugLevels) {
 
     // Create a logger
     setRootLoggerName("test4");
-    TestLogger logger("alpha");
+    Logger logger("alpha");
 
     // Debug level should be 0 if not at debug severity
     logger.setSeverity(isc::log::NONE, 20);
@@ -175,8 +158,8 @@ TEST_F(LoggerTest, SeverityInheritance) {
     // relationship if the loggers are named <parent> and <parent>.<child>.
 
     setRootLoggerName("test5");
-    TestLogger parent("alpha");
-    TestLogger child("alpha.beta");
+    Logger parent("alpha");
+    Logger child("alpha.beta");
 
     // By default, newly created loggers should have a level of DEFAULT
     // (i.e. default to parent)
