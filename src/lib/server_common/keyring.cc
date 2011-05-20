@@ -44,7 +44,7 @@ initKeyring(config::ModuleCCSession& session) {
         // We are already initialized
         return;
     }
-    session.addRemoteConfig("tsig_keys", updateKeyring);
+    session.addRemoteConfig("tsig_keys", updateKeyring, false);
 }
 
 void

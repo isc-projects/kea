@@ -213,6 +213,15 @@ class ConfigData:
             return spec['item_default'], True
         return None, False
 
+    def get_default_value(self, identifier):
+        """Returns the default from the specification, or None if there
+           is no default"""
+        spec = find_spec_part(self.specification.get_config_spec(), identifier)
+        if spec and 'item_default' in spec:
+            return spec['item_default']
+        else:
+            return None
+
     def get_module_spec(self):
         """Returns the ModuleSpec object associated with this ConfigData"""
         return self.specification

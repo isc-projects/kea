@@ -142,13 +142,17 @@ class NotifyOut:
         if zone_id not in self._notify_infos:
             return
 
+        # Has no slave servers, skip it.
+        if (len(self._notify_infos[zone_id].notify_slaves) <= 0):
+            return
+
         with self._lock:
             if (self.notify_num >= _MAX_NOTIFY_NUM) or (zone_id in self._notifying_zones):
                 if zone_id not in self._waiting_zones:
                     self._waiting_zones.append(zone_id)
             else:
                 self._notify_infos[zone_id].prepare_notify_out()
-                self.notify_num += 1 
+                self.notify_num += 1
                 self._notifying_zones.append(zone_id)
 
     def _dispatcher(self, started_event):
@@ -300,7 +304,7 @@ class NotifyOut:
         try:
             r_fds, w, e = select.select(valid_socks, [], [], block_timeout)
         except select.error as err:
-            if err.args[0] != EINTR:
+            if err.args[0] != errno.EINTR:
                 return {}, {}
 
         if self._read_sock in r_fds: # user has called shutdown()
