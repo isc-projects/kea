@@ -193,7 +193,7 @@ ModuleCCSession::ModuleCCSession(
         isc::data::ConstElementPtr new_config),
     isc::data::ConstElementPtr(*command_handler)(
         const std::string& command, isc::data::ConstElementPtr args),
-    bool start_immediately
+    bool start_immediately, const char* socket_path
     ) :
     started_(false),
     session_(session)
@@ -205,7 +205,7 @@ ModuleCCSession::ModuleCCSession(
     config_handler_ = config_handler;
     command_handler_ = command_handler;
 
-    session_.establish(NULL);
+    session_.establish(socket_path);
     session_.subscribe(module_name_, "*");
     //session_.subscribe("Boss", "*");
     //session_.subscribe("statistics", "*");
