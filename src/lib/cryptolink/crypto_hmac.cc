@@ -70,7 +70,8 @@ public:
                 getBotanHashAlgorithmName(hash_algorithm));
         } catch (const Botan::Algorithm_Not_Found&) {
             isc_throw(isc::cryptolink::UnsupportedAlgorithm,
-                      "Unknown hash algorithm: " + hash_algorithm);
+                      "Unknown hash algorithm: " <<
+                      static_cast<int>(hash_algorithm));
         } catch (const Botan::Exception& exc) {
             isc_throw(isc::cryptolink::LibraryError, exc.what());
         }
