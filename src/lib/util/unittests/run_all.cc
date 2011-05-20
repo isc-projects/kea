@@ -29,7 +29,7 @@ int
 run_all() {
     int ret = 0;
 
-    if (getenv("B10TEST_CATCH_EXCEPTION")) {
+    if (getenv("B10TEST_CATCH_EXCEPTION") != NULL) {
         try {
             ret = RUN_ALL_TESTS();
         } catch (const isc::Exception& ex) {
