@@ -62,10 +62,7 @@ public:
     /// Creates a logger of the specific name.
     ///
     /// \param name Name of the logger.
-    ///
-    /// \param exit_delete This argument is present to get round a bug in
-    /// the log4cxx implementation.  It is unused here.
-    LoggerImpl(const std::string& name, bool);
+    LoggerImpl(const std::string& name);
 
 
     /// \brief Destructor
@@ -183,7 +180,6 @@ private:
     /// system.
     static void initLog4cplus();
 
-    bool                is_root_;           ///< Is this BIND 10 root logger?
     std::string         name_;              ///< Full name of this logger
     std::string         fmt_name_;          ///< Formatted name for output
     log4cplus::Logger   logger_;            ///< Underlying log4cplus logger

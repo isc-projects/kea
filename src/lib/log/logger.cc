@@ -31,7 +31,7 @@ namespace log {
 // Initialize Logger implementation.  Does not check whether the implementation
 // has already been initialized - that was done by the caller (getLoggerPtr()).
 void Logger::initLoggerImpl() {
-    loggerptr_ = new LoggerImpl(name_, infunc_);
+    loggerptr_ = new LoggerImpl(name_);
 }
 
 // Destructor.
