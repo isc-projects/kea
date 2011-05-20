@@ -17,6 +17,7 @@
 
 #include <boost/scoped_ptr.hpp>
 
+#include <botan/version.h>
 #include <botan/botan.h>
 #include <botan/hmac.h>
 #include <botan/hash.h>
@@ -70,12 +71,28 @@ public:
         // If the key length is larger than the block size, we hash the
         // key itself first.
         try {
-            if (secret_len > hash->HASH_BLOCK_SIZE) {
+            // use a temp var so we don't have blocks spanning
+            // preprocessor directives
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,9,0)
+            size_t block_length = hash->hash_block_size();
+#elif BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,8,0)
+            size_t block_length = hash->HASH_BLOCK_SIZE;
+#else
+#error "Unsupported Botan version (need 1.8 or higher)"
+            // added to suppress irrelevant compiler errors
+            size_t block_length = 0;
+#endif
+            if (secret_len > block_length) {
                 Botan::SecureVector<Botan::byte> hashed_key =
                     hash->process(static_cast<const Botan::byte*>(secret),
                                   secret_len);
                 hmac_->set_key(hashed_key.begin(), hashed_key.size());
             } else {
+                // Botan 1.8 considers len 0 a bad key. 1.9 does not,
+                // but we won't accept it anyway, and fail early
+                if (secret_len == 0) {
+                    isc_throw(BadKey, "Bad HMAC secret length: 0");
+                }
                 hmac_->set_key(static_cast<const Botan::byte*>(secret),
                                secret_len);
             }
@@ -89,7 +106,15 @@ public:
     ~HMACImpl() { }
 
     size_t getOutputLength() const {
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,9,0)
+        return (hmac_->output_length());
+#elif BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,8,0)
         return (hmac_->OUTPUT_LENGTH);
+#else
+#error "Unsupported Botan version (need 1.8 or higher)"
+        // added to suppress irrelevant compiler errors
+        return 0;
+#endif
     }
 
     void update(const void* data, const size_t len) {

@@ -79,12 +79,24 @@
         3.1 is the minimum version which will work.
       </para>
 
-      <note><para>
+      <para>
+	BIND 10 uses the Botan crypto library for C++. It requires
+	at least Botan version 1.8. To build BIND 10, install the
+	Botan libraries and development include headers.
+      </para>
+
+<!--
+TODO
+Debian and Ubuntu:
+ libgmp3-dev and libbz2-dev required for botan too
+-->
+
+      <para>
 	The authoritative server requires SQLite 3.3.9 or newer.
 	The <command>b10-xfrin</command>, <command>b10-xfrout</command>,
 	and <command>b10-zonemgr</command> modules require the
 	libpython3 library and the Python _sqlite3.so module.
-      </para></note>
+      </para>
 <!-- TODO: this will change ... -->
 
 <!-- TODO: list where to get these from -->
