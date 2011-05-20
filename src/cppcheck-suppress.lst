@@ -12,4 +12,4 @@ functionConst:src/lib/cache/rrset_cache.h
 // Intentional self assignment tests.  Suppress warning about them.
 selfAssignment:src/lib/dns/tests/name_unittest.cc:293
 selfAssignment:src/lib/dns/tests/rdata_unittest.cc:228
-selfAssignment:src/lib/dns/tests/tsigkey_unittest.cc:125
+selfAssignment:src/lib/dns/tests/tsigkey_unittest.cc:137
