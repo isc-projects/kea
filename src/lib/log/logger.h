@@ -148,10 +148,15 @@ public:
     /// \brief Equality
     ///
     /// Check if two instances of this logger refer to the same stream.
-    /// (This method is principally for testing.)
     ///
     /// \return true if the logger objects are instances of the same logger.
     bool operator==(Logger& other);
+
+protected:
+    /// \brief Clear logging hierachy
+    ///
+    /// This is for test use only, hence is protected.
+    static void reset();
 
 private:
     friend class isc::log::Formatter<Logger>;
