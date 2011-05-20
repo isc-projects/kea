@@ -149,7 +149,7 @@ void initLogger() {
     // B10_LOGGER_SEVERITY, and can be one of "DEBUG", "INFO", "WARN", "ERROR"
     // of "FATAL".  Note that the string must be in upper case with no leading
     // of trailing blanks.
-    isc::log::Severity severity = isc::log::DEFAULT;
+    isc::log::Severity severity = isc::log::DEBUG;
     const char* sev_char = getenv("B10_LOGGER_SEVERITY");
     if (sev_char) {
         string sev_string(sev_char);

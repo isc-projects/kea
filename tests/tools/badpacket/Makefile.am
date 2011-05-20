@@ -31,3 +31,5 @@ badpacket_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 badpacket_LDADD += $(top_builddir)/src/lib/log/liblog.la
 badpacket_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 
+badpacket_LDFLAGS = $(LOG4CPLUS_LDFLAGS)
+

@@ -33,7 +33,7 @@ run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
 
-run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS) 
+run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS) $(LOG4CPLUS_LDFLAGS)
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
