@@ -44,7 +44,7 @@ run_unittests_SOURCES  += cache_test_messagefromfile.h
 run_unittests_SOURCES  += cache_test_sectioncount.h
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
+run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS) $(LOG4CPLUS_LDFLAGS)
 run_unittests_LDADD = $(GTEST_LDADD)
 
 # NOTE: we may have to clean up this hack later (see the note in configure.ac)
