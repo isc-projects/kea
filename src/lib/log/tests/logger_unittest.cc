@@ -25,17 +25,37 @@ using namespace isc;
 using namespace isc::log;
 using namespace std;
 
+/// \brief Derived logger
+///
+/// Only exists to make the protected static methods in Logger public for
+/// test purposes.
+
+class DerivedLogger : public isc::log::Logger {
+public:
+    DerivedLogger(std::string name) : isc::log::Logger(name)
+    {}
+    virtual ~DerivedLogger()
+    {}
+
+    static void reset() {
+        isc::log::Logger::reset();
+    }
+};
+
+
 /// \brief Logger Test
 ///
 /// As the logger is only a shell around the implementation, this tests also
 /// checks the logger implementation class as well.
 
 class LoggerTest : public ::testing::Test {
-protected:
+public:
     LoggerTest()
     {}
     ~LoggerTest()
-    {}
+    {
+        DerivedLogger::reset();
+    }
 };
 
 
