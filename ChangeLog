@@ -2,6 +2,8 @@
 	Add optional hmac algorithm SHA224/384/812.
 	(Trac#782,git 77d792c9d7c1a3f95d3e6a8b721ac79002cd7db1).
 
+bind10-devel-20110519 released on May 19, 2011
+
 242.	[func]		jinmei
 	xfrin: added support for TSIG verify.  This change completes TSIG
 	support in b10-xfrin.
