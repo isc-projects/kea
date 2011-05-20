@@ -1,4 +1,6 @@
-bind10-devel-20110519 released on May 19, 2011
+243.	[func]*		feng
+	Add optional hmac algorithm SHA224/384/812.
+	(Trac#782,git 77d792c9d7c1a3f95d3e6a8b721ac79002cd7db1).
 
 242.	[func]		jinmei
 	xfrin: added support for TSIG verify.  This change completes TSIG
@@ -80,7 +82,7 @@ bind10-devel-20110519 released on May 19, 2011
 	(Trac #900, git b395258c708b49a5da8d0cffcb48d83294354ba3)
 
 231.	[func]*		vorner
-	The logging interface changed slightly. We use
+    The logging interface changed slightly. We use
 	logger.foo(MESSAGE_ID).arg(bar); instead of logger.foo(MESSAGE_ID,
 	bar); internally. The message definitions use '%1,%2,...'
 	instead of '%s,%d', which allows us to cope better with
