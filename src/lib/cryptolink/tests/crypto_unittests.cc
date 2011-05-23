@@ -250,7 +250,7 @@ TEST(CryptoLinkTest, HMAC_MD5_RFC2202_SIGN) {
 }
 
 // Temporarily disabled
-TEST(CryptoLinkTest, DISABLED_HMAC_MD5_RFC2202_SIGN_TRUNCATED) {
+TEST(CryptoLinkTest, HMAC_MD5_RFC2202_SIGN_TRUNCATED) {
     const uint8_t secret5[] = { 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
                                 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
                                 0x0c, 0x0c, 0x0c, 0x0c };
@@ -322,7 +322,7 @@ TEST(CryptoLinkTest, HMAC_SHA1_RFC2202_SIGN) {
 }
 
 // Temporarily disabled
-TEST(CryptoLinkTest, DISABLED_HMAC_SHA1_RFC2202_SIGN_TRUNCATED) {
+TEST(CryptoLinkTest, HMAC_SHA1_RFC2202_SIGN_TRUNCATED) {
     const uint8_t secret5[] = { 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
                                 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
                                 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
@@ -650,7 +650,7 @@ TEST(CryptoLinkTest, HMAC_SHA512_RFC4231_SIGN) {
     RUN_NTH_TEST_CASE_FOR_ALG(7, SHA512); 
 }
 
-TEST(CryptoLinkTest, DISABLED_HMAC_SHA256_RFC2202_SIGN_TRUNCATED) {
+TEST(CryptoLinkTest, HMAC_SHA256_RFC2202_SIGN_TRUNCATED) {
     const uint8_t secret5[] = { 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
                                 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
                                 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
