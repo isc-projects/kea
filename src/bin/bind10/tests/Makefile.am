@@ -1,5 +1,6 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 #PYTESTS = args_test.py bind10_test.py
+# NOTE: this has a generated test found in the builddir
 PYTESTS = bind10_test.py
 EXTRA_DIST = $(PYTESTS)
 
@@ -14,5 +15,5 @@ endif
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/bind10 \
 	BIND10_MSGQ_SOCKET_FILE=$(abs_top_builddir)/msgq_socket \
-		$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
+		$(PYCOVERAGE_RUN) $(abs_builddir)/$$pytest || exit ; \
 	done

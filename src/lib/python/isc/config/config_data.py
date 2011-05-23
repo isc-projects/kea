@@ -213,6 +213,15 @@ class ConfigData:
             return spec['item_default'], True
         return None, False
 
+    def get_default_value(self, identifier):
+        """Returns the default from the specification, or None if there
+           is no default"""
+        spec = find_spec_part(self.specification.get_config_spec(), identifier)
+        if spec and 'item_default' in spec:
+            return spec['item_default']
+        else:
+            return None
+
     def get_module_spec(self):
         """Returns the ModuleSpec object associated with this ConfigData"""
         return self.specification
@@ -461,8 +470,8 @@ class MultiConfigData:
                 spec_part_list = spec_part['list_item_spec']
                 list_value, status = self.get_value(identifier)
                 if list_value is None:
-                    print("Error: identifier '%s' not found" % identifier)
-                    return
+                    raise isc.cc.data.DataNotFoundError(identifier)
+
                 if type(list_value) != list:
                     # the identifier specified a single element
                     self._append_value_item(result, spec_part_list, identifier, all)

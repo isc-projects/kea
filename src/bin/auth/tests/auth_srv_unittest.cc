@@ -41,10 +41,12 @@
 using namespace std;
 using namespace isc::cc;
 using namespace isc::dns;
+using namespace isc::util;
 using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::xfr;
-using namespace asiolink;
+using namespace isc::asiodns;
+using namespace isc::asiolink;
 using namespace isc::testutils;
 using namespace isc::server_common::portconfig;
 using isc::UnitTestUtil;

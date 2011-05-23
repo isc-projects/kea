@@ -16,13 +16,14 @@
 
 #include <string>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
 using namespace std;
+using namespace isc::util;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -48,7 +49,7 @@ NS::toWire(OutputBuffer& buffer) const {
 }
 
 void
-NS::toWire(MessageRenderer& renderer) const {
+NS::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeName(nsname_);
 }
 

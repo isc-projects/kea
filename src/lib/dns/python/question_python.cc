@@ -144,7 +144,7 @@ Question_init(s_Question* self, PyObject* args) {
                                                &rrclass_type, &rrclass,
                                                &rrtype_type, &rrtype
            )) {
-            self->question = QuestionPtr(new Question(*name->name, *rrclass->rrclass,
+            self->question = QuestionPtr(new Question(*name->cppobj, *rrclass->rrclass,
                                           *rrtype->rrtype));
             return (0);
         } else if (PyArg_ParseTuple(args, "y#|I", &b, &len, &position)) {
@@ -169,7 +169,7 @@ Question_init(s_Question* self, PyObject* args) {
     }
 
     self->question = QuestionPtr();
-    
+
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
                     "no valid type in constructor argument");
@@ -189,7 +189,7 @@ Question_getName(s_Question* self) {
     // is this the best way to do this?
     name = static_cast<s_Name*>(name_type.tp_alloc(&name_type, 0));
     if (name != NULL) {
-        name->name = new Name(self->question->getName());
+        name->cppobj = new Name(self->question->getName());
     }
 
     return (name);

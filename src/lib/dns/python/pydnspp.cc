@@ -31,23 +31,38 @@
 
 #include <exceptions/exceptions.h>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
+
 #include <dns/exceptions.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 
-#include <dns/python/pydnspp_common.h>
+#include "pydnspp_common.h"
+#include "messagerenderer_python.h"
+#include "name_python.h"
+#include "rcode_python.h"
+#include "tsigkey_python.h"
+#include "tsig_rdata_python.h"
+#include "tsigerror_python.h"
+#include "tsigrecord_python.h"
+#include "tsig_python.h"
 
+namespace isc {
+namespace dns {
+namespace python {
 // For our 'general' isc::Exceptions
-static PyObject* po_IscException;
-static PyObject* po_InvalidParameter;
+PyObject* po_IscException;
+PyObject* po_InvalidParameter;
 
 // For our own isc::dns::Exception
-static PyObject* po_DNSMessageBADVERS;
+PyObject* po_DNSMessageBADVERS;
+}
+}
+}
 
 // order is important here!
-#include <dns/python/messagerenderer_python.cc>
-#include <dns/python/name_python.cc>           // needs Messagerenderer
+using namespace isc::dns::python;
+
 #include <dns/python/rrclass_python.cc>        // needs Messagerenderer
 #include <dns/python/rrtype_python.cc>         // needs Messagerenderer
 #include <dns/python/rrttl_python.cc>          // needs Messagerenderer
@@ -55,16 +70,15 @@ static PyObject* po_DNSMessageBADVERS;
 #include <dns/python/rrset_python.cc>          // needs Rdata, RRTTL
 #include <dns/python/question_python.cc>       // needs RRClass, RRType, RRTTL,
                                                // Name
-#include <dns/python/tsigkey_python.cc>        // needs Name
 #include <dns/python/opcode_python.cc>
-#include <dns/python/rcode_python.cc>
 #include <dns/python/edns_python.cc>           // needs Messagerenderer, Rcode
 #include <dns/python/message_python.cc>        // needs RRset, Question
 
 //
 // Definition of the module
 //
-static PyModuleDef pydnspp = {
+namespace {
+PyModuleDef pydnspp = {
     { PyObject_HEAD_INIT(NULL) NULL, 0, NULL},
     "pydnspp",
     "Python bindings for the classes in the isc::dns namespace.\n\n"
@@ -79,10 +93,11 @@ static PyModuleDef pydnspp = {
     NULL,
     NULL
 };
+}
 
 PyMODINIT_FUNC
 PyInit_pydnspp(void) {
-    PyObject *mod = PyModule_Create(&pydnspp);
+    PyObject* mod = PyModule_Create(&pydnspp);
     if (mod == NULL) {
         return (NULL);
     }
@@ -153,6 +168,21 @@ PyInit_pydnspp(void) {
         return (NULL);
     }
 
+    if (!initModulePart_TSIG(mod)) {
+        return (NULL);
+    }
+
+    if (!initModulePart_TSIGError(mod)) {
+        return (NULL);
+    }
+
+    if (!initModulePart_TSIGRecord(mod)) {
+        return (NULL);
+    }
+
+    if (!initModulePart_TSIGContext(mod)) {
+        return (NULL);
+    }
+
     return (mod);
 }
-

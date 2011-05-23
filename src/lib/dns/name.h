@@ -23,10 +23,13 @@
 #include <exceptions/exceptions.h>
 
 namespace isc {
-namespace dns {
+namespace util {
 class InputBuffer;
 class OutputBuffer;
-class MessageRenderer;
+}
+
+namespace dns {
+class AbstractMessageRenderer;
 
 ///
 /// \brief A standard DNS module exception that is thrown if the name parser
@@ -247,7 +250,7 @@ public:
     ///
     /// \param buffer A buffer storing the wire format %data.
     /// \param downcase Whether to convert upper case alphabets to lower case.
-    explicit Name(InputBuffer& buffer, bool downcase = false);
+    explicit Name(isc::util::InputBuffer& buffer, bool downcase = false);
     ///
     /// We use the default copy constructor intentionally.
     //@}
@@ -347,7 +350,7 @@ public:
     ///
     /// \param renderer DNS message rendering context that encapsulates the
     /// output buffer and name compression information.
-    void toWire(MessageRenderer& renderer) const;
+    void toWire(AbstractMessageRenderer& renderer) const;
 
     /// \brief Render the <code>Name</code> in the wire format without
     /// compression.
@@ -359,7 +362,7 @@ public:
     /// then this method should not throw an exception.
     ///
     /// \param buffer An output buffer to store the wire %data.
-    void toWire(OutputBuffer& buffer) const;
+    void toWire(isc::util::OutputBuffer& buffer) const;
     //@}
 
     ///

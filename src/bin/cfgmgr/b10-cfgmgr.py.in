@@ -18,30 +18,21 @@
 import sys; sys.path.append ('@@PYTHONPATH@@')
 
 from isc.config.cfgmgr import ConfigManager, ConfigManagerDataReadError
+import bind10_config
 from isc.cc import SessionError
 import isc.util.process
 import signal
 import os
 from optparse import OptionParser
+import glob
+import os.path
 
 isc.util.process.rename()
 
-# If B10_FROM_SOURCE is set in the environment, we use data files
-# from a directory relative to the value of that variable, or, if defined,
-# relative to the value of B10_FROM_SOURCE_LOCALSTATEDIR.  Otherwise
-# we use the ones installed on the system.
-# B10_FROM_SOURCE_LOCALSTATEDIR is specifically intended to be used for
-# tests where we want to use variuos types of configuration within the test
-# environment.  (We may want to make it even more generic so that the path is
-# passed from the boss process)
-if "B10_FROM_SOURCE" in os.environ:
-    if "B10_FROM_SOURCE_LOCALSTATEDIR" in os.environ:
-        DATA_PATH = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"]
-    else:
-        DATA_PATH = os.environ["B10_FROM_SOURCE"]
-else:
-    PREFIX = "@prefix@"
-    DATA_PATH = "@localstatedir@/@PACKAGE@".replace("${prefix}", PREFIX)
+# Import some paths from our configuration
+DATA_PATH = bind10_config.DATA_PATH
+PLUGIN_PATHS = bind10_config.PLUGIN_PATHS
+PREFIX = bind10_config.PREFIX
 DEFAULT_CONFIG_FILE = "b10-config.db"
 
 cm = None
@@ -65,6 +56,28 @@ def signal_handler(signal, frame):
     if cm:
         cm.running = False
 
+def load_plugins(path, cm):
+    """Load all python files in the given path and treat them as plugins."""
+    # Find the python files
+    plugins = glob.glob(path + os.sep + '*.py')
+    # Search this directory first, but leave the others there for the imports
+    # of the modules
+    sys.path.insert(0, path)
+    try:
+        for plugin in plugins:
+            # Generate the name of the plugin
+            filename = os.path.basename(plugin)
+            name = filename[:-3]
+            # Load it
+            module = __import__(name)
+            # Ask it to provide the spec and checking function
+            (spec, check_func) = module.load()
+            # And insert it into the manager
+            cm.set_virtual_module(spec, check_func)
+    finally:
+        # Restore the search path
+        sys.path = sys.path[1:]
+
 def main():
     options = parse_options()
     global cm
@@ -73,6 +86,8 @@ def main():
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
         cm.read_config()
+        for ppath in PLUGIN_PATHS:
+            load_plugins(ppath, cm)
         cm.notify_boss()
         cm.run()
     except SessionError as se:

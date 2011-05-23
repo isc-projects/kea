@@ -1,0 +1,53 @@
+"badpacket" is a tool intended to test that a nameserver can cope with
+incorrectly-formatted DNS messages.
+
+This particular incarnation of the tool allows various fields in the DNS
+message to be set to any value (including to values that invalidate the query).
+As well as setting individual values, it is possible to specify ranges; when
+this is done, the tool will send a set of packets so that each combination
+of values is checked.
+
+To illustrate this, consider the following command:
+
+badpacket --address 192.0.2.21 --port 5301 --aa 0-1 --cd 1
+          --rc 0-2 ftp.example.com
+
+(The command has been split across two lines for clarity.)
+
+The address and port flags are self-evident.  The other flags specify
+settings for the AA bit (0 and 1), CD bit (always 1) and the RCODE field
+(0, 1, 2). (The remaining fields in the flags word are not specified, so
+will always be zero.)  There are six combinations of these values, so six
+packets will sent to the remote server with the following settings:
+
+AA RCODE  CD Rest
+0    0    1   0
+0    1    1   0
+0    2    1   0
+1    0    1   0
+1    1    1   0
+1    2    1   0
+
+Each packet will cause a line to be output to stdout, which will have the
+following form:
+
+SUCCESS: (QR:0 OP:0 AA:0 TC:0 RD:0 RA:0 ...
+         (qr:1 op:0 aa:0 tc:0 rd:0 ra:1 ...
+
+(Again the text has been split across two lines for clarity. Also, the full
+list of fields has been truncated.)
+
+Each lines contains a status (SUCCESS indicates that a response was received,
+regardless of the contents of the response), the state of the fields in the
+flags word of the packet sent (in upper-case letters) and the state of the
+fields in the flags word of the response (in lower-case letters).
+
+TODO: At the moment the tool is limited to:
+* Setting values in the flags field.
+* Setting section counts to arbitrary values.
+* Extending or truncating the DNS message size.
+
+Additional options needed are:
+* Add data to sections that should be empty.
+* Deliberately mangle the names placed in the message sections (e.g. by altering
+  the label count fields).

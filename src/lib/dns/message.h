@@ -28,7 +28,13 @@
 #include <dns/rrset.h>
 
 namespace isc {
+namespace util {
+class InputBuffer;
+}
+
 namespace dns {
+class TSIGContext;
+class TSIGRecord;
 
 ///
 /// \brief A standard DNS module exception that is thrown if a wire format
@@ -76,8 +82,7 @@ public:
 
 typedef uint16_t qid_t;
 
-class InputBuffer;
-class MessageRenderer;
+class AbstractMessageRenderer;
 class Message;
 class MessageImpl;
 class Opcode;
@@ -365,6 +370,25 @@ public:
     /// \c Message.
     void setEDNS(ConstEDNSPtr edns);
 
+    /// \brief Return, if any, the TSIG record contained in the received
+    /// message.
+    ///
+    /// Currently, this method is only intended to return a TSIG record
+    /// for an incoming message built via the \c fromWire() method in the
+    /// PARSE mode.  A call to this method in the RENDER mode is invalid and
+    /// result in an exception.  Also, calling this method is meaningless
+    /// unless \c fromWire() is performed.
+    ///
+    /// The returned pointer is valid only during the lifetime of the
+    /// \c Message object and until \c clear() is called.  The \c Message
+    /// object retains the ownership of \c TSIGRecord; the caller must not
+    /// try to delete it.
+    ///
+    /// \exception InvalidMessageOperation Message is not in the PARSE mode.
+    ///
+    /// \return A pointer to the stored \c TSIGRecord or \c NULL.
+    const TSIGRecord* getTSIGRecord() const;
+
     /// \brief Returns the number of RRs contained in the given section.
     ///
     /// In the \c PARSE mode, the returned value may not be identical to
@@ -520,19 +544,37 @@ public:
     /// class \c InvalidMessageOperation will be thrown.
     std::string toText() const;
 
-    /// \brief Render the message in wire formant into a \c MessageRenderer
+    /// \brief Render the message in wire formant into a message renderer
     /// object.
     ///
     /// This \c Message must be in the \c RENDER mode and both \c Opcode and
     /// \c Rcode must have been set beforehand; otherwise, an exception of
     /// class \c InvalidMessageOperation will be thrown.
-    void toWire(MessageRenderer& renderer);
+    ///
+    /// \param renderer DNS message rendering context that encapsulates the
+    /// output buffer and name compression information.
+    void toWire(AbstractMessageRenderer& renderer);
+
+    /// \brief Render the message in wire formant into a message renderer
+    /// object with TSIG.
+    ///
+    /// This method is similar to the other version of \c toWire(), but
+    /// it will also add a TSIG RR with (in many cases) the TSIG MAC for
+    /// the message along with the given TSIG context (\c tsig_ctx).
+    /// The TSIG RR will be placed at the end of \c renderer.
+    /// \c tsig_ctx will be updated based on the fact it was used for signing
+    /// and with the latest MAC.
+    ///
+    /// \param renderer See the other version
+    /// \param tsig_ctx A TSIG context that is to be used for signing the
+    /// message
+    void toWire(AbstractMessageRenderer& renderer, TSIGContext& tsig_ctx);
 
     /// \brief Parse the header section of the \c Message.
-    void parseHeader(InputBuffer& buffer);
+    void parseHeader(isc::util::InputBuffer& buffer);
 
     /// \brief Parse the \c Message.
-    void fromWire(InputBuffer& buffer);
+    void fromWire(isc::util::InputBuffer& buffer);
 
     ///
     /// \name Protocol constants
@@ -559,7 +601,18 @@ private:
 /// that ongoing state information will not be lost if the object
 /// that originated the asynchronous call falls out of scope.
 typedef boost::shared_ptr<Message> MessagePtr;
+typedef boost::shared_ptr<const Message> ConstMessagePtr;
 
+/// Insert the \c Message as a string into stream.
+///
+/// This method convert \c message into a string and inserts it into the
+/// output stream \c os.
+///
+/// \param os A \c std::ostream object on which the insertion operation is
+/// performed.
+/// \param record A \c Message object output by the operation.
+/// \return A reference to the same \c std::ostream object referenced by
+/// parameter \c os after the insertion operation.
 std::ostream& operator<<(std::ostream& os, const Message& message);
 }
 }

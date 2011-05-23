@@ -19,14 +19,14 @@
 
 #include <exceptions/exceptions.h>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rrparamregistry.h>
 #include <dns/rrtype.h>
 
 using namespace std;
+using namespace isc::util;
 using isc::dns::RRType;
-using isc::dns::OutputBuffer;
 
 namespace isc {
 namespace dns {
@@ -53,7 +53,7 @@ RRType::toWire(OutputBuffer& buffer) const {
 }
 
 void
-RRType::toWire(MessageRenderer& renderer) const {
+RRType::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint16(typecode_);
 }
 

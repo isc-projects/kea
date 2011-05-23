@@ -26,6 +26,7 @@
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 
+namespace isc {
 namespace asiolink {
 
 class IntervalTimerImpl {
@@ -133,4 +134,5 @@ IntervalTimer::getInterval() const {
     return (impl_->getInterval());
 }
 
-}
+} // namespace asiolink
+} // namespace isc

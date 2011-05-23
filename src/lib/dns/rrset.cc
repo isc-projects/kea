@@ -18,7 +18,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rrclass.h>
@@ -28,6 +28,7 @@
 
 using namespace std;
 using namespace isc::dns;
+using namespace isc::util;
 using namespace isc::dns::rdata;
 
 namespace isc {
@@ -103,8 +104,8 @@ AbstractRRset::toWire(OutputBuffer& buffer) const {
 }
 
 unsigned int
-AbstractRRset::toWire(MessageRenderer& renderer) const {
-    const unsigned int rrs_written = rrsetToWire<MessageRenderer>(
+AbstractRRset::toWire(AbstractMessageRenderer& renderer) const {
+    const unsigned int rrs_written = rrsetToWire<AbstractMessageRenderer>(
         *this, renderer, renderer.getLengthLimit());
     if (getRdataCount() > rrs_written) {
         renderer.setTruncated();
@@ -201,7 +202,7 @@ BasicRRset::toWire(OutputBuffer& buffer) const {
 }
 
 unsigned int
-BasicRRset::toWire(MessageRenderer& renderer) const {
+BasicRRset::toWire(AbstractMessageRenderer& renderer) const {
     return (AbstractRRset::toWire(renderer));
 }
 

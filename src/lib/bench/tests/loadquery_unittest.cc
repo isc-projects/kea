@@ -17,7 +17,7 @@
 #include <vector>
 #include <sstream>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/message.h>
 #include <dns/name.h>
 #include <dns/opcode.h>
@@ -32,6 +32,7 @@
 using namespace std;
 using namespace isc::bench;
 using namespace isc::dns;
+using namespace isc::util;
 
 namespace {
 typedef pair<string, string> QueryParam;

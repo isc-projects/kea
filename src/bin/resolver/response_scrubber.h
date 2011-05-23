@@ -282,8 +282,8 @@ public:
     ///
     /// \return SUCCESS if the two endpoints match, otherwise an error status
     /// indicating what was incorrect.
-    static Category addressCheck(const asiolink::IOEndpoint& to,
-        const asiolink::IOEndpoint& from);
+    static Category addressCheck(const isc::asiolink::IOEndpoint& to,
+        const isc::asiolink::IOEndpoint& from);
 
     /// \brief Check QID
     ///
