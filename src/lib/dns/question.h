@@ -25,10 +25,14 @@
 #include <dns/rrtype.h>
 
 namespace isc {
+namespace util {
+class InputBuffer;
+class OutputBuffer;
+}
+
 namespace dns {
 
-class InputBuffer;
-class MessageRenderer;
+class AbstractMessageRenderer;
 class Question;
 
 /// \brief A pointer-like type pointing to an \c Question object.
@@ -118,7 +122,7 @@ public:
     /// classes fails.
     ///
     /// \param buffer A buffer storing the wire format data.
-    Question(InputBuffer& buffer);
+    Question(isc::util::InputBuffer& buffer);
 
     /// \brief Constructor from fixed parameters of the \c Question.
     ///
@@ -214,17 +218,17 @@ public:
     /// \param renderer DNS message rendering context that encapsulates the
     /// output buffer and name compression information.
     /// \return 1
-    unsigned int toWire(MessageRenderer& renderer) const;
+    unsigned int toWire(AbstractMessageRenderer& renderer) const;
 
     /// \brief Render the Question in the wire format without name compression.
     ///
     /// This method behaves like the render version except it doesn't compress
     /// the owner name.
-    /// See \c toWire(MessageRenderer& renderer)const.
+    /// See \c toWire(AbstractMessageRenderer& renderer)const.
     ///
     /// \param buffer An output buffer to store the wire data.
     /// \return 1
-    unsigned int toWire(OutputBuffer& buffer) const;
+    unsigned int toWire(isc::util::OutputBuffer& buffer) const;
     //@}
 
     ///

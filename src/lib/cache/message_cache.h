@@ -20,7 +20,7 @@
 #include <dns/message.h>
 #include "message_entry.h"
 #include <nsas/hash_table.h>
-#include <nsas/lru_list.h>
+#include <util/lru_list.h>
 #include "rrset_cache.h"
 
 namespace isc {
@@ -92,7 +92,7 @@ protected:
     RRsetCachePtr rrset_cache_;
     RRsetCachePtr negative_soa_cache_;
     isc::nsas::HashTable<MessageEntry> message_table_;
-    isc::nsas::LruList<MessageEntry> message_lru_;
+    isc::util::LruList<MessageEntry> message_lru_;
 };
 
 typedef boost::shared_ptr<MessageCache> MessageCachePtr;

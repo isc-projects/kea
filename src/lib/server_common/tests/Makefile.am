@@ -12,7 +12,7 @@ endif
 # Some versions of GCC warn about some versions of Boost regarding
 # missing initializer for members in its posix_time.
 # https://svn.boost.org/trac/boost/ticket/3477
-# But older GCC compilers don't have the flag.     
+# But older GCC compilers don't have the flag.
 AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 if USE_CLANGPP
@@ -27,6 +27,8 @@ if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += portconfig_unittest.cc
+run_unittests_SOURCES += keyring_test.cc
+nodist_run_unittests_SOURCES = data_path.h
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
@@ -35,8 +37,13 @@ run_unittests_LDADD = $(GTEST_LDADD)
 run_unittests_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
+run_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
+run_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
+run_unittests_LDADD += $(top_builddir)/src/lib/config/tests/libfake_session.la
 endif
 
 noinst_PROGRAMS = $(TESTS)
+
+EXTRA_DIST = testdata/spec.spec

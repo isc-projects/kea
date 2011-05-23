@@ -19,8 +19,8 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <dns/buffer.h>
-#include <dns/util/hex.h>
+#include <util/buffer.h>
+#include <util/encode/hex.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rdata.h>
@@ -30,6 +30,8 @@
 #include <time.h>
 
 using namespace std;
+using namespace isc::util;
+using namespace isc::util::encode;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -134,7 +136,7 @@ NSEC3PARAM::toWire(OutputBuffer& buffer) const {
 }
 
 void
-NSEC3PARAM::toWire(MessageRenderer& renderer) const {
+NSEC3PARAM::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint8(impl_->hashalg_);
     renderer.writeUint8(impl_->flags_);
     renderer.writeUint16(impl_->iterations_);

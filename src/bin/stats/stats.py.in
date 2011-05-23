@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2010, 2011  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +15,6 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-__version__ = "$Revision$"
-
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import os
 import signal
@@ -26,26 +24,24 @@ from optparse import OptionParser, OptionValueError
 from collections import defaultdict
 from isc.config.ccsession import ModuleCCSession, create_answer
 from isc.cc import Session, SessionError
-# Note: Following lines are removed in b10-stats	#@@REMOVED@@
-if __name__ == 'stats':					#@@REMOVED@@
-    try:						#@@REMOVED@@
-        from fake_time import time, strftime, gmtime	#@@REMOVED@@
-    except ImportError:					#@@REMOVED@@
-        pass						#@@REMOVED@@
 
 # for setproctitle
 import isc.util.process
 isc.util.process.rename()
 
-# If B10_FROM_BUILD is set in the environment, we use data files
+# If B10_FROM_SOURCE is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
 # installed on the system
-if "B10_FROM_BUILD" in os.environ:
-    SPECFILE_LOCATION = os.environ["B10_FROM_BUILD"] + "/src/bin/stats/stats.spec"
+if "B10_FROM_SOURCE" in os.environ:
+    BASE_LOCATION = os.environ["B10_FROM_SOURCE"] + os.sep + \
+        "src" + os.sep + "bin" + os.sep + "stats"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
-    SPECFILE_LOCATION = "@datadir@/@PACKAGE@/stats.spec".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+    BASE_LOCATION = "@datadir@" + os.sep + "@PACKAGE@"
+    BASE_LOCATION = BASE_LOCATION.replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+SPECFILE_LOCATION = BASE_LOCATION + os.sep + "stats.spec"
+SCHEMA_SPECFILE_LOCATION = BASE_LOCATION + os.sep + "stats-schema.spec"
 
 class Singleton(type):
     """
@@ -184,8 +180,7 @@ class CCSessionListener(Listener):
         self.session = self.subject.session = self.cc_session._session
 
         # initialize internal data
-        self.config_spec = self.cc_session.get_module_spec().get_config_spec()
-        self.stats_spec = self.config_spec
+        self.stats_spec = isc.config.module_spec_from_file(SCHEMA_SPECFILE_LOCATION).get_config_spec()
         self.stats_data = self.initialize_data(self.stats_spec)
 
         # add event handler invoked via SessionSubject object
@@ -220,7 +215,13 @@ class CCSessionListener(Listener):
         self.stats_data['stats.start_time'] = get_datetime()
         self.stats_data['stats.last_update_time'] = get_datetime()
         self.stats_data['stats.lname'] = self.session.lname
-        return self.cc_session.start()
+        self.cc_session.start()
+        # request Bob to send statistics data
+        if self.verbose:
+            sys.stdout.write("[b10-stats] request Bob to send statistics data\n")
+        cmd = isc.config.ccsession.create_command("sendstats", None)
+        seq = self.session.group_sendmsg(cmd, 'Boss')
+        self.session.group_recvmsg(True, seq)
 
     def stop(self):
         """
@@ -270,9 +271,6 @@ class CCSessionListener(Listener):
         """
         handle set command
         """
-        if self.verbose:
-            sys.stdout.write("[b10-stats] 'set' command received, args: "+str(args)+"\n")
-
         # 'args' must be dictionary type
         self.stats_data.update(args['stats_data'])
 

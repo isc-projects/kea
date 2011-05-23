@@ -17,6 +17,7 @@
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 #include <asiolink/asiolink.h>
+#include <asiodns/asiodns.h>
 
 #include <gtest/gtest.h>
 #include <string>
@@ -25,7 +26,8 @@ using namespace isc::server_common::portconfig;
 using namespace isc::data;
 using namespace isc;
 using namespace std;
-using namespace asiolink;
+using namespace isc::asiolink;
+using namespace isc::asiodns;
 
 namespace {
 
@@ -175,7 +177,7 @@ TEST_F(InstallListenAddresses, rollback) {
     EXPECT_NO_THROW(installListenAddresses(valid_, store_, dnss_));
     checkAddresses(valid_, "Before rollback");
     // This should not bind them, but should leave the original addresses
-    EXPECT_THROW(installListenAddresses(invalid_, store_, dnss_), IOError);
+    EXPECT_THROW(installListenAddresses(invalid_, store_, dnss_), exception);
     checkAddresses(valid_, "After rollback");
 }
 

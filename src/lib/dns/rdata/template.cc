@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,12 +14,13 @@
 
 #include <string>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
 using namespace std;
+using namespace isc::util;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -50,7 +51,7 @@ MyType::toWire(OutputBuffer& buffer) const {
 }
 
 void
-MyType::toWire(MessageRenderer& renderer) const {
+MyType::toWire(AbstractMessageRenderer& renderer) const {
 }
 
 int

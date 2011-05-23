@@ -26,8 +26,9 @@
 
 #include <config.h>
 
+#include <util/buffer.h>
+#include <util/unittests/resolver.h>
 #include <dns/message.h>
-#include <dns/buffer.h>
 #include <dns/rdata.h>
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
@@ -35,23 +36,12 @@
 #include <dns/rcode.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdataclass.h>
-#include <resolve/resolver_interface.h>
 #include "../nsas_entry.h"
 
 using namespace isc::dns::rdata;
 using namespace isc::dns;
-
-namespace {
-    MessagePtr
-    createResponseMessage(RRsetPtr answer_rrset)
-    {
-        MessagePtr response(new Message(Message::RENDER));
-        response->setOpcode(Opcode::QUERY());
-        response->setRcode(Rcode::NOERROR());
-        response->addRRset(Message::SECTION_ANSWER, answer_rrset);
-        return response;
-    }
-}
+using namespace isc::util;
+using isc::util::unittests::TestResolver;
 
 namespace isc {
 namespace dns {
@@ -124,7 +114,7 @@ public:
     virtual void toWire(OutputBuffer& buffer) const;
 
     /// \brief render the \Rdata in the wire format to a \c MessageRenderer
-    virtual void toWire(MessageRenderer& renderer) const;
+    virtual void toWire(AbstractMessageRenderer& renderer) const;
     
     /// \brief Comparison Method
     virtual int compare(const Rdata& other) const;
@@ -140,7 +130,7 @@ void RdataTest<T>::toWire(OutputBuffer&) const {
 }
 
 template <typename T>
-void RdataTest<T>::toWire(MessageRenderer&) const {
+void RdataTest<T>::toWire(AbstractMessageRenderer&) const {
 }
 
 template <typename T>
@@ -221,133 +211,6 @@ private:
 /// Some constants used in the various tests.
 
 static const uint32_t HASHTABLE_DEFAULT_SIZE = 1009; ///< First prime above 1000
-
-using namespace std;
-
-/*
- * This pretends to be a resolver. It stores the queries and
- * they can be answered.
- */
-class TestResolver : public isc::resolve::ResolverInterface {
-    private:
-        bool checkIndex(size_t index) {
-            return (requests.size() > index);
-        }
-
-        typedef std::map<isc::dns::Question, RRsetPtr >
-            PresetAnswers;
-        PresetAnswers answers_;
-    public:
-        typedef pair<QuestionPtr, CallbackPtr> Request;
-        vector<Request> requests;
-
-        /// \brief Destructor
-        ///
-        /// This is important.  All callbacks in the requests vector must be
-        /// called to remove them from internal loops.  Without this, destroying
-        /// the NSAS object will leave memory assigned.
-        ~TestResolver() {
-            for (size_t i = 0; i < requests.size(); ++i) {
-                requests[i].second->failure();
-            }
-        }
-
-        virtual void resolve(const QuestionPtr& q, const CallbackPtr& c) {
-            PresetAnswers::iterator it(answers_.find(*q));
-            if (it == answers_.end()) {
-                requests.push_back(Request(q, c));
-            } else {
-                if (it->second) {
-                    c->success(createResponseMessage(it->second));
-                } else {
-                    c->failure();
-                }
-            }
-        }
-
-        /*
-         * Add a preset answer. If shared_ptr() is passed (eg. NULL),
-         * it will generate failure. If the question is not preset,
-         * it goes to requests and you can answer later.
-         */
-        void addPresetAnswer(const isc::dns::Question& question,
-            RRsetPtr answer)
-        {
-            answers_[question] = answer;
-        }
-
-        // Thrown if the query at the given index does not exist.
-        class NoSuchRequest : public std::exception { };
-
-        // Thrown if the answer does not match the query
-        class DifferentRequest : public std::exception { };
-
-        QuestionPtr operator[](size_t index) {
-            if (index >= requests.size()) {
-                throw NoSuchRequest();
-            }
-            return (requests[index].first);
-        }
-        /*
-         * Looks if the two provided requests in resolver are A and AAAA.
-         * Sorts them so index1 is A.
-         *
-         * Returns false if there aren't enough elements
-         */
-        bool asksIPs(const Name& name, size_t index1, size_t index2) {
-            size_t max = (index1 < index2) ? index2 : index1;
-            if (!checkIndex(max)) {
-                return false;
-            }
-            EXPECT_EQ(name, (*this)[index1]->getName());
-            EXPECT_EQ(name, (*this)[index2]->getName());
-            EXPECT_EQ(RRClass::IN(), (*this)[index1]->getClass());
-            EXPECT_EQ(RRClass::IN(), (*this)[index2]->getClass());
-            // If they are the other way around, swap
-            if ((*this)[index1]->getType() == RRType::AAAA() &&
-                (*this)[index2]->getType() == RRType::A())
-            {
-                TestResolver::Request tmp((*this).requests[index1]);
-                (*this).requests[index1] =
-                    (*this).requests[index2];
-                (*this).requests[index2] = tmp;
-            }
-            // Check the correct addresses
-            EXPECT_EQ(RRType::A(), (*this)[index1]->getType());
-            EXPECT_EQ(RRType::AAAA(), (*this)[index2]->getType());
-            return (true);
-        }
-
-        /*
-         * Sends a simple answer to a query.
-         * Provide index of a query and the address to pass.
-         */
-        void answer(size_t index, const Name& name, const RRType& type,
-            const rdata::Rdata& rdata, size_t TTL = 100)
-        {
-            if (index >= requests.size()) {
-                throw NoSuchRequest();
-            }
-            RRsetPtr set(new RRset(name, RRClass::IN(),
-                type, RRTTL(TTL)));
-            set->addRdata(rdata);
-            requests[index].second->success(createResponseMessage(set));
-        }
-
-        void provideNS(size_t index,
-            RRsetPtr nameservers)
-        {
-            if (index >= requests.size()) {
-                throw NoSuchRequest();
-            }
-            if (requests[index].first->getName() != nameservers->getName() ||
-                requests[index].first->getType() != RRType::NS())
-            {
-                throw DifferentRequest();
-            }
-            requests[index].second->success(createResponseMessage(nameservers));
-        }
-};
 
 // String constants.  These should end in a dot.
 static const std::string EXAMPLE_CO_UK("example.co.uk.");

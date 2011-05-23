@@ -21,6 +21,7 @@
 #include <asio.hpp>
 #include <asiolink/io_service.h>
 
+namespace isc {
 namespace asiolink {
 
 class IOServiceImpl {
@@ -95,4 +96,5 @@ IOService::get_io_service() {
     return (io_impl_->get_io_service());
 }
 
-} // namepsace asiolink
+} // namespace asiolink
+} // namespace isc

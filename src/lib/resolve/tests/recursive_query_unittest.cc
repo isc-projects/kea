@@ -30,11 +30,14 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/rcode.h>
 
-#include <dns/buffer.h>
+#include <util/buffer.h>
+#include <util/unittests/resolver.h>
 #include <dns/message.h>
+#include <dns/rdataclass.h>
 
 #include <nsas/nameserver_address_store.h>
 #include <cache/resolver_cache.h>
+#include <resolve/resolve.h>
 
 // IMPORTANT: We shouldn't directly use ASIO definitions in this test.
 // In particular, we must not include asio.hpp in this file.
@@ -45,17 +48,31 @@
 // If we need to test something at the level of underlying ASIO and need
 // their definition, that test should go to asiolink/internal/tests.
 #include <resolve/recursive_query.h>
+#include <asiodns/dns_lookup.h>
 #include <asiolink/io_socket.h>
 #include <asiolink/io_service.h>
 #include <asiolink/io_message.h>
 #include <asiolink/io_error.h>
-#include <asiolink/dns_lookup.h>
 #include <asiolink/simple_callback.h>
 
 using isc::UnitTestUtil;
 using namespace std;
-using namespace asiolink;
+using namespace isc::asiodns;
+using namespace isc::asiolink;
 using namespace isc::dns;
+using namespace isc::util;
+
+namespace isc {
+namespace asiodns {
+
+// This is defined in recursive_query.cc, but not in header (it's not public
+// function). So bring it in to be tested.
+std::string
+deepestDelegation(Name name, RRClass rrclass,
+                  isc::cache::ResolverCache& cache);
+
+}
+}
 
 namespace {
 const char* const TEST_SERVER_PORT = "53535";
@@ -108,6 +125,9 @@ class RecursiveQueryTest : public ::testing::Test {
 protected:
     RecursiveQueryTest();
     ~RecursiveQueryTest() {
+        // It would delete itself, but after the io_service_, which could
+        // segfailt in case there were unhandled requests
+        resolver_.reset();
         if (res_ != NULL) {
             freeaddrinfo(res_);
         }
@@ -316,10 +336,10 @@ protected:
     private:
         // Currently unused; these will be used for testing
         // asynchronous lookup calls via the asyncLookup() method
-        boost::shared_ptr<asiolink::IOMessage> io_message_;
+        boost::shared_ptr<isc::asiolink::IOMessage> io_message_;
         isc::dns::MessagePtr message_;
         isc::dns::MessagePtr answer_message_;
-        isc::dns::OutputBufferPtr respbuf_;
+        isc::util::OutputBufferPtr respbuf_;
 
         // Callback functions provided by the caller
         const SimpleCallback* checkin_;
@@ -345,12 +365,6 @@ protected:
             }
         private:
             bool* done_;
-    };
-    
-    class MockResolver : public isc::resolve::ResolverInterface {
-        void resolve(const QuestionPtr& question,
-                     const ResolverInterface::CallbackPtr& callback) {
-        }
     };
 
     // This version of mock server just stops the io_service when it is resumed
@@ -421,16 +435,17 @@ protected:
     vector<uint8_t> callback_data_;
     int sock_;
     struct addrinfo* res_;
+    boost::shared_ptr<isc::util::unittests::TestResolver> resolver_;
 };
 
 RecursiveQueryTest::RecursiveQueryTest() :
     dns_service_(NULL), callback_(NULL), callback_protocol_(0),
-    callback_native_(-1), sock_(-1), res_(NULL)
+    callback_native_(-1), sock_(-1), res_(NULL),
+    resolver_(new isc::util::unittests::TestResolver())
 {
     io_service_ = new IOService();
     setDNSService(true, true);
-    boost::shared_ptr<MockResolver>mock_resolver(new MockResolver());
-    nsas_ = new isc::nsas::NameserverAddressStore(mock_resolver);
+    nsas_ = new isc::nsas::NameserverAddressStore(resolver_);
 }
 
 TEST_F(RecursiveQueryTest, v6UDPSend) {
@@ -565,9 +580,12 @@ TEST_F(RecursiveQueryTest, forwarderSend) {
                       singleAddress(TEST_IPV4_ADDR, port));
 
     Question q(Name("example.com"), RRClass::IN(), RRType::TXT());
+    Message query_message(Message::RENDER);
+    isc::resolve::initResponseMessage(q, query_message);
+
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
-    rq.resolve(q, answer, buffer, &server);
+    rq.forward(ConstMessagePtr(&query_message), answer, buffer, &server);
 
     char data[4096];
     size_t size = sizeof(data);
@@ -632,8 +650,41 @@ bool tryRead(int sock_, int recv_options, size_t max, int* num) {
     return true;
 }
 
+// Mock resolver callback for testing forward query.
+class MockResolverCallback : public isc::resolve::ResolverInterface::Callback {
+public:
+    enum ResultValue {
+        DEFAULT = 0,
+        SUCCESS = 1,
+        FAILURE = 2
+    };
 
-// Test it tries the correct amount of times before giving up
+    MockResolverCallback(DNSServer* server):
+        result(DEFAULT),
+        server_(server->clone())
+    {}
+
+    ~MockResolverCallback() {
+        delete server_;
+    }
+
+    void success(const isc::dns::MessagePtr response) {
+        result = SUCCESS;
+        server_->resume(true);
+    }
+
+    void failure() {
+        result = FAILURE;
+        server_->resume(false);
+    }
+
+    uint32_t result;
+private:
+    DNSServer* server_;
+};
+
+// Test query timeout, set query timeout is lower than client timeout
+// and lookup timeout.
 TEST_F(RecursiveQueryTest, forwardQueryTimeout) {
     // Prepare the service (we do not use the common setup, we do not answer
     setDNSService();
@@ -655,26 +706,20 @@ TEST_F(RecursiveQueryTest, forwardQueryTimeout) {
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
-    query.resolve(question, answer, buffer, &server);
+    Message query_message(Message::RENDER);
+    isc::resolve::initResponseMessage(question, query_message);
 
+    boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
+    query.forward(ConstMessagePtr(&query_message), answer, buffer, &server, callback);
     // Run the test
     io_service_->run();
-
-    // Read up to 3 packets.  Use some ad hoc timeout to prevent an infinite
-    // block (see also recvUDP()).
-    int recv_options = setSocketTimeout(sock_, 10, 0);
-    int num = 0;
-    bool read_success = tryRead(sock_, recv_options, 3, &num);
-
-    // The query should 'succeed' with an error response
-    EXPECT_TRUE(done);
-    EXPECT_EQ(3, num);
-    EXPECT_TRUE(read_success);
+    EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
 }
 
 // If we set client timeout to lower than querytimeout, we should
-// get a failure answer, but still see retries
-// (no actual answer is given here yet)
+// get a failure answer
+// (no actual answer is given here yet. TODO the returned error message
+// should be tested)
 TEST_F(RecursiveQueryTest, forwardClientTimeout) {
     // Prepare the service (we do not use the common setup, we do not answer
     setDNSService();
@@ -689,36 +734,25 @@ TEST_F(RecursiveQueryTest, forwardClientTimeout) {
 
     // Do the answer
     const uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    // Set it up to retry twice before client timeout fires
-    // Since the lookup timer has not fired, it should retry
-    // four times
     RecursiveQuery query(*dns_service_,
                          *nsas_, cache_,
                          singleAddress(TEST_IPV4_ADDR, port),
                          singleAddress(TEST_IPV4_ADDR, port),
-                         200, 480, 4000, 4);
-    Question question(Name("example.net"), RRClass::IN(), RRType::A());
+                         1000, 10, 4000, 4);
+    Question q(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
-    query.resolve(question, answer, buffer, &server);
+    Message query_message(Message::RENDER);
+    isc::resolve::initResponseMessage(q, query_message);
 
+    boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
+    query.forward(ConstMessagePtr(&query_message), answer, buffer, &server, callback);
     // Run the test
     io_service_->run();
-
-    // we know it'll fail, so make it a shorter timeout
-    int recv_options = setSocketTimeout(sock_, 1, 0);
-
-    // Try to read 4 times
-    int num = 0;
-    bool read_success = tryRead(sock_, recv_options, 4, &num);
-
-    // The query should fail
-    EXPECT_TRUE(done1);
-    EXPECT_EQ(3, num);
-    EXPECT_FALSE(read_success);
+    EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
 }
 
-// If we set lookup timeout to lower than querytimeout*retries, we should
-// fail before the full amount of retries
+// If we set lookup timeout to lower than querytimeout, the lookup
+// will fail.
 TEST_F(RecursiveQueryTest, forwardLookupTimeout) {
     // Prepare the service (we do not use the common setup, we do not answer
     setDNSService();
@@ -734,30 +768,22 @@ TEST_F(RecursiveQueryTest, forwardLookupTimeout) {
 
     // Do the answer
     const uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    // Set up the test so that it will retry 5 times, but the lookup
-    // timeout will fire after only 3 normal timeouts
     RecursiveQuery query(*dns_service_,
                          *nsas_, cache_,
                          singleAddress(TEST_IPV4_ADDR, port),
                          singleAddress(TEST_IPV4_ADDR, port),
-                         200, 4000, 480, 5);
+                         1000, 4000, 10, 5);
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
-    query.resolve(question, answer, buffer, &server);
 
+    Message query_message(Message::RENDER);
+    isc::resolve::initResponseMessage(question, query_message);
+
+    boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
+    query.forward(ConstMessagePtr(&query_message), answer, buffer, &server, callback);
     // Run the test
     io_service_->run();
-
-    int recv_options = setSocketTimeout(sock_, 1, 0);
-
-    // Try to read 5 times, should stop after 3 reads
-    int num = 0;
-    bool read_success = tryRead(sock_, recv_options, 5, &num);
-
-    // The query should fail and respond with an error
-    EXPECT_TRUE(done);
-    EXPECT_EQ(3, num);
-    EXPECT_FALSE(read_success);
+    EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
 }
 
 // Set everything very low and see if this doesn't cause weird
@@ -777,8 +803,6 @@ TEST_F(RecursiveQueryTest, lowtimeouts) {
 
     // Do the answer
     const uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    // Set up the test so that it will retry 5 times, but the lookup
-    // timeout will fire after only 3 normal timeouts
     RecursiveQuery query(*dns_service_,
                          *nsas_, cache_,
                          singleAddress(TEST_IPV4_ADDR, port),
@@ -786,21 +810,15 @@ TEST_F(RecursiveQueryTest, lowtimeouts) {
                          1, 1, 1, 1);
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
-    query.resolve(question, answer, buffer, &server);
 
+    Message query_message(Message::RENDER);
+    isc::resolve::initResponseMessage(question, query_message);
+
+    boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
+    query.forward(ConstMessagePtr(&query_message), answer, buffer, &server, callback);
     // Run the test
     io_service_->run();
-
-    int recv_options = setSocketTimeout(sock_, 1, 0);
-
-    // Try to read 5 times, should stop after 3 reads
-    int num = 0;
-    bool read_success = tryRead(sock_, recv_options, 5, &num);
-
-    // The query should fail and respond with an error
-    EXPECT_TRUE(done);
-    EXPECT_EQ(1, num);
-    EXPECT_FALSE(read_success);
+    EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
 }
 
 // as mentioned above, we need a more better framework for this,
@@ -855,7 +873,88 @@ TEST_F(RecursiveQueryTest, DISABLED_recursiveSendNXDOMAIN) {
     EXPECT_EQ(0, answer->getRRCount(Message::SECTION_ANSWER));
 }
 
+// Test that we don't start at root when we have a lower NS cached.
+TEST_F(RecursiveQueryTest, CachedNS) {
+    setDNSService(true, true);
+
+    // Check we have a reasonable fallback - if there's nothing of interest
+    // in the cache, start at root.
+    EXPECT_EQ(".", deepestDelegation(Name("www.somewhere.deep.example.org"),
+                                     RRClass::IN(), cache_));
+
+    // Prefill the cache. There's a zone with a NS and IP address for one
+    // of them (to see that one is enough) and another deeper one, with NS,
+    // but without IP.
+    RRsetPtr nsUpper(new RRset(Name("example.org"), RRClass::IN(),
+                               RRType::NS(), RRTTL(300)));
+    nsUpper->addRdata(rdata::generic::NS(Name("ns.example.org")));
+    nsUpper->addRdata(rdata::generic::NS(Name("ns2.example.org")));
+
+    RRsetPtr nsLower(new RRset(Name("somewhere.deep.example.org"),
+                               RRClass::IN(), RRType::NS(), RRTTL(300)));
+    nsLower->addRdata(rdata::generic::NS(Name("ns.somewhere.deep.example.org"))
+                      );
+
+    RRsetPtr nsIp(new RRset(Name("ns2.example.org"), RRClass::IN(),
+                            RRType::A(), RRTTL(300)));
+    nsIp->addRdata(rdata::in::A("192.0.2.1"));
+
+    // Make sure the test runs in the correct environment (we don't test
+    // the cache, but we need it to unswer this way for the test, so we
+    // just make sure)
+    ASSERT_TRUE(cache_.update(nsUpper));
+    ASSERT_TRUE(cache_.update(nsLower));
+    ASSERT_TRUE(cache_.update(nsIp));
+    RRsetPtr deepest(cache_.lookupDeepestNS(Name(
+        "www.somewhere.deep.example.org"), RRClass::IN()));
+    ASSERT_NE(RRsetPtr(), deepest);
+    ASSERT_EQ(nsLower->getName(), deepest->getName());
+
+    // Direct check of the function that chooses the delegation point
+    // It should not use nsLower, because we don't have IP address for
+    // that one. But it can choose nsUpper.
+    EXPECT_EQ("example.org.",
+              deepestDelegation(Name("www.somewhere.deep.example.org"),
+              RRClass::IN(), cache_));
+
+    // Now more complex and indirect test:
+    // We ask it to resolve the name for us. It will pick up a delegation
+    // point and ask NSAS for it. NSAS will in turn ask resolver for NS record
+    // of the delegation point. We then pick it up from the fake resolver
+    // and check it is the correct one. This checks the delegation point
+    // travels safely trough the whole path there (it would be enough to check
+    // it up to NSAS, but replacing NSAS is more complicated, so we just
+    // include in the test as well for simplicity).
+
+    // Prepare the recursive query
+    vector<pair<string, uint16_t> > roots;
+    roots.push_back(pair<string, uint16_t>("192.0.2.2", 53));
+
+    RecursiveQuery rq(*dns_service_, *nsas_, cache_,
+                      vector<pair<string, uint16_t> >(), roots);
+    // Ask a question at the bottom. It should not use the lower NS, because
+    // it would lead to a loop in NS. But it can use the nsUpper one, it has
+    // an IP address and we can avoid asking root.
+    Question q(Name("www.somewhere.deep.example.org"), RRClass::IN(),
+               RRType::A());
+    OutputBufferPtr buffer(new OutputBuffer(0));
+    MessagePtr answer(new Message(Message::RENDER));
+    // The server is here so we have something to pass there
+    MockServer server(*io_service_);
+    rq.resolve(q, answer, buffer, &server);
+    // We don't need to run the service in this test. We are interested only
+    // in the place it starts resolving at
+
+    // Look what is asked by NSAS - it should be our delegation point.
+    EXPECT_NO_THROW(EXPECT_EQ(nsUpper->getName(),
+                              (*resolver_)[0]->getName()) <<
+                    "It starts resolving at the wrong place") <<
+        "It does not ask NSAS anything, how does it know where to send?";
+}
+
 // TODO: add tests that check whether the cache is updated on succesfull
 // responses, and not updated on failures.
+
+
 
 }

@@ -132,7 +132,7 @@ class SendNonblock(unittest.TestCase):
             task()
             # If we got here, then everything worked well and in time
             # In that case, we terminate successfully
-            sys.exit(0)	# needs exit code
+            os._exit(0)	# needs exit code
         else:
             (pid, status) = os.waitpid(task_pid, 0)
             self.assertEqual(0, status,
@@ -202,7 +202,7 @@ class SendNonblock(unittest.TestCase):
                 try:
                     def killall(signum, frame):
                         os.kill(queue_pid, signal.SIGTERM)
-                        sys.exit(1)
+                        os._exit(1)
                     signal.signal(signal.SIGALRM, killall)
                     msg = msgq.preparemsg({"type" : "ping"}, data)
                     now = time.clock()
