@@ -22,6 +22,7 @@ liblog_la_SOURCES += message_exception.h
 liblog_la_SOURCES += message_initializer.cc message_initializer.h
 liblog_la_SOURCES += message_reader.cc message_reader.h
 liblog_la_SOURCES += message_types.h
+liblog_la_SOURCES += output_option.h
 liblog_la_SOURCES += root_logger_name.cc root_logger_name.h
 
 EXTRA_DIST  = README

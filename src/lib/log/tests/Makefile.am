@@ -13,16 +13,17 @@ CLEANFILES = *.gcno *.gcda
 TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
-run_unittests_SOURCES  = root_logger_name_unittest.cc
-run_unittests_SOURCES += logger_unittest.cc
-run_unittests_SOURCES += logger_level_unittest.cc
-run_unittests_SOURCES += logger_level_impl_unittest.cc
-run_unittests_SOURCES += message_dictionary_unittest.cc
-run_unittests_SOURCES += message_reader_unittest.cc
-run_unittests_SOURCES += message_initializer_unittest.cc
-run_unittests_SOURCES += message_initializer_unittest_2.cc
-run_unittests_SOURCES += run_unittests.cc
+run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += log_formatter_unittest.cc
+run_unittests_SOURCES += logger_level_impl_unittest.cc
+run_unittests_SOURCES += logger_level_unittest.cc
+run_unittests_SOURCES += logger_unittest.cc
+run_unittests_SOURCES += message_dictionary_unittest.cc
+run_unittests_SOURCES += message_initializer_unittest_2.cc
+run_unittests_SOURCES += message_initializer_unittest.cc
+run_unittests_SOURCES += message_reader_unittest.cc
+run_unittests_SOURCES += output_option_unittest.cc
+run_unittests_SOURCES += root_logger_name_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS) $(LOG4CPLUS_LDFLAGS)
