@@ -17,6 +17,7 @@ run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += log_formatter_unittest.cc
 run_unittests_SOURCES += logger_level_impl_unittest.cc
 run_unittests_SOURCES += logger_level_unittest.cc
+run_unittests_SOURCES += logger_manager_unittest.cc
 run_unittests_SOURCES += logger_unittest.cc
 run_unittests_SOURCES += logger_specification_unittest.cc
 run_unittests_SOURCES += message_dictionary_unittest.cc
