@@ -15,6 +15,13 @@
 #include <asio.hpp>
 #include <boost/bind.hpp>
 
+// These 3 are for delayedStart test. For windows and such, probably disabling
+// that test would be best option, it is not that important and while the test
+// itself uses unix-specific features, it tests OS-agnostic part of code.
+#include <unistd.h> // For fork in one of the tests
+#include <sys/types.h> // And for kill
+#include <signal.h>
+
 #include <config.h>
 
 #include <gtest/gtest.h>
