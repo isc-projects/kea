@@ -1,6 +1,4 @@
-SUBDIRS = . io unittests tests io_tests
-# The io_tests is hack, because otherwise we can not order these directories
-# properly. Unittests use io and io_tests use unittest.
+SUBDIRS = . io unittests tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
