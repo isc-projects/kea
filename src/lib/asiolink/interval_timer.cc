@@ -19,6 +19,8 @@
 #include <netinet/in.h>
 
 #include <boost/bind.hpp>
+#include <boost/enable_shared_from_this.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <exceptions/exceptions.h>
 
@@ -29,7 +31,11 @@
 namespace isc {
 namespace asiolink {
 
-class IntervalTimerImpl {
+/// This class uses shared_from_this in its methods. It must live inside
+/// a shared_ptr.
+class IntervalTimerImpl :
+    public boost::enable_shared_from_this<IntervalTimerImpl>
+{
 private:
     // prohibit copy
     IntervalTimerImpl(const IntervalTimerImpl& source);
@@ -85,43 +91,44 @@ IntervalTimerImpl::setup(const IntervalTimer::Callback& cbfunc,
     // At this point the timer is not running yet and will not expire.
     // After calling IOService::run(), the timer will expire.
     update();
-    return;
 }
 
 void
 IntervalTimerImpl::update() {
-    if (interval_ == 0) {
-        // timer has been canceled.  Do nothing.
-        return;
-    }
     try {
         // Update expire time to (current time + interval_).
         timer_.expires_from_now(boost::posix_time::millisec(interval_));
+        // Reset timer.
+        timer_.async_wait(boost::bind(&IntervalTimerImpl::callback,
+                                      shared_from_this(),
+                                      asio::placeholders::error));
     } catch (const asio::system_error& e) {
         isc_throw(isc::Unexpected, "Failed to update timer");
+    } catch (const boost::bad_weak_ptr& e) {
+        isc_throw(isc::Unexpected, "Failed to update timer");
     }
-    // Reset timer.
-    timer_.async_wait(boost::bind(&IntervalTimerImpl::callback, this, _1));
 }
 
 void
-IntervalTimerImpl::callback(const asio::error_code& cancelled) {
+IntervalTimerImpl::callback(const asio::error_code& ec) {
     assert(interval_ != INVALIDATED_INTERVAL);
-    // Do not call cbfunc_ in case the timer was cancelled.
-    // The timer will be canelled in the destructor of asio::deadline_timer.
-    if (!cancelled) {
-        cbfunc_();
+    if (interval_ == 0 || ec) {
+        // timer has been canceled. Do nothing.
+    } else {
         // Set next expire time.
         update();
+        // Invoke the call back function.
+        cbfunc_();
     }
 }
 
-IntervalTimer::IntervalTimer(IOService& io_service) {
-    impl_ = new IntervalTimerImpl(io_service);
-}
+IntervalTimer::IntervalTimer(IOService& io_service) :
+    impl_(new IntervalTimerImpl(io_service))
+{}
 
 IntervalTimer::~IntervalTimer() {
-    delete impl_;
+    // Cancel the timer to make sure cbfunc_() will not be called any more.
+    cancel();
 }
 
 void
