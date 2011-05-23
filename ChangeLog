@@ -1,3 +1,9 @@
+TBD.	[bug]           y-aharen
+	Fixed a bug an instance of IntervalTimerImpl may be destructed 
+	while deadline_timer is holding the handler. This fix addresses
+	occasional failure of IntervalTimerTest.destructIntervalTimer.
+	(Trac #957, git TBD)
+
 243.	[func]*		feng
 	Add optional hmac algorithm SHA224/384/812.
 	(Trac#782,git 77d792c9d7c1a3f95d3e6a8b721ac79002cd7db1).
