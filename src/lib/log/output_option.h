@@ -15,8 +15,8 @@
 #ifndef __OUTPUT_OPTION_H
 #define __OUTPUT_OPTION_H
 
-#include <cstddef>
-#include <cstdint>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string>
 
 /// \brief Logger Output Option
@@ -54,12 +54,17 @@ struct OutputOption {
 
     /// If console, stream on which messages are output
     typedef enum {
-        STR_STDERR = 0,     // Default console stream is stderr
-        STR_STDOUT = 1
+        STR_STDOUT = 0,
+        STR_STDERR = 1
     } Stream;
 
-    /// Members.  The default sets everything to 0, which why the
-    /// stderr/stdout numbers (above) are reversed.
+    /// \brief Constructor
+    OutputOption() : destination(DEST_CONSOLE), stream(STR_STDERR),
+                     flush(false), facility(""), filename(""), maxsize(0),
+                     maxver(0)
+    {}
+
+    /// Members. 
 
     Destination     destination;        ///< Where the output should go
     Stream          stream;             ///< stdout/stderr if console output
