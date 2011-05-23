@@ -12,38 +12,41 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <Python.h>
+
+#include <util/buffer.h>
+
 #include <dns/messagerenderer.h>
 
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
+#include "pydnspp_common.h"
+#include "messagerenderer_python.h"
+
 using namespace isc::dns;
+using namespace isc::dns::python;
+using namespace isc::util;
 
 // MessageRenderer
 
-// since we don't use *Buffer in the python version (but work with
-// the already existing bytearray type where we use these custom buffers
-// in c++, we need to keep track of one here.
-class s_MessageRenderer : public PyObject {
-public:
-    OutputBuffer* outputbuffer;
-    MessageRenderer* messagerenderer;
-};
+s_MessageRenderer::s_MessageRenderer() : outputbuffer(NULL),
+                                         messagerenderer(NULL)
+{
+}
 
-static int MessageRenderer_init(s_MessageRenderer* self);
-static void MessageRenderer_destroy(s_MessageRenderer* self);
+namespace {
+int MessageRenderer_init(s_MessageRenderer* self);
+void MessageRenderer_destroy(s_MessageRenderer* self);
 
-static PyObject* MessageRenderer_getData(s_MessageRenderer* self);
-static PyObject* MessageRenderer_getLength(s_MessageRenderer* self);
-static PyObject* MessageRenderer_isTruncated(s_MessageRenderer* self);
-static PyObject* MessageRenderer_getLengthLimit(s_MessageRenderer* self);
-static PyObject* MessageRenderer_getCompressMode(s_MessageRenderer* self);
-static PyObject* MessageRenderer_setTruncated(s_MessageRenderer* self);
-static PyObject* MessageRenderer_setLengthLimit(s_MessageRenderer* self, PyObject* args);
-static PyObject* MessageRenderer_setCompressMode(s_MessageRenderer* self, PyObject* args);
-static PyObject* MessageRenderer_clear(s_MessageRenderer* self);
+PyObject* MessageRenderer_getData(s_MessageRenderer* self);
+PyObject* MessageRenderer_getLength(s_MessageRenderer* self);
+PyObject* MessageRenderer_isTruncated(s_MessageRenderer* self);
+PyObject* MessageRenderer_getLengthLimit(s_MessageRenderer* self);
+PyObject* MessageRenderer_getCompressMode(s_MessageRenderer* self);
+PyObject* MessageRenderer_setTruncated(s_MessageRenderer* self);
+PyObject* MessageRenderer_setLengthLimit(s_MessageRenderer* self, PyObject* args);
+PyObject* MessageRenderer_setCompressMode(s_MessageRenderer* self, PyObject* args);
+PyObject* MessageRenderer_clear(s_MessageRenderer* self);
 
-static PyMethodDef MessageRenderer_methods[] = {
+PyMethodDef MessageRenderer_methods[] = {
     { "get_data", reinterpret_cast<PyCFunction>(MessageRenderer_getData), METH_NOARGS,
       "Returns the data as a bytes() object" },
     { "get_length", reinterpret_cast<PyCFunction>(MessageRenderer_getLength), METH_NOARGS,
@@ -66,7 +69,116 @@ static PyMethodDef MessageRenderer_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
-static PyTypeObject messagerenderer_type = {
+int
+MessageRenderer_init(s_MessageRenderer* self) {
+    self->outputbuffer = new OutputBuffer(4096);
+    self->messagerenderer = new MessageRenderer(*self->outputbuffer);
+    return (0);
+}
+
+void
+MessageRenderer_destroy(s_MessageRenderer* self) {
+    delete self->messagerenderer;
+    delete self->outputbuffer;
+    self->messagerenderer = NULL;
+    self->outputbuffer = NULL;
+    Py_TYPE(self)->tp_free(self);
+}
+
+PyObject*
+MessageRenderer_getData(s_MessageRenderer* self) {
+    return (Py_BuildValue("y#",
+                         self->messagerenderer->getData(),
+                          self->messagerenderer->getLength()));
+}
+
+PyObject*
+MessageRenderer_getLength(s_MessageRenderer* self) {
+    return (Py_BuildValue("I", self->messagerenderer->getLength()));
+}
+
+PyObject*
+MessageRenderer_isTruncated(s_MessageRenderer* self) {
+    if (self->messagerenderer->isTruncated()) {
+        Py_RETURN_TRUE;
+    } else {
+        Py_RETURN_FALSE;
+    }
+}
+
+PyObject*
+MessageRenderer_getLengthLimit(s_MessageRenderer* self) {
+    return (Py_BuildValue("I", self->messagerenderer->getLengthLimit()));
+}
+
+PyObject*
+MessageRenderer_getCompressMode(s_MessageRenderer* self) {
+    return (Py_BuildValue("I", self->messagerenderer->getCompressMode()));
+}
+
+PyObject*
+MessageRenderer_setTruncated(s_MessageRenderer* self) {
+    self->messagerenderer->setTruncated();
+    Py_RETURN_NONE;
+}
+
+PyObject*
+MessageRenderer_setLengthLimit(s_MessageRenderer* self,
+                               PyObject* args)
+{
+    long lengthlimit;
+    if (!PyArg_ParseTuple(args, "l", &lengthlimit)) {
+        PyErr_Clear();
+        PyErr_SetString(PyExc_TypeError,
+                        "No valid type in set_length_limit argument");
+        return (NULL);
+    }
+    if (lengthlimit < 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "MessageRenderer length limit out of range");
+        return (NULL);
+    }
+    self->messagerenderer->setLengthLimit(lengthlimit);
+    Py_RETURN_NONE;
+}
+
+PyObject*
+MessageRenderer_setCompressMode(s_MessageRenderer* self,
+                               PyObject* args)
+{
+    int mode;
+    if (!PyArg_ParseTuple(args, "i", &mode)) {
+        return (NULL);
+    }
+
+    if (mode == MessageRenderer::CASE_INSENSITIVE) {
+        self->messagerenderer->setCompressMode(MessageRenderer::CASE_INSENSITIVE);
+        // If we return NULL it is seen as an error, so use this for
+        // None returns, it also applies to CASE_SENSITIVE.
+        Py_RETURN_NONE;
+    } else if (mode == MessageRenderer::CASE_SENSITIVE) {
+        self->messagerenderer->setCompressMode(MessageRenderer::CASE_SENSITIVE);
+        Py_RETURN_NONE;
+    } else {
+        PyErr_SetString(PyExc_TypeError,
+                        "MessageRenderer compress mode must be MessageRenderer.CASE_INSENSITIVE"
+                        "or MessageRenderer.CASE_SENSITIVE");
+        return (NULL);
+    }
+}
+
+PyObject*
+MessageRenderer_clear(s_MessageRenderer* self) {
+    self->messagerenderer->clear();
+    Py_RETURN_NONE;
+}
+} // end of unnamed namespace
+
+// end of MessageRenderer
+namespace isc {
+namespace dns {
+namespace python {
+PyTypeObject messagerenderer_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "pydnspp.MessageRenderer",
     sizeof(s_MessageRenderer),          // tp_basicsize
@@ -80,7 +192,7 @@ static PyTypeObject messagerenderer_type = {
     NULL,                               // tp_as_number
     NULL,                               // tp_as_sequence
     NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
+    NULL,                               // tp_hash
     NULL,                               // tp_call
     NULL,                               // tp_str
     NULL,                               // tp_getattro
@@ -121,105 +233,6 @@ static PyTypeObject messagerenderer_type = {
     0                                   // tp_version_tag
 };
 
-static int
-MessageRenderer_init(s_MessageRenderer* self) {
-    self->outputbuffer = new OutputBuffer(4096);
-    self->messagerenderer = new MessageRenderer(*self->outputbuffer);
-    return (0);
-}
-
-static void
-MessageRenderer_destroy(s_MessageRenderer* self) {
-    delete self->messagerenderer;
-    delete self->outputbuffer;
-    self->messagerenderer = NULL;
-    self->outputbuffer = NULL;
-    Py_TYPE(self)->tp_free(self);
-}
-
-static PyObject*
-MessageRenderer_getData(s_MessageRenderer* self) {
-    return (Py_BuildValue("y#",
-                         self->messagerenderer->getData(),
-                          self->messagerenderer->getLength()));
-}
-
-static PyObject*
-MessageRenderer_getLength(s_MessageRenderer* self) {
-    return (Py_BuildValue("I", self->messagerenderer->getLength()));
-}
-
-static PyObject*
-MessageRenderer_isTruncated(s_MessageRenderer* self) {
-    if (self->messagerenderer->isTruncated()) {
-        Py_RETURN_TRUE;
-    } else {
-        Py_RETURN_FALSE;
-    }
-}
-
-static PyObject*
-MessageRenderer_getLengthLimit(s_MessageRenderer* self) {
-    return (Py_BuildValue("I", self->messagerenderer->getLengthLimit()));
-}
-
-static PyObject*
-MessageRenderer_getCompressMode(s_MessageRenderer* self) {
-    return (Py_BuildValue("I", self->messagerenderer->getCompressMode()));
-}
-
-static PyObject*
-MessageRenderer_setTruncated(s_MessageRenderer* self) {
-    self->messagerenderer->setTruncated();
-    Py_RETURN_NONE;
-}
-
-static PyObject*
-MessageRenderer_setLengthLimit(s_MessageRenderer* self,
-                               PyObject* args)
-{
-    unsigned int lengthlimit;
-    if (!PyArg_ParseTuple(args, "I", &lengthlimit)) {
-        return (NULL);
-    }
-    self->messagerenderer->setLengthLimit(lengthlimit);
-    Py_RETURN_NONE;
-}
-
-static PyObject*
-MessageRenderer_setCompressMode(s_MessageRenderer* self,
-                               PyObject* args)
-{
-    unsigned int mode;
-    if (!PyArg_ParseTuple(args, "I", &mode)) {
-        return (NULL);
-    }
-
-    if (mode == MessageRenderer::CASE_INSENSITIVE) {
-        self->messagerenderer->setCompressMode(MessageRenderer::CASE_INSENSITIVE);
-        // If we return NULL it is seen as an error, so use this for
-        // None returns, it also applies to CASE_SENSITIVE.
-        Py_RETURN_NONE;
-    } else if (mode == MessageRenderer::CASE_SENSITIVE) {
-        self->messagerenderer->setCompressMode(MessageRenderer::CASE_SENSITIVE);
-        Py_RETURN_NONE;
-    } else {
-        PyErr_SetString(PyExc_TypeError,
-                        "MessageRenderer compress mode must be MessageRenderer.CASE_INSENSITIVE"
-                        "or MessageRenderer.CASE_SENSITIVE");
-        return (NULL);
-    }
-}
-
-static PyObject*
-MessageRenderer_clear(s_MessageRenderer* self) {
-    self->messagerenderer->clear();
-    Py_RETURN_NONE;
-}
-
-// end of MessageRenderer
-
-
 // Module Initialization, all statics are initialized here
 bool
 initModulePart_MessageRenderer(PyObject* mod) {
@@ -251,5 +264,6 @@ initModulePart_MessageRenderer(PyObject* mod) {
     
     return (true);
 }
-
-
+} // namespace python
+} // namespace dns
+} // namespace isc

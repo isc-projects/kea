@@ -151,6 +151,9 @@ class ModuleCCSession(ConfigData):
         self._remote_module_configs = {}
 
     def __del__(self):
+        # If the CC Session obejct has been closed, it returns
+        # immediately.
+        if self._session._closed: return
         self._session.group_unsubscribe(self._module_name, "*")
         for module_name in self._remote_module_configs:
             self._session.group_unsubscribe(module_name)

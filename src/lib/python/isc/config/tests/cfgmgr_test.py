@@ -135,6 +135,8 @@ class TestConfigManager(unittest.TestCase):
         self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
         self.cm.set_module_spec(module_spec)
         self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        self.assert_(module_spec.get_module_name() not in
+                     self.cm.virtual_modules)
 
     def test_remove_module_spec(self):
         module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
@@ -143,6 +145,30 @@ class TestConfigManager(unittest.TestCase):
         self.assert_(module_spec.get_module_name() in self.cm.module_specs)
         self.cm.remove_module_spec(module_spec.get_module_name())
         self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.assert_(module_spec.get_module_name() not in
+                     self.cm.virtual_modules)
+
+    def test_add_remove_virtual_module(self):
+        module_spec = isc.config.module_spec.module_spec_from_file(
+            self.data_path + os.sep + "spec1.spec")
+        check_func = lambda: True
+        # Make sure it's not in there before
+        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.assert_(module_spec.get_module_name() not in
+                     self.cm.virtual_modules)
+        # Add it there
+        self.cm.set_virtual_module(module_spec, check_func)
+        # Check it's in there
+        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        self.assertEqual(self.cm.module_specs[module_spec.get_module_name()],
+                      module_spec)
+        self.assertEqual(self.cm.virtual_modules[module_spec.get_module_name()],
+                      check_func)
+        # Remove it again
+        self.cm.remove_module_spec(module_spec.get_module_name())
+        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.assert_(module_spec.get_module_name() not in
+                     self.cm.virtual_modules)
 
     def test_get_module_spec(self):
         module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
@@ -311,6 +337,51 @@ class TestConfigManager(unittest.TestCase):
                                   ["shutdown"]
                                 },
                                 {'result': [0]})
+
+    def test_set_config_virtual(self):
+        """Test that if the module is virtual, we don't send it over the
+           message bus, but call the checking function.
+           """
+        # We run the same three times, with different return values
+        def single_test(value, returnFunc, expectedResult):
+            # Because closures can't assign to closed-in variables, we pass
+            # it trough self
+            self.called_with = None
+            def check_test(new_data):
+                self.called_with = new_data
+                return returnFunc()
+
+            # Register our virtual module
+            self.cm.set_virtual_module(self.spec, check_test)
+            # The fake session will throw now if it tries to read a response.
+            # Handy, we don't need to find a complicated way to check for it.
+            result = self.cm._handle_set_config_module(self.spec.
+                                                       get_module_name(),
+                                                       {'item1': value})
+            # Check the correct result is passed and our function was called
+            # With correct data
+            self.assertEqual(self.called_with['item1'], value)
+            self.assertEqual(result, {'result': expectedResult})
+            if expectedResult[0] == 0:
+                # Check it provided the correct notification
+                self.assertEqual(len(self.fake_session.message_queue), 1)
+                self.assertEqual({'command': [ 'config_update',
+                                 {'item1': value}]},
+                                 self.fake_session.get_message('Spec2', None))
+                # and the queue should now be empty again
+                self.assertEqual(len(self.fake_session.message_queue), 0)
+            else:
+                # It shouldn't send anything on error
+                self.assertEqual(len(self.fake_session.message_queue), 0)
+
+        # Success
+        single_test(5, lambda: None, [0])
+        # Graceful error
+        single_test(6, lambda: "Just error", [1, "Just error"])
+        # Exception from the checker
+        def raiser():
+            raise Exception("Just exception")
+        single_test(7, raiser, [1, "Exception: Just exception"])
 
     def test_set_config_all(self):
         my_ok_answer = { 'result': [ 0 ] }

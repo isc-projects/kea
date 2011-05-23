@@ -62,6 +62,12 @@ def create_message():
     message_render.add_rrset(Message.SECTION_ANSWER, rrset)
     return message_render
 
+def strip_mutable_tsig_data(data):
+    # Unfortunately we cannot easily compare TSIG RR because we can't tweak
+    # current time.  As a work around this helper function strips off the time
+    # dependent part of TSIG RDATA, i.e., the MAC (assuming HMAC-MD5) and
+    # Time Signed.
+    return data[0:-32] + data[-26:-22] + data[-6:]
 
 class MessageTest(unittest.TestCase):
 
@@ -80,8 +86,12 @@ class MessageTest(unittest.TestCase):
                                         "2001:db8::134"))
 
         self.bogus_section = Message.SECTION_ADDITIONAL + 1
+        self.bogus_below_section = Message.SECTION_QUESTION - 1
+        self.tsig_key = TSIGKey("www.example.com:SFuWd/q99SzF8Yzd1QbB9g==")
+        self.tsig_ctx = TSIGContext(self.tsig_key)
 
     def test_init(self):
+        self.assertRaises(TypeError, Message, -1)
         self.assertRaises(TypeError, Message, 3)
         self.assertRaises(TypeError, Message, "wrong")
 
@@ -109,15 +119,13 @@ class MessageTest(unittest.TestCase):
         self.assertRaises(InvalidParameter, self.r.set_header_flag, 0)
         self.assertRaises(InvalidParameter, self.r.set_header_flag, 0x7000)
         self.assertRaises(InvalidParameter, self.r.set_header_flag, 0x0800)
-        self.assertRaises(InvalidParameter, self.r.set_header_flag, 0x10000)
-        self.assertRaises(TypeError, self.r.set_header_flag, 0x80000000)
-        # this would cause overflow and result in a "valid" flag
-        self.assertRaises(TypeError, self.r.set_header_flag,
-                          Message.HEADERFLAG_AA | 0x100000000)
-        self.assertRaises(TypeError, self.r.set_header_flag, -1)
-
         self.assertRaises(InvalidMessageOperation,
                           self.p.set_header_flag, Message.HEADERFLAG_AA)
+
+        # Range check.  We need to do this at the binding level, so we need
+        # explicit tests for it.
+        self.assertRaises(ValueError, self.r.set_header_flag, 0x10000)
+        self.assertRaises(ValueError, self.r.set_header_flag, -1)
 
     def test_set_qid(self):
         self.assertRaises(TypeError, self.r.set_qid, "wrong")
@@ -125,6 +133,14 @@ class MessageTest(unittest.TestCase):
                           self.p.set_qid, 123)
         self.r.set_qid(1234)
         self.assertEqual(1234, self.r.get_qid())
+        # Range check.  We need to do this at the binding level, so we need
+        # explicit tests for it.
+        self.r.set_qid(0)
+        self.assertEqual(0, self.r.get_qid())
+        self.r.set_qid(0xffff)
+        self.assertEqual(0xffff, self.r.get_qid())
+        self.assertRaises(ValueError, self.r.set_qid, -1)
+        self.assertRaises(ValueError, self.r.set_qid, 0x10000)
 
     def test_set_rcode(self):
         self.assertRaises(TypeError, self.r.set_rcode, "wrong")
@@ -135,7 +151,7 @@ class MessageTest(unittest.TestCase):
 
         self.assertRaises(InvalidMessageOperation,
                           self.p.set_rcode, rcode)
-        
+
         self.assertRaises(InvalidMessageOperation, self.p.get_rcode)
 
     def test_set_opcode(self):
@@ -197,7 +213,7 @@ class MessageTest(unittest.TestCase):
 
         self.assertRaises(InvalidMessageOperation, self.p.add_rrset,
                           Message.SECTION_ANSWER, self.rrset_a)
-        
+
         self.assertFalse(compare_rrset_list(section_rrset, self.r.get_section(Message.SECTION_ANSWER)))
         self.assertEqual(0, self.r.get_rr_count(Message.SECTION_ANSWER))
         self.r.add_rrset(Message.SECTION_ANSWER, self.rrset_a)
@@ -239,6 +255,8 @@ class MessageTest(unittest.TestCase):
                           Message.SECTION_ANSWER, self.rrset_a)
         self.assertRaises(OverflowError, self.r.add_rrset,
                           self.bogus_section, self.rrset_a)
+        self.assertRaises(OverflowError, self.r.add_rrset,
+                          self.bogus_below_section, self.rrset_a)
 
     def test_clear(self):
         self.assertEqual(None, self.r.clear(Message.PARSE))
@@ -267,12 +285,39 @@ class MessageTest(unittest.TestCase):
         self.assertRaises(InvalidMessageOperation, self.r.to_wire,
                           MessageRenderer())
 
+    def __common_tsigquery_setup(self):
+        self.r.set_opcode(Opcode.QUERY())
+        self.r.set_rcode(Rcode.NOERROR())
+        self.r.set_header_flag(Message.HEADERFLAG_RD)
+        self.r.add_question(Question(Name("www.example.com"),
+                                     RRClass("IN"), RRType("A")))
+
+    def __common_tsig_checks(self, expected_file):
+        renderer = MessageRenderer()
+        self.r.to_wire(renderer, self.tsig_ctx)
+        actual_wire = strip_mutable_tsig_data(renderer.get_data())
+        expected_wire = strip_mutable_tsig_data(read_wire_data(expected_file))
+        self.assertEqual(expected_wire, actual_wire)
+
+    def test_to_wire_with_tsig(self):
+        self.r.set_qid(0x2d65)
+        self.__common_tsigquery_setup()
+        self.__common_tsig_checks("message_toWire2.wire")
+
+    def test_to_wire_with_edns_tsig(self):
+        self.r.set_qid(0x6cd)
+        self.__common_tsigquery_setup()
+        edns = EDNS()
+        edns.set_udp_size(4096)
+        self.r.set_edns(edns)
+        self.__common_tsig_checks("message_toWire3.wire")
+
     def test_to_text(self):
         message_render = create_message()
         
         msg_str =\
 """;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 4149
-;; flags: qr aa rd ; QUESTION: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 0
+;; flags: qr aa rd; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 0
 
 ;; QUESTION SECTION:
 ;test.example.com. IN A
@@ -377,7 +422,54 @@ test.example.com. 3600 IN A 192.0.2.2
                           factoryFromFile,
                           message_parse,
                           "message_fromWire9")
-    
+
+    def test_from_wire_with_tsig(self):
+        # Initially there should be no TSIG
+        self.assertEqual(None, self.p.get_tsig_record())
+
+        # getTSIGRecord() is only valid in the parse mode.
+        self.assertRaises(InvalidMessageOperation, self.r.get_tsig_record)
+
+        factoryFromFile(self.p, "message_toWire2.wire")
+        tsig_rr = self.p.get_tsig_record()
+        self.assertEqual(Name("www.example.com"), tsig_rr.get_name())
+        self.assertEqual(85, tsig_rr.get_length())
+        self.assertEqual(TSIGKey.HMACMD5_NAME,
+                         tsig_rr.get_rdata().get_algorithm())
+
+        # If we clear the message for reuse, the recorded TSIG will be cleared.
+        self.p.clear(Message.PARSE)
+        self.assertEqual(None, self.p.get_tsig_record())
+
+    def test_from_wire_with_tsigcompressed(self):
+        # Mostly same as fromWireWithTSIG, but the TSIG owner name is
+        # compressed.
+        factoryFromFile(self.p, "message_fromWire12.wire");
+        tsig_rr = self.p.get_tsig_record()
+        self.assertEqual(Name("www.example.com"), tsig_rr.get_name())
+        # len(www.example.com) = 17, but when fully compressed, the length is
+        # 2 bytes.  So the length of the record should be 15 bytes shorter.
+        self.assertEqual(70, tsig_rr.get_length())
+
+    def test_from_wire_with_badtsig(self):
+        # Multiple TSIG RRs
+        self.assertRaises(DNSMessageFORMERR, factoryFromFile,
+                          self.p, "message_fromWire13.wire")
+        self.p.clear(Message.PARSE)
+
+        # TSIG in the answer section (must be in additional)
+        self.assertRaises(DNSMessageFORMERR, factoryFromFile,
+                          self.p, "message_fromWire14.wire")
+        self.p.clear(Message.PARSE)
+
+        # TSIG is not the last record.
+        self.assertRaises(DNSMessageFORMERR, factoryFromFile,
+                          self.p, "message_fromWire15.wire")
+        self.p.clear(Message.PARSE)
+
+        # Unexpected RR Class (this will fail in constructing TSIGRecord)
+        self.assertRaises(DNSMessageFORMERR, factoryFromFile,
+                          self.p, "message_fromWire16.wire")
 
 if __name__ == '__main__':
     unittest.main()

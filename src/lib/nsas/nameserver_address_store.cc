@@ -20,10 +20,11 @@
 
 #include <config.h>
 #include <dns/rdataclass.h>
+#include <util/locks.h>
+#include <util/lru_list.h>
+#include <log/logger.h>
 
-#include "locks.h"
 #include "hash_table.h"
-#include "lru_list.h"
 #include "hash_deleter.h"
 #include "nsas_entry_compare.h"
 #include "nameserver_entry.h"
@@ -31,6 +32,8 @@
 #include "zone_entry.h"
 #include "glue_hints.h"
 #include "address_request_callback.h"
+#include "nsasdef.h"
+#include "nsas_log.h"
 
 using namespace isc::dns;
 using namespace std;
@@ -50,9 +53,9 @@ NameserverAddressStore::NameserverAddressStore(
         zonehashsize)),
     nameserver_hash_(new HashTable<NameserverEntry>(
         new NsasEntryCompare<NameserverEntry>, nshashsize)),
-    zone_lru_(new LruList<ZoneEntry>((3 * zonehashsize),
+    zone_lru_(new isc::util::LruList<ZoneEntry>((3 * zonehashsize),
         new HashDeleter<ZoneEntry>(*zone_hash_))),
-    nameserver_lru_(new LruList<NameserverEntry>((3 * nshashsize),
+    nameserver_lru_(new isc::util::LruList<NameserverEntry>((3 * nshashsize),
         new HashDeleter<NameserverEntry>(*nameserver_hash_))),
     resolver_(resolver.get())
 { }
@@ -70,7 +73,7 @@ newZone(
     isc::resolve::ResolverInterface* resolver,
     const string* zone, const RRClass* class_code,
     const boost::shared_ptr<HashTable<NameserverEntry> >* ns_hash,
-    const boost::shared_ptr<LruList<NameserverEntry> >* ns_lru)
+    const boost::shared_ptr<isc::util::LruList<NameserverEntry> >* ns_lru)
 {
     boost::shared_ptr<ZoneEntry> result(new ZoneEntry(resolver, *zone, *class_code,
         *ns_hash, *ns_lru));
@@ -84,6 +87,8 @@ NameserverAddressStore::lookup(const string& zone, const RRClass& class_code,
     boost::shared_ptr<AddressRequestCallback> callback, AddressFamily family,
     const GlueHints& glue_hints)
 {
+    LOG_DEBUG(nsas_logger, NSAS_DBG_TRACE, NSAS_LOOKUPZONE).arg(zone);
+
     pair<bool, boost::shared_ptr<ZoneEntry> > zone_obj(
         zone_hash_->getOrAdd(HashKey(zone, class_code),
                              boost::bind(newZone, resolver_, &zone, &class_code,
@@ -103,6 +108,8 @@ NameserverAddressStore::cancel(const string& zone,
     const boost::shared_ptr<AddressRequestCallback>& callback,
     AddressFamily family)
 {
+    LOG_DEBUG(nsas_logger, NSAS_DBG_TRACE, NSAS_LOOKUPCANCEL).arg(zone);
+
     boost::shared_ptr<ZoneEntry> entry(zone_hash_->get(HashKey(zone,
                                                                class_code)));
     if (entry) {

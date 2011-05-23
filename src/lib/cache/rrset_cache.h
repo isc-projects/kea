@@ -17,7 +17,8 @@
 
 #include <cache/rrset_entry.h>
 #include <nsas/hash_table.h>
-#include <nsas/lru_list.h>
+
+#include <util/lru_list.h>
 
 using namespace isc::nsas;
 
@@ -98,7 +99,7 @@ public:
 protected:
     uint16_t class_; // The class of the rrset cache.
     isc::nsas::HashTable<RRsetEntry> rrset_table_;
-    isc::nsas::LruList<RRsetEntry> rrset_lru_;
+    isc::util::LruList<RRsetEntry> rrset_lru_;
 };
 
 typedef boost::shared_ptr<RRsetCache> RRsetCachePtr;

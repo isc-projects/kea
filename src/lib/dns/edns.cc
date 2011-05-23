@@ -36,6 +36,7 @@
 using namespace std;
 using namespace boost;
 using namespace isc::dns::rdata;
+using namespace isc::util;
 
 namespace isc {
 namespace dns {
@@ -109,19 +110,25 @@ EDNS::toText() const {
     return (ret);
 }
 
+namespace {
+/// Helper function to define unified implementation for the public versions
+/// of toWire().
 template <typename Output>
 int
-EDNS::toWire(Output& output, const uint8_t extended_rcode) const {
+toWireCommon(Output& output, const uint8_t version,
+             const uint16_t udp_size, const bool dnssec_aware,
+             const uint8_t extended_rcode)
+{
     // Render EDNS OPT RR
     uint32_t extrcode_flags = extended_rcode << EXTRCODE_SHIFT;
-    extrcode_flags |= (version_ << VERSION_SHIFT) & VERSION_MASK;
-    if (dnssec_aware_) {
+    extrcode_flags |= (version << VERSION_SHIFT) & VERSION_MASK;
+    if (dnssec_aware) {
         extrcode_flags |= EXTFLAG_DO;
     }
 
     // Construct an RRset corresponding to the EDNS.
     // We don't support any options for now, so the OPT RR can be empty.
-    RRsetPtr edns_rrset(new RRset(Name::ROOT_NAME(), RRClass(udp_size_),
+    RRsetPtr edns_rrset(new RRset(Name::ROOT_NAME(), RRClass(udp_size),
                                   RRType::OPT(), RRTTL(extrcode_flags)));
     edns_rrset->addRdata(ConstRdataPtr(new generic::OPT()));
 
@@ -129,9 +136,12 @@ EDNS::toWire(Output& output, const uint8_t extended_rcode) const {
 
     return (1);
 }
+}
 
 unsigned int
-EDNS::toWire(MessageRenderer& renderer, const uint8_t extended_rcode) const {
+EDNS::toWire(AbstractMessageRenderer& renderer,
+             const uint8_t extended_rcode) const
+{
     // If adding the OPT RR would exceed the size limit, don't do it.
     // 11 = len(".") + type(2byte) + class(2byte) + TTL(4byte) + RDLEN(2byte)
     // (RDATA is empty in this simple implementation)
@@ -139,12 +149,16 @@ EDNS::toWire(MessageRenderer& renderer, const uint8_t extended_rcode) const {
         return (0);
     }
 
-    return (toWire<MessageRenderer>(renderer, extended_rcode));
+    return (toWireCommon(renderer, version_, udp_size_, dnssec_aware_,
+                         extended_rcode));
 }
 
 unsigned int
-EDNS::toWire(OutputBuffer& buffer, const uint8_t extended_rcode) const {
-    return (toWire<OutputBuffer>(buffer, extended_rcode));
+EDNS::toWire(isc::util::OutputBuffer& buffer,
+             const uint8_t extended_rcode) const
+{
+    return (toWireCommon(buffer, version_, udp_size_, dnssec_aware_,
+                         extended_rcode));
 }
 
 EDNS*

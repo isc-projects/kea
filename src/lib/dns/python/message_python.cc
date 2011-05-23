@@ -14,17 +14,22 @@
 
 #include <exceptions/exceptions.h>
 #include <dns/message.h>
-using namespace isc::dns;
+#include <dns/rcode.h>
+#include <dns/tsig.h>
 
+using namespace isc::dns;
+using namespace isc::util;
+
+namespace {
 //
 // Declaration of the custom exceptions
 // Initialization and addition of these go in the initModulePart
 // function at the end of this file
 //
-static PyObject* po_MessageTooShort;
-static PyObject* po_InvalidMessageSection;
-static PyObject* po_InvalidMessageOperation;
-static PyObject* po_InvalidMessageUDPSize;
+PyObject* po_MessageTooShort;
+PyObject* po_InvalidMessageSection;
+PyObject* po_InvalidMessageOperation;
+PyObject* po_InvalidMessageUDPSize;
 
 //
 // Definition of the classes
@@ -33,10 +38,6 @@ static PyObject* po_InvalidMessageUDPSize;
 // For each class, we need a struct, a helper functions (init, destroy,
 // and static wrappers around the methods we export), a list of methods,
 // and a type description
-
-//
-// Section
-//
 
 //
 // Message
@@ -54,36 +55,37 @@ public:
 //
 
 // General creation and destruction
-static int Message_init(s_Message* self, PyObject* args);
-static void Message_destroy(s_Message* self);
+int Message_init(s_Message* self, PyObject* args);
+void Message_destroy(s_Message* self);
 
-static PyObject* Message_getHeaderFlag(s_Message* self, PyObject* args);
-static PyObject* Message_setHeaderFlag(s_Message* self, PyObject* args);
-static PyObject* Message_getQid(s_Message* self);
-static PyObject* Message_setQid(s_Message* self, PyObject* args);
-static PyObject* Message_getRcode(s_Message* self);
-static PyObject* Message_setRcode(s_Message* self, PyObject* args);
-static PyObject* Message_getOpcode(s_Message* self);
-static PyObject* Message_setOpcode(s_Message* self, PyObject* args);
-static PyObject* Message_getEDNS(s_Message* self);
-static PyObject* Message_setEDNS(s_Message* self, PyObject* args);
-static PyObject* Message_getRRCount(s_Message* self, PyObject* args);
+PyObject* Message_getHeaderFlag(s_Message* self, PyObject* args);
+PyObject* Message_setHeaderFlag(s_Message* self, PyObject* args);
+PyObject* Message_getQid(s_Message* self);
+PyObject* Message_setQid(s_Message* self, PyObject* args);
+PyObject* Message_getRcode(s_Message* self);
+PyObject* Message_setRcode(s_Message* self, PyObject* args);
+PyObject* Message_getOpcode(s_Message* self);
+PyObject* Message_setOpcode(s_Message* self, PyObject* args);
+PyObject* Message_getEDNS(s_Message* self);
+PyObject* Message_setEDNS(s_Message* self, PyObject* args);
+PyObject* Message_getTSIGRecord(s_Message* self);
+PyObject* Message_getRRCount(s_Message* self, PyObject* args);
 // use direct iterators for these? (or simply lists for now?)
-static PyObject* Message_getQuestion(s_Message* self);
-static PyObject* Message_getSection(s_Message* self, PyObject* args);
+PyObject* Message_getQuestion(s_Message* self);
+PyObject* Message_getSection(s_Message* self, PyObject* args);
 //static PyObject* Message_beginQuestion(s_Message* self, PyObject* args);
 //static PyObject* Message_endQuestion(s_Message* self, PyObject* args);
 //static PyObject* Message_beginSection(s_Message* self, PyObject* args);
 //static PyObject* Message_endSection(s_Message* self, PyObject* args);
 
-static PyObject* Message_addQuestion(s_Message* self, PyObject* args);
-static PyObject* Message_addRRset(s_Message* self, PyObject* args);
-static PyObject* Message_clear(s_Message* self, PyObject* args);
-static PyObject* Message_makeResponse(s_Message* self);
-static PyObject* Message_toText(s_Message* self);
-static PyObject* Message_str(PyObject* self);
-static PyObject* Message_toWire(s_Message* self, PyObject* args);
-static PyObject* Message_fromWire(s_Message* self, PyObject* args);
+PyObject* Message_addQuestion(s_Message* self, PyObject* args);
+PyObject* Message_addRRset(s_Message* self, PyObject* args);
+PyObject* Message_clear(s_Message* self, PyObject* args);
+PyObject* Message_makeResponse(s_Message* self);
+PyObject* Message_toText(s_Message* self);
+PyObject* Message_str(PyObject* self);
+PyObject* Message_toWire(s_Message* self, PyObject* args);
+PyObject* Message_fromWire(s_Message* self, PyObject* args);
 
 // This list contains the actual set of functions we have in
 // python. Each entry has
@@ -91,7 +93,7 @@ static PyObject* Message_fromWire(s_Message* self, PyObject* args);
 // 2. Our static function here
 // 3. Argument type
 // 4. Documentation
-static PyMethodDef Message_methods[] = {
+PyMethodDef Message_methods[] = {
     { "get_header_flag", reinterpret_cast<PyCFunction>(Message_getHeaderFlag),
       METH_VARARGS,
       "Return whether the specified header flag bit is set in the "
@@ -124,6 +126,11 @@ static PyMethodDef Message_methods[] = {
     },
     { "set_edns", reinterpret_cast<PyCFunction>(Message_setEDNS), METH_VARARGS,
       "Set EDNS for the message."
+    },
+    { "get_tsig_record",
+      reinterpret_cast<PyCFunction>(Message_getTSIGRecord), METH_NOARGS,
+      "Return, if any, the TSIG record contained in the received message. "
+      "If no TSIG RR is set in the message, None will be returned."
     },
     { "get_rr_count", reinterpret_cast<PyCFunction>(Message_getRRCount), METH_VARARGS,
       "Returns the number of RRs contained in the given section." },
@@ -174,7 +181,7 @@ static PyMethodDef Message_methods[] = {
 // This defines the complete type for reflection in python and
 // parsing of PyObject* to s_Message
 // Most of the functions are not actually implemented and NULL here.
-static PyTypeObject message_type = {
+PyTypeObject message_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "pydnspp.Message",
     sizeof(s_Message),                  // tp_basicsize
@@ -224,11 +231,11 @@ static PyTypeObject message_type = {
     0                                   // tp_version_tag
 };
 
-static int
+int
 Message_init(s_Message* self, PyObject* args) {
-    unsigned int i;
-    
-    if (PyArg_ParseTuple(args, "I", &i)) {
+    int i;
+
+    if (PyArg_ParseTuple(args, "i", &i)) {
         PyErr_Clear();
         if (i == Message::PARSE) {
             self->message = new Message(Message::PARSE);
@@ -247,14 +254,14 @@ Message_init(s_Message* self, PyObject* args) {
     return (-1);
 }
 
-static void
+void
 Message_destroy(s_Message* self) {
     delete self->message;
     self->message = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
-static PyObject*
+PyObject*
 Message_getHeaderFlag(s_Message* self, PyObject* args) {
     unsigned int messageflag;
     if (!PyArg_ParseTuple(args, "I", &messageflag)) {
@@ -272,19 +279,19 @@ Message_getHeaderFlag(s_Message* self, PyObject* args) {
     }
 }
 
-static PyObject*
+PyObject*
 Message_setHeaderFlag(s_Message* self, PyObject* args) {
-    int messageflag;
+    long messageflag;
     PyObject *on = Py_True;
 
-    if (!PyArg_ParseTuple(args, "i|O!", &messageflag, &PyBool_Type, &on)) {
+    if (!PyArg_ParseTuple(args, "l|O!", &messageflag, &PyBool_Type, &on)) {
         PyErr_Clear();
         PyErr_SetString(PyExc_TypeError,
                         "no valid type in set_header_flag argument");
         return (NULL);
     }
-    if (messageflag < 0) {
-        PyErr_SetString(PyExc_TypeError, "invalid Message header flag");
+    if (messageflag < 0 || messageflag > 0xffff) {
+        PyErr_SetString(PyExc_ValueError, "Message header flag out of range");
         return (NULL);
     }
 
@@ -303,17 +310,26 @@ Message_setHeaderFlag(s_Message* self, PyObject* args) {
     }
 }
 
-static PyObject*
+PyObject*
 Message_getQid(s_Message* self) {
     return (Py_BuildValue("I", self->message->getQid()));
 }
 
-static PyObject*
+PyObject*
 Message_setQid(s_Message* self, PyObject* args) {
-    uint16_t id;
-    if (!PyArg_ParseTuple(args, "H", &id)) {
+    long id;
+    if (!PyArg_ParseTuple(args, "l", &id)) {
+        PyErr_Clear();
+        PyErr_SetString(PyExc_TypeError,
+                        "no valid type in set_qid argument");
         return (NULL);
     }
+    if (id < 0 || id > 0xffff) {
+        PyErr_SetString(PyExc_ValueError,
+                        "Message id out of range");
+        return (NULL);
+    }
+
     try {
         self->message->setQid(id);
         Py_RETURN_NONE;
@@ -323,21 +339,21 @@ Message_setQid(s_Message* self, PyObject* args) {
     }
 }
 
-static PyObject*
+PyObject*
 Message_getRcode(s_Message* self) {
     s_Rcode* rcode;
 
     rcode = static_cast<s_Rcode*>(rcode_type.tp_alloc(&rcode_type, 0));
     if (rcode != NULL) {
-        rcode->rcode = NULL;
+        rcode->cppobj = NULL;
         try {
-            rcode->rcode = new Rcode(self->message->getRcode());
+            rcode->cppobj = new Rcode(self->message->getRcode());
         } catch (const InvalidMessageOperation& imo) {
             PyErr_SetString(po_InvalidMessageOperation, imo.what());
         } catch (...) {
             PyErr_SetString(po_IscException, "Unexpected exception");
         }
-        if (rcode->rcode == NULL) {
+        if (rcode->cppobj == NULL) {
             Py_DECREF(rcode);
             return (NULL);
         }
@@ -346,14 +362,14 @@ Message_getRcode(s_Message* self) {
     return (rcode);
 }
 
-static PyObject*
+PyObject*
 Message_setRcode(s_Message* self, PyObject* args) {
     s_Rcode* rcode;
     if (!PyArg_ParseTuple(args, "O!", &rcode_type, &rcode)) {
         return (NULL);
     }
     try {
-        self->message->setRcode(*rcode->rcode);
+        self->message->setRcode(*rcode->cppobj);
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
@@ -361,7 +377,7 @@ Message_setRcode(s_Message* self, PyObject* args) {
     }
 }
 
-static PyObject*
+PyObject*
 Message_getOpcode(s_Message* self) {
     s_Opcode* opcode;
 
@@ -384,7 +400,7 @@ Message_getOpcode(s_Message* self) {
     return (opcode);
 }
 
-static PyObject*
+PyObject*
 Message_setOpcode(s_Message* self, PyObject* args) {
     s_Opcode* opcode;
     if (!PyArg_ParseTuple(args, "O!", &opcode_type, &opcode)) {
@@ -399,7 +415,7 @@ Message_setOpcode(s_Message* self, PyObject* args) {
     }
 }
 
-static PyObject*
+PyObject*
 Message_getEDNS(s_Message* self) {
     s_EDNS* edns;
     EDNS* edns_body;
@@ -419,7 +435,7 @@ Message_getEDNS(s_Message* self) {
     return (edns);
 }
 
-static PyObject*
+PyObject*
 Message_setEDNS(s_Message* self, PyObject* args) {
     s_EDNS* edns;
     if (!PyArg_ParseTuple(args, "O!", &edns_type, &edns)) {
@@ -434,7 +450,30 @@ Message_setEDNS(s_Message* self, PyObject* args) {
     }
 }
 
-static PyObject*
+PyObject*
+Message_getTSIGRecord(s_Message* self) {
+    try {
+        const TSIGRecord* tsig_record = self->message->getTSIGRecord();
+
+        if (tsig_record == NULL) {
+            Py_RETURN_NONE;
+        }
+        return (createTSIGRecordObject(*tsig_record));
+    } catch (const InvalidMessageOperation& ex) {
+        PyErr_SetString(po_InvalidMessageOperation, ex.what());
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure in getting TSIGRecord from message: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError, "Unexpected failure in "
+                        "getting TSIGRecord from message");
+    }
+    return (NULL);
+}
+
+PyObject*
 Message_getRRCount(s_Message* self, PyObject* args) {
     unsigned int section;
     if (!PyArg_ParseTuple(args, "I", &section)) {
@@ -453,7 +492,7 @@ Message_getRRCount(s_Message* self, PyObject* args) {
 }
 
 // TODO use direct iterators for these? (or simply lists for now?)
-static PyObject*
+PyObject*
 Message_getQuestion(s_Message* self) {
     QuestionIterator qi, qi_end;
     try {
@@ -492,7 +531,7 @@ Message_getQuestion(s_Message* self) {
     return (list);
 }
 
-static PyObject*
+PyObject*
 Message_getSection(s_Message* self, PyObject* args) {
     unsigned int section;
     if (!PyArg_ParseTuple(args, "I", &section)) {
@@ -549,7 +588,7 @@ Message_getSection(s_Message* self, PyObject* args) {
 //static PyObject* Message_beginSection(s_Message* self, PyObject* args);
 //static PyObject* Message_endSection(s_Message* self, PyObject* args);
 //static PyObject* Message_addQuestion(s_Message* self, PyObject* args);
-static PyObject*
+PyObject*
 Message_addQuestion(s_Message* self, PyObject* args) {
     s_Question *question;
 
@@ -562,12 +601,12 @@ Message_addQuestion(s_Message* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
-static PyObject*
+PyObject*
 Message_addRRset(s_Message* self, PyObject* args) {
     PyObject *sign = Py_False;
-    unsigned int section;
+    int section;
     s_RRset* rrset;
-    if (!PyArg_ParseTuple(args, "IO!|O!", &section, &rrset_type, &rrset,
+    if (!PyArg_ParseTuple(args, "iO!|O!", &section, &rrset_type, &rrset,
                           &PyBool_Type, &sign)) {
         return (NULL);
     }
@@ -589,10 +628,10 @@ Message_addRRset(s_Message* self, PyObject* args) {
     }
 }
 
-static PyObject*
+PyObject*
 Message_clear(s_Message* self, PyObject* args) {
-    unsigned int i;
-    if (PyArg_ParseTuple(args, "I", &i)) {
+    int i;
+    if (PyArg_ParseTuple(args, "i", &i)) {
         PyErr_Clear();
         if (i == Message::PARSE) {
             self->message->clear(Message::PARSE);
@@ -610,13 +649,13 @@ Message_clear(s_Message* self, PyObject* args) {
     }
 }
 
-static PyObject*
+PyObject*
 Message_makeResponse(s_Message* self) {
     self->message->makeResponse();
     Py_RETURN_NONE;
 }
 
-static PyObject*
+PyObject*
 Message_toText(s_Message* self) {
     // Py_BuildValue makes python objects from native data
     try {
@@ -631,7 +670,7 @@ Message_toText(s_Message* self) {
     }
 }
 
-static PyObject*
+PyObject*
 Message_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return (PyObject_CallMethod(self,
@@ -639,19 +678,30 @@ Message_str(PyObject* self) {
                                 const_cast<char*>("")));
 }
 
-static PyObject*
+PyObject*
 Message_toWire(s_Message* self, PyObject* args) {
     s_MessageRenderer* mr;
+    s_TSIGContext* tsig_ctx = NULL;
     
-    if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
+    if (PyArg_ParseTuple(args, "O!|O!", &messagerenderer_type, &mr,
+                         &tsigcontext_type, &tsig_ctx)) {
         try {
-            self->message->toWire(*mr->messagerenderer);
+            if (tsig_ctx == NULL) {
+                self->message->toWire(*mr->messagerenderer);
+            } else {
+                self->message->toWire(*mr->messagerenderer, *tsig_ctx->cppobj);
+            }
             // If we return NULL it is seen as an error, so use this for
             // None returns
             Py_RETURN_NONE;
         } catch (const InvalidMessageOperation& imo) {
             PyErr_Clear();
             PyErr_SetString(po_InvalidMessageOperation, imo.what());
+            return (NULL);
+        } catch (const TSIGContextError& ex) {
+            // toWire() with a TSIG context can fail due to this if the
+            // python program has a bug.
+            PyErr_SetString(po_TSIGContextError, ex.what());
             return (NULL);
         }
     }
@@ -661,7 +711,7 @@ Message_toWire(s_Message* self, PyObject* args) {
     return (NULL);
 }
 
-static PyObject*
+PyObject*
 Message_fromWire(s_Message* self, PyObject* args) {
     const char* b;
     Py_ssize_t len;
@@ -755,3 +805,4 @@ initModulePart_Message(PyObject* mod) {
 
     return (true);
 }
+} // end of unnamed namespace

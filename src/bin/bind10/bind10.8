@@ -2,12 +2,12 @@
 .\"     Title: bind10
 .\"    Author: [see the "AUTHORS" section]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: February 22, 2011
+.\"      Date: March 31, 2011
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
-.TH "BIND10" "8" "February 22, 2011" "BIND10" "BIND10"
+.TH "BIND10" "8" "March 31, 2011" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -22,7 +22,7 @@
 bind10 \- BIND 10 boss process
 .SH "SYNOPSIS"
 .HP \w'\fBbind10\fR\ 'u
-\fBbind10\fR [\fB\-m\ \fR\fB\fIfile\fR\fR] [\fB\-n\fR] [\fB\-u\ \fR\fB\fIuser\fR\fR] [\fB\-v\fR] [\fB\-\-msgq\-socket\-file\ \fR\fB\fIfile\fR\fR] [\fB\-\-no\-cache\fR] [\fB\-\-user\ \fR\fB\fIuser\fR\fR] [\fB\-\-pretty\-name\ \fR\fB\fIname\fR\fR] [\fB\-\-brittle\fR] [\fB\-\-verbose\fR]
+\fBbind10\fR [\fB\-c\ \fR\fB\fIconfig\-filename\fR\fR] [\fB\-m\ \fR\fB\fIfile\fR\fR] [\fB\-n\fR] [\fB\-p\ \fR\fB\fIdata_path\fR\fR] [\fB\-u\ \fR\fB\fIuser\fR\fR] [\fB\-v\fR] [\fB\-\-brittle\fR] [\fB\-\-cmdctl\-port\fR\ \fIport\fR] [\fB\-\-config\-file\fR\ \fIconfig\-filename\fR] [\fB\-\-data\-path\fR\ \fIdirectory\fR] [\fB\-\-msgq\-socket\-file\ \fR\fB\fIfile\fR\fR] [\fB\-\-no\-cache\fR] [\fB\-\-pid\-file\fR\ \fIfilename\fR] [\fB\-\-pretty\-name\ \fR\fB\fIname\fR\fR] [\fB\-\-user\ \fR\fB\fIuser\fR\fR] [\fB\-\-verbose\fR]
 .SH "DESCRIPTION"
 .PP
 The
@@ -31,6 +31,34 @@ daemon starts up other BIND 10 required daemons\&. It handles restarting of exit
 .SH "ARGUMENTS"
 .PP
 The arguments are as follows:
+.PP
+\fB\-\-brittle\fR
+.RS 4
+Shutdown if any of the child processes of
+\fBbind10\fR
+exit\&. This is intended to help developers debug the server, and should not be used in production\&.
+.RE
+.PP
+\fB\-c\fR \fIconfig\-filename\fR, \fB\-\-config\-file\fR \fIconfig\-filename\fR
+.RS 4
+The configuration filename to use\&. Can be either absolute or relative to data path\&. In case it is absolute, value of data path is not considered\&.
+.sp
+Defaults to b10\-config\&.db\&.
+.RE
+.PP
+\fB\-\-cmdctl\-port\fR \fIport\fR
+.RS 4
+The
+\fBb10\-cmdctl\fR
+daemon will listen on this port\&. (See
+b10\-cmdctl(8)
+for the default\&.)
+.RE
+.PP
+\fB\-p\fR \fIdirectory\fR, \fB\-\-data\-path\fR \fIdirectory\fR
+.RS 4
+The path where BIND 10 programs look for various data files\&. Currently only b10\-cfgmgr uses it to locate the configuration file, but the usage might be extended for other programs and other types of files\&.
+.RE
 .PP
 \fB\-m\fR \fIfile\fR, \fB\-\-msgq\-socket\-file\fR \fIfile\fR
 .RS 4
@@ -57,6 +85,13 @@ to run as\&.
 must be initially ran as the root user to use this option\&. The default is to run as the current user\&.
 .RE
 .PP
+\fB\-\-pid\-file\fR \fIfilename\fR
+.RS 4
+If defined, the PID of the
+\fBbind10\fR
+is stored in this file\&. This is used for testing purposes\&.
+.RE
+.PP
 \fB\-\-pretty\-name \fR\fB\fIname\fR\fR
 .RS 4
 The name this process should have in tools like
@@ -64,14 +99,6 @@ The name this process should have in tools like
 or
 \fBtop\fR\&. This is handy if you have multiple versions/installations of
 \fBbind10\fR\&.
-.RE
-.PP
-\fB\-\-brittle\fR
-.RS 4
-Shutdown if any of the child processes of 
-\fBbind10\fR
-exit\&. This is intended to help developers debug the server, and should
-not be used in production.
 .RE
 .PP
 \fB\-v\fR, \fB\-\-verbose\fR

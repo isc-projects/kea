@@ -13,14 +13,23 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+#include <stdlib.h>
+
+#include <string>
+#include <boost/lexical_cast.hpp>
 
 #include <gtest/gtest.h>
 
 #include <dns/tests/unittest_util.h>
+#include <log/logger_support.h>
+
+using namespace std;
 
 int
 main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
+
+    isc::log::initLogger();
 
     return (RUN_ALL_TESTS());
 }

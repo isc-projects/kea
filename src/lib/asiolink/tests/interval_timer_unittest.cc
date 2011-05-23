@@ -18,7 +18,7 @@
 #include <asio.hpp>
 #include <asiolink/asiolink.h>
 
-#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace {
 // TODO: Consider this margin
@@ -26,7 +26,7 @@ const boost::posix_time::time_duration TIMER_MARGIN_MSEC =
     boost::posix_time::milliseconds(50);
 }
 
-using namespace asiolink;
+using namespace isc::asiolink;
 
 // This fixture is for testing IntervalTimer. Some callback functors are 
 // registered as callback function of the timer to test if they are called
@@ -166,16 +166,22 @@ TEST_F(IntervalTimerTest, startIntervalTimer) {
     io_service_.run();
     // reaches here after timer expired
     // delta: difference between elapsed time and 100 milliseconds.
+    boost::posix_time::time_duration test_runtime =
+        boost::posix_time::microsec_clock::universal_time() - start;
+    EXPECT_FALSE(test_runtime.is_negative()) << 
+                 "test duration " << test_runtime << 
+                 " negative - clock skew?";
     boost::posix_time::time_duration delta =
-        (boost::posix_time::microsec_clock::universal_time() - start)
-         - boost::posix_time::millisec(100);
+        test_runtime - boost::posix_time::milliseconds(100);
     if (delta.is_negative()) {
         delta.invert_sign();
     }
     // expect TimerCallBack is called; timer_called_ is true
     EXPECT_TRUE(timer_called_);
     // expect interval is 100 milliseconds +/- TIMER_MARGIN_MSEC.
-    EXPECT_TRUE(delta < TIMER_MARGIN_MSEC);
+    EXPECT_TRUE(delta < TIMER_MARGIN_MSEC) << 
+                "delta " << delta.total_milliseconds() << "msec " <<
+                ">= " << TIMER_MARGIN_MSEC.total_milliseconds();
 }
 
 TEST_F(IntervalTimerTest, destructIntervalTimer) {
@@ -283,14 +289,20 @@ TEST_F(IntervalTimerTest, overwriteIntervalTimer) {
     //   + 400 milliseconds for TimerCallBackOverwriter (stop)
     //   = 800 milliseconds.
     // delta: difference between elapsed time and 400 + 100 milliseconds
+    boost::posix_time::time_duration test_runtime =
+        boost::posix_time::microsec_clock::universal_time() - start;
+    EXPECT_FALSE(test_runtime.is_negative()) << 
+                 "test duration " << test_runtime << 
+                 " negative - clock skew?";
     boost::posix_time::time_duration delta =
-        (boost::posix_time::microsec_clock::universal_time() - start)
-         - boost::posix_time::millisec(400 + 100);
+        test_runtime - boost::posix_time::milliseconds(400 + 100);
     if (delta.is_negative()) {
         delta.invert_sign();
     }
     // expect callback function is updated: TimerCallBack is called
     EXPECT_TRUE(timer_called_);
     // expect interval is updated
-    EXPECT_TRUE(delta < TIMER_MARGIN_MSEC);
+    EXPECT_TRUE(delta < TIMER_MARGIN_MSEC) << 
+                "delta " << delta.total_milliseconds() << " msec " <<
+                ">= " << TIMER_MARGIN_MSEC.total_milliseconds();
 }
