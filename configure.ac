@@ -774,7 +774,6 @@ AC_CONFIG_FILES([Makefile
                  src/lib/server_common/tests/Makefile
                  src/lib/util/Makefile
                  src/lib/util/io/Makefile
-                 src/lib/util/io_tests/Makefile
                  src/lib/util/unittests/Makefile
                  src/lib/util/tests/Makefile
                  tests/Makefile
