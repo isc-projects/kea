@@ -23,7 +23,7 @@ the server to which the question was sent.
 % CNAME         CNAME received in response to query for <%1>
 A debug message recording that CNAME response has been received to an upstream
 query for the specified question.  Previous debug messages will have indicated
-the server to which the question was sent."
+the server to which the question was sent.
 
 % DEEPEST       did not find <%1> in cache, deepest delegation found is %2
 A debug message, a cache lookup did not find the specified <name, class,
@@ -34,9 +34,9 @@ A debug message, a CNAME response was received and another query is being issued
 for the <name, class, type> tuple.
 
 % LONGCHAIN     CNAME received in response to query for <%1>: CNAME chain length exceeded
-A debug message recording that CNAME response has been received to an upstream
-query for the specified question.  (Previous debug messages will have indicated
-the server to which the question was sent.")  However, receipt of this CNAME
+A debug message recording that a CNAME response has been received to an upstream
+query for the specified question (Previous debug messages will have indicated
+the server to which the question was sent).  However, receipt of this CNAME
 has meant that the resolver has exceeded the CNAME chain limit (a CNAME chain
 is where on CNAME points to another) and so an error is being returned.
 
@@ -103,10 +103,10 @@ number at the end of the message indicates which of the two resolve()
 methods has been called.
 
 % RTT           round-trip time of last query calculated as %1
-A debug imessage giving the RTT of the last query and response.
+A debug message giving the RTT of the last query and response.
 
 % RUNCAFND      found <%1> in the cache
-This is a debug message and indicates that a RunningQuery object found the
+This is a debug message and indicates that a RunningQuery object found
 the specified <name, class, type> tuple in the cache.
 
 % RUNCALOOK     looking up up <%1> in the cache
@@ -127,7 +127,7 @@ to the specified nameserver.
 This is an internal debugging message and is only generated in unit tests.
 It indicates that all upstream queries from the resolver are being routed to
 the specified server, regardless of the address of the nameserver to which
-the query would normall be routed.  As it should never be seen in normal
+the query would normally be routed.  As it should never be seen in normal
 operation, it is a warning message instead of a debug message.
 
 % TESTUPSTR     sending upstream query for <%1> to test server at %2
