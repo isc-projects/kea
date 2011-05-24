@@ -427,7 +427,7 @@ TEST_F(CCSessionTest, remoteConfig) {
         EXPECT_NO_THROW(module_name = mccs.addRemoteConfig("Spec2", NULL,
                                                            false));
 
-        size_t qsize(session.getMsgQueue()->size());
+        const size_t qsize(session.getMsgQueue()->size());
         EXPECT_TRUE(session.getMsgQueue()->get(qsize - 2)->equals(*el(
             "[ \"ConfigManager\", \"*\", { \"command\": ["
             "\"get_module_spec\", { \"module_name\": \"Spec2\" } ] } ]")));
@@ -435,6 +435,8 @@ TEST_F(CCSessionTest, remoteConfig) {
             "[ \"ConfigManager\", \"*\", { \"command\": [ \"get_config\","
             "{ \"module_name\": \"Spec2\" } ] } ]")));
         EXPECT_EQ("Spec2", module_name);
+        // Since we returned an empty local config above, the default value
+        // for "item1", which is 1, should be used.
         EXPECT_NO_THROW(item1 =
                         mccs.getRemoteConfigValue(module_name,
                                                   "item1")->intValue());

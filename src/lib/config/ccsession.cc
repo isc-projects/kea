@@ -429,7 +429,7 @@ ModuleCCSession::addRemoteConfig(const std::string& spec_name,
     ConstElementPtr new_config = parseAnswer(rcode, answer);
     ElementPtr local_config;
     if (rcode == 0 && new_config) {
-        // Merge the received config into the defaults
+        // Merge the received config into existing local config
         local_config = rmod_config.getLocalConfig();
         isc::data::merge(local_config, new_config);
         rmod_config.setLocalConfig(local_config);
