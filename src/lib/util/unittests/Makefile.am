@@ -10,8 +10,9 @@ libutil_unittests_la_SOURCES += run_all.h run_all.cc
 libutil_unittests_la_SOURCES += textdata.h
 endif
 
+libutil_unittests_la_CPPFLAGS = $(AM_CPPFLAGS)
 if HAVE_GTEST
-libutil_unittests_la_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
+libutil_unittests_la_CPPFLAGS += $(GTEST_INCLUDES)
 endif
 
 libutil_unittests_la_LIBADD  = $(top_builddir)/src/lib/util/libutil.la
