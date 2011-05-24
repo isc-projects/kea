@@ -190,8 +190,7 @@ public:
                     const char* socket_path = NULL
                     );
 
-    /// Start asynchronous receiving new commands and configuration changes
-    /// asynchronously.
+    /// Start receiving new commands and configuration changes asynchronously.
     ///
     /// This method must be called only once, and only when the ModuleCCSession
     /// was constructed with start_immediately being false.  Otherwise
