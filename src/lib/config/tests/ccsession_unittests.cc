@@ -658,8 +658,6 @@ TEST_F(CCSessionTest, delayedStart) {
             throw;
         }
     }
-
-
 }
 
 }
