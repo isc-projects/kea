@@ -246,7 +246,7 @@ HMAC::verify(const void* sig, const size_t len) {
 }
 
 void
-signHMAC(const void* data, size_t data_len, const void* secret,
+signHMAC(const void* data, const size_t data_len, const void* secret,
          size_t secret_len, const HashAlgorithm hash_algorithm,
          isc::util::OutputBuffer& result, size_t len)
 {
