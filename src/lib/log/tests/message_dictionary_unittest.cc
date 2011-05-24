@@ -29,7 +29,7 @@ using namespace std;
 // and the latter should be present.
 
 static const char* values[] = {
-    "DUPLNS", "duplicate $NAMESPACE directive found",
+    "MSG_DUPLNS", "duplicate $NAMESPACE directive found",
     "NEWSYM", "new symbol added",
     NULL
 };
@@ -190,7 +190,7 @@ TEST_F(MessageDictionaryTest, GlobalTest) {
 TEST_F(MessageDictionaryTest, GlobalLoadTest) {
     vector<string>& duplicates = MessageInitializer::getDuplicates();
     ASSERT_EQ(1, duplicates.size());
-    EXPECT_EQ(string("DUPLNS"), duplicates[0]);
+    EXPECT_EQ(string("MSG_DUPLNS"), duplicates[0]);
 
     string text = MessageDictionary::globalDictionary().getText("NEWSYM");
     EXPECT_EQ(string("new symbol added"), text);

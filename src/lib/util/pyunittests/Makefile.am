@@ -1,0 +1,14 @@
+AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CXXFLAGS = $(B10_CXXFLAGS)
+
+pyexec_LTLIBRARIES = pyunittests_util.la
+pyunittests_util_la_SOURCES = pyunittests_util.cc
+pyunittests_util_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
+pyunittests_util_la_LDFLAGS = $(PYTHON_LDFLAGS)
+
+# Python prefers .so, while some OSes (specifically MacOS) use a different
+# suffix for dynamic objects.  -module is necessary to work this around.
+pyunittests_util_la_LDFLAGS += -module
+pyunittests_util_la_LIBADD = $(top_builddir)/src/lib/util/libutil.la
+pyunittests_util_la_LIBADD += $(PYTHON_LIB)

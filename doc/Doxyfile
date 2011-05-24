@@ -574,6 +574,7 @@ INPUT                  = ../src/lib/cc ../src/lib/config \
     ../src/lib/log ../src/lib/asiolink/ ../src/lib/nsas \
     ../src/lib/testutils ../src/lib/cache ../src/lib/server_common/ \
     ../src/bin/sockcreator/ ../src/lib/util/
+    ../src/lib/resolve
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is
@@ -1164,7 +1165,7 @@ XML_DTD                =
 # and cross-referencing information) to the XML output. Note that
 # enabling this will significantly increase the size of the XML output.
 
-XML_PROGRAMLISTING     = YES
+XML_PROGRAMLISTING     = NO
 
 #---------------------------------------------------------------------------
 # configuration options for the AutoGen Definitions output

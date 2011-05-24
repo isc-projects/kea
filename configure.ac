@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20110322, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20110519, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -686,6 +686,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/bindctl/tests/Makefile
                  src/bin/cfgmgr/Makefile
                  src/bin/cfgmgr/plugins/Makefile
+                 src/bin/cfgmgr/plugins/tests/Makefile
                  src/bin/cfgmgr/tests/Makefile
                  src/bin/host/Makefile
                  src/bin/loadzone/Makefile
@@ -775,6 +776,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/util/Makefile
                  src/lib/util/io/Makefile
                  src/lib/util/unittests/Makefile
+                 src/lib/util/pyunittests/Makefile
                  src/lib/util/tests/Makefile
                  tests/Makefile
                  tests/system/Makefile
@@ -806,6 +808,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/stats/stats.py
            src/bin/stats/stats_httpd.py
            src/bin/stats/stats.spec
+           src/bin/stats/stats-schema.spec
            src/bin/stats/stats-httpd.spec
            src/bin/stats/stats-httpd-xml.tpl
            src/bin/stats/stats-httpd-xsd.tpl
@@ -839,6 +842,8 @@ AC_OUTPUT([doc/version.ent
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
            src/lib/log/tests/run_time_init_test.sh
+           src/lib/util/python/mkpywrapper.py
+           src/lib/server_common/tests/data_path.h
            tests/system/conf.sh
            tests/system/glue/setup.sh
            tests/system/glue/nsx1/b10-config.db
@@ -864,6 +869,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
            chmod +x src/lib/log/tests/run_time_init_test.sh
+           chmod +x src/lib/util/python/mkpywrapper.py
            chmod +x tests/system/conf.sh
           ])
 AC_OUTPUT

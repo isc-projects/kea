@@ -93,6 +93,20 @@ TEST(TSIGErrorTest, toText) {
     EXPECT_EQ("65535", TSIGError(65535).toText());
 }
 
+TEST(TSIGErrorTest, toRcode) {
+    // TSIGError derived from the standard Rcode
+    EXPECT_EQ(Rcode::NOERROR(), TSIGError(Rcode::NOERROR()).toRcode());
+
+    // Well known TSIG errors
+    EXPECT_EQ(Rcode::NOTAUTH(), TSIGError::BAD_SIG().toRcode());
+    EXPECT_EQ(Rcode::NOTAUTH(), TSIGError::BAD_KEY().toRcode());
+    EXPECT_EQ(Rcode::NOTAUTH(), TSIGError::BAD_TIME().toRcode());
+
+    // Unknown (or not yet supported) codes are treated as SERVFAIL.
+    EXPECT_EQ(Rcode::SERVFAIL(), TSIGError(19).toRcode());
+    EXPECT_EQ(Rcode::SERVFAIL(), TSIGError(65535).toRcode());
+}
+
 // test operator<<.  We simply confirm it appends the result of toText().
 TEST(TSIGErrorTest, LeftShiftOperator) {
     ostringstream oss;

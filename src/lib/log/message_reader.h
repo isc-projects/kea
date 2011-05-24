@@ -64,10 +64,9 @@ public:
         dictionary_(dictionary)
     {}
 
-
     /// \brief Virtual Destructor
-    virtual ~MessageReader();
-
+    virtual ~MessageReader()
+    {}
 
     /// \brief Get Dictionary
     ///
@@ -188,10 +187,24 @@ private:
     /// \param tokens $NAMESPACE line split into tokens
     void parseNamespace(const std::vector<std::string>& tokens);
 
+    /// \brief Check for invalid C++ symbol name
+    ///
+    /// The message ID (or concatenation of prefix and message ID) will be used
+    /// as the name of a symbol in C++ code.  This function checks if the name
+    /// is invalid (contains anything other than alphanumeric characters or
+    /// underscores, or starts with a digit).
+    ///
+    /// \param symbol name to check to see if it is an invalid C++ symbol.
+    ///
+    /// \return true if the name is invalid, false if it is valid.
+    bool invalidSymbol(const std::string& symbol);
+
+
 
     /// Attributes
     MessageDictionary*  dictionary_;    ///< Dictionary to add messages to
     MessageIDCollection not_added_;     ///< List of IDs not added
+    int                 lineno_;        ///< Number of last line read
     std::string         prefix_;        ///< Argument of $PREFIX statement
     std::string         ns_;            ///< Argument of $NAMESPACE statement
 };

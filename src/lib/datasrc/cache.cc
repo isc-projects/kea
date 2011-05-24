@@ -24,6 +24,7 @@
 #include <list>
 
 #include <datasrc/cache.h>
+#include <datasrc/logger.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -204,16 +205,21 @@ public:
 // HotCacheImpl constructor
 HotCacheImpl::HotCacheImpl(int slots, bool enabled) :
     enabled_(enabled), slots_(slots), count_(0)
-{}
+{
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_CACHE_CREATE);
+}
 
 // Insert a cache node into the cache
 inline void
 HotCacheImpl::insert(const CacheNodePtr node) {
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_CACHE_INSERT).
+        arg(node->getRRset()->getName());
     std::map<Question, CacheNodePtr>::const_iterator iter;
     iter = map_.find(node->question);
     if (iter != map_.end()) {
         CacheNodePtr old = iter->second;
         if (old && old->isValid()) {
+            LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_CACHE_OLD_FOUND);
             remove(old);
         }
     }
@@ -225,6 +231,7 @@ HotCacheImpl::insert(const CacheNodePtr node) {
     ++count_;
 
     if (slots_ != 0 && count_ > slots_) {
+        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_CACHE_FULL);
         remove(lru_.back());
     }
 }
@@ -245,6 +252,8 @@ HotCacheImpl::promote(CacheNodePtr node) {
 // Remove a node from the LRU list and the map
 void
 HotCacheImpl::remove(ConstCacheNodePtr node) {
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_CACHE_REMOVE).
+        arg(node->getRRset()->getName());
     lru_.erase(node->lru_entry_);
     map_.erase(node->question);
     --count_;
@@ -257,6 +266,7 @@ HotCache::HotCache(const int slots) {
 
 // HotCache destructor
 HotCache::~HotCache() {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_CACHE_DESTROY);
     delete impl_;
 }
 
@@ -303,18 +313,21 @@ HotCache::retrieve(const Name& n, const RRClass& c, const RRType& t,
     std::map<Question, CacheNodePtr>::const_iterator iter;
     iter = impl_->map_.find(Question(n, c, t));
     if (iter == impl_->map_.end()) {
+        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_CACHE_NOT_FOUND).arg(n);
         return (false);
     }
 
     CacheNodePtr node = iter->second;
 
     if (node->isValid()) {
+        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_CACHE_FOUND).arg(n);
         impl_->promote(node);
         rrset = node->getRRset();
         flags = node->getFlags();
         return (true);
     }
 
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_CACHE_EXPIRED).arg(n);
     impl_->remove(node);
     return (false);
 }
@@ -327,6 +340,9 @@ HotCache::setSlots(const int slots) {
     if (!impl_->enabled_) {
         return;
     }
+
+    logger.info(DATASRC_CACHE_SLOTS).arg(slots).arg(max(0, impl_->count_ -
+                                                        slots));
 
     while (impl_->slots_ != 0 && impl_->count_ > impl_->slots_) {
         impl_->remove(impl_->lru_.back());
@@ -343,6 +359,11 @@ HotCache::getSlots() const {
 void
 HotCache::setEnabled(const bool e) {
     impl_->enabled_ = e;
+    if (e) {
+        logger.info(DATASRC_CACHE_ENABLE);
+    } else {
+        logger.info(DATASRC_CACHE_DISABLE);
+    }
 }
 
 /// Indicate whether the cache is enabled

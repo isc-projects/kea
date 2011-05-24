@@ -1,9 +1,95 @@
-231.	[func]*
-	The logging interface changed slightly. We use
-	logger.foo(MESSAGE_ID).arg(bar); instead of logger.foo(MESSAGE_ID, bar);
-	internally. The message definitions use '%1,%2,...' instead of '%s,%d',
-	which allows us to cope better with mismatched placeholders and allows
-	reordering of them in case of translation.
+243.	[func]*		feng
+	Add optional hmac algorithm SHA224/384/812.
+	(Trac#782,git 77d792c9d7c1a3f95d3e6a8b721ac79002cd7db1).
+
+bind10-devel-20110519 released on May 19, 2011
+
+242.	[func]		jinmei
+	xfrin: added support for TSIG verify.  This change completes TSIG
+	support in b10-xfrin.
+	(Trac #914, git 78502c021478d97672232015b7df06a7d52e531b)
+
+241.	[func]		jinmei
+	pydnspp: added python extension for the TSIG API introduced in
+	change 235.
+	(Trac #905, git 081891b38f05f9a186814ab7d1cd5c572b8f777f)
+	(Trac #915, git 0555ab65d0e43d03b2d40c95d833dd050eea6c23)
+
+240.	[func]*		jelte
+	Updated configuration options to Xfrin, so that you can specify
+	a master address, port, and TSIG key per zone. Still only one per
+	zone at this point, and TSIG keys are (currently) only specified
+	by their full string representation. This replaces the
+	Xfrin/master_addr, Xfrin/master_port, and short-lived
+	Xfrin/tsig_key configurations with a Xfrin/zones list.
+	(Trac #811, git 88504d121c5e08fff947b92e698a54d24d14c375)
+
+239.	[bug]		jerry
+	src/bin/xfrout: If a zone doesn't have notify slaves (only has
+	one apex ns record - the primary master name server) will cause
+	b10-xfrout uses 100% of CPU.
+	(Trac #684, git d11b5e89203a5340d4e5ca51c4c02db17c33dc1f)
+
+238.	[func]		zhang likun
+	Implement the simplest forwarder, which pass everything through
+	except QID, port number. The response will not be cached.
+	(Trac #598_new, git 8e28187a582820857ef2dae9b13637a3881f13ba)
+
+237.	[bug]		naokikambe
+	Resolved that the stats module wasn't configurable in bindctl in
+	spite of its having configuration items. The configuration part
+	was removed from the original spec file "stats.spec" and was
+	placed in a new spec file "stats-schema.spec". Because it means
+	definitions of statistics items. The command part is still
+	there. Thus stats module currently has no its own configuration,
+	and the items in "stats-schema.spec" are neither visible nor
+	configurable through bindctl. "stats-schema.spec" is shared with
+	stats module and stats-httpd module, and maybe with other
+	statistical modules in future. "stats.spec" has own configuration
+	and commands of stats module, if it requires.
+	(Trac#719, git a234b20dc6617392deb8a1e00eb0eed0ff353c0a)
+
+236.	[func]		jelte
+	C++ client side of configuration now uses BIND10 logging system.
+	It also has improved error handling when communicating with the
+	rest of the system.
+	(Trac #743, git 86632c12308c3ed099d75eb828f740c526dd7ec0)
+
+235.	[func]		jinmei
+	libdns++: added support for TSIG signing and verification.  It can
+	be done using a newly introduced TSIGContext class.
+	Note: we temporarily disabled support for truncated signature
+	and modified some part of the code introduced in #226 accordingly.
+	We plan to fix this pretty soon.
+	(Trac #812, git ebe0c4b1e66d359227bdd1bd47395fee7b957f14)
+	(Trac #871, git 7c54055c0e47c7a0e36fcfab4b47ff180c0ca8c8)
+	(Trac #813, git ffa2f0672084c1f16e5784cdcdd55822f119feaa)
+	(Trac #893, git 5aaa6c0f628ed7c2093ecdbac93a2c8cf6c94349)
+
+234.	[func]		jerry
+	src/bin/xfrin: update xfrin to use TSIG. Currently it only supports
+	sending a signed TSIG request or SOA request.
+	(Trac #815, git a892818fb13a1839c82104523cb6cb359c970e88)
+
+233.	[func]		stephen
+	Added new-style logging statements to the NSAS code.
+	(Trac #745, git ceef68cd1223ae14d8412adbe18af2812ade8c2d)
+
+232.	[func]		stephen
+	To facilitate the writing of extended descriptions in
+	message files, altered the message file format.  The message
+	is now flagged with a "%" as the first non-blank character
+	in the line and the lines in the extended description are
+	no longer preceded by a "+".
+	(Trac #900, git b395258c708b49a5da8d0cffcb48d83294354ba3)
+
+231.	[func]*		vorner
+    The logging interface changed slightly. We use
+	logger.foo(MESSAGE_ID).arg(bar); instead of logger.foo(MESSAGE_ID,
+	bar); internally. The message definitions use '%1,%2,...'
+	instead of '%s,%d', which allows us to cope better with
+	mismatched placeholders and allows reordering of them in
+	case of translation.
 	(Trac901, git 4903410e45670b30d7283f5d69dc28c2069237d6)
 
 230.	[bug]		naokikambe
@@ -40,14 +126,14 @@
 	(Trac #781, git 9df42279a47eb617f586144dce8cce680598558a)
 
 225.	[func]		naokikambe
-	Added the HTTP/XML interface(b10-stats-httpd) to the
+	Added the HTTP/XML interface (b10-stats-httpd) to the
 	statistics feature in BIND 10. b10-stats-httpd is a standalone
 	HTTP server and it requests statistics data to the stats
-	daemon(b10-stats) and sends it to HTTP clients in XML
+	daemon (b10-stats) and sends it to HTTP clients in XML
 	format. Items of the data collected via b10-stats-httpd
 	are almost equivalent to ones which are collected via
-	bindctl. Since it also can send XSL(Extensible Stylessheet
-	Language) document and XSD(XML Schema definition) document,
+	bindctl. Since it also can send XSL (Extensible Stylesheet
+	Language) document and XSD (XML Schema definition) document,
 	XML document is human-friendly to view through web browsers
 	and its data types are strictly defined.
 	(Trac #547, git 1cbd51919237a6e65983be46e4f5a63d1877b1d3)
@@ -66,11 +152,13 @@
 	reconfigure them.
 	(Trac #775, git 572ac2cf62e18f7eb69d670b890e2a3443bfd6e7)
 
-222.	[bug]		jerry
-	src/lib/zonemgr: Fix a bug that xfrin not checking for new copy of
-	zone on startup.  Imposes some random jitters to avoid many zones
-	need to do refresh at the same time.
-	(Trac #387, svn 9140fab9bab5f6502bd15d391fd51ac078b0b89b)
+222.	[bug]*		jerry
+	src/lib/zonemgr: Fix a bug that xfrin not checking for new
+	copy of zone on startup.  Imposes some random jitters to
+	avoid many zones need to do refresh at the same time. This
+	removed the Zonemgr/jitter_scope setting and introduced
+	Zonemgr/refresh_jitter and Zonemgr/reload_jitter.
+	(Trac #387, git 1241ddcffa16285d0a7bb01d6a8526e19fbb70cb)
 
 221.	[func]*		jerry
 	src/lib/util: Create C++ utility library.
