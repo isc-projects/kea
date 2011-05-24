@@ -29,15 +29,19 @@ namespace cryptolink {
 
 /// \brief Hash algorithm identifiers
 enum HashAlgorithm {
-    MD5 = 0,            ///< MD5
-    SHA1 = 1,           ///< SHA-1
-    SHA256 = 2,         ///< SHA-256
-    UNKNOWN_HASH = 3    ///< This value can be used in conversion
+    UNKNOWN_HASH = 0,   ///< This value can be used in conversion
                         ///  functions, to be returned when the
                         ///  input is unknown (but a value MUST be
                         ///  returned), for instance when the input
                         ///  is a Name or a string, and the return
                         ///  value is a HashAlgorithm.
+    MD5 = 1,            ///< MD5
+    SHA1 = 2,           ///< SHA-1
+    SHA256 = 3,         ///< SHA-256
+    SHA224 = 4,         ///< SHA-224
+    SHA384 = 5,         ///< SHA-384
+    SHA512 = 6          ///< SHA-512
+
 };
 
 // Forward declaration for createHMAC()

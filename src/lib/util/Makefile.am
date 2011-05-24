@@ -1,4 +1,4 @@
-SUBDIRS = . io unittests tests
+SUBDIRS = . io unittests tests pyunittests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
@@ -21,6 +21,8 @@ libutil_la_SOURCES += encode/binary_from_base32hex.h
 libutil_la_SOURCES += encode/binary_from_base16.h
 libutil_la_SOURCES += random/qid_gen.h random/qid_gen.cc
 libutil_la_SOURCES += random/random_number_generator.h
+
+EXTRA_DIST = python/pycppwrapper_util.h
 
 libutil_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 CLEANFILES = *.gcno *.gcda

@@ -12,15 +12,27 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-/// \brief Body of Virtual Destructor
+#ifndef __CONFIG_LOG__H
+#define __CONFIG_LOG__H
 
-#include <log/message_exception.h>
+#include <log/macros.h>
+#include "configdef.h"
 
 namespace isc {
-namespace log {
+namespace config {
 
-MessageException::~MessageException() throw() {
-}
+/// \brief Config Logging
+///
+/// Defines logger object for config log messages
 
-} // namespace log
+/// \brief Config Logger
+///
+/// Define the logger used to log messages.  We could define it in multiple
+/// modules, but defining in a single module and linking to it saves time and
+/// space.
+extern isc::log::Logger config_logger;    // isc::config::config_logger is the CONFIG logger
+
+} // namespace config
 } // namespace isc
+
+#endif // __CONFIG_LOG__H

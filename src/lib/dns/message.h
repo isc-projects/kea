@@ -601,6 +601,7 @@ private:
 /// that ongoing state information will not be lost if the object
 /// that originated the asynchronous call falls out of scope.
 typedef boost::shared_ptr<Message> MessagePtr;
+typedef boost::shared_ptr<const Message> ConstMessagePtr;
 
 /// Insert the \c Message as a string into stream.
 ///
