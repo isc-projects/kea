@@ -22,17 +22,11 @@
 
 namespace isc {
 namespace dns {
-
-class RRClass;
-
 /// TSIG errors
 ///
 /// The \c TSIGError class objects represent standard errors related to
 /// TSIG protocol operations as defined in related specifications, mainly
 /// in RFC2845.
-///
-/// (RCODEs) of the header section of DNS messages, and extended response
-/// codes as defined in the EDNS specification.
 class TSIGError {
 public:
     /// Constants for pre-defined TSIG error values.
@@ -58,7 +52,7 @@ public:
     ///
     /// \exception None
     ///
-    /// \param code The underlying 16-bit error code value of the \c TSIGError.
+    /// \param error_code The underlying 16-bit error code value of the \c TSIGError.
     explicit TSIGError(uint16_t error_code) : code_(error_code) {}
 
     /// Constructor from \c Rcode.
@@ -124,6 +118,22 @@ public:
     ///
     /// \return A string representation of the \c TSIGError.
     std::string toText() const;
+
+    /// \brief Convert the \c TSIGError to a \c Rcode
+    ///
+    /// This method returns an \c Rcode object that is corresponding to
+    /// the TSIG error.  The returned \c Rcode is expected to be used
+    /// by a verifying server to specify the RCODE of a response when
+    /// TSIG verification fails.
+    ///
+    /// Specifically, this method returns \c Rcode::NOTAUTH() for the
+    /// TSIG specific errors, BADSIG, BADKEY, BADTIME, as described in
+    /// RFC2845.  For errors derived from the standard Rcode (code 0-15),
+    /// it returns the corresponding \c Rcode.  For others, this method
+    /// returns \c Rcode::SERVFAIL() as a last resort.
+    ///
+    /// \exception None
+    Rcode toRcode() const;
 
     /// A constant TSIG error object derived from \c Rcode::NOERROR()
     static const TSIGError& NOERROR();

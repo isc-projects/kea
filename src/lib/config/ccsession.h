@@ -135,6 +135,15 @@ public:
 };
 
 ///
+/// \brief This exception is thrown if the constructor fails
+///
+class CCSessionInitError : public isc::Exception {
+public:
+    CCSessionInitError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+///
 /// \brief This module keeps a connection to the command channel,
 /// holds configuration information, and handles messages from
 /// the command channel
@@ -154,6 +163,11 @@ public:
      * AbstractSession without establishing the session.
      * Note: the design decision on who is responsible for establishing the
      * session is in flux, and may change in near future.
+     *
+     * \exception CCSessionInitError when the initialization fails,
+     *            either because the file cannot be read or there is
+     *            a communication problem with the config manager.
+     *
      * @param command_handler A callback function pointer to be called when
      * a control command from a remote agent needs to be performed on the
      * local module.
@@ -220,24 +234,43 @@ public:
     /**
      * Gives access to the configuration values of a different module
      * Once this function has been called with the name of the specification
-     * file of the module you want the configuration of, you can use
+     * file or the module you want the configuration of, you can use
      * \c getRemoteConfigValue() to get a specific setting.
-     * Changes are automatically updated, but you cannot specify handlers
-     * for those changes, must use \c getRemoteConfigValue() to get a value
-     * This function will subscribe to the relevant module channel.
+     * Changes are automatically updated, and you can specify handlers
+     * for those changes. This function will subscribe to the relevant module
+     * channel.
      *
-     * \param spec_file_name The path to the specification file of
-     *                       the module we want to have configuration
-     *                       values from
+     * \param spec_name This specifies the module to add. It is either a
+     *                  filename of the spec file to use or a name of module
+     *                  (in case it's a module name, the spec data is
+     *                  downloaded from the configuration manager, therefore
+     *                  the configuration manager must know it). If
+     *                  spec_is_filenabe is true (the default), then a
+     *                  filename is assumed, otherwise a module name.
+     * \param handler The handler function called whenever there's a change.
+     *                Called once initally from this function. May be NULL
+     *                if you don't want any handler to be called and you're
+     *                fine with requesting the data through
+     *                getRemoteConfigValue() each time.
+     *
+     *                The handler should not throw, or it'll fall trough and
+     *                the exception will get into strange places, probably
+     *                aborting the application.
+     * \param spec_is_filename Says if spec_name is filename or module name.
      * \return The name of the module specified in the given specification
      *         file
      */
-    std::string addRemoteConfig(const std::string& spec_file_name);
+    std::string addRemoteConfig(const std::string& spec_name,
+                                void (*handler)(const std::string& module_name,
+                                                isc::data::ConstElementPtr
+                                                update) = NULL,
+                                bool spec_is_filename = true);
 
     /**
      * Removes the module with the given name from the remote config
      * settings. If the module was not added with \c addRemoteConfig(),
-     * nothing happens.
+     * nothing happens. If there was a handler for this config, it is
+     * removed as well.
      */
     void removeRemoteConfig(const std::string& module_name);
 
@@ -282,7 +315,11 @@ private:
         const std::string& command,
         isc::data::ConstElementPtr args);
 
+    typedef void (*RemoteHandler)(const std::string&,
+                                  isc::data::ConstElementPtr);
     std::map<std::string, ConfigData> remote_module_configs_;
+    std::map<std::string, RemoteHandler> remote_module_handlers_;
+
     void updateRemoteConfig(const std::string& module_name,
                             isc::data::ConstElementPtr new_config);
 };

@@ -11,8 +11,8 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 CLEANFILES = *.gcno *.gcda asiodef.h asiodef.cc
 
 # Define rule to build logging source files from message file
-asiodef.h asiodef.cc: asiodef.msg
-	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/asiodns/asiodef.msg
+asiodef.h asiodef.cc: asiodef.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/asiodns/asiodef.mes
 
 BUILT_SOURCES = asiodef.h asiodef.cc
 
@@ -28,7 +28,7 @@ libasiodns_la_SOURCES += io_fetch.cc io_fetch.h
 
 nodist_libasiodns_la_SOURCES = asiodef.cc asiodef.h
 
-EXTRA_DIST = asiodef.msg
+EXTRA_DIST = asiodef.mes
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)

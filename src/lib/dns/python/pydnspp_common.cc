@@ -15,6 +15,9 @@
 #include <Python.h>
 #include <pydnspp_common.h>
 
+namespace isc {
+namespace dns {
+namespace python {
 int
 readDataFromSequence(uint8_t *data, size_t len, PyObject* sequence) {
     PyObject* el = NULL;
@@ -44,8 +47,15 @@ readDataFromSequence(uint8_t *data, size_t len, PyObject* sequence) {
 }
 
 
-void addClassVariable(PyTypeObject& c, const char* name,
-                      PyObject* obj)
-{
-    PyDict_SetItemString(c.tp_dict, name, obj);
+int
+addClassVariable(PyTypeObject& c, const char* name, PyObject* obj) {
+    if (obj == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                        "NULL object is specified for a class variable");
+        return (-1);
+    }
+    return (PyDict_SetItemString(c.tp_dict, name, obj));
+}
+}
+}
 }

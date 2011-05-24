@@ -17,6 +17,7 @@
 
 #include <boost/scoped_ptr.hpp>
 
+#include <botan/version.h>
 #include <botan/botan.h>
 #include <botan/hmac.h>
 #include <botan/hash.h>
@@ -34,6 +35,15 @@ getBotanHashAlgorithmName(isc::cryptolink::HashAlgorithm algorithm) {
         break;
     case isc::cryptolink::SHA256:
         return ("SHA-256");
+        break;
+    case isc::cryptolink::SHA224:
+        return ("SHA-224");
+        break;
+    case isc::cryptolink::SHA384:
+        return ("SHA-384");
+        break;
+    case isc::cryptolink::SHA512:
+        return ("SHA-512");
         break;
     case isc::cryptolink::UNKNOWN_HASH:
         return ("Unknown");
@@ -60,7 +70,8 @@ public:
                 getBotanHashAlgorithmName(hash_algorithm));
         } catch (const Botan::Algorithm_Not_Found&) {
             isc_throw(isc::cryptolink::UnsupportedAlgorithm,
-                      "Unknown hash algorithm: " + hash_algorithm);
+                      "Unknown hash algorithm: " <<
+                      static_cast<int>(hash_algorithm));
         } catch (const Botan::Exception& exc) {
             isc_throw(isc::cryptolink::LibraryError, exc.what());
         }
@@ -70,12 +81,28 @@ public:
         // If the key length is larger than the block size, we hash the
         // key itself first.
         try {
-            if (secret_len > hash->HASH_BLOCK_SIZE) {
+            // use a temp var so we don't have blocks spanning
+            // preprocessor directives
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,9,0)
+            size_t block_length = hash->hash_block_size();
+#elif BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,8,0)
+            size_t block_length = hash->HASH_BLOCK_SIZE;
+#else
+#error "Unsupported Botan version (need 1.8 or higher)"
+            // added to suppress irrelevant compiler errors
+            size_t block_length = 0;
+#endif
+            if (secret_len > block_length) {
                 Botan::SecureVector<Botan::byte> hashed_key =
                     hash->process(static_cast<const Botan::byte*>(secret),
                                   secret_len);
                 hmac_->set_key(hashed_key.begin(), hashed_key.size());
             } else {
+                // Botan 1.8 considers len 0 a bad key. 1.9 does not,
+                // but we won't accept it anyway, and fail early
+                if (secret_len == 0) {
+                    isc_throw(BadKey, "Bad HMAC secret length: 0");
+                }
                 hmac_->set_key(static_cast<const Botan::byte*>(secret),
                                secret_len);
             }
@@ -89,7 +116,15 @@ public:
     ~HMACImpl() { }
 
     size_t getOutputLength() const {
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,9,0)
+        return (hmac_->output_length());
+#elif BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,8,0)
         return (hmac_->OUTPUT_LENGTH);
+#else
+#error "Unsupported Botan version (need 1.8 or higher)"
+        // added to suppress irrelevant compiler errors
+        return 0;
+#endif
     }
 
     void update(const void* data, const size_t len) {
@@ -144,8 +179,17 @@ public:
         // Botan's verify_mac checks if len matches the output_length,
         // which causes it to fail for truncated signatures, so we do
         // the check ourselves
+        // SEE BELOW FOR TEMPORARY CHANGE
         try {
             Botan::SecureVector<Botan::byte> our_mac = hmac_->final();
+            if (len < getOutputLength()) {
+                // Currently we don't support truncated signature.  To avoid
+                // validating too short signature accidently, we enforce the
+                // standard signature size for the moment.
+                // Once we support truncation correctly, this if-clause should
+                // (and the capitalized comment above) be removed.
+                return (false);
+            }
             if (len == 0 || len > getOutputLength()) {
                 len = getOutputLength();
             }

@@ -2,12 +2,12 @@
 .\"     Title: b10-xfrin
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: September 8, 2010
+.\"      Date: May 19, 2011
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
-.TH "B10\-XFRIN" "8" "September 8, 2010" "BIND10" "BIND10"
+.TH "B10\-XFRIN" "8" "May 19, 2011" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -43,7 +43,7 @@ boss process\&. When triggered it can request and receive a zone transfer and st
 .ps -1
 .br
 .sp
-The Y1 prototype release only supports AXFR\&. IXFR is not implemented\&.
+This prototype release only supports AXFR\&. IXFR is not implemented\&.
 .sp .5v
 .RE
 .PP
@@ -61,14 +61,33 @@ receives its configurations from
 .PP
 The configurable settings are:
 .PP
-\fImaster_addr\fR
-The default is 127\&.0\&.0\&.1\&.
-.PP
-\fImaster_port\fR
-The default is 53\&.
-.PP
 \fItransfers\-in\fR
 defines the maximum number of inbound zone transfers that can run concurrently\&. The default is 10\&.
+.PP
+
+\fIzones\fR
+is a list of zones known to the
+\fBb10\-xfrin\fR
+daemon\&. The list items are:
+\fIname\fR
+(the zone name),
+\fImaster_addr\fR
+(the zone master to transfer from),
+\fImaster_port\fR
+(defaults to 53), and
+\fItsig_key\fR
+(optional TSIG key to use)\&. The
+\fItsig_key\fR
+is specified using a full string colon\-delimited name:key:algorithm representation (e\&.g\&.
+\(lqfoo\&.example\&.org:EvABsfU2h7uofnmqaRCrhHunGsd=:hmac\-sha1\(rq)\&.
+.PP
+(The site\-wide
+\fImaster_addr\fR
+and
+\fImaster_port\fR
+configurations are deprecated; use the
+\fIzones\fR
+list configuration instead\&.)
 .PP
 The configuration commands are:
 .PP
@@ -106,7 +125,9 @@ to define the class (defaults to
 \fImaster\fR
 to define the IP address of the authoritative server to transfer from, and
 \fIport\fR
-to define the port number on the authoritative server (defaults to 53)\&.
+to define the port number on the authoritative server (defaults to 53)\&. If the address or port is not specified, it will use the values previously defined in the
+\fIzones\fR
+configuration\&.
 .PP
 
 \fBshutdown\fR
@@ -143,5 +164,5 @@ The
 daemon was implemented in March 2010 by Zhang Likun of CNNIC for the ISC BIND 10 project\&.
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2010 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2010-2011 Internet Systems Consortium, Inc. ("ISC")
 .br
