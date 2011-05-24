@@ -383,7 +383,7 @@ ModuleCCSession::fetchRemoteSpec(const std::string& module, bool is_filename,
         ConstElementPtr cmd(createCommand("get_module_spec",
                             Element::fromJSON("{\"module_name\": \"" + module +
                                               "\"}")));
-        unsigned int seq = session_.group_sendmsg(cmd, "ConfigManager");
+        const unsigned int seq = session_.group_sendmsg(cmd, "ConfigManager");
 
         // Wait for the answer
         ConstElementPtr env, answer;
@@ -413,15 +413,15 @@ ModuleCCSession::addRemoteConfig(const std::string& spec_name,
 {
     // First get the module name, specification and default config
     ModuleSpec rmod_spec;
-    std::string module_name(fetchRemoteSpec(spec_name, spec_is_filename,
-                                            rmod_spec));
+    const std::string module_name(fetchRemoteSpec(spec_name, spec_is_filename,
+                                                  rmod_spec));
     ConfigData rmod_config(rmod_spec);
 
     // Get the current configuration values from config manager
     ConstElementPtr cmd(createCommand("get_config",
                         Element::fromJSON("{\"module_name\": \"" +
                                           module_name + "\"}")));
-    unsigned int seq = session_.group_sendmsg(cmd, "ConfigManager");
+    const unsigned int seq = session_.group_sendmsg(cmd, "ConfigManager");
 
     ConstElementPtr env, answer;
     session_.group_recvmsg(env, answer, false, seq);
