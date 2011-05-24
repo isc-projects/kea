@@ -16,10 +16,13 @@ libfake_session_la_SOURCES = fake_session.h fake_session.cc
 
 TESTS =
 if HAVE_GTEST
-# We build this file with disabled warnings because of asio
+# We build this file with disabled warnings because of ASIO
 lib_LTLIBRARIES += libasiobased.la
 libasiobased_la_SOURCES = ccsession_unittests.cc
-libasiobased_la_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) -Wno-unused-parameter
+libasiobased_la_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
+# Note: the ordering matters: -Wno-... must follow -Wextra (defined in
+# B10_CXXFLAGS)
+libasiobased_la_CXXFLAGS = $(AM_CXXFLAGS) -Wno-unused-parameter
 libasiobased_la_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
 TESTS += run_unittests
