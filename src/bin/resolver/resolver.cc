@@ -303,7 +303,7 @@ public:
         answer_message->toWire(renderer);
 
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_DETAIL, RESOLVER_DNSMSGSENT)
-                  .arg(renderer.getLength()).arg(answer_message->toText());
+                  .arg(renderer.getLength()).arg(*answer_message);
     }
 };
 
@@ -427,7 +427,7 @@ Resolver::processMessage(const IOMessage& io_message,
     // message.  This is not an oversight - it is handled below.  In the
     // meantime, output the full message for debug purposes (if requested).
     LOG_DEBUG(resolver_logger, RESOLVER_DBG_DETAIL, RESOLVER_DNSMSGRCVD)
-              .arg(query_message->toText());
+              .arg(*query_message);
 
     // Perform further protocol-level validation.
     bool sendAnswer = true;
@@ -442,7 +442,7 @@ Resolver::processMessage(const IOMessage& io_message,
 
         // Unsupported opcode.
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_OPCODEUNS)
-                  .arg(query_message->getOpcode().toText());
+                  .arg(query_message->getOpcode());
         makeErrorMessage(query_message, answer_message,
                          buffer, Rcode::NOTIMP());
 
@@ -530,7 +530,7 @@ ResolverImpl::processNormalQuery(ConstMessagePtr query_message,
 ConstElementPtr
 Resolver::updateConfig(ConstElementPtr config) {
     LOG_DEBUG(resolver_logger, RESOLVER_DBG_CONFIG, RESOLVER_CONFIGUPD)
-              .arg(config->toWire());
+              .arg(*config);
 
     try {
         // Parse forward_addresses
