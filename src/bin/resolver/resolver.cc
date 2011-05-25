@@ -324,9 +324,12 @@ private:
 
 Resolver::Resolver() :
     impl_(new ResolverImpl()),
+    dnss_(NULL),
     checkin_(new ConfigCheck(this)),
     dns_lookup_(new MessageLookup(this)),
     dns_answer_(new MessageAnswer),
+    nsas_(NULL),
+    cache_(NULL),
     configured_(false)
 {}
 
