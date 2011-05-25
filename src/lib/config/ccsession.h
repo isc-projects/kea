@@ -340,8 +340,7 @@ private:
     void updateRemoteConfig(const std::string& module_name,
                             isc::data::ConstElementPtr new_config);
 
-    std::string fetchRemoteSpec(const std::string& module, bool is_filename,
-                                ModuleSpec& spec);
+    ModuleSpec fetchRemoteSpec(const std::string& module, bool is_filename);
 };
 
 }
