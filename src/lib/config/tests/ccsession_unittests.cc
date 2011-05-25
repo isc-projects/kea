@@ -595,4 +595,14 @@ TEST_F(CCSessionTest, delayedStart) {
                  FakeSession::DoubleRead);
 }
 
+// Similar to the above, but more implicitly by calling addRemoteConfig().
+// We should construct ModuleCCSession with start_immediately being false
+// if we need to call addRemoteConfig().
+// The correct cases are covered in remoteConfig test.
+TEST_F(CCSessionTest, doubleStartWithAddRemoteConfig) {
+    ModuleCCSession mccs(ccspecfile("spec29.spec"), session, NULL, NULL);
+    session.getMessages()->add(createAnswer(0, el("{}")));
+    EXPECT_THROW(mccs.addRemoteConfig(ccspecfile("spec2.spec")),
+                 FakeSession::DoubleRead);
+}
 }
