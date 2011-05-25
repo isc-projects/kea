@@ -79,11 +79,11 @@ public:
     {}
     void establish(const char& socket_file);
     void disconnect();
-    void writeData(const void* data, uint32_t datalen);
-    uint32_t readDataLength();
+    void writeData(const void* data, size_t datalen);
+    size_t readDataLength();
     // Blocking read. Will throw a SessionTimeout if the timeout value
     // (in seconds) is thrown. If timeout is 0 it will block forever
-    void readData(void* data, uint32_t datalen);
+    void readData(void* data, size_t datalen);
     void startRead(boost::function<void()> user_handler);
     void setTimeout(size_t seconds) { timeout_ = seconds; };
     size_t getTimeout() const { return timeout_; };
@@ -94,7 +94,7 @@ public:
 
 private:
     void internalRead(const asio::error_code& error,
-                      uint32_t bytes_transferred);
+                      size_t bytes_transferred);
 
 private:
     io_service& io_service_;
@@ -136,7 +136,7 @@ SessionImpl::disconnect() {
 }
 
 void
-SessionImpl::writeData(const void* data, uint32_t datalen) {
+SessionImpl::writeData(const void* data, size_t datalen) {
     try {
         asio::write(socket_, asio::buffer(data, datalen));
     } catch (const asio::system_error& asio_ex) {
@@ -144,9 +144,9 @@ SessionImpl::writeData(const void* data, uint32_t datalen) {
     }
 }
 
-uint32_t
+size_t
 SessionImpl::readDataLength() {
-    uint32_t ret_len = data_length_;
+    size_t ret_len = data_length_;
     
     if (ret_len == 0) {
         readData(&data_length_, sizeof(data_length_));
@@ -161,7 +161,7 @@ SessionImpl::readDataLength() {
 }
 
 void
-SessionImpl::readData(void* data, uint32_t datalen) {
+SessionImpl::readData(void* data, size_t datalen) {
     boost::optional<asio::error_code> read_result;
     boost::optional<asio::error_code> timer_result;
 
@@ -227,7 +227,7 @@ SessionImpl::startRead(boost::function<void()> user_handler) {
 
 void
 SessionImpl::internalRead(const asio::error_code& error,
-                          uint32_t bytes_transferred)
+                          size_t bytes_transferred)
 {
     if (!error) {
         assert(bytes_transferred == sizeof(data_length_));
@@ -349,7 +349,7 @@ bool
 Session::recvmsg(ConstElementPtr& env, ConstElementPtr& msg,
                  bool nonblock, int seq)
 {
-    uint32_t length = impl_->readDataLength();
+    size_t length = impl_->readDataLength();
     if (hasQueuedMsgs()) {
         ConstElementPtr q_el;
         for (int i = 0; i < impl_->queue_->size(); i++) {
