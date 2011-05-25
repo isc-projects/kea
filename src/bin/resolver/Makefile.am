@@ -56,7 +56,7 @@ b10_resolver_LDADD += $(top_builddir)/src/lib/cache/libcache.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/resolve/libresolve.la
 b10_resolver_LDADD += $(top_builddir)/src/bin/auth/change_user.o
-b10_resolver_LDFLAGS = -pthread $(LOG4CPLUS_LDFLAGS)
+b10_resolver_LDFLAGS = -pthread
 
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir
 # and can't use @datadir@ because doesn't expand default ${prefix}
