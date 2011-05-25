@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20110322, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20110519, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -775,8 +775,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/server_common/tests/Makefile
                  src/lib/util/Makefile
                  src/lib/util/io/Makefile
-                 src/lib/util/io/tests/Makefile
                  src/lib/util/unittests/Makefile
+                 src/lib/util/pyunittests/Makefile
                  src/lib/util/tests/Makefile
                  tests/Makefile
                  tests/system/Makefile
@@ -843,6 +843,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/cc/tests/session_unittests_config.h
            src/lib/log/tests/run_time_init_test.sh
            src/lib/util/python/mkpywrapper.py
+           src/lib/server_common/tests/data_path.h
            tests/system/conf.sh
            tests/system/glue/setup.sh
            tests/system/glue/nsx1/b10-config.db

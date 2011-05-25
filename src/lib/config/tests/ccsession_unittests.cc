@@ -346,6 +346,18 @@ TEST_F(CCSessionTest, checkCommand2) {
     EXPECT_EQ(2, mccs.getValue("item1")->intValue());
 }
 
+std::string remote_module_name;
+int remote_item1(0);
+ConstElementPtr remote_config;
+ModuleCCSession *remote_mccs(NULL);
+
+void remoteHandler(const std::string& module_name, ConstElementPtr config) {
+    remote_module_name = module_name;
+    remote_item1 = remote_mccs->getRemoteConfigValue("Spec2", "item1")->
+        intValue();
+    remote_config = config;
+}
+
 TEST_F(CCSessionTest, remoteConfig) {
     std::string module_name;
     int item1;
@@ -392,6 +404,91 @@ TEST_F(CCSessionTest, remoteConfig) {
     
     session.getMessages()->add(createAnswer());
     EXPECT_THROW(mccs.addRemoteConfig(ccspecfile("spec2.spec")), CCSessionError);
+
+    {
+        SCOPED_TRACE("With module name");
+        // Try adding it with downloading the spec from config manager
+        ModuleSpec spec(moduleSpecFromFile(ccspecfile("spec2.spec")));
+        session.getMessages()->add(createAnswer(0, spec.getFullSpec()));
+        session.getMessages()->add(createAnswer(0, el("{}")));
+
+        EXPECT_NO_THROW(module_name = mccs.addRemoteConfig("Spec2", NULL,
+                                                           false));
+
+        EXPECT_EQ("Spec2", module_name);
+        EXPECT_NO_THROW(item1 =
+                        mccs.getRemoteConfigValue(module_name,
+                                                  "item1")->intValue());
+        EXPECT_EQ(1, item1);
+
+        mccs.removeRemoteConfig(module_name);
+    }
+
+    {
+        // Try adding it with a handler.
+        // Pass non-default value to see the handler is called after
+        // downloading the configuration, not too soon.
+        SCOPED_TRACE("With handler");
+        session.getMessages()->add(createAnswer(0, el("{ \"item1\": 2 }")));
+        remote_mccs = &mccs;
+        module_name = mccs.addRemoteConfig(ccspecfile("spec2.spec"),
+                                           remoteHandler);
+        {
+            SCOPED_TRACE("Before update");
+            EXPECT_EQ("Spec2", module_name);
+            EXPECT_TRUE(session.haveSubscription("Spec2", "*"));
+            // Now check the parameters the remote handler stored
+            // This also checks it was called
+            EXPECT_EQ("Spec2", remote_module_name);
+            remote_module_name = "";
+            EXPECT_EQ(2, remote_item1);
+            remote_item1 = 0;
+            if (remote_config) {
+                EXPECT_EQ(2, remote_config->get("item1")->intValue());
+            } else {
+                ADD_FAILURE() << "Remote config not set";
+            }
+            remote_config.reset();
+            // Make sure normal way still works
+            item1 = mccs.getRemoteConfigValue(module_name,
+                                              "item1")->intValue();
+            EXPECT_EQ(2, item1);
+        }
+
+        {
+            SCOPED_TRACE("After update");
+            session.addMessage(el("{ \"command\": [ \"config_update\", "
+                                  "{ \"item1\": 3 } ] }"), module_name, "*");
+            mccs.checkCommand();
+            EXPECT_EQ("Spec2", remote_module_name);
+            remote_module_name = "";
+            EXPECT_EQ(3, remote_item1);
+            remote_item1 = 0;
+            if (remote_config) {
+                EXPECT_EQ(3, remote_config->get("item1")->intValue());
+            } else {
+                ADD_FAILURE() << "Remote config not set";
+            }
+            remote_config.reset();
+            // Make sure normal way still works
+            item1 = mccs.getRemoteConfigValue(module_name,
+                                              "item1")->intValue();
+            EXPECT_EQ(3, item1);
+        }
+
+        remote_mccs = NULL;
+        mccs.removeRemoteConfig(module_name);
+
+        {
+            SCOPED_TRACE("When removed");
+            // Make sure nothing is called any more
+            session.addMessage(el("{ \"command\": [ \"config_update\", "
+                                  "{ \"item1\": 4 } ] }"), module_name, "*");
+            EXPECT_EQ("", remote_module_name);
+            EXPECT_EQ(0, remote_item1);
+            EXPECT_FALSE(remote_config);
+        }
+    }
 }
 
 TEST_F(CCSessionTest, ignoreRemoteConfigCommands) {
