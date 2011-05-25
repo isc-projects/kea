@@ -36,7 +36,7 @@ typedef enum {
     NONE = 6    // Disable logging
 } Severity;
 
-/// Minimum/maximum debug levels.  These are defined wi
+/// Minimum/maximum debug levels.
 
 const int MIN_DEBUG_LEVEL = 0;
 const int MAX_DEBUG_LEVEL = 99;
