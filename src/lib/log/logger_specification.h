@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #ifndef __LOGGER_SPECIFICATION_H
-#define __LOGGER_SPEC_IFICATIONH
+#define __LOGGER_SPECIFICATION_H
 
 #include <stdint.h>
 #include <stdlib.h>
