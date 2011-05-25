@@ -171,13 +171,11 @@ public:
      * @param command_handler A callback function pointer to be called when
      * a control command from a remote agent needs to be performed on the
      * local module.
-     * @param start_immediately If true (default), start listening to new
-     * commands and configuration changes asynchronously at the end of the
-     * constructor; if false, it will be delayed until the start() method is
-     * explicitly called. (This is a short term workaround for an
-     * initialization trouble. We'll need to develop a cleaner solution, and
-     * then remove this knob)
-     * @param socket_path The path to the socket. For testing purposes.
+     * @start_immediately If true (default), start listening to new commands
+     * and configuration changes asynchronously at the end of the constructor;
+     * if false, it will be delayed until the start() method is explicitly
+     * called. (This is a short term workaround for an initialization trouble.
+     * We'll need to develop a cleaner solution, and then remove this knob)
      */
     ModuleCCSession(const std::string& spec_file_name,
                     isc::cc::AbstractSession& session,
@@ -186,8 +184,7 @@ public:
                     isc::data::ConstElementPtr(*command_handler)(
                         const std::string& command,
                         isc::data::ConstElementPtr args) = NULL,
-                    bool start_immediately = true,
-                    const char* socket_path = NULL
+                    bool start_immediately = true
                     );
 
     /// Start receiving new commands and configuration changes asynchronously.

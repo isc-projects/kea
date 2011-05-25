@@ -16,17 +16,8 @@ libfake_session_la_SOURCES = fake_session.h fake_session.cc
 
 TESTS =
 if HAVE_GTEST
-# We build this file with disabled warnings because of ASIO
-lib_LTLIBRARIES += libasiobased.la
-libasiobased_la_SOURCES = ccsession_unittests.cc
-libasiobased_la_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-# Note: the ordering matters: -Wno-... must follow -Wextra (defined in
-# B10_CXXFLAGS)
-libasiobased_la_CXXFLAGS = $(AM_CXXFLAGS) -Wno-unused-parameter
-libasiobased_la_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
-
 TESTS += run_unittests
-run_unittests_SOURCES = module_spec_unittests.cc config_data_unittests.cc run_unittests.cc
+run_unittests_SOURCES = ccsession_unittests.cc module_spec_unittests.cc config_data_unittests.cc run_unittests.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
@@ -35,7 +26,6 @@ run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 run_unittests_LDADD += libfake_session.la
-run_unittests_LDADD += libasiobased.la
 run_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
 
 endif
