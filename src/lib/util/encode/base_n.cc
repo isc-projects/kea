@@ -174,8 +174,10 @@ public:
         return (*this);
     }
     void skipSpaces() {
-        while (base_ != base_end_ &&
-               isspace(static_cast<unsigned char>(*base_)))
+        // If *base_ < 0, on Windows platform with Visual Studio compiler
+        // it may trigger _ASSERTE((unsigned)(c + 1) <= 256);
+        // so make sure that the parameter of isspace() is larger than 0
+        while (base_ != base_end_ && ((*base_) >= 0) && isspace(*base_))
         {
             ++base_;
         }
