@@ -370,14 +370,11 @@ ModuleCCSession::checkCommand() {
     return (0);
 }
 
-std::string
-ModuleCCSession::fetchRemoteSpec(const std::string& module, bool is_filename,
-                                 ModuleSpec& spec)
-{
+ModuleSpec
+ModuleCCSession::fetchRemoteSpec(const std::string& module, bool is_filename) {
     if (is_filename) {
         // It is a filename, simply load it.
-        spec = readModuleSpecification(module);
-        return (spec.getModuleName());
+        return (readModuleSpecification(module));
     } else {
         // It's module name, request it from config manager
 
@@ -394,12 +391,12 @@ ModuleCCSession::fetchRemoteSpec(const std::string& module, bool is_filename,
         ConstElementPtr spec_data = parseAnswer(rcode, answer);
         if (rcode == 0 && spec_data) {
             // received OK, construct the spec out of it
-            spec = ModuleSpec(spec_data);
+            ModuleSpec spec = ModuleSpec(spec_data);
             if (module != spec.getModuleName()) {
                 // It's a different module!
                 isc_throw(CCSessionError, "Module name mismatch");
             }
-            return (module);
+            return (spec);
         } else {
             isc_throw(CCSessionError, "Error getting config for " +
                       module + ": " + answer->str());
@@ -414,9 +411,8 @@ ModuleCCSession::addRemoteConfig(const std::string& spec_name,
                                  bool spec_is_filename)
 {
     // First get the module name, specification and default config
-    ModuleSpec rmod_spec;
-    const std::string module_name(fetchRemoteSpec(spec_name, spec_is_filename,
-                                                  rmod_spec));
+    const ModuleSpec rmod_spec(fetchRemoteSpec(spec_name, spec_is_filename));
+    const std::string module_name(rmod_spec.getModuleName());
     ConfigData rmod_config(rmod_spec);
 
     // Get the current configuration values from config manager
