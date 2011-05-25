@@ -30,6 +30,11 @@ void
 updateKeyring(const std::string&, ConstElementPtr data) {
     ConstElementPtr list(data->get("keys"));
     KeyringPtr load(new TSIGKeyRing);
+
+    // Note that 'data' only contains explicitly configured config parameters.
+    // So if we use the default list is NULL, rather than an empty list, and
+    // we must explicitly expect that case (and handle it just like an empty
+    // list).
     for (size_t i(0); list && i < list->size(); ++ i) {
         load->add(TSIGKey(list->get(i)->stringValue()));
     }
