@@ -202,7 +202,7 @@ class SendNonblock(unittest.TestCase):
                 try:
                     def killall(signum, frame):
                         os.kill(queue_pid, signal.SIGTERM)
-                        sys.exit(1)
+                        os._exit(1)
                     signal.signal(signal.SIGALRM, killall)
                     msg = msgq.preparemsg({"type" : "ping"}, data)
                     now = time.clock()

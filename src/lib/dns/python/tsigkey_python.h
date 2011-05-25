@@ -12,11 +12,42 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <gtest/gtest.h>
+#ifndef __PYTHON_TSIGKEY_H
+#define __PYTHON_TSIGKEY_H 1
 
-int
-main(int argc, char *argv[]) {
-    ::testing::InitGoogleTest(&argc, argv);
+#include <Python.h>
 
-    return RUN_ALL_TESTS();
-}
+namespace isc {
+namespace dns {
+class TSIGKey;
+class TSIGKeyRing;
+
+namespace python {
+
+// The s_* Class simply covers one instantiation of the object
+class s_TSIGKey : public PyObject {
+public:
+    s_TSIGKey();
+    TSIGKey* cppobj;
+};
+
+class s_TSIGKeyRing : public PyObject {
+public:
+    s_TSIGKeyRing();
+    TSIGKeyRing* cppobj;
+};
+
+extern PyTypeObject tsigkey_type;
+extern PyTypeObject tsigkeyring_type;
+
+bool initModulePart_TSIGKey(PyObject* mod);
+bool initModulePart_TSIGKeyRing(PyObject* mod);
+
+} // namespace python
+} // namespace dns
+} // namespace isc
+#endif // __PYTHON_TSIGKEY_H
+
+// Local Variables:
+// mode: c++
+// End:

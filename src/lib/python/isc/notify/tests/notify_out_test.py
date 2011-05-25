@@ -99,36 +99,51 @@ class TestNotifyOut(unittest.TestCase):
         self._notify._notify_infos[('example.org.', 'IN')] = MockZoneNotifyInfo('example.org.', 'IN')
         self._notify._notify_infos[('example.org.', 'CH')] = MockZoneNotifyInfo('example.org.', 'CH')
 
-        info = self._notify._notify_infos[('example.net.', 'IN')]
-        info.notify_slaves.append(('127.0.0.1', 53))
-        info.notify_slaves.append(('1.1.1.1', 5353))
+        net_info = self._notify._notify_infos[('example.net.', 'IN')]
+        net_info.notify_slaves.append(('127.0.0.1', 53))
+        net_info.notify_slaves.append(('1.1.1.1', 5353))
+        com_info = self._notify._notify_infos[('example.com.', 'IN')]
+        com_info.notify_slaves.append(('1.1.1.1', 5353))
+        com_ch_info = self._notify._notify_infos[('example.com.', 'CH')]
+        com_ch_info.notify_slaves.append(('1.1.1.1', 5353))
 
     def tearDown(self):
         self._db_file.close()
         os.unlink(self._db_file.name)
 
     def test_send_notify(self):
+        notify_out._MAX_NOTIFY_NUM = 2
+
         self._notify.send_notify('example.net')
         self.assertEqual(self._notify.notify_num, 1)
-        self.assertEqual(self._notify._notifying_zones[0], ('example.net.','IN'))
+        self.assertEqual(self._notify._notifying_zones[0], ('example.net.', 'IN'))
 
         self._notify.send_notify('example.com')
         self.assertEqual(self._notify.notify_num, 2)
-        self.assertEqual(self._notify._notifying_zones[1], ('example.com.','IN'))
+        self.assertEqual(self._notify._notifying_zones[1], ('example.com.', 'IN'))
 
-        notify_out._MAX_NOTIFY_NUM = 3
+        # notify_num is equal to MAX_NOTIFY_NUM, append it to waiting_zones list.
         self._notify.send_notify('example.com', 'CH')
-        self.assertEqual(self._notify.notify_num, 3)
-        self.assertEqual(self._notify._notifying_zones[2], ('example.com.','CH'))
-
-        self._notify.send_notify('example.org.')
-        self.assertEqual(self._notify._waiting_zones[0], ('example.org.', 'IN'))
-        self._notify.send_notify('example.org.')
+        self.assertEqual(self._notify.notify_num, 2)
         self.assertEqual(1, len(self._notify._waiting_zones))
 
-        self._notify.send_notify('example.org.', 'CH')
+        # zone_id is already in notifying_zones list, append it to waiting_zones list.
+        self._notify.send_notify('example.net')
         self.assertEqual(2, len(self._notify._waiting_zones))
-        self.assertEqual(self._notify._waiting_zones[1], ('example.org.', 'CH'))
+        self.assertEqual(self._notify._waiting_zones[1], ('example.net.', 'IN'))
+
+        # zone_id is already in waiting_zones list, skip it.
+        self._notify.send_notify('example.net')
+        self.assertEqual(2, len(self._notify._waiting_zones))
+
+        # has no slave masters, skip it.
+        self._notify.send_notify('example.org.', 'CH')
+        self.assertEqual(self._notify.notify_num, 2)
+        self.assertEqual(2, len(self._notify._waiting_zones))
+
+        self._notify.send_notify('example.org.')
+        self.assertEqual(self._notify.notify_num, 2)
+        self.assertEqual(2, len(self._notify._waiting_zones))
 
     def test_wait_for_notify_reply(self):
         self._notify.send_notify('example.net.')
@@ -171,6 +186,7 @@ class TestNotifyOut(unittest.TestCase):
         self._notify.send_notify('example.net.')
         self._notify.send_notify('example.com.')
         notify_out._MAX_NOTIFY_NUM = 2
+        # zone example.org. has no slave servers.
         self._notify.send_notify('example.org.')
         self._notify.send_notify('example.com.', 'CH')
 
@@ -179,17 +195,19 @@ class TestNotifyOut(unittest.TestCase):
         self.assertEqual(0, info.notify_try_num)
         self.assertEqual(info.get_current_notify_target(), ('1.1.1.1', 5353))
         self.assertEqual(2, self._notify.notify_num)
+        self.assertEqual(1, len(self._notify._waiting_zones))
 
         self._notify._notify_next_target(info)
         self.assertEqual(0, info.notify_try_num)
         self.assertIsNone(info.get_current_notify_target())
         self.assertEqual(2, self._notify.notify_num)
-        self.assertEqual(1, len(self._notify._waiting_zones))
+        self.assertEqual(0, len(self._notify._waiting_zones))
 
         example_com_info = self._notify._notify_infos[('example.com.', 'IN')]
         self._notify._notify_next_target(example_com_info)
-        self.assertEqual(2, self._notify.notify_num)
-        self.assertEqual(2, len(self._notify._notifying_zones))
+        self.assertEqual(1, self._notify.notify_num)
+        self.assertEqual(1, len(self._notify._notifying_zones))
+        self.assertEqual(0, len(self._notify._waiting_zones))
 
     def test_handle_notify_reply(self):
         self.assertEqual(notify_out._BAD_REPLY_PACKET, self._notify._handle_notify_reply(None, b'badmsg'))

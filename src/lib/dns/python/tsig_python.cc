@@ -12,9 +12,30 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#define PY_SSIZE_T_CLEAN        // need for "y#" below
+#include <Python.h>
+
+#include <string>
+#include <stdexcept>
+
+#include <exceptions/exceptions.h>
+
+#include <util/python/pycppwrapper_util.h>
+
 #include <dns/tsig.h>
 
+#include "pydnspp_common.h"
+#include "name_python.h"
+#include "tsigkey_python.h"
+#include "tsigerror_python.h"
+#include "tsigrecord_python.h"
+#include "tsig_python.h"
+
+using namespace std;
+using namespace isc;
+using namespace isc::util::python;
 using namespace isc::dns;
+using namespace isc::dns::python;
 
 //
 // Definition of the classes
@@ -24,13 +45,17 @@ using namespace isc::dns;
 // and static wrappers around the methods we export), a list of methods,
 // and a type description
 
-namespace {
-// The s_* Class simply covers one instantiation of the object
+//
+// TSIGContext
+//
 
-class s_TSIGContext : public PyObject {
-public:
-    TSIGContext* tsig_ctx;
-};
+// Trivial constructor.
+s_TSIGContext::s_TSIGContext() : cppobj(NULL) {
+}
+
+namespace {
+// Shortcut type which would be convenient for adding class variables safely.
+typedef CPPPyObjectContainer<s_TSIGContext, TSIGContext> TSIGContextContainer;
 
 //
 // We declare the functions here, the definitions are below
@@ -40,6 +65,12 @@ public:
 // General creation and destruction
 int TSIGContext_init(s_TSIGContext* self, PyObject* args);
 void TSIGContext_destroy(s_TSIGContext* self);
+
+// Class specific methods
+PyObject* TSIGContext_getState(s_TSIGContext* self);
+PyObject* TSIGContext_getError(s_TSIGContext* self);
+PyObject* TSIGContext_sign(s_TSIGContext* self, PyObject* args);
+PyObject* TSIGContext_verify(s_TSIGContext* self, PyObject* args);
 
 // These are the functions we export
 // For a minimal support, we don't need them.
@@ -51,18 +82,180 @@ void TSIGContext_destroy(s_TSIGContext* self);
 // 3. Argument type
 // 4. Documentation
 PyMethodDef TSIGContext_methods[] = {
+    { "get_state", reinterpret_cast<PyCFunction>(TSIGContext_getState),
+      METH_NOARGS,
+      "Return the current state of the context (mainly for tests)" },
+    { "get_error", reinterpret_cast<PyCFunction>(TSIGContext_getError),
+      METH_NOARGS,
+      "Return the TSIG error as a result of the latest verification" },
+    { "sign",
+      reinterpret_cast<PyCFunction>(TSIGContext_sign), METH_VARARGS,
+      "Sign a DNS message." },
+    { "verify",
+      reinterpret_cast<PyCFunction>(TSIGContext_verify), METH_VARARGS,
+      "Verify a DNS message." },
     { NULL, NULL, 0, NULL }
 };
 
+int
+TSIGContext_init(s_TSIGContext* self, PyObject* args) {
+    try {
+        // "From key" constructor
+        const s_TSIGKey* tsigkey_obj;
+        if (PyArg_ParseTuple(args, "O!", &tsigkey_type, &tsigkey_obj)) {
+            self->cppobj = new TSIGContext(*tsigkey_obj->cppobj);
+            return (0);
+        }
+
+        // "From key param + keyring" constructor
+        PyErr_Clear();
+        const s_Name* keyname_obj;
+        const s_Name* algname_obj;
+        const s_TSIGKeyRing* keyring_obj;
+        if (PyArg_ParseTuple(args, "O!O!O!", &name_type, &keyname_obj,
+                             &name_type, &algname_obj, &tsigkeyring_type,
+                             &keyring_obj)) {
+            self->cppobj = new TSIGContext(*keyname_obj->cppobj,
+                                           *algname_obj->cppobj,
+                                           *keyring_obj->cppobj);
+            return (0);
+        }
+    } catch (const exception& ex) {
+        const string ex_what = "Failed to construct TSIGContext object: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (-1);
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in constructing TSIGContext");
+        return (-1);
+    }
+
+    PyErr_SetString(PyExc_TypeError,
+                    "Invalid arguments to TSIGContext constructor");
+
+    return (-1);
+}
+
+void
+TSIGContext_destroy(s_TSIGContext* const self) {
+    delete self->cppobj;
+    self->cppobj = NULL;
+    Py_TYPE(self)->tp_free(self);
+}
+
+PyObject*
+TSIGContext_getState(s_TSIGContext* self) {
+    return (Py_BuildValue("I", self->cppobj->getState()));
+}
+
+PyObject*
+TSIGContext_getError(s_TSIGContext* self) {
+    try {
+        PyObjectContainer container(createTSIGErrorObject(
+                                        self->cppobj->getError()));
+        return (Py_BuildValue("O", container.get()));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpectedly failed to get TSIGContext error: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in TSIGContext.get_error");
+    }
+    return (NULL);
+}
+
+PyObject*
+TSIGContext_sign(s_TSIGContext* self, PyObject* args) {
+    long qid = 0;
+    const char* mac;
+    Py_ssize_t mac_size;
+
+    if (PyArg_ParseTuple(args, "ly#", &qid, &mac, &mac_size)) {
+        if (qid < 0 || qid > 0xffff) {
+            PyErr_SetString(PyExc_ValueError,
+                            "TSIGContext.sign: QID out of range");
+            return (NULL);
+        }
+
+        try {
+            ConstTSIGRecordPtr record = self->cppobj->sign(qid, mac, mac_size);
+            return (createTSIGRecordObject(*record));
+        } catch (const TSIGContextError& ex) {
+            PyErr_SetString(po_TSIGContextError, ex.what());
+        } catch (const exception& ex) {
+            const string ex_what = "Unexpected failure in TSIG sign: " +
+                string(ex.what());
+            PyErr_SetString(po_IscException, ex_what.c_str());
+        } catch (...) {
+            PyErr_SetString(PyExc_SystemError,
+                            "Unexpected failure in TSIG sign");
+        }
+    } else {
+        PyErr_SetString(PyExc_TypeError,
+                        "Invalid arguments to TSIGContext.sign");
+    }
+
+    return (NULL);
+}
+
+PyObject*
+TSIGContext_verify(s_TSIGContext* self, PyObject* args) {
+    const char* data;
+    Py_ssize_t data_len;
+    s_TSIGRecord* py_record;
+    PyObject* py_maybe_none;
+    TSIGRecord* record;
+
+    if (PyArg_ParseTuple(args, "O!y#", &tsigrecord_type, &py_record,
+                         &data, &data_len)) {
+        record = py_record->cppobj;
+    } else if (PyArg_ParseTuple(args, "Oy#", &py_maybe_none, &data,
+                                &data_len)) {
+        record = NULL;
+    } else {
+        PyErr_SetString(PyExc_TypeError,
+                        "Invalid arguments to TSIGContext.verify");
+        return (NULL);
+    }
+    PyErr_Clear();
+
+    try {
+        const TSIGError error = self->cppobj->verify(record, data, data_len);
+        return (createTSIGErrorObject(error));
+    } catch (const TSIGContextError& ex) {
+        PyErr_SetString(po_TSIGContextError, ex.what());
+    } catch (const InvalidParameter& ex) {
+        PyErr_SetString(po_InvalidParameter, ex.what());
+    } catch (const exception& ex) {
+        const string ex_what = "Unexpected failure in TSIG verify: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError, "Unexpected failure in TSIG verify");
+    }
+
+    return (NULL);
+}
+} // end of unnamed namespace
+
+namespace isc {
+namespace dns {
+namespace python {
+// Definition of class specific exception(s)
+PyObject* po_TSIGContextError;
+
 // This defines the complete type for reflection in python and
-// parsing of PyObject* to s_EDNS
+// parsing of PyObject* to s_TSIGContext
 // Most of the functions are not actually implemented and NULL here.
-PyTypeObject tsig_context_type = {
+PyTypeObject tsigcontext_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.TSIGContext",
-    sizeof(s_TSIGContext),              // tp_basicsize
+    "pydnspp.TSIGContext",
+    sizeof(s_TSIGContext),                 // tp_basicsize
     0,                                  // tp_itemsize
-    (destructor)TSIGContext_destroy,    // tp_dealloc
+    reinterpret_cast<destructor>(TSIGContext_destroy),       // tp_dealloc
     NULL,                               // tp_print
     NULL,                               // tp_getattr
     NULL,                               // tp_setattr
@@ -77,16 +270,22 @@ PyTypeObject tsig_context_type = {
     NULL,                               // tp_getattro
     NULL,                               // tp_setattro
     NULL,                               // tp_as_buffer
-    Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The TSIGContext class maintains a context of a signed session of "
-    "DNS transactions by TSIG.",
+
+    // We allow the python version of TSIGContext to act as a base class.
+    // From pure design point of view, this is wrong because it's not intended
+    // to be inherited.  However, cryptographic operations are generally
+    // difficult to test, so it would be very advantageous if we can define
+    // a mock context class.
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, // tp_flags
+
+    "The TSIGContext class objects is...(COMPLETE THIS)",
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
-    NULL,                               // tp_richcompare
+    NULL, // tp_richcompare
     0,                                  // tp_weaklistoffset
     NULL,                               // tp_iter
     NULL,                               // tp_iternext
-    TSIGContext_methods,                // tp_methods
+    TSIGContext_methods,                   // tp_methods
     NULL,                               // tp_members
     NULL,                               // tp_getset
     NULL,                               // tp_base
@@ -94,7 +293,7 @@ PyTypeObject tsig_context_type = {
     NULL,                               // tp_descr_get
     NULL,                               // tp_descr_set
     0,                                  // tp_dictoffset
-    (initproc)TSIGContext_init,         // tp_init
+    reinterpret_cast<initproc>(TSIGContext_init),            // tp_init
     NULL,                               // tp_alloc
     PyType_GenericNew,                  // tp_new
     NULL,                               // tp_free
@@ -108,50 +307,58 @@ PyTypeObject tsig_context_type = {
     0                                   // tp_version_tag
 };
 
-int
-TSIGContext_init(s_TSIGContext* self, PyObject* args) {
-    const s_TSIGKey* tsigkey_obj;
-
-    try {
-        if (PyArg_ParseTuple(args, "O!", &tsigkey_type, &tsigkey_obj)) {
-            self->tsig_ctx = new TSIGContext(*tsigkey_obj->tsigkey);
-            return (0);
-        }
-    } catch (...) {
-        PyErr_SetString(po_IscException, "Unexpected exception");
-        return (-1);
-    }
-
-    PyErr_Clear();
-    PyErr_SetString(PyExc_TypeError,
-                    "Invalid arguments to TSIGContext constructor");
-
-    return (-1);
-}
-
-void
-TSIGContext_destroy(s_TSIGContext* const self) {
-    delete self->tsig_ctx;
-    self->tsig_ctx = NULL;
-    Py_TYPE(self)->tp_free(self);
-}
-
 // Module Initialization, all statics are initialized here
 bool
 initModulePart_TSIGContext(PyObject* mod) {
     // We initialize the static description object with PyType_Ready(),
     // then add it to the module. This is not just a check! (leaving
     // this out results in segmentation faults)
-    if (PyType_Ready(&tsig_context_type) < 0) {
+    if (PyType_Ready(&tsigcontext_type) < 0) {
         return (false);
     }
-    Py_INCREF(&tsig_context_type);
-    void* p = &tsig_context_type;
-    PyModule_AddObject(mod, "TSIGContext", static_cast<PyObject*>(p));
+    void* p = &tsigcontext_type;
+    if (PyModule_AddObject(mod, "TSIGContext",
+                           static_cast<PyObject*>(p)) < 0) {
+        return (false);
+    }
+    Py_INCREF(&tsigcontext_type);
 
-    addClassVariable(tsig_context_type, "DEFAULT_FUDGE",
-                     Py_BuildValue("H", TSIGContext::DEFAULT_FUDGE));
+    try {
+        // Class specific exceptions
+        po_TSIGContextError = PyErr_NewException("pydnspp.TSIGContextError",
+                                                 po_IscException, NULL);
+        PyObjectContainer(po_TSIGContextError).installToModule(
+            mod, "TSIGContextError");
+
+        // Constant class variables
+        installClassVariable(tsigcontext_type, "STATE_INIT",
+                             Py_BuildValue("I", TSIGContext::INIT));
+        installClassVariable(tsigcontext_type, "STATE_SENT_REQUEST",
+                             Py_BuildValue("I", TSIGContext::SENT_REQUEST));
+        installClassVariable(tsigcontext_type, "STATE_RECEIVED_REQUEST",
+                             Py_BuildValue("I", TSIGContext::RECEIVED_REQUEST));
+        installClassVariable(tsigcontext_type, "STATE_SENT_RESPONSE",
+                             Py_BuildValue("I", TSIGContext::SENT_RESPONSE));
+        installClassVariable(tsigcontext_type, "STATE_VERIFIED_RESPONSE",
+                             Py_BuildValue("I",
+                                           TSIGContext::VERIFIED_RESPONSE));
+
+        installClassVariable(tsigcontext_type, "DEFAULT_FUDGE",
+                             Py_BuildValue("H", TSIGContext::DEFAULT_FUDGE));
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure in TSIGContext initialization: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (false);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure in TSIGContext initialization");
+        return (false);
+    }
 
     return (true);
 }
-} // end of anonymous namespace
+} // namespace python
+} // namespace dns
+} // namespace isc
