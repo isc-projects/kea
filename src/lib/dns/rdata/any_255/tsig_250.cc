@@ -71,7 +71,7 @@ getToken(istringstream& iss, const string& full_input) {
     string token;
     iss >> token;
     if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid TSIG text: parse error" <<
+        isc_throw(InvalidRdataText, "Invalid TSIG text: parse error " <<
                   full_input);
     }
     return (token);
