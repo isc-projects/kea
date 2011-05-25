@@ -12,6 +12,14 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+// Enable this if you use s# variants with PyArg_ParseTuple(), see
+// http://docs.python.org/py3k/c-api/arg.html#strings-and-buffers
+//#define PY_SSIZE_T_CLEAN
+
+// Python.h needs to be placed at the head of the program file, see:
+// http://docs.python.org/py3k/extending/extending.html#a-simple-example
+#include <Python.h>
+
 #include <string>
 #include <stdexcept>
 
@@ -202,7 +210,7 @@ namespace python {
 // Most of the functions are not actually implemented and NULL here.
 PyTypeObject @cppclass@_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.@CPPCLASS@",
+    "pydnspp.@CPPCLASS@",
     sizeof(s_@CPPCLASS@),                 // tp_basicsize
     0,                                  // tp_itemsize
     reinterpret_cast<destructor>(@CPPCLASS@_destroy),       // tp_dealloc
@@ -287,6 +295,14 @@ initModulePart_@CPPCLASS@(PyObject* mod) {
     }
 
     return (true);
+}
+
+PyObject*
+create@CPPCLASS@Object(const @CPPCLASS@& source) {
+    @CPPCLASS@Container container =
+        PyObject_New(s_@CPPCLASS@, &@cppclass@_type);
+    container.set(new @CPPCLASS@(source));
+    return (container.release());
 }
 } // namespace python
 } // namespace @MODULE@

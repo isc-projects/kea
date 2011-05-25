@@ -34,6 +34,21 @@ extern PyTypeObject @cppclass@_type;
 
 bool initModulePart_@CPPCLASS@(PyObject* mod);
 
+// Note: this utility function works only when @CPPCLASS@ is a copy
+// constructable.
+// And, it would only be useful when python binding needs to create this
+// object frequently.  Otherwise, it would (or should) probably better to
+// remove the declaration and definition of this function.
+//
+/// This is A simple shortcut to create a python @CPPCLASS@ object (in the
+/// form of a pointer to PyObject) with minimal exception safety.
+/// On success, it returns a valid pointer to PyObject with a reference
+/// counter of 1; if something goes wrong it throws an exception (it never
+/// returns a NULL pointer).
+/// This function is expected to be called with in a try block
+/// followed by necessary setup for python exception.
+PyObject* create@CPPCLASS@Object(const @CPPCLASS@& source);
+
 } // namespace python
 } // namespace @MODULE@
 } // namespace isc

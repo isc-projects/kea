@@ -14,6 +14,9 @@
 
 #include <exceptions/exceptions.h>
 #include <dns/message.h>
+#include <dns/rcode.h>
+#include <dns/tsig.h>
+
 using namespace isc::dns;
 using namespace isc::util;
 
@@ -65,6 +68,7 @@ PyObject* Message_getOpcode(s_Message* self);
 PyObject* Message_setOpcode(s_Message* self, PyObject* args);
 PyObject* Message_getEDNS(s_Message* self);
 PyObject* Message_setEDNS(s_Message* self, PyObject* args);
+PyObject* Message_getTSIGRecord(s_Message* self);
 PyObject* Message_getRRCount(s_Message* self, PyObject* args);
 // use direct iterators for these? (or simply lists for now?)
 PyObject* Message_getQuestion(s_Message* self);
@@ -122,6 +126,11 @@ PyMethodDef Message_methods[] = {
     },
     { "set_edns", reinterpret_cast<PyCFunction>(Message_setEDNS), METH_VARARGS,
       "Set EDNS for the message."
+    },
+    { "get_tsig_record",
+      reinterpret_cast<PyCFunction>(Message_getTSIGRecord), METH_NOARGS,
+      "Return, if any, the TSIG record contained in the received message. "
+      "If no TSIG RR is set in the message, None will be returned."
     },
     { "get_rr_count", reinterpret_cast<PyCFunction>(Message_getRRCount), METH_VARARGS,
       "Returns the number of RRs contained in the given section." },
@@ -442,6 +451,29 @@ Message_setEDNS(s_Message* self, PyObject* args) {
 }
 
 PyObject*
+Message_getTSIGRecord(s_Message* self) {
+    try {
+        const TSIGRecord* tsig_record = self->message->getTSIGRecord();
+
+        if (tsig_record == NULL) {
+            Py_RETURN_NONE;
+        }
+        return (createTSIGRecordObject(*tsig_record));
+    } catch (const InvalidMessageOperation& ex) {
+        PyErr_SetString(po_InvalidMessageOperation, ex.what());
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure in getting TSIGRecord from message: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError, "Unexpected failure in "
+                        "getting TSIGRecord from message");
+    }
+    return (NULL);
+}
+
+PyObject*
 Message_getRRCount(s_Message* self, PyObject* args) {
     unsigned int section;
     if (!PyArg_ParseTuple(args, "I", &section)) {
@@ -652,13 +684,12 @@ Message_toWire(s_Message* self, PyObject* args) {
     s_TSIGContext* tsig_ctx = NULL;
     
     if (PyArg_ParseTuple(args, "O!|O!", &messagerenderer_type, &mr,
-                         &tsig_context_type, &tsig_ctx)) {
+                         &tsigcontext_type, &tsig_ctx)) {
         try {
             if (tsig_ctx == NULL) {
                 self->message->toWire(*mr->messagerenderer);
             } else {
-                self->message->toWire(*mr->messagerenderer,
-                                      *tsig_ctx->tsig_ctx);
+                self->message->toWire(*mr->messagerenderer, *tsig_ctx->cppobj);
             }
             // If we return NULL it is seen as an error, so use this for
             // None returns
@@ -666,6 +697,11 @@ Message_toWire(s_Message* self, PyObject* args) {
         } catch (const InvalidMessageOperation& imo) {
             PyErr_Clear();
             PyErr_SetString(po_InvalidMessageOperation, imo.what());
+            return (NULL);
+        } catch (const TSIGContextError& ex) {
+            // toWire() with a TSIG context can fail due to this if the
+            // python program has a bug.
+            PyErr_SetString(po_TSIGContextError, ex.what());
             return (NULL);
         }
     }

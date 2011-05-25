@@ -38,6 +38,14 @@
 #include <dns/messagerenderer.h>
 
 #include "pydnspp_common.h"
+#include "messagerenderer_python.h"
+#include "name_python.h"
+#include "rcode_python.h"
+#include "tsigkey_python.h"
+#include "tsig_rdata_python.h"
+#include "tsigerror_python.h"
+#include "tsigrecord_python.h"
+#include "tsig_python.h"
 
 namespace isc {
 namespace dns {
@@ -52,14 +60,9 @@ PyObject* po_DNSMessageBADVERS;
 }
 }
 
-#include "rcode_python.h"
-#include "tsigerror_python.h"
-
 // order is important here!
 using namespace isc::dns::python;
 
-#include <dns/python/messagerenderer_python.cc>
-#include <dns/python/name_python.cc>           // needs Messagerenderer
 #include <dns/python/rrclass_python.cc>        // needs Messagerenderer
 #include <dns/python/rrtype_python.cc>         // needs Messagerenderer
 #include <dns/python/rrttl_python.cc>          // needs Messagerenderer
@@ -67,8 +70,6 @@ using namespace isc::dns::python;
 #include <dns/python/rrset_python.cc>          // needs Rdata, RRTTL
 #include <dns/python/question_python.cc>       // needs RRClass, RRType, RRTTL,
                                                // Name
-#include <dns/python/tsigkey_python.cc>        // needs Name
-#include <dns/python/tsig_python.cc>           // needs tsigkey
 #include <dns/python/opcode_python.cc>
 #include <dns/python/edns_python.cc>           // needs Messagerenderer, Rcode
 #include <dns/python/message_python.cc>        // needs RRset, Question
@@ -167,7 +168,15 @@ PyInit_pydnspp(void) {
         return (NULL);
     }
 
+    if (!initModulePart_TSIG(mod)) {
+        return (NULL);
+    }
+
     if (!initModulePart_TSIGError(mod)) {
+        return (NULL);
+    }
+
+    if (!initModulePart_TSIGRecord(mod)) {
         return (NULL);
     }
 
@@ -177,4 +186,3 @@ PyInit_pydnspp(void) {
 
     return (mod);
 }
-
