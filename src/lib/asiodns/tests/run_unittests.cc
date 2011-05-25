@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <gtest/gtest.h>
+#include <util/unittests/run_all.h>
 
 #include <log/root_logger_name.h>
 #include <dns/tests/unittest_util.h>
@@ -24,5 +25,5 @@ main(int argc, char* argv[])
     isc::log::setRootLoggerName("unittest");        // Set a root logger name
     isc::UnitTestUtil::addDataPath(TEST_DATA_DIR);  // Add location of test data
 
-    return (RUN_ALL_TESTS());
+    return (isc::util::unittests::run_all());
 }

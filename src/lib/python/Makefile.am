@@ -1,6 +1,7 @@
 SUBDIRS = isc
 
 python_PYTHON =	bind10_config.py
+pythondir = $(pyexecdir)
 
 # Explicitly define DIST_COMMON so ${python_PYTHON} is not included
 # as we don't want the generated file included in distributed tarfile.

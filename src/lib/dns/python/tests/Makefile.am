@@ -12,8 +12,10 @@ PYTESTS += rrset_python_test.py
 PYTESTS += rrttl_python_test.py
 PYTESTS += rrtype_python_test.py
 PYTESTS += tsig_python_test.py
+PYTESTS += tsig_rdata_python_test.py
 PYTESTS += tsigerror_python_test.py
 PYTESTS += tsigkey_python_test.py
+PYTESTS += tsigrecord_python_test.py
 
 EXTRA_DIST = $(PYTESTS)
 EXTRA_DIST += testutil.py
@@ -34,7 +36,7 @@ if ENABLE_PYTHON_COVERAGE
 endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
-	env PYTHONPATH=$(abs_top_srcdir)/src/lib/dns/.libs:$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/lib/dns/python/.libs \
+	env PYTHONPATH=$(abs_top_builddir)/src/lib/util/pyunittests/.libs:$(abs_top_srcdir)/src/lib/dns/.libs:$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/lib/dns/python/.libs \
 	TESTDATA_PATH=$(abs_top_srcdir)/src/lib/dns/tests/testdata:$(abs_top_builddir)/src/lib/dns/tests/testdata \
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \

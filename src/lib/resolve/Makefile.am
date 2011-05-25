@@ -7,16 +7,36 @@ AM_CPPFLAGS += $(SQLITE_CFLAGS)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
-CLEANFILES = *.gcno *.gcda
+# Define rule to build logging source files from message file
+resolvedef.h resolvedef.cc: resolvedef.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/resolve/resolvedef.mes
+
+# Tell Automake that the nsasdef.{cc,h} source files are created in the build
+# process, so it must create these before doing anything else.  Although they
+# are a dependency of the library (so will be created from the message file
+# anyway), there is no guarantee as to exactly _when_ in the build they will be
+# created.  As the .h file is included in other sources file (so must be
+# present when they are compiled), the safest option is to create it first.
+BUILT_SOURCES = resolvedef.h resolvedef.cc
+
+CLEANFILES = *.gcno *.gcda resolvedef.cc resolvedef.h
 
 lib_LTLIBRARIES = libresolve.la
 libresolve_la_SOURCES = resolve.h resolve.cc
+libresolve_la_SOURCES += resolve_log.h resolve_log.cc
 libresolve_la_SOURCES += resolver_interface.h
 libresolve_la_SOURCES += resolver_callback.h resolver_callback.cc
 libresolve_la_SOURCES += response_classifier.cc response_classifier.h
 libresolve_la_SOURCES += recursive_query.cc recursive_query.h
+
+nodist_libresolve_la_SOURCES = resolvedef.h resolvedef.cc
+
 libresolve_la_LIBADD = $(top_builddir)/src/lib/dns/libdns++.la
 libresolve_la_LIBADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+libresolve_la_LIBADD += $(top_builddir)/src/lib/log/liblog.la
+
+# The message file should be in the distribution.
+EXTRA_DIST = resolvedef.mes
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
