@@ -265,7 +265,7 @@ public:
      *                  (in case it's a module name, the spec data is
      *                  downloaded from the configuration manager, therefore
      *                  the configuration manager must know it). If
-     *                  spec_is_filenabe is true (the default), then a
+     *                  spec_is_filename is true (the default), then a
      *                  filename is assumed, otherwise a module name.
      * \param handler The handler function called whenever there's a change.
      *                Called once initally from this function. May be NULL
