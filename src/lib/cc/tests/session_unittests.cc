@@ -235,4 +235,9 @@ TEST_F(SessionTest, run_with_handler_timeout) {
     ASSERT_THROW(my_io_service.run(), SessionTimeout);
 }
 
+// Test it throws if we start it twice
+TEST_F(SessionTest, doubleStart) {
+    sess.start();
+}
+
 
