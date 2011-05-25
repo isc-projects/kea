@@ -3,6 +3,13 @@ PYTESTS = tsig_keys_test.py
 
 EXTRA_DIST = $(PYTESTS)
 
+# If necessary (rare cases), explicitly specify paths to dynamic libraries
+# required by loadable python modules.
+LIBRARY_PATH_PLACEHOLDER =
+if SET_ENV_LIBRARY_PATH
+LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/dns/.libs:$(abs_top_builddir)/src/lib/cryptolink/.libs:$(abs_top_builddir)/src/lib/util/.libs:$(abs_top_builddir)/src/lib/exceptions/.libs
+endif
+
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
 if ENABLE_PYTHON_COVERAGE
@@ -14,6 +21,7 @@ endif
 	echo Running test: $$pytest ; \
 	env B10_TEST_PLUGIN_DIR=$(abs_srcdir)/..:$(abs_builddir)/.. \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/cfgmgr:$(abs_top_builddir)/src/lib/dns/python/.libs \
+	$(LIBRARY_PATH_PLACEHOLDER) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
 

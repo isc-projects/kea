@@ -19,7 +19,9 @@ backends), b10-resolver recursive or forwarding DNS server, b10-cmdctl
 remote control daemon, b10-cfgmgr configuration manager, b10-xfrin
 AXFR inbound service, b10-xfrout outgoing AXFR service, b10-zonemgr
 secondary manager, b10-stats statistics collection and reporting
-daemon, and a new libdns++ library for C++ with a python wrapper.
+daemon, b10-stats-httpd for HTTP access to XML-formatted stats,
+b10-host DNS lookup utility, and a new libdns++ library for C++
+with a python wrapper.
 
 Documentation is included and also available via the BIND 10
 website at http://bind10.isc.org/
