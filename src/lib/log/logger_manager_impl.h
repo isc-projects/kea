@@ -48,7 +48,7 @@ public:
     /// Processes the specification for a single logger.
     ///
     /// \param spec Logging specification for this logger
-    void process(const LoggerSpecification& spec);
+    void processSpecification(const LoggerSpecification& spec);
 
     /// \brief End Processing
     ///
