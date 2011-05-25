@@ -102,8 +102,8 @@ cache, a single RRset was found which was put in the answer.  The instance
 number at the end of the message indicates which of the two resolve()
 methods has been called.
 
-% RTT           round-trip time of last query calculated as %1
-A debug message giving the RTT of the last query and response.
+% RTT           round-trip time of last query calculated as %1 ms
+A debug message giving the round-trip time of the last query and response.
 
 % RUNCAFND      found <%1> in the cache
 This is a debug message and indicates that a RunningQuery object found
