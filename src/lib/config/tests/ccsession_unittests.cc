@@ -434,6 +434,18 @@ TEST_F(CCSessionTest, remoteConfig) {
     }
 
     {
+        SCOPED_TRACE("With bad module name");
+        // It is almost the same as above, but we supply wrong module name.
+        // It should fail.
+        // Try adding it with downloading the spec from config manager
+        ModuleSpec spec(moduleSpecFromFile(ccspecfile("spec2.spec")));
+        session.getMessages()->add(createAnswer(0, spec.getFullSpec()));
+
+        EXPECT_THROW(module_name = mccs.addRemoteConfig("Spec1", NULL, false),
+                     CCSessionError);
+    }
+
+    {
         // Try adding it with a handler.
         // Pass non-default value to see the handler is called after
         // downloading the configuration, not too soon.
