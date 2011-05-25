@@ -256,6 +256,10 @@ public:
      * for those changes. This function will subscribe to the relevant module
      * channel.
      *
+     * If the module name is specified (spec_is_filename is false), the
+     * ModuleCCSession must have been constructed with start_immediately
+     * being false and the \c start() method must not have been called.
+     *
      * \param spec_name This specifies the module to add. It is either a
      *                  filename of the spec file to use or a name of module
      *                  (in case it's a module name, the spec data is
