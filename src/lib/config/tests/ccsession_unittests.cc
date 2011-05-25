@@ -362,7 +362,7 @@ TEST_F(CCSessionTest, remoteConfig) {
     std::string module_name;
     int item1;
     
-    ModuleCCSession mccs(ccspecfile("spec1.spec"), session, NULL, NULL);
+    ModuleCCSession mccs(ccspecfile("spec1.spec"), session, NULL, NULL, false);
     EXPECT_TRUE(session.haveSubscription("Spec1", "*"));
     
     // first simply connect, with no config values, and see we get
@@ -505,7 +505,8 @@ TEST_F(CCSessionTest, ignoreRemoteConfigCommands) {
     session.getMessages()->add(createAnswer(0, el("{  }")));
 
     EXPECT_FALSE(session.haveSubscription("Spec29", "*"));
-    ModuleCCSession mccs(ccspecfile("spec29.spec"), session, my_config_handler, my_command_handler);
+    ModuleCCSession mccs(ccspecfile("spec29.spec"), session, my_config_handler,
+                         my_command_handler, false);
     EXPECT_TRUE(session.haveSubscription("Spec29", "*"));
 
     EXPECT_EQ(2, session.getMsgQueue()->size());
@@ -553,6 +554,33 @@ TEST_F(CCSessionTest, initializationFail) {
                                  my_config_handler, my_command_handler),
                                  CCSessionInitError);
     EXPECT_TRUE(session.haveSubscription("Spec29", "*"));
+}
+
+// Test it throws when we try to start it twice (once from the constructor)
+TEST_F(CCSessionTest, doubleStartImplicit) {
+    ModuleCCSession mccs(ccspecfile("spec29.spec"), session, NULL, NULL);
+    EXPECT_THROW(mccs.start(), CCSessionError);
+}
+
+// The same, but both starts are explicit
+TEST_F(CCSessionTest, doubleStartExplicit) {
+    ModuleCCSession mccs(ccspecfile("spec29.spec"), session, NULL, NULL,
+                         false);
+    mccs.start();
+    EXPECT_THROW(mccs.start(), CCSessionError);
+}
+
+// Test we can request synchronous receive before we start the session,
+// and check there's the mechanism if we do it after
+TEST_F(CCSessionTest, delayedStart) {
+    ModuleCCSession mccs(ccspecfile("spec2.spec"), session, NULL, NULL, false);
+    session.getMessages()->add(createAnswer());
+    ConstElementPtr env, answer;
+    EXPECT_NO_THROW(session.group_recvmsg(env, answer, false, 3));
+    mccs.start();
+    session.getMessages()->add(createAnswer());
+    EXPECT_THROW(session.group_recvmsg(env, answer, false, 3),
+                 FakeSession::DoubleRead);
 }
 
 }
