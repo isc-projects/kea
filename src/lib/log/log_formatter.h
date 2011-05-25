@@ -142,7 +142,7 @@ public:
         if (logger_) {
             // Note that this method does a replacement and returns the
             // modified string. If there are multiple invocations of arg() (e.g.
-            // . logger.info(msgid).arg(xxx).arg(yyy)...), each invocation
+            // logger.info(msgid).arg(xxx).arg(yyy)...), each invocation
             // operates on the string returned by the previous one. This
             // sequential operation means that if we had a message like "%1 %2",
             // and called .arg("%2").arg(42), we would get "42 42"; the first
