@@ -108,6 +108,49 @@ def convert_type(spec_part, value):
     except TypeError as err:
         raise isc.cc.data.DataTypeError(str(err))
 
+def _get_map_or_list(spec_part):
+    """Returns the list or map specification if this is a list or a
+       map specification part. If not, returns the given spec_part
+       itself"""
+    if "map_item_spec" in spec_part:
+        return spec_part["map_item_spec"]
+    elif "list_item_spec" in spec_part:
+        return spec_part["list_item_spec"]
+    else:
+        return spec_part
+
+def _find_spec_part_single(cur_spec, id_part):
+    """Find the spec part for the given (partial) name. This partial
+       name does not contain separators ('/'), and the specification
+       part should be a direct child of the given specification part.
+       id_part may contain list selectors, which will be ignored.
+       Returns the child part.
+       Raises DataNotFoundError if it was not found."""
+    # strip list selector part
+    # don't need it for the spec part, so just drop it
+    id, list_indices = isc.cc.data.split_identifier_list_indices(id_part)
+
+    # The specification we want a sub-part for should be either a
+    # list or a map, which is internally represented by a dict with
+    # an element 'map_item_spec', a dict with an element 'list_item_spec',
+    # or a list.
+    if type(cur_spec) == dict and 'map_item_spec' in cur_spec.keys():
+        for cur_spec_item in cur_spec['map_item_spec']:
+            if cur_spec_item['item_name'] == id:
+                return cur_spec_item
+        # not found
+        raise isc.cc.data.DataNotFoundError(id + " not found")
+    elif type(cur_spec) == dict and 'list_item_spec' in cur_spec.keys():
+        return cur_spec['list_item_spec']
+    elif type(cur_spec) == list:
+        for cur_spec_item in cur_spec:
+            if cur_spec_item['item_name'] == id:
+                return cur_spec_item
+        # not found
+        raise isc.cc.data.DataNotFoundError(id + " not found")
+    else:
+        raise isc.cc.data.DataNotFoundError("Not a correct config specification")
+
 def find_spec_part(element, identifier):
     """find the data definition for the given identifier
        returns either a map with 'item_name' etc, or a list of those"""
@@ -117,38 +160,15 @@ def find_spec_part(element, identifier):
     id_parts[:] = (value for value in id_parts if value != "")
     cur_el = element
 
-    for id_part in id_parts:
-        # strip list selector part
-        # don't need it for the spec part, so just drop it
-        id, list_indices = isc.cc.data.split_identifier_list_indices(id_part)
-        # is this part still needed? (see below)
-        if type(cur_el) == dict and 'map_item_spec' in cur_el.keys():
-            found = False
-            for cur_el_item in cur_el['map_item_spec']:
-                if cur_el_item['item_name'] == id:
-                    cur_el = cur_el_item
-                    found = True
-            if not found:
-                raise isc.cc.data.DataNotFoundError(id + " not found")
-        elif type(cur_el) == dict and 'list_item_spec' in cur_el.keys():
-            cur_el = cur_el['list_item_spec']
-        elif type(cur_el) == list:
-            found = False
-            for cur_el_item in cur_el:
-                if cur_el_item['item_name'] == id:
-                    cur_el = cur_el_item
-                    # if we need to go further, we may need to 'skip' a step here
-                    # but not if we're done
-                    if id_parts[-1] != id_part and type(cur_el) == dict:
-                        if "map_item_spec" in cur_el:
-                            cur_el = cur_el["map_item_spec"]
-                        elif "list_item_spec" in cur_el:
-                            cur_el = cur_el["list_item_spec"]
-                    found = True
-            if not found:
-                raise isc.cc.data.DataNotFoundError(id + " not found")
-        else:
-            raise isc.cc.data.DataNotFoundError("Not a correct config specification")
+    # up to the last element, if the result is a map or a list,
+    # we want its subspecification (i.e. list_item_spec or
+    # map_item_spec). For the last element in the identifier we
+    # always want the 'full' spec of the item
+    for id_part in id_parts[:-1]:
+        cur_el = _find_spec_part_single(cur_el, id_part)
+        cur_el = _get_map_or_list(cur_el)
+
+    cur_el = _find_spec_part_single(cur_el, id_parts[-1])
     return cur_el
 
 def spec_name_list(spec, prefix="", recurse=False):

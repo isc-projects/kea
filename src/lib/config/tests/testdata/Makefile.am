@@ -51,3 +51,4 @@ EXTRA_DIST += spec26.spec
 EXTRA_DIST += spec27.spec
 EXTRA_DIST += spec28.spec
 EXTRA_DIST += spec29.spec
+EXTRA_DIST += spec30.spec
