@@ -34,8 +34,6 @@ class DerivedLogger : public isc::log::Logger {
 public:
     DerivedLogger(std::string name) : isc::log::Logger(name)
     {}
-    virtual ~DerivedLogger()
-    {}
 
     static void reset() {
         isc::log::Logger::reset();
