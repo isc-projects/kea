@@ -52,7 +52,6 @@
 #include <cache/resolver_cache.h>
 #include <nsas/nameserver_address_store.h>
 
-#include <log/macros.h>
 #include <log/logger_support.h>
 #include <log/debug_levels.h>
 #include "resolver_log.h"
