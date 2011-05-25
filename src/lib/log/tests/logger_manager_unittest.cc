@@ -153,7 +153,7 @@ void checkFileContents(const std::string& filename, T start, T finish) {
 }
 
 // Check that the logger correctly creates something logging to a file.
-TEST_F(LoggerManagerTest, FileLogger) {
+TEST_F(LoggerManagerTest, DISABLED_FileLogger) {
 
     // Create a specification for the file logger and use the manager to
     // connect the "filelogger" logger to it.

@@ -29,6 +29,8 @@
 /// Unlike OutputOption (which is a struct), this contains a bit more
 /// structure and is concealed in a class.
 
+#include <vector>
+
 namespace isc {
 namespace log {
 

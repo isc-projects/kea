@@ -15,6 +15,13 @@
 #include <log/logger_manager_impl.h>
 #include <log/logger_manager.h>
 
+namespace isc {
+namespace log {
+
+void LoggerManagerImpl::processInit() {}
+void LoggerManagerImpl::processEnd() {}
+void LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {}
+
 // Constructor - create the implementation  class.
 LoggerManager::LoggerManager() {
     impl_ = new LoggerManagerImpl();
@@ -42,3 +49,6 @@ void
 LoggerManager::processEnd() {
     impl_->processEnd();
 }
+
+} // namespace log
+} // namespace isc

@@ -15,7 +15,7 @@
 #ifndef __LOGGER_MANAGER_H
 #define __LOGGER_MANAGER_H
 
-#include </log/logger_specification.h>
+#include <log/logger_specification.h>
 
 namespace isc {
 namespace log {
