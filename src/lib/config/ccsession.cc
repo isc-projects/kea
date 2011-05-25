@@ -252,6 +252,8 @@ ModuleCCSession::start() {
 
     // register callback for asynchronous read
     session_.startRead(boost::bind(&ModuleCCSession::startCheck, this));
+
+    started_ = true;
 }
 
 /// Validates the new config values, if they are correct,
