@@ -131,15 +131,12 @@ public:
         }
         filename << "/bind10_logger_manager_test_XXXXXX";
 
-        cout << "*** file name before call is " << filename.str() << "\n";
-
         // Copy into writeable storage for the call to mkstemp
         boost::scoped_array<char> tname(new char[filename.str().size() + 1]);
         strcpy(tname.get(), filename.str().c_str());
 
         // Create file, close and delete it, and store the name for later.
         int filenum = mkstemp(tname.get());
-        cout << "*** file name after call is " << tname.get() << "\n";
         if (filenum == -1) {
             isc_throw(Exception, "Unable to obtain unique filename");
         }

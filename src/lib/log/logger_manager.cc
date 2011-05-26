@@ -105,6 +105,8 @@ LoggerManager::init(const std::string& root, const char* file,
 
 
 /// Read local message file
+// TODO This should be done after the configuration has been read so that
+// the file can be placed in the local configuration
 void
 LoggerManager::readLocalMessageFile(const char* file) {
 
@@ -113,7 +115,9 @@ LoggerManager::readLocalMessageFile(const char* file) {
     MessageDictionary& dictionary = MessageDictionary::globalDictionary();
     MessageReader reader(&dictionary);
     try {
-        logger.info(MSG_RDLOCMES).arg(file);
+
+        // FIXEM: commented out for testing
+        // logger.info(MSG_RDLOCMES).arg(file);
         reader.readFile(file, MessageReader::REPLACE);
 
         // File successfully read, list the duplicates
