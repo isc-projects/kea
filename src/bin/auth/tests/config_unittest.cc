@@ -74,6 +74,13 @@ TEST_F(AuthConfigTest, databaseConfig) {
                             "{\"database_file\": \"should_be_ignored\"}")));
 }
 
+TEST_F(AuthConfigTest, versionConfig) {
+    // make sure it does not throw on 'version'
+    EXPECT_NO_THROW(configureAuthServer(
+                        server,
+                        Element::fromJSON("{\"version\": 0}")));
+}
+
 TEST_F(AuthConfigTest, exceptionGuarantee) {
     EXPECT_EQ(AuthSrv::MemoryDataSrcPtr(), server.getMemoryDataSrc(rrclass));
     // This configuration contains an invalid item, which will trigger
