@@ -15,15 +15,23 @@
 #ifndef __LOGGER_MANAGER_IMPL_H
 #define __LOGGER_MANAGER_IMPL_H
 
-#include <log/logger_specification.h>
+#include <string>
+
+#include <log4cplus/appender.h>
+#include <log/logger_level.h>
 
 // Forward declaration to avoid need to include log4cplus header file here.
 namespace log4cplus {
 class Logger;
+class Appender;
 }
 
 namespace isc {
 namespace log {
+
+// Forward declarations
+class LoggerSpecification;
+class OutputOption;
 
 /// \brief Logger Manager Implementation
 ///
@@ -46,7 +54,9 @@ public:
     /// This resets the hierachy of loggers back to their defaults.  This means
     /// that all non-root loggers (if they exist) are set to NOT_SET, and the
     /// root logger reset to logging informational messages.
-    void processInit();
+    ///
+    /// \param root_name BIOND 10 name of the root logger
+    void processInit(const std::string& root_name);
 
     /// \brief Process Specification
     ///
@@ -59,6 +69,16 @@ public:
     ///
     /// Terminates the processing of the logging specifications.
     void processEnd();
+
+    /// \brief Implementation-specific initialization
+    ///
+    /// Performs any implementation-specific initialization.
+    ///
+    /// \param root_name Name of the BIND 10 root logger.
+    /// \param severity Severity to be associated with this logger
+    /// \param dbglevel Debug level associated with the root logger
+    static void init(const std::string& root_name, isc::log::Severity severity,
+                     int dbglevel);
 
 private:
     /// \brief Create console appender
@@ -91,6 +111,30 @@ private:
     /// \param opt Output options for this appender.
     void createSyslogAppender(log4cplus::Logger& logger,
                               const OutputOption& opt) {}
+
+    /// \brief Set default layout and severity for root logger
+    ///
+    /// Initializes the root logger to BIND 10 defaults - console output and
+    /// the passed severity/debug level.
+    ///
+    /// \param root_name Name of the BIND 10 root logger.
+    /// \param severity Severity of messages that the logger should output.
+    /// \param dbglevel Debug level if severity = DEBUG
+    static void initRootLogger(const std::string& root_name,
+                               isc::log::Severity severity = isc::log::INFO,
+                               int dbglevel = 0);
+
+    /// \brief Set layout for console appender
+    ///
+    /// Sets the layout of the specified appender to one suitable for file
+    /// or console output:
+    ///
+    /// YYYY-MM-DD HH:MM:SS.ssss <severity> [root.logger] message
+    ///
+    /// \param appender Appender for which this pattern is to be set.
+    /// \param root_name Name of the BIND 10 root logger.
+    static void setConsoleAppenderLayout(
+        log4cplus::SharedAppenderPtr& appender, const std::string& root_name);
 };
 
 } // namespace log

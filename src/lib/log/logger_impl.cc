@@ -45,9 +45,6 @@ namespace log {
 // Constructor
 LoggerImpl::LoggerImpl(const string& name)
 {
-    // Initialize log4cplus if not already done
-    initLog4cplus();
-
     // Are we the root logger?
     if (name == getRootLoggerName()) {
         name_ = name;
@@ -133,64 +130,12 @@ LoggerImpl::outputRaw(const Severity& severity, const string& message) {
     }
 }
 
-// Initialization.  This is one initialization for all loggers, so requires
-// a singleton to hold the initialization flag.  The flag is held within a
-// static method to ensure that it is created (and initialized) when needed.
-// This avoids a static initialization fiasco.
-
-bool&
-LoggerImpl::initialized() {
-    static bool initialized = false;
-    return (initialized);
-}
-
-void
-LoggerImpl::initLog4cplus() {
-
-    if (! initialized()) {
-
-        // Set up basic configurator.  This attaches a ConsoleAppender to the
-        // root logger with suitable output.  This is used until we we have
-        // actually read the logging configuration, in which case the output
-        // may well be changed.
-        log4cplus::BasicConfigurator config;
-        config.configure();
-        setRootAppenderLayout();
-
-        // Add additional debug levels
-        LoggerLevelImpl::init();
-
-        // All done.
-        initialized() = true;
-    }
-}
-
-void LoggerImpl::setRootAppenderLayout() {
-
-    // Create the pattern we want for the output - local time.
-    string pattern = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [";
-    pattern += getRootLoggerName() + string(".%c] %m\n");
-
-    // Retrieve the appenders on the root instance and set the layout to
-    // use that pattern.
-    log4cplus::SharedAppenderPtrList list =
-        log4cplus::Logger::getRoot().getAllAppenders();
-
-    for (log4cplus::SharedAppenderPtrList::iterator i = list.begin();
-         i != list.end(); ++i) {
-        auto_ptr<log4cplus::Layout> layout(
-            new log4cplus::PatternLayout(pattern));
-        (*i)->setLayout(layout);
-    }
-}
-
 // Reset.  Just reset logger hierarchy to default settings (don't remove the
 // loggers - this appears awkward); this is effectively the same as removing
 // them.
 void
 LoggerImpl::reset() {
     log4cplus::Logger::getDefaultHierarchy().resetConfiguration();
-    initialized() = false;
 
     // N.B.  The documentation is not clear, but it does not appear that the
     // methods used to format the new logging levels are removed from the
