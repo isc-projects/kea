@@ -46,6 +46,7 @@ logger_support_test_LDADD += $(top_builddir)/src/lib/util/libutil.la
 noinst_PROGRAMS = $(TESTS)
 
 # Additional test using the shell
-PYTESTS = run_time_init_test.sh
+PYTESTS = run_time_init_test.sh console_test.sh
 check-local:
 	$(SHELL) $(abs_builddir)/run_time_init_test.sh
+	$(SHELL) $(abs_builddir)/console_test.sh
