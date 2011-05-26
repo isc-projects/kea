@@ -33,7 +33,7 @@
 
 #include <util/strutil.h>
 
-// Note: as log4cplus and th3e BIND 10 logger have many concepts in common, and
+// Note: as log4cplus and the BIND 10 logger have many concepts in common, and
 // thus many similar names, to disambiguate types we don't "use" the log4cplus
 // namespace: instead, all log4cplus types are explicitly qualified.
 

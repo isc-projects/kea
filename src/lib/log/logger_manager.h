@@ -56,6 +56,24 @@ public:
         processEnd();
     }
 
+    /// \brief Process a single specification
+    ///
+    /// A convenience function for a single specification.
+    ///
+    /// \param spec Specification to process
+    void process(const LoggerSpecification& spec) {
+        processInit();
+        processSpecification(spec);
+        processEnd();
+    }
+
+    /// \brief Initialization
+    ///
+    /// Static method for initializing the whole of the logging system.  This
+    /// must be called before anything else.
+    static void init();
+
+
 private:
     /// \brief Initialize Processing
     ///
