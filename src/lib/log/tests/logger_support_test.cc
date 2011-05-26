@@ -42,17 +42,21 @@ using namespace std;
 
 void usage() {
     cout <<
-"logger_support_test [-h] [-s severity] [-d dbglevel] [-c stream] [localfile]\n"
+"logger_support_test [-h] [-c stream] [-d dbglevel] [-f file]\n"
+"                    [-s severity] [localfile]\n"
 "\n"
 "   -h              Print this message and exit\n"
-"   -s severity     Set the severity of messages output.  'severity' is one\n"
-"                   of 'debug', 'info', 'warn', 'error', 'fatal', the default\n"
-"                   being 'info'.\n"
+"\n"
 "   -d dbglevel     Debug level.  Only interpreted if the severity is 'debug'\n"
 "                   this is a number between 0 and 99.\n"
 "   -c stream       Send output to the console.  'stream' is one of 'stdout'\n"
 "                   of 'stderr'.  The '-c' switch is incompatible with '-f'\n"
 "                   and '-l'\n"
+"   -f file         Send output to specified file, appending to existing file\n"
+"                   if one exists.  Incompatible with -c and -l switches.\n"
+"   -s severity     Set the severity of messages output.  'severity' is one\n"
+"                   of 'debug', 'info', 'warn', 'error', 'fatal', the default\n"
+"                   being 'info'.\n"
 "\n"
 "If none of -c, -f or -l is given, by default, output is sent to stdout\n";
 }
@@ -80,7 +84,7 @@ int main(int argc, char** argv) {
     Logger rootLogger(ROOT_NAME);
 
     // Parse options
-    while ((option = getopt(argc, argv, "hc:d:s:")) != -1) {
+    while ((option = getopt(argc, argv, "hc:d:f:s:")) != -1) {
         switch (option) {
         case 'c':
             if (f_found || l_found) {
@@ -105,6 +109,18 @@ int main(int argc, char** argv) {
 
         case 'd':
             spec.setDbglevel(boost::lexical_cast<int>(optarg));
+            break;
+
+        case 'f':
+            if (c_found || l_found) {
+                cerr << "Cannot specify -f with -c or -l\n";
+                return (1);
+            }
+
+            f_found = true;
+
+            outopt.destination = OutputOption::DEST_FILE;
+            outopt.filename = optarg;
             break;
 
         case 'h':

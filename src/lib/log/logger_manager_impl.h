@@ -101,7 +101,7 @@ private:
     /// \param logger Log4cplus logger to which the appender must be attached.
     /// \param opt Output options for this appender.
     void createFileAppender(log4cplus::Logger& logger,
-                            const OutputOption& opt) {}
+                            const OutputOption& opt);
 
     /// \brief Create syslog appender
     ///
