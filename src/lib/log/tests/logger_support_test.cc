@@ -156,7 +156,7 @@ int main(int argc, char** argv) {
 
     // Set the logging options for the root logger.
     LoggerManager manager;
-    //manager.process(spec);
+    manager.process(spec);
 
 
     // Log a few messages

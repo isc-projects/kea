@@ -55,8 +55,8 @@ public:
     /// that all non-root loggers (if they exist) are set to NOT_SET, and the
     /// root logger reset to logging informational messages.
     ///
-    /// \param root_name BIOND 10 name of the root logger
-    void processInit(const std::string& root_name);
+    /// \param root_name BIND 10 name of the root logger
+    void processInit();
 
     /// \brief Process Specification
     ///
@@ -72,13 +72,14 @@ public:
 
     /// \brief Implementation-specific initialization
     ///
-    /// Performs any implementation-specific initialization.
+    /// Performs any implementation-specific initialization.  It is assumed
+    /// that the name of the BIND 10 root logger can be obtained from the
+    /// global function getRootLoggerName().
     ///
-    /// \param root_name Name of the BIND 10 root logger.
     /// \param severity Severity to be associated with this logger
     /// \param dbglevel Debug level associated with the root logger
-    static void init(const std::string& root_name, isc::log::Severity severity,
-                     int dbglevel);
+    static void init(isc::log::Severity severity = isc::log::INFO,
+                     int dbglevel = 0);
 
 private:
     /// \brief Create console appender
@@ -117,11 +118,9 @@ private:
     /// Initializes the root logger to BIND 10 defaults - console output and
     /// the passed severity/debug level.
     ///
-    /// \param root_name Name of the BIND 10 root logger.
     /// \param severity Severity of messages that the logger should output.
     /// \param dbglevel Debug level if severity = DEBUG
-    static void initRootLogger(const std::string& root_name,
-                               isc::log::Severity severity = isc::log::INFO,
+    static void initRootLogger(isc::log::Severity severity = isc::log::INFO,
                                int dbglevel = 0);
 
     /// \brief Set layout for console appender
@@ -133,8 +132,7 @@ private:
     ///
     /// \param appender Appender for which this pattern is to be set.
     /// \param root_name Name of the BIND 10 root logger.
-    static void setConsoleAppenderLayout(
-        log4cplus::SharedAppenderPtr& appender, const std::string& root_name);
+    static void setConsoleAppenderLayout(log4cplus::SharedAppenderPtr& appender);
 };
 
 } // namespace log
