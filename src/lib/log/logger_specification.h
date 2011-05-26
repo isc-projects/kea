@@ -53,33 +53,33 @@ public:
         additive_(additive)
     {}
 
-    /// \brief Set the name
+    /// \brief Set the name of the logger.
     ///
-    /// \param name Name of the logger .
+    /// \param name Name of the logger.
     void setName(const std::string& name) {
         name_ = name;
     }
 
-    /// \return Return logger name
+    /// \return Return logger name.
     std::string getName() const {
         return name_;
     }
 
-    /// \brief Set the severity
+    /// \brief Set the severity.
     ///
-    /// \param severity New severity of the logger .
+    /// \param severity New severity of the logger.
     void setSeverity(isc::log::Severity severity) {
         severity_ = severity;
     }
 
-    /// \return Return logger severity
+    /// \return Return logger severity.
     isc::log::Severity getSeverity() const {
         return severity_;
     }
 
-    /// \brief Set the debug level
+    /// \brief Set the debug level.
     ///
-    /// \param dbglevel New debug level of the logger .
+    /// \param dbglevel New debug level of the logger.
     void setDbglevel(int dbglevel) {
         dbglevel_ = dbglevel;
     }
@@ -89,51 +89,51 @@ public:
         return dbglevel_;
     }
 
-    /// \brief Set the additive flag
+    /// \brief Set the additive flag.
     ///
-    /// \param additive New value of the additive flag
+    /// \param additive New value of the additive flag.
     void setAdditive(bool additive) {
         additive_ = additive;
     }
 
-    /// \return Return additive flag
+    /// \return Return additive flag.
     int getAdditive() const {
         return additive_;
     }
 
-    /// \brief Add output option
+    /// \brief Add output option.
     ///
-    /// \param Option to add to the list
+    /// \param Option to add to the list.
     void addOutputOption(const OutputOption& option) {
         options_.push_back(option);
     }
 
-    /// \return Iterator to start of output options
+    /// \return Iterator to start of output options.
     iterator begin() {
         return options_.begin();
     }
 
-    /// \return Iterator to start of output options
+    /// \return Iterator to start of output options.
     const_iterator begin() const {
         return options_.begin();
     }
 
-    /// \return Iterator to end of output options
+    /// \return Iterator to end of output options.
     iterator end() {
         return options_.end();
     }
 
-    /// \return Iterator to end of output options
+    /// \return Iterator to end of output options.
     const_iterator end() const {
         return options_.end();
     }
 
-    /// \return Number of output specification options
+    /// \return Number of output specification options.
     size_t optionCount() const {
         return options_.size();
     }
 
-    /// \brief Reset back to defaults
+    /// \brief Reset back to defaults.
     void reset() {
         name_ = "";
         severity_ = isc::log::INFO;

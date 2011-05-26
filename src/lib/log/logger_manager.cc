@@ -18,9 +18,7 @@
 namespace isc {
 namespace log {
 
-void LoggerManagerImpl::processInit() {}
 void LoggerManagerImpl::processEnd() {}
-void LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {}
 
 // Constructor - create the implementation  class.
 LoggerManager::LoggerManager() {

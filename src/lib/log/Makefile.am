@@ -15,6 +15,7 @@ liblog_la_SOURCES += logger_level.h
 liblog_la_SOURCES += logger_level.h
 liblog_la_SOURCES += logger_level_impl.cc logger_level_impl.h
 liblog_la_SOURCES += logger_manager.cc logger_manager.h
+liblog_la_SOURCES += logger_manager_impl.cc logger_manager_impl.h
 liblog_la_SOURCES += logger_specification.h
 liblog_la_SOURCES += logger_support.cc logger_support.h
 liblog_la_SOURCES += macros.h
