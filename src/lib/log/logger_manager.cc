@@ -49,7 +49,7 @@ LoggerManager::~LoggerManager() {
 // Initialize processing
 void
 LoggerManager::processInit() {
-    impl_->processInit(getRootLoggerName());
+    impl_->processInit();
 }
 
 // Process logging specification
@@ -77,7 +77,7 @@ LoggerManager::init(const std::string& root, const char* file,
     setRootLoggerName(root);
 
     // Initialize the implementation logging.
-    LoggerManagerImpl::init(root, severity, dbglevel);
+    LoggerManagerImpl::init(severity, dbglevel);
 
     // TODO: sort out the names.
     Logger logger("log");
