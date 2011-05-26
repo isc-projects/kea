@@ -1,3 +1,10 @@
+245.    [func]      vorner
+	Authoritative server can now sign the answers using TSIG
+	(configured in tsig_keys/keys, list of strings like
+	"name:<base64-secret>:sha1-hmac"). It doesn't use them for
+	ACL yet, only verifies them and signs if the request is signed.
+	(Trac875, git fe5e7003544e4e8f18efa7b466a65f336d8c8e4d)
+
 244.	[func] 		stephen
 	In unit tests, allow the choice of whether unhandled exceptions are
 	caught in the unit test program (and details printed) or allowed to
