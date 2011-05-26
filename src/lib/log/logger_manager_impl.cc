@@ -17,6 +17,7 @@
 #include <log4cplus/logger.h>
 #include <log4cplus/configurator.h>
 #include <log4cplus/consoleappender.h>
+#include <log4cplus/fileappender.h>
 
 #include "log/logger_level_impl.h"
 #include "log/logger_manager_impl.h"
@@ -117,6 +118,30 @@ LoggerManagerImpl::createConsoleAppender(log4cplus::Logger& logger,
             (opt.stream == OutputOption::STR_STDERR), opt.flush));
     setConsoleAppenderLayout(console);
     logger.addAppender(console);
+}
+
+// File appender.  Depending on whether a maximum size is given, either
+// a standard file appender or a rolling file appender will be created.
+void
+LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
+                                         const OutputOption& opt)
+{
+    LOG4CPLUS_OPEN_MODE_TYPE mode = 
+        LOG4CPLUS_FSTREAM_NAMESPACE::ios::app;  // Append to existing file
+
+    log4cplus::SharedAppenderPtr fileapp;
+    if (opt.maxsize == 0) {
+        fileapp = log4cplus::SharedAppenderPtr(new log4cplus::FileAppender(
+            opt.filename, mode, opt.flush));
+    } else {
+        fileapp = log4cplus::SharedAppenderPtr(
+            new log4cplus::RollingFileAppender(opt.filename, opt.maxsize,
+                                               opt.maxver, opt.flush));
+    }
+
+    // use the same console layout for the files.
+    setConsoleAppenderLayout(fileapp);
+    logger.addAppender(fileapp);
 }
 
 
