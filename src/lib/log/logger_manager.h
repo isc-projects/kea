@@ -67,12 +67,20 @@ public:
         processEnd();
     }
 
-    /// \brief Initialization
+    /// \brief Run-Time Initialization
     ///
-    /// Static method for initializing the whole of the logging system.  This
-    /// must be called before anything else.
-    static void init();
-
+    /// Performs run-time initialization of the logger system, in particular
+    /// supplying the root logger name and name of a replacement message file.
+    ///
+    /// This must be the first logging function called in the program.
+    ///
+    /// \param root Name of the root logger
+    /// \param file Name of the local message file.
+    /// \param severity Severity at which to log
+    /// \param dbglevel Debug severity (ignored if "severity" is not "DEBUG")
+    static void init(const std::string& root, const char* file = NULL,
+                    isc::log::Severity severity = isc::log::INFO,
+                    int dbglevel = 0);
 
 private:
     /// \brief Initialize Processing
@@ -88,12 +96,20 @@ private:
     /// either the logger does not exist or has been made inactive.
     void processSpecification(const LoggerSpecification& spec);
 
-
     /// \brief End Processing
     ///
     /// Place holder for finish processing.
     /// TODO: Check that the root logger has something enabled
     void processEnd();
+
+    /// \brief Read local message file
+    ///
+    /// Reads the local message file into the global dictionary, overwriting
+    /// existing messages.  If the file contained any message IDs not in the
+    /// dictionary, they are listed in a warning message.
+    ///
+    /// \param file Name of the local message file
+    static void readLocalMessageFile(const char* file);
 
     // Members
     LoggerManagerImpl*  impl_;      ///< Pointer to implementation

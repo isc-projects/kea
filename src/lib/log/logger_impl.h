@@ -192,23 +192,6 @@ public:
 
 
 private:
-
-    /// \brief Initialize log4cplus
-    ///
-    /// Static method to perform initialization of the log4cplus system.
-    static void initLog4cplus();
-
-    /// \brief Initialization Flag
-    ///
-    /// Static method to access an initialization flag.  Doing it this
-    /// way means that there is no static initialization fiasco.
-    static bool& initialized();
-
-    /// \brief Set layout pattern
-    ///
-    /// Sets the layout for root logger appender(s)
-    static void setRootAppenderLayout();
-
     std::string         name_;              ///< Full name of this logger
     log4cplus::Logger   logger_;            ///< Underlying log4cplus logger
 };

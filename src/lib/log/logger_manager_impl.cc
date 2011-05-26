@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <algorithm>
+
 #include <log4cplus/logger.h>
 #include <log4cplus/configurator.h>
 #include <log4cplus/consoleappender.h>
@@ -20,6 +22,9 @@
 #include "log/logger_manager_impl.h"
 #include "log/logger_specification.h"
 #include "log/root_logger_name.h"
+
+#include "log/logger.h"
+#include "log/messagedef.h"
 
 #include "exceptions/exceptions.h"
 
@@ -38,6 +43,8 @@ public:
 // informational messages.  (This last is not a log4cplus default, so we have to
 // explicitly reset the logging severity.)
 
+using namespace std;
+
 namespace isc {
 namespace log {
 
@@ -46,9 +53,9 @@ namespace log {
 // configuration update removes the logger.)
 
 void
-LoggerManagerImpl::processInit() {
+LoggerManagerImpl::processInit(const std::string& root_name) {
     log4cplus::Logger::getDefaultHierarchy().resetConfiguration();
-    log4cplus::Logger::getRoot().setLogLevel(log4cplus::INFO_LOG_LEVEL);
+    initRootLogger(root_name);
 }
 
 // Process logging specification.  Set up the common states then dispatch to
@@ -103,6 +110,60 @@ LoggerManagerImpl::createConsoleAppender(log4cplus::Logger& logger,
     logger.addAppender(console);
 }
 
+
+// One-time initialization of the log4cplus system
+
+void
+LoggerManagerImpl::init(const std::string& root_name,
+                        isc::log::Severity severity, int dbglevel)
+{
+    // Set up basic configurator.  This attaches a ConsoleAppender to the
+    // root logger with suitable output.  This is used until we we have
+    // actually read the logging configuration, in which case the output
+    // may well be changed.
+    log4cplus::BasicConfigurator config;
+    config.configure();
+
+    // Add the additional debug levels
+    LoggerLevelImpl::init();
+
+    // And initialize the root logger
+    initRootLogger(root_name, severity, dbglevel);
+}
+
+// Initialize the root logger
+void LoggerManagerImpl::initRootLogger(const std::string& root_name,
+                                       isc::log::Severity severity,
+                                       int dbglevel) {
+
+    // Set the severity for the root logger
+    log4cplus::Logger::getRoot().setLogLevel(
+            LoggerLevelImpl::convertFromBindLevel(Level(severity, dbglevel)));
+
+    // Retrieve the appenders on the root instance and set the layout to
+    // use the "console" pattern.
+    log4cplus::SharedAppenderPtrList list =
+        log4cplus::Logger::getRoot().getAllAppenders();
+    for (log4cplus::SharedAppenderPtrList::iterator i = list.begin();
+         i != list.end(); ++i) {
+         setConsoleAppenderLayout(*i, root_name);
+    }
+}
+
+// Set the the "console" layout for the given appenders.  This layout includes
+// a date/time and the name of the logger.
+
+void LoggerManagerImpl::setConsoleAppenderLayout(
+        log4cplus::SharedAppenderPtr& appender, const std::string& root_name)
+{
+    // Create the pattern we want for the output - local time.
+    string pattern = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [";
+    pattern += root_name + string(".%c] %m\n");
+
+    // Finally the text of the message
+    auto_ptr<log4cplus::Layout> layout(new log4cplus::PatternLayout(pattern));
+    appender->setLayout(layout);
+}
 
 } // namespace log
 } // namespace isc
