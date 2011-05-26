@@ -20,68 +20,124 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <boost/lexical_cast.hpp>
+
 #include <iostream>
+#include <string>
 
 #include <log/logger.h>
-#include <log/macros.h>
+#include <log/logger_manager.h>
+#include <log/logger_specification.h>
 #include <log/logger_support.h>
+#include <log/macros.h>
 #include <log/root_logger_name.h>
 
 // Include a set of message definitions.
 #include <log/messagedef.h>
 
 using namespace isc::log;
+using namespace std;
 
-// Declare logger to use an example.
-Logger logger_ex("example");
 
-// The program is invoked:
-//
-// logger_support_test [-s severity] [-d level ] [local_file]
-//
-// "severity" is one of "debug", "info", "warn", "error", "fatal"
-// "level" is the debug level, a number between 0 and 99
-// "local_file" is the name of a local file.
-//
+// Print usage information
+
+void usage() {
+    cout <<
+"logger_support_test [-h] [-s severity] [-d dbglevel] [-c stream] [localfile]\n"
+"\n"
+"   -h              Print this message and exit\n"
+"   -s severity     Set the severity of messages output.  'severity' is one\n"
+"                   of 'debug', 'info', 'warn', 'error', 'fatal', the default\n"
+"                   being 'info'.\n"
+"   -d dbglevel     Debug level.  Only interpreted if the severity is 'debug'\n"
+"                   this is a number between 0 and 99.\n"
+"   -c stream       Send output to the console.  'stream' is one of 'stdout'\n"
+"                   of 'stderr'.  The '-c' switch is incompatible with '-f'\n"
+"                   and '-l'\n"
+"\n"
+"If none of -c, -f or -l is given, by default, output is sent to stdout\n";
+}
+
+
 // The program sets the attributes on the root logger and logs a set of
 // messages.  Looking at the output determines whether the program worked.
 
 int main(int argc, char** argv) {
+    const string ROOT_NAME = "alpha";
 
-    isc::log::Severity  severity = isc::log::INFO;  // Default logger severity
-    int                 dbglevel = -1;              // Logger debug level
-    const char*         localfile = NULL;           // Local message file
-    int                 option;                     // For getopt() processing
-    Logger              logger_dlm("dlm");          // Another example logger
+    bool                c_found = false;    // Set true if "-c" found
+    bool                f_found = false;    // Set true if "-f" found
+    bool                l_found = false;    // Set true if "-l" found
+
+    const char*         localfile = NULL;   // Local message file
+    int                 option;             // For getopt() processing
+
+    LoggerSpecification spec(ROOT_NAME);    // Logger specification
+    OutputOption        outopt;             // Logger output option
+
+    // Initialize loggers (to set the root name and initialize logging);
+    // We'll reset them later.
+    setRootLoggerName(ROOT_NAME);
+    Logger rootLogger(ROOT_NAME);
 
     // Parse options
-    while ((option = getopt(argc, argv, "s:d:")) != -1) {
+    while ((option = getopt(argc, argv, "hc:d:s:")) != -1) {
         switch (option) {
-            case 's':
-                if (strcmp(optarg, "debug") == 0) {
-                    severity = isc::log::DEBUG;
-                } else if (strcmp(optarg, "info") == 0) {
-                    severity = isc::log::INFO;
-                } else if (strcmp(optarg, "warn") == 0) {
-                    severity = isc::log::WARN;
-                } else if (strcmp(optarg, "error") == 0) {
-                    severity = isc::log::ERROR;
-                } else if (strcmp(optarg, "fatal") == 0) {
-                    severity = isc::log::FATAL;
-                } else {
-                    std::cout << "Unrecognised severity option: " <<
-                        optarg << "\n";
-                    exit(1);
-                }
-                break;
+        case 'c':
+            if (f_found || l_found) {
+                cerr << "Cannot specify -c with -f or -l\n";
+                return (1);
+            }
 
-            case 'd':
-                dbglevel = atoi(optarg);
-                break;
+            c_found = true;
+            outopt.destination = OutputOption::DEST_CONSOLE;
 
-            default:
-                std::cout << "Unrecognised option: " <<
-                    static_cast<char>(option) << "\n";
+            if (strcmp(optarg, "stdout") == 0) {
+                outopt.stream = OutputOption::STR_STDOUT;
+
+            } else if (strcmp(optarg, "stderr") == 0) {
+                outopt.stream = OutputOption::STR_STDERR;
+
+            } else {
+                cerr << "Unrecognised console option: " << optarg << "\n";
+                return (1);
+            }
+            break;
+
+        case 'd':
+            spec.setDbglevel(boost::lexical_cast<int>(optarg));
+            break;
+
+        case 'h':
+            usage();
+            return (0);
+
+        case 's':
+            if (strcmp(optarg, "debug") == 0) {
+                spec.setSeverity(isc::log::DEBUG);
+
+            } else if (strcmp(optarg, "info") == 0) {
+                spec.setSeverity(isc::log::INFO);
+
+            } else if (strcmp(optarg, "warn") == 0) {
+                spec.setSeverity(isc::log::WARN);
+
+            } else if (strcmp(optarg, "error") == 0) {
+                spec.setSeverity(isc::log::ERROR);
+
+            } else if (strcmp(optarg, "fatal") == 0) {
+                spec.setSeverity(isc::log::FATAL);
+
+            } else {
+                cerr << "Unrecognised severity option: " << optarg << "\n";
+                return (1);
+            }
+            break;
+
+        default:
+            std::cerr << "Unrecognised option: " <<
+                static_cast<char>(option) << "\n";
+            return (1);
         }
     }
 
@@ -90,9 +146,23 @@ int main(int argc, char** argv) {
     }
 
     // Update the logging parameters
-    initLogger("alpha", severity, dbglevel, localfile);
+    initLogger(ROOT_NAME, isc::log::INFO, 0, localfile);
+
+    // Set an output option if we have not done so already.
+    if (! (c_found || f_found || l_found)) {
+        outopt.destination = OutputOption::DEST_CONSOLE;
+        outopt.stream = OutputOption::STR_STDOUT;
+    }
+    spec.addOutputOption(outopt);
+
+    // Set the logging options for the root logger.
+    LoggerManager manager;
+    manager.process(spec);
+
 
     // Log a few messages
+    isc::log::Logger logger_dlm("dlm");
+    isc::log::Logger logger_ex("example");
     LOG_FATAL(logger_ex, MSG_WRITERR).arg("test1").arg("42");
     LOG_ERROR(logger_ex, MSG_RDLOCMES).arg("dummy/file");
     LOG_WARN(logger_dlm, MSG_READERR).arg("a.txt").arg("dummy reason");

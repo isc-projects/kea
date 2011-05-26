@@ -21,6 +21,10 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/scoped_array.hpp>
+
+#include <exceptions/exceptions.h>
+
 #include <log/macros.h>
 #include <log/messagedef.h>
 #include <log/logger.h>
@@ -29,6 +33,7 @@
 #include <log/logger_specification.h>
 #include <log/output_option.h>
 
+using namespace isc;
 using namespace isc::log;
 using namespace std;
 
@@ -40,8 +45,6 @@ using namespace std;
 class DerivedLogger : public isc::log::Logger {
 public:
     DerivedLogger(std::string name) : isc::log::Logger(name)
-    {}
-    virtual ~DerivedLogger()
     {}
 
     static void reset() {
@@ -70,10 +73,14 @@ public:
 
     // Constructor - allocate file and create the specification object
     SpecificationForFileLogger() : spec_(), name_(""), logname_("filelogger") {
+
+        // Set the output to a temporary file.
         OutputOption option;
         option.destination = OutputOption::DEST_FILE;
-        name_ = option.filename = std::string(tmpnam(NULL));
+        option.filename = name_ = createTempFilename();
 
+        // Set target output to the file logger.  The defauls indicate
+        // INFO severity.
         spec_.setName(logname_);
         spec_.addOutputOption(option);
     }
@@ -98,6 +105,48 @@ public:
     // Return name of the file
     string getFileName() const {
         return name_;
+    }
+
+    // Create temporary filename
+    //
+    // The compiler warns against tmpnam() and suggests mkstemp instead.
+    // Unfortunately, this creates the filename and opens it.  So we need to
+    // close and delete the file before returning the name.  Also, the name
+    // is based on the template supplied and the name of the temporary
+    // directory may vary between systems.  So translate TMPDIR and if that
+    // does not exist, use /tmp.
+    //
+    // \return Temporary file name
+    std::string createTempFilename() {
+
+        // Get prefix.  Note that in all copies, strncpy does not guarantee
+        // a null-terminated string, hence the explict setting of the last
+        // character to NULL.
+        ostringstream filename;
+
+        if (getenv("TMPDIR") != NULL) {
+            filename << getenv("TMPDIR");
+        } else {
+            filename << "/tmp";
+        }
+        filename << "/bind10_logger_manager_test_XXXXXX";
+
+        cout << "*** file name before call is " << filename.str() << "\n";
+
+        // Copy into writeable storage for the call to mkstemp
+        boost::scoped_array<char> tname(new char[filename.str().size() + 1]);
+        strcpy(tname.get(), filename.str().c_str());
+
+        // Create file, close and delete it, and store the name for later.
+        int filenum = mkstemp(tname.get());
+        cout << "*** file name after call is " << tname.get() << "\n";
+        if (filenum == -1) {
+            isc_throw(Exception, "Unable to obtain unique filename");
+        }
+        close(filenum);
+        unlink(tname.get());
+
+        return (string(tname.get()));
     }
 
 
@@ -153,7 +202,7 @@ void checkFileContents(const std::string& filename, T start, T finish) {
 }
 
 // Check that the logger correctly creates something logging to a file.
-TEST_F(LoggerManagerTest, DISABLED_FileLogger) {
+TEST_F(LoggerManagerTest, FileLogger) {
 
     // Create a specification for the file logger and use the manager to
     // connect the "filelogger" logger to it.

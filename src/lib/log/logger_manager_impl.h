@@ -17,6 +17,11 @@
 
 #include <log/logger_specification.h>
 
+// Forward declaration to avoid need to include log4cplus header file here.
+namespace log4cplus {
+class Logger;
+}
+
 namespace isc {
 namespace log {
 
@@ -54,6 +59,38 @@ public:
     ///
     /// Terminates the processing of the logging specifications.
     void processEnd();
+
+private:
+    /// \brief Create console appender
+    ///
+    /// Creates an object that, when attached to a logger, will log to one
+    /// of the output streams (stdout or stderr).
+    ///
+    /// \param logger Log4cplus logger to which the appender must be attached.
+    /// \param opt Output options for this appender.
+    void createConsoleAppender(log4cplus::Logger& logger,
+                               const OutputOption& opt);
+
+    /// \brief Create file appender
+    ///
+    /// Creates an object that, when attached to a logger, will log to a
+    /// specified file.  This also includes the ability to "roll" files when
+    /// they reach a specified size.
+    ///
+    /// \param logger Log4cplus logger to which the appender must be attached.
+    /// \param opt Output options for this appender.
+    void createFileAppender(log4cplus::Logger& logger,
+                            const OutputOption& opt) {}
+
+    /// \brief Create syslog appender
+    ///
+    /// Creates an object that, when attached to a logger, will log to the
+    /// syslog file.
+    ///
+    /// \param logger Log4cplus logger to which the appender must be attached.
+    /// \param opt Output options for this appender.
+    void createSyslogAppender(log4cplus::Logger& logger,
+                              const OutputOption& opt) {}
 };
 
 } // namespace log
