@@ -13,17 +13,20 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+testname="Run-time initialization test"
+echo $testname
+
 failcount=0
 localmes=@abs_builddir@/localdef_mes_$$
 tempfile=@abs_builddir@/run_time_init_test_tempfile_$$
 
 passfail() {
     if [ $1 -eq 0 ]; then
-        echo "pass"
+        echo " -- pass"
     else
-        echo "FAIL"
+        echo " ** FAIL"
+        failcount=`expr $failcount + $1`
     fi
-    failcount=`expr $failcount + $1`
 }
 
 # Create the local message file for testing
@@ -35,7 +38,7 @@ cat > $localmes << .
 % RDLOCMES    replacement read local message file, parameter is '%1'
 .
 
-echo -n "1. runInitTest default parameters: "
+echo "1. runInitTest default parameters: "
 cat > $tempfile << .
 FATAL [alpha.example] MSG_WRITERR, error writing to test1: 42
 ERROR [alpha.example] MSG_RDLOCMES, reading local message file dummy/file
@@ -45,7 +48,7 @@ INFO  [alpha.dlm] MSG_OPENIN, unable to open message file example.msg for input:
 ./logger_support_test | cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
-echo -n "2. Severity filter: "
+echo "2. Severity filter: "
 cat > $tempfile << .
 FATAL [alpha.example] MSG_WRITERR, error writing to test1: 42
 ERROR [alpha.example] MSG_RDLOCMES, reading local message file dummy/file
@@ -53,7 +56,7 @@ ERROR [alpha.example] MSG_RDLOCMES, reading local message file dummy/file
 ./logger_support_test -s error | cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
-echo -n "3. Debug level: "
+echo "3. Debug level: "
 cat > $tempfile << .
 FATAL [alpha.example] MSG_WRITERR, error writing to test1: 42
 ERROR [alpha.example] MSG_RDLOCMES, reading local message file dummy/file
@@ -66,7 +69,7 @@ DEBUG [alpha.example] MSG_RDLOCMES, reading local message file dummy/25
 ./logger_support_test -s debug -d 25 | cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
-echo -n "4. Local message replacement: "
+echo "4. Local message replacement: "
 cat > $tempfile << .
 WARN  [alpha.log] MSG_IDNOTFND, could not replace message text for 'MSG_NOTHERE': no such message
 FATAL [alpha.example] MSG_WRITERR, error writing to test1: 42
@@ -80,11 +83,11 @@ rm -f $localmes
 rm -f $tempfile
 
 if [ $failcount -eq 0 ]; then
-    echo "PASS: run_time_init_test"
+    echo "PASS: $testname"
 elif [ $failcount -eq 1 ]; then
-    echo "FAIL: run_time_init_test - 1 test failed"
+    echo "FAIL: $testname - 1 test failed"
 else
-    echo "FAIL: run_time_init_test - $failcount tests failed"
+    echo "FAIL: $testname - $failcount tests failed"
 fi
 
 exit $failcount
