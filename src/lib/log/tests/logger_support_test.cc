@@ -28,7 +28,6 @@
 #include <log/logger.h>
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
-#include <log/logger_support.h>
 #include <log/macros.h>
 #include <log/root_logger_name.h>
 
@@ -146,7 +145,7 @@ int main(int argc, char** argv) {
     }
 
     // Update the logging parameters
-    initLogger(ROOT_NAME, isc::log::INFO, 0, localfile);
+    LoggerManager::init(ROOT_NAME, localfile, isc::log::INFO, 0);
 
     // Set an output option if we have not done so already.
     if (! (c_found || f_found || l_found)) {
@@ -157,7 +156,7 @@ int main(int argc, char** argv) {
 
     // Set the logging options for the root logger.
     LoggerManager manager;
-    manager.process(spec);
+    //manager.process(spec);
 
 
     // Log a few messages
