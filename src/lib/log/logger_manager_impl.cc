@@ -53,9 +53,9 @@ namespace log {
 // configuration update removes the logger.)
 
 void
-LoggerManagerImpl::processInit(const std::string& root_name) {
+LoggerManagerImpl::processInit() {
     log4cplus::Logger::getDefaultHierarchy().resetConfiguration();
-    initRootLogger(root_name);
+    initRootLogger();
 }
 
 // Process logging specification.  Set up the common states then dispatch to
@@ -76,25 +76,33 @@ LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
     // Set the additive flag.
     logger.setAdditivity(spec.getAdditive());
 
-    // Now process output specifications.
-    for (LoggerSpecification::const_iterator i = spec.begin();
-         i != spec.end(); ++i) {
-        switch (i->destination) {
-        case OutputOption::DEST_CONSOLE:
-            createConsoleAppender(logger, *i);
-            break;
+    // Output options given?
+    if (spec.optionCount() > 0) {
 
-        case OutputOption::DEST_FILE:
-            createFileAppender(logger, *i);
-            break;
+        // Yes, so replace all appenders for this logger.
+        logger.removeAllAppenders();
 
-        case OutputOption::DEST_SYSLOG:
-            createSyslogAppender(logger, *i);
-            break;
+        // Now process output specifications.
+        for (LoggerSpecification::const_iterator i = spec.begin();
+             i != spec.end(); ++i) {
+            switch (i->destination) {
+            case OutputOption::DEST_CONSOLE:
+                createConsoleAppender(logger, *i);
+                break;
 
-        default:
-            isc_throw(UnknownLoggingDestination,
-                      "Unknown logging destination, code = " << i->destination);
+            case OutputOption::DEST_FILE:
+                createFileAppender(logger, *i);
+                break;
+
+            case OutputOption::DEST_SYSLOG:
+                createSyslogAppender(logger, *i);
+                break;
+
+            default:
+                isc_throw(UnknownLoggingDestination,
+                          "Unknown logging destination, code = " <<
+                          i->destination);
+            }
         }
     }
 }
@@ -107,6 +115,7 @@ LoggerManagerImpl::createConsoleAppender(log4cplus::Logger& logger,
     log4cplus::SharedAppenderPtr console(
         new log4cplus::ConsoleAppender(
             (opt.stream == OutputOption::STR_STDERR), opt.flush));
+    setConsoleAppenderLayout(console);
     logger.addAppender(console);
 }
 
@@ -114,9 +123,8 @@ LoggerManagerImpl::createConsoleAppender(log4cplus::Logger& logger,
 // One-time initialization of the log4cplus system
 
 void
-LoggerManagerImpl::init(const std::string& root_name,
-                        isc::log::Severity severity, int dbglevel)
-{
+LoggerManagerImpl::init(isc::log::Severity severity, int dbglevel) {
+
     // Set up basic configurator.  This attaches a ConsoleAppender to the
     // root logger with suitable output.  This is used until we we have
     // actually read the logging configuration, in which case the output
@@ -128,12 +136,11 @@ LoggerManagerImpl::init(const std::string& root_name,
     LoggerLevelImpl::init();
 
     // And initialize the root logger
-    initRootLogger(root_name, severity, dbglevel);
+    initRootLogger(severity, dbglevel);
 }
 
 // Initialize the root logger
-void LoggerManagerImpl::initRootLogger(const std::string& root_name,
-                                       isc::log::Severity severity,
+void LoggerManagerImpl::initRootLogger(isc::log::Severity severity,
                                        int dbglevel) {
 
     // Set the severity for the root logger
@@ -146,7 +153,7 @@ void LoggerManagerImpl::initRootLogger(const std::string& root_name,
         log4cplus::Logger::getRoot().getAllAppenders();
     for (log4cplus::SharedAppenderPtrList::iterator i = list.begin();
          i != list.end(); ++i) {
-         setConsoleAppenderLayout(*i, root_name);
+         setConsoleAppenderLayout(*i);
     }
 }
 
@@ -154,11 +161,11 @@ void LoggerManagerImpl::initRootLogger(const std::string& root_name,
 // a date/time and the name of the logger.
 
 void LoggerManagerImpl::setConsoleAppenderLayout(
-        log4cplus::SharedAppenderPtr& appender, const std::string& root_name)
+        log4cplus::SharedAppenderPtr& appender)
 {
     // Create the pattern we want for the output - local time.
     string pattern = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [";
-    pattern += root_name + string(".%c] %m\n");
+    pattern += getRootLoggerName() + string(".%c] %m\n");
 
     // Finally the text of the message
     auto_ptr<log4cplus::Layout> layout(new log4cplus::PatternLayout(pattern));
