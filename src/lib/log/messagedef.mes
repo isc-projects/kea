@@ -118,14 +118,14 @@ the named output file.
 A line starting with a dollar symbol was found, but the first word on the line
 (shown in the message) was not a recognised message compiler directive.
 
-% BADSEVERITY   Unrecognized log severity: %1
+% BADSEVERITY   unrecognized log severity: %1
 A logger severity value was given that was not recognized. The severity
 should be one of "DEBUG", "INFO", "WARN", "ERROR", or "FATAL".
 
-% BADDESTINATION Unrecognized log destination: %1
+% BADDESTINATION unrecognized log destination: %1
 A logger destination value was given that was not recognized. The
 destination should be one of "console", "file", or "syslog".
 
-% BADSTREAM Bad log console output stream: %1
+% BADSTREAM     bad log console output stream: %1
 A log console output stream was given that was not recognized. The
 output stream should be one of "stdout", or "stderr"
