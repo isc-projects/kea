@@ -1,4 +1,4 @@
-// File created from messagedef.mes on Mon May  9 13:52:54 2011
+// File created from messagedef.mes on Fri May 27 12:15:25 2011
 
 #ifndef __MESSAGEDEF_H
 #define __MESSAGEDEF_H
@@ -8,6 +8,9 @@
 namespace isc {
 namespace log {
 
+extern const isc::log::MessageID MSG_BADDESTINATION;
+extern const isc::log::MessageID MSG_BADSEVERITY;
+extern const isc::log::MessageID MSG_BADSTREAM;
 extern const isc::log::MessageID MSG_DUPLNS;
 extern const isc::log::MessageID MSG_DUPMSGID;
 extern const isc::log::MessageID MSG_IDNOTFND;
