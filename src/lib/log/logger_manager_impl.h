@@ -41,6 +41,11 @@ class OutputOption;
 /// As noted in logger_manager.h, the logger manager class exists to set up the
 /// logging given a set of specifications.  This class handles the processing
 /// of those specifications.
+///
+/// Note: the logging has been implemented using a "pimpl" idiom to conceal
+/// the underlying implementation (log4cplus) from the BIND 10 interface.
+/// This requires that there be an implementation class, even though in this
+/// case, all the implementation class methods can be declared static.
 
 class LoggerManagerImpl {
 public:
