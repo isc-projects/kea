@@ -22,6 +22,7 @@
 #include <gtest/gtest.h>
 
 #include <boost/scoped_array.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <exceptions/exceptions.h>
 
@@ -32,6 +33,8 @@
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
 #include <log/output_option.h>
+
+#include "tempdir.h"
 
 using namespace isc;
 using namespace isc::log;
@@ -112,20 +115,14 @@ public:
         // Get prefix.  Note that in all copies, strncpy does not guarantee
         // a null-terminated string, hence the explict setting of the last
         // character to NULL.
-        ostringstream filename;
-
-        if (getenv("TMPDIR") != NULL) {
-            filename << getenv("TMPDIR");
-        } else {
-            filename << "/tmp";
-        }
-        filename << "/bind10_logger_manager_test_XXXXXX";
+        string filename = TEMP_DIR + "/bind10_logger_manager_test_XXXXXX";
 
         // Copy into writeable storage for the call to mkstemp
-        boost::scoped_array<char> tname(new char[filename.str().size() + 1]);
-        strcpy(tname.get(), filename.str().c_str());
+        boost::scoped_array<char> tname(new char[filename.size() + 1]);
+        strcpy(tname.get(), filename.c_str());
 
         // Create file, close and delete it, and store the name for later.
+        // There is still a race condition here, albeit a small one.
         int filenum = mkstemp(tname.get());
         if (filenum == -1) {
             isc_throw(Exception, "Unable to obtain unique filename");
@@ -194,15 +191,17 @@ TEST_F(LoggerManagerTest, FileLogger) {
     // Create a specification for the file logger and use the manager to
     // connect the "filelogger" logger to it.
     SpecificationForFileLogger file_spec;
-    vector<LoggerSpecification> specVector(1, file_spec.getSpecification());
     LoggerManager manager;
-    manager.process(specVector.begin(), specVector.end());
+    manager.process(file_spec.getSpecification());
 
     // Try logging to the file.  Local scope is set to ensure that the logger
     // is destroyed before we reset the global logging.  We record what we
     // put in the file for a later comparison.
     vector<MessageID> ids;
     {
+        // Scope-limit the logger to ensure it is destroyed after the brief
+        // check.  This adds weight to the idea that the logger will not
+        // keep the file open.
         Logger logger(file_spec.getLoggerName());
 
         LOG_FATAL(logger, MSG_DUPMSGID).arg("test");
@@ -214,8 +213,110 @@ TEST_F(LoggerManagerTest, FileLogger) {
     LoggerManager::reset();
 
     // At this point, the output file should contain two lines with messages
-    // LOGTEST_TEST1 and LOGTEST_TEST2 messages - test this.
+    // MSG_DUPMSGID and MSG_DUPLNS messages - test this.
     checkFileContents(file_spec.getFileName(), ids.begin(), ids.end());
 
-    // 
+    // Re-open the file (we have to assume that it was closed when we
+    // reset the logger - there is no easy way to check) and check that
+    // new messages are appended to it.  We use the alternative
+    // invocation of process() here to check it works.
+    vector<LoggerSpecification> spec(1, file_spec.getSpecification());
+    manager.process(spec.begin(), spec.end());
+
+    // Create a new instance of the logger and log three more messages.
+    Logger logger(file_spec.getLoggerName());
+
+    LOG_FATAL(logger, MSG_IDNOTFND).arg("test");
+    ids.push_back(MSG_IDNOTFND);
+
+    LOG_FATAL(logger, MSG_INVMSGID).arg("test").arg("test2");
+    ids.push_back(MSG_INVMSGID);
+
+    LOG_FATAL(logger, MSG_NOMSGID).arg("42");
+    ids.push_back(MSG_NOMSGID);
+
+    // Close the file and check again
+    LoggerManager::reset();
+    checkFileContents(file_spec.getFileName(), ids.begin(), ids.end());
+}
+
+// Check if the file rolls over when it gets above a certain size.
+TEST_F(LoggerManagerTest, FileSizeRollover) {
+    // Set to a suitable minimum that log4cplus can copy with
+    static const size_t SIZE_LIMIT = 204800;
+
+    // Set up the name of the file.
+    SpecificationForFileLogger file_spec;
+    LoggerSpecification& spec = file_spec.getSpecification();
+
+    // Expand the option to ensure that a maximum version size is set.
+    LoggerSpecification::iterator opt = spec.begin();
+    EXPECT_TRUE(opt != spec.end());
+    opt->maxsize = SIZE_LIMIT;    // Bytes
+    opt->maxver = 2;
+
+    // The current current output file does not exist (the creation of file_spec
+    // ensures that.  Check that previous versions don't either.
+    vector<string> prev_name;
+    for (int i = 0; i < 3; ++i) {
+        prev_name.push_back(file_spec.getFileName() + "." +
+                            boost::lexical_cast<string>(i + 1));
+        (void) unlink(prev_name[i].c_str());
+    }
+
+    // Generate an argument for a message that ensures that the message when
+    // logged will be over that size.
+    string big_arg(SIZE_LIMIT, 'x');
+
+    // Set up the file logger
+    LoggerManager manager;
+    manager.process(spec);
+
+    // Log the message twice using different message IDs.  This should generate
+    // three files as for the log4cplus implementation, the files appear to
+    // be rolled after the message is logged.
+    {
+        Logger logger(file_spec.getLoggerName());
+        LOG_FATAL(logger, MSG_IDNOTFND).arg(big_arg);
+        LOG_FATAL(logger, MSG_DUPLNS).arg(big_arg);
+    }
+
+    // Check them.
+    LoggerManager::reset();     // Ensure files are closed
+
+    vector<MessageID> ids;
+    ids.push_back(MSG_IDNOTFND);
+    checkFileContents(prev_name[1], ids.begin(), ids.end());
+
+    ids.clear();
+    ids.push_back(MSG_DUPLNS);
+    checkFileContents(prev_name[0], ids.begin(), ids.end());
+
+    // Log another message and check that the files have rotated and that
+    // a .3 version does not exist.
+    manager.process(spec);
+    {
+        Logger logger(file_spec.getLoggerName());
+        LOG_FATAL(logger, MSG_NOMSGTXT).arg(big_arg);
+    }
+
+    LoggerManager::reset();     // Ensure files are closed
+
+    // Check that the files have moved.
+    ids.clear();
+    ids.push_back(MSG_DUPLNS);
+    checkFileContents(prev_name[1], ids.begin(), ids.end());
+
+    ids.clear();
+    ids.push_back(MSG_NOMSGTXT);
+    checkFileContents(prev_name[0], ids.begin(), ids.end());
+
+    // ... and check that the .3 version does not exist.
+    ifstream file3(prev_name[2].c_str(), ifstream::in);
+    EXPECT_FALSE(file3.good());
+
+    // Tidy up
+    for (int i = 0; i < prev_name.size(); ++i) {
+       (void) unlink(prev_name[i].c_str());
+    }
 }
