@@ -104,3 +104,26 @@ TEST_F(LoggerSpecificationTest, AddOption) {
     ++i;
     EXPECT_TRUE(i == spec.end());
 }
+
+
+TEST(LoggerSpecification, getSeverity) {
+    EXPECT_EQ(DEBUG, getSeverity("DEBUG"));
+    EXPECT_EQ(DEBUG, getSeverity("debug"));
+    EXPECT_EQ(DEBUG, getSeverity("DeBuG"));
+    EXPECT_EQ(INFO, getSeverity("INFO"));
+    EXPECT_EQ(INFO, getSeverity("info"));
+    EXPECT_EQ(INFO, getSeverity("iNfO"));
+    EXPECT_EQ(WARN, getSeverity("WARN"));
+    EXPECT_EQ(WARN, getSeverity("warn"));
+    EXPECT_EQ(WARN, getSeverity("wARn"));
+    EXPECT_EQ(ERROR, getSeverity("ERROR"));
+    EXPECT_EQ(ERROR, getSeverity("error"));
+    EXPECT_EQ(ERROR, getSeverity("ERRoR"));
+    EXPECT_EQ(FATAL, getSeverity("FATAL"));
+    EXPECT_EQ(FATAL, getSeverity("fatal"));
+    EXPECT_EQ(FATAL, getSeverity("FAtaL"));
+
+    // bad values should default to stdout
+    EXPECT_EQ(INFO, getSeverity("some bad value"));
+    EXPECT_EQ(INFO, getSeverity(""));
+}
