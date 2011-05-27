@@ -82,6 +82,12 @@ public:
                     isc::log::Severity severity = isc::log::INFO,
                     int dbglevel = 0);
 
+    /// \brief Reset logging
+    ///
+    /// Resets logging to default (just the root logger output INFO or above
+    /// messages to the console.
+    static void reset();
+
     /// \brief Read local message file
     ///
     /// Reads the local message file into the global dictionary, overwriting

@@ -54,8 +54,8 @@ struct OutputOption {
 
     /// If console, stream on which messages are output
     typedef enum {
-        STR_STDOUT = 0,
-        STR_STDERR = 1
+        STR_STDOUT = 1,
+        STR_STDERR = 2
     } Stream;
 
     /// \brief Constructor

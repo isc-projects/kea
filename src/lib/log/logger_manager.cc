@@ -150,5 +150,11 @@ LoggerManager::readLocalMessageFile(const char* file) {
     }
 }
 
+// Reset logging
+void
+LoggerManager::reset() {
+    LoggerManagerImpl::reset();
+}
+
 } // namespace log
 } // namespace isc

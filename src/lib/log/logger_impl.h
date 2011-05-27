@@ -184,13 +184,6 @@ public:
         return (name_ == other.name_);
     }
 
-    /// \brief Reset logging
-    ///
-    /// Resets (clears) the log4cplus logging, requiring that an initialization
-    /// call be performed again.
-    static void reset();
-
-
 private:
     std::string         name_;              ///< Full name of this logger
     log4cplus::Logger   logger_;            ///< Underlying log4cplus logger

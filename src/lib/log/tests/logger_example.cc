@@ -146,23 +146,18 @@ int main(int argc, char** argv) {
         }
     }
 
-    // Set the local file
-    if (optind < argc) {
-        LoggerManager::readLocalMessageFile(argv[optind]);
-    }
-
-    // Update the logging parameters
-
-    // Set an output option if we have not done so already.
-    if (! (c_found || f_found || l_found)) {
-        outopt.destination = OutputOption::DEST_CONSOLE;
-        outopt.stream = OutputOption::STR_STDOUT;
-    }
+    // Update the logging parameters.  If no output options
+    // were set, the defaults will be used.
     spec.addOutputOption(outopt);
 
     // Set the logging options for the root logger.
     LoggerManager manager;
     manager.process(spec);
+
+    // Set the local file
+    if (optind < argc) {
+        LoggerManager::readLocalMessageFile(argv[optind]);
+    }
 
 
     // Log a few messages

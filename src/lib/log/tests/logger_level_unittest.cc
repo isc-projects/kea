@@ -19,19 +19,25 @@
 
 #include <log/root_logger_name.h>
 #include <log/logger.h>
+#include <log/logger_manager.h>
 #include <log/messagedef.h>
 
 using namespace isc;
 using namespace isc::log;
 using namespace std;
 
+namespace {
+string ROOT_NAME("logleveltest");
+}
+
 class LoggerLevelTest : public ::testing::Test {
 protected:
-    LoggerLevelTest()
-    {}
-
-    ~LoggerLevelTest()
-    {}
+    LoggerLevelTest() {
+        LoggerManager::init(ROOT_NAME);
+    }
+    ~LoggerLevelTest() {
+        LoggerManager::reset();
+    }
 };
 
 
@@ -56,6 +62,11 @@ TEST_F(LoggerLevelTest, Creation) {
 }
 
 TEST(LoggerLevel, getSeverity) {
+    // Should initialize logger as getSeverity() may output
+    // a message.  This gives a properly-qualified logger
+    // name.
+    LoggerManager::init(ROOT_NAME);
+
     EXPECT_EQ(DEBUG, getSeverity("DEBUG"));
     EXPECT_EQ(DEBUG, getSeverity("debug"));
     EXPECT_EQ(DEBUG, getSeverity("DeBuG"));
@@ -75,4 +86,6 @@ TEST(LoggerLevel, getSeverity) {
     // bad values should default to stdout
     EXPECT_EQ(INFO, getSeverity("some bad value"));
     EXPECT_EQ(INFO, getSeverity(""));
+
+    LoggerManager::reset();
 }
