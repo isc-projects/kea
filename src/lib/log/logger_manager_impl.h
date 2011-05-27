@@ -56,19 +56,19 @@ public:
     /// root logger reset to logging informational messages.
     ///
     /// \param root_name BIND 10 name of the root logger
-    void processInit();
+    static void processInit();
 
     /// \brief Process Specification
     ///
     /// Processes the specification for a single logger.
     ///
     /// \param spec Logging specification for this logger
-    void processSpecification(const LoggerSpecification& spec);
+    static void processSpecification(const LoggerSpecification& spec);
 
     /// \brief End Processing
     ///
     /// Terminates the processing of the logging specifications.
-    void processEnd();
+    static void processEnd();
 
     /// \brief Implementation-specific initialization
     ///
@@ -81,6 +81,12 @@ public:
     static void init(isc::log::Severity severity = isc::log::INFO,
                      int dbglevel = 0);
 
+    /// \brief Reset logging
+    ///
+    /// Resets to default configuration (root logger logging to the console
+    /// with INFO severity).
+    static void reset();
+
 private:
     /// \brief Create console appender
     ///
@@ -89,8 +95,8 @@ private:
     ///
     /// \param logger Log4cplus logger to which the appender must be attached.
     /// \param opt Output options for this appender.
-    void createConsoleAppender(log4cplus::Logger& logger,
-                               const OutputOption& opt);
+    static void createConsoleAppender(log4cplus::Logger& logger,
+                                      const OutputOption& opt);
 
     /// \brief Create file appender
     ///
@@ -100,8 +106,8 @@ private:
     ///
     /// \param logger Log4cplus logger to which the appender must be attached.
     /// \param opt Output options for this appender.
-    void createFileAppender(log4cplus::Logger& logger,
-                            const OutputOption& opt);
+    static void createFileAppender(log4cplus::Logger& logger,
+                                   const OutputOption& opt);
 
     /// \brief Create syslog appender
     ///
@@ -110,8 +116,8 @@ private:
     ///
     /// \param logger Log4cplus logger to which the appender must be attached.
     /// \param opt Output options for this appender.
-    void createSyslogAppender(log4cplus::Logger& logger,
-                              const OutputOption& opt) {}
+    static void createSyslogAppender(log4cplus::Logger& logger,
+                                     const OutputOption& opt) {}
 
     /// \brief Set default layout and severity for root logger
     ///

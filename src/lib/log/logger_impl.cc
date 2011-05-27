@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE
 
+#include <iostream>
 #include <iomanip>
 #include <algorithm>
 
@@ -129,30 +130,6 @@ LoggerImpl::outputRaw(const Severity& severity, const string& message) {
             LOG4CPLUS_FATAL(logger_, message);
     }
 }
-
-// Reset.  Just reset logger hierarchy to default settings (don't remove the
-// loggers - this appears awkward); this is effectively the same as removing
-// them.
-void
-LoggerImpl::reset() {
-    log4cplus::Logger::getDefaultHierarchy().resetConfiguration();
-
-    // N.B.  The documentation is not clear, but it does not appear that the
-    // methods used to format the new logging levels are removed from the
-    // log4cxx LogLevelManager class - indeed, there appears to be no way
-    // to do this.  This would seem to suggest that a re-initialization may
-    // well add another instance of the toString/fromString to the manager's
-    // list of methods.
-    //
-    // We could get round this by making setting the LogManager a truly
-    // one-shot process.  However, apart from taking up memory there is little
-    // overhead if multiple instances are added.  The manager walks the list and
-    // uses the first method that processes the argument, so multiple methods
-    // doing the same think will not affect functionality.  Besides, this
-    // reset() method is only used in testing and not in the distributed
-    // software.
-}
-
 
 } // namespace log
 } // namespace isc
