@@ -82,6 +82,15 @@ public:
                     isc::log::Severity severity = isc::log::INFO,
                     int dbglevel = 0);
 
+    /// \brief Read local message file
+    ///
+    /// Reads the local message file into the global dictionary, overwriting
+    /// existing messages.  If the file contained any message IDs not in the
+    /// dictionary, they are listed in a warning message.
+    ///
+    /// \param file Name of the local message file
+    static void readLocalMessageFile(const char* file);
+
 private:
     /// \brief Initialize Processing
     ///
@@ -101,15 +110,6 @@ private:
     /// Place holder for finish processing.
     /// TODO: Check that the root logger has something enabled
     void processEnd();
-
-    /// \brief Read local message file
-    ///
-    /// Reads the local message file into the global dictionary, overwriting
-    /// existing messages.  If the file contained any message IDs not in the
-    /// dictionary, they are listed in a warning message.
-    ///
-    /// \param file Name of the local message file
-    static void readLocalMessageFile(const char* file);
 
     // Members
     LoggerManagerImpl*  impl_;      ///< Pointer to implementation

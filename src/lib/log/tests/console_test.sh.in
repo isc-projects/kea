@@ -13,6 +13,11 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+# \brief
+#
+# The logger supports the idea of a "console" logger than logs to either stdout
+# or stderr.  This test checks that both these options work.
+
 testname="Console output test"
 echo $testname
 
@@ -32,22 +37,22 @@ passfail() {
 
 echo "1. Checking that console output to stdout goes to stdout:"
 rm -f $tempfile
-./logger_support_test -s error -c stdout 1> $tempfile
+./logger_example -s error -c stdout 1> $tempfile
 passfail 2
 
 echo "2. Checking that console output to stdout does not go to stderr:"
 rm -f $tempfile
-./logger_support_test -s error -c stdout 2> $tempfile
+./logger_example -s error -c stdout 2> $tempfile
 passfail 0
 
 echo "3. Checking that console output to stderr goes to stderr:"
 rm -f $tempfile
-./logger_support_test -s error -c stderr 2> $tempfile
+./logger_example -s error -c stderr 2> $tempfile
 passfail 2
 
 echo "4. Checking that console output to stderr does not go to stdout:"
 rm -f $tempfile
-./logger_support_test -s error -c stderr 1> $tempfile
+./logger_example -s error -c stderr 1> $tempfile
 passfail 0
 
 rm -f $tempfile

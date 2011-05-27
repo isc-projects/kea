@@ -892,7 +892,8 @@ AC_OUTPUT([doc/version.ent
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
            src/lib/log/tests/console_test.sh
-           src/lib/log/tests/run_time_init_test.sh
+           src/lib/log/tests/local_file_test.sh
+           src/lib/log/tests/severity_test.sh
            src/lib/util/python/mkpywrapper.py
            src/lib/server_common/tests/data_path.h
            tests/system/conf.sh
