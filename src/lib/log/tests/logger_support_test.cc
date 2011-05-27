@@ -25,7 +25,10 @@
 #include <iostream>
 #include <string>
 
+#include <util/strutil.h>
+
 #include <log/logger.h>
+#include <log/logger_level.h>
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
 #include <log/macros.h>
@@ -128,24 +131,10 @@ int main(int argc, char** argv) {
             return (0);
 
         case 's':
-            if (strcmp(optarg, "debug") == 0) {
-                spec.setSeverity(isc::log::DEBUG);
-
-            } else if (strcmp(optarg, "info") == 0) {
-                spec.setSeverity(isc::log::INFO);
-
-            } else if (strcmp(optarg, "warn") == 0) {
-                spec.setSeverity(isc::log::WARN);
-
-            } else if (strcmp(optarg, "error") == 0) {
-                spec.setSeverity(isc::log::ERROR);
-
-            } else if (strcmp(optarg, "fatal") == 0) {
-                spec.setSeverity(isc::log::FATAL);
-
-            } else {
-                cerr << "Unrecognised severity option: " << optarg << "\n";
-                return (1);
+            {
+                string severity(optarg);
+                isc::util::str::uppercase(severity);
+                spec.setSeverity(getSeverity(severity));
             }
             break;
 
