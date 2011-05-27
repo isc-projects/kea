@@ -1,4 +1,4 @@
-// File created from messagedef.mes on Fri May 27 12:15:25 2011
+// File created from messagedef.mes on Fri May 27 14:49:45 2011
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -34,9 +34,9 @@ extern const isc::log::MessageID MSG_WRITERR = "MSG_WRITERR";
 namespace {
 
 const char* values[] = {
-    "MSG_BADDESTINATION", "Unrecognized log destination: %1",
-    "MSG_BADSEVERITY", "Unrecognized log severity: %1",
-    "MSG_BADSTREAM", "Bad log console output stream: %1",
+    "MSG_BADDESTINATION", "unrecognized log destination: %1",
+    "MSG_BADSEVERITY", "unrecognized log severity: %1",
+    "MSG_BADSTREAM", "bad log console output stream: %1",
     "MSG_DUPLNS", "line %1: duplicate $NAMESPACE directive found",
     "MSG_DUPMSGID", "duplicate message ID (%1) in compiled code",
     "MSG_IDNOTFND", "could not replace message text for '%1': no such message",
