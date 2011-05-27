@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <algorithm>
+#include <iostream>
 
 #include <log4cplus/logger.h>
 #include <log4cplus/configurator.h>
@@ -160,26 +161,33 @@ LoggerManagerImpl::init(isc::log::Severity severity, int dbglevel) {
     // Add the additional debug levels
     LoggerLevelImpl::init();
 
-    // And initialize the root logger
-    initRootLogger(severity, dbglevel);
+    reset();
+}
+
+// Reset logging to default configuration.  This closes all appenders
+// and resets the root logger to output INFO messages to the console.
+// It is principally used in testing.
+void
+LoggerManagerImpl::reset() {
+
+    // Initialize the root logger
+    initRootLogger();
 }
 
 // Initialize the root logger
 void LoggerManagerImpl::initRootLogger(isc::log::Severity severity,
-                                       int dbglevel) {
+                                       int dbglevel)
+{
+    log4cplus::Logger::getDefaultHierarchy().resetConfiguration();
 
     // Set the severity for the root logger
     log4cplus::Logger::getRoot().setLogLevel(
             LoggerLevelImpl::convertFromBindLevel(Level(severity, dbglevel)));
 
-    // Retrieve the appenders on the root instance and set the layout to
-    // use the "console" pattern.
-    log4cplus::SharedAppenderPtrList list =
-        log4cplus::Logger::getRoot().getAllAppenders();
-    for (log4cplus::SharedAppenderPtrList::iterator i = list.begin();
-         i != list.end(); ++i) {
-         setConsoleAppenderLayout(*i);
-    }
+    // Set the root to use a console logger.
+    OutputOption opt;
+    log4cplus::Logger root = log4cplus::Logger::getRoot();
+    createConsoleAppender(root, opt);
 }
 
 // Set the the "console" layout for the given appenders.  This layout includes

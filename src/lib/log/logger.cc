@@ -28,8 +28,7 @@ using namespace std;
 namespace isc {
 namespace log {
 
-// Initialize Logger implementation.  Does not check whether the implementation
-// has already been initialized - that was done by the caller (getLoggerPtr()).
+// Initialize Logger.
 void Logger::initLoggerImpl() {
     loggerptr_ = new LoggerImpl(name_);
 }
@@ -171,13 +170,6 @@ Logger::fatal(const isc::log::MessageID& ident) {
 bool
 Logger::operator==(Logger& other) {
     return (*getLoggerPtr() == *other.getLoggerPtr());
-}
-
-// Reset (used in testing only).  This is a static method.
-
-void
-Logger::reset() {
-    LoggerImpl::reset();
 }
 
 } // namespace log

@@ -37,29 +37,19 @@ using namespace isc;
 using namespace isc::log;
 using namespace std;
 
-/// \brief Derived logger
-///
-/// Only exists to make the protected static methods in Logger public for
-/// test purposes.
-
-class DerivedLogger : public isc::log::Logger {
-public:
-    DerivedLogger(std::string name) : isc::log::Logger(name)
-    {}
-
-    static void reset() {
-        isc::log::Logger::reset();
-    }
-};
+namespace {
+string ROOT_NAME("logmgrtest");
+}
 
 /// \brief LoggerManager Test
 class LoggerManagerTest : public ::testing::Test {
 public:
-    LoggerManagerTest()
-    {}
-    ~LoggerManagerTest()
-    {
-        DerivedLogger::reset();
+    LoggerManagerTest() {
+        LoggerManager::init(ROOT_NAME);
+    }
+
+    ~LoggerManagerTest() {
+        LoggerManager::reset();
     }
 };
 
@@ -221,9 +211,11 @@ TEST_F(LoggerManagerTest, FileLogger) {
         LOG_FATAL(logger, MSG_DUPLNS).arg("test");
         ids.push_back(MSG_DUPLNS);
     }
-    DerivedLogger::reset();
+    LoggerManager::reset();
 
     // At this point, the output file should contain two lines with messages
     // LOGTEST_TEST1 and LOGTEST_TEST2 messages - test this.
     checkFileContents(file_spec.getFileName(), ids.begin(), ids.end());
+
+    // 
 }
