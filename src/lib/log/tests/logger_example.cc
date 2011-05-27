@@ -14,7 +14,11 @@
 
 /// \brief Example Program
 ///
-/// Simple example program showing how to use the logger.
+/// Simple example program showing how to use the logger.  The various
+/// command-line options let most aspects of the logger be exercised, so
+/// making this a useful tool for testing.
+///
+/// See the usage() method for details of use.
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -75,16 +79,13 @@ int main(int argc, char** argv) {
     bool                f_found = false;    // Set true if "-f" found
     bool                l_found = false;    // Set true if "-l" found
 
-    const char*         localfile = NULL;   // Local message file
     int                 option;             // For getopt() processing
 
     LoggerSpecification spec(ROOT_NAME);    // Logger specification
     OutputOption        outopt;             // Logger output option
 
     // Initialize loggers (to set the root name and initialize logging);
-    // We'll reset them later.
-    setRootLoggerName(ROOT_NAME);
-    Logger rootLogger(ROOT_NAME);
+    LoggerManager::init(ROOT_NAME);
 
     // Parse options
     while ((option = getopt(argc, argv, "hc:d:f:s:")) != -1) {
@@ -145,12 +146,12 @@ int main(int argc, char** argv) {
         }
     }
 
+    // Set the local file
     if (optind < argc) {
-        localfile = argv[optind];
+        LoggerManager::readLocalMessageFile(argv[optind]);
     }
 
     // Update the logging parameters
-    LoggerManager::init(ROOT_NAME, localfile, isc::log::INFO, 0);
 
     // Set an output option if we have not done so already.
     if (! (c_found || f_found || l_found)) {

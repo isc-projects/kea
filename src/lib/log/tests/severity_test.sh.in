@@ -13,12 +13,16 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-testname="Run-time initialization test"
+# \brief Severity test
+#
+# Checks that the logger will limit the output of messages less severy than
+# the severity/debug setting.
+
+testname="Severity test"
 echo $testname
 
 failcount=0
-localmes=@abs_builddir@/localdef_mes_$$
-tempfile=@abs_builddir@/run_time_init_test_tempfile_$$
+tempfile=@abs_builddir@/severity_test_tempfile_$$
 
 passfail() {
     if [ $1 -eq 0 ]; then
@@ -29,15 +33,6 @@ passfail() {
     fi
 }
 
-# Create the local message file for testing
-
-cat > $localmes << .
-\$PREFIX MSG_
-% NOTHERE     this message is not in the global dictionary
-% READERR     replacement read error, parameters: '%1' and '%2'
-% RDLOCMES    replacement read local message file, parameter is '%1'
-.
-
 echo "1. runInitTest default parameters: "
 cat > $tempfile << .
 FATAL [alpha.example] MSG_WRITERR, error writing to test1: 42
@@ -45,7 +40,7 @@ ERROR [alpha.example] MSG_RDLOCMES, reading local message file dummy/file
 WARN  [alpha.dlm] MSG_READERR, error reading from message file a.txt: dummy reason
 INFO  [alpha.dlm] MSG_OPENIN, unable to open message file example.msg for input: dummy reason
 .
-./logger_support_test | cut -d' ' -f3- | diff $tempfile -
+./logger_example | cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
 echo "2. Severity filter: "
@@ -53,7 +48,7 @@ cat > $tempfile << .
 FATAL [alpha.example] MSG_WRITERR, error writing to test1: 42
 ERROR [alpha.example] MSG_RDLOCMES, reading local message file dummy/file
 .
-./logger_support_test -s error | cut -d' ' -f3- | diff $tempfile -
+./logger_example -s error | cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
 echo "3. Debug level: "
@@ -66,20 +61,9 @@ DEBUG [alpha.example] MSG_RDLOCMES, reading local message file dummy/0
 DEBUG [alpha.example] MSG_RDLOCMES, reading local message file dummy/24
 DEBUG [alpha.example] MSG_RDLOCMES, reading local message file dummy/25
 .
-./logger_support_test -s debug -d 25 | cut -d' ' -f3- | diff $tempfile -
+./logger_example -s debug -d 25 | cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
-echo "4. Local message replacement: "
-cat > $tempfile << .
-WARN  [alpha.log] MSG_IDNOTFND, could not replace message text for 'MSG_NOTHERE': no such message
-FATAL [alpha.example] MSG_WRITERR, error writing to test1: 42
-ERROR [alpha.example] MSG_RDLOCMES, replacement read local message file, parameter is 'dummy/file'
-WARN  [alpha.dlm] MSG_READERR, replacement read error, parameters: 'a.txt' and 'dummy reason'
-.
-./logger_support_test -s warn $localmes | cut -d' ' -f3- | diff $tempfile -
-passfail $?
-
-rm -f $localmes
 rm -f $tempfile
 
 if [ $failcount -eq 0 ]; then
