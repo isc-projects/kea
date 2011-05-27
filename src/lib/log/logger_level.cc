@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE
 
-#include <log/logger_specification.h>
+#include <log/logger_level.h>
 #include <log/macros.h>
 #include <log/messagedef.h>
 
