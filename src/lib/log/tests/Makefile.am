@@ -36,17 +36,18 @@ run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 endif
 
-TESTS += logger_support_test
-logger_support_test_SOURCES = logger_support_test.cc
-logger_support_test_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-logger_support_test_LDFLAGS = $(AM_LDFLAGS) $(LOG4CPLUS_LDFLAGS)
-logger_support_test_LDADD  = $(top_builddir)/src/lib/log/liblog.la
-logger_support_test_LDADD += $(top_builddir)/src/lib/util/libutil.la
+TESTS += logger_example
+logger_example_SOURCES = logger_example.cc
+logger_example_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
+logger_example_LDFLAGS = $(AM_LDFLAGS) $(LOG4CPLUS_LDFLAGS)
+logger_example_LDADD  = $(top_builddir)/src/lib/log/liblog.la
+logger_example_LDADD += $(top_builddir)/src/lib/util/libutil.la
 
 noinst_PROGRAMS = $(TESTS)
 
 # Additional test using the shell
-PYTESTS = run_time_init_test.sh console_test.sh
+PYTESTS = console_test.sh local_file_test.sh severity_test.sh
 check-local:
-	$(SHELL) $(abs_builddir)/run_time_init_test.sh
 	$(SHELL) $(abs_builddir)/console_test.sh
+	$(SHELL) $(abs_builddir)/local_file_test.sh
+	$(SHELL) $(abs_builddir)/severity_test.sh
