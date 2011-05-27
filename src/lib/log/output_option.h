@@ -75,6 +75,10 @@ struct OutputOption {
     int             maxver;             ///< Maximum versions (none if <= 0)
 };
 
+OutputOption::Destination getDestination(const std::string& dest_str);
+OutputOption::Stream getStream(const std::string& stream_str);
+
+
 } // namespace log
 } // namespace isc
 

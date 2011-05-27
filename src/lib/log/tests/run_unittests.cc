@@ -14,8 +14,12 @@
 
 #include <gtest/gtest.h>
 
+#include <log/logger_support.h>
+
 int
 main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
+
+    isc::log::initLogger();
     return (RUN_ALL_TESTS());
 }

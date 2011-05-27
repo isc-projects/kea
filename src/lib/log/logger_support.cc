@@ -65,24 +65,10 @@ void initLogger() {
     // B10_LOGGER_SEVERITY, and can be one of "DEBUG", "INFO", "WARN", "ERROR"
     // of "FATAL".  Note that the string must be in upper case with no leading
     // of trailing blanks.
-    isc::log::Severity severity = isc::log::DEBUG;
+    isc::log::Severity severity = isc::log::INFO;
     const char* sev_char = getenv("B10_LOGGER_SEVERITY");
     if (sev_char) {
-        string sev_string(sev_char);
-        if (sev_string == "DEBUG") {
-            severity = isc::log::DEBUG;
-        } else if (sev_string == "INFO") {
-            severity = isc::log::INFO;
-        } else if (sev_string == "WARN") {
-            severity = isc::log::WARN;
-        } else if (sev_string == "ERROR") {
-            severity = isc::log::ERROR;
-        } else if (sev_string == "FATAL") {
-            severity = isc::log::FATAL;
-        } else {
-            std::cerr << "**ERROR** unrecognised logger severity of '"
-                      << sev_string << "' - default severity will be used\n";
-        }
+        severity = isc::log::getSeverity(sev_char);
     }
 
     // If the severity is debug, get the debug level (environment variable

@@ -16,7 +16,7 @@ liblog_la_SOURCES += logger_level.h
 liblog_la_SOURCES += logger_level_impl.cc logger_level_impl.h
 liblog_la_SOURCES += logger_manager.cc logger_manager.h
 liblog_la_SOURCES += logger_manager_impl.cc logger_manager_impl.h
-liblog_la_SOURCES += logger_specification.h
+liblog_la_SOURCES += logger_specification.cc logger_specification.h
 liblog_la_SOURCES += logger_support.cc logger_support.h
 liblog_la_SOURCES += macros.h
 liblog_la_SOURCES += messagedef.cc messagedef.h
@@ -25,7 +25,7 @@ liblog_la_SOURCES += message_exception.h
 liblog_la_SOURCES += message_initializer.cc message_initializer.h
 liblog_la_SOURCES += message_reader.cc message_reader.h
 liblog_la_SOURCES += message_types.h
-liblog_la_SOURCES += output_option.h
+liblog_la_SOURCES += output_option.cc output_option.h
 liblog_la_SOURCES += root_logger_name.cc root_logger_name.h
 
 EXTRA_DIST  = README
