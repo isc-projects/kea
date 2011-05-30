@@ -425,6 +425,29 @@ TEST_F(TSIGTest, signUsingHMACSHA1) {
     }
 }
 
+TEST_F(TSIGTest, signUsingHMACSHA224) {
+    isc::util::detail::gettimeFunction = testGetTime<0x4dae7d5f>;
+
+    secret.clear();
+    decodeBase64("MA+QDhXbyqUak+qnMFyTyEirzng=", secret);
+    TSIGContext sha1_ctx(TSIGKey(test_name, TSIGKey::HMACSHA224_NAME(),
+                                 &secret[0], secret.size()));
+
+    const uint16_t sha1_qid = 0x0967;
+    const uint8_t expected_mac[] = {
+        0x3b, 0x93, 0xd3, 0xc5, 0xf9, 0x64, 0xb9, 0xc5, 0x00, 0x35, 
+        0x02, 0x69, 0x9f, 0xfc, 0x44, 0xd6, 0xe2, 0x66, 0xf4, 0x08, 
+        0xef, 0x33, 0xa2, 0xda, 0xa1, 0x48, 0x71, 0xd3
+    };
+    {
+        SCOPED_TRACE("Sign test using HMAC-SHA1");
+        commonSignChecks(createMessageAndSign(sha1_qid, test_name, &sha1_ctx),
+                         sha1_qid, 0x4dae7d5f, expected_mac,
+                         sizeof(expected_mac), 0, 0, NULL,
+                         TSIGKey::HMACSHA224_NAME());
+    }
+}
+
 // The first part of this test checks verifying the signed query used for
 // the "sign" test.
 // The second part of this test generates a signed response to the signed
