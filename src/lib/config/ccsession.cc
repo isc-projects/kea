@@ -37,6 +37,7 @@
 
 #include <log/logger_support.h>
 #include <log/logger_specification.h>
+#include <log/logger_manager.h>
 
 using namespace std;
 
@@ -157,18 +158,25 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
 void
 my_logconfig_handler(const std::string&n, ConstElementPtr new_config) {
     // TODO CHECK FORMAT
+
+    // TODO: defaults
     
-    std::cout << "[XX] n:" << n << std::endl;
-    //resolver->updateLoggingConfig(new_config);
-    std::cout << "[XX] " << new_config->str() << std::endl;
+    std::vector<isc::log::LoggerSpecification> specs;
+
     if (new_config->contains("loggers")) {
         BOOST_FOREACH(ConstElementPtr logger,
                       new_config->get("loggers")->listValue()) {
             // create LoggerOptions
             const std::string lname = logger->get("name")->stringValue();
             isc::log::Severity severity = isc::log::getSeverity(logger->get("severity")->stringValue());
-            int dbg_level = logger->get("debuglevel")->intValue();
-            bool additive = logger->get("additive")->boolValue();
+            int dbg_level = 0;
+            if (logger->contains("debuglevel")) {
+                dbg_level = logger->get("debuglevel")->intValue();
+            }
+            bool additive = false;
+            if (logger->contains("additive")) {
+                additive = logger->get("additive")->boolValue();
+            }
             
             isc::log::LoggerSpecification logger_spec(
                 lname, severity, dbg_level, additive
@@ -178,7 +186,11 @@ my_logconfig_handler(const std::string&n, ConstElementPtr new_config) {
                               logger->get("output_options")->listValue()) {
                     // create outputoptions
                     isc::log::OutputOption output_option;
-                    output_option.destination = isc::log::getDestination(output_option_el->get("destination")->stringValue());
+                    if (output_option_el->contains("destination")) {
+                        output_option.destination = isc::log::getDestination(output_option_el->get("destination")->stringValue());
+                    } else {
+                        output_option.destination = isc::log::OutputOption::DEST_CONSOLE;
+                    }
                     if (output_option_el->contains("stream")) {
                         output_option.stream = isc::log::getStream(output_option_el->get("stream")->stringValue());
                     }
@@ -200,8 +212,13 @@ my_logconfig_handler(const std::string&n, ConstElementPtr new_config) {
                     logger_spec.addOutputOption(output_option);
                 }
             }
+
+            specs.push_back(logger_spec);
         }
     }
+
+    isc::log::LoggerManager logger_manager;
+    logger_manager.process(specs.begin(), specs.end());
 }
 
 
