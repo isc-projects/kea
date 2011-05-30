@@ -133,7 +133,7 @@ def _find_spec_part_single(cur_spec, id_part):
     # The specification we want a sub-part for should be either a
     # list or a map, which is internally represented by a dict with
     # an element 'map_item_spec', a dict with an element 'list_item_spec',
-    # or a list.
+    # or a list (when it is the 'main' config_data element of a module).
     if type(cur_spec) == dict and 'map_item_spec' in cur_spec.keys():
         for cur_spec_item in cur_spec['map_item_spec']:
             if cur_spec_item['item_name'] == id:
@@ -141,7 +141,10 @@ def _find_spec_part_single(cur_spec, id_part):
         # not found
         raise isc.cc.data.DataNotFoundError(id + " not found")
     elif type(cur_spec) == dict and 'list_item_spec' in cur_spec.keys():
-        return cur_spec['list_item_spec']
+        if cur_spec['item_name'] == id:
+            return cur_spec['list_item_spec']
+        # not found
+        raise isc.cc.data.DataNotFoundError(id + " not found")
     elif type(cur_spec) == list:
         for cur_spec_item in cur_spec:
             if cur_spec_item['item_name'] == id:
