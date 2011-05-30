@@ -639,6 +639,12 @@ Resolver::updateConfig(ConstElementPtr config) {
 }
 
 void
+Resolver::updateLoggingConfig(ConstElementPtr config) {
+    std::cout << "[XX] Got new logger config: " << std::endl;
+    std::cout << config->str() << std::endl;
+}
+
+void
 Resolver::setForwardAddresses(const AddressList& addresses)
 {
     impl_->setForwardAddresses(addresses, dnss_);

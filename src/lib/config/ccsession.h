@@ -161,6 +161,10 @@ public:
      * configuration of the local module needs to be updated.
      * This must refer to a valid object of a concrete derived class of
      * AbstractSession without establishing the session.
+     * @param handle_logging If true, the ModuleCCSession will automatically
+     * take care of logging configuration through the virtual Logging config
+     * module.
+     *
      * Note: the design decision on who is responsible for establishing the
      * session is in flux, and may change in near future.
      *
@@ -184,7 +188,8 @@ public:
                     isc::data::ConstElementPtr(*command_handler)(
                         const std::string& command,
                         isc::data::ConstElementPtr args) = NULL,
-                    bool start_immediately = true
+                    bool start_immediately = true,
+                    bool handle_logging = false
                     );
 
     /// Start receiving new commands and configuration changes asynchronously.
