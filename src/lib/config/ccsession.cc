@@ -35,6 +35,9 @@
 #include <config/config_log.h>
 #include <config/ccsession.h>
 
+#include <log/logger_support.h>
+#include <log/logger_specification.h>
+
 using namespace std;
 
 using isc::data::Element;
@@ -151,6 +154,57 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
     }
 }
 
+void
+my_logconfig_handler(const std::string&n, ConstElementPtr new_config) {
+    // TODO CHECK FORMAT
+    
+    std::cout << "[XX] n:" << n << std::endl;
+    //resolver->updateLoggingConfig(new_config);
+    std::cout << "[XX] " << new_config->str() << std::endl;
+    if (new_config->contains("loggers")) {
+        BOOST_FOREACH(ConstElementPtr logger,
+                      new_config->get("loggers")->listValue()) {
+            // create LoggerOptions
+            const std::string lname = logger->get("name")->stringValue();
+            isc::log::Severity severity = isc::log::getSeverity(logger->get("severity")->stringValue());
+            int dbg_level = logger->get("debuglevel")->intValue();
+            bool additive = logger->get("additive")->boolValue();
+            
+            isc::log::LoggerSpecification logger_spec(
+                lname, severity, dbg_level, additive
+            );
+            if (logger->contains("output_options")) {
+                BOOST_FOREACH(ConstElementPtr output_option_el,
+                              logger->get("output_options")->listValue()) {
+                    // create outputoptions
+                    isc::log::OutputOption output_option;
+                    output_option.destination = isc::log::getDestination(output_option_el->get("destination")->stringValue());
+                    if (output_option_el->contains("stream")) {
+                        output_option.stream = isc::log::getStream(output_option_el->get("stream")->stringValue());
+                    }
+                    if (output_option_el->contains("flush")) {
+                        output_option.flush = output_option_el->get("flush")->boolValue();
+                    }
+                    if (output_option_el->contains("facility")) {
+                        output_option.facility = output_option_el->get("facility")->stringValue();
+                    }
+                    if (output_option_el->contains("filename")) {
+                        output_option.filename = output_option_el->get("filename")->stringValue();
+                    }
+                    if (output_option_el->contains("maxsize")) {
+                        output_option.maxsize = output_option_el->get("maxsize")->intValue();
+                    }
+                    if (output_option_el->contains("maxver")) {
+                        output_option.maxver = output_option_el->get("maxver")->intValue();
+                    }
+                    logger_spec.addOutputOption(output_option);
+                }
+            }
+        }
+    }
+}
+
+
 ModuleSpec
 ModuleCCSession::readModuleSpecification(const std::string& filename) {
     std::ifstream file;
@@ -193,7 +247,8 @@ ModuleCCSession::ModuleCCSession(
         isc::data::ConstElementPtr new_config),
     isc::data::ConstElementPtr(*command_handler)(
         const std::string& command, isc::data::ConstElementPtr args),
-    bool start_immediately
+    bool start_immediately,
+    bool handle_logging
     ) :
     started_(false),
     session_(session)
@@ -207,10 +262,8 @@ ModuleCCSession::ModuleCCSession(
 
     session_.establish(NULL);
     session_.subscribe(module_name_, "*");
-    //session_.subscribe("Boss", "*");
-    //session_.subscribe("statistics", "*");
-    // send the data specification
 
+    // send the data specification
     ConstElementPtr spec_msg = createCommand("module_spec",
                                              module_specification_.getFullSpec());
     unsigned int seq = session_.group_sendmsg(spec_msg, "ConfigManager");
@@ -241,6 +294,11 @@ ModuleCCSession::ModuleCCSession(
 
     if (start_immediately) {
         start();
+    }
+
+    // Keep track of logging settings automatically
+    if (handle_logging) {
+        addRemoteConfig("Logging", my_logconfig_handler, false);
     }
 }
 
