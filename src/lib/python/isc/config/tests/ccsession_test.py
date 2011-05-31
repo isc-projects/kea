@@ -220,6 +220,31 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual({'command': ['get_config', {'module_name': 'Spec2'}]},
                          fake_session.get_message('ConfigManager', None))
 
+    def test_start5(self):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        mccs.set_config_handler(self.my_config_handler_ok)
+        self.assertEqual(len(fake_session.message_queue), 0)
+        fake_session.group_sendmsg(None, 'Spec2')
+        fake_session.group_sendmsg(None, 'Spec2')
+        self.assertRaises(ModuleCCSessionError, mccs.start)
+        self.assertEqual(len(fake_session.message_queue), 2)
+        self.assertEqual({'command': ['module_spec', mccs.specification._module_spec]},
+                         fake_session.get_message('ConfigManager', None))
+        self.assertEqual({'command': ['get_config', {'module_name': 'Spec2'}]},
+                         fake_session.get_message('ConfigManager', None))
+
+        self.assertEqual(len(fake_session.message_queue), 0)
+        fake_session.group_sendmsg({'result': [ 0 ]}, "Spec2")
+        fake_session.group_sendmsg({'result': [ 0, {"Wrong": True} ]}, "Spec2")
+        self.assertRaises(ModuleCCSessionError, mccs.start)
+        self.assertEqual(len(fake_session.message_queue), 2)
+
+        self.assertEqual({'command': ['module_spec', mccs.specification._module_spec]},
+                         fake_session.get_message('ConfigManager', None))
+        self.assertEqual({'command': ['get_config', {'module_name': 'Spec2'}]},
+                         fake_session.get_message('ConfigManager', None))
+
     def test_get_socket(self):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec1.spec", None, None, fake_session)
