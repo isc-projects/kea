@@ -388,6 +388,10 @@ doRFC4231Tests(HashAlgorithm hash_algorithm,
     secret_list.push_back(std::string(131, 0xaa));
     secret_list.push_back(std::string(131, 0xaa));
 
+    // Make sure we provide a consistent size of test data
+    ASSERT_EQ(secret_list.size(), data_list.size());
+    ASSERT_EQ(secret_list.size(), hmac_list.size());
+
     for (int i = 0; i < data_list.size(); ++i) {
         SCOPED_TRACE("RFC4231 HMAC test for algorithm ID: " +
                      lexical_cast<std::string>(hash_algorithm) +
