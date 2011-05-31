@@ -237,7 +237,7 @@ def load(dbfile, zone, reader):
     conn, cur = open(dbfile)
     try:
         old_zone_id = get_zoneid(zone, cur)
-    
+
         temp = str(random.randrange(100000))
         cur.execute("INSERT INTO zones (name, rdclass) VALUES (?, 'IN')", [temp])
         new_zone_id = cur.lastrowid
