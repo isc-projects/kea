@@ -329,6 +329,7 @@ class ModuleCCSession(ConfigData):
             if answer:
                 rcode, value = parse_answer(answer)
                 if rcode == 0:
+                    errors = []
                     if value != None:
                         errors = []
                         if self.get_module_spec().validate_config(False,
