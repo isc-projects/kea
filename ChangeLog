@@ -1,3 +1,7 @@
+246.    [func]      stephen
+	Implement logging using log4cplus (http://log4cplus.sourceforge.net)
+	(Trac899, git 31d3f525dc01638aecae460cb4bc2040c9e4df10)
+
 245.    [func]      vorner
 	Authoritative server can now sign the answers using TSIG
 	(configured in tsig_keys/keys, list of strings like
