@@ -16,5 +16,6 @@ endif
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/lib/python/isc/log \
 	TESTDATA_PATH=$(abs_srcdir)/testdata \
+	TESTDATA_WRITE_PATH=$(abs_builddir) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
