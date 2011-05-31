@@ -29,7 +29,9 @@ run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 
 run_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_CLANGPP
-run_unittests_CXXFLAGS += -Wno-error=unused-parameter
+# This is to workaround unused variables tcout and tcerr in
+# log4cplus's streams.h.
+run_unittests_CXXFLAGS += -Wno-unused-variable
 endif
 run_unittests_LDADD  = $(GTEST_LDADD)
 run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
@@ -39,10 +41,6 @@ endif
 TESTS += logger_support_test
 logger_support_test_SOURCES  = logger_support_test.cc
 logger_support_test_CPPFLAGS = $(AM_CPPFLAGS)
-logger_support_test_CXXFLAGS = $(AM_CXXFLAGS)
-if USE_CLANGPP
-logger_support_test_CXXFLAGS += -Wno-error=unused-parameter
-endif
 logger_support_test_LDFLAGS  = $(AM_LDFLAGS)
 logger_support_test_LDADD    = $(top_builddir)/src/lib/log/liblog.la
 
