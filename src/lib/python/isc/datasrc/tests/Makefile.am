@@ -4,6 +4,7 @@ EXTRA_DIST = $(PYTESTS)
 
 EXTRA_DIST += testdata/brokendb.sqlite3
 EXTRA_DIST += testdata/example.com.sqlite3
+CLEANFILES = $(abs_builddir)/example.com.out.sqlite3
 
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
