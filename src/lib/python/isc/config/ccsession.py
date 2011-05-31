@@ -331,7 +331,6 @@ class ModuleCCSession(ConfigData):
                 if rcode == 0:
                     errors = []
                     if value != None:
-                        errors = []
                         if self.get_module_spec().validate_config(False,
                                                                   value,
                                                                   errors):
