@@ -329,10 +329,18 @@ class ModuleCCSession(ConfigData):
             if answer:
                 rcode, value = parse_answer(answer)
                 if rcode == 0:
-                    if value != None and self.get_module_spec().validate_config(False, value):
-                        self.set_local_config(value);
-                        if self._config_handler:
-                            self._config_handler(value)
+                    if value != None:
+                        errors = []
+                        if self.get_module_spec().validate_config(False,
+                                                                  value,
+                                                                  errors):
+                            self.set_local_config(value);
+                            if self._config_handler:
+                                self._config_handler(value)
+                        else:
+                            raise ModuleCCSessionError(
+                                "Wrong data in configuration: " +
+                                " ".join(errors))
                 else:
                     # log error
                     print("[" + self._module_name + "] Error requesting configuration: " + value)
