@@ -29,6 +29,7 @@ run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 
 run_unittests_LDADD  = $(GTEST_LDADD)
 run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 endif
 
 TESTS += logger_support_test

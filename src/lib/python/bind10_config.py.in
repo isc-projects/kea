@@ -42,7 +42,8 @@ def reload():
             DATA_PATH = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"]
         else:
             DATA_PATH = os.environ["B10_FROM_SOURCE"]
-        PLUGIN_PATHS = [DATA_PATH + '/src/bin/cfgmgr/plugins']
+        PLUGIN_PATHS = [os.environ["B10_FROM_SOURCE"] +
+                            '/src/bin/cfgmgr/plugins']
     else:
         DATA_PATH = "@localstatedir@/@PACKAGE@".replace("${prefix}", PREFIX)
         PLUGIN_PATHS = ["@prefix@/share/@PACKAGE@/config_plugins"]
