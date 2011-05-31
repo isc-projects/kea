@@ -171,6 +171,11 @@ public:
      * @param command_handler A callback function pointer to be called when
      * a control command from a remote agent needs to be performed on the
      * local module.
+     * @start_immediately If true (default), start listening to new commands
+     * and configuration changes asynchronously at the end of the constructor;
+     * if false, it will be delayed until the start() method is explicitly
+     * called. (This is a short term workaround for an initialization trouble.
+     * We'll need to develop a cleaner solution, and then remove this knob)
      */
     ModuleCCSession(const std::string& spec_file_name,
                     isc::cc::AbstractSession& session,
@@ -178,8 +183,19 @@ public:
                         isc::data::ConstElementPtr new_config) = NULL,
                     isc::data::ConstElementPtr(*command_handler)(
                         const std::string& command,
-                        isc::data::ConstElementPtr args) = NULL
+                        isc::data::ConstElementPtr args) = NULL,
+                    bool start_immediately = true
                     );
+
+    /// Start receiving new commands and configuration changes asynchronously.
+    ///
+    /// This method must be called only once, and only when the ModuleCCSession
+    /// was constructed with start_immediately being false.  Otherwise
+    /// CCSessionError will be thrown.
+    ///
+    /// As noted in the constructor, this method should be considered a short
+    /// term workaround and will be removed in future.
+    void start();
 
     /**
      * Optional optimization for checkCommand loop; returns true
@@ -240,12 +256,16 @@ public:
      * for those changes. This function will subscribe to the relevant module
      * channel.
      *
+     * This method must be called before calling the \c start() method on the
+     * ModuleCCSession (it also implies the ModuleCCSession must have been
+     * constructed with start_immediately being false).
+     *
      * \param spec_name This specifies the module to add. It is either a
      *                  filename of the spec file to use or a name of module
      *                  (in case it's a module name, the spec data is
      *                  downloaded from the configuration manager, therefore
      *                  the configuration manager must know it). If
-     *                  spec_is_filenabe is true (the default), then a
+     *                  spec_is_filename is true (the default), then a
      *                  filename is assumed, otherwise a module name.
      * \param handler The handler function called whenever there's a change.
      *                Called once initally from this function. May be NULL
@@ -293,7 +313,8 @@ public:
 private:
     ModuleSpec readModuleSpecification(const std::string& filename);
     void startCheck();
-    
+
+    bool started_;
     std::string module_name_;
     isc::cc::AbstractSession& session_;
     ModuleSpec module_specification_;
@@ -322,6 +343,8 @@ private:
 
     void updateRemoteConfig(const std::string& module_name,
                             isc::data::ConstElementPtr new_config);
+
+    ModuleSpec fetchRemoteSpec(const std::string& module, bool is_filename);
 };
 
 }
