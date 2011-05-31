@@ -156,7 +156,7 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
 }
 
 void
-my_logconfig_handler(const std::string&n, ConstElementPtr new_config) {
+my_logconfig_handler(const std::string&n, ConstElementPtr new_config, const ConfigData& config_data) {
     // TODO CHECK FORMAT
 
     // TODO: defaults
@@ -511,7 +511,7 @@ ModuleCCSession::addRemoteConfig(const std::string& spec_name,
     remote_module_configs_[module_name] = rmod_config;
     if (handler) {
         remote_module_handlers_[module_name] = handler;
-        handler(module_name, local_config);
+        handler(module_name, local_config, rmod_config);
     }
 
     // Make sure we get updates in future
@@ -559,7 +559,7 @@ ModuleCCSession::updateRemoteConfig(const std::string& module_name,
         std::map<std::string, RemoteHandler>::iterator hit =
             remote_module_handlers_.find(module_name);
         if (hit != remote_module_handlers_.end()) {
-            hit->second(module_name, new_config);
+            hit->second(module_name, new_config, it->second);
         }
     }
 }

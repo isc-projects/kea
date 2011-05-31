@@ -288,7 +288,8 @@ public:
     std::string addRemoteConfig(const std::string& spec_name,
                                 void (*handler)(const std::string& module_name,
                                                 isc::data::ConstElementPtr
-                                                update) = NULL,
+                                                update,
+                                                const ConfigData& config_data) = NULL,
                                 bool spec_is_filename = true);
 
     /**
@@ -342,7 +343,8 @@ private:
         isc::data::ConstElementPtr args);
 
     typedef void (*RemoteHandler)(const std::string&,
-                                  isc::data::ConstElementPtr);
+                                  isc::data::ConstElementPtr,
+                                  const ConfigData&);
     std::map<std::string, ConfigData> remote_module_configs_;
     std::map<std::string, RemoteHandler> remote_module_handlers_;
 

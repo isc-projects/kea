@@ -351,7 +351,7 @@ int remote_item1(0);
 ConstElementPtr remote_config;
 ModuleCCSession *remote_mccs(NULL);
 
-void remoteHandler(const std::string& module_name, ConstElementPtr config) {
+void remoteHandler(const std::string& module_name, ConstElementPtr config, const ConfigData&) {
     remote_module_name = module_name;
     remote_item1 = remote_mccs->getRemoteConfigValue("Spec2", "item1")->
         intValue();
