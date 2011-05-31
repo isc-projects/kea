@@ -434,6 +434,14 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.assertTrue(zone_state == ZONE_REFRESHING)
 
     def test_update_config_data(self):
+        # make sure it doesn't fail if we only provide secondary zones
+        config_data = {
+                    "secondary_zones": [ { "name": "example.net.",
+                                           "class": "IN" } ]
+                }
+        self.zone_refresh.update_config_data(config_data)
+
+        # update all values
         config_data = {
                     "lowerbound_refresh" : 60,
                     "lowerbound_retry" : 30,
@@ -447,6 +455,53 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.assertEqual(30, self.zone_refresh._lowerbound_retry)
         self.assertEqual(19800, self.zone_refresh._max_transfer_timeout)
         self.assertEqual(0.25, self.zone_refresh._refresh_jitter)
+        self.assertEqual(0.75, self.zone_refresh._reload_jitter)
+
+        # make sure they are not reset when we only update one
+        config_data = {
+                    "reload_jitter" : 0.35,
+                }
+        self.zone_refresh.update_config_data(config_data)
+        self.assertEqual(60, self.zone_refresh._lowerbound_refresh)
+        self.assertEqual(30, self.zone_refresh._lowerbound_retry)
+        self.assertEqual(19800, self.zone_refresh._max_transfer_timeout)
+        self.assertEqual(0.25, self.zone_refresh._refresh_jitter)
+        self.assertEqual(0.35, self.zone_refresh._reload_jitter)
+
+        # and make sure we restore the previous config if something
+        # goes wrong
+        config_data = {
+                    "lowerbound_refresh" : 61,
+                    "lowerbound_retry" : 31,
+                    "max_transfer_timeout" : 19801,
+                    "refresh_jitter" : 0.21,
+                    "reload_jitter" : 0.71,
+                    "secondary_zones": [ { "name": "doesnotexist",
+                                           "class": "IN" } ]
+                }
+        self.assertRaises(ZonemgrException,
+                          self.zone_refresh.update_config_data,
+                          config_data)
+        self.assertEqual(60, self.zone_refresh._lowerbound_refresh)
+        self.assertEqual(30, self.zone_refresh._lowerbound_retry)
+        self.assertEqual(19800, self.zone_refresh._max_transfer_timeout)
+        self.assertEqual(0.25, self.zone_refresh._refresh_jitter)
+        self.assertEqual(0.35, self.zone_refresh._reload_jitter)
+
+        # Make sure we accept 0 as a value
+        config_data = {
+                    "lowerbound_refresh" : 60,
+                    "lowerbound_retry" : 30,
+                    "max_transfer_timeout" : 19800,
+                    "refresh_jitter" : 0,
+                    "reload_jitter" : 0.75,
+                    "secondary_zones": []
+                }
+        self.zone_refresh.update_config_data(config_data)
+        self.assertEqual(60, self.zone_refresh._lowerbound_refresh)
+        self.assertEqual(30, self.zone_refresh._lowerbound_retry)
+        self.assertEqual(19800, self.zone_refresh._max_transfer_timeout)
+        self.assertEqual(0, self.zone_refresh._refresh_jitter)
         self.assertEqual(0.75, self.zone_refresh._reload_jitter)
 
     def test_shutdown(self):

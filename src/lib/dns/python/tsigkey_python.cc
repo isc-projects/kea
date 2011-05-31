@@ -256,6 +256,12 @@ initModulePart_TSIGKey(PyObject* mod) {
                              createNameObject(TSIGKey::HMACSHA1_NAME()));
         installClassVariable(tsigkey_type, "HMACSHA256_NAME",
                              createNameObject(TSIGKey::HMACSHA256_NAME()));
+        installClassVariable(tsigkey_type, "HMACSHA224_NAME",
+                             createNameObject(TSIGKey::HMACSHA224_NAME()));
+        installClassVariable(tsigkey_type, "HMACSHA384_NAME",
+                             createNameObject(TSIGKey::HMACSHA384_NAME()));
+        installClassVariable(tsigkey_type, "HMACSHA512_NAME",
+                             createNameObject(TSIGKey::HMACSHA512_NAME()));
     } catch (const exception& ex) {
         const string ex_what =
             "Unexpected failure in TSIGKey initialization: " +
