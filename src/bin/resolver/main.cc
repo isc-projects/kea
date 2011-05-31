@@ -53,7 +53,7 @@
 #include <nsas/nameserver_address_store.h>
 
 #include <log/logger_support.h>
-#include <log/debug_levels.h>
+#include <log/logger_level.h>
 #include "resolver_log.h"
 
 using namespace std;
@@ -127,7 +127,7 @@ main(int argc, char* argv[]) {
     // temporary initLogger() code.  If verbose, we'll use maximum verbosity.
     isc::log::initLogger("b10-resolver",
                          (verbose ? isc::log::DEBUG : isc::log::INFO),
-                         MAX_DEBUG_LEVEL, NULL);
+                         isc::log::MAX_DEBUG_LEVEL, NULL);
 
     // Print the starting message
     string cmdline = argv[0];
