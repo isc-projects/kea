@@ -73,7 +73,7 @@ class TestSqlite3_ds(unittest.TestCase):
         con = sqlite3.connect(WRITE_ZONE_DB_FILE);
         cur = con.cursor()
         cur.execute("delete from records")
-        
+
         self.assertRaises(sqlite3_ds.Sqlite3DSError,
                           sqlite3_ds.load, WRITE_ZONE_DB_FILE, ".",
                           example_reader)
