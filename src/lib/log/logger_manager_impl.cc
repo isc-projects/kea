@@ -39,20 +39,17 @@ public:
     {}
 };
 
-// Reset hierarchy of loggers back to default settings.  This removes all
-// appenders from loggers, sets their severity to NOT_SET (so that events are
-// passed back to the parent) and resets the root logger to logging
-// informational messages.  (This last is not a log4cplus default, so we have to
-// explicitly reset the logging severity.)
 
 using namespace std;
 
 namespace isc {
 namespace log {
 
-// Reset hierarchy back to default.  Note that this does not delete existing
-// loggers, it makes them inactive.  (So a logger is never removed, even if a
-// configuration update removes the logger.)
+// Reset hierarchy of loggers back to default settings.  This removes all
+// appenders from loggers, sets their severity to NOT_SET (so that events are
+// passed back to the parent) and resets the root logger to logging
+// informational messages.  (This last is not a log4cplus default, so we have to
+// explicitly reset the logging severity.)
 
 void
 LoggerManagerImpl::processInit() {
