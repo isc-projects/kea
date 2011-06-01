@@ -25,11 +25,43 @@ from isc.util.file import path_search
 from bind10_config import PLUGIN_PATHS
 spec = module_spec_from_file(path_search('logging.spec', PLUGIN_PATHS))
 
+ALLOWED_SEVERITIES = [ 'default',
+                       'debug',
+                       'info',
+                       'warn',
+                       'error',
+                       'fatal',
+                       'none' ]
+ALLOWED_DESTINATIONS = [ 'console',
+                         'file',
+                         'syslog' ]
+ALLOWED_STREAMS = [ 'stdout',
+                    'stderr' ]
+
 def check(config):
     # Check the data layout first
     errors=[]
     if not spec.validate_config(False, config, errors):
         return ' '.join(errors)
+    # The 'layout' is ok, now check for specific values
+    if 'loggers' in config:
+        for logger in config['loggers']:
+            if 'severity' in logger and\
+               logger['severity'].lower() not in ALLOWED_SEVERITIES:
+                errors.append("bad severity value " + logger['severity'])
+            if 'output_options' in logger:
+                for output_option in logger['output_options']:
+                    if 'destination' in output_option:
+                        if output_option['destination'].lower() not in ALLOWED_DESTINATIONS:
+                            errors.append("bad destination: " + output_option['destination'])
+                        if 'filename' not in output_option:
+                            errors.append("destination set to file but no filename specified")
+                    if 'stream' in output_option and\
+                       output_option['stream'].lower() not in ALLOWED_STREAMS:
+                        errors.append("bad stream: " + output_option['stream'])
+                
+    if errors:
+        return ', '.join(errors)
     return None
 
 def load():
