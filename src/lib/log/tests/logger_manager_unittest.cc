@@ -186,6 +186,13 @@ TEST_F(LoggerManagerTest, FileLogger) {
     // Create a specification for the file logger and use the manager to
     // connect the "filelogger" logger to it.
     SpecificationForFileLogger file_spec;
+
+    // For the first test, we want to check that the file is created
+    // if it does not already exist.  So delete the temporary file before
+    // logging the first message.
+    unlink(file_spec.getFileName().c_str());
+
+    // Set up the file appenders.
     LoggerManager manager;
     manager.process(file_spec.getSpecification());
 
@@ -194,10 +201,6 @@ TEST_F(LoggerManagerTest, FileLogger) {
     // put in the file for a later comparison.
     vector<MessageID> ids;
     {
-        // For the first test, we want to check that the file is created
-        // if it does not already exist.  So delete the temporary file before
-        // logging the first message.
-        unlink(file_spec.getFileName());
 
         // Scope-limit the logger to ensure it is destroyed after the brief
         // check.  This adds weight to the idea that the logger will not

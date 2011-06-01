@@ -22,18 +22,8 @@
 using namespace isc::log;
 using namespace std;
 
-/// \brief LoggerSpecification Test
-class LoggerSpecificationTest : public ::testing::Test {
-public:
-    LoggerSpecificationTest()
-    {}
-    ~LoggerSpecificationTest()
-    {}
-};
-
-
 // Check default initialization.
-TEST_F(LoggerSpecificationTest, DefaultInitialization) {
+TEST(LoggerSpecificationTest, DefaultInitialization) {
     LoggerSpecification spec;
 
     EXPECT_EQ(string(""), spec.getName());
@@ -44,7 +34,7 @@ TEST_F(LoggerSpecificationTest, DefaultInitialization) {
 }
 
 // Non-default initialization
-TEST_F(LoggerSpecificationTest, Initialization) {
+TEST(LoggerSpecificationTest, Initialization) {
     LoggerSpecification spec("alpha", isc::log::ERROR, 42, true);
 
     EXPECT_EQ(string("alpha"), spec.getName());
@@ -55,7 +45,7 @@ TEST_F(LoggerSpecificationTest, Initialization) {
 }
 
 // Get/Set tests
-TEST_F(LoggerSpecificationTest, SetGet) {
+TEST(LoggerSpecificationTest, SetGet) {
     LoggerSpecification spec;
 
     spec.setName("gamma");
@@ -75,7 +65,7 @@ TEST_F(LoggerSpecificationTest, SetGet) {
 }
 
 // Check option setting
-TEST_F(LoggerSpecificationTest, AddOption) {
+TEST(LoggerSpecificationTest, AddOption) {
     OutputOption option1;
     option1.destination = OutputOption::DEST_FILE;
     option1.filename = "/tmp/example.log";
