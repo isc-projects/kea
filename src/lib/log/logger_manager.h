@@ -71,10 +71,13 @@ public:
     /// Performs run-time initialization of the logger system, in particular
     /// supplying the root logger name and name of a replacement message file.
     ///
-    /// This must be the first logging function called in the program.
+    /// This must be the first logging function called in the program.  If
+    /// an attempt is made to log a message before this is function is called,
+    /// the results will be dependent on the underlying logging package.
     ///
-    /// \param root Name of the root logger
-    /// \param file Name of the local message file.
+    /// \param root Name of the root logger.  This can be NULL, but should be
+    ///        set to the name of the program.
+    /// \param file Name of the local message file (if there is one).
     /// \param severity Severity at which to log
     /// \param dbglevel Debug severity (ignored if "severity" is not "DEBUG")
     static void init(const std::string& root, const char* file = NULL,
@@ -100,8 +103,9 @@ private:
     /// \brief Initialize Processing
     ///
     /// Initializes the processing of a list of specifications by resetting all
-    /// loggers to their defaults.  Note that loggers aren't removed as unless
-    /// a previously-enabled logger is re-enabled, it becomes inactive.
+    /// loggers to their defaults, which is to pass the message to their
+    /// parent logger.  (Except for the root logger, where the default action is
+    /// to output the message.)
     void processInit();
 
     /// \brief Process Logging Specification
