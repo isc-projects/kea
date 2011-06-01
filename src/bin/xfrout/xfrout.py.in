@@ -77,11 +77,8 @@ VERBOSE_MODE = False
 # tsig sign every N axfr packets.
 TSIG_SIGN_EVERY_NTH = 96
 
-
 XFROUT_MAX_MESSAGE_SIZE = 65535
 
-class XfroutException(Exception):
-    pass
 
 def get_rrset_len(rrset):
     """Returns the wire length of the given RRset"""
