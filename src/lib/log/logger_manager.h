@@ -15,7 +15,17 @@
 #ifndef __LOGGER_MANAGER_H
 #define __LOGGER_MANAGER_H
 
+#include "exceptions/exceptions.h"
 #include <log/logger_specification.h>
+
+// Generated if, when updating the logging specification, an unknown
+// destination is encountered.
+class UnknownLoggingDestination : public isc::Exception {
+public:
+    UnknownLoggingDestination(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what)
+    {}
+};
 
 namespace isc {
 namespace log {

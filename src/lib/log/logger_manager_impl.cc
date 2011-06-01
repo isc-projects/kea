@@ -21,24 +21,13 @@
 #include <log4cplus/fileappender.h>
 
 #include "log/logger_level_impl.h"
+#include "log/logger_manager.h"
 #include "log/logger_manager_impl.h"
 #include "log/logger_specification.h"
 #include "log/root_logger_name.h"
 
 #include "log/logger.h"
 #include "log/messagedef.h"
-
-#include "exceptions/exceptions.h"
-
-// Generated exceptions.  Methods in this file can't log exceptions as they may
-// occur when logging is disabled or in an inconsistent state.
-class UnknownLoggingDestination : public isc::Exception {
-public:
-    UnknownLoggingDestination(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what)
-    {}
-};
-
 
 using namespace std;
 
@@ -63,7 +52,6 @@ LoggerManagerImpl::processInit() {
 void
 LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
 
-    // Get/construct the logger for which this specification applies.
     log4cplus::Logger logger = (spec.getName() == getRootLoggerName()) ?
                                log4cplus::Logger::getRoot() :
                                log4cplus::Logger::getInstance(spec.getName());
@@ -98,6 +86,10 @@ LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
                 break;
 
             default:
+                // Not a valid destination.  As we are in the middle of updating
+                // logging destinations, we could be in the situation where
+                // there are no valid appenders.  For this reason, throw an
+                // exception.
                 isc_throw(UnknownLoggingDestination,
                           "Unknown logging destination, code = " <<
                           i->destination);
