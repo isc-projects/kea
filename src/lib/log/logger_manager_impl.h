@@ -73,7 +73,8 @@ public:
     /// \brief End Processing
     ///
     /// Terminates the processing of the logging specifications.
-    static void processEnd();
+    static void processEnd()
+    {}
 
     /// \brief Implementation-specific initialization
     ///

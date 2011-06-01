@@ -34,8 +34,6 @@ using namespace std;
 namespace isc {
 namespace log {
 
-void LoggerManagerImpl::processEnd() {}
-
 // Constructor - create the implementation  class.
 LoggerManager::LoggerManager() {
     impl_ = new LoggerManagerImpl();
