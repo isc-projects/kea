@@ -155,12 +155,29 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
     }
 }
 
+namespace {
+    // Temporary workaround function for missing functionality in
+    // getValue() (main problem described in ticket #993)
+    // This returns either the value set for the given relative id,
+    // or its default value
+    // (intentially defined here so this interface does not get
+    // included in ConfigData as it is)
+    ConstElementPtr getValueOrDefault(ConstElementPtr config_part,
+                                      const std::string& relative_id,
+                                      const ConfigData& config_data,
+                                      const std::string& full_id) {
+        if (config_part->contains(relative_id)) {
+            return config_part->get(relative_id);
+        } else {
+            return config_data.getDefaultValue(full_id);
+        }
+    }
+}
+
 void
 my_logconfig_handler(const std::string&n, ConstElementPtr new_config, const ConfigData& config_data) {
-    // TODO CHECK FORMAT
+    config_data.getModuleSpec().validateConfig(new_config, true);
 
-    // TODO: defaults
-    
     std::vector<isc::log::LoggerSpecification> specs;
 
     if (new_config->contains("loggers")) {
@@ -168,16 +185,10 @@ my_logconfig_handler(const std::string&n, ConstElementPtr new_config, const Conf
                       new_config->get("loggers")->listValue()) {
             // create LoggerOptions
             const std::string lname = logger->get("name")->stringValue();
-            isc::log::Severity severity = isc::log::getSeverity(logger->get("severity")->stringValue());
-            int dbg_level = 0;
-            if (logger->contains("debuglevel")) {
-                dbg_level = logger->get("debuglevel")->intValue();
-            }
-            bool additive = false;
-            if (logger->contains("additive")) {
-                additive = logger->get("additive")->boolValue();
-            }
-            
+            ConstElementPtr severity_el = getValueOrDefault(logger, "severity", config_data, "loggers/severity");
+            isc::log::Severity severity = isc::log::getSeverity(severity_el->stringValue());
+            int dbg_level = getValueOrDefault(logger, "debuglevel", config_data, "loggers/debuglevel")->intValue();
+            bool additive = getValueOrDefault(logger, "additive", config_data, "loggers/additive")->boolValue();
             isc::log::LoggerSpecification logger_spec(
                 lname, severity, dbg_level, additive
             );
@@ -186,29 +197,16 @@ my_logconfig_handler(const std::string&n, ConstElementPtr new_config, const Conf
                               logger->get("output_options")->listValue()) {
                     // create outputoptions
                     isc::log::OutputOption output_option;
-                    if (output_option_el->contains("destination")) {
-                        output_option.destination = isc::log::getDestination(output_option_el->get("destination")->stringValue());
-                    } else {
-                        output_option.destination = isc::log::OutputOption::DEST_CONSOLE;
-                    }
-                    if (output_option_el->contains("stream")) {
-                        output_option.stream = isc::log::getStream(output_option_el->get("stream")->stringValue());
-                    }
-                    if (output_option_el->contains("flush")) {
-                        output_option.flush = output_option_el->get("flush")->boolValue();
-                    }
-                    if (output_option_el->contains("facility")) {
-                        output_option.facility = output_option_el->get("facility")->stringValue();
-                    }
-                    if (output_option_el->contains("filename")) {
-                        output_option.filename = output_option_el->get("filename")->stringValue();
-                    }
-                    if (output_option_el->contains("maxsize")) {
-                        output_option.maxsize = output_option_el->get("maxsize")->intValue();
-                    }
-                    if (output_option_el->contains("maxver")) {
-                        output_option.maxver = output_option_el->get("maxver")->intValue();
-                    }
+                    ConstElementPtr destination_el = getValueOrDefault(output_option_el, "destination", config_data, "loggers/output_options/destination");
+                    output_option.destination = isc::log::getDestination(destination_el->stringValue());
+                    ConstElementPtr stream_el = getValueOrDefault(output_option_el, "stream", config_data, "loggers/output_options/stream");
+                    output_option.stream = isc::log::getStream(stream_el->stringValue());
+                    output_option.flush = getValueOrDefault(output_option_el, "flush", config_data, "loggers/output_options/flush")->boolValue();
+                    output_option.facility = getValueOrDefault(output_option_el, "facility", config_data, "loggers/output_options/facility")->stringValue();
+                    output_option.filename = getValueOrDefault(output_option_el, "filename", config_data, "loggers/output_options/filename")->stringValue();
+                    output_option.maxsize = getValueOrDefault(output_option_el, "maxsize", config_data, "loggers/output_options/maxsize")->intValue();
+                    output_option.maxver = getValueOrDefault(output_option_el, "maxver", config_data, "loggers/output_options/maxver")->intValue();
+
                     logger_spec.addOutputOption(output_option);
                 }
             }
@@ -436,6 +434,11 @@ ModuleCCSession::checkCommand() {
             }
         } catch (const CCSessionError& re) {
             LOG_ERROR(config_logger, CONFIG_CCSESSION_MSG).arg(re.what());
+        } catch (const std::exception& stde) {
+            // No matter what unexpected error happens, we do not want
+            // to crash because of an incoming event
+            // TODO: MSG
+            LOG_ERROR(config_logger, CONFIG_CCSESSION_MSG).arg(stde.what());
         }
         if (!isNull(answer)) {
             session_.reply(routing, answer);
