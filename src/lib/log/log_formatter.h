@@ -15,7 +15,9 @@
 #ifndef __LOG_FORMATTER_H
 #define __LOG_FORMMATER_H
 
+#include <cstddef>
 #include <string>
+#include <iostream>
 #include <boost/lexical_cast.hpp>
 #include <log/logger_level.h>
 
@@ -84,7 +86,6 @@ private:
     /// \brief Which will be the next placeholder to replace
     unsigned nextPlaceholder_;
 
-    Formatter& operator =(const Formatter& other);
 
 public:
     /// \brief Constructor of "active" formatter
@@ -108,12 +109,18 @@ public:
     {
     }
 
+    /// \brief Copy constructor
+    ///
+    /// "Control" is passed to the created object in that it is the created object
+    /// that will have responsibility for outputting the formatted message - the
+    /// object being copied relinquishes that responsibility.
     Formatter(const Formatter& other) :
         logger_(other.logger_), severity_(other.severity_),
         message_(other.message_), nextPlaceholder_(other.nextPlaceholder_)
     {
-        other.logger_ = false;
+        other.logger_ = NULL;
     }
+
     /// \brief Destructor.
     //
     /// This is the place where output happens if the formatter is active.
@@ -123,6 +130,23 @@ public:
             delete message_;
         }
     }
+
+    /// \brief Assignment operator
+    ///
+    /// Essentially the same function as the assignment operator - the object being
+    /// assigned to takes responsibility for outputting the message.
+    Formatter& operator =(const Formatter& other) {
+        if (&other != this) {
+            logger_ = other.logger_;
+            severity_ = other.severity_;
+            message_ = other.message_;
+            nextPlaceholder_ = other.nextPlaceholder_;
+            other.logger_ = NULL;
+        }
+
+        return *this;
+    }
+
     /// \brief Replaces another placeholder
     ///
     /// Replaces another placeholder and returns a new formatter with it.
@@ -137,6 +161,7 @@ public:
             return (*this);
         }
     }
+
     /// \brief String version of arg.
     Formatter& arg(const std::string& arg) {
         if (logger_) {
@@ -147,6 +172,7 @@ public:
         }
         return (*this);
     }
+
 };
 
 }
