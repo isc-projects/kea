@@ -78,9 +78,14 @@ public:
 
     /// \brief Implementation-specific initialization
     ///
-    /// Performs any implementation-specific initialization.  It is assumed
-    /// that the name of the BIND 10 root logger can be obtained from the
-    /// global function getRootLoggerName().
+    /// Sets the basic configuration for logging (the root logger has INFO and
+    /// more severe messages routed to stdout).  Unless this function (or
+    /// process() with a valid specification for all loggers that will log
+    /// messages) is called before a message is logged, log4cplus will output
+    /// a message to stderr noting that logging has not been initialized.
+    ///
+    /// It is assumed here that the name of the BIND 10 root logger can be
+    /// obtained from the global function getRootLoggerName().
     ///
     /// \param severity Severity to be associated with this logger
     /// \param dbglevel Debug level associated with the root logger
