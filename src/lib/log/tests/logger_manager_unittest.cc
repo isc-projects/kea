@@ -111,10 +111,6 @@ public:
     //
     // \return Temporary file name
     std::string createTempFilename() {
-
-        // Get prefix.  Note that in all copies, strncpy does not guarantee
-        // a null-terminated string, hence the explict setting of the last
-        // character to NULL.
         string filename = TEMP_DIR + "/bind10_logger_manager_test_XXXXXX";
 
         // Copy into writeable storage for the call to mkstemp
@@ -128,7 +124,6 @@ public:
             isc_throw(Exception, "Unable to obtain unique filename");
         }
         close(filenum);
-        unlink(tname.get());
 
         return (string(tname.get()));
     }
@@ -199,6 +194,11 @@ TEST_F(LoggerManagerTest, FileLogger) {
     // put in the file for a later comparison.
     vector<MessageID> ids;
     {
+        // For the first test, we want to check that the file is created
+        // if it does not already exist.  So delete the temporary file before
+        // logging the first message.
+        unlink(file_spec.getFileName());
+
         // Scope-limit the logger to ensure it is destroyed after the brief
         // check.  This adds weight to the idea that the logger will not
         // keep the file open.
