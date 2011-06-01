@@ -8,6 +8,7 @@ CLEANFILES = *.gcno *.gcda
 lib_LTLIBRARIES = liblog.la
 liblog_la_SOURCES  =
 liblog_la_SOURCES += dummylog.h dummylog.cc
+liblog_la_SOURCES += impldef.cc impldef.h
 liblog_la_SOURCES += log_formatter.h log_formatter.cc
 liblog_la_SOURCES += logger.cc logger.h
 liblog_la_SOURCES += logger_impl.cc logger_impl.h
@@ -29,6 +30,7 @@ liblog_la_SOURCES += output_option.cc output_option.h
 liblog_la_SOURCES += root_logger_name.cc root_logger_name.h
 
 EXTRA_DIST  = README
+EXTRA_DIST += impldef.mes
 EXTRA_DIST += messagedef.mes
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
