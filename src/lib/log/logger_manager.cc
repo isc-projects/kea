@@ -80,8 +80,8 @@ LoggerManager::init(const std::string& root, const char* file,
     // All other loggers created in this application will be its children.
     setRootLoggerName(root);
 
-    // Initialize the implementation logging.  After this point, some basic logging
-    // has been set up and messages can be logged.
+    // Initialize the implementation logging.  After this point, some basic
+    // logging has been set up and messages can be logged.
     LoggerManagerImpl::init(severity, dbglevel);
 
     // Check if there were any duplicate message IDs in the default dictionary
@@ -89,13 +89,13 @@ LoggerManager::init(const std::string& root, const char* file,
     vector<string>& duplicates = MessageInitializer::getDuplicates();
     if (!duplicates.empty()) {
 
-        // There are duplicates present.  This will be listed in alphabetic order of
-        // message ID, so they need to be sorted.  This list itself may contain
-        // duplicates; if so, the message ID is listed as many times as there are
-        // duplicates.
+        // There are duplicates present.  This will be listed in alphabetic
+        // order of message ID, so they need to be sorted.  This list itself may
+        // contain duplicates; if so, the message ID is listed as many times as
+        // there are duplicates.
         sort(duplicates.begin(), duplicates.end());
-        for (vector<string>::iterator i = duplicates.begin(); i != duplicates.end();
-             ++i) {
+        for (vector<string>::iterator i = duplicates.begin();
+             i != duplicates.end(); ++i) {
             LOG_WARN(logger, MSG_DUPMSGID).arg(*i);
         }
 
@@ -121,10 +121,10 @@ LoggerManager::readLocalMessageFile(const char* file) {
         logger.info(MSG_RDLOCMES).arg(file);
         reader.readFile(file, MessageReader::REPLACE);
 
-        // File successfully read.  As each message in the file is supposed to replace
-        // one in the dictionary, any ID read that can't be located in the dictionary
-        // will not be used.  To aid problem diagnosis, the unknown message IDs are
-        // listed.
+        // File successfully read.  As each message in the file is supposed to
+        // replace one in the dictionary, any ID read that can't be located in
+        // the dictionary will not be used.  To aid problem diagnosis, the
+        // unknown message IDs are listed.
         MessageReader::MessageIDCollection unknown = reader.getNotAdded();
         for (MessageReader::MessageIDCollection::const_iterator
             i = unknown.begin(); i != unknown.end(); ++i) {
@@ -136,8 +136,8 @@ LoggerManager::readLocalMessageFile(const char* file) {
         MessageID ident = e.id();
         vector<string> args = e.arguments();
 
-        // Log the variable number of arguments.  The actual message will be logged
-        // when the error_message variable is destroyed.
+        // Log the variable number of arguments.  The actual message will be
+        // logged when the error_message variable is destroyed.
         Formatter<isc::log::Logger> error_message = logger.error(ident);
         for (int i = 0; i < args.size(); ++i) {
             error_message = error_message.arg(args[i]);
