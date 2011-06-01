@@ -36,7 +36,6 @@ namespace config {
 // validated and conforms to the specification.
 static ConstElementPtr
 find_spec_part(ConstElementPtr spec, const std::string& identifier) {
-    //std::cout << "[XX] find_spec_part for " << identifier << std::endl;
     if (!spec) {
         isc_throw(DataNotFoundError, "Empty specification");
     }
@@ -49,7 +48,7 @@ find_spec_part(ConstElementPtr spec, const std::string& identifier) {
     size_t sep = id.find('/');
     while(sep != std::string::npos) {
         std::string part = id.substr(0, sep);
-        //std::cout << "[XX] id part: " << part << std::endl;
+
         if (spec_part->getType() == Element::list) {
             bool found = false;
             BOOST_FOREACH(ConstElementPtr list_el, spec_part->listValue()) {
@@ -61,11 +60,23 @@ find_spec_part(ConstElementPtr spec, const std::string& identifier) {
                 }
             }
             if (!found) {
-                isc_throw(DataNotFoundError, identifier);
+                isc_throw(DataNotFoundError, part + " in " + identifier + " not found");
             }
+        } else {
+            isc_throw(DataNotFoundError, "NOT LIST OF SPEC ITEMS: " + spec_part->str());
         }
         id = id.substr(sep + 1);
         sep = id.find("/");
+
+        while (spec_part->getType() == Element::map && 
+               (spec_part->contains("list_item_spec") ||
+                spec_part->contains("map_item_spec"))) {
+            if (spec_part->contains("list_item_spec")) {
+                spec_part = spec_part->get("list_item_spec");
+            } else {
+                spec_part = spec_part->get("map_item_spec");
+            }
+        }
     }
     if (id != "" && id != "/") {
         if (spec_part->getType() == Element::list) {
@@ -79,7 +90,7 @@ find_spec_part(ConstElementPtr spec, const std::string& identifier) {
                 }
             }
             if (!found) {
-                isc_throw(DataNotFoundError, identifier);
+                isc_throw(DataNotFoundError, id + " in " + identifier + " not found");
             }
         } else if (spec_part->getType() == Element::map) {
             if (spec_part->contains("map_item_spec")) {
@@ -94,14 +105,13 @@ find_spec_part(ConstElementPtr spec, const std::string& identifier) {
                     }
                 }
                 if (!found) {
-                    isc_throw(DataNotFoundError, identifier);
+                    isc_throw(DataNotFoundError, id + " in " + identifier + " not found");
                 }
             } else {
-                isc_throw(DataNotFoundError, identifier);
+                isc_throw(DataNotFoundError, "Element above " + id + " in " + identifier + " is not a map");
             }
         }
     }
-    //std::cout << "[XX] found spec part: " << std::endl << spec_part << std::endl;
     return (spec_part);
 }
 
@@ -162,6 +172,17 @@ ConfigData::getValue(bool& is_default, const std::string& identifier) const {
         }
     }
     return (value);
+}
+
+ConstElementPtr
+ConfigData::getDefaultValue(const std::string& identifier) const {
+    ConstElementPtr spec_part =
+        find_spec_part(_module_spec.getConfigSpec(), identifier);
+    if (spec_part->contains("item_default")) {
+        return spec_part->get("item_default");
+    } else {
+        isc_throw(DataNotFoundError, "No default for " + identifier);
+    }
 }
 
 /// Returns an ElementPtr pointing to a ListElement containing
