@@ -40,8 +40,7 @@ public:
 
     /// \brief Process Specifications
     ///
-    /// Given a list of logger specifications, disables all current logging
-    /// and resets the properties of each logger to that given.
+    /// Replaces the current logging configuration by the one given.
     ///
     /// \param start Iterator pointing to the start of the collection of
     ///        logging specifications.
