@@ -31,6 +31,12 @@
 
 using namespace std;
 
+namespace {
+
+// Logger used for logging messages within the logging code itself.
+isc::log::Logger logger("log");
+}
+
 namespace isc {
 namespace log {
 
@@ -74,22 +80,22 @@ LoggerManager::init(const std::string& root, const char* file,
     // All other loggers created in this application will be its children.
     setRootLoggerName(root);
 
-    // Initialize the implementation logging.
+    // Initialize the implementation logging.  After this point, some basic logging
+    // has been set up and messages can be logged.
     LoggerManagerImpl::init(severity, dbglevel);
 
-    // TODO: sort out the names.
-    Logger logger("log");
-
     // Check if there were any duplicate message IDs in the default dictionary
-    // and if so, log them.  Log using the logging facility root logger.
+    // and if so, log them.  Log using the logging facility logger.
     vector<string>& duplicates = MessageInitializer::getDuplicates();
     if (!duplicates.empty()) {
 
-        // There are - sort and remove any duplicates.
+        // There are duplicates present.  This will be listed in alphabetic order of
+        // message ID, so they need to be sorted.  This list itself may contain
+        // duplicates; if so, the message ID is listed as many times as there are
+        // duplicates.
         sort(duplicates.begin(), duplicates.end());
-        vector<string>::iterator new_end =
-            unique(duplicates.begin(), duplicates.end());
-        for (vector<string>::iterator i = duplicates.begin(); i != new_end; ++i) {
+        for (vector<string>::iterator i = duplicates.begin(); i != duplicates.end();
+             ++i) {
             LOG_WARN(logger, MSG_DUPMSGID).arg(*i);
         }
 
@@ -114,11 +120,13 @@ LoggerManager::readLocalMessageFile(const char* file) {
     MessageReader reader(&dictionary);
     try {
 
-        // FIXME: commented out for testing
-        // logger.info(MSG_RDLOCMES).arg(file);
+        logger.info(MSG_RDLOCMES).arg(file);
         reader.readFile(file, MessageReader::REPLACE);
 
-        // File successfully read, list the duplicates
+        // File successfully read.  As each message in the file is supposed to replace
+        // one in the dictionary, any ID read that can't be located in the dictionary
+        // will not be used.  To aid problem diagnosis, the unknown message IDs are
+        // listed.
         MessageReader::MessageIDCollection unknown = reader.getNotAdded();
         for (MessageReader::MessageIDCollection::const_iterator
             i = unknown.begin(); i != unknown.end(); ++i) {
