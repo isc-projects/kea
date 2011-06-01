@@ -21,20 +21,10 @@
 using namespace isc::log;
 using namespace std;
 
-/// \brief OutputOption Test
-class OutputOptionTest : public ::testing::Test {
-public:
-    OutputOptionTest()
-    {}
-    ~OutputOptionTest()
-    {}
-};
-
-
 // As OutputOption is a struct, the only meaningful test is to check that it
 // initializes correctly.
 
-TEST_F(OutputOptionTest, Initialization) {
+TEST(OutputOptionTest, Initialization) {
     OutputOption option;
 
     EXPECT_EQ(OutputOption::DEST_CONSOLE, option.destination);
