@@ -114,8 +114,6 @@ LoggerManager::init(const std::string& root, const char* file,
 void
 LoggerManager::readLocalMessageFile(const char* file) {
 
-    Logger logger("log");
-
     MessageDictionary& dictionary = MessageDictionary::globalDictionary();
     MessageReader reader(&dictionary);
     try {
@@ -137,21 +135,12 @@ LoggerManager::readLocalMessageFile(const char* file) {
     catch (MessageException& e) {
         MessageID ident = e.id();
         vector<string> args = e.arguments();
-        switch (args.size()) {
-        case 0:
-            LOG_ERROR(logger, ident);
-            break;
 
-        case 1:
-            LOG_ERROR(logger, ident).arg(args[0]);
-            break;
-
-        case 2:
-            LOG_ERROR(logger, ident).arg(args[0]).arg(args[1]);
-            break;
-
-        default:    // 3 or more (3 should be the maximum)
-            LOG_ERROR(logger, ident).arg(args[0]).arg(args[1]).arg(args[2]);
+        // Log the variable number of arguments.  The actual message will be logged
+        // when the error_message variable is destroyed.
+        Formatter<isc::log::Logger> error_message = logger.error(ident);
+        for (int i = 0; i < args.size(); ++i) {
+            error_message = error_message.arg(args[i]);
         }
     }
 }

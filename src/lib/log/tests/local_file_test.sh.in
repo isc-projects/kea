@@ -43,7 +43,7 @@ cat > $localmes << .
 % RDLOCMES    replacement read local message file, parameter is '%1'
 .
 
-echo "1. Local message replacement: "
+echo "1. Local message replacement:"
 cat > $tempfile << .
 WARN  [alpha.log] MSG_IDNOTFND, could not replace message text for 'MSG_NOTHERE': no such message
 FATAL [alpha.example] MSG_WRITERR, error writing to test1: 42
@@ -53,7 +53,19 @@ WARN  [alpha.dlm] MSG_READERR, replacement read error, parameters: 'a.txt' and '
 ./logger_example -c stdout -s warn $localmes | cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
+echo "2. Report error if unable to read local message file:"
+cat > $tempfile << .
+ERROR [alpha.log] MSG_OPENIN, unable to open message file $localmes for input: No such file or directory
+FATAL [alpha.example] MSG_WRITERR, error writing to test1: 42
+ERROR [alpha.example] MSG_RDLOCMES, reading local message file dummy/file
+WARN  [alpha.dlm] MSG_READERR, error reading from message file a.txt: dummy reason
+.
 rm -f $localmes
+./logger_example -c stdout -s warn $localmes | cut -d' ' -f3- | diff $tempfile -
+passfail $?
+
+# Tidy up.
+
 rm -f $tempfile
 
 if [ $failcount -eq 0 ]; then
