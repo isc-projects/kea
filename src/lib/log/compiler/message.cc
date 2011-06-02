@@ -264,52 +264,46 @@ writeHeaderFile(const string& file, const vector<string>& ns_components,
     // Open the output file for writing
     ofstream hfile(header_file.fullName().c_str());
 
-    try {
-        if (hfile.fail()) {
-            throw MessageException(MSG_OPENOUT, header_file.fullName(),
-                strerror(errno));
-        }
-
-        // Write the header preamble.  If there is an error, we'll pick it up
-        // after the last write.
-
-        hfile <<
-            "// File created from " << message_file.fullName() << " on " <<
-                currentTime() << "\n" <<
-             "\n" <<
-             "#ifndef " << sentinel_text << "\n" <<
-             "#define "  << sentinel_text << "\n" <<
-             "\n" <<
-             "#include <log/message_types.h>\n" <<
-             "\n";
-
-        // Write the message identifiers, bounded by a namespace declaration
-        writeOpeningNamespace(hfile, ns_components);
-
-        vector<string> idents = sortedIdentifiers(dictionary);
-        for (vector<string>::const_iterator j = idents.begin();
-            j != idents.end(); ++j) {
-            hfile << "extern const isc::log::MessageID " << *j << ";\n";
-        }
-        hfile << "\n";
-
-        writeClosingNamespace(hfile, ns_components);
-
-        // ... and finally the postamble
-        hfile << "#endif // " << sentinel_text << "\n";
-
-        // Report errors (if any) and exit
-        if (hfile.fail()) {
-            throw MessageException(MSG_WRITERR, header_file.fullName(),
-                strerror(errno));
-        }
-
-        hfile.close();
+    if (hfile.fail()) {
+        throw MessageException(MSG_OPENOUT, header_file.fullName(),
+            strerror(errno));
     }
-    catch (MessageException&) {
-        hfile.close();
-        throw;
+
+    // Write the header preamble.  If there is an error, we'll pick it up
+    // after the last write.
+
+    hfile <<
+        "// File created from " << message_file.fullName() << " on " <<
+            currentTime() << "\n" <<
+         "\n" <<
+         "#ifndef " << sentinel_text << "\n" <<
+         "#define "  << sentinel_text << "\n" <<
+         "\n" <<
+         "#include <log/message_types.h>\n" <<
+         "\n";
+
+    // Write the message identifiers, bounded by a namespace declaration
+    writeOpeningNamespace(hfile, ns_components);
+
+    vector<string> idents = sortedIdentifiers(dictionary);
+    for (vector<string>::const_iterator j = idents.begin();
+        j != idents.end(); ++j) {
+        hfile << "extern const isc::log::MessageID " << *j << ";\n";
     }
+    hfile << "\n";
+
+    writeClosingNamespace(hfile, ns_components);
+
+    // ... and finally the postamble
+    hfile << "#endif // " << sentinel_text << "\n";
+
+    // Report errors (if any) and exit
+    if (hfile.fail()) {
+        throw MessageException(MSG_WRITERR, header_file.fullName(),
+            strerror(errno));
+    }
+
+    hfile.close();
 }
 
 
@@ -357,76 +351,71 @@ writeProgramFile(const string& file, const vector<string>& ns_components,
 
     // Open the output file for writing
     ofstream ccfile(program_file.fullName().c_str());
-    try {
-        if (ccfile.fail()) {
-            throw MessageException(MSG_OPENOUT, program_file.fullName(),
-                strerror(errno));
-        }
 
-        // Write the preamble.  If there is an error, we'll pick it up after
-        // the last write.
-
-        ccfile <<
-            "// File created from " << message_file.fullName() << " on " <<
-                currentTime() << "\n" <<
-             "\n" <<
-             "#include <cstddef>\n" <<
-             "#include <log/message_types.h>\n" <<
-             "#include <log/message_initializer.h>\n" <<
-             "\n";
-
-        // Declare the message symbols themselves.
-
-        writeOpeningNamespace(ccfile, ns_components);
-
-        vector<string> idents = sortedIdentifiers(dictionary);
-        for (vector<string>::const_iterator j = idents.begin();
-            j != idents.end(); ++j) {
-            ccfile << "extern const isc::log::MessageID " << *j <<
-                " = \"" << *j << "\";\n";
-        }
-        ccfile << "\n";
-
-        writeClosingNamespace(ccfile, ns_components);
-
-        // Now the code for the message initialization.
-
-        ccfile <<
-             "namespace {\n" <<
-             "\n" <<
-             "const char* values[] = {\n";
-
-        // Output the identifiers and the associated text.
-        idents = sortedIdentifiers(dictionary);
-        for (vector<string>::const_iterator i = idents.begin();
-            i != idents.end(); ++i) {
-                ccfile << "    \"" << *i << "\", \"" <<
-                    quoteString(dictionary.getText(*i)) << "\",\n";
-        }
-
-
-        // ... and the postamble
-        ccfile <<
-            "    NULL\n" <<
-            "};\n" <<
-            "\n" <<
-            "const isc::log::MessageInitializer initializer(values);\n" <<
-            "\n" <<
-            "} // Anonymous namespace\n" <<
-            "\n";
-
-        // Report errors (if any) and exit
-        if (ccfile.fail()) {
-            throw MessageException(MSG_WRITERR, program_file.fullName(),
-                strerror(errno));
-        }
-
-        ccfile.close();
+    if (ccfile.fail()) {
+        throw MessageException(MSG_OPENOUT, program_file.fullName(),
+            strerror(errno));
     }
-    catch (MessageException&) {
-        ccfile.close();
-        throw;
+
+    // Write the preamble.  If there is an error, we'll pick it up after
+    // the last write.
+
+    ccfile <<
+        "// File created from " << message_file.fullName() << " on " <<
+            currentTime() << "\n" <<
+         "\n" <<
+         "#include <cstddef>\n" <<
+         "#include <log/message_types.h>\n" <<
+         "#include <log/message_initializer.h>\n" <<
+         "\n";
+
+    // Declare the message symbols themselves.
+
+    writeOpeningNamespace(ccfile, ns_components);
+
+    vector<string> idents = sortedIdentifiers(dictionary);
+    for (vector<string>::const_iterator j = idents.begin();
+        j != idents.end(); ++j) {
+        ccfile << "extern const isc::log::MessageID " << *j <<
+            " = \"" << *j << "\";\n";
     }
+    ccfile << "\n";
+
+    writeClosingNamespace(ccfile, ns_components);
+
+    // Now the code for the message initialization.
+
+    ccfile <<
+         "namespace {\n" <<
+         "\n" <<
+         "const char* values[] = {\n";
+
+    // Output the identifiers and the associated text.
+    idents = sortedIdentifiers(dictionary);
+    for (vector<string>::const_iterator i = idents.begin();
+        i != idents.end(); ++i) {
+            ccfile << "    \"" << *i << "\", \"" <<
+                quoteString(dictionary.getText(*i)) << "\",\n";
+    }
+
+
+    // ... and the postamble
+    ccfile <<
+        "    NULL\n" <<
+        "};\n" <<
+        "\n" <<
+        "const isc::log::MessageInitializer initializer(values);\n" <<
+        "\n" <<
+        "} // Anonymous namespace\n" <<
+        "\n";
+
+    // Report errors (if any) and exit
+    if (ccfile.fail()) {
+        throw MessageException(MSG_WRITERR, program_file.fullName(),
+            strerror(errno));
+    }
+
+    ccfile.close();
 }
 
 
