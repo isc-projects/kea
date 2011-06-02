@@ -35,6 +35,8 @@
 
 #include <log/logger.h>
 
+#include <boost/foreach.hpp>
+
 using namespace std;
 using namespace isc::log;
 using namespace isc::util;
@@ -78,10 +80,11 @@ version() {
 void
 usage() {
     cout <<
-        "Usage: message [-h] [-v] <message-file>\n" <<
+        "Usage: message [-h] [-v] [-p] <message-file>\n" <<
         "\n" <<
         "-h       Print this message and exit\n" <<
         "-v       Print the program version and exit\n" <<
+        "-p       Output python source instead of C++ ones\n" <<
         "\n" <<
         "<message-file> is the name of the input message file.\n";
 }
@@ -237,6 +240,44 @@ writeClosingNamespace(ostream& output, const vector<string>& ns) {
     }
 }
 
+/// \breif Write python file
+///
+/// Writes the python file containing the symbol definitions as module level
+/// constants. These are objects which register themself at creation time,
+/// so they can be replaced by dictionary later.
+///
+/// \param file Name of the message file. The source code is written to a file
+///     file of the same name but with a .py suffix.
+/// \param dictionary The dictionary holding the message definitions.
+///
+/// \note We don't use the namespace as in C++. We don't need it, because
+///     python file/module works as implicit namespace as well.
+
+void
+writePythonFile(const string& file, MessageDictionary& dictionary) {
+    Filename message_file(file);
+    Filename python_file(Filename(message_file.name()).useAsDefault(".py"));
+
+    // Open the file for writing
+    ofstream pyfile(python_file.fullName().c_str());
+
+    // Write the comment and imports
+    pyfile <<
+        "# File created from " << message_file.fullName() << " on " <<
+            currentTime() << "\n" <<
+        "\n" <<
+        "import isc.log.message\n" <<
+        "\n";
+
+    vector<string> idents(sortedIdentifiers(dictionary));
+    BOOST_FOREACH(const string& ident, idents) {
+        pyfile << ident << " = isc.log.message.Message(\"" <<
+            ident << "\", \"" << quoteString(dictionary.getText(ident)) <<
+            "\")\n";
+    }
+
+    pyfile.close();
+}
 
 /// \brief Write Header File
 ///
@@ -455,13 +496,19 @@ warnDuplicates(MessageReader& reader) {
 int
 main(int argc, char* argv[]) {
 
-    const char* soptions = "hv";               // Short options
+    const char* soptions = "hvp";               // Short options
 
     optind = 1;             // Ensure we start a new scan
     int  opt;               // Value of the option
 
+    bool doPython = false;
+
     while ((opt = getopt(argc, argv, soptions)) != -1) {
         switch (opt) {
+            case 'p':
+                doPython = true;
+                break;
+
             case 'h':
                 usage();
                 return 0;
@@ -497,15 +544,27 @@ main(int argc, char* argv[]) {
         MessageReader reader(&dictionary);
         reader.readFile(message_file);
 
-        // Get the namespace into which the message definitions will be put and
-        // split it into components.
-        vector<string> ns_components = splitNamespace(reader.getNamespace());
+        if (doPython) {
+            // Warn in case of ignored directives
+            if (!reader.getNamespace().empty()) {
+                cerr << "Python mode, ignoring the $NAMESPACE directive" <<
+                    endl;
+            }
 
-        // Write the header file.
-        writeHeaderFile(message_file, ns_components, dictionary);
+            // Write the whole python file
+            writePythonFile(message_file, dictionary);
+        } else {
+            // Get the namespace into which the message definitions will be put and
+            // split it into components.
+            vector<string> ns_components =
+                splitNamespace(reader.getNamespace());
 
-        // Write the file that defines the message symbols and text
-        writeProgramFile(message_file, ns_components, dictionary);
+            // Write the header file.
+            writeHeaderFile(message_file, ns_components, dictionary);
+
+            // Write the file that defines the message symbols and text
+            writeProgramFile(message_file, ns_components, dictionary);
+        }
 
         // Finally, warn of any duplicates encountered.
         warnDuplicates(reader);
