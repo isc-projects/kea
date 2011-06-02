@@ -85,9 +85,10 @@ public:
     /// an attempt is made to log a message before this is function is called,
     /// the results will be dependent on the underlying logging package.
     ///
-    /// \param root Name of the root logger.  This can be NULL, but should be
-    ///        set to the name of the program.
-    /// \param file Name of the local message file (if there is one).
+    /// \param root Name of the root logger.  This should be set to the name of
+    ///        the program.
+    /// \param file Name of the local message file.  This must be NULL if there
+    ///        is no local message file.
     /// \param severity Severity at which to log
     /// \param dbglevel Debug severity (ignored if "severity" is not "DEBUG")
     static void init(const std::string& root, const char* file = NULL,
