@@ -26,7 +26,7 @@ tempfile=@abs_builddir@/console_test_tempfile_$$
 
 # Look at tempfile and check that the count equals the expected count
 passfail() {
-    count=`wc -l $tempfile | cut -f1 -d' '`
+    count=`wc -l $tempfile | awk '{print $1}'`
     if [ $count -eq $1 ]; then
         echo " -- pass"
     else
