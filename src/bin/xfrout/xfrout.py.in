@@ -236,10 +236,10 @@ class XfroutSession():
     def dns_xfrout_start(self, sock_fd, msg_query):
         rcode_, msg = self._parse_query_message(msg_query)
         #TODO. create query message and parse header
-        if rcode_ == Rcode.FORMERR():
-            return self._reply_query_with_format_error(msg, sock_fd)
-        elif rcode_ == Rcode.NOTAUTH():
+        if rcode_ == Rcode.NOTAUTH():
             return self._reply_query_with_error_rcode(msg, sock_fd, rcode_)
+        elif rcode_ != Rcode.NOERROR():
+            return self._reply_query_with_format_error(msg, sock_fd)
 
         zone_name = self._get_query_zone_name(msg)
         rcode_ = self._check_xfrout_available(zone_name)
@@ -282,20 +282,25 @@ class XfroutSession():
         rrset_.add_rdata(rdata_)
         return rrset_
 
-    def _send_message_with_last_soa(self, msg, sock_fd, rrset_soa, message_upper_len):
+    def _send_message_with_last_soa(self, msg, sock_fd, rrset_soa, message_upper_len,
+                                    count_since_last_tsig_sign):
         '''Add the SOA record to the end of message. If it can't be
         added, a new message should be created to send out the last soa .
         '''
         rrset_len = get_rrset_len(rrset_soa)
 
-        if message_upper_len + rrset_len + self._tsig_len < XFROUT_MAX_MESSAGE_SIZE:
-            msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
-        else:
+        if (count_since_last_tsig_sign == TSIG_SIGN_EVERY_NTH and
+            message_upper_len + rrset_len >= XFROUT_MAX_MESSAGE_SIZE):
+            # If tsig context exist, sign the packet with serial number TSIG_SIGN_EVERY_NTH
+            self._send_message(sock_fd, msg, self._tsig_ctx)
+            msg = self._clear_message(msg)
+        elif (count_since_last_tsig_sign != TSIG_SIGN_EVERY_NTH and
+              message_upper_len + rrset_len + self._tsig_len >= XFROUT_MAX_MESSAGE_SIZE):
             self._send_message(sock_fd, msg)
             msg = self._clear_message(msg)
-            msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
 
-        # If tsig context exist, sign the last packet 
+        # If tsig context exist, sign the last packet
+        msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
         self._send_message(sock_fd, msg, self._tsig_ctx)
 
 
@@ -329,7 +334,7 @@ class XfroutSession():
                 message_upper_len += rrset_len
                 continue
 
-            # If tsig context exist, sign every N packets 
+            # If tsig context exist, sign every N packets
             if count_since_last_tsig_sign == TSIG_SIGN_EVERY_NTH:
                 count_since_last_tsig_sign = 0
                 self._send_message(sock_fd, msg, self._tsig_ctx)
@@ -346,7 +351,8 @@ class XfroutSession():
             else:
                 message_upper_len = rrset_len
 
-        self._send_message_with_last_soa(msg, sock_fd, rrset_soa, message_upper_len)
+        self._send_message_with_last_soa(msg, sock_fd, rrset_soa, message_upper_len,
+                                         count_since_last_tsig_sign)
 
 class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
     '''The unix domain socket server which accept xfr query sent from auth server.'''
@@ -502,12 +508,11 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         self._log.log_message('info', 'update config data complete.')
 
     def set_tsig_key_ring(self, key_list):
-        """Set the tsig_key for this zone, given a TSIG key string
-           representation. If tsig_key_str is None, no TSIG key will
-           be set. Raises XfrinZoneInfoException if tsig_key_str cannot
-           be parsed."""
+        """Set the tsig_key_ring , given a TSIG key string list representation. """
+
+        # XXX add values to configure zones/tsig options
         self.tsig_key_ring = TSIGKeyRing()
-        # tsig_key_ring list is empty
+        # If key string list is empty, create a empty tsig_key_ring
         if not key_list:
             return
 
