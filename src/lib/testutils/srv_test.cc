@@ -72,9 +72,13 @@ SrvTestBase::createDataFromFile(const char* const datafile,
 
 void
 SrvTestBase::createRequestPacket(Message& message,
-                                 const int protocol)
+                                 const int protocol, TSIGContext* context)
 {
-    message.toWire(request_renderer);
+    if (context == NULL) {
+        message.toWire(request_renderer);
+    } else {
+        message.toWire(request_renderer, *context);
+    }
 
     delete io_message;
 

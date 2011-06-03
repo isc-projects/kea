@@ -1,6 +1,33 @@
+248.    [func]      stephen
+	Add file and stderr as destinations for logging.
+	(Trac555, git 38b3546867425bd64dbc5920111a843a3330646b)
+
+247.    [func]      jelte
+	Upstream queries from the resolver now set EDNS0 buffer size.
+	(Trac834, git 48e10c2530fe52c9bde6197db07674a851aa0f5d)
+
+246.    [func]      stephen
+	Implement logging using log4cplus (http://log4cplus.sourceforge.net)
+	(Trac899, git 31d3f525dc01638aecae460cb4bc2040c9e4df10)
+
+245.    [func]      vorner
+	Authoritative server can now sign the answers using TSIG
+	(configured in tsig_keys/keys, list of strings like
+	"name:<base64-secret>:sha1-hmac"). It doesn't use them for
+	ACL yet, only verifies them and signs if the request is signed.
+	(Trac875, git fe5e7003544e4e8f18efa7b466a65f336d8c8e4d)
+
+244.	[func] 		stephen
+	In unit tests, allow the choice of whether unhandled exceptions are
+	caught in the unit test program (and details printed) or allowed to
+	propagate to the default exception handler.  See the bind10-dev thread
+	https://lists.isc.org/pipermail/bind10-dev/2011-January/001867.html
+	for more details.
+	(Trac #542, git 1aa773d84cd6431aa1483eb34a7f4204949a610f)
+
 243.	[func]*		feng
 	Add optional hmac algorithm SHA224/384/812.
-	(Trac#782,git 77d792c9d7c1a3f95d3e6a8b721ac79002cd7db1).
+	(Trac#782, git 77d792c9d7c1a3f95d3e6a8b721ac79002cd7db1)
 
 bind10-devel-20110519 released on May 19, 2011
 

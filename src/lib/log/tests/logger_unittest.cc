@@ -19,43 +19,29 @@
 
 #include <log/root_logger_name.h>
 #include <log/logger.h>
+#include <log/logger_manager.h>
 #include <log/messagedef.h>
 
 using namespace isc;
 using namespace isc::log;
 using namespace std;
 
-namespace isc {
-namespace log {
+namespace {
+string ROOT_NAME = "loggertest";
+}
 
-/// \brief Test Logger
+/// \brief Logger Test
 ///
-/// This logger is a subclass of the logger class under test, but makes
-/// protected methods public (for testing)
-
-class TestLogger : public Logger {
-public:
-    /// \brief constructor
-    TestLogger(const string& name) : Logger(name, true)
-    {}
-
-    static void reset() {
-        Logger::reset();
-    }
-};
-
-} // namespace log
-} // namespace isc
-
+/// As the logger is only a shell around the implementation, this tests also
+/// checks the logger implementation class as well.
 
 class LoggerTest : public ::testing::Test {
-protected:
-    LoggerTest()
-    {
+public:
+    LoggerTest() {
+        LoggerManager::init(ROOT_NAME);
     }
-
     ~LoggerTest() {
-        TestLogger::reset();
+        LoggerManager::reset();
     }
 };
 
@@ -65,11 +51,10 @@ protected:
 TEST_F(LoggerTest, Name) {
 
     // Create a logger
-    setRootLoggerName("test1");
     Logger logger("alpha");
 
     // ... and check the name
-    EXPECT_EQ(string("test1.alpha"), logger.getName());
+    EXPECT_EQ(ROOT_NAME + string(".alpha"), logger.getName());
 }
 
 // This test attempts to get two instances of a logger with the same name
@@ -77,22 +62,18 @@ TEST_F(LoggerTest, Name) {
 
 TEST_F(LoggerTest, GetLogger) {
 
-    // Set the root logger name (not strictly needed, but this will be the
-    // case in the program(.
-    setRootLoggerName("test2");
-
     const string name1 = "alpha";
     const string name2 = "beta";
 
     // Instantiate two loggers that should be the same
-    TestLogger logger1(name1);
-    TestLogger logger2(name1);
+    Logger logger1(name1);
+    Logger logger2(name1);
     // And check they equal
     EXPECT_TRUE(logger1 == logger2);
 
     // Instantiate another logger with another name and check that it
     // is different to the previously instantiated ones.
-    TestLogger logger3(name2);
+    Logger logger3(name2);
     EXPECT_FALSE(logger1 == logger3);
 }
 
@@ -101,8 +82,7 @@ TEST_F(LoggerTest, GetLogger) {
 TEST_F(LoggerTest, Severity) {
 
     // Create a logger
-    setRootLoggerName("test3");
-    TestLogger logger("alpha");
+    Logger logger("alpha");
 
     // Now check the levels
     logger.setSeverity(isc::log::NONE);
@@ -132,8 +112,7 @@ TEST_F(LoggerTest, Severity) {
 TEST_F(LoggerTest, DebugLevels) {
 
     // Create a logger
-    setRootLoggerName("test4");
-    TestLogger logger("alpha");
+    Logger logger("alpha");
 
     // Debug level should be 0 if not at debug severity
     logger.setSeverity(isc::log::NONE, 20);
@@ -174,13 +153,11 @@ TEST_F(LoggerTest, DebugLevels) {
 
 TEST_F(LoggerTest, SeverityInheritance) {
 
-    // Create to loggers.  We cheat here as we know that the underlying
+    // Create two loggers.  We cheat here as we know that the underlying
     // implementation (in this case log4cxx) will set a parent-child
     // relationship if the loggers are named <parent> and <parent>.<child>.
-
-    setRootLoggerName("test5");
-    TestLogger parent("alpha");
-    TestLogger child("alpha.beta");
+    Logger parent("alpha");
+    Logger child("alpha.beta");
 
     // By default, newly created loggers should have a level of DEFAULT
     // (i.e. default to parent)
@@ -206,11 +183,9 @@ TEST_F(LoggerTest, SeverityInheritance) {
 
 TEST_F(LoggerTest, EffectiveSeverityInheritance) {
 
-    // Create to loggers.  We cheat here as we know that the underlying
+    // Create two loggers.  We cheat here as we know that the underlying
     // implementation (in this case log4cxx) will set a parent-child
     // relationship if the loggers are named <parent> and <parent>.<child>.
-
-    setRootLoggerName("test6");
     Logger parent("test6");
     Logger child("test6.beta");
 
@@ -245,7 +220,6 @@ TEST_F(LoggerTest, EffectiveSeverityInheritance) {
 
 TEST_F(LoggerTest, IsXxxEnabled) {
 
-    setRootLoggerName("test7");
     Logger logger("test7");
 
     logger.setSeverity(isc::log::INFO);
@@ -316,7 +290,6 @@ TEST_F(LoggerTest, IsXxxEnabled) {
 
 TEST_F(LoggerTest, IsDebugEnabledLevel) {
 
-    setRootLoggerName("test8");
     Logger logger("test8");
 
     int MID_LEVEL = (MIN_DEBUG_LEVEL + MAX_DEBUG_LEVEL) / 2;

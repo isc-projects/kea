@@ -38,20 +38,29 @@ public:
         specfile(std::string(TEST_DATA_PATH) + "/spec.spec")
     {
         session.getMessages()->add(createAnswer());
-        mccs.reset(new ModuleCCSession(specfile, session, NULL, NULL));
+        mccs.reset(new ModuleCCSession(specfile, session, NULL, NULL, false));
     }
     isc::cc::FakeSession session;
     std::auto_ptr<ModuleCCSession> mccs;
     std::string specfile;
-    void doInit() {
+    void doInit(bool with_key = true) {
         // Prepare the module specification for it and the config
         session.getMessages()->
             add(createAnswer(0,
                              moduleSpecFromFile(std::string(PLUGIN_DATA_PATH) +
                                                 "/tsig_keys.spec").
                              getFullSpec()));
-        session.getMessages()->add(createAnswer(0, Element::fromJSON(
-            "{\"keys\": [\"key:MTIzNAo=:hmac-sha1\"]}")));
+        if (with_key) {
+            session.getMessages()->add(
+                createAnswer(0, Element::fromJSON(
+                                 "{\"keys\": [\"key:MTIzNAo=:hmac-sha1\"]}")));
+        } else {
+            // This emulates the case of using the spec default.  Note that
+            // the default value won't be passed to the config handler, so
+            // we'll pass an empty object, instead of {"keys": []}.
+            session.getMessages()->add(createAnswer(0,
+                                                    Element::fromJSON("{}")));
+        }
         // Now load it
         EXPECT_NO_THROW(initKeyring(*mccs));
         EXPECT_NE(keyring, boost::shared_ptr<TSIGKeyRing>()) <<
@@ -95,6 +104,14 @@ TEST_F(KeyringTest, keyring) {
         EXPECT_EQ(keyring, boost::shared_ptr<TSIGKeyRing>()) <<
             "The keyring didn't disappear";
     }
+}
+
+TEST_F(KeyringTest, keyringWithDefault) {
+    // If we don't explicitly specify a keyring, the default (no key) will
+    // be used.
+    doInit(false);
+    EXPECT_EQ(0, keyring->size());
+    deinitKeyring(*mccs);
 }
 
 // Init twice
