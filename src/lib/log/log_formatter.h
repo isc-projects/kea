@@ -165,9 +165,16 @@ public:
     /// \brief String version of arg.
     Formatter& arg(const std::string& arg) {
         if (logger_) {
-            // Note that if we had a message like "%1 %2" and called
-            // .arg(42).arg("%1"), we would get "42 %1" (i.e. no recursive
-            // replacements).  This is a limitation but not a problem.
+            // Note that this method does a replacement and returns the
+            // modified string. If there are multiple invocations of arg() (e.g.
+            // logger.info(msgid).arg(xxx).arg(yyy)...), each invocation
+            // operates on the string returned by the previous one. This
+            // sequential operation means that if we had a message like "%1 %2",
+            // and called .arg("%2").arg(42), we would get "42 42"; the first
+            // call replaces the %1" with "%2" and the second replaces all
+            // occurrences of "%2" with 42. (Conversely, the sequence
+            // .arg(42).arg("%1") would return "42 %1" - there are no recursive
+            // replacements).
             replacePlaceholder(message_, arg, ++nextPlaceholder_ );
         }
         return (*this);

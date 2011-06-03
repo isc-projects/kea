@@ -43,13 +43,17 @@ using namespace std;
 namespace isc {
 namespace log {
 
-// Constructor
-LoggerImpl::LoggerImpl(const string& name)
+// Constructor.  Although it may be immediately reset, logger_ is initialized to
+// the log4cplus root logger; at least one compiler requires that all member
+// variables be constructed before the constructor is run, but log4cplus::Logger
+// (the type of logger_) has no default constructor.
+LoggerImpl::LoggerImpl(const string& name) :
+    logger_(log4cplus::Logger::getRoot())
 {
     // Are we the root logger?
     if (name == getRootLoggerName()) {
         name_ = name;
-        logger_ = log4cplus::Logger::getRoot();
+        // logger_ already set to log4cplus root logger at this point
 
     } else {
         name_ = getRootLoggerName() + "." + name;

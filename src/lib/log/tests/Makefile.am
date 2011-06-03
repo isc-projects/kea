@@ -1,7 +1,7 @@
 SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES) $(LOG4CPLUS_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 if USE_STATIC_LINK
@@ -27,13 +27,20 @@ run_unittests_SOURCES += logger_specification_unittest.cc
 # run_unittests_SOURCES += output_option_unittest.cc
 # run_unittests_SOURCES += root_logger_name_unittest.cc
 
-run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS) $(LOG4CPLUS_LDFLAGS)
+run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
+run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 
+run_unittests_CXXFLAGS = $(AM_CXXFLAGS)
+if USE_CLANGPP
+# This is to workaround unused variables tcout and tcerr in
+# log4cplus's streams.h.
+run_unittests_CXXFLAGS += -Wno-unused-variable
+endif
 run_unittests_LDADD  = $(GTEST_LDADD)
 run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 endif
 
 TESTS += logger_example

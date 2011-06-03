@@ -4,6 +4,7 @@ EXTRA_DIST = $(PYTESTS)
 
 EXTRA_DIST += testdata/brokendb.sqlite3
 EXTRA_DIST += testdata/example.com.sqlite3
+CLEANFILES = $(abs_builddir)/example.com.out.sqlite3
 
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
@@ -16,5 +17,6 @@ endif
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/lib/python/isc/log \
 	TESTDATA_PATH=$(abs_srcdir)/testdata \
+	TESTDATA_WRITE_PATH=$(abs_builddir) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done

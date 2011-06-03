@@ -42,6 +42,14 @@ public:
                 isc::data::ElementPtr msg_queue);
     virtual ~FakeSession();
 
+    // This is thrown if two reads for length at once are scheduled at once.
+    // Such thing does bad things currently (see discussion in ticket #931).
+    class DoubleRead : public Exception {
+    public:
+        DoubleRead(const char* file, size_t line, const char* what) :
+            Exception(file, line, what) {}
+    };
+
     virtual void startRead(boost::function<void()> read_callback);
 
     virtual void establish(const char* socket_file = NULL);
@@ -89,6 +97,7 @@ private:
     const isc::data::ElementPtr messages_;
     isc::data::ElementPtr subscriptions_;
     isc::data::ElementPtr msg_queue_;
+    bool started_;
 };
 } // namespace cc
 } // namespace isc
