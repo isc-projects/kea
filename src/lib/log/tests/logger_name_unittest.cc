@@ -16,21 +16,14 @@
 
 #include <gtest/gtest.h>
 
-#include <log/root_logger_name.h>
+#include <log/logger_name.h>
 
 using namespace isc;
 using namespace isc::log;
 
-class RootLoggerNameTest : public ::testing::Test {
-protected:
-    RootLoggerNameTest()
-    {
-    }
-};
+// Check setting and getting of root name
 
-// Check of the (only) functionality of the class.
-
-TEST_F(RootLoggerNameTest, SetGet) {
+TEST(LoggerNameTest, RootNameSetGet) {
     const std::string name1 = "test1";
     const std::string name2 = "test2";
 
@@ -47,4 +40,17 @@ TEST_F(RootLoggerNameTest, SetGet) {
     // was initialised with name1 and that setName() has no effect.)
     setRootLoggerName(name2);
     EXPECT_EQ(name2, getRootLoggerName());
+}
+
+// Check expansion of name
+
+TEST(LoggerNameTest, ExpandLoggerName) {
+    const std::string ROOT = "example";
+    const std::string NAME = "something";
+    const std::string FULL_NAME = ROOT + "." + NAME;
+
+    setRootLoggerName(ROOT);
+    EXPECT_EQ(ROOT, expandLoggerName(ROOT));
+    EXPECT_EQ(FULL_NAME, expandLoggerName(NAME));
+    EXPECT_EQ(FULL_NAME, expandLoggerName(FULL_NAME));
 }
