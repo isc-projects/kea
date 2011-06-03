@@ -1,7 +1,7 @@
 SUBDIRS = . compiler tests
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES) $(LOG4CPLUS_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 CLEANFILES = *.gcno *.gcda
 
@@ -43,5 +43,6 @@ if USE_CLANGPP
 # Same for clang++, but we need to turn off -Werror completely.
 liblog_la_CXXFLAGS += -Wno-error
 endif
-liblog_la_CPPFLAGS = $(AM_CPPFLAGS)
-liblog_la_LIBADD = $(top_builddir)/src/lib/util/libutil.la
+liblog_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+liblog_la_LDFLAGS  = $(LOG4CPLUS_LDFLAGS)
+liblog_la_LIBADD   = $(top_builddir)/src/lib/util/libutil.la

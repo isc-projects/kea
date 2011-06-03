@@ -27,5 +27,3 @@ query_bench_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 query_bench_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
 query_bench_LDADD += $(SQLITE_LIBS)
 
-query_bench_LDFLAGS = $(LOG4CPLUS_LDFLAGS)
-

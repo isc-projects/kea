@@ -329,6 +329,35 @@ class TestMultiConfigData(unittest.TestCase):
         spec_part = self.mcd.find_spec_part("Spec2/item1")
         self.assertEqual({'item_name': 'item1', 'item_type': 'integer', 'item_optional': False, 'item_default': 1, }, spec_part)
 
+    def test_find_spec_part_nested(self):
+        module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec30.spec")
+        self.mcd.set_specification(module_spec)
+        spec_part = self.mcd.find_spec_part("/lists/first_list_items[0]/second_list_items[1]/final_element")
+        self.assertEqual({'item_name': 'final_element', 'item_type': 'string', 'item_default': 'hello', 'item_optional': False}, spec_part)
+        spec_part = self.mcd.find_spec_part("/BAD_NAME/first_list_items[0]/second_list_items[1]/final_element")
+        self.assertEqual(None, spec_part)
+
+    def test_find_spec_part_nested2(self):
+        module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec31.spec")
+        self.mcd.set_specification(module_spec)
+        spec_part = self.mcd.find_spec_part("/lists/first_list_items[0]/second_list_items[1]/map_element/list1[1]/list2[2]")
+        self.assertEqual({"item_name": "number", "item_type": "integer", "item_optional": False, "item_default": 1}, spec_part)
+
+        spec_part = self.mcd.find_spec_part("/DOESNOTEXIST")
+        self.assertEqual(None, spec_part)
+        spec_part = self.mcd.find_spec_part("/lists/DOESNOTEXIST")
+        self.assertEqual(None, spec_part)
+        spec_part = self.mcd.find_spec_part("/lists/first_list_items[0]/DOESNOTEXIST")
+        self.assertEqual(None, spec_part)
+        spec_part = self.mcd.find_spec_part("/lists/first_list_items[0]/second_list_items[1]/DOESNOTEXIST")
+        self.assertEqual(None, spec_part)
+        spec_part = self.mcd.find_spec_part("/lists/first_list_items[0]/second_list_items[1]/map_element/DOESNOTEXIST")
+        self.assertEqual(None, spec_part)
+        spec_part = self.mcd.find_spec_part("/lists/first_list_items[0]/second_list_items[1]/map_element/list1[1]/DOESNOTEXIST")
+        self.assertEqual(None, spec_part)
+        spec_part = self.mcd.find_spec_part("/lists/first_list_items[0]/second_list_items[1]/map_element/list1[1]/list2[1]/DOESNOTEXIST")
+        self.assertEqual(None, spec_part)
+
     def test_get_current_config(self):
         cf = { 'module1': { 'item1': 2, 'item2': True } }
         self.mcd._set_current_config(cf);

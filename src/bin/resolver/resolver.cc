@@ -45,9 +45,8 @@
 
 #include <resolve/recursive_query.h>
 
-#include <log/dummylog.h>
-
-#include <resolver/resolver.h>
+#include "resolver.h"
+#include "resolver_log.h"
 
 using namespace std;
 
@@ -56,7 +55,6 @@ using namespace isc::util;
 using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::config;
-using isc::log::dlog;
 using namespace isc::asiodns;
 using namespace isc::asiolink;
 using namespace isc::server_common::portconfig;
@@ -85,7 +83,7 @@ public:
                     isc::cache::ResolverCache& cache)
     {
         assert(!rec_query_); // queryShutdown must be called first
-        dlog("Query setup");
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_QUSETUP);
         rec_query_ = new RecursiveQuery(dnss, 
                                         nsas, cache,
                                         upstream_,
@@ -101,7 +99,7 @@ public:
         // (this is not a safety check, just to prevent logging of
         // actions that are not performed
         if (rec_query_) {
-            dlog("Query shutdown");
+            LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_QUSHUT);
             delete rec_query_;
             rec_query_ = NULL;
         }
@@ -113,13 +111,12 @@ public:
         upstream_ = upstream;
         if (dnss) {
             if (!upstream_.empty()) {
-                dlog("Setting forward addresses:");
                 BOOST_FOREACH(const AddressPair& address, upstream) {
-                    dlog(" " + address.first + ":" +
-                        boost::lexical_cast<string>(address.second));
+                    LOG_INFO(resolver_logger, RESOLVER_FWDADDR)
+                             .arg(address.first).arg(address.second);
                 }
             } else {
-                dlog("No forward addresses, running in recursive mode");
+                LOG_INFO(resolver_logger, RESOLVER_RECURSIVE);
             }
         }
     }
@@ -130,13 +127,12 @@ public:
         upstream_root_ = upstream_root;
         if (dnss) {
             if (!upstream_root_.empty()) {
-                dlog("Setting root addresses:");
                 BOOST_FOREACH(const AddressPair& address, upstream_root) {
-                    dlog(" " + address.first + ":" +
-                        boost::lexical_cast<string>(address.second));
+                    LOG_INFO(resolver_logger, RESOLVER_ROOTADDR)
+                             .arg(address.first).arg(address.second);
                 }
             } else {
-                dlog("No root addresses");
+                LOG_WARN(resolver_logger, RESOLVER_NOROOTADDR);
             }
         }
     }
@@ -186,8 +182,6 @@ class QuestionInserter {
 public:
     QuestionInserter(MessagePtr message) : message_(message) {}
     void operator()(const QuestionPtr question) {
-        dlog(string("Adding question ") + question->getName().toText() +
-            " to message");
         message_->addQuestion(question);
     }
     MessagePtr message_;
@@ -234,10 +228,6 @@ makeErrorMessage(MessagePtr message, MessagePtr answer_message,
     message->setRcode(rcode);
     MessageRenderer renderer(*buffer);
     message->toWire(renderer);
-
-    dlog(string("Sending an error response (") +
-        boost::lexical_cast<string>(renderer.getLength()) + " bytes):\n" +
-        message->toText());
 }
 
 // This is a derived class of \c DNSLookup, to serve as a
@@ -312,9 +302,8 @@ public:
 
         answer_message->toWire(renderer);
 
-        dlog(string("sending a response (") +
-            boost::lexical_cast<string>(renderer.getLength()) + "bytes): \n" +
-            answer_message->toText());
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_DETAIL, RESOLVER_DNSMSGSENT)
+                  .arg(renderer.getLength()).arg(*answer_message);
     }
 };
 
@@ -335,9 +324,12 @@ private:
 
 Resolver::Resolver() :
     impl_(new ResolverImpl()),
+    dnss_(NULL),
     checkin_(new ConfigCheck(this)),
     dns_lookup_(new MessageLookup(this)),
     dns_answer_(new MessageAnswer),
+    nsas_(NULL),
+    cache_(NULL),
     configured_(false)
 {}
 
@@ -391,21 +383,26 @@ Resolver::processMessage(const IOMessage& io_message,
                          OutputBufferPtr buffer,
                          DNSServer* server)
 {
-    dlog("Got a DNS message");
     InputBuffer request_buffer(io_message.getData(), io_message.getDataSize());
     // First, check the header part.  If we fail even for the base header,
     // just drop the message.
+
+    // In the following code, the debug output is such that there should only be
+    // one debug message if packet processing failed.  There could be two if
+    // it succeeded.
     try {
         query_message->parseHeader(request_buffer);
 
         // Ignore all responses.
         if (query_message->getHeaderFlag(Message::HEADERFLAG_QR)) {
-            dlog("Received unexpected response, ignoring");
+            LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_UNEXRESP);
             server->resume(false);
             return;
         }
+
     } catch (const Exception& ex) {
-        dlog(string("DNS packet exception: ") + ex.what(),true);
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_HDRERR)
+                  .arg(ex.what());
         server->resume(false);
         return;
     }
@@ -414,37 +411,49 @@ Resolver::processMessage(const IOMessage& io_message,
     try {
         query_message->fromWire(request_buffer);
     } catch (const DNSProtocolError& error) {
-        dlog(string("returning ") + error.getRcode().toText() + ": " + 
-            error.what());
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_PROTERR)
+                  .arg(error.what()).arg(error.getRcode());
         makeErrorMessage(query_message, answer_message,
                          buffer, error.getRcode());
         server->resume(true);
         return;
     } catch (const Exception& ex) {
-        dlog(string("returning SERVFAIL: ") + ex.what());
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_PROTERR)
+                  .arg(ex.what()).arg(Rcode::SERVFAIL());
         makeErrorMessage(query_message, answer_message,
                          buffer, Rcode::SERVFAIL());
         server->resume(true);
         return;
-    } // other exceptions will be handled at a higher layer.
+    } // Other exceptions will be handled at a higher layer.
 
-    dlog("received a message:\n" + query_message->toText());
+    // Note:  there appears to be no LOG_DEBUG for a successfully-received
+    // message.  This is not an oversight - it is handled below.  In the
+    // meantime, output the full message for debug purposes (if requested).
+    LOG_DEBUG(resolver_logger, RESOLVER_DBG_DETAIL, RESOLVER_DNSMSGRCVD)
+              .arg(*query_message);
 
     // Perform further protocol-level validation.
     bool sendAnswer = true;
     if (query_message->getOpcode() == Opcode::NOTIFY()) {
+
         makeErrorMessage(query_message, answer_message,
                          buffer, Rcode::NOTAUTH());
-        dlog("Notify arrived, but we are not authoritative");
+        // Notify arrived, but we are not authoritative.
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_NFYNOTAUTH);
+
     } else if (query_message->getOpcode() != Opcode::QUERY()) {
-        dlog("Unsupported opcode (got: " + query_message->getOpcode().toText() +
-            ", expected: " + Opcode::QUERY().toText());
+
+        // Unsupported opcode.
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_OPCODEUNS)
+                  .arg(query_message->getOpcode());
         makeErrorMessage(query_message, answer_message,
                          buffer, Rcode::NOTIMP());
+
     } else if (query_message->getRRCount(Message::SECTION_QUESTION) != 1) {
-        dlog("The query contained " +
-            boost::lexical_cast<string>(query_message->getRRCount(
-            Message::SECTION_QUESTION) + " questions, exactly one expected"));
+
+        // Not one question
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_NOTONEQUES)
+                  .arg(query_message->getRRCount(Message::SECTION_QUESTION));
         makeErrorMessage(query_message, answer_message,
                          buffer, Rcode::FORMERR());
     } else {
@@ -452,16 +461,32 @@ Resolver::processMessage(const IOMessage& io_message,
         const RRType &qtype = question->getType();
         if (qtype == RRType::AXFR()) {
             if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
+
+                // Can't process AXFR request receoved over UDP
+                LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS,
+                          RESOLVER_AXFRUDP);
                 makeErrorMessage(query_message, answer_message,
                                  buffer, Rcode::FORMERR());
             } else {
+
+                // ... or over TCP for that matter
+                LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS,
+                          RESOLVER_AXFRTCP);
                 makeErrorMessage(query_message, answer_message,
                                  buffer, Rcode::NOTIMP());
             }
         } else if (qtype == RRType::IXFR()) {
+
+            // Can't process IXFR request
+            LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_IXFR);
             makeErrorMessage(query_message, answer_message,
                              buffer, Rcode::NOTIMP());
+
         } else if (question->getClass() != RRClass::IN()) {
+
+            // Non-IN message received, refuse it.
+            LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_NOTIN)
+                      .arg(question->getClass());
             makeErrorMessage(query_message, answer_message,
                              buffer, Rcode::REFUSED());
         } else {
@@ -492,18 +517,23 @@ ResolverImpl::processNormalQuery(ConstMessagePtr query_message,
                                  DNSServer* server)
 {
     if (upstream_.empty()) {
-        dlog("Processing normal query");
+        // Processing normal query
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_NORMQUERY);
         ConstQuestionPtr question = *query_message->beginQuestion();
         rec_query_->resolve(*question, answer_message, buffer, server);
+
     } else {
-        dlog("Processing forward query");
+
+        // Processing forward query
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_FWDQUERY);
         rec_query_->forward(query_message, answer_message, buffer, server);
     }
 }
 
 ConstElementPtr
 Resolver::updateConfig(ConstElementPtr config) {
-    dlog("New config comes: " + config->toWire());
+    LOG_DEBUG(resolver_logger, RESOLVER_DBG_CONFIG, RESOLVER_CONFIGUPD)
+              .arg(*config);
 
     try {
         // Parse forward_addresses
@@ -530,6 +560,7 @@ Resolver::updateConfig(ConstElementPtr config) {
             // check for us
             qtimeout = qtimeoutE->intValue();
             if (qtimeout < -1) {
+                LOG_ERROR(resolver_logger, RESOLVER_QUTMOSMALL).arg(qtimeout);
                 isc_throw(BadValue, "Query timeout too small");
             }
             set_timeouts = true;
@@ -537,6 +568,7 @@ Resolver::updateConfig(ConstElementPtr config) {
         if (ctimeoutE) {
             ctimeout = ctimeoutE->intValue();
             if (ctimeout < -1) {
+                LOG_ERROR(resolver_logger, RESOLVER_CLTMOSMALL).arg(ctimeout);
                 isc_throw(BadValue, "Client timeout too small");
             }
             set_timeouts = true;
@@ -544,12 +576,18 @@ Resolver::updateConfig(ConstElementPtr config) {
         if (ltimeoutE) {
             ltimeout = ltimeoutE->intValue();
             if (ltimeout < -1) {
+                LOG_ERROR(resolver_logger, RESOLVER_LKTMOSMALL).arg(ltimeout);
                 isc_throw(BadValue, "Lookup timeout too small");
             }
             set_timeouts = true;
         }
         if (retriesE) {
+            // Do the assignment from "retriesE->intValue()" to "retries"
+            // _after_ the comparison (as opposed to before it for the timeouts)
+            // because "retries" is unsigned.
             if (retriesE->intValue() < 0) {
+                LOG_ERROR(resolver_logger, RESOLVER_RETRYNEG)
+                          .arg(retriesE->intValue());
                 isc_throw(BadValue, "Negative number of retries");
             }
             retries = retriesE->intValue();
@@ -591,8 +629,11 @@ Resolver::updateConfig(ConstElementPtr config) {
         }
         setConfigured();
         return (isc::config::createAnswer());
+
     } catch (const isc::Exception& error) {
-        dlog(string("error in config: ") + error.what(),true);
+
+        // Configuration error
+        LOG_ERROR(resolver_logger, RESOLVER_CONFIGERR).arg(error.what());
         return (isc::config::createAnswer(1, error.what()));
     }
 }
@@ -632,10 +673,10 @@ Resolver::setListenAddresses(const AddressList& addresses) {
 void
 Resolver::setTimeouts(int query_timeout, int client_timeout,
                       int lookup_timeout, unsigned retries) {
-    dlog("Setting query timeout to " + boost::lexical_cast<string>(query_timeout) +
-         ", client timeout to " + boost::lexical_cast<string>(client_timeout) +
-         ", lookup timeout to " + boost::lexical_cast<string>(lookup_timeout) +
-         " and retry count to " + boost::lexical_cast<string>(retries));
+    LOG_DEBUG(resolver_logger, RESOLVER_DBG_CONFIG, RESOLVER_SETPARAM)
+              .arg(query_timeout).arg(client_timeout).arg(lookup_timeout)
+              .arg(retries);
+
     impl_->query_timeout_ = query_timeout;
     impl_->client_timeout_ = client_timeout;
     impl_->lookup_timeout_ = lookup_timeout;
