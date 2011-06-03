@@ -209,16 +209,6 @@ IOFetch::IOFetch(Protocol protocol, IOService& service,
     msg->setHeaderFlag(Message::HEADERFLAG_CD,
                        query_message->getHeaderFlag(Message::HEADERFLAG_CD));
 
-    ConstEDNSPtr edns(query_message->getEDNS());
-    const bool dnssec_ok = edns && edns->getDNSSECAwareness();
-    if (edns) {
-        EDNSPtr edns_response(new EDNS());
-        edns_response->setDNSSECAwareness(dnssec_ok);
-        // TODO: We should make our own edns bufsize length configurable
-        edns_response->setUDPSize(Message::DEFAULT_MAX_EDNS0_UDPSIZE);
-        msg->setEDNS(edns_response);
-    }
-
     initIOFetch(msg, protocol, service,
                 **(query_message->beginQuestion()),
                 address, port, buff, cb, wait);
@@ -238,6 +228,9 @@ IOFetch::initIOFetch(MessagePtr& query_msg, Protocol protocol, IOService& servic
     query_msg->setRcode(Rcode::NOERROR());
     query_msg->setHeaderFlag(Message::HEADERFLAG_RD);
     query_msg->addQuestion(question);
+    EDNSPtr edns_query(new EDNS());
+    edns_query->setUDPSize(Message::DEFAULT_MAX_EDNS0_UDPSIZE);
+    query_msg->setEDNS(edns_query);
     MessageRenderer renderer(*data_->msgbuf);
     query_msg->toWire(renderer);
 }
