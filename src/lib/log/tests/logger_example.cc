@@ -34,9 +34,9 @@
 #include <log/logger.h>
 #include <log/logger_level.h>
 #include <log/logger_manager.h>
+#include <log/logger_name.h>
 #include <log/logger_specification.h>
 #include <log/macros.h>
-#include <log/root_logger_name.h>
 
 // Include a set of message definitions.
 #include <log/messagedef.h>

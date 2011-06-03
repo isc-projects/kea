@@ -17,9 +17,9 @@
 
 #include <gtest/gtest.h>
 
-#include <log/root_logger_name.h>
 #include <log/logger.h>
 #include <log/logger_manager.h>
+#include <log/logger_name.h>
 #include <log/messagedef.h>
 
 using namespace isc;

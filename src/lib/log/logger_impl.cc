@@ -23,14 +23,13 @@
 
 #include <log4cplus/configurator.h>
 
-#include <log/root_logger_name.h>
 #include <log/logger.h>
+#include <log/logger_impl.h>
 #include <log/logger_level.h>
 #include <log/logger_level_impl.h>
-#include <log/logger_impl.h>
+#include <log/logger_name.h>
 #include <log/message_dictionary.h>
 #include <log/message_types.h>
-#include <log/root_logger_name.h>
 
 #include <util/strutil.h>
 
@@ -50,15 +49,19 @@ namespace log {
 LoggerImpl::LoggerImpl(const string& name) :
     logger_(log4cplus::Logger::getRoot())
 {
-    // Are we the root logger?
-    if (name == getRootLoggerName()) {
+    // Are we the root logger, or does the logger name start with
+    // the string "<root_logger_name>.".  If so, use a logger
+    // whose name is the one given.
+    if ((name == getRootLoggerName()) ||
+        (name.find(getRootLoggerName() + string(".")) == 0)) {
         name_ = name;
-        // logger_ already set to log4cplus root logger at this point
 
     } else {
+        // Anything else is assumed to be a sub-logger of the
+        // root logger.
         name_ = getRootLoggerName() + "." + name;
-        logger_ = log4cplus::Logger::getInstance(name);
     }
+    logger_ = log4cplus::Logger::getInstance(name);
 }
 
 // Destructor. (Here because of virtual declaration.)

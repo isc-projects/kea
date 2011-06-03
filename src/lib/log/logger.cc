@@ -17,9 +17,9 @@
 
 #include <log/logger.h>
 #include <log/logger_impl.h>
+#include <log/logger_name.h>
 #include <log/message_dictionary.h>
 #include <log/message_types.h>
-#include <log/root_logger_name.h>
 
 #include <util/strutil.h>
 
