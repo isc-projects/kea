@@ -12,11 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <gtest/gtest.h>
+/// Defines the logger used by the NSAS
 
-int
-main(int argc, char *argv[]) {
-    ::testing::InitGoogleTest(&argc, argv);
+#include "resolver_log.h"
 
-    return RUN_ALL_TESTS();
-}
+isc::log::Logger resolver_logger("resolver");

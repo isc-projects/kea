@@ -192,8 +192,10 @@ ModuleCCSession::ModuleCCSession(
     isc::data::ConstElementPtr(*config_handler)(
         isc::data::ConstElementPtr new_config),
     isc::data::ConstElementPtr(*command_handler)(
-        const std::string& command, isc::data::ConstElementPtr args)
+        const std::string& command, isc::data::ConstElementPtr args),
+    bool start_immediately
     ) :
+    started_(false),
     session_(session)
 {
     module_specification_ = readModuleSpecification(spec_file_name);
@@ -237,8 +239,21 @@ ModuleCCSession::ModuleCCSession(
         }
     }
 
+    if (start_immediately) {
+        start();
+    }
+}
+
+void
+ModuleCCSession::start() {
+    if (started_) {
+        isc_throw(CCSessionError, "Module CC session already started");
+    }
+
     // register callback for asynchronous read
     session_.startRead(boost::bind(&ModuleCCSession::startCheck, this));
+
+    started_ = true;
 }
 
 /// Validates the new config values, if they are correct,
@@ -355,45 +370,56 @@ ModuleCCSession::checkCommand() {
     return (0);
 }
 
+ModuleSpec
+ModuleCCSession::fetchRemoteSpec(const std::string& module, bool is_filename) {
+    if (is_filename) {
+        // It is a filename, simply load it.
+        return (readModuleSpecification(module));
+    } else {
+        // It's module name, request it from config manager
+
+        // Send the command
+        ConstElementPtr cmd(createCommand("get_module_spec",
+                            Element::fromJSON("{\"module_name\": \"" + module +
+                                              "\"}")));
+        const unsigned int seq = session_.group_sendmsg(cmd, "ConfigManager");
+
+        // Wait for the answer
+        ConstElementPtr env, answer;
+        session_.group_recvmsg(env, answer, false, seq);
+        int rcode;
+        ConstElementPtr spec_data = parseAnswer(rcode, answer);
+        if (rcode == 0 && spec_data) {
+            // received OK, construct the spec out of it
+            ModuleSpec spec = ModuleSpec(spec_data);
+            if (module != spec.getModuleName()) {
+                // It's a different module!
+                isc_throw(CCSessionError, "Module name mismatch");
+            }
+            return (spec);
+        } else {
+            isc_throw(CCSessionError, "Error getting config for " +
+                      module + ": " + answer->str());
+        }
+    }
+}
+
 std::string
 ModuleCCSession::addRemoteConfig(const std::string& spec_name,
                                  void (*handler)(const std::string& module,
                                           ConstElementPtr),
                                  bool spec_is_filename)
 {
-    std::string module_name;
-    ModuleSpec rmod_spec;
-    if (spec_is_filename) {
-        // It's a file name, so load it
-        rmod_spec = readModuleSpecification(spec_name);
-        module_name =
-            rmod_spec.getFullSpec()->get("module_name")->stringValue();
-    } else {
-        // It's module name, request it from config manager
-        ConstElementPtr cmd = Element::fromJSON("{ \"command\": ["
-                                                "\"get_module_spec\","
-                                                "{\"module_name\": \"" +
-                                                module_name + "\"} ] }");
-        unsigned int seq = session_.group_sendmsg(cmd, "ConfigManager");
-        ConstElementPtr env, answer;
-        session_.group_recvmsg(env, answer, false, seq);
-        int rcode;
-        ConstElementPtr spec_data = parseAnswer(rcode, answer);
-        if (rcode == 0 && spec_data) {
-            rmod_spec = ModuleSpec(spec_data);
-            module_name = spec_name;
-            if (module_name != rmod_spec.getModuleName()) {
-                isc_throw(CCSessionError, "Module name mismatch");
-            }
-        } else {
-            isc_throw(CCSessionError, "Error getting config for " + module_name + ": " + answer->str());
-        }
-    }
-    ConfigData rmod_config = ConfigData(rmod_spec);
+    // First get the module name, specification and default config
+    const ModuleSpec rmod_spec(fetchRemoteSpec(spec_name, spec_is_filename));
+    const std::string module_name(rmod_spec.getModuleName());
+    ConfigData rmod_config(rmod_spec);
 
-    // Get the current configuration values for that module
-    ConstElementPtr cmd = Element::fromJSON("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name + "\"} ] }");
-    unsigned int seq = session_.group_sendmsg(cmd, "ConfigManager");
+    // Get the current configuration values from config manager
+    ConstElementPtr cmd(createCommand("get_config",
+                        Element::fromJSON("{\"module_name\": \"" +
+                                          module_name + "\"}")));
+    const unsigned int seq = session_.group_sendmsg(cmd, "ConfigManager");
 
     ConstElementPtr env, answer;
     session_.group_recvmsg(env, answer, false, seq);
@@ -401,6 +427,7 @@ ModuleCCSession::addRemoteConfig(const std::string& spec_name,
     ConstElementPtr new_config = parseAnswer(rcode, answer);
     ElementPtr local_config;
     if (rcode == 0 && new_config) {
+        // Merge the received config into existing local config
         local_config = rmod_config.getLocalConfig();
         isc::data::merge(local_config, new_config);
         rmod_config.setLocalConfig(local_config);
@@ -414,6 +441,8 @@ ModuleCCSession::addRemoteConfig(const std::string& spec_name,
         remote_module_handlers_[module_name] = handler;
         handler(module_name, local_config);
     }
+
+    // Make sure we get updates in future
     session_.subscribe(module_name);
     return (module_name);
 }

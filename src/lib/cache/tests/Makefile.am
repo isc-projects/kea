@@ -32,20 +32,20 @@ TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
-run_unittests_SOURCES  += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
-run_unittests_SOURCES  += rrset_entry_unittest.cc
-run_unittests_SOURCES  += rrset_cache_unittest.cc
-run_unittests_SOURCES  += message_cache_unittest.cc
-run_unittests_SOURCES  += message_entry_unittest.cc
-run_unittests_SOURCES  += local_zone_data_unittest.cc
-run_unittests_SOURCES  += resolver_cache_unittest.cc
-run_unittests_SOURCES  += negative_cache_unittest.cc
-run_unittests_SOURCES  += cache_test_messagefromfile.h
-run_unittests_SOURCES  += cache_test_sectioncount.h
+run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
+run_unittests_SOURCES += rrset_entry_unittest.cc
+run_unittests_SOURCES += rrset_cache_unittest.cc
+run_unittests_SOURCES += message_cache_unittest.cc
+run_unittests_SOURCES += message_entry_unittest.cc
+run_unittests_SOURCES += local_zone_data_unittest.cc
+run_unittests_SOURCES += resolver_cache_unittest.cc
+run_unittests_SOURCES += negative_cache_unittest.cc
+run_unittests_SOURCES += cache_test_messagefromfile.h
+run_unittests_SOURCES += cache_test_sectioncount.h
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS) $(LOG4CPLUS_LDFLAGS)
-run_unittests_LDADD = $(GTEST_LDADD)
+run_unittests_LDFLAGS  = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
+run_unittests_LDADD    = $(GTEST_LDADD)
 
 # NOTE: we may have to clean up this hack later (see the note in configure.ac)
 if NEED_LIBBOOST_THREAD
@@ -55,14 +55,14 @@ endif
 run_unittests_LDADD += $(top_builddir)/src/lib/cache/libcache.la
 run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
-run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 endif
 
 noinst_PROGRAMS = $(TESTS)
 
-EXTRA_DIST = testdata/message_cname_referral.wire
+EXTRA_DIST  = testdata/message_cname_referral.wire
 EXTRA_DIST += testdata/message_example_com_soa.wire
 EXTRA_DIST += testdata/message_fromWire1
 EXTRA_DIST += testdata/message_fromWire2

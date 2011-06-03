@@ -51,11 +51,10 @@ b10_auth_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 b10_auth_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 b10_auth_LDADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
 b10_auth_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
-b10_auth_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
+b10_auth_LDADD += $(top_builddir)/src/lib/log/liblog.la
 b10_auth_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
 b10_auth_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
 b10_auth_LDADD += $(SQLITE_LIBS)
-b10_auth_LDFLAGS = $(LOG4CPLUS_LDFLAGS)
 
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir
 # and can't use @datadir@ because doesn't expand default ${prefix}
