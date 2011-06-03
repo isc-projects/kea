@@ -271,7 +271,7 @@ writePythonFile(const string& file, MessageDictionary& dictionary) {
 
     vector<string> idents(sortedIdentifiers(dictionary));
     BOOST_FOREACH(const string& ident, idents) {
-        pyfile << ident << " = isc.log.message.Message(\"" <<
+        pyfile << ident << " = isc.log.message.create(\"" <<
             ident << "\", \"" << quoteString(dictionary.getText(ident)) <<
             "\")\n";
     }
