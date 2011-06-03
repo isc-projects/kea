@@ -60,8 +60,8 @@ struct OutputOption {
 
     /// \brief Constructor
     OutputOption() : destination(DEST_CONSOLE), stream(STR_STDERR),
-                     flush(false), facility(""), filename(""), maxsize(0),
-                     maxver(0)
+                     flush(false), facility("LOCAL0"), filename(""),
+                     maxsize(0), maxver(0)
     {}
 
     /// Members. 
@@ -72,7 +72,7 @@ struct OutputOption {
     std::string     facility;           ///< syslog facility
     std::string     filename;           ///< Filename if file output
     size_t          maxsize;            ///< 0 if no maximum size
-    int             maxver;             ///< Maximum versions (none if <= 0)
+    unsigned int    maxver;             ///< Maximum versions (none if <= 0)
 };
 
 OutputOption::Destination getDestination(const std::string& dest_str);
