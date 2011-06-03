@@ -1,6 +1,6 @@
 249.    [func]      jerry
 	xfrout: add support for TSIG verification.
-	(Trac816, git TBD)
+	(Trac816, git 3b2040e2af2f8139c1c319a2cbc429035d93f217)
 
 248.    [func]      stephen
 	Add file and stderr as destinations for logging.
