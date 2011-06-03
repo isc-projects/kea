@@ -235,13 +235,13 @@ def load(dbfile, zone, reader):
         zone += '.'
 
     conn, cur = open(dbfile)
-    old_zone_id = get_zoneid(zone, cur)
-
-    temp = str(random.randrange(100000))
-    cur.execute("INSERT INTO zones (name, rdclass) VALUES (?, 'IN')", [temp])
-    new_zone_id = cur.lastrowid
-
     try:
+        old_zone_id = get_zoneid(zone, cur)
+
+        temp = str(random.randrange(100000))
+        cur.execute("INSERT INTO zones (name, rdclass) VALUES (?, 'IN')", [temp])
+        new_zone_id = cur.lastrowid
+
         for name, ttl, rdclass, rdtype, rdata in reader():
             sigtype = ''
             if rdtype.lower() == 'rrsig':
@@ -266,20 +266,20 @@ def load(dbfile, zone, reader):
                                VALUES (?, ?, ?, ?, ?, ?)""",
                             [new_zone_id, name, reverse_name(name), ttl,
                              rdtype, rdata])
+
+        if old_zone_id:
+            cur.execute("DELETE FROM zones WHERE id=?", [old_zone_id])
+            cur.execute("UPDATE zones SET name=? WHERE id=?", [zone, new_zone_id])
+            conn.commit()
+            cur.execute("DELETE FROM records WHERE zone_id=?", [old_zone_id])
+            cur.execute("DELETE FROM nsec3 WHERE zone_id=?", [old_zone_id])
+            conn.commit()
+        else:
+            cur.execute("UPDATE zones SET name=? WHERE id=?", [zone, new_zone_id])
+            conn.commit()
     except Exception as e:
         fail = "Error while loading " + zone + ": " + e.args[0]
         raise Sqlite3DSError(fail)
-
-    if old_zone_id:
-        cur.execute("DELETE FROM zones WHERE id=?", [old_zone_id])
-        cur.execute("UPDATE zones SET name=? WHERE id=?", [zone, new_zone_id])
-        conn.commit()
-        cur.execute("DELETE FROM records WHERE zone_id=?", [old_zone_id])
-        cur.execute("DELETE FROM nsec3 WHERE zone_id=?", [old_zone_id])
-        conn.commit()
-    else:
-        cur.execute("UPDATE zones SET name=? WHERE id=?", [zone, new_zone_id])
-        conn.commit()
-
-    cur.close()
-    conn.close()
+    finally:
+        cur.close()
+        conn.close()
