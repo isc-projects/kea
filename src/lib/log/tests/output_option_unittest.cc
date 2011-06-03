@@ -30,7 +30,7 @@ TEST(OutputOptionTest, Initialization) {
     EXPECT_EQ(OutputOption::DEST_CONSOLE, option.destination);
     EXPECT_EQ(OutputOption::STR_STDERR, option.stream);
     EXPECT_FALSE(option.flush);
-    EXPECT_EQ(string(""), option.facility);
+    EXPECT_EQ(string("LOCAL0"), option.facility);
     EXPECT_EQ(string(""), option.filename);
     EXPECT_EQ(0, option.maxsize);
     EXPECT_EQ(0, option.maxver);
