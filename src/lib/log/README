@@ -117,7 +117,7 @@ Points to note:
 * Lines starting $ are directives.  At present, two directives are recognised:
 
   * $PREFIX, which has one optional argument: the string used to prefix symbols.
-    If absent, there is no prefix to the symbols. (Prefixes are explained below.)
+    If absent, there is no prefix to the symbols (prefixes are explained below).
 
   * $NAMESPACE, which has one argument: the namespace in which the symbols are
     created.  In the absence of a $NAMESPACE directive, symbols will be put in
@@ -135,7 +135,7 @@ Points to note:
   * The replacement tokens are the strings "%1", "%2" etc.  When a message
     is logged, these are replaced with the arguments passed to the logging
     call: %1 refers to the first argument, %2 to the second etc.  Within the
-    message text, the placeholders can appear in any order, and placeholders
+    message text, the placeholders can appear in any order and placeholders
     can be repeated.
      
 * Remaining lines indicate an explanation for the preceding message.  These
@@ -215,33 +215,9 @@ To use the current version of the logging:
 
 1. Build message header file and source file as describe above.
 
-2. In the main module of the program, declare an instance of the
-   RootLoggerName class to define the name of the program's root logger, e.g.
-
-       #include <log/root_logger_name.h>
-
-       isc::log::RootLoggerName("b10-auth");
-
-   This can be declared inside or outside an execution unit.
-
-2. In the code that needs to do logging, declare a logger with a given name,
-   e.g.
-
-       #include <log/logger.h>
-            :
-       isc::log::Logger logger("myname");   // "myname" can be anything
-
-   The above example assumes declaration outside a function.  If declaring
-   non-statically within a function, declare it as:
-
-       isc::log::Logger logger("myname", true);
-
-   (The argument is required to support a possible future implementation of
-   logging.  Currently it has no effect.)
-
-3. The main program unit should include a call to isc::log::initLogger()
+2. The main program unit should include a call to isc::log::initLogger()
    (defined in logger_support.h) to set the logging severity, debug log level,
-   and external message file.
+   and external message file:
 
    a) The logging severity is one of the enum defined in logger.h, i.e.
 
@@ -262,43 +238,23 @@ To use the current version of the logging:
       directive of a particular type will be ignored; multiple directives will
       cause the read of the file to fail with an error.)
 
-4. Issue logging calls using methods on logger, e.g.
+   The settings remain in effect until the logging configuration is read, and
+   so provide the default logging during program initialization.
 
-       logger.error(DPS_NSTIMEOUT).arg("isc.org");
+3. Issue logging calls using supplied macros in "log/macros.h", e.g.
 
-   (where, in the example above we might have defined the symbol in the message
+       LOG_ERROR(logger, DPS_NSTIMEOUT).arg("isc.org");
+
+   (The macros are more efficient that calls to the methods on the logger class:
+   they avoid the overhead of evaluating the parameters to arg() if the
+   settings are such that the message is not going to be output.)
+
+   Note: in the example above we might have defined the symbol in the message
    file with something along the lines of:
 
        $PREFIX DPS_
            :
        NSTIMEOUT  queries to all nameservers for %1 have timed out
-
-   At present, the only logging is to the console.
-
-
-Efficiency Considerations
--------------------------
-A common pattern in logging is a debug call of the form:
-
-   logger.debug(dbglevel, MSGID).arg(expensive_call()).arg(...
-
-... where "expensive_call()" is a function call to obtain logging information
-that may be computationally intensive.  Although the cost may be justified
-when debugging is enabled, the cost is still incurred even if debugging is
-disabled and the debug() method returns without outputting anything.  (The
-same may be true of other logging levels, although there are likely to be
-fewer calls to logger.info(), logger.error() etc. throughout the code and
-they are less likely to be disabled.)
-
-For this reason, a set of macros is provided and are called using the
-construct:
-
-   LOG_DEBUG(logger, dbglevel, MSGID).arg(expensive_call()).arg(...
-   LOG_INFO(logger, MSGID).arg(expensive_call()...)
-
-If these are used, the arguments passed to the arg() method are not evaluated
-if the relevant logging level is disabled.
-
 
 Severity Guidelines
 ===================
@@ -306,12 +262,19 @@ When using logging, the question arises, what severity should a message be
 logged at?  The following is a suggestion - as always, the decision must be
 made in the context of which the message is logged.
 
+One thing that should always be borne in mind is whether the logging could
+be used as a vector for a DOS attack.  For example, if a warning message is
+logged every time an invalid packet is received, an attacker could simply send
+large numbers of invalid packets.  (Of course, warnings could be disabled (or
+just warnings for that that particular logger), but nevertheless the message
+is an attack vector.)
+
 FATAL
 -----
-The program has encountered an error that is so severe that it cannot
-continue (or there is no point in continuing).  When a fatal error has been
-logged, the program will usually exit immediately (via a call to abort()) or
-shortly afterwards, after dumping some diagnostic information.
+The program has encountered an error that is so severe that it cannot continue
+(or there is no point in continuing).  When a fatal error has been logged,
+the program will usually exit immediately (or shortly afterwards) after
+dumping some diagnostic information.
 
 ERROR
 -----
@@ -342,7 +305,7 @@ are distributed between the levels is up to the developer.  So if debugging
 the NSAS (for example), a level 0 message might record the creation of a new
 zone, a level 10 recording a timeout when trying to get a nameserver address,
 but a level 50 would record every query for an address. (And we might add
-level 51 to record every update of the RTT.)
+level 70 to record every update of the RTT.)
 
 Note that like severities, levels are cumulative; so if level 25 is set as the
 debug level, all debug levels from 0 to 25 will be output.  In fact, it is
@@ -397,13 +360,3 @@ is only one piece of code that does this functionality.
 Outstanding Issues
 ==================
 * Ability to configure system according to configuration database.
-
-
-log4cxx Issues
-==============
-Some experimental code to utilise log4cxx as an underlying implementation
-is present in the source code directory although it is not currently used.
-The files are:
-
-   logger_impl_log4cxx.{cc,h}
-   xdebuglevel.{cc,h}

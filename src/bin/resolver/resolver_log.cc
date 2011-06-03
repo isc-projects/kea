@@ -12,18 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __DEBUG_LEVELS_H
-#define __DEBUG_LEVELS_H
+/// Defines the logger used by the NSAS
 
-/// \brief Defines Debug Levels
-///
-/// Defines the maximum and minimum debug levels and the number of levels.
-/// These are defined using #define as they are referenced in the construction
-/// of variables declared outside execution units.  (In this way we avoid the
-/// "static initialization fiasco" problem.)
+#include "resolver_log.h"
 
-#define MIN_DEBUG_LEVEL (0)
-#define MAX_DEBUG_LEVEL (99)
-#define NUM_DEBUG_LEVEL (MAX_DEBUG_LEVEL - MIN_DEBUG_LEVEL + 1)
-
-#endif // __DEBUG_LEVELS_H
+isc::log::Logger resolver_logger("resolver");
