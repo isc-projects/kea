@@ -74,9 +74,11 @@ SPECFILE_LOCATION = SPECFILE_PATH + "/xfrout.spec"
 AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + os.sep + "auth.spec"
 MAX_TRANSFERS_OUT = 10
 VERBOSE_MODE = False
-
+# tsig sign every N axfr packets.
+TSIG_SIGN_EVERY_NTH = 96
 
 XFROUT_MAX_MESSAGE_SIZE = 65535
+
 
 def get_rrset_len(rrset):
     """Returns the wire length of the given RRset"""
@@ -86,14 +88,21 @@ def get_rrset_len(rrset):
 
 
 class XfroutSession():
-    def __init__(self, sock_fd, request_data, server, log):
+    def __init__(self, sock_fd, request_data, server, log, tsig_key_ring):
         # The initializer for the superclass may call functions
         # that need _log to be set, so we set it first
         self._sock_fd = sock_fd
         self._request_data = request_data
         self._server = server
         self._log = log
+        self._tsig_key_ring = tsig_key_ring
+        self._tsig_ctx = None
+        self._tsig_len = 0
         self.handle()
+
+    def create_tsig_ctx(self, tsig_record, tsig_key_ring):
+        return TSIGContext(tsig_record.get_name(), tsig_record.get_rdata().get_algorithm(),
+                           tsig_key_ring)
 
     def handle(self):
         ''' Handle a xfrout query, send xfrout response '''
@@ -105,17 +114,33 @@ class XfroutSession():
 
         os.close(self._sock_fd)
 
+    def _check_request_tsig(self, msg, request_data):
+        ''' If request has a tsig record, perform tsig related checks '''
+        tsig_record = msg.get_tsig_record()
+        if tsig_record is not None:
+            self._tsig_len = tsig_record.get_length()
+            self._tsig_ctx = self.create_tsig_ctx(tsig_record, self._tsig_key_ring)
+            tsig_error = self._tsig_ctx.verify(tsig_record, request_data)
+            if tsig_error != TSIGError.NOERROR:
+                return Rcode.NOTAUTH()
+
+        return Rcode.NOERROR()
+
     def _parse_query_message(self, mdata):
         ''' parse query message to [socket,message]'''
         #TODO, need to add parseHeader() in case the message header is invalid
         try:
             msg = Message(Message.PARSE)
             Message.from_wire(msg, mdata)
+
+            # TSIG related checks
+            rcode = self._check_request_tsig(msg, mdata)
+
         except Exception as err:
             self._log.log_message("error", str(err))
             return Rcode.FORMERR(), None
 
-        return Rcode.NOERROR(), msg
+        return rcode, msg
 
     def _get_query_zone_name(self, msg):
         question = msg.get_question()[0]
@@ -130,13 +155,20 @@ class XfroutSession():
             total_count += count
 
 
-    def _send_message(self, sock_fd, msg):
+    def _send_message(self, sock_fd, msg, tsig_ctx=None):
         render = MessageRenderer()
         # As defined in RFC5936 section3.4, perform case-preserving name
         # compression for AXFR message.
         render.set_compress_mode(MessageRenderer.CASE_SENSITIVE)
         render.set_length_limit(XFROUT_MAX_MESSAGE_SIZE)
-        msg.to_wire(render)
+
+        # XXX Currently, python wrapper doesn't accept 'None' parameter in this case,
+        # we should remove the if statement and use a universal interface later.
+        if tsig_ctx is not None:
+            msg.to_wire(render, tsig_ctx)
+        else:
+            msg.to_wire(render)
+
         header_len = struct.pack('H', socket.htons(render.get_length()))
         self._send_data(sock_fd, header_len)
         self._send_data(sock_fd, render.get_data())
@@ -145,7 +177,7 @@ class XfroutSession():
     def _reply_query_with_error_rcode(self, msg, sock_fd, rcode_):
         msg.make_response()
         msg.set_rcode(rcode_)
-        self._send_message(sock_fd, msg)
+        self._send_message(sock_fd, msg, self._tsig_ctx)
 
 
     def _reply_query_with_format_error(self, msg, sock_fd):
@@ -155,7 +187,7 @@ class XfroutSession():
 
         msg.make_response()
         msg.set_rcode(Rcode.FORMERR())
-        self._send_message(sock_fd, msg)
+        self._send_message(sock_fd, msg, self._tsig_ctx)
 
     def _zone_has_soa(self, zone):
         '''Judge if the zone has an SOA record.'''
@@ -204,7 +236,9 @@ class XfroutSession():
     def dns_xfrout_start(self, sock_fd, msg_query):
         rcode_, msg = self._parse_query_message(msg_query)
         #TODO. create query message and parse header
-        if rcode_ != Rcode.NOERROR():
+        if rcode_ == Rcode.NOTAUTH():
+            return self._reply_query_with_error_rcode(msg, sock_fd, rcode_)
+        elif rcode_ != Rcode.NOERROR():
             return self._reply_query_with_format_error(msg, sock_fd)
 
         zone_name = self._get_query_zone_name(msg)
@@ -248,37 +282,43 @@ class XfroutSession():
         rrset_.add_rdata(rdata_)
         return rrset_
 
-    def _send_message_with_last_soa(self, msg, sock_fd, rrset_soa, message_upper_len):
+    def _send_message_with_last_soa(self, msg, sock_fd, rrset_soa, message_upper_len,
+                                    count_since_last_tsig_sign):
         '''Add the SOA record to the end of message. If it can't be
         added, a new message should be created to send out the last soa .
         '''
         rrset_len = get_rrset_len(rrset_soa)
 
-        if message_upper_len + rrset_len < XFROUT_MAX_MESSAGE_SIZE:
-            msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
-        else:
+        if (count_since_last_tsig_sign == TSIG_SIGN_EVERY_NTH and
+            message_upper_len + rrset_len >= XFROUT_MAX_MESSAGE_SIZE):
+            # If tsig context exist, sign the packet with serial number TSIG_SIGN_EVERY_NTH
+            self._send_message(sock_fd, msg, self._tsig_ctx)
+            msg = self._clear_message(msg)
+        elif (count_since_last_tsig_sign != TSIG_SIGN_EVERY_NTH and
+              message_upper_len + rrset_len + self._tsig_len >= XFROUT_MAX_MESSAGE_SIZE):
             self._send_message(sock_fd, msg)
             msg = self._clear_message(msg)
-            msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
 
-        self._send_message(sock_fd, msg)
+        # If tsig context exist, sign the last packet
+        msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
+        self._send_message(sock_fd, msg, self._tsig_ctx)
 
 
     def _reply_xfrout_query(self, msg, sock_fd, zone_name):
         #TODO, there should be a better way to insert rrset.
+        count_since_last_tsig_sign = TSIG_SIGN_EVERY_NTH
         msg.make_response()
         msg.set_header_flag(Message.HEADERFLAG_AA)
         soa_record = sqlite3_ds.get_zone_soa(zone_name, self._server.get_db_file())
         rrset_soa = self._create_rrset_from_db_record(soa_record)
         msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
 
-        message_upper_len = get_rrset_len(rrset_soa)
+        message_upper_len = get_rrset_len(rrset_soa) + self._tsig_len
 
         for rr_data in sqlite3_ds.get_zone_datas(zone_name, self._server.get_db_file()):
             if  self._server._shutdown_event.is_set(): # Check if xfrout is shutdown
                 self._log.log_message("info", "xfrout process is being shutdown")
                 return
-
             # TODO: RRType.SOA() ?
             if RRType(rr_data[5]) == RRType("SOA"): #ignore soa record
                 continue
@@ -294,12 +334,25 @@ class XfroutSession():
                 message_upper_len += rrset_len
                 continue
 
-            self._send_message(sock_fd, msg)
+            # If tsig context exist, sign every N packets
+            if count_since_last_tsig_sign == TSIG_SIGN_EVERY_NTH:
+                count_since_last_tsig_sign = 0
+                self._send_message(sock_fd, msg, self._tsig_ctx)
+            else:
+                self._send_message(sock_fd, msg)
+
+            count_since_last_tsig_sign += 1
             msg = self._clear_message(msg)
             msg.add_rrset(Message.SECTION_ANSWER, rrset_) # Add the rrset to the new message
-            message_upper_len = rrset_len
 
-        self._send_message_with_last_soa(msg, sock_fd, rrset_soa, message_upper_len)
+            # Reserve tsig space for signed packet
+            if count_since_last_tsig_sign == TSIG_SIGN_EVERY_NTH:
+                message_upper_len = rrset_len + self._tsig_len
+            else:
+                message_upper_len = rrset_len
+
+        self._send_message_with_last_soa(msg, sock_fd, rrset_soa, message_upper_len,
+                                         count_since_last_tsig_sign)
 
 class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
     '''The unix domain socket server which accept xfr query sent from auth server.'''
@@ -403,7 +456,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
 
     def finish_request(self, sock_fd, request_data):
         '''Finish one request by instantiating RequestHandlerClass.'''
-        self.RequestHandlerClass(sock_fd, request_data, self, self._log)
+        self.RequestHandlerClass(sock_fd, request_data, self, self._log, self.tsig_key_ring)
 
     def _remove_unused_sock_file(self, sock_file):
         '''Try to remove the socket file. If the file is being used
@@ -449,9 +502,26 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         self._log.log_message('info', 'update config data start.')
         self._lock.acquire()
         self._max_transfers_out = new_config.get('transfers_out')
+        self.set_tsig_key_ring(new_config.get('tsig_key_ring'))
         self._log.log_message('info', 'max transfer out : %d', self._max_transfers_out)
         self._lock.release()
         self._log.log_message('info', 'update config data complete.')
+
+    def set_tsig_key_ring(self, key_list):
+        """Set the tsig_key_ring , given a TSIG key string list representation. """
+
+        # XXX add values to configure zones/tsig options
+        self.tsig_key_ring = TSIGKeyRing()
+        # If key string list is empty, create a empty tsig_key_ring
+        if not key_list:
+            return
+
+        for key_item in key_list:
+            try:
+                self.tsig_key_ring.add(TSIGKey(key_item))
+            except InvalidParameter as ipe:
+                errmsg = "bad TSIG key string: " + str(key_item)
+                self._log.log_message('error', '%s' % errmsg)
 
     def get_db_file(self):
         file, is_default = self._cc.get_remote_config_value("Auth", "database_file")
