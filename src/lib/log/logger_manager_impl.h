@@ -127,8 +127,8 @@ private:
     ///
     /// \param logger Log4cplus logger to which the appender must be attached.
     /// \param opt Output options for this appender.
-    static void createSyslogAppender(log4cplus::Logger& logger,
-                                     const OutputOption& opt) {}
+    static void createSysLogAppender(log4cplus::Logger& logger,
+                                     const OutputOption& opt);
 
     /// \brief Set default layout and severity for root logger
     ///
@@ -145,11 +145,20 @@ private:
     /// Sets the layout of the specified appender to one suitable for file
     /// or console output:
     ///
-    /// YYYY-MM-DD HH:MM:SS.ssss <severity> [root.logger] message
+    /// YYYY-MM-DD HH:MM:SS.ssss SEVERITY [root.logger] message
     ///
     /// \param appender Appender for which this pattern is to be set.
-    /// \param root_name Name of the BIND 10 root logger.
     static void setConsoleAppenderLayout(log4cplus::SharedAppenderPtr& appender);
+
+    /// \brief Set layout for syslog appender
+    ///
+    /// Sets the layout of the specified appender to one suitable for the
+    /// syslog file:
+    ///
+    /// SEVERITY [root.logger] message
+    ///
+    /// \param appender Appender for which this pattern is to be set.
+    static void setSysLogAppenderLayout(log4cplus::SharedAppenderPtr& appender);
 };
 
 } // namespace log
