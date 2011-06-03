@@ -183,9 +183,9 @@ public:
         try {
             Botan::SecureVector<Botan::byte> our_mac = hmac_->final();
             if (len < getOutputLength()) {
-                // Currently we don't support truncated signature.  To avoid
-                // validating too short signature accidently, we enforce the
-                // standard signature size for the moment.
+                // Currently we don't support truncated signature in TSIG (see
+                // #920).  To avoid validating too short signature accidently,
+                // we enforce the standard signature size for the moment.
                 // Once we support truncation correctly, this if-clause should
                 // (and the capitalized comment above) be removed.
                 return (false);
@@ -246,7 +246,7 @@ HMAC::verify(const void* sig, const size_t len) {
 }
 
 void
-signHMAC(const void* data, size_t data_len, const void* secret,
+signHMAC(const void* data, const size_t data_len, const void* secret,
          size_t secret_len, const HashAlgorithm hash_algorithm,
          isc::util::OutputBuffer& result, size_t len)
 {

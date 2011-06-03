@@ -20,6 +20,7 @@
 #include <cassert>
 #include <iostream>
 #include <vector>
+#include <memory>
 
 #include <boost/bind.hpp>
 
@@ -43,6 +44,7 @@
 #include <dns/rrset.h>
 #include <dns/rrttl.h>
 #include <dns/message.h>
+#include <dns/tsig.h>
 
 #include <datasrc/query.h>
 #include <datasrc/data_source.h>
@@ -73,6 +75,7 @@ using namespace isc::xfr;
 using namespace isc::asiolink;
 using namespace isc::asiodns;
 using namespace isc::server_common::portconfig;
+using boost::shared_ptr;
 
 class AuthSrvImpl {
 private:
@@ -85,11 +88,14 @@ public:
     isc::data::ConstElementPtr setDbFile(isc::data::ConstElementPtr config);
 
     bool processNormalQuery(const IOMessage& io_message, MessagePtr message,
-                            OutputBufferPtr buffer);
+                            OutputBufferPtr buffer,
+                            auto_ptr<TSIGContext> tsig_context);
     bool processAxfrQuery(const IOMessage& io_message, MessagePtr message,
-                          OutputBufferPtr buffer);
+                          OutputBufferPtr buffer,
+                          auto_ptr<TSIGContext> tsig_context);
     bool processNotify(const IOMessage& io_message, MessagePtr message,
-                       OutputBufferPtr buffer);
+                       OutputBufferPtr buffer,
+                       auto_ptr<TSIGContext> tsig_context);
 
     IOService io_service_;
 
@@ -116,6 +122,9 @@ public:
 
     /// Addresses we listen on
     AddressList listen_addresses_;
+
+    /// The TSIG keyring
+    const shared_ptr<TSIGKeyRing>* keyring_;
 private:
     std::string db_file_;
 
@@ -139,6 +148,7 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
     memory_datasrc_class_(RRClass::IN()),
     statistics_timer_(io_service_),
     counters_(verbose_mode_),
+    keyring_(NULL),
     xfrout_connected_(false),
     xfrout_client_(xfrout_client)
 {
@@ -241,7 +251,9 @@ public:
 
 void
 makeErrorMessage(MessagePtr message, OutputBufferPtr buffer,
-                 const Rcode& rcode, const bool verbose_mode)
+                 const Rcode& rcode, const bool verbose_mode,
+                 std::auto_ptr<TSIGContext> tsig_context =
+                 std::auto_ptr<TSIGContext>())
 {
     // extract the parameters that should be kept.
     // XXX: with the current implementation, it's not easy to set EDNS0
@@ -272,7 +284,11 @@ makeErrorMessage(MessagePtr message, OutputBufferPtr buffer,
     message->setRcode(rcode);
 
     MessageRenderer renderer(*buffer);
-    message->toWire(renderer);
+    if (tsig_context.get() != NULL) {
+        message->toWire(renderer, *tsig_context);
+    } else {
+        message->toWire(renderer);
+    }
 
     if (verbose_mode) {
         cerr << "[b10-auth] sending an error response (" <<
@@ -446,29 +462,51 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
     }
 
     // Perform further protocol-level validation.
+    // TSIG first
+    // If this is set to something, we know we need to answer with TSIG as well
+    std::auto_ptr<TSIGContext> tsig_context;
+    const TSIGRecord* tsig_record(message->getTSIGRecord());
+    TSIGError tsig_error(TSIGError::NOERROR());
+
+    // Do we do TSIG?
+    // The keyring can be null if we're in test
+    if (impl_->keyring_ != NULL && tsig_record != NULL) {
+        tsig_context.reset(new TSIGContext(tsig_record->getName(),
+                                           tsig_record->getRdata().
+                                                getAlgorithm(),
+                                           **impl_->keyring_));
+        tsig_error = tsig_context->verify(tsig_record, io_message.getData(),
+                                          io_message.getDataSize());
+    }
 
     bool sendAnswer = true;
-    if (message->getOpcode() == Opcode::NOTIFY()) {
-        sendAnswer = impl_->processNotify(io_message, message, buffer);
+    if (tsig_error != TSIGError::NOERROR()) {
+        makeErrorMessage(message, buffer, tsig_error.toRcode(),
+                         impl_->verbose_mode_, tsig_context);
+    } else if (message->getOpcode() == Opcode::NOTIFY()) {
+        sendAnswer = impl_->processNotify(io_message, message, buffer,
+                                          tsig_context);
     } else if (message->getOpcode() != Opcode::QUERY()) {
         if (impl_->verbose_mode_) {
             cerr << "[b10-auth] unsupported opcode" << endl;
         }
         makeErrorMessage(message, buffer, Rcode::NOTIMP(),
-                         impl_->verbose_mode_);
+                         impl_->verbose_mode_, tsig_context);
     } else if (message->getRRCount(Message::SECTION_QUESTION) != 1) {
         makeErrorMessage(message, buffer, Rcode::FORMERR(),
-                         impl_->verbose_mode_);
+                         impl_->verbose_mode_, tsig_context);
     } else {
         ConstQuestionPtr question = *message->beginQuestion();
         const RRType &qtype = question->getType();
         if (qtype == RRType::AXFR()) {
-            sendAnswer = impl_->processAxfrQuery(io_message, message, buffer);
+            sendAnswer = impl_->processAxfrQuery(io_message, message, buffer,
+                                                 tsig_context);
         } else if (qtype == RRType::IXFR()) {
             makeErrorMessage(message, buffer, Rcode::NOTIMP(),
-                             impl_->verbose_mode_);
+                             impl_->verbose_mode_, tsig_context);
         } else {
-            sendAnswer = impl_->processNormalQuery(io_message, message, buffer);
+            sendAnswer = impl_->processNormalQuery(io_message, message, buffer,
+                                                   tsig_context);
         }
     }
 
@@ -477,7 +515,8 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
 
 bool
 AuthSrvImpl::processNormalQuery(const IOMessage& io_message, MessagePtr message,
-                                OutputBufferPtr buffer)
+                                OutputBufferPtr buffer,
+                                auto_ptr<TSIGContext> tsig_context)
 {
     ConstEDNSPtr remote_edns = message->getEDNS();
     const bool dnssec_ok = remote_edns && remote_edns->getDNSSECAwareness();
@@ -523,7 +562,11 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, MessagePtr message,
     const bool udp_buffer =
         (io_message.getSocket().getProtocol() == IPPROTO_UDP);
     renderer.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
-    message->toWire(renderer);
+    if (tsig_context.get() != NULL) {
+        message->toWire(renderer, *tsig_context);
+    } else {
+        message->toWire(renderer);
+    }
 
     if (verbose_mode_) {
         cerr << "[b10-auth] sending a response ("
@@ -536,7 +579,8 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, MessagePtr message,
 
 bool
 AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, MessagePtr message,
-                              OutputBufferPtr buffer)
+                              OutputBufferPtr buffer,
+                              auto_ptr<TSIGContext> tsig_context)
 {
     // Increment query counter.
     incCounter(io_message.getSocket().getProtocol());
@@ -545,7 +589,8 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, MessagePtr message,
         if (verbose_mode_) {
             cerr << "[b10-auth] AXFR query over UDP isn't allowed" << endl;
         }
-        makeErrorMessage(message, buffer, Rcode::FORMERR(), verbose_mode_);
+        makeErrorMessage(message, buffer, Rcode::FORMERR(), verbose_mode_,
+                         tsig_context);
         return (true);
     }
 
@@ -572,7 +617,8 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, MessagePtr message,
             cerr << "[b10-auth] Error in handling XFR request: " << err.what()
                  << endl;
         }
-        makeErrorMessage(message, buffer, Rcode::SERVFAIL(), verbose_mode_);
+        makeErrorMessage(message, buffer, Rcode::SERVFAIL(), verbose_mode_,
+                         tsig_context);
         return (true);
     }
 
@@ -581,7 +627,8 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, MessagePtr message,
 
 bool
 AuthSrvImpl::processNotify(const IOMessage& io_message, MessagePtr message, 
-                           OutputBufferPtr buffer)
+                           OutputBufferPtr buffer,
+                           std::auto_ptr<TSIGContext> tsig_context)
 {
     // The incoming notify must contain exactly one question for SOA of the
     // zone name.
@@ -590,7 +637,8 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, MessagePtr message,
                 cerr << "[b10-auth] invalid number of questions in notify: "
                      << message->getRRCount(Message::SECTION_QUESTION) << endl;
         }
-        makeErrorMessage(message, buffer, Rcode::FORMERR(), verbose_mode_);
+        makeErrorMessage(message, buffer, Rcode::FORMERR(), verbose_mode_,
+                         tsig_context);
         return (true);
     }
     ConstQuestionPtr question = *message->beginQuestion();
@@ -599,7 +647,8 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, MessagePtr message,
                 cerr << "[b10-auth] invalid question RR type in notify: "
                      << question->getType() << endl;
         }
-        makeErrorMessage(message, buffer, Rcode::FORMERR(), verbose_mode_);
+        makeErrorMessage(message, buffer, Rcode::FORMERR(), verbose_mode_,
+                         tsig_context);
         return (true);
     }
 
@@ -662,7 +711,11 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, MessagePtr message,
     message->setRcode(Rcode::NOERROR());
 
     MessageRenderer renderer(*buffer);
-    message->toWire(renderer);
+    if (tsig_context.get() != NULL) {
+        message->toWire(renderer, *tsig_context);
+    } else {
+        message->toWire(renderer);
+    }
     return (true);
 }
 
@@ -771,4 +824,9 @@ AuthSrv::setListenAddresses(const AddressList& addresses) {
 void
 AuthSrv::setDNSService(isc::asiodns::DNSService& dnss) {
     dnss_ = &dnss;
+}
+
+void
+AuthSrv::setTSIGKeyRing(const shared_ptr<TSIGKeyRing>* keyring) {
+    impl_->keyring_ = keyring;
 }
