@@ -19,6 +19,7 @@
 #include <log4cplus/configurator.h>
 #include <log4cplus/consoleappender.h>
 #include <log4cplus/fileappender.h>
+#include <log4cplus/syslogappender.h>
 
 #include "log/logger_level_impl.h"
 #include "log/logger_manager.h"
@@ -82,7 +83,7 @@ LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
                 break;
 
             case OutputOption::DEST_SYSLOG:
-                createSyslogAppender(logger, *i);
+                createSysLogAppender(logger, *i);
                 break;
 
             default:
@@ -132,6 +133,17 @@ LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
     // use the same console layout for the files.
     setConsoleAppenderLayout(fileapp);
     logger.addAppender(fileapp);
+}
+
+// SysLog appender. 
+void
+LoggerManagerImpl::createSysLogAppender(log4cplus::Logger& logger,
+                                         const OutputOption& opt)
+{
+    log4cplus::SharedAppenderPtr syslogapp(
+        new log4cplus::SysLogAppender(opt.facility));
+    setSysLogAppenderLayout(syslogapp);
+    logger.addAppender(syslogapp);
 }
 
 
@@ -188,6 +200,21 @@ void LoggerManagerImpl::setConsoleAppenderLayout(
     // Create the pattern we want for the output - local time.
     string pattern = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [";
     pattern += getRootLoggerName() + string(".%c] %m\n");
+
+    // Finally the text of the message
+    auto_ptr<log4cplus::Layout> layout(new log4cplus::PatternLayout(pattern));
+    appender->setLayout(layout);
+}
+
+// Set the the "syslog" layout for the given appenders.  This is the same
+// as the console, but without the timestamp (which is expected to be
+// set by syslogd).
+
+void LoggerManagerImpl::setSysLogAppenderLayout(
+        log4cplus::SharedAppenderPtr& appender)
+{
+    // Create the pattern we want for the output - local time.
+    string pattern = "%-5p [" + getRootLoggerName() + string(".%c] %m\n");
 
     // Finally the text of the message
     auto_ptr<log4cplus::Layout> layout(new log4cplus::PatternLayout(pattern));
