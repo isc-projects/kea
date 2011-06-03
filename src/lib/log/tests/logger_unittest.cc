@@ -154,8 +154,8 @@ TEST_F(LoggerTest, DebugLevels) {
 TEST_F(LoggerTest, SeverityInheritance) {
 
     // Create two loggers.  We cheat here as we know that the underlying
-    // implementation (in this case log4cxx) will set a parent-child
-    // relationship if the loggers are named <parent> and <parent>.<child>.
+    // implementation will set a parent-child relationship if the loggers
+    // are named <parent> and <parent>.<child>.
     Logger parent("alpha");
     Logger child("alpha.beta");
 
@@ -184,8 +184,8 @@ TEST_F(LoggerTest, SeverityInheritance) {
 TEST_F(LoggerTest, EffectiveSeverityInheritance) {
 
     // Create two loggers.  We cheat here as we know that the underlying
-    // implementation (in this case log4cxx) will set a parent-child
-    // relationship if the loggers are named <parent> and <parent>.<child>.
+    // implementation will set a parent-child relationship if the loggers
+    // are named <parent> and <parent>.<child>.
     Logger parent("test6");
     Logger child("test6.beta");
 
