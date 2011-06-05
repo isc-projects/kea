@@ -827,6 +827,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/util/unittests/Makefile
                  src/lib/util/pyunittests/Makefile
                  src/lib/util/tests/Makefile
+                 src/lib/acl/Makefile
+                 src/lib/acl/tests/Makefile
                  tests/Makefile
                  tests/system/Makefile
                  tests/tools/Makefile
