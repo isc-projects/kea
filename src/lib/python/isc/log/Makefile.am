@@ -13,3 +13,6 @@ log_la_LDFLAGS = $(PYTHON_LDFLAGS)
 log_la_LDFLAGS += -module
 log_la_LIBADD = $(top_builddir)/src/lib/log/liblog.la
 log_la_LIBADD += $(PYTHON_LIB)
+
+# This is not installed, it helps locate the module during tests
+EXTRA_DIST = __init__.py
