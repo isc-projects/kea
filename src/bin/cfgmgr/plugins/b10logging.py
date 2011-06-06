@@ -59,7 +59,7 @@ def check(config):
                     if 'stream' in output_option and\
                        output_option['stream'].lower() not in ALLOWED_STREAMS:
                         errors.append("bad stream: " + output_option['stream'])
-                
+
     if errors:
         return ', '.join(errors)
     return None
