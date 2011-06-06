@@ -49,6 +49,16 @@ find_spec_part(ConstElementPtr spec, const std::string& identifier) {
     while(sep != std::string::npos) {
         std::string part = id.substr(0, sep);
 
+        while (spec_part->getType() == Element::map && 
+               (spec_part->contains("list_item_spec") ||
+                spec_part->contains("map_item_spec"))) {
+            if (spec_part->contains("list_item_spec")) {
+                std::cout << "[XX] traversing list item " << id << std::endl;
+                spec_part = spec_part->get("list_item_spec");
+            } else {
+                spec_part = spec_part->get("map_item_spec");
+            }
+        }
         if (spec_part->getType() == Element::list) {
             bool found = false;
             BOOST_FOREACH(ConstElementPtr list_el, spec_part->listValue()) {
@@ -67,16 +77,6 @@ find_spec_part(ConstElementPtr spec, const std::string& identifier) {
         }
         id = id.substr(sep + 1);
         sep = id.find("/");
-
-        while (spec_part->getType() == Element::map && 
-               (spec_part->contains("list_item_spec") ||
-                spec_part->contains("map_item_spec"))) {
-            if (spec_part->contains("list_item_spec")) {
-                spec_part = spec_part->get("list_item_spec");
-            } else {
-                spec_part = spec_part->get("map_item_spec");
-            }
-        }
     }
     if (id != "" && id != "/") {
         if (spec_part->getType() == Element::list) {
@@ -112,6 +112,7 @@ find_spec_part(ConstElementPtr spec, const std::string& identifier) {
             }
         }
     }
+    std::cout << "[XX] RETURNING SPEC PART FOR '" << identifier << "': " << spec_part->str() << std::endl;
     return (spec_part);
 }
 
