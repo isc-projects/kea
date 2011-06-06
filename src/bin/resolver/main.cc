@@ -221,7 +221,6 @@ main(int argc, char* argv[]) {
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CONFIGLOAD);
 
         LOG_INFO(resolver_logger, RESOLVER_STARTED);
-
         io_service.run();
     } catch (const std::exception& ex) {
         LOG_FATAL(resolver_logger, RESOLVER_FAILED).arg(ex.what());
