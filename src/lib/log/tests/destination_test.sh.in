@@ -82,4 +82,7 @@ else
     echo "FAIL: $testname - $failcount tests failed"
 fi
 
+# Tidy up.
+rm -f $tempfile $destfile1 $destfile2
+
 exit $failcount

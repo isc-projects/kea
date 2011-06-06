@@ -72,10 +72,6 @@ rm -f $localmes
 ./logger_example -c stdout -s warn $localmes | cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
-# Tidy up.
-
-rm -f $tempfile
-
 if [ $failcount -eq 0 ]; then
     echo "PASS: $testname"
 elif [ $failcount -eq 1 ]; then
@@ -83,5 +79,8 @@ elif [ $failcount -eq 1 ]; then
 else
     echo "FAIL: $testname - $failcount tests failed"
 fi
+
+# Tidy up.
+rm -f $tempfile
 
 exit $failcount

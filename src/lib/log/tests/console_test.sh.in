@@ -55,8 +55,6 @@ rm -f $tempfile
 ./logger_example -c stderr -s error 1> $tempfile
 passfail 0
 
-rm -f $tempfile
-
 if [ $failcount -eq 0 ]; then
     echo "PASS: $testname"
 elif [ $failcount -eq 1 ]; then
@@ -64,5 +62,8 @@ elif [ $failcount -eq 1 ]; then
 else
     echo "FAIL: $testname - $failcount tests failed"
 fi
+
+# Tidy up
+rm -f $tempfile
 
 exit $failcount
