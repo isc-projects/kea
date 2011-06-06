@@ -891,6 +891,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
            src/lib/log/tests/console_test.sh
+           src/lib/log/tests/destination_test.sh
            src/lib/log/tests/local_file_test.sh
            src/lib/log/tests/severity_test.sh
            src/lib/log/tests/tempdir.h
@@ -922,6 +923,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
            chmod +x src/lib/log/tests/local_file_test.sh
            chmod +x src/lib/log/tests/console_test.sh
+           chmod +x src/lib/log/tests/destination_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
            chmod +x src/lib/util/python/mkpywrapper.py
            chmod +x tests/system/conf.sh
