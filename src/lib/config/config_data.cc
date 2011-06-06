@@ -30,7 +30,7 @@ namespace {
 //         or the original spec_part, if it is not a MapElement or does
 //         not contain "list_item_spec" or "map_item_spec"
 ConstElementPtr findListOrMapSubSpec(ConstElementPtr spec_part) {
-    while (spec_part->getType() == Element::map && 
+    while (spec_part->getType() == Element::map &&
            (spec_part->contains("list_item_spec") ||
             spec_part->contains("map_item_spec"))) {
         if (spec_part->contains("list_item_spec")) {
