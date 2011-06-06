@@ -787,6 +787,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/config/Makefile
                  src/lib/python/isc/config/tests/Makefile
                  src/lib/python/isc/log/Makefile
+                 src/lib/python/isc/log/tests/Makefile
                  src/lib/python/isc/net/Makefile
                  src/lib/python/isc/net/tests/Makefile
                  src/lib/python/isc/notify/Makefile
