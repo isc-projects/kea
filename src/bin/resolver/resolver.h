@@ -95,8 +95,6 @@ public:
     /// \brief Handle commands from the config session
     isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
 
-    void updateLoggingConfig(isc::data::ConstElementPtr config);
-
     /// \brief Assign an ASIO IO Service queue to this Resolver object
     void setDNSService(isc::asiodns::DNSService& dnss);
 

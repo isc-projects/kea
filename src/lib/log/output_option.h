@@ -78,6 +78,7 @@ struct OutputOption {
 OutputOption::Destination getDestination(const std::string& dest_str);
 OutputOption::Stream getStream(const std::string& stream_str);
 
+
 } // namespace log
 } // namespace isc
 
