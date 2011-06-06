@@ -56,5 +56,6 @@ noinst_PROGRAMS = $(TESTS)
 PYTESTS = console_test.sh local_file_test.sh severity_test.sh
 check-local:
 	$(SHELL) $(abs_builddir)/console_test.sh
+	$(SHELL) $(abs_builddir)/destination_test.sh
 	$(SHELL) $(abs_builddir)/local_file_test.sh
 	$(SHELL) $(abs_builddir)/severity_test.sh

@@ -18,11 +18,13 @@
 # Checks that the logger will limit the output of messages less severy than
 # the severity/debug setting.
 
-testname="Severity test"
+testname="Destination test"
 echo $testname
 
 failcount=0
-tempfile=@abs_builddir@/severity_test_tempfile_$$
+tempfile=@abs_builddir@/destination_test_tempfile_$$
+destfile1=@abs_builddir@/destination_test_destfile_1_$$
+destfile2=@abs_builddir@/destination_test_destfile_2_$$
 
 passfail() {
     if [ $1 -eq 0 ]; then
@@ -33,51 +35,44 @@ passfail() {
     fi
 }
 
-echo "1. runInitTest default parameters: "
+echo "1. One logger, multiple destinations"
+cat > $tempfile << .
+FATAL [example] MSG_WRITERR, error writing to test1: 42
+ERROR [example] MSG_RDLOCMES, reading local message file dummy/file
+FATAL [example.beta] MSG_BADSEVERITY, unrecognized log severity: beta_fatal
+ERROR [example.beta] MSG_BADDESTINATION, unrecognized log destination: beta_error
+.
+rm -f $destfile1 $destfile2
+./logger_example -s error -f $destfile1 -f $destfile2
+cut -d' ' -f3- $destfile1 | diff $tempfile -
+passfail $?
+cut -d' ' -f3- $destfile2 | diff $tempfile -
+passfail $?
+
+echo "2. Two loggers, different destinations and severities"
+rm -f $destfile1 $destfile2
+./logger_example -l example -s info -f $destfile1 -l alpha -s warn -f $destfile2
+
+# All output for example and example.beta should have gone to destfile1.
+# Output for example.alpha should have done to destfile2.
+
 cat > $tempfile << .
 FATAL [example] MSG_WRITERR, error writing to test1: 42
 ERROR [example] MSG_RDLOCMES, reading local message file dummy/file
 WARN  [example] MSG_BADSTREAM, bad log console output stream: example
-WARN  [example.alpha] MSG_READERR, error reading from message file a.txt: dummy reason
-INFO  [example.alpha] MSG_OPENIN, unable to open message file example.msg for input: dummy reason
 FATAL [example.beta] MSG_BADSEVERITY, unrecognized log severity: beta_fatal
 ERROR [example.beta] MSG_BADDESTINATION, unrecognized log destination: beta_error
 WARN  [example.beta] MSG_BADSTREAM, bad log console output stream: beta_warn
 INFO  [example.beta] MSG_READERR, error reading from message file beta: info
 .
-./logger_example -c stdout | cut -d' ' -f3- | diff $tempfile -
+cut -d' ' -f3- $destfile1 | diff $tempfile -
 passfail $?
 
-echo "2. Severity filter: "
 cat > $tempfile << .
-FATAL [example] MSG_WRITERR, error writing to test1: 42
-ERROR [example] MSG_RDLOCMES, reading local message file dummy/file
-FATAL [example.beta] MSG_BADSEVERITY, unrecognized log severity: beta_fatal
-ERROR [example.beta] MSG_BADDESTINATION, unrecognized log destination: beta_error
-.
-./logger_example -c stdout -s error | cut -d' ' -f3- | diff $tempfile -
-passfail $?
-
-echo "3. Debug level: "
-cat > $tempfile << .
-FATAL [example] MSG_WRITERR, error writing to test1: 42
-ERROR [example] MSG_RDLOCMES, reading local message file dummy/file
-WARN  [example] MSG_BADSTREAM, bad log console output stream: example
 WARN  [example.alpha] MSG_READERR, error reading from message file a.txt: dummy reason
-INFO  [example.alpha] MSG_OPENIN, unable to open message file example.msg for input: dummy reason
-DEBUG [example] MSG_RDLOCMES, reading local message file example/0
-DEBUG [example] MSG_RDLOCMES, reading local message file example/24
-DEBUG [example] MSG_RDLOCMES, reading local message file example/25
-FATAL [example.beta] MSG_BADSEVERITY, unrecognized log severity: beta_fatal
-ERROR [example.beta] MSG_BADDESTINATION, unrecognized log destination: beta_error
-WARN  [example.beta] MSG_BADSTREAM, bad log console output stream: beta_warn
-INFO  [example.beta] MSG_READERR, error reading from message file beta: info
-DEBUG [example.beta] MSG_BADSEVERITY, unrecognized log severity: beta/25
 .
-./logger_example -c stdout -s debug -d 25 | cut -d' ' -f3- | diff $tempfile -
+cut -d' ' -f3- $destfile2 | diff $tempfile -
 passfail $?
-
-rm -f $tempfile
 
 if [ $failcount -eq 0 ]; then
     echo "PASS: $testname"
