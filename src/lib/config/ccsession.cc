@@ -455,10 +455,11 @@ ModuleCCSession::fetchRemoteSpec(const std::string& module, bool is_filename) {
         return (readModuleSpecification(module));
     } else {
         // It's module name, request it from config manager
-        ConstElementPtr cmd = Element::fromJSON("{ \"command\": ["
-                                                "\"get_module_spec\","
-                                                "{\"module_name\": \"" + 
-                                                spec_name + "\"} ] }");
+
+        // Send the command
+        ConstElementPtr cmd(createCommand("get_module_spec",
+                            Element::fromJSON("{\"module_name\": \"" + module +
+                                              "\"}")));
         unsigned int seq = session_.group_sendmsg(cmd, "ConfigManager");
         ConstElementPtr env, answer;
         session_.group_recvmsg(env, answer, false, seq);
@@ -482,7 +483,8 @@ ModuleCCSession::fetchRemoteSpec(const std::string& module, bool is_filename) {
 std::string
 ModuleCCSession::addRemoteConfig(const std::string& spec_name,
                                  void (*handler)(const std::string& module,
-                                          ConstElementPtr),
+                                                 ConstElementPtr,
+                                                 const ConfigData&),
                                  bool spec_is_filename)
 {
     // First get the module name, specification and default config
