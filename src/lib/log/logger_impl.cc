@@ -42,26 +42,14 @@ using namespace std;
 namespace isc {
 namespace log {
 
-// Constructor.  Although it may be immediately reset, logger_ is initialized to
-// the log4cplus root logger; at least one compiler requires that all member
-// variables be constructed before the constructor is run, but log4cplus::Logger
-// (the type of logger_) has no default constructor.
-LoggerImpl::LoggerImpl(const string& name) :
-    logger_(log4cplus::Logger::getRoot())
+// Constructor.  The setting of logger_ must be done when the variable is
+// constructed (instead of being left to the body of the function); at least
+// one compiler requires that all member variables be constructed before the
+// constructor is run, but log4cplus::Logger (the type of logger_) has no
+// default constructor.
+LoggerImpl::LoggerImpl(const string& name) : name_(expandLoggerName(name)),
+    logger_(log4cplus::Logger::getInstance(name_))
 {
-    // Are we the root logger, or does the logger name start with
-    // the string "<root_logger_name>.".  If so, use a logger
-    // whose name is the one given.
-    if ((name == getRootLoggerName()) ||
-        (name.find(getRootLoggerName() + string(".")) == 0)) {
-        name_ = name;
-
-    } else {
-        // Anything else is assumed to be a sub-logger of the
-        // root logger.
-        name_ = getRootLoggerName() + "." + name;
-    }
-    logger_ = log4cplus::Logger::getInstance(name);
 }
 
 // Destructor. (Here because of virtual declaration.)
