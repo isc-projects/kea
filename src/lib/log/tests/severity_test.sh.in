@@ -77,8 +77,6 @@ DEBUG [example.beta] MSG_BADSEVERITY, unrecognized log severity: beta/25
 ./logger_example -c stdout -s debug -d 25 | cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
-rm -f $tempfile
-
 if [ $failcount -eq 0 ]; then
     echo "PASS: $testname"
 elif [ $failcount -eq 1 ]; then
@@ -86,5 +84,8 @@ elif [ $failcount -eq 1 ]; then
 else
     echo "FAIL: $testname - $failcount tests failed"
 fi
+
+# Tidy up
+rm -f $tempfile
 
 exit $failcount
