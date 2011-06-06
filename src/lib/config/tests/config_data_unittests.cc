@@ -56,16 +56,9 @@ TEST(ConfigData, getValue) {
     EXPECT_EQ("a", cd.getValue(is_default, "value5")->get(0)->stringValue());
     EXPECT_TRUE(is_default);
     EXPECT_EQ("b", cd.getValue("value5")->get(1)->stringValue());
-    std::cout << "[XX] full: " << cd.getFullConfig()->str() << std::endl;
-    std::cout << "[XX] 1" << std::endl;
-    std::cout << "[XX] value5: " << cd.getValue(is_default, "value5")->str() << std::endl;
     EXPECT_EQ("b", cd.getValue(is_default, "value5")->get(1)->stringValue());
-    std::cout << "[XX] 2" << std::endl;
-    std::cout << "[XX] value5/:" << cd.getValue(is_default, "value5/")->str() << std::endl;
     EXPECT_EQ("b", cd.getValue(is_default, "value5/")->get(1)->stringValue());
-    std::cout << "[XX] 3" << std::endl;
     EXPECT_TRUE(is_default);
-    std::cout << "[XX] 4" << std::endl;
     EXPECT_EQ("{  }", cd.getValue("value6")->str());
     EXPECT_EQ("{  }", cd.getValue(is_default, "value6")->str());
     EXPECT_EQ("{  }", cd.getValue(is_default, "value6/")->str());

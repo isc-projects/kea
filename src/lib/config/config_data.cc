@@ -49,11 +49,13 @@ find_spec_part(ConstElementPtr spec, const std::string& identifier) {
     while(sep != std::string::npos) {
         std::string part = id.substr(0, sep);
 
+        // As long as we are not in the 'final' element as specified
+        // by the identifier, we want to automatically traverse list
+        // and map specifications
         while (spec_part->getType() == Element::map && 
                (spec_part->contains("list_item_spec") ||
                 spec_part->contains("map_item_spec"))) {
             if (spec_part->contains("list_item_spec")) {
-                std::cout << "[XX] traversing list item " << id << std::endl;
                 spec_part = spec_part->get("list_item_spec");
             } else {
                 spec_part = spec_part->get("map_item_spec");
@@ -108,11 +110,12 @@ find_spec_part(ConstElementPtr spec, const std::string& identifier) {
                     isc_throw(DataNotFoundError, id + " in " + identifier + " not found");
                 }
             } else {
-                isc_throw(DataNotFoundError, "Element above " + id + " in " + identifier + " is not a map");
+                isc_throw(DataNotFoundError, "Element above " + id +
+                                             " in " + identifier +
+                                             " is not a map");
             }
         }
     }
-    std::cout << "[XX] RETURNING SPEC PART FOR '" << identifier << "': " << spec_part->str() << std::endl;
     return (spec_part);
 }
 
