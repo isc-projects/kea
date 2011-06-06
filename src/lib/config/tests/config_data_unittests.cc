@@ -64,6 +64,7 @@ TEST(ConfigData, getValue) {
     EXPECT_EQ("{  }", cd.getValue(is_default, "value6/")->str());
     EXPECT_TRUE(is_default);
     EXPECT_EQ("[  ]", cd.getValue("value8")->str());
+    EXPECT_EQ("[  ]", cd.getDefaultValue("value8")->str());
     EXPECT_EQ("empty", cd.getValue("value8/a")->stringValue());
 
     EXPECT_THROW(cd.getValue("")->str(), DataNotFoundError);
@@ -77,6 +78,20 @@ TEST(ConfigData, getValue) {
     ConfigData cd1 = ConfigData(spec1);
     EXPECT_THROW(cd1.getValue("anything")->str(), DataNotFoundError);
 }
+
+TEST(ConfigData, getDefaultValue) {
+    ModuleSpec spec31 = moduleSpecFromFile(std::string(TEST_DATA_PATH) + "/spec31.spec");
+    ConfigData cd = ConfigData(spec31);
+    EXPECT_EQ("[  ]", cd.getDefaultValue("first_list_items")->str());
+    EXPECT_EQ("\"foo\"", cd.getDefaultValue("first_list_items/foo")->str());
+    EXPECT_EQ("{  }", cd.getDefaultValue("first_list_items/second_list_items/map_element")->str());
+    EXPECT_EQ("[  ]", cd.getDefaultValue("first_list_items/second_list_items/map_element/list1")->str());
+    EXPECT_EQ("1", cd.getDefaultValue("first_list_items/second_list_items/map_element/list1/number")->str());
+
+    EXPECT_THROW(cd.getDefaultValue("doesnotexist")->str(), DataNotFoundError);
+    EXPECT_THROW(cd.getDefaultValue("first_list_items/second_list_items/map_element/list1/doesnotexist")->str(), DataNotFoundError);
+}
+
 
 TEST(ConfigData, setLocalConfig) {
     ModuleSpec spec2 = moduleSpecFromFile(std::string(TEST_DATA_PATH) + "/spec2.spec");
