@@ -156,23 +156,95 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
 }
 
 namespace {
-    // Temporary workaround function for missing functionality in
-    // getValue() (main problem described in ticket #993)
-    // This returns either the value set for the given relative id,
-    // or its default value
-    // (intentially defined here so this interface does not get
-    // included in ConfigData as it is)
-    ConstElementPtr getValueOrDefault(ConstElementPtr config_part,
-                                      const std::string& relative_id,
-                                      const ConfigData& config_data,
-                                      const std::string& full_id) {
-        if (config_part->contains(relative_id)) {
-            return config_part->get(relative_id);
-        } else {
-            return config_data.getDefaultValue(full_id);
-        }
+// Temporary workaround functions for missing functionality in
+// getValue() (main problem described in ticket #993)
+// This returns either the value set for the given relative id,
+// or its default value
+// (intentially defined here so this interface does not get
+// included in ConfigData as it is)
+ConstElementPtr getValueOrDefault(ConstElementPtr config_part,
+                                  const std::string& relative_id,
+                                  const ConfigData& config_data,
+                                  const std::string& full_id) {
+    if (config_part->contains(relative_id)) {
+        return config_part->get(relative_id);
+    } else {
+        return config_data.getDefaultValue(full_id);
     }
 }
+
+// Reads a output_option subelement of a logger configuration,
+// and sets the values thereing to the given OutputOption struct,
+// or defaults values if they are not provided (from config_data).
+void
+readOutputOptionConf(isc::log::OutputOption& output_option,
+                     ConstElementPtr output_option_el,
+                     const ConfigData& config_data)
+{
+    ConstElementPtr destination_el = getValueOrDefault(output_option_el,
+                                    "destination", config_data,
+                                    "loggers/output_options/destination");
+    output_option.destination = isc::log::getDestination(destination_el->stringValue());
+    ConstElementPtr stream_el = getValueOrDefault(output_option_el,
+                                    "stream", config_data,
+                                    "loggers/output_options/stream");
+    output_option.stream = isc::log::getStream(stream_el->stringValue());
+    output_option.flush = getValueOrDefault(output_option_el,
+                              "flush", config_data,
+                              "loggers/output_options/flush")->boolValue();
+    output_option.facility = getValueOrDefault(output_option_el,
+                                 "facility", config_data,
+                                 "loggers/output_options/facility")->stringValue();
+    output_option.filename = getValueOrDefault(output_option_el,
+                                 "filename", config_data,
+                                 "loggers/output_options/filename")->stringValue();
+    output_option.maxsize = getValueOrDefault(output_option_el,
+                                "maxsize", config_data,
+                                "loggers/output_options/maxsize")->intValue();
+    output_option.maxver = getValueOrDefault(output_option_el,
+                               "maxver", config_data,
+                               "loggers/output_options/maxver")->intValue();
+}
+
+// Reads a full 'loggers' configuration, and adds the loggers therein
+// to the given vector, fills in blanks with defaults from config_data
+void
+readLoggersConf(std::vector<isc::log::LoggerSpecification>& specs,
+                ConstElementPtr logger,
+                const ConfigData& config_data)
+{
+    const std::string lname = logger->get("name")->stringValue();
+    ConstElementPtr severity_el = getValueOrDefault(logger,
+                                      "severity", config_data,
+                                      "loggers/severity");
+    isc::log::Severity severity = isc::log::getSeverity(
+                                      severity_el->stringValue());
+    int dbg_level = getValueOrDefault(logger, "debuglevel",
+                                      config_data,
+                                      "loggers/debuglevel")->intValue();
+    bool additive = getValueOrDefault(logger, "additive", config_data,
+                                      "loggers/additive")->boolValue();
+
+    isc::log::LoggerSpecification logger_spec(
+        lname, severity, dbg_level, additive
+    );
+
+    if (logger->contains("output_options")) {
+        BOOST_FOREACH(ConstElementPtr output_option_el,
+                      logger->get("output_options")->listValue()) {
+            // create outputoptions
+            isc::log::OutputOption output_option;
+            readOutputOptionConf(output_option,
+                                 output_option_el,
+                                 config_data);
+            logger_spec.addOutputOption(output_option);
+        }
+    }
+
+    specs.push_back(logger_spec);
+}
+
+} // end anonymous namespace
 
 void
 my_logconfig_handler(const std::string&n, ConstElementPtr new_config, const ConfigData& config_data) {
@@ -183,35 +255,7 @@ my_logconfig_handler(const std::string&n, ConstElementPtr new_config, const Conf
     if (new_config->contains("loggers")) {
         BOOST_FOREACH(ConstElementPtr logger,
                       new_config->get("loggers")->listValue()) {
-            // create LoggerOptions
-            const std::string lname = logger->get("name")->stringValue();
-            ConstElementPtr severity_el = getValueOrDefault(logger, "severity", config_data, "loggers/severity");
-            isc::log::Severity severity = isc::log::getSeverity(severity_el->stringValue());
-            int dbg_level = getValueOrDefault(logger, "debuglevel", config_data, "loggers/debuglevel")->intValue();
-            bool additive = getValueOrDefault(logger, "additive", config_data, "loggers/additive")->boolValue();
-            isc::log::LoggerSpecification logger_spec(
-                lname, severity, dbg_level, additive
-            );
-            if (logger->contains("output_options")) {
-                BOOST_FOREACH(ConstElementPtr output_option_el,
-                              logger->get("output_options")->listValue()) {
-                    // create outputoptions
-                    isc::log::OutputOption output_option;
-                    ConstElementPtr destination_el = getValueOrDefault(output_option_el, "destination", config_data, "loggers/output_options/destination");
-                    output_option.destination = isc::log::getDestination(destination_el->stringValue());
-                    ConstElementPtr stream_el = getValueOrDefault(output_option_el, "stream", config_data, "loggers/output_options/stream");
-                    output_option.stream = isc::log::getStream(stream_el->stringValue());
-                    output_option.flush = getValueOrDefault(output_option_el, "flush", config_data, "loggers/output_options/flush")->boolValue();
-                    output_option.facility = getValueOrDefault(output_option_el, "facility", config_data, "loggers/output_options/facility")->stringValue();
-                    output_option.filename = getValueOrDefault(output_option_el, "filename", config_data, "loggers/output_options/filename")->stringValue();
-                    output_option.maxsize = getValueOrDefault(output_option_el, "maxsize", config_data, "loggers/output_options/maxsize")->intValue();
-                    output_option.maxver = getValueOrDefault(output_option_el, "maxver", config_data, "loggers/output_options/maxver")->intValue();
-
-                    logger_spec.addOutputOption(output_option);
-                }
-            }
-
-            specs.push_back(logger_spec);
+            readLoggersConf(specs, logger, config_data);
         }
     }
 
@@ -307,14 +351,15 @@ ModuleCCSession::ModuleCCSession(
         }
     }
 
-    if (start_immediately) {
-        start();
-    }
-
     // Keep track of logging settings automatically
     if (handle_logging) {
         addRemoteConfig("Logging", my_logconfig_handler, false);
     }
+
+    if (start_immediately) {
+        start();
+    }
+
 }
 
 void
