@@ -99,11 +99,6 @@ find_spec_part(ConstElementPtr spec, const std::string& identifier) {
     while(sep != std::string::npos) {
         std::string part = id.substr(0, sep);
 
-        // As long as we are not in the 'final' element as specified
-        // by the identifier, we want to automatically traverse list
-        // and map specifications
-        spec_part = findListOrMapSubSpec(spec_part);
-
         if (spec_part->getType() == Element::list) {
             spec_part = findItemInSpecList(spec_part, part, identifier);
         } else {
@@ -112,6 +107,13 @@ find_spec_part(ConstElementPtr spec, const std::string& identifier) {
         }
         id = id.substr(sep + 1);
         sep = id.find("/");
+
+        // As long as we are not in the 'final' element as specified
+        // by the identifier, we want to automatically traverse list
+        // and map specifications
+        if (id != "" && id != "/") {
+            spec_part = findListOrMapSubSpec(spec_part);
+        }
     }
     if (id != "" && id != "/") {
         if (spec_part->getType() == Element::list) {
@@ -124,7 +126,7 @@ find_spec_part(ConstElementPtr spec, const std::string& identifier) {
             } else {
                 isc_throw(DataNotFoundError, "Element above " + id +
                                              " in " + identifier +
-                                             " is not a map");
+                                             " is not a map: " + spec_part->str());
             }
         }
     }

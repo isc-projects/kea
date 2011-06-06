@@ -209,7 +209,7 @@ main(int argc, char* argv[]) {
         config_session = new ModuleCCSession(specfile, *cc_session,
                                              my_config_handler,
                                              my_command_handler,
-                                             true);
+                                             true, true);
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CONFIGCHAN);
 
         // FIXME: This does not belong here, but inside Boss
