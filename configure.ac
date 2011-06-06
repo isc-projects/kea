@@ -787,7 +787,6 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/config/Makefile
                  src/lib/python/isc/config/tests/Makefile
                  src/lib/python/isc/log/Makefile
-                 src/lib/python/isc/log/tests/Makefile
                  src/lib/python/isc/net/Makefile
                  src/lib/python/isc/net/tests/Makefile
                  src/lib/python/isc/notify/Makefile
@@ -883,7 +882,6 @@ AC_OUTPUT([doc/version.ent
            src/lib/config/tests/data_def_unittests_config.h
            src/lib/python/isc/config/tests/config_test
            src/lib/python/isc/cc/tests/cc_test
-           src/lib/python/isc/log/tests/log_test
            src/lib/python/isc/notify/tests/notify_out_test
            src/lib/dns/gen-rdatacode.py
            src/lib/python/bind10_config.py
