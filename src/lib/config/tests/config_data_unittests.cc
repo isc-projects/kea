@@ -64,15 +64,14 @@ TEST(ConfigData, getValue) {
     EXPECT_EQ("{  }", cd.getValue(is_default, "value6/")->str());
     EXPECT_TRUE(is_default);
     EXPECT_EQ("[  ]", cd.getValue("value8")->str());
+    EXPECT_EQ("empty", cd.getValue("value8/a")->stringValue());
 
     EXPECT_THROW(cd.getValue("")->str(), DataNotFoundError);
     EXPECT_THROW(cd.getValue("/")->str(), DataNotFoundError);
     EXPECT_THROW(cd.getValue("no_such_item")->str(), DataNotFoundError);
     EXPECT_THROW(cd.getValue("value6/a")->str(), DataNotFoundError);
     EXPECT_THROW(cd.getValue("value6/no_such_item")->str(), DataNotFoundError);
-    EXPECT_THROW(cd.getValue("value8/a")->str(), DataNotFoundError);
-    EXPECT_THROW(cd.getValue("value8/a")->str(), DataNotFoundError);
-    EXPECT_THROW(cd.getValue("value8/a")->str(), DataNotFoundError);
+    EXPECT_THROW(cd.getValue("value8/b")->str(), DataNotFoundError);
 
     ModuleSpec spec1 = moduleSpecFromFile(std::string(TEST_DATA_PATH) + "/spec1.spec");
     ConfigData cd1 = ConfigData(spec1);
