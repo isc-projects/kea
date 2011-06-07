@@ -77,11 +77,10 @@ class LoggerImpl;   // Forward declaration of the implementation class
 ///
 /// This class is the main class used for logging.  Use comprises:
 ///
-/// 1. Constructing a logger by instantiating it with a specific name.  As
-/// well as instantiating it when needed, the logger can also be declared
-/// outside a program using.
-///
-/// 2. Using the error(), info() etc. methods to log an error.  (Although it is
+/// 1. Constructing a logger by instantiating it with a specific name. (If the
+/// same logger is in multiple functions within a file, overhead can be
+/// minimised by declaring it as a file-wide static variable.)
+/// 2. Using the error(), info() etc. methods to log an error.  (However, it is
 /// recommended to use the LOG_ERROR, LOG_INFO etc. macros defined in macros.h.
 /// These will avoid the potentially-expensive evaluation of arguments if the
 /// severity is such that the message will be suppressed.)
