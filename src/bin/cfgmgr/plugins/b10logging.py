@@ -46,19 +46,29 @@ def check(config):
     # The 'layout' is ok, now check for specific values
     if 'loggers' in config:
         for logger in config['loggers']:
+            # name should always be present
+            name = logger['name']
+
             if 'severity' in logger and\
                logger['severity'].lower() not in ALLOWED_SEVERITIES:
-                errors.append("bad severity value " + logger['severity'])
+                errors.append("bad severity value for logger " + name +
+                              ": " + logger['severity'])
             if 'output_options' in logger:
                 for output_option in logger['output_options']:
                     if 'destination' in output_option:
                         if output_option['destination'].lower() not in ALLOWED_DESTINATIONS:
-                            errors.append("bad destination: " + output_option['destination'])
-                        if 'filename' not in output_option:
-                            errors.append("destination set to file but no filename specified")
+                            errors.append("bad destination for logger " +
+                            name + ": " + output_option['destination'])
+                        if output_option['destination'].lower() == "file" and\
+                           ('filename' not in output_option or
+                            output_option('filename') == ""):
+                            errors.append("destination set to file but "
+                                          "no filename specified for"
+                                          "logger " + name)
                     if 'stream' in output_option and\
                        output_option['stream'].lower() not in ALLOWED_STREAMS:
-                        errors.append("bad stream: " + output_option['stream'])
+                        errors.append("bad stream for logger " + name +
+                                      ": " + output_option['stream'])
 
     if errors:
         return ', '.join(errors)
