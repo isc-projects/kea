@@ -34,10 +34,8 @@ ConstElementPtr findListOrMapSubSpec(ConstElementPtr spec_part) {
            (spec_part->contains("list_item_spec") ||
             spec_part->contains("map_item_spec"))) {
         if (spec_part->contains("list_item_spec")) {
-            std::cout << "[XX] yup, list" << std::endl;
             spec_part = spec_part->get("list_item_spec");
         } else {
-            std::cout << "[XX] yup, map" << std::endl;
             spec_part = spec_part->get("map_item_spec");
         }
     }
@@ -56,7 +54,6 @@ ConstElementPtr findItemInSpecList(ConstElementPtr spec_part,
                                    const std::string& id_full)
 {
     bool found = false;
-    std::cout << "[XX] find item in list: " << spec_part->str() << std::endl;
     BOOST_FOREACH(ConstElementPtr list_el, spec_part->listValue()) {
         if (list_el->getType() == Element::map &&
             list_el->contains("item_name") &&
@@ -101,7 +98,6 @@ find_spec_part(ConstElementPtr spec, const std::string& identifier) {
     size_t sep = id.find('/');
     while(sep != std::string::npos) {
         std::string part = id.substr(0, sep);
-        std::cout << "[XX] NEXT IS: " << part << std::endl;
 
         if (spec_part->getType() == Element::list) {
             spec_part = findItemInSpecList(spec_part, part, identifier);
@@ -109,7 +105,6 @@ find_spec_part(ConstElementPtr spec, const std::string& identifier) {
             isc_throw(DataNotFoundError,
                       "Not a list of spec items: " + spec_part->str());
         }
-        std::cout << "[XX] FOUND: " << part << std::endl;
         id = id.substr(sep + 1);
         sep = id.find("/");
 
@@ -117,11 +112,9 @@ find_spec_part(ConstElementPtr spec, const std::string& identifier) {
         // by the identifier, we want to automatically traverse list
         // and map specifications
         if (id != "" && id != "/") {
-        std::cout << "[XX] try sublist " << id << std::endl;
             spec_part = findListOrMapSubSpec(spec_part);
         }
     }
-    std::cout << "[XX] LAST: " << id << std::endl;
     if (id != "" && id != "/") {
         if (spec_part->getType() == Element::list) {
             spec_part = findItemInSpecList(spec_part, id, identifier);
@@ -131,6 +124,9 @@ find_spec_part(ConstElementPtr spec, const std::string& identifier) {
                                 spec_part->get("map_item_spec"),
                                 id, identifier);
             } else {
+                // Either we already have the element we are looking
+                // for, or we are trying to reach something that does
+                // not exist (i.e. the code does not match the spec)
                 if (!spec_part->contains("item_name") ||
                     spec_part->get("item_name")->stringValue() != id) {
                     isc_throw(DataNotFoundError, "Element above " + id +

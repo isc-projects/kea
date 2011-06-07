@@ -481,9 +481,9 @@ ModuleCCSession::checkCommand() {
             LOG_ERROR(config_logger, CONFIG_CCSESSION_MSG).arg(re.what());
         } catch (const std::exception& stde) {
             // No matter what unexpected error happens, we do not want
-            // to crash because of an incoming event
-            // TODO: MSG
-            LOG_ERROR(config_logger, CONFIG_CCSESSION_MSG).arg(stde.what());
+            // to crash because of an incoming event, so we log the
+            // exception and continue to run
+            LOG_ERROR(config_logger, CONFIG_CCSESSION_MSG_INTERNAL).arg(stde.what());
         }
         if (!isNull(answer)) {
             session_.reply(routing, answer);
