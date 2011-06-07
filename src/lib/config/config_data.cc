@@ -23,7 +23,9 @@ using namespace isc::data;
 
 namespace {
 
-// Returns the '_spec' part of a list or map specification
+// Returns the '_spec' part of a list or map specification (recursively,
+// i.e. if it is a list of lists or maps, will return the spec of the
+// inner-most list or map).
 //
 // \param spec_part the list or map specification (part)
 // \return the value of spec_part's "list_item_spec" or "map_item_spec",
