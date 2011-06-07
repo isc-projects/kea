@@ -174,11 +174,15 @@ public:
         return (*this);
     }
     void skipSpaces() {
-        // If *base_ < 0, on Windows platform with Visual Studio compiler
-        // it may trigger _ASSERTE((unsigned)(c + 1) <= 256);
-        // so make sure that the parameter of isspace() is larger than 0
-        while (base_ != base_end_ && ((*base_) >= 0) && isspace(*base_))
-        {
+        // If (char is signed and) *base_ < 0, on Windows platform with Visual
+        // Studio compiler it may trigger _ASSERTE((unsigned)(c + 1) <= 256);
+        // so make sure that the parameter of isspace() is larger than 0.
+        // We don't simply cast it to unsigned char to avoid confusing the
+        // isspace() implementation with a possible extension for values
+        // larger than 127.  Also note the check is not ">= 0"; for systems
+        // where char is unsigned that would always be true and would possibly
+        // trigger a compiler warning that could stop the build.
+        while (base_ != base_end_ && *base_ > 0 && isspace(*base_)) {
             ++base_;
         }
     }
