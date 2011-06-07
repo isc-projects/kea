@@ -1,3 +1,9 @@
+250.    [bug]           ocean
+        src/lib/util/encode, in some conditions, the DecodeNormalizer's
+        iterator may reach the end() and when later being dereferenced
+        it will cause crash on some platform.
+        (Trac838, git 83e33ec80c0c6485d8b116b13045b3488071770f)
+
 249.    [func]      	jerry
 	xfrout: add support for TSIG verification.
 	(Trac816, git 3b2040e2af2f8139c1c319a2cbc429035d93f217)
