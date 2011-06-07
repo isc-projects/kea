@@ -49,7 +49,7 @@
                         "item_optional": false,
                         "item_default": "console"
                       },
-                      { "item_name": "stream",
+                      { "item_name": "output",
                         "item_type": "string",
                         "item_optional": false,
                         "item_default": "stdout"
@@ -58,16 +58,6 @@
                         "item_type": "boolean",
                         "item_optional": false,
                         "item_default": false
-                      },
-                      { "item_name": "facility",
-                        "item_type": "string",
-                        "item_optional": false,
-                        "item_default": ""
-                      },
-                      { "item_name": "filename",
-                        "item_type": "string",
-                        "item_optional": false,
-                        "item_default": ""
                       },
                       { "item_name": "maxsize",
                         "item_type": "integer",
