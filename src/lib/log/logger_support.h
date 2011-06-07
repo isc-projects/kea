@@ -53,8 +53,8 @@ void initLogger(const std::string& root,
 ///
 /// B10_LOGGER_SEVERITY
 /// Severity of messages that will be logged.  This must be one of the strings
-/// "DEBUG", "INFO", "WARN", "ERROR", "FATAL". (Must be upper case and must
-/// not contain leading or trailing spaces.)  If not specified (or if
+/// "DEBUG", "INFO", "WARN", "ERROR", "FATAL" or "NONE". (Must be upper case
+/// and must not contain leading or trailing spaces.)  If not specified (or if
 /// specified but incorrect), the default for the logging system will be used
 /// (currently INFO).
 ///
