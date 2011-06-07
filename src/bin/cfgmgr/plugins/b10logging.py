@@ -56,19 +56,36 @@ def check(config):
             if 'output_options' in logger:
                 for output_option in logger['output_options']:
                     if 'destination' in output_option:
-                        if output_option['destination'].lower() not in ALLOWED_DESTINATIONS:
+                        destination = output_option['destination'].lower()
+                        if destination not in ALLOWED_DESTINATIONS:
                             errors.append("bad destination for logger " +
                             name + ": " + output_option['destination'])
-                        if output_option['destination'].lower() == "file" and\
-                           ('filename' not in output_option or
-                            output_option('filename') == ""):
-                            errors.append("destination set to file but "
-                                          "no filename specified for"
-                                          "logger " + name)
-                    if 'stream' in output_option and\
-                       output_option['stream'].lower() not in ALLOWED_STREAMS:
-                        errors.append("bad stream for logger " + name +
-                                      ": " + output_option['stream'])
+                        else:
+                            # if left to default, output is stdout, and
+                            # it will not show in the updated config,
+                            # so 1. we only need to check it if present,
+                            # and 2. if destination is changed, so should
+                            # output. So first check checks 'in', and the
+                            # others 'not in' for 'output'
+                            if destination == "console" and\
+                               'output' in output_option and\
+                               output_option['output'] not in ALLOWED_STREAMS:
+                                errors.append("bad output for logger " + name +
+                                              ": " + output_option['stream'] +
+                                              ", must be stdout or stderr")
+                            elif destination == "file" and\
+                                 'output' not in output_option or\
+                                 output_option['output'] == "":
+                                    errors.append("destination set to file but "
+                                                  "output not set to any "
+                                                  "filename for logger "
+                                                  + name)
+                            elif destination == "syslog" and\
+                                 'output' not in output_option or\
+                                 output_option['output'] == "":
+                                    errors.append("destination set to syslog but "
+                                                  "output not set to any facility"
+                                                  " for logger " + name)
 
     if errors:
         return ', '.join(errors)
