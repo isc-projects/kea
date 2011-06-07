@@ -97,24 +97,6 @@ MessageCache::update(const Message& msg) {
     return (message_table_.add(msg_entry, entry_key, true));
 }
 
-#if 0
-void
-MessageCache::dump(const std::string&) {
-    //TODO
-}
-
-void
-MessageCache::load(const std::string&) {
-    //TODO
-}
-
-bool
-MessageCache::resize(uint32_t) {
-    //TODO
-    return (true);
-}
-#endif
-
 } // namespace cache
 } // namespace isc
 
