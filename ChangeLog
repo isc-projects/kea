@@ -1,3 +1,12 @@
+251.	[bug]*		jinmei
+	Make sure bindctl private files are non readable to anyone except
+	the owner or users in the same group.  Note that if BIND 10 is run
+	with changing the user, this change means that the file owner or
+	group will have to be adjusted.  Also note that this change is
+	only effective for a fresh install; if these files already exist,
+	their permissions must be adjusted by hand (if necessary).
+	(Trac870, git 461fc3cb6ebabc9f3fa5213749956467a14ebfd4)
+
 250.    [bug]           ocean
         src/lib/util/encode, in some conditions, the DecodeNormalizer's
         iterator may reach the end() and when later being dereferenced
