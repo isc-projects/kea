@@ -47,7 +47,7 @@ Logger logger("log");
 void
 initLogger(const string& root, isc::log::Severity severity, int dbglevel,
     const char* file) {
-    LoggerManager::init(root, file, severity, dbglevel);
+    LoggerManager::init(root, severity, dbglevel, file);
 }
 
 /// Logger Run-Time Initialization via Environment Variables

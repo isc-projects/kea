@@ -96,7 +96,11 @@ public:
     ///
     /// Resets to default configuration (root logger logging to the console
     /// with INFO severity).
-    static void reset();
+    ///
+    /// \param severity Severity to be associated with this logger
+    /// \param dbglevel Debug level associated with the root logger
+    static void reset(isc::log::Severity severity = isc::log::INFO,
+                      int dbglevel = 0);
 
 private:
     /// \brief Create console appender
@@ -127,7 +131,7 @@ private:
     ///
     /// \param logger Log4cplus logger to which the appender must be attached.
     /// \param opt Output options for this appender.
-    static void createSysLogAppender(log4cplus::Logger& logger,
+    static void createSyslogAppender(log4cplus::Logger& logger,
                                      const OutputOption& opt);
 
     /// \brief Set default layout and severity for root logger
@@ -158,7 +162,7 @@ private:
     /// SEVERITY [root.logger] message
     ///
     /// \param appender Appender for which this pattern is to be set.
-    static void setSysLogAppenderLayout(log4cplus::SharedAppenderPtr& appender);
+    static void setSyslogAppenderLayout(log4cplus::SharedAppenderPtr& appender);
 };
 
 } // namespace log

@@ -81,7 +81,7 @@ LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
                 break;
 
             case OutputOption::DEST_SYSLOG:
-                createSysLogAppender(logger, *i);
+                createSyslogAppender(logger, *i);
                 break;
 
             default:
@@ -133,14 +133,14 @@ LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
     logger.addAppender(fileapp);
 }
 
-// SysLog appender. 
+// Syslog appender. 
 void
-LoggerManagerImpl::createSysLogAppender(log4cplus::Logger& logger,
+LoggerManagerImpl::createSyslogAppender(log4cplus::Logger& logger,
                                          const OutputOption& opt)
 {
     log4cplus::SharedAppenderPtr syslogapp(
         new log4cplus::SysLogAppender(opt.facility));
-    setSysLogAppenderLayout(syslogapp);
+    setSyslogAppenderLayout(syslogapp);
     logger.addAppender(syslogapp);
 }
 
@@ -160,17 +160,17 @@ LoggerManagerImpl::init(isc::log::Severity severity, int dbglevel) {
     // Add the additional debug levels
     LoggerLevelImpl::init();
 
-    reset();
+    reset(severity, dbglevel);
 }
 
 // Reset logging to default configuration.  This closes all appenders
 // and resets the root logger to output INFO messages to the console.
 // It is principally used in testing.
 void
-LoggerManagerImpl::reset() {
+LoggerManagerImpl::reset(isc::log::Severity severity, int dbglevel) {
 
     // Initialize the root logger
-    initRootLogger();
+    initRootLogger(severity, dbglevel);
 }
 
 // Initialize the root logger
@@ -213,7 +213,7 @@ void LoggerManagerImpl::setConsoleAppenderLayout(
 // as the console, but without the timestamp (which is expected to be
 // set by syslogd).
 
-void LoggerManagerImpl::setSysLogAppenderLayout(
+void LoggerManagerImpl::setSyslogAppenderLayout(
         log4cplus::SharedAppenderPtr& appender)
 {
     // Create the pattern we want for the output - local time.

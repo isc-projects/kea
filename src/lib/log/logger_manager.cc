@@ -72,8 +72,8 @@ LoggerManager::processEnd() {
 /// Logging system initialization
 
 void
-LoggerManager::init(const std::string& root, const char* file,
-                    isc::log::Severity severity, int dbglevel)
+LoggerManager::init(const std::string& root, isc::log::Severity severity,
+                    int dbglevel, const char* file)
 {
     // Create the BIND 10 root logger and set the default severity and
     // debug level.  This is the logger that has the name of the application.
