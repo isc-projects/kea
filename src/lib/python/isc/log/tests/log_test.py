@@ -15,4 +15,21 @@
 
 # This tests it can be loaded, nothing more yet
 import isc.log
+import unittest
 
+class LogDict(unittest.TestCase):
+    def setUp(self):
+        # We work on a test dictionary now.
+        isc.log.set_test_dictionary(True)
+    def tearDown(self):
+        # Return to the global dictionary
+        isc.log.set_test_dictionary(False)
+
+    def test_load_msgs(self):
+        # Try loading a message and see it's there, but nothing more
+        self.assertEqual(isc.log.create_message("ID", "Text"), "ID")
+        self.assertEqual(isc.log.get_message("ID"), "Text")
+        self.assertEqual(isc.log.get_message("no-ID"), None)
+
+if __name__ == '__main__':
+    unittest.main()
