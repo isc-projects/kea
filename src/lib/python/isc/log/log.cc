@@ -19,6 +19,7 @@
 #include <config.h>
 
 #include <log/message_dictionary.h>
+#include <log/logger_manager.h>
 
 using namespace isc::log;
 
@@ -127,6 +128,38 @@ getMessage(PyObject*, PyObject* args) {
     }
 }
 
+PyObject*
+reset(PyObject*, PyObject*) {
+    // TODO Should we check we got exactly 0 arguments?
+    // But who cares, it's testing function only
+    LoggerManager::reset();
+    Py_RETURN_NONE;
+}
+
+PyObject*
+init(PyObject*, PyObject* args) {
+    const char* root;
+    const char* file(NULL);
+    const char* severity("INFO");
+    int dbglevel(0);
+    if (!PyArg_ParseTuple(args, "s|zsi", &root, &file, &severity, &dbglevel)) {
+        return (NULL);
+    }
+
+    try {
+        LoggerManager::init(root, file, getSeverity(severity), dbglevel);
+    }
+    catch (const std::exception& e) {
+        PyErr_SetString(PyExc_RuntimeError, e.what());
+        return (NULL);
+    }
+    catch (...) {
+        PyErr_SetString(PyExc_RuntimeError, "Unknown C++ exception");
+        return (NULL);
+    }
+    Py_RETURN_NONE;
+}
+
 PyMethodDef methods[] = {
     {"set_test_dictionary", &setTestDictionary, METH_VARARGS,
         "Set or unset testing mode for message dictionary. In testing, "
@@ -140,6 +173,14 @@ PyMethodDef methods[] = {
     {"get_message", &getMessage, METH_VARARGS,
         "Get a message. This function is for testing purposes and you don't "
         "need to call it. It returns None if the message does not exist."},
+    {"reset", &reset, METH_VARARGS,
+        "Reset all logging. For testing purposes only, do not use."},
+    {"init", &init, METH_VARARGS,
+        "Run-time initialization. You need to call this before you do any "
+        "logging, to configure the root logger name. You may also provide "
+        "a filename with message translations (or None if you don't want "
+        "any), logging severity (one of 'DEBUG', 'INFO', 'WARN', 'ERROR' or "
+        "'FATAL') and a debug level (integer in the range 0-99)."},
     {NULL, NULL, 0, NULL}
 };
 
