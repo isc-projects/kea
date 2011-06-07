@@ -185,19 +185,19 @@ readOutputOptionConf(isc::log::OutputOption& output_option,
                                     "destination", config_data,
                                     "loggers/output_options/destination");
     output_option.destination = isc::log::getDestination(destination_el->stringValue());
-    ConstElementPtr stream_el = getValueOrDefault(output_option_el,
-                                    "stream", config_data,
-                                    "loggers/output_options/stream");
-    output_option.stream = isc::log::getStream(stream_el->stringValue());
+    ConstElementPtr output_el = getValueOrDefault(output_option_el,
+                                    "output", config_data,
+                                    "loggers/output_options/output");
+    if (output_option.destination == isc::log::OutputOption::DEST_CONSOLE) {
+        output_option.stream = isc::log::getStream(output_el->stringValue());
+    } else if (output_option.destination == isc::log::OutputOption::DEST_FILE) {
+        output_option.filename = output_el->stringValue();
+    } else if (output_option.destination == isc::log::OutputOption::DEST_SYSLOG) {
+        output_option.facility = output_el->stringValue();
+    }
     output_option.flush = getValueOrDefault(output_option_el,
                               "flush", config_data,
                               "loggers/output_options/flush")->boolValue();
-    output_option.facility = getValueOrDefault(output_option_el,
-                                 "facility", config_data,
-                                 "loggers/output_options/facility")->stringValue();
-    output_option.filename = getValueOrDefault(output_option_el,
-                                 "filename", config_data,
-                                 "loggers/output_options/filename")->stringValue();
     output_option.maxsize = getValueOrDefault(output_option_el,
                                 "maxsize", config_data,
                                 "loggers/output_options/maxsize")->intValue();

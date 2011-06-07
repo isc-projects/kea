@@ -46,6 +46,11 @@ ConstElementPtr findListOrMapSubSpec(ConstElementPtr spec_part) {
 
 // Returns a specific Element in a given specification ListElement
 //
+// \exception DataNotFoundError if the given identifier does not
+// point to an existing element. Since we are dealing with the
+// specification here, and not the config data itself, this should
+// not happen, and is a code bug.
+//
 // \param spec_part ListElement to find the element in
 // \param id_part the name of the element to find (must match the value
 //                "item_name" in the list item
