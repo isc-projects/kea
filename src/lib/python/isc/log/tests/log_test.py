@@ -31,5 +31,26 @@ class LogDict(unittest.TestCase):
         self.assertEqual(isc.log.get_message("ID"), "Text")
         self.assertEqual(isc.log.get_message("no-ID"), None)
 
+class Manager(unittest.TestCase):
+    def tearDown(self):
+        isc.log.reset()
+
+    def test_init_debug(self):
+        # We try calling it now only, as we don't have any other functions
+        # to check the outcome by it. Once we add the logger class, we may
+        # check more.
+        isc.log.init("root", None, "DEBUG", 50)
+
+    def test_init_defaults(self):
+        # We try calling it now only, as we don't have any other functions
+        # to check the outcome by it. Once we add the logger class, we may
+        # check more.
+        isc.log.init("root")
+
+    def test_init_notfound(self):
+        # This should not throw, because the C++ one doesn't. Should we really
+        # ignore errors like missing file?
+        isc.log.init("root", "/no/such/file");
+
 if __name__ == '__main__':
     unittest.main()
