@@ -161,9 +161,6 @@ public:
      * configuration of the local module needs to be updated.
      * This must refer to a valid object of a concrete derived class of
      * AbstractSession without establishing the session.
-     * @param handle_logging If true, the ModuleCCSession will automatically
-     * take care of logging configuration through the virtual Logging config
-     * module.
      *
      * Note: the design decision on who is responsible for establishing the
      * session is in flux, and may change in near future.
@@ -175,11 +172,14 @@ public:
      * @param command_handler A callback function pointer to be called when
      * a control command from a remote agent needs to be performed on the
      * local module.
-     * @start_immediately If true (default), start listening to new commands
+     * @param start_immediately If true (default), start listening to new commands
      * and configuration changes asynchronously at the end of the constructor;
      * if false, it will be delayed until the start() method is explicitly
      * called. (This is a short term workaround for an initialization trouble.
      * We'll need to develop a cleaner solution, and then remove this knob)
+     * @param handle_logging If true, the ModuleCCSession will automatically
+     * take care of logging configuration through the virtual Logging config
+     * module.
      */
     ModuleCCSession(const std::string& spec_file_name,
                     isc::cc::AbstractSession& session,
