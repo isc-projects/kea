@@ -48,7 +48,7 @@ namespace log {
 /// 
 /// \section LoggingApiLoggerNames BIND 10 Logger Names
 /// Within BIND 10, the root logger root logger is given the name of the
-/// program (via the stand-along function setRootLoggerName()). Other loggers
+/// program (via the stand-alone function setRootLoggerName()). Other loggers
 /// are children of the root logger and are named "<program>.<sublogger>".
 /// This name appears in logging output, allowing users to identify both
 /// the BIND 10 program and the component within the program that generated
