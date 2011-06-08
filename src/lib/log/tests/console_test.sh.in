@@ -37,22 +37,22 @@ passfail() {
 
 echo "1. Checking that console output to stdout goes to stdout:"
 rm -f $tempfile
-./logger_example -c stdout -s error 1> $tempfile
+./logger_example -c stdout -s error 1> $tempfile 2> /dev/null
 passfail 4
 
 echo "2. Checking that console output to stdout does not go to stderr:"
 rm -f $tempfile
-./logger_example -c stdout -s error 2> $tempfile
+./logger_example -c stdout -s error 1> /dev/null 2> $tempfile
 passfail 0
 
 echo "3. Checking that console output to stderr goes to stderr:"
 rm -f $tempfile
-./logger_example -c stderr -s error 2> $tempfile
+./logger_example -c stderr -s error 1> /dev/null 2> $tempfile
 passfail 4
 
 echo "4. Checking that console output to stderr does not go to stdout:"
 rm -f $tempfile
-./logger_example -c stderr -s error 1> $tempfile
+./logger_example -c stderr -s error 1> $tempfile 2> /dev/null
 passfail 0
 
 if [ $failcount -eq 0 ]; then
