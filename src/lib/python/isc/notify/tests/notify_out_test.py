@@ -24,9 +24,7 @@ from isc.notify import notify_out, SOCK_DATA
 
 # our fake socket, where we can read and insert messages
 class MockSocket():
-    def __init__(self, family, type):
-        self.family = family
-        self.type = type
+    def __init__(self):
         self._local_sock, self._remote_sock = socket.socketpair()
 
     def connect(self, to):
@@ -56,7 +54,7 @@ class MockZoneNotifyInfo(notify_out.ZoneNotifyInfo):
     def prepare_notify_out(self):
         super().prepare_notify_out();
         self._sock.close()
-        self._sock = MockSocket(socket.AF_INET, socket.SOCK_DGRAM)
+        self._sock = MockSocket()
 
 class TestZoneNotifyInfo(unittest.TestCase):
     def setUp(self):
