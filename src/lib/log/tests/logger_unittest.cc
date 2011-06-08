@@ -26,10 +26,6 @@ using namespace isc;
 using namespace isc::log;
 using namespace std;
 
-namespace {
-string ROOT_NAME = "loggertest";
-}
-
 /// \brief Logger Test
 ///
 /// As the logger is only a shell around the implementation, this tests also
@@ -38,7 +34,7 @@ string ROOT_NAME = "loggertest";
 class LoggerTest : public ::testing::Test {
 public:
     LoggerTest() {
-        LoggerManager::init(ROOT_NAME);
+        // Initialization of logging is done in main()
     }
     ~LoggerTest() {
         LoggerManager::reset();
@@ -54,7 +50,7 @@ TEST_F(LoggerTest, Name) {
     Logger logger("alpha");
 
     // ... and check the name
-    EXPECT_EQ(ROOT_NAME + string(".alpha"), logger.getName());
+    EXPECT_EQ(getRootLoggerName() + string(".alpha"), logger.getName());
 }
 
 // This test attempts to get two instances of a logger with the same name

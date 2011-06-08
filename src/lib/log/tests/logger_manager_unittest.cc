@@ -40,15 +40,11 @@ using namespace isc;
 using namespace isc::log;
 using namespace std;
 
-namespace {
-string ROOT_NAME("logmgrtest");
-}
-
 /// \brief LoggerManager Test
 class LoggerManagerTest : public ::testing::Test {
 public:
     LoggerManagerTest() {
-        LoggerManager::init(ROOT_NAME);
+        // Initialization of logging is done in main()
     }
 
     ~LoggerManagerTest() {
