@@ -53,6 +53,9 @@ class MockSocket():
 class MockZoneNotifyInfo(notify_out.ZoneNotifyInfo):
     def create_socket(self, addrinfo):
         super().create_socket(addrinfo)
+        # before replacing the underlying socket, remember the address family
+        # of the original socket so that tests can check that.
+        self.sock_family = self._sock.family
         self._sock.close()
         self._sock = MockSocket()
         return self._sock
@@ -239,11 +242,20 @@ class TestNotifyOut(unittest.TestCase):
         data = b'\x2f\x18\x10\x10\x00\x01\x00\x00\x00\x00\x00\x00\x07example\03com\x00\x00\x06\x00\x01'
         self.assertEqual(notify_out._BAD_QR, self._notify._handle_notify_reply(example_com_info, data))
 
-    def test_send_notify_message_udp(self):
+    def test_send_notify_message_udp_ipv4(self):
         example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
         example_com_info.prepare_notify_out()
-        ret = self._notify._send_notify_message_udp(example_com_info, ('1.1.1.1', 53))
+        ret = self._notify._send_notify_message_udp(example_com_info,
+                                                    ('192.0.2.1', 53))
         self.assertTrue(ret)
+        self.assertEqual(socket.AF_INET, example_com_info.sock_family)
+
+    def test_send_notify_message_udp_ipv6(self):
+        example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
+        ret = self._notify._send_notify_message_udp(example_com_info,
+                                                    ('2001:db8::53', 53))
+        self.assertTrue(ret)
+        self.assertEqual(socket.AF_INET6, example_com_info.sock_family)
 
     def test_zone_notify_handler(self):
         old_send_msg = self._notify._send_notify_message_udp
