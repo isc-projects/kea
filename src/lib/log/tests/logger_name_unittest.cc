@@ -21,9 +21,30 @@
 using namespace isc;
 using namespace isc::log;
 
+// Test class.  To avoid disturbing the root logger configuration in other
+// tests in the suite, the root logger name is saved in the constructor and
+// restored in the destructor.  However, this is a bit chicken and egg, as the
+// functions used to do the save and restore are those being tested...
+//
+// Note that the root name is originally set by the initialization of the
+// logging configuration done in main().
+
+class LoggerNameTest : public ::testing::Test {
+public:
+    LoggerNameTest() {
+        name_ = getRootLoggerName();
+    }
+    ~LoggerNameTest() {
+        setRootLoggerName(name_);
+    }
+
+private:
+    std::string     name_;  ///< Saved name
+};
+
 // Check setting and getting of root name
 
-TEST(LoggerNameTest, RootNameSetGet) {
+TEST_F(LoggerNameTest, RootNameSetGet) {
     const std::string name1 = "test1";
     const std::string name2 = "test2";
 
@@ -44,7 +65,7 @@ TEST(LoggerNameTest, RootNameSetGet) {
 
 // Check expansion of name
 
-TEST(LoggerNameTest, ExpandLoggerName) {
+TEST_F(LoggerNameTest, ExpandLoggerName) {
     const std::string ROOT = "example";
     const std::string NAME = "something";
     const std::string FULL_NAME = ROOT + "." + NAME;
