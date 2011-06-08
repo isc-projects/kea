@@ -51,7 +51,7 @@ initLogger(const string& root, isc::log::Severity severity, int dbglevel,
 }
 
 /// Logger Run-Time Initialization via Environment Variables
-void initLogger() {
+void initLogger(isc::log::Severity severity, int dbglevel) {
 
     // Root logger name is defined by the environment variable B10_LOGGER_ROOT.
     // If not present, the name is "b10root".
@@ -65,7 +65,6 @@ void initLogger() {
     // B10_LOGGER_SEVERITY, and can be one of "DEBUG", "INFO", "WARN", "ERROR"
     // of "FATAL".  Note that the string must be in upper case with no leading
     // of trailing blanks.
-    isc::log::Severity severity = isc::log::INFO;
     const char* sev_char = getenv("B10_LOGGER_SEVERITY");
     if (sev_char) {
         severity = isc::log::getSeverity(sev_char);
@@ -73,7 +72,6 @@ void initLogger() {
 
     // If the severity is debug, get the debug level (environment variable
     // B10_LOGGER_DBGLEVEL), which should be in the range 0 to 99.
-    int dbglevel = 0;
     if (severity == isc::log::DEBUG) {
         const char* dbg_char = getenv("B10_LOGGER_DBGLEVEL");
         if (dbg_char) {
