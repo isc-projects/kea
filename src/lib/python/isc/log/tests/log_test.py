@@ -58,6 +58,7 @@ class Logger(unittest.TestCase):
 
     def setUp(self):
         isc.log.init("root", None, "DEBUG", 50)
+        self.sevs = ['INFO', 'WARN', 'ERROR', 'FATAL']
 
     # Checks defaults of the logger
     def defaults(self, logger):
@@ -77,7 +78,7 @@ class Logger(unittest.TestCase):
         logger.set_severity('DEBUG', 25)
         self.assertEqual(logger.get_effective_severity(), "DEBUG")
         self.assertEqual(logger.get_debug_level(), 25)
-        for sev in ['INFO', 'WARN', 'ERROR', 'FATAL']:
+        for sev in self.sevs:
             logger.set_severity(sev)
             self.assertEqual(logger.get_effective_severity(), sev)
             self.assertEqual(logger.get_debug_level(), 0)
@@ -85,6 +86,29 @@ class Logger(unittest.TestCase):
         logger.set_severity(None)
         # The same bug here
         #self.defaults(logger)
+
+    def test_enabled(self):
+        logger = isc.log.Logger("child")
+        self.sevs.insert(0, 'DEBUG')
+        methods = {
+            'DEBUG': logger.is_debug_enabled,
+            'INFO': logger.is_info_enabled,
+            'WARN': logger.is_warn_enabled,
+            'ERROR': logger.is_error_enabled,
+            'FATAL': logger.is_fatal_enabled
+        }
+        for sev in self.sevs:
+            logger.set_severity(sev)
+            enabled = False
+            for tested in self.sevs:
+                if tested == sev:
+                    enabled = True
+                self.assertEqual(methods[tested](), enabled)
+        logger.set_severity('DEBUG', 50)
+        self.assertTrue(logger.is_debug_enabled())
+        self.assertTrue(logger.is_debug_enabled(0))
+        self.assertTrue(logger.is_debug_enabled(50))
+        self.assertFalse(logger.is_debug_enabled(99))
 
 if __name__ == '__main__':
     unittest.main()
