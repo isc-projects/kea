@@ -43,7 +43,7 @@ run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 endif
 
-TESTS += logger_example
+check_PROGRAMS = logger_example
 logger_example_SOURCES = logger_example.cc
 logger_example_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 logger_example_LDFLAGS = $(AM_LDFLAGS) $(LOG4CPLUS_LDFLAGS)
