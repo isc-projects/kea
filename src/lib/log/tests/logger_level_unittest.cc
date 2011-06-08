@@ -26,14 +26,10 @@ using namespace isc;
 using namespace isc::log;
 using namespace std;
 
-namespace {
-string ROOT_NAME("logleveltest");
-}
-
 class LoggerLevelTest : public ::testing::Test {
 protected:
     LoggerLevelTest() {
-        LoggerManager::init(ROOT_NAME);
+        // Logger initialization is done in main()
     }
     ~LoggerLevelTest() {
         LoggerManager::reset();
@@ -62,11 +58,6 @@ TEST_F(LoggerLevelTest, Creation) {
 }
 
 TEST(LoggerLevel, getSeverity) {
-    // Should initialize logger as getSeverity() may output
-    // a message.  This gives a properly-qualified logger
-    // name.
-    LoggerManager::init(ROOT_NAME);
-
     EXPECT_EQ(DEBUG, getSeverity("DEBUG"));
     EXPECT_EQ(DEBUG, getSeverity("debug"));
     EXPECT_EQ(DEBUG, getSeverity("DeBuG"));
