@@ -52,5 +52,35 @@ class Manager(unittest.TestCase):
         # ignore errors like missing file?
         isc.log.init("root", "/no/such/file");
 
+class Logger(unittest.TestCase):
+    def tearDown(self):
+        isc.log.reset()
+
+    def setUp(self):
+        isc.log.init("root", None, "DEBUG", 50)
+
+    # Checks defaults of the logger
+    def defaults(self, logger):
+        self.assertEqual(logger.get_effective_severity(), "DEBUG")
+        self.assertEqual(logger.get_debug_level(), 50)
+
+    def test_default_severity(self):
+        logger = isc.log.Logger("child")
+        self.defaults(logger)
+
+    # Try changing the severities little bit
+    def test_severity(self):
+        logger = isc.log.Logger("child")
+        logger.set_severity('DEBUG', 25)
+        self.assertEqual(logger.get_effective_severity(), "DEBUG")
+        self.assertEqual(logger.get_debug_level(), 25)
+        for sev in ['INFO', 'WARN', 'ERROR', 'FATAL']:
+            logger.set_severity(sev)
+            self.assertEqual(logger.get_effective_severity(), sev)
+            self.assertEqual(logger.get_debug_level(), 0)
+        # Return to default
+        logger.set_severity(None)
+        self.defaults(logger)
+
 if __name__ == '__main__':
     unittest.main()
