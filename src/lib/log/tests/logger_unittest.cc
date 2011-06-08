@@ -164,6 +164,42 @@ TEST_F(LoggerTest, SeverityInheritance) {
     EXPECT_EQ(isc::log::DEFAULT, parent.getSeverity());
     EXPECT_EQ(isc::log::DEFAULT, child.getSeverity());
 
+    // Set the severity of the parent to debug and check what is
+    // reported by the child.
+    parent.setSeverity(isc::log::DEBUG, 42);
+    EXPECT_EQ(42, parent.getDebugLevel());
+    EXPECT_EQ(0,  child.getDebugLevel());
+    EXPECT_EQ(42, child.getEffectiveDebugLevel());
+
+    // Setting the child to DEBUG severity should set its own
+    // debug level.
+    child.setSeverity(isc::log::DEBUG, 53);
+    EXPECT_EQ(53,  child.getDebugLevel());
+    EXPECT_EQ(53, child.getEffectiveDebugLevel());
+
+    // If the child severity is set to something other than DEBUG,
+    // the debug level should be reported as 0.
+    child.setSeverity(isc::log::ERROR);
+    EXPECT_EQ(0,  child.getDebugLevel());
+    EXPECT_EQ(0, child.getEffectiveDebugLevel());
+}
+
+// Check that changing the parent and child debug level does not affect
+// the other.
+
+TEST_F(LoggerTest, DebugLevelInheritance) {
+
+    // Create two loggers.  We cheat here as we know that the underlying
+    // implementation will set a parent-child relationship if the loggers
+    // are named <parent> and <parent>.<child>.
+    Logger parent("alpha");
+    Logger child("alpha.beta");
+
+    // By default, newly created loggers should have a level of DEFAULT
+    // (i.e. default to parent)
+    EXPECT_EQ(isc::log::DEFAULT, parent.getSeverity());
+    EXPECT_EQ(isc::log::DEFAULT, child.getSeverity());
+
     // Set the severity of the child to something other than the default -
     // check it changes and that of the parent does not.
     child.setSeverity(isc::log::INFO);
