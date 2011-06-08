@@ -26,14 +26,14 @@ tempfile=@abs_builddir@/severity_test_tempfile_$$
 
 passfail() {
     if [ $1 -eq 0 ]; then
-        echo " -- pass"
+        echo " pass"
     else
-        echo " ** FAIL"
+        echo " FAIL"
         failcount=`expr $failcount + $1`
     fi
 }
 
-echo "1. runInitTest default parameters: "
+echo -n "1. runInitTest default parameters:"
 cat > $tempfile << .
 FATAL [example] MSG_WRITERR, error writing to test1: 42
 ERROR [example] MSG_RDLOCMES, reading local message file dummy/file
@@ -48,7 +48,7 @@ INFO  [example.beta] MSG_READERR, error reading from message file beta: info
 ./logger_example -c stdout | cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
-echo "2. Severity filter: "
+echo -n "2. Severity filter:"
 cat > $tempfile << .
 FATAL [example] MSG_WRITERR, error writing to test1: 42
 ERROR [example] MSG_RDLOCMES, reading local message file dummy/file
@@ -58,7 +58,7 @@ ERROR [example.beta] MSG_BADDESTINATION, unrecognized log destination: beta_erro
 ./logger_example -c stdout -s error | cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
-echo "3. Debug level: "
+echo -n "3. Debug level:"
 cat > $tempfile << .
 FATAL [example] MSG_WRITERR, error writing to test1: 42
 ERROR [example] MSG_RDLOCMES, reading local message file dummy/file
