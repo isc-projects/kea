@@ -74,6 +74,14 @@ Logger::getDebugLevel() {
     return (getLoggerPtr()->getDebugLevel());
 }
 
+// Effective debug level (only relevant if messages of severity DEBUG are being
+// logged).
+
+int
+Logger::getEffectiveDebugLevel() {
+    return (getLoggerPtr()->getEffectiveDebugLevel());
+}
+
 // Check on the current severity settings
 
 bool
