@@ -27,9 +27,9 @@ tempfile=@abs_builddir@/run_time_init_test_tempfile_$$
 
 passfail() {
     if [ $1 -eq 0 ]; then
-        echo " -- pass"
+        echo " pass"
     else
-        echo " ** FAIL"
+        echo " FAIL"
         failcount=`expr $failcount + $1`
     fi
 }
@@ -43,7 +43,7 @@ cat > $localmes << .
 % RDLOCMES    replacement read local message file, parameter is '%1'
 .
 
-echo "1. Local message replacement:"
+echo -n "1. Local message replacement:"
 cat > $tempfile << .
 WARN  [example.log] MSG_IDNOTFND, could not replace message text for 'MSG_NOTHERE': no such message
 FATAL [example] MSG_WRITERR, error writing to test1: 42
@@ -57,7 +57,7 @@ WARN  [example.beta] MSG_BADSTREAM, bad log console output stream: beta_warn
 ./logger_example -c stdout -s warn $localmes | cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
-echo "2. Report error if unable to read local message file:"
+echo -n "2. Report error if unable to read local message file:"
 cat > $tempfile << .
 ERROR [example.log] MSG_OPENIN, unable to open message file $localmes for input: No such file or directory
 FATAL [example] MSG_WRITERR, error writing to test1: 42
