@@ -227,16 +227,6 @@ ResolverCache::update(const isc::dns::ConstRRsetPtr& rrset_ptr) {
     }
 }
 
-void
-ResolverCache::dump(const std::string&) {
-    //TODO
-}
-
-void
-ResolverCache::load(const std::string&) {
-    //TODO
-}
-
 ResolverClassCache*
 ResolverCache::getClassCache(const isc::dns::RRClass& cache_class) const {
     for (int i = 0; i < class_caches_.size(); ++i) {
