@@ -26,7 +26,6 @@ using namespace isc::log;
 
 namespace {
 
-
 // This is for testing only. The real module will have it always set as
 // NULL and will use the global dictionary.
 MessageDictionary* testDictionary = NULL;
@@ -45,9 +44,9 @@ setTestDictionary(PyObject*, PyObject* args) {
     }
     bool enable(enableI != 0);
 
-    delete testDictionary;
-    testDictionary = NULL;
     try {
+        delete testDictionary;
+        testDictionary = NULL;
         if (enable) {
             testDictionary = new MessageDictionary;
         }
@@ -162,21 +161,21 @@ init(PyObject*, PyObject* args) {
 }
 
 PyMethodDef methods[] = {
-    {"set_test_dictionary", &setTestDictionary, METH_VARARGS,
+    {"set_test_dictionary", setTestDictionary, METH_VARARGS,
         "Set or unset testing mode for message dictionary. In testing, "
         "the create_message and get_message functions work on different "
         "than the logger-global dictionary, not polluting it."},
-    {"create_message", &createMessage, METH_VARARGS,
+    {"create_message", createMessage, METH_VARARGS,
         "Creates a new message in the dictionary. You shouldn't need to "
         "call this directly, it should be called by the generated message "
         "file. Returns the identifier to be used in logging. The text "
         "shouldn't be empty."},
-    {"get_message", &getMessage, METH_VARARGS,
+    {"get_message", getMessage, METH_VARARGS,
         "Get a message. This function is for testing purposes and you don't "
         "need to call it. It returns None if the message does not exist."},
-    {"reset", &reset, METH_VARARGS,
+    {"reset", reset, METH_NOARGS,
         "Reset all logging. For testing purposes only, do not use."},
-    {"init", &init, METH_VARARGS,
+    {"init", init, METH_VARARGS,
         "Run-time initialization. You need to call this before you do any "
         "logging, to configure the root logger name. You may also provide "
         "a filename with message translations (or None if you don't want "
@@ -220,7 +219,93 @@ Logger_destroy(LoggerWrapper* const self) {
     Py_TYPE(self)->tp_free(self);
 }
 
+// The isc::log doesn't contain function to convert this way
+const char*
+severityToText(const Severity& severity) {
+    switch (severity) {
+        case DEFAULT:
+            return ("DEFAULT");
+        case DEBUG:
+            return ("DEBUG");
+        case INFO:
+            return ("INFO");
+        case WARN:
+            return ("WARN");
+        case ERROR:
+            return ("ERROR");
+        case FATAL:
+            return ("FATAL");
+        default:
+            return (NULL);
+    }
+}
+
+PyObject*
+Logger_getEffectiveSeverity(LoggerWrapper* self, PyObject*) {
+    try {
+        return (Py_BuildValue("s",
+                              severityToText(
+                                  self->logger_->getEffectiveSeverity())));
+    }
+    catch (const std::exception& e) {
+        PyErr_SetString(PyExc_RuntimeError, e.what());
+        return (NULL);
+    }
+    catch (...) {
+        PyErr_SetString(PyExc_RuntimeError, "Unknown C++ exception");
+        return (NULL);
+    }
+}
+
+PyObject*
+Logger_getDebugLevel(LoggerWrapper* self, PyObject*) {
+    try {
+        return (Py_BuildValue("i", self->logger_->getDebugLevel()));
+    }
+    catch (const std::exception& e) {
+        PyErr_SetString(PyExc_RuntimeError, e.what());
+        return (NULL);
+    }
+    catch (...) {
+        PyErr_SetString(PyExc_RuntimeError, "Unknown C++ exception");
+        return (NULL);
+    }
+}
+
+PyObject*
+Logger_setSeverity(LoggerWrapper* self, PyObject* args) {
+    const char* severity;
+    int dbgLevel = 0;
+    if (!PyArg_ParseTuple(args, "z|i", &severity, &dbgLevel)) {
+        return (NULL);
+    }
+    try {
+        self->logger_->setSeverity((severity == NULL) ? DEFAULT :
+                                   getSeverity(severity), dbgLevel);
+    }
+    catch (const std::exception& e) {
+        PyErr_SetString(PyExc_RuntimeError, e.what());
+        return (NULL);
+    }
+    catch (...) {
+        PyErr_SetString(PyExc_RuntimeError, "Unknown C++ exception");
+        return (NULL);
+    }
+    Py_RETURN_NONE;
+}
+
 PyMethodDef loggerMethods[] = {
+    { "get_effective_severity",
+        reinterpret_cast<PyCFunction>(Logger_getEffectiveSeverity),
+        METH_NOARGS, "Returns the effective logging severity as string" },
+    { "get_debug_level", reinterpret_cast<PyCFunction>(Logger_getDebugLevel),
+        METH_NOARGS, "Returns the current debug level." },
+    { "set_severity",
+        reinterpret_cast<PyCFunction>(Logger_setSeverity), METH_VARARGS,
+        "Sets the severity of a logger. The parameters are severity as a "
+        "string and, optionally, a debug level (integer in range 0-99). "
+        "The severity may be NULL, in which case an inherited value is taken."
+        },
     { NULL, NULL, 0, NULL }
 };
 
