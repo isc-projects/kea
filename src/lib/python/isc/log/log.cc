@@ -294,6 +294,70 @@ Logger_setSeverity(LoggerWrapper* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
+template<class FPtr> // Who should remember the pointer-to-method syntax
+PyObject*
+Logger_isLevelEnabled(LoggerWrapper* self, FPtr function) {
+    try {
+        if ((self->logger_->*function)()) {
+            Py_RETURN_TRUE;
+        } else {
+            Py_RETURN_FALSE;
+        }
+    }
+    catch (const std::exception& e) {
+        PyErr_SetString(PyExc_RuntimeError, e.what());
+        return (NULL);
+    }
+    catch (...) {
+        PyErr_SetString(PyExc_RuntimeError, "Unknown C++ exception");
+        return (NULL);
+    }
+}
+
+PyObject*
+Logger_isInfoEnabled(LoggerWrapper* self, PyObject*) {
+    return (Logger_isLevelEnabled(self, &Logger::isInfoEnabled));
+}
+
+PyObject*
+Logger_isWarnEnabled(LoggerWrapper* self, PyObject*) {
+    return (Logger_isLevelEnabled(self, &Logger::isWarnEnabled));
+}
+
+PyObject*
+Logger_isErrorEnabled(LoggerWrapper* self, PyObject*) {
+    return (Logger_isLevelEnabled(self, &Logger::isErrorEnabled));
+}
+
+PyObject*
+Logger_isFatalEnabled(LoggerWrapper* self, PyObject*) {
+    return (Logger_isLevelEnabled(self, &Logger::isFatalEnabled));
+}
+
+PyObject*
+Logger_isDebugEnabled(LoggerWrapper* self, PyObject* args) {
+    int level = MIN_DEBUG_LEVEL;
+    if (!PyArg_ParseTuple(args, "|i", &level)) {
+        return (NULL);
+    }
+
+    try {
+        if (self->logger_->isDebugEnabled(level)) {
+            Py_RETURN_TRUE;
+        } else {
+            Py_RETURN_FALSE;
+        }
+    }
+    catch (const std::exception& e) {
+        PyErr_SetString(PyExc_RuntimeError, e.what());
+        return (NULL);
+    }
+    catch (...) {
+        PyErr_SetString(PyExc_RuntimeError, "Unknown C++ exception");
+        return (NULL);
+    }
+}
+
 PyMethodDef loggerMethods[] = {
     { "get_effective_severity",
         reinterpret_cast<PyCFunction>(Logger_getEffectiveSeverity),
@@ -306,6 +370,18 @@ PyMethodDef loggerMethods[] = {
         "string and, optionally, a debug level (integer in range 0-99). "
         "The severity may be NULL, in which case an inherited value is taken."
         },
+    { "is_debug_enabled", reinterpret_cast<PyCFunction>(Logger_isDebugEnabled),
+        METH_VARARGS, "Returns if the logger would log debug message now. "
+            "You can provide a desired debug level."
+    },
+    { "is_info_enabled", reinterpret_cast<PyCFunction>(Logger_isInfoEnabled),
+        METH_NOARGS, "Returns if the logger would log info message now." },
+    { "is_warn_enabled", reinterpret_cast<PyCFunction>(Logger_isWarnEnabled),
+        METH_NOARGS, "Returns if the logger would log warn message now." },
+    { "is_error_enabled", reinterpret_cast<PyCFunction>(Logger_isErrorEnabled),
+        METH_NOARGS, "Returns if the logger would log error message now." },
+    { "is_fatal_enabled", reinterpret_cast<PyCFunction>(Logger_isFatalEnabled),
+        METH_NOARGS, "Returns if the logger would log fatal message now." },
     { NULL, NULL, 0, NULL }
 };
 
