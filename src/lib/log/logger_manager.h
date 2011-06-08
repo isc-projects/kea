@@ -97,8 +97,7 @@ public:
 
     /// \brief Reset logging
     ///
-    /// Resets logging to default (just the root logger output INFO or above
-    /// messages to the console.
+    /// Resets logging to whatever was set in the call to init().
     static void reset();
 
     /// \brief Read local message file
