@@ -49,12 +49,13 @@ class MockSocket():
         return self._remote_sock
 
 # We subclass the ZoneNotifyInfo class we're testing here, only
-# to override the prepare_notify_out() method.
+# to override the create_socket() method.
 class MockZoneNotifyInfo(notify_out.ZoneNotifyInfo):
-    def prepare_notify_out(self):
-        super().prepare_notify_out();
+    def create_socket(self, addrinfo):
+        super().create_socket(addrinfo)
         self._sock.close()
         self._sock = MockSocket()
+        return self._sock
 
 class TestZoneNotifyInfo(unittest.TestCase):
     def setUp(self):
@@ -62,11 +63,12 @@ class TestZoneNotifyInfo(unittest.TestCase):
 
     def test_prepare_finish_notify_out(self):
         self.info.prepare_notify_out()
-        self.assertNotEqual(self.info._sock, None)
+        self.assertNotEqual(self.info.notify_timeout, None)
         self.assertIsNone(self.info._notify_current)
 
         self.info.finish_notify_out()
         self.assertEqual(self.info._sock, None)
+        self.assertEqual(self.info.notify_timeout, None)
 
     def test_set_next_notify_target(self):
         self.info.notify_slaves.append(('127.0.0.1', 53))
@@ -152,6 +154,11 @@ class TestNotifyOut(unittest.TestCase):
         replied_zones, timeout_zones = self._notify._wait_for_notify_reply()
         self.assertEqual(len(replied_zones), 0)
         self.assertEqual(len(timeout_zones), 2)
+
+        # Trigger timeout events to "send" notifies via a mock socket
+        for zone in timeout_zones:
+            self._notify._zone_notify_handler(timeout_zones[zone],
+                                              notify_out._EVENT_TIMEOUT)
 
         # Now make one socket be readable
         self._notify._notify_infos[('example.net.', 'IN')].notify_timeout = time.time() + 10
