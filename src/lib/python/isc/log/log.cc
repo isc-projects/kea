@@ -20,6 +20,7 @@
 
 #include <log/message_dictionary.h>
 #include <log/logger_manager.h>
+#include <log/logger.h>
 
 using namespace isc::log;
 
@@ -184,6 +185,96 @@ PyMethodDef methods[] = {
     {NULL, NULL, 0, NULL}
 };
 
+class LoggerWrapper : public PyObject {
+// Everything is public here, as it is accessible only inside this .cc file.
+public:
+    Logger *logger_;
+};
+
+extern PyTypeObject logger_type;
+
+int
+Logger_init(LoggerWrapper* self, PyObject* args) {
+    const char* name;
+    if (!PyArg_ParseTuple(args, "s", &name)) {
+        return (-1);
+    }
+    try {
+        self->logger_ = new Logger(name);
+        return (0);
+    }
+    catch (const std::exception& e) {
+        PyErr_SetString(PyExc_RuntimeError, e.what());
+        return (-1);
+    }
+    catch (...) {
+        PyErr_SetString(PyExc_RuntimeError, "Unknown C++ exception");
+        return (-1);
+    }
+}
+
+void
+Logger_destroy(LoggerWrapper* const self) {
+    delete self->logger_;
+    self->logger_ = NULL;
+    Py_TYPE(self)->tp_free(self);
+}
+
+PyMethodDef loggerMethods[] = {
+    { NULL, NULL, 0, NULL }
+};
+
+PyTypeObject logger_type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "isc.log.Logger",
+    sizeof(LoggerWrapper),                 // tp_basicsize
+    0,                                  // tp_itemsize
+    reinterpret_cast<destructor>(Logger_destroy),       // tp_dealloc
+    NULL,                               // tp_print
+    NULL,                               // tp_getattr
+    NULL,                               // tp_setattr
+    NULL,                               // tp_reserved
+    NULL,                               // tp_repr
+    NULL,                               // tp_as_number
+    NULL,                               // tp_as_sequence
+    NULL,                               // tp_as_mapping
+    NULL,                               // tp_hash 
+    NULL,                               // tp_call
+    NULL,                               // tp_str
+    NULL,                               // tp_getattro
+    NULL,                               // tp_setattro
+    NULL,                               // tp_as_buffer
+    Py_TPFLAGS_DEFAULT,                 // tp_flags
+    "Wrapper around the C++ isc::log::Logger class."
+    "It is not complete, but everything important should be here.",
+    NULL,                               // tp_traverse
+    NULL,                               // tp_clear
+    NULL,                               // tp_richcompare
+    0,                                  // tp_weaklistoffset
+    NULL,                               // tp_iter
+    NULL,                               // tp_iternext
+    loggerMethods,                      // tp_methods
+    NULL,                               // tp_members
+    NULL,                               // tp_getset
+    NULL,                               // tp_base
+    NULL,                               // tp_dict
+    NULL,                               // tp_descr_get
+    NULL,                               // tp_descr_set
+    0,                                  // tp_dictoffset
+    reinterpret_cast<initproc>(Logger_init),            // tp_init
+    NULL,                               // tp_alloc
+    PyType_GenericNew,                  // tp_new
+    NULL,                               // tp_free
+    NULL,                               // tp_is_gc
+    NULL,                               // tp_bases
+    NULL,                               // tp_mro
+    NULL,                               // tp_cache
+    NULL,                               // tp_subclasses
+    NULL,                               // tp_weaklist
+    NULL,                               // tp_del
+    0                                   // tp_version_tag
+};
+
 PyModuleDef iscLog = {
     { PyObject_HEAD_INIT(NULL) NULL, 0, NULL},
     "log",
@@ -206,6 +297,17 @@ PyInit_log(void) {
     if (mod == NULL) {
         return (NULL);
     }
+
+    if (PyType_Ready(&logger_type) < 0) {
+        return (NULL);
+    }
+
+    if (PyModule_AddObject(mod, "Logger",
+                           static_cast<PyObject*>(static_cast<void*>(
+                               &logger_type))) < 0) {
+        return (NULL);
+    }
+    Py_INCREF(&logger_type);
 
     return (mod);
 }
