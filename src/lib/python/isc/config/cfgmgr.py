@@ -214,7 +214,7 @@ class ConfigManager:
            is returned"""
         if module_name:
             if module_name in self.module_specs:
-                return self.module_specs[module_name]
+                return self.module_specs[module_name].get_full_spec()
             else:
                 # TODO: log error?
                 return {}
