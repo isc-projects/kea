@@ -1,3 +1,8 @@
+253.    [func]		jelte
+	Add configuration options for logging through the virtual module
+	Logging.
+	(Trac 736, git 9fa2a95177265905408c51d13c96e752b14a0824)
+
 252.    [func]      	stephen
 	Add syslog as destination for logging.
 	(Trac976, git 31a30f5485859fd3df2839fc309d836e3206546e)
