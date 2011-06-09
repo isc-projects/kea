@@ -257,6 +257,17 @@ class TestNotifyOut(unittest.TestCase):
         self.assertTrue(ret)
         self.assertEqual(socket.AF_INET6, example_com_info.sock_family)
 
+    def test_send_notify_message_with_bogus_address(self):
+        example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
+
+        # As long as the underlying data source validates RDATA this shouldn't
+        # happen, but right now it's not actually the case.  Even if the
+        # data source does its job, it's prudent to confirm the behavior for
+        # an unexpected case.
+        ret = self._notify._send_notify_message_udp(example_com_info,
+                                                    ('invalid', 53))
+        self.assertFalse(ret)
+
     def test_zone_notify_handler(self):
         old_send_msg = self._notify._send_notify_message_udp
         def _fake_send_notify_message_udp(va1, va2):
