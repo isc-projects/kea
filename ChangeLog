@@ -1,3 +1,7 @@
+254.	[bug]		jinmei
+	b10-xfrout: failed to send notifies over IPv6 correctly.
+	(Trac964, git 3255c92714737bb461fb67012376788530f16e40)
+
 253.    [func]		jelte
 	Add configuration options for logging through the virtual module
 	Logging.
