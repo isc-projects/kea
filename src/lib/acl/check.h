@@ -54,14 +54,15 @@ public:
      * \return true if the context satisfies the check, false otherwise.
      */
     virtual bool matches(const Context& context) const = 0;
+
     /**
      * \brief The expected cost of single match.
      *
      * This is here to provide some kind of cost information to optimising
      * routines. It is in units without any real size, just bigger number
      * means the check takes longer time. It is expected to be linear scale.
-     * It doesn't need to me exact, but better accuracy might lead to better
-     * optimisations. As of writing this, no optimisations exists yet, but
+     * It doesn't need to be exact, but better accuracy might lead to better
+     * optimisations. As of writing this, no optimisations exist yet, but
      * are expected to exist in future.
      *
      * The default of 10000 is some arbitrary number meaning "somehow longish
@@ -69,14 +70,16 @@ public:
      * choosing something bigger to be cautious).
      */
     virtual unsigned cost() const {
-        return 10000;
+        return (10000);
     }
+
     /// \brief Virtual destructor, as we're virtual
     virtual ~ Check() { }
+
     /**
      * \brief Conversion to text.
      *
-     * This is meant for debugging and purposes, it doesn't have to
+     * This is meant for debugging purposes, it doesn't have to
      * serialise the whole information stored in this Check.
      *
      * If the check is compound, it should not include the subexpressions
@@ -102,6 +105,7 @@ template<class Context> class CompoundCheck : public Check<Context> {
 public:
     /// \brief Abbreviated name for list of subexpressions
     typedef std::vector<const Check<Context>*> Checks;
+
     /**
      * \brief Get the list of subexpressions.
      *
@@ -115,6 +119,7 @@ public:
      * result.
      */
     virtual Checks subexpressions() const = 0;
+
     /**
      * \brief If the result depends only on results of subexpressions.
      *
@@ -132,6 +137,7 @@ public:
      *    be the case in majority of cases.
      */
     virtual bool pure() const { return (true); }
+
     /**
      * \brief Default compound cost function.
      *
