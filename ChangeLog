@@ -1,3 +1,7 @@
+252.    [func]      	stephen
+	Add syslog as destination for logging.
+	(Trac976, git 31a30f5485859fd3df2839fc309d836e3206546e)
+
 251.	[bug]*		jinmei
 	Make sure bindctl private files are non readable to anyone except
 	the owner or users in the same group.  Note that if BIND 10 is run
