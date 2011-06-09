@@ -110,5 +110,28 @@ class Logger(unittest.TestCase):
         self.assertTrue(logger.is_debug_enabled(50))
         self.assertFalse(logger.is_debug_enabled(99))
 
+    def test_invalid_params(self):
+        """
+           Tests invalid arguments for logging functions. The output is tested
+           in check_output.sh.
+        """
+        logger = isc.log.Logger("child")
+        methods = [
+            logger.info,
+            logger.warn,
+            logger.error,
+            logger.fatal
+        ]
+        for meth in methods:
+            # Not enough arguments
+            self.assertRaises(TypeError, meth)
+            # Bad type
+            self.assertRaises(TypeError, meth, 1)
+        # Too few arguments
+        self.assertRaises(TypeError, logger.debug, 42)
+        self.assertRaises(TypeError, logger.debug)
+        # Bad type
+        self.assertRaises(TypeError, logger.debug, "42", "hello")
+
 if __name__ == '__main__':
     unittest.main()
