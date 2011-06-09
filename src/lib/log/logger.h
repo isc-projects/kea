@@ -59,7 +59,7 @@ namespace log {
 /// In this way, individual libraries can have their own loggers without
 /// worrying about the program in which they are used, but:
 /// - The origin of the message will be clearly identified.
-/// - The same component can have different options 736#comment:12(e.g. logging severity)
+/// - The same component can have different options (e.g. logging severity)
 /// in different programs at the same time.
 /// 
 /// \section LoggingApiLoggingMessages Logging Messages
