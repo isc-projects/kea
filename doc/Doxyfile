@@ -573,7 +573,7 @@ INPUT                  = ../src/lib/cc ../src/lib/config \
     ../src/bin/auth ../src/bin/resolver ../src/lib/bench \
     ../src/lib/log ../src/lib/asiolink/ ../src/lib/nsas \
     ../src/lib/testutils ../src/lib/cache ../src/lib/server_common/ \
-    ../src/bin/sockcreator/ ../src/lib/util/
+    ../src/bin/sockcreator/ ../src/lib/util/ \
     ../src/lib/resolve ../src/lib/acl
 
 # This tag can be used to specify the character encoding of the source files
