@@ -52,6 +52,12 @@ public:
      * will reimplement it and decide based on the context passed if it
      * matches.
      *
+     * The caller should expect this method can throw. The list of exceptions
+     * isn't restricted, as we don't know what kind of checks will be needed.
+     * An exception should be considered as it is impossible to check the
+     * condition. It should lead to either blackholing the packet or returning
+     * some 500-like error (ServFail).
+     *
      * \param context The thing we are trying to match against this check.
      * \return true if the context satisfies the check, false otherwise.
      */
@@ -133,6 +139,9 @@ public:
      * ownership. Therefore the only thing the caller needs to do is to make
      * sure this check is not deleted while it's still using the ones from the
      * result.
+     *
+     * This method must not throw except for the standard allocation exceptions
+     * to allocate the result.
      */
     virtual Checks getSubexpressions() const = 0;
 
