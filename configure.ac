@@ -884,6 +884,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/python/isc/config/tests/config_test
            src/lib/python/isc/cc/tests/cc_test
            src/lib/python/isc/notify/tests/notify_out_test
+           src/lib/python/isc/log/tests/log_console.py
            src/lib/dns/gen-rdatacode.py
            src/lib/python/bind10_config.py
            src/lib/dns/tests/testdata/gen-wiredata.py
@@ -923,6 +924,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/log/tests/console_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
            chmod +x src/lib/util/python/mkpywrapper.py
+           chmod +x src/lib/python/isc/log/tests/log_console.py
            chmod +x tests/system/conf.sh
           ])
 AC_OUTPUT
