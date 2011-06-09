@@ -50,7 +50,7 @@ int& initDebugLevel() {
 }
 
 std::string& initRootName() {
-    static std::string root("b10root");
+    static std::string root("bind10");
     return (root);
 }
 
