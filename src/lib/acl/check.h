@@ -16,6 +16,8 @@
 #define ACL_CHECK_H
 
 #include <vector>
+#include <typeinfo>
+#include <sstream>
 
 namespace isc {
 namespace acl {
@@ -41,7 +43,7 @@ namespace acl {
  * The Context carries whatever information might be checked for that protocol
  * (eg. the packet, information where it came from, to what port, ...).
  */
-template<class Context> class Check {
+template<typename Context> class Check {
 public:
     /**
      * \brief The check itself.
@@ -56,6 +58,16 @@ public:
     virtual bool matches(const Context& context) const = 0;
 
     /**
+     * \brief Cost for unknown cost estimate.
+     *
+     * This indicates that the estimate for cost is not provided. This
+     * is arbitrary large value, meaning "somehow longish time". To be
+     * on the safe side, we guess more and be just happily suprirised
+     * if it turns out to run faster.
+     */
+    static const unsigned UNKNOWN_COST;
+
+    /**
      * \brief The expected cost of single match.
      *
      * This is here to provide some kind of cost information to optimising
@@ -65,12 +77,10 @@ public:
      * optimisations. As of writing this, no optimisations exist yet, but
      * are expected to exist in future.
      *
-     * The default of 10000 is some arbitrary number meaning "somehow longish
-     * time" for checks that don't bother to guess their own values (and
-     * choosing something bigger to be cautious).
+     * The default is UNKNOWN_COST.
      */
     virtual unsigned cost() const {
-        return (10000);
+        return (UNKNOWN_COST);
     }
 
     /// \brief Virtual destructor, as we're virtual
@@ -87,9 +97,15 @@ public:
      * CompoundCheck::subexpressions, we're not able to separate them
      * automatically, as this may produce any kind of free-form string).
      */
-    std::string toText() const {
+    virtual std::string toText() const {
+        std::stringstream output;
+        output << typeid(*this).name() << "@" << this;
+        return (output.rdbuf()->str());
     }
 };
+
+// This seems to be the propper way for static template members
+template<typename Context> const unsigned Check<Context>::UNKNOWN_COST = 10000;
 
 /**
  * \brief Base class for compound checks.
@@ -101,7 +117,7 @@ public:
  * debugging purposes to print the whole tree of matches and possible future
  * optimisations which would like to crawl the expression tree).
  */
-template<class Context> class CompoundCheck : public Check<Context> {
+template<typename Context> class CompoundCheck : public Check<Context> {
 public:
     /// \brief Abbreviated name for list of subexpressions
     typedef std::vector<const Check<Context>*> Checks;
@@ -118,7 +134,7 @@ public:
      * sure this check is not deleted while it's still using the ones from the
      * result.
      */
-    virtual Checks subexpressions() const = 0;
+    virtual Checks getSubexpressions() const = 0;
 
     /**
      * \brief If the result depends only on results of subexpressions.
@@ -149,7 +165,7 @@ public:
      * Replacing the default of 10000 from Check.
      */
     virtual unsigned cost() const {
-        Checks checks(subexpressions());
+        Checks checks(getSubexpressions());
         unsigned result(0);
         for (typename Checks::const_iterator i(checks.begin());
              i != checks.end(); ++ i) {

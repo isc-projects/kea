@@ -36,7 +36,7 @@ class First : public CompoundCheck<bool> {
 public:
     // The internal checks are public, so we can check the addresses
     Pass first, second;
-    virtual Checks subexpressions() const {
+    virtual Checks getSubexpressions() const {
         Checks result;
         result.push_back(&first);
         result.push_back(&second);
@@ -49,16 +49,19 @@ public:
 
 TEST(Check, defaultCheckValues) {
     Pass p;
-    EXPECT_EQ(10000, p.cost());
+    EXPECT_EQ(Check<bool>::UNKNOWN_COST, p.cost());
     EXPECT_TRUE(p.matches(true));
     EXPECT_FALSE(p.matches(false));
+    // The exact text is compiler dependant, but we check it returns something
+    // and can be compiled
+    EXPECT_FALSE(p.toText().empty());
 }
 
 TEST(Check, defaultCompoundValues) {
     First f;
-    EXPECT_EQ(20000, f.cost());
+    EXPECT_EQ(2 * Check<bool>::UNKNOWN_COST, f.cost());
     EXPECT_TRUE(f.pure());
-    First::Checks c(f.subexpressions());
+    First::Checks c(f.getSubexpressions());
     ASSERT_EQ(2, c.size());
     EXPECT_EQ(&f.first, c[0]);
     EXPECT_EQ(&f.second, c[1]);
