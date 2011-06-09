@@ -38,6 +38,7 @@ run_unittests_CXXFLAGS += -Wno-unused-variable
 endif
 run_unittests_LDADD  = $(GTEST_LDADD)
 run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
