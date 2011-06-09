@@ -218,7 +218,9 @@ class XfrinConnection(asyncore.dispatcher):
         if self._tsig_ctx is not None:
             tsig_error = self._tsig_ctx.verify(tsig_record, response_data)
             if tsig_error != TSIGError.NOERROR:
-                raise XfrinException('TSIG verify fail: %s' % str(tsig_error))
+                errmsg = 'TSIG verify fail: ' +  str(tsig_error)
+                self.log_msg(errmsg)
+                raise XfrinException(errmsg)
         elif tsig_record is not None:
             # If the response includes a TSIG while we didn't sign the query,
             # we treat it as an error.  RFC doesn't say anything about this
@@ -227,7 +229,9 @@ class XfrinConnection(asyncore.dispatcher):
             # implementation would return such a response, and since this is
             # part of security mechanism, it's probably better to be more
             # strict.
-            raise XfrinException('Unexpected TSIG in response')
+            errmsg = 'Unexpected TSIG in response'
+            self.log_msg(errmsg)
+            raise XfrinException(errmsg)
 
     def _check_soa_serial(self):
         ''' Compare the soa serial, if soa serial in master is less than
@@ -308,13 +312,19 @@ class XfrinConnection(asyncore.dispatcher):
 
         msg_rcode = msg.get_rcode()
         if msg_rcode != Rcode.NOERROR():
-            raise XfrinException('error response: %s' % msg_rcode.to_text())
+            errmsg = 'error response: ' + msg_rcode.to_text()
+            self.log_msg(errmsg)
+            raise XfrinException(errmsg)
 
         if not msg.get_header_flag(Message.HEADERFLAG_QR):
-            raise XfrinException('response is not a response ')
+            errmsg = 'response is not a response'
+            self.log_msg(errmsg)
+            raise XfrinException(errmsg)
 
         if msg.get_qid() != self._query_id:
-            raise XfrinException('bad query id')
+            errmsg = 'bad query id'
+            self.log_msg(errmsg)
+            raise XfrinException(errmsg)
 
     def _check_response_status(self, msg):
         '''Check validation of xfr response. '''
@@ -322,10 +332,14 @@ class XfrinConnection(asyncore.dispatcher):
         self._check_response_header(msg)
 
         if msg.get_rr_count(Message.SECTION_ANSWER) == 0:
-            raise XfrinException('answer section is empty')
+            errmsg = 'answer section is empty'
+            self.log_msg(errmsg)
+            raise XfrinException(errmsg)
 
         if msg.get_rr_count(Message.SECTION_QUESTION) > 1:
-            raise XfrinException('query section count greater than 1')
+            errmsg = 'query section count greater than 1'
+            self.log_msg(errmsg)
+            raise XfrinException(errmsg)
 
     def _handle_answer_section(self, answer_section):
         '''Return a generator for the reponse in one tcp package to a zone transfer.'''
