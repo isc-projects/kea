@@ -54,8 +54,8 @@ initLogger(const string& root, isc::log::Severity severity, int dbglevel,
 void initLogger(isc::log::Severity severity, int dbglevel) {
 
     // Root logger name is defined by the environment variable B10_LOGGER_ROOT.
-    // If not present, the name is "b10root".
-    const char* DEFAULT_ROOT = "b10root";
+    // If not present, the name is "bind10".
+    const char* DEFAULT_ROOT = "bind10";
     const char* root = getenv("B10_LOGGER_ROOT");
     if (! root) {
         root = DEFAULT_ROOT;

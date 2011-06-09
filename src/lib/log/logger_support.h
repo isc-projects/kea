@@ -49,7 +49,7 @@ void initLogger(const std::string& root,
 /// environment variables.  These are:
 ///
 /// B10_LOGGER_ROOT
-/// Name of the root logger.  If not given, the string "b10root" will be used.
+/// Name of the root logger.  If not given, the string "bind10" will be used.
 ///
 /// B10_LOGGER_SEVERITY
 /// Severity of messages that will be logged.  This must be one of the strings
