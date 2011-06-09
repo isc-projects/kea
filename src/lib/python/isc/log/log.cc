@@ -22,7 +22,12 @@
 #include <log/logger_manager.h>
 #include <log/logger.h>
 
+#include <string>
+#include <boost/bind.hpp>
+
 using namespace isc::log;
+using std::string;
+using boost::bind;
 
 namespace {
 
@@ -358,6 +363,143 @@ Logger_isDebugEnabled(LoggerWrapper* self, PyObject* args) {
     }
 }
 
+// To propagate python exceptions trough our code
+class InternalError {};
+
+string
+objectToStr(PyObject* object, bool convert) {
+    PyObject* cleanup(NULL);
+    if (convert) {
+        object = cleanup = PyObject_Str(object);
+        if (object == NULL) {
+            throw InternalError();
+        }
+    }
+    const char* value;
+    PyObject* tuple(Py_BuildValue("(O)", object));
+    if (tuple == NULL) {
+        if (cleanup != NULL) {
+            Py_DECREF(cleanup);
+        }
+        throw InternalError();
+    }
+
+    if (!PyArg_ParseTuple(tuple, "s", &value)) {
+        Py_DECREF(tuple);
+        if (cleanup != NULL) {
+            Py_DECREF(cleanup);
+        }
+        throw InternalError();
+    }
+    string result(value);
+    Py_DECREF(tuple);
+    if (cleanup != NULL) {
+        Py_DECREF(cleanup);
+    }
+    return (result);
+}
+
+// Generic function to output the logging message. Called by the real functions.
+template<class Function>
+PyObject*
+Logger_performOutput(Function function, PyObject* args, bool dbgLevel) {
+    try {
+        Py_ssize_t number(PyObject_Length(args));
+        if (number < 0) {
+            return (NULL);
+        }
+
+        // Which argument is the first to format?
+        size_t start(1);
+        if (dbgLevel) {
+            start ++;
+        }
+
+        if (number < start) {
+            return (PyErr_Format(PyExc_TypeError, "Too few arguments to "
+                                 "logging call, at last %zu needed and %zd "
+                                 "given", start, number));
+        }
+
+        // Extract the fixed arguments
+        PyObject *midO(PySequence_GetItem(args, start - 1));
+        if (midO == NULL) {
+            return (NULL);
+        }
+        string mid(objectToStr(midO, false));
+        long dbg(0);
+        if (dbgLevel) {
+            PyObject *dbgO(PySequence_GetItem(args, 0));
+            if (dbgO == NULL) {
+                return (NULL);
+            }
+            dbg = PyLong_AsLong(dbgO);
+            if (PyErr_Occurred()) {
+                return (NULL);
+            }
+        }
+
+        // We create the logging message right now. If we fail to convert a
+        // parameter to string, at last the part that we already did will
+        // be output
+        Logger::Formatter formatter(function(dbg, mid.c_str()));
+
+        // Now process the rest of parameters, convert each to string and put
+        // into the formatter. It will print itself in the end.
+        for (size_t i(start); i < number; ++ i) {
+            PyObject* param(PySequence_GetItem(args, i));
+            if (param == NULL) {
+                return (NULL);
+            }
+            formatter = formatter.arg(objectToStr(param, true));
+        }
+        Py_RETURN_NONE;
+    }
+    catch (const InternalError&) {
+        return (NULL);
+    }
+    catch (const std::exception& e) {
+        PyErr_SetString(PyExc_RuntimeError, e.what());
+        return (NULL);
+    }
+    catch (...) {
+        PyErr_SetString(PyExc_RuntimeError, "Unknown C++ exception");
+        return (NULL);
+    }
+}
+
+// Now map the functions into the performOutput. I wish C++ could do
+// functional programming.
+PyObject*
+Logger_debug(LoggerWrapper* self, PyObject* args) {
+    return (Logger_performOutput(bind(&Logger::debug, self->logger_, _1, _2),
+                                 args, true));
+}
+
+PyObject*
+Logger_info(LoggerWrapper* self, PyObject* args) {
+    return (Logger_performOutput(bind(&Logger::info, self->logger_, _2),
+                                 args, false));
+}
+
+PyObject*
+Logger_warn(LoggerWrapper* self, PyObject* args) {
+    return (Logger_performOutput(bind(&Logger::warn, self->logger_, _2),
+                                 args, false));
+}
+
+PyObject*
+Logger_error(LoggerWrapper* self, PyObject* args) {
+    return (Logger_performOutput(bind(&Logger::error, self->logger_, _2),
+                                 args, false));
+}
+
+PyObject*
+Logger_fatal(LoggerWrapper* self, PyObject* args) {
+    return (Logger_performOutput(bind(&Logger::fatal, self->logger_, _2),
+                                 args, false));
+}
+
 PyMethodDef loggerMethods[] = {
     { "get_effective_severity",
         reinterpret_cast<PyCFunction>(Logger_getEffectiveSeverity),
@@ -369,11 +511,10 @@ PyMethodDef loggerMethods[] = {
         "Sets the severity of a logger. The parameters are severity as a "
         "string and, optionally, a debug level (integer in range 0-99). "
         "The severity may be NULL, in which case an inherited value is taken."
-        },
+    },
     { "is_debug_enabled", reinterpret_cast<PyCFunction>(Logger_isDebugEnabled),
         METH_VARARGS, "Returns if the logger would log debug message now. "
-            "You can provide a desired debug level."
-    },
+            "You can provide a desired debug level." },
     { "is_info_enabled", reinterpret_cast<PyCFunction>(Logger_isInfoEnabled),
         METH_NOARGS, "Returns if the logger would log info message now." },
     { "is_warn_enabled", reinterpret_cast<PyCFunction>(Logger_isWarnEnabled),
@@ -382,6 +523,21 @@ PyMethodDef loggerMethods[] = {
         METH_NOARGS, "Returns if the logger would log error message now." },
     { "is_fatal_enabled", reinterpret_cast<PyCFunction>(Logger_isFatalEnabled),
         METH_NOARGS, "Returns if the logger would log fatal message now." },
+    { "debug", reinterpret_cast<PyCFunction>(Logger_debug), METH_VARARGS,
+        "Logs a debug-severity message. It takes the debug level, message ID "
+        "and any number of stringifiable arguments to the message." },
+    { "info", reinterpret_cast<PyCFunction>(Logger_info), METH_VARARGS,
+        "Logs a info-severity message. It taskes the message ID and any "
+        "number of stringifiable arguments to the message." },
+    { "warn", reinterpret_cast<PyCFunction>(Logger_warn), METH_VARARGS,
+        "Logs a warn-severity message. It taskes the message ID and any "
+        "number of stringifiable arguments to the message." },
+    { "error", reinterpret_cast<PyCFunction>(Logger_error), METH_VARARGS,
+        "Logs a error-severity message. It taskes the message ID and any "
+        "number of stringifiable arguments to the message." },
+    { "fatal", reinterpret_cast<PyCFunction>(Logger_fatal), METH_VARARGS,
+        "Logs a fatal-severity message. It taskes the message ID and any "
+        "number of stringifiable arguments to the message." },
     { NULL, NULL, 0, NULL }
 };
 
