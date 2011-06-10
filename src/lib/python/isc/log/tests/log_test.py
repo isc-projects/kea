@@ -39,7 +39,7 @@ class Manager(unittest.TestCase):
         # We try calling it now only, as we don't have any other functions
         # to check the outcome by it. Once we add the logger class, we may
         # check more.
-        isc.log.init("root", None, "DEBUG", 50)
+        isc.log.init("root", "DEBUG", 50, None)
 
     def test_init_defaults(self):
         # We try calling it now only, as we don't have any other functions
@@ -50,14 +50,14 @@ class Manager(unittest.TestCase):
     def test_init_notfound(self):
         # This should not throw, because the C++ one doesn't. Should we really
         # ignore errors like missing file?
-        isc.log.init("root", "/no/such/file");
+        isc.log.init("root", "INFO", 0, "/no/such/file");
 
 class Logger(unittest.TestCase):
     def tearDown(self):
         isc.log.reset()
 
     def setUp(self):
-        isc.log.init("root", None, "DEBUG", 50)
+        isc.log.init("root", "DEBUG", 50)
         self.sevs = ['INFO', 'WARN', 'ERROR', 'FATAL']
 
     # Checks defaults of the logger
