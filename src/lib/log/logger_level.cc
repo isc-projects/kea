@@ -34,6 +34,8 @@ getSeverity(const std::string& sev_str) {
         return isc::log::ERROR;
     } else if (boost::iequals(sev_str, "FATAL")) {
         return isc::log::FATAL;
+    } else if (boost::iequals(sev_str, "NONE")) {
+        return isc::log::NONE;
     } else {
         Logger logger("log");
         LOG_ERROR(logger, MSG_BADSEVERITY).arg(sev_str);

@@ -28,34 +28,32 @@ tempfile=@abs_builddir@/console_test_tempfile_$$
 passfail() {
     count=`wc -l $tempfile | awk '{print $1}'`
     if [ $count -eq $1 ]; then
-        echo " -- pass"
+        echo " pass"
     else
-        echo " ** FAIL"
+        echo " FAIL"
         failcount=`expr $failcount + $1`
     fi
 }
 
-echo "1. Checking that console output to stdout goes to stdout:"
+echo -n "1. Checking that console output to stdout goes to stdout:"
 rm -f $tempfile
-./logger_example -c stdout -s error -c stdout 1> $tempfile
-passfail 2
+./logger_example -c stdout -s error 1> $tempfile 2> /dev/null
+passfail 4
 
-echo "2. Checking that console output to stdout does not go to stderr:"
+echo -n "2. Checking that console output to stdout does not go to stderr:"
 rm -f $tempfile
-./logger_example -c stdout -s error -c stdout 2> $tempfile
+./logger_example -c stdout -s error 1> /dev/null 2> $tempfile
 passfail 0
 
-echo "3. Checking that console output to stderr goes to stderr:"
+echo -n "3. Checking that console output to stderr goes to stderr:"
 rm -f $tempfile
-./logger_example -c stdout -s error -c stderr 2> $tempfile
-passfail 2
+./logger_example -c stderr -s error 1> /dev/null 2> $tempfile
+passfail 4
 
-echo "4. Checking that console output to stderr does not go to stdout:"
+echo -n "4. Checking that console output to stderr does not go to stdout:"
 rm -f $tempfile
-./logger_example -c stdout -s error -c stderr 1> $tempfile
+./logger_example -c stderr -s error 1> $tempfile 2> /dev/null
 passfail 0
-
-rm -f $tempfile
 
 if [ $failcount -eq 0 ]; then
     echo "PASS: $testname"
@@ -64,5 +62,8 @@ elif [ $failcount -eq 1 ]; then
 else
     echo "FAIL: $testname - $failcount tests failed"
 fi
+
+# Tidy up
+rm -f $tempfile
 
 exit $failcount
