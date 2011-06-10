@@ -14,6 +14,7 @@
 
 #include <gtest/gtest.h>
 #include <util/unittests/run_all.h>
+#include <log/logger_support.h>
 
 #include <dns/tests/unittest_util.h>
 
@@ -21,6 +22,8 @@ int
 main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
     isc::UnitTestUtil::addDataPath(TEST_DATA_DIR);
+
+    isc::log::initLogger();
 
     return (isc::util::unittests::run_all());
 }
