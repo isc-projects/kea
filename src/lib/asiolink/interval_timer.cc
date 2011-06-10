@@ -53,14 +53,18 @@ private:
     long interval_;
     // asio timer
     asio::deadline_timer timer_;
+    // interval_ will be set to this value in destructor in order to detect
+    // use-after-free type of bugs.
+    static const long INVALIDATED_INTERVAL = -1;
 };
 
 IntervalTimerImpl::IntervalTimerImpl(IOService& io_service) :
     interval_(0), timer_(io_service.get_io_service())
 {}
 
-IntervalTimerImpl::~IntervalTimerImpl()
-{}
+IntervalTimerImpl::~IntervalTimerImpl() {
+    interval_ = INVALIDATED_INTERVAL;
+}
 
 void
 IntervalTimerImpl::setup(const IntervalTimer::Callback& cbfunc,
@@ -102,6 +106,7 @@ IntervalTimerImpl::update() {
 
 void
 IntervalTimerImpl::callback(const asio::error_code& cancelled) {
+    assert(interval_ != INVALIDATED_INTERVAL);
     // Do not call cbfunc_ in case the timer was cancelled.
     // The timer will be canelled in the destructor of asio::deadline_timer.
     if (!cancelled) {
