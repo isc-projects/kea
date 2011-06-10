@@ -44,6 +44,11 @@ namespace acl {
  * (eg. the packet, information where it came from, to what port, ...).
  */
 template<typename Context> class Check {
+protected:
+    /// \brief Constructor.
+    ///
+    /// Just to make sure this thing is not directly instantiated.
+    Check() { }
 public:
     /**
      * \brief The check itself.
