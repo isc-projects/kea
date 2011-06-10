@@ -40,12 +40,13 @@ b10-cmdctl: cmdctl.py
 
 if INSTALL_CONFIGURATIONS
 
-# TODO: permissions handled later
+# Below we intentionally use ${INSTALL} -m 640 instead of $(INSTALL_DATA)
+# because these file will contain sensitive information.
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)/@sysconfdir@/@PACKAGE@   
 	for f in $(CMDCTL_CONFIGURATIONS) ; do	\
 	  if test ! -f $(DESTDIR)$(sysconfdir)/@PACKAGE@/$$f; then	\
-	    $(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(sysconfdir)/@PACKAGE@/ ;	\
+	    ${INSTALL} -m 640 $(srcdir)/$$f $(DESTDIR)$(sysconfdir)/@PACKAGE@/ ;	\
 	  fi ;	\
 	done
 

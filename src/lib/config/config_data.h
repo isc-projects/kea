@@ -57,6 +57,16 @@ public:
     ///        value that is to be returned
     isc::data::ConstElementPtr getValue(const std::string& identifier) const;
 
+    /// Returns the default value for the given identifier.
+    ///
+    /// \exception DataNotFoundError if the given identifier does not
+    ///            exist, or if the given value has no specified default
+    ///
+    /// \param identifier The identifier pointing to the configuration
+    ///        value for which the default is to be returned
+    /// \return ElementPtr containing the default value
+    isc::data::ConstElementPtr getDefaultValue(const std::string& identifier) const;
+
     /// Returns the value currently set for the given identifier
     /// If no value is set, the default value (as specified by the
     /// .spec file) is returned. If there is no value and no default,

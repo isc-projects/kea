@@ -23,14 +23,13 @@
 
 #include <log4cplus/configurator.h>
 
-#include <log/root_logger_name.h>
 #include <log/logger.h>
+#include <log/logger_impl.h>
 #include <log/logger_level.h>
 #include <log/logger_level_impl.h>
-#include <log/logger_impl.h>
+#include <log/logger_name.h>
 #include <log/message_dictionary.h>
 #include <log/message_types.h>
-#include <log/root_logger_name.h>
 
 #include <util/strutil.h>
 
@@ -43,22 +42,14 @@ using namespace std;
 namespace isc {
 namespace log {
 
-// Constructor.  Although it may be immediately reset, logger_ is initialized to
-// the log4cplus root logger; at least one compiler requires that all member
-// variables be constructed before the constructor is run, but log4cplus::Logger
-// (the type of logger_) has no default constructor.
-LoggerImpl::LoggerImpl(const string& name) :
-    logger_(log4cplus::Logger::getRoot())
+// Constructor.  The setting of logger_ must be done when the variable is
+// constructed (instead of being left to the body of the function); at least
+// one compiler requires that all member variables be constructed before the
+// constructor is run, but log4cplus::Logger (the type of logger_) has no
+// default constructor.
+LoggerImpl::LoggerImpl(const string& name) : name_(expandLoggerName(name)),
+    logger_(log4cplus::Logger::getInstance(name_))
 {
-    // Are we the root logger?
-    if (name == getRootLoggerName()) {
-        name_ = name;
-        // logger_ already set to log4cplus root logger at this point
-
-    } else {
-        name_ = getRootLoggerName() + "." + name;
-        logger_ = log4cplus::Logger::getInstance(name);
-    }
 }
 
 // Destructor. (Here because of virtual declaration.)
