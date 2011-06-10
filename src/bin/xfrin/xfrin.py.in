@@ -311,7 +311,7 @@ class XfrinConnection(asyncore.dispatcher):
             raise XfrinException('error response: %s' % msg_rcode.to_text())
 
         if not msg.get_header_flag(Message.HEADERFLAG_QR):
-            raise XfrinException('response is not a response ')
+            raise XfrinException('response is not a response')
 
         if msg.get_qid() != self._query_id:
             raise XfrinException('bad query id')
