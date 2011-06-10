@@ -14,10 +14,6 @@
 
 #include <config.h>
 
-#include <unistd.h>             // for some IPC/network system calls
-#include <sys/socket.h>
-#include <netinet/in.h>
-
 #include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
@@ -31,8 +27,13 @@
 namespace isc {
 namespace asiolink {
 
-/// This class uses shared_from_this in its methods. It must live inside
-/// a shared_ptr.
+/// This class holds a call back function of asynchronous operations.
+/// To ensure the object is alive while an asynchronous operation refers
+/// to it, we use shared_ptr and enable_shared_from_this.
+/// The object will be destructed in case IntervalTimer has been destructed
+/// and no asynchronous operation refers to it.
+/// Please follow the link to get an example:
+/// http://think-async.com/asio/asio-1.4.8/doc/asio/tutorial/tutdaytime3.html#asio.tutorial.tutdaytime3.the_tcp_connection_class
 class IntervalTimerImpl :
     public boost::enable_shared_from_this<IntervalTimerImpl>
 {
@@ -99,13 +100,15 @@ IntervalTimerImpl::update() {
         // Update expire time to (current time + interval_).
         timer_.expires_from_now(boost::posix_time::millisec(interval_));
         // Reset timer.
+        // Pass a function bound with a shared_ptr to this.
         timer_.async_wait(boost::bind(&IntervalTimerImpl::callback,
                                       shared_from_this(),
                                       asio::placeholders::error));
     } catch (const asio::system_error& e) {
-        isc_throw(isc::Unexpected, "Failed to update timer");
-    } catch (const boost::bad_weak_ptr& e) {
-        isc_throw(isc::Unexpected, "Failed to update timer");
+        isc_throw(isc::Unexpected, "Failed to update timer: " << e.what());
+    } catch (const boost::bad_weak_ptr&) {
+        // Can't happen. It means a severe internal bug.
+        assert(0);
     }
 }
 
