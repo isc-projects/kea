@@ -63,7 +63,7 @@ class Logger(unittest.TestCase):
     # Checks defaults of the logger
     def defaults(self, logger):
         self.assertEqual(logger.get_effective_severity(), "DEBUG")
-        self.assertEqual(logger.get_debug_level(), 0)
+        self.assertEqual(logger.get_effective_debug_level(), 50)
 
     def test_default_severity(self):
         logger = isc.log.Logger("child")
@@ -74,11 +74,11 @@ class Logger(unittest.TestCase):
         logger = isc.log.Logger("child")
         logger.set_severity('DEBUG', 25)
         self.assertEqual(logger.get_effective_severity(), "DEBUG")
-        self.assertEqual(logger.get_debug_level(), 25)
+        self.assertEqual(logger.get_effective_debug_level(), 25)
         for sev in self.sevs:
             logger.set_severity(sev)
             self.assertEqual(logger.get_effective_severity(), sev)
-            self.assertEqual(logger.get_debug_level(), 0)
+            self.assertEqual(logger.get_effective_debug_level(), 0)
         # Return to default
         logger.set_severity(None)
         self.defaults(logger)

@@ -263,9 +263,9 @@ Logger_getEffectiveSeverity(LoggerWrapper* self, PyObject*) {
 }
 
 PyObject*
-Logger_getDebugLevel(LoggerWrapper* self, PyObject*) {
+Logger_getEffectiveDebugLevel(LoggerWrapper* self, PyObject*) {
     try {
-        return (Py_BuildValue("i", self->logger_->getDebugLevel()));
+        return (Py_BuildValue("i", self->logger_->getEffectiveDebugLevel()));
     }
     catch (const std::exception& e) {
         PyErr_SetString(PyExc_RuntimeError, e.what());
@@ -504,7 +504,8 @@ PyMethodDef loggerMethods[] = {
     { "get_effective_severity",
         reinterpret_cast<PyCFunction>(Logger_getEffectiveSeverity),
         METH_NOARGS, "Returns the effective logging severity as string" },
-    { "get_debug_level", reinterpret_cast<PyCFunction>(Logger_getDebugLevel),
+    { "get_effective_debug_level",
+        reinterpret_cast<PyCFunction>(Logger_getEffectiveDebugLevel),
         METH_NOARGS, "Returns the current debug level." },
     { "set_severity",
         reinterpret_cast<PyCFunction>(Logger_setSeverity), METH_VARARGS,
