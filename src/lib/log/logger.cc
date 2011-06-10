@@ -17,9 +17,9 @@
 
 #include <log/logger.h>
 #include <log/logger_impl.h>
+#include <log/logger_name.h>
 #include <log/message_dictionary.h>
 #include <log/message_types.h>
-#include <log/root_logger_name.h>
 
 #include <util/strutil.h>
 
@@ -28,8 +28,7 @@ using namespace std;
 namespace isc {
 namespace log {
 
-// Initialize Logger implementation.  Does not check whether the implementation
-// has already been initialized - that was done by the caller (getLoggerPtr()).
+// Initialize Logger.
 void Logger::initLoggerImpl() {
     loggerptr_ = new LoggerImpl(name_);
 }
@@ -73,6 +72,14 @@ Logger::getEffectiveSeverity() {
 int
 Logger::getDebugLevel() {
     return (getLoggerPtr()->getDebugLevel());
+}
+
+// Effective debug level (only relevant if messages of severity DEBUG are being
+// logged).
+
+int
+Logger::getEffectiveDebugLevel() {
+    return (getLoggerPtr()->getEffectiveDebugLevel());
 }
 
 // Check on the current severity settings
@@ -171,13 +178,6 @@ Logger::fatal(const isc::log::MessageID& ident) {
 bool
 Logger::operator==(Logger& other) {
     return (*getLoggerPtr() == *other.getLoggerPtr());
-}
-
-// Reset (used in testing only).  This is a static method.
-
-void
-Logger::reset() {
-    LoggerImpl::reset();
 }
 
 } // namespace log

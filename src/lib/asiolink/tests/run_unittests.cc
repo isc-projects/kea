@@ -14,15 +14,12 @@
 
 #include <gtest/gtest.h>
 #include <util/unittests/run_all.h>
-
-#include <log/root_logger_name.h>
-#include <dns/tests/unittest_util.h>
+#include <log/logger_manager.h>
 
 int
 main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest(&argc, argv);         // Initialize Google test
-    isc::log::setRootLoggerName("unittest");        // Set a root logger name
-
+    isc::log::LoggerManager::init("unittest");      // Set a root logger name
     return (isc::util::unittests::run_all());
 }

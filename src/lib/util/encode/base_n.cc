@@ -160,19 +160,42 @@ public:
         base_zero_code_(base_zero_code),
         base_(base), base_beginpad_(base_beginpad), base_end_(base_end),
         in_pad_(false)
-    {}
+    {
+        // Skip beginning spaces, if any.  We need do it here because
+        // otherwise the first call to operator*() would be confused.
+        skipSpaces();
+    }
     DecodeNormalizer& operator++() {
         ++base_;
-        while (base_ != base_end_ && isspace(*base_)) {
-            ++base_;
-        }
+        skipSpaces();
         if (base_ == base_beginpad_) {
             in_pad_ = true;
         }
         return (*this);
     }
+    void skipSpaces() {
+        // If (char is signed and) *base_ < 0, on Windows platform with Visual
+        // Studio compiler it may trigger _ASSERTE((unsigned)(c + 1) <= 256);
+        // so make sure that the parameter of isspace() is larger than 0.
+        // We don't simply cast it to unsigned char to avoid confusing the
+        // isspace() implementation with a possible extension for values
+        // larger than 127.  Also note the check is not ">= 0"; for systems
+        // where char is unsigned that would always be true and would possibly
+        // trigger a compiler warning that could stop the build.
+        while (base_ != base_end_ && *base_ > 0 && isspace(*base_)) {
+            ++base_;
+        }
+    }
     const char& operator*() const {
-        if (in_pad_ && *base_ == BASE_PADDING_CHAR) {
+        if (base_ == base_end_) {
+            // binary_from_baseX calls this operator when it needs more bits
+            // even if the internal iterator (base_) has reached its end
+            // (if that happens it means the input is an incomplete baseX
+            // string and should be rejected).  So this is the only point
+            // we can catch and reject this type of invalid input.
+            isc_throw(BadValue, "Unexpected end of input in BASE decoder");
+        }
+        if (in_pad_) {
             return (base_zero_code_);
         } else {
             return (*base_);
@@ -268,7 +291,7 @@ BaseNTransformer<BitsPerChunk, BaseZeroCode, Encoder, Decoder>::decode(
                 isc_throw(BadValue, "Too many " << algorithm
                           << " padding characters: " << input);
             }
-        } else if (!isspace(ch)) {
+        } else if (ch < 0 || !isspace(ch)) {
             break;
         }
         ++srit;

@@ -27,7 +27,8 @@ KeyringPtr keyring;
 namespace {
 
 void
-updateKeyring(const std::string&, ConstElementPtr data) {
+updateKeyring(const std::string&, ConstElementPtr data,
+              const isc::config::ConfigData&) {
     ConstElementPtr list(data->get("keys"));
     KeyringPtr load(new TSIGKeyRing);
 

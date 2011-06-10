@@ -15,6 +15,8 @@
 #ifndef __LOGGER_LEVEL_H
 #define __LOGGER_LEVEL_H
 
+#include <string>
+
 namespace isc {
 namespace log {
 
@@ -55,6 +57,18 @@ struct Level {
 
     // Default assignment and copy constructor is appropriate
 };
+
+/// \brief Returns the isc::log::Severity value represented by the given string
+///
+/// This must be one of the strings "DEBUG", "INFO", "WARN", "ERROR", "FATAL" or
+/// "NONE". (Case is not important, but the string most not contain leading or
+/// trailing spaces.)
+///
+/// \param sev_str The string representing severity value
+///
+/// \return The severity. If the string is not recognized, an error will be
+///         logged and the string will return  isc::log::INFO.
+isc::log::Severity getSeverity(const std::string& sev_str);
 
 }   // namespace log
 }   // namespace isc

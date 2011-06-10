@@ -12,22 +12,22 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ROOT_LOGGER_NAME_H
-#define __ROOT_LOGGER_NAME_H
+#ifndef __LOGGER_NAME_H
+#define __LOGGER_NAME_H
 
 #include <string>
 
 /// \brief Define Name of Root Logger
 ///
 /// In BIND-10, the name root logger of a program is the name of the program
-/// itself (in contrast to packages such as log4cxx where the root logger name
-//  is something like ".").  These trivial functions allow the setting and
+/// itself (in contrast to packages such as log4cplus where the root logger name
+//  is something like "root").  These trivial functions allow the setting and
 // getting of that name by the logger classes.
 
 namespace isc {
 namespace log {
 
-/// \brief Set Root Logger Name
+/// \brief Set root logger name
 ///
 /// This function should be called by the program's initialization code before
 /// any logging functions are called.
@@ -35,12 +35,23 @@ namespace log {
 /// \param name Name of the root logger.  This should be the program name.
 void setRootLoggerName(const std::string& name);
 
-/// \brief Get Root Logger Name
+/// \brief Get root logger name
 ///
 /// \return Name of the root logger.
 const std::string& getRootLoggerName();
 
+/// \brief Expand logger name
+///
+/// Given a logger name, returns the fully-expanded logger name.  If the name
+/// starts with the root logger name, it is returned as-is.  Otherwise it is
+/// prefixed with the root logger name.
+///
+/// \param name Name to expand.
+///
+/// \return Fully-expanded logger name.
+std::string expandLoggerName(const std::string& name);
+
 }
 }
 
-#endif // __ROOT_LOGGER_NAME_H
+#endif // __LOGGER_NAME_H

@@ -176,7 +176,7 @@ class TestConfigManager(unittest.TestCase):
         self.cm.set_module_spec(module_spec)
         self.assert_(module_spec.get_module_name() in self.cm.module_specs)
         module_spec2 = self.cm.get_module_spec(module_spec.get_module_name())
-        self.assertEqual(module_spec, module_spec2)
+        self.assertEqual(module_spec.get_full_spec(), module_spec2)
 
         self.assertEqual({}, self.cm.get_module_spec("nosuchmodule"))
 

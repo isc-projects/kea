@@ -890,7 +890,11 @@ AC_OUTPUT([doc/version.ent
            src/lib/dns/tests/testdata/gen-wiredata.py
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
-           src/lib/log/tests/run_time_init_test.sh
+           src/lib/log/tests/console_test.sh
+           src/lib/log/tests/destination_test.sh
+           src/lib/log/tests/local_file_test.sh
+           src/lib/log/tests/severity_test.sh
+           src/lib/log/tests/tempdir.h
            src/lib/util/python/mkpywrapper.py
            src/lib/server_common/tests/data_path.h
            tests/system/conf.sh
@@ -917,7 +921,10 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/msgq/tests/msgq_test
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
-           chmod +x src/lib/log/tests/run_time_init_test.sh
+           chmod +x src/lib/log/tests/local_file_test.sh
+           chmod +x src/lib/log/tests/console_test.sh
+           chmod +x src/lib/log/tests/destination_test.sh
+           chmod +x src/lib/log/tests/severity_test.sh
            chmod +x src/lib/util/python/mkpywrapper.py
            chmod +x tests/system/conf.sh
           ])

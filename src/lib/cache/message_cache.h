@@ -30,6 +30,8 @@ namespace cache {
 /// The object of MessageCache represents the cache for class-specific
 /// messages.
 ///
+/// \todo The message cache class should provide the interfaces for
+///       loading, dumping and resizing.
 class MessageCache {
 // Noncopyable
 private:
@@ -64,20 +66,6 @@ public:
     /// If the message doesn't exist in the cache, it will be added
     /// directly.
     bool update(const isc::dns::Message& msg);
-
-#if 0
-    /// \brief Dump the message cache to specified file.
-    /// \todo It should can be dumped to one configured database.
-    void dump(const std::string& file_name);
-
-    /// \brief Load the cache from one file.
-    /// \todo It should can be loaded from one configured database.
-    void load(const std::string& file_name);
-
-    /// \brief Resize the size of message cache in runtime.
-    bool resize(uint32_t size);
-#endif
-
 protected:
     /// \brief Get the hash key for the message entry in the cache.
     /// \param name query name of the message.
