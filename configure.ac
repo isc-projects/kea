@@ -827,6 +827,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/util/unittests/Makefile
                  src/lib/util/pyunittests/Makefile
                  src/lib/util/tests/Makefile
+                 src/lib/acl/Makefile
+                 src/lib/acl/tests/Makefile
                  tests/Makefile
                  tests/system/Makefile
                  tests/tools/Makefile
@@ -891,6 +893,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
            src/lib/log/tests/console_test.sh
+           src/lib/log/tests/destination_test.sh
            src/lib/log/tests/local_file_test.sh
            src/lib/log/tests/severity_test.sh
            src/lib/log/tests/tempdir.h
@@ -922,6 +925,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
            chmod +x src/lib/log/tests/local_file_test.sh
            chmod +x src/lib/log/tests/console_test.sh
+           chmod +x src/lib/log/tests/destination_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
            chmod +x src/lib/util/python/mkpywrapper.py
            chmod +x src/lib/python/isc/log/tests/log_console.py

@@ -79,24 +79,6 @@ RRsetCache::update(const isc::dns::RRset& rrset, const RRsetTrustLevel& level) {
     return (entry_ptr);
 }
 
-#if 0
-void
-RRsetCache::dump(const std::string&) {
-    //TODO
-}
-
-void
-RRsetCache::load(const std::string&) {
-    //TODO
-}
-
-bool
-RRsetCache::resize(uint32_t) {
-    //TODO
-    return (true);
-}
-#endif
-
 } // namespace cache
 } // namespace isc
 

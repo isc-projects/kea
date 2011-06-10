@@ -19,14 +19,14 @@
 #include <log4cplus/configurator.h>
 #include <log4cplus/consoleappender.h>
 #include <log4cplus/fileappender.h>
+#include <log4cplus/syslogappender.h>
 
+#include "log/logger.h"
 #include "log/logger_level_impl.h"
 #include "log/logger_manager.h"
 #include "log/logger_manager_impl.h"
+#include "log/logger_name.h"
 #include "log/logger_specification.h"
-#include "log/root_logger_name.h"
-
-#include "log/logger.h"
 #include "log/messagedef.h"
 
 using namespace std;
@@ -52,9 +52,8 @@ LoggerManagerImpl::processInit() {
 void
 LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
 
-    log4cplus::Logger logger = (spec.getName() == getRootLoggerName()) ?
-                               log4cplus::Logger::getRoot() :
-                               log4cplus::Logger::getInstance(spec.getName());
+    log4cplus::Logger logger = log4cplus::Logger::getInstance(
+                                   expandLoggerName(spec.getName()));
 
     // Set severity level according to specification entry.
     logger.setLogLevel(LoggerLevelImpl::convertFromBindLevel(
@@ -134,6 +133,17 @@ LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
     logger.addAppender(fileapp);
 }
 
+// Syslog appender. 
+void
+LoggerManagerImpl::createSyslogAppender(log4cplus::Logger& logger,
+                                         const OutputOption& opt)
+{
+    log4cplus::SharedAppenderPtr syslogapp(
+        new log4cplus::SysLogAppender(opt.facility));
+    setSyslogAppenderLayout(syslogapp);
+    logger.addAppender(syslogapp);
+}
+
 
 // One-time initialization of the log4cplus system
 
@@ -150,17 +160,17 @@ LoggerManagerImpl::init(isc::log::Severity severity, int dbglevel) {
     // Add the additional debug levels
     LoggerLevelImpl::init();
 
-    reset();
+    reset(severity, dbglevel);
 }
 
 // Reset logging to default configuration.  This closes all appenders
 // and resets the root logger to output INFO messages to the console.
 // It is principally used in testing.
 void
-LoggerManagerImpl::reset() {
+LoggerManagerImpl::reset(isc::log::Severity severity, int dbglevel) {
 
     // Initialize the root logger
-    initRootLogger();
+    initRootLogger(severity, dbglevel);
 }
 
 // Initialize the root logger
@@ -169,14 +179,20 @@ void LoggerManagerImpl::initRootLogger(isc::log::Severity severity,
 {
     log4cplus::Logger::getDefaultHierarchy().resetConfiguration();
 
-    // Set the severity for the root logger
-    log4cplus::Logger::getRoot().setLogLevel(
-            LoggerLevelImpl::convertFromBindLevel(Level(severity, dbglevel)));
+    // Set the log4cplus root to not output anything - effectively we are
+    // ignoring it.
+    log4cplus::Logger::getRoot().setLogLevel(log4cplus::OFF_LOG_LEVEL);
 
-    // Set the root to use a console logger.
+    // Set the level for the BIND 10 root logger to the given severity and
+    // debug level.
+    log4cplus::Logger b10root = log4cplus::Logger::getInstance(
+                                                    getRootLoggerName());
+    b10root.setLogLevel(LoggerLevelImpl::convertFromBindLevel(
+                                                    Level(severity, dbglevel)));
+
+    // Set the BIND 10 root to use a console logger.
     OutputOption opt;
-    log4cplus::Logger root = log4cplus::Logger::getRoot();
-    createConsoleAppender(root, opt);
+    createConsoleAppender(b10root, opt);
 }
 
 // Set the the "console" layout for the given appenders.  This layout includes
@@ -186,8 +202,22 @@ void LoggerManagerImpl::setConsoleAppenderLayout(
         log4cplus::SharedAppenderPtr& appender)
 {
     // Create the pattern we want for the output - local time.
-    string pattern = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [";
-    pattern += getRootLoggerName() + string(".%c] %m\n");
+    string pattern = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c] %m\n";
+
+    // Finally the text of the message
+    auto_ptr<log4cplus::Layout> layout(new log4cplus::PatternLayout(pattern));
+    appender->setLayout(layout);
+}
+
+// Set the the "syslog" layout for the given appenders.  This is the same
+// as the console, but without the timestamp (which is expected to be
+// set by syslogd).
+
+void LoggerManagerImpl::setSyslogAppenderLayout(
+        log4cplus::SharedAppenderPtr& appender)
+{
+    // Create the pattern we want for the output - local time.
+    string pattern = "%-5p [%c] %m\n";
 
     // Finally the text of the message
     auto_ptr<log4cplus::Layout> layout(new log4cplus::PatternLayout(pattern));

@@ -18,13 +18,13 @@
 #include <log/logger.h>
 #include <log/logger_manager_impl.h>
 #include <log/logger_manager.h>
+#include <log/logger_name.h>
 #include <log/messagedef.h>
 #include <log/message_dictionary.h>
 #include <log/message_exception.h>
 #include <log/message_initializer.h>
 #include <log/message_reader.h>
 #include <log/message_types.h>
-#include <log/root_logger_name.h>
 #include <log/macros.h>
 #include <log/messagedef.h>
 #include <log/message_initializer.h>
@@ -35,7 +35,27 @@ namespace {
 
 // Logger used for logging messages within the logging code itself.
 isc::log::Logger logger("log");
+
+// Static stores for the initialization severity and debug level.
+// These are put in methods to avoid a "static initialization fiasco".
+
+isc::log::Severity& initSeverity() {
+    static isc::log::Severity severity = isc::log::INFO;
+    return (severity);
 }
+
+int& initDebugLevel() {
+    static int dbglevel = 0;
+    return (dbglevel);
+}
+
+std::string& initRootName() {
+    static std::string root("bind10");
+    return (root);
+}
+
+} // Anonymous namespace
+
 
 namespace isc {
 namespace log {
@@ -72,9 +92,16 @@ LoggerManager::processEnd() {
 /// Logging system initialization
 
 void
-LoggerManager::init(const std::string& root, const char* file,
-                    isc::log::Severity severity, int dbglevel)
+LoggerManager::init(const std::string& root, isc::log::Severity severity,
+                    int dbglevel, const char* file)
 {
+    // Save name, severity and debug level for later.  No need to save the
+    // file name as once the local message file is read the messages will
+    // not be lost.
+    initRootName() = root;
+    initSeverity() = severity;
+    initDebugLevel() = dbglevel;
+
     // Create the BIND 10 root logger and set the default severity and
     // debug level.  This is the logger that has the name of the application.
     // All other loggers created in this application will be its children.
@@ -145,10 +172,11 @@ LoggerManager::readLocalMessageFile(const char* file) {
     }
 }
 
-// Reset logging
+// Reset logging to settings passed to init()
 void
 LoggerManager::reset() {
-    LoggerManagerImpl::reset();
+    setRootLoggerName(initRootName());
+    LoggerManagerImpl::reset(initSeverity(), initDebugLevel());
 }
 
 } // namespace log
