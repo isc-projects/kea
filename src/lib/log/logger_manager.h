@@ -87,18 +87,17 @@ public:
     ///
     /// \param root Name of the root logger.  This should be set to the name of
     ///        the program.
-    /// \param file Name of the local message file.  This must be NULL if there
-    ///        is no local message file.
     /// \param severity Severity at which to log
     /// \param dbglevel Debug severity (ignored if "severity" is not "DEBUG")
-    static void init(const std::string& root, const char* file = NULL,
+    /// \param file Name of the local message file.  This must be NULL if there
+    ///        is no local message file.
+    static void init(const std::string& root,
                     isc::log::Severity severity = isc::log::INFO,
-                    int dbglevel = 0);
+                    int dbglevel = 0, const char* file = NULL);
 
     /// \brief Reset logging
     ///
-    /// Resets logging to default (just the root logger output INFO or above
-    /// messages to the console.
+    /// Resets logging to whatever was set in the call to init().
     static void reset();
 
     /// \brief Read local message file

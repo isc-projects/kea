@@ -1,3 +1,31 @@
+254.	[bug]		jinmei
+	b10-xfrout: failed to send notifies over IPv6 correctly.
+	(Trac964, git 3255c92714737bb461fb67012376788530f16e40)
+
+253.    [func]		jelte
+	Add configuration options for logging through the virtual module
+	Logging.
+	(Trac 736, git 9fa2a95177265905408c51d13c96e752b14a0824)
+
+252.    [func]      	stephen
+	Add syslog as destination for logging.
+	(Trac976, git 31a30f5485859fd3df2839fc309d836e3206546e)
+
+251.	[bug]*		jinmei
+	Make sure bindctl private files are non readable to anyone except
+	the owner or users in the same group.  Note that if BIND 10 is run
+	with changing the user, this change means that the file owner or
+	group will have to be adjusted.  Also note that this change is
+	only effective for a fresh install; if these files already exist,
+	their permissions must be adjusted by hand (if necessary).
+	(Trac870, git 461fc3cb6ebabc9f3fa5213749956467a14ebfd4)
+
+250.    [bug]           ocean
+        src/lib/util/encode, in some conditions, the DecodeNormalizer's
+        iterator may reach the end() and when later being dereferenced
+        it will cause crash on some platform.
+        (Trac838, git 83e33ec80c0c6485d8b116b13045b3488071770f)
+
 249.    [func]      	jerry
 	xfrout: add support for TSIG verification.
 	(Trac816, git 3b2040e2af2f8139c1c319a2cbc429035d93f217)
