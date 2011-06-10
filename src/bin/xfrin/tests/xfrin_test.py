@@ -209,6 +209,10 @@ class TestXfrinConnection(unittest.TestCase):
         return mock_ctx
 
     def __match_exception(self, expected_exception, expected_msg, expression):
+        # This helper method is a higher-granularity version of assertRaises().
+        # If it's not sufficient to check the exception class (e.g., when
+        # the same type of exceptions can be thrown from many places), this
+        # method can be used to check it with the exception argument.
         try:
             expression()
         except expected_exception as ex:
