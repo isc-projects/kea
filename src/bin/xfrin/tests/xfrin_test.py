@@ -315,7 +315,7 @@ class TestXfrinConnection(unittest.TestCase):
         self.conn._tsig_ctx_creator = \
             lambda key: self.__create_mock_tsig(key, TSIGError.BAD_KEY)
         self.conn._send_query(RRType.AXFR())
-        self.conn.reply_data = self.conn.create_response_data(bad_qid = True)
+        self.conn.reply_data = self.conn.create_response_data(bad_qid=True)
         # xfrin should check TSIG before other part of incoming message
         # validate log message for XfrinException
         self.conn._verbose = True
