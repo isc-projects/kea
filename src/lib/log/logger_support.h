@@ -15,6 +15,8 @@
 #ifndef __LOGGER_SUPPORT_H
 #define __LOGGER_SUPPORT_H
 
+#include <unistd.h>
+
 #include <string>
 #include <log/logger.h>
 
@@ -36,8 +38,9 @@ namespace log {
 /// \param severity Severity at which to log
 /// \param dbglevel Debug severity (ignored if "severity" is not "DEBUG")
 /// \param file Name of the local message file.
-void initLogger(const std::string& root, isc::log::Severity severity,
-    int dbglevel, const char* file);
+void initLogger(const std::string& root,
+                isc::log::Severity severity = isc::log::INFO,
+                int dbglevel = 0, const char* file = NULL);
 
 
 /// \brief Run-Time Initialization from Environment
@@ -46,19 +49,20 @@ void initLogger(const std::string& root, isc::log::Severity severity,
 /// environment variables.  These are:
 ///
 /// B10_LOGGER_ROOT
-/// Name of the root logger.  If not given, the string "b10root" will be used.
+/// Name of the root logger.  If not given, the string "bind10" will be used.
 ///
 /// B10_LOGGER_SEVERITY
 /// Severity of messages that will be logged.  This must be one of the strings
-/// "DEBUG", "INFO", "WARN", "ERROR", "FATAL". (Must be upper case and must
-/// not contain leading or trailing spaces.)  If not specified (or if
-/// specified but incorrect), the default for the logging system will be used
-/// (currently INFO).
+/// "DEBUG", "INFO", "WARN", "ERROR", "FATAL" or "NONE". (Must be upper case
+/// and must not contain leading or trailing spaces.)  If not specified (or if
+/// specified but incorrect), the default passed as argument to this function
+/// (currently INFO) will be used.
 ///
 /// B10_LOGGER_DBGLEVEL
 /// Ignored if the level is not DEBUG, this should be a number between 0 and
 /// 99 indicating the logging severity.  The default is 0.  If outside these
-/// limits or if not a number, a value of 0 is used.
+/// limits or if not a number, The value passed to this function (default
+/// of 0) is used.
 ///
 /// B10_LOGGER_LOCALMSG
 /// If defined, the path specification of a file that contains message
@@ -68,7 +72,8 @@ void initLogger(const std::string& root, isc::log::Severity severity,
 ///
 /// This function is most likely to be called from unit test programs.
 
-void initLogger();
+void initLogger(isc::log::Severity severity = isc::log::INFO,
+                int dbglevel = 0);
 
 } // namespace log
 } // namespace isc
