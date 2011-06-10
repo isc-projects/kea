@@ -1,3 +1,8 @@
+256.	[bug]		jerry
+	src/bin/xfrin: update xfrin to check TSIG before other part of
+	incoming message.
+	(Trac955, git TBD)
+
 255.	[func]		zhang likun
 	src/lib/cache:  remove empty code in lib/cache and the corresponding
 	suppression rule in	src/cppcheck-suppress.lst.
