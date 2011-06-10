@@ -147,12 +147,12 @@ init(PyObject*, PyObject* args) {
     const char* file(NULL);
     const char* severity("INFO");
     int dbglevel(0);
-    if (!PyArg_ParseTuple(args, "s|zsi", &root, &file, &severity, &dbglevel)) {
+    if (!PyArg_ParseTuple(args, "s|siz", &root, &severity, &dbglevel, &file)) {
         return (NULL);
     }
 
     try {
-        LoggerManager::init(root, file, getSeverity(severity), dbglevel);
+        LoggerManager::init(root, getSeverity(severity), dbglevel, file);
     }
     catch (const std::exception& e) {
         PyErr_SetString(PyExc_RuntimeError, e.what());
@@ -183,9 +183,9 @@ PyMethodDef methods[] = {
     {"init", init, METH_VARARGS,
         "Run-time initialization. You need to call this before you do any "
         "logging, to configure the root logger name. You may also provide "
-        "a filename with message translations (or None if you don't want "
-        "any), logging severity (one of 'DEBUG', 'INFO', 'WARN', 'ERROR' or "
-        "'FATAL') and a debug level (integer in the range 0-99)."},
+        "logging severity (one of 'DEBUG', 'INFO', 'WARN', 'ERROR' or "
+        "'FATAL'), a debug level (integer in the range 0-99) and a file name "
+        "of a dictionary with message text translations."},
     {NULL, NULL, 0, NULL}
 };
 
