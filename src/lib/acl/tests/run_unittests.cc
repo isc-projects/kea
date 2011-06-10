@@ -12,33 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <string>
-#include <root_logger_name.h>
+#include <gtest/gtest.h>
+#include <util/unittests/run_all.h>
 
-namespace isc {
-namespace log {
-
-namespace {
-
-// Obtain the root logger name in a way that is safe for statically-initialized
-// objects.
-
-std::string&
-getRootLoggerNameInternal() {
-    static std::string root_name;
-    return (root_name);
+int
+main(int argc, char* argv[]) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return (isc::util::unittests::run_all());
 }
 
-} // Anonymous namespace
-
-void
-setRootLoggerName(const std::string& name) {
-    getRootLoggerNameInternal() = name;
-}
-
-const std::string& getRootLoggerName() {
-    return (getRootLoggerNameInternal());
-}
-
-} // namespace log
-} // namespace isc

@@ -1,20 +1,58 @@
-249.    [func]      jerry
+256.	[bug]		jerry
+	src/bin/xfrin: update xfrin to check TSIG before other part of
+	incoming message.
+	(Trac955, git 261450e93af0b0406178e9ef121f81e721e0855c)
+
+255.	[func]		zhang likun
+	src/lib/cache:  remove empty code in lib/cache and the corresponding
+	suppression rule in	src/cppcheck-suppress.lst.
+	(Trac639, git 4f714bac4547d0a025afd314c309ca5cb603e212)
+
+254.	[bug]		jinmei
+	b10-xfrout: failed to send notifies over IPv6 correctly.
+	(Trac964, git 3255c92714737bb461fb67012376788530f16e40)
+
+253.    [func]		jelte
+	Add configuration options for logging through the virtual module
+	Logging.
+	(Trac 736, git 9fa2a95177265905408c51d13c96e752b14a0824)
+
+252.    [func]      	stephen
+	Add syslog as destination for logging.
+	(Trac976, git 31a30f5485859fd3df2839fc309d836e3206546e)
+
+251.	[bug]*		jinmei
+	Make sure bindctl private files are non readable to anyone except
+	the owner or users in the same group.  Note that if BIND 10 is run
+	with changing the user, this change means that the file owner or
+	group will have to be adjusted.  Also note that this change is
+	only effective for a fresh install; if these files already exist,
+	their permissions must be adjusted by hand (if necessary).
+	(Trac870, git 461fc3cb6ebabc9f3fa5213749956467a14ebfd4)
+
+250.    [bug]           ocean
+	src/lib/util/encode, in some conditions, the DecodeNormalizer's
+	iterator may reach the end() and when later being dereferenced
+	it will cause crash on some platform.
+	(Trac838, git 83e33ec80c0c6485d8b116b13045b3488071770f)
+
+249.    [func]      	jerry
 	xfrout: add support for TSIG verification.
 	(Trac816, git 3b2040e2af2f8139c1c319a2cbc429035d93f217)
 
-248.    [func]      stephen
+248.    [func]      	stephen
 	Add file and stderr as destinations for logging.
 	(Trac555, git 38b3546867425bd64dbc5920111a843a3330646b)
 
-247.    [func]      jelte
+247.    [func]      	jelte
 	Upstream queries from the resolver now set EDNS0 buffer size.
 	(Trac834, git 48e10c2530fe52c9bde6197db07674a851aa0f5d)
 
-246.    [func]      stephen
+246.    [func]      	stephen
 	Implement logging using log4cplus (http://log4cplus.sourceforge.net)
 	(Trac899, git 31d3f525dc01638aecae460cb4bc2040c9e4df10)
 
-245.    [func]      vorner
+245.    [func]      	vorner
 	Authoritative server can now sign the answers using TSIG
 	(configured in tsig_keys/keys, list of strings like
 	"name:<base64-secret>:sha1-hmac"). It doesn't use them for

@@ -86,7 +86,7 @@ class TSigKeysTest(unittest.TestCase):
         self.assertEqual("TSIG: Invalid TSIG key string: invalid.key",
                          tsig_keys.check({'keys': ['invalid.key']}))
         self.assertEqual(
-            "TSIG: attempt to decode a value not in base64 char set",
+            "TSIG: Unexpected end of input in BASE decoder",
             tsig_keys.check({'keys': ['invalid.key:123']}))
 
     def test_bad_format(self):
