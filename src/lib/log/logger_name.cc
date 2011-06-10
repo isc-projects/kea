@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <string>
-#include <root_logger_name.h>
+#include "log/logger_name.h"
 
 namespace isc {
 namespace log {
@@ -38,6 +38,21 @@ setRootLoggerName(const std::string& name) {
 
 const std::string& getRootLoggerName() {
     return (getRootLoggerNameInternal());
+}
+
+std::string expandLoggerName(const std::string& name) {
+
+    // Are we the root logger, or does the logger name start with
+    // the string "<root_logger_name>.".  If so, use a logger
+    // whose name is the one given.
+    if ((name == getRootLoggerName()) ||
+        (name.find(getRootLoggerName() + std::string(".")) == 0)) {
+        return (name);
+
+    } 
+
+    // Anything else is assumed to be a sub-logger of the root logger.
+    return (getRootLoggerName() + "." + name);
 }
 
 } // namespace log
