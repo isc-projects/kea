@@ -21,6 +21,63 @@
 
 using namespace isc::data;
 
+namespace {
+
+// Returns the '_spec' part of a list or map specification (recursively,
+// i.e. if it is a list of lists or maps, will return the spec of the
+// inner-most list or map).
+//
+// \param spec_part the list or map specification (part)
+// \return the value of spec_part's "list_item_spec" or "map_item_spec",
+//         or the original spec_part, if it is not a MapElement or does
+//         not contain "list_item_spec" or "map_item_spec"
+ConstElementPtr findListOrMapSubSpec(ConstElementPtr spec_part) {
+    while (spec_part->getType() == Element::map &&
+           (spec_part->contains("list_item_spec") ||
+            spec_part->contains("map_item_spec"))) {
+        if (spec_part->contains("list_item_spec")) {
+            spec_part = spec_part->get("list_item_spec");
+        } else {
+            spec_part = spec_part->get("map_item_spec");
+        }
+    }
+    return spec_part;
+}
+
+// Returns a specific Element in a given specification ListElement
+//
+// \exception DataNotFoundError if the given identifier does not
+// point to an existing element. Since we are dealing with the
+// specification here, and not the config data itself, this should
+// not happen, and is a code bug.
+//
+// \param spec_part ListElement to find the element in
+// \param id_part the name of the element to find (must match the value
+//                "item_name" in the list item
+// \param id_full the full identifier id_part is a part of, this is
+//                used to better report any errors
+ConstElementPtr findItemInSpecList(ConstElementPtr spec_part,
+                                   const std::string& id_part,
+                                   const std::string& id_full)
+{
+    bool found = false;
+    BOOST_FOREACH(ConstElementPtr list_el, spec_part->listValue()) {
+        if (list_el->getType() == Element::map &&
+            list_el->contains("item_name") &&
+            list_el->get("item_name")->stringValue() == id_part) {
+            spec_part = list_el;
+            found = true;
+        }
+    }
+    if (!found) {
+        isc_throw(isc::config::DataNotFoundError,
+                  id_part + " in " + id_full + " not found");
+    }
+    return (spec_part);
+}
+
+} // anonymous namespace
+
 namespace isc {
 namespace config {
 
@@ -36,11 +93,10 @@ namespace config {
 // validated and conforms to the specification.
 static ConstElementPtr
 find_spec_part(ConstElementPtr spec, const std::string& identifier) {
-    //std::cout << "[XX] find_spec_part for " << identifier << std::endl;
     if (!spec) {
         isc_throw(DataNotFoundError, "Empty specification");
     }
-    //std::cout << "in: " << std::endl << spec << std::endl;
+
     ConstElementPtr spec_part = spec;
     if (identifier == "") {
         isc_throw(DataNotFoundError, "Empty identifier");
@@ -49,59 +105,44 @@ find_spec_part(ConstElementPtr spec, const std::string& identifier) {
     size_t sep = id.find('/');
     while(sep != std::string::npos) {
         std::string part = id.substr(0, sep);
-        //std::cout << "[XX] id part: " << part << std::endl;
+
         if (spec_part->getType() == Element::list) {
-            bool found = false;
-            BOOST_FOREACH(ConstElementPtr list_el, spec_part->listValue()) {
-                if (list_el->getType() == Element::map &&
-                    list_el->contains("item_name") &&
-                    list_el->get("item_name")->stringValue() == part) {
-                    spec_part = list_el;
-                    found = true;
-                }
-            }
-            if (!found) {
-                isc_throw(DataNotFoundError, identifier);
-            }
+            spec_part = findItemInSpecList(spec_part, part, identifier);
+        } else {
+            isc_throw(DataNotFoundError,
+                      "Not a list of spec items: " + spec_part->str());
         }
         id = id.substr(sep + 1);
         sep = id.find("/");
+
+        // As long as we are not in the 'final' element as specified
+        // by the identifier, we want to automatically traverse list
+        // and map specifications
+        if (id != "" && id != "/") {
+            spec_part = findListOrMapSubSpec(spec_part);
+        }
     }
     if (id != "" && id != "/") {
         if (spec_part->getType() == Element::list) {
-            bool found = false;
-            BOOST_FOREACH(ConstElementPtr list_el, spec_part->listValue()) {
-                if (list_el->getType() == Element::map &&
-                    list_el->contains("item_name") &&
-                    list_el->get("item_name")->stringValue() == id) {
-                    spec_part = list_el;
-                    found = true;
-                }
-            }
-            if (!found) {
-                isc_throw(DataNotFoundError, identifier);
-            }
+            spec_part = findItemInSpecList(spec_part, id, identifier);
         } else if (spec_part->getType() == Element::map) {
             if (spec_part->contains("map_item_spec")) {
-                bool found = false;
-                BOOST_FOREACH(ConstElementPtr list_el,
-                              spec_part->get("map_item_spec")->listValue()) {
-                    if (list_el->getType() == Element::map &&
-                        list_el->contains("item_name") &&
-                        list_el->get("item_name")->stringValue() == id) {
-                        spec_part = list_el;
-                        found = true;
-                    }
-                }
-                if (!found) {
-                    isc_throw(DataNotFoundError, identifier);
-                }
+                spec_part = findItemInSpecList(
+                                spec_part->get("map_item_spec"),
+                                id, identifier);
             } else {
-                isc_throw(DataNotFoundError, identifier);
+                // Either we already have the element we are looking
+                // for, or we are trying to reach something that does
+                // not exist (i.e. the code does not match the spec)
+                if (!spec_part->contains("item_name") ||
+                    spec_part->get("item_name")->stringValue() != id) {
+                    isc_throw(DataNotFoundError, "Element above " + id +
+                                                 " in " + identifier +
+                                                 " is not a map: " + spec_part->str());
+                }
             }
         }
     }
-    //std::cout << "[XX] found spec part: " << std::endl << spec_part << std::endl;
     return (spec_part);
 }
 
@@ -162,6 +203,17 @@ ConfigData::getValue(bool& is_default, const std::string& identifier) const {
         }
     }
     return (value);
+}
+
+ConstElementPtr
+ConfigData::getDefaultValue(const std::string& identifier) const {
+    ConstElementPtr spec_part =
+        find_spec_part(_module_spec.getConfigSpec(), identifier);
+    if (spec_part->contains("item_default")) {
+        return spec_part->get("item_default");
+    } else {
+        isc_throw(DataNotFoundError, "No default for " + identifier);
+    }
 }
 
 /// Returns an ElementPtr pointing to a ListElement containing
