@@ -18,11 +18,18 @@
 #include <boost/lexical_cast.hpp>
 
 #include <log4cplus/logger.h>
+
+#include <log/impldef.h>
 #include <log/logger_level.h>
 #include <log/logger_level_impl.h>
+#include <log/macros.h>
 
 using namespace log4cplus;
 using namespace std;
+
+namespace {
+isc::log::Logger logger("log");
+}
 
 namespace isc {
 namespace log {
@@ -87,7 +94,8 @@ LoggerLevelImpl::convertToBindLevel(const log4cplus::LogLevel loglevel) {
     } else if (loglevel <= log4cplus::DEBUG_LOG_LEVEL) {
 
         // Debug severity, so extract the debug level from the numeric value.
-        // If outside the limits, change the severity to the level above or below.
+        // If outside the limits, change the severity to the level above or
+        // below.
         int dbglevel = MIN_DEBUG_LEVEL +
                        static_cast<int>(log4cplus::DEBUG_LOG_LEVEL) -
                        static_cast<int>(loglevel);
@@ -148,16 +156,28 @@ LoggerLevelImpl::logLevelFromString(const log4cplus::tstring& level) {
                 // if DEBUG99 has been specified.
                 try {
                     int dbglevel = boost::lexical_cast<int>(name.substr(5));
+                    if (dbglevel < MIN_DEBUG_LEVEL) {
+                        LOG_WARN(logger, LOGIMPL_BELOWDBGMIN).arg(dbglevel)
+                            .arg(MIN_DEBUG_LEVEL);
+                        dbglevel = MIN_DEBUG_LEVEL;
+
+                    } else if (dbglevel > MAX_DEBUG_LEVEL) {
+                        LOG_WARN(logger, LOGIMPL_ABOVEDBGMAX).arg(dbglevel)
+                            .arg(MAX_DEBUG_LEVEL);
+                        dbglevel = MAX_DEBUG_LEVEL;
+
+                    }
                     return convertFromBindLevel(Level(DEBUG, dbglevel));
                 }
                 catch (boost::bad_lexical_cast&) {
+                    LOG_ERROR(logger, LOGIMPL_BADDEBUG).arg(name);
                     return (NOT_SET_LOG_LEVEL);
                 }
             }
-        }
-        else {
+        } else {
 
-            // Unknown string - return default. 
+            // Unknown string - return default.  Log4cplus will call any other
+            // registered conversion functions to interpret it.
             return (NOT_SET_LOG_LEVEL);
         }
     }
@@ -175,6 +195,9 @@ LoggerLevelImpl::logLevelToString(log4cplus::LogLevel level) {
         ((dbglevel >= MIN_DEBUG_LEVEL) && (dbglevel <= MAX_DEBUG_LEVEL))) {
         return (tstring("DEBUG"));
     }
+
+    // Unknown, so return empty string for log4cplus to try other conversion
+    // functions.
     return (tstring());
 }
 

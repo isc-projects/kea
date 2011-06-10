@@ -17,8 +17,9 @@
 
 #include <gtest/gtest.h>
 
-#include <log/root_logger_name.h>
 #include <log/logger.h>
+#include <log/logger_manager.h>
+#include <log/logger_name.h>
 #include <log/messagedef.h>
 
 using namespace isc;
@@ -27,11 +28,12 @@ using namespace std;
 
 class LoggerLevelTest : public ::testing::Test {
 protected:
-    LoggerLevelTest()
-    {}
-
-    ~LoggerLevelTest()
-    {}
+    LoggerLevelTest() {
+        // Logger initialization is done in main()
+    }
+    ~LoggerLevelTest() {
+        LoggerManager::reset();
+    }
 };
 
 
@@ -53,4 +55,28 @@ TEST_F(LoggerLevelTest, Creation) {
     isc::log::Level level3(isc::log::DEBUG, 42);
     EXPECT_EQ(isc::log::DEBUG, level3.severity);
     EXPECT_EQ(42, level3.dbglevel);
+}
+
+TEST(LoggerLevel, getSeverity) {
+    EXPECT_EQ(DEBUG, getSeverity("DEBUG"));
+    EXPECT_EQ(DEBUG, getSeverity("debug"));
+    EXPECT_EQ(DEBUG, getSeverity("DeBuG"));
+    EXPECT_EQ(INFO, getSeverity("INFO"));
+    EXPECT_EQ(INFO, getSeverity("info"));
+    EXPECT_EQ(INFO, getSeverity("iNfO"));
+    EXPECT_EQ(WARN, getSeverity("WARN"));
+    EXPECT_EQ(WARN, getSeverity("warn"));
+    EXPECT_EQ(WARN, getSeverity("wARn"));
+    EXPECT_EQ(ERROR, getSeverity("ERROR"));
+    EXPECT_EQ(ERROR, getSeverity("error"));
+    EXPECT_EQ(ERROR, getSeverity("ERRoR"));
+    EXPECT_EQ(FATAL, getSeverity("FATAL"));
+    EXPECT_EQ(FATAL, getSeverity("fatal"));
+    EXPECT_EQ(FATAL, getSeverity("FAtaL"));
+
+    // bad values should default to stdout
+    EXPECT_EQ(INFO, getSeverity("some bad value"));
+    EXPECT_EQ(INFO, getSeverity(""));
+
+    LoggerManager::reset();
 }

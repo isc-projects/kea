@@ -25,25 +25,65 @@
 namespace isc {
 namespace log {
 
-/// \brief Logging API
-///
-/// This module forms the interface into the logging subsystem. Features of the
-/// system and its implementation are:
-///
-/// # Multiple logging objects can be created, each given a name; those with the
-///   same name share characteristics (like destination, level being logged
-///   etc.)
-/// # Messages can be logged at severity levels of FATAL, ERROR, WARN, INFO or
-///   DEBUG.  The DEBUG level has further sub-levels numbered 0 (least
-///   informative) to 99 (most informative).
-/// # Each logger has a severity level set associated with it.  When a message
-///   is logged, it is output only if it is logged at a level equal to the
-///   logger severity level or greater, e.g. if the logger's severity is WARN,
-///   only messages logged at WARN, ERROR or FATAL will be output.
-/// # Messages are identified by message identifiers, which are keys into a
-///   message dictionary.
+/// \page LoggingApi Logging API
+/// \section LoggingApiOverview Overview
+/// BIND 10 logging uses the concepts of the widely-used Java logging
+/// package log4j (http://logging.apache.log/log4j), albeit implemented 
+/// in C++ using an open-source port.  Features of the system are:
+/// 
+/// - Within the code objects - known as loggers - can be created and
+/// used to log messages.  These loggers have names; those with the
+/// same name share characteristics (such as output destination).
+/// - Loggers have a hierarchical relationship, with each logger being
+/// the child of another logger, except for the top of the hierarchy, the
+/// root logger.  If a logger does not log a message, it is passed to the
+/// parent logger.
+/// - Messages can be logged at severity levels of FATAL, ERROR, WARN, INFO
+/// or DEBUG.  The DEBUG level has further sub-levels numbered 0 (least
+/// informative) to 99 (most informative).
+/// - Each logger has a severity level set associated with it.  When a
+/// message is logged, it is output only if it is logged at a level equal
+/// to the logger severity level or greater, e.g. if the logger's severity
+/// is WARN, only messages logged at WARN, ERROR or FATAL will be output.
+/// 
+/// \section LoggingApiLoggerNames BIND 10 Logger Names
+/// Within BIND 10, the root logger root logger is given the name of the
+/// program (via the stand-alone function setRootLoggerName()). Other loggers
+/// are children of the root logger and are named "<program>.<sublogger>".
+/// This name appears in logging output, allowing users to identify both
+/// the BIND 10 program and the component within the program that generated
+/// the message.
+/// 
+/// When creating a logger, the abbreviated name "<sublogger>" can be used;
+/// the program name will be prepended to it when the logger is created.
+/// In this way, individual libraries can have their own loggers without
+/// worrying about the program in which they are used, but:
+/// - The origin of the message will be clearly identified.
+/// - The same component can have different options (e.g. logging severity)
+/// in different programs at the same time.
+/// 
+/// \section LoggingApiLoggingMessages Logging Messages
+/// Instead of embedding the text of messages within the code, each message
+/// is referred to using a symbolic name.  The logging code uses this name as
+/// a key in a dictionary from which the message text is obtained.  Such a
+/// system allows for the optional replacement of message text at run time.
+/// More details about the message disction (and the compiler used to create
+/// the symbol definitions) can be found in other modules in the src/lib/log
+/// directory.
 
 class LoggerImpl;   // Forward declaration of the implementation class
+
+/// \brief Logger Class
+///
+/// This class is the main class used for logging.  Use comprises:
+///
+/// 1. Constructing a logger by instantiating it with a specific name. (If the
+/// same logger is in multiple functions within a file, overhead can be
+/// minimised by declaring it as a file-wide static variable.)
+/// 2. Using the error(), info() etc. methods to log an error.  (However, it is
+/// recommended to use the LOG_ERROR, LOG_INFO etc. macros defined in macros.h.
+/// These will avoid the potentially-expensive evaluation of arguments if the
+/// severity is such that the message will be suppressed.)
 
 class Logger {
 public:
@@ -99,6 +139,13 @@ public:
     /// whether the severity is set to debug.
     virtual int getDebugLevel();
 
+    /// \brief Get Effective Debug Level for Logger
+    ///
+    /// \return The effective debug level of the logger.  This is the same
+    /// as getDebugLevel() if the logger has a debug level set, but otherwise
+    /// is the debug level of the parent.
+    virtual int getEffectiveDebugLevel();
+
     /// \brief Returns if Debug Message Should Be Output
     ///
     /// \param dbglevel Level for which debugging is checked.  Debugging is
@@ -151,12 +198,6 @@ public:
     ///
     /// \return true if the logger objects are instances of the same logger.
     bool operator==(Logger& other);
-
-protected:
-    /// \brief Clear logging hierachy
-    ///
-    /// This is for test use only, hence is protected.
-    static void reset();
 
 private:
     friend class isc::log::Formatter<Logger>;

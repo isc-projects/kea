@@ -50,21 +50,14 @@ namespace log {
 /// documentation, but actually unnamed) and all loggers created are subloggers
 /// if it.
 ///
-/// In this implementation, the name of the logger is checked.  If it is the
-/// name of the program (as set in the call to isc::log::setRootLoggerName),
-/// the log4cplus root logger is used.  Otherwise the name passed is used as
-/// the name of a logger when a log4cplus logger is created.
+/// In this implementation, the log4cplus root logger is unused.  Instead, the
+/// BIND 10 root logger is created as a child of the log4cplus root logger,
+/// and all other loggers used in the program are created as sub-loggers of
+/// that.  In this way, the logging system can just include the name of the
+/// logger in each message without the need to specially consider if the
+/// message is the root logger or not.
 ///
-/// To clarify: if the program is "b10auth" (and that is used to set the BIND 10
-/// root logger name via a call to isc::log::setRootLoggerName()), the BIND 10
-/// logger "b10auth" corresponds to the log4cplus root logger instance (returned
-/// by a call to log4cplus::Logger::getRoot()).  The BIND 10 sub-logger "cache"
-/// corresponds to the log4cplus logger "cache", created by a call to
-/// log4cplus::Logger::getInstance("cache").  The distinction is, however,
-/// invisible to users as the logger reported in messages is always
-/// "programm.sublogger".
-///
-/// b) The idea of debug levels is implemented.  Seee logger_level.h and
+/// b) The idea of debug levels is implemented.  See logger_level.h and
 /// logger_level_impl.h for more details on this.
 
 class LoggerImpl {
@@ -184,31 +177,7 @@ public:
         return (name_ == other.name_);
     }
 
-    /// \brief Reset logging
-    ///
-    /// Resets (clears) the log4cplus logging, requiring that an initialization
-    /// call be performed again.
-    static void reset();
-
-
 private:
-
-    /// \brief Initialize log4cplus
-    ///
-    /// Static method to perform initialization of the log4cplus system.
-    static void initLog4cplus();
-
-    /// \brief Initialization Flag
-    ///
-    /// Static method to access an initialization flag.  Doing it this
-    /// way means that there is no static initialization fiasco.
-    static bool& initialized();
-
-    /// \brief Set layout pattern
-    ///
-    /// Sets the layout for root logger appender(s)
-    static void setRootAppenderLayout();
-
     std::string         name_;              ///< Full name of this logger
     log4cplus::Logger   logger_;            ///< Underlying log4cplus logger
 };

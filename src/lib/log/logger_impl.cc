@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE
 
+#include <iostream>
 #include <iomanip>
 #include <algorithm>
 
@@ -22,18 +23,17 @@
 
 #include <log4cplus/configurator.h>
 
-#include <log/root_logger_name.h>
 #include <log/logger.h>
+#include <log/logger_impl.h>
 #include <log/logger_level.h>
 #include <log/logger_level_impl.h>
-#include <log/logger_impl.h>
+#include <log/logger_name.h>
 #include <log/message_dictionary.h>
 #include <log/message_types.h>
-#include <log/root_logger_name.h>
 
 #include <util/strutil.h>
 
-// Note: as log4cplus and th3e BIND 10 logger have many concepts in common, and
+// Note: as log4cplus and the BIND 10 logger have many concepts in common, and
 // thus many similar names, to disambiguate types we don't "use" the log4cplus
 // namespace: instead, all log4cplus types are explicitly qualified.
 
@@ -42,25 +42,14 @@ using namespace std;
 namespace isc {
 namespace log {
 
-// Constructor.  Although it may be immediately reset, logger_ is initialized to
-// the log4cplus root logger; at least one compiler requires that all member
-// variables be constructed before the constructor is run, but log4cplus::Logger
-// (the type of logger_) has no default constructor.
-LoggerImpl::LoggerImpl(const string& name) :
-    logger_(log4cplus::Logger::getRoot())
+// Constructor.  The setting of logger_ must be done when the variable is
+// constructed (instead of being left to the body of the function); at least
+// one compiler requires that all member variables be constructed before the
+// constructor is run, but log4cplus::Logger (the type of logger_) has no
+// default constructor.
+LoggerImpl::LoggerImpl(const string& name) : name_(expandLoggerName(name)),
+    logger_(log4cplus::Logger::getInstance(name_))
 {
-    // Initialize log4cplus if not already done
-    initLog4cplus();
-
-    // Are we the root logger?
-    if (name == getRootLoggerName()) {
-        name_ = name;
-        // logger_ already set to log4cplus root logger at this point
-
-    } else {
-        name_ = getRootLoggerName() + "." + name;
-        logger_ = log4cplus::Logger::getInstance(name);
-    }
 }
 
 // Destructor. (Here because of virtual declaration.)
@@ -136,82 +125,6 @@ LoggerImpl::outputRaw(const Severity& severity, const string& message) {
             LOG4CPLUS_FATAL(logger_, message);
     }
 }
-
-// Initialization.  This is one initialization for all loggers, so requires
-// a singleton to hold the initialization flag.  The flag is held within a
-// static method to ensure that it is created (and initialized) when needed.
-// This avoids a static initialization fiasco.
-
-bool&
-LoggerImpl::initialized() {
-    static bool initialized = false;
-    return (initialized);
-}
-
-void
-LoggerImpl::initLog4cplus() {
-
-    if (! initialized()) {
-
-        // Set up basic configurator.  This attaches a ConsoleAppender to the
-        // root logger with suitable output.  This is used until we we have
-        // actually read the logging configuration, in which case the output
-        // may well be changed.
-        log4cplus::BasicConfigurator config;
-        config.configure();
-        setRootAppenderLayout();
-
-        // Add additional debug levels
-        LoggerLevelImpl::init();
-
-        // All done.
-        initialized() = true;
-    }
-}
-
-void LoggerImpl::setRootAppenderLayout() {
-
-    // Create the pattern we want for the output - local time.
-    string pattern = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [";
-    pattern += getRootLoggerName() + string(".%c] %m\n");
-
-    // Retrieve the appenders on the root instance and set the layout to
-    // use that pattern.
-    log4cplus::SharedAppenderPtrList list =
-        log4cplus::Logger::getRoot().getAllAppenders();
-
-    for (log4cplus::SharedAppenderPtrList::iterator i = list.begin();
-         i != list.end(); ++i) {
-        auto_ptr<log4cplus::Layout> layout(
-            new log4cplus::PatternLayout(pattern));
-        (*i)->setLayout(layout);
-    }
-}
-
-// Reset.  Just reset logger hierarchy to default settings (don't remove the
-// loggers - this appears awkward); this is effectively the same as removing
-// them.
-void
-LoggerImpl::reset() {
-    log4cplus::Logger::getDefaultHierarchy().resetConfiguration();
-    initialized() = false;
-
-    // N.B.  The documentation is not clear, but it does not appear that the
-    // methods used to format the new logging levels are removed from the
-    // log4cxx LogLevelManager class - indeed, there appears to be no way
-    // to do this.  This would seem to suggest that a re-initialization may
-    // well add another instance of the toString/fromString to the manager's
-    // list of methods.
-    //
-    // We could get round this by making setting the LogManager a truly
-    // one-shot process.  However, apart from taking up memory there is little
-    // overhead if multiple instances are added.  The manager walks the list and
-    // uses the first method that processes the argument, so multiple methods
-    // doing the same think will not affect functionality.  Besides, this
-    // reset() method is only used in testing and not in the distributed
-    // software.
-}
-
 
 } // namespace log
 } // namespace isc

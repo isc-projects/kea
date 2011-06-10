@@ -12,33 +12,18 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <string>
-#include <root_logger_name.h>
+#ifndef __TEMPDIR_H
+#define __TEMPDIR_H
 
-namespace isc {
-namespace log {
+/// \brief Define temporary directory
+///
+/// Defines the temporary directory in which temporary files used by the
+/// unit tests are created.
+
+#include <string>
 
 namespace {
-
-// Obtain the root logger name in a way that is safe for statically-initialized
-// objects.
-
-std::string&
-getRootLoggerNameInternal() {
-    static std::string root_name;
-    return (root_name);
+std::string TEMP_DIR("@builddir@");
 }
 
-} // Anonymous namespace
-
-void
-setRootLoggerName(const std::string& name) {
-    getRootLoggerNameInternal() = name;
-}
-
-const std::string& getRootLoggerName() {
-    return (getRootLoggerNameInternal());
-}
-
-} // namespace log
-} // namespace isc
+#endif // __TEMPDIR_H
