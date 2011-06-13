@@ -43,23 +43,29 @@ enum Action {
  * of any kind, it might be even compound) and an action that is returned
  * whenever the action matches. They are tested in the order and first
  * match counts.
+ *
+ * \note There are protected members. In fact, you should consider them
+ *     private, they are protected so tests can get inside. This class
+ *     is not expected to be subclassed in real applications.
  */
 template<typename Context, typename Action = isc::acl::Action> class Acl {
 private:
     /**
      * \brief Copy constructor.
      *
-     * It is private on purpose, this class is non-copyable, it holds raw
-     * pointers of objects we don't know how to copy and there does not seem
-     * to be any need to copy ACLs.
+     * It is private on purpose, this class is not supposed to be copied.
+     * It is technically possible though, so if the need arises, it can be
+     * added (or, more correctly, this privade one removed so default one
+     * is created).
      */
     Acl(const Acl<Context, Action>& other);
     /**
      * \brief Assignment operator.
      *
-     * It is private on purpose, this class is non-copyable, it holds raw
-     * pointers of objects we don't know how to copy and there does not seem
-     * to be any need to copy ACLs.
+     * It is private on purpose, this class is not supposed to be copied.
+     * It is technically possible though, so if the need arises, it can be
+     * added (or, more correctly, this privade one removed so default one
+     * is created).
      */
     Acl& operator =(const Acl<Context, Action>& other);
 public:
@@ -109,6 +115,7 @@ private:
     // Just type abbreviations.
     typedef std::pair<CheckPtr, Action> Entry;
     typedef std::vector<Entry> Entries;
+protected:
     /// \brief The policy.
     Action policy_;
     /// \brief The entries we have.
