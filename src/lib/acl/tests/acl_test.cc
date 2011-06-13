@@ -14,5 +14,130 @@
 
 #include <gtest/gtest.h>
 #include <acl/acl.h>
+#include <cassert>
 
-isc::acl::Acl<bool> acl(isc::acl::DROP);
+using namespace isc::acl;
+using boost::shared_ptr;
+
+namespace {
+
+// This is arbitrary guess of size for the log. If it's too small for your
+// test, just make it bigger.
+const size_t LOG_SIZE = 10;
+
+// This will remember which checks did run already.
+struct Log {
+    // The actual log cells, if i-th check did run
+    bool run[LOG_SIZE];
+    Log() {
+        // Nothing run yet
+        for (size_t i(0); i < LOG_SIZE; ++ i) {
+            run[i] = false;
+        }
+    }
+    // Checks that the first amount of checks did run and the rest didn't.
+    void checkFirst(size_t amount) const {
+        ASSERT_LE(amount, LOG_SIZE) << "Wrong test: amount bigger than size "
+            "of log";
+        {
+            SCOPED_TRACE("Checking that the first amount of checks did run");
+            for (size_t i(0); i < amount; ++ i) {
+                EXPECT_TRUE(run[i]) << "Check #" << i << " did not run.";
+            }
+        }
+
+        {
+            SCOPED_TRACE("Checking that the rest did not run");
+            for (size_t i(amount); i < LOG_SIZE; ++ i) {
+                EXPECT_FALSE(run[i]) << "Check #" << i << "did run.";
+            }
+        }
+    }
+};
+
+// This returns true or false every time, no matter what is passed to it.
+// But it logs that it did run.
+class ConstCheck : public Check<Log*> {
+public:
+    ConstCheck(bool accepts, size_t logNum) :
+        logNum_(logNum),
+        accepts_(accepts)
+    {
+        assert(logNum < LOG_SIZE); // If this fails, the LOG_SIZE is too small
+    }
+    typedef Log* LPtr;
+    virtual bool matches(const LPtr& log) const {
+        log->run[logNum_] = true;
+        return (accepts_);
+    }
+private:
+    size_t logNum_;
+    bool accepts_;
+};
+
+// Test version of the Acl class. It adds few methods to examine the protected
+// data, but does not change the implementation.
+class TestAcl : public Acl<Log*> {
+public:
+    TestAcl() :
+        Acl(DROP)
+    { }
+    // Check the stored policy there
+    void checkPolicy(Action ac) {
+        EXPECT_EQ(policy_, ac);
+    }
+};
+
+// The test fixture. Contains some members so they don't need to be manually
+// created each time and some convenience functions.
+class AclTest : public ::testing::Test {
+public:
+    AclTest() :
+        nextCheck_(0)
+    { }
+    TestAcl acl_;
+    Log log_;
+    size_t nextCheck_;
+    shared_ptr<Check<Log*> > getCheck(bool accepts) {
+        return (shared_ptr<Check<Log*> >(new ConstCheck(accepts,
+                                                        nextCheck_ ++)));
+    }
+};
+
+/*
+ * This tests the policy (default return value) and that nothing is run
+ * if nothing is inserted (it's hard to imagine otherwise though).
+ *
+ * We use the default ACL unchanged from the test class.
+ */
+TEST_F(AclTest, emptyPolicy) {
+    acl_.checkPolicy(DROP);
+    EXPECT_EQ(DROP, acl_.execute(&log_));
+    // No test was run
+    log_.checkFirst(0);
+}
+
+/*
+ * This tests the policy in case no check matches.
+ */
+TEST_F(AclTest, policy) {
+    acl_.append(getCheck(false), ACCEPT);
+    acl_.append(getCheck(false), REJECT);
+    EXPECT_EQ(DROP, acl_.execute(&log_));
+    // The first two checks were actually run (and didn't match)
+    log_.checkFirst(2);
+}
+
+/*
+ * Checks that it takes the first matching check and returns the
+ * value. Also checks that the others aren't run at all.
+ */
+TEST_F(AclTest, check) {
+    acl_.append(getCheck(false), ACCEPT);
+    acl_.append(getCheck(true), REJECT);
+    acl_.append(getCheck(true), ACCEPT);
+    EXPECT_EQ(REJECT, acl_.execute(&log_));
+    log_.checkFirst(2);
+}
+
+}
