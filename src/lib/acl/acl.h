@@ -96,7 +96,13 @@ public:
      *     passed to the checks.
      */
     Action execute(const Context& context) const {
-        // TODO a for cycle
+        for (typename Entries::const_iterator i(entries_.begin());
+             i != entries_.end(); ++ i) {
+            if (i->first->matches(context)) {
+                return (i->second);
+            }
+        }
+        return (policy_);
     }
     /**
      * \brief Add new entry at the end of the list.
@@ -109,7 +115,7 @@ public:
      * \param action The action to return when the thing matches this check.
      */
     void append(CheckPtr check, const Action& action) {
-
+        entries_.push_back(Entry(check, action));
     }
 private:
     // Just type abbreviations.
