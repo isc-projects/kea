@@ -18,7 +18,34 @@
 
 using namespace isc::acl;
 
-/// General tests
+// Declare a derived class to allow the abstract function to be declared
+// as a concrete one.
+
+class DerivedV4Check : public Ipv4Check<uint32_t> {
+public:
+    // Basic constructor
+    DerivedV4Check(uint32_t address = 1, size_t masksize = 32,
+                   bool inverse = false) :
+                   Ipv4Check<uint32_t>(address, masksize, inverse)
+    {}
+
+    // String constructor
+    DerivedV4Check(const std::string& address, bool inverse = false) :
+        Ipv4Check<uint32_t>(address, inverse)
+    {}
+
+    // Destructor
+    virtual ~DerivedV4Check()
+    {}
+
+    // Concrete implementation of abstract method
+    virtual bool matches(const uint32_t& context) const {
+        return (compare(context));
+    }
+};
+
+
+/// Tests of the free functions.
 
 TEST(IpCheck, CreateNetmask) {
     size_t  i;
@@ -26,14 +53,16 @@ TEST(IpCheck, CreateNetmask) {
     // 8-bit tests.
 
     // Invalid arguments should throw.
-    EXPECT_THROW(createNetmask<int8_t>(0), isc::OutOfRange);
-    EXPECT_THROW(createNetmask<int8_t>(9), isc::OutOfRange);
+    EXPECT_THROW(createNetmask<uint8_t>(0), isc::OutOfRange);
+    EXPECT_THROW(createNetmask<uint8_t>(9), isc::OutOfRange);
 
-    // Check on all possible 8-bit values
+    // Check on all possible 8-bit values.  Use a signed type to generate a
+    // variable with the most significant bits set, as right-shifting it is
+    // guaranteed to introduce additional bits.
     int8_t  expected8;
     for (i = 1, expected8 = 0x80; i <= 8; ++i, expected8 >>= 1) {
-        EXPECT_EQ(static_cast<int32_t>(expected8),
-                  static_cast<int32_t>(createNetmask<int8_t>(i)));
+        EXPECT_EQ(static_cast<uint8_t>(expected8),
+                  createNetmask<uint8_t>(i));
     }
 
     // Do the same for 32 bits.
@@ -43,99 +72,104 @@ TEST(IpCheck, CreateNetmask) {
     // Check on all possible 8-bit values
     int32_t expected32;
     for (i = 1, expected32 = 0x80000000; i <= 32; ++i, expected32 >>= 1) {
-        EXPECT_EQ(expected32, createNetmask<int32_t>(i));
+        EXPECT_EQ(static_cast<uint32_t>(expected32),
+                  createNetmask<uint32_t>(i));
     }
 }
-
-// V4 tests
+// IPV4 tests
 
 // Check that the constructor expands the network mask and stores the elements
 // correctly.  For these tests, we don't worry about the type of the context,
 // so we declare it as an int.
 
 TEST(IpCheck, V4ConstructorAddress) {
-    // Alternating bits
-    Ipv4Check<int> acl1(0x55555555);
-    EXPECT_EQ(0x55555555, acl1.getAddress());
-
-    Ipv4Check<int> acl2(0xcccccccc);
-    EXPECT_EQ(0xcccccccc, acl2.getAddress());
+    DerivedV4Check acl1(0x12345678);
+    EXPECT_EQ(0x12345678, acl1.getAddress());
 }
 
+// The mask is stored in network byte order, so the pattern expected must
+// also be converted to network byte order for the comparison to succeed.
 TEST(IpCheck, V4ConstructorMask) {
     // Valid values. Address of "1" is used as a placeholder
-    Ipv4Check<int> acl1(1, 1);
-    EXPECT_EQ(0x80000000, acl1.getNetmask());
+    DerivedV4Check acl1(1, 1);
+    uint32_t expected = htonl(0x80000000);
+    EXPECT_EQ(expected, acl1.getNetmask());
     EXPECT_EQ(1, acl1.getMasksize());
 
-    Ipv4Check<int> acl2(1, 24);
-    EXPECT_EQ(0xffffff00, acl2.getNetmask());
+    DerivedV4Check acl2(1, 24);
+    expected = htonl(0xffffff00);
+    EXPECT_EQ(expected, acl2.getNetmask());
     EXPECT_EQ(24, acl2.getMasksize());
 
     // ... and some invalid network masks
-    EXPECT_THROW(Ipv4Check<int>(1, 0), isc::OutOfRange);
+    EXPECT_THROW(DerivedV4Check(1, 0), isc::OutOfRange);
+    EXPECT_THROW(DerivedV4Check(1, 33), isc::OutOfRange);
 }
 
 TEST(IpCheck, V4ConstructorInverse) {
     // Valid values. Address/mask of "1" is used as a placeholder
-    Ipv4Check<int> acl1(1, 1);
+    DerivedV4Check acl1(1, 1);
     EXPECT_FALSE(acl1.getInverse());
 
-    Ipv4Check<int> acl2(1, 1, true);
+    DerivedV4Check acl2(1, 1, true);
     EXPECT_TRUE(acl2.getInverse());
 
-    Ipv4Check<int> acl3(1, 1, false);
+    DerivedV4Check acl3(1, 1, false);
     EXPECT_FALSE(acl3.getInverse());
 }
 
 TEST(IpCheck, V4StringConstructor) {
-    Ipv4Check<int> acl1("127.0.0.1");
-    EXPECT_EQ(0x7f000001, acl1.getAddress());
+    DerivedV4Check acl1("127.0.0.1");
+    uint32_t expected = htonl(0x7f000001);
+    EXPECT_EQ(expected, acl1.getAddress());
     EXPECT_EQ(32, acl1.getMasksize());
 
-    Ipv4Check<int> acl2("255.255.255.0/24");
-    EXPECT_EQ(0xffffff00, acl2.getAddress());
+    DerivedV4Check acl2("255.255.255.0/24");
+    expected = htonl(0xffffff00);
+    EXPECT_EQ(expected, acl2.getAddress());
     EXPECT_EQ(24, acl2.getMasksize());
 
-    EXPECT_THROW(Ipv4Check<int>("255.255.255.0/0"), isc::OutOfRange);
-    EXPECT_THROW(Ipv4Check<int>("255.255.255.0/33"), isc::OutOfRange);
-    EXPECT_THROW(Ipv4Check<int>("255.255.255.0/24/3"), isc::InvalidParameter);
-    EXPECT_THROW(Ipv4Check<int>("255.255.255.0/ww"), isc::InvalidParameter);
-    EXPECT_THROW(Ipv4Check<int>("aa.255.255.0/ww"), isc::InvalidParameter);
+    EXPECT_THROW(DerivedV4Check("255.255.255.0/0"), isc::OutOfRange);
+    EXPECT_THROW(DerivedV4Check("255.255.255.0/33"), isc::OutOfRange);
+    EXPECT_THROW(DerivedV4Check("255.255.255.0/24/3"), isc::InvalidParameter);
+    EXPECT_THROW(DerivedV4Check("255.255.255.0/ww"), isc::InvalidParameter);
+    EXPECT_THROW(DerivedV4Check("aa.255.255.0/ww"), isc::InvalidParameter);
 }
 
-// Check that the comparison works - until we have a a message structure,
-// we can't check the matches function.
+// Check that the comparison works - note that "matches" just calls the
+// internal compare() code.
+//
+// Note that addresses passed to the class are expected to be in network-
+// byte order.  Therefore for the comparisons to work as expected, we must
+// convert the values to network-byte order first.
 
 TEST(IpCheck, V4Compare) {
-    // Exact address - match if given address matches stored address
-    Ipv4Check<int> acl1(0x23457f13, 32);
-    EXPECT_TRUE(acl1.compare(0x23457f13));
-    EXPECT_FALSE(acl1.compare(0x23457f12));
-    EXPECT_FALSE(acl1.compare(0x13457f13));
+    // Exact address - match if given address matches stored address.
+    DerivedV4Check acl1(htonl(0x23457f13), 32);
+    EXPECT_TRUE(acl1.matches(htonl(0x23457f13)));
+    EXPECT_FALSE(acl1.matches(htonl(0x23457f12)));
+    EXPECT_FALSE(acl1.matches(htonl(0x13457f13)));
 
     // Exact address - match if address does not match stored address
-    Ipv4Check<int> acl2(0x23457f13, 32, true);
-    EXPECT_FALSE(acl2.compare(0x23457f13));
-    EXPECT_TRUE(acl2.compare(0x23457f12));
-    EXPECT_TRUE(acl2.compare(0x13457f13));
+    DerivedV4Check acl2(htonl(0x23457f13), 32, true);
+    EXPECT_FALSE(acl2.matches(htonl(0x23457f13)));
+    EXPECT_TRUE(acl2.matches(htonl(0x23457f12)));
+    EXPECT_TRUE(acl2.matches(htonl(0x13457f13)));
 
     // Match if the address matches a mask
-    Ipv4Check<int> acl3(0x23450000, 16);
-    EXPECT_TRUE(acl3.compare(0x23450000));
-    EXPECT_TRUE(acl3.compare(0x23450001));
-    EXPECT_TRUE(acl3.compare(0x2345ffff));
-    EXPECT_FALSE(acl3.compare(0x23460000));
-    EXPECT_FALSE(acl3.compare(0x2346ffff));
+    DerivedV4Check acl3(htonl(0x23450000), 16);
+    EXPECT_TRUE(acl3.matches(htonl(0x23450000)));
+    EXPECT_TRUE(acl3.matches(htonl(0x23450001)));
+    EXPECT_TRUE(acl3.matches(htonl(0x2345ffff)));
+    EXPECT_FALSE(acl3.matches(htonl(0x23460000)));
+    EXPECT_FALSE(acl3.matches(htonl(0x2346ffff)));
 
     // Match if the address does not match a mask
-    Ipv4Check<int> acl4(0x23450000, 16, true);
-    EXPECT_FALSE(acl4.compare(0x23450000));
-    EXPECT_FALSE(acl4.compare(0x23450001));
-    EXPECT_FALSE(acl4.compare(0x2345ffff));
-    EXPECT_TRUE(acl4.compare(0x23460000));
-    EXPECT_TRUE(acl4.compare(0x2346ffff));
+    DerivedV4Check acl4(htonl(0x23450000), 16, true);
+    EXPECT_FALSE(acl4.matches(htonl(0x23450000)));
+    EXPECT_FALSE(acl4.matches(htonl(0x23450001)));
+    EXPECT_FALSE(acl4.matches(htonl(0x2345ffff)));
+    EXPECT_TRUE(acl4.matches(htonl(0x23460000)));
+    EXPECT_TRUE(acl4.matches(htonl(0x2346ffff)));
 
-    // 
 }
-
