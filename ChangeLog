@@ -2,7 +2,7 @@
 	Fixed a bug an instance of IntervalTimerImpl may be destructed 
 	while deadline_timer is holding the handler. This fix addresses
 	occasional failure of IntervalTimerTest.destructIntervalTimer.
-	(Trac #957, git TBD)
+	(Trac #957, git e59c215e14b5718f62699ec32514453b983ff603)
 
 256.	[bug]		jerry
 	src/bin/xfrin: update xfrin to check TSIG before other part of
