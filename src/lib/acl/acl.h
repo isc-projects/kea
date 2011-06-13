@@ -17,7 +17,8 @@
 
 #include "check.h"
 #include <vector>
-#include <memory>
+
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace acl {
@@ -73,11 +74,11 @@ public:
     /**
      * \brief Pointer to the check.
      *
-     * We use auto_ptr here, as it provides protection against memory leaks
-     * in case of exceptions, while being a lot more lightweight than
-     * boost::shared_ptr (which seems unneeded here, at last for now).
+     * We use the shared pointer, because we are not able to copy the checks.
+     * However, we might need to copy the entries (when we concatenate ACLs
+     * together in future).
      */
-    typedef std::auto_ptr<Check<Context> > CheckPtr;
+    typedef boost::shared_ptr<Check<Context> > CheckPtr;
     /**
      * \brief The actual main function that decides.
      *
@@ -98,8 +99,7 @@ public:
      * but we may need more when we start implementing some kind optimisations,
      * including replacements, reorderings and removals.
      *
-     * \param check The check to test if the thing matches. The ACL steals
-     *      ownership of the pointer (which is implicit from the auto_ptr).
+     * \param check The check to test if the thing matches.
      * \param action The action to return when the thing matches this check.
      */
     void append(CheckPtr check, const Action& action) {
