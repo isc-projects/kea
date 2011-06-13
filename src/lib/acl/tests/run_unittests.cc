@@ -12,18 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __DEBUG_LEVELS_H
-#define __DEBUG_LEVELS_H
+#include <gtest/gtest.h>
+#include <util/unittests/run_all.h>
 
-/// \brief Defines Debug Levels
-///
-/// Defines the maximum and minimum debug levels and the number of levels.
-/// These are defined using #define as they are referenced in the construction
-/// of variables declared outside execution units.  (In this way we avoid the
-/// "static initialization fiasco" problem.)
+int
+main(int argc, char* argv[]) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return (isc::util::unittests::run_all());
+}
 
-#define MIN_DEBUG_LEVEL (0)
-#define MAX_DEBUG_LEVEL (99)
-#define NUM_DEBUG_LEVEL (MAX_DEBUG_LEVEL - MIN_DEBUG_LEVEL + 1)
-
-#endif // __DEBUG_LEVELS_H

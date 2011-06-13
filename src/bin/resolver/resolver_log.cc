@@ -12,33 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <string>
-#include <root_logger_name.h>
+/// Defines the logger used by the NSAS
 
-namespace isc {
-namespace log {
+#include "resolver_log.h"
 
-namespace {
-
-// Obtain the root logger name in a way that is safe for statically-initialized
-// objects.
-
-std::string&
-getRootLoggerNameInternal() {
-    static std::string root_name;
-    return (root_name);
-}
-
-} // Anonymous namespace
-
-void
-setRootLoggerName(const std::string& name) {
-    getRootLoggerNameInternal() = name;
-}
-
-const std::string& getRootLoggerName() {
-    return (getRootLoggerNameInternal());
-}
-
-} // namespace log
-} // namespace isc
+isc::log::Logger resolver_logger("resolver");

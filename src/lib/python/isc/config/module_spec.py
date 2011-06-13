@@ -87,7 +87,7 @@ class ModuleSpec:
            validate only a part of a configuration tree (like a list of
            non-default values)"""
         data_def = self.get_config_spec()
-        if data_def:
+        if data_def is not None:
             return _validate_spec_list(data_def, full, data, errors)
         else:
             # no spec, always bad
@@ -345,7 +345,7 @@ def _validate_spec_list(module_spec, full, data, errors):
             for spec_item in module_spec:
                 if spec_item["item_name"] == item_name:
                     found = True
-            if not found:
+            if not found and item_name != "version":
                 if errors != None:
                     errors.append("unknown item " + item_name)
                 validated = False
