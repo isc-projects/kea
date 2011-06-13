@@ -243,12 +243,12 @@ class XfrinConnection(asyncore.dispatcher):
         msg = Message(Message.PARSE)
         msg.from_wire(soa_response)
 
+        # TSIG related checks, including an unexpected signed response
+        self._check_response_tsig(msg, soa_response)
+
         # perform some minimal level validation.  It's an open issue how
         # strict we should be (see the comment in _check_response_header())
         self._check_response_header(msg)
-
-        # TSIG related checks, including an unexpected signed response
-        self._check_response_tsig(msg, soa_response)
 
         # TODO, need select soa record from data source then compare the two
         # serial, current just return OK, since this function hasn't been used
@@ -311,7 +311,7 @@ class XfrinConnection(asyncore.dispatcher):
             raise XfrinException('error response: %s' % msg_rcode.to_text())
 
         if not msg.get_header_flag(Message.HEADERFLAG_QR):
-            raise XfrinException('response is not a response ')
+            raise XfrinException('response is not a response')
 
         if msg.get_qid() != self._query_id:
             raise XfrinException('bad query id')
@@ -362,10 +362,12 @@ class XfrinConnection(asyncore.dispatcher):
             recvdata = self._get_request_response(msg_len)
             msg = Message(Message.PARSE)
             msg.from_wire(recvdata)
-            self._check_response_status(msg)
 
             # TSIG related checks, including an unexpected signed response
             self._check_response_tsig(msg, recvdata)
+
+            # Perform response status validation
+            self._check_response_status(msg)
 
             answer_section = msg.get_section(Message.SECTION_ANSWER)
             for rr in self._handle_answer_section(answer_section):

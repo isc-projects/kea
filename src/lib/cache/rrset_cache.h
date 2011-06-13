@@ -30,6 +30,9 @@ class RRsetEntry;
 /// \brief RRset Cache
 /// The object of RRsetCache represented the cache for class-specific
 /// RRsets.
+///
+/// \todo The rrset cache class should provide the interfaces for
+///       loading, dumping and resizing.
 class RRsetCache{
     ///
     /// \name Constructors and Destructor
@@ -72,28 +75,6 @@ public:
     /// new added rrset entry or existed one if it is not replaced.
     RRsetEntryPtr update(const isc::dns::RRset& rrset,
                          const RRsetTrustLevel& level);
-
-#if 0
-    /// \brief Dump the rrset cache to specified file.
-    ///
-    /// \param file_name The file to write to
-    ///
-    /// \todo It should can be dumped to one configured database.
-    void dump(const std::string& file_name);
-
-    /// \brief Load the cache from one file.
-    ///
-    /// \param file_name The file to read from
-    ///
-    /// \todo It should can be loaded from one configured database.
-    void load(const std::string& file_name);
-
-    /// \brief Resize the size of rrset cache in runtime.
-    ///
-    /// \param The size to resize to
-    /// \return true
-    bool resize(uint32_t size);
-#endif
 
     /// \short Protected memebers, so they can be accessed by tests.
 protected:

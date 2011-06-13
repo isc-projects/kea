@@ -12,24 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
-#include <stdlib.h>
-
-#include <string>
-#include <boost/lexical_cast.hpp>
-
 #include <gtest/gtest.h>
-
-#include <dns/tests/unittest_util.h>
 #include <log/logger_support.h>
-
-using namespace std;
+#include <util/unittests/run_all.h>
 
 int
 main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
-
     isc::log::initLogger();
-
-    return (RUN_ALL_TESTS());
+    return (isc::util::unittests::run_all());
 }

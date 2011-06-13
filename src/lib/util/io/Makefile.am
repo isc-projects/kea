@@ -1,5 +1,3 @@
-SUBDIRS = . tests
-
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 lib_LTLIBRARIES = libutil_io.la

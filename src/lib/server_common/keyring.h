@@ -28,14 +28,20 @@
  * on updates.
  *
  * You simply initialize/load the keyring with isc::server_common::initKeyring
- * and then just use the key ring in in isc::server_common::keyring. It is
- * automatically reloaded, when the configuration updates, so you no longer
+ * and then just use the key ring referred to by isc::server_common::keyring. It
+ * is automatically reloaded, when the configuration updates, so you no longer
  * needs to care about it.
  *
  * If you want to keep a key (or session) for longer time or your application
- * is multithreaded, you might want to have a copy of the shared pointer.
- * Otherwise an update might replace the keyring and delete the keys in the
- * old one.
+ * is multithreaded, you might want to have a copy of the shared pointer to
+ * hold a reference. Otherwise an update might replace the keyring and delete
+ * the keys in the old one.
+ *
+ * Also note that, while the interface doesn't prevent application from
+ * modifying the keyring, it is not a good idea to do so. As mentioned above,
+ * it might get reloaded at any time, which would replace the modified keyring.
+ * The possibility to modify it is side effect of simpler implementation and
+ * shorter code, not a goal.
  */
 
 namespace isc {

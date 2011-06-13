@@ -17,9 +17,9 @@
 
 #include <log/logger.h>
 #include <log/logger_impl.h>
+#include <log/logger_name.h>
 #include <log/message_dictionary.h>
 #include <log/message_types.h>
-#include <log/root_logger_name.h>
 
 #include <util/strutil.h>
 
@@ -28,10 +28,9 @@ using namespace std;
 namespace isc {
 namespace log {
 
-// Initialize Logger implementation.  Does not check whether the implementation
-// has already been initialized - that was done by the caller (getLoggerPtr()).
+// Initialize Logger.
 void Logger::initLoggerImpl() {
-    loggerptr_ = new LoggerImpl(name_, infunc_);
+    loggerptr_ = new LoggerImpl(name_);
 }
 
 // Destructor.
@@ -75,6 +74,14 @@ Logger::getDebugLevel() {
     return (getLoggerPtr()->getDebugLevel());
 }
 
+// Effective debug level (only relevant if messages of severity DEBUG are being
+// logged).
+
+int
+Logger::getEffectiveDebugLevel() {
+    return (getLoggerPtr()->getEffectiveDebugLevel());
+}
+
 // Check on the current severity settings
 
 bool
@@ -112,14 +119,14 @@ Logger::isFatalEnabled() {
 // Output methods
 
 void
-Logger::output(const char* sevText, const string& message) {
-    getLoggerPtr()->outputRaw(sevText, message);
+Logger::output(const Severity& severity, const std::string& message) {
+    getLoggerPtr()->outputRaw(severity, message);
 }
 
 Logger::Formatter
 Logger::debug(int dbglevel, const isc::log::MessageID& ident) {
     if (isDebugEnabled(dbglevel)) {
-        return (Formatter("DEBUG", getLoggerPtr()->lookupMessage(ident),
+        return (Formatter(DEBUG, getLoggerPtr()->lookupMessage(ident),
                           this));
     } else {
         return (Formatter());
@@ -129,7 +136,7 @@ Logger::debug(int dbglevel, const isc::log::MessageID& ident) {
 Logger::Formatter
 Logger::info(const isc::log::MessageID& ident) {
     if (isInfoEnabled()) {
-        return (Formatter("INFO ", getLoggerPtr()->lookupMessage(ident),
+        return (Formatter(INFO, getLoggerPtr()->lookupMessage(ident),
                           this));
     } else {
         return (Formatter());
@@ -139,7 +146,7 @@ Logger::info(const isc::log::MessageID& ident) {
 Logger::Formatter
 Logger::warn(const isc::log::MessageID& ident) {
     if (isWarnEnabled()) {
-        return (Formatter("WARN ", getLoggerPtr()->lookupMessage(ident),
+        return (Formatter(WARN, getLoggerPtr()->lookupMessage(ident),
                           this));
     } else {
         return (Formatter());
@@ -149,7 +156,7 @@ Logger::warn(const isc::log::MessageID& ident) {
 Logger::Formatter
 Logger::error(const isc::log::MessageID& ident) {
     if (isErrorEnabled()) {
-        return (Formatter("ERROR", getLoggerPtr()->lookupMessage(ident),
+        return (Formatter(ERROR, getLoggerPtr()->lookupMessage(ident),
                           this));
     } else {
         return (Formatter());
@@ -159,22 +166,18 @@ Logger::error(const isc::log::MessageID& ident) {
 Logger::Formatter
 Logger::fatal(const isc::log::MessageID& ident) {
     if (isFatalEnabled()) {
-        return (Formatter("FATAL", getLoggerPtr()->lookupMessage(ident),
+        return (Formatter(FATAL, getLoggerPtr()->lookupMessage(ident),
                           this));
     } else {
         return (Formatter());
     }
 }
 
-bool Logger::operator==(Logger& other) {
+// Comparison (testing only)
+
+bool
+Logger::operator==(Logger& other) {
     return (*getLoggerPtr() == *other.getLoggerPtr());
-}
-
-// Protected methods (used for testing)
-
-void
-Logger::reset() {
-    LoggerImpl::reset();
 }
 
 } // namespace log

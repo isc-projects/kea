@@ -60,6 +60,15 @@ private:
     set<string> configured_sources_;
 };
 
+/// A derived \c AuthConfigParser for the version value
+/// (which is not used at this moment)
+class VersionConfig : public AuthConfigParser {
+public:
+    VersionConfig() {}
+    virtual void build(ConstElementPtr) {};
+    virtual void commit() {};
+};
+
 void
 DatasourcesConfig::build(ConstElementPtr config_value) {
     BOOST_FOREACH(ConstElementPtr datasrc_elem, config_value->listValue()) {
@@ -293,6 +302,11 @@ createAuthConfigParser(AuthSrv& server, const std::string& config_id,
         // we may introduce dynamic registration of configuration parsers,
         // and then this test can be done in a cleaner and safer way.
         return (new ThrowerCommitConfig());
+    } else if (config_id == "version") {
+        // Currently, the version identifier is ignored, but it should
+        // later be used to mark backwards incompatible changes in the
+        // config data
+        return (new VersionConfig());
     } else {
         isc_throw(AuthConfigError, "Unknown configuration identifier: " <<
                   config_id);
