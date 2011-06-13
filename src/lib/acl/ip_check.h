@@ -15,9 +15,11 @@
 #ifndef __IP_CHECK_H
 #define __IP_CHECK_H
 
-#include <boost/lexical_cast.hpp>
+#include <cassert>
 #include <utility>
 #include <vector>
+
+#include <boost/lexical_cast.hpp>
 
 #include <stdint.h>
 #include <arpa/inet.h>
@@ -41,7 +43,7 @@ namespace acl {
 ///
 /// The function is templated on the data type of the mask.
 ///
-/// \param masksize Size of the mask.  This must be between 1 and 8*sizeof(T).
+/// \param masksize Size of the mask.  This must be between 0 and 8*sizeof(T).
 ///        An out of range exception is thrown if this is not the case.
 ///
 /// \return Value with the most significant "masksize" bits set.
@@ -69,9 +71,16 @@ T createNetmask(size_t masksize) {
         // the expression below will overflow.
 
         return (~((1 << (8 * sizeof(T) - masksize)) - 1));
+
+    } else if (masksize == 0) {
+
+        // Simplifies logic elsewhere we we are allowed to cope with a mask
+        // size of 0.
+
+        return (0);
     }
 
-    isc_throw(isc::OutOfRange, "mask size must be between 1 and " <<
+    isc_throw(isc::OutOfRange, "mask size must be between 0 and " <<
                                8 * sizeof(T));
 }
 
@@ -87,16 +96,16 @@ T createNetmask(size_t masksize) {
 ///
 /// \param addrmask Address and/or address/mask.  The string should be passed
 ///                 without leading or trailing spaces.
-/// \param defmask  Default value of the mask size, used if no mask is given.
-/// \param maxmask  Maximum valid value of the mask size.
+/// \param maxmask  Default value of the mask size, used if no mask is given.
+///                 It is also the maximum permitted value of the mask.
 ///
 /// \return Pair of (string, uint32) holding the address string and the mask
 ///         size value.
 
 std::pair<std::string, uint32_t>
-splitIpAddress(const std::string& addrmask, uint32_t defmask, uint32_t maxmask){
+splitIpAddress(const std::string& addrmask, uint32_t maxmask) {
 
-    uint32_t masksize = defmask;
+    uint32_t masksize = maxmask;
 
     // See if a mask size was given
     std::vector<std::string> components = isc::util::str::tokens(addrmask, "/");
@@ -176,7 +185,7 @@ public:
     {
         // Split the address into address part and mask.
         std::pair<std::string, uint32_t> result =
-            splitIpAddress(address, 8 * sizeof(uint32_t), 8 * sizeof(uint32_t));
+            splitIpAddress(address, 8 * sizeof(uint32_t));
 
         // Try to convert the address.
         int status = inet_pton(AF_INET, result.first.c_str(), &address_);
@@ -299,8 +308,217 @@ public:
 
     uint32_t    address_;   ///< IPv4 address
     size_t      masksize_;  ///< Mask size passed to constructor
-    bool        inverse_;   ///< test for equality or inequality
+    bool        inverse_;   ///< Test for equality or inequality
     uint32_t    netmask_;   ///< Network mask applied to match
+
+};
+
+
+
+// Used for an assertion check
+namespace {
+bool isNonZero(uint8_t i) {
+    return (i != 0);
+}
+} // Anonymous namespace
+
+/// \brief IPV6 Check
+///
+/// This class performs a match between an IPv6 address specified in an ACL
+/// (IP address, network mask and a flag indicating whether the check should
+/// be for a match or for a non-match) and a given IP address.
+///
+/// \param Context Structure holding address to be matched.
+
+template <typename Context>
+class Ipv6Check : public Check<Context> {
+public:
+
+    // Size of array to old IPV6 address.
+    static const size_t IPV6_SIZE = sizeof(struct in6_addr);
+
+    /// \brief IPV6 Constructor
+    ///
+    /// Constructs an IPv6 Check object from a network address given as a
+    /// 16-byte array in network-byte order.
+    ///
+    /// \param address IP address to check for (as an address in network-byte
+    ///        order).
+    /// \param mask The network mask specified as an integer between 1 and
+    ///        128 This determines the number of bits in the mask to check.
+    ///        An exception will be thrown if the number is not within these
+    ///        bounds.
+    /// \param inverse If false (the default), matches() returns true if the
+    ///        condition matches.  If true, matches() returns true if the
+    ///        condition does not match.
+    Ipv6Check(const uint8_t* address, size_t masksize = 8 * IPV6_SIZE,
+              bool inverse = false) :
+        address_(address, address + IPV6_SIZE), masksize_(masksize),
+        inverse_(inverse), netmask_(IPV6_SIZE, 0), netcount_(0)
+    {
+        setNetmask();
+    }
+
+
+
+    /// \brief String Constructor
+    ///
+    /// Constructs an IPv6 Check object from a network address and size of mask
+    /// given as a string of the form "a.b.c.d/n", where the "/n" part is
+    /// optional.
+    ///
+    /// \param address IP address and netmask in the form "<v6-address>/n" (where
+    ///        the "/n" part is optional).
+    /// \param inverse If false (the default), matches() returns true if the
+    ///        condition matches.  If true, matches() returns true if the
+    ///        condition does not match.
+    Ipv6Check(const std::string& address, bool inverse = false) :
+        address_(IPV6_SIZE, 0), masksize_(8 * IPV6_SIZE),
+        inverse_(inverse), netmask_(IPV6_SIZE, 0), netcount_(0)
+    {
+        // Split the address into address part and mask.
+        std::pair<std::string, uint32_t> result =
+            splitIpAddress(address, 8 * IPV6_SIZE);
+
+        // Try to convert the address.
+        int status = inet_pton(AF_INET6, result.first.c_str(), &address_[0]);
+        if (status == 0) {
+            isc_throw(isc::InvalidParameter, "address/masksize of " <<
+                      address << " is not valid IPV6 address");
+        }
+
+        // All done, so finish initialization.
+        masksize_ = result.second;
+        setNetmask();
+    }
+
+
+
+    /// \brief Destructor
+    virtual ~Ipv6Check() {}
+
+
+
+    /// \brief The check itself
+    ///
+    /// Matches the passed argument to the condition stored here.  Different
+    /// specialisations are provided for different argument types, so the
+    /// link will fail if used for a type for which no match is provided.
+    ///
+    /// \param context Information to be matched
+    virtual bool matches(const Context& context) const = 0;
+
+
+
+    /// \brief Estimated cost
+    ///
+    /// Assume that the cost of the match is linear and depends on the number
+    /// of comparison operations.
+    virtual unsigned cost() const {
+        return (IPV6_SIZE);             // Up to 16 checks
+    }
+
+
+
+    ///@{
+    /// Access methods - mainly for testing
+
+    /// \return Stored IP address
+    std::vector<uint8_t> getAddress() const {
+        return (address_);
+    }
+
+    /// \return Network mask applied to match
+    std::vector<uint8_t> getNetmask() const {
+        return (netmask_);
+    }
+
+    /// \return Mask size given to constructor
+    size_t getMasksize() const {
+        return (masksize_);
+    }
+
+    /// \return Setting of inverse flag
+    bool getInverse() {
+        return (inverse_);
+    }
+    ///@}
+
+    /// \brief Set Network Mask
+    ///
+    /// Sets up the network mask from the mask size.  This involves setting
+    /// mask in each byte of the network mask.
+    void setNetmask() {
+
+        // Validate that the mask is valid.
+        if ((masksize_ >= 1) && (masksize_ <=  8 * IPV6_SIZE)) {
+
+            // Loop, setting the bits in the set of mask bytes until all the
+            // specified bits have been used up.  The netmask array was
+            // initialized to zero in the constructor.
+            assert(netcount_ == 0);     // Set in constructor
+            assert(std::find_if(netmask_.begin(), netmask_.end(), isNonZero) ==
+                   netmask_.end());
+
+            size_t bits_left = masksize_;   // Bits remaining to set
+            while (bits_left > 0) {
+                if (bits_left >= 8) {
+                    netmask_[netcount_] = ~0;  // All bits set
+                    bits_left -= 8;
+
+                } else if (bits_left > 0) {
+                    netmask_[netcount_] = createNetmask<uint8_t>(bits_left);
+                    bits_left = 0;
+
+                }
+
+                // One more byte to test against
+                ++netcount_;
+            }
+        } else {
+            isc_throw(isc::OutOfRange,
+                      "mask size of " << masksize_ << " is invalid " <<
+                      "for the data type which is " << sizeof(uint32_t) <<
+                      " bytes long");
+        }
+    }
+
+    /// \brief Comparison
+    ///
+    /// This is the actual comparison function that checks the IP address passed
+    /// to this class with the matching information in the class itself.  It is
+    /// expected to be called from matches().
+    ///
+    /// \param address Address (in network byte order) to match against the
+    ///                check condition in the class.  This is expected to
+    ///                be IPV6_SIZE bytes long.
+    ///
+    /// \return true if the address matches, false if it does not.
+    virtual bool compare(const uint8_t* address) const {
+
+        // To check that the address given matches the stored network address
+        // and netmask, we check the simple condition that:
+        //
+        //     address_given & netmask_ == stored_address & netmask_
+        //
+        // The result is checked for all bytes for which there are bits set in
+        // the network mask.  We stop at the first non-match.
+        bool match = true;
+        for (size_t i = 0; (i < netcount_) && match; ++i) {
+            match = ((address[i] & netmask_[i]) == (address_[i] & netmask_[i]));
+        }
+
+        // As with the V4 check, return the XOR with the inverse flag.
+        return (match != inverse_);
+    }
+
+    // Member variables
+
+    std::vector<uint8_t>    address_;   ///< IPv6 address
+    size_t                  masksize_;  ///< Mask size passed to constructor
+    bool                    inverse_;   ///< Test for equality or inequality
+    std::vector<uint8_t>    netmask_;   ///< Network mask applied to match
+    size_t                  netcount_;  ///< Number of bytes in mask to test
 
 };
 
