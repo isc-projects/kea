@@ -154,7 +154,9 @@ public:
     ///
     /// \return Pointer to the cloned object.  It is the caller's responsibility
     ///         to delete this object.
-    virtual IpBaseCheck* clone() const = 0;
+    virtual IpBaseCheck* clone() const {
+        return (0);
+    }
 };
 
 
@@ -233,7 +235,7 @@ public:
     /// link will fail if used for a type for which no match is provided.
     ///
     /// \param context Information to be matched
-    virtual bool matches(const Context& context) const = 0;
+    virtual bool matches(const Context& context) const;
 
     /// \brief Estimated cost
     ///
@@ -447,7 +449,7 @@ public:
     /// link will fail if used for a type for which no match is provided.
     ///
     /// \param context Information to be matched
-    virtual bool matches(const Context& context) const = 0;
+    virtual bool matches(const Context& context) const;
 
     /// \brief Estimated cost
     ///
