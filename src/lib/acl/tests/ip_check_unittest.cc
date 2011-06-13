@@ -20,6 +20,29 @@
 using namespace isc::acl;
 using namespace std;
 
+// Provide specializations for a simple joint struct holding both an
+// IPV4 address and an IPV6 address
+
+typedef struct {
+    bool        isv4;
+    uint32_t    v4addr;
+    uint8_t     v6addr[16];
+} GeneralAddress;
+
+namespace isc  {
+namespace acl {
+template <>
+bool Ipv4Check<GeneralAddress>::matches(const GeneralAddress& addr) const {
+    return (addr.isv4 ? compare(addr.v4addr) : false);
+}
+
+template <>
+bool Ipv6Check<GeneralAddress>::matches(const GeneralAddress& addr) const {
+    return (addr.isv4 ? false : compare(addr.v6addr));
+}
+} // namespace acl
+} // namespace isc
+
 /// *** Free Function Tests ***
 
 TEST(IpFunctionCheck, CreateNetmask) {
@@ -76,33 +99,34 @@ TEST(IpFunctionCheck, SplitIp) {
 // In this case, the match will check a uint32_t variable representing an IPV4
 // address.
 
-class DerivedV4Check : public Ipv4Check<uint32_t> {
+class DerivedV4Check : public Ipv4Check<GeneralAddress> {
 public:
     // Basic (and default) constructor
     DerivedV4Check(uint32_t address = 1, size_t masksize = 32,
                    bool inverse = false) :
-                   Ipv4Check<uint32_t>(address, masksize, inverse)
+                   Ipv4Check<GeneralAddress>(address, masksize, inverse)
     {}
 
     // String constructor
     DerivedV4Check(const string& address, bool inverse = false) :
-        Ipv4Check<uint32_t>(address, inverse)
+        Ipv4Check<GeneralAddress>(address, inverse)
     {}
 
     // Copy constructor
-    DerivedV4Check(const DerivedV4Check& other) : Ipv4Check<uint32_t>(other)
+    DerivedV4Check(const DerivedV4Check& other) :
+        Ipv4Check<GeneralAddress>(other)
     {}
 
     // Assignment operator
     DerivedV4Check& operator=(const DerivedV4Check& other) {
         if (this != &other) {
-            Ipv4Check<uint32_t>::operator=(other);
+            Ipv4Check<GeneralAddress>::operator=(other);
         }
         return (*this);
     }
 
     // Clone method
-    virtual IpBaseCheck<uint32_t>* clone() const {
+    virtual IpBaseCheck<GeneralAddress>* clone() const {
         return (new DerivedV4Check(*this));
     }
 
@@ -112,7 +136,10 @@ public:
 
     // Concrete implementation of abstract method
     virtual bool matches(const uint32_t& context) const {
-        return (compare(context));
+        GeneralAddress gen;
+        gen.isv4 = true;
+        gen.v4addr = context;
+        return (Ipv4Check<GeneralAddress>::matches(gen));  // Call parent method
     }
 };
 
@@ -264,25 +291,25 @@ TEST(Ipv4Check, V4Compare) {
 // In this case, the match will check a vector of uint8_t s representing an IPV6
 // address.
 
-class DerivedV6Check : public Ipv6Check<vector<uint8_t> > {
+class DerivedV6Check : public Ipv6Check<GeneralAddress> {
 public:
     // default constructor
-    DerivedV6Check() : Ipv6Check<vector<uint8_t> >()
+    DerivedV6Check() : Ipv6Check<GeneralAddress>()
     {}
 
     // Basic constructor
     DerivedV6Check(const uint8_t* address, size_t masksize = 128,
                    bool inverse = false) :
-                   Ipv6Check<vector<uint8_t> >(address, masksize, inverse)
+                   Ipv6Check<GeneralAddress>(address, masksize, inverse)
     {}
 
     // String constructor
     DerivedV6Check(const string& address, bool inverse = false) :
-        Ipv6Check<vector<uint8_t> >(address, inverse)
+        Ipv6Check<GeneralAddress>(address, inverse)
     {}
 
     // Clone method
-    virtual IpBaseCheck<vector<uint8_t> >* clone() const {
+    virtual IpBaseCheck<GeneralAddress>* clone() const {
         return (new DerivedV6Check(*this));
     }
 
@@ -292,7 +319,10 @@ public:
 
     // Concrete implementation of abstract method
     virtual bool matches(const vector<uint8_t>& context) const {
-        return (compare(&context[0])); // (compare(context));
+        GeneralAddress gen;
+        gen.isv4 = false;
+        copy(context.begin(), context.end(), gen.v6addr);
+        return (Ipv6Check<GeneralAddress>::matches(gen));  // Parent method
     }
 };
 
@@ -548,29 +578,6 @@ TEST(Ipv6Check, V6Compare) {
 
 // *** IP Tests ***
 
-// Provide specializations for a simple joint struct holding both an
-// IPV4 address and an IPV6 address
-
-typedef struct {
-    bool        isv4;
-    uint32_t    v4addr;
-    uint8_t     v6addr[16];
-} GeneralAddress;
-
-namespace isc  {
-namespace acl {
-template <>
-bool Ipv4Check<GeneralAddress>::matches(const GeneralAddress& addr) const {
-    return (addr.isv4 ? compare(addr.v4addr) : false);
-}
-
-template <>
-bool Ipv6Check<GeneralAddress>::matches(const GeneralAddress& addr) const {
-    return (addr.isv4 ? false : compare(addr.v6addr));
-}
-} // namespace acl
-} // namespace isc
-
 TEST(IpCheck, V4Test) {
     IpCheck<GeneralAddress> acl("192.168.132.255/16");
                                //c0  a8  84  ff
@@ -597,7 +604,7 @@ TEST(IpCheck, V4Test) {
     IpCheck<GeneralAddress> acl2("192.168.132.255/16", true);
     test.isv4 = true;
     test.v4addr = htonl(0xc0a884ff);
-    EXPECT_FALSE(acl.matches(test));
+    EXPECT_FALSE(acl2.matches(test));
 }
 
 TEST(IpCheck, V6Test) {
@@ -608,10 +615,10 @@ TEST(IpCheck, V6Test) {
     copy(V6ADDR_2, V6ADDR_2 + sizeof(V6ADDR_2), test.v6addr);
     EXPECT_TRUE(acl.matches(test));
 
-    copy(V6ADDR_2, V6ADDR_2_52 + sizeof(V6ADDR_2_52), test.v6addr);
+    copy(V6ADDR_2_52, V6ADDR_2_52 + sizeof(V6ADDR_2_52), test.v6addr);
     EXPECT_TRUE(acl.matches(test));
 
-    copy(V6ADDR_2, V6ADDR_2_48 + sizeof(V6ADDR_2_48), test.v6addr);
+    copy(V6ADDR_2_48, V6ADDR_2_48 + sizeof(V6ADDR_2_48), test.v6addr);
     EXPECT_FALSE(acl.matches(test));
 
     test.isv4 = true;
@@ -623,5 +630,5 @@ TEST(IpCheck, V6Test) {
     IpCheck<GeneralAddress> acl2(string(V6ADDR_2_STRING) + string("/52"), true);
     test.isv4 = false;
     copy(V6ADDR_2, V6ADDR_2 + sizeof(V6ADDR_2), test.v6addr);
-    EXPECT_FALSE(acl.matches(test));
+    EXPECT_FALSE(acl2.matches(test));
 }
