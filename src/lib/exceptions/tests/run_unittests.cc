@@ -17,5 +17,8 @@
 int
 main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
+
+    // Unlike other tests we cannot use our wrapper for RUN_ALL_TESTS()
+    // due to dependency.
     return (RUN_ALL_TESTS());
 }

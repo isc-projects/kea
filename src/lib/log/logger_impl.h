@@ -18,15 +18,19 @@
 #include <stdarg.h>
 #include <time.h>
 
+#include <iostream>
 #include <cstdlib>
 #include <string>
 #include <map>
 #include <utility>
 
-#include <log/debug_levels.h>
-#include <log/logger.h>
+
+// log4cplus logger header file
+#include <log4cplus/logger.h>
+
+// BIND-10 logger files
+#include <log/logger_level_impl.h>
 #include <log/message_types.h>
-#include <log/root_logger_name.h>
 
 namespace isc {
 namespace log {
@@ -35,46 +39,36 @@ namespace log {
 ///
 /// The logger uses a "pimpl" idiom for implementation, where the base logger
 /// class contains little more than a pointer to the implementation class, and
-/// all actions are carried out by the latter.  This class is an implementation
-/// class that just outputs to stdout.
+/// all actions are carried out by the latter.
+///
+/// This particular implementation is based on log4cplus (from sourceforge:
+/// http://log4cplus.sourceforge.net).  Particular items of note:
+///
+/// a) BIND 10 loggers have names of the form "program.sublogger".  In other
+/// words, each of the loggers is a sub-logger of the main program logger.
+/// In log4cplus, there is a root logger (called "root" according to the
+/// documentation, but actually unnamed) and all loggers created are subloggers
+/// if it.
+///
+/// In this implementation, the log4cplus root logger is unused.  Instead, the
+/// BIND 10 root logger is created as a child of the log4cplus root logger,
+/// and all other loggers used in the program are created as sub-loggers of
+/// that.  In this way, the logging system can just include the name of the
+/// logger in each message without the need to specially consider if the
+/// message is the root logger or not.
+///
+/// b) The idea of debug levels is implemented.  See logger_level.h and
+/// logger_level_impl.h for more details on this.
 
 class LoggerImpl {
 public:
-
-    /// \brief Information About Logger
-    ///
-    /// Holds a information about a logger, namely its severity and its debug
-    /// level.  This could be a std::pair, except that it gets confusing when
-    /// accessing the LoggerInfoMap: that returns a pair, so we to reference
-    /// elements we would use constructs like ((i->first).second);
-    struct LoggerInfo {
-        isc::log::Severity  severity;
-        int                 dbglevel;
-
-        LoggerInfo(isc::log::Severity sev = isc::log::INFO,
-            int dbg = MIN_DEBUG_LEVEL) : severity(sev), dbglevel(dbg)
-        {}
-    };
-
-
-    /// \brief Information About All Loggers
-    ///
-    /// Information about all loggers in the system - except the root logger -
-    /// is held in a map, linking name of the logger (excluding the root
-    /// name component) and its set severity and debug levels.  The root
-    /// logger information is held separately.
-    typedef std::map<std::string, LoggerInfo>   LoggerInfoMap;
-
 
     /// \brief Constructor
     ///
     /// Creates a logger of the specific name.
     ///
     /// \param name Name of the logger.
-    ///
-    /// \param exit_delete This argument is present to get round a bug in
-    /// the log4cxx implementation.  It is unused here.
-    LoggerImpl(const std::string& name, bool);
+    LoggerImpl(const std::string& name);
 
 
     /// \brief Destructor
@@ -94,16 +88,16 @@ public:
     ///
     /// \param severity Severity level to log
     /// \param dbglevel If the severity is DEBUG, this is the debug level.
-    /// This can be in the range 1 to 100 and controls the verbosity.  A value
+    /// This can be in the range 0 to 99 and controls the verbosity.  A value
     /// outside these limits is silently coerced to the nearest boundary.
-    virtual void setSeverity(isc::log::Severity severity, int dbglevel = 1);
+    virtual void setSeverity(Severity severity, int dbglevel = 1);
 
 
     /// \brief Get Severity Level for Logger
     ///
     /// \return The current logging level of this logger.  In most cases though,
     /// the effective logging level is what is required.
-    virtual isc::log::Severity getSeverity();
+    virtual Severity getSeverity();
 
 
     /// \brief Get Effective Severity Level for Logger
@@ -111,14 +105,21 @@ public:
     /// \return The effective severity level of the logger.  This is the same
     /// as getSeverity() if the logger has a severity level set, but otherwise
     /// is the severity of the parent.
-    virtual isc::log::Severity getEffectiveSeverity();
+    virtual Severity getEffectiveSeverity();
 
 
-    /// \brief Return DEBUG Level
+    /// \brief Return debug level
     ///
-    /// \return Current setting of debug level.  This is returned regardless of
-    /// whether the
+    /// \return Current setting of debug level.  This will be zero if the
+    ///         the current severity level is not DEBUG.
     virtual int getDebugLevel();
+
+
+    /// \brief Return effective debug level
+    ///
+    /// \return Current setting of effective debug level.  This will be zero if
+    ///         the current effective severity level is not DEBUG.
+    virtual int getEffectiveDebugLevel();
 
 
     /// \brief Returns if Debug Message Should Be Output
@@ -126,52 +127,40 @@ public:
     /// \param dbglevel Level for which debugging is checked.  Debugging is
     /// enabled only if the logger has DEBUG enabled and if the dbglevel
     /// checked is less than or equal to the debug level set for the logger.
-    virtual bool
-    isDebugEnabled(int dbglevel = MIN_DEBUG_LEVEL);
+    virtual bool isDebugEnabled(int dbglevel = MIN_DEBUG_LEVEL) {
+        Level level(DEBUG, dbglevel);
+        return logger_.isEnabledFor(LoggerLevelImpl::convertFromBindLevel(level));
+    }
 
     /// \brief Is INFO Enabled?
     virtual bool isInfoEnabled() {
-        return (isEnabled(isc::log::INFO));
+        return (logger_.isEnabledFor(log4cplus::INFO_LOG_LEVEL));
     }
 
     /// \brief Is WARNING Enabled?
     virtual bool isWarnEnabled() {
-        return (isEnabled(isc::log::WARN));
+        return (logger_.isEnabledFor(log4cplus::WARN_LOG_LEVEL));
     }
 
     /// \brief Is ERROR Enabled?
     virtual bool isErrorEnabled() {
-        return (isEnabled(isc::log::ERROR));
+        return (logger_.isEnabledFor(log4cplus::ERROR_LOG_LEVEL));
     }
 
     /// \brief Is FATAL Enabled?
     virtual bool isFatalEnabled() {
-        return (isEnabled(isc::log::FATAL));
-    }
-
-
-    /// \brief Common Severity check
-    ///
-    /// Implements the common severity check.  As an optimisation, this checks
-    /// to see if any logger-specific levels have been set (a quick check as it
-    /// just involves seeing if the collection of logger information is empty).
-    /// if not, it returns the information for the root level; if so, it has
-    /// to take longer and look up the information in the map holding the
-    /// logging details.
-    virtual bool isEnabled(isc::log::Severity severity) {
-        if (logger_info_.empty()) {
-            return (root_logger_info_.severity <= severity);
-        }
-        else {
-            return (getSeverity() <= severity);
-        }
+        return (logger_.isEnabledFor(log4cplus::FATAL_LOG_LEVEL));
     }
 
     /// \brief Raw output
     ///
     /// Writes the message with time into the log. Used by the Formatter
     /// to produce output.
-    void outputRaw(const char* sev_text, const std::string& message);
+    ///
+    /// \param severity Severity of the message. (This controls the prefix
+    ///        label output with the message text.)
+    /// \param message Text of the message.
+    void outputRaw(const Severity& severity, const std::string& message);
 
     /// \brief Look up message text in dictionary
     ///
@@ -188,28 +177,9 @@ public:
         return (name_ == other.name_);
     }
 
-
-    /// \brief Reset Global Data
-    ///
-    /// Only used for testing, this clears all the logger information and
-    /// resets it back to default values.
-    static void reset() {
-        root_logger_info_ = LoggerInfo(isc::log::INFO, MIN_DEBUG_LEVEL);
-        logger_info_.clear();
-    }
-
-
 private:
-    bool                is_root_;           ///< true if a root logger
-    std::string         name_;              ///< Name of this logger
-
-    // Split the status of the root logger from this logger.  If - is will
-    // probably be the usual case - no per-logger setting is enabled, a
-    // quick check of logger_info_.empty() will return true and we can quickly
-    // return the root logger status without a length lookup in the map.
-
-    static LoggerInfo       root_logger_info_;  ///< Status of root logger
-    static LoggerInfoMap    logger_info_;       ///< Store of debug levels etc.
+    std::string         name_;              ///< Full name of this logger
+    log4cplus::Logger   logger_;            ///< Underlying log4cplus logger
 };
 
 } // namespace log

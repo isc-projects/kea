@@ -44,6 +44,9 @@ class MemoryDataSrc;
 namespace xfr {
 class AbstractXfroutClient;
 }
+namespace dns {
+class TSIGKeyRing;
+}
 }
 
 
@@ -374,6 +377,14 @@ public:
     /// \brief Assign an ASIO DNS Service queue to this Auth object
     void setDNSService(isc::asiodns::DNSService& dnss);
 
+    /// \brief Sets the keyring used for verifying and signing
+    ///
+    /// The parameter is pointer to shared pointer, because the automatic
+    /// reloading routines of tsig keys replace the actual keyring object.
+    /// It is expected the pointer will point to some statically-allocated
+    /// object, it doesn't take ownership of it.
+    void setTSIGKeyRing(const boost::shared_ptr<isc::dns::TSIGKeyRing>*
+                        keyring);
 
 private:
     AuthSrvImpl* impl_;
