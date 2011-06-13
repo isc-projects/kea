@@ -16,10 +16,12 @@
 #define __IP_CHECK_H
 
 #include <cassert>
+#include <iterator>
 #include <utility>
 #include <vector>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <stdint.h>
 #include <arpa/inet.h>
@@ -136,6 +138,27 @@ splitIpAddress(const std::string& addrmask, uint32_t maxmask) {
 }
 
 
+/// \brief IP Base
+///
+/// Base class for both the Ipv4 and Ipv4 check classes.  The only thing this
+/// supplies over and above the Check class is a clone() method, to return
+/// a pointer to a newly-allocated copy of itself.
+
+template <typename Context>
+class IpBaseCheck : public Check<Context> {
+public:
+    /// \brief Clone Object
+    ///
+    /// Implemented by derived classes, this causes a class to create a copy
+    /// of itself and return a pointer to the object.
+    ///
+    /// \return Pointer to the cloned object.  It is the caller's responsibility
+    ///         to delete this object.
+    virtual IpBaseCheck* clone() const = 0;
+};
+
+
+
 /// \brief IPV4 Check
 ///
 /// This class performs a match between an IPv4 address specified in an ACL
@@ -145,7 +168,7 @@ splitIpAddress(const std::string& addrmask, uint32_t maxmask) {
 /// \param Context Structure holding address to be matched.
 
 template <typename Context>
-class Ipv4Check : public Check<Context> {
+class Ipv4Check : public IpBaseCheck<Context> {
 public:
     /// \brief IPV4 Constructor
     ///
@@ -166,8 +189,6 @@ public:
     {
         setNetmask();
     }
-
-
 
     /// \brief String Constructor
     ///
@@ -199,12 +220,11 @@ public:
         setNetmask();
     }
 
-
+    // Default copy constructor and assignment operator are correct for this
+    // class.
 
     /// \brief Destructor
     virtual ~Ipv4Check() {}
-
-
 
     /// \brief The check itself
     ///
@@ -215,8 +235,6 @@ public:
     /// \param context Information to be matched
     virtual bool matches(const Context& context) const = 0;
 
-
-
     /// \brief Estimated cost
     ///
     /// Assume that the cost of the match is linear and depends on the number
@@ -224,8 +242,6 @@ public:
     virtual unsigned cost() const {
         return (1);             // Single check on a 32-bit word
     }
-
-
 
     ///@{
     /// Access methods - mainly for testing
@@ -310,7 +326,6 @@ public:
     size_t      masksize_;  ///< Mask size passed to constructor
     bool        inverse_;   ///< Test for equality or inequality
     uint32_t    netmask_;   ///< Network mask applied to match
-
 };
 
 
@@ -331,11 +346,17 @@ bool isNonZero(uint8_t i) {
 /// \param Context Structure holding address to be matched.
 
 template <typename Context>
-class Ipv6Check : public Check<Context> {
+class Ipv6Check : public IpBaseCheck<Context> {
 public:
 
     // Size of array to old IPV6 address.
     static const size_t IPV6_SIZE = sizeof(struct in6_addr);
+
+    /// \brief Default Constructor
+    Ipv6Check() :
+        address_(IPV6_SIZE, 0), masksize_(0),
+        inverse_(false), netmask_(IPV6_SIZE, 0)
+    {}
 
     /// \brief IPV6 Constructor
     ///
@@ -354,12 +375,10 @@ public:
     Ipv6Check(const uint8_t* address, size_t masksize = 8 * IPV6_SIZE,
               bool inverse = false) :
         address_(address, address + IPV6_SIZE), masksize_(masksize),
-        inverse_(inverse), netmask_(IPV6_SIZE, 0), netcount_(0)
+        inverse_(inverse), netmask_(IPV6_SIZE, 0)
     {
         setNetmask();
     }
-
-
 
     /// \brief String Constructor
     ///
@@ -367,14 +386,14 @@ public:
     /// given as a string of the form "a.b.c.d/n", where the "/n" part is
     /// optional.
     ///
-    /// \param address IP address and netmask in the form "<v6-address>/n" (where
-    ///        the "/n" part is optional).
+    /// \param address IP address and netmask in the form "<v6-address>/n"
+    ///        (where the "/n" part is optional).
     /// \param inverse If false (the default), matches() returns true if the
     ///        condition matches.  If true, matches() returns true if the
     ///        condition does not match.
     Ipv6Check(const std::string& address, bool inverse = false) :
         address_(IPV6_SIZE, 0), masksize_(8 * IPV6_SIZE),
-        inverse_(inverse), netmask_(IPV6_SIZE, 0), netcount_(0)
+        inverse_(inverse), netmask_(IPV6_SIZE, 0)
     {
         // Split the address into address part and mask.
         std::pair<std::string, uint32_t> result =
@@ -392,12 +411,34 @@ public:
         setNetmask();
     }
 
+    /// \brief Copy constructor
+    Ipv6Check(const Ipv6Check& other) : IpBaseCheck<Context>(other),
+        address_(other.address_.begin(), other.address_.end()),
+        masksize_(other.masksize_), inverse_(other.inverse_),
+        netmask_(other.netmask_.begin(), other.netmask_.end())
+    {}
 
+    /// \brief Assignment operator
+    Ipv6Check& operator=(const Ipv6Check& other) {
+        if (this != &other) {
+            // Copy parent
+            IpBaseCheck<Context>::operator=(other);
+
+            // Copy this object
+            address_.clear();
+            std::copy(other.address_.begin(), other.address_.end(),
+                      std::back_inserter(address_));
+            masksize_ = other.masksize_;
+            inverse_ = other.inverse_;
+            netmask_.clear();
+            std::copy(other.netmask_.begin(), other.netmask_.end(),
+                      std::back_inserter(netmask_));
+        }
+        return (*this);
+    }
 
     /// \brief Destructor
     virtual ~Ipv6Check() {}
-
-
 
     /// \brief The check itself
     ///
@@ -408,8 +449,6 @@ public:
     /// \param context Information to be matched
     virtual bool matches(const Context& context) const = 0;
 
-
-
     /// \brief Estimated cost
     ///
     /// Assume that the cost of the match is linear and depends on the number
@@ -417,8 +456,6 @@ public:
     virtual unsigned cost() const {
         return (IPV6_SIZE);             // Up to 16 checks
     }
-
-
 
     ///@{
     /// Access methods - mainly for testing
@@ -456,24 +493,21 @@ public:
             // Loop, setting the bits in the set of mask bytes until all the
             // specified bits have been used up.  The netmask array was
             // initialized to zero in the constructor.
-            assert(netcount_ == 0);     // Set in constructor
             assert(std::find_if(netmask_.begin(), netmask_.end(), isNonZero) ==
                    netmask_.end());
 
             size_t bits_left = masksize_;   // Bits remaining to set
+            int i = -1;                     // To allow pre-incrementing
             while (bits_left > 0) {
                 if (bits_left >= 8) {
-                    netmask_[netcount_] = ~0;  // All bits set
+                    netmask_[++i] = ~0;  // All bits set
                     bits_left -= 8;
 
                 } else if (bits_left > 0) {
-                    netmask_[netcount_] = createNetmask<uint8_t>(bits_left);
+                    netmask_[++i] = createNetmask<uint8_t>(bits_left);
                     bits_left = 0;
 
                 }
-
-                // One more byte to test against
-                ++netcount_;
             }
         } else {
             isc_throw(isc::OutOfRange,
@@ -489,12 +523,12 @@ public:
     /// to this class with the matching information in the class itself.  It is
     /// expected to be called from matches().
     ///
-    /// \param address Address (in network byte order) to match against the
-    ///                check condition in the class.  This is expected to
-    ///                be IPV6_SIZE bytes long.
+    /// \param testaddr Address (in network byte order) to test against the
+    ///                 check condition in the class.  This is expected to
+    ///                 be IPV6_SIZE bytes long.
     ///
     /// \return true if the address matches, false if it does not.
-    virtual bool compare(const uint8_t* address) const {
+    virtual bool compare(const uint8_t* testaddr) const {
 
         // To check that the address given matches the stored network address
         // and netmask, we check the simple condition that:
@@ -502,10 +536,16 @@ public:
         //     address_given & netmask_ == stored_address & netmask_
         //
         // The result is checked for all bytes for which there are bits set in
-        // the network mask.  We stop at the first non-match.
+        // the network mask.  We stop at the first non-match (or when we run
+        // out of bits in the network mask). (Note that the network mask
+        // represents a contiguous set of bits.  As such, as soon as we find
+        // a netmask byte of zeroes, we have run part the part of the address
+        // where we need to match.
+
         bool match = true;
-        for (size_t i = 0; (i < netcount_) && match; ++i) {
-            match = ((address[i] & netmask_[i]) == (address_[i] & netmask_[i]));
+        for (int i = 0; match && (i < IPV6_SIZE) && (netmask_[i] != 0); ++i){
+             match = ((testaddr[i] & netmask_[i]) ==
+                      (address_[i] & netmask_[i]));
         }
 
         // As with the V4 check, return the XOR with the inverse flag.
@@ -518,8 +558,88 @@ public:
     size_t                  masksize_;  ///< Mask size passed to constructor
     bool                    inverse_;   ///< Test for equality or inequality
     std::vector<uint8_t>    netmask_;   ///< Network mask applied to match
-    size_t                  netcount_;  ///< Number of bytes in mask to test
 
+};
+
+
+/// \brief Generic IP Address Check Object
+///
+/// This class performs a match between an IP address specified in an ACL
+/// (IP address (either V4 of V6), network mask and a flag indicating whether
+/// the check should be for a match or for a non-match) and a given IP address.
+///
+/// \param Context Structure holding address to be matched.
+
+template <typename Context>
+class IpCheck : public IpBaseCheck<Context> {
+public:
+
+    /// \brief String Constructor
+    ///
+    /// Constructs an IP Check object from a network address and size of mask
+    /// given as a string of the form "<address>/n", where the "/n" part is
+    /// optional.
+    ///
+    /// \param address IP address and netmask in the form "<address>/n"
+    ///        (where the "/n" part is optional).
+    /// \param inverse If false (the default), matches() returns true if the
+    ///        condition matches.  If true, matches() returns true if the
+    ///        condition does not match.
+    IpCheck(const std::string& address, bool inverse = false) {
+        try {
+            check_.reset(new Ipv4Check<Context>(address, inverse));
+            isv4_ = true;
+        } catch (isc::Exception&) {
+            check_.reset(new Ipv6Check<Context>(address, inverse));
+            isv4_ = false;
+        }
+    }
+
+    /// \brief Copy constructor
+    IpCheck(const IpCheck<Context>& other) : IpBaseCheck<Context>(other),
+                                             check_(other.check_->clone())
+    {}
+
+    /// \brief Assignment operator
+    IpCheck& operator=(const IpCheck& other) {
+        if (this != &other) {
+            IpBaseCheck<Context>::operator=(other);
+            check_.reset(other.check_->clone());
+        }
+    }
+
+    /// \brief Clone
+    IpBaseCheck<Context>* clone() const {
+        return (new IpCheck<Context>(*this));
+    }
+
+    /// \brief Destructor
+    virtual ~IpCheck() {}
+
+    /// \brief The check itself
+    ///
+    /// Matches the passed argument to the condition stored here.  Different
+    /// specialisations are provided for different argument types, so the
+    /// link will fail if used for a type for which no match is provided.
+    ///
+    /// \param context Information to be matched
+    virtual bool matches(const Context& context) const {
+        return (check_->matches(context));
+    }
+
+    /// \brief Estimated cost
+    ///
+    /// Assume that the cost of the match is linear and depends on the number
+    /// of comparison operations.
+    virtual unsigned cost() const {
+        return (check_->cost());
+    }
+
+private:
+    // Member variables
+
+    bool                                      isv4_;  ///< true if V4 address
+    boost::scoped_ptr<IpBaseCheck<Context> >  check_; ///< Check object
 };
 
 } // namespace acl
