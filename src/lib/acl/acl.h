@@ -71,6 +71,7 @@ public:
      */
     ACL(const Action& default_action) : default_action_(default_action)
     {}
+
     /**
      * \brief Pointer to the check.
      *
@@ -79,6 +80,7 @@ public:
      * together in future).
      */
     typedef boost::shared_ptr<const Check<Context> > ConstCheckPtr;
+
     /**
      * \brief The actual main function that decides.
      *
