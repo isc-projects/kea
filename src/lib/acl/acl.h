@@ -90,8 +90,9 @@ public:
      *     passed to the checks.
      */
     const Action& execute(const Context& context) const {
-        for (typename Entries::const_iterator i(entries_.begin());
-             i != entries_.end(); ++i) {
+        typename Entries::const_iterator end(entries_.end());
+        for (typename Entries::const_iterator i(entries_.begin()); i != end;
+             ++i) {
             if (i->first->matches(context)) {
                 return (i->second);
             }
@@ -126,7 +127,7 @@ protected:
      *
      * This is for testing purposes only.
      */
-    const Action& getDefaultAction() const {
+    const Action& get_default_action() const {
         return (default_action_);
     }
 };

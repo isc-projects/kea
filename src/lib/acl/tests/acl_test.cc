@@ -80,54 +80,54 @@ private:
     bool accepts_;
 };
 
-// Test version of the Acl class. It adds few methods to examine the protected
+// Test version of the ACL class. It adds few methods to examine the protected
 // data, but does not change the implementation.
 class TestACL : public ACL<Log> {
 public:
     TestACL() :
         ACL(DROP)
     {}
-    // Check the stored policy there
-    void checkPolicy(BasicAction ac) {
-        EXPECT_EQ(getDefaultAction(), ac);
+    // Check the stored default action there
+    void check_default_action(BasicAction ac) {
+        EXPECT_EQ(get_default_action(), ac);
     }
 };
 
 // The test fixture. Contains some members so they don't need to be manually
 // created each time and some convenience functions.
-class AclTest : public ::testing::Test {
+class ACLTest : public ::testing::Test {
 public:
-    AclTest() :
+    ACLTest() :
         next_check_(0)
     {}
     TestACL acl_;
     Log log_;
     size_t next_check_;
-    shared_ptr<Check<Log> > getCheck(bool accepts) {
+    shared_ptr<Check<Log> > get_check(bool accepts) {
         return (shared_ptr<Check<Log> >(new ConstCheck(accepts,
                                                        next_check_++)));
     }
 };
 
 /*
- * This tests the policy (default return value) and that nothing is run
- * if nothing is inserted (it's hard to imagine otherwise though).
+ * This tests the default action and that nothing is run if nothing is
+ * inserted (it's hard to imagine otherwise though).
  *
  * We use the default ACL unchanged from the test class.
  */
-TEST_F(AclTest, emptyPolicy) {
-    acl_.checkPolicy(DROP);
+TEST_F(ACLTest, empty_rule) {
+    acl_.check_default_action(DROP);
     EXPECT_EQ(DROP, acl_.execute(log_));
     // No test was run
     log_.checkFirst(0);
 }
 
 /*
- * This tests the policy in case no check matches.
+ * This tests the default action in case no check matches.
  */
-TEST_F(AclTest, policy) {
-    acl_.append(getCheck(false), ACCEPT);
-    acl_.append(getCheck(false), REJECT);
+TEST_F(ACLTest, no_match) {
+    acl_.append(get_check(false), ACCEPT);
+    acl_.append(get_check(false), REJECT);
     EXPECT_EQ(DROP, acl_.execute(log_));
     // The first two checks were actually run (and didn't match)
     log_.checkFirst(2);
@@ -137,10 +137,10 @@ TEST_F(AclTest, policy) {
  * Checks that it takes the first matching check and returns the
  * value. Also checks that the others aren't run at all.
  */
-TEST_F(AclTest, check) {
-    acl_.append(getCheck(false), ACCEPT);
-    acl_.append(getCheck(true), REJECT);
-    acl_.append(getCheck(true), ACCEPT);
+TEST_F(ACLTest, check) {
+    acl_.append(get_check(false), ACCEPT);
+    acl_.append(get_check(true), REJECT);
+    acl_.append(get_check(true), ACCEPT);
     EXPECT_EQ(REJECT, acl_.execute(log_));
     log_.checkFirst(2);
 }
