@@ -28,7 +28,7 @@ const size_t LOG_SIZE = 10;
 // This will remember which checks did run already.
 struct Log {
     // The actual log cells, if i-th check did run
-    bool run[LOG_SIZE];
+    mutable bool run[LOG_SIZE];
     Log() {
         // Nothing run yet
         for (size_t i(0); i < LOG_SIZE; ++i) {
@@ -57,7 +57,7 @@ struct Log {
 
 // This returns true or false every time, no matter what is passed to it.
 // But it logs that it did run.
-class ConstCheck : public Check<Log*> {
+class ConstCheck : public Check<Log> {
 public:
     ConstCheck(bool accepts, size_t log_num) :
         log_num_(log_num),
@@ -65,9 +65,14 @@ public:
     {
         assert(log_num < LOG_SIZE); // If this fails, the LOG_SIZE is too small
     }
-    typedef Log* LPtr;
-    virtual bool matches(const LPtr& log) const {
-        log->run[log_num_] = true;
+    /*
+     * This use of mutable log context is abuse for testing purposes.
+     * It is expected that the context will not be modified in the real
+     * applications of ACLs, but we want to know which checks were called
+     * and this is an easy way.
+     */
+    virtual bool matches(const Log& log) const {
+        log.run[log_num_] = true;
         return (accepts_);
     }
 private:
@@ -77,14 +82,14 @@ private:
 
 // Test version of the Acl class. It adds few methods to examine the protected
 // data, but does not change the implementation.
-class TestAcl : public Acl<Log*> {
+class TestACL : public ACL<Log> {
 public:
-    TestAcl() :
-        Acl(DROP)
+    TestACL() :
+        ACL(DROP)
     {}
     // Check the stored policy there
-    void checkPolicy(Action ac) {
-        EXPECT_EQ(policy_, ac);
+    void checkPolicy(BasicAction ac) {
+        EXPECT_EQ(getDefaultAction(), ac);
     }
 };
 
@@ -95,11 +100,11 @@ public:
     AclTest() :
         next_check_(0)
     {}
-    TestAcl acl_;
+    TestACL acl_;
     Log log_;
     size_t next_check_;
-    shared_ptr<Check<Log*> > getCheck(bool accepts) {
-        return (shared_ptr<Check<Log*> >(new ConstCheck(accepts,
+    shared_ptr<Check<Log> > getCheck(bool accepts) {
+        return (shared_ptr<Check<Log> >(new ConstCheck(accepts,
                                                         next_check_++)));
     }
 };
@@ -112,7 +117,7 @@ public:
  */
 TEST_F(AclTest, emptyPolicy) {
     acl_.checkPolicy(DROP);
-    EXPECT_EQ(DROP, acl_.execute(&log_));
+    EXPECT_EQ(DROP, acl_.execute(log_));
     // No test was run
     log_.checkFirst(0);
 }
@@ -123,7 +128,7 @@ TEST_F(AclTest, emptyPolicy) {
 TEST_F(AclTest, policy) {
     acl_.append(getCheck(false), ACCEPT);
     acl_.append(getCheck(false), REJECT);
-    EXPECT_EQ(DROP, acl_.execute(&log_));
+    EXPECT_EQ(DROP, acl_.execute(log_));
     // The first two checks were actually run (and didn't match)
     log_.checkFirst(2);
 }
@@ -136,7 +141,7 @@ TEST_F(AclTest, check) {
     acl_.append(getCheck(false), ACCEPT);
     acl_.append(getCheck(true), REJECT);
     acl_.append(getCheck(true), ACCEPT);
-    EXPECT_EQ(REJECT, acl_.execute(&log_));
+    EXPECT_EQ(REJECT, acl_.execute(log_));
     log_.checkFirst(2);
 }
 
