@@ -103,7 +103,7 @@ public:
     TestACL acl_;
     Log log_;
     size_t next_check_;
-    shared_ptr<Check<Log> > get_check(bool accepts) {
+    shared_ptr<Check<Log> > getCheck(bool accepts) {
         return (shared_ptr<Check<Log> >(new ConstCheck(accepts,
                                                        next_check_++)));
     }
@@ -126,8 +126,8 @@ TEST_F(ACLTest, emptyRule) {
  * This tests the default action in case no check matches.
  */
 TEST_F(ACLTest, noMatch) {
-    acl_.append(get_check(false), ACCEPT);
-    acl_.append(get_check(false), REJECT);
+    acl_.append(getCheck(false), ACCEPT);
+    acl_.append(getCheck(false), REJECT);
     EXPECT_EQ(DROP, acl_.execute(log_));
     // The first two checks were actually run (and didn't match)
     log_.checkFirst(2);
@@ -138,9 +138,9 @@ TEST_F(ACLTest, noMatch) {
  * value. Also checks that the others aren't run at all.
  */
 TEST_F(ACLTest, firstMatch) {
-    acl_.append(get_check(false), ACCEPT);
-    acl_.append(get_check(true), REJECT);
-    acl_.append(get_check(true), ACCEPT);
+    acl_.append(getCheck(false), ACCEPT);
+    acl_.append(getCheck(true), REJECT);
+    acl_.append(getCheck(true), ACCEPT);
     EXPECT_EQ(REJECT, acl_.execute(log_));
     log_.checkFirst(2);
 }
