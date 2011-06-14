@@ -214,7 +214,7 @@ class ConfigManager:
            is returned"""
         if module_name:
             if module_name in self.module_specs:
-                return self.module_specs[module_name]
+                return self.module_specs[module_name].get_full_spec()
             else:
                 # TODO: log error?
                 return {}
@@ -272,7 +272,12 @@ class ConfigManager:
             if type(cmd) == dict:
                 if 'module_name' in cmd and cmd['module_name'] != '':
                     module_name = cmd['module_name']
-                    answer = ccsession.create_answer(0, self.get_module_spec(module_name))
+                    spec = self.get_module_spec(cmd['module_name'])
+                    if type(spec) != type({}):
+                        # this is a ModuleSpec object.  Extract the
+                        # internal spec.
+                        spec = spec.get_full_spec()
+                    answer = ccsession.create_answer(0, spec)
                 else:
                     answer = ccsession.create_answer(1, "Bad module_name in get_module_spec command")
             else:

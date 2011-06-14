@@ -130,6 +130,9 @@ public:
         msg.setRcode(Rcode::NOERROR());
         msg.setHeaderFlag(Message::HEADERFLAG_RD);
         msg.addQuestion(question_);
+        EDNSPtr msg_edns(new EDNS());
+        msg_edns->setUDPSize(Message::DEFAULT_MAX_EDNS0_UDPSIZE);
+        msg.setEDNS(msg_edns);
         MessageRenderer renderer(*msgbuf_);
         msg.toWire(renderer);
         MessageRenderer renderer2(*expected_buffer_);

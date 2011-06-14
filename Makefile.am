@@ -38,8 +38,11 @@ report-cpp-coverage:
 			c++/4.4\*/ext/\* \
 			c++/4.4\*/\*-\*/bits/\* \
 			boost/\* \
+			botan/\* \
 			ext/asio/\* \
+			ext/coroutine/\* \
 			gtest/\* \
+			log4cplus/\* \
 			usr/include/\* \
 			tests/\* \
 			unittests/\* \

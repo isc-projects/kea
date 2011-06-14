@@ -16,13 +16,12 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <unistd.h>             // for some IPC/network system calls
+#include <string>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
 
 #include <config.h>
-
-#include <log/dummylog.h>
 
 #include <dns/question.h>
 #include <dns/message.h>
@@ -31,6 +30,7 @@
 #include <dns/rdataclass.h>
 
 #include <resolve/resolve.h>
+#include <resolve/resolve_log.h>
 #include <cache/resolver_cache.h>
 #include <nsas/address_request_callback.h>
 #include <nsas/nameserver_address.h>
@@ -41,10 +41,10 @@
 #include <asiolink/io_service.h>
 #include <resolve/recursive_query.h>
 
-using isc::log::dlog;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::asiolink;
+using namespace isc::resolve;
 
 namespace isc {
 namespace asiodns {
@@ -64,7 +64,19 @@ hasAddress(const Name& name, const RRClass& rrClass,
             cache.lookup(name, RRType::AAAA(), rrClass) != RRsetPtr());
 }
 
+// Convenience function for debug messages.  Question::toText() includes
+// a trailing newline in its output, which makes it awkward to embed in a
+// message.  This just strips that newline from it.
+std::string
+questionText(const isc::dns::Question& question) {
+    std::string text = question.toText();
+    if (!text.empty()) {
+        text.erase(text.size() - 1);
+    }
+    return (text);
 }
+
+} // anonymous namespace
 
 /// \brief Find deepest usable delegation in the cache
 ///
@@ -135,8 +147,7 @@ RecursiveQuery::RecursiveQuery(DNSService& dns_service,
 // Set the test server - only used for unit testing.
 void
 RecursiveQuery::setTestServer(const std::string& address, uint16_t port) {
-    dlog("Setting test server to " + address + "(" +
-            boost::lexical_cast<std::string>(port) + ")");
+    LOG_WARN(isc::resolve::logger, RESLIB_TESTSERV).arg(address).arg(port);
     test_server_.first = address;
     test_server_.second = port;
 }
@@ -165,14 +176,16 @@ public:
     ResolverNSASCallback(RunningQuery* rq) : rq_(rq) {}
     
     void success(const isc::nsas::NameserverAddress& address) {
-        dlog("Found a nameserver, sending query to " + address.getAddress().toText());
+        // Success callback, send query to found namesever
+        LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_CB, RESLIB_RUNQUSUCC)
+                  .arg(address.getAddress().toText());
         rq_->nsasCallbackCalled();
         rq_->sendTo(address);
     }
     
     void unreachable() {
-        dlog("Nameservers unreachable");
-        // Drop query or send servfail?
+        // Nameservers unreachable: drop query or send servfail?
+        LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_CB, RESLIB_RUNQUFAIL);
         rq_->nsasCallbackCalled();
         rq_->makeSERVFAIL();
         rq_->callCallback(true);
@@ -298,12 +311,16 @@ private:
     // if we have a response for our query stored already. if
     // so, call handlerecursiveresponse(), if not, we call send()
     void doLookup() {
-        dlog("doLookup: try cache");
+        LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_CACHE, RESLIB_RUNCALOOK)
+                  .arg(questionText(question_));
+
         Message cached_message(Message::RENDER);
         isc::resolve::initResponseMessage(question_, cached_message);
         if (cache_.lookup(question_.getName(), question_.getType(),
                           question_.getClass(), cached_message)) {
-            dlog("Message found in cache, continuing with that");
+
+            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_CACHE, RESLIB_RUNCAFND)
+                      .arg(questionText(question_));
             // Should these be set by the cache too?
             cached_message.setOpcode(Opcode::QUERY());
             cached_message.setRcode(Rcode::NOERROR());
@@ -313,9 +330,10 @@ private:
                 stop();
             }
         } else {
-            dlog("doLookup: get lowest usable delegation from cache");
             cur_zone_ = deepestDelegation(question_.getName(),
                                           question_.getClass(), cache_);
+            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_CACHE, RESLIB_DEEPEST)
+                      .arg(questionText(question_)).arg(cur_zone_);
             send();
         }
 
@@ -347,8 +365,9 @@ private:
     void send(IOFetch::Protocol protocol = IOFetch::UDP) {
         protocol_ = protocol;   // Store protocol being used for this
         if (test_server_.second != 0) {
-            dlog("Sending upstream query (" + question_.toText() +
-                 ") to test server at " + test_server_.first);
+            // Send query to test server
+            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_TRACE, RESLIB_TESTUPSTR)
+                .arg(questionText(question_)).arg(test_server_.first);
             gettimeofday(&current_ns_qsent_time, NULL);
             ++outstanding_events_;
             IOFetch query(protocol, io_, question_,
@@ -356,10 +375,13 @@ private:
                 test_server_.second, buffer_, this,
                 query_timeout_);
             io_.get_io_service().post(query);
+
         } else {
             // Ask the NSAS for an address for the current zone,
             // the callback will call the actual sendTo()
-            dlog("Look up nameserver for " + cur_zone_ + " in NSAS");
+            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_TRACE, RESLIB_NSASLOOK)
+                      .arg(cur_zone_);
+
             // Can we have multiple calls to nsas_out? Let's assume not
             // for now
             assert(!nsas_callback_out_);
@@ -387,7 +409,7 @@ private:
     //              error message)
     // returns false if we are not done
     bool handleRecursiveAnswer(const Message& incoming) {
-        dlog("Handle response");
+
         // In case we get a CNAME, we store the target
         // here (classify() will set it when it walks through
         // the cname chain to verify it).
@@ -402,23 +424,30 @@ private:
         switch (category) {
         case isc::resolve::ResponseClassifier::ANSWER:
         case isc::resolve::ResponseClassifier::ANSWERCNAME:
-            // Done. copy and return.
-            dlog("Response is an answer");
+            // Answer received - copy and return.
+            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS, RESLIB_ANSWER)
+                      .arg(questionText(question_));
             isc::resolve::copyResponseMessage(incoming, answer_message_);
             cache_.update(*answer_message_);
             return true;
             break;
+
         case isc::resolve::ResponseClassifier::CNAME:
-            dlog("Response is CNAME!");
+            // CNAME received.
+
             // (unfinished) CNAME. We set our question_ to the CNAME
             // target, then start over at the beginning (for now, that
             // is, we reset our 'current servers' to the root servers).
             if (cname_count_ >= RESOLVER_MAX_CNAME_CHAIN) {
-                // just give up
-                dlog("CNAME chain too long");
+                // CNAME chain too long - just give up
+                LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS, RESLIB_LONGCHAIN)
+                          .arg(questionText(question_));
                 makeSERVFAIL();
                 return true;
             }
+
+            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS, RESLIB_CNAME)
+                      .arg(questionText(question_));
 
             answer_message_->appendSection(Message::SECTION_ANSWER,
                                            incoming);
@@ -426,22 +455,29 @@ private:
             question_ = Question(cname_target, question_.getClass(),
                                  question_.getType());
 
-            dlog("Following CNAME chain to " + question_.toText());
+            // Follow CNAME chain.
+            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS, RESLIB_FOLLOWCNAME)
+                      .arg(questionText(question_));
             doLookup();
             return false;
             break;
+
         case isc::resolve::ResponseClassifier::NXDOMAIN:
         case isc::resolve::ResponseClassifier::NXRRSET:
-            dlog("Response is NXDOMAIN or NXRRSET");
-            // NXDOMAIN, just copy and return.
-            dlog(incoming.toText());
+            // Received NXDOMAIN or NXRRSET, just copy and return
+            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS, RESLIB_NXDOMRR)
+                      .arg(questionText(question_));
             isc::resolve::copyResponseMessage(incoming, answer_message_);
             // no negcache yet
             //cache_.update(*answer_message_);
             return true;
             break;
+
         case isc::resolve::ResponseClassifier::REFERRAL:
-            dlog("Response is referral");
+            // Response is a referral
+            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS, RESLIB_REFERRAL)
+                      .arg(questionText(question_));
+
             cache_.update(incoming);
             // Referral. For now we just take the first glue address
             // we find and continue with that
@@ -460,7 +496,8 @@ private:
                         // (this requires a few API changes in related
                         // libraries, so as not to need many conversions)
                         cur_zone_ = rrs->getName().toText();
-                        dlog("Referred to zone " + cur_zone_);
+                        LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS, RESLIB_REFERZONE)
+                                  .arg(cur_zone_);
                         found_ns = true;
                         break;
                     }
@@ -484,7 +521,10 @@ private:
                              nsas_callback_, ANY_OK, glue_hints);
                 return false;
             } else {
-                dlog("No NS RRset in referral?");
+                // Referral was received but did not contain an NS RRset.
+                LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS, RESLIB_NONSRRSET)
+                          .arg(questionText(question_));
+
                 // TODO this will result in answering with the delegation. oh well
                 isc::resolve::copyResponseMessage(incoming, answer_message_);
                 return true;
@@ -494,7 +534,8 @@ private:
             // Truncated packet.  If the protocol we used for the last one is
             // UDP, re-query using TCP.  Otherwise regard it as an error.
             if (protocol_ == IOFetch::UDP) {
-                dlog("Response truncated, re-querying over TCP");
+                LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS, RESLIB_TRUNCATED)
+                          .arg(questionText(question_));
                 send(IOFetch::TCP);
                 return false;
             }
@@ -513,6 +554,8 @@ private:
         case isc::resolve::ResponseClassifier::NOTSINGLE:
         case isc::resolve::ResponseClassifier::OPCODE:
         case isc::resolve::ResponseClassifier::RCODE:
+            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS, RESLIB_RCODERR)
+                      .arg(questionText(question_));
             // Should we try a different server rather than SERVFAIL?
             makeSERVFAIL();
             return true;
@@ -677,7 +720,7 @@ public:
                 rtt = 1000 * (cur_time.tv_sec - current_ns_qsent_time.tv_sec);
                 rtt += (cur_time.tv_usec - current_ns_qsent_time.tv_usec) / 1000;
             }
-            dlog("RTT: " + boost::lexical_cast<std::string>(rtt));
+            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS, RESLIB_RTT).arg(rtt);
             current_ns_address.updateRTT(rtt);
             if (rtt_recorder_) {
                 rtt_recorder_->addRtt(rtt);
@@ -701,19 +744,22 @@ public:
                     stop();
                 }
             } catch (const isc::dns::DNSProtocolError& dpe) {
-                dlog("DNS Protocol error in answer for " +
-                     question_.toText() + " " +
-                     question_.getType().toText() + ": " +
-                     dpe.what());
                 // Right now, we treat this similar to timeouts
                 // (except we don't store RTT)
                 // We probably want to make this an integral part
                 // of the fetch data process. (TODO)
                 if (retries_--) {
-                    dlog("Retrying");
+                    // Retry
+                    LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS,
+                              RESLIB_PROTOCOLRTRY)
+                              .arg(questionText(question_)).arg(dpe.what())
+                              .arg(retries_);
                     send();
                 } else {
-                    dlog("Giving up");
+                    // Give up
+                    LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS,
+                              RESLIB_PROTOCOL)
+                              .arg(questionText(question_)).arg(dpe.what());
                     if (!callback_called_) {
                         makeSERVFAIL();
                         callCallback(true);
@@ -723,13 +769,17 @@ public:
             }
         } else if (!done_ && retries_--) {
             // Query timed out, but we have some retries, so send again
-            dlog("Timeout for " + question_.toText() + " to " + current_ns_address.getAddress().toText() + ", resending query");
+            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS, RESLIB_TIMEOUTRTRY)
+                      .arg(questionText(question_))
+                      .arg(current_ns_address.getAddress().toText()).arg(retries_);
             current_ns_address.updateRTT(isc::nsas::AddressEntry::UNREACHABLE);
             send();
         } else {
             // We are either already done, or out of retries
             if (result == IOFetch::TIME_OUT) {
-                dlog("Timeout for " + question_.toText() + " to " + current_ns_address.getAddress().toText() + ", giving up");
+                LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_RESULTS, RESLIB_TIMEOUT)
+                          .arg(questionText(question_))
+                          .arg(current_ns_address.getAddress().toText());
                 current_ns_address.updateRTT(isc::nsas::AddressEntry::UNREACHABLE);
             }
             if (!callback_called_) {
@@ -793,8 +843,10 @@ private:
         buffer_->clear();
         int serverIndex = rand() % uc;
         ConstQuestionPtr question = *(query_message_->beginQuestion());
-        dlog("Sending upstream query (" + question->toText() +
-             ") to " + upstream_->at(serverIndex).first);
+        LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_TRACE, RESLIB_UPSTREAM)
+            .arg(questionText(*question))
+            .arg(upstream_->at(serverIndex).first);
+
         ++outstanding_events_;
         // Forward the query, create the IOFetch with
         // query message, so that query flags can be forwarded
@@ -934,14 +986,16 @@ RecursiveQuery::resolve(const QuestionPtr& question,
 
     OutputBufferPtr buffer(new OutputBuffer(0));
 
-    dlog("Asked to resolve: " + question->toText());
-    
-    dlog("Try out cache first (direct call to resolve)");
     // First try to see if we have something cached in the messagecache
+    LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_TRACE, RESLIB_RESOLVE)
+              .arg(questionText(*question)).arg(1);
     if (cache_.lookup(question->getName(), question->getType(),
                       question->getClass(), *answer_message) &&
         answer_message->getRRCount(Message::SECTION_ANSWER) > 0) {
-        dlog("Message found in cache, returning that");
+        // Message found, return that
+        LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_CACHE, RESLIB_RESCAFND)
+                  .arg(questionText(*question)).arg(1);
+        
         // TODO: err, should cache set rcode as well?
         answer_message->setRcode(Rcode::NOERROR());
         callback->success(answer_message);
@@ -952,14 +1006,18 @@ RecursiveQuery::resolve(const QuestionPtr& question,
                                               question->getType(),
                                               question->getClass());
         if (cached_rrset) {
-            dlog("Found single RRset in cache");
+            // Found single RRset in cache
+            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_CACHE, RESLIB_RRSETFND)
+                      .arg(questionText(*question)).arg(1);
             answer_message->addRRset(Message::SECTION_ANSWER,
                                      cached_rrset);
             answer_message->setRcode(Rcode::NOERROR());
             callback->success(answer_message);
         } else {
-            dlog("Message not found in cache, starting recursive query");
-            // It will delete itself when it is done
+            // Message not found in cache, start recursive query.  It will
+            // delete itself when it is done
+            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_TRACE, RESLIB_RESCANOTFND)
+                      .arg(questionText(*question)).arg(1);
             new RunningQuery(io, *question, answer_message,
                              test_server_, buffer, callback,
                              query_timeout_, client_timeout_,
@@ -988,14 +1046,17 @@ RecursiveQuery::resolve(const Question& question,
     answer_message->setOpcode(isc::dns::Opcode::QUERY());
     answer_message->addQuestion(question);
     
-    dlog("Asked to resolve: " + question.toText());
-    
     // First try to see if we have something cached in the messagecache
-    dlog("Try out cache first (started by incoming event)");
+    LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_TRACE, RESLIB_RESOLVE)
+              .arg(questionText(question)).arg(2);
+    
     if (cache_.lookup(question.getName(), question.getType(),
                       question.getClass(), *answer_message) &&
         answer_message->getRRCount(Message::SECTION_ANSWER) > 0) {
-        dlog("Message found in cache, returning that");
+
+        // Message found, return that
+        LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_CACHE, RESLIB_RESCAFND)
+                  .arg(questionText(question)).arg(2);
         // TODO: err, should cache set rcode as well?
         answer_message->setRcode(Rcode::NOERROR());
         crs->success(answer_message);
@@ -1006,14 +1067,19 @@ RecursiveQuery::resolve(const Question& question,
                                               question.getType(),
                                               question.getClass());
         if (cached_rrset) {
-            dlog("Found single RRset in cache");
+            // Found single RRset in cache
+            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_CACHE, RESLIB_RRSETFND)
+                      .arg(questionText(question)).arg(2);
             answer_message->addRRset(Message::SECTION_ANSWER,
                                      cached_rrset);
             answer_message->setRcode(Rcode::NOERROR());
             crs->success(answer_message);
+
         } else {
-            dlog("Message not found in cache, starting recursive query");
-            // It will delete itself when it is done
+            // Message not found in cache, start recursive query.  It will
+            // delete itself when it is done
+            LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_TRACE, RESLIB_RESCANOTFND)
+                      .arg(questionText(question)).arg(2);
             new RunningQuery(io, question, answer_message, 
                              test_server_, buffer, crs, query_timeout_,
                              client_timeout_, lookup_timeout_, retries_,
