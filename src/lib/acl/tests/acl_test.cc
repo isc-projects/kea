@@ -88,8 +88,8 @@ public:
         ACL(DROP)
     {}
     // Check the stored default action there
-    void check_default_action(BasicAction ac) {
-        EXPECT_EQ(get_default_action(), ac);
+    void checkDefaultAction(BasicAction ac) {
+        EXPECT_EQ(getDefaultAction(), ac);
     }
 };
 
@@ -115,8 +115,8 @@ public:
  *
  * We use the default ACL unchanged from the test class.
  */
-TEST_F(ACLTest, empty_rule) {
-    acl_.check_default_action(DROP);
+TEST_F(ACLTest, emptyRule) {
+    acl_.checkDefaultAction(DROP);
     EXPECT_EQ(DROP, acl_.execute(log_));
     // No test was run
     log_.checkFirst(0);
@@ -125,7 +125,7 @@ TEST_F(ACLTest, empty_rule) {
 /*
  * This tests the default action in case no check matches.
  */
-TEST_F(ACLTest, no_match) {
+TEST_F(ACLTest, noMatch) {
     acl_.append(get_check(false), ACCEPT);
     acl_.append(get_check(false), REJECT);
     EXPECT_EQ(DROP, acl_.execute(log_));
@@ -137,7 +137,7 @@ TEST_F(ACLTest, no_match) {
  * Checks that it takes the first matching check and returns the
  * value. Also checks that the others aren't run at all.
  */
-TEST_F(ACLTest, check) {
+TEST_F(ACLTest, firstMatch) {
     acl_.append(get_check(false), ACCEPT);
     acl_.append(get_check(true), REJECT);
     acl_.append(get_check(true), ACCEPT);
