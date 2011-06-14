@@ -31,7 +31,7 @@ struct Log {
     bool run[LOG_SIZE];
     Log() {
         // Nothing run yet
-        for (size_t i(0); i < LOG_SIZE; ++ i) {
+        for (size_t i(0); i < LOG_SIZE; ++i) {
             run[i] = false;
         }
     }
