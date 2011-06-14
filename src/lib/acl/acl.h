@@ -92,7 +92,7 @@ public:
      *     passed to the checks.
      */
     const Action& execute(const Context& context) const {
-        typename Entries::const_iterator end(entries_.end());
+        const typename Entries::const_iterator end(entries_.end());
         for (typename Entries::const_iterator i(entries_.begin()); i != end;
              ++i) {
             if (i->first->matches(context)) {
