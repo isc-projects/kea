@@ -127,7 +127,7 @@ protected:
      *
      * This is for testing purposes only.
      */
-    const Action& get_default_action() const {
+    const Action& getDefaultAction() const {
         return (default_action_);
     }
 };
