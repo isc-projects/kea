@@ -23,14 +23,56 @@
 namespace isc {
 namespace acl {
 
-// TODO: Exceptions (both create the classes and note them that they are
-// thrown
+/**
+ * \brief Exception for bad ACL specifications.
+ *
+ * This will be thrown by the Loader if the ACL description is malformed
+ * in some way.
+ *
+ * It also can hold optional JSON element where was the error detected, so
+ * it can be examined.
+ *
+ * Checks may subclass this exception for similar errors if they see it fit.
+ */
+class LoaderError : public BadValue {
+private:
+    const data::ConstElementPtr element_;
+public:
+    /**
+     * \brief Constructor.
+     *
+     * Should be used with isc_throw if the fourth argument isn't used.
+     *
+     * \param file The file where the throw happened.
+     * \param line Similar as file, just for the line number.
+     * \param what Human readable description of what happened.
+     * \param element This might be passed to hold the JSON element where
+     *     the error was detected.
+     */
+    LoaderError(const char* file, size_t line, const char* what,
+                data::ConstElementPtr element = data::ConstElementPtr()) :
+        BadValue(file, line, what),
+        element_(element)
+    {}
+    ~ LoaderError() throw() {}
+    /**
+     * \brief Get the element.
+     *
+     * This returns the element where the error was detected. Note that it
+     * might be NULL in some situations.
+     */
+    const data::ConstElementPtr& element() const {
+        return (element_);
+    }
+};
 
 /**
  * \brief Loader of the default actions of ACLs.
  *
  * Declared outside the Loader class, as this one does not need to be
- * templated.
+ * templated. This will throw LoaderError if the parameter isn't string
+ * or if it doesn't contain one of the accepted values.
+ *
  * \param action The JSON representation of the action. It must be a string
  *     and contain one of "ACCEPT", "REJECT" or "DENY".
  * \note We could define different names or add aliases if needed.
@@ -86,8 +128,8 @@ public:
          * relevant data and is supposed to return shared pointer to the
          * check.
          *
-         * It is expected to throw an exception when the definition is
-         * invalid.
+         * It is expected to throw the LoaderError exception when the
+         * definition is invalid.
          *
          * \param name The type name of the check. If the creator creates
          *     only one type of check, it can safely ignore this parameter.
@@ -119,7 +161,7 @@ public:
      *
      * Adds a creator to the list of known ones. The creator's list of names
      * must be disjoint with the names already known to the creator or the
-     * XXX exception is thrown.
+     * LoaderError exception is thrown.
      *
      * \param creator Shared pointer to the creator.
      * \note We don't support deregistration yet, but it is expected it will
@@ -137,9 +179,9 @@ public:
      * key, as it is a reserved keyword used to specify actions inside the
      * ACL.
      *
-     * This may throw XXX if it is not a dict or if some of the type names is
-     * not known (there's no creator registered for it). The exceptions from
-     * creators aren't caught.
+     * This may throw LoaderError if it is not a dict or if some of the type
+     * names is not known (there's no creator registered for it). The
+     * exceptions from creators aren't caught.
      *
      * \param description The JSON description of the check.
      */
@@ -149,10 +191,10 @@ public:
      * \brief Load an ACL.
      *
      * This parses an ACL list, creates the checks and actions of each element
-     * and returns it. It may throw XXX if it isn't a list or the "action" key
-     * is missing in some element. Also, no exceptions from loadCheck
-     * (therefore from whatever creator is used) and from the actionLoader
-     * passed to constructor are not caught.
+     * and returns it. It may throw LoaderError if it isn't a list or the
+     * "action" key is missing in some element. Also, no exceptions from
+     * loadCheck (therefore from whatever creator is used) and from the
+     * actionLoader passed to constructor are not caught.
      *
      * \param description The JSON list of ACL.
      */
