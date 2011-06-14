@@ -85,7 +85,7 @@ private:
 class TestACL : public ACL<Log> {
 public:
     TestACL() :
-        ACL(DROP)
+        ACL<Log>(DROP)
     {}
     // Check the stored default action there
     void checkDefaultAction(BasicAction ac) {
