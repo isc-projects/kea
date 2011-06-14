@@ -220,6 +220,7 @@ class BoB:
         self.ccs = None
         self.cfg_start_auth = True
         self.cfg_start_resolver = False
+        self.cfg_start_dhcp6 = False
         self.started_auth_family = False
         self.started_resolver_family = False
         self.curproc = None
@@ -549,6 +550,9 @@ class BoB:
     def start_stats_httpd(self, c_channel_env):
         self.start_simple("b10-stats-httpd", c_channel_env)
 
+    def start_dhcp6(self, c_channel_env):
+        self.start_simple("b10-dhcp6", c_channel_env)
+
     def start_cmdctl(self, c_channel_env):
         """
             Starts the command control process
@@ -600,6 +604,9 @@ class BoB:
         self.start_stats(c_channel_env)
         self.start_stats_httpd(c_channel_env)
         self.start_cmdctl(c_channel_env)
+
+        if self.cfg_start_dhcp6:
+            self.start_dhcp6(c_channel_env)
     
     def startup(self):
         """
