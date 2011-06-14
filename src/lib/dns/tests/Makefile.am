@@ -53,12 +53,15 @@ run_unittests_SOURCES += tsigkey_unittest.cc
 run_unittests_SOURCES += tsigrecord_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
+# We shouldn't need to include BOTAN_LDFLAGS here, but there
+# is one test system where the path for GTEST_LDFLAGS contains
+# an older version of botan, and somehow that version gets
+# linked if we don't
+run_unittests_LDFLAGS = $(AM_LDFLAGS) $(BOTAN_LDFLAGS) $(GTEST_LDFLAGS)
 run_unittests_LDADD = $(GTEST_LDADD)
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
-run_unittests_LDADD += $(top_builddir)/src/lib/util/io/libutil_io.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 endif
 

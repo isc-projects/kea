@@ -71,7 +71,8 @@ FakeSession::FakeSession(isc::data::ElementPtr initial_messages,
                          isc::data::ElementPtr msg_queue) :
     messages_(initial_messages),
     subscriptions_(subscriptions),
-    msg_queue_(msg_queue)
+    msg_queue_(msg_queue),
+    started_(false)
 {
 }
 
@@ -84,6 +85,7 @@ FakeSession::disconnect() {
 
 void
 FakeSession::startRead(boost::function<void()>) {
+    started_ = true;
 }
 
 void
@@ -91,7 +93,13 @@ FakeSession::establish(const char*) {
 }
 
 bool
-FakeSession::recvmsg(ConstElementPtr& msg, bool, int) {
+FakeSession::recvmsg(ConstElementPtr& msg, bool nonblock, int) {
+    if (started_ && !nonblock) {
+        // This would schedule another read for length, leading to
+        // corputed data
+        isc_throw(DoubleRead, "Second read scheduled from recvmsg");
+    }
+
     //cout << "[XX] client asks for message " << endl;
     if (messages_ &&
         messages_->getType() == Element::list &&
@@ -105,7 +113,15 @@ FakeSession::recvmsg(ConstElementPtr& msg, bool, int) {
 }
 
 bool
-FakeSession::recvmsg(ConstElementPtr& env, ConstElementPtr& msg, bool, int) {
+FakeSession::recvmsg(ConstElementPtr& env, ConstElementPtr& msg, bool nonblock,
+                     int)
+{
+    if (started_ && !nonblock) {
+        // This would schedule another read for length, leading to
+        // corputed data
+        isc_throw(DoubleRead, "Second read scheduled from recvmsg");
+    }
+
     //cout << "[XX] client asks for message and env" << endl;
     env = ElementPtr();
     if (messages_ &&

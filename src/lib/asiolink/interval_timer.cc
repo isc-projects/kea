@@ -14,11 +14,9 @@
 
 #include <config.h>
 
-#include <unistd.h>             // for some IPC/network system calls
-#include <sys/socket.h>
-#include <netinet/in.h>
-
 #include <boost/bind.hpp>
+#include <boost/enable_shared_from_this.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <exceptions/exceptions.h>
 
@@ -29,7 +27,16 @@
 namespace isc {
 namespace asiolink {
 
-class IntervalTimerImpl {
+/// This class holds a call back function of asynchronous operations.
+/// To ensure the object is alive while an asynchronous operation refers
+/// to it, we use shared_ptr and enable_shared_from_this.
+/// The object will be destructed in case IntervalTimer has been destructed
+/// and no asynchronous operation refers to it.
+/// Please follow the link to get an example:
+/// http://think-async.com/asio/asio-1.4.8/doc/asio/tutorial/tutdaytime3.html#asio.tutorial.tutdaytime3.the_tcp_connection_class
+class IntervalTimerImpl :
+    public boost::enable_shared_from_this<IntervalTimerImpl>
+{
 private:
     // prohibit copy
     IntervalTimerImpl(const IntervalTimerImpl& source);
@@ -53,14 +60,18 @@ private:
     long interval_;
     // asio timer
     asio::deadline_timer timer_;
+    // interval_ will be set to this value in destructor in order to detect
+    // use-after-free type of bugs.
+    static const long INVALIDATED_INTERVAL = -1;
 };
 
 IntervalTimerImpl::IntervalTimerImpl(IOService& io_service) :
     interval_(0), timer_(io_service.get_io_service())
 {}
 
-IntervalTimerImpl::~IntervalTimerImpl()
-{}
+IntervalTimerImpl::~IntervalTimerImpl() {
+    interval_ = INVALIDATED_INTERVAL;
+}
 
 void
 IntervalTimerImpl::setup(const IntervalTimer::Callback& cbfunc,
@@ -81,42 +92,46 @@ IntervalTimerImpl::setup(const IntervalTimer::Callback& cbfunc,
     // At this point the timer is not running yet and will not expire.
     // After calling IOService::run(), the timer will expire.
     update();
-    return;
 }
 
 void
 IntervalTimerImpl::update() {
-    if (interval_ == 0) {
-        // timer has been canceled.  Do nothing.
-        return;
-    }
     try {
         // Update expire time to (current time + interval_).
         timer_.expires_from_now(boost::posix_time::millisec(interval_));
+        // Reset timer.
+        // Pass a function bound with a shared_ptr to this.
+        timer_.async_wait(boost::bind(&IntervalTimerImpl::callback,
+                                      shared_from_this(),
+                                      asio::placeholders::error));
     } catch (const asio::system_error& e) {
-        isc_throw(isc::Unexpected, "Failed to update timer");
+        isc_throw(isc::Unexpected, "Failed to update timer: " << e.what());
+    } catch (const boost::bad_weak_ptr&) {
+        // Can't happen. It means a severe internal bug.
+        assert(0);
     }
-    // Reset timer.
-    timer_.async_wait(boost::bind(&IntervalTimerImpl::callback, this, _1));
 }
 
 void
-IntervalTimerImpl::callback(const asio::error_code& cancelled) {
-    // Do not call cbfunc_ in case the timer was cancelled.
-    // The timer will be canelled in the destructor of asio::deadline_timer.
-    if (!cancelled) {
-        cbfunc_();
+IntervalTimerImpl::callback(const asio::error_code& ec) {
+    assert(interval_ != INVALIDATED_INTERVAL);
+    if (interval_ == 0 || ec) {
+        // timer has been canceled. Do nothing.
+    } else {
         // Set next expire time.
         update();
+        // Invoke the call back function.
+        cbfunc_();
     }
 }
 
-IntervalTimer::IntervalTimer(IOService& io_service) {
-    impl_ = new IntervalTimerImpl(io_service);
-}
+IntervalTimer::IntervalTimer(IOService& io_service) :
+    impl_(new IntervalTimerImpl(io_service))
+{}
 
 IntervalTimer::~IntervalTimer() {
-    delete impl_;
+    // Cancel the timer to make sure cbfunc_() will not be called any more.
+    cancel();
 }
 
 void

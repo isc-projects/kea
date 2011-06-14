@@ -12,11 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <gtest/gtest.h>
+/// Defines the logger used by the NSAS
 
-int
-main(int argc, char *argv[]) {
-    ::testing::InitGoogleTest(&argc, argv);
+#include <resolve/resolve_log.h>
 
-    return RUN_ALL_TESTS();
-}
+namespace isc {
+namespace resolve {
+
+isc::log::Logger logger("reslib");  // Distinct from "resolver"
+
+} // namespace resolve
+} // namespace isc
+

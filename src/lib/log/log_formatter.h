@@ -15,8 +15,11 @@
 #ifndef __LOG_FORMATTER_H
 #define __LOG_FORMMATER_H
 
+#include <cstddef>
 #include <string>
+#include <iostream>
 #include <boost/lexical_cast.hpp>
+#include <log/logger_level.h>
 
 namespace isc {
 namespace log {
@@ -73,13 +76,17 @@ private:
     ///
     /// If NULL, we are not active and should not produce anything.
     mutable Logger* logger_;
-    /// \brief Prefix (eg. "ERROR", "DEBUG" or like that)
-    const char* prefix_;
+
+    /// \brief Message severity
+    Severity severity_;
+
     /// \brief The messages with %1, %2... placeholders
     std::string* message_;
+
     /// \brief Which will be the next placeholder to replace
     unsigned nextPlaceholder_;
-    Formatter& operator =(const Formatter& other);
+
+
 public:
     /// \brief Constructor of "active" formatter
     ///
@@ -89,34 +96,57 @@ public:
     ///
     /// It is not expected to be called by user of logging system directly.
     ///
-    /// \param prefix The severity prefix, like "ERROR" or "DEBUG"
+    /// \param severity The severity of the message (DEBUG, ERROR etc.)
     /// \param message The message with placeholders. We take ownership of
     ///     it and we will modify the string. Must not be NULL unless
     ///     logger is also NULL, but it's not checked.
     /// \param logger The logger where the final output will go, or NULL
     ///     if no output is wanted.
-    Formatter(const char* prefix = NULL, std::string* message = NULL,
+    Formatter(const Severity& severity = NONE, std::string* message = NULL,
               Logger* logger = NULL) :
-        logger_(logger), prefix_(prefix), message_(message),
-        nextPlaceholder_(1)
+        logger_(logger), severity_(severity), message_(message),
+        nextPlaceholder_(0)
     {
     }
 
+    /// \brief Copy constructor
+    ///
+    /// "Control" is passed to the created object in that it is the created object
+    /// that will have responsibility for outputting the formatted message - the
+    /// object being copied relinquishes that responsibility.
     Formatter(const Formatter& other) :
-        logger_(other.logger_), prefix_(other.prefix_),
+        logger_(other.logger_), severity_(other.severity_),
         message_(other.message_), nextPlaceholder_(other.nextPlaceholder_)
     {
-        other.logger_ = false;
+        other.logger_ = NULL;
     }
+
     /// \brief Destructor.
     //
     /// This is the place where output happens if the formatter is active.
     ~ Formatter() {
         if (logger_) {
-            logger_->output(prefix_, *message_);
+            logger_->output(severity_, *message_);
             delete message_;
         }
     }
+
+    /// \brief Assignment operator
+    ///
+    /// Essentially the same function as the assignment operator - the object being
+    /// assigned to takes responsibility for outputting the message.
+    Formatter& operator =(const Formatter& other) {
+        if (&other != this) {
+            logger_ = other.logger_;
+            severity_ = other.severity_;
+            message_ = other.message_;
+            nextPlaceholder_ = other.nextPlaceholder_;
+            other.logger_ = NULL;
+        }
+
+        return *this;
+    }
+
     /// \brief Replaces another placeholder
     ///
     /// Replaces another placeholder and returns a new formatter with it.
@@ -131,17 +161,25 @@ public:
             return (*this);
         }
     }
+
     /// \brief String version of arg.
     Formatter& arg(const std::string& arg) {
         if (logger_) {
-            // FIXME: This logic has a problem. If we had a message like
-            // "%1 %2" and called .arg("%2").arg(42), we would get "42 %2".
-            // But we consider this to be rare enough not to complicate
-            // matters.
-            replacePlaceholder(message_, arg, nextPlaceholder_ ++);
+            // Note that this method does a replacement and returns the
+            // modified string. If there are multiple invocations of arg() (e.g.
+            // logger.info(msgid).arg(xxx).arg(yyy)...), each invocation
+            // operates on the string returned by the previous one. This
+            // sequential operation means that if we had a message like "%1 %2",
+            // and called .arg("%2").arg(42), we would get "42 42"; the first
+            // call replaces the %1" with "%2" and the second replaces all
+            // occurrences of "%2" with 42. (Conversely, the sequence
+            // .arg(42).arg("%1") would return "42 %1" - there are no recursive
+            // replacements).
+            replacePlaceholder(message_, arg, ++nextPlaceholder_ );
         }
         return (*this);
     }
+
 };
 
 }

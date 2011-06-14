@@ -1,0 +1,193 @@
+# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+$PREFIX RESOLVER_
+# No namespace declaration - these constants go in the global namespace
+# along with the resolver methods.
+
+% AXFRTCP       AXFR request received over TCP
+A debug message, the resolver received a NOTIFY message over TCP.  The server
+cannot process it and will return an error message to the sender with the
+RCODE set to NOTIMP.
+
+% AXFRUDP       AXFR request received over UDP
+A debug message, the resolver received a NOTIFY message over UDP.  The server
+cannot process it (and in any case, an AXFR request should be sent over TCP)
+and will return an error message to the sender with the RCODE set to FORMERR.
+
+% CONFIGCHAN    configuration channel created
+A debug message, output when the resolver has successfully established a
+connection to the configuration channel.
+
+% CONFIGERR     error in configuration: %1
+An error was detected in a configuration update received by the resolver. This
+may be in the format of the configuration message (in which case this is a
+programming error) or it may be in the data supplied (in which case it is
+a user error).  The reason for the error, given as a parameter in the message,
+will give more details.
+
+% CONFIGLOAD    configuration loaded
+A debug message, output when the resolver configuration has been successfully
+loaded.
+
+% CONFIGUPD     configuration updated: %1
+A debug message, the configuration has been updated with the specified
+information.
+
+% DNSMSGRCVD    DNS message received: %1
+A debug message, this always precedes some other logging message and is the
+formatted contents of the DNS packet that the other message refers to.
+
+% DNSMSGSENT    DNS message of %1 bytes sent: %2
+A debug message, this contains details of the response sent back to the querying
+system.
+
+% CLTMOSMALL    client timeout of %1 is too small
+An error indicating that the configuration value specified for the query
+timeout is too small.
+
+% CREATED       main resolver object created
+A debug message, output when the Resolver() object has been created.
+
+% FAILED        resolver failed, reason: %1
+This is an error message output when an unhandled exception is caught by the
+resolver.  All it can do is to shut down.
+
+% FWDADDR       setting forward address %1(%2)
+This message may appear multiple times during startup, and it lists the
+forward addresses used by the resolver when running in forwarding mode.
+
+% FWDQUERY      processing forward query
+The received query has passed all checks and is being forwarded to upstream
+servers.
+
+% HDRERR        message received, exception when processing header: %1
+A debug message noting that an exception occurred during the processing of
+a received packet.  The packet has been dropped.
+
+% IXFR          IXFR request received
+The resolver received a NOTIFY message over TCP.  The server cannot process it
+and will return an error message to the sender with the RCODE set to NOTIMP.
+
+% LKTMOSMALL    lookup timeout of %1 is too small
+An error indicating that the configuration value specified for the lookup
+timeout is too small.
+
+% NFYNOTAUTH    NOTIFY arrived but server is not authoritative
+The resolver received a NOTIFY message.  As the server is not authoritative it
+cannot process it, so it returns an error message to the sender with the RCODE
+set to NOTAUTH.
+
+% NORMQUERY     processing normal query
+The received query has passed all checks and is being processed by the resolver.
+
+% NOTIN         non-IN class request received, returning REFUSED message
+A debug message, the resolver has received a DNS packet that was not IN class.
+The resolver cannot handle such packets, so is returning a REFUSED response to
+the sender.
+
+% NOROOTADDR    no root addresses available
+A warning message during startup, indicates that no root addresses have been
+set.  This may be because the resolver will get them from a priming query.
+
+% NOTONEQUES    query contained %1 questions, exactly one question was expected
+A debug message, the resolver received a query that contained the number of
+entires in the question section detailed in the message.  This is a malformed
+message, as a DNS query must contain only one question.  The resolver will
+return a message to the sender with the RCODE set to FORMERR.
+
+% OPCODEUNS     opcode %1 not supported by the resolver
+A debug message, the resolver received a message with an unsupported opcode
+(it can only process QUERY opcodes).  It will return a message to the sender
+with the RCODE set to NOTIMP.
+
+% PARSEERR      error parsing received message: %1 - returning %2
+A debug message noting that the resolver received a message and the parsing
+of the body of the message failed due to some non-protocol related reason
+(although the parsing of the header succeeded).  The message parameters give
+a textual description of the problem and the RCODE returned.
+
+% PRINTMSG      print message command, aeguments are: %1
+This message is logged when a "print_message" command is received over the
+command channel.
+
+% PROTERR       protocol error parsing received message: %1 - returning %2
+A debug message noting that the resolver received a message and the parsing
+of the body of the message failed due to some protocol error (although the
+parsing of the header succeeded).  The message parameters give a textual
+description of the problem and the RCODE returned.
+
+% QUSETUP       query setup
+A debug message noting that the resolver is creating a RecursiveQuery object.
+
+% QUSHUT        query shutdown
+A debug message noting that the resolver is destroying a RecursiveQuery object.
+
+% QUTMOSMALL    query timeout of %1 is too small
+An error indicating that the configuration value specified for the query
+timeout is too small.
+
+% RECURSIVE     running in recursive mode
+This is an informational message that appears at startup noting that the
+resolver is running in recursive mode.
+
+% RECVMSG       resolver has received a DNS message
+A debug message indicating that the resolver has received a message.  Depending
+on the debug settings, subsequent log output will indicate the nature of the
+message.
+
+% RETRYNEG      negative number of retries (%1) specified in the configuration
+An error message indicating that the resolver configuration has specified a
+negative retry count.  Only zero or positive values are valid.
+
+% ROOTADDR      setting root address %1(%2)
+This message may appear multiple times during startup; it lists the root
+addresses used by the resolver.
+
+% SERVICE       service object created
+A debug message, output when the main service object (which handles the
+received queries) is created.
+
+% SETPARAM      query timeout: %1, client timeout: %2, lookup timeout: %3, retry count: %4
+A debug message, lists the parameters associated with the message.  These are:
+query timeout: the timeout (in ms) used for queries originated by the resolver
+to upstream servers.  Client timeout: the interval to resolver a query by
+a client: after this time, the resolver sends back a SERVFAIL to the client
+whilst continuing to resolver the query. Lookup timeout: the time at which the
+resolver gives up trying to resolve a query.  Retry count: the number of times
+the resolver will retry a query to an upstream server if it gets a timeout.
+
+The client and lookup timeouts require a bit more explanation. The
+resolution of the clent query might require a large number of queries to
+upstream nameservers.  Even if none of these queries timeout, the total time
+taken to perform all the queries may exceed the client timeout.  When this
+happens, a SERVFAIL is returned to the client, but the resolver continues
+with the resolution process. Data received is added to the cache.  However,
+there comes a time - the lookup timeout - when even the resolve gives up.
+At this point it will wait for pending upstream queries to complete or
+timeout and drop the query.
+
+% SHUTDOWN      resolver shutdown complete
+This information message is output when the resolver has shut down.
+
+% STARTED       resolver started
+This informational message is output by the resolver when all initialization
+has been completed and it is entering its main loop.
+
+% STARTING      starting resolver with command line '%1'
+An informational message, this is output when the resolver starts up.
+
+% UNEXRESP      received unexpected response, ignoring
+A debug message noting that the server has received a response instead of a
+query and is ignoring it.

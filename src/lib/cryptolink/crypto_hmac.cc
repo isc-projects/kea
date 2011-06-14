@@ -36,6 +36,15 @@ getBotanHashAlgorithmName(isc::cryptolink::HashAlgorithm algorithm) {
     case isc::cryptolink::SHA256:
         return ("SHA-256");
         break;
+    case isc::cryptolink::SHA224:
+        return ("SHA-224");
+        break;
+    case isc::cryptolink::SHA384:
+        return ("SHA-384");
+        break;
+    case isc::cryptolink::SHA512:
+        return ("SHA-512");
+        break;
     case isc::cryptolink::UNKNOWN_HASH:
         return ("Unknown");
         break;
@@ -61,7 +70,8 @@ public:
                 getBotanHashAlgorithmName(hash_algorithm));
         } catch (const Botan::Algorithm_Not_Found&) {
             isc_throw(isc::cryptolink::UnsupportedAlgorithm,
-                      "Unknown hash algorithm: " + hash_algorithm);
+                      "Unknown hash algorithm: " <<
+                      static_cast<int>(hash_algorithm));
         } catch (const Botan::Exception& exc) {
             isc_throw(isc::cryptolink::LibraryError, exc.what());
         }
@@ -173,9 +183,9 @@ public:
         try {
             Botan::SecureVector<Botan::byte> our_mac = hmac_->final();
             if (len < getOutputLength()) {
-                // Currently we don't support truncated signature.  To avoid
-                // validating too short signature accidently, we enforce the
-                // standard signature size for the moment.
+                // Currently we don't support truncated signature in TSIG (see
+                // #920).  To avoid validating too short signature accidently,
+                // we enforce the standard signature size for the moment.
                 // Once we support truncation correctly, this if-clause should
                 // (and the capitalized comment above) be removed.
                 return (false);
@@ -236,7 +246,7 @@ HMAC::verify(const void* sig, const size_t len) {
 }
 
 void
-signHMAC(const void* data, size_t data_len, const void* secret,
+signHMAC(const void* data, const size_t data_len, const void* secret,
          size_t secret_len, const HashAlgorithm hash_algorithm,
          isc::util::OutputBuffer& result, size_t len)
 {

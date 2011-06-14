@@ -1,6 +1,4 @@
-SUBDIRS = . tests unittests io pyunittests
-# The io/tests is hack, because otherwise we can not order these directories
-# properly. Unittests use io and io/tests use unittest.
+SUBDIRS = . io unittests tests pyunittests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
