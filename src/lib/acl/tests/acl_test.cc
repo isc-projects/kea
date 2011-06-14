@@ -41,14 +41,14 @@ struct Log {
             "of log";
         {
             SCOPED_TRACE("Checking that the first amount of checks did run");
-            for (size_t i(0); i < amount; ++ i) {
+            for (size_t i(0); i < amount; ++i) {
                 EXPECT_TRUE(run[i]) << "Check #" << i << " did not run.";
             }
         }
 
         {
             SCOPED_TRACE("Checking that the rest did not run");
-            for (size_t i(amount); i < LOG_SIZE; ++ i) {
+            for (size_t i(amount); i < LOG_SIZE; ++i) {
                 EXPECT_FALSE(run[i]) << "Check #" << i << "did run.";
             }
         }
@@ -59,19 +59,19 @@ struct Log {
 // But it logs that it did run.
 class ConstCheck : public Check<Log*> {
 public:
-    ConstCheck(bool accepts, size_t logNum) :
-        logNum_(logNum),
+    ConstCheck(bool accepts, size_t log_num) :
+        log_num_(log_num),
         accepts_(accepts)
     {
-        assert(logNum < LOG_SIZE); // If this fails, the LOG_SIZE is too small
+        assert(log_num < LOG_SIZE); // If this fails, the LOG_SIZE is too small
     }
     typedef Log* LPtr;
     virtual bool matches(const LPtr& log) const {
-        log->run[logNum_] = true;
+        log->run[log_num_] = true;
         return (accepts_);
     }
 private:
-    size_t logNum_;
+    size_t log_num_;
     bool accepts_;
 };
 
@@ -81,7 +81,7 @@ class TestAcl : public Acl<Log*> {
 public:
     TestAcl() :
         Acl(DROP)
-    { }
+    {}
     // Check the stored policy there
     void checkPolicy(Action ac) {
         EXPECT_EQ(policy_, ac);
@@ -93,14 +93,14 @@ public:
 class AclTest : public ::testing::Test {
 public:
     AclTest() :
-        nextCheck_(0)
-    { }
+        next_check_(0)
+    {}
     TestAcl acl_;
     Log log_;
-    size_t nextCheck_;
+    size_t next_check_;
     shared_ptr<Check<Log*> > getCheck(bool accepts) {
         return (shared_ptr<Check<Log*> >(new ConstCheck(accepts,
-                                                        nextCheck_ ++)));
+                                                        next_check_++)));
     }
 };
 
