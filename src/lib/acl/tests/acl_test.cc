@@ -105,7 +105,7 @@ public:
     size_t next_check_;
     shared_ptr<Check<Log> > getCheck(bool accepts) {
         return (shared_ptr<Check<Log> >(new ConstCheck(accepts,
-                                                        next_check_++)));
+                                                       next_check_++)));
     }
 };
 
