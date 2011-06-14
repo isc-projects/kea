@@ -12,31 +12,18 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __LOGGER_LEVELS_H
-#define __LOGGER_LEVELS_H
+#ifndef __TEMPDIR_H
+#define __TEMPDIR_H
 
-namespace isc {
-namespace log {
-
-/// \brief Severity Levels
+/// \brief Define temporary directory
 ///
-/// Defines the severity levels for logging.  This is shared between the logger
-/// and the implementations classes.
-///
-/// N.B. The order of the levels - DEBUG less than INFO less that WARN etc. is
-/// implicitly assumed in several implementations.  They must not be changed.
+/// Defines the temporary directory in which temporary files used by the
+/// unit tests are created.
 
-typedef enum {
-    DEFAULT = 0,    // Default to logging level of the parent
-    DEBUG = 1,
-    INFO = 2,
-    WARN = 3,
-    ERROR = 4,
-    FATAL = 5,
-    NONE = 6    // Disable logging
-} Severity;
+#include <string>
 
-}   // namespace log
-}   // namespace isc
+namespace {
+std::string TEMP_DIR("@builddir@");
+}
 
-#endif // __LOGGER_LEVELS_H
+#endif // __TEMPDIR_H

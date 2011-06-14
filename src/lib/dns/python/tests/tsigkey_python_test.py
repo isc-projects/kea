@@ -25,6 +25,9 @@ class TSIGKeyTest(unittest.TestCase):
                          TSIGKey.HMACMD5_NAME)
         self.assertEqual(Name('hmac-sha1'), TSIGKey.HMACSHA1_NAME)
         self.assertEqual(Name('hmac-sha256'), TSIGKey.HMACSHA256_NAME)
+        self.assertEqual(Name('hmac-sha224'), TSIGKey.HMACSHA224_NAME)
+        self.assertEqual(Name('hmac-sha384'), TSIGKey.HMACSHA384_NAME)
+        self.assertEqual(Name('hmac-sha512'), TSIGKey.HMACSHA512_NAME)
 
     def test_init(self):
         key = TSIGKey(self.key_name, TSIGKey.HMACMD5_NAME, self.secret)

@@ -447,6 +447,55 @@ AC_LINK_IFELSE(
 CPPFLAGS=$CPPFLAGS_SAVED
 LDFLAGS=$LDFLAGS_SAVED
 
+# Check for log4cplus
+log4cplus_path="yes"
+AC_ARG_WITH([log4cplus],
+  AC_HELP_STRING([--with-log4cplus=PATH],
+    [specify exact directory of log4cplus library and headers]),
+    [log4cplus_path="$withval"])
+if test "${log4cplus_path}" == "no" ; then
+    AC_MSG_ERROR([Need log4cplus])
+elif test "${log4cplus_path}" != "yes" ; then
+  LOG4CPLUS_INCLUDES="-I${log4cplus_path}/include"
+  LOG4CPLUS_LDFLAGS="-L${log4cplus_path}/lib"
+else
+# If not specified, try some common paths.
+	log4cplusdirs="/usr/local /usr/pkg /opt /opt/local"
+	for d in $log4cplusdirs
+	do
+		if test -f $d/include/log4cplus/logger.h; then
+			LOG4CPLUS_INCLUDES="-I$d/include"
+			LOG4CPLUS_LDFLAGS="-L$d/lib"
+			break
+		fi
+	done
+fi
+
+LOG4CPLUS_LDFLAGS="$LOG4CPLUS_LDFLAGS -llog4cplus $MULTITHREADING_FLAG"
+
+AC_SUBST(LOG4CPLUS_LDFLAGS)
+AC_SUBST(LOG4CPLUS_INCLUDES)
+
+CPPFLAGS_SAVED=$CPPFLAGS
+CPPFLAGS="$LOG4CPLUS_INCLUDES $CPPFLAGS"
+LDFLAGS_SAVED="$LDFLAGS"
+LDFLAGS="$LOG4CPLUS_LDFLAGS $LDFLAGS"
+
+AC_CHECK_HEADERS([log4cplus/logger.h],,AC_MSG_ERROR([Missing required header files.]))
+AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM([#include <log4cplus/logger.h>
+                         ],
+                         [using namespace log4cplus;
+                          Logger logger = Logger::getInstance("main");
+                         ])],
+        [AC_MSG_RESULT([checking for log4cplus library... yes])],
+        [AC_MSG_RESULT([checking for log4cplus library... no])
+         AC_MSG_ERROR([Needs log4cplus library])]
+)
+
+CPPFLAGS=$CPPFLAGS_SAVED
+LDFLAGS=$LDFLAGS_SAVED
+
 #
 # Configure Boost header path
 #
@@ -775,10 +824,11 @@ AC_CONFIG_FILES([Makefile
                  src/lib/server_common/tests/Makefile
                  src/lib/util/Makefile
                  src/lib/util/io/Makefile
-                 src/lib/util/io/tests/Makefile
                  src/lib/util/unittests/Makefile
                  src/lib/util/pyunittests/Makefile
                  src/lib/util/tests/Makefile
+                 src/lib/acl/Makefile
+                 src/lib/acl/tests/Makefile
                  tests/Makefile
                  tests/system/Makefile
                  tests/tools/Makefile
@@ -842,7 +892,11 @@ AC_OUTPUT([doc/version.ent
            src/lib/dns/tests/testdata/gen-wiredata.py
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
-           src/lib/log/tests/run_time_init_test.sh
+           src/lib/log/tests/console_test.sh
+           src/lib/log/tests/destination_test.sh
+           src/lib/log/tests/local_file_test.sh
+           src/lib/log/tests/severity_test.sh
+           src/lib/log/tests/tempdir.h
            src/lib/util/python/mkpywrapper.py
            src/lib/server_common/tests/data_path.h
            tests/system/conf.sh
@@ -869,7 +923,10 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/msgq/tests/msgq_test
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
-           chmod +x src/lib/log/tests/run_time_init_test.sh
+           chmod +x src/lib/log/tests/local_file_test.sh
+           chmod +x src/lib/log/tests/console_test.sh
+           chmod +x src/lib/log/tests/destination_test.sh
+           chmod +x src/lib/log/tests/severity_test.sh
            chmod +x src/lib/util/python/mkpywrapper.py
            chmod +x tests/system/conf.sh
           ])
@@ -902,6 +959,8 @@ dnl includes too
   Boost:         ${BOOST_INCLUDES}
   Botan:         ${BOTAN_INCLUDES}
                  ${BOTAN_LDFLAGS}
+  Log4cplus:     ${LOG4CPLUS_INCLUDES}
+                 ${LOG4CPLUS_LDFLAGS}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
 

@@ -66,7 +66,7 @@ decodeCheck(const string& input_string, vector<uint8_t>& output,
             const string& expected)
 {
     decodeBase32Hex(input_string, output);
-    EXPECT_EQ(expected, string(&output[0], &output[0] + output.size()));
+    EXPECT_EQ(expected, string(output.begin(), output.end()));
 }
 
 TEST_F(Base32HexTest, decode) {
@@ -79,6 +79,11 @@ TEST_F(Base32HexTest, decode) {
     // whitespace should be allowed
     decodeCheck("CP NM\tUOG=", decoded_data, "foob");
     decodeCheck("CPNMU===\n", decoded_data, "foo");
+    decodeCheck("  CP NM\tUOG=", decoded_data, "foob");
+    decodeCheck(" ", decoded_data, "");
+
+    // Incomplete input
+    EXPECT_THROW(decodeBase32Hex("CPNMUOJ", decoded_data), BadValue);
 
     // invalid number of padding characters
     EXPECT_THROW(decodeBase32Hex("CPNMU0==", decoded_data), BadValue);

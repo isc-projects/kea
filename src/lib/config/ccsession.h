@@ -161,6 +161,7 @@ public:
      * configuration of the local module needs to be updated.
      * This must refer to a valid object of a concrete derived class of
      * AbstractSession without establishing the session.
+     *
      * Note: the design decision on who is responsible for establishing the
      * session is in flux, and may change in near future.
      *
@@ -171,6 +172,14 @@ public:
      * @param command_handler A callback function pointer to be called when
      * a control command from a remote agent needs to be performed on the
      * local module.
+     * @param start_immediately If true (default), start listening to new commands
+     * and configuration changes asynchronously at the end of the constructor;
+     * if false, it will be delayed until the start() method is explicitly
+     * called. (This is a short term workaround for an initialization trouble.
+     * We'll need to develop a cleaner solution, and then remove this knob)
+     * @param handle_logging If true, the ModuleCCSession will automatically
+     * take care of logging configuration through the virtual Logging config
+     * module.
      */
     ModuleCCSession(const std::string& spec_file_name,
                     isc::cc::AbstractSession& session,
@@ -178,8 +187,20 @@ public:
                         isc::data::ConstElementPtr new_config) = NULL,
                     isc::data::ConstElementPtr(*command_handler)(
                         const std::string& command,
-                        isc::data::ConstElementPtr args) = NULL
+                        isc::data::ConstElementPtr args) = NULL,
+                    bool start_immediately = true,
+                    bool handle_logging = false
                     );
+
+    /// Start receiving new commands and configuration changes asynchronously.
+    ///
+    /// This method must be called only once, and only when the ModuleCCSession
+    /// was constructed with start_immediately being false.  Otherwise
+    /// CCSessionError will be thrown.
+    ///
+    /// As noted in the constructor, this method should be considered a short
+    /// term workaround and will be removed in future.
+    void start();
 
     /**
      * Optional optimization for checkCommand loop; returns true
@@ -240,12 +261,16 @@ public:
      * for those changes. This function will subscribe to the relevant module
      * channel.
      *
+     * This method must be called before calling the \c start() method on the
+     * ModuleCCSession (it also implies the ModuleCCSession must have been
+     * constructed with start_immediately being false).
+     *
      * \param spec_name This specifies the module to add. It is either a
      *                  filename of the spec file to use or a name of module
      *                  (in case it's a module name, the spec data is
      *                  downloaded from the configuration manager, therefore
      *                  the configuration manager must know it). If
-     *                  spec_is_filenabe is true (the default), then a
+     *                  spec_is_filename is true (the default), then a
      *                  filename is assumed, otherwise a module name.
      * \param handler The handler function called whenever there's a change.
      *                Called once initally from this function. May be NULL
@@ -263,7 +288,8 @@ public:
     std::string addRemoteConfig(const std::string& spec_name,
                                 void (*handler)(const std::string& module_name,
                                                 isc::data::ConstElementPtr
-                                                update) = NULL,
+                                                update,
+                                                const ConfigData& config_data) = NULL,
                                 bool spec_is_filename = true);
 
     /**
@@ -293,7 +319,8 @@ public:
 private:
     ModuleSpec readModuleSpecification(const std::string& filename);
     void startCheck();
-    
+
+    bool started_;
     std::string module_name_;
     isc::cc::AbstractSession& session_;
     ModuleSpec module_specification_;
@@ -316,12 +343,15 @@ private:
         isc::data::ConstElementPtr args);
 
     typedef void (*RemoteHandler)(const std::string&,
-                                  isc::data::ConstElementPtr);
+                                  isc::data::ConstElementPtr,
+                                  const ConfigData&);
     std::map<std::string, ConfigData> remote_module_configs_;
     std::map<std::string, RemoteHandler> remote_module_handlers_;
 
     void updateRemoteConfig(const std::string& module_name,
                             isc::data::ConstElementPtr new_config);
+
+    ModuleSpec fetchRemoteSpec(const std::string& module, bool is_filename);
 };
 
 }

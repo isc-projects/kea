@@ -47,6 +47,7 @@
 #include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
 #include <log/dummylog.h>
+#include <server_common/keyring.h>
 
 using namespace std;
 using namespace isc::data;
@@ -152,9 +153,14 @@ main(int argc, char* argv[]) {
         cc_session = new Session(io_service.get_io_service());
         cout << "[b10-auth] Configuration session channel created." << endl;
 
+        // We delay starting listening to new commands/config just before we
+        // go into the main loop to avoid confusion due to mixture of
+        // synchronous and asynchronous operations (this would happen in
+        // initializing TSIG keys below).  Until then all operations on the
+        // CC session will take place synchronously.
         config_session = new ModuleCCSession(specfile, *cc_session,
                                              my_config_handler,
-                                             my_command_handler);
+                                             my_command_handler, false);
         cout << "[b10-auth] Configuration channel established." << endl;
 
         xfrin_session = new Session(io_service.get_io_service());
@@ -189,6 +195,14 @@ main(int argc, char* argv[]) {
         if (uid != NULL) {
             changeUser(uid);
         }
+
+        cout << "[b10-auth] Loading TSIG keys" << endl;
+        isc::server_common::initKeyring(*config_session);
+        auth_server->setTSIGKeyRing(&isc::server_common::keyring);
+
+        // Now start asynchronous read.
+        config_session->start();
+        cout << "[b10-auth] Configuration channel started." << endl;
 
         cout << "[b10-auth] Server started." << endl;
         io_service.run();
