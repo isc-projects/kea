@@ -59,6 +59,7 @@ private:
      * is created).
      */
     Acl(const Acl<Context, Action>& other);
+
     /**
      * \brief Assignment operator.
      *
@@ -67,7 +68,8 @@ private:
      * added (or, more correctly, this privade one removed so default one
      * is created).
      */
-    Acl& operator =(const Acl<Context, Action>& other);
+    Acl& operator=(const Acl<Context, Action>& other);
+
 public:
     /**
      * \brief Constructor.
@@ -76,7 +78,8 @@ public:
      *     "falls off" the end of the list (when no rule matched).
      */
     Acl(Action policy) : policy_(policy)
-    { }
+    {}
+
     /**
      * \brief Pointer to the check.
      *
@@ -85,6 +88,7 @@ public:
      * together in future).
      */
     typedef boost::shared_ptr<Check<Context> > CheckPtr;
+
     /**
      * \brief The actual main function that decides.
      *
@@ -97,13 +101,14 @@ public:
      */
     Action execute(const Context& context) const {
         for (typename Entries::const_iterator i(entries_.begin());
-             i != entries_.end(); ++ i) {
+             i != entries_.end(); ++i) {
             if (i->first->matches(context)) {
                 return (i->second);
             }
         }
         return (policy_);
     }
+
     /**
      * \brief Add new entry at the end of the list.
      *
