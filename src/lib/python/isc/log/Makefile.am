@@ -1,8 +1,18 @@
-SUBDIRS = . tests
+SUBDIRS = tests
 
-python_PYTHON = __init__.py log.py
+AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CXXFLAGS = $(B10_CXXFLAGS)
 
-pythondir = $(pyexecdir)/isc/log
+pythondir = $(pyexecdir)/isc
+python_LTLIBRARIES = log.la
+log_la_SOURCES = log.cc
 
-pytest:
-	$(SHELL) tests/log_test
+log_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
+log_la_LDFLAGS = $(PYTHON_LDFLAGS)
+log_la_LDFLAGS += -module
+log_la_LIBADD = $(top_builddir)/src/lib/log/liblog.la
+log_la_LIBADD += $(PYTHON_LIB)
+
+# This is not installed, it helps locate the module during tests
+EXTRA_DIST = __init__.py
