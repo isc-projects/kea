@@ -51,33 +51,91 @@ dictionary = {}
 # illustration to make the structure clearer.)  The text of these section is:
 
 # Header - this is output before anything else.
-SEC_HEADER = """<html>
-<head>
-<title>BIND 10 System Messages</title>
-<link rel="stylesheet" href="./bind10-guide.css" type="text/css">
-</head>
-<body>
-<h1>BIND 10 System Messages</h1>
-<p/>
+SEC_HEADER="""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+<!ENTITY % version SYSTEM "version.ent">
+%version;
+]>
+<book>
+  <?xml-stylesheet href="bind10-guide.css" type="text/css"?>
+
+  <bookinfo>
+    <title>BIND 10 Messages Manual</title>
+
+    <copyright>
+      <year>2011</year><holder>Internet Systems Consortium, Inc.</holder>
+    </copyright>
+
+    <abstract>
+      <para>BIND 10 is a Domain Name System (DNS) suite managed by
+	  Internet Systems Consortium (ISC). It includes DNS libraries
+	  and modular components for controlling authoritative and
+	  recursive DNS servers.
+      </para>
+      <para>
+        This is the messages manual for BIND 10 version &__VERSION__;.
+	    The most up-to-date version of this document, along with
+	    other documents for BIND 10, can be found at
+        <ulink url="http://bind10.isc.org/docs"/>.
+      </para>
+    </abstract>
+
+    <releaseinfo>This is the messages manual for BIND 10 version
+        &__VERSION__;.</releaseinfo>
+  </bookinfo>
+
+  <chapter id="intro">
+    <title>Introduction</title>
+    <para>
+      This document lists each messages that can be logged by the
+      programs in the BIND 10 package.  Each entry in this manual
+      is of the form:
+      <screen>IDENTIFICATION, message-text</screen>
+      ... where "IDENTIFICATION" is the message identification included
+      in each message logged and "message-text" is the accompanying
+      message text.  "message-text" may include placeholders of the
+      form "%1", "%2" etc.; these parameters are replaced by relevant
+      values when the message is logged.
+    </para>
+    <para>
+      Each entry is also accompanied by a description giving more
+      information about the circumstances that result in the message
+      being logged.
+    </para>
+  </chapter>
+
+  <chapter id="messages">
+    <title>BIND 10 Messages</title>
+    <para>
+      <variablelist>
 """
 
 # This is output once for each message.  The string contains substitution
 # tokens: $I is replaced by the message identification, $T by the message text,
 # and $D by the message description.
-SEC_MESSAGE = """<b><a name="$I">$I</a></b>, $T<br/>
-$D"""
+SEC_MESSAGE = """<varlistentry>
+<term>$I, $T</term>
+<listitem><para>
+$D
+</para></listitem>
+</varlistentry>"""
 
 # A description may contain blank lines intended to separate paragraphs.  If so,
 # each blank line is replaced by the following.
-SEC_BLANK = "<p/>"
+SEC_BLANK = "</para><para>"
 
 # The separator is copied to the output verbatim after each message except
 # the last.
-SEC_SEPARATOR = "<p/>"
+SEC_SEPARATOR = ""
 
 # The trailier is copied to the output verbatim after the last message.
-SEC_TRAILER = """</body>
-</html>"""
+SEC_TRAILER = """      </variablelist>
+    </para>
+  </chapter>
+</book>
+"""
 
 
 def reportError(filename, what):
@@ -89,21 +147,14 @@ def reportError(filename, what):
 
 
 
-# Printing functions
-def printHeader():
-    print(SEC_HEADER)
-
-def printSeparator():
-    print(SEC_SEPARATOR)
-
-def printMessage(msgid):
-    m1 = SEC_MESSAGE.replace("$I", msgid)
-    m2 = m1.replace("$T", dictionary[msgid]['text'])
-    m3 = m2.replace("$D", dictionary[msgid]['description'])
-    print(m3)
-
-def printTrailer():
-    print(SEC_TRAILER)
+def replaceTag(string):
+    """Replaces the '<' and '>' in text about to be inserted into the template
+       sections above with &lt; and &gt; to avoid problems with message text
+       being interpreted as XML text.
+    """
+    string1 = string.replace("<", "&lt;")
+    string2 = string1.replace(">", "&gt;")
+    return string2
 
 
 
@@ -119,6 +170,38 @@ def replaceBlankLines(lines):
             result.append(l)
 
     return result
+
+
+
+# Printing functions
+def printHeader():
+    print(SEC_HEADER)
+
+def printSeparator():
+    print(SEC_SEPARATOR)
+
+def printMessage(msgid):
+    # In the message ID, replace "<" and ">" with XML-safe versions and
+    # substitute into the data.
+    m1 = SEC_MESSAGE.replace("$I", replaceTag(msgid))
+
+    # Do the same for the message text.
+    m2 = m1.replace("$T", replaceTag(dictionary[msgid]['text']))
+
+    # Do the same for the description then replace blank lines with the
+    # specified separator.  (We do this in that order to avoid replacing
+    # the "<" and ">" in the XML tags in the separator.)
+    desc1 = [replaceTag(l) for l in dictionary[msgid]['description']]
+    desc2 = replaceBlankLines(desc1)
+
+    # Join the lines together to form a single string and insert into
+    # current text.
+    m3 = m2.replace("$D", "\n".join(desc2))
+
+    print(m3)
+
+def printTrailer():
+    print(SEC_TRAILER)
 
 
 
@@ -190,17 +273,12 @@ def addToDictionary(msgid, msgtext, desc, filename):
             i = i + 1
         msgid = msgid + " (" + str(i) + ")"
 
-    # Remove leading and trailing blank lines, and replace embedded blanks
-    # with the blank section element.
-    modified_desc = replaceBlankLines(removeEmptyLeadingTrailing(desc))
-
-    # Put everything in a sub-dictionary that is added to the main one.  At
-    # this point, for ease of subsequent processing the description lines are
-    # concatenated together to form a single string, the lines being separated
-    # by a newline.
+    # Remove leading and trailing blank lines in the description, then
+    # add everything into a subdictionary which is then added to the main
+    # one.
     details = {}
     details['text'] = msgtext
-    details['description'] = "\n".join(modified_desc)
+    details['description'] = removeEmptyLeadingTrailing(desc)
     details['filename'] = filename
     dictionary[msgid] = details
 
@@ -261,8 +339,6 @@ def processFileContent(filename, lines):
         addToDictionary(msgid, msgtext, description, filename)
 
 
-#
-# \param file Name of the file to process
 
 def processFile(filename):
     """Processes a file by reading it in and stripping out all comments and
@@ -323,7 +399,7 @@ if __name__ == "__main__":
     # Read the files and load the data
     processAllFiles(args[0])
 
-    # Now just list the message IDs and text in the global dictionary
+    # Now just print out everything we've read (in alphabetical order).
     count = 1
     printHeader()
     for msgid in sorted(dictionary):
