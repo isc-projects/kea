@@ -15,6 +15,11 @@
 #include <config.h>
 #include <gtest/gtest.h>
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <string.h>
+
 #include <boost/shared_ptr.hpp>
 
 #include <asiolink/io_endpoint.h>
@@ -192,6 +197,48 @@ TEST(IOEndpointTest, createIPProto) {
     EXPECT_THROW(IOEndpoint::create(IPPROTO_IP, IOAddress("192.0.2.1"),
                                     53210)->getAddress().toText(),
                  IOError);
+}
+
+void
+sockAddrMatch(const struct sockaddr& actual_sa,
+              const char* const expected_addr_text,
+              const char* const expected_port_text)
+{
+    struct addrinfo hints;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM; // this shouldn't matter
+    hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
+
+    struct addrinfo* res;
+    ASSERT_EQ(0, getaddrinfo(expected_addr_text, expected_port_text, &hints,
+                             &res));
+    EXPECT_EQ(res->ai_family, actual_sa.sa_family);
+#ifdef HAVE_SA_LEN
+    // ASIO doesn't seem to set sa_len, so we set it to the expected value
+    res->ai_addr->sa_len = actual_sa.sa_len;
+#endif
+    EXPECT_EQ(0, memcmp(res->ai_addr, &actual_sa, res->ai_addrlen));
+    free(res);
+}
+
+TEST(IOEndpointTest, getSockAddr) {
+    // UDP/IPv4
+    ConstIOEndpointPtr ep(IOEndpoint::create(IPPROTO_UDP,
+                                             IOAddress("192.0.2.1"), 53210));
+    sockAddrMatch(ep->getSockAddr(), "192.0.2.1", "53210");
+
+    // UDP/IPv6
+    ep.reset(IOEndpoint::create(IPPROTO_UDP, IOAddress("2001:db8::53"), 53));
+    sockAddrMatch(ep->getSockAddr(), "2001:db8::53", "53");
+
+    // TCP/IPv4
+    ep.reset(IOEndpoint::create(IPPROTO_TCP, IOAddress("192.0.2.2"), 53211));
+    sockAddrMatch(ep->getSockAddr(), "192.0.2.2", "53211");
+
+    // TCP/IPv6
+    ep.reset(IOEndpoint::create(IPPROTO_UDP, IOAddress("2001:db8::5300"), 35));
+    sockAddrMatch(ep->getSockAddr(), "2001:db8::5300", "35");
 }
 
 }

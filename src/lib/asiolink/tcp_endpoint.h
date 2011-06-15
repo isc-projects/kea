@@ -84,6 +84,10 @@ public:
         return (asio_endpoint_.address());
     }
 
+    virtual const struct sockaddr& getSockAddr() const {
+        return (*asio_endpoint_.data());
+    }
+
     virtual uint16_t getPort() const {
         return (asio_endpoint_.port());
     }
@@ -113,3 +117,7 @@ private:
 } // namespace asiolink
 } // namespace isc
 #endif // __TCP_ENDPOINT_H
+
+// Local Variables:
+// mode: c++
+// End:
