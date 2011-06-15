@@ -18,3 +18,8 @@ endif
 	CONFIG_WR_TESTDATA_PATH=$(abs_top_builddir)/src/lib/config/tests/testdata \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
+
+CLEANDIRS = __pycache__
+
+clean-local:
+	rm -rf $(CLEANDIRS)

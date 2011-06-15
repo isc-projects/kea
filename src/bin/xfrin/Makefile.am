@@ -25,3 +25,8 @@ b10-xfrin: xfrin.py
 	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" \
 	       -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" xfrin.py >$@
 	chmod a+x $@
+
+CLEANDIRS = __pycache__
+
+clean-local:
+	rm -rf $(CLEANDIRS)

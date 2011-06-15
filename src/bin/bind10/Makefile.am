@@ -27,3 +27,8 @@ bind10: bind10.py
 
 pytest:
 	$(SHELL) tests/bind10_test
+
+CLEANDIRS = __pycache__
+
+clean-local:
+	rm -rf $(CLEANDIRS)

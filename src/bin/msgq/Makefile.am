@@ -20,3 +20,8 @@ endif
 b10-msgq: msgq.py
 	$(SED) "s|@@PYTHONPATH@@|@pyexecdir@|" msgq.py >$@
 	chmod a+x $@
+
+CLEANDIRS = __pycache__
+
+clean-local:
+	rm -rf $(CLEANDIRS)

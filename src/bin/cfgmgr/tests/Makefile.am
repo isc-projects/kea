@@ -16,3 +16,8 @@ endif
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/cfgmgr \
 	$(PYCOVERAGE_RUN) $(abs_builddir)/$$pytest || exit ; \
 	done
+
+CLEANDIRS = testdata/plugins/__pycache__
+
+clean-local:
+	rm -rf $(CLEANDIRS)
