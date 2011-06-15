@@ -140,7 +140,7 @@ public:
          *     to validate the data and throw if it is bad.
          */
         virtual boost::shared_ptr<Check<Context> > create(
-            const std::string& name, data::ConstElementPtr definition);
+            const std::string& name, data::ConstElementPtr definition) = 0;
         /**
          * \brief Is list or-abbreviation allowed?
          *
@@ -185,7 +185,7 @@ public:
      *
      * \param description The JSON description of the check.
      */
-    boost::shared_ptr<Check<Context> > loadCheck(data::ConstElementPtr&
+    boost::shared_ptr<Check<Context> > loadCheck(const data::ConstElementPtr&
                                                  description);
     /**
      * \brief Load an ACL.
@@ -198,7 +198,7 @@ public:
      *
      * \param description The JSON list of ACL.
      */
-    boost::shared_ptr<Acl<Context, Action> > load(data::ConstElementPtr&
+    boost::shared_ptr<Acl<Context, Action> > load(const data::ConstElementPtr&
                                                   description);
 };
 
