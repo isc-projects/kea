@@ -417,7 +417,7 @@ Logger_performOutput(Function function, PyObject* args, bool dbgLevel) {
 
         if (number < start) {
             return (PyErr_Format(PyExc_TypeError, "Too few arguments to "
-                                 "logging call, at last %zu needed and %zd "
+                                 "logging call, at least %zu needed and %zd "
                                  "given", start, number));
         }
 
@@ -440,7 +440,7 @@ Logger_performOutput(Function function, PyObject* args, bool dbgLevel) {
         }
 
         // We create the logging message right now. If we fail to convert a
-        // parameter to string, at last the part that we already did will
+        // parameter to string, at least the part that we already did will
         // be output
         Logger::Formatter formatter(function(dbg, mid.c_str()));
 
@@ -607,7 +607,7 @@ PyModuleDef iscLog = {
     NULL
 };
 
-}
+} // end anonymous namespace
 
 PyMODINIT_FUNC
 PyInit_log(void) {
