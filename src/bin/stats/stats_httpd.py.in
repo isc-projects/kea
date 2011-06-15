@@ -438,7 +438,7 @@ class StatsHttpd:
             elem = xml.etree.ElementTree.Element(k)
             elem.text = v
             xml_list.append(
-                xml.etree.ElementTree.tostring(elem))
+                str(xml.etree.ElementTree.tostring(elem)))
         xml_string = "".join(xml_list)
         self.xml_body = self.open_template(XML_TEMPLATE_LOCATION).substitute(
             xml_string=xml_string,
