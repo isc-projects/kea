@@ -34,3 +34,8 @@ b10-stats: stats.py
 b10-stats-httpd: stats_httpd.py
 	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" stats_httpd.py >$@
 	chmod a+x $@
+
+CLEANDIRS = __pycache__
+
+clean-local:
+	rm -rf $(CLEANDIRS)

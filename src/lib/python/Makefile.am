@@ -11,3 +11,7 @@ DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in bind10_config.py.in
 EXTRA_DIST =  bind10_config.py.in
 
 CLEANFILES = bind10_config.pyc
+CLEANDIRS = __pycache__
+
+clean-local:
+	rm -rf $(CLEANDIRS)
