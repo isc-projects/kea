@@ -135,8 +135,6 @@ getMessage(PyObject*, PyObject* args) {
 
 PyObject*
 reset(PyObject*, PyObject*) {
-    // TODO Should we check we got exactly 0 arguments?
-    // But who cares, it's testing function only
     LoggerManager::reset();
     Py_RETURN_NONE;
 }
