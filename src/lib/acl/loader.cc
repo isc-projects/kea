@@ -14,12 +14,32 @@
 
 #include "loader.h"
 
+using namespace std;
+
 namespace isc {
 namespace acl {
 
-Action defaultActionLoader(data::ConstElementPtr) {
-    // XXX: Temporary, so it compiles for now
-    return (DROP);
+Action defaultActionLoader(data::ConstElementPtr actionEl) {
+    try {
+        const string action(actionEl->stringValue());
+        if (action == "ACCEPT") {
+            return (ACCEPT);
+        } else if (action == "REJECT") {
+            return (REJECT);
+        } else if (action == "DROP") {
+            return (DROP);
+        } else {
+            throw LoaderError(__FILE__, __LINE__,
+                              string("Unknown action '" + action + "'").
+                                  c_str(),
+                              actionEl);
+        }
+    }
+    catch (const data::TypeError&) {
+        throw LoaderError(__FILE__, __LINE__,
+                          "Invalid element type for action, must be string",
+                          actionEl);
+    }
 }
 
 }
