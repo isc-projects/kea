@@ -3,7 +3,7 @@
    DHCPv6 Protocol structures... */
 
 /*
- * Copyright (c) 2006-2010 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2006-2011 by Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
