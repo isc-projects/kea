@@ -97,14 +97,18 @@ public:
     /**
      * \brief Constructor.
      *
+     * \param default_action The default action for created ACLs.
      * \param actionLoader is the loader which will be used to convert actions
      *     from their JSON representation. The default value is suitable for
      *     the isc::acl::Action enum. If you did not specify the second
      *     template argument, you don't need to specify this loader.
      */
-    Loader(boost::function1<Action, data::ConstElementPtr> actionLoader =
-           &defaultActionLoader)
-    { }
+    Loader(const Action& defaultAction,
+           const boost::function1<Action, data::ConstElementPtr>
+               &actionLoader = &defaultActionLoader) :
+        default_action_(defaultAction),
+        action_loader_(actionLoader)
+    {}
     /**
      * \brief Creator of the checks.
      *
@@ -218,6 +222,82 @@ public:
                               "Check description is not a map",
                               description);
         }
+        // Call the internal part with extracted map
+        return (loadCheck(description, map));
+    }
+    /**
+     * \brief Load an ACL.
+     *
+     * This parses an ACL list, creates the checks and actions of each element
+     * and returns it. It may throw LoaderError if it isn't a list or the
+     * "action" key is missing in some element. Also, no exceptions from
+     * loadCheck (therefore from whatever creator is used) and from the
+     * actionLoader passed to constructor are not caught.
+     *
+     * \param description The JSON list of ACL.
+     */
+    boost::shared_ptr<Acl<Context, Action> > load(const data::ConstElementPtr&
+                                                  description)
+    {
+        // We first check it's a list, so we can use the list reference
+        // (the list may be huge)
+        if (description->getType() != data::Element::list) {
+            throw LoaderError(__FILE__, __LINE__, "ACL not a list",
+                              description);
+        }
+        // First create an empty ACL
+        const List &list(description->listValue());
+        boost::shared_ptr<Acl<Context, Action> > result(
+            new Acl<Context, Action>(default_action_));
+        // Run trough the list of elements
+        for (List::const_iterator i(list.begin()); i != list.end(); ++i) {
+            Map map;
+            try {
+                map = (*i)->mapValue();
+            }
+            catch (const data::TypeError&) {
+                throw LoaderError(__FILE__, __LINE__, "ACL element not a map",
+                                  *i);
+            }
+            // Create an action for the element
+            const Map::const_iterator action(map.find("action"));
+            if (action == map.end()) {
+                throw LoaderError(__FILE__, __LINE__,
+                                  "No action in ACL element", *i);
+            }
+            const Action acValue(action_loader_(action->second));
+            // Now create the check if there's one
+            if (map.size() >= 2) { // One is the action, another one the check
+                result->append(loadCheck(*i, map), acValue);
+            } else {
+                // In case there's no check, this matches every time. We
+                // simulate it by our own private "True" check.
+                result->append(boost::shared_ptr<Check<Context> >(new True()),
+                               acValue);
+            }
+        }
+        return (result);
+    }
+private:
+    // Some type aliases to save typing
+    typedef std::map<std::string, boost::shared_ptr<CheckCreator> > Creators;
+    typedef std::map<std::string, data::ConstElementPtr> Map;
+    typedef std::vector<data::ConstElementPtr> List;
+    // Private members
+    Creators creators_;
+    const Action default_action_;
+    const boost::function1<Action, data::ConstElementPtr> action_loader_;
+    /**
+     * \brief Internal version of loadCheck.
+     *
+     * This is the internal part, shared between load and loadCheck.
+     * \param description The bit of JSON (used in exceptions).
+     * \param map The extracted map describing the check. It does change
+     *     the map.
+     */
+    boost::shared_ptr<Check<Context> > loadCheck(const data::ConstElementPtr&
+                                                 description, Map& map)
+    {
         // Remove the action keyword
         map.erase("action");
         // Now, do we have any definition? Or is it and abbreviation?
@@ -254,21 +334,20 @@ public:
         }
     }
     /**
-     * \brief Load an ACL.
+     * \brief Check that always matches.
      *
-     * This parses an ACL list, creates the checks and actions of each element
-     * and returns it. It may throw LoaderError if it isn't a list or the
-     * "action" key is missing in some element. Also, no exceptions from
-     * loadCheck (therefore from whatever creator is used) and from the
-     * actionLoader passed to constructor are not caught.
-     *
-     * \param description The JSON list of ACL.
+     * This one is used internally for ACL elements without condition. We may
+     * want to make this publicly accesible sometime maybe, but for now,
+     * there's no need.
      */
-    boost::shared_ptr<Acl<Context, Action> > load(const data::ConstElementPtr&
-                                                  description);
-private:
-    typedef std::map<std::string, boost::shared_ptr<CheckCreator> > Creators;
-    Creators creators_;
+    class True : public Check<Context> {
+    public:
+        virtual bool matches(const Context&) const { return (true); };
+        virtual unsigned cost() const { return (1); }
+        // We don't write "true" here, as this one was created using empty
+        // input
+        virtual std::string toText() const { return ""; }
+    };
 };
 
 }
