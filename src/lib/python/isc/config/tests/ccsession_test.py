@@ -616,8 +616,7 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertRaises(TypeError, default_logconfig_handler);
         self.assertRaises(TypeError, default_logconfig_handler, 1);
 
-        spec = isc.config.module_spec_from_file(LOGGING_SPEC_FILE,
-                                                bind10_config.PLUGIN_PATHS)
+        spec = isc.config.module_spec_from_file(LOGGING_SPEC_FILE)
         config_data = ConfigData(spec)
 
         self.assertRaises(TypeError, default_logconfig_handler, 1, config_data)
