@@ -41,6 +41,7 @@ from isc.config.config_data import ConfigData, MultiConfigData, BIND10_CONFIG_DA
 import isc
 from isc.util.file import path_search
 import bind10_config
+from isc.log import log_config_update
 
 class ModuleCCSessionError(Exception): pass
 
@@ -119,7 +120,15 @@ def create_command(command_name, params = None):
     return msg
 
 def default_logconfig_handler(new_config, config_data):
-    pass
+    errors = []
+
+    if config_data.get_module_spec().validate_config(False, new_config, errors):
+        isc.log.log_config_update(new_config, config_data.get_module_spec().get_full_spec())
+    else:
+        # no logging here yet, TODO: log these errors
+        print("Error in logging configuration, ignoring config update: ")
+        for err in errors:
+            print(err)
 
 class ModuleCCSession(ConfigData):
     """This class maintains a connection to the command channel, as
