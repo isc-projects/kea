@@ -608,11 +608,11 @@ class BoB:
 
         if self.cfg_start_dhcp6:
             self.start_dhcp6(c_channel_env)
-    
+
     def startup(self):
         """
             Start the BoB instance.
- 
+
             Returns None if successful, otherwise an string describing the
             problem.
         """
