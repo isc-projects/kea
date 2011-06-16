@@ -118,7 +118,7 @@ of the body of the message failed due to some non-protocol related reason
 (although the parsing of the header succeeded).  The message parameters give
 a textual description of the problem and the RCODE returned.
 
-% PRINTMSG      print message command, aeguments are: %1
+% PRINTMSG      print message command, arguments are: %1
 This message is logged when a "print_message" command is received over the
 command channel.
 
@@ -169,7 +169,7 @@ resolver gives up trying to resolve a query.  Retry count: the number of times
 the resolver will retry a query to an upstream server if it gets a timeout.
 
 The client and lookup timeouts require a bit more explanation. The
-resolution of the clent query might require a large number of queries to
+resolution of the client query might require a large number of queries to
 upstream nameservers.  Even if none of these queries timeout, the total time
 taken to perform all the queries may exceed the client timeout.  When this
 happens, a SERVFAIL is returned to the client, but the resolver continues
