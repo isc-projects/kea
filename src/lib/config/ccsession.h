@@ -354,6 +354,25 @@ private:
     ModuleSpec fetchRemoteSpec(const std::string& module, bool is_filename);
 };
 
+/// \brief Default handler for logging config updates
+///
+/// When CCSession is initialized with handle_logging set to true,
+/// this callback will be used to update the logger when a configuration
+/// change comes in.
+///
+/// This function updates the (global) loggers by initializing a
+/// LoggerManager and passing the settings as specified in the given
+/// configuration update.
+///
+/// \param n The name of the module
+/// \param new_config The modified configuration values
+/// \param config_data The full config data for the (remote) logging
+///                    module.
+void
+default_logconfig_handler(const std::string&n,
+                          isc::data::ConstElementPtr new_config,
+                          const ConfigData& config_data);
+
 }
 }
 #endif // __CCSESSION_H
