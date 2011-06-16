@@ -184,30 +184,6 @@ CPPFLAGS="$CPPFLAGS ${PYTHON_INCLUDES}"
 AC_CHECK_HEADERS([Python.h],, AC_MSG_ERROR([Missing Python.h]))
 CPPFLAGS="$CPPFLAGS_SAVED"
 
-# Python 3.2 has an unused parameter in one of its headers. This
-# has been reported, but not fixed as of yet, so we check if we need
-# to set -Wno-unused-parameter.
-CPPFLAGS_SAVED="$CPPFLAGS"
-CPPFLAGS="$CPPFLAGS ${PYTHON_INCLUDES} -Wall -Wextra -Werror"
-AC_MSG_CHECKING([whether we need -Wno-unused-parameter for python])
-AC_TRY_COMPILE(
-    [#include <Python.h>],
-    [],
-    [AC_MSG_RESULT(no)],
-    [
-    CPPFLAGS="$CPPFLAGS -Wno-unused-parameter"
-    AC_TRY_COMPILE([#include <Python.h>],
-        [],
-        [AC_MSG_RESULT(yes)
-         PYTHON_INCLUDES="${PYTHON_INCLUDES} -Wno-unused-parameter"
-         AC_SUBST(PYTHON_INCLUDES)
-        ],
-        [AC_MSG_ERROR([Can't compile against Python.h])]
-    )
-    ]
-)
-CPPFLAGS="$CPPFLAGS_SAVED"
-
 # Check for python library.  Needed for Python-wrapper libraries.
 LDFLAGS_SAVED="$LDFLAGS"
 LDFLAGS="$LDFLAGS $PYTHON_LDFLAGS"
@@ -303,6 +279,35 @@ namespace isc {class Bar {Foo foo_;};} ],,
 	 B10_CXXFLAGS="$B10_CXXFLAGS -Werror"],
 	[AC_MSG_RESULT(yes)])
 CXXFLAGS="$CXXFLAGS_SAVED"
+
+# Python 3.2 has an unused parameter in one of its headers. This
+# has been reported, but not fixed as of yet, so we check if we need
+# to set -Wno-unused-parameter.
+if test $werror_ok = 1; then
+	CPPFLAGS_SAVED="$CPPFLAGS"
+	CPPFLAGS=${PYTHON_INCLUDES}
+	CXXFLAGS_SAVED="$CXXFLAGS"
+	CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
+	AC_MSG_CHECKING([whether we need -Wno-unused-parameter for python])
+	AC_TRY_COMPILE(
+		[#include <Python.h>],
+		[],
+		[AC_MSG_RESULT(no)],
+		[
+		CXXFLAGS="$CXXFLAGS -Wno-unused-parameter"
+		AC_TRY_COMPILE([#include <Python.h>],
+		[],
+		[AC_MSG_RESULT(yes)
+		 PYTHON_CXXFLAGS="${PYTHON_CXXFLAGS} -Wno-unused-parameter"
+		 AC_SUBST(PYTHON_CXXFLAGS)
+		],
+		[AC_MSG_ERROR([Can't compile against Python.h])]
+                )
+                ]
+	)
+	CXXFLAGS="$CXXFLAGS_SAVED"
+	CPPFLAGS="$CPPFLAGS_SAVED"
+fi
 
 fi				dnl GXX = yes
 
@@ -978,6 +983,7 @@ Flags:
   B10_CXXFLAGS:  $B10_CXXFLAGS
 dnl includes too
   Python:        ${PYTHON_INCLUDES}
+                 ${PYTHON_CXXFLAGS}
                  ${PYTHON_LDFLAGS}
                  ${PYTHON_LIB}
   Boost:         ${BOOST_INCLUDES}
