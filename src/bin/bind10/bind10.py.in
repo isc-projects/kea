@@ -221,6 +221,7 @@ class BoB:
         self.cfg_start_auth = True
         self.cfg_start_resolver = False
         self.cfg_start_dhcp6 = False
+        self.cfg_start_dhcp4 = False
         self.started_auth_family = False
         self.started_resolver_family = False
         self.curproc = None
