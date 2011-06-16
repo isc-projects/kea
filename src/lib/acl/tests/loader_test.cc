@@ -63,20 +63,19 @@ TEST(LoaderHelpers, DefaultActionLoader) {
 
 // A check that doesn't check anything but remembers it's own name
 // and data
-class NamedCheck : public Check<Log*> {
+class NamedCheck : public Check<Log> {
 public:
     NamedCheck(const string& name, ConstElementPtr data) :
         name_(name),
         data_(data)
     {}
-    typedef Log* LogPtr;
-    virtual bool matches(const LogPtr&) const { return (true); }
+    virtual bool matches(const Log&) const { return (true); }
     const string name_;
     const ConstElementPtr data_;
 };
 
 // The creator of NamedCheck
-class NamedCreator : public Loader<Log*>::CheckCreator {
+class NamedCreator : public Loader<Log>::CheckCreator {
 public:
     NamedCreator(const string& name, bool abbreviatedList = true) :
         abbreviated_list_(abbreviatedList)
@@ -90,7 +89,7 @@ public:
     vector<string> names() const {
         return (names_);
     }
-    shared_ptr<Check<Log*> > create(const string& name,
+    shared_ptr<Check<Log> > create(const string& name,
                                            ConstElementPtr data)
     {
         bool found(false);
@@ -103,7 +102,7 @@ public:
         }
         EXPECT_TRUE(found) << "Name " << name << " passed to creator which "
             "doesn't handle it.";
-        return (shared_ptr<Check<Log*> >(new NamedCheck(name, data)));
+        return (shared_ptr<Check<Log> >(new NamedCheck(name, data)));
     }
     bool allowListAbbreviation() const {
         return (abbreviated_list_);
@@ -117,41 +116,40 @@ private:
 class TestCreatorError {};
 
 // This will throw every time it should create something
-class ThrowCreator : public Loader<Log*>::CheckCreator {
+class ThrowCreator : public Loader<Log>::CheckCreator {
 public:
     vector<string> names() const {
         vector<string> result;
         result.push_back("throw");
         return (result);
     }
-    shared_ptr<Check<Log*> > create(const string&, ConstElementPtr) {
+    shared_ptr<Check<Log> > create(const string&, ConstElementPtr) {
         throw TestCreatorError();
     }
 };
 
 // This throws whenever the match is called on it
-class ThrowCheck : public Check<Log*> {
+class ThrowCheck : public Check<Log> {
 public:
-    typedef Log* LogPtr;
-    virtual bool matches(const LogPtr&) const {
+    virtual bool matches(const Log&) const {
         throw TestCreatorError();
     }
 };
 
 // And creator for it
-class ThrowCheckCreator : public Loader<Log*>::CheckCreator {
+class ThrowCheckCreator : public Loader<Log>::CheckCreator {
 public:
     vector<string> names() const {
         vector<string> result;
         result.push_back("throwcheck");
         return (result);
     }
-    shared_ptr<Check<Log*> > create(const string&, ConstElementPtr) {
-        return (shared_ptr<Check<Log*> >(new ThrowCheck()));
+    shared_ptr<Check<Log> > create(const string&, ConstElementPtr) {
+        return (shared_ptr<Check<Log> >(new ThrowCheck()));
     }
 };
 
-class LogCreator : public Loader<Log*>::CheckCreator {
+class LogCreator : public Loader<Log>::CheckCreator {
 public:
     vector<string> names() const {
         vector<string> result;
@@ -163,7 +161,7 @@ public:
      * logging cell used, the second is result of the check. No error checking
      * is done, if there's bug in the test, it will throw TypeError for us.
      */
-    shared_ptr<Check<Log*> > create(const string&,
+    shared_ptr<Check<Log> > create(const string&,
                                     ConstElementPtr definition)
     {
         vector<ConstElementPtr> list(definition->listValue());
@@ -180,7 +178,7 @@ public:
     LoaderTest() :
         loader_(REJECT)
     {}
-    Loader<Log*> loader_;
+    Loader<Log> loader_;
     Log log_;
     // Some convenience functions to set up
 
@@ -199,7 +197,7 @@ public:
     // Load a check and convert it to named check to examine it
     shared_ptr<NamedCheck> loadCheck(const string& definition) {
         SCOPED_TRACE("Loading check " + definition);
-        shared_ptr<Check<Log*> > loaded;
+        shared_ptr<Check<Log> > loaded;
         EXPECT_NO_THROW(loaded = loader_.loadCheck(el(definition)));
         shared_ptr<NamedCheck> result(dynamic_pointer_cast<NamedCheck>(
             loaded));
@@ -237,12 +235,14 @@ public:
     // log items it marked
     //
     // Works with preset names throw and logcheck
-    void aclRun(const string& JSON, Action expectedResult, size_t logged) {
+    void aclRun(const string& JSON, BasicAction expectedResult,
+                size_t logged)
+    {
         SCOPED_TRACE("Running ACL for " + JSON);
         aclSetup();
-        shared_ptr<Acl<Log*> > acl;
+        shared_ptr<ACL<Log> > acl;
         EXPECT_NO_THROW(acl = loader_.load(el(JSON)));
-        EXPECT_EQ(expectedResult, acl->execute(&log_));
+        EXPECT_EQ(expectedResult, acl->execute(log_));
         log_.checkFirst(logged);
     }
     // Check it throws an error when creating the ACL

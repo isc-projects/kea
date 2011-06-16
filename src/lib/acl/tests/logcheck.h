@@ -32,7 +32,7 @@ const size_t LOG_SIZE = 10;
 // This will remember which checks did run already.
 struct Log {
     // The actual log cells, if i-th check did run
-    bool run[LOG_SIZE];
+    mutable bool run[LOG_SIZE];
     Log() {
         // Nothing run yet
         for (size_t i(0); i < LOG_SIZE; ++ i) {
@@ -61,7 +61,7 @@ struct Log {
 
 // This returns true or false every time, no matter what is passed to it.
 // But it logs that it did run.
-class ConstCheck : public Check<Log*> {
+class ConstCheck : public Check<Log> {
 public:
     ConstCheck(bool accepts, size_t logNum) :
         logNum_(logNum),
@@ -69,9 +69,13 @@ public:
     {
         assert(logNum < LOG_SIZE); // If this fails, the LOG_SIZE is too small
     }
-    typedef Log* LPtr;
-    virtual bool matches(const LPtr& log) const {
-        log->run[logNum_] = true;
+    virtual bool matches(const Log& log) const {
+        /*
+         * This is abuse of the context. It is designed to carry the
+         * information to check, not to modify it. However, this is the
+         * easiest way to do the test, so we go against the design.
+         */
+        log.run[logNum_] = true;
         return (accepts_);
     }
 private:

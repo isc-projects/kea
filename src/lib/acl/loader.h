@@ -78,13 +78,13 @@ public:
  *     and contain one of "ACCEPT", "REJECT" or "DENY".
  * \note We could define different names or add aliases if needed.
  */
-Action defaultActionLoader(data::ConstElementPtr action);
+BasicAction defaultActionLoader(data::ConstElementPtr action);
 
 /**
  * \brief Loader of ACLs.
  *
  * The goal of this class is to convert JSON description of an ACL to object
- * of the Acl class (including the checks inside it).
+ * of the ACL class (including the checks inside it).
  *
  * The class can be used to load the checks only. This is supposed to be used
  * by compound checks to create the subexpressions.
@@ -92,7 +92,7 @@ Action defaultActionLoader(data::ConstElementPtr action);
  * To allow any kind of checks to exist in the application, creators are
  * registered for the names of the checks.
  */
-template<typename Context, typename Action = isc::acl::Action> class Loader {
+template<typename Context, typename Action = BasicAction> class Loader {
 public:
     /**
      * \brief Constructor.
@@ -100,7 +100,7 @@ public:
      * \param default_action The default action for created ACLs.
      * \param actionLoader is the loader which will be used to convert actions
      *     from their JSON representation. The default value is suitable for
-     *     the isc::acl::Action enum. If you did not specify the second
+     *     the BasicAction enum. If you did not specify the second
      *     template argument, you don't need to specify this loader.
      */
     Loader(const Action& defaultAction,
@@ -236,7 +236,7 @@ public:
      *
      * \param description The JSON list of ACL.
      */
-    boost::shared_ptr<Acl<Context, Action> > load(const data::ConstElementPtr&
+    boost::shared_ptr<ACL<Context, Action> > load(const data::ConstElementPtr&
                                                   description)
     {
         // We first check it's a list, so we can use the list reference
@@ -247,8 +247,8 @@ public:
         }
         // First create an empty ACL
         const List &list(description->listValue());
-        boost::shared_ptr<Acl<Context, Action> > result(
-            new Acl<Context, Action>(default_action_));
+        boost::shared_ptr<ACL<Context, Action> > result(
+            new ACL<Context, Action>(default_action_));
         // Run trough the list of elements
         for (List::const_iterator i(list.begin()); i != list.end(); ++i) {
             Map map;
