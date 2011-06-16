@@ -22,9 +22,7 @@ import os
 from isc.config.ccsession import *
 from isc.config.config_data import BIND10_CONFIG_DATA_VERSION
 from unittest_fakesession import FakeModuleCCSession, WouldBlockForever
-
-# Is this test ever called outside of this directory?
-LOGGING_SPEC_FILE = "../../../../../bin/cfgmgr/plugins/logging.spec"
+import bind10_config
 
 class TestHelperFunctions(unittest.TestCase):
     def test_parse_answer(self):
@@ -616,7 +614,8 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertRaises(TypeError, default_logconfig_handler);
         self.assertRaises(TypeError, default_logconfig_handler, 1);
 
-        spec = isc.config.module_spec_from_file(LOGGING_SPEC_FILE)
+        spec = isc.config.module_spec_from_file(
+            path_search('logging.spec', bind10_config.PLUGIN_PATHS))
         config_data = ConfigData(spec)
 
         self.assertRaises(TypeError, default_logconfig_handler, 1, config_data)
