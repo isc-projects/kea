@@ -610,7 +610,6 @@ class TestModuleCCSession(unittest.TestCase):
         # test whether default_logconfig_handler reacts nicely to
         # bad data. We assume the actual logger output is tested
         # elsewhere
-        #print(config_data.get_value("loggers"))
         self.assertRaises(TypeError, default_logconfig_handler);
         self.assertRaises(TypeError, default_logconfig_handler, 1);
 

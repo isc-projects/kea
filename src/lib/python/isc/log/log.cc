@@ -168,7 +168,18 @@ init(PyObject*, PyObject* args) {
     Py_RETURN_NONE;
 }
 
-isc::data::ElementPtr PyObjectToElement(PyObject* obj) {
+// This function takes a PyObject* and converts it to a ConstElementPtr
+//
+// The Python object should be a basic object, i.e. a bool, long,
+// float, string, list, or dict. The contents of these lists and
+// dicts have the same limitation.
+// If any other type is encountered, an InternalError is raised.
+//
+// Note: This is a conversion between basic python types and our
+// own c++ equivalent (the Element). In that sense we may want to use it
+// in more places. If so, we should move it. It is defined here now
+// because this is the only place it is used.
+isc::data::ConstElementPtr PyObjectToElement(PyObject* obj) {
     if (PyBool_Check(obj)) {
         return isc::data::Element::create(PyObject_IsTrue(obj) == 1);
     } else if (PyLong_Check(obj)) {
@@ -213,8 +224,8 @@ logConfigUpdate(PyObject*, PyObject* args) {
     }
 
     try {
-        isc::data::ElementPtr new_config = PyObjectToElement(new_configO);
-        isc::data::ElementPtr mod_spec_e = PyObjectToElement(mod_specO);
+        isc::data::ConstElementPtr new_config = PyObjectToElement(new_configO);
+        isc::data::ConstElementPtr mod_spec_e = PyObjectToElement(mod_specO);
         isc::config::ModuleSpec mod_spec(mod_spec_e);
         isc::config::ConfigData config_data(mod_spec);
         isc::config::default_logconfig_handler("logging", new_config,
