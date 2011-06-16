@@ -247,7 +247,9 @@ readLoggersConf(std::vector<isc::log::LoggerSpecification>& specs,
 } // end anonymous namespace
 
 void
-my_logconfig_handler(const std::string&n, ConstElementPtr new_config, const ConfigData& config_data) {
+default_logconfig_handler(const std::string&n,
+                          ConstElementPtr new_config,
+                          const ConfigData& config_data) {
     config_data.getModuleSpec().validateConfig(new_config, true);
 
     std::vector<isc::log::LoggerSpecification> specs;
@@ -353,7 +355,7 @@ ModuleCCSession::ModuleCCSession(
 
     // Keep track of logging settings automatically
     if (handle_logging) {
-        addRemoteConfig("Logging", my_logconfig_handler, false);
+        addRemoteConfig("Logging", default_logconfig_handler, false);
     }
 
     if (start_immediately) {

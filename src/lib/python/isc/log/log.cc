@@ -22,6 +22,8 @@
 #include <log/logger_manager.h>
 #include <log/logger.h>
 
+#include <config/ccsession.h>
+
 #include <string>
 #include <boost/bind.hpp>
 
@@ -34,6 +36,9 @@ namespace {
 // This is for testing only. The real module will have it always set as
 // NULL and will use the global dictionary.
 MessageDictionary* testDictionary = NULL;
+
+// To propagate python exceptions trough our code
+class InternalError {};
 
 PyObject*
 setTestDictionary(PyObject*, PyObject* args) {
@@ -163,6 +168,73 @@ init(PyObject*, PyObject* args) {
     Py_RETURN_NONE;
 }
 
+isc::data::ElementPtr PyObjectToElement(PyObject* obj) {
+    if (PyBool_Check(obj)) {
+        return isc::data::Element::create(PyObject_IsTrue(obj) == 1);
+    } else if (PyLong_Check(obj)) {
+        return isc::data::Element::create(PyLong_AsLong(obj));
+    } else if (PyFloat_Check(obj)) {
+        return isc::data::Element::create(PyFloat_AsDouble(obj));
+    } else if (PyUnicode_Check(obj)) {
+        return isc::data::Element::create(PyBytes_AsString(PyUnicode_AsUTF8String(obj)));
+    } else if (PyList_Check(obj)) {
+        isc::data::ElementPtr result = isc::data::Element::createList();
+        for (Py_ssize_t i = 0; i < PyList_Size(obj); ++i) {
+            result->add(PyObjectToElement(PyList_GetItem(obj, i)));
+        }
+        return result;
+    } else if (PyDict_Check(obj)) {
+        isc::data::ElementPtr result = isc::data::Element::createMap();
+        PyObject *key, *value;
+        Py_ssize_t pos = 0;
+        while (PyDict_Next(obj, &pos, &key, &value)) {
+            result->set(PyBytes_AsString(PyUnicode_AsUTF8String(key)),
+                        PyObjectToElement(value));
+        }
+        return result;
+    } else if (obj == Py_None) {
+        return isc::data::ElementPtr();
+    } else {
+        throw InternalError();
+        return isc::data::ElementPtr();
+    }
+}
+
+PyObject*
+logConfigUpdate(PyObject*, PyObject* args) {
+    // we have no wrappers for ElementPtr and ConfigData,
+    // So we convert them on the spot.
+    // The new_config object is assumed to have been validated.
+    // If we need this code in other places, we should move it out,
+    // or consider full wrappers
+    PyObject* new_configO;
+    PyObject* mod_specO;
+    if (!PyArg_ParseTuple(args, "OO", &new_configO, &mod_specO)) {
+        return (NULL);
+    }
+
+    try {
+        isc::data::ElementPtr new_config = PyObjectToElement(new_configO);
+        isc::data::ElementPtr mod_spec_e = PyObjectToElement(mod_specO);
+        isc::config::ModuleSpec mod_spec(mod_spec_e);
+        isc::config::ConfigData config_data(mod_spec);
+        isc::config::default_logconfig_handler("logging", new_config,
+                                               config_data);
+
+        Py_RETURN_NONE;
+    } catch (const InternalError& ie) {
+        PyErr_SetString(PyExc_TypeError, "argument passed to log_config_update "
+                                         "is not a (compound) basic type");
+        return (NULL);
+    } catch (const std::exception& e) {
+        PyErr_SetString(PyExc_RuntimeError, e.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(PyExc_RuntimeError, "Unknown C++ exception");
+        return (NULL);
+    }
+}
+
 PyMethodDef methods[] = {
     {"set_test_dictionary", setTestDictionary, METH_VARARGS,
         "Set or unset testing mode for message dictionary. In testing, "
@@ -184,6 +256,18 @@ PyMethodDef methods[] = {
         "logging severity (one of 'DEBUG', 'INFO', 'WARN', 'ERROR' or "
         "'FATAL'), a debug level (integer in the range 0-99) and a file name "
         "of a dictionary with message text translations."},
+    {"log_config_update", logConfigUpdate, METH_VARARGS,
+        "Update logger settings. This method is automatically used when "
+        "ModuleCCSession is initialized with handle_logging_config set "
+        "to True. When called, the first argument is the new logging "
+        "configuration (as a basic data type). The second argument is "
+        "the raw specification (as returned from "
+        "ConfigData.get_module_spec().get_full_spec()."
+        "Raises a TypeError if either argument is not a basic type, or "
+        "if it contains a list or dict that does not contain a basic "
+        "type. If this call succeeds, the global logger settings have "
+        "been updated."
+    },
     {NULL, NULL, 0, NULL}
 };
 
@@ -360,9 +444,6 @@ Logger_isDebugEnabled(LoggerWrapper* self, PyObject* args) {
         return (NULL);
     }
 }
-
-// To propagate python exceptions trough our code
-class InternalError {};
 
 string
 objectToStr(PyObject* object, bool convert) {
