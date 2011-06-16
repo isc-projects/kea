@@ -747,6 +747,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/auth/tests/Makefile
                  src/bin/auth/benchmarks/Makefile
 		 src/bin/dhcp6/Makefile
+                 src/bin/dhcp6/tests/Makefile
                  src/bin/resolver/Makefile
                  src/bin/resolver/tests/Makefile
                  src/bin/sockcreator/Makefile
