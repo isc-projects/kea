@@ -18,6 +18,7 @@
 #include <log/logger.h>
 #include <log/logger_impl.h>
 #include <log/logger_name.h>
+#include <log/logger_support.h>
 #include <log/message_dictionary.h>
 #include <log/message_types.h>
 
@@ -28,9 +29,14 @@ using namespace std;
 namespace isc {
 namespace log {
 
-// Initialize Logger.
+// Initialize underlying logger, but only if logging has been initialized.
 void Logger::initLoggerImpl() {
-    loggerptr_ = new LoggerImpl(name_);
+    if (isLoggingInitialized()) {
+        loggerptr_ = new LoggerImpl(name_);
+    } else {
+        isc_throw(LoggingNotInitialized, "attempt to access logging function "
+                  "before logging has been initialized");
+    }
 }
 
 // Destructor.
