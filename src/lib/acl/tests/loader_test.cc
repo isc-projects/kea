@@ -12,12 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include "logcheck.h"
 #include <acl/loader.h>
-
 #include <string>
 #include <gtest/gtest.h>
 
-using namespace isc::acl;
 using namespace std;
 using namespace boost;
 using isc::data::ConstElementPtr;
@@ -62,24 +61,22 @@ TEST(LoaderHelpers, DefaultActionLoader) {
     testActionLoaderException("{}");
 }
 
-// We need to pass a context, but it doesn't matter here which one
-class NullContext {};
-
 // A check that doesn't check anything but remembers it's own name
 // and data
-class NamedCheck : public Check<NullContext> {
+class NamedCheck : public Check<Log*> {
 public:
     NamedCheck(const string& name, ConstElementPtr data) :
         name_(name),
         data_(data)
     {}
-    virtual bool matches(const NullContext&) const { return (true); }
+    typedef Log* LogPtr;
+    virtual bool matches(const LogPtr&) const { return (true); }
     const string name_;
     const ConstElementPtr data_;
 };
 
 // The creator of NamedCheck
-class NamedCreator : public Loader<NullContext>::CheckCreator {
+class NamedCreator : public Loader<Log*>::CheckCreator {
 public:
     NamedCreator(const string& name, bool abbreviatedList = true) :
         abbreviated_list_(abbreviatedList)
@@ -93,7 +90,7 @@ public:
     vector<string> names() const {
         return (names_);
     }
-    shared_ptr<Check<NullContext> > create(const string& name,
+    shared_ptr<Check<Log*> > create(const string& name,
                                            ConstElementPtr data)
     {
         bool found(false);
@@ -106,7 +103,7 @@ public:
         }
         EXPECT_TRUE(found) << "Name " << name << " passed to creator which "
             "doesn't handle it.";
-        return (shared_ptr<Check<NullContext> >(new NamedCheck(name, data)));
+        return (shared_ptr<Check<Log*> >(new NamedCheck(name, data)));
     }
     bool allowListAbbreviation() const {
         return (abbreviated_list_);
@@ -120,21 +117,66 @@ private:
 class TestCreatorError {};
 
 // This will throw every time it should create something
-class ThrowCreator : public Loader<NullContext>::CheckCreator {
+class ThrowCreator : public Loader<Log*>::CheckCreator {
 public:
     vector<string> names() const {
         vector<string> result;
         result.push_back("throw");
         return (result);
     }
-    shared_ptr<Check<NullContext> > create(const string&, ConstElementPtr) {
+    shared_ptr<Check<Log*> > create(const string&, ConstElementPtr) {
         throw TestCreatorError();
+    }
+};
+
+// This throws whenever the match is called on it
+class ThrowCheck : public Check<Log*> {
+public:
+    typedef Log* LogPtr;
+    virtual bool matches(const LogPtr&) const {
+        throw TestCreatorError();
+    }
+};
+
+// And creator for it
+class ThrowCheckCreator : public Loader<Log*>::CheckCreator {
+public:
+    vector<string> names() const {
+        vector<string> result;
+        result.push_back("throwcheck");
+        return (result);
+    }
+    shared_ptr<Check<Log*> > create(const string&, ConstElementPtr) {
+        return (shared_ptr<Check<Log*> >(new ThrowCheck()));
+    }
+};
+
+class LogCreator : public Loader<Log*>::CheckCreator {
+public:
+    vector<string> names() const {
+        vector<string> result;
+        result.push_back("logcheck");
+        return (result);
+    }
+    /*
+     * For simplicity, we just take two values as a list, first is the
+     * logging cell used, the second is result of the check. No error checking
+     * is done, if there's bug in the test, it will throw TypeError for us.
+     */
+    shared_ptr<Check<Log*> > create(const string&,
+                                    ConstElementPtr definition)
+    {
+        vector<ConstElementPtr> list(definition->listValue());
+        int logpos(list[0]->intValue());
+        bool accept(list[1]->boolValue());
+        return (shared_ptr<ConstCheck>(new ConstCheck(accept, logpos)));
     }
 };
 
 class LoaderTest : public ::testing::Test {
 public:
-    Loader<NullContext> loader_;
+    Loader<Log*> loader_;
+    Log log_;
     // Some convenience functions to set up
 
     // Create a NamedCreator, convert to shared pointer
@@ -152,7 +194,7 @@ public:
     // Load a check and convert it to named check to examine it
     shared_ptr<NamedCheck> loadCheck(const string& definition) {
         SCOPED_TRACE("Loading check " + definition);
-        shared_ptr<Check<NullContext> > loaded;
+        shared_ptr<Check<Log*> > loaded;
         EXPECT_NO_THROW(loaded = loader_.loadCheck(el(definition)));
         shared_ptr<NamedCheck> result(dynamic_pointer_cast<NamedCheck>(
             loaded));
@@ -172,6 +214,29 @@ public:
             // It should be identical copy, so checking pointers
             EXPECT_EQ(input, e.element());
         }
+    }
+    // Insert the throw, throwcheck and logcheck checks into the loader
+    void aclSetup() {
+        loader_.registerCreator(shared_ptr<ThrowCreator>(new ThrowCreator()));
+        loader_.registerCreator(shared_ptr<ThrowCheckCreator>(
+            new ThrowCheckCreator()));
+        loader_.registerCreator(shared_ptr<LogCreator>(new LogCreator()));
+    }
+    // Create an ACL, run it, check it's result and how many first
+    // log items it marked
+    //
+    // Works with preset names throw and logcheck
+    void aclRun(const string& JSON, Action expectedResult, size_t logged) {
+        aclSetup();
+        shared_ptr<Acl<Log*> > acl;
+        EXPECT_NO_THROW(acl = loader_.load(el(JSON)));
+        EXPECT_EQ(expectedResult, acl->execute(&log_));
+        log_.checkFirst(logged);
+    }
+    // Check it throws an error when creating the ACL
+    void aclException(const string& JSON) {
+        aclSetup();
+        EXPECT_THROW(loader_.load(el(JSON)), LoaderError);
     }
 };
 
@@ -279,6 +344,66 @@ TEST_F(LoaderTest, CheckNoAction) {
     shared_ptr<NamedCheck> check(loadCheck("{\"name1\": 1, \"action\": 2}"));
     EXPECT_EQ("name1", check->name_);
     EXPECT_TRUE(check->data_->equals(*el("1")));
+}
+
+// The empty ACL can be created and run, providing the default action
+TEST_F(LoaderTest, EmptyACL) {
+    aclRun("[]", REJECT, 0);
+}
+
+// We can create a simple ACL, which will return the correct default
+// action
+TEST_F(LoaderTest, NoMatchACL) {
+    aclRun("[{\"logcheck\": [0, false], \"action\": \"ACCEPT\"}]",
+           REJECT, 1);
+}
+
+// We can created more complicated ACL, it will match at the second
+// check
+TEST_F(LoaderTest, MatchACL) {
+    aclRun("["
+           "  {\"logcheck\": [0, false], \"action\": \"DROP\"},"
+           "  {\"logcheck\": [1, true], \"action\": \"ACCEPT\"}"
+           "]", ACCEPT, 2);
+}
+
+// ACL without a check (matches unconditionally)
+// We add another one check after it, to make sure it is really not run
+TEST_F(LoaderTest, NoCheckACL) {
+    aclRun("["
+           "  {\"acton\": \"DROP\"},"
+           "  {\"throwcheck\": 1, \"action\": \"ACCEPT\"}"
+           "]", DROP, 0);
+}
+
+// Malformed things are rejected
+TEST_F(LoaderTest, InvalidACLFormat) {
+    // Not a list
+    aclException("{}");
+    aclException("42");
+    aclException("true");
+    aclException("null");
+    aclException("\"hello\"");
+    // Malformed element
+    aclException("[42]");
+    aclException("[\"hello\"]");
+    aclException("[[]]");
+    aclException("[true]");
+    aclException("[null]");
+}
+
+// If there's no action keyword, it is rejected
+TEST_F(LoaderTest, NoAction) {
+    aclException("[{}]");
+    aclException("[{\"logcheck\": [0, true]}]");
+}
+
+// Exceptions from check creation is propagated
+TEST_F(LoaderTest, ACLPropagate) {
+    aclSetup();
+    EXPECT_THROW(loader_.load(el("[{\"action\": \"ACCEPT\", \"throw\": 1]")),
+                 TestCreatorError);
+
 }
 
 }
