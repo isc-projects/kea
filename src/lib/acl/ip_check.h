@@ -274,7 +274,7 @@ public:
     }
 
     /// \return Setting of inverse flag
-    bool getInverse() {
+    bool getInverse() const {
         return (inverse_);
     }
     ///@}
@@ -470,7 +470,7 @@ public:
     }
 
     /// \return Setting of inverse flag
-    bool getInverse() {
+    bool getInverse() const {
         return (inverse_);
     }
     ///@}
