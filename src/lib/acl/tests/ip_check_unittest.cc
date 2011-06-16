@@ -28,7 +28,7 @@ struct GeneralAddress {
     uint32_t    v4addr;
     uint8_t     v6addr[16];
 
-    GeneralAddress()
+    GeneralAddress() : isv4(false), v4addr(0)
     {}
 
     // Convenience constructor for V4 address.  As it is not marked as
