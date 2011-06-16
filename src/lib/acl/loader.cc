@@ -19,7 +19,7 @@ using namespace std;
 namespace isc {
 namespace acl {
 
-Action defaultActionLoader(data::ConstElementPtr actionEl) {
+BasicAction defaultActionLoader(data::ConstElementPtr actionEl) {
     try {
         const string action(actionEl->stringValue());
         if (action == "ACCEPT") {

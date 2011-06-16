@@ -351,8 +351,6 @@ Sqlite3DataSrc::findClosestEnclosure(DataSrcMatch& match) const {
     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_SQLITE_ENCLOSURE).
         arg(match.getName());
     if (match.getClass() != getClass() && match.getClass() != RRClass::ANY()) {
-        LOG_ERROR(logger, DATASRC_SQLITE_ENCLOSURE_BAD_CLASS).arg(getClass()).
-            arg(match.getClass());
         return;
     }
 
