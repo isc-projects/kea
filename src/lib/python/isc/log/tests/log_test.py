@@ -16,6 +16,8 @@
 # This tests it can be loaded, nothing more yet
 import isc.log
 import unittest
+import bind10_config
+from isc.config.ccsession import path_search
 
 class LogDict(unittest.TestCase):
     def setUp(self):
@@ -53,8 +55,7 @@ class Manager(unittest.TestCase):
         isc.log.init("root", "INFO", 0, "/no/such/file");
 
     def test_log_config_update(self):
-        LOGGING_SPEC_FILE = "../../../../../bin/cfgmgr/plugins/logging.spec"
-        log_spec = isc.config.module_spec_from_file(LOGGING_SPEC_FILE).get_full_spec()
+        log_spec = isc.config.module_spec_from_file(path_search('logging.spec', bind10_config.PLUGIN_PATHS)).get_full_spec()
 
         self.assertRaises(TypeError, isc.log.log_config_update)
         self.assertRaises(TypeError, isc.log.log_config_update, 1)
