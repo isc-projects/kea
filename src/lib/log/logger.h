@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include <string>
 
+#include <exceptions/exceptions.h>
 #include <log/logger_level.h>
 #include <log/message_types.h>
 #include <log/log_formatter.h>
@@ -72,6 +73,17 @@ namespace log {
 /// directory.
 
 class LoggerImpl;   // Forward declaration of the implementation class
+
+/// \brief Logging Not Initialized
+///
+/// Exception thrown if an attempt is made to access a logging function
+/// if the logging system has not been initialized.
+class LoggingNotInitialized : public isc::Exception {
+public:
+    LoggingNotInitialized(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what)
+    {}
+};
 
 /// \brief Logger Class
 ///
@@ -224,15 +236,14 @@ private:
 
     /// \brief Initialize Implementation
     ///
-    /// Returns the logger pointer.  If not yet set, the underlying
-    /// implementation class is initialized.\n
-    /// \n
-    /// The reason for this indirection is to avoid the "static initialization
-    /// fiacso", whereby we cannot rely on the order of static initializations.
-    /// The main problem is the root logger name - declared statically - which
-    /// is referenced by various loggers.  By deferring a reference to it until
-    /// after the program starts executing - by which time the root name object
-    /// will be initialized - we avoid this problem.
+    /// Returns the logger pointer.  If not yet set, the implementation class is
+    /// initialized.
+    ///
+    /// The main reason for this is to allow loggers to be declared statically
+    /// before the underlying logging system is initialized.  However, any
+    /// attempt to access a logging method on any logger before initialization -
+    /// regardless of whether is is statically or automatically declared -  will
+    /// cause an exception to be thrown.
     ///
     /// \return Returns pointer to implementation
     LoggerImpl* getLoggerPtr() {
