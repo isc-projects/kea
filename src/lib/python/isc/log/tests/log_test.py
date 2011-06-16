@@ -52,6 +52,33 @@ class Manager(unittest.TestCase):
         # ignore errors like missing file?
         isc.log.init("root", "INFO", 0, "/no/such/file");
 
+    def test_log_config_update(self):
+        LOGGING_SPEC_FILE = "../../../../../bin/cfgmgr/plugins/logging.spec"
+        log_spec = isc.config.module_spec_from_file(LOGGING_SPEC_FILE).get_full_spec()
+
+        self.assertRaises(TypeError, isc.log.log_config_update)
+        self.assertRaises(TypeError, isc.log.log_config_update, 1)
+        self.assertRaises(TypeError, isc.log.log_config_update, 1, 1)
+        self.assertRaises(TypeError, isc.log.log_config_update, 1, 1, 1)
+
+        self.assertRaises(TypeError, isc.log.log_config_update, 1, log_spec)
+        self.assertRaises(TypeError, isc.log.log_config_update, [], log_spec)
+        self.assertRaises(TypeError, isc.log.log_config_update, "foo", log_spec)
+
+        # empty should pass
+        isc.log.log_config_update({}, log_spec)
+
+        # bad spec
+        self.assertRaises(TypeError, isc.log.log_config_update, {}, {"foo": "bar"})
+
+        # Try a correct one
+        log_conf = {"loggers":
+                       [{"name": "b10-xfrout", "output_options":
+                           [{"output": "/tmp/bind10.log",
+                                       "destination": "file",
+                                       "flush": True}]}]}
+        isc.log.log_config_update(log_conf, log_spec)
+
 class Logger(unittest.TestCase):
     def tearDown(self):
         isc.log.reset()
