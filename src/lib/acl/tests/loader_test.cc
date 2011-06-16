@@ -171,10 +171,15 @@ public:
         bool accept(list[1]->boolValue());
         return (shared_ptr<ConstCheck>(new ConstCheck(accept, logpos)));
     }
+    // We take a list, so don't interpret it for us
+    virtual bool allowListAbbreviation() const { return (false); }
 };
 
 class LoaderTest : public ::testing::Test {
 public:
+    LoaderTest() :
+        loader_(REJECT)
+    {}
     Loader<Log*> loader_;
     Log log_;
     // Some convenience functions to set up
@@ -217,16 +222,23 @@ public:
     }
     // Insert the throw, throwcheck and logcheck checks into the loader
     void aclSetup() {
-        loader_.registerCreator(shared_ptr<ThrowCreator>(new ThrowCreator()));
-        loader_.registerCreator(shared_ptr<ThrowCheckCreator>(
-            new ThrowCheckCreator()));
-        loader_.registerCreator(shared_ptr<LogCreator>(new LogCreator()));
+        try {
+            loader_.registerCreator(shared_ptr<ThrowCreator>(new
+                                                             ThrowCreator()));
+            loader_.registerCreator(shared_ptr<ThrowCheckCreator>(
+                new ThrowCheckCreator()));
+            loader_.registerCreator(shared_ptr<LogCreator>(new LogCreator()));
+        }
+        // We ignore this exception here, because it happens when we try to
+        // insert the creators multiple times. This is harmless.
+        catch (const LoaderError&) {}
     }
     // Create an ACL, run it, check it's result and how many first
     // log items it marked
     //
     // Works with preset names throw and logcheck
     void aclRun(const string& JSON, Action expectedResult, size_t logged) {
+        SCOPED_TRACE("Running ACL for " + JSON);
         aclSetup();
         shared_ptr<Acl<Log*> > acl;
         EXPECT_NO_THROW(acl = loader_.load(el(JSON)));
@@ -235,6 +247,7 @@ public:
     }
     // Check it throws an error when creating the ACL
     void aclException(const string& JSON) {
+        SCOPED_TRACE("Trying to load bad " + JSON);
         aclSetup();
         EXPECT_THROW(loader_.load(el(JSON)), LoaderError);
     }
@@ -371,7 +384,7 @@ TEST_F(LoaderTest, MatchACL) {
 // We add another one check after it, to make sure it is really not run
 TEST_F(LoaderTest, NoCheckACL) {
     aclRun("["
-           "  {\"acton\": \"DROP\"},"
+           "  {\"action\": \"DROP\"},"
            "  {\"throwcheck\": 1, \"action\": \"ACCEPT\"}"
            "]", DROP, 0);
 }
@@ -401,7 +414,7 @@ TEST_F(LoaderTest, NoAction) {
 // Exceptions from check creation is propagated
 TEST_F(LoaderTest, ACLPropagate) {
     aclSetup();
-    EXPECT_THROW(loader_.load(el("[{\"action\": \"ACCEPT\", \"throw\": 1]")),
+    EXPECT_THROW(loader_.load(el("[{\"action\": \"ACCEPT\", \"throw\": 1}]")),
                  TestCreatorError);
 
 }
