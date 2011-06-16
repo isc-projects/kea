@@ -19,6 +19,7 @@
 #include <cc/data.h>
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
+#include <map>
 
 namespace isc {
 namespace acl {
@@ -161,7 +162,9 @@ public:
      *
      * Adds a creator to the list of known ones. The creator's list of names
      * must be disjoint with the names already known to the creator or the
-     * LoaderError exception is thrown.
+     * LoaderError exception is thrown. In such case, the creator is not
+     * registered under any of the names. In case of other exceptions, like
+     * bad_alloc, only weak exception safety is guaranteed.
      *
      * \param creator Shared pointer to the creator.
      * \note We don't support deregistration yet, but it is expected it will
@@ -170,7 +173,23 @@ public:
      *     deregister their creators. It is expected they would pass the same
      *     pointer to such method as they pass here.
      */
-    void registerCreator(boost::shared_ptr<CheckCreator> creator);
+    void registerCreator(boost::shared_ptr<CheckCreator> creator) {
+        // First check we can insert all the names
+        typedef std::vector<std::string> Strings;
+        const Strings names(creator->names());
+        for (Strings::const_iterator i(names.begin()); i != names.end();
+             ++i) {
+            if (creators_.find(*i) != creators_.end()) {
+                isc_throw(LoaderError, "The loader already contains creator "
+                          "named " << *i);
+            }
+        }
+        // Now insert them
+        for (Strings::const_iterator i(names.begin()); i != names.end();
+             ++i) {
+            creators_[*i] = creator;
+        }
+    }
     /**
      * \brief Load a check.
      *
@@ -186,7 +205,54 @@ public:
      * \param description The JSON description of the check.
      */
     boost::shared_ptr<Check<Context> > loadCheck(const data::ConstElementPtr&
-                                                 description);
+                                                 description)
+    {
+        // Get the description as a map
+        typedef std::map<std::string, data::ConstElementPtr> Map;
+        Map map;
+        try {
+            map = description->mapValue();
+        }
+        catch (const data::TypeError&) {
+            throw LoaderError(__FILE__, __LINE__,
+                              "Check description is not a map",
+                              description);
+        }
+        // Remove the action keyword
+        map.erase("action");
+        // Now, do we have any definition? Or is it and abbreviation?
+        switch (map.size()) {
+            case 0:
+                throw LoaderError(__FILE__, __LINE__,
+                                  "Check description is empty",
+                                  description);
+            case 1: {
+                // Get the first and only item
+                const Map::const_iterator checkDesc(map.begin());
+                const std::string& name(checkDesc->first);
+                const typename Creators::const_iterator
+                    creatorIt(creators_.find(name));
+                if (creatorIt == creators_.end()) {
+                    throw LoaderError(__FILE__, __LINE__,
+                                      ("No creator for ACL check " +
+                                       name).c_str(),
+                                      description);
+                }
+                if (creatorIt->second->allowListAbbreviation() &&
+                    checkDesc->second->getType() == data::Element::list) {
+                    throw LoaderError(__FILE__, __LINE__,
+                                      "Not implemented (OR-abbreviated form)",
+                                      checkDesc->second);
+                }
+                // Create the check and return it
+                return (creatorIt->second->create(name, checkDesc->second));
+            }
+            default:
+                throw LoaderError(__FILE__, __LINE__,
+                                  "Not implemented (AND-abbreviated form)",
+                                  description);
+        }
+    }
     /**
      * \brief Load an ACL.
      *
@@ -200,6 +266,9 @@ public:
      */
     boost::shared_ptr<Acl<Context, Action> > load(const data::ConstElementPtr&
                                                   description);
+private:
+    typedef std::map<std::string, boost::shared_ptr<CheckCreator> > Creators;
+    Creators creators_;
 };
 
 }

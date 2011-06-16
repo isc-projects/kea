@@ -73,6 +73,7 @@ public:
         name_(name),
         data_(data)
     {}
+    virtual bool matches(const NullContext&) const { return (true); }
     const string name_;
     const ConstElementPtr data_;
 };
@@ -92,8 +93,20 @@ public:
     vector<string> names() const {
         return (names_);
     }
-    shared_ptr<Check<NullContext> > create(const string&, ConstElementPtr) {
-        return (shared_ptr<Check<NullContext> >());
+    shared_ptr<Check<NullContext> > create(const string& name,
+                                           ConstElementPtr data)
+    {
+        bool found(false);
+        for (vector<string>::const_iterator i(names_.begin());
+             i != names_.end(); ++i) {
+            if (*i == name) {
+                found = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(found) << "Name " << name << " passed to creator which "
+            "doesn't handle it.";
+        return (shared_ptr<Check<NullContext> >(new NamedCheck(name, data)));
     }
     bool allowListAbbreviation() const {
         return (abbreviated_list_);
@@ -166,6 +179,20 @@ public:
 TEST_F(LoaderTest, CreatorDuplicity) {
     addNamed("name");
     EXPECT_THROW(loader_.registerCreator(namedCreator("name")), LoaderError);
+}
+
+// Test that when it does not accet a duplicity, nothing is inserted
+TEST_F(LoaderTest, CreatorDuplicityUnchanged) {
+    addNamed("name1");
+    vector<string> names;
+    names.push_back("name2");
+    names.push_back("name1");
+    names.push_back("name3");
+    EXPECT_THROW(loader_.registerCreator(
+        shared_ptr<NamedCreator>(new NamedCreator(names))), LoaderError);
+    // It should now reject both name2 and name3 as not known
+    checkException("{\"name2\": null}");
+    checkException("{\"name3\": null}");
 }
 
 // Test that we can register a creator and load a check with the name
