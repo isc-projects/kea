@@ -246,4 +246,12 @@ TEST_F(LoaderTest, ListCheck) {
     EXPECT_TRUE(check->data_->equals(*el("[1, 2]")));
 }
 
+// Check the action key is ignored as it should be
+TEST_F(LoaderTest, CheckNoAction) {
+    addNamed("name1");
+    shared_ptr<NamedCheck> check(loadCheck("{\"name1\": 1, \"action\": 2}"));
+    EXPECT_EQ("name1", check->name_);
+    EXPECT_TRUE(check->data_->equals(*el("1")));
+}
+
 }
