@@ -106,7 +106,7 @@ main(int argc, char* argv[]) {
 
         // auth_server = new AuthSrv(cache, xfrout_client);
         // auth_server->setVerbose(verbose_mode);
-        cout << "[b10-dhcp6] Server created." << endl;
+        cout << "[b10-dhcp6] Initiating DHCPv6 operation." << endl;
 
     } catch (const std::exception& ex) {
         cerr << "[b10-dhcp6] Server failed: " << ex.what() << endl;
