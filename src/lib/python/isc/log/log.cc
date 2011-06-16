@@ -196,7 +196,6 @@ isc::data::ElementPtr PyObjectToElement(PyObject* obj) {
         return isc::data::ElementPtr();
     } else {
         throw InternalError();
-        return isc::data::ElementPtr();
     }
 }
 
@@ -222,17 +221,21 @@ logConfigUpdate(PyObject*, PyObject* args) {
                                                config_data);
 
         Py_RETURN_NONE;
+    } catch (const isc::data::TypeError& de) {
+        PyErr_SetString(PyExc_TypeError, "argument 1 of log_config_update "
+                                         "is not a map of config data");
+    } catch (const isc::config::ModuleSpecError& mse) {
+        PyErr_SetString(PyExc_TypeError, "argument 2 of log_config_update "
+                                         "is not a correct module specification");
     } catch (const InternalError& ie) {
         PyErr_SetString(PyExc_TypeError, "argument passed to log_config_update "
                                          "is not a (compound) basic type");
-        return (NULL);
     } catch (const std::exception& e) {
         PyErr_SetString(PyExc_RuntimeError, e.what());
-        return (NULL);
     } catch (...) {
         PyErr_SetString(PyExc_RuntimeError, "Unknown C++ exception");
-        return (NULL);
     }
+    return (NULL);
 }
 
 PyMethodDef methods[] = {
