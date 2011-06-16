@@ -12,68 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <gtest/gtest.h>
-#include <acl/acl.h>
-#include <cassert>
-
-using namespace isc::acl;
-using boost::shared_ptr;
+#include "logcheck.h"
 
 namespace {
-
-// This is arbitrary guess of size for the log. If it's too small for your
-// test, just make it bigger.
-const size_t LOG_SIZE = 10;
-
-// This will remember which checks did run already.
-struct Log {
-    // The actual log cells, if i-th check did run
-    bool run[LOG_SIZE];
-    Log() {
-        // Nothing run yet
-        for (size_t i(0); i < LOG_SIZE; ++ i) {
-            run[i] = false;
-        }
-    }
-    // Checks that the first amount of checks did run and the rest didn't.
-    void checkFirst(size_t amount) const {
-        ASSERT_LE(amount, LOG_SIZE) << "Wrong test: amount bigger than size "
-            "of log";
-        {
-            SCOPED_TRACE("Checking that the first amount of checks did run");
-            for (size_t i(0); i < amount; ++ i) {
-                EXPECT_TRUE(run[i]) << "Check #" << i << " did not run.";
-            }
-        }
-
-        {
-            SCOPED_TRACE("Checking that the rest did not run");
-            for (size_t i(amount); i < LOG_SIZE; ++ i) {
-                EXPECT_FALSE(run[i]) << "Check #" << i << "did run.";
-            }
-        }
-    }
-};
-
-// This returns true or false every time, no matter what is passed to it.
-// But it logs that it did run.
-class ConstCheck : public Check<Log*> {
-public:
-    ConstCheck(bool accepts, size_t logNum) :
-        logNum_(logNum),
-        accepts_(accepts)
-    {
-        assert(logNum < LOG_SIZE); // If this fails, the LOG_SIZE is too small
-    }
-    typedef Log* LPtr;
-    virtual bool matches(const LPtr& log) const {
-        log->run[logNum_] = true;
-        return (accepts_);
-    }
-private:
-    size_t logNum_;
-    bool accepts_;
-};
 
 // Test version of the Acl class. It adds few methods to examine the protected
 // data, but does not change the implementation.
