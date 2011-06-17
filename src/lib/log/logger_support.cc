@@ -37,14 +37,8 @@ using namespace std;
 
 namespace {
 
-// Flag to hold logging initialization state.  This is held inside a function
-// to ensure that it is correctly initialized even when referenced during
-// program initialization (thus avoiding the "static initialization fiasco").
-bool&
-loggingInitializationFlag() {
-    static bool init_flag = false;
-    return (init_flag);
-}
+// Flag to hold logging initialization state.
+bool logging_init_state = false;
 
 } // Anonymous namespace
 
@@ -54,7 +48,7 @@ namespace log {
 // Return initialization state.
 bool
 isLoggingInitialized() {
-    return (loggingInitializationFlag());
+    return (logging_init_state);
 }
 
 // Set initialization state.  (Note: as logging can be initialized via a direct
@@ -62,11 +56,11 @@ isLoggingInitialized() {
 // the initialization functions in this file.
 void
 setLoggingInitialized(bool state) {
-    loggingInitializationFlag() = state;
+    logging_init_state = state;
 }
 
-// Logger Run-Time Initialization.  This function is present for historical
-// reasons.
+// Logger Run-Time Initialization.
+
 void
 initLogger(const string& root, isc::log::Severity severity, int dbglevel,
     const char* file) {

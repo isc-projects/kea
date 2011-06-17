@@ -243,7 +243,7 @@ private:
     /// before the underlying logging system is initialized.  However, any
     /// attempt to access a logging method on any logger before initialization -
     /// regardless of whether is is statically or automatically declared -  will
-    /// cause an exception to be thrown.
+    /// cause a "LoggingNotInitialized" exception to be thrown.
     ///
     /// \return Returns pointer to implementation
     LoggerImpl* getLoggerPtr() {
