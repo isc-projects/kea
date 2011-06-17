@@ -38,7 +38,7 @@ using boost::bind;
 // workaround, we create a local randomly named namespace here
 // to solve this issue.
 namespace clang_unnamed_namespace_workaround {
-    // To propagate python exceptions trough our code
+    // To propagate python exceptions through our code
     class InternalError {};
 }
 using namespace clang_unnamed_namespace_workaround;
