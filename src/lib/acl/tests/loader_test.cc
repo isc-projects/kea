@@ -259,8 +259,8 @@ TEST_F(LoaderTest, CreatorDuplicity) {
     EXPECT_THROW(loader_.registerCreator(namedCreator("name")), LoaderError);
 }
 
-// Test that when it does not accet a duplicity, nothing is inserted
-TEST_F(LoaderTest, CreatorDuplicityUnchanged) {
+// Test that when it does not accept a duplicate, nothing is inserted
+TEST_F(LoaderTest, CreatorDuplicateUnchanged) {
     addNamed("name1");
     vector<string> names;
     names.push_back("name2");

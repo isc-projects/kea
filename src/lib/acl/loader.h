@@ -129,7 +129,7 @@ public:
         /**
          * \brief Creates the check.
          *
-         * This function does the actuall creation. It is passed all the
+         * This function does the actual creation. It is passed all the
          * relevant data and is supposed to return shared pointer to the
          * check.
          *
