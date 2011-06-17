@@ -116,8 +116,8 @@ class TestXfroutSession(unittest.TestCase):
 
     def setUp(self):
         self.sock = MySocket(socket.AF_INET,socket.SOCK_STREAM)
-        self.log = isc.log.NSLogger('xfrout', '',  severity = 'critical', log_to_console = False )
-        self.xfrsess = MyXfroutSession(self.sock, None, Dbserver(), self.log, TSIGKeyRing())
+        #self.log = isc.log.NSLogger('xfrout', '',  severity = 'critical', log_to_console = False )
+        self.xfrsess = MyXfroutSession(self.sock, None, Dbserver(), TSIGKeyRing())
         self.mdata = bytes(b'\xd6=\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01')
         self.soa_record = (4, 3, 'example.com.', 'com.example.', 3600, 'SOA', None, 'master.example.com. admin.example.com. 1234 3600 1800 2419200 7200')
 
@@ -520,7 +520,7 @@ class MyUnixSockServer(UnixSockServer):
         self._shutdown_event = threading.Event()
         self._max_transfers_out = 10
         self._cc = MyCCSession()
-        self._log = isc.log.NSLogger('xfrout', '', severity = 'critical', log_to_console = False )
+        #self._log = isc.log.NSLogger('xfrout', '', severity = 'critical', log_to_console = False )
 
 class TestUnixSockServer(unittest.TestCase):
     def setUp(self):
