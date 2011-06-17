@@ -1,3 +1,7 @@
+258.	[build]		jelte
+	Now builds and runs with Python 3.2
+	(Trac #710, git dae1d2e24f993e1eef9ab429326652f40a006dfb)
+
 257.	[bug]           y-aharen
 	Fixed a bug an instance of IntervalTimerImpl may be destructed 
 	while deadline_timer is holding the handler. This fix addresses
