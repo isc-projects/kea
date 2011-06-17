@@ -23,8 +23,8 @@ using namespace std;
 // Simple struct holding either an IPV4 or IPV6 address.  This is the "Context"
 // used for the tests.
 //
-// The structure is also convenient for converting an IPV4 address to a
-// four-byte array.
+// The structure is also used for converting an IPV4 address to a four-byte
+// array.
 struct GeneralAddress {
     bool        isv4;           // true if it holds a v4 address
     union {
@@ -32,19 +32,20 @@ struct GeneralAddress {
         uint8_t     v6addr[16];
     };
 
+    // Default constructor.
     GeneralAddress() : isv4(false) {
         fill(v6addr, v6addr + sizeof(v6addr), 0);
     }
 
-    // Convenience constructor for V4 address.  As it is not marked as
-    // explicit, it allows the automatic promotion of a uint32_t to a
-    // GeneralAddress data type in calls to matches().
+    // Convenience constructor for V4 address.  As it is not marked as explicit,
+    // it allows the automatic promotion of a uint32_t to a GeneralAddress data
+    // type in calls to matches().
     GeneralAddress(uint32_t address) : isv4(true), v4addr(address) {
         fill(v6addr +sizeof(v4addr), v6addr + sizeof(v6addr), 0);
     }
 
-    // Convenience constructor for V6 address.  As it is not marked as
-    // explicit, it allows the automatic promotion of a vector<uint8_t> to a
+    // Convenience constructor for V6 address.  As it is not marked as explicit,
+    // it allows the automatic promotion of a vector<uint8_t> to a
     // GeneralAddress data type in calls to matches().
     GeneralAddress(const vector<uint8_t>& address) : isv4(false) {
         if (address.size() != sizeof(v6addr)) {
@@ -55,10 +56,11 @@ struct GeneralAddress {
         copy(address.begin(), address.end(), v6addr);
     }
 
-    // A couple of convenience methods for checking equality.
+    // A couple of convenience methods for checking equality with different
+    // representations of an address.
 
-    // Check that the IPV4 address is the same as that given, and that
-    // the remainder of the V6 addray is zero.
+    // Check that the IPV4 address is the same as that given, and that the
+    // remainder of the V6 addray is zero.
     bool equals(uint32_t address) {
         return ((address == v4addr) &&
                 (find_if(v6addr + sizeof(v4addr), v6addr + sizeof(v6addr),
@@ -73,7 +75,8 @@ struct GeneralAddress {
     }
 };
 
-    // Provide specializations of the matches() method for the class.
+// Provide a specialisation of the IPCheck::matches() method for the
+// GeneralAddress class.
 
 namespace isc  {
 namespace acl {
@@ -92,7 +95,7 @@ bool IPCheck<GeneralAddress>::matches(const GeneralAddress& addr) const {
 /// *** Free Function Tests ***
 
 // Test the createNetmask() function.
-TEST(IpFunctionCheck, CreateNetmask) {
+TEST(IPFunctionCheck, CreateNetmask) {
 
     // 8-bit tests: invalid arguments should throw.
     EXPECT_THROW(createNetmask<uint8_t>(9), isc::OutOfRange);
@@ -117,30 +120,32 @@ TEST(IpFunctionCheck, CreateNetmask) {
     EXPECT_EQ(0, createNetmask<uint32_t>(0));
 }
 
-// Test the splitIpAddress() function.
-TEST(IpFunctionCheck, SplitIpAddress) {
+// Test the splitIPAddress() function.
+TEST(IPFunctionCheck, SplitIPAddress) {
     pair<string, uint32_t> result;
 
-    result = splitIpAddress("192.0.2.1");
+    result = splitIPAddress("192.0.2.1");
     EXPECT_EQ(string("192.0.2.1"), result.first);
     EXPECT_EQ(-1, result.second);
 
-    result = splitIpAddress("192.0.2.1/24");
+    result = splitIPAddress("192.0.2.1/24");
     EXPECT_EQ(string("192.0.2.1"), result.first);
     EXPECT_EQ(24, result.second);
 
-    result = splitIpAddress("2001:db8::/128");
+    result = splitIPAddress("2001:db8::/128");
     EXPECT_EQ(string("2001:db8::"), result.first);
     EXPECT_EQ(128, result.second);
 
-    EXPECT_THROW(splitIpAddress("192.0.2.43/-1"), isc::OutOfRange);
-    EXPECT_THROW(splitIpAddress("2001:db8::/0"), isc::OutOfRange);
-    EXPECT_THROW(splitIpAddress("2001:db8::/xxxx"), isc::InvalidParameter);
-    EXPECT_THROW(splitIpAddress("2001:db8::/32/s"), isc::InvalidParameter);
+    EXPECT_THROW(splitIPAddress("192.0.2.43/-1"), isc::OutOfRange);
+    EXPECT_THROW(splitIPAddress("192.0.2.43//1"), isc::InvalidParameter);
+    EXPECT_THROW(splitIPAddress("192.0.2.43/1/"), isc::InvalidParameter);
+    EXPECT_THROW(splitIPAddress("/192.0.2.43/1"), isc::InvalidParameter);
+    EXPECT_THROW(splitIPAddress("2001:db8::/0"), isc::OutOfRange);
+    EXPECT_THROW(splitIPAddress("2001:db8::/xxxx"), isc::InvalidParameter);
+    EXPECT_THROW(splitIPAddress("2001:db8::/32/s"), isc::InvalidParameter);
 }
 
-// *** IPV4 Tests ***
-// Check that a default constructor can be instantiated.
+// *** General tests ***
 
 TEST(IPCheck, DefaultConstructor) {
     IPCheck<GeneralAddress> acl;
@@ -149,6 +154,8 @@ TEST(IPCheck, DefaultConstructor) {
     // getting optimised away.
     EXPECT_EQ(AF_INET, acl.getFamily());
 }
+
+// *** IPV4 Tests ***
 
 // Check that the constructor stores the elements correctly and, for the
 // address and mask, in network-byte order.
@@ -540,12 +547,15 @@ TEST(IPCheck, V6Compare) {
 
 // *** Mixed-mode tests - mainly to check that no exception is thrown ***
 
-TEST(IPCheck, V4Test) {
+TEST(IPCheck, MixedMode) {
+
+    // ACL has a V4 address specified, check against a V6 address.
     IPCheck<GeneralAddress> acl1("192.0.2.255/24");
     GeneralAddress test1(vector<uint8_t>(V6ADDR_1, V6ADDR_1 + sizeof(V6ADDR_1)));
     EXPECT_NO_THROW(acl1.matches(test1));
     EXPECT_FALSE(acl1.matches(test1));
 
+    // Now the reverse - the ACL is specified with a V6 address.
     IPCheck<GeneralAddress> acl2(V6ADDR_2_STRING);
     GeneralAddress test2(0x12345678);
     EXPECT_NO_THROW(acl2.matches(test2));

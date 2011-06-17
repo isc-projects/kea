@@ -33,15 +33,6 @@
 #include <util/strutil.h>
 #include <exceptions/exceptions.h>
 
-// The contents of this file are:
-//
-// 1. Free functions used by other code in the file.
-// 2. Ipv4Check, the class handling the checking of IPV4 addresses.
-// 3. Ipv6Check, the class handling the checking of IPV6 addresses.
-// 4. IpCheck, the "external" interface and the one that should be used in
-//    code implementing ACL checks.  Detailed documentation of use can be
-//    found in this header for that class.
-
 namespace isc {
 namespace acl {
 
@@ -107,8 +98,8 @@ T createNetmask(size_t masksize) {
 /// string representing the IP address and a number giving the size of the
 /// network mask in bits. (In the latter case, the size of the network mask is
 /// equal to the width of the data type holding the address.) An exception will
-/// be thrown if the string format is invalid or if the network mask is larger
-/// than a given maximum value.
+/// be thrown if the string format is invalid or if the network mask size is not
+/// an integer.
 ///
 /// N.B. This function does NOT check that the address component is a valid IP
 /// address; this is done elsewhere in the address parsing process.
@@ -120,16 +111,23 @@ T createNetmask(size_t masksize) {
 ///         size value.  The second element is -1 if no mask was given.
 
 std::pair<std::string, int>
-splitIpAddress(const std::string& addrmask) {
+splitIPAddress(const std::string& addrmask) {
 
     // Set the default value for the mask size
     int masksize = -1;
 
-    // See if a mask size was given
+    // Split string into its components.  As the tokenising code ignores
+    // leading, trailing nd consecutive delimiters, be strict here and ensures
+    // that the string contains at most 0 or 1 slashes.
+    if (std::count(addrmask.begin(), addrmask.end(), '/') > 1) {
+        isc_throw(isc::InvalidParameter, "address/masksize of " <<
+                  addrmask << " is not valid");
+    }
+
     std::vector<std::string> components = isc::util::str::tokens(addrmask, "/");
     if (components.size() == 2) {
 
-        // There appears to be, try converting it to a number.
+        // There appears to be a mask, try converting it to a number.
         try {
             masksize = boost::lexical_cast<int>(components[1]);
         } catch (boost::bad_lexical_cast&) {
@@ -138,7 +136,8 @@ splitIpAddress(const std::string& addrmask) {
                       " is not valid");
         }
 
-        // Is it in the valid range?
+        // Ensure that it is positive - a mask size of zero is not a valid
+        // value.
         if (masksize <= 0) {
             isc_throw(isc::OutOfRange,
                       "mask size specified in address/masksize " << addrmask <<
@@ -174,7 +173,9 @@ private:
     static const size_t IPV6_SIZE8 = sizeof(struct in6_addr);
     static const size_t IPV6_SIZE32 = IPV6_SIZE8 / 4;
 
-    // Data type to hold the address, regardless of the address family.
+    // Data type to hold the address, regardless of the address family.  The
+    // union allows an IPV4 address to be treated as a sequence of bytes when
+    // necessary.
     union AddressData {
         uint32_t    word[IPV6_SIZE32];      ///< Address in 32-bit words
         uint8_t     byte[IPV6_SIZE8];       ///< Address in 8-bit bytes
@@ -232,11 +233,12 @@ public:
 
     /// \brief String Constructor
     ///
-    /// Constructs an IPv6 Check object from a network address and size of mask
-    /// given as a string of the form <ip6-address>/n".
+    /// Constructs an IP Check object from a network address and size of mask
+    /// given as a string of the form <ip-address>/n".
     ///
-    /// \param address IP address and netmask in the form "<v6-address>/n"
-    ///        (where the "/n" part is optional).
+    /// \param address IP address and netmask in the form "<ip-address>/n"
+    ///        (where the "/n" part is optional and should be valid for the
+    ///        address).
     /// \param inverse If false (the default), matches() returns true if the
     ///        condition matches.  If true, matches() returns true if the
     ///        condition does not match.
@@ -244,12 +246,12 @@ public:
             address_(), netmask_(), masksize_(0), inverse_(inverse),
             family_(0), straddr_(address)
     {
-        // Initialize addresses.
+        // Initialize.
         std::fill(address_.word, address_.word + IPV6_SIZE32, 0);
         std::fill(netmask_.word, netmask_.word + IPV6_SIZE32, 0);
 
         // Split the address into address part and mask.
-        std::pair<std::string, int> result = splitIpAddress(address);
+        std::pair<std::string, int> result = splitIPAddress(address);
 
         // Try to convert the address.  If successful, the result is in
         // network-byte order (most significant components at lower addresses).
@@ -261,18 +263,19 @@ public:
             family_ = AF_INET;
             int status = inet_pton(AF_INET, result.first.c_str(),
                                    address_.word);
-
             if (status == 0) {
                 isc_throw(isc::InvalidParameter, "address/masksize of " <<
                           address << " is not valid IP address");
             }
         }
 
-        // All done, so finish initialization.
+        // All done, so set the network mask.
         setNetmask(result.second);
     }
 
     /// \brief Copy constructor
+    ///
+    /// \param other Object from which the copy is being constructed.
     IPCheck(const IPCheck<Context>& other) : address_(), netmask_(),
             masksize_(other.masksize_), inverse_(other.inverse_),
             family_(other.family_), straddr_(other.straddr_)
@@ -284,6 +287,10 @@ public:
     }
 
     /// \brief Assignment operator
+    ///
+    /// \param other Source of the assignment.
+    ///
+    /// \return Reference to current object.
     IPCheck& operator=(const IPCheck<Context>& other) {
         if (this != &other) {
             Check<Context>::operator=(other);
@@ -305,7 +312,7 @@ public:
     /// \brief The check itself
     ///
     /// Matches the passed argument to the condition stored here.  Different
-    /// specialisations are provided for different argument types, so the
+    /// specialisations must be  provided for different argument types, and the
     /// program will fail to compile if a required specialisation is not
     /// provided.
     ///
@@ -315,8 +322,9 @@ public:
     /// \brief Estimated cost
     ///
     /// Assume that the cost of the match is linear and depends on the 
-    // maximum number of comparison operations.
-    /// of comparison operations.
+    /// maximum number of comparison operations.
+    ///
+    /// \return Estimated cost of the comparison
     virtual unsigned cost() const {
         return ((family_ == AF_INET) ? 1 : IPV6_SIZE32);
     }
@@ -405,7 +413,8 @@ private:
     ///
     /// Convenience comparison for an IPV4 address.
     ///
-    /// \param testaddr Address (in network byte order).
+    /// \param testaddr Address (in network byte order) to test against the
+    ///        check condition in the class.
     ///
     /// \return true if the address matches, false if it does not.
     virtual bool compare(const uint32_t testaddr) const {
@@ -423,13 +432,12 @@ private:
     /// family.
     ///
     /// \param requested Requested mask size.  If negative, the maximum for
-    ///        the address family is assumed.
+    ///        the address family is assumed.  (A negative value will arise
+    ///        if the string constructor was used and no mask size was given.)
     void setNetmask(int requested) {
 
         // Set the maximum mask size allowed.
         int maxmask = 8 * ((family_ == AF_INET) ? sizeof(uint32_t) : IPV6_SIZE8);
-
-        // Adjust if negative.
         if (requested < 0) {
             requested = maxmask;
         }
@@ -439,14 +447,14 @@ private:
             masksize_ = requested;
 
             // The netmask array was initialized to zero in the constructor,
-            // but in debug mode we can check that.
+            // but as an addition check, assert that this is so.
             assert(std::find_if(netmask_.word, netmask_.word + IPV6_SIZE32,
                    std::bind1st(std::not_equal_to<uint32_t>(), 0)) ==
                    netmask_.word + IPV6_SIZE32);
 
             // Loop, setting the bits in the set of mask bytes until all the
             // specified bits have been used up.  As both IPV4 and IPV6
-            // addressees are stored in network-byte order, this works in
+            // addresses are stored in network-byte order, this works in
             // both cases.
             size_t bits_left = masksize_;   // Bits remaining to set
             int i = -1;
@@ -464,7 +472,7 @@ private:
         } else {
             isc_throw(isc::OutOfRange,
                       "mask size of " << masksize_ << " is invalid " <<
-                      "for the data type");
+                      "for the givem address");
         }
     }
 
