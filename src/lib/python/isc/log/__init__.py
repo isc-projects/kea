@@ -27,11 +27,10 @@ import sys
 
 cwd = os.getcwd()
 base = os.path.split(cwd)[0]
-# find the path that contains src/lib/python/isc/log/.libs and append it
-while base != cwd:
-    loglibdir = os.path.join(base, 'src/lib/python/isc/log/.libs')
+
+for base in sys.path:
+    loglibdir = os.path.join(base, 'isc/log/.libs')
     if os.path.exists(loglibdir):
         sys.path.append(loglibdir)
-    cwd = base
-    base = os.path.split(cwd)[0]
+
 from log import *
