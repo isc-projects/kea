@@ -182,6 +182,17 @@ private:
     };
 
 public:
+    /// \brief Default Constructor
+    ///
+    /// Constructs an empty IPCheck object.  The address family returned will
+    /// be zero.
+    IPCheck() : address_(), netmask_(), masksize_(0), inverse_(false),
+                family_(0), straddr_()
+    {
+        std::fill(address_.word, address_.word + IPV6_SIZE32, 0);
+        std::fill(netmask_.word, netmask_.word + IPV6_SIZE32, 0);
+    }
+
     /// \brief IPV4 Constructor
     ///
     /// Constructs an IPCheck object from a network address given as a
@@ -196,7 +207,7 @@ public:
     /// \param inverse If false (the default), matches() returns true if the
     ///        condition matches.  If true, matches() returns true if the
     ///        condition does not match.
-    IPCheck(uint32_t address = 1, int masksize = 8 * sizeof(uint32_t),
+    IPCheck(uint32_t address, int masksize = 8 * sizeof(uint32_t),
             bool inverse = false):
             address_(), netmask_(), masksize_(masksize), inverse_(inverse),
             family_(AF_INET), straddr_()

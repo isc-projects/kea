@@ -149,10 +149,7 @@ TEST(IPFunctionCheck, SplitIPAddress) {
 
 TEST(IPCheck, DefaultConstructor) {
     IPCheck<GeneralAddress> acl;
-
-    // The test is needed to avoid the unused variable causing a warning or
-    // getting optimised away.
-    EXPECT_EQ(AF_INET, acl.getFamily());
+    EXPECT_EQ(0, acl.getFamily());
 }
 
 // *** IPV4 Tests ***
@@ -383,8 +380,6 @@ const uint8_t MASK_128[] = {
 };
 
 } // Anonymous namespace
-
-// Check that a default constructor can be instantiated.
 
 TEST(IPCheck, V6ConstructorAddress) {
     IPCheck<GeneralAddress> acl1(V6ADDR_1);
