@@ -887,12 +887,6 @@ AC_OUTPUT([doc/version.ent
            src/bin/zonemgr/run_b10-zonemgr.sh
            src/bin/stats/stats.py
            src/bin/stats/stats_httpd.py
-           src/bin/stats/stats.spec
-           src/bin/stats/stats-schema.spec
-           src/bin/stats/stats-httpd.spec
-           src/bin/stats/stats-httpd-xml.tpl
-           src/bin/stats/stats-httpd-xsd.tpl
-           src/bin/stats/stats-httpd-xsl.tpl
            src/bin/bind10/bind10.py
            src/bin/bind10/run_bind10.sh
            src/bin/bind10/tests/bind10_test.py
@@ -914,8 +908,8 @@ AC_OUTPUT([doc/version.ent
            src/lib/config/tests/data_def_unittests_config.h
            src/lib/python/isc/config/tests/config_test
            src/lib/python/isc/cc/tests/cc_test
-           src/lib/python/isc/log/tests/log_test
            src/lib/python/isc/notify/tests/notify_out_test
+           src/lib/python/isc/log/tests/log_console.py
            src/lib/dns/gen-rdatacode.py
            src/lib/python/bind10_config.py
            src/lib/dns/tests/testdata/gen-wiredata.py
@@ -957,6 +951,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/log/tests/destination_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
            chmod +x src/lib/util/python/mkpywrapper.py
+           chmod +x src/lib/python/isc/log/tests/log_console.py
            chmod +x tests/system/conf.sh
           ])
 AC_OUTPUT
