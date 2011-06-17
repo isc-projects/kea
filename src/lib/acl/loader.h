@@ -157,7 +157,10 @@ public:
      * \brief Creator of the checks.
      *
      * This can be registered within the Loader and will be used to create the
-     * checks.
+     * checks. It is expected multiple creators (for multiple types, one can
+     * handle even multiple names) will be created and registered to support
+     * range of things we could check. This allows for customizing/extending
+     * the loader.
      */
     class CheckCreator {
     public:
@@ -193,10 +196,14 @@ public:
         /**
          * \brief Is list or-abbreviation allowed?
          *
-         * If this returns true and the parameter is list, the loader will
-         * call the create method with each element of the list and aggregate
-         * all the results in OR compound check. If it is false, the parameter
-         * is passed verbatim no matter if it is or isn't a list.
+         * If this returns true and the parameter (eg. the value we check
+         * against, the one that is passed as the second parameter of create)
+         * is list, the loader will call the create method with each element of
+         * the list and aggregate all the results in OR compound check. If it
+         * is false, the parameter is passed verbatim no matter if it is or
+         * isn't a list. For example, IP check will have this as true (so
+         * multiple IP addresses can be passed as options), but AND operator
+         * will return false and handle the list of subexpressions itself.
          *
          * The rationale behind this is that it is common to specify list of
          * something that matches (eg. list of IP addresses).
@@ -241,10 +248,10 @@ public:
     /**
      * \brief Load a check.
      *
-     * This parses a check dict (block) and calls a creator (or creators, if
-     * more than one check is found inside) for it. It ignores the "action"
-     * key, as it is a reserved keyword used to specify actions inside the
-     * ACL.
+     * This parses a check dict (block, the one element of ACL) and calls a
+     * creator (or creators, if more than one check is found inside) for it. It
+     * ignores the "action" key, as it is a reserved keyword used to specify
+     * actions inside the ACL.
      *
      * This may throw LoaderError if it is not a dict or if some of the type
      * names is not known (there's no creator registered for it). The
@@ -262,9 +269,8 @@ public:
             map = description->mapValue();
         }
         catch (const data::TypeError&) {
-            throw LoaderError(__FILE__, __LINE__,
-                              "Check description is not a map",
-                              description);
+            isc_throw_1(LoaderError, "Check description is not a map",
+                        description);
         }
         // Call the internal part with extracted map
         return (loadCheck(description, map));
@@ -286,8 +292,7 @@ public:
         // We first check it's a list, so we can use the list reference
         // (the list may be huge)
         if (description->getType() != data::Element::list) {
-            throw LoaderError(__FILE__, __LINE__, "ACL not a list",
-                              description);
+            isc_throw_1(LoaderError, "ACL not a list", description);
         }
         // First create an empty ACL
         const List &list(description->listValue());
@@ -300,14 +305,12 @@ public:
                 map = (*i)->mapValue();
             }
             catch (const data::TypeError&) {
-                throw LoaderError(__FILE__, __LINE__, "ACL element not a map",
-                                  *i);
+                isc_throw_1(LoaderError, "ACL element not a map", *i);
             }
             // Create an action for the element
             const Map::const_iterator action(map.find("action"));
             if (action == map.end()) {
-                throw LoaderError(__FILE__, __LINE__,
-                                  "No action in ACL element", *i);
+                isc_throw_1(LoaderError, "No action in ACL element", *i);
             }
             const Action acValue(action_loader_(action->second));
             // Now create the check if there's one
@@ -347,9 +350,8 @@ private:
         // Now, do we have any definition? Or is it and abbreviation?
         switch (map.size()) {
             case 0:
-                throw LoaderError(__FILE__, __LINE__,
-                                  "Check description is empty",
-                                  description);
+                isc_throw_1(LoaderError, "Check description is empty",
+                            description);
             case 1: {
                 // Get the first and only item
                 const Map::const_iterator checkDesc(map.begin());
@@ -357,24 +359,22 @@ private:
                 const typename Creators::const_iterator
                     creatorIt(creators_.find(name));
                 if (creatorIt == creators_.end()) {
-                    throw LoaderError(__FILE__, __LINE__,
-                                      ("No creator for ACL check " +
-                                       name).c_str(),
-                                      description);
+                    isc_throw_1(LoaderError, "No creator for ACL check " <<
+                                name, description);
                 }
                 if (creatorIt->second->allowListAbbreviation() &&
                     checkDesc->second->getType() == data::Element::list) {
-                    throw LoaderError(__FILE__, __LINE__,
-                                      "Not implemented (OR-abbreviated form)",
-                                      checkDesc->second);
+                    isc_throw_1(LoaderError,
+                                "Not implemented (OR-abbreviated form)",
+                                checkDesc->second);
                 }
                 // Create the check and return it
                 return (creatorIt->second->create(name, checkDesc->second));
             }
             default:
-                throw LoaderError(__FILE__, __LINE__,
-                                  "Not implemented (AND-abbreviated form)",
-                                  description);
+                isc_throw_1(LoaderError,
+                            "Not implemented (AND-abbreviated form)",
+                            description);
         }
     }
     /**
