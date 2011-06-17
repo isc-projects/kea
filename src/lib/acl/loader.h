@@ -91,6 +91,50 @@ BasicAction defaultActionLoader(data::ConstElementPtr action);
  *
  * To allow any kind of checks to exist in the application, creators are
  * registered for the names of the checks.
+ *
+ * An ACL definition looks like this:
+ * \verbatim
+ * [
+ *   {
+ *      "action": "ACCEPT",
+ *      "match-type": <parameter>
+ *   },
+ *   {
+ *      "action": "REJECT",
+ *      "match-type": <parameter>
+ *      "another-match-type": [<parameter1>, <parameter2>]
+*    },
+*    {
+*       "action": "DROP"
+*    }
+ * ]
+ * \endverbatim
+ *
+ * This is a list of elements. Each element must have an "action"
+ * entry/keyword. That one specifies which action is returned if this
+ * element matches (the value of the key is passed to the action loader
+ * (see the constructor). It may be any piece of JSON which the action
+ * loader expects.
+ *
+ * The rest of the element are matches. The left side is the name of the
+ * match type (for example match for source IP address or match for message
+ * size). The <parameter> is whatever is needed to describe the match and
+ * depends on the match type, the loader passes it verbatim to creator
+ * of that match type.
+ *
+ * There may be multiple match types in single element. In such case, all
+ * of the matches must match for the element to take action (so, in the second
+ * element, both "match-type" and "another-match-type" must be satisfied).
+ * If there's no match in the element, the action is taken/returned without
+ * conditions, every time (makes sense as the last entry, as the ACL will
+ * never get past it).
+ *
+ * The second entry shows another thing - if there's a list as the value
+ * for some match and the match itself is not expecting a list, it is taken
+ * as an "or" - a match for at last one of the choices in the list must match.
+ * So, for the second entry, both "match-type" and "another-match-type" must
+ * be satisfied, but the another one is satisfied by either parameter1 or
+ * parameter2.
  */
 template<typename Context, typename Action = BasicAction> class Loader {
 public:
