@@ -15,6 +15,8 @@
 #ifndef __IP_CHECK_H
 #define __IP_CHECK_H
 
+#include <sys/socket.h>
+
 #include <cassert>
 #include <functional>
 #include <iterator>
@@ -157,7 +159,14 @@ splitIpAddress(const std::string& addrmask, size_t maxmask) {
     return (std::make_pair(components[0], masksize));
 }
 
-
+/// \brief A simple representation of IP address
+///
+struct IPAddress {
+    explicit IPAddress(const struct sockaddr& sa);
+    const int family;
+    const uint8_t* const data;
+    const size_t length;
+};
 
 /// \brief IPV4 Check
 ///
@@ -264,7 +273,7 @@ public:
     }
 
     /// \return Network mask applied to match
-    const uint32_t getNetmask() const {
+    uint32_t getNetmask() const {
         return (netmask_);
     }
 
@@ -671,3 +680,7 @@ private:
 } // namespace isc
 
 #endif // __IP_CHECK_H
+
+// Local Variables:
+// mode: c++
+// End:

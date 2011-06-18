@@ -12,6 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <string.h>
 
 #include <gtest/gtest.h>
 #include <acl/ip_check.h>
@@ -69,6 +73,7 @@ bool Ipv6Check<GeneralAddress>::matches(const GeneralAddress& addr) const {
 } // namespace acl
 } // namespace isc
 
+namespace {
 /// *** Free Function Tests ***
 
 // Test the createNetmask() function.
@@ -116,6 +121,54 @@ TEST(IpFunctionCheck, SplitIpAddress) {
     EXPECT_THROW(splitIpAddress("2001:db8::/129", 128), isc::OutOfRange);
     EXPECT_THROW(splitIpAddress("2001:db8::/xxxx", 32), isc::InvalidParameter);
     EXPECT_THROW(splitIpAddress("2001:db8::/32/s", 32), isc::InvalidParameter);
+}
+
+const struct sockaddr&
+getSockAddr(const char* const addr) {
+    struct addrinfo hints, *res;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_NUMERICHOST;
+
+    if (getaddrinfo(addr, NULL, &hints, &res) == 0) {
+        static struct sockaddr_storage ss;
+        void* ss_ptr = &ss;
+        memcpy(ss_ptr, res->ai_addr, res->ai_addrlen);
+        freeaddrinfo(res);
+        return (*static_cast<struct sockaddr*>(ss_ptr));
+    }
+
+    // We don't expect getaddrinfo to fail for our tests.  But if that
+    // ever happens we return a dummy value that would make subsequent test
+    // fail.
+    static struct sockaddr sa_dummy;
+    sa_dummy.sa_family = AF_UNSPEC;
+    return (sa_dummy);
+}
+
+TEST(IPAddress, constructIPv4) {
+    IPAddress ipaddr(getSockAddr("192.0.2.1"));
+    const char expected_data[4] = { 192, 0, 2, 1 };
+    EXPECT_EQ(AF_INET, ipaddr.family);
+    EXPECT_EQ(4, ipaddr.length);
+    EXPECT_EQ(0, memcmp(expected_data, ipaddr.data, 4));
+}
+
+TEST(IPAddress, constructIPv6) {
+    IPAddress ipaddr(getSockAddr("2001:db8:1234:abcd::53"));
+    const char expected_data[16] = { 0x20, 0x01, 0x0d, 0xb8, 0x12, 0x34, 0xab,
+                                     0xcd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                     0x00, 0x53 };
+    EXPECT_EQ(AF_INET6, ipaddr.family);
+    EXPECT_EQ(16, ipaddr.length);
+    EXPECT_EQ(0, memcmp(expected_data, ipaddr.data, 16));
+}
+
+TEST(IPAddress, badConstruct) {
+    struct sockaddr sa;
+    sa.sa_family = AF_UNSPEC;
+    EXPECT_THROW(IPAddress ipaddr(sa), isc::BadValue);
 }
 
 // *** IPV4 Tests ***
@@ -571,4 +624,5 @@ TEST(IpCheck, V6Copying) {
     EXPECT_FALSE(acl2.matches(test));
     acl2 = acl;
     EXPECT_TRUE(acl2.matches(test));
+}
 }

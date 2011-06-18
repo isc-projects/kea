@@ -1,6 +1,13 @@
-SUBDIRS = tests
+SUBDIRS = . tests
 
-EXTRA_DIST = check.h acl.h ip_check.h
+AM_CPPFLAGS = -I$(top_builddir)/src/lib
+AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CXXFLAGS = $(B10_CXXFLAGS)
 
-# TODO: Once we have some cc file we are able to compile, create the library.
-# For now, we have only header files, not creating empty library.
+CLEANFILES = *.gcno *.gcda
+
+EXTRA_DIST = check.h acl.h
+
+lib_LTLIBRARIES = libacl.la
+
+libacl_la_SOURCES = ip_check.h ip_check.cc
