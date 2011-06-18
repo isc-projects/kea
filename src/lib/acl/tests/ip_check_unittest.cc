@@ -26,27 +26,32 @@ using namespace std;
 
 // Simple struct holding either an IPV4 or IPV6 address.  This is the "Context"
 // used for the tests.
-
+//
+// The structure is also used for converting an IPV4 address to a four-byte
+// array.
 struct GeneralAddress {
     bool        isv4;           // true if it holds a v4 address
-    uint32_t    v4addr;
-    uint8_t     v6addr[16];
+    union {
+        uint32_t    v4addr;
+        uint8_t     v6addr[16];
+    };
 
-    GeneralAddress()
-    {}
-
-    // Convenience constructor for V4 address.  As it is not marked as
-    // explicit, it allows the automatic promotion of a uint32_t to a
-    // GeneralAddress data type in calls to matches().
-    GeneralAddress(uint32_t address) : isv4(true), v4addr(address)
-    {
-        fill(v6addr, v6addr + sizeof(v6addr), 0);   // Explicitly zero
+    // Default constructor.
+    GeneralAddress() : isv4(false) {
+        fill(v6addr, v6addr + sizeof(v6addr), 0);
     }
 
-    // Convenience constructor for V6 address.  As it is not marked as
-    // explicit, it allows the automatic promotion of a vector<uint8_t> to a
+    // Convenience constructor for V4 address.  As it is not marked as explicit,
+    // it allows the automatic promotion of a uint32_t to a GeneralAddress data
+    // type in calls to matches().
+    GeneralAddress(uint32_t address) : isv4(true), v4addr(address) {
+        fill(v6addr +sizeof(v4addr), v6addr + sizeof(v6addr), 0);
+    }
+
+    // Convenience constructor for V6 address.  As it is not marked as explicit,
+    // it allows the automatic promotion of a vector<uint8_t> to a
     // GeneralAddress data type in calls to matches().
-    GeneralAddress(const vector<uint8_t>& address) : isv4(false), v4addr(0) {
+    GeneralAddress(const vector<uint8_t>& address) : isv4(false) {
         if (address.size() != sizeof(v6addr)) {
             isc_throw(isc::InvalidParameter, "vector passed to GeneralAddress "
                       "constructor is " << address.size() << " bytes long - it "
@@ -54,21 +59,39 @@ struct GeneralAddress {
         }
         copy(address.begin(), address.end(), v6addr);
     }
+
+    // A couple of convenience methods for checking equality with different
+    // representations of an address.
+
+    // Check that the IPV4 address is the same as that given, and that the
+    // remainder of the V6 addray is zero.
+    bool equals(uint32_t address) {
+        return ((address == v4addr) &&
+                (find_if(v6addr + sizeof(v4addr), v6addr + sizeof(v6addr),
+                         bind1st(not_equal_to<uint8_t>(), 0)) ==
+                         v6addr + sizeof(v6addr)));
+    }
+
+    // Check that the V6 array is equal to that given.
+    bool equals(const vector<uint8_t>& address) {
+        return ((address.size() == sizeof(v6addr)) &&
+                equal(address.begin(), address.end(), v6addr));
+    }
 };
 
-// Provide specializations of the Ipv4check and Ipv6Check matches() methods for
-// the GeneralAddress structure.
+// Provide a specialisation of the IPCheck::matches() method for the
+// GeneralAddress class.
 
 namespace isc  {
 namespace acl {
 template <>
-bool Ipv4Check<GeneralAddress>::matches(const GeneralAddress& addr) const {
-    return (addr.isv4 ? compare(addr.v4addr) : false);
-}
-
-template <>
-bool Ipv6Check<GeneralAddress>::matches(const GeneralAddress& addr) const {
-    return (addr.isv4 ? false : compare(addr.v6addr));
+bool IPCheck<GeneralAddress>::matches(const GeneralAddress& addr) const {
+    if (addr.isv4 && (getFamily() == AF_INET)) {
+        return (compare(addr.v4addr));
+    } else if (!addr.isv4 && (getFamily() == AF_INET6)) {
+        return (compare(addr.v6addr));
+    }
+    return (false);
 }
 } // namespace acl
 } // namespace isc
@@ -77,7 +100,7 @@ namespace {
 /// *** Free Function Tests ***
 
 // Test the createNetmask() function.
-TEST(IpFunctionCheck, CreateNetmask) {
+TEST(IPFunctionCheck, CreateNetmask) {
 
     // 8-bit tests: invalid arguments should throw.
     EXPECT_THROW(createNetmask<uint8_t>(9), isc::OutOfRange);
@@ -102,25 +125,29 @@ TEST(IpFunctionCheck, CreateNetmask) {
     EXPECT_EQ(0, createNetmask<uint32_t>(0));
 }
 
-// Test the splitIpAddress() function.
-TEST(IpFunctionCheck, SplitIpAddress) {
+// Test the splitIPAddress() function.
+TEST(IPFunctionCheck, SplitIPAddress) {
     pair<string, uint32_t> result;
 
-    result = splitIpAddress("192.0.2.1/24", 32);
+    result = splitIPAddress("192.0.2.1");
+    EXPECT_EQ(string("192.0.2.1"), result.first);
+    EXPECT_EQ(-1, result.second);
+
+    result = splitIPAddress("192.0.2.1/24");
     EXPECT_EQ(string("192.0.2.1"), result.first);
     EXPECT_EQ(24, result.second);
 
-    result = splitIpAddress("192.0.2.2/32", 32);
-    EXPECT_EQ(string("192.0.2.2"), result.first);
-    EXPECT_EQ(32, result.second);
-
-    result = splitIpAddress("2001:db8::/128", 128);
+    result = splitIPAddress("2001:db8::/128");
     EXPECT_EQ(string("2001:db8::"), result.first);
     EXPECT_EQ(128, result.second);
 
-    EXPECT_THROW(splitIpAddress("2001:db8::/129", 128), isc::OutOfRange);
-    EXPECT_THROW(splitIpAddress("2001:db8::/xxxx", 32), isc::InvalidParameter);
-    EXPECT_THROW(splitIpAddress("2001:db8::/32/s", 32), isc::InvalidParameter);
+    EXPECT_THROW(splitIPAddress("192.0.2.43/-1"), isc::OutOfRange);
+    EXPECT_THROW(splitIPAddress("192.0.2.43//1"), isc::InvalidParameter);
+    EXPECT_THROW(splitIPAddress("192.0.2.43/1/"), isc::InvalidParameter);
+    EXPECT_THROW(splitIPAddress("/192.0.2.43/1"), isc::InvalidParameter);
+    EXPECT_THROW(splitIPAddress("2001:db8::/0"), isc::OutOfRange);
+    EXPECT_THROW(splitIPAddress("2001:db8::/xxxx"), isc::InvalidParameter);
+    EXPECT_THROW(splitIPAddress("2001:db8::/32/s"), isc::InvalidParameter);
 }
 
 const struct sockaddr&
@@ -171,99 +198,134 @@ TEST(IPAddress, badConstruct) {
     EXPECT_THROW(IPAddress ipaddr(sa), isc::BadValue);
 }
 
-// *** IPV4 Tests ***
-// Check that a default constructor can be instantiated.
+// *** General tests ***
 
-TEST(Ipv4Check, V4DefaultConstructor) {
-    Ipv4Check<GeneralAddress> acl1;
-
-    // The test is needed to avoid the unused variable causing a warning or
-    // getting optimised away.
-    EXPECT_EQ(1, acl1.getAddress());
+TEST(IPCheck, DefaultConstructor) {
+    IPCheck<GeneralAddress> acl;
+    EXPECT_EQ(0, acl.getFamily());
 }
+
+// *** IPV4 Tests ***
 
 // Check that the constructor stores the elements correctly and, for the
 // address and mask, in network-byte order.
 
-TEST(Ipv4Check, V4ConstructorAddress) {
-    // Address is presented in network byte order in constructor, so not
+TEST(IPCheck, V4ConstructorAddress) {
+    GeneralAddress address(0x12345678);
+
+    // Address is presented in network byte order in constructor, so no
     // conversion is needed for this test.
-    Ipv4Check<GeneralAddress> acl1(0x12345678);
-    EXPECT_EQ(0x12345678, acl1.getAddress());
+    IPCheck<GeneralAddress> acl(address.v4addr);
+    vector<uint8_t> stored = acl.getAddress();
+
+    EXPECT_EQ(AF_INET, acl.getFamily());
+    EXPECT_TRUE(address.equals(stored));
 }
 
-TEST(Ipv4Check, V4ConstructorMask) {
-    // Valid values. Address of "1" is used as a placeholder
-    Ipv4Check<GeneralAddress> acl1(1, 1);
-
+TEST(IPCheck, V4ConstructorMask) {
     // The mask is stored in network byte order, so the pattern expected must
     // also be converted to network byte order for the comparison to succeed.
-    uint32_t expected = htonl(0x80000000);
-    EXPECT_EQ(expected, acl1.getNetmask());
+    // use the general address structure to handle conversions between words
+    // and bytes
+    IPCheck<GeneralAddress> acl1(1, 1);         // Address of 1 is placeholder
+    GeneralAddress netmask1(htonl(0x80000000)); // Expected mask
+    vector<uint8_t> stored1 = acl1.getNetmask();
+    EXPECT_TRUE(netmask1.equals(stored1));
     EXPECT_EQ(1, acl1.getMasksize());
 
-    Ipv4Check<GeneralAddress> acl2(1, 24);
-    expected = htonl(0xffffff00);
-    EXPECT_EQ(expected, acl2.getNetmask());
+    // Different check
+    IPCheck<GeneralAddress> acl2(1, 24);
+    GeneralAddress netmask2(htonl(0xffffff00));
+    vector<uint8_t> stored2 = acl2.getNetmask();
+    EXPECT_TRUE(netmask2.equals(stored2));
     EXPECT_EQ(24, acl2.getMasksize());
 
     // ... and some invalid network masks
-    EXPECT_THROW(Ipv4Check<GeneralAddress>(1, 0), isc::OutOfRange);
-    EXPECT_THROW(Ipv4Check<GeneralAddress>(1, 33), isc::OutOfRange);
+    GeneralAddress dummy;
+    EXPECT_THROW(IPCheck<GeneralAddress>(1, 0), isc::OutOfRange);
+    EXPECT_THROW(IPCheck<GeneralAddress>(1, 33), isc::OutOfRange);
+    EXPECT_THROW(IPCheck<GeneralAddress>(dummy.v6addr, 129), isc::OutOfRange);
 }
 
-TEST(Ipv4Check, V4ConstructorInverse) {
+TEST(IPCheck, V4ConstructorInverse) {
     // Valid values. Address/mask of "1" is used as a placeholder
-    Ipv4Check<GeneralAddress> acl1(1, 1);
+    IPCheck<GeneralAddress> acl1(1, 1);
     EXPECT_FALSE(acl1.getInverse());
 
-    Ipv4Check<GeneralAddress> acl2(1, 1, true);
+    IPCheck<GeneralAddress> acl2(1, 1, true);
     EXPECT_TRUE(acl2.getInverse());
 
-    Ipv4Check<GeneralAddress> acl3(1, 1, false);
+    IPCheck<GeneralAddress> acl3(1, 1, false);
     EXPECT_FALSE(acl3.getInverse());
 }
 
-TEST(Ipv4Check, V4StringConstructor) {
-    Ipv4Check<GeneralAddress> acl1("192.0.2.255");
-    uint32_t expected = htonl(0xc00002ff);
-    EXPECT_EQ(expected, acl1.getAddress());
+TEST(IPCheck, V4StringConstructor) {
+    // Constructor with no mask given
+    IPCheck<GeneralAddress> acl1("192.0.2.255");
     EXPECT_EQ(32, acl1.getMasksize());
 
-    Ipv4Check<GeneralAddress> acl2("192.0.2.0/24");
-    expected = htonl(0xc0000200);
-    EXPECT_EQ(expected, acl2.getAddress());
+    vector<uint8_t> stored1 = acl1.getAddress();
+    GeneralAddress expected1(htonl(0xc00002ff));
+    EXPECT_TRUE(expected1.equals(stored1));
+
+    // Constructor with valid mask given
+    IPCheck<GeneralAddress> acl2("192.0.2.0/24");
     EXPECT_EQ(24, acl2.getMasksize());
 
-    EXPECT_THROW(Ipv4Check<GeneralAddress>("192.0.2.0/0"), isc::OutOfRange);
-    EXPECT_THROW(Ipv4Check<GeneralAddress>("192.0.2.0/33"), isc::OutOfRange);
-    EXPECT_THROW(Ipv4Check<GeneralAddress>("192.0.2.0/24/3"),
+    vector<uint8_t> stored2 = acl2.getAddress();
+    GeneralAddress expected2(htonl(0xc0000200));
+    EXPECT_TRUE(expected2.equals(stored2));
+
+    // Invalid masks
+    EXPECT_THROW(IPCheck<GeneralAddress>("192.0.2.0/0"), isc::OutOfRange);
+    EXPECT_THROW(IPCheck<GeneralAddress>("192.0.2.0/33"), isc::OutOfRange);
+    EXPECT_THROW(IPCheck<GeneralAddress>("192.0.2.0/24/3"),
                  isc::InvalidParameter);
-    EXPECT_THROW(Ipv4Check<GeneralAddress>("192.0.2.0/ww"),
+    EXPECT_THROW(IPCheck<GeneralAddress>("192.0.2.0/ww"),
                  isc::InvalidParameter);
-    EXPECT_THROW(Ipv4Check<GeneralAddress>("aa.255.255.0/ww"),
+    EXPECT_THROW(IPCheck<GeneralAddress>("aa.255.255.0/ww"),
                  isc::InvalidParameter);
 }
 
-TEST(Ipv4Check, V4CopyConstructor) {
-    Ipv4Check<GeneralAddress> acl1("192.0.2.1/24", true);
-    Ipv4Check<GeneralAddress> acl2(acl1);
+TEST(IPCheck, V4CopyConstructor) {
+    IPCheck<GeneralAddress> acl1("192.0.2.1/24", true);
+    IPCheck<GeneralAddress> acl2(acl1);
 
-    EXPECT_EQ(acl1.getAddress(), acl2.getAddress());
     EXPECT_EQ(acl1.getMasksize(), acl2.getMasksize());
-    EXPECT_EQ(acl1.getNetmask(), acl2.getNetmask());
     EXPECT_EQ(acl1.getInverse(), acl2.getInverse());
+    EXPECT_EQ(acl1.getFamily(), acl2.getFamily());
+    EXPECT_EQ(acl1.getStringAddress(), acl2.getStringAddress());
+
+    vector<uint8_t> net1 = acl1.getNetmask();
+    vector<uint8_t> net2 = acl2.getNetmask();
+    EXPECT_EQ(net1.size(), net2.size());
+    EXPECT_TRUE(equal(net1.begin(), net1.end(), net2.begin()));
+
+    net1 = acl1.getAddress();
+    net2 = acl2.getAddress();
+    EXPECT_EQ(net1.size(), net2.size());
+    EXPECT_TRUE(equal(net1.begin(), net1.end(), net2.begin()));
 }
 
-TEST(Ipv4Check, V4AssignmentOperator) {
-    Ipv4Check<GeneralAddress> acl1("192.0.2.0/24", true);
-    Ipv4Check<GeneralAddress> acl2("192.0.2.128/25", false);
-
+TEST(IPCheck, V4AssignmentOperator) {
+    IPCheck<GeneralAddress> acl1("192.0.2.0/24", true);
+    IPCheck<GeneralAddress> acl2("192.0.2.128/25", false);
     acl2 = acl1;
-    EXPECT_EQ(acl1.getAddress(), acl2.getAddress());
+
     EXPECT_EQ(acl1.getMasksize(), acl2.getMasksize());
-    EXPECT_EQ(acl1.getNetmask(), acl2.getNetmask());
     EXPECT_EQ(acl1.getInverse(), acl2.getInverse());
+    EXPECT_EQ(acl1.getFamily(), acl2.getFamily());
+    EXPECT_EQ(acl1.getStringAddress(), acl2.getStringAddress());
+
+    vector<uint8_t> net1 = acl1.getNetmask();
+    vector<uint8_t> net2 = acl2.getNetmask();
+    EXPECT_EQ(net1.size(), net2.size());
+    EXPECT_TRUE(equal(net1.begin(), net1.end(), net2.begin()));
+
+    net1 = acl1.getAddress();
+    net2 = acl2.getAddress();
+    EXPECT_EQ(net1.size(), net2.size());
+    EXPECT_TRUE(equal(net1.begin(), net1.end(), net2.begin()));
 }
 
 // Check that the comparison works - note that "matches" just calls the
@@ -275,21 +337,21 @@ TEST(Ipv4Check, V4AssignmentOperator) {
 // network-byte order.  Therefore for the comparisons to work as expected, we
 // must convert the values to network-byte order first.
 
-TEST(Ipv4Check, V4Compare) {
+TEST(IPCheck, V4Compare) {
     // Exact address - match if given address matches stored address.
-    Ipv4Check<GeneralAddress> acl1(htonl(0x23457f13), 32);
+    IPCheck<GeneralAddress> acl1(htonl(0x23457f13), 32);
     EXPECT_TRUE(acl1.matches(htonl(0x23457f13)));
     EXPECT_FALSE(acl1.matches(htonl(0x23457f12)));
     EXPECT_FALSE(acl1.matches(htonl(0x13457f13)));
 
     // Exact address - match if address does not match stored address
-    Ipv4Check<GeneralAddress> acl2(htonl(0x23457f13), 32, true);
+    IPCheck<GeneralAddress> acl2(htonl(0x23457f13), 32, true);
     EXPECT_FALSE(acl2.matches(htonl(0x23457f13)));
     EXPECT_TRUE(acl2.matches(htonl(0x23457f12)));
     EXPECT_TRUE(acl2.matches(htonl(0x13457f13)));
 
     // Match if the address matches a mask
-    Ipv4Check<GeneralAddress> acl3(htonl(0x23450000), 16);
+    IPCheck<GeneralAddress> acl3(htonl(0x23450000), 16);
     EXPECT_TRUE(acl3.matches(htonl(0x23450000)));
     EXPECT_TRUE(acl3.matches(htonl(0x23450001)));
     EXPECT_TRUE(acl3.matches(htonl(0x2345ffff)));
@@ -297,7 +359,7 @@ TEST(Ipv4Check, V4Compare) {
     EXPECT_FALSE(acl3.matches(htonl(0x2346ffff)));
 
     // Match if the address does not match a mask
-    Ipv4Check<GeneralAddress> acl4(htonl(0x23450000), 16, true);
+    IPCheck<GeneralAddress> acl4(htonl(0x23450000), 16, true);
     EXPECT_FALSE(acl4.matches(htonl(0x23450000)));
     EXPECT_FALSE(acl4.matches(htonl(0x23450001)));
     EXPECT_FALSE(acl4.matches(htonl(0x2345ffff)));
@@ -311,149 +373,143 @@ TEST(Ipv4Check, V4Compare) {
 
 // Some constants used in the tests
 
-static const char* V6ADDR_1_STRING = "2001:0db8:1122:3344:5566:7788:99aa:bbcc";
-static const uint8_t V6ADDR_1[] = {
+namespace {
+
+const char* V6ADDR_1_STRING = "2001:0db8:1122:3344:5566:7788:99aa:bbcc";
+const uint8_t V6ADDR_1[] = {
     0x20, 0x01, 0x0d, 0xb8, 0x11, 0x22, 0x33, 0x44,
     0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc
 };
 
-static const char* V6ADDR_2_STRING = "2001:0db8::dead:beef";
-static const uint8_t V6ADDR_2[] = {
+const char* V6ADDR_2_STRING = "2001:0db8::dead:beef";
+const uint8_t V6ADDR_2[] = {
     0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe, 0xef
 };
 
 // Identical to V6ADDR_2 to 48 bits
-static const uint8_t V6ADDR_2_48[] = {
+const uint8_t V6ADDR_2_48[] = {
     0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x55, 0x66,
     0x00, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe, 0xef
 };
 
 // Identical to V6ADDR_2 to 52 bits
-static const uint8_t V6ADDR_2_52[] = {
+const uint8_t V6ADDR_2_52[] = {
     0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x05, 0x66,
     0x00, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe, 0xef
 };
 
-static const char* V6ADDR_3_STRING = "::1";
-static const uint8_t V6ADDR_3[] = {
+const char* V6ADDR_3_STRING = "::1";
+const uint8_t V6ADDR_3[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
 };
 
 
 // Mask with MS bit set
-static const uint8_t MASK_1[] = {
+const uint8_t MASK_1[] = {
     0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-static const uint8_t MASK_8[] = {
+const uint8_t MASK_8[] = {
     0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-static const uint8_t MASK_48[] = {
+const uint8_t MASK_48[] = {
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-static const uint8_t MASK_51[] = {
+const uint8_t MASK_51[] = {
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xe0, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-static const uint8_t MASK_128[] = {
+const uint8_t MASK_128[] = {
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 };
 
-// Check that a default constructor can be instantiated.
+} // Anonymous namespace
 
-TEST(Ipv6Check, V6DefaultConstructor) {
-    Ipv6Check<GeneralAddress> acl1;
-
-    // The test is needed to avoid the unused variable causing a warning or
-    // getting optimised away.
-    EXPECT_EQ(0, acl1.getMasksize());
-}
-
-TEST(Ipv6Check, V6ConstructorAddress) {
-    Ipv6Check<GeneralAddress> acl1(V6ADDR_1);
+TEST(IPCheck, V6ConstructorAddress) {
+    IPCheck<GeneralAddress> acl1(V6ADDR_1);
     vector<uint8_t> stored = acl1.getAddress();
     EXPECT_EQ(sizeof(V6ADDR_1), stored.size());
     EXPECT_TRUE(equal(stored.begin(), stored.end(), V6ADDR_1));
 }
 
-TEST(Ipv6Check, V6ConstructorMask) {
+TEST(IPCheck, V6ConstructorMask) {
 
     // Valid masks...
-    Ipv6Check<GeneralAddress> acl1(V6ADDR_1, 1);
+    IPCheck<GeneralAddress> acl1(V6ADDR_1, 1);
     vector<uint8_t> stored = acl1.getNetmask();
     EXPECT_EQ(sizeof(MASK_1), stored.size());
     EXPECT_TRUE(equal(stored.begin(), stored.end(), MASK_1));
 
-    Ipv6Check<GeneralAddress> acl2(V6ADDR_1, 8);
+    IPCheck<GeneralAddress> acl2(V6ADDR_1, 8);
     stored = acl2.getNetmask();
     EXPECT_TRUE(equal(stored.begin(), stored.end(), MASK_8));
 
-    Ipv6Check<GeneralAddress> acl3(V6ADDR_1, 48);
+    IPCheck<GeneralAddress> acl3(V6ADDR_1, 48);
     stored = acl3.getNetmask();
     EXPECT_TRUE(equal(stored.begin(), stored.end(), MASK_48));
 
-    Ipv6Check<GeneralAddress> acl4(V6ADDR_1, 51);
+    IPCheck<GeneralAddress> acl4(V6ADDR_1, 51);
     stored = acl4.getNetmask();
     EXPECT_TRUE(equal(stored.begin(), stored.end(), MASK_51));
 
-    Ipv6Check<GeneralAddress> acl5(V6ADDR_1, 128);
+    IPCheck<GeneralAddress> acl5(V6ADDR_1, 128);
     stored = acl5.getNetmask();
     EXPECT_TRUE(equal(stored.begin(), stored.end(), MASK_128));
 
     // ... and some invalid network masks
-    EXPECT_THROW(Ipv6Check<GeneralAddress>(V6ADDR_1, 0), isc::OutOfRange);
-    EXPECT_THROW(Ipv6Check<GeneralAddress>(V6ADDR_1, 129), isc::OutOfRange);
+    EXPECT_THROW(IPCheck<GeneralAddress>(V6ADDR_1, 0), isc::OutOfRange);
+    EXPECT_THROW(IPCheck<GeneralAddress>(V6ADDR_1, 129), isc::OutOfRange);
 }
 
-TEST(Ipv6Check, V6ConstructorInverse) {
+TEST(IPCheck, V6ConstructorInverse) {
     // Valid values. Address/mask of "1" is used as a placeholder
-    Ipv6Check<GeneralAddress> acl1(V6ADDR_1, 1);
+    IPCheck<GeneralAddress> acl1(V6ADDR_1, 1);
     EXPECT_FALSE(acl1.getInverse());
 
-    Ipv6Check<GeneralAddress> acl2(V6ADDR_1, 1, true);
+    IPCheck<GeneralAddress> acl2(V6ADDR_1, 1, true);
     EXPECT_TRUE(acl2.getInverse());
 
-    Ipv6Check<GeneralAddress> acl3(V6ADDR_1, 1, false);
+    IPCheck<GeneralAddress> acl3(V6ADDR_1, 1, false);
     EXPECT_FALSE(acl3.getInverse());
 }
 
-TEST(Ipv6Check, V6StringConstructor) {
-    Ipv6Check<GeneralAddress> acl1(V6ADDR_1_STRING);
+TEST(IPCheck, V6StringConstructor) {
+    IPCheck<GeneralAddress> acl1(V6ADDR_1_STRING);
     vector<uint8_t> address = acl1.getAddress();
     EXPECT_EQ(128, acl1.getMasksize());
     EXPECT_TRUE(equal(address.begin(), address.end(), V6ADDR_1));
 
-    Ipv6Check<GeneralAddress> acl2(string(V6ADDR_2_STRING) + string("/48"));
+    IPCheck<GeneralAddress> acl2(string(V6ADDR_2_STRING) + string("/48"));
     address = acl2.getAddress();
     EXPECT_EQ(48, acl2.getMasksize());
     EXPECT_TRUE(equal(address.begin(), address.end(), V6ADDR_2));
 
-    Ipv6Check<GeneralAddress> acl3("::1");
+    IPCheck<GeneralAddress> acl3("::1");
     address = acl3.getAddress();
     EXPECT_EQ(128, acl3.getMasksize());
     EXPECT_TRUE(equal(address.begin(), address.end(), V6ADDR_3));
 
-    EXPECT_THROW(Ipv6Check<GeneralAddress>("::1/0"), isc::OutOfRange);
-    EXPECT_THROW(Ipv6Check<GeneralAddress>("::1/129"), isc::OutOfRange);
-    EXPECT_THROW(Ipv6Check<GeneralAddress>("::1/24/3"), isc::InvalidParameter);
-    EXPECT_THROW(Ipv6Check<GeneralAddress>("2001:0db8::abcd/ww"),
+    EXPECT_THROW(IPCheck<GeneralAddress>("::1/0"), isc::OutOfRange);
+    EXPECT_THROW(IPCheck<GeneralAddress>("::1/129"), isc::OutOfRange);
+    EXPECT_THROW(IPCheck<GeneralAddress>("::1/24/3"), isc::InvalidParameter);
+    EXPECT_THROW(IPCheck<GeneralAddress>("2001:0db8::abcd/ww"),
                  isc::InvalidParameter);
-    EXPECT_THROW(Ipv6Check<GeneralAddress>("2xx1:0db8::abcd/32"),
+    EXPECT_THROW(IPCheck<GeneralAddress>("2xx1:0db8::abcd/32"),
                  isc::InvalidParameter);
 }
 
-TEST(Ipv6Check, V6CopyConstructor) {
-    Ipv6Check<GeneralAddress> acl1(string(V6ADDR_2_STRING) + string("/52"));
-    Ipv6Check<GeneralAddress> acl2(acl1);
+TEST(IPCheck, V6CopyConstructor) {
+    IPCheck<GeneralAddress> acl1(string(V6ADDR_2_STRING) + string("/52"));
+    IPCheck<GeneralAddress> acl2(acl1);
 
     vector<uint8_t> acl1_address = acl1.getAddress();
     vector<uint8_t> acl2_address = acl1.getAddress();
@@ -474,9 +530,9 @@ TEST(Ipv6Check, V6CopyConstructor) {
     EXPECT_EQ(acl1.getInverse(), acl2.getInverse());
 }
 
-TEST(Ipv6Check, V6AssignmentOperator) {
-    Ipv6Check<GeneralAddress> acl1(string(V6ADDR_2_STRING) + string("/52"));
-    Ipv6Check<GeneralAddress> acl2(string(V6ADDR_1_STRING) + string("/48"));
+TEST(IPCheck, V6AssignmentOperator) {
+    IPCheck<GeneralAddress> acl1(string(V6ADDR_2_STRING) + string("/52"));
+    IPCheck<GeneralAddress> acl2(string(V6ADDR_1_STRING) + string("/48"));
 
     acl2 = acl1;
 
@@ -499,7 +555,7 @@ TEST(Ipv6Check, V6AssignmentOperator) {
     EXPECT_EQ(acl1.getInverse(), acl2.getInverse());
 }
 
-TEST(Ipv6Check, V6Compare) {
+TEST(IPCheck, V6Compare) {
     // Set up some data.  
     vector<uint8_t> v6addr_2(V6ADDR_2, V6ADDR_2 + sizeof(V6ADDR_2));
     vector<uint8_t> v6addr_2_48(V6ADDR_2_48, V6ADDR_2_48 + sizeof(V6ADDR_2_48));
@@ -507,14 +563,14 @@ TEST(Ipv6Check, V6Compare) {
     vector<uint8_t> v6addr_3(V6ADDR_3, V6ADDR_3 + sizeof(V6ADDR_3));
 
     // Exact address - match if given address matches stored address.
-    Ipv6Check<GeneralAddress> acl1(string(V6ADDR_2_STRING) + string("/128"));
+    IPCheck<GeneralAddress> acl1(string(V6ADDR_2_STRING) + string("/128"));
     EXPECT_TRUE(acl1.matches(v6addr_2));
     EXPECT_FALSE(acl1.matches(v6addr_2_52));
     EXPECT_FALSE(acl1.matches(v6addr_2_48));
     EXPECT_FALSE(acl1.matches(v6addr_3));
 
     // Exact address - match if address does not match stored address
-    Ipv6Check<GeneralAddress> acl2(string(V6ADDR_2_STRING) + string("/128"),
+    IPCheck<GeneralAddress> acl2(string(V6ADDR_2_STRING) + string("/128"),
                                    true);
     EXPECT_FALSE(acl2.matches(v6addr_2));
     EXPECT_TRUE(acl2.matches(v6addr_2_52));
@@ -522,14 +578,14 @@ TEST(Ipv6Check, V6Compare) {
     EXPECT_TRUE(acl2.matches(v6addr_3));
 
     // Match if the address matches a mask
-    Ipv6Check<GeneralAddress> acl3(string(V6ADDR_2_STRING) + string("/52"));
+    IPCheck<GeneralAddress> acl3(string(V6ADDR_2_STRING) + string("/52"));
     EXPECT_TRUE(acl3.matches(v6addr_2));
     EXPECT_TRUE(acl3.matches(v6addr_2_52));
     EXPECT_FALSE(acl3.matches(v6addr_2_48));
     EXPECT_FALSE(acl3.matches(v6addr_3));
 
     // Match if the address does not match a mask
-    Ipv6Check<GeneralAddress> acl4(string(V6ADDR_2_STRING) + string("/52"),
+    IPCheck<GeneralAddress> acl4(string(V6ADDR_2_STRING) + string("/52"),
                               true);
     EXPECT_FALSE(acl4.matches(v6addr_2));
     EXPECT_FALSE(acl4.matches(v6addr_2_52));
@@ -537,92 +593,20 @@ TEST(Ipv6Check, V6Compare) {
     EXPECT_TRUE(acl4.matches(v6addr_3));
 }
 
-// *** IP Tests ***
+// *** Mixed-mode tests - mainly to check that no exception is thrown ***
 
-TEST(IpCheck, V4Test) {
-    IpCheck<GeneralAddress> acl("192.168.132.255/16");
-                               //c0  a8  84  ff
+TEST(IPCheck, MixedMode) {
 
-    GeneralAddress test;
-    test.isv4 = true;
-    test.v4addr = htonl(0xc0a884ff);
-    EXPECT_TRUE(acl.matches(test));
+    // ACL has a V4 address specified, check against a V6 address.
+    IPCheck<GeneralAddress> acl1("192.0.2.255/24");
+    GeneralAddress test1(vector<uint8_t>(V6ADDR_1, V6ADDR_1 + sizeof(V6ADDR_1)));
+    EXPECT_NO_THROW(acl1.matches(test1));
+    EXPECT_FALSE(acl1.matches(test1));
 
-    test.v4addr = htonl(0xc0a884ee);    // Correct to 24 bits
-    EXPECT_TRUE(acl.matches(test));
-
-    test.v4addr = htonl(0xc0a8ffee);    // Correct to 16 bits
-    EXPECT_TRUE(acl.matches(test));
-
-    test.v4addr = htonl(0xc000ffee);    // Incorrect
-    EXPECT_FALSE(acl.matches(test));
-
-    test.isv4 = false;
-    test.v4addr = htonl(0xc0a884ff);    // Correct IPV4 address
-    EXPECT_FALSE(acl.matches(test));
-
-    // Quick check for negative match
-    IpCheck<GeneralAddress> acl2("192.168.132.255/16", true);
-    test.isv4 = true;
-    test.v4addr = htonl(0xc0a884ff);
-    EXPECT_FALSE(acl2.matches(test));
-}
-
-TEST(IpCheck, V6Test) {
-    IpCheck<GeneralAddress> acl(string(V6ADDR_2_STRING) + string("/52"));
-
-    GeneralAddress test;
-    test.isv4 = false;
-    copy(V6ADDR_2, V6ADDR_2 + sizeof(V6ADDR_2), test.v6addr);
-    EXPECT_TRUE(acl.matches(test));
-
-    copy(V6ADDR_2_52, V6ADDR_2_52 + sizeof(V6ADDR_2_52), test.v6addr);
-    EXPECT_TRUE(acl.matches(test));
-
-    copy(V6ADDR_2_48, V6ADDR_2_48 + sizeof(V6ADDR_2_48), test.v6addr);
-    EXPECT_FALSE(acl.matches(test));
-
-    test.isv4 = true;
-    copy(V6ADDR_2, V6ADDR_2 + sizeof(V6ADDR_2), test.v6addr);
-                                        // Correct V6 address
-    EXPECT_FALSE(acl.matches(test));
-
-    // Quick check for negative match
-    IpCheck<GeneralAddress> acl2(string(V6ADDR_2_STRING) + string("/52"), true);
-    test.isv4 = false;
-    copy(V6ADDR_2, V6ADDR_2 + sizeof(V6ADDR_2), test.v6addr);
-    EXPECT_FALSE(acl2.matches(test));
-}
-
-// Check copy constructor and assignment operator for V4 address
-TEST(IpCheck, V4Copying) {
-    IpCheck<GeneralAddress> acl("192.168.132.255/16");
-    GeneralAddress test;
-    test.isv4 = true;
-    test.v4addr = htonl(0xc0a884ff);
-
-    IpCheck<GeneralAddress> acl1(acl);
-    EXPECT_TRUE(acl1.matches(test));
-
-    IpCheck<GeneralAddress> acl2("192.255.132.255/32");
-    EXPECT_FALSE(acl2.matches(test));
-    acl2 = acl;
-    EXPECT_TRUE(acl2.matches(test));
-}
-
-// Check copy constructor and assignment operator for V6 address
-TEST(IpCheck, V6Copying) {
-    IpCheck<GeneralAddress> acl(string(V6ADDR_2_STRING) + string("/52"));
-    GeneralAddress test;
-    test.isv4 = false;
-    copy(V6ADDR_2, V6ADDR_2 + sizeof(V6ADDR_2), test.v6addr);
-
-    IpCheck<GeneralAddress> acl1(acl);
-    EXPECT_TRUE(acl1.matches(test));
-
-    IpCheck<GeneralAddress> acl2(V6ADDR_3_STRING);
-    EXPECT_FALSE(acl2.matches(test));
-    acl2 = acl;
-    EXPECT_TRUE(acl2.matches(test));
+    // Now the reverse - the ACL is specified with a V6 address.
+    IPCheck<GeneralAddress> acl2(V6ADDR_2_STRING);
+    GeneralAddress test2(0x12345678);
+    EXPECT_NO_THROW(acl2.matches(test2));
+    EXPECT_FALSE(acl2.matches(test2));
 }
 }
