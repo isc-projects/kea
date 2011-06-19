@@ -190,9 +190,12 @@ public:
          *     parameters might look like, they are not checked in any way.
          *     Therefore it's up to the creator (or the check being created)
          *     to validate the data and throw if it is bad.
+         * \param Current loader calling this creator. This can be used
+         *     to load subexpressions in case of compound check.
          */
         virtual boost::shared_ptr<Check<Context> > create(
-            const std::string& name, data::ConstElementPtr definition) = 0;
+            const std::string& name, data::ConstElementPtr definition,
+            const Loader<Context, Action>& loader) = 0;
         /**
          * \brief Is list or-abbreviation allowed?
          *
@@ -369,7 +372,8 @@ private:
                                 checkDesc->second);
                 }
                 // Create the check and return it
-                return (creatorIt->second->create(name, checkDesc->second));
+                return (creatorIt->second->create(name, checkDesc->second,
+                                                  *this));
             }
             default:
                 isc_throw_1(LoaderError,
