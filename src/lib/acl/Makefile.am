@@ -5,11 +5,20 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
+# The core library
 lib_LTLIBRARIES = libacl.la
 libacl_la_SOURCES = check.h acl.h
 libacl_la_SOURCES += loader.h loader.cc
 
 libacl_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 libacl_la_LIBADD += $(top_builddir)/src/lib/cc/libcc.la
+
+# DNS specialized one
+lib_LTLIBRARIES += libdnsacl.la
+
+libdnsacl_la_SOURCES = dns.h dns.cc
+
+libdnsacl_la_LIBADD = $(top_builddir)/src/lib/acl/libacl.la
+libdnsacl_la_LIBADD += $(top_builddir)/src/lib/dns/libdns++.la
 
 CLEANFILES = *.gcno *.gcda
