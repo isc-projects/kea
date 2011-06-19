@@ -24,19 +24,62 @@ namespace isc {
 namespace acl {
 namespace dns {
 
-// TODO: Document
+/**
+ * \brief DNS Packet to be checked.
+ *
+ * This plays the role of Context of the generic template ACLs (in namespace
+ * isc::acl).
+ *
+ * It is simple structure holding just the bunch of information. Therefore
+ * the names don't end up with a slash, there are no methods so they can't be
+ * confused with local variables.
+ *
+ * \todo Do we want a constructor to set this in a shorter manner? So we can
+ *     call the ACLs directly?
+ */
 struct Packet {
+    /// \brief The DNS message (payload).
     isc::dns::ConstMessagePtr message;
-    asiolink::IOAddress remote_address, local_address;
-    uint16_t remote_port, local_port;
+    /// \brief The remote IP address (eg. the client).
+    asiolink::IOAddress remote_address;
+    /// \brief The local IP address (ours, of the interface where we received).
+    asiolink::IOAddress local_address;
+    /// \brief The remote port.
+    uint16_t remote_port;
+    /// \brief The local port.
+    uint16_t local_port;
+    /**
+     * \brief Name of the TSIG key the message is signed with.
+     *
+     * This will be either the name of the TSIG key the message is signed with,
+     * or empty string, if the message is not signed. It is true we could get
+     * the information from the message itself, but because at the time when
+     * the ACL is checked, the signature has been verified already, so passing
+     * it around is probably cheaper.
+     *
+     * It is expected that messages with invalid signatures are handled before
+     * ACL.
+     */
     std::string tisg_key;
 };
 
+/// \brief DNS based check.
 typedef acl::Check<Packet> Check;
+/// \brief DNS based compound check.
 typedef acl::CompoundCheck<Packet> CompoundCheck;
+/// \brief DNS based ACL.
 typedef acl::ACL<Packet> ACL;
+/// \brief DNS based ACL loader.
 typedef acl::Loader<Packet> Loader;
 
+/**
+ * \brief Loader singleton access function.
+ *
+ * This function returns a loader of ACLs. It is expected applications
+ * will use this function instead of creating their own loaders, because
+ * one is enough, this one will have registered default checks and it
+ * is known one, so any plugins can registrer additional checks as well.
+ */
 Loader& getLoader();
 
 }
