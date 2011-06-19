@@ -89,8 +89,8 @@ public:
     vector<string> names() const {
         return (names_);
     }
-    shared_ptr<Check<Log> > create(const string& name,
-                                           ConstElementPtr data)
+    shared_ptr<Check<Log> > create(const string& name, ConstElementPtr data,
+                                   const Loader<Log>&)
     {
         bool found(false);
         for (vector<string>::const_iterator i(names_.begin());
@@ -123,7 +123,9 @@ public:
         result.push_back("throw");
         return (result);
     }
-    shared_ptr<Check<Log> > create(const string&, ConstElementPtr) {
+    shared_ptr<Check<Log> > create(const string&, ConstElementPtr,
+                                   const Loader<Log>&)
+    {
         throw TestCreatorError();
     }
 };
@@ -144,7 +146,9 @@ public:
         result.push_back("throwcheck");
         return (result);
     }
-    shared_ptr<Check<Log> > create(const string&, ConstElementPtr) {
+    shared_ptr<Check<Log> > create(const string&, ConstElementPtr,
+                                   const Loader<Log>&)
+    {
         return (shared_ptr<Check<Log> >(new ThrowCheck()));
     }
 };
@@ -161,8 +165,8 @@ public:
      * logging cell used, the second is result of the check. No error checking
      * is done, if there's bug in the test, it will throw TypeError for us.
      */
-    shared_ptr<Check<Log> > create(const string&,
-                                    ConstElementPtr definition)
+    shared_ptr<Check<Log> > create(const string&, ConstElementPtr definition,
+                                   const Loader<Log>&)
     {
         vector<ConstElementPtr> list(definition->listValue());
         int logpos(list[0]->intValue());
