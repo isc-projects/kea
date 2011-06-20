@@ -100,6 +100,18 @@ public:
     /// \return \c RRsetPtr
     RRsetPtr getRRset() const { return (entry->rrset); }
 
+    /// \brief Returns name associated with cached node
+    /// This is the name associated with the RRset if it is a positive
+    /// entry, and the associated question name if the RRSet is NULL
+    /// and this is a negative entry (together with an indication that
+    /// this is a negative entry).
+    string getNodeName() const {
+        if (getRRset()) {
+            return (getRRset()->getName().toText());
+        }
+        return (std::string("negative entry for ") + question.toText());
+    }
+
     /// \brief Returns the query response flags associated with the data.
     ///
     /// \return \c uint32_t
@@ -213,7 +225,7 @@ HotCacheImpl::HotCacheImpl(int slots, bool enabled) :
 inline void
 HotCacheImpl::insert(const CacheNodePtr node) {
     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_CACHE_INSERT).
-        arg(node->getRRset()->getName());
+        arg(node->getNodeName());
     std::map<Question, CacheNodePtr>::const_iterator iter;
     iter = map_.find(node->question);
     if (iter != map_.end()) {
@@ -253,7 +265,7 @@ HotCacheImpl::promote(CacheNodePtr node) {
 void
 HotCacheImpl::remove(ConstCacheNodePtr node) {
     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_CACHE_REMOVE).
-        arg(node->getRRset()->getName());
+        arg(node->getNodeName());
     lru_.erase(node->lru_entry_);
     map_.erase(node->question);
     --count_;
