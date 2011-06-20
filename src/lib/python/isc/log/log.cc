@@ -173,81 +173,39 @@ init(PyObject*, PyObject* args) {
     Py_RETURN_NONE;
 }
 
-// This function takes a PyObject* and converts it to a ConstElementPtr
-//
-// The Python object should be a basic object, i.e. a bool, long,
-// float, string, list, or dict. The contents of these lists and
-// dicts have the same limitation.
-// If any other type is encountered, an InternalError is raised.
-//
-// Note: This is a conversion between basic python types and our
-// own c++ equivalent (the Element). In that sense we may want to use it
-// in more places. If so, we should move it. It is defined here now
-// because this is the only place it is used.
-isc::data::ConstElementPtr PyObjectToElement(PyObject* obj) {
-    if (PyBool_Check(obj)) {
-        return isc::data::Element::create(PyObject_IsTrue(obj) == 1);
-    } else if (PyLong_Check(obj)) {
-        return isc::data::Element::create(PyLong_AsLong(obj));
-    } else if (PyFloat_Check(obj)) {
-        return isc::data::Element::create(PyFloat_AsDouble(obj));
-    } else if (PyUnicode_Check(obj)) {
-        return isc::data::Element::create(PyBytes_AsString(PyUnicode_AsUTF8String(obj)));
-    } else if (PyList_Check(obj)) {
-        isc::data::ElementPtr result = isc::data::Element::createList();
-        for (Py_ssize_t i = 0; i < PyList_Size(obj); ++i) {
-            result->add(PyObjectToElement(PyList_GetItem(obj, i)));
-        }
-        return result;
-    } else if (PyDict_Check(obj)) {
-        isc::data::ElementPtr result = isc::data::Element::createMap();
-        PyObject *key, *value;
-        Py_ssize_t pos = 0;
-        while (PyDict_Next(obj, &pos, &key, &value)) {
-            result->set(PyBytes_AsString(PyUnicode_AsUTF8String(key)),
-                        PyObjectToElement(value));
-        }
-        return result;
-    } else if (obj == Py_None) {
-        return isc::data::ElementPtr();
-    } else {
-        PyErr_SetString(PyExc_TypeError, "Attempt to convert a non-basic "
-                                         "type to ElementPtr");
-        throw InternalError();
-    }
-}
-
 PyObject*
 logConfigUpdate(PyObject*, PyObject* args) {
     // we have no wrappers for ElementPtr and ConfigData,
-    // So we convert them on the spot.
+    // So we expect JSON strings and convert them.
     // The new_config object is assumed to have been validated.
-    // If we need this code in other places, we should move it out,
-    // or consider full wrappers
-    PyObject* new_configO;
-    PyObject* mod_specO;
-    if (!PyArg_ParseTuple(args, "OO", &new_configO, &mod_specO)) {
+
+    const char* new_config_json;
+    const char* mod_spec_json;
+    if (!PyArg_ParseTuple(args, "ss",
+                          &new_config_json, &mod_spec_json)) {
         return (NULL);
     }
 
     try {
-        isc::data::ConstElementPtr new_config = PyObjectToElement(new_configO);
-        isc::data::ConstElementPtr mod_spec_e = PyObjectToElement(mod_specO);
+        isc::data::ConstElementPtr new_config =
+            isc::data::Element::fromJSON(new_config_json);
+        isc::data::ConstElementPtr mod_spec_e =
+            isc::data::Element::fromJSON(mod_spec_json);
         isc::config::ModuleSpec mod_spec(mod_spec_e);
         isc::config::ConfigData config_data(mod_spec);
         isc::config::default_logconfig_handler("logging", new_config,
                                                config_data);
 
         Py_RETURN_NONE;
+    } catch (const isc::data::JSONError& je) {
+        std::string error_msg = std::string("JSON format error: ") + je.what();
+        PyErr_SetString(PyExc_TypeError, error_msg.c_str());
     } catch (const isc::data::TypeError& de) {
         PyErr_SetString(PyExc_TypeError, "argument 1 of log_config_update "
                                          "is not a map of config data");
     } catch (const isc::config::ModuleSpecError& mse) {
         PyErr_SetString(PyExc_TypeError, "argument 2 of log_config_update "
                                          "is not a correct module specification");
-    } catch (const InternalError& ie) {
-        // Python exception already set, so no action needed (as long
-        // as we do in fact return NULL right after this block)
     } catch (const std::exception& e) {
         PyErr_SetString(PyExc_RuntimeError, e.what());
     } catch (...) {
@@ -281,12 +239,13 @@ PyMethodDef methods[] = {
         "Update logger settings. This method is automatically used when "
         "ModuleCCSession is initialized with handle_logging_config set "
         "to True. When called, the first argument is the new logging "
-        "configuration (as a basic data type). The second argument is "
+        "configuration (in JSON format). The second argument is "
         "the raw specification (as returned from "
-        "ConfigData.get_module_spec().get_full_spec()."
-        "Raises a TypeError if either argument is not a basic type, or "
-        "if it contains a list or dict that does not contain a basic "
-        "type. If this call succeeds, the global logger settings have "
+        "ConfigData.get_module_spec().get_full_spec(), and converted to "
+        "JSON format).\n"
+        "Raises a TypeError if either argument is not a (correct) JSON "
+        "string, or if the spec is not a correct spec.\n"
+        "If this call succeeds, the global logger settings have "
         "been updated."
     },
     {NULL, NULL, 0, NULL}
