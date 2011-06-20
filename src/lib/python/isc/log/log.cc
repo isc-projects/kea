@@ -38,6 +38,11 @@ namespace {
 MessageDictionary* testDictionary = NULL;
 
 // To propagate python exceptions trough our code
+// This exception is used to signal to the calling function that a
+// proper Python Exception has already been set, and the caller
+// should now return NULL.
+// Since it is only used internally, and should not pass any
+// information itself, is is not derived from std::exception
 class InternalError {};
 
 PyObject*
@@ -206,6 +211,8 @@ isc::data::ConstElementPtr PyObjectToElement(PyObject* obj) {
     } else if (obj == Py_None) {
         return isc::data::ElementPtr();
     } else {
+        PyErr_SetString(PyExc_TypeError, "Attempt to convert a non-basic "
+                                         "type to ElementPtr");
         throw InternalError();
     }
 }
@@ -239,8 +246,8 @@ logConfigUpdate(PyObject*, PyObject* args) {
         PyErr_SetString(PyExc_TypeError, "argument 2 of log_config_update "
                                          "is not a correct module specification");
     } catch (const InternalError& ie) {
-        PyErr_SetString(PyExc_TypeError, "argument passed to log_config_update "
-                                         "is not a (compound) basic type");
+        // Python exception already set, so no action needed (as long
+        // as we do in fact return NULL right after this block)
     } catch (const std::exception& e) {
         PyErr_SetString(PyExc_RuntimeError, e.what());
     } catch (...) {
