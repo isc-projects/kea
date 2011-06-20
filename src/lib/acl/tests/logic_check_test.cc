@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "logcheck.h"
+#include "creators.h"
 #include <acl/logic_check.h>
 
 using namespace isc::acl;
@@ -46,10 +46,15 @@ testCheck(bool emptyResult) {
     EXPECT_EQ(emptyResult, oper.matches(log));
     log.checkFirst(0);
     // Fill it with some subexpressions
-    oper.addSubexpression(new ConstCheck(emptyResult, 0));
-    oper.addSubexpression(new ConstCheck(emptyResult, 1));
-    oper.addSubexpression(new ConstCheck(!emptyResult, 2));
-    oper.addSubexpression(new ConstCheck(!emptyResult, 3));
+    typedef shared_ptr<ConstCheck> CheckPtr;
+    oper.addSubexpression(CheckPtr(new ConstCheck(emptyResult, 0)));
+    oper.addSubexpression(CheckPtr(new ConstCheck(emptyResult, 1)));
+    // Check what happens when only the default-valued are there
+    EXPECT_EQ(2, oper.getSubexpressions().size());
+    EXPECT_EQ(emptyResult, oper.matches(log));
+    log.checkFirst(2);
+    oper.addSubexpression(CheckPtr(new ConstCheck(!emptyResult, 2)));
+    oper.addSubexpression(CheckPtr(new ConstCheck(!emptyResult, 3)));
     // They are listed there
     EXPECT_EQ(4, oper.getSubexpressions().size());
     // Now, the last one kills it, but the first ones will run, the fourth
@@ -64,6 +69,98 @@ TEST(LogicOperators, AllOf) {
 
 TEST(LogicOperators, AnyOf) {
     testCheck<AnyOfSpec>(false);
+}
+
+// Fixture for the tests of the creators
+class LogicCreatorTest : public ::testing::Test {
+private:
+    typedef shared_ptr<Loader<Log>::CheckCreator> CreatorPtr;
+public:
+    // Register some creators, both tested ones and some auxiliary ones for
+    // help
+    LogicCreatorTest():
+        loader_(REJECT)
+    {
+        loader_.registerCreator(CreatorPtr(new
+            LogicCreator<AnyOfSpec, Log>("ANY")));
+        loader_.registerCreator(CreatorPtr(new
+            LogicCreator<AllOfSpec, Log>("ALL")));
+        loader_.registerCreator(CreatorPtr(new ThrowCreator));
+        loader_.registerCreator(CreatorPtr(new LogCreator));
+    }
+    // To mark which parts of the check did run
+    Log log_;
+    // The loader
+    Loader<Log> loader_;
+    // Some convenience shortcut names
+    typedef LogicOperator<AnyOfSpec, Log> AnyOf;
+    typedef LogicOperator<AllOfSpec, Log> AllOf;
+    typedef shared_ptr<AnyOf> AnyOfPtr;
+    typedef shared_ptr<AllOf> AllOfPtr;
+    // Loads the JSON as a check and tries to convert it to the given check
+    // subclass
+    template<typename Result> shared_ptr<Result> load(const string& JSON) {
+        shared_ptr<Check<Log> > result;
+        EXPECT_NO_THROW(result = loader_.loadCheck(el(JSON)));
+        shared_ptr<Result>
+            resultConverted(dynamic_pointer_cast<Result>(result));
+        EXPECT_NE(shared_ptr<Result>(), resultConverted);
+        return (resultConverted);
+    }
+};
+
+// Test it can load empty ones
+TEST_F(LogicCreatorTest, empty) {
+    AnyOfPtr emptyAny(load<AnyOf>("{\"ANY\": []}"));
+    EXPECT_EQ(0, emptyAny->getSubexpressions().size());
+    AllOfPtr emptyAll(load<AllOf>("{\"ALL\": []}"));
+    EXPECT_EQ(0, emptyAll->getSubexpressions().size());
+}
+
+// Test it rejects invalid inputs (not a list as a parameter)
+TEST_F(LogicCreatorTest, invalid) {
+    EXPECT_THROW(loader_.loadCheck(el("{\"ANY\": null}")), LoaderError);
+    EXPECT_THROW(loader_.loadCheck(el("{\"ANY\": {}}")), LoaderError);
+    EXPECT_THROW(loader_.loadCheck(el("{\"ANY\": true}")), LoaderError);
+    EXPECT_THROW(loader_.loadCheck(el("{\"ANY\": 42}")), LoaderError);
+    EXPECT_THROW(loader_.loadCheck(el("{\"ANY\": \"hello\"}")), LoaderError);
+    EXPECT_THROW(loader_.loadCheck(el("{\"ALL\": null}")), LoaderError);
+    EXPECT_THROW(loader_.loadCheck(el("{\"ALL\": {}}")), LoaderError);
+    EXPECT_THROW(loader_.loadCheck(el("{\"ALL\": true}")), LoaderError);
+    EXPECT_THROW(loader_.loadCheck(el("{\"ALL\": 42}")), LoaderError);
+    EXPECT_THROW(loader_.loadCheck(el("{\"ALL\": \"hello\"}")), LoaderError);
+}
+
+// Exceptions from subexpression creation isn't caught
+TEST_F(LogicCreatorTest, propagate) {
+    EXPECT_THROW(loader_.loadCheck(el("{\"ANY\": [{\"throw\": null}]}")),
+                 TestCreatorError);
+    EXPECT_THROW(loader_.loadCheck(el("{\"ALL\": [{\"throw\": null}]}")),
+                 TestCreatorError);
+}
+
+// We can create more complex ANY check and run it correctly
+TEST_F(LogicCreatorTest, anyRun) {
+    AnyOfPtr any(load<AnyOf>("{\"ANY\": ["
+                             "    {\"logcheck\": [0, false]},"
+                             "    {\"logcheck\": [1, true]},"
+                             "    {\"logcheck\": [2, true]}"
+                             "]}"));
+    EXPECT_EQ(3, any->getSubexpressions().size());
+    EXPECT_TRUE(any->matches(log_));
+    log_.checkFirst(2);
+}
+
+// We can create more complex ALL check and run it correctly
+TEST_F(LogicCreatorTest, allRun) {
+    AllOfPtr any(load<AllOf>("{\"ALL\": ["
+                             "    {\"logcheck\": [0, true]},"
+                             "    {\"logcheck\": [1, false]},"
+                             "    {\"logcheck\": [2, false]}"
+                             "]}"));
+    EXPECT_EQ(3, any->getSubexpressions().size());
+    EXPECT_FALSE(any->matches(log_));
+    log_.checkFirst(2);
 }
 
 }

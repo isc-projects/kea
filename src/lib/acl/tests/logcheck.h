@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef LOGCHECK_H
+#define LOGCHECK_H
+
 #include <gtest/gtest.h>
 #include <acl/acl.h>
 #include <cassert>
@@ -84,3 +87,5 @@ private:
 };
 
 }
+
+#endif
