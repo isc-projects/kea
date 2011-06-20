@@ -7,6 +7,7 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 lib_LTLIBRARIES = libacl.la
 libacl_la_SOURCES = check.h acl.h
+libacl_la_SOURCES += logic_check.h
 libacl_la_SOURCES += loader.h loader.cc
 
 libacl_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
