@@ -364,12 +364,12 @@ private:
 /// LoggerManager and passing the settings as specified in the given
 /// configuration update.
 ///
-/// \param n The name of the module
+/// \param module_name The name of the module
 /// \param new_config The modified configuration values
 /// \param config_data The full config data for the (remote) logging
 ///                    module.
 void
-default_logconfig_handler(const std::string&n,
+default_logconfig_handler(const std::string& module_name,
                           isc::data::ConstElementPtr new_config,
                           const ConfigData& config_data);
 
