@@ -30,7 +30,7 @@ TEST(LogicOperators, AnyOfSpec) {
 TEST(LogicOperators, AllOfSpec) {
     EXPECT_TRUE(AllOfSpec::start());
     EXPECT_TRUE(AllOfSpec::terminate(false));
-    EXPECT_FALSE(AnyOfSpec::terminate(true));
+    EXPECT_FALSE(AllOfSpec::terminate(true));
 }
 
 // Generic test of one check
@@ -46,20 +46,16 @@ testCheck(bool emptyResult) {
     EXPECT_EQ(emptyResult, oper.matches(log));
     log.checkFirst(0);
     // Fill it with some subexpressions
-    oper.addSubexpression(shared_ptr<ConstCheck>(new ConstCheck(emptyResult,
-                                                                0)));
-    oper.addSubexpression(shared_ptr<ConstCheck>(new ConstCheck(emptyResult,
-                                                                1)));
-    oper.addSubexpression(shared_ptr<ConstCheck>(new ConstCheck(!emptyResult,
-                                                                2)));
-    oper.addSubexpression(shared_ptr<ConstCheck>(new ConstCheck(!emptyResult,
-                                                                3)));
+    oper.addSubexpression(new ConstCheck(emptyResult, 0));
+    oper.addSubexpression(new ConstCheck(emptyResult, 1));
+    oper.addSubexpression(new ConstCheck(!emptyResult, 2));
+    oper.addSubexpression(new ConstCheck(!emptyResult, 3));
     // They are listed there
     EXPECT_EQ(4, oper.getSubexpressions().size());
     // Now, the last one kills it, but the first ones will run, the fourth
     // won't
     EXPECT_EQ(!emptyResult, oper.matches(log));
-    log.checkFirst(4);
+    log.checkFirst(3);
 }
 
 TEST(LogicOperators, AllOf) {
