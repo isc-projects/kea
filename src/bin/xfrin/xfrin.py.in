@@ -551,7 +551,8 @@ class Xfrin:
         self._send_cc_session = isc.cc.Session()
         self._module_cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
                                               self.config_handler,
-                                              self.command_handler)
+                                              self.command_handler,
+                                              None, True)
         self._module_cc.start()
         config_data = self._module_cc.get_full_config()
         self.config_handler(config_data)
