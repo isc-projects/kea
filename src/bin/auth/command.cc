@@ -27,16 +27,18 @@
 
 #include <config/ccsession.h>
 
+#include <auth/auth_log.h>
 #include <auth/auth_srv.h>
 #include <auth/command.h>
 
-using namespace std;
-using boost::shared_ptr;
 using boost::scoped_ptr;
-using namespace isc::dns;
+using boost::shared_ptr;
+using namespace isc::auth;
+using namespace isc::config;
 using namespace isc::data;
 using namespace isc::datasrc;
-using namespace isc::config;
+using namespace isc::dns;
+using namespace std;
 
 namespace {
 /// An exception that is thrown if an error occurs while handling a command
@@ -115,9 +117,7 @@ public:
 class SendStatsCommand : public AuthCommand {
 public:
     virtual void exec(AuthSrv& server, isc::data::ConstElementPtr) {
-        if (server.getVerbose()) {
-            cerr << "[b10-auth] command 'sendstats' received" << endl;
-        }
+        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_RECEIVED_SENDSTATS);
         server.submitStatistics();
     }
 };
@@ -140,11 +140,8 @@ public:
                                                       oldzone->getOrigin()));
         newzone->load(oldzone->getFileName());
         oldzone->swap(*newzone);
-
-        if (server.getVerbose()) {
-            cerr << "[b10-auth] Loaded zone '" << newzone->getOrigin()
-                 << "'/" << newzone->getClass() << endl;
-        }
+        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_LOAD_ZONE)
+                  .arg(newzone->getOrigin()).arg(newzone->getClass());
     }
 
 private:
@@ -164,10 +161,7 @@ private:
         ConstElementPtr datasrc_elem = args->get("datasrc");
         if (datasrc_elem) {
             if (datasrc_elem->stringValue() == "sqlite3") {
-                if (server.getVerbose()) {
-                    cerr << "[b10-auth] Nothing to do for loading sqlite3"
-                         << endl;
-                }
+                LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_SQLITE3);
                 return (false);
             } else if (datasrc_elem->stringValue() != "memory") {
                 // (note: at this point it's guaranteed that datasrc_elem
@@ -233,18 +227,14 @@ ConstElementPtr
 execAuthServerCommand(AuthSrv& server, const string& command_id,
                       ConstElementPtr args)
 {
-    if (server.getVerbose()) {
-        cerr << "[b10-auth] Received '" << command_id << "' command" << endl;
-    }
-
+    LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_RECEIVED_COMMAND).arg(command_id);
     try {
         scoped_ptr<AuthCommand>(createAuthCommand(command_id))->exec(server,
                                                                      args);
     } catch (const isc::Exception& ex) {
-        if (server.getVerbose()) {
-            cerr << "[b10-auth] Command '" << command_id
-                 << "' execution failed: " << ex.what() << endl;
-        }
+        // TODO: SHould this be LOG_ERROR?
+        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_COMMAND_FAILED)
+                  .arg(command_id).arg(ex.what());
         return (createAnswer(1, ex.what()));
     }
 
