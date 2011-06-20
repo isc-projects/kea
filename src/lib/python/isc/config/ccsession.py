@@ -42,6 +42,7 @@ import isc
 from isc.util.file import path_search
 import bind10_config
 from isc.log import log_config_update
+import json
 
 class ModuleCCSessionError(Exception): pass
 
@@ -123,7 +124,8 @@ def default_logconfig_handler(new_config, config_data):
     errors = []
 
     if config_data.get_module_spec().validate_config(False, new_config, errors):
-        isc.log.log_config_update(new_config, config_data.get_module_spec().get_full_spec())
+        isc.log.log_config_update(json.dumps(new_config),
+            json.dumps(config_data.get_module_spec().get_full_spec()))
     else:
         # no logging here yet, TODO: log these errors
         print("Error in logging configuration, ignoring config update: ")

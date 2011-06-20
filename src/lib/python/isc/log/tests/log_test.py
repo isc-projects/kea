@@ -16,6 +16,7 @@
 # This tests it can be loaded, nothing more yet
 import isc.log
 import unittest
+import json
 import bind10_config
 from isc.config.ccsession import path_search
 
@@ -55,7 +56,7 @@ class Manager(unittest.TestCase):
         isc.log.init("root", "INFO", 0, "/no/such/file");
 
     def test_log_config_update(self):
-        log_spec = isc.config.module_spec_from_file(path_search('logging.spec', bind10_config.PLUGIN_PATHS)).get_full_spec()
+        log_spec = json.dumps(isc.config.module_spec_from_file(path_search('logging.spec', bind10_config.PLUGIN_PATHS)).get_full_spec())
 
         self.assertRaises(TypeError, isc.log.log_config_update)
         self.assertRaises(TypeError, isc.log.log_config_update, 1)
@@ -65,19 +66,21 @@ class Manager(unittest.TestCase):
         self.assertRaises(TypeError, isc.log.log_config_update, 1, log_spec)
         self.assertRaises(TypeError, isc.log.log_config_update, [], log_spec)
         self.assertRaises(TypeError, isc.log.log_config_update, "foo", log_spec)
+        self.assertRaises(TypeError, isc.log.log_config_update, "{ '", log_spec)
 
         # empty should pass
-        isc.log.log_config_update({}, log_spec)
+        #isc.log.log_config_update("{", log_spec)
+        isc.log.log_config_update("{}", log_spec)
 
         # bad spec
-        self.assertRaises(TypeError, isc.log.log_config_update, {}, {"foo": "bar"})
+        self.assertRaises(TypeError, isc.log.log_config_update, "{}", json.dumps({"foo": "bar"}))
 
         # Try a correct one
-        log_conf = {"loggers":
-                       [{"name": "b10-xfrout", "output_options":
-                           [{"output": "/tmp/bind10.log",
+        log_conf = json.dumps({"loggers":
+                                [{"name": "b10-xfrout", "output_options":
+                                    [{"output": "/tmp/bind10.log",
                                        "destination": "file",
-                                       "flush": True}]}]}
+                                       "flush": True}]}]})
         isc.log.log_config_update(log_conf, log_spec)
 
 class Logger(unittest.TestCase):
