@@ -47,7 +47,7 @@
 #include <auth/auth_log.h>
 #include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
-#include <log/macros.h>
+
 #include <log/logger_support.h>
 #include <server_common/keyring.h>
 
@@ -198,7 +198,7 @@ main(int argc, char* argv[]) {
             configureAuthServer(*auth_server, config_session->getFullConfig());
             auth_server->updateConfig(ElementPtr());
         } catch (const AuthConfigError& ex) {
-            LOG_ERROR(auth_logger, AUTH_SERVER_CONFIG_FAIL).arg(ex.what());
+            LOG_ERROR(auth_logger, AUTH_CONFIG_LOAD_FAIL).arg(ex.what());
         }
 
         if (uid != NULL) {
