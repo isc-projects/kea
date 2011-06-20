@@ -27,12 +27,13 @@ namespace auth {
 /// the b10-auth program.  Higher numbers equate to more verbose (and detailed)
 /// output.
 
-// The first level traces normal operations - asking the AUTH for an address,
-// and cancelling a lookup.  It also records when the AUTH calls back to the
-// resolver to resolve something.
+// The first level traces start-up, recorded as every components starts.
 const int DBG_AUTH_START = 10;
 
-/// define the logger for the "auth" module part of b10-auth.  We could define
+// This level traces more detailed high-level operations.
+const int DBG_AUTH_OPS = 30;
+
+/// Define the logger for the "auth" module part of b10-auth.  We could define
 /// a logger in each file, but we would want to define a common name to avoid
 /// spelling mistakes, so it is just one small step from there to define a
 /// module-common logger.
