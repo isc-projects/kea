@@ -158,9 +158,13 @@ splitIPAddress(const std::string& addrmask) {
 ///
 struct IPAddress {
     explicit IPAddress(const struct sockaddr& sa);
-    const int family;
-    const uint8_t* const data;
-    const size_t length;
+    int getFamily() const { return (family); }
+    const uint8_t* getData() const { return (data); }
+    size_t getLength() const { return (length); }
+private:
+    int family;
+    const uint8_t* data;
+    size_t length;
 };
 
 /// \brief IP Check
