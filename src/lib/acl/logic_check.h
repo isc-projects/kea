@@ -38,11 +38,33 @@ public:
 };
 
 template<typename Mode, typename Context>
-class LogicOperator : public CompoundCheck<Context> {
+class LogicOperator : public CompoundCheck<Context>, boost::noncopyable {
 public:
-    void addSubexpression(boost::shared_ptr<Check<Context> > expr);
-    virtual typename CompoundCheck<Context>::Checks getSubexpressions() const;
-    virtual bool matches(const Context& context) const;
+    ~ LogicOperator() {
+        for (typename CompoundCheck<Context>::Checks::iterator
+                 i(checks_.begin());
+             i != checks_.end(); ++i) {
+            delete *i;
+        }
+    }
+    void addSubexpression(const Check<Context>* expr) {
+        checks_.push_back(expr);
+    }
+    virtual typename CompoundCheck<Context>::Checks getSubexpressions() const {
+        return (checks_);
+    }
+    virtual bool matches(const Context& context) const {
+        for (typename CompoundCheck<Context>::Checks::const_iterator
+                 i(checks_.begin());
+             i != checks_.end(); ++i) {
+            if (Mode::terminate((*i)->matches(context))) {
+                return (!Mode::start());
+            }
+        }
+        return (Mode::start());
+    }
+private:
+    typename CompoundCheck<Context>::Checks checks_;
 };
 
 template<typename Mode, typename Context, typename Action = BasicAction>
