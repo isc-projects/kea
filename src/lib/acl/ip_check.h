@@ -305,9 +305,9 @@ public:
     IPCheck& operator=(const IPCheck<Context>& other) {
         if (this != &other) {
             Check<Context>::operator=(other);
-            std::copy(other.address_.word, other.address_.word + IPV6_SIZE32, 
+            std::copy(other.address_.word, other.address_.word + IPV6_SIZE32,
                       address_.word);
-            std::copy(other.netmask_.word, other.netmask_.word + IPV6_SIZE32, 
+            std::copy(other.netmask_.word, other.netmask_.word + IPV6_SIZE32,
                       netmask_.word);
             masksize_ = other.masksize_;
             inverse_ = other.inverse_;
