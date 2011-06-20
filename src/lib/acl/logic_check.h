@@ -30,6 +30,7 @@ public:
 };
 
 class AllOfSpec {
+public:
     static bool start() { return (true); }
     static bool terminate(const bool another) {
         return (!another);
