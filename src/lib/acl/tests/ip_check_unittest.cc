@@ -177,9 +177,9 @@ getSockAddr(const char* const addr) {
 TEST(IPAddress, constructIPv4) {
     IPAddress ipaddr(getSockAddr("192.0.2.1"));
     const char expected_data[4] = { 192, 0, 2, 1 };
-    EXPECT_EQ(AF_INET, ipaddr.family);
-    EXPECT_EQ(4, ipaddr.length);
-    EXPECT_EQ(0, memcmp(expected_data, ipaddr.data, 4));
+    EXPECT_EQ(AF_INET, ipaddr.getFamily());
+    EXPECT_EQ(4, ipaddr.getLength());
+    EXPECT_EQ(0, memcmp(expected_data, ipaddr.getData(), 4));
 }
 
 TEST(IPAddress, constructIPv6) {
@@ -187,9 +187,9 @@ TEST(IPAddress, constructIPv6) {
     const char expected_data[16] = { 0x20, 0x01, 0x0d, 0xb8, 0x12, 0x34, 0xab,
                                      0xcd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                      0x00, 0x53 };
-    EXPECT_EQ(AF_INET6, ipaddr.family);
-    EXPECT_EQ(16, ipaddr.length);
-    EXPECT_EQ(0, memcmp(expected_data, ipaddr.data, 16));
+    EXPECT_EQ(AF_INET6, ipaddr.getFamily());
+    EXPECT_EQ(16, ipaddr.getLength());
+    EXPECT_EQ(0, memcmp(expected_data, ipaddr.getData(), 16));
 }
 
 TEST(IPAddress, badConstruct) {
