@@ -13,12 +13,15 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <auth/statistics.h>
+#include <auth/auth_log.h>
 
 #include <cc/data.h>
 #include <cc/session.h>
 
 #include <sstream>
 #include <iostream>
+
+using namespace isc::auth;
 
 // TODO: We need a namespace ("auth_server"?) to hold
 // AuthSrv and AuthCounters.
@@ -65,9 +68,7 @@ bool
 AuthCountersImpl::submitStatistics() const {
     if (statistics_session_ == NULL) {
         if (verbose_mode_) {
-            std::cerr << "[b10-auth] "
-                      << "session interface for statistics"
-                      << " is not available" << std::endl;
+            LOG_ERROR(auth_logger, AUTH_NO_STATS_SESSION);
         }
         return (false);
     }
@@ -96,16 +97,12 @@ AuthCountersImpl::submitStatistics() const {
         statistics_session_->group_recvmsg(env, answer, false, seq);
     } catch (const isc::cc::SessionError& ex) {
         if (verbose_mode_) {
-            std::cerr << "[b10-auth] "
-                      << "communication error in sending statistics data: "
-                      << ex.what() << std::endl;
+            LOG_ERROR(auth_logger, AUTH_STATS_COMMS).arg(ex.what());
         }
         return (false);
     } catch (const isc::cc::SessionTimeout& ex) {
         if (verbose_mode_) {
-            std::cerr << "[b10-auth] "
-                      << "timeout happened while sending statistics data: "
-                      << ex.what() << std::endl;
+            LOG_ERROR(auth_logger, AUTH_STATS_TIMEOUT).arg(ex.what());
         }
         return (false);
     }
