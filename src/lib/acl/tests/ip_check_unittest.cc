@@ -503,7 +503,7 @@ TEST(IPCheck, V6AssignmentOperator) {
 }
 
 TEST(IPCheck, V6Compare) {
-    // Set up some data.  
+    // Set up some data.
     vector<uint8_t> v6addr_2(V6ADDR_2, V6ADDR_2 + sizeof(V6ADDR_2));
     vector<uint8_t> v6addr_2_48(V6ADDR_2_48, V6ADDR_2_48 + sizeof(V6ADDR_2_48));
     vector<uint8_t> v6addr_2_52(V6ADDR_2_52, V6ADDR_2_52 + sizeof(V6ADDR_2_52));
