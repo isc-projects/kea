@@ -88,13 +88,13 @@ and put it into the additional section.
 Debug information. The domain is a CNAME (or a DNAME and we created a CNAME
 for it already), so it's being followed.
 
-% QUERY_EMPTY_CNAME cNAME at '%1' is empty
+% QUERY_EMPTY_CNAME CNAME at '%1' is empty
 There was an CNAME and it was being followed. But it contains no records,
 so there's nowhere to go. There will be no answer. This indicates a problem
 with supplied data.
 We tried to follow
 
-% QUERY_TOO_MANY_CNAMES cNAME chain limit exceeded at '%1'
+% QUERY_TOO_MANY_CNAMES CNAME chain limit exceeded at '%1'
 A CNAME led to another CNAME and it led to another, and so on. After 16
 CNAMEs, the software gave up. Long CNAME chains are discouraged, and this
 might possibly be a loop as well. Note that some of the CNAMEs might have
@@ -283,9 +283,9 @@ some other data. But the protocol forbids coexistence of CNAME with anything
 
 % MEM_CNAME_COEXIST can't add data to CNAME in domain '%1'
 This is the same problem as in MEM_CNAME_TO_NONEMPTY, but it happened the
-other way around -- adding some outher data to CNAME.
+other way around -- adding some other data to CNAME.
 
-% MEM_DNAME_NS dNAME and NS can't coexist in non-apex domain '%1'
+% MEM_DNAME_NS DNAME and NS can't coexist in non-apex domain '%1'
 It was requested for DNAME and NS records to be put into the same domain
 which is not the apex (the top of the zone). This is forbidden by RFC
 2672, section 3. This indicates a problem with provided data.
@@ -299,13 +299,13 @@ It was attempted to add the domain into a zone that shouldn't have it
 (eg. the domain is not subdomain of the zone origin). This indicates a
 problem with provided data.
 
-% MEM_WILDCARD_NS nS record in wildcard domain '%1'
+% MEM_WILDCARD_NS NS record in wildcard domain '%1'
 The software refuses to load NS records into a wildcard domain.  It isn't
 explicitly forbidden, but the protocol is ambiguous about how this should
 behave and BIND 9 refuses that as well. Please describe your intention using
 different tools.
 
-% MEM_WILDCARD_DNAME dNAME record in wildcard domain '%1'
+% MEM_WILDCARD_DNAME DNAME record in wildcard domain '%1'
 The software refuses to load DNAME records into a wildcard domain.  It isn't
 explicitly forbidden, but the protocol is ambiguous about how this should
 behave and BIND 9 refuses that as well. Please describe your intention using
@@ -421,11 +421,11 @@ Debug information. The SQLite data source is looking up records of given name
 and type in the database.
 
 % SQLITE_ENCLOSURE looking for zone containing '%1'
-Debug information. The SQLite data source is trying to identify, which zone
+Debug information. The SQLite data source is trying to identify which zone
 should hold this domain.
 
 % SQLITE_ENCLOSURE_NOTFOUND no zone contains it
-Debug information. The last SQLITE_ENCLOSURE query was unsuccessful, there's
+Debug information. The last SQLITE_ENCLOSURE query was unsuccessful; there's
 no such zone in our data.
 
 % SQLITE_PREVIOUS looking for name previous to '%1'
@@ -472,13 +472,13 @@ Debug information. The SQLite data source is identifying if this domain is
 a referral and where it goes.
 
 % SQLITE_FINDREF_BAD_CLASS class mismatch looking for referral ('%1' and '%2')
-The SQLite data source was trying to identify, if there's a referral. But
+The SQLite data source was trying to identify if there's a referral. But
 it contains different class than the query was for.
 
-% SQLITE_CREATE sQLite data source created
+% SQLITE_CREATE SQLite data source created
 Debug information. An instance of SQLite data source is being created.
 
-% SQLITE_DESTROY sQLite data source destroyed
+% SQLITE_DESTROY SQLite data source destroyed
 Debug information. An instance of SQLite data source is being destroyed.
 
 % SQLITE_SETUP setting up SQLite database
