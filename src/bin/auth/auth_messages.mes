@@ -26,6 +26,12 @@ communication over the previously-created channel to the configuration manager.
 A debug message, issued when the authoritative server has posted a request to
 be notified when new configuration information is available.
 
+% AUTH_CONFIG_LOAD_FAIL load of configuration failed: %1
+At attempt to configure the server with information from the configuration
+database has failed, the reason being given in the message. The server will
+continue its initialization although it may not be configured in the desired
+way.
+
 % AUTH_DNSSERVICES_CREATED  DNS services created
 A debug message indicating that the component that will handling incoming
 queries for the authoritiative server (DNSServices) has been successfully
@@ -35,11 +41,9 @@ created.
 A debug message indicating that the authoritiative server has successfully
 accessed the keyring holding TSIG keys.
 
-% AUTH_SERVER_CONFIG_FAIL load of configuration failed: %1
-At attempt to configure the server with information from the configuration
-database has failed, the reason being given in the message. The server will
-continue its initialization although it may not be configured in the desired
-way.
+% AUTH_NO_STATS_SESSION session interface for statistics is not available
+For some reason, no session to the statistics module is available.  This could
+be an error in configuration
 
 % AUTH_SERVER_CREATED   server created
 An informational message indicating that the authoritative server process has
@@ -63,11 +67,21 @@ to the statistics process.
 A debug message indicating that the authoritative server has established
 communication over the previously created statistics channel.
 
+% AUTH_STATS_COMMS communication error in sending statistics data: %1
+An error was encountered when the authoritiative server tried to send data
+to the statistics daemon.  The message includes additional information
+describing the reason for the failure.
+
+% AUTH_STATS_TIMEOUT timeout while sending statistics data: %1
+The authoritative server sent data to the statistics daemon but received
+no acknowledgement within the specified time.  The message includes
+additional information describing the reason for the failure.
+
 % AUTH_XFRIN_CHANNEL_CREATED XFRIN session channel created
 A debug message indicating that the authoritative server has created a channel
-to the XFRIN ("Transfer-in") process.
+to the XFRIN (Transfer-in) process.
 
 % AUTH_XFRIN_CHANNEL_ESTABLISHED XFRIN session channel established
 A debug message indicating that the authoritative server has established
-communication over the previously-created channel to the XFRIN ("Transfer-in")
+communication over the previously-created channel to the XFRIN (Transfer-in)
 process.
