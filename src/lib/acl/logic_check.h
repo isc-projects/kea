@@ -21,6 +21,7 @@
 namespace isc {
 namespace acl {
 
+/// \brief Constants for the AnyOf implementation
 class AnyOfSpec {
 public:
     static bool start() { return (false); }
@@ -29,6 +30,7 @@ public:
     }
 };
 
+/// \brief Constants for the AllOf implementation
 class AllOfSpec {
 public:
     static bool start() { return (true); }
@@ -37,9 +39,28 @@ public:
     }
 };
 
+/**
+ * \brief Logic operators
+ *
+ * This class implements the AllOf and AnyOf compound checks. As their
+ * behaviour is almost the same, the same template class is used. Which
+ * one it is depends on the Mode template parameter. The Mode should be
+ * one of AnyOfSpec or AllOfSpec, which provide some commands for the
+ * internal implementation. It would be nice to provide typedefs for
+ * them, but it is impossible to do so, as we have the Context template
+ * parameter as well and C++ doesn't like templated typedefs.
+ *
+ * The object holds several subexpressions and returns true if all
+ * of the subexpressions return true (in case of AllOfSpec Mode) or
+ * at last one of them return true (in case of AnyOfSpec Mode). If
+ * some subexpression guarantees the result (eg. some returns false
+ * in case of AllOfSpec), the rest is not tried for performance
+ * reasons.
+ */
 template<typename Mode, typename Context>
 class LogicOperator : public CompoundCheck<Context>, boost::noncopyable {
 public:
+    /// Destructor
     ~ LogicOperator() {
         for (typename CompoundCheck<Context>::Checks::iterator
                  i(checks_.begin());
@@ -47,13 +68,50 @@ public:
             delete *i;
         }
     }
+    /**
+     * \brief Add another subexpression.
+     *
+     * This adds another subexpression to the list of checked expressions.
+     * This is usually done shortly after the creation, before using the
+     * check for matches.
+     *
+     * Currently there's no way to place the expression into arbitrary place
+     * or to remove it. It might turn out it would be needed in future to
+     * optimise or it might even turn out we need shared pointers for it.
+     *
+     * \param expr The new expression to put inside. This takes ownership
+     *     of the object pointed to by expr (eg. if this function does not
+     *     throw - and it throws only std::badalloc, you don't delete it,
+     *     it will be deleted when the expression is deleted.
+     */
     void addSubexpression(const Check<Context>* expr) {
         checks_.push_back(expr);
     }
+    /**
+     * \brief The current list of subexpressions.
+     */
     virtual typename CompoundCheck<Context>::Checks getSubexpressions() const {
         return (checks_);
     }
+    /**
+     * \brief The match of the check.
+     *
+     * Runs the subexpressions, one by one, and then decides based on that
+     * what to return.
+     */
     virtual bool matches(const Context& context) const {
+        /*
+         * This might look slightly complicated. However, this is just
+         * generalized version of multi-and or multi-or. The usual
+         * implementation of multi-and starts with true and if one with
+         * false is found, it turns to be false forever and false is
+         * returned. It is exactly the other way around with or.
+         *
+         * So, if we ever find one that makes it the other one than start
+         * (false in case of and, true in case of or), we can just stop and
+         * return that one right away. If it meets no such expression, we
+         * get to the end and return the default.
+         */
         for (typename CompoundCheck<Context>::Checks::const_iterator
                  i(checks_.begin());
              i != checks_.end(); ++i) {
@@ -64,6 +122,7 @@ public:
         return (Mode::start());
     }
 private:
+    /// \brief List of subexpressions
     typename CompoundCheck<Context>::Checks checks_;
 };
 
