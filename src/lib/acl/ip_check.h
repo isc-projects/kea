@@ -291,9 +291,9 @@ public:
             masksize_(other.masksize_), inverse_(other.inverse_),
             family_(other.family_), straddr_(other.straddr_)
     {
-        std::copy(other.address_.word, other.address_.word + IPV6_SIZE32, 
+        std::copy(other.address_.word, other.address_.word + IPV6_SIZE32,
                   address_.word);
-        std::copy(other.netmask_.word, other.netmask_.word + IPV6_SIZE32, 
+        std::copy(other.netmask_.word, other.netmask_.word + IPV6_SIZE32,
                   netmask_.word);
     }
 
@@ -332,7 +332,7 @@ public:
 
     /// \brief Estimated cost
     ///
-    /// Assume that the cost of the match is linear and depends on the 
+    /// Assume that the cost of the match is linear and depends on the
     /// maximum number of comparison operations.
     ///
     /// \return Estimated cost of the comparison
