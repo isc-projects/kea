@@ -69,7 +69,6 @@ class Manager(unittest.TestCase):
         self.assertRaises(TypeError, isc.log.log_config_update, "{ '", log_spec)
 
         # empty should pass
-        #isc.log.log_config_update("{", log_spec)
         isc.log.log_config_update("{}", log_spec)
 
         # bad spec
