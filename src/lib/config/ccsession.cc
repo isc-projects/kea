@@ -247,7 +247,7 @@ readLoggersConf(std::vector<isc::log::LoggerSpecification>& specs,
 } // end anonymous namespace
 
 void
-default_logconfig_handler(const std::string&n,
+default_logconfig_handler(const std::string& module_name,
                           ConstElementPtr new_config,
                           const ConfigData& config_data) {
     config_data.getModuleSpec().validateConfig(new_config, true);
