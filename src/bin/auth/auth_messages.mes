@@ -1,0 +1,73 @@
+# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+$NAMESPACE isc::auth
+
+% AUTH_CONFIG_CHANNEL_CREATED configuration session channel created
+A debug message indicating that authoritative server has created the channel to
+the configuration manager.
+
+% AUTH_CONFIG_CHANNEL_ESTABLISHED configuration session channel established
+A debug message indicating that authoritative server has established
+communication over the previously-created channel to the configuration manager.
+
+% AUTH_CONFIG_CHANNEL_STARTED configuration session channel started
+A debug message, issued when the authoritative server has posted a request to
+be notified when new configuration information is available.
+
+% AUTH_DNSSERVICES_CREATED  DNS services created
+A debug message indicating that the component that will handling incoming
+queries for the authoritiative server (DNSServices) has been successfully
+created.
+
+% AUTH_LOAD_TSIG loading TSIG keys
+A debug message indicating that the authoritiative server has successfully
+accessed the keyring holding TSIG keys.
+
+% AUTH_SERVER_CONFIG_FAIL load of configuration failed: %1
+At attempt to configure the server with information from the configuration
+database has failed, the reason being given in the message. The server will
+continue its initialization although it may not be configured in the desired
+way.
+
+% AUTH_SERVER_CREATED   server created
+An informational message indicating that the authoritative server process has
+been created and is initializing.  The AUTH_SERVER_STARTED message will be
+output when initialization has successfully completed and the server starts
+accepting queries.
+
+% AUTH_SERVER_FAILED   server failed: %1
+The authoritative server has encountered a fatal error and is terminating.  The
+reason for the failure is included in the message.
+
+% AUTH_SERVER_STARTED   server stated
+Initialization of the authoritative server has completed successfully
+and it is entering the main loop, waiting for queries to arrive.
+
+% AUTH_STATS_CHANNEL_CREATED STATS session channel created
+A debug message indicating that the authoritative server has created a channel
+to the statistics process.
+
+% AUTH_STATS_CHANNEL_ESTABLISHED STATS session channel established
+A debug message indicating that the authoritative server has established
+communication over the previously created statistics channel.
+
+% AUTH_XFRIN_CHANNEL_CREATED XFRIN session channel created
+A debug message indicating that the authoritative server has created a channel
+to the XFRIN ("Transfer-in") process.
+
+% AUTH_XFRIN_CHANNEL_ESTABLISHED XFRIN session channel established
+A debug message indicating that the authoritative server has established
+communication over the previously-created channel to the XFRIN ("Transfer-in")
+process.
