@@ -111,48 +111,8 @@ T createNetmask(size_t masksize) {
 ///
 /// \return Pair of (string, int) holding the address string and the mask
 ///         size value.  The second element is -1 if no mask was given.
-
 std::pair<std::string, int>
-splitIPAddress(const std::string& addrmask) {
-
-    // Set the default value for the mask size
-    int masksize = -1;
-
-    // Split string into its components.  As the tokenising code ignores
-    // leading, trailing nd consecutive delimiters, be strict here and ensures
-    // that the string contains at most 0 or 1 slashes.
-    if (std::count(addrmask.begin(), addrmask.end(), '/') > 1) {
-        isc_throw(isc::InvalidParameter, "address/masksize of " <<
-                  addrmask << " is not valid");
-    }
-
-    std::vector<std::string> components = isc::util::str::tokens(addrmask, "/");
-    if (components.size() == 2) {
-
-        // There appears to be a mask, try converting it to a number.
-        try {
-            masksize = boost::lexical_cast<int>(components[1]);
-        } catch (boost::bad_lexical_cast&) {
-            isc_throw(isc::InvalidParameter,
-                      "mask size specified in address/masksize " << addrmask <<
-                      " is not valid");
-        }
-
-        // Ensure that it is positive - a mask size of zero is not a valid
-        // value.
-        if (masksize <= 0) {
-            isc_throw(isc::OutOfRange,
-                      "mask size specified in address/masksize " << addrmask <<
-                      " must be a positive number");
-        }
-
-    } else if (components.size() > 2) {
-        isc_throw(isc::InvalidParameter, "address/masksize of " <<
-                  addrmask << " is not valid");
-    }
-
-    return (std::make_pair(components[0], masksize));
-}
+splitIPAddress(const std::string& addrmask);
 
 /// \brief A simple representation of IP address
 ///
