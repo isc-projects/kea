@@ -16,7 +16,7 @@ $PREFIX ASIODNS_
 $NAMESPACE isc::asiodns
 
 % FETCHCOMP   upstream fetch to %1(%2) has now completed
-A debug message, this records the the upstream fetch (a query made by the
+A debug message, this records that the upstream fetch (a query made by the
 resolver on behalf of its client) to the specified address has completed.
 
 % FETCHSTOP   upstream fetch to %1(%2) has been stopped
@@ -27,12 +27,12 @@ enabled.
 % OPENSOCK    error %1 opening %2 socket to %3(%4)
 The asynchronous I/O code encountered an error when trying to open a socket
 of the specified protocol in order to send a message to the target address.
-The the number of the system error that cause the problem is given in the
+The number of the system error that cause the problem is given in the
 message.
 
 % RECVSOCK    error %1 reading %2 data from %3(%4)
-The asynchronous I/O code encountered an error when trying read data from
-the specified address on the given protocol.  The the number of the system
+The asynchronous I/O code encountered an error when trying to read data from
+the specified address on the given protocol.  The number of the system
 error that cause the problem is given in the message.
 
 % SENDSOCK    error %1 sending data using %2 to %3(%4)
