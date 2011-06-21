@@ -19,6 +19,10 @@
 #include <vector>
 #include <utility>
 
+#include <boost/shared_ptr.hpp>
+
+#include <acl/acl.h>
+
 #include <cc/data.h>
 #include <config/ccsession.h>
 #include <dns/message.h>
@@ -36,6 +40,12 @@
 #include <cache/resolver_cache.h>
 
 #include <resolve/resolver_interface.h>
+
+namespace isc {
+namespace server_common {
+class Client;
+}
+}
 
 class ResolverImpl;
 
@@ -235,6 +245,12 @@ public:
      * will retry this number of times
      */
     int getRetries() const;
+
+    typedef isc::acl::ACL<isc::server_common::Client> ClientACL;
+
+    const ClientACL& getQueryACL() const;
+
+    void setQueryACL(boost::shared_ptr<const ClientACL> new_acl);
 
 private:
     ResolverImpl* impl_;
