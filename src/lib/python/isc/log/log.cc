@@ -41,7 +41,12 @@ using boost::bind;
 // to solve this issue.
 namespace clang_unnamed_namespace_workaround {
     // To propagate python exceptions through our code
-    class InternalError {};
+    // This exception is used to signal to the calling function that a
+    // proper Python Exception has already been set, and the caller
+    // should now return NULL.
+    // Since it is only used internally, and should not pass any
+    // information itself, is is not derived from std::exception
+    class InternalError : public std::exception {};
 }
 using namespace clang_unnamed_namespace_workaround;
 
@@ -50,14 +55,6 @@ namespace {
 // This is for testing only. The real module will have it always set as
 // NULL and will use the global dictionary.
 MessageDictionary* testDictionary = NULL;
-
-// To propagate python exceptions trough our code
-// This exception is used to signal to the calling function that a
-// proper Python Exception has already been set, and the caller
-// should now return NULL.
-// Since it is only used internally, and should not pass any
-// information itself, is is not derived from std::exception
-class InternalError {};
 
 PyObject*
 setTestDictionary(PyObject*, PyObject* args) {
