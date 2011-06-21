@@ -101,6 +101,7 @@ public:
     RRsetPtr getRRset() const { return (entry->rrset); }
 
     /// \brief Returns name associated with cached node
+    ///
     /// This is the name associated with the RRset if it is a positive
     /// entry, and the associated question name if the RRSet is NULL
     /// and this is a negative entry (together with an indication that
