@@ -105,7 +105,6 @@ public:
 
     /// These members are public because AuthSrv accesses them directly.
     ModuleCCSession* config_session_;
-    bool verbose_mode_;
     AbstractSession* xfrin_session_;
 
     /// In-memory data source.  Currently class IN only for simplicity.
@@ -144,11 +143,11 @@ private:
 
 AuthSrvImpl::AuthSrvImpl(const bool use_cache,
                          AbstractXfroutClient& xfrout_client) :
-    config_session_(NULL), verbose_mode_(false),
+    config_session_(NULL),
     xfrin_session_(NULL),
     memory_datasrc_class_(RRClass::IN()),
     statistics_timer_(io_service_),
-    counters_(verbose_mode_),
+    counters_(),
     keyring_(NULL),
     xfrout_connected_(false),
     xfrout_client_(xfrout_client)
@@ -252,7 +251,7 @@ public:
 
 void
 makeErrorMessage(MessagePtr message, OutputBufferPtr buffer,
-                 const Rcode& rcode, const bool&,
+                 const Rcode& rcode, 
                  std::auto_ptr<TSIGContext> tsig_context =
                  std::auto_ptr<TSIGContext>())
 {
@@ -293,16 +292,6 @@ makeErrorMessage(MessagePtr message, OutputBufferPtr buffer,
     LOG_DEBUG(auth_logger, DBG_AUTH_MESSAGES, AUTH_SEND_ERROR_RESPONSE)
               .arg(message->toText());
 }
-}
-
-void
-AuthSrv::setVerbose(const bool on) {
-    impl_->verbose_mode_ = on;
-}
-
-bool
-AuthSrv::getVerbose() const {
-    return (impl_->verbose_mode_);
 }
 
 IOService&
@@ -427,15 +416,13 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
     } catch (const DNSProtocolError& error) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_PACKET_PROTOCOL_ERROR)
                   .arg(error.getRcode().toText()).arg(error.what());
-        makeErrorMessage(message, buffer, error.getRcode(),
-                         impl_->verbose_mode_);
+        makeErrorMessage(message, buffer, error.getRcode());
         server->resume(true);
         return;
     } catch (const Exception& ex) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_PACKET_PARSE_ERROR)
                   .arg(ex.what());
-        makeErrorMessage(message, buffer, Rcode::SERVFAIL(),
-                         impl_->verbose_mode_);
+        makeErrorMessage(message, buffer, Rcode::SERVFAIL());
         server->resume(true);
         return;
     } // other exceptions will be handled at a higher layer.
@@ -463,19 +450,16 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
 
     bool sendAnswer = true;
     if (tsig_error != TSIGError::NOERROR()) {
-        makeErrorMessage(message, buffer, tsig_error.toRcode(),
-                         impl_->verbose_mode_, tsig_context);
+        makeErrorMessage(message, buffer, tsig_error.toRcode(), tsig_context);
     } else if (message->getOpcode() == Opcode::NOTIFY()) {
         sendAnswer = impl_->processNotify(io_message, message, buffer,
                                           tsig_context);
     } else if (message->getOpcode() != Opcode::QUERY()) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_UNSUPPORTED_OPCODE)
                   .arg(message->getOpcode().toText());
-        makeErrorMessage(message, buffer, Rcode::NOTIMP(),
-                         impl_->verbose_mode_, tsig_context);
+        makeErrorMessage(message, buffer, Rcode::NOTIMP(), tsig_context);
     } else if (message->getRRCount(Message::SECTION_QUESTION) != 1) {
-        makeErrorMessage(message, buffer, Rcode::FORMERR(),
-                         impl_->verbose_mode_, tsig_context);
+        makeErrorMessage(message, buffer, Rcode::FORMERR(), tsig_context);
     } else {
         ConstQuestionPtr question = *message->beginQuestion();
         const RRType &qtype = question->getType();
@@ -483,8 +467,7 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
             sendAnswer = impl_->processAxfrQuery(io_message, message, buffer,
                                                  tsig_context);
         } else if (qtype == RRType::IXFR()) {
-            makeErrorMessage(message, buffer, Rcode::NOTIMP(),
-                             impl_->verbose_mode_, tsig_context);
+            makeErrorMessage(message, buffer, Rcode::NOTIMP(), tsig_context);
         } else {
             sendAnswer = impl_->processNormalQuery(io_message, message, buffer,
                                                    tsig_context);
@@ -532,7 +515,7 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, MessagePtr message,
         }
     } catch (const Exception& ex) {
         LOG_ERROR(auth_logger, AUTH_PROCESS_FAIL).arg(ex.what());
-        makeErrorMessage(message, buffer, Rcode::SERVFAIL(), verbose_mode_);
+        makeErrorMessage(message, buffer, Rcode::SERVFAIL());
         return (true);
     }
 
@@ -561,8 +544,7 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, MessagePtr message,
 
     if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_AXFR_UDP);
-        makeErrorMessage(message, buffer, Rcode::FORMERR(), verbose_mode_,
-                         tsig_context);
+        makeErrorMessage(message, buffer, Rcode::FORMERR(), tsig_context);
         return (true);
     }
 
@@ -587,8 +569,7 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, MessagePtr message,
 
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_AXFR_ERROR)
                   .arg(err.what());
-        makeErrorMessage(message, buffer, Rcode::SERVFAIL(), verbose_mode_,
-                         tsig_context);
+        makeErrorMessage(message, buffer, Rcode::SERVFAIL(), tsig_context);
         return (true);
     }
 
@@ -605,16 +586,14 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, MessagePtr message,
     if (message->getRRCount(Message::SECTION_QUESTION) != 1) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_NOTIFY_QUESTIONS)
                   .arg(message->getRRCount(Message::SECTION_QUESTION));
-        makeErrorMessage(message, buffer, Rcode::FORMERR(), verbose_mode_,
-                         tsig_context);
+        makeErrorMessage(message, buffer, Rcode::FORMERR(), tsig_context);
         return (true);
     }
     ConstQuestionPtr question = *message->beginQuestion();
     if (question->getType() != RRType::SOA()) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_NOTIFY_RRTYPE)
                   .arg(question->getType().toText());
-        makeErrorMessage(message, buffer, Rcode::FORMERR(), verbose_mode_,
-                         tsig_context);
+        makeErrorMessage(message, buffer, Rcode::FORMERR(), tsig_context);
         return (true);
     }
 

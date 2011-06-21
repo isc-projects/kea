@@ -32,10 +32,7 @@ private:
     AuthCountersImpl(const AuthCountersImpl& source);
     AuthCountersImpl& operator=(const AuthCountersImpl& source);
 public:
-    // References verbose_mode flag in AuthSrvImpl
-    // TODO: Fix this short term workaround for logging
-    // after we have logging framework
-    AuthCountersImpl(const bool& verbose_mode);
+    AuthCountersImpl();
     ~AuthCountersImpl();
     void inc(const AuthCounters::CounterType type);
     bool submitStatistics() const;
@@ -45,15 +42,13 @@ public:
 private:
     std::vector<uint64_t> counters_;
     isc::cc::AbstractSession* statistics_session_;
-    const bool& verbose_mode_;
 };
 
-AuthCountersImpl::AuthCountersImpl(const bool& verbose_mode) :
+AuthCountersImpl::AuthCountersImpl() :
     // initialize counter
     // size: AuthCounters::COUNTER_TYPES, initial value: 0
     counters_(AuthCounters::COUNTER_TYPES, 0),
-    statistics_session_(NULL),
-    verbose_mode_(verbose_mode)
+    statistics_session_(NULL)
 {}
 
 AuthCountersImpl::~AuthCountersImpl()
@@ -67,9 +62,7 @@ AuthCountersImpl::inc(const AuthCounters::CounterType type) {
 bool
 AuthCountersImpl::submitStatistics() const {
     if (statistics_session_ == NULL) {
-        if (verbose_mode_) {
-            LOG_ERROR(auth_logger, AUTH_NO_STATS_SESSION);
-        }
+        LOG_ERROR(auth_logger, AUTH_NO_STATS_SESSION);
         return (false);
     }
     std::stringstream statistics_string;
@@ -96,14 +89,10 @@ AuthCountersImpl::submitStatistics() const {
         // currently it just returns empty message
         statistics_session_->group_recvmsg(env, answer, false, seq);
     } catch (const isc::cc::SessionError& ex) {
-        if (verbose_mode_) {
-            LOG_ERROR(auth_logger, AUTH_STATS_COMMS).arg(ex.what());
-        }
+        LOG_ERROR(auth_logger, AUTH_STATS_COMMS).arg(ex.what());
         return (false);
     } catch (const isc::cc::SessionTimeout& ex) {
-        if (verbose_mode_) {
-            LOG_ERROR(auth_logger, AUTH_STATS_TIMEOUT).arg(ex.what());
-        }
+        LOG_ERROR(auth_logger, AUTH_STATS_TIMEOUT).arg(ex.what());
         return (false);
     }
     return (true);
@@ -122,8 +111,7 @@ AuthCountersImpl::getCounter(const AuthCounters::CounterType type) const {
     return (counters_.at(type));
 }
 
-AuthCounters::AuthCounters(const bool& verbose_mode) :
-    impl_(new AuthCountersImpl(verbose_mode))
+AuthCounters::AuthCounters() : impl_(new AuthCountersImpl())
 {}
 
 AuthCounters::~AuthCounters() {
