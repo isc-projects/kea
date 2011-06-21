@@ -401,4 +401,17 @@ private:
 }
 }
 
+/*
+ * This include at the end of the file is unusual. But we need to include it,
+ * we use template classes from there. However, they need to be present only
+ * at instantiation of our class, which will happen below this header.
+ *
+ * The problem is, the header uses us as well, therefore there's a circular
+ * dependency. If we loaded it at the beginning and someone loaded us first,
+ * the logic_check header wouldn't have our definitions. This way, no matter
+ * in which order they are loaded, the definitions from this header will be
+ * above the ones from logic_check.
+ */
+#include "logic_check.h"
+
 #endif
