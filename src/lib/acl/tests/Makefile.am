@@ -6,6 +6,7 @@ if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES = run_unittests.cc
 run_unittests_SOURCES += check_test.cc acl_test.cc loader_test.cc
+run_unittests_SOURCES += logcheck.h
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
