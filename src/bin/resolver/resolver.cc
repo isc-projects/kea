@@ -759,5 +759,6 @@ Resolver::getQueryACL() const {
 
 void
 Resolver::setQueryACL(shared_ptr<const ClientACL> new_acl) {
+    LOG_INFO(resolver_logger, RESOLVER_SETQUERYACL);
     impl_->query_acl_ = new_acl;
 }

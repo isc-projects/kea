@@ -191,3 +191,7 @@ An informational message, this is output when the resolver starts up.
 % UNEXRESP      received unexpected response, ignoring
 A debug message noting that the server has received a response instead of a
 query and is ignoring it.
+
+% SETQUERYACL   query ACL is configured
+A debug message that appears when a new query ACL is configured for the
+resolver.
