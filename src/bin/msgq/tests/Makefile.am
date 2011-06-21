@@ -18,7 +18,7 @@ if ENABLE_PYTHON_COVERAGE
 endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
-        $(LIBRARY_PATH_PLACEHOLDER) \
+	$(LIBRARY_PATH_PLACEHOLDER) \
 	env PYTHONPATH=$(abs_top_builddir)/src/bin/msgq:$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python \
 	BIND10_TEST_SOCKET_FILE=$(builddir)/test_msgq_socket.sock \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
