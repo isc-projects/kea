@@ -34,14 +34,6 @@ using namespace isc::server_common;
 
 namespace {
 
-// copied from auth_srv_unittest.cc.  should share it.
-class DummyUnknownSocket : public IOSocket {
-public:
-    DummyUnknownSocket() {}
-    virtual int getNative() const { return (0); }
-    virtual int getProtocol() const { return (IPPROTO_IP); }
-};
-
 class ClientTest : public ::testing::Test {
 protected:
     ClientTest() {
@@ -55,7 +47,6 @@ protected:
                                      *endpoint6));
         client4.reset(new Client(*request4));
         client6.reset(new Client(*request6));
-        
     }
     scoped_ptr<const IOEndpoint> endpoint4;
     scoped_ptr<const IOEndpoint> endpoint6;

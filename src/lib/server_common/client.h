@@ -17,6 +17,8 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <acl/ip_check.h>
+
 #include <asiolink/io_message.h>
 
 namespace isc {
