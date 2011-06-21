@@ -361,10 +361,10 @@ AuthSrv::setMemoryDataSrc(const isc::dns::RRClass& rrclass,
                   "Memory data source is not supported for RR class "
                   << rrclass);
     } else if (!impl_->memory_datasrc_ && memory_datasrc) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_MEM_DATASRC_ENABLED)
+        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_MEM_DATASRC_ENABLED)
                   .arg(rrclass);
     } else if (impl_->memory_datasrc_ && !memory_datasrc) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_MEM_DATASRC_DISABLED)
+        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_MEM_DATASRC_DISABLED)
                   .arg(rrclass);
     }
     impl_->memory_datasrc_ = memory_datasrc;
@@ -603,7 +603,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, MessagePtr message,
     // The incoming notify must contain exactly one question for SOA of the
     // zone name.
     if (message->getRRCount(Message::SECTION_QUESTION) != 1) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_NOTIFY_QUESTIONS)
+        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_NOTIFY_QUESTIONS)
                   .arg(message->getRRCount(Message::SECTION_QUESTION));
         makeErrorMessage(message, buffer, Rcode::FORMERR(), verbose_mode_,
                          tsig_context);
@@ -611,7 +611,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, MessagePtr message,
     }
     ConstQuestionPtr question = *message->beginQuestion();
     if (question->getType() != RRType::SOA()) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_NOTIFY_RRTYPE)
+        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_NOTIFY_RRTYPE)
                   .arg(question->getType().toText());
         makeErrorMessage(message, buffer, Rcode::FORMERR(), verbose_mode_,
                          tsig_context);
@@ -630,7 +630,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, MessagePtr message,
     // silent about such cases, but there doesn't seem to be anything we can
     // improve at the primary server side by sending an error anyway.
     if (xfrin_session_ == NULL) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_NO_XFRIN);
+        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_NO_XFRIN);
         return (false);
     }
 
@@ -656,13 +656,12 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, MessagePtr message,
         int rcode;
         parsed_answer = parseAnswer(rcode, answer);
         if (rcode != 0) {
-            LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_ZONEMGR_ERROR)
+            LOG_ERROR(auth_logger, AUTH_ZONEMGR_ERROR)
                       .arg(parsed_answer->str());
             return (false);
         }
     } catch (const Exception& ex) {
-            LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_ZONEMGR_COMMS)
-                      .arg(ex.what());
+            LOG_ERROR(auth_logger, AUTH_ZONEMGR_COMMS).arg(ex.what());
         return (false);
     }
 
