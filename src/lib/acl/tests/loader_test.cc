@@ -139,9 +139,8 @@ public:
         EXPECT_THROW(loader_.load(el(JSON)), LoaderError);
     }
     // Check that the subexpression is NamedCheck with correct data
-    void isSubexprNamed(const shared_ptr<CompoundCheck<Log> >& compound,
-                        size_t index, const string& name,
-                        ConstElementPtr data)
+    void isSubexprNamed(const CompoundCheck<Log>* compound, size_t index,
+                        const string& name, ConstElementPtr data)
     {
         if (index < compound->getSubexpressions().size()) {
             const NamedCheck*
@@ -244,8 +243,8 @@ TEST_F(LoaderTest, AndAbbrev) {
         // elements, which is in the lexicographical order of the strings.
         // This is not required from our interface, but is easier to write
         // the test.
-        isSubexprNamed(oper, 0, "name1", el("1"));
-        isSubexprNamed(oper, 1, "name2", el("2"));
+        isSubexprNamed(&*oper, 0, "name1", el("1"));
+        isSubexprNamed(&*oper, 1, "name2", el("2"));
     }
 }
 
@@ -259,8 +258,36 @@ TEST_F(LoaderTest, OrAbbrev) {
     if (oper) {
         // The subexpressions are correct
         EXPECT_EQ(2, oper->getSubexpressions().size());
-        isSubexprNamed(oper, 0, "name1", el("1"));
-        isSubexprNamed(oper, 1, "name1", el("2"));
+        isSubexprNamed(&*oper, 0, "name1", el("1"));
+        isSubexprNamed(&*oper, 1, "name1", el("2"));
+    }
+}
+
+// Combined abbreviated form, both at once
+
+// The abbreviated form of check
+TEST_F(LoaderTest, BothAbbrev) {
+    addNamed("name1");
+    addNamed("name2");
+    shared_ptr<LogicOperator<AllOfSpec, Log> > oper(
+        loadCheckAny<LogicOperator<AllOfSpec, Log> >("{\"name1\": 1, \"name2\": [3, 4]}"));
+    // If we don't have anything loaded, the rest would crash. It is already
+    // reported from within loadCheckAny if it isn't loaded.
+    if (oper) {
+        // The subexpressions are correct
+        ASSERT_EQ(2, oper->getSubexpressions().size());
+        // Note: this test relies on the ordering in which map returns it's
+        // elements, which is in the lexicographical order of the strings.
+        // This is not required from our interface, but is easier to write
+        // the test.
+        isSubexprNamed(&*oper, 0, "name1", el("1"));
+        const LogicOperator<AnyOfSpec, Log>*
+            orOper(dynamic_cast<const LogicOperator<AnyOfSpec, Log>*>(
+            oper->getSubexpressions()[1]));
+        ASSERT_TRUE(orOper) << "Different type than AnyOf operator";
+        EXPECT_EQ(2, orOper->getSubexpressions().size());
+        isSubexprNamed(orOper, 0, "name2", el("3"));
+        isSubexprNamed(orOper, 1, "name2", el("4"));
     }
 }
 
