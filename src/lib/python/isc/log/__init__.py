@@ -25,9 +25,6 @@
 import os
 import sys
 
-cwd = os.getcwd()
-base = os.path.split(cwd)[0]
-
 for base in sys.path[:]:
     loglibdir = os.path.join(base, 'isc/log/.libs')
     if os.path.exists(loglibdir):
