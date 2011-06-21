@@ -425,14 +425,14 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
         // Parse the message.
         message->fromWire(request_buffer);
     } catch (const DNSProtocolError& error) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_MESSAGE_PROTOCOL_ERROR)
+        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_PACKET_PROTOCOL_ERROR)
                   .arg(error.getRcode().toText()).arg(error.what());
         makeErrorMessage(message, buffer, error.getRcode(),
                          impl_->verbose_mode_);
         server->resume(true);
         return;
     } catch (const Exception& ex) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_MESSAGE_PARSE_ERROR)
+        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_PACKET_PARSE_ERROR)
                   .arg(ex.what());
         makeErrorMessage(message, buffer, Rcode::SERVFAIL(),
                          impl_->verbose_mode_);
@@ -440,7 +440,7 @@ AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
         return;
     } // other exceptions will be handled at a higher layer.
 
-    LOG_DEBUG(auth_logger, DBG_AUTH_MESSAGES, AUTH_RESPONSE_RECEIVED)
+    LOG_DEBUG(auth_logger, DBG_AUTH_MESSAGES, AUTH_PACKET_RECEIVED)
               .arg(message->toText());
 
     // Perform further protocol-level validation.
