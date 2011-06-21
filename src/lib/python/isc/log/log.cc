@@ -22,6 +22,8 @@
 #include <log/logger_manager.h>
 #include <log/logger.h>
 
+#include <config/ccsession.h>
+
 #include <string>
 #include <boost/bind.hpp>
 
@@ -48,6 +50,14 @@ namespace {
 // This is for testing only. The real module will have it always set as
 // NULL and will use the global dictionary.
 MessageDictionary* testDictionary = NULL;
+
+// To propagate python exceptions trough our code
+// This exception is used to signal to the calling function that a
+// proper Python Exception has already been set, and the caller
+// should now return NULL.
+// Since it is only used internally, and should not pass any
+// information itself, is is not derived from std::exception
+class InternalError {};
 
 PyObject*
 setTestDictionary(PyObject*, PyObject* args) {
@@ -177,6 +187,47 @@ init(PyObject*, PyObject* args) {
     Py_RETURN_NONE;
 }
 
+PyObject*
+logConfigUpdate(PyObject*, PyObject* args) {
+    // we have no wrappers for ElementPtr and ConfigData,
+    // So we expect JSON strings and convert them.
+    // The new_config object is assumed to have been validated.
+
+    const char* new_config_json;
+    const char* mod_spec_json;
+    if (!PyArg_ParseTuple(args, "ss",
+                          &new_config_json, &mod_spec_json)) {
+        return (NULL);
+    }
+
+    try {
+        isc::data::ConstElementPtr new_config =
+            isc::data::Element::fromJSON(new_config_json);
+        isc::data::ConstElementPtr mod_spec_e =
+            isc::data::Element::fromJSON(mod_spec_json);
+        isc::config::ModuleSpec mod_spec(mod_spec_e);
+        isc::config::ConfigData config_data(mod_spec);
+        isc::config::default_logconfig_handler("logging", new_config,
+                                               config_data);
+
+        Py_RETURN_NONE;
+    } catch (const isc::data::JSONError& je) {
+        std::string error_msg = std::string("JSON format error: ") + je.what();
+        PyErr_SetString(PyExc_TypeError, error_msg.c_str());
+    } catch (const isc::data::TypeError& de) {
+        PyErr_SetString(PyExc_TypeError, "argument 1 of log_config_update "
+                                         "is not a map of config data");
+    } catch (const isc::config::ModuleSpecError& mse) {
+        PyErr_SetString(PyExc_TypeError, "argument 2 of log_config_update "
+                                         "is not a correct module specification");
+    } catch (const std::exception& e) {
+        PyErr_SetString(PyExc_RuntimeError, e.what());
+    } catch (...) {
+        PyErr_SetString(PyExc_RuntimeError, "Unknown C++ exception");
+    }
+    return (NULL);
+}
+
 PyMethodDef methods[] = {
     {"set_test_dictionary", setTestDictionary, METH_VARARGS,
         "Set or unset testing mode for message dictionary. In testing, "
@@ -198,6 +249,19 @@ PyMethodDef methods[] = {
         "logging severity (one of 'DEBUG', 'INFO', 'WARN', 'ERROR' or "
         "'FATAL'), a debug level (integer in the range 0-99) and a file name "
         "of a dictionary with message text translations."},
+    {"log_config_update", logConfigUpdate, METH_VARARGS,
+        "Update logger settings. This method is automatically used when "
+        "ModuleCCSession is initialized with handle_logging_config set "
+        "to True. When called, the first argument is the new logging "
+        "configuration (in JSON format). The second argument is "
+        "the raw specification (as returned from "
+        "ConfigData.get_module_spec().get_full_spec(), and converted to "
+        "JSON format).\n"
+        "Raises a TypeError if either argument is not a (correct) JSON "
+        "string, or if the spec is not a correct spec.\n"
+        "If this call succeeds, the global logger settings have "
+        "been updated."
+    },
     {NULL, NULL, 0, NULL}
 };
 
