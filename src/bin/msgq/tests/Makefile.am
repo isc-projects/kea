@@ -2,6 +2,13 @@ PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 PYTESTS = msgq_test.py
 EXTRA_DIST = $(PYTESTS)
 
+# If necessary (rare cases), explicitly specify paths to dynamic libraries
+# required by loadable python modules.
+LIBRARY_PATH_PLACEHOLDER =
+if SET_ENV_LIBRARY_PATH
+LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/cc/.libs:$(abs_top_builddir)/src/lib/config/.libs:$(abs_top_builddir)/src/lib/log/.libs:$(abs_top_builddir)/src/lib/util/.libs:$(abs_top_builddir)/src/lib/exceptions/.libs:$$$(ENV_LIBRARY_PATH)
+endif
+
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
 if ENABLE_PYTHON_COVERAGE
@@ -11,6 +18,7 @@ if ENABLE_PYTHON_COVERAGE
 endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
+        $(LIBRARY_PATH_PLACEHOLDER) \
 	env PYTHONPATH=$(abs_top_builddir)/src/bin/msgq:$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python \
 	BIND10_TEST_SOCKET_FILE=$(builddir)/test_msgq_socket.sock \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
