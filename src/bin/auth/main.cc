@@ -65,8 +65,6 @@ using namespace isc::xfr;
 
 namespace {
 
-bool verbose_mode = false;
-
 /* need global var for config/command handlers.
  * todo: turn this around, and put handlers in the authserver
  * class itself? */
@@ -100,6 +98,7 @@ main(int argc, char* argv[]) {
     int ch;
     const char* uid = NULL;
     bool cache = true;
+    bool verbose = false;
 
     while ((ch = getopt(argc, argv, ":nu:v")) != -1) {
         switch (ch) {
@@ -110,7 +109,7 @@ main(int argc, char* argv[]) {
             uid = optarg;
             break;
         case 'v':
-            verbose_mode = true;
+            verbose = true;
             break;
         case '?':
         default:
@@ -124,7 +123,7 @@ main(int argc, char* argv[]) {
 
     // Initialize logging.  If verbose, we'll use maximum verbosity.
     isc::log::initLogger("b10-auth",
-                         (verbose_mode ? isc::log::DEBUG : isc::log::INFO),
+                         (verbose ? isc::log::DEBUG : isc::log::INFO),
                          isc::log::MAX_DEBUG_LEVEL, NULL);
 
     int ret = 0;
@@ -147,7 +146,6 @@ main(int argc, char* argv[]) {
         }
 
         auth_server = new AuthSrv(cache, xfrout_client);
-        auth_server->setVerbose(verbose_mode);
         LOG_INFO(auth_logger, AUTH_SERVER_CREATED);
 
         SimpleCallback* checkin = auth_server->getCheckinProvider();
