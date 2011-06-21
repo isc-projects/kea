@@ -30,8 +30,16 @@ namespace auth {
 // The first level traces start-up, recorded as every components starts.
 const int DBG_AUTH_START = 10;
 
-// This level traces more detailed high-level operations.
+// This level traces more detailed high-level operations (mainly within
+// commands.cc)
 const int DBG_AUTH_OPS = 30;
+
+// Trace detailed operations.  This is the normal debug level when debugging
+// the module.
+const int DBG_AUTH_DETAIL = 50;
+
+// Output detailed messages
+const int DBG_AUTH_MESSAGES = 70;
 
 /// Define the logger for the "auth" module part of b10-auth.  We could define
 /// a logger in each file, but we would want to define a common name to avoid
