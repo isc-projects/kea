@@ -157,7 +157,7 @@ main(int argc, char* argv[]) {
 
         DNSService dns_service(io_service, checkin, lookup, answer);
         auth_server->setDNSService(dns_service);
-        LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_DNSSERVICES_CREATED);
+        LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_DNS_SERVICES_CREATED);
 
         cc_session = new Session(io_service.get_io_service());
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_CONFIG_CHANNEL_CREATED);
