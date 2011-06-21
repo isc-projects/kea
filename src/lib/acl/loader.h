@@ -24,6 +24,10 @@
 namespace isc {
 namespace acl {
 
+class AnyOfSpec;
+class AllOfSpec;
+template<typename Mode, typename Context> class LogicOperator;
+
 /**
  * \brief Exception for bad ACL specifications.
  *
@@ -367,9 +371,19 @@ private:
                 }
                 if (creatorIt->second->allowListAbbreviation() &&
                     checkDesc->second->getType() == data::Element::list) {
-                    isc_throw_1(LoaderError,
-                                "Not implemented (OR-abbreviated form)",
-                                checkDesc->second);
+                    // Or-abbreviated form - create an OR and put everything
+                    // inside.
+                    const std::vector<data::ConstElementPtr>&
+                        params(checkDesc->second->listValue());
+                    boost::shared_ptr<LogicOperator<AnyOfSpec, Context> >
+                        oper(new LogicOperator<AnyOfSpec, Context>);
+                    for (std::vector<data::ConstElementPtr>::const_iterator
+                             i(params.begin());
+                         i != params.end(); ++i) {
+                        oper->addSubexpression(
+                            creatorIt->second->create(name, *i, *this));
+                    }
+                    return (oper);
                 }
                 // Create the check and return it
                 return (creatorIt->second->create(name, checkDesc->second,
