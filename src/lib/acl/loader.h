@@ -389,10 +389,27 @@ private:
                 return (creatorIt->second->create(name, checkDesc->second,
                                                   *this));
             }
-            default:
-                isc_throw_1(LoaderError,
-                            "Not implemented (AND-abbreviated form)",
-                            description);
+            default: {
+                // This is the AND-abbreviated form. We need to create an
+                // AND (or "ALL") operator, loop trough the whole map and
+                // fill it in. We do a small trick - we create bunch of
+                // single-item maps, call this loader recursively (therefore
+                // it will get into the "case 1" branch, where there is
+                // the actual loading) and use the results to fill the map.
+                //
+                // We keep the description the same, there's nothing we could
+                // take out (we could create a new one, but that would be
+                // confusing, as it is used for error messages only).
+                boost::shared_ptr<LogicOperator<AllOfSpec, Context> >
+                    oper(new LogicOperator<AllOfSpec, Context>);
+                for (Map::const_iterator i(map.begin()); i != map.end(); ++i) {
+                    Map singleSubexpr;
+                    singleSubexpr.insert(*i);
+                    oper->addSubexpression(loadCheck(description,
+                                                     singleSubexpr));
+                }
+                return (oper);
+            }
         }
     }
     /**
