@@ -23,7 +23,14 @@
 # Should we look there? Or define something in bind10_config?
 
 import os
+import sys
+
 cwd = os.getcwd()
-pos = cwd.rfind('/src/')
-import sys; sys.path.insert(0, cwd[:pos] + '/src/lib/python/isc/log/.libs')
+base = os.path.split(cwd)[0]
+
+for base in sys.path:
+    loglibdir = os.path.join(base, 'isc/log/.libs')
+    if os.path.exists(loglibdir):
+        sys.path.append(loglibdir)
+
 from log import *
