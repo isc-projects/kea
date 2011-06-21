@@ -31,8 +31,7 @@ message contains the reason for the failure.
 
 % AUTH_CONFIG_CHANNEL_CREATED configuration session channel created
 This is a debug message indicating that authoritative server has created
-the channel to the configuration manager.
-It is issued during server
+the channel to the configuration manager.  It is issued during server
 startup is an indication that the initialization is proceeding normally.
 
 % AUTH_CONFIG_CHANNEL_ESTABLISHED configuration session channel established
