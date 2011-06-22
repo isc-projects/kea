@@ -172,7 +172,7 @@ public:
 
     /// \brief IPV6 Constructor
     ///
-    /// Constructs an IPv6 Check object from a network address given as a
+    /// Constructs an IPV6 Check object from a network address given as a
     /// 16-byte array in network-byte order and a prefix length.
     ///
     /// \param address IP address to check for (as an address in network-byte
@@ -230,7 +230,7 @@ public:
                 family_ = AF_INET6;
 
             } else {
-                // Not IPV6, try IPv4
+                // Not IPV6, try IPV4
                 int status = inet_pton(AF_INET, result.first.c_str(),
                                        address_bytes);
                 if (status == 1) {
@@ -255,7 +255,7 @@ public:
     /// \brief The check itself
     ///
     /// Matches the passed argument to the condition stored here.  Different
-    /// specialisations must be  provided for different argument types, and the
+    /// specialisations must be provided for different argument types, and the
     /// program will fail to compile if a required specialisation is not
     /// provided.
     ///
