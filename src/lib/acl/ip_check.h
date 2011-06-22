@@ -134,18 +134,9 @@ splitIPAddress(const std::string& ipprefix);
 template <typename Context>
 class IPCheck : public Check<Context> {
 private:
-    // Size of uint8_t array to hold an IPV6 address, and size of a 32-bit word
-    // equivalent.
-    static const size_t IPV6_SIZE8 = sizeof(struct in6_addr);
-    static const size_t IPV6_SIZE32 = IPV6_SIZE8 / 4;
-
-    // Data type to hold the address, regardless of the address family.  The
-    // union allows an IPV4 address to be treated as a sequence of bytes when
-    // necessary.
-    union AddressData {
-        uint32_t    word[IPV6_SIZE32];      ///< Address in 32-bit words
-        uint8_t     byte[IPV6_SIZE8];       ///< Address in 8-bit bytes
-    };
+    // Size of uint8_t array to holds different address types
+    static const size_t IPV6_SIZE = sizeof(struct in6_addr);
+    static const size_t IPV4_SIZE = sizeof(struct in_addr);
 
 public:
     /// \brief Default Constructor
@@ -153,28 +144,31 @@ public:
     /// Constructs an empty IPCheck object.  The address family returned will
     /// be zero.
     IPCheck() : address_(), mask_(), prefixlen_(0), family_(0), straddr_()
-    {
-        std::fill(address_.word, address_.word + IPV6_SIZE32, 0);
-        std::fill(mask_.word, mask_.word + IPV6_SIZE32, 0);
-    }
+    {}
 
     /// \brief IPV4 Constructor
     ///
     /// Constructs an IPCheck object from a network address given as a
     /// 32-bit value in network byte order and a prefix length.
     ///
-    /// \param address IP address to check for (as an address in network-byte
-    ///        order).
+    /// \param address IP address to check for (as an address in host-byte
+    ///        order).  N.B.  Unlike the IPV6 constructor, this is in host
+    ///        byte order.
     /// \param prefixlen The prefix length specified as an integer between 0 and
     ///        32. This determines the number of bits of the address to check.
     ///        (A value of zero imples match all IPV4 addresses.)
-    IPCheck(uint32_t address, int prefixlen = 8 * sizeof(uint32_t)) :
-            address_(), mask_(), prefixlen_(prefixlen), family_(AF_INET),
-            straddr_()
+    IPCheck(uint32_t address, int prefixlen = 8 * IPV4_SIZE) :
+            address_(IPV4_SIZE), mask_(), prefixlen_(prefixlen),
+            family_(AF_INET), straddr_()
     {
-        address_.word[0] = address;
-        std::fill(address_.word + 1, address_.word + IPV6_SIZE32, 0);
-        std::fill(mask_.word, mask_.word + IPV6_SIZE32, 0);
+        // The address is stored in network-byte order, so the 
+        // the address passed should be stored at the lowest address in
+        // the array.
+        address_[3] = static_cast<uint8_t>((address      ) & 0xff);
+        address_[2] = static_cast<uint8_t>((address >>  8) & 0xff);
+        address_[1] = static_cast<uint8_t>((address >> 16) & 0xff);
+        address_[0] = static_cast<uint8_t>((address >> 24) & 0xff);
+
         setMask(prefixlen_);
     }
 
@@ -187,12 +181,11 @@ public:
     ///        order).
     /// \param mask The network mask specified as an integer between 1 and
     ///        128 This determines the number of bits in the mask to check.
-    IPCheck(const uint8_t* address, int prefixlen = 8 * IPV6_SIZE8) :
-            address_(), mask_(), prefixlen_(prefixlen), family_(AF_INET6),
-            straddr_()
+    IPCheck(const uint8_t* address, int prefixlen = 8 * IPV6_SIZE) :
+            address_(address, address + IPV6_SIZE), mask_(),
+            prefixlen_(prefixlen), family_(AF_INET6), straddr_()
     {
-        std::copy(address, address + IPV6_SIZE8, address_.byte);
-        std::fill(mask_.word, mask_.word + IPV6_SIZE32, 0);
+
         setMask(prefixlen_);
     }
 
@@ -213,11 +206,7 @@ public:
     IPCheck(const std::string& addrprfx) : address_(), mask_(), prefixlen_(0),
                                            family_(0), straddr_(addrprfx)
     {
-        // Initialize.
-        std::fill(address_.word, address_.word + IPV6_SIZE32, 0);
-        std::fill(mask_.word, mask_.word + IPV6_SIZE32, 0);
-
-        // Check for special cases first
+        // Check for special cases first.
         if (addrprfx == "any4") {
             family_ = AF_INET;
 
@@ -228,23 +217,32 @@ public:
 
             // General address prefix.  Split into address part and prefix
             // length.
-
             std::pair<std::string, int> result =
                 internal::splitIPAddress(addrprfx);
 
             // Try to convert the address.  If successful, the result is in
             // network-byte order (most significant components at lower
             // addresses).
-            family_ = AF_INET6;
+            BOOST_STATIC_ASSERT(IPV6_SIZE > IPV4_SIZE);
+            uint8_t address_bytes[IPV6_SIZE];
             int status = inet_pton(AF_INET6, result.first.c_str(),
-                                   address_.byte);
-            if (status != 1) {
+                                   address_bytes);
+            if (status == 1) {
+                // It was an IPV6 address, copy into the address store
+                std::copy(address_bytes, address_bytes + IPV6_SIZE,
+                          std::back_inserter(address_));
+                family_ = AF_INET6;
 
+            } else {
                 // Not IPV6, try IPv4
-                family_ = AF_INET;
                 int status = inet_pton(AF_INET, result.first.c_str(),
-                                       address_.word);
-                if (status != 1) {
+                                       address_bytes);
+                if (status == 1) {
+                    std::copy(address_bytes, address_bytes + IPV4_SIZE,
+                              std::back_inserter(address_));
+                    family_ = AF_INET;
+
+                } else {
                     isc_throw(isc::InvalidParameter, "address prefix of " <<
                               result.first << " is a not valid");
                 }
@@ -275,7 +273,7 @@ public:
     ///
     /// \return Estimated cost of the comparison
     virtual unsigned cost() const {
-        return ((family_ == AF_INET) ? 1 : IPV6_SIZE32);
+        return ((family_ == AF_INET) ? IPV4_SIZE : IPV6_SIZE);
     }
 
     ///@{
@@ -283,12 +281,12 @@ public:
 
     /// \return Stored IP address
     std::vector<uint8_t> getAddress() const {
-        return (std::vector<uint8_t>(address_.byte, address_.byte + IPV6_SIZE8));
+        return (address_);
     }
 
     /// \return Network mask applied to match
     std::vector<uint8_t> getMask() const {
-        return (std::vector<uint8_t>(mask_.byte, mask_.byte + IPV6_SIZE8));
+        return (mask_);
     }
 
     /// \return String passed to constructor
@@ -322,58 +320,44 @@ private:
     ///
     /// \param testaddr Address (in network byte order) to test against the
     ///                 check condition in the class.  This is expected to
-    ///                 be IPV6_SIZE8 bytes long.
+    ///                 be IPV6_SIZE or IPV4_SIZE bytes long (the size
+    //                  determines the address family).
     ///
     /// \return true if the address matches, false if it does not.
-    virtual bool compare(const uint8_t* testaddr) const {
+    virtual bool compare(const std::vector<uint8_t>& testaddr) const {
 
-        if (prefixlen_ != 0) {
+        if (prefixlen_ == 0) {
+            // Dispose of simple match-all check first.
+            return (
+                ((family_ == AF_INET)  && (testaddr.size() == IPV4_SIZE)) ||
+                ((family_ == AF_INET6) && (testaddr.size() == IPV6_SIZE)));
 
-            // To check that the address given matches the stored network
-            // address and mask, we check the simple condition that:
-            //
-            //     address_given & mask_ == stored_address & mask_
-            //
-            // The result is checked for all bytes for which there are bits set
-            // in the mask.  We stop at the first non-match (or when we run
-            // out of bits in the mask). (Note that the mask represents a
-            // contiguous set of bits.  As such, as soon as we find a mask byte
-            // of zeroes, we have run past the part of the address where we need
-            // to match.
-            //
-            // We can optimise further by casting to a 32-bit array and checking
-            // 32 bits at a time.
+        } else if (testaddr.size() != address_.size()) {
+            // A simple check on the size of the passed address and the stored
+            // address will serve to ensure that V4 address are not compared to
+            // V6 addresses.
+            return (false);
 
-            bool match = true;
-            for (int i = 0; match && (i < IPV6_SIZE8) && (mask_.byte[i] != 0);
-                 ++i) {
-                 match = ((testaddr[i] & mask_.byte[i]) ==
-                          (address_.byte[i] & mask_.byte[i]));
-            }
-
-            return (match);
         }
 
-        // A prefix length of 0 is an unconditional match.
-        return (true);
-    }
+        // Simple checks failed, so have to do a complete match.  To check that
+        // the address given matches the stored network address and mask, we
+        // check the simple condition that:
+        //
+        //     address_given & mask_ == stored_address & mask_
+        //
+        // The result is checked for all bytes for which there are bits set in
+        // the mask.  We stop at the first non-match (or when we run out of bits
+        // in the mask). (Note that the mask represents a contiguous set of
+        // bits.  As such, as soon as we find a mask byte of zeroes, we have run
+        // past the part of the address where we need to match.
 
-    /// \brief Comparison
-    ///
-    /// Convenience comparison for an IPV4 address.
-    ///
-    /// \param testaddr Address (in network byte order) to test against the
-    ///        check condition in the class.
-    ///
-    /// \return true if the address matches, false if it does not.
-    virtual bool compare(const uint32_t testaddr) const {
-        if (prefixlen_ != 0) {
-            return ((testaddr & mask_.word[0]) ==
-                    (address_.word[0] & mask_.word[0]));
+        bool match = true;
+        for (int i = 0; match && (i < address_.size()) &&
+                       (mask_[i] != 0); ++i) {
+             match = ((testaddr[i] & mask_[i]) == (address_[i] & mask_[i]));
         }
-
-        // A prefix length of 0 is an unconditional match.
-        return (true);
+        return (match);
     }
 
 
@@ -391,8 +375,11 @@ private:
     ///        was given.)
     void setMask(int requested) {
 
-        // Set the maximum mask size allowed.
-        int maxmask = 8 * ((family_ == AF_INET) ? sizeof(uint32_t) : IPV6_SIZE8);
+        mask_.clear();
+        mask_.resize((family_ == AF_INET) ? IPV4_SIZE : IPV6_SIZE);
+
+        // Set the maximum number of bits allowed in the mask.
+        int maxmask = 8 * (mask_.size());
         if (requested < 0) {
             requested = maxmask;
         }
@@ -400,12 +387,6 @@ private:
         // Validate that the mask is valid.
         if (requested <= maxmask) {
             prefixlen_ = requested;
-
-            // The mask array was initialized to zero in the constructor,
-            // but as an addition check, assert that this is so.
-            assert(std::find_if(mask_.word, mask_.word + IPV6_SIZE32,
-                   std::bind1st(std::not_equal_to<uint32_t>(), 0)) ==
-                   mask_.word + IPV6_SIZE32);
 
             // Loop, setting the bits in the set of mask bytes until all the
             // specified bits have been used up.  As both IPV4 and IPV6
@@ -415,11 +396,11 @@ private:
             int i = -1;
             while (bits_left > 0) {
                 if (bits_left >= 8) {
-                    mask_.byte[++i] = ~0;  // All bits set
+                    mask_[++i] = ~0;  // All bits set
                     bits_left -= 8;
 
                 } else if (bits_left > 0) {
-                    mask_.byte[++i] = internal::createMask<uint8_t>(bits_left);
+                    mask_[++i] = internal::createMask<uint8_t>(bits_left);
                     bits_left = 0;
 
                 }
@@ -433,11 +414,11 @@ private:
 
     // Member variables
 
-    AddressData address_;   ///< Address in binary form
-    AddressData mask_;      ///< Address mask
-    size_t      prefixlen_; ///< Mask size passed to constructor
-    int         family_;    ///< Address family
-    std::string straddr_;   ///< Copy of constructor address string
+    std::vector<uint8_t> address_;  ///< Address in binary form
+    std::vector<uint8_t> mask_;     ///< Address mask
+    size_t      prefixlen_;         ///< Mask size passed to constructor
+    int         family_;            ///< Address family
+    std::string straddr_;           ///< Copy of constructor address string
 };
 
 } // namespace acl
