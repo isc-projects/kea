@@ -18,6 +18,7 @@
 #include <boost/scoped_ptr.hpp>
 
 using namespace isc::acl;
+using namespace isc::acl::internal;
 using namespace std;
 
 // Simple struct holding either an IPV4 or IPV6 address.  This is the "Context"
@@ -94,30 +95,30 @@ bool IPCheck<GeneralAddress>::matches(const GeneralAddress& addr) const {
 
 /// *** Free Function Tests ***
 
-// Test the createNetmask() function.
-TEST(IPFunctionCheck, CreateNetmask) {
+// Test the createMask() function.
+TEST(IPFunctionCheck, CreateMask) {
 
     // 8-bit tests: invalid arguments should throw.
-    EXPECT_THROW(createNetmask<uint8_t>(9), isc::OutOfRange);
+    EXPECT_THROW(createMask<uint8_t>(9), isc::OutOfRange);
 
     // Check on all possible 8-bit values.  Use a signed type to generate a
     // variable with the most significant bits set (right-shifting will
     // introduce additional bits).
     int8_t expected8 = 0x80;
     for (size_t i = 1; i <= 8; ++i, expected8 >>= 1) {
-        EXPECT_EQ(static_cast<uint8_t>(expected8), createNetmask<uint8_t>(i));
+        EXPECT_EQ(static_cast<uint8_t>(expected8), createMask<uint8_t>(i));
     }
-    EXPECT_EQ(0, createNetmask<uint8_t>(0));
+    EXPECT_EQ(0, createMask<uint8_t>(0));
 
     // Do the same for 32 bits.
-    EXPECT_THROW(createNetmask<int32_t>(33), isc::OutOfRange);
+    EXPECT_THROW(createMask<int32_t>(33), isc::OutOfRange);
 
     int32_t expected32 = 0x80000000;
     for (size_t i = 1; i <= 32; ++i, expected32 >>= 1) {
         EXPECT_EQ(static_cast<uint32_t>(expected32),
-                  createNetmask<uint32_t>(i));
+                  createMask<uint32_t>(i));
     }
-    EXPECT_EQ(0, createNetmask<uint32_t>(0));
+    EXPECT_EQ(0, createMask<uint32_t>(0));
 }
 
 // Test the splitIPAddress() function.
