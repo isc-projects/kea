@@ -20,8 +20,8 @@
 #include <iostream>
 #include <fstream>
 
+#include <log/log_messages.h>
 #include <log/message_exception.h>
-#include <log/messagedef.h>
 #include <log/message_reader.h>
 #include <util/strutil.h>
 

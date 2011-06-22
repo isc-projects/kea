@@ -1,4 +1,4 @@
-// File created from messagedef.mes on Fri May 27 14:49:45 2011
+// File created from log_messages.mes on Wed Jun 22 10:38:51 2011
 
 #include <cstddef>
 #include <log/message_types.h>

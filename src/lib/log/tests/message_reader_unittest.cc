@@ -16,7 +16,7 @@
 #include <string>
 #include <gtest/gtest.h>
 
-#include <log/messagedef.h>
+#include <log/log_messages.h>
 #include <log/message_dictionary.h>
 #include <log/message_exception.h>
 #include <log/message_reader.h>

@@ -1,7 +1,7 @@
-// File created from messagedef.mes on Fri May 27 14:49:45 2011
+// File created from log_messages.mes on Wed Jun 22 10:38:51 2011
 
-#ifndef __MESSAGEDEF_H
-#define __MESSAGEDEF_H
+#ifndef __LOG_MESSAGES_H
+#define __LOG_MESSAGES_H
 
 #include <log/message_types.h>
 
@@ -32,4 +32,4 @@ extern const isc::log::MessageID MSG_WRITERR;
 } // namespace log
 } // namespace isc
 
-#endif // __MESSAGEDEF_H
+#endif // __LOG_MESSAGES_H

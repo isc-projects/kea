@@ -16,18 +16,17 @@
 #include <vector>
 
 #include <log/logger.h>
-#include <log/logger_manager_impl.h>
 #include <log/logger_manager.h>
+#include <log/logger_manager_impl.h>
 #include <log/logger_name.h>
-#include <log/messagedef.h>
+#include <log/log_messages.h>
+#include <log/macros.h>
 #include <log/message_dictionary.h>
 #include <log/message_exception.h>
 #include <log/message_initializer.h>
+#include <log/message_initializer.h>
 #include <log/message_reader.h>
 #include <log/message_types.h>
-#include <log/macros.h>
-#include <log/messagedef.h>
-#include <log/message_initializer.h>
 
 using namespace std;
 

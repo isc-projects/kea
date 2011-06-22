@@ -28,10 +28,10 @@
 #include <util/filename.h>
 #include <util/strutil.h>
 
+#include <log/log_messages.h>
 #include <log/message_dictionary.h>
 #include <log/message_exception.h>
 #include <log/message_reader.h>
-#include <log/messagedef.h>
 
 #include <log/logger.h>
 
