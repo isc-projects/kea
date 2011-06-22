@@ -15,6 +15,9 @@
 #ifndef __CLIENT_H
 #define __CLIENT_H 1
 
+#include <string>
+#include <ostream>
+
 #include <boost/noncopyable.hpp>
 
 #include <acl/ip_check.h>
@@ -35,16 +38,29 @@ class Client : boost::noncopyable {
 public:
     explicit Client(const isc::asiolink::IOMessage& request_message);
     ~Client();
-    const isc::asiolink::IOEndpoint& getRemoteEndpoint() const;
     const isc::asiolink::IOEndpoint& getRequestSourceEndpoint() const;
 
     // convenience shortcut
     const isc::acl::IPAddress& getRequestSourceIPAddress() const;
 
+    std::string toText() const;
+
 private:
     struct ClientImpl;
     ClientImpl* impl_;
 };
+
+/// \brief Insert the \c Client as a string into stream.
+///
+/// This method convert \c client into a string and inserts it into the
+/// output stream \c os.
+///
+/// \param os A \c std::ostream object on which the insertion operation is
+/// performed.
+/// \param edns A reference to an \c Client object output by the operation.
+/// \return A reference to the same \c std::ostream object referenced by
+/// parameter \c os after the insertion operation.
+std::ostream& operator<<(std::ostream& os, const Client& client);
 }
 
 namespace acl {
