@@ -21,17 +21,23 @@
 
 $NAMESPACE isc::log
 
-% LOGIMPL_ABOVEDBGMAX   debug level of %1 is too high and will be set to the maximum of %2
-A message from the underlying logger implementation code, the debug level
-(as set by the string DEBGUGn) is above the maximum allowed value and has
-been reduced to that value.
+% LOGIMPL_ABOVE_MAX_DEBUG debug level of %1 is too high and will be set to the maximum of %2
+A message from the interface to the underlying logger implementation reporting
+that the debug level (as set by an internally-created string DEBUGn, where n
+is an integer, e.g. DEBUG22) is above the maximum allowed value and has
+been reduced to that value.  The appearance of this message may indicate
+a programming error - please submit a bug report.
 
-% LOGIMPL_BADDEBUG      debug string is '%1': must be of the form DEBUGn
-The string indicating the extended logging level (used by the underlying
-logger implementation code) is not of the stated form.  In particular,
-it starts DEBUG but does not end with an integer.
+% LOGIMPL_BAD_DEBUG_STRING debug string '%1' has invalid format
+A message from the interface to the underlying logger implementation
+reporting that an internally-created string used to set the debug level
+is not of the correct format (it should be of the form DEBUGn, where n
+is an integer, e.g. DEBUG22).  The appearance of this message indicates
+a programming error - please submit a bug report.
 
-% LOGIMPL_BELOWDBGMIN   debug level of %1 is too low and will be set to the minimum of %2
-A message from the underlying logger implementation code, the debug level
-(as set by the string DEBGUGn) is below the minimum allowed value and has
-been increased to that value.
+% LOGIMPL_BELOW_MIN_DEBUG debug level of %1 is too low and will be set to the minimum of %2
+A message from the interface to the underlying logger implementation reporting
+that the debug level (as set by an internally-created string DEBUGn, where n
+is an integer, e.g. DEBUG22) is below the minimum allowed value and has
+been increased to that value.  The appearance of this message may indicate
+a programming error - please submit a bug report.
