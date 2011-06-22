@@ -16,6 +16,7 @@
 #define __IP_CHECK_H
 
 #include <cassert>
+#include <algorithm>
 #include <functional>
 #include <iterator>
 #include <utility>
@@ -30,7 +31,6 @@
 #include <netinet/in.h>
 
 #include <acl/check.h>
-#include <util/strutil.h>
 #include <exceptions/exceptions.h>
 
 namespace isc {
@@ -107,7 +107,7 @@ T createMask(size_t prefixlen) {
 /// N.B. This function does NOT check that the address component is a valid IP
 /// address; this is done elsewhere in the address parsing process.
 ///
-/// \param addrmask Address or address prefix.  The string should be passed
+/// \param ipprefix Address or address prefix.  The string should be passed
 ///                 without leading or trailing spaces.
 ///
 /// \return Pair of (string, int) holding the address string and the prefix
@@ -116,7 +116,7 @@ T createMask(size_t prefixlen) {
 /// \exception InvalidParameter Address prefix not of the expected syntax
 
 std::pair<std::string, int>
-splitIPAddress(const std::string& prefix);
+splitIPAddress(const std::string& ipprefix);
 
 } // namespace internal
 

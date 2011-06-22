@@ -24,7 +24,7 @@ namespace acl {
 namespace internal {
 
 pair<string, int>
-splitIPAddress(const string& prefix) {
+splitIPAddress(const string& ipprefix) {
 
     // Set the default value for the prefix length.  As the type of the address
     // is not known at the point this function is called, the maximum
@@ -32,18 +32,20 @@ splitIPAddress(const string& prefix) {
     // a "match any address" match.
     int prefix_size = -1;
 
+    // Only deal with the string after we've removed leading and trailing
+    // spaces.
+    string mod_prefix = isc::util::str::trim(ipprefix);
+
     // Split string into its components - an address and a prefix length.
     // We initialize by assuming that there is no slash in the string given.
-    string address = prefix;
+    string address = mod_prefix;
     string prefixlen = "";
 
-    // Parse the string given after stripping leading and trailing spaces.
-    string mod_prefix = isc::util::str::trim(prefix);
     size_t slashpos = mod_prefix.find('/');
     if ((mod_prefix.size() == 0) || (slashpos == 0) ||
         (slashpos == (mod_prefix.size() - 1))) {
         // Nothing in prefix, or it starts with or ends with a slash.
-        isc_throw(isc::InvalidParameter, "address prefix of " << prefix <<
+        isc_throw(isc::InvalidParameter, "address prefix of " << ipprefix <<
                                          " is not valid");
 
     } else if (slashpos != string::npos) {
@@ -61,7 +63,7 @@ splitIPAddress(const string& prefix) {
             prefix_size = boost::lexical_cast<int>(prefixlen);
             if (prefix_size < 0) {
                 isc_throw(isc::InvalidParameter, "address prefix of " <<
-                          prefix << " is not valid");
+                          ipprefix << " is not valid");
             }
         } catch (boost::bad_lexical_cast&) {
             isc_throw(isc::InvalidParameter, "prefix length of " << prefixlen <<
