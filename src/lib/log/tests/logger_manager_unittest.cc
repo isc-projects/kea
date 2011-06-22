@@ -203,16 +203,16 @@ TEST_F(LoggerManagerTest, FileLogger) {
         // keep the file open.
         Logger logger(file_spec.getLoggerName());
 
-        LOG_FATAL(logger, MSG_DUPMSGID).arg("test");
-        ids.push_back(MSG_DUPMSGID);
+        LOG_FATAL(logger, LOG_DUPLICATE_MESSAGE_ID).arg("test");
+        ids.push_back(LOG_DUPLICATE_MESSAGE_ID);
 
-        LOG_FATAL(logger, MSG_DUPLNS).arg("test");
-        ids.push_back(MSG_DUPLNS);
+        LOG_FATAL(logger, LOG_DUPLICATE_NAMESPACE).arg("test");
+        ids.push_back(LOG_DUPLICATE_NAMESPACE);
     }
     LoggerManager::reset();
 
     // At this point, the output file should contain two lines with messages
-    // MSG_DUPMSGID and MSG_DUPLNS messages - test this.
+    // LOG_DUPLICATE_MESSAGE_ID and LOG_DUPLICATE_NAMESPACE messages - test this.
     checkFileContents(file_spec.getFileName(), ids.begin(), ids.end());
 
     // Re-open the file (we have to assume that it was closed when we
@@ -225,14 +225,14 @@ TEST_F(LoggerManagerTest, FileLogger) {
     // Create a new instance of the logger and log three more messages.
     Logger logger(file_spec.getLoggerName());
 
-    LOG_FATAL(logger, MSG_IDNOTFND).arg("test");
-    ids.push_back(MSG_IDNOTFND);
+    LOG_FATAL(logger, LOG_NO_SUCH_MESSAGE).arg("test");
+    ids.push_back(LOG_NO_SUCH_MESSAGE);
 
-    LOG_FATAL(logger, MSG_INVMSGID).arg("test").arg("test2");
-    ids.push_back(MSG_INVMSGID);
+    LOG_FATAL(logger, LOG_INVALID_MESSAGE_ID).arg("test").arg("test2");
+    ids.push_back(LOG_INVALID_MESSAGE_ID);
 
-    LOG_FATAL(logger, MSG_NOMSGID).arg("42");
-    ids.push_back(MSG_NOMSGID);
+    LOG_FATAL(logger, LOG_NO_MESSAGE_ID).arg("42");
+    ids.push_back(LOG_NO_MESSAGE_ID);
 
     // Close the file and check again
     LoggerManager::reset();
@@ -276,19 +276,19 @@ TEST_F(LoggerManagerTest, FileSizeRollover) {
     // be rolled after the message is logged.
     {
         Logger logger(file_spec.getLoggerName());
-        LOG_FATAL(logger, MSG_IDNOTFND).arg(big_arg);
-        LOG_FATAL(logger, MSG_DUPLNS).arg(big_arg);
+        LOG_FATAL(logger, LOG_NO_SUCH_MESSAGE).arg(big_arg);
+        LOG_FATAL(logger, LOG_DUPLICATE_NAMESPACE).arg(big_arg);
     }
 
     // Check them.
     LoggerManager::reset();     // Ensure files are closed
 
     vector<MessageID> ids;
-    ids.push_back(MSG_IDNOTFND);
+    ids.push_back(LOG_NO_SUCH_MESSAGE);
     checkFileContents(prev_name[1], ids.begin(), ids.end());
 
     ids.clear();
-    ids.push_back(MSG_DUPLNS);
+    ids.push_back(LOG_DUPLICATE_NAMESPACE);
     checkFileContents(prev_name[0], ids.begin(), ids.end());
 
     // Log another message and check that the files have rotated and that
@@ -296,18 +296,18 @@ TEST_F(LoggerManagerTest, FileSizeRollover) {
     manager.process(spec);
     {
         Logger logger(file_spec.getLoggerName());
-        LOG_FATAL(logger, MSG_NOMSGTXT).arg(big_arg);
+        LOG_FATAL(logger, LOG_NO_MESSAGE_TEXT).arg(big_arg);
     }
 
     LoggerManager::reset();     // Ensure files are closed
 
     // Check that the files have moved.
     ids.clear();
-    ids.push_back(MSG_DUPLNS);
+    ids.push_back(LOG_DUPLICATE_NAMESPACE);
     checkFileContents(prev_name[1], ids.begin(), ids.end());
 
     ids.clear();
-    ids.push_back(MSG_NOMSGTXT);
+    ids.push_back(LOG_NO_MESSAGE_TEXT);
     checkFileContents(prev_name[0], ids.begin(), ids.end());
 
     // ... and check that the .3 version does not exist.

@@ -122,7 +122,7 @@ LoggerManager::init(const std::string& root, isc::log::Severity severity,
         sort(duplicates.begin(), duplicates.end());
         for (vector<string>::iterator i = duplicates.begin();
              i != duplicates.end(); ++i) {
-            LOG_WARN(logger, MSG_DUPMSGID).arg(*i);
+            LOG_WARN(logger, LOG_DUPLICATE_MESSAGE_ID).arg(*i);
         }
 
     }
@@ -144,7 +144,7 @@ LoggerManager::readLocalMessageFile(const char* file) {
     MessageReader reader(&dictionary);
     try {
 
-        logger.info(MSG_RDLOCMES).arg(file);
+        logger.info(LOG_READING_LOCAL_FILE).arg(file);
         reader.readFile(file, MessageReader::REPLACE);
 
         // File successfully read.  As each message in the file is supposed to
@@ -155,7 +155,7 @@ LoggerManager::readLocalMessageFile(const char* file) {
         for (MessageReader::MessageIDCollection::const_iterator
             i = unknown.begin(); i != unknown.end(); ++i) {
             string message_id = boost::lexical_cast<string>(*i);
-                logger.warn(MSG_IDNOTFND).arg(message_id);
+                logger.warn(LOG_NO_SUCH_MESSAGE).arg(message_id);
         }
     }
     catch (MessageException& e) {

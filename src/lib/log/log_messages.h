@@ -8,26 +8,26 @@
 namespace isc {
 namespace log {
 
-extern const isc::log::MessageID MSG_BADDESTINATION;
-extern const isc::log::MessageID MSG_BADSEVERITY;
-extern const isc::log::MessageID MSG_BADSTREAM;
-extern const isc::log::MessageID MSG_DUPLNS;
-extern const isc::log::MessageID MSG_DUPMSGID;
-extern const isc::log::MessageID MSG_IDNOTFND;
-extern const isc::log::MessageID MSG_INVMSGID;
-extern const isc::log::MessageID MSG_NOMSGID;
-extern const isc::log::MessageID MSG_NOMSGTXT;
-extern const isc::log::MessageID MSG_NSEXTRARG;
-extern const isc::log::MessageID MSG_NSINVARG;
-extern const isc::log::MessageID MSG_NSNOARG;
-extern const isc::log::MessageID MSG_OPENIN;
-extern const isc::log::MessageID MSG_OPENOUT;
-extern const isc::log::MessageID MSG_PRFEXTRARG;
-extern const isc::log::MessageID MSG_PRFINVARG;
-extern const isc::log::MessageID MSG_RDLOCMES;
-extern const isc::log::MessageID MSG_READERR;
-extern const isc::log::MessageID MSG_UNRECDIR;
-extern const isc::log::MessageID MSG_WRITERR;
+extern const isc::log::MessageID LOG_BAD_DESTINATION;
+extern const isc::log::MessageID LOG_BAD_SEVERITY;
+extern const isc::log::MessageID LOG_BAD_STREAM;
+extern const isc::log::MessageID LOG_DUPLICATE_NAMESPACE;
+extern const isc::log::MessageID LOG_DUPLICATE_MESSAGE_ID;
+extern const isc::log::MessageID LOG_NO_SUCH_MESSAGE;
+extern const isc::log::MessageID LOG_INVALID_MESSAGE_ID;
+extern const isc::log::MessageID LOG_NO_MESSAGE_ID;
+extern const isc::log::MessageID LOG_NO_MESSAGE_TEXT;
+extern const isc::log::MessageID LOG_NAMESPACE_EXTRA_ARGS;
+extern const isc::log::MessageID LOG_NAMESPACE_INVALID_ARG;
+extern const isc::log::MessageID LOG_NAMESPACE_NO_ARGS;
+extern const isc::log::MessageID LOG_INPUT_OPEN_FAIL;
+extern const isc::log::MessageID LOG_OPEN_OUTPUT_FAIL;
+extern const isc::log::MessageID LOG_PREFIX_EXTRA_ARGS;
+extern const isc::log::MessageID LOG_PREFIX_INVALID_ARG;
+extern const isc::log::MessageID LOG_READING_LOCAL_FILE;
+extern const isc::log::MessageID LOG_READ_ERROR;
+extern const isc::log::MessageID LOG_UNRECOGNISED_DIRECTIVE;
+extern const isc::log::MessageID LOG_WRITE_ERROR;
 
 } // namespace log
 } // namespace isc

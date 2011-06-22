@@ -38,7 +38,7 @@ getSeverity(const std::string& sev_str) {
         return isc::log::NONE;
     } else {
         Logger logger("log");
-        LOG_ERROR(logger, MSG_BADSEVERITY).arg(sev_str);
+        LOG_ERROR(logger, LOG_BAD_SEVERITY).arg(sev_str);
         return isc::log::INFO;
     }
 }
