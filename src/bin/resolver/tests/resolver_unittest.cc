@@ -171,14 +171,14 @@ TEST_F(ResolverTest, queryACL) {
 
     // Same query, but with an explicit "DROP" ACL entry.  There should be
     // no response.
-    parse_message->clear(Message::PARSE);
-    response_message->clear(Message::RENDER);
-    response_obuffer->clear();
     server.updateConfig(Element::fromJSON("{ \"query_acl\": "
                                           "  [ {\"action\": \"DROP\","
                                           "     \"from\": \"" +
                                           string(DEFAULT_REMOTE_ADDRESS) +
                                           "\"} ] }"));
+    parse_message->clear(Message::PARSE);
+    response_message->clear(Message::RENDER);
+    response_obuffer->clear();
     server.processMessage(*io_message, parse_message, response_message,
                           response_obuffer, &dnsserv);
     EXPECT_FALSE(dnsserv.hasAnswer());
