@@ -19,20 +19,19 @@
 # underlying implementation is changed.  For that reason, they have been put
 # in a separate file.
 
-$PREFIX LOGIMPL_
 $NAMESPACE isc::log
 
-% ABOVEDBGMAX   debug level of %1 is too high and will be set to the maximum of %2
+% LOGIMPL_ABOVEDBGMAX   debug level of %1 is too high and will be set to the maximum of %2
 A message from the underlying logger implementation code, the debug level
 (as set by the string DEBGUGn) is above the maximum allowed value and has
 been reduced to that value.
 
-% BADDEBUG      debug string is '%1': must be of the form DEBUGn
+% LOGIMPL_BADDEBUG      debug string is '%1': must be of the form DEBUGn
 The string indicating the extended logging level (used by the underlying
 logger implementation code) is not of the stated form.  In particular,
 it starts DEBUG but does not end with an integer.
 
-% BELOWDBGMIN   debug level of %1 is too low and will be set to the minimum of %2
+% LOGIMPL_BELOWDBGMIN   debug level of %1 is too low and will be set to the minimum of %2
 A message from the underlying logger implementation code, the debug level
 (as set by the string DEBGUGn) is below the minimum allowed value and has
 been increased to that value.
