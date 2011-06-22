@@ -36,16 +36,17 @@ the SOA record has been checked, and a zone transfer has been started.
 The AXFR transfer of the given zone was successfully completed.
 
 % XFRIN_BAD_MASTER_ADDR_FORMAT bad format for master address: %1
-The given master address is not a valid IP address
+The given master address is not a valid IP address.
 
 % XFRIN_BAD_MASTER_PORT_FORMAT bad format for master port: %1
-The given master port is not a valid port number
+The master port as read from the configuration is not a valid port number.
 
 % XFRIN_BAD_TSIG_KEY_STRING bad TSIG key string: %1
-The given string does not represent a valid TSIG key.
+The TSIG key string as read from the configuration does not represent
+a valid TSIG key.
 
 % XFRIN_BAD_ZONE_CLASS Invalid zone class: %1
-The given zone class is not a valid DNS class.
+The zone class as read from the configuration is not a valid DNS class.
 
 % XFRIN_CC_SESSION_ERROR error reading from cc channel: %1
 There was a problem reading from the command and control channel. The
