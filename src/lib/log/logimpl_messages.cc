@@ -1,4 +1,4 @@
-// File created from logimpl_messages.mes on Wed Jun 22 10:38:55 2011
+// File created from logimpl_messages.mes on Wed Jun 22 10:57:02 2011
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -7,9 +7,9 @@
 namespace isc {
 namespace log {
 
-extern const isc::log::MessageID LOGIMPL_ABOVEDBGMAX = "LOGIMPL_ABOVEDBGMAX";
-extern const isc::log::MessageID LOGIMPL_BADDEBUG = "LOGIMPL_BADDEBUG";
-extern const isc::log::MessageID LOGIMPL_BELOWDBGMIN = "LOGIMPL_BELOWDBGMIN";
+extern const isc::log::MessageID LOGIMPL_ABOVE_MAX_DEBUG = "LOGIMPL_ABOVE_MAX_DEBUG";
+extern const isc::log::MessageID LOGIMPL_BAD_DEBUG_STRING = "LOGIMPL_BAD_DEBUG_STRING";
+extern const isc::log::MessageID LOGIMPL_BELOW_MIN_DEBUG = "LOGIMPL_BELOW_MIN_DEBUG";
 
 } // namespace log
 } // namespace isc
@@ -17,9 +17,9 @@ extern const isc::log::MessageID LOGIMPL_BELOWDBGMIN = "LOGIMPL_BELOWDBGMIN";
 namespace {
 
 const char* values[] = {
-    "LOGIMPL_ABOVEDBGMAX", "debug level of %1 is too high and will be set to the maximum of %2",
-    "LOGIMPL_BADDEBUG", "debug string is '%1': must be of the form DEBUGn",
-    "LOGIMPL_BELOWDBGMIN", "debug level of %1 is too low and will be set to the minimum of %2",
+    "LOGIMPL_ABOVE_MAX_DEBUG", "debug level of %1 is too high and will be set to the maximum of %2",
+    "LOGIMPL_BAD_DEBUG_STRING", "debug string '%1' has invalid format",
+    "LOGIMPL_BELOW_MIN_DEBUG", "debug level of %1 is too low and will be set to the minimum of %2",
     NULL
 };
 
