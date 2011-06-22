@@ -155,6 +155,14 @@ public:
                             OutputBufferPtr buffer,
                             DNSServer* server);
 
+    const Resolver::ClientACL& getQueryACL() const {
+        return (*query_acl_);
+    }
+
+    void setQueryACL(shared_ptr<const Resolver::ClientACL> new_acl) {
+        query_acl_ = new_acl;
+    }
+
     /// Currently non-configurable, but will be.
     static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
 
@@ -177,10 +185,9 @@ public:
     /// Number of retries after timeout
     unsigned retries_;
 
+private:
     /// TBD
     shared_ptr<const Resolver::ClientACL> query_acl_;
-
-private:
 
     /// Object to handle upstream queries
     RecursiveQuery* rec_query_;
@@ -453,25 +460,44 @@ Resolver::processMessage(const IOMessage& io_message,
                          buffer, Rcode::NOTAUTH());
         // Notify arrived, but we are not authoritative.
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_NFYNOTAUTH);
-
     } else if (query_message->getOpcode() != Opcode::QUERY()) {
-
         // Unsupported opcode.
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_OPCODEUNS)
                   .arg(query_message->getOpcode());
         makeErrorMessage(query_message, answer_message,
                          buffer, Rcode::NOTIMP());
-
     } else if (query_message->getRRCount(Message::SECTION_QUESTION) != 1) {
-
         // Not one question
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_NOTONEQUES)
                   .arg(query_message->getRRCount(Message::SECTION_QUESTION));
         makeErrorMessage(query_message, answer_message,
                          buffer, Rcode::FORMERR());
     } else {
-        ConstQuestionPtr question = *query_message->beginQuestion();
-        const RRType &qtype = question->getType();
+        const ConstQuestionPtr question = *query_message->beginQuestion();
+        const RRType qtype = question->getType();
+
+        Client client(io_message);
+        const BasicAction query_action(impl_->getQueryACL().execute(client));
+        if (query_action == REJECT) {
+            LOG_INFO(resolver_logger, RESOLVER_QUERYREJECTED)
+                .arg(question->getName()).arg(qtype).arg(question->getClass())
+                .arg(client);
+            makeErrorMessage(query_message, answer_message, buffer,
+                             Rcode::REFUSED());
+            // the following should be refactored
+            server->resume(true);
+            return;
+        } else if (query_action == DROP) {
+            LOG_INFO(resolver_logger, RESOLVER_QUERYDROPPED)
+                .arg(question->getName()).arg(qtype).arg(question->getClass())
+                .arg(client);
+            server->resume(false);
+            return;
+        }
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_QUERYACCEPTED)
+            .arg(question->getName()).arg(qtype).arg(question->getClass())
+            .arg(client);
+
         if (qtype == RRType::AXFR()) {
             if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
 
@@ -481,7 +507,6 @@ Resolver::processMessage(const IOMessage& io_message,
                 makeErrorMessage(query_message, answer_message,
                                  buffer, Rcode::FORMERR());
             } else {
-
                 // ... or over TCP for that matter
                 LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS,
                           RESOLVER_AXFRTCP);
@@ -489,12 +514,10 @@ Resolver::processMessage(const IOMessage& io_message,
                                  buffer, Rcode::NOTIMP());
             }
         } else if (qtype == RRType::IXFR()) {
-
             // Can't process IXFR request
             LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_IXFR);
             makeErrorMessage(query_message, answer_message,
                              buffer, Rcode::NOTIMP());
-
         } else if (question->getClass() != RRClass::IN()) {
 
             // Non-IN message received, refuse it.
@@ -754,11 +777,11 @@ Resolver::getListenAddresses() const {
 
 const Resolver::ClientACL&
 Resolver::getQueryACL() const {
-    return (*impl_->query_acl_);
+    return (impl_->getQueryACL());
 }
 
 void
 Resolver::setQueryACL(shared_ptr<const ClientACL> new_acl) {
     LOG_INFO(resolver_logger, RESOLVER_SETQUERYACL);
-    impl_->query_acl_ = new_acl;
+    impl_->setQueryACL(new_acl);
 }
