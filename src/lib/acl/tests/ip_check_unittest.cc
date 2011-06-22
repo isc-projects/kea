@@ -200,18 +200,6 @@ TEST(IPCheck, V4ConstructorMask) {
     EXPECT_THROW(IPCheck<GeneralAddress>(dummy.v6addr, 129), isc::OutOfRange);
 }
 
-TEST(IPCheck, V4ConstructorInverse) {
-    // Valid values. Address ands mask of "1" are used as placeholders
-    IPCheck<GeneralAddress> acl1(1, 1);
-    EXPECT_FALSE(acl1.getInverse());
-
-    IPCheck<GeneralAddress> acl2(1, 1, true);
-    EXPECT_TRUE(acl2.getInverse());
-
-    IPCheck<GeneralAddress> acl3(1, 1, false);
-    EXPECT_FALSE(acl3.getInverse());
-}
-
 TEST(IPCheck, V4StringConstructor) {
     // Constructor with no mask given
     IPCheck<GeneralAddress> acl1("192.0.2.255");
@@ -247,11 +235,10 @@ TEST(IPCheck, V4StringConstructor) {
 }
 
 TEST(IPCheck, V4CopyConstructor) {
-    IPCheck<GeneralAddress> acl1("192.0.2.1/24", true);
+    IPCheck<GeneralAddress> acl1("192.0.2.1/24");
     IPCheck<GeneralAddress> acl2(acl1);
 
     EXPECT_EQ(acl1.getPrefixlen(), acl2.getPrefixlen());
-    EXPECT_EQ(acl1.getInverse(), acl2.getInverse());
     EXPECT_EQ(acl1.getFamily(), acl2.getFamily());
     EXPECT_EQ(acl1.getStringAddress(), acl2.getStringAddress());
 
@@ -267,12 +254,11 @@ TEST(IPCheck, V4CopyConstructor) {
 }
 
 TEST(IPCheck, V4AssignmentOperator) {
-    IPCheck<GeneralAddress> acl1("192.0.2.0/24", true);
-    IPCheck<GeneralAddress> acl2("192.0.2.128/25", false);
+    IPCheck<GeneralAddress> acl1("192.0.2.0/24");
+    IPCheck<GeneralAddress> acl2("192.0.2.128/25");
     acl2 = acl1;
 
     EXPECT_EQ(acl1.getPrefixlen(), acl2.getPrefixlen());
-    EXPECT_EQ(acl1.getInverse(), acl2.getInverse());
     EXPECT_EQ(acl1.getFamily(), acl2.getFamily());
     EXPECT_EQ(acl1.getStringAddress(), acl2.getStringAddress());
 
@@ -303,42 +289,28 @@ TEST(IPCheck, V4Compare) {
     EXPECT_FALSE(acl1.matches(htonl(0x23457f12)));
     EXPECT_FALSE(acl1.matches(htonl(0x13457f13)));
 
-    // Exact address - match if address does not match stored address
-    IPCheck<GeneralAddress> acl2(htonl(0x23457f13), 32, true);
-    EXPECT_FALSE(acl2.matches(htonl(0x23457f13)));
-    EXPECT_TRUE(acl2.matches(htonl(0x23457f12)));
-    EXPECT_TRUE(acl2.matches(htonl(0x13457f13)));
-
     // Match if the address matches a mask
-    IPCheck<GeneralAddress> acl3(htonl(0x23450000), 16);
+    IPCheck<GeneralAddress> acl2(htonl(0x23450000), 16);
+    EXPECT_TRUE(acl2.matches(htonl(0x23450000)));
+    EXPECT_TRUE(acl2.matches(htonl(0x23450001)));
+    EXPECT_TRUE(acl2.matches(htonl(0x2345ffff)));
+    EXPECT_FALSE(acl2.matches(htonl(0x23460000)));
+    EXPECT_FALSE(acl2.matches(htonl(0x2346ffff)));
+
+    // Match if "any4" is specified
+    IPCheck<GeneralAddress> acl3("any4");
     EXPECT_TRUE(acl3.matches(htonl(0x23450000)));
     EXPECT_TRUE(acl3.matches(htonl(0x23450001)));
     EXPECT_TRUE(acl3.matches(htonl(0x2345ffff)));
-    EXPECT_FALSE(acl3.matches(htonl(0x23460000)));
-    EXPECT_FALSE(acl3.matches(htonl(0x2346ffff)));
+    EXPECT_TRUE(acl3.matches(htonl(0x23460000)));
+    EXPECT_TRUE(acl3.matches(htonl(0x2346ffff)));
 
-    // Match if the address does not match a mask
-    IPCheck<GeneralAddress> acl4(htonl(0x23450000), 16, true);
-    EXPECT_FALSE(acl4.matches(htonl(0x23450000)));
-    EXPECT_FALSE(acl4.matches(htonl(0x23450001)));
-    EXPECT_FALSE(acl4.matches(htonl(0x2345ffff)));
+    IPCheck<GeneralAddress> acl4(htonl(0x23450000), 0);
+    EXPECT_TRUE(acl4.matches(htonl(0x23450000)));
+    EXPECT_TRUE(acl4.matches(htonl(0x23450001)));
+    EXPECT_TRUE(acl4.matches(htonl(0x2345ffff)));
     EXPECT_TRUE(acl4.matches(htonl(0x23460000)));
     EXPECT_TRUE(acl4.matches(htonl(0x2346ffff)));
-
-    // Match if "any4" is specified
-    IPCheck<GeneralAddress> acl5("any4");
-    EXPECT_TRUE(acl5.matches(htonl(0x23450000)));
-    EXPECT_TRUE(acl5.matches(htonl(0x23450001)));
-    EXPECT_TRUE(acl5.matches(htonl(0x2345ffff)));
-    EXPECT_TRUE(acl5.matches(htonl(0x23460000)));
-    EXPECT_TRUE(acl5.matches(htonl(0x2346ffff)));
-
-    IPCheck<GeneralAddress> acl6(htonl(0x23450000), 0);
-    EXPECT_TRUE(acl6.matches(htonl(0x23450000)));
-    EXPECT_TRUE(acl6.matches(htonl(0x23450001)));
-    EXPECT_TRUE(acl6.matches(htonl(0x2345ffff)));
-    EXPECT_TRUE(acl6.matches(htonl(0x23460000)));
-    EXPECT_TRUE(acl6.matches(htonl(0x2346ffff)));
 }
 
 
@@ -443,18 +415,6 @@ TEST(IPCheck, V6ConstructorMask) {
     EXPECT_THROW(IPCheck<GeneralAddress>(V6ADDR_1, 129), isc::OutOfRange);
 }
 
-TEST(IPCheck, V6ConstructorInverse) {
-    // Valid values. Address/mask of "1" is used as a placeholder
-    IPCheck<GeneralAddress> acl1(V6ADDR_1, 1);
-    EXPECT_FALSE(acl1.getInverse());
-
-    IPCheck<GeneralAddress> acl2(V6ADDR_1, 1, true);
-    EXPECT_TRUE(acl2.getInverse());
-
-    IPCheck<GeneralAddress> acl3(V6ADDR_1, 1, false);
-    EXPECT_FALSE(acl3.getInverse());
-}
-
 TEST(IPCheck, V6StringConstructor) {
     IPCheck<GeneralAddress> acl1(V6ADDR_1_STRING);
     vector<uint8_t> address = acl1.getAddress();
@@ -507,8 +467,6 @@ TEST(IPCheck, V6CopyConstructor) {
     EXPECT_EQ(acl1_mask.size(), acl2_mask.size());
     EXPECT_TRUE(equal(acl1_mask.begin(), acl1_mask.end(),
                 acl2_mask.begin()));
-
-    EXPECT_EQ(acl1.getInverse(), acl2.getInverse());
 }
 
 TEST(IPCheck, V6AssignmentOperator) {
@@ -532,8 +490,6 @@ TEST(IPCheck, V6AssignmentOperator) {
     EXPECT_EQ(acl1_mask.size(), acl2_mask.size());
     EXPECT_TRUE(equal(acl1_mask.begin(), acl1_mask.end(),
                 acl2_mask.begin()));
-
-    EXPECT_EQ(acl1.getInverse(), acl2.getInverse());
 }
 
 TEST(IPCheck, V6Compare) {
@@ -550,42 +506,25 @@ TEST(IPCheck, V6Compare) {
     EXPECT_FALSE(acl1.matches(v6addr_2_48));
     EXPECT_FALSE(acl1.matches(v6addr_3));
 
-    // Exact address - match if address does not match stored address
-    IPCheck<GeneralAddress> acl2(string(V6ADDR_2_STRING) + string("/128"),
-                                   true);
-    EXPECT_FALSE(acl2.matches(v6addr_2));
-    EXPECT_TRUE(acl2.matches(v6addr_2_52));
-    EXPECT_TRUE(acl2.matches(v6addr_2_48));
-    EXPECT_TRUE(acl2.matches(v6addr_3));
-
     // Match if the address matches a mask
-    IPCheck<GeneralAddress> acl3(string(V6ADDR_2_STRING) + string("/52"));
-    EXPECT_TRUE(acl3.matches(v6addr_2));
-    EXPECT_TRUE(acl3.matches(v6addr_2_52));
-    EXPECT_FALSE(acl3.matches(v6addr_2_48));
-    EXPECT_FALSE(acl3.matches(v6addr_3));
-
-    // Match if the address does not match a mask
-    IPCheck<GeneralAddress> acl4(string(V6ADDR_2_STRING) + string("/52"),
-                              true);
-    EXPECT_FALSE(acl4.matches(v6addr_2));
-    EXPECT_FALSE(acl4.matches(v6addr_2_52));
-    EXPECT_TRUE(acl4.matches(v6addr_2_48));
-    EXPECT_TRUE(acl4.matches(v6addr_3));
+    IPCheck<GeneralAddress> acl2(string(V6ADDR_2_STRING) + string("/52"));
+    EXPECT_TRUE(acl2.matches(v6addr_2));
+    EXPECT_TRUE(acl2.matches(v6addr_2_52));
+    EXPECT_FALSE(acl2.matches(v6addr_2_48));
+    EXPECT_FALSE(acl2.matches(v6addr_3));
 
     // Match on any address
-    IPCheck<GeneralAddress> acl5("any6");
-    EXPECT_TRUE(acl5.matches(v6addr_2));
-    EXPECT_TRUE(acl5.matches(v6addr_2_52));
-    EXPECT_TRUE(acl5.matches(v6addr_2_48));
-    EXPECT_TRUE(acl5.matches(v6addr_3));
+    IPCheck<GeneralAddress> acl3("any6");
+    EXPECT_TRUE(acl3.matches(v6addr_2));
+    EXPECT_TRUE(acl3.matches(v6addr_2_52));
+    EXPECT_TRUE(acl3.matches(v6addr_2_48));
+    EXPECT_TRUE(acl3.matches(v6addr_3));
 
-    IPCheck<GeneralAddress> acl6(string(V6ADDR_1_STRING) + string("/0"));
-    EXPECT_TRUE(acl6.matches(v6addr_2));
-    EXPECT_TRUE(acl6.matches(v6addr_2_52));
-    EXPECT_TRUE(acl6.matches(v6addr_2_48));
-    EXPECT_TRUE(acl6.matches(v6addr_3));
-
+    IPCheck<GeneralAddress> acl4(string(V6ADDR_1_STRING) + string("/0"));
+    EXPECT_TRUE(acl4.matches(v6addr_2));
+    EXPECT_TRUE(acl4.matches(v6addr_2_52));
+    EXPECT_TRUE(acl4.matches(v6addr_2_48));
+    EXPECT_TRUE(acl4.matches(v6addr_3));
 }
 
 // *** Mixed-mode tests - mainly to check that no exception is thrown ***
