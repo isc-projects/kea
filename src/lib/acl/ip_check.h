@@ -286,7 +286,6 @@ public:
     size_t getPrefixlen() const {
         // Work this out by shifting bits out of the mask
         size_t count = 0;
-        int index = 0;
         for (size_t i = 0; i < mask_.size(); ++i) {
             if (mask_[i] == 0xff) {
                 // Full byte, 8 bit set
