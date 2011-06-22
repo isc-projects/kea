@@ -147,6 +147,9 @@ TEST(IPFunctionCheck, SplitIPAddress) {
     EXPECT_THROW(splitIPAddress("/192.0.2.43/1"), isc::InvalidParameter);
     EXPECT_THROW(splitIPAddress("2001:db8::/xxxx"), isc::InvalidParameter);
     EXPECT_THROW(splitIPAddress("2001:db8::/32/s"), isc::InvalidParameter);
+    EXPECT_THROW(splitIPAddress("1/"), isc::InvalidParameter);
+    EXPECT_THROW(splitIPAddress("/1"), isc::InvalidParameter);
+    EXPECT_THROW(splitIPAddress(" 1/ "), isc::InvalidParameter);
 }
 
 // *** General tests ***
