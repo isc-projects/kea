@@ -7,26 +7,26 @@
 namespace isc {
 namespace log {
 
-extern const isc::log::MessageID MSG_BADDESTINATION = "MSG_BADDESTINATION";
-extern const isc::log::MessageID MSG_BADSEVERITY = "MSG_BADSEVERITY";
-extern const isc::log::MessageID MSG_BADSTREAM = "MSG_BADSTREAM";
-extern const isc::log::MessageID MSG_DUPLNS = "MSG_DUPLNS";
-extern const isc::log::MessageID MSG_DUPMSGID = "MSG_DUPMSGID";
-extern const isc::log::MessageID MSG_IDNOTFND = "MSG_IDNOTFND";
-extern const isc::log::MessageID MSG_INVMSGID = "MSG_INVMSGID";
-extern const isc::log::MessageID MSG_NOMSGID = "MSG_NOMSGID";
-extern const isc::log::MessageID MSG_NOMSGTXT = "MSG_NOMSGTXT";
-extern const isc::log::MessageID MSG_NSEXTRARG = "MSG_NSEXTRARG";
-extern const isc::log::MessageID MSG_NSINVARG = "MSG_NSINVARG";
-extern const isc::log::MessageID MSG_NSNOARG = "MSG_NSNOARG";
-extern const isc::log::MessageID MSG_OPENIN = "MSG_OPENIN";
-extern const isc::log::MessageID MSG_OPENOUT = "MSG_OPENOUT";
-extern const isc::log::MessageID MSG_PRFEXTRARG = "MSG_PRFEXTRARG";
-extern const isc::log::MessageID MSG_PRFINVARG = "MSG_PRFINVARG";
-extern const isc::log::MessageID MSG_RDLOCMES = "MSG_RDLOCMES";
-extern const isc::log::MessageID MSG_READERR = "MSG_READERR";
-extern const isc::log::MessageID MSG_UNRECDIR = "MSG_UNRECDIR";
-extern const isc::log::MessageID MSG_WRITERR = "MSG_WRITERR";
+extern const isc::log::MessageID LOG_BAD_DESTINATION = "LOG_BAD_DESTINATION";
+extern const isc::log::MessageID LOG_BAD_SEVERITY = "LOG_BAD_SEVERITY";
+extern const isc::log::MessageID LOG_BAD_STREAM = "LOG_BAD_STREAM";
+extern const isc::log::MessageID LOG_DUPLICATE_NAMESPACE = "LOG_DUPLICATE_NAMESPACE";
+extern const isc::log::MessageID LOG_DUPLICATE_MESSAGE_ID = "LOG_DUPLICATE_MESSAGE_ID";
+extern const isc::log::MessageID LOG_NO_SUCH_MESSAGE = "LOG_NO_SUCH_MESSAGE";
+extern const isc::log::MessageID LOG_INVALID_MESSAGE_ID = "LOG_INVALID_MESSAGE_ID";
+extern const isc::log::MessageID LOG_NO_MESSAGE_ID = "LOG_NO_MESSAGE_ID";
+extern const isc::log::MessageID LOG_NO_MESSAGE_TEXT = "LOG_NO_MESSAGE_TEXT";
+extern const isc::log::MessageID LOG_NAMESPACE_EXTRA_ARGS = "LOG_NAMESPACE_EXTRA_ARGS";
+extern const isc::log::MessageID LOG_NAMESPACE_INVALID_ARG = "LOG_NAMESPACE_INVALID_ARG";
+extern const isc::log::MessageID LOG_NAMESPACE_NO_ARGS = "LOG_NAMESPACE_NO_ARGS";
+extern const isc::log::MessageID LOG_INPUT_OPEN_FAIL = "LOG_INPUT_OPEN_FAIL";
+extern const isc::log::MessageID LOG_OPEN_OUTPUT_FAIL = "LOG_OPEN_OUTPUT_FAIL";
+extern const isc::log::MessageID LOG_PREFIX_EXTRA_ARGS = "LOG_PREFIX_EXTRA_ARGS";
+extern const isc::log::MessageID LOG_PREFIX_INVALID_ARG = "LOG_PREFIX_INVALID_ARG";
+extern const isc::log::MessageID LOG_READING_LOCAL_FILE = "LOG_READING_LOCAL_FILE";
+extern const isc::log::MessageID LOG_READ_ERROR = "LOG_READ_ERROR";
+extern const isc::log::MessageID LOG_UNRECOGNISED_DIRECTIVE = "LOG_UNRECOGNISED_DIRECTIVE";
+extern const isc::log::MessageID LOG_WRITE_ERROR = "LOG_WRITE_ERROR";
 
 } // namespace log
 } // namespace isc
@@ -34,26 +34,26 @@ extern const isc::log::MessageID MSG_WRITERR = "MSG_WRITERR";
 namespace {
 
 const char* values[] = {
-    "MSG_BADDESTINATION", "unrecognized log destination: %1",
-    "MSG_BADSEVERITY", "unrecognized log severity: %1",
-    "MSG_BADSTREAM", "bad log console output stream: %1",
-    "MSG_DUPLNS", "line %1: duplicate $NAMESPACE directive found",
-    "MSG_DUPMSGID", "duplicate message ID (%1) in compiled code",
-    "MSG_IDNOTFND", "could not replace message text for '%1': no such message",
-    "MSG_INVMSGID", "line %1: invalid message identification '%2'",
-    "MSG_NOMSGID", "line %1: message definition line found without a message ID",
-    "MSG_NOMSGTXT", "line %1: line found containing a message ID ('%2') and no text",
-    "MSG_NSEXTRARG", "line %1: $NAMESPACE directive has too many arguments",
-    "MSG_NSINVARG", "line %1: $NAMESPACE directive has an invalid argument ('%2')",
-    "MSG_NSNOARG", "line %1: no arguments were given to the $NAMESPACE directive",
-    "MSG_OPENIN", "unable to open message file %1 for input: %2",
-    "MSG_OPENOUT", "unable to open %1 for output: %2",
-    "MSG_PRFEXTRARG", "line %1: $PREFIX directive has too many arguments",
-    "MSG_PRFINVARG", "line %1: $PREFIX directive has an invalid argument ('%2')",
-    "MSG_RDLOCMES", "reading local message file %1",
-    "MSG_READERR", "error reading from message file %1: %2",
-    "MSG_UNRECDIR", "line %1: unrecognised directive '%2'",
-    "MSG_WRITERR", "error writing to %1: %2",
+    "LOG_BAD_DESTINATION", "unrecognized log destination: %1",
+    "LOG_BAD_SEVERITY", "unrecognized log severity: %1",
+    "LOG_BAD_STREAM", "bad log console output stream: %1",
+    "LOG_DUPLICATE_NAMESPACE", "line %1: duplicate $NAMESPACE directive found",
+    "LOG_DUPLICATE_MESSAGE_ID", "duplicate message ID (%1) in compiled code",
+    "LOG_NO_SUCH_MESSAGE", "could not replace message text for '%1': no such message",
+    "LOG_INVALID_MESSAGE_ID", "line %1: invalid message identification '%2'",
+    "LOG_NO_MESSAGE_ID", "line %1: message definition line found without a message ID",
+    "LOG_NO_MESSAGE_TEXT", "line %1: line found containing a message ID ('%2') and no text",
+    "LOG_NAMESPACE_EXTRA_ARGS", "line %1: $NAMESPACE directive has too many arguments",
+    "LOG_NAMESPACE_INVALID_ARG", "line %1: $NAMESPACE directive has an invalid argument ('%2')",
+    "LOG_NAMESPACE_NO_ARGS", "line %1: no arguments were given to the $NAMESPACE directive",
+    "LOG_INPUT_OPEN_FAIL", "unable to open message file %1 for input: %2",
+    "LOG_OPEN_OUTPUT_FAIL", "unable to open %1 for output: %2",
+    "LOG_PREFIX_EXTRA_ARGS", "line %1: $PREFIX directive has too many arguments",
+    "LOG_PREFIX_INVALID_ARG", "line %1: $PREFIX directive has an invalid argument ('%2')",
+    "LOG_READING_LOCAL_FILE", "reading local message file %1",
+    "LOG_READ_ERROR", "error reading from message file %1: %2",
+    "LOG_UNRECOGNISED_DIRECTIVE", "line %1: unrecognised directive '%2'",
+    "LOG_WRITE_ERROR", "error writing to %1: %2",
     NULL
 };
 

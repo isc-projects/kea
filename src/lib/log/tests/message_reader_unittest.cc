@@ -102,8 +102,8 @@ processLineException(MessageReader& reader, const char* what,
 TEST_F(MessageReaderTest, InvalidDirectives) {
 
     // Check that a "$" with nothing else generates an error
-    processLineException(reader_, "$", MSG_UNRECDIR);
-    processLineException(reader_, "$xyz", MSG_UNRECDIR);
+    processLineException(reader_, "$", LOG_UNRECOGNISED_DIRECTIVE);
+    processLineException(reader_, "$xyz", LOG_UNRECOGNISED_DIRECTIVE);
 }
 
 // Check that it can parse a prefix
@@ -117,20 +117,20 @@ TEST_F(MessageReaderTest, Prefix) {
     EXPECT_NO_THROW(reader_.processLine("$PREFIX"));
 
     // Check a $PREFIX with multiple arguments is invalid
-    processLineException(reader_, "$prefix A B", MSG_PRFEXTRARG);
+    processLineException(reader_, "$prefix A B", LOG_PREFIX_EXTRA_ARGS);
 
     // Prefixes should be alphanumeric (with underscores) and not start
     // with a number.
-    processLineException(reader_, "$prefix ab[cd", MSG_PRFINVARG);
-    processLineException(reader_, "$prefix 123", MSG_PRFINVARG);
-    processLineException(reader_, "$prefix 1ABC", MSG_PRFINVARG);
+    processLineException(reader_, "$prefix ab[cd", LOG_PREFIX_INVALID_ARG);
+    processLineException(reader_, "$prefix 123", LOG_PREFIX_INVALID_ARG);
+    processLineException(reader_, "$prefix 1ABC", LOG_PREFIX_INVALID_ARG);
 
     // A valid prefix should be accepted
     EXPECT_NO_THROW(reader_.processLine("$PREFIX   dlm__"));
     EXPECT_EQ(string("dlm__"), reader_.getPrefix());
 
     // And check that the parser fails on invalid prefixes...
-    processLineException(reader_, "$prefix 1ABC", MSG_PRFINVARG);
+    processLineException(reader_, "$prefix 1ABC", LOG_PREFIX_INVALID_ARG);
 
     // Check that we can clear the prefix as well
     reader_.clearPrefix();
@@ -150,13 +150,13 @@ TEST_F(MessageReaderTest, Namespace) {
     EXPECT_EQ(string(""), reader_.getNamespace());
 
     // Check that a $NAMESPACE directive with no argument generates an error.
-    processLineException(reader_, "$NAMESPACE", MSG_NSNOARG);
+    processLineException(reader_, "$NAMESPACE", LOG_NAMESPACE_NO_ARGS);
 
     // Check a $NAMESPACE with multiple arguments is invalid
-    processLineException(reader_, "$namespace A B", MSG_NSEXTRARG);
+    processLineException(reader_, "$namespace A B", LOG_NAMESPACE_EXTRA_ARGS);
 
     // Namespaces should be alphanumeric (with underscores and colons)
-    processLineException(reader_, "$namespace ab[cd", MSG_NSINVARG);
+    processLineException(reader_, "$namespace ab[cd", LOG_NAMESPACE_INVALID_ARG);
 
     // A valid $NAMESPACE should be accepted
     EXPECT_NO_THROW(reader_.processLine("$NAMESPACE isc"));
@@ -176,7 +176,7 @@ TEST_F(MessageReaderTest, Namespace) {
     EXPECT_EQ(string("::"), reader_.getNamespace());
 
     // ... and that another $NAMESPACE is rejected
-    processLineException(reader_, "$NAMESPACE ABC", MSG_DUPLNS);
+    processLineException(reader_, "$NAMESPACE ABC", LOG_DUPLICATE_NAMESPACE);
 }
 
 // Check that it can parse a line

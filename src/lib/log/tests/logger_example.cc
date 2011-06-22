@@ -285,21 +285,21 @@ int main(int argc, char** argv) {
     isc::log::Logger logger_alpha("alpha");
     isc::log::Logger logger_beta("beta");
 
-    LOG_FATAL(logger_ex, MSG_WRITERR).arg("test1").arg("42");
-    LOG_ERROR(logger_ex, MSG_RDLOCMES).arg("dummy/file");
-    LOG_WARN(logger_ex, MSG_BADSTREAM).arg("example");
-    LOG_WARN(logger_alpha, MSG_READERR).arg("a.txt").arg("dummy reason");
-    LOG_INFO(logger_alpha, MSG_OPENIN).arg("example.msg").arg("dummy reason");
-    LOG_DEBUG(logger_ex, 0, MSG_RDLOCMES).arg("example/0");
-    LOG_DEBUG(logger_ex, 24, MSG_RDLOCMES).arg("example/24");
-    LOG_DEBUG(logger_ex, 25, MSG_RDLOCMES).arg("example/25");
-    LOG_DEBUG(logger_ex, 26, MSG_RDLOCMES).arg("example/26");
-    LOG_FATAL(logger_beta, MSG_BADSEVERITY).arg("beta_fatal");
-    LOG_ERROR(logger_beta, MSG_BADDESTINATION).arg("beta_error");
-    LOG_WARN(logger_beta, MSG_BADSTREAM).arg("beta_warn");
-    LOG_INFO(logger_beta, MSG_READERR).arg("beta").arg("info");
-    LOG_DEBUG(logger_beta, 25, MSG_BADSEVERITY).arg("beta/25");
-    LOG_DEBUG(logger_beta, 26, MSG_BADSEVERITY).arg("beta/26");
+    LOG_FATAL(logger_ex, LOG_WRITE_ERROR).arg("test1").arg("42");
+    LOG_ERROR(logger_ex, LOG_READING_LOCAL_FILE).arg("dummy/file");
+    LOG_WARN(logger_ex, LOG_BAD_STREAM).arg("example");
+    LOG_WARN(logger_alpha, LOG_READ_ERROR).arg("a.txt").arg("dummy reason");
+    LOG_INFO(logger_alpha, LOG_INPUT_OPEN_FAIL).arg("example.msg").arg("dummy reason");
+    LOG_DEBUG(logger_ex, 0, LOG_READING_LOCAL_FILE).arg("example/0");
+    LOG_DEBUG(logger_ex, 24, LOG_READING_LOCAL_FILE).arg("example/24");
+    LOG_DEBUG(logger_ex, 25, LOG_READING_LOCAL_FILE).arg("example/25");
+    LOG_DEBUG(logger_ex, 26, LOG_READING_LOCAL_FILE).arg("example/26");
+    LOG_FATAL(logger_beta, LOG_BAD_SEVERITY).arg("beta_fatal");
+    LOG_ERROR(logger_beta, LOG_BAD_DESTINATION).arg("beta_error");
+    LOG_WARN(logger_beta, LOG_BAD_STREAM).arg("beta_warn");
+    LOG_INFO(logger_beta, LOG_READ_ERROR).arg("beta").arg("info");
+    LOG_DEBUG(logger_beta, 25, LOG_BAD_SEVERITY).arg("beta/25");
+    LOG_DEBUG(logger_beta, 26, LOG_BAD_SEVERITY).arg("beta/26");
 
     return (0);
 }
