@@ -36,7 +36,11 @@
 namespace isc {
 namespace acl {
 
-// Free functions
+// Free functions.  These are not supposed to be used outside this module,
+// but are declared public for testing.  To try to conceal them, they are
+// put in an "internal" namespace.
+
+namespace internal {
 
 /// \brief Convert prefix length to mask
 ///
@@ -56,7 +60,7 @@ namespace acl {
 /// \exception OutOfRange prefixlen is too large for the data type.
 
 template <typename T>
-T createNetmask(size_t prefixlen) {
+T createMask(size_t prefixlen) {
 
     if (prefixlen == 0) {
         return (0);
@@ -154,6 +158,8 @@ splitIPAddress(const std::string& prefix) {
 
     return (std::make_pair(components[0], prefixlen));
 }
+
+} // namespace internal
 
 
 
@@ -277,7 +283,8 @@ public:
             // General address prefix.  Split into address part and prefix
             // length.
 
-            std::pair<std::string, int> result = splitIPAddress(addrprfx);
+            std::pair<std::string, int> result =
+                internal::splitIPAddress(addrprfx);
 
             // Try to convert the address.  If successful, the result is in
             // network-byte order (most significant components at lower
@@ -505,7 +512,7 @@ private:
                     bits_left -= 8;
 
                 } else if (bits_left > 0) {
-                    mask_.byte[++i] = createNetmask<uint8_t>(bits_left);
+                    mask_.byte[++i] = internal::createMask<uint8_t>(bits_left);
                     bits_left = 0;
 
                 }
