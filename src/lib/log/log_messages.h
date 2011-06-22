@@ -1,4 +1,4 @@
-// File created from log_messages.mes on Wed Jun 22 10:38:51 2011
+// File created from log_messages.mes on Wed Jun 22 11:54:57 2011
 
 #ifndef __LOG_MESSAGES_H
 #define __LOG_MESSAGES_H
@@ -11,16 +11,16 @@ namespace log {
 extern const isc::log::MessageID LOG_BAD_DESTINATION;
 extern const isc::log::MessageID LOG_BAD_SEVERITY;
 extern const isc::log::MessageID LOG_BAD_STREAM;
-extern const isc::log::MessageID LOG_DUPLICATE_NAMESPACE;
 extern const isc::log::MessageID LOG_DUPLICATE_MESSAGE_ID;
-extern const isc::log::MessageID LOG_NO_SUCH_MESSAGE;
+extern const isc::log::MessageID LOG_DUPLICATE_NAMESPACE;
+extern const isc::log::MessageID LOG_INPUT_OPEN_FAIL;
 extern const isc::log::MessageID LOG_INVALID_MESSAGE_ID;
-extern const isc::log::MessageID LOG_NO_MESSAGE_ID;
-extern const isc::log::MessageID LOG_NO_MESSAGE_TEXT;
 extern const isc::log::MessageID LOG_NAMESPACE_EXTRA_ARGS;
 extern const isc::log::MessageID LOG_NAMESPACE_INVALID_ARG;
 extern const isc::log::MessageID LOG_NAMESPACE_NO_ARGS;
-extern const isc::log::MessageID LOG_INPUT_OPEN_FAIL;
+extern const isc::log::MessageID LOG_NO_MESSAGE_ID;
+extern const isc::log::MessageID LOG_NO_MESSAGE_TEXT;
+extern const isc::log::MessageID LOG_NO_SUCH_MESSAGE;
 extern const isc::log::MessageID LOG_OPEN_OUTPUT_FAIL;
 extern const isc::log::MessageID LOG_PREFIX_EXTRA_ARGS;
 extern const isc::log::MessageID LOG_PREFIX_INVALID_ARG;
