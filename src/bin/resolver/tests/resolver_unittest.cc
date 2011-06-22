@@ -14,6 +14,8 @@
 
 #include <string>
 
+#include <exceptions/exceptions.h>
+
 #include <dns/name.h>
 
 #include <cc/data.h>
@@ -149,6 +151,14 @@ TEST_F(ResolverTest, notifyFail) {
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::NOTAUTH(),
                 Opcode::NOTIFY().getCode(), QR_FLAG, 0, 0, 0, 0);
+}
+
+TEST_F(ResolverTest, setQueryACL) {
+    // valid cases are tested through other tests.  We only explicitly check
+    // an invalid case: passing a NULL shared pointer.
+    EXPECT_THROW(server.setQueryACL(
+                     boost::shared_ptr<const Resolver::ClientACL>()),
+                 isc::InvalidParameter);
 }
 
 TEST_F(ResolverTest, queryACL) {
