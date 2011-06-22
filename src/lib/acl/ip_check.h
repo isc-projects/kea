@@ -143,7 +143,7 @@ public:
     ///
     /// Constructs an empty IPCheck object.  The address family returned will
     /// be zero.
-    IPCheck() : address_(), mask_(), prefixlen_(0), family_(0), straddr_()
+    IPCheck() : address_(), mask_(), prefixlen_(0), family_(0)
     {}
 
     /// \brief IPV4 Constructor
@@ -159,7 +159,7 @@ public:
     ///        (A value of zero imples match all IPV4 addresses.)
     IPCheck(uint32_t address, int prefixlen = 8 * IPV4_SIZE) :
             address_(IPV4_SIZE), mask_(), prefixlen_(prefixlen),
-            family_(AF_INET), straddr_()
+            family_(AF_INET)
     {
         // The address is stored in network-byte order, so the 
         // the address passed should be stored at the lowest address in
@@ -183,7 +183,7 @@ public:
     ///        128 This determines the number of bits in the mask to check.
     IPCheck(const uint8_t* address, int prefixlen = 8 * IPV6_SIZE) :
             address_(address, address + IPV6_SIZE), mask_(),
-            prefixlen_(prefixlen), family_(AF_INET6), straddr_()
+            prefixlen_(prefixlen), family_(AF_INET6)
     {
 
         setMask(prefixlen_);
@@ -204,7 +204,7 @@ public:
     ///        address in that address family.  The address can also be
     ///        given as "any4" or "any6".
     IPCheck(const std::string& addrprfx) : address_(), mask_(), prefixlen_(0),
-                                           family_(0), straddr_(addrprfx)
+                                           family_(0)
     {
         // Check for special cases first.
         if (addrprfx == "any4") {
@@ -289,11 +289,6 @@ public:
         return (mask_);
     }
 
-    /// \return String passed to constructor
-    std::string getStringAddress() const {
-        return (straddr_);
-    }
-
     /// \return Prefix length of the match
     size_t getPrefixlen() const {
         return (prefixlen_);
@@ -320,23 +315,20 @@ private:
     ///
     /// \param testaddr Address (in network byte order) to test against the
     ///                 check condition in the class.  This is expected to
-    ///                 be IPV6_SIZE or IPV4_SIZE bytes long (the size
-    //                  determines the address family).
+    ///                 be IPV6_SIZE or IPV4_SIZE bytes long.
+    /// \param family   Address family of testaddr.
     ///
     /// \return true if the address matches, false if it does not.
-    virtual bool compare(const std::vector<uint8_t>& testaddr) const {
+    virtual bool compare(const uint8_t* testaddr, int family) const {
 
-        if (prefixlen_ == 0) {
-            // Dispose of simple match-all check first.
-            return (
-                ((family_ == AF_INET)  && (testaddr.size() == IPV4_SIZE)) ||
-                ((family_ == AF_INET6) && (testaddr.size() == IPV6_SIZE)));
-
-        } else if (testaddr.size() != address_.size()) {
-            // A simple check on the size of the passed address and the stored
-            // address will serve to ensure that V4 address are not compared to
-            // V6 addresses.
+        if (family != family_) {
+            // Can't match if the address is of the wrong family
             return (false);
+    
+        } else if (prefixlen_ == 0) {
+            // ... but if its the right family, a zero length prefix matches
+            // immediately.
+            return (true);
 
         }
 
@@ -418,7 +410,6 @@ private:
     std::vector<uint8_t> mask_;     ///< Address mask
     size_t      prefixlen_;         ///< Mask size passed to constructor
     int         family_;            ///< Address family
-    std::string straddr_;           ///< Copy of constructor address string
 };
 
 } // namespace acl
