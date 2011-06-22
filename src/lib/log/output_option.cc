@@ -33,7 +33,7 @@ getDestination(const std::string& dest_str) {
         return OutputOption::DEST_SYSLOG;
     } else {
         Logger logger("log");
-        LOG_ERROR(logger, MSG_BADDESTINATION).arg(dest_str);
+        LOG_ERROR(logger, LOG_BAD_DESTINATION).arg(dest_str);
         return OutputOption::DEST_CONSOLE;
     }
 }
@@ -46,7 +46,7 @@ getStream(const std::string& stream_str) {
         return OutputOption::STR_STDOUT;
     } else {
         Logger logger("log");
-        LOG_ERROR(logger, MSG_BADSTREAM).arg(stream_str);
+        LOG_ERROR(logger, LOG_BAD_STREAM).arg(stream_str);
         return OutputOption::STR_STDOUT;
     }
 }
