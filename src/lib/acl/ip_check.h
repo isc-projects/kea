@@ -15,7 +15,6 @@
 #ifndef __IP_CHECK_H
 #define __IP_CHECK_H
 
-#include <cassert>
 #include <algorithm>
 #include <functional>
 #include <iterator>
@@ -143,7 +142,7 @@ public:
     ///
     /// Constructs an empty IPCheck object.  The address family returned will
     /// be zero.
-    IPCheck() : address_(), mask_(), prefixlen_(0), family_(0)
+    IPCheck() : address_(), mask_(), family_(0)
     {}
 
     /// \brief IPV4 Constructor
@@ -158,8 +157,7 @@ public:
     ///        32. This determines the number of bits of the address to check.
     ///        (A value of zero imples match all IPV4 addresses.)
     IPCheck(uint32_t address, int prefixlen = 8 * IPV4_SIZE) :
-            address_(IPV4_SIZE), mask_(), prefixlen_(prefixlen),
-            family_(AF_INET)
+            address_(IPV4_SIZE), mask_(), family_(AF_INET)
     {
         // The address is stored in network-byte order, so the 
         // the address passed should be stored at the lowest address in
@@ -169,7 +167,7 @@ public:
         address_[1] = static_cast<uint8_t>((address >> 16) & 0xff);
         address_[0] = static_cast<uint8_t>((address >> 24) & 0xff);
 
-        setMask(prefixlen_);
+        setMask(prefixlen);
     }
 
     /// \brief IPV6 Constructor
@@ -182,11 +180,10 @@ public:
     /// \param mask The network mask specified as an integer between 1 and
     ///        128 This determines the number of bits in the mask to check.
     IPCheck(const uint8_t* address, int prefixlen = 8 * IPV6_SIZE) :
-            address_(address, address + IPV6_SIZE), mask_(),
-            prefixlen_(prefixlen), family_(AF_INET6)
+            address_(address, address + IPV6_SIZE), mask_(), family_(AF_INET6)
     {
 
-        setMask(prefixlen_);
+        setMask(prefixlen);
     }
 
     /// \brief String Constructor
@@ -203,8 +200,7 @@ public:
     ///        address).  If "n" is specified as zero, the match is for any
     ///        address in that address family.  The address can also be
     ///        given as "any4" or "any6".
-    IPCheck(const std::string& addrprfx) : address_(), mask_(), prefixlen_(0),
-                                           family_(0)
+    IPCheck(const std::string& addrprfx) : address_(), mask_(), family_(0)
     {
         // Check for special cases first.
         if (addrprfx == "any4") {
@@ -291,7 +287,27 @@ public:
 
     /// \return Prefix length of the match
     size_t getPrefixlen() const {
-        return (prefixlen_);
+        // Work this out by shifting bits out of the mask
+        size_t count = 0;
+        int index = 0;
+        for (size_t i = 0; i < mask_.size(); ++i) {
+            if (mask_[i] == 0xff) {
+                // Full byte, 8 bit set
+                count += 8;
+
+            } else if (mask_[i] != 0) {
+                // Partial set, count the bits
+                uint8_t byte = mask_[i];
+                for (int i = 0; i < 8 * sizeof(uint8_t); ++i) {
+                    count += byte & 0x01;   // Add one if the bit is set
+                    byte >>= 1;             // Go for next bit
+                }
+
+                // There won't be any more bits set after this, so exit
+                break;
+            }
+        }
+        return (count);
     }
 
     /// \return Address family
@@ -325,14 +341,9 @@ private:
             // Can't match if the address is of the wrong family
             return (false);
     
-        } else if (prefixlen_ == 0) {
-            // ... but if its the right family, a zero length prefix matches
-            // immediately.
-            return (true);
-
         }
 
-        // Simple checks failed, so have to do a complete match.  To check that
+        // Simple check failed, so have to do a complete match.  To check that
         // the address given matches the stored network address and mask, we
         // check the simple condition that:
         //
@@ -343,6 +354,10 @@ private:
         // in the mask). (Note that the mask represents a contiguous set of
         // bits.  As such, as soon as we find a mask byte of zeroes, we have run
         // past the part of the address where we need to match.
+        //
+        // Note that if the passed address was any4 or any6, we rely on the
+        // fact that the size of address_ and mask_ are zero - the loop will
+        // terminate before the first iteration.
 
         bool match = true;
         for (int i = 0; match && (i < address_.size()) &&
@@ -378,13 +393,12 @@ private:
 
         // Validate that the mask is valid.
         if (requested <= maxmask) {
-            prefixlen_ = requested;
 
             // Loop, setting the bits in the set of mask bytes until all the
             // specified bits have been used up.  As both IPV4 and IPV6
             // addresses are stored in network-byte order, this works in
             // both cases.
-            size_t bits_left = prefixlen_;   // Bits remaining to set
+            size_t bits_left = requested;   // Bits remaining to set
             int i = -1;
             while (bits_left > 0) {
                 if (bits_left >= 8) {
@@ -399,7 +413,7 @@ private:
             }
         } else {
             isc_throw(isc::OutOfRange,
-                      "mask size of " << prefixlen_ << " is invalid " <<
+                      "mask size of " << requested << " is invalid " <<
                       "for the givem address");
         }
     }
@@ -408,7 +422,6 @@ private:
 
     std::vector<uint8_t> address_;  ///< Address in binary form
     std::vector<uint8_t> mask_;     ///< Address mask
-    size_t      prefixlen_;         ///< Mask size passed to constructor
     int         family_;            ///< Address family
 };
 
