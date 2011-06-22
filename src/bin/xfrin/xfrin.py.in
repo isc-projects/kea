@@ -32,7 +32,7 @@ import isc.net.parse
 from xfrin_messages import *
 
 isc.log.init("b10-xfrin")
-logger = isc.log.Logger("b10-xfrin")
+logger = isc.log.Logger("xfrin")
 
 try:
     from pydnspp import *
@@ -73,9 +73,6 @@ __version__ = 'BIND10'
 # define xfrin rcode
 XFRIN_OK = 0
 XFRIN_FAIL = 1
-
-def log_error(msg):
-    raise DONOTCALLMEEVER
 
 class XfrinException(Exception):
     pass
@@ -281,7 +278,7 @@ class XfrinConnection(asyncore.dispatcher):
             ret = XFRIN_FAIL
             #TODO, recover data source.
         except isc.datasrc.sqlite3_ds.Sqlite3DSError as e:
-            logger.error(XFRIN_AXFR_DB_FAILURE, self._zone_name, str(e))
+            logger.error(XFRIN_AXFR_DATABASE_FAILURE, self._zone_name, str(e))
             ret = XFRIN_FAIL
         except UserWarning as e:
             # XXX: this is an exception from our C++ library via the
