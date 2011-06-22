@@ -24,6 +24,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 
+#include <exceptions/exceptions.h>
+
 #include <acl/acl.h>
 #include <acl/loader.h>
 
@@ -784,6 +786,10 @@ Resolver::getQueryACL() const {
 
 void
 Resolver::setQueryACL(shared_ptr<const ClientACL> new_acl) {
+    if (!new_acl) {
+        isc_throw(InvalidParameter, "NULL pointer is passed to setQueryACL");
+    }
+
     LOG_INFO(resolver_logger, RESOLVER_SETQUERYACL);
     impl_->setQueryACL(new_acl);
 }
