@@ -1,7 +1,7 @@
-// File created from impldef.mes on Wed Jun  1 10:32:57 2011
+// File created from logimpl_messages.mes on Wed Jun 22 10:38:55 2011
 
-#ifndef __IMPLDEF_H
-#define __IMPLDEF_H
+#ifndef __LOGIMPL_MESSAGES_H
+#define __LOGIMPL_MESSAGES_H
 
 #include <log/message_types.h>
 
@@ -15,4 +15,4 @@ extern const isc::log::MessageID LOGIMPL_BELOWDBGMIN;
 } // namespace log
 } // namespace isc
 
-#endif // __IMPLDEF_H
+#endif // __LOGIMPL_MESSAGES_H

@@ -40,7 +40,7 @@
 #include <log/macros.h>
 
 // Include a set of message definitions.
-#include <log/messagedef.h>
+#include <log/log_messages.h>
 
 using namespace isc::log;
 using namespace std;

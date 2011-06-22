@@ -14,7 +14,7 @@
 
 #include <log/logger_level.h>
 #include <log/macros.h>
-#include <log/messagedef.h>
+#include <log/log_messages.h>
 
 #include <boost/algorithm/string.hpp>
 

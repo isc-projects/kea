@@ -13,11 +13,12 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <string>
-#include <log/output_option.h>
-#include <log/macros.h>
-#include <log/messagedef.h>
 
 #include <boost/algorithm/string.hpp>
+
+#include <log/log_messages.h>
+#include <log/macros.h>
+#include <log/output_option.h>
 
 namespace isc {
 namespace log {
