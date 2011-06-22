@@ -29,7 +29,7 @@ from isc.config.ccsession import *
 from isc.notify import notify_out
 import isc.util.process
 import isc.net.parse
-from xfrindef import *
+from xfrin_messages import *
 
 isc.log.init("b10-xfrin")
 logger = isc.log.Logger("b10-xfrin")
