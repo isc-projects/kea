@@ -287,7 +287,7 @@ public:
     }
 
     /// \return Network mask applied to match
-    std::vector<uint8_t> getNetmask() const {
+    std::vector<uint8_t> getMask() const {
         return (std::vector<uint8_t>(mask_.byte, mask_.byte + IPV6_SIZE8));
     }
 
