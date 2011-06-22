@@ -6,13 +6,13 @@ pkglibexec_SCRIPTS = b10-xfrin
 
 b10_xfrindir = $(pkgdatadir)
 b10_xfrin_DATA = xfrin.spec
-pyexec_DATA = xfrindef.py
+pyexec_DATA = xfrin_messages.py
 
-CLEANFILES = b10-xfrin xfrin.pyc xfrinlog.py xfrindef.py xfrindef.pyc
+CLEANFILES = b10-xfrin xfrin.pyc xfrinlog.py xfrin_messages.py xfrin_messages.pyc
 
 man_MANS = b10-xfrin.8
 EXTRA_DIST = $(man_MANS) b10-xfrin.xml
-EXTRA_DIST += xfrin.spec xfrindef.mes
+EXTRA_DIST += xfrin.spec xfrin_messages.mes
 
 if ENABLE_MAN
 
@@ -22,11 +22,11 @@ b10-xfrin.8: b10-xfrin.xml
 endif
 
 # Define rule to build logging source files from message file
-xfrindef.py: xfrindef.mes
-	$(top_builddir)/src/lib/log/compiler/message -p $(top_srcdir)/src/bin/xfrin/xfrindef.mes
+xfrin_messages.py: xfrin_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message -p $(top_srcdir)/src/bin/xfrin/xfrin_messages.mes
 
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
-b10-xfrin: xfrin.py xfrindef.py
+b10-xfrin: xfrin.py xfrin_messages.py
 	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" \
 	       -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" xfrin.py >$@
 	chmod a+x $@
