@@ -101,7 +101,8 @@ namespace isc  {
 namespace acl {
 template <>
 bool IPCheck<GeneralAddress>::matches(const GeneralAddress& address) const {
-    return (compare(address.addr));
+    return (compare(&address.addr[0],
+            (address.addr.size() == IPV4_SIZE) ? AF_INET : AF_INET6));
 }
 } // namespace acl
 } // namespace isc
@@ -251,7 +252,6 @@ TEST(IPCheck, V4CopyConstructor) {
 
     EXPECT_EQ(acl1.getPrefixlen(), acl2.getPrefixlen());
     EXPECT_EQ(acl1.getFamily(), acl2.getFamily());
-    EXPECT_EQ(acl1.getStringAddress(), acl2.getStringAddress());
 
     vector<uint8_t> net1 = acl1.getMask();
     vector<uint8_t> net2 = acl2.getMask();
@@ -271,7 +271,6 @@ TEST(IPCheck, V4AssignmentOperator) {
 
     EXPECT_EQ(acl1.getPrefixlen(), acl2.getPrefixlen());
     EXPECT_EQ(acl1.getFamily(), acl2.getFamily());
-    EXPECT_EQ(acl1.getStringAddress(), acl2.getStringAddress());
 
     vector<uint8_t> net1 = acl1.getMask();
     vector<uint8_t> net2 = acl2.getMask();
