@@ -255,38 +255,6 @@ public:
         }
     }
 
-    /// \brief Copy constructor
-    ///
-    /// \param other Object from which the copy is being constructed.
-    IPCheck(const IPCheck<Context>& other) : address_(), mask_(),
-            prefixlen_(other.prefixlen_), family_(other.family_),
-            straddr_(other.straddr_)
-    {
-        std::copy(other.address_.word, other.address_.word + IPV6_SIZE32,
-                  address_.word);
-        std::copy(other.mask_.word, other.mask_.word + IPV6_SIZE32,
-                  mask_.word);
-    }
-
-    /// \brief Assignment operator
-    ///
-    /// \param other Source of the assignment.
-    ///
-    /// \return Reference to current object.
-    IPCheck& operator=(const IPCheck<Context>& other) {
-        if (this != &other) {
-            Check<Context>::operator=(other);
-            std::copy(other.address_.word, other.address_.word + IPV6_SIZE32,
-                      address_.word);
-            std::copy(other.mask_.word, other.mask_.word + IPV6_SIZE32,
-                      mask_.word);
-            prefixlen_ = other.prefixlen_;
-            family_ = other.family_;
-            straddr_ = other.straddr_;
-        }
-        return (*this);
-    }
-
     /// \brief Destructor
     virtual ~IPCheck() {}
 
