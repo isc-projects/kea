@@ -112,7 +112,7 @@ T createMask(size_t prefixlen) {
 ///
 /// \return Pair of (string, int) holding the address string and the prefix
 ///         length.  The second element is -1 if no prefix was given.
-///
+// definitions and te/
 /// \exception InvalidParameter Address prefix not of the expected syntax
 
 std::pair<std::string, int>
@@ -152,8 +152,7 @@ public:
     ///
     /// Constructs an empty IPCheck object.  The address family returned will
     /// be zero.
-    IPCheck() : address_(), mask_(), prefixlen_(0), inverse_(false),
-                family_(0), straddr_()
+    IPCheck() : address_(), mask_(), prefixlen_(0), family_(0), straddr_()
     {
         std::fill(address_.word, address_.word + IPV6_SIZE32, 0);
         std::fill(mask_.word, mask_.word + IPV6_SIZE32, 0);
@@ -169,13 +168,9 @@ public:
     /// \param prefixlen The prefix length specified as an integer between 0 and
     ///        32. This determines the number of bits of the address to check.
     ///        (A value of zero imples match all IPV4 addresses.)
-    /// \param inverse If false (the default), matches() returns true if the
-    ///        condition matches.  If true, matches() returns true if the
-    ///        condition does not match.
-    IPCheck(uint32_t address, int prefixlen = 8 * sizeof(uint32_t),
-            bool inverse = false):
-            address_(), mask_(), prefixlen_(prefixlen), inverse_(inverse),
-            family_(AF_INET), straddr_()
+    IPCheck(uint32_t address, int prefixlen = 8 * sizeof(uint32_t)) :
+            address_(), mask_(), prefixlen_(prefixlen), family_(AF_INET),
+            straddr_()
     {
         address_.word[0] = address;
         std::fill(address_.word + 1, address_.word + IPV6_SIZE32, 0);
@@ -192,13 +187,9 @@ public:
     ///        order).
     /// \param mask The network mask specified as an integer between 1 and
     ///        128 This determines the number of bits in the mask to check.
-    /// \param inverse If false (the default), matches() returns true if the
-    ///        condition matches.  If true, matches() returns true if the
-    ///        condition does not match.
-    IPCheck(const uint8_t* address, int prefixlen = 8 * IPV6_SIZE8,
-            bool inverse = false):
-            address_(), mask_(), prefixlen_(prefixlen), inverse_(inverse),
-            family_(AF_INET6), straddr_()
+    IPCheck(const uint8_t* address, int prefixlen = 8 * IPV6_SIZE8) :
+            address_(), mask_(), prefixlen_(prefixlen), family_(AF_INET6),
+            straddr_()
     {
         std::copy(address, address + IPV6_SIZE8, address_.byte);
         std::fill(mask_.word, mask_.word + IPV6_SIZE32, 0);
@@ -219,12 +210,8 @@ public:
     ///        address).  If "n" is specified as zero, the match is for any
     ///        address in that address family.  The address can also be
     ///        given as "any4" or "any6".
-    /// \param inverse If false (the default), matches() returns true if the
-    ///        condition matches.  If true, matches() returns true if the
-    ///        condition does not match.
-    IPCheck(const std::string& addrprfx, bool inverse = false) :
-            address_(), mask_(), prefixlen_(0), inverse_(inverse),
-            family_(0), straddr_(addrprfx)
+    IPCheck(const std::string& addrprfx) : address_(), mask_(), prefixlen_(0),
+                                           family_(0), straddr_(addrprfx)
     {
         // Initialize.
         std::fill(address_.word, address_.word + IPV6_SIZE32, 0);
@@ -272,8 +259,8 @@ public:
     ///
     /// \param other Object from which the copy is being constructed.
     IPCheck(const IPCheck<Context>& other) : address_(), mask_(),
-            prefixlen_(other.prefixlen_), inverse_(other.inverse_),
-            family_(other.family_), straddr_(other.straddr_)
+            prefixlen_(other.prefixlen_), family_(other.family_),
+            straddr_(other.straddr_)
     {
         std::copy(other.address_.word, other.address_.word + IPV6_SIZE32,
                   address_.word);
@@ -294,7 +281,6 @@ public:
             std::copy(other.mask_.word, other.mask_.word + IPV6_SIZE32,
                       mask_.word);
             prefixlen_ = other.prefixlen_;
-            inverse_ = other.inverse_;
             family_ = other.family_;
             straddr_ = other.straddr_;
         }
@@ -357,11 +343,6 @@ public:
 
         return (family_);
     }
-
-    /// \return Setting of inverse flag
-    bool getInverse() const {
-        return (inverse_);
-    }
     ///@}
 
 private:
@@ -402,8 +383,7 @@ private:
                           (address_.byte[i] & mask_.byte[i]));
             }
 
-            // As with the V4 check, return the XOR with the inverse flag.
-            return (match != inverse_);
+            return (match);
         }
 
         // A prefix length of 0 is an unconditional match.
@@ -420,8 +400,8 @@ private:
     /// \return true if the address matches, false if it does not.
     virtual bool compare(const uint32_t testaddr) const {
         if (prefixlen_ != 0) {
-            return (((testaddr & mask_.word[0]) ==
-                     (address_.word[0] & mask_.word[0])) != inverse_);
+            return ((testaddr & mask_.word[0]) ==
+                    (address_.word[0] & mask_.word[0]));
         }
 
         // A prefix length of 0 is an unconditional match.
@@ -488,7 +468,6 @@ private:
     AddressData address_;   ///< Address in binary form
     AddressData mask_;      ///< Address mask
     size_t      prefixlen_; ///< Mask size passed to constructor
-    bool        inverse_;   ///< Test for equality or inequality
     int         family_;    ///< Address family
     std::string straddr_;   ///< Copy of constructor address string
 };
