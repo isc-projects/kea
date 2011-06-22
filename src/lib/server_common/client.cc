@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <string>
+#include <sstream>
+
 #include <acl/ip_check.h>
 
 #include <asiolink/io_endpoint.h>
@@ -49,6 +52,19 @@ Client::getRequestSourceEndpoint() const {
 const IPAddress&
 Client::getRequestSourceIPAddress() const {
     return (impl_->request_src_);
+}
+
+std::string
+Client::toText() const {
+    std::stringstream ss;
+    ss << impl_->request_.getRemoteEndpoint().getAddress().toText()
+       << '#' << impl_->request_.getRemoteEndpoint().getPort();
+    return (ss.str());
+}
+
+std::ostream&
+isc::server_common::operator<<(std::ostream& os, const Client& client) {
+    return (os << client.toText());
 }
 
 template <>

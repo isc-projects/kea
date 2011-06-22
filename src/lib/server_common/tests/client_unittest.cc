@@ -15,6 +15,9 @@
 #include <sys/socket.h>
 #include <string.h>
 
+#include <string>
+#include <sstream>
+
 #include <boost/scoped_ptr.hpp>
 
 #include <acl/ip_check.h>
@@ -108,5 +111,17 @@ TEST_F(ClientTest, ACLCheckIPv6) {
     EXPECT_TRUE(IPCheck<Client>("2001:db8::/64").matches(*client6));
     EXPECT_FALSE(IPCheck<Client>("2001:db8:1::/64").matches(*client6));
     EXPECT_FALSE(IPCheck<Client>("32.1.13.184").matches(*client6));
+}
+
+TEST_F(ClientTest, toText) {
+    EXPECT_EQ("192.0.2.1#53214", client4->toText());
+    EXPECT_EQ("2001:db8::1#53216", client6->toText());
+}
+
+// test operator<<.  We simply confirm it appends the result of toText().
+TEST_F(ClientTest, LeftShiftOperator) {
+    std::ostringstream oss;
+    oss << *client4 << "more text";
+    EXPECT_EQ(client4->toText() + std::string("more text"), oss.str());
 }
 }
