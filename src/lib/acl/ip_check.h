@@ -159,7 +159,7 @@ public:
     IPCheck(uint32_t address, int prefixlen = 8 * IPV4_SIZE) :
             address_(IPV4_SIZE), mask_(), family_(AF_INET)
     {
-        // The address is stored in network-byte order, so the 
+        // The address is stored in network-byte order, so the
         // the address passed should be stored at the lowest address in
         // the array.
         address_[3] = static_cast<uint8_t>((address      ) & 0xff);
@@ -190,7 +190,7 @@ public:
     ///
     /// Constructs an IP Check object from an address or address prefix in the
     /// form <ip-address>/n".
-    /// 
+    ///
     /// Also allowed are the special keywords "any4" and "any6", which match
     /// any IPV4 or IPV6 address.  These must be specified exactly as-is
     /// (i.e. lowercase, with no leading or trailing spaces).
@@ -340,7 +340,7 @@ private:
         if (family != family_) {
             // Can't match if the address is of the wrong family
             return (false);
-    
+
         }
 
         // Simple check failed, so have to do a complete match.  To check that
@@ -414,7 +414,7 @@ private:
         } else {
             isc_throw(isc::OutOfRange,
                       "mask size of " << requested << " is invalid " <<
-                      "for the givem address");
+                      "for the given address");
         }
     }
 
