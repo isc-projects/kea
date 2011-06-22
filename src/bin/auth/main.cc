@@ -47,6 +47,7 @@
 #include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
 #include <log/dummylog.h>
+#include <log/logger_support.h>
 #include <server_common/keyring.h>
 
 using namespace std;
@@ -117,6 +118,11 @@ main(int argc, char* argv[]) {
     if (argc - optind > 0) {
         usage();
     }
+
+    // Initialize logging.  If verbose, we'll use maximum verbosity.
+    isc::log::initLogger("b10-auth",
+                         (verbose_mode ? isc::log::DEBUG : isc::log::INFO),
+                         isc::log::MAX_DEBUG_LEVEL, NULL);
 
     int ret = 0;
 
