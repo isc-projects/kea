@@ -244,43 +244,62 @@ public:
     ///
     /// Constructs an IP Check object from an address or address prefix in the
     /// form <ip-address>/n".
+    /// 
+    /// Also allowed are the special keywords "any4" and "any6", which match
+    /// any IPV4 or IPV6 address.  These must be specified exactly as-is
+    /// (i.e. lowercase, with no leading or trailing spaces).
     ///
-    /// \param address IP address and mask in the form "<ip-address>/n"
+    /// \param addrprfx IP address prefix in the form "<ip-address>/n"
     ///        (where the "/n" part is optional and should be valid for the
     ///        address).  If "n" is specified as zero, the match is for any
-    ///        address in that address family.
+    ///        address in that address family.  The address can also be
+    ///        given as "any4" or "any6".
     /// \param inverse If false (the default), matches() returns true if the
     ///        condition matches.  If true, matches() returns true if the
     ///        condition does not match.
-    IPCheck(const std::string& address, bool inverse = false) :
+    IPCheck(const std::string& addrprfx, bool inverse = false) :
             address_(), mask_(), prefixlen_(0), inverse_(inverse),
-            family_(0), straddr_(address)
+            family_(0), straddr_(addrprfx)
     {
         // Initialize.
         std::fill(address_.word, address_.word + IPV6_SIZE32, 0);
         std::fill(mask_.word, mask_.word + IPV6_SIZE32, 0);
 
-        // Split the address into address part and mask.
-        std::pair<std::string, int> result = splitIPAddress(address);
-
-        // Try to convert the address.  If successful, the result is in
-        // network-byte order (most significant components at lower addresses).
-        family_ = AF_INET6;
-        int status = inet_pton(AF_INET6, result.first.c_str(), address_.byte);
-        if (status == 0) {
-
-            // Not IPV6, try IPv4
+        // Check for special cases first
+        if (addrprfx == "any4") {
             family_ = AF_INET;
-            int status = inet_pton(AF_INET, result.first.c_str(),
-                                   address_.word);
-            if (status == 0) {
-                isc_throw(isc::InvalidParameter, "address of " <<
-                          result.first << " is a not valid IP address");
-            }
-        }
 
-        // All done, so set the mask used in checking.
-        setMask(result.second);
+        } else if (addrprfx == "any6") {
+            family_ = AF_INET6;
+
+        } else {
+
+            // General address prefix.  Split into address part and prefix
+            // length.
+
+            std::pair<std::string, int> result = splitIPAddress(addrprfx);
+
+            // Try to convert the address.  If successful, the result is in
+            // network-byte order (most significant components at lower
+            // addresses).
+            family_ = AF_INET6;
+            int status = inet_pton(AF_INET6, result.first.c_str(),
+                                   address_.byte);
+            if (status == 0) {
+
+                // Not IPV6, try IPv4
+                family_ = AF_INET;
+                int status = inet_pton(AF_INET, result.first.c_str(),
+                                       address_.word);
+                if (status == 0) {
+                    isc_throw(isc::InvalidParameter, "address prefix of " <<
+                              result.first << " is a not valid");
+                }
+            }
+
+            // All done, so set the mask used in checking.
+            setMask(result.second);
+        }
     }
 
     /// \brief Copy constructor
