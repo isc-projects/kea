@@ -320,6 +320,21 @@ TEST(IPCheck, V4Compare) {
     EXPECT_FALSE(acl4.matches(htonl(0x2345ffff)));
     EXPECT_TRUE(acl4.matches(htonl(0x23460000)));
     EXPECT_TRUE(acl4.matches(htonl(0x2346ffff)));
+
+    // Match if "any4" is specified
+    IPCheck<GeneralAddress> acl5("any4");
+    EXPECT_TRUE(acl5.matches(htonl(0x23450000)));
+    EXPECT_TRUE(acl5.matches(htonl(0x23450001)));
+    EXPECT_TRUE(acl5.matches(htonl(0x2345ffff)));
+    EXPECT_TRUE(acl5.matches(htonl(0x23460000)));
+    EXPECT_TRUE(acl5.matches(htonl(0x2346ffff)));
+
+    IPCheck<GeneralAddress> acl6(htonl(0x23450000), 0);
+    EXPECT_TRUE(acl6.matches(htonl(0x23450000)));
+    EXPECT_TRUE(acl6.matches(htonl(0x23450001)));
+    EXPECT_TRUE(acl6.matches(htonl(0x2345ffff)));
+    EXPECT_TRUE(acl6.matches(htonl(0x23460000)));
+    EXPECT_TRUE(acl6.matches(htonl(0x2346ffff)));
 }
 
 
@@ -553,6 +568,20 @@ TEST(IPCheck, V6Compare) {
     EXPECT_FALSE(acl4.matches(v6addr_2_52));
     EXPECT_TRUE(acl4.matches(v6addr_2_48));
     EXPECT_TRUE(acl4.matches(v6addr_3));
+
+    // Match on any address
+    IPCheck<GeneralAddress> acl5("any6");
+    EXPECT_TRUE(acl5.matches(v6addr_2));
+    EXPECT_TRUE(acl5.matches(v6addr_2_52));
+    EXPECT_TRUE(acl5.matches(v6addr_2_48));
+    EXPECT_TRUE(acl5.matches(v6addr_3));
+
+    IPCheck<GeneralAddress> acl6(string(V6ADDR_1_STRING) + string("/0"));
+    EXPECT_TRUE(acl6.matches(v6addr_2));
+    EXPECT_TRUE(acl6.matches(v6addr_2_52));
+    EXPECT_TRUE(acl6.matches(v6addr_2_48));
+    EXPECT_TRUE(acl6.matches(v6addr_3));
+
 }
 
 // *** Mixed-mode tests - mainly to check that no exception is thrown ***
@@ -570,4 +599,14 @@ TEST(IPCheck, MixedMode) {
     GeneralAddress test2(0x12345678);
     EXPECT_NO_THROW(acl2.matches(test2));
     EXPECT_FALSE(acl2.matches(test2));
+
+    // Ensure only a V4 address matches "any4".
+    IPCheck<GeneralAddress> acl3("any4");
+    EXPECT_FALSE(acl3.matches(test1));
+    EXPECT_TRUE(acl3.matches(test2));
+
+    // ... and check the reverse
+    IPCheck<GeneralAddress> acl4("any6");
+    EXPECT_TRUE(acl4.matches(test1));
+    EXPECT_FALSE(acl4.matches(test2));
 }
