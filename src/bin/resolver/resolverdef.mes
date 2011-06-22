@@ -195,3 +195,12 @@ query and is ignoring it.
 % SETQUERYACL   query ACL is configured
 A debug message that appears when a new query ACL is configured for the
 resolver.
+
+%QUERYREJECTED   query rejected: '%1/%2/%3' from %4
+TBD
+
+%QUERYDROPPED    query dropped: '%1/%2/%3' from %4
+TBD
+
+%QUERYACCEPTED   query accepted: '%1/%2/%3' from %4
+TBD
