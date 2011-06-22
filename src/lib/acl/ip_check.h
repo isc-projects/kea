@@ -238,13 +238,13 @@ public:
             family_ = AF_INET6;
             int status = inet_pton(AF_INET6, result.first.c_str(),
                                    address_.byte);
-            if (status == 0) {
+            if (status != 1) {
 
                 // Not IPV6, try IPv4
                 family_ = AF_INET;
                 int status = inet_pton(AF_INET, result.first.c_str(),
                                        address_.word);
-                if (status == 0) {
+                if (status != 1) {
                     isc_throw(isc::InvalidParameter, "address prefix of " <<
                               result.first << " is a not valid");
                 }
