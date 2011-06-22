@@ -183,14 +183,14 @@ TEST(IPCheck, V4ConstructorMask) {
     // and bytes
     IPCheck<GeneralAddress> acl1(1, 1);         // Address of 1 is placeholder
     GeneralAddress mask1(htonl(0x80000000));    // Expected mask
-    vector<uint8_t> stored1 = acl1.getNetmask();
+    vector<uint8_t> stored1 = acl1.getMask();
     EXPECT_TRUE(mask1.equals(stored1));
     EXPECT_EQ(1, acl1.getPrefixlen());
 
     // Different check
     IPCheck<GeneralAddress> acl2(1, 24);
     GeneralAddress mask2(htonl(0xffffff00));
-    vector<uint8_t> stored2 = acl2.getNetmask();
+    vector<uint8_t> stored2 = acl2.getMask();
     EXPECT_TRUE(mask2.equals(stored2));
     EXPECT_EQ(24, acl2.getPrefixlen());
 
@@ -242,8 +242,8 @@ TEST(IPCheck, V4CopyConstructor) {
     EXPECT_EQ(acl1.getFamily(), acl2.getFamily());
     EXPECT_EQ(acl1.getStringAddress(), acl2.getStringAddress());
 
-    vector<uint8_t> net1 = acl1.getNetmask();
-    vector<uint8_t> net2 = acl2.getNetmask();
+    vector<uint8_t> net1 = acl1.getMask();
+    vector<uint8_t> net2 = acl2.getMask();
     EXPECT_EQ(net1.size(), net2.size());
     EXPECT_TRUE(equal(net1.begin(), net1.end(), net2.begin()));
 
@@ -262,8 +262,8 @@ TEST(IPCheck, V4AssignmentOperator) {
     EXPECT_EQ(acl1.getFamily(), acl2.getFamily());
     EXPECT_EQ(acl1.getStringAddress(), acl2.getStringAddress());
 
-    vector<uint8_t> net1 = acl1.getNetmask();
-    vector<uint8_t> net2 = acl2.getNetmask();
+    vector<uint8_t> net1 = acl1.getMask();
+    vector<uint8_t> net2 = acl2.getMask();
     EXPECT_EQ(net1.size(), net2.size());
     EXPECT_TRUE(equal(net1.begin(), net1.end(), net2.begin()));
 
@@ -391,24 +391,24 @@ TEST(IPCheck, V6ConstructorMask) {
 
     // Valid masks...
     IPCheck<GeneralAddress> acl1(V6ADDR_1, 1);
-    vector<uint8_t> stored = acl1.getNetmask();
+    vector<uint8_t> stored = acl1.getMask();
     EXPECT_EQ(sizeof(MASK_1), stored.size());
     EXPECT_TRUE(equal(stored.begin(), stored.end(), MASK_1));
 
     IPCheck<GeneralAddress> acl2(V6ADDR_1, 8);
-    stored = acl2.getNetmask();
+    stored = acl2.getMask();
     EXPECT_TRUE(equal(stored.begin(), stored.end(), MASK_8));
 
     IPCheck<GeneralAddress> acl3(V6ADDR_1, 48);
-    stored = acl3.getNetmask();
+    stored = acl3.getMask();
     EXPECT_TRUE(equal(stored.begin(), stored.end(), MASK_48));
 
     IPCheck<GeneralAddress> acl4(V6ADDR_1, 51);
-    stored = acl4.getNetmask();
+    stored = acl4.getMask();
     EXPECT_TRUE(equal(stored.begin(), stored.end(), MASK_51));
 
     IPCheck<GeneralAddress> acl5(V6ADDR_1, 128);
-    stored = acl5.getNetmask();
+    stored = acl5.getMask();
     EXPECT_TRUE(equal(stored.begin(), stored.end(), MASK_128));
 
     // ... and some invalid network masks
@@ -461,8 +461,8 @@ TEST(IPCheck, V6CopyConstructor) {
 
     EXPECT_EQ(acl1.getPrefixlen(), acl2.getPrefixlen());
 
-    vector<uint8_t> acl1_mask = acl1.getNetmask();
-    vector<uint8_t> acl2_mask = acl1.getNetmask();
+    vector<uint8_t> acl1_mask = acl1.getMask();
+    vector<uint8_t> acl2_mask = acl1.getMask();
     EXPECT_EQ(sizeof(V6ADDR_1), acl1_mask.size());
     EXPECT_EQ(acl1_mask.size(), acl2_mask.size());
     EXPECT_TRUE(equal(acl1_mask.begin(), acl1_mask.end(),
@@ -484,8 +484,8 @@ TEST(IPCheck, V6AssignmentOperator) {
 
     EXPECT_EQ(acl1.getPrefixlen(), acl2.getPrefixlen());
 
-    vector<uint8_t> acl1_mask = acl1.getNetmask();
-    vector<uint8_t> acl2_mask = acl2.getNetmask();
+    vector<uint8_t> acl1_mask = acl1.getMask();
+    vector<uint8_t> acl2_mask = acl2.getMask();
     EXPECT_EQ(sizeof(V6ADDR_1), acl1_mask.size());
     EXPECT_EQ(acl1_mask.size(), acl2_mask.size());
     EXPECT_TRUE(equal(acl1_mask.begin(), acl1_mask.end(),
