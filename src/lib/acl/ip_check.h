@@ -45,7 +45,7 @@ namespace internal {
 ///
 /// Given a prefix length and a data type, return a value of that data type
 /// with the most significant "prefix length" bits set.  For example, if the
-/// data type is an uint8_t and the p[refix length is 3, the function would
+/// data type is an uint8_t and the prefix length is 3, the function would
 /// return a uint8_t holding the binary value 11100000.  This value is used as
 /// a mask in the address checks.
 ///
@@ -75,7 +75,7 @@ T createMask(size_t prefixlen) {
         //
         // We note that the value of 2**m - 1 gives a value with the least
         // significant m bits set.  For a data type of width w, this means that
-        // the most signficant (w-m) bits clear.
+        // the most signficant (w-m) bits are clear.
         //
         // Hence the value 2**(w-m) - 1 gives a result with the least signficant
         // w-m bits set and the most significant m bits clear.  The 1's
@@ -99,9 +99,8 @@ T createMask(size_t prefixlen) {
 /// Splits an IP address prefix (given in the form of "xxxxxx/n" or "xxxxx" into
 /// a string representing the IP address and a number giving the length of the
 /// prefix. (In the latter case, the prefix is equal in length to the width in
-/// width in bits of the data type holding the address.) An exception will
-/// be thrown if the string format is invalid or if the prefix length is
-/// invalid.
+/// width in bits of the data type holding the address.) An exception will be
+/// thrown if the string format is invalid or if the prefix length is invalid.
 ///
 /// N.B. This function does NOT check that the address component is a valid IP
 /// address; this is done elsewhere in the address parsing process.
@@ -111,7 +110,7 @@ T createMask(size_t prefixlen) {
 ///
 /// \return Pair of (string, int) holding the address string and the prefix
 ///         length.  The second element is -1 if no prefix was given.
-// definitions and te/
+///
 /// \exception InvalidParameter Address prefix not of the expected syntax
 
 std::pair<std::string, int>
@@ -151,17 +150,16 @@ public:
     /// 32-bit value in network byte order and a prefix length.
     ///
     /// \param address IP address to check for (as an address in host-byte
-    ///        order).  N.B.  Unlike the IPV6 constructor, this is in host
-    ///        byte order.
+    ///        order).  Note host-byte order - this is different to the IPV6
+    ///        constructor.
     /// \param prefixlen The prefix length specified as an integer between 0 and
     ///        32. This determines the number of bits of the address to check.
     ///        (A value of zero imples match all IPV4 addresses.)
     IPCheck(uint32_t address, int prefixlen = 8 * IPV4_SIZE) :
             address_(IPV4_SIZE), mask_(), family_(AF_INET)
     {
-        // The address is stored in network-byte order, so the
-        // the address passed should be stored at the lowest address in
-        // the array.
+        // The address is stored in network-byte order, so the MS byte should
+        // be stored at the lowest address in the array.
         address_[3] = static_cast<uint8_t>((address      ) & 0xff);
         address_[2] = static_cast<uint8_t>((address >>  8) & 0xff);
         address_[1] = static_cast<uint8_t>((address >> 16) & 0xff);
@@ -182,7 +180,6 @@ public:
     IPCheck(const uint8_t* address, int prefixlen = 8 * IPV6_SIZE) :
             address_(address, address + IPV6_SIZE), mask_(), family_(AF_INET6)
     {
-
         setMask(prefixlen);
     }
 
@@ -195,18 +192,18 @@ public:
     /// any IPV4 or IPV6 address.  These must be specified exactly as-is
     /// (i.e. lowercase, with no leading or trailing spaces).
     ///
-    /// \param addrprfx IP address prefix in the form "<ip-address>/n"
+    /// \param ipprefix IP address prefix in the form "<ip-address>/n"
     ///        (where the "/n" part is optional and should be valid for the
     ///        address).  If "n" is specified as zero, the match is for any
     ///        address in that address family.  The address can also be
     ///        given as "any4" or "any6".
-    IPCheck(const std::string& addrprfx) : address_(), mask_(), family_(0)
+    IPCheck(const std::string& ipprefix) : address_(), mask_(), family_(0)
     {
         // Check for special cases first.
-        if (addrprfx == "any4") {
+        if (ipprefix == "any4") {
             family_ = AF_INET;
 
-        } else if (addrprfx == "any6") {
+        } else if (ipprefix == "any6") {
             family_ = AF_INET6;
 
         } else {
@@ -214,7 +211,7 @@ public:
             // General address prefix.  Split into address part and prefix
             // length.
             std::pair<std::string, int> result =
-                internal::splitIPAddress(addrprfx);
+                internal::splitIPAddress(ipprefix);
 
             // Try to convert the address.  If successful, the result is in
             // network-byte order (most significant components at lower
@@ -240,11 +237,11 @@ public:
 
                 } else {
                     isc_throw(isc::InvalidParameter, "address prefix of " <<
-                              result.first << " is a not valid");
+                              ipprefix << " is a not valid");
                 }
             }
 
-            // All done, so set the mask used in checking.
+            // All done, so set the mask used in address comparison.
             setMask(result.second);
         }
     }
@@ -340,7 +337,6 @@ private:
         if (family != family_) {
             // Can't match if the address is of the wrong family
             return (false);
-
         }
 
         // Simple check failed, so have to do a complete match.  To check that
@@ -356,8 +352,8 @@ private:
         // past the part of the address where we need to match.
         //
         // Note that if the passed address was any4 or any6, we rely on the
-        // fact that the size of address_ and mask_ are zero - the loop will
-        // terminate before the first iteration.
+        // fact that the size of address_ is zero - the loop will terminate
+        // before the first iteration.
 
         bool match = true;
         for (int i = 0; match && (i < address_.size()) &&
