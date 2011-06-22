@@ -150,10 +150,12 @@ public:
     void resolve(const isc::dns::QuestionPtr& question,
         const isc::resolve::ResolverInterface::CallbackPtr& callback);
 
-    void processNormalQuery(ConstMessagePtr query_message,
-                            MessagePtr answer_message,
-                            OutputBufferPtr buffer,
-                            DNSServer* server);
+    enum NormalQueryResult { RECURSION, DROPPED, ERROR };
+    NormalQueryResult processNormalQuery(const IOMessage& io_message,
+                                         MessagePtr query_message,
+                                         MessagePtr answer_message,
+                                         OutputBufferPtr buffer,
+                                         DNSServer* server);
 
     const Resolver::ClientACL& getQueryACL() const {
         return (*query_acl_);
@@ -419,7 +421,6 @@ Resolver::processMessage(const IOMessage& io_message,
             server->resume(false);
             return;
         }
-
     } catch (const Exception& ex) {
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_HDRERR)
                   .arg(ex.what());
@@ -453,7 +454,7 @@ Resolver::processMessage(const IOMessage& io_message,
               .arg(*query_message);
 
     // Perform further protocol-level validation.
-    bool sendAnswer = true;
+    bool send_answer = true;
     if (query_message->getOpcode() == Opcode::NOTIFY()) {
 
         makeErrorMessage(query_message, answer_message,
@@ -470,73 +471,22 @@ Resolver::processMessage(const IOMessage& io_message,
         // Not one question
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_NOTONEQUES)
                   .arg(query_message->getRRCount(Message::SECTION_QUESTION));
-        makeErrorMessage(query_message, answer_message,
-                         buffer, Rcode::FORMERR());
+        makeErrorMessage(query_message, answer_message, buffer,
+                         Rcode::FORMERR());
     } else {
-        const ConstQuestionPtr question = *query_message->beginQuestion();
-        const RRType qtype = question->getType();
-
-        Client client(io_message);
-        const BasicAction query_action(impl_->getQueryACL().execute(client));
-        if (query_action == REJECT) {
-            LOG_INFO(resolver_logger, RESOLVER_QUERYREJECTED)
-                .arg(question->getName()).arg(qtype).arg(question->getClass())
-                .arg(client);
-            makeErrorMessage(query_message, answer_message, buffer,
-                             Rcode::REFUSED());
-            // the following should be refactored
-            server->resume(true);
-            return;
-        } else if (query_action == DROP) {
-            LOG_INFO(resolver_logger, RESOLVER_QUERYDROPPED)
-                .arg(question->getName()).arg(qtype).arg(question->getClass())
-                .arg(client);
-            server->resume(false);
-            return;
-        }
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_QUERYACCEPTED)
-            .arg(question->getName()).arg(qtype).arg(question->getClass())
-            .arg(client);
-
-        if (qtype == RRType::AXFR()) {
-            if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
-
-                // Can't process AXFR request receoved over UDP
-                LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS,
-                          RESOLVER_AXFRUDP);
-                makeErrorMessage(query_message, answer_message,
-                                 buffer, Rcode::FORMERR());
-            } else {
-                // ... or over TCP for that matter
-                LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS,
-                          RESOLVER_AXFRTCP);
-                makeErrorMessage(query_message, answer_message,
-                                 buffer, Rcode::NOTIMP());
-            }
-        } else if (qtype == RRType::IXFR()) {
-            // Can't process IXFR request
-            LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_IXFR);
-            makeErrorMessage(query_message, answer_message,
-                             buffer, Rcode::NOTIMP());
-        } else if (question->getClass() != RRClass::IN()) {
-
-            // Non-IN message received, refuse it.
-            LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_NOTIN)
-                      .arg(question->getClass());
-            makeErrorMessage(query_message, answer_message,
-                             buffer, Rcode::REFUSED());
-        } else {
+        const ResolverImpl::NormalQueryResult result =
+            impl_->processNormalQuery(io_message, query_message,
+                                      answer_message, buffer, server);
+        if (result == ResolverImpl::RECURSION) {
             // The RecursiveQuery object will post the "resume" event to the
             // DNSServer when an answer arrives, so we don't have to do it now.
-            sendAnswer = false;
-            impl_->processNormalQuery(query_message, answer_message,
-                                      buffer, server);
+            return;
+        } else if (result == ResolverImpl::DROPPED) {
+            send_answer = false;
         }
     }
 
-    if (sendAnswer) {
-        server->resume(true);
-    }
+    server->resume(send_answer);
 }
 
 void
@@ -546,24 +496,76 @@ ResolverImpl::resolve(const QuestionPtr& question,
     rec_query_->resolve(question, callback);
 }
 
-void
-ResolverImpl::processNormalQuery(ConstMessagePtr query_message,
+ResolverImpl::NormalQueryResult
+ResolverImpl::processNormalQuery(const IOMessage& io_message,
+                                 MessagePtr query_message,
                                  MessagePtr answer_message,
                                  OutputBufferPtr buffer,
                                  DNSServer* server)
 {
+    const ConstQuestionPtr question = *query_message->beginQuestion();
+    const RRType qtype = question->getType();
+    const RRClass qclass = question->getClass();
+
+    // Apply query ACL
+    Client client(io_message);
+    const BasicAction query_action(getQueryACL().execute(client));
+    if (query_action == isc::acl::REJECT) {
+        LOG_INFO(resolver_logger, RESOLVER_QUERYREJECTED)
+            .arg(question->getName()).arg(qtype).arg(qclass).arg(client);
+        makeErrorMessage(query_message, answer_message, buffer,
+                         Rcode::REFUSED());
+        return (ERROR);
+    } else if (query_action == isc::acl::DROP) {
+        LOG_INFO(resolver_logger, RESOLVER_QUERYDROPPED)
+            .arg(question->getName()).arg(qtype).arg(qclass).arg(client);
+        return (DROPPED);
+    }
+    LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_QUERYACCEPTED)
+        .arg(question->getName()).arg(qtype).arg(question->getClass())
+        .arg(client);
+
+    // ACL passed.  Reject inappropriate queries for the resolver.
+    if (qtype == RRType::AXFR()) {
+        if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
+            // Can't process AXFR request receoved over UDP
+            LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_AXFRUDP);
+            makeErrorMessage(query_message, answer_message, buffer,
+                             Rcode::FORMERR());
+        } else {
+            // ... or over TCP for that matter
+            LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_AXFRTCP);
+            makeErrorMessage(query_message, answer_message, buffer,
+                             Rcode::NOTIMP());
+        }
+        return (ERROR);
+    } else if (qtype == RRType::IXFR()) {
+        // Can't process IXFR request
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_IXFR);
+        makeErrorMessage(query_message, answer_message, buffer,
+                         Rcode::NOTIMP());
+        return (ERROR);
+    } else if (qclass != RRClass::IN()) {
+        // Non-IN message received, refuse it.
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_NOTIN)
+            .arg(qclass);
+        makeErrorMessage(query_message, answer_message, buffer,
+                         Rcode::REFUSED());
+        return (ERROR);
+    }
+
+    // Everything is okay.  Start resolver.
     if (upstream_.empty()) {
         // Processing normal query
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_NORMQUERY);
-        ConstQuestionPtr question = *query_message->beginQuestion();
         rec_query_->resolve(*question, answer_message, buffer, server);
-
     } else {
-
         // Processing forward query
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_FWDQUERY);
         rec_query_->forward(query_message, answer_message, buffer, server);
     }
+
+    return (RECURSION);
 }
 
 namespace {
