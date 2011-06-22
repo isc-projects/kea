@@ -12,81 +12,79 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-$PREFIX XFRIN_
 # No namespace declaration - these constants go in the global namespace
-# along with the resolver methods.
+# of the xfrin messages python module.
 
-% STARTING      starting resolver with command line '%1'
-An informational message, this is output when the resolver starts up.
-
-% IMPORT_DNS    error importing python DNS module: %1
-There was an error importing the python DNS module pydnspp. The most
-likely cause is a PYTHONPATH problem.
-
-% CONNECT_MASTER error connecting to master at %1: %2
-There was an error opening a connection to the master. The error is
-shown in the log message.
-
-% AXFR_TRANSFER_STARTED AXFR transfer of zone %1 started
-A connection to the master server has been made, the serial value in
-the SOA record has been checked, and a zone transfer has been started.
-
-% AXFR_TRANSFER_SUCCESS AXFR transfer of zone %1 succeeded
-The AXFR transfer of the given zone was successfully completed.
-
-% AXFR_TRANSFER_FAILURE AXFR transfer of zone %1 failed: %2
-The AXFR transfer for the given zone has failed due to a protocol error.
-The error is shown in the log message.
-
-% AXFR_DB_FAILURE AXFR transfer of zone %1 failed: %2
-The AXFR transfer for the given zone has failed due to a database problem.
-The error is shown in the log message.
-
-% AXFR_INTERNAL_FAILURE AXFR transfer of zone %1 failed: %2
+% XFRIN_AXFR_INTERNAL_FAILURE AXFR transfer of zone %1 failed: %2
 The AXFR transfer for the given zone has failed due to an internal
 problem in the bind10 python wrapper library.
 The error is shown in the log message.
 
-% BAD_MASTER_ADDR_FORMAT bad format for master address: %1
+% XFRIN_AXFR_DATABASE_FAILURE AXFR transfer of zone %1 failed: %2
+The AXFR transfer for the given zone has failed due to a database problem.
+The error is shown in the log message.
+
+% XFRIN_AXFR_TRANSFER_FAILURE AXFR transfer of zone %1 failed: %2
+The AXFR transfer for the given zone has failed due to a protocol error.
+The error is shown in the log message.
+
+% XFRIN_AXFR_TRANSFER_STARTED AXFR transfer of zone %1 started
+A connection to the master server has been made, the serial value in
+the SOA record has been checked, and a zone transfer has been started.
+
+% XFRIN_AXFR_TRANSFER_SUCCESS AXFR transfer of zone %1 succeeded
+The AXFR transfer of the given zone was successfully completed.
+
+% XFRIN_BAD_MASTER_ADDR_FORMAT bad format for master address: %1
 The given master address is not a valid IP address
 
-% BAD_MASTER_PORT_FORMAT bad format for master port: %1
+% XFRIN_BAD_MASTER_PORT_FORMAT bad format for master port: %1
 The given master port is not a valid port number
 
-% BAD_ZONE_CLASS Invalid zone class: %1
-The given zone class is not a valid DNS class.
-
-% BAD_TSIG_KEY_STRING bad TSIG key string: %1
+% XFRIN_BAD_TSIG_KEY_STRING bad TSIG key string: %1
 The given string does not represent a valid TSIG key.
 
-% RETRANSFER_UNKNOWN_ZONE got notification to retransfer unknown zone %1
+% XFRIN_BAD_ZONE_CLASS Invalid zone class: %1
+The given zone class is not a valid DNS class.
+
+% XFRIN_CC_SESSION_ERROR error reading from cc channel: %1
+There was a problem reading from the command and control channel. The
+most likely cause is that xfrin the msgq daemon is not running.
+
+% XFRIN_COMMAND_ERROR error while executing command '%1': %2
+There was an error while the given command was being processed. The
+error is given in the log message.
+
+% XFRIN_CONNECT_MASTER error connecting to master at %1: %2
+There was an error opening a connection to the master. The error is
+shown in the log message.
+
+% XFRIN_MSGQ_SEND_ERROR error while contacting %1 and %2
+There was a problem sending a message to the xfrout module or the
+zone manager. This most likely means that the msgq daemon has quit or
+was killed.
+
+% XFRIN_MSGQ_SEND_ERROR_ZONE_MANAGER error while contacting %1
+There was a problem sending a message to the zone manager. This most
+likely means that the msgq daemon has quit or was killed.
+
+% XFRIN_IMPORT_DNS error importing python DNS module: %1
+There was an error importing the python DNS module pydnspp. The most
+likely cause is a PYTHONPATH problem.
+
+% XFRIN_RETRANSFER_UNKNOWN_ZONE got notification to retransfer unknown zone %1
 There was an internal command to retransfer the given zone, but the
 zone is not known to the system. This may indicate that the configuration
 for xfrin is incomplete, or there was a typographical error in the
 zone name in the configuration.
 
-% COMMAND_ERROR error while executing command '%1': %2
-There was an error while the given command was being processed. The
-error is given in the log message.
+% XFRIN_STARTING starting resolver with command line '%1'
+An informational message, this is output when the resolver starts up.
 
-% MSGQ_SEND_ERROR error while contacting %1 and %2
-There was a problem sending a message to the xfrout module or the
-zone manager. This most likely means that the msgq daemon has quit or
-was killed.
-
-% MSGQ_SEND_ERROR_ZONE_MANAGER error while contacting %1
-There was a problem sending a message to the zone manager. This most
-likely means that the msgq daemon has quit or was killed.
-
-% STOPPED_BY_KEYBOARD keyboard interrupt, shutting down
+% XFRIN_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down
 There was a keyboard interrupt signal to stop the xfrin daemon. The
 daemon will now shut down.
 
-% CC_SESSION_ERROR error reading from cc channel: %1
-There was a problem reading from the command and control channel. The
-most likely cause is that xfrin the msgq daemon is not running.
-
-% UNKNOWN_ERROR unknown error: %1
+% XFRIN_UNKNOWN_ERROR unknown error: %1
 An uncaught exception was raised while running the xfrin daemon. The
 exception message is printed in the log message.
-
