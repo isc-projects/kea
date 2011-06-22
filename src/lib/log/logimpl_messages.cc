@@ -1,4 +1,4 @@
-// File created from impldef.mes on Wed Jun  1 10:32:57 2011
+// File created from logimpl_messages.mes on Wed Jun 22 10:38:55 2011
 
 #include <cstddef>
 #include <log/message_types.h>

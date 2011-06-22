@@ -19,9 +19,9 @@
 
 #include <log4cplus/logger.h>
 
-#include <log/impldef.h>
 #include <log/logger_level.h>
 #include <log/logger_level_impl.h>
+#include <log/logimpl_messages.h>
 #include <log/macros.h>
 
 using namespace log4cplus;

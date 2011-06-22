@@ -27,7 +27,7 @@
 #include <exceptions/exceptions.h>
 
 #include <log/macros.h>
-#include <log/messagedef.h>
+#include <log/log_messages.h>
 #include <log/logger.h>
 #include <log/logger_level.h>
 #include <log/logger_manager.h>
