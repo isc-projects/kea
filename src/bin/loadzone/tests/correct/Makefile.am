@@ -13,8 +13,15 @@ EXTRA_DIST += ttl2.db
 EXTRA_DIST += ttlext.db
 EXTRA_DIST += example.db
 
+# If necessary (rare cases), explicitly specify paths to dynamic libraries
+# required by loadable python modules.
+LIBRARY_PATH_PLACEHOLDER =
+if SET_ENV_LIBRARY_PATH
+LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/cc/.libs:$(abs_top_builddir)/src/lib/config/.libs:$(abs_top_builddir)/src/lib/log/.libs:$(abs_top_builddir)/src/lib/util/.libs:$(abs_top_builddir)/src/lib/exceptions/.libs:$$$(ENV_LIBRARY_PATH)
+endif
+
 # TODO: maybe use TESTS?
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
 	echo Running test: correct_test.sh 
-	$(SHELL) $(abs_builddir)/correct_test.sh
+	$(LIBRARY_PATH_PLACEHOLDER) $(SHELL) $(abs_builddir)/correct_test.sh
