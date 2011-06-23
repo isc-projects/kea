@@ -23,7 +23,8 @@ main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
     isc::UnitTestUtil::addDataPath(TEST_DATA_DIR);
     isc::UnitTestUtil::addDataPath(TEST_DATA_BUILDDIR);
-    isc::log::initLogger();
+    isc::log::initLogger("resolver_test", isc::log::DEBUG,
+                         isc::log::MAX_DEBUG_LEVEL);
 
     return (isc::util::unittests::run_all());
 }

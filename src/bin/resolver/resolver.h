@@ -19,6 +19,10 @@
 #include <vector>
 #include <utility>
 
+#include <boost/shared_ptr.hpp>
+
+#include <acl/acl.h>
+
 #include <cc/data.h>
 #include <config/ccsession.h>
 #include <dns/message.h>
@@ -36,6 +40,12 @@
 #include <cache/resolver_cache.h>
 
 #include <resolve/resolver_interface.h>
+
+namespace isc {
+namespace server_common {
+class Client;
+}
+}
 
 class ResolverImpl;
 
@@ -235,6 +245,27 @@ public:
      * will retry this number of times
      */
     int getRetries() const;
+
+    // Shortcut typedef used for query ACL.
+    typedef isc::acl::ACL<isc::server_common::Client> ClientACL;
+
+    /// Get the query ACL.
+    ///
+    /// \exception None
+    const ClientACL& getQueryACL() const;
+
+    /// Set the new query ACL.
+    ///
+    /// This method replaces the existing query ACL completely.
+    /// Normally this method will be called via the configuration handler,
+    /// but is publicly available for convenience of tests (and other
+    /// experimental purposes).
+    /// \c new_acl must not be a NULL pointer.
+    ///
+    /// \exception InvalidParameter The given pointer is NULL
+    ///
+    /// \param new_acl The new ACL to replace the existing one.
+    void setQueryACL(boost::shared_ptr<const ClientACL> new_acl);
 
 private:
     ResolverImpl* impl_;
