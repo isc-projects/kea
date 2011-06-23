@@ -98,7 +98,7 @@ LoggerImpl::getEffectiveDebugLevel() {
 // Output a general message
 string*
 LoggerImpl::lookupMessage(const MessageID& ident) {
-    return (new string(string(ident) + ", " +
+    return (new string(string(ident) + " " +
                        MessageDictionary::globalDictionary().getText(ident)));
 }
 
