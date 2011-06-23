@@ -166,13 +166,6 @@ TEST(IPFunctionCheck, SplitIPAddress) {
     EXPECT_THROW(splitIPAddress(" 1/ "), isc::InvalidParameter);
 }
 
-// *** General tests ***
-
-TEST(IPCheck, DefaultConstructor) {
-    IPCheck<GeneralAddress> acl;
-    EXPECT_EQ(0, acl.getFamily());
-}
-
 // *** IPV4 Tests ***
 
 // Check that the constructor stores the elements correctly and, for the
