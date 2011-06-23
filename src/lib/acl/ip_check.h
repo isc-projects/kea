@@ -17,8 +17,6 @@
 
 #include <algorithm>
 #include <functional>
-#include <iterator>
-#include <utility>
 #include <vector>
 
 #include <boost/static_assert.hpp>
@@ -29,6 +27,7 @@
 
 #include <acl/check.h>
 #include <exceptions/exceptions.h>
+#include <util/strutil.h>
 
 namespace isc {
 namespace acl {
@@ -47,10 +46,8 @@ namespace internal {
 /// return a uint8_t holding the binary value 11100000.  This value is used as
 /// a mask in the address checks.
 ///
-/// The function is templated on the data type of the mask.
-///
 /// \param prefixlen number of bits to be set in the mask.  This must be
-///        between 0 and 8*sizeof(T).
+///        between 0 and 8.
 ///
 /// \return uint8_t with the most significant "prefixlen" bits set.
 ///
@@ -128,7 +125,7 @@ splitIPAddress(const std::string& ipprefix);
 template <typename Context>
 class IPCheck : public Check<Context> {
 private:
-    // Size of uint8_t array to holds different address types
+    // Size of uint8_t array needed to hold different address types
     static const size_t IPV6_SIZE = sizeof(struct in6_addr);
     static const size_t IPV4_SIZE = sizeof(struct in_addr);
 
@@ -143,8 +140,7 @@ public:
     /// form <ip-address>/n".
     ///
     /// Also allowed are the special keywords "any4" and "any6", which match
-    /// any IPv4 or IPv6 address.  These must be specified exactly as-is
-    /// (i.e. lowercase, with no leading or trailing spaces).
+    /// any IPv4 or IPv6 address.  These must be specified in lowercase.
     ///
     /// \param ipprefix IP address prefix in the form "<ip-address>/n"
     ///        (where the "/n" part is optional and should be valid for the
@@ -153,15 +149,19 @@ public:
     ///        given as "any4" or "any6".
     IPCheck(const std::string& ipprefix) : family_(0) {
 
-        // Ensure array elements are correctly initialized.
+        // Ensure array elements are correctly initialized with zeroes.
         std::fill(address_, address_ + IPV6_SIZE, 0);
         std::fill(mask_, mask_ + IPV6_SIZE, 0);
 
+        // Only deal with the string after we've removed leading and trailing
+        // spaces.
+        const std::string mod_prefix = isc::util::str::trim(ipprefix);
+
         // Check for special cases first.
-        if (ipprefix == "any4") {
+        if (mod_prefix == "any4") {
             family_ = AF_INET;
 
-        } else if (ipprefix == "any6") {
+        } else if (mod_prefix == "any6") {
             family_ = AF_INET6;
 
         } else {
@@ -169,7 +169,7 @@ public:
             // General address prefix.  Split into address part and prefix
             // length.
             const std::pair<std::string, int> result =
-                internal::splitIPAddress(ipprefix);
+                internal::splitIPAddress(mod_prefix);
 
             // Try to convert the address.  If successful, the result is in
             // network-byte order (most significant components at lower
@@ -185,7 +185,7 @@ public:
                     family_ = AF_INET;
                 }
             }
-            
+
             // Handle errors.
             if (status == 0) {
                 isc_throw(isc::InvalidParameter, "address prefix of " <<
@@ -240,15 +240,15 @@ public:
 
     /// \return Prefix length of the match
     size_t getPrefixlen() const {
-        // Work this out by shifting bits out of the mask.
+        // Work this out by counting bits in the mask.
         size_t count = 0;
         for (size_t i = 0; i < IPV6_SIZE; ++i) {
             if (mask_[i] == 0xff) {
-                // Full byte, 8 bit set
+                // All bits set in this byte
                 count += 8;
 
             } else if (mask_[i] != 0) {
-                // Partial set, count the bits
+                // Only some bits set in this byte.  Count them.
                 uint8_t byte = mask_[i];
                 for (int j = 0; j < 8; ++j) {
                     count += byte & 0x01;   // Add one if the bit is set
@@ -296,17 +296,17 @@ public:
         //
         // The result is checked for all bytes for which there are bits set in
         // the mask.  We stop at the first non-match (or when we run out of bits
-        // in the mask). 
+        // in the mask).
         //
         // Note that the mask represents a contiguous set of bits.  As such, as
         // soon as we find a mask byte of zeroes, we have run past the part of
         // the address where we need to match.
         //
         // Note also that when checking an IPv4 address, the constructor has
-        // set all bytes in the mask beyond the first four bytes that may be
-        // taken up by a mask for that address to zero, which will cause the
-        // loop to terminate.  This means that if the ACL is for an IPv4
-        // address, the loop will never check more than four bytes of testaddr.
+        // set all bytes in the mask beyond the first four bytes to zero.
+        // As the loop stops when it encounters a zero mask byte, if the
+        // ACL is for an IPV4 address, the loop will never check more than four
+        // bytes.
 
         bool match = true;
         for (int i = 0; match && (i < IPV6_SIZE) && (mask_[i] != 0); ++i) {
@@ -354,13 +354,12 @@ private:
                 } else if (bits_left > 0) {
                     mask_[++i] = internal::createMask(bits_left);
                     bits_left = 0;
-
                 }
             }
         } else {
             isc_throw(isc::OutOfRange,
                       "mask size of " << requested << " is invalid " <<
-                      "for the given address");
+                      "for the given address family");
         }
     }
 

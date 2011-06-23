@@ -15,7 +15,6 @@
 
 #include <gtest/gtest.h>
 #include <acl/ip_check.h>
-#include <boost/scoped_ptr.hpp>
 
 using namespace isc::acl;
 using namespace isc::acl::internal;
@@ -76,7 +75,7 @@ struct GeneralAddress {
     // A couple of convenience methods for checking equality with different
     // representations of an address.
 
-    // Check that the IPV4 address is the same as that given.  
+    // Check that the IPV4 address is the same as that given.
     bool equals(uint32_t address) {
         if (family == AF_INET) {
             const vector<uint8_t> byte_address = convertUint32(address);
@@ -139,14 +138,11 @@ TEST(IPFunctionCheck, SplitIPAddress) {
     EXPECT_EQ(string("2001:db8::"), result.first);
     EXPECT_EQ(128, result.second);
 
-    result = splitIPAddress("    2001:db8::1/127    ");
-    EXPECT_EQ(string("2001:db8::1"), result.first);
-    EXPECT_EQ(127, result.second);
-
     result = splitIPAddress("192.0.2.1/0");
     EXPECT_EQ(string("192.0.2.1"), result.first);
     EXPECT_EQ(0, result.second);
 
+    EXPECT_THROW(splitIPAddress("192.0.2.43/27 "), isc::InvalidParameter);
     EXPECT_THROW(splitIPAddress("192.0.2.43/-1"), isc::InvalidParameter);
     EXPECT_THROW(splitIPAddress("192.0.2.43//1"), isc::InvalidParameter);
     EXPECT_THROW(splitIPAddress("192.0.2.43/1/"), isc::InvalidParameter);
