@@ -12,8 +12,6 @@ lib_LTLIBRARIES = libacl.la
 libacl_la_SOURCES  = check.h
 libacl_la_SOURCES += ip_check.h ip_check.cc
 
-# Note: the ordering matters: -Wno-... must follow -Wextra (defined in
-# B10_CXXFLAGS)
 libacl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libacl_la_CPPFLAGS = $(AM_CPPFLAGS)
 libacl_la_LIBADD = $(top_builddir)/src/lib/util/libutil.la
