@@ -38,6 +38,7 @@
 #include <log/logger_support.h>
 #include <log/logger_specification.h>
 #include <log/logger_manager.h>
+#include <log/logger_name.h>
 
 using namespace std;
 
@@ -213,7 +214,18 @@ readLoggersConf(std::vector<isc::log::LoggerSpecification>& specs,
                 ConstElementPtr logger,
                 const ConfigData& config_data)
 {
-    const std::string lname = logger->get("name")->stringValue();
+    std::string lname = logger->get("name")->stringValue();
+
+    // If the first part of the name is '*', it is meant for 'every
+    // program', so we replace it with whatever is set as the root
+    // logger.
+    // We could tokenize the string, but if * is used, the string
+    // should either be "*", or start with "*.", so it's easier to
+    // look directly
+    if (lname[0] == '*' && (lname.length() == 1 || lname[1] == '.')) {
+        lname = isc::log::getRootLoggerName();
+    }
+
     ConstElementPtr severity_el = getValueOrDefault(logger,
                                       "severity", config_data,
                                       "loggers/severity");
