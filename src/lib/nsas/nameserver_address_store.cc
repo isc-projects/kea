@@ -32,7 +32,6 @@
 #include "zone_entry.h"
 #include "glue_hints.h"
 #include "address_request_callback.h"
-#include "nsasdef.h"
 #include "nsas_log.h"
 
 using namespace isc::dns;
