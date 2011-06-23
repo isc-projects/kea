@@ -31,100 +31,116 @@ A logger severity value was given that was not recognized. The severity
 should be one of "DEBUG", "INFO", "WARN", "ERROR", or "FATAL".
 
 % LOG_BAD_STREAM bad log console output stream: %1
-A log console output stream was given that was not recognized. The
-output stream should be one of "stdout", or "stderr"
+A log console output stream was given that was not recognized. The output
+stream should be one of "stdout", or "stderr"
 
 % LOG_DUPLICATE_MESSAGE_ID duplicate message ID (%1) in compiled code
-Indicative of a programming error, when it started up, BIND10 detected that
-the given message ID had been registered by one or more modules.  (All message
-IDs should be unique throughout BIND10.)  This has no impact on the operation
-of the server other that erroneous messages may be logged.  (When BIND10 loads
-the message IDs (and their associated text), if a duplicate ID is found it is
-discarded.  However, when the module that supplied the duplicate ID logs that
-particular message, the text supplied by the module that added the original
-ID will be output - something that may bear no relation to the condition being
-logged.
+During start-up, BIND10 detected that the given message identification had
+been defined multiple times in the BIND10 code.
+
+This has no ill-effects other than the possibility that an erronous
+message may be logged.  However, as it is indicative of a programming
+error, please log a bug report.
 
 % LOG_DUPLICATE_NAMESPACE line %1: duplicate $NAMESPACE directive found
-When reading a message file, more than one $NAMESPACE directive was found.  In
-this version of the code, such a condition is regarded as an error and the
-read will be abandoned.
+When reading a message file, more than one $NAMESPACE directive was found.
+Such a condition is regarded as an error and the read will be abandoned.
 
 % LOG_INPUT_OPEN_FAIL unable to open message file %1 for input: %2
-The program was not able to open the specified input message file for the
-reason given.
+The program was not able to open the specified input message file for
+the reason given.
 
 % LOG_INVALID_MESSAGE_ID line %1: invalid message identification '%2'
-The concatenation of the prefix and the message identification is used as
-a symbol in the C++ module; as such it may only contain 
+An invalid message identification (ID) has been found during the read of
+a message file.  Message IDs should comprise only alphanumeric characters
+and the underscore, and should not start with a digit.
 
 % LOG_NAMESPACE_EXTRA_ARGS line %1: $NAMESPACE directive has too many arguments
-The $NAMESPACE directive takes a single argument, a namespace in which all the
-generated symbol names are placed.  This error is generated when the
-compiler finds a $NAMESPACE directive with more than one argument.
+The $NAMESPACE directive in a message file takes a single argument, a
+namespace in which all the generated symbol names are placed.  This error
+is generated when the compiler finds a $NAMESPACE directive with more
+than one argument.
 
 % LOG_NAMESPACE_INVALID_ARG line %1: $NAMESPACE directive has an invalid argument ('%2')
-The $NAMESPACE argument should be a valid C++ namespace.  The reader does a
-cursory check on its validity, checking that the characters in the namespace
-are correct.  The error is generated when the reader finds an invalid
-character. (Valid are alphanumeric characters, underscores and colons.)
+The $NAMESPACE argument in a message file should be a valid C++ namespace.
+This message is output if the simple check on the syntax of the string
+carried out by the reader fails.
 
 % LOG_NAMESPACE_NO_ARGS line %1: no arguments were given to the $NAMESPACE directive
-The $NAMESPACE directive takes a single argument, a namespace in which all the
-generated symbol names are placed.  This error is generated when the
-compiler finds a $NAMESPACE directive with no arguments.
+The $NAMESPACE directive in a message file takes a single argument,
+a C++ namespace in which all the generated symbol names are placed.
+This error is generated when the compiler finds a $NAMESPACE directive
+with no arguments.
 
 % LOG_NO_MESSAGE_ID line %1: message definition line found without a message ID
-Message definition lines are lines starting with a "%".  The rest of the line
-should comprise the message ID and text describing the message.  This error
-indicates the message compiler found a line in the message file comprising
-just the "%" and nothing else.
+Within a message file, message are defined by lines starting with a "%".
+The rest of the line should comprise the message ID and text describing
+the message.  This error indicates the message compiler found a line in
+the message file comprising just the "%" and nothing else.
 
 % LOG_NO_MESSAGE_TEXT line %1: line found containing a message ID ('%2') and no text
-Message definition lines are lines starting with a "%".  The rest of the line
-should comprise the message ID and text describing the message.  This error
-is generated when a line is found in the message file that contains the
-leading "%" and the message identification but no text.
+Within a message file, message are defined by lines starting with a "%".
+The rest of the line should comprise the message ID and text describing
+the message.  This error indicates the message compiler found a line
+in the message file comprising just the "%" and message identification,
+but no text.
 
 % LOG_NO_SUCH_MESSAGE could not replace message text for '%1': no such message
 During start-up a local message file was read.  A line with the listed
-message identification was found in the file, but the identification is not
-one contained in the compiled-in message dictionary.  Either the message
-identification has been mis-spelled in the file, or the local file was used
-for an earlier version of the software and the message with that
-identification has been removed.
+message identification was found in the file, but the identification is
+not one contained in the compiled-in message dictionary.  This message
+may appear a number of times in the file, once for every such unknown
+message identification.
 
-This message may appear a number of times in the file, once for every such
-unknown message identification.
+There may be several reasons why this message may appear:
+
+- The message ID has been mis-spelled in the local message file.
+
+- The program outputting the message may not use that particular message
+(e.g. it originates in a module not used by the program.)
+
+- The local file was written for an earlier version of the BIND10 software
+and the later version no longer generates that message.
+
+Whatever the reason, there is no impact on the operation of BIND10.
 
 % LOG_OPEN_OUTPUT_FAIL unable to open %1 for output: %2
-The program was not able to open the specified output file for the reason
-given.
+Originating within the logging code, the program was not able to open
+the specified output file for the reason given.
 
 % LOG_PREFIX_EXTRA_ARGS line %1: $PREFIX directive has too many arguments
-The $PREFIX directive takes a single argument, a prefix to be added to the
-symbol names when a C++ .h file is created.  This error is generated when the
-compiler finds a $PREFIX directive with more than one argument.
+Within a message file, the $PREFIX directive takes a single argument,
+a prefix to be added to the symbol names when a C++ file is created.
+This error is generated when the compiler finds a $PREFIX directive with
+more than one argument.
+
+Note: the $PREFIX directive is deprecated and will be removed in a future
+version of BIND10.
 
 % LOG_PREFIX_INVALID_ARG line %1: $PREFIX directive has an invalid argument ('%2')
-The $PREFIX argument is used in a symbol name in a C++ header file.  As such,
-it must adhere to restrictions on C++ symbol names (e.g. may only contain
-alphanumeric characters or underscores, and may nor start with a digit).
-A $PREFIX directive was found with an argument (given in the message) that
-violates those restictions.
+Within a message file, the $PREFIX directive takes a single argument,
+a prefix to be added to the symbol names when a C++ file is created.
+As such, it must adhere to restrictions on C++ symbol names (e.g. may
+only contain alphanumeric characters or underscores, and may nor start
+with a digit).  A $PREFIX directive was found with an argument (given
+in the message) that violates those restictions.
+
+Note: the $PREFIX directive is deprecated and will be removed in a future
+version of BIND10.
 
 % LOG_READING_LOCAL_FILE reading local message file %1
-This is an informational message output by BIND10 when it starts to read a
-local message file.  (A local message file may replace the text of one of more
-messages; the ID of the message will not be changed though.)
+This is an informational message output by BIND10 when it starts to read
+a local message file.  (A local message file may replace the text of
+one of more messages; the ID of the message will not be changed though.)
 
 % LOG_READ_ERROR error reading from message file %1: %2
 The specified error was encountered reading from the named message file.
 
 % LOG_UNRECOGNISED_DIRECTIVE line %1: unrecognised directive '%2'
-A line starting with a dollar symbol was found, but the first word on the line
-(shown in the message) was not a recognised message compiler directive.
+Within a message file, a line starting with a dollar symbol was found
+(indicating the presence of a directive) but the first word on the line
+(shown in the message) was not recognised.
 
 % LOG_WRITE_ERROR error writing to %1: %2
-The specified error was encountered by the message compiler when writing to
-the named output file.
+The specified error was encountered by the message compiler when writing
+to the named output file.
