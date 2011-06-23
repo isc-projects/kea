@@ -16,7 +16,7 @@
 #define __AUTH_LOG__H
 
 #include <log/macros.h>
-#include "auth_messages.h"
+#include <auth/auth_messages.h>
 
 namespace isc {
 namespace auth {
