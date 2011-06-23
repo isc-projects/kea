@@ -36,7 +36,6 @@ _EVENT_NONE = 0
 _EVENT_READ = 1
 _EVENT_TIMEOUT = 2
 _NOTIFY_TIMEOUT = 1
-_IDLE_SLEEP_TIME = 0.5
 
 # define the rcode for parsing notify reply message
 _REPLY_OK = 0
@@ -120,6 +119,9 @@ class NotifyOut:
         self._lock = threading.Lock()
         self._db_file = datasrc_file
         self._init_notify_out(datasrc_file)
+        # Use nonblock event to eliminate busy loop
+        # If there are no notifying zones, clear the event bit and wait.
+        self._nonblock_event = threading.Event()
 
     def _init_notify_out(self, datasrc_file):
         '''Get all the zones name and its notify target's address
@@ -160,6 +162,8 @@ class NotifyOut:
                 self._notify_infos[zone_id].prepare_notify_out()
                 self.notify_num += 1
                 self._notifying_zones.append(zone_id)
+                if not self._nonblock_event.isSet():
+                    self._nonblock_event.set()
 
     def _dispatcher(self, started_event):
         started_event.set() # Let the master know we are alive already
@@ -215,6 +219,9 @@ class NotifyOut:
 
         # Ask it to stop
         self._serving = False
+        if not self._nonblock_event.isSet():
+            # set self._nonblock_event to stop waiting for new notifying zones.
+            self._nonblock_event.set()   
         self._write_sock.send(SOCK_DATA) # make self._read_sock be readable.
 
         # Wait for it
@@ -291,7 +298,7 @@ class NotifyOut:
                 else:
                     min_timeout = tmp_timeout
 
-        block_timeout = _IDLE_SLEEP_TIME
+        block_timeout = None
         if min_timeout is not None:
             block_timeout = min_timeout - time.time()
             if block_timeout < 0:
@@ -314,6 +321,14 @@ class NotifyOut:
         # This is None only during some tests
         if self._read_sock is not None:
             valid_socks.append(self._read_sock)
+
+        # Currently, there is no notifying zones, waiting for zones to send notify
+        if block_timeout is None:
+            self._nonblock_event.clear()
+            self._nonblock_event.wait()
+            # has new notifying zone, check immediately
+            block_timeout = 0
+
         try:
             r_fds, w, e = select.select(valid_socks, [], [], block_timeout)
         except select.error as err:
@@ -385,6 +400,8 @@ class NotifyOut:
                     self._notify_infos[zone_id].prepare_notify_out()
                     self.notify_num += 1 
                     self._notifying_zones.append(zone_id)
+                    if not self._nonblock_event.isSet():
+                        self._nonblock_event.set()
 
     def _send_notify_message_udp(self, zone_notify_info, addrinfo):
         msg, qid = self._create_notify_message(zone_notify_info.zone_name, 
