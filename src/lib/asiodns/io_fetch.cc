@@ -41,7 +41,7 @@
 #include <log/logger.h>
 #include <log/macros.h>
 
-#include <asiodns/asiodef.h>
+#include <asiodns/asiodns_messages.h>
 #include <asiodns/io_fetch.h>
 
 #include <util/buffer.h>
