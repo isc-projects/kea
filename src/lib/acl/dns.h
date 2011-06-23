@@ -25,7 +25,7 @@ namespace acl {
 namespace dns {
 
 /**
- * \brief DNS Packet to be checked.
+ * \brief DNS request to be checked.
  *
  * This plays the role of Context of the generic template ACLs (in namespace
  * isc::acl).
@@ -37,7 +37,7 @@ namespace dns {
  * \todo Do we want a constructor to set this in a shorter manner? So we can
  *     call the ACLs directly?
  */
-struct Packet {
+struct RequestContext {
     /// \brief The DNS message (payload).
     isc::dns::ConstMessagePtr message;
     /// \brief The remote IP address (eg. the client).
@@ -60,17 +60,17 @@ struct Packet {
      * It is expected that messages with invalid signatures are handled before
      * ACL.
      */
-    std::string tisg_key;
+    std::string tsig_key_name;
 };
 
 /// \brief DNS based check.
-typedef acl::Check<Packet> Check;
+typedef acl::Check<RequestContext> Check;
 /// \brief DNS based compound check.
-typedef acl::CompoundCheck<Packet> CompoundCheck;
+typedef acl::CompoundCheck<RequestContext> CompoundCheck;
 /// \brief DNS based ACL.
-typedef acl::ACL<Packet> ACL;
+typedef acl::ACL<RequestContext> ACL;
 /// \brief DNS based ACL loader.
-typedef acl::Loader<Packet> Loader;
+typedef acl::Loader<RequestContext> Loader;
 
 /**
  * \brief Loader singleton access function.
