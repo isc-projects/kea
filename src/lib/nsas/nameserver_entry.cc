@@ -179,7 +179,7 @@ NameserverEntry::updateAddressRTTAtIndex(uint32_t rtt, size_t index,
         new_rtt = 1;
     }
     addresses_[family][index].setRTT(new_rtt);
-    LOG_DEBUG(nsas_logger, NSAS_DBG_RTT, NSAS_SETRTT)
+    LOG_DEBUG(nsas_logger, NSAS_DBG_RTT, NSAS_UPDATE_RTT)
               .arg(addresses_[family][index].getAddress().toText())
               .arg(old_rtt).arg(new_rtt);
 }
@@ -234,7 +234,7 @@ class NameserverEntry::ResolverCallback :
             if (!response_message ||
                 response_message->getRcode() != isc::dns::Rcode::NOERROR() ||
                 response_message->getRRCount(isc::dns::Message::SECTION_ANSWER) == 0) {
-                LOG_ERROR(nsas_logger, NSAS_INVRESPSTR).arg(entry_->getName());
+                LOG_ERROR(nsas_logger, NSAS_INVALID_RESPONSE).arg(entry_->getName());
                 failureInternal(lock);
                 return;
             }
@@ -249,7 +249,7 @@ class NameserverEntry::ResolverCallback :
                 response->getClass() != RRClass(entry_->getClass()))
             {
                 // Invalid response type or class
-                LOG_ERROR(nsas_logger, NSAS_INVRESPTC)
+                LOG_ERROR(nsas_logger, NSAS_WRONG_ANSWER)
                           .arg(entry_->getName()).arg(type_)
                           .arg(entry_->getClass()).arg(response->getType())
                           .arg(response->getClass());
@@ -437,7 +437,7 @@ NameserverEntry::askIP(isc::resolve::ResolverInterface* resolver,
         // We are unlocked here, as the callback from that might want to lock
         lock.unlock();
 
-        LOG_DEBUG(nsas_logger, NSAS_DBG_TRACE, NSAS_NSADDR).arg(getName());
+        LOG_DEBUG(nsas_logger, NSAS_DBG_TRACE, NSAS_FIND_NS_ADDRESS).arg(getName());
         askIP(resolver, RRType::A(), V4_ONLY);
         askIP(resolver, RRType::AAAA(), V6_ONLY);
         // Make sure we end the routine when we are not locked

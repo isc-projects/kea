@@ -86,7 +86,7 @@ NameserverAddressStore::lookup(const string& zone, const RRClass& class_code,
     boost::shared_ptr<AddressRequestCallback> callback, AddressFamily family,
     const GlueHints& glue_hints)
 {
-    LOG_DEBUG(nsas_logger, NSAS_DBG_TRACE, NSAS_LOOKUPZONE).arg(zone);
+    LOG_DEBUG(nsas_logger, NSAS_DBG_TRACE, NSAS_SEARCH_ZONE_NS).arg(zone);
 
     pair<bool, boost::shared_ptr<ZoneEntry> > zone_obj(
         zone_hash_->getOrAdd(HashKey(zone, class_code),
@@ -107,7 +107,7 @@ NameserverAddressStore::cancel(const string& zone,
     const boost::shared_ptr<AddressRequestCallback>& callback,
     AddressFamily family)
 {
-    LOG_DEBUG(nsas_logger, NSAS_DBG_TRACE, NSAS_LOOKUPCANCEL).arg(zone);
+    LOG_DEBUG(nsas_logger, NSAS_DBG_TRACE, NSAS_LOOKUP_CANCEL).arg(zone);
 
     boost::shared_ptr<ZoneEntry> entry(zone_hash_->get(HashKey(zone,
                                                                class_code)));
