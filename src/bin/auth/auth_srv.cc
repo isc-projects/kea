@@ -640,7 +640,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, MessagePtr message,
             return (false);
         }
     } catch (const Exception& ex) {
-            LOG_ERROR(auth_logger, AUTH_ZONEMGR_COMMS).arg(ex.what());
+        LOG_ERROR(auth_logger, AUTH_ZONEMGR_COMMS).arg(ex.what());
         return (false);
     }
 
