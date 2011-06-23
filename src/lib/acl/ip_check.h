@@ -135,46 +135,6 @@ private:
     static const size_t IPV4_SIZE = sizeof(struct in_addr);
 
 public:
-    /// \brief IPv4 Constructor
-    ///
-    /// Constructs an IPCheck object from a network address given as a
-    /// 32-bit value in network byte order and a prefix length.
-    ///
-    /// \param address IP address to check for (as an address in host-byte
-    ///        order).  Note host-byte order - this is different to the IPv6
-    ///        constructor.
-    /// \param prefixlen The prefix length specified as an integer between 0
-    ///        and 32. This determines the number of bits of the address to
-    ///        check. (A value of zero imples match all IPv4 addresses.)
-    IPCheck(uint32_t address, int prefixlen = 8 * IPV4_SIZE) :
-            address_(IPV4_SIZE), mask_(), family_(AF_INET)
-    {
-        // The address is stored in network-byte order, so the MS byte should
-        // be stored at the lowest address in the array.
-        address_[3] = static_cast<uint8_t>((address      ) & 0xff);
-        address_[2] = static_cast<uint8_t>((address >>  8) & 0xff);
-        address_[1] = static_cast<uint8_t>((address >> 16) & 0xff);
-        address_[0] = static_cast<uint8_t>((address >> 24) & 0xff);
-
-        setMask(prefixlen);
-    }
-
-    /// \brief IPv6 Constructor
-    ///
-    /// Constructs an IPv6 Check object from a network address given as a
-    /// 16-byte array in network-byte order and a prefix length.
-    ///
-    /// \param address IP address to check for (as an address in network-byte
-    ///        order).
-    /// \param prefixlen The prefix length specified as an integer between 0
-    ///        and 128.  This determines the number of bits of the address to
-    ///        check.
-    IPCheck(const uint8_t* address, int prefixlen = 8 * IPV6_SIZE) :
-            address_(address, address + IPV6_SIZE), mask_(), family_(AF_INET6)
-    {
-        setMask(prefixlen);
-    }
-
     /// \brief String Constructor
     ///
     /// Constructs an IP Check object from an address or address prefix in the
