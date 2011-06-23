@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <boost/lexical_cast.hpp>
+
 #include <acl/ip_check.h>
 #include <util/strutil.h>
 
@@ -26,22 +28,16 @@ namespace internal {
 pair<string, int>
 splitIPAddress(const string& ipprefix) {
 
-    // Set the default value for the prefix length.  As the type of the address
-    // is not known at the point this function is called, the maximum
-    // allowable value is also not known.  And the value of 0 is reserved for
-    // a "match any address" match.
-    int prefix_size = -1;
-
     // Only deal with the string after we've removed leading and trailing
     // spaces.
-    string mod_prefix = isc::util::str::trim(ipprefix);
+    const string mod_prefix = isc::util::str::trim(ipprefix);
 
     // Split string into its components - an address and a prefix length.
     // We initialize by assuming that there is no slash in the string given.
     string address = mod_prefix;
     string prefixlen = "";
 
-    size_t slashpos = mod_prefix.find('/');
+    const size_t slashpos = mod_prefix.find('/');
     if ((mod_prefix.size() == 0) || (slashpos == 0) ||
         (slashpos == (mod_prefix.size() - 1))) {
         // Nothing in prefix, or it starts with or ends with a slash.
@@ -56,6 +52,12 @@ splitIPAddress(const string& ipprefix) {
         address = mod_prefix.substr(0, slashpos);
         prefixlen = mod_prefix.substr(slashpos + 1);
     }
+
+    // Set the default value for the prefix length.  As the type of the address
+    // is not known at the point this function is called, the maximum
+    // allowable value is also not known.  And the value of 0 is reserved for
+    // a "match any address" match.
+    int prefix_size = -1;
 
     // If there is a prefixlength, attempt to convert it.
     if (!prefixlen.empty()) {
