@@ -23,7 +23,6 @@ using namespace std;
 namespace {
 const size_t IPV4_SIZE = 4;
 const size_t IPV6_SIZE = 16;
-}
 
 // Simple struct holding either an IPV4 or IPV6 address.  This is the "Context"
 // used for the tests.
@@ -94,6 +93,7 @@ struct GeneralAddress {
         return (false);
     }
 };
+} // Unnamed namespace
 
 // Provide a specialisation of the IPCheck::matches() method for the
 // GeneralAddress class.
@@ -107,6 +107,7 @@ bool IPCheck<GeneralAddress>::matches(const GeneralAddress& address) const {
 } // namespace acl
 } // namespace isc
 
+namespace {
 /// *** Free Function Tests ***
 
 // Test the createMask() function.
@@ -308,8 +309,6 @@ TEST(IPCheck, V4Compare) {
 
 // Some constants used in the tests
 
-namespace {
-
 const char* V6ADDR_1_STRING = "2001:0db8:1122:3344:5566:7788:99aa:bbcc";
 const uint8_t V6ADDR_1[] = {
     0x20, 0x01, 0x0d, 0xb8, 0x11, 0x22, 0x33, 0x44,
@@ -367,8 +366,6 @@ const uint8_t V6ADDR_4[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
-
-} // Anonymous namespace
 
 TEST(IPCheck, V6StringConstructor) {
     IPCheck<GeneralAddress> acl1(V6ADDR_1_STRING);
@@ -588,3 +585,4 @@ TEST(IPCheck, MixedMode) {
     GeneralAddress test6(vector<uint8_t>(V6ADDR_1, V6ADDR_1 + IPV6_SIZE));
     EXPECT_FALSE(acl6.matches(test6));
 }
+} // Unnamed namespace
