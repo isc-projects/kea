@@ -117,7 +117,9 @@ class TestNotifyOut(unittest.TestCase):
     def test_send_notify(self):
         notify_out._MAX_NOTIFY_NUM = 2
 
+        self._notify._nonblock_event.clear()
         self._notify.send_notify('example.net')
+        self.assertTrue(self._notify._nonblock_event.isSet())
         self.assertEqual(self._notify.notify_num, 1)
         self.assertEqual(self._notify._notifying_zones[0], ('example.net.', 'IN'))
 
@@ -126,7 +128,10 @@ class TestNotifyOut(unittest.TestCase):
         self.assertEqual(self._notify._notifying_zones[1], ('example.com.', 'IN'))
 
         # notify_num is equal to MAX_NOTIFY_NUM, append it to waiting_zones list.
+        self._notify._nonblock_event.clear()
         self._notify.send_notify('example.com', 'CH')
+        # add waiting zones won't set nonblock_event.
+        self.assertFalse(self._notify._nonblock_event.isSet())
         self.assertEqual(self._notify.notify_num, 2)
         self.assertEqual(1, len(self._notify._waiting_zones))
 
@@ -348,7 +353,7 @@ class TestNotifyOut(unittest.TestCase):
 
     def test_prepare_select_info(self):
         timeout, valid_fds, notifying_zones = self._notify._prepare_select_info()
-        self.assertEqual(notify_out._IDLE_SLEEP_TIME, timeout)
+        self.assertEqual(None, timeout)
         self.assertListEqual([], valid_fds)
 
         self._notify._notify_infos[('example.net.', 'IN')]._sock = 1
@@ -371,8 +376,12 @@ class TestNotifyOut(unittest.TestCase):
 
     def test_shutdown(self):
         thread = self._notify.dispatcher()
+        # nonblock_event will be cleared since there are no notifying zones.
+        self.assertFalse(self._notify._nonblock_event.isSet())
         self.assertTrue(thread.is_alive())
         self._notify.shutdown()
+        # nonblock_event should have been setted to stop waiting.
+        self.assertTrue(self._notify._nonblock_event.isSet())
         self.assertFalse(thread.is_alive())
 
 if __name__== "__main__":
