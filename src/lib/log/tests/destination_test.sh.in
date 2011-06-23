@@ -37,10 +37,10 @@ passfail() {
 
 echo "1. One logger, multiple destinations:"
 cat > $tempfile << .
-FATAL [example] MSG_WRITERR, error writing to test1: 42
-ERROR [example] MSG_RDLOCMES, reading local message file dummy/file
-FATAL [example.beta] MSG_BADSEVERITY, unrecognized log severity: beta_fatal
-ERROR [example.beta] MSG_BADDESTINATION, unrecognized log destination: beta_error
+FATAL [example] MSG_WRITERR error writing to test1: 42
+ERROR [example] MSG_RDLOCMES reading local message file dummy/file
+FATAL [example.beta] MSG_BADSEVERITY unrecognized log severity: beta_fatal
+ERROR [example.beta] MSG_BADDESTINATION unrecognized log destination: beta_error
 .
 rm -f $destfile1 $destfile2
 ./logger_example -s error -f $destfile1 -f $destfile2
@@ -61,13 +61,13 @@ rm -f $destfile1 $destfile2
 # Output for example.alpha should have done to destfile2.
 
 cat > $tempfile << .
-FATAL [example] MSG_WRITERR, error writing to test1: 42
-ERROR [example] MSG_RDLOCMES, reading local message file dummy/file
-WARN  [example] MSG_BADSTREAM, bad log console output stream: example
-FATAL [example.beta] MSG_BADSEVERITY, unrecognized log severity: beta_fatal
-ERROR [example.beta] MSG_BADDESTINATION, unrecognized log destination: beta_error
-WARN  [example.beta] MSG_BADSTREAM, bad log console output stream: beta_warn
-INFO  [example.beta] MSG_READERR, error reading from message file beta: info
+FATAL [example] MSG_WRITERR error writing to test1: 42
+ERROR [example] MSG_RDLOCMES reading local message file dummy/file
+WARN  [example] MSG_BADSTREAM bad log console output stream: example
+FATAL [example.beta] MSG_BADSEVERITY unrecognized log severity: beta_fatal
+ERROR [example.beta] MSG_BADDESTINATION unrecognized log destination: beta_error
+WARN  [example.beta] MSG_BADSTREAM bad log console output stream: beta_warn
+INFO  [example.beta] MSG_READERR error reading from message file beta: info
 .
 echo -n  "   - destination 1:"
 cut -d' ' -f3- $destfile1 | diff $tempfile -
@@ -75,7 +75,7 @@ passfail $?
 
 echo -n  "   - destination 2:"
 cat > $tempfile << .
-WARN  [example.alpha] MSG_READERR, error reading from message file a.txt: dummy reason
+WARN  [example.alpha] MSG_READERR error reading from message file a.txt: dummy reason
 .
 cut -d' ' -f3- $destfile2 | diff $tempfile -
 passfail $?

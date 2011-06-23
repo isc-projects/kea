@@ -9,10 +9,24 @@ python_LTLIBRARIES = log.la
 log_la_SOURCES = log.cc
 
 log_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
+# Note: PYTHON_CXXFLAGS may have some -Wno... workaround, which must be
+# placed after -Wextra defined in AM_CXXFLAGS
+log_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
 log_la_LDFLAGS = $(PYTHON_LDFLAGS)
 log_la_LDFLAGS += -module
 log_la_LIBADD = $(top_builddir)/src/lib/log/liblog.la
+log_la_LIBADD += $(top_builddir)/src/lib/cc/libcc.la
+log_la_LIBADD += $(top_builddir)/src/lib/config/libcfgclient.la
+log_la_LIBADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 log_la_LIBADD += $(PYTHON_LIB)
 
 # This is not installed, it helps locate the module during tests
 EXTRA_DIST = __init__.py
+
+pytest:
+	$(SHELL) tests/log_test
+
+CLEANDIRS = __pycache__
+
+clean-local:
+	rm -rf $(CLEANDIRS)
