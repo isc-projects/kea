@@ -276,7 +276,7 @@ class NameserverEntry::ResolverCallback :
                 // If we found it, use it. If not, create a new one.
                 entries.push_back(found ? *found : AddressEntry(
                                                    IOAddress(address), 1));
-                LOG_DEBUG(nsas_logger, NSAS_DBG_RESULTS, NSAS_NSLKUPSUCC)
+                LOG_DEBUG(nsas_logger, NSAS_DBG_RESULTS, NSAS_FOUND_ADDRESS)
                           .arg(address).arg(entry_->getName());
             }
 
@@ -322,7 +322,7 @@ class NameserverEntry::ResolverCallback :
          * So mark the current address family as unreachable.
          */
         virtual void failure() {
-            LOG_DEBUG(nsas_logger, NSAS_DBG_RESULTS, NSAS_NSLKUPFAIL)
+            LOG_DEBUG(nsas_logger, NSAS_DBG_RESULTS, NSAS_NS_LOOKUP_FAIL)
                       .arg(type_).arg(entry_->getName());
             Lock lock(entry_->mutex_);
             failureInternal(lock);
