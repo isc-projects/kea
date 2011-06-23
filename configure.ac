@@ -280,6 +280,35 @@ namespace isc {class Bar {Foo foo_;};} ],,
 	[AC_MSG_RESULT(yes)])
 CXXFLAGS="$CXXFLAGS_SAVED"
 
+# Python 3.2 has an unused parameter in one of its headers. This
+# has been reported, but not fixed as of yet, so we check if we need
+# to set -Wno-unused-parameter.
+if test $werror_ok = 1; then
+	CPPFLAGS_SAVED="$CPPFLAGS"
+	CPPFLAGS=${PYTHON_INCLUDES}
+	CXXFLAGS_SAVED="$CXXFLAGS"
+	CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
+	AC_MSG_CHECKING([whether we need -Wno-unused-parameter for python])
+	AC_TRY_COMPILE(
+		[#include <Python.h>],
+		[],
+		[AC_MSG_RESULT(no)],
+		[
+		CXXFLAGS="$CXXFLAGS -Wno-unused-parameter"
+		AC_TRY_COMPILE([#include <Python.h>],
+		[],
+		[AC_MSG_RESULT(yes)
+		 PYTHON_CXXFLAGS="${PYTHON_CXXFLAGS} -Wno-unused-parameter"
+		 AC_SUBST(PYTHON_CXXFLAGS)
+		],
+		[AC_MSG_ERROR([Can't compile against Python.h])]
+                )
+                ]
+	)
+	CXXFLAGS="$CXXFLAGS_SAVED"
+	CPPFLAGS="$CPPFLAGS_SAVED"
+fi
+
 fi				dnl GXX = yes
 
 AM_CONDITIONAL(GCC_WERROR_OK, test $werror_ok = 1)
@@ -858,12 +887,6 @@ AC_OUTPUT([doc/version.ent
            src/bin/zonemgr/run_b10-zonemgr.sh
            src/bin/stats/stats.py
            src/bin/stats/stats_httpd.py
-           src/bin/stats/stats.spec
-           src/bin/stats/stats-schema.spec
-           src/bin/stats/stats-httpd.spec
-           src/bin/stats/stats-httpd-xml.tpl
-           src/bin/stats/stats-httpd-xsd.tpl
-           src/bin/stats/stats-httpd-xsl.tpl
            src/bin/bind10/bind10.py
            src/bin/bind10/run_bind10.sh
            src/bin/bind10/tests/bind10_test.py
@@ -955,6 +978,7 @@ Flags:
   B10_CXXFLAGS:  $B10_CXXFLAGS
 dnl includes too
   Python:        ${PYTHON_INCLUDES}
+                 ${PYTHON_CXXFLAGS}
                  ${PYTHON_LDFLAGS}
                  ${PYTHON_LIB}
   Boost:         ${BOOST_INCLUDES}

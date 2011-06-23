@@ -39,6 +39,10 @@
 from isc.cc import Session
 from isc.config.config_data import ConfigData, MultiConfigData, BIND10_CONFIG_DATA_VERSION
 import isc
+from isc.util.file import path_search
+import bind10_config
+from isc.log import log_config_update
+import json
 
 class ModuleCCSessionError(Exception): pass
 
@@ -116,6 +120,18 @@ def create_command(command_name, params = None):
     msg = { 'command': cmd }
     return msg
 
+def default_logconfig_handler(new_config, config_data):
+    errors = []
+
+    if config_data.get_module_spec().validate_config(False, new_config, errors):
+        isc.log.log_config_update(json.dumps(new_config),
+            json.dumps(config_data.get_module_spec().get_full_spec()))
+    else:
+        # no logging here yet, TODO: log these errors
+        print("Error in logging configuration, ignoring config update: ")
+        for err in errors:
+            print(err)
+
 class ModuleCCSession(ConfigData):
     """This class maintains a connection to the command channel, as
        well as configuration options for modules. The module provides
@@ -126,7 +142,7 @@ class ModuleCCSession(ConfigData):
        callbacks are called when 'check_command' is called on the
        ModuleCCSession"""
        
-    def __init__(self, spec_file_name, config_handler, command_handler, cc_session = None):
+    def __init__(self, spec_file_name, config_handler, command_handler, cc_session = None, handle_logging_config = False):
         """Initialize a ModuleCCSession. This does *NOT* send the
            specification and request the configuration yet. Use start()
            for that once the ModuleCCSession has been initialized.
@@ -149,6 +165,11 @@ class ModuleCCSession(ConfigData):
         self._session.group_subscribe(self._module_name, "*")
 
         self._remote_module_configs = {}
+        self._remote_module_callbacks = {}
+
+        if handle_logging_config:
+            self.add_remote_config(path_search('logging.spec', bind10_config.PLUGIN_PATHS),
+                                   default_logconfig_handler)
 
     def __del__(self):
         # If the CC Session obejct has been closed, it returns
@@ -218,6 +239,9 @@ class ModuleCCSession(ConfigData):
                             newc = self._remote_module_configs[module_name].get_local_config()
                             isc.cc.data.merge(newc, new_config)
                             self._remote_module_configs[module_name].set_local_config(newc)
+                            if self._remote_module_callbacks[module_name] != None:
+                                self._remote_module_callbacks[module_name](new_config,
+                                                                           self._remote_module_configs[module_name])
                         # For other modules, we're not supposed to answer
                         return
 
@@ -260,7 +284,7 @@ class ModuleCCSession(ConfigData):
            and return an answer created with create_answer()"""
         self._command_handler = command_handler
 
-    def add_remote_config(self, spec_file_name):
+    def add_remote_config(self, spec_file_name, config_update_callback = None):
         """Gives access to the configuration of a different module.
            These remote module options can at this moment only be
            accessed through get_remote_config_value(). This function
@@ -289,9 +313,12 @@ class ModuleCCSession(ConfigData):
             if rcode == 0:
                 if value != None and module_spec.validate_config(False, value):
                     module_cfg.set_local_config(value);
+                    if config_update_callback is not None:
+                        config_update_callback(value, module_cfg)
 
         # all done, add it
         self._remote_module_configs[module_name] = module_cfg
+        self._remote_module_callbacks[module_name] = config_update_callback
         return module_name
         
     def remove_remote_config(self, module_name):
@@ -299,6 +326,7 @@ class ModuleCCSession(ConfigData):
         if module_name in self._remote_module_configs:
             self._session.group_unsubscribe(module_name)
             del self._remote_module_configs[module_name]
+            del self._remote_module_callbacks[module_name]
 
     def get_remote_config_value(self, module_name, identifier):
         """Returns the current setting for the given identifier at the
