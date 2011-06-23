@@ -16,7 +16,7 @@
 #define __NSAS_LOG__H
 
 #include <log/macros.h>
-#include "nsasdef.h"
+#include "nsas_messages.h"
 
 namespace isc {
 namespace nsas {
