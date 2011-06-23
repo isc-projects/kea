@@ -152,9 +152,9 @@ public:
     /// \param address IP address to check for (as an address in host-byte
     ///        order).  Note host-byte order - this is different to the IPV6
     ///        constructor.
-    /// \param prefixlen The prefix length specified as an integer between 0 and
-    ///        32. This determines the number of bits of the address to check.
-    ///        (A value of zero imples match all IPV4 addresses.)
+    /// \param prefixlen The prefix length specified as an integer between 0
+    ///        and 32. This determines the number of bits of the address to
+    ///        check. (A value of zero imples match all IPV4 addresses.)
     IPCheck(uint32_t address, int prefixlen = 8 * IPV4_SIZE) :
             address_(IPV4_SIZE), mask_(), family_(AF_INET)
     {
@@ -175,8 +175,9 @@ public:
     ///
     /// \param address IP address to check for (as an address in network-byte
     ///        order).
-    /// \param mask The network mask specified as an integer between 1 and
-    ///        128 This determines the number of bits in the mask to check.
+    /// \param prefixlen The prefix length specified as an integer between 0
+    ///        and 128.  This determines the number of bits of the address to
+    ///        check.
     IPCheck(const uint8_t* address, int prefixlen = 8 * IPV6_SIZE) :
             address_(address, address + IPV6_SIZE), mask_(), family_(AF_INET6)
     {
@@ -197,8 +198,7 @@ public:
     ///        address).  If "n" is specified as zero, the match is for any
     ///        address in that address family.  The address can also be
     ///        given as "any4" or "any6".
-    IPCheck(const std::string& ipprefix) : address_(), mask_(), family_(0)
-    {
+    IPCheck(const std::string& ipprefix) : address_(), mask_(), family_(0) {
         // Check for special cases first.
         if (ipprefix == "any4") {
             family_ = AF_INET;
@@ -210,7 +210,7 @@ public:
 
             // General address prefix.  Split into address part and prefix
             // length.
-            std::pair<std::string, int> result =
+            const std::pair<std::string, int> result =
                 internal::splitIPAddress(ipprefix);
 
             // Try to convert the address.  If successful, the result is in

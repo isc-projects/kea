@@ -77,7 +77,7 @@ struct GeneralAddress {
     // Check that the IPV4 address is the same as that given.
     bool equals(uint32_t address) {
         if (addr.size() == IPV4_SIZE) {
-            vector<uint8_t> byte_address = convertUint32(address);
+            const vector<uint8_t> byte_address = convertUint32(address);
             return (equal(byte_address.begin(), byte_address.end(),
                            addr.begin()));
         }
