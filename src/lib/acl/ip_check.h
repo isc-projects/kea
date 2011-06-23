@@ -21,9 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include <boost/lexical_cast.hpp>
 #include <boost/static_assert.hpp>
-#include <boost/scoped_ptr.hpp>
 
 #include <stdint.h>
 #include <arpa/inet.h>
