@@ -137,13 +137,6 @@ private:
     static const size_t IPV4_SIZE = sizeof(struct in_addr);
 
 public:
-    /// \brief Default Constructor
-    ///
-    /// Constructs an empty IPCheck object.  The address family returned will
-    /// be zero.
-    IPCheck() : address_(), mask_(), family_(0)
-    {}
-
     /// \brief IPV4 Constructor
     ///
     /// Constructs an IPCheck object from a network address given as a
