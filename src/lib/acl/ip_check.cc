@@ -15,7 +15,6 @@
 #include <boost/lexical_cast.hpp>
 
 #include <acl/ip_check.h>
-#include <util/strutil.h>
 
 using namespace std;
 
@@ -28,18 +27,14 @@ namespace internal {
 pair<string, int>
 splitIPAddress(const string& ipprefix) {
 
-    // Only deal with the string after we've removed leading and trailing
-    // spaces.
-    const string mod_prefix = isc::util::str::trim(ipprefix);
-
     // Split string into its components - an address and a prefix length.
     // We initialize by assuming that there is no slash in the string given.
-    string address = mod_prefix;
+    string address = ipprefix;
     string prefixlen = "";
 
-    const size_t slashpos = mod_prefix.find('/');
-    if ((mod_prefix.size() == 0) || (slashpos == 0) ||
-        (slashpos == (mod_prefix.size() - 1))) {
+    const size_t slashpos = ipprefix.find('/');
+    if ((ipprefix.size() == 0) || (slashpos == 0) ||
+        (slashpos == (ipprefix.size() - 1))) {
         // Nothing in prefix, or it starts with or ends with a slash.
         isc_throw(isc::InvalidParameter, "address prefix of " << ipprefix <<
                                          " is not valid");
@@ -49,13 +44,13 @@ splitIPAddress(const string& ipprefix) {
         // Don't worry about multiple slashes - if there are some, they will
         // appear in the prefixlen segment and will be detected when an attempt
         // is made to convert it to a number.
-        address = mod_prefix.substr(0, slashpos);
-        prefixlen = mod_prefix.substr(slashpos + 1);
+        address = ipprefix.substr(0, slashpos);
+        prefixlen = ipprefix.substr(slashpos + 1);
     }
 
     // Set the default value for the prefix length.  As the type of the address
     // is not known at the point this function is called, the maximum
-    // allowable value is also not known.  And the value of 0 is reserved for
+    // allowable value is also not known.  The value of 0 is reserved for
     // a "match any address" match.
     int prefix_size = -1;
 
@@ -68,8 +63,8 @@ splitIPAddress(const string& ipprefix) {
                           ipprefix << " is not valid");
             }
         } catch (boost::bad_lexical_cast&) {
-            isc_throw(isc::InvalidParameter, "prefix length of " << prefixlen <<
-                                             " is not valid");
+            isc_throw(isc::InvalidParameter, "prefix length of '" <<
+                      prefixlen << "' is not valid");
         }
     }
 
