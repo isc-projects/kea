@@ -16,6 +16,9 @@ pydnspp_la_SOURCES += tsigrecord_python.cc tsigrecord_python.h
 pydnspp_la_SOURCES += tsig_python.cc tsig_python.h
 
 pydnspp_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
+# Note: PYTHON_CXXFLAGS may have some -Wno... workaround, which must be
+# placed after -Wextra defined in AM_CXXFLAGS
+pydnspp_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
 pydnspp_la_LDFLAGS = $(PYTHON_LDFLAGS)
 
 # directly included from source files, so these don't have their own
