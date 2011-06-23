@@ -24,6 +24,41 @@ namespace isc {
 namespace acl {
 namespace internal {
 
+uint8_t
+createMask(size_t prefixlen) {
+
+    if (prefixlen == 0) {
+        return (0);
+
+    } else if (prefixlen <= 8) {
+
+        // In the following discussion:
+        //
+        // w is the width of the data type in bits.
+        // m is the value of prefixlen, the number of most signifcant bits we
+        // want to set.
+        // ** is exponentiation (i.e. 2**n is 2 raised to the power of n).
+        //
+        // We note that the value of 2**m - 1 gives a value with the least
+        // significant m bits set.  For a data type of width w, this means that
+        // the most signficant (w-m) bits are clear.
+        //
+        // Hence the value 2**(w-m) - 1 gives a result with the least signficant
+        // w-m bits set and the most significant m bits clear.  The 1's
+        // complement of this value gives is the result we want.
+        //
+        // Final note: at this point in the logic, m is non-zero, so w-m < w.
+        // This means 1<<(w-m) will fit into a variable of width w bits.  In
+        // other words, in the expression below, no term will cause an integer
+        // overflow.
+        return (~((1 << (8 - prefixlen)) - 1));
+    }
+
+    // Mask size is too large. (Note that prefixlen is unsigned, so can't be
+    // negative.)
+    isc_throw(isc::OutOfRange, "prefixlen argument must be between 0 and 8");
+}
+
 pair<string, int>
 splitIPAddress(const string& ipprefix) {
 
