@@ -123,7 +123,7 @@ splitIPAddress(const std::string& ipprefix);
 /// \brief IP Check
 ///
 /// This class performs a match between an IP address prefix specified in an ACL
-/// and a given IP address.  The check works for both IPV4 and IPV6 addresses.
+/// and a given IP address.  The check works for both IPv4 and IPv6 addresses.
 ///
 /// The class is templated on the type of a context structure passed to the
 /// matches() method, and a template specialisation for that method must be
@@ -137,17 +137,17 @@ private:
     static const size_t IPV4_SIZE = sizeof(struct in_addr);
 
 public:
-    /// \brief IPV4 Constructor
+    /// \brief IPv4 Constructor
     ///
     /// Constructs an IPCheck object from a network address given as a
     /// 32-bit value in network byte order and a prefix length.
     ///
     /// \param address IP address to check for (as an address in host-byte
-    ///        order).  Note host-byte order - this is different to the IPV6
+    ///        order).  Note host-byte order - this is different to the IPv6
     ///        constructor.
     /// \param prefixlen The prefix length specified as an integer between 0
     ///        and 32. This determines the number of bits of the address to
-    ///        check. (A value of zero imples match all IPV4 addresses.)
+    ///        check. (A value of zero imples match all IPv4 addresses.)
     IPCheck(uint32_t address, int prefixlen = 8 * IPV4_SIZE) :
             address_(IPV4_SIZE), mask_(), family_(AF_INET)
     {
@@ -161,9 +161,9 @@ public:
         setMask(prefixlen);
     }
 
-    /// \brief IPV6 Constructor
+    /// \brief IPv6 Constructor
     ///
-    /// Constructs an IPV6 Check object from a network address given as a
+    /// Constructs an IPv6 Check object from a network address given as a
     /// 16-byte array in network-byte order and a prefix length.
     ///
     /// \param address IP address to check for (as an address in network-byte
@@ -183,7 +183,7 @@ public:
     /// form <ip-address>/n".
     ///
     /// Also allowed are the special keywords "any4" and "any6", which match
-    /// any IPV4 or IPV6 address.  These must be specified exactly as-is
+    /// any IPv4 or IPv6 address.  These must be specified exactly as-is
     /// (i.e. lowercase, with no leading or trailing spaces).
     ///
     /// \param ipprefix IP address prefix in the form "<ip-address>/n"
@@ -214,13 +214,13 @@ public:
             int status = inet_pton(AF_INET6, result.first.c_str(),
                                    address_bytes);
             if (status == 1) {
-                // It was an IPV6 address, copy into the address store
+                // It was an IPv6 address, copy into the address store
                 std::copy(address_bytes, address_bytes + IPV6_SIZE,
                           std::back_inserter(address_));
                 family_ = AF_INET6;
 
             } else {
-                // Not IPV6, try IPV4
+                // Not IPv6, try IPv4
                 int status = inet_pton(AF_INET, result.first.c_str(),
                                        address_bytes);
                 if (status == 1) {
@@ -301,7 +301,7 @@ public:
 
     /// \return Address family
     int getFamily() const {
-        // Check that a family_  value of 0 does not imply IPV4 or IPV6.
+        // Check that a family_  value of 0 does not imply IPv4 or IPv6.
         // This avoids confusion if getFamily() is called on an object that
         // has been initialized by default.
         BOOST_STATIC_ASSERT(AF_INET != 0);
@@ -383,7 +383,7 @@ private:
         if (requested <= maxmask) {
 
             // Loop, setting the bits in the set of mask bytes until all the
-            // specified bits have been used up.  As both IPV4 and IPV6
+            // specified bits have been used up.  As both IPv4 and IPv6
             // addresses are stored in network-byte order, this works in
             // both cases.
             size_t bits_left = requested;   // Bits remaining to set
