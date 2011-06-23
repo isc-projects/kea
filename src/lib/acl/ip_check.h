@@ -300,7 +300,7 @@ private:
 
         // Set the maximum number of bits allowed in the mask, and request
         // that number of bits if no prefix length was given in the constructor.
-        int maxmask = 8 * ((family_ == AF_INET) ? IPV4_SIZE : IPV6_SIZE);
+        const int maxmask = 8 * ((family_ == AF_INET) ? IPV4_SIZE : IPV6_SIZE);
         if (requested < 0) {
             requested = maxmask;
         }
