@@ -232,9 +232,8 @@ execAuthServerCommand(AuthSrv& server, const string& command_id,
         scoped_ptr<AuthCommand>(createAuthCommand(command_id))->exec(server,
                                                                      args);
     } catch (const isc::Exception& ex) {
-        // TODO: SHould this be LOG_ERROR?
-        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_COMMAND_FAILED)
-                  .arg(command_id).arg(ex.what());
+        LOG_ERROR(auth_logger, AUTH_COMMAND_FAILED).arg(command_id)
+                                                   .arg(ex.what());
         return (createAnswer(1, ex.what()));
     }
 

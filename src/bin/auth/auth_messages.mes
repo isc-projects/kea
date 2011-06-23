@@ -25,7 +25,7 @@ This is a debug message output when the authoritative server has received
 an AXFR query over UDP. Use of UDP for AXFRs is not permitted by the
 protocol, so the server will return a FORMERR error to the sender.
 
-% AUTH_COMMAND_FAILED execution of command '%1' failed: %2
+% AUTH_COMMAND_FAILED execution of command channel instruction '%1' failed: %2
 Execution of the specified command by the authoritative server failed. The
 message contains the reason for the failure.
 
@@ -74,14 +74,14 @@ reason for the failure is given in the message.) The server will drop the
 packet.
 
 % AUTH_LOAD_TSIG loading TSIG keys
-This is a debug message indicating that the authoritiative server has
-successfully accessed the keyring holding TSIG keys. It is issued during
-server startup is an indication that the initialization is proceeding
-normally.
+This is a debug message indicating that the authoritiative server
+has requested the keyring holding TSIG keys from the configuration
+database. It is issued during server startup is an indication that the
+initialization is proceeding normally.
 
 % AUTH_LOAD_ZONE loaded zone %1/%2
 This debug message is issued during the processing of the 'loadzone' command
-when the authoritative server has successfully loaded the names zone of the
+when the authoritative server has successfully loaded the named zone of the
 named class.
 
 % AUTH_MEM_DATASRC_DISABLED memory data source is disabled for class %1
@@ -93,8 +93,9 @@ This is a debug message reporting that the authoritative server has
 discovered that the memory data source is enabled for the given class.
 
 % AUTH_NO_STATS_SESSION session interface for statistics is not available
-For some reason, the authoritative server has no session with the statistics
-module is available. This could be an error in configuration.
+The authoritative server had no session with the statistics module at the
+time it attempted to send it data: the attempt has been abandoned. This
+could be an error in configuration.
 
 % AUTH_NO_XFRIN received NOTIFY but XFRIN session is not running
 This is a debug message produced by the authoritative server when it receives
@@ -148,7 +149,7 @@ This is a debug message issued when the authoritative server has received
 a command on the command channel.
 
 % AUTH_RECEIVED_SENDSTATS command 'sendstats' received
-This is a debug message issues when the authoritative server has received
+This is a debug message issued when the authoritative server has received
 a command from the statistics module to send it data. The 'sendstats'
 command is handled differently to other commands, which is why the debug
 message associated with it has its own code.
