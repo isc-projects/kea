@@ -580,13 +580,12 @@ TEST(IPCheck, MixedMode) {
     EXPECT_FALSE(acl4.matches(test2));
 
     // Check where the bit pattern of an IPv4 address matches that of an IPv6
-    // one. 2001:db8.
+    // one.
     IPCheck<GeneralAddress> acl5("2001:db8::/32");
     GeneralAddress test5(0x20010db8);
     EXPECT_FALSE(acl5.matches(test5));
 
     // ... and where the reverse is true. (2001:db8 corresponds to 32.1.13.184).
-    // (To get the bytes for the IPv6 address into a GeneralAddress structure,
     IPCheck<GeneralAddress> acl6("32.1.13.184");
     GeneralAddress test6(vector<uint8_t>(V6ADDR_1, V6ADDR_1 + IPV6_SIZE));
     EXPECT_FALSE(acl6.matches(test6));
