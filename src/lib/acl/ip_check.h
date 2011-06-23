@@ -52,21 +52,20 @@ namespace internal {
 /// \param prefixlen number of bits to be set in the mask.  This must be
 ///        between 0 and 8*sizeof(T).
 ///
-/// \return Value with the most significant "prefixlen" bits set.
+/// \return uint8_t with the most significant "prefixlen" bits set.
 ///
 /// \exception OutOfRange prefixlen is too large for the data type.
 
-template <typename T>
-T createMask(size_t prefixlen) {
+uint8_t createMask(size_t prefixlen) {
 
     if (prefixlen == 0) {
         return (0);
 
-    } else if (prefixlen <= 8 * sizeof(T)) {
+    } else if (prefixlen <= 8) {
 
         // In the following discussion:
         //
-        // w is the width of the data type T in bits.
+        // w is the width of the data type in bits.
         // m is the value of prefixlen, the number of most signifcant bits we
         // want to set.
         // ** is exponentiation (i.e. 2**n is 2 raised to the power of n).
@@ -83,13 +82,12 @@ T createMask(size_t prefixlen) {
         // This means 1<<(w-m) will fit into a variable of width w bits.  In
         // other words, in the expression below, no term will cause an integer
         // overflow.
-        return (~((1 << (8 * sizeof(T) - prefixlen)) - 1));
+        return (~((1 << (8 - prefixlen)) - 1));
     }
 
     // Mask size is too large. (Note that prefixlen is unsigned, so can't be
     // negative.)
-    isc_throw(isc::OutOfRange, "prefixlen argument must be between 0 and " <<
-                               8 * sizeof(T));
+    isc_throw(isc::OutOfRange, "prefixlen argument must be between 0 and 8");
 }
 
 /// \brief Split IP Address Prefix
@@ -354,7 +352,7 @@ private:
                     bits_left -= 8;
 
                 } else if (bits_left > 0) {
-                    mask_[++i] = internal::createMask<uint8_t>(bits_left);
+                    mask_[++i] = internal::createMask(bits_left);
                     bits_left = 0;
 
                 }
