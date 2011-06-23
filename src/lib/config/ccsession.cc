@@ -222,7 +222,8 @@ readLoggersConf(std::vector<isc::log::LoggerSpecification>& specs,
     // We could tokenize the string, but if * is used, the string
     // should either be "*", or start with "*.", so it's easier to
     // look directly
-    if (lname[0] == '*' && (lname.length() == 1 || lname[1] == '.')) {
+    if (lname.length() > 0 && lname[0] == '*' &&
+        (lname.length() == 1 || lname[1] == '.')) {
         lname = isc::log::getRootLoggerName();
     }
 
