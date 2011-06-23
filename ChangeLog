@@ -1,3 +1,8 @@
+260.	[func]      stephen
+	Remove comma between message identification and the message
+	text in the new-style logging messages.
+	(Trac 1031, git 1c7930a7ba19706d388e4f8dcf2a55a886b74cd2)
+
 259.	[bug]       stephen
 	Logging now correctly initialized in b10-auth.  Also, fixed
 	bug whereby querying for "version.bind txt ch" would cause
