@@ -20,11 +20,17 @@
 #include <vector>
 #include <cassert>
 
+#include <boost/shared_ptr.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/foreach.hpp>
+
+#include <exceptions/exceptions.h>
+
+#include <acl/acl.h>
+#include <acl/loader.h>
+
 #include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
-
-#include <boost/foreach.hpp>
-#include <boost/lexical_cast.hpp>
 
 #include <config/ccsession.h>
 
@@ -41,6 +47,8 @@
 #include <dns/rrttl.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
+
+#include <server_common/client.h>
 #include <server_common/portconfig.h>
 
 #include <resolve/recursive_query.h>
@@ -49,14 +57,17 @@
 #include "resolver_log.h"
 
 using namespace std;
+using namespace boost;
 
 using namespace isc;
 using namespace isc::util;
+using namespace isc::acl;
 using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::config;
 using namespace isc::asiodns;
 using namespace isc::asiolink;
+using namespace isc::server_common;
 using namespace isc::server_common::portconfig;
 
 class ResolverImpl {
@@ -71,6 +82,7 @@ public:
         client_timeout_(4000),
         lookup_timeout_(30000),
         retries_(3),
+        query_acl_(new Resolver::ClientACL(REJECT)),
         rec_query_(NULL)
     {}
 
@@ -140,10 +152,20 @@ public:
     void resolve(const isc::dns::QuestionPtr& question,
         const isc::resolve::ResolverInterface::CallbackPtr& callback);
 
-    void processNormalQuery(ConstMessagePtr query_message,
-                            MessagePtr answer_message,
-                            OutputBufferPtr buffer,
-                            DNSServer* server);
+    enum NormalQueryResult { RECURSION, DROPPED, ERROR };
+    NormalQueryResult processNormalQuery(const IOMessage& io_message,
+                                         MessagePtr query_message,
+                                         MessagePtr answer_message,
+                                         OutputBufferPtr buffer,
+                                         DNSServer* server);
+
+    const Resolver::ClientACL& getQueryACL() const {
+        return (*query_acl_);
+    }
+
+    void setQueryACL(shared_ptr<const Resolver::ClientACL> new_acl) {
+        query_acl_ = new_acl;
+    }
 
     /// Currently non-configurable, but will be.
     static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
@@ -168,6 +190,8 @@ public:
     unsigned retries_;
 
 private:
+    /// TBD
+    shared_ptr<const Resolver::ClientACL> query_acl_;
 
     /// Object to handle upstream queries
     RecursiveQuery* rec_query_;
@@ -399,7 +423,6 @@ Resolver::processMessage(const IOMessage& io_message,
             server->resume(false);
             return;
         }
-
     } catch (const Exception& ex) {
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_HDRERR)
                   .arg(ex.what());
@@ -433,74 +456,39 @@ Resolver::processMessage(const IOMessage& io_message,
               .arg(*query_message);
 
     // Perform further protocol-level validation.
-    bool sendAnswer = true;
+    bool send_answer = true;
     if (query_message->getOpcode() == Opcode::NOTIFY()) {
 
         makeErrorMessage(query_message, answer_message,
                          buffer, Rcode::NOTAUTH());
         // Notify arrived, but we are not authoritative.
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_NFYNOTAUTH);
-
     } else if (query_message->getOpcode() != Opcode::QUERY()) {
-
         // Unsupported opcode.
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_OPCODEUNS)
                   .arg(query_message->getOpcode());
         makeErrorMessage(query_message, answer_message,
                          buffer, Rcode::NOTIMP());
-
     } else if (query_message->getRRCount(Message::SECTION_QUESTION) != 1) {
-
         // Not one question
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_NOTONEQUES)
                   .arg(query_message->getRRCount(Message::SECTION_QUESTION));
-        makeErrorMessage(query_message, answer_message,
-                         buffer, Rcode::FORMERR());
+        makeErrorMessage(query_message, answer_message, buffer,
+                         Rcode::FORMERR());
     } else {
-        ConstQuestionPtr question = *query_message->beginQuestion();
-        const RRType &qtype = question->getType();
-        if (qtype == RRType::AXFR()) {
-            if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
-
-                // Can't process AXFR request receoved over UDP
-                LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS,
-                          RESOLVER_AXFRUDP);
-                makeErrorMessage(query_message, answer_message,
-                                 buffer, Rcode::FORMERR());
-            } else {
-
-                // ... or over TCP for that matter
-                LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS,
-                          RESOLVER_AXFRTCP);
-                makeErrorMessage(query_message, answer_message,
-                                 buffer, Rcode::NOTIMP());
-            }
-        } else if (qtype == RRType::IXFR()) {
-
-            // Can't process IXFR request
-            LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_IXFR);
-            makeErrorMessage(query_message, answer_message,
-                             buffer, Rcode::NOTIMP());
-
-        } else if (question->getClass() != RRClass::IN()) {
-
-            // Non-IN message received, refuse it.
-            LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_NOTIN)
-                      .arg(question->getClass());
-            makeErrorMessage(query_message, answer_message,
-                             buffer, Rcode::REFUSED());
-        } else {
+        const ResolverImpl::NormalQueryResult result =
+            impl_->processNormalQuery(io_message, query_message,
+                                      answer_message, buffer, server);
+        if (result == ResolverImpl::RECURSION) {
             // The RecursiveQuery object will post the "resume" event to the
             // DNSServer when an answer arrives, so we don't have to do it now.
-            sendAnswer = false;
-            impl_->processNormalQuery(query_message, answer_message,
-                                      buffer, server);
+            return;
+        } else if (result == ResolverImpl::DROPPED) {
+            send_answer = false;
         }
     }
 
-    if (sendAnswer) {
-        server->resume(true);
-    }
+    server->resume(send_answer);
 }
 
 void
@@ -510,24 +498,102 @@ ResolverImpl::resolve(const QuestionPtr& question,
     rec_query_->resolve(question, callback);
 }
 
-void
-ResolverImpl::processNormalQuery(ConstMessagePtr query_message,
+ResolverImpl::NormalQueryResult
+ResolverImpl::processNormalQuery(const IOMessage& io_message,
+                                 MessagePtr query_message,
                                  MessagePtr answer_message,
                                  OutputBufferPtr buffer,
                                  DNSServer* server)
 {
+    const ConstQuestionPtr question = *query_message->beginQuestion();
+    const RRType qtype = question->getType();
+    const RRClass qclass = question->getClass();
+
+    // Apply query ACL
+    Client client(io_message);
+    const BasicAction query_action(getQueryACL().execute(client));
+    if (query_action == isc::acl::REJECT) {
+        LOG_INFO(resolver_logger, RESOLVER_QUERYREJECTED)
+            .arg(question->getName()).arg(qtype).arg(qclass).arg(client);
+        makeErrorMessage(query_message, answer_message, buffer,
+                         Rcode::REFUSED());
+        return (ERROR);
+    } else if (query_action == isc::acl::DROP) {
+        LOG_INFO(resolver_logger, RESOLVER_QUERYDROPPED)
+            .arg(question->getName()).arg(qtype).arg(qclass).arg(client);
+        return (DROPPED);
+    }
+    LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_QUERYACCEPTED)
+        .arg(question->getName()).arg(qtype).arg(question->getClass())
+        .arg(client);
+
+    // ACL passed.  Reject inappropriate queries for the resolver.
+    if (qtype == RRType::AXFR()) {
+        if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
+            // Can't process AXFR request receoved over UDP
+            LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_AXFRUDP);
+            makeErrorMessage(query_message, answer_message, buffer,
+                             Rcode::FORMERR());
+        } else {
+            // ... or over TCP for that matter
+            LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_AXFRTCP);
+            makeErrorMessage(query_message, answer_message, buffer,
+                             Rcode::NOTIMP());
+        }
+        return (ERROR);
+    } else if (qtype == RRType::IXFR()) {
+        // Can't process IXFR request
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_IXFR);
+        makeErrorMessage(query_message, answer_message, buffer,
+                         Rcode::NOTIMP());
+        return (ERROR);
+    } else if (qclass != RRClass::IN()) {
+        // Non-IN message received, refuse it.
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_NOTIN)
+            .arg(qclass);
+        makeErrorMessage(query_message, answer_message, buffer,
+                         Rcode::REFUSED());
+        return (ERROR);
+    }
+
+    // Everything is okay.  Start resolver.
     if (upstream_.empty()) {
         // Processing normal query
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_NORMQUERY);
-        ConstQuestionPtr question = *query_message->beginQuestion();
         rec_query_->resolve(*question, answer_message, buffer, server);
-
     } else {
-
         // Processing forward query
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_FWDQUERY);
         rec_query_->forward(query_message, answer_message, buffer, server);
     }
+
+    return (RECURSION);
+}
+
+namespace {
+// This is a simplified ACL parser for the initial implementation with minimal
+// external dependency.  For a longer term we'll switch to a more generic
+// loader with allowing more complicated ACL syntax.
+shared_ptr<const Resolver::ClientACL>
+createQueryACL(isc::data::ConstElementPtr acl_config) {
+    if (!acl_config) {
+        return (shared_ptr<const Resolver::ClientACL>());
+    }
+
+    shared_ptr<Resolver::ClientACL> new_acl(
+        new Resolver::ClientACL(REJECT));
+    BOOST_FOREACH(ConstElementPtr rule, acl_config->listValue()) {
+        ConstElementPtr action = rule->get("action");
+        ConstElementPtr from = rule->get("from");
+        if (!action || !from) {
+            isc_throw(BadValue, "query ACL misses mandatory parameter");
+        }
+        new_acl->append(shared_ptr<IPCheck<Client> >(
+                            new IPCheck<Client>(from->stringValue())),
+                        defaultActionLoader(action));
+    }
+    return (new_acl);
+}
 }
 
 ConstElementPtr
@@ -546,6 +612,8 @@ Resolver::updateConfig(ConstElementPtr config) {
         ConstElementPtr listenAddressesE(config->get("listen_on"));
         AddressList listenAddresses(parseAddresses(listenAddressesE,
                                                       "listen_on"));
+        shared_ptr<const ClientACL> query_acl(createQueryACL(
+                                                  config->get("query_acl")));
         bool set_timeouts(false);
         int qtimeout = impl_->query_timeout_;
         int ctimeout = impl_->client_timeout_;
@@ -621,6 +689,9 @@ Resolver::updateConfig(ConstElementPtr config) {
         if (set_timeouts) {
             setTimeouts(qtimeout, ctimeout, ltimeout, retries);
             need_query_restart = true;
+        }
+        if (query_acl) {
+            setQueryACL(query_acl);
         }
 
         if (need_query_restart) {
@@ -706,4 +777,19 @@ Resolver::getRetries() const {
 AddressList
 Resolver::getListenAddresses() const {
     return (impl_->listen_);
+}
+
+const Resolver::ClientACL&
+Resolver::getQueryACL() const {
+    return (impl_->getQueryACL());
+}
+
+void
+Resolver::setQueryACL(shared_ptr<const ClientACL> new_acl) {
+    if (!new_acl) {
+        isc_throw(InvalidParameter, "NULL pointer is passed to setQueryACL");
+    }
+
+    LOG_INFO(resolver_logger, RESOLVER_SETQUERYACL);
+    impl_->setQueryACL(new_acl);
 }

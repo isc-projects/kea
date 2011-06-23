@@ -15,7 +15,10 @@
 #ifndef __IP_CHECK_H
 #define __IP_CHECK_H
 
+#include <sys/socket.h>
+
 #include <algorithm>
+#include <cassert>
 #include <functional>
 #include <vector>
 
@@ -79,7 +82,63 @@ splitIPAddress(const std::string& ipprefix);
 
 } // namespace internal
 
+/// \brief A simple representation of IP address.
+///
+/// This structure provides address family independent interfaces of an
+/// IP(v4 or v6) address, so that the application can perform
+/// \c IPCheck::matches without knowing which version of address it is
+/// handling.  (For example, consider the standard socket API: it uses
+/// the generic \c sockaddr structure to represent endpoints).
+///
+/// An object of this class could be constructed from various types of
+/// sources, but in the initial implementation there's only one constructor,
+/// which takes a \c sockaddr structure.  For efficiency the \c IPAddress
+/// object only retains a reference to the necessary part of \c sockaddr.
+/// Therefore the corresponding \c sockaddr instance must be valid while the
+/// \c IPAddress object is used.
+///
+/// This class is copyable so that a fixed object can be easily reused for
+/// different addresses.  To ensure internal integrity, specific member
+/// variables are kept private and only accessible via read-only accessor
+/// methods.  Due to this, it is ensured, for example, that if \c getFamily()
+/// returns \c AF_INET6, \c getLength() always returns 16.
+///
+/// All accessor methods are straightforward and exception free.
+///
+/// In future, we may introduce the default constructor to further improve
+/// reusability.
+struct IPAddress {
+    /// The constructor from socket address structure.
+    ///
+    /// This constructor set up the internal data based on the actual type
+    /// \c sa.  For example, if \c sa.sa_family is \c AF_INET, it assumes
+    /// \c sa actually refers to a \c sockaddr_in structure.
+    /// The behavior when this assumption isn't held is undefined.
+    ///
+    /// \param sa A reference to the socket address structure from which the
+    /// \c IPAddress is to be constructed.
+    explicit IPAddress(const struct sockaddr& sa);
 
+    /// Return the address family of the address
+    ///
+    /// It's AF_INET for IPv4 and AF_INET6 for IPv6.
+    int getFamily() const { return (family); }
+
+    /// Return the binary representation of the address in network byte order.
+    ///
+    /// Only the \c getLength() bytes from the returned pointer are ensured
+    /// to be valid.  In addition, if the \c sockaddr structure given on
+    /// construction was dynamically allocated, the data is valid only until
+    /// the \c sockaddr is invalidated.
+    const uint8_t* getData() const { return (data); }
+
+    /// Return the length of the address.
+    size_t getLength() const { return (length); }
+private:
+    int family;
+    const uint8_t* data;
+    size_t length;
+};
 
 /// \brief IP Check
 ///
@@ -341,3 +400,7 @@ private:
 } // namespace isc
 
 #endif // __IP_CHECK_H
+
+// Local Variables:
+// mode: c++
+// End:

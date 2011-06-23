@@ -191,3 +191,24 @@ An informational message, this is output when the resolver starts up.
 % UNEXRESP      received unexpected response, ignoring
 A debug message noting that the server has received a response instead of a
 query and is ignoring it.
+
+% SETQUERYACL   query ACL is configured
+A debug message that appears when a new query ACL is configured for the
+resolver.
+
+%QUERYACCEPTED   query accepted: '%1/%2/%3' from %4
+A debug message that indicates an incoming query is accepted in terms of
+the query ACL.  The log message shows the query in the form of
+<query name>/<query type>/<query class>, and the client that sends the
+query in the form of <Source IP address>#<source port>.
+
+%QUERYREJECTED   query rejected: '%1/%2/%3' from %4
+An informational message that indicates an incoming query is rejected
+in terms of the query ACL.  This results in a response with an RCODE of
+REFUSED.  See QUERYACCEPTED for the information given in the message.
+
+%QUERYDROPPED    query dropped: '%1/%2/%3' from %4
+An informational message that indicates an incoming query is dropped
+in terms of the query ACL.  Unlike the QUERYREJECTED case, the server does
+not return any response.  See QUERYACCEPTED for the information given in
+the message.

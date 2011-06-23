@@ -12,14 +12,21 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <string>
+
+#include <exceptions/exceptions.h>
+
 #include <dns/name.h>
 
+#include <cc/data.h>
 #include <resolver/resolver.h>
 #include <dns/tests/unittest_util.h>
 #include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
 
+using namespace std;
 using namespace isc::dns;
+using namespace isc::data;
 using namespace isc::testutils;
 using isc::UnitTestUtil;
 
@@ -28,7 +35,17 @@ const char* const TEST_PORT = "53535";
 
 class ResolverTest : public SrvTestBase{
 protected:
-    ResolverTest() : server(){}
+    ResolverTest() : server() {
+        // By default queries from the "default remote address" will be
+        // rejected, so we'll need to add an explicit ACL entry to allow that.
+        server.setConfigured();
+        server.updateConfig(Element::fromJSON(
+                                "{ \"query_acl\": "
+                                "  [ {\"action\": \"ACCEPT\","
+                                "     \"from\": \"" +
+                                string(DEFAULT_REMOTE_ADDRESS) +
+                                "\"} ] }"));
+    }
     virtual void processMessage() {
         server.processMessage(*io_message,
                               parse_message,
@@ -135,5 +152,47 @@ TEST_F(ResolverTest, notifyFail) {
     headerCheck(*parse_message, default_qid, Rcode::NOTAUTH(),
                 Opcode::NOTIFY().getCode(), QR_FLAG, 0, 0, 0, 0);
 }
+
+TEST_F(ResolverTest, setQueryACL) {
+    // valid cases are tested through other tests.  We only explicitly check
+    // an invalid case: passing a NULL shared pointer.
+    EXPECT_THROW(server.setQueryACL(
+                     boost::shared_ptr<const Resolver::ClientACL>()),
+                 isc::InvalidParameter);
+}
+
+TEST_F(ResolverTest, queryACL) {
+    // The "ACCEPT" cases are covered in other tests.  Here we explicitly
+    // test "REJECT" and "DROP" cases.
+
+    // Clear the existing ACL, reverting to the "default reject" rule.
+
+    // AXFR over UDP.  This would otherwise result in FORMERR.
+    server.updateConfig(Element::fromJSON("{ \"query_acl\": [] }"));
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                                       Name("example.com"), RRClass::IN(),
+                                       RRType::AXFR());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, parse_message, response_message,
+                          response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::REFUSED(),
+                Opcode::QUERY().getCode(), QR_FLAG, 1, 0, 0, 0);
+
+    // Same query, but with an explicit "DROP" ACL entry.  There should be
+    // no response.
+    server.updateConfig(Element::fromJSON("{ \"query_acl\": "
+                                          "  [ {\"action\": \"DROP\","
+                                          "     \"from\": \"" +
+                                          string(DEFAULT_REMOTE_ADDRESS) +
+                                          "\"} ] }"));
+    parse_message->clear(Message::PARSE);
+    response_message->clear(Message::RENDER);
+    response_obuffer->clear();
+    server.processMessage(*io_message, parse_message, response_message,
+                          response_obuffer, &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
+}
+
 
 }
