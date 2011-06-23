@@ -158,7 +158,7 @@ struct IOFetchData {
         stopped(false),
         timeout(wait),
         packet(false),
-        origin(ASIODNS_UNKORIGIN),
+        origin(ASIODNS_UNKNOWN_ORIGIN),
         staging(),
         qid(QidGenerator::getInstance().generateQid())
     {}
@@ -329,7 +329,7 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
 
         // Finished with this socket, so close it.  This will not generate an
         // I/O error, but reset the origin to unknown in case we change this.
-        data_->origin = ASIODNS_UNKORIGIN;
+        data_->origin = ASIODNS_UNKNOWN_ORIGIN;
         data_->socket->close();
 
         /// We are done
@@ -415,7 +415,7 @@ void IOFetch::logIOFailure(asio::error_code ec) {
     assert((data_->origin == ASIODNS_OPEN_SOCKET) ||
            (data_->origin == ASIODNS_SEND_DATA) ||
            (data_->origin == ASIODNS_READ_DATA) ||
-           (data_->origin == ASIODNS_UNKORIGIN));
+           (data_->origin == ASIODNS_UNKNOWN_ORIGIN));
 
     static const char* PROTOCOL[2] = {"TCP", "UDP"};
     LOG_ERROR(logger, data_->origin).arg(ec.value()).
