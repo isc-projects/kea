@@ -1,4 +1,11 @@
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CXXFLAGS = $(B10_CXXFLAGS)
+
+if USE_STATIC_LINK
+AM_LDFLAGS = -static
+endif
+
+CLEANFILES = *.gcno *.gcda
 
 TESTS =
 if HAVE_GTEST
