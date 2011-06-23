@@ -590,4 +590,3 @@ TEST(IPCheck, MixedMode) {
     GeneralAddress test6(vector<uint8_t>(V6ADDR_1, V6ADDR_1 + IPV6_SIZE));
     EXPECT_FALSE(acl6.matches(test6));
 }
-
