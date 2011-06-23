@@ -224,7 +224,7 @@ readLoggersConf(std::vector<isc::log::LoggerSpecification>& specs,
     // look directly
     if (lname.length() > 0 && lname[0] == '*' &&
         (lname.length() == 1 || lname[1] == '.')) {
-        lname = isc::log::getRootLoggerName();
+        lname = isc::log::getRootLoggerName() + lname.substr(1);
     }
 
     ConstElementPtr severity_el = getValueOrDefault(logger,
