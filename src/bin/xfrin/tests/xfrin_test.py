@@ -15,6 +15,7 @@
 
 import unittest
 import socket
+import io
 from isc.testutils.tsigctx_mock import MockTSIGContext
 from xfrin import *
 
@@ -78,7 +79,7 @@ class MockXfrin(Xfrin):
 
     def _get_db_file(self):
         pass
-    
+
     def _cc_check_command(self):
         self._shutdown_event.set()
         if MockXfrin.check_command_hook:
@@ -207,6 +208,18 @@ class TestXfrinConnection(unittest.TestCase):
         mock_ctx.error = error
         return mock_ctx
 
+    def __match_exception(self, expected_exception, expected_msg, expression):
+        # This helper method is a higher-granularity version of assertRaises().
+        # If it's not sufficient to check the exception class (e.g., when
+        # the same type of exceptions can be thrown from many places), this
+        # method can be used to check it with the exception argument.
+        try:
+            expression()
+        except expected_exception as ex:
+            self.assertEqual(str(ex), expected_msg)
+        else:
+            self.assertFalse('exception is expected, but not raised')
+
     def test_close(self):
         # we shouldn't be using the global asyncore map.
         self.assertEqual(len(asyncore.socket_map), 0)
@@ -293,6 +306,31 @@ class TestXfrinConnection(unittest.TestCase):
         self.conn.reply_data = self.conn.create_response_data(bad_qid = True)
         self.assertRaises(XfrinException, self._handle_xfrin_response)
 
+    def test_response_error_code_bad_sig(self):
+        self.conn._tsig_key = TSIG_KEY
+        self.conn._tsig_ctx_creator = \
+            lambda key: self.__create_mock_tsig(key, TSIGError.BAD_SIG)
+        self.conn._send_query(RRType.AXFR())
+        self.conn.reply_data = self.conn.create_response_data(
+                rcode=Rcode.SERVFAIL())
+        # xfrin should check TSIG before other part of incoming message
+        # validate log message for XfrinException
+        self.__match_exception(XfrinException,
+                               "TSIG verify fail: BADSIG",
+                               self._handle_xfrin_response)
+
+    def test_response_bad_qid_bad_key(self):
+        self.conn._tsig_key = TSIG_KEY
+        self.conn._tsig_ctx_creator = \
+            lambda key: self.__create_mock_tsig(key, TSIGError.BAD_KEY)
+        self.conn._send_query(RRType.AXFR())
+        self.conn.reply_data = self.conn.create_response_data(bad_qid=True)
+        # xfrin should check TSIG before other part of incoming message
+        # validate log message for XfrinException
+        self.__match_exception(XfrinException,
+                               "TSIG verify fail: BADKEY",
+                               self._handle_xfrin_response)
+
     def test_response_non_response(self):
         self.conn._send_query(RRType.AXFR())
         self.conn.reply_data = self.conn.create_response_data(response = False)
@@ -336,6 +374,18 @@ class TestXfrinConnection(unittest.TestCase):
         self.soa_response_params['bad_qid'] = True
         self.conn.response_generator = self._create_soa_response_data
         self.assertRaises(XfrinException, self.conn._check_soa_serial)
+
+    def test_soacheck_bad_qid_bad_sig(self):
+        self.conn._tsig_key = TSIG_KEY
+        self.conn._tsig_ctx_creator = \
+            lambda key: self.__create_mock_tsig(key, TSIGError.BAD_SIG)
+        self.soa_response_params['bad_qid'] = True
+        self.conn.response_generator = self._create_soa_response_data
+        # xfrin should check TSIG before other part of incoming message
+        # validate log message for XfrinException
+        self.__match_exception(XfrinException,
+                               "TSIG verify fail: BADSIG",
+                               self.conn._check_soa_serial)
 
     def test_soacheck_non_response(self):
         self.soa_response_params['response'] = False

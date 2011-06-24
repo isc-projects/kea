@@ -437,8 +437,15 @@ class StatsHttpd:
             (k, v) = (str(k), str(v))
             elem = xml.etree.ElementTree.Element(k)
             elem.text = v
+            # The coding conversion is tricky. xml..tostring() of Python 3.2
+            # returns bytes (not string) regardless of the coding, while
+            # tostring() of Python 3.1 returns a string.  To support both
+            # cases transparently, we first make sure tostring() returns
+            # bytes by specifying utf-8 and then convert the result to a
+            # plain string (code below assume it).
             xml_list.append(
-                xml.etree.ElementTree.tostring(elem))
+                str(xml.etree.ElementTree.tostring(elem, encoding='utf-8'),
+                    encoding='us-ascii'))
         xml_string = "".join(xml_list)
         self.xml_body = self.open_template(XML_TEMPLATE_LOCATION).substitute(
             xml_string=xml_string,

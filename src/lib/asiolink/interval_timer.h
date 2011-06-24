@@ -16,6 +16,7 @@
 #define __ASIOLINK_INTERVAL_TIMER_H 1
 
 #include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <asiolink/io_service.h>
 
@@ -41,9 +42,6 @@ class IntervalTimerImpl;
 ///
 /// The call back function will not be called if the instance of this class is
 /// destroyed before the timer is expired.
-///
-/// Note: Destruction of an instance of this class while call back is pending
-/// causes throwing an exception from \c IOService.
 ///
 /// Sample code:
 /// \code
@@ -100,12 +98,12 @@ public:
     /// \param interval Interval in milliseconds (greater than 0)
     ///
     /// Note: IntervalTimer will not pass \c asio::error_code to
-    /// call back function. In case the timer is cancelled, the function
+    /// call back function. In case the timer is canceled, the function
     /// will not be called.
     ///
     /// \throw isc::InvalidParameter cbfunc is empty
     /// \throw isc::BadValue interval is less than or equal to 0
-    /// \throw isc::Unexpected ASIO library error
+    /// \throw isc::Unexpected internal runtime error
     void setup(const Callback& cbfunc, const long interval);
 
     /// Cancel the timer.
@@ -127,7 +125,7 @@ public:
     long getInterval() const;
 
 private:
-    IntervalTimerImpl* impl_;
+    boost::shared_ptr<IntervalTimerImpl> impl_;
 };
 
 } // namespace asiolink
