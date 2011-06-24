@@ -1,0 +1,841 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BIND 10 Messages Manual</title><link rel="stylesheet" href="./bind10-guide.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><meta name="description" content="BIND 10 is a Domain Name System (DNS) suite managed by Internet Systems Consortium (ISC). It includes DNS libraries and modular components for controlling authoritative and recursive DNS servers. This is the messages manual for BIND 10 version 20110519. The most up-to-date version of this document, along with other documents for BIND 10, can be found at ."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="BIND 10 Messages Manual"><div class="titlepage"><div><div><h1 class="title"><a name="id1168230298903"></a>BIND 10 Messages Manual</h1></div><div><p class="releaseinfo">This is the messages manual for BIND 10 version
+        20110519.</p></div><div><p class="copyright">Copyright © 2011 Internet Systems Consortium, Inc.</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a Domain Name System (DNS) suite managed by
+	  Internet Systems Consortium (ISC). It includes DNS libraries
+	  and modular components for controlling authoritative and
+	  recursive DNS servers.
+      </p><p>
+        This is the messages manual for BIND 10 version 20110519.
+	    The most up-to-date version of this document, along with
+	    other documents for BIND 10, can be found at
+        <a class="ulink" href="http://bind10.isc.org/docs" target="_top">http://bind10.isc.org/docs</a>.
+      </p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#intro">1. Introduction</a></span></dt><dt><span class="chapter"><a href="#messages">2. BIND 10 Messages</a></span></dt></dl></div><div class="chapter" title="Chapter 1. Introduction"><div class="titlepage"><div><div><h2 class="title"><a name="intro"></a>Chapter 1. Introduction</h2></div></div></div><p>
+      This document lists each message that can be logged by the
+      programs in the BIND 10 package.  Each entry in this manual
+      is of the form:
+      </p><pre class="screen">IDENTIFICATION message-text</pre><p>
+      ... where "IDENTIFICATION" is the message identification included
+      in each message logged and "message-text" is the accompanying
+      message text.  The "message-text" may include placeholders of the
+      form "%1", "%2" etc.; these parameters are replaced by relevant
+      values when the message is logged.
+    </p><p>
+      Each entry is also accompanied by a description giving more
+      information about the circumstances that result in the message
+      being logged.
+    </p><p>
+      For information on configuring and using BIND 10 logging,
+      refer to the <a class="ulink" href="bind10-guide.html" target="_top">BIND 10 Guide</a>.
+    </p></div><div class="chapter" title="Chapter 2. BIND 10 Messages"><div class="titlepage"><div><div><h2 class="title"><a name="messages"></a>Chapter 2. BIND 10 Messages</h2></div></div></div><p>
+      </p><div class="variablelist"><dl><dt><a name="ASIODNS_FETCHCOMP"></a><span class="term">ASIODNS_FETCHCOMP upstream fetch to %1(%2) has now completed</span></dt><dd><p>
+A debug message, this records the the upstream fetch (a query made by the
+resolver on behalf of its client) to the specified address has completed.
+</p></dd><dt><a name="ASIODNS_FETCHSTOP"></a><span class="term">ASIODNS_FETCHSTOP upstream fetch to %1(%2) has been stopped</span></dt><dd><p>
+An external component has requested the halting of an upstream fetch.  This
+is an allowed operation, and the message should only appear if debug is
+enabled.
+</p></dd><dt><a name="ASIODNS_OPENSOCK"></a><span class="term">ASIODNS_OPENSOCK error %1 opening %2 socket to %3(%4)</span></dt><dd><p>
+The asynchronous I/O code encountered an error when trying to open a socket
+of the specified protocol in order to send a message to the target address.
+The the number of the system error that cause the problem is given in the
+message.
+</p></dd><dt><a name="ASIODNS_RECVSOCK"></a><span class="term">ASIODNS_RECVSOCK error %1 reading %2 data from %3(%4)</span></dt><dd><p>
+The asynchronous I/O code encountered an error when trying read data from
+the specified address on the given protocol.  The the number of the system
+error that cause the problem is given in the message.
+</p></dd><dt><a name="ASIODNS_RECVTMO"></a><span class="term">ASIODNS_RECVTMO receive timeout while waiting for data from %1(%2)</span></dt><dd><p>
+An upstream fetch from the specified address timed out.  This may happen for
+any number of reasons and is most probably a problem at the remote server
+or a problem on the network.  The message will only appear if debug is
+enabled.
+</p></dd><dt><a name="ASIODNS_SENDSOCK"></a><span class="term">ASIODNS_SENDSOCK error %1 sending data using %2 to %3(%4)</span></dt><dd><p>
+The asynchronous I/O code encountered an error when trying send data to
+the specified address on the given protocol.  The the number of the system
+error that cause the problem is given in the message.
+</p></dd><dt><a name="ASIODNS_UNKORIGIN"></a><span class="term">ASIODNS_UNKORIGIN unknown origin for ASIO error code %1 (protocol: %2, address %3)</span></dt><dd><p>
+This message should not appear and indicates an internal error if it does.
+Please enter a bug report.
+</p></dd><dt><a name="ASIODNS_UNKRESULT"></a><span class="term">ASIODNS_UNKRESULT unknown result (%1) when IOFetch::stop() was executed for I/O to %2(%3)</span></dt><dd><p>
+The termination method of the resolver's upstream fetch class was called with
+an unknown result code (which is given in the message).  This message should
+not appear and may indicate an internal error.  Please enter a bug report.
+</p></dd><dt><a name="CONFIG_CCSESSION_MSG"></a><span class="term">CONFIG_CCSESSION_MSG error in CC session message: %1</span></dt><dd><p>
+There was a problem with an incoming message on the command and control
+channel. The message does not appear to be a valid command, and is
+missing a required element or contains an unknown data format. This
+most likely means that another BIND10 module is sending a bad message.
+The message itself is ignored by this module.
+</p></dd><dt><a name="CONFIG_CCSESSION_MSG_INTERNAL"></a><span class="term">CONFIG_CCSESSION_MSG_INTERNAL error handling CC session message: %1</span></dt><dd><p>
+There was an internal problem handling an incoming message on the
+command and control channel. An unexpected exception was thrown. This
+most likely points to an internal inconsistency in the module code. The
+exception message is appended to the log error, and the module will
+continue to run, but will not send back an answer.
+</p></dd><dt><a name="CONFIG_FOPEN_ERR"></a><span class="term">CONFIG_FOPEN_ERR error opening %1: %2</span></dt><dd><p>
+There was an error opening the given file.
+</p></dd><dt><a name="CONFIG_JSON_PARSE"></a><span class="term">CONFIG_JSON_PARSE JSON parse error in %1: %2</span></dt><dd><p>
+There was a parse error in the JSON file. The given file does not appear
+to be in valid JSON format. Please verify that the filename is correct
+and that the contents are valid JSON.
+</p></dd><dt><a name="CONFIG_MANAGER_CONFIG"></a><span class="term">CONFIG_MANAGER_CONFIG error getting configuration from cfgmgr: %1</span></dt><dd><p>
+The configuration manager returned an error when this module requested
+the configuration. The full error message answer from the configuration
+manager is appended to the log error. The most likely cause is that
+the module is of a different (command specification) version than the
+running configuration manager.
+</p></dd><dt><a name="CONFIG_MANAGER_MOD_SPEC"></a><span class="term">CONFIG_MANAGER_MOD_SPEC module specification not accepted by cfgmgr: %1</span></dt><dd><p>
+The module specification file for this module was rejected by the
+configuration manager. The full error message answer from the
+configuration manager is appended to the log error. The most likely
+cause is that the module is of a different (specification file) version
+than the running configuration manager.
+</p></dd><dt><a name="CONFIG_MODULE_SPEC"></a><span class="term">CONFIG_MODULE_SPEC module specification error in %1: %2</span></dt><dd><p>
+The given file does not appear to be a valid specification file. Please
+verify that the filename is correct and that its contents are a valid
+BIND10 module specification.
+</p></dd><dt><a name="DATASRC_CACHE_CREATE"></a><span class="term">DATASRC_CACHE_CREATE creating the hotspot cache</span></dt><dd><p>
+Debug information that the hotspot cache was created at startup.
+</p></dd><dt><a name="DATASRC_CACHE_DESTROY"></a><span class="term">DATASRC_CACHE_DESTROY destroying the hotspot cache</span></dt><dd><p>
+Debug information. The hotspot cache is being destroyed.
+</p></dd><dt><a name="DATASRC_CACHE_DISABLE"></a><span class="term">DATASRC_CACHE_DISABLE disabling the cache</span></dt><dd><p>
+The hotspot cache is disabled from now on. It is not going to store
+information or return anything.
+</p></dd><dt><a name="DATASRC_CACHE_ENABLE"></a><span class="term">DATASRC_CACHE_ENABLE enabling the cache</span></dt><dd><p>
+The hotspot cache is enabled from now on.
+</p></dd><dt><a name="DATASRC_CACHE_EXPIRED"></a><span class="term">DATASRC_CACHE_EXPIRED the item '%1' is expired</span></dt><dd><p>
+Debug information. There was an attempt to look up an item in the hotspot
+cache. And the item was actually there, but it was too old, so it was removed
+instead and nothing is reported (the external behaviour is the same as with
+CACHE_NOT_FOUND).
+</p></dd><dt><a name="DATASRC_CACHE_FOUND"></a><span class="term">DATASRC_CACHE_FOUND the item '%1' was found</span></dt><dd><p>
+Debug information. An item was successfully looked up in the hotspot cache.
+</p></dd><dt><a name="DATASRC_CACHE_FULL"></a><span class="term">DATASRC_CACHE_FULL cache is full, dropping oldest</span></dt><dd><p>
+Debug information. After inserting an item into the hotspot cache, the
+maximum number of items was exceeded, so the least recently used item will
+be dropped. This should be directly followed by CACHE_REMOVE.
+</p></dd><dt><a name="DATASRC_CACHE_INSERT"></a><span class="term">DATASRC_CACHE_INSERT inserting item '%1' into the cache</span></dt><dd><p>
+Debug information. It means a new item is being inserted into the hotspot
+cache.
+</p></dd><dt><a name="DATASRC_CACHE_NOT_FOUND"></a><span class="term">DATASRC_CACHE_NOT_FOUND the item '%1' was not found</span></dt><dd><p>
+Debug information. It was attempted to look up an item in the hotspot cache,
+but it is not there.
+</p></dd><dt><a name="DATASRC_CACHE_OLD_FOUND"></a><span class="term">DATASRC_CACHE_OLD_FOUND older instance of cache item found, replacing</span></dt><dd><p>
+Debug information. While inserting an item into the hotspot cache, an older
+instance of an item with the same name was found. The old instance will be
+removed. This should be directly followed by CACHE_REMOVE.
+</p></dd><dt><a name="DATASRC_CACHE_REMOVE"></a><span class="term">DATASRC_CACHE_REMOVE removing '%1' from the cache</span></dt><dd><p>
+Debug information. An item is being removed from the hotspot cache.
+</p></dd><dt><a name="DATASRC_CACHE_SLOTS"></a><span class="term">DATASRC_CACHE_SLOTS setting the cache size to '%1', dropping '%2' items</span></dt><dd><p>
+The maximum allowed number of items of the hotspot cache is set to the given
+number. If there are too many, some of them will be dropped. The size of 0
+means no limit.
+</p></dd><dt><a name="DATASRC_DO_QUERY"></a><span class="term">DATASRC_DO_QUERY handling query for '%1/%2'</span></dt><dd><p>
+Debug information. We're processing some internal query for given name and
+type.
+</p></dd><dt><a name="DATASRC_MEM_ADD_RRSET"></a><span class="term">DATASRC_MEM_ADD_RRSET adding RRset '%1/%2' into zone '%3'</span></dt><dd><p>
+Debug information. An RRset is being added to the in-memory data source.
+</p></dd><dt><a name="DATASRC_MEM_ADD_WILDCARD"></a><span class="term">DATASRC_MEM_ADD_WILDCARD adding wildcards for '%1'</span></dt><dd><p>
+Debug information. Some special marks above each * in wildcard name are needed.
+They are being added now for this name.
+</p></dd><dt><a name="DATASRC_MEM_ADD_ZONE"></a><span class="term">DATASRC_MEM_ADD_ZONE adding zone '%1/%2'</span></dt><dd><p>
+Debug information. A zone is being added into the in-memory data source.
+</p></dd><dt><a name="DATASRC_MEM_ANY_SUCCESS"></a><span class="term">DATASRC_MEM_ANY_SUCCESS ANY query for '%1' successful</span></dt><dd><p>
+Debug information. The domain was found and an ANY type query is being answered
+by providing everything found inside the domain.
+</p></dd><dt><a name="DATASRC_MEM_CNAME"></a><span class="term">DATASRC_MEM_CNAME CNAME at the domain '%1'</span></dt><dd><p>
+Debug information. The requested domain is an alias to a different domain,
+returning the CNAME instead.
+</p></dd><dt><a name="DATASRC_MEM_CNAME_COEXIST"></a><span class="term">DATASRC_MEM_CNAME_COEXIST can't add data to CNAME in domain '%1'</span></dt><dd><p>
+This is the same problem as in MEM_CNAME_TO_NONEMPTY, but it happened the
+other way around -- adding some outher data to CNAME.
+</p></dd><dt><a name="DATASRC_MEM_CNAME_TO_NONEMPTY"></a><span class="term">DATASRC_MEM_CNAME_TO_NONEMPTY can't add CNAME to domain with other data in '%1'</span></dt><dd><p>
+Someone or something tried to add a CNAME into a domain that already contains
+some other data. But the protocol forbids coexistence of CNAME with anything
+(RFC 1034, section 3.6.2). This indicates a problem with provided data.
+</p></dd><dt><a name="DATASRC_MEM_CREATE"></a><span class="term">DATASRC_MEM_CREATE creating zone '%1' in '%2' class</span></dt><dd><p>
+Debug information. A representation of a zone for the in-memory data source is
+being created.
+</p></dd><dt><a name="DATASRC_MEM_DELEG_FOUND"></a><span class="term">DATASRC_MEM_DELEG_FOUND delegation found at '%1'</span></dt><dd><p>
+Debug information. A delegation point was found above the requested record.
+</p></dd><dt><a name="DATASRC_MEM_DESTROY"></a><span class="term">DATASRC_MEM_DESTROY destroying zone '%1' in '%2' class</span></dt><dd><p>
+Debug information. A zone from in-memory data source is being destroyed.
+</p></dd><dt><a name="DATASRC_MEM_DNAME_ENCOUNTERED"></a><span class="term">DATASRC_MEM_DNAME_ENCOUNTERED encountered a DNAME</span></dt><dd><p>
+Debug information. While searching for the requested domain, a DNAME was
+encountered on the way.  This may lead to redirection to a different domain and
+stop the search.
+</p></dd><dt><a name="DATASRC_MEM_DNAME_FOUND"></a><span class="term">DATASRC_MEM_DNAME_FOUND DNAME found at '%1'</span></dt><dd><p>
+Debug information. A DNAME was found instead of the requested information.
+</p></dd><dt><a name="DATASRC_MEM_DNAME_NS"></a><span class="term">DATASRC_MEM_DNAME_NS dNAME and NS can't coexist in non-apex domain '%1'</span></dt><dd><p>
+It was requested for DNAME and NS records to be put into the same domain
+which is not the apex (the top of the zone). This is forbidden by RFC
+2672, section 3. This indicates a problem with provided data.
+</p></dd><dt><a name="DATASRC_MEM_DOMAIN_EMPTY"></a><span class="term">DATASRC_MEM_DOMAIN_EMPTY requested domain '%1' is empty</span></dt><dd><p>
+Debug information. The requested domain exists in the tree of domains, but
+it is empty. Therefore it doesn't contain the requested resource type.
+</p></dd><dt><a name="DATASRC_MEM_DUP_RRSET"></a><span class="term">DATASRC_MEM_DUP_RRSET duplicate RRset '%1/%2'</span></dt><dd><p>
+An RRset is being inserted into in-memory data source for a second time.  The
+original version must be removed first. Note that loading master files where an
+RRset is split into multiple locations is not supported yet.
+</p></dd><dt><a name="DATASRC_MEM_EXACT_DELEGATION"></a><span class="term">DATASRC_MEM_EXACT_DELEGATION delegation at the exact domain '%1'</span></dt><dd><p>
+Debug information. There's a NS record at the requested domain. This means
+this zone is not authoritative for the requested domain, but a delegation
+should be followed. The requested domain is an apex of some zone.
+</p></dd><dt><a name="DATASRC_MEM_FIND"></a><span class="term">DATASRC_MEM_FIND find '%1/%2'</span></dt><dd><p>
+Debug information. A search for the requested RRset is being started.
+</p></dd><dt><a name="DATASRC_MEM_FIND_ZONE"></a><span class="term">DATASRC_MEM_FIND_ZONE looking for zone '%1'</span></dt><dd><p>
+Debug information. A zone object for this zone is being searched for in the
+in-memory data source.
+</p></dd><dt><a name="DATASRC_MEM_LOAD"></a><span class="term">DATASRC_MEM_LOAD loading zone '%1' from file '%2'</span></dt><dd><p>
+Debug information. The content of master file is being loaded into the memory.
+</p></dd><dt><a name="DATASRC_MEM_NOTFOUND"></a><span class="term">DATASRC_MEM_NOTFOUND requested domain '%1' not found</span></dt><dd><p>
+Debug information. The requested domain does not exist.
+</p></dd><dt><a name="DATASRC_MEM_NS_ENCOUNTERED"></a><span class="term">DATASRC_MEM_NS_ENCOUNTERED encountered a NS</span></dt><dd><p>
+Debug information. While searching for the requested domain, a NS was
+encountered on the way (a delegation). This may lead to stop of the search.
+</p></dd><dt><a name="DATASRC_MEM_NXRRSET"></a><span class="term">DATASRC_MEM_NXRRSET no such type '%1' at '%2'</span></dt><dd><p>
+Debug information. The domain exists, but it doesn't hold any record of the
+requested type.
+</p></dd><dt><a name="DATASRC_MEM_OUT_OF_ZONE"></a><span class="term">DATASRC_MEM_OUT_OF_ZONE domain '%1' doesn't belong to zone '%2'</span></dt><dd><p>
+It was attempted to add the domain into a zone that shouldn't have it
+(eg. the domain is not subdomain of the zone origin). This indicates a
+problem with provided data.
+</p></dd><dt><a name="DATASRC_MEM_RENAME"></a><span class="term">DATASRC_MEM_RENAME renaming RRset from '%1' to '%2'</span></dt><dd><p>
+Debug information. A RRset is being generated from a different RRset (most
+probably a wildcard). So it must be renamed to whatever the user asked for. In
+fact, it's impossible to rename RRsets with our libraries, so a new one is
+created and all resource records are copied over.
+</p></dd><dt><a name="DATASRC_MEM_SINGLETON"></a><span class="term">DATASRC_MEM_SINGLETON trying to add multiple RRs for domain '%1' and type '%2'</span></dt><dd><p>
+Some resource types are singletons -- only one is allowed in a domain
+(for example CNAME or SOA). This indicates a problem with provided data.
+</p></dd><dt><a name="DATASRC_MEM_SUCCESS"></a><span class="term">DATASRC_MEM_SUCCESS query for '%1/%2' successful</span></dt><dd><p>
+Debug information. The requested record was found.
+</p></dd><dt><a name="DATASRC_MEM_SUPER_STOP"></a><span class="term">DATASRC_MEM_SUPER_STOP stopped at superdomain '%1', domain '%2' is empty</span></dt><dd><p>
+Debug information. The search stopped at a superdomain of the requested
+domain. The domain is a empty nonterminal, therefore it is treated  as NXRRSET
+case (eg. the domain exists, but it doesn't have the requested record type).
+</p></dd><dt><a name="DATASRC_MEM_SWAP"></a><span class="term">DATASRC_MEM_SWAP swapping contents of two zone representations ('%1' and '%2')</span></dt><dd><p>
+Debug information. The contents of two in-memory zones are being exchanged.
+This is usual practice to do some manipulation in exception-safe manner -- the
+new data are prepared in a different zone object and when it works, they are
+swapped. The old one contains the new data and the other one can be safely
+destroyed.
+</p></dd><dt><a name="DATASRC_MEM_WILDCARD_CANCEL"></a><span class="term">DATASRC_MEM_WILDCARD_CANCEL wildcard match canceled for '%1'</span></dt><dd><p>
+Debug information. A domain above wildcard was reached, but there's something
+below the requested domain. Therefore the wildcard doesn't apply here.  This
+behaviour is specified by RFC 1034, section 4.3.3
+</p></dd><dt><a name="DATASRC_MEM_WILDCARD_DNAME"></a><span class="term">DATASRC_MEM_WILDCARD_DNAME dNAME record in wildcard domain '%1'</span></dt><dd><p>
+The software refuses to load DNAME records into a wildcard domain.  It isn't
+explicitly forbidden, but the protocol is ambiguous about how this should
+behave and BIND 9 refuses that as well. Please describe your intention using
+different tools.
+</p></dd><dt><a name="DATASRC_MEM_WILDCARD_NS"></a><span class="term">DATASRC_MEM_WILDCARD_NS nS record in wildcard domain '%1'</span></dt><dd><p>
+The software refuses to load NS records into a wildcard domain.  It isn't
+explicitly forbidden, but the protocol is ambiguous about how this should
+behave and BIND 9 refuses that as well. Please describe your intention using
+different tools.
+</p></dd><dt><a name="DATASRC_META_ADD"></a><span class="term">DATASRC_META_ADD adding a data source into meta data source</span></dt><dd><p>
+Debug information. Yet another data source is being added into the meta data
+source. (probably at startup or reconfiguration)
+</p></dd><dt><a name="DATASRC_META_ADD_CLASS_MISMATCH"></a><span class="term">DATASRC_META_ADD_CLASS_MISMATCH mismatch between classes '%1' and '%2'</span></dt><dd><p>
+It was attempted to add a data source into a meta data source. But their
+classes do not match.
+</p></dd><dt><a name="DATASRC_META_REMOVE"></a><span class="term">DATASRC_META_REMOVE removing data source from meta data source</span></dt><dd><p>
+Debug information. A data source is being removed from meta data source.
+</p></dd><dt><a name="DATASRC_QUERY_ADD_NSEC"></a><span class="term">DATASRC_QUERY_ADD_NSEC adding NSEC record for '%1'</span></dt><dd><p>
+Debug information. A NSEC record covering this zone is being added.
+</p></dd><dt><a name="DATASRC_QUERY_ADD_NSEC3"></a><span class="term">DATASRC_QUERY_ADD_NSEC3 adding NSEC3 record of zone '%1'</span></dt><dd><p>
+Debug information. A NSEC3 record for the given zone is being added to the
+response message.
+</p></dd><dt><a name="DATASRC_QUERY_ADD_RRSET"></a><span class="term">DATASRC_QUERY_ADD_RRSET adding RRset '%1/%2' to message</span></dt><dd><p>
+Debug information. An RRset is being added to the response message.
+</p></dd><dt><a name="DATASRC_QUERY_ADD_SOA"></a><span class="term">DATASRC_QUERY_ADD_SOA adding SOA of '%1'</span></dt><dd><p>
+Debug information. A SOA record of the given zone is being added to the
+authority section of the response message.
+</p></dd><dt><a name="DATASRC_QUERY_AUTH_FAIL"></a><span class="term">DATASRC_QUERY_AUTH_FAIL the underlying data source failed with %1</span></dt><dd><p>
+The underlying data source failed to answer the authoritative query. 1 means
+some error, 2 is not implemented. The data source should have logged the
+specific error already.
+</p></dd><dt><a name="DATASRC_QUERY_BAD_REFERRAL"></a><span class="term">DATASRC_QUERY_BAD_REFERRAL bad referral to '%1'</span></dt><dd><p>
+The domain lives in another zone. But it is not possible to generate referral
+information for it.
+</p></dd><dt><a name="DATASRC_QUERY_CACHED"></a><span class="term">DATASRC_QUERY_CACHED data for %1/%2 found in cache</span></dt><dd><p>
+Debug information. The requested data were found in the hotspot cache, so
+no query is sent to the real data source.
+</p></dd><dt><a name="DATASRC_QUERY_CHECK_CACHE"></a><span class="term">DATASRC_QUERY_CHECK_CACHE checking cache for '%1/%2'</span></dt><dd><p>
+Debug information. While processing a query, lookup to the hotspot cache
+is being made.
+</p></dd><dt><a name="DATASRC_QUERY_COPY_AUTH"></a><span class="term">DATASRC_QUERY_COPY_AUTH copying authoritative section into message</span></dt><dd><p>
+Debug information. The whole referral information is being copied into the
+response message.
+</p></dd><dt><a name="DATASRC_QUERY_DELEGATION"></a><span class="term">DATASRC_QUERY_DELEGATION looking for delegation on the path to '%1'</span></dt><dd><p>
+Debug information. The software is trying to identify delegation points on the
+way down to the given domain.
+</p></dd><dt><a name="DATASRC_QUERY_EMPTY_CNAME"></a><span class="term">DATASRC_QUERY_EMPTY_CNAME cNAME at '%1' is empty</span></dt><dd><p>
+There was an CNAME and it was being followed. But it contains no records,
+so there's nowhere to go. There will be no answer. This indicates a problem
+with supplied data.
+We tried to follow
+</p></dd><dt><a name="DATASRC_QUERY_EMPTY_DNAME"></a><span class="term">DATASRC_QUERY_EMPTY_DNAME the DNAME on '%1' is empty</span></dt><dd><p>
+During an attempt to synthesize CNAME from this DNAME it was discovered the
+DNAME is empty (it has no records). This indicates problem with supplied data.
+</p></dd><dt><a name="DATASRC_QUERY_FAIL"></a><span class="term">DATASRC_QUERY_FAIL query failed</span></dt><dd><p>
+Some subtask of query processing failed. The reason should have been reported
+already. We are returning SERVFAIL.
+</p></dd><dt><a name="DATASRC_QUERY_FOLLOW_CNAME"></a><span class="term">DATASRC_QUERY_FOLLOW_CNAME following CNAME at '%1'</span></dt><dd><p>
+Debug information. The domain is a CNAME (or a DNAME and we created a CNAME
+for it already), so it's being followed.
+</p></dd><dt><a name="DATASRC_QUERY_GET_MX_ADDITIONAL"></a><span class="term">DATASRC_QUERY_GET_MX_ADDITIONAL addition of A/AAAA for '%1' requested by MX '%2'</span></dt><dd><p>
+Debug information. While processing a query, a MX record was met. It
+references the mentioned address, so A/AAAA records for it are looked up
+and put it into the additional section.
+</p></dd><dt><a name="DATASRC_QUERY_GET_NS_ADDITIONAL"></a><span class="term">DATASRC_QUERY_GET_NS_ADDITIONAL addition of A/AAAA for '%1' requested by NS '%2'</span></dt><dd><p>
+Debug information. While processing a query, a NS record was met. It
+references the mentioned address, so A/AAAA records for it are looked up
+and put it into the additional section.
+</p></dd><dt><a name="DATASRC_QUERY_GLUE_FAIL"></a><span class="term">DATASRC_QUERY_GLUE_FAIL the underlying data source failed with %1</span></dt><dd><p>
+The underlying data source failed to answer the glue query. 1 means some error,
+2 is not implemented. The data source should have logged the specific error
+already.
+</p></dd><dt><a name="DATASRC_QUERY_INVALID_OP"></a><span class="term">DATASRC_QUERY_INVALID_OP invalid query operation requested</span></dt><dd><p>
+This indicates a programmer error. The DO_QUERY was called with unknown
+operation code.
+</p></dd><dt><a name="DATASRC_QUERY_IS_AUTH"></a><span class="term">DATASRC_QUERY_IS_AUTH auth query (%1/%2)</span></dt><dd><p>
+Debug information. The last DO_QUERY is an auth query.
+</p></dd><dt><a name="DATASRC_QUERY_IS_GLUE"></a><span class="term">DATASRC_QUERY_IS_GLUE glue query (%1/%2)</span></dt><dd><p>
+Debug information. The last DO_QUERY is query for glue addresses.
+</p></dd><dt><a name="DATASRC_QUERY_IS_NOGLUE"></a><span class="term">DATASRC_QUERY_IS_NOGLUE query for non-glue addresses (%1/%2)</span></dt><dd><p>
+Debug information. The last DO_QUERY is query for addresses that are not
+glue.
+</p></dd><dt><a name="DATASRC_QUERY_IS_REF"></a><span class="term">DATASRC_QUERY_IS_REF query for referral (%1/%2)</span></dt><dd><p>
+Debug information. The last DO_QUERY is query for referral information.
+</p></dd><dt><a name="DATASRC_QUERY_IS_SIMPLE"></a><span class="term">DATASRC_QUERY_IS_SIMPLE simple query (%1/%2)</span></dt><dd><p>
+Debug information. The last DO_QUERY is a simple query.
+</p></dd><dt><a name="DATASRC_QUERY_MISPLACED_TASK"></a><span class="term">DATASRC_QUERY_MISPLACED_TASK task of this type should not be here</span></dt><dd><p>
+This indicates a programming error. A task was found in the internal task
+queue, but this kind of task wasn't designed to be inside the queue (it should
+be handled right away, not queued).
+</p></dd><dt><a name="DATASRC_QUERY_MISSING_NS"></a><span class="term">DATASRC_QUERY_MISSING_NS missing NS records for '%1'</span></dt><dd><p>
+NS records should have been put into the authority section. However, this zone
+has none. This indicates problem with provided data.
+</p></dd><dt><a name="DATASRC_QUERY_MISSING_SOA"></a><span class="term">DATASRC_QUERY_MISSING_SOA the zone '%1' has no SOA</span></dt><dd><p>
+The answer should have been a negative one (eg. of nonexistence of something).
+To do so, a SOA record should be put into the authority section, but the zone
+does not have one. This indicates problem with provided data.
+</p></dd><dt><a name="DATASRC_QUERY_NOGLUE_FAIL"></a><span class="term">DATASRC_QUERY_NOGLUE_FAIL the underlying data source failed with %1</span></dt><dd><p>
+The underlying data source failed to answer the no-glue query. 1 means some
+error, 2 is not implemented. The data source should have logged the specific
+error already.
+</p></dd><dt><a name="DATASRC_QUERY_NO_CACHE_ANY_AUTH"></a><span class="term">DATASRC_QUERY_NO_CACHE_ANY_AUTH ignoring cache for ANY query (%1/%2 in %3 class)</span></dt><dd><p>
+Debug information. The hotspot cache is ignored for authoritative ANY queries
+for consistency reasons.
+</p></dd><dt><a name="DATASRC_QUERY_NO_CACHE_ANY_SIMPLE"></a><span class="term">DATASRC_QUERY_NO_CACHE_ANY_SIMPLE ignoring cache for ANY query (%1/%2 in %3 class)</span></dt><dd><p>
+Debug information. The hotspot cache is ignored for ANY queries for consistency
+reasons.
+</p></dd><dt><a name="DATASRC_QUERY_NO_DS_NSEC"></a><span class="term">DATASRC_QUERY_NO_DS_NSEC there's no DS record in the '%1' zone</span></dt><dd><p>
+An attempt to add a NSEC record into the message failed, because the zone does
+not have any DS record. This indicates problem with the provided data.
+</p></dd><dt><a name="DATASRC_QUERY_NO_DS_NSEC3"></a><span class="term">DATASRC_QUERY_NO_DS_NSEC3 there's no DS record in the '%1' zone</span></dt><dd><p>
+An attempt to add a NSEC3 record into the message failed, because the zone does
+not have any DS record. This indicates problem with the provided data.
+</p></dd><dt><a name="DATASRC_QUERY_NO_ZONE"></a><span class="term">DATASRC_QUERY_NO_ZONE no zone containing '%1' in class '%2'</span></dt><dd><p>
+Lookup of domain failed because the data have no zone that contain the
+domain. Maybe someone sent a query to the wrong server for some reason.
+</p></dd><dt><a name="DATASRC_QUERY_PROCESS"></a><span class="term">DATASRC_QUERY_PROCESS processing query '%1/%2' in the '%3' class</span></dt><dd><p>
+Debug information. A sure query is being processed now.
+</p></dd><dt><a name="DATASRC_QUERY_PROVENX_FAIL"></a><span class="term">DATASRC_QUERY_PROVENX_FAIL unable to prove nonexistence of '%1'</span></dt><dd><p>
+The user wants DNSSEC and we discovered the entity doesn't exist (either
+domain or the record). But there was an error getting NSEC/NSEC3 record
+to prove the nonexistence.
+</p></dd><dt><a name="DATASRC_QUERY_REF_FAIL"></a><span class="term">DATASRC_QUERY_REF_FAIL the underlying data source failed with %1</span></dt><dd><p>
+The underlying data source failed to answer the query for referral information.
+1 means some error, 2 is not implemented. The data source should have logged
+the specific error already.
+</p></dd><dt><a name="DATASRC_QUERY_RRSIG"></a><span class="term">DATASRC_QUERY_RRSIG unable to answer RRSIG query</span></dt><dd><p>
+The server is unable to answer a direct query for RRSIG type, but was asked
+to do so.
+</p></dd><dt><a name="DATASRC_QUERY_SIMPLE_FAIL"></a><span class="term">DATASRC_QUERY_SIMPLE_FAIL the underlying data source failed with %1</span></dt><dd><p>
+The underlying data source failed to answer the simple query. 1 means some
+error, 2 is not implemented. The data source should have logged the specific
+error already.
+</p></dd><dt><a name="DATASRC_QUERY_SYNTH_CNAME"></a><span class="term">DATASRC_QUERY_SYNTH_CNAME synthesizing CNAME from DNAME on '%1'</span></dt><dd><p>
+Debug information. While answering a query, a DNAME was met. The DNAME itself
+will be returned, but along with it a CNAME for clients which don't understand
+DNAMEs will be synthesized.
+</p></dd><dt><a name="DATASRC_QUERY_TASK_FAIL"></a><span class="term">DATASRC_QUERY_TASK_FAIL task failed with %1</span></dt><dd><p>
+The query subtask failed. The reason should have been reported by the subtask
+already. The code is 1 for error, 2 for not implemented.
+</p></dd><dt><a name="DATASRC_QUERY_TOO_MANY_CNAMES"></a><span class="term">DATASRC_QUERY_TOO_MANY_CNAMES cNAME chain limit exceeded at '%1'</span></dt><dd><p>
+A CNAME led to another CNAME and it led to another, and so on. After 16
+CNAMEs, the software gave up. Long CNAME chains are discouraged, and this
+might possibly be a loop as well. Note that some of the CNAMEs might have
+been synthesized from DNAMEs. This indicates problem with supplied data.
+</p></dd><dt><a name="DATASRC_QUERY_UNKNOWN_RESULT"></a><span class="term">DATASRC_QUERY_UNKNOWN_RESULT unknown result of subtask</span></dt><dd><p>
+This indicates a programmer error. The answer of subtask doesn't look like
+anything known.
+</p></dd><dt><a name="DATASRC_QUERY_WILDCARD"></a><span class="term">DATASRC_QUERY_WILDCARD looking for a wildcard covering '%1'</span></dt><dd><p>
+Debug information. A direct match wasn't found, so a wildcard covering the
+domain is being looked for now.
+</p></dd><dt><a name="DATASRC_QUERY_WILDCARD_FAIL"></a><span class="term">DATASRC_QUERY_WILDCARD_FAIL error processing wildcard for '%1'</span></dt><dd><p>
+During an attempt to cover the domain by a wildcard an error happened. The
+exact kind was hopefully already reported.
+</p></dd><dt><a name="DATASRC_QUERY_WILDCARD_PROVENX_FAIL"></a><span class="term">DATASRC_QUERY_WILDCARD_PROVENX_FAIL unable to prove nonexistence of '%1' (%2)</span></dt><dd><p>
+While processing a wildcard, it wasn't possible to prove nonexistence of the
+given domain or record.  The code is 1 for error and 2 for not implemented.
+</p></dd><dt><a name="DATASRC_QUERY_WILDCARD_REFERRAL"></a><span class="term">DATASRC_QUERY_WILDCARD_REFERRAL unable to find referral info for '%1' (%2)</span></dt><dd><p>
+While processing a wildcard, a referral was met. But it wasn't possible to get
+enough information for it.  The code is 1 for error, 2 for not implemented.
+</p></dd><dt><a name="DATASRC_SQLITE_CLOSE"></a><span class="term">DATASRC_SQLITE_CLOSE closing SQLite database</span></dt><dd><p>
+Debug information. The SQLite data source is closing the database file.
+</p></dd><dt><a name="DATASRC_SQLITE_CREATE"></a><span class="term">DATASRC_SQLITE_CREATE sQLite data source created</span></dt><dd><p>
+Debug information. An instance of SQLite data source is being created.
+</p></dd><dt><a name="DATASRC_SQLITE_DESTROY"></a><span class="term">DATASRC_SQLITE_DESTROY sQLite data source destroyed</span></dt><dd><p>
+Debug information. An instance of SQLite data source is being destroyed.
+</p></dd><dt><a name="DATASRC_SQLITE_ENCLOSURE"></a><span class="term">DATASRC_SQLITE_ENCLOSURE looking for zone containing '%1'</span></dt><dd><p>
+Debug information. The SQLite data source is trying to identify, which zone
+should hold this domain.
+</p></dd><dt><a name="DATASRC_SQLITE_ENCLOSURE_NOTFOUND"></a><span class="term">DATASRC_SQLITE_ENCLOSURE_NOTFOUND no zone contains it</span></dt><dd><p>
+Debug information. The last SQLITE_ENCLOSURE query was unsuccessful, there's
+no such zone in our data.
+</p></dd><dt><a name="DATASRC_SQLITE_FIND"></a><span class="term">DATASRC_SQLITE_FIND looking for RRset '%1/%2'</span></dt><dd><p>
+Debug information. The SQLite data source is looking up a resource record
+set.
+</p></dd><dt><a name="DATASRC_SQLITE_FINDADDRS"></a><span class="term">DATASRC_SQLITE_FINDADDRS looking for A/AAAA addresses for '%1'</span></dt><dd><p>
+Debug information. The data source is looking up the addresses for given
+domain name.
+</p></dd><dt><a name="DATASRC_SQLITE_FINDADDRS_BAD_CLASS"></a><span class="term">DATASRC_SQLITE_FINDADDRS_BAD_CLASS class mismatch looking for addresses ('%1' and '%2')</span></dt><dd><p>
+The SQLite data source was looking up A/AAAA addresses, but the data source
+contains different class than the query was for.
+</p></dd><dt><a name="DATASRC_SQLITE_FINDEXACT"></a><span class="term">DATASRC_SQLITE_FINDEXACT looking for exact RRset '%1/%2'</span></dt><dd><p>
+Debug information. The SQLite data source is looking up an exact resource
+record.
+</p></dd><dt><a name="DATASRC_SQLITE_FINDEXACT_BAD_CLASS"></a><span class="term">DATASRC_SQLITE_FINDEXACT_BAD_CLASS class mismatch looking for an RRset ('%1' and '%2')</span></dt><dd><p>
+The SQLite data source was looking up an exact RRset, but the data source
+contains different class than the query was for.
+</p></dd><dt><a name="DATASRC_SQLITE_FINDREC"></a><span class="term">DATASRC_SQLITE_FINDREC looking for record '%1/%2'</span></dt><dd><p>
+Debug information. The SQLite data source is looking up records of given name
+and type in the database.
+</p></dd><dt><a name="DATASRC_SQLITE_FINDREF"></a><span class="term">DATASRC_SQLITE_FINDREF looking for referral at '%1'</span></dt><dd><p>
+Debug information. The SQLite data source is identifying if this domain is
+a referral and where it goes.
+</p></dd><dt><a name="DATASRC_SQLITE_FINDREF_BAD_CLASS"></a><span class="term">DATASRC_SQLITE_FINDREF_BAD_CLASS class mismatch looking for referral ('%1' and '%2')</span></dt><dd><p>
+The SQLite data source was trying to identify, if there's a referral. But
+it contains different class than the query was for.
+</p></dd><dt><a name="DATASRC_SQLITE_FIND_BAD_CLASS"></a><span class="term">DATASRC_SQLITE_FIND_BAD_CLASS class mismatch looking for an RRset ('%1' and '%2')</span></dt><dd><p>
+The SQLite data source was looking up an RRset, but the data source contains
+different class than the query was for.
+</p></dd><dt><a name="DATASRC_SQLITE_FIND_NSEC3"></a><span class="term">DATASRC_SQLITE_FIND_NSEC3 looking for NSEC3 in zone '%1' for hash '%2'</span></dt><dd><p>
+Debug information. We're trying to look up a NSEC3 record in the SQLite data
+source.
+</p></dd><dt><a name="DATASRC_SQLITE_FIND_NSEC3_NO_ZONE"></a><span class="term">DATASRC_SQLITE_FIND_NSEC3_NO_ZONE no such zone '%1'</span></dt><dd><p>
+The SQLite data source was asked to provide a NSEC3 record for given zone.
+But it doesn't contain that zone.
+</p></dd><dt><a name="DATASRC_SQLITE_OPEN"></a><span class="term">DATASRC_SQLITE_OPEN opening SQLite database '%1'</span></dt><dd><p>
+Debug information. The SQLite data source is loading an SQLite database in
+the provided file.
+</p></dd><dt><a name="DATASRC_SQLITE_PREVIOUS"></a><span class="term">DATASRC_SQLITE_PREVIOUS looking for name previous to '%1'</span></dt><dd><p>
+Debug information. We're trying to look up name preceding the supplied one.
+</p></dd><dt><a name="DATASRC_SQLITE_PREVIOUS_NO_ZONE"></a><span class="term">DATASRC_SQLITE_PREVIOUS_NO_ZONE no zone containing '%1'</span></dt><dd><p>
+The SQLite data source tried to identify name preceding this one. But this
+one is not contained in any zone in the data source.
+</p></dd><dt><a name="DATASRC_SQLITE_SETUP"></a><span class="term">DATASRC_SQLITE_SETUP setting up SQLite database</span></dt><dd><p>
+The database for SQLite data source was found empty. It is assumed this is the
+first run and it is being initialized with current schema.  It'll still contain
+no data, but it will be ready for use.
+</p></dd><dt><a name="DATASRC_STATIC_BAD_CLASS"></a><span class="term">DATASRC_STATIC_BAD_CLASS static data source can handle CH only</span></dt><dd><p>
+For some reason, someone asked the static data source a query that is not in
+the CH class.
+</p></dd><dt><a name="DATASRC_STATIC_CREATE"></a><span class="term">DATASRC_STATIC_CREATE creating the static datasource</span></dt><dd><p>
+Debug information. The static data source (the one holding stuff like
+version.bind) is being created.
+</p></dd><dt><a name="DATASRC_STATIC_FIND"></a><span class="term">DATASRC_STATIC_FIND looking for '%1/%2'</span></dt><dd><p>
+Debug information. This resource record set is being looked up in the static
+data source.
+</p></dd><dt><a name="DATASRC_UNEXPECTED_QUERY_STATE"></a><span class="term">DATASRC_UNEXPECTED_QUERY_STATE unexpected query state</span></dt><dd><p>
+This indicates a programming error. An internal task of unknown type was
+generated.
+</p></dd><dt><a name="LOGIMPL_ABOVEDBGMAX"></a><span class="term">LOGIMPL_ABOVEDBGMAX debug level of %1 is too high and will be set to the maximum of %2</span></dt><dd><p>
+A message from the underlying logger implementation code, the debug level
+(as set by the string DEBGUGn) is above the maximum allowed value and has
+been reduced to that value.
+</p></dd><dt><a name="LOGIMPL_BADDEBUG"></a><span class="term">LOGIMPL_BADDEBUG debug string is '%1': must be of the form DEBUGn</span></dt><dd><p>
+The string indicating the extended logging level (used by the underlying
+logger implementation code) is not of the stated form.  In particular,
+it starts DEBUG but does not end with an integer.
+</p></dd><dt><a name="LOGIMPL_BELOWDBGMIN"></a><span class="term">LOGIMPL_BELOWDBGMIN debug level of %1 is too low and will be set to the minimum of %2</span></dt><dd><p>
+A message from the underlying logger implementation code, the debug level
+(as set by the string DEBGUGn) is below the minimum allowed value and has
+been increased to that value.
+</p></dd><dt><a name="MSG_BADDESTINATION"></a><span class="term">MSG_BADDESTINATION unrecognized log destination: %1</span></dt><dd><p>
+A logger destination value was given that was not recognized. The
+destination should be one of "console", "file", or "syslog".
+</p></dd><dt><a name="MSG_BADSEVERITY"></a><span class="term">MSG_BADSEVERITY unrecognized log severity: %1</span></dt><dd><p>
+A logger severity value was given that was not recognized. The severity
+should be one of "DEBUG", "INFO", "WARN", "ERROR", or "FATAL".
+</p></dd><dt><a name="MSG_BADSTREAM"></a><span class="term">MSG_BADSTREAM bad log console output stream: %1</span></dt><dd><p>
+A log console output stream was given that was not recognized. The
+output stream should be one of "stdout", or "stderr"
+</p></dd><dt><a name="MSG_DUPLNS"></a><span class="term">MSG_DUPLNS line %1: duplicate $NAMESPACE directive found</span></dt><dd><p>
+When reading a message file, more than one $NAMESPACE directive was found.  In
+this version of the code, such a condition is regarded as an error and the
+read will be abandoned.
+</p></dd><dt><a name="MSG_DUPMSGID"></a><span class="term">MSG_DUPMSGID duplicate message ID (%1) in compiled code</span></dt><dd><p>
+Indicative of a programming error, when it started up, BIND10 detected that
+the given message ID had been registered by one or more modules.  (All message
+IDs should be unique throughout BIND10.)  This has no impact on the operation
+of the server other that erroneous messages may be logged.  (When BIND10 loads
+the message IDs (and their associated text), if a duplicate ID is found it is
+discarded.  However, when the module that supplied the duplicate ID logs that
+particular message, the text supplied by the module that added the original
+ID will be output - something that may bear no relation to the condition being
+logged.
+</p></dd><dt><a name="MSG_IDNOTFND"></a><span class="term">MSG_IDNOTFND could not replace message text for '%1': no such message</span></dt><dd><p>
+During start-up a local message file was read.  A line with the listed
+message identification was found in the file, but the identification is not
+one contained in the compiled-in message dictionary.  Either the message
+identification has been mis-spelled in the file, or the local file was used
+for an earlier version of the software and the message with that
+identification has been removed.
+</p><p>
+This message may appear a number of times in the file, once for every such
+unknown message identification.
+</p></dd><dt><a name="MSG_INVMSGID"></a><span class="term">MSG_INVMSGID line %1: invalid message identification '%2'</span></dt><dd><p>
+The concatenation of the prefix and the message identification is used as
+a symbol in the C++ module; as such it may only contain
+</p></dd><dt><a name="MSG_NOMSGID"></a><span class="term">MSG_NOMSGID line %1: message definition line found without a message ID</span></dt><dd><p>
+Message definition lines are lines starting with a "%".  The rest of the line
+should comprise the message ID and text describing the message.  This error
+indicates the message compiler found a line in the message file comprising
+just the "%" and nothing else.
+</p></dd><dt><a name="MSG_NOMSGTXT"></a><span class="term">MSG_NOMSGTXT line %1: line found containing a message ID ('%2') and no text</span></dt><dd><p>
+Message definition lines are lines starting with a "%".  The rest of the line
+should comprise the message ID and text describing the message.  This error
+is generated when a line is found in the message file that contains the
+leading "%" and the message identification but no text.
+</p></dd><dt><a name="MSG_NSEXTRARG"></a><span class="term">MSG_NSEXTRARG line %1: $NAMESPACE directive has too many arguments</span></dt><dd><p>
+The $NAMESPACE directive takes a single argument, a namespace in which all the
+generated symbol names are placed.  This error is generated when the
+compiler finds a $NAMESPACE directive with more than one argument.
+</p></dd><dt><a name="MSG_NSINVARG"></a><span class="term">MSG_NSINVARG line %1: $NAMESPACE directive has an invalid argument ('%2')</span></dt><dd><p>
+The $NAMESPACE argument should be a valid C++ namespace.  The reader does a
+cursory check on its validity, checking that the characters in the namespace
+are correct.  The error is generated when the reader finds an invalid
+character. (Valid are alphanumeric characters, underscores and colons.)
+</p></dd><dt><a name="MSG_NSNOARG"></a><span class="term">MSG_NSNOARG line %1: no arguments were given to the $NAMESPACE directive</span></dt><dd><p>
+The $NAMESPACE directive takes a single argument, a namespace in which all the
+generated symbol names are placed.  This error is generated when the
+compiler finds a $NAMESPACE directive with no arguments.
+</p></dd><dt><a name="MSG_OPENIN"></a><span class="term">MSG_OPENIN unable to open message file %1 for input: %2</span></dt><dd><p>
+The program was not able to open the specified input message file for the
+reason given.
+</p></dd><dt><a name="MSG_OPENOUT"></a><span class="term">MSG_OPENOUT unable to open %1 for output: %2</span></dt><dd><p>
+The program was not able to open the specified output file for the reason
+given.
+</p></dd><dt><a name="MSG_PRFEXTRARG"></a><span class="term">MSG_PRFEXTRARG line %1: $PREFIX directive has too many arguments</span></dt><dd><p>
+The $PREFIX directive takes a single argument, a prefix to be added to the
+symbol names when a C++ .h file is created.  This error is generated when the
+compiler finds a $PREFIX directive with more than one argument.
+</p></dd><dt><a name="MSG_PRFINVARG"></a><span class="term">MSG_PRFINVARG line %1: $PREFIX directive has an invalid argument ('%2')</span></dt><dd><p>
+The $PREFIX argument is used in a symbol name in a C++ header file.  As such,
+it must adhere to restrictions on C++ symbol names (e.g. may only contain
+alphanumeric characters or underscores, and may nor start with a digit).
+A $PREFIX directive was found with an argument (given in the message) that
+violates those restictions.
+</p></dd><dt><a name="MSG_RDLOCMES"></a><span class="term">MSG_RDLOCMES reading local message file %1</span></dt><dd><p>
+This is an informational message output by BIND10 when it starts to read a
+local message file.  (A local message file may replace the text of one of more
+messages; the ID of the message will not be changed though.)
+</p></dd><dt><a name="MSG_READERR"></a><span class="term">MSG_READERR error reading from message file %1: %2</span></dt><dd><p>
+The specified error was encountered reading from the named message file.
+</p></dd><dt><a name="MSG_UNRECDIR"></a><span class="term">MSG_UNRECDIR line %1: unrecognised directive '%2'</span></dt><dd><p>
+A line starting with a dollar symbol was found, but the first word on the line
+(shown in the message) was not a recognised message compiler directive.
+</p></dd><dt><a name="MSG_WRITERR"></a><span class="term">MSG_WRITERR error writing to %1: %2</span></dt><dd><p>
+The specified error was encountered by the message compiler when writing to
+the named output file.
+</p></dd><dt><a name="NSAS_INVRESPSTR"></a><span class="term">NSAS_INVRESPSTR queried for %1 but got invalid response</span></dt><dd><p>
+This message indicates an internal error in the nameserver address store
+component (NSAS) of the resolver.  The NSAS made a query for a RR for the
+specified nameserver but received an invalid response.  Either the success
+function was called without a DNS message or the message was invalid on some
+way. (In the latter case, the error should have been picked up elsewhere in
+the processing logic, hence the raising of the error here.)
+</p></dd><dt><a name="NSAS_INVRESPTC"></a><span class="term">NSAS_INVRESPTC queried for %1 RR of type/class %2/%3, received response %4/%5</span></dt><dd><p>
+This message indicates an internal error in the nameserver address store
+component (NSAS) of the resolver.  The NSAS made a query for the given RR
+type and class, but instead received an answer with the given type and class.
+</p></dd><dt><a name="NSAS_LOOKUPCANCEL"></a><span class="term">NSAS_LOOKUPCANCEL lookup for zone %1 has been cancelled</span></dt><dd><p>
+A debug message, this is output when a NSAS (nameserver address store -
+part of the resolver) lookup for a zone has been cancelled.
+</p></dd><dt><a name="NSAS_LOOKUPZONE"></a><span class="term">NSAS_LOOKUPZONE searching NSAS for nameservers for zone %1</span></dt><dd><p>
+A debug message, this is output when a call is made to the nameserver address
+store (part of the resolver) to obtain the nameservers for the specified zone.
+</p></dd><dt><a name="NSAS_NSADDR"></a><span class="term">NSAS_NSADDR asking resolver to obtain A and AAAA records for %1</span></dt><dd><p>
+A debug message, the NSAS (nameserver address store - part of the resolver) is
+making a callback into the resolver to retrieve the address records for the
+specified nameserver.
+</p></dd><dt><a name="NSAS_NSLKUPFAIL"></a><span class="term">NSAS_NSLKUPFAIL failed to lookup any %1 for %2</span></dt><dd><p>
+A debug message, the NSAS (nameserver address store - part of the resolver)
+has been unable to retrieve the specified resource record for the specified
+nameserver.  This is not necessarily a problem - the nameserver may be
+unreachable, in which case the NSAS will try other nameservers in the zone.
+</p></dd><dt><a name="NSAS_NSLKUPSUCC"></a><span class="term">NSAS_NSLKUPSUCC found address %1 for %2</span></dt><dd><p>
+A debug message, the NSAS (nameserver address store - part of the resolver)
+has retrieved the given address for the specified nameserver through an
+external query.
+</p></dd><dt><a name="NSAS_SETRTT"></a><span class="term">NSAS_SETRTT reporting RTT for %1 as %2; new value is now %3</span></dt><dd><p>
+A NSAS (nameserver address store - part of the resolver) debug message
+reporting the round-trip time (RTT) for a query made to the specified
+nameserver.  The RTT has been updated using the value given and the new RTT is
+displayed.  (The RTT is subject to a calculation that damps out sudden
+changes.  As a result, the new RTT is not necessarily equal to the RTT
+reported.)
+</p></dd><dt><a name="RESLIB_ANSWER"></a><span class="term">RESLIB_ANSWER answer received in response to query for &lt;%1&gt;</span></dt><dd><p>
+A debug message recording that an answer has been received to an upstream
+query for the specified question.  Previous debug messages will have indicated
+the server to which the question was sent.
+</p></dd><dt><a name="RESLIB_CNAME"></a><span class="term">RESLIB_CNAME CNAME received in response to query for &lt;%1&gt;</span></dt><dd><p>
+A debug message recording that CNAME response has been received to an upstream
+query for the specified question.  Previous debug messages will have indicated
+the server to which the question was sent.
+</p></dd><dt><a name="RESLIB_DEEPEST"></a><span class="term">RESLIB_DEEPEST did not find &lt;%1&gt; in cache, deepest delegation found is %2</span></dt><dd><p>
+A debug message, a cache lookup did not find the specified &lt;name, class,
+type&gt; tuple in the cache; instead, the deepest delegation found is indicated.
+</p></dd><dt><a name="RESLIB_FOLLOWCNAME"></a><span class="term">RESLIB_FOLLOWCNAME following CNAME chain to &lt;%1&gt;</span></dt><dd><p>
+A debug message, a CNAME response was received and another query is being issued
+for the &lt;name, class, type&gt; tuple.
+</p></dd><dt><a name="RESLIB_LONGCHAIN"></a><span class="term">RESLIB_LONGCHAIN CNAME received in response to query for &lt;%1&gt;: CNAME chain length exceeded</span></dt><dd><p>
+A debug message recording that a CNAME response has been received to an upstream
+query for the specified question (Previous debug messages will have indicated
+the server to which the question was sent).  However, receipt of this CNAME
+has meant that the resolver has exceeded the CNAME chain limit (a CNAME chain
+is where on CNAME points to another) and so an error is being returned.
+</p></dd><dt><a name="RESLIB_NONSRRSET"></a><span class="term">RESLIB_NONSRRSET no NS RRSet in referral response received to query for &lt;%1&gt;</span></dt><dd><p>
+A debug message, this indicates that a response was received for the specified
+query and was categorised as a referral.  However, the received message did
+not contain any NS RRsets.  This may indicate a programming error in the
+response classification code.
+</p></dd><dt><a name="RESLIB_NSASLOOK"></a><span class="term">RESLIB_NSASLOOK looking up nameserver for zone %1 in the NSAS</span></dt><dd><p>
+A debug message, the RunningQuery object is querying the NSAS for the
+nameservers for the specified zone.
+</p></dd><dt><a name="RESLIB_NXDOMRR"></a><span class="term">RESLIB_NXDOMRR NXDOMAIN/NXRRSET received in response to query for &lt;%1&gt;</span></dt><dd><p>
+A debug message recording that either a NXDOMAIN or an NXRRSET response has
+been received to an upstream query for the specified question.  Previous debug
+messages will have indicated the server to which the question was sent.
+</p></dd><dt><a name="RESLIB_PROTOCOL"></a><span class="term">RESLIB_PROTOCOL protocol error in answer for %1:  %3</span></dt><dd><p>
+A debug message indicating that a protocol error was received.  As there
+are no retries left, an error will be reported.
+</p></dd><dt><a name="RESLIB_PROTOCOLRTRY"></a><span class="term">RESLIB_PROTOCOLRTRY protocol error in answer for %1: %2 (retries left: %3)</span></dt><dd><p>
+A debug message indicating that a protocol error was received and that
+the resolver is repeating the query to the same nameserver.  After this
+repeated query, there will be the indicated number of retries left.
+</p></dd><dt><a name="RESLIB_RCODERR"></a><span class="term">RESLIB_RCODERR RCODE indicates error in response to query for &lt;%1&gt;</span></dt><dd><p>
+A debug message, the response to the specified query indicated an error
+that is not covered by a specific code path.  A SERVFAIL will be returned.
+</p></dd><dt><a name="RESLIB_REFERRAL"></a><span class="term">RESLIB_REFERRAL referral received in response to query for &lt;%1&gt;</span></dt><dd><p>
+A debug message recording that a referral response has been received to an
+upstream query for the specified question.  Previous debug messages will
+have indicated the server to which the question was sent.
+</p></dd><dt><a name="RESLIB_REFERZONE"></a><span class="term">RESLIB_REFERZONE referred to zone %1</span></dt><dd><p>
+A debug message indicating that the last referral message was to the specified
+zone.
+</p></dd><dt><a name="RESLIB_RESCAFND"></a><span class="term">RESLIB_RESCAFND found &lt;%1&gt; in the cache (resolve() instance %2)</span></dt><dd><p>
+This is a debug message and indicates that a RecursiveQuery object found the
+the specified &lt;name, class, type&gt; tuple in the cache.  The instance number
+at the end of the message indicates which of the two resolve() methods has
+been called.
+</p></dd><dt><a name="RESLIB_RESCANOTFND"></a><span class="term">RESLIB_RESCANOTFND did not find &lt;%1&gt; in the cache, starting RunningQuery (resolve() instance %2)</span></dt><dd><p>
+This is a debug message and indicates that the look in the cache made by the
+RecursiveQuery::resolve() method did not find an answer, so a new RunningQuery
+object has been created to resolve the question.  The instance number at
+the end of the message indicates which of the two resolve() methods has
+been called.
+</p></dd><dt><a name="RESLIB_RESOLVE"></a><span class="term">RESLIB_RESOLVE asked to resolve &lt;%1&gt; (resolve() instance %2)</span></dt><dd><p>
+A debug message, the RecursiveQuery::resolve method has been called to resolve
+the specified &lt;name, class, type&gt; tuple.  The first action will be to lookup
+the specified tuple in the cache.  The instance number at the end of the
+message indicates which of the two resolve() methods has been called.
+</p></dd><dt><a name="RESLIB_RRSETFND"></a><span class="term">RESLIB_RRSETFND found single RRset in the cache when querying for &lt;%1&gt; (resolve() instance %2)</span></dt><dd><p>
+A debug message, indicating that when RecursiveQuery::resolve queried the
+cache, a single RRset was found which was put in the answer.  The instance
+number at the end of the message indicates which of the two resolve()
+methods has been called.
+</p></dd><dt><a name="RESLIB_RTT"></a><span class="term">RESLIB_RTT round-trip time of last query calculated as %1 ms</span></dt><dd><p>
+A debug message giving the round-trip time of the last query and response.
+</p></dd><dt><a name="RESLIB_RUNCAFND"></a><span class="term">RESLIB_RUNCAFND found &lt;%1&gt; in the cache</span></dt><dd><p>
+This is a debug message and indicates that a RunningQuery object found
+the specified &lt;name, class, type&gt; tuple in the cache.
+</p></dd><dt><a name="RESLIB_RUNCALOOK"></a><span class="term">RESLIB_RUNCALOOK looking up up &lt;%1&gt; in the cache</span></dt><dd><p>
+This is a debug message and indicates that a RunningQuery object has made
+a call to its doLookup() method to look up the specified &lt;name, class, type&gt;
+tuple, the first action of which will be to examine the cache.
+</p></dd><dt><a name="RESLIB_RUNQUFAIL"></a><span class="term">RESLIB_RUNQUFAIL failure callback - nameservers are unreachable</span></dt><dd><p>
+A debug message indicating that a RunningQuery's failure callback has been
+called because all nameservers for the zone in question are unreachable.
+</p></dd><dt><a name="RESLIB_RUNQUSUCC"></a><span class="term">RESLIB_RUNQUSUCC success callback - sending query to %1</span></dt><dd><p>
+A debug message indicating that a RunningQuery's success callback has been
+called because a nameserver has been found, and that a query is being sent
+to the specified nameserver.
+</p></dd><dt><a name="RESLIB_TESTSERV"></a><span class="term">RESLIB_TESTSERV setting test server to %1(%2)</span></dt><dd><p>
+This is an internal debugging message and is only generated in unit tests.
+It indicates that all upstream queries from the resolver are being routed to
+the specified server, regardless of the address of the nameserver to which
+the query would normally be routed.  As it should never be seen in normal
+operation, it is a warning message instead of a debug message.
+</p></dd><dt><a name="RESLIB_TESTUPSTR"></a><span class="term">RESLIB_TESTUPSTR sending upstream query for &lt;%1&gt; to test server at %2</span></dt><dd><p>
+This is a debug message and should only be seen in unit tests.  A query for
+the specified &lt;name, class, type&gt; tuple is being sent to a test nameserver
+whose address is given in the message.
+</p></dd><dt><a name="RESLIB_TIMEOUT"></a><span class="term">RESLIB_TIMEOUT query &lt;%1&gt; to %2 timed out</span></dt><dd><p>
+A debug message indicating that the specified query has timed out and as
+there are no retries left, an error will be reported.
+</p></dd><dt><a name="RESLIB_TIMEOUTRTRY"></a><span class="term">RESLIB_TIMEOUTRTRY query &lt;%1&gt; to %2 timed out, re-trying (retries left: %3)</span></dt><dd><p>
+A debug message indicating that the specified query has timed out and that
+the resolver is repeating the query to the same nameserver.  After this
+repeated query, there will be the indicated number of retries left.
+</p></dd><dt><a name="RESLIB_TRUNCATED"></a><span class="term">RESLIB_TRUNCATED response to query for &lt;%1&gt; was truncated, re-querying over TCP</span></dt><dd><p>
+A debug message, this indicates that the response to the specified query was
+truncated and that the resolver will be re-querying over TCP.  There are
+various reasons why responses may be truncated, so this message is normal and
+gives no cause for concern.
+</p></dd><dt><a name="RESLIB_UPSTREAM"></a><span class="term">RESLIB_UPSTREAM sending upstream query for &lt;%1&gt; to %2</span></dt><dd><p>
+A debug message indicating that a query for the specified &lt;name, class, type&gt;
+tuple is being sent to a nameserver whose address is given in the message.
+</p></dd><dt><a name="RESOLVER_AXFRTCP"></a><span class="term">RESOLVER_AXFRTCP AXFR request received over TCP</span></dt><dd><p>
+A debug message, the resolver received a NOTIFY message over TCP.  The server
+cannot process it and will return an error message to the sender with the
+RCODE set to NOTIMP.
+</p></dd><dt><a name="RESOLVER_AXFRUDP"></a><span class="term">RESOLVER_AXFRUDP AXFR request received over UDP</span></dt><dd><p>
+A debug message, the resolver received a NOTIFY message over UDP.  The server
+cannot process it (and in any case, an AXFR request should be sent over TCP)
+and will return an error message to the sender with the RCODE set to FORMERR.
+</p></dd><dt><a name="RESOLVER_CLTMOSMALL"></a><span class="term">RESOLVER_CLTMOSMALL client timeout of %1 is too small</span></dt><dd><p>
+An error indicating that the configuration value specified for the query
+timeout is too small.
+</p></dd><dt><a name="RESOLVER_CONFIGCHAN"></a><span class="term">RESOLVER_CONFIGCHAN configuration channel created</span></dt><dd><p>
+A debug message, output when the resolver has successfully established a
+connection to the configuration channel.
+</p></dd><dt><a name="RESOLVER_CONFIGERR"></a><span class="term">RESOLVER_CONFIGERR error in configuration: %1</span></dt><dd><p>
+An error was detected in a configuration update received by the resolver. This
+may be in the format of the configuration message (in which case this is a
+programming error) or it may be in the data supplied (in which case it is
+a user error).  The reason for the error, given as a parameter in the message,
+will give more details.
+</p></dd><dt><a name="RESOLVER_CONFIGLOAD"></a><span class="term">RESOLVER_CONFIGLOAD configuration loaded</span></dt><dd><p>
+A debug message, output when the resolver configuration has been successfully
+loaded.
+</p></dd><dt><a name="RESOLVER_CONFIGUPD"></a><span class="term">RESOLVER_CONFIGUPD configuration updated: %1</span></dt><dd><p>
+A debug message, the configuration has been updated with the specified
+information.
+</p></dd><dt><a name="RESOLVER_CREATED"></a><span class="term">RESOLVER_CREATED main resolver object created</span></dt><dd><p>
+A debug message, output when the Resolver() object has been created.
+</p></dd><dt><a name="RESOLVER_DNSMSGRCVD"></a><span class="term">RESOLVER_DNSMSGRCVD DNS message received: %1</span></dt><dd><p>
+A debug message, this always precedes some other logging message and is the
+formatted contents of the DNS packet that the other message refers to.
+</p></dd><dt><a name="RESOLVER_DNSMSGSENT"></a><span class="term">RESOLVER_DNSMSGSENT DNS message of %1 bytes sent: %2</span></dt><dd><p>
+A debug message, this contains details of the response sent back to the querying
+system.
+</p></dd><dt><a name="RESOLVER_FAILED"></a><span class="term">RESOLVER_FAILED resolver failed, reason: %1</span></dt><dd><p>
+This is an error message output when an unhandled exception is caught by the
+resolver.  All it can do is to shut down.
+</p></dd><dt><a name="RESOLVER_FWDADDR"></a><span class="term">RESOLVER_FWDADDR setting forward address %1(%2)</span></dt><dd><p>
+This message may appear multiple times during startup, and it lists the
+forward addresses used by the resolver when running in forwarding mode.
+</p></dd><dt><a name="RESOLVER_FWDQUERY"></a><span class="term">RESOLVER_FWDQUERY processing forward query</span></dt><dd><p>
+The received query has passed all checks and is being forwarded to upstream
+servers.
+</p></dd><dt><a name="RESOLVER_HDRERR"></a><span class="term">RESOLVER_HDRERR message received, exception when processing header: %1</span></dt><dd><p>
+A debug message noting that an exception occurred during the processing of
+a received packet.  The packet has been dropped.
+</p></dd><dt><a name="RESOLVER_IXFR"></a><span class="term">RESOLVER_IXFR IXFR request received</span></dt><dd><p>
+The resolver received a NOTIFY message over TCP.  The server cannot process it
+and will return an error message to the sender with the RCODE set to NOTIMP.
+</p></dd><dt><a name="RESOLVER_LKTMOSMALL"></a><span class="term">RESOLVER_LKTMOSMALL lookup timeout of %1 is too small</span></dt><dd><p>
+An error indicating that the configuration value specified for the lookup
+timeout is too small.
+</p></dd><dt><a name="RESOLVER_NFYNOTAUTH"></a><span class="term">RESOLVER_NFYNOTAUTH NOTIFY arrived but server is not authoritative</span></dt><dd><p>
+The resolver received a NOTIFY message.  As the server is not authoritative it
+cannot process it, so it returns an error message to the sender with the RCODE
+set to NOTAUTH.
+</p></dd><dt><a name="RESOLVER_NORMQUERY"></a><span class="term">RESOLVER_NORMQUERY processing normal query</span></dt><dd><p>
+The received query has passed all checks and is being processed by the resolver.
+</p></dd><dt><a name="RESOLVER_NOROOTADDR"></a><span class="term">RESOLVER_NOROOTADDR no root addresses available</span></dt><dd><p>
+A warning message during startup, indicates that no root addresses have been
+set.  This may be because the resolver will get them from a priming query.
+</p></dd><dt><a name="RESOLVER_NOTIN"></a><span class="term">RESOLVER_NOTIN non-IN class request received, returning REFUSED message</span></dt><dd><p>
+A debug message, the resolver has received a DNS packet that was not IN class.
+The resolver cannot handle such packets, so is returning a REFUSED response to
+the sender.
+</p></dd><dt><a name="RESOLVER_NOTONEQUES"></a><span class="term">RESOLVER_NOTONEQUES query contained %1 questions, exactly one question was expected</span></dt><dd><p>
+A debug message, the resolver received a query that contained the number of
+entires in the question section detailed in the message.  This is a malformed
+message, as a DNS query must contain only one question.  The resolver will
+return a message to the sender with the RCODE set to FORMERR.
+</p></dd><dt><a name="RESOLVER_OPCODEUNS"></a><span class="term">RESOLVER_OPCODEUNS opcode %1 not supported by the resolver</span></dt><dd><p>
+A debug message, the resolver received a message with an unsupported opcode
+(it can only process QUERY opcodes).  It will return a message to the sender
+with the RCODE set to NOTIMP.
+</p></dd><dt><a name="RESOLVER_PARSEERR"></a><span class="term">RESOLVER_PARSEERR error parsing received message: %1 - returning %2</span></dt><dd><p>
+A debug message noting that the resolver received a message and the parsing
+of the body of the message failed due to some non-protocol related reason
+(although the parsing of the header succeeded).  The message parameters give
+a textual description of the problem and the RCODE returned.
+</p></dd><dt><a name="RESOLVER_PRINTMSG"></a><span class="term">RESOLVER_PRINTMSG print message command, aeguments are: %1</span></dt><dd><p>
+This message is logged when a "print_message" command is received over the
+command channel.
+</p></dd><dt><a name="RESOLVER_PROTERR"></a><span class="term">RESOLVER_PROTERR protocol error parsing received message: %1 - returning %2</span></dt><dd><p>
+A debug message noting that the resolver received a message and the parsing
+of the body of the message failed due to some protocol error (although the
+parsing of the header succeeded).  The message parameters give a textual
+description of the problem and the RCODE returned.
+</p></dd><dt><a name="RESOLVER_QUSETUP"></a><span class="term">RESOLVER_QUSETUP query setup</span></dt><dd><p>
+A debug message noting that the resolver is creating a RecursiveQuery object.
+</p></dd><dt><a name="RESOLVER_QUSHUT"></a><span class="term">RESOLVER_QUSHUT query shutdown</span></dt><dd><p>
+A debug message noting that the resolver is destroying a RecursiveQuery object.
+</p></dd><dt><a name="RESOLVER_QUTMOSMALL"></a><span class="term">RESOLVER_QUTMOSMALL query timeout of %1 is too small</span></dt><dd><p>
+An error indicating that the configuration value specified for the query
+timeout is too small.
+</p></dd><dt><a name="RESOLVER_RECURSIVE"></a><span class="term">RESOLVER_RECURSIVE running in recursive mode</span></dt><dd><p>
+This is an informational message that appears at startup noting that the
+resolver is running in recursive mode.
+</p></dd><dt><a name="RESOLVER_RECVMSG"></a><span class="term">RESOLVER_RECVMSG resolver has received a DNS message</span></dt><dd><p>
+A debug message indicating that the resolver has received a message.  Depending
+on the debug settings, subsequent log output will indicate the nature of the
+message.
+</p></dd><dt><a name="RESOLVER_RETRYNEG"></a><span class="term">RESOLVER_RETRYNEG negative number of retries (%1) specified in the configuration</span></dt><dd><p>
+An error message indicating that the resolver configuration has specified a
+negative retry count.  Only zero or positive values are valid.
+</p></dd><dt><a name="RESOLVER_ROOTADDR"></a><span class="term">RESOLVER_ROOTADDR setting root address %1(%2)</span></dt><dd><p>
+This message may appear multiple times during startup; it lists the root
+addresses used by the resolver.
+</p></dd><dt><a name="RESOLVER_SERVICE"></a><span class="term">RESOLVER_SERVICE service object created</span></dt><dd><p>
+A debug message, output when the main service object (which handles the
+received queries) is created.
+</p></dd><dt><a name="RESOLVER_SETPARAM"></a><span class="term">RESOLVER_SETPARAM query timeout: %1, client timeout: %2, lookup timeout: %3, retry count: %4</span></dt><dd><p>
+A debug message, lists the parameters associated with the message.  These are:
+query timeout: the timeout (in ms) used for queries originated by the resolver
+to upstream servers.  Client timeout: the interval to resolver a query by
+a client: after this time, the resolver sends back a SERVFAIL to the client
+whilst continuing to resolver the query. Lookup timeout: the time at which the
+resolver gives up trying to resolve a query.  Retry count: the number of times
+the resolver will retry a query to an upstream server if it gets a timeout.
+</p><p>
+The client and lookup timeouts require a bit more explanation. The
+resolution of the clent query might require a large number of queries to
+upstream nameservers.  Even if none of these queries timeout, the total time
+taken to perform all the queries may exceed the client timeout.  When this
+happens, a SERVFAIL is returned to the client, but the resolver continues
+with the resolution process. Data received is added to the cache.  However,
+there comes a time - the lookup timeout - when even the resolve gives up.
+At this point it will wait for pending upstream queries to complete or
+timeout and drop the query.
+</p></dd><dt><a name="RESOLVER_SHUTDOWN"></a><span class="term">RESOLVER_SHUTDOWN resolver shutdown complete</span></dt><dd><p>
+This information message is output when the resolver has shut down.
+</p></dd><dt><a name="RESOLVER_STARTED"></a><span class="term">RESOLVER_STARTED resolver started</span></dt><dd><p>
+This informational message is output by the resolver when all initialization
+has been completed and it is entering its main loop.
+</p></dd><dt><a name="RESOLVER_STARTING"></a><span class="term">RESOLVER_STARTING starting resolver with command line '%1'</span></dt><dd><p>
+An informational message, this is output when the resolver starts up.
+</p></dd><dt><a name="RESOLVER_UNEXRESP"></a><span class="term">RESOLVER_UNEXRESP received unexpected response, ignoring</span></dt><dd><p>
+A debug message noting that the server has received a response instead of a
+query and is ignoring it.
+</p></dd></dl></div><p>
+    </p></div></div></body></html>
