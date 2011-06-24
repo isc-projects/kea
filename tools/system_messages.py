@@ -115,7 +115,7 @@ SEC_HEADER="""<?xml version="1.0" encoding="UTF-8"?>
 # This is output once for each message.  The string contains substitution
 # tokens: $I is replaced by the message identification, $T by the message text,
 # and $D by the message description.
-SEC_MESSAGE = """<varlistentry>
+SEC_MESSAGE = """<varlistentry id="$I">
 <term>$I, $T</term>
 <listitem><para>
 $D
