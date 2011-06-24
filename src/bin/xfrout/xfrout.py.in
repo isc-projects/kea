@@ -46,7 +46,7 @@ try:
 except ImportError as e:
     # C++ loadable module may not be installed; even so the xfrout process
     # must keep running, so we warn about it and move forward.
-    log.error(XFROUT_IMPORT_DNS, str(e))
+    log.error(XFROUT_IMPORT, str(e))
 
 isc.util.process.rename()
 
@@ -151,6 +151,9 @@ class XfroutSession():
         question = msg.get_question()[0]
         return question.get_name().to_text()
 
+    def _get_query_zone_class(self, msg):
+        question = msg.get_question()[0]
+        return question.get_class().to_text()
 
     def _send_data(self, sock_fd, data):
         size = len(data)
@@ -247,17 +250,23 @@ class XfroutSession():
             return self._reply_query_with_format_error(msg, sock_fd)
 
         zone_name = self._get_query_zone_name(msg)
+        zone_class_str = self._get_query_zone_class(msg)
+        # TODO: should we not also include class in the check?
         rcode_ = self._check_xfrout_available(zone_name)
+
         if rcode_ != Rcode.NOERROR():
-            logger.info(XFROUT_AXFR_TRANSFER_FAILED, zone_name, rcode_.to_text())
+            logger.info(XFROUT_AXFR_TRANSFER_FAILED, zone_name,
+                        zone_class_str, rcode_.to_text())
             return self. _reply_query_with_error_rcode(msg, sock_fd, rcode_)
 
         try:
-            logger.info(XFROUT_AXFR_TRANSFER_STARTED, zone_name)
+            logger.info(XFROUT_AXFR_TRANSFER_STARTED, zone_name, zone_class_str)
             self._reply_xfrout_query(msg, sock_fd, zone_name)
         except Exception as err:
-            logger.error(XFROUT_AXFR_TRANSFER_ERROR, zone_name, str(err))
+            logger.error(XFROUT_AXFR_TRANSFER_ERROR, zone_name,
+                         zone_class_str, str(err))
             pass
+        logger.info(XFROUT_AXFR_TRANSFER_DONE, zone_name, zone_class_str)
 
         self._server.decrease_transfers_counter()
         return
@@ -398,7 +407,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         try:
             request, client_address = self.get_request()
         except socket.error:
-            logger.error(XFROUT_REQUEST_FETCH)
+            logger.error(XFROUT_FETCH_REQUEST_FAIL)
             return
 
         # Check self._shutdown_event to ensure the real shutdown comes.
@@ -412,7 +421,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
                     (rlist, wlist, xlist) = ([], [], [])
                     continue
                 else:
-                    logger.error(XFROUT_SOCKET_SELECT, str(e))
+                    logger.error(XFROUT_SOCKET_SELECT_ERROR, str(e))
                     break
 
             # self.server._shutdown_event will be set by now, if it is not a false
@@ -423,7 +432,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
             try:
                 self.process_request(request)
             except Exception as pre:
-                log.error(XFROUT_PROCESS_REQUEST, str(client_address), str(pre))
+                log.error(XFROUT_PROCESS_REQUEST_ERROR, str(pre))
                 break
 
     def _handle_request_noblock(self):
@@ -476,7 +485,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
             try:
                 os.unlink(sock_file)
             except OSError as err:
-                logger.error(XFROUT_REMOVE_UNIX_SOCKET_FILE, sock_file, str(err))
+                logger.error(XFROUT_REMOVE_OLD_UNIX_SOCKET_FILE, sock_file, str(err))
                 sys.exit(0)
 
     def _sock_file_in_use(self, sock_file):
