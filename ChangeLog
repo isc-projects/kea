@@ -1,3 +1,42 @@
+261.	[func]      stephen
+	Add new-style logging messages to b10-auth.
+	(Trac 738, git c021505a1a0d6ecb15a8fd1592b94baff6d115f4)
+
+260.	[func]      stephen
+	Remove comma between message identification and the message
+	text in the new-style logging messages.
+	(Trac 1031, git 1c7930a7ba19706d388e4f8dcf2a55a886b74cd2)
+
+259.	[bug]       stephen
+	Logging now correctly initialized in b10-auth.  Also, fixed
+	bug whereby querying for "version.bind txt ch" would cause
+	b10-auth to crash if BIND 10 was started with the "-v" switch.
+	(Trac 1022,1023, git 926a65fa08617be677a93e9e388df0f229b01067)
+
+258.	[build]		jelte
+	Now builds and runs with Python 3.2
+	(Trac #710, git dae1d2e24f993e1eef9ab429326652f40a006dfb)
+
+257.	[bug]           y-aharen
+	Fixed a bug an instance of IntervalTimerImpl may be destructed 
+	while deadline_timer is holding the handler. This fix addresses
+	occasional failure of IntervalTimerTest.destructIntervalTimer.
+	(Trac #957, git e59c215e14b5718f62699ec32514453b983ff603)
+
+256.	[bug]		jerry
+	src/bin/xfrin: update xfrin to check TSIG before other part of
+	incoming message.
+	(Trac955, git 261450e93af0b0406178e9ef121f81e721e0855c)
+
+255.	[func]		zhang likun
+	src/lib/cache:  remove empty code in lib/cache and the corresponding
+	suppression rule in	src/cppcheck-suppress.lst.
+	(Trac639, git 4f714bac4547d0a025afd314c309ca5cb603e212)
+
+254.	[bug]		jinmei
+	b10-xfrout: failed to send notifies over IPv6 correctly.
+	(Trac964, git 3255c92714737bb461fb67012376788530f16e40)
+
 253.    [func]		jelte
 	Add configuration options for logging through the virtual module
 	Logging.
@@ -17,10 +56,10 @@
 	(Trac870, git 461fc3cb6ebabc9f3fa5213749956467a14ebfd4)
 
 250.    [bug]           ocean
-        src/lib/util/encode, in some conditions, the DecodeNormalizer's
-        iterator may reach the end() and when later being dereferenced
-        it will cause crash on some platform.
-        (Trac838, git 83e33ec80c0c6485d8b116b13045b3488071770f)
+	src/lib/util/encode, in some conditions, the DecodeNormalizer's
+	iterator may reach the end() and when later being dereferenced
+	it will cause crash on some platform.
+	(Trac838, git 83e33ec80c0c6485d8b116b13045b3488071770f)
 
 249.    [func]      	jerry
 	xfrout: add support for TSIG verification.

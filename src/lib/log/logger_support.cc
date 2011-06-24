@@ -29,20 +29,37 @@
 #include <iostream>
 #include <string>
 
-#include <log/logger.h>
+#include <log/logger_level.h>
 #include <log/logger_manager.h>
 #include <log/logger_support.h>
+
+using namespace std;
+
+namespace {
+
+// Flag to hold logging initialization state.
+bool logging_init_state = false;
+
+} // Anonymous namespace
 
 namespace isc {
 namespace log {
 
-using namespace std;
+// Return initialization state.
+bool
+isLoggingInitialized() {
+    return (logging_init_state);
+}
 
-// Declare a logger for the logging subsystem.  This is a sub-logger of the
-// root logger and is used in all functions in this file.
-Logger logger("log");
+// Set initialization state.  (Note: as logging can be initialized via a direct
+// call to LoggerManager::init(), this function is called from there, not from
+// the initialization functions in this file.
+void
+setLoggingInitialized(bool state) {
+    logging_init_state = state;
+}
 
-/// Logger Run-Time Initialization
+// Logger Run-Time Initialization.
 
 void
 initLogger(const string& root, isc::log::Severity severity, int dbglevel,
@@ -50,7 +67,7 @@ initLogger(const string& root, isc::log::Severity severity, int dbglevel,
     LoggerManager::init(root, severity, dbglevel, file);
 }
 
-/// Logger Run-Time Initialization via Environment Variables
+// Logger Run-Time Initialization via Environment Variables
 void initLogger(isc::log::Severity severity, int dbglevel) {
 
     // Root logger name is defined by the environment variable B10_LOGGER_ROOT.
@@ -79,20 +96,20 @@ void initLogger(isc::log::Severity severity, int dbglevel) {
             try {
                 level = boost::lexical_cast<int>(dbg_char);
                 if (level < MIN_DEBUG_LEVEL) {
-                    std::cerr << "**ERROR** debug level of " << level
-                              << " is invalid - a value of " << MIN_DEBUG_LEVEL
-                              << " will be used\n";
+                    cerr << "**ERROR** debug level of " << level
+                         << " is invalid - a value of " << MIN_DEBUG_LEVEL
+                         << " will be used\n";
                     level = MIN_DEBUG_LEVEL;
                 } else if (level > MAX_DEBUG_LEVEL) {
-                    std::cerr << "**ERROR** debug level of " << level
-                              << " is invalid - a value of " << MAX_DEBUG_LEVEL
-                              << " will be used\n";
+                    cerr << "**ERROR** debug level of " << level
+                         << " is invalid - a value of " << MAX_DEBUG_LEVEL
+                         << " will be used\n";
                     level = MAX_DEBUG_LEVEL;
                 }
             } catch (...) {
                 // Error, but not fatal to the test
-                std::cerr << "**ERROR** Unable to translate "
-                             "B10_LOGGER_DBGLEVEL - a value of 0 will be used\n";
+                cerr << "**ERROR** Unable to translate "
+                        "B10_LOGGER_DBGLEVEL - a value of 0 will be used\n";
             }
             dbglevel = level;
         }

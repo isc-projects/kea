@@ -266,12 +266,12 @@ writePythonFile(const string& file, MessageDictionary& dictionary) {
         "# File created from " << message_file.fullName() << " on " <<
             currentTime() << "\n" <<
         "\n" <<
-        "import isc.log.message\n" <<
+        "import isc.log\n" <<
         "\n";
 
     vector<string> idents(sortedIdentifiers(dictionary));
     BOOST_FOREACH(const string& ident, idents) {
-        pyfile << ident << " = isc.log.message.create(\"" <<
+        pyfile << ident << " = isc.log.create_message(\"" <<
             ident << "\", \"" << quoteString(dictionary.getText(ident)) <<
             "\")\n";
     }
