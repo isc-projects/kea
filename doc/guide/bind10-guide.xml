@@ -1439,19 +1439,28 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 <!-- TODO: how to configure logging, logging destinations etc. -->
 
     <para>
-        Each message written by BIND10 to the configured logging destinations
+        Each message written by BIND 10 to the configured logging destinations
         comprises a number of components that identify the origin of the
         message and, if the message indicates a problem, information about the
         problem that may be useful in fixing it.
     </para>
+
     <para>
-        Consider the message below logged to a file (the layout of messages
-        written to the system logging file (syslog) may be slightly different).
-        <screen>2011-06-15 13:48:22.034 ERROR [b10-resolver.asiolink] 
-    ASIODNS_OPENSOCK, error 111 opening TCP socket to 127.0.0.1(53)</screen>
-        (The error has been split across two lines here for display reasons.
-         In the logging file, it will appear on one line.) The log message
-        comprises a number of components:
+        Consider the message below logged to a file:
+        <screen>2011-06-15 13:48:22.034 ERROR [b10-resolver.asiolink]
+    ASIODNS_OPENSOCK error 111 opening TCP socket to 127.0.0.1(53)</screen>
+    </para>
+
+    <para>
+      Note: the layout of messages written to the system logging
+      file (syslog) may be slightly different.  This message has
+      been split across two lines here for display reasons; in the
+      logging file, it will appear on one line.)
+    </para>
+
+    <para>
+      The log message comprises a number of components:
+
         <variablelist>
         <varlistentry>
         <term>2011-06-15 13:48:22.034</term>
@@ -1459,31 +1468,39 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
             The date and time at which the message was generated.
         </para></listitem>
         </varlistentry>
+
         <varlistentry>
         <term>ERROR</term>
         <listitem><para>
             The severity of the message.
         </para></listitem>
         </varlistentry>
+
         <varlistentry>
         <term>[b10-resolver.asiolink]</term>
         <listitem><para>
-            The source of the message.  This comprises two components: the
-            BIND-10 process generating the message (in this case, the resolver
-            b10-resolver) and the module within the program from which the
-            message originated (which in the example is the asynchronous I/O
-            link module, asiolink).
+	    The source of the message.  This comprises two components:
+	    the BIND 10 process generating the message (in this
+	    case, <command>b10-resolver</command>) and the module
+	    within the program from which the message originated
+	    (which in the example is the asynchronous I/O link
+	    module, asiolink).
         </para></listitem>
         </varlistentry>
+
         <varlistentry>
         <term>ASIODNS_OPENSOCK</term>
         <listitem><para>
-            The message identification.  Every message in BIND-10 has a unique
-            identification, which can be used as an index into the
-            BIND10 Messages Manual
-            from which more information can be obtained.
+	    The message identification.  Every message in BIND 10
+	    has a unique identification, which can be used as an
+	    index into the <ulink
+	    url="bind10-messages.html"><citetitle>BIND 10 Messages
+	    Manual</citetitle></ulink> (<ulink
+	    url="http://bind10.isc.org/docs/bind10-messages.html"
+	    />) from which more information can be obtained.
         </para></listitem>
         </varlistentry>
+
         <varlistentry>
         <term>error 111 opening TCP socket to 127.0.0.1(53)</term>
         <listitem><para>
@@ -1498,6 +1515,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
         </para></listitem>
         </varlistentry>
         </variablelist>
+
     </para>
   </chapter>
 
