@@ -218,6 +218,10 @@ main(int argc, char* argv[]) {
         }
 
         resolver->setConfigSession(config_session);
+        // Install all initial configurations.  If loading configuration
+        // fails, it will be logged, but we start the server anyway, giving
+        // the user a second chance to correct the configuration.
+        resolver->updateConfig(config_session->getFullConfig());
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CONFIGLOAD);
 
         LOG_INFO(resolver_logger, RESOLVER_STARTED);
