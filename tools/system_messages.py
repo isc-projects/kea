@@ -89,13 +89,13 @@ SEC_HEADER="""<?xml version="1.0" encoding="UTF-8"?>
   <chapter id="intro">
     <title>Introduction</title>
     <para>
-      This document lists each messages that can be logged by the
+      This document lists each message that can be logged by the
       programs in the BIND 10 package.  Each entry in this manual
       is of the form:
-      <screen>IDENTIFICATION, message-text</screen>
+      <screen>IDENTIFICATION message-text</screen>
       ... where "IDENTIFICATION" is the message identification included
       in each message logged and "message-text" is the accompanying
-      message text.  "message-text" may include placeholders of the
+      message text.  The "message-text" may include placeholders of the
       form "%1", "%2" etc.; these parameters are replaced by relevant
       values when the message is logged.
     </para>
@@ -103,6 +103,10 @@ SEC_HEADER="""<?xml version="1.0" encoding="UTF-8"?>
       Each entry is also accompanied by a description giving more
       information about the circumstances that result in the message
       being logged.
+    </para>
+    <para>
+      For information on configuring and using BIND 10 logging,
+      refer to the <ulink url="bind10-guide.html">BIND 10 Guide</ulink>.
     </para>
   </chapter>
 
