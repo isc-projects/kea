@@ -22,6 +22,7 @@ import os
 from isc.config.ccsession import *
 from isc.config.config_data import BIND10_CONFIG_DATA_VERSION
 from unittest_fakesession import FakeModuleCCSession, WouldBlockForever
+import bind10_config
 
 class TestHelperFunctions(unittest.TestCase):
     def test_parse_answer(self):
@@ -604,7 +605,43 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual(len(fake_session.message_queue), 1)
         mccs.check_command()
         self.assertEqual(len(fake_session.message_queue), 0)
-        
+
+    def test_logconfig_handler(self):
+        # test whether default_logconfig_handler reacts nicely to
+        # bad data. We assume the actual logger output is tested
+        # elsewhere
+        self.assertRaises(TypeError, default_logconfig_handler);
+        self.assertRaises(TypeError, default_logconfig_handler, 1);
+
+        spec = isc.config.module_spec_from_file(
+            path_search('logging.spec', bind10_config.PLUGIN_PATHS))
+        config_data = ConfigData(spec)
+
+        self.assertRaises(TypeError, default_logconfig_handler, 1, config_data)
+
+        default_logconfig_handler({}, config_data)
+
+        # Wrong data should not raise, but simply not be accepted
+        # This would log a lot of errors, so we may want to suppress that later
+        default_logconfig_handler({ "bad_data": "indeed" }, config_data)
+        default_logconfig_handler({ "bad_data": 1}, config_data)
+        default_logconfig_handler({ "bad_data": 1123 }, config_data)
+        default_logconfig_handler({ "bad_data": True }, config_data)
+        default_logconfig_handler({ "bad_data": False }, config_data)
+        default_logconfig_handler({ "bad_data": 1.1 }, config_data)
+        default_logconfig_handler({ "bad_data": [] }, config_data)
+        default_logconfig_handler({ "bad_data": [[],[],[[1, 3, False, "foo" ]]] },
+                                  config_data)
+        default_logconfig_handler({ "bad_data": [ 1, 2, { "b": { "c": "d" } } ] },
+                                  config_data)
+
+        # Try a correct config
+        log_conf = {"loggers":
+                       [{"name": "b10-xfrout", "output_options":
+                           [{"output": "/tmp/bind10.log",
+                                       "destination": "file",
+                                       "flush": True}]}]}
+        default_logconfig_handler(log_conf, config_data)
 
 class fakeData:
     def decode(self):

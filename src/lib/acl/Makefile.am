@@ -1,6 +1,24 @@
-SUBDIRS = tests
+SUBDIRS = . tests
 
-EXTRA_DIST = check.h acl.h
+AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 
-# TODO: Once we have some cc file we are able to compile, create the library.
-# For now, we have only header files, not creating empty library.
+AM_CXXFLAGS = $(B10_CXXFLAGS)
+
+# The core library
+lib_LTLIBRARIES = libacl.la
+libacl_la_SOURCES = check.h acl.h
+libacl_la_SOURCES += loader.h loader.cc
+
+libacl_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
+libacl_la_LIBADD += $(top_builddir)/src/lib/cc/libcc.la
+
+# DNS specialized one
+lib_LTLIBRARIES += libdnsacl.la
+
+libdnsacl_la_SOURCES = dns.h dns.cc
+
+libdnsacl_la_LIBADD = libacl.la
+libdnsacl_la_LIBADD += $(top_builddir)/src/lib/dns/libdns++.la
+
+CLEANFILES = *.gcno *.gcda

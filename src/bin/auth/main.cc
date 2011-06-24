@@ -47,7 +47,6 @@
 #include <auth/auth_log.h>
 #include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
-
 #include <log/logger_support.h>
 #include <server_common/keyring.h>
 
