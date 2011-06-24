@@ -190,7 +190,7 @@ public:
     unsigned retries_;
 
 private:
-    /// TBD
+    /// ACL on incoming queries
     shared_ptr<const Resolver::ClientACL> query_acl_;
 
     /// Object to handle upstream queries
