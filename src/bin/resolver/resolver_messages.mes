@@ -15,151 +15,142 @@
 # No namespace declaration - these constants go in the global namespace
 # along with the resolver methods.
 
-% RESOLVER_AXFR_TCP       AXFR request received over TCP
+% RESOLVER_AXFR_TCP AXFR request received over TCP
 A debug message, the resolver received a NOTIFY message over TCP.  The server
 cannot process it and will return an error message to the sender with the
 RCODE set to NOTIMP.
 
-% RESOLVER_AXFR_UDP       AXFR request received over UDP
+% RESOLVER_AXFR_UDP AXFR request received over UDP
 A debug message, the resolver received a NOTIFY message over UDP.  The server
 cannot process it (and in any case, an AXFR request should be sent over TCP)
 and will return an error message to the sender with the RCODE set to FORMERR.
 
-% RESOLVER_CONFIG_CHANNEL    configuration channel created
+% RESOLVER_CLI_TMO_SMALL client timeout of %1 is too small
+An error indicating that the configuration value specified for the query
+timeout is too small.
+
+% RESOLVER_CONFIG_CHANNEL configuration channel created
 A debug message, output when the resolver has successfully established a
 connection to the configuration channel.
 
-% RESOLVER_CONFIG_ERROR     error in configuration: %1
+% RESOLVER_CONFIG_ERROR error in configuration: %1
 An error was detected in a configuration update received by the resolver. This
 may be in the format of the configuration message (in which case this is a
 programming error) or it may be in the data supplied (in which case it is
 a user error).  The reason for the error, given as a parameter in the message,
 will give more details.
 
-% RESOLVER_CONFIG_LOADED    configuration loaded
+% RESOLVER_CONFIG_LOADED configuration loaded
 A debug message, output when the resolver configuration has been successfully
 loaded.
 
-% RESOLVER_CONFIG_UPDATED     configuration updated: %1
+% RESOLVER_CONFIG_UPDATED configuration updated: %1
 A debug message, the configuration has been updated with the specified
 information.
 
-% RESOLVER_DNS_MSG_RECVD    DNS message received: %1
+% RESOLVER_CREATED main resolver object created
+A debug message, output when the Resolver() object has been created.
+
+% RESOLVER_DNS_MSG_RECVD DNS message received: %1
 A debug message, this always precedes some other logging message and is the
 formatted contents of the DNS packet that the other message refers to.
 
-% RESOLVER_DNS_MSG_SENT    DNS message of %1 bytes sent: %2
+% RESOLVER_DNS_MSG_SENT DNS message of %1 bytes sent: %2
 A debug message, this contains details of the response sent back to the querying
 system.
 
-% RESOLVER_CLI_TMO_SMALL    client timeout of %1 is too small
-An error indicating that the configuration value specified for the query
-timeout is too small.
-
-% RESOLVER_CREATED       main resolver object created
-A debug message, output when the Resolver() object has been created.
-
-% RESOLVER_FAILED        resolver failed, reason: %1
+% RESOLVER_FAILED resolver failed, reason: %1
 This is an error message output when an unhandled exception is caught by the
 resolver.  All it can do is to shut down.
 
-% RESOLVER_FWD_ADDRESS       setting forward address %1(%2)
+% RESOLVER_FWD_ADDRESS setting forward address %1(%2)
 This message may appear multiple times during startup, and it lists the
 forward addresses used by the resolver when running in forwarding mode.
 
-% RESOLVER_FWD_QUERY      processing forward query
+% RESOLVER_FWD_QUERY processing forward query
 The received query has passed all checks and is being forwarded to upstream
 servers.
 
-% RESOLVER_HEADER_ERROR        message received, exception when processing header: %1
+% RESOLVER_HEADER_ERROR message received, exception when processing header: %1
 A debug message noting that an exception occurred during the processing of
 a received packet.  The packet has been dropped.
 
-% RESOLVER_IXFR          IXFR request received
+% RESOLVER_IXFR IXFR request received
 The resolver received a NOTIFY message over TCP.  The server cannot process it
 and will return an error message to the sender with the RCODE set to NOTIMP.
 
-% RESOLVER_LKUP_TMO_SMALL    lookup timeout of %1 is too small
+% RESOLVER_LKUP_TMO_SMALL lookup timeout of %1 is too small
 An error indicating that the configuration value specified for the lookup
 timeout is too small.
 
-% RESOLVER_NOTIFY_RECVD    NOTIFY arrived but server is not authoritative
-The resolver received a NOTIFY message.  As the server is not authoritative it
-cannot process it, so it returns an error message to the sender with the RCODE
-set to NOTAUTH.
+% RESOLVER_NEG_RETRIES negative number of retries (%1) specified in the configuration
+An error message indicating that the resolver configuration has specified a
+negative retry count.  Only zero or positive values are valid.
 
-% RESOLVER_NORMAL_QUERY     processing normal query
-The received query has passed all checks and is being processed by the resolver.
-
-% RESOLVER_NON_IN_PACKET         non-IN class request received, returning REFUSED message
+% RESOLVER_NON_IN_PACKET non-IN class request received, returning REFUSED message
 A debug message, the resolver has received a DNS packet that was not IN class.
 The resolver cannot handle such packets, so is returning a REFUSED response to
 the sender.
 
-% RESOLVER_NO_ROOT_ADDRESS    no root addresses available
-A warning message during startup, indicates that no root addresses have been
-set.  This may be because the resolver will get them from a priming query.
+% RESOLVER_NORMAL_QUERY processing normal query
+The received query has passed all checks and is being processed by the resolver.
 
-% RESOLVER_NOT_ONE_QUEST    query contained %1 questions, exactly one question was expected
+% RESOLVER_NOTIFY_RECVD NOTIFY arrived but server is not authoritative
+The resolver received a NOTIFY message.  As the server is not authoritative it
+cannot process it, so it returns an error message to the sender with the RCODE
+set to NOTAUTH.
+
+% RESOLVER_NOT_ONE_QUEST query contained %1 questions, exactly one question was expected
 A debug message, the resolver received a query that contained the number of
 entires in the question section detailed in the message.  This is a malformed
 message, as a DNS query must contain only one question.  The resolver will
 return a message to the sender with the RCODE set to FORMERR.
 
-% RESOLVER_UNSUPPORTED_OPCODE     opcode %1 not supported by the resolver
-A debug message, the resolver received a message with an unsupported opcode
-(it can only process QUERY opcodes).  It will return a message to the sender
-with the RCODE set to NOTIMP.
+% RESOLVER_NO_ROOT_ADDRESS no root addresses available
+A warning message during startup, indicates that no root addresses have been
+set.  This may be because the resolver will get them from a priming query.
 
-% RESOLVER_PARSE_ERROR      error parsing received message: %1 - returning %2
+% RESOLVER_PARSE_ERROR error parsing received message: %1 - returning %2
 A debug message noting that the resolver received a message and the parsing
 of the body of the message failed due to some non-protocol related reason
 (although the parsing of the header succeeded).  The message parameters give
 a textual description of the problem and the RCODE returned.
 
-% RESOLVER_PRINT_COMMAND      print message command, arguments are: %1
+% RESOLVER_PRINT_COMMAND print message command, arguments are: %1
 This message is logged when a "print_message" command is received over the
 command channel.
 
-% RESOLVER_PROTOCOL_ERROR       protocol error parsing received message: %1 - returning %2
+% RESOLVER_PROTOCOL_ERROR protocol error parsing received message: %1 - returning %2
 A debug message noting that the resolver received a message and the parsing
 of the body of the message failed due to some protocol error (although the
 parsing of the header succeeded).  The message parameters give a textual
 description of the problem and the RCODE returned.
 
-% RESOLVER_RECQ_SETUP       query setup
-A debug message noting that the resolver is creating a RecursiveQuery object.
-
-% RESOLVER_RECQ_SHUTDOWN        query shutdown
-A debug message noting that the resolver is destroying a RecursiveQuery object.
-
-% RESOLVER_QUERY_TMO_SMALL    query timeout of %1 is too small
+% RESOLVER_QUERY_TMO_SMALL query timeout of %1 is too small
 An error indicating that the configuration value specified for the query
 timeout is too small.
 
-% RESOLVER_RECURSIVE     running in recursive mode
-This is an informational message that appears at startup noting that the
-resolver is running in recursive mode.
-
-% RESOLVER_RECEIVED_MSG       resolver has received a DNS message
+% RESOLVER_RECEIVED_MSG resolver has received a DNS message
 A debug message indicating that the resolver has received a message.  Depending
 on the debug settings, subsequent log output will indicate the nature of the
 message.
 
-% RESOLVER_NEG_RETRIES      negative number of retries (%1) specified in the configuration
-An error message indicating that the resolver configuration has specified a
-negative retry count.  Only zero or positive values are valid.
+% RESOLVER_RECQ_SETUP query setup
+A debug message noting that the resolver is creating a RecursiveQuery object.
 
-% RESOLVER_SET_ROOT_ADDRESS      setting root address %1(%2)
-This message may appear multiple times during startup; it lists the root
-addresses used by the resolver.
+% RESOLVER_RECQ_SHUTDOWN query shutdown
+A debug message noting that the resolver is destroying a RecursiveQuery object.
 
-% RESOLVER_SERVICE_CREATED       service object created
+% RESOLVER_RECURSIVE running in recursive mode
+This is an informational message that appears at startup noting that the
+resolver is running in recursive mode.
+
+% RESOLVER_SERVICE_CREATED service object created
 A debug message, output when the main service object (which handles the
 received queries) is created.
 
-% RESOLVER_SET_PARAMS      query timeout: %1, client timeout: %2, lookup timeout: %3, retry count: %4
-A debug message, lists the parameters associated with the message.  These are:
+% RESOLVER_SET_PARAMS query timeout: %1, client timeout: %2, lookup timeout: %3, retry count: %4
+A debug message, lists the parameters being set for the resolver.  These are:
 query timeout: the timeout (in ms) used for queries originated by the resolver
 to upstream servers.  Client timeout: the interval to resolver a query by
 a client: after this time, the resolver sends back a SERVFAIL to the client
@@ -173,20 +164,29 @@ upstream nameservers.  Even if none of these queries timeout, the total time
 taken to perform all the queries may exceed the client timeout.  When this
 happens, a SERVFAIL is returned to the client, but the resolver continues
 with the resolution process. Data received is added to the cache.  However,
-there comes a time - the lookup timeout - when even the resolve gives up.
+there comes a time - the lookup timeout - when even the resolver gives up.
 At this point it will wait for pending upstream queries to complete or
 timeout and drop the query.
 
-% RESOLVER_SHUTDOWN      resolver shutdown complete
+% RESOLVER_SET_ROOT_ADDRESS setting root address %1(%2)
+This message may appear multiple times during startup; it lists the root
+addresses used by the resolver.
+
+% RESOLVER_SHUTDOWN resolver shutdown complete
 This information message is output when the resolver has shut down.
 
-% RESOLVER_STARTED       resolver started
+% RESOLVER_STARTED resolver started
 This informational message is output by the resolver when all initialization
 has been completed and it is entering its main loop.
 
-% RESOLVER_STARTING      starting resolver with command line '%1'
+% RESOLVER_STARTING starting resolver with command line '%1'
 An informational message, this is output when the resolver starts up.
 
-% RESOLVER_UNEXPECTED_RESPONSE      received unexpected response, ignoring
+% RESOLVER_UNEXPECTED_RESPONSE received unexpected response, ignoring
 A debug message noting that the server has received a response instead of a
 query and is ignoring it.
+
+% RESOLVER_UNSUPPORTED_OPCODE opcode %1 not supported by the resolver
+A debug message, the resolver received a message with an unsupported opcode
+(it can only process QUERY opcodes).  It will return a message to the sender
+with the RCODE set to NOTIMP.
