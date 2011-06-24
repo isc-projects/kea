@@ -668,15 +668,6 @@ Resolver::updateConfig(ConstElementPtr config) {
         if (listenAddressesE) {
             setListenAddresses(listenAddresses);
             need_query_restart = true;
-        } else {
-            if (!configured_) {
-                // TODO: ModuleSpec needs getDefault()
-                AddressList initial_addresses;
-                initial_addresses.push_back(AddressPair("127.0.0.1", 53));
-                initial_addresses.push_back(AddressPair("::1", 53));
-                setListenAddresses(initial_addresses);
-                need_query_restart = true;
-            }
         }
         if (forwardAddressesE) {
             setForwardAddresses(forwardAddresses);
