@@ -216,17 +216,6 @@ readLoggersConf(std::vector<isc::log::LoggerSpecification>& specs,
 {
     std::string lname = logger->get("name")->stringValue();
 
-    // If the first part of the name is '*', it is meant for 'every
-    // program', so we replace it with whatever is set as the root
-    // logger.
-    // We could tokenize the string, but if * is used, the string
-    // should either be "*", or start with "*.", so it's easier to
-    // look directly
-    if (lname.length() > 0 && lname[0] == '*' &&
-        (lname.length() == 1 || lname[1] == '.')) {
-        lname = isc::log::getRootLoggerName() + lname.substr(1);
-    }
-
     ConstElementPtr severity_el = getValueOrDefault(logger,
                                       "severity", config_data,
                                       "loggers/severity");
@@ -257,6 +246,65 @@ readLoggersConf(std::vector<isc::log::LoggerSpecification>& specs,
     specs.push_back(logger_spec);
 }
 
+
+// Returns the loggers related to this module
+//
+// This function does two things;
+// - it drops the configuration parts for loggers for other modules
+// - it replaces the '*' in the name of the loggers by the name of
+//   this module, but *only* if the expanded name is not configured
+//   explicitely
+//
+// Examples: if this is the module b10-resolver,
+// For the config names ['*', 'b10-auth']
+// The '*' is replaced with 'b10-resolver', and this logger is used.
+// 'b10-auth' is ignored (of course, it will not be in the b10-auth
+// module).
+//
+// For ['*', 'b10-resolver']
+// The '*' is ignored, and only 'b10-resolver' is used.
+//
+// For ['*.reslib', 'b10-resolver']
+// Or ['b10-resolver.reslib', '*']
+// Both are used, where the * will be expanded to b10-resolver
+//
+// \param The original 'loggers' config list
+// \returns ListElement containing only loggers relevant for this
+//          module, where * is replaced by the root logger name
+ConstElementPtr
+getRelatedLoggers(ConstElementPtr loggers) {
+    // Keep a list of names for easier lookup later
+    std::vector<std::string> our_names;
+    const std::string& root_name = isc::log::getRootLoggerName();
+
+    ElementPtr result = isc::data::Element::createList();
+
+    BOOST_FOREACH(ConstElementPtr cur_logger, loggers->listValue()) {
+        const std::string cur_name = cur_logger->get("name")->stringValue();
+        if (cur_name.find(root_name) == 0) {
+            our_names.push_back(cur_name);
+            result->add(cur_logger);
+        }
+    }
+
+    // now find the * names
+    BOOST_FOREACH(ConstElementPtr cur_logger, loggers->listValue()) {
+        std::string cur_name = cur_logger->get("name")->stringValue();
+        // if name starts with *, replace * with root logger name
+        if (cur_name.length() > 0 && cur_name[0] == '*') {
+            cur_name = root_name + cur_name.substr(1);
+
+            // now add it to the result list, but only if a logger with
+            // that name was not configured explicitely
+            if (std::find(our_names.begin(), our_names.end(),
+                          cur_name) != our_names.end()) {
+                result->add(cur_logger);
+            }
+        }
+    }
+    return result;
+}
+
 } // end anonymous namespace
 
 void
@@ -268,8 +316,9 @@ default_logconfig_handler(const std::string& module_name,
     std::vector<isc::log::LoggerSpecification> specs;
 
     if (new_config->contains("loggers")) {
+        ConstElementPtr loggers = getRelatedLoggers(new_config->get("loggers"));
         BOOST_FOREACH(ConstElementPtr logger,
-                      new_config->get("loggers")->listValue()) {
+                      loggers->listValue()) {
             readLoggersConf(specs, logger, config_data);
         }
     }
