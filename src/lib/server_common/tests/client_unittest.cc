@@ -30,10 +30,10 @@
 
 #include <gtest/gtest.h>
 
-using namespace boost; 
-using namespace isc::acl; 
-using namespace isc::asiolink; 
-using namespace isc::server_common; 
+using namespace boost;
+using namespace isc::acl;
+using namespace isc::asiolink;
+using namespace isc::server_common;
 
 namespace {
 
