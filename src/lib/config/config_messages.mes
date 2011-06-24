@@ -12,44 +12,43 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-$PREFIX CONFIG_
 $NAMESPACE isc::config
 
-% FOPEN_ERR     error opening %1: %2
+% CONFIG_FOPEN_ERR     error opening %1: %2
 There was an error opening the given file.
 
-% JSON_PARSE    JSON parse error in %1: %2
+% CONFIG_JSON_PARSE    JSON parse error in %1: %2
 There was a parse error in the JSON file. The given file does not appear
 to be in valid JSON format. Please verify that the filename is correct
 and that the contents are valid JSON.
 
-% MODULE_SPEC   module specification error in %1: %2
+% CONFIG_MODULE_SPEC   module specification error in %1: %2
 The given file does not appear to be a valid specification file. Please
 verify that the filename is correct and that its contents are a valid
 BIND10 module specification.
 
-% MANAGER_MOD_SPEC    module specification not accepted by cfgmgr: %1
+% CONFIG_MANAGER_MOD_SPEC    module specification not accepted by cfgmgr: %1
 The module specification file for this module was rejected by the
 configuration manager. The full error message answer from the
 configuration manager is appended to the log error. The most likely
 cause is that the module is of a different (specification file) version
 than the running configuration manager.
 
-% MANAGER_CONFIG    error getting configuration from cfgmgr: %1
+% CONFIG_MANAGER_CONFIG    error getting configuration from cfgmgr: %1
 The configuration manager returned an error when this module requested
 the configuration. The full error message answer from the configuration
 manager is appended to the log error. The most likely cause is that
 the module is of a different (command specification) version than the
 running configuration manager.
 
-% CCSESSION_MSG error in CC session message: %1
+% CONFIG_CCSESSION_MSG error in CC session message: %1
 There was a problem with an incoming message on the command and control
 channel. The message does not appear to be a valid command, and is
 missing a required element or contains an unknown data format. This
 most likely means that another BIND10 module is sending a bad message.
 The message itself is ignored by this module.
 
-% CCSESSION_MSG_INTERNAL error handling CC session message: %1
+% CONFIG_CCSESSION_MSG_INTERNAL error handling CC session message: %1
 There was an internal problem handling an incoming message on the
 command and control channel. An unexpected exception was thrown. This
 most likely points to an internal inconsistency in the module code. The
