@@ -23,6 +23,7 @@
 
 #include <stdint.h>
 #include <arpa/inet.h>
+#include <sys/socket.h> // for AF_INET/AF_INET6
 #include <netinet/in.h>
 
 #include <acl/check.h>
