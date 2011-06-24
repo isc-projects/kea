@@ -12,6 +12,9 @@ query_bench_SOURCES += ../query.h  ../query.cc
 query_bench_SOURCES += ../auth_srv.h ../auth_srv.cc
 query_bench_SOURCES += ../auth_config.h ../auth_config.cc
 query_bench_SOURCES += ../statistics.h ../statistics.cc
+query_bench_SOURCES += ../auth_log.h ../auth_log.cc
+
+nodist_query_bench_SOURCES = ../auth_messages.h ../auth_messages.cc
 
 query_bench_LDADD = $(top_builddir)/src/lib/dns/libdns++.la
 query_bench_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la

@@ -21,6 +21,7 @@ import threading
 import time
 import errno
 from isc.datasrc import sqlite3_ds
+from isc.net import addr
 import isc
 try: 
     from pydnspp import * 
@@ -66,7 +67,7 @@ class ZoneNotifyInfo:
         self.zone_name = zone_name_
         self.zone_class = class_
         self.notify_msg_id = 0
-        self.notify_timeout = 0
+        self.notify_timeout = None
         self.notify_try_num = 0  #Notify times sending to one target.
        
     def set_next_notify_target(self):
@@ -77,8 +78,7 @@ class ZoneNotifyInfo:
             self._notify_current = None
 
     def prepare_notify_out(self):
-        '''Create the socket and set notify timeout time to now'''
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) #TODO support IPv6?
+        '''Set notify timeout time to now'''
         self.notify_timeout = time.time()
         self.notify_try_num = 0
         self._slave_index = 0
@@ -89,6 +89,12 @@ class ZoneNotifyInfo:
         if self._sock:
             self._sock.close()
             self._sock = None
+        self.notify_timeout = None
+
+    def create_socket(self, dest_addr):
+        self._sock = socket.socket(addr.IPAddr(dest_addr).family,
+                                   socket.SOCK_DGRAM)
+        return self._sock
 
     def get_socket(self):
         return self._sock
@@ -270,8 +276,15 @@ class NotifyOut:
             sock = self._notify_infos[info].get_socket()
             if sock:
                 valid_socks.append(sock)
+
+            # If a non null timeout is specified notify has been scheduled
+            # (in which case socket is still None) or sent (with a valid
+            # socket).  In either case we need add the zone to notifying_zones
+            # so that we can invoke the appropriate event for the zone after
+            # select.
+            tmp_timeout = self._notify_infos[info].notify_timeout
+            if tmp_timeout is not None:
                 notifying_zones[info] = self._notify_infos[info]
-                tmp_timeout = self._notify_infos[info].notify_timeout
                 if min_timeout is not None:
                     if tmp_timeout < min_timeout:
                         min_timeout = tmp_timeout
@@ -380,12 +393,13 @@ class NotifyOut:
         render.set_length_limit(512) 
         msg.to_wire(render)
         zone_notify_info.notify_msg_id = qid
-        sock = zone_notify_info.get_socket()
         try:
+            sock = zone_notify_info.create_socket(addrinfo[0])
             sock.sendto(render.get_data(), 0, addrinfo)
             self._log_msg('info', 'sending notify to %s' % addr_to_str(addrinfo))
-        except socket.error as err:
-            self._log_msg('error', 'send notify to %s failed: %s' % (addr_to_str(addrinfo), str(err)))
+        except (socket.error, addr.InvalidAddress) as err:
+            self._log_msg('error', 'send notify to %s failed: %s' %
+                          (addr_to_str(addrinfo), str(err)))
             return False
 
         return True

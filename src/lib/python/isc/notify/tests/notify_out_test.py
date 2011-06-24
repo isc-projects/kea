@@ -24,9 +24,7 @@ from isc.notify import notify_out, SOCK_DATA
 
 # our fake socket, where we can read and insert messages
 class MockSocket():
-    def __init__(self, family, type):
-        self.family = family
-        self.type = type
+    def __init__(self):
         self._local_sock, self._remote_sock = socket.socketpair()
 
     def connect(self, to):
@@ -51,12 +49,16 @@ class MockSocket():
         return self._remote_sock
 
 # We subclass the ZoneNotifyInfo class we're testing here, only
-# to override the prepare_notify_out() method.
+# to override the create_socket() method.
 class MockZoneNotifyInfo(notify_out.ZoneNotifyInfo):
-    def prepare_notify_out(self):
-        super().prepare_notify_out();
+    def create_socket(self, addrinfo):
+        super().create_socket(addrinfo)
+        # before replacing the underlying socket, remember the address family
+        # of the original socket so that tests can check that.
+        self.sock_family = self._sock.family
         self._sock.close()
-        self._sock = MockSocket(socket.AF_INET, socket.SOCK_DGRAM)
+        self._sock = MockSocket()
+        return self._sock
 
 class TestZoneNotifyInfo(unittest.TestCase):
     def setUp(self):
@@ -64,11 +66,12 @@ class TestZoneNotifyInfo(unittest.TestCase):
 
     def test_prepare_finish_notify_out(self):
         self.info.prepare_notify_out()
-        self.assertNotEqual(self.info._sock, None)
+        self.assertNotEqual(self.info.notify_timeout, None)
         self.assertIsNone(self.info._notify_current)
 
         self.info.finish_notify_out()
         self.assertEqual(self.info._sock, None)
+        self.assertEqual(self.info.notify_timeout, None)
 
     def test_set_next_notify_target(self):
         self.info.notify_slaves.append(('127.0.0.1', 53))
@@ -155,6 +158,11 @@ class TestNotifyOut(unittest.TestCase):
         self.assertEqual(len(replied_zones), 0)
         self.assertEqual(len(timeout_zones), 2)
 
+        # Trigger timeout events to "send" notifies via a mock socket
+        for zone in timeout_zones:
+            self._notify._zone_notify_handler(timeout_zones[zone],
+                                              notify_out._EVENT_TIMEOUT)
+
         # Now make one socket be readable
         self._notify._notify_infos[('example.net.', 'IN')].notify_timeout = time.time() + 10
         self._notify._notify_infos[('example.com.', 'IN')].notify_timeout = time.time() + 10
@@ -234,11 +242,31 @@ class TestNotifyOut(unittest.TestCase):
         data = b'\x2f\x18\x10\x10\x00\x01\x00\x00\x00\x00\x00\x00\x07example\03com\x00\x00\x06\x00\x01'
         self.assertEqual(notify_out._BAD_QR, self._notify._handle_notify_reply(example_com_info, data))
 
-    def test_send_notify_message_udp(self):
+    def test_send_notify_message_udp_ipv4(self):
         example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
         example_com_info.prepare_notify_out()
-        ret = self._notify._send_notify_message_udp(example_com_info, ('1.1.1.1', 53))
+        ret = self._notify._send_notify_message_udp(example_com_info,
+                                                    ('192.0.2.1', 53))
         self.assertTrue(ret)
+        self.assertEqual(socket.AF_INET, example_com_info.sock_family)
+
+    def test_send_notify_message_udp_ipv6(self):
+        example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
+        ret = self._notify._send_notify_message_udp(example_com_info,
+                                                    ('2001:db8::53', 53))
+        self.assertTrue(ret)
+        self.assertEqual(socket.AF_INET6, example_com_info.sock_family)
+
+    def test_send_notify_message_with_bogus_address(self):
+        example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
+
+        # As long as the underlying data source validates RDATA this shouldn't
+        # happen, but right now it's not actually the case.  Even if the
+        # data source does its job, it's prudent to confirm the behavior for
+        # an unexpected case.
+        ret = self._notify._send_notify_message_udp(example_com_info,
+                                                    ('invalid', 53))
+        self.assertFalse(ret)
 
     def test_zone_notify_handler(self):
         old_send_msg = self._notify._send_notify_message_udp

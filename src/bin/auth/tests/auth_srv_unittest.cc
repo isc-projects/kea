@@ -190,15 +190,6 @@ TEST_F(AuthSrvTest, unsupportedRequest) {
     unsupportedRequest();
 }
 
-// Simple API check
-TEST_F(AuthSrvTest, verbose) {
-    EXPECT_FALSE(server.getVerbose());
-    server.setVerbose(true);
-    EXPECT_TRUE(server.getVerbose());
-    server.setVerbose(false);
-    EXPECT_FALSE(server.getVerbose());
-}
-
 // Multiple questions.  Should result in FORMERR.
 TEST_F(AuthSrvTest, multiQuestion) {
     multiQuestion();
