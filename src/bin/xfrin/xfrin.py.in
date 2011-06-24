@@ -29,12 +29,17 @@ from isc.config.ccsession import *
 from isc.notify import notify_out
 import isc.util.process
 import isc.net.parse
+from xfrin_messages import *
+
+isc.log.init("b10-xfrin")
+logger = isc.log.Logger("xfrin")
+
 try:
     from pydnspp import *
 except ImportError as e:
     # C++ loadable module may not be installed; even so the xfrin process
     # must keep running, so we warn about it and move forward.
-    sys.stderr.write('[b10-xfrin] failed to import DNS module: %s\n' % str(e))
+    logger.error(XFRIN_IMPORT_DNS, str(e))
 
 isc.util.process.rename()
 
@@ -68,9 +73,6 @@ __version__ = 'BIND10'
 # define xfrin rcode
 XFRIN_OK = 0
 XFRIN_FAIL = 1
-
-def log_error(msg):
-    sys.stderr.write("[b10-xfrin] %s\n" % str(msg))
 
 class XfrinException(Exception):
     pass
@@ -150,8 +152,7 @@ class XfrinConnection(asyncore.dispatcher):
             self.connect(self._master_address)
             return True
         except socket.error as e:
-            self.log_msg('Failed to connect:(%s), %s' % (self._master_address,
-                                                            str(e)))
+            logger.error(CONNECT_MASTER, self._master_address, str(e))
             return False
 
     def _create_query(self, query_type):
@@ -264,31 +265,27 @@ class XfrinConnection(asyncore.dispatcher):
                 logstr = 'SOA check for \'%s\' ' % self._zone_name
                 ret =  self._check_soa_serial()
 
-            logstr = 'transfer of \'%s\': AXFR ' % self._zone_name
             if ret == XFRIN_OK:
-                self.log_msg(logstr + 'started')
+                logger.info(XFRIN_AXFR_TRANSFER_STARTED, self._zone_name)
                 self._send_query(RRType.AXFR())
                 isc.datasrc.sqlite3_ds.load(self._db_file, self._zone_name,
                                             self._handle_xfrin_response)
 
-                self.log_msg(logstr + 'succeeded')
+                logger.info(XFRIN_AXFR_TRANSFER_SUCCESS, self._zone_name)
 
         except XfrinException as e:
-            self.log_msg(e)
-            self.log_msg(logstr + 'failed')
+            logger.error(XFRIN_AXFR_TRANSFER_FAILURE, self._zone_name, str(e))
             ret = XFRIN_FAIL
             #TODO, recover data source.
         except isc.datasrc.sqlite3_ds.Sqlite3DSError as e:
-            self.log_msg(e)
-            self.log_msg(logstr + 'failed')
+            logger.error(XFRIN_AXFR_DATABASE_FAILURE, self._zone_name, str(e))
             ret = XFRIN_FAIL
         except UserWarning as e:
             # XXX: this is an exception from our C++ library via the
             # Boost.Python binding.  It would be better to have more more
             # specific exceptions, but at this moment this is the finest
             # granularity.
-            self.log_msg(e)
-            self.log_msg(logstr + 'failed')
+            logger.error(XFRIN_AXFR_INTERNAL_FAILURE, self._zone_name, str(e))
             ret = XFRIN_FAIL
         finally:
            self.close()
@@ -395,11 +392,6 @@ class XfrinConnection(asyncore.dispatcher):
         # Overwrite the log function, log nothing
         pass
 
-    def log_msg(self, msg):
-        if self._verbose:
-            sys.stdout.write('[b10-xfrin] %s\n' % str(msg))
-
-
 def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
                   shutdown_event, master_addrinfo, check_soa, verbose,
                   tsig_key):
@@ -481,8 +473,8 @@ class ZoneInfo:
             try:
                 self.master_addr = isc.net.parse.addr_parse(master_addr_str)
             except ValueError:
+                logger.error(XFRIN_BAD_MASTER_ADDR_FORMAT, master_addr_str)
                 errmsg = "bad format for zone's master: " + master_addr_str
-                log_error(errmsg)
                 raise XfrinZoneInfoException(errmsg)
 
     def set_master_port(self, master_port_str):
@@ -496,8 +488,8 @@ class ZoneInfo:
             try:
                 self.master_port = isc.net.parse.port_parse(master_port_str)
             except ValueError:
+                logger.error(XFRIN_BAD_MASTER_PORT_FORMAT, master_port_str)
                 errmsg = "bad format for zone's master port: " + master_port_str
-                log_error(errmsg)
                 raise XfrinZoneInfoException(errmsg)
 
     def set_zone_class(self, zone_class_str):
@@ -514,8 +506,8 @@ class ZoneInfo:
             try:
                 self.rrclass = RRClass(zone_class_str)
             except InvalidRRClass:
+                logger.error(XFRIN_BAD_ZONE_CLASS, zone_class_str)
                 errmsg = "invalid zone class: " + zone_class_str
-                log_error(errmsg)
                 raise XfrinZoneInfoException(errmsg)
 
     def set_tsig_key(self, tsig_key_str):
@@ -529,8 +521,8 @@ class ZoneInfo:
             try:
                 self.tsig_key = TSIGKey(tsig_key_str)
             except InvalidParameter as ipe:
+                logger.error(XFRIN_BAD_TSIG_KEY_STRING, tsig_key_str)
                 errmsg = "bad TSIG key string: " + tsig_key_str
-                log_error(errmsg)
                 raise XfrinZoneInfoException(errmsg)
 
     def get_master_addr_info(self):
@@ -556,7 +548,8 @@ class Xfrin:
         self._send_cc_session = isc.cc.Session()
         self._module_cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
                                               self.config_handler,
-                                              self.command_handler)
+                                              self.command_handler,
+                                              None, True)
         self._module_cc.start()
         config_data = self._module_cc.get_full_config()
         self.config_handler(config_data)
@@ -635,7 +628,7 @@ class Xfrin:
                 if zone_info is None:
                     # TODO what to do? no info known about zone. defaults?
                     errmsg = "Got notification to retransfer unknown zone " + zone_name.to_text()
-                    log_error(errmsg)
+                    logger.error(XFRIN_RETRANSFER_UNKNOWN_ZONE, zone_name.to_text())
                     answer = create_answer(1, errmsg)
                 else:
                     master_addr = zone_info.get_master_addr_info()
@@ -670,7 +663,7 @@ class Xfrin:
             else:
                 answer = create_answer(1, 'unknown command: ' + command)
         except XfrinException as err:
-            log_error('error happened for command: %s, %s' % (command, str(err)) )
+            logger.error(XFRIN_COMMAND_ERROR, command, str(err))
             answer = create_answer(1, str(err))
         return answer
 
@@ -762,8 +755,7 @@ class Xfrin:
                 except isc.cc.session.SessionTimeout:
                     pass        # for now we just ignore the failure
             except socket.error as err:
-                log_error("Fail to send message to %s and %s, msgq may has been killed"
-                          % (XFROUT_MODULE_NAME, ZONE_MANAGER_MODULE_NAME))
+                logger.error(XFRIN_MSGQ_SEND_ERROR, XFROUT_MODULE_NAME, ZONE_MANAGER_MODULE_NAME)
         else:
             msg = create_command(ZONE_XFRIN_FAILED, param)
             # catch the exception, in case msgq has been killed.
@@ -775,8 +767,7 @@ class Xfrin:
                 except isc.cc.session.SessionTimeout:
                     pass        # for now we just ignore the failure
             except socket.error as err:
-                log_error("Fail to send message to %s, msgq may has been killed"
-                          % ZONE_MANAGER_MODULE_NAME)
+                logger.error(XFRIN_MSGQ_SEND_ERROR_ZONE_MANAGER, ZONE_MANAGER_MODULE_NAME)
 
     def startup(self):
         while not self._shutdown_event.is_set():
@@ -844,12 +835,11 @@ def main(xfrin_class, use_signal = True):
         xfrind = xfrin_class(verbose = options.verbose)
         xfrind.startup()
     except KeyboardInterrupt:
-        log_error("exit b10-xfrin")
+        logger.info(XFRIN_STOPPED_BY_KEYBOARD)
     except isc.cc.session.SessionError as e:
-        log_error(str(e))
-        log_error('Error happened! is the command channel daemon running?')
+        logger.error(XFRIN_CC_SESSION_ERROR, str(e))
     except Exception as e:
-        log_error(str(e))
+        logger.error(XFRIN_UNKNOWN_ERROR, str(e))
 
     if xfrind:
         xfrind.shutdown()
