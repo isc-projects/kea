@@ -178,6 +178,10 @@ public:
     /// program will fail to compile if a required specialisation is not
     /// provided.
     ///
+    /// It is expected that matches() will extract the address information from
+    /// the Context structure, and use compare() to actually perform the
+    /// comparison.
+    ///
     /// \param context Information to be matched
     virtual bool matches(const Context& context) const;
 
@@ -214,6 +218,7 @@ public:
             if (mask_[i] == 0xff) {
                 // All bits set in this byte
                 count += 8;
+                continue;
 
             } else if (mask_[i] != 0) {
                 // Only some bits set in this byte.  Count them.
@@ -222,11 +227,8 @@ public:
                     count += byte & 0x01;   // Add one if the bit is set
                     byte >>= 1;             // Go for next bit
                 }
-            } else {
-                // Encountered a zero byte, so exit - there are no more bits
-                // set.
-                break;
             }
+            break;
         }
         return (count);
     }
@@ -237,6 +239,7 @@ public:
     }
     ///@}
 
+protected:
     /// \brief Comparison
     ///
     /// This is the actual comparison function that checks the IP address passed
