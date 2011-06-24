@@ -164,24 +164,20 @@ TEST_F(IntervalTimerTest, startIntervalTimer) {
     itimer.setup(TimerCallBack(this), 100);
     EXPECT_EQ(100, itimer.getInterval());
     io_service_.run();
-    // reaches here after timer expired
+    // Control reaches here after io_service_ was stopped by TimerCallBack.
+
     // delta: difference between elapsed time and 100 milliseconds.
     boost::posix_time::time_duration test_runtime =
         boost::posix_time::microsec_clock::universal_time() - start;
     EXPECT_FALSE(test_runtime.is_negative()) << 
                  "test duration " << test_runtime << 
                  " negative - clock skew?";
-    boost::posix_time::time_duration delta =
-        test_runtime - boost::posix_time::milliseconds(100);
-    if (delta.is_negative()) {
-        delta.invert_sign();
-    }
-    // expect TimerCallBack is called; timer_called_ is true
+    // Expect TimerCallBack is called; timer_called_ is true
     EXPECT_TRUE(timer_called_);
-    // expect interval is 100 milliseconds +/- TIMER_MARGIN_MSEC.
-    EXPECT_TRUE(delta < TIMER_MARGIN_MSEC) << 
-                "delta " << delta.total_milliseconds() << "msec " <<
-                ">= " << TIMER_MARGIN_MSEC.total_milliseconds();
+    // Expect test_runtime is 100 milliseconds or longer.
+    EXPECT_TRUE(test_runtime > boost::posix_time::milliseconds(100)) << 
+                "test runtime " << test_runtime.total_milliseconds() <<
+                "msec " << ">= 100";
 }
 
 TEST_F(IntervalTimerTest, destructIntervalTimer) {
@@ -244,7 +240,7 @@ TEST_F(IntervalTimerTest, cancel) {
 }
 
 TEST_F(IntervalTimerTest, overwriteIntervalTimer) {
-    // Calling setup() multiple times updates call back function and interval.
+    // Call setup() multiple times to update call back function and interval.
     //
     // There are two timers:
     //  itimer (A)
@@ -266,7 +262,7 @@ TEST_F(IntervalTimerTest, overwriteIntervalTimer) {
     //     0  100  200  300  400  500  600  700  800 (ms)
     // (A) i-------------+----C----s
     //                        ^    ^stop io_service
-    //                        |change call back function
+    //                        |change call back function and interval
     // (B) i------------------+-------------------S
     //                                            ^(stop io_service on fail)
     //
@@ -279,30 +275,11 @@ TEST_F(IntervalTimerTest, overwriteIntervalTimer) {
     itimer.setup(TimerCallBackCounter(this), 300);
     itimer_overwriter.setup(TimerCallBackOverwriter(this, itimer), 400);
     io_service_.run();
-    // reaches here after timer expired
-    // if interval is updated, it takes
-    //   400 milliseconds for TimerCallBackOverwriter
-    //   + 100 milliseconds for TimerCallBack (stop)
-    //   = 500 milliseconds.
-    // otherwise (test fails), it takes
-    //   400 milliseconds for TimerCallBackOverwriter
-    //   + 400 milliseconds for TimerCallBackOverwriter (stop)
-    //   = 800 milliseconds.
-    // delta: difference between elapsed time and 400 + 100 milliseconds
-    boost::posix_time::time_duration test_runtime =
-        boost::posix_time::microsec_clock::universal_time() - start;
-    EXPECT_FALSE(test_runtime.is_negative()) << 
-                 "test duration " << test_runtime << 
-                 " negative - clock skew?";
-    boost::posix_time::time_duration delta =
-        test_runtime - boost::posix_time::milliseconds(400 + 100);
-    if (delta.is_negative()) {
-        delta.invert_sign();
-    }
-    // expect callback function is updated: TimerCallBack is called
+    // Control reaches here after io_service_ was stopped by
+    // TimerCallBackCounter or TimerCallBackOverwriter.
+
+    // Expect callback function is updated: TimerCallBack is called
     EXPECT_TRUE(timer_called_);
-    // expect interval is updated
-    EXPECT_TRUE(delta < TIMER_MARGIN_MSEC) << 
-                "delta " << delta.total_milliseconds() << " msec " <<
-                ">= " << TIMER_MARGIN_MSEC.total_milliseconds();
+    // Expect interval is updated: return value of getInterval() is updated
+    EXPECT_EQ(itimer.getInterval(), 100);
 }
