@@ -16,7 +16,7 @@
 #define __RESOLVER_LOG__H
 
 #include <log/macros.h>
-#include "resolverdef.h"
+#include "resolver_messages.h"
 
 /// \brief Resolver Logging
 ///
