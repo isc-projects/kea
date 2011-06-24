@@ -51,11 +51,11 @@ There was a problem reading a response from antoher module over the
 command and control channel. The most likely cause is that the
 configuration manager b10-cfgmgr is not running.
 
-% XFROUT_FETCH_REQUEST_FAILED socket error while fetching a request from the auth daemon
+% XFROUT_FETCH_REQUEST_ERROR socket error while fetching a request from the auth daemon
 There was a socket error while contacting the b10-auth daemon to
 fetch a transfer request. The auth daemon may have shutdown.
 
-% XFROUT_HANDLE_QUERY error while handling query: %1
+% XFROUT_HANDLE_QUERY_ERROR error while handling query: %1
 There was a general error handling an xfrout query. The error is shown
 in the message. In principle this error should not appear, and points
 to an oversight catching exceptions in the right place. However, to
@@ -80,7 +80,7 @@ received from the configuration manager.
 The xfrout daemon received a command on the command channel that
 NOTIFY packets should be sent for the given zone.
 
-% XFROUT_PARSE_QUERY error parsing query: %1
+% XFROUT_PARSE_QUERY_ERROR error parsing query: %1
 There was a parse error while reading an incoming query. The parse
 error is shown in the log message. A remote client sent a packet we
 do not understand or support. The xfrout request will be ignored.
@@ -94,7 +94,7 @@ in the log message, but at this point no specific information other
 than that could be given. This points to incomplete exception handling
 in the code.
 
-% XFROUT_RECEIVE_FILE_DESCRIPTOR error receiving the file descriptor for an XFR connection
+% XFROUT_RECEIVE_FILE_DESCRIPTOR_ERROR error receiving the file descriptor for an XFR connection
 There was an error receiving the file descriptor for the transfer
 request. Normally, the request is received by b10-auth, and passed on
 to the xfrout daemon, so it can answer directly. However, there was a
@@ -104,12 +104,12 @@ problem receiving this file descriptor. The request will be ignored.
 The xfrout daemon received a shutdown command from the command channel
 and will now shut down.
 
-% XFROUT_REMOVE_UNIX_SOCKET_FILE error clearing unix socket file %1: %2
+% XFROUT_REMOVE_UNIX_SOCKET_FILE_ERROR error clearing unix socket file %1: %2
 When shutting down, the xfrout daemon tried to clear the unix socket
 file used for communication with the auth daemon. It failed to remove
 the file. The reason for the failure is given in the error message.
 
-% XFROUT_REMOVE_OLD_UNIX_SOCKET_FILE error removing unix socket file %1: %2
+% XFROUT_REMOVE_OLD_UNIX_SOCKET_FILE_ERROR error removing unix socket file %1: %2
 The unix socket file xfrout needs for contact with the auth daemon
 already exists, and needs to be removed first, but there is a problem
 removing it. It is likely that we do not have permission to remove

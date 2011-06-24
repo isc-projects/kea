@@ -114,7 +114,7 @@ class XfroutSession():
             self.dns_xfrout_start(self._sock_fd, self._request_data)
             #TODO, avoid catching all exceptions
         except Exception as e:
-            logger.error(XFROUT_HANDLE_QUERY, str(e))
+            logger.error(XFROUT_HANDLE_QUERY_ERROR, str(e))
             pass
 
         os.close(self._sock_fd)
@@ -142,7 +142,7 @@ class XfroutSession():
             rcode = self._check_request_tsig(msg, mdata)
 
         except Exception as err:
-            logger.error(XFROUT_PARSE_QUERY, str(err))
+            logger.error(XFROUT_PARSE_QUERY_ERROR, str(err))
             return Rcode.FORMERR(), None
 
         return rcode, msg
@@ -407,7 +407,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         try:
             request, client_address = self.get_request()
         except socket.error:
-            logger.error(XFROUT_FETCH_REQUEST_FAIL)
+            logger.error(XFROUT_FETCH_REQUEST_ERROR)
             return
 
         # Check self._shutdown_event to ensure the real shutdown comes.
@@ -451,7 +451,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
             # xfrout unix socket server, to check whether there is another
             # xfrout running.
             if sock_fd == FD_COMM_ERROR:
-                logger.error(XFROUT_RECEIVE_FILE_DESCRIPTOR)
+                logger.error(XFROUT_RECEIVE_FILE_DESCRIPTOR_ERROR)
             return
 
         # receive request msg
@@ -485,7 +485,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
             try:
                 os.unlink(sock_file)
             except OSError as err:
-                logger.error(XFROUT_REMOVE_OLD_UNIX_SOCKET_FILE, sock_file, str(err))
+                logger.error(XFROUT_REMOVE_OLD_UNIX_SOCKET_FILE_ERROR, sock_file, str(err))
                 sys.exit(0)
 
     def _sock_file_in_use(self, sock_file):
@@ -506,7 +506,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         try:
             os.unlink(self._sock_file)
         except Exception as e:
-            logger.error(XFROUT_REMOVE_UNIX_SOCKET_FILE, str(e))
+            logger.error(XFROUT_REMOVE_UNIX_SOCKET_FILE_ERROR, str(e))
             pass
 
     def update_config_data(self, new_config):
