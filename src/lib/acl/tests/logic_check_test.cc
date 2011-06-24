@@ -163,4 +163,46 @@ TEST_F(LogicCreatorTest, allRun) {
     log_.checkFirst(2);
 }
 
+// Or is able to return false
+TEST_F(LogicCreatorTest, anyFalse) {
+    AnyOfPtr any(load<AnyOf>("{\"ANY\": ["
+                             "    {\"logcheck\": [0, false]},"
+                             "    {\"logcheck\": [1, false]},"
+                             "    {\"logcheck\": [2, false]}"
+                             "]}"));
+    EXPECT_EQ(3, any->getSubexpressions().size());
+    EXPECT_FALSE(any->matches(log_));
+    log_.checkFirst(3);
+}
+
+// And is able to return true
+TEST_F(LogicCreatorTest, andTrue) {
+    AllOfPtr all(load<AllOf>("{\"ALL\": ["
+                             "    {\"logcheck\": [0, true]},"
+                             "    {\"logcheck\": [1, true]},"
+                             "    {\"logcheck\": [2, true]}"
+                             "]}"));
+    EXPECT_EQ(3, all->getSubexpressions().size());
+    EXPECT_TRUE(all->matches(log_));
+    log_.checkFirst(3);
+}
+
+// We can nest them together
+TEST_F(LogicCreatorTest, nested) {
+    AllOfPtr all(load<AllOf>("{\"ALL\": ["
+                             "    {\"ANY\": ["
+                             "        {\"logcheck\": [0, true]},"
+                             "        {\"logcheck\": [2, true]},"
+                             "    ]},"
+                             "    {\"logcheck\": [1, false]}"
+                             "]}"));
+    EXPECT_EQ(2, all->getSubexpressions().size());
+    const LogicOperator<AnyOfSpec, Log>*
+        any(dynamic_cast<const LogicOperator<AnyOfSpec, Log>*>
+            (all->getSubexpressions()[0]));
+    EXPECT_EQ(2, any->getSubexpressions().size());
+    EXPECT_FALSE(all->matches(log_));
+    log_.checkFirst(2);
+}
+
 }
