@@ -133,19 +133,21 @@
 	  "item_type": "map",
 	  "item_optional": false,
 	  "item_default": {},
-	},
-	"map_item_spec": [
-	  {
-	    "item_name": "action",
-	    "item_type": "string",
-	    "item_optional": false
-	  },
-	  {
-	    "item_name": "from",
-	    "item_type": "string",
-	    "item_optional": false
-	  }
-	]
+	  "map_item_spec": [
+	    {
+	      "item_name": "action",
+	      "item_type": "string",
+	      "item_optional": false,
+	      "item_default": ""
+	    },
+	    {
+	      "item_name": "from",
+	      "item_type": "string",
+	      "item_optional": false,
+	      "item_default": ""
+	    }
+	  ]
+        }
       }
     ],
     "commands": [
