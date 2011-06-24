@@ -83,7 +83,7 @@ public:
         typename CompoundCheck<Context>::Checks result;
         for (typename Checks::const_iterator i(checks_.begin());
              i != checks_.end(); ++i) {
-            result.push_back(&**i);
+            result.push_back(i->get());
         }
         return (result);
     }
