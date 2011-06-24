@@ -138,8 +138,7 @@ SEC_SEPARATOR = ""
 SEC_TRAILER = """      </variablelist>
     </para>
   </chapter>
-</book>
-"""
+</book>"""
 
 
 def reportError(filename, what):
