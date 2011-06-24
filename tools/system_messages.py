@@ -120,7 +120,7 @@ SEC_HEADER="""<?xml version="1.0" encoding="UTF-8"?>
 # tokens: $I is replaced by the message identification, $T by the message text,
 # and $D by the message description.
 SEC_MESSAGE = """<varlistentry id="$I">
-<term>$I, $T</term>
+<term>$I $T</term>
 <listitem><para>
 $D
 </para></listitem>
