@@ -15,20 +15,27 @@
 # No namespace declaration - these constants go in the global namespace
 # of the xfrout messages python module.
 
-% XFROUT_AXFR_TRANSFER_ERROR error transferring zone %1: %2
+% XFROUT_AXFR_TRANSFER_DONE transfer of %1/%2 complete
+The transfer of the given zone has been completed successfully.
+
+% XFROUT_AXFR_TRANSFER_ERROR error transferring zone %1/%2: %3
 An uncaught exception was encountered while sending the response to
 an AXFR query. The error message of the exception is included in the
 log message, but this error most likely points to incomplete exception
 handling in the code.
 
-% XFROUT_AXFR_TRANSFER_FAILED transfer of %1 failed, rcode: %2
+% XFROUT_AXFR_TRANSFER_FAILED transfer of %1/%2 failed, rcode: %3
 A transfer out for the given zone failed. An error response is sent
 to the client. The given rcode is the rcode that is set in the error
 response. This is either NOTAUTH (we are not authoritative for the
 zone), SERVFAIL (our internal database is missing the SOA record for
-the zone), or REFUSED (the client is not allowed to transfer the zone).
+the zone), or REFUSED (the limit of simultaneous outgoing AXFR
+transfers, as specified by the configuration value
+Xfrout/max_transfers_out, has been reached).
+# Still a TODO, but when implemented, REFUSED can also mean
+# the client is not allowed to transfer the zone
 
-% XFROUT_AXFR_TRANSFER_STARTED transfer of zone %1 has started
+% XFROUT_AXFR_TRANSFER_STARTED transfer of zone %1/%2 has started
 A transfer out of the given zone has started.
 
 % XFROUT_BAD_TSIG_KEY_STRING bad TSIG key string: %1
@@ -41,22 +48,25 @@ most likely cause is that the msgq daemon is not running.
 
 % XFROUT_CC_SESSION_TIMEOUT_ERROR timeout waiting for cc response
 There was a problem reading a response from antoher module over the
-command and control channel. The most likely cause it that the
+command and control channel. The most likely cause is that the
 configuration manager b10-cfgmgr is not running.
 
-% XFROUT_FETCH_REQUEST socket error while fetching a request from the auth daemon
+% XFROUT_FETCH_REQUEST_FAILED socket error while fetching a request from the auth daemon
 There was a socket error while contacting the b10-auth daemon to
 fetch a transfer request. The auth daemon may have shutdown.
 
-% XFROUT_HANDLE_QUERY error while handling query: %e
+% XFROUT_HANDLE_QUERY error while handling query: %1
 There was a general error handling an xfrout query. The error is shown
 in the message. In principle this error should not appear, and points
 to an oversight catching exceptions in the right place. However, to
 ensure the daemon keeps running, this error is caught and reported.
 
-% XFROUT_IMPORT_DNS error importing python DNS module: %1
-There was an error importing the python DNS module pydnspp. The most
-likely cause is a PYTHONPATH problem.
+% XFROUT_IMPORT error importing python module: %1
+There was an error importing a python module. One of the modules needed
+by xfrout could not be found. This suggests that either some libraries
+are missing on the system, or the PYTHONPATH variable is not correct.
+The specific place where this library needs to be may depend on your
+system and your specific installation.
 
 % XFROUT_NEW_CONFIG Update xfrout configuration
 New configuration settings have been sent from the configuration
@@ -70,16 +80,19 @@ received from the configuration manager.
 The xfrout daemon received a command on the command channel that
 NOTIFY packets should be sent for the given zone.
 
-% XFROUT_PARSE_QUERY error parsing query to xfrout: %1
+% XFROUT_PARSE_QUERY error parsing query: %1
 There was a parse error while reading an incoming query. The parse
 error is shown in the log message. A remote client sent a packet we
 do not understand or support. The xfrout request will be ignored.
+In general, this should only occur for unexpected problems like
+memory allocation failures, as the query should already have been
+parsed by the b10-auth daemon, before it was passed here.
 
-% XFROUT_PROCESS_REQUEST error processing request for %1: %2
-There was an error processing a request from the given address. The
-error is included in the log message, but at this point no specific
-information other than that could be given. This points to incomplete
-exception handling in the code.
+% XFROUT_PROCESS_REQUEST_ERROR error processing transfer request: %2
+There was an error processing a transfer request. The error is included
+in the log message, but at this point no specific information other
+than that could be given. This points to incomplete exception handling
+in the code.
 
 % XFROUT_RECEIVE_FILE_DESCRIPTOR error receiving the file descriptor for an XFR connection
 There was an error receiving the file descriptor for the transfer
@@ -103,7 +116,7 @@ removing it. It is likely that we do not have permission to remove
 this file. The specific error is show in the log message. The xfrout
 daemon will shut down.
 
-% XFROUT_SOCKET_SELECT error while calling select() on request socket
+% XFROUT_SOCKET_SELECT_ERROR error while calling select() on request socket: %1
 There was an error while calling select() on the socket that informs
 the xfrout daemon that a new xfrout request has arrived. This most
 likely points to an error in the internal communication with b10-auth.
@@ -114,11 +127,12 @@ There was a keyboard interrupt signal to stop the xfrout daemon. The
 daemon will now shut down.
 
 % XFROUT_STOPPING the xfrout daemon is shutting down
-The xfrout daemon is shutting down
+The current transfer is aborted, as the xfrout daemon is shutting down.
 
-% XFROUT_UNIX_SOCKET_FILE_IN_USE another xfrout process seems to be using the unix socket file
-The xfrout daemon tried to clear the unix domain socket needed for
-contacting the b10-auth daemon to pass requests on, but the file is
-in use. The most likely cause is that another xfrout daemon process is
-still running. This xfrout daemon will now shut down.
+% XFROUT_UNIX_SOCKET_FILE_IN_USE another xfrout process seems to be using the unix socket file %1
+While starting up, the xfrout daemon tried to clear the unix domain
+socket needed for contacting the b10-auth daemon to pass requests
+on, but the file is in use. The most likely cause is that another
+xfrout daemon process is still running. This xfrout daemon (the one
+printing this message) will not start.
 
