@@ -1,3 +1,14 @@
+260.	[func]      stephen
+	Remove comma between message identification and the message
+	text in the new-style logging messages.
+	(Trac 1031, git 1c7930a7ba19706d388e4f8dcf2a55a886b74cd2)
+
+259.	[bug]       stephen
+	Logging now correctly initialized in b10-auth.  Also, fixed
+	bug whereby querying for "version.bind txt ch" would cause
+	b10-auth to crash if BIND 10 was started with the "-v" switch.
+	(Trac 1022,1023, git 926a65fa08617be677a93e9e388df0f229b01067)
+
 258.	[build]		jelte
 	Now builds and runs with Python 3.2
 	(Trac #710, git dae1d2e24f993e1eef9ab429326652f40a006dfb)

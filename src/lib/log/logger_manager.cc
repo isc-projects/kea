@@ -15,10 +15,11 @@
 #include <algorithm>
 #include <vector>
 
-#include <log/logger.h>
+#include <log/logger_level.h>
 #include <log/logger_manager_impl.h>
 #include <log/logger_manager.h>
 #include <log/logger_name.h>
+#include <log/logger_support.h>
 #include <log/messagedef.h>
 #include <log/message_dictionary.h>
 #include <log/message_exception.h>
@@ -110,6 +111,7 @@ LoggerManager::init(const std::string& root, isc::log::Severity severity,
     // Initialize the implementation logging.  After this point, some basic
     // logging has been set up and messages can be logged.
     LoggerManagerImpl::init(severity, dbglevel);
+    setLoggingInitialized();
 
     // Check if there were any duplicate message IDs in the default dictionary
     // and if so, log them.  Log using the logging facility logger.
