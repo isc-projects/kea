@@ -16,7 +16,8 @@ endif
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
-CLEANFILES = *.gcno *.gcda auth.spec spec_config.h
+CLEANFILES  = *.gcno *.gcda auth.spec spec_config.h
+CLEANFILES += auth_messages.h auth_messages.cc
 
 man_MANS = b10-auth.8
 EXTRA_DIST = $(man_MANS) b10-auth.xml
@@ -34,16 +35,25 @@ auth.spec: auth.spec.pre
 spec_config.h: spec_config.h.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
 
-BUILT_SOURCES = spec_config.h
+auth_messages.h auth_messages.cc: auth_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/bin/auth/auth_messages.mes
+
+BUILT_SOURCES = spec_config.h auth_messages.h auth_messages.cc
+
 pkglibexec_PROGRAMS = b10-auth
 b10_auth_SOURCES = query.cc query.h
 b10_auth_SOURCES += auth_srv.cc auth_srv.h
+b10_auth_SOURCES += auth_log.cc auth_log.h
 b10_auth_SOURCES += change_user.cc change_user.h
 b10_auth_SOURCES += auth_config.cc auth_config.h
 b10_auth_SOURCES += command.cc command.h
 b10_auth_SOURCES += common.h common.cc
 b10_auth_SOURCES += statistics.cc statistics.h
 b10_auth_SOURCES += main.cc
+
+nodist_b10_auth_SOURCES = auth_messages.h auth_messages.cc
+EXTRA_DIST += auth_messages.mes
+
 b10_auth_LDADD =  $(top_builddir)/src/lib/datasrc/libdatasrc.la
 b10_auth_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
 b10_auth_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la

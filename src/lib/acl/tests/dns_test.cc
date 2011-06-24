@@ -12,13 +12,24 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <acl/dns.h>
 #include <gtest/gtest.h>
-#include <log/logger_support.h>
-#include <util/unittests/run_all.h>
 
-int
-main(int argc, char* argv[]) {
-    ::testing::InitGoogleTest(&argc, argv);
-    isc::log::initLogger();
-    return (isc::util::unittests::run_all());
+using namespace isc::acl::dns;
+
+namespace {
+
+// Tests that the getLoader actually returns something, returns the same every
+// time and the returned value can be used to anything. It is not much of a
+// test, but the getLoader is not much of a function.
+TEST(DNSACL, getLoader) {
+    Loader* l(&getLoader());
+    ASSERT_TRUE(l != NULL);
+    EXPECT_EQ(l, &getLoader());
+    EXPECT_NO_THROW(l->load(isc::data::Element::fromJSON(
+        "[{\"action\": \"DROP\"}]")));
+    // TODO Test that the things we should register by default, like IP based
+    // check, are loaded.
+}
+
 }
