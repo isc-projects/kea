@@ -1,3 +1,7 @@
+261.	[func]      stephen
+	Add new-style logging messages to b10-auth.
+	(Trac 738, git c021505a1a0d6ecb15a8fd1592b94baff6d115f4)
+
 260.	[func]      stephen
 	Remove comma between message identification and the message
 	text in the new-style logging messages.

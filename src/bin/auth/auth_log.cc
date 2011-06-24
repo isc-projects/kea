@@ -12,13 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <gtest/gtest.h>
-#include <log/logger_support.h>
-#include <util/unittests/run_all.h>
+/// Defines the logger used by the top-level component of b10-auth.
 
-int
-main(int argc, char* argv[]) {
-    ::testing::InitGoogleTest(&argc, argv);
-    isc::log::initLogger();
-    return (isc::util::unittests::run_all());
-}
+#include "auth_log.h"
+
+namespace isc {
+namespace auth {
+
+isc::log::Logger auth_logger("auth");
+
+} // namespace auth
+} // namespace isc
+

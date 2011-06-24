@@ -12,13 +12,23 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <gtest/gtest.h>
-#include <log/logger_support.h>
-#include <util/unittests/run_all.h>
+#include "dns.h"
 
-int
-main(int argc, char* argv[]) {
-    ::testing::InitGoogleTest(&argc, argv);
-    isc::log::initLogger();
-    return (isc::util::unittests::run_all());
+namespace isc {
+namespace acl {
+namespace dns {
+
+Loader&
+getLoader() {
+    static Loader* loader(NULL);
+    if (loader == NULL) {
+        loader = new Loader(REJECT);
+        // TODO: This is the place where we register default check creators
+        // like IP check, etc, once we have them.
+    }
+    return (*loader);
+}
+
+}
+}
 }
