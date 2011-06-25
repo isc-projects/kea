@@ -17,23 +17,59 @@ $NAMESPACE isc::server_common
 # \brief Messages for the server_common library
 
 % SRV_COMMON_ADDRESS_MISSING address specification is missing "address" or "port" element in %1
+This points to an error in configuration. Some address specification is missing
+either the address or port part and therefore can not be used.
 
 % SRV_COMMON_PORT_RANGE port out of valid range (%1 in %2)
+This points to an error in configuration. The port in some address
+specification is out of the valid range (0-65535).
 
 % SRV_COMMON_ADDRESS_TYPE address specification type is invalid in %1
+This points to an error in configuration. Some address specification is
+malformed. The address part must be a string (and a valid IP address, either
+IPv4 or IPv6) and the port must be integer (in the valid range).
 
 % SRV_COMMON_ADDRESSES_NOT_LIST the address and port specification is not a list
+This points to an error in configuration. What was supposed to be a list of
+IP address - port pairs isn't a list at all but something else.
 
 % SRV_COMMON_SET_LISTEN setting addresses to listen to
+Debug message, noting that the server is about to start listening on a
+different set of IP addresses and ports.
 
 % SRV_COMMON_ADDRESS_VALUE address to set: %1#%2
+Debug message. This lists one address and port value of the set of
+addresses we are going to listen on (eg. there will be one log message
+per pair). This appears only after SRV_COMMON_SET_LISTEN, but might
+be hidden, as it has higher debug level.
 
 % SRV_COMMON_ADDRESS_FAIL failed to listen on addresses (%1)
+The server failed to bind to one of the address/port pair it should according
+to configuration, for reason listed in the message (usually because that pair
+is already used by other service or missing privileges). The server will try
+to recover and bind the address/port pairs it was listening before.
 
 % SRV_COMMON_ADDRESS_UNRECOVERABLE failed to recover original addresses also (%2)
+The recovery of old addresses after SRV_COMMON_ADDRESS_FAIL also failed (for
+the reason listed). This should not happen.
+
+We would really like to terminate the server right now, but considering that
+the server needs reconfiguration and it is not possible to reconfigure a server
+without it being run, we leave it running in inconsistent and broken state.
+It probably will not work, but will allow the reconfiguration. We hope to
+update the configuration system so we can really crash the server happily
+instead.
 
 % SRV_COMMON_KEYS_UPDATE updating TSIG keyring
+Debug message indicating that the server is initializing global TSIG keyring.
+This should be seen only at server start.
 
 % SRV_COMMON_KEYS_INIT initializing TSIG keyring
+Debug message indicating new keyring is being loaded from configuration (either
+on startup or as a result of configuration update).
 
 % SRV_COMMON_KEYS_DEINIT deinitilizing TSIG keyring
+Debug message indicating that the server is deinilizing the TSIG keyring. This
+could be seen at server shutdown only, but usually not even there, as leaving
+the TSIG in memory until the real shutdown and memory reclamation by OS is
+harmless, so we don't usually do it.
