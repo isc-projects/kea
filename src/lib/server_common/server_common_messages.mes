@@ -16,18 +16,24 @@ $NAMESPACE isc::server_common
 
 # \brief Messages for the server_common library
 
-% SRV_COMMON_ADDRESS_MISSING Address specification is missing "address" or "port" element in %1
+% SRV_COMMON_ADDRESS_MISSING address specification is missing "address" or "port" element in %1
 
-% SRV_COMMON_PORT_RANGE Port out of valid range (%1 in %2)
+% SRV_COMMON_PORT_RANGE port out of valid range (%1 in %2)
 
-% SRV_COMMON_ADDRESS_TYPE Address specification type is invalid in %1
+% SRV_COMMON_ADDRESS_TYPE address specification type is invalid in %1
 
-% SRV_COMMON_ADDRESSES_NOT_LIST The address and port specification is not a list
+% SRV_COMMON_ADDRESSES_NOT_LIST the address and port specification is not a list
 
-% SRV_COMMON_SET_LISTEN Setting addresses to listen to
+% SRV_COMMON_SET_LISTEN setting addresses to listen to
 
-% SRV_COMMON_ADDRESS_VALUE Address to set: %1#%2
+% SRV_COMMON_ADDRESS_VALUE address to set: %1#%2
 
-% SRV_COMMON_ADDRESS_FAIL Failed to listen on addresses (%1)
+% SRV_COMMON_ADDRESS_FAIL failed to listen on addresses (%1)
 
-% SRV_COMMON_ADDRESS_UNRECOVERABLE Failed to recover original addresses also (%2)
+% SRV_COMMON_ADDRESS_UNRECOVERABLE failed to recover original addresses also (%2)
+
+% SRV_COMMON_KEYS_UPDATE updating TSIG keyring
+
+% SRV_COMMON_KEYS_INIT initializing TSIG keyring
+
+% SRV_COMMON_KEYS_DEINIT deinitilizing TSIG keyring
