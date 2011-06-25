@@ -123,4 +123,19 @@ TEST_F(FormatterTest, noRecurse) {
     EXPECT_EQ("%1 %1", outputs[0].second);
 }
 
+// Test it can accept exceptions (which don't have a default conversion
+// to string by themself)
+TEST_F(FormatterTest, exception) {
+    class Ex : public std::exception {
+    public:
+        virtual const char* what() const throw() {
+            return "Exception test";
+        }
+    };
+    Formatter(isc::log::INFO, s("%1"), this).arg(Ex());
+    ASSERT_EQ(1, outputs.size());
+    EXPECT_EQ(isc::log::INFO, outputs[0].first);
+    EXPECT_EQ("Exception test", outputs[0].second);
+}
+
 }

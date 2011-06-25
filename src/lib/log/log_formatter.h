@@ -180,6 +180,14 @@ public:
         return (*this);
     }
 
+    Formatter& arg(const std::exception& e) {
+        if (logger_) {
+            return (arg(e.what()));
+        } else {
+            return (*this);
+        }
+    }
+
 };
 
 }
