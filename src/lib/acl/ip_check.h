@@ -341,6 +341,13 @@ private:
     int     family_;              ///< Address family
 };
 
+// Some compilers seem to need this to be explicitly defined outside the class
+template <typename Context>
+const size_t IPCheck<Context>::IPV6_SIZE;
+
+template <typename Context>
+const size_t IPCheck<Context>::IPV4_SIZE;
+
 } // namespace acl
 } // namespace isc
 
