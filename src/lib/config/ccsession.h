@@ -400,8 +400,8 @@ default_logconfig_handler(const std::string& module_name,
 /// are running, this function may be moved to the unnamed namespace
 ///
 /// \param loggers the original 'loggers' config list
-/// \returns ListElement containing only loggers relevant for this
-///          module, where * is replaced by the root logger name
+/// \return ListElement containing only loggers relevant for this
+///         module, where * is replaced by the root logger name
 isc::data::ConstElementPtr
 getRelatedLoggers(isc::data::ConstElementPtr loggers);
 
