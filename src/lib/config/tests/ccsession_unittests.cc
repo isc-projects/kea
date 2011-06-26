@@ -649,11 +649,19 @@ TEST(LogConfigTest, relatedLoggersTest) {
     // The default root logger name is "bind10"
     doRelatedLoggersTest("[{ \"name\": \"other_module\" }]",
                          "[]");
+    doRelatedLoggersTest("[{ \"name\": \"other_module.somelib\" }]",
+                         "[]");
+    doRelatedLoggersTest("[{ \"name\": \"bind10_other\" }]",
+                         "[]");
+    doRelatedLoggersTest("[{ \"name\": \"bind10_other.somelib\" }]",
+                         "[]");
     doRelatedLoggersTest("[ { \"name\": \"other_module\" },"
                          "  { \"name\": \"bind10\" }]",
                          "[ { \"name\": \"bind10\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"bind10\" }]",
                          "[ { \"name\": \"bind10\" } ]");
+    doRelatedLoggersTest("[ { \"name\": \"bind10.somelib\" }]",
+                         "[ { \"name\": \"bind10.somelib\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"other_module.somelib\" },"
                          "  { \"name\": \"bind10.somelib\" }]",
                          "[ { \"name\": \"bind10.somelib\" } ]");
