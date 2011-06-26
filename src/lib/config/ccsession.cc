@@ -260,7 +260,7 @@ getRelatedLoggers(ConstElementPtr loggers) {
 
     BOOST_FOREACH(ConstElementPtr cur_logger, loggers->listValue()) {
         const std::string cur_name = cur_logger->get("name")->stringValue();
-        if (cur_name.find(root_name) == 0) {
+        if (cur_name == root_name || cur_name.find(root_name + ".") == 0) {
             our_names.insert(cur_name);
             result->add(cur_logger);
         }
