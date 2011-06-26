@@ -23,6 +23,7 @@
 #include <fstream>
 #include <sstream>
 #include <cerrno>
+#include <set>
 
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
@@ -246,35 +247,13 @@ readLoggersConf(std::vector<isc::log::LoggerSpecification>& specs,
     specs.push_back(logger_spec);
 }
 
+} // end anonymous namespace
 
-// Returns the loggers related to this module
-//
-// This function does two things;
-// - it drops the configuration parts for loggers for other modules
-// - it replaces the '*' in the name of the loggers by the name of
-//   this module, but *only* if the expanded name is not configured
-//   explicitely
-//
-// Examples: if this is the module b10-resolver,
-// For the config names ['*', 'b10-auth']
-// The '*' is replaced with 'b10-resolver', and this logger is used.
-// 'b10-auth' is ignored (of course, it will not be in the b10-auth
-// module).
-//
-// For ['*', 'b10-resolver']
-// The '*' is ignored, and only 'b10-resolver' is used.
-//
-// For ['*.reslib', 'b10-resolver']
-// Or ['b10-resolver.reslib', '*']
-// Both are used, where the * will be expanded to b10-resolver
-//
-// \param The original 'loggers' config list
-// \returns ListElement containing only loggers relevant for this
-//          module, where * is replaced by the root logger name
+
 ConstElementPtr
 getRelatedLoggers(ConstElementPtr loggers) {
     // Keep a list of names for easier lookup later
-    std::vector<std::string> our_names;
+    std::set<std::string> our_names;
     const std::string& root_name = isc::log::getRootLoggerName();
 
     ElementPtr result = isc::data::Element::createList();
@@ -282,7 +261,7 @@ getRelatedLoggers(ConstElementPtr loggers) {
     BOOST_FOREACH(ConstElementPtr cur_logger, loggers->listValue()) {
         const std::string cur_name = cur_logger->get("name")->stringValue();
         if (cur_name.find(root_name) == 0) {
-            our_names.push_back(cur_name);
+            our_names.insert(cur_name);
             result->add(cur_logger);
         }
     }
@@ -290,22 +269,26 @@ getRelatedLoggers(ConstElementPtr loggers) {
     // now find the * names
     BOOST_FOREACH(ConstElementPtr cur_logger, loggers->listValue()) {
         std::string cur_name = cur_logger->get("name")->stringValue();
-        // if name starts with *, replace * with root logger name
-        if (cur_name.length() > 0 && cur_name[0] == '*') {
+        // if name is '*', or starts with '*.', replace * with root
+        // logger name
+        if (cur_name.length() > 0 && cur_name[0] == '*' &&
+            !(cur_name.length() > 1 && cur_name[1] != '.')) {
             cur_name = root_name + cur_name.substr(1);
-
             // now add it to the result list, but only if a logger with
             // that name was not configured explicitely
-            if (std::find(our_names.begin(), our_names.end(),
-                          cur_name) != our_names.end()) {
-                result->add(cur_logger);
+            if (our_names.find(cur_name) == our_names.end()) {
+                // we substitute the name here already, but as
+                // we are dealing with consts, we copy the data
+                // there's no direct copy (yet), but we can use JSON
+                ElementPtr new_logger = isc::data::Element::fromJSON(cur_logger->str());
+                ConstElementPtr new_name = Element::create(cur_name);
+                new_logger->set("name", new_name);
+                result->add(new_logger);
             }
         }
     }
     return result;
 }
-
-} // end anonymous namespace
 
 void
 default_logconfig_handler(const std::string& module_name,
