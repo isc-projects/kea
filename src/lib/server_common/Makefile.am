@@ -32,4 +32,6 @@ BUILT_SOURCES = server_common_messages.h server_common_messages.cc
 server_common_messages.h server_common_messages.cc: server_common_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/server_common/server_common_messages.mes
 
-CLEANFILES = *.gcno *.gcda messagedef.h messagedef.cc
+EXTRA_DIST = server_common_messages.mes
+
+CLEANFILES = *.gcno *.gcda server_common_messages.h server_common_messages.cc
