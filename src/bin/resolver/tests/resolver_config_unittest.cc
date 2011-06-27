@@ -294,7 +294,7 @@ TEST_F(ResolverConfig, queryACLIPv6) {
                   createClient("2001:db8::1")));
 }
 
-TEST_F(ResolverConfig, compoundQueryACL) {
+TEST_F(ResolverConfig, multiEntryACL) {
     // A bit more complicated one: mixture of IPv4 and IPv6 with 3 rules
     // in total.  We shouldn't have to check so many variations of rules
     // as it should have been tested in the underlying ACL module.  All we
