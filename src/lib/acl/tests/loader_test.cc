@@ -12,21 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "logcheck.h"
+#include "creators.h"
 #include <acl/loader.h>
 #include <string>
 #include <gtest/gtest.h>
 
 using namespace std;
 using namespace boost;
-using isc::data::ConstElementPtr;
 
 namespace {
-
-// Just for convenience, create JSON objects from JSON string
-ConstElementPtr el(const string& JSON) {
-    return (isc::data::Element::fromJSON(JSON));
-}
 
 // We don't use the EXPECT_THROW macro, as it doesn't allow us
 // to examine the exception. We want to check the element is stored
@@ -61,122 +55,6 @@ TEST(LoaderHelpers, DefaultActionLoader) {
     testActionLoaderException("{}");
 }
 
-// A check that doesn't check anything but remembers it's own name
-// and data
-class NamedCheck : public Check<Log> {
-public:
-    NamedCheck(const string& name, ConstElementPtr data) :
-        name_(name),
-        data_(data)
-    {}
-    virtual bool matches(const Log&) const { return (true); }
-    const string name_;
-    const ConstElementPtr data_;
-};
-
-// The creator of NamedCheck
-class NamedCreator : public Loader<Log>::CheckCreator {
-public:
-    NamedCreator(const string& name, bool abbreviatedList = true) :
-        abbreviated_list_(abbreviatedList)
-    {
-        names_.push_back(name);
-    }
-    NamedCreator(const vector<string>& names) :
-        names_(names),
-        abbreviated_list_(true)
-    {}
-    vector<string> names() const {
-        return (names_);
-    }
-    shared_ptr<Check<Log> > create(const string& name, ConstElementPtr data,
-                                   const Loader<Log>&)
-    {
-        bool found(false);
-        for (vector<string>::const_iterator i(names_.begin());
-             i != names_.end(); ++i) {
-            if (*i == name) {
-                found = true;
-                break;
-            }
-        }
-        EXPECT_TRUE(found) << "Name " << name << " passed to creator which "
-            "doesn't handle it.";
-        return (shared_ptr<Check<Log> >(new NamedCheck(name, data)));
-    }
-    bool allowListAbbreviation() const {
-        return (abbreviated_list_);
-    }
-private:
-    vector<string> names_;
-    const bool abbreviated_list_;
-};
-
-// To be thrown in tests internally
-class TestCreatorError {};
-
-// This will throw every time it should create something
-class ThrowCreator : public Loader<Log>::CheckCreator {
-public:
-    vector<string> names() const {
-        vector<string> result;
-        result.push_back("throw");
-        return (result);
-    }
-    shared_ptr<Check<Log> > create(const string&, ConstElementPtr,
-                                   const Loader<Log>&)
-    {
-        throw TestCreatorError();
-    }
-};
-
-// This throws whenever the match is called on it
-class ThrowCheck : public Check<Log> {
-public:
-    virtual bool matches(const Log&) const {
-        throw TestCreatorError();
-    }
-};
-
-// And creator for it
-class ThrowCheckCreator : public Loader<Log>::CheckCreator {
-public:
-    vector<string> names() const {
-        vector<string> result;
-        result.push_back("throwcheck");
-        return (result);
-    }
-    shared_ptr<Check<Log> > create(const string&, ConstElementPtr,
-                                   const Loader<Log>&)
-    {
-        return (shared_ptr<Check<Log> >(new ThrowCheck()));
-    }
-};
-
-class LogCreator : public Loader<Log>::CheckCreator {
-public:
-    vector<string> names() const {
-        vector<string> result;
-        result.push_back("logcheck");
-        return (result);
-    }
-    /*
-     * For simplicity, we just take two values as a list, first is the
-     * logging cell used, the second is result of the check. No error checking
-     * is done, if there's bug in the test, it will throw TypeError for us.
-     */
-    shared_ptr<Check<Log> > create(const string&, ConstElementPtr definition,
-                                   const Loader<Log>&)
-    {
-        vector<ConstElementPtr> list(definition->listValue());
-        int logpos(list[0]->intValue());
-        bool accept(list[1]->boolValue());
-        return (shared_ptr<ConstCheck>(new ConstCheck(accept, logpos)));
-    }
-    // We take a list, so don't interpret it for us
-    virtual bool allowListAbbreviation() const { return (false); }
-};
-
 class LoaderTest : public ::testing::Test {
 public:
     LoaderTest() :
@@ -198,15 +76,20 @@ public:
         EXPECT_NO_THROW(loader_.registerCreator(
             namedCreator(name, abbreviatedList)));
     }
-    // Load a check and convert it to named check to examine it
-    shared_ptr<NamedCheck> loadCheck(const string& definition) {
+    template<class Result> shared_ptr<Result> loadCheckAny(const string&
+                                                               definition)
+    {
         SCOPED_TRACE("Loading check " + definition);
         shared_ptr<Check<Log> > loaded;
         EXPECT_NO_THROW(loaded = loader_.loadCheck(el(definition)));
-        shared_ptr<NamedCheck> result(dynamic_pointer_cast<NamedCheck>(
+        shared_ptr<Result> result(dynamic_pointer_cast<Result>(
             loaded));
         EXPECT_TRUE(result);
         return (result);
+    }
+    // Load a check and convert it to named check to examine it
+    shared_ptr<NamedCheck> loadCheck(const string& definition) {
+        return (loadCheckAny<NamedCheck>(definition));
     }
     // The loadCheck throws an exception
     void checkException(const string& JSON) {
@@ -254,6 +137,20 @@ public:
         SCOPED_TRACE("Trying to load bad " + JSON);
         aclSetup();
         EXPECT_THROW(loader_.load(el(JSON)), LoaderError);
+    }
+    // Check that the subexpression is NamedCheck with correct data
+    void isSubexprNamed(const CompoundCheck<Log>* compound, size_t index,
+                        const string& name, ConstElementPtr data)
+    {
+        if (index < compound->getSubexpressions().size()) {
+            const NamedCheck*
+                check(dynamic_cast<const NamedCheck*>(compound->
+                                                      getSubexpressions()
+                                                      [index]));
+            ASSERT_TRUE(check) << "The subexpression is of different type";
+            EXPECT_EQ(name, check->name_);
+            EXPECT_TRUE(data->equals(*check->data_));
+        }
     }
 };
 
@@ -331,19 +228,67 @@ TEST_F(LoaderTest, CheckPropagate) {
     EXPECT_THROW(loader_.loadCheck(el("{\"throw\": null}")), TestCreatorError);
 }
 
-// The abbreviated form is not yet implemented
-// (we need the operators to be implemented)
+// The abbreviated form of check
 TEST_F(LoaderTest, AndAbbrev) {
     addNamed("name1");
     addNamed("name2");
-    EXPECT_THROW(loader_.loadCheck(el("{\"name1\": 1, \"name2\": 2}")),
-                 LoaderError);
+    shared_ptr<LogicOperator<AllOfSpec, Log> > oper(
+        loadCheckAny<LogicOperator<AllOfSpec, Log> >("{\"name1\": 1, \"name2\": 2}"));
+    // If we don't have anything loaded, the rest would crash. It is already
+    // reported from within loadCheckAny if it isn't loaded.
+    if (oper) {
+        // The subexpressions are correct
+        EXPECT_EQ(2, oper->getSubexpressions().size());
+        // Note: this test relies on the ordering in which map returns it's
+        // elements, which is in the lexicographical order of the strings.
+        // This is not required from our interface, but is easier to write
+        // the test.
+        isSubexprNamed(&*oper, 0, "name1", el("1"));
+        isSubexprNamed(&*oper, 1, "name2", el("2"));
+    }
 }
 
+// The abbreviated form of parameters
 TEST_F(LoaderTest, OrAbbrev) {
     addNamed("name1");
-    EXPECT_THROW(loader_.loadCheck(el("{\"name1\": [1, 2]}")),
-                 LoaderError);
+    shared_ptr<LogicOperator<AnyOfSpec, Log> > oper(
+        loadCheckAny<LogicOperator<AnyOfSpec, Log> >("{\"name1\": [1, 2]}"));
+    // If we don't have anything loaded, the rest would crash. It is already
+    // reported from within loadCheckAny if it isn't loaded.
+    if (oper) {
+        // The subexpressions are correct
+        EXPECT_EQ(2, oper->getSubexpressions().size());
+        isSubexprNamed(&*oper, 0, "name1", el("1"));
+        isSubexprNamed(&*oper, 1, "name1", el("2"));
+    }
+}
+
+// Combined abbreviated form, both at once
+
+// The abbreviated form of check
+TEST_F(LoaderTest, BothAbbrev) {
+    addNamed("name1");
+    addNamed("name2");
+    shared_ptr<LogicOperator<AllOfSpec, Log> > oper(
+        loadCheckAny<LogicOperator<AllOfSpec, Log> >("{\"name1\": 1, \"name2\": [3, 4]}"));
+    // If we don't have anything loaded, the rest would crash. It is already
+    // reported from within loadCheckAny if it isn't loaded.
+    if (oper) {
+        // The subexpressions are correct
+        ASSERT_EQ(2, oper->getSubexpressions().size());
+        // Note: this test relies on the ordering in which map returns it's
+        // elements, which is in the lexicographical order of the strings.
+        // This is not required from our interface, but is easier to write
+        // the test.
+        isSubexprNamed(&*oper, 0, "name1", el("1"));
+        const LogicOperator<AnyOfSpec, Log>*
+            orOper(dynamic_cast<const LogicOperator<AnyOfSpec, Log>*>(
+            oper->getSubexpressions()[1]));
+        ASSERT_TRUE(orOper) << "Different type than AnyOf operator";
+        EXPECT_EQ(2, orOper->getSubexpressions().size());
+        isSubexprNamed(orOper, 0, "name2", el("3"));
+        isSubexprNamed(orOper, 1, "name2", el("4"));
+    }
 }
 
 // But this is not abbreviated form, this should be passed directly to the
