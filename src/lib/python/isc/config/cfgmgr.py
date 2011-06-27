@@ -28,7 +28,12 @@ import tempfile
 import json
 import errno
 from isc.cc import data
-from isc.config import ccsession, config_data
+from isc.config import ccsession, config_data, module_spec
+from isc.util.file import path_search
+import bind10_config
+import isc.log
+
+logger = isc.log.Logger("cfgmgr")
 
 class ConfigManagerDataReadError(Exception):
     """This exception is thrown when there is an error while reading
@@ -182,6 +187,20 @@ class ConfigManager:
         self.cc.group_subscribe("ConfigManager")
         self.cc.group_subscribe("Boss", "ConfigManager")
         self.running = False
+        # As a core module, CfgMgr is different than other modules,
+        # as it does not use a ModuleCCSession, and hence needs
+        # to handle logging config on its own
+        self.log_config_data = config_data.ConfigData(
+            isc.config.module_spec_from_file(
+                path_search('logging.spec',
+                bind10_config.PLUGIN_PATHS)))
+        # store the logging 'module' name for easier reference
+        self.log_module_name = self.log_config_data.get_module_spec().get_module_name()
+
+    def check_logging_config(self, config):
+        if self.log_module_name in config:
+            ccsession.default_logconfig_handler(config[self.log_module_name],
+                                                self.log_config_data)
 
     def notify_boss(self):
         """Notifies the Boss module that the Config Manager is running"""
@@ -256,6 +275,7 @@ class ConfigManager:
             self.config = ConfigManagerData.read_from_file(self.data_path,
                                                            self.\
                                                            database_filename)
+            self.check_logging_config(self.config.data);
         except ConfigManagerDataEmpty:
             # ok, just start with an empty config
             self.config = ConfigManagerData(self.data_path,
@@ -388,6 +408,8 @@ class ConfigManager:
                         got_error = True
                         err_list.append(val)
         if not got_error:
+            # if Logging config is in there, update our config as well
+            self.check_logging_config(cmd);
             self.write_config()
             return ccsession.create_answer(0)
         else:
