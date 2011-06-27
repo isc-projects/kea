@@ -100,7 +100,7 @@ private:
 
     // Confirm our assumption of relative sizes - this allows us to assume that
     // an array sized for an IPv6 address can hold an IPv4 address.
-    BOOST_STATIC_ASSERT(IPV6_SIZE > IPV4_SIZE);
+    BOOST_STATIC_ASSERT(sizeof(struct in6_addr) > sizeof(struct in_addr));
 
 public:
     /// \brief String Constructor
