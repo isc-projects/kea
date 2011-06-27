@@ -271,18 +271,21 @@ getRelatedLoggers(ConstElementPtr loggers) {
         std::string cur_name = cur_logger->get("name")->stringValue();
         // if name is '*', or starts with '*.', replace * with root
         // logger name
-        if (cur_name.length() > 0 && cur_name[0] == '*' &&
-            !(cur_name.length() > 1 && cur_name[1] != '.')) {
+        if (cur_name == "*" || cur_name.length() > 1 &&
+            cur_name[0] == '*' && cur_name[1] == '.') {
+
             cur_name = root_name + cur_name.substr(1);
             // now add it to the result list, but only if a logger with
             // that name was not configured explicitely
             if (our_names.find(cur_name) == our_names.end()) {
                 // we substitute the name here already, but as
                 // we are dealing with consts, we copy the data
-                // there's no direct copy (yet), but we can use JSON
-                ElementPtr new_logger = isc::data::Element::fromJSON(cur_logger->str());
-                ConstElementPtr new_name = Element::create(cur_name);
-                new_logger->set("name", new_name);
+                ElementPtr new_logger(Element::createMap());
+                // since we'll only be updating one first-level element,
+                // and we return as const again, a shallow map copy is
+                // enough
+                new_logger->setValue(cur_logger->mapValue());
+                new_logger->set("name", Element::create(cur_name));
                 result->add(new_logger);
             }
         }
