@@ -28,3 +28,8 @@ install-data-local:
 	$(mkinstalldirs) $(DESTDIR)/@localstatedir@/@PACKAGE@
 # TODO: permissions handled later
 
+
+CLEANDIRS = __pycache__
+
+clean-local:
+	rm -rf $(CLEANDIRS)

@@ -12,75 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <gtest/gtest.h>
-#include <acl/acl.h>
-#include <cassert>
-
-using namespace isc::acl;
-using boost::shared_ptr;
+#include "logcheck.h"
 
 namespace {
 
-// This is arbitrary guess of size for the log. If it's too small for your
-// test, just make it bigger.
-const size_t LOG_SIZE = 10;
-
-// This will remember which checks did run already.
-struct Log {
-    // The actual log cells, if i-th check did run
-    mutable bool run[LOG_SIZE];
-    Log() {
-        // Nothing run yet
-        for (size_t i(0); i < LOG_SIZE; ++i) {
-            run[i] = false;
-        }
-    }
-    // Checks that the first amount of checks did run and the rest didn't.
-    void checkFirst(size_t amount) const {
-        ASSERT_LE(amount, LOG_SIZE) << "Wrong test: amount bigger than size "
-            "of log";
-        {
-            SCOPED_TRACE("Checking that the first amount of checks did run");
-            for (size_t i(0); i < amount; ++i) {
-                EXPECT_TRUE(run[i]) << "Check #" << i << " did not run.";
-            }
-        }
-
-        {
-            SCOPED_TRACE("Checking that the rest did not run");
-            for (size_t i(amount); i < LOG_SIZE; ++i) {
-                EXPECT_FALSE(run[i]) << "Check #" << i << "did run.";
-            }
-        }
-    }
-};
-
-// This returns true or false every time, no matter what is passed to it.
-// But it logs that it did run.
-class ConstCheck : public Check<Log> {
-public:
-    ConstCheck(bool accepts, size_t log_num) :
-        log_num_(log_num),
-        accepts_(accepts)
-    {
-        assert(log_num < LOG_SIZE); // If this fails, the LOG_SIZE is too small
-    }
-    /*
-     * This use of mutable log context is abuse for testing purposes.
-     * It is expected that the context will not be modified in the real
-     * applications of ACLs, but we want to know which checks were called
-     * and this is an easy way.
-     */
-    virtual bool matches(const Log& log) const {
-        log.run[log_num_] = true;
-        return (accepts_);
-    }
-private:
-    size_t log_num_;
-    bool accepts_;
-};
-
-// Test version of the ACL class. It adds few methods to examine the protected
+// Test version of the Acl class. It adds few methods to examine the protected
 // data, but does not change the implementation.
 class TestACL : public ACL<Log> {
 public:

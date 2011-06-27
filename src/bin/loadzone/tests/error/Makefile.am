@@ -12,8 +12,15 @@ EXTRA_DIST += keyerror3.db
 EXTRA_DIST += originerr1.db
 EXTRA_DIST += originerr2.db
 
+# If necessary (rare cases), explicitly specify paths to dynamic libraries
+# required by loadable python modules.
+LIBRARY_PATH_PLACEHOLDER =
+if SET_ENV_LIBRARY_PATH
+LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/cc/.libs:$(abs_top_builddir)/src/lib/config/.libs:$(abs_top_builddir)/src/lib/log/.libs:$(abs_top_builddir)/src/lib/util/.libs:$(abs_top_builddir)/src/lib/exceptions/.libs:$$$(ENV_LIBRARY_PATH)
+endif
+
 # TODO: use TESTS ?
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
 	echo Running test: error_test.sh
-	$(SHELL) $(abs_builddir)/error_test.sh
+	$(LIBRARY_PATH_PLACEHOLDER) $(SHELL) $(abs_builddir)/error_test.sh
