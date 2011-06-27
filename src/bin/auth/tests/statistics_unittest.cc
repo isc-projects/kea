@@ -69,13 +69,12 @@ private:
     };
 
 protected:
-    AuthCountersTest() : verbose_mode_(false), counters(verbose_mode_) {
+    AuthCountersTest() : counters() {
         counters.setStatisticsSession(&statistics_session_);
     }
     ~AuthCountersTest() {
     }
     MockSession statistics_session_;
-    bool verbose_mode_;
     AuthCounters counters;
 };
 

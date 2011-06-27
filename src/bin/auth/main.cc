@@ -44,25 +44,25 @@
 #include <auth/command.h>
 #include <auth/change_user.h>
 #include <auth/auth_srv.h>
+#include <auth/auth_log.h>
 #include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
-#include <log/dummylog.h>
 #include <log/logger_support.h>
 #include <server_common/keyring.h>
 
 using namespace std;
-using namespace isc::data;
+using namespace isc::asiodns;
+using namespace isc::asiolink;
+using namespace isc::auth;
 using namespace isc::cc;
 using namespace isc::config;
+using namespace isc::data;
 using namespace isc::dns;
+using namespace isc::log;
 using namespace isc::util;
 using namespace isc::xfr;
-using namespace isc::asiolink;
-using namespace isc::asiodns;
 
 namespace {
-
-bool verbose_mode = false;
 
 /* need global var for config/command handlers.
  * todo: turn this around, and put handlers in the authserver
@@ -89,6 +89,7 @@ usage() {
     cerr << "\t-v: verbose output" << endl;
     exit(1);
 }
+
 } // end of anonymous namespace
 
 int
@@ -96,6 +97,7 @@ main(int argc, char* argv[]) {
     int ch;
     const char* uid = NULL;
     bool cache = true;
+    bool verbose = false;
 
     while ((ch = getopt(argc, argv, ":nu:v")) != -1) {
         switch (ch) {
@@ -106,8 +108,7 @@ main(int argc, char* argv[]) {
             uid = optarg;
             break;
         case 'v':
-            verbose_mode = true;
-            isc::log::denabled = true;
+            verbose = true;
             break;
         case '?':
         default:
@@ -121,7 +122,7 @@ main(int argc, char* argv[]) {
 
     // Initialize logging.  If verbose, we'll use maximum verbosity.
     isc::log::initLogger("b10-auth",
-                         (verbose_mode ? isc::log::DEBUG : isc::log::INFO),
+                         (verbose ? isc::log::DEBUG : isc::log::INFO),
                          isc::log::MAX_DEBUG_LEVEL, NULL);
 
     int ret = 0;
@@ -144,8 +145,7 @@ main(int argc, char* argv[]) {
         }
 
         auth_server = new AuthSrv(cache, xfrout_client);
-        auth_server->setVerbose(verbose_mode);
-        cout << "[b10-auth] Server created." << endl;
+        LOG_INFO(auth_logger, AUTH_SERVER_CREATED);
 
         SimpleCallback* checkin = auth_server->getCheckinProvider();
         IOService& io_service = auth_server->getIOService();
@@ -154,10 +154,10 @@ main(int argc, char* argv[]) {
 
         DNSService dns_service(io_service, checkin, lookup, answer);
         auth_server->setDNSService(dns_service);
-        cout << "[b10-auth] DNSServices created." << endl;
+        LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_DNS_SERVICES_CREATED);
 
         cc_session = new Session(io_service.get_io_service());
-        cout << "[b10-auth] Configuration session channel created." << endl;
+        LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_CONFIG_CHANNEL_CREATED);
 
         // We delay starting listening to new commands/config just before we
         // go into the main loop to avoid confusion due to mixture of
@@ -167,19 +167,19 @@ main(int argc, char* argv[]) {
         config_session = new ModuleCCSession(specfile, *cc_session,
                                              my_config_handler,
                                              my_command_handler, false);
-        cout << "[b10-auth] Configuration channel established." << endl;
+        LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_CONFIG_CHANNEL_ESTABLISHED);
 
         xfrin_session = new Session(io_service.get_io_service());
-        cout << "[b10-auth] Xfrin session channel created." << endl;
+        LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_XFRIN_CHANNEL_CREATED);
         xfrin_session->establish(NULL);
         xfrin_session_established = true;
-        cout << "[b10-auth] Xfrin session channel established." << endl;
+        LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_XFRIN_CHANNEL_ESTABLISHED);
 
         statistics_session = new Session(io_service.get_io_service());
-        cout << "[b10-auth] Statistics session channel created." << endl;
+        LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_STATS_CHANNEL_CREATED);
         statistics_session->establish(NULL);
         statistics_session_established = true;
-        cout << "[b10-auth] Statistics session channel established." << endl;
+        LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_STATS_CHANNEL_ESTABLISHED);
 
         auth_server->setXfrinSession(xfrin_session);
         auth_server->setStatisticsSession(statistics_session);
@@ -188,33 +188,34 @@ main(int argc, char* argv[]) {
         // all initial configurations, but as a short term workaround we
         // handle the traditional "database_file" setup by directly calling
         // updateConfig().
-        // if server load configure failed, we won't exit, give user second chance
-        // to correct the configure.
+        // if server load configure failed, we won't exit, give user second
+        // chance to correct the configure.
         auth_server->setConfigSession(config_session);
         try {
             configureAuthServer(*auth_server, config_session->getFullConfig());
             auth_server->updateConfig(ElementPtr());
         } catch (const AuthConfigError& ex) {
-            cout << "[bin10-auth] Server load config failed:" << ex.what() << endl;
+            LOG_ERROR(auth_logger, AUTH_CONFIG_LOAD_FAIL).arg(ex.what());
         }
 
         if (uid != NULL) {
             changeUser(uid);
         }
 
-        cout << "[b10-auth] Loading TSIG keys" << endl;
+        LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_LOAD_TSIG);
         isc::server_common::initKeyring(*config_session);
         auth_server->setTSIGKeyRing(&isc::server_common::keyring);
 
         // Now start asynchronous read.
         config_session->start();
-        cout << "[b10-auth] Configuration channel started." << endl;
+        LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_CONFIG_CHANNEL_STARTED);
 
-        cout << "[b10-auth] Server started." << endl;
+        // Successfully initialized.
+        LOG_INFO(auth_logger, AUTH_SERVER_STARTED);
         io_service.run();
 
     } catch (const std::exception& ex) {
-        cerr << "[b10-auth] Server failed: " << ex.what() << endl;
+        LOG_FATAL(auth_logger, AUTH_SERVER_FAILED).arg(ex.what());
         ret = 1;
     }
 
