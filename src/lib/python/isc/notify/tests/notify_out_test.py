@@ -376,9 +376,31 @@ class TestNotifyOut(unittest.TestCase):
 
     def test_shutdown(self):
         thread = self._notify.dispatcher()
-        # nonblock_event will be cleared since there are no notifying zones.
-        self.assertFalse(self._notify._nonblock_event.isSet())
         self.assertTrue(thread.is_alive())
+        # nonblock_event won't be setted since there are no notifying zones.
+        self.assertFalse(self._notify._nonblock_event.isSet())
+
+        # set nonblock_event manually
+        self._notify._nonblock_event.set()
+        # nonblock_event will be cleared soon since there are no notifying zones.
+        while (self._notify._nonblock_event.isSet()):
+            pass
+        self.assertFalse(self._notify._nonblock_event.isSet())
+
+        # send notify
+        example_net_info = self._notify._notify_infos[('example.net.', 'IN')]
+        example_net_info.notify_slaves = [('127.0.0.1', 53)]
+        example_net_info.create_socket('127.0.0.1')
+        self._notify.send_notify('example.net')
+        self.assertTrue(self._notify._nonblock_event.isSet())
+        # set notify_try_num to _MAX_NOTIFY_TRY_NUM, zone 'example.net' will be removed
+        # from notifying zones soon and nonblock_event will be cleared since there is no 
+        # notifying zone left.
+        example_net_info.notify_try_num = notify_out._MAX_NOTIFY_TRY_NUM
+        while (self._notify._nonblock_event.isSet()):
+            pass
+        self.assertFalse(self._notify._nonblock_event.isSet())
+
         self._notify.shutdown()
         # nonblock_event should have been setted to stop waiting.
         self.assertTrue(self._notify._nonblock_event.isSet())
