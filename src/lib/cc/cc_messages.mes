@@ -13,3 +13,23 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 $NAMESPACE isc::cc
+
+% CC_CONN_ERROR error connecting to message queue (%1)
+
+% CC_NO_MSGQ unable to connect to message queue (%1)
+
+% CC_WRITE_ERROR error writing data to command channel (%1)
+
+% CC_LENGTH_NOT_READY length not ready
+
+% CC_READ_EXCEPTION error reading data from command channel (%1)
+
+% CC_TIMEOUT timeout reading data from command channel
+
+% CC_READ_ERROR error reading data from command channel (%1)
+
+% CC_ZERO_LENGTH invalid message length (0)
+
+% CC_ASYNC_READ_FAILED asynchronous read failed
+
+% CC_INVALID_LENGTHS invalid length parameters (%1, %2)
