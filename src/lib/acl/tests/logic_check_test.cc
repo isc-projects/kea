@@ -20,6 +20,8 @@
 using namespace std;
 using namespace boost;
 using namespace isc::acl;
+using namespace isc::acl::tests;
+using isc::data::Element;
 
 namespace {
 
@@ -105,7 +107,7 @@ public:
     // subclass
     template<typename Result> shared_ptr<Result> load(const string& JSON) {
         shared_ptr<Check<Log> > result;
-        EXPECT_NO_THROW(result = loader_.loadCheck(el(JSON)));
+        EXPECT_NO_THROW(result = loader_.loadCheck(Element::fromJSON(JSON)));
         /*
          * Optimally, we would use a dynamic_pointer_cast here to both
          * convert the pointer and to check the type is correct. However,
@@ -136,23 +138,35 @@ TEST_F(LogicCreatorTest, empty) {
 
 // Test it rejects invalid inputs (not a list as a parameter)
 TEST_F(LogicCreatorTest, invalid) {
-    EXPECT_THROW(loader_.loadCheck(el("{\"ANY\": null}")), LoaderError);
-    EXPECT_THROW(loader_.loadCheck(el("{\"ANY\": {}}")), LoaderError);
-    EXPECT_THROW(loader_.loadCheck(el("{\"ANY\": true}")), LoaderError);
-    EXPECT_THROW(loader_.loadCheck(el("{\"ANY\": 42}")), LoaderError);
-    EXPECT_THROW(loader_.loadCheck(el("{\"ANY\": \"hello\"}")), LoaderError);
-    EXPECT_THROW(loader_.loadCheck(el("{\"ALL\": null}")), LoaderError);
-    EXPECT_THROW(loader_.loadCheck(el("{\"ALL\": {}}")), LoaderError);
-    EXPECT_THROW(loader_.loadCheck(el("{\"ALL\": true}")), LoaderError);
-    EXPECT_THROW(loader_.loadCheck(el("{\"ALL\": 42}")), LoaderError);
-    EXPECT_THROW(loader_.loadCheck(el("{\"ALL\": \"hello\"}")), LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"ANY\": null}")),
+                 LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"ANY\": {}}")),
+                 LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"ANY\": true}")),
+                 LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"ANY\": 42}")),
+                 LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"ANY\": \"hello\"}")),
+                 LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"ALL\": null}")),
+                 LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"ALL\": {}}")),
+                 LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"ALL\": true}")),
+                 LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"ALL\": 42}")),
+                 LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"ALL\": \"hello\"}")),
+                 LoaderError);
 }
 
 // Exceptions from subexpression creation isn't caught
 TEST_F(LogicCreatorTest, propagate) {
-    EXPECT_THROW(loader_.loadCheck(el("{\"ANY\": [{\"throw\": null}]}")),
+    EXPECT_THROW(loader_.loadCheck(
+                     Element::fromJSON("{\"ANY\": [{\"throw\": null}]}")),
                  TestCreatorError);
-    EXPECT_THROW(loader_.loadCheck(el("{\"ALL\": [{\"throw\": null}]}")),
+    EXPECT_THROW(loader_.loadCheck(
+                     Element::fromJSON("{\"ALL\": [{\"throw\": null}]}")),
                  TestCreatorError);
 }
 

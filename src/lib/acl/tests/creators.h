@@ -24,13 +24,9 @@
 #include <acl/loader.h>
 #include <string>
 
-// Just for convenience, create JSON objects from JSON string
-// (Note that inline is absolutely necessary here, because it's defined in
-// a header file shared in multiple translation units)
-inline isc::data::ConstElementPtr
-el(const std::string& JSON) {
-    return (isc::data::Element::fromJSON(JSON));
-}
+namespace isc {
+namespace acl {
+namespace tests {
 
 // A check that doesn't check anything but remembers it's own name
 // and data
@@ -152,6 +148,9 @@ public:
     virtual bool allowListAbbreviation() const { return (false); }
 };
 
+}
+}
+}
 #endif
 
 // Local Variables:
