@@ -12,27 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __CONFIG_LOG__H
-#define __CONFIG_LOG__H
+/// Defines the logger used by the top-level component of b10-auth.
 
-#include <log/macros.h>
-#include "config_messages.h"
+#include "auth_log.h"
 
 namespace isc {
-namespace config {
+namespace auth {
 
-/// \brief Config Logging
-///
-/// Defines logger object for config log messages
+isc::log::Logger auth_logger("auth");
 
-/// \brief Config Logger
-///
-/// Define the logger used to log messages.  We could define it in multiple
-/// modules, but defining in a single module and linking to it saves time and
-/// space.
-extern isc::log::Logger config_logger;    // isc::config::config_logger is the CONFIG logger
-
-} // namespace config
+} // namespace auth
 } // namespace isc
 
-#endif // __CONFIG_LOG__H
