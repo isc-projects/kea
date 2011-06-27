@@ -28,6 +28,7 @@ import os.path
 import isc.log
 isc.log.init("b10-cfgmgr")
 from isc.config.cfgmgr import ConfigManager, ConfigManagerDataReadError, logger
+from isc.config.cfgmgr_messages import *
 
 isc.util.process.rename()
 
@@ -93,13 +94,12 @@ def main():
         cm.notify_boss()
         cm.run()
     except SessionError as se:
-        print("[b10-cfgmgr] Error creating config manager, "
-              "is the command channel daemon running?")
+        logger.error(CFGMGR_CC_SESSION_ERROR, str(se))
         return 1
     except KeyboardInterrupt as kie:
-        print("[b10-cfgmgr] Interrupted, exiting")
+        logger.info(CFGMGR_STOPPED_BY_KEYBOARD)
     except ConfigManagerDataReadError as cmdre:
-        print("[b10-cfgmgr] " + str(cmdre))
+        logger.error(CFGMGR_DATA_READ_ERROR, str(cmdre))
         return 2
     return 0
 
