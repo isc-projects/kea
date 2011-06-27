@@ -16,7 +16,8 @@
 # of the xfrout messages python module.
 
 % XFROUT_AXFR_TRANSFER_DONE transfer of %1/%2 complete
-The transfer of the given zone has been completed successfully.
+The transfer of the given zone has been completed successfully, or was
+aborted due to a shutdown event.
 
 % XFROUT_AXFR_TRANSFER_ERROR error transferring zone %1/%2: %3
 An uncaught exception was encountered while sending the response to
@@ -65,7 +66,7 @@ ensure the daemon keeps running, this error is caught and reported.
 There was an error importing a python module. One of the modules needed
 by xfrout could not be found. This suggests that either some libraries
 are missing on the system, or the PYTHONPATH variable is not correct.
-The specific place where this library needs to be may depends on your
+The specific place where this library needs to be depends on your
 system and your specific installation.
 
 % XFROUT_NEW_CONFIG Update xfrout configuration
@@ -118,9 +119,10 @@ daemon will shut down.
 
 % XFROUT_SOCKET_SELECT_ERROR error while calling select() on request socket: %1
 There was an error while calling select() on the socket that informs
-the xfrout daemon that a new xfrout request has arrived. This most
-likely points to an error in the internal communication with b10-auth.
-The error is included in the log message.
+the xfrout daemon that a new xfrout request has arrived. This should
+be a result of rare local error such as memory allocation failure and
+shouldn't happen under normal conditions. The error is included in the
+log message.
 
 % XFROUT_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down
 There was a keyboard interrupt signal to stop the xfrout daemon. The
