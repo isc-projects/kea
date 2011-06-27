@@ -21,6 +21,11 @@
 namespace isc {
 namespace cc {
 
+enum {
+    DBG_TRACE_BASIC = 10,
+    DBG_TRACE_DETAILED = 80
+};
+
 extern isc::log::Logger logger;
 
 }
