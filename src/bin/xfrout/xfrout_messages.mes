@@ -65,7 +65,7 @@ ensure the daemon keeps running, this error is caught and reported.
 There was an error importing a python module. One of the modules needed
 by xfrout could not be found. This suggests that either some libraries
 are missing on the system, or the PYTHONPATH variable is not correct.
-The specific place where this library needs to be may depend on your
+The specific place where this library needs to be may depends on your
 system and your specific installation.
 
 % XFROUT_NEW_CONFIG Update xfrout configuration
