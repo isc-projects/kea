@@ -80,7 +80,7 @@ my_command_handler(const string& command, ConstElementPtr args) {
     ConstElementPtr answer = createAnswer();
 
     if (command == "print_message") {
-        LOG_INFO(resolver_logger, RESOLVER_PRINTMSG).arg(args);
+        LOG_INFO(resolver_logger, RESOLVER_PRINT_COMMAND).arg(args);
         /* let's add that message to our answer as well */
         answer = createAnswer(0, args);
     } else if (command == "shutdown") {
@@ -203,14 +203,14 @@ main(int argc, char* argv[]) {
         
         DNSService dns_service(io_service, checkin, lookup, answer);
         resolver->setDNSService(dns_service);
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_SERVICE);
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_SERVICE_CREATED);
 
         cc_session = new Session(io_service.get_io_service());
         config_session = new ModuleCCSession(specfile, *cc_session,
                                              my_config_handler,
                                              my_command_handler,
                                              true, true);
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CONFIGCHAN);
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CONFIG_CHANNEL);
 
         // FIXME: This does not belong here, but inside Boss
         if (uid != NULL) {
@@ -218,7 +218,7 @@ main(int argc, char* argv[]) {
         }
 
         resolver->setConfigSession(config_session);
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CONFIGLOAD);
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CONFIG_LOADED);
 
         LOG_INFO(resolver_logger, RESOLVER_STARTED);
         io_service.run();
