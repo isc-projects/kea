@@ -263,7 +263,7 @@ public:
      * \param description The JSON description of the check.
      */
     boost::shared_ptr<Check<Context> > loadCheck(const data::ConstElementPtr&
-                                                 description)
+                                                 description) const
     {
         // Get the description as a map
         typedef std::map<std::string, data::ConstElementPtr> Map;
@@ -290,7 +290,7 @@ public:
      * \param description The JSON list of ACL.
      */
     boost::shared_ptr<ACL<Context, Action> > load(const data::ConstElementPtr&
-                                                  description)
+                                                  description) const
     {
         // We first check it's a list, so we can use the list reference
         // (the list may be huge)
@@ -346,7 +346,7 @@ private:
      *     the map.
      */
     boost::shared_ptr<Check<Context> > loadCheck(const data::ConstElementPtr&
-                                                 description, Map& map)
+                                                 description, Map& map) const
     {
         // Remove the action keyword
         map.erase("action");
