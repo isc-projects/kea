@@ -54,10 +54,6 @@ class ZoneNotifyInfo:
     '''This class keeps track of notify-out information for one zone.'''
 
     def __init__(self, zone_name_, class_):
-        '''notify_timeout_: absolute time for next notify reply. when the zone
-        is preparing for sending notify message, notify_timeout_ is set to now,
-        that means the first sending is triggered by the 'Timeout' mechanism.
-        '''
         self._notify_current = None
         self._slave_index = 0
         self._sock = None
@@ -66,8 +62,11 @@ class ZoneNotifyInfo:
         self.zone_name = zone_name_
         self.zone_class = class_
         self.notify_msg_id = 0
+        # Absolute time for next notify reply. When the zone is preparing for
+        # sending notify message, notify_timeout_ is set to now, that means
+        # the first sending is triggered by the 'Timeout' mechanism.
         self.notify_timeout = None
-        self.notify_try_num = 0  #Notify times sending to one target.
+        self.notify_try_num = 0  # Notify times sending to one target.
 
     def set_next_notify_target(self):
         if self._slave_index < (len(self.notify_slaves) - 1):
@@ -377,8 +376,8 @@ class NotifyOut:
                 self._log_msg('info', 'notify to %s: retried exceeded' % addr_to_str(tgt))
                 self._notify_next_target(zone_notify_info)
             else:
-                retry_timeout = _NOTIFY_TIMEOUT * pow(2, zone_notify_info.notify_try_num)
                 # set exponential backoff according rfc1996 section 3.6
+                retry_timeout = _NOTIFY_TIMEOUT * pow(2, zone_notify_info.notify_try_num)
                 zone_notify_info.notify_timeout = time.time() + retry_timeout
                 self._send_notify_message_udp(zone_notify_info, tgt)
 
