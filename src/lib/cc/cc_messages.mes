@@ -33,3 +33,27 @@ $NAMESPACE isc::cc
 % CC_ASYNC_READ_FAILED asynchronous read failed
 
 % CC_INVALID_LENGTHS invalid length parameters (%1, %2)
+
+% CC_ESTABLISH trying to establish connection with message queue daemon at %1
+
+% CC_ESTABLISHED successfully connected to message queue daemon
+
+% CC_DISCONNECT disconnecting from message queue daemon
+
+% CC_START_READ starting asynchronous read
+
+% CC_SUBSCRIBE subscribing to communication group %1
+
+% CC_UNSUBSCRIBE unsubscribing from communication group %1
+
+% CC_GROUP_SEND sending message '%1' to group '%2'
+
+% CC_GROUP_RECEIVE trying to receive a message
+
+% CC_GROUP_RECEIVED message arrived ('%1', '%2')
+
+% CC_NO_MESSAGE no message ready to be received yet
+
+% CC_REPLY replying to message from '%1' with '%2'
+
+% CC_SET_TIMEOUT setting timeout to %1ms

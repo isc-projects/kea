@@ -119,8 +119,10 @@ private:
 void
 SessionImpl::establish(const char& socket_file) {
     try {
+        LOG_DEBUG(logger, DBG_TRACE_BASIC, CC_ESTABLISH).arg(socket_file);
         socket_.connect(asio::local::stream_protocol::endpoint(&socket_file),
                         error_);
+        LOG_DEBUG(logger, DBG_TRACE_BASIC, CC_ESTABLISHED);
     } catch(const asio::system_error& se) {
         LOG_FATAL(logger, CC_CONN_ERROR).arg(se.what());
         isc_throw(SessionError, se.what());
@@ -134,6 +136,7 @@ SessionImpl::establish(const char& socket_file) {
 
 void
 SessionImpl::disconnect() {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, CC_DISCONNECT);
     socket_.close();
     data_length_ = 0;
 }
@@ -265,6 +268,7 @@ Session::disconnect() {
 
 void
 Session::startRead(boost::function<void()> read_callback) {
+    LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_START_READ);
     impl_->startRead(read_callback);
 }
 
@@ -428,6 +432,7 @@ Session::recvmsg(ConstElementPtr& env, ConstElementPtr& msg,
 
 void
 Session::subscribe(std::string group, std::string instance) {
+    LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_SUBSCRIBE).arg(group);
     ElementPtr env = Element::createMap();
 
     env->set("type", Element::create("subscribe"));
@@ -439,6 +444,7 @@ Session::subscribe(std::string group, std::string instance) {
 
 void
 Session::unsubscribe(std::string group, std::string instance) {
+    LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_UNSUBSCRIBE).arg(group);
     ElementPtr env = Element::createMap();
 
     env->set("type", Element::create("unsubscribe"));
@@ -452,6 +458,8 @@ int
 Session::group_sendmsg(ConstElementPtr msg, std::string group,
                        std::string instance, std::string to)
 {
+    LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_GROUP_SEND).arg(msg->str()).
+        arg(group);
     ElementPtr env = Element::createMap();
     long int nseq = ++impl_->sequence_;
     
@@ -471,11 +479,21 @@ bool
 Session::group_recvmsg(ConstElementPtr& envelope, ConstElementPtr& msg,
                        bool nonblock, int seq)
 {
-    return (recvmsg(envelope, msg, nonblock, seq));
+    LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_GROUP_RECEIVE);
+    bool result(recvmsg(envelope, msg, nonblock, seq));
+    if (result) {
+        LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_GROUP_RECEIVED).
+            arg(envelope->str()).arg(msg->str());
+    } else {
+        LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_NO_MESSAGE);
+    }
+    return (result);
 }
 
 int
 Session::reply(ConstElementPtr envelope, ConstElementPtr newmsg) {
+    LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_REPLY).arg(envelope->str()).
+        arg(newmsg->str());
     ElementPtr env = Element::createMap();
     long int nseq = ++impl_->sequence_;
     
@@ -499,6 +517,7 @@ Session::hasQueuedMsgs() const {
 
 void
 Session::setTimeout(size_t milliseconds) {
+    LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_SET_TIMEOUT).arg(milliseconds);
     impl_->setTimeout(milliseconds);
 }
 
