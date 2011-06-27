@@ -19,6 +19,7 @@
 
 using namespace std;
 using namespace boost;
+using isc::data::ConstElementPtr;
 
 namespace {
 

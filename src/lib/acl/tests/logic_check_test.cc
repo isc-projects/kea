@@ -15,7 +15,10 @@
 #include "creators.h"
 #include <acl/logic_check.h>
 #include <typeinfo>
+#include <boost/shared_ptr.hpp> // for static_pointer_cast
 
+using namespace std;
+using namespace boost;
 using namespace isc::acl;
 
 namespace {
