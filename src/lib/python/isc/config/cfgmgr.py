@@ -32,6 +32,7 @@ from isc.config import ccsession, config_data, module_spec
 from isc.util.file import path_search
 import bind10_config
 import isc.log
+from isc.config.cfgmgr_messages import *
 
 logger = isc.log.Logger("cfgmgr")
 
@@ -94,7 +95,7 @@ class ConfigManagerData:
                 elif file_config['version'] == 1:
                     # only format change, no other changes necessary
                     file_config['version'] = 2
-                    print("[b10-cfgmgr] Updating configuration database version from 1 to 2")
+                    logger.info(CFGMGR_AUTOMATIC_CONFIG_DATABASE_UPDATE, 1, 2)
                     config.data = file_config
                 else:
                     if config_data.BIND10_CONFIG_DATA_VERSION > file_config['version']:
@@ -136,12 +137,9 @@ class ConfigManagerData:
             else:
                 os.rename(filename, self.db_filename)
         except IOError as ioe:
-            # TODO: log this (level critical)
-            print("[b10-cfgmgr] Unable to write configuration file; configuration not stored: " + str(ioe))
-            # TODO: debug option to keep file?
+            logger.error(CFGMGR_IOERROR_WHILE_WRITING_CONFIGURATION, str(ioe))
         except OSError as ose:
-            # TODO: log this (level critical)
-            print("[b10-cfgmgr] Unable to write configuration file; configuration not stored: " + str(ose))
+            logger.error(CFGMGR_OSERROR_WHILE_WRITING_CONFIGURATION, str(ose))
         try:
             if filename and os.path.exists(filename):
                 os.remove(filename)
@@ -463,8 +461,6 @@ class ConfigManager:
             elif cmd == ccsession.COMMAND_SET_CONFIG:
                 answer = self._handle_set_config(arg)
             elif cmd == ccsession.COMMAND_SHUTDOWN:
-                # TODO: logging
-                #print("[b10-cfgmgr] Received shutdown command")
                 self.running = False
                 answer = ccsession.create_answer(0)
             elif cmd == ccsession.COMMAND_MODULE_SPEC:
