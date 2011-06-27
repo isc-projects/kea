@@ -256,6 +256,12 @@ TEST_F(ResolverConfig, defaultQueryACL) {
     EXPECT_EQ(REJECT, server.getQueryACL().execute(createClient("192.0.2.1")));
     EXPECT_EQ(REJECT, server.getQueryACL().execute(
                   createClient("2001:db8::1")));
+
+    // The following would be allowed if the server had loaded the default
+    // configuration from the spec file.  In this context it should not have
+    // happened, and they should be rejected just like the above cases.
+    EXPECT_EQ(REJECT, server.getQueryACL().execute(createClient("127.0.0.1")));
+    EXPECT_EQ(REJECT, server.getQueryACL().execute(createClient("::1")));
 }
 
 TEST_F(ResolverConfig, emptyQueryACL) {
