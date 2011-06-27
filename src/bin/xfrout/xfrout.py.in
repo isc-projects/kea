@@ -506,7 +506,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         try:
             os.unlink(self._sock_file)
         except Exception as e:
-            logger.error(XFROUT_REMOVE_UNIX_SOCKET_FILE_ERROR, str(e))
+            logger.error(XFROUT_REMOVE_UNIX_SOCKET_FILE_ERROR, self._sock_file, str(e))
             pass
 
     def update_config_data(self, new_config):
