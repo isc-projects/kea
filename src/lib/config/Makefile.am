@@ -6,10 +6,10 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/lib/log -I$(top_builddir)/src/lib/log
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 # Define rule to build logging source files from message file
-configdef.h configdef.cc: configdef.mes
-	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/config/configdef.mes
+config_messages.h config_messages.cc: config_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/config/config_messages.mes
 
-BUILT_SOURCES = configdef.h configdef.cc
+BUILT_SOURCES = config_messages.h config_messages.cc
 
 lib_LTLIBRARIES = libcfgclient.la
 libcfgclient_la_SOURCES = config_data.h config_data.cc
@@ -17,9 +17,9 @@ libcfgclient_la_SOURCES += module_spec.h module_spec.cc
 libcfgclient_la_SOURCES += ccsession.cc ccsession.h
 libcfgclient_la_SOURCES += config_log.h config_log.cc
 
-nodist_libcfgclient_la_SOURCES  = configdef.h configdef.cc
+nodist_libcfgclient_la_SOURCES  = config_messages.h config_messages.cc
 
 # The message file should be in the distribution.
-EXTRA_DIST = configdef.mes
+EXTRA_DIST = config_messages.mes
 
-CLEANFILES = *.gcno *.gcda configdef.h configdef.cc
+CLEANFILES = *.gcno *.gcda config_messages.h config_messages.cc

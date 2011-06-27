@@ -41,3 +41,8 @@ endif
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
+
+CLEANDIRS = __pycache__
+
+clean-local:
+	rm -rf $(CLEANDIRS)

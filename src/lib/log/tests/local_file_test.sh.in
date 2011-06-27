@@ -37,36 +37,35 @@ passfail() {
 # Create the local message file for testing
 
 cat > $localmes << .
-\$PREFIX MSG_
-% NOTHERE     this message is not in the global dictionary
-% READERR     replacement read error, parameters: '%1' and '%2'
-% RDLOCMES    replacement read local message file, parameter is '%1'
+% MSG_NOTHERE     this message is not in the global dictionary
+% MSG_READERR     replacement read error, parameters: '%1' and '%2'
+% MSG_RDLOCMES    replacement read local message file, parameter is '%1'
 .
 
 echo -n "1. Local message replacement:"
 cat > $tempfile << .
-WARN  [example.log] MSG_IDNOTFND, could not replace message text for 'MSG_NOTHERE': no such message
-FATAL [example] MSG_WRITERR, error writing to test1: 42
-ERROR [example] MSG_RDLOCMES, replacement read local message file, parameter is 'dummy/file'
-WARN  [example] MSG_BADSTREAM, bad log console output stream: example
-WARN  [example.alpha] MSG_READERR, replacement read error, parameters: 'a.txt' and 'dummy reason'
-FATAL [example.beta] MSG_BADSEVERITY, unrecognized log severity: beta_fatal
-ERROR [example.beta] MSG_BADDESTINATION, unrecognized log destination: beta_error
-WARN  [example.beta] MSG_BADSTREAM, bad log console output stream: beta_warn
+WARN  [example.log] MSG_IDNOTFND could not replace message text for 'MSG_NOTHERE': no such message
+FATAL [example] MSG_WRITERR error writing to test1: 42
+ERROR [example] MSG_RDLOCMES replacement read local message file, parameter is 'dummy/file'
+WARN  [example] MSG_BADSTREAM bad log console output stream: example
+WARN  [example.alpha] MSG_READERR replacement read error, parameters: 'a.txt' and 'dummy reason'
+FATAL [example.beta] MSG_BADSEVERITY unrecognized log severity: beta_fatal
+ERROR [example.beta] MSG_BADDESTINATION unrecognized log destination: beta_error
+WARN  [example.beta] MSG_BADSTREAM bad log console output stream: beta_warn
 .
 ./logger_example -c stdout -s warn $localmes | cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
 echo -n "2. Report error if unable to read local message file:"
 cat > $tempfile << .
-ERROR [example.log] MSG_OPENIN, unable to open message file $localmes for input: No such file or directory
-FATAL [example] MSG_WRITERR, error writing to test1: 42
-ERROR [example] MSG_RDLOCMES, reading local message file dummy/file
-WARN  [example] MSG_BADSTREAM, bad log console output stream: example
-WARN  [example.alpha] MSG_READERR, error reading from message file a.txt: dummy reason
-FATAL [example.beta] MSG_BADSEVERITY, unrecognized log severity: beta_fatal
-ERROR [example.beta] MSG_BADDESTINATION, unrecognized log destination: beta_error
-WARN  [example.beta] MSG_BADSTREAM, bad log console output stream: beta_warn
+ERROR [example.log] MSG_OPENIN unable to open message file $localmes for input: No such file or directory
+FATAL [example] MSG_WRITERR error writing to test1: 42
+ERROR [example] MSG_RDLOCMES reading local message file dummy/file
+WARN  [example] MSG_BADSTREAM bad log console output stream: example
+WARN  [example.alpha] MSG_READERR error reading from message file a.txt: dummy reason
+FATAL [example.beta] MSG_BADSEVERITY unrecognized log severity: beta_fatal
+ERROR [example.beta] MSG_BADDESTINATION unrecognized log destination: beta_error
+WARN  [example.beta] MSG_BADSTREAM bad log console output stream: beta_warn
 .
 rm -f $localmes
 ./logger_example -c stdout -s warn $localmes | cut -d' ' -f3- | diff $tempfile -

@@ -13,7 +13,7 @@
     <subtitle>Administrator Reference for BIND 10</subtitle>
 
     <copyright>
-      <year>2010</year><holder>Internet Systems Consortium, Inc.</holder>
+      <year>2010-2011</year><holder>Internet Systems Consortium, Inc.</holder>
     </copyright>
 
     <abstract>
@@ -81,15 +81,13 @@
 
       <para>
 	BIND 10 uses the Botan crypto library for C++. It requires
-	at least Botan version 1.8. To build BIND 10, install the
-	Botan libraries and development include headers.
+	at least Botan version 1.8.
       </para>
 
-<!--
-TODO
-Debian and Ubuntu:
- libgmp3-dev and libbz2-dev required for botan too
--->
+      <para>
+	BIND 10 uses the log4cplus C++ logging library. It requires
+	at least log4cplus version 1.0.3.
+      </para>
 
       <para>
 	The authoritative server requires SQLite 3.3.9 or newer.
@@ -303,6 +301,12 @@ var/
 
     <section>
       <title>Building Requirements</title>
+
+        <para>
+          In addition to the run-time requirements, building BIND 10
+          from source code requires various development include headers.
+        </para>
+
         <note>
           <simpara>
             Some operating systems have split their distribution packages into
@@ -320,6 +324,19 @@ var/
         </para>
 
         <para>
+	  To build BIND 10, also install the Botan (at least version
+	  1.8) and the log4cplus (at least version 1.0.3)
+          development include headers.
+        </para>
+
+<!--
+TODO
+Debian and Ubuntu:
+ libgmp3-dev and libbz2-dev required for botan too
+-->
+
+        <para>
+<!-- TODO: is this needed at build time? test time? -->
 	  The Python Library and Python _sqlite3 module are required to
           enable the Xfrout and Xfrin support.
         </para>
@@ -333,7 +350,7 @@ var/
           Building BIND 10 also requires a C++ compiler and
           standard development headers, make, and pkg-config.
           BIND 10 builds have been tested with GCC g++ 3.4.3, 4.1.2,
-          4.1.3, 4.2.1, 4.3.2, and 4.4.1.
+          4.1.3, 4.2.1, 4.3.2, and 4.4.1; Clang++ 2.8; and Sun C++ 5.10.
         </para>
     </section>
 
