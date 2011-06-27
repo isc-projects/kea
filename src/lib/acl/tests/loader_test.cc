@@ -76,15 +76,20 @@ public:
         EXPECT_NO_THROW(loader_.registerCreator(
             namedCreator(name, abbreviatedList)));
     }
-    // Load a check and convert it to named check to examine it
-    shared_ptr<NamedCheck> loadCheck(const string& definition) {
+    template<class Result> shared_ptr<Result> loadCheckAny(const string&
+                                                               definition)
+    {
         SCOPED_TRACE("Loading check " + definition);
         shared_ptr<Check<Log> > loaded;
         EXPECT_NO_THROW(loaded = loader_.loadCheck(el(definition)));
-        shared_ptr<NamedCheck> result(dynamic_pointer_cast<NamedCheck>(
+        shared_ptr<Result> result(dynamic_pointer_cast<Result>(
             loaded));
         EXPECT_TRUE(result);
         return (result);
+    }
+    // Load a check and convert it to named check to examine it
+    shared_ptr<NamedCheck> loadCheck(const string& definition) {
+        return (loadCheckAny<NamedCheck>(definition));
     }
     // The loadCheck throws an exception
     void checkException(const string& JSON) {
@@ -132,6 +137,20 @@ public:
         SCOPED_TRACE("Trying to load bad " + JSON);
         aclSetup();
         EXPECT_THROW(loader_.load(el(JSON)), LoaderError);
+    }
+    // Check that the subexpression is NamedCheck with correct data
+    void isSubexprNamed(const CompoundCheck<Log>* compound, size_t index,
+                        const string& name, ConstElementPtr data)
+    {
+        if (index < compound->getSubexpressions().size()) {
+            const NamedCheck*
+                check(dynamic_cast<const NamedCheck*>(compound->
+                                                      getSubexpressions()
+                                                      [index]));
+            ASSERT_TRUE(check) << "The subexpression is of different type";
+            EXPECT_EQ(name, check->name_);
+            EXPECT_TRUE(data->equals(*check->data_));
+        }
     }
 };
 
@@ -209,19 +228,67 @@ TEST_F(LoaderTest, CheckPropagate) {
     EXPECT_THROW(loader_.loadCheck(el("{\"throw\": null}")), TestCreatorError);
 }
 
-// The abbreviated form is not yet implemented
-// (we need the operators to be implemented)
+// The abbreviated form of check
 TEST_F(LoaderTest, AndAbbrev) {
     addNamed("name1");
     addNamed("name2");
-    EXPECT_THROW(loader_.loadCheck(el("{\"name1\": 1, \"name2\": 2}")),
-                 LoaderError);
+    shared_ptr<LogicOperator<AllOfSpec, Log> > oper(
+        loadCheckAny<LogicOperator<AllOfSpec, Log> >("{\"name1\": 1, \"name2\": 2}"));
+    // If we don't have anything loaded, the rest would crash. It is already
+    // reported from within loadCheckAny if it isn't loaded.
+    if (oper) {
+        // The subexpressions are correct
+        EXPECT_EQ(2, oper->getSubexpressions().size());
+        // Note: this test relies on the ordering in which map returns it's
+        // elements, which is in the lexicographical order of the strings.
+        // This is not required from our interface, but is easier to write
+        // the test.
+        isSubexprNamed(&*oper, 0, "name1", el("1"));
+        isSubexprNamed(&*oper, 1, "name2", el("2"));
+    }
 }
 
+// The abbreviated form of parameters
 TEST_F(LoaderTest, OrAbbrev) {
     addNamed("name1");
-    EXPECT_THROW(loader_.loadCheck(el("{\"name1\": [1, 2]}")),
-                 LoaderError);
+    shared_ptr<LogicOperator<AnyOfSpec, Log> > oper(
+        loadCheckAny<LogicOperator<AnyOfSpec, Log> >("{\"name1\": [1, 2]}"));
+    // If we don't have anything loaded, the rest would crash. It is already
+    // reported from within loadCheckAny if it isn't loaded.
+    if (oper) {
+        // The subexpressions are correct
+        EXPECT_EQ(2, oper->getSubexpressions().size());
+        isSubexprNamed(&*oper, 0, "name1", el("1"));
+        isSubexprNamed(&*oper, 1, "name1", el("2"));
+    }
+}
+
+// Combined abbreviated form, both at once
+
+// The abbreviated form of check
+TEST_F(LoaderTest, BothAbbrev) {
+    addNamed("name1");
+    addNamed("name2");
+    shared_ptr<LogicOperator<AllOfSpec, Log> > oper(
+        loadCheckAny<LogicOperator<AllOfSpec, Log> >("{\"name1\": 1, \"name2\": [3, 4]}"));
+    // If we don't have anything loaded, the rest would crash. It is already
+    // reported from within loadCheckAny if it isn't loaded.
+    if (oper) {
+        // The subexpressions are correct
+        ASSERT_EQ(2, oper->getSubexpressions().size());
+        // Note: this test relies on the ordering in which map returns it's
+        // elements, which is in the lexicographical order of the strings.
+        // This is not required from our interface, but is easier to write
+        // the test.
+        isSubexprNamed(&*oper, 0, "name1", el("1"));
+        const LogicOperator<AnyOfSpec, Log>*
+            orOper(dynamic_cast<const LogicOperator<AnyOfSpec, Log>*>(
+            oper->getSubexpressions()[1]));
+        ASSERT_TRUE(orOper) << "Different type than AnyOf operator";
+        EXPECT_EQ(2, orOper->getSubexpressions().size());
+        isSubexprNamed(orOper, 0, "name2", el("3"));
+        isSubexprNamed(orOper, 1, "name2", el("4"));
+    }
 }
 
 // But this is not abbreviated form, this should be passed directly to the
