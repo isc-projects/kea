@@ -17,3 +17,8 @@ endif
 	B10_FROM_SOURCE=$(abs_top_srcdir) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
+
+CLEANDIRS = __pycache__
+
+clean-local:
+	rm -rf $(CLEANDIRS)

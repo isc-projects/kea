@@ -6,6 +6,9 @@ pyexec_LTLIBRARIES = pyunittests_util.la
 pyunittests_util_la_SOURCES = pyunittests_util.cc
 pyunittests_util_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 pyunittests_util_la_LDFLAGS = $(PYTHON_LDFLAGS)
+# Note: PYTHON_CXXFLAGS may have some -Wno... workaround, which must be
+# placed after -Wextra defined in AM_CXXFLAGS
+pyunittests_util_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
 
 # Python prefers .so, while some OSes (specifically MacOS) use a different
 # suffix for dynamic objects.  -module is necessary to work this around.

@@ -247,7 +247,9 @@ readLoggersConf(std::vector<isc::log::LoggerSpecification>& specs,
 } // end anonymous namespace
 
 void
-my_logconfig_handler(const std::string&n, ConstElementPtr new_config, const ConfigData& config_data) {
+default_logconfig_handler(const std::string& module_name,
+                          ConstElementPtr new_config,
+                          const ConfigData& config_data) {
     config_data.getModuleSpec().validateConfig(new_config, true);
 
     std::vector<isc::log::LoggerSpecification> specs;
@@ -272,7 +274,7 @@ ModuleCCSession::readModuleSpecification(const std::string& filename) {
     // this file should be declared in a @something@ directive
     file.open(filename.c_str());
     if (!file) {
-        LOG_ERROR(config_logger, CONFIG_FOPEN_ERR).arg(filename).arg(strerror(errno));
+        LOG_ERROR(config_logger, CONFIG_OPEN_FAIL).arg(filename).arg(strerror(errno));
         isc_throw(CCSessionInitError, strerror(errno));
     }
 
@@ -282,7 +284,7 @@ ModuleCCSession::readModuleSpecification(const std::string& filename) {
         LOG_ERROR(config_logger, CONFIG_JSON_PARSE).arg(filename).arg(pe.what());
         isc_throw(CCSessionInitError, pe.what());
     } catch (const ModuleSpecError& dde) {
-        LOG_ERROR(config_logger, CONFIG_MODULE_SPEC).arg(filename).arg(dde.what());
+        LOG_ERROR(config_logger, CONFIG_MOD_SPEC_FORMAT).arg(filename).arg(dde.what());
         isc_throw(CCSessionInitError, dde.what());
     }
     file.close();
@@ -332,7 +334,7 @@ ModuleCCSession::ModuleCCSession(
     int rcode;
     ConstElementPtr err = parseAnswer(rcode, answer);
     if (rcode != 0) {
-        LOG_ERROR(config_logger, CONFIG_MANAGER_MOD_SPEC).arg(answer->str());
+        LOG_ERROR(config_logger, CONFIG_MOD_SPEC_REJECT).arg(answer->str());
         isc_throw(CCSessionInitError, answer->str());
     }
     
@@ -346,14 +348,14 @@ ModuleCCSession::ModuleCCSession(
         if (rcode == 0) {
             handleConfigUpdate(new_config);
         } else {
-            LOG_ERROR(config_logger, CONFIG_MANAGER_CONFIG).arg(new_config->str());
+            LOG_ERROR(config_logger, CONFIG_GET_FAIL).arg(new_config->str());
             isc_throw(CCSessionInitError, answer->str());
         }
     }
 
     // Keep track of logging settings automatically
     if (handle_logging) {
-        addRemoteConfig("Logging", my_logconfig_handler, false);
+        addRemoteConfig("Logging", default_logconfig_handler, false);
     }
 
     if (start_immediately) {
