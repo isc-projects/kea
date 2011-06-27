@@ -24,6 +24,10 @@
 namespace isc {
 namespace acl {
 
+class AnyOfSpec;
+class AllOfSpec;
+template<typename Mode, typename Context> class LogicOperator;
+
 /**
  * \brief Exception for bad ACL specifications.
  *
@@ -367,18 +371,45 @@ private:
                 }
                 if (creatorIt->second->allowListAbbreviation() &&
                     checkDesc->second->getType() == data::Element::list) {
-                    isc_throw_1(LoaderError,
-                                "Not implemented (OR-abbreviated form)",
-                                checkDesc->second);
+                    // Or-abbreviated form - create an OR and put everything
+                    // inside.
+                    const std::vector<data::ConstElementPtr>&
+                        params(checkDesc->second->listValue());
+                    boost::shared_ptr<LogicOperator<AnyOfSpec, Context> >
+                        oper(new LogicOperator<AnyOfSpec, Context>);
+                    for (std::vector<data::ConstElementPtr>::const_iterator
+                             i(params.begin());
+                         i != params.end(); ++i) {
+                        oper->addSubexpression(
+                            creatorIt->second->create(name, *i, *this));
+                    }
+                    return (oper);
                 }
                 // Create the check and return it
                 return (creatorIt->second->create(name, checkDesc->second,
                                                   *this));
             }
-            default:
-                isc_throw_1(LoaderError,
-                            "Not implemented (AND-abbreviated form)",
-                            description);
+            default: {
+                // This is the AND-abbreviated form. We need to create an
+                // AND (or "ALL") operator, loop trough the whole map and
+                // fill it in. We do a small trick - we create bunch of
+                // single-item maps, call this loader recursively (therefore
+                // it will get into the "case 1" branch, where there is
+                // the actual loading) and use the results to fill the map.
+                //
+                // We keep the description the same, there's nothing we could
+                // take out (we could create a new one, but that would be
+                // confusing, as it is used for error messages only).
+                boost::shared_ptr<LogicOperator<AllOfSpec, Context> >
+                    oper(new LogicOperator<AllOfSpec, Context>);
+                for (Map::const_iterator i(map.begin()); i != map.end(); ++i) {
+                    Map singleSubexpr;
+                    singleSubexpr.insert(*i);
+                    oper->addSubexpression(loadCheck(description,
+                                                     singleSubexpr));
+                }
+                return (oper);
+            }
         }
     }
     /**
@@ -400,5 +431,18 @@ private:
 
 }
 }
+
+/*
+ * This include at the end of the file is unusual. But we need to include it,
+ * we use template classes from there. However, they need to be present only
+ * at instantiation of our class, which will happen below this header.
+ *
+ * The problem is, the header uses us as well, therefore there's a circular
+ * dependency. If we loaded it at the beginning and someone loaded us first,
+ * the logic_check header wouldn't have our definitions. This way, no matter
+ * in which order they are loaded, the definitions from this header will be
+ * above the ones from logic_check.
+ */
+#include "logic_check.h"
 
 #endif
