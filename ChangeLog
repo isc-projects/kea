@@ -1,3 +1,16 @@
+261.?	[func]*		jinmei
+	b10-resolver: Introduced ACL on incoming queries.  By default the
+	resolver accepts queries from ::1 and 127.0.0.1 and rejects all
+	others.  The ACL can be configured with bindctl via the
+	"Resolver/query_acl" parameter.  For example, to accept queries
+	from 192.0.2.0/24 (in addition to the default list), do this:
+	> config add Resolver/query_acl
+	> config set Resolver/query_acl[2]/action "ACCEPT"
+	> config set Resolver/query_acl[2]/from "192.0.2.0/24"
+	> config commit
+	(Trac #999, git TBD,
+	also based on other ACL related work done by stephen and vorner)
+
 260.	[func]      stephen
 	Remove comma between message identification and the message
 	text in the new-style logging messages.
