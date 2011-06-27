@@ -24,6 +24,8 @@
 
 #include <config/tests/data_def_unittests_config.h>
 
+#include <log/logger_name.h>
+
 using namespace isc::data;
 using namespace isc::config;
 using namespace isc::cc;
@@ -632,4 +634,64 @@ TEST_F(CCSessionTest, doubleStartWithAddRemoteConfig) {
     EXPECT_THROW(mccs.addRemoteConfig(ccspecfile("spec2.spec")),
                  FakeSession::DoubleRead);
 }
+
+namespace {
+void doRelatedLoggersTest(const char* input, const char* expected) {
+    ConstElementPtr all_conf = isc::data::Element::fromJSON(input);
+    ConstElementPtr expected_conf = isc::data::Element::fromJSON(expected);
+    EXPECT_EQ(*expected_conf, *isc::config::getRelatedLoggers(all_conf));
+}
+} // end anonymous namespace
+
+TEST(LogConfigTest, relatedLoggersTest) {
+    // make sure logger configs for 'other' programs are ignored,
+    // and that * is substituted correctly
+    // The default root logger name is "bind10"
+    doRelatedLoggersTest("[{ \"name\": \"other_module\" }]",
+                         "[]");
+    doRelatedLoggersTest("[{ \"name\": \"other_module.somelib\" }]",
+                         "[]");
+    doRelatedLoggersTest("[{ \"name\": \"bind10_other\" }]",
+                         "[]");
+    doRelatedLoggersTest("[{ \"name\": \"bind10_other.somelib\" }]",
+                         "[]");
+    doRelatedLoggersTest("[ { \"name\": \"other_module\" },"
+                         "  { \"name\": \"bind10\" }]",
+                         "[ { \"name\": \"bind10\" } ]");
+    doRelatedLoggersTest("[ { \"name\": \"bind10\" }]",
+                         "[ { \"name\": \"bind10\" } ]");
+    doRelatedLoggersTest("[ { \"name\": \"bind10.somelib\" }]",
+                         "[ { \"name\": \"bind10.somelib\" } ]");
+    doRelatedLoggersTest("[ { \"name\": \"other_module.somelib\" },"
+                         "  { \"name\": \"bind10.somelib\" }]",
+                         "[ { \"name\": \"bind10.somelib\" } ]");
+    doRelatedLoggersTest("[ { \"name\": \"other_module.somelib\" },"
+                         "  { \"name\": \"bind10\" },"
+                         "  { \"name\": \"bind10.somelib\" }]",
+                         "[ { \"name\": \"bind10\" },"
+                         "  { \"name\": \"bind10.somelib\" } ]");
+    doRelatedLoggersTest("[ { \"name\": \"*\" }]",
+                         "[ { \"name\": \"bind10\" } ]");
+    doRelatedLoggersTest("[ { \"name\": \"*.somelib\" }]",
+                         "[ { \"name\": \"bind10.somelib\" } ]");
+    doRelatedLoggersTest("[ { \"name\": \"*\", \"severity\": \"DEBUG\" },"
+                         "  { \"name\": \"bind10\", \"severity\": \"WARN\"}]",
+                         "[ { \"name\": \"bind10\", \"severity\": \"WARN\"} ]");
+    doRelatedLoggersTest("[ { \"name\": \"*\", \"severity\": \"DEBUG\" },"
+                         "  { \"name\": \"some_module\", \"severity\": \"WARN\"}]",
+                         "[ { \"name\": \"bind10\", \"severity\": \"DEBUG\"} ]");
+
+    // make sure 'bad' things like '*foo.x' or '*lib' are ignored
+    // (cfgmgr should have already caught it in the logconfig plugin
+    // check, and is responsible for reporting the error)
+    doRelatedLoggersTest("[ { \"name\": \"*foo\" }]",
+                         "[ ]");
+    doRelatedLoggersTest("[ { \"name\": \"*foo.bar\" }]",
+                         "[ ]");
+    doRelatedLoggersTest("[ { \"name\": \"*foo\" },"
+                         "  { \"name\": \"*foo.lib\" },"
+                         "  { \"name\": \"bind10\" } ]",
+                         "[ { \"name\": \"bind10\" } ]");
+}
+
 }

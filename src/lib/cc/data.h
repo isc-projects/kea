@@ -479,7 +479,7 @@ public:
         return (true);
     }
     using Element::setValue;
-    bool setValue(std::map<std::string, ConstElementPtr>& v) {
+    bool setValue(const std::map<std::string, ConstElementPtr>& v) {
         m = v;
         return (true);
     }
