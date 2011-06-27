@@ -41,7 +41,7 @@
 #include <log/logger.h>
 #include <log/macros.h>
 
-#include <asiodns/asiodef.h>
+#include <asiodns/asiodns_messages.h>
 #include <asiodns/io_fetch.h>
 
 #include <util/buffer.h>
@@ -158,7 +158,7 @@ struct IOFetchData {
         stopped(false),
         timeout(wait),
         packet(false),
-        origin(ASIODNS_UNKORIGIN),
+        origin(ASIODNS_UNKNOWN_ORIGIN),
         staging(),
         qid(QidGenerator::getInstance().generateQid())
     {}
@@ -280,7 +280,7 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
 
         // Open a connection to the target system.  For speed, if the operation
         // is synchronous (i.e. UDP operation) we bypass the yield.
-        data_->origin = ASIODNS_OPENSOCK;
+        data_->origin = ASIODNS_OPEN_SOCKET;
         if (data_->socket->isOpenSynchronous()) {
             data_->socket->open(data_->remote_snd.get(), *this);
         } else {
@@ -290,7 +290,7 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
         do {
             // Begin an asynchronous send, and then yield.  When the send completes,
             // we will resume immediately after this point.
-            data_->origin = ASIODNS_SENDSOCK;
+            data_->origin = ASIODNS_SEND_DATA;
             CORO_YIELD data_->socket->asyncSend(data_->msgbuf->getData(),
                 data_->msgbuf->getLength(), data_->remote_snd.get(), *this);
     
@@ -313,7 +313,7 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
             // received all the data before copying it back to the user's buffer.
             // And we want to minimise the amount of copying...
     
-            data_->origin = ASIODNS_RECVSOCK;
+            data_->origin = ASIODNS_READ_DATA;
             data_->cumulative = 0;          // No data yet received
             data_->offset = 0;              // First data into start of buffer
             data_->received->clear();       // Clear the receive buffer
@@ -329,7 +329,7 @@ IOFetch::operator()(asio::error_code ec, size_t length) {
 
         // Finished with this socket, so close it.  This will not generate an
         // I/O error, but reset the origin to unknown in case we change this.
-        data_->origin = ASIODNS_UNKORIGIN;
+        data_->origin = ASIODNS_UNKNOWN_ORIGIN;
         data_->socket->close();
 
         /// We are done
@@ -367,13 +367,13 @@ IOFetch::stop(Result result) {
         data_->stopped = true;
         switch (result) {
             case TIME_OUT:
-                LOG_DEBUG(logger, DBG_COMMON, ASIODNS_RECVTMO).
+                LOG_DEBUG(logger, DBG_COMMON, ASIODNS_READ_TIMEOUT).
                     arg(data_->remote_snd->getAddress().toText()).
                     arg(data_->remote_snd->getPort());
                 break;
 
             case SUCCESS:
-                LOG_DEBUG(logger, DBG_ALL, ASIODNS_FETCHCOMP).
+                LOG_DEBUG(logger, DBG_ALL, ASIODNS_FETCH_COMPLETED).
                     arg(data_->remote_rcv->getAddress().toText()).
                     arg(data_->remote_rcv->getPort());
                 break;
@@ -382,13 +382,13 @@ IOFetch::stop(Result result) {
                 // Fetch has been stopped for some other reason.  This is
                 // allowed but as it is unusual it is logged, but with a lower
                 // debug level than a timeout (which is totally normal).
-                LOG_DEBUG(logger, DBG_IMPORTANT, ASIODNS_FETCHSTOP).
+                LOG_DEBUG(logger, DBG_IMPORTANT, ASIODNS_FETCH_STOPPED).
                     arg(data_->remote_snd->getAddress().toText()).
                     arg(data_->remote_snd->getPort());
                 break;
 
             default:
-                LOG_ERROR(logger, ASIODNS_UNKRESULT).
+                LOG_ERROR(logger, ASIODNS_UNKNOWN_RESULT).
                     arg(data_->remote_snd->getAddress().toText()).
                     arg(data_->remote_snd->getPort());
         }
@@ -412,10 +412,10 @@ IOFetch::stop(Result result) {
 void IOFetch::logIOFailure(asio::error_code ec) {
 
     // Should only get here with a known error code.
-    assert((data_->origin == ASIODNS_OPENSOCK) ||
-           (data_->origin == ASIODNS_SENDSOCK) ||
-           (data_->origin == ASIODNS_RECVSOCK) ||
-           (data_->origin == ASIODNS_UNKORIGIN));
+    assert((data_->origin == ASIODNS_OPEN_SOCKET) ||
+           (data_->origin == ASIODNS_SEND_DATA) ||
+           (data_->origin == ASIODNS_READ_DATA) ||
+           (data_->origin == ASIODNS_UNKNOWN_ORIGIN));
 
     static const char* PROTOCOL[2] = {"TCP", "UDP"};
     LOG_ERROR(logger, data_->origin).arg(ec.value()).
