@@ -1,3 +1,10 @@
+263.	[func]      jelte
+	Logging configuration can now also accept a * as a first-level
+	name (e.g. '*', or '*.cache'), indicating that every module
+	should use that configuration, unless overridden by an explicit
+	logging configuration for that module
+	(Trac 1004, git 0fad7d4a8557741f953eda9fed1d351a3d9dc5ef)
+
 262.	[func]      stephen
 	Add some initial documentation about the logging framework.
 	Provide BIND 10 Messages Manual in HTML and DocBook? XML formats.
