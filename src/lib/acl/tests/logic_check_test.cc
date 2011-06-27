@@ -14,6 +14,7 @@
 
 #include "creators.h"
 #include <acl/logic_check.h>
+#include <typeinfo>
 
 using namespace isc::acl;
 
@@ -102,8 +103,21 @@ public:
     template<typename Result> shared_ptr<Result> load(const string& JSON) {
         shared_ptr<Check<Log> > result;
         EXPECT_NO_THROW(result = loader_.loadCheck(el(JSON)));
+        /*
+         * Optimally, we would use a dynamic_pointer_cast here to both
+         * convert the pointer and to check the type is correct. However,
+         * clang++ seems to be confused by templates and creates two typeids
+         * for the same templated type (even with the same parameters),
+         * therfore considering the types different, even if they are the same.
+         * This leads to false alarm in the test. Luckily, it generates the
+         * same name for both typeids, so we use them instead (which is enough
+         * to test the correct type of Check is returned). Then we can safely
+         * cast statically, as we don't use any kind of nasty things like
+         * multiple inheritance.
+         */
+        EXPECT_STREQ(typeid(Result).name(), typeid(*result.get()).name());
         shared_ptr<Result>
-            resultConverted(dynamic_pointer_cast<Result>(result));
+            resultConverted(static_pointer_cast<Result>(result));
         EXPECT_NE(shared_ptr<Result>(), resultConverted);
         return (resultConverted);
     }
@@ -197,8 +211,14 @@ TEST_F(LogicCreatorTest, nested) {
                              "    {\"logcheck\": [1, false]}"
                              "]}"));
     EXPECT_EQ(2, all->getSubexpressions().size());
+    /*
+     * This has the same problem as load function above, and we use the
+     * same solution here.
+     */
+    ASSERT_STREQ(typeid(LogicOperator<AnyOfSpec, Log>).name(),
+                 typeid(*all->getSubexpressions()[0]).name());
     const LogicOperator<AnyOfSpec, Log>*
-        any(dynamic_cast<const LogicOperator<AnyOfSpec, Log>*>
+        any(static_cast<const LogicOperator<AnyOfSpec, Log>*>
             (all->getSubexpressions()[0]));
     EXPECT_EQ(2, any->getSubexpressions().size());
     EXPECT_FALSE(all->matches(log_));
