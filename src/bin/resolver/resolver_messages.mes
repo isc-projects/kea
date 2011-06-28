@@ -196,3 +196,24 @@ query and is ignoring it.
 A debug message, the resolver received a message with an unsupported opcode
 (it can only process QUERY opcodes).  It will return a message to the sender
 with the RCODE set to NOTIMP.
+
+% RESOLVER_SET_QUERY_ACL   query ACL is configured
+A debug message that appears when a new query ACL is configured for the
+resolver.
+
+% RESOLVER_QUERY_ACCEPTED   query accepted: '%1/%2/%3' from %4
+A debug message that indicates an incoming query is accepted in terms of
+the query ACL.  The log message shows the query in the form of
+<query name>/<query type>/<query class>, and the client that sends the
+query in the form of <Source IP address>#<source port>.
+
+% RESOLVER_QUERY_REJECTED   query rejected: '%1/%2/%3' from %4
+An informational message that indicates an incoming query is rejected
+in terms of the query ACL.  This results in a response with an RCODE of
+REFUSED.  See QUERYACCEPTED for the information given in the message.
+
+% RESOLVER_QUERY_DROPPED    query dropped: '%1/%2/%3' from %4
+An informational message that indicates an incoming query is dropped
+in terms of the query ACL.  Unlike the QUERYREJECTED case, the server does
+not return any response.  See QUERYACCEPTED for the information given in
+the message.

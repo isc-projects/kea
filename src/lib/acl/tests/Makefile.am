@@ -1,5 +1,12 @@
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CXXFLAGS = $(B10_CXXFLAGS)
+
+if USE_STATIC_LINK
+AM_LDFLAGS = -static
+endif
+
+CLEANFILES = *.gcno *.gcda
 
 TESTS =
 if HAVE_GTEST
@@ -13,6 +20,7 @@ run_unittests_SOURCES += loader_test.cc
 run_unittests_SOURCES += logcheck.h
 run_unittests_SOURCES += creators.h
 run_unittests_SOURCES += logic_check_test.cc
+
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
