@@ -65,5 +65,5 @@ A NSAS (nameserver address store - part of the resolver) made a query for
 a resource record of a particular type and class, but instead received
 an answer with a different given type and class.
 
-This message indicates an internal error in the nameserver address store
-component (NSAS) of the resolver.  Please raise a bug report.
+This message indicates an internal error in the NSAS.  Please raise a 
+bug report.
