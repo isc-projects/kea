@@ -29,8 +29,8 @@ The library is disconnecting from the message queue daemon. This debug message
 indicates that the program is trying to shut down gracefully.
 
 % CC_ESTABLISH trying to establish connection with message queue daemon at %1
-This is debug message and indicates that the command channel library is about
-connect to the message queue daemon, which should be listening on UNIX-domain
+This debug message indicates that the command channel library is about to
+connect to the message queue daemon, which should be listening on the UNIX-domain
 socket listed in the output.
 
 % CC_ESTABLISHED successfully connected to message queue daemon
@@ -69,16 +69,16 @@ It isn't possible to connect to the message queue daemon, for reason listed.
 It is unlikely any program will be able continue without the communication.
 
 % CC_READ_ERROR error reading data from command channel (%1)
-A low level error happened when the library tried to read data from command
-channel socket. The reason is listed.
+A low level error happened when the library tried to read data from the
+command channel socket. The reason is listed.
 
 % CC_READ_EXCEPTION error reading data from command channel (%1)
-We received an exception while trying to read data from command channel socket.
-The reason is listed.
+We received an exception while trying to read data from the command
+channel socket. The reason is listed.
 
 % CC_REPLY replying to message from '%1' with '%2'
-Debug message, noting we're sending a response to original message with given
-envelope.
+Debug message, noting we're sending a response to the original message
+with the given envelope.
 
 % CC_SET_TIMEOUT setting timeout to %1ms
 Debug message. A timeout for which the program is willing to wait for a reply
@@ -105,4 +105,4 @@ channel socket.
 
 % CC_ZERO_LENGTH invalid message length (0)
 The library received a message length being zero, which makes no sense, since
-all messages must contain at last the envelope.
+all messages must contain at least the envelope.
