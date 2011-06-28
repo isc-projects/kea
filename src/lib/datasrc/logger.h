@@ -16,7 +16,7 @@
 #define __DATASRC_LOGGER_H
 
 #include <log/macros.h>
-#include <datasrc/messagedef.h>
+#include <datasrc/datasrc_messages.h>
 
 /// \file logger.h
 /// \brief Data Source library global logger

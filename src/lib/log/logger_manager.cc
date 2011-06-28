@@ -109,6 +109,7 @@ LoggerManager::init(const std::string& root, isc::log::Severity severity,
     // Initialize the implementation logging.  After this point, some basic
     // logging has been set up and messages can be logged.
     LoggerManagerImpl::init(severity, dbglevel);
+    setLoggingInitialized();
 
     // Check if there were any duplicate message IDs in the default dictionary
     // and if so, log them.  Log using the logging facility logger.

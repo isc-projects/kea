@@ -12,18 +12,18 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef LOGCHECK_H
+#define LOGCHECK_H
+
 #include <gtest/gtest.h>
 #include <acl/acl.h>
 #include <cassert>
 
-// This is not a public header, it is used only inside the tests. Therefore
-// we lower the standards a bit and use anonymous namespace in the header
-// and "using", just for convenience. This is just to share little bit of code
-// between multiple tests.
-using namespace isc::acl;
-using boost::shared_ptr;
+// This is not a public header, it is used only inside the tests.
 
-namespace {
+namespace isc {
+namespace acl {
+namespace tests {
 
 // This is arbitrary guess of size for the log. If it's too small for your
 // test, just make it bigger.
@@ -84,3 +84,11 @@ private:
 };
 
 }
+}
+}
+
+#endif
+
+// Local Variables:
+// mode: c++
+// End:

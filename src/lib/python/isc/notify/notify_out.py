@@ -23,11 +23,11 @@ import errno
 from isc.datasrc import sqlite3_ds
 from isc.net import addr
 import isc
-try: 
-    from pydnspp import * 
-except ImportError as e: 
-    # C++ loadable module may not be installed; 
-    sys.stderr.write('[b10-xfrout] failed to import DNS or XFR module: %s\n' % str(e)) 
+try:
+    from pydnspp import *
+except ImportError as e:
+    # C++ loadable module may not be installed;
+    sys.stderr.write('[b10-xfrout] failed to import DNS or XFR module: %s\n' % str(e))
 
 ZONE_NEW_DATA_READY_CMD = 'zone_new_data_ready'
 _MAX_NOTIFY_NUM = 30
@@ -36,7 +36,6 @@ _EVENT_NONE = 0
 _EVENT_READ = 1
 _EVENT_TIMEOUT = 2
 _NOTIFY_TIMEOUT = 1
-_IDLE_SLEEP_TIME = 0.5
 
 # define the rcode for parsing notify reply message
 _REPLY_OK = 0
@@ -55,10 +54,6 @@ class ZoneNotifyInfo:
     '''This class keeps track of notify-out information for one zone.'''
 
     def __init__(self, zone_name_, class_):
-        '''notify_timeout_: absolute time for next notify reply. when the zone 
-        is preparing for sending notify message, notify_timeout_ is set to now, 
-        that means the first sending is triggered by the 'Timeout' mechanism. 
-        '''
         self._notify_current = None
         self._slave_index = 0
         self._sock = None
@@ -67,9 +62,12 @@ class ZoneNotifyInfo:
         self.zone_name = zone_name_
         self.zone_class = class_
         self.notify_msg_id = 0
+        # Absolute time for next notify reply. When the zone is preparing for
+        # sending notify message, notify_timeout_ is set to now, that means
+        # the first sending is triggered by the 'Timeout' mechanism.
         self.notify_timeout = None
-        self.notify_try_num = 0  #Notify times sending to one target.
-       
+        self.notify_try_num = 0  # Notify times sending to one target.
+
     def set_next_notify_target(self):
         if self._slave_index < (len(self.notify_slaves) - 1):
             self._slave_index += 1
@@ -104,9 +102,9 @@ class ZoneNotifyInfo:
 
 class NotifyOut:
     '''This class is used to handle notify logic for all zones(sending
-    notify message to its slaves). notify service can be started by 
+    notify message to its slaves). notify service can be started by
     calling  dispatcher(), and it can be stoped by calling shutdown()
-    in another thread. ''' 
+    in another thread. '''
     def __init__(self, datasrc_file, log=None, verbose=True):
         self._notify_infos = {} # key is (zone_name, zone_class)
         self._waiting_zones = []
@@ -120,12 +118,15 @@ class NotifyOut:
         self._lock = threading.Lock()
         self._db_file = datasrc_file
         self._init_notify_out(datasrc_file)
+        # Use nonblock event to eliminate busy loop
+        # If there are no notifying zones, clear the event bit and wait.
+        self._nonblock_event = threading.Event()
 
     def _init_notify_out(self, datasrc_file):
         '''Get all the zones name and its notify target's address
-        TODO, currently the zones are got by going through the zone 
-        table in database. There should be a better way to get them 
-        and also the setting 'also_notify', and there should be one 
+        TODO, currently the zones are got by going through the zone
+        table in database. There should be a better way to get them
+        and also the setting 'also_notify', and there should be one
         mechanism to cover the changed datasrc.'''
         self._db_file = datasrc_file
         for zone_name, zone_class in sqlite3_ds.get_zones_info(datasrc_file):
@@ -136,7 +137,7 @@ class NotifyOut:
                 self._notify_infos[zone_id].notify_slaves.append((item, 53))
 
     def send_notify(self, zone_name, zone_class='IN'):
-        '''Send notify to one zone's slaves, this function is 
+        '''Send notify to one zone's slaves, this function is
         the only interface for class NotifyOut which can be called
         by other object.
           Internally, the function only set the zone's notify-reply
@@ -160,6 +161,8 @@ class NotifyOut:
                 self._notify_infos[zone_id].prepare_notify_out()
                 self.notify_num += 1
                 self._notifying_zones.append(zone_id)
+                if not self._nonblock_event.isSet():
+                    self._nonblock_event.set()
 
     def _dispatcher(self, started_event):
         started_event.set() # Let the master know we are alive already
@@ -178,8 +181,8 @@ class NotifyOut:
 
         If one zone get the notify reply before timeout, call the
         handle to process the reply. If one zone can't get the notify
-        before timeout, call the handler to resend notify or notify 
-        next slave.  
+        before timeout, call the handler to resend notify or notify
+        next slave.
 
         The thread can be stopped by calling shutdown().
 
@@ -215,6 +218,9 @@ class NotifyOut:
 
         # Ask it to stop
         self._serving = False
+        if not self._nonblock_event.isSet():
+            # set self._nonblock_event to stop waiting for new notifying zones.
+            self._nonblock_event.set()
         self._write_sock.send(SOCK_DATA) # make self._read_sock be readable.
 
         # Wait for it
@@ -233,7 +239,7 @@ class NotifyOut:
         then use the name in NS record rdata part to get the a/aaaa records
         in the same zone. the targets listed in a/aaaa record rdata are treated
         as the notify slaves.
-        Note: this is the simplest way to get the address of slaves, 
+        Note: this is the simplest way to get the address of slaves,
         but not correct, it can't handle the delegation slaves, or the CNAME
         and DNAME logic.
         TODO. the function should be provided by one library.'''
@@ -241,8 +247,8 @@ class NotifyOut:
         soa_rrset = sqlite3_ds.get_zone_rrset(zone_name, zone_name, 'SOA', self._db_file)
         ns_rr_name = []
         for ns in ns_rrset:
-            ns_rr_name.append(self._get_rdata_data(ns)) 
-       
+            ns_rr_name.append(self._get_rdata_data(ns))
+
         if len(soa_rrset) > 0:
             sname = (soa_rrset[0][sqlite3_ds.RR_RDATA_INDEX].split(' '))[0].strip() #TODO, bad hardcode to get rdata part
             if sname in ns_rr_name:
@@ -291,7 +297,7 @@ class NotifyOut:
                 else:
                     min_timeout = tmp_timeout
 
-        block_timeout = _IDLE_SLEEP_TIME
+        block_timeout = None
         if min_timeout is not None:
             block_timeout = min_timeout - time.time()
             if block_timeout < 0:
@@ -314,6 +320,14 @@ class NotifyOut:
         # This is None only during some tests
         if self._read_sock is not None:
             valid_socks.append(self._read_sock)
+
+        # Currently, there is no notifying zones, waiting for zones to send notify
+        if block_timeout is None:
+            self._nonblock_event.clear()
+            self._nonblock_event.wait()
+            # has new notifying zone, check immediately
+            block_timeout = 0
+
         try:
             r_fds, w, e = select.select(valid_socks, [], [], block_timeout)
         except select.error as err:
@@ -340,10 +354,10 @@ class NotifyOut:
         return replied_zones, not_replied_zones
 
     def _zone_notify_handler(self, zone_notify_info, event_type):
-        '''Notify handler for one zone. The first notify message is 
-        always triggered by the event "_EVENT_TIMEOUT" since when 
-        one zone prepares to notify its slaves, its notify_timeout 
-        is set to now, which is used to trigger sending notify 
+        '''Notify handler for one zone. The first notify message is
+        always triggered by the event "_EVENT_TIMEOUT" since when
+        one zone prepares to notify its slaves, its notify_timeout
+        is set to now, which is used to trigger sending notify
         message when dispatcher() scanning zones. '''
         tgt = zone_notify_info.get_current_notify_target()
         if event_type == _EVENT_READ:
@@ -362,13 +376,13 @@ class NotifyOut:
                 self._log_msg('info', 'notify to %s: retried exceeded' % addr_to_str(tgt))
                 self._notify_next_target(zone_notify_info)
             else:
-                retry_timeout = _NOTIFY_TIMEOUT * pow(2, zone_notify_info.notify_try_num)
                 # set exponential backoff according rfc1996 section 3.6
+                retry_timeout = _NOTIFY_TIMEOUT * pow(2, zone_notify_info.notify_try_num)
                 zone_notify_info.notify_timeout = time.time() + retry_timeout
                 self._send_notify_message_udp(zone_notify_info, tgt)
 
     def _notify_next_target(self, zone_notify_info):
-        '''Notify next address for the same zone. If all the targets 
+        '''Notify next address for the same zone. If all the targets
         has been notified, notify the first zone in waiting list. '''
         zone_notify_info.notify_try_num = 0
         zone_notify_info.set_next_notify_target()
@@ -376,21 +390,23 @@ class NotifyOut:
         if not tgt:
             zone_notify_info.finish_notify_out()
             with self._lock:
-                self.notify_num -= 1 
-                self._notifying_zones.remove((zone_notify_info.zone_name, 
-                                              zone_notify_info.zone_class)) 
+                self.notify_num -= 1
+                self._notifying_zones.remove((zone_notify_info.zone_name,
+                                              zone_notify_info.zone_class))
                 # trigger notify out for waiting zones
                 if len(self._waiting_zones) > 0:
-                    zone_id = self._waiting_zones.pop(0) 
+                    zone_id = self._waiting_zones.pop(0)
                     self._notify_infos[zone_id].prepare_notify_out()
-                    self.notify_num += 1 
+                    self.notify_num += 1
                     self._notifying_zones.append(zone_id)
+                    if not self._nonblock_event.isSet():
+                        self._nonblock_event.set()
 
     def _send_notify_message_udp(self, zone_notify_info, addrinfo):
-        msg, qid = self._create_notify_message(zone_notify_info.zone_name, 
+        msg, qid = self._create_notify_message(zone_notify_info.zone_name,
                                                zone_notify_info.zone_class)
         render = MessageRenderer()
-        render.set_length_limit(512) 
+        render.set_length_limit(512)
         msg.to_wire(render)
         zone_notify_info.notify_msg_id = qid
         try:
@@ -405,7 +421,7 @@ class NotifyOut:
         return True
 
     def _create_rrset_from_db_record(self, record, zone_class):
-        '''Create one rrset from one record of datasource, if the schema of record is changed, 
+        '''Create one rrset from one record of datasource, if the schema of record is changed,
         This function should be updated first. TODO, the function is copied from xfrout, there
         should be library for creating one rrset. '''
         rrtype_ = RRType(record[sqlite3_ds.RR_TYPE_INDEX])
@@ -425,7 +441,7 @@ class NotifyOut:
         question = Question(Name(zone_name), RRClass(zone_class), RRType('SOA'))
         msg.add_question(question)
         # Add soa record to answer section
-        soa_record = sqlite3_ds.get_zone_rrset(zone_name, zone_name, 'SOA', self._db_file) 
+        soa_record = sqlite3_ds.get_zone_rrset(zone_name, zone_name, 'SOA', self._db_file)
         rrset_soa = self._create_rrset_from_db_record(soa_record[0], zone_class)
         msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
         return msg, qid
@@ -443,10 +459,10 @@ class NotifyOut:
                 self._log_msg('error', errstr + 'bad flags')
                 return _BAD_QR
 
-            if msg.get_qid() != zone_notify_info.notify_msg_id: 
+            if msg.get_qid() != zone_notify_info.notify_msg_id:
                 self._log_msg('error', errstr + 'bad query ID')
                 return _BAD_QUERY_ID
-            
+
             question = msg.get_question()[0]
             if question.get_name() != Name(zone_notify_info.zone_name):
                 self._log_msg('error', errstr + 'bad query name')
@@ -456,7 +472,7 @@ class NotifyOut:
                 self._log_msg('error', errstr + 'bad opcode')
                 return _BAD_OPCODE
         except Exception as err:
-            # We don't care what exception, just report it? 
+            # We don't care what exception, just report it?
             self._log_msg('error', errstr + str(err))
             return _BAD_REPLY_PACKET
 
