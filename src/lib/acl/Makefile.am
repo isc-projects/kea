@@ -11,7 +11,6 @@ libacl_la_SOURCES += check.h
 libacl_la_SOURCES += ip_check.h ip_check.cc
 libacl_la_SOURCES += logic_check.h
 libacl_la_SOURCES += loader.h loader.cc
-libacl_la_SOURCES += ip_check.h ip_check.cc
 
 libacl_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 libacl_la_LIBADD += $(top_builddir)/src/lib/cc/libcc.la
