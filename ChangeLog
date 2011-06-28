@@ -1,6 +1,6 @@
 264.	[bug]       jerry
 	Fix a busy loop issue in notify-out.
-	(Trac 1001, git TBD)
+	(Trac 1001, git fb993ba8c52dca4a3a261e319ed095e5af8db15a)
 
 263.	[func]      jelte
 	Logging configuration can now also accept a * as a first-level
