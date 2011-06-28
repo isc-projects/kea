@@ -17,13 +17,15 @@ AM_CXXFLAGS += -Wno-unused-parameter
 endif
 
 lib_LTLIBRARIES = libserver_common.la
-libserver_common_la_SOURCES = portconfig.h portconfig.cc
+libserver_common_la_SOURCES = client.h client.cc
 libserver_common_la_SOURCES += keyring.h keyring.cc
+libserver_common_la_SOURCES += portconfig.h portconfig.cc
 libserver_common_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 libserver_common_la_LIBADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 libserver_common_la_LIBADD += $(top_builddir)/src/lib/cc/libcc.la
 libserver_common_la_LIBADD += $(top_builddir)/src/lib/config/libcfgclient.la
 libserver_common_la_LIBADD += $(top_builddir)/src/lib/log/liblog.la
+libserver_common_la_LIBADD += $(top_builddir)/src/lib/acl/libacl.la
 libserver_common_la_LIBADD += $(top_builddir)/src/lib/dns/libdns++.la
 
 CLEANFILES = *.gcno *.gcda

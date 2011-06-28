@@ -12,13 +12,16 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <sys/socket.h>
+
+#include <exceptions/exceptions.h>
+
 #include <boost/lexical_cast.hpp>
 
 #include <acl/ip_check.h>
 
 using namespace std;
-
-// Split the IP Address prefix
+using namespace isc;
 
 namespace isc {
 namespace acl {
@@ -105,7 +108,34 @@ splitIPAddress(const string& ipprefix) {
 
     return (make_pair(address, prefix_size));
 }
-
 } // namespace internal
+
+namespace {
+const uint8_t*
+getSockAddrData(const struct sockaddr& sa) {
+    const void* sa_ptr = &sa;
+    const void* data_ptr;
+    if (sa.sa_family == AF_INET) {
+        const struct sockaddr_in* sin =
+            static_cast<const struct sockaddr_in*>(sa_ptr);
+        data_ptr = &sin->sin_addr;
+    } else if (sa.sa_family == AF_INET6) {
+        const struct sockaddr_in6* sin6 =
+            static_cast<const struct sockaddr_in6*>(sa_ptr);
+        data_ptr = &sin6->sin6_addr;
+    } else {
+        isc_throw(BadValue, "Unsupported address family for IPAddress: " <<
+                  static_cast<int>(sa.sa_family));
+    }
+    return (static_cast<const uint8_t*>(data_ptr));
+}
+}
+
+IPAddress::IPAddress(const struct sockaddr& sa) :
+    family(sa.sa_family),
+    data(getSockAddrData(sa)),
+    length(family == AF_INET ?
+           sizeof(struct in_addr) : sizeof(struct in6_addr))
+{}
 } // namespace acl
 } // namespace isc
