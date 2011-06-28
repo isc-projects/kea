@@ -61,15 +61,10 @@ public:
     };
     /// The constructor.
     ///
-    /// \param verbose_mode reference to verbose_mode_ of AuthSrvImpl
-    ///
     /// This constructor is mostly exception free. But it may still throw
     /// a standard exception if memory allocation fails inside the method.
     ///
-    /// \todo Fix this short term workaround for logging
-    /// after we have logging framework.
-    ///
-    AuthCounters(const bool& verbose_mode);
+    AuthCounters();
     /// The destructor.
     ///
     /// This method never throws an exception.
