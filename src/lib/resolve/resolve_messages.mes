@@ -41,7 +41,7 @@ is where on CNAME points to another) and so an error is being returned.
 
 % RESLIB_NO_NS_RRSET no NS RRSet in referral response received to query for <%1>
 A debug message, this indicates that a response was received for the specified
-query and was categorised as a referral.  However, the received message did
+query and was categorized as a referral.  However, the received message did
 not contain any NS RRsets.  This may indicate a programming error in the
 response classification code.
 
@@ -58,7 +58,7 @@ messages will have indicated the server to which the question was sent.
 A debug message indicating that a protocol error was received.  As there
 are no retries left, an error will be reported.
 
-% RESLIB_PROTOCOL_RETRY  protocol error in answer for %1: %2 (retries left: %3)
+% RESLIB_PROTOCOL_RETRY protocol error in answer for %1: %2 (retries left: %3)
 A debug message indicating that a protocol error was received and that
 the resolver is repeating the query to the same nameserver.  After this
 repeated query, there will be the indicated number of retries left.
@@ -80,7 +80,7 @@ object has been created to resolve the question.  The instance number at
 the end of the message indicates which of the two resolve() methods has
 been called.
 
-% RESLIB_REFERRAL  referral received in response to query for <%1>
+% RESLIB_REFERRAL referral received in response to query for <%1>
 A debug message recording that a referral response has been received to an
 upstream query for the specified question.  Previous debug messages will
 have indicated the server to which the question was sent.
