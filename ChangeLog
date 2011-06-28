@@ -1,3 +1,33 @@
+263.	[func]      jelte
+	Logging configuration can now also accept a * as a first-level
+	name (e.g. '*', or '*.cache'), indicating that every module
+	should use that configuration, unless overridden by an explicit
+	logging configuration for that module
+	(Trac 1004, git 0fad7d4a8557741f953eda9fed1d351a3d9dc5ef)
+
+262.	[func]      stephen
+	Add some initial documentation about the logging framework.
+	Provide BIND 10 Messages Manual in HTML and DocBook? XML formats.
+	This provides all the log message descriptions in a single document.
+	A developer tool, tools/system_messages.py (available in git repo),
+	was written to generate this.
+	(Trac 1012, git 502100d7b9cd9d2300e78826a3bddd024ef38a74)
+
+261.	[func]      stephen
+	Add new-style logging messages to b10-auth.
+	(Trac 738, git c021505a1a0d6ecb15a8fd1592b94baff6d115f4)
+
+260.	[func]      stephen
+	Remove comma between message identification and the message
+	text in the new-style logging messages.
+	(Trac 1031, git 1c7930a7ba19706d388e4f8dcf2a55a886b74cd2)
+
+259.	[bug]       stephen
+	Logging now correctly initialized in b10-auth.  Also, fixed
+	bug whereby querying for "version.bind txt ch" would cause
+	b10-auth to crash if BIND 10 was started with the "-v" switch.
+	(Trac 1022,1023, git 926a65fa08617be677a93e9e388df0f229b01067)
+
 258.	[build]		jelte
 	Now builds and runs with Python 3.2
 	(Trac #710, git dae1d2e24f993e1eef9ab429326652f40a006dfb)
