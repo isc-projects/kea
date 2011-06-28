@@ -23,6 +23,7 @@
 #include <fstream>
 #include <sstream>
 #include <cerrno>
+#include <set>
 
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
@@ -38,6 +39,7 @@
 #include <log/logger_support.h>
 #include <log/logger_specification.h>
 #include <log/logger_manager.h>
+#include <log/logger_name.h>
 
 using namespace std;
 
@@ -213,7 +215,8 @@ readLoggersConf(std::vector<isc::log::LoggerSpecification>& specs,
                 ConstElementPtr logger,
                 const ConfigData& config_data)
 {
-    const std::string lname = logger->get("name")->stringValue();
+    std::string lname = logger->get("name")->stringValue();
+
     ConstElementPtr severity_el = getValueOrDefault(logger,
                                       "severity", config_data,
                                       "loggers/severity");
@@ -246,15 +249,62 @@ readLoggersConf(std::vector<isc::log::LoggerSpecification>& specs,
 
 } // end anonymous namespace
 
+
+ConstElementPtr
+getRelatedLoggers(ConstElementPtr loggers) {
+    // Keep a list of names for easier lookup later
+    std::set<std::string> our_names;
+    const std::string& root_name = isc::log::getRootLoggerName();
+
+    ElementPtr result = isc::data::Element::createList();
+
+    BOOST_FOREACH(ConstElementPtr cur_logger, loggers->listValue()) {
+        const std::string cur_name = cur_logger->get("name")->stringValue();
+        if (cur_name == root_name || cur_name.find(root_name + ".") == 0) {
+            our_names.insert(cur_name);
+            result->add(cur_logger);
+        }
+    }
+
+    // now find the * names
+    BOOST_FOREACH(ConstElementPtr cur_logger, loggers->listValue()) {
+        std::string cur_name = cur_logger->get("name")->stringValue();
+        // if name is '*', or starts with '*.', replace * with root
+        // logger name
+        if (cur_name == "*" || cur_name.length() > 1 &&
+            cur_name[0] == '*' && cur_name[1] == '.') {
+
+            cur_name = root_name + cur_name.substr(1);
+            // now add it to the result list, but only if a logger with
+            // that name was not configured explicitely
+            if (our_names.find(cur_name) == our_names.end()) {
+                // we substitute the name here already, but as
+                // we are dealing with consts, we copy the data
+                ElementPtr new_logger(Element::createMap());
+                // since we'll only be updating one first-level element,
+                // and we return as const again, a shallow map copy is
+                // enough
+                new_logger->setValue(cur_logger->mapValue());
+                new_logger->set("name", Element::create(cur_name));
+                result->add(new_logger);
+            }
+        }
+    }
+    return result;
+}
+
 void
-my_logconfig_handler(const std::string&n, ConstElementPtr new_config, const ConfigData& config_data) {
+default_logconfig_handler(const std::string& module_name,
+                          ConstElementPtr new_config,
+                          const ConfigData& config_data) {
     config_data.getModuleSpec().validateConfig(new_config, true);
 
     std::vector<isc::log::LoggerSpecification> specs;
 
     if (new_config->contains("loggers")) {
+        ConstElementPtr loggers = getRelatedLoggers(new_config->get("loggers"));
         BOOST_FOREACH(ConstElementPtr logger,
-                      new_config->get("loggers")->listValue()) {
+                      loggers->listValue()) {
             readLoggersConf(specs, logger, config_data);
         }
     }
@@ -272,7 +322,7 @@ ModuleCCSession::readModuleSpecification(const std::string& filename) {
     // this file should be declared in a @something@ directive
     file.open(filename.c_str());
     if (!file) {
-        LOG_ERROR(config_logger, CONFIG_FOPEN_ERR).arg(filename).arg(strerror(errno));
+        LOG_ERROR(config_logger, CONFIG_OPEN_FAIL).arg(filename).arg(strerror(errno));
         isc_throw(CCSessionInitError, strerror(errno));
     }
 
@@ -282,7 +332,7 @@ ModuleCCSession::readModuleSpecification(const std::string& filename) {
         LOG_ERROR(config_logger, CONFIG_JSON_PARSE).arg(filename).arg(pe.what());
         isc_throw(CCSessionInitError, pe.what());
     } catch (const ModuleSpecError& dde) {
-        LOG_ERROR(config_logger, CONFIG_MODULE_SPEC).arg(filename).arg(dde.what());
+        LOG_ERROR(config_logger, CONFIG_MOD_SPEC_FORMAT).arg(filename).arg(dde.what());
         isc_throw(CCSessionInitError, dde.what());
     }
     file.close();
@@ -332,7 +382,7 @@ ModuleCCSession::ModuleCCSession(
     int rcode;
     ConstElementPtr err = parseAnswer(rcode, answer);
     if (rcode != 0) {
-        LOG_ERROR(config_logger, CONFIG_MANAGER_MOD_SPEC).arg(answer->str());
+        LOG_ERROR(config_logger, CONFIG_MOD_SPEC_REJECT).arg(answer->str());
         isc_throw(CCSessionInitError, answer->str());
     }
     
@@ -346,14 +396,14 @@ ModuleCCSession::ModuleCCSession(
         if (rcode == 0) {
             handleConfigUpdate(new_config);
         } else {
-            LOG_ERROR(config_logger, CONFIG_MANAGER_CONFIG).arg(new_config->str());
+            LOG_ERROR(config_logger, CONFIG_GET_FAIL).arg(new_config->str());
             isc_throw(CCSessionInitError, answer->str());
         }
     }
 
     // Keep track of logging settings automatically
     if (handle_logging) {
-        addRemoteConfig("Logging", my_logconfig_handler, false);
+        addRemoteConfig("Logging", default_logconfig_handler, false);
     }
 
     if (start_immediately) {

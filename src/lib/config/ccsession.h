@@ -354,8 +354,60 @@ private:
     ModuleSpec fetchRemoteSpec(const std::string& module, bool is_filename);
 };
 
-}
-}
+/// \brief Default handler for logging config updates
+///
+/// When CCSession is initialized with handle_logging set to true,
+/// this callback will be used to update the logger when a configuration
+/// change comes in.
+///
+/// This function updates the (global) loggers by initializing a
+/// LoggerManager and passing the settings as specified in the given
+/// configuration update.
+///
+/// \param module_name The name of the module
+/// \param new_config The modified configuration values
+/// \param config_data The full config data for the (remote) logging
+///                    module.
+void
+default_logconfig_handler(const std::string& module_name,
+                          isc::data::ConstElementPtr new_config,
+                          const ConfigData& config_data);
+
+
+/// \brief Returns the loggers related to this module
+///
+/// This function does two things;
+/// - it drops the configuration parts for loggers for other modules
+/// - it replaces the '*' in the name of the loggers by the name of
+///   this module, but *only* if the expanded name is not configured
+///   explicitely
+///
+/// Examples: if this is the module b10-resolver,
+/// For the config names ['*', 'b10-auth']
+/// The '*' is replaced with 'b10-resolver', and this logger is used.
+/// 'b10-auth' is ignored (of course, it will not be in the b10-auth
+/// module).
+///
+/// For ['*', 'b10-resolver']
+/// The '*' is ignored, and only 'b10-resolver' is used.
+///
+/// For ['*.reslib', 'b10-resolver']
+/// Or ['b10-resolver.reslib', '*']
+/// Both are used, where the * will be expanded to b10-resolver
+///
+/// \note This is a public function at this time, but mostly for
+/// the purposes of testing. Once we can directly test what loggers
+/// are running, this function may be moved to the unnamed namespace
+///
+/// \param loggers the original 'loggers' config list
+/// \return ListElement containing only loggers relevant for this
+///         module, where * is replaced by the root logger name
+isc::data::ConstElementPtr
+getRelatedLoggers(isc::data::ConstElementPtr loggers);
+
+} // namespace config
+
+} // namespace isc
 #endif // __CCSESSION_H
 
 // Local Variables:

@@ -83,7 +83,7 @@ public:
                     isc::cache::ResolverCache& cache)
     {
         assert(!rec_query_); // queryShutdown must be called first
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_QUSETUP);
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_QUERY_SETUP);
         rec_query_ = new RecursiveQuery(dnss, 
                                         nsas, cache,
                                         upstream_,
@@ -99,7 +99,8 @@ public:
         // (this is not a safety check, just to prevent logging of
         // actions that are not performed
         if (rec_query_) {
-            LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_QUSHUT);
+            LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT,
+                      RESOLVER_QUERY_SHUTDOWN);
             delete rec_query_;
             rec_query_ = NULL;
         }
@@ -112,7 +113,7 @@ public:
         if (dnss) {
             if (!upstream_.empty()) {
                 BOOST_FOREACH(const AddressPair& address, upstream) {
-                    LOG_INFO(resolver_logger, RESOLVER_FWDADDR)
+                    LOG_INFO(resolver_logger, RESOLVER_FORWARD_ADDRESS)
                              .arg(address.first).arg(address.second);
                 }
             } else {
@@ -128,11 +129,11 @@ public:
         if (dnss) {
             if (!upstream_root_.empty()) {
                 BOOST_FOREACH(const AddressPair& address, upstream_root) {
-                    LOG_INFO(resolver_logger, RESOLVER_ROOTADDR)
+                    LOG_INFO(resolver_logger, RESOLVER_SET_ROOT_ADDRESS)
                              .arg(address.first).arg(address.second);
                 }
             } else {
-                LOG_WARN(resolver_logger, RESOLVER_NOROOTADDR);
+                LOG_WARN(resolver_logger, RESOLVER_NO_ROOT_ADDRESS);
             }
         }
     }
@@ -302,7 +303,8 @@ public:
 
         answer_message->toWire(renderer);
 
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_DETAIL, RESOLVER_DNSMSGSENT)
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_DETAIL,
+                  RESOLVER_DNS_MESSAGE_SENT)
                   .arg(renderer.getLength()).arg(*answer_message);
     }
 };
@@ -395,13 +397,13 @@ Resolver::processMessage(const IOMessage& io_message,
 
         // Ignore all responses.
         if (query_message->getHeaderFlag(Message::HEADERFLAG_QR)) {
-            LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_UNEXRESP);
+            LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_UNEXPECTED_RESPONSE);
             server->resume(false);
             return;
         }
 
     } catch (const Exception& ex) {
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_HDRERR)
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_HEADER_ERROR)
                   .arg(ex.what());
         server->resume(false);
         return;
@@ -411,14 +413,14 @@ Resolver::processMessage(const IOMessage& io_message,
     try {
         query_message->fromWire(request_buffer);
     } catch (const DNSProtocolError& error) {
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_PROTERR)
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_PROTOCOL_ERROR)
                   .arg(error.what()).arg(error.getRcode());
         makeErrorMessage(query_message, answer_message,
                          buffer, error.getRcode());
         server->resume(true);
         return;
     } catch (const Exception& ex) {
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_PROTERR)
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_MESSAGE_ERROR)
                   .arg(ex.what()).arg(Rcode::SERVFAIL());
         makeErrorMessage(query_message, answer_message,
                          buffer, Rcode::SERVFAIL());
@@ -429,8 +431,8 @@ Resolver::processMessage(const IOMessage& io_message,
     // Note:  there appears to be no LOG_DEBUG for a successfully-received
     // message.  This is not an oversight - it is handled below.  In the
     // meantime, output the full message for debug purposes (if requested).
-    LOG_DEBUG(resolver_logger, RESOLVER_DBG_DETAIL, RESOLVER_DNSMSGRCVD)
-              .arg(*query_message);
+    LOG_DEBUG(resolver_logger, RESOLVER_DBG_DETAIL,
+              RESOLVER_DNS_MESSAGE_RECEIVED).arg(*query_message);
 
     // Perform further protocol-level validation.
     bool sendAnswer = true;
@@ -439,20 +441,22 @@ Resolver::processMessage(const IOMessage& io_message,
         makeErrorMessage(query_message, answer_message,
                          buffer, Rcode::NOTAUTH());
         // Notify arrived, but we are not authoritative.
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_NFYNOTAUTH);
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS,
+                  RESOLVER_NOTIFY_RECEIVED);
 
     } else if (query_message->getOpcode() != Opcode::QUERY()) {
 
         // Unsupported opcode.
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_OPCODEUNS)
-                  .arg(query_message->getOpcode());
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS,
+                  RESOLVER_UNSUPPORTED_OPCODE).arg(query_message->getOpcode());
         makeErrorMessage(query_message, answer_message,
                          buffer, Rcode::NOTIMP());
 
     } else if (query_message->getRRCount(Message::SECTION_QUESTION) != 1) {
 
         // Not one question
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_NOTONEQUES)
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS,
+                  RESOLVER_NOT_ONE_QUESTION)
                   .arg(query_message->getRRCount(Message::SECTION_QUESTION));
         makeErrorMessage(query_message, answer_message,
                          buffer, Rcode::FORMERR());
@@ -464,14 +468,14 @@ Resolver::processMessage(const IOMessage& io_message,
 
                 // Can't process AXFR request receoved over UDP
                 LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS,
-                          RESOLVER_AXFRUDP);
+                          RESOLVER_AXFR_UDP);
                 makeErrorMessage(query_message, answer_message,
                                  buffer, Rcode::FORMERR());
             } else {
 
                 // ... or over TCP for that matter
                 LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS,
-                          RESOLVER_AXFRTCP);
+                          RESOLVER_AXFR_TCP);
                 makeErrorMessage(query_message, answer_message,
                                  buffer, Rcode::NOTIMP());
             }
@@ -485,7 +489,7 @@ Resolver::processMessage(const IOMessage& io_message,
         } else if (question->getClass() != RRClass::IN()) {
 
             // Non-IN message received, refuse it.
-            LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_NOTIN)
+            LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_NON_IN_PACKET)
                       .arg(question->getClass());
             makeErrorMessage(query_message, answer_message,
                              buffer, Rcode::REFUSED());
@@ -518,21 +522,21 @@ ResolverImpl::processNormalQuery(ConstMessagePtr query_message,
 {
     if (upstream_.empty()) {
         // Processing normal query
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_NORMQUERY);
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_NORMAL_QUERY);
         ConstQuestionPtr question = *query_message->beginQuestion();
         rec_query_->resolve(*question, answer_message, buffer, server);
 
     } else {
 
         // Processing forward query
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_FWDQUERY);
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_FORWARD_QUERY);
         rec_query_->forward(query_message, answer_message, buffer, server);
     }
 }
 
 ConstElementPtr
 Resolver::updateConfig(ConstElementPtr config) {
-    LOG_DEBUG(resolver_logger, RESOLVER_DBG_CONFIG, RESOLVER_CONFIGUPD)
+    LOG_DEBUG(resolver_logger, RESOLVER_DBG_CONFIG, RESOLVER_CONFIG_UPDATED)
               .arg(*config);
 
     try {
@@ -560,7 +564,8 @@ Resolver::updateConfig(ConstElementPtr config) {
             // check for us
             qtimeout = qtimeoutE->intValue();
             if (qtimeout < -1) {
-                LOG_ERROR(resolver_logger, RESOLVER_QUTMOSMALL).arg(qtimeout);
+                LOG_ERROR(resolver_logger, RESOLVER_QUERY_TIME_SMALL)
+                          .arg(qtimeout);
                 isc_throw(BadValue, "Query timeout too small");
             }
             set_timeouts = true;
@@ -568,7 +573,8 @@ Resolver::updateConfig(ConstElementPtr config) {
         if (ctimeoutE) {
             ctimeout = ctimeoutE->intValue();
             if (ctimeout < -1) {
-                LOG_ERROR(resolver_logger, RESOLVER_CLTMOSMALL).arg(ctimeout);
+                LOG_ERROR(resolver_logger, RESOLVER_CLIENT_TIME_SMALL)
+                          .arg(ctimeout);
                 isc_throw(BadValue, "Client timeout too small");
             }
             set_timeouts = true;
@@ -576,7 +582,8 @@ Resolver::updateConfig(ConstElementPtr config) {
         if (ltimeoutE) {
             ltimeout = ltimeoutE->intValue();
             if (ltimeout < -1) {
-                LOG_ERROR(resolver_logger, RESOLVER_LKTMOSMALL).arg(ltimeout);
+                LOG_ERROR(resolver_logger, RESOLVER_LOOKUP_TIME_SMALL)
+                          .arg(ltimeout);
                 isc_throw(BadValue, "Lookup timeout too small");
             }
             set_timeouts = true;
@@ -586,7 +593,7 @@ Resolver::updateConfig(ConstElementPtr config) {
             // _after_ the comparison (as opposed to before it for the timeouts)
             // because "retries" is unsigned.
             if (retriesE->intValue() < 0) {
-                LOG_ERROR(resolver_logger, RESOLVER_RETRYNEG)
+                LOG_ERROR(resolver_logger, RESOLVER_NEGATIVE_RETRIES)
                           .arg(retriesE->intValue());
                 isc_throw(BadValue, "Negative number of retries");
             }
@@ -633,7 +640,7 @@ Resolver::updateConfig(ConstElementPtr config) {
     } catch (const isc::Exception& error) {
 
         // Configuration error
-        LOG_ERROR(resolver_logger, RESOLVER_CONFIGERR).arg(error.what());
+        LOG_ERROR(resolver_logger, RESOLVER_CONFIG_ERROR).arg(error.what());
         return (isc::config::createAnswer(1, error.what()));
     }
 }
@@ -673,7 +680,7 @@ Resolver::setListenAddresses(const AddressList& addresses) {
 void
 Resolver::setTimeouts(int query_timeout, int client_timeout,
                       int lookup_timeout, unsigned retries) {
-    LOG_DEBUG(resolver_logger, RESOLVER_DBG_CONFIG, RESOLVER_SETPARAM)
+    LOG_DEBUG(resolver_logger, RESOLVER_DBG_CONFIG, RESOLVER_SET_PARAMS)
               .arg(query_timeout).arg(client_timeout).arg(lookup_timeout)
               .arg(retries);
 
