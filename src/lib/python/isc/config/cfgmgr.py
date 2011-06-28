@@ -32,7 +32,7 @@ from isc.config import ccsession, config_data, module_spec
 from isc.util.file import path_search
 import bind10_config
 import isc.log
-from isc.config.cfgmgr_messages import *
+from cfgmgr_messages import *
 
 logger = isc.log.Logger("cfgmgr")
 
