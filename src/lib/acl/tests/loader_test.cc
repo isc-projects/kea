@@ -19,6 +19,10 @@
 
 using namespace std;
 using namespace boost;
+using namespace isc::acl;
+using namespace isc::acl::tests;
+using isc::data::Element;
+using isc::data::ConstElementPtr;
 
 namespace {
 
@@ -27,7 +31,7 @@ namespace {
 // there as well.
 void testActionLoaderException(const string& JSON) {
     SCOPED_TRACE("Should throw with input: " + JSON);
-    ConstElementPtr elem(el(JSON));
+    ConstElementPtr elem(Element::fromJSON(JSON));
     try {
         defaultActionLoader(elem);
         FAIL() << "It did not throw";
@@ -42,9 +46,9 @@ void testActionLoaderException(const string& JSON) {
 // Test the defaultActionLoader function
 TEST(LoaderHelpers, DefaultActionLoader) {
     // First the three valid inputs
-    EXPECT_EQ(ACCEPT, defaultActionLoader(el("\"ACCEPT\"")));
-    EXPECT_EQ(REJECT, defaultActionLoader(el("\"REJECT\"")));
-    EXPECT_EQ(DROP, defaultActionLoader(el("\"DROP\"")));
+    EXPECT_EQ(ACCEPT, defaultActionLoader(Element::fromJSON("\"ACCEPT\"")));
+    EXPECT_EQ(REJECT, defaultActionLoader(Element::fromJSON("\"REJECT\"")));
+    EXPECT_EQ(DROP, defaultActionLoader(Element::fromJSON("\"DROP\"")));
     // Now few invalid ones
     // String, but unknown one
     testActionLoaderException("\"UNKNOWN\"");
@@ -81,7 +85,8 @@ public:
     {
         SCOPED_TRACE("Loading check " + definition);
         shared_ptr<Check<Log> > loaded;
-        EXPECT_NO_THROW(loaded = loader_.loadCheck(el(definition)));
+        EXPECT_NO_THROW(loaded = loader_.loadCheck(
+                            Element::fromJSON(definition)));
         shared_ptr<Result> result(dynamic_pointer_cast<Result>(
             loaded));
         EXPECT_TRUE(result);
@@ -94,7 +99,7 @@ public:
     // The loadCheck throws an exception
     void checkException(const string& JSON) {
         SCOPED_TRACE("Loading check exception: " + JSON);
-        ConstElementPtr input(el(JSON));
+        ConstElementPtr input(Element::fromJSON(JSON));
         // Not using EXPECT_THROW, we want to examine the exception
         try {
             loader_.loadCheck(input);
@@ -128,7 +133,7 @@ public:
         SCOPED_TRACE("Running ACL for " + JSON);
         aclSetup();
         shared_ptr<ACL<Log> > acl;
-        EXPECT_NO_THROW(acl = loader_.load(el(JSON)));
+        EXPECT_NO_THROW(acl = loader_.load(Element::fromJSON(JSON)));
         EXPECT_EQ(expectedResult, acl->execute(log_));
         log_.checkFirst(logged);
     }
@@ -136,7 +141,7 @@ public:
     void aclException(const string& JSON) {
         SCOPED_TRACE("Trying to load bad " + JSON);
         aclSetup();
-        EXPECT_THROW(loader_.load(el(JSON)), LoaderError);
+        EXPECT_THROW(loader_.load(Element::fromJSON(JSON)), LoaderError);
     }
     // Check that the subexpression is NamedCheck with correct data
     void isSubexprNamed(const CompoundCheck<Log>* compound, size_t index,
@@ -179,7 +184,7 @@ TEST_F(LoaderTest, SimpleCheckLoad) {
     addNamed("name");
     shared_ptr<NamedCheck> check(loadCheck("{\"name\": 42}"));
     EXPECT_EQ("name", check->name_);
-    EXPECT_TRUE(check->data_->equals(*el("42")));
+    EXPECT_TRUE(check->data_->equals(*Element::fromJSON("42")));
 }
 
 // As above, but there are multiple creators registered within the loader
@@ -188,7 +193,7 @@ TEST_F(LoaderTest, MultiCreatorCheckLoad) {
     addNamed("name2");
     shared_ptr<NamedCheck> check(loadCheck("{\"name2\": 42}"));
     EXPECT_EQ("name2", check->name_);
-    EXPECT_TRUE(check->data_->equals(*el("42")));
+    EXPECT_TRUE(check->data_->equals(*Element::fromJSON("42")));
 }
 
 // Similar to above, but there's a creator with multiple names
@@ -201,7 +206,7 @@ TEST_F(LoaderTest, MultiNameCheckLoad) {
         new NamedCreator(names))));
     shared_ptr<NamedCheck> check(loadCheck("{\"name3\": 42}"));
     EXPECT_EQ("name3", check->name_);
-    EXPECT_TRUE(check->data_->equals(*el("42")));
+    EXPECT_TRUE(check->data_->equals(*Element::fromJSON("42")));
 }
 
 // Invalid format is rejected
@@ -225,7 +230,8 @@ TEST_F(LoaderTest, UnkownName) {
 // Exception from the creator is propagated
 TEST_F(LoaderTest, CheckPropagate) {
     loader_.registerCreator(shared_ptr<ThrowCreator>(new ThrowCreator()));
-    EXPECT_THROW(loader_.loadCheck(el("{\"throw\": null}")), TestCreatorError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"throw\": null}")),
+                 TestCreatorError);
 }
 
 // The abbreviated form of check
@@ -243,8 +249,8 @@ TEST_F(LoaderTest, AndAbbrev) {
         // elements, which is in the lexicographical order of the strings.
         // This is not required from our interface, but is easier to write
         // the test.
-        isSubexprNamed(&*oper, 0, "name1", el("1"));
-        isSubexprNamed(&*oper, 1, "name2", el("2"));
+        isSubexprNamed(&*oper, 0, "name1", Element::fromJSON("1"));
+        isSubexprNamed(&*oper, 1, "name2", Element::fromJSON("2"));
     }
 }
 
@@ -258,8 +264,8 @@ TEST_F(LoaderTest, OrAbbrev) {
     if (oper) {
         // The subexpressions are correct
         EXPECT_EQ(2, oper->getSubexpressions().size());
-        isSubexprNamed(&*oper, 0, "name1", el("1"));
-        isSubexprNamed(&*oper, 1, "name1", el("2"));
+        isSubexprNamed(&*oper, 0, "name1", Element::fromJSON("1"));
+        isSubexprNamed(&*oper, 1, "name1", Element::fromJSON("2"));
     }
 }
 
@@ -280,14 +286,14 @@ TEST_F(LoaderTest, BothAbbrev) {
         // elements, which is in the lexicographical order of the strings.
         // This is not required from our interface, but is easier to write
         // the test.
-        isSubexprNamed(&*oper, 0, "name1", el("1"));
+        isSubexprNamed(&*oper, 0, "name1", Element::fromJSON("1"));
         const LogicOperator<AnyOfSpec, Log>*
             orOper(dynamic_cast<const LogicOperator<AnyOfSpec, Log>*>(
             oper->getSubexpressions()[1]));
         ASSERT_TRUE(orOper) << "Different type than AnyOf operator";
         EXPECT_EQ(2, orOper->getSubexpressions().size());
-        isSubexprNamed(orOper, 0, "name2", el("3"));
-        isSubexprNamed(orOper, 1, "name2", el("4"));
+        isSubexprNamed(orOper, 0, "name2", Element::fromJSON("3"));
+        isSubexprNamed(orOper, 1, "name2", Element::fromJSON("4"));
     }
 }
 
@@ -297,7 +303,7 @@ TEST_F(LoaderTest, ListCheck) {
     addNamed("name1", false);
     shared_ptr<NamedCheck> check(loadCheck("{\"name1\": [1, 2]}"));
     EXPECT_EQ("name1", check->name_);
-    EXPECT_TRUE(check->data_->equals(*el("[1, 2]")));
+    EXPECT_TRUE(check->data_->equals(*Element::fromJSON("[1, 2]")));
 }
 
 // Check the action key is ignored as it should be
@@ -305,7 +311,7 @@ TEST_F(LoaderTest, CheckNoAction) {
     addNamed("name1");
     shared_ptr<NamedCheck> check(loadCheck("{\"name1\": 1, \"action\": 2}"));
     EXPECT_EQ("name1", check->name_);
-    EXPECT_TRUE(check->data_->equals(*el("1")));
+    EXPECT_TRUE(check->data_->equals(*Element::fromJSON("1")));
 }
 
 // The empty ACL can be created and run, providing the default action
@@ -363,7 +369,9 @@ TEST_F(LoaderTest, NoAction) {
 // Exceptions from check creation is propagated
 TEST_F(LoaderTest, ACLPropagate) {
     aclSetup();
-    EXPECT_THROW(loader_.load(el("[{\"action\": \"ACCEPT\", \"throw\": 1}]")),
+    EXPECT_THROW(loader_.load(
+                     Element::fromJSON(
+                         "[{\"action\": \"ACCEPT\", \"throw\": 1}]")),
                  TestCreatorError);
 
 }

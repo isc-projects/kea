@@ -19,53 +19,49 @@
 #define CREATORS_H
 
 #include "logcheck.h"
+
+#include <cc/data.h>
 #include <acl/loader.h>
 #include <string>
 
-using isc::data::ConstElementPtr;
-using namespace std;
-using namespace boost;
-
-namespace {
-
-// Just for convenience, create JSON objects from JSON string
-ConstElementPtr el(const string& JSON) {
-    return (isc::data::Element::fromJSON(JSON));
-}
+namespace isc {
+namespace acl {
+namespace tests {
 
 // A check that doesn't check anything but remembers it's own name
 // and data
 class NamedCheck : public Check<Log> {
 public:
-    NamedCheck(const string& name, ConstElementPtr data) :
+    NamedCheck(const std::string& name, isc::data::ConstElementPtr data) :
         name_(name),
         data_(data)
     {}
     virtual bool matches(const Log&) const { return (true); }
-    const string name_;
-    const ConstElementPtr data_;
+    const std::string name_;
+    const isc::data::ConstElementPtr data_;
 };
 
 // The creator of NamedCheck
 class NamedCreator : public Loader<Log>::CheckCreator {
 public:
-    NamedCreator(const string& name, bool abbreviatedList = true) :
+    NamedCreator(const std::string& name, bool abbreviatedList = true) :
         abbreviated_list_(abbreviatedList)
     {
         names_.push_back(name);
     }
-    NamedCreator(const vector<string>& names) :
+    NamedCreator(const std::vector<std::string>& names) :
         names_(names),
         abbreviated_list_(true)
     {}
-    vector<string> names() const {
+    std::vector<std::string> names() const {
         return (names_);
     }
-    shared_ptr<Check<Log> > create(const string& name, ConstElementPtr data,
-                                   const Loader<Log>&)
+    boost::shared_ptr<Check<Log> > create(const std::string& name,
+                                          isc::data::ConstElementPtr data,
+                                          const Loader<Log>&)
     {
         bool found(false);
-        for (vector<string>::const_iterator i(names_.begin());
+        for (std::vector<std::string>::const_iterator i(names_.begin());
              i != names_.end(); ++i) {
             if (*i == name) {
                 found = true;
@@ -74,13 +70,13 @@ public:
         }
         EXPECT_TRUE(found) << "Name " << name << " passed to creator which "
             "doesn't handle it.";
-        return (shared_ptr<Check<Log> >(new NamedCheck(name, data)));
+        return (boost::shared_ptr<Check<Log> >(new NamedCheck(name, data)));
     }
     bool allowListAbbreviation() const {
         return (abbreviated_list_);
     }
 private:
-    vector<string> names_;
+    std::vector<std::string> names_;
     const bool abbreviated_list_;
 };
 
@@ -90,13 +86,14 @@ class TestCreatorError {};
 // This will throw every time it should create something
 class ThrowCreator : public Loader<Log>::CheckCreator {
 public:
-    vector<string> names() const {
-        vector<string> result;
+    std::vector<std::string> names() const {
+        std::vector<std::string> result;
         result.push_back("throw");
         return (result);
     }
-    shared_ptr<Check<Log> > create(const string&, ConstElementPtr,
-                                   const Loader<Log>&)
+    boost::shared_ptr<Check<Log> > create(const std::string&,
+                                          isc::data::ConstElementPtr,
+                                          const Loader<Log>&)
     {
         throw TestCreatorError();
     }
@@ -113,22 +110,23 @@ public:
 // And creator for it
 class ThrowCheckCreator : public Loader<Log>::CheckCreator {
 public:
-    vector<string> names() const {
-        vector<string> result;
+    std::vector<std::string> names() const {
+        std::vector<std::string> result;
         result.push_back("throwcheck");
         return (result);
     }
-    shared_ptr<Check<Log> > create(const string&, ConstElementPtr,
-                                   const Loader<Log>&)
+    boost::shared_ptr<Check<Log> > create(const std::string&,
+                                          isc::data::ConstElementPtr,
+                                          const Loader<Log>&)
     {
-        return (shared_ptr<Check<Log> >(new ThrowCheck()));
+        return (boost::shared_ptr<Check<Log> >(new ThrowCheck()));
     }
 };
 
 class LogCreator : public Loader<Log>::CheckCreator {
 public:
-    vector<string> names() const {
-        vector<string> result;
+    std::vector<std::string> names() const {
+        std::vector<std::string> result;
         result.push_back("logcheck");
         return (result);
     }
@@ -137,18 +135,24 @@ public:
      * logging cell used, the second is result of the check. No error checking
      * is done, if there's bug in the test, it will throw TypeError for us.
      */
-    shared_ptr<Check<Log> > create(const string&, ConstElementPtr definition,
-                                   const Loader<Log>&)
+    boost::shared_ptr<Check<Log> > create(const std::string&,
+                                          isc::data::ConstElementPtr definition,
+                                          const Loader<Log>&)
     {
-        vector<ConstElementPtr> list(definition->listValue());
+        std::vector<isc::data::ConstElementPtr> list(definition->listValue());
         int logpos(list[0]->intValue());
         bool accept(list[1]->boolValue());
-        return (shared_ptr<ConstCheck>(new ConstCheck(accept, logpos)));
+        return (boost::shared_ptr<ConstCheck>(new ConstCheck(accept, logpos)));
     }
     // We take a list, so don't interpret it for us
     virtual bool allowListAbbreviation() const { return (false); }
 };
 
 }
-
+}
+}
 #endif
+
+// Local Variables:
+// mode: c++
+// End:
