@@ -775,6 +775,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/auth/Makefile
                  src/bin/auth/tests/Makefile
                  src/bin/auth/benchmarks/Makefile
+                 src/bin/dhcp6/Makefile
+                 src/bin/dhcp6/tests/Makefile
                  src/bin/resolver/Makefile
                  src/bin/resolver/tests/Makefile
                  src/bin/sockcreator/Makefile
@@ -904,6 +906,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/msgq/run_msgq.sh
            src/bin/auth/auth.spec.pre
            src/bin/auth/spec_config.h.pre
+           src/bin/dhcp6/spec_config.h.pre
            src/bin/tests/process_rename_test.py
            src/lib/config/tests/data_def_unittests_config.h
            src/lib/python/isc/config/tests/config_test
