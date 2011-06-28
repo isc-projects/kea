@@ -385,7 +385,6 @@ class TestNotifyOut(unittest.TestCase):
         # nonblock_event will be cleared soon since there are no notifying zones.
         while (self._notify._nonblock_event.isSet()):
             pass
-        self.assertFalse(self._notify._nonblock_event.isSet())
 
         # send notify
         example_net_info = self._notify._notify_infos[('example.net.', 'IN')]
@@ -399,8 +398,8 @@ class TestNotifyOut(unittest.TestCase):
         example_net_info.notify_try_num = notify_out._MAX_NOTIFY_TRY_NUM
         while (self._notify._nonblock_event.isSet()):
             pass
-        self.assertFalse(self._notify._nonblock_event.isSet())
 
+        self.assertFalse(self._notify._nonblock_event.isSet())
         self._notify.shutdown()
         # nonblock_event should have been setted to stop waiting.
         self.assertTrue(self._notify._nonblock_event.isSet())
