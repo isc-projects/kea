@@ -35,44 +35,44 @@ passfail() {
 
 echo -n "1. runInitTest default parameters:"
 cat > $tempfile << .
-FATAL [example] LOG_WRITE_ERROR, error writing to test1: 42
-ERROR [example] LOG_READING_LOCAL_FILE, reading local message file dummy/file
-WARN  [example] LOG_BAD_STREAM, bad log console output stream: example
-WARN  [example.alpha] LOG_READ_ERROR, error reading from message file a.txt: dummy reason
-INFO  [example.alpha] LOG_INPUT_OPEN_FAIL, unable to open message file example.msg for input: dummy reason
-FATAL [example.beta] LOG_BAD_SEVERITY, unrecognized log severity: beta_fatal
-ERROR [example.beta] LOG_BAD_DESTINATION, unrecognized log destination: beta_error
-WARN  [example.beta] LOG_BAD_STREAM, bad log console output stream: beta_warn
-INFO  [example.beta] LOG_READ_ERROR, error reading from message file beta: info
+FATAL [example] LOG_WRITE_ERROR error writing to test1: 42
+ERROR [example] LOG_READING_LOCAL_FILE reading local message file dummy/file
+WARN  [example] LOG_BAD_STREAM bad log console output stream: example
+WARN  [example.alpha] LOG_READ_ERROR error reading from message file a.txt: dummy reason
+INFO  [example.alpha] LOG_INPUT_OPEN_FAIL unable to open message file example.msg for input: dummy reason
+FATAL [example.beta] LOG_BAD_SEVERITY unrecognized log severity: beta_fatal
+ERROR [example.beta] LOG_BAD_DESTINATION unrecognized log destination: beta_error
+WARN  [example.beta] LOG_BAD_STREAM bad log console output stream: beta_warn
+INFO  [example.beta] LOG_READ_ERROR error reading from message file beta: info
 .
 ./logger_example -c stdout | cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
 echo -n "2. Severity filter:"
 cat > $tempfile << .
-FATAL [example] LOG_WRITE_ERROR, error writing to test1: 42
-ERROR [example] LOG_READING_LOCAL_FILE, reading local message file dummy/file
-FATAL [example.beta] LOG_BAD_SEVERITY, unrecognized log severity: beta_fatal
-ERROR [example.beta] LOG_BAD_DESTINATION, unrecognized log destination: beta_error
+FATAL [example] LOG_WRITE_ERROR error writing to test1: 42
+ERROR [example] LOG_READING_LOCAL_FILE reading local message file dummy/file
+FATAL [example.beta] LOG_BAD_SEVERITY unrecognized log severity: beta_fatal
+ERROR [example.beta] LOG_BAD_DESTINATION unrecognized log destination: beta_error
 .
 ./logger_example -c stdout -s error | cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
 echo -n "3. Debug level:"
 cat > $tempfile << .
-FATAL [example] LOG_WRITE_ERROR, error writing to test1: 42
-ERROR [example] LOG_READING_LOCAL_FILE, reading local message file dummy/file
-WARN  [example] LOG_BAD_STREAM, bad log console output stream: example
-WARN  [example.alpha] LOG_READ_ERROR, error reading from message file a.txt: dummy reason
-INFO  [example.alpha] LOG_INPUT_OPEN_FAIL, unable to open message file example.msg for input: dummy reason
-DEBUG [example] LOG_READING_LOCAL_FILE, reading local message file example/0
-DEBUG [example] LOG_READING_LOCAL_FILE, reading local message file example/24
-DEBUG [example] LOG_READING_LOCAL_FILE, reading local message file example/25
-FATAL [example.beta] LOG_BAD_SEVERITY, unrecognized log severity: beta_fatal
-ERROR [example.beta] LOG_BAD_DESTINATION, unrecognized log destination: beta_error
-WARN  [example.beta] LOG_BAD_STREAM, bad log console output stream: beta_warn
-INFO  [example.beta] LOG_READ_ERROR, error reading from message file beta: info
-DEBUG [example.beta] LOG_BAD_SEVERITY, unrecognized log severity: beta/25
+FATAL [example] LOG_WRITE_ERROR error writing to test1: 42
+ERROR [example] LOG_READING_LOCAL_FILE reading local message file dummy/file
+WARN  [example] LOG_BAD_STREAM bad log console output stream: example
+WARN  [example.alpha] LOG_READ_ERROR error reading from message file a.txt: dummy reason
+INFO  [example.alpha] LOG_INPUT_OPEN_FAIL unable to open message file example.msg for input: dummy reason
+DEBUG [example] LOG_READING_LOCAL_FILE reading local message file example/0
+DEBUG [example] LOG_READING_LOCAL_FILE reading local message file example/24
+DEBUG [example] LOG_READING_LOCAL_FILE reading local message file example/25
+FATAL [example.beta] LOG_BAD_SEVERITY unrecognized log severity: beta_fatal
+ERROR [example.beta] LOG_BAD_DESTINATION unrecognized log destination: beta_error
+WARN  [example.beta] LOG_BAD_STREAM bad log console output stream: beta_warn
+INFO  [example.beta] LOG_READ_ERROR error reading from message file beta: info
+DEBUG [example.beta] LOG_BAD_SEVERITY unrecognized log severity: beta/25
 .
 ./logger_example -c stdout -s debug -d 25 | cut -d' ' -f3- | diff $tempfile -
 passfail $?
