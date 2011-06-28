@@ -94,12 +94,12 @@ def main():
         cm.notify_boss()
         cm.run()
     except SessionError as se:
-        logger.error(CFGMGR_CC_SESSION_ERROR, str(se))
+        logger.fatal(CFGMGR_CC_SESSION_ERROR, se)
         return 1
     except KeyboardInterrupt as kie:
         logger.info(CFGMGR_STOPPED_BY_KEYBOARD)
     except ConfigManagerDataReadError as cmdre:
-        logger.error(CFGMGR_DATA_READ_ERROR, str(cmdre))
+        logger.fatal(CFGMGR_DATA_READ_ERROR, cmdre)
         return 2
     return 0
 
