@@ -1,13 +1,52 @@
-260.	[func]      stephen
+265.	[func]*		jinmei
+	b10-resolver: Introduced ACL on incoming queries.  By default the
+	resolver accepts queries from ::1 and 127.0.0.1 and rejects all
+	others.  The ACL can be configured with bindctl via the
+	"Resolver/query_acl" parameter.  For example, to accept queries
+	from 192.0.2.0/24 (in addition to the default list), do this:
+	> config add Resolver/query_acl
+	> config set Resolver/query_acl[2]/action "ACCEPT"
+	> config set Resolver/query_acl[2]/from "192.0.2.0/24"
+	> config commit
+	(Trac #999, git e0744372924442ec75809d3964e917680c57a2ce,
+	also based on other ACL related work done by stephen and vorner)
+
+264.	[bug]		jerry
+	b10-xfrout: fixed a busy loop in its notify-out subthread.  Due to
+	the loop, the thread previously woke up every 0.5 seconds throughout
+	most of the lifetime of b10-xfrout, wasting the corresponding CPU
+	time.
+	(Trac #1001, git fb993ba8c52dca4a3a261e319ed095e5af8db15a)
+
+263.	[func]		jelte
+	Logging configuration can now also accept a * as a first-level
+	name (e.g. '*', or '*.cache'), indicating that every module
+	should use that configuration, unless overridden by an explicit
+	logging configuration for that module
+	(Trac #1004, git 0fad7d4a8557741f953eda9fed1d351a3d9dc5ef)
+
+262.	[func]		stephen
+	Add some initial documentation about the logging framework.
+	Provide BIND 10 Messages Manual in HTML and DocBook? XML formats.
+	This provides all the log message descriptions in a single document.
+	A developer tool, tools/system_messages.py (available in git repo),
+	was written to generate this.
+	(Trac #1012, git 502100d7b9cd9d2300e78826a3bddd024ef38a74)
+
+261.	[func]		stephen
+	Add new-style logging messages to b10-auth.
+	(Trac #738, git c021505a1a0d6ecb15a8fd1592b94baff6d115f4)
+
+260.	[func]		stephen
 	Remove comma between message identification and the message
 	text in the new-style logging messages.
-	(Trac 1031, git 1c7930a7ba19706d388e4f8dcf2a55a886b74cd2)
+	(Trac #1031, git 1c7930a7ba19706d388e4f8dcf2a55a886b74cd2)
 
-259.	[bug]       stephen
+259.	[bug]		stephen
 	Logging now correctly initialized in b10-auth.  Also, fixed
 	bug whereby querying for "version.bind txt ch" would cause
 	b10-auth to crash if BIND 10 was started with the "-v" switch.
-	(Trac 1022,1023, git 926a65fa08617be677a93e9e388df0f229b01067)
+	(Trac #1022,#1023, git 926a65fa08617be677a93e9e388df0f229b01067)
 
 258.	[build]		jelte
 	Now builds and runs with Python 3.2

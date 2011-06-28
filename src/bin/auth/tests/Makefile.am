@@ -22,6 +22,7 @@ TESTS += run_unittests
 run_unittests_SOURCES = $(top_srcdir)/src/lib/dns/tests/unittest_util.h
 run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
 run_unittests_SOURCES += ../auth_srv.h ../auth_srv.cc
+run_unittests_SOURCES += ../auth_log.h ../auth_log.cc
 run_unittests_SOURCES += ../query.h ../query.cc
 run_unittests_SOURCES += ../change_user.h ../change_user.cc
 run_unittests_SOURCES += ../auth_config.h ../auth_config.cc
@@ -36,6 +37,9 @@ run_unittests_SOURCES += query_unittest.cc
 run_unittests_SOURCES += change_user_unittest.cc
 run_unittests_SOURCES += statistics_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
+
+nodist_run_unittests_SOURCES = ../auth_messages.h ../auth_messages.cc
+
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 run_unittests_LDADD = $(GTEST_LDADD)
