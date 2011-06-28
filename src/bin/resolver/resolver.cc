@@ -464,7 +464,8 @@ Resolver::processMessage(const IOMessage& io_message,
         makeErrorMessage(query_message, answer_message,
                          buffer, Rcode::NOTAUTH());
         // Notify arrived, but we are not authoritative.
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS, RESOLVER_NFYNOTAUTH);
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS,
+                  RESOLVER_NOTIFY_RECEIVED);
     } else if (query_message->getOpcode() != Opcode::QUERY()) {
         // Unsupported opcode.
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_PROCESS,
@@ -562,7 +563,7 @@ ResolverImpl::processNormalQuery(const IOMessage& io_message,
     // Everything is okay.  Start resolver.
     if (upstream_.empty()) {
         // Processing normal query
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_NORMQUERY);
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_NORMAL_QUERY);
         rec_query_->resolve(*question, answer_message, buffer, server);
     } else {
         // Processing forward query
