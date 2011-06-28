@@ -124,27 +124,6 @@ public:
                         isc::util::OutputBufferPtr buffer,
                         isc::asiodns::DNSServer* server);
 
-    /// \brief Set verbose flag
-    ///
-    /// \param on The new value of the verbose flag
-
-    /// \brief Enable or disable verbose logging.
-    ///
-    /// This method never throws an exception.
-    ///
-    /// \param on \c true to enable verbose logging; \c false to disable
-    /// verbose logging.
-    void setVerbose(const bool on);
-
-    /// \brief Returns the logging verbosity of the \c AuthSrv object.
-    ///
-    /// This method never throws an exception.
-    ///
-    /// \return \c true if verbose logging is enabled; otherwise \c false.
-
-    /// \brief Get the current value of the verbose flag
-    bool getVerbose() const;
-
     /// \brief Updates the data source for the \c AuthSrv object.
     ///
     /// This method installs or replaces the data source that the \c AuthSrv

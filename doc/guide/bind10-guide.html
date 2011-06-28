@@ -6,7 +6,7 @@
       </p><p>
         This is the reference guide for BIND 10 version 20110519.
 	The most up-to-date version of this document, along with
-	other documents for BIND 10, can be found at <a class="ulink" href="http://bind10.isc.org/docs" target="_top">http://bind10.isc.org/docs</a>.  </p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#intro">1. Introduction</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230299038">Supported Platforms</a></span></dt><dt><span class="section"><a href="#id1168230299065">Required Software</a></span></dt><dt><span class="section"><a href="#starting_stopping">Starting and Stopping the Server</a></span></dt><dt><span class="section"><a href="#managing_once_running">Managing BIND 10</a></span></dt></dl></dd><dt><span class="chapter"><a href="#installation">2. Installation</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230284846">Building Requirements</a></span></dt><dt><span class="section"><a href="#quickstart">Quick start</a></span></dt><dt><span class="section"><a href="#install">Installation from source</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230285026">Download Tar File</a></span></dt><dt><span class="section"><a href="#id1168230285045">Retrieve from Git</a></span></dt><dt><span class="section"><a href="#id1168230285106">Configure before the build</a></span></dt><dt><span class="section"><a href="#id1168230285203">Build</a></span></dt><dt><span class="section"><a href="#id1168230285219">Install</a></span></dt><dt><span class="section"><a href="#id1168230285242">Install Hierarchy</a></span></dt></dl></dd></dl></dd><dt><span class="chapter"><a href="#bind10">3. Starting BIND10 with <span class="command"><strong>bind10</strong></span></a></span></dt><dd><dl><dt><span class="section"><a href="#start">Starting BIND 10</a></span></dt></dl></dd><dt><span class="chapter"><a href="#msgq">4. Command channel</a></span></dt><dt><span class="chapter"><a href="#cfgmgr">5. Configuration manager</a></span></dt><dt><span class="chapter"><a href="#cmdctl">6. Remote control daemon</a></span></dt><dd><dl><dt><span class="section"><a href="#cmdctl.spec">Configuration specification for b10-cmdctl</a></span></dt></dl></dd><dt><span class="chapter"><a href="#bindctl">7. Control and configure user interface</a></span></dt><dt><span class="chapter"><a href="#authserver">8. Authoritative Server</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230285816">Server Configurations</a></span></dt><dt><span class="section"><a href="#id1168230285881">Data Source Backends</a></span></dt><dt><span class="section"><a href="#id1168230285912">Loading Master Zones Files</a></span></dt></dl></dd><dt><span class="chapter"><a href="#xfrin">9. Incoming Zone Transfers</a></span></dt><dt><span class="chapter"><a href="#xfrout">10. Outbound Zone Transfers</a></span></dt><dt><span class="chapter"><a href="#zonemgr">11. Secondary Manager</a></span></dt><dt><span class="chapter"><a href="#resolverserver">12. Recursive Name Server</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230286300">Forwarding</a></span></dt></dl></dd><dt><span class="chapter"><a href="#statistics">13. Statistics</a></span></dt></dl></div><div class="chapter" title="Chapter 1. Introduction"><div class="titlepage"><div><div><h2 class="title"><a name="intro"></a>Chapter 1. Introduction</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168230299038">Supported Platforms</a></span></dt><dt><span class="section"><a href="#id1168230299065">Required Software</a></span></dt><dt><span class="section"><a href="#starting_stopping">Starting and Stopping the Server</a></span></dt><dt><span class="section"><a href="#managing_once_running">Managing BIND 10</a></span></dt></dl></div><p>
+	other documents for BIND 10, can be found at <a class="ulink" href="http://bind10.isc.org/docs" target="_top">http://bind10.isc.org/docs</a>.  </p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#intro">1. Introduction</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230299038">Supported Platforms</a></span></dt><dt><span class="section"><a href="#id1168230299065">Required Software</a></span></dt><dt><span class="section"><a href="#starting_stopping">Starting and Stopping the Server</a></span></dt><dt><span class="section"><a href="#managing_once_running">Managing BIND 10</a></span></dt></dl></dd><dt><span class="chapter"><a href="#installation">2. Installation</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230284846">Building Requirements</a></span></dt><dt><span class="section"><a href="#quickstart">Quick start</a></span></dt><dt><span class="section"><a href="#install">Installation from source</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230285026">Download Tar File</a></span></dt><dt><span class="section"><a href="#id1168230285045">Retrieve from Git</a></span></dt><dt><span class="section"><a href="#id1168230285106">Configure before the build</a></span></dt><dt><span class="section"><a href="#id1168230285203">Build</a></span></dt><dt><span class="section"><a href="#id1168230285219">Install</a></span></dt><dt><span class="section"><a href="#id1168230285242">Install Hierarchy</a></span></dt></dl></dd></dl></dd><dt><span class="chapter"><a href="#bind10">3. Starting BIND10 with <span class="command"><strong>bind10</strong></span></a></span></dt><dd><dl><dt><span class="section"><a href="#start">Starting BIND 10</a></span></dt></dl></dd><dt><span class="chapter"><a href="#msgq">4. Command channel</a></span></dt><dt><span class="chapter"><a href="#cfgmgr">5. Configuration manager</a></span></dt><dt><span class="chapter"><a href="#cmdctl">6. Remote control daemon</a></span></dt><dd><dl><dt><span class="section"><a href="#cmdctl.spec">Configuration specification for b10-cmdctl</a></span></dt></dl></dd><dt><span class="chapter"><a href="#bindctl">7. Control and configure user interface</a></span></dt><dt><span class="chapter"><a href="#authserver">8. Authoritative Server</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230285816">Server Configurations</a></span></dt><dt><span class="section"><a href="#id1168230285881">Data Source Backends</a></span></dt><dt><span class="section"><a href="#id1168230285912">Loading Master Zones Files</a></span></dt></dl></dd><dt><span class="chapter"><a href="#xfrin">9. Incoming Zone Transfers</a></span></dt><dt><span class="chapter"><a href="#xfrout">10. Outbound Zone Transfers</a></span></dt><dt><span class="chapter"><a href="#zonemgr">11. Secondary Manager</a></span></dt><dt><span class="chapter"><a href="#resolverserver">12. Recursive Name Server</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230286300">Forwarding</a></span></dt></dl></dd><dt><span class="chapter"><a href="#statistics">13. Statistics</a></span></dt><dt><span class="chapter"><a href="#logging">14. Logging</a></span></dt></dl></div><div class="chapter" title="Chapter 1. Introduction"><div class="titlepage"><div><div><h2 class="title"><a name="intro"></a>Chapter 1. Introduction</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168230299038">Supported Platforms</a></span></dt><dt><span class="section"><a href="#id1168230299065">Required Software</a></span></dt><dt><span class="section"><a href="#starting_stopping">Starting and Stopping the Server</a></span></dt><dt><span class="section"><a href="#managing_once_running">Managing BIND 10</a></span></dt></dl></div><p>
       BIND is the popular implementation of a DNS server, developer
       interfaces, and DNS tools.
       BIND 10 is a rewrite of BIND 9.  BIND 10 is written in C++ and Python
@@ -684,4 +684,48 @@ This may be a temporary setting until then.
     "stats.timestamp": 1295543046.823504
 }
        </pre><p>
+    </p></div><div class="chapter" title="Chapter 14. Logging"><div class="titlepage"><div><div><h2 class="title"><a name="logging"></a>Chapter 14. Logging</h2></div></div></div><p>
+        Each message written by BIND 10 to the configured logging destinations
+        comprises a number of components that identify the origin of the
+        message and, if the message indicates a problem, information about the
+        problem that may be useful in fixing it.
+    </p><p>
+        Consider the message below logged to a file:
+        </p><pre class="screen">2011-06-15 13:48:22.034 ERROR [b10-resolver.asiolink]
+    ASIODNS_OPENSOCK error 111 opening TCP socket to 127.0.0.1(53)</pre><p>
+    </p><p>
+      Note: the layout of messages written to the system logging
+      file (syslog) may be slightly different.  This message has
+      been split across two lines here for display reasons; in the
+      logging file, it will appear on one line.)
+    </p><p>
+      The log message comprises a number of components:
+
+        </p><div class="variablelist"><dl><dt><span class="term">2011-06-15 13:48:22.034</span></dt><dd><p>
+            The date and time at which the message was generated.
+        </p></dd><dt><span class="term">ERROR</span></dt><dd><p>
+            The severity of the message.
+        </p></dd><dt><span class="term">[b10-resolver.asiolink]</span></dt><dd><p>
+	    The source of the message.  This comprises two components:
+	    the BIND 10 process generating the message (in this
+	    case, <span class="command"><strong>b10-resolver</strong></span>) and the module
+	    within the program from which the message originated
+	    (which in the example is the asynchronous I/O link
+	    module, asiolink).
+        </p></dd><dt><span class="term">ASIODNS_OPENSOCK</span></dt><dd><p>
+	    The message identification.  Every message in BIND 10
+	    has a unique identification, which can be used as an
+	    index into the <a class="ulink" href="bind10-messages.html" target="_top"><em class="citetitle">BIND 10 Messages
+	    Manual</em></a> (<a class="ulink" href="http://bind10.isc.org/docs/bind10-messages.html" target="_top">http://bind10.isc.org/docs/bind10-messages.html</a>) from which more information can be obtained.
+        </p></dd><dt><span class="term">error 111 opening TCP socket to 127.0.0.1(53)</span></dt><dd><p>
+            A brief description of the cause of the problem.  Within this text,
+            information relating to the condition that caused the message to
+            be logged will be included.  In this example, error number 111
+            (an operating system-specific error number) was encountered when
+            trying to open a TCP connection to port 53 on the local system
+            (address 127.0.0.1).  The next step would be to find out the reason
+            for the failure by consulting your system's documentation to
+            identify what error number 111 means.
+        </p></dd></dl></div><p>
+
     </p></div></div></body></html>
