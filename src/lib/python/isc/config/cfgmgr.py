@@ -137,9 +137,9 @@ class ConfigManagerData:
             else:
                 os.rename(filename, self.db_filename)
         except IOError as ioe:
-            logger.error(CFGMGR_IOERROR_WHILE_WRITING_CONFIGURATION, str(ioe))
+            logger.error(CFGMGR_IOERROR_WHILE_WRITING_CONFIGURATION, ioe)
         except OSError as ose:
-            logger.error(CFGMGR_OSERROR_WHILE_WRITING_CONFIGURATION, str(ose))
+            logger.error(CFGMGR_OSERROR_WHILE_WRITING_CONFIGURATION, ose)
         try:
             if filename and os.path.exists(filename):
                 os.remove(filename)
