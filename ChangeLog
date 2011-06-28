@@ -1,5 +1,8 @@
 264.	[bug]       jerry
-	Fix a busy loop issue in notify-out.
+	b10-xfrout: fixed a busy loop in its notify-out subthread.  Due to
+	the loop, the thread previously woke up every 0.5 seconds throughout
+	most of the lifetime of b10-xfrout, wasting the corresponding CPU
+	time.
 	(Trac 1001, git fb993ba8c52dca4a3a261e319ed095e5af8db15a)
 
 263.	[func]      jelte
