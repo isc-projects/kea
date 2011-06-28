@@ -101,7 +101,7 @@ main(int argc, char* argv[]) {
             specfile = string(getenv("B10_FROM_BUILD")) +
                 "/src/bin/auth/dhcp6.spec";
         } else {
-            specfile = string(AUTH_SPECFILE_LOCATION);
+            specfile = string(DHCP6_SPECFILE_LOCATION);
         }
 
         // auth_server = new AuthSrv(cache, xfrout_client);
@@ -114,8 +114,8 @@ main(int argc, char* argv[]) {
     }
 
     while (true) {
-	    sleep(10);
-	    cout << "[b10-dhcp6] I'm alive." << endl;
+            sleep(10);
+            cout << "[b10-dhcp6] I'm alive." << endl;
     }
 
     return (ret);
