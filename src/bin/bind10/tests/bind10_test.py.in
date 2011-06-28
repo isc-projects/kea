@@ -111,6 +111,9 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.cfg_start_auth, True)
         self.assertEqual(bob.cfg_start_resolver, False)
 
+        self.assertEqual(bob.cfg_start_dhcp4, False)
+        self.assertEqual(bob.cfg_start_dhcp6, False)
+
     def test_init_alternate_socket(self):
         bob = BoB("alt_socket_file")
         self.assertEqual(bob.verbose, False)
@@ -125,6 +128,8 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.nocache, False)
         self.assertEqual(bob.cfg_start_auth, True)
         self.assertEqual(bob.cfg_start_resolver, False)
+        self.assertEqual(bob.cfg_start_dhcp4, False)
+        self.assertEqual(bob.cfg_start_dhcp6, False)
 
     def test_command_handler(self):
         class DummySession():
@@ -247,6 +252,16 @@ class MockBob(BoB):
         self.processes[12] = ProcessInfo('b10-cmdctl', ['/bin/false'])
         self.processes[12].pid = 12
 
+    def start_dhcp6(self, c_channel_env):
+        self.dhcp6 = True
+        self.processes[13] = ProcessInfo('b10-dhcp6', ['/bin/false'])
+        self.processes[13]
+
+    def start_dhcp4(self, c_channel_env):
+        self.dhcp4 = True
+        self.processes[14] = ProcessInfo('b10-dhcp4', ['/bin/false'])
+        self.processes[14]
+
     # We don't really use all of these stop_ methods. But it might turn out
     # someone would add some stop_ method to BoB and we want that one overriden
     # in case he forgets to update the tests.
@@ -358,6 +373,24 @@ class TestStartStopProcessesBob(unittest.TestCase):
         Check the set of processes needed to run resolver only is started.
         """
         self.check_started(bob, True, False, True)
+
+    def check_started_dhcp(self, bob, v4, v6):
+        """
+        Check if proper combinations of DHCPv4 and DHCpv6 can be started
+        """
+        v4found = 0
+        v6found = 0
+
+        for pid in bob.processes:
+            if (bob.processes[pid].name == "b10-dhcp4"):
+                v4found += 1
+            if (bob.processes[pid].name == "b10-dhcp6"):
+                v6found += 1
+
+        # there should be exactly one DHCPv4 daemon (if v4==True)
+        # there should be exactly one DHCPv6 daemon (if v6==True)
+        self.assertEqual(v4==True, v4found==1)
+        self.assertEqual(v6==True, v6found==1)
 
     # Checks the processes started when starting neither auth nor resolver
     # is specified.
@@ -523,6 +556,40 @@ class TestStartStopProcessesBob(unittest.TestCase):
         bob.start_resolver = lambda: self.fail("Started resolver again")
 
         bob.config_handler({'start_auth': True, 'start_resolver': True})
+
+    # Checks that DHCP (v4 and v6) processes are started when expected
+    def test_start_dhcp(self):
+
+        # Create BoB and ensure correct initialization
+        bob = MockBob()
+        self.check_preconditions(bob)
+
+        # don't care about DNS stuff
+        bob.cfg_start_auth = False
+        bob.cfg_start_resolver = False
+
+        # v4 and v6 disabled
+        bob.cfg_start_dhcp6 = False
+        bob.cfg_start_dhcp4 = False
+        bob.start_all_processes()
+        self.check_started_dhcp(bob, False, False)
+
+        # v6 only enabled
+        bob.cfg_start_dhcp6 = True
+        bob.cfg_start_dhcp4 = False
+        bob.start_all_processes()
+        self.check_started_dhcp(bob, False, True)
+
+        # uncomment when dhcpv4 becomes implemented
+        # v4 only enabled
+        #bob.cfg_start_dhcp6 = False
+        #bob.cfg_start_dhcp4 = True
+        #self.check_started_dhcp(bob, True, False)
+
+        # both v4 and v6 enabled
+        #bob.cfg_start_dhcp6 = True
+        #bob.cfg_start_dhcp4 = True
+        #self.check_started_dhcp(bob, True, True)
 
 class TestBossCmd(unittest.TestCase):
     def test_ping(self):
