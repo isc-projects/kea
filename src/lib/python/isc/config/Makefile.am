@@ -1,8 +1,7 @@
 SUBDIRS = . tests
 
 python_PYTHON = __init__.py ccsession.py cfgmgr.py config_data.py module_spec.py
-
-nodist_python_PYTHON = cfgmgr_messages.py
+pyexec_DATA = cfgmgr_messages.py
 
 pythondir = $(pyexecdir)/isc/config
 
@@ -15,10 +14,6 @@ CLEANFILES = cfgmgr_messages.py cfgmgr_messages.pyc
 CLEANDIRS = __pycache__
 
 EXTRA_DIST = cfgmgr_messages.mes
-
-BUILT_SOURCES = cfgmgr_messages.py
-
-all-local: cfgmgr_messages.py
 
 clean-local:
 	rm -rf $(CLEANDIRS)
