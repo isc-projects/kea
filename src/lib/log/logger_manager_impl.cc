@@ -21,13 +21,13 @@
 #include <log4cplus/fileappender.h>
 #include <log4cplus/syslogappender.h>
 
-#include "log/logger.h"
-#include "log/logger_level_impl.h"
-#include "log/logger_manager.h"
-#include "log/logger_manager_impl.h"
-#include "log/logger_name.h"
-#include "log/logger_specification.h"
-#include "log/messagedef.h"
+#include <log/logger.h>
+#include <log/logger_level_impl.h>
+#include <log/logger_manager.h>
+#include <log/logger_manager_impl.h>
+#include <log/log_messages.h>
+#include <log/logger_name.h>
+#include <log/logger_specification.h>
 
 using namespace std;
 

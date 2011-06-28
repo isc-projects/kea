@@ -26,6 +26,7 @@ TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
+run_unittests_SOURCES += client_unittest.cc
 run_unittests_SOURCES += portconfig_unittest.cc
 run_unittests_SOURCES += keyring_test.cc
 nodist_run_unittests_SOURCES = data_path.h
@@ -37,6 +38,8 @@ run_unittests_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.la
+run_unittests_LDADD += $(top_builddir)/src/lib/acl/libacl.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la

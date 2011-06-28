@@ -12,7 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <boost/shared_ptr.hpp>
+
 #include "logcheck.h"
+
+using namespace isc::acl;
+using namespace isc::acl::tests;
+using boost::shared_ptr;
 
 namespace {
 
@@ -39,7 +45,7 @@ public:
     TestACL acl_;
     Log log_;
     size_t next_check_;
-    shared_ptr<Check<Log> > getCheck(bool accepts) {
+    boost::shared_ptr<Check<Log> > getCheck(bool accepts) {
         return (shared_ptr<Check<Log> >(new ConstCheck(accepts,
                                                        next_check_++)));
     }
