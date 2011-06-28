@@ -19,6 +19,7 @@
 #include <log/logger_manager.h>
 #include <log/logger_manager_impl.h>
 #include <log/logger_name.h>
+#include <log/logger_support.h>
 #include <log/log_messages.h>
 #include <log/macros.h>
 #include <log/message_dictionary.h>

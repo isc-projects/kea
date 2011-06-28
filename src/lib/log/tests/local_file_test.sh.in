@@ -44,28 +44,28 @@ cat > $localmes << .
 
 echo -n "1. Local message replacement:"
 cat > $tempfile << .
-WARN  [example.log] LOG_NO_SUCH_MESSAGE, could not replace message text for 'LOG_NOTHERE': no such message
-FATAL [example] LOG_WRITE_ERROR, error writing to test1: 42
-ERROR [example] LOG_READING_LOCAL_FILE, replacement read local message file, parameter is 'dummy/file'
-WARN  [example] LOG_BAD_STREAM, bad log console output stream: example
-WARN  [example.alpha] LOG_READ_ERROR, replacement read error, parameters: 'a.txt' and 'dummy reason'
-FATAL [example.beta] LOG_BAD_SEVERITY, unrecognized log severity: beta_fatal
-ERROR [example.beta] LOG_BAD_DESTINATION, unrecognized log destination: beta_error
-WARN  [example.beta] LOG_BAD_STREAM, bad log console output stream: beta_warn
+WARN  [example.log] LOG_NO_SUCH_MESSAGE could not replace message text for 'LOG_NOTHERE': no such message
+FATAL [example] LOG_WRITE_ERROR error writing to test1: 42
+ERROR [example] LOG_READING_LOCAL_FILE replacement read local message file, parameter is 'dummy/file'
+WARN  [example] LOG_BAD_STREAM bad log console output stream: example
+WARN  [example.alpha] LOG_READ_ERROR replacement read error, parameters: 'a.txt' and 'dummy reason'
+FATAL [example.beta] LOG_BAD_SEVERITY unrecognized log severity: beta_fatal
+ERROR [example.beta] LOG_BAD_DESTINATION unrecognized log destination: beta_error
+WARN  [example.beta] LOG_BAD_STREAM bad log console output stream: beta_warn
 .
 ./logger_example -c stdout -s warn $localmes | cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
 echo -n "2. Report error if unable to read local message file:"
 cat > $tempfile << .
-ERROR [example.log] LOG_INPUT_OPEN_FAIL, unable to open message file $localmes for input: No such file or directory
-FATAL [example] LOG_WRITE_ERROR, error writing to test1: 42
-ERROR [example] LOG_READING_LOCAL_FILE, reading local message file dummy/file
-WARN  [example] LOG_BAD_STREAM, bad log console output stream: example
-WARN  [example.alpha] LOG_READ_ERROR, error reading from message file a.txt: dummy reason
-FATAL [example.beta] LOG_BAD_SEVERITY, unrecognized log severity: beta_fatal
-ERROR [example.beta] LOG_BAD_DESTINATION, unrecognized log destination: beta_error
-WARN  [example.beta] LOG_BAD_STREAM, bad log console output stream: beta_warn
+ERROR [example.log] LOG_INPUT_OPEN_FAIL unable to open message file $localmes for input: No such file or directory
+FATAL [example] LOG_WRITE_ERROR error writing to test1: 42
+ERROR [example] LOG_READING_LOCAL_FILE reading local message file dummy/file
+WARN  [example] LOG_BAD_STREAM bad log console output stream: example
+WARN  [example.alpha] LOG_READ_ERROR error reading from message file a.txt: dummy reason
+FATAL [example.beta] LOG_BAD_SEVERITY unrecognized log severity: beta_fatal
+ERROR [example.beta] LOG_BAD_DESTINATION unrecognized log destination: beta_error
+WARN  [example.beta] LOG_BAD_STREAM bad log console output stream: beta_warn
 .
 rm -f $localmes
 ./logger_example -c stdout -s warn $localmes | cut -d' ' -f3- | diff $tempfile -
