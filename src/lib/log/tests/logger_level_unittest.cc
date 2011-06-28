@@ -19,8 +19,8 @@
 
 #include <log/logger.h>
 #include <log/logger_manager.h>
+#include <log/log_messages.h>
 #include <log/logger_name.h>
-#include <log/messagedef.h>
 
 using namespace isc;
 using namespace isc::log;
