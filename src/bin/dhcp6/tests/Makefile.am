@@ -10,5 +10,5 @@ check-local:
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/bind10 \
 	BIND10_MSGQ_SOCKET_FILE=$(abs_top_builddir)/msgq_socket \
-		$(PYCOVERAGE_RUN) $(abs_builddir)/$$pytest || exit ; \
+		$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
