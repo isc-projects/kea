@@ -19,6 +19,7 @@
 
 using namespace std;
 using namespace boost;
+using namespace isc::acl;
 using namespace isc::acl::tests;
 using isc::data::Element;
 using isc::data::ConstElementPtr;
