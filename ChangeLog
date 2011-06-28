@@ -1,3 +1,7 @@
+264.	[bug]       jerry
+	Fix a busy loop issue in notify-out.
+	(Trac 1001, git TBD)
+
 263.	[func]      jelte
 	Logging configuration can now also accept a * as a first-level
 	name (e.g. '*', or '*.cache'), indicating that every module
