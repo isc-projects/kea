@@ -454,6 +454,9 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
     ElementPtr map = Element::createMap();
     skip_chars(in, " \t\n", line, pos);
     char c = in.peek();
+    if (c == EOF) {
+        throwJSONError(std::string("Unterminated map, <string> or } expected"), file, line, pos);
+    }
     if (c == '}') {
         // empty map, skip closing curly
         c = in.get();
