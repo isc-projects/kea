@@ -59,7 +59,9 @@ public:
         BadValue(file, line, what),
         element_(element)
     {}
+
     ~ LoaderError() throw() {}
+
     /**
      * \brief Get the element.
      *
@@ -157,6 +159,7 @@ public:
         default_action_(defaultAction),
         action_loader_(actionLoader)
     {}
+
     /**
      * \brief Creator of the checks.
      *
@@ -168,6 +171,9 @@ public:
      */
     class CheckCreator {
     public:
+        /** \brief Virtual class needs virtual destructor */
+        virtual ~CheckCreator() {}
+
         /**
          * \brief List of names supported by this loader.
          *
@@ -177,6 +183,7 @@ public:
          * types of checks.
          */
         virtual std::vector<std::string> names() const = 0;
+
         /**
          * \brief Creates the check.
          *
@@ -200,6 +207,7 @@ public:
         virtual boost::shared_ptr<Check<Context> > create(
             const std::string& name, data::ConstElementPtr definition,
             const Loader<Context, Action>& loader) = 0;
+
         /**
          * \brief Is list or-abbreviation allowed?
          *
@@ -219,6 +227,7 @@ public:
             return (true);
         }
     };
+
     /**
      * \brief Register another check creator.
      *
@@ -252,6 +261,7 @@ public:
             creators_[*i] = creator;
         }
     }
+
     /**
      * \brief Load a check.
      *
@@ -282,6 +292,7 @@ public:
         // Call the internal part with extracted map
         return (loadCheck(description, map));
     }
+
     /**
      * \brief Load an ACL.
      *
@@ -332,6 +343,7 @@ public:
         }
         return (result);
     }
+
 private:
     // Some type aliases to save typing
     typedef std::map<std::string, boost::shared_ptr<CheckCreator> > Creators;
@@ -341,6 +353,7 @@ private:
     Creators creators_;
     const Action default_action_;
     const boost::function1<Action, data::ConstElementPtr> action_loader_;
+
     /**
      * \brief Internal version of loadCheck.
      *
@@ -412,6 +425,7 @@ private:
             }
         }
     }
+
     /**
      * \brief Check that always matches.
      *

@@ -1,0 +1,9 @@
+*~
+Makefile
+Makefile.in
+*.o
+.deps
+.libs
+b10-dhcp6
+spec_config.h
+spec_config.h.pre

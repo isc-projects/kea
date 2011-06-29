@@ -19,9 +19,9 @@
 
 #include <log4cplus/logger.h>
 
-#include <log/impldef.h>
 #include <log/logger_level.h>
 #include <log/logger_level_impl.h>
+#include <log/logimpl_messages.h>
 #include <log/macros.h>
 
 using namespace log4cplus;
@@ -157,12 +157,12 @@ LoggerLevelImpl::logLevelFromString(const log4cplus::tstring& level) {
                 try {
                     int dbglevel = boost::lexical_cast<int>(name.substr(5));
                     if (dbglevel < MIN_DEBUG_LEVEL) {
-                        LOG_WARN(logger, LOGIMPL_BELOWDBGMIN).arg(dbglevel)
+                        LOG_WARN(logger, LOGIMPL_BELOW_MIN_DEBUG).arg(dbglevel)
                             .arg(MIN_DEBUG_LEVEL);
                         dbglevel = MIN_DEBUG_LEVEL;
 
                     } else if (dbglevel > MAX_DEBUG_LEVEL) {
-                        LOG_WARN(logger, LOGIMPL_ABOVEDBGMAX).arg(dbglevel)
+                        LOG_WARN(logger, LOGIMPL_ABOVE_MAX_DEBUG).arg(dbglevel)
                             .arg(MAX_DEBUG_LEVEL);
                         dbglevel = MAX_DEBUG_LEVEL;
 
@@ -170,7 +170,7 @@ LoggerLevelImpl::logLevelFromString(const log4cplus::tstring& level) {
                     return convertFromBindLevel(Level(DEBUG, dbglevel));
                 }
                 catch (boost::bad_lexical_cast&) {
-                    LOG_ERROR(logger, LOGIMPL_BADDEBUG).arg(name);
+                    LOG_ERROR(logger, LOGIMPL_BAD_DEBUG_STRING).arg(name);
                     return (NOT_SET_LOG_LEVEL);
                 }
             }
