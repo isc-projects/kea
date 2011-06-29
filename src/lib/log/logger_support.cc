@@ -31,7 +31,9 @@
 
 #include <log/logger_level.h>
 #include <log/logger_manager.h>
+#include <log/logger_specification.h>
 #include <log/logger_support.h>
+#include <log/output_option.h>
 
 using namespace std;
 
@@ -39,6 +41,68 @@ namespace {
 
 // Flag to hold logging initialization state.
 bool logging_init_state = false;
+
+
+// Set logging destination according to the setting of B10_LOGGER_DESTINATION.
+// (See header for initLogger() for more details.)
+void
+setDestination(const char* root, const isc::log::Severity severity,
+               const int dbglevel) {
+
+    using namespace isc::log;
+
+    // Constants:
+    static const string STDOUT = "stdout";
+    static const string STDERR = "stderr";
+    static const string SYSLOG = "syslog";
+    static const string SYSLOG_COLON = "syslog:";
+
+
+    const char* destination = getenv("B10_LOGGER_DESTINATION");
+    if (destination != NULL) {
+
+        // Destination is present, adjust root logger destination to it.
+        LoggerSpecification spec(root, severity, dbglevel);
+        OutputOption option;
+
+        const string dest = destination;
+        if (dest == STDOUT) {
+            option.destination = OutputOption::DEST_CONSOLE;
+            option.stream = OutputOption::STR_STDOUT;
+
+        } else if (dest == STDERR) {
+            option.destination = OutputOption::DEST_CONSOLE;
+            option.stream = OutputOption::STR_STDERR;
+
+        } else if (dest == SYSLOG) {
+            option.destination = OutputOption::DEST_SYSLOG;
+            option.facility = "local0";
+
+        } else if (dest.find(SYSLOG_COLON) == 0) {
+            option.destination = OutputOption::DEST_SYSLOG;
+            // Must take account of the string actually being "syslog:".
+            if (dest == SYSLOG_COLON) {
+                cerr << "**ERROR** value for B10_LOGGER_DESTINATION of " <<
+                        SYSLOG_COLON << " is invalid, " << SYSLOG <<
+                        " will be used instead\n";
+                option.facility = "local0";
+            } else {
+                // Everything else is the facility name
+                option.facility = dest.substr(SYSLOG_COLON.size());
+            }
+
+        } else {
+            // Not a recognised destination, assume a file.
+            option.destination = OutputOption::DEST_FILE;
+            option.filename = dest;
+        }
+
+        // ... and set it.
+        spec.addOutputOption(option);
+        LoggerManager manager;
+        manager.process(spec);
+    }
+}
 
 } // Anonymous namespace
 
@@ -115,11 +179,14 @@ void initLogger(isc::log::Severity severity, int dbglevel) {
         }
     }
 
-    /// Set the local message file
+    // Set the local message file
     const char* localfile = getenv("B10_LOGGER_LOCALMSG");
 
     // Initialize logging
     initLogger(root, severity, dbglevel, localfile);
+
+    // Now set the destination
+    setDestination(root, severity, dbglevel);
 }
 
 } // namespace log
