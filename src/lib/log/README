@@ -410,6 +410,44 @@ logger "pkt-auth".)  As the loggers are independent and the severity
 levels independent, fine-tuning of what and what is not recorded can
 be achieved.
 
+Logging Initialization
+======================
+In all cases, if an attempt is made to use a logging method before the logging
+has been initialized, the program will terminate with a LoggingNotInitialized
+call.
+
+C++
+---
+Logging Initialization is carried out by calling initLogger().  There are two
+variants to the call, one for use by production programs and one for use by
+unit tests.
+
+Variant #1, Used by Production Programs
+---------------------------------------
+    void initLogger(const std::string& root,
+                    isc::log::Severity severity = isc::log::INFO,
+                    int dbglevel = 0, const char* file = NULL);
+
+This is the call that should be used by production programs:
+
+root
+Name of the program (e.g. "b10-auth").  This is also the name of the root
+logger and is used when configuring logging.
+
+severity
+Default severity that the program will start logging with.  Although this may
+be overridden when the program obtains its configuration from the configuration
+database, this is the severity that it used until then.  (This may be set by
+a command-line parameter.)
+
+dbglevel
+The debug level used if "severity" is set to isc::log::DEBUG.
+
+file
+The name of a local message file.  This will be read and its defintitions used
+to replace the compiled-in text of the messages.
+
+
 
 Notes
 =====
@@ -419,3 +457,47 @@ in both the message compiler and the server; in the server it is used
 when the server starts up (or when triggered by a command) to read in
 a message file to overwrite the internal dictionary.  Writing it in C++
 means there is only one piece of code that does this functionality.
+
+
+Variant #2, Used by Unit Tests
+------------------------------
+    void initLogger()
+
+This is the call that should be used by unit tests.  In this variant, all the
+options are supplied by environment variables. (It should not be used for
+production programs to avoid the chance that the program operation is affected
+by inadvertantly-defined environment variables.)
+
+The environment variables are:
+
+B10_LOGGER_ROOT
+Sets the "root" for the unit test.  If not defined, the name "bind10" is used.
+
+B10_LOGGER_SEVERITY
+The severity to set for the root logger in the unit test.  Valid values are
+"DEBUG", "INFO", "WARN", "ERROR", "FATAL" and "NONE".  If not defined, "INFO"
+is used.
+
+B10_LOGGER_DBGLEVEL
+If B10_LOGGER_SEVERITY is set to "DEBUG", the debug level.  This can be a
+number between 0 and 99, and defaults to 0.
+
+B10_LOGGER_LOCALMSG
+If defined, points to a local message file.  The default is not to use a local
+message file.
+
+B10_LOGGER_DESTINATION
+The location to which log message are written.  This can be one of:
+
+   stdout               Message are written to stdout
+   stderr               Messages are written to stderr
+   syslog[:facility]    Messages are written to syslog.  If the optional
+                        "facility" is used, the messages are written using
+                        that facility.  (This defaults to "local7" if not
+                        specified)
+   Anything else        Interpreted as the name of a file to which output
+                        is appended.  If the file does not exist, a new one
+                        is opened.
+
+In the case of "stdout", "stderr" and "syslog", they must be written exactly
+as is - no leading or trailing spaces, and in lower-case.
