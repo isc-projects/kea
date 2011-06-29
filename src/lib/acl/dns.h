@@ -15,7 +15,15 @@
 #ifndef ACL_DNS_H
 #define ACL_DNS_H
 
-#include "loader.h"
+#include <string>
+#include <vector>
+
+#include <boost/shared_ptr.hpp>
+
+#include <cc/data.h>
+
+#include <acl/ip_check.h>
+#include <acl/loader.h>
 
 #include <asiolink/io_address.h>
 #include <dns/message.h>
@@ -64,13 +72,13 @@ struct RequestContext {
 };
 
 /// \brief DNS based check.
-typedef acl::Check<RequestContext> Check;
+typedef acl::Check<RequestContext> RequestCheck;
 /// \brief DNS based compound check.
 typedef acl::CompoundCheck<RequestContext> CompoundCheck;
 /// \brief DNS based ACL.
-typedef acl::ACL<RequestContext> ACL;
+typedef acl::ACL<RequestContext> RequestACL;
 /// \brief DNS based ACL loader.
-typedef acl::Loader<RequestContext> Loader;
+typedef acl::Loader<RequestContext> RequestLoader;
 
 /**
  * \brief Loader singleton access function.
@@ -80,10 +88,37 @@ typedef acl::Loader<RequestContext> Loader;
  * one is enough, this one will have registered default checks and it
  * is known one, so any plugins can registrer additional checks as well.
  */
-Loader& getLoader();
+RequestLoader& getLoader();
+
+// The following is essentially private to the implementation and could
+// be hidden in the implementation file.  But it's visible via this header
+// file for testing purposes.  They are not supposed to be used by normal
+// applications directly, and to signal the intent, they are given inside
+// a separate namespace.
+namespace internal {
+// Shortcut typedef
+typedef isc::acl::IPCheck<RequestContext> RequestIPCheck;
+
+class RequestCheckCreator : public acl::Loader<RequestContext>::CheckCreator {
+public:
+    virtual std::vector<std::string> names() const;
+
+    virtual boost::shared_ptr<RequestCheck>
+    create(const std::string& name, isc::data::ConstElementPtr definition,
+           const acl::Loader<RequestContext>& loader);
+
+    /// Until we are sure how the various rules work for this case, we won't
+    /// allow unexpected special interpretation for list definitions.
+    virtual bool allowListAbbreviation() const { return (false); }
+};
+}
 
 }
 }
 }
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:
