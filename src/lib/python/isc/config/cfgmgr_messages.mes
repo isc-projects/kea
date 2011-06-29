@@ -1,0 +1,50 @@
+# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# No namespace declaration - these constants go in the global namespace
+# of the xfrin messages python module.
+
+% CFGMGR_AUTOMATIC_CONFIG_DATABASE_UPDATE Updating configuration database from version %1 to %2
+An older version of the configuration database has been found, from which
+there was an automatic upgrade path to the current version. These changes
+are now applied, and no action from the administrator is necessary.
+
+% CFGMGR_CC_SESSION_ERROR Error connecting to command channel: %1
+The configuration manager daemon was unable to connect to the messaging
+system. The most likely cause is that msgq is not running.
+
+% CFGMGR_DATA_READ_ERROR error reading configuration database from disk: %1
+There was a problem reading the persistent configuration data as stored
+on disk. The file may be corrupted, or it is of a version from where
+there is no automatic upgrade path. The file needs to be repaired or
+removed. The configuration manager daemon will now shut down.
+
+% CFGMGR_IOERROR_WHILE_WRITING_CONFIGURATION Unable to write configuration file; configuration not stored: %1
+There was an IO error from the system while the configuration manager
+was trying to write the configuration database to disk. The specific
+error is given. The most likely cause is that the directory where
+the file is stored does not exist, or is not writable. The updated
+configuration is not stored.
+
+% CFGMGR_OSERROR_WHILE_WRITING_CONFIGURATION Unable to write configuration file; configuration not stored: %1
+There was an OS error from the system while the configuration manager
+was trying to write the configuration database to disk. The specific
+error is given. The most likely cause is that the system does not have
+write access to the configuration database file. The updated
+configuration is not stored.
+
+% CFGMGR_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down
+There was a keyboard interrupt signal to stop the cfgmgr daemon. The
+daemon will now shut down.
+
