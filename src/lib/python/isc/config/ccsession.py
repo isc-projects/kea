@@ -142,14 +142,29 @@ class ModuleCCSession(ConfigData):
        callbacks are called when 'check_command' is called on the
        ModuleCCSession"""
        
-    def __init__(self, spec_file_name, config_handler, command_handler, cc_session = None, handle_logging_config = False):
+    def __init__(self, spec_file_name, config_handler, command_handler, cc_session=None, handle_logging_config=False):
         """Initialize a ModuleCCSession. This does *NOT* send the
            specification and request the configuration yet. Use start()
            for that once the ModuleCCSession has been initialized.
-           specfile_name is the path to the specification file
+
+           specfile_name is the path to the specification file.
+
            config_handler and command_handler are callback functions,
            see set_config_handler and set_command_handler for more
-           information on their signatures."""
+           information on their signatures.
+
+           cc_session can be used to pass in an existing CCSession,
+           if it is None, one will be set up. This is mainly intended
+           for testing purposes.
+
+           handle_logging_config: if True, the module session will
+           automatically handle logging configuration for the module;
+           it will read the system-wide Logging configuration and call
+           the logger manager to apply it. It will also inform the
+           logger manager when the logging configuration gets updated.
+           The module does not need to do anything except intializing
+           its loggers, and provide log messages
+        """
         module_spec = isc.config.module_spec_from_file(spec_file_name)
         ConfigData.__init__(self, module_spec)
         
