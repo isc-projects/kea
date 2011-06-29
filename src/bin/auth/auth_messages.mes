@@ -188,7 +188,7 @@ accepting queries.
 The authoritative server has encountered a fatal error and is terminating. The
 reason for the failure is included in the message.
 
-% AUTH_SERVER_STARTED server stated
+% AUTH_SERVER_STARTED server started
 Initialization of the authoritative server has completed successfully
 and it is entering the main loop, waiting for queries to arrive.
 
