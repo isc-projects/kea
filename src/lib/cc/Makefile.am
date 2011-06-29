@@ -22,10 +22,18 @@ endif
 
 lib_LTLIBRARIES = libcc.la
 libcc_la_SOURCES = data.cc data.h session.cc session.h
+libcc_la_SOURCES += logger.cc logger.h
+nodist_libcc_la_SOURCES = cc_messages.cc cc_messages.h
+libcc_la_LIBADD = $(top_builddir)/src/lib/log/liblog.la
 
-CLEANFILES = *.gcno *.gcda session_config.h
+CLEANFILES = *.gcno *.gcda session_config.h cc_messages.cc cc_messages.h
 
 session_config.h: session_config.h.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" session_config.h.pre >$@
 
-BUILT_SOURCES = session_config.h 
+cc_messages.cc cc_messages.h: cc_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/cc/cc_messages.mes
+
+BUILT_SOURCES = session_config.h cc_messages.cc cc_messages.h
+
+EXTRA_DIST = cc_messages.mes
