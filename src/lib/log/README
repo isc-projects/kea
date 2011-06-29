@@ -493,8 +493,8 @@ The location to which log message are written.  This can be one of:
    stderr               Messages are written to stderr
    syslog[:facility]    Messages are written to syslog.  If the optional
                         "facility" is used, the messages are written using
-                        that facility.  (This defaults to "local7" if not
-                        specified)
+                        that facility.  (This defaults to "local0" if not
+                        specified.)
    Anything else        Interpreted as the name of a file to which output
                         is appended.  If the file does not exist, a new one
                         is opened.
