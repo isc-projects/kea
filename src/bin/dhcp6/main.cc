@@ -33,7 +33,7 @@
 #include <log/dummylog.h>
 
 #include <dhcp6/spec_config.h>
-
+#include "dhcp6/dhcp6_srv.h"
 
 using namespace std;
 using namespace isc::util;
@@ -41,6 +41,8 @@ using namespace isc::data;
 using namespace isc::cc;
 using namespace isc::config;
 using namespace isc::util;
+
+using namespace isc;
 
 namespace {
 
@@ -108,14 +110,14 @@ main(int argc, char* argv[]) {
         // auth_server->setVerbose(verbose_mode);
         cout << "[b10-dhcp6] Initiating DHCPv6 operation." << endl;
 
+        Dhcpv6Srv *srv = new Dhcpv6Srv();
+
+        //srv->init();
+        srv->run();
+
     } catch (const std::exception& ex) {
         cerr << "[b10-dhcp6] Server failed: " << ex.what() << endl;
         ret = 1;
-    }
-
-    while (true) {
-            sleep(10);
-            cout << "[b10-dhcp6] I'm alive." << endl;
     }
 
     return (ret);
