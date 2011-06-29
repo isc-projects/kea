@@ -14,6 +14,7 @@
 
 #include <config.h>
 
+#include <stdint.h>
 #include <netinet/in.h>
 
 #include <algorithm>
@@ -21,7 +22,6 @@
 #include <cassert>
 
 #include <boost/shared_ptr.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 
 #include <exceptions/exceptions.h>
@@ -57,7 +57,7 @@
 #include "resolver_log.h"
 
 using namespace std;
-using namespace boost;
+using boost::shared_ptr;
 
 using namespace isc;
 using namespace isc::util;
