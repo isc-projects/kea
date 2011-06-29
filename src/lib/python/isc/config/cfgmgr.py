@@ -28,7 +28,13 @@ import tempfile
 import json
 import errno
 from isc.cc import data
-from isc.config import ccsession, config_data
+from isc.config import ccsession, config_data, module_spec
+from isc.util.file import path_search
+import bind10_config
+import isc.log
+from cfgmgr_messages import *
+
+logger = isc.log.Logger("cfgmgr")
 
 class ConfigManagerDataReadError(Exception):
     """This exception is thrown when there is an error while reading
@@ -89,7 +95,7 @@ class ConfigManagerData:
                 elif file_config['version'] == 1:
                     # only format change, no other changes necessary
                     file_config['version'] = 2
-                    print("[b10-cfgmgr] Updating configuration database version from 1 to 2")
+                    logger.info(CFGMGR_AUTOMATIC_CONFIG_DATABASE_UPDATE, 1, 2)
                     config.data = file_config
                 else:
                     if config_data.BIND10_CONFIG_DATA_VERSION > file_config['version']:
@@ -131,12 +137,9 @@ class ConfigManagerData:
             else:
                 os.rename(filename, self.db_filename)
         except IOError as ioe:
-            # TODO: log this (level critical)
-            print("[b10-cfgmgr] Unable to write configuration file; configuration not stored: " + str(ioe))
-            # TODO: debug option to keep file?
+            logger.error(CFGMGR_IOERROR_WHILE_WRITING_CONFIGURATION, ioe)
         except OSError as ose:
-            # TODO: log this (level critical)
-            print("[b10-cfgmgr] Unable to write configuration file; configuration not stored: " + str(ose))
+            logger.error(CFGMGR_OSERROR_WHILE_WRITING_CONFIGURATION, ose)
         try:
             if filename and os.path.exists(filename):
                 os.remove(filename)
@@ -182,6 +185,20 @@ class ConfigManager:
         self.cc.group_subscribe("ConfigManager")
         self.cc.group_subscribe("Boss", "ConfigManager")
         self.running = False
+        # As a core module, CfgMgr is different than other modules,
+        # as it does not use a ModuleCCSession, and hence needs
+        # to handle logging config on its own
+        self.log_config_data = config_data.ConfigData(
+            isc.config.module_spec_from_file(
+                path_search('logging.spec',
+                bind10_config.PLUGIN_PATHS)))
+        # store the logging 'module' name for easier reference
+        self.log_module_name = self.log_config_data.get_module_spec().get_module_name()
+
+    def check_logging_config(self, config):
+        if self.log_module_name in config:
+            ccsession.default_logconfig_handler(config[self.log_module_name],
+                                                self.log_config_data)
 
     def notify_boss(self):
         """Notifies the Boss module that the Config Manager is running"""
@@ -256,6 +273,7 @@ class ConfigManager:
             self.config = ConfigManagerData.read_from_file(self.data_path,
                                                            self.\
                                                            database_filename)
+            self.check_logging_config(self.config.data);
         except ConfigManagerDataEmpty:
             # ok, just start with an empty config
             self.config = ConfigManagerData(self.data_path,
@@ -388,6 +406,8 @@ class ConfigManager:
                         got_error = True
                         err_list.append(val)
         if not got_error:
+            # if Logging config is in there, update our config as well
+            self.check_logging_config(cmd);
             self.write_config()
             return ccsession.create_answer(0)
         else:
@@ -441,8 +461,6 @@ class ConfigManager:
             elif cmd == ccsession.COMMAND_SET_CONFIG:
                 answer = self._handle_set_config(arg)
             elif cmd == ccsession.COMMAND_SHUTDOWN:
-                # TODO: logging
-                #print("[b10-cfgmgr] Received shutdown command")
                 self.running = False
                 answer = ccsession.create_answer(0)
             elif cmd == ccsession.COMMAND_MODULE_SPEC:

@@ -22,19 +22,19 @@ AM_CXXFLAGS += -Wno-unused-parameter
 endif
 
 # Define rule to build logging source files from message file
-nsasdef.h nsasdef.cc: nsasdef.mes
-	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/nsas/nsasdef.mes
+nsas_messages.h nsas_messages.cc: nsas_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/nsas/nsas_messages.mes
 
 # What is being built.
 lib_LTLIBRARIES = libnsas.la
 
-# Tell Automake that the nsasdef.{cc,h} source files are created in the build
+# Tell Automake that the nsas_messages.{cc,h} source files are created in the build
 # process, so it must create these before doing anything else.  Although they
 # are a dependency of the library (so will be created from the message file
 # anyway), there is no guarantee as to exactly _when_ in the build they will be
 # created.  As the .h file is included in other sources file (so must be
 # present when they are compiled), the safest option is to create it first.
-BUILT_SOURCES = nsasdef.h nsasdef.cc
+BUILT_SOURCES = nsas_messages.h nsas_messages.cc
 
 # Library sources. The generated files will not be in the distribution.
 libnsas_la_SOURCES  = address_entry.h address_entry.cc
@@ -54,10 +54,10 @@ libnsas_la_SOURCES += fetchable.h
 libnsas_la_SOURCES += address_request_callback.h
 libnsas_la_SOURCES += glue_hints.h glue_hints.cc
 
-nodist_libnsas_la_SOURCES  = nsasdef.h nsasdef.cc
+nodist_libnsas_la_SOURCES  = nsas_messages.h nsas_messages.cc
 
 # The message file should be in the distribution.
-EXTRA_DIST = nsasdef.mes
+EXTRA_DIST = nsas_messages.mes
 
 # Make sure that the generated files are got rid of in a clean operation
-CLEANFILES = *.gcno *.gcda nsasdef.h nsasdef.cc
+CLEANFILES = *.gcno *.gcda nsas_messages.h nsas_messages.cc

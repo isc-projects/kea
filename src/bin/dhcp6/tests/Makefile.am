@@ -1,7 +1,8 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
-PYTESTS = b10-cfgmgr_test.py
-
-EXTRA_DIST = $(PYTESTS) testdata/plugins/testplugin.py
+#PYTESTS = args_test.py bind10_test.py
+# NOTE: this has a generated test found in the builddir
+PYTESTS = dhcp6_test.py
+EXTRA_DIST = $(PYTESTS)
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.
@@ -12,20 +13,10 @@ endif
 
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
-if ENABLE_PYTHON_COVERAGE
-	touch $(abs_top_srcdir)/.coverage 
-	rm -f .coverage
-	${LN_S} $(abs_top_srcdir)/.coverage .coverage
-endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
-	env TESTDATA_PATH=$(abs_srcdir)/testdata \
+	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/bind10 \
 	$(LIBRARY_PATH_PLACEHOLDER) \
-	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/cfgmgr:$(abs_top_builddir)/src/lib/python/isc/config \
-	$(PYCOVERAGE_RUN) $(abs_builddir)/$$pytest || exit ; \
+	BIND10_MSGQ_SOCKET_FILE=$(abs_top_builddir)/msgq_socket \
+		$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
-
-CLEANDIRS = testdata/plugins/__pycache__
-
-clean-local:
-	rm -rf $(CLEANDIRS)
