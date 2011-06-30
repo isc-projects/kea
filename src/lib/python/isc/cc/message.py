@@ -35,7 +35,7 @@ def from_wire(data):
        Raises an AttributeError if the given object has no decode()
        method (which should return a string).
        '''
-    return json.loads(data.decode('utf8'))
+    return json.loads(data.decode('utf8'), strict=False)
 
 if __name__ == "__main__":
     import doctest
