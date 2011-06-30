@@ -45,10 +45,6 @@ namespace isc {
         };
         typedef std::list<Iface> IfaceLst;
 
-    private:
-        IfaceMgr(); // don't create IfaceMgr directly, use instance() method
-        ~IfaceMgr();
-    public:
         static IfaceMgr& instance();
         static void instanceCreate();
 
@@ -67,17 +63,21 @@ namespace isc {
         bool send(Pkt6 &pkt);
         Pkt6 * receive();
 
+	// don't use private, we need derived classes in tests
     protected:
+        IfaceMgr(); // don't create IfaceMgr directly, use instance() method
+        ~IfaceMgr();
+
         void detectIfaces();
 
         // XXX: having 2 maps (ifindex->iface and ifname->iface would)
         //      probably be better for performance reasons
         IfaceLst ifaces_;
-    private:
+
         static IfaceMgr * instance_;
 
-        int recvsock_; // XXX: should be fd_set eventually, but we 2 sockets
-        int sendsock_; // will do for until next release
+        int recvsock_; // XXX: should be fd_set eventually, but we have only
+        int sendsock_; // 2 sockets for now. Will do for until next release
 
         char * control_buf_;
         int control_buf_len_;

@@ -12,35 +12,35 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+#include <iostream>
+#include <sstream>
 
-#include "dhcp6/dhcp6.h"
-#include "dhcp6/pkt6.h"
+#include <arpa/inet.h>
+#include <gtest/gtest.h>
 
-namespace isc {
 
-    /**
-     * constructor.
-     *
-     * Note: Pkt6 will take ownership of any data passed
-     *
-     * @param data
-     * @param dataLen
-     */
-    Pkt6::Pkt6(char * data, int dataLen) {
-	data_ = data;
-	dataLen_ = dataLen;
+#include "dhcp6/dhcp6_srv.h"
+
+using namespace std;
+using namespace isc;
+
+class Dhcpv6SrvTest : public ::testing::Test {
+public:
+    Dhcpv6SrvTest() {
     }
-
-    Pkt6::Pkt6(int dataLen) {
-	data_ = new char[dataLen];
-	dataLen_ = dataLen;
-    }
-
-    Pkt6::~Pkt6() {
-	if (data_) {
-	    delete [] data_;
-	}
-
-    }
-
 };
+
+TEST_F(Dhcpv6SrvTest, basic) {
+    // there's almost no code now. What's there provides echo capability 
+    // that is just a proof of concept and will be removed soon
+    // No need to thoroughly test it
+
+    EXPECT_NO_THROW( {
+        Dhcpv6Srv * srv = new Dhcpv6Srv();
+
+	delete srv;
+    });
+    
+}
+

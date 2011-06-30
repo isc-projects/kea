@@ -25,12 +25,12 @@
 using namespace std;
 using namespace isc;
 
+// empty class for now, but may be extended once Addr6 becomes bigger
 class Addr6Test : public ::testing::Test {
 public:
     Addr6Test() {
     }
 };
-
 
 TEST_F(Addr6Test, constructor) {
 
@@ -56,14 +56,14 @@ TEST_F(Addr6Test, mcast_linklocal) {
     Addr6 global("2001:db8:1::dead:beef", true);
     Addr6 local("fe80::face:b00c", true);
 
-    EXPECT_EQ(mcast.multicast(), true);
-    EXPECT_EQ(mcast.linkLocal(), false);
+    EXPECT_TRUE(mcast.multicast());
+    EXPECT_FALSE(mcast.linkLocal());
 
-    EXPECT_EQ(global.multicast(), false);
-    EXPECT_EQ(global.linkLocal(), false);
+    EXPECT_FALSE(global.multicast());
+    EXPECT_FALSE(global.linkLocal());
 
-    EXPECT_EQ(local.multicast(), false);
-    EXPECT_EQ(local.linkLocal(), true);
+    EXPECT_FALSE(local.multicast());
+    EXPECT_TRUE(local.linkLocal());
 }
 
 TEST_F(Addr6Test, equal) {
@@ -72,8 +72,8 @@ TEST_F(Addr6Test, equal) {
     Addr6 two("2001:db8:1::abcd");
     Addr6 three("2001:db8:1::4321");
 
-    EXPECT_EQ( (one==two), true);
-    EXPECT_EQ( (one==three), false);
+    EXPECT_TRUE( one==two );
+    EXPECT_FALSE( one==three );
 }
 
 TEST_F(Addr6Test, stream) {
@@ -84,5 +84,5 @@ TEST_F(Addr6Test, stream) {
     stringstream tmp;
     tmp << addr;
 
-    EXPECT_EQ( tmp.str(), plain);
+    EXPECT_STREQ( tmp.str().c_str(), plain.c_str() );
 }
