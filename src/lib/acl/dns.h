@@ -46,16 +46,28 @@ namespace dns {
  *     call the ACLs directly?
  */
 struct RequestContext {
+    explicit RequestContext(const IPAddress& remote_address_param) :
+        remote_address(remote_address_param)
+    {}
+
+    const IPAddress& remote_address;
+
+#ifdef notyet
     /// \brief The DNS message (payload).
     isc::dns::ConstMessagePtr message;
+
     /// \brief The remote IP address (eg. the client).
     asiolink::IOAddress remote_address;
+
     /// \brief The local IP address (ours, of the interface where we received).
     asiolink::IOAddress local_address;
+
     /// \brief The remote port.
     uint16_t remote_port;
+
     /// \brief The local port.
     uint16_t local_port;
+
     /**
      * \brief Name of the TSIG key the message is signed with.
      *
@@ -69,6 +81,7 @@ struct RequestContext {
      * ACL.
      */
     std::string tsig_key_name;
+#endif
 };
 
 /// \brief DNS based check.
@@ -96,6 +109,7 @@ RequestLoader& getLoader();
 // applications directly, and to signal the intent, they are given inside
 // a separate namespace.
 namespace internal {
+
 // Shortcut typedef
 typedef isc::acl::IPCheck<RequestContext> RequestIPCheck;
 
@@ -111,11 +125,11 @@ public:
     /// allow unexpected special interpretation for list definitions.
     virtual bool allowListAbbreviation() const { return (false); }
 };
-}
+} // end of namespace "internal"
 
-}
-}
-}
+} // end of namespace "dns"
+} // end of namespace "acl"
+} // end of namespace "isc"
 
 #endif
 
