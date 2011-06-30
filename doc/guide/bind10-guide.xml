@@ -129,7 +129,7 @@
 	The processes started by the <command>bind10</command>
 	command have names starting with "b10-", including:
       </para>
-      
+
       <para>
 
         <itemizedlist>
@@ -224,7 +224,7 @@
 
     <section id="managing_once_running">
       <title>Managing BIND 10</title>
-      
+
       <para>
 	Once BIND 10 is running, a few commands are used to interact
 	directly with the system:
@@ -263,7 +263,7 @@
 <!-- TODO point to these -->
       In addition, manual pages are also provided in the default installation.
     </para>
-      
+
 <!--
 bin/
   bindctl*
@@ -370,7 +370,7 @@ Debian and Ubuntu:
       </para>
 
       <orderedlist>
-    
+
         <listitem>
           <simpara>
             Install required build dependencies.
@@ -454,7 +454,7 @@ Debian and Ubuntu:
           Downloading a release tar file is the recommended method to
           obtain the source code.
         </para>
-        
+
         <para>
           The BIND 10 releases are available as tar file downloads from
           <ulink url="ftp://ftp.isc.org/isc/bind10/"/>.
@@ -533,34 +533,34 @@ Debian and Ubuntu:
               <simpara>Define the the installation location (the
                 default is <filename>/usr/local/</filename>).
               </simpara>
-            </listitem> 
+            </listitem>
           </varlistentry>
 
           <varlistentry>
             <term>--with-boost-include</term>
-            <listitem> 
+            <listitem>
               <simpara>Define the path to find the Boost headers.
               </simpara>
-            </listitem> 
+            </listitem>
           </varlistentry>
 
           <varlistentry>
             <term>--with-pythonpath</term>
-            <listitem> 
+            <listitem>
               <simpara>Define the path to Python 3.1 if it is not in the
                 standard execution path.
               </simpara>
-            </listitem> 
+            </listitem>
           </varlistentry>
 
           <varlistentry>
             <term>--with-gtest</term>
-            <listitem> 
+            <listitem>
               <simpara>Enable building the C++ Unit Tests using the
                 Google Tests framework. Optionally this can define the
                 path to the gtest header files and library.
               </simpara>
-            </listitem> 
+            </listitem>
           </varlistentry>
 
           </variablelist>
@@ -679,13 +679,13 @@ Debian and Ubuntu:
         </para>
       </section>
   -->
-  
+
   </chapter>
 
   <chapter id="bind10">
     <title>Starting BIND10 with <command>bind10</command></title>
     <para>
-      BIND 10 provides the <command>bind10</command> command which 
+      BIND 10 provides the <command>bind10</command> command which
       starts up the required processes.
       <command>bind10</command>
       will also restart processes that exit unexpectedly.
@@ -694,7 +694,7 @@ Debian and Ubuntu:
 
     <para>
       After starting the <command>b10-msgq</command> communications channel,
-      <command>bind10</command> connects to it, 
+      <command>bind10</command> connects to it,
       runs the configuration manager, and reads its own configuration.
       Then it starts the other modules.
     </para>
@@ -752,7 +752,7 @@ Debian and Ubuntu:
         <command>b10-msgq</command> service.
         It listens on 127.0.0.1.
       </para>
-      
+
 <!-- TODO: this is broken, see Trac #111
       <para>
         To select an alternate port for the <command>b10-msgq</command> to
@@ -1078,10 +1078,10 @@ since we used bind10 -->
         The configuration data item is:
 
         <variablelist>
-    
+
           <varlistentry>
             <term>database_file</term>
-            <listitem> 
+            <listitem>
               <simpara>This is an optional string to define the path to find
                  the SQLite3 database file.
 <!-- TODO: -->
@@ -1103,7 +1103,7 @@ This may be a temporary setting until then.
 
           <varlistentry>
             <term>shutdown</term>
-            <listitem> 
+            <listitem>
               <simpara>Stop the authoritative DNS server.
               </simpara>
 <!-- TODO: what happens when this is sent, will bind10 restart? -->
@@ -1159,7 +1159,7 @@ This may be a temporary setting until then.
 
           <varlistentry>
             <term>$INCLUDE</term>
-            <listitem> 
+            <listitem>
               <simpara>Loads an additional zone file. This may be recursive.
               </simpara>
             </listitem>
@@ -1167,7 +1167,7 @@ This may be a temporary setting until then.
 
           <varlistentry>
             <term>$ORIGIN</term>
-            <listitem> 
+            <listitem>
               <simpara>Defines the relative domain name.
               </simpara>
             </listitem>
@@ -1175,7 +1175,7 @@ This may be a temporary setting until then.
 
           <varlistentry>
             <term>$TTL</term>
-            <listitem> 
+            <listitem>
               <simpara>Defines the time-to-live value used for following
                 records that don't include a TTL.
               </simpara>
@@ -1240,7 +1240,7 @@ TODO
 
     <note><simpara>
      The current development release of BIND 10 only supports
-     AXFR. (IXFR is not supported.) 
+     AXFR. (IXFR is not supported.)
 
 <!-- TODO: sqlite3 data source only? -->
 
@@ -1287,7 +1287,7 @@ what if a NOTIFY is sent?
 
     <note><simpara>
      The current development release of BIND 10 only supports
-     AXFR. (IXFR is not supported.) 
+     AXFR. (IXFR is not supported.)
      Access control is not yet provided.
     </simpara></note>
 
