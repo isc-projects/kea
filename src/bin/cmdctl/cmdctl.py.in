@@ -433,7 +433,7 @@ class CommandControl():
             except ccsession.ModuleCCSessionError as mcse:
                 errstr = str("Error in ccsession answer:") + str(mcse)
 
-        logger.error(CMDCTL_COMMAND_ERROR, conmmand_name, module_name, errstr)
+        logger.error(CMDCTL_COMMAND_ERROR, command_name, module_name, errstr)
         return 1, {'error': errstr}
     
     def get_cmdctl_config_data(self):
