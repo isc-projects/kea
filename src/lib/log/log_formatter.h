@@ -180,6 +180,9 @@ public:
         return (*this);
     }
 
+    /// \brief Exception version of arg.
+    ///
+    /// Simply for convenience, so the .what() doesn't have to be typed.
     Formatter& arg(const std::exception& e) {
         if (logger_) {
             return (arg(e.what()));
