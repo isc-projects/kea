@@ -1,3 +1,11 @@
+266.	[func]		Multiple developers
+        Convert various error messages, debugging and other output
+        to the new logging interface, including for b10-resolver,
+        the resolver library, the CC library, b10-auth, b10-cfgmgr,
+        b10-xfrin, and b10-xfrout. This includes a lot of new
+        documentation describing the new log messages.
+        (Trac #738, #739, #742, #746, #759, #761, #762)
+
 265.	[func]*		jinmei
 	b10-resolver: Introduced ACL on incoming queries.  By default the
 	resolver accepts queries from ::1 and 127.0.0.1 and rejects all
