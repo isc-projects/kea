@@ -67,7 +67,7 @@ parseAddresses(isc::data::ConstElementPtr addresses,
                 }
             }
         } else if (addresses->getType() != Element::null) {
-            LOG_ERROR(logger, SRVCOMM_ADDRESSES_NOT_LIST);
+            LOG_ERROR(logger, SRVCOMM_ADDRESSES_NOT_LIST).arg(elemName);
             isc_throw(TypeError, elemName + " config element must be a list");
         }
     }
