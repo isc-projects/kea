@@ -1,3 +1,13 @@
+266.    [func]*		tomek
+	b10-dhcp6: Implemented DHCPv6 echo server. It joins DHCPv6
+	multicast groups and listens to incoming DHCPv6 client messages.
+	Received messages are then echoed back to clients. This
+	functionality is limited, but it can be used to test out client
+	resiliency to unexpected messages. Note that network interface
+	detection routines are not implemented yet, so interface name
+	and its address must be specified in interfaces.txt.
+	(Trac #878, git 3b1a604abf5709bfda7271fa94213f7d823de69d)
+
 265.	[func]*		jinmei
 	b10-resolver: Introduced ACL on incoming queries.  By default the
 	resolver accepts queries from ::1 and 127.0.0.1 and rejects all
