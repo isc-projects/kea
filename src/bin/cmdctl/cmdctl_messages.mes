@@ -58,7 +58,7 @@ with the tool b10-cmdctl-usermgr.
 This debug message indicates that the given command is being sent to
 the given module.
 
-% CMDCTL_SSL_ERROR_USER_DENIED user denied because of SSL error: %1
+% CMDCTL_SSL_SETUP_FAILURE_USER_DENIED failed to create an SSL connection (user denied): %1
 The user was denied because the SSL connection could not successfully
 be set up. The specific error is given in the log message. Possible
 causes may be that the ssl request itself was bad, or the local key or
