@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #ifndef ACL_DNS_H
-#define ACL_DNS_H
+#define ACL_DNS_H 1
 
 #include <string>
 #include <vector>
@@ -25,9 +25,6 @@
 #include <acl/ip_check.h>
 #include <acl/loader.h>
 
-#include <asiolink/io_address.h>
-#include <dns/message.h>
-
 namespace isc {
 namespace acl {
 namespace dns {
@@ -38,50 +35,55 @@ namespace dns {
  * This plays the role of Context of the generic template ACLs (in namespace
  * isc::acl).
  *
- * It is simple structure holding just the bunch of information. Therefore
- * the names don't end up with a slash, there are no methods so they can't be
- * confused with local variables.
+ * It is a simple structure holding just the bunch of information. Therefore
+ * the names don't end up with an underscore; there are no methods so they
+ * can't be confused with local variables.
  *
- * \todo Do we want a constructor to set this in a shorter manner? So we can
- *     call the ACLs directly?
+ * This structure is generally expected to be ephemeral and read-only: It
+ * would be constructed immediately before a particular ACL is checked
+ * and used only for the ACL match purposes.  Due to this nature, and since
+ * ACL processing is often performance sensitive (typically it's performed
+ * against all incoming packets), the construction is designed to be
+ * lightweight: it tries to avoid expensive data copies or dynamic memory
+ * allocation as much as possible.  Specifically, the constructor can
+ * take a pointer or reference to an object and keeps it as a reference
+ * (not making a local copy).  This also means the caller is responsible for
+ * keeping the passed parameters valid while this structure is used.
+ * This should generally be reasonable as this structure is expected to be
+ * used only for a very short period as stated above.
+ *
+ * Based on the minimalist philosophy, the initial implementation only
+ * maintains the remote (source) IP address of the request.  The plan is
+ * to add more parameters of the request.  A scheduled next step is to
+ * support the TSIG key (if it's included in the request).  Other possibilities
+ * are the local (destination) IP address, the remote and local port numbers,
+ * various fields of the DNS request (e.g. a particular header flag value).
  */
 struct RequestContext {
+    /// The constructor
+    ///
+    /// This is a trivial constructor that perform straightforward
+    /// initialization of the member variables from the given parameters.
+    ///
+    /// \exception None
+    ///
+    /// \parameter remote_address_param The remote IP address
     explicit RequestContext(const IPAddress& remote_address_param) :
         remote_address(remote_address_param)
     {}
 
+    ///
+    /// \name Parameter variables
+    ///
+    /// These member variables must be immutable so that the integrity of
+    /// the structure is kept throughout its lifetime.  The easiest way is
+    /// to declare the variable as const.  If it's not possible for a
+    /// particular variable, it must be defined as private and accessible
+    /// only via an accessor method.
+    //@{
+    /// \brief The remote IP address (eg. the client's IP address).
     const IPAddress& remote_address;
-
-#ifdef notyet
-    /// \brief The DNS message (payload).
-    isc::dns::ConstMessagePtr message;
-
-    /// \brief The remote IP address (eg. the client).
-    asiolink::IOAddress remote_address;
-
-    /// \brief The local IP address (ours, of the interface where we received).
-    asiolink::IOAddress local_address;
-
-    /// \brief The remote port.
-    uint16_t remote_port;
-
-    /// \brief The local port.
-    uint16_t local_port;
-
-    /**
-     * \brief Name of the TSIG key the message is signed with.
-     *
-     * This will be either the name of the TSIG key the message is signed with,
-     * or empty string, if the message is not signed. It is true we could get
-     * the information from the message itself, but because at the time when
-     * the ACL is checked, the signature has been verified already, so passing
-     * it around is probably cheaper.
-     *
-     * It is expected that messages with invalid signatures are handled before
-     * ACL.
-     */
-    std::string tsig_key_name;
-#endif
+    //@}
 };
 
 /// \brief DNS based check.
