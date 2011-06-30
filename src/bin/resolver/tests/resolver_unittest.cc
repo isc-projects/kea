@@ -157,7 +157,7 @@ TEST_F(ResolverTest, setQueryACL) {
     // valid cases are tested through other tests.  We only explicitly check
     // an invalid case: passing a NULL shared pointer.
     EXPECT_THROW(server.setQueryACL(
-                     boost::shared_ptr<const Resolver::ClientACL>()),
+                     boost::shared_ptr<const Resolver::QueryACL>()),
                  isc::InvalidParameter);
 }
 
