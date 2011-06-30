@@ -1375,6 +1375,67 @@ what is XfroutClient xfr_client??
 <!-- TODO: later the above will have some defaults -->
 
     <section>
+      <title>Access Control</title>
+
+      <para>
+        The <command>b10-resolver</command> daemon only accepts
+        DNS queries from the localhost (127.0.0.1 and ::1).
+        The <option>Resolver/query_acl</option> configuration may
+	be used to reject, drop, or allow specific IPs or networks.
+        This configuration list is first match.
+      </para>
+
+      <para>
+	The configuration's <option>action</option> item may be
+	set to <quote>ACCEPT</quote> to allow the incoming query,
+	<quote>REJECT</quote> to respond with a DNS REFUSED return
+	code, or <quote>DROP</quote> to ignore the query without
+	any response (such as a blackhole).  For more information,
+	see the respective debugging messages:  <ulink
+	url="bind10-messages.html#RESOLVER_QUERY_ACCEPTED">RESOLVER_QUERY_ACCEPTED</ulink>,
+	<ulink
+	url="bind10-messages.html#RESOLVER_QUERY_REJECTED">RESOLVER_QUERY_REJECTED</ulink>,
+	and <ulink
+url="bind10-messages.html#RESOLVER_QUERY_DROPPED">RESOLVER_QUERY_DROPPED</ulink>.
+      </para>
+
+      <para>
+	The required configuration's <option>from</option> item is set
+        to an IPv4 or IPv6 address, addresses with an network mask, or to
+	the special lowercase keywords <quote>any6</quote> (for
+	any IPv6 address) or <quote>any4</quote> (for any IPv4
+	address).
+      </para>
+
+<!-- TODO:
+/0 is for any address in that address family
+does that need any address too?
+-->
+
+      <para>
+	For example to allow the <replaceable>192.168.1.0/24</replaceable>
+	network to use your recursive name server, at the
+	<command>bindctl</command> prompt run:
+      </para>
+
+      <screen>
+&gt; <userinput>config add Resolver/query_acl</userinput>
+&gt; <userinput>config set Resolver/query_acl[<replaceable>2</replaceable>]/action "ACCEPT"</userinput>
+&gt; <userinput>config set Resolver/query_acl[<replaceable>2</replaceable>]/from "<replaceable>192.168.1.0/24</replaceable>"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+
+     <simpara>(Replace the <quote><replaceable>2</replaceable></quote>
+       as needed; run <quote><userinput>config show
+       Resolver/query_acl</userinput></quote> if needed.)</simpara>
+
+<!-- TODO: check this -->
+      <note><simpara>This prototype access control configuration
+      syntax may be changed.</simpara></note>
+
+    </section>
+
+    <section>
       <title>Forwarding</title>
 
       <para>
@@ -1532,6 +1593,29 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
         </para></listitem>
         </varlistentry>
         </variablelist>
+
+<!--
+what's the default log output?  stdout? stderr?
+
+(15:07:03) jelte: > ./src/bin/bindctl/run_bindctl.sh
+["login success "] login as root
+> config show Logging/loggers
+Logging/loggers	[]	list
+> config add Logging/loggers
+> config set Logging/loggers[0]/name
+> config set Logging/loggers[0]/severity DEBUG
+> config set Logging/loggers[0]/debuglevel 99
+> config add Logging/loggers[0]/output_options
+> config commit
+
+(16:38:26) jinmei: Error: destination set to syslog but output not set to any facility for logger *
+
+(16:50:35) jinmei: log4cplus:WARN RollingFileAppender: MaxFileSize property value is too small. Resetting to 204800.
+
+see src/lib/log/README
+and spec file
+and code of course!
+-->
 
     </para>
   </chapter>
