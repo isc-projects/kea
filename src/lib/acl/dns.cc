@@ -32,10 +32,22 @@ using namespace isc::data;
 
 namespace isc {
 namespace acl {
+
+/// The specialization of \c IPCheck for access control with \c RequestContext.
+///
+/// It returns \c true if the remote (source) IP address of the request
+/// matches the expression encapsulated in the \c IPCheck, and returns
+/// \c false if not.
+///
+/// \note The match logic is expected to be extended as we add
+/// more match parameters (at least there's a plan for TSIG key).
 template <>
 bool
-IPCheck<dns::RequestContext>::matches(const dns::RequestContext&) const {
-    return (false);
+IPCheck<dns::RequestContext>::matches(
+    const dns::RequestContext& request) const
+{
+    return (compare(request.remote_address.getData(),
+                    request.remote_address.getFamily()));
 }
 
 namespace dns {
