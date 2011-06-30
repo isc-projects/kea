@@ -42,7 +42,7 @@ parseAddresses(isc::data::ConstElementPtr addresses,
                 ConstElementPtr addr(addrPair->get("address"));
                 ConstElementPtr port(addrPair->get("port"));
                 if (!addr || ! port) {
-                    LOG_ERROR(logger, SRV_COMMON_ADDRESS_MISSING).
+                    LOG_ERROR(logger, SRVCOMM_ADDRESS_MISSING).
                         arg(addrPair->str());
                     isc_throw(BadValue, "Address must contain both the IP"
                         "address and port");
@@ -51,7 +51,7 @@ parseAddresses(isc::data::ConstElementPtr addresses,
                     IOAddress(addr->stringValue());
                     if (port->intValue() < 0 ||
                         port->intValue() > 0xffff) {
-                        LOG_ERROR(logger, SRV_COMMON_PORT_RANGE).
+                        LOG_ERROR(logger, SRVCOMM_PORT_RANGE).
                             arg(port->intValue()).arg(addrPair->str());
                         isc_throw(BadValue, "Bad port value (" <<
                             port->intValue() << ")");
@@ -60,14 +60,14 @@ parseAddresses(isc::data::ConstElementPtr addresses,
                         port->intValue()));
                 }
                 catch (const TypeError &e) { // Better error message
-                    LOG_ERROR(logger, SRV_COMMON_ADDRESS_TYPE).
+                    LOG_ERROR(logger, SRVCOMM_ADDRESS_TYPE).
                         arg(addrPair->str());
                     isc_throw(TypeError,
                         "Address must be a string and port an integer");
                 }
             }
         } else if (addresses->getType() != Element::null) {
-            LOG_ERROR(logger, SRV_COMMON_ADDRESSES_NOT_LIST);
+            LOG_ERROR(logger, SRVCOMM_ADDRESSES_NOT_LIST);
             isc_throw(TypeError, elemName + " config element must be a list");
         }
     }
@@ -92,9 +92,9 @@ installListenAddresses(const AddressList& newAddresses,
                        isc::asiodns::DNSService& service)
 {
     try {
-        LOG_DEBUG(logger, DBG_TRACE_BASIC, SRV_COMMON_SET_LISTEN);
+        LOG_DEBUG(logger, DBG_TRACE_BASIC, SRVCOMM_SET_LISTEN);
         BOOST_FOREACH(const AddressPair& addr, newAddresses) {
-            LOG_DEBUG(logger, DBG_TRACE_VALUES, SRV_COMMON_ADDRESS_VALUE).
+            LOG_DEBUG(logger, DBG_TRACE_VALUES, SRVCOMM_ADDRESS_VALUE).
                 arg(addr.first).arg(addr.second);
         }
         setAddresses(service, newAddresses);
@@ -114,12 +114,12 @@ installListenAddresses(const AddressList& newAddresses,
          * user will get error info, command control can be used to set new
          * address. So we just catch the exception without propagating outside
          */
-        LOG_ERROR(logger, SRV_COMMON_ADDRESS_FAIL).arg(e);
+        LOG_ERROR(logger, SRVCOMM_ADDRESS_FAIL).arg(e);
         try {
             setAddresses(service, addressStore);
         }
         catch (const exception& e2) {
-            LOG_FATAL(logger, SRV_COMMON_ADDRESS_UNRECOVERABLE).arg(e2);
+            LOG_FATAL(logger, SRVCOMM_ADDRESS_UNRECOVERABLE).arg(e2);
         }
         //Anyway the new configure has problem, we need to notify configure
         //manager the new configure doesn't work
