@@ -20,9 +20,10 @@ using namespace isc::log;
 
 /// \brief Test InitLogger
 ///
-/// A test program that initializes using initLogger(), then outputs several
-/// messages at different severities.  An external script sets the environment
-/// variables and checks that they have the desired effect.
+/// A program used in testing the logger that initializes logging using
+/// initLogger(), then outputs several messages at different severities and
+/// debug levels.  An external script sets the environment variables and checks
+/// that they have the desired effect.
 
 int
 main(int, char**) {
