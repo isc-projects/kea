@@ -76,13 +76,13 @@ void initLogger(const std::string& root,
 /// "DEBUG", "INFO", "WARN", "ERROR", "FATAL" or "NONE". (Must be upper case
 /// and must not contain leading or trailing spaces.)  If not specified (or if
 /// specified but incorrect), the default passed as argument to this function
-/// (currently INFO) will be used.
+/// (currently DEBUG) will be used.
 ///
 /// B10_LOGGER_DBGLEVEL
 /// Ignored if the level is not DEBUG, this should be a number between 0 and
 /// 99 indicating the logging severity.  The default is 0.  If outside these
 /// limits or if not a number, The value passed to this function (default
-/// of 0) is used.
+/// of MAX_DEBUG_LEVEL) is used.
 ///
 /// B10_LOGGER_LOCALMSG
 /// If defined, the path specification of a file that contains message
@@ -94,8 +94,8 @@ void initLogger(const std::string& root,
 /// be overridden by the tester.  It is not intended for use in production
 /// code.
 
-void initLogger(isc::log::Severity severity = isc::log::INFO,
-                int dbglevel = 0);
+void initLogger(isc::log::Severity severity = isc::log::DEBUG,
+                int dbglevel = isc::log::MAX_DEBUG_LEVEL);
 
 } // namespace log
 } // namespace isc
