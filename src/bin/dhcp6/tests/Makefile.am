@@ -40,24 +40,27 @@ endif
 TESTS =
 if HAVE_GTEST
 
-TESTS += run_unittests
+TESTS += dhcp6_unittests
 
-run_unittests_SOURCES  = ../addr6.h ../addr6.cc
-run_unittests_SOURCES += ../pkt6.h ../pkt6.cc
-run_unittests_SOURCES += ../iface_mgr.h ../iface_mgr.cc
-run_unittests_SOURCES += ../dhcp6_srv.h ../dhcp6_srv.cc
-run_unittests_SOURCES += addr6_unittest.cc
-run_unittests_SOURCES += run_unittests.cc
+dhcp6_unittests_SOURCES  = ../addr6.h ../addr6.cc
+dhcp6_unittests_SOURCES += ../pkt6.h ../pkt6.cc
+dhcp6_unittests_SOURCES += ../iface_mgr.h ../iface_mgr.cc
+dhcp6_unittests_SOURCES += ../dhcp6_srv.h ../dhcp6_srv.cc
+dhcp6_unittests_SOURCES += dhcp6_unittests.cc
+dhcp6_unittests_SOURCES += addr6_unittest.cc
+dhcp6_unittests_SOURCES += pkt6_unittest.cc
+dhcp6_unittests_SOURCES += iface_mgr_unittest.cc
+dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc
 
-run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
-run_unittests_LDADD = $(GTEST_LDADD)
-run_unittests_LDADD += $(SQLITE_LIBS)
-run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
-run_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
-run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.la
-run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
-run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
+dhcp6_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
+dhcp6_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
+dhcp6_unittests_LDADD = $(GTEST_LDADD)
+dhcp6_unittests_LDADD += $(SQLITE_LIBS)
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 endif
 
 noinst_PROGRAMS = $(TESTS)

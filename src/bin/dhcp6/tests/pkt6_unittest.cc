@@ -12,35 +12,40 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+#include <iostream>
+#include <sstream>
 
-#include "dhcp6/dhcp6.h"
+#include <arpa/inet.h>
+#include <gtest/gtest.h>
+
+
 #include "dhcp6/pkt6.h"
 
-namespace isc {
+using namespace std;
+using namespace isc;
 
-    /**
-     * constructor.
-     *
-     * Note: Pkt6 will take ownership of any data passed
-     *
-     * @param data
-     * @param dataLen
-     */
-    Pkt6::Pkt6(char * data, int dataLen) {
-	data_ = data;
-	dataLen_ = dataLen;
+// empty class for now, but may be extended once Addr6 becomes bigger
+class Pkt6Test : public ::testing::Test {
+public:
+    Pkt6Test() {
     }
-
-    Pkt6::Pkt6(int dataLen) {
-	data_ = new char[dataLen];
-	dataLen_ = dataLen;
-    }
-
-    Pkt6::~Pkt6() {
-	if (data_) {
-	    delete [] data_;
-	}
-
-    }
-
 };
+
+TEST_F(Pkt6Test, constructor) {
+    Pkt6 * pkt1 = new Pkt6(17);
+    
+    ASSERT_EQ(pkt1->dataLen_, 17);
+
+    char * buf = new char[23];
+    // can't use char buf[23], as Pkt6 takes ownership of the data
+
+    Pkt6 * pkt2 = new Pkt6(buf, 23);
+
+    ASSERT_EQ(pkt2->dataLen_, 23);
+    ASSERT_EQ(pkt2->data_, buf);
+
+    delete pkt1;
+    delete pkt2;
+}
+
