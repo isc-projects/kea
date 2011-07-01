@@ -19,3 +19,19 @@ $NAMESPACE isc::cache
 % CACHE_LOCALZONE_UNKNOWN entry with key %1 not found in local zone data
 
 % CACHE_LOCALZONE_FOUND found entry with key %1 in local zone data
+
+% CACHE_MESSAGES_INIT initialized message cache for %1 %2 messages
+
+% CACHE_MESSAGES_DEINIT deinitialized message cache
+
+% CACHE_MESSAGES_FOUND found a message entry for %1 in the message cache
+
+% CACHE_MESSAGES_EXPIRED found an expired message entry for %1 in the message cache
+
+% CACHE_MESSAGES_UNKNOWN no entry for %1 found in the message cache
+
+% CACHE_MESSAGES_UNCACHEABLE not inserting uncacheable message %1/%2/%3
+
+% CACHE_MESSAGES_UPDATE updating message entry %1/%2/%3
+
+% CACHE_MESSAGES_REMOVE removing old instance of %1/%2/%3 first
