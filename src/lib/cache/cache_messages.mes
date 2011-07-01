@@ -35,3 +35,5 @@ $NAMESPACE isc::cache
 % CACHE_MESSAGES_UPDATE updating message entry %1/%2/%3
 
 % CACHE_MESSAGES_REMOVE removing old instance of %1/%2/%3 first
+
+% CACHE_ENTRY_MISSING_RRSET missing RRset to generate message for %1
