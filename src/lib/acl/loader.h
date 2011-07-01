@@ -301,7 +301,7 @@ public:
      * and returns it.
      *
      * No exceptions from \c loadCheck (therefore from whatever creator is
-     * used) and from the actionLoader passed to constructor are not caught.
+     * used) and from the actionLoader passed to constructor are caught.
      *
      * \exception InvalidParameter The given element is NULL (most likely a
      * caller's bug)
