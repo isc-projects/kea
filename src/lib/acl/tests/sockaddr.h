@@ -19,6 +19,8 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+#include <exceptions/exceptions.h>
+
 namespace isc {
 namespace acl {
 namespace tests {
@@ -35,7 +37,8 @@ inline const struct sockaddr&
 getSockAddr(const char* const addr) {
     struct addrinfo hints, *res;
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;
+    //hints.ai_family = AF_UNSPEC;
+    hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_NUMERICHOST;
 
@@ -48,11 +51,11 @@ getSockAddr(const char* const addr) {
     }
 
     // We don't expect getaddrinfo to fail for our tests.  But if that
-    // ever happens we return a dummy value that would make subsequent test
-    // fail.
-    static struct sockaddr sa_dummy;
-    sa_dummy.sa_family = AF_UNSPEC;
-    return (sa_dummy);
+    // ever happens we throw an exception to make sure the corresponding test
+    // fail (either due to a failure of *_NO_THROW or the uncaught exception).
+    isc_throw(Unexpected,
+              "failed to convert textual IP address to sockaddr for " <<
+              addr);
 }
 
 } // end of namespace "tests"
