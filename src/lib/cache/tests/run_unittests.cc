@@ -19,11 +19,15 @@
 
 #include <dns/tests/unittest_util.h>
 
+#include <log/logger_support.h>
+
 int
 main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
     isc::UnitTestUtil::addDataPath(TEST_DATA_SRCDIR);
     isc::UnitTestUtil::addDataPath(TEST_DATA_BUILDDIR);
+
+    isc::log::initLogger();
 
     return (isc::util::unittests::run_all());
 }

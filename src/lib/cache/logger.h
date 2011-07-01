@@ -26,7 +26,7 @@
 /// cc files.
 
 namespace isc {
-namespace datasrc {
+namespace cache {
 
 /// \brief The logger for this library
 extern isc::log::Logger logger;
@@ -34,6 +34,8 @@ extern isc::log::Logger logger;
 enum {
     /// \brief Trace basic operations
     DBG_TRACE_BASIC = 10,
+    /// \brief Trace data operations
+    DBG_TRACE_DATA = 40,
 };
 
 }
