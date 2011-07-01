@@ -44,17 +44,17 @@ $NAMESPACE isc::cache
 
 % CACHE_RESOLVER_LOOKUP_MSG looking up message in resolver cache for %1/%2
 
-% CACHE_RESOLVER_LOOKUP_RRSET looking up rrset in resolver cache for %1/%2
+% CACHE_RESOLVER_LOOKUP_RRSET looking up RRset in resolver cache for %1/%2
 
 % CACHE_RESOLVER_NO_QUESTION answer message for %1/%2 has empty question section
 
 % CACHE_RESOLVER_LOCAL_MSG message for %1/%2 found in local zone data
 
-% CACHE_RESOLVER_LOCAL_RRSET rrset for %1/%2 found in local zone data
+% CACHE_RESOLVER_LOCAL_RRSET RRset for %1/%2 found in local zone data
 
 % CACHE_RESOLVER_UPDATE_MSG updating message for %1/%2/%3
 
-% CACHE_RESOLVER_UPDATE_RRSET updating rrset for %1/%2/%3
+% CACHE_RESOLVER_UPDATE_RRSET updating RRset for %1/%2/%3
 
 % CACHE_RESOLVER_UNKNOWN_CLASS_MSG no cache for class %1
 
@@ -65,3 +65,17 @@ $NAMESPACE isc::cache
 % CACHE_RESOLVER_UPDATE_UNKNOWN_CLASS_MSG no cache for class %1
 
 % CACHE_RESOLVER_UPDATE_UNKNOWN_CLASS_RRSET no cache for class %1
+
+% CACHE_RRSET_INIT initializing RRset cache for %2 RRsets of class %1
+
+% CACHE_RRSET_LOOKUP looking up %1/%2 in RRset cache
+
+% CACHE_RRSET_EXPIRED found expired RRset %1/%2
+
+% CACHE_RRSET_NOT_FOUND no RRset found for %1/%2
+
+% CACHE_RRSET_UPDATE updating RRset %1/%2/%3 in the cache
+
+% CACHE_RRSET_UNTRUSTED not replacing old RRset for %1/%2/%3, it has higher trust level
+
+% CACHE_RRSET_REMOVE_OLD removing old RRset for %1/%2/%3 to make space for new one
