@@ -15,7 +15,7 @@
 #include <cache/logger.h>
 
 namespace isc {
-namespace datasrc {
+namespace cache {
 
 isc::log::Logger logger("cache");
 
