@@ -145,17 +145,6 @@ private:
 /// parameter \c os after the insertion operation.
 std::ostream& operator<<(std::ostream& os, const Client& client);
 }
-
-namespace acl {
-/// The specialization of \c IPCheck for access control with \c Client.
-///
-/// It returns \c true if the source IP address of the client's request
-/// matches the expression encapsulated in the \c IPCheck, and returns
-/// \c false if not.
-template <>
-bool IPCheck<server_common::Client>::matches(
-    const server_common::Client& client) const;
-}
 }
 
 #endif  // __CLIENT_H
