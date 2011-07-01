@@ -409,6 +409,11 @@ TEST(Element, to_and_from_wire) {
     EXPECT_THROW(Element::fromJSON("[ 1, 2, }"), isc::data::JSONError);
     EXPECT_THROW(Element::fromJSON("[ 1, 2, {}"), isc::data::JSONError);
     EXPECT_THROW(Element::fromJSON("[ 1, 2, { ]"), isc::data::JSONError);
+    EXPECT_THROW(Element::fromJSON("[ "), isc::data::JSONError);
+    EXPECT_THROW(Element::fromJSON("{{}}"), isc::data::JSONError);
+    EXPECT_THROW(Element::fromJSON("{[]}"), isc::data::JSONError);
+    EXPECT_THROW(Element::fromJSON("{ \"a\", \"b\" }"), isc::data::JSONError);
+    EXPECT_THROW(Element::fromJSON("[ \"a\": \"b\" ]"), isc::data::JSONError);
 }
 
 ConstElementPtr
