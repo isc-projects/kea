@@ -68,8 +68,8 @@ import isc.net.parse
 import isc.log
 from bind10_messages import *
 
-isc.log.init("b10-bind10")
-logger = isc.log.Logger("bind10")
+isc.log.init("b10-boss")
+logger = isc.log.Logger("boss")
 
 # Pending system-wide debug level definitions, the ones we
 # use here are hardcoded for now
@@ -380,12 +380,12 @@ class BoB:
         """
         self.curproc = process
         if port is None and address is None:
-            logger.debug(DBG_PROCESS, BIND10_STARTING_PROCESS, self.curproc)
+            logger.info(BIND10_STARTING_PROCESS, self.curproc)
         elif address is None:
-            logger.debug(DBG_PROCESS, BIND10_STARTING_PROCESS_PORT, self.curproc,
+            logger.info(BIND10_STARTING_PROCESS_PORT, self.curproc,
                         port)
         else:
-            logger.debug(DBG_PROCESS, BIND10_STARTING_PROCESS_PORT_ADDRESS,
+            logger.info(BIND10_STARTING_PROCESS_PORT_ADDRESS,
                         self.curproc, address, port)
 
     def log_started(self, pid = None):
