@@ -86,7 +86,7 @@ internal::RequestCheckCreator::create(const string& name,
 }
 
 RequestLoader&
-getLoader() {
+getRequestLoader() {
     static RequestLoader* loader(NULL);
     if (loader == NULL) {
         // Creator registration may throw, so we first store the new loader

@@ -103,7 +103,7 @@ typedef acl::Loader<RequestContext> RequestLoader;
  * one is enough, this one will have registered default checks and it
  * is known one, so any plugins can registrer additional checks as well.
  */
-RequestLoader& getLoader();
+RequestLoader& getRequestLoader();
 
 // The following is essentially private to the implementation and could
 // be hidden in the implementation file.  But it's visible via this header
