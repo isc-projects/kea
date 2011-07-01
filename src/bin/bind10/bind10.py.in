@@ -628,7 +628,7 @@ class BoB:
         # try to connect, and if we can't wait a short while
         try:
             self.cc_session = isc.cc.Session(self.msgq_socket_file)
-            logger.fatal(BIND10_MSGQ_ALREADY_RUNNING);
+            logger.fatal(BIND10_MSGQ_ALREADY_RUNNING)
             return "b10-msgq already running, or socket file not cleaned , cannot start"
         except isc.cc.session.SessionError:
             # this is the case we want, where the msgq is not running
