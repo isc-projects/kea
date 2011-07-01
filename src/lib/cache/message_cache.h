@@ -39,7 +39,7 @@ private:
     MessageCache& operator=(const MessageCache& source);
 public:
     /// \param rrset_cache The cache that stores the RRsets that the
-    ///        message entry will points to
+    ///        message entry will point to
     /// \param cache_size The size of message cache.
     /// \param message_class The class of the message cache
     /// \param negative_soa_cache The cache that stores the SOA record
