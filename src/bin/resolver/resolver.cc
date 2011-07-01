@@ -62,6 +62,7 @@ using boost::shared_ptr;
 using namespace isc;
 using namespace isc::util;
 using namespace isc::acl;
+using isc::acl::dns::RequestACL;
 using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::config;
@@ -162,11 +163,11 @@ public:
                                          OutputBufferPtr buffer,
                                          DNSServer* server);
 
-    const Resolver::QueryACL& getQueryACL() const {
+    const RequestACL& getQueryACL() const {
         return (*query_acl_);
     }
 
-    void setQueryACL(shared_ptr<const Resolver::QueryACL> new_acl) {
+    void setQueryACL(shared_ptr<const RequestACL> new_acl) {
         query_acl_ = new_acl;
     }
 
@@ -194,7 +195,7 @@ public:
 
 private:
     /// ACL on incoming queries
-    shared_ptr<const Resolver::QueryACL> query_acl_;
+    shared_ptr<const RequestACL> query_acl_;
 
     /// Object to handle upstream queries
     RecursiveQuery* rec_query_;
@@ -595,9 +596,9 @@ Resolver::updateConfig(ConstElementPtr config) {
         AddressList listenAddresses(parseAddresses(listenAddressesE,
                                                       "listen_on"));
         const ConstElementPtr query_acl_cfg(config->get("query_acl"));
-        const shared_ptr<const QueryACL> query_acl =
+        const shared_ptr<const RequestACL> query_acl =
             query_acl_cfg ? acl::dns::getLoader().load(query_acl_cfg) :
-            shared_ptr<const QueryACL>();
+            shared_ptr<const RequestACL>();
         bool set_timeouts(false);
         int qtimeout = impl_->query_timeout_;
         int ctimeout = impl_->client_timeout_;
@@ -757,13 +758,13 @@ Resolver::getListenAddresses() const {
     return (impl_->listen_);
 }
 
-const Resolver::QueryACL&
+const RequestACL&
 Resolver::getQueryACL() const {
     return (impl_->getQueryACL());
 }
 
 void
-Resolver::setQueryACL(shared_ptr<const QueryACL> new_acl) {
+Resolver::setQueryACL(shared_ptr<const RequestACL> new_acl) {
     if (!new_acl) {
         isc_throw(InvalidParameter, "NULL pointer is passed to setQueryACL");
     }
