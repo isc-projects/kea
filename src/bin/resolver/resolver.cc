@@ -85,7 +85,7 @@ public:
         retries_(3),
         // we apply "reject all" (implicit default of the loader) ACL by
         // default:
-        query_acl_(acl::dns::getLoader().load(Element::fromJSON("[]"))),
+        query_acl_(acl::dns::getRequestLoader().load(Element::fromJSON("[]"))),
         rec_query_(NULL)
     {}
 
@@ -597,7 +597,7 @@ Resolver::updateConfig(ConstElementPtr config) {
                                                       "listen_on"));
         const ConstElementPtr query_acl_cfg(config->get("query_acl"));
         const shared_ptr<const RequestACL> query_acl =
-            query_acl_cfg ? acl::dns::getLoader().load(query_acl_cfg) :
+            query_acl_cfg ? acl::dns::getRequestLoader().load(query_acl_cfg) :
             shared_ptr<const RequestACL>();
         bool set_timeouts(false);
         int qtimeout = impl_->query_timeout_;

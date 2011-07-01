@@ -37,20 +37,20 @@ using namespace std;
 using boost::scoped_ptr;
 using namespace isc::data;
 using namespace isc::acl;
+using namespace isc::acl::dns;
 using isc::acl::LoaderError;
 
 namespace {
 
-// Tests that the getLoader actually returns something, returns the same every
-// time and the returned value can be used to anything. It is not much of a
-// test, but the getLoader is not much of a function.
-TEST(DNSACL, getLoader) {
-    dns::RequestLoader* l(&dns::getLoader());
+TEST(DNSACL, getRequestLoader) {
+    dns::RequestLoader* l(&getRequestLoader());
     ASSERT_TRUE(l != NULL);
-    EXPECT_EQ(l, &dns::getLoader());
+    EXPECT_EQ(l, &getRequestLoader());
     EXPECT_NO_THROW(l->load(Element::fromJSON("[{\"action\": \"DROP\"}]")));
 
-    // Test check rules registered by default, i.e. RequestCheck
+    // Confirm it can load the ACl syntax acceptable to a default creator.
+    // Tests to see whether the loaded rules work correctly will be in
+    // other dedicated tests below.
     EXPECT_NO_THROW(l->load(Element::fromJSON("[{\"action\": \"DROP\","
                                               "  \"from\": \"192.0.2.1\"}]")));
 }
@@ -77,7 +77,7 @@ TEST_F(RequestCheckCreatorTest, allowListAbbreviation) {
 // are done in the tests for IPCheck.
 TEST_F(RequestCheckCreatorTest, createIPv4Check) {
     check_ = creator_.create("from", Element::fromJSON("\"192.0.2.1\""),
-                             dns::getLoader());
+                             getRequestLoader());
     const dns::internal::RequestIPCheck& ipcheck_ =
         dynamic_cast<const dns::internal::RequestIPCheck&>(*check_);
     EXPECT_EQ(AF_INET, ipcheck_.getFamily());
@@ -92,7 +92,7 @@ TEST_F(RequestCheckCreatorTest, createIPv4Check) {
 TEST_F(RequestCheckCreatorTest, createIPv6Check) {
     check_ = creator_.create("from",
                              Element::fromJSON("\"2001:db8::5300/120\""),
-                             dns::getLoader());
+                             getRequestLoader());
     const dns::internal::RequestIPCheck& ipcheck_ =
         dynamic_cast<const dns::internal::RequestIPCheck&>(*check_);
     EXPECT_EQ(AF_INET6, ipcheck_.getFamily());
@@ -109,23 +109,23 @@ TEST_F(RequestCheckCreatorTest, createIPv6Check) {
 TEST_F(RequestCheckCreatorTest, badCreate) {
     // Invalid name
     EXPECT_THROW(creator_.create("bad", Element::fromJSON("\"192.0.2.1\""),
-                                 dns::getLoader()), LoaderError);
+                                 getRequestLoader()), LoaderError);
 
     // Invalid type of parameter
     EXPECT_THROW(creator_.create("from", Element::fromJSON("4"),
-                                 dns::getLoader()),
+                                 getRequestLoader()),
                  isc::data::TypeError);
     EXPECT_THROW(creator_.create("from", Element::fromJSON("[]"),
-                                 dns::getLoader()),
+                                 getRequestLoader()),
                  isc::data::TypeError);
 
     // Syntax error for IPCheck
     EXPECT_THROW(creator_.create("from", Element::fromJSON("\"bad\""),
-                                 dns::getLoader()),
+                                 getRequestLoader()),
                  isc::InvalidParameter);
 
     // NULL pointer
-    EXPECT_THROW(creator_.create("from", ConstElementPtr(), dns::getLoader()),
+    EXPECT_THROW(creator_.create("from", ConstElementPtr(), getRequestLoader()),
                  LoaderError);
 }
 
@@ -137,7 +137,7 @@ protected:
     ConstRequestCheckPtr createIPCheck(const string& prefix) {
         return (creator_.create("from", Element::fromJSON(
                                     string("\"") + prefix + string("\"")),
-                                dns::getLoader()));
+                                getRequestLoader()));
     }
 
     // create a one time request context for a specific test.  Note that
