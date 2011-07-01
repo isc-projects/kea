@@ -13,3 +13,9 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 $NAMESPACE isc::cache
+
+% CACHE_LOCALZONE_UPDATE updating local zone element at key %1
+
+% CACHE_LOCALZONE_UNKNOWN entry with key %1 not found in local zone data
+
+% CACHE_LOCALZONE_FOUND found entry with key %1 in local zone data
