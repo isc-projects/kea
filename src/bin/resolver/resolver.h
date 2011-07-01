@@ -239,13 +239,10 @@ public:
      */
     int getRetries() const;
 
-    // Shortcut typedef used for query ACL.
-    typedef isc::acl::ACL<isc::acl::dns::RequestContext> QueryACL;
-
     /// Get the query ACL.
     ///
     /// \exception None
-    const QueryACL& getQueryACL() const;
+    const isc::acl::dns::RequestACL& getQueryACL() const;
 
     /// Set the new query ACL.
     ///
@@ -258,7 +255,8 @@ public:
     /// \exception InvalidParameter The given pointer is NULL
     ///
     /// \param new_acl The new ACL to replace the existing one.
-    void setQueryACL(boost::shared_ptr<const QueryACL> new_acl);
+    void setQueryACL(boost::shared_ptr<const isc::acl::dns::RequestACL>
+                     new_acl);
 
 private:
     ResolverImpl* impl_;
