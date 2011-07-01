@@ -20,6 +20,7 @@
 #include "message_entry.h"
 #include "message_utility.h"
 #include "rrset_cache.h"
+#include "logger.h"
 
 using namespace isc::dns;
 using namespace std;

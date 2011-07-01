@@ -37,3 +37,31 @@ $NAMESPACE isc::cache
 % CACHE_MESSAGES_REMOVE removing old instance of %1/%2/%3 first
 
 % CACHE_ENTRY_MISSING_RRSET missing RRset to generate message for %1
+
+% CACHE_RESOLVER_INIT initializing resolver cache for class %1
+
+% CACHE_RESOLVER_INIT_INFO initializing resolver cache for class %1
+
+% CACHE_RESOLVER_LOOKUP_MSG looking up message in resolver cache for %1/%2
+
+% CACHE_RESOLVER_LOOKUP_RRSET looking up rrset in resolver cache for %1/%2
+
+% CACHE_RESOLVER_NO_QUESTION answer message for %1/%2 has empty question section
+
+% CACHE_RESOLVER_LOCAL_MSG message for %1/%2 found in local zone data
+
+% CACHE_RESOLVER_LOCAL_RRSET rrset for %1/%2 found in local zone data
+
+% CACHE_RESOLVER_UPDATE_MSG updating message for %1/%2/%3
+
+% CACHE_RESOLVER_UPDATE_RRSET updating rrset for %1/%2/%3
+
+% CACHE_RESOLVER_UNKNOWN_CLASS_MSG no cache for class %1
+
+% CACHE_RESOLVER_UNKNOWN_CLASS_RRSET no cache for class %1
+
+% CACHE_RESOLVER_DEEPEST looking up deepest NS for %1/%2
+
+% CACHE_RESOLVER_UPDATE_UNKNOWN_CLASS_MSG no cache for class %1
+
+% CACHE_RESOLVER_UPDATE_UNKNOWN_CLASS_RRSET no cache for class %1
