@@ -49,7 +49,7 @@ running, which needs to be stopped.
 
 % BIND10_MSGQ_DAEMON_ENDED b10-msgq process died, shutting down
 The message bus daemon has died. This is a fatal error, since it may
-leave the system in an inconsistent state. BIND10 will now shut down
+leave the system in an inconsistent state. BIND10 will now shut down.
 
 % BIND10_MSGQ_DISAPPEARED msgq channel disappeared
 While listening on the message bus channel for messages, it suddenly
@@ -125,13 +125,13 @@ process; once that has been implemented, modules should not need root
 privileges anymore.
 
 % BIND10_STARTED_PROCESS started %1
-The given process has successfully been started
+The given process has successfully been started.
 
 % BIND10_STARTED_PROCESS_PID started %1 (PID %2)
 The given process has successfully been started, and has the given PID.
 
 % BIND10_STARTING starting BIND10: %1
-Informational message on startup that show the full version.
+Informational message on startup that shows the full version.
 
 % BIND10_STARTING_PROCESS starting process %1
 The boss module is starting the given process.
