@@ -28,21 +28,21 @@ started according to the configuration.
 This message shows whether or not the resolver should be
 started according to the configuration.
 
-% BIND10_INVALID_USER invalid user: '%1'
+% BIND10_INVALID_USER invalid user: %1
 The boss process was started with the -u option, to drop root privileges
 and continue running as the specified user, but the user is unknown.
 
 % BIND10_KILL_PROCESS killing process %1
-The boss module is sending a kill signal to the given process, as part
-of the process of killing all started processes during a failed startup,
-as described for BIND10_KILLING_ALL_PROCESSES
+The boss module is sending a kill signal to process with the given name,
+as part of the process of killing all started processes during a failed
+startup, as described for BIND10_KILLING_ALL_PROCESSES
 
 % BIND10_KILLING_ALL_PROCESSES killing all started processes
 The boss module was not able to start every process it needed to start
 during startup, and will now kill the processes that did get started.
 
 % BIND10_MSGQ_ALREADY_RUNNING msgq daemon already running, cannot start
-There already appears to me a message bus daemon running. Either an
+There already appears to be a message bus daemon running. Either an
 old process was not shut down correctly, and needs to be killed, or
 another instance of BIND10, with the same msgq domain socket, is
 running, which needs to be stopped.
@@ -58,12 +58,8 @@ inconsistent state of the system, and BIND 10 will now shut down.
 
 % BIND10_PROCESS_ENDED_NO_EXIT_STATUS process %1 (PID %2) died: exit status not available
 The given process ended unexpectedly, but no exit status is
-available. Depending on which module it was, it may simply be
-restarted, or it may be a problem that will cause the boss module to
-shut down too. The latter happens if it was the message bus daemon,
-which, if it has died suddenly, may leave the system in an
-inconsistent state. BIND10 will also shut down now if it has been run
-with --brittle.
+available. See BIND10_PROCESS_ENDED_WITH_EXIT_STATUS for a longer
+description.
 
 % BIND10_PROCESS_ENDED_WITH_EXIT_STATUS process %1 (PID %2) terminated, exit status = %3
 The given process ended unexpectedly with the given exit status.
@@ -109,7 +105,7 @@ The boss module is sending a SIGTERM signal to the given process.
 
 % BIND10_SHUTDOWN stopping the server
 The boss process received a command or signal telling it to shut down.
-It will send shutdown commands to each process. The processes that do
+It will send a shutdown command to each process. The processes that do
 not shut down will then receive a SIGTERM signal. If that doesn't work,
 it shall send SIGKILL signals to the processes still alive.
 
@@ -122,7 +118,7 @@ The given module is being started or restarted without root privileges.
 If the module needs these privileges, it may have problems starting.
 Note that this issue should be resolved by the pending 'socket-creator'
 process; once that has been implemented, modules should not need root
-privileges anymore.
+privileges anymore. See tickets #800 and #801 for more information.
 
 % BIND10_STARTED_PROCESS started %1
 The given process has successfully been started.

@@ -262,7 +262,7 @@ class BoB:
             if new_config['start_' + name]:
                 if not started:
                     if self.uid is not None:
-                        logger.warn(BIND10_START_AS_NON_ROOT, name)
+                        logger.info(BIND10_START_AS_NON_ROOT, name)
                     start()
             else:
                 stop()
@@ -368,7 +368,8 @@ class BoB:
     def log_starting(self, process, port = None, address = None):
         """
             A convenience function to output a "Starting xxx" message if the
-            verbose option is set.  Putting this into a separate method ensures
+            logging is set to DEBUG with debuglevel DBG_PROCESS or higher.
+            Putting this into a separate method ensures
             that the output form is consistent across all processes.
 
             The process name (passed as the first argument) is put into
@@ -757,10 +758,10 @@ class BoB:
                 # elsewhere.
                 if self.runnable:
                     if exit_status is None:
-                        logger.info(BIND10_PROCESS_ENDED_NO_EXIT_STATUS,
+                        logger.warn(BIND10_PROCESS_ENDED_NO_EXIT_STATUS,
                                     proc_info.name, proc_info.pid)
                     else:
-                        logger.info(BIND10_PROCESS_ENDED_WITH_EXIT_STATUS,
+                        logger.warn(BIND10_PROCESS_ENDED_WITH_EXIT_STATUS,
                                     proc_info.name, proc_info.pid,
                                     exit_status)
 
@@ -1022,6 +1023,7 @@ def main():
                     boss_of_bind.ccs.check_command()
                 except isc.cc.session.ProtocolError:
                     logger.fatal(BIND10_MSGQ_DISAPPEARED)
+                    self.runnable = False
                     break
             elif fd == wakeup_fd:
                 os.read(wakeup_fd, 32)
