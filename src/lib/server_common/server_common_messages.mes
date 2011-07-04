@@ -24,7 +24,7 @@ IP address - port pairs isn't a list at all but something else.
 The server failed to bind to one of the address/port pair it should according
 to configuration, for reason listed in the message (usually because that pair
 is already used by other service or missing privileges). The server will try
-to recover and bind the address/port pairs it was listening before, if any.
+to recover and bind the address/port pairs it was listening to before (if any).
 
 % SRVCOMM_ADDRESS_MISSING address specification is missing "address" or "port" element in %1
 This points to an error in configuration. An address specification in the
@@ -54,7 +54,7 @@ per pair). This appears only after SRVCOMM_SET_LISTEN, but might
 be hidden, as it has higher debug level.
 
 % SRVCOMM_KEYS_DEINIT deinitializing TSIG keyring
-Debug message indicating that the server is deinilizing the TSIG keyring.
+Debug message indicating that the server is deinitializing the TSIG keyring.
 
 % SRVCOMM_KEYS_INIT initializing TSIG keyring
 Debug message indicating that the server is initializing the global TSIG
@@ -65,8 +65,8 @@ Debug message indicating new keyring is being loaded from configuration (either
 on startup or as a result of configuration update).
 
 % SRVCOMM_PORT_RANGE port out of valid range (%1 in %2)
-This points to an error in configuration. The port in some address
-specification is out of the valid range (0-65535).
+This points to an error in configuration. The port in an address
+specification is outside the valid range of 0 to 65535.
 
 % SRVCOMM_SET_LISTEN setting addresses to listen to
 Debug message, noting that the server is about to start listening on a
