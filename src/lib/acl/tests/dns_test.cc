@@ -32,4 +32,24 @@ TEST(DNSACL, getLoader) {
     // check, are loaded.
 }
 
+// The following tests test only the creators are registered, they are tested
+// elsewhere
+
+// TODO: Enable the tests when we merge the IP check branch here (is it called
+// "from" in the branch?)
+TEST(DNSACL, DISABLED_notLoad) {
+    EXPECT_NO_THROW(getLoader().loadCheck(isc::data::Element::fromJSON(
+        "{\"NOT\": {\"from\": \"192.0.2.1\"}}")));
+}
+
+TEST(DNSACL, DISABLED_allLoad) {
+    EXPECT_NO_THROW(getLoader().loadCheck(isc::data::Element::fromJSON(
+        "{\"ALL\": [{\"from\": \"192.0.2.1\"}]}")));
+}
+
+TEST(DNSACL, DISABLED_anyLoad) {
+    EXPECT_NO_THROW(getLoader().loadCheck(isc::data::Element::fromJSON(
+        "{\"ANY\": [{\"from\": \"192.0.2.1\"}]}")));
+}
+
 }
