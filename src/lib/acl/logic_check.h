@@ -200,6 +200,21 @@ private:
     const std::string name_;
 };
 
+template<typename Context>
+class NotCheck : public CompoundCheck<Context> {
+public:
+    NotCheck(const boost::shared_ptr<Check<Context> >& expr) {
+
+    }
+    virtual typename CompoundCheck<Context>::Checks getSubexpressions() const {
+
+    }
+    virtual bool matches(const Context& context) const {
+    }
+private:
+    const boost::shared_ptr<Check<Context> > expr_;
+};
+
 }
 }
 

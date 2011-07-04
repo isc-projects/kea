@@ -242,4 +242,24 @@ TEST_F(LogicCreatorTest, nested) {
     log_.checkFirst(2);
 }
 
+void notTest(bool value) {
+    NotCheck<Log> notOp(shared_ptr<Check<Log> >(new ConstCheck(value, 0)));
+    Log log;
+    // It returns negated value
+    EXPECT_EQ(!value, notOp.matches(log));
+    // And runs the only one thing there
+    log.checkFirst(1);
+    // Check the getSubexpressions does sane things
+    ASSERT_EQ(1, notOp.getSubexpressions().size());
+    EXPECT_EQ(value, notOp.getSubexpressions()[0]->matches(log));
+}
+
+TEST(Not, trueValue) {
+    notTest(true);
+}
+
+TEST(Not, trueValue) {
+    notTest(true);
+}
+
 }
