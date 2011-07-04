@@ -132,6 +132,18 @@ Filename::useAsDefault(const string& name) const {
     return (retstring);
 }
 
+void
+Filename::setDirectory(const std::string& new_directory) {
+    directory_ = new_directory;
+    // append '/' if necessary
+    size_t sep = directory_.rfind('/');
+    if (sep == std::string::npos || sep < directory_.size() - 1) {
+        directory_ += "/";
+    }
+    // and regenerate the full name
+    full_name_ = directory_ + name_ + extension_;
+}
+
 
 } // namespace log
 } // namespace isc

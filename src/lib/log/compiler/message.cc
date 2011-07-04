@@ -85,6 +85,7 @@ usage() {
         "-h       Print this message and exit\n" <<
         "-v       Print the program version and exit\n" <<
         "-p       Output python source instead of C++ ones\n" <<
+        "-d <dir> Place output files in given directory\n" <<
         "\n" <<
         "<message-file> is the name of the input message file.\n";
 }
@@ -249,14 +250,21 @@ writeClosingNamespace(ostream& output, const vector<string>& ns) {
 /// \param file Name of the message file. The source code is written to a file
 ///     file of the same name but with a .py suffix.
 /// \param dictionary The dictionary holding the message definitions.
+/// \param output_directory if not null NULL, output files are written
+///     to the given directory. If NULL, they are written to the current
+///     working directory.
 ///
 /// \note We don't use the namespace as in C++. We don't need it, because
 ///     python file/module works as implicit namespace as well.
 
 void
-writePythonFile(const string& file, MessageDictionary& dictionary) {
+writePythonFile(const string& file, MessageDictionary& dictionary,
+                const char* output_directory) {
     Filename message_file(file);
     Filename python_file(Filename(message_file.name()).useAsDefault(".py"));
+    if (output_directory) {
+        python_file.setDirectory(output_directory);
+    }
 
     // Open the file for writing
     ofstream pyfile(python_file.fullName().c_str());
@@ -291,13 +299,19 @@ writePythonFile(const string& file, MessageDictionary& dictionary) {
 /// \param ns Namespace in which the definitions are to be placed.  An empty
 /// string indicates no namespace.
 /// \param dictionary Dictionary holding the message definitions.
+/// \param output_directory if not null NULL, output files are written
+///     to the given directory. If NULL, they are written to the current
+///     working directory.
 
 void
 writeHeaderFile(const string& file, const vector<string>& ns_components,
-                MessageDictionary& dictionary)
+                MessageDictionary& dictionary, const char* output_directory)
 {
     Filename message_file(file);
     Filename header_file(Filename(message_file.name()).useAsDefault(".h"));
+    if (output_directory) {
+        header_file.setDirectory(output_directory);
+    }
 
     // Text to use as the sentinels.
     string sentinel_text = sentinel(header_file);
@@ -382,13 +396,25 @@ replaceNonAlphaNum(char c) {
 /// optimisation is done at link-time, not compiler-time.  In this it _may_
 /// decide to remove the initializer object because of a lack of references
 /// to it.  But until BIND-10 is ported to Windows, we won't know.
-
+///
+/// \param file Name of the message file.  The header file is written to a
+/// file of the same name but with a .h suffix.
+/// \param ns Namespace in which the definitions are to be placed.  An empty
+/// string indicates no namespace.
+/// \param dictionary Dictionary holding the message definitions.
+/// \param output_directory if not null NULL, output files are written
+///     to the given directory. If NULL, they are written to the current
+///     working directory.
 void
 writeProgramFile(const string& file, const vector<string>& ns_components,
-                 MessageDictionary& dictionary)
+                 MessageDictionary& dictionary,
+                 const char* output_directory)
 {
     Filename message_file(file);
     Filename program_file(Filename(message_file.name()).useAsDefault(".cc"));
+    if (output_directory) {
+        program_file.setDirectory(output_directory);
+    }
 
     // Open the output file for writing
     ofstream ccfile(program_file.fullName().c_str());
@@ -496,15 +522,20 @@ warnDuplicates(MessageReader& reader) {
 int
 main(int argc, char* argv[]) {
 
-    const char* soptions = "hvp";               // Short options
+    const char* soptions = "hvpd:";               // Short options
 
     optind = 1;             // Ensure we start a new scan
     int  opt;               // Value of the option
 
     bool doPython = false;
+    const char *output_directory = NULL;
 
     while ((opt = getopt(argc, argv, soptions)) != -1) {
         switch (opt) {
+            case 'd':
+                output_directory = optarg;
+                break;
+
             case 'p':
                 doPython = true;
                 break;
@@ -552,7 +583,7 @@ main(int argc, char* argv[]) {
             }
 
             // Write the whole python file
-            writePythonFile(message_file, dictionary);
+            writePythonFile(message_file, dictionary, output_directory);
         } else {
             // Get the namespace into which the message definitions will be put and
             // split it into components.
@@ -560,10 +591,12 @@ main(int argc, char* argv[]) {
                 splitNamespace(reader.getNamespace());
 
             // Write the header file.
-            writeHeaderFile(message_file, ns_components, dictionary);
+            writeHeaderFile(message_file, ns_components, dictionary,
+                            output_directory);
 
             // Write the file that defines the message symbols and text
-            writeProgramFile(message_file, ns_components, dictionary);
+            writeProgramFile(message_file, ns_components, dictionary,
+                             output_directory);
         }
 
         // Finally, warn of any duplicates encountered.
