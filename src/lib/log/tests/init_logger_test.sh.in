@@ -44,9 +44,8 @@ WARN  [bind10.log] LOG_BAD_STREAM bad log console output stream: warn
 ERROR [bind10.log] LOG_DUPLICATE_MESSAGE_ID duplicate message ID (error) in compiled code
 FATAL [bind10.log] LOG_NO_MESSAGE_ID line fatal: message definition line found without a message ID
 .
-rm -f $destfile
-B10_LOGGER_SEVERITY=DEBUG B10_LOGGER_DBGLEVEL=99 ./init_logger_test 2> $destfile
-cut -d' ' -f3- $destfile | diff $tempfile -
+B10_LOGGER_SEVERITY=DEBUG B10_LOGGER_DBGLEVEL=99 ./init_logger_test 2>&1 | \
+    cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
 echo -n  "   - severity=DEBUG, dbglevel=50: "
@@ -58,9 +57,8 @@ WARN  [bind10.log] LOG_BAD_STREAM bad log console output stream: warn
 ERROR [bind10.log] LOG_DUPLICATE_MESSAGE_ID duplicate message ID (error) in compiled code
 FATAL [bind10.log] LOG_NO_MESSAGE_ID line fatal: message definition line found without a message ID
 .
-rm -f $destfile
-B10_LOGGER_SEVERITY=DEBUG B10_LOGGER_DBGLEVEL=50 ./init_logger_test 2> $destfile
-cut -d' ' -f3- $destfile | diff $tempfile -
+B10_LOGGER_SEVERITY=DEBUG B10_LOGGER_DBGLEVEL=50 ./init_logger_test 2>&1 | \
+    cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
 echo -n  "   - severity=WARN: "
@@ -69,9 +67,8 @@ WARN  [bind10.log] LOG_BAD_STREAM bad log console output stream: warn
 ERROR [bind10.log] LOG_DUPLICATE_MESSAGE_ID duplicate message ID (error) in compiled code
 FATAL [bind10.log] LOG_NO_MESSAGE_ID line fatal: message definition line found without a message ID
 .
-rm -f $destfile
-B10_LOGGER_SEVERITY=WARN ./init_logger_test 2> $destfile
-cut -d' ' -f3- $destfile | diff $tempfile -
+B10_LOGGER_SEVERITY=WARN ./init_logger_test 2>&1 | \
+    cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
 echo "2. Checking that B10_LOGGER_DESTINATION works"
