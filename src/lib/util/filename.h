@@ -86,6 +86,9 @@ public:
         return (directory_);
     }
 
+    /// \return Set directory for the file
+    void setDirectory(const std::string& new_directory);
+
     /// \return Name of Given File Name
     std::string name() const {
         return (name_);
