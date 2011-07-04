@@ -276,7 +276,7 @@ TEST_F(LogicCreatorTest, notInvalid) {
                  LoaderError);
     EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"NOT\": [{"
                                                      "\"logcheck\": [0, true]"
-                                                     "]}]}")),
+                                                     "}]}")),
                  LoaderError);
 }
 
