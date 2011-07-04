@@ -203,13 +203,16 @@ private:
 template<typename Context>
 class NotCheck : public CompoundCheck<Context> {
 public:
-    NotCheck(const boost::shared_ptr<Check<Context> >& expr) {
-
-    }
+    NotCheck(const boost::shared_ptr<Check<Context> >& expr) :
+        expr_(expr)
+    { }
     virtual typename CompoundCheck<Context>::Checks getSubexpressions() const {
-
+        typename CompoundCheck<Context>::Checks result;
+        result.push_back(expr_.get());
+        return (result);
     }
     virtual bool matches(const Context& context) const {
+        return (!expr_->matches(context));
     }
 private:
     const boost::shared_ptr<Check<Context> > expr_;
