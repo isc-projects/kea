@@ -93,6 +93,7 @@ public:
             LogicCreator<AllOfSpec, Log>("ALL")));
         loader_.registerCreator(CreatorPtr(new ThrowCreator));
         loader_.registerCreator(CreatorPtr(new LogCreator));
+        loader_.registerCreator(CreatorPtr(new NotCreator<Log>("NOT")));
     }
     // To mark which parts of the check did run
     Log log_;
@@ -260,6 +261,31 @@ TEST(Not, trueValue) {
 
 TEST(Not, falseValue) {
     notTest(false);
+}
+
+TEST_F(LogicCreatorTest, notInvalid) {
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"NOT\": null}")),
+                 LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"NOT\": \"hello\"}")),
+                 LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"NOT\": true}")),
+                 LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"NOT\": 42}")),
+                 LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"NOT\": []}")),
+                 LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"NOT\": [{"
+                                                     "\"logcheck\": [0, true]"
+                                                     "]}]}")),
+                 LoaderError);
+}
+
+TEST_F(LogicCreatorTest, notValid) {
+    shared_ptr<NotCheck<Log> > notOp(load<NotCheck<Log> >("{\"NOT\":"
+                                                          "  {\"logcheck\":"
+                                                          "     [0, true]}}"));
+    EXPECT_FALSE(notOp->matches(log_));
+    log_.checkFirst(1);
 }
 
 }

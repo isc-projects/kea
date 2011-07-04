@@ -236,6 +236,18 @@ private:
     const boost::shared_ptr<Check<Context> > expr_;
 };
 
+template<typename Context, typename Action = BasicAction>
+class NotCreator : public Loader<Context, Action>::CheckCreator {
+public:
+    NotCreator(const std::string& name);
+    virtual std::vector<std::string> names() const;
+    virtual boost::shared_ptr<Check<Context> > create(const std::string&,
+                                                      data::ConstElementPtr
+                                                      definition,
+                                                      const Loader<Context,
+                                                      Action>& loader);
+};
+
 }
 }
 
