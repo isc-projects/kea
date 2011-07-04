@@ -20,6 +20,13 @@ An older version of the configuration database has been found, from which
 there was an automatic upgrade path to the current version. These changes
 are now applied, and no action from the administrator is necessary.
 
+% CFGMGR_BAD_UPDATE_RESPONSE_FROM_MODULE Unable to parse response from module %1: %2
+The configuration manager sent a configuration update to a module, but
+the module responded with an answer that could not be parsed. The answer
+message appears to be invalid JSON data, or not decodable to a string.
+This is likely to be a problem in the module in question. The update is
+assumed to have failed, and will not be stored.
+
 % CFGMGR_CC_SESSION_ERROR Error connecting to command channel: %1
 The configuration manager daemon was unable to connect to the messaging
 system. The most likely cause is that msgq is not running.
