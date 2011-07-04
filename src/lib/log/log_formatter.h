@@ -163,6 +163,8 @@ public:
     }
 
     /// \brief String version of arg.
+    ///
+    /// \param arg The text to place into the placeholder.
     Formatter& arg(const std::string& arg) {
         if (logger_) {
             // Note that this method does a replacement and returns the
@@ -178,6 +180,18 @@ public:
             replacePlaceholder(message_, arg, ++nextPlaceholder_ );
         }
         return (*this);
+    }
+
+    /// \brief Exception version of arg.
+    ///
+    /// \param e An exception which the "what()" is extracted an put into the
+    ///     message.
+    Formatter& arg(const std::exception& e) {
+        if (logger_) {
+            return (arg(e.what()));
+        } else {
+            return (*this);
+        }
     }
 
 };
