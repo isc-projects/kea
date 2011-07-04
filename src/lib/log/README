@@ -143,7 +143,7 @@ Points to note:
     indicates that there was a problem in a write operation.
 
   * The rest of the line - from the first non-space character to the
-    last non- space character - is taken exactly as-is for the text
+    last non- space character - is taken exactly for the text
     of the message. There are no restrictions on what characters may
     be in this text, other than they be printable.  (This means that
     both single-quote (') and double-quote (") characters are allowed.)
@@ -151,7 +151,8 @@ Points to note:
     "%2" etc.).  When a message is logged, these are replaced with the
     arguments passed to the logging call: %1 refers to the first argument,
     %2 to the second etc.  Within the message text, the placeholders
-    can appear in any order and placeholders can be repeated.
+    can appear in any order and placeholders can be repeated. Otherwise,
+    the message is printed unmodified.
 
 * Remaining lines indicate an explanation for the preceding message. These
   are intended to be processed by a separate program and used to generate
