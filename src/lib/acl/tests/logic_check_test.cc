@@ -258,8 +258,8 @@ TEST(Not, trueValue) {
     notTest(true);
 }
 
-TEST(Not, trueValue) {
-    notTest(true);
+TEST(Not, falseValue) {
+    notTest(false);
 }
 
 }
