@@ -13,6 +13,9 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include "dns.h"
+#include "logic_check.h"
+
+using boost::shared_ptr;
 
 namespace isc {
 namespace acl {
@@ -22,9 +25,19 @@ Loader&
 getLoader() {
     static Loader* loader(NULL);
     if (loader == NULL) {
+        // TODO:
+        // There's some trick with auto_ptr in the branch when IP check
+        // is added here. That one is better, bring it in on merge.
         loader = new Loader(REJECT);
-        // TODO: This is the place where we register default check creators
-        // like IP check, etc, once we have them.
+        loader->registerCreator(
+            shared_ptr<NotCreator<RequestContext> >(
+                new NotCreator<RequestContext>("NOT")));
+        loader->registerCreator(
+            shared_ptr<LogicCreator<AnyOfSpec, RequestContext> >(
+                new LogicCreator<AnyOfSpec, RequestContext>("ANY")));
+        loader->registerCreator(
+            shared_ptr<LogicCreator<AllOfSpec, RequestContext> >(
+                new LogicCreator<AllOfSpec, RequestContext>("ALL")));
     }
     return (*loader);
 }
