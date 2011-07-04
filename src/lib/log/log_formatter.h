@@ -181,19 +181,6 @@ public:
         }
         return (*this);
     }
-
-    /// \brief Exception version of arg.
-    ///
-    /// \param e An exception which the "what()" is extracted an put into the
-    ///     message.
-    Formatter& arg(const std::exception& e) {
-        if (logger_) {
-            return (arg(e.what()));
-        } else {
-            return (*this);
-        }
-    }
-
 };
 
 }
