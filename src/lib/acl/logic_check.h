@@ -200,21 +200,39 @@ private:
     const std::string name_;
 };
 
+/**
+ * \brief The NOT operator for ACLs.
+ *
+ * This simply returns the negation of whatever returns the subexpression.
+ */
 template<typename Context>
 class NotCheck : public CompoundCheck<Context> {
 public:
+    /**
+     * \brief Constructor
+     *
+     * \param expr The subexpression to be negated by this NOT.
+     */
     NotCheck(const boost::shared_ptr<Check<Context> >& expr) :
         expr_(expr)
     { }
+    /**
+     * \brief The list of subexpressions
+     *
+     * \return The vector will contain single value and it is the expression
+     *     passed by constructor.
+     */
     virtual typename CompoundCheck<Context>::Checks getSubexpressions() const {
         typename CompoundCheck<Context>::Checks result;
         result.push_back(expr_.get());
         return (result);
     }
+    /// \brief The matching function
     virtual bool matches(const Context& context) const {
         return (!expr_->matches(context));
     }
 private:
+    /// \brief The subexpression
     const boost::shared_ptr<Check<Context> > expr_;
 };
 
