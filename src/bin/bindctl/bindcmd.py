@@ -674,7 +674,10 @@ class BindCmdInterpreter(Cmd):
         elif cmd.command == "revert":
             self.config_data.clear_local_changes()
         elif cmd.command == "commit":
-            self.config_data.commit()
+            try:
+                self.config_data.commit()
+            except isc.config.ModuleCCSessionError as mcse:
+                print(str(mcse))
         elif cmd.command == "diff":
             print(self.config_data.get_local_changes());
         elif cmd.command == "go":

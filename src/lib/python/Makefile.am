@@ -1,6 +1,6 @@
 SUBDIRS = isc
 
-python_PYTHON =	bind10_config.py
+python_PYTHON =	bind10_config.py config_messages.py
 pythondir = $(pyexecdir)
 
 # Explicitly define DIST_COMMON so ${python_PYTHON} is not included
@@ -10,7 +10,7 @@ DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in bind10_config.py.in
 # When setting DIST_COMMON, then need to add the .in file too.
 EXTRA_DIST =  bind10_config.py.in
 
-CLEANFILES = bind10_config.pyc
+CLEANFILES = bind10_config.pyc config_messages.pyc config_messages.py
 CLEANDIRS = __pycache__
 
 clean-local:

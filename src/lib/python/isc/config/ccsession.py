@@ -43,6 +43,9 @@ from isc.util.file import path_search
 import bind10_config
 from isc.log import log_config_update
 import json
+from config_messages import *
+
+logger = isc.log.Logger("config")
 
 class ModuleCCSessionError(Exception): pass
 
@@ -127,10 +130,7 @@ def default_logconfig_handler(new_config, config_data):
         isc.log.log_config_update(json.dumps(new_config),
             json.dumps(config_data.get_module_spec().get_full_spec()))
     else:
-        # no logging here yet, TODO: log these errors
-        print("Error in logging configuration, ignoring config update: ")
-        for err in errors:
-            print(err)
+        logger.error(CONFIG_LOG_CONFIG_ERRORS, errors)
 
 class ModuleCCSession(ConfigData):
     """This class maintains a connection to the command channel, as
@@ -385,8 +385,7 @@ class ModuleCCSession(ConfigData):
                                 "Wrong data in configuration: " +
                                 " ".join(errors))
                 else:
-                    # log error
-                    print("[" + self._module_name + "] Error requesting configuration: " + value)
+                    logger.error(CONFIG_GET_FAILED, value)
             else:
                 raise ModuleCCSessionError("No answer from configuration manager")
         except isc.cc.SessionTimeout:
@@ -498,7 +497,6 @@ class UIModuleCCSession(MultiConfigData):
                 self.request_current_config()
                 self.clear_local_changes()
             elif "error" in answer:
-                print("Error: " + answer["error"])
-                print("Configuration not committed")
+                raise ModuleCCSessionError("Error: " + str(answer["error"]) + "\n" + "Configuration not committed")
             else:
                 raise ModuleCCSessionError("Unknown format of answer in commit(): " + str(answer))
