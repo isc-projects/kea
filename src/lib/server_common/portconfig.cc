@@ -114,12 +114,12 @@ installListenAddresses(const AddressList& newAddresses,
          * user will get error info, command control can be used to set new
          * address. So we just catch the exception without propagating outside
          */
-        LOG_ERROR(logger, SRVCOMM_ADDRESS_FAIL).arg(e);
+        LOG_ERROR(logger, SRVCOMM_ADDRESS_FAIL).arg(e.what());
         try {
             setAddresses(service, addressStore);
         }
         catch (const exception& e2) {
-            LOG_FATAL(logger, SRVCOMM_ADDRESS_UNRECOVERABLE).arg(e2);
+            LOG_FATAL(logger, SRVCOMM_ADDRESS_UNRECOVERABLE).arg(e2.what());
         }
         //Anyway the new configure has problem, we need to notify configure
         //manager the new configure doesn't work
