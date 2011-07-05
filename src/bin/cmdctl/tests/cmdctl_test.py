@@ -173,7 +173,7 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         self.handler.server._user_infos['root'] = ['aa', 'aaa']
         ret, msg = self.handler._check_user_name_and_pwd()
         self.assertFalse(ret)
-        self.assertEqual(msg, ['password doesn\'t match'])
+        self.assertEqual(msg, ['username or password error'])
 
     def test_check_user_name_and_pwd_2(self):
         user_info = {'username':'root', 'password':'abc123'}
@@ -214,7 +214,7 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
 
         ret, msg = self.handler._check_user_name_and_pwd()
         self.assertFalse(ret)
-        self.assertEqual(msg, ['user doesn\'t exist'])
+        self.assertEqual(msg, ['username or password error'])
 
     def test_do_POST(self):
         self.handler.headers = {}
