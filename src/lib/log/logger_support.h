@@ -68,25 +68,36 @@ void initLogger(const std::string& root,
 /// Performs run-time initialization of the logger via the setting of
 /// environment variables.  These are:
 ///
-/// B10_LOGGER_ROOT
+/// - B10_LOGGER_ROOT\n
 /// Name of the root logger.  If not given, the string "bind10" will be used.
 ///
-/// B10_LOGGER_SEVERITY
+/// - B10_LOGGER_SEVERITY\n
 /// Severity of messages that will be logged.  This must be one of the strings
 /// "DEBUG", "INFO", "WARN", "ERROR", "FATAL" or "NONE". (Must be upper case
 /// and must not contain leading or trailing spaces.)  If not specified (or if
 /// specified but incorrect), the default passed as argument to this function
 /// (currently INFO) will be used.
 ///
-/// B10_LOGGER_DBGLEVEL
+/// - B10_LOGGER_DBGLEVEL\n
 /// Ignored if the level is not DEBUG, this should be a number between 0 and
 /// 99 indicating the logging severity.  The default is 0.  If outside these
 /// limits or if not a number, The value passed to this function (default
 /// of 0) is used.
 ///
-/// B10_LOGGER_LOCALMSG
+/// - B10_LOGGER_LOCALMSG\n
 /// If defined, the path specification of a file that contains message
 /// definitions replacing ones in the default dictionary.
+///
+/// - B10_LOGGER_DESTINATION\n
+/// If defined, the destination of the logging output.  This can be one of:
+///   - \c stdout Send output to stdout.
+///   - \c stderr Send output to stderr
+///   - \c syslog Send output to syslog using the facility local0.
+///   - \c syslog:xxx  Send output to syslog, using the facility xxx. ("xxx"
+///     should be one of the syslog facilities such as "local0".)  There must
+///     be a colon between "syslog" and "xxx
+///   - \c other Anything else is interpreted as the name of a file to which
+///     output is appended.  If the file does not exist, it is created.
 ///
 /// Any errors in the settings cause messages to be output to stderr.
 ///
