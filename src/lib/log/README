@@ -142,13 +142,19 @@ Points to note:
     the error originated from the logging library and the "WRITE_ERROR"
     indicates that there was a problem in a write operation.
 
-  * The replacement tokens are the strings "%1", "%2" etc.  When a message
-    is logged, these are replaced with the arguments passed to the logging
-    call: %1 refers to the first argument, %2 to the second etc.  Within the
-    message text, the placeholders can appear in any order and placeholders
-    can be repeated.
-     
-* Remaining lines indicate an explanation for the preceding message.  These
+  * The rest of the line - from the first non-space character to the
+    last non- space character - is taken exactly for the text
+    of the message. There are no restrictions on what characters may
+    be in this text, other than they be printable.  (This means that
+    both single-quote (') and double-quote (") characters are allowed.)
+    The message text may include replacement tokens (the strings "%1",
+    "%2" etc.).  When a message is logged, these are replaced with the
+    arguments passed to the logging call: %1 refers to the first argument,
+    %2 to the second etc.  Within the message text, the placeholders
+    can appear in any order and placeholders can be repeated. Otherwise,
+    the message is printed unmodified.
+
+* Remaining lines indicate an explanation for the preceding message. These
   are intended to be processed by a separate program and used to generate
   an error messages manual.  They are ignored by the message compiler.
 
@@ -232,8 +238,8 @@ Using the Logging - C++
 =======================
 1. Build message header file and source file as describe above.
 
-2. The main program unit should include a call to isc::log::initLogger()
-   (defined in logger_support.h) to set the logging severity, debug log
+2. The main program unit must include a call to isc::log::initLogger()
+   (described in more detail below) to set the logging severity, debug log
    level, and external message file:
 
    a) The logging severity is one of the enum defined in logger.h, i.e.
@@ -279,9 +285,9 @@ Using the Logging - Python
 ==========================
 1. Build message module as describe above.
 
-2. The main program unit should include a call to isc.log.init() to
-   set the to set the logging severity, debug log level, and external
-   message file:
+2. The main program unit must include a call to isc.log.init()
+   (described in more detail below) to set the to set the logging
+   severity, debug log level, and external message file:
 
    a) The logging severity is one of the strings:
 
@@ -315,6 +321,91 @@ Using the Logging - Python
 4. Issue calls to the logging methods:
 
        logger.error(LOG_WRITE_ERROR, "output.txt");
+
+Logging Initialization
+======================
+In all cases, if an attempt is made to use a logging method before the logging
+has been initialized, the program will terminate with a LoggingNotInitialized
+exception.
+
+C++
+---
+Logging Initialization is carried out by calling initLogger().  There are two
+variants to the call, one for use by production programs and one for use by
+unit tests.
+
+Variant #1, Used by Production Programs
+---------------------------------------
+void isc::log::initLogger(const std::string& root,
+                          isc::log::Severity severity = isc::log::INFO,
+                          int dbglevel = 0, const char* file = NULL);
+
+This is the call that should be used by production programs:
+
+root
+Name of the program (e.g. "b10-auth").  This is also the name of the root
+logger and is used when configuring logging.
+
+severity
+Default severity that the program will start logging with.  Although this may
+be overridden when the program obtains its configuration from the configuration
+database, this is the severity that it used until then.  (This may be set by
+a command-line parameter.)
+
+dbglevel
+The debug level used if "severity" is set to isc::log::DEBUG.
+
+file
+The name of a local message file.  This will be read and its definitions used
+to replace the compiled-in text of the messages.
+
+
+Variant #2, Used by Unit Tests
+------------------------------
+    void isc::log::initLogger()
+
+This is the call that should be used by unit tests.  In this variant, all the
+options are supplied by environment variables. (It should not be used for
+production programs to avoid the chance that the program operation is affected
+by inadvertently-defined environment variables.)
+
+The environment variables are:
+
+B10_LOGGER_ROOT
+Sets the "root" for the unit test.  If not defined, the name "bind10" is used.
+
+B10_LOGGER_SEVERITY
+The severity to set for the root logger in the unit test.  Valid values are
+"DEBUG", "INFO", "WARN", "ERROR", "FATAL" and "NONE".  If not defined, "INFO"
+is used.
+
+B10_LOGGER_DBGLEVEL
+If B10_LOGGER_SEVERITY is set to "DEBUG", the debug level.  This can be a
+number between 0 and 99, and defaults to 0.
+
+B10_LOGGER_LOCALMSG
+If defined, points to a local message file.  The default is not to use a local
+message file.
+
+B10_LOGGER_DESTINATION
+The location to which log message are written.  This can be one of:
+
+   stdout               Message are written to stdout
+   stderr               Messages are written to stderr
+   syslog[:facility]    Messages are written to syslog.  If the optional
+                        "facility" is used, the messages are written using
+                        that facility.  (This defaults to "local0" if not
+                        specified.)
+   Anything else        Interpreted as the name of a file to which output
+                        is appended.  If the file does not exist, a new one
+                        is opened.
+
+In the case of "stdout", "stderr" and "syslog", they must be written exactly
+as is - no leading or trailing spaces, and in lower-case.
+
+Python
+------
+To be supplied
 
 
 Severity Guidelines

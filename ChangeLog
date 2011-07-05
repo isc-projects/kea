@@ -1,3 +1,8 @@
+267.	[func]		stephen
+	Add environment variable to allow redirection of logging output during
+	unit tests.
+	(Trac #1071, git 05164f9d61006869233b498d248486b4307ea8b6)
+
 266.	[func]		Multiple developers
         Convert various error messages, debugging and other output
         to the new logging interface, including for b10-resolver,
