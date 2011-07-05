@@ -3,6 +3,7 @@ SUBDIRS = . tests
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
 pkglibexec_SCRIPTS = b10-cmdctl
+pyexec_DATA = cmdctl_messages.py
 
 b10_cmdctldir = $(pkgdatadir)
 
@@ -18,10 +19,10 @@ b10_cmdctl_DATA += cmdctl.spec
 
 EXTRA_DIST = $(CMDCTL_CONFIGURATIONS)
 
-CLEANFILES=	b10-cmdctl cmdctl.pyc cmdctl.spec
+CLEANFILES=	b10-cmdctl cmdctl.pyc cmdctl.spec cmdctl_messages.py cmdctl_messages.pyc
 
 man_MANS = b10-cmdctl.8
-EXTRA_DIST += $(man_MANS) b10-cmdctl.xml
+EXTRA_DIST += $(man_MANS) b10-cmdctl.xml cmdctl_messages.mes
 
 if ENABLE_MAN
 
@@ -33,8 +34,11 @@ endif
 cmdctl.spec: cmdctl.spec.pre
 	$(SED) -e "s|@@SYSCONFDIR@@|$(sysconfdir)|" cmdctl.spec.pre >$@
 
+cmdctl_messages.py: cmdctl_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message -p $(top_srcdir)/src/bin/cmdctl/cmdctl_messages.mes
+
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
-b10-cmdctl: cmdctl.py
+b10-cmdctl: cmdctl.py cmdctl_messages.py
 	$(SED) "s|@@PYTHONPATH@@|@pyexecdir@|" cmdctl.py >$@
 	chmod a+x $@
 
