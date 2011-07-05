@@ -225,10 +225,13 @@ struct MemoryZone::MemoryZoneImpl {
      */
     // Implementation of MemoryZone::add
     result::Result add(const ConstRRsetPtr& rrset, DomainTree* domains) {
+        // Sanitize input.  This will cause an exception to be thrown
+        // if the input RRset is empty.
+        addValidation(rrset);
+
+        // OK, can add the RRset.
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ADD_RRSET).
             arg(rrset->getName()).arg(rrset->getType()).arg(origin_);
-        // Sanitize input
-        addValidation(rrset);
 
         // Add wildcards possibly contained in the owner name to the domain
         // tree.

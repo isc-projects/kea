@@ -163,6 +163,8 @@ public:
     }
 
     /// \brief String version of arg.
+    ///
+    /// \param arg The text to place into the placeholder.
     Formatter& arg(const std::string& arg) {
         if (logger_) {
             // Note that this method does a replacement and returns the
@@ -179,7 +181,6 @@ public:
         }
         return (*this);
     }
-
 };
 
 }
