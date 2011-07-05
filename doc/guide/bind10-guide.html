@@ -1,24 +1,24 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BIND 10 Guide</title><link rel="stylesheet" href="./bind10-guide.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><meta name="description" content="BIND 10 is a Domain Name System (DNS) suite managed by Internet Systems Consortium (ISC). It includes DNS libraries and modular components for controlling authoritative and recursive DNS servers. This is the reference guide for BIND 10 version 20110519. The most up-to-date version of this document, along with other documents for BIND 10, can be found at ."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="BIND 10 Guide"><div class="titlepage"><div><div><h1 class="title"><a name="id1168230298903"></a>BIND 10 Guide</h1></div><div><h2 class="subtitle">Administrator Reference for BIND 10</h2></div><div><p class="releaseinfo">This is the reference guide for BIND 10 version
-        20110519.</p></div><div><p class="copyright">Copyright © 2010 Internet Systems Consortium, Inc.</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a Domain Name System (DNS) suite managed by
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BIND 10 Guide</title><link rel="stylesheet" href="./bind10-guide.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><meta name="description" content="BIND 10 is a Domain Name System (DNS) suite managed by Internet Systems Consortium (ISC). It includes DNS libraries and modular components for controlling authoritative and recursive DNS servers. This is the reference guide for BIND 10 version 20110705. The most up-to-date version of this document, along with other documents for BIND 10, can be found at ."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="BIND 10 Guide"><div class="titlepage"><div><div><h1 class="title"><a name="id1168230298906"></a>BIND 10 Guide</h1></div><div><h2 class="subtitle">Administrator Reference for BIND 10</h2></div><div><p class="releaseinfo">This is the reference guide for BIND 10 version
+        20110705.</p></div><div><p class="copyright">Copyright © 2010-2011 Internet Systems Consortium, Inc.</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a Domain Name System (DNS) suite managed by
 	Internet Systems Consortium (ISC). It includes DNS libraries
 	and modular components for controlling authoritative and
 	recursive DNS servers.
       </p><p>
-        This is the reference guide for BIND 10 version 20110519.
+        This is the reference guide for BIND 10 version 20110705.
 	The most up-to-date version of this document, along with
-	other documents for BIND 10, can be found at <a class="ulink" href="http://bind10.isc.org/docs" target="_top">http://bind10.isc.org/docs</a>.  </p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#intro">1. Introduction</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230299038">Supported Platforms</a></span></dt><dt><span class="section"><a href="#id1168230299065">Required Software</a></span></dt><dt><span class="section"><a href="#starting_stopping">Starting and Stopping the Server</a></span></dt><dt><span class="section"><a href="#managing_once_running">Managing BIND 10</a></span></dt></dl></dd><dt><span class="chapter"><a href="#installation">2. Installation</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230284846">Building Requirements</a></span></dt><dt><span class="section"><a href="#quickstart">Quick start</a></span></dt><dt><span class="section"><a href="#install">Installation from source</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230285026">Download Tar File</a></span></dt><dt><span class="section"><a href="#id1168230285045">Retrieve from Git</a></span></dt><dt><span class="section"><a href="#id1168230285106">Configure before the build</a></span></dt><dt><span class="section"><a href="#id1168230285203">Build</a></span></dt><dt><span class="section"><a href="#id1168230285219">Install</a></span></dt><dt><span class="section"><a href="#id1168230285242">Install Hierarchy</a></span></dt></dl></dd></dl></dd><dt><span class="chapter"><a href="#bind10">3. Starting BIND10 with <span class="command"><strong>bind10</strong></span></a></span></dt><dd><dl><dt><span class="section"><a href="#start">Starting BIND 10</a></span></dt></dl></dd><dt><span class="chapter"><a href="#msgq">4. Command channel</a></span></dt><dt><span class="chapter"><a href="#cfgmgr">5. Configuration manager</a></span></dt><dt><span class="chapter"><a href="#cmdctl">6. Remote control daemon</a></span></dt><dd><dl><dt><span class="section"><a href="#cmdctl.spec">Configuration specification for b10-cmdctl</a></span></dt></dl></dd><dt><span class="chapter"><a href="#bindctl">7. Control and configure user interface</a></span></dt><dt><span class="chapter"><a href="#authserver">8. Authoritative Server</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230285816">Server Configurations</a></span></dt><dt><span class="section"><a href="#id1168230285881">Data Source Backends</a></span></dt><dt><span class="section"><a href="#id1168230285912">Loading Master Zones Files</a></span></dt></dl></dd><dt><span class="chapter"><a href="#xfrin">9. Incoming Zone Transfers</a></span></dt><dt><span class="chapter"><a href="#xfrout">10. Outbound Zone Transfers</a></span></dt><dt><span class="chapter"><a href="#zonemgr">11. Secondary Manager</a></span></dt><dt><span class="chapter"><a href="#resolverserver">12. Recursive Name Server</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230286300">Forwarding</a></span></dt></dl></dd><dt><span class="chapter"><a href="#statistics">13. Statistics</a></span></dt><dt><span class="chapter"><a href="#logging">14. Logging</a></span></dt></dl></div><div class="chapter" title="Chapter 1. Introduction"><div class="titlepage"><div><div><h2 class="title"><a name="intro"></a>Chapter 1. Introduction</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168230299038">Supported Platforms</a></span></dt><dt><span class="section"><a href="#id1168230299065">Required Software</a></span></dt><dt><span class="section"><a href="#starting_stopping">Starting and Stopping the Server</a></span></dt><dt><span class="section"><a href="#managing_once_running">Managing BIND 10</a></span></dt></dl></div><p>
+	other documents for BIND 10, can be found at <a class="ulink" href="http://bind10.isc.org/docs" target="_top">http://bind10.isc.org/docs</a>.  </p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#intro">1. Introduction</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230299042">Supported Platforms</a></span></dt><dt><span class="section"><a href="#id1168230299068">Required Software</a></span></dt><dt><span class="section"><a href="#starting_stopping">Starting and Stopping the Server</a></span></dt><dt><span class="section"><a href="#managing_once_running">Managing BIND 10</a></span></dt></dl></dd><dt><span class="chapter"><a href="#installation">2. Installation</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230284849">Building Requirements</a></span></dt><dt><span class="section"><a href="#quickstart">Quick start</a></span></dt><dt><span class="section"><a href="#install">Installation from source</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230285038">Download Tar File</a></span></dt><dt><span class="section"><a href="#id1168230285058">Retrieve from Git</a></span></dt><dt><span class="section"><a href="#id1168230285118">Configure before the build</a></span></dt><dt><span class="section"><a href="#id1168230285217">Build</a></span></dt><dt><span class="section"><a href="#id1168230285232">Install</a></span></dt><dt><span class="section"><a href="#id1168230285255">Install Hierarchy</a></span></dt></dl></dd></dl></dd><dt><span class="chapter"><a href="#bind10">3. Starting BIND10 with <span class="command"><strong>bind10</strong></span></a></span></dt><dd><dl><dt><span class="section"><a href="#start">Starting BIND 10</a></span></dt></dl></dd><dt><span class="chapter"><a href="#msgq">4. Command channel</a></span></dt><dt><span class="chapter"><a href="#cfgmgr">5. Configuration manager</a></span></dt><dt><span class="chapter"><a href="#cmdctl">6. Remote control daemon</a></span></dt><dd><dl><dt><span class="section"><a href="#cmdctl.spec">Configuration specification for b10-cmdctl</a></span></dt></dl></dd><dt><span class="chapter"><a href="#bindctl">7. Control and configure user interface</a></span></dt><dt><span class="chapter"><a href="#authserver">8. Authoritative Server</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230285830">Server Configurations</a></span></dt><dt><span class="section"><a href="#id1168230285895">Data Source Backends</a></span></dt><dt><span class="section"><a href="#id1168230285925">Loading Master Zones Files</a></span></dt></dl></dd><dt><span class="chapter"><a href="#xfrin">9. Incoming Zone Transfers</a></span></dt><dt><span class="chapter"><a href="#xfrout">10. Outbound Zone Transfers</a></span></dt><dt><span class="chapter"><a href="#zonemgr">11. Secondary Manager</a></span></dt><dt><span class="chapter"><a href="#resolverserver">12. Recursive Name Server</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230286381">Forwarding</a></span></dt></dl></dd><dt><span class="chapter"><a href="#statistics">13. Statistics</a></span></dt><dt><span class="chapter"><a href="#logging">14. Logging</a></span></dt></dl></div><div class="chapter" title="Chapter 1. Introduction"><div class="titlepage"><div><div><h2 class="title"><a name="intro"></a>Chapter 1. Introduction</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168230299042">Supported Platforms</a></span></dt><dt><span class="section"><a href="#id1168230299068">Required Software</a></span></dt><dt><span class="section"><a href="#starting_stopping">Starting and Stopping the Server</a></span></dt><dt><span class="section"><a href="#managing_once_running">Managing BIND 10</a></span></dt></dl></div><p>
       BIND is the popular implementation of a DNS server, developer
       interfaces, and DNS tools.
       BIND 10 is a rewrite of BIND 9.  BIND 10 is written in C++ and Python
       and provides a modular environment for serving and maintaining DNS.
     </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
         This guide covers the experimental prototype of
-        BIND 10 version 20110519.
+        BIND 10 version 20110705.
       </p></div><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
         BIND 10 provides a EDNS0- and DNSSEC-capable
         authoritative DNS server and a caching recursive name server
         which also provides forwarding.
-      </p></div><div class="section" title="Supported Platforms"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230299038"></a>Supported Platforms</h2></div></div></div><p>
+      </p></div><div class="section" title="Supported Platforms"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230299042"></a>Supported Platforms</h2></div></div></div><p>
   BIND 10 builds have been tested on Debian GNU/Linux 5,
   Ubuntu 9.10, NetBSD 5, Solaris 10, FreeBSD 7 and 8, and CentOS
   Linux 5.3.
@@ -28,13 +28,15 @@
 
         It is planned for BIND 10 to build, install and run on
         Windows and standard Unix-type platforms.
-      </p></div><div class="section" title="Required Software"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230299065"></a>Required Software</h2></div></div></div><p>
+      </p></div><div class="section" title="Required Software"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230299068"></a>Required Software</h2></div></div></div><p>
         BIND 10 requires Python 3.1.  Later versions may work, but Python
         3.1 is the minimum version which will work.
       </p><p>
 	BIND 10 uses the Botan crypto library for C++. It requires
-	at least Botan version 1.8. To build BIND 10, install the
-	Botan libraries and development include headers.
+	at least Botan version 1.8.
+      </p><p>
+	BIND 10 uses the log4cplus C++ logging library. It requires
+	at least log4cplus version 1.0.3.
       </p><p>
 	The authoritative server requires SQLite 3.3.9 or newer.
 	The <span class="command"><strong>b10-xfrin</strong></span>, <span class="command"><strong>b10-xfrout</strong></span>,
@@ -136,7 +138,10 @@
       and, of course, DNS. These include detailed developer
       documentation and code examples.
 
-    </p></div><div class="chapter" title="Chapter 2. Installation"><div class="titlepage"><div><div><h2 class="title"><a name="installation"></a>Chapter 2. Installation</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168230284846">Building Requirements</a></span></dt><dt><span class="section"><a href="#quickstart">Quick start</a></span></dt><dt><span class="section"><a href="#install">Installation from source</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230285026">Download Tar File</a></span></dt><dt><span class="section"><a href="#id1168230285045">Retrieve from Git</a></span></dt><dt><span class="section"><a href="#id1168230285106">Configure before the build</a></span></dt><dt><span class="section"><a href="#id1168230285203">Build</a></span></dt><dt><span class="section"><a href="#id1168230285219">Install</a></span></dt><dt><span class="section"><a href="#id1168230285242">Install Hierarchy</a></span></dt></dl></dd></dl></div><div class="section" title="Building Requirements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230284846"></a>Building Requirements</h2></div></div></div><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+    </p></div><div class="chapter" title="Chapter 2. Installation"><div class="titlepage"><div><div><h2 class="title"><a name="installation"></a>Chapter 2. Installation</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168230284849">Building Requirements</a></span></dt><dt><span class="section"><a href="#quickstart">Quick start</a></span></dt><dt><span class="section"><a href="#install">Installation from source</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168230285038">Download Tar File</a></span></dt><dt><span class="section"><a href="#id1168230285058">Retrieve from Git</a></span></dt><dt><span class="section"><a href="#id1168230285118">Configure before the build</a></span></dt><dt><span class="section"><a href="#id1168230285217">Build</a></span></dt><dt><span class="section"><a href="#id1168230285232">Install</a></span></dt><dt><span class="section"><a href="#id1168230285255">Install Hierarchy</a></span></dt></dl></dd></dl></div><div class="section" title="Building Requirements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230284849"></a>Building Requirements</h2></div></div></div><p>
+          In addition to the run-time requirements, building BIND 10
+          from source code requires various development include headers.
+        </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
             Some operating systems have split their distribution packages into
             a run-time and a development package.  You will need to install
             the development package versions, which include header files and
@@ -147,6 +152,11 @@
   
   
         </p><p>
+	  To build BIND 10, also install the Botan (at least version
+	  1.8) and the log4cplus (at least version 1.0.3)
+          development include headers.
+        </p><p>
+
 	  The Python Library and Python _sqlite3 module are required to
           enable the Xfrout and Xfrin support.
         </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
@@ -156,7 +166,7 @@
           Building BIND 10 also requires a C++ compiler and
           standard development headers, make, and pkg-config.
           BIND 10 builds have been tested with GCC g++ 3.4.3, 4.1.2,
-          4.1.3, 4.2.1, 4.3.2, and 4.4.1.
+          4.1.3, 4.2.1, 4.3.2, and 4.4.1; Clang++ 2.8; and Sun C++ 5.10.
         </p></div><div class="section" title="Quick start"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="quickstart"></a>Quick start</h2></div></div></div><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
           This quickly covers the standard steps for installing
           and deploying BIND 10 as an authoritative name server using
@@ -192,14 +202,14 @@
         the Git code revision control system or as a downloadable
         tar file. It may also be available in pre-compiled ready-to-use
         packages from operating system vendors.
-      </p><div class="section" title="Download Tar File"><div class="titlepage"><div><div><h3 class="title"><a name="id1168230285026"></a>Download Tar File</h3></div></div></div><p>
+      </p><div class="section" title="Download Tar File"><div class="titlepage"><div><div><h3 class="title"><a name="id1168230285038"></a>Download Tar File</h3></div></div></div><p>
           Downloading a release tar file is the recommended method to
           obtain the source code.
         </p><p>
           The BIND 10 releases are available as tar file downloads from
           <a class="ulink" href="ftp://ftp.isc.org/isc/bind10/" target="_top">ftp://ftp.isc.org/isc/bind10/</a>.
           Periodic development snapshots may also be available.
-        </p></div><div class="section" title="Retrieve from Git"><div class="titlepage"><div><div><h3 class="title"><a name="id1168230285045"></a>Retrieve from Git</h3></div></div></div><p>
+        </p></div><div class="section" title="Retrieve from Git"><div class="titlepage"><div><div><h3 class="title"><a name="id1168230285058"></a>Retrieve from Git</h3></div></div></div><p>
           Downloading this "bleeding edge" code is recommended only for
           developers or advanced users.  Using development code in a production
           environment is not recommended.
@@ -233,7 +243,7 @@
           <span class="command"><strong>autoheader</strong></span>,
           <span class="command"><strong>automake</strong></span>,
           and related commands.
-        </p></div><div class="section" title="Configure before the build"><div class="titlepage"><div><div><h3 class="title"><a name="id1168230285106"></a>Configure before the build</h3></div></div></div><p>
+        </p></div><div class="section" title="Configure before the build"><div class="titlepage"><div><div><h3 class="title"><a name="id1168230285118"></a>Configure before the build</h3></div></div></div><p>
           BIND 10 uses the GNU Build System to discover build environment
           details.
           To generate the makefiles using the defaults, simply run:
@@ -264,16 +274,16 @@
         </p><p>
           If the configure fails, it may be due to missing or old
           dependencies.
-        </p></div><div class="section" title="Build"><div class="titlepage"><div><div><h3 class="title"><a name="id1168230285203"></a>Build</h3></div></div></div><p>
+        </p></div><div class="section" title="Build"><div class="titlepage"><div><div><h3 class="title"><a name="id1168230285217"></a>Build</h3></div></div></div><p>
     After the configure step is complete, to build the executables
     from the C++ code and prepare the Python scripts, run:
 
           </p><pre class="screen">$ <strong class="userinput"><code>make</code></strong></pre><p>
-        </p></div><div class="section" title="Install"><div class="titlepage"><div><div><h3 class="title"><a name="id1168230285219"></a>Install</h3></div></div></div><p>
+        </p></div><div class="section" title="Install"><div class="titlepage"><div><div><h3 class="title"><a name="id1168230285232"></a>Install</h3></div></div></div><p>
           To install the BIND 10 executables, support files,
           and documentation, run:
           </p><pre class="screen">$ <strong class="userinput"><code>make install</code></strong></pre><p>
-        </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>The install step may require superuser privileges.</p></div></div><div class="section" title="Install Hierarchy"><div class="titlepage"><div><div><h3 class="title"><a name="id1168230285242"></a>Install Hierarchy</h3></div></div></div><p>
+        </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>The install step may require superuser privileges.</p></div></div><div class="section" title="Install Hierarchy"><div class="titlepage"><div><div><h3 class="title"><a name="id1168230285255"></a>Install Hierarchy</h3></div></div></div><p>
           The following is the layout of the complete BIND 10 installation:
           </p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem">
                 <code class="filename">bin/</code> &#8212;
@@ -490,12 +500,12 @@ shutdown
       the details and relays (over a <span class="command"><strong>b10-msgq</strong></span> command
       channel) the configuration on to the specified module.
     </p><p>
-    </p></div><div class="chapter" title="Chapter 8. Authoritative Server"><div class="titlepage"><div><div><h2 class="title"><a name="authserver"></a>Chapter 8. Authoritative Server</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168230285816">Server Configurations</a></span></dt><dt><span class="section"><a href="#id1168230285881">Data Source Backends</a></span></dt><dt><span class="section"><a href="#id1168230285912">Loading Master Zones Files</a></span></dt></dl></div><p>
+    </p></div><div class="chapter" title="Chapter 8. Authoritative Server"><div class="titlepage"><div><div><h2 class="title"><a name="authserver"></a>Chapter 8. Authoritative Server</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168230285830">Server Configurations</a></span></dt><dt><span class="section"><a href="#id1168230285895">Data Source Backends</a></span></dt><dt><span class="section"><a href="#id1168230285925">Loading Master Zones Files</a></span></dt></dl></div><p>
       The <span class="command"><strong>b10-auth</strong></span> is the authoritative DNS server.
       It supports EDNS0 and DNSSEC. It supports IPv6.
       Normally it is started by the <span class="command"><strong>bind10</strong></span> master
       process.
-    </p><div class="section" title="Server Configurations"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230285816"></a>Server Configurations</h2></div></div></div><p>
+    </p><div class="section" title="Server Configurations"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230285830"></a>Server Configurations</h2></div></div></div><p>
         <span class="command"><strong>b10-auth</strong></span> is configured via the
         <span class="command"><strong>b10-cfgmgr</strong></span> configuration manager.
         The module name is <span class="quote">&#8220;<span class="quote">Auth</span>&#8221;</span>.
@@ -515,7 +525,7 @@ This may be a temporary setting until then.
         </p><div class="variablelist"><dl><dt><span class="term">shutdown</span></dt><dd>Stop the authoritative DNS server.
               </dd></dl></div><p>
 
-      </p></div><div class="section" title="Data Source Backends"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230285881"></a>Data Source Backends</h2></div></div></div><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+      </p></div><div class="section" title="Data Source Backends"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230285895"></a>Data Source Backends</h2></div></div></div><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
         For the development prototype release, <span class="command"><strong>b10-auth</strong></span>
         supports a SQLite3 data source backend and in-memory data source
         backend.
@@ -529,7 +539,7 @@ This may be a temporary setting until then.
         The default is <code class="filename">/usr/local/var/</code>.)
   This data file location may be changed by defining the
   <span class="quote">&#8220;<span class="quote">database_file</span>&#8221;</span> configuration.
-      </p></div><div class="section" title="Loading Master Zones Files"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230285912"></a>Loading Master Zones Files</h2></div></div></div><p>
+      </p></div><div class="section" title="Loading Master Zones Files"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230285925"></a>Loading Master Zones Files</h2></div></div></div><p>
         RFC 1035 style DNS master zone files may imported
         into a BIND 10 data source by using the
         <span class="command"><strong>b10-loadzone</strong></span> utility.
@@ -607,7 +617,7 @@ This may be a temporary setting until then.
     </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
      Access control (such as allowing notifies) is not yet provided.
      The primary/secondary service is not yet complete.
-    </p></div></div><div class="chapter" title="Chapter 12. Recursive Name Server"><div class="titlepage"><div><div><h2 class="title"><a name="resolverserver"></a>Chapter 12. Recursive Name Server</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168230286300">Forwarding</a></span></dt></dl></div><p>
+    </p></div></div><div class="chapter" title="Chapter 12. Recursive Name Server"><div class="titlepage"><div><div><h2 class="title"><a name="resolverserver"></a>Chapter 12. Recursive Name Server</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168230286381">Forwarding</a></span></dt></dl></div><p>
       The <span class="command"><strong>b10-resolver</strong></span> process is started by
       <span class="command"><strong>bind10</strong></span>.
 
@@ -636,7 +646,7 @@ This may be a temporary setting until then.
 &gt; <strong class="userinput"><code>config set Resolver/listen_on [{ "address": "127.0.0.1", "port": 53 }]</code></strong>
 &gt; <strong class="userinput"><code>config commit</code></strong>
 </pre><p>
-    </p><div class="section" title="Forwarding"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230286300"></a>Forwarding</h2></div></div></div><p>
+    </p><div class="section" title="Forwarding"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168230286381"></a>Forwarding</h2></div></div></div><p>
 
         To enable forwarding, the upstream address and port must be
         configured to forward queries to, such as:
