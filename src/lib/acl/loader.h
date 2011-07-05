@@ -81,7 +81,7 @@ public:
  * or if it doesn't contain one of the accepted values.
  *
  * \param action The JSON representation of the action. It must be a string
- *     and contain one of "ACCEPT", "REJECT" or "DENY".
+ *     and contain one of "ACCEPT", "REJECT" or "DROP.
  * \note We could define different names or add aliases if needed.
  */
 BasicAction defaultActionLoader(data::ConstElementPtr action);
