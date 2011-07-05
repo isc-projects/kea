@@ -134,6 +134,14 @@
       data storage types.
     </simpara></note>
 
+
+<!--
+
+tsig_key_ring list of
+tsig_key string
+
+-->
+
 <!-- TODO: formating -->
     <para>
       The configuration commands are:
