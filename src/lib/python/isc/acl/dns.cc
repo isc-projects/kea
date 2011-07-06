@@ -24,6 +24,7 @@
 #include <acl/acl.h>
 #include <acl/dns.h>
 
+#include "acl.h"
 #include "dns_requestacl_python.h"
 
 using namespace std;
@@ -34,8 +35,6 @@ using namespace isc::acl::dns;
 using namespace isc::acl::dns::python;
 
 namespace {
-PyObject* po_dns_LoaderError;
-
 PyObject*
 loadRequestACL(PyObject*, PyObject* args) {
     const char* acl_config;
@@ -51,7 +50,7 @@ loadRequestACL(PyObject*, PyObject* args) {
             }
             return (py_acl);
         } catch (const exception& ex) {
-            PyErr_SetString(po_dns_LoaderError, ex.what());
+            PyErr_SetString(isc::acl::python::po_LoaderError, ex.what());
             return (NULL);
         } catch (...) {
             PyErr_SetString(PyExc_SystemError, "Unexpected C++ exception");
@@ -88,16 +87,6 @@ PyMODINIT_FUNC
 PyInit_dns(void) {
     PyObject* mod = PyModule_Create(&dnsacl);
     if (mod == NULL) {
-        return (NULL);
-    }
-
-    try {
-        po_dns_LoaderError = PyErr_NewException("isc.acl.dns.LoaderError",
-                                                NULL, NULL);
-        PyObjectContainer(po_dns_LoaderError).installToModule(mod,
-                                                              "LoaderError");
-    } catch (...) {
-        Py_DECREF(mod);
         return (NULL);
     }
 
