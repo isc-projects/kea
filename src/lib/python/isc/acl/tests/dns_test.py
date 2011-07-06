@@ -16,10 +16,60 @@
 import unittest
 from isc.acl.dns import *
 
-class DNSACLTest(unittest.TestCase):
+class RequestACLTest(unittest.TestCase):
 
-    def test_placeholder(self):
-        pass
+    def test_request_loader(self):
+        # these shouldn't raise an exception
+        load_request_acl('[{"action": "DROP"}]')
+        load_request_acl('[{"action": "DROP", "from": "192.0.2.1"}]')
+
+        # Invalid types
+        self.assertRaises(TypeError, load_request_acl, 1)
+        self.assertRaises(TypeError, load_request_acl, [])
+
+        # Incorrect number of arguments
+        self.assertRaises(TypeError, load_request_acl,
+                          '[{"action": "DROP"}]', 0)
+
+    def test_bad_acl_syntax(self):
+        # this test is derived from loader_test.cc
+        self.assertRaises(LoaderError, load_request_acl, '{}');
+        self.assertRaises(LoaderError, load_request_acl, '42');
+        self.assertRaises(LoaderError, load_request_acl, 'true');
+        self.assertRaises(LoaderError, load_request_acl, 'null');
+        self.assertRaises(LoaderError, load_request_acl, '"hello"');
+        self.assertRaises(LoaderError, load_request_acl, '[42]');
+        self.assertRaises(LoaderError, load_request_acl, '["hello"]');
+        self.assertRaises(LoaderError, load_request_acl, '[[]]');
+        self.assertRaises(LoaderError, load_request_acl, '[true]');
+        self.assertRaises(LoaderError, load_request_acl, '[null]');
+        self.assertRaises(LoaderError, load_request_acl, '[{}]');
+
+    def test_bad_acl_ipsyntax(self):
+        # this test is derived from ip_check_unittest.cc
+        self.assertRaises(LoaderError, load_request_acl,
+                          '[{"action": "DROP", "from": "192.0.2.43/-1"}]')
+        self.assertRaises(LoaderError, load_request_acl,
+                          '[{"action": "DROP", "from": "192.0.2.43//1"')
+        self.assertRaises(LoaderError, load_request_acl,
+                          '[{"action": "DROP", "from": "192.0.2.43/1/"')
+        self.assertRaises(LoaderError, load_request_acl,
+                          '[{"action": "DROP", "from": "/192.0.2.43/1"')
+        self.assertRaises(LoaderError, load_request_acl,
+                          '[{"action": "DROP", "from": "2001:db8::/xxxx"')
+        self.assertRaises(LoaderError, load_request_acl,
+                          '[{"action": "DROP", "from": "2001:db8::/32/s"')
+        self.assertRaises(LoaderError, load_request_acl,
+                          '[{"action": "DROP", "from": "1/"')
+        self.assertRaises(LoaderError, load_request_acl,
+                          '[{"action": "DROP", "from": "/1"')
+        self.assertRaises(LoaderError, load_request_acl,
+                          '[{"action": "DROP", "from": "192.0.2.0/33"')
+        self.assertRaises(LoaderError, load_request_acl,
+                          '[{"action": "DROP", "from": "::1/129"')
+
+    def test_construct(self):
+        RequestACL()
 
 if __name__ == '__main__':
     unittest.main()
