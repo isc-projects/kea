@@ -598,7 +598,7 @@ Resolver::updateConfig(ConstElementPtr config) {
         const ConstElementPtr query_acl_cfg(config->get("query_acl"));
         const shared_ptr<const RequestACL> query_acl =
             query_acl_cfg ? acl::dns::getRequestLoader().load(query_acl_cfg) :
-            shared_ptr<const RequestACL>();
+            shared_ptr<RequestACL>();
         bool set_timeouts(false);
         int qtimeout = impl_->query_timeout_;
         int ctimeout = impl_->client_timeout_;
