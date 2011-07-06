@@ -14,6 +14,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import unittest
+from isc.acl.acl import LoaderError
 from isc.acl.dns import *
 
 class RequestACLTest(unittest.TestCase):
