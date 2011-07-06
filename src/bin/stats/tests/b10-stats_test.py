@@ -31,11 +31,11 @@ stats.gmtime = gmtime
 from stats import SessionSubject, CCSessionListener, get_timestamp, get_datetime
 from fake_time import _TEST_TIME_SECS, _TEST_TIME_STRF
 
-# setting Constant
-if sys.path[0] == '':
-    TEST_SPECFILE_LOCATION = "./testdata/stats_test.spec"
+if "B10_FROM_SOURCE" in os.environ:
+    TEST_SPECFILE_LOCATION = os.environ["B10_FROM_SOURCE"] +\
+    "/src/bin/stats/tests/testdata/stats_test.spec"
 else:
-    TEST_SPECFILE_LOCATION = sys.path[0] + "/testdata/stats_test.spec"
+    TEST_SPECFILE_LOCATION = "./testdata/stats_test.spec"
 
 class TestStats(unittest.TestCase):
 
