@@ -25,11 +25,18 @@ from collections import defaultdict
 from isc.config.ccsession import ModuleCCSession, create_answer
 from isc.cc import Session, SessionError
 
+import isc.log
+from stats_messages import *
+
+isc.log.init("b10-stats")
+logger = isc.log.Logger("stats")
+
+# Some constants for debug levels
+DBG_STATS_MESSAGING = 30
+
 # for setproctitle
 import isc.util.process
 isc.util.process.rename()
-
-import isc.log
 
 # If B10_FROM_SOURCE is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
@@ -205,8 +212,7 @@ class CCSessionListener(Listener):
                 kwargs = self.initialize_data(cmd["command_args"])
                 self.add_event(Callback(name=name, callback=callback, args=(), kwargs=kwargs))
             except AttributeError as ae:
-                sys.stderr.write("[b10-stats] Caught undefined command while parsing spec file: "
-                                 +str(cmd["command_name"])+"\n")
+                logger.error(STATS_UNKNOWN_COMMAND_IN_SPEC, cmd["command_name"])
 
     def start(self):
         """
@@ -219,8 +225,7 @@ class CCSessionListener(Listener):
         self.stats_data['stats.lname'] = self.session.lname
         self.cc_session.start()
         # request Bob to send statistics data
-        if self.verbose:
-            sys.stdout.write("[b10-stats] request Bob to send statistics data\n")
+        logger.debug(DBG_STATS_MESSAGING, STATS_SEND_STATS_REQUEST_BOSS)
         cmd = isc.config.ccsession.create_command("sendstats", None)
         seq = self.session.group_sendmsg(cmd, 'Boss')
         self.session.group_recvmsg(True, seq)
@@ -241,8 +246,8 @@ class CCSessionListener(Listener):
         """
         handle a configure from the cc channel
         """
-        if self.verbose:
-            sys.stdout.write("[b10-stats] newconfig received: "+str(new_config)+"\n")
+        logger.debug(DBG_STATS_MESSAGING, STATS_RECEIVED_NEW_CONFIG,
+                     new_config)
 
         # do nothing currently
         return create_answer(0)
@@ -264,8 +269,7 @@ class CCSessionListener(Listener):
         """
         handle shutdown command
         """
-        if self.verbose:
-            sys.stdout.write("[b10-stats] 'shutdown' command received\n")
+        logger.info(STATS_RECEIVED_SHUTDOWN_COMMAND)
         self.subject.running = False
         return create_answer(0)
 
@@ -285,12 +289,13 @@ class CCSessionListener(Listener):
         """
         handle remove command
         """
-        if self.verbose:
-            sys.stdout.write("[b10-stats] 'remove' command received, args: "+str(args)+"\n")
 
         # 'args' must be dictionary type
         if args and args['stats_item_name'] in self.stats_data:
             stats_item_name = args['stats_item_name']
+
+        logger.debug(DBG_STATS_MESSAGING, STATS_RECEIVED_REMOVE_COMMAND,
+                     stats_item_name)
 
         # just remove one item
         self.stats_data.pop(stats_item_name)
@@ -301,8 +306,6 @@ class CCSessionListener(Listener):
         """
         handle show command
         """
-        if self.verbose:
-            sys.stdout.write("[b10-stats] 'show' command received, args: "+str(args)+"\n")
 
         # always overwrite 'report_time' and 'stats.timestamp'
         # if "show" command invoked
@@ -312,16 +315,21 @@ class CCSessionListener(Listener):
         # if with args
         if args and args['stats_item_name'] in self.stats_data:
             stats_item_name = args['stats_item_name']
+            logger.debug(DBG_STATS_MESSAGING,
+                         STATS_RECEIVED_SHOW_NAME_COMMAND,
+                         stats_item_name)
             return create_answer(0, {stats_item_name: self.stats_data[stats_item_name]})
 
+        logger.debug(DBG_STATS_MESSAGING,
+                     STATS_RECEIVED_SHOW_ALL_COMMAND)
         return create_answer(0, self.stats_data)
 
     def command_reset(self, args):
         """
         handle reset command
         """
-        if self.verbose:
-            sys.stdout.write("[b10-stats] 'reset' command received\n")
+        logger.debug(DBG_STATS_MESSAGING,
+                     STATS_RECEIVED_RESET_COMMAND)
 
         # re-initialize internal variables
         self.stats_data = self.initialize_data(self.stats_spec)
@@ -338,8 +346,7 @@ class CCSessionListener(Listener):
         """
         handle status command
         """
-        if self.verbose:
-            sys.stdout.write("[b10-stats] 'status' command received\n")
+        logger.debug(DBG_STATS_MESSAGING, STATS_RECEIVED_STATUS_COMMAND)
         # just return "I'm alive."
         return create_answer(0, "I'm alive.")
 
@@ -347,9 +354,7 @@ class CCSessionListener(Listener):
         """
         handle an unknown command
         """
-        if self.verbose:
-            sys.stdout.write("[b10-stats] Unknown command received: '"
-                             + str(command) + "'\n")
+        logger.error(STATS_RECEIVED_UNKNOWN_COMMAND, command)
         return create_answer(1, "Unknown command: '"+str(command)+"'")
 
 
@@ -403,13 +408,12 @@ def main(session=None):
             subject.check()
         subject.stop()
 
-    except OptionValueError:
-        sys.stderr.write("[b10-stats] Error parsing options\n")
+    except OptionValueError as ove:
+        logger.fatal(STATS_BAD_OPTION_VALUE, ove)
     except SessionError as se:
-        sys.stderr.write("[b10-stats] Error creating Stats module, "
-              + "is the command channel daemon running?\n")
+        logger.fatal(STATS_CC_SESSION_ERROR, se)
     except KeyboardInterrupt as kie:
-        sys.stderr.write("[b10-stats] Interrupted, exiting\n")
+        logger.info(STATS_STOPPED_BY_KEYBOARD)
 
 if __name__ == "__main__":
     main()
