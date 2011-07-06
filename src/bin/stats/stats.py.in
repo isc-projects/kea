@@ -29,6 +29,8 @@ from isc.cc import Session, SessionError
 import isc.util.process
 isc.util.process.rename()
 
+import isc.log
+
 # If B10_FROM_SOURCE is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
 # installed on the system
