@@ -93,7 +93,7 @@ class RequestContextTest(unittest.TestCase):
 class RequestACLTest(unittest.TestCase):
 
     def test_direct_construct(self):
-        acl = RequestACL()
+        self.assertRaises(TypeError, RequestACL)
 
     def test_request_loader(self):
         # these shouldn't raise an exception
