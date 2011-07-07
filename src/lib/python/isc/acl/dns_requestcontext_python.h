@@ -12,23 +12,42 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_ACL_H
-#define __PYTHON_ACL_H 1
+#ifndef __PYTHON_REQUESTCONTEXT_H
+#define __PYTHON_REQUESTCONTEXT_H 1
 
 #include <Python.h>
 
+#include <acl/dns.h>
+
 namespace isc {
 namespace acl {
+namespace dns {
 namespace python {
 
-extern PyObject* po_ACLError;
-extern PyObject* po_LoaderError;
+// The s_* Class simply covers one instantiation of the object
+class s_RequestContext : public PyObject {
+public:
+    s_RequestContext();
+    RequestContext* cppobj;
+
+    // This object needs to maintain some source data to construct the
+    // underlying RequestContext object throughout its lifetime.
+    // These are "public" so that it can be accessed in the python wrapper
+    // implementation, but essentially they should be private, and the
+    // implementation details are hidden.
+    struct Data;
+    Data* data_;
+};
+
+extern PyTypeObject requestcontext_type;
+
+bool initModulePart_RequestContext(PyObject* mod);
 
 } // namespace python
+} // namespace dns
 } // namespace acl
 } // namespace isc
-
-#endif // __PYTHON_ACL_H
+#endif // __PYTHON_REQUESTCONTEXT_H
 
 // Local Variables:
 // mode: c++

@@ -129,7 +129,7 @@ namespace python {
 // Most of the functions are not actually implemented and NULL here.
 PyTypeObject requestacl_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "pydnspp.RequestACL",
+    "isc.acl.dns.RequestACL",
     sizeof(s_RequestACL),                 // tp_basicsize
     0,                                  // tp_itemsize
     reinterpret_cast<destructor>(RequestACL_destroy),       // tp_dealloc
