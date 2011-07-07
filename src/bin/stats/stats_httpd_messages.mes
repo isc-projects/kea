@@ -13,7 +13,7 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 # No namespace declaration - these constants go in the global namespace
-# of the stats_messages python module.
+# of the stats_httpd_messages python module.
 
 % STATS_HTTPD_BAD_OPTION_VALUE bad command line argument: %1
 The stats-httpd module was called with a bad command-line argument,
