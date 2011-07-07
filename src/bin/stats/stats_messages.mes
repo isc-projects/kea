@@ -19,6 +19,11 @@
 The stats module was called with a bad command-line argument, and will
 not start.
 
+% STATS_CC_SESSION_ERROR error connecting to message bus: %1
+The stats module was unable to connect to the BIND 10 command and
+control channel. A likely problem is that the message bus daemon
+(b10-msgq) is not running. The stats module will now shut down.
+
 % STATS_RECEIVED_NEW_CONFIG received new configuration: %1
 This debug message is printed when the configuration manager has sent
 the stats module a configuration update.
@@ -56,11 +61,6 @@ to send statistics data to the stats module.
 % STATS_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down
 There was a keyboard interrupt signal to stop the stats daemon. The
 daemon will now shut down.
-
-% STATS_CC_SESSION_ERROR error connecting to message bus: %1
-The stats module was unable to connect to the BIND 10 command and
-control channel. A likely problem is that the message bus daemon
-(b10-msgq) is not running. The stats module will now shut down.
 
 % STATS_UNKNOWN_COMMAND_IN_SPEC unknown command in specification file: %1
 The specification file for the stats module contains a command that
