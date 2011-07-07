@@ -51,7 +51,7 @@ updating, the old instance is being removed prior of inserting a new one.
 
 % CACHE_MESSAGES_UNCACHEABLE not inserting uncacheable message %1/%2/%3
 Debug message, noting that the given message can not be cached. This is because
-there's no SOA record in the message. See RFG 2308 section 5 for more
+there's no SOA record in the message. See RFC 2308 section 5 for more
 information.
 
 % CACHE_MESSAGES_UNKNOWN no entry for %1 found in the message cache
