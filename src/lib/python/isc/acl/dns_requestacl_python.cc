@@ -28,11 +28,14 @@
 #include <acl/acl.h>
 #include <acl/dns.h>
 
+#include "acl.h"
 #include "dns_requestacl_python.h"
+#include "dns_requestcontext_python.h"
 
 using namespace std;
 using namespace isc::util::python;
 using namespace isc::acl;
+using namespace isc::acl::python;
 using namespace isc::acl::dns;
 using namespace isc::acl::dns::python;
 
@@ -51,6 +54,9 @@ using namespace isc::acl::dns::python;
 // Trivial constructor.
 s_RequestACL::s_RequestACL() {}
 
+// Import pydoc text
+#include "dns_requestacl_inc.cc"
+
 namespace {
 // Shortcut type which would be convenient for adding class variables safely.
 typedef CPPPyObjectContainer<s_RequestACL, RequestACL> RequestACLContainer;
@@ -60,26 +66,9 @@ typedef CPPPyObjectContainer<s_RequestACL, RequestACL> RequestACLContainer;
 // the type definition of the object, since both can use the other
 //
 
-// General creation and destruction
-int RequestACL_init(s_RequestACL* self, PyObject* args);
-void RequestACL_destroy(s_RequestACL* self);
-
 // These are the functions we export
 // For a minimal support, we don't need them.
 
-// This list contains the actual set of functions we have in
-// python. Each entry has
-// 1. Python method name
-// 2. Our static function here
-// 3. Argument type
-// 4. Documentation
-PyMethodDef RequestACL_methods[] = {
-    { NULL, NULL, 0, NULL }
-};
-
-// This is a template of typical code logic of python class initialization
-// with C++ backend.  You'll need to adjust it according to details of the
-// actual C++ class.
 int
 RequestACL_init(s_RequestACL* self, PyObject* /*args*/) {
     // maybe we should prohibit direct creation of the ACL
@@ -118,6 +107,39 @@ RequestACL_destroy(s_RequestACL* const self) {
     self->cppobj.reset();
     Py_TYPE(self)->tp_free(self);
 }
+
+PyObject*
+RequestACL_execute(PyObject* po_self, PyObject* args) {
+    s_RequestACL* const self = static_cast<s_RequestACL*>(po_self);
+
+    try {
+        const s_RequestContext* po_context;
+        if (PyArg_ParseTuple(args, "O!", &requestcontext_type, &po_context)) {
+            const BasicAction action =
+                self->cppobj->execute(*po_context->cppobj);
+            return (Py_BuildValue("I", action));
+        }
+    } catch (const exception& ex) {
+        const string ex_what = "Failed to execute ACL: " + string(ex.what());
+        PyErr_SetString(po_ACLError, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "Unexpected exception in executing ACL");
+    }
+
+    return (NULL);
+}
+
+// This list contains the actual set of functions we have in
+// python. Each entry has
+// 1. Python method name
+// 2. Our static function here
+// 3. Argument type
+// 4. Documentation
+PyMethodDef RequestACL_methods[] = {
+    { "execute", RequestACL_execute, METH_VARARGS, RequestACL_execute_doc },
+    { NULL, NULL, 0, NULL }
+};
 } // end of unnamed namespace
 
 namespace isc {
@@ -148,7 +170,7 @@ PyTypeObject requestacl_type = {
     NULL,                               // tp_setattro
     NULL,                               // tp_as_buffer
     Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The RequestACL class objects is...(COMPLETE THIS)",
+    RequestACL_doc,
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
     NULL,				 // tp_richcompare
