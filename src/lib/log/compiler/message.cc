@@ -55,13 +55,15 @@ static const char* VERSION = "1.0-0";
 /// \b Invocation<BR>
 /// The program is invoked with the command:
 ///
-/// <tt>message [-v | -h | \<message-file\>]</tt>
+/// <tt>message [-v | -h | -p | -d <dir> | \<message-file\>]</tt>
 ///
 /// It reads the message file and writes out two files of the same name in the
 /// default directory but with extensions of .h and .cc.
 ///
 /// \-v causes it to print the version number and exit. \-h prints a help
-/// message (and exits).
+/// message (and exits). -p sets the output to python. -d <dir> will make
+/// it write the output file(s) to dir instead of current working
+/// directory
 
 
 /// \brief Print Version
@@ -80,7 +82,7 @@ version() {
 void
 usage() {
     cout <<
-        "Usage: message [-h] [-v] [-p] <message-file>\n" <<
+        "Usage: message [-h] [-v] [-p] [-d dir] <message-file>\n" <<
         "\n" <<
         "-h       Print this message and exit\n" <<
         "-v       Print the program version and exit\n" <<
