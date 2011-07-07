@@ -109,9 +109,7 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
                     return None
         except StatsHttpdError as err:
             self.send_error(500)
-            if self.server.verbose:
-                self.server.log_writer(
-                    "[b10-stats-httpd] %s\n" % err)
+            logger.error(STATS_HTTPD_SERVER_ERROR, err)
             return None
         else:
             self.send_response(200)
@@ -119,15 +117,6 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Content-Length", len(body))
             self.end_headers()
             return body
-
-    def log_message(self, format, *args):
-        """Change the default log format"""
-        if self.server.verbose:
-            self.server.log_writer(
-                "[b10-stats-httpd] %s - - [%s] %s\n" %
-                (self.address_string(),
-                 self.log_date_time_string(),
-                 format%args))
 
 class HttpServerError(Exception):
     """Exception class for HttpServer class. It is intended to be
@@ -145,13 +134,12 @@ class HttpServer(http.server.HTTPServer):
     sys.stderr.write. They are intended to be referred by HttpHandler
     object."""
     def __init__(self, server_address, handler,
-                 xml_handler, xsd_handler, xsl_handler, log_writer, verbose=False):
+                 xml_handler, xsd_handler, xsl_handler, log_writer):
         self.server_address = server_address
         self.xml_handler = xml_handler
         self.xsd_handler = xsd_handler
         self.xsl_handler = xsl_handler
         self.log_writer = log_writer
-        self.verbose = verbose
         http.server.HTTPServer.__init__(self, server_address, handler)
 
 class StatsHttpdError(Exception):
@@ -165,8 +153,7 @@ class StatsHttpd:
     statistics module. It handles HTTP requests, and command channel
     and config channel CC session. It uses select.select function
     while waiting for clients requests."""
-    def __init__(self, verbose=False):
-        self.verbose = verbose
+    def __init__(self):
         self.running = False
         self.poll_intval = 0.5
         self.write_log = sys.stderr.write
@@ -231,7 +218,7 @@ class StatsHttpd:
             httpd = HttpServer(
                 server_address, HttpHandler,
                 self.xml_handler, self.xsd_handler, self.xsl_handler,
-                self.write_log, self.verbose)
+                self.write_log)
         except (socket.gaierror, socket.error,
                 OverflowError, TypeError) as err:
             # try IPv4 next
@@ -310,7 +297,7 @@ class StatsHttpd:
         logger.debug(DBG_STATS_HTTPD_MESSAGING, STATS_HTTPD_HANDLE_CONFIG,
                    new_config)
         for key in new_config.keys():
-            if key not in DEFAULT_CONFIG:
+            if key not in DEFAULT_CONFIG and key != "version":
                 logger.error(STATS_HTTPD_UNKNOWN_CONFIG_ITEM, key)
                 return isc.config.ccsession.create_answer(
                     1, "Unknown known config: %s" % key)
@@ -479,7 +466,9 @@ if __name__ == "__main__":
             "-v", "--verbose", dest="verbose", action="store_true",
             help="display more about what is going on")
         (options, args) = parser.parse_args()
-        stats_httpd = StatsHttpd(verbose=options.verbose)
+        if options.verbose:
+            isc.log.init("b10-stats-httpd", "DEBUG", 99)
+        stats_httpd = StatsHttpd()
         stats_httpd.start()
     except OptionValueError as ove:
         logger.fatal(STATS_HTTPD_BAD_OPTION_VALUE, ove)

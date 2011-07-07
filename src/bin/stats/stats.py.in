@@ -153,9 +153,8 @@ class SessionSubject(Subject, metaclass=Singleton):
     """
     A concrete subject class which creates CC session object
     """
-    def __init__(self, session=None, verbose=False):
+    def __init__(self, session=None):
         Subject.__init__(self)
-        self.verbose = verbose
         self.session=session
         self.running = False
 
@@ -175,9 +174,8 @@ class CCSessionListener(Listener):
     A concrete listener class which creates SessionSubject object and
     ModuleCCSession object
     """
-    def __init__(self, subject, verbose=False):
+    def __init__(self, subject):
         Listener.__init__(self, subject)
-        self.verbose = verbose
         self.session = subject.session
         self.boot_time = get_datetime()
 
@@ -402,8 +400,10 @@ def main(session=None):
         parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
                       help="display more about what is going on")
         (options, args) = parser.parse_args()
-        subject = SessionSubject(session=session, verbose=options.verbose)
-        listener = CCSessionListener(subject, verbose=options.verbose)
+        if options.verbose:
+            isc.log.init("b10-stats", "DEBUG", 99)
+        subject = SessionSubject(session=session)
+        listener = CCSessionListener(subject)
         subject.start()
         while subject.running:
             subject.check()
