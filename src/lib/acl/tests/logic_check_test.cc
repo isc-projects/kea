@@ -244,7 +244,7 @@ TEST_F(LogicCreatorTest, nested) {
 }
 
 void notTest(bool value) {
-    NotCheck<Log> notOp(shared_ptr<Check<Log> >(new ConstCheck(value, 0)));
+    NotOperator<Log> notOp(shared_ptr<Check<Log> >(new ConstCheck(value, 0)));
     Log log;
     // It returns negated value
     EXPECT_EQ(!value, notOp.matches(log));
@@ -281,9 +281,9 @@ TEST_F(LogicCreatorTest, notInvalid) {
 }
 
 TEST_F(LogicCreatorTest, notValid) {
-    shared_ptr<NotCheck<Log> > notOp(load<NotCheck<Log> >("{\"NOT\":"
-                                                          "  {\"logcheck\":"
-                                                          "     [0, true]}}"));
+    shared_ptr<NotOperator<Log> > notOp(load<NotOperator<Log> >("{\"NOT\":"
+                                                                "  {\"logcheck\":"
+                                                                "     [0, true]}}"));
     EXPECT_FALSE(notOp->matches(log_));
     log_.checkFirst(1);
 }
