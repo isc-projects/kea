@@ -110,7 +110,7 @@ currentTime() {
 
     // Convert to string and strip out the trailing newline
     string current_time = buffer;
-    return isc::util::str::trim(current_time);
+    return (isc::util::str::trim(current_time));
 }
 
 
@@ -131,7 +131,7 @@ sentinel(Filename& file) {
     string ext = file.extension();
     string sentinel_text = "__" + name + "_" + ext.substr(1);
     isc::util::str::uppercase(sentinel_text);
-    return sentinel_text;
+    return (sentinel_text);
 }
 
 
@@ -158,7 +158,7 @@ quoteString(const string& instring) {
         outstring += instring[i];
     }
 
-    return outstring;
+    return (outstring);
 }
 
 
@@ -181,7 +181,7 @@ sortedIdentifiers(MessageDictionary& dictionary) {
     }
     sort(ident.begin(), ident.end());
 
-    return ident;
+    return (ident);
 }
 
 
@@ -211,7 +211,7 @@ splitNamespace(string ns) {
 
     // ... and return the vector of namespace components split on the single
     // colon.
-    return isc::util::str::tokens(ns, ":");
+    return (isc::util::str::tokens(ns, ":"));
 }
 
 
@@ -262,10 +262,11 @@ writeClosingNamespace(ostream& output, const vector<string>& ns) {
 
 void
 writePythonFile(const string& file, MessageDictionary& dictionary,
-                const char* output_directory) {
+                const char* output_directory)
+{
     Filename message_file(file);
     Filename python_file(Filename(message_file.name()).useAsDefault(".py"));
-    if (output_directory) {
+    if (output_directory != NULL) {
         python_file.setDirectory(output_directory);
     }
 
@@ -312,7 +313,7 @@ writeHeaderFile(const string& file, const vector<string>& ns_components,
 {
     Filename message_file(file);
     Filename header_file(Filename(message_file.name()).useAsDefault(".h"));
-    if (output_directory) {
+    if (output_directory != NULL) {
         header_file.setDirectory(output_directory);
     }
 
@@ -545,15 +546,15 @@ main(int argc, char* argv[]) {
 
             case 'h':
                 usage();
-                return 0;
+                return (0);
 
             case 'v':
                 version();
-                return 0;
+                return (0);
 
             default:
                 // A message will have already been output about the error.
-                return 1;
+                return (1);
         }
     }
 
@@ -561,11 +562,11 @@ main(int argc, char* argv[]) {
     if (optind < (argc - 1)) {
         cout << "Error: excess arguments in command line\n";
         usage();
-        return 1;
+        return (1);
     } else if (optind >= argc) {
         cout << "Error: missing message file\n";
         usage();
-        return 1;
+        return (1);
     }
     string message_file = argv[optind];
 
@@ -605,7 +606,7 @@ main(int argc, char* argv[]) {
         // Finally, warn of any duplicates encountered.
         warnDuplicates(reader);
     }
-    catch (MessageException& e) {
+    catch (const MessageException& e) {
         // Create an error message from the ID and the text
         MessageDictionary& global = MessageDictionary::globalDictionary();
         string text = e.id();
@@ -619,9 +620,9 @@ main(int argc, char* argv[]) {
 
         cerr << text << "\n";
 
-        return 1;
+        return (1);
     }
 
-    return 0;
+    return (0);
 
 }
