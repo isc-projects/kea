@@ -41,8 +41,8 @@ class TestStats(unittest.TestCase):
 
     def setUp(self):
         self.session = Session()
-        self.subject = SessionSubject(session=self.session, verbose=True)
-        self.listener = CCSessionListener(self.subject, verbose=True)
+        self.subject = SessionSubject(session=self.session)
+        self.listener = CCSessionListener(self.subject)
         self.stats_spec = self.listener.cc_session.get_module_spec().get_config_spec()
         self.module_name = self.listener.cc_session.get_module_spec().get_module_name()
         self.stats_data = {
@@ -516,9 +516,9 @@ class TestStats(unittest.TestCase):
 class TestStats2(unittest.TestCase):
 
     def setUp(self):
-        self.session = Session(verbose=True)
-        self.subject = SessionSubject(session=self.session, verbose=True)
-        self.listener = CCSessionListener(self.subject, verbose=True)
+        self.session = Session()
+        self.subject = SessionSubject(session=self.session)
+        self.listener = CCSessionListener(self.subject)
         self.module_name = self.listener.cc_session.get_module_spec().get_module_name()
         # check starting
         self.assertFalse(self.subject.running)
@@ -553,9 +553,9 @@ class TestStats2(unittest.TestCase):
         stats.SPECFILE_LOCATION = TEST_SPECFILE_LOCATION
         stats.SCHEMA_SPECFILE_LOCATION = TEST_SPECFILE_LOCATION
         self.assertEqual(stats.SPECFILE_LOCATION, TEST_SPECFILE_LOCATION)
-        self.subject = stats.SessionSubject(session=self.session, verbose=True)
+        self.subject = stats.SessionSubject(session=self.session)
         self.session = self.subject.session
-        self.listener = stats.CCSessionListener(self.subject, verbose=True)
+        self.listener = stats.CCSessionListener(self.subject)
 
         self.assertEqual(self.listener.stats_spec, [])
         self.assertEqual(self.listener.stats_data, {})
