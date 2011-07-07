@@ -184,4 +184,22 @@ TEST_F(RequestCheckTest, checkIPv6) {
     EXPECT_FALSE(createIPCheck("32.1.13.184")->matches(getRequest6()));
 }
 
+// The following tests test only the creators are registered, they are tested
+// elsewhere
+
+TEST(DNSACL, notLoad) {
+    EXPECT_NO_THROW(getRequestLoader().loadCheck(isc::data::Element::fromJSON(
+        "{\"NOT\": {\"from\": \"192.0.2.1\"}}")));
+}
+
+TEST(DNSACL, allLoad) {
+    EXPECT_NO_THROW(getRequestLoader().loadCheck(isc::data::Element::fromJSON(
+        "{\"ALL\": [{\"from\": \"192.0.2.1\"}]}")));
+}
+
+TEST(DNSACL, anyLoad) {
+    EXPECT_NO_THROW(getRequestLoader().loadCheck(isc::data::Element::fromJSON(
+        "{\"ANY\": [{\"from\": \"192.0.2.1\"}]}")));
+}
+
 }
