@@ -206,14 +206,14 @@ private:
  * This simply returns the negation of whatever returns the subexpression.
  */
 template<typename Context>
-class NotCheck : public CompoundCheck<Context> {
+class NotOperator : public CompoundCheck<Context> {
 public:
     /**
      * \brief Constructor
      *
      * \param expr The subexpression to be negated by this NOT.
      */
-    NotCheck(const boost::shared_ptr<Check<Context> >& expr) :
+    NotOperator(const boost::shared_ptr<Check<Context> >& expr) :
         expr_(expr)
     { }
     /**
@@ -265,7 +265,7 @@ public:
                                                       const Loader<Context,
                                                       Action>& loader)
     {
-        return (boost::shared_ptr<Check<Context> >(new NotCheck<Context>(
+        return (boost::shared_ptr<Check<Context> >(new NotOperator<Context>(
                     loader.loadCheck(definition))));
     }
     /**
