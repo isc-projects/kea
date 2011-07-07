@@ -23,7 +23,7 @@ message to the sender with the RCODE set to NOTIMP.
 
 % RESOLVER_AXFR_UDP AXFR request received over UDP
 This is a debug message output when the resolver received a request for
-an AXFR (full transfer of a zone) over TCP.  Only authoritative servers
+an AXFR (full transfer of a zone) over UDP.  Only authoritative servers
 are able to handle AXFR requests (and in any case, an AXFR request should
 be sent over TCP), so the resolver will return an error message to the
 sender with the RCODE set to NOTIMP.
@@ -200,7 +200,7 @@ timeout and drop the query.
 % RESOLVER_SET_ROOT_ADDRESS setting root address %1(%2)
 This message gives the address of one of the root servers used by the
 resolver.  It is output during startup and may appear multiple times,
-oncee for each root server address.
+once for each root server address.
 
 % RESOLVER_SHUTDOWN resolver shutdown complete
 This informational message is output when the resolver has shut down.
