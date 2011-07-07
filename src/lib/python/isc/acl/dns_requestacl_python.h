@@ -30,6 +30,11 @@ namespace python {
 class s_RequestACL : public PyObject {
 public:
     s_RequestACL();
+
+    // We don't have to use a shared pointer for its original purposes as
+    // the python object maintains reference counters itself.  But the
+    // underlying C++ API only exposes a shared pointer for the ACL objects,
+    // so we store it in that form.
     boost::shared_ptr<RequestACL> cppobj;
 };
 
