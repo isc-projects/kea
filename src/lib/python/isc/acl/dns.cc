@@ -35,6 +35,8 @@ using namespace isc::data;
 using namespace isc::acl::dns;
 using namespace isc::acl::dns::python;
 
+#include "dnsacl_inc.cc"
+
 namespace {
 PyObject*
 loadRequestACL(PyObject*, PyObject* args) {
@@ -63,7 +65,7 @@ loadRequestACL(PyObject*, PyObject* args) {
 }
 
 PyMethodDef methods[] = {
-    { "load_request_acl", loadRequestACL, METH_VARARGS, "TBD" },
+    { "load_request_acl", loadRequestACL, METH_VARARGS, load_request_acl_doc },
     { NULL, NULL, 0, NULL }
 };
 

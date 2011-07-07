@@ -1,43 +1,24 @@
 namespace {
 const char* const RequestACL_doc = "\
-The ACL itself.\n\
+The DNS Request ACL.\n\
 \n\
-It holds bunch of ordered entries, each one consisting of a check ( of\n\
-any kind, it might be even compound) and an action that is returned\n\
-whenever the action matches. They are tested in the order and first\n\
-match counts.\n\
+It holds bunch of ordered entries, each one consisting of a check for\n\
+a given DNS Request context and an action, which is one of ACCEPT,\n\
+REJECT, or DROP, as defined in the isc.acl module.\n\
+The checks are tested in the order and first match counts.\n\
 \n\
-This is non-copyable. It seems that there's no need to copy them (even\n\
-when it would be technically possible), so we forbid it just to\n\
-prevent copying it by accident. If there really is legitimate use,\n\
-this restriction can be removed.\n\
-\n\
-The class is template. It is possible to specify on which context the\n\
-checks match and which actions it returns. The actions must be\n\
-copyable for this to work and it is expected to be something small,\n\
-usually an enum (but other objects are also possible).\n\
-\n\
-There are protected functions. In fact, you should consider them\n\
-private, they are protected so tests can get inside. This class is not\n\
-expected to be subclassed in real applications.\n\
-\n\
-ACL(default_action)\n\
-\n\
-    Constructor.\n\
-\n\
-    Parameters:\n\
-      default_action It is the action that is returned when the\n\
-                 checked things \"falls off\" the end of the list\n\
-                 (when no rule matched).\n\
+A RequestACL object cannot be constructed directly; an application\n\
+must use isc.acl.dns.load_request_acl() to create a RequestACL object.\n\
 \n\
 ";
 
 const char* const RequestACL_execute_doc = "\
-execute(context) ->  Action \n\
+execute(context) -> action \n\
 \n\
-The actual main function that decides.\n\
+The returned action is one of ACCEPT, REJECT or DROP as defined in\n\
+the isc.acl module.\n\
 \n\
-This is the function that takes the entries one by one, checks the\n\
+This is the function that takes the ACL entries one by one, checks the\n\
 context against conditions and if it matches, returns the action that\n\
 belongs to the first matched entry or default action if nothing\n\
 matches.\n\
