@@ -13,14 +13,10 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# This file is not installed. The log.so is installed into the right place.
-# It is only to find it in the .libs directory when we run as a test or
-# from the build directory.
-# But as nobody gives us the builddir explicitly (and we can't use generation
-# from .in file, as it would put us into the builddir and we wouldn't be found)
-# we guess from current directory. Any idea for something better? This should
-# be enough for the tests, but would it work for B10_FROM_SOURCE as well?
-# Should we look there? Or define something in bind10_config?
+# This file is not installed; The .so version will be installed into the right
+# place at installation time.
+# This helper script is only to find it in the .libs directory when we run
+# as a test or from the build directory.
 
 import os
 import sys
