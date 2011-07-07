@@ -16,6 +16,8 @@
 
 #include <util/python/pycppwrapper_util.h>
 
+#include <acl/acl.h>
+
 #include "acl.h"
 
 using namespace isc::util::python;
@@ -58,6 +60,16 @@ PyInit_acl(void) {
 
         po_LoaderError = PyErr_NewException("isc.acl.LoaderError", NULL, NULL);
         PyObjectContainer(po_LoaderError).installToModule(mod, "LoaderError");
+
+        // Install module constants.  Note that we can release our own
+        // references to these objects because we don't have corresponding
+        // C++ variables.
+        PyObjectContainer(Py_BuildValue("I", isc::acl::ACCEPT)).
+            installToModule(mod, "ACCEPT", false);
+        PyObjectContainer(Py_BuildValue("I", isc::acl::REJECT)).
+            installToModule(mod, "REJECT", false);
+        PyObjectContainer(Py_BuildValue("I", isc::acl::DROP)).
+            installToModule(mod, "DROP", false);
     } catch (...) {
         Py_DECREF(mod);
         return (NULL);
