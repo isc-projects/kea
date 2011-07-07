@@ -250,7 +250,7 @@ PyTypeObject requestcontext_type = {
     NULL,                               // tp_as_number
     NULL,                               // tp_as_sequence
     NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
+    NULL,                               // tp_hash
     NULL,                               // tp_call
     RequestContext_str,                 // tp_str
     NULL,                               // tp_getattro

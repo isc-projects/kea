@@ -127,7 +127,7 @@ PyTypeObject requestacl_type = {
     NULL,                               // tp_as_number
     NULL,                               // tp_as_sequence
     NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
+    NULL,                               // tp_hash
     NULL,                               // tp_call
     NULL,	                       // tp_str
     NULL,                               // tp_getattro
