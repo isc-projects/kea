@@ -380,6 +380,9 @@ class ConfigManager:
                 answer, env = self.cc.group_recvmsg(False, seq)
             except isc.cc.SessionTimeout:
                 answer = ccsession.create_answer(1, "Timeout waiting for answer from " + module_name)
+            except isc.cc.SessionError as se:
+                logger.error(CFGMGR_BAD_UPDATE_RESPONSE_FROM_MODULE, module_name, se)
+                answer = ccsession.create_answer(1, "Unable to parse response from " + module_name + ": " + str(se))
         if answer:
             rcode, val = ccsession.parse_answer(answer)
             if rcode == 0:
