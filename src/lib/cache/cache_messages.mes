@@ -41,7 +41,7 @@ nothing.
 Debug message. We found the whole message in the cache, so it can be returned
 to user without any other lookups.
 
-% CACHE_MESSAGES_INIT initialized message cache for %1 %2 messages
+% CACHE_MESSAGES_INIT initialized message cache for %1 messages of class %2
 Debug message issued when a new message cache is issued. It lists the class
 of messages it can hold and the maximum size of the cache.
 
@@ -50,8 +50,9 @@ Debug message. This may follow CACHE_MESSAGES_UPDATE and indicates that, while
 updating, the old instance is being removed prior of inserting a new one.
 
 % CACHE_MESSAGES_UNCACHEABLE not inserting uncacheable message %1/%2/%3
-Debug message, noting that the given message can not be cached. This is for
-some reason described in RFC2308.
+Debug message, noting that the given message can not be cached. This is because
+there's no SOA record in the message. See RFG 2308 section 5 for more
+information.
 
 % CACHE_MESSAGES_UNKNOWN no entry for %1 found in the message cache
 Debug message. The message cache didn't find any entry for the given key.
@@ -119,18 +120,18 @@ Debug message. While trying to insert an RRset into the cache, it was
 discovered that there's no cache for the class of the RRset. Therefore
 the message will not be cached.
 
-% CACHE_RRSET_EXPIRED found expired RRset %1/%2
-Debug message. There' the data requested in the RRset cache. However, it is
+% CACHE_RRSET_EXPIRED found expired RRset %1/%2/%3
+Debug message. The requested data was found in the RRset cache. However, it is
 expired, so the cache removed it and is going to pretend nothing was found.
 
 % CACHE_RRSET_INIT initializing RRset cache for %2 RRsets of class %1
 Debug message. The RRset cache to hold at most this many RRsets for the given
 class is being created.
 
-% CACHE_RRSET_LOOKUP looking up %1/%2 in RRset cache
+% CACHE_RRSET_LOOKUP looking up %1/%2/%3 in RRset cache
 Debug message. The resolver is trying to look up data in the RRset cache.
 
-% CACHE_RRSET_NOT_FOUND no RRset found for %1/%2
+% CACHE_RRSET_NOT_FOUND no RRset found for %1/%2/%3
 Debug message which can follow CACHE_RRSET_LOOKUP. This means the data is not
 in the cache.
 

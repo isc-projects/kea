@@ -36,7 +36,7 @@ RRsetCache::RRsetCache(uint32_t cache_size,
                   new HashDeleter<RRsetEntry>(rrset_table_))
 {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, CACHE_RRSET_INIT).arg(cache_size).
-        arg(rrset_class);
+        arg(RRClass(rrset_class));
 }
 
 RRsetEntryPtr
@@ -44,7 +44,7 @@ RRsetCache::lookup(const isc::dns::Name& qname,
                    const isc::dns::RRType& qtype)
 {
     LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_RRSET_LOOKUP).arg(qname).
-        arg(qtype);
+        arg(qtype).arg(RRClass(class_));
     const string entry_name = genCacheEntryName(qname, qtype);
 
     RRsetEntryPtr entry_ptr = rrset_table_.get(HashKey(entry_name,
@@ -56,7 +56,7 @@ RRsetCache::lookup(const isc::dns::Name& qname,
             return (entry_ptr);
         } else {
             LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_RRSET_EXPIRED).arg(qname).
-                arg(qtype);
+                arg(qtype).arg(RRClass(class_));
             // the rrset entry has expired, so just remove it from
             // hash table and lru list.
             rrset_table_.remove(entry_ptr->hashKey());
@@ -65,7 +65,7 @@ RRsetCache::lookup(const isc::dns::Name& qname,
     }
 
     LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_RRSET_NOT_FOUND).arg(qname).
-        arg(qtype);
+        arg(qtype).arg(RRClass(class_));
     return (RRsetEntryPtr());
 }
 
