@@ -25,6 +25,7 @@
 #include <acl/dns.h>
 
 #include "acl.h"
+#include "dns_requestcontext_python.h"
 #include "dns_requestacl_python.h"
 
 using namespace std;
@@ -90,6 +91,10 @@ PyInit_dns(void) {
         return (NULL);
     }
 
+    if (!initModulePart_RequestContext(mod)) {
+        Py_DECREF(mod);
+        return (NULL);
+    }
     if (!initModulePart_RequestACL(mod)) {
         Py_DECREF(mod);
         return (NULL);
