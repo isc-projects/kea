@@ -58,52 +58,16 @@ s_RequestACL::s_RequestACL() {}
 #include "dns_requestacl_inc.cc"
 
 namespace {
-// Shortcut type which would be convenient for adding class variables safely.
-typedef CPPPyObjectContainer<s_RequestACL, RequestACL> RequestACLContainer;
-
-//
-// We declare the functions here, the definitions are below
-// the type definition of the object, since both can use the other
-//
-
-// These are the functions we export
-// For a minimal support, we don't need them.
-
 int
-RequestACL_init(s_RequestACL* self, PyObject* /*args*/) {
-    // maybe we should prohibit direct creation of the ACL
-    try {
-#ifdef notyet
-        if (PyArg_ParseTuple(args, "REPLACE ME")) {
-            // YOU'LL NEED SOME VALIDATION, PREPARATION, ETC, HERE.
-            self->cppobj = new RequestACL(/*NECESSARY PARAMS*/);
-            return (0);
-        }
-#endif
-        self->cppobj.reset(new RequestACL(REJECT));
-        return (0);
-    } catch (const exception& ex) {
-        const string ex_what = "Failed to construct RequestACL object: " +
-            string(ex.what());
-        //PyErr_SetString(po_IscException, ex_what.c_str());
-        PyErr_SetString(PyExc_TypeError, ex_what.c_str());
-        return (-1);
-    } catch (...) {
-        PyErr_SetString(/*po_IscException*/PyExc_TypeError,
-                        "Unexpected exception in constructing RequestACL");
-        return (-1);
-    }
-
+RequestACL_init(PyObject*, PyObject*, PyObject*) {
     PyErr_SetString(PyExc_TypeError,
-                    "Invalid arguments to RequestACL constructor");
-
+                    "RequestACL cannot be directly constructed");
     return (-1);
 }
 
-// This is a template of typical code logic of python object destructor.
-// In many cases you can use it without modification, but check that carefully.
 void
-RequestACL_destroy(s_RequestACL* const self) {
+RequestACL_destroy(PyObject* const po_self) {
+    s_RequestACL* const self = static_cast<s_RequestACL*>(po_self);
     self->cppobj.reset();
     Py_TYPE(self)->tp_free(self);
 }
@@ -154,7 +118,7 @@ PyTypeObject requestacl_type = {
     "isc.acl.dns.RequestACL",
     sizeof(s_RequestACL),                 // tp_basicsize
     0,                                  // tp_itemsize
-    reinterpret_cast<destructor>(RequestACL_destroy),       // tp_dealloc
+    RequestACL_destroy,                // tp_dealloc
     NULL,                               // tp_print
     NULL,                               // tp_getattr
     NULL,                               // tp_setattr
@@ -185,7 +149,7 @@ PyTypeObject requestacl_type = {
     NULL,                               // tp_descr_get
     NULL,                               // tp_descr_set
     0,                                  // tp_dictoffset
-    reinterpret_cast<initproc>(RequestACL_init),            // tp_init
+    RequestACL_init,                    // tp_init
     NULL,                               // tp_alloc
     PyType_GenericNew,                  // tp_new
     NULL,                               // tp_free
@@ -213,27 +177,6 @@ initModulePart_RequestACL(PyObject* mod) {
         return (false);
     }
     Py_INCREF(&requestacl_type);
-
-#if 0                           // we probably don't have any class vars
-    // The following template is the typical procedure for installing class
-    // variables.  If the class doesn't have a class variable, remove the
-    // entire try-catch clauses.
-    try {
-        // Constant class variables
-        installClassVariable(requestacl_type, "REPLACE_ME",
-                             Py_BuildValue("REPLACE ME"));
-    } catch (const exception& ex) {
-        const string ex_what =
-            "Unexpected failure in RequestACL initialization: " +
-            string(ex.what());
-        PyErr_SetString(po_IscException, ex_what.c_str());
-        return (false);
-    } catch (...) {
-        PyErr_SetString(PyExc_SystemError,
-                        "Unexpected failure in RequestACL initialization");
-        return (false);
-    }
-#endif
 
     return (true);
 }
