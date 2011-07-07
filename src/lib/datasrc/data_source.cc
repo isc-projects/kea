@@ -945,7 +945,7 @@ tryWildcard(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo, bool& found) {
 void
 DataSrc::doQuery(Query& q) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_QUERY_PROCESS).arg(q.qname()).
-        arg(q.qclass());
+        arg(q.qtype()).arg(q.qclass());
     Message& m = q.message();
     vector<RRsetPtr> additional;
 

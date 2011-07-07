@@ -20,6 +20,7 @@
 #include "message_entry.h"
 #include "message_utility.h"
 #include "rrset_cache.h"
+#include "logger.h"
 
 using namespace isc::dns;
 using namespace std;
@@ -64,7 +65,7 @@ static uint32_t MAX_UINT32 = numeric_limits<uint32_t>::max();
 // tunable.  Values of one to three hours have been found to work well
 // and would make sensible a default.  Values exceeding one day have
 // been found to be problematic. (sec 5, RFC2308)
-// The default value is 3 hourse (10800 seconds)
+// The default value is 3 hours (10800 seconds)
 // TODO:Give an option to let user configure
 static uint32_t MAX_NEGATIVE_CACHE_TTL = 10800;
 
@@ -142,6 +143,8 @@ MessageEntry::genMessage(const time_t& time_now,
         // has expired, if it is, return false.
         vector<RRsetEntryPtr> rrset_entry_vec;
         if (false == getRRsetEntries(rrset_entry_vec, time_now)) {
+            LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_ENTRY_MISSING_RRSET).
+                arg(entry_name_);
             return (false);
         }
 
