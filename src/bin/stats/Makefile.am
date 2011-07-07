@@ -7,17 +7,18 @@ pkglibexec_SCRIPTS = b10-stats b10-stats-httpd
 b10_statsdir = $(pkgdatadir)
 b10_stats_DATA = stats.spec stats-httpd.spec stats-schema.spec
 b10_stats_DATA += stats-httpd-xml.tpl stats-httpd-xsd.tpl stats-httpd-xsl.tpl
-pyexec_DATA = stats_messages.py
+pyexec_DATA = stats_messages.py stats_httpd_messages.py
 
 CLEANFILES = b10-stats stats.pyc
 CLEANFILES += b10-stats-httpd stats_httpd.pyc
 CLEANFILES += stats_messages.py stats_messages.pyc
+CLEANFILES += stats_httpd_messages.py stats_httpd_messages.pyc
 
 man_MANS = b10-stats.8 b10-stats-httpd.8
 EXTRA_DIST = $(man_MANS) b10-stats.xml b10-stats-httpd.xml
 EXTRA_DIST += stats.spec stats-httpd.spec stats-schema.spec
 EXTRA_DIST += stats-httpd-xml.tpl stats-httpd-xsd.tpl stats-httpd-xsl.tpl
-EXTRA_DIST += stats_messages.mes
+EXTRA_DIST += stats_messages.mes stats_httpd_messages.mes
 
 if ENABLE_MAN
 
@@ -31,6 +32,9 @@ endif
 
 stats_messages.py: stats_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message -p $(top_srcdir)/src/bin/stats/stats_messages.mes
+
+stats_httpd_messages.py: stats_httpd_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message -p $(top_srcdir)/src/bin/stats/stats_httpd_messages.mes
 
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
 b10-stats: stats.py
