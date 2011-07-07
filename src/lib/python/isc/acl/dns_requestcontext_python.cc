@@ -116,18 +116,10 @@ private:
 s_RequestContext::s_RequestContext() : cppobj(NULL), data_(NULL) {
 }
 
+// Import pydoc text
+#include "dns_requestcontext_inc.cc"
+
 namespace {
-// Shortcut type which would be convenient for adding class variables safely.
-typedef CPPPyObjectContainer<s_RequestContext, RequestContext> RequestContextContainer;
-
-//
-// We declare the functions here, the definitions are below
-// the type definition of the object, since both can use the other
-//
-
-// These are the functions we export
-// For a minimal support, we don't need them.
-
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -265,7 +257,7 @@ PyTypeObject requestcontext_type = {
     NULL,                               // tp_setattro
     NULL,                               // tp_as_buffer
     Py_TPFLAGS_DEFAULT,                 // tp_flags
-    "The RequestContext class objects is...(COMPLETE THIS)",
+    RequestContext_doc,
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
     NULL, // tp_richcompare
@@ -294,7 +286,6 @@ PyTypeObject requestcontext_type = {
     0                                   // tp_version_tag
 };
 
-// Module Initialization, all statics are initialized here
 bool
 initModulePart_RequestContext(PyObject* mod) {
     // We initialize the static description object with PyType_Ready(),

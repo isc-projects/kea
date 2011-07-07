@@ -28,3 +28,5 @@ acl_la_LIBADD += $(PYTHON_LIB)
 dns_la_LDFLAGS += -module
 dns_la_LIBADD = $(top_builddir)/src/lib/acl/libdnsacl.la
 dns_la_LIBADD += $(PYTHON_LIB)
+
+EXTRA_DIST = dnsacl_inc.cc dns_requestacl_inc.cc dns_requestcontext_inc.cc
