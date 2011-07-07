@@ -57,13 +57,9 @@ class TestHttpHandler(unittest.TestCase):
     """Tests for HttpHandler class"""
 
     def setUp(self):
-        self.verbose = True
-        self.stats_httpd = stats_httpd.StatsHttpd(self.verbose)
+        self.stats_httpd = stats_httpd.StatsHttpd()
         self.assertTrue(type(self.stats_httpd.httpd) is list)
         self.httpd = self.stats_httpd.httpd
-        for ht in self.httpd:
-            self.assertTrue(ht.verbose)
-        self.stats_httpd.cc_session.verbose = False
 
     def test_do_GET(self):
         for ht in self.httpd:
@@ -155,21 +151,6 @@ class TestHttpHandler(unittest.TestCase):
         handler.do_HEAD()
         self.assertEqual(handler.response.code, 404)
 
-    def test_log_message(self):
-        for ht in self.httpd:
-            self._test_log_message(ht._handler)
-
-    def _test_log_message(self, handler):
-        # switch write_log function
-        handler.server.log_writer = handler.response._write_log
-        log_message = 'ABCDEFG'
-        handler.log_message("%s", log_message)
-        self.assertEqual(handler.response.log, 
-                         "[b10-stats-httpd] %s - - [%s] %s\n" %
-                         (handler.address_string(),
-                          handler.log_date_time_string(),
-                          log_message))
-
 class TestHttpServerError(unittest.TestCase):
     """Tests for HttpServerError exception"""
 
@@ -183,12 +164,9 @@ class TestHttpServer(unittest.TestCase):
     """Tests for HttpServer class"""
 
     def test_httpserver(self):
-        self.verbose = True
-        self.stats_httpd = stats_httpd.StatsHttpd(self.verbose)
-        self.stats_httpd.cc_session.verbose = False
+        self.stats_httpd = stats_httpd.StatsHttpd()
         for ht in self.stats_httpd.httpd:
             self.assertTrue(ht.server_address in self.stats_httpd.http_addrs)
-            self.assertEqual(ht.verbose, self.verbose)
             self.assertEqual(ht.xml_handler, self.stats_httpd.xml_handler)
             self.assertEqual(ht.xsd_handler, self.stats_httpd.xsd_handler)
             self.assertEqual(ht.xsl_handler, self.stats_httpd.xsl_handler)
@@ -209,17 +187,14 @@ class TestStatsHttpd(unittest.TestCase):
     """Tests for StatsHttpd class"""
 
     def setUp(self):
-        self.verbose = True
         fake_socket._CLOSED = False
         fake_socket.has_ipv6 = True
-        self.stats_httpd = stats_httpd.StatsHttpd(self.verbose)
-        self.stats_httpd.cc_session.verbose = False
+        self.stats_httpd = stats_httpd.StatsHttpd()
 
     def tearDown(self):
         self.stats_httpd.stop()
 
     def test_init(self):
-        self.assertTrue(self.stats_httpd.verbose)
         self.assertFalse(self.stats_httpd.mccs.get_socket()._closed)
         self.assertEqual(self.stats_httpd.mccs.get_socket().fileno(),
                          id(self.stats_httpd.mccs.get_socket()))
@@ -317,8 +292,7 @@ class TestStatsHttpd(unittest.TestCase):
         self.stats_httpd.cc_session.group_sendmsg(
             { 'command': [ "shutdown" ] }, "StatsHttpd")
         self.stats_httpd.start()
-        self.stats_httpd = stats_httpd.StatsHttpd(self.verbose)
-        self.stats_httpd.cc_session.verbose = False
+        self.stats_httpd = stats_httpd.StatsHttpd()
         self.assertRaises(
             fake_select.error, self.stats_httpd.start)
 

@@ -50,6 +50,12 @@ stats-httpd module will respond with an error, and the command will
 be ignored.
 
 % STATS_HTTPD_SERVER_ERROR http server error: %1
+An internal error occurred while handling an http request. A HTTP 500
+response will be sent back, and the specific error is printed. This
+is an error condition that should not occur, and likely points to a
+module that is not responding correctly to statistic requests.
+
+% STATS_HTTPD_SERVER_INIT_ERROR http server initialization error: %1
 There was a problem initializing the http server in the stats-httpd
 module upon receiving new configuration data.The most likely cause is a
 port binding problem or a bad configuration value. The specific error
@@ -59,7 +65,7 @@ error is sent back.
 % STATS_HTTPD_SHUTDOWN shutting down
 The stats-httpd daemon will now shut down.
 
-% STATS_HTTPD_START_SERVER_ERROR http server error: %1
+% STATS_HTTPD_START_SERVER_INIT_ERROR http server initialization error: %1
 There was a problem initializing the http server in the stats-httpd
 module upon startup. The most likely cause is that it was not able
 to bind to the listening port. The specific error is printed, and the
