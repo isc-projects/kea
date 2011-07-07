@@ -57,60 +57,63 @@ setDestination(const char* root, const isc::log::Severity severity,
 
     using namespace isc::log;
 
+    // Constants: not declared static as this is function is expected to be
+    // called once only
+    const string DEVNULL = "/dev/null";
+    const string STDOUT = "stdout";
+    const string STDERR = "stderr";
+    const string SYSLOG = "syslog";
+    const string SYSLOG_COLON = "syslog:";
+
+    // Get the destination.  If not specified, assume /dev/null. (The default
+    // severity for unit tests is DEBUG, which generates a lot of output.
+    // Routing the logging to /dev/null will suppress that, whilst still
+    // ensuring that the code paths are tested.)
     const char* destination = getenv("B10_LOGGER_DESTINATION");
-    if (destination != NULL) {
+    const string dest((destination == NULL) ? DEVNULL : destination);
 
-        // Constants: not declared static as this is function is expected to be
-        // called once only
-        const string STDOUT = "stdout";
-        const string STDERR = "stderr";
-        const string SYSLOG = "syslog";
-        const string SYSLOG_COLON = "syslog:";
+    // Prepare the objects to define the logging specification
+    LoggerSpecification spec(root, severity, dbglevel);
+    OutputOption option;
 
-        // Prepare the objects to define the logging specification
-        LoggerSpecification spec(root, severity, dbglevel);
-        OutputOption option;
+    // Set up output option according to destination specification
+    if (dest == STDOUT) {
+        option.destination = OutputOption::DEST_CONSOLE;
+        option.stream = OutputOption::STR_STDOUT;
 
-        // Set up output option according to destination specification
-        const string dest = destination;
-        if (dest == STDOUT) {
-            option.destination = OutputOption::DEST_CONSOLE;
-            option.stream = OutputOption::STR_STDOUT;
+    } else if (dest == STDERR) {
+        option.destination = OutputOption::DEST_CONSOLE;
+        option.stream = OutputOption::STR_STDERR;
 
-        } else if (dest == STDERR) {
-            option.destination = OutputOption::DEST_CONSOLE;
-            option.stream = OutputOption::STR_STDERR;
+    } else if (dest == SYSLOG) {
+        option.destination = OutputOption::DEST_SYSLOG;
+        // Use default specified in OutputOption constructor for the
+        // syslog destination
 
-        } else if (dest == SYSLOG) {
-            option.destination = OutputOption::DEST_SYSLOG;
-            // Use default specified in OutputOption constructor for the
-            // syslog destination
-
-        } else if (dest.find(SYSLOG_COLON) == 0) {
-            option.destination = OutputOption::DEST_SYSLOG;
-            // Must take account of the string actually being "syslog:"
-            if (dest == SYSLOG_COLON) {
-                cerr << "**ERROR** value for B10_LOGGER_DESTINATION of " <<
-                        SYSLOG_COLON << " is invalid, " << SYSLOG <<
-                        " will be used instead\n";
-                // Use default for logging facility
-
-            } else {
-                // Everything else in the string is the facility name
-                option.facility = dest.substr(SYSLOG_COLON.size());
-            }
+    } else if (dest.find(SYSLOG_COLON) == 0) {
+        option.destination = OutputOption::DEST_SYSLOG;
+        // Must take account of the string actually being "syslog:"
+        if (dest == SYSLOG_COLON) {
+            cerr << "**ERROR** value for B10_LOGGER_DESTINATION of " <<
+                    SYSLOG_COLON << " is invalid, " << SYSLOG <<
+                    " will be used instead\n";
+            // Use default for logging facility
 
         } else {
-            // Not a recognised destination, assume a file
-            option.destination = OutputOption::DEST_FILE;
-            option.filename = dest;
+            // Everything else in the string is the facility name
+            option.facility = dest.substr(SYSLOG_COLON.size());
         }
 
-        // ... and set the destination
-        spec.addOutputOption(option);
-        LoggerManager manager;
-        manager.process(spec);
+    } else {
+        // Not a recognised destination, assume a file.
+        option.destination = OutputOption::DEST_FILE;
+        option.filename = dest;
     }
+
+    // ... and set the destination
+    spec.addOutputOption(option);
+    LoggerManager manager;
+    manager.process(spec);
 }
 
 } // Anonymous namespace
