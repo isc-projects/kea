@@ -24,6 +24,7 @@ using namespace isc::acl::python;
 namespace isc {
 namespace acl {
 namespace python {
+PyObject* po_ACLError;
 PyObject* po_LoaderError;
 }
 }
@@ -52,6 +53,9 @@ PyInit_acl(void) {
     }
 
     try {
+        po_ACLError = PyErr_NewException("isc.acl.Error", NULL, NULL);
+        PyObjectContainer(po_ACLError).installToModule(mod, "Error");
+
         po_LoaderError = PyErr_NewException("isc.acl.LoaderError", NULL, NULL);
         PyObjectContainer(po_LoaderError).installToModule(mod, "LoaderError");
     } catch (...) {

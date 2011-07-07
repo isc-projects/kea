@@ -14,8 +14,63 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import unittest
-from isc.acl.acl import LoaderError
+import socket
+from isc.acl.acl import LoaderError, Error
 from isc.acl.dns import *
+
+def get_sockaddr(address, port):
+    '''This is a simple shortcut wrapper for getaddrinfo'''
+    ai = socket.getaddrinfo(address, port, 0, 0, 0, socket.AI_NUMERICHOST)[0]
+    return ai[4]
+
+class RequestContextTest(unittest.TestCase):
+
+    def test_construct(self):
+        # Construct the context from IPv4/IPv6 addresses, check the object
+        # by printing it.
+        self.assertEqual('<isc.acl.dns.RequestContext object, ' + \
+                             'remote_addr=[192.0.2.1]:53001>',
+                         RequestContext(('192.0.2.1', 53001)).__str__())
+        self.assertEqual('<isc.acl.dns.RequestContext object, ' + \
+                             'remote_addr=[2001:db8::1234]:53006>',
+                         RequestContext(('2001:db8::1234', 53006,
+                                         0, 0)).__str__())
+
+        # Unusual case: port number overflows (this constructor allows that,
+        # although it should be rare anyway; the socket address should
+        # normally come from the Python socket module.
+        self.assertEqual('<isc.acl.dns.RequestContext object, ' + \
+                             'remote_addr=[192.0.2.1]:0>',
+                         RequestContext(('192.0.2.1', 65536)).__str__())
+
+        # same test using socket.getaddrinfo() to ensure it accepts the sock
+        # address representation used in the Python socket module.
+        self.assertEqual('<isc.acl.dns.RequestContext object, ' + \
+                             'remote_addr=[192.0.2.1]:53001>',
+                         RequestContext(get_sockaddr('192.0.2.1',
+                                                     53001)).__str__())
+        self.assertEqual('<isc.acl.dns.RequestContext object, ' + \
+                             'remote_addr=[2001:db8::1234]:53006>',
+                         RequestContext(get_sockaddr('2001:db8::1234',
+                                                     53006)).__str__())
+
+        #
+        # Invalid parameters (in our expected usage this should not happen
+        # because the sockaddr would come from the Python socket module, but
+        # validation should still be performed correctly)
+        #
+        # not a tuple
+        self.assertRaises(TypeError, RequestContext, 1)
+        # invalid number of parameters
+        self.assertRaises(TypeError, RequestContext, ('192.0.2.1', 53), 0)
+        # tuple is not in the form of sockaddr
+        self.assertRaises(TypeError, RequestContext, (0, 53))
+        self.assertRaises(TypeError, RequestContext, ('192.0.2.1', 'http'))
+        self.assertRaises(TypeError, RequestContext, ('::', 0, 'flow', 0))
+        # invalid address
+        self.assertRaises(Error, RequestContext, ('example.com', 5300))
+        self.assertRaises(Error, RequestContext, ('192.0.2.1.1', 5300))
+        self.assertRaises(Error, RequestContext, ('2001:db8:::1', 5300))
 
 class RequestACLTest(unittest.TestCase):
 
