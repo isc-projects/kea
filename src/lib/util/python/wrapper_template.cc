@@ -222,7 +222,7 @@ PyTypeObject @cppclass@_type = {
     NULL,                               // tp_as_number
     NULL,                               // tp_as_sequence
     NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
+    NULL,                               // tp_hash
     NULL,                               // tp_call
     // THIS MAY HAVE TO BE CHANGED TO NULL:
     @CPPCLASS@_str,                       // tp_str
