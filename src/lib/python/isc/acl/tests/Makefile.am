@@ -1,5 +1,5 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
-PYTESTS = dns_test.py
+PYTESTS = acl_test.py dns_test.py
 
 EXTRA_DIST = $(PYTESTS)
 
