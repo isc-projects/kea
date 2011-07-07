@@ -60,6 +60,10 @@ namespace dns {
 namespace python {
 
 struct s_RequestContext::Data {
+    // The constructor.  Currently it only accepts the information of the
+    // request source address, and contains all necessary logic in the body
+    // of the constructor.  As it's extended we may have refactor it by
+    // introducing helper methods.
     Data(const char* const remote_addr, const unsigned short remote_port) {
         struct addrinfo hints, *res;
         memset(&hints, 0, sizeof(hints));
@@ -82,12 +86,19 @@ struct s_RequestContext::Data {
         remote_ipaddr.reset(new IPAddress(getRemoteSockaddr()));
     }
 
+    // A convenient type converter from sockaddr_storage to sockaddr
     const struct sockaddr& getRemoteSockaddr() const {
         const void* p = &remote_ss;
         return (*static_cast<const struct sockaddr*>(p));
     }
 
+    // The remote (source) IP address the request.  Note that it needs
+    // a reference to remote_ss.  That's why the latter is stored within
+    // this structure.
     scoped_ptr<IPAddress> remote_ipaddr;
+
+    // The effective length of remote_ss.  It's necessary for getnameinf()
+    // called from sockaddrToText (__str__ backend).
     socklen_t remote_salen;
 
 private:
@@ -189,7 +200,7 @@ RequestContext_destroy(PyObject* po_self) {
     Py_TYPE(self)->tp_free(self);
 }
 
-// A helper function for __str()__
+// A helper function for __str__()
 string
 sockaddrToText(const struct sockaddr& sa, socklen_t sa_len) {
     char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
