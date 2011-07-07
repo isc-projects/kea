@@ -20,6 +20,7 @@ run_unittests_SOURCES += loader_test.cc
 run_unittests_SOURCES += logcheck.h
 run_unittests_SOURCES += creators.h
 run_unittests_SOURCES += logic_check_test.cc
+run_unittests_SOURCES += sockaddr.h
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)

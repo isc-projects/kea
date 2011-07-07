@@ -93,6 +93,7 @@ public:
             LogicCreator<AllOfSpec, Log>("ALL")));
         loader_.registerCreator(CreatorPtr(new ThrowCreator));
         loader_.registerCreator(CreatorPtr(new LogCreator));
+        loader_.registerCreator(CreatorPtr(new NotCreator<Log>("NOT")));
     }
     // To mark which parts of the check did run
     Log log_;
@@ -240,6 +241,51 @@ TEST_F(LogicCreatorTest, nested) {
     EXPECT_EQ(2, any->getSubexpressions().size());
     EXPECT_FALSE(all->matches(log_));
     log_.checkFirst(2);
+}
+
+void notTest(bool value) {
+    NotOperator<Log> notOp(shared_ptr<Check<Log> >(new ConstCheck(value, 0)));
+    Log log;
+    // It returns negated value
+    EXPECT_EQ(!value, notOp.matches(log));
+    // And runs the only one thing there
+    log.checkFirst(1);
+    // Check the getSubexpressions does sane things
+    ASSERT_EQ(1, notOp.getSubexpressions().size());
+    EXPECT_EQ(value, notOp.getSubexpressions()[0]->matches(log));
+}
+
+TEST(Not, trueValue) {
+    notTest(true);
+}
+
+TEST(Not, falseValue) {
+    notTest(false);
+}
+
+TEST_F(LogicCreatorTest, notInvalid) {
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"NOT\": null}")),
+                 LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"NOT\": \"hello\"}")),
+                 LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"NOT\": true}")),
+                 LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"NOT\": 42}")),
+                 LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"NOT\": []}")),
+                 LoaderError);
+    EXPECT_THROW(loader_.loadCheck(Element::fromJSON("{\"NOT\": [{"
+                                                     "\"logcheck\": [0, true]"
+                                                     "}]}")),
+                 LoaderError);
+}
+
+TEST_F(LogicCreatorTest, notValid) {
+    shared_ptr<NotOperator<Log> > notOp(load<NotOperator<Log> >("{\"NOT\":"
+                                                                "  {\"logcheck\":"
+                                                                "     [0, true]}}"));
+    EXPECT_FALSE(notOp->matches(log_));
+    log_.checkFirst(1);
 }
 
 }

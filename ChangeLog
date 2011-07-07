@@ -1,7 +1,14 @@
-267.	[func]		stephen
+268.	[func]		stephen
 	Add environment variable to allow redirection of logging output during
 	unit tests.
 	(Trac #1071, git 05164f9d61006869233b498d248486b4307ea8b6)
+
+267.	[func]		tomek
+	Added a dummy module for DHCP6. This module does not actually
+	do anything at this point, and BIND 10 has no option for
+	starting it yet. It is included as a base for further
+	development.
+	(Trac #990, git 4a590df96a1b1d373e87f1f56edaceccb95f267d)
 
 266.	[func]		Multiple developers
         Convert various error messages, debugging and other output
