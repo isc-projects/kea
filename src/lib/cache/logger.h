@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,22 +12,33 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
+#ifndef __DATASRC_LOGGER_H
+#define __DATASRC_LOGGER_H
 
-#include <gtest/gtest.h>
-#include <util/unittests/run_all.h>
+#include <log/macros.h>
+#include <cache/cache_messages.h>
 
-#include <dns/tests/unittest_util.h>
+/// \file logger.h
+/// \brief Cache library global logger
+///
+/// This holds the logger for the cache library. It is a private header
+/// and should not be included in any publicly used header, only in local
+/// cc files.
 
-#include <log/logger_support.h>
+namespace isc {
+namespace cache {
 
-int
-main(int argc, char* argv[]) {
-    ::testing::InitGoogleTest(&argc, argv);
-    isc::UnitTestUtil::addDataPath(TEST_DATA_SRCDIR);
-    isc::UnitTestUtil::addDataPath(TEST_DATA_BUILDDIR);
+/// \brief The logger for this library
+extern isc::log::Logger logger;
 
-    isc::log::initLogger();
+enum {
+    /// \brief Trace basic operations
+    DBG_TRACE_BASIC = 10,
+    /// \brief Trace data operations
+    DBG_TRACE_DATA = 40,
+};
 
-    return (isc::util::unittests::run_all());
 }
+}
+
+#endif
