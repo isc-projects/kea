@@ -43,6 +43,7 @@ using namespace isc::util;
 
 static const char* VERSION = "1.0-0";
 
+/// \file log/compiler/message.cc
 /// \brief Message Compiler
 ///
 /// \b Overview<BR>
