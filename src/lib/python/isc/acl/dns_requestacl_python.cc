@@ -163,7 +163,6 @@ PyTypeObject requestacl_type = {
     0                                   // tp_version_tag
 };
 
-// Module Initialization, all statics are initialized here
 bool
 initModulePart_RequestACL(PyObject* mod) {
     // We initialize the static description object with PyType_Ready(),
