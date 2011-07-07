@@ -38,7 +38,7 @@ Allowed values are "stdout" and "stderr".
 % LOG_DUPLICATE_MESSAGE_ID duplicate message ID (%1) in compiled code
 During start-up, BIND 10 detected that the given message identification
 had been defined multiple times in the BIND 10 code.  This indicates a
-programming error; please log a bug report.
+programming error; please submit a bug report.
 
 % LOG_DUPLICATE_NAMESPACE line %1: duplicate $NAMESPACE directive found
 When reading a message file, more than one $NAMESPACE directive was found.
