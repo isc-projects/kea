@@ -152,7 +152,7 @@ class XfrinConnection(asyncore.dispatcher):
             self.connect(self._master_address)
             return True
         except socket.error as e:
-            logger.error(CONNECT_MASTER, self._master_address, str(e))
+            logger.error(XFRIN_CONNECT_MASTER, self._master_address, str(e))
             return False
 
     def _create_query(self, query_type):
