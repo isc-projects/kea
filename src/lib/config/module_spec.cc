@@ -67,10 +67,13 @@ check_config_item(ConstElementPtr spec) {
         check_leaf_item(spec, "list_item_spec", Element::map, true);
         check_config_item(spec->get("list_item_spec"));
     }
-    // todo: add stuff for type map
-    if (Element::nameToType(spec->get("item_type")->stringValue()) == Element::map) {
+
+    if (spec->get("item_type")->stringValue() == "map") {
         check_leaf_item(spec, "map_item_spec", Element::list, true);
         check_config_item_list(spec->get("map_item_spec"));
+    } else if (spec->get("item_type")->stringValue() == "named_map") {
+        check_leaf_item(spec, "named_map_item_spec", Element::map, true);
+        check_config_item(spec->get("named_map_item_spec"));
     }
 }
 
@@ -286,7 +289,8 @@ check_type(ConstElementPtr spec, ConstElementPtr element) {
             return (cur_item_type == "list");
             break;
         case Element::map:
-            return (cur_item_type == "map");
+            return (cur_item_type == "map" ||
+                    cur_item_type == "named_map");
             break;
     }
     return (false);
@@ -323,8 +327,19 @@ ModuleSpec::validateItem(ConstElementPtr spec, ConstElementPtr data,
         }
     }
     if (data->getType() == Element::map) {
-        if (!validateSpecList(spec->get("map_item_spec"), data, full, errors)) {
-            return (false);
+        // either a 'normal' map or a 'named' map
+        if (spec->contains("map_item_spec")) {
+            if (!validateSpecList(spec->get("map_item_spec"), data, full, errors)) {
+                return (false);
+            }
+        } else {
+            typedef std::pair<std::string, ConstElementPtr> maptype;
+
+            BOOST_FOREACH(maptype m, data->mapValue()) {
+                if (!validateItem(spec->get("named_map_item_spec"), m.second, full, errors)) {
+                    return (false);
+                }
+            }
         }
     }
     return (true);
