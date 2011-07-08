@@ -42,11 +42,10 @@ def send_shutdown(module_name):
     return send_command("shutdown", module_name)
 
 class ThreadingServerManager:
-    def __init__(self, server_class, verbose):
+    def __init__(self, server_class):
         self.server_class = server_class
         self.server_class_name = server_class.__name__
-        self.verbose = verbose
-        self.server = self.server_class(self.verbose)
+        self.server = self.server_class()
         self.server._thread = threading.Thread(
             name=self.server_class_name, target=self.server.run)
         self.server._thread.daemon = True
@@ -60,10 +59,9 @@ class ThreadingServerManager:
         self.server._thread.join(TIMEOUT_SEC)
 
 class MockMsgq:
-    def __init__(self, verbose):
-        self.verbose = verbose
+    def __init__(self):
         self._started = threading.Event()
-        self.msgq = msgq.MsgQ(None, verbose)
+        self.msgq = msgq.MsgQ(None)
         result = self.msgq.setup()
         if result:
             sys.exit("Error on Msgq startup: %s" % result)
@@ -81,7 +79,7 @@ class MockMsgq:
         self.msgq.shutdown()
 
 class MockCfgmgr:
-    def __init__(self, verbose):
+    def __init__(self):
         self._started = threading.Event()
         self.cfgmgr = isc.config.cfgmgr.ConfigManager(
             os.environ['CONFIG_TESTDATA_PATH'], "b10-config.db")
@@ -127,8 +125,7 @@ class MockBoss:
 """
     _BASETIME = (2011, 6, 22, 8, 14, 8, 2, 173, 0)
 
-    def __init__(self, verbose):
-        self.verbose = verbose
+    def __init__(self):
         self._started = threading.Event()
         self.running = False
         self.spec_file = io.StringIO(self.spec_str)
@@ -200,8 +197,7 @@ class MockAuth:
   }
 }
 """
-    def __init__(self, verbose):
-        self.verbose = verbose
+    def __init__(self):
         self._started = threading.Event()
         self.running = False
         self.spec_file = io.StringIO(self.spec_str)
@@ -239,9 +235,9 @@ class MockAuth:
         return isc.config.create_answer(1, "Unknown Command")
 
 class MyStats(stats.Stats):
-    def __init__(self, verbose):
+    def __init__(self):
         self._started = threading.Event()
-        stats.Stats.__init__(self, verbose)
+        stats.Stats.__init__(self)
 
     def run(self):
         self._started.set()
@@ -251,9 +247,9 @@ class MyStats(stats.Stats):
         send_shutdown("Stats")
 
 class MyStatsHttpd(stats_httpd.StatsHttpd):
-    def __init__(self, verbose):
+    def __init__(self):
         self._started = threading.Event()
-        stats_httpd.StatsHttpd.__init__(self, verbose)
+        stats_httpd.StatsHttpd.__init__(self)
 
     def run(self):
         self._started.set()
@@ -263,23 +259,22 @@ class MyStatsHttpd(stats_httpd.StatsHttpd):
         send_shutdown("StatsHttpd")
 
 class BaseModules:
-    def __init__(self, verbose):
-        self.verbose = verbose
+    def __init__(self):
         self.class_name = BaseModules.__name__
 
         # Change value of BIND10_MSGQ_SOCKET_FILE in environment variables
         os.environ['BIND10_MSGQ_SOCKET_FILE'] = tempfile.mktemp(prefix='unix_socket.')
         # MockMsgq
-        self.msgq = ThreadingServerManager(MockMsgq, self.verbose)
+        self.msgq = ThreadingServerManager(MockMsgq)
         self.msgq.run()
         # MockCfgmgr
-        self.cfgmgr = ThreadingServerManager(MockCfgmgr, self.verbose)
+        self.cfgmgr = ThreadingServerManager(MockCfgmgr)
         self.cfgmgr.run()
         # MockBoss
-        self.boss = ThreadingServerManager(MockBoss, self.verbose)
+        self.boss = ThreadingServerManager(MockBoss)
         self.boss.run()
         # MockAuth
-        self.auth = ThreadingServerManager(MockAuth, self.verbose)
+        self.auth = ThreadingServerManager(MockAuth)
         self.auth.run()
 
     def shutdown(self):
