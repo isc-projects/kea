@@ -201,12 +201,14 @@ TEST_F(AuthCountersTest, submitStatistics) {
     // Command is "set".
     EXPECT_EQ("set", statistics_session_.sent_msg->get("command")
                          ->get(0)->stringValue());
+    EXPECT_EQ("Auth", statistics_session_.sent_msg->get("command")
+                         ->get(1)->get("owner")->stringValue());
     ConstElementPtr statistics_data = statistics_session_.sent_msg
                                           ->get("command")->get(1)
-                                          ->get("stats_data");
+                                          ->get("data");
     // UDP query counter is 2 and TCP query counter is 1.
-    EXPECT_EQ(2, statistics_data->get("auth.queries.udp")->intValue());
-    EXPECT_EQ(1, statistics_data->get("auth.queries.tcp")->intValue());
+    EXPECT_EQ(2, statistics_data->get("queries.udp")->intValue());
+    EXPECT_EQ(1, statistics_data->get("queries.tcp")->intValue());
 }
 
 }
