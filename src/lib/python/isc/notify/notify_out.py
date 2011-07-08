@@ -30,7 +30,7 @@ logger = isc.log.Logger("notify_out")
 try:
     from pydnspp import *
 except ImportError as e:
-    logger.error(NOTIFY_OUT_IMPORT_DNS, str(e))
+    logger.error(NOTIFY_OUT_IMPORT_ERROR, str(e))
 
 ZONE_NEW_DATA_READY_CMD = 'zone_new_data_ready'
 _MAX_NOTIFY_NUM = 30
@@ -361,18 +361,19 @@ class NotifyOut:
         tgt = zone_notify_info.get_current_notify_target()
         if event_type == _EVENT_READ:
             reply = self._get_notify_reply(zone_notify_info.get_socket(), tgt)
-            if reply:
-                if self._handle_notify_reply(zone_notify_info, reply):
+            if reply is not None:
+                if self._handle_notify_reply(zone_notify_info, reply, tgt):
                     self._notify_next_target(zone_notify_info)
 
         elif event_type == _EVENT_TIMEOUT and zone_notify_info.notify_try_num > 0:
-            logger.info(NOTIFY_OUT_TIMEOUT_RETRY, tgt[0], tgt[1])
+            logger.info(NOTIFY_OUT_TIMEOUT, tgt[0], tgt[1])
 
         tgt = zone_notify_info.get_current_notify_target()
         if tgt:
             zone_notify_info.notify_try_num += 1
             if zone_notify_info.notify_try_num > _MAX_NOTIFY_TRY_NUM:
-                logger.info(NOTIFY_OUT_RETRY_EXCEEDED, tgt[0], tgt[1])
+                logger.error(NOTIFY_OUT_RETRY_EXCEEDED, tgt[0], tgt[1],
+                             _MAX_NOTIFY_TRY_NUM)
                 self._notify_next_target(zone_notify_info)
             else:
                 # set exponential backoff according rfc1996 section 3.6
@@ -452,34 +453,32 @@ class NotifyOut:
 
     def _handle_notify_reply(self, zone_notify_info, msg_data, from_addr):
         '''Parse the notify reply message.
-        TODO, the error message should be refined properly.
         rcode will not checked here, If we get the response
         from the slave, it means the slaves has got the notify.'''
         msg = Message(Message.PARSE)
         try:
-            #errstr = 'notify reply error: '
             msg.from_wire(msg_data)
             if not msg.get_header_flag(Message.HEADERFLAG_QR):
-                logger.error(NOTIFY_OUT_REPLY_QR_NOT_SET, from_addr[0],
-                             from_addr[1])
+                logger.warn(NOTIFY_OUT_REPLY_QR_NOT_SET, from_addr[0],
+                            from_addr[1])
                 return _BAD_QR
 
             if msg.get_qid() != zone_notify_info.notify_msg_id:
-                logger.error(NOTIFY_OUT_REPLY_BAD_QID, from_addr[0],
-                             from_addr[1], msg.get_qid(),
-                             zone_notify_info.notify_msg_id)
+                logger.warn(NOTIFY_OUT_REPLY_BAD_QID, from_addr[0],
+                            from_addr[1], msg.get_qid(),
+                            zone_notify_info.notify_msg_id)
                 return _BAD_QUERY_ID
 
             question = msg.get_question()[0]
             if question.get_name() != Name(zone_notify_info.zone_name):
-                logger.error(NOTIFY_OUT_REPLY_BAD_QUERY_NAME, from_addr[0],
-                             from_addr[1], question.get_name().to_text(),
-                             Name(zone_notify_info.zone_name).to_text())
+                logger.warn(NOTIFY_OUT_REPLY_BAD_QUERY_NAME, from_addr[0],
+                            from_addr[1], question.get_name().to_text(),
+                            Name(zone_notify_info.zone_name).to_text())
                 return _BAD_QUERY_NAME
 
             if msg.get_opcode() != Opcode.NOTIFY():
-                logger.error(NOTIFY_OUT_REPLY_BAD_OPCODE, from_addr[0],
-                             from_addr[1], msg.get_opcode().to_text())
+                logger.warn(NOTIFY_OUT_REPLY_BAD_OPCODE, from_addr[0],
+                            from_addr[1], msg.get_opcode().to_text())
                 return _BAD_OPCODE
         except Exception as err:
             # We don't care what exception, just report it?

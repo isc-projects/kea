@@ -56,12 +56,13 @@ static const char* VERSION = "1.0-0";
 /// \b Invocation<BR>
 /// The program is invoked with the command:
 ///
-/// <tt>message [-v | -h | -p | -d <dir> | \<message-file\>]</tt>
+/// <tt>message [-v | -h | -p | -d <dir> | <message-file>]</tt>
 ///
-/// It reads the message file and writes out two files of the same name in the
-/// default directory but with extensions of .h and .cc.
+/// It reads the message file and writes out two files of the same
+/// name in the current working directory (unless -d is used) but
+/// with extensions of .h and .cc.
 ///
-/// \-v causes it to print the version number and exit. \-h prints a help
+/// -v causes it to print the version number and exit. -h prints a help
 /// message (and exits). -p sets the output to python. -d <dir> will make
 /// it write the output file(s) to dir instead of current working
 /// directory
