@@ -84,8 +84,9 @@ There was a keyboard interrupt signal to stop the stats-httpd
 daemon. The daemon will now shut down.
 
 % STATHTTPD_UNKNOWN_CONFIG_ITEM unknown configuration item: %1
-The stats-httpd daemon received new configuration. However, one of the
-items in the configuration is unknown. The new configuration is ignored,
-and an error is sent back. As possible cause is that there was an
-upgrade problem, and the stats-httpd version is out of sync with the
-rest of the system.
+The stats-httpd daemon received a configuration update from the
+configuration manager. However, one of the items in the
+configuration is unknown. The new configuration is ignored, and an
+error is sent back. As possible cause is that there was an upgrade
+problem, and the stats-httpd version is out of sync with the rest of
+the system.
