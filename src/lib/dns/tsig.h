@@ -353,6 +353,10 @@ public:
     TSIGError verify(const TSIGRecord* const record, const void* const data,
                      const size_t data_len);
 
+    /// TBD: mostly for internal use.  context dependent.
+    /// won't provide python binding.
+    size_t getTSIGLength() const;
+
     /// Return the current state of the context
     ///
     /// \note

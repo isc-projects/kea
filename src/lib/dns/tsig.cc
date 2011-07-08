@@ -270,6 +270,45 @@ TSIGContext::~TSIGContext() {
     delete impl_;
 }
 
+size_t
+TSIGContext::getTSIGLength() const {
+    //
+    // The space required for an TSIG record is:
+    //
+    //	n1 bytes for the (key) name
+    //	2 bytes for the type
+    //	2 bytes for the class
+    //	4 bytes for the ttl
+    //	2 bytes for the rdlength
+    //	n2 bytes for the algorithm name
+    //	6 bytes for the time signed
+    //	2 bytes for the fudge
+    //	2 bytes for the MAC size
+    //	x bytes for the MAC
+    //	2 bytes for the original id
+    //	2 bytes for the error
+    //	2 bytes for the other data length
+    //	y bytes for the other data (at most)
+    // ---------------------------------
+    //     26 + n1 + n2 + x + y bytes
+    //
+
+    // Normally the digest length ("x") is the length of the underlying
+    // hash output.  If a key related error occurred, however, the
+    // corresponding TSIG will be "unsigned", and the digest length will be 0.
+    const size_t digest_len =
+        (impl_->error_ == TSIGError::BAD_KEY() ||
+         impl_->error_ == TSIGError::BAD_SIG()) ? 0 : impl_->digest_len_;
+
+    // Other Len ("y") is normally 0; if BAD_TIME error occurred, the
+    // subsequent TSIG will contain 48 bits of the server current time.
+    const size_t other_len = (impl_->error_ == TSIGError::BAD_TIME()) ? 6 : 0;
+
+    return (26 + impl_->key_.getKeyName().getLength() +
+            impl_->key_.getAlgorithmName().getLength() +
+            digest_len + other_len);
+}
+
 TSIGContext::State
 TSIGContext::getState() const {
     return (impl_->state_);
