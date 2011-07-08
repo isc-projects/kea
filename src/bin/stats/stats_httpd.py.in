@@ -42,8 +42,8 @@ logger = isc.log.Logger("stats-httpd")
 
 # Some constants for debug levels, these should be removed when we
 # have #1074
-DBG_STATS_HTTPD_INIT = 10
-DBG_STATS_HTTPD_MESSAGING = 30
+DBG_STATHTTPD_INIT = 10
+DBG_STATHTTPD_MESSAGING = 30
 
 # If B10_FROM_SOURCE is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
@@ -109,7 +109,7 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
                     return None
         except StatsHttpdError as err:
             self.send_error(500)
-            logger.error(STATS_HTTPD_SERVER_ERROR, err)
+            logger.error(STATHTTPD_SERVER_ERROR, err)
             return None
         else:
             self.send_response(200)
@@ -167,7 +167,7 @@ class StatsHttpd:
     def open_mccs(self):
         """Opens a ModuleCCSession object"""
         # create ModuleCCSession
-        logger.debug(DBG_STATS_HTTPD_INIT, STATS_HTTPD_STARTING_CC_SESSION)
+        logger.debug(DBG_STATHTTPD_INIT, STATHTTPD_STARTING_CC_SESSION)
         self.mccs = isc.config.ModuleCCSession(
             SPECFILE_LOCATION, self.config_handler, self.command_handler)
         self.cc_session = self.mccs._session
@@ -181,7 +181,7 @@ class StatsHttpd:
         if self.mccs is None:
             return
 
-        logger.debug(DBG_STATS_HTTPD_INIT, STATS_HTTPD_CLOSING_CC_SESSION)
+        logger.debug(DBG_STATHTTPD_INIT, STATHTTPD_CLOSING_CC_SESSION)
         self.mccs.close()
         self.mccs = None
 
@@ -230,7 +230,7 @@ class StatsHttpd:
                     (server_address[0], server_address[1],
                      err.__class__.__name__, err))
         else:
-            logger.info(STATS_HTTPD_STARTED, server_address[0],
+            logger.info(STATHTTPD_STARTED, server_address[0],
                         server_address[1])
         return httpd
 
@@ -239,7 +239,7 @@ class StatsHttpd:
         if len(self.httpd) == 0:
             return
         for ht in self.httpd:
-            logger.info(STATS_HTTPD_CLOSING, ht.server_address[0],
+            logger.info(STATHTTPD_CLOSING, ht.server_address[0],
                         ht.server_address[1])
             ht.server_close()
         self.httpd = []
@@ -277,7 +277,7 @@ class StatsHttpd:
     def stop(self):
         """Stops the running StatsHttpd objects. Closes CC session and
         HTTP handling sockets"""
-        logger.info(STATS_HTTPD_SHUTDOWN)
+        logger.info(STATHTTPD_SHUTDOWN)
         self.close_httpd()
         self.close_mccs()
 
@@ -294,11 +294,11 @@ class StatsHttpd:
     def config_handler(self, new_config):
         """Config handler for the ModuleCCSession object. It resets
         addresses and ports to listen HTTP requests on."""
-        logger.debug(DBG_STATS_HTTPD_MESSAGING, STATS_HTTPD_HANDLE_CONFIG,
+        logger.debug(DBG_STATHTTPD_MESSAGING, STATHTTPD_HANDLE_CONFIG,
                    new_config)
         for key in new_config.keys():
             if key not in DEFAULT_CONFIG and key != "version":
-                logger.error(STATS_HTTPD_UNKNOWN_CONFIG_ITEM, key)
+                logger.error(STATHTTPD_UNKNOWN_CONFIG_ITEM, key)
                 return isc.config.ccsession.create_answer(
                     1, "Unknown known config: %s" % key)
         # backup old config
@@ -308,7 +308,7 @@ class StatsHttpd:
         try:
             self.open_httpd()
         except HttpServerError as err:
-            logger.error(STATS_HTTPD_SERVER_ERROR, err)
+            logger.error(STATHTTPD_SERVER_ERROR, err)
             # restore old config
             self.config_handler(old_config)
             return isc.config.ccsession.create_answer(
@@ -320,19 +320,19 @@ class StatsHttpd:
         """Command handler for the ModuleCCSesson object. It handles
         "status" and "shutdown" commands."""
         if command == "status":
-            logger.debug(DBG_STATS_HTTPD_MESSAGING,
-                         STATS_HTTPD_RECEIVED_STATUS_COMMAND)
+            logger.debug(DBG_STATHTTPD_MESSAGING,
+                         STATHTTPD_RECEIVED_STATUS_COMMAND)
             return isc.config.ccsession.create_answer(
                 0, "Stats Httpd is up. (PID " + str(os.getpid()) + ")")
         elif command == "shutdown":
-            logger.debug(DBG_STATS_HTTPD_MESSAGING,
-                         STATS_HTTPD_RECEIVED_SHUTDOWN_COMMAND)
+            logger.debug(DBG_STATHTTPD_MESSAGING,
+                         STATHTTPD_RECEIVED_SHUTDOWN_COMMAND)
             self.running = False
             return isc.config.ccsession.create_answer(
                 0, "Stats Httpd is shutting down.")
         else:
-            logger.debug(DBG_STATS_HTTPD_MESSAGING,
-                         STATS_HTTPD_RECEIVED_UNKNOWN_COMMAND, command)
+            logger.debug(DBG_STATHTTPD_MESSAGING,
+                         STATHTTPD_RECEIVED_UNKNOWN_COMMAND, command)
             return isc.config.ccsession.create_answer(
                 1, "Unknown command: " + str(command))
 
@@ -471,13 +471,13 @@ if __name__ == "__main__":
         stats_httpd = StatsHttpd()
         stats_httpd.start()
     except OptionValueError as ove:
-        logger.fatal(STATS_HTTPD_BAD_OPTION_VALUE, ove)
+        logger.fatal(STATHTTPD_BAD_OPTION_VALUE, ove)
         sys.exit(1)
     except isc.cc.session.SessionError as se:
-        logger.fatal(STATS_HTTPD_CC_SESSION_ERROR, se)
+        logger.fatal(STATHTTPD_CC_SESSION_ERROR, se)
         sys.exit(1)
     except HttpServerError as hse:
-        logger.fatal(STATS_HTTPD_START_SERVER_ERROR, hse)
+        logger.fatal(STATHTTPD_START_SERVER_ERROR, hse)
         sys.exit(1)
     except KeyboardInterrupt as kie:
-        logger.info(STATS_HTTPD_STOPPED_BY_KEYBOARD)
+        logger.info(STATHTTPD_STOPPED_BY_KEYBOARD)
