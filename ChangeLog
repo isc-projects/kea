@@ -1,3 +1,13 @@
+xxx.	[func]		naokikambe
+	Add statistics category in each module spec file for management of
+	statistics data schemas by each module. Add get_statistics_spec into
+	cfgmgr and related codes. show statistics data and data schema by each
+	module via both bintcl and HTTP/XML interfaces. Change item name in
+	each statistics data. (Remove prefix "xxx." indicating the module
+	name.)  Add new mock modules for unittests of stats and stats httpd
+	modules.
+	(Trac #928,#929,#930, git nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn)
+
 278.	[doc]		jelte
 	Add logging configuration documentation to the guide.
 	(Trac #1011, git TODO)
