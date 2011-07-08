@@ -927,4 +927,76 @@ TEST_F(TSIGTest, tooShortMAC) {
     }
 }
 
+TEST_F(TSIGTest, getTSIGLength) {
+    // Check for the most common case with various algorithms
+    // See the comment in TSIGContext::getTSIGLength() for calculation and
+    // parameter notation.
+    // The key name (www.example.com) is the same for most cases, where n1=17
+
+    // hmac-md5.sig-alg.reg.int.: n2=26, x=16
+    EXPECT_EQ(85, tsig_ctx->getTSIGLength());
+
+    // hmac-sha1: n2=11, x=20
+    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name, TSIGKey::HMACSHA1_NAME(),
+                                           &dummy_data[0], 20)));
+    EXPECT_EQ(74, tsig_ctx->getTSIGLength());
+
+    // hmac-sha256: n2=13, x=32
+    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name,
+                                           TSIGKey::HMACSHA256_NAME(),
+                                           &dummy_data[0], 32)));
+    EXPECT_EQ(88, tsig_ctx->getTSIGLength());
+
+    // hmac-sha224: n2=13, x=28
+    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name,
+                                           TSIGKey::HMACSHA224_NAME(),
+                                           &dummy_data[0], 28)));
+    EXPECT_EQ(84, tsig_ctx->getTSIGLength());
+
+    // hmac-sha384: n2=13, x=48
+    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name,
+                                           TSIGKey::HMACSHA384_NAME(),
+                                           &dummy_data[0], 48)));
+    EXPECT_EQ(104, tsig_ctx->getTSIGLength());
+
+    // hmac-sha512: n2=13, x=64
+    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name,
+                                           TSIGKey::HMACSHA512_NAME(),
+                                           &dummy_data[0], 64)));
+    EXPECT_EQ(120, tsig_ctx->getTSIGLength());
+
+    // bad key case: n1=len(badkey.example.com)=20, n2=26, x=0
+    tsig_ctx.reset(new TSIGContext(badkey_name, TSIGKey::HMACMD5_NAME(),
+                                   keyring));
+    EXPECT_EQ(72, tsig_ctx->getTSIGLength());
+
+    // bad sig case: n1=17, n2=26, x=0
+    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    createMessageFromFile("message_toWire2.wire");
+    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name, TSIGKey::HMACMD5_NAME(),
+                                           &dummy_data[0],
+                                           dummy_data.size())));
+    {
+        SCOPED_TRACE("Verify resulting in BADSIG");
+        commonVerifyChecks(*tsig_ctx, message.getTSIGRecord(),
+                           &received_data[0], received_data.size(),
+                           TSIGError::BAD_SIG(), TSIGContext::RECEIVED_REQUEST);
+    }
+    EXPECT_EQ(69, tsig_ctx->getTSIGLength());
+
+    // bad time case: n1=17, n2=26, x=16, y=6
+    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a - 1000>;
+    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name, TSIGKey::HMACMD5_NAME(),
+                                           &dummy_data[0],
+                                           dummy_data.size())));
+    {
+        SCOPED_TRACE("Verify resulting in BADTIME");
+        commonVerifyChecks(*tsig_ctx, message.getTSIGRecord(),
+                           &received_data[0], received_data.size(),
+                           TSIGError::BAD_TIME(),
+                           TSIGContext::RECEIVED_REQUEST);
+    }
+    EXPECT_EQ(91, tsig_ctx->getTSIGLength());
+}
+
 } // end namespace
