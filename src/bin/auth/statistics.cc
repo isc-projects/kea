@@ -67,10 +67,11 @@ AuthCountersImpl::submitStatistics() const {
     }
     std::stringstream statistics_string;
     statistics_string << "{\"command\": [\"set\","
-                      <<   "{ \"stats_data\": "
-                      <<     "{ \"auth.queries.udp\": "
+                      <<   "{ \"owner\": \"Auth\","
+                      <<   "  \"data\":"
+                      <<     "{ \"queries.udp\": "
                       <<     counters_.at(AuthCounters::COUNTER_UDP_QUERY)
-                      <<     ", \"auth.queries.tcp\": "
+                      <<     ", \"queries.tcp\": "
                       <<     counters_.at(AuthCounters::COUNTER_TCP_QUERY)
                       <<   " }"
                       <<   "}"
