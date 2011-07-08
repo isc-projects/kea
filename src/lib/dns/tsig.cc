@@ -58,10 +58,32 @@ getTSIGTime() {
 }
 
 struct TSIGContext::TSIGContextImpl {
-    TSIGContextImpl(const TSIGKey& key) :
-        state_(INIT), key_(key), error_(Rcode::NOERROR()),
-        previous_timesigned_(0)
-    {}
+    TSIGContextImpl(const TSIGKey& key,
+                    TSIGError error = TSIGError::NOERROR()) :
+        state_(INIT), key_(key), error_(error),
+        previous_timesigned_(0), digest_len_(0)
+    {
+        if (error == TSIGError::NOERROR()) {
+            // In normal (NOERROR) case, the key should be valid, and we
+            // should be able to pre-create a corresponding HMAC object,
+            // which will be likely to be used for sign or verify later.
+            // We do this in the constructor so that we can know the expected
+            // digest length in advance.  The creation should normally succeed,
+            // but the key information could be still broken, which could
+            // trigger an exception inside the cryptolink module.  We ignore
+            // it at this moment; a subsequent sign/verify operation will try
+            // to create the HMAC, which would also fail.
+            try {
+                hmac_.reset(CryptoLink::getCryptoLink().createHMAC(
+                                key_.getSecret(), key_.getSecretLength(),
+                                key_.getAlgorithm()),
+                            deleteHMAC);
+            } catch (const Exception&) {
+                return;
+            }
+            digest_len_ = hmac_->getOutputLength();
+        }
+    }
 
     // This helper method is used from verify().  It's expected to be called
     // just before verify() returns.  It updates internal state based on
@@ -83,6 +105,21 @@ struct TSIGContext::TSIGContextImpl {
         }
         error_ = error;
         return (error);
+    }
+
+    // A shortcut method to create an HMAC object for sign/verify.  If one
+    // has been successfully created in the constructor, return it; otherwise
+    // create a new one and return it.
+    HMACPtr getHMAC() {
+        if (hmac_) {
+            HMACPtr ret = HMACPtr();
+            ret.swap(hmac_);
+            return (ret);
+        }
+        return (HMACPtr(CryptoLink::getCryptoLink().createHMAC(
+                            key_.getSecret(), key_.getSecretLength(),
+                            key_.getAlgorithm()),
+                        deleteHMAC));
     }
 
     // The following three are helper methods to compute the digest for
@@ -111,6 +148,8 @@ struct TSIGContext::TSIGContextImpl {
     vector<uint8_t> previous_digest_;
     TSIGError error_;
     uint64_t previous_timesigned_; // only meaningful for response with BADTIME
+    size_t digest_len_;
+    HMACPtr hmac_;
 };
 
 void
@@ -221,8 +260,7 @@ TSIGContext::TSIGContext(const Name& key_name, const Name& algorithm_name,
         // be used in subsequent response with a TSIG indicating a BADKEY
         // error.
         impl_ = new TSIGContextImpl(TSIGKey(key_name, algorithm_name,
-                                            NULL, 0));
-        impl_->error_ = TSIGError::BAD_KEY();
+                                            NULL, 0), TSIGError::BAD_KEY());
     } else {
         impl_ = new TSIGContextImpl(*result.key);
     }
@@ -276,11 +314,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
         return (tsig);
     }
 
-    HMACPtr hmac(CryptoLink::getCryptoLink().createHMAC(
-                     impl_->key_.getSecret(),
-                     impl_->key_.getSecretLength(),
-                     impl_->key_.getAlgorithm()),
-                 deleteHMAC);
+    HMACPtr hmac(impl_->getHMAC());
 
     // If the context has previous MAC (either the Request MAC or its own
     // previous MAC), digest it.
@@ -406,11 +440,7 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
         return (impl_->postVerifyUpdate(error, NULL, 0));
     }
 
-    HMACPtr hmac(CryptoLink::getCryptoLink().createHMAC(
-                     impl_->key_.getSecret(),
-                     impl_->key_.getSecretLength(),
-                     impl_->key_.getAlgorithm()),
-                 deleteHMAC);
+    HMACPtr hmac(impl_->getHMAC());
 
     // If the context has previous MAC (either the Request MAC or its own
     // previous MAC), digest it.
