@@ -267,6 +267,19 @@ class ConfigManager:
                 commands[module_name] = self.module_specs[module_name].get_commands_spec()
         return commands
 
+    def get_statistics_spec(self, name = None):
+        """Returns a dict containing 'module_name': statistics_spec for
+           all modules. If name is specified, only that module will
+           be included"""
+        statistics = {}
+        if name:
+            if name in self.module_specs:
+                statistics[name] = self.module_specs[name].get_statistics_spec()
+        else:
+            for module_name in self.module_specs.keys():
+                statistics[module_name] = self.module_specs[module_name].get_statistics_spec()
+        return statistics
+
     def read_config(self):
         """Read the current configuration from the file specificied at init()"""
         try:
@@ -457,6 +470,8 @@ class ConfigManager:
         if cmd:
             if cmd == ccsession.COMMAND_GET_COMMANDS_SPEC:
                 answer = ccsession.create_answer(0, self.get_commands_spec())
+            elif cmd == ccsession.COMMAND_GET_STATISTICS_SPEC:
+                answer = ccsession.create_answer(0, self.get_statistics_spec())
             elif cmd == ccsession.COMMAND_GET_MODULE_SPEC:
                 answer = self._handle_get_module_spec(arg)
             elif cmd == ccsession.COMMAND_GET_CONFIG:
