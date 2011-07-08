@@ -23,6 +23,7 @@
 
 import json
 import sys
+import time
 
 import isc.cc.data
 
@@ -117,6 +118,26 @@ class ModuleSpec:
 
         return False
 
+    def validate_statistics(self, full, stat, errors = None):
+        """Check whether the given piece of data conforms to this
+           data definition. If so, it returns True. If not, it will
+           return false. If errors is given, and is an array, a string
+           describing the error will be appended to it. The current
+           version stops as soon as there is one error so this list
+           will not be exhaustive. If 'full' is true, it also errors on
+           non-optional missing values. Set this to False if you want to
+           validate only a part of a statistics tree (like a list of
+           non-default values). Also it checks 'item_format' in case
+           of time"""
+        stat_spec = self.get_statistics_spec()
+        if stat_spec:
+            return _validate_spec_list(stat_spec, full, stat, errors)
+        else:
+            # no spec, always bad
+            if errors != None:
+                errors.append("No statistics specification")
+            return False
+
     def get_module_name(self):
         """Returns a string containing the name of the module as
            specified by the specification given at __init__()"""
@@ -152,6 +173,14 @@ class ModuleSpec:
         else:
             return None
     
+    def get_statistics_spec(self):
+        """Returns a dict representation of the statistics part of the
+           specification, or None if there is none."""
+        if 'statistics' in self._module_spec:
+            return self._module_spec['statistics']
+        else:
+            return None
+    
     def __str__(self):
         """Returns a string representation of the full specification"""
         return self._module_spec.__str__()
@@ -160,8 +189,9 @@ def _check(module_spec):
     """Checks the full specification. This is a dict that contains the
        element "module_spec", which is in itself a dict that
        must contain at least a "module_name" (string) and optionally
-       a "config_data" and a "commands" element, both of which are lists
-       of dicts. Raises a ModuleSpecError if there is a problem."""
+       a "config_data", a "commands" and a "statistics" element, all
+       of which are lists of dicts. Raises a ModuleSpecError if there
+       is a problem."""
     if type(module_spec) != dict:
         raise ModuleSpecError("data specification not a dict")
     if "module_name" not in module_spec:
@@ -173,6 +203,8 @@ def _check(module_spec):
         _check_config_spec(module_spec["config_data"])
     if "commands" in module_spec:
         _check_command_spec(module_spec["commands"])
+    if "statistics" in module_spec:
+        _check_statistics_spec(module_spec["statistics"])
 
 def _check_config_spec(config_data):
     # config data is a list of items represented by dicts that contain
@@ -263,7 +295,46 @@ def _check_item_spec(config_item):
             if type(map_item) != dict:
                 raise ModuleSpecError("map_item_spec element is not a dict")
             _check_item_spec(map_item)
+    if 'item_format' in config_item and 'item_default' in config_item:
+        item_format = config_item["item_format"]
+        item_default = config_item["item_default"]
+        if not _check_format(item_default, item_format):
+            raise ModuleSpecError(
+                "Wrong format for " + str(item_default) + " in " + str(item_name))
 
+def _check_statistics_spec(statistics):
+    # statistics is a list of items represented by dicts that contain
+    # things like "item_name", depending on the type they can have
+    # specific subitems
+    """Checks a list that contains the statistics part of the
+       specification. Raises a ModuleSpecError if there is a
+       problem."""
+    if type(statistics) != list:
+        raise ModuleSpecError("statistics is of type " + str(type(statistics))
+                              + ", not a list of items")
+    for stat_item in statistics:
+        _check_item_spec(stat_item)
+        # Additionally checks if there are 'item_title' and
+        # 'item_description'
+        for item in [ 'item_title',  'item_description' ]:
+            if item not in stat_item:
+                raise ModuleSpecError("no " + item + " in statistics item")
+
+def _check_format(value, format_name):
+    """Check if specified value and format are correct. Return True if
+       is is correct."""
+    # TODO: should be added other format types if necessary
+    time_formats = { 'date-time' : "%Y-%m-%dT%H:%M:%SZ",
+                     'date'      : "%Y-%m-%d",
+                     'time'      : "%H:%M:%S" }
+    for fmt in time_formats:
+        if format_name == fmt:
+            try:
+                time.strptime(value, time_formats[fmt])
+                return True
+            except (ValueError, TypeError):
+                break
+    return False
 
 def _validate_type(spec, value, errors):
     """Returns true if the value is of the correct type given the
@@ -300,6 +371,18 @@ def _validate_type(spec, value, errors):
     else:
         return True
 
+def _validate_format(spec, value, errors):
+    """Returns true if the value is of the correct format given the
+       specification. And also return true if no 'item_format'"""
+    if "item_format" in spec:
+        item_format = spec['item_format']
+        if not _check_format(value, item_format):
+            if errors != None:
+                errors.append("format type of " + str(value)
+                              + " should be " + item_format)
+            return False
+    return True
+
 def _validate_item(spec, full, data, errors):
     if not _validate_type(spec, data, errors):
         return False
@@ -307,6 +390,8 @@ def _validate_item(spec, full, data, errors):
         list_spec = spec['list_item_spec']
         for data_el in data:
             if not _validate_type(list_spec, data_el, errors):
+                return False
+            if not _validate_format(list_spec, data_el, errors):
                 return False
             if list_spec['item_type'] == "map":
                 if not _validate_item(list_spec, full, data_el, errors):
@@ -322,6 +407,8 @@ def _validate_item(spec, full, data, errors):
                     return False
                 if not _validate_item(named_set_spec, full, data_el, errors):
                     return False
+    elif not _validate_format(spec, data, errors):
+        return False
     return True
 
 def _validate_spec(spec, full, data, errors):
