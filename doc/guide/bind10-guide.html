@@ -717,24 +717,30 @@ This may be a temporary setting until then.
 
     </p><p>
 
-       This stats daemon provides commands to identify if it is running,
-       show specified or all statistics data, set values, remove data,
-       and reset data.
+       This stats daemon provides commands to identify if it is
+       running, show specified or all statistics data, show specified
+       or all statistics data schema, and set specified statistics
+       data.
 
        For example, using <span class="command"><strong>bindctl</strong></span>:
 
        </p><pre class="screen">
 &gt; <strong class="userinput"><code>Stats show</code></strong>
 {
-    "auth.queries.tcp": 1749,
-    "auth.queries.udp": 867868,
-    "bind10.boot_time": "2011-01-20T16:59:03Z",
-    "report_time": "2011-01-20T17:04:06Z",
-    "stats.boot_time": "2011-01-20T16:59:05Z",
-    "stats.last_update_time": "2011-01-20T17:04:05Z",
-    "stats.lname": "4d3869d9_a@jreed.example.net",
-    "stats.start_time": "2011-01-20T16:59:05Z",
-    "stats.timestamp": 1295543046.823504
+    "Auth": {
+        "queries.tcp": 1749,
+        "queries.udp": 867868
+    },
+    "Boss": {
+        "boot_time": "2011-01-20T16:59:03Z"
+    },
+    "Stats": {
+        "boot_time": "2011-01-20T16:59:05Z",
+        "last_update_time": "2011-01-20T17:04:05Z",
+        "lname": "4d3869d9_a@jreed.example.net",
+        "report_time": "2011-01-20T17:04:06Z",
+        "timestamp": 1295543046.823504
+    }
 }
        </pre><p>
     </p></div><div class="chapter" title="Chapter 14. Logging"><div class="titlepage"><div><div><h2 class="title"><a name="logging"></a>Chapter 14. Logging</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id1168229447788">Logging configuration</a></span></dt><dd><dl><dt><span class="section"><a href="#id1168229447799">Loggers</a></span></dt><dt><span class="section"><a href="#id1168229448040">Output Options</a></span></dt><dt><span class="section"><a href="#id1168229448215">Example session</a></span></dt></dl></dd><dt><span class="section"><a href="#id1168229448428">Logging Message Format</a></span></dt></dl></div><div class="section" title="Logging configuration"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id1168229447788"></a>Logging configuration</h2></div></div></div><p>
