@@ -60,8 +60,7 @@ s_RequestACL::s_RequestACL() {}
 namespace {
 int
 RequestACL_init(PyObject*, PyObject*, PyObject*) {
-    PyErr_SetString(PyExc_TypeError,
-                    "RequestACL cannot be directly constructed");
+    PyErr_SetString(po_ACLError, "RequestACL cannot be directly constructed");
     return (-1);
 }
 
