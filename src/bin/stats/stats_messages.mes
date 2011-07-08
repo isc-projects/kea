@@ -62,7 +62,7 @@ This debug message is printed when a request is sent to the boss module
 to send its data to the stats module.
 
 % STATS_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down
-There was a keyboard interrupt signal to stop the stats daemon. The
+There was a keyboard interrupt signal to stop the stats module. The
 daemon will now shut down.
 
 % STATS_UNKNOWN_COMMAND_IN_SPEC unknown command in specification file: %1
