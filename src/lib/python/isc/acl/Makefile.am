@@ -26,11 +26,12 @@ dns_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
 # Python prefers .so, while some OSes (specifically MacOS) use a different
 # suffix for dynamic objects.  -module is necessary to work this around.
 acl_la_LDFLAGS += -module
-acl_la_LIBADD = $(top_builddir)/src/lib/acl/libdnsacl.la
+acl_la_LIBADD = $(top_builddir)/src/lib/acl/libacl.la
 acl_la_LIBADD += $(PYTHON_LIB)
 
 dns_la_LDFLAGS += -module
 dns_la_LIBADD = $(top_builddir)/src/lib/acl/libdnsacl.la
+dns_la_LIBADD += acl.la
 dns_la_LIBADD += $(PYTHON_LIB)
 
 EXTRA_DIST = acl.py dns.py
