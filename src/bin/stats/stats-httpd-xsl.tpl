@@ -44,6 +44,7 @@ td.title {
         <h1>BIND 10 Statistics</h1>
         <table>
           <tr>
+            <th>Owner</th>
             <th>Title</th>
             <th>Value</th>
           </tr>
