@@ -1453,24 +1453,32 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
     <para>
 
-       This stats daemon provides commands to identify if it is running,
-       show specified or all statistics data, set values, remove data,
-       and reset data.
+<!-- TODO -->
+       This stats daemon provides commands to identify if it is
+       running, show specified or all statistics data, show specified
+       or all statistics data schema, and set specified statistics
+       data.
 
        For example, using <command>bindctl</command>:
 
+<!-- TODO -->
        <screen>
 &gt; <userinput>Stats show</userinput>
 {
-    "auth.queries.tcp": 1749,
-    "auth.queries.udp": 867868,
-    "bind10.boot_time": "2011-01-20T16:59:03Z",
-    "report_time": "2011-01-20T17:04:06Z",
-    "stats.boot_time": "2011-01-20T16:59:05Z",
-    "stats.last_update_time": "2011-01-20T17:04:05Z",
-    "stats.lname": "4d3869d9_a@jreed.example.net",
-    "stats.start_time": "2011-01-20T16:59:05Z",
-    "stats.timestamp": 1295543046.823504
+    "Auth": {
+        "queries.tcp": 1749,
+        "queries.udp": 867868
+    },
+    "Boss": {
+        "boot_time": "2011-01-20T16:59:03Z"
+    },
+    "Stats": {
+        "boot_time": "2011-01-20T16:59:05Z",
+        "last_update_time": "2011-01-20T17:04:05Z",
+        "lname": "4d3869d9_a@jreed.example.net",
+        "report_time": "2011-01-20T17:04:06Z",
+        "timestamp": 1295543046.823504
+    }
 }
        </screen>
     </para>
