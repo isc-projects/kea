@@ -85,7 +85,7 @@ isc.util.process.rename(sys.argv[0])
 # number, and the overall BIND 10 version number (set in configure.ac).
 VERSION = "bind10 20110223 (BIND 10 @PACKAGE_VERSION@)"
 
-# This is for bind10.boottime of stats module
+# This is for boot_time of Boss
 _BASETIME = time.gmtime()
 
 class RestartSchedule:
@@ -319,8 +319,9 @@ class BoB:
             elif command == "sendstats":
                 # send statistics data to the stats daemon immediately
                 cmd = isc.config.ccsession.create_command(
-                    'set', { "stats_data": {
-                            'bind10.boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
+                    'set', { "owner": "Boss",
+                             "data": {
+                            'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
                             }})
                 seq = self.cc_session.group_sendmsg(cmd, 'Stats')
                 self.cc_session.group_recvmsg(True, seq)
