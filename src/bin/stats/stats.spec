@@ -6,18 +6,51 @@
     "commands": [
       {
         "command_name": "status",
-        "command_description": "identify whether stats module is alive or not",
+        "command_description": "Show status of the stats daemon",
+        "command_args": []
+      },
+      {
+        "command_name": "shutdown",
+        "command_description": "Shut down the stats module",
         "command_args": []
       },
       {
         "command_name": "show",
-        "command_description": "show the specified/all statistics data",
+        "command_description": "Show the specified/all statistics data",
         "command_args": [
           {
-            "item_name": "stats_item_name",
+            "item_name": "owner",
             "item_type": "string",
             "item_optional": true,
-            "item_default": ""
+            "item_default": "",
+            "item_description": "module name of the owner of the statistics data"
+          },
+	  {
+	    "item_name": "name",
+            "item_type": "string",
+            "item_optional": true,
+            "item_default": "",
+            "item_description": "statistics item name of the owner"
+          }
+        ]
+      },
+      {
+        "command_name": "showschema",
+        "command_description": "show the specified/all statistics shema",
+        "command_args": [
+          {
+            "item_name": "owner",
+            "item_type": "string",
+            "item_optional": true,
+            "item_default": "",
+            "item_description": "module name of the owner of the statistics data"
+          },
+	  {
+	    "item_name": "name",
+            "item_type": "string",
+            "item_optional": true,
+            "item_default": "",
+            "item_description": "statistics item name of the owner"
           }
         ]
       },
@@ -26,35 +59,21 @@
         "command_description": "set the value of specified name in statistics data",
         "command_args": [
           {
-            "item_name": "stats_data",
+            "item_name": "owner",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": "",
+            "item_description": "module name of the owner of the statistics data"
+          },
+	  {
+	    "item_name": "data",
             "item_type": "map",
             "item_optional": false,
             "item_default": {},
+            "item_description": "statistics data set of the owner",
             "map_item_spec": []
           }
         ]
-      },
-      {
-        "command_name": "remove",
-        "command_description": "remove the specified name from statistics data",
-        "command_args": [
-          {
-            "item_name": "stats_item_name",
-            "item_type": "string",
-            "item_optional": false,
-            "item_default": ""
-          }
-        ]
-      },
-      {
-        "command_name": "reset",
-        "command_description": "reset all statistics data to default values except for several constant names",
-        "command_args": []
-      },
-      {
-        "command_name": "shutdown",
-        "command_description": "Shut down the stats module",
-        "command_args": []
       }
     ],
     "statistics": [
@@ -100,7 +119,7 @@
         "item_default": "",
         "item_title": "Local Name",
         "item_description": "A localname of stats module given via CC protocol"
-       }
+      }
     ]
   }
 }
