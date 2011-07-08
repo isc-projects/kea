@@ -200,9 +200,9 @@ TEST_F(FilenameTest, setDirectory) {
     EXPECT_EQ("/a.b", fname.expandWithDefault(""));
 
     fname.setDirectory("");
-    EXPECT_EQ("/", fname.directory());
-    EXPECT_EQ("/a.b", fname.fullName());
-    EXPECT_EQ("/a.b", fname.expandWithDefault(""));
+    EXPECT_EQ("", fname.directory());
+    EXPECT_EQ("a.b", fname.fullName());
+    EXPECT_EQ("a.b", fname.expandWithDefault(""));
 
     fname = Filename("/first/a.b");
     EXPECT_EQ("/first/", fname.directory());
