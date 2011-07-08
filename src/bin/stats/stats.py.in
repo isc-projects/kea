@@ -224,7 +224,7 @@ class CCSessionListener(Listener):
         self.stats_data['stats.lname'] = self.session.lname
         self.cc_session.start()
         # request Bob to send statistics data
-        logger.debug(DBG_STATS_MESSAGING, STATS_SEND_STATS_REQUEST_BOSS)
+        logger.debug(DBG_STATS_MESSAGING, STATS_SEND_REQUEST_BOSS)
         cmd = isc.config.ccsession.create_command("sendstats", None)
         seq = self.session.group_sendmsg(cmd, 'Boss')
         self.session.group_recvmsg(True, seq)

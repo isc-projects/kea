@@ -16,24 +16,27 @@
 # of the stats_messages python module.
 
 % STATS_BAD_OPTION_VALUE bad command line argument: %1
-The stats module was called with a bad command-line argument, and will
+The stats module was called with a bad command-line argument and will
 not start.
 
 % STATS_CC_SESSION_ERROR error connecting to message bus: %1
 The stats module was unable to connect to the BIND 10 command and
-control channel. A likely problem is that the message bus daemon
+control bus. A likely problem is that the message bus daemon
 (b10-msgq) is not running. The stats module will now shut down.
 
 % STATS_RECEIVED_NEW_CONFIG received new configuration: %1
-This debug message is printed when the configuration manager has sent
-the stats module a configuration update.
+This debug message is printed when the stats module has received a
+configuration update from the configuration manager.
 
 % STATS_RECEIVED_REMOVE_COMMAND received command to remove %1
 A remove command for the given name was sent to the stats module, and
-it will now be removed.
+the given statistics value will now be removed. It will not appear in
+statistics reports until it appears in a statistics update from a
+module again.
 
 % STATS_RECEIVED_RESET_COMMAND received command to reset all statistics
-The stats module received a command to reset all collected statistics.
+The stats module received a command to clear all collected statistics.
+The data is cleared until it receives an update from the modules again.
 
 % STATS_RECEIVED_SHOW_ALL_COMMAND received command to show all statistics
 The stats module received a command to show all statistics that it has
@@ -44,19 +47,19 @@ The stats module received a command to show the statistics that it has
 collected for the given item.
 
 % STATS_RECEIVED_SHUTDOWN_COMMAND shutdown command received
-A shutdown command was sent to the stats module, and it will now shut down.
+A shutdown command was sent to the stats module and it will now shut down.
 
 % STATS_RECEIVED_STATUS_COMMAND received command to return status
-A status command was sent to the stats module, and it will respond with
-'I'm alive'.
+A status command was sent to the stats module. It will return a
+response indicating that it is running normally.
 
 % STATS_RECEIVED_UNKNOWN_COMMAND received unknown command: %1
 An unknown command has been sent to the stats module. The stats module
-will respond with an error, and the command will be ignored.
+will respond with an error and the command will be ignored.
 
-% STATS_SEND_STATS_REQUEST_BOSS requesting boss to send statistics data
+% STATS_SEND_REQUEST_BOSS requesting boss to send statistics
 This debug message is printed when a request is sent to the boss module
-to send statistics data to the stats module.
+to send its data to the stats module.
 
 % STATS_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down
 There was a keyboard interrupt signal to stop the stats daemon. The
