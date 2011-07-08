@@ -134,14 +134,20 @@ Filename::useAsDefault(const string& name) const {
 
 void
 Filename::setDirectory(const std::string& new_directory) {
-    directory_ = new_directory;
-    // append '/' if necessary
-    size_t sep = directory_.rfind('/');
-    if (sep == std::string::npos || sep < directory_.size() - 1) {
-        directory_ += "/";
+    std::string directory(new_directory);
+
+    if (directory.length() > 0) {
+        // append '/' if necessary
+        size_t sep = directory.rfind('/');
+        if (sep == std::string::npos || sep < directory.size() - 1) {
+            directory += "/";
+        }
     }
     // and regenerate the full name
-    full_name_ = directory_ + name_ + extension_;
+    std::string full_name = directory + name_ + extension_;
+
+    directory_.swap(directory);
+    full_name_.swap(full_name);
 }
 
 

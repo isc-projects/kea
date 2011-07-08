@@ -301,6 +301,15 @@ class TestNotifyOut(unittest.TestCase):
         self._notify._zone_notify_handler(example_net_info, notify_out._EVENT_NONE)
         self.assertNotEqual(cur_tgt, example_net_info._notify_current)
 
+        cur_tgt = example_net_info._notify_current
+        example_net_info.create_socket('127.0.0.1')
+        # dns message, will result in bad_qid, but what we are testing
+        # here is whether handle_notify_reply is called correctly
+        example_net_info._sock.remote_end().send(b'\x2f\x18\xa0\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\03com\x00\x00\x06\x00\x01')
+        self._notify._zone_notify_handler(example_net_info, notify_out._EVENT_READ)
+        self.assertNotEqual(cur_tgt, example_net_info._notify_current)
+
+
     def _example_net_data_reader(self):
         zone_data = [
         ('example.net.',         '1000',  'IN',  'SOA', 'a.dns.example.net. mail.example.net. 1 1 1 1 1'),
