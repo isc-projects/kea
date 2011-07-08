@@ -95,12 +95,6 @@
       invoked
       via <refentrytitle>bindctl</refentrytitle><manvolnum>1</manvolnum>.
     </para>
-    <para><filename>/usr/local/share/bind10-devel/stats-schema.spec</filename>
-      <!--TODO: The filename should be computed from prefix-->
-      &mdash; This is a spec file for data schema of
-      of BIND 10 statistics. This schema cannot be configured 
-      via <refentrytitle>bindctl</refentrytitle><manvolnum>1</manvolnum>.
-    </para>
   </refsect1>
 
   <refsect1>

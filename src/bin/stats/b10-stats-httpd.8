@@ -36,7 +36,7 @@ b10-stats-httpd \- BIND 10 HTTP server for HTTP/XML interface of statistics
 .PP
 
 \fBb10\-stats\-httpd\fR
-is a standalone HTTP server\&. It is intended for HTTP/XML interface for statistics module\&. This server process runs as a process separated from the process of the BIND 10 Stats daemon (\fBb10\-stats\fR)\&. The server is initially executed by the BIND 10 boss process (\fBbind10\fR) and eventually exited by it\&. The server is intended to be server requests by HTTP clients like web browsers and third\-party modules\&. When the server is asked, it requests BIND 10 statistics data from
+is a standalone HTTP server\&. It is intended for HTTP/XML interface for statistics module\&. This server process runs as a process separated from the process of the BIND 10 Stats daemon (\fBb10\-stats\fR)\&. The server is initially executed by the BIND 10 boss process (\fBbind10\fR) and eventually exited by it\&. The server is intended to be server requests by HTTP clients like web browsers and third\-party modules\&. When the server is asked, it requests BIND 10 statistics data or its schema from
 \fBb10\-stats\fR, and it sends the data back in Python dictionary format and the server converts it into XML format\&. The server sends it to the HTTP client\&. The server can send three types of document, which are XML (Extensible Markup Language), XSD (XML Schema definition) and XSL (Extensible Stylesheet Language)\&. The XML document is the statistics data of BIND 10, The XSD document is the data schema of it, and The XSL document is the style sheet to be showed for the web browsers\&. There is different URL for each document\&. But please note that you would be redirected to the URL of XML document if you request the URL of the root document\&. For example, you would be redirected to http://127\&.0\&.0\&.1:8000/bind10/statistics/xml if you request http://127\&.0\&.0\&.1:8000/\&. Please see the manual and the spec file of
 \fBb10\-stats\fR
 for more details about the items of BIND 10 statistics\&. The server uses CC session in communication with
@@ -65,10 +65,6 @@ switches to verbose mode and sends verbose messages to STDOUT\&.
 bindctl(1)\&. Please see the manual of
 bindctl(1)
 about how to configure the settings\&.
-.PP
-/usr/local/share/bind10\-devel/stats\-schema\&.spec
-\(em This is a spec file for data schema of of BIND 10 statistics\&. This schema cannot be configured via
-bindctl(1)\&.
 .PP
 
 /usr/local/share/bind10\-devel/stats\-httpd\-xml\&.tpl
