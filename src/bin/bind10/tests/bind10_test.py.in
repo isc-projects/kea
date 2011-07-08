@@ -153,8 +153,9 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.cc_session.group, "Stats")
         self.assertEqual(bob.cc_session.msg,
                          isc.config.ccsession.create_command(
-                'set', { "stats_data": {
-                        'bind10.boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
+                "set", { "owner": "Boss",
+                         "data": {
+                        "boot_time": time.strftime("%Y-%m-%dT%H:%M:%SZ", _BASETIME)
                         }}))
         # "ping" command
         self.assertEqual(bob.command_handler("ping", None),
