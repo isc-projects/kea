@@ -794,6 +794,54 @@ TEST_F(MessageTest, toWireTSIGNoTruncation) {
     }
 }
 
+// This is a buggy renderer for testing.  It behaves like the straightforward
+// MessageRenderer, but once its internal buffer reaches the length for
+// the header and a question for www.example.com (33 bytes), its
+// getLengthLimit() returns a faked value, which would make TSIG RR rendering
+// fail unexpectedly in the test that follows.
+class BadRenderer : public MessageRenderer {
+public:
+    BadRenderer(isc::util::OutputBuffer& buffer) :
+        MessageRenderer(buffer)
+    {}
+    virtual size_t getLengthLimit() const {
+        if (MessageRenderer::getLength() >= 33) {
+            return (0);
+        }
+        return (MessageRenderer::getLengthLimit());
+    }
+};
+
+TEST_F(MessageTest, toWireTSIGLengthErrors) {
+    // specify an unusual short limit that wouldn't be able to hold
+    // the TSIG.
+    renderer.setLengthLimit(tsig_ctx.getTSIGLength() - 1);
+    // Use commonTSIGToWireCheck() only to call toWire() with otherwise valid
+    // conditions.  The checks inside it don't matter because we expect an
+    // exception before any of the checks.
+    EXPECT_THROW(commonTSIGToWireCheck(message_render, renderer, tsig_ctx,
+                                       "message_toWire2.wire"),
+                 InvalidParameter);
+
+    // This one is large enough for TSIG, but the remaining limit isn't
+    // even enough for the Header section.
+    renderer.clear();
+    message_render.clear(Message::RENDER);
+    renderer.setLengthLimit(tsig_ctx.getTSIGLength() + 1);
+    EXPECT_THROW(commonTSIGToWireCheck(message_render, renderer, tsig_ctx,
+                                       "message_toWire2.wire"),
+                 InvalidParameter);
+
+    // Trying to render a message with TSIG using a buggy renderer.
+    obuffer.clear();
+    BadRenderer bad_renderer(obuffer);
+    bad_renderer.setLengthLimit(512);
+    message_render.clear(Message::RENDER);
+    EXPECT_THROW(commonTSIGToWireCheck(message_render, bad_renderer, tsig_ctx,
+                                       "message_toWire2.wire"),
+                 Unexpected);
+}
+
 TEST_F(MessageTest, toWireWithoutOpcode) {
     message_render.setRcode(Rcode::NOERROR());
     EXPECT_THROW(message_render.toWire(renderer), InvalidMessageOperation);
