@@ -284,6 +284,21 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
         }
     }
 
+    // If we're adding a TSIG to a truncated message, clear all RRsets
+    // from the message except for the question before adding the TSIG.
+    // If even the question doesn't fit, don't include any question (TBD).
+    if (tsig_ctx != NULL && renderer.isTruncated()) {
+        renderer.clear();
+        renderer.skip(HEADERLEN);
+        qdcount =
+            for_each(questions_.begin(), questions_.end(),
+                     RenderSection<QuestionPtr>(renderer,
+                                                false)).getTotalCount();
+        ancount = 0;
+        nscount = 0;
+        arcount = 0;
+    }
+
     // Adjust the counter buffer.
     // XXX: these may not be equal to the number of corresponding entries
     // in rrsets_[] or questions_ if truncation occurred or an EDNS OPT RR
