@@ -21,6 +21,7 @@ import unittest
 import os
 from pydnspp import *
 from testutil import *
+from pyunittests_util import fix_current_time
 
 # helper functions for tests taken from c++ unittests
 if "TESTDATA_PATH" in os.environ:
@@ -62,16 +63,12 @@ def create_message():
     message_render.add_rrset(Message.SECTION_ANSWER, rrset)
     return message_render
 
-def strip_mutable_tsig_data(data):
-    # Unfortunately we cannot easily compare TSIG RR because we can't tweak
-    # current time.  As a work around this helper function strips off the time
-    # dependent part of TSIG RDATA, i.e., the MAC (assuming HMAC-MD5) and
-    # Time Signed.
-    return data[0:-32] + data[-26:-22] + data[-6:]
-
 class MessageTest(unittest.TestCase):
 
     def setUp(self):
+        # make sure we don't use faked time unless explicitly do so in tests
+        fix_current_time(None)
+
         self.p = Message(Message.PARSE)
         self.r = Message(Message.RENDER)
 
@@ -89,6 +86,10 @@ class MessageTest(unittest.TestCase):
         self.bogus_below_section = Message.SECTION_QUESTION - 1
         self.tsig_key = TSIGKey("www.example.com:SFuWd/q99SzF8Yzd1QbB9g==")
         self.tsig_ctx = TSIGContext(self.tsig_key)
+
+    def tearDown(self):
+        # reset any faked current time setting (it would affect other tests)
+        fix_current_time(None)
 
     def test_init(self):
         self.assertRaises(TypeError, Message, -1)
@@ -285,26 +286,28 @@ class MessageTest(unittest.TestCase):
         self.assertRaises(InvalidMessageOperation, self.r.to_wire,
                           MessageRenderer())
 
-    def __common_tsigquery_setup(self):
+    def __common_tsigquery_setup(self, flags=[Message.HEADERFLAG_RD],
+                                 rrtype=RRType("A")):
         self.r.set_opcode(Opcode.QUERY())
         self.r.set_rcode(Rcode.NOERROR())
-        self.r.set_header_flag(Message.HEADERFLAG_RD)
+        for flag in flags:
+            self.r.set_header_flag(flag)
         self.r.add_question(Question(Name("www.example.com"),
-                                     RRClass("IN"), RRType("A")))
+                                     RRClass("IN"), rrtype))
 
     def __common_tsig_checks(self, expected_file):
         renderer = MessageRenderer()
         self.r.to_wire(renderer, self.tsig_ctx)
-        actual_wire = strip_mutable_tsig_data(renderer.get_data())
-        expected_wire = strip_mutable_tsig_data(read_wire_data(expected_file))
-        self.assertEqual(expected_wire, actual_wire)
+        self.assertEqual(read_wire_data(expected_file), renderer.get_data())
 
     def test_to_wire_with_tsig(self):
+        fix_current_time(0x4da8877a)
         self.r.set_qid(0x2d65)
         self.__common_tsigquery_setup()
         self.__common_tsig_checks("message_toWire2.wire")
 
     def test_to_wire_with_edns_tsig(self):
+        fix_current_time(0x4db60d1f)
         self.r.set_qid(0x6cd)
         self.__common_tsigquery_setup()
         edns = EDNS()
