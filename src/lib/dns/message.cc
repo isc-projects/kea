@@ -341,6 +341,8 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
 
     // Add TSIG, if necessary, at the end of the message.
     if (tsig_ctx != NULL) {
+        // Release the reserved space in the renderer.
+        renderer.setLengthLimit(renderer.getLengthLimit() + tsig_len);
         tsig_ctx->sign(qid_, renderer.getData(),
                        renderer.getLength())->toWire(renderer);
 
