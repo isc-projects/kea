@@ -239,6 +239,16 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
                   "Message rendering attempted without Opcode set");
     }
 
+    // Reserve the space for TSIG (if needed) so that we can handle truncation
+    // case correctly later when that happens.
+    const size_t tsig_len = (tsig_ctx != NULL) ? tsig_ctx->getTSIGLength() : 0;
+    if (tsig_len > 0) {
+        if (tsig_len > renderer.getLengthLimit()) {
+            ;                       // TBD
+        }
+        renderer.setLengthLimit(renderer.getLengthLimit() - tsig_len);
+    }
+
     // reserve room for the header
     renderer.skip(HEADERLEN);
 
@@ -330,7 +340,6 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
     renderer.writeUint16At(arcount, header_pos);
 
     // Add TSIG, if necessary, at the end of the message.
-    // TODO: truncate case consideration
     if (tsig_ctx != NULL) {
         tsig_ctx->sign(qid_, renderer.getData(),
                        renderer.getLength())->toWire(renderer);
