@@ -244,12 +244,18 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
     const size_t tsig_len = (tsig_ctx != NULL) ? tsig_ctx->getTSIGLength() : 0;
     if (tsig_len > 0) {
         if (tsig_len > renderer.getLengthLimit()) {
-            ;                       // TBD
+            isc_throw(InvalidParameter, "Failed to render DNS message: "
+                      "too small limit for a TSIG (" <<
+                      renderer.getLengthLimit() << ")");
         }
         renderer.setLengthLimit(renderer.getLengthLimit() - tsig_len);
     }
 
     // reserve room for the header
+    if (renderer.getLengthLimit() < HEADERLEN) {
+        isc_throw(InvalidParameter, "Failed to render DNS message: "
+                  "too small limit for a Header");
+    }
     renderer.skip(HEADERLEN);
 
     uint16_t qdcount =
@@ -296,7 +302,7 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
 
     // If we're adding a TSIG to a truncated message, clear all RRsets
     // from the message except for the question before adding the TSIG.
-    // If even the question doesn't fit, don't include any question (TBD).
+    // TODO: If even the question doesn't fit, don't include any question.
     if (tsig_ctx != NULL && renderer.isTruncated()) {
         renderer.clear();
         renderer.skip(HEADERLEN);
@@ -343,8 +349,13 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
     if (tsig_ctx != NULL) {
         // Release the reserved space in the renderer.
         renderer.setLengthLimit(renderer.getLengthLimit() + tsig_len);
-        tsig_ctx->sign(qid_, renderer.getData(),
-                       renderer.getLength())->toWire(renderer);
+
+        const int tsig_count =
+            tsig_ctx->sign(qid_, renderer.getData(),
+                           renderer.getLength())->toWire(renderer);
+        if (tsig_count != 1) {
+            isc_throw(Unexpected, "Failed to render a TSIG RR");
+        }
 
         // update the ARCOUNT for the TSIG RR.  Note that for a sane DNS
         // message arcount should never overflow to 0.
