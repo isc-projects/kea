@@ -34,6 +34,17 @@ import isc.cc
 import isc.config
 import isc.util.process
 
+import isc.log
+from stats_httpd_messages import *
+
+isc.log.init("b10-stats-httpd")
+logger = isc.log.Logger("stats-httpd")
+
+# Some constants for debug levels, these should be removed when we
+# have #1074
+DBG_STATHTTPD_INIT = 10
+DBG_STATHTTPD_MESSAGING = 30
+
 # If B10_FROM_SOURCE is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
 # installed on the system
@@ -98,9 +109,7 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
                     return None
         except StatsHttpdError as err:
             self.send_error(500)
-            if self.server.verbose:
-                self.server.log_writer(
-                    "[b10-stats-httpd] %s\n" % err)
+            logger.error(STATHTTPD_SERVER_ERROR, err)
             return None
         else:
             self.send_response(200)
@@ -108,15 +117,6 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Content-Length", len(body))
             self.end_headers()
             return body
-
-    def log_message(self, format, *args):
-        """Change the default log format"""
-        if self.server.verbose:
-            self.server.log_writer(
-                "[b10-stats-httpd] %s - - [%s] %s\n" %
-                (self.address_string(),
-                 self.log_date_time_string(),
-                 format%args))
 
 class HttpServerError(Exception):
     """Exception class for HttpServer class. It is intended to be
@@ -134,13 +134,12 @@ class HttpServer(http.server.HTTPServer):
     sys.stderr.write. They are intended to be referred by HttpHandler
     object."""
     def __init__(self, server_address, handler,
-                 xml_handler, xsd_handler, xsl_handler, log_writer, verbose=False):
+                 xml_handler, xsd_handler, xsl_handler, log_writer):
         self.server_address = server_address
         self.xml_handler = xml_handler
         self.xsd_handler = xsd_handler
         self.xsl_handler = xsl_handler
         self.log_writer = log_writer
-        self.verbose = verbose
         http.server.HTTPServer.__init__(self, server_address, handler)
 
 class StatsHttpdError(Exception):
@@ -154,8 +153,7 @@ class StatsHttpd:
     statistics module. It handles HTTP requests, and command channel
     and config channel CC session. It uses select.select function
     while waiting for clients requests."""
-    def __init__(self, verbose=False):
-        self.verbose = verbose
+    def __init__(self):
         self.running = False
         self.poll_intval = 0.5
         self.write_log = sys.stderr.write
@@ -169,8 +167,7 @@ class StatsHttpd:
     def open_mccs(self):
         """Opens a ModuleCCSession object"""
         # create ModuleCCSession
-        if self.verbose:
-            self.write_log("[b10-stats-httpd] Starting CC Session\n")
+        logger.debug(DBG_STATHTTPD_INIT, STATHTTPD_STARTING_CC_SESSION)
         self.mccs = isc.config.ModuleCCSession(
             SPECFILE_LOCATION, self.config_handler, self.command_handler)
         self.cc_session = self.mccs._session
@@ -183,8 +180,8 @@ class StatsHttpd:
         """Closes a ModuleCCSession object"""
         if self.mccs is None:
             return
-        if self.verbose:
-            self.write_log("[b10-stats-httpd] Closing CC Session\n")
+
+        logger.debug(DBG_STATHTTPD_INIT, STATHTTPD_CLOSING_CC_SESSION)
         self.mccs.close()
         self.mccs = None
 
@@ -221,7 +218,7 @@ class StatsHttpd:
             httpd = HttpServer(
                 server_address, HttpHandler,
                 self.xml_handler, self.xsd_handler, self.xsl_handler,
-                self.write_log, self.verbose)
+                self.write_log)
         except (socket.gaierror, socket.error,
                 OverflowError, TypeError) as err:
             # try IPv4 next
@@ -233,10 +230,8 @@ class StatsHttpd:
                     (server_address[0], server_address[1],
                      err.__class__.__name__, err))
         else:
-            if self.verbose:
-                self.write_log(
-                    "[b10-stats-httpd] Started on address %s, port %s\n" %
-                    server_address)
+            logger.info(STATHTTPD_STARTED, server_address[0],
+                        server_address[1])
         return httpd
 
     def close_httpd(self):
@@ -244,11 +239,8 @@ class StatsHttpd:
         if len(self.httpd) == 0:
             return
         for ht in self.httpd:
-            if self.verbose:
-                self.write_log(
-                    "[b10-stats-httpd] Closing address %s, port %s\n" %
-                    (ht.server_address[0], ht.server_address[1])
-                    )
+            logger.info(STATHTTPD_CLOSING, ht.server_address[0],
+                        ht.server_address[1])
             ht.server_close()
         self.httpd = []
 
@@ -285,8 +277,7 @@ class StatsHttpd:
     def stop(self):
         """Stops the running StatsHttpd objects. Closes CC session and
         HTTP handling sockets"""
-        if self.verbose:
-            self.write_log("[b10-stats-httpd] Shutting down\n")
+        logger.info(STATHTTPD_SHUTDOWN)
         self.close_httpd()
         self.close_mccs()
 
@@ -303,13 +294,11 @@ class StatsHttpd:
     def config_handler(self, new_config):
         """Config handler for the ModuleCCSession object. It resets
         addresses and ports to listen HTTP requests on."""
-        if self.verbose:
-            self.write_log("[b10-stats-httpd] Loading config : %s\n" % str(new_config))
+        logger.debug(DBG_STATHTTPD_MESSAGING, STATHTTPD_HANDLE_CONFIG,
+                   new_config)
         for key in new_config.keys():
-            if key not in DEFAULT_CONFIG:
-                if self.verbose:
-                    self.write_log(
-                        "[b10-stats-httpd] Unknown known config: %s" % key)
+            if key not in DEFAULT_CONFIG and key != "version":
+                logger.error(STATHTTPD_UNKNOWN_CONFIG_ITEM, key)
                 return isc.config.ccsession.create_answer(
                     1, "Unknown known config: %s" % key)
         # backup old config
@@ -319,9 +308,7 @@ class StatsHttpd:
         try:
             self.open_httpd()
         except HttpServerError as err:
-            if self.verbose:
-                self.write_log("[b10-stats-httpd] %s\n" % err)
-                self.write_log("[b10-stats-httpd] Restoring old config\n")
+            logger.error(STATHTTPD_SERVER_ERROR, err)
             # restore old config
             self.config_handler(old_config)
             return isc.config.ccsession.create_answer(
@@ -333,19 +320,19 @@ class StatsHttpd:
         """Command handler for the ModuleCCSesson object. It handles
         "status" and "shutdown" commands."""
         if command == "status":
-            if self.verbose:
-                self.write_log("[b10-stats-httpd] Received 'status' command\n")
+            logger.debug(DBG_STATHTTPD_MESSAGING,
+                         STATHTTPD_RECEIVED_STATUS_COMMAND)
             return isc.config.ccsession.create_answer(
                 0, "Stats Httpd is up. (PID " + str(os.getpid()) + ")")
         elif command == "shutdown":
-            if self.verbose:
-                self.write_log("[b10-stats-httpd] Received 'shutdown' command\n")
+            logger.debug(DBG_STATHTTPD_MESSAGING,
+                         STATHTTPD_RECEIVED_SHUTDOWN_COMMAND)
             self.running = False
             return isc.config.ccsession.create_answer(
                 0, "Stats Httpd is shutting down.")
         else:
-            if self.verbose:
-                self.write_log("[b10-stats-httpd] Received unknown command\n")
+            logger.debug(DBG_STATHTTPD_MESSAGING,
+                         STATHTTPD_RECEIVED_UNKNOWN_COMMAND, command)
             return isc.config.ccsession.create_answer(
                 1, "Unknown command: " + str(command))
 
@@ -479,14 +466,18 @@ if __name__ == "__main__":
             "-v", "--verbose", dest="verbose", action="store_true",
             help="display more about what is going on")
         (options, args) = parser.parse_args()
-        stats_httpd = StatsHttpd(verbose=options.verbose)
+        if options.verbose:
+            isc.log.init("b10-stats-httpd", "DEBUG", 99)
+        stats_httpd = StatsHttpd()
         stats_httpd.start()
-    except OptionValueError:
-        sys.exit("[b10-stats-httpd] Error parsing options")
+    except OptionValueError as ove:
+        logger.fatal(STATHTTPD_BAD_OPTION_VALUE, ove)
+        sys.exit(1)
     except isc.cc.session.SessionError as se:
-        sys.exit("[b10-stats-httpd] Error creating module, "
-                 + "is the command channel daemon running?")
+        logger.fatal(STATHTTPD_CC_SESSION_ERROR, se)
+        sys.exit(1)
     except HttpServerError as hse:
-        sys.exit("[b10-stats-httpd] %s" % hse)
+        logger.fatal(STATHTTPD_START_SERVER_ERROR, hse)
+        sys.exit(1)
     except KeyboardInterrupt as kie:
-        sys.exit("[b10-stats-httpd] Interrupted, exiting")
+        logger.info(STATHTTPD_STOPPED_BY_KEYBOARD)
