@@ -93,12 +93,9 @@ def get_rrset_len(rrset):
 
 class XfroutSession():
     def __init__(self, sock_fd, request_data, server, tsig_key_ring):
-        # The initializer for the superclass may call functions
-        # that need _log to be set, so we set it first
         self._sock_fd = sock_fd
         self._request_data = request_data
         self._server = server
-        #self._log = log
         self._tsig_key_ring = tsig_key_ring
         self._tsig_ctx = None
         self._tsig_len = 0
@@ -140,6 +137,8 @@ class XfroutSession():
 
             # TSIG related checks
             rcode = self._check_request_tsig(msg, mdata)
+
+            # TODO The ACL check comes here
 
         except Exception as err:
             logger.error(XFROUT_PARSE_QUERY_ERROR, str(err))
@@ -563,7 +562,6 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
 class XfroutServer:
     def __init__(self):
         self._unix_socket_server = None
-        #self._log = None
         self._listen_sock_file = UNIX_SOCKET_FILE
         self._shutdown_event = threading.Event()
         self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler, None, True)
@@ -600,9 +598,6 @@ class XfroutServer:
                 answer = create_answer(1, "Unknown config data: " + str(key))
                 continue
             self._config_data[key] = new_config[key]
-
-        #if self._log:
-        #    self._log.update_config(new_config)
 
         if self._unix_socket_server:
             self._unix_socket_server.update_config_data(self._config_data)
