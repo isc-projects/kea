@@ -23,6 +23,7 @@ from isc.cc.session import *
 from pydnspp import *
 from xfrout import *
 import xfrout
+import isc.acl.dns
 
 TSIG_KEY = TSIGKey("example.com:SFuWd/q99SzF8Yzd1QbB9g==")
 
@@ -515,11 +516,10 @@ class MyCCSession():
 
 class MyUnixSockServer(UnixSockServer):
     def __init__(self):
-        self._lock = threading.Lock()
-        self._transfers_counter = 0
         self._shutdown_event = threading.Event()
         self._max_transfers_out = 10
         self._cc = MyCCSession()
+        self._common_init()
         #self._log = isc.log.NSLogger('xfrout', '', severity = 'critical', log_to_console = False )
 
 class TestUnixSockServer(unittest.TestCase):
@@ -535,15 +535,24 @@ class TestUnixSockServer(unittest.TestCase):
         recv_msg = self.unix._receive_query_message(self.read_sock)
         self.assertEqual(recv_msg, send_msg)
 
+    def check_default_ACL(self):
+        context = isc.acl.dns.RequestContext(socket.getaddrinfo("127.0.0.1",
+                                             1234, 0, 0, 0,
+                                             socket.AI_NUMERICHOST)[0][4])
+        self.assertEqual(isc.acl.acl.REJECT, self.unix._acl.execute(context))
+
     def test_updata_config_data(self):
+        self.check_default_ACL()
         tsig_key_str = 'example.com:SFuWd/q99SzF8Yzd1QbB9g=='
         tsig_key_list = [tsig_key_str]
         bad_key_list = ['bad..example.com:SFuWd/q99SzF8Yzd1QbB9g==']
         self.unix.update_config_data({'transfers_out':10 })
         self.assertEqual(self.unix._max_transfers_out, 10)
         self.assertTrue(self.unix.tsig_key_ring is not None)
+        self.check_default_ACL()
 
-        self.unix.update_config_data({'transfers_out':9, 'tsig_key_ring':tsig_key_list})
+        self.unix.update_config_data({'transfers_out':9,
+                                      'tsig_key_ring':tsig_key_list})
         self.assertEqual(self.unix._max_transfers_out, 9)
         self.assertEqual(self.unix.tsig_key_ring.size(), 1)
         self.unix.tsig_key_ring.remove(Name("example.com."))
