@@ -145,6 +145,8 @@ def _find_spec_part_single(cur_spec, id_part):
             return cur_spec['list_item_spec']
         # not found
         raise isc.cc.data.DataNotFoundError(id + " not found")
+    elif type(cur_spec) == dict and 'named_map_item_spec' in cur_spec.keys():
+        return cur_spec['named_map_item_spec']
     elif type(cur_spec) == list:
         for cur_spec_item in cur_spec:
             if cur_spec_item['item_name'] == id:
@@ -408,11 +410,38 @@ class MultiConfigData:
             id_parts = isc.cc.data.split_identifier(id)
             id_prefix = ""
             while len(id_parts) > 0:
+                # [XX] TODO: Refactor
                 id_part = id_parts.pop(0)
                 item_id, list_indices = isc.cc.data.split_identifier_list_indices(id_part)
                 id_list = module + "/" + id_prefix + "/" + item_id
                 id_prefix += "/" + id_part
-                if list_indices is not None:
+                part_spec = find_spec_part(self._specifications[module].get_config_spec(), id_prefix)
+                if part_spec['item_type'] == 'named_map':
+                    if len(id_parts) == 0:
+                        if 'item_default' in part_spec:
+                            return part_spec['item_default']
+                        else:
+                            return None
+                    id_part = id_parts.pop(0)
+
+                    named_map_value, type = self.get_value(id_list)
+                    if id_part in named_map_value:
+                        if len(id_parts) > 0:
+                            # we are looking for the *default* value.
+                            # so if not present in here, we need to
+                            # lookup the one from the spec
+                            rest_of_id = "/".join(id_parts)
+                            result = isc.cc.data.find_no_exc(named_map_value[id_part], rest_of_id)
+                            if result is None:
+                                spec_part = self.find_spec_part(identifier)
+                                if 'item_default' in spec_part:
+                                    return spec_part['item_default']
+                            return result
+                        else:
+                            return named_map_value[id_part]
+                    else:
+                        return None
+                elif list_indices is not None:
                     # there's actually two kinds of default here for
                     # lists; they can have a default value (like an
                     # empty list), but their elements can  also have
@@ -449,7 +478,12 @@ class MultiConfigData:
                     
             spec = find_spec_part(self._specifications[module].get_config_spec(), id)
             if 'item_default' in spec:
-                return spec['item_default']
+                # one special case, named_map
+                if spec['item_type'] == 'named_map':
+                    print("is " + id_part + " in named map?")
+                    return spec['item_default']
+                else:
+                    return spec['item_default']
             else:
                 return None
 
@@ -509,12 +543,37 @@ class MultiConfigData:
                         for i in range(len(list_value)):
                             self._append_value_item(result, spec_part_list, "%s[%d]" % (identifier, i), all)
             elif item_type == "map":
+                value, status = self.get_value(identifier)
                 # just show the specific contents of a map, we are
                 # almost never interested in just its name
                 spec_part_map = spec_part['map_item_spec']
                 self._append_value_item(result, spec_part_map, identifier, all)
+            elif item_type == "named_map":
+                value, status = self.get_value(identifier)
+                if status == self.NONE or (status == self.DEFAULT and value == {}):
+                    raise isc.cc.data.DataNotFoundError(identifier)
+                # show just the one entry, when either the map is empty,
+                # or when this is element is not requested specifically
+                if (len(value.keys()) == 0 and (all or first)):
+                    entry = _create_value_map_entry(identifier,
+                                                    item_type,
+                                                    {}, status)
+                    result.append(entry)
+                elif not first and not all:
+                    entry = _create_value_map_entry(identifier,
+                                                    item_type,
+                                                    None, status)
+                    result.append(entry)
+                else:
+                    spec_part_named_map = spec_part['named_map_item_spec']
+                    for entry in value:
+                    #    xxxxxxxxxxx
+                        self._append_value_item(result, spec_part_named_map, identifier + "/" + entry, all)
             else:
                 value, status = self.get_value(identifier)
+                if status == self.NONE and not spec_part['item_optional']:
+                    raise isc.cc.data.DataNotFoundError(identifier)
+
                 entry = _create_value_map_entry(identifier,
                                                 item_type,
                                                 value, status)
