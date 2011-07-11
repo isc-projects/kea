@@ -46,6 +46,38 @@
           }
           ]
         }
+      },
+      { "item_name": "new_zones",
+        "item_type": "named_map",
+        "item_optional": false,
+        "item_default": {},
+        "named_map_item_spec": {
+          "item_name": "zone",
+          "item_type": "map",
+          "item_default": {},
+          "map_item_spec": [
+          { "item_name": "class",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": "IN"
+          },
+          {
+            "item_name": "master_addr",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": ""
+          },
+          { "item_name": "master_port",
+            "item_type": "integer",
+            "item_optional": false,
+            "item_default": 53
+          },
+          { "item_name": "tsig_key",
+            "item_type": "string",
+            "item_optional": true
+          }
+          ]
+        }
       }
     ],
     "commands": [
