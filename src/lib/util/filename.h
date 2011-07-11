@@ -86,6 +86,13 @@ public:
         return (directory_);
     }
 
+    /// \brief Set directory for the file
+    ///
+    /// \param new_directory The directory to set. If this is an empty
+    ///        string, the directory this filename object currently
+    ///        has will be removed.
+    void setDirectory(const std::string& new_directory);
+
     /// \return Name of Given File Name
     std::string name() const {
         return (name_);
