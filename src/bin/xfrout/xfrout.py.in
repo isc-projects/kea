@@ -517,6 +517,8 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
 
     def update_config_data(self, new_config):
         '''Apply the new config setting of xfrout module. '''
+        if 'ACL' in new_config:
+            self._acl = REQUEST_LOADER.load(new_config['ACL'])
         logger.info(XFROUT_NEW_CONFIG)
         self._lock.acquire()
         self._max_transfers_out = new_config.get('transfers_out')
@@ -607,7 +609,10 @@ class XfroutServer:
             self._config_data[key] = new_config[key]
 
         if self._unix_socket_server:
-            self._unix_socket_server.update_config_data(self._config_data)
+            try:
+                self._unix_socket_server.update_config_data(self._config_data)
+            except Exception as e:
+                answer = create_answer(1, "Bad configuration: " + str(e))
 
         return answer
 
