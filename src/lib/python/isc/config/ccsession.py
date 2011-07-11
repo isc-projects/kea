@@ -445,12 +445,14 @@ class UIModuleCCSession(MultiConfigData):
     def _add_value_to_named_map(self, identifier, value):
         if value is None:
             raise isc.cc.data.DataNotFoundError("Need a name to add a new item to named_map " + str(identifier))
-
-        cur_map, status = self.get_value(identifier)
-        if not cur_map:
-            cur_map = {}
-        cur_map[value] = {}
-        self.set_value(identifier, cur_map)
+        elif type(value) != str:
+            raise isc.cc.data.DataTypeError("Name for named_map " + identifier + " must be a string")
+        else:
+            cur_map, status = self.get_value(identifier)
+            if not cur_map:
+                cur_map = {}
+            cur_map[value] = {}
+            self.set_value(identifier, cur_map)
 
     def add_value(self, identifier, value_str = None):
         """Add a value to a configuration list. Raises a DataTypeError
@@ -475,6 +477,35 @@ class UIModuleCCSession(MultiConfigData):
         else:
             raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list or a named map")
 
+    def _remove_value_from_list(self, identifier, value):
+        if value is None:
+            # we are directly removing an list index
+            id, list_indices = isc.cc.data.split_identifier_list_indices(identifier)
+            if list_indices is None:
+                raise DataTypeError("identifier in remove_value() does not contain a list index, and no value to remove")
+            else:
+                self.set_value(identifier, None)
+        else:
+            cur_list, status = self.get_value(identifier)
+            if not cur_list:
+                cur_list = []
+            elif value in cur_list:
+                cur_list.remove(value)
+            self.set_value(identifier, cur_list)
+
+    def _remove_value_from_named_map(self, identifier, value):
+        if value is None:
+            raise isc.cc.data.DataNotFoundError("Need a name to remove an item from named_map " + str(identifier))
+        elif type(value) != str:
+            raise isc.cc.data.DataTypeError("Name for named_map " + identifier + " must be a string")
+        else:
+            cur_map, status = self.get_value(identifier)
+            if not cur_map:
+                cur_map = {}
+            if value in cur_map:
+                del cur_map[value]
+            else:
+                raise isc.cc.data.DataNotFoundError(value + " not found in named_map " + str(identifier))
 
     def remove_value(self, identifier, value_str):
         """Remove a value from a configuration list. The value string
@@ -483,27 +514,22 @@ class UIModuleCCSession(MultiConfigData):
            or if the given value_str does not match the list_item_spec
            """
         module_spec = self.find_spec_part(identifier)
-        if (type(module_spec) != dict or "list_item_spec" not in module_spec):
-            raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list")
+        if module_spec is None:
+            raise isc.cc.data.DataNotFoundError("Unknown item " + str(identifier))
 
-        if value_str is None:
-            # we are directly removing an list index
-            id, list_indices = isc.cc.data.split_identifier_list_indices(identifier)
-            if list_indices is None:
-                raise DataTypeError("identifier in remove_value() does not contain a list index, and no value to remove")
-            else:
-                self.set_value(identifier, None)
-        else:
+        value = None
+        if value_str is not None:
             value = isc.cc.data.parse_value_str(value_str)
             isc.config.config_data.check_type(module_spec, [value])
-            cur_list, status = self.get_value(identifier)
-            #if not cur_list:
-            #    cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
-            if not cur_list:
-                cur_list = []
-            if value in cur_list:
-                cur_list.remove(value)
-            self.set_value(identifier, cur_list)
+
+        if 'list_item_spec' in module_spec:
+            self._remove_value_from_list(identifier, value)
+        elif 'named_map_item_spec' in module_spec:
+            self._remove_value_from_named_map(identifier, value)
+        else:
+            raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list or a named_map")
+
+
 
     def commit(self):
         """Commit all local changes, send them through b10-cmdctl to
