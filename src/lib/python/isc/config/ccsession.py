@@ -441,6 +441,8 @@ class UIModuleCCSession(MultiConfigData):
         if value not in cur_list:
             cur_list.append(value)
             self.set_value(identifier, cur_list)
+        else:
+            raise isc.cc.data.DataAlreadyPresentError(value + " already in " + identifier)
 
     def _add_value_to_named_map(self, identifier, value):
         if value is None:
@@ -451,15 +453,21 @@ class UIModuleCCSession(MultiConfigData):
             cur_map, status = self.get_value(identifier)
             if not cur_map:
                 cur_map = {}
-            cur_map[value] = {}
-            self.set_value(identifier, cur_map)
+            if value not in cur_map:
+                cur_map[value] = {}
+                self.set_value(identifier, cur_map)
+            else:
+                raise isc.cc.data.DataAlreadyPresentError(value + " already in " + identifier)
 
     def add_value(self, identifier, value_str = None):
         """Add a value to a configuration list. Raises a DataTypeError
            if the value does not conform to the list_item_spec field
            of the module config data specification. If value_str is
            not given, we add the default as specified by the .spec
-           file."""
+           file. Raises a DataNotFoundError if the given identifier
+           is not specified in the specification as a map or list.
+           Raises a DataAlreadyPresentError if the specified element
+           already exists."""
         module_spec = self.find_spec_part(identifier)
         if module_spec is None:
             raise isc.cc.data.DataNotFoundError("Unknown item " + str(identifier))
