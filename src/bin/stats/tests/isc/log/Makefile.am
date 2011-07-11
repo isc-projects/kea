@@ -1,4 +1,3 @@
-SUBDIRS = cc config util log
 EXTRA_DIST = __init__.py
 CLEANFILES = __init__.pyc
 
