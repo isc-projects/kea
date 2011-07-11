@@ -60,7 +60,7 @@ static const char* VERSION = "1.0-0";
 ///
 /// It reads the message file and writes out two files of the same
 /// name in the current working directory (unless -d is used) but
-/// with extensions of .h and .cc.
+/// with extensions of .h and .cc, or .py if -p is used.
 ///
 /// -v causes it to print the version number and exit. -h prints a help
 /// message (and exits). -p sets the output to python. -d <dir> will make
