@@ -25,6 +25,7 @@
 #include <acl/dns.h>
 #include <acl/ip_check.h>
 #include <acl/loader.h>
+#include <acl/logic_check.h>
 
 using namespace std;
 using boost::shared_ptr;
@@ -98,6 +99,15 @@ getRequestLoader() {
         // Register default check creator(s)
         loader_ptr->registerCreator(shared_ptr<internal::RequestCheckCreator>(
                                         new internal::RequestCheckCreator()));
+        loader_ptr->registerCreator(
+            shared_ptr<NotCreator<RequestContext> >(
+                new NotCreator<RequestContext>("NOT")));
+        loader_ptr->registerCreator(
+            shared_ptr<LogicCreator<AnyOfSpec, RequestContext> >(
+                new LogicCreator<AnyOfSpec, RequestContext>("ANY")));
+        loader_ptr->registerCreator(
+            shared_ptr<LogicCreator<AllOfSpec, RequestContext> >(
+                new LogicCreator<AllOfSpec, RequestContext>("ALL")));
 
         // From this point there shouldn't be any exception thrown
         loader = loader_ptr.release();

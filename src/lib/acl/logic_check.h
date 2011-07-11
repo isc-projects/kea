@@ -200,6 +200,86 @@ private:
     const std::string name_;
 };
 
+/**
+ * \brief The NOT operator for ACLs.
+ *
+ * This simply returns the negation of whatever returns the subexpression.
+ */
+template<typename Context>
+class NotOperator : public CompoundCheck<Context> {
+public:
+    /**
+     * \brief Constructor
+     *
+     * \param expr The subexpression to be negated by this NOT.
+     */
+    NotOperator(const boost::shared_ptr<Check<Context> >& expr) :
+        expr_(expr)
+    { }
+    /**
+     * \brief The list of subexpressions
+     *
+     * \return The vector will contain single value and it is the expression
+     *     passed by constructor.
+     */
+    virtual typename CompoundCheck<Context>::Checks getSubexpressions() const {
+        typename CompoundCheck<Context>::Checks result;
+        result.push_back(expr_.get());
+        return (result);
+    }
+    /// \brief The matching function
+    virtual bool matches(const Context& context) const {
+        return (!expr_->matches(context));
+    }
+private:
+    /// \brief The subexpression
+    const boost::shared_ptr<Check<Context> > expr_;
+};
+
+template<typename Context, typename Action = BasicAction>
+class NotCreator : public Loader<Context, Action>::CheckCreator {
+public:
+    /**
+     * \brief Constructor
+     *
+     * \param name The name of the NOT operator to be loaded as.
+     */
+    NotCreator(const std::string& name) :
+        name_(name)
+    { }
+    /**
+     * \brief List of the names this loads
+     *
+     * \return Single-value vector containing the name passed to the
+     *     constructor.
+     */
+    virtual std::vector<std::string> names() const {
+        std::vector<std::string> result;
+        result.push_back(name_);
+        return (result);
+    }
+    /// \brief Create the check.
+    virtual boost::shared_ptr<Check<Context> > create(const std::string&,
+                                                      data::ConstElementPtr
+                                                      definition,
+                                                      const Loader<Context,
+                                                      Action>& loader)
+    {
+        return (boost::shared_ptr<Check<Context> >(new NotOperator<Context>(
+                    loader.loadCheck(definition))));
+    }
+    /**
+     * \brief Or-abbreviated form.
+     *
+     * This returns false. In theory, the NOT operator could be used with
+     * the abbreviated form, but it would be confusing. Such syntax is
+     * therefore explicitly forbidden.
+     */
+    virtual bool allowListAbbreviation() const { return (false); }
+public:
+    const std::string name_;
+};
+
 }
 }
 
