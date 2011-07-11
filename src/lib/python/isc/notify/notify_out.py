@@ -27,10 +27,11 @@ from notify_out_messages import *
 
 logger = isc.log.Logger("notify_out")
 
-try:
-    from pydnspp import *
-except ImportError as e:
-    logger.error(NOTIFY_OUT_IMPORT_ERROR, str(e))
+# there used to be a printed message if this import failed, but if
+# we can't import we should not start anyway, and logging an error
+# is a bad idea since the logging system is most likely not
+# initialized yet. see trac ticket #1103
+from pydnspp import *
 
 ZONE_NEW_DATA_READY_CMD = 'zone_new_data_ready'
 _MAX_NOTIFY_NUM = 30
@@ -372,8 +373,8 @@ class NotifyOut:
         if tgt:
             zone_notify_info.notify_try_num += 1
             if zone_notify_info.notify_try_num > _MAX_NOTIFY_TRY_NUM:
-                logger.error(NOTIFY_OUT_RETRY_EXCEEDED, tgt[0], tgt[1],
-                             _MAX_NOTIFY_TRY_NUM)
+                logger.warn(NOTIFY_OUT_RETRY_EXCEEDED, tgt[0], tgt[1],
+                            _MAX_NOTIFY_TRY_NUM)
                 self._notify_next_target(zone_notify_info)
             else:
                 # set exponential backoff according rfc1996 section 3.6
