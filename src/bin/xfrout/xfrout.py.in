@@ -48,6 +48,9 @@ except ImportError as e:
     # must keep running, so we warn about it and move forward.
     log.error(XFROUT_IMPORT, str(e))
 
+from isc.acl.acl import ACCEPT, REJECT, DROP
+from isc.acl.dns import REQUEST_LOADER
+
 isc.util.process.rename()
 
 def init_paths():
@@ -374,13 +377,17 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         self._sock_file = sock_file
         socketserver_mixin.NoPollMixIn.__init__(self)
         ThreadingUnixStreamServer.__init__(self, sock_file, handle_class)
-        self._lock = threading.Lock()
-        self._transfers_counter = 0
         self._shutdown_event = shutdown_event
         self._write_sock, self._read_sock = socket.socketpair()
+        self._common_init()
         #self._log = log
         self.update_config_data(config_data)
         self._cc = cc
+
+    def _common_init(self):
+        self._lock = threading.Lock()
+        self._transfers_counter = 0
+        self._acl = REQUEST_LOADER.load("[]")
 
     def _receive_query_message(self, sock):
         ''' receive request message from sock'''
