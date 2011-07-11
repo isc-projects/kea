@@ -444,7 +444,7 @@ class UIModuleCCSession(MultiConfigData):
         else:
             raise isc.cc.data.DataAlreadyPresentError(value + " already in " + identifier)
 
-    def _add_value_to_named_map(self, identifier, value):
+    def _add_value_to_named_map(self, identifier, value, item_value):
         if value is None:
             raise isc.cc.data.DataNotFoundError("Need a name to add a new item to named_map " + str(identifier))
         elif type(value) != str:
@@ -454,7 +454,7 @@ class UIModuleCCSession(MultiConfigData):
             if not cur_map:
                 cur_map = {}
             if value not in cur_map:
-                cur_map[value] = {}
+                cur_map[value] = item_value
                 self.set_value(identifier, cur_map)
             else:
                 raise isc.cc.data.DataAlreadyPresentError(value + " already in " + identifier)
@@ -481,7 +481,10 @@ class UIModuleCCSession(MultiConfigData):
         if 'list_item_spec' in module_spec:
             self._add_value_to_list(identifier, value)
         elif 'named_map_item_spec' in module_spec:
-            self._add_value_to_named_map(identifier, value)
+            item_value = None
+            if 'item_default' in module_spec['named_map_item_spec']:
+                item_value = module_spec['named_map_item_spec']['item_default']
+            self._add_value_to_named_map(identifier, value, item_value)
         else:
             raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list or a named map")
 
@@ -516,11 +519,11 @@ class UIModuleCCSession(MultiConfigData):
                 raise isc.cc.data.DataNotFoundError(value + " not found in named_map " + str(identifier))
 
     def remove_value(self, identifier, value_str):
-        """Remove a value from a configuration list. The value string
-           must be a string representation of the full item. Raises
-           a DataTypeError if the value at the identifier is not a list,
-           or if the given value_str does not match the list_item_spec
-           """
+        """Remove a value from a configuration list or named map.
+        The value string must be a string representation of the full
+        item. Raises a DataTypeError if the value at the identifier
+        is not a list, or if the given value_str does not match the
+        list_item_spec """
         module_spec = self.find_spec_part(identifier)
         if module_spec is None:
             raise isc.cc.data.DataNotFoundError("Unknown item " + str(identifier))
@@ -528,9 +531,10 @@ class UIModuleCCSession(MultiConfigData):
         value = None
         if value_str is not None:
             value = isc.cc.data.parse_value_str(value_str)
-            isc.config.config_data.check_type(module_spec, [value])
 
         if 'list_item_spec' in module_spec:
+            if value is not None:
+                isc.config.config_data.check_type(module_spec['list_item_spec'], value)
             self._remove_value_from_list(identifier, value)
         elif 'named_map_item_spec' in module_spec:
             self._remove_value_from_named_map(identifier, value)

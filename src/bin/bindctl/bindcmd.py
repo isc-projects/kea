@@ -400,9 +400,8 @@ class BindCmdInterpreter(Cmd):
                 print("Error: " + str(dnfe))
             except isc.cc.data.DataAlreadyPresentError as dnfe:
                 print("Error: " + str(dnfe))
-            # [XX] TODO: add back
-            #except KeyError as ke:
-            #    print("Error: missing " + str(ke))
+            except KeyError as ke:
+                print("Error: missing " + str(ke))
         else:
             self.apply_cmd(cmd)
 
@@ -629,7 +628,7 @@ class BindCmdInterpreter(Cmd):
             values = self.config_data.get_value_maps(identifier, show_all)
             for value_map in values:
                 line = value_map['name']
-                if value_map['type'] in [ 'module', 'map' ]:
+                if value_map['type'] in [ 'module', 'map', 'named_map' ]:
                     line += "/"
                 elif value_map['type'] == 'list' \
                      and value_map['value'] != []:
@@ -637,7 +636,9 @@ class BindCmdInterpreter(Cmd):
                     # we have more data to show
                     line += "/"
                 else:
-                    line += "\t" + json.dumps(value_map['value'])
+                    # if type is named_map, don't print value
+                    if value_map['type'] != 'named_map':
+                        line += "\t" + json.dumps(value_map['value'])
                 line += "\t" + value_map['type']
                 line += "\t"
                 if value_map['default']:
