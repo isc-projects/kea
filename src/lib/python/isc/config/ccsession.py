@@ -426,6 +426,31 @@ class UIModuleCCSession(MultiConfigData):
             raise ModuleCCSessionError("Bad config version")
         self._set_current_config(config)
 
+    def _add_value_to_list(self, identifier, value):
+        cur_list, status = self.get_value(identifier)
+        if not cur_list:
+            cur_list = []
+
+        if value is None:
+            if "item_default" in module_spec["list_item_spec"]:
+                value = module_spec["list_item_spec"]["item_default"]
+
+        if value is None:
+            raise isc.cc.data.DataNotFoundError("No value given and no default for " + str(identifier))
+
+        if value not in cur_list:
+            cur_list.append(value)
+            self.set_value(identifier, cur_list)
+
+    def _add_value_to_named_map(self, identifier, value):
+        if value is None:
+            raise isc.cc.data.DataNotFoundError("Need a name to add a new item to named_map " + str(identifier))
+
+        cur_map, status = self.get_value(identifier)
+        if not cur_map:
+            cur_map = {}
+        cur_map[value] = {}
+        self.set_value(identifier, cur_map)
 
     def add_value(self, identifier, value_str = None):
         """Add a value to a configuration list. Raises a DataTypeError
@@ -434,27 +459,22 @@ class UIModuleCCSession(MultiConfigData):
            not given, we add the default as specified by the .spec
            file."""
         module_spec = self.find_spec_part(identifier)
-        if (type(module_spec) != dict or "list_item_spec" not in module_spec):
-            raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list")
-
-        cur_list, status = self.get_value(identifier)
-        if not cur_list:
-            cur_list = []
+        if module_spec is None:
+            raise isc.cc.data.DataNotFoundError("Unknown item " + str(identifier))
 
         # Hmm. Do we need to check for duplicates?
         value = None
         if value_str is not None:
             value = isc.cc.data.parse_value_str(value_str)
-        else:
-            if "item_default" in module_spec["list_item_spec"]:
-                value = module_spec["list_item_spec"]["item_default"]
 
-        if value is None:
-            raise isc.cc.data.DataNotFoundError("No value given and no default for " + str(identifier))
-            
-        if value not in cur_list:
-            cur_list.append(value)
-            self.set_value(identifier, cur_list)
+        # the specified element must be a list or a named_map
+        if 'list_item_spec' in module_spec:
+            self._add_value_to_list(identifier, value)
+        elif 'named_map_item_spec' in module_spec:
+            self._add_value_to_named_map(identifier, value)
+        else:
+            raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list or a named map")
+
 
     def remove_value(self, identifier, value_str):
         """Remove a value from a configuration list. The value string
