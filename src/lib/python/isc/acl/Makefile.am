@@ -15,7 +15,7 @@ acl_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 acl_la_LDFLAGS = $(PYTHON_LDFLAGS)
 acl_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
 
-dns_la_SOURCES = dns.cc dns_requestacl_python.h dns_requestacl_python.cc
+dns_la_SOURCES = dns.h dns.cc dns_requestacl_python.h dns_requestacl_python.cc
 dns_la_SOURCES += dns_requestcontext_python.h dns_requestcontext_python.cc
 dns_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 dns_la_LDFLAGS = $(PYTHON_LDFLAGS)

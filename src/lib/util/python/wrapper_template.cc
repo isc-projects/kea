@@ -210,7 +210,7 @@ namespace python {
 // Most of the functions are not actually implemented and NULL here.
 PyTypeObject @cppclass@_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "pydnspp.@CPPCLASS@",
+    "@MODULE@.@CPPCLASS@",
     sizeof(s_@CPPCLASS@),                 // tp_basicsize
     0,                                  // tp_itemsize
     reinterpret_cast<destructor>(@CPPCLASS@_destroy),       // tp_dealloc
