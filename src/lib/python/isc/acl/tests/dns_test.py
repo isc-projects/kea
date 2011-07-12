@@ -20,7 +20,8 @@ from isc.acl.dns import *
 
 def get_sockaddr(address, port):
     '''This is a simple shortcut wrapper for getaddrinfo'''
-    ai = socket.getaddrinfo(address, port, 0, 0, 0, socket.AI_NUMERICHOST)[0]
+    ai = socket.getaddrinfo(address, port, 0, socket.SOCK_DGRAM,
+                            socket.IPPROTO_UDP, socket.AI_NUMERICHOST)[0]
     return ai[4]
 
 def get_acl(prefix):
