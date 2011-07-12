@@ -42,7 +42,7 @@
 #include <acl/dns.h>
 #include <acl/ip_check.h>
 
-#include "acl.h"
+#include "dns.h"
 #include "dns_requestcontext_python.h"
 
 using namespace std;
@@ -51,7 +51,6 @@ using boost::lexical_cast;
 using namespace isc;
 using namespace isc::util::python;
 using namespace isc::acl::dns;
-using namespace isc::acl::python;
 using namespace isc::acl::dns::python;
 
 namespace isc {
@@ -177,7 +176,7 @@ RequestContext_init(PyObject* po_self, PyObject* args, PyObject*) {
     } catch (const exception& ex) {
         const string ex_what = "Failed to construct RequestContext object: " +
             string(ex.what());
-        PyErr_SetString(po_ACLError, ex_what.c_str());
+        PyErr_SetString(getACLException("Error"), ex_what.c_str());
         return (-1);
     } catch (...) {
         PyErr_SetString(PyExc_RuntimeError,

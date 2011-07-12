@@ -28,14 +28,13 @@
 #include <acl/acl.h>
 #include <acl/dns.h>
 
-#include "acl.h"
+#include "dns.h"
 #include "dns_requestacl_python.h"
 #include "dns_requestcontext_python.h"
 
 using namespace std;
 using namespace isc::util::python;
 using namespace isc::acl;
-using namespace isc::acl::python;
 using namespace isc::acl::dns;
 using namespace isc::acl::dns::python;
 
@@ -60,7 +59,8 @@ s_RequestACL::s_RequestACL() {}
 namespace {
 int
 RequestACL_init(PyObject*, PyObject*, PyObject*) {
-    PyErr_SetString(po_ACLError, "RequestACL cannot be directly constructed");
+    PyErr_SetString(getACLException("Error"),
+                    "RequestACL cannot be directly constructed");
     return (-1);
 }
 
@@ -84,7 +84,7 @@ RequestACL_execute(PyObject* po_self, PyObject* args) {
         }
     } catch (const exception& ex) {
         const string ex_what = "Failed to execute ACL: " + string(ex.what());
-        PyErr_SetString(po_ACLError, ex_what.c_str());
+        PyErr_SetString(getACLException("Error"), ex_what.c_str());
     } catch (...) {
         PyErr_SetString(PyExc_RuntimeError,
                         "Unexpected exception in executing ACL");
