@@ -17,6 +17,7 @@ acl_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
 
 dns_la_SOURCES = dns.h dns.cc dns_requestacl_python.h dns_requestacl_python.cc
 dns_la_SOURCES += dns_requestcontext_python.h dns_requestcontext_python.cc
+dns_la_SOURCES += dns_requestloader_python.h dns_requestloader_python.cc
 dns_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 dns_la_LDFLAGS = $(PYTHON_LDFLAGS)
 # Note: PYTHON_CXXFLAGS may have some -Wno... workaround, which must be
@@ -34,6 +35,7 @@ dns_la_LIBADD = $(top_builddir)/src/lib/acl/libdnsacl.la
 dns_la_LIBADD += $(PYTHON_LIB)
 
 EXTRA_DIST = acl.py dns.py
+EXTRA_DIST += acl_inc.cc
 EXTRA_DIST += dnsacl_inc.cc dns_requestacl_inc.cc dns_requestcontext_inc.cc
 
 CLEANDIRS = __pycache__

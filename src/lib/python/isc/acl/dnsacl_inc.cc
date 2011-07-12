@@ -1,21 +1,17 @@
 namespace {
-const char* const load_request_acl_doc = "\
-load_request_acl(description) -> RequestACL\n\
+const char* const dnsacl_doc = "\
+Implementation module for DNS ACL operations\n\n\
+This module provides Python bindings for the C++ classes in the\n\
+isc::acl::dns namespace.  Specifically, it defines Python interfaces of\n\
+handling access control lists (ACLs) with DNS related contexts.\n\
+These bindings are close match to the C++ API, but they are not complete\n\
+(some parts are not needed) and some are done in more python-like ways.\n\
 \n\
-Load a DNS ACL.\n\
+Special objects:\n\
 \n\
-This parses an ACL list, creates internal data for each rule\n\
-and returns a RequestACl object that contains all given rules.\n\
-\n\
-Exceptions:\n\
-  LoaderError Load failed.  The most likely cause of this is a syntax\n\
-              error in the description.  Other internal errors such as\n\
-              memory allocation failure is also converted to this\n\
-              exception.\n\
-\n\
-Parameters:\n\
-  description String representation of the JSON list of ACL.\n\
-\n\
-Return Value(s): The newly created RequestACL object\n\
+REQUEST_LOADER -- A singleton loader of ACLs. It is expected applications\n\
+  will use this function instead of creating their own loaders, because\n\
+  one is enough, this one will have registered default checks and it is\n\
+  known one, so any plugins can registrer additional checks as well.\n\
 ";
 } // unnamed namespace
