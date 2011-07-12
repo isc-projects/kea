@@ -65,7 +65,7 @@ RequestACL_init(PyObject*, PyObject*, PyObject*) {
 }
 
 void
-RequestACL_destroy(PyObject* const po_self) {
+RequestACL_destroy(PyObject* po_self) {
     s_RequestACL* const self = static_cast<s_RequestACL*>(po_self);
     self->cppobj.reset();
     Py_TYPE(self)->tp_free(self);
