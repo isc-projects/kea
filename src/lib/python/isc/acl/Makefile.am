@@ -10,7 +10,7 @@ pythondir = $(PYTHON_SITEPKG_DIR)/isc/acl
 pyexec_LTLIBRARIES = acl.la dns.la
 pyexecdir = $(PYTHON_SITEPKG_DIR)/isc/acl
 
-acl_la_SOURCES = acl.h acl.cc
+acl_la_SOURCES = acl.cc
 acl_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 acl_la_LDFLAGS = $(PYTHON_LDFLAGS)
 acl_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
@@ -31,7 +31,6 @@ acl_la_LIBADD += $(PYTHON_LIB)
 
 dns_la_LDFLAGS += -module
 dns_la_LIBADD = $(top_builddir)/src/lib/acl/libdnsacl.la
-dns_la_LIBADD += acl.la
 dns_la_LIBADD += $(PYTHON_LIB)
 
 EXTRA_DIST = acl.py dns.py
