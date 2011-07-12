@@ -29,7 +29,8 @@ def get_acl(prefix):
     that accepts addresses for the given IP prefix (and reject any others
     by default)
     '''
-    return load_request_acl('[{"action": "ACCEPT", "from": "' + prefix + '"}]')
+    return REQUEST_LOADER.load('[{"action": "ACCEPT", "from": "' + \
+                                   prefix + '"}]')
 
 def get_context(address):
     '''This is a simple shortcut wrapper for creating a RequestContext
@@ -98,64 +99,64 @@ class RequestACLTest(unittest.TestCase):
 
     def test_request_loader(self):
         # these shouldn't raise an exception
-        load_request_acl('[{"action": "DROP"}]')
-        load_request_acl('[{"action": "DROP", "from": "192.0.2.1"}]')
+        REQUEST_LOADER.load('[{"action": "DROP"}]')
+        REQUEST_LOADER.load('[{"action": "DROP", "from": "192.0.2.1"}]')
 
         # Invalid types
-        self.assertRaises(TypeError, load_request_acl, 1)
-        self.assertRaises(TypeError, load_request_acl, [])
+        self.assertRaises(TypeError, REQUEST_LOADER.load, 1)
+        self.assertRaises(TypeError, REQUEST_LOADER.load, [])
 
         # Incorrect number of arguments
-        self.assertRaises(TypeError, load_request_acl,
+        self.assertRaises(TypeError, REQUEST_LOADER.load,
                           '[{"action": "DROP"}]', 0)
 
     def test_bad_acl_syntax(self):
         # the following are derived from loader_test.cc
-        self.assertRaises(LoaderError, load_request_acl, '{}');
-        self.assertRaises(LoaderError, load_request_acl, '42');
-        self.assertRaises(LoaderError, load_request_acl, 'true');
-        self.assertRaises(LoaderError, load_request_acl, 'null');
-        self.assertRaises(LoaderError, load_request_acl, '"hello"');
-        self.assertRaises(LoaderError, load_request_acl, '[42]');
-        self.assertRaises(LoaderError, load_request_acl, '["hello"]');
-        self.assertRaises(LoaderError, load_request_acl, '[[]]');
-        self.assertRaises(LoaderError, load_request_acl, '[true]');
-        self.assertRaises(LoaderError, load_request_acl, '[null]');
-        self.assertRaises(LoaderError, load_request_acl, '[{}]');
+        self.assertRaises(LoaderError, REQUEST_LOADER.load, '{}');
+        self.assertRaises(LoaderError, REQUEST_LOADER.load, '42');
+        self.assertRaises(LoaderError, REQUEST_LOADER.load, 'true');
+        self.assertRaises(LoaderError, REQUEST_LOADER.load, 'null');
+        self.assertRaises(LoaderError, REQUEST_LOADER.load, '"hello"');
+        self.assertRaises(LoaderError, REQUEST_LOADER.load, '[42]');
+        self.assertRaises(LoaderError, REQUEST_LOADER.load, '["hello"]');
+        self.assertRaises(LoaderError, REQUEST_LOADER.load, '[[]]');
+        self.assertRaises(LoaderError, REQUEST_LOADER.load, '[true]');
+        self.assertRaises(LoaderError, REQUEST_LOADER.load, '[null]');
+        self.assertRaises(LoaderError, REQUEST_LOADER.load, '[{}]');
 
         # the following are derived from dns_test.cc
-        self.assertRaises(LoaderError, load_request_acl,
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           '[{"action": "ACCEPT", "bad": "192.0.2.1"}]')
-        self.assertRaises(LoaderError, load_request_acl,
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           '[{"action": "ACCEPT", "from": 4}]')
-        self.assertRaises(LoaderError, load_request_acl,
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           '[{"action": "ACCEPT", "from": []}]')
-        self.assertRaises(LoaderError, load_request_acl,
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           '[{"action": "ACCEPT", "from": "bad"}]')
-        self.assertRaises(LoaderError, load_request_acl,
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           '[{"action": "ACCEPT", "from": null}]')
 
     def test_bad_acl_ipsyntax(self):
         # this test is derived from ip_check_unittest.cc
-        self.assertRaises(LoaderError, load_request_acl,
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           '[{"action": "DROP", "from": "192.0.2.43/-1"}]')
-        self.assertRaises(LoaderError, load_request_acl,
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           '[{"action": "DROP", "from": "192.0.2.43//1"')
-        self.assertRaises(LoaderError, load_request_acl,
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           '[{"action": "DROP", "from": "192.0.2.43/1/"')
-        self.assertRaises(LoaderError, load_request_acl,
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           '[{"action": "DROP", "from": "/192.0.2.43/1"')
-        self.assertRaises(LoaderError, load_request_acl,
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           '[{"action": "DROP", "from": "2001:db8::/xxxx"')
-        self.assertRaises(LoaderError, load_request_acl,
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           '[{"action": "DROP", "from": "2001:db8::/32/s"')
-        self.assertRaises(LoaderError, load_request_acl,
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           '[{"action": "DROP", "from": "1/"')
-        self.assertRaises(LoaderError, load_request_acl,
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           '[{"action": "DROP", "from": "/1"')
-        self.assertRaises(LoaderError, load_request_acl,
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           '[{"action": "DROP", "from": "192.0.2.0/33"')
-        self.assertRaises(LoaderError, load_request_acl,
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           '[{"action": "DROP", "from": "::1/129"')
 
     def test_execute(self):
@@ -174,13 +175,13 @@ class RequestACLTest(unittest.TestCase):
         self.assertEqual(REJECT, get_acl('32.1.13.184').execute(CONTEXT6))
 
         # A bit more complicated example, derived from resolver_config_unittest
-        acl = load_request_acl('[ {"action": "ACCEPT", ' +
-                               '     "from": "192.0.2.1"},' +
-                               '    {"action": "REJECT",' +
-                               '     "from": "192.0.2.0/24"},' +
-                               '    {"action": "DROP",' +
-                               '     "from": "2001:db8::1"},' +
-                               '] }')
+        acl = REQUEST_LOADER.load('[ {"action": "ACCEPT", ' +
+                                  '     "from": "192.0.2.1"},' +
+                                  '    {"action": "REJECT",' +
+                                  '     "from": "192.0.2.0/24"},' +
+                                  '    {"action": "DROP",' +
+                                  '     "from": "2001:db8::1"},' +
+                                  '] }')
         self.assertEqual(ACCEPT, acl.execute(CONTEXT4))
         self.assertEqual(REJECT, acl.execute(get_context('192.0.2.2')))
         self.assertEqual(DROP, acl.execute(get_context('2001:db8::1')))
@@ -194,6 +195,13 @@ class RequestACLTest(unittest.TestCase):
         self.assertRaises(TypeError, acl.execute, get_context('192.0.2.2'), 0)
         # type mismatch
         self.assertRaises(TypeError, acl.execute, 'bad parameter')
+
+class RequestLoaderTest(unittest.TestCase):
+    # Note: loading ACLs is tested in other test cases.
+
+    def test_construct(self):
+        # at least for now, we don't allow direct construction.
+        self.assertRaises(Error, RequestLoader)
 
 if __name__ == '__main__':
     unittest.main()
