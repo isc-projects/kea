@@ -18,24 +18,22 @@
 
 #include <acl/acl.h>
 
-#include "acl.h"
-
 using namespace isc::util::python;
-using namespace isc::acl::python;
 
-namespace isc {
-namespace acl {
-namespace python {
+namespace {
+// Commonly used Python exception objects.  Right now the acl module consists
+// of only one .cc file, so we hide them in an unnamed namespace.  If and when
+// we extend this module with multiple .cc files, we should move them to
+// a named namespace, say isc::acl::python, and declare them in a separate
+// header file.
 PyObject* po_ACLError;
 PyObject* po_LoaderError;
-}
-}
 }
 
 namespace {
 PyModuleDef acl = {
     { PyObject_HEAD_INIT(NULL) NULL, 0, NULL},
-    "isc.acl",
+    "isc.acl.acl",
     "This module provides Python bindings for the C++ classes in the "
     "isc::acl namespace",
     -1,
