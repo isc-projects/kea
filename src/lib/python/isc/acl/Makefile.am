@@ -37,6 +37,7 @@ dns_la_LIBADD += $(PYTHON_LIB)
 EXTRA_DIST = acl.py dns.py
 EXTRA_DIST += acl_inc.cc
 EXTRA_DIST += dnsacl_inc.cc dns_requestacl_inc.cc dns_requestcontext_inc.cc
+EXTRA_DIST += dns_requestloader_inc.cc
 
 CLEANDIRS = __pycache__
 
