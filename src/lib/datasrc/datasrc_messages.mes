@@ -17,7 +17,7 @@ $NAMESPACE isc::datasrc
 # \brief Messages for the data source library
 
 % DATASRC_CACHE_CREATE creating the hotspot cache
-This is a debug message issued during startup when the hostspot cache
+This is a debug message issued during startup when the hotspot cache
 is created.
 
 % DATASRC_CACHE_DESTROY destroying the hotspot cache
@@ -201,11 +201,11 @@ behave and BIND 9 refuses that as well. Please describe your intention using
 different tools.
 
 % DATASRC_META_ADD adding a data source into meta data source
-This is a debug message issued during startup or reconfiguration. A
-another data source is being added into the meta data source.
+This is a debug message issued during startup or reconfiguration.
+Another data source is being added into the meta data source.
 
 % DATASRC_META_ADD_CLASS_MISMATCH mismatch between classes '%1' and '%2'
-It was attempted to add a data source into a meta data source. But their
+It was attempted to add a data source into a meta data source, but their
 classes do not match.
 
 % DATASRC_META_REMOVE removing data source from meta data source
@@ -465,13 +465,13 @@ the provided file.
 % DATASRC_SQLITE_PREVIOUS looking for name previous to '%1'
 This is a debug message.  The name given was not found, so the program
 is searching for the next name higher up the hierarchy (e.g. if
-www.example.com were queried for and not found, the sofftware searches
+www.example.com were queried for and not found, the software searches
 for the "previous" name, example.com).
 
 % DATASRC_SQLITE_PREVIOUS_NO_ZONE no zone containing '%1'
 The name given was not found, so the program is searching for the next
 name higher up the hierarchy (e.g. if www.example.com were queried
-for and not found, the sofftware searches for the "previous" name,
+for and not found, the software searches for the "previous" name,
 example.com). However, this name is not contained in any zone in the
 data source. This is an error since it indicates a problem in the earlier
 processing of the query.
