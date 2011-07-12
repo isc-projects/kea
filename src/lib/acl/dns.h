@@ -67,7 +67,7 @@ struct RequestContext {
     ///
     /// \exception None
     ///
-    /// \parameter remote_address_param The remote IP address
+    /// \param remote_address_param The remote IP address
     explicit RequestContext(const IPAddress& remote_address_param) :
         remote_address(remote_address_param)
     {}
