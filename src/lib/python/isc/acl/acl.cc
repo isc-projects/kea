@@ -60,9 +60,11 @@ PyInit_acl(void) {
         po_LoaderError = PyErr_NewException("isc.acl.LoaderError", NULL, NULL);
         PyObjectContainer(po_LoaderError).installToModule(mod, "LoaderError");
 
-        // Install module constants.  Note that we can release our own
-        // references to these objects because we don't have corresponding
-        // C++ variables.
+        // Install module constants.  Note that we can let Py_BuildValue
+        // "steal" the references to these object (by specifying false to
+        // installToModule), because, unlike the exception cases above,
+        // we don't have corresponding C++ variables (see the note in
+        // pycppwrapper_util for more details).
         PyObjectContainer(Py_BuildValue("I", isc::acl::ACCEPT)).
             installToModule(mod, "ACCEPT", false);
         PyObjectContainer(Py_BuildValue("I", isc::acl::REJECT)).
