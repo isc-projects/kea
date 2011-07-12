@@ -27,6 +27,7 @@
 #include "dns.h"
 #include "dns_requestcontext_python.h"
 #include "dns_requestacl_python.h"
+#include "dns_requestloader_python.h"
 
 using namespace std;
 using boost::shared_ptr;
@@ -38,45 +39,21 @@ using namespace isc::acl::dns::python;
 #include "dnsacl_inc.cc"
 
 namespace {
-PyObject*
-loadRequestACL(PyObject*, PyObject* args) {
-    const char* acl_config;
-
-    if (PyArg_ParseTuple(args, "s", &acl_config)) {
-        try {
-            shared_ptr<RequestACL> acl(
-                getRequestLoader().load(Element::fromJSON(acl_config)));
-            s_RequestACL* py_acl = static_cast<s_RequestACL*>(
-                requestacl_type.tp_alloc(&requestacl_type, 0));
-            if (py_acl != NULL) {
-                py_acl->cppobj = acl;
-            }
-            return (py_acl);
-        } catch (const exception& ex) {
-            PyErr_SetString(getACLException("LoaderError"), ex.what());
-            return (NULL);
-        } catch (...) {
-            PyErr_SetString(PyExc_SystemError, "Unexpected C++ exception");
-            return (NULL);
-        }
-    }
-
-    return (NULL);
-}
+// This is a Python binding object corresponding to the singleton loader used
+// in the C++ version of the library.
+// We can define it as a pure object rather than through an accessor function,
+// because in Python we can ensure it has been created and initialized
+// in the module initializer by the time it's actually used.
+s_RequestLoader* po_REQUEST_LOADER;
 
 PyMethodDef methods[] = {
-    { "load_request_acl", loadRequestACL, METH_VARARGS, load_request_acl_doc },
     { NULL, NULL, 0, NULL }
 };
 
 PyModuleDef dnsacl = {
     { PyObject_HEAD_INIT(NULL) NULL, 0, NULL},
     "isc.acl.dns",
-    "This module provides Python bindings for the C++ classes in the "
-    "isc::acl::dns namespace.  Specifically, it defines Python interfaces of "
-    "handling access control lists (ACLs) with DNS related contexts.\n\n"
-    "These bindings are close match to the C++ API, but they are not complete "
-    "(some parts are not needed) and some are done in more python-like ways.",
+    dnsacl_doc,
     -1,
     methods,
     NULL,
@@ -124,6 +101,32 @@ PyInit_dns(void) {
         return (NULL);
     }
     if (!initModulePart_RequestACL(mod)) {
+        Py_DECREF(mod);
+        return (NULL);
+    }
+    if (!initModulePart_RequestLoader(mod)) {
+        Py_DECREF(mod);
+        return (NULL);
+    }
+
+    // Module constants
+    try {
+        if (po_REQUEST_LOADER == NULL) {
+            po_REQUEST_LOADER = static_cast<s_RequestLoader*>(
+                requestloader_type.tp_alloc(&requestloader_type, 0));
+        }
+        if (po_REQUEST_LOADER != NULL) {
+            // We gain and keep our own reference to the singleton object
+            // for the same reason as that for exception objects (see comments
+            // in pycppwrapper_util for more details).  Note also that we don't
+            // bother to release the reference even if exception is thrown
+            // below (in fact, we cannot delete the singleton loader).
+            po_REQUEST_LOADER->cppobj = &getRequestLoader();
+            Py_INCREF(po_REQUEST_LOADER);
+        }
+        PyObjectContainer(po_REQUEST_LOADER).installToModule(mod,
+                                                             "REQUEST_LOADER");
+    } catch (...) {
         Py_DECREF(mod);
         return (NULL);
     }

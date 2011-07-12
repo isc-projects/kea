@@ -20,6 +20,8 @@
 
 using namespace isc::util::python;
 
+#include "acl_inc.cc"
+
 namespace {
 // Commonly used Python exception objects.  Right now the acl module consists
 // of only one .cc file, so we hide them in an unnamed namespace.  If and when
@@ -34,8 +36,7 @@ namespace {
 PyModuleDef acl = {
     { PyObject_HEAD_INIT(NULL) NULL, 0, NULL},
     "isc.acl.acl",
-    "This module provides Python bindings for the C++ classes in the "
-    "isc::acl namespace",
+    acl_doc,
     -1,
     NULL,
     NULL,
