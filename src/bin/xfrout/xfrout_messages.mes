@@ -95,6 +95,14 @@ in the log message, but at this point no specific information other
 than that could be given. This points to incomplete exception handling
 in the code.
 
+% XFROUT_QUERY_DROPPED request to transfer %1/%2 to %3:%4 dropped
+The xfrout process silently dropped a request to transfer zone to given host.
+This is required by the ACLs.
+
+% XFROUT_QUERY_REJECTED request to transfer %1/%2 to %3:%4 rejected
+The xfrout process rejected (by REFUSED rcode) a request to transfer zone to
+given host. This is because of ACLs.
+
 % XFROUT_RECEIVE_FILE_DESCRIPTOR_ERROR error receiving the file descriptor for an XFR connection
 There was an error receiving the file descriptor for the transfer
 request. Normally, the request is received by b10-auth, and passed on
