@@ -19,6 +19,7 @@ import socket
 import tempfile
 import sys
 from cmdctl import *
+import isc.log
 
 SPEC_FILE_PATH = '..' + os.sep
 if 'CMDCTL_SPEC_PATH' in os.environ:
@@ -447,6 +448,7 @@ class TestFuncNotInClass(unittest.TestCase):
 
 
 if __name__== "__main__":
+    isc.log.resetUnitTestRootLogger()
     unittest.main()
 
 
