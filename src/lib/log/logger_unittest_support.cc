@@ -80,7 +80,7 @@ b10LoggerDbglevel(int defdbglevel) {
 // variables B10_LOGGER_SEVERITY, B10_LOGGER_DBGLEVEL and B10_LOGGER_DESTINATION.
 
 void
-setUnitTestRootLoggerCharacteristics() {
+resetUnitTestRootLogger() {
 
     using namespace isc::log;
 
@@ -168,7 +168,7 @@ void initLogger(isc::log::Severity severity, int dbglevel) {
     // in the environment variables.  (The two-step approach is used as the
     // setUnitTestRootLoggerCharacteristics() function is used in several
     // places in the BIND 10 tests, and it avoid duplicating code.)
-    setUnitTestRootLoggerCharacteristics();
+    resetUnitTestRootLogger();
 } 
 
 } // namespace log
