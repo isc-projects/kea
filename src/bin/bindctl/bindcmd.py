@@ -628,7 +628,7 @@ class BindCmdInterpreter(Cmd):
             values = self.config_data.get_value_maps(identifier, show_all)
             for value_map in values:
                 line = value_map['name']
-                if value_map['type'] in [ 'module', 'map', 'named_map' ]:
+                if value_map['type'] in [ 'module', 'map' ]:
                     line += "/"
                 elif value_map['type'] == 'list' \
                      and value_map['value'] != []:
@@ -636,8 +636,14 @@ class BindCmdInterpreter(Cmd):
                     # we have more data to show
                     line += "/"
                 else:
-                    # if type is named_map, don't print value
-                    if value_map['type'] != 'named_map':
+                    # if type is named_map, don't print value if None
+                    # (it is either {} meaning empty, or None, meaning
+                    # there actually is data, but not to be shown with
+                    # the current command
+                    if value_map['type'] == 'named_map' and\
+                       value_map['value'] is None:
+                        line += "/\t"
+                    else:
                         line += "\t" + json.dumps(value_map['value'])
                 line += "\t" + value_map['type']
                 line += "\t"
