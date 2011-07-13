@@ -65,7 +65,7 @@ this restriction may be removed.\n\
 const char* const RequestLoader_load_doc = "\
 load(description) -> RequestACL\n\
 \n\
-Load a DNS ACL.\n\
+Load a DNS (Request) ACL.\n\
 \n\
 This parses an ACL list, creates internal data for each rule\n\
 and returns a RequestACl object that contains all given rules.\n\
@@ -77,7 +77,9 @@ Exceptions:\n\
               exception.\n\
 \n\
 Parameters:\n\
-  description String representation of the JSON list of ACL.\n\
+  description String or Python representation of the JSON list of\n\
+              ACL. The Python representation is ones accepted by the\n\
+              standard json module.\n\
 \n\
 Return Value(s): The newly created RequestACL object\n\
 ";
