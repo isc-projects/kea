@@ -255,7 +255,9 @@ class XfroutSession():
     def dns_xfrout_start(self, sock_fd, msg_query):
         rcode_, msg = self._parse_query_message(msg_query)
         #TODO. create query message and parse header
-        if rcode_ == Rcode.NOTAUTH():
+        if rcode_ is None: # Dropped by ACL
+            return
+        elif rcode_ == Rcode.NOTAUTH() or rcode_ == Rcode.REFUSED():
             return self._reply_query_with_error_rcode(msg, sock_fd, rcode_)
         elif rcode_ != Rcode.NOERROR():
             return self._reply_query_with_format_error(msg, sock_fd)
@@ -268,7 +270,7 @@ class XfroutSession():
         if rcode_ != Rcode.NOERROR():
             logger.info(XFROUT_AXFR_TRANSFER_FAILED, zone_name,
                         zone_class_str, rcode_.to_text())
-            return self. _reply_query_with_error_rcode(msg, sock_fd, rcode_)
+            return self._reply_query_with_error_rcode(msg, sock_fd, rcode_)
 
         try:
             logger.info(XFROUT_AXFR_TRANSFER_STARTED, zone_name, zone_class_str)
