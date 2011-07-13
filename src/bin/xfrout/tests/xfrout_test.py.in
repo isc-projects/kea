@@ -117,8 +117,8 @@ class TestXfroutSession(unittest.TestCase):
 
     def setUp(self):
         self.sock = MySocket(socket.AF_INET,socket.SOCK_STREAM)
-        #self.log = isc.log.NSLogger('xfrout', '',  severity = 'critical', log_to_console = False )
-        self.xfrsess = MyXfroutSession(self.sock, None, Dbserver(), TSIGKeyRing())
+        self.xfrsess = MyXfroutSession(self.sock, None, Dbserver(),
+                                       TSIGKeyRing(), ('127.0.0.1', 12345))
         self.mdata = bytes(b'\xd6=\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01')
         self.soa_record = (4, 3, 'example.com.', 'com.example.', 3600, 'SOA', None, 'master.example.com. admin.example.com. 1234 3600 1800 2419200 7200')
 
@@ -526,6 +526,21 @@ class TestUnixSockServer(unittest.TestCase):
     def setUp(self):
         self.write_sock, self.read_sock = socket.socketpair()
         self.unix = MyUnixSockServer()
+
+    def test_guess_remote(self):
+        """Test we can guess the remote endpoint when we have only the
+           file descriptor. This is needed, because we get only that one
+           from auth."""
+        # We test with UDP, as it can be "connected" without other
+        # endpoint
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.connect(('127.0.0.1', 12345))
+        self.assertEqual(('127.0.0.1', 12345),
+                         self.unix._guess_remote(sock.fileno()))
+        sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+        sock.connect(('::1', 12345))
+        self.assertEqual(('::1', 12345, 0, 0),
+                         self.unix._guess_remote(sock.fileno()))
 
     def test_receive_query_message(self):
         send_msg = b"\xd6=\x00\x00\x00\x01\x00"
