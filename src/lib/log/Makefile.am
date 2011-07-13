@@ -20,6 +20,7 @@ liblog_la_SOURCES += logger_manager_impl.cc logger_manager_impl.h
 liblog_la_SOURCES += logger_name.cc logger_name.h
 liblog_la_SOURCES += logger_specification.h
 liblog_la_SOURCES += logger_support.cc logger_support.h
+liblog_la_SOURCES += logger_unittest_support.cc logger_unittest_support.h
 liblog_la_SOURCES += macros.h
 liblog_la_SOURCES += log_messages.cc log_messages.h
 liblog_la_SOURCES += message_dictionary.cc message_dictionary.h
