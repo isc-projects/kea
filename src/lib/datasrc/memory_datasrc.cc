@@ -523,7 +523,7 @@ struct MemoryZone::MemoryZoneImpl {
 
                 // fall through
             case DomainTree::NOTFOUND:
-                LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOTFOUND).
+                LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOT_FOUND).
                     arg(name);
                 return (FindResult(NXDOMAIN, ConstRRsetPtr()));
             case DomainTree::EXACTMATCH: // This one is OK, handle it
