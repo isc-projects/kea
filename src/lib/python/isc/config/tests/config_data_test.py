@@ -618,6 +618,24 @@ class TestMultiConfigData(unittest.TestCase):
         config_items = self.mcd.get_config_item_list("Spec2", True)
         self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
 
+    def test_get_config_item_list_named_map(self):
+        config_items = self.mcd.get_config_item_list()
+        self.assertEqual([], config_items)
+        module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec32.spec")
+        self.mcd.set_specification(module_spec)
+        config_items = self.mcd.get_config_item_list()
+        self.assertEqual(['Spec32'], config_items)
+        config_items = self.mcd.get_config_item_list(None, False)
+        self.assertEqual(['Spec32'], config_items)
+        config_items = self.mcd.get_config_item_list(None, True)
+        self.assertEqual(['Spec32/named_map_item'], config_items)
+        self.mcd.set_value('Spec32/named_map_item', { "aaaa": 4, "aabb": 5, "bbbb": 6})
+        config_items = self.mcd.get_config_item_list("/Spec32/named_map_item", True)
+        self.assertEqual(['Spec32/named_map_item/aaaa',
+                          'Spec32/named_map_item/aabb',
+                          'Spec32/named_map_item/bbbb',
+                         ], config_items)
+
 if __name__ == '__main__':
     unittest.main()
 
