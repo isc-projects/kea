@@ -144,7 +144,13 @@ class XfroutSession():
             # TSIG related checks
             rcode = self._check_request_tsig(msg, mdata)
 
-            # TODO The ACL check comes here
+            # ACL checks
+            acl_result = self._acl.execute(
+                isc.acl.dns.RequestContext(self._remote))
+            if acl_result == isc.acl.acl.DROP:
+                return None, None
+            elif acl_result == isc.acl.acl.REJECT:
+                return Rcode.REFUSED(), msg
 
         except Exception as err:
             logger.error(XFROUT_PARSE_QUERY_ERROR, str(err))
