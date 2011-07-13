@@ -193,11 +193,15 @@ def spec_name_list(spec, prefix="", recurse=False):
                     result.extend(spec_name_list(map_el['map_item_spec'], prefix + map_el['item_name'], recurse))
                 else:
                     result.append(prefix + name)
+        elif 'named_map_item_spec' in spec:
+            # we added a '/' above, but in this one case we don't want it
+            result.append(prefix[:-1])
+            pass
         else:
             for name in spec:
                 result.append(prefix + name + "/")
                 if recurse:
-                    result.extend(spec_name_list(spec[name],name, recurse))
+                    result.extend(spec_name_list(spec[name], name, recurse))
     elif type(spec) == list:
         for list_el in spec:
             if 'item_name' in list_el:
@@ -209,7 +213,7 @@ def spec_name_list(spec, prefix="", recurse=False):
             else:
                 raise ConfigDataError("Bad specification")
     else:
-        raise ConfigDataError("Bad specication")
+        raise ConfigDataError("Bad specification")
     return result
 
 class ConfigData:
@@ -660,7 +664,28 @@ class MultiConfigData:
                                     cur_value)
             cur_id_part = cur_id_part + id_part + "/"
         isc.cc.data.set(self._local_changes, identifier, value)
- 
+
+    def _get_list_items(self, item_name):
+        """This method is used in get_config_item_list, to add list
+           indices and named_map names to the completion list. If
+           the given item_name is for a list or named_map, it'll
+           return a list of those (appended to item_name), otherwise
+           the list will only contain the item_name itself."""
+        spec_part = self.find_spec_part(item_name)
+        if 'item_type' in spec_part and \
+           spec_part['item_type'] == 'named_map':
+            subslash = ""
+            if spec_part['named_map_item_spec']['item_type'] == 'map' or\
+               spec_part['named_map_item_spec']['item_type'] == 'named_map':
+                subslash = "/"
+            values, status = self.get_value(item_name)
+            if len(values) > 0:
+                return [ item_name + "/" + v + subslash for v in values.keys() ]
+            else:
+                return [ item_name ]
+        else:
+            return [ item_name ]
+
     def get_config_item_list(self, identifier = None, recurse = False):
         """Returns a list of strings containing the item_names of
            the child items at the given identifier. If no identifier is
@@ -671,7 +696,11 @@ class MultiConfigData:
             if identifier.startswith("/"):
                 identifier = identifier[1:]
             spec = self.find_spec_part(identifier)
-            return spec_name_list(spec, identifier + "/", recurse)
+            spec_list = spec_name_list(spec, identifier + "/", recurse)
+            result_list = []
+            for spec_name in spec_list:
+                result_list.extend(self._get_list_items(spec_name))
+            return result_list
         else:
             if recurse:
                 id_list = []
