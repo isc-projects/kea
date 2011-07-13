@@ -252,8 +252,7 @@ class CommandControl():
         self._cc = isc.cc.Session()
         self._module_cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
                                               self.config_handler,
-                                              self.command_handler,
-                                              None, True)
+                                              self.command_handler)
         self._module_name = self._module_cc.get_module_spec().get_module_name()
         self._cmdctl_config_data = self._module_cc.get_full_config()
         self._module_cc.start()
