@@ -23,13 +23,13 @@ is created.
 % DATASRC_CACHE_DESTROY destroying the hotspot cache
 Debug information. The hotspot cache is being destroyed.
 
-% DATASRC_CACHE_DISABLE disabling the cache
+% DATASRC_CACHE_DISABLE disabling the hotspot cache
 A debug message issued when the hotspot cache is disabled.
 
-% DATASRC_CACHE_ENABLE enabling the cache
+% DATASRC_CACHE_ENABLE enabling the hotspot cache
 A debug message issued when the hotspot cache is enabled.
 
-% DATASRC_CACHE_EXPIRED the item '%1' is expired
+% DATASRC_CACHE_EXPIRED item '%1' in the hotspot cache has expired
 A debug message issued when a hotspot cache lookup located the item but it
 had expired.  The item was removed and the program proceeded as if the item
 had not been found.
@@ -37,28 +37,28 @@ had not been found.
 % DATASRC_CACHE_FOUND the item '%1' was found
 Debug information. An item was successfully located in the hotspot cache.
 
-% DATASRC_CACHE_FULL cache is full, dropping oldest
+% DATASRC_CACHE_FULL hotspot cache is full, dropping oldest
 Debug information. After inserting an item into the hotspot cache, the
 maximum number of items was exceeded, so the least recently used item will
 be dropped. This should be directly followed by CACHE_REMOVE.
 
-% DATASRC_CACHE_INSERT inserting item '%1' into the cache
+% DATASRC_CACHE_INSERT inserting item '%1' into the hotspot cache
 A debug message indicating that a new item is being inserted into the hotspot
 cache.
 
-% DATASRC_CACHE_NOT_FOUND the item '%1' was not found
+% DATASRC_CACHE_NOT_FOUND the item '%1' was not found in the hotspot cache
 A debug message issued when hotspot cache was searched for the specified
 item but it was not found.
 
-% DATASRC_CACHE_OLD_FOUND older instance of cache item '%1' found, replacing
+% DATASRC_CACHE_OLD_FOUND older instance of hotspot cache item '%1' found, replacing
 Debug information. While inserting an item into the hotspot cache, an older
 instance of an item with the same name was found; the old instance will be
 removed. This will be directly followed by CACHE_REMOVE.
 
-% DATASRC_CACHE_REMOVE removing '%1' from the cache
+% DATASRC_CACHE_REMOVE removing '%1' from the hotspot cache
 Debug information. An item is being removed from the hotspot cache.
 
-% DATASRC_CACHE_SLOTS setting the cache size to '%1', dropping '%2' items
+% DATASRC_CACHE_SLOTS setting the hotspot cache size to '%1', dropping '%2' items
 The maximum allowed number of items of the hotspot cache is set to the given
 number. If there are too many, some of them will be dropped. The size of 0
 means no limit.
@@ -142,7 +142,7 @@ in-memory data source.
 % DATASRC_MEM_LOAD loading zone '%1' from file '%2'
 Debug information. The content of master file is being loaded into the memory.
 
-% DATASRC_MEM_NOTFOUND requested domain '%1' not found
+% DATASRC_MEM_NOT_FOUND requested domain '%1' not found
 Debug information. The requested domain does not exist.
 
 % DATASRC_MEM_NS_ENCOUNTERED encountered a NS
@@ -410,7 +410,7 @@ Debug information. An instance of SQLite data source is being destroyed.
 Debug information. The SQLite data source is trying to identify which zone
 should hold this domain.
 
-% DATASRC_SQLITE_ENCLOSURE_NOTFOUND no zone contains it
+% DATASRC_SQLITE_ENCLOSURE_NOT_FOUND no zone contains '%1'
 Debug information. The last SQLITE_ENCLOSURE query was unsuccessful; there's
 no such zone in our data.
 
