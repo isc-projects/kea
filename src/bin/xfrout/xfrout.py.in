@@ -117,7 +117,7 @@ class XfroutSession():
             self.dns_xfrout_start(self._sock_fd, self._request_data)
             #TODO, avoid catching all exceptions
         except Exception as e:
-            logger.error(XFROUT_HANDLE_QUERY_ERROR, str(e))
+            logger.error(XFROUT_HANDLE_QUERY_ERROR, e)
             pass
 
         os.close(self._sock_fd)
@@ -148,12 +148,20 @@ class XfroutSession():
             acl_result = self._acl.execute(
                 isc.acl.dns.RequestContext(self._remote))
             if acl_result == isc.acl.acl.DROP:
+                logger.info(XFROUT_QUERY_DROPPED,
+                            self._get_query_zone_name(msg),
+                            self._get_query_zone_class(msg),
+                            self._remote[0], self._remote[1])
                 return None, None
             elif acl_result == isc.acl.acl.REJECT:
+                logger.info(XFROUT_QUERY_REJECTED,
+                            self._get_query_zone_name(msg),
+                            self._get_query_zone_class(msg),
+                            self._remote[0], self._remote[1])
                 return Rcode.REFUSED(), msg
 
         except Exception as err:
-            logger.error(XFROUT_PARSE_QUERY_ERROR, str(err))
+            logger.error(XFROUT_PARSE_QUERY_ERROR, err)
             return Rcode.FORMERR(), None
 
         return rcode, msg
