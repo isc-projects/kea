@@ -68,7 +68,7 @@ class TestHttpHandler(unittest.TestCase):
         self.assertTrue(type(self.stats_httpd.httpd) is list)
         self.assertEqual(len(self.stats_httpd.httpd), 0)
         statshttpd_server.run()
-        time.sleep(TIMEOUT_SEC*5)
+        time.sleep(TIMEOUT_SEC*8)
         client = http.client.HTTPConnection(address, port)
         client._http_vsn_str = 'HTTP/1.0\n'
         client.connect()
@@ -248,23 +248,6 @@ class TestHttpHandler(unittest.TestCase):
         self.assertEqual(response.status, 404)
         client.close()
         statshttpd_server.shutdown()
-
-    def test_log_message(self):
-        class MyHttpHandler(stats_httpd.HttpHandler):
-            def __init__(self):
-                class _Dummy_class_(): pass
-                self.address_string = lambda : 'dummyhost'
-                self.log_date_time_string = lambda : \
-                    'DD/MM/YYYY HH:MI:SS'
-                self.server = _Dummy_class_()
-                self.server.log_writer = self.log_writer
-            def log_writer(self, line):
-                self.logged_line = line
-        self.handler = MyHttpHandler()
-        self.handler.log_message("%s %d", 'ABCDEFG', 12345)
-        self.assertEqual(self.handler.logged_line,
-                         "[b10-stats-httpd] dummyhost - - "
-                         + "[DD/MM/YYYY HH:MI:SS] ABCDEFG 12345\n")
 
 class TestHttpServerError(unittest.TestCase):
     """Tests for HttpServerError exception"""
