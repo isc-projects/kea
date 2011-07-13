@@ -410,7 +410,6 @@ class MultiConfigData:
             id_parts = isc.cc.data.split_identifier(id)
             id_prefix = ""
             while len(id_parts) > 0:
-                # [XX] TODO: Refactor
                 id_part = id_parts.pop(0)
                 item_id, list_indices = isc.cc.data.split_identifier_list_indices(id_part)
                 id_list = module + "/" + id_prefix + "/" + item_id
@@ -527,7 +526,7 @@ class MultiConfigData:
                 spec_part_list = spec_part['list_item_spec']
                 list_value, status = self.get_value(identifier)
                 if list_value is None:
-                    raise isc.cc.data.DataNotFoundError(identifier)
+                    raise isc.cc.data.DataNotFoundError(identifier + " not found")
 
                 if type(list_value) != list:
                     # the identifier specified a single element
@@ -550,11 +549,10 @@ class MultiConfigData:
                 self._append_value_item(result, spec_part_map, identifier, all)
             elif item_type == "named_map":
                 value, status = self.get_value(identifier)
-                if status == self.NONE or (status == self.DEFAULT and value == {}):
-                    raise isc.cc.data.DataNotFoundError(identifier)
+
                 # show just the one entry, when either the map is empty,
                 # or when this is element is not requested specifically
-                if (len(value.keys()) == 0 and (all or first)):
+                if len(value.keys()) == 0:
                     entry = _create_value_map_entry(identifier,
                                                     item_type,
                                                     {}, status)
@@ -567,12 +565,14 @@ class MultiConfigData:
                 else:
                     spec_part_named_map = spec_part['named_map_item_spec']
                     for entry in value:
-                    #    xxxxxxxxxxx
-                        self._append_value_item(result, spec_part_named_map, identifier + "/" + entry, all)
+                        self._append_value_item(result,
+                                                spec_part_named_map,
+                                                identifier + "/" + entry,
+                                                all)
             else:
                 value, status = self.get_value(identifier)
                 if status == self.NONE and not spec_part['item_optional']:
-                    raise isc.cc.data.DataNotFoundError(identifier)
+                    raise isc.cc.data.DataNotFoundError(identifier + " not found")
 
                 entry = _create_value_map_entry(identifier,
                                                 item_type,
@@ -628,7 +628,7 @@ class MultiConfigData:
                     spec_part = spec_part['list_item_spec']
                 check_type(spec_part, value)
         else:
-            raise isc.cc.data.DataNotFoundError(identifier)
+            raise isc.cc.data.DataNotFoundError(identifier + " not found")
 
         # Since we do not support list diffs (yet?), we need to
         # copy the currently set list of items to _local_changes
@@ -638,12 +638,26 @@ class MultiConfigData:
         cur_id_part = '/'
         for id_part in id_parts:
             id, list_indices = isc.cc.data.split_identifier_list_indices(id_part)
+            cur_value, status = self.get_value(cur_id_part + id)
+            # Check if the value was there in the first place
+            if status == MultiConfigData.NONE and cur_id_part != "/":
+                raise isc.cc.data.DataNotFoundError(id_part +
+                                                    " not found in " +
+                                                    cur_id_part)
             if list_indices is not None:
-                cur_list, status = self.get_value(cur_id_part + id)
+                # And check if we don't set something outside of any
+                # list
+                cur_list = cur_value
+                for list_index in list_indices:
+                    if list_index >= len(cur_list):
+                        raise isc.cc.data.DataNotFoundError("No item " +
+                                  str(list_index) + " in " + id_part)
+                    else:
+                        cur_list = cur_list[list_index]
                 if status != MultiConfigData.LOCAL:
                     isc.cc.data.set(self._local_changes,
                                     cur_id_part + id,
-                                    cur_list)
+                                    cur_value)
             cur_id_part = cur_id_part + id_part + "/"
         isc.cc.data.set(self._local_changes, identifier, value)
  

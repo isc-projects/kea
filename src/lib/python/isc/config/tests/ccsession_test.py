@@ -750,15 +750,16 @@ class TestUIModuleCCSession(unittest.TestCase):
         uccs.add_value("/Spec32/named_map_item", "foo")
         value, status = uccs.get_value("/Spec32/named_map_item")
         self.assertEqual({'a': 1, 'b': 2, 'foo': 3}, value)
-        uccs.set_value("/Spec32/named_map_item/bar", 4)
-        value, status = uccs.get_value("/Spec32/named_map_item")
-        self.assertEqual({'a': 1, 'b': 2, 'foo': 3, 'bar': 4}, value)
 
         uccs.remove_value("/Spec32/named_map_item", "a")
         uccs.remove_value("/Spec32/named_map_item", "foo")
         value, status = uccs.get_value("/Spec32/named_map_item")
-        self.assertEqual({'b': 2, 'bar': 4}, value)
+        self.assertEqual({'b': 2}, value)
 
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          uccs.set_value,
+                          "/Spec32/named_map_item/no_such_item",
+                          4)
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           uccs.remove_value, "/Spec32/named_map_item",
                           "no_such_item")
