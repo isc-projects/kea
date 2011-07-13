@@ -234,11 +234,11 @@ specific error already.
 The domain lives in another zone. But it is not possible to generate referral
 information for it.
 
-% DATASRC_QUERY_CACHED data for %1/%2 found in cache
+% DATASRC_QUERY_CACHED data for %1/%2 found in hotspot cache
 Debug information. The requested data were found in the hotspot cache, so
 no query is sent to the real data source.
 
-% DATASRC_QUERY_CHECK_CACHE checking cache for '%1/%2'
+% DATASRC_QUERY_CHECK_CACHE checking hotspot cache for '%1/%2'
 Debug information. While processing a query, lookup to the hotspot cache
 is being made.
 
@@ -321,11 +321,11 @@ The underlying data source failed to answer the no-glue query. 1 means some
 error, 2 is not implemented. The data source should have logged the specific
 error already.
 
-% DATASRC_QUERY_NO_CACHE_ANY_AUTH ignoring cache for ANY query (%1/%2 in %3 class)
+% DATASRC_QUERY_NO_CACHE_ANY_AUTH ignoring hotspot cache for ANY query (%1/%2 in %3 class)
 Debug information. The hotspot cache is ignored for authoritative ANY queries
 for consistency reasons.
 
-% DATASRC_QUERY_NO_CACHE_ANY_SIMPLE ignoring cache for ANY query (%1/%2 in %3 class)
+% DATASRC_QUERY_NO_CACHE_ANY_SIMPLE ignoring hotspot cache for ANY query (%1/%2 in %3 class)
 Debug information. The hotspot cache is ignored for ANY queries for consistency
 reasons.
 
