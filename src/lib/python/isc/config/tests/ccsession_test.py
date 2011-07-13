@@ -108,8 +108,11 @@ class TestModuleCCSession(unittest.TestCase):
     def spec_file(self, file):
         return self.data_path + os.sep + file
         
-    def create_session(self, spec_file_name, config_handler = None, command_handler = None, cc_session = None):
-        return ModuleCCSession(self.spec_file(spec_file_name), config_handler, command_handler, cc_session)
+    def create_session(self, spec_file_name, config_handler = None,
+                       command_handler = None, cc_session = None):
+        return ModuleCCSession(self.spec_file(spec_file_name),
+                               config_handler, command_handler,
+                               cc_session, False)
 
     def test_init(self):
         fake_session = FakeModuleCCSession()

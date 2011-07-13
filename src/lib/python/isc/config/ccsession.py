@@ -142,7 +142,7 @@ class ModuleCCSession(ConfigData):
        callbacks are called when 'check_command' is called on the
        ModuleCCSession"""
        
-    def __init__(self, spec_file_name, config_handler, command_handler, cc_session=None, handle_logging_config=False):
+    def __init__(self, spec_file_name, config_handler, command_handler, cc_session=None, handle_logging_config=True):
         """Initialize a ModuleCCSession. This does *NOT* send the
            specification and request the configuration yet. Use start()
            for that once the ModuleCCSession has been initialized.
@@ -163,7 +163,7 @@ class ModuleCCSession(ConfigData):
            the logger manager to apply it. It will also inform the
            logger manager when the logging configuration gets updated.
            The module does not need to do anything except intializing
-           its loggers, and provide log messages
+           its loggers, and provide log messages. Defaults to true.
         """
         module_spec = isc.config.module_spec_from_file(spec_file_name)
         ConfigData.__init__(self, module_spec)
