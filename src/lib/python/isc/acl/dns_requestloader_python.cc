@@ -82,9 +82,10 @@ RequestLoader_destroy(PyObject* po_self) {
     Py_TYPE(self)->tp_free(self);
 }
 
-// This helper function essentially does:
-//   import json
-//   return json.dumps
+// This C structure corresponds to a Python callable object for json.dumps().
+// This is initialized at the class initialization time (in
+// initModulePart_RequestLoader() below) and it's ensured to be non NULL and
+// valid in the rest of the class implementation.
 // Getting access to the json module this way and call one of its functions
 // via PyObject_CallObject() may exceed the reasonably acceptable level for
 // straightforward bindings.  But the alternative would be to write a Python
@@ -92,18 +93,7 @@ RequestLoader_destroy(PyObject* po_self) {
 // be too much.  So, right now, we implement everything within the binding
 // implementation.  If future extensions require more such non trivial
 // wrappers, we should consider the frontend approach more seriously.
-PyObject*
-getJSONDumpsObj() {
-    PyObject* json_dump_obj = NULL;
-    PyObject* json_module = PyImport_AddModule("json");
-    if (json_module != NULL) {
-        PyObject* json_dict = PyModule_GetDict(json_module);
-        if (json_dict != NULL) {
-            json_dump_obj = PyDict_GetItemString(json_dict, "dumps");
-        }
-    }
-    return (json_dump_obj);
-}
+PyObject* json_dumps_obj = NULL;
 
 PyObject*
 RequestLoader_load(PyObject* po_self, PyObject* args) {
@@ -125,12 +115,9 @@ RequestLoader_load(PyObject* po_self, PyObject* args) {
             // tuple as its argument parameter, just like ParseTuple.
             PyObject* json_obj;
             if (PyArg_ParseTuple(args, "O", &json_obj)) {
-                PyObject* json_dumps_obj = getJSONDumpsObj();
-                if (json_dumps_obj != NULL) {
-                    c1.reset(PyObject_CallObject(json_dumps_obj, args));
-                    c2.reset(Py_BuildValue("(O)", c1.get()));
-                    py_result = PyArg_ParseTuple(c2.get(), "s", &acl_config);
-                }
+                c1.reset(PyObject_CallObject(json_dumps_obj, args));
+                c2.reset(Py_BuildValue("(O)", c1.get()));
+                py_result = PyArg_ParseTuple(c2.get(), "s", &acl_config);
             }
         }
         if (py_result) {
@@ -245,6 +232,34 @@ initModulePart_RequestLoader(PyObject* mod) {
                            static_cast<PyObject*>(p)) < 0) {
         return (false);
     }
+
+    // Get and hold our own reference to json.dumps() for later use.
+    // Normally it should succeed as __init__.py of the isc.acl package
+    // explicitly imports the json module, and the code below should be
+    // error free (e.g. they don't require memory allocation) under this
+    // condition.
+    // This could still fail with deviant or evil Python code such as those
+    // that first import json and then delete the reference to it from
+    // sys.modules before it imports the acl.dns module.  The RequestLoader
+    // class could still work as long as it doesn't use the JSON decoder,
+    // but we'd rather refuse to import the module than allowing the partially
+    // workable class to keep running.
+    PyObject* json_module = PyImport_AddModule("json");
+    if (json_module != NULL) {
+        PyObject* json_dict = PyModule_GetDict(json_module);
+        if (json_dict != NULL) {
+            json_dumps_obj = PyDict_GetItemString(json_dict, "dumps");
+        }
+    }
+    if (json_dumps_obj != NULL) {
+        Py_INCREF(json_dumps_obj);
+    } else {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "isc.acl.dns.RequestLoader needs the json module, but "
+                        "it's missing");
+        return (false);
+    }
+
     Py_INCREF(&requestloader_type);
 
     return (true);
