@@ -95,7 +95,8 @@ def get_rrset_len(rrset):
 
 
 class XfroutSession():
-    def __init__(self, sock_fd, request_data, server, tsig_key_ring, remote):
+    def __init__(self, sock_fd, request_data, server, tsig_key_ring, remote,
+                 acl):
         self._sock_fd = sock_fd
         self._request_data = request_data
         self._server = server
@@ -103,6 +104,7 @@ class XfroutSession():
         self._tsig_ctx = None
         self._tsig_len = 0
         self._remote = remote
+        self._acl = acl
         self.handle()
 
     def create_tsig_ctx(self, tsig_record, tsig_key_ring):
@@ -493,7 +495,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         '''Finish one request by instantiating RequestHandlerClass.'''
         self.RequestHandlerClass(sock_fd, request_data, self,
                                  self.tsig_key_ring,
-                                 self._guess_remote(sock_fd))
+                                 self._guess_remote(sock_fd), self._acl)
 
     def _remove_unused_sock_file(self, sock_file):
         '''Try to remove the socket file. If the file is being used
