@@ -82,13 +82,58 @@ RequestLoader_destroy(PyObject* po_self) {
     Py_TYPE(self)->tp_free(self);
 }
 
+// This helper function essentially does:
+//   import json
+//   return json.dumps
+// Getting access to the json module this way and call one of its functions
+// via PyObject_CallObject() may exceed the reasonably acceptable level for
+// straightforward bindings.  But the alternative would be to write a Python
+// frontend for the entire module only for this conversion, which would also
+// be too much.  So, right now, we implement everything within the binding
+// implementation.  If future extensions require more such non trivial
+// wrappers, we should consider the frontend approach more seriously.
+PyObject*
+getJSONDumpsObj() {
+    PyObject* json_dump_obj = NULL;
+    PyObject* json_module = PyImport_AddModule("json");
+    if (json_module != NULL) {
+        PyObject* json_dict = PyModule_GetDict(json_module);
+        if (json_dict != NULL) {
+            json_dump_obj = PyDict_GetItemString(json_dict, "dumps");
+        }
+    }
+    return (json_dump_obj);
+}
+
 PyObject*
 RequestLoader_load(PyObject* po_self, PyObject* args) {
     s_RequestLoader* const self = static_cast<s_RequestLoader*>(po_self);
-    const char* acl_config;
 
-    if (PyArg_ParseTuple(args, "s", &acl_config)) {
-        try {
+    try {
+        PyObjectContainer c1, c2; // placeholder for temporary py objects
+        const char* acl_config;
+
+        // First, try string
+        int py_result = PyArg_ParseTuple(args, "s", &acl_config);
+        if (!py_result) {
+            PyErr_Clear();  // need to clear the error from ParseTuple
+
+            // If that fails, confirm the argument is a single Python object,
+            // and pass the argument to json.dumps() without conversion.
+            // Note that we should pass 'args', not 'json_obj' to
+            // PyObject_CallObject(), since this function expects a form of
+            // tuple as its argument parameter, just like ParseTuple.
+            PyObject* json_obj;
+            if (PyArg_ParseTuple(args, "O", &json_obj)) {
+                PyObject* json_dumps_obj = getJSONDumpsObj();
+                if (json_dumps_obj != NULL) {
+                    c1.reset(PyObject_CallObject(json_dumps_obj, args));
+                    c2.reset(Py_BuildValue("(O)", c1.get()));
+                    py_result = PyArg_ParseTuple(c2.get(), "s", &acl_config);
+                }
+            }
+        }
+        if (py_result) {
             shared_ptr<RequestACL> acl(
                 self->cppobj->load(Element::fromJSON(acl_config)));
             s_RequestACL* py_acl = static_cast<s_RequestACL*>(
@@ -97,15 +142,24 @@ RequestLoader_load(PyObject* po_self, PyObject* args) {
                 py_acl->cppobj = acl;
             }
             return (py_acl);
-        } catch (const exception& ex) {
-            PyErr_SetString(getACLException("LoaderError"), ex.what());
-            return (NULL);
-        } catch (...) {
-            PyErr_SetString(PyExc_SystemError, "Unexpected C++ exception");
-            return (NULL);
         }
+    } catch (const PyCPPWrapperException&) {
+        // If the wrapper utility throws, it's most likely because an invalid
+        // type of argument is passed (and the call to json.dumps() failed
+        // above), rather than a rare case of system errors such as memory
+        // allocation failure.  So we fall through to the end of this function
+        // and raise a TypeError.
+        ;
+    } catch (const exception& ex) {
+        PyErr_SetString(getACLException("LoaderError"), ex.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError, "Unexpected C++ exception");
+        return (NULL);
     }
 
+    PyErr_SetString(PyExc_TypeError, "RequestLoader.load() "
+                    "expects str or python representation of JSON");
     return (NULL);
 }
 
