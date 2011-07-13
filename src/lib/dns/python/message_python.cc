@@ -703,6 +703,15 @@ Message_toWire(s_Message* self, PyObject* args) {
             // python program has a bug.
             PyErr_SetString(po_TSIGContextError, ex.what());
             return (NULL);
+        } catch (const std::exception& ex) {
+            // Other exceptions should be rare (most likely an implementation
+            // bug)
+            PyErr_SetString(po_TSIGContextError, ex.what());
+            return (NULL);
+        } catch (...) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "Unexpected C++ exception in Message.to_wire");
+            return (NULL);
         }
     }
     PyErr_Clear();
