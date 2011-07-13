@@ -103,15 +103,15 @@ isc::log::Severity b10LoggerSeverity(isc::log::Severity defseverity);
 int b10LoggerDbglevel(int defdbglevel);
 
 
-/// \brief Reset Logger Characteristics
+/// \brief Reset Root Logger Characteristics
 ///
-/// This is a simplified interface into the setting of the characteristics
+/// This is a simplified interface into the resetting of the characteristics
 /// of the root logger.  It is aimed for use in unit tests and resets the
 /// characteristics of the root logger to use a severity, debug level and
 /// destination set by the environment variables B10_LOGGER_SEVERITY,
 /// B10_LOGGER_DBGLEVEL and B10_LOGGER_DESTINATION.
 void
-setUnitTestRootLoggerCharacteristics();
+resetUnitTestRootLogger();
 
 } // namespace log
 } // namespace isc
