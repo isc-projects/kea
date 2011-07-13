@@ -22,7 +22,7 @@ int
 main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest(&argc, argv);         // Initialize Google test
-    isc::log::LoggerManager::init("unittest");      // Set a root logger name
+    isc::log::initLogger();                         // Initialize logging
     isc::UnitTestUtil::addDataPath(TEST_DATA_DIR);  // Add location of test data
 
     return (isc::util::unittests::run_all());
