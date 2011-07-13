@@ -356,7 +356,8 @@ Sqlite3DataSrc::findClosestEnclosure(DataSrcMatch& match) const {
 
     unsigned int position;
     if (findClosest(match.getName(), &position) == -1) {
-        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_SQLITE_ENCLOSURE_NOTFOUND);
+        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_SQLITE_ENCLOSURE_NOT_FOUND)
+                  .arg(match.getName());
         return;
     }
 
