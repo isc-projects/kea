@@ -15,7 +15,7 @@
 #include <gtest/gtest.h>
 #include <util/unittests/run_all.h>
 
-#include <log/logger_manager.h>
+#include <log/logger_support.h>
 #include <dns/tests/unittest_util.h>
 
 int
