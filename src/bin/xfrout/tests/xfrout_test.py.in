@@ -118,7 +118,10 @@ class TestXfroutSession(unittest.TestCase):
     def setUp(self):
         self.sock = MySocket(socket.AF_INET,socket.SOCK_STREAM)
         self.xfrsess = MyXfroutSession(self.sock, None, Dbserver(),
-                                       TSIGKeyRing(), ('127.0.0.1', 12345))
+                                       TSIGKeyRing(), ('127.0.0.1', 12345),
+                                       # When not testing ACLs, simply accept
+                                       isc.acl.dns.REQUEST_LOADER.load(
+                                           [{"action": "ACCEPT"}]))
         self.mdata = bytes(b'\xd6=\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01')
         self.soa_record = (4, 3, 'example.com.', 'com.example.', 3600, 'SOA', None, 'master.example.com. admin.example.com. 1234 3600 1800 2419200 7200')
 
