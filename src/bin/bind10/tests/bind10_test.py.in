@@ -26,6 +26,7 @@ import socket
 from isc.net.addr import IPAddr
 import time
 import isc
+import isc.log
 
 from isc.testutils.parse_args import TestOptParser, OptsError
 
@@ -764,4 +765,5 @@ class TestBrittle(unittest.TestCase):
         self.assertFalse(bob.runnable)
 
 if __name__ == '__main__':
+    isc.log.resetUnitTestRootLogger()
     unittest.main()

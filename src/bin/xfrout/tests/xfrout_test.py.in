@@ -23,6 +23,7 @@ from isc.cc.session import *
 from pydnspp import *
 from xfrout import *
 import xfrout
+import isc.log
 
 TSIG_KEY = TSIGKey("example.com:SFuWd/q99SzF8Yzd1QbB9g==")
 
@@ -670,4 +671,5 @@ class TestInitialization(unittest.TestCase):
         self.assertEqual(xfrout.UNIX_SOCKET_FILE, "The/Socket/File")
 
 if __name__== "__main__":
+    isc.log.resetUnitTestRootLogger()
     unittest.main()
