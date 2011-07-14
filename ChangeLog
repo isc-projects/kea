@@ -1,3 +1,8 @@
+269.	[bug]		y-aharen
+	Modified IntervalTimerTest not to rely on the accuracy of the timer.
+	This fix addresses occasional failure of build tests.
+	(Trac #1016, git 090c4c5abac33b2b28d7bdcf3039005a014f9c5b)
+
 268.	[func]		stephen
 	Add environment variable to allow redirection of logging output during
 	unit tests.
