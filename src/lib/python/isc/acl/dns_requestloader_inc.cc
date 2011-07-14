@@ -1,12 +1,13 @@
 namespace {
+
+// Note: this is derived from the generic Loader class of the C++
+// implementation, but is slightly different from the original.
+// Be careful when you make further merge from the C++ document.
 const char* const RequestLoader_doc = "\
 Loader of DNS Request ACLs.\n\
 \n\
 The goal of this class is to convert JSON description of an ACL to\n\
 object of the ACL class (including the checks inside it).\n\
-\n\
-The class can be used to load the checks only. This is supposed to be\n\
-used by compound checks to create the subexpressions.\n\
 \n\
 To allow any kind of checks to exist in the application, creators are\n\
 registered for the names of the checks (this feature is not yet\n\
