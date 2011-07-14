@@ -566,7 +566,7 @@ class XfroutServer:
         #self._log = None
         self._listen_sock_file = UNIX_SOCKET_FILE
         self._shutdown_event = threading.Event()
-        self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler, None, True)
+        self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
         self._config_data = self._cc.get_full_config()
         self._cc.start()
         self._cc.add_remote_config(AUTH_SPECFILE_LOCATION);

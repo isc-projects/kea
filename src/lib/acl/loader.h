@@ -101,21 +101,21 @@ BasicAction defaultActionLoader(data::ConstElementPtr action);
  *
  * An ACL definition looks like this:
  * \verbatim
- * [
- *   {
- *      "action": "ACCEPT",
- *      "match-type": <parameter>
- *   },
- *   {
- *      "action": "REJECT",
- *      "match-type": <parameter>
- *      "another-match-type": [<parameter1>, <parameter2>]
-*    },
-*    {
-*       "action": "DROP"
-*    }
- * ]
- * \endverbatim
+ [
+   {
+      "action": "ACCEPT",
+      "match-type": <parameter>
+   },
+   {
+      "action": "REJECT",
+      "match-type": <parameter>,
+      "another-match-type": [<parameter1>, <parameter2>]
+   },
+   {
+      "action": "DROP"
+   }
+ ]
+ \endverbatim
  *
  * This is a list of elements. Each element must have an "action"
  * entry/keyword. That one specifies which action is returned if this

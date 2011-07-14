@@ -23,6 +23,7 @@ from isc.config.ccsession import *
 from isc.config.config_data import BIND10_CONFIG_DATA_VERSION
 from unittest_fakesession import FakeModuleCCSession, WouldBlockForever
 import bind10_config
+import isc.log
 
 class TestHelperFunctions(unittest.TestCase):
     def test_parse_answer(self):
@@ -107,8 +108,11 @@ class TestModuleCCSession(unittest.TestCase):
     def spec_file(self, file):
         return self.data_path + os.sep + file
         
-    def create_session(self, spec_file_name, config_handler = None, command_handler = None, cc_session = None):
-        return ModuleCCSession(self.spec_file(spec_file_name), config_handler, command_handler, cc_session)
+    def create_session(self, spec_file_name, config_handler = None,
+                       command_handler = None, cc_session = None):
+        return ModuleCCSession(self.spec_file(spec_file_name),
+                               config_handler, command_handler,
+                               cc_session, False)
 
     def test_init(self):
         fake_session = FakeModuleCCSession()
@@ -739,5 +743,6 @@ class TestUIModuleCCSession(unittest.TestCase):
         uccs.commit()
 
 if __name__ == '__main__':
+    isc.log.init("bind10")
     unittest.main()
 

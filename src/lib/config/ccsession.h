@@ -179,7 +179,7 @@ public:
      * We'll need to develop a cleaner solution, and then remove this knob)
      * @param handle_logging If true, the ModuleCCSession will automatically
      * take care of logging configuration through the virtual Logging config
-     * module.
+     * module. Defaults to true.
      */
     ModuleCCSession(const std::string& spec_file_name,
                     isc::cc::AbstractSession& session,
@@ -189,7 +189,7 @@ public:
                         const std::string& command,
                         isc::data::ConstElementPtr args) = NULL,
                     bool start_immediately = true,
-                    bool handle_logging = false
+                    bool handle_logging = true
                     );
 
     /// Start receiving new commands and configuration changes asynchronously.
