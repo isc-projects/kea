@@ -1,3 +1,8 @@
+270.	[func]		jinmei
+	Added python bindings for ACLs using the DNS request as the
+	context.  They are accessible via the isc.acl.dns module.
+	(Trac #983, git c24553e21fe01121a42e2136d0a1230d75812b27)
+
 269.	[bug]		y-aharen
 	Modified IntervalTimerTest not to rely on the accuracy of the timer.
 	This fix addresses occasional failure of build tests.
