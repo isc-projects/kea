@@ -4,6 +4,13 @@ PYTESTS = b10-stats_test.py b10-stats-httpd_test.py
 EXTRA_DIST = $(PYTESTS) fake_time.py fake_socket.py fake_select.py
 CLEANFILES = fake_time.pyc fake_socket.pyc fake_select.pyc
 
+# If necessary (rare cases), explicitly specify paths to dynamic libraries
+# required by loadable python modules.
+LIBRARY_PATH_PLACEHOLDER =
+if SET_ENV_LIBRARY_PATH
+LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/cc/.libs:$(abs_top_builddir)/src/lib/config/.libs:$(abs_top_builddir)/src/lib/log/.libs:$(abs_top_builddir)/src/lib/util/.libs:$(abs_top_builddir)/src/lib/exceptions/.libs:$$$(ENV_LIBRARY_PATH)
+endif
+
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
 if ENABLE_PYTHON_COVERAGE
@@ -13,6 +20,7 @@ if ENABLE_PYTHON_COVERAGE
 endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
+	$(LIBRARY_PATH_PLACEHOLDER) \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/stats:$(abs_top_builddir)/src/bin/stats/tests \
 	B10_FROM_SOURCE=$(abs_top_srcdir) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \

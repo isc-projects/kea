@@ -161,7 +161,7 @@ StaticDataSrc::findRRset(const Name& qname,
         arg(qtype);
     flags = 0;
     if (qclass != getClass() && qclass != RRClass::ANY()) {
-        LOG_ERROR(logger, DATASRC_STATIC_BAD_CLASS);
+        LOG_ERROR(logger, DATASRC_STATIC_CLASS_NOT_CH);
         return (ERROR);
     }
 

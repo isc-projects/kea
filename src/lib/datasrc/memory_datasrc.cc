@@ -129,7 +129,7 @@ struct MemoryZone::MemoryZoneImpl {
         // Ensure CNAME and other type of RR don't coexist for the same
         // owner name.
         if (rrset->getType() == RRType::CNAME()) {
-            // XXX: this check will become incorrect when we support DNSSEC
+            // TODO: this check will become incorrect when we support DNSSEC
             // (depending on how we support DNSSEC).  We should revisit it
             // at that point.
             if (!domain->empty()) {
@@ -523,7 +523,7 @@ struct MemoryZone::MemoryZoneImpl {
 
                 // fall through
             case DomainTree::NOTFOUND:
-                LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOTFOUND).
+                LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOT_FOUND).
                     arg(name);
                 return (FindResult(NXDOMAIN, ConstRRsetPtr()));
             case DomainTree::EXACTMATCH: // This one is OK, handle it
