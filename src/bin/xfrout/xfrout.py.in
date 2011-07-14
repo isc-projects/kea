@@ -399,7 +399,6 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         self._shutdown_event = shutdown_event
         self._write_sock, self._read_sock = socket.socketpair()
         self._common_init()
-        #self._log = log
         self.update_config_data(config_data)
         self._cc = cc
 
@@ -496,7 +495,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
            socket
         """
         # This uses a trick. If the socket is IPv4 in reality and we pretend
-        # it to to be IPv6, it returns IPv4 address anyway. This doesn't seem
+        # it to be IPv6, it returns IPv4 address anyway. This doesn't seem
         # to care about the SOCK_STREAM parameter at all (which it really is,
         # except for testing)
         if socket.has_ipv6:
@@ -614,9 +613,6 @@ class XfroutServer:
         self._config_data = self._cc.get_full_config()
         self._cc.start()
         self._cc.add_remote_config(AUTH_SPECFILE_LOCATION);
-        #self._log = isc.log.NSLogger(self._config_data.get('log_name'), self._config_data.get('log_file'),
-        #                        self._config_data.get('log_severity'), self._config_data.get('log_versions'),
-        #                        self._config_data.get('log_max_bytes'), True)
         self._start_xfr_query_listener()
         self._start_notifier()
 
