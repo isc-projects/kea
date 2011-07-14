@@ -1,3 +1,8 @@
+272.	[func]		jinmei
+	libdns++/pydnspp: TSIG signing now handles truncated DNS messages
+	(i.e. with TC bit on) with TSIG correctly.
+	(Trac #910, 8e00f359e81c3cb03c5075710ead0f87f87e3220)
+
 271.	[func]		stephen
 	Default logging for unit tests changed to severity DEBUG (level 99)
 	with the output routed to /dev/null.  This can be altered by setting
