@@ -269,10 +269,11 @@ PyMethodDef methods[] = {
         "'FATAL'), a debug level (integer in the range 0-99) and a file name "
         "of a dictionary with message text translations."},
     {"resetUnitTestRootLogger", resetUnitTestRootLogger, METH_VARARGS,
-        "Initialization for unit tests.  Sets the severity and output stream "
-        "according to a set of environment variables.  This should not be "
-        "used in production code.  The name is slightly confusing, but it "
-        "mirrors a method of the same name used for the C++ unit tests."},
+        "Resets the configuration of the root logger to that set by the "
+        "B10_XXX environment variables.  It is aimed at unit tests, where "
+        "the logging is initialized by the code under test; called before "
+        "the unit test starts, this function resets the logging configuration "
+        "to that in use for the C++ unit tests."},
     {"log_config_update", logConfigUpdate, METH_VARARGS,
         "Update logger settings. This method is automatically used when "
         "ModuleCCSession is initialized with handle_logging_config set "
