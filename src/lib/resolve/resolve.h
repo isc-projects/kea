@@ -37,7 +37,6 @@ namespace resolve {
 /// section), you can simply use this to create an error response.
 ///
 /// \param answer_message The message to clear and place the error in
-/// \param question The question to add to the
 /// \param error_code The error Rcode
 void makeErrorMessage(isc::dns::MessagePtr answer_message,
                       const isc::dns::Rcode& error_code);
