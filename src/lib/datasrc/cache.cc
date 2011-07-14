@@ -232,7 +232,8 @@ HotCacheImpl::insert(const CacheNodePtr node) {
     if (iter != map_.end()) {
         CacheNodePtr old = iter->second;
         if (old && old->isValid()) {
-            LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_CACHE_OLD_FOUND);
+            LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_CACHE_OLD_FOUND)
+                      .arg(node->getNodeName());
             remove(old);
         }
     }

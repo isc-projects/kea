@@ -177,3 +177,40 @@ TEST_F(FilenameTest, UseAsDefault) {
     EXPECT_EQ("/s/t/u", fname.useAsDefault("/s/t/u"));
     EXPECT_EQ("/a/b/c", fname.useAsDefault(""));
 }
+
+TEST_F(FilenameTest, setDirectory) {
+    Filename fname("a.b");
+    EXPECT_EQ("", fname.directory());
+    EXPECT_EQ("a.b", fname.fullName());
+    EXPECT_EQ("a.b", fname.expandWithDefault(""));
+
+    fname.setDirectory("/just/some/dir/");
+    EXPECT_EQ("/just/some/dir/", fname.directory());
+    EXPECT_EQ("/just/some/dir/a.b", fname.fullName());
+    EXPECT_EQ("/just/some/dir/a.b", fname.expandWithDefault(""));
+
+    fname.setDirectory("/just/some/dir");
+    EXPECT_EQ("/just/some/dir/", fname.directory());
+    EXPECT_EQ("/just/some/dir/a.b", fname.fullName());
+    EXPECT_EQ("/just/some/dir/a.b", fname.expandWithDefault(""));
+
+    fname.setDirectory("/");
+    EXPECT_EQ("/", fname.directory());
+    EXPECT_EQ("/a.b", fname.fullName());
+    EXPECT_EQ("/a.b", fname.expandWithDefault(""));
+
+    fname.setDirectory("");
+    EXPECT_EQ("", fname.directory());
+    EXPECT_EQ("a.b", fname.fullName());
+    EXPECT_EQ("a.b", fname.expandWithDefault(""));
+
+    fname = Filename("/first/a.b");
+    EXPECT_EQ("/first/", fname.directory());
+    EXPECT_EQ("/first/a.b", fname.fullName());
+    EXPECT_EQ("/first/a.b", fname.expandWithDefault(""));
+
+    fname.setDirectory("/just/some/dir");
+    EXPECT_EQ("/just/some/dir/", fname.directory());
+    EXPECT_EQ("/just/some/dir/a.b", fname.fullName());
+    EXPECT_EQ("/just/some/dir/a.b", fname.expandWithDefault(""));
+}

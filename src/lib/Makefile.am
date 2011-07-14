@@ -1,3 +1,3 @@
-SUBDIRS = exceptions util log cryptolink dns cc config python xfr \
+SUBDIRS = exceptions util log cryptolink dns cc config acl python xfr \
           bench asiolink asiodns nsas cache resolve testutils datasrc \
-          acl server_common
+          server_common
