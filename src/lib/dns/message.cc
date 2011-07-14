@@ -239,7 +239,28 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
                   "Message rendering attempted without Opcode set");
     }
 
+    // Reserve the space for TSIG (if needed) so that we can handle truncation
+    // case correctly later when that happens.  orig_xxx variables remember
+    // some configured parameters of renderer in case they are needed in
+    // truncation processing below.
+    const size_t tsig_len = (tsig_ctx != NULL) ? tsig_ctx->getTSIGLength() : 0;
+    const size_t orig_msg_len_limit = renderer.getLengthLimit();
+    const AbstractMessageRenderer::CompressMode orig_compress_mode =
+        renderer.getCompressMode();
+    if (tsig_len > 0) {
+        if (tsig_len > orig_msg_len_limit) {
+            isc_throw(InvalidParameter, "Failed to render DNS message: "
+                      "too small limit for a TSIG (" <<
+                      orig_msg_len_limit << ")");
+        }
+        renderer.setLengthLimit(orig_msg_len_limit - tsig_len);
+    }
+
     // reserve room for the header
+    if (renderer.getLengthLimit() < HEADERLEN) {
+        isc_throw(InvalidParameter, "Failed to render DNS message: "
+                  "too small limit for a Header");
+    }
     renderer.skip(HEADERLEN);
 
     uint16_t qdcount =
@@ -284,6 +305,22 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
         }
     }
 
+    // If we're adding a TSIG to a truncated message, clear all RRsets
+    // from the message except for the question before adding the TSIG.
+    // If even (some of) the question doesn't fit, don't include it.
+    if (tsig_ctx != NULL && renderer.isTruncated()) {
+        renderer.clear();
+        renderer.setLengthLimit(orig_msg_len_limit - tsig_len);
+        renderer.setCompressMode(orig_compress_mode);
+        renderer.skip(HEADERLEN);
+        qdcount = for_each(questions_.begin(), questions_.end(),
+                           RenderSection<QuestionPtr>(renderer,
+                                                      false)).getTotalCount();
+        ancount = 0;
+        nscount = 0;
+        arcount = 0;
+    }
+
     // Adjust the counter buffer.
     // XXX: these may not be equal to the number of corresponding entries
     // in rrsets_[] or questions_ if truncation occurred or an EDNS OPT RR
@@ -315,10 +352,16 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
     renderer.writeUint16At(arcount, header_pos);
 
     // Add TSIG, if necessary, at the end of the message.
-    // TODO: truncate case consideration
     if (tsig_ctx != NULL) {
-        tsig_ctx->sign(qid_, renderer.getData(),
-                       renderer.getLength())->toWire(renderer);
+        // Release the reserved space in the renderer.
+        renderer.setLengthLimit(orig_msg_len_limit);
+
+        const int tsig_count =
+            tsig_ctx->sign(qid_, renderer.getData(),
+                           renderer.getLength())->toWire(renderer);
+        if (tsig_count != 1) {
+            isc_throw(Unexpected, "Failed to render a TSIG RR");
+        }
 
         // update the ARCOUNT for the TSIG RR.  Note that for a sane DNS
         // message arcount should never overflow to 0.

@@ -565,6 +565,17 @@ public:
     /// \c tsig_ctx will be updated based on the fact it was used for signing
     /// and with the latest MAC.
     ///
+    /// \exception InvalidMessageOperation The message is not in the Render
+    /// mode, or either Rcode or Opcode is not set.
+    /// \exception InvalidParameter The allowable limit of \c renderer is too
+    /// small for a TSIG or the Header section.  Note that this shouldn't
+    /// happen with parameters as defined in the standard protocols,
+    /// so it's more likely a program bug.
+    /// \exception Unexpected Rendering the TSIG RR fails.  The implementation
+    /// internally makes sure this doesn't happen, so if that ever occurs
+    /// it should mean a bug either in the TSIG context or in the renderer
+    /// implementation.
+    ///
     /// \param renderer See the other version
     /// \param tsig_ctx A TSIG context that is to be used for signing the
     /// message
