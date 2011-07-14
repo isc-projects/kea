@@ -19,9 +19,13 @@
 
 #include <string>
 #include <log/logger.h>
-
-// Include the unit test function declarations here for compatibility
 #include <log/logger_unittest_support.h>
+
+/// \file
+/// \brief Logging initialization functions
+///
+/// Contains a set of functions relating to logging initialization that are
+/// used by the production code.
 
 namespace isc {
 namespace log {
@@ -36,17 +40,13 @@ namespace log {
 /// \return true if logging has been initialized, false if not
 bool isLoggingInitialized();
 
-/// \brief Set "logging initialized" flag
-///
-/// Sets the state of the "logging initialized" flag.
+/// \brief Set state of "logging initialized" flag
 ///
 /// \param state State to set the flag to. (This is expected to be "true" - the
 ///        default - for all code apart from specific unit tests.)
 void setLoggingInitialized(bool state = true);
 
-
-
-/// \brief Run-Time Initialization
+/// \brief Run-time initialization
 ///
 /// Performs run-time initialization of the logger in particular supplying:
 ///
@@ -65,10 +65,7 @@ void initLogger(const std::string& root,
                 isc::log::Severity severity = isc::log::INFO,
                 int dbglevel = 0, const char* file = NULL);
 
-
-
 } // namespace log
 } // namespace isc
-
 
 #endif // __LOGGER_SUPPORT_H

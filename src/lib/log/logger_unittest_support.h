@@ -18,7 +18,12 @@
 #include <string>
 #include <log/logger.h>
 
-// Note: this file holds logging functions used by unit tests.
+/// \file
+/// \brief Miscellaneous logging functions used by the unit tests.
+///
+/// As the configuration database is unsually unavailable during unit tests,
+/// the functions defined here allow a limited amount of logging configuration
+/// through the use of environment variables
 
 namespace isc {
 namespace log {
@@ -71,7 +76,7 @@ void initLogger(isc::log::Severity severity = isc::log::DEBUG,
                 int dbglevel = isc::log::MAX_DEBUG_LEVEL);
 
 
-/// \brief Logging Severity from B10_LOGGER_SEVERITY
+/// \brief Obtains logging severity from B10_LOGGER_SEVERITY
 ///
 /// Support function called by the unit test logging initialization code.
 /// It returns the logging severity defined by B10_LOGGER_SEVERITY.  If
@@ -84,7 +89,7 @@ void initLogger(isc::log::Severity severity = isc::log::DEBUG,
 isc::log::Severity b10LoggerSeverity(isc::log::Severity defseverity);
 
 
-/// \brief Logging Debug Level from B10_LOGGER_DBGLEVEL
+/// \brief Obtains logging debug level from B10_LOGGER_DBGLEVEL
 ///
 /// Support function called by the unit test logging initialization code.
 /// It returns the logging debug level defined by B10_LOGGER_DBGLEVEL.  If
@@ -103,7 +108,7 @@ isc::log::Severity b10LoggerSeverity(isc::log::Severity defseverity);
 int b10LoggerDbglevel(int defdbglevel);
 
 
-/// \brief Reset Root Logger Characteristics
+/// \brief Reset root logger characteristics
 ///
 /// This is a simplified interface into the resetting of the characteristics
 /// of the root logger.  It is aimed for use in unit tests and resets the
