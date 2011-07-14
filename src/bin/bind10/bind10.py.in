@@ -65,6 +65,16 @@ import posix
 import isc.cc
 import isc.util.process
 import isc.net.parse
+import isc.log
+from bind10_messages import *
+
+isc.log.init("b10-boss")
+logger = isc.log.Logger("boss")
+
+# Pending system-wide debug level definitions, the ones we
+# use here are hardcoded for now
+DBG_PROCESS = 10
+DBG_COMMANDS = 30
 
 # Assign this process some longer name
 isc.util.process.rename(sys.argv[0])
@@ -220,6 +230,8 @@ class BoB:
         self.ccs = None
         self.cfg_start_auth = True
         self.cfg_start_resolver = False
+        self.cfg_start_dhcp6 = False
+        self.cfg_start_dhcp4 = False
         self.started_auth_family = False
         self.started_resolver_family = False
         self.curproc = None
@@ -250,8 +262,7 @@ class BoB:
             if new_config['start_' + name]:
                 if not started:
                     if self.uid is not None:
-                        sys.stderr.write("[bind10] Starting " + name + " as " +
-                            "a user, not root. This might fail.\n")
+                        logger.info(BIND10_START_AS_NON_ROOT, name)
                     start()
             else:
                 stop()
@@ -277,9 +288,8 @@ class BoB:
             self.started_auth_family = False
 
         # The real code of the config handler function follows here
-        if self.verbose:
-            sys.stdout.write("[bind10] Handling new configuration: " +
-                str(new_config) + "\n")
+        logger.debug(DBG_COMMANDS, BIND10_RECEIVED_NEW_CONFIGURATION,
+                     new_config)
         start_stop('resolver', self.started_resolver_family, resolver_on,
             resolver_off)
         start_stop('auth', self.started_auth_family, auth_on, auth_off)
@@ -296,8 +306,7 @@ class BoB:
         return process_list
 
     def command_handler(self, command, args):
-        if self.verbose:
-            sys.stdout.write("[bind10] Boss got command: " + str(command) + "\n")
+        logger.debug(DBG_COMMANDS, BIND10_RECEIVED_COMMAND, command)
         answer = isc.config.ccsession.create_answer(1, "command not implemented")
         if type(command) != str:
             answer = isc.config.ccsession.create_answer(1, "bad command")
@@ -330,12 +339,10 @@ class BoB:
             start, this runs through the list of started processes, killing
             each one.  It then clears that list.
         """
-        if self.verbose:
-            sys.stdout.write("[bind10] killing started processes:\n")
+        logger.info(BIND10_KILLING_ALL_PROCESSES)
 
         for pid in self.processes:
-            if self.verbose:
-                sys.stdout.write("[bind10] - %s\n" % self.processes[pid].name)
+            logger.info(BIND10_KILL_PROCESS, self.processes[pid].name)
             self.processes[pid].process.kill()
         self.processes = {}
 
@@ -349,23 +356,20 @@ class BoB:
             xfrin/xfrout and zone manager as we don't need to start those if we
             are not running the authoritative server.)
         """
-        if self.verbose:
-            sys.stdout.write("[bind10] Reading Boss configuration:\n")
+        logger.info(BIND10_READING_BOSS_CONFIGURATION)
 
         config_data = self.ccs.get_full_config()
         self.cfg_start_auth = config_data.get("start_auth")
         self.cfg_start_resolver = config_data.get("start_resolver")
 
-        if self.verbose:
-            sys.stdout.write("[bind10] - start_auth: %s\n" %
-                str(self.cfg_start_auth))
-            sys.stdout.write("[bind10] - start_resolver: %s\n" %
-                str(self.cfg_start_resolver))
+        logger.info(BIND10_CONFIGURATION_START_AUTH, self.cfg_start_auth)
+        logger.info(BIND10_CONFIGURATION_START_RESOLVER, self.cfg_start_resolver)
 
     def log_starting(self, process, port = None, address = None):
         """
             A convenience function to output a "Starting xxx" message if the
-            verbose option is set.  Putting this into a separate method ensures
+            logging is set to DEBUG with debuglevel DBG_PROCESS or higher.
+            Putting this into a separate method ensures
             that the output form is consistent across all processes.
 
             The process name (passed as the first argument) is put into
@@ -375,13 +379,14 @@ class BoB:
             appended to the message (if present).
         """
         self.curproc = process
-        if self.verbose:
-            sys.stdout.write("[bind10] Starting %s" % self.curproc)
-            if port is not None:
-                sys.stdout.write(" on port %d" % port)
-                if address is not None:
-                    sys.stdout.write(" (address %s)" % str(address))
-            sys.stdout.write("\n")
+        if port is None and address is None:
+            logger.info(BIND10_STARTING_PROCESS, self.curproc)
+        elif address is None:
+            logger.info(BIND10_STARTING_PROCESS_PORT, self.curproc,
+                        port)
+        else:
+            logger.info(BIND10_STARTING_PROCESS_PORT_ADDRESS,
+                        self.curproc, address, port)
 
     def log_started(self, pid = None):
         """
@@ -389,11 +394,10 @@ class BoB:
             message.  As with starting_message(), this ensures a consistent
             format.
         """
-        if self.verbose:
-            sys.stdout.write("[bind10] Started %s" % self.curproc)
-            if pid is not None:
-                sys.stdout.write(" (PID %d)" % pid)
-            sys.stdout.write("\n")
+        if pid is None:
+            logger.debug(DBG_PROCESS, BIND10_STARTED_PROCESS, self.curproc)
+        else:
+            logger.debug(DBG_PROCESS, BIND10_STARTED_PROCESS_PID, self.curproc, pid)
 
     # The next few methods start the individual processes of BIND-10.  They
     # are called via start_all_processes().  If any fail, an exception is
@@ -457,7 +461,8 @@ class BoB:
         """
         self.log_starting("ccsession")
         self.ccs = isc.config.ModuleCCSession(SPECFILE_LOCATION, 
-                                      self.config_handler, self.command_handler)
+                                      self.config_handler,
+                                      self.command_handler)
         self.ccs.start()
         self.log_started()
 
@@ -549,6 +554,9 @@ class BoB:
     def start_stats_httpd(self, c_channel_env):
         self.start_simple("b10-stats-httpd", c_channel_env)
 
+    def start_dhcp6(self, c_channel_env):
+        self.start_simple("b10-dhcp6", c_channel_env)
+
     def start_cmdctl(self, c_channel_env):
         """
             Starts the command control process
@@ -600,11 +608,14 @@ class BoB:
         self.start_stats(c_channel_env)
         self.start_stats_httpd(c_channel_env)
         self.start_cmdctl(c_channel_env)
-    
+
+        if self.cfg_start_dhcp6:
+            self.start_dhcp6(c_channel_env)
+
     def startup(self):
         """
             Start the BoB instance.
- 
+
             Returns None if successful, otherwise an string describing the
             problem.
         """
@@ -612,12 +623,12 @@ class BoB:
         # running
         c_channel_env = {}
         if self.msgq_socket_file is not None:
-             c_channel_env["BIND10_MSGQ_SOCKET_FILE"] = self.msgq_socket_file 
-        if self.verbose:
-           sys.stdout.write("[bind10] Checking for already running b10-msgq\n")
+             c_channel_env["BIND10_MSGQ_SOCKET_FILE"] = self.msgq_socket_file
+        logger.debug(DBG_PROCESS, BIND10_CHECK_MSGQ_ALREADY_RUNNING)
         # try to connect, and if we can't wait a short while
         try:
             self.cc_session = isc.cc.Session(self.msgq_socket_file)
+            logger.fatal(BIND10_MSGQ_ALREADY_RUNNING)
             return "b10-msgq already running, or socket file not cleaned , cannot start"
         except isc.cc.session.SessionError:
             # this is the case we want, where the msgq is not running
@@ -655,8 +666,7 @@ class BoB:
         Stop the given process, friendly-like. The process is the name it has
         (in logs, etc), the recipient is the address on msgq.
         """
-        if self.verbose:
-            sys.stdout.write("[bind10] Asking %s to terminate\n" % process)
+        logger.info(BIND10_STOP_PROCESS, process)
         # TODO: Some timeout to solve processes that don't want to die would
         # help. We can even store it in the dict, it is used only as a set
         self.expected_shutdowns[process] = 1
@@ -682,8 +692,7 @@ class BoB:
 
     def shutdown(self):
         """Stop the BoB instance."""
-        if self.verbose:
-            sys.stdout.write("[bind10] Stopping the server.\n")
+        logger.info(BIND10_SHUTDOWN)
         # first try using the BIND 10 request to stop
         try:
             self.stop_all_processes()
@@ -697,9 +706,8 @@ class BoB:
         # next try sending a SIGTERM
         processes_to_stop = list(self.processes.values())
         for proc_info in processes_to_stop:
-            if self.verbose:
-                sys.stdout.write("[bind10] Sending SIGTERM to %s (PID %d).\n" % 
-                                 (proc_info.name, proc_info.pid))
+            logger.info(BIND10_SEND_SIGTERM, proc_info.name,
+                        proc_info.pid)
             try:
                 proc_info.process.terminate()
             except OSError:
@@ -713,17 +721,15 @@ class BoB:
             self.reap_children()
             processes_to_stop = list(self.processes.values())
             for proc_info in processes_to_stop:
-                if self.verbose:
-                    sys.stdout.write("[bind10] Sending SIGKILL to %s (PID %d).\n" % 
-                                     (proc_info.name, proc_info.pid))
+                logger.info(BIND10_SEND_SIGKILL, proc_info.name,
+                            proc_info.pid)
                 try:
                     proc_info.process.kill()
                 except OSError:
                     # ignore these (usually ESRCH because the child
                     # finally exited)
                     pass
-        if self.verbose:
-            sys.stdout.write("[bind10] All processes ended, server done.\n")
+        logger.info(BIND10_SHUTDOWN_COMPLETE)
 
     def _get_process_exit_status(self):
         return os.waitpid(-1, os.WNOHANG)
@@ -751,18 +757,16 @@ class BoB:
                 # elsewhere.
                 if self.runnable:
                     if exit_status is None:
-                        sys.stdout.write(
-                            "[bind10] Process %s (PID %d) died: exit status not available" % 
-                            (proc_info.name, proc_info.pid))
+                        logger.warn(BIND10_PROCESS_ENDED_NO_EXIT_STATUS,
+                                    proc_info.name, proc_info.pid)
                     else:
-                        sys.stdout.write(
-                            "[bind10] Process %s (PID %d) terminated, exit status = %d\n" % 
-                            (proc_info.name, proc_info.pid, exit_status))
+                        logger.warn(BIND10_PROCESS_ENDED_WITH_EXIT_STATUS,
+                                    proc_info.name, proc_info.pid,
+                                    exit_status)
 
                     # Was it a special process?
                     if proc_info.name == "b10-msgq":
-                        sys.stdout.write(
-                                 "[bind10] The b10-msgq process died, shutting down.\n")
+                        logger.fatal(BIND10_MSGQ_DAEMON_ENDED)
                         self.runnable = False
 
                 # If we're in 'brittle' mode, we want to shutdown after
@@ -770,7 +774,7 @@ class BoB:
                 if self.brittle:
                     self.runnable = False
             else:
-                sys.stdout.write("[bind10] Unknown child pid %d exited.\n" % pid)
+                logger.info(BIND10_UNKNOWN_CHILD_PROCESS_ENDED, pid)
 
     def restart_processes(self):
         """
@@ -801,14 +805,11 @@ class BoB:
                     next_restart = restart_time
                 still_dead[proc_info.pid] = proc_info
             else:
-                if self.verbose:
-                    sys.stdout.write("[bind10] Resurrecting dead %s process...\n" % 
-                        proc_info.name)
+                logger.info(BIND10_RESURRECTING_PROCESS, proc_info.name)
                 try:
                     proc_info.respawn()
                     self.processes[proc_info.pid] = proc_info
-                    sys.stdout.write("[bind10] Resurrected %s (PID %d)\n" %
-                                     (proc_info.name, proc_info.pid))
+                    logger.info(BIND10_RESURRECTED_PROCESS, proc_info.name, proc_info.pid)
                 except:
                     still_dead[proc_info.pid] = proc_info
         # remember any processes that refuse to be resurrected
@@ -840,8 +841,7 @@ def fatal_signal(signal_number, stack_frame):
     """We need to exit (SIGINT or SIGTERM received)."""
     global options
     global boss_of_bind
-    if options.verbose:
-        sys.stdout.write("[bind10] Received %s.\n" % get_signame(signal_number))
+    logger.info(BIND10_RECEIVED_SIGNAL, get_signame(signal_number))
     signal.signal(signal.SIGCHLD, signal.SIG_DFL)
     boss_of_bind.runnable = False
 
@@ -959,12 +959,11 @@ def main():
             pass
 
         if setuid is None:
-            sys.stderr.write("bind10: invalid user: '%s'\n" % options.user)
+            logger.fatal(BIND10_INVALID_USER, options.user)
             sys.exit(1)
 
     # Announce startup.
-    if options.verbose:
-        sys.stdout.write("%s\n" % VERSION)
+    logger.info(BIND10_STARTING, VERSION)
 
     # Create wakeup pipe for signal handlers
     wakeup_pipe = os.pipe()
@@ -986,9 +985,9 @@ def main():
                        setuid, username, options.cmdctl_port, options.brittle)
     startup_result = boss_of_bind.startup()
     if startup_result:
-        sys.stderr.write("[bind10] Error on startup: %s\n" % startup_result)
+        logger.fatal(BIND10_STARTUP_ERROR, startup_result)
         sys.exit(1)
-    sys.stdout.write("[bind10] BIND 10 started\n")
+    logger.info(BIND10_STARTUP_COMPLETE)
     dump_pid(options.pid_file)
 
     # In our main loop, we check for dead processes or messages 
@@ -1014,7 +1013,7 @@ def main():
             if err.args[0] == errno.EINTR:
                 (rlist, wlist, xlist) = ([], [], [])
             else:
-                sys.stderr.write("[bind10] Error with select(); %s\n" % err)
+                logger.fatal(BIND10_SELECT_ERROR, err)
                 break
 
         for fd in rlist + xlist:
@@ -1022,8 +1021,8 @@ def main():
                 try:
                     boss_of_bind.ccs.check_command()
                 except isc.cc.session.ProtocolError:
-                    if options.verbose:
-                        sys.stderr.write("[bind10] msgq channel disappeared.\n")
+                    logger.fatal(BIND10_MSGQ_DISAPPEARED)
+                    self.runnable = False
                     break
             elif fd == wakeup_fd:
                 os.read(wakeup_fd, 32)
@@ -1031,7 +1030,6 @@ def main():
     # shutdown
     signal.signal(signal.SIGCHLD, signal.SIG_DFL)
     boss_of_bind.shutdown()
-    sys.stdout.write("[bind10] BIND 10 exiting\n");
     unlink_pid_file(options.pid_file)
     sys.exit(0)
 

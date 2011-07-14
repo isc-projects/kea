@@ -68,6 +68,12 @@ public:
         return address_.getFamily();
     }
 
+    // This is completely dummy and unused.  Define it just for build.
+    virtual const struct sockaddr& getSockAddr() const {
+        static struct sockaddr sa;
+        return (sa);
+    }
+
 private:
     IOAddress   address_;        // Address of endpoint
     uint16_t    port_;          // Port number of endpoint
