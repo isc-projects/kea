@@ -150,8 +150,6 @@ private:
 struct MessageRenderer::MessageRendererImpl {
     /// \brief Constructor from an output buffer.
     ///
-    /// \param buffer An \c OutputBuffer object to which wire format data is
-    /// written.
     MessageRendererImpl() :
         nbuffer_(Name::MAX_WIRE), msglength_limit_(512),
         truncated_(false), compress_mode_(MessageRenderer::CASE_INSENSITIVE)
