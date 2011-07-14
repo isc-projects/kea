@@ -355,7 +355,7 @@ public:
 
     /// Return the expected length of TSIG RR after \c sign()
     ///
-    /// This method returns the length of the TSIG RR based that would be
+    /// This method returns the length of the TSIG RR that would be
     /// produced as a result of \c sign() with the state of the context
     /// at the time of the call.  The expected length can be decided
     /// from the key and the algorithm (which determines the MAC size if
@@ -363,9 +363,9 @@ public:
     /// related error has been identified, the MAC will be excluded; if
     /// a time error has occurred, the TSIG will include "other data".
     ///
-    /// This method is provided mainly for the convenient of the Message class,
-    /// which needs to know the expected TSIG length in rendering a signed
-    /// DNS message so that it can handle truncated messages with TSIG
+    /// This method is provided mainly for the convenience of the Message
+    /// class, which needs to know the expected TSIG length in rendering a
+    /// signed DNS message so that it can handle truncated messages with TSIG
     /// correctly.  Normal applications wouldn't need this method.  The Python
     /// binding for this method won't be provided for the same reason.
     ///

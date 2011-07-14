@@ -109,8 +109,10 @@ struct TSIGContext::TSIGContextImpl {
 
     // A shortcut method to create an HMAC object for sign/verify.  If one
     // has been successfully created in the constructor, return it; otherwise
-    // create a new one and return it.
-    HMACPtr getHMAC() {
+    // create a new one and return it.  In the former case, the ownership is
+    // transferred to the caller; the stored HMAC will be reset after the
+    // call.
+    HMACPtr createHMAC() {
         if (hmac_) {
             HMACPtr ret = HMACPtr();
             ret.swap(hmac_);
@@ -353,7 +355,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
         return (tsig);
     }
 
-    HMACPtr hmac(impl_->getHMAC());
+    HMACPtr hmac(impl_->createHMAC());
 
     // If the context has previous MAC (either the Request MAC or its own
     // previous MAC), digest it.
@@ -479,7 +481,7 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
         return (impl_->postVerifyUpdate(error, NULL, 0));
     }
 
-    HMACPtr hmac(impl_->getHMAC());
+    HMACPtr hmac(impl_->createHMAC());
 
     // If the context has previous MAC (either the Request MAC or its own
     // previous MAC), digest it.
