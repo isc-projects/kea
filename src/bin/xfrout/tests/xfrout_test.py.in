@@ -546,7 +546,6 @@ class MyUnixSockServer(UnixSockServer):
         self._max_transfers_out = 10
         self._cc = MyCCSession()
         self._common_init()
-        #self._log = isc.log.NSLogger('xfrout', '', severity = 'critical', log_to_console = False )
 
 class TestUnixSockServer(unittest.TestCase):
     def setUp(self):
@@ -592,7 +591,7 @@ class TestUnixSockServer(unittest.TestCase):
                                              socket.AI_NUMERICHOST)[0][4])
         self.assertEqual(isc.acl.acl.REJECT, self.unix._acl.execute(context))
 
-    def test_updata_config_data(self):
+    def test_update_config_data(self):
         self.check_default_ACL()
         tsig_key_str = 'example.com:SFuWd/q99SzF8Yzd1QbB9g=='
         tsig_key_list = [tsig_key_str]
