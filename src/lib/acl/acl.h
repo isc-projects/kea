@@ -88,8 +88,11 @@ public:
      * the context against conditions and if it matches, returns the
      * action that belongs to the first matched entry or default action
      * if nothing matches.
+     *
      * \param context The thing that should be checked. It is directly
      *     passed to the checks.
+     *
+     * \return The action for the ACL entry that first matches the context.
      */
     const Action& execute(const Context& context) const {
         const typename Entries::const_iterator end(entries_.end());

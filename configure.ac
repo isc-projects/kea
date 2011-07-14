@@ -139,6 +139,16 @@ else
 	AC_SUBST(pkgpyexecdir)
 fi
 
+# We need to store the default pyexecdir in a separate variable so that
+# we can specify in Makefile.am the install directory of various BIND 10
+# python scripts and loadable modules; in Makefile.am we cannot replace
+# $(pyexecdir) using itself, e.g, this doesn't work:
+# pyexecdir = $(pyexecdir)/isc/some_module
+# The separate variable makes this setup possible as follows:
+# pyexecdir = $(PYTHON_SITEPKG_DIR)/isc/some_module
+PYTHON_SITEPKG_DIR=${pyexecdir}
+AC_SUBST(PYTHON_SITEPKG_DIR)
+
 # Check for python development environments
 if test -x ${PYTHON}-config; then
 	PYTHON_INCLUDES=`${PYTHON}-config --includes`
@@ -810,6 +820,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/cc/tests/Makefile
                  src/lib/python/Makefile
                  src/lib/python/isc/Makefile
+                 src/lib/python/isc/acl/Makefile
+                 src/lib/python/isc/acl/tests/Makefile
                  src/lib/python/isc/util/Makefile
                  src/lib/python/isc/util/tests/Makefile
                  src/lib/python/isc/datasrc/Makefile
