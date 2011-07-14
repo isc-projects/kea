@@ -151,7 +151,8 @@ TEST_F(CCSessionTest, parseCommand) {
 
 TEST_F(CCSessionTest, session1) {
     EXPECT_FALSE(session.haveSubscription("Spec1", "*"));
-    ModuleCCSession mccs(ccspecfile("spec1.spec"), session, NULL, NULL);
+    ModuleCCSession mccs(ccspecfile("spec1.spec"), session, NULL, NULL,
+                         true, false);
     EXPECT_TRUE(session.haveSubscription("Spec1", "*"));
 
     EXPECT_EQ(1, session.getMsgQueue()->size());
@@ -163,14 +164,15 @@ TEST_F(CCSessionTest, session1) {
     EXPECT_EQ("*", to);
     EXPECT_EQ(0, session.getMsgQueue()->size());
 
-    // without explicit argument, the session should not automatically
+    // with this argument, the session should not automatically
     // subscribe to logging config
     EXPECT_FALSE(session.haveSubscription("Logging", "*"));
 }
 
 TEST_F(CCSessionTest, session2) {
     EXPECT_FALSE(session.haveSubscription("Spec2", "*"));
-    ModuleCCSession mccs(ccspecfile("spec2.spec"), session, NULL, NULL);
+    ModuleCCSession mccs(ccspecfile("spec2.spec"), session, NULL, NULL,
+                         true, false);
     EXPECT_TRUE(session.haveSubscription("Spec2", "*"));
 
     EXPECT_EQ(1, session.getMsgQueue()->size());
@@ -217,7 +219,7 @@ TEST_F(CCSessionTest, session3) {
 
     EXPECT_FALSE(session.haveSubscription("Spec2", "*"));
     ModuleCCSession mccs(ccspecfile("spec2.spec"), session, my_config_handler,
-                         my_command_handler);
+                         my_command_handler, true, false);
     EXPECT_TRUE(session.haveSubscription("Spec2", "*"));
 
     EXPECT_EQ(2, session.getMsgQueue()->size());
@@ -241,7 +243,7 @@ TEST_F(CCSessionTest, checkCommand) {
 
     EXPECT_FALSE(session.haveSubscription("Spec29", "*"));
     ModuleCCSession mccs(ccspecfile("spec29.spec"), session, my_config_handler,
-                         my_command_handler);
+                         my_command_handler, true, false);
     EXPECT_TRUE(session.haveSubscription("Spec29", "*"));
 
     EXPECT_EQ(2, session.getMsgQueue()->size());
@@ -318,7 +320,7 @@ TEST_F(CCSessionTest, checkCommand2) {
     session.getMessages()->add(createAnswer(0, el("{}")));
     EXPECT_FALSE(session.haveSubscription("Spec29", "*"));
     ModuleCCSession mccs(ccspecfile("spec29.spec"), session, my_config_handler,
-                         my_command_handler);
+                         my_command_handler, true, false);
     EXPECT_TRUE(session.haveSubscription("Spec29", "*"));
     ConstElementPtr msg;
     std::string group, to;
@@ -370,7 +372,8 @@ TEST_F(CCSessionTest, remoteConfig) {
     std::string module_name;
     int item1;
     
-    ModuleCCSession mccs(ccspecfile("spec1.spec"), session, NULL, NULL, false);
+    ModuleCCSession mccs(ccspecfile("spec1.spec"), session, NULL, NULL,
+                         false, false);
     EXPECT_TRUE(session.haveSubscription("Spec1", "*"));
     
     // first simply connect, with no config values, and see we get
@@ -526,7 +529,7 @@ TEST_F(CCSessionTest, ignoreRemoteConfigCommands) {
 
     EXPECT_FALSE(session.haveSubscription("Spec29", "*"));
     ModuleCCSession mccs(ccspecfile("spec29.spec"), session, my_config_handler,
-                         my_command_handler, false);
+                         my_command_handler, false, false);
     EXPECT_TRUE(session.haveSubscription("Spec29", "*"));
 
     EXPECT_EQ(2, session.getMsgQueue()->size());
@@ -578,14 +581,15 @@ TEST_F(CCSessionTest, initializationFail) {
 
 // Test it throws when we try to start it twice (once from the constructor)
 TEST_F(CCSessionTest, doubleStartImplicit) {
-    ModuleCCSession mccs(ccspecfile("spec29.spec"), session, NULL, NULL);
+    ModuleCCSession mccs(ccspecfile("spec29.spec"), session, NULL, NULL,
+                         true, false);
     EXPECT_THROW(mccs.start(), CCSessionError);
 }
 
 // The same, but both starts are explicit
 TEST_F(CCSessionTest, doubleStartExplicit) {
     ModuleCCSession mccs(ccspecfile("spec29.spec"), session, NULL, NULL,
-                         false);
+                         false, false);
     mccs.start();
     EXPECT_THROW(mccs.start(), CCSessionError);
 }
@@ -593,7 +597,8 @@ TEST_F(CCSessionTest, doubleStartExplicit) {
 // Test we can request synchronous receive before we start the session,
 // and check there's the mechanism if we do it after
 TEST_F(CCSessionTest, delayedStart) {
-    ModuleCCSession mccs(ccspecfile("spec2.spec"), session, NULL, NULL, false);
+    ModuleCCSession mccs(ccspecfile("spec2.spec"), session, NULL, NULL,
+                         false, false);
     session.getMessages()->add(createAnswer());
     ConstElementPtr env, answer;
     EXPECT_NO_THROW(session.group_recvmsg(env, answer, false, 3));
@@ -620,7 +625,7 @@ TEST_F(CCSessionTest, loggingStartBadSpec) {
     // just give an empty config
     session.getMessages()->add(createAnswer(0, el("{}")));
     EXPECT_THROW(new ModuleCCSession(ccspecfile("spec2.spec"), session,
-                 NULL, NULL, true, true), ModuleSpecError);
+                 NULL, NULL), ModuleSpecError);
     EXPECT_FALSE(session.haveSubscription("Logging", "*"));
 }
 
@@ -629,7 +634,8 @@ TEST_F(CCSessionTest, loggingStartBadSpec) {
 // if we need to call addRemoteConfig().
 // The correct cases are covered in remoteConfig test.
 TEST_F(CCSessionTest, doubleStartWithAddRemoteConfig) {
-    ModuleCCSession mccs(ccspecfile("spec29.spec"), session, NULL, NULL);
+    ModuleCCSession mccs(ccspecfile("spec29.spec"), session, NULL, NULL,
+                         true, false);
     session.getMessages()->add(createAnswer(0, el("{}")));
     EXPECT_THROW(mccs.addRemoteConfig(ccspecfile("spec2.spec")),
                  FakeSession::DoubleRead);

@@ -43,6 +43,9 @@ from isc.util.file import path_search
 import bind10_config
 from isc.log import log_config_update
 import json
+from config_messages import *
+
+logger = isc.log.Logger("config")
 
 class ModuleCCSessionError(Exception): pass
 
@@ -127,10 +130,7 @@ def default_logconfig_handler(new_config, config_data):
         isc.log.log_config_update(json.dumps(new_config),
             json.dumps(config_data.get_module_spec().get_full_spec()))
     else:
-        # no logging here yet, TODO: log these errors
-        print("Error in logging configuration, ignoring config update: ")
-        for err in errors:
-            print(err)
+        logger.error(CONFIG_LOG_CONFIG_ERRORS, errors)
 
 class ModuleCCSession(ConfigData):
     """This class maintains a connection to the command channel, as
@@ -142,7 +142,7 @@ class ModuleCCSession(ConfigData):
        callbacks are called when 'check_command' is called on the
        ModuleCCSession"""
        
-    def __init__(self, spec_file_name, config_handler, command_handler, cc_session=None, handle_logging_config=False):
+    def __init__(self, spec_file_name, config_handler, command_handler, cc_session=None, handle_logging_config=True):
         """Initialize a ModuleCCSession. This does *NOT* send the
            specification and request the configuration yet. Use start()
            for that once the ModuleCCSession has been initialized.
@@ -163,7 +163,7 @@ class ModuleCCSession(ConfigData):
            the logger manager to apply it. It will also inform the
            logger manager when the logging configuration gets updated.
            The module does not need to do anything except intializing
-           its loggers, and provide log messages
+           its loggers, and provide log messages. Defaults to true.
         """
         module_spec = isc.config.module_spec_from_file(spec_file_name)
         ConfigData.__init__(self, module_spec)
@@ -385,8 +385,7 @@ class ModuleCCSession(ConfigData):
                                 "Wrong data in configuration: " +
                                 " ".join(errors))
                 else:
-                    # log error
-                    print("[" + self._module_name + "] Error requesting configuration: " + value)
+                    logger.error(CONFIG_GET_FAILED, value)
             else:
                 raise ModuleCCSessionError("No answer from configuration manager")
         except isc.cc.SessionTimeout:
@@ -498,7 +497,6 @@ class UIModuleCCSession(MultiConfigData):
                 self.request_current_config()
                 self.clear_local_changes()
             elif "error" in answer:
-                print("Error: " + answer["error"])
-                print("Configuration not committed")
+                raise ModuleCCSessionError("Error: " + str(answer["error"]) + "\n" + "Configuration not committed")
             else:
                 raise ModuleCCSessionError("Unknown format of answer in commit(): " + str(answer))
