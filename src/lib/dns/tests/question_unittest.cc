@@ -106,6 +106,22 @@ TEST_F(QuestionTest, toWireRenderer) {
                         obuffer.getLength(), &wiredata[0], wiredata.size());
 }
 
+TEST_F(QuestionTest, toWireTruncated) {
+    // If the available length in the renderer is too small, it would require
+    // truncation.  This won't happen in normal cases, but protocol wise it
+    // could still happen if and when we support some (possibly future) opcode
+    // that allows multiple questions.
+
+    // Set the length limit to the qname length so that the whole question
+    // would request truncated
+    renderer.setLengthLimit(example_name1.getLength());
+
+    EXPECT_FALSE(renderer.isTruncated()); // check pre-render condition
+    EXPECT_EQ(0, test_question1.toWire(renderer));
+    EXPECT_TRUE(renderer.isTruncated());
+    EXPECT_EQ(0, renderer.getLength()); // renderer shouldn't have any data
+}
+
 // test operator<<.  We simply confirm it appends the result of toText().
 TEST_F(QuestionTest, LeftShiftOperator) {
     ostringstream oss;
