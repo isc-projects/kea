@@ -307,8 +307,8 @@ class SOA(RR):
                                                 self.retry, self.expire,
                                                 self.minimum))
 
-class TXT:
-    rdlen = -1                  # auto-calculate
+class TXT(RR):
+    rdlen = None                # auto-calculate
     nstring = 1                 # number of character-strings
     stringlen = -1              # default string length, auto-calculate
     string = 'Test String'      # default string
@@ -330,11 +330,9 @@ class TXT:
                 stringlen_list.append(self.stringlen)
             if stringlen_list[-1] < 0:
                 stringlen_list[-1] = int(len(wirestring_list[-1]) / 2)
-        rdlen = self.rdlen
-        if rdlen < 0:
-            rdlen = int(len(''.join(wirestring_list)) / 2) + self.nstring
-        f.write('\n# TXT RDATA (RDLEN=%d)\n' % rdlen)
-        f.write('%04x\n' % rdlen);
+        if self.rdlen is None:
+            self.rdlen = int(len(''.join(wirestring_list)) / 2) + self.nstring
+        self.dump_header(f, self.rdlen)
         for i in range(0, self.nstring):
             f.write('# String Len=%d, String=\"%s\"\n' %
                     (stringlen_list[i], string_list[i]))
