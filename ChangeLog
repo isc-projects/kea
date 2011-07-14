@@ -24,6 +24,8 @@
 	unit tests.
 	(Trac #1071, git 05164f9d61006869233b498d248486b4307ea8b6)
 
+bind10-devel-20110705 released on July 05, 2011
+
 267.	[func]		tomek
 	Added a dummy module for DHCP6. This module does not actually
 	do anything at this point, and BIND 10 has no option for
