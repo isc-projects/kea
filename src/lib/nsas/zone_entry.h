@@ -66,7 +66,7 @@ public:
      *     different objects.
      * \param nameserver_table Hashtable of NameServerEntry objects for
      *     this zone
-     * \param namesever_lru LRU for the nameserver entries
+     * \param nameserver_lru LRU for the nameserver entries
      * \todo Move to cc file, include the lookup (if NSAS uses resolver for
      *     everything)
      */
