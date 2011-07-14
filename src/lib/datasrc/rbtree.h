@@ -226,7 +226,8 @@ public:
 private:
     /// \name Callback related methods
     ///
-    /// See the description of \c RBTree<T>::find() about callbacks.
+    /// See the description of \c RBTree<T>::find() at \ref callback
+    /// about callbacks.
     ///
     /// These methods never throw an exception.
     //@{
@@ -702,6 +703,7 @@ public:
     }
 
     /// \brief Find with callback and node chain.
+    /// \anchor callback
     ///
     /// This version of \c find() is specifically designed for the backend
     /// of the \c MemoryZone class, and implements all necessary features
