@@ -113,10 +113,10 @@ public:
     /// \brief Constructor from an input string
     ///
     /// The string must be of the form:
-    /// <name>:<secret>[:<algorithm>]
-    /// Where <name> is a domain name for the key, <secret> is a
+    /// name:secret[:algorithm]
+    /// Where "name" is a domain name for the key, "secret" is a
     /// base64 representation of the key secret, and the optional
-    /// algorithm is an algorithm identifier as specified in RFC4635.
+    /// "algorithm" is an algorithm identifier as specified in RFC 4635.
     /// The default algorithm is hmac-md5.sig-alg.reg.int.
     ///
     /// The same restriction about the algorithm name (and secret) as that
@@ -188,11 +188,10 @@ public:
     ///
     /// The resulting string will be of the form
     /// name:secret:algorithm
-    /// Where <name> is a domain name for the key, <secret> is a
-    /// base64 representation of the key secret, and algorithm is
-    /// an algorithm identifier as specified in RFC4635
+    /// Where "name" is a domain name for the key, "secret" is a
+    /// base64 representation of the key secret, and "algorithm" is
+    /// an algorithm identifier as specified in RFC 4635.
     ///
-    /// \param key the TSIG key to convert
     /// \return The string representation of the given TSIGKey.
     std::string toText() const;
 

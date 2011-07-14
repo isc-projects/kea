@@ -92,7 +92,10 @@ public:
 
     /// \brief cancel the given lookup action
     ///
+    /// \param zone Name of zone.
+    /// \param class_code Class of the zone.
     /// \param callback Callback object that would be called
+    /// \param family TODO, check above family too
     void cancel(const std::string& zone, const dns::RRClass& class_code,
                 const boost::shared_ptr<AddressRequestCallback>& callback,
                 AddressFamily family = ANY_OK);

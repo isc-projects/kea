@@ -52,6 +52,8 @@ public:
     virtual ~MessageCache();
 
     /// \brief Look up message in cache.
+    /// \param qname TODO
+    /// \param qtype TODO
     /// \param message generated response message if the message entry
     ///        can be found.
     ///
