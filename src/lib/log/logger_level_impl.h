@@ -83,7 +83,7 @@ public:
     /// The log4cplus log level may be non-standard in which case it is
     /// encoding a BIND 10 debug level as well.
     ///
-    /// \param level log4cplus log level
+    /// \param loglevel log4cplus log level
     ///
     /// \return Equivalent BIND 10 severity and debug level
     static

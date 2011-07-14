@@ -38,7 +38,7 @@ public:
     ///
     /// Adds a round-trip time to the internal vector of times.
     ///
-    /// \param RTT to record.
+    /// \param rtt RTT to record.
     void addRtt(uint32_t rtt) {
         rtt_.push_back(rtt);
     }
@@ -73,6 +73,8 @@ public:
     ///
     /// \param dns_service The DNS Service to perform the recursive
     ///        query on.
+    /// \param nsas TODO
+    /// \param cache TODO
     /// \param upstream Addresses and ports of the upstream servers
     ///        to forward queries to.
     /// \param upstream_root Addresses and ports of the root servers
@@ -147,6 +149,9 @@ public:
     ///  function resolve().
     ///
     /// \param query_message the full query got from client.
+    /// \param answer_message the full answer received from other server.
+    /// \param buffer TODO
+    /// \param server TODO
     /// \param callback callback object
     void forward(isc::dns::ConstMessagePtr query_message,
                  isc::dns::MessagePtr answer_message,

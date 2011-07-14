@@ -209,7 +209,7 @@ public:
     /// \exception isc::InvalidParameter Unsettable flag is specified
     /// \exception None otherwise
     /// \param flag The node flag to be changed.
-    /// \on If \c true, set the flag to on; otherwise set it to off.
+    /// \param on If \c true, set the flag to on; otherwise set it to off.
     void setFlag(Flags flag, bool on = true) {
         if ((flag & ~SETTABLE_FLAGS) != 0) {
             isc_throw(isc::InvalidParameter,
