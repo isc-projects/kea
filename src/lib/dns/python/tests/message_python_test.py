@@ -356,6 +356,20 @@ class MessageTest(unittest.TestCase):
                                         [LONG_TXT1, LONG_TXT3])
         self.__common_tsig_checks("message_toWire4.wire")
 
+    def test_to_wire_tsig_truncation3(self):
+        self.r.set_opcode(Opcode.QUERY())
+        self.r.set_rcode(Rcode.NOERROR())
+        for i in range(1, 68):
+            self.r.add_question(Question(Name("www.example.com"),
+                                         RRClass("IN"), RRType(i)))
+        renderer = MessageRenderer()
+        self.r.to_wire(renderer, self.tsig_ctx)
+
+        self.p.from_wire(renderer.get_data())
+        self.assertTrue(self.p.get_header_flag(Message.HEADERFLAG_TC))
+        self.assertEqual(66, self.p.get_rr_count(Message.SECTION_QUESTION))
+        self.assertNotEqual(None, self.p.get_tsig_record())
+
     def test_to_wire_tsig_no_truncation(self):
         fix_current_time(0x4e17b38d)
         data = factoryFromFile(self.p, "message_fromWire18.wire")

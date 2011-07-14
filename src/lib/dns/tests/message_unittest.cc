@@ -772,6 +772,39 @@ TEST_F(MessageTest, toWireTSIGTruncation2) {
     }
 }
 
+TEST_F(MessageTest, toWireTSIGTruncation3) {
+    // Similar to previous ones, but truncation occurs due to too many
+    // Questions (very unusual, but not necessarily illegal).
+
+    // We are going to create a message starting with a standard
+    // header (12 bytes) and multiple questions in the Question
+    // section of the same owner name (changing the RRType, just so
+    // that it would be the form that would be accepted by the BIND 9
+    // parser).  The first Question is 21 bytes in length, and the subsequent
+    // ones are 6 bytes.  We'll also use a TSIG whose size is 85 bytes.
+    // Up to 66 questions can fit in the standard 512-byte buffer
+    // (12 + 21 + 6 * 65 + 85 = 508).  If we try to add one more it would
+    // result in truncation.
+    message_render.setOpcode(Opcode::QUERY());
+    message_render.setRcode(Rcode::NOERROR());
+    for (int i = 1; i <= 67; ++i) {
+        message_render.addQuestion(Question(Name("www.example.com"),
+                                            RRClass::IN(), RRType(i)));
+    }
+    message_render.toWire(renderer, tsig_ctx);
+
+    // Check the rendered data by parsing it.  We only check it has the
+    // TC bit on, has the correct number of questions, and has a TSIG RR.
+    // Checking the signature wouldn't be necessary for this rare case
+    // scenario.
+    InputBuffer buffer(renderer.getData(), renderer.getLength());
+    message_parse.fromWire(buffer);
+    EXPECT_TRUE(message_parse.getHeaderFlag(Message::HEADERFLAG_TC));
+    // Note that the number of questions are 66, not 67 as we tried to add.
+    EXPECT_EQ(66, message_parse.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_TRUE(message_parse.getTSIGRecord() != NULL);
+}
+
 TEST_F(MessageTest, toWireTSIGNoTruncation) {
     // A boundary case that shouldn't cause truncation: the resulting
     // response message with a TSIG will be 512 bytes long.
@@ -795,20 +828,21 @@ TEST_F(MessageTest, toWireTSIGNoTruncation) {
 }
 
 // This is a buggy renderer for testing.  It behaves like the straightforward
-// MessageRenderer, but once its internal buffer reaches the length for
-// the header and a question for www.example.com (33 bytes), its
-// getLengthLimit() returns a faked value, which would make TSIG RR rendering
-// fail unexpectedly in the test that follows.
+// MessageRenderer, but once it has some data, its setLengthLimit() ignores
+// the given parameter and resets the limit to the current length, making
+// subsequent insertion result in truncation, which would make TSIG RR
+// rendering fail unexpectedly in the test that follows.
 class BadRenderer : public MessageRenderer {
 public:
     BadRenderer(isc::util::OutputBuffer& buffer) :
         MessageRenderer(buffer)
     {}
-    virtual size_t getLengthLimit() const {
-        if (MessageRenderer::getLength() >= 33) {
-            return (0);
+    virtual void setLengthLimit(size_t len) {
+        if (getLength() > 0) {
+            MessageRenderer::setLengthLimit(getLength());
+        } else {
+            MessageRenderer::setLengthLimit(len);
         }
-        return (MessageRenderer::getLengthLimit());
     }
 };
 
