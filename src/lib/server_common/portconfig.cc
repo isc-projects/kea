@@ -13,10 +13,10 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <server_common/portconfig.h>
+#include <server_common/logger.h>
 
 #include <asiolink/io_address.h>
 #include <asiodns/dns_service.h>
-#include <log/dummylog.h>
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
@@ -25,7 +25,6 @@ using namespace std;
 using namespace isc::data;
 using namespace isc::asiolink;
 using namespace isc::asiodns;
-using isc::log::dlog;
 
 namespace isc {
 namespace server_common {
@@ -43,6 +42,8 @@ parseAddresses(isc::data::ConstElementPtr addresses,
                 ConstElementPtr addr(addrPair->get("address"));
                 ConstElementPtr port(addrPair->get("port"));
                 if (!addr || ! port) {
+                    LOG_ERROR(logger, SRVCOMM_ADDRESS_MISSING).
+                        arg(addrPair->str());
                     isc_throw(BadValue, "Address must contain both the IP"
                         "address and port");
                 }
@@ -50,6 +51,8 @@ parseAddresses(isc::data::ConstElementPtr addresses,
                     IOAddress(addr->stringValue());
                     if (port->intValue() < 0 ||
                         port->intValue() > 0xffff) {
+                        LOG_ERROR(logger, SRVCOMM_PORT_RANGE).
+                            arg(port->intValue()).arg(addrPair->str());
                         isc_throw(BadValue, "Bad port value (" <<
                             port->intValue() << ")");
                     }
@@ -57,11 +60,14 @@ parseAddresses(isc::data::ConstElementPtr addresses,
                         port->intValue()));
                 }
                 catch (const TypeError &e) { // Better error message
+                    LOG_ERROR(logger, SRVCOMM_ADDRESS_TYPE).
+                        arg(addrPair->str());
                     isc_throw(TypeError,
                         "Address must be a string and port an integer");
                 }
             }
         } else if (addresses->getType() != Element::null) {
+            LOG_ERROR(logger, SRVCOMM_ADDRESSES_NOT_LIST).arg(elemName);
             isc_throw(TypeError, elemName + " config element must be a list");
         }
     }
@@ -86,10 +92,10 @@ installListenAddresses(const AddressList& newAddresses,
                        isc::asiodns::DNSService& service)
 {
     try {
-        dlog("Setting listen addresses:");
+        LOG_DEBUG(logger, DBG_TRACE_BASIC, SRVCOMM_SET_LISTEN);
         BOOST_FOREACH(const AddressPair& addr, newAddresses) {
-            dlog(" " + addr.first + ":" +
-                        boost::lexical_cast<string>(addr.second));
+            LOG_DEBUG(logger, DBG_TRACE_VALUES, SRVCOMM_ADDRESS_VALUE).
+                arg(addr.first).arg(addr.second);
         }
         setAddresses(service, newAddresses);
         addressStore = newAddresses;
@@ -108,13 +114,12 @@ installListenAddresses(const AddressList& newAddresses,
          * user will get error info, command control can be used to set new
          * address. So we just catch the exception without propagating outside
          */
-        dlog(string("Unable to set new address: ") + e.what(), true);
+        LOG_ERROR(logger, SRVCOMM_ADDRESS_FAIL).arg(e.what());
         try {
             setAddresses(service, addressStore);
         }
         catch (const exception& e2) {
-            dlog("Unable to recover from error;", true);
-            dlog(string("Rollback failed with: ") + e2.what(), true);
+            LOG_FATAL(logger, SRVCOMM_ADDRESS_UNRECOVERABLE).arg(e2.what());
         }
         //Anyway the new configure has problem, we need to notify configure
         //manager the new configure doesn't work

@@ -20,6 +20,8 @@
 // See the description of the namespace below.
 #include <unistd.h>             // for some network system calls
 
+#include <sys/socket.h>         // for sockaddr
+
 #include <functional>
 #include <string>
 
@@ -90,6 +92,44 @@ public:
     /// \brief Returns the address family of the endpoint.
     virtual short getFamily() const = 0;
 
+    /// \brief Returns the address of the endpoint in the form of sockaddr
+    /// structure.
+    ///
+    /// The actual instance referenced by the returned value of this method
+    /// is of per address family structure: For IPv4 (AF_INET), it's
+    /// \c sockaddr_in; for IPv6 (AF_INET6), it's \c sockaddr_in6.
+    /// The corresponding port and address members of the underlying structure
+    /// will be set in the network byte order.
+    ///
+    /// This method is "redundant" in that all information to construct the
+    /// \c sockaddr is available via the other "get" methods.
+    /// It is still defined for performance sensitive applications that need
+    /// to get the address information, such as for address based access
+    /// control at a high throughput.  Internally it is implemented with
+    /// minimum overhead such as data copy (this is another reason why this
+    /// method returns a reference).
+    ///
+    /// As a tradeoff, this method is more fragile; it assumes that the
+    /// underlying ASIO implementation stores the address information in
+    /// the form of \c sockaddr and it can be accessed in an efficient way.
+    /// This is the case as of this writing, but if the underlying
+    /// implementation changes this method may become much slower or its
+    /// interface may have to be changed, too.
+    ///
+    /// It is therefore discouraged for normal applications to use this
+    /// method.  Unless the application is very performance sensitive, it
+    /// should use the other "get" method to retrieve specific information
+    /// of the endpoint.
+    ///
+    /// The returned reference is only valid while the corresponding
+    /// \c IOEndpoint is valid.  Once it's destructed the reference will
+    /// become invalid.
+    ///
+    /// \exception None
+    /// \return Reference to a \c sockaddr structure corresponding to the
+    /// endpoint.
+    virtual const struct sockaddr& getSockAddr() const = 0;
+
     bool operator==(const IOEndpoint& other) const;
     bool operator!=(const IOEndpoint& other) const;
 
@@ -121,3 +161,7 @@ public:
 } // namespace asiolink
 } // namespace isc
 #endif // __IO_ENDPOINT_H
+
+// Local Variables:
+// mode: c++
+// End:

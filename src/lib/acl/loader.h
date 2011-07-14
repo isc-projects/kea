@@ -15,7 +15,8 @@
 #ifndef ACL_LOADER_H
 #define ACL_LOADER_H
 
-#include "acl.h"
+#include <exceptions/exceptions.h>
+#include <acl/acl.h>
 #include <cc/data.h>
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
@@ -23,6 +24,10 @@
 
 namespace isc {
 namespace acl {
+
+class AnyOfSpec;
+class AllOfSpec;
+template<typename Mode, typename Context> class LogicOperator;
 
 /**
  * \brief Exception for bad ACL specifications.
@@ -55,7 +60,9 @@ public:
         BadValue(file, line, what),
         element_(element)
     {}
+
     ~ LoaderError() throw() {}
+
     /**
      * \brief Get the element.
      *
@@ -75,7 +82,7 @@ public:
  * or if it doesn't contain one of the accepted values.
  *
  * \param action The JSON representation of the action. It must be a string
- *     and contain one of "ACCEPT", "REJECT" or "DENY".
+ *     and contain one of "ACCEPT", "REJECT" or "DROP.
  * \note We could define different names or add aliases if needed.
  */
 BasicAction defaultActionLoader(data::ConstElementPtr action);
@@ -153,6 +160,7 @@ public:
         default_action_(defaultAction),
         action_loader_(actionLoader)
     {}
+
     /**
      * \brief Creator of the checks.
      *
@@ -164,6 +172,9 @@ public:
      */
     class CheckCreator {
     public:
+        /** \brief Virtual class needs virtual destructor */
+        virtual ~CheckCreator() {}
+
         /**
          * \brief List of names supported by this loader.
          *
@@ -173,6 +184,7 @@ public:
          * types of checks.
          */
         virtual std::vector<std::string> names() const = 0;
+
         /**
          * \brief Creates the check.
          *
@@ -196,6 +208,7 @@ public:
         virtual boost::shared_ptr<Check<Context> > create(
             const std::string& name, data::ConstElementPtr definition,
             const Loader<Context, Action>& loader) = 0;
+
         /**
          * \brief Is list or-abbreviation allowed?
          *
@@ -215,6 +228,7 @@ public:
             return (true);
         }
     };
+
     /**
      * \brief Register another check creator.
      *
@@ -248,6 +262,7 @@ public:
             creators_[*i] = creator;
         }
     }
+
     /**
      * \brief Load a check.
      *
@@ -263,7 +278,7 @@ public:
      * \param description The JSON description of the check.
      */
     boost::shared_ptr<Check<Context> > loadCheck(const data::ConstElementPtr&
-                                                 description)
+                                                 description) const
     {
         // Get the description as a map
         typedef std::map<std::string, data::ConstElementPtr> Map;
@@ -278,20 +293,33 @@ public:
         // Call the internal part with extracted map
         return (loadCheck(description, map));
     }
+
     /**
      * \brief Load an ACL.
      *
      * This parses an ACL list, creates the checks and actions of each element
-     * and returns it. It may throw LoaderError if it isn't a list or the
-     * "action" key is missing in some element. Also, no exceptions from
-     * loadCheck (therefore from whatever creator is used) and from the
-     * actionLoader passed to constructor are not caught.
+     * and returns it.
+     *
+     * No exceptions from \c loadCheck (therefore from whatever creator is
+     * used) and from the actionLoader passed to constructor are caught.
+     *
+     * \exception InvalidParameter The given element is NULL (most likely a
+     * caller's bug)
+     * \exception LoaderError The given element isn't a list or the
+     * "action" key is missing in some element
      *
      * \param description The JSON list of ACL.
+     *
+     * \return The newly created ACL object
      */
     boost::shared_ptr<ACL<Context, Action> > load(const data::ConstElementPtr&
-                                                  description)
+                                                  description) const
     {
+        if (!description) {
+            isc_throw(isc::InvalidParameter,
+                      "Null description is passed to ACL loader");
+        }
+
         // We first check it's a list, so we can use the list reference
         // (the list may be huge)
         if (description->getType() != data::Element::list) {
@@ -328,6 +356,7 @@ public:
         }
         return (result);
     }
+
 private:
     // Some type aliases to save typing
     typedef std::map<std::string, boost::shared_ptr<CheckCreator> > Creators;
@@ -337,6 +366,7 @@ private:
     Creators creators_;
     const Action default_action_;
     const boost::function1<Action, data::ConstElementPtr> action_loader_;
+
     /**
      * \brief Internal version of loadCheck.
      *
@@ -346,7 +376,7 @@ private:
      *     the map.
      */
     boost::shared_ptr<Check<Context> > loadCheck(const data::ConstElementPtr&
-                                                 description, Map& map)
+                                                 description, Map& map) const
     {
         // Remove the action keyword
         map.erase("action");
@@ -367,20 +397,48 @@ private:
                 }
                 if (creatorIt->second->allowListAbbreviation() &&
                     checkDesc->second->getType() == data::Element::list) {
-                    isc_throw_1(LoaderError,
-                                "Not implemented (OR-abbreviated form)",
-                                checkDesc->second);
+                    // Or-abbreviated form - create an OR and put everything
+                    // inside.
+                    const std::vector<data::ConstElementPtr>&
+                        params(checkDesc->second->listValue());
+                    boost::shared_ptr<LogicOperator<AnyOfSpec, Context> >
+                        oper(new LogicOperator<AnyOfSpec, Context>);
+                    for (std::vector<data::ConstElementPtr>::const_iterator
+                             i(params.begin());
+                         i != params.end(); ++i) {
+                        oper->addSubexpression(
+                            creatorIt->second->create(name, *i, *this));
+                    }
+                    return (oper);
                 }
                 // Create the check and return it
                 return (creatorIt->second->create(name, checkDesc->second,
                                                   *this));
             }
-            default:
-                isc_throw_1(LoaderError,
-                            "Not implemented (AND-abbreviated form)",
-                            description);
+            default: {
+                // This is the AND-abbreviated form. We need to create an
+                // AND (or "ALL") operator, loop trough the whole map and
+                // fill it in. We do a small trick - we create bunch of
+                // single-item maps, call this loader recursively (therefore
+                // it will get into the "case 1" branch, where there is
+                // the actual loading) and use the results to fill the map.
+                //
+                // We keep the description the same, there's nothing we could
+                // take out (we could create a new one, but that would be
+                // confusing, as it is used for error messages only).
+                boost::shared_ptr<LogicOperator<AllOfSpec, Context> >
+                    oper(new LogicOperator<AllOfSpec, Context>);
+                for (Map::const_iterator i(map.begin()); i != map.end(); ++i) {
+                    Map singleSubexpr;
+                    singleSubexpr.insert(*i);
+                    oper->addSubexpression(loadCheck(description,
+                                                     singleSubexpr));
+                }
+                return (oper);
+            }
         }
     }
+
     /**
      * \brief Check that always matches.
      *
@@ -401,4 +459,21 @@ private:
 }
 }
 
+/*
+ * This include at the end of the file is unusual. But we need to include it,
+ * we use template classes from there. However, they need to be present only
+ * at instantiation of our class, which will happen below this header.
+ *
+ * The problem is, the header uses us as well, therefore there's a circular
+ * dependency. If we loaded it at the beginning and someone loaded us first,
+ * the logic_check header wouldn't have our definitions. This way, no matter
+ * in which order they are loaded, the definitions from this header will be
+ * above the ones from logic_check.
+ */
+#include "logic_check.h"
+
 #endif
+
+// Local Variables:
+// mode: c++
+// End:

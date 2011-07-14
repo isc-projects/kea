@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 #include <log/logger_support.h>
-#include <log/messagedef.h>
+#include <log/log_messages.h>
 
 using namespace isc::log;
 
@@ -63,10 +63,10 @@ TEST(LoggerSupportTest, LoggingInitializationCheck) {
     isc::log::Logger test_logger("test");
 
     EXPECT_THROW(test_logger.isDebugEnabled(), LoggingNotInitialized);
-    EXPECT_THROW(test_logger.info(MSG_OPENIN), LoggingNotInitialized);
+    EXPECT_THROW(test_logger.info(LOG_INPUT_OPEN_FAIL), LoggingNotInitialized);
 
     // ... and check that they work when logging is initialized.
     setLoggingInitialized(true);
     EXPECT_NO_THROW(test_logger.isDebugEnabled());
-    EXPECT_NO_THROW(test_logger.info(MSG_OPENIN));
+    EXPECT_NO_THROW(test_logger.info(LOG_INPUT_OPEN_FAIL));
 }

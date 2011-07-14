@@ -28,7 +28,7 @@ run_unittests_SOURCES += resolver_config_unittest.cc
 run_unittests_SOURCES += response_scrubber_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 
-nodist_run_unittests_SOURCES = ../resolverdef.h ../resolverdef.cc
+nodist_run_unittests_SOURCES = ../resolver_messages.h ../resolver_messages.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
@@ -39,6 +39,7 @@ run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
+run_unittests_LDADD += $(top_builddir)/src/lib/acl/libdnsacl.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 run_unittests_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
@@ -47,6 +48,8 @@ run_unittests_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cache/libcache.la
 run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 run_unittests_LDADD += $(top_builddir)/src/lib/resolve/libresolve.la
+run_unittests_LDADD += $(top_builddir)/src/lib/acl/libacl.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 
 # Note the ordering matters: -Wno-... must follow -Wextra (defined in

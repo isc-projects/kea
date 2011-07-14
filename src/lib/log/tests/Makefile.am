@@ -51,13 +51,26 @@ logger_example_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 logger_example_LDFLAGS = $(AM_LDFLAGS) $(LOG4CPLUS_LDFLAGS)
 logger_example_LDADD  = $(top_builddir)/src/lib/log/liblog.la
 logger_example_LDADD += $(top_builddir)/src/lib/util/libutil.la
+logger_example_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+
+check_PROGRAMS += init_logger_test
+init_logger_test_SOURCES = init_logger_test.cc
+init_logger_test_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
+init_logger_test_LDFLAGS = $(AM_LDFLAGS) $(LOG4CPLUS_LDFLAGS)
+init_logger_test_LDADD  = $(top_builddir)/src/lib/log/liblog.la
+init_logger_test_LDADD += $(top_builddir)/src/lib/util/libutil.la
+init_logger_test_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 
 noinst_PROGRAMS = $(TESTS)
 
-# Additional test using the shell
-PYTESTS = console_test.sh local_file_test.sh severity_test.sh
+# Additional test using the shell.  These are principally tests
+# where the global logging environment is affected, and where the
+# output needs to be compared with stored output (where "cut" and
+# "diff" are useful utilities).
+
 check-local:
 	$(SHELL) $(abs_builddir)/console_test.sh
 	$(SHELL) $(abs_builddir)/destination_test.sh
+	$(SHELL) $(abs_builddir)/init_logger_test.sh
 	$(SHELL) $(abs_builddir)/local_file_test.sh
 	$(SHELL) $(abs_builddir)/severity_test.sh

@@ -31,7 +31,9 @@
 
 #include <log/logger_level.h>
 #include <log/logger_manager.h>
+#include <log/logger_specification.h>
 #include <log/logger_support.h>
+#include <log/output_option.h>
 
 using namespace std;
 
@@ -39,6 +41,77 @@ namespace {
 
 // Flag to hold logging initialization state.
 bool logging_init_state = false;
+
+
+// Set logging destination according to the setting of B10_LOGGER_DESTINATION.
+// (See header for initLogger() for more details.)  This is a no-op if the
+// environment variable is not defined.
+//
+// \param root Name of the root logger
+// \param severity Severity level to be assigned to the root logger
+// \param dbglevel Debug level
+
+void
+setDestination(const char* root, const isc::log::Severity severity,
+               const int dbglevel) {
+
+    using namespace isc::log;
+
+    const char* destination = getenv("B10_LOGGER_DESTINATION");
+    if (destination != NULL) {
+
+        // Constants: not declared static as this is function is expected to be
+        // called once only
+        const string STDOUT = "stdout";
+        const string STDERR = "stderr";
+        const string SYSLOG = "syslog";
+        const string SYSLOG_COLON = "syslog:";
+
+        // Prepare the objects to define the logging specification
+        LoggerSpecification spec(root, severity, dbglevel);
+        OutputOption option;
+
+        // Set up output option according to destination specification
+        const string dest = destination;
+        if (dest == STDOUT) {
+            option.destination = OutputOption::DEST_CONSOLE;
+            option.stream = OutputOption::STR_STDOUT;
+
+        } else if (dest == STDERR) {
+            option.destination = OutputOption::DEST_CONSOLE;
+            option.stream = OutputOption::STR_STDERR;
+
+        } else if (dest == SYSLOG) {
+            option.destination = OutputOption::DEST_SYSLOG;
+            // Use default specified in OutputOption constructor for the
+            // syslog destination
+
+        } else if (dest.find(SYSLOG_COLON) == 0) {
+            option.destination = OutputOption::DEST_SYSLOG;
+            // Must take account of the string actually being "syslog:"
+            if (dest == SYSLOG_COLON) {
+                cerr << "**ERROR** value for B10_LOGGER_DESTINATION of " <<
+                        SYSLOG_COLON << " is invalid, " << SYSLOG <<
+                        " will be used instead\n";
+                // Use default for logging facility
+
+            } else {
+                // Everything else in the string is the facility name
+                option.facility = dest.substr(SYSLOG_COLON.size());
+            }
+
+        } else {
+            // Not a recognised destination, assume a file
+            option.destination = OutputOption::DEST_FILE;
+            option.filename = dest;
+        }
+
+        // ... and set the destination
+        spec.addOutputOption(option);
+        LoggerManager manager;
+        manager.process(spec);
+    }
+}
 
 } // Anonymous namespace
 
@@ -115,11 +188,14 @@ void initLogger(isc::log::Severity severity, int dbglevel) {
         }
     }
 
-    /// Set the local message file
+    // Set the local message file
     const char* localfile = getenv("B10_LOGGER_LOCALMSG");
 
     // Initialize logging
     initLogger(root, severity, dbglevel, localfile);
+
+    // Now set the destination for logging output
+    setDestination(root, severity, dbglevel);
 }
 
 } // namespace log
