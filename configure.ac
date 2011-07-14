@@ -775,6 +775,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/auth/Makefile
                  src/bin/auth/tests/Makefile
                  src/bin/auth/benchmarks/Makefile
+                 src/bin/dhcp6/Makefile
+                 src/bin/dhcp6/tests/Makefile
                  src/bin/resolver/Makefile
                  src/bin/resolver/tests/Makefile
                  src/bin/sockcreator/Makefile
@@ -791,6 +793,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/stats/tests/isc/cc/Makefile
                  src/bin/stats/tests/isc/config/Makefile
                  src/bin/stats/tests/isc/util/Makefile
+                 src/bin/stats/tests/isc/log/Makefile
                  src/bin/stats/tests/testdata/Makefile
                  src/bin/stats/tests/http/Makefile
                  src/bin/usermgr/Makefile
@@ -904,6 +907,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/msgq/run_msgq.sh
            src/bin/auth/auth.spec.pre
            src/bin/auth/spec_config.h.pre
+           src/bin/dhcp6/spec_config.h.pre
            src/bin/tests/process_rename_test.py
            src/lib/config/tests/data_def_unittests_config.h
            src/lib/python/isc/config/tests/config_test
@@ -917,6 +921,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/cc/tests/session_unittests_config.h
            src/lib/log/tests/console_test.sh
            src/lib/log/tests/destination_test.sh
+           src/lib/log/tests/init_logger_test.sh
            src/lib/log/tests/local_file_test.sh
            src/lib/log/tests/severity_test.sh
            src/lib/log/tests/tempdir.h
@@ -946,9 +951,10 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/msgq/tests/msgq_test
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
-           chmod +x src/lib/log/tests/local_file_test.sh
            chmod +x src/lib/log/tests/console_test.sh
            chmod +x src/lib/log/tests/destination_test.sh
+           chmod +x src/lib/log/tests/init_logger_test.sh
+           chmod +x src/lib/log/tests/local_file_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
            chmod +x src/lib/util/python/mkpywrapper.py
            chmod +x src/lib/python/isc/log/tests/log_console.py

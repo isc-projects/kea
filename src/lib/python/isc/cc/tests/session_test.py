@@ -274,6 +274,16 @@ class testSession(unittest.TestCase):
         self.assertEqual({"hello": "b"}, msg)
         self.assertFalse(sess.has_queued_msgs())
 
+    def test_recv_bad_msg(self):
+        sess = MySession()
+        self.assertFalse(sess.has_queued_msgs())
+        sess._socket.addrecv({'to': 'someone' }, {'hello': 'b'})
+        sess._socket.addrecv({'to': 'someone', 'reply': 1}, {'hello': 'a'})
+        # mangle the bytes a bit
+        sess._socket.recvqueue[5] = sess._socket.recvqueue[5] - 2
+        sess._socket.recvqueue = sess._socket.recvqueue[:-2]
+        self.assertRaises(SessionError, sess.recvmsg, True, 1)
+
     def test_next_sequence(self):
         sess = MySession()
         self.assertEqual(sess._sequence, 1)

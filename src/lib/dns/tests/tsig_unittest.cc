@@ -440,7 +440,7 @@ TEST_F(TSIGTest, signUsingHMACSHA224) {
         0xef, 0x33, 0xa2, 0xda, 0xa1, 0x48, 0x71, 0xd3
     };
     {
-        SCOPED_TRACE("Sign test using HMAC-SHA1");
+        SCOPED_TRACE("Sign test using HMAC-SHA224");
         commonSignChecks(createMessageAndSign(sha1_qid, test_name, &sha1_ctx),
                          sha1_qid, 0x4dae7d5f, expected_mac,
                          sizeof(expected_mac), 0, 0, NULL,

@@ -5,6 +5,23 @@
 <!ENTITY % version SYSTEM "version.ent">
 %version;
 ]>
+
+<!--
+ - Copyright (C) 2010-2011  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
 <book>
   <?xml-stylesheet href="bind10-guide.css" type="text/css"?>
 
@@ -1448,6 +1465,92 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
        </screen>
     </para>
 
+  </chapter>
+
+  <chapter id="logging">
+    <title>Logging</title>
+
+<!-- TODO: how to configure logging, logging destinations etc. -->
+
+    <para>
+        Each message written by BIND 10 to the configured logging destinations
+        comprises a number of components that identify the origin of the
+        message and, if the message indicates a problem, information about the
+        problem that may be useful in fixing it.
+    </para>
+
+    <para>
+        Consider the message below logged to a file:
+        <screen>2011-06-15 13:48:22.034 ERROR [b10-resolver.asiolink]
+    ASIODNS_OPENSOCK error 111 opening TCP socket to 127.0.0.1(53)</screen>
+    </para>
+
+    <para>
+      Note: the layout of messages written to the system logging
+      file (syslog) may be slightly different.  This message has
+      been split across two lines here for display reasons; in the
+      logging file, it will appear on one line.)
+    </para>
+
+    <para>
+      The log message comprises a number of components:
+
+        <variablelist>
+        <varlistentry>
+        <term>2011-06-15 13:48:22.034</term>
+        <listitem><para>
+            The date and time at which the message was generated.
+        </para></listitem>
+        </varlistentry>
+
+        <varlistentry>
+        <term>ERROR</term>
+        <listitem><para>
+            The severity of the message.
+        </para></listitem>
+        </varlistentry>
+
+        <varlistentry>
+        <term>[b10-resolver.asiolink]</term>
+        <listitem><para>
+	    The source of the message.  This comprises two components:
+	    the BIND 10 process generating the message (in this
+	    case, <command>b10-resolver</command>) and the module
+	    within the program from which the message originated
+	    (which in the example is the asynchronous I/O link
+	    module, asiolink).
+        </para></listitem>
+        </varlistentry>
+
+        <varlistentry>
+        <term>ASIODNS_OPENSOCK</term>
+        <listitem><para>
+	    The message identification.  Every message in BIND 10
+	    has a unique identification, which can be used as an
+	    index into the <ulink
+	    url="bind10-messages.html"><citetitle>BIND 10 Messages
+	    Manual</citetitle></ulink> (<ulink
+	    url="http://bind10.isc.org/docs/bind10-messages.html"
+	    />) from which more information can be obtained.
+        </para></listitem>
+        </varlistentry>
+
+        <varlistentry>
+        <term>error 111 opening TCP socket to 127.0.0.1(53)</term>
+        <listitem><para>
+            A brief description of the cause of the problem.  Within this text,
+            information relating to the condition that caused the message to
+            be logged will be included.  In this example, error number 111
+            (an operating system-specific error number) was encountered when
+            trying to open a TCP connection to port 53 on the local system
+            (address 127.0.0.1).  The next step would be to find out the reason
+            for the failure by consulting your system's documentation to
+            identify what error number 111 means.
+        </para></listitem>
+        </varlistentry>
+        </variablelist>
+
+    </para>
   </chapter>
 
 <!-- TODO: how to help: run unit tests, join lists, review trac tickets -->
