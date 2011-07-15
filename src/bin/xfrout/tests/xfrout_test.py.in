@@ -159,7 +159,7 @@ class TestXfroutSession(unittest.TestCase):
         self.xfrsess._remote = ('192.0.2.1', 12345)
         rcode, msg = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(None, rcode)
-        # This should be refused, therefore NOTAUTH
+        # This should be refused, therefore REFUSED
         self.xfrsess._remote = ('192.0.2.2', 12345)
         rcode, msg = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
