@@ -486,7 +486,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
 
     def _guess_remote(self, sock_fd):
         """
-           Guess remote address and port of the socket. The socket must be a
+           Guess remote address and port of the socket. The sock_fd must be a
            socket
         """
         # This uses a trick. If the socket is IPv4 in reality and we pretend
