@@ -290,7 +290,7 @@ makeErrorMessage(MessagePtr message, OutputBufferPtr buffer,
         message->toWire(renderer);
     }
     LOG_DEBUG(auth_logger, DBG_AUTH_MESSAGES, AUTH_SEND_ERROR_RESPONSE)
-              .arg(message->toText());
+              .arg(renderer.getLength()).arg(*message);
 }
 }
 
