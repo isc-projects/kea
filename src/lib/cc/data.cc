@@ -511,7 +511,7 @@ Element::nameToType(const std::string& type_name) {
         return (Element::list);
     } else if (type_name == "map") {
         return (Element::map);
-    } else if (type_name == "named_map") {
+    } else if (type_name == "named_set") {
         return (Element::map);
     } else if (type_name == "null") {
         return (Element::null);

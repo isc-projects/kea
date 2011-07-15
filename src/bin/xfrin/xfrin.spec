@@ -48,10 +48,10 @@
         }
       },
       { "item_name": "new_zones",
-        "item_type": "named_map",
+        "item_type": "named_set",
         "item_optional": false,
         "item_default": {},
-        "named_map_item_spec": {
+        "named_set_item_spec": {
           "item_name": "zone",
           "item_type": "map",
           "item_default": {},

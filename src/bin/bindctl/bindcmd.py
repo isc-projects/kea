@@ -636,11 +636,11 @@ class BindCmdInterpreter(Cmd):
                     # we have more data to show
                     line += "/"
                 else:
-                    # if type is named_map, don't print value if None
+                    # if type is named_set, don't print value if None
                     # (it is either {} meaning empty, or None, meaning
                     # there actually is data, but not to be shown with
                     # the current command
-                    if value_map['type'] == 'named_map' and\
+                    if value_map['type'] == 'named_set' and\
                        value_map['value'] is None:
                         line += "/\t"
                     else:

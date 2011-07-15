@@ -691,7 +691,7 @@ class TestUIModuleCCSession(unittest.TestCase):
         fake_conn.set_get_answer('/config_data', { 'version': BIND10_CONFIG_DATA_VERSION })
         return UIModuleCCSession(fake_conn)
 
-    def create_uccs_named_map(self, fake_conn):
+    def create_uccs_named_set(self, fake_conn):
         module_spec = isc.config.module_spec_from_file(self.spec_file("spec32.spec"))
         fake_conn.set_get_answer('/module_spec', { module_spec.get_module_name(): module_spec.get_full_spec()})
         fake_conn.set_get_answer('/config_data', { 'version': BIND10_CONFIG_DATA_VERSION })
@@ -742,26 +742,26 @@ class TestUIModuleCCSession(unittest.TestCase):
         uccs.remove_value("Spec2/item5[0]", None)
         self.assertEqual({'Spec2': {'item5': []}}, uccs._local_changes)
 
-    def test_add_remove_value_named_map(self):
+    def test_add_remove_value_named_set(self):
         fake_conn = fakeUIConn()
-        uccs = self.create_uccs_named_map(fake_conn)
-        value, status = uccs.get_value("/Spec32/named_map_item")
+        uccs = self.create_uccs_named_set(fake_conn)
+        value, status = uccs.get_value("/Spec32/named_set_item")
         self.assertEqual({'a': 1, 'b': 2}, value)
-        uccs.add_value("/Spec32/named_map_item", "foo")
-        value, status = uccs.get_value("/Spec32/named_map_item")
+        uccs.add_value("/Spec32/named_set_item", "foo")
+        value, status = uccs.get_value("/Spec32/named_set_item")
         self.assertEqual({'a': 1, 'b': 2, 'foo': 3}, value)
 
-        uccs.remove_value("/Spec32/named_map_item", "a")
-        uccs.remove_value("/Spec32/named_map_item", "foo")
-        value, status = uccs.get_value("/Spec32/named_map_item")
+        uccs.remove_value("/Spec32/named_set_item", "a")
+        uccs.remove_value("/Spec32/named_set_item", "foo")
+        value, status = uccs.get_value("/Spec32/named_set_item")
         self.assertEqual({'b': 2}, value)
 
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           uccs.set_value,
-                          "/Spec32/named_map_item/no_such_item",
+                          "/Spec32/named_set_item/no_such_item",
                           4)
         self.assertRaises(isc.cc.data.DataNotFoundError,
-                          uccs.remove_value, "/Spec32/named_map_item",
+                          uccs.remove_value, "/Spec32/named_set_item",
                           "no_such_item")
 
     def test_commit(self):
