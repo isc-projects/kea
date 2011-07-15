@@ -361,7 +361,7 @@ class TestMultiConfigData(unittest.TestCase):
 
     def test_get_current_config(self):
         cf = { 'module1': { 'item1': 2, 'item2': True } }
-        self.mcd._set_current_config(cf);
+        self.mcd._set_current_config(cf)
         self.assertEqual(cf, self.mcd.get_current_config())
 
     def test_get_local_changes(self):
@@ -411,7 +411,6 @@ class TestMultiConfigData(unittest.TestCase):
         self.assertEqual('a', value)
         value = self.mcd.get_default_value("Spec2/item5[1]")
         self.assertEqual('b', value)
-        self.assertRaises(self.mcd.get_default_value("Spec2/item5[2]"))
         value = self.mcd.get_default_value("Spec2/item5[5]")
         self.assertEqual(None, value)
         value = self.mcd.get_default_value("Spec2/item5[0][1]")

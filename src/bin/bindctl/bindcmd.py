@@ -659,10 +659,9 @@ class BindCmdInterpreter(Cmd):
                 data, default = self.config_data.get_value(identifier)
                 print(json.dumps(data))
         elif cmd.command == "add":
-            if 'value' in cmd.params:
-                self.config_data.add_value(identifier, cmd.params['value'])
-            else:
-                self.config_data.add_value(identifier)
+            self.config_data.add_value(identifier,
+                                       cmd.params.get('value_or_name'),
+                                       cmd.params.get('value_for_set'))
         elif cmd.command == "remove":
             if 'value' in cmd.params:
                 self.config_data.remove_value(identifier, cmd.params['value'])
@@ -686,7 +685,7 @@ class BindCmdInterpreter(Cmd):
         elif cmd.command == "commit":
             self.config_data.commit()
         elif cmd.command == "diff":
-            print(self.config_data.get_local_changes());
+            print(self.config_data.get_local_changes())
         elif cmd.command == "go":
             self.go(identifier)
 

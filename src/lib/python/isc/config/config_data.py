@@ -261,7 +261,7 @@ class ConfigData:
 
     def get_local_config(self):
         """Returns the non-default config values in a dict"""
-        return self.data;
+        return self.data
 
     def get_item_list(self, identifier = None, recurse = False):
         """Returns a list of strings containing the full identifiers of
