@@ -444,11 +444,11 @@ class UIModuleCCSession(MultiConfigData):
         else:
             raise isc.cc.data.DataAlreadyPresentError(value + " already in " + identifier)
 
-    def _add_value_to_named_map(self, identifier, value, item_value):
+    def _add_value_to_named_set(self, identifier, value, item_value):
         if value is None:
-            raise isc.cc.data.DataNotFoundError("Need a name to add a new item to named_map " + str(identifier))
+            raise isc.cc.data.DataNotFoundError("Need a name to add a new item to named_set " + str(identifier))
         elif type(value) != str:
-            raise isc.cc.data.DataTypeError("Name for named_map " + identifier + " must be a string")
+            raise isc.cc.data.DataTypeError("Name for named_set " + identifier + " must be a string")
         else:
             cur_map, status = self.get_value(identifier)
             if not cur_map:
@@ -477,16 +477,16 @@ class UIModuleCCSession(MultiConfigData):
         if value_str is not None:
             value = isc.cc.data.parse_value_str(value_str)
 
-        # the specified element must be a list or a named_map
+        # the specified element must be a list or a named_set
         if 'list_item_spec' in module_spec:
             self._add_value_to_list(identifier, value)
-        elif 'named_map_item_spec' in module_spec:
+        elif 'named_set_item_spec' in module_spec:
             item_value = None
-            if 'item_default' in module_spec['named_map_item_spec']:
-                item_value = module_spec['named_map_item_spec']['item_default']
-            self._add_value_to_named_map(identifier, value, item_value)
+            if 'item_default' in module_spec['named_set_item_spec']:
+                item_value = module_spec['named_set_item_spec']['item_default']
+            self._add_value_to_named_set(identifier, value, item_value)
         else:
-            raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list or a named map")
+            raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list or a named set")
 
     def _remove_value_from_list(self, identifier, value):
         if value is None:
@@ -504,11 +504,11 @@ class UIModuleCCSession(MultiConfigData):
                 cur_list.remove(value)
             self.set_value(identifier, cur_list)
 
-    def _remove_value_from_named_map(self, identifier, value):
+    def _remove_value_from_named_set(self, identifier, value):
         if value is None:
-            raise isc.cc.data.DataNotFoundError("Need a name to remove an item from named_map " + str(identifier))
+            raise isc.cc.data.DataNotFoundError("Need a name to remove an item from named_set " + str(identifier))
         elif type(value) != str:
-            raise isc.cc.data.DataTypeError("Name for named_map " + identifier + " must be a string")
+            raise isc.cc.data.DataTypeError("Name for named_set " + identifier + " must be a string")
         else:
             cur_map, status = self.get_value(identifier)
             if not cur_map:
@@ -516,10 +516,10 @@ class UIModuleCCSession(MultiConfigData):
             if value in cur_map:
                 del cur_map[value]
             else:
-                raise isc.cc.data.DataNotFoundError(value + " not found in named_map " + str(identifier))
+                raise isc.cc.data.DataNotFoundError(value + " not found in named_set " + str(identifier))
 
     def remove_value(self, identifier, value_str):
-        """Remove a value from a configuration list or named map.
+        """Remove a value from a configuration list or named set.
         The value string must be a string representation of the full
         item. Raises a DataTypeError if the value at the identifier
         is not a list, or if the given value_str does not match the
@@ -536,10 +536,10 @@ class UIModuleCCSession(MultiConfigData):
             if value is not None:
                 isc.config.config_data.check_type(module_spec['list_item_spec'], value)
             self._remove_value_from_list(identifier, value)
-        elif 'named_map_item_spec' in module_spec:
-            self._remove_value_from_named_map(identifier, value)
+        elif 'named_set_item_spec' in module_spec:
+            self._remove_value_from_named_set(identifier, value)
         else:
-            raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list or a named_map")
+            raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list or a named_set")
 
 
 

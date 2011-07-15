@@ -145,8 +145,8 @@ def _find_spec_part_single(cur_spec, id_part):
             return cur_spec['list_item_spec']
         # not found
         raise isc.cc.data.DataNotFoundError(id + " not found")
-    elif type(cur_spec) == dict and 'named_map_item_spec' in cur_spec.keys():
-        return cur_spec['named_map_item_spec']
+    elif type(cur_spec) == dict and 'named_set_item_spec' in cur_spec.keys():
+        return cur_spec['named_set_item_spec']
     elif type(cur_spec) == list:
         for cur_spec_item in cur_spec:
             if cur_spec_item['item_name'] == id:
@@ -193,7 +193,7 @@ def spec_name_list(spec, prefix="", recurse=False):
                     result.extend(spec_name_list(map_el['map_item_spec'], prefix + map_el['item_name'], recurse))
                 else:
                     result.append(prefix + name)
-        elif 'named_map_item_spec' in spec:
+        elif 'named_set_item_spec' in spec:
             # we added a '/' above, but in this one case we don't want it
             result.append(prefix[:-1])
             pass
@@ -419,7 +419,7 @@ class MultiConfigData:
                 id_list = module + "/" + id_prefix + "/" + item_id
                 id_prefix += "/" + id_part
                 part_spec = find_spec_part(self._specifications[module].get_config_spec(), id_prefix)
-                if part_spec['item_type'] == 'named_map':
+                if part_spec['item_type'] == 'named_set':
                     if len(id_parts) == 0:
                         if 'item_default' in part_spec:
                             return part_spec['item_default']
@@ -427,21 +427,21 @@ class MultiConfigData:
                             return None
                     id_part = id_parts.pop(0)
 
-                    named_map_value, type = self.get_value(id_list)
-                    if id_part in named_map_value:
+                    named_set_value, type = self.get_value(id_list)
+                    if id_part in named_set_value:
                         if len(id_parts) > 0:
                             # we are looking for the *default* value.
                             # so if not present in here, we need to
                             # lookup the one from the spec
                             rest_of_id = "/".join(id_parts)
-                            result = isc.cc.data.find_no_exc(named_map_value[id_part], rest_of_id)
+                            result = isc.cc.data.find_no_exc(named_set_value[id_part], rest_of_id)
                             if result is None:
                                 spec_part = self.find_spec_part(identifier)
                                 if 'item_default' in spec_part:
                                     return spec_part['item_default']
                             return result
                         else:
-                            return named_map_value[id_part]
+                            return named_set_value[id_part]
                     else:
                         return None
                 elif list_indices is not None:
@@ -481,9 +481,9 @@ class MultiConfigData:
                     
             spec = find_spec_part(self._specifications[module].get_config_spec(), id)
             if 'item_default' in spec:
-                # one special case, named_map
-                if spec['item_type'] == 'named_map':
-                    print("is " + id_part + " in named map?")
+                # one special case, named_set
+                if spec['item_type'] == 'named_set':
+                    print("is " + id_part + " in named set?")
                     return spec['item_default']
                 else:
                     return spec['item_default']
@@ -551,7 +551,7 @@ class MultiConfigData:
                 # almost never interested in just its name
                 spec_part_map = spec_part['map_item_spec']
                 self._append_value_item(result, spec_part_map, identifier, all)
-            elif item_type == "named_map":
+            elif item_type == "named_set":
                 value, status = self.get_value(identifier)
 
                 # show just the one entry, when either the map is empty,
@@ -567,10 +567,10 @@ class MultiConfigData:
                                                     None, status)
                     result.append(entry)
                 else:
-                    spec_part_named_map = spec_part['named_map_item_spec']
+                    spec_part_named_set = spec_part['named_set_item_spec']
                     for entry in value:
                         self._append_value_item(result,
-                                                spec_part_named_map,
+                                                spec_part_named_set,
                                                 identifier + "/" + entry,
                                                 all)
             else:
@@ -667,16 +667,16 @@ class MultiConfigData:
 
     def _get_list_items(self, item_name):
         """This method is used in get_config_item_list, to add list
-           indices and named_map names to the completion list. If
-           the given item_name is for a list or named_map, it'll
+           indices and named_set names to the completion list. If
+           the given item_name is for a list or named_set, it'll
            return a list of those (appended to item_name), otherwise
            the list will only contain the item_name itself."""
         spec_part = self.find_spec_part(item_name)
         if 'item_type' in spec_part and \
-           spec_part['item_type'] == 'named_map':
+           spec_part['item_type'] == 'named_set':
             subslash = ""
-            if spec_part['named_map_item_spec']['item_type'] == 'map' or\
-               spec_part['named_map_item_spec']['item_type'] == 'named_map':
+            if spec_part['named_set_item_spec']['item_type'] == 'map' or\
+               spec_part['named_set_item_spec']['item_type'] == 'named_set':
                 subslash = "/"
             values, status = self.get_value(item_name)
             if len(values) > 0:

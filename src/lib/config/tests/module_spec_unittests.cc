@@ -212,7 +212,7 @@ TEST(ModuleSpec, CommandValidation) {
 
 }
 
-TEST(ModuleSpec, NamedMapValidation) {
+TEST(ModuleSpec, NamedSetValidation) {
     ModuleSpec dd = moduleSpecFromFile(specfile("spec32.spec"));
 
     ElementPtr errors = Element::createList();
