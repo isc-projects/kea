@@ -54,7 +54,7 @@
          "item_name": "query_acl",
          "item_type": "list",
          "item_optional": false,
-         "item_default": [],
+         "item_default": [{"action": "ACCEPT"}],
          "list_item_spec":
          {
              "item_name": "acl_element",
