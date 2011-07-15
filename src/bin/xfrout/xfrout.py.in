@@ -400,7 +400,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
     def _common_init(self):
         self._lock = threading.Lock()
         self._transfers_counter = 0
-        self._acl = REQUEST_LOADER.load("[]")
+        self._acl = REQUEST_LOADER.load('[{"action": "ACCEPT"}]')
 
     def _receive_query_message(self, sock):
         ''' receive request message from sock'''
