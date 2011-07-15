@@ -21,6 +21,7 @@
 #include <config/ccsession.h>
 
 #include <fstream>
+#include <iostream>
 
 #include <config/tests/data_def_unittests_config.h>
 
@@ -51,9 +52,13 @@ protected:
         // create a ModuleCCSession, we must set an initial
         // ok answer.
         session.getMessages()->add(createAnswer());
+        root_name = isc::log::getRootLoggerName();
     }
-    ~CCSessionTest() {}
+    ~CCSessionTest() {
+        isc::log::setRootLoggerName(root_name);
+    }
     FakeSession session;
+    std::string root_name;
 };
 
 TEST_F(CCSessionTest, createAnswer) {
@@ -652,40 +657,42 @@ void doRelatedLoggersTest(const char* input, const char* expected) {
 TEST(LogConfigTest, relatedLoggersTest) {
     // make sure logger configs for 'other' programs are ignored,
     // and that * is substituted correctly
-    // The default root logger name is "bind10"
+    // We'll use a root logger name of "b10-test".
+    isc::log::setRootLoggerName("b10-test");
+
     doRelatedLoggersTest("[{ \"name\": \"other_module\" }]",
                          "[]");
     doRelatedLoggersTest("[{ \"name\": \"other_module.somelib\" }]",
                          "[]");
-    doRelatedLoggersTest("[{ \"name\": \"bind10_other\" }]",
+    doRelatedLoggersTest("[{ \"name\": \"test_other\" }]",
                          "[]");
-    doRelatedLoggersTest("[{ \"name\": \"bind10_other.somelib\" }]",
+    doRelatedLoggersTest("[{ \"name\": \"test_other.somelib\" }]",
                          "[]");
     doRelatedLoggersTest("[ { \"name\": \"other_module\" },"
-                         "  { \"name\": \"bind10\" }]",
-                         "[ { \"name\": \"bind10\" } ]");
-    doRelatedLoggersTest("[ { \"name\": \"bind10\" }]",
-                         "[ { \"name\": \"bind10\" } ]");
-    doRelatedLoggersTest("[ { \"name\": \"bind10.somelib\" }]",
-                         "[ { \"name\": \"bind10.somelib\" } ]");
+                         "  { \"name\": \"test\" }]",
+                         "[ { \"name\": \"b10-test\" } ]");
+    doRelatedLoggersTest("[ { \"name\": \"test\" }]",
+                         "[ { \"name\": \"b10-test\" } ]");
+    doRelatedLoggersTest("[ { \"name\": \"test.somelib\" }]",
+                         "[ { \"name\": \"b10-test.somelib\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"other_module.somelib\" },"
-                         "  { \"name\": \"bind10.somelib\" }]",
-                         "[ { \"name\": \"bind10.somelib\" } ]");
+                         "  { \"name\": \"test.somelib\" }]",
+                         "[ { \"name\": \"b10-test.somelib\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"other_module.somelib\" },"
-                         "  { \"name\": \"bind10\" },"
-                         "  { \"name\": \"bind10.somelib\" }]",
-                         "[ { \"name\": \"bind10\" },"
-                         "  { \"name\": \"bind10.somelib\" } ]");
+                         "  { \"name\": \"test\" },"
+                         "  { \"name\": \"test.somelib\" }]",
+                         "[ { \"name\": \"b10-test\" },"
+                         "  { \"name\": \"b10-test.somelib\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"*\" }]",
-                         "[ { \"name\": \"bind10\" } ]");
+                         "[ { \"name\": \"b10-test\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"*.somelib\" }]",
-                         "[ { \"name\": \"bind10.somelib\" } ]");
+                         "[ { \"name\": \"b10-test.somelib\" } ]");
     doRelatedLoggersTest("[ { \"name\": \"*\", \"severity\": \"DEBUG\" },"
-                         "  { \"name\": \"bind10\", \"severity\": \"WARN\"}]",
-                         "[ { \"name\": \"bind10\", \"severity\": \"WARN\"} ]");
+                         "  { \"name\": \"test\", \"severity\": \"WARN\"}]",
+                         "[ { \"name\": \"b10-test\", \"severity\": \"WARN\"} ]");
     doRelatedLoggersTest("[ { \"name\": \"*\", \"severity\": \"DEBUG\" },"
                          "  { \"name\": \"some_module\", \"severity\": \"WARN\"}]",
-                         "[ { \"name\": \"bind10\", \"severity\": \"DEBUG\"} ]");
+                         "[ { \"name\": \"b10-test\", \"severity\": \"DEBUG\"} ]");
 
     // make sure 'bad' things like '*foo.x' or '*lib' are ignored
     // (cfgmgr should have already caught it in the logconfig plugin
@@ -696,8 +703,8 @@ TEST(LogConfigTest, relatedLoggersTest) {
                          "[ ]");
     doRelatedLoggersTest("[ { \"name\": \"*foo\" },"
                          "  { \"name\": \"*foo.lib\" },"
-                         "  { \"name\": \"bind10\" } ]",
-                         "[ { \"name\": \"bind10\" } ]");
+                         "  { \"name\": \"test\" } ]",
+                         "[ { \"name\": \"b10-test\" } ]");
 }
 
 }

@@ -18,12 +18,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include <ctype.h>
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
+#include <algorithm>
 #include <cerrno>
+#include <fstream>
+#include <iostream>
 #include <set>
+#include <sstream>
+#include <string>
 
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
@@ -175,6 +178,37 @@ ConstElementPtr getValueOrDefault(ConstElementPtr config_part,
     }
 }
 
+// Prefix name with "b10-".
+//
+// Root logger names are based on the name of the binary they're from (e.g.
+// b10-resolver). This, however, is not how they appear internally (in for
+// instance bindctl, where a module name is based on what is specified in
+// the .spec file (e.g. Resolver)).
+//
+// This function prefixes the name read in the configuration with 'b10-" and
+// leaves the module code as it is. (It is now a required convention that the
+// name from the specfile and the actual binary name should match).  To take
+// account of the use of capital letters in module names in bindctl, the first
+// letter of the name read in is lower-cased.
+//
+// In this way, you configure resolver logging with the name "resolver" and in
+// the printed output it becomes "b10-resolver".  
+//
+// To allow for (a) people using b10-resolver in the configuration instead of
+// "resolver" and (b) that fact that during the resolution of wildcards in
+
+//
+// \param instring String to prefix.  Lowercase the first character and apply
+//        the prefix.  If empty, "b10-" is returned.
+std::string
+b10Prefix(const std::string& instring) {
+    std::string result = instring;
+    if (!result.empty()) {
+        result[0] = static_cast<char>(tolower(result[0]));
+    }
+    return (std::string("b10-") + result);
+}
+
 // Reads a output_option subelement of a logger configuration,
 // and sets the values thereing to the given OutputOption struct,
 // or defaults values if they are not provided (from config_data).
@@ -215,6 +249,7 @@ readLoggersConf(std::vector<isc::log::LoggerSpecification>& specs,
                 ConstElementPtr logger,
                 const ConfigData& config_data)
 {
+    // Read name, adding prefix as required.
     std::string lname = logger->get("name")->stringValue();
 
     ConstElementPtr severity_el = getValueOrDefault(logger,
@@ -247,6 +282,25 @@ readLoggersConf(std::vector<isc::log::LoggerSpecification>& specs,
     specs.push_back(logger_spec);
 }
 
+// Copies the map for a logger, changing the of the logger.  This is
+// used because the logger being copied is "const", but we want to
+// change a top-level name, so need to create a new one.
+
+ElementPtr
+copyLogger(ConstElementPtr& cur_logger, const std::string& new_name) {
+
+    ElementPtr new_logger(Element::createMap());
+
+    // since we'll only be updating one first-level element,
+    // and we return as const again, a shallow map copy is
+    // enough
+    new_logger->setValue(cur_logger->mapValue());
+    new_logger->set("name", Element::create(new_name));
+
+    return (new_logger);
+}
+
+
 } // end anonymous namespace
 
 
@@ -259,34 +313,53 @@ getRelatedLoggers(ConstElementPtr loggers) {
     ElementPtr result = isc::data::Element::createList();
 
     BOOST_FOREACH(ConstElementPtr cur_logger, loggers->listValue()) {
+        // Need to add the b10- prefix to names ready from the spec file.
         const std::string cur_name = cur_logger->get("name")->stringValue();
-        if (cur_name == root_name || cur_name.find(root_name + ".") == 0) {
-            our_names.insert(cur_name);
-            result->add(cur_logger);
+        const std::string mod_name = b10Prefix(cur_name);
+        if (mod_name == root_name || mod_name.find(root_name + ".") == 0) {
+
+            // Note this name so that we don't add a wildcard that matches it.
+            our_names.insert(mod_name);
+
+            // We want to store the logger with the modified name (i.e. with
+            // the b10- prefix).  As we are dealing with const loggers, we
+            // store a modified copy of the data.
+            result->add(copyLogger(cur_logger, mod_name));
+            LOG_DEBUG(config_logger, DBG_CONFIG_PROCESS, CONFIG_LOG_EXPLICIT)
+                      .arg(cur_name);
+
+        } else if (!cur_name.empty() && (cur_name[0] != '*')) {
+            // Not a wildcard logger and we are ignore it, note the fact.
+            LOG_DEBUG(config_logger, DBG_CONFIG_PROCESS,
+                      CONFIG_LOG_IGNORE_EXPLICIT).arg(cur_name);
         }
     }
 
-    // now find the * names
+    // Mow find the wildcard names (the one that start with "*").
     BOOST_FOREACH(ConstElementPtr cur_logger, loggers->listValue()) {
         std::string cur_name = cur_logger->get("name")->stringValue();
         // if name is '*', or starts with '*.', replace * with root
-        // logger name
+        // logger name.
         if (cur_name == "*" || cur_name.length() > 1 &&
             cur_name[0] == '*' && cur_name[1] == '.') {
 
-            cur_name = root_name + cur_name.substr(1);
-            // now add it to the result list, but only if a logger with
-            // that name was not configured explicitely
-            if (our_names.find(cur_name) == our_names.end()) {
-                // we substitute the name here already, but as
+            // Substitute the "*" with the root name
+            std::string mod_name = cur_name;
+            mod_name.replace(0, 1, root_name);
+
+            // Mow add it to the result list, but only if a logger with
+            // that name was not configured explicitly
+            if (our_names.find(mod_name) == our_names.end()) {
+                // We substitute the name here already, but as
                 // we are dealing with consts, we copy the data
-                ElementPtr new_logger(Element::createMap());
-                // since we'll only be updating one first-level element,
-                // and we return as const again, a shallow map copy is
-                // enough
-                new_logger->setValue(cur_logger->mapValue());
-                new_logger->set("name", Element::create(cur_name));
-                result->add(new_logger);
+                result->add(copyLogger(cur_logger, mod_name));
+                LOG_DEBUG(config_logger, DBG_CONFIG_PROCESS,
+                          CONFIG_LOG_WILD_MATCH).arg(cur_name);
+
+            } else if (!cur_name.empty() && (cur_name[0] == '*')) {
+                // Is a wildcard and we are ignoring it.
+                LOG_DEBUG(config_logger, DBG_CONFIG_PROCESS,
+                          CONFIG_LOG_IGNORE_WILD).arg(cur_name);
             }
         }
     }
