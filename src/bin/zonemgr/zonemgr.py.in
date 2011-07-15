@@ -38,6 +38,10 @@ from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
 import isc.util.process
 
+# Initialize logging for called modules.
+# TODO: Log messages properly
+isc.log.init("b10-zonemgr")
+
 isc.util.process.rename()
 
 # If B10_FROM_BUILD is set in the environment, we use data files
