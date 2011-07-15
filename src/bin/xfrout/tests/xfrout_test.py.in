@@ -158,11 +158,18 @@ class TestXfroutSession(unittest.TestCase):
         # This should be dropped completely, therefore returning None
         self.xfrsess._remote = ('192.0.2.1', 12345)
         rcode, msg = self.xfrsess._parse_query_message(self.mdata)
-        self.assertTrue(rcode is None)
-        # This should be rejected, therefore NOTAUTH
+        self.assertEqual(None, rcode)
+        # This should be refused, therefore NOTAUTH
         self.xfrsess._remote = ('192.0.2.2', 12345)
         rcode, msg = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
+        # If the TSIG check fails, it should not check ACL
+        # (If it checked ACL as well, it would just drop the request)
+        self.xfrsess._remote = ('192.0.2.1', 12345)
+        self.xfrsess._tsig_key_ring = TSIGKeyRing()
+        rcode, msg = self.xfrsess._parse_query_message(request_data)
+        self.assertEqual(rcode.to_text(), "NOTAUTH")
+        self.assertTrue(self.xfrsess._tsig_ctx is not None)
 
     def test_get_query_zone_name(self):
         msg = self.getmsg()
@@ -221,20 +228,6 @@ class TestXfroutSession(unittest.TestCase):
         self.assertEqual(msg.get_opcode(), opcode)
         self.assertEqual(msg.get_rcode(), rcode)
         self.assertTrue(msg.get_header_flag(Message.HEADERFLAG_AA))
-
-    def test_reply_query_with_format_error(self):
-        msg = self.getmsg()
-        self.xfrsess._reply_query_with_format_error(msg, self.sock)
-        get_msg = self.sock.read_msg()
-        self.assertEqual(get_msg.get_rcode().to_text(), "FORMERR")
-
-        # tsig signed message
-        msg = self.getmsg()
-        self.xfrsess._tsig_ctx = self.create_mock_tsig_ctx(TSIGError.NOERROR)
-        self.xfrsess._reply_query_with_format_error(msg, self.sock)
-        get_msg = self.sock.read_msg()
-        self.assertEqual(get_msg.get_rcode().to_text(), "FORMERR")
-        self.assertTrue(self.message_has_tsig(get_msg))
 
     def test_create_rrset_from_db_record(self):
         rrset = self.xfrsess._create_rrset_from_db_record(self.soa_record)
@@ -614,13 +607,13 @@ class TestUnixSockServer(unittest.TestCase):
         self.assertEqual(self.unix.tsig_key_ring.size(), 0)
 
         # Load the ACL
-        self.unix.update_config_data({'ACL': [{'from': '127.0.0.1',
+        self.unix.update_config_data({'query_acl': [{'from': '127.0.0.1',
                                                'action': 'ACCEPT'}]})
         self.check_loaded_ACL()
         # Pass a wrong data there and check it does not replace the old one
         self.assertRaises(isc.acl.acl.LoaderError,
                           self.unix.update_config_data,
-                          {'ACL': ['Something bad']})
+                          {'query_acl': ['Something bad']})
         self.check_loaded_ACL()
 
     def test_get_db_file(self):
