@@ -254,7 +254,8 @@ SessionImpl::internalRead(const asio::error_code& error,
     }
 }
 
-Session::Session(io_service& io_service) : impl_(new SessionImpl(io_service))
+Session::Session(asio::io_service& io_service) :
+    impl_(new SessionImpl(io_service))
 {}
 
 Session::~Session() {
@@ -326,7 +327,7 @@ Session::establish(const char* socket_file) {
 // prefix.
 //
 void
-Session::sendmsg(ConstElementPtr msg) {
+Session::sendmsg(isc::data::ConstElementPtr msg) {
     std::string header_wire = msg->toWire();
     unsigned int length = 2 + header_wire.length();
     unsigned int length_net = htonl(length);
@@ -339,7 +340,9 @@ Session::sendmsg(ConstElementPtr msg) {
 }
 
 void
-Session::sendmsg(ConstElementPtr env, ConstElementPtr msg) {
+Session::sendmsg(isc::data::ConstElementPtr env,
+                 isc::data::ConstElementPtr msg) {
+
     std::string header_wire = env->toWire();
     std::string body_wire = msg->toWire();
     unsigned int length = 2 + header_wire.length() + body_wire.length();
@@ -354,13 +357,14 @@ Session::sendmsg(ConstElementPtr env, ConstElementPtr msg) {
 }
 
 bool
-Session::recvmsg(ConstElementPtr& msg, bool nonblock, int seq) {
+Session::recvmsg(isc::data::ConstElementPtr& msg, bool nonblock, int seq) {
     ConstElementPtr l_env;
     return (recvmsg(l_env, msg, nonblock, seq));
 }
 
 bool
-Session::recvmsg(ConstElementPtr& env, ConstElementPtr& msg,
+Session::recvmsg(isc::data::ConstElementPtr& env,
+                 isc::data::ConstElementPtr& msg,
                  bool nonblock, int seq)
 {
     size_t length = impl_->readDataLength();
@@ -455,7 +459,7 @@ Session::unsubscribe(std::string group, std::string instance) {
 }
 
 int
-Session::group_sendmsg(ConstElementPtr msg, std::string group,
+Session::group_sendmsg(isc::data::ConstElementPtr msg, std::string group,
                        std::string instance, std::string to)
 {
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_GROUP_SEND).arg(msg->str()).
@@ -476,7 +480,8 @@ Session::group_sendmsg(ConstElementPtr msg, std::string group,
 }
 
 bool
-Session::group_recvmsg(ConstElementPtr& envelope, ConstElementPtr& msg,
+Session::group_recvmsg(isc::data::ConstElementPtr& envelope,
+                       isc::data::ConstElementPtr& msg,
                        bool nonblock, int seq)
 {
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_GROUP_RECEIVE);
@@ -491,7 +496,8 @@ Session::group_recvmsg(ConstElementPtr& envelope, ConstElementPtr& msg,
 }
 
 int
-Session::reply(ConstElementPtr envelope, ConstElementPtr newmsg) {
+Session::reply(isc::data::ConstElementPtr envelope,
+               isc::data::ConstElementPtr newmsg) {
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_REPLY).arg(envelope->str()).
         arg(newmsg->str());
     ElementPtr env = Element::createMap();
