@@ -559,6 +559,12 @@ class TestUnixSockServer(unittest.TestCase):
         sock.connect(('::1', 12345))
         self.assertEqual(('::1', 12345, 0, 0),
                          self.unix._guess_remote(sock.fileno()))
+        # Try when pretending there's no IPv6 support
+        xfrout.socket.has_ipv6 = False
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.connect(('127.0.0.1', 12345))
+        self.assertEqual(('127.0.0.1', 12345),
+                         self.unix._guess_remote(sock.fileno()))
 
     def test_receive_query_message(self):
         send_msg = b"\xd6=\x00\x00\x00\x01\x00"
@@ -572,7 +578,7 @@ class TestUnixSockServer(unittest.TestCase):
         context = isc.acl.dns.RequestContext(socket.getaddrinfo("127.0.0.1",
                                              1234, 0, 0, 0,
                                              socket.AI_NUMERICHOST)[0][4])
-        self.assertEqual(isc.acl.acl.REJECT, self.unix._acl.execute(context))
+        self.assertEqual(isc.acl.acl.ACCEPT, self.unix._acl.execute(context))
 
     def check_loaded_ACL(self):
         context = isc.acl.dns.RequestContext(socket.getaddrinfo("127.0.0.1",
