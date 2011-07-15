@@ -217,7 +217,6 @@ TEST(ModuleSpec, NamedSetValidation) {
 
     ElementPtr errors = Element::createList();
     EXPECT_TRUE(dataTestWithErrors(dd, "data32_1.data", errors));
-    std::cout << "[XX] ERRORS: " << *errors << std::endl;
     EXPECT_FALSE(dataTest(dd, "data32_2.data"));
     EXPECT_FALSE(dataTest(dd, "data32_3.data"));
 }

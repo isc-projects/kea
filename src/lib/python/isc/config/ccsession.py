@@ -312,7 +312,7 @@ class ModuleCCSession(ConfigData):
         module_spec = isc.config.module_spec_from_file(spec_file_name)
         module_cfg = ConfigData(module_spec)
         module_name = module_spec.get_module_name()
-        self._session.group_subscribe(module_name);
+        self._session.group_subscribe(module_name)
 
         # Get the current config for that module now
         seq = self._session.group_sendmsg(create_command(COMMAND_GET_CONFIG, { "module_name": module_name }), "ConfigManager")
@@ -327,7 +327,7 @@ class ModuleCCSession(ConfigData):
             rcode, value = parse_answer(answer)
             if rcode == 0:
                 if value != None and module_spec.validate_config(False, value):
-                    module_cfg.set_local_config(value);
+                    module_cfg.set_local_config(value)
                     if config_update_callback is not None:
                         config_update_callback(value, module_cfg)
 
@@ -377,7 +377,7 @@ class ModuleCCSession(ConfigData):
                         if self.get_module_spec().validate_config(False,
                                                                   value,
                                                                   errors):
-                            self.set_local_config(value);
+                            self.set_local_config(value)
                             if self._config_handler:
                                 self._config_handler(value)
                         else:
@@ -415,8 +415,8 @@ class UIModuleCCSession(MultiConfigData):
             self.set_specification(isc.config.ModuleSpec(specs[module]))
 
     def update_specs_and_config(self):
-        self.request_specifications();
-        self.request_current_config();
+        self.request_specifications()
+        self.request_current_config()
 
     def request_current_config(self):
         """Requests the current configuration from the configuration
@@ -436,19 +436,27 @@ class UIModuleCCSession(MultiConfigData):
                 value = module_spec["list_item_spec"]["item_default"]
 
         if value is None:
-            raise isc.cc.data.DataNotFoundError("No value given and no default for " + str(identifier))
+            raise isc.cc.data.DataNotFoundError(
+                "No value given and no default for " + str(identifier))
 
         if value not in cur_list:
             cur_list.append(value)
             self.set_value(identifier, cur_list)
         else:
-            raise isc.cc.data.DataAlreadyPresentError(value + " already in " + identifier)
+            raise isc.cc.data.DataAlreadyPresentError(value +
+                                                      " already in "
+                                                      + identifier)
 
     def _add_value_to_named_set(self, identifier, value, item_value):
-        if value is None:
-            raise isc.cc.data.DataNotFoundError("Need a name to add a new item to named_set " + str(identifier))
-        elif type(value) != str:
-            raise isc.cc.data.DataTypeError("Name for named_set " + identifier + " must be a string")
+        if type(value) != str:
+            raise isc.cc.data.DataTypeError("Name for named_set " +
+                                            identifier +
+                                            " must be a string")
+        # fail on both None and empty string
+        if not value:
+            raise isc.cc.data.DataNotFoundError(
+                    "Need a name to add a new item to named_set " +
+                    str(identifier))
         else:
             cur_map, status = self.get_value(identifier)
             if not cur_map:
@@ -457,9 +465,11 @@ class UIModuleCCSession(MultiConfigData):
                 cur_map[value] = item_value
                 self.set_value(identifier, cur_map)
             else:
-                raise isc.cc.data.DataAlreadyPresentError(value + " already in " + identifier)
+                raise isc.cc.data.DataAlreadyPresentError(value +
+                                                          " already in "
+                                                          + identifier)
 
-    def add_value(self, identifier, value_str = None):
+    def add_value(self, identifier, value_str = None, set_value_str = None):
         """Add a value to a configuration list. Raises a DataTypeError
            if the value does not conform to the list_item_spec field
            of the module config data specification. If value_str is
@@ -472,19 +482,29 @@ class UIModuleCCSession(MultiConfigData):
         if module_spec is None:
             raise isc.cc.data.DataNotFoundError("Unknown item " + str(identifier))
 
-        # Hmm. Do we need to check for duplicates?
-        value = None
-        if value_str is not None:
-            value = isc.cc.data.parse_value_str(value_str)
-
         # the specified element must be a list or a named_set
         if 'list_item_spec' in module_spec:
+            value = None
+            # in lists, we might get the value with spaces, making it
+            # the third argument. In that case we interpret both as
+            # one big string meant as the value
+            if value_str is not None:
+                if set_value_str is not None:
+                    value_str += set_value_str
+                value = isc.cc.data.parse_value_str(value_str)
             self._add_value_to_list(identifier, value)
         elif 'named_set_item_spec' in module_spec:
+            item_name = None
             item_value = None
-            if 'item_default' in module_spec['named_set_item_spec']:
-                item_value = module_spec['named_set_item_spec']['item_default']
-            self._add_value_to_named_set(identifier, value, item_value)
+            if value_str is not None:
+                item_name =  isc.cc.data.parse_value_str(value_str)
+            if set_value_str is not None:
+                item_value = isc.cc.data.parse_value_str(set_value_str)
+            else:
+                if 'item_default' in module_spec['named_set_item_spec']:
+                    item_value = module_spec['named_set_item_spec']['item_default']
+            self._add_value_to_named_set(identifier, item_name,
+                                         item_value)
         else:
             raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list or a named set")
 
