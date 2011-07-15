@@ -95,13 +95,16 @@ in the log message, but at this point no specific information other
 than that could be given. This points to incomplete exception handling
 in the code.
 
-% XFROUT_QUERY_DROPPED request to transfer %1/%2 to %3:%4 dropped
+% XFROUT_QUERY_DROPPED request to transfer %1/%2 to [%3]:%4 dropped
 The xfrout process silently dropped a request to transfer zone to given host.
-This is required by the ACLs.
+This is required by the ACLs. The %1 and %2 represent the zone name and class,
+the %3 and %4 the IP address and port of the peer requesting the transfer.
 
-% XFROUT_QUERY_REJECTED request to transfer %1/%2 to %3:%4 rejected
+% XFROUT_QUERY_REJECTED request to transfer %1/%2 to [%3]:%4 rejected
 The xfrout process rejected (by REFUSED rcode) a request to transfer zone to
-given host. This is because of ACLs.
+given host. This is because of ACLs. The %1 and %2 represent the zone name and
+class, the %3 and %4 the IP address and port of the peer requesting the
+transfer.
 
 % XFROUT_RECEIVE_FILE_DESCRIPTOR_ERROR error receiving the file descriptor for an XFR connection
 There was an error receiving the file descriptor for the transfer

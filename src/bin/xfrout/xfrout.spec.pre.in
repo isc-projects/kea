@@ -51,13 +51,13 @@
          }
        },
        {
-         "item_name": "ACL",
+         "item_name": "query_acl",
          "item_type": "list",
          "item_optional": false,
          "item_default": [],
          "list_item_spec":
          {
-             "item_name": "ACL_element",
+             "item_name": "acl_element",
              "item_type": "any",
              "item_optional": true
          }

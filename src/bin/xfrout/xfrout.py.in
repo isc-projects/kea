@@ -144,21 +144,22 @@ class XfroutSession():
             # TSIG related checks
             rcode = self._check_request_tsig(msg, mdata)
 
-            # ACL checks
-            acl_result = self._acl.execute(
-                isc.acl.dns.RequestContext(self._remote))
-            if acl_result == isc.acl.acl.DROP:
-                logger.info(XFROUT_QUERY_DROPPED,
-                            self._get_query_zone_name(msg),
-                            self._get_query_zone_class(msg),
-                            self._remote[0], self._remote[1])
-                return None, None
-            elif acl_result == isc.acl.acl.REJECT:
-                logger.info(XFROUT_QUERY_REJECTED,
-                            self._get_query_zone_name(msg),
-                            self._get_query_zone_class(msg),
-                            self._remote[0], self._remote[1])
-                return Rcode.REFUSED(), msg
+            if rcode == Rcode.NOERROR():
+                # ACL checks
+                acl_result = self._acl.execute(
+                    isc.acl.dns.RequestContext(self._remote))
+                if acl_result == DROP:
+                    logger.info(XFROUT_QUERY_DROPPED,
+                                self._get_query_zone_name(msg),
+                                self._get_query_zone_class(msg),
+                                self._remote[0], self._remote[1])
+                    return None, None
+                elif acl_result == REJECT:
+                    logger.info(XFROUT_QUERY_REJECTED,
+                                self._get_query_zone_name(msg),
+                                self._get_query_zone_class(msg),
+                                self._remote[0], self._remote[1])
+                    return Rcode.REFUSED(), msg
 
         except Exception as err:
             logger.error(XFROUT_PARSE_QUERY_ERROR, err)
@@ -202,18 +203,11 @@ class XfroutSession():
 
 
     def _reply_query_with_error_rcode(self, msg, sock_fd, rcode_):
-        msg.make_response()
-        msg.set_rcode(rcode_)
-        self._send_message(sock_fd, msg, self._tsig_ctx)
-
-
-    def _reply_query_with_format_error(self, msg, sock_fd):
-        '''query message format isn't legal.'''
         if not msg:
             return # query message is invalid. send nothing back.
 
         msg.make_response()
-        msg.set_rcode(Rcode.FORMERR())
+        msg.set_rcode(rcode_)
         self._send_message(sock_fd, msg, self._tsig_ctx)
 
     def _zone_has_soa(self, zone):
@@ -268,7 +262,8 @@ class XfroutSession():
         elif rcode_ == Rcode.NOTAUTH() or rcode_ == Rcode.REFUSED():
             return self._reply_query_with_error_rcode(msg, sock_fd, rcode_)
         elif rcode_ != Rcode.NOERROR():
-            return self._reply_query_with_format_error(msg, sock_fd)
+            return self._reply_query_with_error_rcode(msg, sock_fd,
+                                                      Rcode.FORMERR())
 
         zone_name = self._get_query_zone_name(msg)
         zone_class_str = self._get_query_zone_class(msg)
@@ -553,9 +548,9 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
 
     def update_config_data(self, new_config):
         '''Apply the new config setting of xfrout module. '''
-        if 'ACL' in new_config:
-            self._acl = REQUEST_LOADER.load(new_config['ACL'])
         logger.info(XFROUT_NEW_CONFIG)
+        if 'query_acl' in new_config:
+            self._acl = REQUEST_LOADER.load(new_config['query_acl'])
         self._lock.acquire()
         self._max_transfers_out = new_config.get('transfers_out')
         self.set_tsig_key_ring(new_config.get('tsig_key_ring'))
@@ -645,7 +640,9 @@ class XfroutServer:
             try:
                 self._unix_socket_server.update_config_data(self._config_data)
             except Exception as e:
-                answer = create_answer(1, "Bad configuration: " + str(e))
+                answer = create_answer(1,
+                                       "Failed to handle new configuration: " +
+                                       str(e))
 
         return answer
 
