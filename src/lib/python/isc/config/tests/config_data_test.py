@@ -425,13 +425,13 @@ class TestMultiConfigData(unittest.TestCase):
 
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec32.spec")
         self.mcd.set_specification(module_spec)
-        value = self.mcd.get_default_value("Spec32/named_map_item")
+        value = self.mcd.get_default_value("Spec32/named_set_item")
         self.assertEqual({ 'a': 1, 'b': 2}, value)
-        value = self.mcd.get_default_value("Spec32/named_map_item/a")
+        value = self.mcd.get_default_value("Spec32/named_set_item/a")
         self.assertEqual(1, value)
-        value = self.mcd.get_default_value("Spec32/named_map_item/b")
+        value = self.mcd.get_default_value("Spec32/named_set_item/b")
         self.assertEqual(2, value)
-        value = self.mcd.get_default_value("Spec32/named_map_item/no_such_item")
+        value = self.mcd.get_default_value("Spec32/named_set_item/no_such_item")
         self.assertEqual(None, value)
 
     def test_get_value(self):
@@ -557,27 +557,27 @@ class TestMultiConfigData(unittest.TestCase):
         maps = self.mcd.get_value_maps("/Spec22/value9")
         self.assertEqual(expected, maps)
 
-    def test_get_value_maps_named_map(self):
+    def test_get_value_maps_named_set(self):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec32.spec")
         self.mcd.set_specification(module_spec)
         maps = self.mcd.get_value_maps()
         self.assertEqual([{'default': False, 'type': 'module',
                            'name': 'Spec32', 'value': None,
                            'modified': False}], maps)
-        maps = self.mcd.get_value_maps("/Spec32/named_map_item")
+        maps = self.mcd.get_value_maps("/Spec32/named_set_item")
         self.assertEqual([{'default': True, 'type': 'integer',
-                           'name': 'Spec32/named_map_item/a',
+                           'name': 'Spec32/named_set_item/a',
                            'value': 1, 'modified': False},
                           {'default': True, 'type': 'integer',
-                           'name': 'Spec32/named_map_item/b',
+                           'name': 'Spec32/named_set_item/b',
                            'value': 2, 'modified': False}], maps)
-        maps = self.mcd.get_value_maps("/Spec32/named_map_item/a")
+        maps = self.mcd.get_value_maps("/Spec32/named_set_item/a")
         self.assertEqual([{'default': True, 'type': 'integer',
-                           'name': 'Spec32/named_map_item/a',
+                           'name': 'Spec32/named_set_item/a',
                            'value': 1, 'modified': False}], maps)
-        maps = self.mcd.get_value_maps("/Spec32/named_map_item/b")
+        maps = self.mcd.get_value_maps("/Spec32/named_set_item/b")
         self.assertEqual([{'default': True, 'type': 'integer',
-                           'name': 'Spec32/named_map_item/b',
+                           'name': 'Spec32/named_set_item/b',
                            'value': 2, 'modified': False}], maps)
 
     def test_set_value(self):
@@ -618,7 +618,7 @@ class TestMultiConfigData(unittest.TestCase):
         config_items = self.mcd.get_config_item_list("Spec2", True)
         self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
 
-    def test_get_config_item_list_named_map(self):
+    def test_get_config_item_list_named_set(self):
         config_items = self.mcd.get_config_item_list()
         self.assertEqual([], config_items)
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec32.spec")
@@ -628,12 +628,12 @@ class TestMultiConfigData(unittest.TestCase):
         config_items = self.mcd.get_config_item_list(None, False)
         self.assertEqual(['Spec32'], config_items)
         config_items = self.mcd.get_config_item_list(None, True)
-        self.assertEqual(['Spec32/named_map_item'], config_items)
-        self.mcd.set_value('Spec32/named_map_item', { "aaaa": 4, "aabb": 5, "bbbb": 6})
-        config_items = self.mcd.get_config_item_list("/Spec32/named_map_item", True)
-        self.assertEqual(['Spec32/named_map_item/aaaa',
-                          'Spec32/named_map_item/aabb',
-                          'Spec32/named_map_item/bbbb',
+        self.assertEqual(['Spec32/named_set_item'], config_items)
+        self.mcd.set_value('Spec32/named_set_item', { "aaaa": 4, "aabb": 5, "bbbb": 6})
+        config_items = self.mcd.get_config_item_list("/Spec32/named_set_item", True)
+        self.assertEqual(['Spec32/named_set_item/aaaa',
+                          'Spec32/named_set_item/aabb',
+                          'Spec32/named_set_item/bbbb',
                          ], config_items)
 
 if __name__ == '__main__':
