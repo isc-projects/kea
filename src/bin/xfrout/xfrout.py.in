@@ -400,6 +400,9 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
     def _common_init(self):
         self._lock = threading.Lock()
         self._transfers_counter = 0
+        # This default value will probably get overwritten by the (same)
+        # default value from the spec file. This is here just to make
+        # sure and to make the default value in tests consistent.
         self._acl = REQUEST_LOADER.load('[{"action": "ACCEPT"}]')
 
     def _receive_query_message(self, sock):
