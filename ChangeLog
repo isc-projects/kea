@@ -1,3 +1,9 @@
+273.    [func]      vorner
+	It is possible to specify ACL for the xfrout module. It is in the ACL
+	configuration key and has the usual ACL syntax. It currently supports
+	only the source address currently. Default ACL accepts everything.
+    (Trac #772, git 50070c824270d5da1db0b716db73b726d458e9f7)
+
 272.	[func]		jinmei
 	libdns++/pydnspp: TSIG signing now handles truncated DNS messages
 	(i.e. with TC bit on) with TSIG correctly.
