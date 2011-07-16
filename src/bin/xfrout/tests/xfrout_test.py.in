@@ -582,17 +582,20 @@ class TestUnixSockServer(unittest.TestCase):
 
     def check_default_ACL(self):
         context = isc.acl.dns.RequestContext(socket.getaddrinfo("127.0.0.1",
-                                             1234, 0, 0, 0,
+                                             1234, 0, socket.SOCK_DGRAM,
+                                             socket.IPPROTO_UDP,
                                              socket.AI_NUMERICHOST)[0][4])
         self.assertEqual(isc.acl.acl.ACCEPT, self.unix._acl.execute(context))
 
     def check_loaded_ACL(self):
         context = isc.acl.dns.RequestContext(socket.getaddrinfo("127.0.0.1",
-                                             1234, 0, 0, 0,
+                                             1234, 0, socket.SOCK_DGRAM,
+                                             socket.IPPROTO_UDP,
                                              socket.AI_NUMERICHOST)[0][4])
         self.assertEqual(isc.acl.acl.ACCEPT, self.unix._acl.execute(context))
         context = isc.acl.dns.RequestContext(socket.getaddrinfo("192.0.2.1",
-                                             1234, 0, 0, 0,
+                                             1234, 0, socket.SOCK_DGRAM,
+                                             socket.IPPROTO_UDP,
                                              socket.AI_NUMERICHOST)[0][4])
         self.assertEqual(isc.acl.acl.REJECT, self.unix._acl.execute(context))
 
