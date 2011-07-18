@@ -700,7 +700,7 @@ Name::split(const unsigned int first, const unsigned int n) const {
 }
 
 Name
-Name::split(const unsigned level) const {
+Name::split(const unsigned int level) const {
     if (level >= getLabelCount()) {
         isc_throw(OutOfRange, "invalid level for name split (" << level
                   << ") for name " << *this);
