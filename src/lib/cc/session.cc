@@ -254,7 +254,8 @@ SessionImpl::internalRead(const asio::error_code& error,
     }
 }
 
-Session::Session(io_service& io_service) : impl_(new SessionImpl(io_service))
+Session::Session(asio::io_service& io_service) :
+    impl_(new SessionImpl(io_service))
 {}
 
 Session::~Session() {
