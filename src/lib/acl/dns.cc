@@ -27,6 +27,7 @@
 
 #include <acl/dns.h>
 #include <acl/ip_check.h>
+#include <acl/dnsname_check.h>
 #include <acl/loader.h>
 #include <acl/logic_check.h>
 
