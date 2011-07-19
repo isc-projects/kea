@@ -520,7 +520,8 @@ ResolverImpl::processNormalQuery(const IOMessage& io_message,
     const Client client(io_message);
     const BasicAction query_action(
         getQueryACL().execute(acl::dns::RequestContext(
-                                  client.getRequestSourceIPAddress())));
+                                  client.getRequestSourceIPAddress(),
+                                  query_message->getTSIGRecord())));
     if (query_action == isc::acl::REJECT) {
         LOG_INFO(resolver_logger, RESOLVER_QUERY_REJECTED)
             .arg(question->getName()).arg(qtype).arg(qclass).arg(client);
