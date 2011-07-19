@@ -1,9 +1,9 @@
-xxx.	[bug]		naokikambe
+274.	[bug]		naokikambe
 	add unittests for functions xml_handler, xsd_handler and xsl_handler
 	respectively to make sure their behaviors are correct, regardless of
 	whether type which xml.etree.ElementTree.tostring() after Python3.2
 	returns is str or byte.
-	(Trac #1021, git xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)
+	(Trac #1021, git 486bf91e0ecc5fbecfe637e1e75ebe373d42509b)
 
 273.    [func]		vorner
 	It is possible to specify ACL for the xfrout module. It is in the ACL
