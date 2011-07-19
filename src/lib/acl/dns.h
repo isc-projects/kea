@@ -57,9 +57,9 @@ namespace dns {
  * used only for a very short period as stated above.
  *
  * Based on the minimalist philosophy, the initial implementation only
- * maintains the remote (source) IP address of the request.  The plan is
- * to add more parameters of the request.  A scheduled next step is to
- * support the TSIG key (if it's included in the request).  Other possibilities
+ * maintains the remote (source) IP address of the request and (optionally)
+ * the TSIG record included in the request.  We may add more parameters of
+ * the request as we see the need for them.  Possible additional parameters
  * are the local (destination) IP address, the remote and local port numbers,
  * various fields of the DNS request (e.g. a particular header flag value).
  */
@@ -72,8 +72,10 @@ struct RequestContext {
     /// \exception None
     ///
     /// \parameter remote_address_param The remote IP address
-    explicit RequestContext(const IPAddress& remote_address_param,
-                            const isc::dns::TSIGRecord* tsig_param) :
+    /// \parameter tsig_param A valid pointer to the TSIG record included in
+    /// the request or NULL if the request doesn't contain a TSIG.
+    RequestContext(const IPAddress& remote_address_param,
+                   const isc::dns::TSIGRecord* tsig_param) :
         remote_address(remote_address_param),
         tsig(tsig_param)
     {}
@@ -90,7 +92,9 @@ struct RequestContext {
     /// \brief The remote IP address (eg. the client's IP address).
     const IPAddress& remote_address;
 
-    /// TBD
+    /// \brief The TSIG record included in the request message, if any.
+    ///
+    /// If the request doesn't include a TSIG, this member will be NULL.
     const isc::dns::TSIGRecord* const tsig;
     //@}
 };

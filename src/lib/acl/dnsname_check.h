@@ -23,24 +23,49 @@ namespace isc {
 namespace acl {
 namespace dns {
 
+/// ACL check for DNS names
+///
+/// This class is intended to perform a match between a domain name
+/// specified in an ACL and a given name.  The primary usage of this class
+/// is an ACL match for TSIG keys, where an ACL would contain a list of
+/// acceptable key names and the \c match() method would compare the owner
+/// name of a TSIG record against the specified names.
+///
+/// This class could be used for other kinds of names such as the query name
+/// of normal DNS queries.
+///
+/// The class is templated on the type of a context structure passed to the
+/// matches() method, and a template specialisation for that method must be
+/// supplied for the class to be used.
 template <typename Context>
 class NameCheck : public Check<Context> {
 public:
+    /// The constructor
+    ///
+    /// \exception std::bad_alloc Resource allocation fails in copying the
+    /// name
+    ///
+    /// \param name The domain name to be matched in \c matches().
     NameCheck(const isc::dns::Name& name) : name_(name) {}
 
-    /// \brief Destructor
+    /// Destructor
     virtual ~NameCheck() {}
 
-    /// \brief The check itself
+    /// The check method
     ///
     /// Matches the passed argument to the condition stored here.  Different
-    /// specialisations must be provided for different argument types, and the
+    /// specializations must be provided for different argument types, and the
     /// program will fail to compile if a required specialisation is not
     /// provided.
     ///
     /// \param context Information to be matched
     virtual bool matches(const Context& context) const;
 
+    /// Returns the name specified on construction.
+    ///
+    /// This is mainly for testing purposes.
+    ///
+    /// \exception None
     const isc::dns::Name& getName() const { return (name_); }
 
 private:

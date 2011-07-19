@@ -58,7 +58,9 @@ namespace dns {
 /// The specialization of \c NameCheck for access control with
 /// \c RequestContext.
 ///
-/// TBD
+/// It returns \c true if the request contains a TSIG record and its key
+/// (owner) name is equal to the name stored in the check; otherwise
+/// it returns \c false.
 template<>
 bool
 NameCheck<RequestContext>::matches(const RequestContext& request) const {
