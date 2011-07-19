@@ -329,7 +329,7 @@ getRelatedLoggers(ConstElementPtr loggers) {
                       .arg(cur_name);
 
         } else if (!cur_name.empty() && (cur_name[0] != '*')) {
-            // Not a wildcard logger and we are ignore it, note the fact.
+            // Not a wildcard logger and we are ignoring it.
             LOG_DEBUG(config_logger, DBG_CONFIG_PROCESS,
                       CONFIG_LOG_IGNORE_EXPLICIT).arg(cur_name);
         }
@@ -338,7 +338,7 @@ getRelatedLoggers(ConstElementPtr loggers) {
     // Mow find the wildcard names (the one that start with "*").
     BOOST_FOREACH(ConstElementPtr cur_logger, loggers->listValue()) {
         std::string cur_name = cur_logger->get("name")->stringValue();
-        // if name is '*', or starts with '*.', replace * with root
+        // If name is '*', or starts with '*.', replace * with root
         // logger name.
         if (cur_name == "*" || cur_name.length() > 1 &&
             cur_name[0] == '*' && cur_name[1] == '.') {
@@ -347,17 +347,20 @@ getRelatedLoggers(ConstElementPtr loggers) {
             std::string mod_name = cur_name;
             mod_name.replace(0, 1, root_name);
 
-            // Mow add it to the result list, but only if a logger with
-            // that name was not configured explicitly
+            // Now add it to the result list, but only if a logger with
+            // that name was not configured explicitly.
             if (our_names.find(mod_name) == our_names.end()) {
-                // We substitute the name here already, but as
-                // we are dealing with consts, we copy the data
+
+                // We substitute the name here, but as we are dealing with
+                // consts, we need to copy the data.
                 result->add(copyLogger(cur_logger, mod_name));
                 LOG_DEBUG(config_logger, DBG_CONFIG_PROCESS,
                           CONFIG_LOG_WILD_MATCH).arg(cur_name);
 
             } else if (!cur_name.empty() && (cur_name[0] == '*')) {
-                // Is a wildcard and we are ignoring it.
+                // Is a wildcard and we are ignoring it (because the wildcard
+                // expands to a specification that we already encountered when
+                // processing explicit names).
                 LOG_DEBUG(config_logger, DBG_CONFIG_PROCESS,
                           CONFIG_LOG_IGNORE_WILD).arg(cur_name);
             }
