@@ -23,9 +23,13 @@
 #include <cc/data.h>
 
 #include <acl/ip_check.h>
+#include <acl/dnsname_check.h>
 #include <acl/loader.h>
 
 namespace isc {
+namespace dns {
+class TSIGRecord;
+}
 namespace acl {
 namespace dns {
 
@@ -68,8 +72,10 @@ struct RequestContext {
     /// \exception None
     ///
     /// \parameter remote_address_param The remote IP address
-    explicit RequestContext(const IPAddress& remote_address_param) :
-        remote_address(remote_address_param)
+    explicit RequestContext(const IPAddress& remote_address_param,
+                            const isc::dns::TSIGRecord* tsig_param) :
+        remote_address(remote_address_param),
+        tsig(tsig_param)
     {}
 
     ///
@@ -83,6 +89,9 @@ struct RequestContext {
     //@{
     /// \brief The remote IP address (eg. the client's IP address).
     const IPAddress& remote_address;
+
+    /// TBD
+    const isc::dns::TSIGRecord* const tsig;
     //@}
 };
 
@@ -114,6 +123,7 @@ namespace internal {
 
 // Shortcut typedef
 typedef isc::acl::IPCheck<RequestContext> RequestIPCheck;
+typedef isc::acl::dns::NameCheck<RequestContext> RequestKeyCheck;
 
 class RequestCheckCreator : public acl::Loader<RequestContext>::CheckCreator {
 public:

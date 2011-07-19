@@ -34,6 +34,16 @@ bool NameCheck<Name>::matches(const Name& name) const {
 } // namespace isc
 
 namespace {
+TEST(DNSNameCheck, construct) {
+    EXPECT_EQ(Name("example.com"),
+              NameCheck<Name>(Name("example.com")).getName());
+
+    // Construct the same check with an explicit trailing dot.  Should result
+    // in the same result.
+    EXPECT_EQ(Name("example.com"),
+              NameCheck<Name>(Name("example.com.")).getName());
+}
+
 TEST(DNSNameCheck, match) {
     NameCheck<Name> check(Name("example.com"));
     EXPECT_TRUE(check.matches(Name("example.com")));
