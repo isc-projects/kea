@@ -41,6 +41,8 @@ public:
     /// \param context Information to be matched
     virtual bool matches(const Context& context) const;
 
+    const isc::dns::Name& getName() const { return (name_); }
+
 private:
     const isc::dns::Name name_;
 };
