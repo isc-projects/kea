@@ -137,9 +137,27 @@ class TestBoB(unittest.TestCase):
             def group_sendmsg(self, msg, group):
                 (self.msg, self.group) = (msg, group)
             def group_recvmsg(self, nonblock, seq): pass
+        class DummyModuleCCSession():
+            module_spec = isc.config.module_spec.ModuleSpec({
+                    "module_name": "Boss",
+                    "statistics": [
+                        {
+                            "item_name": "boot_time",
+                            "item_type": "string",
+                            "item_optional": False,
+                            "item_default": "1970-01-01T00:00:00Z",
+                            "item_title": "Boot time",
+                            "item_description": "A date time when bind10 process starts initially",
+                            "item_format": "date-time"
+                            }
+                        ]
+                    })
+            def get_module_spec(self):
+                return self.module_spec
         bob = BoB()
         bob.verbose = True
         bob.cc_session = DummySession()
+        bob.ccs = DummyModuleCCSession()
         # a bad command
         self.assertEqual(bob.command_handler(-1, None),
                          isc.config.ccsession.create_answer(1, "bad command"))
