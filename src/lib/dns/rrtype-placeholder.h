@@ -22,6 +22,10 @@
 
 #include <exceptions/exceptions.h>
 
+#if defined(__sun) && defined(DS)
+# undef DS
+#endif
+
 namespace isc {
 namespace util {
 class InputBuffer;
