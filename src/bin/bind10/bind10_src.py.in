@@ -318,14 +318,18 @@ class BoB:
                 answer = isc.config.ccsession.create_answer(0)
             elif command == "sendstats":
                 # send statistics data to the stats daemon immediately
-                cmd = isc.config.ccsession.create_command(
+                statistics_data = {
+                    'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
+                    }
+                valid = self.ccs.get_module_spec().validate_statistics(
+                    True, statistics_data)
+                if valid:
+                    cmd = isc.config.ccsession.create_command(
                     'set', { "owner": "Boss",
-                             "data": {
-                            'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
-                            }})
-                seq = self.cc_session.group_sendmsg(cmd, 'Stats')
-                self.cc_session.group_recvmsg(True, seq)
-                answer = isc.config.ccsession.create_answer(0)
+                             "data": statistics_data })
+                    seq = self.cc_session.group_sendmsg(cmd, 'Stats')
+                    self.cc_session.group_recvmsg(True, seq)
+                    answer = isc.config.ccsession.create_answer(0)
             elif command == "ping":
                 answer = isc.config.ccsession.create_answer(0, "pong")
             elif command == "show_processes":
