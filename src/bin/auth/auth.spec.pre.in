@@ -122,6 +122,24 @@
           }
         ]
       }
+    ],
+    "statistics": [
+      {
+        "item_name": "queries.tcp",
+        "item_type": "integer",
+        "item_optional": false,
+        "item_default": 0,
+        "item_title": "Queries TCP ",
+        "item_description": "A number of total query counts which all auth servers receive over TCP since they started initially"
+      },
+      {
+        "item_name": "queries.udp",
+        "item_type": "integer",
+        "item_optional": false,
+        "item_default": 0,
+        "item_title": "Queries UDP",
+        "item_description": "A number of total query counts which all auth servers receive over UDP since they started initially"
+      }
     ]
   }
 }
