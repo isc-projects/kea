@@ -53,7 +53,7 @@ TEST(DNSNameCheck, match) {
     EXPECT_TRUE(check.matches(Name("EXAMPLE.COM")));
 
     // this is exact match.  so super/sub domains don't match
-    EXPECT_FALSE(check.matches(Name("org")));
+    EXPECT_FALSE(check.matches(Name("com")));
     EXPECT_FALSE(check.matches(Name("www.example.com")));
 }
 } // Unnamed namespace
