@@ -137,7 +137,8 @@ class TestXfroutSession(unittest.TestCase):
         self.assertEqual(rcode.to_text(), "NOTAUTH")
         self.assertTrue(self.xfrsess._tsig_ctx is not None)
         # NOERROR
-        self.xfrsess._tsig_key_ring.add(TSIG_KEY)
+        self.assertEqual(TSIGKeyRing.SUCCESS,
+                         self.xfrsess._tsig_key_ring.add(TSIG_KEY))
         [rcode, msg] = self.xfrsess._parse_query_message(request_data)
         self.assertEqual(rcode.to_text(), "NOERROR")
         self.assertTrue(self.xfrsess._tsig_ctx is not None)
@@ -176,7 +177,8 @@ class TestXfroutSession(unittest.TestCase):
         self.xfrsess._acl = isc.acl.dns.REQUEST_LOADER.load([
             {"key": "example.com", "action": "ACCEPT"}, {"action": "REJECT"}
         ])
-        self.xfrsess._tsig_key_ring.add(TSIG_KEY)
+        self.assertEqual(TSIGKeyRing.SUCCESS,
+                         self.xfrsess._tsig_key_ring.add(TSIG_KEY))
         [rcode, msg] = self.xfrsess._parse_query_message(request_data)
         self.assertEqual(rcode.to_text(), "NOERROR")
 
@@ -184,7 +186,6 @@ class TestXfroutSession(unittest.TestCase):
         self.xfrsess._acl = isc.acl.dns.REQUEST_LOADER.load([
             {"key": "example.org", "action": "ACCEPT"}, {"action": "REJECT"}
         ])
-        self.xfrsess._tsig_key_ring.add(TSIG_KEY)
         [rcode, msg] = self.xfrsess._parse_query_message(request_data)
         self.assertEqual(rcode.to_text(), "REFUSED")
 
@@ -192,7 +193,6 @@ class TestXfroutSession(unittest.TestCase):
         self.xfrsess._acl = isc.acl.dns.REQUEST_LOADER.load([
             {"key": "example.org", "action": "ACCEPT"}, {"action": "REJECT"}
         ])
-        self.xfrsess._tsig_key_ring.add(TSIG_KEY)
         [rcode, msg] = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
 
