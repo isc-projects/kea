@@ -136,7 +136,7 @@ private:
         // wire format.  If some evil or buggy python program directly calls
         // us with bogus data, validation in libdns++ will trigger an
         // exception, which will be caught and converted to a Python exception
-        // RequestContext_init().
+        // in RequestContext_init().
         isc::util::InputBuffer b(tsig_data, tsig_len);
         const Name key_name(b);
         const RRType tsig_type(b.readUint16());
@@ -220,7 +220,7 @@ RequestContext_init(PyObject* po_self, PyObject* args, PyObject*) {
                              &remote_flowinfo, &remote_zoneid,
                              &tsig_data, &tsig_len))
         {
-            // We need to clear the error in case the first call to PareTuple
+            // We need to clear the error in case the first call to ParseTuple
             // fails.
             PyErr_Clear();
 
