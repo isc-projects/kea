@@ -198,3 +198,7 @@ the message channel.
 % BIND10_UNKNOWN_CHILD_PROCESS_ENDED unknown child pid %1 exited
 An unknown child process has exited. The PID is printed, but no further
 action will be taken by the boss process.
+
+% BIND10_INVALID_STATISTICS_DATA invalid specification of statistics data specified
+An error was encountered when the boss module specified
+statistics data which is invalid for the boss specification file.
