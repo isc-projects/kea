@@ -21,7 +21,6 @@
 #include <config/ccsession.h>
 
 #include <fstream>
-#include <iostream>
 
 #include <config/tests/data_def_unittests_config.h>
 
@@ -45,20 +44,21 @@ el(const std::string& str) {
 
 class CCSessionTest : public ::testing::Test {
 protected:
-    CCSessionTest() : session(el("[]"), el("[]"), el("[]")) {
+    CCSessionTest() : session(el("[]"), el("[]"), el("[]")),
+                      root_name(isc::log::getRootLoggerName())
+    {
         // upon creation of a ModuleCCSession, the class
         // sends its specification to the config manager.
         // it expects an ok answer back, so everytime we
         // create a ModuleCCSession, we must set an initial
         // ok answer.
         session.getMessages()->add(createAnswer());
-        root_name = isc::log::getRootLoggerName();
     }
     ~CCSessionTest() {
         isc::log::setRootLoggerName(root_name);
     }
     FakeSession session;
-    std::string root_name;
+    const std::string root_name;
 };
 
 TEST_F(CCSessionTest, createAnswer) {
@@ -693,7 +693,8 @@ TEST(LogConfigTest, relatedLoggersTest) {
     doRelatedLoggersTest("[ { \"name\": \"*\", \"severity\": \"DEBUG\" },"
                          "  { \"name\": \"some_module\", \"severity\": \"WARN\"}]",
                          "[ { \"name\": \"b10-test\", \"severity\": \"DEBUG\"} ]");
-
+    doRelatedLoggersTest("[ { \"name\": \"b10-test\" }]",
+                         "[]");
     // make sure 'bad' things like '*foo.x' or '*lib' are ignored
     // (cfgmgr should have already caught it in the logconfig plugin
     // check, and is responsible for reporting the error)

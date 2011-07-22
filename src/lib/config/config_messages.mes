@@ -41,7 +41,7 @@ running configuration manager.
 This is a debug message.  When processing the "loggers" part of the
 configuration file, the configuration library found an entry for the named
 logger that matches the logger specification for the program.  The logging
-configuration for the program will updated with the information.
+configuration for the program will be updated with the information.
 
 % CONFIG_LOG_IGNORE_EXPLICIT ignoring logging configuration for explicitly-named logger %1
 This is a debug message.  When processing the "loggers" part of the
@@ -60,7 +60,7 @@ This is a debug message.  When processing the "loggers" part of
 the configuration file, the configuration library found the named
 wildcard entry (one containing the "*" character) that matches a logger
 specification in the program. The logging configuration for the program
-will updated with the information.
+will be updated with the information.
 
 % CONFIG_JSON_PARSE JSON parse error in %1: %2
 There was an error parsing the JSON file. The given file does not appear
