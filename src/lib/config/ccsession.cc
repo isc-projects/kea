@@ -192,7 +192,7 @@ ConstElementPtr getValueOrDefault(ConstElementPtr config_part,
 // letter of the name read in is lower-cased.
 //
 // In this way, you configure resolver logging with the name "resolver" and in
-// the printed output it becomes "b10-resolver".  
+// the printed output it becomes "b10-resolver".
 //
 // To allow for (a) people using b10-resolver in the configuration instead of
 // "resolver" and (b) that fact that during the resolution of wildcards in
@@ -335,7 +335,7 @@ getRelatedLoggers(ConstElementPtr loggers) {
         }
     }
 
-    // Mow find the wildcard names (the one that start with "*").
+    // Now find the wildcard names (the one that start with "*").
     BOOST_FOREACH(ConstElementPtr cur_logger, loggers->listValue()) {
         std::string cur_name = cur_logger->get("name")->stringValue();
         // If name is '*', or starts with '*.', replace * with root
@@ -366,7 +366,7 @@ getRelatedLoggers(ConstElementPtr loggers) {
             }
         }
     }
-    return result;
+    return (result);
 }
 
 void
