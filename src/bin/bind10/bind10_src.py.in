@@ -330,6 +330,10 @@ class BoB:
                     seq = self.cc_session.group_sendmsg(cmd, 'Stats')
                     self.cc_session.group_recvmsg(True, seq)
                     answer = isc.config.ccsession.create_answer(0)
+                else:
+                    logger.fatal(BIND10_INVALID_STATISTICS_DATA);
+                    answer = isc.config.ccsession.create_answer(
+                        1, "specified statistics data is invalid")
             elif command == "ping":
                 answer = isc.config.ccsession.create_answer(0, "pong")
             elif command == "show_processes":
