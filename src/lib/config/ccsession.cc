@@ -180,31 +180,30 @@ ConstElementPtr getValueOrDefault(ConstElementPtr config_part,
 
 // Prefix name with "b10-".
 //
-// Root logger names are based on the name of the binary they're from (e.g.
-// b10-resolver). This, however, is not how they appear internally (in for
-// instance bindctl, where a module name is based on what is specified in
-// the .spec file (e.g. Resolver)).
+// In BIND 10, modules have names taken from the .spec file, which are typically
+// names starting with a capital letter (e.g. "Resolver", "Auth" etc.).  The
+// names of the associated binaries are derived from the module names, being
+// prefixed "b10-" and having the first letter of the module name lower-cased
+// (e.g. "b10-resolver", "b10-auth").  (It is a required convention that there
+// be this relationship between the names.)
 //
-// This function prefixes the name read in the configuration with 'b10-" and
-// leaves the module code as it is. (It is now a required convention that the
-// name from the specfile and the actual binary name should match).  To take
-// account of the use of capital letters in module names in bindctl, the first
-// letter of the name read in is lower-cased.
+// Within the binaries the root loggers are named after the binaries themselves.
+// (The reason for this is that the name of the logger is included in the
+// message logged, so making it clear which message comes from which BIND 10
+// process.) As logging is configured using module names, the configuration code
+// has to match these with the corresponding logger names. This function
+// converts a module name to a root logger name by lowercasing the first letter
+// of the module name and prepending "b10-".
 //
-// In this way, you configure resolver logging with the name "resolver" and in
-// the printed output it becomes "b10-resolver".
+// \param instring String to convert.  (This may be empty, in which case
+//        "b10-" will be returned.)
 //
-// To allow for (a) people using b10-resolver in the configuration instead of
-// "resolver" and (b) that fact that during the resolution of wildcards in
-
-//
-// \param instring String to prefix.  Lowercase the first character and apply
-//        the prefix.  If empty, "b10-" is returned.
+// \return Converted string.
 std::string
 b10Prefix(const std::string& instring) {
     std::string result = instring;
     if (!result.empty()) {
-        result[0] = static_cast<char>(tolower(result[0]));
+        result[0] = tolower(result[0]);
     }
     return (std::string("b10-") + result);
 }
@@ -282,18 +281,20 @@ readLoggersConf(std::vector<isc::log::LoggerSpecification>& specs,
     specs.push_back(logger_spec);
 }
 
-// Copies the map for a logger, changing the of the logger.  This is
-// used because the logger being copied is "const", but we want to
-// change a top-level name, so need to create a new one.
-
-ElementPtr
+// Copies the map for a logger, changing the name of the logger in the process.
+// This is used because the map being copied is "const", so in order to
+// change the name we need to create a new one.
+//
+// \param cur_logger Logger being copied.
+// \param new_name New value of the "name" element at the top level.
+//
+// \return Pointer to the map with the updated element.
+ConstElementPtr
 copyLogger(ConstElementPtr& cur_logger, const std::string& new_name) {
 
+    // Since we'll only be updating one first-level element and subsequent
+    // use won't change the contents of the map, a shallow map copy is enough.
     ElementPtr new_logger(Element::createMap());
-
-    // since we'll only be updating one first-level element,
-    // and we return as const again, a shallow map copy is
-    // enough
     new_logger->setValue(cur_logger->mapValue());
     new_logger->set("name", Element::create(new_name));
 
@@ -394,7 +395,7 @@ ModuleSpec
 ModuleCCSession::readModuleSpecification(const std::string& filename) {
     std::ifstream file;
     ModuleSpec module_spec;
-    
+
     // this file should be declared in a @something@ directive
     file.open(filename.c_str());
     if (!file) {
@@ -461,7 +462,7 @@ ModuleCCSession::ModuleCCSession(
         LOG_ERROR(config_logger, CONFIG_MOD_SPEC_REJECT).arg(answer->str());
         isc_throw(CCSessionInitError, answer->str());
     }
-    
+
     setLocalConfig(Element::fromJSON("{}"));
     // get any stored configuration from the manager
     if (config_handler_) {
@@ -587,7 +588,7 @@ int
 ModuleCCSession::checkCommand() {
     ConstElementPtr cmd, routing, data;
     if (session_.group_recvmsg(routing, data, true)) {
-        
+
         /* ignore result messages (in case we're out of sync, to prevent
          * pingpongs */
         if (data->getType() != Element::map || data->contains("result")) {
