@@ -17,6 +17,7 @@
 
 #include <cc/session.h>
 #include <stdint.h>
+#include <boost/scoped_ptr.hpp>
 
 class AuthCountersImpl;
 
@@ -51,13 +52,18 @@ class AuthCountersImpl;
 /// \todo Consider overhead of \c AuthCounters::inc()
 class AuthCounters {
 private:
-    AuthCountersImpl* impl_;
+    boost::scoped_ptr<AuthCountersImpl> impl_;
 public:
     // Enum for the type of counter
-    enum CounterType {
-        COUNTER_UDP_QUERY = 0,  ///< COUNTER_UDP_QUERY: counter for UDP queries
-        COUNTER_TCP_QUERY = 1,  ///< COUNTER_TCP_QUERY: counter for TCP queries
-        COUNTER_TYPES = 2 ///< The number of defined counters
+    enum ServerCounterType {
+        SERVER_UDP_QUERY = 0,  ///< SERVER_UDP_QUERY: counter for UDP queries
+        SERVER_TCP_QUERY = 1,  ///< SERVER_TCP_QUERY: counter for TCP queries
+        SERVER_COUNTER_TYPES = 2 ///< The number of defined counters
+    };
+    enum PerZoneCounterType {
+        ZONE_UDP_QUERY = 0,  ///< ZONE_UDP_QUERY: counter for UDP queries
+        ZONE_TCP_QUERY = 1,  ///< ZONE_TCP_QUERY: counter for TCP queries
+        PER_ZONE_COUNTER_TYPES = 2 ///< The number of defined counters
     };
     /// The constructor.
     ///
@@ -79,7 +85,7 @@ public:
     ///
     /// usage: counter.inc(CounterType::COUNTER_UDP_QUERY);
     /// 
-    void inc(const CounterType type);
+    void inc(const ServerCounterType type);
 
     /// \brief Submit statistics counters to statistics module.
     ///
@@ -130,7 +136,7 @@ public:
     ///
     /// \return the value of the counter specified by \a type.
     ///
-    uint64_t getCounter(const AuthCounters::CounterType type) const;
+    uint64_t getCounter(const AuthCounters::ServerCounterType type) const;
 };
 
 #endif // __STATISTICS_H
