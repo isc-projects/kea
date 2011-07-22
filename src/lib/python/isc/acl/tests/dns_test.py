@@ -15,6 +15,7 @@
 
 import unittest
 import socket
+from pydnspp import *
 from isc.acl.acl import LoaderError, Error, ACCEPT, REJECT, DROP
 from isc.acl.dns import *
 
@@ -39,12 +40,37 @@ def get_acl_json(prefix):
     json[0]["from"] = prefix
     return REQUEST_LOADER.load(json)
 
-def get_context(address):
+# The following two are similar to the previous two, but use a TSIG key name
+# instead of IP prefix.
+def get_tsig_acl(key):
+    return REQUEST_LOADER.load('[{"action": "ACCEPT", "key": "' + \
+                                   key + '"}]')
+
+def get_tsig_acl_json(key):
+    json = [{"action": "ACCEPT"}]
+    json[0]["key"] = key
+    return REQUEST_LOADER.load(json)
+
+# commonly used TSIG RDATA.  For the purpose of ACL checks only the key name
+# matters; other parrameters are simply borrowed from some other tests, which
+# can be anything for the purpose of the tests here.
+TSIG_RDATA = TSIG("hmac-md5.sig-alg.reg.int. 1302890362 " + \
+                      "300 16 2tra2tra2tra2tra2tra2g== " + \
+                      "11621 0 0")
+
+def get_context(address, key_name=None):
     '''This is a simple shortcut wrapper for creating a RequestContext
-    object with a given IP address.  Port number doesn't matter in the test
-    (as of the initial implementation), so it's fixed for simplicity.
+    object with a given IP address and optionally TSIG key  name.
+    Port number doesn't matter in the test (as of the initial implementation),
+    so it's fixed for simplicity.
+    If key_name is not None, it internally creates a (faked) TSIG record
+    and constructs a context with that key.  Note that only the key name
+    matters for the purpose of ACL checks.
     '''
-    return RequestContext(get_sockaddr(address, 53000))
+    tsig_record = None
+    if key_name is not None:
+        tsig_record = TSIGRecord(Name(key_name), TSIG_RDATA)
+    return RequestContext(get_sockaddr(address, 53000), tsig_record)
 
 # These are commonly used RequestContext object
 CONTEXT4 = get_context('192.0.2.1')
@@ -62,6 +88,21 @@ class RequestContextTest(unittest.TestCase):
                              'remote_addr=[2001:db8::1234]:53006>',
                          RequestContext(('2001:db8::1234', 53006,
                                          0, 0)).__str__())
+
+        # Construct the context from IP address and a TSIG record.
+        tsig_record = TSIGRecord(Name("key.example.com"), TSIG_RDATA)
+        self.assertEqual('<isc.acl.dns.RequestContext object, ' + \
+                             'remote_addr=[192.0.2.1]:53001, ' + \
+                             'key=key.example.com.>',
+                         RequestContext(('192.0.2.1', 53001),
+                                        tsig_record).__str__())
+
+        # same with IPv6 address, just in case.
+        self.assertEqual('<isc.acl.dns.RequestContext object, ' + \
+                             'remote_addr=[2001:db8::1234]:53006, ' + \
+                             'key=key.example.com.>',
+                         RequestContext(('2001:db8::1234', 53006,
+                                         0, 0), tsig_record).__str__())
 
         # Unusual case: port number overflows (this constructor allows that,
         # although it should be rare anyway; the socket address should
@@ -89,7 +130,9 @@ class RequestContextTest(unittest.TestCase):
         # not a tuple
         self.assertRaises(TypeError, RequestContext, 1)
         # invalid number of parameters
-        self.assertRaises(TypeError, RequestContext, ('192.0.2.1', 53), 0)
+        self.assertRaises(TypeError, RequestContext, ('192.0.2.1', 53), 0, 1)
+        # type error for TSIG
+        self.assertRaises(TypeError, RequestContext, ('192.0.2.1', 53), tsig=1)
         # tuple is not in the form of sockaddr
         self.assertRaises(TypeError, RequestContext, (0, 53))
         self.assertRaises(TypeError, RequestContext, ('192.0.2.1', 'http'))
@@ -159,9 +202,21 @@ class RequestACLTest(unittest.TestCase):
         self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           [{"action": "ACCEPT", "from": []}])
         self.assertRaises(LoaderError, REQUEST_LOADER.load,
+                          '[{"action": "ACCEPT", "key": 1}]')
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
+                          [{"action": "ACCEPT", "key": 1}])
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
+                          '[{"action": "ACCEPT", "key": {}}]')
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
+                          [{"action": "ACCEPT", "key": {}}])
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           '[{"action": "ACCEPT", "from": "bad"}]')
         self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           [{"action": "ACCEPT", "from": "bad"}])
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
+                          [{"action": "ACCEPT", "key": "bad..name"}])
+        self.assertRaises(LoaderError, REQUEST_LOADER.load,
+                          [{"action": "ACCEPT", "key": "bad..name"}])
         self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           '[{"action": "ACCEPT", "from": null}]')
         self.assertRaises(LoaderError, REQUEST_LOADER.load,
@@ -236,6 +291,28 @@ class RequestACLTest(unittest.TestCase):
                          get_acl_json('2001:db8:1::/64').execute(CONTEXT6))
         self.assertEqual(REJECT, get_acl('32.1.13.184').execute(CONTEXT6))
         self.assertEqual(REJECT, get_acl_json('32.1.13.184').execute(CONTEXT6))
+
+        # TSIG checks, derived from dns_test.cc
+        self.assertEqual(ACCEPT, get_tsig_acl('key.example.com').\
+                             execute(get_context('192.0.2.1',
+                                                 'key.example.com')))
+        self.assertEqual(REJECT, get_tsig_acl_json('key.example.com').\
+                             execute(get_context('192.0.2.1',
+                                                 'badkey.example.com')))
+        self.assertEqual(ACCEPT, get_tsig_acl('key.example.com').\
+                             execute(get_context('2001:db8::1',
+                                                 'key.example.com')))
+        self.assertEqual(REJECT, get_tsig_acl_json('key.example.com').\
+                             execute(get_context('2001:db8::1',
+                                                 'badkey.example.com')))
+        self.assertEqual(REJECT, get_tsig_acl('key.example.com').\
+                             execute(CONTEXT4))
+        self.assertEqual(REJECT, get_tsig_acl_json('key.example.com').\
+                             execute(CONTEXT4))
+        self.assertEqual(REJECT, get_tsig_acl('key.example.com').\
+                             execute(CONTEXT6))
+        self.assertEqual(REJECT, get_tsig_acl_json('key.example.com').\
+                             execute(CONTEXT6))
 
         # A bit more complicated example, derived from resolver_config_unittest
         acl = REQUEST_LOADER.load('[ {"action": "ACCEPT", ' +
