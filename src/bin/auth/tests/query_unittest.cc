@@ -103,9 +103,9 @@ const char* const other_zone_rrs =
 // will result in DNAME.
 // This mock zone doesn't handle empty non terminal nodes (if we need to test
 // such cases find() should have specialized code for it).
-class MockZone : public Zone {
+class MockZoneFinder : public ZoneFinder {
 public:
-    MockZone() :
+    MockZoneFinder() :
         origin_(Name("example.com")),
         delegation_name_("delegation.example.com"),
         dname_name_("dname.example.com"),
@@ -120,7 +120,7 @@ public:
             other_zone_rrs;
 
         masterLoad(zone_stream, origin_, rrclass_,
-                   boost::bind(&MockZone::loadRRset, this, _1));
+                   boost::bind(&MockZoneFinder::loadRRset, this, _1));
     }
     virtual const isc::dns::Name& getOrigin() const { return (origin_); }
     virtual const isc::dns::RRClass& getClass() const { return (rrclass_); }
@@ -163,9 +163,9 @@ private:
     const RRClass rrclass_;
 };
 
-Zone::FindResult
-MockZone::find(const Name& name, const RRType& type,
-               RRsetList* target, const FindOptions options) const
+ZoneFinder::FindResult
+MockZoneFinder::find(const Name& name, const RRType& type,
+                     RRsetList* target, const FindOptions options) const
 {
     // Emulating a broken zone: mandatory apex RRs are missing if specifically
     // configured so (which are rare cases).
@@ -233,10 +233,10 @@ protected:
         response.setRcode(Rcode::NOERROR());
         response.setOpcode(Opcode::QUERY());
         // create and add a matching zone.
-        mock_zone = new MockZone();
-        memory_datasrc.addZone(ZonePtr(mock_zone));
+        mock_finder = new MockZoneFinder();
+        memory_datasrc.addZone(ZoneFinderPtr(mock_finder));
     }
-    MockZone* mock_zone;
+    MockZoneFinder* mock_finder;
     MemoryDataSrc memory_datasrc;
     const Name qname;
     const RRClass qclass;
@@ -346,7 +346,7 @@ TEST_F(QueryTest, apexAnyMatch) {
                   "example.com. 3600 IN NS glue.delegation.example.com.\n"
                   "example.com. 3600 IN NS noglue.example.com.\n"
                   "example.com. 3600 IN NS example.net.\n",
-                  NULL, ns_addrs_txt, mock_zone->getOrigin());
+                  NULL, ns_addrs_txt, mock_finder->getOrigin());
 }
 
 TEST_F(QueryTest, mxANYMatch) {
@@ -368,7 +368,7 @@ TEST_F(QueryTest, nodomainANY) {
     EXPECT_NO_THROW(Query(memory_datasrc, Name("nxdomain.example.com"),
                           RRType::ANY(), response).process());
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 1, 0,
-                  NULL, soa_txt, NULL, mock_zone->getOrigin());
+                  NULL, soa_txt, NULL, mock_finder->getOrigin());
 }
 
 // This tests that when we need to look up Zone's apex NS records for
@@ -376,7 +376,7 @@ TEST_F(QueryTest, nodomainANY) {
 // throw in that case.
 TEST_F(QueryTest, noApexNS) {
     // Disable apex NS record
-    mock_zone->setApexNSFlag(false);
+    mock_finder->setApexNSFlag(false);
 
     EXPECT_THROW(Query(memory_datasrc, Name("noglue.example.com"), qtype,
                        response).process(), Query::NoApexNS);
@@ -395,7 +395,7 @@ TEST_F(QueryTest, nxdomain) {
     EXPECT_NO_THROW(Query(memory_datasrc, Name("nxdomain.example.com"), qtype,
                           response).process());
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 1, 0,
-                  NULL, soa_txt, NULL, mock_zone->getOrigin());
+                  NULL, soa_txt, NULL, mock_finder->getOrigin());
 }
 
 TEST_F(QueryTest, nxrrset) {
@@ -403,7 +403,7 @@ TEST_F(QueryTest, nxrrset) {
                           RRType::TXT(), response).process());
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 1, 0,
-                  NULL, soa_txt, NULL, mock_zone->getOrigin());
+                  NULL, soa_txt, NULL, mock_finder->getOrigin());
 }
 
 /*
@@ -412,7 +412,7 @@ TEST_F(QueryTest, nxrrset) {
  */
 TEST_F(QueryTest, noSOA) {
     // disable zone's SOA RR.
-    mock_zone->setSOAFlag(false);
+    mock_finder->setSOAFlag(false);
 
     // The NX Domain
     EXPECT_THROW(Query(memory_datasrc, Name("nxdomain.example.com"),
@@ -620,7 +620,7 @@ TEST_F(QueryTest, DNAME_NX_RRSET) {
         RRType::TXT(), response).process());
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 1, 0,
-        NULL, soa_txt, NULL, mock_zone->getOrigin());
+        NULL, soa_txt, NULL, mock_finder->getOrigin());
 }
 
 /*

@@ -32,10 +32,10 @@ using namespace isc::dns;
 namespace isc {
 namespace datasrc {
 
-// Private data and hidden methods of MemoryZone
-struct MemoryZone::MemoryZoneImpl {
+// Private data and hidden methods of MemoryZoneFinder
+struct MemoryZoneFinder::MemoryZoneFinderImpl {
     // Constructor
-    MemoryZoneImpl(const RRClass& zone_class, const Name& origin) :
+    MemoryZoneFinderImpl(const RRClass& zone_class, const Name& origin) :
         zone_class_(zone_class), origin_(origin), origin_data_(NULL),
         domains_(true)
     {
@@ -223,7 +223,7 @@ struct MemoryZone::MemoryZoneImpl {
      * Implementation of longer methods. We put them here, because the
      * access is without the impl_-> and it will get inlined anyway.
      */
-    // Implementation of MemoryZone::add
+    // Implementation of MemoryZoneFinder::add
     result::Result add(const ConstRRsetPtr& rrset, DomainTree* domains) {
         // Sanitize input.  This will cause an exception to be thrown
         // if the input RRset is empty.
@@ -409,7 +409,7 @@ struct MemoryZone::MemoryZoneImpl {
         }
     }
 
-    // Implementation of MemoryZone::find
+    // Implementation of MemoryZoneFinder::find
     FindResult find(const Name& name, RRType type,
                     RRsetList* target, const FindOptions options) const
     {
@@ -593,50 +593,50 @@ struct MemoryZone::MemoryZoneImpl {
     }
 };
 
-MemoryZone::MemoryZone(const RRClass& zone_class, const Name& origin) :
-    impl_(new MemoryZoneImpl(zone_class, origin))
+MemoryZoneFinder::MemoryZoneFinder(const RRClass& zone_class, const Name& origin) :
+    impl_(new MemoryZoneFinderImpl(zone_class, origin))
 {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_CREATE).arg(origin).
         arg(zone_class);
 }
 
-MemoryZone::~MemoryZone() {
+MemoryZoneFinder::~MemoryZoneFinder() {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_DESTROY).arg(getOrigin()).
         arg(getClass());
     delete impl_;
 }
 
 const Name&
-MemoryZone::getOrigin() const {
+MemoryZoneFinder::getOrigin() const {
     return (impl_->origin_);
 }
 
 const RRClass&
-MemoryZone::getClass() const {
+MemoryZoneFinder::getClass() const {
     return (impl_->zone_class_);
 }
 
-Zone::FindResult
-MemoryZone::find(const Name& name, const RRType& type,
+ZoneFinder::FindResult
+MemoryZoneFinder::find(const Name& name, const RRType& type,
                  RRsetList* target, const FindOptions options) const
 {
     return (impl_->find(name, type, target, options));
 }
 
 result::Result
-MemoryZone::add(const ConstRRsetPtr& rrset) {
+MemoryZoneFinder::add(const ConstRRsetPtr& rrset) {
     return (impl_->add(rrset, &impl_->domains_));
 }
 
 
 void
-MemoryZone::load(const string& filename) {
+MemoryZoneFinder::load(const string& filename) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_LOAD).arg(getOrigin()).
         arg(filename);
     // Load it into a temporary tree
-    MemoryZoneImpl::DomainTree tmp;
+    MemoryZoneFinderImpl::DomainTree tmp;
     masterLoad(filename.c_str(), getOrigin(), getClass(),
-        boost::bind(&MemoryZoneImpl::addFromLoad, impl_, _1, &tmp));
+        boost::bind(&MemoryZoneFinderImpl::addFromLoad, impl_, _1, &tmp));
     // If it went well, put it inside
     impl_->file_name_ = filename;
     tmp.swap(impl_->domains_);
@@ -644,14 +644,14 @@ MemoryZone::load(const string& filename) {
 }
 
 void
-MemoryZone::swap(MemoryZone& zone) {
+MemoryZoneFinder::swap(MemoryZoneFinder& zone) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_SWAP).arg(getOrigin()).
         arg(zone.getOrigin());
     std::swap(impl_, zone.impl_);
 }
 
 const string
-MemoryZone::getFileName() const {
+MemoryZoneFinder::getFileName() const {
     return (impl_->file_name_);
 }
 
@@ -659,7 +659,7 @@ MemoryZone::getFileName() const {
 /// interface.
 ///
 /// For now, \c MemoryDataSrc only contains a \c ZoneTable object, which
-/// consists of (pointers to) \c MemoryZone objects, we may add more
+/// consists of (pointers to) \c MemoryZoneFinder objects, we may add more
 /// member variables later for new features.
 class MemoryDataSrc::MemoryDataSrcImpl {
 public:
@@ -681,7 +681,7 @@ MemoryDataSrc::getZoneCount() const {
 }
 
 result::Result
-MemoryDataSrc::addZone(ZonePtr zone) {
+MemoryDataSrc::addZone(ZoneFinderPtr zone) {
     if (!zone) {
         isc_throw(InvalidParameter,
                   "Null pointer is passed to MemoryDataSrc::addZone()");

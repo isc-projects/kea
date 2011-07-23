@@ -181,8 +181,8 @@ TEST_F(MemoryDatasrcConfigTest, addOneZone) {
     EXPECT_NO_THROW(parser->commit());
     EXPECT_EQ(1, server.getMemoryDataSrc(rrclass)->getZoneCount());
     // Check it actually loaded something
-    EXPECT_EQ(Zone::SUCCESS, server.getMemoryDataSrc(rrclass)->findZone(
-        Name("ns.example.com.")).zone->find(Name("ns.example.com."),
+    EXPECT_EQ(ZoneFinder::SUCCESS, server.getMemoryDataSrc(rrclass)->findZone(
+        Name("ns.example.com.")).zone_finder->find(Name("ns.example.com."),
         RRType::A()).code);
 }
 
