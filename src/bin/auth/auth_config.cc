@@ -163,7 +163,7 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
             isc_throw(AuthConfigError, "Missing zone file for zone: "
                       << origin->str());
         }
-        shared_ptr<MemoryZone> new_zone(new MemoryZone(rrclass_,
+        shared_ptr<MemoryZoneFinder> new_zone(new MemoryZoneFinder(rrclass_,
             Name(origin->stringValue())));
         const result::Result result = memory_datasrc_->addZone(new_zone);
         if (result == result::EXIST) {
