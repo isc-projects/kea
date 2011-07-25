@@ -13,6 +13,9 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+import socket
+import struct
+
 """
 Module that comunicates with the priviledget socket creator (b10-sockcreator).
 """
@@ -55,14 +58,26 @@ class Parser:
         have a read_fd() method to read the file descriptor. This slightly
         unusual modification of socket object is used to easy up testing.
         """
-        pass # TODO Implement
+        self.__socket = creator_socket
 
     def terminate(self):
         """
         Asks the creator process to terminate and waits for it to close the
         socket. Does not return anything.
         """
-        pass # TODO Implement
+        if self.__socket is None:
+            raise CreatorError('Terminated already', True)
+        try:
+            self.__socket.sendall(b'T')
+            # Wait for an EOF - it will return empty data
+            eof = self.__socket.recv(1)
+            if len(eof) != 0:
+                raise CreatorError('Protocol error - data after terminated',
+                                   True)
+            self.__socket = None
+        except socket.error as se:
+            self.__socket = None
+            raise CreatorError(str(se), True)
 
     def get_socket(self, address, port, socktype):
         """
@@ -75,4 +90,64 @@ class Parser:
         should be fast, as it is on localhost) and returns the file descriptor
         number. It raises a CreatorError exception if the creation fails.
         """
-        pass # TODO Implement
+        if self.__socket is None:
+            raise CreatorError('Socket requested on terminated creator', True)
+        # First, assemble the request from parts
+        data = b'S'
+        if socktype == 'UDP' or socktype == socket.SOCK_DGRAM:
+            data += b'U'
+        elif socktype == 'TCP' or socktype == socket.SOCK_STREAM:
+            data += b'T'
+        else:
+            raise ValueError('Unknown socket type: ' + str(socktype))
+        if address.family == socket.AF_INET:
+            data += b'4'
+        elif address.family == socket.AF_INET6:
+            data += b'6'
+        else:
+            raise ValueError('Unknown address family in address')
+        data += struct.pack('!H', port)
+        data += address.addr
+        try:
+            # Send the request
+            self.__socket.sendall(data)
+            answer = self.__socket.recv(1)
+            if answer == b'S':
+                # Success!
+                return self.__socket.read_fd()
+            elif answer == b'E':
+                # There was an error, read the error as well
+                error = self.__socket.recv(1)
+                errno = struct.unpack('i',
+                                      self.__read_all(len(struct.pack('i',
+                                                                      0))))
+                if error == b'S':
+                    cause = 'socket'
+                elif error == b'B':
+                    cause = 'bind'
+                else:
+                    self.__socket = None
+                    raise CreatorError('Unknown error cause' + str(answer), True)
+                raise CreatorError('Error creating socket on ' + cause, False,
+                                   errno[0])
+            else:
+                self.__socket = None
+                raise CreatorError('Unknown response ' + str(answer), True)
+        except socket.error as se:
+            self.__socket = None
+            raise CreatorError(str(se), True)
+
+    def __read_all(self, length):
+        """
+        Keeps reading until length data is read or EOF or error happens.
+
+        EOF is considered error as well and throws.
+        """
+        result = b''
+        while len(result) < length:
+            data = self.__socket.recv(length - len(result))
+            if len(data) == 0:
+                self.__socket = None
+                raise CreatorError('Unexpected EOF', True)
+            result += data
+        return result
