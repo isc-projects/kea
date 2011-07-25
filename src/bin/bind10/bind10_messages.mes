@@ -155,3 +155,37 @@ the message channel.
 An unknown child process has exited. The PID is printed, but no further
 action will be taken by the boss process.
 
+% BIND10_SOCKCREATOR_INIT initializing socket creator parser
+The boss module initializes routines for parsing the socket creator
+protocol.
+
+% BIND10_SOCKCREATOR_TERMINATE terminating socket creator
+The boss module sends a request to terminate to the socket creator.
+
+% BIND10_SOCKET_GET requesting socket [%1]:%2 of type %3 from the creator
+The boss forwards a request for a socket to the socket creator.
+
+% BIND10_SOCKCREATOR_EOF eof while expecting data from socket creator
+There should be more data from the socket creator, but it closed the socket.
+It probably crashed.
+
+% BIND10_SOCKCREATOR_BAD_RESPONSE unknown response for socket request: %1
+The boss requested a socket from the creator, but the answer is unknown. This
+looks like programmer error.
+
+% BIND10_SOCKET_ERROR error on %1 call in the creator: %2/%3
+The socket creator failed to create the requested socket. It failed on the
+indicated OS API function with given error.
+
+% BIND10_SOCKCREATOR_BAD_CAUSE unknown error cause from socket creator: %1
+The socket creator reported an error when creating a socket. But the function
+which failed is unknown (not one of 'S' for socket or 'B' for bind).
+
+% BIND10_SOCKET_CREATED successfully created socket %1
+The socket creator successfully created and sent a requested socket, it has
+the given file number.
+
+% BIND10_SOCKCREATOR_TRANSPORT_ERROR transport error when talking to the socket creator: %1
+Either sending or receiving data from the socket creator failed with the given
+error. The creator probably crashed or some serious OS-level problem happened,
+as the communication happens only on local host.
