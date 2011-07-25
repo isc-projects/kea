@@ -16,6 +16,7 @@ run_unittests_SOURCES += acl_test.cc
 run_unittests_SOURCES += check_test.cc
 run_unittests_SOURCES += dns_test.cc
 run_unittests_SOURCES += ip_check_unittest.cc
+run_unittests_SOURCES += dnsname_check_unittest.cc
 run_unittests_SOURCES += loader_test.cc
 run_unittests_SOURCES += logcheck.h
 run_unittests_SOURCES += creators.h
