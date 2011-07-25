@@ -193,6 +193,13 @@ class MockBob(BoB):
         self.cmdctl = False
         self.c_channel_env = {}
         self.processes = { }
+        self.creator = False
+
+    def start_creator(self):
+        self.creator = True
+
+    def stop_creator(self, kill=False):
+        self.creator = False
 
     def read_bind10_config(self):
         # Configuration options are set directly
@@ -337,6 +344,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         self.assertEqual(bob.msgq, core)
         self.assertEqual(bob.cfgmgr, core)
         self.assertEqual(bob.ccsession, core)
+        self.assertEqual(bob.creator, core)
         self.assertEqual(bob.auth, auth)
         self.assertEqual(bob.resolver, resolver)
         self.assertEqual(bob.xfrout, auth)

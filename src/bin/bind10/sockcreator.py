@@ -16,6 +16,7 @@
 import socket
 import struct
 import os
+import subprocess
 from bind10_messages import *
 from libutil_io_python import recv_fd
 
@@ -191,3 +192,33 @@ class WrappedSocket:
         Read the file descriptor from the socket.
         """
         return recv_fd(self.fileno())
+
+# FIXME: Any idea how to test this? Starting an external process doesn't sound
+# OK
+class Creator(Parser):
+    """
+    This starts the socket creator and allows asking for the sockets.
+    """
+    def __init__(self, path):
+        (local, remote) = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
+        # Popen does not like, for some reason, having the same socket for
+        # stdin as well as stdout, so we dup it before passing it there.
+        remote2 = socket.fromfd(remote.fileno(), socket.AF_UNIX,
+                                socket.SOCK_STREAM)
+        env = os.environ
+        env['PATH'] = path
+        self.__process = subprocess.Popen(['b10-sockcreator'], env=env,
+                                          stdin=remote.fileno(),
+                                          stdout=remote2.fileno())
+        remote.close()
+        remote2.close()
+        Parser.__init__(self, WrappedSocket(local))
+
+    def pid(self):
+        return self.__process.pid
+
+    def kill(self):
+        logger.warn(BIND10_SOCKCREATOR_KILL)
+        if self.__process is not None:
+            self.__process.kill()
+            self.__process = None

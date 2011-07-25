@@ -189,3 +189,12 @@ the given file number.
 Either sending or receiving data from the socket creator failed with the given
 error. The creator probably crashed or some serious OS-level problem happened,
 as the communication happens only on local host.
+
+% BIND10_SOCKCREATOR_CRASHED the socket creator crashed
+The socket creator terminated unexpectadly. It is not possible to restart it
+(because the boss already gave up root privileges), so the system is going
+to terminate.
+
+% BIND10_SOCKCREATOR_KILL killing the socket creator
+The socket creator is being terminated the aggressive way, by sending it
+sigkill. This should not happen usually.
