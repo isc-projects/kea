@@ -147,7 +147,8 @@ class XfroutSession():
             if rcode == Rcode.NOERROR():
                 # ACL checks
                 acl_result = self._acl.execute(
-                    isc.acl.dns.RequestContext(self._remote))
+                    isc.acl.dns.RequestContext(self._remote,
+                                               msg.get_tsig_record()))
                 if acl_result == DROP:
                     logger.info(XFROUT_QUERY_DROPPED,
                                 self._get_query_zone_name(msg),
