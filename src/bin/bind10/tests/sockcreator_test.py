@@ -20,9 +20,10 @@ Tests for the bind10.sockcreator module.
 import unittest
 import struct
 import socket
-from bind10.sockcreator import Parser, CreatorError
 from isc.net.addr import IPAddr
 import isc.log
+from libutil_io_python import send_fd
+from bind10.sockcreator import Parser, CreatorError, WrappedSocket
 
 class FakeCreator:
     """
@@ -271,6 +272,39 @@ class ParserTests(unittest.TestCase):
         addr.family = 42
         self.assertRaises(ValueError, Parser(FakeCreator([])).get_socket,
                           addr, 42, socket.SOCK_DGRAM)
+
+class WrapTests(unittest.TestCase):
+    """
+    Tests for the wrap_socket function.
+    """
+    def test_wrap(self):
+        # We construct two pairs of socket. The receiving side of one pair will
+        # be wrapped. Then we send one of the other pair through this pair and
+        # check the received one can be used as a socket
+
+        # The transport socket
+        (t1, t2) = socket.socketpair()
+        # The payload socket
+        (p1, p2) = socket.socketpair()
+
+        t2 = WrappedSocket(t2)
+
+        # Transfer the descriptor
+        send_fd(t1.fileno(), p1.fileno())
+        p1 = socket.fromfd(t2.read_fd(), socket.AF_UNIX, socket.SOCK_STREAM)
+
+        # Now, pass some data trough the socket
+        p1.send(b'A')
+        data = p2.recv(1)
+        self.assertEqual(b'A', data)
+
+        # Test the wrapping didn't hurt the socket's usual methods
+        t1.send(b'B')
+        data = t2.recv(1)
+        self.assertEqual(b'B', data)
+        t2.send(b'C')
+        data = t1.recv(1)
+        self.assertEqual(b'C', data)
 
 if __name__ == '__main__':
     isc.log.init("bind10") # FIXME Should this be needed?

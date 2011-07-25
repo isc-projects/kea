@@ -17,6 +17,7 @@ import socket
 import struct
 import os
 from bind10_messages import *
+from libutil_io_python import recv_fd
 
 logger = isc.log.Logger("boss")
 
@@ -60,7 +61,10 @@ class Parser:
         Creates the parser. The creator_socket is socket to the socket creator
         process that will be used for communication. However, the object must
         have a read_fd() method to read the file descriptor. This slightly
-        unusual modification of socket object is used to easy up testing.
+        unusual trick with modifying an object is used to easy up testing.
+
+        You can use WrappedSocket in production code to add the method to any
+        ordinary socket.
         """
         self.__socket = creator_socket
         logger.info(BIND10_SOCKCREATOR_INIT)
@@ -166,3 +170,24 @@ class Parser:
                 raise CreatorError('Unexpected EOF', True)
             result += data
         return result
+
+class WrappedSocket:
+    """
+    This class wraps a socket and adds a read_fd method, so it can be used
+    for the Parser class conveniently. It simply copies all it's guts into
+    itself and implements the method.
+    """
+    def __init__(self, socket):
+        # Copy whatever can be copied from the socket
+        for name in dir(socket):
+            if name not in ['__class__', '__weakref__']:
+                setattr(self, name, getattr(socket, name))
+        # Keep the socket, so we can prevent it from being garbage-collected
+        # and closed before we are removed ourself
+        self.__orig_socket = socket
+
+    def read_fd(self):
+        """
+        Read the file descriptor from the socket.
+        """
+        return recv_fd(self.fileno())
