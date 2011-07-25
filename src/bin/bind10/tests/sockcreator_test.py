@@ -61,6 +61,7 @@ class FakeCreator:
             raise InvalidPlan('Nothing more planned')
         (kind, data) = self.__plan[0]
         if kind == 'e':
+            self.__plan.pop(0)
             raise socket.error('False socket error')
         if kind != expected:
             raise InvalidPlan('Planned ' + kind + ', but ' + expected +
@@ -108,6 +109,7 @@ class FakeCreator:
             self.__plan[0] = ('s', rest)
         else:
             self.__plan.pop(0)
+
     def all_used(self):
         """
         Returns if the whole plan was consumed.
@@ -118,15 +120,65 @@ class ParserTests(unittest.TestCase):
     """
     Testcases for the Parser class.
     """
+    def __terminate(self):
+        creator = FakeCreator([('s', b'T'), ('r', b'')])
+        parser = Parser(creator)
+        self.assertEqual(None, parser.terminate())
+        self.assertTrue(creator.all_used())
+        return parser
+
     def test_terminate(self):
         """
         Test if the command to terminate is correct and it waits for reading the
         EOF.
         """
-        creator = FakeCreator([('s', b'T'), ('r', b'')])
+        self.__terminate()
+
+    def test_terminate_error1(self):
+        """
+        Test it reports an exception when there's error terminating the creator.
+        This one raises an error when receiving the EOF.
+        """
+        creator = FakeCreator([('s', b'T'), ('e', None)])
         parser = Parser(creator)
-        self.assertEqual(None, parser.terminate())
-        self.assertTrue(creator.all_used())
+        with self.assertRaises(CreatorError) as cm:
+            parser.terminate()
+        self.assertTrue(cm.exception.fatal)
+        self.assertEqual(None, cm.exception.errno)
+
+    def test_terminate_error2(self):
+        """
+        Test it reports an exception when there's error terminating the creator.
+        This one raises an error when sending data.
+        """
+        creator = FakeCreator([('e', None)])
+        parser = Parser(creator)
+        with self.assertRaises(CreatorError) as cm:
+            parser.terminate()
+        self.assertTrue(cm.exception.fatal)
+        self.assertEqual(None, cm.exception.errno)
+
+    def test_terminate_twice(self):
+        """
+        Test we can't terminate twice.
+        """
+        parser = self.__terminate()
+        with self.assertRaises(CreatorError) as cm:
+            parser.terminate()
+        self.assertTrue(cm.exception.fatal)
+        self.assertEqual(None, cm.exception.errno)
+
+    def test_terminate_error3(self):
+        """
+        Test it reports an exception when there's error terminating the creator.
+        This one sends data when it should have terminated.
+        """
+        creator = FakeCreator([('s', b'T'), ('r', b'Extra data')])
+        parser = Parser(creator)
+        with self.assertRaises(CreatorError) as cm:
+            parser.terminate()
+        self.assertTrue(cm.exception.fatal)
+        self.assertEqual(None, cm.exception.errno)
 
     def test_crash(self):
         """
@@ -188,6 +240,32 @@ class ParserTests(unittest.TestCase):
     def test_create2(self):
         self.__create('2001:db8::', socket.SOCK_STREAM,
             b'T6\0\x2A\x20\x01\x0d\xb8\0\0\0\0\0\0\0\0\0\0\0\0')
+
+    def test_create_terminated(self):
+        """
+        Test we can't request sockets after it was terminated.
+        """
+        parser = self.__terminate()
+        with self.assertRaises(CreatorError) as cm:
+            parser.get_socket(IPAddr('0.0.0.0'), 0, 'UDP')
+        self.assertTrue(cm.exception.fatal)
+        self.assertEqual(None, cm.exception.errno)
+
+    def test_invalid_socktype(self):
+        """
+        Test invalid socket type is rejected
+        """
+        self.assertRaises(ValueError, Parser(FakeCreator([])).get_socket,
+                          IPAddr('0.0.0.0'), 42, 'RAW')
+
+    def test_invalid_family(self):
+        """
+        Test it rejects invalid address family.
+        """
+        addr = IPAddr('0.0.0.0')
+        addr.family = 'Nonsense'
+        self.assertRaises(ValueError, Parser(FakeCreator([])).get_socket,
+                          addr, 42, socket.SOCK_DGRAM)
 
 if __name__ == '__main__':
     unittest.main()
