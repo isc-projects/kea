@@ -22,6 +22,7 @@ import struct
 import socket
 from bind10.sockcreator import Parser, CreatorError
 from isc.net.addr import IPAddr
+import isc.log
 
 class FakeCreator:
     """
@@ -262,10 +263,16 @@ class ParserTests(unittest.TestCase):
         """
         Test it rejects invalid address family.
         """
+        # Note: this produces a bad logger output, since this address
+        # can not be converted to string, so the original message with
+        # placeholders is output. This should not happen in practice, so
+        # it is harmless.
         addr = IPAddr('0.0.0.0')
-        addr.family = 'Nonsense'
+        addr.family = 42
         self.assertRaises(ValueError, Parser(FakeCreator([])).get_socket,
                           addr, 42, socket.SOCK_DGRAM)
 
 if __name__ == '__main__':
+    isc.log.init("bind10") # FIXME Should this be needed?
+    isc.log.resetUnitTestRootLogger()
     unittest.main()

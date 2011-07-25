@@ -15,6 +15,10 @@
 
 import socket
 import struct
+import os
+from bind10_messages import *
+
+logger = isc.log.Logger("boss")
 
 """
 Module that comunicates with the priviledget socket creator (b10-sockcreator).
@@ -59,6 +63,7 @@ class Parser:
         unusual modification of socket object is used to easy up testing.
         """
         self.__socket = creator_socket
+        logger.info(BIND10_SOCKCREATOR_INIT)
 
     def terminate(self):
         """
@@ -67,6 +72,7 @@ class Parser:
         """
         if self.__socket is None:
             raise CreatorError('Terminated already', True)
+        logger.info(BIND10_SOCKCREATOR_TERMINATE)
         try:
             self.__socket.sendall(b'T')
             # Wait for an EOF - it will return empty data
@@ -93,6 +99,7 @@ class Parser:
         if self.__socket is None:
             raise CreatorError('Socket requested on terminated creator', True)
         # First, assemble the request from parts
+        logger.info(BIND10_SOCKET_GET, address, port, socktype)
         data = b'S'
         if socktype == 'UDP' or socktype == socket.SOCK_DGRAM:
             data += b'U'
@@ -114,7 +121,9 @@ class Parser:
             answer = self.__socket.recv(1)
             if answer == b'S':
                 # Success!
-                return self.__socket.read_fd()
+                result = self.__socket.read_fd()
+                logger.info(BIND10_SOCKET_CREATED, result)
+                return result
             elif answer == b'E':
                 # There was an error, read the error as well
                 error = self.__socket.recv(1)
@@ -127,14 +136,19 @@ class Parser:
                     cause = 'bind'
                 else:
                     self.__socket = None
+                    logger.fatal(BIND10_SOCKCREATOR_BAD_CAUSE, error)
                     raise CreatorError('Unknown error cause' + str(answer), True)
+                logger.error(BIND10_SOCKET_ERROR, cause, errno[0],
+                             os.strerror(errno[0]))
                 raise CreatorError('Error creating socket on ' + cause, False,
                                    errno[0])
             else:
                 self.__socket = None
+                logger.fatal(BIND10_SOCKCREATOR_BAD_RESPONSE, answer)
                 raise CreatorError('Unknown response ' + str(answer), True)
         except socket.error as se:
             self.__socket = None
+            logger.fatal(BIND10_SOCKCREATOR_TRANSPORT_ERROR, str(se))
             raise CreatorError(str(se), True)
 
     def __read_all(self, length):
@@ -148,6 +162,7 @@ class Parser:
             data = self.__socket.recv(length - len(result))
             if len(data) == 0:
                 self.__socket = None
+                logger.fatal(BIND10_SOCKCREATOR_EOF)
                 raise CreatorError('Unexpected EOF', True)
             result += data
         return result
