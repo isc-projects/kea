@@ -1498,6 +1498,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
         <variablelist>
         <varlistentry>
         <term>2011-06-15 13:48:22.034</term>
+<!-- TODO: timestamp repeated even if using syslog? -->
         <listitem><para>
             The date and time at which the message was generated.
         </para></listitem>
