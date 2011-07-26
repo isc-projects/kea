@@ -1,8 +1,7 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 #PYTESTS = args_test.py bind10_test.py
 # NOTE: this has a generated test found in the builddir
-PYTESTS = bind10_test.py
-EXTRA_DIST = $(PYTESTS)
+PYTESTS = bind10_test.py sockcreator_test.py
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.
@@ -21,7 +20,7 @@ endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	$(LIBRARY_PATH_PLACEHOLDER) \
-	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/bind10 \
+	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_srcdir)/src/bin:$(abs_top_builddir)/src/bin/bind10:$(abs_top_builddir)/src/lib/util/io/.libs \
 	BIND10_MSGQ_SOCKET_FILE=$(abs_top_builddir)/msgq_socket \
 		$(PYCOVERAGE_RUN) $(abs_builddir)/$$pytest || exit ; \
 	done
