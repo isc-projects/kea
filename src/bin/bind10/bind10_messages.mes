@@ -32,14 +32,14 @@ started according to the configuration.
 The boss process was started with the -u option, to drop root privileges
 and continue running as the specified user, but the user is unknown.
 
+% BIND10_KILLING_ALL_PROCESSES killing all started processes
+The boss module was not able to start every process it needed to start
+during startup, and will now kill the processes that did get started.
+
 % BIND10_KILL_PROCESS killing process %1
 The boss module is sending a kill signal to process with the given name,
 as part of the process of killing all started processes during a failed
 startup, as described for BIND10_KILLING_ALL_PROCESSES
-
-% BIND10_KILLING_ALL_PROCESSES killing all started processes
-The boss module was not able to start every process it needed to start
-during startup, and will now kill the processes that did get started.
 
 % BIND10_MSGQ_ALREADY_RUNNING msgq daemon already running, cannot start
 There already appears to be a message bus daemon running. Either an
@@ -113,12 +113,49 @@ it shall send SIGKILL signals to the processes still alive.
 All child processes have been stopped, and the boss process will now
 stop itself.
 
-% BIND10_START_AS_NON_ROOT starting %1 as a user, not root. This might fail.
-The given module is being started or restarted without root privileges.
-If the module needs these privileges, it may have problems starting.
-Note that this issue should be resolved by the pending 'socket-creator'
-process; once that has been implemented, modules should not need root
-privileges anymore. See tickets #800 and #801 for more information.
+% BIND10_SOCKCREATOR_BAD_CAUSE unknown error cause from socket creator: %1
+The socket creator reported an error when creating a socket. But the function
+which failed is unknown (not one of 'S' for socket or 'B' for bind).
+
+% BIND10_SOCKCREATOR_BAD_RESPONSE unknown response for socket request: %1
+The boss requested a socket from the creator, but the answer is unknown. This
+looks like a programmer error.
+
+% BIND10_SOCKCREATOR_CRASHED the socket creator crashed
+The socket creator terminated unexpectadly. It is not possible to restart it
+(because the boss already gave up root privileges), so the system is going
+to terminate.
+
+% BIND10_SOCKCREATOR_EOF eof while expecting data from socket creator
+There should be more data from the socket creator, but it closed the socket.
+It probably crashed.
+
+% BIND10_SOCKCREATOR_INIT initializing socket creator parser
+The boss module initializes routines for parsing the socket creator
+protocol.
+
+% BIND10_SOCKCREATOR_KILL killing the socket creator
+The socket creator is being terminated the aggressive way, by sending it
+sigkill. This should not happen usually.
+
+% BIND10_SOCKCREATOR_TERMINATE terminating socket creator
+The boss module sends a request to terminate to the socket creator.
+
+% BIND10_SOCKCREATOR_TRANSPORT_ERROR transport error when talking to the socket creator: %1
+Either sending or receiving data from the socket creator failed with the given
+error. The creator probably crashed or some serious OS-level problem happened,
+as the communication happens only on local host.
+
+% BIND10_SOCKET_CREATED successfully created socket %1
+The socket creator successfully created and sent a requested socket, it has
+the given file number.
+
+% BIND10_SOCKET_ERROR error on %1 call in the creator: %2/%3
+The socket creator failed to create the requested socket. It failed on the
+indicated OS API function with given error.
+
+% BIND10_SOCKET_GET requesting socket [%1]:%2 of type %3 from the creator
+The boss forwards a request for a socket to the socket creator.
 
 % BIND10_STARTED_PROCESS started %1
 The given process has successfully been started.
@@ -147,6 +184,13 @@ All modules have been successfully started, and BIND 10 is now running.
 There was a fatal error when BIND10 was trying to start. The error is
 shown, and BIND10 will now shut down.
 
+% BIND10_START_AS_NON_ROOT starting %1 as a user, not root. This might fail.
+The given module is being started or restarted without root privileges.
+If the module needs these privileges, it may have problems starting.
+Note that this issue should be resolved by the pending 'socket-creator'
+process; once that has been implemented, modules should not need root
+privileges anymore. See tickets #800 and #801 for more information.
+
 % BIND10_STOP_PROCESS asking %1 to shut down
 The boss module is sending a shutdown command to the given module over
 the message channel.
@@ -154,47 +198,3 @@ the message channel.
 % BIND10_UNKNOWN_CHILD_PROCESS_ENDED unknown child pid %1 exited
 An unknown child process has exited. The PID is printed, but no further
 action will be taken by the boss process.
-
-% BIND10_SOCKCREATOR_INIT initializing socket creator parser
-The boss module initializes routines for parsing the socket creator
-protocol.
-
-% BIND10_SOCKCREATOR_TERMINATE terminating socket creator
-The boss module sends a request to terminate to the socket creator.
-
-% BIND10_SOCKET_GET requesting socket [%1]:%2 of type %3 from the creator
-The boss forwards a request for a socket to the socket creator.
-
-% BIND10_SOCKCREATOR_EOF eof while expecting data from socket creator
-There should be more data from the socket creator, but it closed the socket.
-It probably crashed.
-
-% BIND10_SOCKCREATOR_BAD_RESPONSE unknown response for socket request: %1
-The boss requested a socket from the creator, but the answer is unknown. This
-looks like a programmer error.
-
-% BIND10_SOCKET_ERROR error on %1 call in the creator: %2/%3
-The socket creator failed to create the requested socket. It failed on the
-indicated OS API function with given error.
-
-% BIND10_SOCKCREATOR_BAD_CAUSE unknown error cause from socket creator: %1
-The socket creator reported an error when creating a socket. But the function
-which failed is unknown (not one of 'S' for socket or 'B' for bind).
-
-% BIND10_SOCKET_CREATED successfully created socket %1
-The socket creator successfully created and sent a requested socket, it has
-the given file number.
-
-% BIND10_SOCKCREATOR_TRANSPORT_ERROR transport error when talking to the socket creator: %1
-Either sending or receiving data from the socket creator failed with the given
-error. The creator probably crashed or some serious OS-level problem happened,
-as the communication happens only on local host.
-
-% BIND10_SOCKCREATOR_CRASHED the socket creator crashed
-The socket creator terminated unexpectadly. It is not possible to restart it
-(because the boss already gave up root privileges), so the system is going
-to terminate.
-
-% BIND10_SOCKCREATOR_KILL killing the socket creator
-The socket creator is being terminated the aggressive way, by sending it
-sigkill. This should not happen usually.
