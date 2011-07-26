@@ -23,7 +23,7 @@ from libutil_io_python import recv_fd
 logger = isc.log.Logger("boss")
 
 """
-Module that comunicates with the priviledget socket creator (b10-sockcreator).
+Module that comunicates with the privileged socket creator (b10-sockcreator).
 """
 
 class CreatorError(Exception):
@@ -54,7 +54,7 @@ class Parser:
 
     In theory, anything here can throw a fatal CreatorError exception, but it
     happens only in case something like the creator process crashes. Any other
-    occations are mentioned explicitly.
+    occasions are mentioned explicitly.
     """
 
     def __init__(self, creator_socket):
@@ -73,7 +73,9 @@ class Parser:
     def terminate(self):
         """
         Asks the creator process to terminate and waits for it to close the
-        socket. Does not return anything.
+        socket. Does not return anything. Raises a CreatorError if there is
+        still data on the socket, if there is an error closing the socket,
+        or if the socket had already been closed.
         """
         if self.__socket is None:
             raise CreatorError('Terminated already', True)
@@ -160,7 +162,7 @@ class Parser:
         """
         Keeps reading until length data is read or EOF or error happens.
 
-        EOF is considered error as well and throws.
+        EOF is considered error as well and throws a CreatorError.
         """
         result = b''
         while len(result) < length:
@@ -175,7 +177,7 @@ class Parser:
 class WrappedSocket:
     """
     This class wraps a socket and adds a read_fd method, so it can be used
-    for the Parser class conveniently. It simply copies all it's guts into
+    for the Parser class conveniently. It simply copies all its guts into
     itself and implements the method.
     """
     def __init__(self, socket):

@@ -171,7 +171,7 @@ It probably crashed.
 
 % BIND10_SOCKCREATOR_BAD_RESPONSE unknown response for socket request: %1
 The boss requested a socket from the creator, but the answer is unknown. This
-looks like programmer error.
+looks like a programmer error.
 
 % BIND10_SOCKET_ERROR error on %1 call in the creator: %2/%3
 The socket creator failed to create the requested socket. It failed on the
