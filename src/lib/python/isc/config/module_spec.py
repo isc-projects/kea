@@ -130,7 +130,7 @@ class ModuleSpec:
            non-default values). Also it checks 'item_format' in case
            of time"""
         stat_spec = self.get_statistics_spec()
-        if stat_spec:
+        if stat_spec != None:
             return _validate_spec_list(stat_spec, full, stat, errors)
         else:
             # no spec, always bad
