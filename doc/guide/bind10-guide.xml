@@ -1953,7 +1953,7 @@ Logging/loggers	[]	list
 
         <para>
 
-          Let's first add a default logger;
+          Let's first add a default logger:
 
         </para>
 
@@ -1970,7 +1970,7 @@ Logging/loggers/	list	(modified)
         <para>
 
 	  The loggers value line changed to indicate that it is no
-	  longer an empty list;
+	  longer an empty list:
 
         </para>
 
