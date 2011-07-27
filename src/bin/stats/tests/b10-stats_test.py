@@ -331,7 +331,7 @@ class TestStats(unittest.TestCase):
         self.assertEqual(self.stats.update_statistics_data(owner='Stats', lname=0.0),
                          ['0.0 should be a string'])
         self.assertEqual(self.stats.update_statistics_data(owner='Dummy', foo='bar'),
-                         ['unknown module name'])
+                         ['unknown module name: Dummy'])
 
     def test_command_status(self):
         self.assertEqual(self.stats.command_status(),
@@ -346,13 +346,20 @@ class TestStats(unittest.TestCase):
         
     def test_command_show(self):
         self.assertEqual(self.stats.command_show(owner='Foo', name=None),
-                         isc.config.create_answer(1, "item name is not specified"))
+                         isc.config.create_answer(
+                1, "specified arguments are incorrect: owner: Foo, name: None"))
         self.assertEqual(self.stats.command_show(owner='Foo', name='_bar_'),
                          isc.config.create_answer(
-                1, "specified module name and/or item name are incorrect"))
+                1, "specified arguments are incorrect: owner: Foo, name: _bar_"))
         self.assertEqual(self.stats.command_show(owner='Foo', name='bar'),
                          isc.config.create_answer(
-                1, "specified module name and/or item name are incorrect"))
+                1, "specified arguments are incorrect: owner: Foo, name: bar"))
+        self.assertEqual(self.stats.command_show(owner='Auth'),
+                         isc.config.create_answer(
+                0, {'queries.tcp': 0, 'queries.udp': 0}))
+        self.assertEqual(self.stats.command_show(owner='Auth', name='queries.udp'),
+                         isc.config.create_answer(
+                0, 0))
         orig_get_timestamp = stats.get_timestamp
         orig_get_datetime = stats.get_datetime
         stats.get_timestamp = lambda : 1308730448.965706
@@ -452,13 +459,42 @@ class TestStats(unittest.TestCase):
 
         self.assertEqual(self.stats.command_showschema(owner='Foo'),
                          isc.config.create_answer(
-                1, "specified module name and/or item name are incorrect"))
+                1, "specified arguments are incorrect: owner: Foo, name: None"))
         self.assertEqual(self.stats.command_showschema(owner='Foo', name='bar'),
                          isc.config.create_answer(
-                1, "specified module name and/or item name are incorrect"))
+                1, "specified arguments are incorrect: owner: Foo, name: bar"))
+        self.assertEqual(self.stats.command_showschema(owner='Auth'),
+                         isc.config.create_answer(
+                0, [{
+                        "item_default": 0,
+                        "item_description": "A number of total query counts which all auth servers receive over TCP since they started initially",
+                        "item_name": "queries.tcp",
+                        "item_optional": False,
+                        "item_title": "Queries TCP",
+                        "item_type": "integer"
+                        },
+                    {
+                        "item_default": 0,
+                        "item_description": "A number of total query counts which all auth servers receive over UDP since they started initially",
+                        "item_name": "queries.udp",
+                        "item_optional": False,
+                        "item_title": "Queries UDP",
+                        "item_type": "integer"
+                        }]))
+        self.assertEqual(self.stats.command_showschema(owner='Auth', name='queries.tcp'),
+                         isc.config.create_answer(
+                0, {
+                    "item_default": 0,
+                    "item_description": "A number of total query counts which all auth servers receive over TCP since they started initially",
+                    "item_name": "queries.tcp",
+                    "item_optional": False,
+                    "item_title": "Queries TCP",
+                    "item_type": "integer"
+                    }))
+
         self.assertEqual(self.stats.command_showschema(owner='Stats', name='bar'),
                          isc.config.create_answer(
-                1, "specified module name and/or item name are incorrect"))
+                1, "specified arguments are incorrect: owner: Stats, name: bar"))
         self.assertEqual(self.stats.command_showschema(name='bar'),
                          isc.config.create_answer(
                 1, "module name is not specified"))
@@ -487,8 +523,7 @@ class TestStats(unittest.TestCase):
                                                 data={ 'lname' : '_foo_@_bar_' }),
                          isc.config.create_answer(
                 1,
-                "specified module name and/or statistics data are incorrect:"
-                + " unknown item lname"))
+                "errors while setting statistics data: unknown item lname"))
         self.stats.statistics_data['Stats'] = {}
         self.stats.mccs.specification = isc.config.module_spec.ModuleSpec(
             { "module_name": self.stats.module_name } )
@@ -496,8 +531,7 @@ class TestStats(unittest.TestCase):
                                                 data={ 'lname' : '_foo_@_bar_' }),
                          isc.config.create_answer(
                 1,
-                "specified module name and/or statistics data are incorrect:"
-                + " No statistics specification"))
+                "errors while setting statistics data: No statistics specification"))
         self.stats.statistics_data['Stats'] = {}
         self.stats.mccs.specification = isc.config.module_spec.ModuleSpec(
             { "module_name": self.stats.module_name,
