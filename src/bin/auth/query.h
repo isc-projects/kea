@@ -26,7 +26,7 @@ class RRset;
 }
 
 namespace datasrc {
-class InMemoryClient;
+class DataSourceClient;
 }
 
 namespace auth {
@@ -36,10 +36,8 @@ namespace auth {
 ///
 /// Many of the design details for this class are still in flux.
 /// We'll revisit and update them as we add more functionality, for example:
-/// - memory_client parameter of the constructor.  It is a data source that
-///   uses in memory dedicated backend.
 /// - as a related point, we may have to pass the RR class of the query.
-///   in the initial implementation the RR class is an attribute of memory
+///   in the initial implementation the RR class is an attribute of
 ///   datasource and omitted.  It's not clear if this assumption holds with
 ///   generic data sources.  On the other hand, it will help keep
 ///   implementation simpler, and we might rather want to modify the design
@@ -51,7 +49,7 @@ namespace auth {
 ///   separate attribute setter.
 /// - likewise, we'll eventually need to do per zone access control, for which
 ///   we need querier's information such as its IP address.
-/// - memory_client and response may better be parameters to process() instead
+/// - datasrc_client and response may better be parameters to process() instead
 ///   of the constructor.
 ///
 /// <b>Note:</b> The class name is intentionally the same as the one used in
@@ -135,15 +133,15 @@ public:
     ///
     /// This constructor never throws an exception.
     ///
-    /// \param memory_client The memory datasource wherein the answer to the query is
+    /// \param datasrc_client The datasource wherein the answer to the query is
     /// to be found.
     /// \param qname The query name
     /// \param qtype The RR type of the query
     /// \param response The response message to store the answer to the query.
-    Query(const isc::datasrc::InMemoryClient& memory_client,
+    Query(const isc::datasrc::DataSourceClient& datasrc_client,
           const isc::dns::Name& qname, const isc::dns::RRType& qtype,
           isc::dns::Message& response) :
-        memory_client_(memory_client), qname_(qname), qtype_(qtype),
+        datasrc_client_(datasrc_client), qname_(qname), qtype_(qtype),
         response_(response)
     {}
 
@@ -157,7 +155,7 @@ public:
     /// successful search would result in adding a corresponding RRset to
     /// the answer section of the response.
     ///
-    /// If no matching zone is found in the memory datasource, the RCODE of
+    /// If no matching zone is found in the datasource, the RCODE of
     /// SERVFAIL will be set in the response.
     /// <b>Note:</b> this is different from the error code that BIND 9 returns
     /// by default when it's configured as an authoritative-only server (and
@@ -208,7 +206,7 @@ public:
     };
 
 private:
-    const isc::datasrc::InMemoryClient& memory_client_;
+    const isc::datasrc::DataSourceClient& datasrc_client_;
     const isc::dns::Name& qname_;
     const isc::dns::RRType& qtype_;
     isc::dns::Message& response_;
