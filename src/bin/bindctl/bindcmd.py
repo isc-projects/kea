@@ -398,8 +398,8 @@ class BindCmdInterpreter(Cmd):
                 print("Error: " + str(dte))
             except isc.cc.data.DataNotFoundError as dnfe:
                 print("Error: " + str(dnfe))
-            except isc.cc.data.DataAlreadyPresentError as dnfe:
-                print("Error: " + str(dnfe))
+            except isc.cc.data.DataAlreadyPresentError as dape:
+                print("Error: " + str(dape))
             except KeyError as ke:
                 print("Error: missing " + str(ke))
         else:
