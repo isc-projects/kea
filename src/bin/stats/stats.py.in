@@ -72,6 +72,7 @@ def parse_spec(spec):
     """
     parse spec type data
     """
+    if type(spec) is not list: return {}
     def _parse_spec(spec):
         item_type = spec['item_type']
         if item_type == "integer":

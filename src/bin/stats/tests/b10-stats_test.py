@@ -69,7 +69,7 @@ class TestUtilties(unittest.TestCase):
                 'test_list2' : [0,0,0],
                 'test_map2'  : { 'A' : 0, 'B' : 0, 'C' : 0 },
                 'test_none'  : None })
-        self.assertRaises(TypeError, stats.parse_spec, None)
+        self.assertEqual(stats.parse_spec(None), {})
         self.assertRaises(KeyError, stats.parse_spec, [{'item_name':'Foo'}])
 
     def test_get_timestamp(self):
