@@ -92,7 +92,7 @@ class ModuleSpec:
             return _validate_spec_list(data_def, full, data, errors)
         else:
             # no spec, always bad
-            if errors != None:
+            if errors is not None:
                 errors.append("No config_data specification")
             return False
 
@@ -130,11 +130,11 @@ class ModuleSpec:
            non-default values). Also it checks 'item_format' in case
            of time"""
         stat_spec = self.get_statistics_spec()
-        if stat_spec != None:
+        if stat_spec is not None:
             return _validate_spec_list(stat_spec, full, stat, errors)
         else:
             # no spec, always bad
-            if errors != None:
+            if errors is not None:
                 errors.append("No statistics specification")
             return False
 
@@ -341,27 +341,27 @@ def _validate_type(spec, value, errors):
        specification"""
     data_type = spec['item_type']
     if data_type == "integer" and type(value) != int:
-        if errors != None:
+        if errors is not None:
             errors.append(str(value) + " should be an integer")
         return False
     elif data_type == "real" and type(value) != float:
-        if errors != None:
+        if errors is not None:
             errors.append(str(value) + " should be a real")
         return False
     elif data_type == "boolean" and type(value) != bool:
-        if errors != None:
+        if errors is not None:
             errors.append(str(value) + " should be a boolean")
         return False
     elif data_type == "string" and type(value) != str:
-        if errors != None:
+        if errors is not None:
             errors.append(str(value) + " should be a string")
         return False
     elif data_type == "list" and type(value) != list:
-        if errors != None:
+        if errors is not None:
             errors.append(str(value) + " should be a list")
         return False
     elif data_type == "map" and type(value) != dict:
-        if errors != None:
+        if errors is not None:
             errors.append(str(value) + " should be a map")
         return False
     elif data_type == "named_set" and type(value) != dict:
@@ -377,7 +377,7 @@ def _validate_format(spec, value, errors):
     if "item_format" in spec:
         item_format = spec['item_format']
         if not _check_format(value, item_format):
-            if errors != None:
+            if errors is not None:
                 errors.append("format type of " + str(value)
                               + " should be " + item_format)
             return False
@@ -420,7 +420,7 @@ def _validate_spec(spec, full, data, errors):
     elif item_name in data:
         return _validate_item(spec, full, data[item_name], errors)
     elif full and not item_optional:
-        if errors != None:
+        if errors is not None:
             errors.append("non-optional item " + item_name + " missing")
         return False
     else:
@@ -445,7 +445,7 @@ def _validate_spec_list(module_spec, full, data, errors):
                 if spec_item["item_name"] == item_name:
                     found = True
             if not found and item_name != "version":
-                if errors != None:
+                if errors is not None:
                     errors.append("unknown item " + item_name)
                 validated = False
     return validated
