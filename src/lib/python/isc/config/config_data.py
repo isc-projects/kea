@@ -196,7 +196,6 @@ def spec_name_list(spec, prefix="", recurse=False):
         elif 'named_set_item_spec' in spec:
             # we added a '/' above, but in this one case we don't want it
             result.append(prefix[:-1])
-            pass
         else:
             for name in spec:
                 result.append(prefix + name + "/")
@@ -420,6 +419,12 @@ class MultiConfigData:
                 id_prefix += "/" + id_part
                 part_spec = find_spec_part(self._specifications[module].get_config_spec(), id_prefix)
                 if part_spec['item_type'] == 'named_set':
+                    # For named sets, the identifier is partly defined
+                    # by which values are actually present, and not
+                    # purely by the specification.
+                    # So if there is a part of the identifier left,
+                    # we need to look up the value, then see if that
+                    # contains the next part of the identifier we got
                     if len(id_parts) == 0:
                         if 'item_default' in part_spec:
                             return part_spec['item_default']

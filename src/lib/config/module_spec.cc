@@ -327,7 +327,8 @@ ModuleSpec::validateItem(ConstElementPtr spec, ConstElementPtr data,
         }
     }
     if (data->getType() == Element::map) {
-        // either a 'normal' map or a 'named' set
+        // either a normal 'map' or a 'named set' (determined by which
+        // subspecification it has)
         if (spec->contains("map_item_spec")) {
             if (!validateSpecList(spec->get("map_item_spec"), data, full, errors)) {
                 return (false);
