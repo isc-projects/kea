@@ -208,8 +208,7 @@ class Stats:
             (rcode, value) = isc.config.ccsession.parse_answer(answer)
             if rcode == 0:
                 for mod in value:
-                    spec = { "module_name" : mod,
-                             "statistics"  : [] }
+                    spec = { "module_name" : mod }
                     if value[mod] and type(value[mod]) is list:
                         spec["statistics"] = value[mod]
                     modules[mod] = isc.config.module_spec.ModuleSpec(spec)
