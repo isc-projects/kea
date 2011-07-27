@@ -183,34 +183,33 @@ private:
     //@}
 };
 
-/// \brief A data source that uses in memory dedicated backend.
+/// \brief A data source client that holds all necessary data in memory.
 ///
-/// The \c InMemoryClient class represents a data source and provides a
-/// basic interface to help DNS lookup processing. For a given domain
-/// name, its \c findZone() method searches the in memory dedicated backend
-/// for the zone that gives a longest match against that name.
+/// The \c InMemoryClient class provides an access to a conceptual data
+/// source that maintains all necessary data in a memory image, thereby
+/// allowing much faster lookups.  The in memory data is a copy of some
+/// real physical source - in the current implementation a list of zones
+/// are populated as a result of \c addZone() calls; zone data is given
+/// in a standard master file (but there's a plan to use database backends
+/// as a source of the in memory data).
 ///
-/// The in memory dedicated backend are assumed to be of the same RR class,
-/// but the \c InMemoryClient class does not enforce the assumption through
+/// Although every data source client is assumed to be of the same RR class,
+/// the \c InMemoryClient class does not enforce the assumption through
 /// its interface.
 /// For example, the \c addZone() method does not check if the new zone is of
-/// the same RR class as that of the others already in the dedicated backend.
+/// the same RR class as that of the others already in memory.
 /// It is caller's responsibility to ensure this assumption.
 ///
 /// <b>Notes to developer:</b>
-///
-/// For now, we don't make it a derived class of AbstractDataSrc because the
-/// interface is so different (we'll eventually consider this as part of the
-/// generalization work).
 ///
 /// The addZone() method takes a (Boost) shared pointer because it would be
 /// inconvenient to require the caller to maintain the ownership of zones,
 /// while it wouldn't be safe to delete unnecessary zones inside the dedicated
 /// backend.
 ///
-/// The findZone() method takes a domain name and returns the best matching \c
-/// MemoryZone in the form of (Boost) shared pointer, so that it can provide
-/// the general interface for all data sources.
+/// The findZone() method takes a domain name and returns the best matching 
+/// \c MemoryZoneFinder in the form of (Boost) shared pointer, so that it can
+/// provide the general interface for all data sources.
 class InMemoryClient : public DataSourceClient {
 public:
     ///
@@ -229,51 +228,37 @@ public:
     ~InMemoryClient();
     //@}
 
-    /// Return the number of zones stored in the data source.
+    /// Return the number of zones stored in the client.
     ///
     /// This method never throws an exception.
     ///
-    /// \return The number of zones stored in the data source.
+    /// \return The number of zones stored in the client.
     unsigned int getZoneCount() const;
 
-    /// Add a \c Zone to the \c InMemoryClient.
+    /// Add a zone (in the form of \c ZoneFinder) to the \c InMemoryClient.
     ///
-    /// \c Zone must not be associated with a NULL pointer; otherwise
+    /// \c zone must not be associated with a NULL pointer; otherwise
     /// an exception of class \c InvalidParameter will be thrown.
     /// If internal resource allocation fails, a corresponding standard
     /// exception will be thrown.
     /// This method never throws an exception otherwise.
     ///
-    /// \param zone A \c Zone object to be added.
+    /// \param zone A \c ZoneFinder object to be added.
     /// \return \c result::SUCCESS If the zone is successfully
-    /// added to the memory data source.
+    /// added to the client.
     /// \return \c result::EXIST The memory data source already
     /// stores a zone that has the same origin.
     result::Result addZone(ZoneFinderPtr zone);
 
-    /// Find a \c Zone that best matches the given name in the \c InMemoryClient.
+    /// Returns a \c ZoneFinder for a zone that best matches the given name.
     ///
-    /// It searches the internal storage for a \c Zone that gives the
-    /// longest match against \c name, and returns the result in the
-    /// form of a \c FindResult object as follows:
-    /// - \c code: The result code of the operation.
-    ///   - \c result::SUCCESS: A zone that gives an exact match
-    ///   is found
-    ///   - \c result::PARTIALMATCH: A zone whose origin is a
-    ///   super domain of \c name is found (but there is no exact match)
-    ///   - \c result::NOTFOUND: For all other cases.
-    /// - \c zone: A "Boost" shared pointer to the found \c Zone object if one
-    /// is found; otherwise \c NULL.
-    ///
-    /// This method never throws an exception.
-    ///
-    /// \param name A domain name for which the search is performed.
-    /// \return A \c FindResult object enclosing the search result (see above).
+    /// This derived version of the method never throws an exception.
+    /// For other details see \c DataSourceClient::findZone().
     virtual FindResult findZone(const isc::dns::Name& name) const;
 
 private:
     // TODO: Do we still need the PImpl if nobody should manipulate this class
-    // directly any more (it should be handled trough DataSourceClient)?
+    // directly any more (it should be handled through DataSourceClient)?
     class InMemoryClientImpl;
     InMemoryClientImpl* impl_;
 };

@@ -95,7 +95,7 @@ const char* const other_zone_rrs =
 // This is a mock Zone class for testing.
 // It is a derived class of ZoneFinder for the convenient of tests.
 // Its find() method emulates the common behavior of protocol compliant
-// zone classes, but simplifies some minor cases and also supports broken
+// ZoneFinder classes, but simplifies some minor cases and also supports broken
 // behavior.
 // For simplicity, most names are assumed to be "in zone"; there's only
 // one zone cut at the point of name "delegation.example.com".

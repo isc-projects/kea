@@ -81,8 +81,8 @@ private:
     /// This method may throw a exception because its underlying methods may
     /// throw exceptions.
     ///
-    /// \param zone The ZoneFinder wherein the additional data to the query is bo be
-    /// found.
+    /// \param zone The ZoneFinder through which the additional data for the
+    /// query is to be found.
     /// \param rrset The RRset (i.e., NS or MX rrset) which require additional
     /// processing.
     void getAdditional(const isc::datasrc::ZoneFinder& zone,
@@ -100,7 +100,8 @@ private:
     /// The glue records must exactly match the name in the NS RDATA, without
     /// CNAME or wildcard processing.
     ///
-    /// \param zone The \c ZoneFinder wherein the address records is to be found.
+    /// \param zone The \c ZoneFinder through which the address records is to
+    /// be found.
     /// \param qname The name in rrset RDATA.
     /// \param options The search options.
     void findAddrs(const isc::datasrc::ZoneFinder& zone,
@@ -108,10 +109,10 @@ private:
                    const isc::datasrc::ZoneFinder::FindOptions options
                    = isc::datasrc::ZoneFinder::FIND_DEFAULT) const;
 
-    /// \brief Look up \c ZoneFinder's NS and address records for the NS RDATA
-    /// (domain name) for authoritative answer.
+    /// \brief Look up a zone's NS RRset and their address records for an
+    /// authoritative answer.
     ///
-    /// On returning an authoritative answer, insert the \c ZoneFinder's NS into the
+    /// On returning an authoritative answer, insert a zone's NS into the
     /// authority section and AAAA/A RRs of each of the NS RDATA into the
     /// additional section.
     ///
@@ -124,8 +125,8 @@ private:
     /// include AAAA/A RRs under a zone cut in additional section. (BIND 9
     /// excludes under-cut RRs; NSD include them.)
     ///
-    /// \param zone The \c ZoneFinder wherein the additional data to the query is to
-    /// be found.
+    /// \param zone The \c ZoneFinder through which the NS and additional data
+    /// for the query are to be found.
     void getAuthAdditional(const isc::datasrc::ZoneFinder& zone) const;
 
 public:
