@@ -20,6 +20,7 @@
 #include <boost/noncopyable.hpp>
 
 #include <datasrc/zonetable.h>
+#include <datasrc/client.h>
 
 namespace isc {
 namespace dns {
@@ -210,44 +211,13 @@ private:
 /// The findZone() method takes a domain name and returns the best matching \c
 /// MemoryZone in the form of (Boost) shared pointer, so that it can provide
 /// the general interface for all data sources.
-class MemoryDataSrc {
+class MemoryDataSrc : public DataSourceClient {
 public:
-    /// \brief A helper structure to represent the search result of
-    /// <code>MemoryDataSrc::find()</code>.
-    ///
-    /// This is a straightforward pair of the result code and a share pointer
-    /// to the found zone to represent the result of \c find().
-    /// We use this in order to avoid overloading the return value for both
-    /// the result code ("success" or "not found") and the found object,
-    /// i.e., avoid using \c NULL to mean "not found", etc.
-    ///
-    /// This is a simple value class with no internal state, so for
-    /// convenience we allow the applications to refer to the members
-    /// directly.
-    ///
-    /// See the description of \c find() for the semantics of the member
-    /// variables.
-    struct FindResult {
-        FindResult(result::Result param_code,
-                   const ZoneFinderPtr param_zone_finder) :
-            code(param_code), zone_finder(param_zone_finder)
-        {}
-        const result::Result code;
-        const ZoneFinderPtr zone_finder;
-    };
-
     ///
     /// \name Constructors and Destructor.
     ///
-    /// \b Note:
-    /// The copy constructor and the assignment operator are intentionally
-    /// defined as private, making this class non copyable.
     //@{
-private:
-    MemoryDataSrc(const MemoryDataSrc& source);
-    MemoryDataSrc& operator=(const MemoryDataSrc& source);
 
-public:
     /// Default constructor.
     ///
     /// This constructor internally involves resource allocation, and if
@@ -288,20 +258,22 @@ public:
     /// form of a \c FindResult object as follows:
     /// - \c code: The result code of the operation.
     ///   - \c result::SUCCESS: A zone that gives an exact match
-    //    is found
+    ///   is found
     ///   - \c result::PARTIALMATCH: A zone whose origin is a
-    //    super domain of \c name is found (but there is no exact match)
+    ///   super domain of \c name is found (but there is no exact match)
     ///   - \c result::NOTFOUND: For all other cases.
     /// - \c zone: A "Boost" shared pointer to the found \c Zone object if one
-    //  is found; otherwise \c NULL.
+    /// is found; otherwise \c NULL.
     ///
     /// This method never throws an exception.
     ///
     /// \param name A domain name for which the search is performed.
     /// \return A \c FindResult object enclosing the search result (see above).
-    FindResult findZone(const isc::dns::Name& name) const;
+    virtual FindResult findZone(const isc::dns::Name& name) const;
 
 private:
+    // TODO: Do we still need the PImpl if nobody should manipulate this class
+    // directly any more (it should be handled trough DataSourceClient)?
     class MemoryDataSrcImpl;
     MemoryDataSrcImpl* impl_;
 };
