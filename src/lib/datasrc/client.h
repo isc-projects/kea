@@ -15,6 +15,8 @@
 #ifndef __DATA_SOURCE_CLIENT_H
 #define __DATA_SOURCE_CLIENT_H 1
 
+#include <datasrc/zone.h>
+
 namespace isc {
 namespace datasrc {
 
@@ -28,6 +30,9 @@ namespace datasrc {
 /// we'll give them more concise names such as InMemoryClient.
 ///
 /// This class is not copyable.
+///
+/// \todo This class is not complete. It needs more factory methods, for
+///     accessing the whole zone, updating it, loading it, etc.
 class DataSourceClient : boost::noncopyable {
 public:
     /// \brief A helper structure to represent the search result of
@@ -78,12 +83,12 @@ public:
     /// form of a \c FindResult object as follows:
     /// - \c code: The result code of the operation.
     ///   - \c result::SUCCESS: A zone that gives an exact match
-    //    is found
+    ///   is found
     ///   - \c result::PARTIALMATCH: A zone whose origin is a
-    //    super domain of \c name is found (but there is no exact match)
+    ///   super domain of \c name is found (but there is no exact match)
     ///   - \c result::NOTFOUND: For all other cases.
     /// - \c zone: Pointer to the found \c ZoneFinder object if one
-    //    is found; otherwise \c NULL.
+    ///   is found; otherwise \c NULL.
     ///
     /// This method never throws an exception.
     ///
