@@ -124,6 +124,11 @@ class FakeCreator:
 class ParserTests(unittest.TestCase):
     """
     Testcases for the Parser class.
+
+    A lot of these test could be done by
+    `with self.assertRaises(CreatorError) as cm`. But some versions of python
+    take the scope wrong and don't work, so we use the primitive way of
+    try-except.
     """
     def __terminate(self):
         creator = FakeCreator([('s', b'T'), ('r', b'')])
@@ -139,6 +144,17 @@ class ParserTests(unittest.TestCase):
         """
         self.__terminate()
 
+    def __terminate_raises(self, parser):
+        """
+        Check that terminate() raises a fatal exception.
+        """
+        try:
+            parser.terminate()
+            self.fail("Not raised")
+        except CreatorError as ce:
+            self.assertTrue(ce.fatal)
+            self.assertEqual(None, ce.errno)
+
     def test_terminate_error1(self):
         """
         Test it reports an exception when there's error terminating the creator.
@@ -146,10 +162,7 @@ class ParserTests(unittest.TestCase):
         """
         creator = FakeCreator([('s', b'T'), ('e', None)])
         parser = Parser(creator)
-        with self.assertRaises(CreatorError) as cm:
-            parser.terminate()
-        self.assertTrue(cm.exception.fatal)
-        self.assertEqual(None, cm.exception.errno)
+        self.__terminate_raises(parser)
 
     def test_terminate_error2(self):
         """
@@ -158,20 +171,7 @@ class ParserTests(unittest.TestCase):
         """
         creator = FakeCreator([('e', None)])
         parser = Parser(creator)
-        with self.assertRaises(CreatorError) as cm:
-            parser.terminate()
-        self.assertTrue(cm.exception.fatal)
-        self.assertEqual(None, cm.exception.errno)
-
-    def test_terminate_twice(self):
-        """
-        Test we can't terminate twice.
-        """
-        parser = self.__terminate()
-        with self.assertRaises(CreatorError) as cm:
-            parser.terminate()
-        self.assertTrue(cm.exception.fatal)
-        self.assertEqual(None, cm.exception.errno)
+        self.__terminate_raises(parser)
 
     def test_terminate_error3(self):
         """
@@ -180,10 +180,14 @@ class ParserTests(unittest.TestCase):
         """
         creator = FakeCreator([('s', b'T'), ('r', b'Extra data')])
         parser = Parser(creator)
-        with self.assertRaises(CreatorError) as cm:
-            parser.terminate()
-        self.assertTrue(cm.exception.fatal)
-        self.assertEqual(None, cm.exception.errno)
+        self.__terminate_raises(parser)
+
+    def test_terminate_twice(self):
+        """
+        Test we can't terminate twice.
+        """
+        parser = self.__terminate()
+        self.__terminate_raises(parser)
 
     def test_crash(self):
         """
@@ -192,12 +196,14 @@ class ParserTests(unittest.TestCase):
         """
         creator = FakeCreator([('s', b'SU4\0\0\0\0\0\0'), ('r', b'')])
         parser = Parser(creator)
-        with self.assertRaises(CreatorError) as cm:
+        try:
             parser.get_socket(IPAddr('0.0.0.0'), 0, 'UDP')
-        self.assertTrue(creator.all_used())
-        # Is the exception correct?
-        self.assertTrue(cm.exception.fatal)
-        self.assertEqual(None, cm.exception.errno)
+            self.fail("Not raised")
+        except CreatorError as ce:
+            self.assertTrue(creator.all_used())
+            # Is the exception correct?
+            self.assertTrue(ce.fatal)
+            self.assertEqual(None, ce.errno)
 
     def test_error(self):
         """
@@ -210,20 +216,24 @@ class ParserTests(unittest.TestCase):
         creator = FakeCreator([('s', b'SU4\0\0\0\0\0\0'), ('r', b'ES' +
             intpart[:1]), ('r', intpart[1:])])
         parser = Parser(creator)
-        with self.assertRaises(CreatorError) as cm:
+        try:
             parser.get_socket(IPAddr('0.0.0.0'), 0, 'UDP')
-        self.assertTrue(creator.all_used())
-        # Is the exception correct?
-        self.assertFalse(cm.exception.fatal)
-        self.assertEqual(42, cm.exception.errno)
+            self.fail("Not raised")
+        except CreatorError as ce:
+            self.assertTrue(creator.all_used())
+            # Is the exception correct?
+            self.assertFalse(ce.fatal)
+            self.assertEqual(42, ce.errno)
 
     def __error(self, plan):
         creator = FakeCreator(plan)
         parser = Parser(creator)
-        with self.assertRaises(CreatorError) as cm:
+        try:
             parser.get_socket(IPAddr('0.0.0.0'), 0, socket.SOCK_DGRAM)
-        self.assertTrue(creator.all_used())
-        self.assertTrue(cm.exception.fatal)
+            self.fail("Not raised")
+        except CreatorError as ce:
+            self.assertTrue(creator.all_used())
+            self.assertTrue(ce.fatal)
 
     def test_error_send(self):
         self.__error([('e', None)])
@@ -251,10 +261,12 @@ class ParserTests(unittest.TestCase):
         Test we can't request sockets after it was terminated.
         """
         parser = self.__terminate()
-        with self.assertRaises(CreatorError) as cm:
+        try:
             parser.get_socket(IPAddr('0.0.0.0'), 0, 'UDP')
-        self.assertTrue(cm.exception.fatal)
-        self.assertEqual(None, cm.exception.errno)
+            self.fail("Not raised")
+        except CreatorError as ce:
+            self.assertTrue(ce.fatal)
+            self.assertEqual(None, ce.errno)
 
     def test_invalid_socktype(self):
         """
