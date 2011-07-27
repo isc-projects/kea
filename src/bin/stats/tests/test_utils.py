@@ -182,7 +182,7 @@ class MockAuth:
         "item_type": "integer",
         "item_optional": false,
         "item_default": 0,
-        "item_title": "Queries TCP ",
+        "item_title": "Queries TCP",
         "item_description": "A number of total query counts which all auth servers receive over TCP since they started initially"
       },
       {
