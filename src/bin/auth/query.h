@@ -26,7 +26,7 @@ class RRset;
 }
 
 namespace datasrc {
-class MemoryDataSrc;
+class InMemoryClient;
 }
 
 namespace auth {
@@ -36,7 +36,7 @@ namespace auth {
 ///
 /// Many of the design details for this class are still in flux.
 /// We'll revisit and update them as we add more functionality, for example:
-/// - memory_datasrc parameter of the constructor.  It is a data source that
+/// - memory_client parameter of the constructor.  It is a data source that
 ///   uses in memory dedicated backend.
 /// - as a related point, we may have to pass the RR class of the query.
 ///   in the initial implementation the RR class is an attribute of memory
@@ -51,7 +51,7 @@ namespace auth {
 ///   separate attribute setter.
 /// - likewise, we'll eventually need to do per zone access control, for which
 ///   we need querier's information such as its IP address.
-/// - memory_datasrc and response may better be parameters to process() instead
+/// - memory_client and response may better be parameters to process() instead
 ///   of the constructor.
 ///
 /// <b>Note:</b> The class name is intentionally the same as the one used in
@@ -135,15 +135,15 @@ public:
     ///
     /// This constructor never throws an exception.
     ///
-    /// \param memory_datasrc The memory datasource wherein the answer to the query is
+    /// \param memory_client The memory datasource wherein the answer to the query is
     /// to be found.
     /// \param qname The query name
     /// \param qtype The RR type of the query
     /// \param response The response message to store the answer to the query.
-    Query(const isc::datasrc::MemoryDataSrc& memory_datasrc,
+    Query(const isc::datasrc::InMemoryClient& memory_client,
           const isc::dns::Name& qname, const isc::dns::RRType& qtype,
           isc::dns::Message& response) :
-        memory_datasrc_(memory_datasrc), qname_(qname), qtype_(qtype),
+        memory_client_(memory_client), qname_(qname), qtype_(qtype),
         response_(response)
     {}
 
@@ -208,7 +208,7 @@ public:
     };
 
 private:
-    const isc::datasrc::MemoryDataSrc& memory_datasrc_;
+    const isc::datasrc::InMemoryClient& memory_client_;
     const isc::dns::Name& qname_;
     const isc::dns::RRType& qtype_;
     isc::dns::Message& response_;

@@ -234,10 +234,10 @@ protected:
         response.setOpcode(Opcode::QUERY());
         // create and add a matching zone.
         mock_finder = new MockZoneFinder();
-        memory_datasrc.addZone(ZoneFinderPtr(mock_finder));
+        memory_client.addZone(ZoneFinderPtr(mock_finder));
     }
     MockZoneFinder* mock_finder;
-    MemoryDataSrc memory_datasrc;
+    InMemoryClient memory_client;
     const Name qname;
     const RRClass qclass;
     const RRType qtype;
@@ -286,14 +286,14 @@ responseCheck(Message& response, const isc::dns::Rcode& rcode,
 TEST_F(QueryTest, noZone) {
     // There's no zone in the memory datasource.  So the response should have
     // REFUSED.
-    MemoryDataSrc empty_memory_datasrc;
-    Query nozone_query(empty_memory_datasrc, qname, qtype, response);
+    InMemoryClient empty_memory_client;
+    Query nozone_query(empty_memory_client, qname, qtype, response);
     EXPECT_NO_THROW(nozone_query.process());
     EXPECT_EQ(Rcode::REFUSED(), response.getRcode());
 }
 
 TEST_F(QueryTest, exactMatch) {
-    Query query(memory_datasrc, qname, qtype, response);
+    Query query(memory_client, qname, qtype, response);
     EXPECT_NO_THROW(query.process());
     // find match rrset
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
@@ -303,7 +303,7 @@ TEST_F(QueryTest, exactMatch) {
 TEST_F(QueryTest, exactAddrMatch) {
     // find match rrset, omit additional data which has already been provided
     // in the answer section from the additional.
-    EXPECT_NO_THROW(Query(memory_datasrc, Name("noglue.example.com"), qtype,
+    EXPECT_NO_THROW(Query(memory_client, Name("noglue.example.com"), qtype,
                           response).process());
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 2,
@@ -315,7 +315,7 @@ TEST_F(QueryTest, exactAddrMatch) {
 TEST_F(QueryTest, apexNSMatch) {
     // find match rrset, omit authority data which has already been provided
     // in the answer section from the authority section.
-    EXPECT_NO_THROW(Query(memory_datasrc, Name("example.com"), RRType::NS(),
+    EXPECT_NO_THROW(Query(memory_client, Name("example.com"), RRType::NS(),
                           response).process());
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 3, 0, 3,
@@ -326,7 +326,7 @@ TEST_F(QueryTest, apexNSMatch) {
 TEST_F(QueryTest, exactAnyMatch) {
     // find match rrset, omit additional data which has already been provided
     // in the answer section from the additional.
-    EXPECT_NO_THROW(Query(memory_datasrc, Name("noglue.example.com"),
+    EXPECT_NO_THROW(Query(memory_client, Name("noglue.example.com"),
                           RRType::ANY(), response).process());
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 2,
@@ -339,7 +339,7 @@ TEST_F(QueryTest, exactAnyMatch) {
 TEST_F(QueryTest, apexAnyMatch) {
     // find match rrset, omit additional data which has already been provided
     // in the answer section from the additional.
-    EXPECT_NO_THROW(Query(memory_datasrc, Name("example.com"),
+    EXPECT_NO_THROW(Query(memory_client, Name("example.com"),
                           RRType::ANY(), response).process());
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 4, 0, 3,
                   "example.com. 3600 IN SOA . . 0 0 0 0 0\n"
@@ -350,7 +350,7 @@ TEST_F(QueryTest, apexAnyMatch) {
 }
 
 TEST_F(QueryTest, mxANYMatch) {
-    EXPECT_NO_THROW(Query(memory_datasrc, Name("mx.example.com"),
+    EXPECT_NO_THROW(Query(memory_client, Name("mx.example.com"),
                           RRType::ANY(), response).process());
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 3, 3, 4,
                   mx_txt, zone_ns_txt,
@@ -358,14 +358,14 @@ TEST_F(QueryTest, mxANYMatch) {
 }
 
 TEST_F(QueryTest, glueANYMatch) {
-    EXPECT_NO_THROW(Query(memory_datasrc, Name("delegation.example.com"),
+    EXPECT_NO_THROW(Query(memory_client, Name("delegation.example.com"),
                           RRType::ANY(), response).process());
     responseCheck(response, Rcode::NOERROR(), 0, 0, 4, 3,
                   NULL, delegation_txt, ns_addrs_txt);
 }
 
 TEST_F(QueryTest, nodomainANY) {
-    EXPECT_NO_THROW(Query(memory_datasrc, Name("nxdomain.example.com"),
+    EXPECT_NO_THROW(Query(memory_client, Name("nxdomain.example.com"),
                           RRType::ANY(), response).process());
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 1, 0,
                   NULL, soa_txt, NULL, mock_finder->getOrigin());
@@ -378,13 +378,13 @@ TEST_F(QueryTest, noApexNS) {
     // Disable apex NS record
     mock_finder->setApexNSFlag(false);
 
-    EXPECT_THROW(Query(memory_datasrc, Name("noglue.example.com"), qtype,
+    EXPECT_THROW(Query(memory_client, Name("noglue.example.com"), qtype,
                        response).process(), Query::NoApexNS);
     // We don't look into the response, as it threw
 }
 
 TEST_F(QueryTest, delegation) {
-    EXPECT_NO_THROW(Query(memory_datasrc, Name("delegation.example.com"),
+    EXPECT_NO_THROW(Query(memory_client, Name("delegation.example.com"),
                           qtype, response).process());
 
     responseCheck(response, Rcode::NOERROR(), 0, 0, 4, 3,
@@ -392,14 +392,14 @@ TEST_F(QueryTest, delegation) {
 }
 
 TEST_F(QueryTest, nxdomain) {
-    EXPECT_NO_THROW(Query(memory_datasrc, Name("nxdomain.example.com"), qtype,
+    EXPECT_NO_THROW(Query(memory_client, Name("nxdomain.example.com"), qtype,
                           response).process());
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 1, 0,
                   NULL, soa_txt, NULL, mock_finder->getOrigin());
 }
 
 TEST_F(QueryTest, nxrrset) {
-    EXPECT_NO_THROW(Query(memory_datasrc, Name("www.example.com"),
+    EXPECT_NO_THROW(Query(memory_client, Name("www.example.com"),
                           RRType::TXT(), response).process());
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 1, 0,
@@ -415,19 +415,19 @@ TEST_F(QueryTest, noSOA) {
     mock_finder->setSOAFlag(false);
 
     // The NX Domain
-    EXPECT_THROW(Query(memory_datasrc, Name("nxdomain.example.com"),
+    EXPECT_THROW(Query(memory_client, Name("nxdomain.example.com"),
                        qtype, response).process(), Query::NoSOA);
     // Of course, we don't look into the response, as it throwed
 
     // NXRRSET
-    EXPECT_THROW(Query(memory_datasrc, Name("nxrrset.example.com"),
+    EXPECT_THROW(Query(memory_client, Name("nxrrset.example.com"),
                        qtype, response).process(), Query::NoSOA);
 }
 
 TEST_F(QueryTest, noMatchZone) {
     // there's a zone in the memory datasource but it doesn't match the qname.
     // should result in REFUSED.
-    Query(memory_datasrc, Name("example.org"), qtype, response).process();
+    Query(memory_client, Name("example.org"), qtype, response).process();
     EXPECT_EQ(Rcode::REFUSED(), response.getRcode());
 }
 
@@ -438,7 +438,7 @@ TEST_F(QueryTest, noMatchZone) {
  * A record, other to unknown out of zone one.
  */
 TEST_F(QueryTest, MX) {
-    Query(memory_datasrc, Name("mx.example.com"), RRType::MX(),
+    Query(memory_client, Name("mx.example.com"), RRType::MX(),
           response).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 3, 3, 4,
@@ -452,7 +452,7 @@ TEST_F(QueryTest, MX) {
  * This should not trigger the additional processing for the exchange.
  */
 TEST_F(QueryTest, MXAlias) {
-    Query(memory_datasrc, Name("cnamemx.example.com"), RRType::MX(),
+    Query(memory_client, Name("cnamemx.example.com"), RRType::MX(),
           response).process();
 
     // there shouldn't be no additional RRs for the exchanges (we have 3
@@ -472,7 +472,7 @@ TEST_F(QueryTest, MXAlias) {
  * returned.
  */
 TEST_F(QueryTest, CNAME) {
-    Query(memory_datasrc, Name("cname.example.com"), RRType::A(),
+    Query(memory_client, Name("cname.example.com"), RRType::A(),
         response).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 0, 0,
@@ -482,7 +482,7 @@ TEST_F(QueryTest, CNAME) {
 TEST_F(QueryTest, explicitCNAME) {
     // same owner name as the CNAME test but explicitly query for CNAME RR.
     // expect the same response as we don't provide a full chain yet.
-    Query(memory_datasrc, Name("cname.example.com"), RRType::CNAME(),
+    Query(memory_client, Name("cname.example.com"), RRType::CNAME(),
         response).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
@@ -494,7 +494,7 @@ TEST_F(QueryTest, CNAME_NX_RRSET) {
     // note: with chaining, what should be expected is not trivial:
     // BIND 9 returns the CNAME in answer and SOA in authority, no additional.
     // NSD returns the CNAME, NS in authority, A/AAAA for NS in additional.
-    Query(memory_datasrc, Name("cname.example.com"), RRType::TXT(),
+    Query(memory_client, Name("cname.example.com"), RRType::TXT(),
         response).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 0, 0,
@@ -503,7 +503,7 @@ TEST_F(QueryTest, CNAME_NX_RRSET) {
 
 TEST_F(QueryTest, explicitCNAME_NX_RRSET) {
     // same owner name as the NXRRSET test but explicitly query for CNAME RR.
-    Query(memory_datasrc, Name("cname.example.com"), RRType::CNAME(),
+    Query(memory_client, Name("cname.example.com"), RRType::CNAME(),
         response).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
@@ -517,7 +517,7 @@ TEST_F(QueryTest, CNAME_NX_DOMAIN) {
     // RCODE being NXDOMAIN.
     // NSD returns the CNAME, NS in authority, A/AAAA for NS in additional,
     // RCODE being NOERROR.
-    Query(memory_datasrc, Name("cnamenxdom.example.com"), RRType::A(),
+    Query(memory_client, Name("cnamenxdom.example.com"), RRType::A(),
         response).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 0, 0,
@@ -526,7 +526,7 @@ TEST_F(QueryTest, CNAME_NX_DOMAIN) {
 
 TEST_F(QueryTest, explicitCNAME_NX_DOMAIN) {
     // same owner name as the NXDOMAIN test but explicitly query for CNAME RR.
-    Query(memory_datasrc, Name("cnamenxdom.example.com"), RRType::CNAME(),
+    Query(memory_client, Name("cnamenxdom.example.com"), RRType::CNAME(),
         response).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
@@ -542,7 +542,7 @@ TEST_F(QueryTest, CNAME_OUT) {
      * Then the same test should be done with .org included there and
      * see what it does (depends on what we want to do)
      */
-    Query(memory_datasrc, Name("cnameout.example.com"), RRType::A(),
+    Query(memory_client, Name("cnameout.example.com"), RRType::A(),
         response).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 0, 0,
@@ -551,7 +551,7 @@ TEST_F(QueryTest, CNAME_OUT) {
 
 TEST_F(QueryTest, explicitCNAME_OUT) {
     // same owner name as the OUT test but explicitly query for CNAME RR.
-    Query(memory_datasrc, Name("cnameout.example.com"), RRType::CNAME(),
+    Query(memory_client, Name("cnameout.example.com"), RRType::CNAME(),
         response).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
@@ -567,7 +567,7 @@ TEST_F(QueryTest, explicitCNAME_OUT) {
  * pointing to NXRRSET and NXDOMAIN cases (similarly as with CNAME).
  */
 TEST_F(QueryTest, DNAME) {
-    Query(memory_datasrc, Name("www.dname.example.com"), RRType::A(),
+    Query(memory_client, Name("www.dname.example.com"), RRType::A(),
         response).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 0, 0,
@@ -583,7 +583,7 @@ TEST_F(QueryTest, DNAME) {
  * DNAME.
  */
 TEST_F(QueryTest, DNAME_ANY) {
-    Query(memory_datasrc, Name("www.dname.example.com"), RRType::ANY(),
+    Query(memory_client, Name("www.dname.example.com"), RRType::ANY(),
         response).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 0, 0,
@@ -592,7 +592,7 @@ TEST_F(QueryTest, DNAME_ANY) {
 
 // Test when we ask for DNAME explicitly, it does no synthetizing.
 TEST_F(QueryTest, explicitDNAME) {
-    Query(memory_datasrc, Name("dname.example.com"), RRType::DNAME(),
+    Query(memory_client, Name("dname.example.com"), RRType::DNAME(),
         response).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
@@ -604,7 +604,7 @@ TEST_F(QueryTest, explicitDNAME) {
  * the CNAME, it should return the RRset.
  */
 TEST_F(QueryTest, DNAME_A) {
-    Query(memory_datasrc, Name("dname.example.com"), RRType::A(),
+    Query(memory_client, Name("dname.example.com"), RRType::A(),
         response).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
@@ -616,7 +616,7 @@ TEST_F(QueryTest, DNAME_A) {
  * It should not synthetize the CNAME.
  */
 TEST_F(QueryTest, DNAME_NX_RRSET) {
-    EXPECT_NO_THROW(Query(memory_datasrc, Name("dname.example.com"),
+    EXPECT_NO_THROW(Query(memory_client, Name("dname.example.com"),
         RRType::TXT(), response).process());
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 1, 0,
@@ -636,7 +636,7 @@ TEST_F(QueryTest, LongDNAME) {
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
         "dname.example.com.");
-    EXPECT_NO_THROW(Query(memory_datasrc, longname, RRType::A(),
+    EXPECT_NO_THROW(Query(memory_client, longname, RRType::A(),
         response).process());
 
     responseCheck(response, Rcode::YXDOMAIN(), AA_FLAG, 1, 0, 0,
@@ -655,7 +655,7 @@ TEST_F(QueryTest, MaxLenDNAME) {
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
         "dname.example.com.");
-    EXPECT_NO_THROW(Query(memory_datasrc, longname, RRType::A(),
+    EXPECT_NO_THROW(Query(memory_client, longname, RRType::A(),
         response).process());
 
     // Check the answer is OK
