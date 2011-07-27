@@ -42,116 +42,116 @@ namespace {
 using result::SUCCESS;
 using result::EXIST;
 
-class MemoryDataSrcTest : public ::testing::Test {
+class InMemoryClientTest : public ::testing::Test {
 protected:
-    MemoryDataSrcTest() : rrclass(RRClass::IN())
+    InMemoryClientTest() : rrclass(RRClass::IN())
     {}
     RRClass rrclass;
-    MemoryDataSrc memory_datasrc;
+    InMemoryClient memory_client;
 };
 
-TEST_F(MemoryDataSrcTest, add_find_Zone) {
+TEST_F(InMemoryClientTest, add_find_Zone) {
     // test add zone
     // Bogus zone (NULL)
-    EXPECT_THROW(memory_datasrc.addZone(ZoneFinderPtr()),
+    EXPECT_THROW(memory_client.addZone(ZoneFinderPtr()),
                  isc::InvalidParameter);
 
     // add zones with different names one by one
-    EXPECT_EQ(result::SUCCESS, memory_datasrc.addZone(
+    EXPECT_EQ(result::SUCCESS, memory_client.addZone(
                   ZoneFinderPtr(new MemoryZoneFinder(RRClass::IN(),
                                                      Name("a")))));
-    EXPECT_EQ(result::SUCCESS, memory_datasrc.addZone(
+    EXPECT_EQ(result::SUCCESS, memory_client.addZone(
                   ZoneFinderPtr(new MemoryZoneFinder(RRClass::CH(), Name("b")))));
-    EXPECT_EQ(result::SUCCESS, memory_datasrc.addZone(
+    EXPECT_EQ(result::SUCCESS, memory_client.addZone(
                   ZoneFinderPtr(new MemoryZoneFinder(RRClass::IN(), Name("c")))));
     // add zones with the same name suffix
-    EXPECT_EQ(result::SUCCESS, memory_datasrc.addZone(
+    EXPECT_EQ(result::SUCCESS, memory_client.addZone(
                   ZoneFinderPtr(new MemoryZoneFinder(RRClass::CH(),
                                          Name("x.d.e.f")))));
-    EXPECT_EQ(result::SUCCESS, memory_datasrc.addZone(
+    EXPECT_EQ(result::SUCCESS, memory_client.addZone(
                   ZoneFinderPtr(new MemoryZoneFinder(RRClass::CH(),
                                          Name("o.w.y.d.e.f")))));
-    EXPECT_EQ(result::SUCCESS, memory_datasrc.addZone(
+    EXPECT_EQ(result::SUCCESS, memory_client.addZone(
                   ZoneFinderPtr(new MemoryZoneFinder(RRClass::CH(),
                                          Name("p.w.y.d.e.f")))));
-    EXPECT_EQ(result::SUCCESS, memory_datasrc.addZone(
+    EXPECT_EQ(result::SUCCESS, memory_client.addZone(
                   ZoneFinderPtr(new MemoryZoneFinder(RRClass::IN(),
                                          Name("q.w.y.d.e.f")))));
     // add super zone and its subzone
-    EXPECT_EQ(result::SUCCESS, memory_datasrc.addZone(
+    EXPECT_EQ(result::SUCCESS, memory_client.addZone(
                   ZoneFinderPtr(new MemoryZoneFinder(RRClass::CH(),
                                                      Name("g.h")))));
-    EXPECT_EQ(result::SUCCESS, memory_datasrc.addZone(
+    EXPECT_EQ(result::SUCCESS, memory_client.addZone(
                   ZoneFinderPtr(new MemoryZoneFinder(RRClass::IN(),
                                                Name("i.g.h")))));
-    EXPECT_EQ(result::SUCCESS, memory_datasrc.addZone(
+    EXPECT_EQ(result::SUCCESS, memory_client.addZone(
                   ZoneFinderPtr(new MemoryZoneFinder(RRClass::IN(),
                                          Name("z.d.e.f")))));
-    EXPECT_EQ(result::SUCCESS, memory_datasrc.addZone(
+    EXPECT_EQ(result::SUCCESS, memory_client.addZone(
                   ZoneFinderPtr(new MemoryZoneFinder(RRClass::IN(),
                                          Name("j.z.d.e.f")))));
 
     // different zone class isn't allowed.
-    EXPECT_EQ(result::EXIST, memory_datasrc.addZone(
+    EXPECT_EQ(result::EXIST, memory_client.addZone(
                   ZoneFinderPtr(new MemoryZoneFinder(RRClass::CH(),
                                          Name("q.w.y.d.e.f")))));
 
     // names are compared in a case insensitive manner.
-    EXPECT_EQ(result::EXIST, memory_datasrc.addZone(
+    EXPECT_EQ(result::EXIST, memory_client.addZone(
                   ZoneFinderPtr(new MemoryZoneFinder(RRClass::IN(),
                                          Name("Q.W.Y.d.E.f")))));
 
     // test find zone
-    EXPECT_EQ(result::SUCCESS, memory_datasrc.findZone(Name("a")).code);
+    EXPECT_EQ(result::SUCCESS, memory_client.findZone(Name("a")).code);
     EXPECT_EQ(Name("a"),
-              memory_datasrc.findZone(Name("a")).zone_finder->getOrigin());
+              memory_client.findZone(Name("a")).zone_finder->getOrigin());
 
     EXPECT_EQ(result::SUCCESS,
-              memory_datasrc.findZone(Name("j.z.d.e.f")).code);
+              memory_client.findZone(Name("j.z.d.e.f")).code);
     EXPECT_EQ(Name("j.z.d.e.f"),
-              memory_datasrc.findZone(Name("j.z.d.e.f")).zone_finder->getOrigin());
+              memory_client.findZone(Name("j.z.d.e.f")).zone_finder->getOrigin());
 
     // NOTFOUND
-    EXPECT_EQ(result::NOTFOUND, memory_datasrc.findZone(Name("d.e.f")).code);
+    EXPECT_EQ(result::NOTFOUND, memory_client.findZone(Name("d.e.f")).code);
     EXPECT_EQ(ConstZoneFinderPtr(),
-              memory_datasrc.findZone(Name("d.e.f")).zone_finder);
+              memory_client.findZone(Name("d.e.f")).zone_finder);
 
     EXPECT_EQ(result::NOTFOUND,
-              memory_datasrc.findZone(Name("w.y.d.e.f")).code);
+              memory_client.findZone(Name("w.y.d.e.f")).code);
     EXPECT_EQ(ConstZoneFinderPtr(),
-              memory_datasrc.findZone(Name("w.y.d.e.f")).zone_finder);
+              memory_client.findZone(Name("w.y.d.e.f")).zone_finder);
 
     // there's no exact match.  the result should be the longest match,
     // and the code should be PARTIALMATCH.
     EXPECT_EQ(result::PARTIALMATCH,
-              memory_datasrc.findZone(Name("j.g.h")).code);
+              memory_client.findZone(Name("j.g.h")).code);
     EXPECT_EQ(Name("g.h"),
-              memory_datasrc.findZone(Name("g.h")).zone_finder->getOrigin());
+              memory_client.findZone(Name("g.h")).zone_finder->getOrigin());
 
     EXPECT_EQ(result::PARTIALMATCH,
-              memory_datasrc.findZone(Name("z.i.g.h")).code);
+              memory_client.findZone(Name("z.i.g.h")).code);
     EXPECT_EQ(Name("i.g.h"),
-              memory_datasrc.findZone(Name("z.i.g.h")).zone_finder->getOrigin());
+              memory_client.findZone(Name("z.i.g.h")).zone_finder->getOrigin());
 }
 
-TEST_F(MemoryDataSrcTest, getZoneCount) {
-    EXPECT_EQ(0, memory_datasrc.getZoneCount());
-    memory_datasrc.addZone(
+TEST_F(InMemoryClientTest, getZoneCount) {
+    EXPECT_EQ(0, memory_client.getZoneCount());
+    memory_client.addZone(
                   ZoneFinderPtr(new MemoryZoneFinder(rrclass,
                                                      Name("example.com"))));
-    EXPECT_EQ(1, memory_datasrc.getZoneCount());
+    EXPECT_EQ(1, memory_client.getZoneCount());
 
     // duplicate add.  counter shouldn't change
-    memory_datasrc.addZone(
+    memory_client.addZone(
                   ZoneFinderPtr(new MemoryZoneFinder(rrclass,
                                                      Name("example.com"))));
-    EXPECT_EQ(1, memory_datasrc.getZoneCount());
+    EXPECT_EQ(1, memory_client.getZoneCount());
 
     // add one more
-    memory_datasrc.addZone(
+    memory_client.addZone(
                   ZoneFinderPtr(new MemoryZoneFinder(rrclass,
                                                      Name("example.org"))));
-    EXPECT_EQ(2, memory_datasrc.getZoneCount());
+    EXPECT_EQ(2, memory_client.getZoneCount());
 }
 
 // A helper callback of masterLoad() used in MemoryZoneFinderTest.

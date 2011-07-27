@@ -185,13 +185,13 @@ private:
 
 /// \brief A data source that uses in memory dedicated backend.
 ///
-/// The \c MemoryDataSrc class represents a data source and provides a
+/// The \c InMemoryClient class represents a data source and provides a
 /// basic interface to help DNS lookup processing. For a given domain
 /// name, its \c findZone() method searches the in memory dedicated backend
 /// for the zone that gives a longest match against that name.
 ///
 /// The in memory dedicated backend are assumed to be of the same RR class,
-/// but the \c MemoryDataSrc class does not enforce the assumption through
+/// but the \c InMemoryClient class does not enforce the assumption through
 /// its interface.
 /// For example, the \c addZone() method does not check if the new zone is of
 /// the same RR class as that of the others already in the dedicated backend.
@@ -211,7 +211,7 @@ private:
 /// The findZone() method takes a domain name and returns the best matching \c
 /// MemoryZone in the form of (Boost) shared pointer, so that it can provide
 /// the general interface for all data sources.
-class MemoryDataSrc : public DataSourceClient {
+class InMemoryClient : public DataSourceClient {
 public:
     ///
     /// \name Constructors and Destructor.
@@ -223,10 +223,10 @@ public:
     /// This constructor internally involves resource allocation, and if
     /// it fails, a corresponding standard exception will be thrown.
     /// It never throws an exception otherwise.
-    MemoryDataSrc();
+    InMemoryClient();
 
     /// The destructor.
-    ~MemoryDataSrc();
+    ~InMemoryClient();
     //@}
 
     /// Return the number of zones stored in the data source.
@@ -236,7 +236,7 @@ public:
     /// \return The number of zones stored in the data source.
     unsigned int getZoneCount() const;
 
-    /// Add a \c Zone to the \c MemoryDataSrc.
+    /// Add a \c Zone to the \c InMemoryClient.
     ///
     /// \c Zone must not be associated with a NULL pointer; otherwise
     /// an exception of class \c InvalidParameter will be thrown.
@@ -251,7 +251,7 @@ public:
     /// stores a zone that has the same origin.
     result::Result addZone(ZoneFinderPtr zone);
 
-    /// Find a \c Zone that best matches the given name in the \c MemoryDataSrc.
+    /// Find a \c Zone that best matches the given name in the \c InMemoryClient.
     ///
     /// It searches the internal storage for a \c Zone that gives the
     /// longest match against \c name, and returns the result in the
@@ -274,8 +274,8 @@ public:
 private:
     // TODO: Do we still need the PImpl if nobody should manipulate this class
     // directly any more (it should be handled trough DataSourceClient)?
-    class MemoryDataSrcImpl;
-    MemoryDataSrcImpl* impl_;
+    class InMemoryClientImpl;
+    InMemoryClientImpl* impl_;
 };
 }
 }
