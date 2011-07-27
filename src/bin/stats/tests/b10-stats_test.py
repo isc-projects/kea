@@ -488,6 +488,15 @@ class TestStats(unittest.TestCase):
                          isc.config.create_answer(
                 1,
                 "specified module name and/or statistics data are incorrect:"
+                + " unknown item lname"))
+        self.stats.statistics_data['Stats'] = {}
+        self.stats.mccs.specification = isc.config.module_spec.ModuleSpec(
+            { "module_name": self.stats.module_name } )
+        self.assertEqual(self.stats.command_set(owner='Stats',
+                                                data={ 'lname' : '_foo_@_bar_' }),
+                         isc.config.create_answer(
+                1,
+                "specified module name and/or statistics data are incorrect:"
                 + " No statistics specification"))
         self.stats.statistics_data['Stats'] = {}
         self.stats.mccs.specification = isc.config.module_spec.ModuleSpec(
