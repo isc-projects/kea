@@ -93,7 +93,7 @@ const char* const other_zone_rrs =
     "mx.delegation.example.com. 3600 IN A 192.0.2.100\n";
 
 // This is a mock Zone class for testing.
-// It is a derived class of Zone for the convenient of tests.
+// It is a derived class of ZoneFinder for the convenient of tests.
 // Its find() method emulates the common behavior of protocol compliant
 // zone classes, but simplifies some minor cases and also supports broken
 // behavior.
@@ -237,6 +237,10 @@ protected:
         memory_client.addZone(ZoneFinderPtr(mock_finder));
     }
     MockZoneFinder* mock_finder;
+    // We use InMemoryClient here. We could have some kind of mock client
+    // here, but historically, the Query supported only InMemoryClient
+    // (originally named MemoryDataSrc) and was tested with it, so we keep
+    // it like this for now.
     InMemoryClient memory_client;
     const Name qname;
     const RRClass qclass;
