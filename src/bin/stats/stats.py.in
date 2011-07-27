@@ -259,7 +259,7 @@ class Stats:
                     self.statistics_data[owner].update(data)
                     return
             except KeyError:
-                errors.append('unknown module name')
+                errors.append("unknown module name: " + str(owner))
             return errors
 
     def command_status(self):
@@ -289,8 +289,6 @@ class Stats:
         else:
             logger.debug(DBG_STATS_MESSAGING,
                          STATS_RECEIVED_SHOW_ALL_COMMAND)
-        if owner and not name:
-            return isc.config.create_answer(1, "item name is not specified")
         errors = self.update_statistics_data(
             self.module_name,
             timestamp=get_timestamp(),
@@ -298,11 +296,12 @@ class Stats:
             )
         if errors: raise StatsError("stats spec file is incorrect")
         ret = self.get_statistics_data(owner, name)
-        if ret:
+        if ret is not None:
             return isc.config.create_answer(0, ret)
         else:
             return isc.config.create_answer(
-                1, "specified module name and/or item name are incorrect")
+                1, "specified arguments are incorrect: " \
+                    + "owner: " + str(owner) + ", name: " + str(name))
 
     def command_showschema(self, owner=None, name=None):
         """
@@ -335,7 +334,8 @@ class Stats:
             else:
                 return isc.config.create_answer(0, schema)
         return isc.config.create_answer(
-                1, "specified module name and/or item name are incorrect")
+                1, "specified arguments are incorrect: " \
+                    + "owner: " + str(owner) + ", name: " + str(name))
 
     def command_set(self, owner, data):
         """
@@ -344,9 +344,8 @@ class Stats:
         errors = self.update_statistics_data(owner, **data)
         if errors:
             return isc.config.create_answer(
-                1,
-                "specified module name and/or statistics data are incorrect: "
-                + ", ".join(errors))
+                1, "errors while setting statistics data: " \
+                    + ", ".join(errors))
         errors = self.update_statistics_data(
             self.module_name, last_update_time=get_datetime() )
         if errors:
