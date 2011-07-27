@@ -655,36 +655,36 @@ MemoryZoneFinder::getFileName() const {
     return (impl_->file_name_);
 }
 
-/// Implementation details for \c MemoryDataSrc hidden from the public
+/// Implementation details for \c InMemoryClient hidden from the public
 /// interface.
 ///
-/// For now, \c MemoryDataSrc only contains a \c ZoneTable object, which
+/// For now, \c InMemoryClient only contains a \c ZoneTable object, which
 /// consists of (pointers to) \c MemoryZoneFinder objects, we may add more
 /// member variables later for new features.
-class MemoryDataSrc::MemoryDataSrcImpl {
+class InMemoryClient::InMemoryClientImpl {
 public:
-    MemoryDataSrcImpl() : zone_count(0) {}
+    InMemoryClientImpl() : zone_count(0) {}
     unsigned int zone_count;
     ZoneTable zone_table;
 };
 
-MemoryDataSrc::MemoryDataSrc() : impl_(new MemoryDataSrcImpl)
+InMemoryClient::InMemoryClient() : impl_(new InMemoryClientImpl)
 {}
 
-MemoryDataSrc::~MemoryDataSrc() {
+InMemoryClient::~InMemoryClient() {
     delete impl_;
 }
 
 unsigned int
-MemoryDataSrc::getZoneCount() const {
+InMemoryClient::getZoneCount() const {
     return (impl_->zone_count);
 }
 
 result::Result
-MemoryDataSrc::addZone(ZoneFinderPtr zone) {
+InMemoryClient::addZone(ZoneFinderPtr zone) {
     if (!zone) {
         isc_throw(InvalidParameter,
-                  "Null pointer is passed to MemoryDataSrc::addZone()");
+                  "Null pointer is passed to InMemoryClient::addZone()");
     }
 
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_ADD_ZONE).
@@ -697,8 +697,8 @@ MemoryDataSrc::addZone(ZoneFinderPtr zone) {
     return (result);
 }
 
-MemoryDataSrc::FindResult
-MemoryDataSrc::findZone(const isc::dns::Name& name) const {
+InMemoryClient::FindResult
+InMemoryClient::findZone(const isc::dns::Name& name) const {
     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_FIND_ZONE).arg(name);
     return (FindResult(impl_->zone_table.findZone(name).code,
                        impl_->zone_table.findZone(name).zone));

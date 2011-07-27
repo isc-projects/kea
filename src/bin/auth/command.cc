@@ -177,7 +177,7 @@ private:
         const RRClass zone_class = class_elem ?
             RRClass(class_elem->stringValue()) : RRClass::IN();
 
-        AuthSrv::MemoryDataSrcPtr datasrc(server.getMemoryDataSrc(zone_class));
+        AuthSrv::InMemoryClientPtr datasrc(server.getInMemoryClient(zone_class));
         if (datasrc == NULL) {
             isc_throw(AuthCommandError, "Memory data source is disabled");
         }
@@ -189,7 +189,7 @@ private:
         const Name origin(origin_elem->stringValue());
 
         // Get the current zone
-        const MemoryDataSrc::FindResult result = datasrc->findZone(origin);
+        const InMemoryClient::FindResult result = datasrc->findZone(origin);
         if (result.code != result::SUCCESS) {
             isc_throw(AuthCommandError, "Zone " << origin <<
                       " is not found in data source");

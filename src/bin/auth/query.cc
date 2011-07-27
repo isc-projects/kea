@@ -126,8 +126,8 @@ Query::process() const {
     const bool qtype_is_any = (qtype_ == RRType::ANY());
 
     response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
-    const MemoryDataSrc::FindResult result =
-        memory_datasrc_.findZone(qname_);
+    const InMemoryClient::FindResult result =
+        memory_client_.findZone(qname_);
 
     // If we have no matching authoritative zone for the query name, return
     // REFUSED.  In short, this is to be compatible with BIND 9, but the
