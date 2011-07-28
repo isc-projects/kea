@@ -139,10 +139,10 @@ public:
         shared_ptr<InMemoryZoneFinder> zone_finder(
             new InMemoryZoneFinder(old_zone_finder->getClass(),
                                    old_zone_finder->getOrigin()));
-        newzone->load(old_zone_finder->getFileName());
-        old_zone_finder->swap(*newzone);
+        zone_finder->load(old_zone_finder->getFileName());
+        old_zone_finder->swap(*zone_finder);
         LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_LOAD_ZONE)
-                  .arg(newzone->getOrigin()).arg(newzone->getClass());
+                  .arg(zone_finder->getOrigin()).arg(zone_finder->getClass());
     }
 
 private:
