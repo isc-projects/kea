@@ -136,8 +136,8 @@ public:
         // that doesn't block other server operations.
         // TODO: we may (should?) want to check the "last load time" and
         // the timestamp of the file and skip loading if the file isn't newer.
-        shared_ptr<MemoryZoneFinder> newzone(
-            new MemoryZoneFinder(oldzone->getClass(), oldzone->getOrigin()));
+        shared_ptr<InMemoryZoneFinder> newzone(
+            new InMemoryZoneFinder(oldzone->getClass(), oldzone->getOrigin()));
         newzone->load(oldzone->getFileName());
         oldzone->swap(*newzone);
         LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_LOAD_ZONE)
@@ -146,7 +146,7 @@ public:
 
 private:
     // zone finder to be updated with the new file.
-    shared_ptr<MemoryZoneFinder> oldzone;
+    shared_ptr<InMemoryZoneFinder> oldzone;
 
     // A helper private method to parse and validate command parameters.
     // On success, it sets 'oldzone' to the zone to be updated.
@@ -195,7 +195,7 @@ private:
                       " is not found in data source");
         }
 
-        oldzone = boost::dynamic_pointer_cast<MemoryZoneFinder>(
+        oldzone = boost::dynamic_pointer_cast<InMemoryZoneFinder>(
             result.zone_finder);
 
         return (true);

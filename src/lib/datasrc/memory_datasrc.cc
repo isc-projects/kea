@@ -32,10 +32,10 @@ using namespace isc::dns;
 namespace isc {
 namespace datasrc {
 
-// Private data and hidden methods of MemoryZoneFinder
-struct MemoryZoneFinder::MemoryZoneFinderImpl {
+// Private data and hidden methods of InMemoryZoneFinder
+struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
     // Constructor
-    MemoryZoneFinderImpl(const RRClass& zone_class, const Name& origin) :
+    InMemoryZoneFinderImpl(const RRClass& zone_class, const Name& origin) :
         zone_class_(zone_class), origin_(origin), origin_data_(NULL),
         domains_(true)
     {
@@ -223,7 +223,7 @@ struct MemoryZoneFinder::MemoryZoneFinderImpl {
      * Implementation of longer methods. We put them here, because the
      * access is without the impl_-> and it will get inlined anyway.
      */
-    // Implementation of MemoryZoneFinder::add
+    // Implementation of InMemoryZoneFinder::add
     result::Result add(const ConstRRsetPtr& rrset, DomainTree* domains) {
         // Sanitize input.  This will cause an exception to be thrown
         // if the input RRset is empty.
@@ -409,7 +409,7 @@ struct MemoryZoneFinder::MemoryZoneFinderImpl {
         }
     }
 
-    // Implementation of MemoryZoneFinder::find
+    // Implementation of InMemoryZoneFinder::find
     FindResult find(const Name& name, RRType type,
                     RRsetList* target, const FindOptions options) const
     {
@@ -593,50 +593,50 @@ struct MemoryZoneFinder::MemoryZoneFinderImpl {
     }
 };
 
-MemoryZoneFinder::MemoryZoneFinder(const RRClass& zone_class, const Name& origin) :
-    impl_(new MemoryZoneFinderImpl(zone_class, origin))
+InMemoryZoneFinder::InMemoryZoneFinder(const RRClass& zone_class, const Name& origin) :
+    impl_(new InMemoryZoneFinderImpl(zone_class, origin))
 {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_CREATE).arg(origin).
         arg(zone_class);
 }
 
-MemoryZoneFinder::~MemoryZoneFinder() {
+InMemoryZoneFinder::~InMemoryZoneFinder() {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_DESTROY).arg(getOrigin()).
         arg(getClass());
     delete impl_;
 }
 
 const Name&
-MemoryZoneFinder::getOrigin() const {
+InMemoryZoneFinder::getOrigin() const {
     return (impl_->origin_);
 }
 
 const RRClass&
-MemoryZoneFinder::getClass() const {
+InMemoryZoneFinder::getClass() const {
     return (impl_->zone_class_);
 }
 
 ZoneFinder::FindResult
-MemoryZoneFinder::find(const Name& name, const RRType& type,
+InMemoryZoneFinder::find(const Name& name, const RRType& type,
                  RRsetList* target, const FindOptions options) const
 {
     return (impl_->find(name, type, target, options));
 }
 
 result::Result
-MemoryZoneFinder::add(const ConstRRsetPtr& rrset) {
+InMemoryZoneFinder::add(const ConstRRsetPtr& rrset) {
     return (impl_->add(rrset, &impl_->domains_));
 }
 
 
 void
-MemoryZoneFinder::load(const string& filename) {
+InMemoryZoneFinder::load(const string& filename) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_LOAD).arg(getOrigin()).
         arg(filename);
     // Load it into a temporary tree
-    MemoryZoneFinderImpl::DomainTree tmp;
+    InMemoryZoneFinderImpl::DomainTree tmp;
     masterLoad(filename.c_str(), getOrigin(), getClass(),
-        boost::bind(&MemoryZoneFinderImpl::addFromLoad, impl_, _1, &tmp));
+        boost::bind(&InMemoryZoneFinderImpl::addFromLoad, impl_, _1, &tmp));
     // If it went well, put it inside
     impl_->file_name_ = filename;
     tmp.swap(impl_->domains_);
@@ -644,14 +644,14 @@ MemoryZoneFinder::load(const string& filename) {
 }
 
 void
-MemoryZoneFinder::swap(MemoryZoneFinder& zone) {
+InMemoryZoneFinder::swap(InMemoryZoneFinder& zone) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_SWAP).arg(getOrigin()).
         arg(zone.getOrigin());
     std::swap(impl_, zone.impl_);
 }
 
 const string
-MemoryZoneFinder::getFileName() const {
+InMemoryZoneFinder::getFileName() const {
     return (impl_->file_name_);
 }
 
@@ -659,7 +659,7 @@ MemoryZoneFinder::getFileName() const {
 /// interface.
 ///
 /// For now, \c InMemoryClient only contains a \c ZoneTable object, which
-/// consists of (pointers to) \c MemoryZoneFinder objects, we may add more
+/// consists of (pointers to) \c InMemoryZoneFinder objects, we may add more
 /// member variables later for new features.
 class InMemoryClient::InMemoryClientImpl {
 public:
