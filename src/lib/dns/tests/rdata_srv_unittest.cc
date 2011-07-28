@@ -111,6 +111,10 @@ TEST_F(Rdata_SRV_Test, createFromWire) {
     EXPECT_THROW(rdataFactoryFromFile(RRType("SRV"), RRClass("IN"),
                                       "rdata_cname_fromWire", 69),
                  DNSMessageFORMERR);
+    // parse compressed target name
+    EXPECT_EQ(0, rdata_srv.compare(
+                  *rdataFactoryFromFile(RRType("SRV"), RRClass("IN"),
+                                      "rdata_srv_fromWire", 89)));
 }
 
 TEST_F(Rdata_SRV_Test, toWireBuffer) {

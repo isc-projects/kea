@@ -126,6 +126,8 @@ SRV::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint16(impl_->priority_);
     renderer.writeUint16(impl_->weight_);
     renderer.writeUint16(impl_->port_);
+    // According to RFC 2782, name compression is not
+    // to be used for this field.
     renderer.writeName(impl_->target_, false);
 }
 
