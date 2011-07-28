@@ -21,6 +21,7 @@ libdatasrc_la_SOURCES += memory_datasrc.h memory_datasrc.cc
 libdatasrc_la_SOURCES += zone.h
 libdatasrc_la_SOURCES += result.h
 libdatasrc_la_SOURCES += logger.h logger.cc
+libdatasrc_la_SOURCES += client.h
 nodist_libdatasrc_la_SOURCES = datasrc_messages.h datasrc_messages.cc
 
 libdatasrc_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
