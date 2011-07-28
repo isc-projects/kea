@@ -30,7 +30,7 @@ class RRsetList;
 
 namespace datasrc {
 
-/// A derived zone class intended to be used with the memory data source.
+/// A derived zone finder class intended to be used with the memory data source.
 ///
 /// Conceptually this "finder" maintains a local in-memory copy of all RRs
 /// of a single zone from some kind of source (right now it's a textual
@@ -51,7 +51,7 @@ public:
     /// \param rrclass The RR class of the zone.
     /// \param origin The origin name of the zone.
     InMemoryZoneFinder(const isc::dns::RRClass& rrclass,
-                     const isc::dns::Name& origin);
+                       const isc::dns::Name& origin);
 
     /// The destructor.
     virtual ~InMemoryZoneFinder();
@@ -131,14 +131,14 @@ public:
     /// Return the master file name of the zone
     ///
     /// This method returns the name of the zone's master file to be loaded.
-    /// The returned string will be an empty unless the zone has successfully
-    /// loaded a zone.
+    /// The returned string will be an empty unless the zone finder has
+    /// successfully loaded a zone.
     ///
     /// This method should normally not throw an exception.  But the creation
     /// of the return string may involve a resource allocation, and if it
     /// fails, the corresponding standard exception will be thrown.
     ///
-    /// \return The name of the zone file loaded in the zone, or an empty
+    /// \return The name of the zone file loaded in the zone finder, or an empty
     /// string if the zone hasn't loaded any file.
     const std::string getFileName() const;
 
@@ -167,13 +167,14 @@ public:
     ///     configuration reloading is written.
     void load(const std::string& filename);
 
-    /// Exchanges the content of \c this zone with that of the given \c zone.
+    /// Exchanges the content of \c this zone finder with that of the given
+    /// \c zone_finder.
     ///
     /// This method never throws an exception.
     ///
-    /// \param zone Another \c InMemoryZone object which is to be swapped with
-    /// \c this zone.
-    void swap(InMemoryZoneFinder& zone);
+    /// \param zone_finder Another \c InMemoryZone object which is to
+    /// be swapped with \c this zone finder.
+    void swap(InMemoryZoneFinder& zone_finder);
 
 private:
     /// \name Hidden private data
@@ -237,20 +238,21 @@ public:
 
     /// Add a zone (in the form of \c ZoneFinder) to the \c InMemoryClient.
     ///
-    /// \c zone must not be associated with a NULL pointer; otherwise
+    /// \c zone_finder must not be associated with a NULL pointer; otherwise
     /// an exception of class \c InvalidParameter will be thrown.
     /// If internal resource allocation fails, a corresponding standard
     /// exception will be thrown.
     /// This method never throws an exception otherwise.
     ///
-    /// \param zone A \c ZoneFinder object to be added.
-    /// \return \c result::SUCCESS If the zone is successfully
+    /// \param zone_finder A \c ZoneFinder object to be added.
+    /// \return \c result::SUCCESS If the zone_finder is successfully
     /// added to the client.
     /// \return \c result::EXIST The memory data source already
     /// stores a zone that has the same origin.
-    result::Result addZone(ZoneFinderPtr zone);
+    result::Result addZone(ZoneFinderPtr zone_finder);
 
-    /// Returns a \c ZoneFinder for a zone that best matches the given name.
+    /// Returns a \c ZoneFinder for a zone_finder that best matches the given
+    /// name.
     ///
     /// This derived version of the method never throws an exception.
     /// For other details see \c DataSourceClient::findZone().

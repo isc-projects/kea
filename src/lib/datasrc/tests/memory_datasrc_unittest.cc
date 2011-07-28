@@ -236,7 +236,7 @@ public:
     // Some data to test with
     const RRClass class_;
     const Name origin_;
-    // The zone to torture by tests
+    // The zone finder to torture by tests
     InMemoryZoneFinder zone_finder_;
 
     /*
@@ -274,9 +274,9 @@ public:
     RRsetPtr rr_not_wild_another_;
 
     /**
-     * \brief Test one find query to the zone.
+     * \brief Test one find query to the zone finder.
      *
-     * Asks a query to the zone and checks it does not throw and returns
+     * Asks a query to the zone finder and checks it does not throw and returns
      * expected results. It returns nothing, it just signals failures
      * to GTEST.
      *
@@ -286,8 +286,8 @@ public:
      * \param check_answer Should a check against equality of the answer be
      *     done?
      * \param answer The expected rrset, if any should be returned.
-     * \param zone Check different InMemoryZoneFinder object than zone_ (if NULL,
-     *     uses zone_)
+     * \param zone_finder Check different InMemoryZoneFinder object than
+     *     zone_finder_ (if NULL, uses zone_finder_)
      * \param check_wild_answer Checks that the answer has the same RRs, type
      *     class and TTL as the eqxpected answer and that the name corresponds
      *     to the one searched. It is meant for checking answers for wildcard
@@ -353,7 +353,7 @@ public:
 /**
  * \brief Test InMemoryZoneFinder::InMemoryZoneFinder constructor.
  *
- * Takes the created zone and checks its properties they are the same
+ * Takes the created zone finder and checks its properties they are the same
  * as passed parameters.
  */
 TEST_F(InMemoryZoneFinderTest, constructor) {
@@ -1004,34 +1004,34 @@ TEST_F(InMemoryZoneFinderTest, loadBadWildcard) {
 }
 
 TEST_F(InMemoryZoneFinderTest, swap) {
-    // build one zone with some data
-    InMemoryZoneFinder zone1(class_, origin_);
-    EXPECT_EQ(result::SUCCESS, zone1.add(rr_ns_));
-    EXPECT_EQ(result::SUCCESS, zone1.add(rr_ns_aaaa_));
+    // build one zone finder with some data
+    InMemoryZoneFinder finder1(class_, origin_);
+    EXPECT_EQ(result::SUCCESS, finder1.add(rr_ns_));
+    EXPECT_EQ(result::SUCCESS, finder1.add(rr_ns_aaaa_));
 
-    // build another zone of a different RR class with some other data
+    // build another zone finder of a different RR class with some other data
     const Name other_origin("version.bind");
     ASSERT_NE(origin_, other_origin); // make sure these two are different
-    InMemoryZoneFinder zone2(RRClass::CH(), other_origin);
+    InMemoryZoneFinder finder2(RRClass::CH(), other_origin);
     EXPECT_EQ(result::SUCCESS,
-              zone2.add(RRsetPtr(new RRset(Name("version.bind"),
+              finder2.add(RRsetPtr(new RRset(Name("version.bind"),
                                            RRClass::CH(), RRType::TXT(),
                                            RRTTL(0)))));
 
-    zone1.swap(zone2);
-    EXPECT_EQ(other_origin, zone1.getOrigin());
-    EXPECT_EQ(origin_, zone2.getOrigin());
-    EXPECT_EQ(RRClass::CH(), zone1.getClass());
-    EXPECT_EQ(RRClass::IN(), zone2.getClass());
+    finder1.swap(finder2);
+    EXPECT_EQ(other_origin, finder1.getOrigin());
+    EXPECT_EQ(origin_, finder2.getOrigin());
+    EXPECT_EQ(RRClass::CH(), finder1.getClass());
+    EXPECT_EQ(RRClass::IN(), finder2.getClass());
     // make sure the zone data is swapped, too
     findTest(origin_, RRType::NS(), ZoneFinder::NXDOMAIN, false,
-             ConstRRsetPtr(), NULL, &zone1);
+             ConstRRsetPtr(), NULL, &finder1);
     findTest(other_origin, RRType::TXT(), ZoneFinder::SUCCESS, false,
-             ConstRRsetPtr(), NULL, &zone1);
+             ConstRRsetPtr(), NULL, &finder1);
     findTest(origin_, RRType::NS(), ZoneFinder::SUCCESS, false,
-             ConstRRsetPtr(), NULL, &zone2);
+             ConstRRsetPtr(), NULL, &finder2);
     findTest(other_origin, RRType::TXT(), ZoneFinder::NXDOMAIN, false,
-             ConstRRsetPtr(), NULL, &zone2);
+             ConstRRsetPtr(), NULL, &finder2);
 }
 
 TEST_F(InMemoryZoneFinderTest, getFileName) {
