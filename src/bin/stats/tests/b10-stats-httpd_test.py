@@ -30,6 +30,9 @@ import stats_httpd
 import stats
 from test_utils import BaseModules, ThreadingServerManager, MyStats, MyStatsHttpd, TIMEOUT_SEC
 
+# set test name for logger 
+isc.log.init("b10-stats-httpd_test")
+
 DUMMY_DATA = {
     'Boss' : {
         "boot_time": "2011-03-04T11:59:06Z"
