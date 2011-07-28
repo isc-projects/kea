@@ -38,7 +38,7 @@ namespace datasrc {
 /// backend).  This is why the class has methods like \c load() or \c add().
 ///
 /// This class is non copyable.
-class MemoryZoneFinder : boost::noncopyable, public ZoneFinder {
+class InMemoryZoneFinder : boost::noncopyable, public ZoneFinder {
     ///
     /// \name Constructors and Destructor.
 public:
@@ -50,11 +50,11 @@ public:
     ///
     /// \param rrclass The RR class of the zone.
     /// \param origin The origin name of the zone.
-    MemoryZoneFinder(const isc::dns::RRClass& rrclass,
+    InMemoryZoneFinder(const isc::dns::RRClass& rrclass,
                      const isc::dns::Name& origin);
 
     /// The destructor.
-    virtual ~MemoryZoneFinder();
+    virtual ~InMemoryZoneFinder();
     //@}
 
     /// \brief Returns the origin of the zone.
@@ -171,15 +171,15 @@ public:
     ///
     /// This method never throws an exception.
     ///
-    /// \param zone Another \c MemoryZone object which is to be swapped with
+    /// \param zone Another \c InMemoryZone object which is to be swapped with
     /// \c this zone.
-    void swap(MemoryZoneFinder& zone);
+    void swap(InMemoryZoneFinder& zone);
 
 private:
     /// \name Hidden private data
     //@{
-    struct MemoryZoneFinderImpl;
-    MemoryZoneFinderImpl* impl_;
+    struct InMemoryZoneFinderImpl;
+    InMemoryZoneFinderImpl* impl_;
     //@}
 };
 
@@ -208,7 +208,7 @@ private:
 /// backend.
 ///
 /// The findZone() method takes a domain name and returns the best matching 
-/// \c MemoryZoneFinder in the form of (Boost) shared pointer, so that it can
+/// \c InMemoryZoneFinder in the form of (Boost) shared pointer, so that it can
 /// provide the general interface for all data sources.
 class InMemoryClient : public DataSourceClient {
 public:

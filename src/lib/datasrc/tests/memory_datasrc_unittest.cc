@@ -58,48 +58,50 @@ TEST_F(InMemoryClientTest, add_find_Zone) {
 
     // add zones with different names one by one
     EXPECT_EQ(result::SUCCESS, memory_client.addZone(
-                  ZoneFinderPtr(new MemoryZoneFinder(RRClass::IN(),
-                                                     Name("a")))));
+                  ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
+                                                       Name("a")))));
     EXPECT_EQ(result::SUCCESS, memory_client.addZone(
-                  ZoneFinderPtr(new MemoryZoneFinder(RRClass::CH(), Name("b")))));
+                  ZoneFinderPtr(new InMemoryZoneFinder(RRClass::CH(),
+                                                       Name("b")))));
     EXPECT_EQ(result::SUCCESS, memory_client.addZone(
-                  ZoneFinderPtr(new MemoryZoneFinder(RRClass::IN(), Name("c")))));
+                  ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
+                                                       Name("c")))));
     // add zones with the same name suffix
     EXPECT_EQ(result::SUCCESS, memory_client.addZone(
-                  ZoneFinderPtr(new MemoryZoneFinder(RRClass::CH(),
-                                         Name("x.d.e.f")))));
+                  ZoneFinderPtr(new InMemoryZoneFinder(RRClass::CH(),
+                                                       Name("x.d.e.f")))));
     EXPECT_EQ(result::SUCCESS, memory_client.addZone(
-                  ZoneFinderPtr(new MemoryZoneFinder(RRClass::CH(),
-                                         Name("o.w.y.d.e.f")))));
+                  ZoneFinderPtr(new InMemoryZoneFinder(RRClass::CH(),
+                                                       Name("o.w.y.d.e.f")))));
     EXPECT_EQ(result::SUCCESS, memory_client.addZone(
-                  ZoneFinderPtr(new MemoryZoneFinder(RRClass::CH(),
-                                         Name("p.w.y.d.e.f")))));
+                  ZoneFinderPtr(new InMemoryZoneFinder(RRClass::CH(),
+                                                       Name("p.w.y.d.e.f")))));
     EXPECT_EQ(result::SUCCESS, memory_client.addZone(
-                  ZoneFinderPtr(new MemoryZoneFinder(RRClass::IN(),
-                                         Name("q.w.y.d.e.f")))));
+                  ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
+                                                       Name("q.w.y.d.e.f")))));
     // add super zone and its subzone
     EXPECT_EQ(result::SUCCESS, memory_client.addZone(
-                  ZoneFinderPtr(new MemoryZoneFinder(RRClass::CH(),
-                                                     Name("g.h")))));
+                  ZoneFinderPtr(new InMemoryZoneFinder(RRClass::CH(),
+                                                       Name("g.h")))));
     EXPECT_EQ(result::SUCCESS, memory_client.addZone(
-                  ZoneFinderPtr(new MemoryZoneFinder(RRClass::IN(),
+                  ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
                                                Name("i.g.h")))));
     EXPECT_EQ(result::SUCCESS, memory_client.addZone(
-                  ZoneFinderPtr(new MemoryZoneFinder(RRClass::IN(),
-                                         Name("z.d.e.f")))));
+                  ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
+                                                       Name("z.d.e.f")))));
     EXPECT_EQ(result::SUCCESS, memory_client.addZone(
-                  ZoneFinderPtr(new MemoryZoneFinder(RRClass::IN(),
-                                         Name("j.z.d.e.f")))));
+                  ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
+                                                       Name("j.z.d.e.f")))));
 
     // different zone class isn't allowed.
     EXPECT_EQ(result::EXIST, memory_client.addZone(
-                  ZoneFinderPtr(new MemoryZoneFinder(RRClass::CH(),
-                                         Name("q.w.y.d.e.f")))));
+                  ZoneFinderPtr(new InMemoryZoneFinder(RRClass::CH(),
+                                                       Name("q.w.y.d.e.f")))));
 
     // names are compared in a case insensitive manner.
     EXPECT_EQ(result::EXIST, memory_client.addZone(
-                  ZoneFinderPtr(new MemoryZoneFinder(RRClass::IN(),
-                                         Name("Q.W.Y.d.E.f")))));
+                  ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
+                                                       Name("Q.W.Y.d.E.f")))));
 
     // test find zone
     EXPECT_EQ(result::SUCCESS, memory_client.findZone(Name("a")).code);
@@ -109,7 +111,8 @@ TEST_F(InMemoryClientTest, add_find_Zone) {
     EXPECT_EQ(result::SUCCESS,
               memory_client.findZone(Name("j.z.d.e.f")).code);
     EXPECT_EQ(Name("j.z.d.e.f"),
-              memory_client.findZone(Name("j.z.d.e.f")).zone_finder->getOrigin());
+              memory_client.findZone(Name("j.z.d.e.f")).zone_finder->
+                  getOrigin());
 
     // NOTFOUND
     EXPECT_EQ(result::NOTFOUND, memory_client.findZone(Name("d.e.f")).code);
@@ -131,38 +134,39 @@ TEST_F(InMemoryClientTest, add_find_Zone) {
     EXPECT_EQ(result::PARTIALMATCH,
               memory_client.findZone(Name("z.i.g.h")).code);
     EXPECT_EQ(Name("i.g.h"),
-              memory_client.findZone(Name("z.i.g.h")).zone_finder->getOrigin());
+              memory_client.findZone(Name("z.i.g.h")).zone_finder->
+                  getOrigin());
 }
 
 TEST_F(InMemoryClientTest, getZoneCount) {
     EXPECT_EQ(0, memory_client.getZoneCount());
     memory_client.addZone(
-                  ZoneFinderPtr(new MemoryZoneFinder(rrclass,
-                                                     Name("example.com"))));
+                  ZoneFinderPtr(new InMemoryZoneFinder(rrclass,
+                                                       Name("example.com"))));
     EXPECT_EQ(1, memory_client.getZoneCount());
 
     // duplicate add.  counter shouldn't change
     memory_client.addZone(
-                  ZoneFinderPtr(new MemoryZoneFinder(rrclass,
-                                                     Name("example.com"))));
+                  ZoneFinderPtr(new InMemoryZoneFinder(rrclass,
+                                                       Name("example.com"))));
     EXPECT_EQ(1, memory_client.getZoneCount());
 
     // add one more
     memory_client.addZone(
-                  ZoneFinderPtr(new MemoryZoneFinder(rrclass,
-                                                     Name("example.org"))));
+                  ZoneFinderPtr(new InMemoryZoneFinder(rrclass,
+                                                       Name("example.org"))));
     EXPECT_EQ(2, memory_client.getZoneCount());
 }
 
-// A helper callback of masterLoad() used in MemoryZoneFinderTest.
+// A helper callback of masterLoad() used in InMemoryZoneFinderTest.
 void
 setRRset(RRsetPtr rrset, vector<RRsetPtr*>::iterator& it) {
     *(*it) = rrset;
     ++it;
 }
 
-/// \brief Test fixture for the MemoryZoneFinder class
-class MemoryZoneFinderTest : public ::testing::Test {
+/// \brief Test fixture for the InMemoryZoneFinder class
+class InMemoryZoneFinderTest : public ::testing::Test {
     // A straightforward pair of textual RR(set) and a RRsetPtr variable
     // to store the RRset.  Used to build test data below.
     struct RRsetData {
@@ -170,7 +174,7 @@ class MemoryZoneFinderTest : public ::testing::Test {
         RRsetPtr* rrset;
     };
 public:
-    MemoryZoneFinderTest() :
+    InMemoryZoneFinderTest() :
         class_(RRClass::IN()),
         origin_("example.org"),
         zone_finder_(class_, origin_)
@@ -233,7 +237,7 @@ public:
     const RRClass class_;
     const Name origin_;
     // The zone to torture by tests
-    MemoryZoneFinder zone_finder_;
+    InMemoryZoneFinder zone_finder_;
 
     /*
      * Some RRsets to put inside the zone.
@@ -282,7 +286,7 @@ public:
      * \param check_answer Should a check against equality of the answer be
      *     done?
      * \param answer The expected rrset, if any should be returned.
-     * \param zone Check different MemoryZoneFinder object than zone_ (if NULL,
+     * \param zone Check different InMemoryZoneFinder object than zone_ (if NULL,
      *     uses zone_)
      * \param check_wild_answer Checks that the answer has the same RRs, type
      *     class and TTL as the eqxpected answer and that the name corresponds
@@ -294,7 +298,7 @@ public:
                   bool check_answer = true,
                   const ConstRRsetPtr& answer = ConstRRsetPtr(),
                   RRsetList* target = NULL,
-                  MemoryZoneFinder* zone_finder = NULL,
+                  InMemoryZoneFinder* zone_finder = NULL,
                   ZoneFinder::FindOptions options = ZoneFinder::FIND_DEFAULT,
                   bool check_wild_answer = false)
     {
@@ -347,12 +351,12 @@ public:
 };
 
 /**
- * \brief Test MemoryZoneFinder::MemoryZoneFinder constructor.
+ * \brief Test InMemoryZoneFinder::InMemoryZoneFinder constructor.
  *
  * Takes the created zone and checks its properties they are the same
  * as passed parameters.
  */
-TEST_F(MemoryZoneFinderTest, constructor) {
+TEST_F(InMemoryZoneFinderTest, constructor) {
     ASSERT_EQ(class_, zone_finder_.getClass());
     ASSERT_EQ(origin_, zone_finder_.getOrigin());
 }
@@ -362,12 +366,12 @@ TEST_F(MemoryZoneFinderTest, constructor) {
  * We test that it throws at the correct moments and the correct exceptions.
  * And we test the return value.
  */
-TEST_F(MemoryZoneFinderTest, add) {
+TEST_F(InMemoryZoneFinderTest, add) {
     // This one does not belong to this zone
-    EXPECT_THROW(zone_finder_.add(rr_out_), MemoryZoneFinder::OutOfZone);
+    EXPECT_THROW(zone_finder_.add(rr_out_), InMemoryZoneFinder::OutOfZone);
     // Test null pointer
     EXPECT_THROW(zone_finder_.add(ConstRRsetPtr()),
-                 MemoryZoneFinder::NullRRset);
+                 InMemoryZoneFinder::NullRRset);
 
     // Now put all the data we have there. It should throw nothing
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_ns_)));
@@ -380,22 +384,22 @@ TEST_F(MemoryZoneFinderTest, add) {
     EXPECT_NO_THROW(EXPECT_EQ(EXIST, zone_finder_.add(rr_ns_a_)));
 }
 
-TEST_F(MemoryZoneFinderTest, addMultipleCNAMEs) {
+TEST_F(InMemoryZoneFinderTest, addMultipleCNAMEs) {
     rr_cname_->addRdata(generic::CNAME("canonical2.example.org."));
-    EXPECT_THROW(zone_finder_.add(rr_cname_), MemoryZoneFinder::AddError);
+    EXPECT_THROW(zone_finder_.add(rr_cname_), InMemoryZoneFinder::AddError);
 }
 
-TEST_F(MemoryZoneFinderTest, addCNAMEThenOther) {
+TEST_F(InMemoryZoneFinderTest, addCNAMEThenOther) {
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_cname_));
-    EXPECT_THROW(zone_finder_.add(rr_cname_a_), MemoryZoneFinder::AddError);
+    EXPECT_THROW(zone_finder_.add(rr_cname_a_), InMemoryZoneFinder::AddError);
 }
 
-TEST_F(MemoryZoneFinderTest, addOtherThenCNAME) {
+TEST_F(InMemoryZoneFinderTest, addOtherThenCNAME) {
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_cname_a_));
-    EXPECT_THROW(zone_finder_.add(rr_cname_), MemoryZoneFinder::AddError);
+    EXPECT_THROW(zone_finder_.add(rr_cname_), InMemoryZoneFinder::AddError);
 }
 
-TEST_F(MemoryZoneFinderTest, findCNAME) {
+TEST_F(InMemoryZoneFinderTest, findCNAME) {
     // install CNAME RR
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_cname_));
 
@@ -408,7 +412,7 @@ TEST_F(MemoryZoneFinderTest, findCNAME) {
              rr_cname_);
 }
 
-TEST_F(MemoryZoneFinderTest, findCNAMEUnderZoneCut) {
+TEST_F(InMemoryZoneFinderTest, findCNAMEUnderZoneCut) {
     // There's nothing special when we find a CNAME under a zone cut
     // (with FIND_GLUE_OK).  The behavior is different from BIND 9,
     // so we test this case explicitly.
@@ -425,27 +429,27 @@ TEST_F(MemoryZoneFinderTest, findCNAMEUnderZoneCut) {
 // Two DNAMEs at single domain are disallowed by RFC 2672, section 3)
 // Having a CNAME there is disallowed too, but it is tested by
 // addOtherThenCNAME and addCNAMEThenOther.
-TEST_F(MemoryZoneFinderTest, addMultipleDNAMEs) {
+TEST_F(InMemoryZoneFinderTest, addMultipleDNAMEs) {
     rr_dname_->addRdata(generic::DNAME("target2.example.org."));
-    EXPECT_THROW(zone_finder_.add(rr_dname_), MemoryZoneFinder::AddError);
+    EXPECT_THROW(zone_finder_.add(rr_dname_), InMemoryZoneFinder::AddError);
 }
 
 /*
  * These two tests ensure that we can't have DNAME and NS at the same
  * node with the exception of the apex of zone (forbidden by RFC 2672)
  */
-TEST_F(MemoryZoneFinderTest, addDNAMEThenNS) {
+TEST_F(InMemoryZoneFinderTest, addDNAMEThenNS) {
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_dname_)));
-    EXPECT_THROW(zone_finder_.add(rr_dname_ns_), MemoryZoneFinder::AddError);
+    EXPECT_THROW(zone_finder_.add(rr_dname_ns_), InMemoryZoneFinder::AddError);
 }
 
-TEST_F(MemoryZoneFinderTest, addNSThenDNAME) {
+TEST_F(InMemoryZoneFinderTest, addNSThenDNAME) {
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_dname_ns_)));
-    EXPECT_THROW(zone_finder_.add(rr_dname_), MemoryZoneFinder::AddError);
+    EXPECT_THROW(zone_finder_.add(rr_dname_), InMemoryZoneFinder::AddError);
 }
 
 // It is allowed to have NS and DNAME at apex
-TEST_F(MemoryZoneFinderTest, DNAMEAndNSAtApex) {
+TEST_F(InMemoryZoneFinderTest, DNAMEAndNSAtApex) {
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_dname_apex_)));
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_ns_)));
 
@@ -456,7 +460,7 @@ TEST_F(MemoryZoneFinderTest, DNAMEAndNSAtApex) {
              rr_dname_apex_);
 }
 
-TEST_F(MemoryZoneFinderTest, NSAndDNAMEAtApex) {
+TEST_F(InMemoryZoneFinderTest, NSAndDNAMEAtApex) {
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_ns_)));
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_dname_apex_)));
 }
@@ -465,7 +469,7 @@ TEST_F(MemoryZoneFinderTest, NSAndDNAMEAtApex) {
 // 2672 as well.
 
 // Search under a DNAME record. It should return the DNAME
-TEST_F(MemoryZoneFinderTest, findBelowDNAME) {
+TEST_F(InMemoryZoneFinderTest, findBelowDNAME) {
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_dname_)));
     findTest(Name("below.dname.example.org"), RRType::A(), ZoneFinder::DNAME,
              true, rr_dname_);
@@ -473,7 +477,7 @@ TEST_F(MemoryZoneFinderTest, findBelowDNAME) {
 
 // Search at the domain with DNAME. It should act as DNAME isn't there, DNAME
 // influences only the data below (see RFC 2672, section 3)
-TEST_F(MemoryZoneFinderTest, findAtDNAME) {
+TEST_F(InMemoryZoneFinderTest, findAtDNAME) {
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_dname_)));
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_dname_a_)));
 
@@ -486,7 +490,7 @@ TEST_F(MemoryZoneFinderTest, findAtDNAME) {
 
 // Try searching something that is both under NS and DNAME, without and with
 // GLUE_OK mode (it should stop at the NS and DNAME respectively).
-TEST_F(MemoryZoneFinderTest, DNAMEUnderNS) {
+TEST_F(InMemoryZoneFinderTest, DNAMEUnderNS) {
     zone_finder_.add(rr_child_ns_);
     zone_finder_.add(rr_child_dname_);
 
@@ -498,7 +502,7 @@ TEST_F(MemoryZoneFinderTest, DNAMEUnderNS) {
 }
 
 // Test adding child zones and zone cut handling
-TEST_F(MemoryZoneFinderTest, delegationNS) {
+TEST_F(InMemoryZoneFinderTest, delegationNS) {
     // add in-zone data
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_ns_)));
 
@@ -526,7 +530,7 @@ TEST_F(MemoryZoneFinderTest, delegationNS) {
              ZoneFinder::DELEGATION, true, rr_child_ns_);
 }
 
-TEST_F(MemoryZoneFinderTest, findAny) {
+TEST_F(InMemoryZoneFinderTest, findAny) {
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_a_)));
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_ns_)));
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_child_glue_)));
@@ -571,7 +575,7 @@ TEST_F(MemoryZoneFinderTest, findAny) {
     EXPECT_EQ(0, new_glue_child_rrsets.size());
 }
 
-TEST_F(MemoryZoneFinderTest, glue) {
+TEST_F(InMemoryZoneFinderTest, glue) {
     // install zone data:
     // a zone cut
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_child_ns_)));
@@ -619,7 +623,7 @@ TEST_F(MemoryZoneFinderTest, glue) {
  * \todo This doesn't do any kind of CNAME and so on. If it isn't
  *     directly there, it just tells it doesn't exist.
  */
-TEST_F(MemoryZoneFinderTest, find) {
+TEST_F(InMemoryZoneFinderTest, find) {
     // Fill some data inside
     // Now put all the data we have there. It should throw nothing
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_ns_)));
@@ -641,7 +645,7 @@ TEST_F(MemoryZoneFinderTest, find) {
     findTest(Name("example.net"), RRType::A(), ZoneFinder::NXDOMAIN);
 }
 
-TEST_F(MemoryZoneFinderTest, emptyNode) {
+TEST_F(InMemoryZoneFinderTest, emptyNode) {
     /*
      * The backend RBTree for this test should look like as follows:
      *          example.org
@@ -680,7 +684,7 @@ TEST_F(MemoryZoneFinderTest, emptyNode) {
     findTest(Name("org"), RRType::A(), ZoneFinder::NXDOMAIN);
 }
 
-TEST_F(MemoryZoneFinderTest, load) {
+TEST_F(InMemoryZoneFinderTest, load) {
     // Put some data inside the zone
     EXPECT_NO_THROW(EXPECT_EQ(result::SUCCESS, zone_finder_.add(rr_ns_)));
     // Loading with different origin should fail
@@ -689,7 +693,7 @@ TEST_F(MemoryZoneFinderTest, load) {
     // See the original data is still there, survived the exception
     findTest(origin_, RRType::NS(), ZoneFinder::SUCCESS, true, rr_ns_);
     // Create correct zone
-    MemoryZoneFinder rootzone(class_, Name("."));
+    InMemoryZoneFinder rootzone(class_, Name("."));
     // Try putting something inside
     EXPECT_NO_THROW(EXPECT_EQ(result::SUCCESS, rootzone.add(rr_ns_aaaa_)));
     // Load the zone. It should overwrite/remove the above RRset
@@ -715,7 +719,7 @@ TEST_F(MemoryZoneFinderTest, load) {
  * Test that puts a (simple) wildcard into the zone and checks we can
  * correctly find the data.
  */
-TEST_F(MemoryZoneFinderTest, wildcard) {
+TEST_F(InMemoryZoneFinderTest, wildcard) {
     /*
      *            example.org.
      *                 |
@@ -768,7 +772,7 @@ TEST_F(MemoryZoneFinderTest, wildcard) {
  *   - When the query is in another zone.  That is, delegation cancels
  *     the wildcard defaults."
  */
-TEST_F(MemoryZoneFinderTest, delegatedWildcard) {
+TEST_F(InMemoryZoneFinderTest, delegatedWildcard) {
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_child_wild_));
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_child_ns_));
 
@@ -787,7 +791,7 @@ TEST_F(MemoryZoneFinderTest, delegatedWildcard) {
 }
 
 // Tests combination of wildcard and ANY.
-TEST_F(MemoryZoneFinderTest, anyWildcard) {
+TEST_F(InMemoryZoneFinderTest, anyWildcard) {
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_wild_));
 
     // First try directly the name (normal match)
@@ -815,7 +819,7 @@ TEST_F(MemoryZoneFinderTest, anyWildcard) {
 
 // Test there's nothing in the wildcard in the middle if we load
 // wild.*.foo.example.org.
-TEST_F(MemoryZoneFinderTest, emptyWildcard) {
+TEST_F(InMemoryZoneFinderTest, emptyWildcard) {
     /*
      *            example.org.
      *                foo
@@ -858,7 +862,7 @@ TEST_F(MemoryZoneFinderTest, emptyWildcard) {
 }
 
 // Same as emptyWildcard, but with multiple * in the path.
-TEST_F(MemoryZoneFinderTest, nestedEmptyWildcard) {
+TEST_F(InMemoryZoneFinderTest, nestedEmptyWildcard) {
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nested_emptywild_));
 
     {
@@ -918,7 +922,7 @@ TEST_F(MemoryZoneFinderTest, nestedEmptyWildcard) {
 // We run this part twice from the below test, in two slightly different
 // situations
 void
-MemoryZoneFinderTest::doCancelWildcardTest() {
+InMemoryZoneFinderTest::doCancelWildcardTest() {
     // These should be canceled
     {
         SCOPED_TRACE("Canceled under foo.wild.example.org");
@@ -972,7 +976,7 @@ MemoryZoneFinderTest::doCancelWildcardTest() {
  * Tests few cases "around" the canceled wildcard match, to see something that
  * shouldn't be canceled isn't.
  */
-TEST_F(MemoryZoneFinderTest, cancelWildcard) {
+TEST_F(InMemoryZoneFinderTest, cancelWildcard) {
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_wild_));
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_not_wild_));
 
@@ -991,23 +995,24 @@ TEST_F(MemoryZoneFinderTest, cancelWildcard) {
     }
 }
 
-TEST_F(MemoryZoneFinderTest, loadBadWildcard) {
+TEST_F(InMemoryZoneFinderTest, loadBadWildcard) {
     // We reject loading the zone if it contains a wildcard name for
     // NS or DNAME.
-    EXPECT_THROW(zone_finder_.add(rr_nswild_), MemoryZoneFinder::AddError);
-    EXPECT_THROW(zone_finder_.add(rr_dnamewild_), MemoryZoneFinder::AddError);
+    EXPECT_THROW(zone_finder_.add(rr_nswild_), InMemoryZoneFinder::AddError);
+    EXPECT_THROW(zone_finder_.add(rr_dnamewild_),
+                 InMemoryZoneFinder::AddError);
 }
 
-TEST_F(MemoryZoneFinderTest, swap) {
+TEST_F(InMemoryZoneFinderTest, swap) {
     // build one zone with some data
-    MemoryZoneFinder zone1(class_, origin_);
+    InMemoryZoneFinder zone1(class_, origin_);
     EXPECT_EQ(result::SUCCESS, zone1.add(rr_ns_));
     EXPECT_EQ(result::SUCCESS, zone1.add(rr_ns_aaaa_));
 
     // build another zone of a different RR class with some other data
     const Name other_origin("version.bind");
     ASSERT_NE(origin_, other_origin); // make sure these two are different
-    MemoryZoneFinder zone2(RRClass::CH(), other_origin);
+    InMemoryZoneFinder zone2(RRClass::CH(), other_origin);
     EXPECT_EQ(result::SUCCESS,
               zone2.add(RRsetPtr(new RRset(Name("version.bind"),
                                            RRClass::CH(), RRType::TXT(),
@@ -1029,7 +1034,7 @@ TEST_F(MemoryZoneFinderTest, swap) {
              ConstRRsetPtr(), NULL, &zone2);
 }
 
-TEST_F(MemoryZoneFinderTest, getFileName) {
+TEST_F(InMemoryZoneFinderTest, getFileName) {
     // for an empty zone the file name should also be empty.
     EXPECT_TRUE(zone_finder_.getFileName().empty());
 
@@ -1039,7 +1044,7 @@ TEST_F(MemoryZoneFinderTest, getFileName) {
     EXPECT_TRUE(zone_finder_.getFileName().empty());
 
     // after a successful load, the specified file name should be set
-    MemoryZoneFinder rootzone(class_, Name("."));
+    InMemoryZoneFinder rootzone(class_, Name("."));
     EXPECT_NO_THROW(rootzone.load(TEST_DATA_DIR "/root.zone"));
     EXPECT_EQ(TEST_DATA_DIR "/root.zone", rootzone.getFileName());
     // overriding load, which will fail
