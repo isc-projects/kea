@@ -644,10 +644,10 @@ InMemoryZoneFinder::load(const string& filename) {
 }
 
 void
-InMemoryZoneFinder::swap(InMemoryZoneFinder& zone) {
+InMemoryZoneFinder::swap(InMemoryZoneFinder& zone_finder) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_SWAP).arg(getOrigin()).
-        arg(zone.getOrigin());
-    std::swap(impl_, zone.impl_);
+        arg(zone_finder.getOrigin());
+    std::swap(impl_, zone_finder.impl_);
 }
 
 const string
@@ -681,16 +681,16 @@ InMemoryClient::getZoneCount() const {
 }
 
 result::Result
-InMemoryClient::addZone(ZoneFinderPtr zone) {
-    if (!zone) {
+InMemoryClient::addZone(ZoneFinderPtr zone_finder) {
+    if (!zone_finder) {
         isc_throw(InvalidParameter,
                   "Null pointer is passed to InMemoryClient::addZone()");
     }
 
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_ADD_ZONE).
-        arg(zone->getOrigin()).arg(zone->getClass().toText());
+        arg(zone_finder->getOrigin()).arg(zone_finder->getClass().toText());
 
-    const result::Result result = impl_->zone_table.addZone(zone);
+    const result::Result result = impl_->zone_table.addZone(zone_finder);
     if (result == result::SUCCESS) {
         ++impl_->zone_count;
     }

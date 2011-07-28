@@ -136,20 +136,21 @@ public:
         // that doesn't block other server operations.
         // TODO: we may (should?) want to check the "last load time" and
         // the timestamp of the file and skip loading if the file isn't newer.
-        shared_ptr<InMemoryZoneFinder> newzone(
-            new InMemoryZoneFinder(oldzone->getClass(), oldzone->getOrigin()));
-        newzone->load(oldzone->getFileName());
-        oldzone->swap(*newzone);
+        shared_ptr<InMemoryZoneFinder> zone_finder(
+            new InMemoryZoneFinder(old_zone_finder->getClass(),
+                                   old_zone_finder->getOrigin()));
+        newzone->load(old_zone_finder->getFileName());
+        old_zone_finder->swap(*newzone);
         LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_LOAD_ZONE)
                   .arg(newzone->getOrigin()).arg(newzone->getClass());
     }
 
 private:
     // zone finder to be updated with the new file.
-    shared_ptr<InMemoryZoneFinder> oldzone;
+    shared_ptr<InMemoryZoneFinder> old_zone_finder;
 
     // A helper private method to parse and validate command parameters.
-    // On success, it sets 'oldzone' to the zone to be updated.
+    // On success, it sets 'old_zone_finder' to the zone to be updated.
     // It returns true if everything is okay; and false if the command is
     // valid but there's no need for further process.
     bool validate(AuthSrv& server, isc::data::ConstElementPtr args) {
@@ -195,7 +196,7 @@ private:
                       " is not found in data source");
         }
 
-        oldzone = boost::dynamic_pointer_cast<InMemoryZoneFinder>(
+        old_zone_finder = boost::dynamic_pointer_cast<InMemoryZoneFinder>(
             result.zone_finder);
 
         return (true);
