@@ -24,6 +24,9 @@ import stats
 import isc.cc.session
 from test_utils import BaseModules, ThreadingServerManager, MyStats, send_command, TIMEOUT_SEC
 
+# set test name for logger 
+isc.log.init("b10-stats_test")
+
 class TestUtilties(unittest.TestCase):
     items = [
         { 'item_name': 'test_int1',  'item_type': 'integer', 'item_default': 12345      },

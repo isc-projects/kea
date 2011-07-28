@@ -156,9 +156,7 @@ class Stats:
         Start stats module
         """
         self.running = True
-        # TODO: should be added into new logging interface
-        # if self.verbose:
-        #     sys.stdout.write("[b10-stats] starting\n")
+        logger.info(STATS_STARTING)
 
         # request Bob to send statistics data
         logger.debug(DBG_STATS_MESSAGING, STATS_SEND_REQUEST_BOSS)
@@ -289,7 +287,7 @@ class Stats:
         """
         handle show command
         """
-        if (owner or name):
+        if owner or name:
             logger.debug(DBG_STATS_MESSAGING,
                          STATS_RECEIVED_SHOW_NAME_COMMAND,
                          str(owner)+", "+str(name))
@@ -314,9 +312,13 @@ class Stats:
         """
         handle show command
         """
-        # TODO: should be added into new logging interface
-        # if self.verbose:
-        #     sys.stdout.write("[b10-stats] 'showschema' command received\n")
+        if owner or name:
+            logger.debug(DBG_STATS_MESSAGING,
+                         STATS_RECEIVED_SHOWSCHEMA_NAME_COMMAND,
+                         str(owner)+", "+str(name))
+        else:
+            logger.debug(DBG_STATS_MESSAGING,
+                         STATS_RECEIVED_SHOWSCHEMA_ALL_COMMAND)
         self.update_modules()
         schema = {}
         schema_byname = {}
@@ -372,10 +374,12 @@ if __name__ == "__main__":
         stats.start()
     except OptionValueError as ove:
         logger.fatal(STATS_BAD_OPTION_VALUE, ove)
+        sys.exit(1)
     except SessionError as se:
         logger.fatal(STATS_CC_SESSION_ERROR, se)
-    # TODO: should be added into new logging interface
+        sys.exit(1)
     except StatsError as se:
-        sys.exit("[b10-stats] %s" % se)
+        logger.fatal(STATS_START_ERROR, se)
+        sys.exit(1)
     except KeyboardInterrupt as kie:
         logger.info(STATS_STOPPED_BY_KEYBOARD)
