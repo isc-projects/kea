@@ -301,8 +301,7 @@ class StatsHttpd:
             # restore old config
             self.load_config(old_config)
             self.open_httpd()
-            return isc.config.ccsession.create_answer(
-                1, "[b10-stats-httpd] %s" % err)
+            return isc.config.ccsession.create_answer(1, str(err))
         else:
             return isc.config.ccsession.create_answer(0)
 
