@@ -211,3 +211,12 @@ TEST(ModuleSpec, CommandValidation) {
     EXPECT_EQ(errors->get(0)->stringValue(), "Type mismatch");
 
 }
+
+TEST(ModuleSpec, NamedSetValidation) {
+    ModuleSpec dd = moduleSpecFromFile(specfile("spec32.spec"));
+
+    ElementPtr errors = Element::createList();
+    EXPECT_TRUE(dataTestWithErrors(dd, "data32_1.data", errors));
+    EXPECT_FALSE(dataTest(dd, "data32_2.data"));
+    EXPECT_FALSE(dataTest(dd, "data32_3.data"));
+}

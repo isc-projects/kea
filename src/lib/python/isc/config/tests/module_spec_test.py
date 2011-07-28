@@ -98,6 +98,9 @@ class TestModuleSpec(unittest.TestCase):
         self.assertEqual(True, self.validate_data("spec22.spec", "data22_6.data"))
         self.assertEqual(True, self.validate_data("spec22.spec", "data22_7.data"))
         self.assertEqual(False, self.validate_data("spec22.spec", "data22_8.data"))
+        self.assertEqual(True, self.validate_data("spec32.spec", "data32_1.data"))
+        self.assertEqual(False, self.validate_data("spec32.spec", "data32_2.data"))
+        self.assertEqual(False, self.validate_data("spec32.spec", "data32_3.data"))
 
     def validate_command_params(self, specfile_name, datafile_name, cmd_name):
         dd = self.read_spec_file(specfile_name);
