@@ -23,6 +23,11 @@
 
 #include <exceptions/exceptions.h>
 
+#include <dns/name.h>
+#include <dns/tsigkey.h>
+#include <dns/tsigrecord.h>
+#include <dns/rdataclass.h>
+
 #include <cc/data.h>
 #include <acl/dns.h>
 #include <acl/loader.h>
@@ -35,6 +40,8 @@
 
 using namespace std;
 using boost::scoped_ptr;
+using namespace isc::dns;
+using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::acl;
 using namespace isc::acl::dns;
@@ -64,8 +71,10 @@ protected:
 };
 
 TEST_F(RequestCheckCreatorTest, names) {
-    ASSERT_EQ(1, creator_.names().size());
-    EXPECT_EQ("from", creator_.names()[0]);
+    const vector<string> names = creator_.names();
+    EXPECT_EQ(2, names.size());
+    EXPECT_TRUE(find(names.begin(), names.end(), "from") != names.end());
+    EXPECT_TRUE(find(names.begin(), names.end(), "key") != names.end());
 }
 
 TEST_F(RequestCheckCreatorTest, allowListAbbreviation) {
@@ -93,17 +102,25 @@ TEST_F(RequestCheckCreatorTest, createIPv6Check) {
     check_ = creator_.create("from",
                              Element::fromJSON("\"2001:db8::5300/120\""),
                              getRequestLoader());
-    const dns::internal::RequestIPCheck& ipcheck_ =
+    const dns::internal::RequestIPCheck& ipcheck =
         dynamic_cast<const dns::internal::RequestIPCheck&>(*check_);
-    EXPECT_EQ(AF_INET6, ipcheck_.getFamily());
-    EXPECT_EQ(120, ipcheck_.getPrefixlen());
-    const vector<uint8_t> check_address(ipcheck_.getAddress());
+    EXPECT_EQ(AF_INET6, ipcheck.getFamily());
+    EXPECT_EQ(120, ipcheck.getPrefixlen());
+    const vector<uint8_t> check_address(ipcheck.getAddress());
     ASSERT_EQ(16, check_address.size());
     const uint8_t expected_address[] = { 0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00,
                                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                          0x00, 0x00, 0x53, 0x00 };
     EXPECT_TRUE(equal(check_address.begin(), check_address.end(),
                       expected_address));
+}
+
+TEST_F(RequestCheckCreatorTest, createTSIGKeyCheck) {
+    check_ = creator_.create("key", Element::fromJSON("\"key.example.com\""),
+                             getRequestLoader());
+    const dns::internal::RequestKeyCheck& keycheck =
+        dynamic_cast<const dns::internal::RequestKeyCheck&>(*check_);
+    EXPECT_EQ(Name("key.example.com"), keycheck.getName());
 }
 
 TEST_F(RequestCheckCreatorTest, badCreate) {
@@ -118,11 +135,22 @@ TEST_F(RequestCheckCreatorTest, badCreate) {
     EXPECT_THROW(creator_.create("from", Element::fromJSON("[]"),
                                  getRequestLoader()),
                  isc::data::TypeError);
+    EXPECT_THROW(creator_.create("key", Element::fromJSON("1"),
+                                 getRequestLoader()),
+                 isc::data::TypeError);
+    EXPECT_THROW(creator_.create("key", Element::fromJSON("{}"),
+                                 getRequestLoader()),
+                 isc::data::TypeError);
 
     // Syntax error for IPCheck
     EXPECT_THROW(creator_.create("from", Element::fromJSON("\"bad\""),
                                  getRequestLoader()),
                  isc::InvalidParameter);
+
+    // Syntax error for Name (key) Check
+    EXPECT_THROW(creator_.create("key", Element::fromJSON("\"bad..name\""),
+                                 getRequestLoader()),
+                 EmptyLabel);
 
     // NULL pointer
     EXPECT_THROW(creator_.create("from", ConstElementPtr(), getRequestLoader()),
@@ -140,23 +168,43 @@ protected:
                                 getRequestLoader()));
     }
 
+    // A helper shortcut to create a single Name (key) check for the given
+    // name.
+    ConstRequestCheckPtr createKeyCheck(const string& key_name) {
+        return (creator_.create("key", Element::fromJSON(
+                                    string("\"") + key_name + string("\"")),
+                                getRequestLoader()));
+    }
+
     // create a one time request context for a specific test.  Note that
     // getSockaddr() uses a static storage, so it cannot be called more than
     // once in a single test.
-    const dns::RequestContext& getRequest4() {
+    const dns::RequestContext& getRequest4(const TSIGRecord* tsig = NULL) {
         ipaddr.reset(new IPAddress(tests::getSockAddr("192.0.2.1")));
-        request.reset(new dns::RequestContext(*ipaddr));
+        request.reset(new dns::RequestContext(*ipaddr, tsig));
         return (*request);
     }
-    const dns::RequestContext& getRequest6() {
+    const dns::RequestContext& getRequest6(const TSIGRecord* tsig = NULL) {
         ipaddr.reset(new IPAddress(tests::getSockAddr("2001:db8::1")));
-        request.reset(new dns::RequestContext(*ipaddr));
+        request.reset(new dns::RequestContext(*ipaddr, tsig));
         return (*request);
+    }
+
+    // create a one time TSIG Record for a specific test.  The only parameter
+    // of the record that matters is the key name; others are hardcoded with
+    // arbitrarily chosen values.
+    const TSIGRecord* getTSIGRecord(const string& key_name) {
+        tsig_rdata.reset(new any::TSIG(TSIGKey::HMACMD5_NAME(), 0, 0, 0, NULL,
+                                       0, 0, 0, NULL));
+        tsig.reset(new TSIGRecord(Name(key_name), *tsig_rdata));
+        return (tsig.get());
     }
 
 private:
     scoped_ptr<IPAddress> ipaddr;
     scoped_ptr<dns::RequestContext> request;
+    scoped_ptr<any::TSIG> tsig_rdata;
+    scoped_ptr<TSIGRecord> tsig;
     dns::internal::RequestCheckCreator creator_;
 };
 
@@ -182,6 +230,24 @@ TEST_F(RequestCheckTest, checkIPv6) {
     EXPECT_TRUE(createIPCheck("2001:db8::/64")->matches(getRequest6()));
     EXPECT_FALSE(createIPCheck("2001:db8:1::/64")->matches(getRequest6()));
     EXPECT_FALSE(createIPCheck("32.1.13.184")->matches(getRequest6()));
+}
+
+TEST_F(RequestCheckTest, checkTSIGKey) {
+    EXPECT_TRUE(createKeyCheck("key.example.com")->matches(
+                    getRequest4(getTSIGRecord("key.example.com"))));
+    EXPECT_FALSE(createKeyCheck("key.example.com")->matches(
+                     getRequest4(getTSIGRecord("badkey.example.com"))));
+
+    // Same for IPv6 (which shouldn't matter)
+    EXPECT_TRUE(createKeyCheck("key.example.com")->matches(
+                    getRequest6(getTSIGRecord("key.example.com"))));
+    EXPECT_FALSE(createKeyCheck("key.example.com")->matches(
+                     getRequest6(getTSIGRecord("badkey.example.com"))));
+
+    // by default the test request doesn't have a TSIG key, which shouldn't
+    // match any key checks.
+    EXPECT_FALSE(createKeyCheck("key.example.com")->matches(getRequest4()));
+    EXPECT_FALSE(createKeyCheck("key.example.com")->matches(getRequest6()));
 }
 
 // The following tests test only the creators are registered, they are tested
