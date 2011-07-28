@@ -1,3 +1,13 @@
+275.	[func]		jinmei
+	Added support for TSIG key matching in ACLs.  The xfrout ACL can
+	now refer to TSIG key names using the "key" attribute.  For
+	example, the following specifies an ACL that allows zone transfer
+	if and only if the request is signed with a TSIG of a key name
+	"key.example":
+	> config set Xfrout/query_acl[0] {"action": "ACCEPT", \
+	                                  "key": "key.example"}
+	(Trac #1104, git 9b2e89cabb6191db86f88ee717f7abc4171fa979)
+
 274.	[bug]		naokikambe
 	add unittests for functions xml_handler, xsd_handler and xsl_handler
 	respectively to make sure their behaviors are correct, regardless of
