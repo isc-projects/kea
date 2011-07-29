@@ -50,8 +50,8 @@ const uint8_t wiredata_srv2[] = {
     0x00, 0x01, 0x00, 0x05, 0x05, 0x78, 0x07, 0x65, 0x78, 0x61, 0x6d,
     0x70, 0x6c, 0x65, 0x03, 0x63, 0x6f, 0x6d, 0x00};
 
-const generic::SRV rdata_srv(srv_txt);
-const generic::SRV rdata_srv2(srv_txt2);
+const in::SRV rdata_srv(srv_txt);
+const in::SRV rdata_srv2(srv_txt2);
 
 TEST_F(Rdata_SRV_Test, createFromText) {
     EXPECT_EQ(1, rdata_srv.getPriority());
@@ -62,30 +62,32 @@ TEST_F(Rdata_SRV_Test, createFromText) {
 
 TEST_F(Rdata_SRV_Test, badText) {
     // priority is too large (2814...6 is 2^48)
-    EXPECT_THROW(generic::SRV("281474976710656 5 1500 a.example.com."),
+    EXPECT_THROW(in::SRV("281474976710656 5 1500 a.example.com."),
                  InvalidRdataText);
     // weight is too large
-    EXPECT_THROW(generic::SRV("1 281474976710656 1500 a.example.com."),
+    EXPECT_THROW(in::SRV("1 281474976710656 1500 a.example.com."),
                  InvalidRdataText);
     // port is too large
-    EXPECT_THROW(generic::SRV("1 5 281474976710656 a.example.com."),
+    EXPECT_THROW(in::SRV("1 5 281474976710656 a.example.com."),
                  InvalidRdataText);
     // incomplete text
-    EXPECT_THROW(generic::SRV("1 5 a.example.com."),
+    EXPECT_THROW(in::SRV("1 5 a.example.com."),
+                 InvalidRdataText);
+    EXPECT_THROW(in::SRV("1 5 1500a.example.com."),
                  InvalidRdataText);
     // bad name
-    EXPECT_THROW(generic::SRV("1 5 1500 a.example.com." + too_long_label),
+    EXPECT_THROW(in::SRV("1 5 1500 a.example.com." + too_long_label),
                  TooLongLabel);
 }
 
 TEST_F(Rdata_SRV_Test, assignment) {
-    generic::SRV copy((string(srv_txt2)));
+    in::SRV copy((string(srv_txt2)));
     copy = rdata_srv;
     EXPECT_EQ(0, copy.compare(rdata_srv));
 
     // Check if the copied data is valid even after the original is deleted
-    generic::SRV* copy2 = new generic::SRV(rdata_srv);
-    generic::SRV copy3((string(srv_txt2)));
+    in::SRV* copy2 = new in::SRV(rdata_srv);
+    in::SRV copy3((string(srv_txt2)));
     copy3 = *copy2;
     delete copy2;
     EXPECT_EQ(0, copy3.compare(rdata_srv));
@@ -148,18 +150,18 @@ TEST_F(Rdata_SRV_Test, toText) {
 
 TEST_F(Rdata_SRV_Test, compare) {
     // test RDATAs, sorted in the ascendent order.
-    vector<generic::SRV> compare_set;
-    compare_set.push_back(generic::SRV("1 5 1500 a.example.com."));
-    compare_set.push_back(generic::SRV("2 5 1500 a.example.com."));
-    compare_set.push_back(generic::SRV("2 6 1500 a.example.com."));
-    compare_set.push_back(generic::SRV("2 6 1600 a.example.com."));
-    compare_set.push_back(generic::SRV("2 6 1600 example.com."));
+    vector<in::SRV> compare_set;
+    compare_set.push_back(in::SRV("1 5 1500 a.example.com."));
+    compare_set.push_back(in::SRV("2 5 1500 a.example.com."));
+    compare_set.push_back(in::SRV("2 6 1500 a.example.com."));
+    compare_set.push_back(in::SRV("2 6 1600 a.example.com."));
+    compare_set.push_back(in::SRV("2 6 1600 example.com."));
 
     EXPECT_EQ(0, compare_set[0].compare(
-                  generic::SRV("1 5 1500 a.example.com.")));
+                  in::SRV("1 5 1500 a.example.com.")));
 
-    vector<generic::SRV>::const_iterator it;
-    vector<generic::SRV>::const_iterator it_end = compare_set.end();
+    vector<in::SRV>::const_iterator it;
+    vector<in::SRV>::const_iterator it_end = compare_set.end();
     for (it = compare_set.begin(); it != it_end - 1; ++it) {
         EXPECT_GT(0, (*it).compare(*(it + 1)));
         EXPECT_LT(0, (*(it + 1)).compare(*it));
