@@ -121,7 +121,7 @@ SRV::SRV(const string& srv_str) :
 /// When a read operation on \c buffer fails (e.g., due to a corrupted
 /// message) a corresponding exception from the \c InputBuffer class will
 /// be thrown.
-/// If the wire-format data does not begin with a valid domain name,
+/// If the wire-format data does not end with a valid domain name,
 /// a corresponding exception from the \c Name class will be thrown.
 /// In addition, this constructor internally involves resource allocation,
 /// and if it fails a corresponding standard exception will be thrown.
