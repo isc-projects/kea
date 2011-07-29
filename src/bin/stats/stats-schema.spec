@@ -54,8 +54,7 @@
         "item_optional": false,
         "item_default": 0.0,
         "item_title": "stats.Timestamp",
-        "item_description": "A current time stamp since epoch time (1970-01-01T00:00:00Z)",
-        "item_format": "second"
+        "item_description": "A current time stamp since epoch time (1970-01-01T00:00:00Z)"
       },
       {
         "item_name": "stats.lname",
