@@ -14,11 +14,7 @@
 
 #include <stdint.h>
 
-#include <string>
-
 #include <dns/name.h>
-#include <dns/rrtype.h>
-#include <dns/rrttl.h>
 #include <dns/rdata.h>
 
 // BEGIN_HEADER_GUARD
@@ -30,21 +26,59 @@
 
 // BEGIN_RDATA_NAMESPACE
 
+/// \brief \c rdata::SRV class represents the SRV RDATA as defined %in
+/// RFC2782.
+///
+/// This class implements the basic interfaces inherited from the abstract
+/// \c rdata::Rdata class, and provides trivial accessors specific to the
+/// SRV RDATA.
+
 struct SRVImpl;
 
 class SRV : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS
+
+    /// \brief Assignment operator.
+    ///
+    /// It internally allocates a resource, and if it fails a corresponding
+    /// standard exception will be thrown.
+    /// This operator never throws an exception otherwise.
+    ///
+    /// This operator provides the strong exception guarantee: When an
+    /// exception is thrown the content of the assignment target will be
+    /// intact.
     SRV& operator=(const SRV& source);
+
+    /// \brief The destructor.
     ~SRV();
 
     ///
     /// Specialized methods
     ///
+
+    /// \brief Return the value of the priority field.
+    ///
+    /// This method never throws an exception.
     uint16_t getPriority() const;
+
+    /// \brief Return the value of the weight field.
+    ///
+    /// This method never throws an exception.
     uint16_t getWeight() const;
+
+    /// \brief Return the value of the port field.
+    ///
+    /// This method never throws an exception.
     uint16_t getPort() const;
+
+    /// \brief Return the value of the target field.
+    ///
+    /// \return A reference to a \c Name class object corresponding to the
+    /// internal target name.
+    ///
+    /// This method never throws an exception.
     const Name& getTarget() const;
 
 private:
