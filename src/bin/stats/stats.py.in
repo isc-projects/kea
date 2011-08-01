@@ -68,12 +68,14 @@ def get_datetime(gmt=None):
     if not gmt: gmt = gmtime()
     return strftime("%Y-%m-%dT%H:%M:%SZ", gmt)
 
-def parse_spec(spec):
+def get_spec_defaults(spec):
     """
-    parse spec type data
+    extracts the default values of the items from spec specified in
+    arg, and returns the dict-type variable which is a set of the item
+    names and the default values
     """
     if type(spec) is not list: return {}
-    def _parse_spec(spec):
+    def _get_spec_defaults(spec):
         item_type = spec['item_type']
         if item_type == "integer":
             return int(spec.get('item_default', 0))
@@ -86,14 +88,14 @@ def parse_spec(spec):
         elif item_type == "list":
             return spec.get(
                     "item_default",
-                    [ _parse_spec(s) for s in spec["list_item_spec"] ])
+                    [ _get_spec_defaults(s) for s in spec["list_item_spec"] ])
         elif item_type == "map":
             return spec.get(
                     "item_default",
-                    dict([ (s["item_name"], _parse_spec(s)) for s in spec["map_item_spec"] ]) )
+                    dict([ (s["item_name"], _get_spec_defaults(s)) for s in spec["map_item_spec"] ]) )
         else:
             return spec.get("item_default", None)
-    return dict([ (s['item_name'], _parse_spec(s)) for s in spec ])
+    return dict([ (s['item_name'], _get_spec_defaults(s)) for s in spec ])
 
 class Callback():
     """
@@ -137,7 +139,7 @@ class Stats:
             name = "command_" + cmd["command_name"]
             try:
                 callback = getattr(self, name)
-                kwargs = parse_spec(cmd["command_args"])
+                kwargs = get_spec_defaults(cmd["command_args"])
                 self.callbacks[name] = Callback(command=callback, kwargs=kwargs)
             except AttributeError:
                 raise StatsError(STATS_UNKNOWN_COMMAND_IN_SPEC, cmd["command_name"])
@@ -248,7 +250,7 @@ class Stats:
         self.update_modules()
         statistics_data = {}
         for (name, module) in self.modules.items():
-            value = parse_spec(module.get_statistics_spec())
+            value = get_spec_defaults(module.get_statistics_spec())
             if module.validate_statistics(True, value):
                 statistics_data[name] = value
         for (name, value) in self.statistics_data.items():
