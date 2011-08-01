@@ -26,15 +26,14 @@
 
 // BEGIN_RDATA_NAMESPACE
 
+struct SRVImpl;
+
 /// \brief \c rdata::SRV class represents the SRV RDATA as defined %in
 /// RFC2782.
 ///
 /// This class implements the basic interfaces inherited from the abstract
 /// \c rdata::Rdata class, and provides trivial accessors specific to the
 /// SRV RDATA.
-
-struct SRVImpl;
-
 class SRV : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
