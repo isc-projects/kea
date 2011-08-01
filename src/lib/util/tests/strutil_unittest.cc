@@ -24,17 +24,9 @@ using namespace isc;
 using namespace isc::util;
 using namespace std;
 
-class StringUtilTest : public ::testing::Test {
-protected:
-    StringUtilTest()
-    {
-    }
-};
-
-
 // Check for slash replacement
 
-TEST_F(StringUtilTest, Slash) {
+TEST(StringUtilTest, Slash) {
 
     string instring = "";
     isc::util::str::normalizeSlash(instring);
@@ -51,7 +43,7 @@ TEST_F(StringUtilTest, Slash) {
 
 // Check that leading and trailing space trimming works
 
-TEST_F(StringUtilTest, Trim) {
+TEST(StringUtilTest, Trim) {
 
     // Empty and full string.
     EXPECT_EQ("", isc::util::str::trim(""));
@@ -73,7 +65,7 @@ TEST_F(StringUtilTest, Trim) {
 // returned vector; if not as expected, the following references may be invalid
 // so should not be used.
 
-TEST_F(StringUtilTest, Tokens) {
+TEST(StringUtilTest, Tokens) {
     vector<string>  result;
 
     // Default delimiters
@@ -159,7 +151,7 @@ TEST_F(StringUtilTest, Tokens) {
 
 // Changing case
 
-TEST_F(StringUtilTest, ChangeCase) {
+TEST(StringUtilTest, ChangeCase) {
     string mixed("abcDEFghiJKLmno123[]{=+--+]}");
     string upper("ABCDEFGHIJKLMNO123[]{=+--+]}");
     string lower("abcdefghijklmno123[]{=+--+]}");
@@ -175,7 +167,7 @@ TEST_F(StringUtilTest, ChangeCase) {
 
 // Formatting
 
-TEST_F(StringUtilTest, Formatting) {
+TEST(StringUtilTest, Formatting) {
 
     vector<string> args;
     args.push_back("arg1");
@@ -216,7 +208,7 @@ TEST_F(StringUtilTest, Formatting) {
     EXPECT_EQ(format9, isc::util::str::format(format9, args));
 }
 
-TEST_F(StringUtilTest, getToken) {
+TEST(StringUtilTest, getToken) {
     string s("a b c");
     istringstream ss(s);
     EXPECT_EQ("a", isc::util::str::getToken(ss));
@@ -233,7 +225,7 @@ int16_t tokenToNumCall_16_8(const string& token) {
     return isc::util::str::tokenToNum<int16_t, 8>(token);
 }
 
-TEST_F(StringUtilTest, tokenToNum) {
+TEST(StringUtilTest, tokenToNum) {
     uint32_t num32 = tokenToNumCall_32_16("0");
     EXPECT_EQ(0, num32);
     num32 = tokenToNumCall_32_16("123");
