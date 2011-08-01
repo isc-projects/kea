@@ -128,7 +128,7 @@ SRV::SRV(const string& srv_str) :
 ///
 /// According to RFC2782, the Target field must be a non compressed form
 /// of domain name.  But this implementation accepts a %SRV RR even if that
-/// field is compressed.
+/// field is compressed as suggested in RFC3597.
 ///
 /// \param buffer A buffer storing the wire format data.
 /// \param rdata_len The length of the RDATA in bytes, normally expected
