@@ -201,23 +201,23 @@ public:
     /// class description).
     ///
     /// The owner name will be compressed if possible, although it's an
-    /// unlikely event in practice because the %Question section a DNS
+    /// unlikely event in practice because the Question section a DNS
     /// message normally doesn't contain multiple question entries and
     /// it's located right after the Header section.
     /// Nevertheless, \c renderer records the information of the owner name
     /// so that it can be pointed by other RRs in other sections (which is
     /// more likely to happen).
     ///
-    /// In theory, an attempt to render a Question may cause truncation
-    /// (when the Question section contains a large number of entries),
-    /// but this implementation doesn't catch that situation.
-    /// It would make the code unnecessarily complicated (though perhaps
-    /// slightly) for almost impossible case in practice.
-    /// An upper layer will handle the pathological case as a general error.
+    /// It could be possible, though very rare in practice, that
+    /// an attempt to render a Question may cause truncation
+    /// (when the Question section contains a large number of entries).
+    /// In such a case this method avoid the rendering and indicate the
+    /// truncation in the \c renderer.  This method returns 0 in this case.
     ///
     /// \param renderer DNS message rendering context that encapsulates the
     /// output buffer and name compression information.
-    /// \return 1
+    ///
+    /// \return 1 on success; 0 if it causes truncation
     unsigned int toWire(AbstractMessageRenderer& renderer) const;
 
     /// \brief Render the Question in the wire format without name compression.

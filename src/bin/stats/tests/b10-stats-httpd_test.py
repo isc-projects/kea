@@ -402,6 +402,95 @@ class TestStatsHttpd(unittest.TestCase):
             )
         self.assertEqual(ret, 1)
 
+    def test_xml_handler(self):
+        orig_get_stats_data = stats_httpd.StatsHttpd.get_stats_data
+        stats_httpd.StatsHttpd.get_stats_data = lambda x: {'foo':'bar'}
+        xml_body1 = stats_httpd.StatsHttpd().open_template(
+            stats_httpd.XML_TEMPLATE_LOCATION).substitute(
+            xml_string='<foo>bar</foo>',
+            xsd_namespace=stats_httpd.XSD_NAMESPACE,
+            xsd_url_path=stats_httpd.XSD_URL_PATH,
+            xsl_url_path=stats_httpd.XSL_URL_PATH)
+        xml_body2 = stats_httpd.StatsHttpd().xml_handler()
+        self.assertEqual(type(xml_body1), str)
+        self.assertEqual(type(xml_body2), str)
+        self.assertEqual(xml_body1, xml_body2)
+        stats_httpd.StatsHttpd.get_stats_data = lambda x: {'bar':'foo'}
+        xml_body2 = stats_httpd.StatsHttpd().xml_handler()
+        self.assertNotEqual(xml_body1, xml_body2)
+        stats_httpd.StatsHttpd.get_stats_data = orig_get_stats_data
+
+    def test_xsd_handler(self):
+        orig_get_stats_spec = stats_httpd.StatsHttpd.get_stats_spec
+        stats_httpd.StatsHttpd.get_stats_spec = lambda x: \
+            [{
+                "item_name": "foo",
+                "item_type": "string",
+                "item_optional": False,
+                "item_default": "bar",
+                "item_description": "foo is bar",
+                "item_title": "Foo"
+               }]
+        xsd_body1 = stats_httpd.StatsHttpd().open_template(
+            stats_httpd.XSD_TEMPLATE_LOCATION).substitute(
+            xsd_string='<all>' \
+                + '<element maxOccurs="1" minOccurs="1" name="foo" type="string">' \
+                + '<annotation><appinfo>Foo</appinfo>' \
+                + '<documentation>foo is bar</documentation>' \
+                + '</annotation></element></all>',
+            xsd_namespace=stats_httpd.XSD_NAMESPACE)
+        xsd_body2 = stats_httpd.StatsHttpd().xsd_handler()
+        self.assertEqual(type(xsd_body1), str)
+        self.assertEqual(type(xsd_body2), str)
+        self.assertEqual(xsd_body1, xsd_body2)
+        stats_httpd.StatsHttpd.get_stats_spec = lambda x: \
+            [{
+                "item_name": "bar",
+                "item_type": "string",
+                "item_optional": False,
+                "item_default": "foo",
+                "item_description": "bar is foo",
+                "item_title": "bar"
+               }]
+        xsd_body2 = stats_httpd.StatsHttpd().xsd_handler()
+        self.assertNotEqual(xsd_body1, xsd_body2)
+        stats_httpd.StatsHttpd.get_stats_spec = orig_get_stats_spec
+
+    def test_xsl_handler(self):
+        orig_get_stats_spec = stats_httpd.StatsHttpd.get_stats_spec
+        stats_httpd.StatsHttpd.get_stats_spec = lambda x: \
+            [{
+                "item_name": "foo",
+                "item_type": "string",
+                "item_optional": False,
+                "item_default": "bar",
+                "item_description": "foo is bar",
+                "item_title": "Foo"
+               }]
+        xsl_body1 = stats_httpd.StatsHttpd().open_template(
+            stats_httpd.XSL_TEMPLATE_LOCATION).substitute(
+            xsl_string='<xsl:template match="*"><tr>' \
+                + '<td class="title" title="foo is bar">Foo</td>' \
+                + '<td><xsl:value-of select="foo" /></td>' \
+                + '</tr></xsl:template>',
+            xsd_namespace=stats_httpd.XSD_NAMESPACE)
+        xsl_body2 = stats_httpd.StatsHttpd().xsl_handler()
+        self.assertEqual(type(xsl_body1), str)
+        self.assertEqual(type(xsl_body2), str)
+        self.assertEqual(xsl_body1, xsl_body2)
+        stats_httpd.StatsHttpd.get_stats_spec = lambda x: \
+            [{
+                "item_name": "bar",
+                "item_type": "string",
+                "item_optional": False,
+                "item_default": "foo",
+                "item_description": "bar is foo",
+                "item_title": "bar"
+               }]
+        xsl_body2 = stats_httpd.StatsHttpd().xsl_handler()
+        self.assertNotEqual(xsl_body1, xsl_body2)
+        stats_httpd.StatsHttpd.get_stats_spec = orig_get_stats_spec
+
     def test_for_without_B10_FROM_SOURCE(self):
         # just lets it go through the code without B10_FROM_SOURCE env
         # variable

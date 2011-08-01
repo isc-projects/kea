@@ -270,6 +270,8 @@ B10_CXXFLAGS="-Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compa
 case "$host" in
 *-solaris*)
 	MULTITHREADING_FLAG=-pthreads
+	# In Solaris, IN6ADDR_ANY_INIT and IN6ADDR_LOOPBACK_INIT need -Wno-missing-braces
+	B10_CXXFLAGS="$B10_CXXFLAGS -Wno-missing-braces"
 	;;
 *)
 	MULTITHREADING_FLAG=-pthread
@@ -902,9 +904,10 @@ AC_OUTPUT([doc/version.ent
            src/bin/zonemgr/run_b10-zonemgr.sh
            src/bin/stats/stats.py
            src/bin/stats/stats_httpd.py
-           src/bin/bind10/bind10.py
+           src/bin/bind10/bind10_src.py
            src/bin/bind10/run_bind10.sh
            src/bin/bind10/tests/bind10_test.py
+           src/bin/bind10/tests/sockcreator_test.py
            src/bin/bindctl/run_bindctl.sh
            src/bin/bindctl/bindctl_main.py
            src/bin/bindctl/tests/bindctl_test

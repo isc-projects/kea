@@ -385,7 +385,14 @@ class StatsHttpd:
             annotation.append(documentation)
             element.append(annotation)
             xsd_root.append(element)
-        xsd_string = xml.etree.ElementTree.tostring(xsd_root)
+        # The coding conversion is tricky. xml..tostring() of Python 3.2
+        # returns bytes (not string) regardless of the coding, while
+        # tostring() of Python 3.1 returns a string.  To support both
+        # cases transparently, we first make sure tostring() returns
+        # bytes by specifying utf-8 and then convert the result to a
+        # plain string (code below assume it).
+        xsd_string = str(xml.etree.ElementTree.tostring(xsd_root, encoding='utf-8'),
+                         encoding='us-ascii')
         self.xsd_body = self.open_template(XSD_TEMPLATE_LOCATION).substitute(
             xsd_string=xsd_string,
             xsd_namespace=XSD_NAMESPACE
@@ -410,7 +417,14 @@ class StatsHttpd:
             tr.append(td1)
             tr.append(td2)
             xsd_root.append(tr)
-        xsl_string = xml.etree.ElementTree.tostring(xsd_root)
+        # The coding conversion is tricky. xml..tostring() of Python 3.2
+        # returns bytes (not string) regardless of the coding, while
+        # tostring() of Python 3.1 returns a string.  To support both
+        # cases transparently, we first make sure tostring() returns
+        # bytes by specifying utf-8 and then convert the result to a
+        # plain string (code below assume it).
+        xsl_string = str(xml.etree.ElementTree.tostring(xsd_root, encoding='utf-8'),
+                         encoding='us-ascii')
         self.xsl_body = self.open_template(XSL_TEMPLATE_LOCATION).substitute(
             xsl_string=xsl_string,
             xsd_namespace=XSD_NAMESPACE)

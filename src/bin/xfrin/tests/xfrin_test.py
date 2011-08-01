@@ -18,6 +18,7 @@ import socket
 import io
 from isc.testutils.tsigctx_mock import MockTSIGContext
 from xfrin import *
+import isc.log
 
 #
 # Commonly used (mostly constant) test parameters
@@ -1115,6 +1116,7 @@ class TestMain(unittest.TestCase):
 
 if __name__== "__main__":
     try:
+        isc.log.resetUnitTestRootLogger()
         unittest.main()
     except KeyboardInterrupt as e:
         print(e)
