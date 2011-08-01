@@ -139,8 +139,8 @@ public:
          *     calls to the connection.
          */
         Finder(DatabaseConnection& connection, int zone_id);
-        virtual const isc::dns::Name& getOrigin() const;
-        virtual const isc::dns::RRClass& getClass() const;
+        virtual isc::dns::Name getOrigin() const;
+        virtual isc::dns::RRClass getClass() const;
         virtual FindResult find(const isc::dns::Name& name,
                                 const isc::dns::RRType& type,
                                 isc::dns::RRsetList* target = NULL,
