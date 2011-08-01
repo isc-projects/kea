@@ -45,8 +45,8 @@ using namespace isc::util::encode;
 
 #include <dns/rdata/generic/detail/ds_like.h>
 
-class DS : public DS_LIKE<DS, 43> {
-    friend class DS_LIKE<DS, 43>;
+class DLV : public DS_LIKE<DLV, 32769> {
+    friend class DS_LIKE<DLV, 32769>;
     static string const id;
 
 public:
@@ -55,37 +55,37 @@ public:
 
 };
 
-///    explicit DS(const std::string& type_str);
-inline DS::DS(const std::string& type_str) : DS_LIKE<DS, 43>(type_str) {}
+///    explicit DLV(const std::string& type_str);
+inline DLV::DLV(const std::string& type_str) : DS_LIKE<DLV, 32769>(type_str) {}
 
-///    DS(isc::util::InputBuffer& buffer, size_t rdata_len);
-inline DS::DS(isc::util::InputBuffer& buffer, size_t rdata_len) : DS_LIKE<DS, 43>(buffer, rdata_len) {}
+///    DLV(isc::util::InputBuffer& buffer, size_t rdata_len);
+inline DLV::DLV(isc::util::InputBuffer& buffer, size_t rdata_len) : DS_LIKE<DLV, 32769>(buffer, rdata_len) {}
 
-///    DS(const DS& other);
-inline DS::DS(const DS& other) : DS_LIKE<DS, 43>(other) {}
+///    DLV(const DLV& other);
+inline DLV::DLV(const DLV& other) : DS_LIKE<DLV, 32769>(other) {}
 
 ///    virtual std::string toText() const;
-inline std::string DS::toText() const
+inline std::string DLV::toText() const
 {
-    return DS_LIKE<DS, 43>::toText();
+    return DS_LIKE<DLV, 32769>::toText();
 }
 
 ///    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-inline void DS::toWire(isc::util::OutputBuffer& buffer) const
+inline void DLV::toWire(isc::util::OutputBuffer& buffer) const
 {
-    DS_LIKE<DS, 43>::toWire(buffer);
+    DS_LIKE<DLV, 32769>::toWire(buffer);
 }
 
 ///    virtual void toWire(AbstractMessageRenderer& renderer) const;
-inline void DS::toWire(AbstractMessageRenderer& renderer) const
+inline void DLV::toWire(AbstractMessageRenderer& renderer) const
 {
-    DS_LIKE<DS, 43>::toWire(renderer);
+    DS_LIKE<DLV, 32769>::toWire(renderer);
 }
 
 ///    virtual int compare(const Rdata& other) const;
-inline int DS::compare(const Rdata& other) const
+inline int DLV::compare(const Rdata& other) const
 {
-    return DS_LIKE<DS, 43>::compare(other);
+    return DS_LIKE<DLV, 32769>::compare(other);
 }
 
 // END_RDATA_NAMESPACE
