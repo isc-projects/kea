@@ -70,7 +70,7 @@ public:
      *     be returned - the ID is only passed back to the connection as
      *     an opaque handle.
      */
-    virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const;
+    virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const = 0;
 };
 
 /**
@@ -146,6 +146,24 @@ public:
                                 isc::dns::RRsetList* target = NULL,
                                 const FindOptions options = FIND_DEFAULT)
             const = 0;
+        /**
+         * \brief The zone ID
+         *
+         * This function provides the stored zone ID as passed to the
+         * constructor. This is meant for testing purposes and normal
+         * applications shouldn't need it.
+         */
+        int zone_id() const { return (zone_id_); }
+        /**
+         * \brief The database connection.
+         *
+         * This function provides the database connection stored inside as
+         * passed to the constructor. This is meant for testing purposes and
+         * normal applications shouldn't need it.
+         */
+        const DatabaseConnection& connection() const {
+            return (connection_);
+        }
     private:
         DatabaseConnection& connection_;
         const int zone_id_;
