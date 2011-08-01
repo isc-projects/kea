@@ -72,7 +72,8 @@ protected:
                                           IOSocket::getDummyUDPSocket(),
                                           *endpoint));
         client.reset(new Client(*query_message));
-        request.reset(new RequestContext(client->getRequestSourceIPAddress()));
+        request.reset(new RequestContext(client->getRequestSourceIPAddress(),
+                                         NULL));
         return (*request);
     }
     void invalidTest(const string &JSON, const string& name);

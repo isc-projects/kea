@@ -74,14 +74,12 @@ class QuestionTest(unittest.TestCase):
         self.assertEqual("foo.example.com. IN NS\n", str(self.test_question1))
         self.assertEqual("bar.example.com. CH A\n", self.test_question2.to_text())
     
-    
     def test_to_wire_buffer(self):
         obuffer = bytes()
         obuffer = self.test_question1.to_wire(obuffer)
         obuffer = self.test_question2.to_wire(obuffer)
         wiredata = read_wire_data("question_toWire1")
         self.assertEqual(obuffer, wiredata)
-    
     
     def test_to_wire_renderer(self):
         renderer = MessageRenderer()
@@ -90,6 +88,14 @@ class QuestionTest(unittest.TestCase):
         wiredata = read_wire_data("question_toWire2")
         self.assertEqual(renderer.get_data(), wiredata)
         self.assertRaises(TypeError, self.test_question1.to_wire, 1)
+
+    def test_to_wire_truncated(self):
+        renderer = MessageRenderer()
+        renderer.set_length_limit(self.example_name1.get_length())
+        self.assertFalse(renderer.is_truncated())
+        self.test_question1.to_wire(renderer)
+        self.assertTrue(renderer.is_truncated())
+        self.assertEqual(0, renderer.get_length())
 
 if __name__ == '__main__':
     unittest.main()

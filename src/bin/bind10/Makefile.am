@@ -1,7 +1,11 @@
 SUBDIRS = . tests
 
 sbin_SCRIPTS = bind10
-CLEANFILES = bind10 bind10.pyc bind10_messages.py bind10_messages.pyc
+CLEANFILES = bind10 bind10_src.pyc bind10_messages.py bind10_messages.pyc \
+	sockcreator.pyc
+
+python_PYTHON = __init__.py sockcreator.py
+pythondir = $(pyexecdir)/bind10
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 pyexec_DATA = bind10_messages.py
@@ -24,9 +28,9 @@ bind10_messages.py: bind10_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message -p $(top_srcdir)/src/bin/bind10/bind10_messages.mes
 
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
-bind10: bind10.py
+bind10: bind10_src.py
 	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" \
-	       -e "s|@@LIBEXECDIR@@|$(pkglibexecdir)|" bind10.py >$@
+	       -e "s|@@LIBEXECDIR@@|$(pkglibexecdir)|" bind10_src.py >$@
 	chmod a+x $@
 
 pytest:
