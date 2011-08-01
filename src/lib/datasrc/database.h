@@ -111,7 +111,7 @@ public:
      *     suggests, the client takes ownership of the connection and will
      *     delete it when itself deleted.
      */
-    DatabaseClient(const std::auto_ptr<DatabaseConnection>& connection);
+    DatabaseClient(std::auto_ptr<DatabaseConnection> connection);
     /**
      * \brief Corresponding ZoneFinder implementation
      *
@@ -145,7 +145,7 @@ public:
                                 const isc::dns::RRType& type,
                                 isc::dns::RRsetList* target = NULL,
                                 const FindOptions options = FIND_DEFAULT)
-            const = 0;
+            const;
         /**
          * \brief The zone ID
          *
