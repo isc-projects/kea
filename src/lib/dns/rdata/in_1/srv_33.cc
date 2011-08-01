@@ -27,6 +27,7 @@
 
 using namespace std;
 using namespace isc::util;
+using namespace isc::util::str;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -72,10 +73,10 @@ SRV::SRV(const string& srv_str) :
     istringstream iss(srv_str);
 
     try {
-        const int32_t priority = str::tokenToNum<int32_t, 16>(str::getToken(iss));
-        const int32_t weight = str::tokenToNum<int32_t, 16>(str::getToken(iss));
-        const int32_t port = str::tokenToNum<int32_t, 16>(str::getToken(iss));
-        const Name targetname(str::getToken(iss));
+        const int32_t priority = tokenToNum<int32_t, 16>(getToken(iss));
+        const int32_t weight = tokenToNum<int32_t, 16>(getToken(iss));
+        const int32_t port = tokenToNum<int32_t, 16>(getToken(iss));
+        const Name targetname(getToken(iss));
 
         if (!iss.eof()) {
             isc_throw(InvalidRdataText, "Unexpected input for SRV RDATA: " <<
@@ -83,7 +84,7 @@ SRV::SRV(const string& srv_str) :
         }
 
         impl_ = new SRVImpl(priority, weight, port, targetname);
-    } catch (str::StringTokenError ste) {
+    } catch (StringTokenError ste) {
         isc_throw(InvalidRdataText, "Invalid SRV text: " <<
                   ste.what() << ": " << srv_str);
     }
