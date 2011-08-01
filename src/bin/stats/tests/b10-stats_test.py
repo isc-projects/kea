@@ -191,7 +191,7 @@ class TestStats(unittest.TestCase):
 
     def test_start_with_err(self):
         statsd = stats.Stats()
-        statsd.update_statistics_data = lambda x,**y: [1]
+        statsd.update_statistics_data = lambda x,**y: ['an error']
         self.assertRaises(stats.StatsError, statsd.start)
 
     def test_config_handler(self):
