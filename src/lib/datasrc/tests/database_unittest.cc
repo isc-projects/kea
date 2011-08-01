@@ -15,6 +15,7 @@
 #include <gtest/gtest.h>
 
 #include <dns/name.h>
+#include <exceptions/exceptions.h>
 
 #include <datasrc/database.h>
 
@@ -88,6 +89,11 @@ TEST_F(DatabaseClientTest, superZone) {
         "sub.example.org")));
     EXPECT_EQ(result::PARTIALMATCH, zone.code);
     checkZoneFinder(zone);
+}
+
+TEST_F(DatabaseClientTest, noConnException) {
+    EXPECT_THROW(DatabaseClient(auto_ptr<DatabaseConnection>()),
+                 isc::InvalidParameter);
 }
 
 }
