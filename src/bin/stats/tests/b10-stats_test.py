@@ -56,9 +56,9 @@ class TestUtilties(unittest.TestCase):
         { 'item_name': 'test_none',  'item_type': 'none'    }
         ]
 
-    def test_parse_spec(self):
+    def test_get_spec_defaults(self):
         self.assertEqual(
-            stats.parse_spec(self.items), {
+            stats.get_spec_defaults(self.items), {
                 'test_int1'  : 12345              ,
                 'test_real1' : 12345.6789         ,
                 'test_bool1' : True               ,
@@ -72,8 +72,8 @@ class TestUtilties(unittest.TestCase):
                 'test_list2' : [0,0,0],
                 'test_map2'  : { 'A' : 0, 'B' : 0, 'C' : 0 },
                 'test_none'  : None })
-        self.assertEqual(stats.parse_spec(None), {})
-        self.assertRaises(KeyError, stats.parse_spec, [{'item_name':'Foo'}])
+        self.assertEqual(stats.get_spec_defaults(None), {})
+        self.assertRaises(KeyError, stats.get_spec_defaults, [{'item_name':'Foo'}])
 
     def test_get_timestamp(self):
         self.assertEqual(stats.get_timestamp(), 1308730448.965706)
@@ -280,7 +280,7 @@ class TestStats(unittest.TestCase):
         self.assertTrue('Stats' in self.stats.modules)
         self.assertTrue('Boss' in self.stats.modules)
         self.assertFalse('Dummy' in self.stats.modules)
-        my_statistics_data = stats.parse_spec(self.stats.modules['Stats'].get_statistics_spec())
+        my_statistics_data = stats.get_spec_defaults(self.stats.modules['Stats'].get_statistics_spec())
         self.assertTrue('report_time' in my_statistics_data)
         self.assertTrue('boot_time' in my_statistics_data)
         self.assertTrue('last_update_time' in my_statistics_data)
@@ -291,7 +291,7 @@ class TestStats(unittest.TestCase):
         self.assertEqual(my_statistics_data['last_update_time'], "1970-01-01T00:00:00Z")
         self.assertEqual(my_statistics_data['timestamp'], 0.0)
         self.assertEqual(my_statistics_data['lname'], "")
-        my_statistics_data = stats.parse_spec(self.stats.modules['Boss'].get_statistics_spec())
+        my_statistics_data = stats.get_spec_defaults(self.stats.modules['Boss'].get_statistics_spec())
         self.assertTrue('boot_time' in my_statistics_data)
         self.assertEqual(my_statistics_data['boot_time'], "1970-01-01T00:00:00Z")
 
