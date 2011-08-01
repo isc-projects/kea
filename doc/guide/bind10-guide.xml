@@ -1603,24 +1603,19 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
         </para>
 
-        <para>
+        <section>
+          <title>name (string)</title>
 
-name (string)
-
-        </para>
-
-        <para>
-
+          <para>
 	  Each logger in the system has a name, the name being that
 	  of the component using it to log messages. For instance,
 	  if you want to configure logging for the resolver module,
 	  you add an entry for a logger named 'Resolver'. This
 	  configuration will then be used by the loggers in the
 	  Resolver module, and all the libraries used by it.
+              </para>
 
 <!-- TODO: how to know these names? -->
-
-        </para>
 
         <para>
 
@@ -1691,11 +1686,10 @@ name (string)
 
         </para>
 
-        <para>
+        </section>
 
-severity (string)
-
-        </para>
+        <section>
+          <title>severity (string)</title>
 
         <para>
 
@@ -1708,14 +1702,39 @@ severity (string)
 	  Each message is logged with an associated severity which
 	  may be one of the following (in descending order of
 	  severity):
-
-    FATAL
-    ERROR
-    WARN
-    INFO
-    DEBUG
-
         </para>
+
+<itemizedlist>
+<listitem>
+<simpara>
+    FATAL
+</simpara>
+</listitem>
+
+<listitem>
+<simpara>
+    ERROR
+</simpara>
+</listitem>
+
+<listitem>
+<simpara>
+    WARN
+</simpara>
+</listitem>
+
+<listitem>
+<simpara>
+    INFO
+</simpara>
+</listitem>
+
+<listitem>
+<simpara>
+    DEBUG
+</simpara>
+</listitem>
+</itemizedlist>
 
         <para>
 
@@ -1729,11 +1748,10 @@ severity (string)
 
         </para>
 
-        <para>
+        </section>
 
-output_options (list)
-
-        </para>
+        <section>
+          <title>output_options (list)</title>
 
         <para>
 
@@ -1749,11 +1767,10 @@ output_options (list)
 
         </para>
 
-        <para>
+        </section>
 
-debuglevel (integer)
-
-        </para>
+        <section>
+          <title>debuglevel (integer)</title>
 
         <para>
 
@@ -1774,11 +1791,10 @@ debuglevel (integer)
 
         </para>
 
-        <para>
+        </section>
 
-additive (true or false)
-
-        </para>
+        <section>
+          <title>additive (true or false)</title>
 
         <para>
 
@@ -1796,6 +1812,8 @@ additive (true or false)
 
       </section>
 
+      </section>
+
       <section>
         <title>Output Options</title>
 
@@ -1807,11 +1825,8 @@ additive (true or false)
 
         </para>
 
-        <para>
-
-destination (string)
-
-        </para>
+        <section>
+          <title>destination (string)</title>
 
         <para>
 
@@ -1819,19 +1834,36 @@ destination (string)
 
         </para>
 
-        <para>
+<!-- TODO: itemized list -->
 
-    * console
-    * file
-    * syslog
+<itemizedlist>
 
-        </para>
+<listitem>
+<simpara>
+    console
+</simpara>
+</listitem>
 
-        <para>
+<listitem>
+<simpara>
+   file
+</simpara>
+</listitem>
 
-output (string)
+<listitem>
+<simpara>
+    syslog
+</simpara>
+</listitem>
 
-        </para>
+</itemizedlist>
+
+
+
+        </section>
+
+        <section>
+          <title>output (string)</title>
 
         <para>
 
@@ -1840,30 +1872,38 @@ output (string)
 
         </para>
 
-        <para>
+        <variablelist>
 
-    * destination is 'console'
-
+          <varlistentry>
+            <term>destination is 'console'</term>
+            <listitem>
+              <simpara>
       'output' must be one of 'stdout' (messages printed to standard output) or 'stderr' (messages printed to standard error).
+              </simpara>
+            </listitem>
+          </varlistentry>
 
-        </para>
 
-        <para>
-
-    * destination is 'file'
-
+          <varlistentry>
+            <term>destination is 'file'</term>
+            <listitem>
+              <simpara>
       The value of output is interpreted as a file name; log messages will be appended to this file.
+              </simpara>
+            </listitem>
+          </varlistentry>
 
 
-        </para>
-
-        <para>
-
-    * destination is 'syslog'
-
+          <varlistentry>
+            <term>destination is 'syslog'</term>
+            <listitem>
+              <simpara>
       The value of output is interpreted as the syslog facility (e.g. 'local0') that should be used for log messages.
+              </simpara>
+            </listitem>
+          </varlistentry>
 
-        </para>
+        </variablelist>
 
         <para>
 
@@ -1871,11 +1911,10 @@ output (string)
 
         </para>
 
-        <para>
+        </section>
 
-flush (true of false)
-
-        </para>
+        <section>
+          <title>flush (true of false)</title>
 
         <para>
 
@@ -1886,11 +1925,10 @@ flush (true of false)
 
         </para>
 
-        <para>
+        </section>
 
-maxsize (integer)
-
-        </para>
+        <section>
+          <title>maxsize (integer)</title>
 
         <para>
 
@@ -1908,11 +1946,10 @@ maxsize (integer)
 
         </para>
 
-        <para>
+        </section>
 
-maxver (integer)
-
-        </para>
+        <section>
+          <title>maxver (integer)</title>
 
         <para>
 
@@ -1921,6 +1958,7 @@ maxver (integer)
 	  if 'file'.
 
       </para>
+        </section>
 
       </section>
 
