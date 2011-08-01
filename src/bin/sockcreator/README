@@ -3,7 +3,7 @@ The socket creator
 
 The only thing we need higher rights than standard user is binding sockets to
 ports lower than 1024. So we will have a separate process that keeps the
-rights, while the rests drop them for security reasons.
+rights, while the rest drops them for security reasons.
 
 This process is the socket creator. Its goal is to be as simple as possible
 and to contain as little code as possible to minimise the amount of code

@@ -48,6 +48,9 @@ except ImportError as e:
     # must keep running, so we warn about it and move forward.
     log.error(XFROUT_IMPORT, str(e))
 
+from isc.acl.acl import ACCEPT, REJECT, DROP
+from isc.acl.dns import REQUEST_LOADER
+
 isc.util.process.rename()
 
 def init_paths():
@@ -92,16 +95,16 @@ def get_rrset_len(rrset):
 
 
 class XfroutSession():
-    def __init__(self, sock_fd, request_data, server, tsig_key_ring):
-        # The initializer for the superclass may call functions
-        # that need _log to be set, so we set it first
+    def __init__(self, sock_fd, request_data, server, tsig_key_ring, remote,
+                 acl):
         self._sock_fd = sock_fd
         self._request_data = request_data
         self._server = server
-        #self._log = log
         self._tsig_key_ring = tsig_key_ring
         self._tsig_ctx = None
         self._tsig_len = 0
+        self._remote = remote
+        self._acl = acl
         self.handle()
 
     def create_tsig_ctx(self, tsig_record, tsig_key_ring):
@@ -114,7 +117,7 @@ class XfroutSession():
             self.dns_xfrout_start(self._sock_fd, self._request_data)
             #TODO, avoid catching all exceptions
         except Exception as e:
-            logger.error(XFROUT_HANDLE_QUERY_ERROR, str(e))
+            logger.error(XFROUT_HANDLE_QUERY_ERROR, e)
             pass
 
         os.close(self._sock_fd)
@@ -141,8 +144,26 @@ class XfroutSession():
             # TSIG related checks
             rcode = self._check_request_tsig(msg, mdata)
 
+            if rcode == Rcode.NOERROR():
+                # ACL checks
+                acl_result = self._acl.execute(
+                    isc.acl.dns.RequestContext(self._remote,
+                                               msg.get_tsig_record()))
+                if acl_result == DROP:
+                    logger.info(XFROUT_QUERY_DROPPED,
+                                self._get_query_zone_name(msg),
+                                self._get_query_zone_class(msg),
+                                self._remote[0], self._remote[1])
+                    return None, None
+                elif acl_result == REJECT:
+                    logger.info(XFROUT_QUERY_REJECTED,
+                                self._get_query_zone_name(msg),
+                                self._get_query_zone_class(msg),
+                                self._remote[0], self._remote[1])
+                    return Rcode.REFUSED(), msg
+
         except Exception as err:
-            logger.error(XFROUT_PARSE_QUERY_ERROR, str(err))
+            logger.error(XFROUT_PARSE_QUERY_ERROR, err)
             return Rcode.FORMERR(), None
 
         return rcode, msg
@@ -183,18 +204,11 @@ class XfroutSession():
 
 
     def _reply_query_with_error_rcode(self, msg, sock_fd, rcode_):
-        msg.make_response()
-        msg.set_rcode(rcode_)
-        self._send_message(sock_fd, msg, self._tsig_ctx)
-
-
-    def _reply_query_with_format_error(self, msg, sock_fd):
-        '''query message format isn't legal.'''
         if not msg:
             return # query message is invalid. send nothing back.
 
         msg.make_response()
-        msg.set_rcode(Rcode.FORMERR())
+        msg.set_rcode(rcode_)
         self._send_message(sock_fd, msg, self._tsig_ctx)
 
     def _zone_has_soa(self, zone):
@@ -244,10 +258,13 @@ class XfroutSession():
     def dns_xfrout_start(self, sock_fd, msg_query):
         rcode_, msg = self._parse_query_message(msg_query)
         #TODO. create query message and parse header
-        if rcode_ == Rcode.NOTAUTH():
+        if rcode_ is None: # Dropped by ACL
+            return
+        elif rcode_ == Rcode.NOTAUTH() or rcode_ == Rcode.REFUSED():
             return self._reply_query_with_error_rcode(msg, sock_fd, rcode_)
         elif rcode_ != Rcode.NOERROR():
-            return self._reply_query_with_format_error(msg, sock_fd)
+            return self._reply_query_with_error_rcode(msg, sock_fd,
+                                                      Rcode.FORMERR())
 
         zone_name = self._get_query_zone_name(msg)
         zone_class_str = self._get_query_zone_class(msg)
@@ -257,7 +274,7 @@ class XfroutSession():
         if rcode_ != Rcode.NOERROR():
             logger.info(XFROUT_AXFR_TRANSFER_FAILED, zone_name,
                         zone_class_str, rcode_.to_text())
-            return self. _reply_query_with_error_rcode(msg, sock_fd, rcode_)
+            return self._reply_query_with_error_rcode(msg, sock_fd, rcode_)
 
         try:
             logger.info(XFROUT_AXFR_TRANSFER_STARTED, zone_name, zone_class_str)
@@ -375,13 +392,19 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         self._sock_file = sock_file
         socketserver_mixin.NoPollMixIn.__init__(self)
         ThreadingUnixStreamServer.__init__(self, sock_file, handle_class)
-        self._lock = threading.Lock()
-        self._transfers_counter = 0
         self._shutdown_event = shutdown_event
         self._write_sock, self._read_sock = socket.socketpair()
-        #self._log = log
+        self._common_init()
         self.update_config_data(config_data)
         self._cc = cc
+
+    def _common_init(self):
+        self._lock = threading.Lock()
+        self._transfers_counter = 0
+        # This default value will probably get overwritten by the (same)
+        # default value from the spec file. This is here just to make
+        # sure and to make the default value in tests consistent.
+        self._acl = REQUEST_LOADER.load('[{"action": "ACCEPT"}]')
 
     def _receive_query_message(self, sock):
         ''' receive request message from sock'''
@@ -465,10 +488,28 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
             t.daemon = True
         t.start()
 
+    def _guess_remote(self, sock_fd):
+        """
+           Guess remote address and port of the socket. The sock_fd must be a
+           socket
+        """
+        # This uses a trick. If the socket is IPv4 in reality and we pretend
+        # it to be IPv6, it returns IPv4 address anyway. This doesn't seem
+        # to care about the SOCK_STREAM parameter at all (which it really is,
+        # except for testing)
+        if socket.has_ipv6:
+            sock = socket.fromfd(sock_fd, socket.AF_INET6, socket.SOCK_STREAM)
+        else:
+            # To make it work even on hosts without IPv6 support
+            # (Any idea how to simulate this in test?)
+            sock = socket.fromfd(sock_fd, socket.AF_INET, socket.SOCK_STREAM)
+        return sock.getpeername()
 
     def finish_request(self, sock_fd, request_data):
         '''Finish one request by instantiating RequestHandlerClass.'''
-        self.RequestHandlerClass(sock_fd, request_data, self, self.tsig_key_ring)
+        self.RequestHandlerClass(sock_fd, request_data, self,
+                                 self.tsig_key_ring,
+                                 self._guess_remote(sock_fd), self._acl)
 
     def _remove_unused_sock_file(self, sock_file):
         '''Try to remove the socket file. If the file is being used
@@ -512,6 +553,8 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
     def update_config_data(self, new_config):
         '''Apply the new config setting of xfrout module. '''
         logger.info(XFROUT_NEW_CONFIG)
+        if 'query_acl' in new_config:
+            self._acl = REQUEST_LOADER.load(new_config['query_acl'])
         self._lock.acquire()
         self._max_transfers_out = new_config.get('transfers_out')
         self.set_tsig_key_ring(new_config.get('tsig_key_ring'))
@@ -563,16 +606,12 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
 class XfroutServer:
     def __init__(self):
         self._unix_socket_server = None
-        #self._log = None
         self._listen_sock_file = UNIX_SOCKET_FILE
         self._shutdown_event = threading.Event()
         self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
         self._config_data = self._cc.get_full_config()
         self._cc.start()
         self._cc.add_remote_config(AUTH_SPECFILE_LOCATION);
-        #self._log = isc.log.NSLogger(self._config_data.get('log_name'), self._config_data.get('log_file'),
-        #                        self._config_data.get('log_severity'), self._config_data.get('log_versions'),
-        #                        self._config_data.get('log_max_bytes'), True)
         self._start_xfr_query_listener()
         self._start_notifier()
 
@@ -601,11 +640,13 @@ class XfroutServer:
                 continue
             self._config_data[key] = new_config[key]
 
-        #if self._log:
-        #    self._log.update_config(new_config)
-
         if self._unix_socket_server:
-            self._unix_socket_server.update_config_data(self._config_data)
+            try:
+                self._unix_socket_server.update_config_data(self._config_data)
+            except Exception as e:
+                answer = create_answer(1,
+                                       "Failed to handle new configuration: " +
+                                       str(e))
 
         return answer
 

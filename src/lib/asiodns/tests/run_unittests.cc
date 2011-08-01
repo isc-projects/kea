@@ -15,14 +15,14 @@
 #include <gtest/gtest.h>
 #include <util/unittests/run_all.h>
 
-#include <log/logger_manager.h>
+#include <log/logger_support.h>
 #include <dns/tests/unittest_util.h>
 
 int
 main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest(&argc, argv);         // Initialize Google test
-    isc::log::LoggerManager::init("unittest");      // Set a root logger name
+    isc::log::initLogger();                         // Initialize logging
     isc::UnitTestUtil::addDataPath(TEST_DATA_DIR);  // Add location of test data
 
     return (isc::util::unittests::run_all());

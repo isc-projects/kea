@@ -20,15 +20,20 @@
 
 #include <exceptions/exceptions.h>
 
+#include <dns/name.h>
+#include <dns/tsigrecord.h>
+
 #include <cc/data.h>
 
 #include <acl/dns.h>
 #include <acl/ip_check.h>
+#include <acl/dnsname_check.h>
 #include <acl/loader.h>
 #include <acl/logic_check.h>
 
 using namespace std;
 using boost::shared_ptr;
+using namespace isc::dns;
 using namespace isc::data;
 
 namespace isc {
@@ -39,9 +44,6 @@ namespace acl {
 /// It returns \c true if the remote (source) IP address of the request
 /// matches the expression encapsulated in the \c IPCheck, and returns
 /// \c false if not.
-///
-/// \note The match logic is expected to be extended as we add
-/// more match parameters (at least there's a plan for TSIG key).
 template <>
 bool
 IPCheck<dns::RequestContext>::matches(
@@ -53,6 +55,18 @@ IPCheck<dns::RequestContext>::matches(
 
 namespace dns {
 
+/// The specialization of \c NameCheck for access control with
+/// \c RequestContext.
+///
+/// It returns \c true if the request contains a TSIG record and its key
+/// (owner) name is equal to the name stored in the check; otherwise
+/// it returns \c false.
+template<>
+bool
+NameCheck<RequestContext>::matches(const RequestContext& request) const {
+    return (request.tsig != NULL && request.tsig->getName() == name_);
+}
+
 vector<string>
 internal::RequestCheckCreator::names() const {
     // Probably we should eventually build this vector in a more
@@ -60,6 +74,7 @@ internal::RequestCheckCreator::names() const {
     // everything.
     vector<string> supported_names;
     supported_names.push_back("from");
+    supported_names.push_back("key");
     return (supported_names);
 }
 
@@ -77,6 +92,10 @@ internal::RequestCheckCreator::create(const string& name,
     if (name == "from") {
         return (shared_ptr<internal::RequestIPCheck>(
                     new internal::RequestIPCheck(definition->stringValue())));
+    } else if (name == "key") {
+        return (shared_ptr<internal::RequestKeyCheck>(
+                    new internal::RequestKeyCheck(
+                        Name(definition->stringValue()))));
     } else {
         // This case shouldn't happen (normally) as it should have been
         // rejected at the loader level.  But we explicitly catch the case

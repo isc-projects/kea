@@ -20,6 +20,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <log/logger_level_impl.h>
+#include <log/logger_support.h>
 #include <log4cplus/logger.h>
 
 using namespace isc::log;
@@ -27,8 +28,10 @@ using namespace std;
 
 class LoggerLevelImplTest : public ::testing::Test {
 protected:
-    LoggerLevelImplTest()
-    {}
+    LoggerLevelImplTest() {
+        // Ensure logging set to default for unit tests
+        resetUnitTestRootLogger();
+    }
 
     ~LoggerLevelImplTest()
     {}

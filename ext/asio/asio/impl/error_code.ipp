@@ -11,6 +11,9 @@
 #ifndef ASIO_IMPL_ERROR_CODE_IPP
 #define ASIO_IMPL_ERROR_CODE_IPP
 
+// strerror() needs <cstring>
+#include <cstring>
+
 #if defined(_MSC_VER) && (_MSC_VER >= 1200)
 # pragma once
 #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)

@@ -14,7 +14,7 @@
 
 // Enable this if you use s# variants with PyArg_ParseTuple(), see
 // http://docs.python.org/py3k/c-api/arg.html#strings-and-buffers
-//#define PY_SSIZE_T_CLEAN
+#define PY_SSIZE_T_CLEAN
 
 // Python.h needs to be placed at the head of the program file, see:
 // http://docs.python.org/py3k/extending/extending.html#a-simple-example
@@ -37,7 +37,15 @@
 
 #include <exceptions/exceptions.h>
 
+#include <util/buffer.h>
 #include <util/python/pycppwrapper_util.h>
+
+#include <dns/name.h>
+#include <dns/rrclass.h>
+#include <dns/rrtype.h>
+#include <dns/rrttl.h>
+#include <dns/rdata.h>
+#include <dns/tsigrecord.h>
 
 #include <acl/dns.h>
 #include <acl/ip_check.h>
@@ -49,6 +57,8 @@ using namespace std;
 using boost::scoped_ptr;
 using boost::lexical_cast;
 using namespace isc;
+using namespace isc::dns;
+using namespace isc::dns::rdata;
 using namespace isc::util::python;
 using namespace isc::acl::dns;
 using namespace isc::acl::dns::python;
@@ -59,11 +69,39 @@ namespace dns {
 namespace python {
 
 struct s_RequestContext::Data {
-    // The constructor.  Currently it only accepts the information of the
-    // request source address, and contains all necessary logic in the body
-    // of the constructor.  As it's extended we may have refactor it by
-    // introducing helper methods.
-    Data(const char* const remote_addr, const unsigned short remote_port) {
+    // The constructor.
+    Data(const char* const remote_addr, const unsigned short remote_port,
+         const char* tsig_data, const Py_ssize_t tsig_len)
+    {
+        createRemoteAddr(remote_addr, remote_port);
+        createTSIGRecord(tsig_data, tsig_len);
+    }
+
+    // A convenient type converter from sockaddr_storage to sockaddr
+    const struct sockaddr& getRemoteSockaddr() const {
+        const void* p = &remote_ss;
+        return (*static_cast<const struct sockaddr*>(p));
+    }
+
+    // The remote (source) IP address of the request.  Note that it needs
+    // a reference to remote_ss.  That's why the latter is stored within
+    // this structure.
+    scoped_ptr<IPAddress> remote_ipaddr;
+
+    // The effective length of remote_ss.  It's necessary for getnameinfo()
+    // called from sockaddrToText (__str__ backend).
+    socklen_t remote_salen;
+
+    // The TSIG record included in the request, if any.  If the request
+    // doesn't contain a TSIG, this will be NULL.
+    scoped_ptr<TSIGRecord> tsig_record;
+
+private:
+    // A helper method for the constructor that is responsible for constructing
+    // the remote address.
+    void createRemoteAddr(const char* const remote_addr,
+                          const unsigned short remote_port)
+    {
         struct addrinfo hints, *res;
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_UNSPEC;
@@ -85,20 +123,31 @@ struct s_RequestContext::Data {
         remote_ipaddr.reset(new IPAddress(getRemoteSockaddr()));
     }
 
-    // A convenient type converter from sockaddr_storage to sockaddr
-    const struct sockaddr& getRemoteSockaddr() const {
-        const void* p = &remote_ss;
-        return (*static_cast<const struct sockaddr*>(p));
+    // A helper method for the constructor that is responsible for constructing
+    // the request TSIG.
+    void createTSIGRecord(const char* tsig_data, const Py_ssize_t tsig_len) {
+        if (tsig_len == 0) {
+            return;
+        }
+
+        // Re-construct the TSIG record from the passed binary.  This should
+        // normally succeed because we are generally expected to be called
+        // from the frontend .py, which converts a valid TSIGRecord in its
+        // wire format.  If some evil or buggy python program directly calls
+        // us with bogus data, validation in libdns++ will trigger an
+        // exception, which will be caught and converted to a Python exception
+        // in RequestContext_init().
+        isc::util::InputBuffer b(tsig_data, tsig_len);
+        const Name key_name(b);
+        const RRType tsig_type(b.readUint16());
+        const RRClass tsig_class(b.readUint16());
+        const RRTTL ttl(b.readUint32());
+        const size_t rdlen(b.readUint16());
+        const ConstRdataPtr rdata = createRdata(tsig_type, tsig_class, b,
+                                                rdlen);
+        tsig_record.reset(new TSIGRecord(key_name, tsig_class, ttl,
+                                         *rdata, 0));
     }
-
-    // The remote (source) IP address the request.  Note that it needs
-    // a reference to remote_ss.  That's why the latter is stored within
-    // this structure.
-    scoped_ptr<IPAddress> remote_ipaddr;
-
-    // The effective length of remote_ss.  It's necessary for getnameinf()
-    // called from sockaddrToText (__str__ backend).
-    socklen_t remote_salen;
 
 private:
     struct sockaddr_storage remote_ss;
@@ -145,31 +194,41 @@ RequestContext_init(PyObject* po_self, PyObject* args, PyObject*) {
     s_RequestContext* const self = static_cast<s_RequestContext*>(po_self);
 
     try {
-        // In this initial implementation, the constructor is simply: It
-        // takes a single parameter, which should be a Python socket address
-        // object.  For IPv4, it's ('address test', numeric_port); for IPv6,
+        // In this initial implementation, the constructor is simple: It
+        // takes two parameters.  The first parameter should be a Python
+        // socket address object.
+        // For IPv4, it's ('address test', numeric_port); for IPv6,
         // it's ('address text', num_port, num_flowid, num_zoneid).
+        // The second parameter is wire-format TSIG record in the form of
+        // Python byte data.  If the TSIG isn't included in the request,
+        // its length will be 0.
         // Below, we parse the argument in the most straightforward way.
         // As the constructor becomes more complicated, we should probably
         // make it more structural (for example, we should first retrieve
-        // the socket address as a PyObject, and parse it recursively)
+        // the python objects, and parse them recursively)
 
         const char* remote_addr;
         unsigned short remote_port;
         unsigned int remote_flowinfo; // IPv6 only, unused here
         unsigned int remote_zoneid; // IPv6 only, unused here
+        const char* tsig_data;
+        Py_ssize_t tsig_len;
 
-        if (PyArg_ParseTuple(args, "(sH)", &remote_addr, &remote_port) ||
-            PyArg_ParseTuple(args, "(sHII)", &remote_addr, &remote_port,
-                             &remote_flowinfo, &remote_zoneid))
+        if (PyArg_ParseTuple(args, "(sH)y#", &remote_addr, &remote_port,
+                             &tsig_data, &tsig_len) ||
+            PyArg_ParseTuple(args, "(sHII)y#", &remote_addr, &remote_port,
+                             &remote_flowinfo, &remote_zoneid,
+                             &tsig_data, &tsig_len))
         {
-            // We need to clear the error in case the first call to PareTuple
+            // We need to clear the error in case the first call to ParseTuple
             // fails.
             PyErr_Clear();
 
             auto_ptr<s_RequestContext::Data> dataptr(
-                new s_RequestContext::Data(remote_addr, remote_port));
-            self->cppobj = new RequestContext(*dataptr->remote_ipaddr);
+                new s_RequestContext::Data(remote_addr, remote_port,
+                                           tsig_data, tsig_len));
+            self->cppobj = new RequestContext(*dataptr->remote_ipaddr,
+                                              dataptr->tsig_record.get());
             self->data_ = dataptr.release();
             return (0);
         }
@@ -224,7 +283,11 @@ RequestContext_str(PyObject* po_self) {
         objss << "<" << requestcontext_type.tp_name << " object, "
               << "remote_addr="
               << sockaddrToText(self->data_->getRemoteSockaddr(),
-                                self->data_->remote_salen) << ">";
+                                self->data_->remote_salen);
+        if (self->data_->tsig_record) {
+            objss << ", key=" << self->data_->tsig_record->getName();
+        }
+        objss << ">";
         return (Py_BuildValue("s", objss.str().c_str()));
     } catch (const exception& ex) {
         const string ex_what =
@@ -248,7 +311,7 @@ namespace python {
 // Most of the functions are not actually implemented and NULL here.
 PyTypeObject requestcontext_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "isc.acl.dns.RequestContext",
+    "isc.acl._dns.RequestContext",
     sizeof(s_RequestContext),                 // tp_basicsize
     0,                                  // tp_itemsize
     RequestContext_destroy,             // tp_dealloc
@@ -266,7 +329,7 @@ PyTypeObject requestcontext_type = {
     NULL,                               // tp_getattro
     NULL,                               // tp_setattro
     NULL,                               // tp_as_buffer
-    Py_TPFLAGS_DEFAULT,                 // tp_flags
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, // tp_flags
     RequestContext_doc,
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
