@@ -165,7 +165,8 @@ class Stats:
             boot_time=get_datetime(_BASETIME)
             )
         if errors:
-            raise StatsError("stats spec file is incorrect")
+            raise StatsError("stats spec file is incorrect: "
+                             + ", ".join(errors))
 
         while self.running:
             self.mccs.check_command(False)
@@ -293,7 +294,9 @@ class Stats:
             timestamp=get_timestamp(),
             report_time=get_datetime()
             )
-        if errors: raise StatsError("stats spec file is incorrect")
+        if errors:
+            raise StatsError("stats spec file is incorrect: "
+                             + ", ".join(errors))
         ret = self.get_statistics_data(owner, name)
         if ret is not None:
             return isc.config.create_answer(0, ret)
@@ -352,7 +355,8 @@ class Stats:
         errors = self.update_statistics_data(
             self.module_name, last_update_time=get_datetime() )
         if errors:
-            raise StatsError("stats spec file is incorrect")
+            raise StatsError("stats spec file is incorrect: "
+                             + ", ".join(errors))
         return isc.config.create_answer(0)
 
 if __name__ == "__main__":
