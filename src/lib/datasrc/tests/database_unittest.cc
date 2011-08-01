@@ -33,7 +33,7 @@ namespace {
 class MockConnection : public DatabaseConnection {
 public:
     virtual std::pair<bool, int> getZone(const Name& name) const {
-        if (name == Name("zone.example.org")) {
+        if (name == Name("example.org")) {
             return (std::pair<bool, int>(true, 42));
         } else {
             return (std::pair<bool, int>(false, 0));

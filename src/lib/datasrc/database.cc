@@ -14,8 +14,72 @@
 
 #include <datasrc/database.h>
 
+#include <exceptions/exceptions.h>
+#include <dns/name.h>
+
+using isc::dns::Name;
+
 namespace isc {
 namespace datasrc {
+
+DatabaseClient::DatabaseClient(std::auto_ptr<DatabaseConnection> connection) :
+    connection_(connection)
+{
+    if (connection_.get() == NULL) {
+        isc_throw(isc::InvalidParameter,
+                  "No connection provided to DatabaseClient");
+    }
+}
+
+DataSourceClient::FindResult
+DatabaseClient::findZone(const Name& name) const {
+    std::pair<bool, int> zone(connection_->getZone(name));
+    // Try exact first
+    if (zone.first) {
+        return (FindResult(result::SUCCESS,
+                           ZoneFinderPtr(new Finder(*connection_,
+                                                    zone.second))));
+    }
+    // Than super domains
+    // Start from 1, as 0 is covered above
+    for (size_t i(1); i < name.getLabelCount(); ++i) {
+        zone = connection_->getZone(name.split(i));
+        if (zone.first) {
+            return (FindResult(result::PARTIALMATCH,
+                               ZoneFinderPtr(new Finder(*connection_,
+                                                        zone.second))));
+        }
+    }
+    // No, really nothing
+    return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
+}
+
+DatabaseClient::Finder::Finder(DatabaseConnection& connection, int zone_id) :
+    connection_(connection),
+    zone_id_(zone_id)
+{ }
+
+ZoneFinder::FindResult
+DatabaseClient::Finder::find(const isc::dns::Name&,
+                             const isc::dns::RRType&,
+                             isc::dns::RRsetList*,
+                             const FindOptions) const
+{
+    // TODO Implement
+    return (FindResult(SUCCESS, isc::dns::ConstRRsetPtr()));
+}
+
+Name
+DatabaseClient::Finder::getOrigin() const {
+    // TODO Implement
+    return (Name("."));
+}
+
+isc::dns::RRClass
+DatabaseClient::Finder::getClass() const {
+    // TODO Implement
+    return isc::dns::RRClass::IN();
+}
 
 }
 }
