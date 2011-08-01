@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <stdint.h>
+
 #include <string>
 
 #include <gtest/gtest.h>
@@ -212,4 +214,64 @@ TEST_F(StringUtilTest, Formatting) {
     args.clear();
     string format9 = "%s %s";
     EXPECT_EQ(format9, isc::util::str::format(format9, args));
+}
+
+TEST_F(StringUtilTest, getToken) {
+    string s("a b c");
+    istringstream ss(s);
+    EXPECT_EQ("a", isc::util::str::getToken(ss));
+    EXPECT_EQ("b", isc::util::str::getToken(ss));
+    EXPECT_EQ("c", isc::util::str::getToken(ss));
+    EXPECT_THROW(isc::util::str::getToken(ss), isc::util::str::StringTokenError);
+}
+
+int32_t tokenToNumCall_32_16(const string& token) {
+    return isc::util::str::tokenToNum<int32_t, 16>(token);
+}
+
+int16_t tokenToNumCall_16_8(const string& token) {
+    return isc::util::str::tokenToNum<int16_t, 8>(token);
+}
+
+TEST_F(StringUtilTest, tokenToNum) {
+    uint32_t num32 = tokenToNumCall_32_16("0");
+    EXPECT_EQ(0, num32);
+    num32 = tokenToNumCall_32_16("123");
+    EXPECT_EQ(123, num32);
+    num32 = tokenToNumCall_32_16("65535");
+    EXPECT_EQ(65535, num32);
+
+    EXPECT_THROW(tokenToNumCall_32_16(""),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_32_16("a"),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_32_16("-1"),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_32_16("65536"),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_32_16("1234567890"),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_32_16("-1234567890"),
+                 isc::util::str::StringTokenError);
+
+    uint16_t num16 = tokenToNumCall_16_8("123");
+    EXPECT_EQ(123, num16);
+    num16 = tokenToNumCall_16_8("0");
+    EXPECT_EQ(0, num16);
+    num16 = tokenToNumCall_16_8("255");
+    EXPECT_EQ(255, num16);
+
+    EXPECT_THROW(tokenToNumCall_16_8(""),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_16_8("a"),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_16_8("-1"),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_16_8("256"),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_16_8("1234567890"),
+                 isc::util::str::StringTokenError);
+    EXPECT_THROW(tokenToNumCall_16_8("-1234567890"),
+                 isc::util::str::StringTokenError);
+
 }
