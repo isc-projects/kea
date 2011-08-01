@@ -1473,7 +1473,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 <!-- TODO: how to configure logging, logging destinations etc. -->
 
     <section>
-      <title>Logging Message Formatn</title>
+      <title>Logging Message Format</title>
 
       <para>
 	  Each message written by BIND 10 to the configured logging
