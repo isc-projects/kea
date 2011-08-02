@@ -1,6 +1,7 @@
 #ifndef __COUNTER_H
 #define __COUNTER_H 1
 
+#include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
 namespace isc {
@@ -9,10 +10,8 @@ namespace statistics {
 // forward declaration for pImpl idiom
 class CounterImpl;
 
-class Counter {
+class Counter : boost::noncopyable {
     private:
-        Counter(const Counter& source);
-        Counter& operator=(const Counter& source);
         boost::scoped_ptr<CounterImpl> impl_;
     public:
         typedef unsigned int Type;

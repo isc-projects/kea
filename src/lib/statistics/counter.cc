@@ -1,5 +1,7 @@
 #include <vector>
 #include <cassert>
+
+#include <boost/noncopyable.hpp>
 #include <boost/unordered_map.hpp>
 
 #include <statistics/counter.h>
@@ -11,10 +13,7 @@ const unsigned int InitialValue = 0;
 namespace isc {
 namespace statistics {
 
-class CounterImpl {
-    private:
-        CounterImpl(const CounterImpl& source);
-        CounterImpl& operator=(const CounterImpl& source);
+class CounterImpl : boost::noncopyable {
     private:
         std::vector<Counter::Value> counters_;
     public:
