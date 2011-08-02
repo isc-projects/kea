@@ -132,7 +132,7 @@
   <refsect1>
     <title>CONFIGURATION AND COMMANDS</title>
     <para>
-      The configurable setting in 
+      The configurable setting in
       <filename>stats-httpd.spec</filename> is:
     </para>
     <variablelist>
