@@ -13,6 +13,13 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+"""
+This unittests run Msgq, Cfgmgr, Auth, Boss and Stats as mock in
+background. Because the stats httpd communicates various other modules
+in runtime. However this aim is not to actually simulate a whole
+system running.
+"""
+
 import unittest
 import os
 import imp
