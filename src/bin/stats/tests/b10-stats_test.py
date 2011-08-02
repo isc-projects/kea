@@ -296,6 +296,10 @@ class TestStats(unittest.TestCase):
         my_statistics_data = stats.get_spec_defaults(self.stats.modules['Boss'].get_statistics_spec())
         self.assertTrue('boot_time' in my_statistics_data)
         self.assertEqual(my_statistics_data['boot_time'], "1970-01-01T00:00:00Z")
+        orig_parse_answer = stats.isc.config.ccsession.parse_answer
+        stats.isc.config.ccsession.parse_answer = lambda x: (99, 'error')
+        self.assertRaises(stats.StatsError, self.stats.update_modules)
+        stats.isc.config.ccsession.parse_answer = orig_parse_answer
 
     def test_get_statistics_data(self):
         my_statistics_data = self.stats.get_statistics_data()
@@ -307,7 +311,7 @@ class TestStats(unittest.TestCase):
         self.assertTrue('last_update_time' in my_statistics_data)
         self.assertTrue('timestamp' in my_statistics_data)
         self.assertTrue('lname' in my_statistics_data)
-        self.assertIsNone(self.stats.get_statistics_data(owner='Foo'))
+        self.assertRaises(stats.StatsError, self.stats.get_statistics_data, owner='Foo')
         my_statistics_data = self.stats.get_statistics_data(owner='Stats')
         self.assertTrue('boot_time' in my_statistics_data)
         my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='report_time')
@@ -320,9 +324,12 @@ class TestStats(unittest.TestCase):
         self.assertEqual(my_statistics_data, 0.0)
         my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='lname')
         self.assertEqual(my_statistics_data, '')
-        self.assertIsNone(self.stats.get_statistics_data(owner='Stats', name='Bar'))
-        self.assertIsNone(self.stats.get_statistics_data(owner='Foo', name='Bar'))
-        self.assertEqual(self.stats.get_statistics_data(name='Bar'), None)
+        self.assertRaises(stats.StatsError, self.stats.get_statistics_data,
+                          owner='Stats', name='Bar')
+        self.assertRaises(stats.StatsError, self.stats.get_statistics_data,
+                          owner='Foo', name='Bar')
+        self.assertRaises(stats.StatsError, self.stats.get_statistics_data,
+                          name='Bar')
 
     def test_update_statistics_data(self):
         self.stats.update_statistics_data(owner='Stats', lname='foo@bar')
