@@ -497,3 +497,10 @@ data source.
 This indicates a programming error. An internal task of unknown type was
 generated.
 
+% DATASRC_SQLITE_NEWCONN TODO
+
+% DATASRC_SQLITE_DROPCONN TODO
+
+% DATASRC_SQLITE_CONNOPEN TODO
+
+% DATASRC_SQLITE_CONNCLOSE TODO
