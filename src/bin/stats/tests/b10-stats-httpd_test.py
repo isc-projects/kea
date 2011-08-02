@@ -30,7 +30,7 @@ import stats_httpd
 import stats
 from test_utils import BaseModules, ThreadingServerManager, MyStats, MyStatsHttpd, TIMEOUT_SEC
 
-# set test name for logger 
+# set test name for logger
 isc.log.init("b10-stats-httpd_test")
 
 DUMMY_DATA = {
@@ -364,7 +364,7 @@ class TestStatsHttpd(unittest.TestCase):
             for ht in self.stats_httpd.httpd:
                 self.assertTrue(isinstance(ht.socket, socket.socket))
             self.stats_httpd.close_httpd()
-    
+
         # dual stack (address is ipv4)
         if self.ipv6_enabled:
             self.stats_httpd.http_addrs = [ ('127.0.0.1', 8000) ]
@@ -380,20 +380,20 @@ class TestStatsHttpd(unittest.TestCase):
             for ht in self.stats_httpd.httpd:
                 self.assertTrue(isinstance(ht.socket, socket.socket))
             self.stats_httpd.close_httpd()
-    
+
         # only-ipv4 single stack (force set ipv6 )
         if not self.ipv6_enabled:
             self.stats_httpd.http_addrs = [ ('::1', 8000) ]
             self.assertRaises(stats_httpd.HttpServerError,
                               self.stats_httpd.open_httpd)
-    
+
         # hostname
         self.stats_httpd.http_addrs = [ ('localhost', 8000) ]
         self.stats_httpd.open_httpd()
         for ht in self.stats_httpd.httpd:
             self.assertTrue(isinstance(ht.socket, socket.socket))
         self.stats_httpd.close_httpd()
-    
+
         self.stats_httpd.http_addrs = [ ('my.host.domain', 8000) ]
         self.assertRaises(stats_httpd.HttpServerError, self.stats_httpd.open_httpd)
         self.assertEqual(type(self.stats_httpd.httpd), list)

@@ -10,7 +10,7 @@ import threading
 import tempfile
 
 import msgq
-import isc.config.cfgmgr 
+import isc.config.cfgmgr
 import stats
 import stats_httpd
 
@@ -49,7 +49,7 @@ class ThreadingServerManager:
         self.server._thread = threading.Thread(
             name=self.server_class_name, target=self.server.run)
         self.server._thread.daemon = True
-        
+
     def run(self):
         self.server._thread.start()
         self.server._started.wait()
@@ -94,7 +94,7 @@ class MockCfgmgr:
 
     def shutdown(self):
         self.cfgmgr.running = False
-            
+
 class MockBoss:
     spec_str = """\
 {
@@ -157,7 +157,7 @@ class MockBoss:
             params = { "owner": "Boss",
                        "data": {
                     'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', self._BASETIME)
-                    } 
+                    }
                        }
             return send_command("set", "Stats", params=params, session=self.cc_session)
         return isc.config.create_answer(1, "Unknown Command")
