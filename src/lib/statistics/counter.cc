@@ -2,7 +2,6 @@
 #include <cassert>
 
 #include <boost/noncopyable.hpp>
-#include <boost/unordered_map.hpp>
 
 #include <statistics/counter.h>
 
