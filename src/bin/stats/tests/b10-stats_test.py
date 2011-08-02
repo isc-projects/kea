@@ -56,6 +56,13 @@ class TestUtilties(unittest.TestCase):
         { 'item_name': 'test_none',  'item_type': 'none'    }
         ]
 
+    def setUp(self):
+        self.const_timestamp = 1308730448.965706
+        self.const_timetuple = (2011, 6, 22, 8, 14, 8, 2, 173, 0)
+        self.const_datetime = '2011-06-22T08:14:08Z'
+        stats.time = lambda : self.const_timestamp
+        stats.gmtime = lambda : self.const_timetuple
+
     def test_get_spec_defaults(self):
         self.assertEqual(
             stats.get_spec_defaults(self.items), {
@@ -76,14 +83,12 @@ class TestUtilties(unittest.TestCase):
         self.assertRaises(KeyError, stats.get_spec_defaults, [{'item_name':'Foo'}])
 
     def test_get_timestamp(self):
-        self.assertEqual(stats.get_timestamp(), 1308730448.965706)
+        self.assertEqual(stats.get_timestamp(), self.const_timestamp)
 
     def test_get_datetime(self):
-        stats.time = lambda : 1308730448.965706
-        stats.gmtime = lambda : (2011, 6, 22, 8, 14, 8, 2, 173, 0)
-        self.assertEqual(stats.get_datetime(), '2011-06-22T08:14:08Z')
+        self.assertEqual(stats.get_datetime(), self.const_datetime)
         self.assertNotEqual(stats.get_datetime(
-                (2011, 6, 22, 8, 23, 40, 2, 173, 0)), '2011-06-22T08:14:08Z')
+                (2011, 6, 22, 8, 23, 40, 2, 173, 0)), self.const_datetime)
 
 class TestCallback(unittest.TestCase):
     def setUp(self):
@@ -107,9 +112,6 @@ class TestCallback(unittest.TestCase):
             command=self.dummy_func,
             args=self.dummy_args
             )
-
-    def tearDown(self):
-        pass
 
     def test_init(self):
         self.assertEqual((self.cback1.command, self.cback1.args, self.cback1.kwargs),
