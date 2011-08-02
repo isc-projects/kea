@@ -18,23 +18,31 @@
 
 #include <datasrc/database.h>
 
-// TODO Once the whole SQLite3 thing is ported here, move the Sqlite3Error
-// here and remove the header file.
-#include <datasrc/sqlite3_datasrc.h>
+#include <exceptions/exceptions.h>
+#include <cc/data.h>
+
+#include <string>
 
 namespace isc {
 namespace datasrc {
 
+class SQLite3Error : public Exception {
+public:
+    SQLite3Error(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+struct SQLite3Parameters;
+
 class SQLite3Connection : public DatabaseConnection {
 public:
-    // TODO Should we simplify this as well and just pass config to the
-    // constructor and be done? (whenever the config would change, we would
-    // recreate new connections)
-    Result init() { return (init(isc::data::ElementPtr())); }
-    Result init(const isc::data::ConstElementPtr& config);
-    Result close();
-
+    SQLite3Connection(const isc::data::ConstElementPtr& config);
+    ~ SQLite3Connection();
     virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const;
+private:
+    SQLite3Parameters* dbparameters_;
+    void open(const std::string& filename);
+    void close();
 };
 
 }
