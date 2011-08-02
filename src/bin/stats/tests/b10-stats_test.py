@@ -24,7 +24,7 @@ import stats
 import isc.cc.session
 from test_utils import BaseModules, ThreadingServerManager, MyStats, send_command, TIMEOUT_SEC
 
-# set test name for logger 
+# set test name for logger
 isc.log.init("b10-stats_test")
 
 class TestUtilties(unittest.TestCase):
@@ -205,19 +205,19 @@ class TestStats(unittest.TestCase):
         self.base.boss.server._started.wait()
         self.assertEqual(
             send_command(
-                'show', 'Stats', 
+                'show', 'Stats',
                 params={ 'owner' : 'Boss',
                   'name'  : 'boot_time' }),
             (0, '2011-06-22T08:14:08Z'))
         self.assertEqual(
             send_command(
-                'set', 'Stats', 
+                'set', 'Stats',
                 params={ 'owner' : 'Boss',
                   'data'  : { 'boot_time' : '2012-06-22T18:24:08Z' } }),
             (0, None))
         self.assertEqual(
             send_command(
-                'show', 'Stats', 
+                'show', 'Stats',
                 params={ 'owner' : 'Boss',
                   'name'  : 'boot_time' }),
             (0, '2012-06-22T18:24:08Z'))
@@ -267,7 +267,7 @@ class TestStats(unittest.TestCase):
             self.assertTrue('item_description' in item)
             if len(item) == 7:
                 self.assertTrue('item_format' in item)
-        
+
         self.assertEqual(
             send_command('__UNKNOWN__', 'Stats'),
             (1, "Unknown command: '__UNKNOWN__'"))
@@ -340,13 +340,13 @@ class TestStats(unittest.TestCase):
         self.assertEqual(self.stats.command_status(),
                 isc.config.create_answer(
                 0, "Stats is up. (PID " + str(os.getpid()) + ")"))
-        
+
     def test_command_shutdown(self):
         self.stats.running = True
         self.assertEqual(self.stats.command_shutdown(),
                          isc.config.create_answer(0))
         self.assertFalse(self.stats.running)
-        
+
     def test_command_show(self):
         self.assertEqual(self.stats.command_show(owner='Foo', name=None),
                          isc.config.create_answer(
@@ -380,7 +380,7 @@ class TestStats(unittest.TestCase):
               "statistics": [] } )
         self.assertRaises(
             stats.StatsError, self.stats.command_show, owner='Foo', name='bar')
-        
+
     def test_command_showchema(self):
         (rcode, value) = isc.config.ccsession.parse_answer(
             self.stats.command_showschema())
