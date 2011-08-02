@@ -415,7 +415,7 @@ class StatsHttpd:
                 annotation.append(documentation)
                 element.append(annotation)
                 alltag.append(element)
-        
+
             complextype = xml.etree.ElementTree.Element("complexType")
             complextype.append(alltag)
             mod_element = xml.etree.ElementTree.Element("element", { "name" : mod })
