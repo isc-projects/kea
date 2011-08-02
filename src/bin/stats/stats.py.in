@@ -197,7 +197,10 @@ class Stats:
 
     def update_modules(self):
         """
-        update information of each module
+        updates information of each module. This method gets each
+        module's information from the config manager and sets it into
+        self.modules. If its getting from the config manager fails, it
+        raises StatsError.
         """
         modules = {}
         seq = self.cc_session.group_sendmsg(
@@ -213,12 +216,16 @@ class Stats:
                     if value[mod] and type(value[mod]) is list:
                         spec["statistics"] = value[mod]
                     modules[mod] = isc.config.module_spec.ModuleSpec(spec)
+            else:
+                raise StatsError("Updating module spec fails: " + str(value))
         modules[self.module_name] = self.mccs.get_module_spec()
         self.modules = modules
 
     def get_statistics_data(self, owner=None, name=None):
         """
-        return statistics data which stats module has of each module
+        returns statistics data which stats module has of each
+        module. If it can't find specified statistics data, it raises
+        StatsError.
         """
         self.update_statistics_data()
         if owner and name:
@@ -235,10 +242,18 @@ class Stats:
             pass
         else:
             return self.statistics_data
+        raise StatsError("No statistics data found: "
+                         + "owner: " + str(owner) + ", "
+                         + "name: " + str(name))
 
     def update_statistics_data(self, owner=None, **data):
         """
-        change statistics date of specified module into specified data
+        change statistics date of specified module into specified
+        data. It updates information of each module first, and it
+        updates statistics data. If specified data is invalid for
+        statistics spec of specified owner, it returns a list of error
+        messeges. If there is no error or if neither owner nor data is
+        specified in args, it returns None.
         """
         self.update_modules()
         statistics_data = {}
@@ -297,10 +312,10 @@ class Stats:
         if errors:
             raise StatsError("stats spec file is incorrect: "
                              + ", ".join(errors))
-        ret = self.get_statistics_data(owner, name)
-        if ret is not None:
-            return isc.config.create_answer(0, ret)
-        else:
+        try:
+            return isc.config.create_answer(
+                0, self.get_statistics_data(owner, name))
+        except StatsError:
             return isc.config.create_answer(
                 1, "specified arguments are incorrect: " \
                     + "owner: " + str(owner) + ", name: " + str(name))
