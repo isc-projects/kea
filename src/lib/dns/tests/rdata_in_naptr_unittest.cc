@@ -30,6 +30,7 @@ using namespace std;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using namespace isc::dns::rdata::in;
 
 namespace {
 class Rdata_IN_NAPTR_Test : public RdataTest {
@@ -39,9 +40,16 @@ class Rdata_IN_NAPTR_Test : public RdataTest {
 static uint8_t naptr_rdata[] = {0x00,0x0a,0x00,0x64,0x01,0x53,0x07,0x53,0x49,0x50,0x2b,0x44,0x32,0x55,0x00,0x04,0x5f,0x73,0x69,0x70,
     0x04,0x5f,0x75,0x64,0x70,0x07,0x65,0x78,0x61,0x6d,0x70,0x6c,0x65,0x03,0x63,0x6f,0x6d,0x00};
 
-static char *naptr_str = "10 100 \"S\" \"SIP+D2U\" \"\" _sip._udp.example.com.";
+static const char *naptr_str = "10 100 \"S\" \"SIP+D2U\" \"\" _sip._udp.example.com.";
 
 TEST_F(Rdata_IN_NAPTR_Test, createFromText) {
+    NAPTR naptr(naptr_str);
+    EXPECT_EQ(10, naptr.getOrder());
+    EXPECT_EQ(100, naptr.getPreference());
+    EXPECT_EQ(string("S"), naptr.getFlags());
+}
+
+TEST_F(Rdata_IN_NAPTR_Test, createFromWire) {
 }
 
 }

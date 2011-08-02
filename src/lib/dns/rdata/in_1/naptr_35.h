@@ -16,6 +16,7 @@
 
 #include <string>
 
+#include <dns/name.h>
 #include <dns/rdata.h>
 
 // BEGIN_ISC_NAMESPACE
@@ -31,7 +32,26 @@ public:
     // END_COMMON_MEMBERS
 
     // NAPTR specific methods
+    uint16_t getOrder() const;
+    uint16_t getPreference() const;
+    const std::string& getFlags() const;
+    const std::string& getServices() const;
+    const std::string& getRegexp() const;
+    const Name& getReplacement() const;
 private:
+    /// Extract a <character-string> from a string
+    ///
+    /// \param input_str The input string
+    /// \param input_iterator The iterator from which to start extracting
+    /// \return a std::string that contains the extracted <character-string>
+    std::string getNextCharacterString(const std::string& input_str, std::string::const_iterator& input_iterator);
+
+    uint16_t order_;
+    uint16_t preference_;
+    std::string flags_;
+    std::string services_;
+    std::string regexp_;
+    Name replacement_;
 };
 
 // END_RDATA_NAMESPACE
