@@ -931,7 +931,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/python/isc/log/tests/log_console.py
            src/lib/dns/gen-rdatacode.py
            src/lib/python/bind10_config.py
-           src/lib/dns/tests/testdata/gen-wiredata.py
+           src/lib/dns/tests/testdata/gen_wiredata.py
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
            src/lib/log/tests/console_test.sh
