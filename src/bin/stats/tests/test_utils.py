@@ -15,9 +15,9 @@ import stats
 import stats_httpd
 
 # TODO: consider appropriate timeout seconds
-TIMEOUT_SEC = 0.01
+TIMEOUT_SEC = 0.05
 
-def send_command(command_name, module_name, params=None, session=None, nonblock=False, timeout=TIMEOUT_SEC*2):
+def send_command(command_name, module_name, params=None, session=None, nonblock=False, timeout=TIMEOUT_SEC):
     if not session:
         cc_session = isc.cc.Session()
     else:
@@ -53,6 +53,8 @@ class ThreadingServerManager:
     def run(self):
         self.server._thread.start()
         self.server._started.wait()
+        # waiting for the server's being ready for listening
+        time.sleep(TIMEOUT_SEC)
 
     def shutdown(self):
         self.server.shutdown()
