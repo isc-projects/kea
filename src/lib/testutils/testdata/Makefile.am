@@ -32,4 +32,4 @@ EXTRA_DIST += test2.zone.in
 EXTRA_DIST += test2-new.zone.in
 
 .spec.wire:
-	$(abs_top_builddir)/src/lib/dns/tests/testdata/gen-wiredata.py -o $@ $<
+	$(PYTHON) $(abs_top_builddir)/src/lib/dns/tests/testdata/gen_wiredata.py -o $@ $<
