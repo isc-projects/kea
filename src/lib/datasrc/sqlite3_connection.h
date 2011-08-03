@@ -24,6 +24,10 @@
 #include <string>
 
 namespace isc {
+namespace dns {
+class RRClass;
+}
+
 namespace datasrc {
 
 class SQLite3Error : public Exception {
@@ -36,11 +40,13 @@ struct SQLite3Parameters;
 
 class SQLite3Connection : public DatabaseConnection {
 public:
-    SQLite3Connection(const isc::data::ConstElementPtr& config);
+    SQLite3Connection(const isc::data::ConstElementPtr& config,
+                      const isc::dns::RRClass& rrclass);
     ~ SQLite3Connection();
     virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const;
 private:
     SQLite3Parameters* dbparameters_;
+    std::string class_;
     void open(const std::string& filename);
     void close();
 };

@@ -45,8 +45,10 @@ struct SQLite3Parameters {
 };
 
 SQLite3Connection::SQLite3Connection(const isc::data::ConstElementPtr&
-                                     config) :
-    dbparameters_(new SQLite3Parameters)
+                                     config,
+                                     const isc::dns::RRClass& rrclass) :
+    dbparameters_(new SQLite3Parameters),
+    class_(rrclass.toText())
 {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_NEWCONN);
 
