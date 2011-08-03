@@ -46,7 +46,7 @@ public:
     virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const;
 private:
     SQLite3Parameters* dbparameters_;
-    std::string class_;
+    const std::string class_;
     void open(const std::string& filename);
     void close();
 };
