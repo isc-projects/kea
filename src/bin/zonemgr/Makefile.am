@@ -12,7 +12,7 @@ CLEANFILES  = b10-zonemgr zonemgr.pyc zonemgr.spec
 CLEANFILES += zonemgr_messages.py zonemgr_messages.pyc
 
 man_MANS = b10-zonemgr.8
-EXTRA_DIST = $(man_MANS) b10-zonemgr.xml
+EXTRA_DIST = $(man_MANS) b10-zonemgr.xml zonemgr_messages.mes
 
 if ENABLE_MAN
 
