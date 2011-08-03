@@ -965,7 +965,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/msgq/tests/msgq_test
            chmod +x src/lib/dns/gen-rdatacode.py
-           chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
+           chmod +x src/lib/dns/tests/testdata/gen_wiredata.py
            chmod +x src/lib/log/tests/console_test.sh
            chmod +x src/lib/log/tests/destination_test.sh
            chmod +x src/lib/log/tests/init_logger_test.sh
