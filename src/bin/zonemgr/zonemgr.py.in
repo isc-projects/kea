@@ -659,8 +659,7 @@ if '__main__' == __name__:
         parser = OptionParser()
         set_cmd_options(parser)
         (options, args) = parser.parse_args()
-        VERBOSE_MODE = options.verbose
-        if VERBOSE_MODE:
+        if options.verbose:
             logger.set_severity("DEBUG", 99)
 
         set_signal_handler()
