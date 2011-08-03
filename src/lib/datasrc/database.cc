@@ -16,6 +16,9 @@
 
 #include <exceptions/exceptions.h>
 #include <dns/name.h>
+#include <dns/rrttl.h>
+#include <dns/rdata.h>
+#include <datasrc/data_source.h>
 
 using isc::dns::Name;
 
@@ -62,13 +65,71 @@ DatabaseClient::Finder::Finder(boost::shared_ptr<DatabaseConnection>
 { }
 
 ZoneFinder::FindResult
-DatabaseClient::Finder::find(const isc::dns::Name&,
-                             const isc::dns::RRType&,
+DatabaseClient::Finder::find(const isc::dns::Name& name,
+                             const isc::dns::RRType& type,
                              isc::dns::RRsetList*,
                              const FindOptions) const
 {
-    // TODO Implement
-    return (FindResult(SUCCESS, isc::dns::ConstRRsetPtr()));
+    bool records_found = false;
+    connection_.searchForRecords(zone_id_, name.toText());
+
+    isc::dns::RRsetPtr result_rrset;
+
+    std::vector<std::string> columns;
+    while (connection_.getNextRecord(columns)) {
+        if (!records_found) {
+            records_found = true;
+        }
+
+        if (columns.size() != 4) {
+            isc_throw(DataSourceError,
+                      "Datasource backend did not return 4 columns in getNextRecord()");
+        }
+
+        const isc::dns::RRType cur_type(columns[0]);
+        const isc::dns::RRTTL cur_ttl(columns[1]);
+        //cur_sigtype(columns[2]);
+
+        if (cur_type == type) {
+            if (!result_rrset) {
+                result_rrset = isc::dns::RRsetPtr(new isc::dns::RRset(name,
+                                                                      getClass(),
+                                                                      cur_type,
+                                                                      cur_ttl));
+            } else {
+                // We have existing data from earlier calls, do some checks
+                // and updates if necessary
+                if (cur_ttl < result_rrset->getTTL()) {
+                    result_rrset->setTTL(cur_ttl);
+                }
+            }
+
+            result_rrset->addRdata(isc::dns::rdata::createRdata(cur_type,
+                                                                getClass(),
+                                                                columns[3]));
+        } else if (cur_type == isc::dns::RRType::CNAME()) {
+            // There should be no other data, so cur_rrset should be empty,
+            // except for signatures
+            if (result_rrset && result_rrset->getRdataCount() > 0) {
+                isc_throw(DataSourceError, "CNAME found but it is not the only record for " + name.toText());
+            }
+            result_rrset = isc::dns::RRsetPtr(new isc::dns::RRset(name,
+                                                                  getClass(),
+                                                                  cur_type,
+                                                                  cur_ttl));
+            result_rrset->addRdata(isc::dns::rdata::createRdata(cur_type,
+                                                                getClass(),
+                                                                columns[3]));
+        }
+    }
+
+    if (result_rrset) {
+        return (FindResult(SUCCESS, result_rrset));
+    } else if (records_found) {
+        return (FindResult(NXRRSET, isc::dns::ConstRRsetPtr()));
+    } else {
+        return (FindResult(NXDOMAIN, isc::dns::ConstRRsetPtr()));
+    }
 }
 
 Name
