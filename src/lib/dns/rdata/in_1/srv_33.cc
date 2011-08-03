@@ -64,7 +64,7 @@ NumType
 tokenToNum(const string& num_token) {
     NumType num;
     try {
-        num = lexical_cast<NumType>(num_token);
+        num = boost::lexical_cast<NumType>(num_token);
     } catch (const boost::bad_lexical_cast& ex) {
         isc_throw(InvalidRdataText, "Invalid SRV numeric parameter: " <<
                   num_token);
