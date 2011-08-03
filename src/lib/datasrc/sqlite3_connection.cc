@@ -24,19 +24,20 @@ namespace datasrc {
 struct SQLite3Parameters {
     SQLite3Parameters() :
         db_(NULL), version_(-1),
-        q_zone_(NULL) /*, q_record_(NULL), q_addrs_(NULL), q_referral_(NULL),
-        q_any_(NULL), q_count_(NULL), q_previous_(NULL), q_nsec3_(NULL),
+        q_zone_(NULL), q_any_(NULL)
+        /*q_record_(NULL), q_addrs_(NULL), q_referral_(NULL),
+        q_count_(NULL), q_previous_(NULL), q_nsec3_(NULL),
         q_prevnsec3_(NULL) */
     {}
     sqlite3* db_;
     int version_;
     sqlite3_stmt* q_zone_;
+    sqlite3_stmt* q_any_;
     /*
     TODO: Yet unneeded statements
     sqlite3_stmt* q_record_;
     sqlite3_stmt* q_addrs_;
     sqlite3_stmt* q_referral_;
-    sqlite3_stmt* q_any_;
     sqlite3_stmt* q_count_;
     sqlite3_stmt* q_previous_;
     sqlite3_stmt* q_nsec3_;
@@ -69,6 +70,9 @@ public:
         if (params_.q_zone_ != NULL) {
             sqlite3_finalize(params_.q_zone_);
         }
+        if (params_.q_any_ != NULL) {
+            sqlite3_finalize(params_.q_any_);
+        }
         /*
         if (params_.q_record_ != NULL) {
             sqlite3_finalize(params_.q_record_);
@@ -78,9 +82,6 @@ public:
         }
         if (params_.q_referral_ != NULL) {
             sqlite3_finalize(params_.q_referral_);
-        }
-        if (params_.q_any_ != NULL) {
-            sqlite3_finalize(params_.q_any_);
         }
         if (params_.q_count_ != NULL) {
             sqlite3_finalize(params_.q_count_);
@@ -132,6 +133,9 @@ const char* const SCHEMA_LIST[] = {
 
 const char* const q_zone_str = "SELECT id FROM zones WHERE name=?1 AND rdclass = ?2";
 
+const char* const q_any_str = "SELECT rdtype, ttl, sigtype, rdata "
+    "FROM records WHERE zone_id=?1 AND name=?2";
+
 /* TODO: Prune the statements, not everything will be needed maybe?
 const char* const q_record_str = "SELECT rdtype, ttl, sigtype, rdata "
     "FROM records WHERE zone_id=?1 AND name=?2 AND "
@@ -147,9 +151,6 @@ const char* const q_referral_str = "SELECT rdtype, ttl, sigtype, rdata FROM "
     "records WHERE zone_id=?1 AND name=?2 AND"
     "(rdtype='NS' OR sigtype='NS' OR rdtype='DS' OR sigtype='DS' OR "
     "rdtype='DNAME' OR sigtype='DNAME')";
-
-const char* const q_any_str = "SELECT rdtype, ttl, sigtype, rdata "
-    "FROM records WHERE zone_id=?1 AND name=?2";
 
 const char* const q_count_str = "SELECT COUNT(*) FROM records "
     "WHERE zone_id=?1 AND rname LIKE (?2 || '%');";
@@ -200,11 +201,11 @@ checkAndSetupSchema(Initializer* initializer) {
     }
 
     initializer->params_.q_zone_ = prepare(db, q_zone_str);
+    initializer->params_.q_any_ = prepare(db, q_any_str);
     /* TODO: Yet unneeded statements
     initializer->params_.q_record_ = prepare(db, q_record_str);
     initializer->params_.q_addrs_ = prepare(db, q_addrs_str);
     initializer->params_.q_referral_ = prepare(db, q_referral_str);
-    initializer->params_.q_any_ = prepare(db, q_any_str);
     initializer->params_.q_count_ = prepare(db, q_count_str);
     initializer->params_.q_previous_ = prepare(db, q_previous_str);
     initializer->params_.q_nsec3_ = prepare(db, q_nsec3_str);
@@ -252,6 +253,9 @@ SQLite3Connection::close(void) {
     sqlite3_finalize(dbparameters_->q_zone_);
     dbparameters_->q_zone_ = NULL;
 
+    sqlite3_finalize(dbparameters_->q_any_);
+    dbparameters_->q_any_ = NULL;
+
     /* TODO: Once they are needed or not, uncomment or drop
     sqlite3_finalize(dbparameters->q_record_);
     dbparameters->q_record_ = NULL;
@@ -261,9 +265,6 @@ SQLite3Connection::close(void) {
 
     sqlite3_finalize(dbparameters->q_referral_);
     dbparameters->q_referral_ = NULL;
-
-    sqlite3_finalize(dbparameters->q_any_);
-    dbparameters->q_any_ = NULL;
 
     sqlite3_finalize(dbparameters->q_count_);
     dbparameters->q_count_ = NULL;
@@ -316,6 +317,52 @@ SQLite3Connection::getZone(const isc::dns::Name& name) const {
     sqlite3_reset(dbparameters_->q_zone_);
 
     return (result);
+}
+
+void
+SQLite3Connection::searchForRecords(int zone_id, const std::string& name) const {
+    sqlite3_reset(dbparameters_->q_any_);
+    sqlite3_clear_bindings(dbparameters_->q_any_);
+    sqlite3_bind_int(dbparameters_->q_any_, 1, zone_id);
+    // use transient since name is a ref and may disappear
+    sqlite3_bind_text(dbparameters_->q_any_, 2, name.c_str(), -1,
+                      SQLITE_TRANSIENT);
+};
+
+namespace {
+const char*
+convertToPlainChar(const unsigned char* ucp) {
+    if (ucp == NULL) {
+        return ("");
+    }
+    const void* p = ucp;
+    return (static_cast<const char*>(p));
+}
+}
+
+bool
+SQLite3Connection::getNextRecord(std::vector<std::string>& columns) const {
+    sqlite3_stmt* current_stmt = dbparameters_->q_any_;
+    const int rc = sqlite3_step(current_stmt);
+
+    if (rc == SQLITE_ROW) {
+        columns.clear();
+        for (int column = 0; column < 4; ++column) {
+            columns.push_back(convertToPlainChar(sqlite3_column_text(
+                                                 current_stmt, column)));
+        }
+        return true;
+    } else if (rc == SQLITE_DONE) {
+        // reached the end of matching rows
+        sqlite3_reset(current_stmt);
+        sqlite3_clear_bindings(current_stmt);
+        return false;
+    }
+    sqlite3_reset(current_stmt);
+    isc_throw(DataSourceError, "Unexpected failure in sqlite3_step");
+
+    // Compilers might not realize isc_throw always throws
+    return false;
 }
 
 }
