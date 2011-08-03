@@ -71,6 +71,29 @@ public:
      *     an opaque handle.
      */
     virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const = 0;
+
+    /**
+     * \brief Starts a new search for records of the given name in the given zone
+     *
+     * \param zone_id The zone to search in, as returned by getZone()
+     * \param name The name of the records to find
+     */
+    virtual void searchForRecords(int zone_id, const std::string& name) const = 0;
+
+    /**
+     * \brief Retrieves the next record from the search started with searchForRecords()
+     *
+     * Returns a boolean specifying whether or not there was more data to read.
+     * In the case of a database error, a DatasourceError is thrown.
+     *
+     * \exception DatasourceError if there was an error reading from the database
+     *
+     * \param columns This vector will be cleared, and the fields of the record will
+     *                be appended here as strings (in the order rdtype, ttl, sigtype,
+     *                and rdata). If there was no data, the vector is untouched.
+     * \return true if there was a next record, false if there was not
+     */
+    virtual bool getNextRecord(std::vector<std::string>& columns) const = 0;
 };
 
 /**

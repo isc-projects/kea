@@ -39,6 +39,8 @@ public:
             return (std::pair<bool, int>(false, 0));
         }
     }
+    virtual void searchForRecords(int, const std::string&) const {};
+    virtual bool getNextRecord(std::vector<std::string>&) const { return false; };
 };
 
 class DatabaseClientTest : public ::testing::Test {
