@@ -135,7 +135,7 @@ const char* const SCHEMA_LIST[] = {
     NULL
 };
 
-const char* const q_zone_str = "SELECT id FROM zones WHERE name=?1";
+const char* const q_zone_str = "SELECT id FROM zones WHERE name=?1 AND rdclass = ?2";
 
 /* TODO: Prune the statements, not everything will be needed maybe?
 const char* const q_record_str = "SELECT rdtype, ttl, sigtype, rdata "
@@ -288,8 +288,34 @@ SQLite3Connection::close(void) {
 }
 
 std::pair<bool, int>
-SQLite3Connection::getZone(const isc::dns::Name&) const {
-    return std::pair<bool, int>(false, 0);
+SQLite3Connection::getZone(const isc::dns::Name& name) const {
+    int rc;
+
+    sqlite3_reset(dbparameters_->q_zone_);
+    rc = sqlite3_bind_text(dbparameters_->q_zone_, 1, name.toText().c_str(),
+                           -1, SQLITE_STATIC);
+    if (rc != SQLITE_OK) {
+        isc_throw(SQLite3Error, "Could not bind " << name <<
+                  " to SQL statement (zone)");
+    }
+    rc = sqlite3_bind_text(dbparameters_->q_zone_, 2, class_.c_str(), -1,
+                           SQLITE_STATIC);
+    if (rc != SQLITE_OK) {
+        isc_throw(SQLite3Error, "Could not bind " << class_ <<
+                  " to SQL statement (zone)");
+    }
+
+    rc = sqlite3_step(dbparameters_->q_zone_);
+    std::pair<bool, int> result;
+    if (rc == SQLITE_ROW) {
+        result = std::pair<bool, int>(true,
+                                      sqlite3_column_int(dbparameters_->
+                                                         q_zone_, 0));
+    } else {
+        result = std::pair<bool, int>(false, 0);
+    }
+    sqlite3_reset(dbparameters_->q_zone_);
+    return (result);
 }
 
 }
