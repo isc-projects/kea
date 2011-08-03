@@ -15,11 +15,15 @@
 #include <datasrc/sqlite3_connection.h>
 #include <datasrc/data_source.h>
 
+#include <dns/rrclass.h>
+
 #include <gtest/gtest.h>
 
 using namespace isc::datasrc;
 using isc::data::ConstElementPtr;
 using isc::data::Element;
+using isc::dns::RRClass;
+using isc::dns::Name;
 
 namespace {
 // Some test data
@@ -43,28 +47,70 @@ ConstElementPtr SQLITE_DBFILE_NOTEXIST = Element::fromJSON(
 
 // Opening works (the content is tested in different tests)
 TEST(SQLite3Open, common) {
-    EXPECT_NO_THROW(SQLite3Connection conn(SQLITE_DBFILE_EXAMPLE));
+    EXPECT_NO_THROW(SQLite3Connection conn(SQLITE_DBFILE_EXAMPLE,
+                                           RRClass::IN()));
 }
 
 // Missing config
 TEST(SQLite3Open, noConfig) {
-    EXPECT_THROW(SQLite3Connection conn(Element::fromJSON("{}")),
+    EXPECT_THROW(SQLite3Connection conn(Element::fromJSON("{}"),
+                                                          RRClass::IN()),
                  DataSourceError);
 }
 
 // The file can't be opened
 TEST(SQLite3Open, notExist) {
-    EXPECT_THROW(SQLite3Connection conn(SQLITE_DBFILE_NOTEXIST), SQLite3Error);
+    EXPECT_THROW(SQLite3Connection conn(SQLITE_DBFILE_NOTEXIST,
+                                        RRClass::IN()), SQLite3Error);
 }
 
 // It rejects broken DB
 TEST(SQLite3Open, brokenDB) {
-    EXPECT_THROW(SQLite3Connection conn(SQLITE_DBFILE_BROKENDB), SQLite3Error);
+    EXPECT_THROW(SQLite3Connection conn(SQLITE_DBFILE_BROKENDB,
+                                        RRClass::IN()), SQLite3Error);
 }
 
 // Test we can create the schema on the fly
 TEST(SQLite3Open, memoryDB) {
-    EXPECT_NO_THROW(SQLite3Connection conn(SQLITE_DBFILE_MEMORY));
+    EXPECT_NO_THROW(SQLite3Connection conn(SQLITE_DBFILE_MEMORY,
+                                           RRClass::IN()));
+}
+
+// Test fixture for querying the connection
+class SQLite3Conn : public ::testing::Test {
+public:
+    SQLite3Conn() {
+        initConn(SQLITE_DBFILE_EXAMPLE, RRClass::IN());
+    }
+    // So it can be re-created with different data
+    void initConn(const ConstElementPtr& config, const RRClass& rrclass) {
+        conn.reset(new SQLite3Connection(config, rrclass));
+    }
+    // The tested connection
+    std::auto_ptr<SQLite3Connection> conn;
+};
+
+// This zone exists in the data, so it should be found
+TEST_F(SQLite3Conn, getZone) {
+    std::pair<bool, int> result(conn->getZone(Name("example.com")));
+    EXPECT_TRUE(result.first);
+    EXPECT_EQ(1, result.second);
+}
+
+// But it should find only the zone, nothing below it
+TEST_F(SQLite3Conn, subZone) {
+    EXPECT_FALSE(conn->getZone(Name("sub.example.com")).first);
+}
+
+// This zone is not there at all
+TEST_F(SQLite3Conn, noZone) {
+    EXPECT_FALSE(conn->getZone(Name("example.org")).first);
+}
+
+// This zone is there, but in different class
+TEST_F(SQLite3Conn, noClass) {
+    initConn(SQLITE_DBFILE_EXAMPLE, RRClass::CH());
+    EXPECT_FALSE(conn->getZone(Name("example.com")).first);
 }
 
 }
