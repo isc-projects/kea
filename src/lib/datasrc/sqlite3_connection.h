@@ -30,6 +30,13 @@ class RRClass;
 
 namespace datasrc {
 
+/**
+ * \brief Low-level database error
+ *
+ * This exception is thrown when the SQLite library complains about something.
+ * It might mean corrupt database file, invalid request or that something is
+ * rotten in the library.
+ */
 class SQLite3Error : public Exception {
 public:
     SQLite3Error(const char* file, size_t line, const char* what) :
@@ -38,16 +45,63 @@ public:
 
 struct SQLite3Parameters;
 
+/**
+ * \brief Concrete implementation of DatabaseConnection for SQLite3 databases
+ *
+ * This opens one database file with our schema and serves data from there.
+ * According to the design, it doesn't interpret the data in any way, it just
+ * provides unified access to the DB.
+ */
 class SQLite3Connection : public DatabaseConnection {
 public:
+    /**
+     * \brief Constructor
+     *
+     * This opens the database and becomes ready to serve data from there.
+     *
+     * This might throw SQLite3Error if the given database file doesn't work
+     * (it is broken, doesn't exist and can't be created, etc). It might throw
+     * DataSourceError if the provided config is invalid (it is missing the
+     * database_file element).
+     *
+     * \param config The part of config describing which database file should
+     *     be used.
+     * \param rrclass Which class of data it should serve (while the database
+     *     can contain multiple classes of data, single connection can provide
+     *     only one class).
+     * \todo Should we pass the database filename instead of the config? It
+     *     might be cleaner if this class doesn't know anything about configs.
+     */
     SQLite3Connection(const isc::data::ConstElementPtr& config,
                       const isc::dns::RRClass& rrclass);
+    /**
+     * \brief Destructor
+     *
+     * Closes the database.
+     */
     ~ SQLite3Connection();
+    /**
+     * \brief Look up a zone
+     *
+     * This implements the getZone from DatabaseConnection and looks up a zone
+     * in the data. It looks for a zone with the exact given origin and class
+     * passed to the constructor.
+     *
+     * It may throw SQLite3Error if something about the database is broken.
+     *
+     * \param name The name of zone to look up
+     * \return The pair contains if the lookup was successful in the first
+     *     element and the zone id in the second if it was.
+     */
     virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const;
 private:
+    /// \brief Private database data
     SQLite3Parameters* dbparameters_;
+    /// \brief The class for which the queries are done
     const std::string class_;
+    /// \brief Opens the database
     void open(const std::string& filename);
+    /// \brief Closes the database
     void close();
 };
 
