@@ -189,28 +189,28 @@ class TestStats(unittest.TestCase):
         stats.SPECFILE_LOCATION = orig_spec_location
 
     def test_start(self):
+        # start without err
         statsserver = ThreadingServerManager(MyStats)
-        stats = statsserver.server
-        self.assertFalse(stats.running)
+        statsd = statsserver.server
+        self.assertFalse(statsd.running)
         statsserver.run()
-        time.sleep(TIMEOUT_SEC)
-        self.assertTrue(stats.running)
+        self.assertTrue(statsd.running)
         statsserver.shutdown()
-        self.assertFalse(stats.running)
+        self.assertFalse(statsd.running)
 
-    def test_start_with_err(self):
+        # start with err
         statsd = stats.Stats()
         statsd.update_statistics_data = lambda x,**y: ['an error']
         self.assertRaises(stats.StatsError, statsd.start)
 
-    def test_config_handler(self):
+    def test_handlers(self):
+        # config_handler
         self.assertEqual(self.stats.config_handler({'foo':'bar'}),
                          isc.config.create_answer(0))
 
-    def test_command_handler(self):
+        # command_handler
         statsserver = ThreadingServerManager(MyStats)
         statsserver.run()
-        time.sleep(TIMEOUT_SEC*4)
         self.base.boss.server._started.wait()
         self.assertEqual(
             send_command(
@@ -352,12 +352,13 @@ class TestStats(unittest.TestCase):
         self.assertEqual(self.stats.update_statistics_data(owner='Dummy', foo='bar'),
                          ['unknown module name: Dummy'])
 
-    def test_command_status(self):
+    def test_commands(self):
+        # status
         self.assertEqual(self.stats.command_status(),
                 isc.config.create_answer(
                 0, "Stats is up. (PID " + str(os.getpid()) + ")"))
 
-    def test_command_shutdown(self):
+        # shutdown
         self.stats.running = True
         self.assertEqual(self.stats.command_shutdown(),
                          isc.config.create_answer(0))

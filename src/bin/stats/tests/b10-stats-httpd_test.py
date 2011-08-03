@@ -78,7 +78,6 @@ class TestHttpHandler(unittest.TestCase):
         self.assertTrue(type(self.stats_httpd.httpd) is list)
         self.assertEqual(len(self.stats_httpd.httpd), 0)
         statshttpd_server.run()
-        time.sleep(TIMEOUT_SEC*8)
         client = http.client.HTTPConnection(address, port)
         client._http_vsn_str = 'HTTP/1.0\n'
         client.connect()
@@ -175,7 +174,6 @@ class TestHttpHandler(unittest.TestCase):
         statshttpd_server.run()
         self.assertTrue(self.stats_server.server.running)
         self.stats_server.shutdown()
-        time.sleep(TIMEOUT_SEC*2)
         self.assertFalse(self.stats_server.server.running)
         statshttpd.cc_session.set_timeout(milliseconds=TIMEOUT_SEC/1000)
         client = http.client.HTTPConnection(address, port)
@@ -213,7 +211,6 @@ class TestHttpHandler(unittest.TestCase):
             lambda cmd, args: \
                 isc.config.ccsession.create_answer(1, "I have an error.")
             )
-        time.sleep(TIMEOUT_SEC*5)
         client = http.client.HTTPConnection(address, port)
         client.connect()
 
@@ -244,7 +241,6 @@ class TestHttpHandler(unittest.TestCase):
         self.stats_httpd = statshttpd_server.server
         self.stats_httpd.load_config({'listen_on' : [{ 'address': address, 'port' : port }]})
         statshttpd_server.run()
-        time.sleep(TIMEOUT_SEC*5)
         client = http.client.HTTPConnection(address, port)
         client.connect()
         client.putrequest('HEAD', stats_httpd.XML_URL_PATH)
@@ -423,7 +419,6 @@ class TestStatsHttpd(unittest.TestCase):
         self.statshttpd_server = ThreadingServerManager(MyStatsHttpd)
         self.statshttpd_server.server.load_config({'listen_on' : [{ 'address': '127.0.0.1', 'port' : 65454 }]})
         self.statshttpd_server.run()
-        time.sleep(TIMEOUT_SEC)
         self.stats_httpd.load_config({'listen_on' : [{ 'address': '127.0.0.1', 'port' : 65454 }]})
         self.assertRaises(stats_httpd.HttpServerError, self.stats_httpd.open_httpd)
         self.statshttpd_server.shutdown()
@@ -434,7 +429,6 @@ class TestStatsHttpd(unittest.TestCase):
         self.stats_httpd = self.statshttpd_server.server
         self.stats_httpd.load_config({'listen_on' : [{ 'address': '127.0.0.1', 'port' : 65455 }]})
         self.statshttpd_server.run()
-        time.sleep(TIMEOUT_SEC*2)
         self.assertTrue(self.stats_httpd.running)
         self.statshttpd_server.shutdown()
         self.assertFalse(self.stats_httpd.running)
@@ -461,7 +455,6 @@ class TestStatsHttpd(unittest.TestCase):
         statshttpd = statshttpd_server.server
         statshttpd.load_config({'listen_on' : [{ 'address': address, 'port' : port }]})
         statshttpd_server.run()
-        time.sleep(TIMEOUT_SEC*2)
         statshttpd_server.shutdown()
 
     def test_open_template(self):
