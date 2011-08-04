@@ -52,12 +52,12 @@ public:
      */
     void createClient() {
         current_connection_ = new MockConnection();
-        client_.reset(new DatabaseClient(auto_ptr<DatabaseConnection>(
+        client_.reset(new DatabaseClient(shared_ptr<DatabaseConnection>(
              current_connection_)));
     }
     // Will be deleted by client_, just keep the current value for comparison.
     MockConnection* current_connection_;
-    auto_ptr<DatabaseClient> client_;
+    shared_ptr<DatabaseClient> client_;
     /**
      * Check the zone finder is a valid one and references the zone ID and
      * connection available here.
@@ -92,7 +92,7 @@ TEST_F(DatabaseClientTest, superZone) {
 }
 
 TEST_F(DatabaseClientTest, noConnException) {
-    EXPECT_THROW(DatabaseClient(auto_ptr<DatabaseConnection>()),
+    EXPECT_THROW(DatabaseClient(shared_ptr<DatabaseConnection>()),
                  isc::InvalidParameter);
 }
 

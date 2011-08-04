@@ -19,7 +19,6 @@
 #include <datasrc/database.h>
 
 #include <exceptions/exceptions.h>
-#include <cc/data.h>
 
 #include <string>
 
@@ -59,27 +58,22 @@ public:
      *
      * This opens the database and becomes ready to serve data from there.
      *
-     * This might throw SQLite3Error if the given database file doesn't work
-     * (it is broken, doesn't exist and can't be created, etc). It might throw
-     * DataSourceError if the provided config is invalid (it is missing the
-     * database_file element).
+     * \exception SQLite3Error will be thrown if the given database file
+     * doesn't work (it is broken, doesn't exist and can't be created, etc).
      *
-     * \param config The part of config describing which database file should
-     *     be used.
+     * \param filename The database file to be used.
      * \param rrclass Which class of data it should serve (while the database
      *     can contain multiple classes of data, single connection can provide
      *     only one class).
-     * \todo Should we pass the database filename instead of the config? It
-     *     might be cleaner if this class doesn't know anything about configs.
      */
-    SQLite3Connection(const isc::data::ConstElementPtr& config,
+    SQLite3Connection(const std::string& filename,
                       const isc::dns::RRClass& rrclass);
     /**
      * \brief Destructor
      *
      * Closes the database.
      */
-    ~ SQLite3Connection();
+    ~SQLite3Connection();
     /**
      * \brief Look up a zone
      *
@@ -87,7 +81,7 @@ public:
      * in the data. It looks for a zone with the exact given origin and class
      * passed to the constructor.
      *
-     * It may throw SQLite3Error if something about the database is broken.
+     * \exception SQLite3Error if something about the database is broken.
      *
      * \param name The name of zone to look up
      * \return The pair contains if the lookup was successful in the first

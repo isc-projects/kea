@@ -44,19 +44,14 @@ struct SQLite3Parameters {
     */
 };
 
-SQLite3Connection::SQLite3Connection(const isc::data::ConstElementPtr&
-                                     config,
+SQLite3Connection::SQLite3Connection(const std::string& filename,
                                      const isc::dns::RRClass& rrclass) :
     dbparameters_(new SQLite3Parameters),
     class_(rrclass.toText())
 {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_NEWCONN);
 
-    if (config && config->contains("database_file")) {
-        open(config->get("database_file")->stringValue());
-    } else {
-        isc_throw(DataSourceError, "No SQLite database file specified");
-    }
+    open(filename);
 }
 
 namespace {
@@ -237,7 +232,7 @@ SQLite3Connection::open(const std::string& name) {
     initializer.move(dbparameters_);
 }
 
-SQLite3Connection::~ SQLite3Connection() {
+SQLite3Connection::~SQLite3Connection() {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_DROPCONN);
     if (dbparameters_->db_ != NULL) {
         close();
@@ -291,6 +286,8 @@ std::pair<bool, int>
 SQLite3Connection::getZone(const isc::dns::Name& name) const {
     int rc;
 
+    // Take the statement (simple SELECT id FROM zones WHERE...)
+    // and prepare it (bind the parameters to it)
     sqlite3_reset(dbparameters_->q_zone_);
     rc = sqlite3_bind_text(dbparameters_->q_zone_, 1, name.toText().c_str(),
                            -1, SQLITE_STATIC);
@@ -305,6 +302,7 @@ SQLite3Connection::getZone(const isc::dns::Name& name) const {
                   " to SQL statement (zone)");
     }
 
+    // Get the data there and see if it found anything
     rc = sqlite3_step(dbparameters_->q_zone_);
     std::pair<bool, int> result;
     if (rc == SQLITE_ROW) {
@@ -314,7 +312,9 @@ SQLite3Connection::getZone(const isc::dns::Name& name) const {
     } else {
         result = std::pair<bool, int>(false, 0);
     }
+    // Free resources
     sqlite3_reset(dbparameters_->q_zone_);
+
     return (result);
 }
 
