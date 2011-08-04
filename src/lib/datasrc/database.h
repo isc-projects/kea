@@ -78,7 +78,7 @@ public:
      * \param zone_id The zone to search in, as returned by getZone()
      * \param name The name of the records to find
      */
-    virtual void searchForRecords(int zone_id, const std::string& name) const = 0;
+    virtual void searchForRecords(int zone_id, const std::string& name) = 0;
 
     /**
      * \brief Retrieves the next record from the search started with searchForRecords()
@@ -93,7 +93,7 @@ public:
      *                and rdata). If there was no data, the vector is untouched.
      * \return true if there was a next record, false if there was not
      */
-    virtual bool getNextRecord(std::vector<std::string>& columns) const = 0;
+    virtual bool getNextRecord(std::vector<std::string>& columns) = 0;
 };
 
 /**
@@ -154,6 +154,10 @@ public:
         Finder(boost::shared_ptr<DatabaseConnection> connection, int zone_id);
         virtual isc::dns::Name getOrigin() const;
         virtual isc::dns::RRClass getClass() const;
+
+        /**
+         * \brief Find an RRset in the datasource
+         */
         virtual FindResult find(const isc::dns::Name& name,
                                 const isc::dns::RRType& type,
                                 isc::dns::RRsetList* target = NULL,
