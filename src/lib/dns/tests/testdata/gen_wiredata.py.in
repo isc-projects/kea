@@ -285,10 +285,6 @@ RDATA contains a single field named "value".
 
 What you are expected to do is as follows:
 
-- Add a dictionary entry of "'foo': (FOO, {})" to config_param of the
-  get_config_param() function (this step could be automated; we may do
-  it in a future version)
-
 - Define a new class named "FOO" inherited from the RR class.  Also
   define a class variable named "value" for the FOO RDATA field (the
   variable name can be different from the field name, but it's
@@ -1064,15 +1060,22 @@ class TSIG(RR):
         f.write('%04x%s\n' % (other_len,
                               ' ' + other_data if len(other_data) > 0 else ''))
 
+# Build section-class mapping
+config_param = { 'name' : (Name, {}),
+                 'header' : (DNSHeader, header_xtables),
+                 'question' : (DNSQuestion, question_xtables),
+                 'edns' : (EDNS, {}) }
+for rrtype in dict_rrtype.keys():
+    # For any supported RR types add the tuple of (RR_CLASS, {}).
+    # We expect KeyError as not all the types are supported, and simply
+    # ignore them.
+    try:
+        cur_mod = sys.modules[__name__]
+        config_param[rrtype] = (cur_mod.__dict__[rrtype.upper()], {})
+    except KeyError:
+        pass
+
 def get_config_param(section):
-    config_param = {'name' : (Name, {}),
-                    'header' : (DNSHeader, header_xtables),
-                    'question' : (DNSQuestion, question_xtables),
-                    'edns' : (EDNS, {}), 'a' : (A, {}), 'ns' : (NS, {}),
-                    'soa' : (SOA, {}), 'txt' : (TXT, {}), 'aaaa' : (AAAA, {}),
-                    'rp' : (RP, {}), 'rrsig' : (RRSIG, {}),
-                    'nsec' : (NSEC, {}), 'nsec3' : (NSEC3, {}),
-                    'tsig' : (TSIG, {}) }
     s = section
     m = re.match('^([^:]+)/\d+$', section)
     if m:
