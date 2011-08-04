@@ -502,6 +502,20 @@ class DNSQuestion:
         f.write(' %04x %04x\n' % (self.rrtype, self.rrclass))
 
 class EDNS:
+    '''Implements rendering EDNS OPT RR in the test data format.
+
+    Configurable parameter is as follows (see the description of the
+    same name of attribute for the default value):
+    - name (string): The owner name of the OPT RR.  The string must be
+      interpreted as a valid domain name.
+    - udpsize (16-bit int): The UDP payload size (set as the RR class)
+    - extrcode (8-bit int): The upper 8 bits of the extended RCODE.
+    - version (8-bit int): The EDNS version.
+    - do (int): The DNSSEC DO bit.  The bit will be set if this value
+      is 1; otherwise the bit will be unset.
+    - mbz (15-bit int): The rest of the flags field.
+    - rdlen (16-bit int): The RDLEN field.
+    '''
     name = '.'
     udpsize = 4096
     extrcode = 0
@@ -517,7 +531,7 @@ class EDNS:
                  1 if self.do else 0))
         
         code_vers = (self.extrcode << 8) | (self.version & 0x00ff)
-        extflags = (self.do << 15) | (self.mbz & 0x8000)
+        extflags = (self.do << 15) | (self.mbz & ~0x8000)
         f.write('%s %04x %04x %04x %04x\n' %
                 (encode_name(self.name), dict_rrtype['opt'], self.udpsize,
                  code_vers, extflags))
