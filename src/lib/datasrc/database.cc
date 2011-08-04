@@ -18,6 +18,8 @@
 #include <dns/name.h>
 #include <dns/rrttl.h>
 #include <dns/rdata.h>
+#include <dns/rdataclass.h>
+
 #include <datasrc/data_source.h>
 
 using isc::dns::Name;
@@ -123,6 +125,26 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                                                                 getClass(),
                                                                 columns[3]));
             result_status = CNAME;
+        } else if (cur_type == isc::dns::RRType::RRSIG()) {
+            isc::dns::rdata::RdataPtr cur_rrsig(
+                isc::dns::rdata::createRdata(cur_type, getClass(), columns[3]));
+            const isc::dns::RRType& type_covered =
+                static_cast<isc::dns::rdata::generic::RRSIG*>(
+                    cur_rrsig.get())->typeCovered();
+            // Ignore the RRSIG data we got if it does not cover the type
+            // that was requested or CNAME
+            // see if we have RRset data yet, and whether it has an RRsig yet
+            if (type_covered == type || type_covered == isc::dns::RRType::CNAME()) {
+                if (!result_rrset) {
+                // no data at all yet, assume the RRset data is coming, and
+                // that the type covered will match
+                    result_rrset = isc::dns::RRsetPtr(new isc::dns::RRset(name,
+                                                                        getClass(),
+                                                                        type_covered,
+                                                                        cur_ttl));
+                }
+                result_rrset->addRRsig(cur_rrsig);
+            }
         }
     }
 

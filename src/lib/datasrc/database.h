@@ -157,6 +157,11 @@ public:
 
         /**
          * \brief Find an RRset in the datasource
+         *
+         * target is unused at this point, it was used in the original
+         * API to store the results for ANY queries, and we may reuse it
+         * for that, but we might choose a different approach.
+         * 
          */
         virtual FindResult find(const isc::dns::Name& name,
                                 const isc::dns::RRType& type,
