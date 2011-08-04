@@ -84,7 +84,7 @@ SRV::SRV(const string& srv_str) :
         }
 
         impl_ = new SRVImpl(priority, weight, port, targetname);
-    } catch (StringTokenError ste) {
+    } catch (const StringTokenError& ste) {
         isc_throw(InvalidRdataText, "Invalid SRV text: " <<
                   ste.what() << ": " << srv_str);
     }
