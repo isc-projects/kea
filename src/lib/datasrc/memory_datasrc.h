@@ -182,6 +182,7 @@ private:
     struct InMemoryZoneFinderImpl;
     InMemoryZoneFinderImpl* impl_;
     //@}
+    friend class InMemoryClient;
 };
 
 /// \brief A data source client that holds all necessary data in memory.
@@ -257,6 +258,9 @@ public:
     /// This derived version of the method never throws an exception.
     /// For other details see \c DataSourceClient::findZone().
     virtual FindResult findZone(const isc::dns::Name& name) const;
+
+    /// \brief Implementation of the getIterator method
+    virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name) const;
 
 private:
     // TODO: Do we still need the PImpl if nobody should manipulate this class

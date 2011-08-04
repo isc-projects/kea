@@ -154,11 +154,11 @@ TEST_F(InMemoryClientTest, iterator) {
     RRsetPtr subRRsetA(new RRset(Name("sub.x.a"), RRClass::IN(), RRType::A(),
                                   RRTTL(300)));
     subRRsetA->addRdata(rdata::in::A("192.0.2.2"));
-    EXPECT_EQ(result::SUCCESS, memory_client.addZone(
-                  ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
-                                                       Name("a")))));
+    EXPECT_EQ(result::SUCCESS, memory_client.addZone(zone));
     // First, the zone is not there, so it should throw
     EXPECT_THROW(memory_client.getIterator(Name("b")), DataSourceError);
+    // This zone is not there either, even when there's a zone containing this
+    EXPECT_THROW(memory_client.getIterator(Name("x.a")), DataSourceError);
     // Now, an empty zone
     ZoneIteratorPtr iterator(memory_client.getIterator(Name("a")));
     EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
