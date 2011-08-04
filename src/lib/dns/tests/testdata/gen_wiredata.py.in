@@ -319,7 +319,7 @@ What you are expected to do is as follows:
       f.write('%04x\\n' % (self.value))
 
   The first f.write() call is not mandatory, but is encouraged to
-  provide so that the generated files will be more human readable.
+  be provided so that the generated files will be more human readable.
   Depending on the complexity of the RDATA fields, the dump()
   implementation would be more complicated.  In particular, if the
   RDATA length is variable and the RDLEN field value is not specified
@@ -578,14 +578,14 @@ class RR:
         rdlen_data = ''
         if rdlen >= 0:
             rdlen_spec = ', RDLEN=%d' % rdlen
-            rdlen_data = ' %04x' % rdlen
+            rdlen_data = '%04x' % rdlen
         if self.as_rr:
             rrclass = parse_value(self.rr_class, dict_rrclass)
             f.write('\n# %s RR (QNAME=%s Class=%s TTL=%d%s)\n' %
                     (type_txt, self.rr_name,
                      code_totext(rrclass, rdict_rrclass), self.rr_ttl,
                      rdlen_spec))
-            f.write('%s %04x %04x %08x%s\n' %
+            f.write('%s %04x %04x %08x %s\n' %
                     (encode_name(self.rr_name), type_code, rrclass,
                      self.rr_ttl, rdlen_data))
         else:
@@ -703,7 +703,7 @@ class RP(RR):
         f.write('# MAILBOX=%s TEXT=%s\n' % (self.mailbox, self.text))
         f.write('%s %s\n' % (mailbox_wire, text_wire))
 
-class NSECBASE:
+class NSECBASE(RR):
     '''Implements rendering NSEC/NSEC3 type bitmaps commonly used for
     these RRs.  The NSEC and NSEC3 classes will be inherited from this
     class.'''
@@ -747,7 +747,6 @@ class NSECBASE:
                     (block_list[i], maplen_list[i], bitmap_list[i]))
 
 class NSEC(NSECBASE):
-    rdlen = None                # auto-calculate
     nextname = 'next.example.com'
     def dump_fixedpart(self, f, bitmap_totallen):
         name_wire = encode_name(self.nextname)
@@ -755,14 +754,12 @@ class NSEC(NSECBASE):
             # if rdlen needs to be calculated, it must be based on the bitmap
             # length, because the configured maplen can be fake.
             self.rdlen = int(len(name_wire) / 2) + bitmap_totallen
-        f.write('\n# NSEC RDATA (RDLEN=%d)\n' % self.rdlen)
-        f.write('%04x\n' % self.rdlen);
+        self.dump_header(f, self.rdlen)
         f.write('# Next Name=%s (%d bytes)\n' % (self.nextname,
                                                  int(len(name_wire) / 2)))
         f.write('%s\n' % name_wire)
 
 class NSEC3(NSECBASE):
-    rdlen = None                # auto-calculate
     hashalg = 1                 # SHA-1
     optout = False              # opt-out flag
     mbz = 0                     # other flag fields (none defined yet)
@@ -777,8 +774,7 @@ class NSEC3(NSECBASE):
             # length, because the configured maplen can be fake.
             self.rdlen = 4 + 1 + len(self.salt) + 1 + len(self.hash) \
                 + bitmap_totallen
-        f.write('\n# NSEC3 RDATA (RDLEN=%d)\n' % self.rdlen)
-        f.write('%04x\n' % self.rdlen)
+        self.dump_header(f, self.rdlen)
         optout_val = 1 if self.optout else 0
         f.write('# Hash Alg=%s, Opt-Out=%d, Other Flags=%0x, Iterations=%d\n' %
                 (code_totext(self.hashalg, rdict_nsec3_algorithm),
