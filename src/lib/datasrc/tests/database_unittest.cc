@@ -113,6 +113,9 @@ private:
         addRecord("AAAA", "3600", "", "2001:db8::2");
         addRecord("RRSIG", "3600", "", "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
         addCurName("signed1.example.org.");
+        addRecord("CNAME", "3600", "", "www.example.org.");
+        addRecord("RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+        addCurName("signedcname1.example.org.");
 
         // let's pretend we have a database that is not careful
         // about the order in which it returns data
@@ -122,10 +125,9 @@ private:
         addRecord("RRSIG", "3600", "", "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
         addRecord("AAAA", "3600", "", "2001:db8::1");
         addCurName("signed2.example.org.");
-
-        addRecord("CNAME", "3600", "", "www.example.org.");
         addRecord("RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addCurName("signedcname.example.org.");
+        addRecord("CNAME", "3600", "", "www.example.org.");
+        addCurName("signedcname2.example.org.");
 
         // also add some intentionally bad data
         cur_name.push_back(std::vector<std::string>());
@@ -192,6 +194,33 @@ TEST_F(DatabaseClientTest, noConnException) {
                  isc::InvalidParameter);
 }
 
+namespace {
+void
+doFindTest(shared_ptr<DatabaseClient::Finder> finder,
+           const isc::dns::Name& name,
+           const isc::dns::RRType& type,
+           const isc::dns::RRType& expected_type,
+           ZoneFinder::Result expected_result,
+           unsigned int expected_rdata_count,
+           unsigned int expected_signature_count)
+{
+    ZoneFinder::FindResult result = finder->find(name, type,
+                                                 NULL, ZoneFinder::FIND_DEFAULT);
+    ASSERT_EQ(expected_result, result.code) << name.toText() << " " << type.toText();
+    if (expected_rdata_count > 0) {
+        EXPECT_EQ(expected_rdata_count, result.rrset->getRdataCount());
+        EXPECT_EQ(expected_type, result.rrset->getType());
+        if (expected_signature_count > 0) {
+            EXPECT_EQ(expected_signature_count, result.rrset->getRRsig()->getRdataCount());
+        } else {
+            EXPECT_EQ(isc::dns::RRsetPtr(), result.rrset->getRRsig());
+        }
+    } else {
+        EXPECT_EQ(isc::dns::RRsetPtr(), result.rrset);
+    }
+}
+} // end anonymous namespace
+
 TEST_F(DatabaseClientTest, find) {
     DataSourceClient::FindResult zone(client_->findZone(Name("example.org")));
     ASSERT_EQ(result::SUCCESS, zone.code);
@@ -200,62 +229,46 @@ TEST_F(DatabaseClientTest, find) {
     EXPECT_EQ(42, finder->zone_id());
     isc::dns::Name name("www.example.org.");
 
-    ZoneFinder::FindResult result1 = finder->find(name, isc::dns::RRType::A(),
-                                                  NULL, ZoneFinder::FIND_DEFAULT);
-    ASSERT_EQ(ZoneFinder::SUCCESS, result1.code);
-    EXPECT_EQ(1, result1.rrset->getRdataCount());
-    EXPECT_EQ(isc::dns::RRType::A(), result1.rrset->getType());
-    EXPECT_EQ(isc::dns::RRsetPtr(), result1.rrset->getRRsig());
+    doFindTest(finder, isc::dns::Name("www.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               ZoneFinder::SUCCESS, 1, 0);
+    doFindTest(finder, isc::dns::Name("www.example.org."),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
+               ZoneFinder::SUCCESS, 2, 0);
+    doFindTest(finder, isc::dns::Name("www.example.org."),
+               isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
+               ZoneFinder::NXRRSET, 0, 0);
+    doFindTest(finder, isc::dns::Name("cname.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::CNAME(),
+               ZoneFinder::CNAME, 1, 0);
+    doFindTest(finder, isc::dns::Name("doesnotexist.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               ZoneFinder::NXDOMAIN, 0, 0);
+    doFindTest(finder, isc::dns::Name("signed1.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               ZoneFinder::SUCCESS, 1, 1);
+    doFindTest(finder, isc::dns::Name("signed1.example.org."),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
+               ZoneFinder::SUCCESS, 2, 1);
+    doFindTest(finder, isc::dns::Name("signed1.example.org."),
+               isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
+               ZoneFinder::NXRRSET, 0, 0);
+    doFindTest(finder, isc::dns::Name("signedcname1.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::CNAME(),
+               ZoneFinder::CNAME, 1, 1);
 
-    ZoneFinder::FindResult result2 = finder->find(name, isc::dns::RRType::AAAA(),
-                                                  NULL, ZoneFinder::FIND_DEFAULT);
-    ASSERT_EQ(ZoneFinder::SUCCESS, result2.code);
-    EXPECT_EQ(2, result2.rrset->getRdataCount());
-    EXPECT_EQ(isc::dns::RRType::AAAA(), result2.rrset->getType());
-    EXPECT_EQ(isc::dns::RRsetPtr(), result2.rrset->getRRsig());
-
-    ZoneFinder::FindResult result3 = finder->find(name, isc::dns::RRType::TXT(),
-                                                  NULL, ZoneFinder::FIND_DEFAULT);
-    ASSERT_EQ(ZoneFinder::NXRRSET, result3.code);
-    EXPECT_EQ(isc::dns::ConstRRsetPtr(), result3.rrset);
-
-    ZoneFinder::FindResult result4 = finder->find(isc::dns::Name("cname.example.org."),
-                                                  isc::dns::RRType::A(),
-                                                  NULL, ZoneFinder::FIND_DEFAULT);
-    ASSERT_EQ(ZoneFinder::CNAME, result4.code);
-    EXPECT_EQ(1, result4.rrset->getRdataCount());
-    EXPECT_EQ(isc::dns::RRType::CNAME(), result4.rrset->getType());
-    EXPECT_EQ(isc::dns::RRsetPtr(), result4.rrset->getRRsig());
-
-    ZoneFinder::FindResult result5 = finder->find(isc::dns::Name("doesnotexist.example.org."),
-                                                  isc::dns::RRType::A(),
-                                                  NULL, ZoneFinder::FIND_DEFAULT);
-    ASSERT_EQ(ZoneFinder::NXDOMAIN, result5.code);
-    EXPECT_EQ(isc::dns::ConstRRsetPtr(), result5.rrset);
-
-    ZoneFinder::FindResult result6 = finder->find(isc::dns::Name("signed1.example.org."),
-                                                  isc::dns::RRType::A(),
-                                                  NULL, ZoneFinder::FIND_DEFAULT);
-    ASSERT_EQ(ZoneFinder::SUCCESS, result6.code);
-    EXPECT_EQ(1, result6.rrset->getRdataCount());
-    EXPECT_EQ(isc::dns::RRType::A(), result6.rrset->getType());
-    EXPECT_NE(isc::dns::RRsetPtr(), result6.rrset->getRRsig());
-
-    ZoneFinder::FindResult result7 = finder->find(isc::dns::Name("signed1.example.org."),
-                                                  isc::dns::RRType::AAAA(),
-                                                  NULL, ZoneFinder::FIND_DEFAULT);
-    ASSERT_EQ(ZoneFinder::SUCCESS, result7.code);
-    EXPECT_EQ(2, result7.rrset->getRdataCount());
-    EXPECT_EQ(isc::dns::RRType::AAAA(), result7.rrset->getType());
-    EXPECT_NE(isc::dns::RRsetPtr(), result7.rrset->getRRsig());
-
-    ZoneFinder::FindResult result8 = finder->find(isc::dns::Name("signedcname.example.org."),
-                                                  isc::dns::RRType::A(),
-                                                  NULL, ZoneFinder::FIND_DEFAULT);
-    ASSERT_EQ(ZoneFinder::SUCCESS, result8.code);
-    EXPECT_EQ(1, result8.rrset->getRdataCount());
-    EXPECT_EQ(isc::dns::RRType::CNAME(), result8.rrset->getType());
-    EXPECT_NE(isc::dns::RRsetPtr(), result8.rrset->getRRsig());
+    doFindTest(finder, isc::dns::Name("signed2.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               ZoneFinder::SUCCESS, 1, 1);
+    doFindTest(finder, isc::dns::Name("signed2.example.org."),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
+               ZoneFinder::SUCCESS, 2, 1);
+    doFindTest(finder, isc::dns::Name("signed2.example.org."),
+               isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
+               ZoneFinder::NXRRSET, 0, 0);
+    doFindTest(finder, isc::dns::Name("signedcname2.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::CNAME(),
+               ZoneFinder::CNAME, 1, 1);
 
     EXPECT_THROW(finder->find(isc::dns::Name("emptyvector.example.org."),
                                               isc::dns::RRType::A(),
