@@ -153,7 +153,7 @@ TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
         impl_ = new TSIGImpl(algorithm, time_signed, fudge, mac, orig_id,
                             error, other_data);
 
-    } catch (StringTokenError ste) {
+    } catch (const StringTokenError& ste) {
         isc_throw(InvalidRdataText, "Invalid TSIG text: " << ste.what() <<
                   ": " << tsig_str);
     }
