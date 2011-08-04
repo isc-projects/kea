@@ -18,6 +18,10 @@
 #include <exceptions/exceptions.h>
 
 #include <datasrc/database.h>
+#include <datasrc/zone.h>
+#include <datasrc/data_source.h>
+
+#include <map>
 
 using namespace isc::datasrc;
 using namespace std;
@@ -32,6 +36,8 @@ namespace {
  */
 class MockConnection : public DatabaseConnection {
 public:
+    MockConnection() { fillData(); }
+
     virtual std::pair<bool, int> getZone(const Name& name) const {
         if (name == Name("example.org")) {
             return (std::pair<bool, int>(true, 42));
@@ -39,8 +45,74 @@ public:
             return (std::pair<bool, int>(false, 0));
         }
     }
-    virtual void searchForRecords(int, const std::string&) const {};
-    virtual bool getNextRecord(std::vector<std::string>&) const { return false; };
+
+    virtual void searchForRecords(int zone_id, const std::string& name) {
+        // we're not aiming for efficiency in this test, simply
+        // copy the relevant vector from records
+        cur_record = 0;
+
+        if (zone_id == 42) {
+            if (records.count(name) > 0) {
+                cur_name = records.find(name)->second;
+            } else {
+                cur_name.clear();
+            }
+        } else {
+            cur_name.clear();
+        }
+    };
+
+    virtual bool getNextRecord(std::vector<std::string>& columns) {
+        if (cur_record < cur_name.size()) {
+            columns = cur_name[cur_record++];
+            return true;
+        } else {
+            return false;
+        }
+    };
+
+private:
+    std::map<std::string, std::vector< std::vector<std::string> > > records;
+    // used as internal index for getNextRecord()
+    size_t cur_record;
+    // used as temporary storage after searchForRecord() and during
+    // getNextRecord() calls, as well as during the building of the
+    // fake data
+    std::vector< std::vector<std::string> > cur_name;
+
+    void addRecord(const std::string& name,
+                   const std::string& type,
+                   const std::string& sigtype,
+                   const std::string& rdata) {
+        std::vector<std::string> columns;
+        columns.push_back(name);
+        columns.push_back(type);
+        columns.push_back(sigtype);
+        columns.push_back(rdata);
+        cur_name.push_back(columns);
+    }
+
+    void addCurName(const std::string& name) {
+        records[name] = cur_name;
+        cur_name.clear();
+    }
+
+    void fillData() {
+        addRecord("A", "3600", "", "192.0.2.1");
+        addRecord("AAAA", "3600", "", "2001:db8::1");
+        addRecord("AAAA", "3600", "", "2001:db8::2");
+        addCurName("www.example.org.");
+        addRecord("CNAME", "3600", "", "www.example.org.");
+        addCurName("cname.example.org.");
+
+        // also add some intentionally bad data
+        cur_name.push_back(std::vector<std::string>());
+        addCurName("emptyvector.example.org.");
+        addRecord("A", "3600", "", "192.0.2.1");
+        addRecord("CNAME", "3600", "", "www.example.org.");
+        addCurName("badcname.example.org.");
+        
+    }
 };
 
 class DatabaseClientTest : public ::testing::Test {
@@ -96,6 +168,49 @@ TEST_F(DatabaseClientTest, superZone) {
 TEST_F(DatabaseClientTest, noConnException) {
     EXPECT_THROW(DatabaseClient(shared_ptr<DatabaseConnection>()),
                  isc::InvalidParameter);
+}
+
+TEST_F(DatabaseClientTest, find) {
+    DataSourceClient::FindResult zone(client_->findZone(Name("example.org")));
+    ASSERT_EQ(result::SUCCESS, zone.code);
+    shared_ptr<DatabaseClient::Finder> finder(
+        dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
+    EXPECT_EQ(42, finder->zone_id());
+    isc::dns::Name name("www.example.org.");
+
+    ZoneFinder::FindResult result1 = finder->find(name, isc::dns::RRType::A(),
+                                                  NULL, ZoneFinder::FIND_DEFAULT);
+    ASSERT_EQ(ZoneFinder::SUCCESS, result1.code);
+    EXPECT_EQ(1, result1.rrset->getRdataCount());
+    EXPECT_EQ(isc::dns::RRType::A(), result1.rrset->getType());
+
+    ZoneFinder::FindResult result2 = finder->find(name, isc::dns::RRType::AAAA(),
+                                                  NULL, ZoneFinder::FIND_DEFAULT);
+    ASSERT_EQ(ZoneFinder::SUCCESS, result2.code);
+    EXPECT_EQ(2, result2.rrset->getRdataCount());
+    EXPECT_EQ(isc::dns::RRType::AAAA(), result2.rrset->getType());
+
+    ZoneFinder::FindResult result3 = finder->find(name, isc::dns::RRType::TXT(),
+                                                  NULL, ZoneFinder::FIND_DEFAULT);
+    ASSERT_EQ(ZoneFinder::NXRRSET, result3.code);
+    EXPECT_EQ(isc::dns::ConstRRsetPtr(), result3.rrset);
+
+    ZoneFinder::FindResult result4 = finder->find(isc::dns::Name("cname.example.org."),
+                                                  isc::dns::RRType::A(),
+                                                  NULL, ZoneFinder::FIND_DEFAULT);
+    ASSERT_EQ(ZoneFinder::CNAME, result4.code);
+    EXPECT_EQ(1, result4.rrset->getRdataCount());
+    EXPECT_EQ(isc::dns::RRType::CNAME(), result4.rrset->getType());
+
+    EXPECT_THROW(finder->find(isc::dns::Name("emptyvector.example.org."),
+                                              isc::dns::RRType::A(),
+                                              NULL, ZoneFinder::FIND_DEFAULT),
+                 DataSourceError);
+    EXPECT_THROW(finder->find(isc::dns::Name("badcname.example.org."),
+                                              isc::dns::RRType::A(),
+                                              NULL, ZoneFinder::FIND_DEFAULT),
+                 DataSourceError);
+
 }
 
 }

@@ -320,7 +320,7 @@ SQLite3Connection::getZone(const isc::dns::Name& name) const {
 }
 
 void
-SQLite3Connection::searchForRecords(int zone_id, const std::string& name) const {
+SQLite3Connection::searchForRecords(int zone_id, const std::string& name) {
     sqlite3_reset(dbparameters_->q_any_);
     sqlite3_clear_bindings(dbparameters_->q_any_);
     sqlite3_bind_int(dbparameters_->q_any_, 1, zone_id);
@@ -341,7 +341,7 @@ convertToPlainChar(const unsigned char* ucp) {
 }
 
 bool
-SQLite3Connection::getNextRecord(std::vector<std::string>& columns) const {
+SQLite3Connection::getNextRecord(std::vector<std::string>& columns) {
     sqlite3_stmt* current_stmt = dbparameters_->q_any_;
     const int rc = sqlite3_step(current_stmt);
 
