@@ -441,6 +441,17 @@ def print_header(f, input_file):
 ''')
 
 class Name:
+    '''Implements rendering a single domain name in the test data format.
+
+    Configurable parameter is as follows (see the description of the
+    same name of attribute for the default value):
+    - name (string): A textual representation of the name, such as
+      'example.com'.
+    - pointer (int): If specified, compression pointer will be
+      prepended to the generated data with the offset being the value
+      of this parameter.
+    '''
+
     name = 'example.com'
     pointer = None                # no compression by default
     def dump(self, f):
@@ -458,12 +469,33 @@ class Name:
         f.write('\n')
 
 class DNSHeader:
+    '''Implements rendering a DNS Header section in the test data format.
+
+    Configurable parameter is as follows (see the description of the
+    same name of attribute for the default value):
+    - id (16-bit int):
+    - qr, aa, tc, rd, ra, ad, cd (0 or 1): Standard header bits as
+      defined in RFC1035 and RFC4035.  If set to 1, the corresponding
+      bit will be set; if set to 0, it will be cleared.
+    - mbz (0-3): The reserved field of the 3rd and 4th octets of the
+      header.
+    - rcode (4-bit int or string): The RCODE field.  If specified as a
+      string, it must be the commonly used textual mnemonic of the RCODEs
+      (NOERROR, FORMERR, etc, case insensitive).
+    - opcode (4-bit int or string): The OPCODE field.  If specified as
+      a string, it must be the commonly used textual mnemonic of the
+      OPCODEs (QUERY, NOTIFY, etc, case insensitive).
+    - qdcount, ancount, nscount, arcount (16-bit int): The QD/AN/NS/AR
+      COUNT fields, respectively.
+    '''
+
     id = 0x1035
     (qr, aa, tc, rd, ra, ad, cd) = 0, 0, 0, 0, 0, 0, 0
     mbz = 0
     rcode = 0                   # noerror
     opcode = 0                  # query
     (qdcount, ancount, nscount, arcount) = 1, 0, 0, 0
+
     def dump(self, f):
         f.write('\n# Header Section\n')
         f.write('# ID=' + str(self.id))
