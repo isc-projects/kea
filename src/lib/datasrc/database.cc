@@ -22,7 +22,8 @@ using isc::dns::Name;
 namespace isc {
 namespace datasrc {
 
-DatabaseClient::DatabaseClient(std::auto_ptr<DatabaseConnection> connection) :
+DatabaseClient::DatabaseClient(boost::shared_ptr<DatabaseConnection>
+                               connection) :
     connection_(connection)
 {
     if (connection_.get() == NULL) {
@@ -37,7 +38,7 @@ DatabaseClient::findZone(const Name& name) const {
     // Try exact first
     if (zone.first) {
         return (FindResult(result::SUCCESS,
-                           ZoneFinderPtr(new Finder(*connection_,
+                           ZoneFinderPtr(new Finder(connection_,
                                                     zone.second))));
     }
     // Than super domains
@@ -46,7 +47,7 @@ DatabaseClient::findZone(const Name& name) const {
         zone = connection_->getZone(name.split(i));
         if (zone.first) {
             return (FindResult(result::PARTIALMATCH,
-                               ZoneFinderPtr(new Finder(*connection_,
+                               ZoneFinderPtr(new Finder(connection_,
                                                         zone.second))));
         }
     }
@@ -54,7 +55,8 @@ DatabaseClient::findZone(const Name& name) const {
     return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
 }
 
-DatabaseClient::Finder::Finder(DatabaseConnection& connection, int zone_id) :
+DatabaseClient::Finder::Finder(boost::shared_ptr<DatabaseConnection>
+                               connection, int zone_id) :
     connection_(connection),
     zone_id_(zone_id)
 { }

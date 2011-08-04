@@ -50,7 +50,7 @@ public:
      * It is empty, but needs a virtual one, since we will use the derived
      * classes in polymorphic way.
      */
-    virtual ~ DatabaseConnection() { }
+    virtual ~DatabaseConnection() { }
     /**
      * \brief Retrieve a zone identifier
      *
@@ -94,24 +94,14 @@ public:
      *
      * It initializes the client with a connection.
      *
-     * It throws isc::InvalidParameter if connection is NULL. It might throw
+     * \exception isc::InvalidParameter if connection is NULL. It might throw
      * standard allocation exception as well, but doesn't throw anything else.
-     *
-     * \note Some objects returned from methods of this class (like ZoneFinder)
-     *     hold references to the connection. As the lifetime of the connection
-     *     is bound to this object, the returned objects must not be used after
-     *     descruction of the DatabaseClient.
-     *
-     * \todo Should we use shared_ptr instead? On one side, we would get rid of
-     *     the restriction and maybe could easy up some shutdown scenarios with
-     *     multi-threaded applications, on the other hand it is more expensive
-     *     and looks generally unneeded.
      *
      * \param connection The connection to use to get data. As the parameter
      *     suggests, the client takes ownership of the connection and will
      *     delete it when itself deleted.
      */
-    DatabaseClient(std::auto_ptr<DatabaseConnection> connection);
+    DatabaseClient(boost::shared_ptr<DatabaseConnection> connection);
     /**
      * \brief Corresponding ZoneFinder implementation
      *
@@ -138,7 +128,7 @@ public:
          *     DatabaseConnection::getZone and which will be passed to further
          *     calls to the connection.
          */
-        Finder(DatabaseConnection& connection, int zone_id);
+        Finder(boost::shared_ptr<DatabaseConnection> connection, int zone_id);
         virtual isc::dns::Name getOrigin() const;
         virtual isc::dns::RRClass getClass() const;
         virtual FindResult find(const isc::dns::Name& name,
@@ -162,10 +152,10 @@ public:
          * normal applications shouldn't need it.
          */
         const DatabaseConnection& connection() const {
-            return (connection_);
+            return (*connection_);
         }
     private:
-        DatabaseConnection& connection_;
+        boost::shared_ptr<DatabaseConnection> connection_;
         const int zone_id_;
     };
     /**
@@ -183,7 +173,7 @@ public:
     virtual FindResult findZone(const isc::dns::Name& name) const;
 private:
     /// \brief Our connection.
-    const std::auto_ptr<DatabaseConnection> connection_;
+    const boost::shared_ptr<DatabaseConnection> connection_;
 };
 
 }
