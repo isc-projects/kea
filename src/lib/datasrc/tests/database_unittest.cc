@@ -202,6 +202,12 @@ TEST_F(DatabaseClientTest, find) {
     EXPECT_EQ(1, result4.rrset->getRdataCount());
     EXPECT_EQ(isc::dns::RRType::CNAME(), result4.rrset->getType());
 
+    ZoneFinder::FindResult result5 = finder->find(isc::dns::Name("doesnotexist.example.org."),
+                                                  isc::dns::RRType::A(),
+                                                  NULL, ZoneFinder::FIND_DEFAULT);
+    ASSERT_EQ(ZoneFinder::NXDOMAIN, result5.code);
+    EXPECT_EQ(isc::dns::ConstRRsetPtr(), result5.rrset);
+
     EXPECT_THROW(finder->find(isc::dns::Name("emptyvector.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),

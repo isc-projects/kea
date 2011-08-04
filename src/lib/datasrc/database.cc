@@ -74,7 +74,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     connection_.searchForRecords(zone_id_, name.toText());
 
     isc::dns::RRsetPtr result_rrset;
-    ZoneFinder::Result result_status = NXRRSET;
+    ZoneFinder::Result result_status = SUCCESS;
 
     std::vector<std::string> columns;
     while (connection_.getNextRecord(columns)) {
@@ -123,9 +123,6 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                                                                 getClass(),
                                                                 columns[3]));
             result_status = CNAME;
-        } else if (cur_type == isc::dns::RRType::RRSIG()) {
-            // if we have data already, check covered type
-            // if not, covered type must be CNAME or type requested
         }
     }
 
