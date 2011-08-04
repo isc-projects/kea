@@ -74,7 +74,6 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
 {
     bool records_found = false;
     connection_.searchForRecords(zone_id_, name.toText());
-
     isc::dns::RRsetPtr result_rrset;
     ZoneFinder::Result result_status = SUCCESS;
 
@@ -114,13 +113,16 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
         } else if (cur_type == isc::dns::RRType::CNAME()) {
             // There should be no other data, so cur_rrset should be empty,
             // except for signatures
-            if (result_rrset && result_rrset->getRdataCount() > 0) {
-                isc_throw(DataSourceError, "CNAME found but it is not the only record for " + name.toText());
+            if (result_rrset) {
+                if (result_rrset->getRdataCount() > 0) {
+                    isc_throw(DataSourceError, "CNAME found but it is not the only record for " + name.toText());
+                }
+            } else {
+                result_rrset = isc::dns::RRsetPtr(new isc::dns::RRset(name,
+                                                                    getClass(),
+                                                                    cur_type,
+                                                                    cur_ttl));
             }
-            result_rrset = isc::dns::RRsetPtr(new isc::dns::RRset(name,
-                                                                  getClass(),
-                                                                  cur_type,
-                                                                  cur_ttl));
             result_rrset->addRdata(isc::dns::rdata::createRdata(cur_type,
                                                                 getClass(),
                                                                 columns[3]));
@@ -139,9 +141,9 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                 // no data at all yet, assume the RRset data is coming, and
                 // that the type covered will match
                     result_rrset = isc::dns::RRsetPtr(new isc::dns::RRset(name,
-                                                                        getClass(),
-                                                                        type_covered,
-                                                                        cur_ttl));
+                                                                          getClass(),
+                                                                          type_covered,
+                                                                          cur_ttl));
                 }
                 result_rrset->addRRsig(cur_rrsig);
             }
