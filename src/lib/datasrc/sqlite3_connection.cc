@@ -359,6 +359,7 @@ SQLite3Connection::getNextRecord(std::vector<std::string>& columns) const {
         return false;
     }
     sqlite3_reset(current_stmt);
+    sqlite3_clear_bindings(current_stmt);
     isc_throw(DataSourceError, "Unexpected failure in sqlite3_step");
 
     // Compilers might not realize isc_throw always throws
