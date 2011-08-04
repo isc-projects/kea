@@ -552,8 +552,15 @@ class RR:
       contained).  Default is 'example.com.'
     - rr_class (string): The RR class of the data.  Only meaningful
       when the data is dumped as an RR.  Default is 'IN'.
-    - rr_ttl (integer): The TTL value of the RR.  Only meaningful when
+    - rr_ttl (int): The TTL value of the RR.  Only meaningful when
       the data is dumped as an RR.  Default is 86400 (1 day).
+    - rdlen (int): 16-bit RDATA length.  It can be None (i.e. omitted
+      in the spec file), in which case the actual length of the
+      generated RDATA is automatically determined and used; if
+      negative, the RDLEN field will be omitted from the output data.
+      (Note that omitting RDLEN with as_rr being True is mostly
+      meaningless, although the script doesn't complain about it).
+      Default is None.
     '''
 
     def __init__(self):
@@ -562,26 +569,36 @@ class RR:
         self.rr_name = 'example.com'
         self.rr_class = 'IN'
         self.rr_ttl = 86400
+        self.rdlen = None
+
     def dump_header(self, f, rdlen):
         type_txt = self.__class__.__name__
         type_code = parse_value(type_txt, dict_rrtype)
+        rdlen_spec = ''
+        rdlen_data = ''
+        if rdlen >= 0:
+            rdlen_spec = ', RDLEN=%d' % rdlen
+            rdlen_data = ' %04x' % rdlen
         if self.as_rr:
             rrclass = parse_value(self.rr_class, dict_rrclass)
-            f.write('\n# %s RR (QNAME=%s Class=%s TTL=%d RDLEN=%d)\n' %
+            f.write('\n# %s RR (QNAME=%s Class=%s TTL=%d%s)\n' %
                     (type_txt, self.rr_name,
-                     code_totext(rrclass, rdict_rrclass), self.rr_ttl, rdlen))
-            f.write('%s %04x %04x %08x %04x\n' %
+                     code_totext(rrclass, rdict_rrclass), self.rr_ttl,
+                     rdlen_spec))
+            f.write('%s %04x %04x %08x%s\n' %
                     (encode_name(self.rr_name), type_code, rrclass,
-                     self.rr_ttl, rdlen))
+                     self.rr_ttl, rdlen_data))
         else:
-            f.write('\n# %s RDATA (RDLEN=%d)\n' % (type_txt, rdlen))
-            f.write('%04x\n' % rdlen)
+            f.write('\n# %s RDATA%s\n' % (type_txt, rdlen_spec))
+            f.write('%s\n' % rdlen_data)
 
 class A(RR):
-    rdlen = 4                   # fixed by default
+    RDLEN_DEFAULT = 4           # fixed by default
     address = '192.0.2.1'
 
     def dump(self, f):
+        if self.rdlen is None:
+            self.rdlen = self.RDLEN_DEFAULT
         self.dump_header(f, self.rdlen)
         f.write('# Address=%s\n' % (self.address))
         bin_address = socket.inet_aton(self.address)
@@ -589,10 +606,12 @@ class A(RR):
                                         bin_address[2], bin_address[3]))
 
 class AAAA(RR):
-    rdlen = 16
+    RDLEN_DEFAULT = 16          # fixed by default
     address = '2001:db8::1'
 
     def dump(self, f):
+        if self.rdlen is None:
+            self.rdlen = self.RDLEN_DEFAULT
         self.dump_header(f, self.rdlen)
         f.write('# Address=%s\n' % (self.address))
         bin_address = socket.inet_pton(socket.AF_INET6, self.address)
@@ -600,7 +619,6 @@ class AAAA(RR):
         f.write('\n')
 
 class NS(RR):
-    rdlen = None                   # auto calculate
     nsname = 'ns.example.com'
 
     def dump(self, f):
@@ -612,7 +630,6 @@ class NS(RR):
         f.write('%s\n' % nsname_wire)
 
 class SOA(RR):
-    rdlen = None                  # auto-calculate
     mname = 'ns.example.com'
     rname = 'root.example.com'
     serial = 2010012601
@@ -636,7 +653,6 @@ class SOA(RR):
                                                 self.minimum))
 
 class TXT(RR):
-    rdlen = None                # auto-calculate
     nstring = 1                 # number of character-strings
     stringlen = -1              # default string length, auto-calculate
     string = 'Test String'      # default string
@@ -668,17 +684,12 @@ class TXT(RR):
                                     ' ' if len(wirestring_list[i]) > 0 else '',
                                     wirestring_list[i]))
 
-class RP:
+class RP(RR):
     '''Implements rendering RP RDATA in the wire format.
     Configurable parameters are as follows:
-    - rdlen: 16-bit RDATA length.  If omitted, the accurate value is auto
-      calculated and used; if negative, the RDLEN field will be omitted from
-      the output data.
-    - mailbox: The mailbox field.
-    - text: The text field.
-    All of these parameters have the default values and can be omitted.
+    - mailbox: The mailbox field.  Default is 'root.example.com'
+    - text: The text field.  Default is 'rp-text.example.com'
     '''
-    rdlen = None                # auto-calculate
     mailbox = 'root.example.com'
     text = 'rp-text.example.com'
     def dump(self, f):
@@ -688,11 +699,7 @@ class RP:
             self.rdlen = (len(mailbox_wire) + len(text_wire)) / 2
         else:
             self.rdlen = int(self.rdlen)
-        if self.rdlen >= 0:
-            f.write('\n# RP RDATA (RDLEN=%d)\n' % self.rdlen)
-            f.write('%04x\n' % self.rdlen)
-        else:
-            f.write('\n# RP RDATA (RDLEN omitted)\n')
+        self.dump_header(f, self.rdlen)
         f.write('# MAILBOX=%s TEXT=%s\n' % (self.mailbox, self.text))
         f.write('%s %s\n' % (mailbox_wire, text_wire))
 
@@ -824,7 +831,6 @@ class RRSIG:
         f.write('%04x %s %s\n' % (self.tag, name_wire, sig_wire))
 
 class TSIG(RR):
-    rdlen = None                # auto-calculate
     algorithm = 'hmac-sha256'
     time_signed = 1286978795    # arbitrarily chosen default
     fudge = 300
