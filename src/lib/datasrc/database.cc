@@ -78,10 +78,10 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     isc::dns::RRsetPtr result_rrset;
     ZoneFinder::Result result_status = SUCCESS;
 
-    connection_.searchForRecords(zone_id_, name.toText());
+    connection_->searchForRecords(zone_id_, name.toText());
 
     std::vector<std::string> columns;
-    while (connection_.getNextRecord(columns)) {
+    while (connection_->getNextRecord(columns)) {
         if (!records_found) {
             records_found = true;
         }
