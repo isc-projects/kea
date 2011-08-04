@@ -100,4 +100,40 @@ TEST_F(SQLite3Conn, noClass) {
     EXPECT_FALSE(conn->getZone(Name("example.com")).first);
 }
 
+namespace {
+    // Simple function to cound the number of records for
+    // any name
+    size_t countRecords(std::auto_ptr<SQLite3Connection>& conn,
+                        int zone_id, const std::string& name) {
+        conn->searchForRecords(zone_id, name);
+        size_t count = 0;
+        std::vector<std::string> columns;
+        while (conn->getNextRecord(columns)) {
+            EXPECT_EQ(4, columns.size());
+            ++count;
+        }
+        return count;
+    }
+}
+}
+
+TEST_F(SQLite3Conn, getRecords) {
+    std::pair<bool, int> zone_info(conn->getZone(Name("example.com")));
+    ASSERT_TRUE(zone_info.first);
+
+    int zone_id = zone_info.second;
+    ASSERT_EQ(1, zone_id);
+
+    // without search, getNext() should return false
+    std::vector<std::string> columns;
+    EXPECT_FALSE(conn->getNextRecord(columns));
+    EXPECT_EQ(0, columns.size());
+
+    EXPECT_EQ(4, countRecords(conn, zone_id, "foo.example.com."));
+    EXPECT_EQ(15, countRecords(conn, zone_id, "example.com."));
+    EXPECT_EQ(0, countRecords(conn, zone_id, "foo.bar."));
+    EXPECT_EQ(0, countRecords(conn, zone_id, ""));
+
+    EXPECT_FALSE(conn->getNextRecord(columns));
+    EXPECT_EQ(0, columns.size());
 }
