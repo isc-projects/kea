@@ -18,6 +18,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <util/buffer.h>
+#include <util/strutil.h>
 
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
@@ -26,6 +27,7 @@
 
 using namespace std;
 using namespace isc::util;
+using namespace isc::util::str;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -43,39 +45,6 @@ struct SRVImpl {
     uint16_t port_;
     Name target_;
 };
-
-namespace {
-string
-getToken(istringstream& iss, const string& full_input) {
-    string token;
-    iss >> token;
-    if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid SRV text: parse error " <<
-                  full_input);
-    }
-    return (token);
-}
-
-// This helper function converts a string token to an *unsigned* integer.
-// NumType is a *signed* integral type (e.g. int32_t) that is sufficiently
-// wide to store resulting integers.
-template <typename NumType, int BitSize>
-NumType
-tokenToNum(const string& num_token) {
-    NumType num;
-    try {
-        num = boost::lexical_cast<NumType>(num_token);
-    } catch (const boost::bad_lexical_cast& ex) {
-        isc_throw(InvalidRdataText, "Invalid SRV numeric parameter: " <<
-                  num_token);
-    }
-    if (num < 0 || num >= (static_cast<NumType>(1) << BitSize)) {
-        isc_throw(InvalidRdataText, "Numeric SRV parameter out of range: " <<
-                  num);
-    }
-    return (num);
-}
-}
 
 /// \brief Constructor from string.
 ///
@@ -103,17 +72,22 @@ SRV::SRV(const string& srv_str) :
 {
     istringstream iss(srv_str);
 
-    const int32_t priority = tokenToNum<int32_t, 16>(getToken(iss, srv_str));
-    const int32_t weight = tokenToNum<int32_t, 16>(getToken(iss, srv_str));
-    const int32_t port = tokenToNum<int32_t, 16>(getToken(iss, srv_str));
-    const Name targetname(getToken(iss, srv_str));
+    try {
+        const int32_t priority = tokenToNum<int32_t, 16>(getToken(iss));
+        const int32_t weight = tokenToNum<int32_t, 16>(getToken(iss));
+        const int32_t port = tokenToNum<int32_t, 16>(getToken(iss));
+        const Name targetname(getToken(iss));
 
-    if (!iss.eof()) {
-        isc_throw(InvalidRdataText, "Unexpected input for SRV RDATA: " <<
-                  srv_str);
+        if (!iss.eof()) {
+            isc_throw(InvalidRdataText, "Unexpected input for SRV RDATA: " <<
+                    srv_str);
+        }
+
+        impl_ = new SRVImpl(priority, weight, port, targetname);
+    } catch (StringTokenError ste) {
+        isc_throw(InvalidRdataText, "Invalid SRV text: " <<
+                  ste.what() << ": " << srv_str);
     }
-
-    impl_ = new SRVImpl(priority, weight, port, targetname);
 }
 
 /// \brief Constructor from wire-format data.
