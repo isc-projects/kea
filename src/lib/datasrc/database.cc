@@ -72,10 +72,13 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                              isc::dns::RRsetList*,
                              const FindOptions) const
 {
+    // This variable is used to determine the difference between
+    // NXDOMAIN and NXRRSET
     bool records_found = false;
-    connection_.searchForRecords(zone_id_, name.toText());
     isc::dns::RRsetPtr result_rrset;
     ZoneFinder::Result result_status = SUCCESS;
+
+    connection_.searchForRecords(zone_id_, name.toText());
 
     std::vector<std::string> columns;
     while (connection_.getNextRecord(columns)) {
