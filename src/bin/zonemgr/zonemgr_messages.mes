@@ -43,7 +43,7 @@ discovered that the data did not contain an SOA record.  The load has
 been abandoned.
 
 % ZONEMGR_NO_TIMER_THREAD trying to stop zone timer thread but it is not running
-At attempt was made to stop the timer thread (used to track when zones
+An attempt was made to stop the timer thread (used to track when zones
 should be refreshed) but it was not running.  This may indicate an
 internal program error.  Please submit a bug report.
 
