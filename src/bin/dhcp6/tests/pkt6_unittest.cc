@@ -25,6 +25,7 @@
 using namespace std;
 using namespace isc;
 
+namespace {
 // empty class for now, but may be extended once Addr6 becomes bigger
 class Pkt6Test : public ::testing::Test {
 public:
@@ -35,17 +36,18 @@ public:
 TEST_F(Pkt6Test, constructor) {
     Pkt6 * pkt1 = new Pkt6(17);
     
-    ASSERT_EQ(pkt1->dataLen_, 17);
+    ASSERT_EQ(pkt1->data_len_, 17);
 
     char * buf = new char[23];
     // can't use char buf[23], as Pkt6 takes ownership of the data
 
     Pkt6 * pkt2 = new Pkt6(buf, 23);
 
-    ASSERT_EQ(pkt2->dataLen_, 23);
+    ASSERT_EQ(pkt2->data_len_, 23);
     ASSERT_EQ(pkt2->data_, buf);
 
     delete pkt1;
     delete pkt2;
 }
 
+}
