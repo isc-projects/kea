@@ -15,6 +15,320 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+"""
+Generator of various types of DNS data in the hex format.
+
+This script reads a human readable specification file (called "spec
+file" hereafter) that defines some type of DNS data (an RDATA, an RR,
+or a complete message) and dumps the defined data to a separate file
+as a "wire format" sequence parsable by the
+UnitTestUtil::readWireData() function (currently defined as part of
+libdns++ tests).  Many DNS related tests involve wire format test
+data, so it will be convenient if we can define the data in a more
+intuitive way than writing the entire hex sequence by hand.
+
+Here is a simple example.  Consider the following spec file:
+
+  [custom]
+  sections: a
+  [a]
+  as_rr: True
+
+When the script reads this file, it detects the file specifies a single
+component (called "section" here) that consists of a single A RDATA,
+which must be dumped as an RR (not only the part of RDATA).  It then
+dumps the following content:
+
+  # A RR (QNAME=example.com Class=IN(1) TTL=86400 RDLEN=4)
+  076578616d706c6503636f6d00 0001 0001 00015180 0004
+  # Address=192.0.2.1
+  c0000201
+
+As can be seen, the script automatically completes all variable
+parameters of RRs: owner name, class, TTL, RDATA length and data.  For
+testing purposes many of these will be the same common one (like
+"example.com" or 192.0.2.1), so it would be convenient if we only have
+to specify non default parameters.  To change the RDATA (i.e., the
+IPv4 address), we should add the following line at the end of the spec
+file:
+
+  address: 192.0.2.2
+
+Then the last two lines of the output file will be as follows:
+
+  # Address=192.0.2.2
+  c0000202
+
+In some cases we would rather specify malformed data for tests.  This
+script has the ability to specify broken parameters for many types of
+data.  For example, we can generate data that would look like an A RR
+but the RDLEN is 3 by adding the following line to the spec file:
+
+  rdlen: 3
+
+Then the first two lines of the output file will be as follows:
+
+  # A RR (QNAME=example.com Class=IN(1) TTL=86400 RDLEN=3)
+  076578616d706c6503636f6d00 0001 0001 00015180 0003
+
+** USAGE **
+
+  gen_wiredata.py [-o output_file] spec_file
+
+If the -o option is missing, and if the spec_file has a suffix (such as
+in the form of "data.spec"), the output file name will be the prefix
+part of it (as in "data"); if -o is missing and the spec_file does not
+have a suffix, the script will fail.
+
+** SPEC FILE SYNTAX **
+
+A spec file accepted in this script should be in the form of a
+configuration file that is parsable by the Python's standard
+configparser module.  In short, it consists of sections; each section
+is identified in the form of [section_name] followed by "name: value"
+entries.  Lines beginning with # or ; will be treated as comments.
+Refer to the configparser module documentation for further details of
+the general syntax.
+
+This script has two major modes: the custom mode and the DNS query
+mode.  The former generates an arbitrary combination of DNS message
+header, question section, RDATAs or RRs.  It is mainly intended to
+generate a test data for a single type of RDATA or RR, or for
+complicated complete DNS messages.  The DNS query mode is actually a
+special case of the custom mode, which is a shortcut to generate a
+simple DNS query message (with or without EDNS).
+
+* Custom mode syntax *
+
+By default this script assumes the DNS query mode.  To specify the
+custom mode, there must be a special "custom" section in the spec
+file, which should contain 'sections' entry.  This value of this
+entryis colon-separated string fields, each of which is either
+"header", "question", "edns", "name", or a string specifying an RR
+type.  For RR types the string is lower-cased string mnemonic that
+identifies the type: 'a' for type A, 'ns' for type NS, and so on
+(note: in the current implementation it's case sensitive, and must be
+lower cased).
+
+Each of these fields is interpreted as a section name of the spec
+(configuration), and in that section parameters specific to the
+semantics of the field can be configured.
+
+A "header" section specifies the content of a DNS message header.
+See the documentation of the DNSHeader class of this module for
+configurable parameters.
+
+A "question" section specifies the content of a single question that
+is normally to be placed in the Question section of a DNS message.
+See the documentation of the DNSQuestion class of this module for
+configurable parameters.
+
+An "edns" section specifies the content of an EDNS OPT RR.  See the
+documentation of the EDNS class of this module for configurable
+parameters.
+
+A "name" section specifies a domain name with or without compression.
+This is specifically intended to be used for testing name related
+functionalities and would rarely be used with other sections.  See the
+documentation of the Name class of this module for configurable
+parameters.
+
+In a specific section for an RR or RDATA, possible entries depend on
+the type.  But there are some common configurable entries.  See the
+description of the RR class.  The most important one would be "as_rr".
+It controls whether the entry should be treated as an RR (with name,
+type, class and TTL) or only as an RDATA.  By default as_rr is
+"False", so if an entry is to be intepreted as an RR, an as_rr entry
+must be explicitly specified with a value of "True".
+
+Another common entry is "rdlen".  It specifies the RDLEN field value
+of the RR (note: this is included when the entry is interpreted as
+RDATA, too).  By default this value is automatically determined by the
+RR type and (it has a variable length) from other fields of RDATA, but
+as shown in the above example, it can be explicitly set, possibly to a
+bogus value for testing against invalid data.
+
+For type specific entries (and their defaults when provided), see the
+documentation of the corresponding Python class defined in this
+module.  In general, there should be a class named the same mnemonic
+of the corresponding RR type for each supported type, and they are a
+subclass of the RR class.  For example, the "NS" class is defined for
+RR type NS.
+
+Look again at the A RR example shown at the beginning of this
+description.  There's a "custom" section, which consists of a
+"sections" entry whose value is a single "a", which means the data to
+be generated is an A RR or RDATA.  There's a corresponding "a"
+section, which only specifies that it should be interpreted as an RR
+(all field values of the RR are derived from the default).
+
+If you want to generate a data sequence for two ore more RRs or
+RDATAs, you can specify them in the form of colon-separated fields for
+the "sections" entry.  For example, to generate a sequence of A and NS
+RRs in that order, the "custom" section would be something like this:
+
+  [custom]
+  sections: a:ns
+
+and there must be an "ns" section in addtion to "a".
+
+If a sequence of two or more RRs/RDATAs of the same RR type should be
+generated, these should be uniquely indexed with the "/" separator.
+For example, to generate two A RRs, the "custom" section would be as
+follows:
+
+  [custom]
+  sections: a/1:a/2
+
+and there must be "a/1" and "a/2" sections.
+
+Another practical example that would be used for many tests is to
+generate data for a complete DNS ressponse message.  The spec file of
+such an example configuration would look like as follows:
+
+  [custom]
+  sections: header:question:a
+  [header]
+  qr: 1
+  ancount: 1
+  [question]
+  [a]
+  as_rr: True
+
+With this configuration, this script will generate test data for a DNS
+response to a query for example.com/IN/A containing one corresponding
+A RR in the answer section.
+
+* DNS query mode syntax *
+
+If the spec file does not contain a "custom" section (that has a
+"sections" entry), this script assumes the DNS query mode.  This mode
+is actually a special case of custom mode; it implicitly assumes the
+"sections" entry whose value is "header:question:edns".
+
+In this mode it is expected that the spec file also contains at least
+a "header" and "question" sections, and optionally an "edns" section.
+But the script does not warn or fail even if the expected sections are
+missing.
+
+* Entry value types *
+
+As described above, a section of the spec file accepts entries
+specific to the semantics of the section.  They generally correspond
+to DNS message or RR fields.
+
+Many of them are expected to be integral values, for which either decimal or
+hexadecimal representation is accepted, for example:
+
+  rr_ttl: 3600
+  tag: 0x1234
+
+Some others are expected to be string.  A string value does not have
+to be quated:
+
+  address: 192.0.2.2
+
+but can also be quoated with single quotes:
+
+  address: '192.0.2.2'
+
+Note 1: a string that can be interpreted as an integer must be quated.
+For example, if you want to set a "string" entry to "3600", it should
+be:
+
+  string: '3600'
+
+instead of
+
+  string: 3600
+
+Note 2: a string enclosed with double quotes is not accepted:
+
+  # This doesn't work:
+  address: "192.0.2.2"
+
+In general, string values are converted to hexadecimal sequences
+according to the semantics of the entry.  For instance, a textual IPv4
+address in the above example will be converted to a hexadecimal
+sequence corresponding to a 4-byte integer.  So, in many cases, the
+acceptable syntax for a particular string entry value should be
+obvious from the context.  There are still some exceptional cases
+especially for complicated RR field values, for which the
+corresponding class documentation should be referenced.
+
+One special string syntax that would be worth noting is domain names,
+which would natually be used in many kinds of entries.  The simplest
+form of acceptable syntax is a textual representation of domain names
+such as "example.com" (note: names are always assumed to be
+"absolute", so the trailing dot can be omitted).  But a domain name in
+the wire format can also contain a compression pointer.  This script
+provides a simple support for name compression with a special notation
+of "ptr=nn" where nn is the numeric pointer value (decimal).  For example,
+if the NSDNAME field of an NS RDATA is specified as follows:
+
+  nsname: ns.ptr=12
+
+this script will generate the following output:
+
+  # NS name=ns.ptr=12
+  026e73c00c
+
+** EXTEND THE SCRIPT **
+
+This script is expected to be extended as we add more support for
+various types of RR.  It is encouraged to add support for a new type
+of RR to this script as we see the need for testing that type.  Here
+is a simple instruction of how to do that.
+
+Assume you are adding support for "FOO" RR.  Also assume that the FOO
+RDATA contains a single field named "value".
+
+What you are expected to do is as follows:
+
+- Add a dictionary entry of "'foo': (FOO, {})" to config_param of the
+  get_config_param() function (this step could be automated; we may do
+  it in a future version)
+
+- Define a new class named "FOO" inherited from the RR class.  Also
+  define a class variable named "value" for the FOO RDATA field (the
+  variable name can be different from the field name, but it's
+  convenient if it can be easily identifiable.) with an appropriate
+  default value (if possible):
+
+    class FOO(RR):
+        value = 10
+
+  The name of the variable will be (automatically) used as the
+  corresponding entry name in the spec file.  So, a spec file that
+  sets this field to 20 would look like this:
+
+    [foo]
+    value: 20
+
+- Define the "dump()" method for class FOO.  It must call
+  self.dump_header() (which is derived from class RR) at the
+  beginning.  It then prints the RDATA field values in an appropriate
+  way.  Assuming the value is a 16-bit integer field, a complete
+  dump() method would look like this:
+
+    def dump(self, f):
+      if self.rdlen is None:
+          self.rdlen = 2
+      self.dump_header(f, self.rdlen)
+      f.write('# Value=%d\\n' % (self.value))
+      f.write('%04x\\n' % (self.value))
+
+  The first f.write() call is not mandatory, but is encouraged to
+  provide so that the generated files will be more human readable.
+  Depending on the complexity of the RDATA fields, the dump()
+  implementation would be more complicated.  In particular, if the
+  RDATA length is variable and the RDLEN field value is not specified
+  in the spec file, the dump() method is normally expected to
+  calculate the correct length and pass it to dump_header().  See the
+  implementation of various derived classes of class RR for actual
+  examples.
+"""
+
 import configparser, re, time, socket, sys
 from datetime import datetime
 from optparse import OptionParser
@@ -231,12 +545,15 @@ class RR:
     derived class for the RR type SOA should be named "SOA".
 
     Configurable parameters are as follows:
-    - as_rr (bool): Whether or not the data is to be dumped as an RR.  False
-      by default.
-    - rr_class (string): The RR class of the data.  Only meaningful when the
-      data is dumped as an RR.  Default is 'IN'.
-    - rr_ttl (integer): The TTL value of the RR.  Only meaningful when the
-      data is dumped as an RR.  Default is 86400 (1 day).
+    - as_rr (bool): Whether or not the data is to be dumped as an RR.
+      False by default.
+    - rr_name (string): The owner name of the RR.  The string must be
+      interpreted as a valid domain name (compression pointer can be
+      contained).  Default is 'example.com.'
+    - rr_class (string): The RR class of the data.  Only meaningful
+      when the data is dumped as an RR.  Default is 'IN'.
+    - rr_ttl (integer): The TTL value of the RR.  Only meaningful when
+      the data is dumped as an RR.  Default is 86400 (1 day).
     '''
 
     def __init__(self):
@@ -595,7 +912,7 @@ if __name__ == "__main__":
 
     print_header(output, configfile)
 
-    # First try the 'custom' mode; if it fails assume the standard mode.
+    # First try the 'custom' mode; if it fails assume the query mode.
     try:
         sections = config.get('custom', 'sections').split(':')
     except configparser.NoSectionError:
