@@ -312,11 +312,11 @@ What you are expected to do is as follows:
   dump() method would look like this:
 
     def dump(self, f):
-      if self.rdlen is None:
-          self.rdlen = 2
-      self.dump_header(f, self.rdlen)
-      f.write('# Value=%d\\n' % (self.value))
-      f.write('%04x\\n' % (self.value))
+        if self.rdlen is None:
+            self.rdlen = 2
+        self.dump_header(f, self.rdlen)
+        f.write('# Value=%d\\n' % (self.value))
+        f.write('%04x\\n' % (self.value))
 
   The first f.write() call is not mandatory, but is encouraged to
   be provided so that the generated files will be more human readable.
@@ -375,7 +375,6 @@ rdict_nsec3_algorithm = dict([(dict_nsec3_algorithm[k], k.upper()) for k in \
 header_xtables = { 'qr' : dict_qr, 'opcode' : dict_opcode,
                    'rcode' : dict_rcode }
 question_xtables = { 'rrtype' : dict_rrtype, 'rrclass' : dict_rrclass }
-rrsig_xtables = { 'algorithm' : dict_algorithm }
 
 def parse_value(value, xtable = {}):
     if re.search(re_hex, value):
@@ -593,6 +592,13 @@ class RR:
             f.write('%s\n' % rdlen_data)
 
 class A(RR):
+    '''Implements rendering A RDATA (of class IN) in the test data format.
+
+    Configurable parameter is as follows (see the description of the
+    same name of attribute for the default value):
+    - address (string): The address field.  This must be a valid textual
+      IPv4 address.
+    '''
     RDLEN_DEFAULT = 4           # fixed by default
     address = '192.0.2.1'
 
@@ -606,6 +612,14 @@ class A(RR):
                                         bin_address[2], bin_address[3]))
 
 class AAAA(RR):
+    '''Implements rendering AAAA RDATA (of class IN) in the test data
+    format.
+
+    Configurable parameter is as follows (see the description of the
+    same name of attribute for the default value):
+    - address (string): The address field.  This must be a valid textual
+      IPv6 address.
+    '''
     RDLEN_DEFAULT = 16          # fixed by default
     address = '2001:db8::1'
 
@@ -619,6 +633,14 @@ class AAAA(RR):
         f.write('\n')
 
 class NS(RR):
+    '''Implements rendering NS RDATA in the test data format.
+
+    Configurable parameter is as follows (see the description of the
+    same name of attribute for the default value):
+    - nsname (string): The NSDNAME field.  The string must be
+      interpreted as a valid domain name.
+    '''
+
     nsname = 'ns.example.com'
 
     def dump(self, f):
@@ -630,6 +652,19 @@ class NS(RR):
         f.write('%s\n' % nsname_wire)
 
 class SOA(RR):
+    '''Implements rendering SOA RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - mname/rname (string): The MNAME/RNAME fields, respectively.  The
+      string must be interpreted as a valid domain name.
+    - serial (32-bit int): The SERIAL field
+    - refresh (32-bit int): The REFRESH field
+    - retry (32-bit int): The RETRY field
+    - expire (32-bit int): The EXPIRE field
+    - minimum (32-bit int): The MINIMUM field
+    '''
+
     mname = 'ns.example.com'
     rname = 'root.example.com'
     serial = 2010012601
@@ -653,9 +688,30 @@ class SOA(RR):
                                                 self.minimum))
 
 class TXT(RR):
-    nstring = 1                 # number of character-strings
-    stringlen = -1              # default string length, auto-calculate
-    string = 'Test String'      # default string
+    '''Implements rendering TXT RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - nstring (int): number of character-strings
+    - stringlenN (int) (int, N = 0, ..., nstring-1): the length of the
+      N-th character-string.
+    - stringN (string, N = 0, ..., nstring-1): the N-th
+      character-string.
+    - stringlen (int): the default string.  If nstring >= 1 and the
+      corresponding stringlenN isn't specified in the spec file, this
+      value will be used.  If this parameter isn't specified either,
+      the length of the string will be used.  Note that it means
+      this parameter (or any stringlenN) doesn't have to be specified
+      unless you want to intentially build a broken character string.
+    - string (string): the default string.  If nstring >= 1 and the
+      corresponding stringN isn't specified in the spec file, this
+      string will be used.
+    '''
+
+    nstring = 1
+    stringlen = None
+    string = 'Test String'
+
     def dump(self, f):
         stringlen_list = []
         string_list = []
@@ -672,7 +728,7 @@ class TXT(RR):
                 stringlen_list.append(self.__dict__[key_stringlen])
             else:
                 stringlen_list.append(self.stringlen)
-            if stringlen_list[-1] < 0:
+            if stringlen_list[-1] is None:
                 stringlen_list[-1] = int(len(wirestring_list[-1]) / 2)
         if self.rdlen is None:
             self.rdlen = int(len(''.join(wirestring_list)) / 2) + self.nstring
@@ -685,10 +741,13 @@ class TXT(RR):
                                     wirestring_list[i]))
 
 class RP(RR):
-    '''Implements rendering RP RDATA in the wire format.
-    Configurable parameters are as follows:
-    - mailbox: The mailbox field.  Default is 'root.example.com'
-    - text: The text field.  Default is 'rp-text.example.com'
+    '''Implements rendering RP RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - mailbox (string): The mailbox field.
+    - text (string): The text field.
+    These strings must be interpreted as a valid domain name.
     '''
     mailbox = 'root.example.com'
     text = 'rp-text.example.com'
@@ -706,7 +765,26 @@ class RP(RR):
 class NSECBASE(RR):
     '''Implements rendering NSEC/NSEC3 type bitmaps commonly used for
     these RRs.  The NSEC and NSEC3 classes will be inherited from this
-    class.'''
+    class.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - nbitmap (int): The number of type bitmaps.
+    The following three define the bitmaps.  If suffixed with "N"
+    (0 <= N < nbitmaps), it means the definition for the N-th bitmap.
+    If there is no suffix (e.g., just "block", it means the default
+    for any unspecified values)
+    - block[N] (8-bit int): The Window Block.
+    - maplen[N] (8-bit int): The Bitmap Length.  The default "maplen"
+      can also be unspecified (with being set to None), in which case
+      the corresponding length will be calculated from the bitmap.
+    - bitmap[N] (string): The Bitmap.  This must be the hexadecimal
+      representation of the bitmap field.  For example, for a bitmap
+      where the 7th and 15th bits (and only these bits) are set, it
+      must be '0101'.  Note also that the value must be quated with
+      single quatations because it could also be interpreted as an
+      integer.
+    '''
     nbitmap = 1                 # number of bitmaps
     block = 0
     maplen = None              # default bitmap length, auto-calculate
@@ -747,6 +825,15 @@ class NSECBASE(RR):
                     (block_list[i], maplen_list[i], bitmap_list[i]))
 
 class NSEC(NSECBASE):
+    '''Implements rendering NSEC RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - Type bitmap related parameters: see class NSECBASE
+    - nextname (string): The Next Domain Name field.  The string must be
+      interpreted as a valid domain name.
+    '''
+
     nextname = 'next.example.com'
     def dump_fixedpart(self, f, bitmap_totallen):
         name_wire = encode_name(self.nextname)
@@ -760,6 +847,28 @@ class NSEC(NSECBASE):
         f.write('%s\n' % name_wire)
 
 class NSEC3(NSECBASE):
+    '''Implements rendering NSEC3 RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - Type bitmap related parameters: see class NSECBASE
+    - hashalg (8-bit int): The Hash Algorithm field.  Note that
+      currently the only defined algorithm is SHA-1, for which a value
+      of 1 will be used, and it's the default.  So this implementation
+      does not support any string representation right now.
+    - optout (bool): The Opt-Out flag of the Flags field.
+    - mbz (7-bit int): The rest of the Flags field.  This value will
+      be left shifted for 1 bit and then OR-ed with optout to
+      construct the complete Flags field.
+    - iterations (16-bit int): The Iterations field.
+    - saltlen (int): The Salt Length field.
+    - salt (string): The Salt field.  It is converted to a sequence of
+      ascii codes and its hexadecimal representation will be used.
+    - hashlen (int): The Hash Length field.
+    - hash (string): The Next Hashed Owner Name field.  This parameter
+      is interpreted as "salt".
+    '''
+
     hashalg = 1                 # SHA-1
     optout = False              # opt-out flag
     mbz = 0                     # other flag fields (none defined yet)
@@ -791,9 +900,37 @@ class NSEC3(NSECBASE):
                                 encode_string(self.hash)))
 
 class RRSIG(RR):
-    covered = 1                 # A
-    algorithm = 5               # RSA-SHA1
-    labels = -1                 # auto-calculate (#labels of signer)
+    '''Implements rendering RRSIG RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - covered (int or string): The Type Covered field.  If specified
+      as an integer, it must be the 16-bit RR type value of the
+      covered type.  If specifed as a string, it must be the textual
+      mnemonic of the type.
+    - algorithm (int or string): The Algorithm field.   If specified
+      as an integer, it must be the 8-bit algorithm number as defined
+      in RFC4034.  If specifed as a string, it must be one of the keys
+      of dict_algorithm (case insensitive).
+    - labels (int): The Labels field.  If omitted (the corresponding
+      variable being set to None), the number of labels of "signer"
+      (excluding the trailing null label as specified in RFC4034) will
+      be used.
+    - originalttl (32-bit int): The Original TTL field.
+    - expiration (32-bit int): The Expiration TTL field.
+    - inception (32-bit int): The Inception TTL field.
+    - tag (16-bit int): The Key Tag field.
+    - signer (string): The Signer's Name field.  The string must be
+      interpreted as a valid domain name.
+    - signature (int): The Signature field.  Right now only a simple
+      integer form is supported.  A prefix of "0" will be prepended if
+      the resulting hexadecimal representation consists of an odd
+      number of characters.
+    '''
+
+    covered = 'A'
+    algorithm = 'RSASHA1'
+    labels = None                 # auto-calculate (#labels of signer)
     originalttl = 3600
     expiration = int(time.mktime(datetime.strptime('20100131120000',
                                                    dnssec_timefmt).timetuple()))
@@ -802,14 +939,21 @@ class RRSIG(RR):
     tag = 0x1035
     signer = 'example.com'
     signature = 0x123456789abcdef123456789abcdef
+
     def dump(self, f):
         name_wire = encode_name(self.signer)
-        sig_wire = '%x' % self.signature 
+        sig_wire = '%x' % self.signature
+        if len(sig_wire) % 2 != 0:
+            sig_wire = '0' + sig_wire
         if self.rdlen is None:
             self.rdlen = int(18 + len(name_wire) / 2 + len(str(sig_wire)) / 2)
         self.dump_header(f, self.rdlen)
 
-        if self.labels < 0:
+        if type(self.covered) is str:
+            self.covered = dict_rrtype[self.covered.lower()]
+        if type(self.algorithm) is str:
+            self.algorithm = dict_algorithm[self.algorithm.lower()]
+        if self.labels is None:
             self.labels = count_namelabels(self.signer)
         f.write('# Covered=%s Algorithm=%s Labels=%d OrigTTL=%d\n' %
                 (code_totext(self.covered, rdict_rrtype),
@@ -824,6 +968,47 @@ class RRSIG(RR):
         f.write('%04x %s %s\n' % (self.tag, name_wire, sig_wire))
 
 class TSIG(RR):
+    '''Implements rendering TSIG RDATA in the test data format.
+
+    As a meta RR type TSIG uses some non common parameters.  This
+    class overrides some of the default attributes of the RR class
+    accordingly:
+    - rr_class is set to 'ANY'
+    - rr_ttl is set to 0
+    Like other derived classes these can be overridden via the spec
+    file.
+
+    Other configurable parameters are as follows (see the description
+    of the same name of attribute for the default value):
+    - algorithm (string): The Algorithm Name field.  The value is
+      generally interpreted as a domain name string, and will
+      typically be one of the standard algorithm names defined in
+      RFC4635.  For convenience, however, a shortcut value "hmac-md5"
+      is allowed instead of the standard "hmac-md5.sig-alg.reg.int".
+    - time_signed (48-bit int): The Time Signed field.
+    - fudge (16-bit int): The Fudge field.
+    - mac_size (int): The MAC Size field.  If omitted, the common value
+      determined by the algorithm will be used.
+    - mac (int or string): The MAC field.  If specified as an integer,
+      the integer value is used as the MAC, possibly with prepended
+      0's so that the total length will be mac_size.  If specifed as a
+      string, it is converted to a sequence of ascii codes and its
+      hexadecimal representation will be used.  So, for example, if
+      "mac" is set to 'abc', it will be converted to '616263'.  Note
+      that in this case the length of "mac" may not be equal to
+      mac_size.  If unspecified, the mac_size number of '78' (ascii
+      code of 'x') will be used.
+    - original_id (16-bit int): The Original ID field.
+    - error (16-bit int): The Error field.
+    - other_len (int): The Other Len field.
+    - other_data (int or string): The Other Data field.  This is
+      interpreted just like "mac" except that other_len is used
+      instead of mac_size.  If unspecified this will be empty unless
+      the "error" is set to 18 (which means the "BADTIME" error), in
+      which case a hexadecimal representation of "time_signed + fudge
+      + 1" will be used.
+    '''
+
     algorithm = 'hmac-sha256'
     time_signed = 1286978795    # arbitrarily chosen default
     fudge = 300
