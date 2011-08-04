@@ -15,32 +15,57 @@
 
 #include "dhcp6/dhcp6.h"
 #include "dhcp6/pkt6.h"
+#include <iostream>
 
 namespace isc {
 
-    /**
-     * constructor.
-     *
-     * Note: Pkt6 will take ownership of any data passed
-     *
-     * @param data
-     * @param dataLen
-     */
-    Pkt6::Pkt6(char * data, int dataLen) {
-	data_ = data;
-	dataLen_ = dataLen;
-    }
+///
+/// constructor
+///
+/// This constructor is used during packet reception.
+///
+/// Note: Pkt6 will take ownership of any data passed
+/// (due to performance reasons). Copying data on creation
+/// would be more elegant, but slower.
+///
+/// \param data
+/// \param dataLen
+///
+Pkt6::Pkt6(char * data, int dataLen) {
+    data_ = data;
+    data_len_ = dataLen;
+}
 
-    Pkt6::Pkt6(int dataLen) {
+///
+/// constructor
+///
+/// This constructor is used for generated packets.
+///
+/// Note: Pkt6 will take ownership of any data passed
+/// (due to performance reasons). Copying data on creation
+/// would be more elegant, but slower.
+///
+/// \param dataLen - length of the data to be allocated
+///
+Pkt6::Pkt6(int dataLen) {
+    try {
 	data_ = new char[dataLen];
-	dataLen_ = dataLen;
+	data_len_ = dataLen;
+    } catch (const std::exception& ex) {
+	// TODO move to LOG_FATAL()
+	// let's continue with empty pkt for now
+        std::cout << "Failed to allocate " << dataLen << " bytes."
+                  << std::endl;
+        data_ = 0;
+        data_len_ = 0;
     }
+}
 
-    Pkt6::~Pkt6() {
-	if (data_) {
-	    delete [] data_;
-	}
-
+Pkt6::~Pkt6() {
+    if (data_) {
+        delete [] data_;
+        data_ = 0;
     }
+}
 
 };

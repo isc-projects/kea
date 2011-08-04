@@ -25,6 +25,7 @@
 using namespace std;
 using namespace isc;
 
+namespace {
 class Dhcpv6SrvTest : public ::testing::Test {
 public:
     Dhcpv6SrvTest() {
@@ -36,11 +37,17 @@ TEST_F(Dhcpv6SrvTest, basic) {
     // that is just a proof of concept and will be removed soon
     // No need to thoroughly test it
 
+    // srv has stubbed interface detection. It will read
+    // interfaces.txt instead. It will pretend to have detected
+    // fe80::1234 link-local address on eth0 interface. Obviously
+
+    // an attempt to bind this socket will fail.
     EXPECT_NO_THROW( {
         Dhcpv6Srv * srv = new Dhcpv6Srv();
 
 	delete srv;
-    });
+	});
     
 }
 
+}

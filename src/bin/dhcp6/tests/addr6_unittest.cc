@@ -25,6 +25,7 @@
 using namespace std;
 using namespace isc;
 
+namespace {
 // empty class for now, but may be extended once Addr6 becomes bigger
 class Addr6Test : public ::testing::Test {
 public:
@@ -85,4 +86,6 @@ TEST_F(Addr6Test, stream) {
     tmp << addr;
 
     EXPECT_STREQ( tmp.str().c_str(), plain.c_str() );
+}
+
 }

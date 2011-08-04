@@ -88,13 +88,11 @@ main(int argc, char* argv[]) {
 
     int ret = 0;
 
-    // XXX: we should eventually pass io_service here.
+    // TODO remainder of auth to dhcp6 code copy. We need to enable this in
+    //      dhcp6 eventually
 #if 0
     Session* cc_session = NULL;
-    Session* xfrin_session = NULL;
     Session* statistics_session = NULL;
-    bool xfrin_session_established = false; // XXX (see Trac #287)
-    bool statistics_session_established = false; // XXX (see Trac #287)
     ModuleCCSession* config_session = NULL;
 #endif
     try {
@@ -110,9 +108,8 @@ main(int argc, char* argv[]) {
         // auth_server->setVerbose(verbose_mode);
         cout << "[b10-dhcp6] Initiating DHCPv6 operation." << endl;
 
-        Dhcpv6Srv *srv = new Dhcpv6Srv();
+        Dhcpv6Srv* srv = new Dhcpv6Srv();
 
-        //srv->init();
         srv->run();
 
     } catch (const std::exception& ex) {
