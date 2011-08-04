@@ -175,7 +175,7 @@ std::string getToken(std::istringstream& iss);
 /// BitSize is the maximum number of bits that the resulting integer can take.
 /// This function first checks whether the given token can be converted to
 /// an integer of NumType type.  It then confirms the conversion result is
-/// within the valid range, i.e., [0, 2^NumType - 1].  The second check is
+/// within the valid range, i.e., [0, 2^BitSize - 1].  The second check is
 /// necessary because lexical_cast<T> where T is an unsigned integer type
 /// doesn't correctly reject negative numbers when compiled with SunStudio.
 ///
