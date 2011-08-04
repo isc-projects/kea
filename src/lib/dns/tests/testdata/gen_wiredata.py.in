@@ -588,6 +588,17 @@ class A(RR):
         f.write('%02x%02x%02x%02x\n' % (bin_address[0], bin_address[1],
                                         bin_address[2], bin_address[3]))
 
+class AAAA(RR):
+    rdlen = 16
+    address = '2001:db8::1'
+
+    def dump(self, f):
+        self.dump_header(f, self.rdlen)
+        f.write('# Address=%s\n' % (self.address))
+        bin_address = socket.inet_pton(socket.AF_INET6, self.address)
+        [f.write('%02x' % x) for x in bin_address]
+        f.write('\n')
+
 class NS(RR):
     rdlen = None                   # auto calculate
     nsname = 'ns.example.com'
@@ -874,7 +885,7 @@ def get_config_param(section):
                     'header' : (DNSHeader, header_xtables),
                     'question' : (DNSQuestion, question_xtables),
                     'edns' : (EDNS, {}), 'a' : (A, {}), 'ns' : (NS, {}),
-                    'soa' : (SOA, {}), 'txt' : (TXT, {}),
+                    'soa' : (SOA, {}), 'txt' : (TXT, {}), 'aaaa' : (AAAA, {}),
                     'rp' : (RP, {}), 'rrsig' : (RRSIG, {}),
                     'nsec' : (NSEC, {}), 'nsec3' : (NSEC3, {}),
                     'tsig' : (TSIG, {}) }
