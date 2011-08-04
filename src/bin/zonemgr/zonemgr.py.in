@@ -96,7 +96,6 @@ class ZonemgrRefresh:
     do zone refresh.
     Zone timers can be started by calling run_timer(), and it
     can be stopped by calling shutdown() in another thread.
-
     """
 
     def __init__(self, cc, db_file, slave_socket, config_data):
@@ -374,13 +373,14 @@ class ZonemgrRefresh:
 
     def run_timer(self, daemon=False):
         """
-        Keep track of zone timers. Spawns and starts a thread. The thread object is returned.
+        Keep track of zone timers. Spawns and starts a thread. The thread object
+        is returned.
 
         You can stop it by calling shutdown().
         """
         # Small sanity check
         if self._running:
-            logger.error(ZONEMGR_TIMER_ALREADY_RUNNING)
+            logger.error(ZONEMGR_TIMER_THREAD_RUNNING)
             raise RuntimeError("Trying to run the timers twice at the same time")
 
         # Prepare the launch
@@ -405,7 +405,7 @@ class ZonemgrRefresh:
         called from a different thread.
         """
         if not self._running:
-            logger.error(ZONEMGR_TIMER_NOT_RUNNING)
+            logger.error(ZONEMGR_NO_TIMER_THREAD)
             raise RuntimeError("Trying to shutdown, but not running")
 
         # Ask the thread to stop
@@ -526,8 +526,8 @@ class Zonemgr:
         return db_file
 
     def shutdown(self):
-        """Shutdown the zonemgr process. the thread which is keeping track of zone
-        timers should be terminated.
+        """Shutdown the zonemgr process. The thread which is keeping track of
+           zone timers should be terminated.
         """
         self._zone_refresh.shutdown()
 
@@ -593,9 +593,10 @@ class Zonemgr:
 
     def command_handler(self, command, args):
         """Handle command receivd from command channel.
-        ZONE_NOTIFY_COMMAND is issued by Auth process; ZONE_XFRIN_SUCCESS_COMMAND
-        and ZONE_XFRIN_FAILED_COMMAND are issued by Xfrin process; shutdown is issued
-        by a user or Boss process. """
+        ZONE_NOTIFY_COMMAND is issued by Auth process;
+        ZONE_XFRIN_SUCCESS_COMMAND and ZONE_XFRIN_FAILED_COMMAND are issued by
+        Xfrin process;
+        shutdown is issued by a user or Boss process. """
         answer = create_answer(0)
         if command == ZONE_NOTIFY_COMMAND:
             """ Handle Auth notify command"""
