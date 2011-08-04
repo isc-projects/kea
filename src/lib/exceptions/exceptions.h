@@ -137,6 +137,18 @@ public:
 };
 
 ///
+/// \brief A generic exception that is thrown when a function is
+/// not implemented.
+///
+/// This may be due to unfinished implementation or in case the
+/// function isn't even planned to be provided for that situation.
+class NotImplemented : public Exception {
+public:
+    NotImplemented(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+///
 /// A shortcut macro to insert known values into exception arguments.
 ///
 /// It allows the \c stream argument to be part of a statement using an
