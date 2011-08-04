@@ -80,6 +80,9 @@ private:
     // fake data
     std::vector< std::vector<std::string> > cur_name;
 
+    // Adds one record to the current name in the database
+    // The actual data will not be added to 'records' until
+    // addCurName() is called
     void addRecord(const std::string& name,
                    const std::string& type,
                    const std::string& sigtype,
@@ -92,17 +95,32 @@ private:
         cur_name.push_back(columns);
     }
 
+    // Adds all records we just built with calls to addRecords
+    // to the actual fake database. This will clear cur_name,
+    // so we can immediately start adding new records.
     void addCurName(const std::string& name) {
+        ASSERT_EQ(0, records.count(name));
         records[name] = cur_name;
         cur_name.clear();
     }
 
+    // Fills the database with zone data.
+    // This method constructs a number of resource records (with addRecord),
+    // which will all be added for one domain name to the fake database
+    // (with addCurName). So for instance the first set of calls create
+    // data for the name 'www.example.org', which will consist of one A RRset
+    // of one record, and one AAAA RRset of two records.
+    // The order in which they are added is the order in which getNextRecord()
+    // will return them (so we can test whether find() etc. support data that
+    // might not come in 'normal' order)
+    // It shall immediately fail if you try to add the same name twice.
     void fillData() {
         // some plain data
         addRecord("A", "3600", "", "192.0.2.1");
         addRecord("AAAA", "3600", "", "2001:db8::1");
         addRecord("AAAA", "3600", "", "2001:db8::2");
         addCurName("www.example.org.");
+
         addRecord("CNAME", "3600", "", "www.example.org.");
         addCurName("cname.example.org.");
 
@@ -135,7 +153,6 @@ private:
         addRecord("A", "3600", "", "192.0.2.1");
         addRecord("CNAME", "3600", "", "www.example.org.");
         addCurName("badcname.example.org.");
-        
     }
 };
 
