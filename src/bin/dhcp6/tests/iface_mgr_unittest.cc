@@ -27,6 +27,7 @@
 using namespace std;
 using namespace isc;
 
+namespace {
 class NakedIfaceMgr: public IfaceMgr {
     // "naked" Interface Manager, exposes internal fields 
 public:
@@ -169,10 +170,10 @@ TEST_F(IfaceMgrTest, sendReceive) {
 	sendPkt.data_[i] = i;
     }
 
-    sendPkt.remotePort = 10547;
-    sendPkt.remoteAddr = Addr6("::1", true);
-    sendPkt.ifindex = 1;
-    sendPkt.iface = "lo";
+    sendPkt.remote_port_ = 10547;
+    sendPkt.remote_addr_ = Addr6("::1", true);
+    sendPkt.ifindex_ = 1;
+    sendPkt.iface_ = "lo";
     
     Pkt6 * rcvPkt;
 
@@ -183,14 +184,15 @@ TEST_F(IfaceMgrTest, sendReceive) {
     ASSERT_TRUE( rcvPkt != NULL ); // received our own packet
 
     // let's check that we received what was sent
-    EXPECT_EQ(sendPkt.dataLen_, rcvPkt->dataLen_);
-    EXPECT_EQ(0, memcmp(sendPkt.data_, rcvPkt->data_, rcvPkt->dataLen_) );
+    EXPECT_EQ(sendPkt.data_len_, rcvPkt->data_len_);
+    EXPECT_EQ(0, memcmp(sendPkt.data_, rcvPkt->data_, rcvPkt->data_len_) );
 
-    EXPECT_EQ(sendPkt.remoteAddr, rcvPkt->remoteAddr);
-    EXPECT_EQ(rcvPkt->remotePort, 10546);
+    EXPECT_EQ(sendPkt.remote_addr_, rcvPkt->remote_addr_);
+    EXPECT_EQ(rcvPkt->remote_port_, 10546);
 
     delete rcvPkt;
 
     delete ifacemgr;
 }
 
+}

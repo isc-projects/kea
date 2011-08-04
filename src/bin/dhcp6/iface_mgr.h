@@ -34,34 +34,37 @@ namespace isc {
             int ifindex_;
             Addr6Lst addrs_;
             char mac_[20]; //
-            int macLen_;
+            int mac_len_;
 
             Iface();
-            Iface(const std::string name, int ifindex);
+            Iface(const std::string& name, int ifindex);
             std::string getFullName() const;
             std::string getPlainMac() const;
 
             // next field is not needed, let's keep it in cointainers
         };
+
+	// TODO performance improvement: we may change this into
+	//      2 maps (ifindex-indexed and name-indexed)
         typedef std::list<Iface> IfaceLst;
 
         static IfaceMgr& instance();
         static void instanceCreate();
 
         Iface * getIface(int ifindex);
-        Iface * getIface(const std::string &ifname);
+        Iface * getIface(const std::string& ifname);
 
         bool openSockets();
         void printIfaces();
 
-        int openSocket(const std::string &ifname,
-                       const Addr6 &addr,
+        int openSocket(const std::string& ifname,
+                       const Addr6& addr,
                        int port, bool multicast);
-        bool joinMcast(int sock, const std::string &ifname,
+        bool joinMcast(int sock, const std::string& ifname,
                        const std::string& mcast);
 
-        bool send(Pkt6 &pkt);
-        Pkt6 * receive();
+        bool send(Pkt6& pkt);
+        Pkt6* receive();
 
 	// don't use private, we need derived classes in tests
     protected:

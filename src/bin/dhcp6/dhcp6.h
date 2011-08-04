@@ -126,8 +126,8 @@ extern const int dhcpv6_type_name_max;
 /* 
  * DHCPv6 well-known multicast addressess, from section 5.1 of RFC 3315 
  */
-#define ALL_DHCP_RELAY_AGENTS_AND_SERVERS "FF02::1:2"
-#define ALL_DHCP_SERVERS "FF05::1:3"
+#define ALL_DHCP_RELAY_AGENTS_AND_SERVERS "ff02::1:2"
+#define ALL_DHCP_SERVERS "ff05::1:3"
 
 #define DHCP6_CLIENT_PORT 546
 #define DHCP6_SERVER_PORT 547

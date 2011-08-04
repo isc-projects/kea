@@ -29,16 +29,16 @@ namespace isc {
         // XXX: probably need getter/setter wrappers
         //      and hide fields as protected
         char * data_;
-        int dataLen_;
+        int data_len_;
 
-        Addr6 localAddr;
-        Addr6 remoteAddr;
+        Addr6 local_addr_;
+        Addr6 remote_addr_;
 
-        std::string iface;
-        int ifindex;
+        std::string iface_;
+        int ifindex_;
 
-        int localPort;
-        int remotePort;
+        int local_port_;
+        int remote_port_;
 
         // XXX: add *a lot* here
 

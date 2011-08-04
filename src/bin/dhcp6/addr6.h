@@ -24,15 +24,26 @@ namespace isc {
     static const int MAX_ADDRESS_STRING_LEN =
         sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255");
 
+
+    /// \brief The implementation class for IPv6 address.
+    ///
+    /// There are no virtual methods to avoid virtual funtions
+    /// table. There are no extra fields, other than the address
+    /// itself. As a result, instances of this class are memory
+    /// optimal (sizeof(Addr6) == 16).
+    ///
+    /// Extra care should be taken, when extending this class
+    /// to keep low memory footprint.
     class Addr6 {
     public:
-        Addr6(const char * addr, bool plain=false);
+        Addr6(const char* addr, bool plain=false);
         Addr6(struct in6_addr* addr);
-        Addr6(struct sockaddr_in6 * addr);
+        Addr6(struct sockaddr_in6* addr);
         Addr6();
         inline const char * get() const { return addr_; }
         std::string getPlain() const;
-        char * get() { return addr_; }
+        char* getAddr() { return addr_; }
+        bool equals(const Addr6& other) const;
         bool operator==(const Addr6& other) const;
 
         bool linkLocal() const;
@@ -40,14 +51,13 @@ namespace isc {
 
         // no dtor necessary (no allocations done)
     private:
-        char addr_[MAX_ADDRESS_STRING_LEN];
+        char addr_[16];
     };
 
-    std::ostream & operator << (std::ostream & out, const Addr6& addr);
+    std::ostream& operator << (std::ostream & out, const Addr6& addr);
 
+    // TODO may need to also define map for faster access
     typedef std::list<Addr6> Addr6Lst;
-
 };
-
 
 #endif

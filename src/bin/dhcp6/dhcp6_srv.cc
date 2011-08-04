@@ -22,29 +22,36 @@ using namespace isc;
 
 Dhcpv6Srv::Dhcpv6Srv() {
     cout << "Initialization" << endl;
+
+    // first call to instance() will create IfaceMgr (it's a singleton)
+    // it may throw something if things go wrong
+    IfaceMgr::instance();
 }
 
 Dhcpv6Srv::~Dhcpv6Srv() {
     cout << "DHCPv6 Srv shutdown." << endl;
 }
 
-bool Dhcpv6Srv::run() {
+bool
+Dhcpv6Srv::run() {
     while (true) {
-        Pkt6 * pkt;
+        Pkt6* pkt;
 
         pkt = IfaceMgr::instance().receive();
 
         if (pkt) {
-            Addr6 client = pkt->remoteAddr;
-            cout << "Received " << pkt->dataLen_ << " bytes, echoing back."
+            Addr6 client = pkt->remote_addr_;
+            cout << "Received " << pkt->data_len_ << " bytes, echoing back."
                  << endl;
             IfaceMgr::instance().send(*pkt);
             delete pkt;
         }
 
+	// TODO add support for config session (see src/bin/auth/main.cc)
+	//      so this daemon can be controlled from bob
         sleep(1);
 
     }
 
-    return true;
+    return (true);
 }
