@@ -489,9 +489,25 @@ class DNSHeader:
                                            self.nscount, self.arcount))
 
 class DNSQuestion:
+    '''Implements rendering a DNS question in the test data format.
+
+    Configurable parameter is as follows (see the description of the
+    same name of attribute for the default value):
+    - name (string): The QNAME.  The string must be interpreted as a
+      valid domain name.
+    - rrtype (int or string): The question type.  If specified
+      as an integer, it must be the 16-bit RR type value of the
+      covered type.  If specifed as a string, it must be the textual
+      mnemonic of the type.
+    - rrclass (int or string): The question class.  If specified as an
+      integer, it must be the 16-bit RR class value of the covered
+      type.  If specifed as a string, it must be the textual mnemonic
+      of the class.
+    '''
     name = 'example.com.'
     rrtype = parse_value('A', dict_rrtype)
     rrclass = parse_value('IN', dict_rrclass)
+
     def dump(self, f):
         f.write('\n# Question Section\n')
         f.write('# QNAME=%s QTYPE=%s QCLASS=%s\n' %
@@ -514,7 +530,9 @@ class EDNS:
     - do (int): The DNSSEC DO bit.  The bit will be set if this value
       is 1; otherwise the bit will be unset.
     - mbz (15-bit int): The rest of the flags field.
-    - rdlen (16-bit int): The RDLEN field.
+    - rdlen (16-bit int): The RDLEN field.  Note: right now specifying
+      a non 0 value (except for making bogus data) doesn't make sense
+      because there is no way to configure RDATA.
     '''
     name = '.'
     udpsize = 4096
