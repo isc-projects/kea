@@ -794,8 +794,7 @@ class NSEC3(NSECBASE):
                                 ' ' if len(self.hash) > 0 else '',
                                 encode_string(self.hash)))
 
-class RRSIG:
-    rdlen = -1                  # auto-calculate
+class RRSIG(RR):
     covered = 1                 # A
     algorithm = 5               # RSA-SHA1
     labels = -1                 # auto-calculate (#labels of signer)
@@ -810,20 +809,18 @@ class RRSIG:
     def dump(self, f):
         name_wire = encode_name(self.signer)
         sig_wire = '%x' % self.signature 
-        rdlen = self.rdlen
-        if rdlen < 0:
-            rdlen = int(18 + len(name_wire) / 2 + len(str(sig_wire)) / 2)
-        labels = self.labels
-        if labels < 0:
-            labels = count_namelabels(self.signer)
-        f.write('\n# RRSIG RDATA (RDLEN=%d)\n' % rdlen)
-        f.write('%04x\n' % rdlen);
+        if self.rdlen is None:
+            self.rdlen = int(18 + len(name_wire) / 2 + len(str(sig_wire)) / 2)
+        self.dump_header(f, self.rdlen)
+
+        if self.labels < 0:
+            self.labels = count_namelabels(self.signer)
         f.write('# Covered=%s Algorithm=%s Labels=%d OrigTTL=%d\n' %
                 (code_totext(self.covered, rdict_rrtype),
-                 code_totext(self.algorithm, rdict_algorithm), labels,
+                 code_totext(self.algorithm, rdict_algorithm), self.labels,
                  self.originalttl))
         f.write('%04x %02x %02x %08x\n' % (self.covered, self.algorithm,
-                                           labels, self.originalttl))
+                                           self.labels, self.originalttl))
         f.write('# Expiration=%s, Inception=%s\n' %
                 (str(self.expiration), str(self.inception)))
         f.write('%08x %08x\n' % (self.expiration, self.inception))
