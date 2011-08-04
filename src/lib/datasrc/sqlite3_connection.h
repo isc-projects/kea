@@ -88,8 +88,8 @@ public:
      *     element and the zone id in the second if it was.
      */
     virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const;
-    virtual void searchForRecords(int zone_id, const std::string& name) const;
-    virtual bool getNextRecord(std::vector<std::string>& columns) const;
+    virtual void searchForRecords(int zone_id, const std::string& name);
+    virtual bool getNextRecord(std::vector<std::string>& columns);
 private:
     /// \brief Private database data
     SQLite3Parameters* dbparameters_;
