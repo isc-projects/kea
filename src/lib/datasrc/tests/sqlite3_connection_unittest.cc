@@ -11,6 +11,7 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+#include <memory>
 
 #include <datasrc/sqlite3_connection.h>
 #include <datasrc/data_source.h>
@@ -18,6 +19,7 @@
 #include <dns/rrclass.h>
 
 #include <gtest/gtest.h>
+#include <boost/shared_ptr.hpp>
 
 using namespace isc::datasrc;
 using isc::data::ConstElementPtr;
@@ -74,7 +76,7 @@ public:
         conn.reset(new SQLite3Connection(filename, rrclass));
     }
     // The tested connection
-    std::auto_ptr<SQLite3Connection> conn;
+    boost::shared_ptr<SQLite3Connection> conn;
 };
 
 // This zone exists in the data, so it should be found
@@ -103,7 +105,7 @@ TEST_F(SQLite3Conn, noClass) {
 namespace {
     // Simple function to cound the number of records for
     // any name
-    size_t countRecords(std::auto_ptr<SQLite3Connection>& conn,
+    size_t countRecords(boost::shared_ptr<SQLite3Connection>& conn,
                         int zone_id, const std::string& name) {
         conn->searchForRecords(zone_id, name);
         size_t count = 0;
