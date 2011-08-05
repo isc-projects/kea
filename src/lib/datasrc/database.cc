@@ -183,23 +183,25 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
 
             if (cur_type == type) {
                 addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl, columns[3]);
-                    //isc::dns::rdata::createRdata(cur_type, getClass(), columns[3]));
             } else if (cur_type == isc::dns::RRType::CNAME()) {
                 // There should be no other data, so cur_rrset should be empty,
                 // except for signatures, of course
                 if (result_rrset) {
                     if (result_rrset->getRdataCount() > 0) {
-                        isc_throw(DataSourceError, "CNAME found but it is not the only record for " + name.toText());
+                        isc_throw(DataSourceError,
+                                  "CNAME found but it is not the only record for " +
+                                  name.toText());
                     }
                 }
                 addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl, columns[3]);
-                    //isc::dns::rdata::createRdata(cur_type, getClass(), columns[3]));
                 result_status = CNAME;
             } else if (cur_type == isc::dns::RRType::RRSIG()) {
                 // If we get signatures before we get the actual data, we can't know
                 // which ones to keep and which to drop...
                 // So we keep a separate store of any signature that may be relevant
                 // and add them to the final RRset when we are done.
+                // A possible optimization here is to not store them for types we
+                // are certain we don't need
                 isc::dns::rdata::RdataPtr cur_rrsig(
                     isc::dns::rdata::createRdata(cur_type, getClass(), columns[3]));
                 sig_store.addSig(cur_rrsig);
