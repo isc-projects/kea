@@ -74,7 +74,7 @@ namespace {
     // created with the given name, class, type and ttl
     // The type is checked if the rrset exists, but the
     // name is not.
-    // 
+    //
     // Then adds the given rdata to the set
     //
     // Raises a DataSourceError if the type does not

@@ -75,6 +75,12 @@ public:
     /**
      * \brief Starts a new search for records of the given name in the given zone
      *
+     * The data searched by this call can be retrieved with subsequent calls to
+     * getNextRecord().
+     *
+     * \exception DataSourceError if there is a problem connecting to the
+     *                            backend database
+     *
      * \param zone_id The zone to search in, as returned by getZone()
      * \param name The name of the records to find
      */
@@ -169,7 +175,7 @@ public:
          *       target again for that, but it might also use something
          *       different. It is left in for compatibility at the moment.
          * \note options are ignored at this moment
-         * 
+         *
          * \exception DataSourceError when there is a problem reading
          *                            the data from the dabase backend.
          *                            This can be a connection, code, or
