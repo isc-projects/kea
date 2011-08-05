@@ -271,7 +271,8 @@ public:
      *
      * \exception DataSourceError if the zone doesn't exist.
      * \exception isc::NotImplemented if the underlying DatabaseConnection
-     *     doesn't implement iteration.
+     *     doesn't implement iteration. But in case it is not implemented
+     *     and the zone doesn't exist, DataSourceError is thrown.
      * \exception Anything else the underlying DatabaseConnection might
      *     want to throw.
      * \param name The origin of the zone to iterate.

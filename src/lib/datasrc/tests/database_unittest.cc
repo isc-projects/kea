@@ -15,28 +15,149 @@
 #include <gtest/gtest.h>
 
 #include <dns/name.h>
+#include <dns/rrttl.h>
 #include <exceptions/exceptions.h>
 
 #include <datasrc/database.h>
+#include <datasrc/data_source.h>
+#include <datasrc/iterator.h>
 
 using namespace isc::datasrc;
 using namespace std;
 using namespace boost;
-using isc::dns::Name;
+using namespace isc::dns;
 
 namespace {
 
 /*
- * A virtual database connection that pretends it contains single zone --
- * example.org.
+ * A connection with minimum implementation, keeping the original
+ * "NotImplemented" methods.
  */
-class MockConnection : public DatabaseConnection {
+class NopConnection : public DatabaseConnection {
 public:
     virtual std::pair<bool, int> getZone(const Name& name) const {
         if (name == Name("example.org")) {
             return (std::pair<bool, int>(true, 42));
+        } else if (name == Name("null.example.org")) {
+            return (std::pair<bool, int>(true, 13));
+        } else if (name == Name("empty.example.org")) {
+            return (std::pair<bool, int>(true, 0));
+        } else if (name == Name("bad.example.org")) {
+            return (std::pair<bool, int>(true, -1));
         } else {
             return (std::pair<bool, int>(false, 0));
+        }
+    }
+};
+
+/*
+ * A virtual database connection that pretends it contains single zone --
+ * example.org.
+ *
+ * It has the same getZone method as NopConnection, but it provides
+ * implementation of the optional functionality.
+ */
+class MockConnection : public NopConnection {
+private:
+    class MockIteratorContext : public IteratorContext {
+    private:
+        int step;
+    public:
+        MockIteratorContext() :
+            step(0)
+        { }
+        virtual bool getNext(string& name, string& rtype, int& ttl,
+                             string& data)
+        {
+            switch (step ++) {
+                case 0:
+                    name = "example.org";
+                    rtype = "SOA";
+                    ttl = 300;
+                    data = "ns1.example.org. admin.example.org. "
+                        "1234 3600 1800 2419200 7200";
+                    return (true);
+                case 1:
+                    name = "x.example.org";
+                    rtype = "A";
+                    ttl = 300;
+                    data = "192.0.2.1";
+                    return (true);
+                case 2:
+                    name = "x.example.org";
+                    rtype = "A";
+                    ttl = 300;
+                    data = "192.0.2.2";
+                    return (true);
+                case 3:
+                    name = "x.example.org";
+                    rtype = "AAAA";
+                    ttl = 300;
+                    data = "2001:db8::1";
+                    return (true);
+                case 4:
+                    name = "x.example.org";
+                    rtype = "AAAA";
+                    ttl = 300;
+                    data = "2001:db8::2";
+                    return (true);
+                default:
+                    ADD_FAILURE() <<
+                        "Request past the end of iterator context";
+                case 5:
+                    return (false);
+            }
+        }
+    };
+    class EmptyIteratorContext : public IteratorContext {
+    public:
+        virtual bool getNext(string&, string&, int&, string&) {
+            return (false);
+        }
+    };
+    class BadIteratorContext : public IteratorContext {
+    private:
+        int step;
+    public:
+        BadIteratorContext() :
+            step(0)
+        { }
+        virtual bool getNext(string& name, string& rtype, int& ttl,
+                             string& data)
+        {
+            switch (step ++) {
+                case 0:
+                    name = "x.example.org";
+                    rtype = "A";
+                    ttl = 300;
+                    data = "192.0.2.1";
+                    return (true);
+                case 1:
+                    name = "x.example.org";
+                    rtype = "A";
+                    ttl = 301;
+                    data = "192.0.2.2";
+                    return (true);
+                default:
+                    ADD_FAILURE() <<
+                        "Request past the end of iterator context";
+                case 2:
+                    return (false);
+            }
+        }
+    };
+public:
+    virtual IteratorContextPtr getIteratorContext(const Name&, int id) const {
+        if (id == 42) {
+            return (IteratorContextPtr(new MockIteratorContext()));
+        } else if (id == 13) {
+            return (IteratorContextPtr());
+        } else if (id == 0) {
+            return (IteratorContextPtr(new EmptyIteratorContext()));
+        } else if (id == -1) {
+            return (IteratorContextPtr(new BadIteratorContext()));
+        } else {
+            isc_throw(isc::Unexpected, "Unknown zone ID");
         }
     }
 };
@@ -44,7 +165,7 @@ public:
 // This tests the default getIteratorContext behaviour, throwing NotImplemented
 TEST(DatabaseConnectionTest, getIteratorContext) {
     // The parameters don't matter
-    EXPECT_THROW(MockConnection().getIteratorContext(Name("."), 1),
+    EXPECT_THROW(NopConnection().getIteratorContext(Name("."), 1),
                  isc::NotImplemented);
 }
 
@@ -101,6 +222,93 @@ TEST_F(DatabaseClientTest, superZone) {
 TEST_F(DatabaseClientTest, noConnException) {
     EXPECT_THROW(DatabaseClient(auto_ptr<DatabaseConnection>()),
                  isc::InvalidParameter);
+}
+
+// If the zone doesn't exist, exception is thrown
+TEST_F(DatabaseClientTest, noZoneIterator) {
+    EXPECT_THROW(client_->getIterator(Name("example.com")), DataSourceError);
+}
+
+// If the zone doesn't exist and iteration is not implemented, it still throws
+// the exception it doesn't exist
+TEST_F(DatabaseClientTest, noZoneNotImplementedIterator) {
+    EXPECT_THROW(DatabaseClient(auto_ptr<DatabaseConnection>(
+        new NopConnection())).getIterator(Name("example.com")),
+                 DataSourceError);
+}
+
+TEST_F(DatabaseClientTest, notImplementedIterator) {
+    EXPECT_THROW(DatabaseClient(auto_ptr<DatabaseConnection>(
+        new NopConnection())).getIterator(Name("example.org")),
+                 isc::NotImplemented);
+}
+
+// Pretend a bug in the connection and pass NULL as the context
+// Should not crash, but gracefully throw
+TEST_F(DatabaseClientTest, nullIteratorContext) {
+    EXPECT_THROW(client_->getIterator(Name("null.example.org")),
+                 isc::Unexpected);
+}
+
+// It doesn't crash or anything if the zone is completely empty
+TEST_F(DatabaseClientTest, emptyIterator) {
+    ZoneIteratorPtr it(client_->getIterator(Name("empty.example.org")));
+    EXPECT_EQ(ConstRRsetPtr(), it->getNextRRset());
+    // This is past the end, it should throw
+    EXPECT_THROW(it->getNextRRset(), isc::Unexpected);
+}
+
+// Iterate trough a zone
+TEST_F(DatabaseClientTest, iterator) {
+    ZoneIteratorPtr it(client_->getIterator(Name("example.org")));
+    ConstRRsetPtr rrset(it->getNextRRset());
+    ASSERT_NE(ConstRRsetPtr(), rrset);
+    EXPECT_EQ(Name("example.org"), rrset->getName());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+    EXPECT_EQ(RRType::SOA(), rrset->getType());
+    EXPECT_EQ(RRTTL(300), rrset->getTTL());
+    RdataIteratorPtr rit(rrset->getRdataIterator());
+    ASSERT_FALSE(rit->isLast());
+    rit->next();
+    EXPECT_TRUE(rit->isLast());
+
+    rrset = it->getNextRRset();
+    ASSERT_NE(ConstRRsetPtr(), rrset);
+    EXPECT_EQ(Name("x.example.org"), rrset->getName());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+    EXPECT_EQ(RRType::A(), rrset->getType());
+    EXPECT_EQ(RRTTL(300), rrset->getTTL());
+    rit = rrset->getRdataIterator();
+    ASSERT_FALSE(rit->isLast());
+    EXPECT_EQ("192.0.2.1", rit->getCurrent().toText());
+    rit->next();
+    ASSERT_FALSE(rit->isLast());
+    EXPECT_EQ("192.0.2.2", rit->getCurrent().toText());
+    rit->next();
+    EXPECT_TRUE(rit->isLast());
+
+    rrset = it->getNextRRset();
+    ASSERT_NE(ConstRRsetPtr(), rrset);
+    EXPECT_EQ(Name("x.example.org"), rrset->getName());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+    EXPECT_EQ(RRType::AAAA(), rrset->getType());
+    EXPECT_EQ(RRTTL(300), rrset->getTTL());
+    EXPECT_EQ(ConstRRsetPtr(), it->getNextRRset());
+    rit = rrset->getRdataIterator();
+    ASSERT_FALSE(rit->isLast());
+    EXPECT_EQ("2001:db8::1", rit->getCurrent().toText());
+    rit->next();
+    ASSERT_FALSE(rit->isLast());
+    EXPECT_EQ("2001:db8::2", rit->getCurrent().toText());
+    rit->next();
+    EXPECT_TRUE(rit->isLast());
+}
+
+// This has inconsistent TTL in the set (the rest, like nonsense in
+// the data is handled in rdata itself).
+TEST_F(DatabaseClientTest, badIterator) {
+    ZoneIteratorPtr it(client_->getIterator(Name("bad.example.org")));
+    EXPECT_THROW(it->getNextRRset(), DataSourceError);
 }
 
 }
