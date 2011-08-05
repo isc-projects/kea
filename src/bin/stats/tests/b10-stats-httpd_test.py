@@ -512,13 +512,13 @@ class TestStatsHttpd(unittest.TestCase):
 
         self.assertEqual(
             self.stats_httpd.config_handler(
-                dict(listen_on=[dict(address="127.0.0.2",port=8000)])),
+                dict(listen_on=[dict(address="127.0.0.1",port=8000)])),
             isc.config.ccsession.create_answer(0))
         self.assertTrue("listen_on" in self.stats_httpd.config)
         for addr in self.stats_httpd.config["listen_on"]:
             self.assertTrue("address" in addr)
             self.assertTrue("port" in addr)
-            self.assertTrue(addr["address"] == "127.0.0.2")
+            self.assertTrue(addr["address"] == "127.0.0.1")
             self.assertTrue(addr["port"] == 8000)
 
         if self.ipv6_enabled:
