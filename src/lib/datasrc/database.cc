@@ -70,8 +70,16 @@ DatabaseClient::Finder::Finder(boost::shared_ptr<DatabaseConnection>
 
 namespace {
     // Adds the given Rdata to the given RRset
-    // If the rrset does not exist, one is created
-    // adds the given rdata to the set
+    // If the rrset is an empty pointer, a new one is
+    // created with the given name, class, type and ttl
+    // The type is checked if the rrset exists, but the
+    // name is not.
+    // 
+    // Then adds the given rdata to the set
+    //
+    // Raises a DataSourceError if the type does not
+    // match, or if the given rdata string does not
+    // parse correctly for the given type and class
     void addOrCreate(isc::dns::RRsetPtr& rrset,
                      const isc::dns::Name& name,
                      const isc::dns::RRClass& cls,
@@ -114,9 +122,9 @@ namespace {
     // it to util. That would also provide an opportunity to add unit tests)
     class RRsigStore {
     public:
-        // add the given signature Rdata to the store
-        // The signature MUST be of the RRSIG type (the caller
-        // must make sure of this)
+        // Adds the given signature Rdata to the store
+        // The signature rdata MUST be of the RRSIG rdata type
+        // (the caller must make sure of this)
         void addSig(isc::dns::rdata::RdataPtr sig_rdata) {
             const isc::dns::RRType& type_covered =
                 static_cast<isc::dns::rdata::generic::RRSIG*>(
@@ -185,13 +193,10 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                 addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl, columns[3]);
             } else if (cur_type == isc::dns::RRType::CNAME()) {
                 // There should be no other data, so cur_rrset should be empty,
-                // except for signatures, of course
                 if (result_rrset) {
-                    if (result_rrset->getRdataCount() > 0) {
-                        isc_throw(DataSourceError,
-                                  "CNAME found but it is not the only record for " +
-                                  name.toText());
-                    }
+                    isc_throw(DataSourceError,
+                                "CNAME found but it is not the only record for " +
+                                name.toText());
                 }
                 addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl, columns[3]);
                 result_status = CNAME;
