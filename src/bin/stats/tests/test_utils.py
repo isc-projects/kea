@@ -53,6 +53,7 @@ class ThreadingServerManager:
     def run(self):
         self.server._thread.start()
         self.server._started.wait()
+        self.server._started.clear()
         # waiting for the server's being ready for listening
         time.sleep(TIMEOUT_SEC)
 
