@@ -47,8 +47,6 @@ BUILT_SOURCES += tsig_verify4.wire tsig_verify5.wire tsig_verify6.wire
 BUILT_SOURCES += tsig_verify7.wire tsig_verify8.wire tsig_verify9.wire
 BUILT_SOURCES += tsig_verify10.wire
 
-noinst_SCRIPTS = gen_wiredata.py
-
 # NOTE: keep this in sync with real file listing
 # so is included in tarball
 EXTRA_DIST = edns_toWire1.spec edns_toWire2.spec
@@ -124,4 +122,4 @@ EXTRA_DIST += tsig_verify7.spec tsig_verify8.spec tsig_verify9.spec
 EXTRA_DIST += tsig_verify10.spec
 
 .spec.wire:
-	$(PYTHON) ./gen_wiredata.py -o $@ $<
+	$(PYTHON) $(top_builddir)/src/lib/util/python/gen_wiredata.py -o $@ $<
