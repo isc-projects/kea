@@ -158,16 +158,34 @@ public:
         /**
          * \brief Find an RRset in the datasource
          *
-         * target is unused at this point, it was used in the original
-         * API to store the results for ANY queries, and we may reuse it
-         * for that, but we might choose a different approach.
+         * Searches the datasource for an RRset of the given name and
+         * type. If there is a CNAME at the given name, the CNAME rrset
+         * is returned.
+         * (this implementation is not complete, and currently only
+         * does full matches, CNAMES, and the signatures for matches and
+         * CNAMEs)
+         * \note target was used in the original design to handle ANY
+         *       queries. This is not implemented yet, and may use
+         *       target again for that, but it might also use something
+         *       different. It is left in for compatibility at the moment.
+         * \note options are ignored at this moment
          * 
+         * \exception DataSourceError when there is a problem reading
+         *                            the data from the dabase backend.
+         *                            This can be a connection, code, or
+         *                            data (parse) error.
+         *
+         * \param name The name to find
+         * \param type The RRType to find
+         * \param target Unused at this moment
+         * \param options Unused at this moment
          */
         virtual FindResult find(const isc::dns::Name& name,
                                 const isc::dns::RRType& type,
                                 isc::dns::RRsetList* target = NULL,
                                 const FindOptions options = FIND_DEFAULT)
             const;
+
         /**
          * \brief The zone ID
          *
