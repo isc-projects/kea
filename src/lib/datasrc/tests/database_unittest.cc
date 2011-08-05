@@ -127,6 +127,7 @@ private:
         // some DNSSEC-'signed' data
         addRecord("A", "3600", "", "192.0.2.1");
         addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE");
         addRecord("AAAA", "3600", "", "2001:db8::1");
         addRecord("AAAA", "3600", "", "2001:db8::2");
         addRecord("RRSIG", "3600", "", "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
@@ -134,11 +135,18 @@ private:
         addRecord("CNAME", "3600", "", "www.example.org.");
         addRecord("RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
         addCurName("signedcname1.example.org.");
+        // special case might fail; sig is for cname, which isn't there (should be ignored)
+        // (ignoring of 'normal' other type is done above by www.)
+        addRecord("A", "3600", "", "192.0.2.1");
+        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+        addRecord("RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+        addCurName("acnamesig1.example.org.");
 
         // let's pretend we have a database that is not careful
         // about the order in which it returns data
         addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
         addRecord("AAAA", "3600", "", "2001:db8::2");
+        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE");
         addRecord("A", "3600", "", "192.0.2.1");
         addRecord("RRSIG", "3600", "", "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
         addRecord("AAAA", "3600", "", "2001:db8::1");
@@ -147,12 +155,28 @@ private:
         addRecord("CNAME", "3600", "", "www.example.org.");
         addCurName("signedcname2.example.org.");
 
+        addRecord("RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+        addRecord("A", "3600", "", "192.0.2.1");
+        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+        addCurName("acnamesig2.example.org.");
+
+        addRecord("RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+        addRecord("A", "3600", "", "192.0.2.1");
+        addCurName("acnamesig3.example.org.");
+
         // also add some intentionally bad data
         cur_name.push_back(std::vector<std::string>());
         addCurName("emptyvector.example.org.");
         addRecord("A", "3600", "", "192.0.2.1");
         addRecord("CNAME", "3600", "", "www.example.org.");
         addCurName("badcname.example.org.");
+        addRecord("A", "3600", "", "bad");
+        addCurName("badrdata.example.org.");
+        addRecord("BAD_TYPE", "3600", "", "192.0.2.1");
+        addCurName("badtype.example.org.");
+        addRecord("A", "badttl", "", "192.0.2.1");
+        addCurName("badttl.example.org.");
     }
 };
 
@@ -263,7 +287,7 @@ TEST_F(DatabaseClientTest, find) {
                ZoneFinder::NXDOMAIN, 0, 0);
     doFindTest(finder, isc::dns::Name("signed1.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
-               ZoneFinder::SUCCESS, 1, 1);
+               ZoneFinder::SUCCESS, 1, 2);
     doFindTest(finder, isc::dns::Name("signed1.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
                ZoneFinder::SUCCESS, 2, 1);
@@ -276,7 +300,7 @@ TEST_F(DatabaseClientTest, find) {
 
     doFindTest(finder, isc::dns::Name("signed2.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
-               ZoneFinder::SUCCESS, 1, 1);
+               ZoneFinder::SUCCESS, 1, 2);
     doFindTest(finder, isc::dns::Name("signed2.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
                ZoneFinder::SUCCESS, 2, 1);
@@ -287,11 +311,33 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRType::A(), isc::dns::RRType::CNAME(),
                ZoneFinder::CNAME, 1, 1);
 
+    doFindTest(finder, isc::dns::Name("acnamesig1.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               ZoneFinder::SUCCESS, 1, 1);
+    doFindTest(finder, isc::dns::Name("acnamesig2.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               ZoneFinder::SUCCESS, 1, 1);
+    doFindTest(finder, isc::dns::Name("acnamesig3.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               ZoneFinder::SUCCESS, 1, 1);
+
     EXPECT_THROW(finder->find(isc::dns::Name("emptyvector.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
     EXPECT_THROW(finder->find(isc::dns::Name("badcname.example.org."),
+                                              isc::dns::RRType::A(),
+                                              NULL, ZoneFinder::FIND_DEFAULT),
+                 DataSourceError);
+    EXPECT_THROW(finder->find(isc::dns::Name("badrdata.example.org."),
+                                              isc::dns::RRType::A(),
+                                              NULL, ZoneFinder::FIND_DEFAULT),
+                 DataSourceError);
+    EXPECT_THROW(finder->find(isc::dns::Name("badtype.example.org."),
+                                              isc::dns::RRType::A(),
+                                              NULL, ZoneFinder::FIND_DEFAULT),
+                 DataSourceError);
+    EXPECT_THROW(finder->find(isc::dns::Name("badttl.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
