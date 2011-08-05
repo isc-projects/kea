@@ -18,6 +18,7 @@
 
 #include <dns/name.h>
 #include <dns/rdata.h>
+#include <util/buffer.h>
 
 // BEGIN_ISC_NAMESPACE
 
@@ -39,12 +40,26 @@ public:
     const std::string& getRegexp() const;
     const Name& getReplacement() const;
 private:
-    /// Extract a <character-string> from a string
+    /// Get a <character-string> from a string
     ///
     /// \param input_str The input string
-    /// \param input_iterator The iterator from which to start extracting
-    /// \return a std::string that contains the extracted <character-string>
+    /// \param input_iterator The iterator from which to start extracting, the iterator will be updated
+    ///        to new position after the function is returned
+    /// \return A std::string that contains the extracted <character-string>
     std::string getNextCharacterString(const std::string& input_str, std::string::const_iterator& input_iterator);
+
+    /// Get a <character-string> from a input buffer
+    ///
+    /// \param buffer The input buffer
+    /// \param len The input buffer total length
+    /// \return A std::string that contains the extracted <character-string>
+    std::string getNextCharacterString(util::InputBuffer& buffer, size_t len);
+
+    /// Skip the left whitespaces of the input string
+    ///
+    /// \param input_str The input string
+    /// \param input_iterator From which the skipping started
+    void skipLeftSpaces(const std::string& input_str, std::string::const_iterator& input_iterator);
 
     uint16_t order_;
     uint16_t preference_;
