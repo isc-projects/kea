@@ -64,7 +64,7 @@ This is a debug message indicating that the zone manager has received a
 NOTIFY command over the command channel.  The command is sent by the Auth
 process when it is acting as a slave server for the zone and causes the
 zone manager to record the master server for the zone and start a timer;
-when the time rexpires, the master will be polled to see if it contains
+when the timer expires, the master will be polled to see if it contains
 new data.
 
 % ZONEMGR_RECEIVE_SHUTDOWN received SHUTDOWN command
