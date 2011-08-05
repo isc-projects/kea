@@ -14,10 +14,11 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 """
-This unittests run Msgq, Cfgmgr, Auth and Boss as mock in
-background. Because the stats module communicates various other
-modules in runtime. However this aim is not to actually simulate a
-whole system running.
+In each of these tests we start several virtual components. They are
+not the real components, no external processes are started. They are
+just simple mock objects running each in its own thread and pretending
+to be bind10 modules. This helps testing the stats module in a close
+to real environment.
 """
 
 import unittest
@@ -146,11 +147,9 @@ class TestStats(unittest.TestCase):
     def setUp(self):
         self.base = BaseModules()
         self.stats = stats.Stats()
-        self.assertTrue("B10_FROM_SOURCE" in os.environ)
-        self.assertEqual(stats.SPECFILE_LOCATION, \
-                             os.environ["B10_FROM_SOURCE"] + os.sep + \
-                             "src" + os.sep + "bin" + os.sep + "stats" + \
-                             os.sep + "stats.spec")
+        self.const_timestamp = 1308730448.965706
+        self.const_datetime = '2011-06-22T08:14:08Z'
+        self.const_default_datetime = '1970-01-01T00:00:00Z'
 
     def tearDown(self):
         self.base.shutdown()
@@ -216,19 +215,19 @@ class TestStats(unittest.TestCase):
                 'show', 'Stats',
                 params={ 'owner' : 'Boss',
                   'name'  : 'boot_time' }),
-            (0, '2011-06-22T08:14:08Z'))
+            (0, self.const_datetime))
         self.assertEqual(
             send_command(
                 'set', 'Stats',
                 params={ 'owner' : 'Boss',
-                  'data'  : { 'boot_time' : '2012-06-22T18:24:08Z' } }),
+                  'data'  : { 'boot_time' : self.const_datetime } }),
             (0, None))
         self.assertEqual(
             send_command(
                 'show', 'Stats',
                 params={ 'owner' : 'Boss',
                   'name'  : 'boot_time' }),
-            (0, '2012-06-22T18:24:08Z'))
+            (0, self.const_datetime))
         self.assertEqual(
             send_command('status', 'Stats'),
             (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
@@ -242,7 +241,7 @@ class TestStats(unittest.TestCase):
         self.assertEqual(len(value['Stats']), 5)
         self.assertEqual(len(value['Boss']), 1)
         self.assertTrue('boot_time' in value['Boss'])
-        self.assertEqual(value['Boss']['boot_time'], '2012-06-22T18:24:08Z')
+        self.assertEqual(value['Boss']['boot_time'], self.const_datetime)
         self.assertTrue('report_time' in value['Stats'])
         self.assertTrue('boot_time' in value['Stats'])
         self.assertTrue('last_update_time' in value['Stats'])
@@ -294,14 +293,14 @@ class TestStats(unittest.TestCase):
         self.assertTrue('last_update_time' in my_statistics_data)
         self.assertTrue('timestamp' in my_statistics_data)
         self.assertTrue('lname' in my_statistics_data)
-        self.assertEqual(my_statistics_data['report_time'], "1970-01-01T00:00:00Z")
-        self.assertEqual(my_statistics_data['boot_time'], "1970-01-01T00:00:00Z")
-        self.assertEqual(my_statistics_data['last_update_time'], "1970-01-01T00:00:00Z")
+        self.assertEqual(my_statistics_data['report_time'], self.const_default_datetime)
+        self.assertEqual(my_statistics_data['boot_time'], self.const_default_datetime)
+        self.assertEqual(my_statistics_data['last_update_time'], self.const_default_datetime)
         self.assertEqual(my_statistics_data['timestamp'], 0.0)
         self.assertEqual(my_statistics_data['lname'], "")
         my_statistics_data = stats.get_spec_defaults(self.stats.modules['Boss'].get_statistics_spec())
         self.assertTrue('boot_time' in my_statistics_data)
-        self.assertEqual(my_statistics_data['boot_time'], "1970-01-01T00:00:00Z")
+        self.assertEqual(my_statistics_data['boot_time'], self.const_default_datetime)
         orig_parse_answer = stats.isc.config.ccsession.parse_answer
         stats.isc.config.ccsession.parse_answer = lambda x: (99, 'error')
         self.assertRaises(stats.StatsError, self.stats.update_modules)
@@ -321,11 +320,11 @@ class TestStats(unittest.TestCase):
         my_statistics_data = self.stats.get_statistics_data(owner='Stats')
         self.assertTrue('boot_time' in my_statistics_data)
         my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='report_time')
-        self.assertEqual(my_statistics_data, "1970-01-01T00:00:00Z")
+        self.assertEqual(my_statistics_data, self.const_default_datetime)
         my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='boot_time')
-        self.assertEqual(my_statistics_data, "1970-01-01T00:00:00Z")
+        self.assertEqual(my_statistics_data, self.const_default_datetime)
         my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='last_update_time')
-        self.assertEqual(my_statistics_data, "1970-01-01T00:00:00Z")
+        self.assertEqual(my_statistics_data, self.const_default_datetime)
         my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='timestamp')
         self.assertEqual(my_statistics_data, 0.0)
         my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='lname')
@@ -342,10 +341,10 @@ class TestStats(unittest.TestCase):
         self.assertTrue('Stats' in self.stats.statistics_data)
         my_statistics_data = self.stats.statistics_data['Stats']
         self.assertEqual(my_statistics_data['lname'], 'foo@bar')
-        self.stats.update_statistics_data(owner='Stats', last_update_time='2000-01-01T10:10:10Z')
+        self.stats.update_statistics_data(owner='Stats', last_update_time=self.const_datetime)
         self.assertTrue('Stats' in self.stats.statistics_data)
         my_statistics_data = self.stats.statistics_data['Stats']
-        self.assertEqual(my_statistics_data['last_update_time'], '2000-01-01T10:10:10Z')
+        self.assertEqual(my_statistics_data['last_update_time'], self.const_datetime)
         self.assertEqual(self.stats.update_statistics_data(owner='Stats', lname=0.0),
                          ['0.0 should be a string'])
         self.assertEqual(self.stats.update_statistics_data(owner='Dummy', foo='bar'),
@@ -381,14 +380,14 @@ class TestStats(unittest.TestCase):
                 0, 0))
         orig_get_timestamp = stats.get_timestamp
         orig_get_datetime = stats.get_datetime
-        stats.get_timestamp = lambda : 1308730448.965706
-        stats.get_datetime = lambda : '2011-06-22T08:14:08Z'
-        self.assertEqual(stats.get_timestamp(), 1308730448.965706)
-        self.assertEqual(stats.get_datetime(), '2011-06-22T08:14:08Z')
+        stats.get_timestamp = lambda : self.const_timestamp
+        stats.get_datetime = lambda : self.const_datetime
+        self.assertEqual(stats.get_timestamp(), self.const_timestamp)
+        self.assertEqual(stats.get_datetime(), self.const_datetime)
         self.assertEqual(self.stats.command_show(owner='Stats', name='report_time'), \
-                             isc.config.create_answer(0, '2011-06-22T08:14:08Z'))
-        self.assertEqual(self.stats.statistics_data['Stats']['timestamp'], 1308730448.965706)
-        self.assertEqual(self.stats.statistics_data['Stats']['boot_time'], '1970-01-01T00:00:00Z')
+                             isc.config.create_answer(0, self.const_datetime))
+        self.assertEqual(self.stats.statistics_data['Stats']['timestamp'], self.const_timestamp)
+        self.assertEqual(self.stats.statistics_data['Stats']['boot_time'], self.const_default_datetime)
         stats.get_timestamp = orig_get_timestamp
         stats.get_datetime = orig_get_datetime
         self.stats.mccs.specification = isc.config.module_spec.ModuleSpec(
@@ -520,17 +519,17 @@ class TestStats(unittest.TestCase):
 
     def test_command_set(self):
         orig_get_datetime = stats.get_datetime
-        stats.get_datetime = lambda : '2011-06-22T06:12:38Z'
+        stats.get_datetime = lambda : self.const_datetime
         (rcode, value) = isc.config.ccsession.parse_answer(
             self.stats.command_set(owner='Boss',
-                                   data={ 'boot_time' : '2011-06-22T13:15:04Z' }))
+                                   data={ 'boot_time' : self.const_datetime }))
         stats.get_datetime = orig_get_datetime
         self.assertEqual(rcode, 0)
         self.assertTrue(value is None)
         self.assertEqual(self.stats.statistics_data['Boss']['boot_time'],
-                         '2011-06-22T13:15:04Z')
+                         self.const_datetime)
         self.assertEqual(self.stats.statistics_data['Stats']['last_update_time'],
-                         '2011-06-22T06:12:38Z')
+                         self.const_datetime)
         self.assertEqual(self.stats.command_set(owner='Stats',
                                                 data={ 'lname' : 'foo@bar' }),
                          isc.config.create_answer(0, None))
@@ -566,16 +565,27 @@ class TestStats(unittest.TestCase):
         self.assertRaises(stats.StatsError,
                           self.stats.command_set, owner='Stats', data={ 'dummy' : '_xxxx_yyyy_zzz_' })
 
+class TestOSEnv(unittest.TestCase):
     def test_osenv(self):
         """
-        test for not having environ "B10_FROM_SOURCE"
+        test for the environ variable "B10_FROM_SOURCE"
+        "B10_FROM_SOURCE" is set in Makefile
         """
-        if "B10_FROM_SOURCE" in os.environ:
-            path = os.environ["B10_FROM_SOURCE"]
-            os.environ.pop("B10_FROM_SOURCE")
-            imp.reload(stats)
-            os.environ["B10_FROM_SOURCE"] = path
-            imp.reload(stats)
+        # test case having B10_FROM_SOURCE
+        self.assertTrue("B10_FROM_SOURCE" in os.environ)
+        self.assertEqual(stats.SPECFILE_LOCATION, \
+                             os.environ["B10_FROM_SOURCE"] + os.sep + \
+                             "src" + os.sep + "bin" + os.sep + "stats" + \
+                             os.sep + "stats.spec")
+        # test case not having B10_FROM_SOURCE
+        path = os.environ["B10_FROM_SOURCE"]
+        os.environ.pop("B10_FROM_SOURCE")
+        self.assertFalse("B10_FROM_SOURCE" in os.environ)
+        # import stats again
+        imp.reload(stats)
+        # revert the changes
+        os.environ["B10_FROM_SOURCE"] = path
+        imp.reload(stats)
 
 def test_main():
     unittest.main()

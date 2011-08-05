@@ -14,10 +14,11 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 """
-This unittests run Msgq, Cfgmgr, Auth, Boss and Stats as mock in
-background. Because the stats httpd communicates various other modules
-in runtime. However this aim is not to actually simulate a whole
-system running.
+In each of these tests we start several virtual components. They are
+not the real components, no external processes are started. They are
+just simple mock objects running each in its own thread and pretending
+to be bind10 modules. This helps testing the stats http server in a
+close to real environment.
 """
 
 import unittest
