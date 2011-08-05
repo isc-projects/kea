@@ -23,4 +23,4 @@ EXTRA_DIST += example.com
 EXTRA_DIST += example.sqlite3
 
 .spec.wire:
-	$(PYTHON) $(abs_top_builddir)/src/lib/dns/tests/testdata/gen_wiredata.py -o $@ $<
+	$(PYTHON) $(top_builddir)/src/lib/util/python/gen_wiredata.py -o $@ $<
