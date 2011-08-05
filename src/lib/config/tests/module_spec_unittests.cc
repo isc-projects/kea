@@ -287,7 +287,7 @@ TEST(ModuleSpec, CheckFormat) {
     item_default = "\"item_default\": \"2011-05-27\",";
     item_format  = "\"item_format\": \"date\"";
     specs.push_back("," + item_default + item_format);
-    item_default = "\"item_default\": \"19:42:57Z\",";
+    item_default = "\"item_default\": \"19:42:57\",";
     item_format  = "\"item_format\": \"time\"";
     specs.push_back("," + item_default + item_format);
 

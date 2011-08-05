@@ -330,8 +330,10 @@ def _check_format(value, format_name):
     for fmt in time_formats:
         if format_name == fmt:
             try:
-                time.strptime(value, time_formats[fmt])
-                return True
+                # reverse check
+                return value == time.strftime(
+                    time_formats[fmt],
+                    time.strptime(value, time_formats[fmt]))
             except (ValueError, TypeError):
                 break
     return False

@@ -103,8 +103,15 @@ check_format(ConstElementPtr value, ConstElementPtr format_name) {
     BOOST_FOREACH (const format_types::value_type& f, time_formats) {
         if (format_name->stringValue() == f.first) {
             struct tm tm;
+            char buf[255] = "";
+            memset(&tm, 0, sizeof(tm));
+            // reverse check
             return (strptime(value->stringValue().c_str(),
-                             f.second.c_str(), &tm) != NULL);
+                             f.second.c_str(), &tm) != NULL
+                    && strftime(buf, sizeof(buf),
+                                f.second.c_str(), &tm) != 0
+                    && strcmp(value->stringValue().c_str(),
+                              buf) == 0);
         }
     }
     return (false);
