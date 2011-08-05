@@ -141,8 +141,8 @@ encountered an internal error whilst processing a received packet:
 the cause of the error is included in the message.
 
 The server will return a SERVFAIL error code to the sender of the packet.
-However, this message indicates a potential error in the server.
-Please open a bug ticket for this issue.
+This message indicates a potential error in the server.  Please open a
+bug ticket for this issue.
 
 % AUTH_RECEIVED_COMMAND command '%1' received
 This is a debug message issued when the authoritative server has received
