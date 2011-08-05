@@ -48,7 +48,6 @@ TEST_F(Rdata_RRSIG_Test, fromText) {
     generic::RRSIG rdata_rrsig(rrsig_txt);
     EXPECT_EQ(rrsig_txt, rdata_rrsig.toText());
     EXPECT_EQ(isc::dns::RRType::A(), rdata_rrsig.typeCovered());
-
 }
 
 TEST_F(Rdata_RRSIG_Test, badText) {

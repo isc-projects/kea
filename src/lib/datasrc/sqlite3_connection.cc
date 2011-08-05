@@ -351,19 +351,20 @@ SQLite3Connection::getNextRecord(std::vector<std::string>& columns) {
             columns.push_back(convertToPlainChar(sqlite3_column_text(
                                                  current_stmt, column)));
         }
-        return true;
+        return (true);
     } else if (rc == SQLITE_DONE) {
         // reached the end of matching rows
         sqlite3_reset(current_stmt);
         sqlite3_clear_bindings(current_stmt);
-        return false;
+        return (false);
     }
     sqlite3_reset(current_stmt);
     sqlite3_clear_bindings(current_stmt);
-    isc_throw(DataSourceError, "Unexpected failure in sqlite3_step");
+    isc_throw(DataSourceError,
+              "Unexpected failure in sqlite3_step (sqlite result code " << rc << ")");
 
     // Compilers might not realize isc_throw always throws
-    return false;
+    return (false);
 }
 
 }

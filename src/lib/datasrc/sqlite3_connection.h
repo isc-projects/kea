@@ -88,7 +88,30 @@ public:
      *     element and the zone id in the second if it was.
      */
     virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const;
+
+    /**
+     * \brief Start a new search for the given name in the given zone.
+     *
+     * This implements the searchForRecords from DatabaseConnection.
+     * This particular implementation does not raise DataSourceError.
+     *
+     * \param zone_id The zone to seach in, as returned by getZone()
+     * \param name The name to find records for
+     */
     virtual void searchForRecords(int zone_id, const std::string& name);
+
+    /**
+     * \brief Retrieve the next record from the search started with
+     *        searchForRecords
+     *
+     * This implements the getNextRecord from DatabaseConnection.
+     * See the documentation there for more information.
+     *
+     * \param columns This vector will be cleared, and the fields of the record will
+     *                be appended here as strings (in the order rdtype, ttl, sigtype,
+     *                and rdata). If there was no data, the vector is untouched.
+     * \return true if there was a next record, false if there was not
+     */
     virtual bool getNextRecord(std::vector<std::string>& columns);
 private:
     /// \brief Private database data
