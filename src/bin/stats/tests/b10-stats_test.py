@@ -211,7 +211,6 @@ class TestStats(unittest.TestCase):
         # command_handler
         statsserver = ThreadingServerManager(MyStats)
         statsserver.run()
-        self.base.boss.server._started.wait()
         self.assertEqual(
             send_command(
                 'show', 'Stats',
