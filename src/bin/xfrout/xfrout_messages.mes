@@ -48,7 +48,7 @@ There was a problem reading from the command and control channel. The
 most likely cause is that the msgq daemon is not running.
 
 % XFROUT_CC_SESSION_TIMEOUT_ERROR timeout waiting for cc response
-There was a problem reading a response from antoher module over the
+There was a problem reading a response from another module over the
 command and control channel. The most likely cause is that the
 configuration manager b10-cfgmgr is not running.
 
