@@ -41,6 +41,13 @@ public:
     }
 };
 
+// This tests the default getIteratorContext behaviour, throwing NotImplemented
+TEST(DatabaseConnectionTest, getIteratorContext) {
+    // The parameters don't matter
+    EXPECT_THROW(MockConnection().getIteratorContext(Name("."), 1),
+                 isc::NotImplemented);
+}
+
 class DatabaseClientTest : public ::testing::Test {
 public:
     DatabaseClientTest() {
