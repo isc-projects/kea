@@ -14,7 +14,7 @@
 
 #include <sqlite3.h>
 
-#include <datasrc/sqlite3_connection.h>
+#include <datasrc/sqlite3_database.h>
 #include <datasrc/logger.h>
 #include <datasrc/data_source.h>
 
@@ -44,7 +44,7 @@ struct SQLite3Parameters {
     */
 };
 
-SQLite3Connection::SQLite3Connection(const std::string& filename,
+SQLite3Database::SQLite3Database(const std::string& filename,
                                      const isc::dns::RRClass& rrclass) :
     dbparameters_(new SQLite3Parameters),
     class_(rrclass.toText())
@@ -215,7 +215,7 @@ checkAndSetupSchema(Initializer* initializer) {
 }
 
 void
-SQLite3Connection::open(const std::string& name) {
+SQLite3Database::open(const std::string& name) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_CONNOPEN).arg(name);
     if (dbparameters_->db_ != NULL) {
         // There shouldn't be a way to trigger this anyway
@@ -232,7 +232,7 @@ SQLite3Connection::open(const std::string& name) {
     initializer.move(dbparameters_);
 }
 
-SQLite3Connection::~SQLite3Connection() {
+SQLite3Database::~SQLite3Database() {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_DROPCONN);
     if (dbparameters_->db_ != NULL) {
         close();
@@ -241,7 +241,7 @@ SQLite3Connection::~SQLite3Connection() {
 }
 
 void
-SQLite3Connection::close(void) {
+SQLite3Database::close(void) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_CONNCLOSE);
     if (dbparameters_->db_ == NULL) {
         isc_throw(DataSourceError,
@@ -283,7 +283,7 @@ SQLite3Connection::close(void) {
 }
 
 std::pair<bool, int>
-SQLite3Connection::getZone(const isc::dns::Name& name) const {
+SQLite3Database::getZone(const isc::dns::Name& name) const {
     int rc;
 
     // Take the statement (simple SELECT id FROM zones WHERE...)
