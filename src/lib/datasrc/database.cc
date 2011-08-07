@@ -22,32 +22,32 @@ using isc::dns::Name;
 namespace isc {
 namespace datasrc {
 
-DatabaseClient::DatabaseClient(boost::shared_ptr<DatabaseConnection>
-                               connection) :
-    connection_(connection)
+DatabaseClient::DatabaseClient(boost::shared_ptr<DatabaseAbstraction>
+                               database) :
+    database_(database)
 {
-    if (connection_.get() == NULL) {
+    if (database_.get() == NULL) {
         isc_throw(isc::InvalidParameter,
-                  "No connection provided to DatabaseClient");
+                  "No database provided to DatabaseClient");
     }
 }
 
 DataSourceClient::FindResult
 DatabaseClient::findZone(const Name& name) const {
-    std::pair<bool, int> zone(connection_->getZone(name));
+    std::pair<bool, int> zone(database_->getZone(name));
     // Try exact first
     if (zone.first) {
         return (FindResult(result::SUCCESS,
-                           ZoneFinderPtr(new Finder(connection_,
+                           ZoneFinderPtr(new Finder(database_,
                                                     zone.second))));
     }
     // Than super domains
     // Start from 1, as 0 is covered above
     for (size_t i(1); i < name.getLabelCount(); ++i) {
-        zone = connection_->getZone(name.split(i));
+        zone = database_->getZone(name.split(i));
         if (zone.first) {
             return (FindResult(result::PARTIALMATCH,
-                               ZoneFinderPtr(new Finder(connection_,
+                               ZoneFinderPtr(new Finder(database_,
                                                         zone.second))));
         }
     }
@@ -55,9 +55,9 @@ DatabaseClient::findZone(const Name& name) const {
     return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
 }
 
-DatabaseClient::Finder::Finder(boost::shared_ptr<DatabaseConnection>
-                               connection, int zone_id) :
-    connection_(connection),
+DatabaseClient::Finder::Finder(boost::shared_ptr<DatabaseAbstraction>
+                               database, int zone_id) :
+    database_(database),
     zone_id_(zone_id)
 { }
 
