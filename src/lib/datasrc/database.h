@@ -130,6 +130,8 @@ public:
          *     calls to the database.
          */
         Finder(boost::shared_ptr<DatabaseAbstraction> database, int zone_id);
+        // The following three methods are just implementations of inherited
+        // ZoneFinder's pure virtual methods.
         virtual isc::dns::Name getOrigin() const;
         virtual isc::dns::RRClass getClass() const;
         virtual FindResult find(const isc::dns::Name& name,
@@ -167,9 +169,11 @@ public:
      * (which is not restricted in any way).
      *
      * \param name Name of the zone or data contained there.
-     * \return Result containing the code and instance of Finder, if anything
-     *     is found. Applications should not rely on the specific class being
-     *     returned, though.
+     * \return FindResult containing the code and an instance of Finder, if
+     *     anything is found. However, application should not rely on the
+     *     ZoneFinder being instance of Finder (possible subclass of this class
+     *     may return something else and it may change in future versions), it
+     *     should use it as a ZoneFinder only.
      */
     virtual FindResult findZone(const isc::dns::Name& name) const;
 private:
