@@ -7,7 +7,7 @@ ports for now, but we should have some function where we can abstract it later.
 
 Goals
 -----
-* Be able to request a socket of any combination IP/IPv6 UDP/TCP bound to given
+* Be able to request a socket of any combination IPv4/IPv6 UDP/TCP bound to given
   port and address (sockets that are not bound to anything can be created
   without privileges, therefore are not requested from the socket creator).
 * Allow to provide the same socket to multiple modules (eg. multiple running
@@ -52,7 +52,7 @@ started by boss.
 There are two possibilities:
 * Let the msgq send messages about disconnected clients (eg. group message to
   some name). This one is better if we want to migrate to dbus, since dbus
-  already has this capability as well as sending the sockets inbound (at last it
+  already has this capability as well as sending the sockets inbound (at least it
   seems so on unix) and we could get rid of the unix-domain socket completely.
 * Keep the unix-domain connections open forever. Boss can remember which socket
   was sent to which connection and when the connection closes (because the
