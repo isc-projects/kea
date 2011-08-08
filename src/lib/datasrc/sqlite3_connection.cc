@@ -318,5 +318,10 @@ SQLite3Connection::getZone(const isc::dns::Name& name) const {
     return (result);
 }
 
+DatabaseConnection::IteratorContextPtr
+SQLite3Connection::getIteratorContext(const isc::dns::Name&, int) const {
+    return IteratorContextPtr();
+}
+
 }
 }

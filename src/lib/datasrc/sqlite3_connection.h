@@ -94,6 +94,8 @@ public:
      *     element and the zone id in the second if it was.
      */
     virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const;
+    virtual IteratorContextPtr getIteratorContext(const isc::dns::Name&,
+                                                  int id) const;
 private:
     /// \brief Private database data
     SQLite3Parameters* dbparameters_;

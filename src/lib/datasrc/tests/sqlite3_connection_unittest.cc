@@ -113,4 +113,28 @@ TEST_F(SQLite3Conn, noClass) {
     EXPECT_FALSE(conn->getZone(Name("example.com")).first);
 }
 
+// This tests the iterator context
+TEST_F(SQLite3Conn, iterator) {
+    // Our test zone is conveniently small, but not empty
+    initConn(SQLITE_DBFILE_EXAMPLE2, RRClass::IN());
+
+    // Get the iterator context
+    DatabaseConnection::IteratorContextPtr
+        context(conn->getIteratorContext(Name("example2.com"), 1));
+    ASSERT_NE(DatabaseConnection::IteratorContextPtr(),
+              context);
+
+    std::string name, rtype, data;
+    int ttl;
+    // Get and check the first and only record
+    EXPECT_TRUE(context->getNext(name, rtype, ttl, data));
+    EXPECT_EQ("example2.com.", name);
+    EXPECT_EQ("SOA", rtype);
+    EXPECT_EQ("master.example2.com. admin.example2.com. "
+              "1234 3600 1800 2419200 7200", data);
+    EXPECT_EQ(3600, ttl);
+    // Check there's no other
+    EXPECT_FALSE(context->getNext(name, rtype, ttl, data));
+}
+
 }
