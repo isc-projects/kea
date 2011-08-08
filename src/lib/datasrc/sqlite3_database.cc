@@ -14,7 +14,7 @@
 
 #include <sqlite3.h>
 
-#include <datasrc/sqlite3_connection.h>
+#include <datasrc/sqlite3_database.h>
 #include <datasrc/logger.h>
 #include <datasrc/data_source.h>
 
@@ -44,19 +44,14 @@ struct SQLite3Parameters {
     */
 };
 
-SQLite3Connection::SQLite3Connection(const isc::data::ConstElementPtr&
-                                     config,
+SQLite3Database::SQLite3Database(const std::string& filename,
                                      const isc::dns::RRClass& rrclass) :
     dbparameters_(new SQLite3Parameters),
     class_(rrclass.toText())
 {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_NEWCONN);
 
-    if (config && config->contains("database_file")) {
-        open(config->get("database_file")->stringValue());
-    } else {
-        isc_throw(DataSourceError, "No SQLite database file specified");
-    }
+    open(filename);
 }
 
 namespace {
@@ -224,7 +219,7 @@ checkAndSetupSchema(Initializer* initializer) {
 }
 
 void
-SQLite3Connection::open(const std::string& name) {
+SQLite3Database::open(const std::string& name) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_CONNOPEN).arg(name);
     if (dbparameters_->db_ != NULL) {
         // There shouldn't be a way to trigger this anyway
@@ -241,7 +236,7 @@ SQLite3Connection::open(const std::string& name) {
     initializer.move(dbparameters_);
 }
 
-SQLite3Connection::~ SQLite3Connection() {
+SQLite3Database::~SQLite3Database() {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_DROPCONN);
     if (dbparameters_->db_ != NULL) {
         close();
@@ -250,7 +245,7 @@ SQLite3Connection::~ SQLite3Connection() {
 }
 
 void
-SQLite3Connection::close(void) {
+SQLite3Database::close(void) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_CONNCLOSE);
     if (dbparameters_->db_ == NULL) {
         isc_throw(DataSourceError,
@@ -292,9 +287,11 @@ SQLite3Connection::close(void) {
 }
 
 std::pair<bool, int>
-SQLite3Connection::getZone(const isc::dns::Name& name) const {
+SQLite3Database::getZone(const isc::dns::Name& name) const {
     int rc;
 
+    // Take the statement (simple SELECT id FROM zones WHERE...)
+    // and prepare it (bind the parameters to it)
     sqlite3_reset(dbparameters_->q_zone_);
     rc = sqlite3_bind_text(dbparameters_->q_zone_, 1, name.toText().c_str(),
                            -1, SQLITE_STATIC);
@@ -309,6 +306,7 @@ SQLite3Connection::getZone(const isc::dns::Name& name) const {
                   " to SQL statement (zone)");
     }
 
+    // Get the data there and see if it found anything
     rc = sqlite3_step(dbparameters_->q_zone_);
     std::pair<bool, int> result;
     if (rc == SQLITE_ROW) {
@@ -318,7 +316,9 @@ SQLite3Connection::getZone(const isc::dns::Name& name) const {
     } else {
         result = std::pair<bool, int>(false, 0);
     }
+    // Free resources
     sqlite3_reset(dbparameters_->q_zone_);
+
     return (result);
 }
 
@@ -332,14 +332,14 @@ getstr(const unsigned char* str) {
 
 }
 
-class SQLite3Connection::Context : public DatabaseConnection::IteratorContext {
+class SQLite3Database::Context : public DatabaseAbstraction::IteratorContext {
 public:
-    Context(boost::shared_ptr<const SQLite3Connection> connection, int id) :
-        connection_(connection),
+    Context(const boost::shared_ptr<const SQLite3Database>& database, int id) :
+        database_(database),
         statement(NULL)
     {
         // We create the statement now and then just keep getting data from it
-        statement = prepare(connection->dbparameters_->db_, q_iterate_str);
+        statement = prepare(database->dbparameters_->db_, q_iterate_str);
         if (sqlite3_bind_int(statement, 1, id) != SQLITE_OK) {
             isc_throw(SQLite3Error, "Could not bind " << id <<
                       " to SQL statement (iterate)");
@@ -359,17 +359,18 @@ public:
         return (false);
     }
     virtual ~Context() {
-        if (statement)
+        if (statement) {
             sqlite3_finalize(statement);
+        }
     }
 
 private:
-    boost::shared_ptr<const SQLite3Connection> connection_;
+    boost::shared_ptr<const SQLite3Database> database_;
     sqlite3_stmt *statement;
 };
 
-DatabaseConnection::IteratorContextPtr
-SQLite3Connection::getIteratorContext(const isc::dns::Name&, int id) const {
+DatabaseAbstraction::IteratorContextPtr
+SQLite3Database::getIteratorContext(const isc::dns::Name&, int id) const {
     return (IteratorContextPtr(new Context(shared_from_this(), id)));
 }
 

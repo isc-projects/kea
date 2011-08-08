@@ -33,7 +33,7 @@ namespace {
  * A connection with minimum implementation, keeping the original
  * "NotImplemented" methods.
  */
-class NopConnection : public DatabaseConnection {
+class NopAbstraction : public DatabaseAbstraction {
 public:
     virtual std::pair<bool, int> getZone(const Name& name) const {
         if (name == Name("example.org")) {
@@ -57,7 +57,7 @@ public:
  * It has the same getZone method as NopConnection, but it provides
  * implementation of the optional functionality.
  */
-class MockConnection : public NopConnection {
+class MockAbstraction : public NopAbstraction {
 private:
     class MockIteratorContext : public IteratorContext {
     private:
@@ -165,7 +165,7 @@ public:
 // This tests the default getIteratorContext behaviour, throwing NotImplemented
 TEST(DatabaseConnectionTest, getIteratorContext) {
     // The parameters don't matter
-    EXPECT_THROW(NopConnection().getIteratorContext(Name("."), 1),
+    EXPECT_THROW(NopAbstraction().getIteratorContext(Name("."), 1),
                  isc::NotImplemented);
 }
 
@@ -179,16 +179,16 @@ public:
      * times per test.
      */
     void createClient() {
-        current_connection_ = new MockConnection();
-        client_.reset(new DatabaseClient(auto_ptr<DatabaseConnection>(
-             current_connection_)));
+        current_database_ = new MockAbstraction();
+        client_.reset(new DatabaseClient(shared_ptr<DatabaseAbstraction>(
+             current_database_)));
     }
     // Will be deleted by client_, just keep the current value for comparison.
-    MockConnection* current_connection_;
-    auto_ptr<DatabaseClient> client_;
+    MockAbstraction* current_database_;
+    shared_ptr<DatabaseClient> client_;
     /**
      * Check the zone finder is a valid one and references the zone ID and
-     * connection available here.
+     * database available here.
      */
     void checkZoneFinder(const DataSourceClient::FindResult& zone) {
         ASSERT_NE(ZoneFinderPtr(), zone.zone_finder) << "No zone finder";
@@ -197,7 +197,7 @@ public:
         ASSERT_NE(shared_ptr<DatabaseClient::Finder>(), finder) <<
             "Wrong type of finder";
         EXPECT_EQ(42, finder->zone_id());
-        EXPECT_EQ(current_connection_, &finder->connection());
+        EXPECT_EQ(current_database_, &finder->database());
     }
 };
 
@@ -220,7 +220,7 @@ TEST_F(DatabaseClientTest, superZone) {
 }
 
 TEST_F(DatabaseClientTest, noConnException) {
-    EXPECT_THROW(DatabaseClient(auto_ptr<DatabaseConnection>()),
+    EXPECT_THROW(DatabaseClient(shared_ptr<DatabaseAbstraction>()),
                  isc::InvalidParameter);
 }
 
@@ -232,14 +232,14 @@ TEST_F(DatabaseClientTest, noZoneIterator) {
 // If the zone doesn't exist and iteration is not implemented, it still throws
 // the exception it doesn't exist
 TEST_F(DatabaseClientTest, noZoneNotImplementedIterator) {
-    EXPECT_THROW(DatabaseClient(auto_ptr<DatabaseConnection>(
-        new NopConnection())).getIterator(Name("example.com")),
+    EXPECT_THROW(DatabaseClient(boost::shared_ptr<DatabaseAbstraction>(
+        new NopAbstraction())).getIterator(Name("example.com")),
                  DataSourceError);
 }
 
 TEST_F(DatabaseClientTest, notImplementedIterator) {
-    EXPECT_THROW(DatabaseClient(auto_ptr<DatabaseConnection>(
-        new NopConnection())).getIterator(Name("example.org")),
+    EXPECT_THROW(DatabaseClient(shared_ptr<DatabaseAbstraction>(
+        new NopAbstraction())).getIterator(Name("example.org")),
                  isc::NotImplemented);
 }
 
