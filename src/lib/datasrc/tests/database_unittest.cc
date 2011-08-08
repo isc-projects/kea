@@ -65,9 +65,9 @@ public:
     virtual bool getNextRecord(std::vector<std::string>& columns) {
         if (cur_record < cur_name.size()) {
             columns = cur_name[cur_record++];
-            return true;
+            return (true);
         } else {
-            return false;
+            return (false);
         }
     };
 
@@ -268,7 +268,7 @@ TEST_F(DatabaseClientTest, find) {
     shared_ptr<DatabaseClient::Finder> finder(
         dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
     EXPECT_EQ(42, finder->zone_id());
-    isc::dns::Name name("www.example.org.");
+    const isc::dns::Name name("www.example.org.");
 
     doFindTest(finder, isc::dns::Name("www.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
