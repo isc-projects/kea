@@ -90,6 +90,7 @@ public:
      *     element and the zone id in the second if it was.
      */
     virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const;
+    /// \brief Implementation of DatabaseAbstraction::getIteratorContext
     virtual IteratorContextPtr getIteratorContext(const isc::dns::Name&,
                                                   int id) const;
 private:
@@ -101,6 +102,7 @@ private:
     void open(const std::string& filename);
     /// \brief Closes the database
     void close();
+    /// \brief SQLite3 implementation of IteratorContext
     class Context;
     friend class Context;
 };
