@@ -41,18 +41,32 @@ static uint8_t naptr_rdata[] = {0x00,0x0a,0x00,0x64,0x01,0x53,0x07,0x53,0x49,
     0x50,0x2b,0x44,0x32,0x55,0x00,0x04,0x5f,0x73,0x69,0x70,0x04,0x5f,0x75,0x64,
     0x70,0x07,0x65,0x78,0x61,0x6d,0x70,0x6c,0x65,0x03,0x63,0x6f,0x6d,0x00};
 
-static const char *naptr_str = "10 100 \"S\" \"SIP+D2U\" \"\" _sip._udp.example.com.";
-static const char *naptr_str_small1 = "9 100 \"S\" \"SIP+D2U\" \"\" _sip._udp.example.com.";
-static const char *naptr_str_small2 = "10 90 \"S\" \"SIP+D2U\" \"\" _sip._udp.example.com.";
-static const char *naptr_str_small3 = "10 100 \"R\" \"SIP+D2U\" \"\" _sip._udp.example.com.";
-static const char *naptr_str_small4 = "10 100 \"S\" \"SIP+C2U\" \"\" _sip._udp.example.com.";
-static const char *naptr_str_small5 = "10 100 \"S\" \"SIP+D2U\" \"\" _rip._udp.example.com.";
+static const char *naptr_str = 
+    "10 100 \"S\" \"SIP+D2U\" \"\" _sip._udp.example.com.";
+static const char *naptr_str2 = 
+    "10 100 S SIP+D2U \"\" _sip._udp.example.com.";
 
-static const char *naptr_str_large1 = "11 100 \"S\" \"SIP+D2U\" \"\" _sip._udp.example.com.";
-static const char *naptr_str_large2 = "10 110 \"S\" \"SIP+D2U\" \"\" _sip._udp.example.com.";
-static const char *naptr_str_large3 = "10 100 \"T\" \"SIP+D2U\" \"\" _sip._udp.example.com.";
-static const char *naptr_str_large4 = "10 100 \"S\" \"SIP+E2U\" \"\" _sip._udp.example.com.";
-static const char *naptr_str_large5 = "10 100 \"S\" \"SIP+D2U\" \"\" _tip._udp.example.com.";
+static const char *naptr_str_small1 = 
+    "9 100 \"S\" \"SIP+D2U\" \"\" _sip._udp.example.com.";
+static const char *naptr_str_small2 = 
+    "10 90 \"S\" \"SIP+D2U\" \"\" _sip._udp.example.com.";
+static const char *naptr_str_small3 = 
+    "10 100 \"R\" \"SIP+D2U\" \"\" _sip._udp.example.com.";
+static const char *naptr_str_small4 = 
+    "10 100 \"S\" \"SIP+C2U\" \"\" _sip._udp.example.com.";
+static const char *naptr_str_small5 = 
+    "10 100 \"S\" \"SIP+D2U\" \"\" _rip._udp.example.com.";
+
+static const char *naptr_str_large1 = 
+    "11 100 \"S\" \"SIP+D2U\" \"\" _sip._udp.example.com.";
+static const char *naptr_str_large2 = 
+    "10 110 \"S\" \"SIP+D2U\" \"\" _sip._udp.example.com.";
+static const char *naptr_str_large3 = 
+    "10 100 \"T\" \"SIP+D2U\" \"\" _sip._udp.example.com.";
+static const char *naptr_str_large4 = 
+    "10 100 \"S\" \"SIP+E2U\" \"\" _sip._udp.example.com.";
+static const char *naptr_str_large5 = 
+    "10 100 \"S\" \"SIP+D2U\" \"\" _tip._udp.example.com.";
 
 TEST_F(Rdata_IN_NAPTR_Test, createFromText) {
     NAPTR naptr(naptr_str);
@@ -62,6 +76,26 @@ TEST_F(Rdata_IN_NAPTR_Test, createFromText) {
     EXPECT_EQ(string("SIP+D2U"), naptr.getServices());
     EXPECT_EQ(string(""), naptr.getRegexp());
     EXPECT_EQ(Name("_sip._udp.example.com."), naptr.getReplacement());
+
+    // Test <char-string> that separated by space
+    NAPTR naptr2(naptr_str2);
+    EXPECT_EQ(string("S"), naptr2.getFlags());
+    EXPECT_EQ(string("SIP+D2U"), naptr2.getServices());
+}
+
+TEST_F(Rdata_IN_NAPTR_Test, badText) {
+    // Order number cannot exceed 65535
+    EXPECT_THROW(const NAPTR naptr("65536 10 S SIP \"\" _sip._udp.example.com."),
+                 InvalidRdataText);
+    // Preference number cannot exceed 65535
+    EXPECT_THROW(const NAPTR naptr("100 65536 S SIP \"\" _sip._udp.example.com."),
+                 InvalidRdataText);
+    // No regexp given
+    EXPECT_THROW(const NAPTR naptr("100 10 S SIP _sip._udp.example.com."),
+                 InvalidRdataText);
+    // The double quotes seperator must match
+    EXPECT_THROW(const NAPTR naptr("100 10 \"S SIP \"\" _sip._udp.example.com."),
+                 InvalidRdataText);
 }
 
 TEST_F(Rdata_IN_NAPTR_Test, createFromWire) {
