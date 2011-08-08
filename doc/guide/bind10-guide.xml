@@ -1704,37 +1704,27 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 	  severity):
         </para>
 
-<itemizedlist>
-<listitem>
-<simpara>
-    FATAL
-</simpara>
-</listitem>
+        <itemizedlist>
+          <listitem>
+            <simpara> FATAL </simpara>
+          </listitem>
 
-<listitem>
-<simpara>
-    ERROR
-</simpara>
-</listitem>
+          <listitem>
+            <simpara> ERROR </simpara>
+          </listitem>
 
-<listitem>
-<simpara>
-    WARN
-</simpara>
-</listitem>
+          <listitem>
+            <simpara> WARN </simpara>
+          </listitem>
 
-<listitem>
-<simpara>
-    INFO
-</simpara>
-</listitem>
+          <listitem>
+            <simpara> INFO </simpara>
+          </listitem>
 
-<listitem>
-<simpara>
-    DEBUG
-</simpara>
-</listitem>
-</itemizedlist>
+          <listitem>
+            <simpara> DEBUG </simpara>
+          </listitem>
+        </itemizedlist>
 
         <para>
 
@@ -1828,37 +1818,27 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
         <section>
           <title>destination (string)</title>
 
-        <para>
+          <para>
 
-          The destination is the type of output. It can be one of:
+            The destination is the type of output. It can be one of:
 
-        </para>
+          </para>
 
-<!-- TODO: itemized list -->
+          <itemizedlist>
 
-<itemizedlist>
+            <listitem>
+              <simpara> console </simpara>
+          </listitem>
 
-<listitem>
-<simpara>
-    console
-</simpara>
-</listitem>
+            <listitem>
+              <simpara> file </simpara>
+          </listitem>
 
-<listitem>
-<simpara>
-   file
-</simpara>
-</listitem>
+            <listitem>
+              <simpara> syslog </simpara>
+            </listitem>
 
-<listitem>
-<simpara>
-    syslog
-</simpara>
-</listitem>
-
-</itemizedlist>
-
-
+          </itemizedlist>
 
         </section>
 
@@ -1878,27 +1858,30 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
             <term>destination is 'console'</term>
             <listitem>
               <simpara>
-      'output' must be one of 'stdout' (messages printed to standard output) or 'stderr' (messages printed to standard error).
+		 The value of output must be one of 'stdout'
+		 (messages printed to standard output) or 'stderr'
+		 (messages printed to standard error).
               </simpara>
             </listitem>
           </varlistentry>
-
 
           <varlistentry>
             <term>destination is 'file'</term>
             <listitem>
               <simpara>
-      The value of output is interpreted as a file name; log messages will be appended to this file.
+		The value of output is interpreted as a file name;
+		log messages will be appended to this file.
               </simpara>
             </listitem>
           </varlistentry>
-
 
           <varlistentry>
             <term>destination is 'syslog'</term>
             <listitem>
               <simpara>
-      The value of output is interpreted as the syslog facility (e.g. 'local0') that should be used for log messages.
+		The value of output is interpreted as the syslog
+		facility (e.g. 'local0') that should be used for
+		log messages.
               </simpara>
             </listitem>
           </varlistentry>
@@ -1911,54 +1894,47 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
         </para>
 
-        </section>
-
         <section>
           <title>flush (true of false)</title>
 
-        <para>
-
-	  Flush buffers after each log message. Doing this will
-	  reduce performance but will ensure that if the program
-	  terminates abnormally, all messages up to the point of
-	  termination are output.
-
-        </para>
+          <para>
+	    Flush buffers after each log message. Doing this will
+	    reduce performance but will ensure that if the program
+	    terminates abnormally, all messages up to the point of
+	    termination are output.
+          </para>
 
         </section>
 
         <section>
           <title>maxsize (integer)</title>
 
-        <para>
+          <para>
+	    Only relevant when destination is file, this is maximum
+	    file size of output files in bytes. When the maximum
+	    size is reached, the file is renamed (a ".1" is appended
+	    to the name - if a ".1" file exists, it is renamed ".2"
+	    etc.) and a new file opened.
+          </para>
 
-	  Only relevant when destination is file, this is maximum
-	  file size of output files in bytes. When the maximum size
-	  is reached, the file is renamed (a ".1" is appended to
-	  the name - if a ".1" file exists, it is renamed ".2"
-	  etc.) and a new file opened.
-
-        </para>
-
-        <para>
-
-          If this is 0, no maximum file size is used.
-
-        </para>
+          <para>
+            If this is 0, no maximum file size is used.
+          </para>
 
         </section>
 
         <section>
           <title>maxver (integer)</title>
 
-        <para>
+          <para>
+	    Maximum number of old log files to keep around when
+	    rolling the output file. Only relevant when destination
+	    if 'file'.
+          </para>
 
-	  Maximum number of old log files to keep around when
-	  rolling the output file. Only relevant when destination
-	  if 'file'.
-
-      </para>
         </section>
+
+      </section>
 
       </section>
 
