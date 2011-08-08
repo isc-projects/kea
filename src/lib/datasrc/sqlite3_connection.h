@@ -21,6 +21,7 @@
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
 
+#include <boost/enable_shared_from_this.hpp>
 #include <string>
 
 namespace isc {
@@ -52,7 +53,8 @@ struct SQLite3Parameters;
  * According to the design, it doesn't interpret the data in any way, it just
  * provides unified access to the DB.
  */
-class SQLite3Connection : public DatabaseConnection {
+class SQLite3Connection : public DatabaseConnection,
+    public boost::enable_shared_from_this<SQLite3Connection> {
 public:
     /**
      * \brief Constructor
@@ -105,6 +107,8 @@ private:
     void open(const std::string& filename);
     /// \brief Closes the database
     void close();
+    class Context;
+    friend class Context;
 };
 
 }

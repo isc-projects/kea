@@ -87,7 +87,7 @@ public:
         conn.reset(new SQLite3Connection(config, rrclass));
     }
     // The tested connection
-    std::auto_ptr<SQLite3Connection> conn;
+    boost::shared_ptr<SQLite3Connection> conn;
 };
 
 // This zone exists in the data, so it should be found
