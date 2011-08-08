@@ -137,6 +137,10 @@ const char* const SCHEMA_LIST[] = {
 
 const char* const q_zone_str = "SELECT id FROM zones WHERE name=?1 AND rdclass = ?2";
 
+const char* const q_iterate_str = "SELECT name, rdtype, ttl, rdata FROM records "
+                                  "WHERE zone_id = ?1 "
+                                  "ORDER BY name, rdtype";
+
 /* TODO: Prune the statements, not everything will be needed maybe?
 const char* const q_record_str = "SELECT rdtype, ttl, sigtype, rdata "
     "FROM records WHERE zone_id=?1 AND name=?2 AND "
@@ -318,9 +322,55 @@ SQLite3Connection::getZone(const isc::dns::Name& name) const {
     return (result);
 }
 
+namespace {
+
+std::string
+getstr(const unsigned char* str) {
+    return
+        (std::string(static_cast<const char*>(static_cast<const void*>(str))));
+}
+
+}
+
+class SQLite3Connection::Context : public DatabaseConnection::IteratorContext {
+public:
+    Context(boost::shared_ptr<const SQLite3Connection> connection, int id) :
+        connection_(connection),
+        statement(NULL)
+    {
+        // We create the statement now and then just keep getting data from it
+        statement = prepare(connection->dbparameters_->db_, q_iterate_str);
+        if (sqlite3_bind_int(statement, 1, id) != SQLITE_OK) {
+            isc_throw(SQLite3Error, "Could not bind " << id <<
+                      " to SQL statement (iterate)");
+        }
+    }
+    bool getNext(std::string& name, std::string& rtype, int& ttl,
+                 std::string& data)
+    {
+        // If there's another row, get it
+        if (sqlite3_step(statement) == SQLITE_ROW) {
+            name = getstr(sqlite3_column_text(statement, 0));
+            rtype = getstr(sqlite3_column_text(statement, 1));
+            ttl = sqlite3_column_int(statement, 2);
+            data = getstr(sqlite3_column_text(statement, 3));
+            return (true);
+        }
+        return (false);
+    }
+    virtual ~Context() {
+        if (statement)
+            sqlite3_finalize(statement);
+    }
+
+private:
+    boost::shared_ptr<const SQLite3Connection> connection_;
+    sqlite3_stmt *statement;
+};
+
 DatabaseConnection::IteratorContextPtr
-SQLite3Connection::getIteratorContext(const isc::dns::Name&, int) const {
-    return IteratorContextPtr();
+SQLite3Connection::getIteratorContext(const isc::dns::Name&, int id) const {
+    return (IteratorContextPtr(new Context(shared_from_this(), id)));
 }
 
 }
