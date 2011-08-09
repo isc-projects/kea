@@ -28,6 +28,7 @@
 #include <dns/name.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+#include <dns/rrparamregistry.h>
 
 #include <stdio.h>
 #include <time.h>
@@ -46,47 +47,11 @@ using namespace isc::util::encode;
 #include <dns/rdata/generic/detail/ds_like.h>
 
 class DS : public DS_LIKE<DS, 43> {
-    friend class DS_LIKE<DS, 43>;
-    static string const id;
-
 public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS
 
 };
-
-///    explicit DS(const std::string& type_str);
-inline DS::DS(const std::string& type_str) : DS_LIKE<DS, 43>(type_str) {}
-
-///    DS(isc::util::InputBuffer& buffer, size_t rdata_len);
-inline DS::DS(isc::util::InputBuffer& buffer, size_t rdata_len) : DS_LIKE<DS, 43>(buffer, rdata_len) {}
-
-///    DS(const DS& other);
-inline DS::DS(const DS& other) : DS_LIKE<DS, 43>(other) {}
-
-///    virtual std::string toText() const;
-inline std::string DS::toText() const
-{
-    return DS_LIKE<DS, 43>::toText();
-}
-
-///    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-inline void DS::toWire(isc::util::OutputBuffer& buffer) const
-{
-    DS_LIKE<DS, 43>::toWire(buffer);
-}
-
-///    virtual void toWire(AbstractMessageRenderer& renderer) const;
-inline void DS::toWire(AbstractMessageRenderer& renderer) const
-{
-    DS_LIKE<DS, 43>::toWire(renderer);
-}
-
-///    virtual int compare(const Rdata& other) const;
-inline int DS::compare(const Rdata& other) const
-{
-    return DS_LIKE<DS, 43>::compare(other);
-}
 
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
