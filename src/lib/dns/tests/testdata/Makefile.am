@@ -102,6 +102,7 @@ EXTRA_DIST += rdata_rp_fromWire5.spec rdata_rp_fromWire6.spec
 EXTRA_DIST += rdata_rp_toWire1.spec rdata_rp_toWire2.spec
 EXTRA_DIST += rdata_soa_fromWire rdata_soa_toWireUncompressed.spec
 EXTRA_DIST += rdata_srv_fromWire
+EXTRA_DIST += rdata_minfo_fromWire
 EXTRA_DIST += rdata_txt_fromWire1 rdata_txt_fromWire2.spec
 EXTRA_DIST += rdata_txt_fromWire3.spec rdata_txt_fromWire4.spec
 EXTRA_DIST += rdata_txt_fromWire5.spec rdata_unknown_fromWire
