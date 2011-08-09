@@ -358,6 +358,19 @@ TEST(ModuleSpec, CheckFormat) {
     item_format  = "\"item_format\": \"time\"";
     specs.push_back("," + item_default + item_format);
 
+    // wrong date-time-type format not ending with "Z"
+    item_default = "\"item_default\": \"2011-05-27T19:42:57\",";
+    item_format  = "\"item_format\": \"date-time\"";
+    specs.push_back("," + item_default + item_format);
+    // wrong date-type format ending with "T"
+    item_default = "\"item_default\": \"2011-05-27T\",";
+    item_format  = "\"item_format\": \"date\"";
+    specs.push_back("," + item_default + item_format);
+    // wrong time-type format ending with "Z"
+    item_default = "\"item_default\": \"19:42:57Z\",";
+    item_format  = "\"item_format\": \"time\"";
+    specs.push_back("," + item_default + item_format);
+
     BOOST_FOREACH(std::string s, specs) {
         el = Element::fromJSON(json_begin + s + json_end)->get("module_spec");
         EXPECT_THROW(ModuleSpec(el, true), ModuleSpecError);
