@@ -12,12 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+// BEGIN_HEADER_GUARD
+
 #include <stdint.h>
 
 #include <dns/name.h>
 #include <dns/rdata.h>
-
-// BEGIN_HEADER_GUARD
 
 // BEGIN_ISC_NAMESPACE
 
