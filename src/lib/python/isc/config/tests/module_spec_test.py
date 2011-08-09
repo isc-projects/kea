@@ -352,6 +352,12 @@ class TestModuleSpec(unittest.TestCase):
         self.assertFalse(isc.config.module_spec._check_format('', 'date-time'))
         self.assertFalse(isc.config.module_spec._check_format(None, 'date-time'))
         self.assertFalse(isc.config.module_spec._check_format(None, None))
+        # wrong date-time-type format not ending with "Z"
+        self.assertFalse(isc.config.module_spec._check_format('2011-05-27T19:42:57', 'date-time'))
+        # wrong date-type format ending with "T"
+        self.assertFalse(isc.config.module_spec._check_format('2011-05-27T', 'date'))
+        # wrong time-type format ending with "Z"
+        self.assertFalse(isc.config.module_spec._check_format('19:42:57Z', 'time'))
 
     def test_validate_type(self):
         errors = []
