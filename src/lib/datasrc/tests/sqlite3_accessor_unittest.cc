@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <datasrc/sqlite3_database.h>
+#include <datasrc/sqlite3_accessor.h>
 #include <datasrc/data_source.h>
 
 #include <dns/rrclass.h>

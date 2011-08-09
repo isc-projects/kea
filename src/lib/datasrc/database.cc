@@ -22,7 +22,7 @@ using isc::dns::Name;
 namespace isc {
 namespace datasrc {
 
-DatabaseClient::DatabaseClient(boost::shared_ptr<DatabaseAbstraction>
+DatabaseClient::DatabaseClient(boost::shared_ptr<DatabaseAccessor>
                                database) :
     database_(database)
 {
@@ -55,7 +55,7 @@ DatabaseClient::findZone(const Name& name) const {
     return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
 }
 
-DatabaseClient::Finder::Finder(boost::shared_ptr<DatabaseAbstraction>
+DatabaseClient::Finder::Finder(boost::shared_ptr<DatabaseAccessor>
                                database, int zone_id) :
     database_(database),
     zone_id_(zone_id)
