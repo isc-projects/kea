@@ -1,0 +1,35 @@
+#
+# various kinds of MINFO RDATA stored in an input buffer
+#
+# RDLENGHT=27 bytes
+# 0  1
+ 00 1c
+# 2  3  4  5  6  7  8  9 10  1  2  3  4  5  6  7  8  9 20  1  2(bytes)
+ 04 72 6f 6f 74 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00 07 65 6d
+# 3  4  5  6  7  8  9
+ 61 69 6c 62 78 c0 07
+#
+# compressed name
+# RDLENGHT=04 bytes
+#30  1
+ 00 04
+# 2  3  4  5(bytes)
+ c0 02 c0 14
+#
+# length too short
+# 6  7
+ 00 03
+# 8  9 40  1(bytes)
+ c0 02 c0 14
+#
+# length too long
+# 2  3
+ 00 19
+# 4  5  6  7(bytes)
+ c0 02 c0 14
+#
+# incomplete target name
+# 8  9
+ 00 13
+#50  1  2  3  4  5  6  7  8  9 60  1  2  3  4  5  6  7  8 (bytes)
+ 04 72 6f 6f 74 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00 07
