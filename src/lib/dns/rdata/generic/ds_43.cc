@@ -15,5 +15,37 @@
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
+DS::DS(const std::string& type_str) :
+    DS_LIKE(type_str)
+{}
+
+DS::DS(isc::util::InputBuffer& buffer, size_t rdata_len) :
+    DS_LIKE(buffer, rdata_len)
+{}
+
+DS::DS(const DS& other) :
+    DS_LIKE(other)
+{}
+
+std::string DS::toText() const
+{
+    return DS_LIKE::toText();
+}
+
+void DS::toWire(isc::util::OutputBuffer& buffer) const
+{
+    DS_LIKE::toWire(buffer);
+}
+
+void DS::toWire(AbstractMessageRenderer& renderer) const
+{
+    DS_LIKE::toWire(renderer);
+}
+
+int DS::compare(const Rdata& other) const
+{
+    return DS_LIKE::compare(other);
+}
+
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE

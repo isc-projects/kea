@@ -20,9 +20,6 @@
 #include <string>
 #include <vector>
 
-using namespace std;
-using namespace isc::util;
-
 struct DSImpl {
     // straightforward representation of DS RDATA fields
     DSImpl(uint16_t tag, uint8_t algorithm, uint8_t digest_type,
@@ -48,16 +45,24 @@ public:
 
 	iss >> tag >> algorithm >> digest_type >> &digestbuf;
 	if (iss.bad() || iss.fail()) {
-	    isc_throw(InvalidRdataText, "Invalid DS text");
+	    isc_throw(InvalidRdataText, "Invalid " +
+		      RRParamRegistry::getRegistry().codeToTypeText(typeCode) +
+		      " text");
 	}
 	if (tag > 0xffff) {
-	    isc_throw(InvalidRdataText, "DS tag out of range");
+	    isc_throw(InvalidRdataText,
+		      RRParamRegistry::getRegistry().codeToTypeText(typeCode) +
+		      " tag out of range");
 	}
 	if (algorithm > 0xff) {
-	    isc_throw(InvalidRdataText, "DS algorithm out of range");
+	    isc_throw(InvalidRdataText,
+		      RRParamRegistry::getRegistry().codeToTypeText(typeCode) +
+		      " algorithm out of range");
 	}
 	if (digest_type > 0xff) {
-	    isc_throw(InvalidRdataText, "DS digest type out of range");
+	    isc_throw(InvalidRdataText,
+		      RRParamRegistry::getRegistry().codeToTypeText(typeCode) +
+		      " digest type out of range");
 	}
 
 	vector<uint8_t> digest;
@@ -68,7 +73,9 @@ public:
 
     DS_LIKE(InputBuffer& buffer, size_t rdata_len) {
 	if (rdata_len < 4) {
-	    isc_throw(InvalidRdataLength, "DS too short");
+	    isc_throw(InvalidRdataLength,
+		      RRParamRegistry::getRegistry().codeToTypeText(typeCode) +
+		      " too short");
 	}
 
 	uint16_t tag = buffer.readUint16();
