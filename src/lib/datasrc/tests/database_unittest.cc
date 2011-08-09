@@ -30,7 +30,7 @@ namespace {
  * A virtual database connection that pretends it contains single zone --
  * example.org.
  */
-class MockAbstraction : public DatabaseAbstraction {
+class MockAccessor : public DatabaseAccessor {
 public:
     virtual std::pair<bool, int> getZone(const Name& name) const {
         if (name == Name("example.org")) {
@@ -51,12 +51,12 @@ public:
      * times per test.
      */
     void createClient() {
-        current_database_ = new MockAbstraction();
-        client_.reset(new DatabaseClient(shared_ptr<DatabaseAbstraction>(
+        current_database_ = new MockAccessor();
+        client_.reset(new DatabaseClient(shared_ptr<DatabaseAccessor>(
              current_database_)));
     }
     // Will be deleted by client_, just keep the current value for comparison.
-    MockAbstraction* current_database_;
+    MockAccessor* current_database_;
     shared_ptr<DatabaseClient> client_;
     /**
      * Check the zone finder is a valid one and references the zone ID and
@@ -92,7 +92,7 @@ TEST_F(DatabaseClientTest, superZone) {
 }
 
 TEST_F(DatabaseClientTest, noConnException) {
-    EXPECT_THROW(DatabaseClient(shared_ptr<DatabaseAbstraction>()),
+    EXPECT_THROW(DatabaseClient(shared_ptr<DatabaseAccessor>()),
                  isc::InvalidParameter);
 }
 

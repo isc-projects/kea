@@ -14,7 +14,7 @@
 
 #include <sqlite3.h>
 
-#include <datasrc/sqlite3_database.h>
+#include <datasrc/sqlite3_accessor.h>
 #include <datasrc/logger.h>
 #include <datasrc/data_source.h>
 
