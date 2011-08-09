@@ -67,7 +67,7 @@ import isc.util.process
 import isc.net.parse
 import isc.log
 from bind10_messages import *
-import bind10.sockcreator
+import isc.bind10.sockcreator
 
 isc.log.init("b10-boss")
 logger = isc.log.Logger("boss")
@@ -337,8 +337,8 @@ class BoB:
 
     def start_creator(self):
         self.curproc = 'b10-sockcreator'
-        self.sockcreator = bind10.sockcreator.Creator("@@LIBEXECDIR@@:" +
-                                                      os.environ['PATH'])
+        self.sockcreator = isc.bind10.sockcreator.Creator("@@LIBEXECDIR@@:" +
+                                                          os.environ['PATH'])
 
     def stop_creator(self, kill=False):
         if self.sockcreator is None:
