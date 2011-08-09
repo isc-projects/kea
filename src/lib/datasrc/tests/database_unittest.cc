@@ -15,6 +15,7 @@
 #include <gtest/gtest.h>
 
 #include <dns/name.h>
+#include <dns/rrttl.h>
 #include <exceptions/exceptions.h>
 
 #include <datasrc/database.h>
@@ -36,7 +37,7 @@ namespace {
  */
 class MockConnection : public DatabaseConnection {
 public:
-    MockConnection() { fillData(); }
+    MockConnection() : search_running_(false) { fillData(); }
 
     virtual std::pair<bool, int> getZone(const Name& name) const {
         if (name == Name("example.org")) {
@@ -47,10 +48,23 @@ public:
     }
 
     virtual void searchForRecords(int zone_id, const std::string& name) {
+        search_running_ = true;
+
+        // 'hardcoded' name to trigger exceptions (for testing
+        // the error handling of find() (the other on is below in 
+        // if the name is "exceptiononsearch" it'll raise an exception here
+        if (name == "dsexception.in.search.") {
+            isc_throw(DataSourceError, "datasource exception on search");
+        } else if (name == "iscexception.in.search.") {
+            isc_throw(isc::Exception, "isc exception on search");
+        } else if (name == "basicexception.in.search.") {
+            throw std::exception();
+        }
+        searched_name_ = name;
+
         // we're not aiming for efficiency in this test, simply
         // copy the relevant vector from records
         cur_record = 0;
-
         if (zone_id == 42) {
             if (records.count(name) > 0) {
                 cur_name = records.find(name)->second;
@@ -62,14 +76,37 @@ public:
         }
     };
 
-    virtual bool getNextRecord(std::vector<std::string>& columns) {
+    virtual bool getNextRecord(std::string columns[], size_t column_count) {
+        if (searched_name_ == "dsexception.in.getnext.") {
+            isc_throw(DataSourceError, "datasource exception on getnextrecord");
+        } else if (searched_name_ == "iscexception.in.getnext.") {
+            isc_throw(isc::Exception, "isc exception on getnextrecord");
+        } else if (searched_name_ == "basicexception.in.getnext.") {
+            throw std::exception();
+        }
+
+        if (column_count != DatabaseConnection::RecordColumnCount) {
+            isc_throw(DataSourceError, "Wrong column count in getNextRecord");
+        }
         if (cur_record < cur_name.size()) {
-            columns = cur_name[cur_record++];
+            for (size_t i = 0; i < column_count; ++i) {
+                columns[i] = cur_name[cur_record][i];
+            }
+            cur_record++;
             return (true);
         } else {
+            resetSearch();
             return (false);
         }
     };
+
+    virtual void resetSearch() {
+        search_running_ = false;
+    };
+
+    bool searchRunning() const {
+        return (search_running_);
+    }
 
 private:
     std::map<std::string, std::vector< std::vector<std::string> > > records;
@@ -79,6 +116,14 @@ private:
     // getNextRecord() calls, as well as during the building of the
     // fake data
     std::vector< std::vector<std::string> > cur_name;
+
+    // This boolean is used to make sure find() calls resetSearch
+    // when it encounters an error
+    bool search_running_;
+
+    // We store the name passed to searchForRecords, so we can
+    // hardcode some exceptions into getNextRecord
+    std::string searched_name_;
 
     // Adds one record to the current name in the database
     // The actual data will not be added to 'records' until
@@ -120,6 +165,11 @@ private:
         addRecord("AAAA", "3600", "", "2001:db8::1");
         addRecord("AAAA", "3600", "", "2001:db8::2");
         addCurName("www.example.org.");
+
+        addRecord("A", "3600", "", "192.0.2.1");
+        addRecord("AAAA", "3600", "", "2001:db8::1");
+        addRecord("A", "3600", "", "192.0.2.2");
+        addCurName("www2.example.org.");
 
         addRecord("CNAME", "3600", "", "www.example.org.");
         addCurName("cname.example.org.");
@@ -165,18 +215,42 @@ private:
         addRecord("A", "3600", "", "192.0.2.1");
         addCurName("acnamesig3.example.org.");
 
+        addRecord("A", "3600", "", "192.0.2.1");
+        addRecord("A", "360", "", "192.0.2.2");
+        addCurName("ttldiff1.example.org.");
+        addRecord("A", "360", "", "192.0.2.1");
+        addRecord("A", "3600", "", "192.0.2.2");
+        addCurName("ttldiff2.example.org.");
+
         // also add some intentionally bad data
-        cur_name.push_back(std::vector<std::string>());
-        addCurName("emptyvector.example.org.");
         addRecord("A", "3600", "", "192.0.2.1");
         addRecord("CNAME", "3600", "", "www.example.org.");
-        addCurName("badcname.example.org.");
+        addCurName("badcname1.example.org.");
+
+        addRecord("CNAME", "3600", "", "www.example.org.");
+        addRecord("A", "3600", "", "192.0.2.1");
+        addCurName("badcname2.example.org.");
+
+        addRecord("CNAME", "3600", "", "www.example.org.");
+        addRecord("CNAME", "3600", "", "www.example2.org.");
+        addCurName("badcname3.example.org.");
+
         addRecord("A", "3600", "", "bad");
         addCurName("badrdata.example.org.");
+
         addRecord("BAD_TYPE", "3600", "", "192.0.2.1");
         addCurName("badtype.example.org.");
+
         addRecord("A", "badttl", "", "192.0.2.1");
         addCurName("badttl.example.org.");
+
+        addRecord("A", "badttl", "", "192.0.2.1");
+        addRecord("RRSIG", "3600", "", "A 5 3 3600 somebaddata 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+        addCurName("badsig.example.org.");
+
+        addRecord("A", "3600", "", "192.0.2.1");
+        addRecord("RRSIG", "3600", "TXT", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+        addCurName("badsigtype.example.org.");
     }
 };
 
@@ -241,18 +315,21 @@ doFindTest(shared_ptr<DatabaseClient::Finder> finder,
            const isc::dns::Name& name,
            const isc::dns::RRType& type,
            const isc::dns::RRType& expected_type,
+           const isc::dns::RRTTL expected_ttl,
            ZoneFinder::Result expected_result,
            unsigned int expected_rdata_count,
            unsigned int expected_signature_count)
 {
-    ZoneFinder::FindResult result = finder->find(name, type,
-                                                 NULL, ZoneFinder::FIND_DEFAULT);
-    ASSERT_EQ(expected_result, result.code) << name.toText() << " " << type.toText();
+    ZoneFinder::FindResult result =
+        finder->find(name, type, NULL, ZoneFinder::FIND_DEFAULT);
+    ASSERT_EQ(expected_result, result.code) << name << " " << type;
     if (expected_rdata_count > 0) {
         EXPECT_EQ(expected_rdata_count, result.rrset->getRdataCount());
+        EXPECT_EQ(expected_ttl, result.rrset->getTTL());
         EXPECT_EQ(expected_type, result.rrset->getType());
         if (expected_signature_count > 0) {
-            EXPECT_EQ(expected_signature_count, result.rrset->getRRsig()->getRdataCount());
+            EXPECT_EQ(expected_signature_count,
+                      result.rrset->getRRsig()->getRdataCount());
         } else {
             EXPECT_EQ(isc::dns::RRsetPtr(), result.rrset->getRRsig());
         }
@@ -268,79 +345,189 @@ TEST_F(DatabaseClientTest, find) {
     shared_ptr<DatabaseClient::Finder> finder(
         dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
     EXPECT_EQ(42, finder->zone_id());
-    const isc::dns::Name name("www.example.org.");
+    EXPECT_FALSE(current_connection_->searchRunning());
 
     doFindTest(finder, isc::dns::Name("www.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS, 1, 0);
+    EXPECT_FALSE(current_connection_->searchRunning());
+    doFindTest(finder, isc::dns::Name("www2.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600),
+               ZoneFinder::SUCCESS, 2, 0);
+    EXPECT_FALSE(current_connection_->searchRunning());
     doFindTest(finder, isc::dns::Name("www.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
+               isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS, 2, 0);
     doFindTest(finder, isc::dns::Name("www.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
+               isc::dns::RRTTL(3600),
                ZoneFinder::NXRRSET, 0, 0);
+    EXPECT_FALSE(current_connection_->searchRunning());
     doFindTest(finder, isc::dns::Name("cname.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::CNAME(),
+               isc::dns::RRTTL(3600),
                ZoneFinder::CNAME, 1, 0);
+    EXPECT_FALSE(current_connection_->searchRunning());
+    doFindTest(finder, isc::dns::Name("cname.example.org."),
+               isc::dns::RRType::CNAME(), isc::dns::RRType::CNAME(),
+               isc::dns::RRTTL(3600),
+               ZoneFinder::SUCCESS, 1, 0);
+    EXPECT_FALSE(current_connection_->searchRunning());
     doFindTest(finder, isc::dns::Name("doesnotexist.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600),
                ZoneFinder::NXDOMAIN, 0, 0);
+    EXPECT_FALSE(current_connection_->searchRunning());
     doFindTest(finder, isc::dns::Name("signed1.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS, 1, 2);
+    EXPECT_FALSE(current_connection_->searchRunning());
     doFindTest(finder, isc::dns::Name("signed1.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
+               isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS, 2, 1);
+    EXPECT_FALSE(current_connection_->searchRunning());
     doFindTest(finder, isc::dns::Name("signed1.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
+               isc::dns::RRTTL(3600),
                ZoneFinder::NXRRSET, 0, 0);
+    EXPECT_FALSE(current_connection_->searchRunning());
     doFindTest(finder, isc::dns::Name("signedcname1.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::CNAME(),
+               isc::dns::RRTTL(3600),
                ZoneFinder::CNAME, 1, 1);
+    EXPECT_FALSE(current_connection_->searchRunning());
 
     doFindTest(finder, isc::dns::Name("signed2.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS, 1, 2);
+    EXPECT_FALSE(current_connection_->searchRunning());
     doFindTest(finder, isc::dns::Name("signed2.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
+               isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS, 2, 1);
+    EXPECT_FALSE(current_connection_->searchRunning());
     doFindTest(finder, isc::dns::Name("signed2.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
+               isc::dns::RRTTL(3600),
                ZoneFinder::NXRRSET, 0, 0);
+    EXPECT_FALSE(current_connection_->searchRunning());
     doFindTest(finder, isc::dns::Name("signedcname2.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::CNAME(),
+               isc::dns::RRTTL(3600),
                ZoneFinder::CNAME, 1, 1);
+    EXPECT_FALSE(current_connection_->searchRunning());
 
     doFindTest(finder, isc::dns::Name("acnamesig1.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS, 1, 1);
+    EXPECT_FALSE(current_connection_->searchRunning());
     doFindTest(finder, isc::dns::Name("acnamesig2.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS, 1, 1);
+    EXPECT_FALSE(current_connection_->searchRunning());
     doFindTest(finder, isc::dns::Name("acnamesig3.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS, 1, 1);
+    EXPECT_FALSE(current_connection_->searchRunning());
 
-    EXPECT_THROW(finder->find(isc::dns::Name("emptyvector.example.org."),
+    doFindTest(finder, isc::dns::Name("ttldiff1.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(360),
+               ZoneFinder::SUCCESS, 2, 0);
+    EXPECT_FALSE(current_connection_->searchRunning());
+    doFindTest(finder, isc::dns::Name("ttldiff2.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(360),
+               ZoneFinder::SUCCESS, 2, 0);
+    EXPECT_FALSE(current_connection_->searchRunning());
+
+    EXPECT_THROW(finder->find(isc::dns::Name("badcname1.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_THROW(finder->find(isc::dns::Name("badcname.example.org."),
+    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_THROW(finder->find(isc::dns::Name("badcname2.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
+    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_THROW(finder->find(isc::dns::Name("badcname3.example.org."),
+                                              isc::dns::RRType::A(),
+                                              NULL, ZoneFinder::FIND_DEFAULT),
+                 DataSourceError);
+    EXPECT_FALSE(current_connection_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("badrdata.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
+    EXPECT_FALSE(current_connection_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("badtype.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
+    EXPECT_FALSE(current_connection_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("badttl.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
+    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_THROW(finder->find(isc::dns::Name("badsig.example.org."),
+                                              isc::dns::RRType::A(),
+                                              NULL, ZoneFinder::FIND_DEFAULT),
+                 DataSourceError);
+    EXPECT_FALSE(current_connection_->searchRunning());
+
+    // Trigger the hardcoded exceptions and see if find() has cleaned up
+    /*
+    EXPECT_THROW(finder->find(isc::dns::Name("dsexception.in.search."),
+                                              isc::dns::RRType::A(),
+                                              NULL, ZoneFinder::FIND_DEFAULT),
+                 DataSourceError);
+    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_THROW(finder->find(isc::dns::Name("iscexception.in.search."),
+                                              isc::dns::RRType::A(),
+                                              NULL, ZoneFinder::FIND_DEFAULT),
+                 DataSourceError);
+    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_THROW(finder->find(isc::dns::Name("basicexception.in.search."),
+                                              isc::dns::RRType::A(),
+                                              NULL, ZoneFinder::FIND_DEFAULT),
+                 std::exception);
+    EXPECT_FALSE(current_connection_->searchRunning());
+    */
+    EXPECT_THROW(finder->find(isc::dns::Name("dsexception.in.getnext."),
+                                              isc::dns::RRType::A(),
+                                              NULL, ZoneFinder::FIND_DEFAULT),
+                 DataSourceError);
+    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_THROW(finder->find(isc::dns::Name("iscexception.in.getnext."),
+                                              isc::dns::RRType::A(),
+                                              NULL, ZoneFinder::FIND_DEFAULT),
+                 DataSourceError);
+    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_THROW(finder->find(isc::dns::Name("basicexception.in.getnext."),
+                                              isc::dns::RRType::A(),
+                                              NULL, ZoneFinder::FIND_DEFAULT),
+                 std::exception);
+    EXPECT_FALSE(current_connection_->searchRunning());
+
+    // This RRSIG has the wrong sigtype field, which should be
+    // an error if we decide to keep using that field
+    // Right now the field is ignored, so it does not error
+    doFindTest(finder, isc::dns::Name("badsigtype.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600),
+               ZoneFinder::SUCCESS, 1, 1);
+    EXPECT_FALSE(current_connection_->searchRunning());
 
 }
 

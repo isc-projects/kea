@@ -95,6 +95,9 @@ public:
      * This implements the searchForRecords from DatabaseConnection.
      * This particular implementation does not raise DataSourceError.
      *
+     * \exception DataSourceError when sqlite3_bind_int() or
+     *                            sqlite3_bind_text() fails
+     *
      * \param zone_id The zone to seach in, as returned by getZone()
      * \param name The name to find records for
      */
@@ -107,12 +110,31 @@ public:
      * This implements the getNextRecord from DatabaseConnection.
      * See the documentation there for more information.
      *
+     * If this method raises an exception, the contents of columns are undefined.
+     *
+     * \exception DataSourceError if there is an error returned by sqlite_step()
+     *                            When this exception is raised, the current
+     *                            search as initialized by searchForRecords() is
+     *                            NOT reset, and the caller is expected to take
+     *                            care of that.
      * \param columns This vector will be cleared, and the fields of the record will
      *                be appended here as strings (in the order rdtype, ttl, sigtype,
-     *                and rdata). If there was no data, the vector is untouched.
+     *                and rdata). If there was no data (i.e. if this call returns
+     *                false), the vector is untouched.
      * \return true if there was a next record, false if there was not
      */
-    virtual bool getNextRecord(std::vector<std::string>& columns);
+    virtual bool getNextRecord(std::string columns[], size_t column_count);
+
+    /**
+     * \brief Resets any state created by searchForRecords
+     *
+     * This implements the resetSearch from DatabaseConnection.
+     * See the documentation there for more information.
+     * 
+     * This function never throws.
+     */
+    virtual void resetSearch();
+
 private:
     /// \brief Private database data
     SQLite3Parameters* dbparameters_;
