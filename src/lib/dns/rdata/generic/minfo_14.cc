@@ -40,12 +40,11 @@ using namespace isc::dns;
 ///
 /// <b>Exceptions</b>
 ///
-/// If <rmailbox name> or <emailbox name> if not a valid domain name, a
-/// corresponding exception from the \c Name class will be thrown;
-/// If the number of RDATA fields (must be 2) is incorrect, an exception of
-/// class \c InvalidRdataText will be thrown.
-/// This constructor internally involves resource allocation, and if it
-/// fails a corresponding standard exception std::bad_alloc  will be throw.
+/// \exception InvalidRdataText The number of RDATA fields (must be 2) is
+/// incorrect.
+/// \exception std::bad_alloc Memory allocation for names fails.
+/// \exception Other The constructor of the \c Name class will throw if the
+/// names in the string is invalid.
 MINFO::MINFO(const std::string& minfo_str) :
     // We cannot construct both names in the initialization list due to the
     // necessary text processing, so we have to initialize them with a dummy
@@ -96,8 +95,7 @@ MINFO::MINFO(const MINFO& other) :
 /// The output of this method is formatted as described in the "from string"
 /// constructor (\c MINFO(const std::string&))).
 ///
-/// If internal resource allocation fails, a corresponding
-/// standard exception will be thrown.
+/// \exception std::bad_alloc Internal resource allocation fails.
 ///
 /// \return A \c string object that represents the \c MINFO object.
 std::string
@@ -107,9 +105,7 @@ MINFO::toText() const {
 
 /// \brief Render the \c MINFO in the wire format without name compression.
 ///
-/// If internal resource allocation fails, a corresponding standard
-/// exception will be thrown.
-/// This method never throws an exception otherwise.
+/// \exception std::bad_alloc Internal resource allocation fails.
 ///
 /// \param buffer An output buffer to store the wire data.
 void
@@ -121,12 +117,10 @@ MINFO::toWire(OutputBuffer& buffer) const {
 /// \brief Render the \c MINFO in the wire format with taking into account
 /// compression.
 ///
-/// As specified in RFC1035, the rmailbox and emailbox fields (domain names)
-/// will be compressed.
+/// As specified in RFC3597, TYPE MINFO is "well-known", the rmailbox and
+/// emailbox fields (domain names) will be compressed.
 ///
-/// If internal resource allocation fails, a corresponding
-/// standard exception will be thrown.
-/// This method never throws an exception otherwise.
+/// \exception std::bad_alloc Internal resource allocation fails.
 ///
 /// \param renderer DNS message rendering context that encapsulates the
 /// output buffer and name compression information.
