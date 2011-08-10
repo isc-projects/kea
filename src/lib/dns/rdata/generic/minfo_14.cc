@@ -78,7 +78,9 @@ MINFO::MINFO(const std::string& minfo_str) :
 /// \exception std::bad_alloc Memory allocation for names fails.
 /// \exception Other The constructor of the \c Name class will throw if the
 /// names in the wire is invalid.
-MINFO::MINFO(InputBuffer& buffer, size_t) : rmailbox_(buffer), emailbox_(buffer) {
+MINFO::MINFO(InputBuffer& buffer, size_t) :
+    rmailbox_(buffer), emailbox_(buffer)
+{
 }
 
 /// \brief Copy constructor.
