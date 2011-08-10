@@ -96,7 +96,7 @@ public:
      * DatabaseConnection::RecordColumnCount elements, the elements of which
      * are defined in DatabaseConnection::RecordColumns, in their basic
      * string representation.
-     * 
+     *
      * If you are implementing a derived database connection class, you
      * should have this method check the column_count value, and fill the
      * array with strings conforming to their description in RecordColumn.
@@ -129,10 +129,12 @@ public:
     /**
      * Definitions of the fields as they are required to be filled in
      * by getNextRecord()
-     * 
+     *
      * When implementing getNextRecord(), the columns array should
      * be filled with the values as described in this enumeration,
-     * in this order.
+     * in this order, i.e. TYPE_COLUMN should be the first element
+     * (index 0) of the array, TTL_COLUMN should be the second element
+     * (index 1), etc.
      */
     enum RecordColumns {
         TYPE_COLUMN = 0,    ///< The RRType of the record (A/NS/TXT etc.)

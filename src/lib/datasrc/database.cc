@@ -23,6 +23,7 @@
 #include <dns/rdataclass.h>
 
 #include <datasrc/data_source.h>
+#include <datasrc/logger.h>
 
 #include <boost/foreach.hpp>
 
@@ -95,12 +96,8 @@ void addOrCreate(isc::dns::RRsetPtr& rrset,
         if (ttl < rrset->getTTL()) {
             rrset->setTTL(ttl);
         }
-        // make sure the type is correct
-        // TODO Assert?
-        if (type != rrset->getType()) {
-            isc_throw(DataSourceError,
-                        "attempt to add multiple types to RRset in find()");
-        }
+        // This is a check to make sure find() is not messing things up
+        assert(type == rrset->getType());
     }
     try {
         rrset->addRdata(isc::dns::rdata::createRdata(type, cls, rdata_str));
@@ -167,6 +164,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     isc::dns::RRsetPtr result_rrset;
     ZoneFinder::Result result_status = SUCCESS;
     RRsigStore sig_store;
+    logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS).arg(name).arg(type);
 
     try {
         connection_->searchForRecords(zone_id_, name.toText());
@@ -193,13 +191,18 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                 //cur_sigtype(columns[SIGTYPE_COLUMN]);
 
                 if (cur_type == type) {
+                    if (result_rrset &&
+                        result_rrset->getType() == isc::dns::RRType::CNAME()) {
+                        isc_throw(DataSourceError, "CNAME found but it is not "
+                                  "the only record for " + name.toText());
+                    }
                     addOrCreate(result_rrset, name, getClass(), cur_type,
                                 cur_ttl, columns[DatabaseConnection::RDATA_COLUMN]);
                 } else if (cur_type == isc::dns::RRType::CNAME()) {
                     // There should be no other data, so result_rrset should be empty.
                     if (result_rrset) {
                         isc_throw(DataSourceError, "CNAME found but it is not "
-                                "the only record for " + name.toText());
+                                  "the only record for " + name.toText());
                     }
                     addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
                                 columns[DatabaseConnection::RDATA_COLUMN]);
@@ -227,26 +230,35 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
             }
         }
     } catch (const DataSourceError& dse) {
+        logger.error(DATASRC_DATABASE_FIND_ERROR).arg(dse.what());
         // call cleanup and rethrow
         connection_->resetSearch();
         throw;
     } catch (const isc::Exception& isce) {
-//         // cleanup, change it to a DataSourceError and rethrow
+        logger.error(DATASRC_DATABASE_FIND_UNCAUGHT_ISC_ERROR).arg(isce.what());
+        // cleanup, change it to a DataSourceError and rethrow
         connection_->resetSearch();
         isc_throw(DataSourceError, isce.what());
     } catch (const std::exception& ex) {
+        logger.error(DATASRC_DATABASE_FIND_UNCAUGHT_ERROR).arg(ex.what());
         connection_->resetSearch();
         throw;
     }
 
     if (!result_rrset) {
         if (records_found) {
+            logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FOUND_NXRRSET)
+                        .arg(name).arg(getClass()).arg(type);
             result_status = NXRRSET;
         } else {
+            logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FOUND_NXDOMAIN)
+                        .arg(name).arg(getClass()).arg(type);
             result_status = NXDOMAIN;
         }
     } else {
         sig_store.appendSignatures(result_rrset);
+        logger.debug(DBG_TRACE_DETAILED,
+                    DATASRC_DATABASE_FOUND_RRSET).arg(*result_rrset);
     }
     return (FindResult(result_status, result_rrset));
 }
