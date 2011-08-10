@@ -67,6 +67,7 @@ import isc.util.process
 import isc.net.parse
 import isc.log
 from bind10_messages import *
+import isc.bind10.sockcreator
 
 isc.log.init("b10-boss")
 logger = isc.log.Logger("boss")
@@ -248,6 +249,7 @@ class BoB:
         self.config_filename = config_filename
         self.cmdctl_port = cmdctl_port
         self.brittle = brittle
+        self.sockcreator = None
 
     def config_handler(self, new_config):
         # If this is initial update, don't do anything now, leave it to startup
@@ -333,6 +335,20 @@ class BoB:
                                                             "Unknown command")
         return answer
 
+    def start_creator(self):
+        self.curproc = 'b10-sockcreator'
+        self.sockcreator = isc.bind10.sockcreator.Creator("@@LIBEXECDIR@@:" +
+                                                          os.environ['PATH'])
+
+    def stop_creator(self, kill=False):
+        if self.sockcreator is None:
+            return
+        if kill:
+            self.sockcreator.kill()
+        else:
+            self.sockcreator.terminate()
+        self.sockcreator = None
+
     def kill_started_processes(self):
         """
             Called as part of the exception handling when a process fails to
@@ -340,6 +356,8 @@ class BoB:
             each one.  It then clears that list.
         """
         logger.info(BIND10_KILLING_ALL_PROCESSES)
+
+        self.stop_creator(True)
 
         for pid in self.processes:
             logger.info(BIND10_KILL_PROCESS, self.processes[pid].name)
@@ -571,6 +589,11 @@ class BoB:
             Starts up all the processes.  Any exception generated during the
             starting of the processes is handled by the caller.
         """
+        # The socket creator first, as it is the only thing that needs root
+        self.start_creator()
+        # TODO: Once everything uses the socket creator, we can drop root
+        # privileges right now
+
         c_channel_env = self.c_channel_env
         self.start_msgq(c_channel_env)
         self.start_cfgmgr(c_channel_env)
@@ -660,6 +683,8 @@ class BoB:
         self.cc_session.group_sendmsg(cmd, "Zonemgr", "Zonemgr")
         self.cc_session.group_sendmsg(cmd, "Stats", "Stats")
         self.cc_session.group_sendmsg(cmd, "StatsHttpd", "StatsHttpd")
+        # Terminate the creator last
+        self.stop_creator()
 
     def stop_process(self, process, recipient):
         """
@@ -746,7 +771,14 @@ class BoB:
                 # XXX: should be impossible to get any other error here
                 raise
             if pid == 0: break
-            if pid in self.processes:
+            if self.sockcreator is not None and self.sockcreator.pid() == pid:
+                # This is the socket creator, started and terminated
+                # differently. This can't be restarted.
+                if self.runnable:
+                    logger.fatal(BIND10_SOCKCREATOR_CRASHED)
+                    self.sockcreator = None
+                    self.runnable = False
+            elif pid in self.processes:
                 # One of the processes we know about.  Get information on it.
                 proc_info = self.processes.pop(pid)
                 proc_info.restart_schedule.set_run_stop_time()
