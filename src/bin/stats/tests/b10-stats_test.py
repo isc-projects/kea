@@ -59,6 +59,7 @@ class TestStats(unittest.TestCase):
         # check starting
         self.assertFalse(self.subject.running)
         self.subject.start()
+        self.assertEqual(len(self.session.old_message_queue), 1)
         self.assertTrue(self.subject.running)
         self.assertEqual(len(self.session.message_queue), 0)
         self.assertEqual(self.module_name, 'Stats')
@@ -509,7 +510,7 @@ class TestStats(unittest.TestCase):
     def test_for_boss(self):
         last_queue = self.session.old_message_queue.pop()
         self.assertEqual(
-            last_queue.msg, {'command': ['sendstats']})
+            last_queue.msg, {'command': ['getstats']})
         self.assertEqual(
             last_queue.env['group'], 'Boss')
 

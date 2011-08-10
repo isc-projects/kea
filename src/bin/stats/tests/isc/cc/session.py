@@ -115,8 +115,16 @@ class Session:
 
     def group_recvmsg(self, nonblock=True, seq=0):
         que = self.dequeue()
+        if que.msg != None:
+            cmd = que.msg.get("command")
+            if cmd and cmd[0] == 'getstats':
+                # Create answer for command 'getstats'
+                retdata =  { "stats_data": {
+                            'bind10.boot_time' : "1970-01-01T00:00:00Z"
+                           }}
+                return {'result': [0, retdata]}, que.env
         return que.msg, que.env
-        
+
     def group_reply(self, routing, msg):
         return self.enqueue(msg=msg, env={
                 "type": "send",
