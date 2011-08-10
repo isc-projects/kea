@@ -34,7 +34,7 @@ struct DSImpl {
     const vector<uint8_t> digest_;
 };
 
-template<class RTYPE, uint16_t typeCode>class DS_LIKE : public Rdata {
+template<uint16_t typeCode>class DS_LIKE : public Rdata {
 public:
     DS_LIKE(const string& ds_str) :
 	impl_(NULL)
@@ -137,7 +137,7 @@ public:
 
     int
     compare(const Rdata& other) const {
-	const RTYPE& other_ds = dynamic_cast<const RTYPE&>(other);
+	const DS_LIKE& other_ds = dynamic_cast<const DS_LIKE&>(other);
 
 	if (impl_->tag_ != other_ds.impl_->tag_) {
 	    return (impl_->tag_ < other_ds.impl_->tag_ ? -1 : 1);
