@@ -32,6 +32,14 @@ namespace config {
 /// space.
 extern isc::log::Logger config_logger;    // isc::config::config_logger is the CONFIG logger
 
+/// \brief Debug Levels
+///
+/// Debug levels used in the configuration library
+enum {
+    DBG_CONFIG_PROCESS = 40     // Enumerate configuration elements as they
+                                // ... are processed.
+};
+
 } // namespace config
 } // namespace isc
 

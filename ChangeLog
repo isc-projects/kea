@@ -1,3 +1,13 @@
+277.	[func]		jerry
+	Implement the SRV rrtype according to RFC2782.
+	(Trac #1128, git 5fd94aa027828c50e63ae1073d9d6708e0a9c223)
+
+276.	[func]		stephen
+	Although the top-level loggers are named after the program (e.g.
+	b10-auth, b10-resolver), allow the logger configuration to omit the
+	"b10-" prefix and use just the module name.
+	(Trac #1003, git a01cd4ac5a68a1749593600c0f338620511cae2d)
+
 275.	[func]		jinmei
 	Added support for TSIG key matching in ACLs.  The xfrout ACL can
 	now refer to TSIG key names using the "key" attribute.  For

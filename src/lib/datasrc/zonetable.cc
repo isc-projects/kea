@@ -28,8 +28,8 @@ namespace datasrc {
 /// \short Private data and implementation of ZoneTable
 struct ZoneTable::ZoneTableImpl {
     // Type aliases to make it shorter
-    typedef RBTree<Zone> ZoneTree;
-    typedef RBNode<Zone> ZoneNode;
+    typedef RBTree<ZoneFinder> ZoneTree;
+    typedef RBNode<ZoneFinder> ZoneNode;
     // The actual storage
     ZoneTree zones_;
 
@@ -40,7 +40,7 @@ struct ZoneTable::ZoneTableImpl {
      */
 
     // Implementation of ZoneTable::addZone
-    result::Result addZone(ZonePtr zone) {
+    result::Result addZone(ZoneFinderPtr zone) {
         // Sanity check
         if (!zone) {
             isc_throw(InvalidParameter,
@@ -85,12 +85,12 @@ struct ZoneTable::ZoneTableImpl {
                 break;
             // We have no data there, so translate the pointer to NULL as well
             case ZoneTree::NOTFOUND:
-                return (FindResult(result::NOTFOUND, ZonePtr()));
+                return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
             // Can Not Happen
             default:
                 assert(0);
                 // Because of warning
-                return (FindResult(result::NOTFOUND, ZonePtr()));
+                return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
         }
 
         // Can Not Happen (remember, NOTFOUND is handled)
@@ -108,7 +108,7 @@ ZoneTable::~ZoneTable() {
 }
 
 result::Result
-ZoneTable::addZone(ZonePtr zone) {
+ZoneTable::addZone(ZoneFinderPtr zone) {
     return (impl_->addZone(zone));
 }
 
