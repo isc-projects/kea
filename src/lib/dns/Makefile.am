@@ -23,6 +23,7 @@ EXTRA_DIST += rdata/generic/cname_5.cc
 EXTRA_DIST += rdata/generic/cname_5.h
 EXTRA_DIST += rdata/generic/detail/nsec_bitmap.cc
 EXTRA_DIST += rdata/generic/detail/nsec_bitmap.h
+EXTRA_DIST += rdata/generic/detail/txt_like.h
 EXTRA_DIST += rdata/generic/dname_39.cc
 EXTRA_DIST += rdata/generic/dname_39.h
 EXTRA_DIST += rdata/generic/dnskey_48.cc
@@ -49,7 +50,7 @@ EXTRA_DIST += rdata/generic/rrsig_46.cc
 EXTRA_DIST += rdata/generic/rrsig_46.h
 EXTRA_DIST += rdata/generic/soa_6.cc
 EXTRA_DIST += rdata/generic/soa_6.h
-EXTRA_DIST += rdata/generic/txt_16.cc
+EXTRA_DIST += rdata/generic/spf_99.h
 EXTRA_DIST += rdata/generic/txt_16.h
 EXTRA_DIST += rdata/hs_4/a_1.cc
 EXTRA_DIST += rdata/hs_4/a_1.h
@@ -92,6 +93,7 @@ libdns___la_SOURCES += tsigkey.h tsigkey.cc
 libdns___la_SOURCES += tsigrecord.h tsigrecord.cc
 libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.h
 libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.cc
+libdns___la_SOURCES += rdata/generic/detail/txt_like.h
 
 libdns___la_CPPFLAGS = $(AM_CPPFLAGS)
 # Most applications of libdns++ will only implicitly rely on libcryptolink,

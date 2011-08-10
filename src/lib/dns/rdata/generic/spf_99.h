@@ -33,48 +33,7 @@
 
 #include <dns/rdata/generic/detail/txt_like.h>
 
-class SPF : public TXT_LIKE<SPF, 99> {
-    friend class TXT_LIKE<SPF, 99>;
-    static string const id;
-
-public:
-    // BEGIN_COMMON_MEMBERS
-    // END_COMMON_MEMBERS
-
-};
-
-///    explicit SPF(const std::string& type_str);
-inline SPF::SPF(const std::string& type_str) : TXT_LIKE<SPF, 99>(type_str) {}
-
-///    SPF(isc::util::InputBuffer& buffer, size_t rdata_len);
-inline SPF::SPF(isc::util::InputBuffer& buffer, size_t rdata_len) : TXT_LIKE<SPF, 99>(buffer, rdata_len) {}
-
-///    SPF(const SPF& other);
-inline SPF::SPF(const SPF& other) : TXT_LIKE<SPF, 99>(other) {}
-
-///    virtual std::string toText() const;
-inline std::string SPF::toText() const
-{
-    return TXT_LIKE<SPF, 99>::toText();
-}
-
-///    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-inline void SPF::toWire(isc::util::OutputBuffer& buffer) const
-{
-    TXT_LIKE<SPF, 99>::toWire(buffer);
-}
-
-///    virtual void toWire(AbstractMessageRenderer& renderer) const;
-inline void SPF::toWire(AbstractMessageRenderer& renderer) const
-{
-    TXT_LIKE<SPF, 99>::toWire(renderer);
-}
-
-///    virtual int compare(const Rdata& other) const;
-inline int SPF::compare(const Rdata& other) const
-{
-    return TXT_LIKE<SPF, 99>::compare(other);
-}
+typedef TXT_LIKE<99> SPF;
 
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
