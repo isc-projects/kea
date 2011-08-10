@@ -79,7 +79,8 @@ TEST_F(Rdata_MINFO_Test, badText) {
     EXPECT_THROW(generic::MINFO("root.example.com."),
                  InvalidRdataText);
     // bad name
-    EXPECT_THROW(generic::MINFO("root.example.com. emailbx.example.com." + too_long_label),
+    EXPECT_THROW(generic::MINFO("root.example.com. emailbx.example.com." +
+                                too_long_label),
                  TooLongLabel);
 }
 
