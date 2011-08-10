@@ -69,7 +69,7 @@ There was a keyboard interrupt signal to stop the cmdctl daemon. The
 daemon will now shut down.
 
 % CMDCTL_UNCAUGHT_EXCEPTION uncaught exception: %1
-The b10-cdmctl daemon encountered an uncaught exception and
+The b10-cmdctl daemon encountered an uncaught exception and
 will now shut down. This is indicative of a programming error and
 should not happen under normal circumstances. The exception message
 is printed.
