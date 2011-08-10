@@ -37,16 +37,6 @@ public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS
 
-    /// We use the default copy constructor and assignment operator.
-
-    /// \brief Constructor from RDATA field parameters.
-    ///
-    /// The parameters are a straightforward mapping of %MINFO RDATA
-    /// fields as defined in RFC1035.
-    MINFO(const Name& rmailbox, const Name& emailbox) :
-        rmailbox_(rmailbox), emailbox_(emailbox)
-    {}
-
     /// \brief Return the value of the rmailbox field.
     ///
     /// This method normally does not throw an exception, but if resource

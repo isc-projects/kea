@@ -103,7 +103,7 @@ TEST_F(Rdata_MINFO_Test, createFromWire) {
                  InvalidRdataLength);
     // incomplete name.  the error should be detected in the name constructor
     EXPECT_THROW(rdataFactoryFromFile(RRType("MINFO"), RRClass("IN"),
-                                      "rdata_cname_fromWire", 48),
+                                      "rdata_minfo_fromWire", 48),
                  DNSMessageFORMERR);
 }
 
