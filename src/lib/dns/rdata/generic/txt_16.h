@@ -33,48 +33,7 @@
 
 #include <dns/rdata/generic/detail/txt_like.h>
 
-class TXT : public TXT_LIKE<TXT, 16> {
-    friend class TXT_LIKE<TXT, 16>;
-    static string const id;
-
-public:
-    // BEGIN_COMMON_MEMBERS
-    // END_COMMON_MEMBERS
-
-};
-
-///    explicit TXT(const std::string& type_str);
-inline TXT::TXT(const std::string& type_str) : TXT_LIKE<TXT, 16>(type_str) {}
-
-///    TXT(isc::util::InputBuffer& buffer, size_t rdata_len);
-inline TXT::TXT(isc::util::InputBuffer& buffer, size_t rdata_len) : TXT_LIKE<TXT, 16>(buffer, rdata_len) {}
-
-///    TXT(const TXT& other);
-inline TXT::TXT(const TXT& other) : TXT_LIKE<TXT, 16>(other) {}
-
-///    virtual std::string toText() const;
-inline std::string TXT::toText() const
-{
-    return TXT_LIKE<TXT, 16>::toText();
-}
-
-///    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-inline void TXT::toWire(isc::util::OutputBuffer& buffer) const
-{
-    TXT_LIKE<TXT, 16>::toWire(buffer);
-}
-
-///    virtual void toWire(AbstractMessageRenderer& renderer) const;
-inline void TXT::toWire(AbstractMessageRenderer& renderer) const
-{
-    TXT_LIKE<TXT, 16>::toWire(renderer);
-}
-
-///    virtual int compare(const Rdata& other) const;
-inline int TXT::compare(const Rdata& other) const
-{
-    return TXT_LIKE<TXT, 16>::compare(other);
-}
+typedef TXT_LIKE<16> TXT;
 
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
