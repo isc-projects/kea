@@ -46,12 +46,7 @@ using namespace isc::util::encode;
 
 #include <dns/rdata/generic/detail/ds_like.h>
 
-class DS : public DS_LIKE<DS, 43> {
-public:
-    // BEGIN_COMMON_MEMBERS
-    // END_COMMON_MEMBERS
-
-};
+typedef DS_LIKE<43> DS;
 
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
