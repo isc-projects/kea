@@ -23,7 +23,7 @@
 using namespace std;
 using namespace isc::util;
 
-template<class RTYPE, uint16_t typeCode>class TXT_LIKE : public Rdata {
+template<uint16_t typeCode>class TXT_LIKE : public Rdata {
 public:
     TXT_LIKE(InputBuffer& buffer, size_t rdata_len) {
 	if (rdata_len > MAX_RDLENGTH) {
@@ -31,17 +31,17 @@ public:
 	}
 
 	if (rdata_len == 0) {       // note that this couldn't happen in the loop.
-	    isc_throw(DNSMessageFORMERR,
-		      "Error in parsing " + RRParamRegistry::getRegistry().codeToTypeText(typeCode)
-		     + " RDATA: 0-length character string");
+	    isc_throw(DNSMessageFORMERR, "Error in parsing " +
+		      RRParamRegistry::getRegistry().codeToTypeText(typeCode) +
+		      " RDATA: 0-length character string");
 	}
 
 	do {
 	    const uint8_t len = buffer.readUint8();
 	    if (rdata_len < len + 1) {
-		isc_throw(DNSMessageFORMERR,
-			  "Error in parsing " + RRParamRegistry::getRegistry().codeToTypeText(typeCode)
-			 + " RDATA: character string length is too large: " << static_cast<int>(len));
+		isc_throw(DNSMessageFORMERR, "Error in parsing " +
+			  RRParamRegistry::getRegistry().codeToTypeText(typeCode) +
+			  " RDATA: character string length is too large: " << static_cast<int>(len));
 	    }
 	    vector<uint8_t> data(len + 1);
 	    data[0] = len;
@@ -71,8 +71,8 @@ public:
 
 	// TBD: right now, we don't support escaped characters
 	if (txtstr.find('\\') != string::npos) {
-	    isc_throw(InvalidRdataText, RRParamRegistry::getRegistry().codeToTypeText(typeCode)
-			+ " RDATA from text: escaped character is currently not supported: " << txtstr);
+	    isc_throw(InvalidRdataText, RRParamRegistry::getRegistry().codeToTypeText(typeCode) +
+		      " RDATA from text: escaped character is currently not supported: " << txtstr);
 	}
 
 	vector<uint8_t> data;
@@ -83,7 +83,7 @@ public:
 	string_list_.push_back(data);
     }
 
-    TXT_LIKE(const RTYPE& other) :
+    TXT_LIKE(const TXT_LIKE& other) :
 	Rdata(), string_list_(other.string_list_)
     {}
 
@@ -130,7 +130,7 @@ public:
 
     int
     compare(const Rdata& other) const {
-	const RTYPE& other_txt = dynamic_cast<const RTYPE&>(other);
+	const TXT_LIKE& other_txt = dynamic_cast<const TXT_LIKE&>(other);
 
 	// This implementation is not efficient.  Revisit this (TBD).
 	OutputBuffer this_buffer(0);
