@@ -130,7 +130,7 @@ public:
      *
      * This implements the resetSearch from DatabaseConnection.
      * See the documentation there for more information.
-     * 
+     *
      * This function never throws.
      */
     virtual void resetSearch();
