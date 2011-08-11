@@ -66,40 +66,38 @@ private:
         MockIteratorContext() :
             step(0)
         { }
-        virtual bool getNext(string& name, string& rtype, int& ttl,
-                             string& data)
-        {
+        virtual bool getNext(string data[4]) {
             switch (step ++) {
                 case 0:
-                    name = "example.org";
-                    rtype = "SOA";
-                    ttl = 300;
-                    data = "ns1.example.org. admin.example.org. "
+                    data[0] = "example.org";
+                    data[1] = "SOA";
+                    data[2] = "300";
+                    data[3] = "ns1.example.org. admin.example.org. "
                         "1234 3600 1800 2419200 7200";
                     return (true);
                 case 1:
-                    name = "x.example.org";
-                    rtype = "A";
-                    ttl = 300;
-                    data = "192.0.2.1";
+                    data[0] = "x.example.org";
+                    data[1] = "A";
+                    data[2] = "300";
+                    data[3] = "192.0.2.1";
                     return (true);
                 case 2:
-                    name = "x.example.org";
-                    rtype = "A";
-                    ttl = 300;
-                    data = "192.0.2.2";
+                    data[0] = "x.example.org";
+                    data[1] = "A";
+                    data[2] = "300";
+                    data[3] = "192.0.2.2";
                     return (true);
                 case 3:
-                    name = "x.example.org";
-                    rtype = "AAAA";
-                    ttl = 300;
-                    data = "2001:db8::1";
+                    data[0] = "x.example.org";
+                    data[1] = "AAAA";
+                    data[2] = "300";
+                    data[3] = "2001:db8::1";
                     return (true);
                 case 4:
-                    name = "x.example.org";
-                    rtype = "AAAA";
-                    ttl = 300;
-                    data = "2001:db8::2";
+                    data[0] = "x.example.org";
+                    data[1] = "AAAA";
+                    data[2] = "300";
+                    data[3] = "2001:db8::2";
                     return (true);
                 default:
                     ADD_FAILURE() <<
@@ -111,7 +109,7 @@ private:
     };
     class EmptyIteratorContext : public IteratorContext {
     public:
-        virtual bool getNext(string&, string&, int&, string&) {
+        virtual bool getNext(string[4]) {
             return (false);
         }
     };
@@ -122,21 +120,19 @@ private:
         BadIteratorContext() :
             step(0)
         { }
-        virtual bool getNext(string& name, string& rtype, int& ttl,
-                             string& data)
-        {
+        virtual bool getNext(string data[4]) {
             switch (step ++) {
                 case 0:
-                    name = "x.example.org";
-                    rtype = "A";
-                    ttl = 300;
-                    data = "192.0.2.1";
+                    data[0] = "x.example.org";
+                    data[1] = "A";
+                    data[2] = "300";
+                    data[3] = "192.0.2.1";
                     return (true);
                 case 1:
-                    name = "x.example.org";
-                    rtype = "A";
-                    ttl = 301;
-                    data = "192.0.2.2";
+                    data[0] = "x.example.org";
+                    data[1] = "A";
+                    data[2] = "301";
+                    data[3] = "192.0.2.2";
                     return (true);
                 default:
                     ADD_FAILURE() <<

@@ -106,19 +106,13 @@ public:
          * must not be interlieved with any other RRs (eg. RRsets must be
          * "together").
          *
-         * \param name The name of the RR will be returned here.
-         * \param rtype The string representation of RRType will be returned
-         *     through this parameter.
-         * \param ttl The time to live output parameter.
-         * \param data This is where the string representation of data will be
-         *     put.
-         * \return If there was RR returned. Once it returns false, the zone
-         *     was iterated to its end.
+         * \param data The data are to be returned by this parameter. They are
+         *     (in order) the name, rrtype, TTL and the rdata.
+         * \todo Unify with the interface in #1062 eventually.
          * \todo Do we consider databases where it is stored in binary blob
          *     format?
          */
-        virtual bool getNext(std::string& name, std::string& rtype, int& ttl,
-                             std::string& data) = 0;
+        virtual bool getNext(std::string data[4]) = 0;
     };
     typedef boost::shared_ptr<IteratorContext> IteratorContextPtr;
     /**
