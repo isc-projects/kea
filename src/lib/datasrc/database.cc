@@ -179,15 +179,16 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
             try {
                 const isc::dns::RRType cur_type(columns[DatabaseConnection::TYPE_COLUMN]);
                 const isc::dns::RRTTL cur_ttl(columns[DatabaseConnection::TTL_COLUMN]);
-                // Ths sigtype column was an optimization for finding the relevant
-                // RRSIG RRs for a lookup. Currently this column is not used in this
-                // revised datasource implementation. We should either start using it
-                // again, or remove it from use completely (i.e. also remove it from
-                // the schema and the backend implementation).
-                // Note that because we don't use it now, we also won't notice it if
-                // the value is wrong (i.e. if the sigtype column contains an rrtype
-                // that is different from the actual value of the 'type covered' field
-                // in the RRSIG Rdata).
+                // Ths sigtype column was an optimization for finding the
+                // relevant RRSIG RRs for a lookup. Currently this column is
+                // not used in this revised datasource implementation. We
+                // should either start using it again, or remove it from use
+                // completely (i.e. also remove it from the schema and the
+                // backend implementation).
+                // Note that because we don't use it now, we also won't notice
+                // it if the value is wrong (i.e. if the sigtype column
+                // contains an rrtype that is different from the actual value
+                // of the 'type covered' field in the RRSIG Rdata).
                 //cur_sigtype(columns[SIGTYPE_COLUMN]);
 
                 if (cur_type == type) {
@@ -199,7 +200,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                     addOrCreate(result_rrset, name, getClass(), cur_type,
                                 cur_ttl, columns[DatabaseConnection::RDATA_COLUMN]);
                 } else if (cur_type == isc::dns::RRType::CNAME()) {
-                    // There should be no other data, so result_rrset should be empty.
+                    // There should be no other data, so result_rrset should
+                    // be empty.
                     if (result_rrset) {
                         isc_throw(DataSourceError, "CNAME found but it is not "
                                   "the only record for " + name.toText());
@@ -211,9 +213,10 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                     // If we get signatures before we get the actual data, we
                     // can't know which ones to keep and which to drop...
                     // So we keep a separate store of any signature that may be
-                    // relevant and add them to the final RRset when we are done.
-                    // A possible optimization here is to not store them for types
-                    // we are certain we don't need
+                    // relevant and add them to the final RRset when we are
+                    // done.
+                    // A possible optimization here is to not store them for
+                    // types we are certain we don't need
                     sig_store.addSig(isc::dns::rdata::createRdata(cur_type,
                                     getClass(),
                                     columns[DatabaseConnection::RDATA_COLUMN]));
