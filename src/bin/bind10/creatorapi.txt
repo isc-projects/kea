@@ -33,6 +33,19 @@ token over the connection (so Boss will know which socket to send there, in case
 multiple applications ask for sockets simultaneously) and Boss sends the socket
 in return.
 
+In theory, we could send the requests directly over the unix-domain
+socket, but it has two disadvantages:
+* The msgq handles serializing/deserializing of structured
+  information (like the parameters to be used), we would have to do it
+  manually on the socket.
+* We could place some kind of security in front of msgq (in case file
+  permissions are not enough, for example if they are not honored on
+  socket files, as indicated in the first paragraph of:
+  http://lkml.indiana.edu/hypermail/linux/kernel/0505.2/0008.html).
+  The socket would have to be secured separately. With the tokens,
+  there's some level of security already - someone not having the
+  token can't request a priviledged socket.
+
 Caching of sockets
 ------------------
 To allow sending the same socket to multiple application, the Boss process will
@@ -64,7 +77,10 @@ The commands
 * Command to release a socket. This one would have single parameter, the token
   used to get the socket. After this, boss would decrease its reference count
   and if it drops to zero, close its own copy of the socket. This should be used
-  when the module stops using the socket (and after closes it).
+  when the module stops using the socket (and after closes it). The
+  library could remember the file-descriptor to token mapping (for
+  common applications that don't request the same socket multiple
+  times in parallel).
 * Command to request a socket. It would have parameters to specify which socket
   (IP address, address family, port) and how to allow sharing. Sharing would be
   one of:
@@ -78,3 +94,26 @@ The commands
   It would return either error (the socket can't be created or sharing is not
   possible) or the token. Then there would be some time for the application to
   pick up the requested socket.
+
+Examples
+--------
+We probably would have a library with blocking calls to request the
+sockets, so a code could look like:
+
+(socket_fd, token) = request_socket(address, port, 'UDP', SHARE_SAMENAME, 'test-application')
+sock = socket.fromfd(socket_fd)
+
+# Some sock.send and sock.recv stuff here
+
+sock.close()
+release_socket(socket_fd) # or release_socket(token)
+
+Known limitations
+-----------------
+Currently the socket creator doesn't support specifying any socket
+options. If it turns out there are any options that need to be set
+before bind(), we'll need to extend it (and extend the protocol as
+well).
+
+The current socket creator doesn't know raw sockets, but if they are
+needed, it should be easy to add.
