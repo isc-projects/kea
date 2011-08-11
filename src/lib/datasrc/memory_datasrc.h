@@ -58,10 +58,10 @@ public:
     //@}
 
     /// \brief Returns the origin of the zone.
-    virtual const isc::dns::Name& getOrigin() const;
+    virtual isc::dns::Name getOrigin() const;
 
     /// \brief Returns the class of the zone.
-    virtual const isc::dns::RRClass& getClass() const;
+    virtual isc::dns::RRClass getClass() const;
 
     /// \brief Looks up an RRset in the zone.
     ///
