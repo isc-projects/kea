@@ -111,17 +111,16 @@ TEST_F(SQLite3Conn, iterator) {
     ASSERT_NE(DatabaseAbstraction::IteratorContextPtr(),
               context);
 
-    std::string name, rtype, data;
-    int ttl;
+    std::string data[4];
     // Get and check the first and only record
-    EXPECT_TRUE(context->getNext(name, rtype, ttl, data));
-    EXPECT_EQ("example2.com.", name);
-    EXPECT_EQ("SOA", rtype);
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("example2.com.", data[0]);
+    EXPECT_EQ("SOA", data[1]);
     EXPECT_EQ("master.example2.com. admin.example2.com. "
-              "1234 3600 1800 2419200 7200", data);
-    EXPECT_EQ(3600, ttl);
+              "1234 3600 1800 2419200 7200", data[3]);
+    EXPECT_EQ("3600", data[2]);
     // Check there's no other
-    EXPECT_FALSE(context->getNext(name, rtype, ttl, data));
+    EXPECT_FALSE(context->getNext(data));
 }
 
 }

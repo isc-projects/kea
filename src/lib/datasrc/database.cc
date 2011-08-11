@@ -120,8 +120,7 @@ public:
             ready_ = false;
             return (ConstRRsetPtr());
         }
-        string nameStr(name_), rtypeStr(rtype_);
-        int ttl(ttl_);
+        string nameStr(name_), rtypeStr(rtype_), ttl(ttl_);
         Name name(nameStr);
         RRType rtype(rtypeStr);
         RRsetPtr rrset(new RRset(name, class_, rtype, RRTTL(ttl)));
@@ -138,7 +137,12 @@ public:
 private:
     // Load next row of data
     void getData() {
-        data_ready_ = context_->getNext(name_, rtype_, ttl_, rdata_);
+        string data[4];
+        data_ready_ = context_->getNext(data);
+        name_ = data[0];
+        rtype_ = data[1];
+        ttl_ = data[2];
+        rdata_ = data[3];
     }
     // The context
     const DatabaseAbstraction::IteratorContextPtr context_;
@@ -147,8 +151,7 @@ private:
     // Status
     bool ready_, data_ready_;
     // Data of the next row
-    string name_, rtype_, rdata_;
-    int ttl_;
+    string name_, rtype_, rdata_, ttl_;
 };
 
 }
