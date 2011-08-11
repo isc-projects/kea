@@ -37,107 +37,80 @@ class Rdata_MINFO_Test : public RdataTest {
 };
 
 // minfo text
-string minfo_txt("root.example.com. emailbx.example.com.");
-string minfo_txt2("rmailbx.example.com. emailbx.example.com.");
-string too_long_label("012345678901234567890123456789"
-    "0123456789012345678901234567890123");
+const char* const minfo_txt = "rmailbox.example.com. emailbox.example.com.";
+const char* const too_long_label = "01234567890123456789012345678901234567"
+                                   "89012345678901234567890123";
 
-// root.example.com. emailbx.example.com.
-const uint8_t uncompressed_wiredata_minfo[] = {
-    0x04, 0x72, 0x6f, 0x6f, 0x74, 0x07, 0x65, 0x78, 0x61, 0x6d, 0x70,
-    0x6c, 0x65, 0x03, 0x63, 0x6f, 0x6d, 0x00, 0x07, 0x65, 0x6d, 0x61,
-    0x69, 0x6c, 0x62, 0x78, 0x07, 0x65, 0x78, 0x61, 0x6d, 0x70, 0x6c,
-    0x65, 0x03, 0x63, 0x6f, 0x6d, 0x00};
-// rmailbx.example.com. emailbx.example.com.
-const uint8_t uncompressed_wiredata_minfo2[] = {
-    0x07, 0x72, 0x6d, 0x61, 0x69, 0x6c, 0x62, 0x78, 0x07, 0x65, 0x78,
-    0x61, 0x6d, 0x70, 0x6c, 0x65, 0x03, 0x63, 0x6f, 0x6d, 0x00, 0x07,
-    0x65, 0x6d, 0x61, 0x69, 0x6c, 0x62, 0x78, 0x07, 0x65, 0x78, 0x61,
-    0x6d, 0x70, 0x6c, 0x65, 0x03, 0x63, 0x6f, 0x6d, 0x00};
-
-// root.example.com. emailbx.example.com.
-const uint8_t compressed_wiredata_minfo[] = {
-    0x04, 0x72, 0x6f, 0x6f, 0x74, 0x07, 0x65, 0x78, 0x61, 0x6d, 0x70,
-    0x6c, 0x65, 0x03, 0x63, 0x6f, 0x6d, 0x00, 0x07, 0x65, 0x6d, 0x61,
-    0x69, 0x6c, 0x62, 0x78, 0xc0, 0x05};
-// rmailbx.example.com. emailbx.example.com.
-const uint8_t compressed_wiredata_minfo2[] = {
-    0x07, 0x72, 0x6d, 0x61, 0x69, 0x6c, 0x62, 0x78, 0x07, 0x65, 0x78,
-    0x61, 0x6d, 0x70, 0x6c, 0x65, 0x03, 0x63, 0x6f, 0x6d, 0x00, 0x07,
-    0x65, 0x6d, 0x61, 0x69, 0x6c, 0x62, 0x78, 0xc0, 0x08};
-
-const generic::MINFO rdata_minfo(minfo_txt);
-const generic::MINFO rdata_minfo2(minfo_txt2);
+const generic::MINFO rdata_minfo((string(minfo_txt)));
 
 TEST_F(Rdata_MINFO_Test, createFromText) {
-    EXPECT_EQ(Name("root.example.com."), rdata_minfo.getRmailbox());
-    EXPECT_EQ(Name("emailbx.example.com."), rdata_minfo.getEmailbox());
+    EXPECT_EQ(Name("rmailbox.example.com."), rdata_minfo.getRmailbox());
+    EXPECT_EQ(Name("emailbox.example.com."), rdata_minfo.getEmailbox());
 }
 
 TEST_F(Rdata_MINFO_Test, badText) {
     // incomplete text
     EXPECT_THROW(generic::MINFO("root.example.com."),
                  InvalidRdataText);
-    // bad name
+    // number of fields (must be 2) is incorrect
+    EXPECT_THROW(generic::MINFO("root.example.com emailbox.example.com. "
+                                "example.com."),
+                 InvalidRdataText);
+    // bad rmailbox name
     EXPECT_THROW(generic::MINFO("root.example.com. emailbx.example.com." +
-                                too_long_label),
+                                string(too_long_label)),
+                 TooLongLabel);
+    // bad emailbox name
+    EXPECT_THROW(generic::MINFO("root.example.com."  +
+                          string(too_long_label) + " emailbx.example.com."),
                  TooLongLabel);
 }
 
 TEST_F(Rdata_MINFO_Test, createFromWire) {
     // compressed emailbx name
     EXPECT_EQ(0, rdata_minfo.compare(
-                  *rdataFactoryFromFile(RRType("MINFO"), RRClass("IN"),
+                  *rdataFactoryFromFile(RRType::MINFO(), RRClass::IN(),
                                         "rdata_minfo_fromWire")));
     // compressed rmailbx and emailbx name
     EXPECT_EQ(0, rdata_minfo.compare(
-                  *rdataFactoryFromFile(RRType("MINFO"), RRClass("IN"),
-                                        "rdata_minfo_fromWire", 30)));
+                  *rdataFactoryFromFile(RRType("MINFO"), RRClass::IN(),
+                                        "rdata_minfo_fromWire", 35)));
     // RDLENGTH is too short
-    EXPECT_THROW(rdataFactoryFromFile(RRType("MINFO"), RRClass("IN"),
-                                      "rdata_minfo_fromWire", 36),
+    EXPECT_THROW(rdataFactoryFromFile(RRType::MINFO(), RRClass::IN(),
+                                      "rdata_minfo_fromWire", 41),
                  InvalidRdataLength);
     // RDLENGTH is too long
-    EXPECT_THROW(rdataFactoryFromFile(RRType("MINFO"), RRClass("IN"),
-                                      "rdata_minfo_fromWire", 42),
+    EXPECT_THROW(rdataFactoryFromFile(RRType::MINFO(), RRClass::IN(),
+                                      "rdata_minfo_fromWire", 47),
                  InvalidRdataLength);
     // incomplete name.  the error should be detected in the name constructor
-    EXPECT_THROW(rdataFactoryFromFile(RRType("MINFO"), RRClass("IN"),
-                                      "rdata_minfo_fromWire", 48),
+    EXPECT_THROW(rdataFactoryFromFile(RRType("MINFO"), RRClass::IN(),
+                                      "rdata_minfo_fromWire", 53),
                  DNSMessageFORMERR);
 }
 
 TEST_F(Rdata_MINFO_Test, toWireBuffer) {
+    obuffer.skip(2);
     rdata_minfo.toWire(obuffer);
+    vector<unsigned char> data;
+    UnitTestUtil::readWireData("rdata_minfo_toWireUncompressed.wire", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
-                        uncompressed_wiredata_minfo,
-                        sizeof(uncompressed_wiredata_minfo));
-    obuffer.clear();
-    rdata_minfo2.toWire(obuffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
-                        uncompressed_wiredata_minfo2,
-                        sizeof(uncompressed_wiredata_minfo2));
+                        static_cast<const uint8_t *>(obuffer.getData()) + 2,
+                        obuffer.getLength() - 2, &data[2], data.size() - 2);
 }
 
 TEST_F(Rdata_MINFO_Test, toWireRenderer) {
+    obuffer.skip(2);
     rdata_minfo.toWire(renderer);
+    vector<unsigned char> data;
+    UnitTestUtil::readWireData("rdata_minfo_toWire", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
-                        compressed_wiredata_minfo,
-                        sizeof(compressed_wiredata_minfo));
-    renderer.clear();
-    rdata_minfo2.toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
-                        compressed_wiredata_minfo2,
-                        sizeof(compressed_wiredata_minfo2));
+                        static_cast<const uint8_t *>(obuffer.getData()) + 2,
+                        obuffer.getLength() - 2, &data[2], data.size() - 2);
 }
 
 TEST_F(Rdata_MINFO_Test, toText) {
     EXPECT_EQ(minfo_txt, rdata_minfo.toText());
-    EXPECT_EQ(minfo_txt2, rdata_minfo2.toText());
 }
 
 TEST_F(Rdata_MINFO_Test, compare) {
@@ -145,18 +118,18 @@ TEST_F(Rdata_MINFO_Test, compare) {
     EXPECT_EQ(0, rdata_minfo.compare(rdata_minfo));
 
     // names must be compared in case-insensitive manner
-    EXPECT_EQ(0, rdata_minfo.compare(generic::MINFO("ROOT.example.com. "
-                                                  "emailbx.EXAMPLE.com.")));
+    EXPECT_EQ(0, rdata_minfo.compare(generic::MINFO("RMAILBOX.example.com. "
+                                                  "emailbox.EXAMPLE.com.")));
 
     // another MINFO whose rmailbox name is larger than that of rdata_minfo.
-    const generic::MINFO large1_minfo("zzzz.example.com. "
+    const generic::MINFO large1_minfo("zzzzzzzz.example.com. "
                                       "emailbox.example.com.");
     EXPECT_GT(0, rdata_minfo.compare(large1_minfo));
     EXPECT_LT(0, large1_minfo.compare(rdata_minfo));
 
     // another MINFO whose emailbox name is larger than that of rdata_minfo.
-    const generic::MINFO large2_minfo("root.example.com. "
-                                      "zzzzzzz.example.com.");
+    const generic::MINFO large2_minfo("rmailbox.example.com. "
+                                      "zzzzzzzzzzz.example.com.");
     EXPECT_GT(0, rdata_minfo.compare(large2_minfo));
     EXPECT_LT(0, large2_minfo.compare(rdata_minfo));
 
