@@ -14,28 +14,14 @@
 
 // BEGIN_HEADER_GUARD
 
-#include <iostream>
+#include <stdint.h>
+
 #include <string>
-#include <sstream>
-#include <vector>
 
-#include <boost/lexical_cast.hpp>
-
-#include <util/buffer.h>
-#include <util/encode/hex.h>
-
-#include <dns/messagerenderer.h>
 #include <dns/name.h>
+#include <dns/rrtype.h>
+#include <dns/rrttl.h>
 #include <dns/rdata.h>
-#include <dns/rdataclass.h>
-#include <dns/rrparamregistry.h>
-
-#include <stdio.h>
-#include <time.h>
-
-using namespace std;
-using namespace isc::util;
-using namespace isc::util::encode;
 
 // BEGIN_ISC_NAMESPACE
 
@@ -44,9 +30,23 @@ using namespace isc::util::encode;
 
 // BEGIN_RDATA_NAMESPACE
 
-#include <dns/rdata/generic/detail/ds_like.h>
+template<class Type, uint16_t typeCode> class DSLikeImpl;
 
-typedef DS_LIKE<32769> DLV;
+class DLV : public Rdata {
+public:
+    // BEGIN_COMMON_MEMBERS
+    // END_COMMON_MEMBERS
+    DLV& operator=(const DLV& source);
+    ~DLV();
+
+    ///
+    /// Specialized methods
+    ///
+    uint16_t getTag() const;
+private:
+    typedef DSLikeImpl<DLV, 32769> DLVImpl;
+    DLVImpl* impl_;
+};
 
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
