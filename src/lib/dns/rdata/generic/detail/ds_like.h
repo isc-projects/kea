@@ -20,62 +20,37 @@
 #include <string>
 #include <vector>
 
-struct DSImpl {
-    // straightforward representation of DS RDATA fields
-    DSImpl(uint16_t tag, uint8_t algorithm, uint8_t digest_type,
-           const vector<uint8_t>& digest) :
-        tag_(tag), algorithm_(algorithm), digest_type_(digest_type),
-        digest_(digest)
-    {}
-
-    uint16_t tag_;
-    uint8_t algorithm_;
-    uint8_t digest_type_;
-    const vector<uint8_t> digest_;
-};
-
-template<uint16_t typeCode>class DS_LIKE : public Rdata {
+template<class Type, uint16_t typeCode>class DSLikeImpl {
 public:
-    DS_LIKE(const string& ds_str) :
-	impl_(NULL)
+    DSLikeImpl(const string& ds_str)
     {
 	istringstream iss(ds_str);
-	unsigned int tag, algorithm, digest_type;
 	stringbuf digestbuf;
+	uint32_t tag, algorithm, digest_type;
 
 	iss >> tag >> algorithm >> digest_type >> &digestbuf;
 	if (iss.bad() || iss.fail()) {
-	    isc_throw(InvalidRdataText, "Invalid " +
-		      RRParamRegistry::getRegistry().codeToTypeText(typeCode) +
-		      " text");
+	    isc_throw(InvalidRdataText, "Invalid " << RRType(typeCode) << " text");
 	}
 	if (tag > 0xffff) {
-	    isc_throw(InvalidRdataText,
-		      RRParamRegistry::getRegistry().codeToTypeText(typeCode) +
-		      " tag out of range");
+	    isc_throw(InvalidRdataText, RRType(typeCode) << " tag out of range");
 	}
 	if (algorithm > 0xff) {
-	    isc_throw(InvalidRdataText,
-		      RRParamRegistry::getRegistry().codeToTypeText(typeCode) +
-		      " algorithm out of range");
+	    isc_throw(InvalidRdataText, RRType(typeCode) << " algorithm out of range");
 	}
 	if (digest_type > 0xff) {
-	    isc_throw(InvalidRdataText,
-		      RRParamRegistry::getRegistry().codeToTypeText(typeCode) +
-		      " digest type out of range");
+	    isc_throw(InvalidRdataText, RRType(typeCode) << " digest type out of range");
 	}
 
-	vector<uint8_t> digest;
-	decodeHex(digestbuf.str(), digest);
-
-	impl_ = new DSImpl(tag, algorithm, digest_type, digest);
+	tag_ = tag;
+	algorithm_ = algorithm;
+	digest_type_ = digest_type;
+	decodeHex(digestbuf.str(), digest_);
     }
 
-    DS_LIKE(InputBuffer& buffer, size_t rdata_len) {
+    DSLikeImpl(InputBuffer& buffer, size_t rdata_len) {
 	if (rdata_len < 4) {
-	    isc_throw(InvalidRdataLength,
-		      RRParamRegistry::getRegistry().codeToTypeText(typeCode) +
-		      " too short");
+	    isc_throw(InvalidRdataLength, RRType(typeCode) << " too short");
 	}
 
 	uint16_t tag = buffer.readUint16();
@@ -83,76 +58,63 @@ public:
 	uint16_t digest_type = buffer.readUint8();
 
 	rdata_len -= 4;
-	vector<uint8_t> digest(rdata_len);
-	buffer.readData(&digest[0], rdata_len);
+	digest_.resize(rdata_len);
+	buffer.readData(&digest_[0], rdata_len);
 
-	impl_ = new DSImpl(tag, algorithm, digest_type, digest);
+	tag_ = tag;
+	algorithm_ = algorithm;
+	digest_type_ = digest_type;
     }
 
-    DS_LIKE(const DS_LIKE& source) :
-	Rdata(), impl_(new DSImpl(*source.impl_))
-    {}
-
-    DS_LIKE&
-    operator=(const DS_LIKE& source) {
-	if (impl_ == source.impl_) {
-	    return (*this);
-	}
-
-	DSImpl* newimpl = new DSImpl(*source.impl_);
-	delete impl_;
-	impl_ = newimpl;
-
-	return (*this);
-    }
-
-    ~DS_LIKE() {
-	delete impl_;
+    DSLikeImpl(const DSLikeImpl& source)
+    {
+	digest_ = source.digest_;
+	tag_ = source.tag_;
+	algorithm_ = source.algorithm_;
+	digest_type_ = source.digest_type_;
     }
 
     string
     toText() const {
 	using namespace boost;
-	return (lexical_cast<string>(static_cast<int>(impl_->tag_)) +
-	    " " + lexical_cast<string>(static_cast<int>(impl_->algorithm_)) +
-	    " " + lexical_cast<string>(static_cast<int>(impl_->digest_type_)) +
-	    " " + encodeHex(impl_->digest_));
+	return (lexical_cast<string>(static_cast<int>(tag_)) +
+	    " " + lexical_cast<string>(static_cast<int>(algorithm_)) +
+	    " " + lexical_cast<string>(static_cast<int>(digest_type_)) +
+	    " " + encodeHex(digest_));
     }
 
     void
     toWire(OutputBuffer& buffer) const {
-	buffer.writeUint16(impl_->tag_);
-	buffer.writeUint8(impl_->algorithm_);
-	buffer.writeUint8(impl_->digest_type_);
-	buffer.writeData(&impl_->digest_[0], impl_->digest_.size());
+	buffer.writeUint16(tag_);
+	buffer.writeUint8(algorithm_);
+	buffer.writeUint8(digest_type_);
+	buffer.writeData(&digest_[0], digest_.size());
     }
 
     void
     toWire(AbstractMessageRenderer& renderer) const {
-	renderer.writeUint16(impl_->tag_);
-	renderer.writeUint8(impl_->algorithm_);
-	renderer.writeUint8(impl_->digest_type_);
-	renderer.writeData(&impl_->digest_[0], impl_->digest_.size());
+	renderer.writeUint16(tag_);
+	renderer.writeUint8(algorithm_);
+	renderer.writeUint8(digest_type_);
+	renderer.writeData(&digest_[0], digest_.size());
     }
 
     int
-    compare(const Rdata& other) const {
-	const DS_LIKE& other_ds = dynamic_cast<const DS_LIKE&>(other);
-
-	if (impl_->tag_ != other_ds.impl_->tag_) {
-	    return (impl_->tag_ < other_ds.impl_->tag_ ? -1 : 1);
+    compare(const DSLikeImpl& other_ds) const {
+	if (tag_ != other_ds.tag_) {
+	    return (tag_ < other_ds.tag_ ? -1 : 1);
 	}
-	if (impl_->algorithm_ != other_ds.impl_->algorithm_) {
-	    return (impl_->algorithm_ < other_ds.impl_->algorithm_ ? -1 : 1);
+	if (algorithm_ != other_ds.algorithm_) {
+	    return (algorithm_ < other_ds.algorithm_ ? -1 : 1);
 	}
-	if (impl_->digest_type_ != other_ds.impl_->digest_type_) {
-	    return (impl_->digest_type_ < other_ds.impl_->digest_type_ ? -1 : 1);
+	if (digest_type_ != other_ds.digest_type_) {
+	    return (digest_type_ < other_ds.digest_type_ ? -1 : 1);
 	}
 
-	size_t this_len = impl_->digest_.size();
-	size_t other_len = other_ds.impl_->digest_.size();
+	size_t this_len = digest_.size();
+	size_t other_len = other_ds.digest_.size();
 	size_t cmplen = min(this_len, other_len);
-	int cmp = memcmp(&impl_->digest_[0], &other_ds.impl_->digest_[0], cmplen);
+	int cmp = memcmp(&digest_[0], &other_ds.digest_[0], cmplen);
 	if (cmp != 0) {
 	    return (cmp);
 	} else {
@@ -162,11 +124,15 @@ public:
 
     uint16_t
     getTag() const {
-	return (impl_->tag_);
+	return (tag_);
     }
 
 private:
-    DSImpl* impl_;
+    // straightforward representation of DS RDATA fields
+    uint16_t tag_;
+    uint8_t algorithm_;
+    uint8_t digest_type_;
+    vector<uint8_t> digest_;
 };
 
 #endif //  __DS_LIKE_H
