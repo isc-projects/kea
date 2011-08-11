@@ -135,6 +135,8 @@ public:
      */
     virtual void resetSearch();
 
+    virtual const std::string& getDBName() const { return database_name_; }
+
 private:
     /// \brief Private database data
     SQLite3Parameters* dbparameters_;
@@ -144,6 +146,7 @@ private:
     void open(const std::string& filename);
     /// \brief Closes the database
     void close();
+    const std::string database_name_;
 };
 
 }

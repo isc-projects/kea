@@ -164,7 +164,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     isc::dns::RRsetPtr result_rrset;
     ZoneFinder::Result result_status = SUCCESS;
     RRsigStore sig_store;
-    logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS).arg(name).arg(type);
+    logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
+        .arg(connection_->getDBName()).arg(name).arg(type);
 
     try {
         connection_->searchForRecords(zone_id_, name.toText());
@@ -233,17 +234,20 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
             }
         }
     } catch (const DataSourceError& dse) {
-        logger.error(DATASRC_DATABASE_FIND_ERROR).arg(dse.what());
+        logger.error(DATASRC_DATABASE_FIND_ERROR)
+            .arg(connection_->getDBName()).arg(dse.what());
         // call cleanup and rethrow
         connection_->resetSearch();
         throw;
     } catch (const isc::Exception& isce) {
-        logger.error(DATASRC_DATABASE_FIND_UNCAUGHT_ISC_ERROR).arg(isce.what());
+        logger.error(DATASRC_DATABASE_FIND_UNCAUGHT_ISC_ERROR)
+            .arg(connection_->getDBName()).arg(isce.what());
         // cleanup, change it to a DataSourceError and rethrow
         connection_->resetSearch();
         isc_throw(DataSourceError, isce.what());
     } catch (const std::exception& ex) {
-        logger.error(DATASRC_DATABASE_FIND_UNCAUGHT_ERROR).arg(ex.what());
+        logger.error(DATASRC_DATABASE_FIND_UNCAUGHT_ERROR)
+            .arg(connection_->getDBName()).arg(ex.what());
         connection_->resetSearch();
         throw;
     }
