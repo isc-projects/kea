@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20110519, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20110809, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -839,6 +839,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/notify/Makefile
                  src/lib/python/isc/notify/tests/Makefile
                  src/lib/python/isc/testutils/Makefile
+                 src/lib/python/isc/bind10/Makefile
+                 src/lib/python/isc/bind10/tests/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/testdata/Makefile
@@ -871,6 +873,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/util/Makefile
                  src/lib/util/io/Makefile
                  src/lib/util/unittests/Makefile
+                 src/lib/util/python/Makefile
                  src/lib/util/pyunittests/Makefile
                  src/lib/util/tests/Makefile
                  src/lib/acl/Makefile
@@ -907,7 +910,6 @@ AC_OUTPUT([doc/version.ent
            src/bin/bind10/bind10_src.py
            src/bin/bind10/run_bind10.sh
            src/bin/bind10/tests/bind10_test.py
-           src/bin/bind10/tests/sockcreator_test.py
            src/bin/bindctl/run_bindctl.sh
            src/bin/bindctl/bindctl_main.py
            src/bin/bindctl/tests/bindctl_test
@@ -931,7 +933,6 @@ AC_OUTPUT([doc/version.ent
            src/lib/python/isc/log/tests/log_console.py
            src/lib/dns/gen-rdatacode.py
            src/lib/python/bind10_config.py
-           src/lib/dns/tests/testdata/gen-wiredata.py
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
            src/lib/log/tests/console_test.sh
@@ -941,6 +942,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/log/tests/severity_test.sh
            src/lib/log/tests/tempdir.h
            src/lib/util/python/mkpywrapper.py
+           src/lib/util/python/gen_wiredata.py
            src/lib/server_common/tests/data_path.h
            tests/system/conf.sh
            tests/system/glue/setup.sh
@@ -965,13 +967,13 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/msgq/tests/msgq_test
            chmod +x src/lib/dns/gen-rdatacode.py
-           chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
            chmod +x src/lib/log/tests/console_test.sh
            chmod +x src/lib/log/tests/destination_test.sh
            chmod +x src/lib/log/tests/init_logger_test.sh
            chmod +x src/lib/log/tests/local_file_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
            chmod +x src/lib/util/python/mkpywrapper.py
+           chmod +x src/lib/util/python/gen_wiredata.py
            chmod +x src/lib/python/isc/log/tests/log_console.py
            chmod +x tests/system/conf.sh
           ])
