@@ -17,7 +17,6 @@
 #include <dns/rrclass.h>
 
 #include <gtest/gtest.h>
-#include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 
 using namespace isc::datasrc;
@@ -135,7 +134,7 @@ TEST_F(SQLite3Conn, getRecords) {
     const int zone_id = zone_info.second;
     ASSERT_EQ(1, zone_id);
 
-    const size_t column_count = DatabaseConnection::RecordColumnCount;
+    const size_t column_count = DatabaseConnection::RECORDCOLUMNCOUNT;
     std::string columns[column_count];
 
     // without search, getNext() should return false

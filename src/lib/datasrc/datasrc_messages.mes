@@ -73,6 +73,11 @@ The error message contains specific information about the error.
 Debug information. The database data source is looking up records with the given
 name and type in the database.
 
+% DATASRC_DATABASE_FIND_TTL_MISMATCH TTL values differ for elements of %1/%2/%3, setting to %4
+The datasource backend provided resource records for the given RRset with
+different TTL values. The TTL of the RRSET is set to the lowest value, which
+is printed in the log message.
+
 % DATASRC_DATABASE_FIND_UNCAUGHT_ERROR uncaught general error retrieving data from datasource %1: %2
 There was an uncaught general exception while reading data from a datasource.
 This most likely points to a logic error in the code, and can be considered a

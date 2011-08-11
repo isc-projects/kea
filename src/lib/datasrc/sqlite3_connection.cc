@@ -325,21 +325,17 @@ SQLite3Connection::getZone(const isc::dns::Name& name) const {
 void
 SQLite3Connection::searchForRecords(int zone_id, const std::string& name) {
     resetSearch();
-    int result;
-    result = sqlite3_bind_int(dbparameters_->q_any_, 1, zone_id);
-    if (result != SQLITE_OK) {
+    if (sqlite3_bind_int(dbparameters_->q_any_, 1, zone_id) != SQLITE_OK) {
         isc_throw(DataSourceError,
                   "Error in sqlite3_bind_int() for zone_id " <<
-                  zone_id << ", sqlite3 result code: " << result);
+                  zone_id << ": " << sqlite3_errmsg(dbparameters_->db_));
     }
-
     // use transient since name is a ref and may disappear
-    result = sqlite3_bind_text(dbparameters_->q_any_, 2, name.c_str(), -1,
-                               SQLITE_TRANSIENT);
-    if (result != SQLITE_OK) {
+    if (sqlite3_bind_text(dbparameters_->q_any_, 2, name.c_str(), -1,
+                               SQLITE_TRANSIENT) != SQLITE_OK) {
         isc_throw(DataSourceError,
                   "Error in sqlite3_bind_text() for name " <<
-                  name << ", sqlite3 result code: " << result);
+                  name << ": " << sqlite3_errmsg(dbparameters_->db_));
     }
 }
 
@@ -349,10 +345,23 @@ namespace {
 // might not be directly convertable
 // In case sqlite3_column_text() returns NULL, we just make it an
 // empty string.
+// The sqlite3parameters value is only used to check the error code if
+// ucp == NULL
 const char*
-convertToPlainChar(const unsigned char* ucp) {
+convertToPlainChar(const unsigned char* ucp,
+                   SQLite3Parameters* dbparameters) {
     if (ucp == NULL) {
-        return ("");
+        // The field can really be NULL, in which case we return an
+        // empty string, or sqlite may have run out of memory, in
+        // which case we raise an error
+        if (dbparameters &&
+            sqlite3_errcode(dbparameters->db_) == SQLITE_NOMEM) {
+            isc_throw(DataSourceError,
+                      "Sqlite3 backend encountered a memory allocation "
+                      "error in sqlite3_column_text()");
+        } else {
+            return ("");
+        }
     }
     const void* p = ucp;
     return (static_cast<const char*>(p));
@@ -361,35 +370,35 @@ convertToPlainChar(const unsigned char* ucp) {
 
 bool
 SQLite3Connection::getNextRecord(std::string columns[], size_t column_count) {
-    try {
-        sqlite3_stmt* current_stmt = dbparameters_->q_any_;
-        const int rc = sqlite3_step(current_stmt);
-
-        if (column_count != RecordColumnCount) {
-                isc_throw(DataSourceError,
-                        "Datasource backend caller did not pass a column array "
-                        "of size " << RecordColumnCount <<
-                        " to getNextRecord()");
-        }
-
-        if (rc == SQLITE_ROW) {
-            for (int column = 0; column < column_count; ++column) {
-                columns[column] = convertToPlainChar(sqlite3_column_text(
-                                                    current_stmt, column));
-            }
-            return (true);
-        } else if (rc == SQLITE_DONE) {
-            // reached the end of matching rows
-            resetSearch();
-            return (false);
-        }
-        resetSearch();
-        isc_throw(DataSourceError,
-                "Unexpected failure in sqlite3_step (sqlite result code " << rc << ")");
-    } catch (const std::bad_alloc&) {
-        isc_throw(DataSourceError,
-                  "bad_alloc in Sqlite3Connection::getNextRecord");
+    if (column_count != RECORDCOLUMNCOUNT) {
+            isc_throw(DataSourceError,
+                    "Datasource backend caller did not pass a column array "
+                    "of size " << RECORDCOLUMNCOUNT <<
+                    " to getNextRecord()");
     }
+
+    sqlite3_stmt* current_stmt = dbparameters_->q_any_;
+    const int rc = sqlite3_step(current_stmt);
+
+    if (rc == SQLITE_ROW) {
+        for (int column = 0; column < column_count; ++column) {
+            try {
+                columns[column] = convertToPlainChar(sqlite3_column_text(
+                                                     current_stmt, column),
+                                                     dbparameters_);
+            } catch (const std::bad_alloc&) {
+                isc_throw(DataSourceError,
+                        "bad_alloc in Sqlite3Connection::getNextRecord");
+            }
+        }
+        return (true);
+    } else if (rc == SQLITE_DONE) {
+        // reached the end of matching rows
+        resetSearch();
+        return (false);
+    }
+    isc_throw(DataSourceError, "Unexpected failure in sqlite3_step: " <<
+                               sqlite3_errmsg(dbparameters_->db_));
     // Compilers might not realize isc_throw always throws
     return (false);
 }
