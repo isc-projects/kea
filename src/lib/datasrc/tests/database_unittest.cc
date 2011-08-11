@@ -116,7 +116,7 @@ public:
     }
 
     virtual const std::string& getDBName() const {
-        return database_name_;
+        return (database_name_);
     }
 private:
     std::map<std::string, std::vector< std::vector<std::string> > > records;
