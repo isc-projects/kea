@@ -1,38 +1,47 @@
 #
 # various kinds of MINFO RDATA stored in an input buffer
-#
-# RDLENGHT=28 bytes
+# 
+# Valid compressed RDATA for "(rmailbox.example.com. emailbox.example.com.)"
+# RDLENGHT=32 bytes
 # 0  1
- 00 1c
-# 2  3  4  5  6  7  8  9 10  1  2  3  4  5  6  7  8  9 20  1  2(bytes)
- 04 72 6f 6f 74 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00 07 65 6d
-# 3  4  5  6  7  8  9
- 61 69 6c 62 78 c0 07
+ 00 21
+# RMAILBOX: non compressed
+# 2  3  4  5  6  7  8  9 10  1  2  3  4  5  6  7  8  9 20  1  2  3(bytes)
+#(8) r  m  a  i  l  b  o  x (7) e  x  a  m  p  l  e (3) c  o  m  .
+ 08 72 6d 61 69 6c 62 6f 78 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+# EMAILBOX: compressed
+# 4  5  6  7  8  9 30  1  2  3  4
+#(8) e  m  a  i  l  b  o  x ptr=11
+ 08 65 6d 61 69 6c 62 6f 78 c0 0b
 #
-# compressed name
+# Both RMAILBOX and EMAILBOX compressed
 # RDLENGHT=04 bytes
-#30  1
+# 5  6
  00 04
-# 2  3  4  5(bytes)
- c0 02 c0 14
+# 7  8  9 40(bytes)
+#ptr=02 ptr=24
+ c0 02 c0 18
 #
-# length too short
+# rdlength too short
 # RDLENGHT=03 bytes
-# 6  7
+# 1  2
  00 03
-# 8  9 40  1(bytes)
- c0 02 c0 14
+# 3  4  5  6(bytes)
+#ptr=02 ptr=24
+ c0 02 c0 18
 #
-# length too long
+# rdlength too long
 # RDLENGHT=25 bytes
-# 2  3
+# 7  8
  00 19
-# 4  5  6  7(bytes)
- c0 02 c0 14
+# 9 50  1  2(bytes)
+#ptr=02 ptr=24
+ c0 02 c0 18
 #
-# incomplete target name
+# incomplete RMAILBOX NAME
 # RDLENGHT=19 bytes
-# 8  9
+# 3  4
  00 13
-#50  1  2  3  4  5  6  7  8  9 60  1  2  3  4  5  6  7  8 (bytes)
- 04 72 6f 6f 74 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00 07
+# 5  6  7  8  9 60  1  2  3  4  5  6  7  8  9 60  1  2  3 (bytes)
+#(8) r  m  a  i  l  b  o  x (7) e  x  a  m  p  l  e (3) c
+ 08 72 6d 61 69 6c 62 6f 78 07 65 78 61 6d 70 6c 65 03 63
