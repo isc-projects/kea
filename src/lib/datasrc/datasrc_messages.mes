@@ -413,7 +413,7 @@ Debug information. An instance of SQLite data source is being created.
 % DATASRC_SQLITE_DESTROY SQLite data source destroyed
 Debug information. An instance of SQLite data source is being destroyed.
 
-% DATASRC_SQLITE_DROPCONN SQLite3Connection is being deinitialized
+% DATASRC_SQLITE_DROPCONN SQLite3Database is being deinitialized
 The object around a database connection is being destroyed.
 
 % DATASRC_SQLITE_ENCLOSURE looking for zone containing '%1'
@@ -468,7 +468,7 @@ source.
 The SQLite data source was asked to provide a NSEC3 record for given zone.
 But it doesn't contain that zone.
 
-% DATASRC_SQLITE_NEWCONN SQLite3Connection is being initialized
+% DATASRC_SQLITE_NEWCONN SQLite3Database is being initialized
 A wrapper object to hold database connection is being initialized.
 
 % DATASRC_SQLITE_OPEN opening SQLite database '%1'
