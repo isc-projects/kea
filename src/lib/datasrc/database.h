@@ -93,7 +93,7 @@ public:
      * In the case of a database error, a DatasourceError is thrown.
      *
      * The columns passed is an array of std::strings consisting of
-     * DatabaseConnection::RECORDCOLUMNCOUNT elements, the elements of which
+     * DatabaseConnection::COLUMN_COUNT elements, the elements of which
      * are defined in DatabaseConnection::RecordColumns, in their basic
      * string representation.
      *
@@ -146,7 +146,7 @@ public:
     };
 
     /// The number of fields the columns array passed to getNextRecord should have
-    static const size_t RECORDCOLUMNCOUNT = 4;
+    static const size_t COLUMN_COUNT = 4;
 
     /**
         * \brief Returns a string identifying this dabase backend
@@ -236,6 +236,20 @@ public:
          *       target again for that, but it might also use something
          *       different. It is left in for compatibility at the moment.
          * \note options are ignored at this moment
+         *
+         * \note Maybe counter intuitively, this method is not a const member
+         * function.  This is intentional; some of the underlying implementations
+         * are expected to use a database backend, and would internally contain
+         * some abstraction of "database connection".  In the most strict sense
+         * any (even read only) operation might change the internal state of
+         * such a connection, and in that sense the operation cannot be considered
+         * "const".  In order to avoid giving a false sense of safety to the
+         * caller, we indicate a call to this method may have a surprising
+         * side effect.  That said, this view may be too strict and it may
+         * make sense to say the internal database connection doesn't affect
+         * external behavior in terms of the interface of this method.  As
+         * we gain more experiences with various kinds of backends we may
+         * revisit the constness.
          *
          * \exception DataSourceError when there is a problem reading
          *                            the data from the dabase backend.

@@ -73,7 +73,7 @@ The error message contains specific information about the error.
 Debug information. The database data source is looking up records with the given
 name and type in the database.
 
-% DATASRC_DATABASE_FIND_TTL_MISMATCH TTL values differ for elements of %1/%2/%3, setting to %4
+% DATASRC_DATABASE_FIND_TTL_MISMATCH TTL values differ in %1 for elements of %2/%3/%4, setting to %5
 The datasource backend provided resource records for the given RRset with
 different TTL values. The TTL of the RRSET is set to the lowest value, which
 is printed in the log message.

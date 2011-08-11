@@ -83,12 +83,18 @@ namespace {
 // Raises a DataSourceError if the type does not
 // match, or if the given rdata string does not
 // parse correctly for the given type and class
+//
+// The DatabaseConnection is passed to print the
+// database name in the log message if the TTL is
+// modified
 void addOrCreate(isc::dns::RRsetPtr& rrset,
                     const isc::dns::Name& name,
                     const isc::dns::RRClass& cls,
                     const isc::dns::RRType& type,
                     const isc::dns::RRTTL& ttl,
-                    const std::string& rdata_str)
+                    const std::string& rdata_str,
+                    const DatabaseConnection& conn
+                )
 {
     if (!rrset) {
         rrset.reset(new isc::dns::RRset(name, cls, type, ttl));
@@ -100,7 +106,8 @@ void addOrCreate(isc::dns::RRsetPtr& rrset,
                 rrset->setTTL(ttl);
             }
             logger.info(DATASRC_DATABASE_FIND_TTL_MISMATCH)
-                .arg(name).arg(cls).arg(type).arg(rrset->getTTL());
+                .arg(conn.getDBName()).arg(name).arg(cls)
+                .arg(type).arg(rrset->getTTL());
         }
     }
     try {
@@ -174,9 +181,9 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     try {
         connection_->searchForRecords(zone_id_, name.toText());
 
-        std::string columns[DatabaseConnection::RECORDCOLUMNCOUNT];
+        std::string columns[DatabaseConnection::COLUMN_COUNT];
         while (connection_->getNextRecord(columns,
-                                        DatabaseConnection::RECORDCOLUMNCOUNT)) {
+                                        DatabaseConnection::COLUMN_COUNT)) {
             if (!records_found) {
                 records_found = true;
             }
@@ -203,7 +210,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                                   "the only record for " + name.toText());
                     }
                     addOrCreate(result_rrset, name, getClass(), cur_type,
-                                cur_ttl, columns[DatabaseConnection::RDATA_COLUMN]);
+                                cur_ttl, columns[DatabaseConnection::RDATA_COLUMN],
+                                *connection_);
                 } else if (cur_type == isc::dns::RRType::CNAME()) {
                     // There should be no other data, so result_rrset should
                     // be empty.
@@ -212,7 +220,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                                   "the only record for " + name.toText());
                     }
                     addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
-                                columns[DatabaseConnection::RDATA_COLUMN]);
+                                columns[DatabaseConnection::RDATA_COLUMN],
+                                *connection_);
                     result_status = CNAME;
                 } else if (cur_type == isc::dns::RRType::RRSIG()) {
                     // If we get signatures before we get the actual data, we

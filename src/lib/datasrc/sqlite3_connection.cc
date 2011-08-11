@@ -370,11 +370,10 @@ convertToPlainChar(const unsigned char* ucp,
 
 bool
 SQLite3Connection::getNextRecord(std::string columns[], size_t column_count) {
-    if (column_count != RECORDCOLUMNCOUNT) {
+    if (column_count != COLUMN_COUNT) {
             isc_throw(DataSourceError,
                     "Datasource backend caller did not pass a column array "
-                    "of size " << RECORDCOLUMNCOUNT <<
-                    " to getNextRecord()");
+                    "of size " << COLUMN_COUNT << " to getNextRecord()");
     }
 
     sqlite3_stmt* current_stmt = dbparameters_->q_any_;
