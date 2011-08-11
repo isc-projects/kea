@@ -73,7 +73,7 @@ public:
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type,
                             isc::dns::RRsetList* target = NULL,
-                            const FindOptions options = FIND_DEFAULT) const;
+                            const FindOptions options = FIND_DEFAULT);
 
     /// \brief Inserts an rrset into the zone.
     ///
