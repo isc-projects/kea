@@ -127,8 +127,7 @@ TEST_F(SQLite3Conn, getRecords) {
     std::string columns[column_count];
 
     // without search, getNext() should return false
-    EXPECT_FALSE(conn->getNextRecord(columns,
-        column_count));
+    EXPECT_FALSE(conn->getNextRecord(columns, column_count));
     checkRecordRow(columns, "", "", "", "");
 
     conn->searchForRecords(zone_id, "foo.bar.");

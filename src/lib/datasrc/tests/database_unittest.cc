@@ -51,7 +51,7 @@ public:
         search_running_ = true;
 
         // 'hardcoded' name to trigger exceptions (for testing
-        // the error handling of find() (the other on is below in 
+        // the error handling of find() (the other on is below in
         // if the name is "exceptiononsearch" it'll raise an exception here
         if (name == "dsexception.in.search.") {
             isc_throw(DataSourceError, "datasource exception on search");

@@ -329,6 +329,7 @@ SQLite3Connection::searchForRecords(int zone_id, const std::string& name) {
                   "Error in sqlite3_bind_int() for zone_id " <<
                   zone_id << ", sqlite3 result code: " << result);
     }
+
     // use transient since name is a ref and may disappear
     result = sqlite3_bind_text(dbparameters_->q_any_, 2, name.c_str(), -1,
                                SQLITE_TRANSIENT);
@@ -337,7 +338,7 @@ SQLite3Connection::searchForRecords(int zone_id, const std::string& name) {
                   "Error in sqlite3_bind_text() for name " <<
                   name << ", sqlite3 result code: " << result);
     }
-};
+}
 
 namespace {
 // This helper function converts from the unsigned char* type (used by
@@ -382,8 +383,9 @@ SQLite3Connection::getNextRecord(std::string columns[], size_t column_count) {
         resetSearch();
         isc_throw(DataSourceError,
                 "Unexpected failure in sqlite3_step (sqlite result code " << rc << ")");
-    } catch (std::bad_alloc) {
-        isc_throw(DataSourceError, "bad_alloc in Sqlite3Connection::getNextRecord");
+    } catch (const std::bad_alloc&) {
+        isc_throw(DataSourceError,
+                  "bad_alloc in Sqlite3Connection::getNextRecord");
     }
     // Compilers might not realize isc_throw always throws
     return (false);
