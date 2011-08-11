@@ -92,7 +92,7 @@ public:
             throw std::exception();
         }
 
-        if (column_count != DatabaseConnection::RECORDCOLUMNCOUNT) {
+        if (column_count != DatabaseConnection::COLUMN_COUNT) {
             isc_throw(DataSourceError, "Wrong column count in getNextRecord");
         }
         if (cur_record < cur_name.size()) {
@@ -324,6 +324,25 @@ TEST_F(DatabaseClientTest, noConnException) {
 }
 
 namespace {
+// checks if the given rrset matches the
+// given name, class, type and rdatas
+void
+checkRRset(isc::dns::ConstRRsetPtr rrset,
+           const isc::dns::Name& name,
+           const isc::dns::RRClass& rrclass,
+           const isc::dns::RRType& rrtype,
+           const isc::dns::RRTTL& rrttl,
+           const std::vector<std::string> rdatas) {
+    isc::dns::RRsetPtr expected_rrset(
+        new isc::dns::RRset(name, rrclass, rrtype, rrttl));
+    for (unsigned int i = 0; i < rdatas.size(); ++i) {
+        expected_rrset->addRdata(
+            isc::dns::rdata::createRdata(rrtype, rrclass,
+                                         rdatas[i]));
+    }
+    isc::testutils::rrsetCheck(expected_rrset, rrset);
+}
+
 void
 doFindTest(shared_ptr<DatabaseClient::Finder> finder,
            const isc::dns::Name& name,
@@ -338,25 +357,13 @@ doFindTest(shared_ptr<DatabaseClient::Finder> finder,
         finder->find(name, type, NULL, ZoneFinder::FIND_DEFAULT);
     ASSERT_EQ(expected_result, result.code) << name << " " << type;
     if (expected_rdatas.size() > 0) {
-        EXPECT_EQ(expected_rdatas.size(), result.rrset->getRdataCount());
-        EXPECT_EQ(expected_ttl, result.rrset->getTTL());
-        EXPECT_EQ(expected_type, result.rrset->getType());
-
-        isc::dns::RRsetPtr expected_rrset(
-            new isc::dns::RRset(name, finder->getClass(),
-                                expected_type, expected_ttl));
-        for (unsigned int i = 0; i < expected_rdatas.size(); ++i) {
-            expected_rrset->addRdata(
-                isc::dns::rdata::createRdata(expected_type,
-                                             finder->getClass(),
-                                             expected_rdatas[i]));
-        }
-        isc::testutils::rrsetCheck(expected_rrset, result.rrset);
+        checkRRset(result.rrset, name, finder->getClass(),
+                   expected_type, expected_ttl, expected_rdatas);
 
         if (expected_sig_rdatas.size() > 0) {
-            // TODO same for sigrrset
-            EXPECT_EQ(expected_sig_rdatas.size(),
-                      result.rrset->getRRsig()->getRdataCount());
+            checkRRset(result.rrset->getRRsig(), name,
+                       finder->getClass(), isc::dns::RRType::RRSIG(),
+                       expected_ttl, expected_sig_rdatas);
         } else {
             EXPECT_EQ(isc::dns::RRsetPtr(), result.rrset->getRRsig());
         }
