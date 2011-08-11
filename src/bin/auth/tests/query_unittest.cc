@@ -122,8 +122,8 @@ public:
         masterLoad(zone_stream, origin_, rrclass_,
                    boost::bind(&MockZoneFinder::loadRRset, this, _1));
     }
-    virtual const isc::dns::Name& getOrigin() const { return (origin_); }
-    virtual const isc::dns::RRClass& getClass() const { return (rrclass_); }
+    virtual isc::dns::Name getOrigin() const { return (origin_); }
+    virtual isc::dns::RRClass getClass() const { return (rrclass_); }
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type,
                             RRsetList* target = NULL,
