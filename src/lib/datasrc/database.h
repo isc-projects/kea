@@ -147,6 +147,17 @@ public:
 
     /// The number of fields the columns array passed to getNextRecord should have
     static const size_t RecordColumnCount = 4;
+
+    /**
+        * \brief Returns a string identifying this dabase backend
+        *
+        * Any implementation is free to choose the exact string content,
+        * but it is advisable to make it a name that is distinguishable
+        * from the others.
+        *
+        * \return the name of the dabase
+        */
+    virtual const std::string& getDBName() const = 0;
 };
 
 /**
@@ -273,6 +284,7 @@ public:
      *     returned, though.
      */
     virtual FindResult findZone(const isc::dns::Name& name) const;
+
 private:
     /// \brief Our connection.
     const boost::shared_ptr<DatabaseConnection> connection_;

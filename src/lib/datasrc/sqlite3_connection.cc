@@ -17,6 +17,7 @@
 #include <datasrc/sqlite3_connection.h>
 #include <datasrc/logger.h>
 #include <datasrc/data_source.h>
+#include <util/filename.h>
 
 namespace isc {
 namespace datasrc {
@@ -48,7 +49,9 @@ struct SQLite3Parameters {
 SQLite3Connection::SQLite3Connection(const std::string& filename,
                                      const isc::dns::RRClass& rrclass) :
     dbparameters_(new SQLite3Parameters),
-    class_(rrclass.toText())
+    class_(rrclass.toText()),
+    database_name_("sqlite3_" +
+                   isc::util::Filename(filename).nameAndExtension())
 {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_NEWCONN);
 
