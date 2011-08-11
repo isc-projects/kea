@@ -425,7 +425,7 @@ class UIModuleCCSession(MultiConfigData):
             raise ModuleCCSessionError("Bad config version")
         self._set_current_config(config)
 
-    def _add_value_to_list(self, identifier, value):
+    def _add_value_to_list(self, identifier, value, module_spec):
         cur_list, status = self.get_value(identifier)
         if not cur_list:
             cur_list = []
@@ -491,7 +491,7 @@ class UIModuleCCSession(MultiConfigData):
                 if set_value_str is not None:
                     value_str += set_value_str
                 value = isc.cc.data.parse_value_str(value_str)
-            self._add_value_to_list(identifier, value)
+            self._add_value_to_list(identifier, value, module_spec)
         elif 'named_set_item_spec' in module_spec:
             item_name = None
             item_value = None
