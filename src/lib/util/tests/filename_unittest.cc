@@ -143,13 +143,13 @@ TEST_F(FilenameTest, Components) {
     EXPECT_EQ("/", fname.directory());
     EXPECT_EQ(" ", fname.name());
     EXPECT_EQ(".", fname.extension());
-    EXPECT_EQ(".", fname.nameAndExtension());
+    EXPECT_EQ(" .", fname.nameAndExtension());
 
     fname.setName(" / . ");
     EXPECT_EQ("/", fname.directory());
     EXPECT_EQ(" ", fname.name());
     EXPECT_EQ(".", fname.extension());
-    EXPECT_EQ(".", fname.nameAndExtension());
+    EXPECT_EQ(" .", fname.nameAndExtension());
 }
 
 // Check that the expansion with a default works.
