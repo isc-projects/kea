@@ -47,6 +47,7 @@ run_unittests_LDADD += $(SQLITE_LIBS)
 run_unittests_LDADD += $(top_builddir)/src/lib/testutils/libtestutils.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/datasrc/libdatasrc.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/libdns++.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la

@@ -30,10 +30,10 @@ using namespace isc::dns;
 namespace {
 
 /*
- * A connection with minimum implementation, keeping the original
+ * An accessor with minimum implementation, keeping the original
  * "NotImplemented" methods.
  */
-class NopAbstraction : public DatabaseAbstraction {
+class NopAccessor : public DatabaseAccessor {
 public:
     virtual std::pair<bool, int> getZone(const Name& name) const {
         if (name == Name("example.org")) {
@@ -57,7 +57,7 @@ public:
  * It has the same getZone method as NopConnection, but it provides
  * implementation of the optional functionality.
  */
-class MockAbstraction : public NopAbstraction {
+class MockAccessor : public NopAccessor {
 private:
     class MockIteratorContext : public IteratorContext {
     private:
@@ -161,7 +161,7 @@ public:
 // This tests the default getIteratorContext behaviour, throwing NotImplemented
 TEST(DatabaseConnectionTest, getIteratorContext) {
     // The parameters don't matter
-    EXPECT_THROW(NopAbstraction().getIteratorContext(Name("."), 1),
+    EXPECT_THROW(NopAccessor().getIteratorContext(Name("."), 1),
                  isc::NotImplemented);
 }
 
@@ -175,12 +175,12 @@ public:
      * times per test.
      */
     void createClient() {
-        current_database_ = new MockAbstraction();
-        client_.reset(new DatabaseClient(shared_ptr<DatabaseAbstraction>(
+        current_database_ = new MockAccessor();
+        client_.reset(new DatabaseClient(shared_ptr<DatabaseAccessor>(
              current_database_)));
     }
     // Will be deleted by client_, just keep the current value for comparison.
-    MockAbstraction* current_database_;
+    MockAccessor* current_database_;
     shared_ptr<DatabaseClient> client_;
     /**
      * Check the zone finder is a valid one and references the zone ID and
@@ -215,8 +215,8 @@ TEST_F(DatabaseClientTest, superZone) {
     checkZoneFinder(zone);
 }
 
-TEST_F(DatabaseClientTest, noConnException) {
-    EXPECT_THROW(DatabaseClient(shared_ptr<DatabaseAbstraction>()),
+TEST_F(DatabaseClientTest, noAccessorException) {
+    EXPECT_THROW(DatabaseClient(shared_ptr<DatabaseAccessor>()),
                  isc::InvalidParameter);
 }
 
@@ -228,14 +228,14 @@ TEST_F(DatabaseClientTest, noZoneIterator) {
 // If the zone doesn't exist and iteration is not implemented, it still throws
 // the exception it doesn't exist
 TEST_F(DatabaseClientTest, noZoneNotImplementedIterator) {
-    EXPECT_THROW(DatabaseClient(boost::shared_ptr<DatabaseAbstraction>(
-        new NopAbstraction())).getIterator(Name("example.com")),
+    EXPECT_THROW(DatabaseClient(boost::shared_ptr<DatabaseAccessor>(
+        new NopAccessor())).getIterator(Name("example.com")),
                  DataSourceError);
 }
 
 TEST_F(DatabaseClientTest, notImplementedIterator) {
-    EXPECT_THROW(DatabaseClient(shared_ptr<DatabaseAbstraction>(
-        new NopAbstraction())).getIterator(Name("example.org")),
+    EXPECT_THROW(DatabaseClient(shared_ptr<DatabaseAccessor>(
+        new NopAccessor())).getIterator(Name("example.org")),
                  isc::NotImplemented);
 }
 

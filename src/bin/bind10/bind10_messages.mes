@@ -122,7 +122,7 @@ The boss requested a socket from the creator, but the answer is unknown. This
 looks like a programmer error.
 
 % BIND10_SOCKCREATOR_CRASHED the socket creator crashed
-The socket creator terminated unexpectadly. It is not possible to restart it
+The socket creator terminated unexpectedly. It is not possible to restart it
 (because the boss already gave up root privileges), so the system is going
 to terminate.
 
