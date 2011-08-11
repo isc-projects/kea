@@ -29,7 +29,7 @@ using std::string;
 namespace isc {
 namespace datasrc {
 
-DatabaseClient::DatabaseClient(boost::shared_ptr<DatabaseAbstraction>
+DatabaseClient::DatabaseClient(boost::shared_ptr<DatabaseAccessor>
                                database) :
     database_(database)
 {
@@ -62,7 +62,7 @@ DatabaseClient::findZone(const Name& name) const {
     return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
 }
 
-DatabaseClient::Finder::Finder(boost::shared_ptr<DatabaseAbstraction>
+DatabaseClient::Finder::Finder(boost::shared_ptr<DatabaseAccessor>
                                database, int zone_id) :
     database_(database),
     zone_id_(zone_id)
@@ -102,7 +102,7 @@ namespace {
  */
 class Iterator : public ZoneIterator {
 public:
-    Iterator(const DatabaseAbstraction::IteratorContextPtr& context,
+    Iterator(const DatabaseAccessor::IteratorContextPtr& context,
              const RRClass& rrclass) :
         context_(context),
         class_(rrclass),
@@ -145,7 +145,7 @@ private:
         rdata_ = data[3];
     }
     // The context
-    const DatabaseAbstraction::IteratorContextPtr context_;
+    const DatabaseAccessor::IteratorContextPtr context_;
     // Class of the zone
     RRClass class_;
     // Status
@@ -167,10 +167,10 @@ DatabaseClient::getIterator(const isc::dns::Name& name) const {
                   "in this data source");
     }
     // Request the context
-    DatabaseAbstraction::IteratorContextPtr
+    DatabaseAccessor::IteratorContextPtr
         context(database_->getIteratorContext(name, zone.second));
     // It must not return NULL, that's a bug of the implementation
-    if (context == DatabaseAbstraction::IteratorContextPtr()) {
+    if (context == DatabaseAccessor::IteratorContextPtr()) {
         isc_throw(isc::Unexpected, "Iterator context null at " +
                   name.toText());
     }

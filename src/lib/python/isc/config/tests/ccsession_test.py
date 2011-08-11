@@ -745,6 +745,8 @@ class TestUIModuleCCSession(unittest.TestCase):
                           uccs.remove_value, "Spec2/item5[123]", None)
         uccs.remove_value("Spec2/item5[0]", None)
         self.assertEqual({'Spec2': {'item5': []}}, uccs._local_changes)
+        uccs.add_value("Spec2/item5", None);
+        self.assertEqual({'Spec2': {'item5': ['']}}, uccs._local_changes)
 
     def test_add_remove_value_named_set(self):
         fake_conn = fakeUIConn()

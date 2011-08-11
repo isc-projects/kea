@@ -14,7 +14,7 @@
 
 #include <sqlite3.h>
 
-#include <datasrc/sqlite3_database.h>
+#include <datasrc/sqlite3_accessor.h>
 #include <datasrc/logger.h>
 #include <datasrc/data_source.h>
 
@@ -334,7 +334,7 @@ getstr(const unsigned char* str) {
 
 }
 
-class SQLite3Database::Context : public DatabaseAbstraction::IteratorContext {
+class SQLite3Database::Context : public DatabaseAccessor::IteratorContext {
 public:
     Context(const boost::shared_ptr<const SQLite3Database>& database, int id) :
         database_(database),
@@ -370,7 +370,7 @@ private:
     sqlite3_stmt *statement;
 };
 
-DatabaseAbstraction::IteratorContextPtr
+DatabaseAccessor::IteratorContextPtr
 SQLite3Database::getIteratorContext(const isc::dns::Name&, int id) const {
     return (IteratorContextPtr(new Context(shared_from_this(), id)));
 }
