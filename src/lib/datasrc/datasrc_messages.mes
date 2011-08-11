@@ -64,7 +64,7 @@ number. If there are too many, some of them will be dropped. The size of 0
 means no limit.
 
 % DATASRC_DATABASE_FIND_ERROR error retrieving data from datasource %1: %2
-The was an internal error while reading data from a datasource. This can either
+This was an internal error while reading data from a datasource. This can either
 mean the specific data source implementation is not behaving correctly, or the
 data it provides is invalid. The current search is aborted.
 The error message contains specific information about the error.
