@@ -354,7 +354,7 @@ convertToPlainChar(const unsigned char* ucp,
         // The field can really be NULL, in which case we return an
         // empty string, or sqlite may have run out of memory, in
         // which case we raise an error
-        if (dbparameters &&
+        if (dbparameters != NULL &&
             sqlite3_errcode(dbparameters->db_) == SQLITE_NOMEM) {
             isc_throw(DataSourceError,
                       "Sqlite3 backend encountered a memory allocation "
