@@ -156,7 +156,7 @@ ZoneFinder::FindResult
 DatabaseClient::Finder::find(const isc::dns::Name& name,
                              const isc::dns::RRType& type,
                              isc::dns::RRsetList*,
-                             const FindOptions) const
+                             const FindOptions)
 {
     // This variable is used to determine the difference between
     // NXDOMAIN and NXRRSET
