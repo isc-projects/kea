@@ -93,11 +93,15 @@ void addOrCreate(isc::dns::RRsetPtr& rrset,
     if (!rrset) {
         rrset.reset(new isc::dns::RRset(name, cls, type, ttl));
     } else {
-        if (ttl < rrset->getTTL()) {
-            rrset->setTTL(ttl);
-        }
         // This is a check to make sure find() is not messing things up
         assert(type == rrset->getType());
+        if (ttl != rrset->getTTL()) {
+            if (ttl < rrset->getTTL()) {
+                rrset->setTTL(ttl);
+            }
+            logger.info(DATASRC_DATABASE_FIND_TTL_MISMATCH)
+                .arg(name).arg(cls).arg(type).arg(rrset->getTTL());
+        }
     }
     try {
         rrset->addRdata(isc::dns::rdata::createRdata(type, cls, rdata_str));
@@ -170,9 +174,9 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     try {
         connection_->searchForRecords(zone_id_, name.toText());
 
-        std::string columns[DatabaseConnection::RecordColumnCount];
+        std::string columns[DatabaseConnection::RECORDCOLUMNCOUNT];
         while (connection_->getNextRecord(columns,
-                                        DatabaseConnection::RecordColumnCount)) {
+                                        DatabaseConnection::RECORDCOLUMNCOUNT)) {
             if (!records_found) {
                 records_found = true;
             }

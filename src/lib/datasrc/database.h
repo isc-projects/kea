@@ -93,7 +93,7 @@ public:
      * In the case of a database error, a DatasourceError is thrown.
      *
      * The columns passed is an array of std::strings consisting of
-     * DatabaseConnection::RecordColumnCount elements, the elements of which
+     * DatabaseConnection::RECORDCOLUMNCOUNT elements, the elements of which
      * are defined in DatabaseConnection::RecordColumns, in their basic
      * string representation.
      *
@@ -146,7 +146,7 @@ public:
     };
 
     /// The number of fields the columns array passed to getNextRecord should have
-    static const size_t RecordColumnCount = 4;
+    static const size_t RECORDCOLUMNCOUNT = 4;
 
     /**
         * \brief Returns a string identifying this dabase backend
