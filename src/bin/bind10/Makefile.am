@@ -1,11 +1,7 @@
 SUBDIRS = . tests
 
 sbin_SCRIPTS = bind10
-CLEANFILES = bind10 bind10_src.pyc bind10_messages.py bind10_messages.pyc \
-	sockcreator.pyc
-
-python_PYTHON = __init__.py sockcreator.py
-pythondir = $(pyexecdir)/bind10
+CLEANFILES = bind10 bind10_src.pyc bind10_messages.py bind10_messages.pyc
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 pyexec_DATA = bind10_messages.py
