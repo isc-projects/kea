@@ -135,7 +135,12 @@ public:
      */
     virtual void resetSearch();
 
-    virtual const std::string& getDBName() const { return database_name_; }
+    /// The SQLite3 implementation of this method returns a string starting
+    /// with a fixed prefix of "sqlite3_" followed by the DB file name
+    /// removing any path name.  For example, for the DB file
+    /// /somewhere/in/the/system/bind10.sqlite3, this method will return
+    /// "sqlite3_bind10.sqlite3".
+    virtual const std::string& getDBName() const { return (database_name_); }
 
 private:
     /// \brief Private database data

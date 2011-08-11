@@ -151,11 +151,14 @@ public:
     /**
         * \brief Returns a string identifying this dabase backend
         *
+        * The returned string is mainly intended to be used for
+        * debugging/logging purposes.
+        *
         * Any implementation is free to choose the exact string content,
         * but it is advisable to make it a name that is distinguishable
         * from the others.
         *
-        * \return the name of the dabase
+        * \return the name of the database
         */
     virtual const std::string& getDBName() const = 0;
 };
