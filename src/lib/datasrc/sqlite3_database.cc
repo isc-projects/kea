@@ -18,6 +18,8 @@
 #include <datasrc/logger.h>
 #include <datasrc/data_source.h>
 
+#include <boost/lexical_cast.hpp>
+
 namespace isc {
 namespace datasrc {
 
@@ -345,15 +347,14 @@ public:
                       " to SQL statement (iterate)");
         }
     }
-    bool getNext(std::string& name, std::string& rtype, int& ttl,
-                 std::string& data)
-    {
+    bool getNext(std::string data[4]) {
         // If there's another row, get it
         if (sqlite3_step(statement) == SQLITE_ROW) {
-            name = getstr(sqlite3_column_text(statement, 0));
-            rtype = getstr(sqlite3_column_text(statement, 1));
-            ttl = sqlite3_column_int(statement, 2);
-            data = getstr(sqlite3_column_text(statement, 3));
+            data[0] = getstr(sqlite3_column_text(statement, 0));
+            data[1] = getstr(sqlite3_column_text(statement, 1));
+            data[2] = boost::lexical_cast<std::string>(
+                sqlite3_column_int(statement, 2));
+            data[3] = getstr(sqlite3_column_text(statement, 3));
             return (true);
         }
         return (false);
