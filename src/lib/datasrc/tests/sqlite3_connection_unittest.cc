@@ -134,7 +134,7 @@ TEST_F(SQLite3Conn, getRecords) {
     const int zone_id = zone_info.second;
     ASSERT_EQ(1, zone_id);
 
-    const size_t column_count = DatabaseConnection::RECORDCOLUMNCOUNT;
+    const size_t column_count = DatabaseConnection::COLUMN_COUNT;
     std::string columns[column_count];
 
     // without search, getNext() should return false
