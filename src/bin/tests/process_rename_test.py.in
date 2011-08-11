@@ -38,8 +38,10 @@ class TestRename(unittest.TestCase):
         Then scan them by looking at the source text
         (without actually running them)
         """
-        # Regexp to find all the *_SCRIPTS = something lines,
-        # including line continuations (backslash and newline)
+        # Regexp to find all the *_SCRIPTS = something lines (except for
+        # noinst_SCRIPTS, which are scripts for tests), including line
+        # continuations (backslash and newline)
+        excluded_lines = re.compile(r'^(noinst_SCRIPTS.*$)', re.MULTILINE)
         lines = re.compile(r'^\w+_SCRIPTS\s*=\s*((.|\\\n)*)$',
             re.MULTILINE)
         # Script name regular expression
@@ -53,7 +55,8 @@ class TestRename(unittest.TestCase):
             if 'Makefile' in fs:
                 makefile = ''.join(open(os.path.join(d,
                     "Makefile")).readlines())
-                for (var, _) in lines.findall(makefile):
+                for (var, _) in lines.findall(re.sub(excluded_lines, '',
+                                                     makefile)):
                     for (script, _) in scripts.findall(var):
                         self.__scan(d, script, fun)
 

@@ -13,8 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 
-#ifndef __DATASRC_SQLITE3_CONNECTION_H
-#define __DATASRC_SQLITE3_CONNECTION_H
+#ifndef __DATASRC_SQLITE3_ACCESSOR_H
+#define __DATASRC_SQLITE3_ACCESSOR_H
 
 #include <datasrc/database.h>
 
@@ -46,13 +46,13 @@ public:
 struct SQLite3Parameters;
 
 /**
- * \brief Concrete implementation of DatabaseAbstraction for SQLite3 databases
+ * \brief Concrete implementation of DatabaseAccessor for SQLite3 databases
  *
  * This opens one database file with our schema and serves data from there.
  * According to the design, it doesn't interpret the data in any way, it just
  * provides unified access to the DB.
  */
-class SQLite3Database : public DatabaseAbstraction,
+class SQLite3Database : public DatabaseAccessor,
     public boost::enable_shared_from_this<SQLite3Database> {
 public:
     /**
@@ -79,7 +79,7 @@ public:
     /**
      * \brief Look up a zone
      *
-     * This implements the getZone from DatabaseAbstraction and looks up a zone
+     * This implements the getZone from DatabaseAccessor and looks up a zone
      * in the data. It looks for a zone with the exact given origin and class
      * passed to the constructor.
      *
