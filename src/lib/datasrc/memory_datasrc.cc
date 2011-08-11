@@ -606,12 +606,12 @@ InMemoryZoneFinder::~InMemoryZoneFinder() {
     delete impl_;
 }
 
-const Name&
+Name
 InMemoryZoneFinder::getOrigin() const {
     return (impl_->origin_);
 }
 
-const RRClass&
+RRClass
 InMemoryZoneFinder::getClass() const {
     return (impl_->zone_class_);
 }
