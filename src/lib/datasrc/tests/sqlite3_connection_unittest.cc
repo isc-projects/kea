@@ -30,7 +30,9 @@ namespace {
 // Some test data
 std::string SQLITE_DBFILE_EXAMPLE = TEST_DATA_DIR "/test.sqlite3";
 std::string SQLITE_DBFILE_EXAMPLE2 = TEST_DATA_DIR "/example2.com.sqlite3";
+std::string SQLITE_DBNAME_EXAMPLE2 = "sqlite3_example2.com.sqlite3";
 std::string SQLITE_DBFILE_EXAMPLE_ROOT = TEST_DATA_DIR "/test-root.sqlite3";
+std::string SQLITE_DBNAME_EXAMPLE_ROOT = "sqlite3_test-root.sqlite3";
 std::string SQLITE_DBFILE_BROKENDB = TEST_DATA_DIR "/brokendb.sqlite3";
 std::string SQLITE_DBFILE_MEMORY = ":memory:";
 
@@ -99,6 +101,16 @@ TEST_F(SQLite3Conn, noZone) {
 TEST_F(SQLite3Conn, noClass) {
     initConn(SQLITE_DBFILE_EXAMPLE, RRClass::CH());
     EXPECT_FALSE(conn->getZone(Name("example.com")).first);
+}
+
+TEST(SQLite3Open, getDBNameExample2) {
+    SQLite3Connection conn(SQLITE_DBFILE_EXAMPLE2, RRClass::IN());
+    EXPECT_EQ(SQLITE_DBNAME_EXAMPLE2, conn.getDBName());
+}
+
+TEST(SQLite3Open, getDBNameExampleROOT) {
+    SQLite3Connection conn(SQLITE_DBFILE_EXAMPLE_ROOT, RRClass::IN());
+    EXPECT_EQ(SQLITE_DBNAME_EXAMPLE_ROOT, conn.getDBName());
 }
 
 // Simple function to cound the number of records for

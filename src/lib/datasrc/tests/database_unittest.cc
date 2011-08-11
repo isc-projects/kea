@@ -37,7 +37,11 @@ namespace {
  */
 class MockConnection : public DatabaseConnection {
 public:
-    MockConnection() : search_running_(false) { fillData(); }
+    MockConnection() : search_running_(false),
+                       database_name_("mock_database")
+    {
+        fillData();
+    }
 
     virtual std::pair<bool, int> getZone(const Name& name) const {
         if (name == Name("example.org")) {
@@ -108,6 +112,9 @@ public:
         return (search_running_);
     }
 
+    virtual const std::string& getDBName() const {
+        return database_name_;
+    }
 private:
     std::map<std::string, std::vector< std::vector<std::string> > > records;
     // used as internal index for getNextRecord()
@@ -124,6 +131,8 @@ private:
     // We store the name passed to searchForRecords, so we can
     // hardcode some exceptions into getNextRecord
     std::string searched_name_;
+
+    const std::string database_name_;
 
     // Adds one record to the current name in the database
     // The actual data will not be added to 'records' until
@@ -271,6 +280,8 @@ public:
     // Will be deleted by client_, just keep the current value for comparison.
     MockConnection* current_connection_;
     shared_ptr<DatabaseClient> client_;
+    const std::string database_name_;
+
     /**
      * Check the zone finder is a valid one and references the zone ID and
      * connection available here.
