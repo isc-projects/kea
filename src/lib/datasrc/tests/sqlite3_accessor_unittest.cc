@@ -64,13 +64,13 @@ TEST(SQLite3Open, memoryDB) {
 }
 
 // Test fixture for querying the db
-class SQLite3Conn : public ::testing::Test {
+class SQLite3Access : public ::testing::Test {
 public:
-    SQLite3Conn() {
-        initConn(SQLITE_DBFILE_EXAMPLE, RRClass::IN());
+    SQLite3Access() {
+        initAccessor(SQLITE_DBFILE_EXAMPLE, RRClass::IN());
     }
     // So it can be re-created with different data
-    void initConn(const std::string& filename, const RRClass& rrclass) {
+    void initAccessor(const std::string& filename, const RRClass& rrclass) {
         db.reset(new SQLite3Database(filename, rrclass));
     }
     // The tested db
@@ -78,25 +78,25 @@ public:
 };
 
 // This zone exists in the data, so it should be found
-TEST_F(SQLite3Conn, getZone) {
+TEST_F(SQLite3Access, getZone) {
     std::pair<bool, int> result(db->getZone(Name("example.com")));
     EXPECT_TRUE(result.first);
     EXPECT_EQ(1, result.second);
 }
 
 // But it should find only the zone, nothing below it
-TEST_F(SQLite3Conn, subZone) {
+TEST_F(SQLite3Access, subZone) {
     EXPECT_FALSE(db->getZone(Name("sub.example.com")).first);
 }
 
 // This zone is not there at all
-TEST_F(SQLite3Conn, noZone) {
+TEST_F(SQLite3Access, noZone) {
     EXPECT_FALSE(db->getZone(Name("example.org")).first);
 }
 
 // This zone is there, but in different class
-TEST_F(SQLite3Conn, noClass) {
-    initConn(SQLITE_DBFILE_EXAMPLE, RRClass::CH());
+TEST_F(SQLite3Access, noClass) {
+    initAccessor(SQLITE_DBFILE_EXAMPLE, RRClass::CH());
     EXPECT_FALSE(db->getZone(Name("example.com")).first);
 }
 

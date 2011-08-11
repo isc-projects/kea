@@ -91,7 +91,7 @@ TEST_F(DatabaseClientTest, superZone) {
     checkZoneFinder(zone);
 }
 
-TEST_F(DatabaseClientTest, noConnException) {
+TEST_F(DatabaseClientTest, noAccessorException) {
     EXPECT_THROW(DatabaseClient(shared_ptr<DatabaseAccessor>()),
                  isc::InvalidParameter);
 }
