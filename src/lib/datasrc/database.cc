@@ -200,16 +200,30 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
             // of the 'type covered' field in the RRSIG Rdata).
             //cur_sigtype(columns[SIGTYPE_COLUMN]);
 
-            if (type != NULL && cur_type == *type) {
+            // Check for delegations before checking for the right type.
+            // This is needed to properly delegate request for the NS
+            // record itself.
+            //
+            // This happens with NS only, CNAME must be alone and DNAME
+            // is not checked in the exact queried domain.
+            if (want_ns && cur_type == isc::dns::RRType::NS()) {
+                if (result_rrset &&
+                    result_rrset->getType() != isc::dns::RRType::NS()) {
+                    isc_throw(DataSourceError, "NS found together with data"
+                              " in non-apex domain " + name.toText());
+                }
+                addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
+                            columns[DatabaseAccessor::RDATA_COLUMN],
+                            *database_);
+            } else if (type != NULL && cur_type == *type) {
                 if (result_rrset &&
                     result_rrset->getType() == isc::dns::RRType::CNAME()) {
                     isc_throw(DataSourceError, "CNAME found but it is not "
                               "the only record for " + name.toText());
                 } else if (result_rrset && want_ns &&
                            result_rrset->getType() == isc::dns::RRType::NS()) {
-                    // In case there's a NS, we should find the delegation, not
-                    // the data
-                    continue;
+                    isc_throw(DataSourceError, "NS found together with data"
+                              " in non-apex domain " + name.toText());
                 }
                 addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
                             columns[DatabaseAccessor::RDATA_COLUMN],
@@ -220,16 +234,6 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
                 if (result_rrset) {
                     isc_throw(DataSourceError, "CNAME found but it is not "
                               "the only record for " + name.toText());
-                }
-                addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
-                            columns[DatabaseAccessor::RDATA_COLUMN],
-                            *database_);
-            } else if (want_ns && cur_type == isc::dns::RRType::NS()) {
-                if (result_rrset &&
-                    // In case we already found some data here, we should
-                    // replace it with the NS, we should delegate
-                    result_rrset->getType() != isc::dns::RRType::NS()) {
-                    result_rrset = isc::dns::RRsetPtr();
                 }
                 addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
                             columns[DatabaseAccessor::RDATA_COLUMN],
@@ -325,7 +329,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
             found = getRRset(name, &type, true, false, name != origin);
             records_found = found.first;
             result_rrset = found.second;
-            if (result_rrset && type != isc::dns::RRType::NS() &&
+            if (result_rrset && name != origin &&
                 result_rrset->getType() == isc::dns::RRType::NS()) {
                 result_status = DELEGATION;
             } else if (result_rrset && type != isc::dns::RRType::CNAME() &&
