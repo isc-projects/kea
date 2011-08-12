@@ -162,6 +162,88 @@ private:
 };
 }
 
+std::pair<bool, isc::dns::RRsetPtr>
+DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
+                                 const isc::dns::RRType& type)
+{
+    RRsigStore sig_store;
+    database_->searchForRecords(zone_id_, name.toText());
+    bool records_found = false;
+    isc::dns::RRsetPtr result_rrset;
+
+    std::string columns[DatabaseAccessor::COLUMN_COUNT];
+    while (database_->getNextRecord(columns, DatabaseAccessor::COLUMN_COUNT)) {
+        if (!records_found) {
+            records_found = true;
+        }
+
+        try {
+            const isc::dns::RRType cur_type(columns[DatabaseAccessor::
+                                            TYPE_COLUMN]);
+            const isc::dns::RRTTL cur_ttl(columns[DatabaseAccessor::
+                                          TTL_COLUMN]);
+            // Ths sigtype column was an optimization for finding the
+            // relevant RRSIG RRs for a lookup. Currently this column is
+            // not used in this revised datasource implementation. We
+            // should either start using it again, or remove it from use
+            // completely (i.e. also remove it from the schema and the
+            // backend implementation).
+            // Note that because we don't use it now, we also won't notice
+            // it if the value is wrong (i.e. if the sigtype column
+            // contains an rrtype that is different from the actual value
+            // of the 'type covered' field in the RRSIG Rdata).
+            //cur_sigtype(columns[SIGTYPE_COLUMN]);
+
+            if (cur_type == type) {
+                if (result_rrset &&
+                    result_rrset->getType() == isc::dns::RRType::CNAME()) {
+                    isc_throw(DataSourceError, "CNAME found but it is not "
+                              "the only record for " + name.toText());
+                }
+                addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
+                            columns[DatabaseAccessor::RDATA_COLUMN],
+                            *database_);
+            } else if (cur_type == isc::dns::RRType::CNAME()) {
+                // There should be no other data, so result_rrset should
+                // be empty.
+                if (result_rrset) {
+                    isc_throw(DataSourceError, "CNAME found but it is not "
+                              "the only record for " + name.toText());
+                }
+                addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
+                            columns[DatabaseAccessor::RDATA_COLUMN],
+                            *database_);
+            } else if (cur_type == isc::dns::RRType::RRSIG()) {
+                // If we get signatures before we get the actual data, we
+                // can't know which ones to keep and which to drop...
+                // So we keep a separate store of any signature that may be
+                // relevant and add them to the final RRset when we are
+                // done.
+                // A possible optimization here is to not store them for
+                // types we are certain we don't need
+                sig_store.addSig(isc::dns::rdata::createRdata(cur_type,
+                    getClass(), columns[DatabaseAccessor::RDATA_COLUMN]));
+            }
+        } catch (const isc::dns::InvalidRRType& irt) {
+            isc_throw(DataSourceError, "Invalid RRType in database for " <<
+                      name << ": " << columns[DatabaseAccessor::
+                      TYPE_COLUMN]);
+        } catch (const isc::dns::InvalidRRTTL& irttl) {
+            isc_throw(DataSourceError, "Invalid TTL in database for " <<
+                      name << ": " << columns[DatabaseAccessor::
+                      TTL_COLUMN]);
+        } catch (const isc::dns::rdata::InvalidRdataText& ird) {
+            isc_throw(DataSourceError, "Invalid rdata in database for " <<
+                      name << ": " << columns[DatabaseAccessor::
+                      RDATA_COLUMN]);
+        }
+    }
+    if (result_rrset) {
+        sig_store.appendSignatures(result_rrset);
+    }
+    return std::pair<bool, isc::dns::RRsetPtr>(records_found, result_rrset);
+}
+
 
 ZoneFinder::FindResult
 DatabaseClient::Finder::find(const isc::dns::Name& name,
@@ -174,85 +256,19 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     bool records_found = false;
     isc::dns::RRsetPtr result_rrset;
     ZoneFinder::Result result_status = SUCCESS;
-    RRsigStore sig_store;
     logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
         .arg(database_->getDBName()).arg(name).arg(type);
 
     try {
-        database_->searchForRecords(zone_id_, name.toText());
+        // First, do we have any kind of delegation (NS/DNAME) here?
 
-        std::string columns[DatabaseAccessor::COLUMN_COUNT];
-        while (database_->getNextRecord(columns,
-                                        DatabaseAccessor::COLUMN_COUNT)) {
-            if (!records_found) {
-                records_found = true;
-            }
-
-            try {
-                const isc::dns::RRType cur_type(columns[DatabaseAccessor::
-                                                        TYPE_COLUMN]);
-                const isc::dns::RRTTL cur_ttl(columns[DatabaseAccessor::
-                                                      TTL_COLUMN]);
-                // Ths sigtype column was an optimization for finding the
-                // relevant RRSIG RRs for a lookup. Currently this column is
-                // not used in this revised datasource implementation. We
-                // should either start using it again, or remove it from use
-                // completely (i.e. also remove it from the schema and the
-                // backend implementation).
-                // Note that because we don't use it now, we also won't notice
-                // it if the value is wrong (i.e. if the sigtype column
-                // contains an rrtype that is different from the actual value
-                // of the 'type covered' field in the RRSIG Rdata).
-                //cur_sigtype(columns[SIGTYPE_COLUMN]);
-
-                if (cur_type == type) {
-                    if (result_rrset &&
-                        result_rrset->getType() == isc::dns::RRType::CNAME()) {
-                        isc_throw(DataSourceError, "CNAME found but it is not "
-                                  "the only record for " + name.toText());
-                    }
-                    addOrCreate(result_rrset, name, getClass(), cur_type,
-                                cur_ttl, columns[DatabaseAccessor::
-                                                 RDATA_COLUMN],
-                                *database_);
-                } else if (cur_type == isc::dns::RRType::CNAME()) {
-                    // There should be no other data, so result_rrset should
-                    // be empty.
-                    if (result_rrset) {
-                        isc_throw(DataSourceError, "CNAME found but it is not "
-                                  "the only record for " + name.toText());
-                    }
-                    addOrCreate(result_rrset, name, getClass(), cur_type,
-                                cur_ttl, columns[DatabaseAccessor::
-                                                 RDATA_COLUMN],
-                                *database_);
-                    result_status = CNAME;
-                } else if (cur_type == isc::dns::RRType::RRSIG()) {
-                    // If we get signatures before we get the actual data, we
-                    // can't know which ones to keep and which to drop...
-                    // So we keep a separate store of any signature that may be
-                    // relevant and add them to the final RRset when we are
-                    // done.
-                    // A possible optimization here is to not store them for
-                    // types we are certain we don't need
-                    sig_store.addSig(isc::dns::rdata::createRdata(cur_type,
-                                    getClass(),
-                                    columns[DatabaseAccessor::
-                                            RDATA_COLUMN]));
-                }
-            } catch (const isc::dns::InvalidRRType& irt) {
-                isc_throw(DataSourceError, "Invalid RRType in database for " <<
-                        name << ": " << columns[DatabaseAccessor::
-                                                TYPE_COLUMN]);
-            } catch (const isc::dns::InvalidRRTTL& irttl) {
-                isc_throw(DataSourceError, "Invalid TTL in database for " <<
-                        name << ": " << columns[DatabaseAccessor::
-                                                TTL_COLUMN]);
-            } catch (const isc::dns::rdata::InvalidRdataText& ird) {
-                isc_throw(DataSourceError, "Invalid rdata in database for " <<
-                        name << ": " << columns[DatabaseAccessor::
-                                                RDATA_COLUMN]);
-            }
+        // Try getting the final result and extract it
+        std::pair<bool, isc::dns::RRsetPtr> found(getRRset(name, type));
+        records_found = found.first;
+        result_rrset = found.second;
+        if (result_rrset && type != isc::dns::RRType::CNAME() &&
+            result_rrset->getType() == isc::dns::RRType::CNAME()) {
+            result_status = CNAME;
         }
     } catch (const DataSourceError& dse) {
         logger.error(DATASRC_DATABASE_FIND_ERROR)
@@ -288,7 +304,6 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
             result_status = NXDOMAIN;
         }
     } else {
-        sig_store.appendSignatures(result_rrset);
         logger.debug(DBG_TRACE_DETAILED,
                      DATASRC_DATABASE_FOUND_RRSET)
                     .arg(database_->getDBName()).arg(*result_rrset);
