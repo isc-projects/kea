@@ -318,9 +318,12 @@ public:
          *     instead. This is with type = NULL only and is not checked in
          *     other circumstances. If the DNAME has multiple RRs, it throws
          *     DataSourceError.
-         * \param want_ns This allows redirection by NS to be returned.
-         * \todo When want_ns is true and there's another RRtype, we should
-         *     throw, but we don't yet.
+         * \param want_ns This allows redirection by NS to be returned. If
+         *     any other data is met as well, DataSourceError is thrown.
+         * \note It may happen that some of the above error conditions are not
+         *     detected in some circumstances. The goal here is not to validate
+         *     the domain in DB, but to avoid bad behaviour resulting from
+         *     broken data.
          * \return First part of the result tells if the domain contains any
          *     RRs. This can be used to decide between NXDOMAIN and NXRRSET.
          *     The second part is the RRset found (if any) with any relevant
