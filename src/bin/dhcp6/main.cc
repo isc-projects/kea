@@ -50,9 +50,8 @@ bool verbose_mode = false;
 
 void
 usage() {
-    cerr << "Usage:  b10-dhcp6 [-u user] [-v]"
+    cerr << "Usage:  b10-dhcp6 [-v]"
          << endl;
-    cerr << "\t-u: change process UID to the specified user" << endl;
     cerr << "\t-v: verbose output" << endl;
     exit(1);
 }
