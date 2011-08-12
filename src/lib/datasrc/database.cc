@@ -189,8 +189,10 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
             }
 
             try {
-                const isc::dns::RRType cur_type(columns[DatabaseConnection::TYPE_COLUMN]);
-                const isc::dns::RRTTL cur_ttl(columns[DatabaseConnection::TTL_COLUMN]);
+                const isc::dns::RRType cur_type(columns[DatabaseConnection::
+                                                        TYPE_COLUMN]);
+                const isc::dns::RRTTL cur_ttl(columns[DatabaseConnection::
+                                                      TTL_COLUMN]);
                 // Ths sigtype column was an optimization for finding the
                 // relevant RRSIG RRs for a lookup. Currently this column is
                 // not used in this revised datasource implementation. We
@@ -210,7 +212,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                                   "the only record for " + name.toText());
                     }
                     addOrCreate(result_rrset, name, getClass(), cur_type,
-                                cur_ttl, columns[DatabaseConnection::RDATA_COLUMN],
+                                cur_ttl, columns[DatabaseConnection::
+                                                 RDATA_COLUMN],
                                 *connection_);
                 } else if (cur_type == isc::dns::RRType::CNAME()) {
                     // There should be no other data, so result_rrset should
@@ -219,8 +222,9 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                         isc_throw(DataSourceError, "CNAME found but it is not "
                                   "the only record for " + name.toText());
                     }
-                    addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
-                                columns[DatabaseConnection::RDATA_COLUMN],
+                    addOrCreate(result_rrset, name, getClass(), cur_type,
+                                cur_ttl, columns[DatabaseConnection::
+                                                 RDATA_COLUMN],
                                 *connection_);
                     result_status = CNAME;
                 } else if (cur_type == isc::dns::RRType::RRSIG()) {
@@ -233,17 +237,21 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                     // types we are certain we don't need
                     sig_store.addSig(isc::dns::rdata::createRdata(cur_type,
                                     getClass(),
-                                    columns[DatabaseConnection::RDATA_COLUMN]));
+                                    columns[DatabaseConnection::
+                                            RDATA_COLUMN]));
                 }
             } catch (const isc::dns::InvalidRRType& irt) {
                 isc_throw(DataSourceError, "Invalid RRType in database for " <<
-                        name << ": " << columns[DatabaseConnection::TYPE_COLUMN]);
+                        name << ": " << columns[DatabaseConnection::
+                                                TYPE_COLUMN]);
             } catch (const isc::dns::InvalidRRTTL& irttl) {
                 isc_throw(DataSourceError, "Invalid TTL in database for " <<
-                        name << ": " << columns[DatabaseConnection::TTL_COLUMN]);
+                        name << ": " << columns[DatabaseConnection::
+                                                TTL_COLUMN]);
             } catch (const isc::dns::rdata::InvalidRdataText& ird) {
                 isc_throw(DataSourceError, "Invalid rdata in database for " <<
-                        name << ": " << columns[DatabaseConnection::RDATA_COLUMN]);
+                        name << ": " << columns[DatabaseConnection::
+                                                RDATA_COLUMN]);
             }
         }
     } catch (const DataSourceError& dse) {
