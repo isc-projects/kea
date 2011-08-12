@@ -290,6 +290,11 @@ public:
     private:
         boost::shared_ptr<DatabaseAccessor> database_;
         const int zone_id_;
+        /// \brief Searches database for an RRset
+        std::pair<bool, isc::dns::RRsetPtr> getRRset(const isc::dns::Name&
+                                                     name,
+                                                     const isc::dns::RRType&
+                                                     type);
     };
     /**
      * \brief Find a zone in the database
