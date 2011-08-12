@@ -27,6 +27,12 @@
 
 // BEGIN_RDATA_NAMESPACE
 
+/// \brief \c NAPTR class represents the NAPTR rdata defined in
+/// RFC2915, RFC2168 and RFC3403
+///
+/// This class implements the basic interfaces inherited from the
+/// \c rdata::Rdata class, and provides accessors specific to the
+/// NAPTR rdata.
 class NAPTR : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
@@ -59,7 +65,8 @@ private:
     ///
     /// \param input_str The input string
     /// \param input_iterator From which the skipping started
-    void skipLeftSpaces(const std::string& input_str, std::string::const_iterator& input_iterator);
+    /// \return How many spaces are skipped
+    int skipLeftSpaces(const std::string& input_str, std::string::const_iterator& input_iterator);
 
     uint16_t order_;
     uint16_t preference_;
