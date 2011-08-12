@@ -114,7 +114,7 @@ private:
     const char* const desc_;
 };
 
-SQLite3Database::SQLite3Database(const std::string& filename,
+SQLite3Accessor::SQLite3Accessor(const std::string& filename,
                                      const isc::dns::RRClass& rrclass) :
     dbparameters_(new SQLite3Parameters),
     class_(rrclass.toText()),
@@ -219,7 +219,7 @@ checkAndSetupSchema(Initializer* initializer) {
 }
 
 void
-SQLite3Database::open(const std::string& name) {
+SQLite3Accessor::open(const std::string& name) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_CONNOPEN).arg(name);
     if (dbparameters_->db_ != NULL) {
         // There shouldn't be a way to trigger this anyway
@@ -236,7 +236,7 @@ SQLite3Database::open(const std::string& name) {
     initializer.move(dbparameters_);
 }
 
-SQLite3Database::~SQLite3Database() {
+SQLite3Accessor::~SQLite3Accessor() {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_DROPCONN);
     if (dbparameters_->db_ != NULL) {
         close();
@@ -245,7 +245,7 @@ SQLite3Database::~SQLite3Database() {
 }
 
 void
-SQLite3Database::close(void) {
+SQLite3Accessor::close(void) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_CONNCLOSE);
     if (dbparameters_->db_ == NULL) {
         isc_throw(DataSourceError,
@@ -263,12 +263,12 @@ SQLite3Database::close(void) {
 }
 
 std::pair<bool, int>
-SQLite3Database::getZone(const isc::dns::Name& name) const {
+SQLite3Accessor::getZone(const isc::dns::Name& name) const {
     return (getZone(name.toText()));
 }
 
 std::pair<bool, int>
-SQLite3Database::getZone(const string& name) const {
+SQLite3Accessor::getZone(const string& name) const {
     int rc;
     sqlite3_stmt* const stmt = dbparameters_->statements_[ZONE];
 
@@ -301,7 +301,7 @@ SQLite3Database::getZone(const string& name) const {
 }
 
 void
-SQLite3Database::searchForRecords(int zone_id, const std::string& name) {
+SQLite3Accessor::searchForRecords(int zone_id, const std::string& name) {
     resetSearch();
 
     sqlite3_stmt* const stmt = dbparameters_->statements_[ANY];
@@ -349,7 +349,7 @@ convertToPlainChar(const unsigned char* ucp,
 }
 
 bool
-SQLite3Database::getNextRecord(std::string columns[], size_t column_count) {
+SQLite3Accessor::getNextRecord(std::string columns[], size_t column_count) {
     if (column_count != COLUMN_COUNT) {
             isc_throw(DataSourceError,
                     "Datasource backend caller did not pass a column array "
@@ -383,13 +383,13 @@ SQLite3Database::getNextRecord(std::string columns[], size_t column_count) {
 }
 
 void
-SQLite3Database::resetSearch() {
+SQLite3Accessor::resetSearch() {
     sqlite3_reset(dbparameters_->statements_[ANY]);
     sqlite3_clear_bindings(dbparameters_->statements_[ANY]);
 }
 
 pair<bool, int>
-SQLite3Database::startUpdateZone(const string& zone_name, const bool replace) {
+SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
     if (dbparameters_->updating_zone) {
         isc_throw(DataSourceError,
                   "duplicate zone update on SQLite3 data source");
@@ -425,7 +425,7 @@ SQLite3Database::startUpdateZone(const string& zone_name, const bool replace) {
 }
 
 void
-SQLite3Database::commitUpdateZone() {
+SQLite3Accessor::commitUpdateZone() {
     if (!dbparameters_->updating_zone) {
         isc_throw(DataSourceError, "committing zone update on SQLite3 "
                   "data source without transaction");
@@ -438,7 +438,7 @@ SQLite3Database::commitUpdateZone() {
 }
 
 void
-SQLite3Database::rollbackUpdateZone() {
+SQLite3Accessor::rollbackUpdateZone() {
     if (!dbparameters_->updating_zone) {
         isc_throw(DataSourceError, "rolling back zone update on SQLite3 "
                   "data source without transaction");
@@ -480,7 +480,7 @@ doUpdate(SQLite3Parameters* dbparams, StatementID stmt_id,
 }
 
 void
-SQLite3Database::addRecordToZone(const vector<string>& columns) {
+SQLite3Accessor::addRecordToZone(const vector<string>& columns) {
     if (!dbparameters_->updating_zone) {
         isc_throw(DataSourceError, "adding record to SQLite3 "
                   "data source without transaction");
@@ -494,7 +494,7 @@ SQLite3Database::addRecordToZone(const vector<string>& columns) {
 }
 
 void
-SQLite3Database::deleteRecordInZone(const vector<string>& params) {
+SQLite3Accessor::deleteRecordInZone(const vector<string>& params) {
     if (!dbparameters_->updating_zone) {
         isc_throw(DataSourceError, "deleting record in SQLite3 "
                   "data source without transaction");
