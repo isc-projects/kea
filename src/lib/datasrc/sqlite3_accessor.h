@@ -13,8 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 
-#ifndef __DATASRC_SQLITE3_CONNECTION_H
-#define __DATASRC_SQLITE3_CONNECTION_H
+#ifndef __DATASRC_SQLITE3_ACCESSOR_H
+#define __DATASRC_SQLITE3_ACCESSOR_H
 
 #include <datasrc/database.h>
 
@@ -45,13 +45,13 @@ public:
 struct SQLite3Parameters;
 
 /**
- * \brief Concrete implementation of DatabaseConnection for SQLite3 databases
+ * \brief Concrete implementation of DatabaseAccessor for SQLite3 databases
  *
  * This opens one database file with our schema and serves data from there.
  * According to the design, it doesn't interpret the data in any way, it just
  * provides unified access to the DB.
  */
-class SQLite3Connection : public DatabaseConnection {
+class SQLite3Database : public DatabaseAccessor {
 public:
     /**
      * \brief Constructor
@@ -63,21 +63,21 @@ public:
      *
      * \param filename The database file to be used.
      * \param rrclass Which class of data it should serve (while the database
-     *     can contain multiple classes of data, single connection can provide
-     *     only one class).
+     *     file can contain multiple classes of data, single database can
+     *     provide only one class).
      */
-    SQLite3Connection(const std::string& filename,
-                      const isc::dns::RRClass& rrclass);
+    SQLite3Database(const std::string& filename,
+                    const isc::dns::RRClass& rrclass);
     /**
      * \brief Destructor
      *
      * Closes the database.
      */
-    ~SQLite3Connection();
+    ~SQLite3Database();
     /**
      * \brief Look up a zone
      *
-     * This implements the getZone from DatabaseConnection and looks up a zone
+     * This implements the getZone from DatabaseAccessor and looks up a zone
      * in the data. It looks for a zone with the exact given origin and class
      * passed to the constructor.
      *

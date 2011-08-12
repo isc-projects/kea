@@ -78,6 +78,6 @@ message, either in the message parser, or while trying to extract data
 from the parsed message. The error is printed, and notify_out will
 treat the response as a bad message, but this does point to a
 programming error, since all exceptions should have been caught
-explicitely. Please file a bug report. Since there was a response,
+explicitly. Please file a bug report. Since there was a response,
 no more notifies will be sent to this server for this notification
 event.
