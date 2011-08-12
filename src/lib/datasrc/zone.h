@@ -27,7 +27,7 @@ namespace datasrc {
 /// a DNS zone as part of data source.
 ///
 /// At the moment this is provided mainly for making the \c ZoneTable class
-/// and the authoritative query logic  testable, and only provides a minimal
+/// and the authoritative query logic testable, and only provides a minimal
 /// set of features.
 /// This is why this class is defined in the same header file, but it may
 /// have to move to a separate header file when we understand what is
@@ -53,9 +53,9 @@ namespace datasrc {
 ///
 /// <b>Note:</b> Unlike some other abstract base classes we don't name the
 /// class beginning with "Abstract".  This is because we want to have
-/// commonly used definitions such as \c Result and \c ZonePtr, and we want
-/// to make them look more intuitive.
-class Zone {
+/// commonly used definitions such as \c Result and \c ZoneFinderPtr, and we
+/// want to make them look more intuitive.
+class ZoneFinder {
 public:
     /// Result codes of the \c find() method.
     ///
@@ -119,10 +119,10 @@ protected:
     ///
     /// This is intentionally defined as \c protected as this base class should
     /// never be instantiated (except as part of a derived class).
-    Zone() {}
+    ZoneFinder() {}
 public:
     /// The destructor.
-    virtual ~Zone() {}
+    virtual ~ZoneFinder() {}
     //@}
 
     ///
@@ -131,10 +131,10 @@ public:
     /// These methods should never throw an exception.
     //@{
     /// Return the origin name of the zone.
-    virtual const isc::dns::Name& getOrigin() const = 0;
+    virtual isc::dns::Name getOrigin() const = 0;
 
     /// Return the RR class of the zone.
-    virtual const isc::dns::RRClass& getClass() const = 0;
+    virtual isc::dns::RRClass getClass() const = 0;
     //@}
 
     ///
@@ -197,15 +197,15 @@ public:
                             const isc::dns::RRType& type,
                             isc::dns::RRsetList* target = NULL,
                             const FindOptions options
-                            = FIND_DEFAULT) const = 0;
+                            = FIND_DEFAULT) = 0;
     //@}
 };
 
-/// \brief A pointer-like type pointing to a \c Zone object.
-typedef boost::shared_ptr<Zone> ZonePtr;
+/// \brief A pointer-like type pointing to a \c ZoneFinder object.
+typedef boost::shared_ptr<ZoneFinder> ZoneFinderPtr;
 
-/// \brief A pointer-like type pointing to a \c Zone object.
-typedef boost::shared_ptr<const Zone> ConstZonePtr;
+/// \brief A pointer-like type pointing to a \c ZoneFinder object.
+typedef boost::shared_ptr<const ZoneFinder> ConstZoneFinderPtr;
 
 }
 }

@@ -78,7 +78,7 @@ specified, it will appear once for each address.
 % RESOLVER_FORWARD_QUERY processing forward query
 This is a debug message indicating that a query received by the resolver
 has passed a set of checks (message is well-formed, it is allowed by the
-ACL, it is a supported opcode etc.) and is being forwarded to upstream
+ACL, it is a supported opcode, etc.) and is being forwarded to upstream
 servers.
 
 % RESOLVER_HEADER_ERROR message received, exception when processing header: %1
@@ -116,7 +116,7 @@ so is returning a REFUSED response to the sender.
 % RESOLVER_NORMAL_QUERY processing normal query
 This is a debug message indicating that the query received by the resolver
 has passed a set of checks (message is well-formed, it is allowed by the
-ACL, it is a supported opcode etc.) and is being processed the resolver.
+ACL, it is a supported opcode, etc.) and is being processed by the resolver.
 
 % RESOLVER_NOTIFY_RECEIVED NOTIFY arrived but server is not authoritative
 The resolver has received a NOTIFY message.  As the server is not

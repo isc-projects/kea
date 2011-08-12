@@ -57,6 +57,8 @@ EXTRA_DIST += rdata/in_1/a_1.cc
 EXTRA_DIST += rdata/in_1/a_1.h
 EXTRA_DIST += rdata/in_1/aaaa_28.cc
 EXTRA_DIST += rdata/in_1/aaaa_28.h
+EXTRA_DIST += rdata/in_1/srv_33.cc
+EXTRA_DIST += rdata/in_1/srv_33.h
 #EXTRA_DIST += rdata/template.cc
 #EXTRA_DIST += rdata/template.h
 
