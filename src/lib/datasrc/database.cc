@@ -275,18 +275,23 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
 
     if (!result_rrset) {
         if (records_found) {
-            logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FOUND_NXRRSET)
-                        .arg(name).arg(getClass()).arg(type);
+            logger.debug(DBG_TRACE_DETAILED,
+                         DATASRC_DATABASE_FOUND_NXRRSET)
+                        .arg(database_->getDBName()).arg(name)
+                        .arg(getClass()).arg(type);
             result_status = NXRRSET;
         } else {
-            logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FOUND_NXDOMAIN)
-                        .arg(name).arg(getClass()).arg(type);
+            logger.debug(DBG_TRACE_DETAILED,
+                         DATASRC_DATABASE_FOUND_NXDOMAIN)
+                        .arg(database_->getDBName()).arg(name)
+                        .arg(getClass()).arg(type);
             result_status = NXDOMAIN;
         }
     } else {
         sig_store.appendSignatures(result_rrset);
         logger.debug(DBG_TRACE_DETAILED,
-                    DATASRC_DATABASE_FOUND_RRSET).arg(*result_rrset);
+                     DATASRC_DATABASE_FOUND_RRSET)
+                    .arg(database_->getDBName()).arg(*result_rrset);
     }
     return (FindResult(result_status, result_rrset));
 }
