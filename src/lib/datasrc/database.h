@@ -15,6 +15,8 @@
 #ifndef __DATABASE_DATASRC_H
 #define __DATABASE_DATASRC_H
 
+#include <boost/scoped_ptr.hpp>
+
 #include <datasrc/client.h>
 
 namespace isc {
@@ -52,6 +54,7 @@ public:
      * classes in polymorphic way.
      */
     virtual ~DatabaseAccessor() { }
+
     /**
      * \brief Retrieve a zone identifier
      *
@@ -146,7 +149,46 @@ public:
         RDATA_COLUMN = 3    ///< Full text representation of the record's RDATA
     };
 
-    /// The number of fields the columns array passed to getNextRecord should have
+    /// TBD
+    virtual std::pair<bool, int> startUpdateZone(const std::string& zone_name,
+                                                 bool replace) = 0;
+
+    /// TBD
+    virtual void commitUpdateZone() = 0;
+
+    /// TBD
+    virtual void rollbackUpdateZone() = 0;
+
+    /// TBD
+    /// This is "dumb"; doesn't inspect the content of columns.
+    /// The zone is the one specified in startUpdateZone().
+    virtual void addRecordToZone(const std::vector<std::string>& columns) = 0;
+
+    /// TBD
+    ///
+    /// note: in dynamic update or IXFR, TTL may also be specified, but
+    /// we intentionally ignore that in this interface, because it's not
+    /// guaranteed that all records have the same TTL (unlike the RRset
+    /// assumption) and there can even be multiple records for the same name,
+    /// type and rdata with different TTLs.  If we only delete one of them,
+    /// subsequent lookup will still return a positive answer, which would
+    /// be confusing.  It's a higher layer's responsibility to check if
+    /// there is at least one record in the database that has the given
+    /// TTL.
+    virtual void deleteRecordInZone(
+        const std::vector<std::string>& params) = 0;
+
+    /// TBD
+    /// Compliant database should support the following columns:
+    /// name, rname, ttl, rdtype, sigtype, rdata
+    /// (even though their internal representation may be different).
+    static const size_t ADD_COLUMN_COUNT = 6;
+
+    /// TBD
+    static const size_t DEL_PARAM_COUNT = 3;
+
+    /// The number of fields the columns array passed to getNextRecord should
+    /// have.
     static const size_t COLUMN_COUNT = 4;
 
     /**
@@ -291,6 +333,18 @@ public:
         boost::shared_ptr<DatabaseAccessor> database_;
         const int zone_id_;
     };
+
+    class Updater : public ZoneUpdater {
+    public:
+        Updater(boost::shared_ptr<DatabaseAccessor> database, int zone_id);
+        virtual ZoneFinder& getFinder();
+
+    private:
+        boost::shared_ptr<DatabaseAccessor> database_;
+        const int zone_id_;
+        boost::scoped_ptr<Finder::Finder> finder_;
+    };
+
     /**
      * \brief Find a zone in the database
      *
@@ -307,6 +361,10 @@ public:
      */
     virtual FindResult findZone(const isc::dns::Name& name) const;
 
+    /// TBD
+    virtual ZoneUpdaterPtr startUpdateZone(const isc::dns::Name& name,
+                                           bool replace) const;
+
 private:
     /// \brief Our database.
     const boost::shared_ptr<DatabaseAccessor> database_;
@@ -315,4 +373,8 @@ private:
 }
 }
 
-#endif
+#endif  // __DATABASE_DATASRC_H
+
+// Local Variables:
+// mode: c++
+// End:

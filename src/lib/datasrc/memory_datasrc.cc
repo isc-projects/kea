@@ -17,6 +17,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 
+#include <exceptions/exceptions.h>
+
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <dns/rrsetlist.h>
@@ -702,6 +704,13 @@ InMemoryClient::findZone(const isc::dns::Name& name) const {
     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_FIND_ZONE).arg(name);
     return (FindResult(impl_->zone_table.findZone(name).code,
                        impl_->zone_table.findZone(name).zone));
+}
+
+ZoneUpdaterPtr
+InMemoryClient::startUpdateZone(const isc::dns::Name&, bool) const {
+    // TODO: once #1067 is merged, we should replace Unexpected with
+    // NotImplemented.
+    isc_throw(isc::Unexpected, "Update attempt on in memory data source");
 }
 } // end of namespace datasrc
 } // end of namespace dns

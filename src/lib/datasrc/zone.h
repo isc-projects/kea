@@ -207,8 +207,18 @@ typedef boost::shared_ptr<ZoneFinder> ZoneFinderPtr;
 /// \brief A pointer-like type pointing to a \c ZoneFinder object.
 typedef boost::shared_ptr<const ZoneFinder> ConstZoneFinderPtr;
 
-}
-}
+/// The base class to make updates to a single zone.
+class ZoneUpdater {
+public:
+    /// TBD
+    virtual ZoneFinder& getFinder() = 0;
+};
+
+/// \brief A pointer-like type pointing to a \c ZoneUpdater object.
+typedef boost::shared_ptr<ZoneUpdater> ZoneUpdaterPtr;
+
+} // end of datasrc
+} // end of isc
 
 #endif  // __ZONE_H
 

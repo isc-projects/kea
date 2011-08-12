@@ -27,6 +27,7 @@
 
 #include <boost/foreach.hpp>
 
+using boost::shared_ptr;
 using isc::dns::Name;
 
 namespace isc {
@@ -308,5 +309,33 @@ DatabaseClient::Finder::getClass() const {
     return isc::dns::RRClass::IN();
 }
 
+ZoneUpdaterPtr
+DatabaseClient::startUpdateZone(const isc::dns::Name& name,
+                                bool replace) const
+{
+    // TODO: create a dedicated accessor
+
+    const std::pair<bool, int> zone(database_->startUpdateZone(name.toText(),
+                                                               replace));
+    if (!zone.first) {
+        return (ZoneUpdaterPtr());
+    }
+
+    // At this moment this one cannot anything except giving a finder.
+    return (ZoneUpdaterPtr(new DatabaseClient::Updater(database_,
+                                                       zone.second)));
+}
+
+DatabaseClient::Updater::Updater(shared_ptr<DatabaseAccessor> database,
+                                 int zone_id) :
+    database_(database), zone_id_(zone_id),
+    finder_(new Finder::Finder(database_, zone_id_))
+{
+}
+
+ZoneFinder&
+DatabaseClient::Updater::getFinder() {
+    return (*finder_);
+}
 }
 }
