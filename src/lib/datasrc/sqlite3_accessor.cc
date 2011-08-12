@@ -290,7 +290,7 @@ SQLite3Database::getZone(const isc::dns::Name& name) const {
     // and prepare it (bind the parameters to it)
     sqlite3_reset(dbparameters_->q_zone_);
     rc = sqlite3_bind_text(dbparameters_->q_zone_, 1, name.toText().c_str(),
-                           -1, SQLITE_STATIC);
+                           -1, SQLITE_TRANSIENT);
     if (rc != SQLITE_OK) {
         isc_throw(SQLite3Error, "Could not bind " << name <<
                   " to SQL statement (zone)");
