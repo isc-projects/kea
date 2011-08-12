@@ -61,22 +61,14 @@ usage() {
 int
 main(int argc, char* argv[]) {
     int ch;
-    const char* uid = NULL;
-    bool cache = true;
 
-    while ((ch = getopt(argc, argv, ":nu:v")) != -1) {
+    while ((ch = getopt(argc, argv, ":v")) != -1) {
         switch (ch) {
-        case 'n':
-            cache = false;
-            break;
-        case 'u':
-            uid = optarg;
-            break;
         case 'v':
             verbose_mode = true;
             isc::log::denabled = true;
             break;
-        case '?':
+        case ':':
         default:
             usage();
         }
