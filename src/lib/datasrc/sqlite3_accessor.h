@@ -88,6 +88,60 @@ public:
      *     element and the zone id in the second if it was.
      */
     virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const;
+
+    /**
+     * \brief Start a new search for the given name in the given zone.
+     *
+     * This implements the searchForRecords from DatabaseConnection.
+     * This particular implementation does not raise DataSourceError.
+     *
+     * \exception DataSourceError when sqlite3_bind_int() or
+     *                            sqlite3_bind_text() fails
+     *
+     * \param zone_id The zone to seach in, as returned by getZone()
+     * \param name The name to find records for
+     */
+    virtual void searchForRecords(int zone_id, const std::string& name);
+
+    /**
+     * \brief Retrieve the next record from the search started with
+     *        searchForRecords
+     *
+     * This implements the getNextRecord from DatabaseConnection.
+     * See the documentation there for more information.
+     *
+     * If this method raises an exception, the contents of columns are undefined.
+     *
+     * \exception DataSourceError if there is an error returned by sqlite_step()
+     *                            When this exception is raised, the current
+     *                            search as initialized by searchForRecords() is
+     *                            NOT reset, and the caller is expected to take
+     *                            care of that.
+     * \param columns This vector will be cleared, and the fields of the record will
+     *                be appended here as strings (in the order rdtype, ttl, sigtype,
+     *                and rdata). If there was no data (i.e. if this call returns
+     *                false), the vector is untouched.
+     * \return true if there was a next record, false if there was not
+     */
+    virtual bool getNextRecord(std::string columns[], size_t column_count);
+
+    /**
+     * \brief Resets any state created by searchForRecords
+     *
+     * This implements the resetSearch from DatabaseConnection.
+     * See the documentation there for more information.
+     *
+     * This function never throws.
+     */
+    virtual void resetSearch();
+
+    /// The SQLite3 implementation of this method returns a string starting
+    /// with a fixed prefix of "sqlite3_" followed by the DB file name
+    /// removing any path name.  For example, for the DB file
+    /// /somewhere/in/the/system/bind10.sqlite3, this method will return
+    /// "sqlite3_bind10.sqlite3".
+    virtual const std::string& getDBName() const { return (database_name_); }
+
 private:
     /// \brief Private database data
     SQLite3Parameters* dbparameters_;
@@ -97,6 +151,7 @@ private:
     void open(const std::string& filename);
     /// \brief Closes the database
     void close();
+    const std::string database_name_;
 };
 
 }
