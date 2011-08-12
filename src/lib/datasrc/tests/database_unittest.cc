@@ -319,7 +319,9 @@ TEST_F(DatabaseClientTest, superZone) {
 }
 
 TEST_F(DatabaseClientTest, noAccessorException) {
-    EXPECT_THROW(DatabaseClient(shared_ptr<DatabaseAccessor>()),
+    // We need a dummy variable here; some compiler would regard it a mere
+    // declaration instead of an instantiation and make the test fail.
+    EXPECT_THROW(DatabaseClient dummy((shared_ptr<DatabaseAccessor>())),
                  isc::InvalidParameter);
 }
 
