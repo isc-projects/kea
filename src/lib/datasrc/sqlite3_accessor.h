@@ -135,6 +135,30 @@ public:
      */
     virtual void resetSearch();
 
+    /// TBD
+    /// This cannot be nested.
+    virtual std::pair<bool, int> startUpdateZone(const std::string& zone_name,
+                                                 bool replace);
+
+    /// TBD
+    /// Note: we are quite impatient here: it's quite possible that the COMMIT
+    /// fails due to other process performing SELECT on the same database
+    /// (consider the case where COMMIT is done by xfrin or dynamic update
+    /// server while an authoritative server is busy reading the DB).
+    /// In a future version we should probably need to introduce some retry
+    /// attempt and/or increase timeout before giving up the COMMIT, even
+    /// if it still doesn't guarantee 100% success.
+    virtual void commitUpdateZone();
+
+    /// TBD
+    virtual void rollbackUpdateZone();
+
+    /// TBD
+    virtual void addRecordToZone(const std::vector<std::string>& columns);
+
+    /// TBD
+    virtual void deleteRecordInZone(const std::vector<std::string>& params);
+
     /// The SQLite3 implementation of this method returns a string starting
     /// with a fixed prefix of "sqlite3_" followed by the DB file name
     /// removing any path name.  For example, for the DB file
@@ -143,6 +167,11 @@ public:
     virtual const std::string& getDBName() const { return (database_name_); }
 
 private:
+    // same as the public version except it takes name as a string
+    // (actually this is the intended interface.  this should replace the
+    // current public version).
+    std::pair<bool, int> getZone(const std::string& name) const;
+
     /// \brief Private database data
     SQLite3Parameters* dbparameters_;
     /// \brief The class for which the queries are done
@@ -157,4 +186,8 @@ private:
 }
 }
 
-#endif
+#endif  // __DATASRC_SQLITE3_CONNECTION_H
+
+// Local Variables:
+// mode: c++
+// End:
