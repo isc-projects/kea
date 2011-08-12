@@ -370,14 +370,17 @@ doFindTest(shared_ptr<DatabaseClient::Finder> finder,
            const isc::dns::RRTTL expected_ttl,
            ZoneFinder::Result expected_result,
            const std::vector<std::string>& expected_rdatas,
-           const std::vector<std::string>& expected_sig_rdatas)
+           const std::vector<std::string>& expected_sig_rdatas,
+           const isc::dns::Name& expected_name = isc::dns::Name::ROOT_NAME())
 {
+    SCOPED_TRACE("doFindTest " + name.toText() + " " + type.toText());
     ZoneFinder::FindResult result =
         finder->find(name, type, NULL, ZoneFinder::FIND_DEFAULT);
     ASSERT_EQ(expected_result, result.code) << name << " " << type;
     if (expected_rdatas.size() > 0) {
-        checkRRset(result.rrset, name, finder->getClass(),
-                   expected_type, expected_ttl, expected_rdatas);
+        checkRRset(result.rrset, expected_name != Name(".") ? expected_name :
+                   name, finder->getClass(), expected_type, expected_ttl,
+                   expected_rdatas);
 
         if (expected_sig_rdatas.size() > 0) {
             checkRRset(result.rrset->getRRsig(), name,
@@ -709,12 +712,12 @@ TEST_F(DatabaseClientTest, find) {
     doFindTest(finder, isc::dns::Name("ns.delegation.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::NS(),
                isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas,
-               expected_sig_rdatas);
+               expected_sig_rdatas, isc::dns::Name("delegation.example.org."));
     EXPECT_FALSE(current_database_->searchRunning());
     doFindTest(finder, isc::dns::Name("ns.delegation.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::NS(),
                isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas,
-               expected_sig_rdatas);
+               expected_sig_rdatas, isc::dns::Name("delegation.example.org."));
     EXPECT_FALSE(current_database_->searchRunning());
 
     // Even when we check directly at the delegation point, we should get
@@ -738,12 +741,12 @@ TEST_F(DatabaseClientTest, find) {
     doFindTest(finder, isc::dns::Name("below.dname.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::DNAME(),
                isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas,
-               expected_sig_rdatas);
+               expected_sig_rdatas, isc::dns::Name("dname.example.org."));
     EXPECT_FALSE(current_database_->searchRunning());
     doFindTest(finder, isc::dns::Name("below.dname.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::DNAME(),
                isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas,
-               expected_sig_rdatas);
+               expected_sig_rdatas, isc::dns::Name("dname.example.org."));
     EXPECT_FALSE(current_database_->searchRunning());
 
     // But we don't delegate at DNAME point

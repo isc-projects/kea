@@ -164,7 +164,9 @@ private:
 
 std::pair<bool, isc::dns::RRsetPtr>
 DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
-                                 const isc::dns::RRType& type)
+                                 const isc::dns::RRType* type,
+                                 bool want_cname, bool want_dname,
+                                 bool want_ns)
 {
     RRsigStore sig_store;
     database_->searchForRecords(zone_id_, name.toText());
@@ -194,21 +196,46 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
             // of the 'type covered' field in the RRSIG Rdata).
             //cur_sigtype(columns[SIGTYPE_COLUMN]);
 
-            if (cur_type == type) {
+            if (type != NULL && cur_type == *type) {
                 if (result_rrset &&
                     result_rrset->getType() == isc::dns::RRType::CNAME()) {
+                    isc_throw(DataSourceError, "CNAME found but it is not "
+                              "the only record for " + name.toText());
+                } else if (result_rrset && want_ns &&
+                           result_rrset->getType() == isc::dns::RRType::NS()) {
+                    // In case there's a NS, we should find the delegation, not
+                    // the data
+                    continue;
+                }
+                addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
+                            columns[DatabaseAccessor::RDATA_COLUMN],
+                            *database_);
+            } else if (want_cname && cur_type == isc::dns::RRType::CNAME()) {
+                // There should be no other data, so result_rrset should
+                // be empty.
+                if (result_rrset) {
                     isc_throw(DataSourceError, "CNAME found but it is not "
                               "the only record for " + name.toText());
                 }
                 addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
                             columns[DatabaseAccessor::RDATA_COLUMN],
                             *database_);
-            } else if (cur_type == isc::dns::RRType::CNAME()) {
-                // There should be no other data, so result_rrset should
-                // be empty.
-                if (result_rrset) {
-                    isc_throw(DataSourceError, "CNAME found but it is not "
-                              "the only record for " + name.toText());
+            } else if (want_ns && cur_type == isc::dns::RRType::NS()) {
+                if (result_rrset &&
+                    // In case we already found some data here, we should
+                    // replace it with the NS, we should delegate
+                    result_rrset->getType() != isc::dns::RRType::NS()) {
+                    result_rrset = isc::dns::RRsetPtr();
+                }
+                addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
+                            columns[DatabaseAccessor::RDATA_COLUMN],
+                            *database_);
+            } else if (want_dname && cur_type == isc::dns::RRType::DNAME()) {
+                // There should be max one RR of DNAME present
+                if (result_rrset &&
+                    result_rrset->getType() == isc::dns::RRType::DNAME()) {
+                    isc_throw(DataSourceError, "DNAME with multiple RRs in " +
+                              name.toText());
                 }
                 addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
                             columns[DatabaseAccessor::RDATA_COLUMN],
@@ -256,19 +283,51 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     bool records_found = false;
     isc::dns::RRsetPtr result_rrset;
     ZoneFinder::Result result_status = SUCCESS;
+    std::pair<bool, isc::dns::RRsetPtr> found;
     logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
         .arg(database_->getDBName()).arg(name).arg(type);
 
     try {
         // First, do we have any kind of delegation (NS/DNAME) here?
+        Name origin(getOrigin());
+        size_t originLabelCount(origin.getLabelCount());
+        size_t currentLabelCount(name.getLabelCount());
+        // This is how many labels we remove to get origin
+        size_t removeLabels(currentLabelCount - originLabelCount);
+        // Now go trough all superdomains from origin down
+        for (int i(removeLabels); i > 0; -- i) {
+            Name superdomain(name.split(i));
+            // Look if there's NS or DNAME (but ignore the NS in origin)
+            found = getRRset(superdomain, NULL, false, true,
+                             i != removeLabels);
+            if (found.second) {
+                // We found something redirecting somewhere else
+                // (it can be only NS or DNAME here)
+                result_rrset = found.second;
+                if (result_rrset->getType() == isc::dns::RRType::NS()) {
+                    result_status = DELEGATION;
+                } else {
+                    result_status = DNAME;
+                }
+                // Don't search more
+                break;
+            }
+        }
 
-        // Try getting the final result and extract it
-        std::pair<bool, isc::dns::RRsetPtr> found(getRRset(name, type));
-        records_found = found.first;
-        result_rrset = found.second;
-        if (result_rrset && type != isc::dns::RRType::CNAME() &&
-            result_rrset->getType() == isc::dns::RRType::CNAME()) {
-            result_status = CNAME;
+        if (!result_rrset) { // Only if we didn't find a redirect already
+            // Try getting the final result and extract it
+            // It is special if there's a CNAME or NS, DNAME is ignored here
+            // And we don't consider the NS in origin
+            found = getRRset(name, &type, true, false, name != origin);
+            records_found = found.first;
+            result_rrset = found.second;
+            if (result_rrset && type != isc::dns::RRType::NS() &&
+                result_rrset->getType() == isc::dns::RRType::NS()) {
+                result_status = DELEGATION;
+            } else if (result_rrset && type != isc::dns::RRType::CNAME() &&
+                       result_rrset->getType() == isc::dns::RRType::CNAME()) {
+                result_status = CNAME;
+            }
         }
     } catch (const DataSourceError& dse) {
         logger.error(DATASRC_DATABASE_FIND_ERROR)
