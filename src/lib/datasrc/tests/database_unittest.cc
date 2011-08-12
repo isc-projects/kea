@@ -31,14 +31,21 @@ using namespace isc::datasrc;
 using namespace std;
 using namespace boost;
 using isc::dns::Name;
+using isc::dns::RRType;
+using isc::dns::RRTTL;
 
 namespace {
+
+const int READONLY_ZONE_ID = 42;
+const int WRITABLE_ZONE_ID = 4200;
 
 /*
  * A virtual database database that pretends it contains single zone --
  * example.org.
  */
 class MockAccessor : public DatabaseAccessor {
+    typedef std::map<std::string, std::vector< std::vector<std::string> > >
+    RECORDS;
 public:
     MockAccessor() : search_running_(false),
                        database_name_("mock_database")
@@ -46,9 +53,12 @@ public:
         fillData();
     }
 
-    virtual std::pair<bool, int> getZone(const Name& name) const {
-        if (name == Name("example.org")) {
-            return (std::pair<bool, int>(true, 42));
+    virtual pair<bool, int> getZone(const Name& name) const {
+        return (getZone(name.toText()));
+    }
+    pair<bool, int> getZone(const string& name) const {
+        if (name == "example.org.") {
+            return (std::pair<bool, int>(true, READONLY_ZONE_ID));
         } else {
             return (std::pair<bool, int>(false, 0));
         }
@@ -72,16 +82,13 @@ public:
         // we're not aiming for efficiency in this test, simply
         // copy the relevant vector from records
         cur_record = 0;
-        if (zone_id == 42) {
-            if (records.count(name) > 0) {
-                cur_name = records.find(name)->second;
-            } else {
-                cur_name.clear();
-            }
+        const RECORDS& cur_records = getRecords(zone_id);
+        if (cur_records.count(name) > 0) {
+            cur_name = cur_records.find(name)->second;
         } else {
             cur_name.clear();
         }
-    };
+    }
 
     virtual bool getNextRecord(std::string columns[], size_t column_count) {
         if (searched_name_ == "dsexception.in.getnext.") {
@@ -119,7 +126,10 @@ public:
         return (database_name_);
     }
 private:
-    std::map<std::string, std::vector< std::vector<std::string> > > records;
+    RECORDS readonly_records;
+    RECORDS update_records;
+    RECORDS empty_records;
+
     // used as internal index for getNextRecord()
     size_t cur_record;
     // used as temporary storage after searchForRecord() and during
@@ -136,6 +146,15 @@ private:
     std::string searched_name_;
 
     const std::string database_name_;
+
+    const RECORDS& getRecords(int zone_id) const {
+        if (zone_id == READONLY_ZONE_ID) {
+            return (readonly_records);
+        } else if (zone_id == WRITABLE_ZONE_ID) {
+            return (update_records);
+        }
+        return (empty_records);
+    }
 
     // Adds one record to the current name in the database
     // The actual data will not be added to 'records' until
@@ -156,8 +175,8 @@ private:
     // to the actual fake database. This will clear cur_name,
     // so we can immediately start adding new records.
     void addCurName(const std::string& name) {
-        ASSERT_EQ(0, records.count(name));
-        records[name] = cur_name;
+        ASSERT_EQ(0, readonly_records.count(name));
+        readonly_records[name] = cur_name;
         cur_name.clear();
     }
 
@@ -264,10 +283,34 @@ private:
         addRecord("RRSIG", "3600", "TXT", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
         addCurName("badsigtype.example.org.");
     }
+
+    virtual pair<bool, int> startUpdateZone(const std::string& zone_name,
+                                            bool replace)
+    {
+        const pair<bool, int> zone_info = getZone(zone_name);
+        if (!zone_info.first) {
+            return (pair<bool, int>(false, 0));
+        }
+
+        // Prepare the record set for update.  If replacing the existing one,
+        // we use an empty set; otherwise we use a writable copy of the
+        // original.
+        if (replace) {
+            update_records.clear();
+        } else {
+            update_records = readonly_records;
+        }
+
+        return (pair<bool, int>(true, WRITABLE_ZONE_ID));
+    }
+    virtual void commitUpdateZone() {}
+    virtual void rollbackUpdateZone() {}
+    virtual void addRecordToZone(const vector<string>&) {}
+    virtual void deleteRecordInZone(const vector<string>&) {}
 };
 
 class DatabaseClientTest : public ::testing::Test {
-public:
+protected:
     DatabaseClientTest() {
         createClient();
     }
@@ -285,6 +328,10 @@ public:
     shared_ptr<DatabaseClient> client_;
     const std::string database_name_;
 
+    const std::vector<std::string> empty_rdatas; // for NXRRSET/NXDOMAIN
+    std::vector<std::string> expected_rdatas;
+    std::vector<std::string> expected_sig_rdatas;
+
     /**
      * Check the zone finder is a valid one and references the zone ID and
      * database available here.
@@ -295,7 +342,7 @@ public:
             dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
         ASSERT_NE(shared_ptr<DatabaseClient::Finder>(), finder) <<
             "Wrong type of finder";
-        EXPECT_EQ(42, finder->zone_id());
+        EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
         EXPECT_EQ(current_database_, &finder->database());
     }
 };
@@ -325,6 +372,17 @@ TEST_F(DatabaseClientTest, noAccessorException) {
                  isc::InvalidParameter);
 }
 
+TEST_F(DatabaseClientTest, startUpdate) {
+    // startUpdate will succeed only when there's an exact match zone.
+
+    EXPECT_EQ(ZoneUpdaterPtr(),
+              client_->startUpdateZone(Name("example.com"), false));
+    EXPECT_NE(ZoneUpdaterPtr(),
+              client_->startUpdateZone(Name("example.org"), false));
+    EXPECT_EQ(ZoneUpdaterPtr(),
+              client_->startUpdateZone(Name("sub.example.org"), false));
+}
+
 namespace {
 // checks if the given rrset matches the
 // given name, class, type and rdatas
@@ -346,7 +404,7 @@ checkRRset(isc::dns::ConstRRsetPtr rrset,
 }
 
 void
-doFindTest(shared_ptr<DatabaseClient::Finder> finder,
+doFindTest(ZoneFinder& finder,
            const isc::dns::Name& name,
            const isc::dns::RRType& type,
            const isc::dns::RRType& expected_type,
@@ -356,15 +414,15 @@ doFindTest(shared_ptr<DatabaseClient::Finder> finder,
            const std::vector<std::string>& expected_sig_rdatas)
 {
     ZoneFinder::FindResult result =
-        finder->find(name, type, NULL, ZoneFinder::FIND_DEFAULT);
+        finder.find(name, type, NULL, ZoneFinder::FIND_DEFAULT);
     ASSERT_EQ(expected_result, result.code) << name << " " << type;
     if (expected_rdatas.size() > 0) {
-        checkRRset(result.rrset, name, finder->getClass(),
+        checkRRset(result.rrset, name, finder.getClass(),
                    expected_type, expected_ttl, expected_rdatas);
 
         if (expected_sig_rdatas.size() > 0) {
             checkRRset(result.rrset->getRRsig(), name,
-                       finder->getClass(), isc::dns::RRType::RRSIG(),
+                       finder.getClass(), isc::dns::RRType::RRSIG(),
                        expected_ttl, expected_sig_rdatas);
         } else {
             EXPECT_EQ(isc::dns::RRsetPtr(), result.rrset->getRRsig());
@@ -380,15 +438,13 @@ TEST_F(DatabaseClientTest, find) {
     ASSERT_EQ(result::SUCCESS, zone.code);
     shared_ptr<DatabaseClient::Finder> finder(
         dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
-    EXPECT_EQ(42, finder->zone_id());
+    EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
     EXPECT_FALSE(current_database_->searchRunning());
-    std::vector<std::string> expected_rdatas;
-    std::vector<std::string> expected_sig_rdatas;
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
     expected_rdatas.push_back("192.0.2.1");
-    doFindTest(finder, isc::dns::Name("www.example.org."),
+    doFindTest(*finder, isc::dns::Name("www.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
@@ -399,7 +455,7 @@ TEST_F(DatabaseClientTest, find) {
     expected_sig_rdatas.clear();
     expected_rdatas.push_back("192.0.2.1");
     expected_rdatas.push_back("192.0.2.2");
-    doFindTest(finder, isc::dns::Name("www2.example.org."),
+    doFindTest(*finder, isc::dns::Name("www2.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
@@ -410,7 +466,7 @@ TEST_F(DatabaseClientTest, find) {
     expected_sig_rdatas.clear();
     expected_rdatas.push_back("2001:db8::1");
     expected_rdatas.push_back("2001:db8::2");
-    doFindTest(finder, isc::dns::Name("www.example.org."),
+    doFindTest(*finder, isc::dns::Name("www.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
@@ -419,7 +475,7 @@ TEST_F(DatabaseClientTest, find) {
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
-    doFindTest(finder, isc::dns::Name("www.example.org."),
+    doFindTest(*finder, isc::dns::Name("www.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
                isc::dns::RRTTL(3600),
                ZoneFinder::NXRRSET,
@@ -429,7 +485,7 @@ TEST_F(DatabaseClientTest, find) {
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
     expected_rdatas.push_back("www.example.org.");
-    doFindTest(finder, isc::dns::Name("cname.example.org."),
+    doFindTest(*finder, isc::dns::Name("cname.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::CNAME(),
                isc::dns::RRTTL(3600),
                ZoneFinder::CNAME,
@@ -439,7 +495,7 @@ TEST_F(DatabaseClientTest, find) {
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
     expected_rdatas.push_back("www.example.org.");
-    doFindTest(finder, isc::dns::Name("cname.example.org."),
+    doFindTest(*finder, isc::dns::Name("cname.example.org."),
                isc::dns::RRType::CNAME(), isc::dns::RRType::CNAME(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
@@ -448,7 +504,7 @@ TEST_F(DatabaseClientTest, find) {
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
-    doFindTest(finder, isc::dns::Name("doesnotexist.example.org."),
+    doFindTest(*finder, isc::dns::Name("doesnotexist.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600),
                ZoneFinder::NXDOMAIN,
@@ -460,7 +516,7 @@ TEST_F(DatabaseClientTest, find) {
     expected_rdatas.push_back("192.0.2.1");
     expected_sig_rdatas.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
     expected_sig_rdatas.push_back("A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE");
-    doFindTest(finder, isc::dns::Name("signed1.example.org."),
+    doFindTest(*finder, isc::dns::Name("signed1.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
@@ -472,7 +528,7 @@ TEST_F(DatabaseClientTest, find) {
     expected_rdatas.push_back("2001:db8::1");
     expected_rdatas.push_back("2001:db8::2");
     expected_sig_rdatas.push_back("AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-    doFindTest(finder, isc::dns::Name("signed1.example.org."),
+    doFindTest(*finder, isc::dns::Name("signed1.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
@@ -481,7 +537,7 @@ TEST_F(DatabaseClientTest, find) {
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
-    doFindTest(finder, isc::dns::Name("signed1.example.org."),
+    doFindTest(*finder, isc::dns::Name("signed1.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
                isc::dns::RRTTL(3600),
                ZoneFinder::NXRRSET,
@@ -492,7 +548,7 @@ TEST_F(DatabaseClientTest, find) {
     expected_sig_rdatas.clear();
     expected_rdatas.push_back("www.example.org.");
     expected_sig_rdatas.push_back("CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-    doFindTest(finder, isc::dns::Name("signedcname1.example.org."),
+    doFindTest(*finder, isc::dns::Name("signedcname1.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::CNAME(),
                isc::dns::RRTTL(3600),
                ZoneFinder::CNAME,
@@ -504,7 +560,7 @@ TEST_F(DatabaseClientTest, find) {
     expected_rdatas.push_back("192.0.2.1");
     expected_sig_rdatas.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
     expected_sig_rdatas.push_back("A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE");
-    doFindTest(finder, isc::dns::Name("signed2.example.org."),
+    doFindTest(*finder, isc::dns::Name("signed2.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
@@ -516,7 +572,7 @@ TEST_F(DatabaseClientTest, find) {
     expected_rdatas.push_back("2001:db8::2");
     expected_rdatas.push_back("2001:db8::1");
     expected_sig_rdatas.push_back("AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-    doFindTest(finder, isc::dns::Name("signed2.example.org."),
+    doFindTest(*finder, isc::dns::Name("signed2.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
@@ -525,7 +581,7 @@ TEST_F(DatabaseClientTest, find) {
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
-    doFindTest(finder, isc::dns::Name("signed2.example.org."),
+    doFindTest(*finder, isc::dns::Name("signed2.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
                isc::dns::RRTTL(3600),
                ZoneFinder::NXRRSET,
@@ -536,7 +592,7 @@ TEST_F(DatabaseClientTest, find) {
     expected_sig_rdatas.clear();
     expected_rdatas.push_back("www.example.org.");
     expected_sig_rdatas.push_back("CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-    doFindTest(finder, isc::dns::Name("signedcname2.example.org."),
+    doFindTest(*finder, isc::dns::Name("signedcname2.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::CNAME(),
                isc::dns::RRTTL(3600),
                ZoneFinder::CNAME,
@@ -548,7 +604,7 @@ TEST_F(DatabaseClientTest, find) {
     expected_sig_rdatas.clear();
     expected_rdatas.push_back("192.0.2.1");
     expected_sig_rdatas.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-    doFindTest(finder, isc::dns::Name("acnamesig1.example.org."),
+    doFindTest(*finder, isc::dns::Name("acnamesig1.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
@@ -559,7 +615,7 @@ TEST_F(DatabaseClientTest, find) {
     expected_sig_rdatas.clear();
     expected_rdatas.push_back("192.0.2.1");
     expected_sig_rdatas.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-    doFindTest(finder, isc::dns::Name("acnamesig2.example.org."),
+    doFindTest(*finder, isc::dns::Name("acnamesig2.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
@@ -570,7 +626,7 @@ TEST_F(DatabaseClientTest, find) {
     expected_sig_rdatas.clear();
     expected_rdatas.push_back("192.0.2.1");
     expected_sig_rdatas.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-    doFindTest(finder, isc::dns::Name("acnamesig3.example.org."),
+    doFindTest(*finder, isc::dns::Name("acnamesig3.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
@@ -581,7 +637,7 @@ TEST_F(DatabaseClientTest, find) {
     expected_sig_rdatas.clear();
     expected_rdatas.push_back("192.0.2.1");
     expected_rdatas.push_back("192.0.2.2");
-    doFindTest(finder, isc::dns::Name("ttldiff1.example.org."),
+    doFindTest(*finder, isc::dns::Name("ttldiff1.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(360),
                ZoneFinder::SUCCESS,
@@ -592,13 +648,12 @@ TEST_F(DatabaseClientTest, find) {
     expected_sig_rdatas.clear();
     expected_rdatas.push_back("192.0.2.1");
     expected_rdatas.push_back("192.0.2.2");
-    doFindTest(finder, isc::dns::Name("ttldiff2.example.org."),
+    doFindTest(*finder, isc::dns::Name("ttldiff2.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(360),
                ZoneFinder::SUCCESS,
                expected_rdatas, expected_sig_rdatas);
     EXPECT_FALSE(current_database_->searchRunning());
-
 
     EXPECT_THROW(finder->find(isc::dns::Name("badcname1.example.org."),
                                               isc::dns::RRType::A(),
@@ -676,12 +731,38 @@ TEST_F(DatabaseClientTest, find) {
     expected_sig_rdatas.clear();
     expected_rdatas.push_back("192.0.2.1");
     expected_sig_rdatas.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-    doFindTest(finder, isc::dns::Name("badsigtype.example.org."),
+    doFindTest(*finder, isc::dns::Name("badsigtype.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas, expected_sig_rdatas);
     EXPECT_FALSE(current_database_->searchRunning());
+}
+
+TEST_F(DatabaseClientTest, updaterFinder) {
+    ZoneUpdaterPtr updater = client_->startUpdateZone(Name("example.org"),
+                                                      false);
+    ASSERT_TRUE(updater);
+
+    // If this update isn't replacing the zone, the finder should work
+    // just like the normal find() case.
+    EXPECT_EQ(WRITABLE_ZONE_ID, dynamic_cast<DatabaseClient::Finder&>(
+                  updater->getFinder()).zone_id());
+    expected_rdatas.clear();
+    expected_rdatas.push_back("192.0.2.1");
+    doFindTest(updater->getFinder(), Name("www.example.org."),
+               RRType::A(), RRType::A(), RRTTL(3600), ZoneFinder::SUCCESS,
+               expected_rdatas, empty_rdatas);
+
+    // When replacing the zone, the updater's finder shouldn't see anything
+    // in the zone until something is added.
+    updater = client_->startUpdateZone(Name("example.org"), true);
+    ASSERT_TRUE(updater);
+    EXPECT_EQ(WRITABLE_ZONE_ID, dynamic_cast<DatabaseClient::Finder&>(
+                  updater->getFinder()).zone_id());
+    doFindTest(updater->getFinder(), Name("www.example.org."),
+               RRType::A(), RRType::A(), RRTTL(3600), ZoneFinder::NXDOMAIN,
+               empty_rdatas, empty_rdatas);
 }
 
 }
