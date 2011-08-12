@@ -263,6 +263,25 @@ private:
         addRecord("A", "3600", "", "192.0.2.1");
         addRecord("RRSIG", "3600", "TXT", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
         addCurName("badsigtype.example.org.");
+
+        // Data for testing delegation (with NS and DNAME)
+        addRecord("A", "3600", "", "192.0.2.1");
+        addRecord("NS", "3600", "", "ns.example.com.");
+        addRecord("NS", "3600", "", "ns.delegation.example.org.");
+        addCurName("delegation.example.org.");
+        addRecord("A", "3600", "", "192.0.2.1");
+        addCurName("ns.delegation.example.org.");
+
+        addRecord("A", "3600", "", "192.0.2.1");
+        addRecord("DNAME", "3600", "", "dname.example.com.");
+        addCurName("dname.example.org.");
+        addRecord("A", "3600", "", "192.0.2.1");
+        addCurName("below.dname.example.org.");
+
+        // Now double DNAME, to test failure mode
+        addRecord("DNAME", "3600", "", "dname1.example.com.");
+        addRecord("DNAME", "3600", "", "dname2.example.com.");
+        addCurName("baddname.example.org.");
     }
 };
 
@@ -680,6 +699,73 @@ TEST_F(DatabaseClientTest, find) {
                ZoneFinder::SUCCESS,
                expected_rdatas, expected_sig_rdatas);
     EXPECT_FALSE(current_database_->searchRunning());
+
+    // Check when we ask for something below delegation point, we get the NS
+    // (Both when the RRset there exists and doesn't)
+    expected_rdatas.clear();
+    expected_sig_rdatas.clear();
+    expected_rdatas.push_back("ns.example.com.");
+    expected_rdatas.push_back("ns.delegation.example.org.");
+    doFindTest(finder, isc::dns::Name("ns.delegation.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::NS(),
+               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas,
+               expected_sig_rdatas);
+    EXPECT_FALSE(current_database_->searchRunning());
+    doFindTest(finder, isc::dns::Name("ns.delegation.example.org."),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::NS(),
+               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas,
+               expected_sig_rdatas);
+    EXPECT_FALSE(current_database_->searchRunning());
+
+    // Even when we check directly at the delegation point, we should get
+    // the NS (both when the RRset does and doesn't exist in data)
+    doFindTest(finder, isc::dns::Name("delegation.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::NS(),
+               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas,
+               expected_sig_rdatas);
+    EXPECT_FALSE(current_database_->searchRunning());
+    doFindTest(finder, isc::dns::Name("delegation.example.org."),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::NS(),
+               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas,
+               expected_sig_rdatas);
+    EXPECT_FALSE(current_database_->searchRunning());
+
+    // Now test delegation. If it is below the delegation point, we should get
+    // the DNAME (the one with data under DNAME is invalid zone, but we test
+    // the behaviour anyway just to make sure)
+    expected_rdatas.clear();
+    expected_rdatas.push_back("dname.example.com.");
+    doFindTest(finder, isc::dns::Name("below.dname.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::DNAME(),
+               isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas,
+               expected_sig_rdatas);
+    EXPECT_FALSE(current_database_->searchRunning());
+    doFindTest(finder, isc::dns::Name("below.dname.example.org."),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::DNAME(),
+               isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas,
+               expected_sig_rdatas);
+    EXPECT_FALSE(current_database_->searchRunning());
+
+    // But we don't delegate at DNAME point
+    expected_rdatas.clear();
+    expected_rdatas.push_back("192.0.2.1");
+    doFindTest(finder, isc::dns::Name("dname.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas,
+               expected_sig_rdatas);
+    EXPECT_FALSE(current_database_->searchRunning());
+    expected_rdatas.clear();
+    doFindTest(finder, isc::dns::Name("dname.example.org."),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas,
+               expected_sig_rdatas);
+    EXPECT_FALSE(current_database_->searchRunning());
+
+    // This is broken dname, it contains two targets
+    EXPECT_THROW(finder->find(isc::dns::Name("below.baddname.example.org."),
+                              isc::dns::RRType::A(), NULL,
+                              ZoneFinder::FIND_DEFAULT),
+                 DataSourceError);
 }
 
 }
