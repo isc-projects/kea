@@ -26,7 +26,7 @@ import socket
 from isc.net.addr import IPAddr
 import isc.log
 from libutil_io_python import send_fd
-from bind10.sockcreator import Parser, CreatorError, WrappedSocket
+from isc.bind10.sockcreator import Parser, CreatorError, WrappedSocket
 
 class FakeCreator:
     """

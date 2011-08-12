@@ -11,7 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
-#include <datasrc/sqlite3_connection.h>
+#include <datasrc/sqlite3_accessor.h>
+
 #include <datasrc/data_source.h>
 
 #include <dns/rrclass.h>
@@ -43,73 +44,73 @@ std::string SQLITE_DBFILE_NOTEXIST = TEST_DATA_DIR "/nodir/notexist";
 
 // Opening works (the content is tested in different tests)
 TEST(SQLite3Open, common) {
-    EXPECT_NO_THROW(SQLite3Connection conn(SQLITE_DBFILE_EXAMPLE,
-                                           RRClass::IN()));
+    EXPECT_NO_THROW(SQLite3Database db(SQLITE_DBFILE_EXAMPLE,
+                                       RRClass::IN()));
 }
 
 // The file can't be opened
 TEST(SQLite3Open, notExist) {
-    EXPECT_THROW(SQLite3Connection conn(SQLITE_DBFILE_NOTEXIST,
-                                        RRClass::IN()), SQLite3Error);
+    EXPECT_THROW(SQLite3Database db(SQLITE_DBFILE_NOTEXIST,
+                                    RRClass::IN()), SQLite3Error);
 }
 
 // It rejects broken DB
 TEST(SQLite3Open, brokenDB) {
-    EXPECT_THROW(SQLite3Connection conn(SQLITE_DBFILE_BROKENDB,
-                                        RRClass::IN()), SQLite3Error);
+    EXPECT_THROW(SQLite3Database db(SQLITE_DBFILE_BROKENDB,
+                                    RRClass::IN()), SQLite3Error);
 }
 
 // Test we can create the schema on the fly
 TEST(SQLite3Open, memoryDB) {
-    EXPECT_NO_THROW(SQLite3Connection conn(SQLITE_DBFILE_MEMORY,
-                                           RRClass::IN()));
+    EXPECT_NO_THROW(SQLite3Database db(SQLITE_DBFILE_MEMORY,
+                                       RRClass::IN()));
 }
 
-// Test fixture for querying the connection
-class SQLite3Conn : public ::testing::Test {
+// Test fixture for querying the db
+class SQLite3Access : public ::testing::Test {
 public:
-    SQLite3Conn() {
-        initConn(SQLITE_DBFILE_EXAMPLE, RRClass::IN());
+    SQLite3Access() {
+        initAccessor(SQLITE_DBFILE_EXAMPLE, RRClass::IN());
     }
     // So it can be re-created with different data
-    void initConn(const std::string& filename, const RRClass& rrclass) {
-        conn.reset(new SQLite3Connection(filename, rrclass));
+    void initAccessor(const std::string& filename, const RRClass& rrclass) {
+        db.reset(new SQLite3Database(filename, rrclass));
     }
-    // The tested connection
-    boost::scoped_ptr<SQLite3Connection> conn;
+    // The tested dbection
+    boost::scoped_ptr<SQLite3Database> db;
 };
 
 // This zone exists in the data, so it should be found
-TEST_F(SQLite3Conn, getZone) {
-    std::pair<bool, int> result(conn->getZone(Name("example.com")));
+TEST_F(SQLite3Access, getZone) {
+    std::pair<bool, int> result(db->getZone(Name("example.com")));
     EXPECT_TRUE(result.first);
     EXPECT_EQ(1, result.second);
 }
 
 // But it should find only the zone, nothing below it
-TEST_F(SQLite3Conn, subZone) {
-    EXPECT_FALSE(conn->getZone(Name("sub.example.com")).first);
+TEST_F(SQLite3Access, subZone) {
+    EXPECT_FALSE(db->getZone(Name("sub.example.com")).first);
 }
 
 // This zone is not there at all
-TEST_F(SQLite3Conn, noZone) {
-    EXPECT_FALSE(conn->getZone(Name("example.org")).first);
+TEST_F(SQLite3Access, noZone) {
+    EXPECT_FALSE(db->getZone(Name("example.org")).first);
 }
 
 // This zone is there, but in different class
-TEST_F(SQLite3Conn, noClass) {
-    initConn(SQLITE_DBFILE_EXAMPLE, RRClass::CH());
-    EXPECT_FALSE(conn->getZone(Name("example.com")).first);
+TEST_F(SQLite3Access, noClass) {
+    initAccessor(SQLITE_DBFILE_EXAMPLE, RRClass::CH());
+    EXPECT_FALSE(db->getZone(Name("example.com")).first);
 }
 
 TEST(SQLite3Open, getDBNameExample2) {
-    SQLite3Connection conn(SQLITE_DBFILE_EXAMPLE2, RRClass::IN());
-    EXPECT_EQ(SQLITE_DBNAME_EXAMPLE2, conn.getDBName());
+    SQLite3Database db(SQLITE_DBFILE_EXAMPLE2, RRClass::IN());
+    EXPECT_EQ(SQLITE_DBNAME_EXAMPLE2, db.getDBName());
 }
 
 TEST(SQLite3Open, getDBNameExampleROOT) {
-    SQLite3Connection conn(SQLITE_DBFILE_EXAMPLE_ROOT, RRClass::IN());
-    EXPECT_EQ(SQLITE_DBNAME_EXAMPLE_ROOT, conn.getDBName());
+    SQLite3Database db(SQLITE_DBFILE_EXAMPLE_ROOT, RRClass::IN());
+    EXPECT_EQ(SQLITE_DBNAME_EXAMPLE_ROOT, db.getDBName());
 }
 
 // Simple function to cound the number of records for
@@ -127,96 +128,96 @@ checkRecordRow(const std::string columns[],
     EXPECT_EQ(field3, columns[3]);
 }
 
-TEST_F(SQLite3Conn, getRecords) {
-    const std::pair<bool, int> zone_info(conn->getZone(Name("example.com")));
+TEST_F(SQLite3Access, getRecords) {
+    const std::pair<bool, int> zone_info(db->getZone(Name("example.com")));
     ASSERT_TRUE(zone_info.first);
 
     const int zone_id = zone_info.second;
     ASSERT_EQ(1, zone_id);
 
-    const size_t column_count = DatabaseConnection::COLUMN_COUNT;
+    const size_t column_count = DatabaseAccessor::COLUMN_COUNT;
     std::string columns[column_count];
 
     // without search, getNext() should return false
-    EXPECT_FALSE(conn->getNextRecord(columns, column_count));
+    EXPECT_FALSE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "", "", "", "");
 
-    conn->searchForRecords(zone_id, "foo.bar.");
-    EXPECT_FALSE(conn->getNextRecord(columns, column_count));
+    db->searchForRecords(zone_id, "foo.bar.");
+    EXPECT_FALSE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "", "", "", "");
 
-    conn->searchForRecords(zone_id, "");
-    EXPECT_FALSE(conn->getNextRecord(columns, column_count));
+    db->searchForRecords(zone_id, "");
+    EXPECT_FALSE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "", "", "", "");
 
     // Should error on a bad number of columns
-    EXPECT_THROW(conn->getNextRecord(columns, 3), DataSourceError);
-    EXPECT_THROW(conn->getNextRecord(columns, 5), DataSourceError);
+    EXPECT_THROW(db->getNextRecord(columns, 3), DataSourceError);
+    EXPECT_THROW(db->getNextRecord(columns, 5), DataSourceError);
 
     // now try some real searches
-    conn->searchForRecords(zone_id, "foo.example.com.");
-    ASSERT_TRUE(conn->getNextRecord(columns, column_count));
+    db->searchForRecords(zone_id, "foo.example.com.");
+    ASSERT_TRUE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "CNAME", "3600", "",
                    "cnametest.example.org.");
-    ASSERT_TRUE(conn->getNextRecord(columns, column_count));
+    ASSERT_TRUE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "RRSIG", "3600", "CNAME",
                    "CNAME 5 3 3600 20100322084538 20100220084538 33495 "
                    "example.com. FAKEFAKEFAKEFAKE");
-    ASSERT_TRUE(conn->getNextRecord(columns, column_count));
+    ASSERT_TRUE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "NSEC", "7200", "",
                    "mail.example.com. CNAME RRSIG NSEC");
-    ASSERT_TRUE(conn->getNextRecord(columns, column_count));
+    ASSERT_TRUE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "RRSIG", "7200", "NSEC",
                    "NSEC 5 3 7200 20100322084538 20100220084538 33495 "
                    "example.com. FAKEFAKEFAKEFAKE");
-    EXPECT_FALSE(conn->getNextRecord(columns, column_count));
+    EXPECT_FALSE(db->getNextRecord(columns, column_count));
     // with no more records, the array should not have been modified
     checkRecordRow(columns, "RRSIG", "7200", "NSEC",
                    "NSEC 5 3 7200 20100322084538 20100220084538 33495 "
                    "example.com. FAKEFAKEFAKEFAKE");
 
-    conn->searchForRecords(zone_id, "example.com.");
-    ASSERT_TRUE(conn->getNextRecord(columns, column_count));
+    db->searchForRecords(zone_id, "example.com.");
+    ASSERT_TRUE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "SOA", "3600", "",
                    "master.example.com. admin.example.com. "
                    "1234 3600 1800 2419200 7200");
-    ASSERT_TRUE(conn->getNextRecord(columns, column_count));
+    ASSERT_TRUE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "RRSIG", "3600", "SOA",
                    "SOA 5 2 3600 20100322084538 20100220084538 "
                    "33495 example.com. FAKEFAKEFAKEFAKE");
-    ASSERT_TRUE(conn->getNextRecord(columns, column_count));
+    ASSERT_TRUE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "NS", "1200", "", "dns01.example.com.");
-    ASSERT_TRUE(conn->getNextRecord(columns, column_count));
+    ASSERT_TRUE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "NS", "3600", "", "dns02.example.com.");
-    ASSERT_TRUE(conn->getNextRecord(columns, column_count));
+    ASSERT_TRUE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "NS", "1800", "", "dns03.example.com.");
-    ASSERT_TRUE(conn->getNextRecord(columns, column_count));
+    ASSERT_TRUE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "RRSIG", "3600", "NS",
                    "NS 5 2 3600 20100322084538 20100220084538 "
                    "33495 example.com. FAKEFAKEFAKEFAKE");
-    ASSERT_TRUE(conn->getNextRecord(columns, column_count));
+    ASSERT_TRUE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "MX", "3600", "", "10 mail.example.com.");
-    ASSERT_TRUE(conn->getNextRecord(columns, column_count));
+    ASSERT_TRUE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "MX", "3600", "",
                    "20 mail.subzone.example.com.");
-    ASSERT_TRUE(conn->getNextRecord(columns, column_count));
+    ASSERT_TRUE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "RRSIG", "3600", "MX",
                    "MX 5 2 3600 20100322084538 20100220084538 "
                    "33495 example.com. FAKEFAKEFAKEFAKE");
-    ASSERT_TRUE(conn->getNextRecord(columns, column_count));
+    ASSERT_TRUE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "NSEC", "7200", "",
                    "cname-ext.example.com. NS SOA MX RRSIG NSEC DNSKEY");
-    ASSERT_TRUE(conn->getNextRecord(columns, column_count));
+    ASSERT_TRUE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "RRSIG", "7200", "NSEC",
                    "NSEC 5 2 7200 20100322084538 20100220084538 "
                    "33495 example.com. FAKEFAKEFAKEFAKE");
-    ASSERT_TRUE(conn->getNextRecord(columns, column_count));
+    ASSERT_TRUE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "DNSKEY", "3600", "",
                    "256 3 5 AwEAAcOUBllYc1hf7ND9uDy+Yz1BF3sI0m4q NGV7W"
                    "cTD0WEiuV7IjXgHE36fCmS9QsUxSSOV o1I/FMxI2PJVqTYHkX"
                    "FBS7AzLGsQYMU7UjBZ SotBJ6Imt5pXMu+lEDNy8TOUzG3xm7g"
                    "0qcbW YF6qCEfvZoBtAqi5Rk7Mlrqs8agxYyMx");
-    ASSERT_TRUE(conn->getNextRecord(columns, column_count));
+    ASSERT_TRUE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "DNSKEY", "3600", "",
                    "257 3 5 AwEAAe5WFbxdCPq2jZrZhlMj7oJdff3W7syJ tbvzg"
                    "62tRx0gkoCDoBI9DPjlOQG0UAbj+xUV 4HQZJStJaZ+fHU5AwV"
@@ -226,15 +227,15 @@ TEST_F(SQLite3Conn, getRecords) {
                    "fiHAxFHrkY3t3D5J R9Nsl/7fdRmSznwtcSDgLXBoFEYmw6p86"
                    "Acv RyoYNcL1SXjaKVLG5jyU3UR+LcGZT5t/0xGf oIK/aKwEN"
                    "rsjcKZZj660b1M=");
-    ASSERT_TRUE(conn->getNextRecord(columns, column_count));
+    ASSERT_TRUE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "RRSIG", "3600", "DNSKEY",
                    "DNSKEY 5 2 3600 20100322084538 20100220084538 "
                    "4456 example.com. FAKEFAKEFAKEFAKE");
-    ASSERT_TRUE(conn->getNextRecord(columns, column_count));
+    ASSERT_TRUE(db->getNextRecord(columns, column_count));
     checkRecordRow(columns, "RRSIG", "3600", "DNSKEY",
                    "DNSKEY 5 2 3600 20100322084538 20100220084538 "
                    "33495 example.com. FAKEFAKEFAKEFAKE");
-    EXPECT_FALSE(conn->getNextRecord(columns, column_count));
+    EXPECT_FALSE(db->getNextRecord(columns, column_count));
     // getnextrecord returning false should mean array is not altered
     checkRecordRow(columns, "RRSIG", "3600", "DNSKEY",
                    "DNSKEY 5 2 3600 20100322084538 20100220084538 "

@@ -21,7 +21,7 @@ namespace isc {
 namespace datasrc {
 
 /**
- * \brief Abstract connection to database with DNS data
+ * \brief Abstraction of lowlevel database with DNS data
  *
  * This class is defines interface to databases. Each supported database
  * will provide methods for accessing the data stored there in a generic
@@ -39,10 +39,11 @@ namespace datasrc {
  *     be better for that than copy constructor.
  *
  * \note The same application may create multiple connections to the same
- *     database. If the database allows having multiple open queries at one
- *     connection, the connection class may share it.
+ *     database, having multiple instances of this class. If the database
+ *     allows having multiple open queries at one connection, the connection
+ *     class may share it.
  */
-class DatabaseConnection : boost::noncopyable {
+class DatabaseAccessor : boost::noncopyable {
 public:
     /**
      * \brief Destructor
@@ -50,7 +51,7 @@ public:
      * It is empty, but needs a virtual one, since we will use the derived
      * classes in polymorphic way.
      */
-    virtual ~DatabaseConnection() { }
+    virtual ~DatabaseAccessor() { }
     /**
      * \brief Retrieve a zone identifier
      *
@@ -67,7 +68,7 @@ public:
      *     was found. In case it was, the second part is internal zone ID.
      *     This one will be passed to methods finding data in the zone.
      *     It is not required to keep them, in which case whatever might
-     *     be returned - the ID is only passed back to the connection as
+     *     be returned - the ID is only passed back to the database as
      *     an opaque handle.
      */
     virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const = 0;
@@ -168,36 +169,36 @@ public:
  *
  * This class (together with corresponding versions of ZoneFinder,
  * ZoneIterator, etc.) translates high-level data source queries to
- * low-level calls on DatabaseConnection. It calls multiple queries
+ * low-level calls on DatabaseAccessor. It calls multiple queries
  * if necessary and validates data from the database, allowing the
- * DatabaseConnection to be just simple translation to SQL/other
+ * DatabaseAccessor to be just simple translation to SQL/other
  * queries to database.
  *
  * While it is possible to subclass it for specific database in case
  * of special needs, it is not expected to be needed. This should just
- * work as it is with whatever DatabaseConnection.
+ * work as it is with whatever DatabaseAccessor.
  */
 class DatabaseClient : public DataSourceClient {
 public:
     /**
      * \brief Constructor
      *
-     * It initializes the client with a connection.
+     * It initializes the client with a database.
      *
-     * \exception isc::InvalidParameter if connection is NULL. It might throw
+     * \exception isc::InvalidParameter if database is NULL. It might throw
      * standard allocation exception as well, but doesn't throw anything else.
      *
-     * \param connection The connection to use to get data. As the parameter
-     *     suggests, the client takes ownership of the connection and will
+     * \param database The database to use to get data. As the parameter
+     *     suggests, the client takes ownership of the database and will
      *     delete it when itself deleted.
      */
-    DatabaseClient(boost::shared_ptr<DatabaseConnection> connection);
+    DatabaseClient(boost::shared_ptr<DatabaseAccessor> database);
     /**
      * \brief Corresponding ZoneFinder implementation
      *
      * The zone finder implementation for database data sources. Similarly
      * to the DatabaseClient, it translates the queries to methods of the
-     * connection.
+     * database.
      *
      * Application should not come directly in contact with this class
      * (it should handle it trough generic ZoneFinder pointer), therefore
@@ -212,13 +213,15 @@ public:
         /**
          * \brief Constructor
          *
-         * \param connection The connection (shared with DatabaseClient) to
+         * \param database The database (shared with DatabaseClient) to
          *     be used for queries (the one asked for ID before).
          * \param zone_id The zone ID which was returned from
-         *     DatabaseConnection::getZone and which will be passed to further
-         *     calls to the connection.
+         *     DatabaseAccessor::getZone and which will be passed to further
+         *     calls to the database.
          */
-        Finder(boost::shared_ptr<DatabaseConnection> connection, int zone_id);
+        Finder(boost::shared_ptr<DatabaseAccessor> database, int zone_id);
+        // The following three methods are just implementations of inherited
+        // ZoneFinder's pure virtual methods.
         virtual isc::dns::Name getOrigin() const;
         virtual isc::dns::RRClass getClass() const;
 
@@ -275,36 +278,38 @@ public:
          */
         int zone_id() const { return (zone_id_); }
         /**
-         * \brief The database connection.
+         * \brief The database.
          *
-         * This function provides the database connection stored inside as
+         * This function provides the database stored inside as
          * passed to the constructor. This is meant for testing purposes and
          * normal applications shouldn't need it.
          */
-        const DatabaseConnection& connection() const {
-            return (*connection_);
+        const DatabaseAccessor& database() const {
+            return (*database_);
         }
     private:
-        boost::shared_ptr<DatabaseConnection> connection_;
+        boost::shared_ptr<DatabaseAccessor> database_;
         const int zone_id_;
     };
     /**
      * \brief Find a zone in the database
      *
-     * This queries connection's getZone to find the best matching zone.
+     * This queries database's getZone to find the best matching zone.
      * It will propagate whatever exceptions are thrown from that method
      * (which is not restricted in any way).
      *
      * \param name Name of the zone or data contained there.
-     * \return Result containing the code and instance of Finder, if anything
-     *     is found. Applications should not rely on the specific class being
-     *     returned, though.
+     * \return FindResult containing the code and an instance of Finder, if
+     *     anything is found. However, application should not rely on the
+     *     ZoneFinder being instance of Finder (possible subclass of this class
+     *     may return something else and it may change in future versions), it
+     *     should use it as a ZoneFinder only.
      */
     virtual FindResult findZone(const isc::dns::Name& name) const;
 
 private:
-    /// \brief Our connection.
-    const boost::shared_ptr<DatabaseConnection> connection_;
+    /// \brief Our database.
+    const boost::shared_ptr<DatabaseAccessor> database_;
 };
 
 }

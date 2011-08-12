@@ -32,32 +32,32 @@ using isc::dns::Name;
 namespace isc {
 namespace datasrc {
 
-DatabaseClient::DatabaseClient(boost::shared_ptr<DatabaseConnection>
-                               connection) :
-    connection_(connection)
+DatabaseClient::DatabaseClient(boost::shared_ptr<DatabaseAccessor>
+                               database) :
+    database_(database)
 {
-    if (connection_.get() == NULL) {
+    if (database_.get() == NULL) {
         isc_throw(isc::InvalidParameter,
-                  "No connection provided to DatabaseClient");
+                  "No database provided to DatabaseClient");
     }
 }
 
 DataSourceClient::FindResult
 DatabaseClient::findZone(const Name& name) const {
-    std::pair<bool, int> zone(connection_->getZone(name));
+    std::pair<bool, int> zone(database_->getZone(name));
     // Try exact first
     if (zone.first) {
         return (FindResult(result::SUCCESS,
-                           ZoneFinderPtr(new Finder(connection_,
+                           ZoneFinderPtr(new Finder(database_,
                                                     zone.second))));
     }
     // Than super domains
     // Start from 1, as 0 is covered above
     for (size_t i(1); i < name.getLabelCount(); ++i) {
-        zone = connection_->getZone(name.split(i));
+        zone = database_->getZone(name.split(i));
         if (zone.first) {
             return (FindResult(result::PARTIALMATCH,
-                               ZoneFinderPtr(new Finder(connection_,
+                               ZoneFinderPtr(new Finder(database_,
                                                         zone.second))));
         }
     }
@@ -65,9 +65,9 @@ DatabaseClient::findZone(const Name& name) const {
     return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
 }
 
-DatabaseClient::Finder::Finder(boost::shared_ptr<DatabaseConnection>
-                               connection, int zone_id) :
-    connection_(connection),
+DatabaseClient::Finder::Finder(boost::shared_ptr<DatabaseAccessor>
+                               database, int zone_id) :
+    database_(database),
     zone_id_(zone_id)
 { }
 
@@ -84,7 +84,7 @@ namespace {
 // match, or if the given rdata string does not
 // parse correctly for the given type and class
 //
-// The DatabaseConnection is passed to print the
+// The DatabaseAccessor is passed to print the
 // database name in the log message if the TTL is
 // modified
 void addOrCreate(isc::dns::RRsetPtr& rrset,
@@ -93,7 +93,7 @@ void addOrCreate(isc::dns::RRsetPtr& rrset,
                     const isc::dns::RRType& type,
                     const isc::dns::RRTTL& ttl,
                     const std::string& rdata_str,
-                    const DatabaseConnection& conn
+                    const DatabaseAccessor& db
                 )
 {
     if (!rrset) {
@@ -106,7 +106,7 @@ void addOrCreate(isc::dns::RRsetPtr& rrset,
                 rrset->setTTL(ttl);
             }
             logger.info(DATASRC_DATABASE_FIND_TTL_MISMATCH)
-                .arg(conn.getDBName()).arg(name).arg(cls)
+                .arg(db.getDBName()).arg(name).arg(cls)
                 .arg(type).arg(rrset->getTTL());
         }
     }
@@ -176,22 +176,22 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     ZoneFinder::Result result_status = SUCCESS;
     RRsigStore sig_store;
     logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
-        .arg(connection_->getDBName()).arg(name).arg(type);
+        .arg(database_->getDBName()).arg(name).arg(type);
 
     try {
-        connection_->searchForRecords(zone_id_, name.toText());
+        database_->searchForRecords(zone_id_, name.toText());
 
-        std::string columns[DatabaseConnection::COLUMN_COUNT];
-        while (connection_->getNextRecord(columns,
-                                        DatabaseConnection::COLUMN_COUNT)) {
+        std::string columns[DatabaseAccessor::COLUMN_COUNT];
+        while (database_->getNextRecord(columns,
+                                        DatabaseAccessor::COLUMN_COUNT)) {
             if (!records_found) {
                 records_found = true;
             }
 
             try {
-                const isc::dns::RRType cur_type(columns[DatabaseConnection::
+                const isc::dns::RRType cur_type(columns[DatabaseAccessor::
                                                         TYPE_COLUMN]);
-                const isc::dns::RRTTL cur_ttl(columns[DatabaseConnection::
+                const isc::dns::RRTTL cur_ttl(columns[DatabaseAccessor::
                                                       TTL_COLUMN]);
                 // Ths sigtype column was an optimization for finding the
                 // relevant RRSIG RRs for a lookup. Currently this column is
@@ -212,9 +212,9 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                                   "the only record for " + name.toText());
                     }
                     addOrCreate(result_rrset, name, getClass(), cur_type,
-                                cur_ttl, columns[DatabaseConnection::
+                                cur_ttl, columns[DatabaseAccessor::
                                                  RDATA_COLUMN],
-                                *connection_);
+                                *database_);
                 } else if (cur_type == isc::dns::RRType::CNAME()) {
                     // There should be no other data, so result_rrset should
                     // be empty.
@@ -223,9 +223,9 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                                   "the only record for " + name.toText());
                     }
                     addOrCreate(result_rrset, name, getClass(), cur_type,
-                                cur_ttl, columns[DatabaseConnection::
+                                cur_ttl, columns[DatabaseAccessor::
                                                  RDATA_COLUMN],
-                                *connection_);
+                                *database_);
                     result_status = CNAME;
                 } else if (cur_type == isc::dns::RRType::RRSIG()) {
                     // If we get signatures before we get the actual data, we
@@ -237,39 +237,39 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                     // types we are certain we don't need
                     sig_store.addSig(isc::dns::rdata::createRdata(cur_type,
                                     getClass(),
-                                    columns[DatabaseConnection::
+                                    columns[DatabaseAccessor::
                                             RDATA_COLUMN]));
                 }
             } catch (const isc::dns::InvalidRRType& irt) {
                 isc_throw(DataSourceError, "Invalid RRType in database for " <<
-                        name << ": " << columns[DatabaseConnection::
+                        name << ": " << columns[DatabaseAccessor::
                                                 TYPE_COLUMN]);
             } catch (const isc::dns::InvalidRRTTL& irttl) {
                 isc_throw(DataSourceError, "Invalid TTL in database for " <<
-                        name << ": " << columns[DatabaseConnection::
+                        name << ": " << columns[DatabaseAccessor::
                                                 TTL_COLUMN]);
             } catch (const isc::dns::rdata::InvalidRdataText& ird) {
                 isc_throw(DataSourceError, "Invalid rdata in database for " <<
-                        name << ": " << columns[DatabaseConnection::
+                        name << ": " << columns[DatabaseAccessor::
                                                 RDATA_COLUMN]);
             }
         }
     } catch (const DataSourceError& dse) {
         logger.error(DATASRC_DATABASE_FIND_ERROR)
-            .arg(connection_->getDBName()).arg(dse.what());
+            .arg(database_->getDBName()).arg(dse.what());
         // call cleanup and rethrow
-        connection_->resetSearch();
+        database_->resetSearch();
         throw;
     } catch (const isc::Exception& isce) {
         logger.error(DATASRC_DATABASE_FIND_UNCAUGHT_ISC_ERROR)
-            .arg(connection_->getDBName()).arg(isce.what());
+            .arg(database_->getDBName()).arg(isce.what());
         // cleanup, change it to a DataSourceError and rethrow
-        connection_->resetSearch();
+        database_->resetSearch();
         isc_throw(DataSourceError, isce.what());
     } catch (const std::exception& ex) {
         logger.error(DATASRC_DATABASE_FIND_UNCAUGHT_ERROR)
-            .arg(connection_->getDBName()).arg(ex.what());
-        connection_->resetSearch();
+            .arg(database_->getDBName()).arg(ex.what());
+        database_->resetSearch();
         throw;
     }
 

@@ -35,12 +35,12 @@ using isc::dns::Name;
 namespace {
 
 /*
- * A virtual database connection that pretends it contains single zone --
+ * A virtual database database that pretends it contains single zone --
  * example.org.
  */
-class MockConnection : public DatabaseConnection {
+class MockAccessor : public DatabaseAccessor {
 public:
-    MockConnection() : search_running_(false),
+    MockAccessor() : search_running_(false),
                        database_name_("mock_database")
     {
         fillData();
@@ -92,7 +92,7 @@ public:
             throw std::exception();
         }
 
-        if (column_count != DatabaseConnection::COLUMN_COUNT) {
+        if (column_count != DatabaseAccessor::COLUMN_COUNT) {
             isc_throw(DataSourceError, "Wrong column count in getNextRecord");
         }
         if (cur_record < cur_name.size()) {
@@ -276,18 +276,18 @@ public:
      * times per test.
      */
     void createClient() {
-        current_connection_ = new MockConnection();
-        client_.reset(new DatabaseClient(shared_ptr<DatabaseConnection>(
-             current_connection_)));
+        current_database_ = new MockAccessor();
+        client_.reset(new DatabaseClient(shared_ptr<DatabaseAccessor>(
+             current_database_)));
     }
     // Will be deleted by client_, just keep the current value for comparison.
-    MockConnection* current_connection_;
+    MockAccessor* current_database_;
     shared_ptr<DatabaseClient> client_;
     const std::string database_name_;
 
     /**
      * Check the zone finder is a valid one and references the zone ID and
-     * connection available here.
+     * database available here.
      */
     void checkZoneFinder(const DataSourceClient::FindResult& zone) {
         ASSERT_NE(ZoneFinderPtr(), zone.zone_finder) << "No zone finder";
@@ -296,7 +296,7 @@ public:
         ASSERT_NE(shared_ptr<DatabaseClient::Finder>(), finder) <<
             "Wrong type of finder";
         EXPECT_EQ(42, finder->zone_id());
-        EXPECT_EQ(current_connection_, &finder->connection());
+        EXPECT_EQ(current_database_, &finder->database());
     }
 };
 
@@ -318,8 +318,8 @@ TEST_F(DatabaseClientTest, superZone) {
     checkZoneFinder(zone);
 }
 
-TEST_F(DatabaseClientTest, noConnException) {
-    EXPECT_THROW(DatabaseClient(shared_ptr<DatabaseConnection>()),
+TEST_F(DatabaseClientTest, noAccessorException) {
+    EXPECT_THROW(DatabaseClient(shared_ptr<DatabaseAccessor>()),
                  isc::InvalidParameter);
 }
 
@@ -379,7 +379,7 @@ TEST_F(DatabaseClientTest, find) {
     shared_ptr<DatabaseClient::Finder> finder(
         dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
     EXPECT_EQ(42, finder->zone_id());
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
     std::vector<std::string> expected_rdatas;
     std::vector<std::string> expected_sig_rdatas;
 
@@ -391,7 +391,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
@@ -402,7 +402,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
@@ -413,7 +413,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
@@ -422,7 +422,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::NXRRSET,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
@@ -432,7 +432,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::CNAME,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
@@ -442,7 +442,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
@@ -451,7 +451,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::NXDOMAIN,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
@@ -463,7 +463,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
@@ -475,7 +475,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
@@ -484,7 +484,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::NXRRSET,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
@@ -495,7 +495,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::CNAME,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
@@ -507,7 +507,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
@@ -519,7 +519,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
@@ -528,7 +528,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::NXRRSET,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
@@ -539,7 +539,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::CNAME,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
 
     expected_rdatas.clear();
@@ -551,7 +551,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
@@ -562,7 +562,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
@@ -573,7 +573,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
@@ -584,7 +584,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(360),
                ZoneFinder::SUCCESS,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
@@ -595,77 +595,77 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(360),
                ZoneFinder::SUCCESS,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
 
     EXPECT_THROW(finder->find(isc::dns::Name("badcname1.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("badcname2.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("badcname3.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("badrdata.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("badtype.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("badttl.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("badsig.example.org."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     // Trigger the hardcoded exceptions and see if find() has cleaned up
     EXPECT_THROW(finder->find(isc::dns::Name("dsexception.in.search."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("iscexception.in.search."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("basicexception.in.search."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  std::exception);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     EXPECT_THROW(finder->find(isc::dns::Name("dsexception.in.getnext."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("iscexception.in.getnext."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
     EXPECT_THROW(finder->find(isc::dns::Name("basicexception.in.getnext."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
                  std::exception);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 
     // This RRSIG has the wrong sigtype field, which should be
     // an error if we decide to keep using that field
@@ -679,7 +679,7 @@ TEST_F(DatabaseClientTest, find) {
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
                expected_rdatas, expected_sig_rdatas);
-    EXPECT_FALSE(current_connection_->searchRunning());
+    EXPECT_FALSE(current_database_->searchRunning());
 }
 
 }

@@ -1,0 +1,145 @@
+# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# No namespace declaration - these constants go in the global namespace
+# of the zonemgr messages python module.
+
+% ZONEMGR_CCSESSION_ERROR command channel session error: %1
+An error was encountered on the command channel.  The message indicates
+the nature of the error.
+
+% ZONEMGR_JITTER_TOO_BIG refresh_jitter is too big, setting to 0.5
+The value specified in the configuration for the refresh jitter is too large
+so its value has been set to the maximum of 0.5.
+
+% ZONEMGR_KEYBOARD_INTERRUPT exiting zonemgr process as result of keyboard interrupt
+An informational message output when the zone manager was being run at a
+terminal and it was terminated via a keyboard interrupt signal.
+
+% ZONEMGR_LOAD_ZONE loading zone %1 (class %2)
+This is a debug message indicating that the zone of the specified class
+is being loaded.
+
+% ZONEMGR_NO_MASTER_ADDRESS internal BIND 10 command did not contain address of master
+A command received by the zone manager from the Auth module did not
+contain the address of the master server from which a NOTIFY message
+was received.  This may be due to an internal programming error; please
+submit a bug report.
+
+% ZONEMGR_NO_SOA zone %1 (class %2) does not have an SOA record
+When loading the named zone of the specified class the zone manager
+discovered that the data did not contain an SOA record.  The load has
+been abandoned.
+
+% ZONEMGR_NO_TIMER_THREAD trying to stop zone timer thread but it is not running
+An attempt was made to stop the timer thread (used to track when zones
+should be refreshed) but it was not running.  This may indicate an
+internal program error.  Please submit a bug report.
+
+% ZONEMGR_NO_ZONE_CLASS internal BIND 10 command did not contain class of zone
+A command received by the zone manager from another BIND 10 module did
+not contain the class of the zone on which the zone manager should act.
+This may be due to an internal programming error; please submit a
+bug report.
+
+% ZONEMGR_NO_ZONE_NAME internal BIND 10 command did not contain name of zone
+A command received by the zone manager from another BIND 10 module did
+not contain the name of the zone on which the zone manager should act.
+This may be due to an internal programming error; please submit a
+bug report.
+
+% ZONEMGR_RECEIVE_NOTIFY received NOTIFY command for zone %1 (class %2)
+This is a debug message indicating that the zone manager has received a
+NOTIFY command over the command channel.  The command is sent by the Auth
+process when it is acting as a slave server for the zone and causes the
+zone manager to record the master server for the zone and start a timer;
+when the timer expires, the master will be polled to see if it contains
+new data.
+
+% ZONEMGR_RECEIVE_SHUTDOWN received SHUTDOWN command
+This is a debug message indicating that the zone manager has received
+a SHUTDOWN command over the command channel from the Boss process.
+It will act on this command and shut down.
+
+% ZONEMGR_RECEIVE_UNKNOWN received unknown command '%1'
+This is a warning message indicating that the zone manager has received
+the stated command over the command channel.  The command is not known
+to the zone manager and although the command is ignored, its receipt
+may indicate an internal error.  Please submit a bug report.
+
+% ZONEMGR_RECEIVE_XFRIN_FAILED received XFRIN FAILED command for zone %1 (class %2)
+This is a debug message indicating that the zone manager has received
+an XFRIN FAILED command over the command channel.  The command is sent
+by the Xfrin process when a transfer of zone data into the system has
+failed, and causes the zone manager to schedule another transfer attempt.
+
+% ZONEMGR_RECEIVE_XFRIN_SUCCESS received XFRIN SUCCESS command for zone %1 (class %2)
+This is a debug message indicating that the zone manager has received
+an XFRIN SUCCESS command over the command channel.  The command is sent
+by the Xfrin process when the transfer of zone data into the system has
+succeeded, and causes the data to be loaded and served by BIND 10.
+
+% ZONEMGR_REFRESH_ZONE refreshing zone %1 (class %2)
+The zone manager is refreshing the named zone of the specified class
+with updated information.
+
+% ZONEMGR_SELECT_ERROR error with select(): %1
+An attempt to wait for input from a socket failed.  The failing operation
+is a call to the operating system's select() function, which failed for
+the given reason.
+
+% ZONEMGR_SEND_FAIL failed to send command to %1, session has been closed
+The zone manager attempted to send a command to the named BIND 10 module,
+but the send failed.  The session between the modules has been closed.
+
+% ZONEMGR_SESSION_ERROR unable to establish session to command channel daemon
+The zonemgr process was not able to be started because it could not
+connect to the command channel daemon.  The most usual cause of this
+problem is that the daemon is not running.
+
+% ZONEMGR_SESSION_TIMEOUT timeout on session to command channel daemon
+The zonemgr process was not able to be started because it timed out when
+connecting to the command channel daemon.  The most usual cause of this
+problem is that the daemon is not running.
+
+% ZONEMGR_SHUTDOWN zone manager has shut down
+A debug message, output when the zone manager has shut down completely.
+
+% ZONEMGR_STARTING zone manager starting
+A debug message output when the zone manager starts up.
+
+% ZONEMGR_TIMER_THREAD_RUNNING trying to start timer thread but one is already running
+This message is issued when an attempt is made to start the timer
+thread (which keeps track of when zones need a refresh) but one is
+already running.  It indicates either an error in the program logic or
+a problem with stopping a previous instance of the timer.  Please submit
+a bug report.
+
+% ZONEMGR_UNKNOWN_ZONE_FAIL zone %1 (class %2) is not known to the zone manager
+An XFRIN operation has failed but the zone that was the subject of the
+operation is not being managed by the zone manager.  This may indicate
+an error in the program (as the operation should not have been initiated
+if this were the case).  Please submit a bug report.
+
+% ZONEMGR_UNKNOWN_ZONE_NOTIFIED notified zone %1 (class %2) is not known to the zone manager
+A NOTIFY was received but the zone that was the subject of the operation
+is not being managed by the zone manager.  This may indicate an error
+in the program (as the operation should not have been initiated if this
+were the case).  Please submit a bug report.
+
+% ZONEMGR_UNKNOWN_ZONE_SUCCESS zone %1 (class %2) is not known to the zone manager
+An XFRIN operation has succeeded but the zone received is not being
+managed by the zone manager.  This may indicate an error in the program
+(as the operation should not have been initiated if this were the case).
+Please submit a bug report.
