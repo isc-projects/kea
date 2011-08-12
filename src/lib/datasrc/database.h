@@ -293,8 +293,11 @@ public:
         /// \brief Searches database for an RRset
         std::pair<bool, isc::dns::RRsetPtr> getRRset(const isc::dns::Name&
                                                      name,
-                                                     const isc::dns::RRType&
-                                                     type);
+                                                     const isc::dns::RRType*
+                                                     type,
+                                                     bool want_cname,
+                                                     bool want_dname,
+                                                     bool want_ns);
     };
     /**
      * \brief Find a zone in the database
