@@ -229,7 +229,7 @@ def _check_item_spec(config_item):
     item_type = config_item["item_type"]
     if type(item_type) != str:
         raise ModuleSpecError("item_type in " + item_name + " is not a string: " + str(type(item_type)))
-    if item_type not in ["integer", "real", "boolean", "string", "list", "map", "any"]:
+    if item_type not in ["integer", "real", "boolean", "string", "list", "map", "named_set", "any"]:
         raise ModuleSpecError("unknown item_type in " + item_name + ": " + item_type)
     if "item_optional" in config_item:
         if type(config_item["item_optional"]) != bool:
@@ -293,6 +293,10 @@ def _validate_type(spec, value, errors):
         if errors != None:
             errors.append(str(value) + " should be a map")
         return False
+    elif data_type == "named_set" and type(value) != dict:
+        if errors != None:
+            errors.append(str(value) + " should be a map")
+        return False
     else:
         return True
 
@@ -308,8 +312,16 @@ def _validate_item(spec, full, data, errors):
                 if not _validate_item(list_spec, full, data_el, errors):
                     return False
     elif type(data) == dict:
-        if not _validate_spec_list(spec['map_item_spec'], full, data, errors):
-            return False
+        if 'map_item_spec' in spec:
+            if not _validate_spec_list(spec['map_item_spec'], full, data, errors):
+                return False
+        else:
+            named_set_spec = spec['named_set_item_spec']
+            for data_el in data.values():
+                if not _validate_type(named_set_spec, data_el, errors):
+                    return False
+                if not _validate_item(named_set_spec, full, data_el, errors):
+                    return False
     return True
 
 def _validate_spec(spec, full, data, errors):

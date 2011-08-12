@@ -742,6 +742,16 @@ Debian and Ubuntu:
         get additional debugging or diagnostic output.
       </para>
 <!-- TODO: note it doesn't go into background -->
+
+      <note>
+        <para>
+          If the setproctitle Python module is detected at start up,
+          the process names for the Python-based daemons will be renamed
+          to better identify them instead of just <quote>python</quote>.
+          This is not needed on some operating systems.
+        </para>
+      </note>
+
     </section>
 
   </chapter>
