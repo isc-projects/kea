@@ -606,19 +606,19 @@ InMemoryZoneFinder::~InMemoryZoneFinder() {
     delete impl_;
 }
 
-const Name&
+Name
 InMemoryZoneFinder::getOrigin() const {
     return (impl_->origin_);
 }
 
-const RRClass&
+RRClass
 InMemoryZoneFinder::getClass() const {
     return (impl_->zone_class_);
 }
 
 ZoneFinder::FindResult
 InMemoryZoneFinder::find(const Name& name, const RRType& type,
-                 RRsetList* target, const FindOptions options) const
+                 RRsetList* target, const FindOptions options)
 {
     return (impl_->find(name, type, target, options));
 }
