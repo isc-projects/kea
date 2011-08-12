@@ -122,12 +122,12 @@ public:
         masterLoad(zone_stream, origin_, rrclass_,
                    boost::bind(&MockZoneFinder::loadRRset, this, _1));
     }
-    virtual const isc::dns::Name& getOrigin() const { return (origin_); }
-    virtual const isc::dns::RRClass& getClass() const { return (rrclass_); }
+    virtual isc::dns::Name getOrigin() const { return (origin_); }
+    virtual isc::dns::RRClass getClass() const { return (rrclass_); }
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type,
                             RRsetList* target = NULL,
-                            const FindOptions options = FIND_DEFAULT) const;
+                            const FindOptions options = FIND_DEFAULT);
 
     // If false is passed, it makes the zone broken as if it didn't have the
     // SOA.
@@ -165,7 +165,7 @@ private:
 
 ZoneFinder::FindResult
 MockZoneFinder::find(const Name& name, const RRType& type,
-                     RRsetList* target, const FindOptions options) const
+                     RRsetList* target, const FindOptions options)
 {
     // Emulating a broken zone: mandatory apex RRs are missing if specifically
     // configured so (which are rare cases).
