@@ -1597,8 +1597,9 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
         <para>
 
 	  The three most important elements of a logger configuration
-	  are the name (the component that is generating the
-	  messages), the severity (what to log), and the output_options
+	  are the <option>name</option> (the component that is
+	  generating the messages), the <option>severity</option>
+	  (what to log), and the <option>output_options</option>
 	  (where to log).
 
         </para>
@@ -1610,48 +1611,62 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 	  Each logger in the system has a name, the name being that
 	  of the component using it to log messages. For instance,
 	  if you want to configure logging for the resolver module,
-	  you add an entry for a logger named 'Resolver'. This
+	  you add an entry for a logger named <quote>Resolver</quote>. This
 	  configuration will then be used by the loggers in the
 	  Resolver module, and all the libraries used by it.
               </para>
 
-<!-- TODO: how to know these names? -->
+<!-- TODO: later we will have a way to know names of all modules
+
+Right now you can only see what their names are if they are running
+(a simple 'help' without anything else in bindctl for instance).
+
+ -->
 
         <para>
 
 	  If you want to specify logging for one specific library
-	  within the module, you set the name to 'module.library'.
-	  For example, the logger used by the nameserver address
-	  store component has the full name of 'Resolver.nsas'. If
+	  within the module, you set the name to
+	  <replaceable>module.library</replaceable>.  For example, the
+	  logger used by the nameserver address store component
+	  has the full name of <quote>Resolver.nsas</quote>. If
 	  there is no entry in Logging for a particular library,
 	  it will use the configuration given for the module.
 
-<!-- TODO: how to know these specific names? -->
+<!-- TODO: how to know these specific names?
+
+We will either have to document them or tell the administrator to
+specify module-wide logging and see what appears...
+
+-->
 
         </para>
 
         <para>
+
+<!-- TODO: severity has not been covered yet -->
 
 	  To illustrate this, suppose you want the cache library
 	  to log messages of severity DEBUG, and the rest of the
 	  resolver code to log messages of severity INFO. To achieve
-	  this you specify two loggers, one with the name 'Resolver'
-	  and severity INFO, and one with the name 'Resolver.cache'
-	  with severity DEBUG. As there are no entries for other
-	  libraries (e.g. the nsas), they will use the configuration
-	  for the module ('Resolver'), so giving the desired
-	  behavior.
+	  this you specify two loggers, one with the name
+	  <quote>Resolver</quote> and severity INFO, and one with
+	  the name <quote>Resolver.cache</quote> with severity
+	  DEBUG. As there are no entries for other libraries (e.g.
+	  the nsas), they will use the configuration for the module
+	  (<quote>Resolver</quote>), so giving the desired behavior.
 
         </para>
 
         <para>
 
-	  One special case is that of a module name of '*', which
-	  is interpreted as 'any module'. You can set global logging
-	  options by using this, including setting the logging
-	  configuration for a library that is used by multiple
-	  modules (e.g. '*.config" specifies the configuration
-	  library code in whatever module is using it).
+	  One special case is that of a module name of <quote>*</quote>
+	  (asterisks), which is interpreted as <emphasis>any</emphasis>
+	  module. You can set global logging options by using this,
+	  including setting the logging configuration for a library
+	  that is used by multiple modules (e.g. <quote>*.config</quote>
+	  specifies the configuration library code in whatever
+	  module is using it).
 
         </para>
 
@@ -1661,13 +1676,15 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 	  configuration that might match a particular logger, the
 	  specification with the more specific logger name takes
 	  precedence. For example, if there are entries for for
-	  both '*' and 'Resolver', the resolver module - and all
-	  libraries it uses - will log messages according to the
-	  configuration in the second entry ('Resolver'). All other
-	  modules will use the configuration of the first entry
-	  ('*'). If there was also a configuration entry for
-	  'Resolver.cache', the cache library within the resolver
-	  would use that in preference to the entry for 'Resolver'.
+	  both <quote>*</quote> and <quote>Resolver</quote>, the
+	  resolver module &mdash; and all libraries it uses &mdash;
+	  will log messages according to the configuration in the
+	  second entry (<quote>Resolver</quote>). All other modules
+	  will use the configuration of the first entry
+	  (<quote>*</quote>). If there was also a configuration
+	  entry for <quote>Resolver.cache</quote>, the cache library
+	  within the resolver would use that in preference to the
+	  entry for <quote>Resolver</quote>.
 
         </para>
 
@@ -1675,14 +1692,15 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
 	  One final note about the naming. When specifying the
 	  module name within a logger, use the name of the module
-	  as specified in bindctl, e.g. 'Resolver' for the resolver
-	  module, 'Xfrout' for the xfrout module etc. When the
-	  message is logged, the message will include the name of
-	  the logger generating the message, but with the module
+	  as specified in <command>bindctl</command>, e.g.
+	  <quote>Resolver</quote> for the resolver module,
+	  <quote>Xfrout</quote> for the xfrout module, etc. When
+	  the message is logged, the message will include the name
+	  of the logger generating the message, but with the module
 	  name replaced by the name of the process implementing
 	  the module (so for example, a message generated by the
-	  'Auth.cache' logger will appear in the output with a
-	  logger name of 'b10-auth.cache').
+	  <quote>Auth.cache</quote> logger will appear in the output
+	  with a logger name of <quote>b10-auth.cache</quote>).
 
         </para>
 
@@ -1694,11 +1712,6 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
         <para>
 
           This specifies the category of messages logged.
-
-        </para>
-
-        <para>
-
 	  Each message is logged with an associated severity which
 	  may be one of the following (in descending order of
 	  severity):
@@ -1730,7 +1743,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
 	  When the severity of a logger is set to one of these
 	  values, it will only log messages of that severity, and
-	  the severities below it. The severity may also be set to
+	  the severities above it. The severity may also be set to
 	  NONE, in which case all messages from that logger are
 	  inhibited.
 
@@ -1745,9 +1758,9 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
         <para>
 
-	  Each logger can have zero or more output_options. These
-	  specify where log messages are sent to. These are explained
-	  in detail below.
+	  Each logger can have zero or more
+	  <option>output_options</option>. These specify where log
+	  messages are sent to. These are explained in detail below.
 
         </para>
 
@@ -1766,14 +1779,17 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
 	  When a logger's severity is set to DEBUG, this value
 	  specifies what debug messages should be printed. It ranges
-	  from 0 (least verbose) to 99 (most verbose). The general
-	  classification of debug message types is
-
-<!-- TODO: complete this sentence -->
-
+	  from 0 (least verbose) to 99 (most verbose).
         </para>
 
-<!-- TODO; there's a ticket to determine these levels, see #1074 -->
+
+<!-- TODO: complete this sentence:
+
+	  The general classification of debug message types is
+
+TODO; there's a ticket to determine these levels, see #1074
+
+ -->
 
         <para>
 
@@ -1788,13 +1804,15 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
         <para>
 
-	  If this is true, the output_options from the parent will
-	  be used. For example, if there are two loggers configured;
-	  'Resolver' and 'Resolver.cache', and additive is true in
-	  the second, it will write the log messages not only to
-	  the destinations specified for 'Resolver.cache', but also
-	  to the destinations as specified in the output_options
-	  in the logger named Resolver'.
+	  If this is true, the <option>output_options</option> from
+	  the parent will be used. For example, if there are two
+	  loggers configured; <quote>Resolver</quote> and
+	  <quote>Resolver.cache</quote>, and <option>additive</option>
+	  is true in the second, it will write the log messages
+	  not only to the destinations specified for
+	  <quote>Resolver.cache</quote>, but also to the destinations
+	  as specified in the <option>output_options</option> in
+	  the logger named <quote>Resolver</quote>.
 
 <!-- TODO: check this -->
 
@@ -1809,9 +1827,10 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
         <para>
 
-	  The main settings for an output option are the 'destination'
-	  and a value called 'output', the meaning of which depends
-	  on the destination that is set.
+	  The main settings for an output option are the
+	  <option>destination</option> and a value called
+	  <option>output</option>, the meaning of which depends on
+	  the destination that is set.
 
         </para>
 
@@ -1855,18 +1874,19 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
         <variablelist>
 
           <varlistentry>
-            <term>destination is 'console'</term>
+            <term><option>destination</option> is <quote>console</quote></term>
             <listitem>
               <simpara>
-		 The value of output must be one of 'stdout'
-		 (messages printed to standard output) or 'stderr'
-		 (messages printed to standard error).
+		 The value of output must be one of <quote>stdout</quote>
+		 (messages printed to standard output) or
+		 <quote>stderr</quote> (messages printed to standard
+		 error).
               </simpara>
             </listitem>
           </varlistentry>
 
           <varlistentry>
-            <term>destination is 'file'</term>
+            <term><option>destination</option> is <quote>file</quote></term>
             <listitem>
               <simpara>
 		The value of output is interpreted as a file name;
@@ -1876,12 +1896,13 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
           </varlistentry>
 
           <varlistentry>
-            <term>destination is 'syslog'</term>
+            <term><option>destination</option> is <quote>syslog</quote></term>
             <listitem>
               <simpara>
-		The value of output is interpreted as the syslog
-		facility (e.g. 'local0') that should be used for
-		log messages.
+		The value of output is interpreted as the
+		<command>syslog</command> facility (e.g.
+		<emphasis>local0</emphasis>) that should be used
+		for log messages.
               </simpara>
             </listitem>
           </varlistentry>
@@ -1890,7 +1911,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
         <para>
 
-          The other options for output_options are:
+          The other options for <option>output_options</option> are:
 
         </para>
 
@@ -1912,9 +1933,10 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
           <para>
 	    Only relevant when destination is file, this is maximum
 	    file size of output files in bytes. When the maximum
-	    size is reached, the file is renamed (a ".1" is appended
-	    to the name - if a ".1" file exists, it is renamed ".2"
-	    etc.) and a new file opened.
+	    size is reached, the file is renamed and a new file opened.
+	    (For example, a ".1" is appended to the name &mdash;
+	    if a ".1" file exists, it is renamed ".2",
+            etc.)
           </para>
 
           <para>
@@ -1928,8 +1950,8 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
           <para>
 	    Maximum number of old log files to keep around when
-	    rolling the output file. Only relevant when destination
-	    if 'file'.
+	    rolling the output file. Only relevant when
+	    <option>destination</option> is <quote>file</quote>.
           </para>
 
         </section>
@@ -1944,15 +1966,16 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
         <para>
 
 	  In this example we want to set the global logging to
-	  write to the file /var/log/my_bind10.log, at severity
-	  WARN. We want the authoritative server to log at DEBUG
-	  with debuglevel 40, to a different file (/tmp/debug_messages).
+	  write to the file <filename>/var/log/my_bind10.log</filename>,
+	  at severity WARN. We want the authoritative server to
+	  log at DEBUG with debuglevel 40, to a different file
+	  (<filename>/tmp/debug_messages</filename>).
 
         </para>
 
         <para>
 
-Start bindctl
+          Start <command>bindctl</command>.
 
         </para>
 
@@ -2144,7 +2167,7 @@ Logging/loggers[0]/output_options[0]/maxver	8	integer	(modified)
         <para>
 
 	  And every module will now be using the values from the
-	  logger named '*'.
+	  logger named <quote>*</quote>.
 
         </para>
 
