@@ -143,6 +143,20 @@ public:
     /// \param name A domain name for which the search is performed.
     /// \return A \c FindResult object enclosing the search result (see above).
     virtual FindResult findZone(const isc::dns::Name& name) const = 0;
+
+    /// TBD
+    ///
+    /// We allow having a read-only data source.  For such data source
+    /// this method will result in a NotImplemented exception.
+    ///
+    /// To avoid throwing the exception accidentally with a lazy
+    /// implementation, we still keep this method pure virtual without
+    /// an implementation.  All derived classes must explicitly write the
+    /// definition of this method, even if it simply throws the NotImplemented
+    /// exception.
+    virtual ZoneUpdaterPtr startUpdateZone(const isc::dns::Name& name,
+                                           bool replace)
+        const = 0;
 };
 }
 }
