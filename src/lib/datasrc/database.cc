@@ -34,10 +34,10 @@ namespace isc {
 namespace datasrc {
 
 DatabaseClient::DatabaseClient(boost::shared_ptr<DatabaseAccessor>
-                               database) :
-    database_(database)
+                               accessor) :
+    accessor_(accessor)
 {
-    if (database_.get() == NULL) {
+    if (!accessor_) {
         isc_throw(isc::InvalidParameter,
                   "No database provided to DatabaseClient");
     }
@@ -45,20 +45,20 @@ DatabaseClient::DatabaseClient(boost::shared_ptr<DatabaseAccessor>
 
 DataSourceClient::FindResult
 DatabaseClient::findZone(const Name& name) const {
-    std::pair<bool, int> zone(database_->getZone(name));
+    std::pair<bool, int> zone(accessor_->getZone(name));
     // Try exact first
     if (zone.first) {
         return (FindResult(result::SUCCESS,
-                           ZoneFinderPtr(new Finder(database_,
+                           ZoneFinderPtr(new Finder(accessor_,
                                                     zone.second))));
     }
     // Than super domains
     // Start from 1, as 0 is covered above
     for (size_t i(1); i < name.getLabelCount(); ++i) {
-        zone = database_->getZone(name.split(i));
+        zone = accessor_->getZone(name.split(i));
         if (zone.first) {
             return (FindResult(result::PARTIALMATCH,
-                               ZoneFinderPtr(new Finder(database_,
+                               ZoneFinderPtr(new Finder(accessor_,
                                                         zone.second))));
         }
     }
@@ -66,9 +66,9 @@ DatabaseClient::findZone(const Name& name) const {
     return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
 }
 
-DatabaseClient::Finder::Finder(boost::shared_ptr<DatabaseAccessor>
-                               database, int zone_id) :
-    database_(database),
+DatabaseClient::Finder::Finder(boost::shared_ptr<DatabaseAccessor> accessor,
+                               int zone_id) :
+    accessor_(accessor),
     zone_id_(zone_id)
 { }
 
@@ -177,13 +177,13 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     ZoneFinder::Result result_status = SUCCESS;
     RRsigStore sig_store;
     logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
-        .arg(database_->getDBName()).arg(name).arg(type);
+        .arg(accessor_->getDBName()).arg(name).arg(type);
 
     try {
-        database_->searchForRecords(zone_id_, name.toText());
+        accessor_->searchForRecords(zone_id_, name.toText());
 
         std::string columns[DatabaseAccessor::COLUMN_COUNT];
-        while (database_->getNextRecord(columns,
+        while (accessor_->getNextRecord(columns,
                                         DatabaseAccessor::COLUMN_COUNT)) {
             if (!records_found) {
                 records_found = true;
@@ -215,7 +215,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                     addOrCreate(result_rrset, name, getClass(), cur_type,
                                 cur_ttl, columns[DatabaseAccessor::
                                                  RDATA_COLUMN],
-                                *database_);
+                                *accessor_);
                 } else if (cur_type == isc::dns::RRType::CNAME()) {
                     // There should be no other data, so result_rrset should
                     // be empty.
@@ -226,7 +226,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                     addOrCreate(result_rrset, name, getClass(), cur_type,
                                 cur_ttl, columns[DatabaseAccessor::
                                                  RDATA_COLUMN],
-                                *database_);
+                                *accessor_);
                     result_status = CNAME;
                 } else if (cur_type == isc::dns::RRType::RRSIG()) {
                     // If we get signatures before we get the actual data, we
@@ -257,20 +257,20 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
         }
     } catch (const DataSourceError& dse) {
         logger.error(DATASRC_DATABASE_FIND_ERROR)
-            .arg(database_->getDBName()).arg(dse.what());
+            .arg(accessor_->getDBName()).arg(dse.what());
         // call cleanup and rethrow
-        database_->resetSearch();
+        accessor_->resetSearch();
         throw;
     } catch (const isc::Exception& isce) {
         logger.error(DATASRC_DATABASE_FIND_UNCAUGHT_ISC_ERROR)
-            .arg(database_->getDBName()).arg(isce.what());
+            .arg(accessor_->getDBName()).arg(isce.what());
         // cleanup, change it to a DataSourceError and rethrow
-        database_->resetSearch();
+        accessor_->resetSearch();
         isc_throw(DataSourceError, isce.what());
     } catch (const std::exception& ex) {
         logger.error(DATASRC_DATABASE_FIND_UNCAUGHT_ERROR)
-            .arg(database_->getDBName()).arg(ex.what());
-        database_->resetSearch();
+            .arg(accessor_->getDBName()).arg(ex.what());
+        accessor_->resetSearch();
         throw;
     }
 
@@ -278,13 +278,13 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
         if (records_found) {
             logger.debug(DBG_TRACE_DETAILED,
                          DATASRC_DATABASE_FOUND_NXRRSET)
-                        .arg(database_->getDBName()).arg(name)
+                        .arg(accessor_->getDBName()).arg(name)
                         .arg(getClass()).arg(type);
             result_status = NXRRSET;
         } else {
             logger.debug(DBG_TRACE_DETAILED,
                          DATASRC_DATABASE_FOUND_NXDOMAIN)
-                        .arg(database_->getDBName()).arg(name)
+                        .arg(accessor_->getDBName()).arg(name)
                         .arg(getClass()).arg(type);
             result_status = NXDOMAIN;
         }
@@ -292,7 +292,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
         sig_store.appendSignatures(result_rrset);
         logger.debug(DBG_TRACE_DETAILED,
                      DATASRC_DATABASE_FOUND_RRSET)
-                    .arg(database_->getDBName()).arg(*result_rrset);
+                    .arg(accessor_->getDBName()).arg(*result_rrset);
     }
     return (FindResult(result_status, result_rrset));
 }
@@ -315,21 +315,21 @@ DatabaseClient::startUpdateZone(const isc::dns::Name& name,
 {
     // TODO: create a dedicated accessor
 
-    const std::pair<bool, int> zone(database_->startUpdateZone(name.toText(),
+    const std::pair<bool, int> zone(accessor_->startUpdateZone(name.toText(),
                                                                replace));
     if (!zone.first) {
         return (ZoneUpdaterPtr());
     }
 
     // At this moment this one cannot anything except giving a finder.
-    return (ZoneUpdaterPtr(new DatabaseClient::Updater(database_,
+    return (ZoneUpdaterPtr(new DatabaseClient::Updater(accessor_,
                                                        zone.second)));
 }
 
-DatabaseClient::Updater::Updater(shared_ptr<DatabaseAccessor> database,
+DatabaseClient::Updater::Updater(shared_ptr<DatabaseAccessor> accessor,
                                  int zone_id) :
-    database_(database), zone_id_(zone_id),
-    finder_(new Finder::Finder(database_, zone_id_))
+    accessor_(accessor), zone_id_(zone_id),
+    finder_(new Finder::Finder(accessor_, zone_id_))
 {
 }
 
