@@ -49,16 +49,18 @@ DatabaseClient::findZone(const Name& name) const {
     if (zone.first) {
         return (FindResult(result::SUCCESS,
                            ZoneFinderPtr(new Finder(database_,
-                                                    zone.second))));
+                                                    zone.second, name))));
     }
     // Than super domains
     // Start from 1, as 0 is covered above
     for (size_t i(1); i < name.getLabelCount(); ++i) {
-        zone = database_->getZone(name.split(i));
+        isc::dns::Name superdomain(name.split(i));
+        zone = database_->getZone(superdomain);
         if (zone.first) {
             return (FindResult(result::PARTIALMATCH,
                                ZoneFinderPtr(new Finder(database_,
-                                                        zone.second))));
+                                                        zone.second,
+                                                        superdomain))));
         }
     }
     // No, really nothing
@@ -66,9 +68,11 @@ DatabaseClient::findZone(const Name& name) const {
 }
 
 DatabaseClient::Finder::Finder(boost::shared_ptr<DatabaseAccessor>
-                               database, int zone_id) :
+                               database, int zone_id,
+                               const isc::dns::Name& origin) :
     database_(database),
-    zone_id_(zone_id)
+    zone_id_(zone_id),
+    origin_(origin)
 { }
 
 namespace {
@@ -372,8 +376,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
 
 Name
 DatabaseClient::Finder::getOrigin() const {
-    // TODO Implement
-    return (Name("."));
+    return (origin_);
 }
 
 isc::dns::RRClass

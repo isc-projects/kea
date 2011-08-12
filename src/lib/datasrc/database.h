@@ -17,6 +17,8 @@
 
 #include <datasrc/client.h>
 
+#include <dns/name.h>
+
 namespace isc {
 namespace datasrc {
 
@@ -218,8 +220,12 @@ public:
          * \param zone_id The zone ID which was returned from
          *     DatabaseAccessor::getZone and which will be passed to further
          *     calls to the database.
+         * \param origin The name of the origin of this zone. It could query
+         *     it from database, but as the DatabaseClient just searched for
+         *     the zone using the name, it should have it.
          */
-        Finder(boost::shared_ptr<DatabaseAccessor> database, int zone_id);
+        Finder(boost::shared_ptr<DatabaseAccessor> database, int zone_id,
+               const isc::dns::Name& origin);
         // The following three methods are just implementations of inherited
         // ZoneFinder's pure virtual methods.
         virtual isc::dns::Name getOrigin() const;
@@ -290,6 +296,7 @@ public:
     private:
         boost::shared_ptr<DatabaseAccessor> database_;
         const int zone_id_;
+        const isc::dns::Name origin_;
         /**
          * \brief Searches database for an RRset
          *

@@ -265,7 +265,6 @@ private:
         addCurName("badsigtype.example.org.");
 
         // Data for testing delegation (with NS and DNAME)
-        addRecord("A", "3600", "", "192.0.2.1");
         addRecord("NS", "3600", "", "ns.example.com.");
         addRecord("NS", "3600", "", "ns.delegation.example.org.");
         addCurName("delegation.example.org.");
@@ -282,6 +281,12 @@ private:
         addRecord("DNAME", "3600", "", "dname1.example.com.");
         addRecord("DNAME", "3600", "", "dname2.example.com.");
         addCurName("baddname.example.org.");
+
+        // Put some data into apex (including NS) so we can check our NS
+        // doesn't break anything
+        addRecord("NS", "3600", "", "ns.example.com.");
+        addRecord("A", "3600", "", "192.0.2.1");
+        addCurName("example.org.");
     }
 };
 
@@ -703,6 +708,17 @@ TEST_F(DatabaseClientTest, find) {
                expected_rdatas, expected_sig_rdatas);
     EXPECT_FALSE(current_database_->searchRunning());
 
+    // The apex should not be considered delegation point and we can access
+    // data
+    expected_rdatas.clear();
+    expected_sig_rdatas.clear();
+    expected_rdatas.push_back("192.0.2.1");
+    doFindTest(finder, isc::dns::Name("example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas,
+               expected_sig_rdatas);
+    EXPECT_FALSE(current_database_->searchRunning());
+
     // Check when we ask for something below delegation point, we get the NS
     // (Both when the RRset there exists and doesn't)
     expected_rdatas.clear();
@@ -769,6 +785,16 @@ TEST_F(DatabaseClientTest, find) {
                               isc::dns::RRType::A(), NULL,
                               ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
+    EXPECT_FALSE(current_database_->searchRunning());
+}
+
+TEST_F(DatabaseClientTest, getOrigin) {
+    DataSourceClient::FindResult zone(client_->findZone(Name("example.org")));
+    ASSERT_EQ(result::SUCCESS, zone.code);
+    shared_ptr<DatabaseClient::Finder> finder(
+        dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
+    EXPECT_EQ(42, finder->zone_id());
+    EXPECT_EQ(isc::dns::Name("example.org"), finder->getOrigin());
 }
 
 }
