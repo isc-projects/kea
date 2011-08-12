@@ -40,7 +40,6 @@ Dhcpv6Srv::run() {
         pkt = IfaceMgr::instance().receive();
 
         if (pkt) {
-            Addr6 client = pkt->remote_addr_;
             cout << "Received " << pkt->data_len_ << " bytes, echoing back."
                  << endl;
             IfaceMgr::instance().send(*pkt);
