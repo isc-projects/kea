@@ -90,15 +90,15 @@ most likely points to a logic error in the code, and can be considered a bug.
 The current search is aborted. Specific information about the exception is
 printed in this error message.
 
-% DATASRC_DATABASE_FOUND_NXDOMAIN search in database resulted in NXDOMAIN for %1/%2/%3
+% DATASRC_DATABASE_FOUND_NXDOMAIN search in datasource %1 resulted in NXDOMAIN for %2/%3/%4
 The data returned by the database backend did not contain any data for the given
 domain name, class and type.
 
-% DATASRC_DATABASE_FOUND_NXRRSET search in database resulted in NXRRSET for %1/%2/%3
+% DATASRC_DATABASE_FOUND_NXRRSET search in datasource %1 resulted in NXRRSET for %2/%3/%4
 The data returned by the database backend contained data for the given domain
 name and class, but not for the given type.
 
-% DATASRC_DATABASE_FOUND_RRSET search in database resulted in RRset %1
+% DATASRC_DATABASE_FOUND_RRSET search in datasource %1 resulted in RRset %2
 The data returned by the database backend contained data for the given domain
 name, and it either matches the type or has a relevant type. The RRset that is
 returned is printed.
