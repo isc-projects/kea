@@ -332,7 +332,7 @@ checkRRset(isc::dns::ConstRRsetPtr rrset,
            const isc::dns::RRClass& rrclass,
            const isc::dns::RRType& rrtype,
            const isc::dns::RRTTL& rrttl,
-           const std::vector<std::string> rdatas) {
+           const std::vector<std::string>& rdatas) {
     isc::dns::RRsetPtr expected_rrset(
         new isc::dns::RRset(name, rrclass, rrtype, rrttl));
     for (unsigned int i = 0; i < rdatas.size(); ++i) {
