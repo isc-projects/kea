@@ -58,10 +58,10 @@ public:
     //@}
 
     /// \brief Returns the origin of the zone.
-    virtual const isc::dns::Name& getOrigin() const;
+    virtual isc::dns::Name getOrigin() const;
 
     /// \brief Returns the class of the zone.
-    virtual const isc::dns::RRClass& getClass() const;
+    virtual isc::dns::RRClass getClass() const;
 
     /// \brief Looks up an RRset in the zone.
     ///
@@ -73,7 +73,7 @@ public:
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type,
                             isc::dns::RRsetList* target = NULL,
-                            const FindOptions options = FIND_DEFAULT) const;
+                            const FindOptions options = FIND_DEFAULT);
 
     /// \brief Inserts an rrset into the zone.
     ///

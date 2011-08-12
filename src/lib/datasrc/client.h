@@ -15,6 +15,8 @@
 #ifndef __DATA_SOURCE_CLIENT_H
 #define __DATA_SOURCE_CLIENT_H 1
 
+#include <boost/noncopyable.hpp>
+
 #include <datasrc/zone.h>
 
 namespace isc {
