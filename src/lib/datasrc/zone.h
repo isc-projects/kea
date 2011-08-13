@@ -209,9 +209,20 @@ typedef boost::shared_ptr<const ZoneFinder> ConstZoneFinderPtr;
 
 /// The base class to make updates to a single zone.
 class ZoneUpdater {
+protected:
+    ZoneUpdater() {}
+
 public:
+    virtual ~ZoneUpdater() {}
+
     /// TBD
     virtual ZoneFinder& getFinder() = 0;
+
+    /// TBD
+    ///
+    /// This operation can only be performed at most once.  A duplicate call
+    /// must result in a DatasourceError exception.
+    virtual void commit() = 0;
 };
 
 /// \brief A pointer-like type pointing to a \c ZoneUpdater object.
