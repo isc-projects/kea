@@ -25,7 +25,8 @@ namespace datasrc {
 struct SQLite3Parameters {
     SQLite3Parameters() :
         db_(NULL), version_(-1),
-        q_zone_(NULL), q_any_(NULL)
+        q_zone_(NULL), q_any_(NULL),
+        q_any_sub_(NULL), q_current_(NULL)
         /*q_record_(NULL), q_addrs_(NULL), q_referral_(NULL),
         q_count_(NULL), q_previous_(NULL), q_nsec3_(NULL),
         q_prevnsec3_(NULL) */
@@ -34,6 +35,8 @@ struct SQLite3Parameters {
     int version_;
     sqlite3_stmt* q_zone_;
     sqlite3_stmt* q_any_;
+    sqlite3_stmt* q_any_sub_;
+    sqlite3_stmt* q_current_;
     /*
     TODO: Yet unneeded statements
     sqlite3_stmt* q_record_;
@@ -76,6 +79,11 @@ public:
         if (params_.q_any_ != NULL) {
             sqlite3_finalize(params_.q_any_);
         }
+        if (params_.q_any_sub_ != NULL) {
+            sqlite3_finalize(params_.q_any_sub_);
+        }
+        // we do NOT finalize q_current_ - that is just a pointer to one of
+        // the other statements, not a separate one.
         /*
         if (params_.q_record_ != NULL) {
             sqlite3_finalize(params_.q_record_);
@@ -138,6 +146,9 @@ const char* const q_zone_str = "SELECT id FROM zones WHERE name=?1 AND rdclass =
 
 const char* const q_any_str = "SELECT rdtype, ttl, sigtype, rdata "
     "FROM records WHERE zone_id=?1 AND name=?2";
+
+const char* const q_any_sub_str = "SELECT rdtype, ttl, sigtype, rdata "
+    "FROM records WHERE zone_id=?1 AND name LIKE (\"%.\" || ?2)";
 
 /* TODO: Prune the statements, not everything will be needed maybe?
 const char* const q_record_str = "SELECT rdtype, ttl, sigtype, rdata "
@@ -204,7 +215,10 @@ checkAndSetupSchema(Initializer* initializer) {
     }
 
     initializer->params_.q_zone_ = prepare(db, q_zone_str);
-    initializer->params_.q_any_ = prepare(db, q_any_str);
+    // Make sure the current is initialized to one of the statements, not NULL
+    initializer->params_.q_current_ = initializer->params_.q_any_ =
+        prepare(db, q_any_str);
+    initializer->params_.q_any_sub_ = prepare(db, q_any_sub_str);
     /* TODO: Yet unneeded statements
     initializer->params_.q_record_ = prepare(db, q_record_str);
     initializer->params_.q_addrs_ = prepare(db, q_addrs_str);
@@ -323,15 +337,19 @@ SQLite3Database::getZone(const isc::dns::Name& name) const {
 }
 
 void
-SQLite3Database::searchForRecords(int zone_id, const std::string& name, bool) {
+SQLite3Database::searchForRecords(int zone_id, const std::string& name,
+                                  bool subdomains)
+{
+    dbparameters_->q_current_ = subdomains ? dbparameters_->q_any_sub_ :
+        dbparameters_->q_any_;
     resetSearch();
-    if (sqlite3_bind_int(dbparameters_->q_any_, 1, zone_id) != SQLITE_OK) {
+    if (sqlite3_bind_int(dbparameters_->q_current_, 1, zone_id) != SQLITE_OK) {
         isc_throw(DataSourceError,
                   "Error in sqlite3_bind_int() for zone_id " <<
                   zone_id << ": " << sqlite3_errmsg(dbparameters_->db_));
     }
     // use transient since name is a ref and may disappear
-    if (sqlite3_bind_text(dbparameters_->q_any_, 2, name.c_str(), -1,
+    if (sqlite3_bind_text(dbparameters_->q_current_, 2, name.c_str(), -1,
                                SQLITE_TRANSIENT) != SQLITE_OK) {
         isc_throw(DataSourceError,
                   "Error in sqlite3_bind_text() for name " <<
@@ -376,7 +394,7 @@ SQLite3Database::getNextRecord(std::string columns[], size_t column_count) {
                     "of size " << COLUMN_COUNT << " to getNextRecord()");
     }
 
-    sqlite3_stmt* current_stmt = dbparameters_->q_any_;
+    sqlite3_stmt* current_stmt = dbparameters_->q_current_;
     const int rc = sqlite3_step(current_stmt);
 
     if (rc == SQLITE_ROW) {
@@ -404,8 +422,8 @@ SQLite3Database::getNextRecord(std::string columns[], size_t column_count) {
 
 void
 SQLite3Database::resetSearch() {
-    sqlite3_reset(dbparameters_->q_any_);
-    sqlite3_clear_bindings(dbparameters_->q_any_);
+    sqlite3_reset(dbparameters_->q_current_);
+    sqlite3_clear_bindings(dbparameters_->q_current_);
 }
 
 }
