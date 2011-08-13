@@ -85,7 +85,9 @@ The commands
   (IP address, address family, port) and how to allow sharing. Sharing would be
   one of:
   - None
-  - Same kind of application
+  - Same kind of application (however, it is not entirely clear what
+    this means, in case it won't work out intuitively, we'll need to
+    define it somehow)
   - Any kind of application
   And a kind of application would be provided, to decide if the sharing is
   possible (eg. if auth allows sharing with the same kind and something else
@@ -113,7 +115,9 @@ Known limitations
 Currently the socket creator doesn't support specifying any socket
 options. If it turns out there are any options that need to be set
 before bind(), we'll need to extend it (and extend the protocol as
-well).
+well). If we want to support them, we'll have to solve a possible
+conflict (what to do when two applications request the same socket and
+want to share it, but want different options).
 
 The current socket creator doesn't know raw sockets, but if they are
 needed, it should be easy to add.
