@@ -240,6 +240,16 @@ TEST_F(SQLite3Access, getRecords) {
     checkRecordRow(columns, "RRSIG", "3600", "DNSKEY",
                    "DNSKEY 5 2 3600 20100322084538 20100220084538 "
                    "33495 example.com. FAKEFAKEFAKEFAKE");
+
+    // Try searching for subdomain
+    // There's foo.bar.example.com in the data
+    db->searchForRecords(zone_id, "bar.example.com.", true);
+    EXPECT_TRUE(db->getNextRecord(columns, column_count));
+    checkRecordRow(columns, "A", "3600", "", "192.0.2.1");
+    EXPECT_FALSE(db->getNextRecord(columns, column_count));
+    // But we shouldn't match mix.example.com here
+    db->searchForRecords(zone_id, "ix.example.com.", true);
+    EXPECT_FALSE(db->getNextRecord(columns, column_count));
 }
 
 } // end anonymous namespace
