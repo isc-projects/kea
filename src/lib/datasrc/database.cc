@@ -12,12 +12,14 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <string>
 #include <vector>
 
 #include <datasrc/database.h>
 
 #include <exceptions/exceptions.h>
 #include <dns/name.h>
+#include <dns/rrclass.h>
 #include <dns/rrttl.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
@@ -27,15 +29,18 @@
 
 #include <boost/foreach.hpp>
 
+using namespace std;
 using boost::shared_ptr;
 using isc::dns::Name;
+using isc::dns::RRClass;
 
 namespace isc {
 namespace datasrc {
 
-DatabaseClient::DatabaseClient(boost::shared_ptr<DatabaseAccessor>
+DatabaseClient::DatabaseClient(RRClass rrclass,
+                               boost::shared_ptr<DatabaseAccessor>
                                accessor) :
-    accessor_(accessor)
+    rrclass_(rrclass), accessor_(accessor)
 {
     if (!accessor_) {
         isc_throw(isc::InvalidParameter,
@@ -321,21 +326,55 @@ DatabaseClient::startUpdateZone(const isc::dns::Name& name,
         return (ZoneUpdaterPtr());
     }
 
-    // At this moment this one cannot anything except giving a finder.
-    return (ZoneUpdaterPtr(new DatabaseClient::Updater(accessor_,
-                                                       zone.second)));
+     return (ZoneUpdaterPtr(new Updater(accessor_, zone.second,
+                                        name.toText(), rrclass_.toText())));
 }
 
 DatabaseClient::Updater::Updater(shared_ptr<DatabaseAccessor> accessor,
-                                 int zone_id) :
-    accessor_(accessor), zone_id_(zone_id),
-    finder_(new Finder::Finder(accessor_, zone_id_))
+                                 int zone_id, const string& zone_name,
+                                 const string& class_name) :
+    committed_(false), accessor_(accessor), zone_id_(zone_id),
+    db_name_(accessor->getDBName()), zone_name_(zone_name),
+    class_name_(class_name),
+    finder_(new Finder(accessor_, zone_id_))
 {
+    logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_CREATED)
+        .arg(zone_name_).arg(class_name_).arg(db_name_);
+}
+
+DatabaseClient::Updater::~Updater() {
+    if (!committed_) {
+        accessor_->rollbackUpdateZone();
+        logger.info(DATASRC_DATABASE_UPDATER_ROLLBACK)
+            .arg(zone_name_).arg(class_name_).arg(db_name_);
+    }
+
+    logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_DESTROYED)
+        .arg(zone_name_).arg(class_name_).arg(db_name_);
 }
 
 ZoneFinder&
 DatabaseClient::Updater::getFinder() {
     return (*finder_);
+}
+
+void
+DatabaseClient::Updater::commit() {
+    if (committed_) {
+        isc_throw(DataSourceError, "Duplicate commit attempt for "
+                  << zone_name_ << "/" << class_name_ << " on "
+                  << db_name_);
+    }
+    accessor_->commitUpdateZone();
+
+    // We release the accessor immediately after commit is completed so that
+    // we don't hold the possible internal resource any longer.
+    accessor_.reset();
+
+    committed_ = true;
+
+    logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_COMMIT)
+        .arg(zone_name_).arg(class_name_).arg(db_name_);
 }
 }
 }

@@ -32,6 +32,7 @@ using namespace std;
 using namespace boost;
 using isc::dns::Name;
 using isc::dns::RRType;
+using isc::dns::RRClass;
 using isc::dns::RRTTL;
 
 namespace {
@@ -47,8 +48,8 @@ class MockAccessor : public DatabaseAccessor {
     typedef std::map<std::string, std::vector< std::vector<std::string> > >
     RECORDS;
 public:
-    MockAccessor() : search_running_(false),
-                       database_name_("mock_database")
+    MockAccessor() : search_running_(false), rollbacked_(false),
+                     database_name_("mock_database")
     {
         fillData();
     }
@@ -112,14 +113,18 @@ public:
             resetSearch();
             return (false);
         }
-    };
+    }
 
     virtual void resetSearch() {
         search_running_ = false;
-    };
+    }
 
     bool searchRunning() const {
         return (search_running_);
+    }
+
+    bool isRollbacked() const {
+        return (rollbacked_);
     }
 
     virtual const std::string& getDBName() const {
@@ -140,6 +145,10 @@ private:
     // This boolean is used to make sure find() calls resetSearch
     // when it encounters an error
     bool search_running_;
+
+    // Whether rollback operation has been performed for the database.
+    // Not useful except for purely testing purpose.
+    bool rollbacked_;
 
     // We store the name passed to searchForRecords, so we can
     // hardcode some exceptions into getNextRecord
@@ -303,15 +312,19 @@ private:
 
         return (pair<bool, int>(true, WRITABLE_ZONE_ID));
     }
-    virtual void commitUpdateZone() {}
-    virtual void rollbackUpdateZone() {}
+    virtual void commitUpdateZone() {
+        readonly_records = update_records;
+    }
+    virtual void rollbackUpdateZone() {
+        rollbacked_ = true;
+    }
     virtual void addRecordToZone(const vector<string>&) {}
     virtual void deleteRecordInZone(const vector<string>&) {}
 };
 
 class DatabaseClientTest : public ::testing::Test {
 protected:
-    DatabaseClientTest() {
+    DatabaseClientTest() : qname("www.example.org"), qtype("A") {
         createClient();
     }
     /*
@@ -320,14 +333,19 @@ protected:
      */
     void createClient() {
         current_accessor_ = new MockAccessor();
-        client_.reset(new DatabaseClient(shared_ptr<DatabaseAccessor>(
-             current_accessor_)));
+        client_.reset(new DatabaseClient(RRClass::IN(),
+                                         shared_ptr<DatabaseAccessor>(
+                                             current_accessor_)));
     }
     // Will be deleted by client_, just keep the current value for comparison.
     MockAccessor* current_accessor_;
     shared_ptr<DatabaseClient> client_;
     const std::string database_name_;
 
+    const Name qname;           // commonly used name to be found
+    const RRType qtype;         // commonly used RR type with qname
+
+    ZoneUpdaterPtr updater;
     const std::vector<std::string> empty_rdatas; // for NXRRSET/NXDOMAIN
     std::vector<std::string> expected_rdatas;
     std::vector<std::string> expected_sig_rdatas;
@@ -366,9 +384,7 @@ TEST_F(DatabaseClientTest, superZone) {
 }
 
 TEST_F(DatabaseClientTest, noAccessorException) {
-    // We need a dummy variable here; some compiler would regard it a mere
-    // declaration instead of an instantiation and make the test fail.
-    EXPECT_THROW(DatabaseClient dummy((shared_ptr<DatabaseAccessor>())),
+    EXPECT_THROW(DatabaseClient(RRClass::IN(), shared_ptr<DatabaseAccessor>()),
                  isc::InvalidParameter);
 }
 
@@ -740,8 +756,7 @@ TEST_F(DatabaseClientTest, find) {
 }
 
 TEST_F(DatabaseClientTest, updaterFinder) {
-    ZoneUpdaterPtr updater = client_->startUpdateZone(Name("example.org"),
-                                                      false);
+    updater = client_->startUpdateZone(Name("example.org"), false);
     ASSERT_TRUE(updater);
 
     // If this update isn't replacing the zone, the finder should work
@@ -764,5 +779,56 @@ TEST_F(DatabaseClientTest, updaterFinder) {
                RRType::A(), RRType::A(), RRTTL(3600), ZoneFinder::NXDOMAIN,
                empty_rdatas, empty_rdatas);
 }
+
+TEST_F(DatabaseClientTest, flushZone) {
+    // A simple update case: flush the entire zone
+
+    // Before update, the name exists.
+    ZoneFinderPtr finder = client_->findZone(Name("example.org")).zone_finder;
+    EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(qname, qtype).code);
+
+    // start update in the replace mode.  the normal finder should still
+    // be able to see the record, but the updater's finder shouldn't.
+    updater = client_->startUpdateZone(Name("example.org"), true);
+    EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(qname, qtype).code);
+    EXPECT_EQ(ZoneFinder::NXDOMAIN,
+              updater->getFinder().find(qname, qtype).code);
+
+    // commit the update.  now the normal finder shouldn't see it.
+    updater->commit();
+    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->find(qname, qtype).code);
+
+    // Check rollback wasn't accidentally performed.
+    EXPECT_FALSE(current_accessor_->isRollbacked());
+}
+
+TEST_F(DatabaseClientTest, updateCancel) {
+    // similar to the previous test, but destruct the updater before commit.
+
+    ZoneFinderPtr finder = client_->findZone(Name("example.org")).zone_finder;
+    EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(qname, qtype).code);
+
+    updater = client_->startUpdateZone(Name("example.org"), true);
+    EXPECT_EQ(ZoneFinder::NXDOMAIN,
+              updater->getFinder().find(qname, qtype).code);
+    // DB should not have been rolled back yet.
+    EXPECT_FALSE(current_accessor_->isRollbacked());
+    updater.reset();            // destruct without commit
+
+    // reset() should have triggered rollback (although it doesn't affect
+    // anything to the mock accessor implementation except for the result of
+    // isRollbacked())
+    EXPECT_TRUE(current_accessor_->isRollbacked());
+    EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(qname, qtype).code);
+}
+
+TEST_F(DatabaseClientTest, duplicateCommit) {
+    // duplicate commit.  should result in exception.
+    updater = client_->startUpdateZone(Name("example.org"), true);
+    updater->commit();
+    EXPECT_THROW(updater->commit(), DataSourceError);
+}
+
+// add/delete after commit.  should error
 
 }
