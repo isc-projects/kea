@@ -54,7 +54,9 @@ public:
         }
     }
 
-    virtual void searchForRecords(int zone_id, const std::string& name) {
+    virtual void searchForRecords(int zone_id, const std::string& name,
+                                  bool subdomains)
+    {
         search_running_ = true;
 
         // 'hardcoded' name to trigger exceptions (for testing
@@ -69,14 +71,29 @@ public:
         }
         searched_name_ = name;
 
-        // we're not aiming for efficiency in this test, simply
-        // copy the relevant vector from records
         cur_record = 0;
         if (zone_id == 42) {
-            if (records.count(name) > 0) {
-                cur_name = records.find(name)->second;
-            } else {
+            if (subdomains) {
                 cur_name.clear();
+                // Just walk everything and check if it is a subdomain.
+                // If it is, just copy all data from there.
+                for (Domains::iterator i(records.begin()); i != records.end();
+                     ++ i) {
+                    Name local(i->first);
+                    if (local.compare(isc::dns::Name(name)).getRelation() ==
+                        isc::dns::NameComparisonResult::SUBDOMAIN) {
+                        cur_name.insert(cur_name.end(), i->second.begin(),
+                                        i->second.end());
+                    }
+                }
+            } else {
+                if (records.count(name) > 0) {
+                    // we're not aiming for efficiency in this test, simply
+                    // copy the relevant vector from records
+                    cur_name = records.find(name)->second;
+                } else {
+                    cur_name.clear();
+                }
             }
         } else {
             cur_name.clear();
@@ -119,7 +136,9 @@ public:
         return (database_name_);
     }
 private:
-    std::map<std::string, std::vector< std::vector<std::string> > > records;
+    typedef std::map<std::string, std::vector< std::vector<std::string> > >
+        Domains;
+    Domains records;
     // used as internal index for getNextRecord()
     size_t cur_record;
     // used as temporary storage after searchForRecord() and during
