@@ -263,6 +263,10 @@ private:
         addRecord("A", "3600", "", "192.0.2.1");
         addRecord("RRSIG", "3600", "TXT", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
         addCurName("badsigtype.example.org.");
+
+        // This is because of empty domain test
+        addRecord("A", "3600", "", "192.0.2.1");
+        addCurName("a.b.example.org.");
     }
 };
 
@@ -682,6 +686,15 @@ TEST_F(DatabaseClientTest, find) {
                ZoneFinder::SUCCESS,
                expected_rdatas, expected_sig_rdatas);
     EXPECT_FALSE(current_database_->searchRunning());
+
+    // Check empty domain
+    expected_rdatas.clear();
+    expected_sig_rdatas.clear();
+    // This domain doesn't exist, but a subdomain of it does.
+    // Therefore we should pretend the domain is there, but contains no RRsets
+    doFindTest(finder, isc::dns::Name("b.example.org."), isc::dns::RRType::A(),
+               isc::dns::RRType::A(), isc::dns::RRTTL(3600),
+               ZoneFinder::NXRRSET, expected_rdatas, expected_sig_rdatas);
 }
 
 }
