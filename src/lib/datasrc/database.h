@@ -15,7 +15,11 @@
 #ifndef __DATABASE_DATASRC_H
 #define __DATABASE_DATASRC_H
 
+#include <string>
+
 #include <boost/scoped_ptr.hpp>
+
+#include <dns/rrclass.h>
 
 #include <datasrc/client.h>
 
@@ -230,11 +234,14 @@ public:
      * \exception isc::InvalidParameter if database is NULL. It might throw
      * standard allocation exception as well, but doesn't throw anything else.
      *
+     * \param rrclass The RR class of the zones that this client will handle.
      * \param database The database to use to get data. As the parameter
      *     suggests, the client takes ownership of the database and will
      *     delete it when itself deleted.
      */
-    DatabaseClient(boost::shared_ptr<DatabaseAccessor> database);
+    DatabaseClient(isc::dns::RRClass rrclass,
+                   boost::shared_ptr<DatabaseAccessor> database);
+
     /**
      * \brief Corresponding ZoneFinder implementation
      *
@@ -337,12 +344,19 @@ public:
 
     class Updater : public ZoneUpdater {
     public:
-        Updater(boost::shared_ptr<DatabaseAccessor> database, int zone_id);
+        Updater(boost::shared_ptr<DatabaseAccessor> database, int zone_id,
+                const std::string& zone_name, const std::string& class_name);
+        ~Updater();
         virtual ZoneFinder& getFinder();
+        virtual void commit();
 
     private:
+        bool committed_;
         boost::shared_ptr<DatabaseAccessor> accessor_;
         const int zone_id_;
+        std::string db_name_;
+        std::string zone_name_;
+        std::string class_name_;
         boost::scoped_ptr<Finder::Finder> finder_;
     };
 
@@ -367,6 +381,9 @@ public:
                                            bool replace) const;
 
 private:
+    /// \brief The RR class that this client handles.
+    const isc::dns::RRClass rrclass_;
+
     /// \brief The accessor to our database.
     const boost::shared_ptr<DatabaseAccessor> accessor_;
 };
