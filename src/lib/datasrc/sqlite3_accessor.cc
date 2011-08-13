@@ -323,7 +323,7 @@ SQLite3Database::getZone(const isc::dns::Name& name) const {
 }
 
 void
-SQLite3Database::searchForRecords(int zone_id, const std::string& name) {
+SQLite3Database::searchForRecords(int zone_id, const std::string& name, bool) {
     resetSearch();
     if (sqlite3_bind_int(dbparameters_->q_any_, 1, zone_id) != SQLITE_OK) {
         isc_throw(DataSourceError,
