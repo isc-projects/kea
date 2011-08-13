@@ -284,11 +284,12 @@ ZoneFinder::FindResult
 DatabaseClient::Finder::find(const isc::dns::Name& name,
                              const isc::dns::RRType& type,
                              isc::dns::RRsetList*,
-                             const FindOptions)
+                             const FindOptions options)
 {
     // This variable is used to determine the difference between
     // NXDOMAIN and NXRRSET
     bool records_found = false;
+    bool glue_ok(options & FIND_GLUE_OK);
     isc::dns::RRsetPtr result_rrset;
     ZoneFinder::Result result_status = SUCCESS;
     std::pair<bool, isc::dns::RRsetPtr> found;
@@ -307,7 +308,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
             Name superdomain(name.split(i));
             // Look if there's NS or DNAME (but ignore the NS in origin)
             found = getRRset(superdomain, NULL, false, true,
-                             i != removeLabels);
+                             i != removeLabels && !glue_ok);
             if (found.second) {
                 // We found something redirecting somewhere else
                 // (it can be only NS or DNAME here)
@@ -326,10 +327,11 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
             // Try getting the final result and extract it
             // It is special if there's a CNAME or NS, DNAME is ignored here
             // And we don't consider the NS in origin
-            found = getRRset(name, &type, true, false, name != origin);
+            found = getRRset(name, &type, true, false,
+                             name != origin && !glue_ok);
             records_found = found.first;
             result_rrset = found.second;
-            if (result_rrset && name != origin &&
+            if (result_rrset && name != origin && !glue_ok &&
                 result_rrset->getType() == isc::dns::RRType::NS()) {
                 result_status = DELEGATION;
             } else if (result_rrset && type != isc::dns::RRType::CNAME() &&
