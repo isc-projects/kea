@@ -84,8 +84,14 @@ public:
      *
      * \param zone_id The zone to search in, as returned by getZone()
      * \param name The name of the records to find
+     * \param subdomains If set to true, match subdomains of name instead
+     *     of name itself. It is used to find empty domains and match
+     *     wildcards.
+     * \todo Should we return the name as well? If we search for subdomains
+     *     it might be useful (and needed in case of wildcard).
      */
-    virtual void searchForRecords(int zone_id, const std::string& name) = 0;
+    virtual void searchForRecords(int zone_id, const std::string& name,
+                                  bool subdomains = false) = 0;
 
     /**
      * \brief Retrieves the next record from the search started with searchForRecords()

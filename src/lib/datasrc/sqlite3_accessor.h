@@ -100,8 +100,10 @@ public:
      *
      * \param zone_id The zone to seach in, as returned by getZone()
      * \param name The name to find records for
+     * \param subdomains Match subdomains instead of the name.
      */
-    virtual void searchForRecords(int zone_id, const std::string& name);
+    virtual void searchForRecords(int zone_id, const std::string& name,
+                                  bool subdomains = false);
 
     /**
      * \brief Retrieve the next record from the search started with
