@@ -31,21 +31,30 @@ using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
 
-namespace {
-class Rdata_MINFO_Test : public RdataTest {
-    // there's nothing to specialize
-};
-
 // minfo text
 const char* const minfo_txt = "rmailbox.example.com. emailbox.example.com.";
+const char* const minfo_txt2 = "root.example.com. emailbox.example.com.";
 const char* const too_long_label = "01234567890123456789012345678901234567"
                                    "89012345678901234567890123";
 
-const generic::MINFO rdata_minfo((string(minfo_txt)));
+namespace {
+class Rdata_MINFO_Test : public RdataTest {
+    // there's nothing to specialize
+public:
+    Rdata_MINFO_Test():
+        rdata_minfo(string(minfo_txt)), rdata_minfo2(string(minfo_txt2)) {}
+
+    const generic::MINFO rdata_minfo;
+    const generic::MINFO rdata_minfo2;
+};
+
 
 TEST_F(Rdata_MINFO_Test, createFromText) {
     EXPECT_EQ(Name("rmailbox.example.com."), rdata_minfo.getRmailbox());
     EXPECT_EQ(Name("emailbox.example.com."), rdata_minfo.getEmailbox());
+
+    EXPECT_EQ(Name("root.example.com."), rdata_minfo2.getRmailbox());
+    EXPECT_EQ(Name("emailbox.example.com."), rdata_minfo2.getEmailbox());
 }
 
 TEST_F(Rdata_MINFO_Test, badText) {
@@ -57,60 +66,97 @@ TEST_F(Rdata_MINFO_Test, badText) {
                                 "example.com."),
                  InvalidRdataText);
     // bad rmailbox name
-    EXPECT_THROW(generic::MINFO("root.example.com. emailbx.example.com." +
+    EXPECT_THROW(generic::MINFO("root.example.com. emailbox.example.com." +
                                 string(too_long_label)),
                  TooLongLabel);
     // bad emailbox name
     EXPECT_THROW(generic::MINFO("root.example.com."  +
-                          string(too_long_label) + " emailbx.example.com."),
+                          string(too_long_label) + " emailbox.example.com."),
                  TooLongLabel);
 }
 
 TEST_F(Rdata_MINFO_Test, createFromWire) {
-    // compressed emailbx name
+    // uncompressed names
     EXPECT_EQ(0, rdata_minfo.compare(
                   *rdataFactoryFromFile(RRType::MINFO(), RRClass::IN(),
-                                        "rdata_minfo_fromWire")));
-    // compressed rmailbx and emailbx name
+                                     "rdata_minfo_fromWire1.wire")));
+    // compressed names
     EXPECT_EQ(0, rdata_minfo.compare(
-                  *rdataFactoryFromFile(RRType("MINFO"), RRClass::IN(),
-                                        "rdata_minfo_fromWire", 35)));
+                  *rdataFactoryFromFile(RRType::MINFO(), RRClass::IN(),
+                                     "rdata_minfo_fromWire2.wire", 15)));
     // RDLENGTH is too short
     EXPECT_THROW(rdataFactoryFromFile(RRType::MINFO(), RRClass::IN(),
-                                      "rdata_minfo_fromWire", 41),
+                                     "rdata_minfo_fromWire3.wire"),
                  InvalidRdataLength);
     // RDLENGTH is too long
     EXPECT_THROW(rdataFactoryFromFile(RRType::MINFO(), RRClass::IN(),
-                                      "rdata_minfo_fromWire", 47),
+                                      "rdata_minfo_fromWire4.wire"),
                  InvalidRdataLength);
-    // incomplete name.  the error should be detected in the name constructor
-    EXPECT_THROW(rdataFactoryFromFile(RRType("MINFO"), RRClass::IN(),
-                                      "rdata_minfo_fromWire", 53),
+    // bogus rmailbox name, the error should be detected in the name
+    // constructor
+    EXPECT_THROW(rdataFactoryFromFile(RRType::MINFO(), RRClass::IN(),
+                                      "rdata_minfo_fromWire5.wire"),
+                 DNSMessageFORMERR);
+    // bogus emailbox name, the error should be detected in the name
+    // constructor
+    EXPECT_THROW(rdataFactoryFromFile(RRType::MINFO(), RRClass::IN(),
+                                      "rdata_minfo_fromWire6.wire"),
                  DNSMessageFORMERR);
 }
 
+TEST_F(Rdata_MINFO_Test, assignment) {
+    generic::MINFO copy((string(minfo_txt2)));
+    copy = rdata_minfo;
+    EXPECT_EQ(0, copy.compare(rdata_minfo));
+
+    // Check if the copied data is valid even after the original is deleted
+    generic::MINFO* copy2 = new generic::MINFO(rdata_minfo);
+    generic::MINFO copy3((string(minfo_txt2)));
+    copy3 = *copy2;
+    delete copy2;
+    EXPECT_EQ(0, copy3.compare(rdata_minfo));
+
+    // Self assignment
+    copy = copy;
+    EXPECT_EQ(0, copy.compare(rdata_minfo));
+}
+
 TEST_F(Rdata_MINFO_Test, toWireBuffer) {
-    obuffer.skip(2);
     rdata_minfo.toWire(obuffer);
     vector<unsigned char> data;
-    UnitTestUtil::readWireData("rdata_minfo_toWireUncompressed.wire", data);
+    UnitTestUtil::readWireData("rdata_minfo_toWireUncompressed1.wire", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t *>(obuffer.getData()) + 2,
-                        obuffer.getLength() - 2, &data[2], data.size() - 2);
+                        static_cast<const uint8_t *>(obuffer.getData()),
+                        obuffer.getLength(), &data[0], data.size());
+
+    obuffer.clear();
+    rdata_minfo2.toWire(obuffer);
+    vector<unsigned char> data2;
+    UnitTestUtil::readWireData("rdata_minfo_toWireUncompressed2.wire", data2);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        static_cast<const uint8_t *>(obuffer.getData()),
+                        obuffer.getLength(), &data2[0], data2.size());
 }
 
 TEST_F(Rdata_MINFO_Test, toWireRenderer) {
-    obuffer.skip(2);
     rdata_minfo.toWire(renderer);
     vector<unsigned char> data;
-    UnitTestUtil::readWireData("rdata_minfo_toWire", data);
+    UnitTestUtil::readWireData("rdata_minfo_toWire1.wire", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t *>(obuffer.getData()) + 2,
-                        obuffer.getLength() - 2, &data[2], data.size() - 2);
+                        static_cast<const uint8_t *>(obuffer.getData()),
+                        obuffer.getLength(), &data[0], data.size());
+    renderer.clear();
+    rdata_minfo2.toWire(renderer);
+    vector<unsigned char> data2;
+    UnitTestUtil::readWireData("rdata_minfo_toWire2.wire", data2);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        static_cast<const uint8_t *>(obuffer.getData()),
+                        obuffer.getLength(), &data2[0], data2.size());
 }
 
 TEST_F(Rdata_MINFO_Test, toText) {
     EXPECT_EQ(minfo_txt, rdata_minfo.toText());
+    EXPECT_EQ(minfo_txt2, rdata_minfo2.toText());
 }
 
 TEST_F(Rdata_MINFO_Test, compare) {

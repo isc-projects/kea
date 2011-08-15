@@ -4,3 +4,5 @@
 [custom]
 sections: minfo
 [minfo]
+rmailbox: root.example.com.
+rdlen: -1

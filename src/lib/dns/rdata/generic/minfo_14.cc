@@ -79,8 +79,7 @@ MINFO::MINFO(const std::string& minfo_str) :
 /// names in the wire is invalid.
 MINFO::MINFO(InputBuffer& buffer, size_t) :
     rmailbox_(buffer), emailbox_(buffer)
-{
-}
+{}
 
 /// \brief Copy constructor.
 ///
@@ -112,6 +111,14 @@ void
 MINFO::toWire(OutputBuffer& buffer) const {
     rmailbox_.toWire(buffer);
     emailbox_.toWire(buffer);
+}
+
+MINFO&
+MINFO::operator=(const MINFO& source) {
+    rmailbox_ = source.rmailbox_;
+    emailbox_ = source.emailbox_;
+
+    return (*this);
 }
 
 /// \brief Render the \c MINFO in the wire format with taking into account
