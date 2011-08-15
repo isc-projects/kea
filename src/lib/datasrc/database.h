@@ -120,7 +120,7 @@ public:
     typedef boost::shared_ptr<IteratorContext> IteratorContextPtr;
 
     /**
-     * \brief Creates an iterator context for given zone.
+     * \brief Creates an iterator context for the whole zone.
      *
      * This should create a new iterator context to be used by
      * DatabaseConnection's ZoneIterator. It can be created based on the name
@@ -136,8 +136,8 @@ public:
      * \param id The ID of the zone, returned from getZone().
      * \return Newly created iterator context. Must not be NULL.
      */
-    virtual IteratorContextPtr getIteratorContext(const isc::dns::Name& name,
-                                                  int id) const
+    virtual IteratorContextPtr getAllRecords(const isc::dns::Name& name,
+                                             int id) const
     {
         /*
          * This is a compromise. We need to document the parameters in doxygen,
