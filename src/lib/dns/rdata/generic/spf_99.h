@@ -39,7 +39,7 @@ public:
     ~SPF();
 
 private:
-    typedef TXTLikeImpl<SPF, 16> SPFImpl;
+    typedef TXTLikeImpl<SPF, 99> SPFImpl;
     SPFImpl* impl_;
 };
 
