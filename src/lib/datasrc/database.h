@@ -150,6 +150,96 @@ public:
         isc_throw(isc::NotImplemented,
                   "This database datasource can't be iterated");
     }
+
+    /**
+     * \brief Starts a new search for records of the given name in the given zone
+     *
+     * The data searched by this call can be retrieved with subsequent calls to
+     * getNextRecord().
+     *
+     * \exception DataSourceError if there is a problem connecting to the
+     *                            backend database
+     *
+     * \param zone_id The zone to search in, as returned by getZone()
+     * \param name The name of the records to find
+     */
+    virtual void searchForRecords(int zone_id, const std::string& name) = 0;
+
+    /**
+     * \brief Retrieves the next record from the search started with searchForRecords()
+     *
+     * Returns a boolean specifying whether or not there was more data to read.
+     * In the case of a database error, a DatasourceError is thrown.
+     *
+     * The columns passed is an array of std::strings consisting of
+     * DatabaseConnection::COLUMN_COUNT elements, the elements of which
+     * are defined in DatabaseConnection::RecordColumns, in their basic
+     * string representation.
+     *
+     * If you are implementing a derived database connection class, you
+     * should have this method check the column_count value, and fill the
+     * array with strings conforming to their description in RecordColumn.
+     *
+     * \exception DatasourceError if there was an error reading from the database
+     *
+     * \param columns The elements of this array will be filled with the data
+     *                for one record as defined by RecordColumns
+     *                If there was no data, the array is untouched.
+     * \return true if there was a next record, false if there was not
+     */
+    virtual bool getNextRecord(std::string columns[], size_t column_count) = 0;
+
+    /**
+     * \brief Resets the current search initiated with searchForRecords()
+     *
+     * This method will be called when the called of searchForRecords() and
+     * getNextRecord() finds bad data, and aborts the current search.
+     * It should clean up whatever handlers searchForRecords() created, and
+     * any other state modified or needed by getNextRecord()
+     *
+     * Of course, the implementation of getNextRecord may also use it when
+     * it is done with a search. If it does, the implementation of this
+     * method should make sure it can handle being called multiple times.
+     *
+     * The implementation for this method should make sure it never throws.
+     */
+    virtual void resetSearch() = 0;
+
+    /**
+     * Definitions of the fields as they are required to be filled in
+     * by getNextRecord()
+     *
+     * When implementing getNextRecord(), the columns array should
+     * be filled with the values as described in this enumeration,
+     * in this order, i.e. TYPE_COLUMN should be the first element
+     * (index 0) of the array, TTL_COLUMN should be the second element
+     * (index 1), etc.
+     */
+    enum RecordColumns {
+        TYPE_COLUMN = 0,    ///< The RRType of the record (A/NS/TXT etc.)
+        TTL_COLUMN = 1,     ///< The TTL of the record (a
+        SIGTYPE_COLUMN = 2, ///< For RRSIG records, this contains the RRTYPE
+                            ///< the RRSIG covers. In the current implementation,
+                            ///< this field is ignored.
+        RDATA_COLUMN = 3    ///< Full text representation of the record's RDATA
+    };
+
+    /// The number of fields the columns array passed to getNextRecord should have
+    static const size_t COLUMN_COUNT = 4;
+
+    /**
+     * \brief Returns a string identifying this dabase backend
+     *
+     * The returned string is mainly intended to be used for
+     * debugging/logging purposes.
+     *
+     * Any implementation is free to choose the exact string content,
+     * but it is advisable to make it a name that is distinguishable
+     * from the others.
+     *
+     * \return the name of the database
+     */
+    virtual const std::string& getDBName() const = 0;
 };
 
 /**
@@ -212,11 +302,51 @@ public:
         // ZoneFinder's pure virtual methods.
         virtual isc::dns::Name getOrigin() const;
         virtual isc::dns::RRClass getClass() const;
+
+        /**
+         * \brief Find an RRset in the datasource
+         *
+         * Searches the datasource for an RRset of the given name and
+         * type. If there is a CNAME at the given name, the CNAME rrset
+         * is returned.
+         * (this implementation is not complete, and currently only
+         * does full matches, CNAMES, and the signatures for matches and
+         * CNAMEs)
+         * \note target was used in the original design to handle ANY
+         *       queries. This is not implemented yet, and may use
+         *       target again for that, but it might also use something
+         *       different. It is left in for compatibility at the moment.
+         * \note options are ignored at this moment
+         *
+         * \note Maybe counter intuitively, this method is not a const member
+         * function.  This is intentional; some of the underlying implementations
+         * are expected to use a database backend, and would internally contain
+         * some abstraction of "database connection".  In the most strict sense
+         * any (even read only) operation might change the internal state of
+         * such a connection, and in that sense the operation cannot be considered
+         * "const".  In order to avoid giving a false sense of safety to the
+         * caller, we indicate a call to this method may have a surprising
+         * side effect.  That said, this view may be too strict and it may
+         * make sense to say the internal database connection doesn't affect
+         * external behavior in terms of the interface of this method.  As
+         * we gain more experiences with various kinds of backends we may
+         * revisit the constness.
+         *
+         * \exception DataSourceError when there is a problem reading
+         *                            the data from the dabase backend.
+         *                            This can be a connection, code, or
+         *                            data (parse) error.
+         *
+         * \param name The name to find
+         * \param type The RRType to find
+         * \param target Unused at this moment
+         * \param options Unused at this moment
+         */
         virtual FindResult find(const isc::dns::Name& name,
                                 const isc::dns::RRType& type,
                                 isc::dns::RRsetList* target = NULL,
-                                const FindOptions options = FIND_DEFAULT)
-            const;
+                                const FindOptions options = FIND_DEFAULT);
+
         /**
          * \brief The zone ID
          *

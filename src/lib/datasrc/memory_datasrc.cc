@@ -622,7 +622,7 @@ InMemoryZoneFinder::getClass() const {
 
 ZoneFinder::FindResult
 InMemoryZoneFinder::find(const Name& name, const RRType& type,
-                 RRsetList* target, const FindOptions options) const
+                 RRsetList* target, const FindOptions options)
 {
     return (impl_->find(name, type, target, options));
 }
