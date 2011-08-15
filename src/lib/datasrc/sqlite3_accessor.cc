@@ -329,13 +329,32 @@ SQLite3Database::getZone(const isc::dns::Name& name) const {
 }
 
 namespace {
-
-std::string
-getstr(const unsigned char* str) {
-    return
-        (std::string(static_cast<const char*>(static_cast<const void*>(str))));
+// This helper function converts from the unsigned char* type (used by
+// sqlite3) to char* (wanted by std::string). Technically these types
+// might not be directly convertable
+// In case sqlite3_column_text() returns NULL, we just make it an
+// empty string.
+// The sqlite3parameters value is only used to check the error code if
+// ucp == NULL
+const char*
+convertToPlainChar(const unsigned char* ucp,
+                   SQLite3Parameters* dbparameters) {
+    if (ucp == NULL) {
+        // The field can really be NULL, in which case we return an
+        // empty string, or sqlite may have run out of memory, in
+        // which case we raise an error
+        if (dbparameters != NULL &&
+            sqlite3_errcode(dbparameters->db_) == SQLITE_NOMEM) {
+            isc_throw(DataSourceError,
+                      "Sqlite3 backend encountered a memory allocation "
+                      "error in sqlite3_column_text()");
+        } else {
+            return ("");
+        }
+    }
+    const void* p = ucp;
+    return (static_cast<const char*>(p));
 }
-
 }
 
 class SQLite3Database::Context : public DatabaseAccessor::IteratorContext {
@@ -354,11 +373,14 @@ public:
     bool getNext(std::string data[4]) {
         // If there's another row, get it
         if (sqlite3_step(statement) == SQLITE_ROW) {
-            data[0] = getstr(sqlite3_column_text(statement, 0));
-            data[1] = getstr(sqlite3_column_text(statement, 1));
+            data[0] = convertToPlainChar(sqlite3_column_text(statement, 0),
+                                         database_->dbparameters_);
+            data[1] = convertToPlainChar(sqlite3_column_text(statement, 1),
+                                         database_->dbparameters_);
             data[2] = boost::lexical_cast<std::string>(
                 sqlite3_column_int(statement, 2));
-            data[3] = getstr(sqlite3_column_text(statement, 3));
+            data[3] = convertToPlainChar(sqlite3_column_text(statement, 3),
+                                         database_->dbparameters_);
             return (true);
         }
         return (false);
@@ -394,35 +416,6 @@ SQLite3Database::searchForRecords(int zone_id, const std::string& name) {
                   "Error in sqlite3_bind_text() for name " <<
                   name << ": " << sqlite3_errmsg(dbparameters_->db_));
     }
-}
-
-namespace {
-// This helper function converts from the unsigned char* type (used by
-// sqlite3) to char* (wanted by std::string). Technically these types
-// might not be directly convertable
-// In case sqlite3_column_text() returns NULL, we just make it an
-// empty string.
-// The sqlite3parameters value is only used to check the error code if
-// ucp == NULL
-const char*
-convertToPlainChar(const unsigned char* ucp,
-                   SQLite3Parameters* dbparameters) {
-    if (ucp == NULL) {
-        // The field can really be NULL, in which case we return an
-        // empty string, or sqlite may have run out of memory, in
-        // which case we raise an error
-        if (dbparameters != NULL &&
-            sqlite3_errcode(dbparameters->db_) == SQLITE_NOMEM) {
-            isc_throw(DataSourceError,
-                      "Sqlite3 backend encountered a memory allocation "
-                      "error in sqlite3_column_text()");
-        } else {
-            return ("");
-        }
-    }
-    const void* p = ucp;
-    return (static_cast<const char*>(p));
-}
 }
 
 bool
