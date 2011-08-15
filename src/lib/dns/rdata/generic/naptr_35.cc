@@ -32,6 +32,105 @@ using namespace isc::util;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
+namespace {
+/// Skip the left whitespaces of the input string
+///
+/// \param input_str The input string
+/// \param input_iterator From which the skipping started
+void
+skipLeftSpaces(const std::string& input_str,
+                    std::string::const_iterator& input_iterator)
+{
+    if (input_iterator >= input_str.end()) {
+        isc_throw(InvalidRdataText,
+                  "Invalid NAPTR text format, field is missing.");
+    }
+
+    if (!isspace(*input_iterator)) {
+        isc_throw(InvalidRdataText,
+                  "Invalid NAPTR text format, fields are not separated by space.");
+    }
+    // Skip white spaces
+    while (input_iterator < input_str.end() && isspace(*input_iterator)) {
+        ++input_iterator;
+    }
+}
+
+/// Get a <character-string> from a string
+///
+/// \param input_str The input string
+/// \param input_iterator The iterator from which to start extracting,
+///        the iterator will be updated to new position after the function
+///        is returned
+/// \return A std::string that contains the extracted <character-string>
+std::string
+getNextCharacterString(const std::string& input_str,
+                              std::string::const_iterator& input_iterator)
+{
+    string result;
+
+    // If the input string only contains white-spaces, it is an invalid
+    // <character-string>
+    if (input_iterator >= input_str.end()) {
+        isc_throw(InvalidRdataText, "Invalid NAPTR text format, \
+                  <character-string> field is missing.");
+    }
+
+    // Whether the <character-string> is seperated with doulble quotes symbol(")
+    bool quotes_seperated = (*input_iterator == '"');
+
+    if (quotes_seperated) {
+        ++input_iterator;
+    }
+
+    while(input_iterator < input_str.end()){
+        if (quotes_seperated) {
+            // If the <character-string> is seperated with quotes symbol and
+            // another quotes symbol is encountered, it is the end of the
+            // <character-string>
+            if (*input_iterator == '"') {
+                ++input_iterator;
+                break;
+            }
+        } else if (*input_iterator == ' ') {
+            // If the <character-string> is not seperated with quotes symbol,
+            // it is seperated with <space> char
+            break;
+        }
+
+        result.push_back(*input_iterator);
+
+        ++input_iterator;
+    }
+
+    if (result.size() > MAX_CHARSTRING_LEN) {
+        isc_throw(CharStringTooLong, "NAPTR <character-string> is too long");
+    }
+
+    return (result);
+}
+
+/// Get a <character-string> from a input buffer
+///
+/// \param buffer The input buffer
+/// \param len The input buffer total length
+/// \return A std::string that contains the extracted <character-string>
+std::string
+getNextCharacterString(InputBuffer& buffer, size_t len) {
+    uint8_t str_len = buffer.readUint8();
+
+    size_t pos = buffer.getPosition();
+    if (len - pos < str_len) {
+        isc_throw(InvalidRdataLength, "Invalid NAPTR string length");
+    }
+
+    uint8_t buf[MAX_CHARSTRING_LEN];
+    buffer.readData(buf, str_len);
+    return (string(buf, buf + str_len));
+}
+
+} // Anonymouse namespace
+
 NAPTR::NAPTR(InputBuffer& buffer, size_t len):
     replacement_(".")
 {
@@ -62,31 +161,19 @@ NAPTR::NAPTR(const std::string& naptr_str):
 
     string::const_iterator input_iterator = naptr_str.begin() + iss.tellg();
 
-    if (skipLeftSpaces(naptr_str, input_iterator) == 0) {
-        isc_throw(InvalidRdataText,
-                  "Invalid NAPTR text format, fields are not separated by space");
-    }
+    skipLeftSpaces(naptr_str, input_iterator);
 
     flags_ = getNextCharacterString(naptr_str, input_iterator);
 
-    if (skipLeftSpaces(naptr_str, input_iterator) == 0) {
-        isc_throw(InvalidRdataText,
-                  "Invalid NAPTR text format, fields are not separated by space");
-    }
+    skipLeftSpaces(naptr_str, input_iterator);
 
     services_ = getNextCharacterString(naptr_str, input_iterator);
 
-    if (skipLeftSpaces(naptr_str, input_iterator) == 0) {
-        isc_throw(InvalidRdataText,
-                  "Invalid NAPTR text format, fields are not separated by space");
-    }
+    skipLeftSpaces(naptr_str, input_iterator);
 
     regexp_ = getNextCharacterString(naptr_str, input_iterator);
 
-    if (skipLeftSpaces(naptr_str, input_iterator) == 0) {
-        isc_throw(InvalidRdataText,
-                  "Invalid NAPTR text format, fields are not separated by space");
-    }
+    skipLeftSpaces(naptr_str, input_iterator);
 
     if (input_iterator < naptr_str.end()) {
         string replacementStr(input_iterator, naptr_str.end());
@@ -221,80 +308,6 @@ NAPTR::getRegexp() const {
 const Name&
 NAPTR::getReplacement() const {
     return (replacement_);
-}
-
-std::string
-NAPTR::getNextCharacterString(const std::string& input_str,
-                              std::string::const_iterator& input_iterator)
-{
-    string result;
-
-    // If the input string only contains white-spaces, it is an invalid
-    // <character-string>
-    if (input_iterator >= input_str.end()) {
-        isc_throw(InvalidRdataText, "Invalid NAPTR text format, \
-                  <character-string> field is missing.");
-    }
-
-    // Whether the <character-string> is seperated with doulble quotes symbol(")
-    bool quotes_seperated = (*input_iterator == '"');
-
-    if (quotes_seperated) {
-        ++input_iterator;
-    }
-
-    while(input_iterator < input_str.end()){
-        if (quotes_seperated) {
-            // If the <character-string> is seperated with quotes symbol and
-            // another quotes symbol is encountered, it is the end of the
-            // <character-string>
-            if (*input_iterator == '"') {
-                ++input_iterator;
-                break;
-            }
-        } else if (*input_iterator == ' ') {
-            // If the <character-string> is not seperated with quotes symbol,
-            // it is seperated with <space> char
-            break;
-        }
-
-        result.push_back(*input_iterator);
-
-        ++input_iterator;
-    }
-
-    if (result.size() > MAX_CHARSTRING_LEN) {
-        isc_throw(CharStringTooLong, "NAPTR <character-string> is too long");
-    }
-
-    return (result);
-}
-
-std::string
-NAPTR::getNextCharacterString(InputBuffer& buffer, size_t len) {
-    uint8_t str_len = buffer.readUint8();
-
-    size_t pos = buffer.getPosition();
-    if (len - pos < str_len) {
-        isc_throw(InvalidRdataLength, "Invalid NAPTR string length");
-    }
-
-    uint8_t buf[MAX_CHARSTRING_LEN];
-    buffer.readData(buf, str_len);
-    return (string(buf, buf + str_len));
-}
-
-int
-NAPTR::skipLeftSpaces(const std::string& input_str,
-                    std::string::const_iterator& input_iterator)
-{
-    int space_count = 0;
-    // Skip white spaces
-    while (input_iterator < input_str.end() && isspace(*input_iterator)) {
-        ++input_iterator;
-        ++space_count;
-    }
-    return space_count;
 }
 
 // END_RDATA_NAMESPACE
