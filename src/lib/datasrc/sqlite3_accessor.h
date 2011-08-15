@@ -91,8 +91,8 @@ public:
      */
     virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const;
 
-    /// \brief Implementation of DatabaseAbstraction::getIteratorContext
-    virtual IteratorContextPtr getIteratorContext(const isc::dns::Name&,
+    /// \brief Implementation of DatabaseAbstraction::getAllRecords
+    virtual IteratorContextPtr getAllRecords(const isc::dns::Name&,
                                                   int id) const;
     /**
      * \brief Start a new search for the given name in the given zone.

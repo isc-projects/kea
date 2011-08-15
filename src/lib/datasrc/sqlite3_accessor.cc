@@ -375,7 +375,7 @@ private:
 };
 
 DatabaseAccessor::IteratorContextPtr
-SQLite3Database::getIteratorContext(const isc::dns::Name&, int id) const {
+SQLite3Database::getAllRecords(const isc::dns::Name&, int id) const {
     return (IteratorContextPtr(new Context(shared_from_this(), id)));
 }
 

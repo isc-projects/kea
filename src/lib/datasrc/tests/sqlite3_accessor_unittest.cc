@@ -110,7 +110,7 @@ TEST_F(SQLite3Access, iterator) {
 
     // Get the iterator context
     DatabaseAccessor::IteratorContextPtr
-        context(db->getIteratorContext(Name("example2.com"), 1));
+        context(db->getAllRecords(Name("example2.com"), 1));
     ASSERT_NE(DatabaseAccessor::IteratorContextPtr(),
               context);
 
