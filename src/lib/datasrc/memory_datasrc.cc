@@ -736,6 +736,7 @@ public:
             dom_iterator_ = node_->getData()->begin();
         }
     }
+
     virtual ConstRRsetPtr getNextRRset() {
         if (!ready_) {
             isc_throw(Unexpected, "Iterating past the zone end");
@@ -757,12 +758,12 @@ public:
         if (node_ == NULL) {
             // That's all, folks
             ready_ = false;
-            return ConstRRsetPtr();
+            return (ConstRRsetPtr());
         }
         // The iterator points to the next yet unused RRset now
         ConstRRsetPtr result(dom_iterator_->second);
         // This one is used, move it to the next time for next call
-        ++ dom_iterator_;
+        ++dom_iterator_;
 
         return (result);
     }
@@ -789,7 +790,7 @@ InMemoryClient::getIterator(const Name& name) const {
         isc_throw(Unexpected, "The zone at " + name.toText() +
                   " is not InMemoryZoneFinder");
     }
-    return ZoneIteratorPtr(new MemoryIterator(zone->impl_->domains_, name));
+    return (ZoneIteratorPtr(new MemoryIterator(zone->impl_->domains_, name)));
 }
 
 } // end of namespace datasrc
