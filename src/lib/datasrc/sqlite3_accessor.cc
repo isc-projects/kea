@@ -319,13 +319,18 @@ SQLite3Database::getZone(const isc::dns::Name& name) const {
         result = std::pair<bool, int>(true,
                                       sqlite3_column_int(dbparameters_->
                                                          q_zone_, 0));
-    } else {
+        return (result);
+    } else if (rc == SQLITE_DONE) {
         result = std::pair<bool, int>(false, 0);
+        // Free resources
+        sqlite3_reset(dbparameters_->q_zone_);
+        return (result);
     }
-    // Free resources
-    sqlite3_reset(dbparameters_->q_zone_);
 
-    return (result);
+    isc_throw(DataSourceError, "Unexpected failure in sqlite3_step: " <<
+                               sqlite3_errmsg(dbparameters_->db_));
+    // Compilers might not realize isc_throw always throws
+    return (std::pair<bool, int>(false, 0));
 }
 
 namespace {
@@ -372,7 +377,8 @@ public:
     }
     bool getNext(std::string data[4]) {
         // If there's another row, get it
-        if (sqlite3_step(statement) == SQLITE_ROW) {
+        int rc(sqlite3_step(statement));
+        if (rc == SQLITE_ROW) {
             data[0] = convertToPlainChar(sqlite3_column_text(statement, 0),
                                          database_->dbparameters_);
             data[1] = convertToPlainChar(sqlite3_column_text(statement, 1),
@@ -382,6 +388,10 @@ public:
             data[3] = convertToPlainChar(sqlite3_column_text(statement, 3),
                                          database_->dbparameters_);
             return (true);
+        } else if (rc != SQLITE_DONE) {
+            isc_throw(DataSourceError,
+                      "Unexpected failure in sqlite3_step: " <<
+                      sqlite3_errmsg(database_->dbparameters_->db_));
         }
         return (false);
     }
