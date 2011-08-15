@@ -90,6 +90,7 @@ public:
      *     element and the zone id in the second if it was.
      */
     virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const;
+
     /// \brief Implementation of DatabaseAbstraction::getIteratorContext
     virtual IteratorContextPtr getIteratorContext(const isc::dns::Name&,
                                                   int id) const;

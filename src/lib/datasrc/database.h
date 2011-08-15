@@ -74,6 +74,7 @@ public:
      *     an opaque handle.
      */
     virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const = 0;
+
     /**
      * \brief This holds the internal context of ZoneIterator for databases
      *
@@ -96,14 +97,15 @@ public:
          * Virtual destructor, so any descendand class is destroyed correctly.
          */
         virtual ~IteratorContext() { }
+
         /**
          * \brief Function to provide next resource record
          *
          * This function should provide data about the next resource record
          * from the iterated zone. The data are not converted yet.
          *
-         * The order of RRs is not strictly set, but the RRs for single RRset
-         * must not be interlieved with any other RRs (eg. RRsets must be
+         * \note The order of RRs is not strictly set, but the RRs for single
+         * RRset must not be interleaved with any other RRs (eg. RRsets must be
          * "together").
          *
          * \param data The data are to be returned by this parameter. They are
@@ -114,7 +116,9 @@ public:
          */
         virtual bool getNext(std::string data[4]) = 0;
     };
+
     typedef boost::shared_ptr<IteratorContext> IteratorContextPtr;
+
     /**
      * \brief Creates an iterator context for given zone.
      *
@@ -250,6 +254,7 @@ public:
      *     should use it as a ZoneFinder only.
      */
     virtual FindResult findZone(const isc::dns::Name& name) const;
+
     /**
      * \brief Get the zone iterator
      *
@@ -268,6 +273,7 @@ public:
      * \return Shared pointer to the iterator (it will never be NULL)
      */
     virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name) const;
+
 private:
     /// \brief Our database.
     const boost::shared_ptr<DatabaseAccessor> database_;
