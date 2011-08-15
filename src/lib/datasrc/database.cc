@@ -51,7 +51,7 @@ DatabaseClient::findZone(const Name& name) const {
                            ZoneFinderPtr(new Finder(database_,
                                                     zone.second, name))));
     }
-    // Than super domains
+    // Then super domains
     // Start from 1, as 0 is covered above
     for (size_t i(1); i < name.getLabelCount(); ++i) {
         isc::dns::Name superdomain(name.split(i));
@@ -276,7 +276,7 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
     if (result_rrset) {
         sig_store.appendSignatures(result_rrset);
     }
-    return std::pair<bool, isc::dns::RRsetPtr>(records_found, result_rrset);
+    return (std::pair<bool, isc::dns::RRsetPtr>(records_found, result_rrset));
 }
 
 
@@ -298,16 +298,17 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     try {
         // First, do we have any kind of delegation (NS/DNAME) here?
         Name origin(getOrigin());
-        size_t originLabelCount(origin.getLabelCount());
-        size_t currentLabelCount(name.getLabelCount());
+        size_t origin_label_count(origin.getLabelCount());
+        size_t current_label_count(name.getLabelCount());
         // This is how many labels we remove to get origin
-        size_t removeLabels(currentLabelCount - originLabelCount);
+        size_t remove_labels(current_label_count - origin_label_count);
+
         // Now go trough all superdomains from origin down
-        for (int i(removeLabels); i > 0; -- i) {
+        for (int i(remove_labels); i > 0; --i) {
             Name superdomain(name.split(i));
             // Look if there's NS or DNAME (but ignore the NS in origin)
             found = getRRset(superdomain, NULL, false, true,
-                             i != removeLabels);
+                             i != remove_labels);
             if (found.second) {
                 // We found something redirecting somewhere else
                 // (it can be only NS or DNAME here)
