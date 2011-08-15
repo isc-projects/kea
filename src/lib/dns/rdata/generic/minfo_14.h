@@ -37,6 +37,11 @@ public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS
 
+    /// \brief Define the assignment operator.
+    ///
+    /// This method never throws an exception.
+    MINFO& operator=(const MINFO& source);
+
     /// \brief Return the value of the rmailbox field.
     ///
     /// \exception std::bad_alloc If resource allocation for the returned
