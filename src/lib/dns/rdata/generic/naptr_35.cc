@@ -39,7 +39,7 @@ namespace {
 /// \param input_iterator From which the skipping started
 void
 skipLeftSpaces(const std::string& input_str,
-                    std::string::const_iterator& input_iterator)
+               std::string::const_iterator& input_iterator)
 {
     if (input_iterator >= input_str.end()) {
         isc_throw(InvalidRdataText,
@@ -48,7 +48,7 @@ skipLeftSpaces(const std::string& input_str,
 
     if (!isspace(*input_iterator)) {
         isc_throw(InvalidRdataText,
-                  "Invalid NAPTR text format, fields are not separated by space.");
+            "Invalid NAPTR text format, fields are not separated by space.");
     }
     // Skip white spaces
     while (input_iterator < input_str.end() && isspace(*input_iterator)) {
@@ -65,7 +65,7 @@ skipLeftSpaces(const std::string& input_str,
 /// \return A std::string that contains the extracted <character-string>
 std::string
 getNextCharacterString(const std::string& input_str,
-                              std::string::const_iterator& input_iterator)
+                       std::string::const_iterator& input_iterator)
 {
     string result;
 
@@ -76,15 +76,15 @@ getNextCharacterString(const std::string& input_str,
                   <character-string> field is missing.");
     }
 
-    // Whether the <character-string> is seperated with doulble quotes symbol(")
-    bool quotes_seperated = (*input_iterator == '"');
+    // Whether the <character-string> is separated with double quotes (")
+    bool quotes_separated = (*input_iterator == '"');
 
-    if (quotes_seperated) {
+    if (quotes_separated) {
         ++input_iterator;
     }
 
     while(input_iterator < input_str.end()){
-        if (quotes_seperated) {
+        if (quotes_separated) {
             // If the <character-string> is seperated with quotes symbol and
             // another quotes symbol is encountered, it is the end of the
             // <character-string>
@@ -129,7 +129,7 @@ getNextCharacterString(InputBuffer& buffer, size_t len) {
     return (string(buf, buf + str_len));
 }
 
-} // Anonymouse namespace
+} // Anonymous namespace
 
 NAPTR::NAPTR(InputBuffer& buffer, size_t len):
     replacement_(".")
