@@ -197,7 +197,7 @@ public:
                             const isc::dns::RRType& type,
                             isc::dns::RRsetList* target = NULL,
                             const FindOptions options
-                            = FIND_DEFAULT) const = 0;
+                            = FIND_DEFAULT) = 0;
     //@}
 };
 
