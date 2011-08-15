@@ -323,9 +323,9 @@ namespace {
  * Otherwise we just return what we have and keep the row as the one ahead
  * for next time.
  */
-class Iterator : public ZoneIterator {
+class DatabaseIterator : public ZoneIterator {
 public:
-    Iterator(const DatabaseAccessor::IteratorContextPtr& context,
+    DatabaseIterator(const DatabaseAccessor::IteratorContextPtr& context,
              const RRClass& rrclass) :
         context_(context),
         class_(rrclass),
@@ -404,7 +404,7 @@ DatabaseClient::getIterator(const isc::dns::Name& name) const {
     // actual zone class from the connection, as the DatabaseClient
     // doesn't know it and the iterator needs it (so it wouldn't query
     // it each time)
-    return (ZoneIteratorPtr(new Iterator(context, RRClass::IN())));
+    return (ZoneIteratorPtr(new DatabaseIterator(context, RRClass::IN())));
 }
 
 }
