@@ -326,6 +326,12 @@ private:
         // This is because of empty domain test
         addRecord("A", "3600", "", "192.0.2.1");
         addCurName("a.b.example.org.");
+
+        // Something for wildcards
+        addRecord("A", "3600", "", "192.0.2.5");
+        addCurName("*.wild.example.org.");
+        addRecord("AAAA", "3600", "", "2001:db8::5");
+        addCurName("cancel.here.wild.example.org.");
     }
 };
 
@@ -962,6 +968,70 @@ TEST_F(DatabaseClientTest, glueOK) {
                expected_sig_rdatas_, isc::dns::Name("dname.example.org."),
                ZoneFinder::FIND_GLUE_OK);
     EXPECT_FALSE(current_database_->searchRunning());
+}
+
+TEST_F(DatabaseClientTest, wildcard) {
+    shared_ptr<DatabaseClient::Finder> finder(getFinder());
+
+    // First, simple wildcard match
+    expected_rdatas_.push_back("192.0.2.5");
+    doFindTest(finder, isc::dns::Name("a.wild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
+               expected_sig_rdatas_);
+    doFindTest(finder, isc::dns::Name("b.a.wild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
+               expected_sig_rdatas_);
+    expected_rdatas_.clear();
+    doFindTest(finder, isc::dns::Name("a.wild.example.org"),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas_,
+               expected_sig_rdatas_);
+    doFindTest(finder, isc::dns::Name("b.a.wild.example.org"),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas_,
+               expected_sig_rdatas_);
+
+    // Direct request for thi wildcard
+    expected_rdatas_.push_back("192.0.2.5");
+    doFindTest(finder, isc::dns::Name("*.wild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
+               expected_sig_rdatas_);
+    expected_rdatas_.clear();
+    doFindTest(finder, isc::dns::Name("*.wild.example.org"),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas_,
+               expected_sig_rdatas_);
+    // This is nonsense, but check it doesn't match by some stupid accident
+    doFindTest(finder, isc::dns::Name("a.*.wild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXDOMAIN,
+               expected_rdatas_, expected_sig_rdatas_);
+    // These should be canceled, since it is below a domain which exitsts
+    doFindTest(finder, isc::dns::Name("nothing.here.wild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXDOMAIN,
+               expected_rdatas_, expected_sig_rdatas_);
+    doFindTest(finder, isc::dns::Name("cancel.here.wild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET,
+               expected_rdatas_, expected_sig_rdatas_);
+    doFindTest(finder,
+               isc::dns::Name("below.cancel.here.wild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXDOMAIN,
+               expected_rdatas_, expected_sig_rdatas_);
+    // And this should be just plain empty non-terminal domain, check
+    // the wildcard doesn't hurt it
+    doFindTest(finder, isc::dns::Name("here.wild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas_,
+               expected_sig_rdatas_);
+
+    // TODO Check delegation, multiple wildcards and wildcards somewhere
+    // in the middle.
 }
 
 TEST_F(DatabaseClientTest, getOrigin) {
