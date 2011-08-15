@@ -23,24 +23,22 @@
 using namespace std;
 using namespace isc::util;
 
-template<uint16_t typeCode>class TXT_LIKE : public Rdata {
+template<class Type, uint16_t typeCode>class TXTLikeImpl {
 public:
-    TXT_LIKE(InputBuffer& buffer, size_t rdata_len) {
+    TXTLikeImpl(InputBuffer& buffer, size_t rdata_len) {
 	if (rdata_len > MAX_RDLENGTH) {
 	    isc_throw(InvalidRdataLength, "RDLENGTH too large: " << rdata_len);
 	}
 
 	if (rdata_len == 0) {       // note that this couldn't happen in the loop.
-	    isc_throw(DNSMessageFORMERR, "Error in parsing " +
-		      RRParamRegistry::getRegistry().codeToTypeText(typeCode) +
+	    isc_throw(DNSMessageFORMERR, "Error in parsing " << RRType(typeCode) <<
 		      " RDATA: 0-length character string");
 	}
 
 	do {
 	    const uint8_t len = buffer.readUint8();
 	    if (rdata_len < len + 1) {
-		isc_throw(DNSMessageFORMERR, "Error in parsing " +
-			  RRParamRegistry::getRegistry().codeToTypeText(typeCode) +
+		isc_throw(DNSMessageFORMERR, "Error in parsing " << RRType(typeCode) <<
 			  " RDATA: character string length is too large: " << static_cast<int>(len));
 	    }
 	    vector<uint8_t> data(len + 1);
@@ -52,7 +50,7 @@ public:
 	} while (rdata_len > 0);
     }
 
-    explicit TXT_LIKE(const std::string& txtstr) {
+    explicit TXTLikeImpl(const std::string& txtstr) {
 	// TBD: this is a simple, incomplete implementation that only supports
 	// a single character-string.
 
@@ -65,13 +63,13 @@ public:
 	}
 
 	if (length > MAX_CHARSTRING_LEN) {
-	    isc_throw(CharStringTooLong, RRParamRegistry::getRegistry().codeToTypeText(typeCode)
-			 + " RDATA construction from text: string length is too long: " << length);
+	    isc_throw(CharStringTooLong, RRType(typeCode) <<
+		      " RDATA construction from text: string length is too long: " << length);
 	}
 
 	// TBD: right now, we don't support escaped characters
 	if (txtstr.find('\\') != string::npos) {
-	    isc_throw(InvalidRdataText, RRParamRegistry::getRegistry().codeToTypeText(typeCode) +
+	    isc_throw(InvalidRdataText, RRType(typeCode) <<
 		      " RDATA from text: escaped character is currently not supported: " << txtstr);
 	}
 
@@ -83,8 +81,8 @@ public:
 	string_list_.push_back(data);
     }
 
-    TXT_LIKE(const TXT_LIKE& other) :
-	Rdata(), string_list_(other.string_list_)
+    TXTLikeImpl(const TXTLikeImpl& other) :
+	string_list_(other.string_list_)
     {}
 
     void
@@ -129,16 +127,14 @@ public:
     }
 
     int
-    compare(const Rdata& other) const {
-	const TXT_LIKE& other_txt = dynamic_cast<const TXT_LIKE&>(other);
-
+    compare(const TXTLikeImpl& other) const {
 	// This implementation is not efficient.  Revisit this (TBD).
 	OutputBuffer this_buffer(0);
 	toWire(this_buffer);
 	size_t this_len = this_buffer.getLength();
 
 	OutputBuffer other_buffer(0);
-	other_txt.toWire(other_buffer);
+	other.toWire(other_buffer);
 	const size_t other_len = other_buffer.getLength();
 
 	const size_t cmplen = min(this_len, other_len);

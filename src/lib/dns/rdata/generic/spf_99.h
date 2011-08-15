@@ -14,15 +14,12 @@
 
 // BEGIN_HEADER_GUARD
 
+#include <stdint.h>
+
 #include <string>
+#include <vector>
 
-#include <dns/name.h>
 #include <dns/rdata.h>
-
-#include <util/buffer.h>
-#include <dns/exceptions.h>
-#include <dns/messagerenderer.h>
-#include <dns/rrparamregistry.h>
 
 // BEGIN_ISC_NAMESPACE
 
@@ -31,9 +28,20 @@
 
 // BEGIN_RDATA_NAMESPACE
 
-#include <dns/rdata/generic/detail/txt_like.h>
+template<class Type, uint16_t typeCode> class TXTLikeImpl;
 
-typedef TXT_LIKE<99> SPF;
+class SPF : public Rdata {
+public:
+    // BEGIN_COMMON_MEMBERS
+    // END_COMMON_MEMBERS
+
+    SPF& operator=(const SPF& source);
+    ~SPF();
+
+private:
+    typedef TXTLikeImpl<SPF, 16> SPFImpl;
+    SPFImpl* impl_;
+};
 
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
