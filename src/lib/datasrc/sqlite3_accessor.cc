@@ -17,6 +17,7 @@
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/logger.h>
 #include <datasrc/data_source.h>
+#include <util/filename.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -26,19 +27,20 @@ namespace datasrc {
 struct SQLite3Parameters {
     SQLite3Parameters() :
         db_(NULL), version_(-1),
-        q_zone_(NULL) /*, q_record_(NULL), q_addrs_(NULL), q_referral_(NULL),
-        q_any_(NULL), q_count_(NULL), q_previous_(NULL), q_nsec3_(NULL),
+        q_zone_(NULL), q_any_(NULL)
+        /*q_record_(NULL), q_addrs_(NULL), q_referral_(NULL),
+        q_count_(NULL), q_previous_(NULL), q_nsec3_(NULL),
         q_prevnsec3_(NULL) */
     {}
     sqlite3* db_;
     int version_;
     sqlite3_stmt* q_zone_;
+    sqlite3_stmt* q_any_;
     /*
     TODO: Yet unneeded statements
     sqlite3_stmt* q_record_;
     sqlite3_stmt* q_addrs_;
     sqlite3_stmt* q_referral_;
-    sqlite3_stmt* q_any_;
     sqlite3_stmt* q_count_;
     sqlite3_stmt* q_previous_;
     sqlite3_stmt* q_nsec3_;
@@ -49,7 +51,9 @@ struct SQLite3Parameters {
 SQLite3Database::SQLite3Database(const std::string& filename,
                                      const isc::dns::RRClass& rrclass) :
     dbparameters_(new SQLite3Parameters),
-    class_(rrclass.toText())
+    class_(rrclass.toText()),
+    database_name_("sqlite3_" +
+                   isc::util::Filename(filename).nameAndExtension())
 {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_NEWCONN);
 
@@ -71,6 +75,9 @@ public:
         if (params_.q_zone_ != NULL) {
             sqlite3_finalize(params_.q_zone_);
         }
+        if (params_.q_any_ != NULL) {
+            sqlite3_finalize(params_.q_any_);
+        }
         /*
         if (params_.q_record_ != NULL) {
             sqlite3_finalize(params_.q_record_);
@@ -80,9 +87,6 @@ public:
         }
         if (params_.q_referral_ != NULL) {
             sqlite3_finalize(params_.q_referral_);
-        }
-        if (params_.q_any_ != NULL) {
-            sqlite3_finalize(params_.q_any_);
         }
         if (params_.q_count_ != NULL) {
             sqlite3_finalize(params_.q_count_);
@@ -134,6 +138,9 @@ const char* const SCHEMA_LIST[] = {
 
 const char* const q_zone_str = "SELECT id FROM zones WHERE name=?1 AND rdclass = ?2";
 
+const char* const q_any_str = "SELECT rdtype, ttl, sigtype, rdata "
+    "FROM records WHERE zone_id=?1 AND name=?2";
+
 const char* const q_iterate_str = "SELECT name, rdtype, ttl, rdata FROM records "
                                   "WHERE zone_id = ?1 "
                                   "ORDER BY name, rdtype";
@@ -153,9 +160,6 @@ const char* const q_referral_str = "SELECT rdtype, ttl, sigtype, rdata FROM "
     "records WHERE zone_id=?1 AND name=?2 AND"
     "(rdtype='NS' OR sigtype='NS' OR rdtype='DS' OR sigtype='DS' OR "
     "rdtype='DNAME' OR sigtype='DNAME')";
-
-const char* const q_any_str = "SELECT rdtype, ttl, sigtype, rdata "
-    "FROM records WHERE zone_id=?1 AND name=?2";
 
 const char* const q_count_str = "SELECT COUNT(*) FROM records "
     "WHERE zone_id=?1 AND rname LIKE (?2 || '%');";
@@ -206,11 +210,11 @@ checkAndSetupSchema(Initializer* initializer) {
     }
 
     initializer->params_.q_zone_ = prepare(db, q_zone_str);
+    initializer->params_.q_any_ = prepare(db, q_any_str);
     /* TODO: Yet unneeded statements
     initializer->params_.q_record_ = prepare(db, q_record_str);
     initializer->params_.q_addrs_ = prepare(db, q_addrs_str);
     initializer->params_.q_referral_ = prepare(db, q_referral_str);
-    initializer->params_.q_any_ = prepare(db, q_any_str);
     initializer->params_.q_count_ = prepare(db, q_count_str);
     initializer->params_.q_previous_ = prepare(db, q_previous_str);
     initializer->params_.q_nsec3_ = prepare(db, q_nsec3_str);
@@ -258,6 +262,9 @@ SQLite3Database::close(void) {
     sqlite3_finalize(dbparameters_->q_zone_);
     dbparameters_->q_zone_ = NULL;
 
+    sqlite3_finalize(dbparameters_->q_any_);
+    dbparameters_->q_any_ = NULL;
+
     /* TODO: Once they are needed or not, uncomment or drop
     sqlite3_finalize(dbparameters->q_record_);
     dbparameters->q_record_ = NULL;
@@ -267,9 +274,6 @@ SQLite3Database::close(void) {
 
     sqlite3_finalize(dbparameters->q_referral_);
     dbparameters->q_referral_ = NULL;
-
-    sqlite3_finalize(dbparameters->q_any_);
-    dbparameters->q_any_ = NULL;
 
     sqlite3_finalize(dbparameters->q_count_);
     dbparameters->q_count_ = NULL;
@@ -296,7 +300,7 @@ SQLite3Database::getZone(const isc::dns::Name& name) const {
     // and prepare it (bind the parameters to it)
     sqlite3_reset(dbparameters_->q_zone_);
     rc = sqlite3_bind_text(dbparameters_->q_zone_, 1, name.toText().c_str(),
-                           -1, SQLITE_STATIC);
+                           -1, SQLITE_TRANSIENT);
     if (rc != SQLITE_OK) {
         isc_throw(SQLite3Error, "Could not bind " << name <<
                   " to SQL statement (zone)");
@@ -373,6 +377,92 @@ private:
 DatabaseAccessor::IteratorContextPtr
 SQLite3Database::getIteratorContext(const isc::dns::Name&, int id) const {
     return (IteratorContextPtr(new Context(shared_from_this(), id)));
+}
+
+void
+SQLite3Database::searchForRecords(int zone_id, const std::string& name) {
+    resetSearch();
+    if (sqlite3_bind_int(dbparameters_->q_any_, 1, zone_id) != SQLITE_OK) {
+        isc_throw(DataSourceError,
+                  "Error in sqlite3_bind_int() for zone_id " <<
+                  zone_id << ": " << sqlite3_errmsg(dbparameters_->db_));
+    }
+    // use transient since name is a ref and may disappear
+    if (sqlite3_bind_text(dbparameters_->q_any_, 2, name.c_str(), -1,
+                               SQLITE_TRANSIENT) != SQLITE_OK) {
+        isc_throw(DataSourceError,
+                  "Error in sqlite3_bind_text() for name " <<
+                  name << ": " << sqlite3_errmsg(dbparameters_->db_));
+    }
+}
+
+namespace {
+// This helper function converts from the unsigned char* type (used by
+// sqlite3) to char* (wanted by std::string). Technically these types
+// might not be directly convertable
+// In case sqlite3_column_text() returns NULL, we just make it an
+// empty string.
+// The sqlite3parameters value is only used to check the error code if
+// ucp == NULL
+const char*
+convertToPlainChar(const unsigned char* ucp,
+                   SQLite3Parameters* dbparameters) {
+    if (ucp == NULL) {
+        // The field can really be NULL, in which case we return an
+        // empty string, or sqlite may have run out of memory, in
+        // which case we raise an error
+        if (dbparameters != NULL &&
+            sqlite3_errcode(dbparameters->db_) == SQLITE_NOMEM) {
+            isc_throw(DataSourceError,
+                      "Sqlite3 backend encountered a memory allocation "
+                      "error in sqlite3_column_text()");
+        } else {
+            return ("");
+        }
+    }
+    const void* p = ucp;
+    return (static_cast<const char*>(p));
+}
+}
+
+bool
+SQLite3Database::getNextRecord(std::string columns[], size_t column_count) {
+    if (column_count != COLUMN_COUNT) {
+            isc_throw(DataSourceError,
+                    "Datasource backend caller did not pass a column array "
+                    "of size " << COLUMN_COUNT << " to getNextRecord()");
+    }
+
+    sqlite3_stmt* current_stmt = dbparameters_->q_any_;
+    const int rc = sqlite3_step(current_stmt);
+
+    if (rc == SQLITE_ROW) {
+        for (int column = 0; column < column_count; ++column) {
+            try {
+                columns[column] = convertToPlainChar(sqlite3_column_text(
+                                                     current_stmt, column),
+                                                     dbparameters_);
+            } catch (const std::bad_alloc&) {
+                isc_throw(DataSourceError,
+                        "bad_alloc in Sqlite3Connection::getNextRecord");
+            }
+        }
+        return (true);
+    } else if (rc == SQLITE_DONE) {
+        // reached the end of matching rows
+        resetSearch();
+        return (false);
+    }
+    isc_throw(DataSourceError, "Unexpected failure in sqlite3_step: " <<
+                               sqlite3_errmsg(dbparameters_->db_));
+    // Compilers might not realize isc_throw always throws
+    return (false);
+}
+
+void
+SQLite3Database::resetSearch() {
+    sqlite3_reset(dbparameters_->q_any_);
+    sqlite3_clear_bindings(dbparameters_->q_any_);
 }
 
 }
