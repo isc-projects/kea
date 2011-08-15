@@ -38,6 +38,7 @@ public:
      * descendant is called.
      */
     virtual ~ ZoneIterator() { }
+
     /**
      * \brief Get next RRset from the zone.
      *

@@ -150,6 +150,7 @@ public:
     /// \param name A domain name for which the search is performed.
     /// \return A \c FindResult object enclosing the search result (see above).
     virtual FindResult findZone(const isc::dns::Name& name) const = 0;
+
     /// \brief Returns an iterator to the given zone
     ///
     /// This allows for traversing the whole zone. The returned object can

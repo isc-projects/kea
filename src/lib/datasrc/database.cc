@@ -111,6 +111,7 @@ public:
         // Prepare data for the next time
         getData();
     }
+
     virtual isc::dns::ConstRRsetPtr getNextRRset() {
         if (!ready_) {
             isc_throw(isc::Unexpected, "Iterating past the zone end");
@@ -120,14 +121,14 @@ public:
             ready_ = false;
             return (ConstRRsetPtr());
         }
-        string nameStr(name_), rtypeStr(rtype_), ttl(ttl_);
-        Name name(nameStr);
-        RRType rtype(rtypeStr);
+        string name_str(name_), rtype_str(rtype_), ttl(ttl_);
+        Name name(name_str);
+        RRType rtype(rtype_str);
         RRsetPtr rrset(new RRset(name, class_, rtype, RRTTL(ttl)));
-        while (data_ready_ && name_ == nameStr && rtypeStr == rtype_) {
+        while (data_ready_ && name_ == name_str && rtype_str == rtype_) {
             if (ttl_ != ttl) {
-                isc_throw(DataSourceError, "TTLs in rrset " + nameStr + "/" +
-                          rtypeStr + " differ");
+                isc_throw(DataSourceError, "TTLs in rrset " + name_str + "/" +
+                          rtype_str + " differ");
             }
             rrset->addRdata(rdata::createRdata(rtype, class_, rdata_));
             getData();
@@ -144,6 +145,7 @@ private:
         ttl_ = data[2];
         rdata_ = data[3];
     }
+
     // The context
     const DatabaseAccessor::IteratorContextPtr context_;
     // Class of the zone
