@@ -104,6 +104,8 @@ TEST_F(Rdata_NAPTR_Test, badText) {
                  InvalidRdataText);
     EXPECT_THROW(const NAPTR naptr("100 10 \"S\"\"SIP\" \"\" _sip._udp.example.com."),
                  InvalidRdataText);
+    // Field cannot be missing
+    EXPECT_THROW(const NAPTR naptr("100 10 \"S\""), InvalidRdataText);
 
     // The <character-string> cannot exceed 255 characters
     string naptr_str;
