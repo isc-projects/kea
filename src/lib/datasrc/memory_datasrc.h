@@ -182,6 +182,10 @@ private:
     struct InMemoryZoneFinderImpl;
     InMemoryZoneFinderImpl* impl_;
     //@}
+    // The friend here is for InMemoryClient::getIterator. The iterator
+    // needs to access the data inside the zone, so the InMemoryClient
+    // extracts the pointer to data and puts it into the iterator.
+    // The access is read only.
     friend class InMemoryClient;
 };
 
