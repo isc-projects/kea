@@ -125,10 +125,6 @@ public:
 
     /// The TSIG keyring
     const shared_ptr<TSIGKeyRing>* keyring_;
-
-    /// Bind the ModuleSpec object in config_session_ with
-    /// isc:config::ModuleSpec::validateStatistics.
-    void registerStatisticsValidator();
 private:
     std::string db_file_;
 
@@ -143,9 +139,6 @@ private:
 
     /// Increment query counter
     void incCounter(const int protocol);
-
-    // validateStatistics
-    bool validateStatistics(isc::data::ConstElementPtr data) const;
 };
 
 AuthSrvImpl::AuthSrvImpl(const bool use_cache,
@@ -324,7 +317,6 @@ AuthSrv::setXfrinSession(AbstractSession* xfrin_session) {
 void
 AuthSrv::setConfigSession(ModuleCCSession* config_session) {
     impl_->config_session_ = config_session;
-    impl_->registerStatisticsValidator();
 }
 
 void
@@ -676,22 +668,6 @@ AuthSrvImpl::incCounter(const int protocol) {
         // unknown protocol
         isc_throw(Unexpected, "Unknown protocol: " << protocol);
     }
-}
-
-void
-AuthSrvImpl::registerStatisticsValidator() {
-    counters_.registerStatisticsValidator(
-        boost::bind(&AuthSrvImpl::validateStatistics, this, _1));
-}
-
-bool
-AuthSrvImpl::validateStatistics(isc::data::ConstElementPtr data) const {
-    if (config_session_ == NULL) {
-        return (false);
-    }
-    return (
-        config_session_->getModuleSpec().validateStatistics(
-            data, true));
 }
 
 ConstElementPtr

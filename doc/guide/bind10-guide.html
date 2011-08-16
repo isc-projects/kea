@@ -664,30 +664,24 @@ This may be a temporary setting until then.
 
     </p><p>
 
-       This stats daemon provides commands to identify if it is
-       running, show specified or all statistics data, show specified
-       or all statistics data schema, and set specified statistics
-       data.
+       This stats daemon provides commands to identify if it is running,
+       show specified or all statistics data, set values, remove data,
+       and reset data.
 
        For example, using <span class="command"><strong>bindctl</strong></span>:
 
        </p><pre class="screen">
 &gt; <strong class="userinput"><code>Stats show</code></strong>
 {
-    "Auth": {
-        "queries.tcp": 1749,
-        "queries.udp": 867868
-    },
-    "Boss": {
-        "boot_time": "2011-01-20T16:59:03Z"
-    },
-    "Stats": {
-        "boot_time": "2011-01-20T16:59:05Z",
-        "last_update_time": "2011-01-20T17:04:05Z",
-        "lname": "4d3869d9_a@jreed.example.net",
-        "report_time": "2011-01-20T17:04:06Z",
-        "timestamp": 1295543046.823504
-    }
+    "auth.queries.tcp": 1749,
+    "auth.queries.udp": 867868,
+    "bind10.boot_time": "2011-01-20T16:59:03Z",
+    "report_time": "2011-01-20T17:04:06Z",
+    "stats.boot_time": "2011-01-20T16:59:05Z",
+    "stats.last_update_time": "2011-01-20T17:04:05Z",
+    "stats.lname": "4d3869d9_a@jreed.example.net",
+    "stats.start_time": "2011-01-20T16:59:05Z",
+    "stats.timestamp": 1295543046.823504
 }
        </pre><p>
     </p></div><div class="chapter" title="Chapter 14. Logging"><div class="titlepage"><div><div><h2 class="title"><a name="logging"></a>Chapter 14. Logging</h2></div></div></div><p>
