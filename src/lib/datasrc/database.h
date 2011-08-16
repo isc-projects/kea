@@ -108,13 +108,14 @@ public:
          * RRset must not be interleaved with any other RRs (eg. RRsets must be
          * "together").
          *
-         * \param data The data are to be returned by this parameter. They are
-         *     (in order) the name, rrtype, TTL and the rdata.
-         * \todo Unify with the interface in #1062 eventually.
+         * \param columns The data will be returned through here. The order
+         *     is specified by the RecordColumns enum.
+         * \param Size of the columns array. Must be equal to COLUMN_COUNT,
+         *     otherwise DataSourceError is thrown.
          * \todo Do we consider databases where it is stored in binary blob
          *     format?
          */
-        virtual bool getNext(std::string data[4]) = 0;
+        virtual bool getNext(std::string columns[], size_t column_data) = 0;
     };
 
     typedef boost::shared_ptr<IteratorContext> IteratorContextPtr;
@@ -222,7 +223,7 @@ public:
                             ///< the RRSIG covers. In the current implementation,
                             ///< this field is ignored.
         RDATA_COLUMN = 3,   ///< Full text representation of the record's RDATA
-        DOMAIN_NAME = 4     ///< The domain name of this RR
+        NAME_COLUMN = 4     ///< The domain name of this RR
     };
 
     /// The number of fields the columns array passed to getNextRecord should have

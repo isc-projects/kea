@@ -361,12 +361,12 @@ public:
 private:
     // Load next row of data
     void getData() {
-        string data[4];
-        data_ready_ = context_->getNext(data);
-        name_ = data[0];
-        rtype_ = data[1];
-        ttl_ = data[2];
-        rdata_ = data[3];
+        string data[DatabaseAccessor::COLUMN_COUNT];
+        data_ready_ = context_->getNext(data, DatabaseAccessor::COLUMN_COUNT);
+        name_ = data[DatabaseAccessor::NAME_COLUMN];
+        rtype_ = data[DatabaseAccessor::TYPE_COLUMN];
+        ttl_ = data[DatabaseAccessor::TTL_COLUMN];
+        rdata_ = data[DatabaseAccessor::RDATA_COLUMN];
     }
 
     // The context
