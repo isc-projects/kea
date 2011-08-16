@@ -114,6 +114,9 @@ public:
          *     otherwise DataSourceError is thrown.
          * \todo Do we consider databases where it is stored in binary blob
          *     format?
+         * \throw DataSourceError if there's database-related error. If the
+         *     exception (or any other in case of derived class) is thrown,
+         *     the iterator can't be safely used any more.
          */
         virtual bool getNext(std::string columns[], size_t column_data) = 0;
     };
