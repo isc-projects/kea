@@ -1,10 +1,3 @@
-279.    [func]          naokikambe
-	Statistics items are specified by each module's spec file.
-	Stats module can read these through the config manager. Stats
-	module and stats httpd report statistics data and statistics
-	schema by each module via both bindctl and HTTP/XML.
-	(Trac #928,#929,#930, git f20be125d667bceea0d940fc5fabf87b2eef86cd)
-
 278.	[doc]		jelte
 	Add logging configuration documentation to the guide.
 	(Trac #1011, git TODO)

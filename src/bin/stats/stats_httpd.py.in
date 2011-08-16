@@ -57,6 +57,7 @@ else:
     BASE_LOCATION = "@datadir@" + os.sep + "@PACKAGE@"
     BASE_LOCATION = BASE_LOCATION.replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
 SPECFILE_LOCATION = BASE_LOCATION + os.sep + "stats-httpd.spec"
+SCHEMA_SPECFILE_LOCATION = BASE_LOCATION + os.sep + "stats-schema.spec"
 XML_TEMPLATE_LOCATION = BASE_LOCATION + os.sep + "stats-httpd-xml.tpl"
 XSD_TEMPLATE_LOCATION = BASE_LOCATION + os.sep + "stats-httpd-xsd.tpl"
 XSL_TEMPLATE_LOCATION = BASE_LOCATION + os.sep + "stats-httpd-xsl.tpl"
@@ -68,7 +69,7 @@ XSD_URL_PATH = '/bind10/statistics/xsd'
 XSL_URL_PATH = '/bind10/statistics/xsl'
 # TODO: This should be considered later.
 XSD_NAMESPACE = 'http://bind10.isc.org' + XSD_URL_PATH
-DEFAULT_CONFIG = dict(version=0, listen_on=[('127.0.0.1', 8000)])
+DEFAULT_CONFIG = dict(listen_on=[('127.0.0.1', 8000)])
 
 # Assign this process name
 isc.util.process.rename()
@@ -160,6 +161,8 @@ class StatsHttpd:
         self.httpd = []
         self.open_mccs()
         self.load_config()
+        self.load_templates()
+        self.open_httpd()
 
     def open_mccs(self):
         """Opens a ModuleCCSession object"""
@@ -168,6 +171,10 @@ class StatsHttpd:
         self.mccs = isc.config.ModuleCCSession(
             SPECFILE_LOCATION, self.config_handler, self.command_handler)
         self.cc_session = self.mccs._session
+        # read spec file of stats module and subscribe 'Stats'
+        self.stats_module_spec = isc.config.module_spec_from_file(SCHEMA_SPECFILE_LOCATION)
+        self.stats_config_spec = self.stats_module_spec.get_config_spec()
+        self.stats_module_name = self.stats_module_spec.get_module_name()
 
     def close_mccs(self):
         """Closes a ModuleCCSession object"""
@@ -201,41 +208,45 @@ class StatsHttpd:
         for addr in self.http_addrs:
             self.httpd.append(self._open_httpd(addr))
 
-    def _open_httpd(self, server_address):
-        httpd = None
+    def _open_httpd(self, server_address, address_family=None):
         try:
-            # get address family for the server_address before
-            # creating HttpServer object
-            address_family = socket.getaddrinfo(*server_address)[0][0]
-            HttpServer.address_family = address_family
+            # try IPv6 at first
+            if address_family is not None:
+                HttpServer.address_family = address_family
+            elif socket.has_ipv6:
+                HttpServer.address_family = socket.AF_INET6
             httpd = HttpServer(
                 server_address, HttpHandler,
                 self.xml_handler, self.xsd_handler, self.xsl_handler,
                 self.write_log)
-            logger.info(STATHTTPD_STARTED, server_address[0],
-                        server_address[1])
-            return httpd
         except (socket.gaierror, socket.error,
                 OverflowError, TypeError) as err:
-           if httpd:
-                httpd.server_close()
-           raise HttpServerError(
-               "Invalid address %s, port %s: %s: %s" %
-               (server_address[0], server_address[1],
-                err.__class__.__name__, err))
+            # try IPv4 next
+            if HttpServer.address_family == socket.AF_INET6:
+                httpd = self._open_httpd(server_address, socket.AF_INET)
+            else:
+                raise HttpServerError(
+                    "Invalid address %s, port %s: %s: %s" %
+                    (server_address[0], server_address[1],
+                     err.__class__.__name__, err))
+        else:
+            logger.info(STATHTTPD_STARTED, server_address[0],
+                        server_address[1])
+        return httpd
 
     def close_httpd(self):
         """Closes sockets for HTTP"""
-        while len(self.httpd)>0:
-            ht = self.httpd.pop()
+        if len(self.httpd) == 0:
+            return
+        for ht in self.httpd:
             logger.info(STATHTTPD_CLOSING, ht.server_address[0],
                         ht.server_address[1])
             ht.server_close()
+        self.httpd = []
 
     def start(self):
         """Starts StatsHttpd objects to run. Waiting for client
         requests by using select.select functions"""
-        self.open_httpd()
         self.mccs.start()
         self.running = True
         while self.running:
@@ -299,9 +310,9 @@ class StatsHttpd:
         except HttpServerError as err:
             logger.error(STATHTTPD_SERVER_ERROR, err)
             # restore old config
-            self.load_config(old_config)
-            self.open_httpd()
-            return isc.config.ccsession.create_answer(1, str(err))
+            self.config_handler(old_config)
+            return isc.config.ccsession.create_answer(
+                1, "[b10-stats-httpd] %s" % err)
         else:
             return isc.config.ccsession.create_answer(0)
 
@@ -330,7 +341,8 @@ class StatsHttpd:
         the data which obtains from it"""
         try:
             seq = self.cc_session.group_sendmsg(
-                isc.config.ccsession.create_command('show'), 'Stats')
+                isc.config.ccsession.create_command('show'),
+                self.stats_module_name)
             (answer, env) = self.cc_session.group_recvmsg(False, seq)
             if answer:
                 (rcode, value) = isc.config.ccsession.parse_answer(answer)
@@ -345,82 +357,34 @@ class StatsHttpd:
                 raise StatsHttpdError("Stats module: %s" % str(value))
 
     def get_stats_spec(self):
-        """Requests statistics data to the Stats daemon and returns
-        the data which obtains from it"""
-        try:
-            seq = self.cc_session.group_sendmsg(
-                isc.config.ccsession.create_command('showschema'), 'Stats')
-            (answer, env) = self.cc_session.group_recvmsg(False, seq)
-            if answer:
-                (rcode, value) = isc.config.ccsession.parse_answer(answer)
-                if rcode == 0:
-                    return value
-                else:
-                    raise StatsHttpdError("Stats module: %s" % str(value))
-        except (isc.cc.session.SessionTimeout,
-                isc.cc.session.SessionError) as err:
-            raise StatsHttpdError("%s: %s" %
-                                  (err.__class__.__name__, err))
+        """Just returns spec data"""
+        return self.stats_config_spec
 
-    def xml_handler(self):
-        """Handler which requests to Stats daemon to obtain statistics
-        data and returns the body of XML document"""
-        xml_list=[]
-        for (mod, spec) in self.get_stats_data().items():
-            if not spec: continue
-            elem1 = xml.etree.ElementTree.Element(str(mod))
-            for (k, v) in spec.items():
-                elem2 = xml.etree.ElementTree.Element(str(k))
-                elem2.text = str(v)
-                elem1.append(elem2)
-            # The coding conversion is tricky. xml..tostring() of Python 3.2
-            # returns bytes (not string) regardless of the coding, while
-            # tostring() of Python 3.1 returns a string.  To support both
-            # cases transparently, we first make sure tostring() returns
-            # bytes by specifying utf-8 and then convert the result to a
-            # plain string (code below assume it).
-            xml_list.append(
-                str(xml.etree.ElementTree.tostring(elem1, encoding='utf-8'),
-                    encoding='us-ascii'))
-        xml_string = "".join(xml_list)
-        self.xml_body = self.open_template(XML_TEMPLATE_LOCATION).substitute(
-            xml_string=xml_string,
-            xsd_namespace=XSD_NAMESPACE,
-            xsd_url_path=XSD_URL_PATH,
-            xsl_url_path=XSL_URL_PATH)
-        assert self.xml_body is not None
-        return self.xml_body
-
-    def xsd_handler(self):
-        """Handler which just returns the body of XSD document"""
+    def load_templates(self):
+        """Setup the bodies of XSD and XSL documents to be responds to
+        HTTP clients. Before that it also creates XML tag structures by
+        using xml.etree.ElementTree.Element class and substitutes
+        concrete strings with parameters embed in the string.Template
+        object."""
         # for XSD
         xsd_root = xml.etree.ElementTree.Element("all") # started with "all" tag
-        for (mod, spec) in self.get_stats_spec().items():
-            if not spec: continue
-            alltag = xml.etree.ElementTree.Element("all")
-            for item in spec:
-                element = xml.etree.ElementTree.Element(
-                    "element",
-                    dict( name=item["item_name"],
-                          type=item["item_type"] if item["item_type"].lower() != 'real' else 'float',
-                          minOccurs="1",
-                          maxOccurs="1" ),
-                    )
-                annotation = xml.etree.ElementTree.Element("annotation")
-                appinfo = xml.etree.ElementTree.Element("appinfo")
-                documentation = xml.etree.ElementTree.Element("documentation")
-                appinfo.text = item["item_title"]
-                documentation.text = item["item_description"]
-                annotation.append(appinfo)
-                annotation.append(documentation)
-                element.append(annotation)
-                alltag.append(element)
-
-            complextype = xml.etree.ElementTree.Element("complexType")
-            complextype.append(alltag)
-            mod_element = xml.etree.ElementTree.Element("element", { "name" : mod })
-            mod_element.append(complextype)
-            xsd_root.append(mod_element)
+        for item in self.get_stats_spec():
+            element = xml.etree.ElementTree.Element(
+                "element",
+                dict( name=item["item_name"],
+                      type=item["item_type"] if item["item_type"].lower() != 'real' else 'float',
+                      minOccurs="1",
+                      maxOccurs="1" ),
+                )
+            annotation = xml.etree.ElementTree.Element("annotation")
+            appinfo = xml.etree.ElementTree.Element("appinfo")
+            documentation = xml.etree.ElementTree.Element("documentation")
+            appinfo.text = item["item_title"]
+            documentation.text = item["item_description"]
+            annotation.append(appinfo)
+            annotation.append(documentation)
+            element.append(annotation)
+            xsd_root.append(element)
         # The coding conversion is tricky. xml..tostring() of Python 3.2
         # returns bytes (not string) regardless of the coding, while
         # tostring() of Python 3.1 returns a string.  To support both
@@ -434,33 +398,25 @@ class StatsHttpd:
             xsd_namespace=XSD_NAMESPACE
             )
         assert self.xsd_body is not None
-        return self.xsd_body
 
-    def xsl_handler(self):
-        """Handler which just returns the body of XSL document"""
         # for XSL
         xsd_root = xml.etree.ElementTree.Element(
             "xsl:template",
             dict(match="*")) # started with xml:template tag
-        for (mod, spec) in self.get_stats_spec().items():
-            if not spec: continue
-            for item in spec:
-                tr = xml.etree.ElementTree.Element("tr")
-                td0 = xml.etree.ElementTree.Element("td")
-                td0.text = str(mod)
-                td1 = xml.etree.ElementTree.Element(
-                    "td", { "class" : "title",
-                            "title" : item["item_description"] })
-                td1.text = item["item_title"]
-                td2 = xml.etree.ElementTree.Element("td")
-                xsl_valueof = xml.etree.ElementTree.Element(
-                    "xsl:value-of",
-                    dict(select=mod+'/'+item["item_name"]))
-                td2.append(xsl_valueof)
-                tr.append(td0)
-                tr.append(td1)
-                tr.append(td2)
-                xsd_root.append(tr)
+        for item in self.get_stats_spec():
+            tr = xml.etree.ElementTree.Element("tr")
+            td1 = xml.etree.ElementTree.Element(
+                "td", { "class" : "title",
+                        "title" : item["item_description"] })
+            td1.text = item["item_title"]
+            td2 = xml.etree.ElementTree.Element("td")
+            xsl_valueof = xml.etree.ElementTree.Element(
+                "xsl:value-of",
+                dict(select=item["item_name"]))
+            td2.append(xsl_valueof)
+            tr.append(td1)
+            tr.append(td2)
+            xsd_root.append(tr)
         # The coding conversion is tricky. xml..tostring() of Python 3.2
         # returns bytes (not string) regardless of the coding, while
         # tostring() of Python 3.1 returns a string.  To support both
@@ -473,15 +429,47 @@ class StatsHttpd:
             xsl_string=xsl_string,
             xsd_namespace=XSD_NAMESPACE)
         assert self.xsl_body is not None
+
+    def xml_handler(self):
+        """Handler which requests to Stats daemon to obtain statistics
+        data and returns the body of XML document"""
+        xml_list=[]
+        for (k, v) in self.get_stats_data().items():
+            (k, v) = (str(k), str(v))
+            elem = xml.etree.ElementTree.Element(k)
+            elem.text = v
+            # The coding conversion is tricky. xml..tostring() of Python 3.2
+            # returns bytes (not string) regardless of the coding, while
+            # tostring() of Python 3.1 returns a string.  To support both
+            # cases transparently, we first make sure tostring() returns
+            # bytes by specifying utf-8 and then convert the result to a
+            # plain string (code below assume it).
+            xml_list.append(
+                str(xml.etree.ElementTree.tostring(elem, encoding='utf-8'),
+                    encoding='us-ascii'))
+        xml_string = "".join(xml_list)
+        self.xml_body = self.open_template(XML_TEMPLATE_LOCATION).substitute(
+            xml_string=xml_string,
+            xsd_namespace=XSD_NAMESPACE,
+            xsd_url_path=XSD_URL_PATH,
+            xsl_url_path=XSL_URL_PATH)
+        assert self.xml_body is not None
+        return self.xml_body
+
+    def xsd_handler(self):
+        """Handler which just returns the body of XSD document"""
+        return self.xsd_body
+
+    def xsl_handler(self):
+        """Handler which just returns the body of XSL document"""
         return self.xsl_body
 
     def open_template(self, file_name):
         """It opens a template file, and it loads all lines to a
         string variable and returns string. Template object includes
         the variable. Limitation of a file size isn't needed there."""
-        f = open(file_name, 'r')
-        lines = "".join(f.readlines())
-        f.close()
+        lines = "".join(
+            open(file_name, 'r').readlines())
         assert lines is not None
         return string.Template(lines)
 

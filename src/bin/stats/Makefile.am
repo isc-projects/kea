@@ -5,7 +5,7 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 pkglibexec_SCRIPTS = b10-stats b10-stats-httpd
 
 b10_statsdir = $(pkgdatadir)
-b10_stats_DATA = stats.spec stats-httpd.spec
+b10_stats_DATA = stats.spec stats-httpd.spec stats-schema.spec
 b10_stats_DATA += stats-httpd-xml.tpl stats-httpd-xsd.tpl stats-httpd-xsl.tpl
 pyexec_DATA = stats_messages.py stats_httpd_messages.py
 
@@ -16,7 +16,7 @@ CLEANFILES += stats_httpd_messages.py stats_httpd_messages.pyc
 
 man_MANS = b10-stats.8 b10-stats-httpd.8
 EXTRA_DIST = $(man_MANS) b10-stats.xml b10-stats-httpd.xml
-EXTRA_DIST += stats.spec stats-httpd.spec
+EXTRA_DIST += stats.spec stats-httpd.spec stats-schema.spec
 EXTRA_DIST += stats-httpd-xml.tpl stats-httpd-xsd.tpl stats-httpd-xsl.tpl
 EXTRA_DIST += stats_messages.mes stats_httpd_messages.mes
 
