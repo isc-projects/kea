@@ -88,48 +88,6 @@
   </refsect1>
 
   <refsect1>
-    <title>DEFAULT STATISTICS</title>
-
-    <para>
-      The <command>b10-stats</command> daemon contains
-      built-in statistics:
-    </para>
-
-    <variablelist>
-
-      <varlistentry>
-        <term>report_time</term>
-<!-- TODO: why not named stats.report_time? -->
-        <listitem><simpara>The latest report date and time in
-          ISO 8601 format.</simpara></listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>stats.timestamp</term>
-        <listitem><simpara>The current date and time represented in
-          seconds since UNIX epoch (1970-01-01T0 0:00:00Z) with
-          precision (delimited with a period) up to
-          one hundred thousandth of second.</simpara></listitem>
-      </varlistentry>
-
-<!-- TODO: document
-    "stats.boot_time": "2011-08-11T15:23:56Z",
-when started
-    "stats.last_update_time": "2011-08-11T15:23:56Z",
-when stats module last received data from other component
-    "stats.lname": "4e43f40c_15@t1.m.reedmedia.net",
-name used for msgq command-control channel
-    "stats.start_time": "2011-08-11T15:23:56Z",
-when starts collecting data
--->
-
-<!-- TODO: document auth.foo and bind10.foo in their corresponding manuals -->
-
-    </variablelist>
-
-  </refsect1>
-
-  <refsect1>
     <title>CONFIGURATION AND COMMANDS</title>
 
     <para>
@@ -143,15 +101,20 @@ when starts collecting data
     </para>
 
     <para>
-      <command>remove</command> removes the named statistics data.
+<!-- TODO: remove is removed in trac930 -->
+      <command>remove</command> removes the named statistics name and data.
     </para>
 
     <para>
-      <command>reset</command>
+<!-- TODO: reset is removed in trac930 -->
+      <command>reset</command> will reset all statistics data to
+      default values except for constant names.
+      This may re-add previously removed statistics names.
     </para>
 
     <para>
       <command>set</command>
+<!-- TODO: document this -->
     </para>
 
     <para>
@@ -160,6 +123,8 @@ when starts collecting data
       By default, it outputs all the statistics data it has collected.
       An optional item name may be specified to receive individual output.
     </para>
+
+<!-- TODO: document showschema -->
 
     <para>
       <command>shutdown</command> will shutdown the
@@ -174,6 +139,70 @@ when starts collecting data
 
   </refsect1>
 
+  <refsect1>
+    <title>STATISTICS DATA</title>
+
+    <para>
+      The <command>b10-stats</command> daemon contains these statistics:
+    </para>
+
+    <variablelist>
+
+      <varlistentry>
+        <term>report_time</term>
+<!-- TODO: why not named stats.report_time? -->
+        <listitem><simpara>The latest report date and time in
+          ISO 8601 format.</simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>stats.boot_time</term>
+        <listitem><simpara>The date and time when this daemon was
+          started in ISO 8601 format.
+          This is a constant which can't be reset except by restarting
+          <command>b10-stats</command>.
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>stats.last_update_time</term>
+        <listitem><simpara>The date and time (in ISO 8601 format)
+          when this daemon last received data from another component.
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>stats.lname</term>
+        <listitem><simpara>This is the name used for the
+          <command>b10-msgq</command> command-control channel.
+          (This is a constant which can't be reset except by restarting
+          <command>b10-stats</command>.)
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>stats.start_time</term>
+        <listitem><simpara>This is the date and time (in ISO 8601 format)
+          when this daemon started collecting data.
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>stats.timestamp</term>
+        <listitem><simpara>The current date and time represented in
+          seconds since UNIX epoch (1970-01-01T0 0:00:00Z) with
+          precision (delimited with a period) up to
+          one hundred thousandth of second.</simpara></listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>
+      See other manual pages for explanations for their statistics
+      that are kept track by <command>b10-stats</command>.
+    </para>
+
+  </refsect1>
 
   <refsect1>
     <title>FILES</title>
