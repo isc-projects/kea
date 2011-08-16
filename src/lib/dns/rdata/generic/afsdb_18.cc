@@ -23,6 +23,8 @@
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
+#include <boost/lexical_cast.hpp>
+
 using namespace std;
 using namespace isc::util::str;
 
@@ -109,7 +111,7 @@ AFSDB::operator=(const AFSDB& source) {
 /// \return A \c string object that represents the \c AFSDB object.
 string
 AFSDB::toText() const {
-    return (lexical_cast<string>(subtype_) + " " + server_.toText());
+    return (boost::lexical_cast<string>(subtype_) + " " + server_.toText());
 }
 
 /// \brief Render the \c AFSDB in the wire format without name compression.
