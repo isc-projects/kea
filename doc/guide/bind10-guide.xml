@@ -547,7 +547,7 @@ Debian and Ubuntu:
           <varlistentry>
             <term>--prefix</term>
             <listitem>
-              <simpara>Define the the installation location (the
+              <simpara>Define the installation location (the
                 default is <filename>/usr/local/</filename>).
               </simpara>
             </listitem>
