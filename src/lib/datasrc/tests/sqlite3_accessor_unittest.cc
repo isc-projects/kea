@@ -114,16 +114,34 @@ TEST_F(SQLite3Access, iterator) {
     ASSERT_NE(DatabaseAccessor::IteratorContextPtr(),
               context);
 
-    std::string data[4];
+    size_t size(5);
+    std::string data[size];
     // Get and check the first and only record
-    EXPECT_TRUE(context->getNext(data));
-    EXPECT_EQ("example2.com.", data[0]);
-    EXPECT_EQ("SOA", data[1]);
+    EXPECT_TRUE(context->getNext(data, size));
+    EXPECT_EQ("example2.com.", data[4]);
+    EXPECT_EQ("SOA", data[0]);
     EXPECT_EQ("master.example2.com. admin.example2.com. "
               "1234 3600 1800 2419200 7200", data[3]);
-    EXPECT_EQ("3600", data[2]);
+    EXPECT_EQ("3600", data[1]);
     // Check there's no other
-    EXPECT_FALSE(context->getNext(data));
+    EXPECT_FALSE(context->getNext(data, size));
+}
+
+TEST_F(SQLite3Access, iteratorColumnCount) {
+    // Our test zone is conveniently small, but not empty
+    initAccessor(SQLITE_DBFILE_EXAMPLE2, RRClass::IN());
+
+    // Get the iterator context
+    DatabaseAccessor::IteratorContextPtr
+        context(db->getAllRecords(Name("example2.com"), 1));
+    ASSERT_NE(DatabaseAccessor::IteratorContextPtr(),
+              context);
+
+    EXPECT_THROW(context->getNext(NULL, 0), DataSourceError);
+    std::string data[6];
+    EXPECT_THROW(context->getNext(data, 4), DataSourceError);
+    EXPECT_THROW(context->getNext(data, 6), DataSourceError);
+    EXPECT_NO_THROW(context->getNext(data, 5));
 }
 
 TEST(SQLite3Open, getDBNameExample2) {

@@ -141,7 +141,7 @@ const char* const q_zone_str = "SELECT id FROM zones WHERE name=?1 AND rdclass =
 const char* const q_any_str = "SELECT rdtype, ttl, sigtype, rdata, name "
     "FROM records WHERE zone_id=?1 AND name=?2";
 
-const char* const q_iterate_str = "SELECT name, rdtype, ttl, rdata FROM records "
+const char* const q_iterate_str = "SELECT rdtype, ttl, sigtype, rdata, name FROM records "
                                   "WHERE zone_id = ?1 "
                                   "ORDER BY name, rdtype";
 
@@ -362,6 +362,10 @@ convertToPlainChar(const unsigned char* ucp,
 }
 }
 
+// TODO: Once we want to have iterator returned from searchForRecords, this
+// class can be reused. It should be modified to take the sqlite3 statement
+// instead of creating it in constructor, it doesn't have to care which one
+// it is, just provide data from it.
 class SQLite3Database::Context : public DatabaseAccessor::IteratorContext {
 public:
     Context(const boost::shared_ptr<const SQLite3Database>& database, int id) :
@@ -375,18 +379,18 @@ public:
                       " to SQL statement (iterate)");
         }
     }
-    bool getNext(std::string data[4]) {
+    bool getNext(std::string data[], size_t size) {
+        if (size != COLUMN_COUNT) {
+            isc_throw(DataSourceError, "getNext received size of " << size <<
+                      ", not " << COLUMN_COUNT);
+        }
         // If there's another row, get it
         int rc(sqlite3_step(statement));
         if (rc == SQLITE_ROW) {
-            data[0] = convertToPlainChar(sqlite3_column_text(statement, 0),
-                                         database_->dbparameters_);
-            data[1] = convertToPlainChar(sqlite3_column_text(statement, 1),
-                                         database_->dbparameters_);
-            data[2] = boost::lexical_cast<std::string>(
-                sqlite3_column_int(statement, 2));
-            data[3] = convertToPlainChar(sqlite3_column_text(statement, 3),
-                                         database_->dbparameters_);
+            for (size_t i(0); i < size; ++ i) {
+                data[i] = convertToPlainChar(sqlite3_column_text(statement, i),
+                                             database_->dbparameters_);
+            }
             return (true);
         } else if (rc != SQLITE_DONE) {
             isc_throw(DataSourceError,
