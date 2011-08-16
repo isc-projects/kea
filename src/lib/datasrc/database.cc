@@ -49,16 +49,18 @@ DatabaseClient::findZone(const Name& name) const {
     if (zone.first) {
         return (FindResult(result::SUCCESS,
                            ZoneFinderPtr(new Finder(database_,
-                                                    zone.second))));
+                                                    zone.second, name))));
     }
-    // Than super domains
+    // Then super domains
     // Start from 1, as 0 is covered above
     for (size_t i(1); i < name.getLabelCount(); ++i) {
-        zone = database_->getZone(name.split(i));
+        isc::dns::Name superdomain(name.split(i));
+        zone = database_->getZone(superdomain);
         if (zone.first) {
             return (FindResult(result::PARTIALMATCH,
                                ZoneFinderPtr(new Finder(database_,
-                                                        zone.second))));
+                                                        zone.second,
+                                                        superdomain))));
         }
     }
     // No, really nothing
@@ -66,9 +68,11 @@ DatabaseClient::findZone(const Name& name) const {
 }
 
 DatabaseClient::Finder::Finder(boost::shared_ptr<DatabaseAccessor>
-                               database, int zone_id) :
+                               database, int zone_id,
+                               const isc::dns::Name& origin) :
     database_(database),
-    zone_id_(zone_id)
+    zone_id_(zone_id),
+    origin_(origin)
 { }
 
 namespace {
@@ -162,6 +166,119 @@ private:
 };
 }
 
+std::pair<bool, isc::dns::RRsetPtr>
+DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
+                                 const isc::dns::RRType* type,
+                                 bool want_cname, bool want_dname,
+                                 bool want_ns)
+{
+    RRsigStore sig_store;
+    database_->searchForRecords(zone_id_, name.toText());
+    bool records_found = false;
+    isc::dns::RRsetPtr result_rrset;
+
+    std::string columns[DatabaseAccessor::COLUMN_COUNT];
+    while (database_->getNextRecord(columns, DatabaseAccessor::COLUMN_COUNT)) {
+        if (!records_found) {
+            records_found = true;
+        }
+
+        try {
+            const isc::dns::RRType cur_type(columns[DatabaseAccessor::
+                                            TYPE_COLUMN]);
+            const isc::dns::RRTTL cur_ttl(columns[DatabaseAccessor::
+                                          TTL_COLUMN]);
+            // Ths sigtype column was an optimization for finding the
+            // relevant RRSIG RRs for a lookup. Currently this column is
+            // not used in this revised datasource implementation. We
+            // should either start using it again, or remove it from use
+            // completely (i.e. also remove it from the schema and the
+            // backend implementation).
+            // Note that because we don't use it now, we also won't notice
+            // it if the value is wrong (i.e. if the sigtype column
+            // contains an rrtype that is different from the actual value
+            // of the 'type covered' field in the RRSIG Rdata).
+            //cur_sigtype(columns[SIGTYPE_COLUMN]);
+
+            // Check for delegations before checking for the right type.
+            // This is needed to properly delegate request for the NS
+            // record itself.
+            //
+            // This happens with NS only, CNAME must be alone and DNAME
+            // is not checked in the exact queried domain.
+            if (want_ns && cur_type == isc::dns::RRType::NS()) {
+                if (result_rrset &&
+                    result_rrset->getType() != isc::dns::RRType::NS()) {
+                    isc_throw(DataSourceError, "NS found together with data"
+                              " in non-apex domain " + name.toText());
+                }
+                addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
+                            columns[DatabaseAccessor::RDATA_COLUMN],
+                            *database_);
+            } else if (type != NULL && cur_type == *type) {
+                if (result_rrset &&
+                    result_rrset->getType() == isc::dns::RRType::CNAME()) {
+                    isc_throw(DataSourceError, "CNAME found but it is not "
+                              "the only record for " + name.toText());
+                } else if (result_rrset && want_ns &&
+                           result_rrset->getType() == isc::dns::RRType::NS()) {
+                    isc_throw(DataSourceError, "NS found together with data"
+                              " in non-apex domain " + name.toText());
+                }
+                addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
+                            columns[DatabaseAccessor::RDATA_COLUMN],
+                            *database_);
+            } else if (want_cname && cur_type == isc::dns::RRType::CNAME()) {
+                // There should be no other data, so result_rrset should
+                // be empty.
+                if (result_rrset) {
+                    isc_throw(DataSourceError, "CNAME found but it is not "
+                              "the only record for " + name.toText());
+                }
+                addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
+                            columns[DatabaseAccessor::RDATA_COLUMN],
+                            *database_);
+            } else if (want_dname && cur_type == isc::dns::RRType::DNAME()) {
+                // There should be max one RR of DNAME present
+                if (result_rrset &&
+                    result_rrset->getType() == isc::dns::RRType::DNAME()) {
+                    isc_throw(DataSourceError, "DNAME with multiple RRs in " +
+                              name.toText());
+                }
+                addOrCreate(result_rrset, name, getClass(), cur_type, cur_ttl,
+                            columns[DatabaseAccessor::RDATA_COLUMN],
+                            *database_);
+            } else if (cur_type == isc::dns::RRType::RRSIG()) {
+                // If we get signatures before we get the actual data, we
+                // can't know which ones to keep and which to drop...
+                // So we keep a separate store of any signature that may be
+                // relevant and add them to the final RRset when we are
+                // done.
+                // A possible optimization here is to not store them for
+                // types we are certain we don't need
+                sig_store.addSig(isc::dns::rdata::createRdata(cur_type,
+                    getClass(), columns[DatabaseAccessor::RDATA_COLUMN]));
+            }
+        } catch (const isc::dns::InvalidRRType& irt) {
+            isc_throw(DataSourceError, "Invalid RRType in database for " <<
+                      name << ": " << columns[DatabaseAccessor::
+                      TYPE_COLUMN]);
+        } catch (const isc::dns::InvalidRRTTL& irttl) {
+            isc_throw(DataSourceError, "Invalid TTL in database for " <<
+                      name << ": " << columns[DatabaseAccessor::
+                      TTL_COLUMN]);
+        } catch (const isc::dns::rdata::InvalidRdataText& ird) {
+            isc_throw(DataSourceError, "Invalid rdata in database for " <<
+                      name << ": " << columns[DatabaseAccessor::
+                      RDATA_COLUMN]);
+        }
+    }
+    if (result_rrset) {
+        sig_store.appendSignatures(result_rrset);
+    }
+    return (std::pair<bool, isc::dns::RRsetPtr>(records_found, result_rrset));
+}
+
 
 ZoneFinder::FindResult
 DatabaseClient::Finder::find(const isc::dns::Name& name,
@@ -174,84 +291,61 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     bool records_found = false;
     isc::dns::RRsetPtr result_rrset;
     ZoneFinder::Result result_status = SUCCESS;
-    RRsigStore sig_store;
+    std::pair<bool, isc::dns::RRsetPtr> found;
     logger.debug(DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
         .arg(database_->getDBName()).arg(name).arg(type);
 
     try {
-        database_->searchForRecords(zone_id_, name.toText());
+        // First, do we have any kind of delegation (NS/DNAME) here?
+        Name origin(getOrigin());
+        size_t origin_label_count(origin.getLabelCount());
+        size_t current_label_count(name.getLabelCount());
+        // This is how many labels we remove to get origin
+        size_t remove_labels(current_label_count - origin_label_count);
 
-        std::string columns[DatabaseAccessor::COLUMN_COUNT];
-        while (database_->getNextRecord(columns,
-                                        DatabaseAccessor::COLUMN_COUNT)) {
-            if (!records_found) {
-                records_found = true;
-            }
-
-            try {
-                const isc::dns::RRType cur_type(columns[DatabaseAccessor::
-                                                        TYPE_COLUMN]);
-                const isc::dns::RRTTL cur_ttl(columns[DatabaseAccessor::
-                                                      TTL_COLUMN]);
-                // Ths sigtype column was an optimization for finding the
-                // relevant RRSIG RRs for a lookup. Currently this column is
-                // not used in this revised datasource implementation. We
-                // should either start using it again, or remove it from use
-                // completely (i.e. also remove it from the schema and the
-                // backend implementation).
-                // Note that because we don't use it now, we also won't notice
-                // it if the value is wrong (i.e. if the sigtype column
-                // contains an rrtype that is different from the actual value
-                // of the 'type covered' field in the RRSIG Rdata).
-                //cur_sigtype(columns[SIGTYPE_COLUMN]);
-
-                if (cur_type == type) {
-                    if (result_rrset &&
-                        result_rrset->getType() == isc::dns::RRType::CNAME()) {
-                        isc_throw(DataSourceError, "CNAME found but it is not "
-                                  "the only record for " + name.toText());
-                    }
-                    addOrCreate(result_rrset, name, getClass(), cur_type,
-                                cur_ttl, columns[DatabaseAccessor::
-                                                 RDATA_COLUMN],
-                                *database_);
-                } else if (cur_type == isc::dns::RRType::CNAME()) {
-                    // There should be no other data, so result_rrset should
-                    // be empty.
-                    if (result_rrset) {
-                        isc_throw(DataSourceError, "CNAME found but it is not "
-                                  "the only record for " + name.toText());
-                    }
-                    addOrCreate(result_rrset, name, getClass(), cur_type,
-                                cur_ttl, columns[DatabaseAccessor::
-                                                 RDATA_COLUMN],
-                                *database_);
-                    result_status = CNAME;
-                } else if (cur_type == isc::dns::RRType::RRSIG()) {
-                    // If we get signatures before we get the actual data, we
-                    // can't know which ones to keep and which to drop...
-                    // So we keep a separate store of any signature that may be
-                    // relevant and add them to the final RRset when we are
-                    // done.
-                    // A possible optimization here is to not store them for
-                    // types we are certain we don't need
-                    sig_store.addSig(isc::dns::rdata::createRdata(cur_type,
-                                    getClass(),
-                                    columns[DatabaseAccessor::
-                                            RDATA_COLUMN]));
+        // Now go trough all superdomains from origin down
+        for (int i(remove_labels); i > 0; --i) {
+            Name superdomain(name.split(i));
+            // Look if there's NS or DNAME (but ignore the NS in origin)
+            found = getRRset(superdomain, NULL, false, true,
+                             i != remove_labels);
+            if (found.second) {
+                // We found something redirecting somewhere else
+                // (it can be only NS or DNAME here)
+                result_rrset = found.second;
+                if (result_rrset->getType() == isc::dns::RRType::NS()) {
+                    LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                              DATASRC_DATABASE_FOUND_DELEGATION).
+                        arg(database_->getDBName()).arg(superdomain);
+                    result_status = DELEGATION;
+                } else {
+                    LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                              DATASRC_DATABASE_FOUND_DNAME).
+                        arg(database_->getDBName()).arg(superdomain);
+                    result_status = DNAME;
                 }
-            } catch (const isc::dns::InvalidRRType& irt) {
-                isc_throw(DataSourceError, "Invalid RRType in database for " <<
-                        name << ": " << columns[DatabaseAccessor::
-                                                TYPE_COLUMN]);
-            } catch (const isc::dns::InvalidRRTTL& irttl) {
-                isc_throw(DataSourceError, "Invalid TTL in database for " <<
-                        name << ": " << columns[DatabaseAccessor::
-                                                TTL_COLUMN]);
-            } catch (const isc::dns::rdata::InvalidRdataText& ird) {
-                isc_throw(DataSourceError, "Invalid rdata in database for " <<
-                        name << ": " << columns[DatabaseAccessor::
-                                                RDATA_COLUMN]);
+                // Don't search more
+                break;
+            }
+        }
+
+        if (!result_rrset) { // Only if we didn't find a redirect already
+            // Try getting the final result and extract it
+            // It is special if there's a CNAME or NS, DNAME is ignored here
+            // And we don't consider the NS in origin
+            found = getRRset(name, &type, true, false, name != origin);
+            records_found = found.first;
+            result_rrset = found.second;
+            if (result_rrset && name != origin &&
+
+                result_rrset->getType() == isc::dns::RRType::NS()) {
+                LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                          DATASRC_DATABASE_FOUND_DELEGATION_EXACT).
+                    arg(database_->getDBName()).arg(name);
+                result_status = DELEGATION;
+            } else if (result_rrset && type != isc::dns::RRType::CNAME() &&
+                       result_rrset->getType() == isc::dns::RRType::CNAME()) {
+                result_status = CNAME;
             }
         }
     } catch (const DataSourceError& dse) {
@@ -288,7 +382,6 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
             result_status = NXDOMAIN;
         }
     } else {
-        sig_store.appendSignatures(result_rrset);
         logger.debug(DBG_TRACE_DETAILED,
                      DATASRC_DATABASE_FOUND_RRSET)
                     .arg(database_->getDBName()).arg(*result_rrset);
@@ -298,8 +391,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
 
 Name
 DatabaseClient::Finder::getOrigin() const {
-    // TODO Implement
-    return (Name("."));
+    return (origin_);
 }
 
 isc::dns::RRClass
