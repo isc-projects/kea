@@ -316,12 +316,12 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                 if (result_rrset->getType() == isc::dns::RRType::NS()) {
                     LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                               DATASRC_DATABASE_FOUND_DELEGATION).
-                        arg(superdomain);
+                        arg(database_->getDBName()).arg(superdomain);
                     result_status = DELEGATION;
                 } else {
                     LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                               DATASRC_DATABASE_FOUND_DNAME).
-                        arg(superdomain);
+                        arg(database_->getDBName()).arg(superdomain);
                     result_status = DNAME;
                 }
                 // Don't search more
@@ -341,7 +341,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                 result_rrset->getType() == isc::dns::RRType::NS()) {
                 LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                           DATASRC_DATABASE_FOUND_DELEGATION_EXACT).
-                    arg(name);
+                    arg(database_->getDBName()).arg(name);
                 result_status = DELEGATION;
             } else if (result_rrset && type != isc::dns::RRType::CNAME() &&
                        result_rrset->getType() == isc::dns::RRType::CNAME()) {
