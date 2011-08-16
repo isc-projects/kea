@@ -1599,14 +1599,15 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
         <varlistentry>
         <term>error 111 opening TCP socket to 127.0.0.1(53)</term>
         <listitem><para>
-            A brief description of the cause of the problem.  Within this text,
-            information relating to the condition that caused the message to
-            be logged will be included.  In this example, error number 111
-            (an operating system-specific error number) was encountered when
-            trying to open a TCP connection to port 53 on the local system
-            (address 127.0.0.1).  The next step would be to find out the reason
-            for the failure by consulting your system's documentation to
-            identify what error number 111 means.
+	   A brief description of the cause of the problem.
+	   Within this text, information relating to the condition
+	   that caused the message to be logged will be included.
+	   In this example, error number 111 (an operating
+	   system-specific error number) was encountered when trying
+	   to open a TCP connection to port 53 on the local system
+	   (address 127.0.0.1).  The next step would be to find
+	   out the reason for the failure by consulting your system's
+	   documentation to identify what error number 111 means.
         </para></listitem>
         </varlistentry>
         </variablelist>
