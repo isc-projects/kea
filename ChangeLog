@@ -1,9 +1,13 @@
+279.	[func]		jerry
+	libdns++: Implement the AFSDB rrtype according to RFC1183.
+	(Trac #1114, git ce052cd92cd128ea3db5a8f154bd151956c2920c)
+
 278.	[doc]		jelte
 	Add logging configuration documentation to the guide.
 	(Trac #1011, git 2cc500af0929c1f268aeb6f8480bc428af70f4c4)
 
 277.	[func]		jerry
-	Implement the SRV rrtype according to RFC2782.
+	libdns++: Implement the SRV rrtype according to RFC2782.
 	(Trac #1128, git 5fd94aa027828c50e63ae1073d9d6708e0a9c223)
 
 276.	[func]		stephen
