@@ -342,6 +342,8 @@ public:
         if (!data_ready_) {
             // At the end of zone
             ready_ = false;
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                      DATASRC_DATABASE_ITERATE_END);
             return (ConstRRsetPtr());
         }
         string name_str(name_), rtype_str(rtype_), ttl(ttl_);
@@ -356,6 +358,8 @@ public:
             rrset->addRdata(rdata::createRdata(rtype, class_, rdata_));
             getData();
         }
+        LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE_NEXT).
+            arg(rrset->getName()).arg(rrset->getType());
         return (rrset);
     }
 private:
@@ -404,6 +408,8 @@ DatabaseClient::getIterator(const isc::dns::Name& name) const {
     // actual zone class from the connection, as the DatabaseClient
     // doesn't know it and the iterator needs it (so it wouldn't query
     // it each time)
+    LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE).
+        arg(name);
     return (ZoneIteratorPtr(new DatabaseIterator(context, RRClass::IN())));
 }
 
