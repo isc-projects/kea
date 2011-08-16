@@ -88,50 +88,6 @@
   </refsect1>
 
   <refsect1>
-    <title>DEFAULT STATISTICS</title>
-
-    <para>
-      The <command>b10-stats</command> daemon contains
-      built-in statistics:
-    </para>
-
-    <variablelist>
-
-      <varlistentry>
-        <term>report_time</term>
-<!-- TODO: why not named stats.report_time? -->
-        <listitem><simpara>The latest report date and time in
-          ISO 8601 format.</simpara></listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>stats.timestamp</term>
-        <listitem><simpara>The current date and time represented in
-          seconds since UNIX epoch (1970-01-01T0 0:00:00Z) with
-          precision (delimited with a period) up to
-          one hundred thousandth of second.</simpara></listitem>
-      </varlistentry>
-
-<!-- TODO: document
-    "stats.boot_time": "2011-08-11T15:23:56Z",
-when started
-stats.boot_time is a constant which can't be reset.
-    "stats.last_update_time": "2011-08-11T15:23:56Z",
-when stats module last received data from other component
-    "stats.lname": "4e43f40c_15@t1.m.reedmedia.net",
-stats.lname is a constant which can't be reset.
-name used for msgq command-control channel
-    "stats.start_time": "2011-08-11T15:23:56Z",
-when starts collecting data
--->
-
-<!-- TODO: document auth.foo and bind10.foo in their corresponding manuals -->
-
-    </variablelist>
-
-  </refsect1>
-
-  <refsect1>
     <title>CONFIGURATION AND COMMANDS</title>
 
     <para>
@@ -183,6 +139,49 @@ when starts collecting data
 
   </refsect1>
 
+  <refsect1>
+    <title>STATISTICS DATA</title>
+
+    <para>
+      The <command>b10-stats</command> daemon contains
+      built-in statistics:
+    </para>
+
+    <variablelist>
+
+      <varlistentry>
+        <term>report_time</term>
+<!-- TODO: why not named stats.report_time? -->
+        <listitem><simpara>The latest report date and time in
+          ISO 8601 format.</simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>stats.timestamp</term>
+        <listitem><simpara>The current date and time represented in
+          seconds since UNIX epoch (1970-01-01T0 0:00:00Z) with
+          precision (delimited with a period) up to
+          one hundred thousandth of second.</simpara></listitem>
+      </varlistentry>
+
+<!-- TODO: document
+    "stats.boot_time": "2011-08-11T15:23:56Z",
+when started
+stats.boot_time is a constant which can't be reset.
+    "stats.last_update_time": "2011-08-11T15:23:56Z",
+when stats module last received data from other component
+    "stats.lname": "4e43f40c_15@t1.m.reedmedia.net",
+stats.lname is a constant which can't be reset.
+name used for msgq command-control channel
+    "stats.start_time": "2011-08-11T15:23:56Z",
+when starts collecting data
+-->
+
+<!-- TODO: document auth.foo and bind10.foo in their corresponding manuals -->
+
+    </variablelist>
+
+  </refsect1>
 
   <refsect1>
     <title>FILES</title>
