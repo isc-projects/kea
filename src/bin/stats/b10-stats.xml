@@ -115,9 +115,11 @@
 <!-- TODO: document
     "stats.boot_time": "2011-08-11T15:23:56Z",
 when started
+stats.boot_time is a constant which can't be reset.
     "stats.last_update_time": "2011-08-11T15:23:56Z",
 when stats module last received data from other component
     "stats.lname": "4e43f40c_15@t1.m.reedmedia.net",
+stats.lname is a constant which can't be reset.
 name used for msgq command-control channel
     "stats.start_time": "2011-08-11T15:23:56Z",
 when starts collecting data
@@ -143,15 +145,20 @@ when starts collecting data
     </para>
 
     <para>
-      <command>remove</command> removes the named statistics data.
+<!-- TODO: remove is removed in trac930 -->
+      <command>remove</command> removes the named statistics name and data.
     </para>
 
     <para>
-      <command>reset</command>
+<!-- TODO: reset is removed in trac930 -->
+      <command>reset</command> will reset all statistics data to
+      default values except for constant names.
+      This may re-add previously removed statistics names.
     </para>
 
     <para>
       <command>set</command>
+<!-- TODO: document this -->
     </para>
 
     <para>
@@ -160,6 +167,8 @@ when starts collecting data
       By default, it outputs all the statistics data it has collected.
       An optional item name may be specified to receive individual output.
     </para>
+
+<!-- TODO: document showschema -->
 
     <para>
       <command>shutdown</command> will shutdown the
