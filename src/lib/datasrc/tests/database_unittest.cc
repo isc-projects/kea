@@ -263,6 +263,46 @@ private:
         addRecord("A", "3600", "", "192.0.2.1");
         addRecord("RRSIG", "3600", "TXT", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
         addCurName("badsigtype.example.org.");
+
+        // Data for testing delegation (with NS and DNAME)
+        addRecord("NS", "3600", "", "ns.example.com.");
+        addRecord("NS", "3600", "", "ns.delegation.example.org.");
+        addRecord("RRSIG", "3600", "", "NS 5 3 3600 20000101000000 "
+                  "20000201000000 12345 example.org. FAKEFAKEFAKE");
+        addCurName("delegation.example.org.");
+        addRecord("A", "3600", "", "192.0.2.1");
+        addCurName("ns.delegation.example.org.");
+        addRecord("A", "3600", "", "192.0.2.1");
+        addCurName("deep.below.delegation.example.org.");
+
+        addRecord("A", "3600", "", "192.0.2.1");
+        addRecord("DNAME", "3600", "", "dname.example.com.");
+        addRecord("RRSIG", "3600", "", "DNAME 5 3 3600 20000101000000 "
+                  "20000201000000 12345 example.org. FAKEFAKEFAKE");
+        addCurName("dname.example.org.");
+        addRecord("A", "3600", "", "192.0.2.1");
+        addCurName("below.dname.example.org.");
+
+        // Broken NS
+        addRecord("A", "3600", "", "192.0.2.1");
+        addRecord("NS", "3600", "", "ns.example.com.");
+        addCurName("brokenns1.example.org.");
+        addRecord("NS", "3600", "", "ns.example.com.");
+        addRecord("A", "3600", "", "192.0.2.1");
+        addCurName("brokenns2.example.org.");
+
+        // Now double DNAME, to test failure mode
+        addRecord("DNAME", "3600", "", "dname1.example.com.");
+        addRecord("DNAME", "3600", "", "dname2.example.com.");
+        addCurName("baddname.example.org.");
+
+        // Put some data into apex (including NS) so we can check our NS
+        // doesn't break anything
+        addRecord("NS", "3600", "", "ns.example.com.");
+        addRecord("A", "3600", "", "192.0.2.1");
+        addRecord("RRSIG", "3600", "", "NS 5 3 3600 20000101000000 "
+                  "20000201000000 12345 example.org. FAKEFAKEFAKE");
+        addCurName("example.org.");
     }
 };
 
@@ -298,6 +338,21 @@ public:
         EXPECT_EQ(42, finder->zone_id());
         EXPECT_EQ(current_database_, &finder->database());
     }
+
+    shared_ptr<DatabaseClient::Finder> getFinder() {
+        DataSourceClient::FindResult zone(
+            client_->findZone(Name("example.org")));
+        EXPECT_EQ(result::SUCCESS, zone.code);
+        shared_ptr<DatabaseClient::Finder> finder(
+            dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
+        EXPECT_EQ(42, finder->zone_id());
+        EXPECT_FALSE(current_database_->searchRunning());
+
+        return (finder);
+    }
+
+    std::vector<std::string> expected_rdatas_;
+    std::vector<std::string> expected_sig_rdatas_;
 };
 
 TEST_F(DatabaseClientTest, zoneNotFound) {
@@ -353,19 +408,24 @@ doFindTest(shared_ptr<DatabaseClient::Finder> finder,
            const isc::dns::RRTTL expected_ttl,
            ZoneFinder::Result expected_result,
            const std::vector<std::string>& expected_rdatas,
-           const std::vector<std::string>& expected_sig_rdatas)
+           const std::vector<std::string>& expected_sig_rdatas,
+           const isc::dns::Name& expected_name = isc::dns::Name::ROOT_NAME(),
+           const ZoneFinder::FindOptions options = ZoneFinder::FIND_DEFAULT)
 {
+    SCOPED_TRACE("doFindTest " + name.toText() + " " + type.toText());
     ZoneFinder::FindResult result =
-        finder->find(name, type, NULL, ZoneFinder::FIND_DEFAULT);
+        finder->find(name, type, NULL, options);
     ASSERT_EQ(expected_result, result.code) << name << " " << type;
     if (expected_rdatas.size() > 0) {
-        checkRRset(result.rrset, name, finder->getClass(),
-                   expected_type, expected_ttl, expected_rdatas);
+        checkRRset(result.rrset, expected_name != Name(".") ? expected_name :
+                   name, finder->getClass(), expected_type, expected_ttl,
+                   expected_rdatas);
 
         if (expected_sig_rdatas.size() > 0) {
-            checkRRset(result.rrset->getRRsig(), name,
-                       finder->getClass(), isc::dns::RRType::RRSIG(),
-                       expected_ttl, expected_sig_rdatas);
+            checkRRset(result.rrset->getRRsig(), expected_name != Name(".") ?
+                       expected_name : name, finder->getClass(),
+                       isc::dns::RRType::RRSIG(), expected_ttl,
+                       expected_sig_rdatas);
         } else {
             EXPECT_EQ(isc::dns::RRsetPtr(), result.rrset->getRRsig());
         }
@@ -376,227 +436,220 @@ doFindTest(shared_ptr<DatabaseClient::Finder> finder,
 } // end anonymous namespace
 
 TEST_F(DatabaseClientTest, find) {
-    DataSourceClient::FindResult zone(client_->findZone(Name("example.org")));
-    ASSERT_EQ(result::SUCCESS, zone.code);
-    shared_ptr<DatabaseClient::Finder> finder(
-        dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
-    EXPECT_EQ(42, finder->zone_id());
-    EXPECT_FALSE(current_database_->searchRunning());
-    std::vector<std::string> expected_rdatas;
-    std::vector<std::string> expected_sig_rdatas;
+    shared_ptr<DatabaseClient::Finder> finder(getFinder());
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
-    expected_rdatas.push_back("192.0.2.1");
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    expected_rdatas_.push_back("192.0.2.1");
     doFindTest(finder, isc::dns::Name("www.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
-    expected_rdatas.push_back("192.0.2.1");
-    expected_rdatas.push_back("192.0.2.2");
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    expected_rdatas_.push_back("192.0.2.1");
+    expected_rdatas_.push_back("192.0.2.2");
     doFindTest(finder, isc::dns::Name("www2.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
-    expected_rdatas.push_back("2001:db8::1");
-    expected_rdatas.push_back("2001:db8::2");
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    expected_rdatas_.push_back("2001:db8::1");
+    expected_rdatas_.push_back("2001:db8::2");
     doFindTest(finder, isc::dns::Name("www.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
     doFindTest(finder, isc::dns::Name("www.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
                isc::dns::RRTTL(3600),
                ZoneFinder::NXRRSET,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
-    expected_rdatas.push_back("www.example.org.");
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    expected_rdatas_.push_back("www.example.org.");
     doFindTest(finder, isc::dns::Name("cname.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::CNAME(),
                isc::dns::RRTTL(3600),
                ZoneFinder::CNAME,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
-    expected_rdatas.push_back("www.example.org.");
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    expected_rdatas_.push_back("www.example.org.");
     doFindTest(finder, isc::dns::Name("cname.example.org."),
                isc::dns::RRType::CNAME(), isc::dns::RRType::CNAME(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
     doFindTest(finder, isc::dns::Name("doesnotexist.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600),
                ZoneFinder::NXDOMAIN,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
-    expected_rdatas.push_back("192.0.2.1");
-    expected_sig_rdatas.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-    expected_sig_rdatas.push_back("A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE");
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    expected_rdatas_.push_back("192.0.2.1");
+    expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE");
     doFindTest(finder, isc::dns::Name("signed1.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
-    expected_rdatas.push_back("2001:db8::1");
-    expected_rdatas.push_back("2001:db8::2");
-    expected_sig_rdatas.push_back("AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    expected_rdatas_.push_back("2001:db8::1");
+    expected_rdatas_.push_back("2001:db8::2");
+    expected_sig_rdatas_.push_back("AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
     doFindTest(finder, isc::dns::Name("signed1.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
     doFindTest(finder, isc::dns::Name("signed1.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
                isc::dns::RRTTL(3600),
                ZoneFinder::NXRRSET,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
-    expected_rdatas.push_back("www.example.org.");
-    expected_sig_rdatas.push_back("CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    expected_rdatas_.push_back("www.example.org.");
+    expected_sig_rdatas_.push_back("CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
     doFindTest(finder, isc::dns::Name("signedcname1.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::CNAME(),
                isc::dns::RRTTL(3600),
                ZoneFinder::CNAME,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
-    expected_rdatas.push_back("192.0.2.1");
-    expected_sig_rdatas.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-    expected_sig_rdatas.push_back("A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE");
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    expected_rdatas_.push_back("192.0.2.1");
+    expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE");
     doFindTest(finder, isc::dns::Name("signed2.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
-    expected_rdatas.push_back("2001:db8::2");
-    expected_rdatas.push_back("2001:db8::1");
-    expected_sig_rdatas.push_back("AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    expected_rdatas_.push_back("2001:db8::2");
+    expected_rdatas_.push_back("2001:db8::1");
+    expected_sig_rdatas_.push_back("AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
     doFindTest(finder, isc::dns::Name("signed2.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
     doFindTest(finder, isc::dns::Name("signed2.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
                isc::dns::RRTTL(3600),
                ZoneFinder::NXRRSET,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
-    expected_rdatas.push_back("www.example.org.");
-    expected_sig_rdatas.push_back("CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    expected_rdatas_.push_back("www.example.org.");
+    expected_sig_rdatas_.push_back("CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
     doFindTest(finder, isc::dns::Name("signedcname2.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::CNAME(),
                isc::dns::RRTTL(3600),
                ZoneFinder::CNAME,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
-    expected_rdatas.push_back("192.0.2.1");
-    expected_sig_rdatas.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    expected_rdatas_.push_back("192.0.2.1");
+    expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
     doFindTest(finder, isc::dns::Name("acnamesig1.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
-    expected_rdatas.push_back("192.0.2.1");
-    expected_sig_rdatas.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    expected_rdatas_.push_back("192.0.2.1");
+    expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
     doFindTest(finder, isc::dns::Name("acnamesig2.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
-    expected_rdatas.push_back("192.0.2.1");
-    expected_sig_rdatas.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    expected_rdatas_.push_back("192.0.2.1");
+    expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
     doFindTest(finder, isc::dns::Name("acnamesig3.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
-    expected_rdatas.push_back("192.0.2.1");
-    expected_rdatas.push_back("192.0.2.2");
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    expected_rdatas_.push_back("192.0.2.1");
+    expected_rdatas_.push_back("192.0.2.2");
     doFindTest(finder, isc::dns::Name("ttldiff1.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(360),
                ZoneFinder::SUCCESS,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
-    expected_rdatas.push_back("192.0.2.1");
-    expected_rdatas.push_back("192.0.2.2");
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    expected_rdatas_.push_back("192.0.2.1");
+    expected_rdatas_.push_back("192.0.2.2");
     doFindTest(finder, isc::dns::Name("ttldiff2.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(360),
                ZoneFinder::SUCCESS,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
 
 
@@ -672,16 +725,219 @@ TEST_F(DatabaseClientTest, find) {
     // This RRSIG has the wrong sigtype field, which should be
     // an error if we decide to keep using that field
     // Right now the field is ignored, so it does not error
-    expected_rdatas.clear();
-    expected_sig_rdatas.clear();
-    expected_rdatas.push_back("192.0.2.1");
-    expected_sig_rdatas.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    expected_rdatas_.push_back("192.0.2.1");
+    expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
     doFindTest(finder, isc::dns::Name("badsigtype.example.org."),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
                isc::dns::RRTTL(3600),
                ZoneFinder::SUCCESS,
-               expected_rdatas, expected_sig_rdatas);
+               expected_rdatas_, expected_sig_rdatas_);
     EXPECT_FALSE(current_database_->searchRunning());
+}
+
+TEST_F(DatabaseClientTest, findDelegation) {
+    shared_ptr<DatabaseClient::Finder> finder(getFinder());
+
+    // The apex should not be considered delegation point and we can access
+    // data
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    expected_rdatas_.push_back("192.0.2.1");
+    doFindTest(finder, isc::dns::Name("example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
+               expected_sig_rdatas_);
+    EXPECT_FALSE(current_database_->searchRunning());
+
+    expected_rdatas_.clear();
+    expected_rdatas_.push_back("ns.example.com.");
+    expected_sig_rdatas_.push_back("NS 5 3 3600 20000101000000 20000201000000 "
+                                  "12345 example.org. FAKEFAKEFAKE");
+    doFindTest(finder, isc::dns::Name("example.org."),
+               isc::dns::RRType::NS(), isc::dns::RRType::NS(),
+               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
+               expected_sig_rdatas_);
+    EXPECT_FALSE(current_database_->searchRunning());
+
+    // Check when we ask for something below delegation point, we get the NS
+    // (Both when the RRset there exists and doesn't)
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    expected_rdatas_.push_back("ns.example.com.");
+    expected_rdatas_.push_back("ns.delegation.example.org.");
+    expected_sig_rdatas_.push_back("NS 5 3 3600 20000101000000 20000201000000 "
+                                  "12345 example.org. FAKEFAKEFAKE");
+    doFindTest(finder, isc::dns::Name("ns.delegation.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::NS(),
+               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
+               expected_sig_rdatas_,
+               isc::dns::Name("delegation.example.org."));
+    EXPECT_FALSE(current_database_->searchRunning());
+    doFindTest(finder, isc::dns::Name("ns.delegation.example.org."),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::NS(),
+               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
+               expected_sig_rdatas_,
+               isc::dns::Name("delegation.example.org."));
+    doFindTest(finder, isc::dns::Name("deep.below.delegation.example.org."),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::NS(),
+               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
+               expected_sig_rdatas_,
+               isc::dns::Name("delegation.example.org."));
+    EXPECT_FALSE(current_database_->searchRunning());
+
+    // Even when we check directly at the delegation point, we should get
+    // the NS
+    doFindTest(finder, isc::dns::Name("delegation.example.org."),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::NS(),
+               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
+               expected_sig_rdatas_);
+    EXPECT_FALSE(current_database_->searchRunning());
+
+    // And when we ask direcly for the NS, we should still get delegation
+    doFindTest(finder, isc::dns::Name("delegation.example.org."),
+               isc::dns::RRType::NS(), isc::dns::RRType::NS(),
+               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
+               expected_sig_rdatas_);
+    EXPECT_FALSE(current_database_->searchRunning());
+
+    // Now test delegation. If it is below the delegation point, we should get
+    // the DNAME (the one with data under DNAME is invalid zone, but we test
+    // the behaviour anyway just to make sure)
+    expected_rdatas_.clear();
+    expected_rdatas_.push_back("dname.example.com.");
+    expected_sig_rdatas_.clear();
+    expected_sig_rdatas_.push_back("DNAME 5 3 3600 20000101000000 "
+                                  "20000201000000 12345 example.org. "
+                                  "FAKEFAKEFAKE");
+    doFindTest(finder, isc::dns::Name("below.dname.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::DNAME(),
+               isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas_,
+               expected_sig_rdatas_, isc::dns::Name("dname.example.org."));
+    EXPECT_FALSE(current_database_->searchRunning());
+    doFindTest(finder, isc::dns::Name("below.dname.example.org."),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::DNAME(),
+               isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas_,
+               expected_sig_rdatas_, isc::dns::Name("dname.example.org."));
+    EXPECT_FALSE(current_database_->searchRunning());
+    doFindTest(finder, isc::dns::Name("really.deep.below.dname.example.org."),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::DNAME(),
+               isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas_,
+               expected_sig_rdatas_, isc::dns::Name("dname.example.org."));
+    EXPECT_FALSE(current_database_->searchRunning());
+
+    // Asking direcly for DNAME should give SUCCESS
+    doFindTest(finder, isc::dns::Name("dname.example.org."),
+               isc::dns::RRType::DNAME(), isc::dns::RRType::DNAME(),
+               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
+               expected_sig_rdatas_);
+
+    // But we don't delegate at DNAME point
+    expected_rdatas_.clear();
+    expected_rdatas_.push_back("192.0.2.1");
+    expected_sig_rdatas_.clear();
+    doFindTest(finder, isc::dns::Name("dname.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas_,
+               expected_sig_rdatas_);
+    EXPECT_FALSE(current_database_->searchRunning());
+    expected_rdatas_.clear();
+    doFindTest(finder, isc::dns::Name("dname.example.org."),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas_,
+               expected_sig_rdatas_);
+    EXPECT_FALSE(current_database_->searchRunning());
+
+    // This is broken dname, it contains two targets
+    EXPECT_THROW(finder->find(isc::dns::Name("below.baddname.example.org."),
+                              isc::dns::RRType::A(), NULL,
+                              ZoneFinder::FIND_DEFAULT),
+                 DataSourceError);
+    EXPECT_FALSE(current_database_->searchRunning());
+
+    // Broken NS - it lives together with something else
+    EXPECT_FALSE(current_database_->searchRunning());
+    EXPECT_THROW(finder->find(isc::dns::Name("brokenns1.example.org."),
+                              isc::dns::RRType::A(), NULL,
+                              ZoneFinder::FIND_DEFAULT),
+                 DataSourceError);
+    EXPECT_FALSE(current_database_->searchRunning());
+    EXPECT_THROW(finder->find(isc::dns::Name("brokenns2.example.org."),
+                              isc::dns::RRType::A(), NULL,
+                              ZoneFinder::FIND_DEFAULT),
+                 DataSourceError);
+    EXPECT_FALSE(current_database_->searchRunning());
+}
+
+// Glue-OK mode. Just go trough NS delegations down (but not trough
+// DNAME) and pretend it is not there.
+TEST_F(DatabaseClientTest, glueOK) {
+    shared_ptr<DatabaseClient::Finder> finder(getFinder());
+
+    expected_rdatas_.clear();
+    expected_sig_rdatas_.clear();
+    doFindTest(finder, isc::dns::Name("ns.delegation.example.org."),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXRRSET,
+               expected_rdatas_, expected_sig_rdatas_,
+               isc::dns::Name("ns.delegation.example.org."),
+               ZoneFinder::FIND_GLUE_OK);
+    doFindTest(finder, isc::dns::Name("nothere.delegation.example.org."),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::AAAA(),
+               isc::dns::RRTTL(3600), ZoneFinder::NXDOMAIN,
+               expected_rdatas_, expected_sig_rdatas_,
+               isc::dns::Name("nothere.delegation.example.org."),
+               ZoneFinder::FIND_GLUE_OK);
+    expected_rdatas_.push_back("192.0.2.1");
+    doFindTest(finder, isc::dns::Name("ns.delegation.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::A(),
+               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS,
+               expected_rdatas_, expected_sig_rdatas_,
+               isc::dns::Name("ns.delegation.example.org."),
+               ZoneFinder::FIND_GLUE_OK);
+    expected_rdatas_.clear();
+    expected_rdatas_.push_back("ns.example.com.");
+    expected_rdatas_.push_back("ns.delegation.example.org.");
+    expected_sig_rdatas_.clear();
+    expected_sig_rdatas_.push_back("NS 5 3 3600 20000101000000 "
+                                   "20000201000000 12345 example.org. "
+                                   "FAKEFAKEFAKE");
+    // When we request the NS, it should be SUCCESS, not DELEGATION
+    // (different in GLUE_OK)
+    doFindTest(finder, isc::dns::Name("delegation.example.org."),
+               isc::dns::RRType::NS(), isc::dns::RRType::NS(),
+               isc::dns::RRTTL(3600), ZoneFinder::SUCCESS,
+               expected_rdatas_, expected_sig_rdatas_,
+               isc::dns::Name("delegation.example.org."),
+               ZoneFinder::FIND_GLUE_OK);
+    expected_rdatas_.clear();
+    expected_rdatas_.push_back("dname.example.com.");
+    expected_sig_rdatas_.clear();
+    expected_sig_rdatas_.push_back("DNAME 5 3 3600 20000101000000 "
+                                   "20000201000000 12345 example.org. "
+                                   "FAKEFAKEFAKE");
+    doFindTest(finder, isc::dns::Name("below.dname.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::DNAME(),
+               isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas_,
+               expected_sig_rdatas_, isc::dns::Name("dname.example.org."),
+               ZoneFinder::FIND_GLUE_OK);
+    EXPECT_FALSE(current_database_->searchRunning());
+    doFindTest(finder, isc::dns::Name("below.dname.example.org."),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::DNAME(),
+               isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas_,
+               expected_sig_rdatas_, isc::dns::Name("dname.example.org."),
+               ZoneFinder::FIND_GLUE_OK);
+    EXPECT_FALSE(current_database_->searchRunning());
+}
+
+TEST_F(DatabaseClientTest, getOrigin) {
+    DataSourceClient::FindResult zone(client_->findZone(Name("example.org")));
+    ASSERT_EQ(result::SUCCESS, zone.code);
+    shared_ptr<DatabaseClient::Finder> finder(
+        dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
+    EXPECT_EQ(42, finder->zone_id());
+    EXPECT_EQ(isc::dns::Name("example.org"), finder->getOrigin());
 }
 
 }
