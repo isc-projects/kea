@@ -103,6 +103,7 @@ in separate zonemgr process.
       <command>b10-xfrin</command> daemon.
       The list items are:
       <varname>name</varname> (the zone name),
+<!-- TODO: class string -->
       <varname>master_addr</varname> (the zone master to transfer from),
       <varname>master_port</varname> (defaults to 53), and
       <varname>tsig_key</varname> (optional TSIG key to use).
