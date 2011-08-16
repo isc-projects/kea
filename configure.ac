@@ -801,6 +801,13 @@ AC_CONFIG_FILES([Makefile
                  src/bin/zonemgr/tests/Makefile
                  src/bin/stats/Makefile
                  src/bin/stats/tests/Makefile
+                 src/bin/stats/tests/isc/Makefile
+                 src/bin/stats/tests/isc/cc/Makefile
+                 src/bin/stats/tests/isc/config/Makefile
+                 src/bin/stats/tests/isc/util/Makefile
+                 src/bin/stats/tests/isc/log/Makefile
+                 src/bin/stats/tests/testdata/Makefile
+                 src/bin/stats/tests/http/Makefile
                  src/bin/usermgr/Makefile
                  src/bin/tests/Makefile
                  src/lib/Makefile
