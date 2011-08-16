@@ -17,6 +17,8 @@
 
 #include <datasrc/client.h>
 
+#include <dns/name.h>
+
 namespace isc {
 namespace datasrc {
 
@@ -218,8 +220,12 @@ public:
          * \param zone_id The zone ID which was returned from
          *     DatabaseAccessor::getZone and which will be passed to further
          *     calls to the database.
+         * \param origin The name of the origin of this zone. It could query
+         *     it from database, but as the DatabaseClient just searched for
+         *     the zone using the name, it should have it.
          */
-        Finder(boost::shared_ptr<DatabaseAccessor> database, int zone_id);
+        Finder(boost::shared_ptr<DatabaseAccessor> database, int zone_id,
+               const isc::dns::Name& origin);
         // The following three methods are just implementations of inherited
         // ZoneFinder's pure virtual methods.
         virtual isc::dns::Name getOrigin() const;
@@ -290,6 +296,48 @@ public:
     private:
         boost::shared_ptr<DatabaseAccessor> database_;
         const int zone_id_;
+        const isc::dns::Name origin_;
+        /**
+         * \brief Searches database for an RRset
+         *
+         * This method scans RRs of single domain specified by name and finds
+         * RRset with given type or any of redirection RRsets that are
+         * requested.
+         *
+         * This function is used internally by find(), because this part is
+         * called multiple times with slightly different parameters.
+         *
+         * \param name Which domain name should be scanned.
+         * \param type The RRType which is requested. This can be NULL, in
+         *     which case the method will look for the redirections only.
+         * \param want_cname If this is true, CNAME redirection may be returned
+         *     instead of the RRset with given type. If there's CNAME and
+         *     something else or the CNAME has multiple RRs, it throws
+         *     DataSourceError.
+         * \param want_dname If this is true, DNAME redirection may be returned
+         *     instead. This is with type = NULL only and is not checked in
+         *     other circumstances. If the DNAME has multiple RRs, it throws
+         *     DataSourceError.
+         * \param want_ns This allows redirection by NS to be returned. If
+         *     any other data is met as well, DataSourceError is thrown.
+         * \note It may happen that some of the above error conditions are not
+         *     detected in some circumstances. The goal here is not to validate
+         *     the domain in DB, but to avoid bad behaviour resulting from
+         *     broken data.
+         * \return First part of the result tells if the domain contains any
+         *     RRs. This can be used to decide between NXDOMAIN and NXRRSET.
+         *     The second part is the RRset found (if any) with any relevant
+         *     signatures attached to it.
+         * \todo This interface doesn't look very elegant. Any better idea
+         *     would be nice.
+         */
+        std::pair<bool, isc::dns::RRsetPtr> getRRset(const isc::dns::Name&
+                                                     name,
+                                                     const isc::dns::RRType*
+                                                     type,
+                                                     bool want_cname,
+                                                     bool want_dname,
+                                                     bool want_ns);
     };
     /**
      * \brief Find a zone in the database
