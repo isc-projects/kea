@@ -31,10 +31,14 @@ public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS
 
-    //We can use the default destructor.
-    //virtual ~DHCID() {}
+    // subject to change
+    // DHCID& operator=(const DHCID& source);
+    // ~DHCID();
+
+    const std::vector<uint8_t>& getDigest() const;
+
 private:
-    std::vector<uint8_t> digest_;	// opaque data at least 3 octets long
+    std::vector<uint8_t> digest_;       // opaque data at least 3 octets long
 };
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
