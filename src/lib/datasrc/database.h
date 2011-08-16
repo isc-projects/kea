@@ -221,11 +221,12 @@ public:
         SIGTYPE_COLUMN = 2, ///< For RRSIG records, this contains the RRTYPE
                             ///< the RRSIG covers. In the current implementation,
                             ///< this field is ignored.
-        RDATA_COLUMN = 3    ///< Full text representation of the record's RDATA
+        RDATA_COLUMN = 3,   ///< Full text representation of the record's RDATA
+        DOMAIN_NAME = 4     ///< The domain name of this RR
     };
 
     /// The number of fields the columns array passed to getNextRecord should have
-    static const size_t COLUMN_COUNT = 4;
+    static const size_t COLUMN_COUNT = 5;
 
     /**
      * \brief Returns a string identifying this dabase backend
