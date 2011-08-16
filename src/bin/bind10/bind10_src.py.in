@@ -85,7 +85,7 @@ isc.util.process.rename(sys.argv[0])
 # number, and the overall BIND 10 version number (set in configure.ac).
 VERSION = "bind10 20110223 (BIND 10 @PACKAGE_VERSION@)"
 
-# This is for boot_time of Boss
+# This is for bind10.boottime of stats module
 _BASETIME = time.gmtime()
 
 class RestartSchedule:
@@ -318,22 +318,13 @@ class BoB:
                 answer = isc.config.ccsession.create_answer(0)
             elif command == "sendstats":
                 # send statistics data to the stats daemon immediately
-                statistics_data = {
-                    'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
-                    }
-                valid = self.ccs.get_module_spec().validate_statistics(
-                    True, statistics_data)
-                if valid:
-                    cmd = isc.config.ccsession.create_command(
-                    'set', { "owner": "Boss",
-                             "data": statistics_data })
-                    seq = self.cc_session.group_sendmsg(cmd, 'Stats')
-                    self.cc_session.group_recvmsg(True, seq)
-                    answer = isc.config.ccsession.create_answer(0)
-                else:
-                    logger.fatal(BIND10_INVALID_STATISTICS_DATA);
-                    answer = isc.config.ccsession.create_answer(
-                        1, "specified statistics data is invalid")
+                cmd = isc.config.ccsession.create_command(
+                    'set', { "stats_data": {
+                            'bind10.boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
+                            }})
+                seq = self.cc_session.group_sendmsg(cmd, 'Stats')
+                self.cc_session.group_recvmsg(True, seq)
+                answer = isc.config.ccsession.create_answer(0)
             elif command == "ping":
                 answer = isc.config.ccsession.create_answer(0, "pong")
             elif command == "show_processes":
