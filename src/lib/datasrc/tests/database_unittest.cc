@@ -272,6 +272,8 @@ private:
         addCurName("delegation.example.org.");
         addRecord("A", "3600", "", "192.0.2.1");
         addCurName("ns.delegation.example.org.");
+        addRecord("A", "3600", "", "192.0.2.1");
+        addCurName("deep.below.delegation.example.org.");
 
         addRecord("A", "3600", "", "192.0.2.1");
         addRecord("DNAME", "3600", "", "dname.example.com.");
@@ -775,6 +777,11 @@ TEST_F(DatabaseClientTest, findDelegation) {
                isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
                expected_sig_rdatas_,
                isc::dns::Name("delegation.example.org."));
+    doFindTest(finder, isc::dns::Name("deep.below.delegation.example.org."),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::NS(),
+               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
+               expected_sig_rdatas_,
+               isc::dns::Name("delegation.example.org."));
     EXPECT_FALSE(current_database_->searchRunning());
 
     // Even when we check directly at the delegation point, we should get
@@ -807,6 +814,11 @@ TEST_F(DatabaseClientTest, findDelegation) {
                expected_sig_rdatas_, isc::dns::Name("dname.example.org."));
     EXPECT_FALSE(current_database_->searchRunning());
     doFindTest(finder, isc::dns::Name("below.dname.example.org."),
+               isc::dns::RRType::AAAA(), isc::dns::RRType::DNAME(),
+               isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas_,
+               expected_sig_rdatas_, isc::dns::Name("dname.example.org."));
+    EXPECT_FALSE(current_database_->searchRunning());
+    doFindTest(finder, isc::dns::Name("really.deep.below.dname.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::DNAME(),
                isc::dns::RRTTL(3600), ZoneFinder::DNAME, expected_rdatas_,
                expected_sig_rdatas_, isc::dns::Name("dname.example.org."));
