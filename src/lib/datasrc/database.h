@@ -268,7 +268,8 @@ public:
          * \param name The name to find
          * \param type The RRType to find
          * \param target Unused at this moment
-         * \param options Unused at this moment
+         * \param options Options about how to search.
+         *     See ZoneFinder::FindOptions.
          */
         virtual FindResult find(const isc::dns::Name& name,
                                 const isc::dns::RRType& type,
