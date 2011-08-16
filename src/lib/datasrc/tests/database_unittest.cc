@@ -282,6 +282,11 @@ private:
     // so we can immediately start adding new records.
     void addCurName(const std::string& name) {
         ASSERT_EQ(0, records.count(name));
+        // Append the name to all of them
+        for (std::vector<std::vector<std::string> >::iterator
+             i(cur_name.begin()); i != cur_name.end(); ++ i) {
+            i->push_back(name);
+        }
         records[name] = cur_name;
         cur_name.clear();
     }

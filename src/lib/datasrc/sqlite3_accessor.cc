@@ -138,7 +138,7 @@ const char* const SCHEMA_LIST[] = {
 
 const char* const q_zone_str = "SELECT id FROM zones WHERE name=?1 AND rdclass = ?2";
 
-const char* const q_any_str = "SELECT rdtype, ttl, sigtype, rdata "
+const char* const q_any_str = "SELECT rdtype, ttl, sigtype, rdata, name "
     "FROM records WHERE zone_id=?1 AND name=?2";
 
 const char* const q_iterate_str = "SELECT name, rdtype, ttl, rdata FROM records "
