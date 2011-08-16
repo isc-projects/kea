@@ -91,6 +91,7 @@ COMMAND_CONFIG_UPDATE = "config_update"
 COMMAND_MODULE_SPECIFICATION_UPDATE = "module_specification_update"
 
 COMMAND_GET_COMMANDS_SPEC = "get_commands_spec"
+COMMAND_GET_STATISTICS_SPEC = "get_statistics_spec"
 COMMAND_GET_CONFIG = "get_config"
 COMMAND_SET_CONFIG = "set_config"
 COMMAND_GET_MODULE_SPEC = "get_module_spec"
