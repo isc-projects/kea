@@ -314,8 +314,14 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                 // (it can be only NS or DNAME here)
                 result_rrset = found.second;
                 if (result_rrset->getType() == isc::dns::RRType::NS()) {
+                    LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                              DATASRC_DATABASE_FOUND_DELEGATION).
+                        arg(superdomain);
                     result_status = DELEGATION;
                 } else {
+                    LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                              DATASRC_DATABASE_FOUND_DNAME).
+                        arg(superdomain);
                     result_status = DNAME;
                 }
                 // Don't search more
@@ -331,7 +337,11 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
             records_found = found.first;
             result_rrset = found.second;
             if (result_rrset && name != origin &&
+
                 result_rrset->getType() == isc::dns::RRType::NS()) {
+                LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                          DATASRC_DATABASE_FOUND_DELEGATION_EXACT).
+                    arg(name);
                 result_status = DELEGATION;
             } else if (result_rrset && type != isc::dns::RRType::CNAME() &&
                        result_rrset->getType() == isc::dns::RRType::CNAME()) {
