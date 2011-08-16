@@ -43,15 +43,15 @@ DHCID::DHCID(const string& dhcid_str) {
     // < 2 octets >    Identifier type code
     // < 1 octet >     Digest type code
     if (digest_.size() < 3) {
-	isc_throw(InvalidRdataLength, "DHCID length " << digest_.size() <<
-		  " too short, need at least 3 bytes");
+        isc_throw(InvalidRdataLength, "DHCID length " << digest_.size() <<
+                  " too short, need at least 3 bytes");
     }
 }
 
 DHCID::DHCID(InputBuffer& buffer, size_t rdata_len) {
     if (rdata_len < 3) {
-	isc_throw(InvalidRdataLength, "DHCID length " << rdata_len <<
-		  " too short, need at least 3 bytes");
+        isc_throw(InvalidRdataLength, "DHCID length " << rdata_len <<
+                  " too short, need at least 3 bytes");
     }
 
     digest_.resize(rdata_len);
@@ -85,10 +85,16 @@ DHCID::compare(const Rdata& other) const {
     size_t cmplen = min(this_len, other_len);
     int cmp = memcmp(&digest_[0], &other_dhcid.digest_[0], cmplen);
     if (cmp != 0) {
-	return (cmp);
+        return (cmp);
     } else {
-	return ((this_len == other_len) ? 0 : (this_len < other_len) ? -1 : 1);
+        return ((this_len == other_len) ? 0 : (this_len < other_len) ? -1 : 1);
     }
 }
+
+const std::vector<uint8_t>&
+DHCID::getDigest() const {
+    return (digest_);
+}
+
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
