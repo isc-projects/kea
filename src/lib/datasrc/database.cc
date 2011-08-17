@@ -338,7 +338,8 @@ DatabaseClient::Updater::Updater(shared_ptr<DatabaseAccessor> accessor,
     db_name_(accessor->getDBName()), zone_name_(zone_name),
     zone_class_(zone_class),
     finder_(new Finder(accessor_, zone_id_)),
-    add_columns_(DatabaseAccessor::ADD_COLUMN_COUNT)
+    add_columns_(DatabaseAccessor::ADD_COLUMN_COUNT),
+    del_params_(DatabaseAccessor::DEL_PARAM_COUNT)
 {
     logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_CREATED)
         .arg(zone_name_).arg(zone_class_).arg(db_name_);
@@ -379,12 +380,12 @@ DatabaseClient::Updater::addRRset(const RRset& rrset) {
                   << rrset.getType());
     }
 
-    add_columns_.clear();
-    add_columns_[DatabaseAccessor::ADD_NAME] = rrset.getName().toText();
-    add_columns_[DatabaseAccessor::ADD_REV_NAME] =
+    add_columns_.assign(DatabaseAccessor::ADD_COLUMN_COUNT, "");
+    add_columns_.at(DatabaseAccessor::ADD_NAME) = rrset.getName().toText();
+    add_columns_.at(DatabaseAccessor::ADD_REV_NAME) =
         rrset.getName().reverse().toText();
-    add_columns_[DatabaseAccessor::ADD_TTL] = rrset.getTTL().toText();
-    add_columns_[DatabaseAccessor::ADD_TYPE] = rrset.getType().toText();
+    add_columns_.at(DatabaseAccessor::ADD_TTL) = rrset.getTTL().toText();
+    add_columns_.at(DatabaseAccessor::ADD_TYPE) = rrset.getType().toText();
     for (; !it->isLast(); it->next()) {
         if (rrset.getType() == RRType::RRSIG()) {
             // XXX: the current interface (based on the current sqlite3
@@ -394,11 +395,41 @@ DatabaseClient::Updater::addRRset(const RRset& rrset) {
             // the interface, but until then we have to conform to the schema.
             const generic::RRSIG& rrsig_rdata =
                 dynamic_cast<const generic::RRSIG&>(it->getCurrent());
-            add_columns_[DatabaseAccessor::ADD_SIGTYPE] =
+            add_columns_.at(DatabaseAccessor::ADD_SIGTYPE) =
                 rrsig_rdata.typeCovered().toText();
         }
-        add_columns_[DatabaseAccessor::ADD_RDATA] = it->getCurrent().toText();
+        add_columns_.at(DatabaseAccessor::ADD_RDATA) =
+            it->getCurrent().toText();
         accessor_->addRecordToZone(add_columns_);
+    }
+}
+
+void
+DatabaseClient::Updater::deleteRRset(const RRset& rrset) {
+    if (committed_) {
+        isc_throw(DataSourceError, "Delete attempt after commit on zone: "
+                  << zone_name_ << "/" << zone_class_);
+    }
+    if (rrset.getClass() != zone_class_) {
+        isc_throw(DataSourceError, "An RRset of a different class is being "
+                  << "deleted from " << zone_name_ << "/" << zone_class_
+                  << ": " << rrset.toText());
+    }
+
+    RdataIteratorPtr it = rrset.getRdataIterator();
+    if (it->isLast()) {
+        isc_throw(DataSourceError, "An empty RRset is being deleted for "
+                  << rrset.getName() << "/" << zone_class_ << "/"
+                  << rrset.getType());
+    }
+
+    del_params_.assign(DatabaseAccessor::DEL_PARAM_COUNT, "");
+    del_params_.at(DatabaseAccessor::DEL_NAME) = rrset.getName().toText();
+    del_params_.at(DatabaseAccessor::DEL_TYPE) = rrset.getType().toText();
+    for (; !it->isLast(); it->next()) {
+        del_params_.at(DatabaseAccessor::DEL_RDATA) =
+            it->getCurrent().toText();
+        accessor_->deleteRecordInZone(del_params_);
     }
 }
 

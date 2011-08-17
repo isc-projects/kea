@@ -239,6 +239,11 @@ public:
 
     /// TBD
     ///
+    /// how to handle TTL?
+    virtual void deleteRRset(const isc::dns::RRset& rrset) = 0;
+
+    /// TBD
+    ///
     /// This operation can only be performed at most once.  A duplicate call
     /// must result in a DatasourceError exception.
     virtual void commit() = 0;

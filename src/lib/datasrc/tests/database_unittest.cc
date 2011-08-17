@@ -28,7 +28,10 @@
 
 #include <testutils/dnsmessage_test.h>
 
+#include <algorithm>
 #include <map>
+#include <vector>
+#include <string>
 
 using namespace isc::datasrc;
 using namespace std;
@@ -158,7 +161,33 @@ public:
         // remember this one so that test cases can check it.
         columns_lastadded = columns;
     }
-    virtual void deleteRecordInZone(const vector<string>&) {}
+
+    // Helper predicate class used in deleteRecordInZone().
+    struct deleteMatch {
+        deleteMatch(const string& type, const string& rdata) :
+            type_(type), rdata_(rdata)
+        {}
+        bool operator()(const vector<string>& row) const {
+            return (row[0] == type_ && row[3] == rdata_);
+        }
+        const string& type_;
+        const string& rdata_;
+    };
+
+    virtual void deleteRecordInZone(const vector<string>& params) {
+        vector<vector<string> > records =
+            update_records[params[DatabaseAccessor::DEL_NAME]];
+        records.erase(remove_if(records.begin(), records.end(),
+                                deleteMatch(
+                                    params[DatabaseAccessor::DEL_TYPE],
+                                    params[DatabaseAccessor::DEL_RDATA])),
+                      records.end());
+        if (records.empty()) {
+            update_records.erase(params[DatabaseAccessor::DEL_NAME]);
+        } else {
+            update_records[params[DatabaseAccessor::DEL_NAME]] = records;
+        }
+    }
 
     bool searchRunning() const {
         return (search_running_);
@@ -356,7 +385,7 @@ protected:
 
         rrset.reset(new RRset(qname, RRClass::IN(), qtype, rrttl));
         // Adding an IN/A RDATA.  Intentionally using different data
-        // than the initial data configured MockAccessor::fillData().
+        // than the initial data configured in MockAccessor::fillData().
         rrset->addRdata(rdata::createRdata(rrset->getType(), rrset->getClass(),
                                            "192.0.2.2"));
 
@@ -931,6 +960,24 @@ TEST_F(DatabaseClientTest, addRRsetToCurrentZone) {
     }
 }
 
+TEST_F(DatabaseClientTest, addMultipleRRs) {
+    // Similar to the previous case, but the added RRset contains multiple
+    // RRs.
+    updater = client_->startUpdateZone(Name("example.org"), false);
+    rrset->addRdata(rdata::createRdata(rrset->getType(), rrset->getClass(),
+                                       "192.0.2.3"));
+    updater->addRRset(*rrset);
+    expected_rdatas.clear();
+    expected_rdatas.push_back("192.0.2.1");
+    expected_rdatas.push_back("192.0.2.2");
+    expected_rdatas.push_back("192.0.2.3");
+    {
+        SCOPED_TRACE("add multiple RRs");
+        doFindTest(updater->getFinder(), qname, qtype, qtype, rrttl,
+                   ZoneFinder::SUCCESS, expected_rdatas, empty_rdatas);
+    }
+}
+
 TEST_F(DatabaseClientTest, addRRsetOfLargerTTL) {
     // Similar to the previous one, but the TTL of the added RRset is larger
     // than that of the existing record.  The finder should use the smaller
@@ -1025,7 +1072,169 @@ TEST_F(DatabaseClientTest, addAfterCommit) {
    EXPECT_THROW(updater->addRRset(*rrset), DataSourceError);
 }
 
-// delete rrset without rdata; not necessarily harmful, but treat it as an error.
-// delete after commit.  should error
+TEST_F(DatabaseClientTest, deleteRRset) {
+    rrset.reset(new RRset(qname, RRClass::IN(), qtype, rrttl));
+    rrset->addRdata(rdata::createRdata(rrset->getType(), rrset->getClass(),
+                                       "192.0.2.1"));
 
+    // Delete one RR from an RRset
+    updater = client_->startUpdateZone(Name("example.org"), false);
+    updater->deleteRRset(*rrset);
+
+    // Delete the only RR of a name
+    rrset.reset(new RRset(Name("cname.example.org"), RRClass::IN(),
+                          RRType::CNAME(), rrttl));
+    rrset->addRdata(rdata::createRdata(rrset->getType(), rrset->getClass(),
+                                       "www.example.org"));
+    updater->deleteRRset(*rrset);
+
+    // The updater finder should immediately see the deleted results.
+    {
+        SCOPED_TRACE("delete RRset");
+        doFindTest(updater->getFinder(), qname, qtype, qtype, rrttl,
+                   ZoneFinder::NXRRSET, empty_rdatas, empty_rdatas);
+        doFindTest(updater->getFinder(), Name("cname.example.org"),
+                   qtype, qtype, rrttl, ZoneFinder::NXDOMAIN,
+                   empty_rdatas, empty_rdatas);
+    }
+
+    // before committing the change, the original finder should see the
+    // original record.
+    {
+        SCOPED_TRACE("delete RRset before commit");
+        expected_rdatas.push_back("192.0.2.1");
+        doFindTest(*finder, qname, qtype, qtype, rrttl,
+                   ZoneFinder::SUCCESS, expected_rdatas, empty_rdatas);
+
+        expected_rdatas.clear();
+        expected_rdatas.push_back("www.example.org.");
+        doFindTest(*finder, Name("cname.example.org"), qtype,
+                   RRType::CNAME(), rrttl,
+                   ZoneFinder::CNAME, expected_rdatas, empty_rdatas);
+    }
+
+    // once committed, the record should be removed from the original finder's
+    // view, too.
+    updater->commit();
+    {
+        SCOPED_TRACE("delete RRset after commit");
+        doFindTest(*finder, qname, qtype, qtype, rrttl,
+                   ZoneFinder::NXRRSET, empty_rdatas, empty_rdatas);
+        doFindTest(*finder, Name("cname.example.org"),
+                   qtype, qtype, rrttl, ZoneFinder::NXDOMAIN,
+                   empty_rdatas, empty_rdatas);
+    }
+}
+
+TEST_F(DatabaseClientTest, deleteRRsetToNXDOMAIN) {
+    // similar to the previous case, but it removes the only record of the
+    // given name.  a subsequent find() should result in NXDOMAIN.
+    rrset.reset(new RRset(Name("cname.example.org"), RRClass::IN(),
+                          RRType::CNAME(), rrttl));
+    rrset->addRdata(rdata::createRdata(rrset->getType(), rrset->getClass(),
+                                       "www.example.org"));
+
+    updater = client_->startUpdateZone(Name("example.org"), false);
+    updater->deleteRRset(*rrset);
+    {
+        SCOPED_TRACE("delete RRset to NXDOMAIN");
+        doFindTest(updater->getFinder(), Name("cname.example.org"), qtype,
+                   qtype, rrttl, ZoneFinder::NXDOMAIN, empty_rdatas,
+                   empty_rdatas);
+    }
+}
+
+TEST_F(DatabaseClientTest, deleteMultipleRRs) {
+    rrset.reset(new RRset(qname, RRClass::IN(), RRType::AAAA(), rrttl));
+    rrset->addRdata(rdata::createRdata(rrset->getType(), rrset->getClass(),
+                                       "2001:db8::1"));
+    rrset->addRdata(rdata::createRdata(rrset->getType(), rrset->getClass(),
+                                       "2001:db8::2"));
+
+    updater = client_->startUpdateZone(Name("example.org"), false);
+    updater->deleteRRset(*rrset);
+
+    {
+        SCOPED_TRACE("delete multiple RRs");
+        doFindTest(updater->getFinder(), qname, RRType::AAAA(), qtype, rrttl,
+                   ZoneFinder::NXRRSET, empty_rdatas, empty_rdatas);
+    }
+}
+
+TEST_F(DatabaseClientTest, partialDelete) {
+    rrset.reset(new RRset(qname, RRClass::IN(), RRType::AAAA(), rrttl));
+    rrset->addRdata(rdata::createRdata(rrset->getType(), rrset->getClass(),
+                                       "2001:db8::1"));
+    // This does not exist in the test data source:
+    rrset->addRdata(rdata::createRdata(rrset->getType(), rrset->getClass(),
+                                       "2001:db8::3"));
+
+    // deleteRRset should succeed "silently", and subsequent find() should
+    // find the remaining RR.
+    updater = client_->startUpdateZone(Name("example.org"), false);
+    updater->deleteRRset(*rrset);
+    {
+        SCOPED_TRACE("partial delete");
+        expected_rdatas.push_back("2001:db8::2");
+        doFindTest(updater->getFinder(), qname, RRType::AAAA(),
+                   RRType::AAAA(), rrttl, ZoneFinder::SUCCESS,
+                   expected_rdatas, empty_rdatas);
+    }
+}
+
+TEST_F(DatabaseClientTest, deleteNoMatch) {
+    // similar to the previous test, but there's not even a match in the
+    // specified RRset.  Essentially there's no difference in the result.
+    updater = client_->startUpdateZone(Name("example.org"), false);
+    updater->deleteRRset(*rrset);
+    {
+        SCOPED_TRACE("delete no match");
+        expected_rdatas.push_back("192.0.2.1");
+        doFindTest(updater->getFinder(), qname, qtype, qtype, rrttl,
+                   ZoneFinder::SUCCESS, expected_rdatas, empty_rdatas);
+    }
+}
+
+TEST_F(DatabaseClientTest, deleteWithDifferentTTL) {
+    // Our delete interface simply ignores TTL (may change in a future version)
+    rrset.reset(new RRset(qname, RRClass::IN(), qtype, RRTTL(1800)));
+    rrset->addRdata(rdata::createRdata(rrset->getType(), rrset->getClass(),
+                                       "192.0.2.1"));
+    updater = client_->startUpdateZone(Name("example.org"), false);
+    updater->deleteRRset(*rrset);
+    {
+        SCOPED_TRACE("delete RRset with a different TTL");
+        doFindTest(updater->getFinder(), qname, qtype, qtype, rrttl,
+                   ZoneFinder::NXRRSET, empty_rdatas, empty_rdatas);
+    }
+}
+
+TEST_F(DatabaseClientTest, deleteDeviantRR) {
+    updater = client_->startUpdateZone(Name("example.org"), false);
+
+    // RR class mismatch.  This should be detected and rejected.
+    rrset.reset(new RRset(qname, RRClass::CH(), RRType::TXT(), rrttl));
+    rrset->addRdata(rdata::createRdata(rrset->getType(), rrset->getClass(),
+                                       "test text"));
+    EXPECT_THROW(updater->deleteRRset(*rrset), DataSourceError);
+
+    // Out-of-zone owner name.  At a higher level this should be rejected,
+    // but it doesn't happen in this interface.
+    rrset.reset(new RRset(Name("example.com"), RRClass::IN(), qtype, rrttl));
+    rrset->addRdata(rdata::createRdata(rrset->getType(), rrset->getClass(),
+                                       "192.0.2.100"));
+    EXPECT_NO_THROW(updater->deleteRRset(*rrset));
+}
+
+TEST_F(DatabaseClientTest, deleteAfterCommit) {
+   updater = client_->startUpdateZone(Name("example.org"), false);
+   updater->commit();
+   EXPECT_THROW(updater->deleteRRset(*rrset), DataSourceError);
+}
+
+TEST_F(DatabaseClientTest, deleteEmptyRRset) {
+    updater = client_->startUpdateZone(Name("example.org"), false);
+    rrset.reset(new RRset(qname, RRClass::IN(), qtype, rrttl));
+    EXPECT_THROW(updater->deleteRRset(*rrset), DataSourceError);
+}
 }
