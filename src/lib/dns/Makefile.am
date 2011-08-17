@@ -51,8 +51,13 @@ EXTRA_DIST += rdata/generic/soa_6.cc
 EXTRA_DIST += rdata/generic/soa_6.h
 EXTRA_DIST += rdata/generic/txt_16.cc
 EXTRA_DIST += rdata/generic/txt_16.h
+<<<<<<< HEAD
 EXTRA_DIST += rdata/generic/minfo_14.cc
 EXTRA_DIST += rdata/generic/minfo_14.h
+=======
+EXTRA_DIST += rdata/generic/afsdb_18.cc
+EXTRA_DIST += rdata/generic/afsdb_18.h
+>>>>>>> master
 EXTRA_DIST += rdata/hs_4/a_1.cc
 EXTRA_DIST += rdata/hs_4/a_1.h
 EXTRA_DIST += rdata/in_1/a_1.cc
