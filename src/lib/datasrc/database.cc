@@ -380,6 +380,9 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
             // But check if something lives below this
             // domain and if so, pretend something is here as well.
             if (hasSubdomains(name.toText())) {
+                LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                          DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL).
+                    arg(database_->getDBName()).arg(name);
                 records_found = true;
             } else {
                 // It's not empty non-terminal. So check for wildcards.
@@ -407,6 +410,10 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                             records_found = true;
                             // We pretend to switch to non-glue_ok mode
                             glue_ok = false;
+                            LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                                      DATASRC_DATABASE_WILDCARD_CANCEL_NS).
+                                arg(database_->getDBName()).arg(wildcard).
+                                arg(first_ns->getName());
                         } else if (!hasSubdomains(name.split(i - 1).toText()))
                         {
                             // Nothing we added as part of the * can exist
@@ -415,11 +422,24 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                             // that case, we need to cancel the match.
                             records_found = true;
                             result_rrset = found.second;
+                            LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                                      DATASRC_DATABASE_WILDCARD).
+                                arg(database_->getDBName()).arg(wildcard).
+                                arg(name);
+                        } else {
+                            LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                                      DATASRC_DATABASE_WILDCARD_CANCEL_SUB).
+                                arg(database_->getDBName()).arg(wildcard).
+                                arg(name).arg(superdomain);
                         }
                         break;
                     } else if (hasSubdomains(wildcard.toText())) {
                         // Empty non-terminal asterisk
                         records_found = true;
+                        LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                                  DATASRC_DATABASE_WILDCARD_EMPTY).
+                            arg(database_->getDBName()).arg(wildcard).
+                            arg(name);
                         break;
                     }
                 }
