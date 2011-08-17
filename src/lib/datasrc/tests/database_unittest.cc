@@ -554,8 +554,9 @@ TEST_F(DatabaseClientTest, iterator) {
 // This has inconsistent TTL in the set (the rest, like nonsense in
 // the data is handled in rdata itself).
 TEST_F(DatabaseClientTest, badIterator) {
+    // It should not throw, but get the lowest one of them
     ZoneIteratorPtr it(client_->getIterator(Name("bad.example.org")));
-    EXPECT_THROW(it->getNextRRset(), DataSourceError);
+    EXPECT_EQ(it->getNextRRset()->getTTL(), isc::dns::RRTTL(300));
 }
 
 // checks if the given rrset matches the

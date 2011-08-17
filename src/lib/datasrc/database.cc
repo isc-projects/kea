@@ -352,8 +352,12 @@ public:
         RRsetPtr rrset(new RRset(name, class_, rtype, RRTTL(ttl)));
         while (data_ready_ && name_ == name_str && rtype_str == rtype_) {
             if (ttl_ != ttl) {
-                isc_throw(DataSourceError, "TTLs in rrset " + name_str + "/" +
-                          rtype_str + " differ");
+                LOG_WARN(logger, DATASRC_DATABASE_ITERATE_TTL_DIFF).
+                    arg(name_).arg(ttl).arg(ttl_);
+                if (ttl < ttl_) {
+                    ttl_ = ttl;
+                    rrset->setTTL(RRTTL(ttl));
+                }
             }
             rrset->addRdata(rdata::createRdata(rtype, class_, rdata_));
             getData();
