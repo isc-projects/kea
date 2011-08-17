@@ -1,5 +1,5 @@
 #
-# A simplest form of MINFO: all default parameters
+# A simplest form of MINFO: custom rmailbox and default emailbox
 #
 [custom]
 sections: minfo
