@@ -37,7 +37,7 @@
 	returns is str or byte.
 	(Trac #1021, git 486bf91e0ecc5fbecfe637e1e75ebe373d42509b)
 
-273.    [func]		vorner
+273.	[func]		vorner
 	It is possible to specify ACL for the xfrout module. It is in the ACL
 	configuration key and has the usual ACL syntax. It currently supports
 	only the source address. Default ACL accepts everything.
