@@ -25,6 +25,7 @@
 #include <datasrc/database.h>
 #include <datasrc/zone.h>
 #include <datasrc/data_source.h>
+#include <datasrc/sqlite3_accessor.h>
 
 #include <testutils/dnsmessage_test.h>
 
@@ -40,8 +41,90 @@ using namespace isc::dns;
 
 namespace {
 
+// Imaginary zone IDs used in the mock accessor below.
 const int READONLY_ZONE_ID = 42;
 const int WRITABLE_ZONE_ID = 4200;
+
+// Commonly used test data
+const char* const TEST_RECORDS[][5] = {
+    // some plain data
+    {"www.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"www.example.org.", "AAAA", "3600", "", "2001:db8::1"},
+    {"www.example.org.", "AAAA", "3600", "", "2001:db8::2"},
+
+    {"www2.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"www2.example.org.","AAAA", "3600", "", "2001:db8::1"},
+    {"www2.example.org.", "A", "3600", "", "192.0.2.2"},
+
+    {"cname.example.org.", "CNAME", "3600", "", "www.example.org."},
+
+    // some DNSSEC-'signed' data
+    {"signed1.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"signed1.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"signed1.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE"},
+    {"signed1.example.org.", "AAAA", "3600", "", "2001:db8::1"},
+    {"signed1.example.org.", "AAAA", "3600", "", "2001:db8::2"},
+    {"signed1.example.org.", "RRSIG", "3600", "", "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    {"signedcname1.example.org.", "CNAME", "3600", "", "www.example.org."},
+    {"signedcname1.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    // special case might fail; sig is for cname, which isn't there (should be ignored)
+    // (ignoring of 'normal' other type is done above by www.)
+    {"acnamesig1.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"acnamesig1.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"acnamesig1.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    // let's pretend we have a database that is not careful
+    // about the order in which it returns data
+    {"signed2.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"signed2.example.org.", "AAAA", "3600", "", "2001:db8::2"},
+    {"signed2.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE"},
+    {"signed2.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"signed2.example.org.", "RRSIG", "3600", "", "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"signed2.example.org.", "AAAA", "3600", "", "2001:db8::1"},
+
+    {"signedcname2.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"signedcname2.example.org.", "CNAME", "3600", "", "www.example.org."},
+
+    {"acnamesig2.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"acnamesig2.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"acnamesig2.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    {"acnamesig3.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"acnamesig3.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"acnamesig3.example.org.", "A", "3600", "", "192.0.2.1"},
+
+    {"ttldiff1.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"ttldiff1.example.org.", "A", "360", "", "192.0.2.2"},
+
+    {"ttldiff2.example.org.", "A", "360", "", "192.0.2.1"},
+    {"ttldiff2.example.org.", "A", "3600", "", "192.0.2.2"},
+
+    // also add some intentionally bad data
+    {"badcname1.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"badcname1.example.org.", "CNAME", "3600", "", "www.example.org."},
+
+    {"badcname2.example.org.", "CNAME", "3600", "", "www.example.org."},
+    {"badcname2.example.org.", "A", "3600", "", "192.0.2.1"},
+
+    {"badcname3.example.org.", "CNAME", "3600", "", "www.example.org."},
+    {"badcname3.example.org.", "CNAME", "3600", "", "www.example2.org."},
+
+    {"badrdata.example.org.", "A", "3600", "", "bad"},
+
+    {"badtype.example.org.", "BAD_TYPE", "3600", "", "192.0.2.1"},
+
+    {"badttl.example.org.", "A", "badttl", "", "192.0.2.1"},
+
+    {"badsig.example.org.", "A", "badttl", "", "192.0.2.1"},
+    {"badsig.example.org.", "RRSIG", "3600", "", "A 5 3 3600 somebaddata 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    {"badsigtype.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"badsigtype.example.org.", "RRSIG", "3600", "TXT", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    {NULL, NULL, NULL, NULL, NULL},
+};
 
 /*
  * A virtual database database that pretends it contains single zone --
@@ -277,97 +360,40 @@ private:
     // might not come in 'normal' order)
     // It shall immediately fail if you try to add the same name twice.
     void fillData() {
-        // some plain data
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("AAAA", "3600", "", "2001:db8::1");
-        addRecord("AAAA", "3600", "", "2001:db8::2");
-        addCurName("www.example.org.");
+        const char* prev_name = NULL;
+        for (int i = 0; TEST_RECORDS[i][0] != NULL; ++i) {
+            if (prev_name != NULL &&
+                strcmp(prev_name, TEST_RECORDS[i][0]) != 0) {
+                addCurName(prev_name);
+            }
+            prev_name = TEST_RECORDS[i][0];
+            addRecord(TEST_RECORDS[i][1], TEST_RECORDS[i][2],
+                      TEST_RECORDS[i][3], TEST_RECORDS[i][4]);
+        }
+        addCurName(prev_name);
+    }
+};
 
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("AAAA", "3600", "", "2001:db8::1");
-        addRecord("A", "3600", "", "192.0.2.2");
-        addCurName("www2.example.org.");
+class TestSQLite3Accessor : public SQLite3Accessor {
+public:
+    TestSQLite3Accessor() : SQLite3Accessor(
+        TEST_DATA_BUILDDIR "/rwtest.sqlite3.copied",
+        RRClass::IN())
+    {
+        startUpdateZone("example.org.", true);
+        vector<string> columns;
+        for (int i = 0; TEST_RECORDS[i][0] != NULL; ++i) {
+            columns.assign(DatabaseAccessor::ADD_COLUMN_COUNT, "");
+            columns[ADD_NAME] = TEST_RECORDS[i][0];
+            columns[ADD_REV_NAME] = Name(columns[ADD_NAME]).reverse().toText();
+            columns[ADD_TYPE] = TEST_RECORDS[i][1];
+            columns[ADD_TTL] = TEST_RECORDS[i][2];
+            columns[ADD_SIGTYPE] = TEST_RECORDS[i][3];
+            columns[ADD_RDATA] = TEST_RECORDS[i][4];
 
-        addRecord("CNAME", "3600", "", "www.example.org.");
-        addCurName("cname.example.org.");
-
-        // some DNSSEC-'signed' data
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE");
-        addRecord("AAAA", "3600", "", "2001:db8::1");
-        addRecord("AAAA", "3600", "", "2001:db8::2");
-        addRecord("RRSIG", "3600", "", "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addCurName("signed1.example.org.");
-        addRecord("CNAME", "3600", "", "www.example.org.");
-        addRecord("RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addCurName("signedcname1.example.org.");
-        // special case might fail; sig is for cname, which isn't there (should be ignored)
-        // (ignoring of 'normal' other type is done above by www.)
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addRecord("RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addCurName("acnamesig1.example.org.");
-
-        // let's pretend we have a database that is not careful
-        // about the order in which it returns data
-        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addRecord("AAAA", "3600", "", "2001:db8::2");
-        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE");
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("RRSIG", "3600", "", "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addRecord("AAAA", "3600", "", "2001:db8::1");
-        addCurName("signed2.example.org.");
-        addRecord("RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addRecord("CNAME", "3600", "", "www.example.org.");
-        addCurName("signedcname2.example.org.");
-
-        addRecord("RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addCurName("acnamesig2.example.org.");
-
-        addRecord("RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addRecord("RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addRecord("A", "3600", "", "192.0.2.1");
-        addCurName("acnamesig3.example.org.");
-
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("A", "360", "", "192.0.2.2");
-        addCurName("ttldiff1.example.org.");
-        addRecord("A", "360", "", "192.0.2.1");
-        addRecord("A", "3600", "", "192.0.2.2");
-        addCurName("ttldiff2.example.org.");
-
-        // also add some intentionally bad data
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("CNAME", "3600", "", "www.example.org.");
-        addCurName("badcname1.example.org.");
-
-        addRecord("CNAME", "3600", "", "www.example.org.");
-        addRecord("A", "3600", "", "192.0.2.1");
-        addCurName("badcname2.example.org.");
-
-        addRecord("CNAME", "3600", "", "www.example.org.");
-        addRecord("CNAME", "3600", "", "www.example2.org.");
-        addCurName("badcname3.example.org.");
-
-        addRecord("A", "3600", "", "bad");
-        addCurName("badrdata.example.org.");
-
-        addRecord("BAD_TYPE", "3600", "", "192.0.2.1");
-        addCurName("badtype.example.org.");
-
-        addRecord("A", "badttl", "", "192.0.2.1");
-        addCurName("badttl.example.org.");
-
-        addRecord("A", "badttl", "", "192.0.2.1");
-        addRecord("RRSIG", "3600", "", "A 5 3 3600 somebaddata 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addCurName("badsig.example.org.");
-
-        addRecord("A", "3600", "", "192.0.2.1");
-        addRecord("RRSIG", "3600", "TXT", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
-        addCurName("badsigtype.example.org.");
+            addRecordToZone(columns);
+        }
+        commitUpdateZone();
     }
 };
 
@@ -389,7 +415,7 @@ protected:
 
         rrset.reset(new RRset(qname, qclass, qtype, rrttl));
         // Adding an IN/A RDATA.  Intentionally using different data
-        // than the initial data configured in MockAccessor::fillData().
+        // than the initial data configured in TEST_RECORDS.
         rrset->addRdata(rdata::createRdata(rrset->getType(), rrset->getClass(),
                                            "192.0.2.2"));
 
@@ -407,33 +433,34 @@ protected:
      */
     void createClient() {
         current_accessor_ = new ACCESSOR_TYPE();
+        is_mock_ = (dynamic_cast<MockAccessor*>(current_accessor_) != NULL);
         client_.reset(new DatabaseClient(qclass,
                                          shared_ptr<DatabaseAccessor>(
                                              current_accessor_)));
     }
 
     bool searchRunning(bool expected = false) const {
-        try {
+        if (is_mock_) {
             const MockAccessor* mock_accessor =
                 dynamic_cast<const MockAccessor*>(current_accessor_);
             return (mock_accessor->searchRunning());
-        } catch (const bad_cast&) {
+        } else {
             return (expected);
         }
     }
 
     bool isRollbacked(bool expected = false) const {
-        try {
+        if (is_mock_) {
             const MockAccessor* mock_accessor =
                 dynamic_cast<const MockAccessor*>(current_accessor_);
             return (mock_accessor->isRollbacked());
-        } catch (const bad_cast&) {
+        } else {
             return (expected);
         }
     }
 
     void checkLastAdded(const char* const expected[]) const {
-        try {
+        if (is_mock_) {
             const MockAccessor* mock_accessor =
                 dynamic_cast<const MockAccessor*>(current_accessor_);
             int i = 0;
@@ -441,13 +468,14 @@ protected:
                           mock_accessor->getLastAdded()) {
                 EXPECT_EQ(expected[i++], column);
             }
-        } catch (const bad_cast&) {
-            ;
         }
     }
 
+    // Some tests only work for MockAccessor.  We remember whether our accessor
+    // is of that type.
+    bool is_mock_;
+
     // Will be deleted by client_, just keep the current value for comparison.
-    //MockAccessor* current_accessor_;
     DatabaseAccessor* current_accessor_;
     shared_ptr<DatabaseClient> client_;
     const std::string database_name_;
@@ -478,12 +506,14 @@ protected:
             dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
         ASSERT_NE(shared_ptr<DatabaseClient::Finder>(), finder) <<
             "Wrong type of finder";
-        EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
+        if (is_mock_) {
+            EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
+        }
         EXPECT_EQ(current_accessor_, &finder->getAccessor());
     }
 };
 
-typedef ::testing::Types<MockAccessor> TestAccessorTypes;
+typedef ::testing::Types<MockAccessor, TestSQLite3Accessor> TestAccessorTypes;
 TYPED_TEST_CASE(DatabaseClientTest, TestAccessorTypes);
 
 TYPED_TEST(DatabaseClientTest, zoneNotFound) {
@@ -572,7 +602,9 @@ doFindTest(ZoneFinder& finder,
 }
 
 TYPED_TEST(DatabaseClientTest, find) {
-    EXPECT_EQ(READONLY_ZONE_ID, this->finder->zone_id());
+    if (this->is_mock_) {
+        EXPECT_EQ(READONLY_ZONE_ID, this->finder->zone_id());
+    }
     EXPECT_FALSE(this->searchRunning());
 
     this->expected_rdatas.clear();
@@ -800,38 +832,41 @@ TYPED_TEST(DatabaseClientTest, find) {
                  DataSourceError);
     EXPECT_FALSE(this->searchRunning());
 
-    // Trigger the hardcoded exceptions and see if find() has cleaned up
-    EXPECT_THROW(this->finder->find(Name("dsexception.in.search."),
-                                    this->qtype, NULL,
-                                    ZoneFinder::FIND_DEFAULT),
-                 DataSourceError);
-    EXPECT_FALSE(this->searchRunning());
-    EXPECT_THROW(this->finder->find(Name("iscexception.in.search."),
-                                    this->qtype, NULL,
-                                    ZoneFinder::FIND_DEFAULT),
-                 DataSourceError);
-    EXPECT_FALSE(this->searchRunning());
-    EXPECT_THROW(this->finder->find(
-                     Name("basicexception.in.search."),
-                     this->qtype, NULL, ZoneFinder::FIND_DEFAULT),
-                 std::exception);
-    EXPECT_FALSE(this->searchRunning());
+    // Trigger the hardcoded exceptions and see if find() has cleaned up.
+    // This can only work for a mock accessor.
+    if (this->is_mock_) {
+        EXPECT_THROW(this->finder->find(Name("dsexception.in.search."),
+                                        this->qtype, NULL,
+                                        ZoneFinder::FIND_DEFAULT),
+                     DataSourceError);
+        EXPECT_FALSE(this->searchRunning());
+        EXPECT_THROW(this->finder->find(Name("iscexception.in.search."),
+                                        this->qtype, NULL,
+                                        ZoneFinder::FIND_DEFAULT),
+                     DataSourceError);
+        EXPECT_FALSE(this->searchRunning());
+        EXPECT_THROW(this->finder->find(
+                         Name("basicexception.in.search."),
+                         this->qtype, NULL, ZoneFinder::FIND_DEFAULT),
+                     std::exception);
+        EXPECT_FALSE(this->searchRunning());
 
-    EXPECT_THROW(this->finder->find(Name("dsexception.in.getnext."),
-                                    this->qtype, NULL,
-                                    ZoneFinder::FIND_DEFAULT),
-                 DataSourceError);
-    EXPECT_FALSE(this->searchRunning());
-    EXPECT_THROW(this->finder->find(Name("iscexception.in.getnext."),
-                                    this->qtype, NULL,
-                                    ZoneFinder::FIND_DEFAULT),
-                 DataSourceError);
-    EXPECT_FALSE(this->searchRunning());
-    EXPECT_THROW(this->finder->find(Name("basicexception.in.getnext."),
-                                    this->qtype, NULL,
-                                    ZoneFinder::FIND_DEFAULT),
-                 std::exception);
-    EXPECT_FALSE(this->searchRunning());
+        EXPECT_THROW(this->finder->find(Name("dsexception.in.getnext."),
+                                        this->qtype, NULL,
+                                        ZoneFinder::FIND_DEFAULT),
+                     DataSourceError);
+        EXPECT_FALSE(this->searchRunning());
+        EXPECT_THROW(this->finder->find(Name("iscexception.in.getnext."),
+                                        this->qtype, NULL,
+                                        ZoneFinder::FIND_DEFAULT),
+                     DataSourceError);
+        EXPECT_FALSE(this->searchRunning());
+        EXPECT_THROW(this->finder->find(Name("basicexception.in.getnext."),
+                                        this->qtype, NULL,
+                                        ZoneFinder::FIND_DEFAULT),
+                     std::exception);
+        EXPECT_FALSE(this->searchRunning());
+    }
 
     // This RRSIG has the wrong sigtype field, which should be
     // an error if we decide to keep using that field
@@ -852,21 +887,26 @@ TYPED_TEST(DatabaseClientTest, updaterFinder) {
 
     // If this update isn't replacing the zone, the finder should work
     // just like the normal find() case.
-    EXPECT_EQ(WRITABLE_ZONE_ID, dynamic_cast<DatabaseClient::Finder&>(
-                  this->updater->getFinder()).zone_id());
+    if (this->is_mock_) {
+        EXPECT_EQ(WRITABLE_ZONE_ID, dynamic_cast<DatabaseClient::Finder&>(
+                      this->updater->getFinder()).zone_id());
+    }
     this->expected_rdatas.clear();
     this->expected_rdatas.push_back("192.0.2.1");
-    doFindTest(this->updater->getFinder(), Name("www.example.org."),
+    doFindTest(this->updater->getFinder(), this->qname,
                this->qtype, this->qtype, this->rrttl, ZoneFinder::SUCCESS,
                this->expected_rdatas, this->empty_rdatas);
 
     // When replacing the zone, the updater's finder shouldn't see anything
     // in the zone until something is added.
+    this->updater.reset();
     this->updater = this->client_->startUpdateZone(this->zname, true);
     ASSERT_TRUE(this->updater);
-    EXPECT_EQ(WRITABLE_ZONE_ID, dynamic_cast<DatabaseClient::Finder&>(
-                  this->updater->getFinder()).zone_id());
-    doFindTest(this->updater->getFinder(), Name("www.example.org."),
+    if (this->is_mock_) {
+        EXPECT_EQ(WRITABLE_ZONE_ID, dynamic_cast<DatabaseClient::Finder&>(
+                      this->updater->getFinder()).zone_id());
+    }
+    doFindTest(this->updater->getFinder(), this->qname,
                RRType::A(), RRType::A(), RRTTL(3600), ZoneFinder::NXDOMAIN,
                this->empty_rdatas, this->empty_rdatas);
 }
@@ -875,15 +915,14 @@ TYPED_TEST(DatabaseClientTest, flushZone) {
     // A simple update case: flush the entire zone
 
     // Before update, the name exists.
-    ZoneFinderPtr finder = this->client_->findZone(this->zname).zone_finder;
     EXPECT_EQ(ZoneFinder::SUCCESS, this->finder->find(this->qname,
                                                       this->qtype).code);
 
     // start update in the replace mode.  the normal finder should still
     // be able to see the record, but the updater's finder shouldn't.
     this->updater = this->client_->startUpdateZone(this->zname, true);
-    EXPECT_EQ(ZoneFinder::SUCCESS, this->finder->find(this->qname,
-                                                      this->qtype).code);
+    EXPECT_EQ(ZoneFinder::SUCCESS,
+              this->finder->find(this->qname, this->qtype).code);
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
               this->updater->getFinder().find(this->qname, this->qtype).code);
 
@@ -941,6 +980,7 @@ TYPED_TEST(DatabaseClientTest, addRRsetToNewZone) {
     }
 
     // Similar to the previous case, but with RRSIG
+    this->updater.reset();
     this->updater = this->client_->startUpdateZone(this->zname, true);
     this->updater->addRRset(*this->rrset);
     this->updater->addRRset(*this->rrsigset);
