@@ -18,6 +18,7 @@
 #include <datasrc/client.h>
 
 #include <dns/name.h>
+#include <exceptions/exceptions.h>
 
 namespace isc {
 namespace datasrc {
@@ -74,6 +75,86 @@ public:
      *     an opaque handle.
      */
     virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const = 0;
+
+    /**
+     * \brief This holds the internal context of ZoneIterator for databases
+     *
+     * While the ZoneIterator implementation from DatabaseClient does all the
+     * translation from strings to DNS classes and validation, this class
+     * holds the pointer to where the database is at reading the data.
+     *
+     * It can either hold shared pointer to the connection which created it
+     * and have some kind of statement inside (in case single database
+     * connection can handle multiple concurrent SQL statements) or it can
+     * create a new connection (or, if it is more convenient, the connection
+     * itself can inherit both from DatabaseConnection and IteratorContext
+     * and just clone itself).
+     */
+    class IteratorContext : public boost::noncopyable {
+    public:
+        /**
+         * \brief Destructor
+         *
+         * Virtual destructor, so any descendand class is destroyed correctly.
+         */
+        virtual ~IteratorContext() { }
+
+        /**
+         * \brief Function to provide next resource record
+         *
+         * This function should provide data about the next resource record
+         * from the iterated zone. The data are not converted yet.
+         *
+         * \note The order of RRs is not strictly set, but the RRs for single
+         * RRset must not be interleaved with any other RRs (eg. RRsets must be
+         * "together").
+         *
+         * \param columns The data will be returned through here. The order
+         *     is specified by the RecordColumns enum.
+         * \param Size of the columns array. Must be equal to COLUMN_COUNT,
+         *     otherwise DataSourceError is thrown.
+         * \todo Do we consider databases where it is stored in binary blob
+         *     format?
+         * \throw DataSourceError if there's database-related error. If the
+         *     exception (or any other in case of derived class) is thrown,
+         *     the iterator can't be safely used any more.
+         */
+        virtual bool getNext(std::string columns[], size_t column_data) = 0;
+    };
+
+    typedef boost::shared_ptr<IteratorContext> IteratorContextPtr;
+
+    /**
+     * \brief Creates an iterator context for the whole zone.
+     *
+     * This should create a new iterator context to be used by
+     * DatabaseConnection's ZoneIterator. It can be created based on the name
+     * or the ID (returned from getZone()), what is more comfortable for the
+     * database implementation. Both are provided (and are guaranteed to match,
+     * the DatabaseClient first looks up the zone ID and then calls this).
+     *
+     * The default implementation throws isc::NotImplemented, to allow
+     * "minimal" implementations of the connection not supporting optional
+     * functionality.
+     *
+     * \param name The name of the zone.
+     * \param id The ID of the zone, returned from getZone().
+     * \return Newly created iterator context. Must not be NULL.
+     */
+    virtual IteratorContextPtr getAllRecords(const isc::dns::Name& name,
+                                             int id) const
+    {
+        /*
+         * This is a compromise. We need to document the parameters in doxygen,
+         * so they need a name, but then it complains about unused parameter.
+         * This is a NOP that "uses" the parameters.
+         */
+        static_cast<void>(name);
+        static_cast<void>(id);
+
+        isc_throw(isc::NotImplemented,
+                  "This database datasource can't be iterated");
+    }
 
     /**
      * \brief Starts a new search for records of the given name in the given zone
@@ -145,11 +226,12 @@ public:
         SIGTYPE_COLUMN = 2, ///< For RRSIG records, this contains the RRTYPE
                             ///< the RRSIG covers. In the current implementation,
                             ///< this field is ignored.
-        RDATA_COLUMN = 3    ///< Full text representation of the record's RDATA
+        RDATA_COLUMN = 3,   ///< Full text representation of the record's RDATA
+        NAME_COLUMN = 4     ///< The domain name of this RR
     };
 
     /// The number of fields the columns array passed to getNextRecord should have
-    static const size_t COLUMN_COUNT = 4;
+    static const size_t COLUMN_COUNT = 5;
 
     /**
      * \brief Returns a string identifying this dabase backend
@@ -355,6 +437,25 @@ public:
      *     should use it as a ZoneFinder only.
      */
     virtual FindResult findZone(const isc::dns::Name& name) const;
+
+    /**
+     * \brief Get the zone iterator
+     *
+     * The iterator allows going through the whole zone content. If the
+     * underlying DatabaseConnection is implemented correctly, it should
+     * be possible to have multiple ZoneIterators at once and query data
+     * at the same time.
+     *
+     * \exception DataSourceError if the zone doesn't exist.
+     * \exception isc::NotImplemented if the underlying DatabaseConnection
+     *     doesn't implement iteration. But in case it is not implemented
+     *     and the zone doesn't exist, DataSourceError is thrown.
+     * \exception Anything else the underlying DatabaseConnection might
+     *     want to throw.
+     * \param name The origin of the zone to iterate.
+     * \return Shared pointer to the iterator (it will never be NULL)
+     */
+    virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name) const;
 
 private:
     /// \brief Our database.
