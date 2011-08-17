@@ -20,6 +20,7 @@
 
 #include <exceptions/exceptions.h>
 
+#include <boost/enable_shared_from_this.hpp>
 #include <string>
 
 namespace isc {
@@ -51,7 +52,8 @@ struct SQLite3Parameters;
  * According to the design, it doesn't interpret the data in any way, it just
  * provides unified access to the DB.
  */
-class SQLite3Database : public DatabaseAccessor {
+class SQLite3Database : public DatabaseAccessor,
+    public boost::enable_shared_from_this<SQLite3Database> {
 public:
     /**
      * \brief Constructor
@@ -89,6 +91,9 @@ public:
      */
     virtual std::pair<bool, int> getZone(const isc::dns::Name& name) const;
 
+    /// \brief Implementation of DatabaseAbstraction::getAllRecords
+    virtual IteratorContextPtr getAllRecords(const isc::dns::Name&,
+                                                  int id) const;
     /**
      * \brief Start a new search for the given name in the given zone.
      *
@@ -151,6 +156,9 @@ private:
     void open(const std::string& filename);
     /// \brief Closes the database
     void close();
+    /// \brief SQLite3 implementation of IteratorContext
+    class Context;
+    friend class Context;
     const std::string database_name_;
 };
 

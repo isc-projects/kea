@@ -25,12 +25,35 @@
 #include <datasrc/memory_datasrc.h>
 #include <datasrc/rbtree.h>
 #include <datasrc/logger.h>
+#include <datasrc/iterator.h>
+#include <datasrc/data_source.h>
 
 using namespace std;
 using namespace isc::dns;
 
 namespace isc {
 namespace datasrc {
+
+namespace {
+// Some type aliases
+/*
+ * Each domain consists of some RRsets. They will be looked up by the
+ * RRType.
+ *
+ * The use of map is questionable with regard to performance - there'll
+ * be usually only few RRsets in the domain, so the log n benefit isn't
+ * much and a vector/array might be faster due to its simplicity and
+ * continuous memory location. But this is unlikely to be a performance
+ * critical place and map has better interface for the lookups, so we use
+ * that.
+ */
+typedef map<RRType, ConstRRsetPtr> Domain;
+typedef Domain::value_type DomainPair;
+typedef boost::shared_ptr<Domain> DomainPtr;
+// The tree stores domains
+typedef RBTree<Domain> DomainTree;
+typedef RBNode<Domain> DomainNode;
+}
 
 // Private data and hidden methods of InMemoryZoneFinder
 struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
@@ -44,25 +67,6 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         DomainPtr origin_domain(new Domain);
         origin_data_->setData(origin_domain);
     }
-
-    // Some type aliases
-    /*
-     * Each domain consists of some RRsets. They will be looked up by the
-     * RRType.
-     *
-     * The use of map is questionable with regard to performance - there'll
-     * be usually only few RRsets in the domain, so the log n benefit isn't
-     * much and a vector/array might be faster due to its simplicity and
-     * continuous memory location. But this is unlikely to be a performance
-     * critical place and map has better interface for the lookups, so we use
-     * that.
-     */
-    typedef map<RRType, ConstRRsetPtr> Domain;
-    typedef Domain::value_type DomainPair;
-    typedef boost::shared_ptr<Domain> DomainPtr;
-    // The tree stores domains
-    typedef RBTree<Domain> DomainTree;
-    typedef RBNode<Domain> DomainNode;
     static const DomainNode::Flags DOMAINFLAG_WILD = DomainNode::FLAG_USER1;
 
     // Information about the zone
@@ -634,7 +638,7 @@ InMemoryZoneFinder::load(const string& filename) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_LOAD).arg(getOrigin()).
         arg(filename);
     // Load it into a temporary tree
-    InMemoryZoneFinderImpl::DomainTree tmp;
+    DomainTree tmp;
     masterLoad(filename.c_str(), getOrigin(), getClass(),
         boost::bind(&InMemoryZoneFinderImpl::addFromLoad, impl_, _1, &tmp));
     // If it went well, put it inside
@@ -700,8 +704,94 @@ InMemoryClient::addZone(ZoneFinderPtr zone_finder) {
 InMemoryClient::FindResult
 InMemoryClient::findZone(const isc::dns::Name& name) const {
     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_FIND_ZONE).arg(name);
-    return (FindResult(impl_->zone_table.findZone(name).code,
-                       impl_->zone_table.findZone(name).zone));
+    ZoneTable::FindResult result(impl_->zone_table.findZone(name));
+    return (FindResult(result.code, result.zone));
 }
+
+namespace {
+
+class MemoryIterator : public ZoneIterator {
+private:
+    RBTreeNodeChain<Domain> chain_;
+    Domain::const_iterator dom_iterator_;
+    const DomainTree& tree_;
+    const DomainNode* node_;
+    bool ready_;
+public:
+    MemoryIterator(const DomainTree& tree, const Name& origin) :
+        tree_(tree),
+        ready_(true)
+    {
+        // Find the first node (origin) and preserve the node chain for future
+        // searches
+        DomainTree::Result result(tree_.find<void*>(origin, &node_, chain_,
+                                                    NULL, NULL));
+        // It can't happen that the origin is not in there
+        if (result != DomainTree::EXACTMATCH) {
+            isc_throw(Unexpected,
+                      "In-memory zone corrupted, missing origin node");
+        }
+        // Initialize the iterator if there's somewhere to point to
+        if (node_ != NULL && node_->getData() != DomainPtr()) {
+            dom_iterator_ = node_->getData()->begin();
+        }
+    }
+
+    virtual ConstRRsetPtr getNextRRset() {
+        if (!ready_) {
+            isc_throw(Unexpected, "Iterating past the zone end");
+        }
+        /*
+         * This cycle finds the first nonempty node with yet unused RRset.
+         * If it is NULL, we run out of nodes. If it is empty, it doesn't
+         * contain any RRsets. If we are at the end, just get to next one.
+         */
+        while (node_ != NULL && (node_->getData() == DomainPtr() ||
+                                 dom_iterator_ == node_->getData()->end())) {
+            node_ = tree_.nextNode(chain_);
+            // If there's a node, initialize the iterator and check next time
+            // if the map is empty or not
+            if (node_ != NULL && node_->getData() != NULL) {
+                dom_iterator_ = node_->getData()->begin();
+            }
+        }
+        if (node_ == NULL) {
+            // That's all, folks
+            ready_ = false;
+            return (ConstRRsetPtr());
+        }
+        // The iterator points to the next yet unused RRset now
+        ConstRRsetPtr result(dom_iterator_->second);
+        // This one is used, move it to the next time for next call
+        ++dom_iterator_;
+
+        return (result);
+    }
+};
+
+} // End of anonymous namespace
+
+ZoneIteratorPtr
+InMemoryClient::getIterator(const Name& name) const {
+    ZoneTable::FindResult result(impl_->zone_table.findZone(name));
+    if (result.code != result::SUCCESS) {
+        isc_throw(DataSourceError, "No such zone: " + name.toText());
+    }
+
+    const InMemoryZoneFinder*
+        zone(dynamic_cast<const InMemoryZoneFinder*>(result.zone.get()));
+    if (zone == NULL) {
+        /*
+         * TODO: This can happen only during some of the tests and only as
+         * a temporary solution. This should be fixed by #1159 and then
+         * this cast and check shouldn't be necessary. We don't have
+         * test for handling a "can not happen" condition.
+         */
+        isc_throw(Unexpected, "The zone at " + name.toText() +
+                  " is not InMemoryZoneFinder");
+    }
+    return (ZoneIteratorPtr(new MemoryIterator(zone->impl_->domains_, name)));
+}
+
 } // end of namespace datasrc
 } // end of namespace dns
