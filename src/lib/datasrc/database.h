@@ -350,6 +350,15 @@ public:
                                                      bool want_ns, const
                                                      isc::dns::Name*
                                                      construct_name = NULL);
+        /**
+         * \brief Checks if something lives below this domain.
+         *
+         * This looks if there's any subdomain of the given name. It can be
+         * used to test if domain is empty non-terminal.
+         *
+         * \param name The domain to check.
+         */
+        bool hasSubdomains(const std::string& name);
     };
     /**
      * \brief Find a zone in the database
