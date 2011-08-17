@@ -38,8 +38,8 @@ DHCID::DHCID(const string& dhcid_str) {
     iss >> &digestbuf;
     decodeHex(digestbuf.str(), digest_);
 
-    // RFC4701 states DNS software should consider the RDATA section to be opaque,
-    // but there must be at least three bytes in the data:
+    // RFC4701 states DNS software should consider the RDATA section to
+    // be opaque, but there must be at least three bytes in the data:
     // < 2 octets >    Identifier type code
     // < 1 octet >     Digest type code
     if (digest_.size() < 3) {
