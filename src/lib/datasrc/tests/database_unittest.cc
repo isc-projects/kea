@@ -12,9 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <boost/foreach.hpp>
+
 #include <gtest/gtest.h>
 
 #include <dns/name.h>
+#include <dns/rdata.h>
 #include <dns/rrttl.h>
 #include <dns/rrset.h>
 #include <exceptions/exceptions.h>
@@ -30,10 +33,7 @@
 using namespace isc::datasrc;
 using namespace std;
 using namespace boost;
-using isc::dns::Name;
-using isc::dns::RRType;
-using isc::dns::RRClass;
-using isc::dns::RRTTL;
+using namespace isc::dns;
 
 namespace {
 
@@ -119,6 +119,47 @@ public:
         search_running_ = false;
     }
 
+    virtual pair<bool, int> startUpdateZone(const std::string& zone_name,
+                                            bool replace)
+    {
+        const pair<bool, int> zone_info = getZone(zone_name);
+        if (!zone_info.first) {
+            return (pair<bool, int>(false, 0));
+        }
+
+        // Prepare the record set for update.  If replacing the existing one,
+        // we use an empty set; otherwise we use a writable copy of the
+        // original.
+        if (replace) {
+            update_records.clear();
+        } else {
+            update_records = readonly_records;
+        }
+
+        return (pair<bool, int>(true, WRITABLE_ZONE_ID));
+    }
+    virtual void commitUpdateZone() {
+        readonly_records = update_records;
+    }
+    virtual void rollbackUpdateZone() {
+        rollbacked_ = true;
+    }
+    virtual void addRecordToZone(const vector<string>& columns) {
+        // Copy the current value to cur_name.  If it doesn't exist,
+        // operator[] will create a new one.
+        cur_name = update_records[columns[DatabaseAccessor::ADD_NAME]];
+        addRecord(columns[DatabaseAccessor::ADD_TYPE],
+                  columns[DatabaseAccessor::ADD_TTL],
+                  columns[DatabaseAccessor::ADD_SIGTYPE],
+                  columns[DatabaseAccessor::ADD_RDATA]);
+        // copy back the added entry.
+        update_records[columns[DatabaseAccessor::ADD_NAME]] = cur_name;
+
+        // remember this one so that test cases can check it.
+        columns_lastadded = columns;
+    }
+    virtual void deleteRecordInZone(const vector<string>&) {}
+
     bool searchRunning() const {
         return (search_running_);
     }
@@ -129,6 +170,10 @@ public:
 
     virtual const std::string& getDBName() const {
         return (database_name_);
+    }
+
+    const vector<string>& getLastAdded() const {
+        return (columns_lastadded);
     }
 private:
     RECORDS readonly_records;
@@ -141,6 +186,9 @@ private:
     // getNextRecord() calls, as well as during the building of the
     // fake data
     std::vector< std::vector<std::string> > cur_name;
+
+    // The columns that were most recently added via addRecordToZone()
+    vector<string> columns_lastadded;
 
     // This boolean is used to make sure find() calls resetSearch
     // when it encounters an error
@@ -168,13 +216,13 @@ private:
     // Adds one record to the current name in the database
     // The actual data will not be added to 'records' until
     // addCurName() is called
-    void addRecord(const std::string& name,
-                   const std::string& type,
+    void addRecord(const std::string& type,
+                   const std::string& ttl,
                    const std::string& sigtype,
                    const std::string& rdata) {
         std::vector<std::string> columns;
-        columns.push_back(name);
         columns.push_back(type);
+        columns.push_back(ttl);
         columns.push_back(sigtype);
         columns.push_back(rdata);
         cur_name.push_back(columns);
@@ -292,40 +340,33 @@ private:
         addRecord("RRSIG", "3600", "TXT", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE");
         addCurName("badsigtype.example.org.");
     }
-
-    virtual pair<bool, int> startUpdateZone(const std::string& zone_name,
-                                            bool replace)
-    {
-        const pair<bool, int> zone_info = getZone(zone_name);
-        if (!zone_info.first) {
-            return (pair<bool, int>(false, 0));
-        }
-
-        // Prepare the record set for update.  If replacing the existing one,
-        // we use an empty set; otherwise we use a writable copy of the
-        // original.
-        if (replace) {
-            update_records.clear();
-        } else {
-            update_records = readonly_records;
-        }
-
-        return (pair<bool, int>(true, WRITABLE_ZONE_ID));
-    }
-    virtual void commitUpdateZone() {
-        readonly_records = update_records;
-    }
-    virtual void rollbackUpdateZone() {
-        rollbacked_ = true;
-    }
-    virtual void addRecordToZone(const vector<string>&) {}
-    virtual void deleteRecordInZone(const vector<string>&) {}
 };
 
 class DatabaseClientTest : public ::testing::Test {
 protected:
-    DatabaseClientTest() : qname("www.example.org"), qtype("A") {
+    DatabaseClientTest() : qname("www.example.org"), qtype("A"), rrttl(3600) {
         createClient();
+
+        // set up the commonly used finder.
+        DataSourceClient::FindResult zone(
+            client_->findZone(Name("example.org")));
+        assert(zone.code == result::SUCCESS);
+        finder = dynamic_pointer_cast<DatabaseClient::Finder>(
+            zone.zone_finder);
+
+        rrset.reset(new RRset(qname, RRClass::IN(), qtype, rrttl));
+        // Adding an IN/A RDATA.  Intentionally using different data
+        // than the initial data configured MockAccessor::fillData().
+        rrset->addRdata(rdata::createRdata(rrset->getType(), rrset->getClass(),
+                                           "192.0.2.2"));
+
+        rrsigset.reset(new RRset(qname, RRClass::IN(), RRType::RRSIG(),
+                                 rrttl));
+        rrsigset->addRdata(rdata::createRdata(rrsigset->getType(),
+                                              rrsigset->getClass(),
+                                              "A 5 3 0 20000101000000 "
+                                              "20000201000000 0 example.org. "
+                                              "FAKEFAKEFAKE"));
     }
     /*
      * We initialize the client from a function, so we can call it multiple
@@ -342,8 +383,14 @@ protected:
     shared_ptr<DatabaseClient> client_;
     const std::string database_name_;
 
+    // The zone finder of the test zone commonly used in various tests.
+    shared_ptr<DatabaseClient::Finder> finder;
+
     const Name qname;           // commonly used name to be found
     const RRType qtype;         // commonly used RR type with qname
+    const RRTTL rrttl;          // commonly used RR TTL
+    RRsetPtr rrset;             // for adding/deleting an RRset
+    RRsetPtr rrsigset;          // for adding/deleting an RRset
 
     ZoneUpdaterPtr updater;
     const std::vector<std::string> empty_rdatas; // for NXRRSET/NXDOMAIN
@@ -450,10 +497,6 @@ doFindTest(ZoneFinder& finder,
 } // end anonymous namespace
 
 TEST_F(DatabaseClientTest, find) {
-    DataSourceClient::FindResult zone(client_->findZone(Name("example.org")));
-    ASSERT_EQ(result::SUCCESS, zone.code);
-    shared_ptr<DatabaseClient::Finder> finder(
-        dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
     EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
     EXPECT_FALSE(current_accessor_->searchRunning());
 
@@ -766,7 +809,7 @@ TEST_F(DatabaseClientTest, updaterFinder) {
     expected_rdatas.clear();
     expected_rdatas.push_back("192.0.2.1");
     doFindTest(updater->getFinder(), Name("www.example.org."),
-               RRType::A(), RRType::A(), RRTTL(3600), ZoneFinder::SUCCESS,
+               qtype, qtype, rrttl, ZoneFinder::SUCCESS,
                expected_rdatas, empty_rdatas);
 
     // When replacing the zone, the updater's finder shouldn't see anything
@@ -829,6 +872,160 @@ TEST_F(DatabaseClientTest, duplicateCommit) {
     EXPECT_THROW(updater->commit(), DataSourceError);
 }
 
-// add/delete after commit.  should error
+TEST_F(DatabaseClientTest, addRRsetToNewZone) {
+    // Add a single RRset to a fresh empty zone
+    updater = client_->startUpdateZone(Name("example.org"), true);
+    updater->addRRset(*rrset);
+
+    expected_rdatas.clear();
+    expected_rdatas.push_back("192.0.2.2");
+    {
+        SCOPED_TRACE("add RRset");
+        doFindTest(updater->getFinder(), qname, qtype, qtype, rrttl,
+                   ZoneFinder::SUCCESS, expected_rdatas, empty_rdatas);
+    }
+
+    // Similar to the previous case, but with RRSIG
+    updater = client_->startUpdateZone(Name("example.org"), true);
+    updater->addRRset(*rrset);
+    updater->addRRset(*rrsigset);
+
+    // confirm the expected columns were passed to the mock accessor.
+    const char* const rrsig_added[] = {
+        "www.example.org.", "org.example.www.", "3600", "RRSIG", "A",
+        "A 5 3 0 20000101000000 20000201000000 0 example.org. FAKEFAKEFAKE"
+    };
+    int i = 0;
+    BOOST_FOREACH(const string& column, current_accessor_->getLastAdded()) {
+        EXPECT_EQ(rrsig_added[i++], column);
+    }
+
+    expected_sig_rdatas.clear();
+    expected_sig_rdatas.push_back(rrsig_added[DatabaseAccessor::ADD_RDATA]);
+    {
+        SCOPED_TRACE("add RRset with RRSIG");
+        doFindTest(updater->getFinder(), qname, qtype, qtype, rrttl,
+                   ZoneFinder::SUCCESS, expected_rdatas, expected_sig_rdatas);
+    }
+}
+
+TEST_F(DatabaseClientTest, addRRsetToCurrentZone) {
+    // Similar to the previous test, but not replacing the existing data.
+    updater = client_->startUpdateZone(Name("example.org"), false);
+    updater->addRRset(*rrset);
+
+    // We should see both old and new data.
+    expected_rdatas.clear();
+    expected_rdatas.push_back("192.0.2.1");
+    expected_rdatas.push_back("192.0.2.2");
+    {
+        SCOPED_TRACE("add RRset");
+        doFindTest(updater->getFinder(), qname, qtype, qtype, rrttl,
+                   ZoneFinder::SUCCESS, expected_rdatas, empty_rdatas);
+    }
+    updater->commit();
+    {
+        SCOPED_TRACE("add RRset after commit");
+        doFindTest(*finder, qname, qtype, qtype, rrttl,
+                   ZoneFinder::SUCCESS, expected_rdatas, empty_rdatas);
+    }
+}
+
+TEST_F(DatabaseClientTest, addRRsetOfLargerTTL) {
+    // Similar to the previous one, but the TTL of the added RRset is larger
+    // than that of the existing record.  The finder should use the smaller
+    // one.
+    updater = client_->startUpdateZone(Name("example.org"), false);
+    rrset->setTTL(RRTTL(7200));
+    updater->addRRset(*rrset);
+
+    expected_rdatas.clear();
+    expected_rdatas.push_back("192.0.2.1");
+    expected_rdatas.push_back("192.0.2.2");
+    {
+        SCOPED_TRACE("add RRset of larger TTL");
+        doFindTest(updater->getFinder(), qname, qtype, qtype, rrttl,
+                   ZoneFinder::SUCCESS, expected_rdatas, empty_rdatas);
+    }
+}
+
+TEST_F(DatabaseClientTest, addRRsetOfSmallerTTL) {
+    // Similar to the previous one, but the added RRset has a smaller TTL.
+    // The added TTL should be used by the finder.
+    updater = client_->startUpdateZone(Name("example.org"), false);
+    rrset->setTTL(RRTTL(1800));
+    updater->addRRset(*rrset);
+
+    expected_rdatas.clear();
+    expected_rdatas.push_back("192.0.2.1");
+    expected_rdatas.push_back("192.0.2.2");
+    {
+        SCOPED_TRACE("add RRset of smaller TTL");
+        doFindTest(updater->getFinder(), qname, qtype, qtype, RRTTL(1800),
+                   ZoneFinder::SUCCESS, expected_rdatas, empty_rdatas);
+    }
+}
+
+TEST_F(DatabaseClientTest, addSameRR) {
+    // Add the same RR as that is already in the data source.
+    // Currently the add interface doesn't try to suppress the duplicate,
+    // neither does the finder.  We may want to revisit it in future versions.
+
+    updater = client_->startUpdateZone(Name("example.org"), false);
+    rrset.reset(new RRset(qname, RRClass::IN(), qtype, rrttl));
+    rrset->addRdata(rdata::createRdata(rrset->getType(), rrset->getClass(),
+                                       "192.0.2.1"));
+    updater->addRRset(*rrset);
+    expected_rdatas.clear();
+    expected_rdatas.push_back("192.0.2.1");
+    expected_rdatas.push_back("192.0.2.1");
+    {
+        SCOPED_TRACE("add same RR");
+        doFindTest(updater->getFinder(), qname, qtype, qtype, rrttl,
+                   ZoneFinder::SUCCESS, expected_rdatas, empty_rdatas);
+    }
+}
+
+TEST_F(DatabaseClientTest, addDeviantRR) {
+    updater = client_->startUpdateZone(Name("example.org"), false);
+
+    // RR class mismatch.  This should be detected and rejected.
+    rrset.reset(new RRset(qname, RRClass::CH(), RRType::TXT(), rrttl));
+    rrset->addRdata(rdata::createRdata(rrset->getType(), rrset->getClass(),
+                                       "test text"));
+    EXPECT_THROW(updater->addRRset(*rrset), DataSourceError);
+
+    // Out-of-zone owner name.  At a higher level this should be rejected,
+    // but it doesn't happen in this interface.
+    rrset.reset(new RRset(Name("example.com"), RRClass::IN(), qtype, rrttl));
+    rrset->addRdata(rdata::createRdata(rrset->getType(), rrset->getClass(),
+                                       "192.0.2.100"));
+    updater->addRRset(*rrset);
+
+    expected_rdatas.clear();
+    expected_rdatas.push_back("192.0.2.100");
+    {
+        // Note: with the find() implementation being more strict about
+        // zone cuts, this test may fail.  Then the test should be updated.
+        SCOPED_TRACE("add out-of-zone RR");
+        doFindTest(updater->getFinder(), Name("example.com"), qtype, qtype,
+                   rrttl, ZoneFinder::SUCCESS, expected_rdatas, empty_rdatas);
+    }
+}
+
+TEST_F(DatabaseClientTest, addEmptyRRset) {
+    updater = client_->startUpdateZone(Name("example.org"), false);
+    rrset.reset(new RRset(qname, RRClass::IN(), qtype, rrttl));
+    EXPECT_THROW(updater->addRRset(*rrset), DataSourceError);
+}
+
+TEST_F(DatabaseClientTest, addAfterCommit) {
+   updater = client_->startUpdateZone(Name("example.org"), false);
+   updater->commit();
+   EXPECT_THROW(updater->addRRset(*rrset), DataSourceError);
+}
+
+// delete rrset without rdata; not necessarily harmful, but treat it as an error.
+// delete after commit.  should error
 
 }

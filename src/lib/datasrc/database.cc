@@ -21,6 +21,7 @@
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
+#include <dns/rrset.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
@@ -31,8 +32,8 @@
 
 using namespace std;
 using boost::shared_ptr;
-using isc::dns::Name;
-using isc::dns::RRClass;
+using namespace isc::dns;
+using namespace isc::dns::rdata;
 
 namespace isc {
 namespace datasrc {
@@ -327,30 +328,31 @@ DatabaseClient::startUpdateZone(const isc::dns::Name& name,
     }
 
      return (ZoneUpdaterPtr(new Updater(accessor_, zone.second,
-                                        name.toText(), rrclass_.toText())));
+                                        name.toText(), rrclass_)));
 }
 
 DatabaseClient::Updater::Updater(shared_ptr<DatabaseAccessor> accessor,
                                  int zone_id, const string& zone_name,
-                                 const string& class_name) :
+                                 const RRClass& zone_class) :
     committed_(false), accessor_(accessor), zone_id_(zone_id),
     db_name_(accessor->getDBName()), zone_name_(zone_name),
-    class_name_(class_name),
-    finder_(new Finder(accessor_, zone_id_))
+    zone_class_(zone_class),
+    finder_(new Finder(accessor_, zone_id_)),
+    add_columns_(DatabaseAccessor::ADD_COLUMN_COUNT)
 {
     logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_CREATED)
-        .arg(zone_name_).arg(class_name_).arg(db_name_);
+        .arg(zone_name_).arg(zone_class_).arg(db_name_);
 }
 
 DatabaseClient::Updater::~Updater() {
     if (!committed_) {
         accessor_->rollbackUpdateZone();
         logger.info(DATASRC_DATABASE_UPDATER_ROLLBACK)
-            .arg(zone_name_).arg(class_name_).arg(db_name_);
+            .arg(zone_name_).arg(zone_class_).arg(db_name_);
     }
 
     logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_DESTROYED)
-        .arg(zone_name_).arg(class_name_).arg(db_name_);
+        .arg(zone_name_).arg(zone_class_).arg(db_name_);
 }
 
 ZoneFinder&
@@ -359,10 +361,52 @@ DatabaseClient::Updater::getFinder() {
 }
 
 void
+DatabaseClient::Updater::addRRset(const RRset& rrset) {
+    if (committed_) {
+        isc_throw(DataSourceError, "Add attempt after commit to zone: "
+                  << zone_name_ << "/" << zone_class_);
+    }
+    if (rrset.getClass() != zone_class_) {
+        isc_throw(DataSourceError, "An RRset of a different class is being "
+                  << "added to " << zone_name_ << "/" << zone_class_ << ": "
+                  << rrset.toText());
+    }
+
+    RdataIteratorPtr it = rrset.getRdataIterator();
+    if (it->isLast()) {
+        isc_throw(DataSourceError, "An empty RRset is being added for "
+                  << rrset.getName() << "/" << zone_class_ << "/"
+                  << rrset.getType());
+    }
+
+    add_columns_.clear();
+    add_columns_[DatabaseAccessor::ADD_NAME] = rrset.getName().toText();
+    add_columns_[DatabaseAccessor::ADD_REV_NAME] =
+        rrset.getName().reverse().toText();
+    add_columns_[DatabaseAccessor::ADD_TTL] = rrset.getTTL().toText();
+    add_columns_[DatabaseAccessor::ADD_TYPE] = rrset.getType().toText();
+    for (; !it->isLast(); it->next()) {
+        if (rrset.getType() == RRType::RRSIG()) {
+            // XXX: the current interface (based on the current sqlite3
+            // data source schema) requires a separate "sigtype" column,
+            // even though it won't be used in a newer implementation.
+            // We should eventually clean up the schema design and simplify
+            // the interface, but until then we have to conform to the schema.
+            const generic::RRSIG& rrsig_rdata =
+                dynamic_cast<const generic::RRSIG&>(it->getCurrent());
+            add_columns_[DatabaseAccessor::ADD_SIGTYPE] =
+                rrsig_rdata.typeCovered().toText();
+        }
+        add_columns_[DatabaseAccessor::ADD_RDATA] = it->getCurrent().toText();
+        accessor_->addRecordToZone(add_columns_);
+    }
+}
+
+void
 DatabaseClient::Updater::commit() {
     if (committed_) {
         isc_throw(DataSourceError, "Duplicate commit attempt for "
-                  << zone_name_ << "/" << class_name_ << " on "
+                  << zone_name_ << "/" << zone_class_ << " on "
                   << db_name_);
     }
     accessor_->commitUpdateZone();
@@ -374,7 +418,7 @@ DatabaseClient::Updater::commit() {
     committed_ = true;
 
     logger.debug(DBG_TRACE_DATA, DATASRC_DATABASE_UPDATER_COMMIT)
-        .arg(zone_name_).arg(class_name_).arg(db_name_);
+        .arg(zone_name_).arg(zone_class_).arg(db_name_);
 }
 }
 }

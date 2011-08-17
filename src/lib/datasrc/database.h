@@ -20,6 +20,8 @@
 #include <boost/scoped_ptr.hpp>
 
 #include <dns/rrclass.h>
+#include <dns/rrclass.h>
+#include <dns/rrset.h>
 
 #include <datasrc/client.h>
 
@@ -151,6 +153,16 @@ public:
                             ///< the RRSIG covers. In the current implementation,
                             ///< this field is ignored.
         RDATA_COLUMN = 3    ///< Full text representation of the record's RDATA
+    };
+
+    enum AddRecordColumns {
+        ADD_NAME = 0, ///< The owner name of the record (a domain name)
+        ADD_REV_NAME = 1, ///< Reversed name of NAME (used for DNSSEC)
+        ADD_TTL = 2,     ///< The TTL of the record (an integer)
+        ADD_TYPE = 3,    ///< The RRType of the record (A/NS/TXT etc.)
+        ADD_SIGTYPE = 4, ///< For RRSIG records, this contains the RRTYPE
+                            ///< the RRSIG covers.
+        ADD_RDATA = 5    ///< Full text representation of the record's RDATA
     };
 
     /// TBD
@@ -345,9 +357,11 @@ public:
     class Updater : public ZoneUpdater {
     public:
         Updater(boost::shared_ptr<DatabaseAccessor> database, int zone_id,
-                const std::string& zone_name, const std::string& class_name);
+                const std::string& zone_name,
+                const isc::dns::RRClass& zone_class);
         ~Updater();
         virtual ZoneFinder& getFinder();
+        virtual void addRRset(const isc::dns::RRset& rrset);
         virtual void commit();
 
     private:
@@ -356,8 +370,9 @@ public:
         const int zone_id_;
         std::string db_name_;
         std::string zone_name_;
-        std::string class_name_;
+        isc::dns::RRClass zone_class_;
         boost::scoped_ptr<Finder::Finder> finder_;
+        std::vector<std::string> add_columns_;
     };
 
     /**
