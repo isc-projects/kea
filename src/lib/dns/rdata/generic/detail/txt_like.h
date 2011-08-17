@@ -26,126 +26,134 @@ using namespace isc::util;
 template<class Type, uint16_t typeCode>class TXTLikeImpl {
 public:
     TXTLikeImpl(InputBuffer& buffer, size_t rdata_len) {
-	if (rdata_len > MAX_RDLENGTH) {
-	    isc_throw(InvalidRdataLength, "RDLENGTH too large: " << rdata_len);
-	}
+        if (rdata_len > MAX_RDLENGTH) {
+            isc_throw(InvalidRdataLength, "RDLENGTH too large: " << rdata_len);
+        }
 
-	if (rdata_len == 0) {       // note that this couldn't happen in the loop.
-	    isc_throw(DNSMessageFORMERR, "Error in parsing " << RRType(typeCode) <<
-		      " RDATA: 0-length character string");
-	}
+        if (rdata_len == 0) {    // note that this couldn't happen in the loop.
+            isc_throw(DNSMessageFORMERR, "Error in parsing " <<
+                      RRType(typeCode) << " RDATA: 0-length character string");
+        }
 
-	do {
-	    const uint8_t len = buffer.readUint8();
-	    if (rdata_len < len + 1) {
-		isc_throw(DNSMessageFORMERR, "Error in parsing " << RRType(typeCode) <<
-			  " RDATA: character string length is too large: " << static_cast<int>(len));
-	    }
-	    vector<uint8_t> data(len + 1);
-	    data[0] = len;
-	    buffer.readData(&data[0] + 1, len);
-	    string_list_.push_back(data);
+        do {
+            const uint8_t len = buffer.readUint8();
+            if (rdata_len < len + 1) {
+                isc_throw(DNSMessageFORMERR, "Error in parsing " <<
+                          RRType(typeCode) <<
+                          " RDATA: character string length is too large: " <<
+                          static_cast<int>(len));
+            }
+            vector<uint8_t> data(len + 1);
+            data[0] = len;
+            buffer.readData(&data[0] + 1, len);
+            string_list_.push_back(data);
 
-	    rdata_len -= (len + 1);
-	} while (rdata_len > 0);
+            rdata_len -= (len + 1);
+        } while (rdata_len > 0);
     }
 
     explicit TXTLikeImpl(const std::string& txtstr) {
-	// TBD: this is a simple, incomplete implementation that only supports
-	// a single character-string.
+        // TBD: this is a simple, incomplete implementation that only supports
+        // a single character-string.
 
-	size_t length = txtstr.size();
-	size_t pos_begin = 0;
+        size_t length = txtstr.size();
+        size_t pos_begin = 0;
 
-	if (length > 1 && txtstr[0] == '"' && txtstr[length - 1] == '"') {
-	    pos_begin = 1;
-	    length -= 2;
-	}
+        if (length > 1 && txtstr[0] == '"' && txtstr[length - 1] == '"') {
+            pos_begin = 1;
+            length -= 2;
+        }
 
-	if (length > MAX_CHARSTRING_LEN) {
-	    isc_throw(CharStringTooLong, RRType(typeCode) <<
-		      " RDATA construction from text: string length is too long: " << length);
-	}
+        if (length > MAX_CHARSTRING_LEN) {
+            isc_throw(CharStringTooLong, RRType(typeCode) <<
+                      " RDATA construction from text:"
+                      " string length is too long: " << length);
+        }
 
-	// TBD: right now, we don't support escaped characters
-	if (txtstr.find('\\') != string::npos) {
-	    isc_throw(InvalidRdataText, RRType(typeCode) <<
-		      " RDATA from text: escaped character is currently not supported: " << txtstr);
-	}
+        // TBD: right now, we don't support escaped characters
+        if (txtstr.find('\\') != string::npos) {
+            isc_throw(InvalidRdataText, RRType(typeCode) <<
+                      " RDATA from text:"
+                      " escaped character is currently not supported: " <<
+                      txtstr);
+        }
 
-	vector<uint8_t> data;
-	data.reserve(length + 1);
-	data.push_back(length);
-	data.insert(data.end(), txtstr.begin() + pos_begin,
-		    txtstr.begin() + pos_begin + length);
-	string_list_.push_back(data);
+        vector<uint8_t> data;
+        data.reserve(length + 1);
+        data.push_back(length);
+        data.insert(data.end(), txtstr.begin() + pos_begin,
+                    txtstr.begin() + pos_begin + length);
+        string_list_.push_back(data);
     }
 
     TXTLikeImpl(const TXTLikeImpl& other) :
-	string_list_(other.string_list_)
+        string_list_(other.string_list_)
     {}
 
     void
     toWire(OutputBuffer& buffer) const {
-	for (vector<vector<uint8_t> >::const_iterator it = string_list_.begin();
-	     it != string_list_.end();
-	     ++it)
-	{
-	    buffer.writeData(&(*it)[0], (*it).size());
-	}
+        for (vector<vector<uint8_t> >::const_iterator it =
+                                                          string_list_.begin();
+             it != string_list_.end();
+             ++it)
+        {
+            buffer.writeData(&(*it)[0], (*it).size());
+        }
     }
 
     void
     toWire(AbstractMessageRenderer& renderer) const {
-	for (vector<vector<uint8_t> >::const_iterator it = string_list_.begin();
-	     it != string_list_.end();
-	     ++it)
-	{
-	    renderer.writeData(&(*it)[0], (*it).size());
-	}
+        for (vector<vector<uint8_t> >::const_iterator it =
+                                                          string_list_.begin();
+             it != string_list_.end();
+             ++it)
+        {
+            renderer.writeData(&(*it)[0], (*it).size());
+        }
     }
 
     string
     toText() const {
-	string s;
+        string s;
 
-	// XXX: this implementation is not entirely correct.  for example, it
-	// should escape double-quotes if they appear in the character string.
-	for (vector<vector<uint8_t> >::const_iterator it = string_list_.begin();
-	     it != string_list_.end();
-	     ++it)
-	{
-	    if (!s.empty()) {
-		s.push_back(' ');
-	    }
-	    s.push_back('"');
-	    s.insert(s.end(), (*it).begin() + 1, (*it).end());
-	    s.push_back('"');
-	}
+        // XXX: this implementation is not entirely correct.  for example, it
+        // should escape double-quotes if they appear in the character string.
+        for (vector<vector<uint8_t> >::const_iterator it =
+                                                          string_list_.begin();
+             it != string_list_.end();
+             ++it)
+        {
+            if (!s.empty()) {
+                s.push_back(' ');
+            }
+            s.push_back('"');
+            s.insert(s.end(), (*it).begin() + 1, (*it).end());
+            s.push_back('"');
+        }
 
-	return (s);
+        return (s);
     }
 
     int
     compare(const TXTLikeImpl& other) const {
-	// This implementation is not efficient.  Revisit this (TBD).
-	OutputBuffer this_buffer(0);
-	toWire(this_buffer);
-	size_t this_len = this_buffer.getLength();
+        // This implementation is not efficient.  Revisit this (TBD).
+        OutputBuffer this_buffer(0);
+        toWire(this_buffer);
+        size_t this_len = this_buffer.getLength();
 
-	OutputBuffer other_buffer(0);
-	other.toWire(other_buffer);
-	const size_t other_len = other_buffer.getLength();
+        OutputBuffer other_buffer(0);
+        other.toWire(other_buffer);
+        const size_t other_len = other_buffer.getLength();
 
-	const size_t cmplen = min(this_len, other_len);
-	const int cmp = memcmp(this_buffer.getData(), other_buffer.getData(),
-			       cmplen);
-	if (cmp != 0) {
-	    return (cmp);
-	} else {
-	    return ((this_len == other_len) ? 0 :
-		    (this_len < other_len) ? -1 : 1);
-	}
+        const size_t cmplen = min(this_len, other_len);
+        const int cmp = memcmp(this_buffer.getData(), other_buffer.getData(),
+                               cmplen);
+        if (cmp != 0) {
+            return (cmp);
+        } else {
+            return ((this_len == other_len) ? 0 :
+                    (this_len < other_len) ? -1 : 1);
+        }
     }
 
 private:
