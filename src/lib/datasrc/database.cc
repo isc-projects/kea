@@ -349,6 +349,18 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                 result_status = CNAME;
             }
         }
+        if (!result_rrset && !records_found) {
+            // Nothing lives here. But check if something lives below this
+            // domain and if so, pretend something is here as well.
+            database_->searchForRecords(zone_id_, name.toText(), true);
+            std::string columns[DatabaseAccessor::COLUMN_COUNT];
+            if (database_->getNextRecord(columns,
+                                         DatabaseAccessor::COLUMN_COUNT)) {
+                records_found = true;
+                // We don't consume everything, so get rid of the rest
+                database_->resetSearch();
+            }
+        }
     } catch (const DataSourceError& dse) {
         logger.error(DATASRC_DATABASE_FIND_ERROR)
             .arg(database_->getDBName()).arg(dse.what());
