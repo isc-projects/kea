@@ -1,0 +1,7 @@
+{
+    "dummy_str": "Dummy String",
+    "dummy_int": 118,
+    "dummy_datetime": "2011-05-27T19:42:57Z",
+    "dummy_date": "2011-05-27",
+    "dummy_time": "19:42:57"
+}

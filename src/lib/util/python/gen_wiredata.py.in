@@ -844,6 +844,27 @@ class MINFO(RR):
         f.write('# RMAILBOX=%s EMAILBOX=%s\n' % (self.rmailbox, self.emailbox))
         f.write('%s %s\n' % (rmailbox_wire, emailbox_wire))
 
+class AFSDB(RR):
+    '''Implements rendering AFSDB RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - subtype (16 bit int): The subtype field.
+    - server (string): The server field.
+    The string must be interpreted as a valid domain name.
+    '''
+    subtype = 1
+    server = 'afsdb.example.com'
+    def dump(self, f):
+        server_wire = encode_name(self.server)
+        if self.rdlen is None:
+            self.rdlen = 2 + len(server_wire) / 2
+        else:
+            self.rdlen = int(self.rdlen)
+        self.dump_header(f, self.rdlen)
+        f.write('# SUBTYPE=%d SERVER=%s\n' % (self.subtype, self.server))
+        f.write('%04x %s\n' % (self.subtype, server_wire))
+
 class NSECBASE(RR):
     '''Implements rendering NSEC/NSEC3 type bitmaps commonly used for
     these RRs.  The NSEC and NSEC3 classes will be inherited from this

@@ -37,6 +37,17 @@
         "command_description": "List the running BIND 10 processes",
         "command_args": []
       }
+    ],
+    "statistics": [
+      {
+        "item_name": "boot_time",
+        "item_type": "string",
+        "item_optional": false,
+        "item_default": "1970-01-01T00:00:00Z",
+        "item_title": "Boot time",
+        "item_description": "A date time when bind10 process starts initially",
+        "item_format": "date-time"
+      }
     ]
   }
 }

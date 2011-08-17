@@ -66,6 +66,17 @@
         "command_description": "Shut down BIND 10",
         "command_args": []
       }
+    ],
+    "statistics": [
+      {
+        "item_name": "dummy_time",
+        "item_type": "string",
+        "item_optional": false,
+        "item_default": "1970-01-01T00:00:00Z",
+        "item_title": "Dummy Time",
+        "item_description": "A dummy date time",
+        "item_format": "date-time"
+      }
     ]
   }
 }
