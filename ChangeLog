@@ -1,9 +1,11 @@
+bind10-devel-20110819 released on August 19, 2011
+
 281.	[func]		jelte
 	Added a new type for configuration data: "named set". This allows for
 	similar configuration as the current "list" type, but with strings
 	instead of indices as identifiers. The intended use is for instance
-	/foo/zones/example.org/bar instead of /foo/zones[2]/bar. Currently this
-	new type is not in use yet.
+	/foo/zones/example.org/bar instead of /foo/zones[2]/bar. Currently
+	this new type is not in use yet.
 	(Trac #926, git 06aeefc4787c82db7f5443651f099c5af47bd4d6)
 
 280.	[func]		jerry
