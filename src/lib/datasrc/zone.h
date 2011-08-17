@@ -131,10 +131,10 @@ public:
     /// These methods should never throw an exception.
     //@{
     /// Return the origin name of the zone.
-    virtual const isc::dns::Name& getOrigin() const = 0;
+    virtual isc::dns::Name getOrigin() const = 0;
 
     /// Return the RR class of the zone.
-    virtual const isc::dns::RRClass& getClass() const = 0;
+    virtual isc::dns::RRClass getClass() const = 0;
     //@}
 
     ///
@@ -197,7 +197,7 @@ public:
                             const isc::dns::RRType& type,
                             isc::dns::RRsetList* target = NULL,
                             const FindOptions options
-                            = FIND_DEFAULT) const = 0;
+                            = FIND_DEFAULT) = 0;
     //@}
 };
 
