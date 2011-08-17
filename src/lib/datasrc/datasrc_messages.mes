@@ -114,6 +114,13 @@ While iterating through the zone, the program reached end of the data.
 While iterating through the zone, the program extracted next RRset from it.
 The name and RRtype of the RRset is indicated in the message.
 
+% DATASRC_DATABASE_ITERATE_TTL_DIFF TTL for %1/%2 differs (%3 and %4)
+While iterating through the zone, the time to live for RRs of the given RRset
+was discovered not to be the same the same This isn't allowed on the wire and
+is considered generally broken, so we set it to the lowest of them internaly
+(but we don't modify the database). But the data in database should better be
+checked and fixed by human.
+
 % DATASRC_DO_QUERY handling query for '%1/%2'
 A debug message indicating that a query for the given name and RR type is being
 processed.
