@@ -103,6 +103,11 @@ public:
         return (extension_);
     }
 
+    /// \return Name + extension of Given File Name
+    std::string nameAndExtension() const {
+        return (name_ + extension_);
+    }
+
     /// \brief Expand Name with Default
     ///
     /// A default file specified is supplied and used to fill in any missing

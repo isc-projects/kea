@@ -51,42 +51,49 @@ TEST_F(FilenameTest, Components) {
     EXPECT_EQ("/alpha/beta/", fname.directory());
     EXPECT_EQ("gamma", fname.name());
     EXPECT_EQ(".delta", fname.extension());
+    EXPECT_EQ("gamma.delta", fname.nameAndExtension());
 
     // Directory only
     fname.setName("/gamma/delta/");
     EXPECT_EQ("/gamma/delta/", fname.directory());
     EXPECT_EQ("", fname.name());
     EXPECT_EQ("", fname.extension());
+    EXPECT_EQ("", fname.nameAndExtension());
 
     // Filename only
     fname.setName("epsilon");
     EXPECT_EQ("", fname.directory());
     EXPECT_EQ("epsilon", fname.name());
     EXPECT_EQ("", fname.extension());
+    EXPECT_EQ("epsilon", fname.nameAndExtension());
 
     // Extension only
     fname.setName(".zeta");
     EXPECT_EQ("", fname.directory());
     EXPECT_EQ("", fname.name());
     EXPECT_EQ(".zeta", fname.extension());
+    EXPECT_EQ(".zeta", fname.nameAndExtension());
 
     // Missing directory
     fname.setName("eta.theta");
     EXPECT_EQ("", fname.directory());
     EXPECT_EQ("eta", fname.name());
     EXPECT_EQ(".theta", fname.extension());
+    EXPECT_EQ("eta.theta", fname.nameAndExtension());
 
     // Missing filename
     fname.setName("/iota/.kappa");
     EXPECT_EQ("/iota/", fname.directory());
     EXPECT_EQ("", fname.name());
     EXPECT_EQ(".kappa", fname.extension());
+    EXPECT_EQ(".kappa", fname.nameAndExtension());
 
     // Missing extension
     fname.setName("lambda/mu/nu");
     EXPECT_EQ("lambda/mu/", fname.directory());
     EXPECT_EQ("nu", fname.name());
     EXPECT_EQ("", fname.extension());
+    EXPECT_EQ("nu", fname.nameAndExtension());
 
     // Check that the decomposition can occur in the presence of leading and
     // trailing spaces
@@ -94,18 +101,21 @@ TEST_F(FilenameTest, Components) {
     EXPECT_EQ("lambda/mu/", fname.directory());
     EXPECT_EQ("nu", fname.name());
     EXPECT_EQ("", fname.extension());
+    EXPECT_EQ("nu", fname.nameAndExtension());
 
     // Empty string
     fname.setName("");
     EXPECT_EQ("", fname.directory());
     EXPECT_EQ("", fname.name());
     EXPECT_EQ("", fname.extension());
+    EXPECT_EQ("", fname.nameAndExtension());
 
     // ... and just spaces
     fname.setName("  ");
     EXPECT_EQ("", fname.directory());
     EXPECT_EQ("", fname.name());
     EXPECT_EQ("", fname.extension());
+    EXPECT_EQ("", fname.nameAndExtension());
 
     // Check corner cases - where separators are present, but strings are
     // absent.
@@ -113,16 +123,19 @@ TEST_F(FilenameTest, Components) {
     EXPECT_EQ("/", fname.directory());
     EXPECT_EQ("", fname.name());
     EXPECT_EQ("", fname.extension());
+    EXPECT_EQ("", fname.nameAndExtension());
 
     fname.setName(".");
     EXPECT_EQ("", fname.directory());
     EXPECT_EQ("", fname.name());
     EXPECT_EQ(".", fname.extension());
+    EXPECT_EQ(".", fname.nameAndExtension());
 
     fname.setName("/.");
     EXPECT_EQ("/", fname.directory());
     EXPECT_EQ("", fname.name());
     EXPECT_EQ(".", fname.extension());
+    EXPECT_EQ(".", fname.nameAndExtension());
 
     // Note that the space is a valid filename here; only leading and trailing
     // spaces should be trimmed.
@@ -130,11 +143,13 @@ TEST_F(FilenameTest, Components) {
     EXPECT_EQ("/", fname.directory());
     EXPECT_EQ(" ", fname.name());
     EXPECT_EQ(".", fname.extension());
+    EXPECT_EQ(" .", fname.nameAndExtension());
 
     fname.setName(" / . ");
     EXPECT_EQ("/", fname.directory());
     EXPECT_EQ(" ", fname.name());
     EXPECT_EQ(".", fname.extension());
+    EXPECT_EQ(" .", fname.nameAndExtension());
 }
 
 // Check that the expansion with a default works.

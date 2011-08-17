@@ -1,10 +1,10 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BIND 10 Messages Manual</title><link rel="stylesheet" href="./bind10-guide.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><meta name="description" content="BIND 10 is a Domain Name System (DNS) suite managed by Internet Systems Consortium (ISC). It includes DNS libraries and modular components for controlling authoritative and recursive DNS servers. This is the messages manual for BIND 10 version 20110519. The most up-to-date version of this document, along with other documents for BIND 10, can be found at ."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="BIND 10 Messages Manual"><div class="titlepage"><div><div><h1 class="title"><a name="id1168230298903"></a>BIND 10 Messages Manual</h1></div><div><p class="releaseinfo">This is the messages manual for BIND 10 version
-        20110519.</p></div><div><p class="copyright">Copyright © 2011 Internet Systems Consortium, Inc.</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a Domain Name System (DNS) suite managed by
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BIND 10 Messages Manual</title><link rel="stylesheet" href="./bind10-guide.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><meta name="description" content="BIND 10 is a Domain Name System (DNS) suite managed by Internet Systems Consortium (ISC). It includes DNS libraries and modular components for controlling authoritative and recursive DNS servers. This is the messages manual for BIND 10 version 20110705. The most up-to-date version of this document, along with other documents for BIND 10, can be found at ."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="BIND 10 Messages Manual"><div class="titlepage"><div><div><h1 class="title"><a name="id1168230298906"></a>BIND 10 Messages Manual</h1></div><div><p class="releaseinfo">This is the messages manual for BIND 10 version
+        20110705.</p></div><div><p class="copyright">Copyright © 2011 Internet Systems Consortium, Inc.</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a Domain Name System (DNS) suite managed by
 	  Internet Systems Consortium (ISC). It includes DNS libraries
 	  and modular components for controlling authoritative and
 	  recursive DNS servers.
       </p><p>
-        This is the messages manual for BIND 10 version 20110519.
+        This is the messages manual for BIND 10 version 20110705.
 	    The most up-to-date version of this document, along with
 	    other documents for BIND 10, can be found at
         <a class="ulink" href="http://bind10.isc.org/docs" target="_top">http://bind10.isc.org/docs</a>.
@@ -26,38 +26,337 @@
       For information on configuring and using BIND 10 logging,
       refer to the <a class="ulink" href="bind10-guide.html" target="_top">BIND 10 Guide</a>.
     </p></div><div class="chapter" title="Chapter 2. BIND 10 Messages"><div class="titlepage"><div><div><h2 class="title"><a name="messages"></a>Chapter 2. BIND 10 Messages</h2></div></div></div><p>
-      </p><div class="variablelist"><dl><dt><a name="ASIODNS_FETCHCOMP"></a><span class="term">ASIODNS_FETCHCOMP upstream fetch to %1(%2) has now completed</span></dt><dd><p>
-A debug message, this records the the upstream fetch (a query made by the
+      </p><div class="variablelist"><dl><dt><a name="ASIODNS_FETCH_COMPLETED"></a><span class="term">ASIODNS_FETCH_COMPLETED upstream fetch to %1(%2) has now completed</span></dt><dd><p>
+A debug message, this records that the upstream fetch (a query made by the
 resolver on behalf of its client) to the specified address has completed.
-</p></dd><dt><a name="ASIODNS_FETCHSTOP"></a><span class="term">ASIODNS_FETCHSTOP upstream fetch to %1(%2) has been stopped</span></dt><dd><p>
+</p></dd><dt><a name="ASIODNS_FETCH_STOPPED"></a><span class="term">ASIODNS_FETCH_STOPPED upstream fetch to %1(%2) has been stopped</span></dt><dd><p>
 An external component has requested the halting of an upstream fetch.  This
 is an allowed operation, and the message should only appear if debug is
 enabled.
-</p></dd><dt><a name="ASIODNS_OPENSOCK"></a><span class="term">ASIODNS_OPENSOCK error %1 opening %2 socket to %3(%4)</span></dt><dd><p>
+</p></dd><dt><a name="ASIODNS_OPEN_SOCKET"></a><span class="term">ASIODNS_OPEN_SOCKET error %1 opening %2 socket to %3(%4)</span></dt><dd><p>
 The asynchronous I/O code encountered an error when trying to open a socket
 of the specified protocol in order to send a message to the target address.
-The the number of the system error that cause the problem is given in the
+The number of the system error that cause the problem is given in the
 message.
-</p></dd><dt><a name="ASIODNS_RECVSOCK"></a><span class="term">ASIODNS_RECVSOCK error %1 reading %2 data from %3(%4)</span></dt><dd><p>
-The asynchronous I/O code encountered an error when trying read data from
-the specified address on the given protocol.  The the number of the system
+</p></dd><dt><a name="ASIODNS_READ_DATA"></a><span class="term">ASIODNS_READ_DATA error %1 reading %2 data from %3(%4)</span></dt><dd><p>
+The asynchronous I/O code encountered an error when trying to read data from
+the specified address on the given protocol.  The number of the system
 error that cause the problem is given in the message.
-</p></dd><dt><a name="ASIODNS_RECVTMO"></a><span class="term">ASIODNS_RECVTMO receive timeout while waiting for data from %1(%2)</span></dt><dd><p>
+</p></dd><dt><a name="ASIODNS_READ_TIMEOUT"></a><span class="term">ASIODNS_READ_TIMEOUT receive timeout while waiting for data from %1(%2)</span></dt><dd><p>
 An upstream fetch from the specified address timed out.  This may happen for
 any number of reasons and is most probably a problem at the remote server
 or a problem on the network.  The message will only appear if debug is
 enabled.
-</p></dd><dt><a name="ASIODNS_SENDSOCK"></a><span class="term">ASIODNS_SENDSOCK error %1 sending data using %2 to %3(%4)</span></dt><dd><p>
+</p></dd><dt><a name="ASIODNS_SEND_DATA"></a><span class="term">ASIODNS_SEND_DATA error %1 sending data using %2 to %3(%4)</span></dt><dd><p>
 The asynchronous I/O code encountered an error when trying send data to
 the specified address on the given protocol.  The the number of the system
 error that cause the problem is given in the message.
-</p></dd><dt><a name="ASIODNS_UNKORIGIN"></a><span class="term">ASIODNS_UNKORIGIN unknown origin for ASIO error code %1 (protocol: %2, address %3)</span></dt><dd><p>
-This message should not appear and indicates an internal error if it does.
-Please enter a bug report.
-</p></dd><dt><a name="ASIODNS_UNKRESULT"></a><span class="term">ASIODNS_UNKRESULT unknown result (%1) when IOFetch::stop() was executed for I/O to %2(%3)</span></dt><dd><p>
-The termination method of the resolver's upstream fetch class was called with
-an unknown result code (which is given in the message).  This message should
-not appear and may indicate an internal error.  Please enter a bug report.
+</p></dd><dt><a name="ASIODNS_UNKNOWN_ORIGIN"></a><span class="term">ASIODNS_UNKNOWN_ORIGIN unknown origin for ASIO error code %1 (protocol: %2, address %3)</span></dt><dd><p>
+An internal consistency check on the origin of a message from the
+asynchronous I/O module failed. This may indicate an internal error;
+please submit a bug report.
+</p></dd><dt><a name="ASIODNS_UNKNOWN_RESULT"></a><span class="term">ASIODNS_UNKNOWN_RESULT unknown result (%1) when IOFetch::stop() was executed for I/O to %2(%3)</span></dt><dd><p>
+An internal error indicating that the termination method of the resolver's
+upstream fetch class was called with an unknown result code (which is
+given in the message).  Please submit a bug report.
+</p></dd><dt><a name="AUTH_AXFR_ERROR"></a><span class="term">AUTH_AXFR_ERROR error handling AXFR request: %1</span></dt><dd><p>
+This is a debug message produced by the authoritative server when it
+has encountered an error processing an AXFR request. The message gives
+the reason for the error, and the server will return a SERVFAIL code to
+the sender.
+</p></dd><dt><a name="AUTH_AXFR_UDP"></a><span class="term">AUTH_AXFR_UDP AXFR query received over UDP</span></dt><dd><p>
+This is a debug message output when the authoritative server has received
+an AXFR query over UDP. Use of UDP for AXFRs is not permitted by the
+protocol, so the server will return a FORMERR error to the sender.
+</p></dd><dt><a name="AUTH_COMMAND_FAILED"></a><span class="term">AUTH_COMMAND_FAILED execution of command channel instruction '%1' failed: %2</span></dt><dd><p>
+Execution of the specified command by the authoritative server failed. The
+message contains the reason for the failure.
+</p></dd><dt><a name="AUTH_CONFIG_CHANNEL_CREATED"></a><span class="term">AUTH_CONFIG_CHANNEL_CREATED configuration session channel created</span></dt><dd><p>
+This is a debug message indicating that authoritative server has created
+the channel to the configuration manager.  It is issued during server
+startup is an indication that the initialization is proceeding normally.
+</p></dd><dt><a name="AUTH_CONFIG_CHANNEL_ESTABLISHED"></a><span class="term">AUTH_CONFIG_CHANNEL_ESTABLISHED configuration session channel established</span></dt><dd><p>
+This is a debug message indicating that authoritative server
+has established communication the configuration manager over the
+previously-created channel. It is issued during server startup is an
+indication that the initialization is proceeding normally.
+</p></dd><dt><a name="AUTH_CONFIG_CHANNEL_STARTED"></a><span class="term">AUTH_CONFIG_CHANNEL_STARTED configuration session channel started</span></dt><dd><p>
+This is a debug message, issued when the authoritative server has
+posted a request to be notified when new configuration information is
+available. It is issued during server startup is an indication that
+the initialization is proceeding normally.
+</p></dd><dt><a name="AUTH_CONFIG_LOAD_FAIL"></a><span class="term">AUTH_CONFIG_LOAD_FAIL load of configuration failed: %1</span></dt><dd><p>
+An attempt to configure the server with information from the configuration
+database during the startup sequence has failed. (The reason for
+the failure is given in the message.) The server will continue its
+initialization although it may not be configured in the desired way.
+</p></dd><dt><a name="AUTH_CONFIG_UPDATE_FAIL"></a><span class="term">AUTH_CONFIG_UPDATE_FAIL update of configuration failed: %1</span></dt><dd><p>
+At attempt to update the configuration the server with information
+from the configuration database has failed, the reason being given in
+the message.
+</p></dd><dt><a name="AUTH_DATA_SOURCE"></a><span class="term">AUTH_DATA_SOURCE data source database file: %1</span></dt><dd><p>
+This is a debug message produced by the authoritative server when it accesses a
+datebase data source, listing the file that is being accessed.
+</p></dd><dt><a name="AUTH_DNS_SERVICES_CREATED"></a><span class="term">AUTH_DNS_SERVICES_CREATED DNS services created</span></dt><dd><p>
+This is a debug message indicating that the component that will handling
+incoming queries for the authoritiative server (DNSServices) has been
+successfully created. It is issued during server startup is an indication
+that the initialization is proceeding normally.
+</p></dd><dt><a name="AUTH_HEADER_PARSE_FAIL"></a><span class="term">AUTH_HEADER_PARSE_FAIL unable to parse header in received DNS packet: %1</span></dt><dd><p>
+This is a debug message, generated by the authoritative server when an
+attempt to parse the header of a received DNS packet has failed. (The
+reason for the failure is given in the message.) The server will drop the
+packet.
+</p></dd><dt><a name="AUTH_LOAD_TSIG"></a><span class="term">AUTH_LOAD_TSIG loading TSIG keys</span></dt><dd><p>
+This is a debug message indicating that the authoritiative server
+has requested the keyring holding TSIG keys from the configuration
+database. It is issued during server startup is an indication that the
+initialization is proceeding normally.
+</p></dd><dt><a name="AUTH_LOAD_ZONE"></a><span class="term">AUTH_LOAD_ZONE loaded zone %1/%2</span></dt><dd><p>
+This debug message is issued during the processing of the 'loadzone' command
+when the authoritative server has successfully loaded the named zone of the
+named class.
+</p></dd><dt><a name="AUTH_MEM_DATASRC_DISABLED"></a><span class="term">AUTH_MEM_DATASRC_DISABLED memory data source is disabled for class %1</span></dt><dd><p>
+This is a debug message reporting that the authoritative server has
+discovered that the memory data source is disabled for the given class.
+</p></dd><dt><a name="AUTH_MEM_DATASRC_ENABLED"></a><span class="term">AUTH_MEM_DATASRC_ENABLED memory data source is enabled for class %1</span></dt><dd><p>
+This is a debug message reporting that the authoritative server has
+discovered that the memory data source is enabled for the given class.
+</p></dd><dt><a name="AUTH_NOTIFY_QUESTIONS"></a><span class="term">AUTH_NOTIFY_QUESTIONS invalid number of questions (%1) in incoming NOTIFY</span></dt><dd><p>
+This debug message is logged by the authoritative server when it receives
+a NOTIFY packet that contains zero or more than one question. (A valid
+NOTIFY packet contains one question.) The server will return a FORMERR
+error to the sender.
+</p></dd><dt><a name="AUTH_NOTIFY_RRTYPE"></a><span class="term">AUTH_NOTIFY_RRTYPE invalid question RR type (%1) in incoming NOTIFY</span></dt><dd><p>
+This debug message is logged by the authoritative server when it receives
+a NOTIFY packet that an RR type of something other than SOA in the
+question section. (The RR type received is included in the message.) The
+server will return a FORMERR error to the sender.
+</p></dd><dt><a name="AUTH_NO_STATS_SESSION"></a><span class="term">AUTH_NO_STATS_SESSION session interface for statistics is not available</span></dt><dd><p>
+The authoritative server had no session with the statistics module at the
+time it attempted to send it data: the attempt has been abandoned. This
+could be an error in configuration.
+</p></dd><dt><a name="AUTH_NO_XFRIN"></a><span class="term">AUTH_NO_XFRIN received NOTIFY but XFRIN session is not running</span></dt><dd><p>
+This is a debug message produced by the authoritative server when it receives
+a NOTIFY packet but the XFRIN process is not running. The packet will be
+dropped and nothing returned to the sender.
+</p></dd><dt><a name="AUTH_PACKET_PARSE_ERROR"></a><span class="term">AUTH_PACKET_PARSE_ERROR unable to parse received DNS packet: %1</span></dt><dd><p>
+This is a debug message, generated by the authoritative server when an
+attempt to parse a received DNS packet has failed due to something other
+than a protocol error. The reason for the failure is given in the message;
+the server will return a SERVFAIL error code to the sender.
+</p></dd><dt><a name="AUTH_PACKET_PROTOCOL_ERROR"></a><span class="term">AUTH_PACKET_PROTOCOL_ERROR DNS packet protocol error: %1. Returning %2</span></dt><dd><p>
+This is a debug message, generated by the authoritative server when an
+attempt to parse a received DNS packet has failed due to a protocol error.
+The reason for the failure is given in the message, as is the error code
+that will be returned to the sender.
+</p></dd><dt><a name="AUTH_PACKET_RECEIVED"></a><span class="term">AUTH_PACKET_RECEIVED message received:\n%1</span></dt><dd><p>
+This is a debug message output by the authoritative server when it
+receives a valid DNS packet.
+</p><p>
+Note: This message includes the packet received, rendered in the form of
+multiple lines of text. For this reason, it is suggested that this log message
+not be routed to the syslog file, where the multiple lines could confuse
+programs that expect a format of one message per line.
+</p></dd><dt><a name="AUTH_PROCESS_FAIL"></a><span class="term">AUTH_PROCESS_FAIL message processing failure: %1</span></dt><dd><p>
+This message is generated by the authoritative server when it has
+encountered an internal error whilst processing a received packet:
+the cause of the error is included in the message.
+</p><p>
+The server will return a SERVFAIL error code to the sender of the packet.
+However, this message indicates a potential error in the server.
+Please open a bug ticket for this issue.
+</p></dd><dt><a name="AUTH_RECEIVED_COMMAND"></a><span class="term">AUTH_RECEIVED_COMMAND command '%1' received</span></dt><dd><p>
+This is a debug message issued when the authoritative server has received
+a command on the command channel.
+</p></dd><dt><a name="AUTH_RECEIVED_SENDSTATS"></a><span class="term">AUTH_RECEIVED_SENDSTATS command 'sendstats' received</span></dt><dd><p>
+This is a debug message issued when the authoritative server has received
+a command from the statistics module to send it data. The 'sendstats'
+command is handled differently to other commands, which is why the debug
+message associated with it has its own code.
+</p></dd><dt><a name="AUTH_RESPONSE_RECEIVED"></a><span class="term">AUTH_RESPONSE_RECEIVED received response message, ignoring</span></dt><dd><p>
+This is a debug message, this is output if the authoritative server
+receives a DNS packet with the QR bit set, i.e. a DNS response. The
+server ignores the packet as it only responds to question packets.
+</p></dd><dt><a name="AUTH_SEND_ERROR_RESPONSE"></a><span class="term">AUTH_SEND_ERROR_RESPONSE sending an error response (%1 bytes):\n%2</span></dt><dd><p>
+This is a debug message recording that the authoritative server is sending
+an error response to the originator of the query. A previous message will
+have recorded details of the failure.
+</p><p>
+Note: This message includes the packet sent, rendered in the form of
+multiple lines of text. For this reason, it is suggested that this log message
+not be routed to the syslog file, where the multiple lines could confuse
+programs that expect a format of one message per line.
+</p></dd><dt><a name="AUTH_SEND_NORMAL_RESPONSE"></a><span class="term">AUTH_SEND_NORMAL_RESPONSE sending an error response (%1 bytes):\n%2</span></dt><dd><p>
+This is a debug message recording that the authoritative server is sending
+a response to the originator of a query.
+</p><p>
+Note: This message includes the packet sent, rendered in the form of
+multiple lines of text. For this reason, it is suggested that this log message
+not be routed to the syslog file, where the multiple lines could confuse
+programs that expect a format of one message per line.
+</p></dd><dt><a name="AUTH_SERVER_CREATED"></a><span class="term">AUTH_SERVER_CREATED server created</span></dt><dd><p>
+An informational message indicating that the authoritative server process has
+been created and is initializing. The AUTH_SERVER_STARTED message will be
+output when initialization has successfully completed and the server starts
+accepting queries.
+</p></dd><dt><a name="AUTH_SERVER_FAILED"></a><span class="term">AUTH_SERVER_FAILED server failed: %1</span></dt><dd><p>
+The authoritative server has encountered a fatal error and is terminating. The
+reason for the failure is included in the message.
+</p></dd><dt><a name="AUTH_SERVER_STARTED"></a><span class="term">AUTH_SERVER_STARTED server started</span></dt><dd><p>
+Initialization of the authoritative server has completed successfully
+and it is entering the main loop, waiting for queries to arrive.
+</p></dd><dt><a name="AUTH_SQLITE3"></a><span class="term">AUTH_SQLITE3 nothing to do for loading sqlite3</span></dt><dd><p>
+This is a debug message indicating that the authoritative server has
+found that the data source it is loading is an SQLite3 data source,
+so no further validation is needed.
+</p></dd><dt><a name="AUTH_STATS_CHANNEL_CREATED"></a><span class="term">AUTH_STATS_CHANNEL_CREATED STATS session channel created</span></dt><dd><p>
+This is a debug message indicating that the authoritative server has
+created a channel to the statistics process.  It is issued during server
+startup is an indication that the initialization is proceeding normally.
+</p></dd><dt><a name="AUTH_STATS_CHANNEL_ESTABLISHED"></a><span class="term">AUTH_STATS_CHANNEL_ESTABLISHED STATS session channel established</span></dt><dd><p>
+This is a debug message indicating that the authoritative server
+has established communication over the previously created statistics
+channel.  It is issued during server startup is an indication that the
+initialization is proceeding normally.
+</p></dd><dt><a name="AUTH_STATS_COMMS"></a><span class="term">AUTH_STATS_COMMS communication error in sending statistics data: %1</span></dt><dd><p>
+An error was encountered when the authoritiative server tried to send data
+to the statistics daemon. The message includes additional information
+describing the reason for the failure.
+</p></dd><dt><a name="AUTH_STATS_TIMEOUT"></a><span class="term">AUTH_STATS_TIMEOUT timeout while sending statistics data: %1</span></dt><dd><p>
+The authoritative server sent data to the statistics daemon but received
+no acknowledgement within the specified time. The message includes
+additional information describing the reason for the failure.
+</p></dd><dt><a name="AUTH_STATS_TIMER_DISABLED"></a><span class="term">AUTH_STATS_TIMER_DISABLED statistics timer has been disabled</span></dt><dd><p>
+This is a debug message indicating that the statistics timer has been
+disabled in the authoritative server and no statistics information is
+being produced.
+</p></dd><dt><a name="AUTH_STATS_TIMER_SET"></a><span class="term">AUTH_STATS_TIMER_SET statistics timer set to %1 second(s)</span></dt><dd><p>
+This is a debug message indicating that the statistics timer has been
+enabled and that the authoritative server will produce statistics data
+at the specified interval.
+</p></dd><dt><a name="AUTH_UNSUPPORTED_OPCODE"></a><span class="term">AUTH_UNSUPPORTED_OPCODE unsupported opcode: %1</span></dt><dd><p>
+This is a debug message, produced when a received DNS packet being
+processed by the authoritative server has been found to contain an
+unsupported opcode. (The opcode is included in the message.) The server
+will return an error code of NOTIMPL to the sender.
+</p></dd><dt><a name="AUTH_XFRIN_CHANNEL_CREATED"></a><span class="term">AUTH_XFRIN_CHANNEL_CREATED XFRIN session channel created</span></dt><dd><p>
+This is a debug message indicating that the authoritative server has
+created a channel to the XFRIN (Transfer-in) process.  It is issued
+during server startup is an indication that the initialization is
+proceeding normally.
+</p></dd><dt><a name="AUTH_XFRIN_CHANNEL_ESTABLISHED"></a><span class="term">AUTH_XFRIN_CHANNEL_ESTABLISHED XFRIN session channel established</span></dt><dd><p>
+This is a debug message indicating that the authoritative server has
+established communication over the previously-created channel to the
+XFRIN (Transfer-in) process.  It is issued during server startup is an
+indication that the initialization is proceeding normally.
+</p></dd><dt><a name="AUTH_ZONEMGR_COMMS"></a><span class="term">AUTH_ZONEMGR_COMMS error communicating with zone manager: %1</span></dt><dd><p>
+This is a debug message output during the processing of a NOTIFY request.
+An error (listed in the message) has been encountered whilst communicating
+with the zone manager. The NOTIFY request will not be honored.
+</p></dd><dt><a name="AUTH_ZONEMGR_ERROR"></a><span class="term">AUTH_ZONEMGR_ERROR received error response from zone manager: %1</span></dt><dd><p>
+This is a debug message output during the processing of a NOTIFY
+request. The zone manager component has been informed of the request,
+but has returned an error response (which is included in the message). The
+NOTIFY request will not be honored.
+</p></dd><dt><a name="CC_ASYNC_READ_FAILED"></a><span class="term">CC_ASYNC_READ_FAILED asynchronous read failed</span></dt><dd><p>
+This marks a low level error, we tried to read data from the message queue
+daemon asynchronously, but the ASIO library returned an error.
+</p></dd><dt><a name="CC_CONN_ERROR"></a><span class="term">CC_CONN_ERROR error connecting to message queue (%1)</span></dt><dd><p>
+It is impossible to reach the message queue daemon for the reason given. It
+is unlikely there'll be reason for whatever program this currently is to
+continue running, as the communication with the rest of BIND 10 is vital
+for the components.
+</p></dd><dt><a name="CC_DISCONNECT"></a><span class="term">CC_DISCONNECT disconnecting from message queue daemon</span></dt><dd><p>
+The library is disconnecting from the message queue daemon. This debug message
+indicates that the program is trying to shut down gracefully.
+</p></dd><dt><a name="CC_ESTABLISH"></a><span class="term">CC_ESTABLISH trying to establish connection with message queue daemon at %1</span></dt><dd><p>
+This debug message indicates that the command channel library is about to
+connect to the message queue daemon, which should be listening on the UNIX-domain
+socket listed in the output.
+</p></dd><dt><a name="CC_ESTABLISHED"></a><span class="term">CC_ESTABLISHED successfully connected to message queue daemon</span></dt><dd><p>
+This debug message indicates that the connection was successfully made, this
+should follow CC_ESTABLISH.
+</p></dd><dt><a name="CC_GROUP_RECEIVE"></a><span class="term">CC_GROUP_RECEIVE trying to receive a message</span></dt><dd><p>
+Debug message, noting that a message is expected to come over the command
+channel.
+</p></dd><dt><a name="CC_GROUP_RECEIVED"></a><span class="term">CC_GROUP_RECEIVED message arrived ('%1', '%2')</span></dt><dd><p>
+Debug message, noting that we successfully received a message (its envelope and
+payload listed). This follows CC_GROUP_RECEIVE, but might happen some time
+later, depending if we waited for it or just polled.
+</p></dd><dt><a name="CC_GROUP_SEND"></a><span class="term">CC_GROUP_SEND sending message '%1' to group '%2'</span></dt><dd><p>
+Debug message, we're about to send a message over the command channel.
+</p></dd><dt><a name="CC_INVALID_LENGTHS"></a><span class="term">CC_INVALID_LENGTHS invalid length parameters (%1, %2)</span></dt><dd><p>
+This happens when garbage comes over the command channel or some kind of
+confusion happens in the program. The data received from the socket make no
+sense if we interpret it as lengths of message. The first one is total length
+of message, the second length of the header. The header and it's length
+(2 bytes) is counted in the total length.
+</p></dd><dt><a name="CC_LENGTH_NOT_READY"></a><span class="term">CC_LENGTH_NOT_READY length not ready</span></dt><dd><p>
+There should be data representing length of message on the socket, but it
+is not there.
+</p></dd><dt><a name="CC_NO_MESSAGE"></a><span class="term">CC_NO_MESSAGE no message ready to be received yet</span></dt><dd><p>
+The program polled for incoming messages, but there was no message waiting.
+This is a debug message which may happen only after CC_GROUP_RECEIVE.
+</p></dd><dt><a name="CC_NO_MSGQ"></a><span class="term">CC_NO_MSGQ unable to connect to message queue (%1)</span></dt><dd><p>
+It isn't possible to connect to the message queue daemon, for reason listed.
+It is unlikely any program will be able continue without the communication.
+</p></dd><dt><a name="CC_READ_ERROR"></a><span class="term">CC_READ_ERROR error reading data from command channel (%1)</span></dt><dd><p>
+A low level error happened when the library tried to read data from the
+command channel socket. The reason is listed.
+</p></dd><dt><a name="CC_READ_EXCEPTION"></a><span class="term">CC_READ_EXCEPTION error reading data from command channel (%1)</span></dt><dd><p>
+We received an exception while trying to read data from the command
+channel socket. The reason is listed.
+</p></dd><dt><a name="CC_REPLY"></a><span class="term">CC_REPLY replying to message from '%1' with '%2'</span></dt><dd><p>
+Debug message, noting we're sending a response to the original message
+with the given envelope.
+</p></dd><dt><a name="CC_SET_TIMEOUT"></a><span class="term">CC_SET_TIMEOUT setting timeout to %1ms</span></dt><dd><p>
+Debug message. A timeout for which the program is willing to wait for a reply
+is being set.
+</p></dd><dt><a name="CC_START_READ"></a><span class="term">CC_START_READ starting asynchronous read</span></dt><dd><p>
+Debug message. From now on, when a message (or command) comes, it'll wake the
+program and the library will automatically pass it over to correct place.
+</p></dd><dt><a name="CC_SUBSCRIBE"></a><span class="term">CC_SUBSCRIBE subscribing to communication group %1</span></dt><dd><p>
+Debug message. The program wants to receive messages addressed to this group.
+</p></dd><dt><a name="CC_TIMEOUT"></a><span class="term">CC_TIMEOUT timeout reading data from command channel</span></dt><dd><p>
+The program waited too long for data from the command channel (usually when it
+sent a query to different program and it didn't answer for whatever reason).
+</p></dd><dt><a name="CC_UNSUBSCRIBE"></a><span class="term">CC_UNSUBSCRIBE unsubscribing from communication group %1</span></dt><dd><p>
+Debug message. The program no longer wants to receive messages addressed to
+this group.
+</p></dd><dt><a name="CC_WRITE_ERROR"></a><span class="term">CC_WRITE_ERROR error writing data to command channel (%1)</span></dt><dd><p>
+A low level error happened when the library tried to write data to the command
+channel socket.
+</p></dd><dt><a name="CC_ZERO_LENGTH"></a><span class="term">CC_ZERO_LENGTH invalid message length (0)</span></dt><dd><p>
+The library received a message length being zero, which makes no sense, since
+all messages must contain at least the envelope.
+</p></dd><dt><a name="CFGMGR_AUTOMATIC_CONFIG_DATABASE_UPDATE"></a><span class="term">CFGMGR_AUTOMATIC_CONFIG_DATABASE_UPDATE Updating configuration database from version %1 to %2</span></dt><dd><p>
+An older version of the configuration database has been found, from which
+there was an automatic upgrade path to the current version. These changes
+are now applied, and no action from the administrator is necessary.
+</p></dd><dt><a name="CFGMGR_CC_SESSION_ERROR"></a><span class="term">CFGMGR_CC_SESSION_ERROR Error connecting to command channel: %1</span></dt><dd><p>
+The configuration manager daemon was unable to connect to the messaging
+system. The most likely cause is that msgq is not running.
+</p></dd><dt><a name="CFGMGR_DATA_READ_ERROR"></a><span class="term">CFGMGR_DATA_READ_ERROR error reading configuration database from disk: %1</span></dt><dd><p>
+There was a problem reading the persistent configuration data as stored
+on disk. The file may be corrupted, or it is of a version from where
+there is no automatic upgrade path. The file needs to be repaired or
+removed. The configuration manager daemon will now shut down.
+</p></dd><dt><a name="CFGMGR_IOERROR_WHILE_WRITING_CONFIGURATION"></a><span class="term">CFGMGR_IOERROR_WHILE_WRITING_CONFIGURATION Unable to write configuration file; configuration not stored: %1</span></dt><dd><p>
+There was an IO error from the system while the configuration manager
+was trying to write the configuration database to disk. The specific
+error is given. The most likely cause is that the directory where
+the file is stored does not exist, or is not writable. The updated
+configuration is not stored.
+</p></dd><dt><a name="CFGMGR_OSERROR_WHILE_WRITING_CONFIGURATION"></a><span class="term">CFGMGR_OSERROR_WHILE_WRITING_CONFIGURATION Unable to write configuration file; configuration not stored: %1</span></dt><dd><p>
+There was an OS error from the system while the configuration manager
+was trying to write the configuration database to disk. The specific
+error is given. The most likely cause is that the system does not have
+write access to the configuration database file. The updated
+configuration is not stored.
+</p></dd><dt><a name="CFGMGR_STOPPED_BY_KEYBOARD"></a><span class="term">CFGMGR_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down</span></dt><dd><p>
+There was a keyboard interrupt signal to stop the cfgmgr daemon. The
+daemon will now shut down.
 </p></dd><dt><a name="CONFIG_CCSESSION_MSG"></a><span class="term">CONFIG_CCSESSION_MSG error in CC session message: %1</span></dt><dd><p>
 There was a problem with an incoming message on the command and control
 channel. The message does not appear to be a valid command, and is
@@ -65,33 +364,36 @@ missing a required element or contains an unknown data format. This
 most likely means that another BIND10 module is sending a bad message.
 The message itself is ignored by this module.
 </p></dd><dt><a name="CONFIG_CCSESSION_MSG_INTERNAL"></a><span class="term">CONFIG_CCSESSION_MSG_INTERNAL error handling CC session message: %1</span></dt><dd><p>
-There was an internal problem handling an incoming message on the
-command and control channel. An unexpected exception was thrown. This
-most likely points to an internal inconsistency in the module code. The
-exception message is appended to the log error, and the module will
-continue to run, but will not send back an answer.
-</p></dd><dt><a name="CONFIG_FOPEN_ERR"></a><span class="term">CONFIG_FOPEN_ERR error opening %1: %2</span></dt><dd><p>
-There was an error opening the given file.
-</p></dd><dt><a name="CONFIG_JSON_PARSE"></a><span class="term">CONFIG_JSON_PARSE JSON parse error in %1: %2</span></dt><dd><p>
-There was a parse error in the JSON file. The given file does not appear
-to be in valid JSON format. Please verify that the filename is correct
-and that the contents are valid JSON.
-</p></dd><dt><a name="CONFIG_MANAGER_CONFIG"></a><span class="term">CONFIG_MANAGER_CONFIG error getting configuration from cfgmgr: %1</span></dt><dd><p>
+There was an internal problem handling an incoming message on the command
+and control channel. An unexpected exception was thrown, details of
+which are appended to the message. The module will continue to run,
+but will not send back an answer.
+</p><p>
+The most likely cause of this error is a programming error.  Please raise
+a bug report.
+</p></dd><dt><a name="CONFIG_GET_FAIL"></a><span class="term">CONFIG_GET_FAIL error getting configuration from cfgmgr: %1</span></dt><dd><p>
 The configuration manager returned an error when this module requested
 the configuration. The full error message answer from the configuration
 manager is appended to the log error. The most likely cause is that
 the module is of a different (command specification) version than the
 running configuration manager.
-</p></dd><dt><a name="CONFIG_MANAGER_MOD_SPEC"></a><span class="term">CONFIG_MANAGER_MOD_SPEC module specification not accepted by cfgmgr: %1</span></dt><dd><p>
-The module specification file for this module was rejected by the
-configuration manager. The full error message answer from the
-configuration manager is appended to the log error. The most likely
-cause is that the module is of a different (specification file) version
-than the running configuration manager.
-</p></dd><dt><a name="CONFIG_MODULE_SPEC"></a><span class="term">CONFIG_MODULE_SPEC module specification error in %1: %2</span></dt><dd><p>
-The given file does not appear to be a valid specification file. Please
-verify that the filename is correct and that its contents are a valid
-BIND10 module specification.
+</p></dd><dt><a name="CONFIG_JSON_PARSE"></a><span class="term">CONFIG_JSON_PARSE JSON parse error in %1: %2</span></dt><dd><p>
+There was an error parsing the JSON file. The given file does not appear
+to be in valid JSON format. Please verify that the filename is correct
+and that the contents are valid JSON.
+</p></dd><dt><a name="CONFIG_MOD_SPEC_FORMAT"></a><span class="term">CONFIG_MOD_SPEC_FORMAT module specification error in %1: %2</span></dt><dd><p>
+The given file does not appear to be a valid specification file: details
+are included in the message. Please verify that the filename is correct
+and that its contents are a valid BIND10 module specification.
+</p></dd><dt><a name="CONFIG_MOD_SPEC_REJECT"></a><span class="term">CONFIG_MOD_SPEC_REJECT module specification rejected by cfgmgr: %1</span></dt><dd><p>
+The specification file for this module was rejected by the configuration
+manager. The full error message answer from the configuration manager is
+appended to the log error. The most likely cause is that the module is of
+a different (specification file) version than the running configuration
+manager.
+</p></dd><dt><a name="CONFIG_OPEN_FAIL"></a><span class="term">CONFIG_OPEN_FAIL error opening %1: %2</span></dt><dd><p>
+There was an error opening the given file. The reason for the failure
+is included in the message.
 </p></dd><dt><a name="DATASRC_CACHE_CREATE"></a><span class="term">DATASRC_CACHE_CREATE creating the hotspot cache</span></dt><dd><p>
 Debug information that the hotspot cache was created at startup.
 </p></dd><dt><a name="DATASRC_CACHE_DESTROY"></a><span class="term">DATASRC_CACHE_DESTROY destroying the hotspot cache</span></dt><dd><p>
@@ -146,7 +448,7 @@ Debug information. The requested domain is an alias to a different domain,
 returning the CNAME instead.
 </p></dd><dt><a name="DATASRC_MEM_CNAME_COEXIST"></a><span class="term">DATASRC_MEM_CNAME_COEXIST can't add data to CNAME in domain '%1'</span></dt><dd><p>
 This is the same problem as in MEM_CNAME_TO_NONEMPTY, but it happened the
-other way around -- adding some outher data to CNAME.
+other way around -- adding some other data to CNAME.
 </p></dd><dt><a name="DATASRC_MEM_CNAME_TO_NONEMPTY"></a><span class="term">DATASRC_MEM_CNAME_TO_NONEMPTY can't add CNAME to domain with other data in '%1'</span></dt><dd><p>
 Someone or something tried to add a CNAME into a domain that already contains
 some other data. But the protocol forbids coexistence of CNAME with anything
@@ -164,7 +466,7 @@ encountered on the way.  This may lead to redirection to a different domain and
 stop the search.
 </p></dd><dt><a name="DATASRC_MEM_DNAME_FOUND"></a><span class="term">DATASRC_MEM_DNAME_FOUND DNAME found at '%1'</span></dt><dd><p>
 Debug information. A DNAME was found instead of the requested information.
-</p></dd><dt><a name="DATASRC_MEM_DNAME_NS"></a><span class="term">DATASRC_MEM_DNAME_NS dNAME and NS can't coexist in non-apex domain '%1'</span></dt><dd><p>
+</p></dd><dt><a name="DATASRC_MEM_DNAME_NS"></a><span class="term">DATASRC_MEM_DNAME_NS DNAME and NS can't coexist in non-apex domain '%1'</span></dt><dd><p>
 It was requested for DNAME and NS records to be put into the same domain
 which is not the apex (the top of the zone). This is forbidden by RFC
 2672, section 3. This indicates a problem with provided data.
@@ -222,12 +524,12 @@ destroyed.
 Debug information. A domain above wildcard was reached, but there's something
 below the requested domain. Therefore the wildcard doesn't apply here.  This
 behaviour is specified by RFC 1034, section 4.3.3
-</p></dd><dt><a name="DATASRC_MEM_WILDCARD_DNAME"></a><span class="term">DATASRC_MEM_WILDCARD_DNAME dNAME record in wildcard domain '%1'</span></dt><dd><p>
+</p></dd><dt><a name="DATASRC_MEM_WILDCARD_DNAME"></a><span class="term">DATASRC_MEM_WILDCARD_DNAME DNAME record in wildcard domain '%1'</span></dt><dd><p>
 The software refuses to load DNAME records into a wildcard domain.  It isn't
 explicitly forbidden, but the protocol is ambiguous about how this should
 behave and BIND 9 refuses that as well. Please describe your intention using
 different tools.
-</p></dd><dt><a name="DATASRC_MEM_WILDCARD_NS"></a><span class="term">DATASRC_MEM_WILDCARD_NS nS record in wildcard domain '%1'</span></dt><dd><p>
+</p></dd><dt><a name="DATASRC_MEM_WILDCARD_NS"></a><span class="term">DATASRC_MEM_WILDCARD_NS NS record in wildcard domain '%1'</span></dt><dd><p>
 The software refuses to load NS records into a wildcard domain.  It isn't
 explicitly forbidden, but the protocol is ambiguous about how this should
 behave and BIND 9 refuses that as well. Please describe your intention using
@@ -269,7 +571,7 @@ response message.
 </p></dd><dt><a name="DATASRC_QUERY_DELEGATION"></a><span class="term">DATASRC_QUERY_DELEGATION looking for delegation on the path to '%1'</span></dt><dd><p>
 Debug information. The software is trying to identify delegation points on the
 way down to the given domain.
-</p></dd><dt><a name="DATASRC_QUERY_EMPTY_CNAME"></a><span class="term">DATASRC_QUERY_EMPTY_CNAME cNAME at '%1' is empty</span></dt><dd><p>
+</p></dd><dt><a name="DATASRC_QUERY_EMPTY_CNAME"></a><span class="term">DATASRC_QUERY_EMPTY_CNAME CNAME at '%1' is empty</span></dt><dd><p>
 There was an CNAME and it was being followed. But it contains no records,
 so there's nowhere to go. There will be no answer. This indicates a problem
 with supplied data.
@@ -363,7 +665,7 @@ DNAMEs will be synthesized.
 </p></dd><dt><a name="DATASRC_QUERY_TASK_FAIL"></a><span class="term">DATASRC_QUERY_TASK_FAIL task failed with %1</span></dt><dd><p>
 The query subtask failed. The reason should have been reported by the subtask
 already. The code is 1 for error, 2 for not implemented.
-</p></dd><dt><a name="DATASRC_QUERY_TOO_MANY_CNAMES"></a><span class="term">DATASRC_QUERY_TOO_MANY_CNAMES cNAME chain limit exceeded at '%1'</span></dt><dd><p>
+</p></dd><dt><a name="DATASRC_QUERY_TOO_MANY_CNAMES"></a><span class="term">DATASRC_QUERY_TOO_MANY_CNAMES CNAME chain limit exceeded at '%1'</span></dt><dd><p>
 A CNAME led to another CNAME and it led to another, and so on. After 16
 CNAMEs, the software gave up. Long CNAME chains are discouraged, and this
 might possibly be a loop as well. Note that some of the CNAMEs might have
@@ -385,15 +687,15 @@ While processing a wildcard, a referral was met. But it wasn't possible to get
 enough information for it.  The code is 1 for error, 2 for not implemented.
 </p></dd><dt><a name="DATASRC_SQLITE_CLOSE"></a><span class="term">DATASRC_SQLITE_CLOSE closing SQLite database</span></dt><dd><p>
 Debug information. The SQLite data source is closing the database file.
-</p></dd><dt><a name="DATASRC_SQLITE_CREATE"></a><span class="term">DATASRC_SQLITE_CREATE sQLite data source created</span></dt><dd><p>
+</p></dd><dt><a name="DATASRC_SQLITE_CREATE"></a><span class="term">DATASRC_SQLITE_CREATE SQLite data source created</span></dt><dd><p>
 Debug information. An instance of SQLite data source is being created.
-</p></dd><dt><a name="DATASRC_SQLITE_DESTROY"></a><span class="term">DATASRC_SQLITE_DESTROY sQLite data source destroyed</span></dt><dd><p>
+</p></dd><dt><a name="DATASRC_SQLITE_DESTROY"></a><span class="term">DATASRC_SQLITE_DESTROY SQLite data source destroyed</span></dt><dd><p>
 Debug information. An instance of SQLite data source is being destroyed.
 </p></dd><dt><a name="DATASRC_SQLITE_ENCLOSURE"></a><span class="term">DATASRC_SQLITE_ENCLOSURE looking for zone containing '%1'</span></dt><dd><p>
-Debug information. The SQLite data source is trying to identify, which zone
+Debug information. The SQLite data source is trying to identify which zone
 should hold this domain.
 </p></dd><dt><a name="DATASRC_SQLITE_ENCLOSURE_NOTFOUND"></a><span class="term">DATASRC_SQLITE_ENCLOSURE_NOTFOUND no zone contains it</span></dt><dd><p>
-Debug information. The last SQLITE_ENCLOSURE query was unsuccessful, there's
+Debug information. The last SQLITE_ENCLOSURE query was unsuccessful; there's
 no such zone in our data.
 </p></dd><dt><a name="DATASRC_SQLITE_FIND"></a><span class="term">DATASRC_SQLITE_FIND looking for RRset '%1/%2'</span></dt><dd><p>
 Debug information. The SQLite data source is looking up a resource record
@@ -417,7 +719,7 @@ and type in the database.
 Debug information. The SQLite data source is identifying if this domain is
 a referral and where it goes.
 </p></dd><dt><a name="DATASRC_SQLITE_FINDREF_BAD_CLASS"></a><span class="term">DATASRC_SQLITE_FINDREF_BAD_CLASS class mismatch looking for referral ('%1' and '%2')</span></dt><dd><p>
-The SQLite data source was trying to identify, if there's a referral. But
+The SQLite data source was trying to identify if there's a referral. But
 it contains different class than the query was for.
 </p></dd><dt><a name="DATASRC_SQLITE_FIND_BAD_CLASS"></a><span class="term">DATASRC_SQLITE_FIND_BAD_CLASS class mismatch looking for an RRset ('%1' and '%2')</span></dt><dd><p>
 The SQLite data source was looking up an RRset, but the data source contains
@@ -452,142 +754,173 @@ data source.
 </p></dd><dt><a name="DATASRC_UNEXPECTED_QUERY_STATE"></a><span class="term">DATASRC_UNEXPECTED_QUERY_STATE unexpected query state</span></dt><dd><p>
 This indicates a programming error. An internal task of unknown type was
 generated.
-</p></dd><dt><a name="LOGIMPL_ABOVEDBGMAX"></a><span class="term">LOGIMPL_ABOVEDBGMAX debug level of %1 is too high and will be set to the maximum of %2</span></dt><dd><p>
-A message from the underlying logger implementation code, the debug level
-(as set by the string DEBGUGn) is above the maximum allowed value and has
-been reduced to that value.
-</p></dd><dt><a name="LOGIMPL_BADDEBUG"></a><span class="term">LOGIMPL_BADDEBUG debug string is '%1': must be of the form DEBUGn</span></dt><dd><p>
-The string indicating the extended logging level (used by the underlying
-logger implementation code) is not of the stated form.  In particular,
-it starts DEBUG but does not end with an integer.
-</p></dd><dt><a name="LOGIMPL_BELOWDBGMIN"></a><span class="term">LOGIMPL_BELOWDBGMIN debug level of %1 is too low and will be set to the minimum of %2</span></dt><dd><p>
-A message from the underlying logger implementation code, the debug level
-(as set by the string DEBGUGn) is below the minimum allowed value and has
-been increased to that value.
-</p></dd><dt><a name="MSG_BADDESTINATION"></a><span class="term">MSG_BADDESTINATION unrecognized log destination: %1</span></dt><dd><p>
+</p></dd><dt><a name="LOGIMPL_ABOVE_MAX_DEBUG"></a><span class="term">LOGIMPL_ABOVE_MAX_DEBUG debug level of %1 is too high and will be set to the maximum of %2</span></dt><dd><p>
+A message from the interface to the underlying logger implementation reporting
+that the debug level (as set by an internally-created string DEBUGn, where n
+is an integer, e.g. DEBUG22) is above the maximum allowed value and has
+been reduced to that value.  The appearance of this message may indicate
+a programming error - please submit a bug report.
+</p></dd><dt><a name="LOGIMPL_BAD_DEBUG_STRING"></a><span class="term">LOGIMPL_BAD_DEBUG_STRING debug string '%1' has invalid format</span></dt><dd><p>
+A message from the interface to the underlying logger implementation
+reporting that an internally-created string used to set the debug level
+is not of the correct format (it should be of the form DEBUGn, where n
+is an integer, e.g. DEBUG22).  The appearance of this message indicates
+a programming error - please submit a bug report.
+</p></dd><dt><a name="LOGIMPL_BELOW_MIN_DEBUG"></a><span class="term">LOGIMPL_BELOW_MIN_DEBUG debug level of %1 is too low and will be set to the minimum of %2</span></dt><dd><p>
+A message from the interface to the underlying logger implementation reporting
+that the debug level (as set by an internally-created string DEBUGn, where n
+is an integer, e.g. DEBUG22) is below the minimum allowed value and has
+been increased to that value.  The appearance of this message may indicate
+a programming error - please submit a bug report.
+</p></dd><dt><a name="LOG_BAD_DESTINATION"></a><span class="term">LOG_BAD_DESTINATION unrecognized log destination: %1</span></dt><dd><p>
 A logger destination value was given that was not recognized. The
 destination should be one of "console", "file", or "syslog".
-</p></dd><dt><a name="MSG_BADSEVERITY"></a><span class="term">MSG_BADSEVERITY unrecognized log severity: %1</span></dt><dd><p>
+</p></dd><dt><a name="LOG_BAD_SEVERITY"></a><span class="term">LOG_BAD_SEVERITY unrecognized log severity: %1</span></dt><dd><p>
 A logger severity value was given that was not recognized. The severity
 should be one of "DEBUG", "INFO", "WARN", "ERROR", or "FATAL".
-</p></dd><dt><a name="MSG_BADSTREAM"></a><span class="term">MSG_BADSTREAM bad log console output stream: %1</span></dt><dd><p>
-A log console output stream was given that was not recognized. The
-output stream should be one of "stdout", or "stderr"
-</p></dd><dt><a name="MSG_DUPLNS"></a><span class="term">MSG_DUPLNS line %1: duplicate $NAMESPACE directive found</span></dt><dd><p>
-When reading a message file, more than one $NAMESPACE directive was found.  In
-this version of the code, such a condition is regarded as an error and the
-read will be abandoned.
-</p></dd><dt><a name="MSG_DUPMSGID"></a><span class="term">MSG_DUPMSGID duplicate message ID (%1) in compiled code</span></dt><dd><p>
-Indicative of a programming error, when it started up, BIND10 detected that
-the given message ID had been registered by one or more modules.  (All message
-IDs should be unique throughout BIND10.)  This has no impact on the operation
-of the server other that erroneous messages may be logged.  (When BIND10 loads
-the message IDs (and their associated text), if a duplicate ID is found it is
-discarded.  However, when the module that supplied the duplicate ID logs that
-particular message, the text supplied by the module that added the original
-ID will be output - something that may bear no relation to the condition being
-logged.
-</p></dd><dt><a name="MSG_IDNOTFND"></a><span class="term">MSG_IDNOTFND could not replace message text for '%1': no such message</span></dt><dd><p>
-During start-up a local message file was read.  A line with the listed
-message identification was found in the file, but the identification is not
-one contained in the compiled-in message dictionary.  Either the message
-identification has been mis-spelled in the file, or the local file was used
-for an earlier version of the software and the message with that
-identification has been removed.
+</p></dd><dt><a name="LOG_BAD_STREAM"></a><span class="term">LOG_BAD_STREAM bad log console output stream: %1</span></dt><dd><p>
+A log console output stream was given that was not recognized. The output
+stream should be one of "stdout", or "stderr"
+</p></dd><dt><a name="LOG_DUPLICATE_MESSAGE_ID"></a><span class="term">LOG_DUPLICATE_MESSAGE_ID duplicate message ID (%1) in compiled code</span></dt><dd><p>
+During start-up, BIND10 detected that the given message identification had
+been defined multiple times in the BIND10 code.
 </p><p>
-This message may appear a number of times in the file, once for every such
-unknown message identification.
-</p></dd><dt><a name="MSG_INVMSGID"></a><span class="term">MSG_INVMSGID line %1: invalid message identification '%2'</span></dt><dd><p>
-The concatenation of the prefix and the message identification is used as
-a symbol in the C++ module; as such it may only contain
-</p></dd><dt><a name="MSG_NOMSGID"></a><span class="term">MSG_NOMSGID line %1: message definition line found without a message ID</span></dt><dd><p>
-Message definition lines are lines starting with a "%".  The rest of the line
-should comprise the message ID and text describing the message.  This error
-indicates the message compiler found a line in the message file comprising
-just the "%" and nothing else.
-</p></dd><dt><a name="MSG_NOMSGTXT"></a><span class="term">MSG_NOMSGTXT line %1: line found containing a message ID ('%2') and no text</span></dt><dd><p>
-Message definition lines are lines starting with a "%".  The rest of the line
-should comprise the message ID and text describing the message.  This error
-is generated when a line is found in the message file that contains the
-leading "%" and the message identification but no text.
-</p></dd><dt><a name="MSG_NSEXTRARG"></a><span class="term">MSG_NSEXTRARG line %1: $NAMESPACE directive has too many arguments</span></dt><dd><p>
-The $NAMESPACE directive takes a single argument, a namespace in which all the
-generated symbol names are placed.  This error is generated when the
-compiler finds a $NAMESPACE directive with more than one argument.
-</p></dd><dt><a name="MSG_NSINVARG"></a><span class="term">MSG_NSINVARG line %1: $NAMESPACE directive has an invalid argument ('%2')</span></dt><dd><p>
-The $NAMESPACE argument should be a valid C++ namespace.  The reader does a
-cursory check on its validity, checking that the characters in the namespace
-are correct.  The error is generated when the reader finds an invalid
-character. (Valid are alphanumeric characters, underscores and colons.)
-</p></dd><dt><a name="MSG_NSNOARG"></a><span class="term">MSG_NSNOARG line %1: no arguments were given to the $NAMESPACE directive</span></dt><dd><p>
-The $NAMESPACE directive takes a single argument, a namespace in which all the
-generated symbol names are placed.  This error is generated when the
-compiler finds a $NAMESPACE directive with no arguments.
-</p></dd><dt><a name="MSG_OPENIN"></a><span class="term">MSG_OPENIN unable to open message file %1 for input: %2</span></dt><dd><p>
-The program was not able to open the specified input message file for the
-reason given.
-</p></dd><dt><a name="MSG_OPENOUT"></a><span class="term">MSG_OPENOUT unable to open %1 for output: %2</span></dt><dd><p>
-The program was not able to open the specified output file for the reason
-given.
-</p></dd><dt><a name="MSG_PRFEXTRARG"></a><span class="term">MSG_PRFEXTRARG line %1: $PREFIX directive has too many arguments</span></dt><dd><p>
-The $PREFIX directive takes a single argument, a prefix to be added to the
-symbol names when a C++ .h file is created.  This error is generated when the
-compiler finds a $PREFIX directive with more than one argument.
-</p></dd><dt><a name="MSG_PRFINVARG"></a><span class="term">MSG_PRFINVARG line %1: $PREFIX directive has an invalid argument ('%2')</span></dt><dd><p>
-The $PREFIX argument is used in a symbol name in a C++ header file.  As such,
-it must adhere to restrictions on C++ symbol names (e.g. may only contain
-alphanumeric characters or underscores, and may nor start with a digit).
-A $PREFIX directive was found with an argument (given in the message) that
-violates those restictions.
-</p></dd><dt><a name="MSG_RDLOCMES"></a><span class="term">MSG_RDLOCMES reading local message file %1</span></dt><dd><p>
-This is an informational message output by BIND10 when it starts to read a
-local message file.  (A local message file may replace the text of one of more
-messages; the ID of the message will not be changed though.)
-</p></dd><dt><a name="MSG_READERR"></a><span class="term">MSG_READERR error reading from message file %1: %2</span></dt><dd><p>
+This has no ill-effects other than the possibility that an erronous
+message may be logged.  However, as it is indicative of a programming
+error, please log a bug report.
+</p></dd><dt><a name="LOG_DUPLICATE_NAMESPACE"></a><span class="term">LOG_DUPLICATE_NAMESPACE line %1: duplicate $NAMESPACE directive found</span></dt><dd><p>
+When reading a message file, more than one $NAMESPACE directive was found.
+Such a condition is regarded as an error and the read will be abandoned.
+</p></dd><dt><a name="LOG_INPUT_OPEN_FAIL"></a><span class="term">LOG_INPUT_OPEN_FAIL unable to open message file %1 for input: %2</span></dt><dd><p>
+The program was not able to open the specified input message file for
+the reason given.
+</p></dd><dt><a name="LOG_INVALID_MESSAGE_ID"></a><span class="term">LOG_INVALID_MESSAGE_ID line %1: invalid message identification '%2'</span></dt><dd><p>
+An invalid message identification (ID) has been found during the read of
+a message file.  Message IDs should comprise only alphanumeric characters
+and the underscore, and should not start with a digit.
+</p></dd><dt><a name="LOG_NAMESPACE_EXTRA_ARGS"></a><span class="term">LOG_NAMESPACE_EXTRA_ARGS line %1: $NAMESPACE directive has too many arguments</span></dt><dd><p>
+The $NAMESPACE directive in a message file takes a single argument, a
+namespace in which all the generated symbol names are placed.  This error
+is generated when the compiler finds a $NAMESPACE directive with more
+than one argument.
+</p></dd><dt><a name="LOG_NAMESPACE_INVALID_ARG"></a><span class="term">LOG_NAMESPACE_INVALID_ARG line %1: $NAMESPACE directive has an invalid argument ('%2')</span></dt><dd><p>
+The $NAMESPACE argument in a message file should be a valid C++ namespace.
+This message is output if the simple check on the syntax of the string
+carried out by the reader fails.
+</p></dd><dt><a name="LOG_NAMESPACE_NO_ARGS"></a><span class="term">LOG_NAMESPACE_NO_ARGS line %1: no arguments were given to the $NAMESPACE directive</span></dt><dd><p>
+The $NAMESPACE directive in a message file takes a single argument,
+a C++ namespace in which all the generated symbol names are placed.
+This error is generated when the compiler finds a $NAMESPACE directive
+with no arguments.
+</p></dd><dt><a name="LOG_NO_MESSAGE_ID"></a><span class="term">LOG_NO_MESSAGE_ID line %1: message definition line found without a message ID</span></dt><dd><p>
+Within a message file, message are defined by lines starting with a "%".
+The rest of the line should comprise the message ID and text describing
+the message.  This error indicates the message compiler found a line in
+the message file comprising just the "%" and nothing else.
+</p></dd><dt><a name="LOG_NO_MESSAGE_TEXT"></a><span class="term">LOG_NO_MESSAGE_TEXT line %1: line found containing a message ID ('%2') and no text</span></dt><dd><p>
+Within a message file, message are defined by lines starting with a "%".
+The rest of the line should comprise the message ID and text describing
+the message.  This error indicates the message compiler found a line
+in the message file comprising just the "%" and message identification,
+but no text.
+</p></dd><dt><a name="LOG_NO_SUCH_MESSAGE"></a><span class="term">LOG_NO_SUCH_MESSAGE could not replace message text for '%1': no such message</span></dt><dd><p>
+During start-up a local message file was read.  A line with the listed
+message identification was found in the file, but the identification is
+not one contained in the compiled-in message dictionary.  This message
+may appear a number of times in the file, once for every such unknown
+message identification.
+</p><p>
+There may be several reasons why this message may appear:
+</p><p>
+- The message ID has been mis-spelled in the local message file.
+</p><p>
+- The program outputting the message may not use that particular message
+(e.g. it originates in a module not used by the program.)
+</p><p>
+- The local file was written for an earlier version of the BIND10 software
+and the later version no longer generates that message.
+</p><p>
+Whatever the reason, there is no impact on the operation of BIND10.
+</p></dd><dt><a name="LOG_OPEN_OUTPUT_FAIL"></a><span class="term">LOG_OPEN_OUTPUT_FAIL unable to open %1 for output: %2</span></dt><dd><p>
+Originating within the logging code, the program was not able to open
+the specified output file for the reason given.
+</p></dd><dt><a name="LOG_PREFIX_EXTRA_ARGS"></a><span class="term">LOG_PREFIX_EXTRA_ARGS line %1: $PREFIX directive has too many arguments</span></dt><dd><p>
+Within a message file, the $PREFIX directive takes a single argument,
+a prefix to be added to the symbol names when a C++ file is created.
+This error is generated when the compiler finds a $PREFIX directive with
+more than one argument.
+</p><p>
+Note: the $PREFIX directive is deprecated and will be removed in a future
+version of BIND10.
+</p></dd><dt><a name="LOG_PREFIX_INVALID_ARG"></a><span class="term">LOG_PREFIX_INVALID_ARG line %1: $PREFIX directive has an invalid argument ('%2')</span></dt><dd><p>
+Within a message file, the $PREFIX directive takes a single argument,
+a prefix to be added to the symbol names when a C++ file is created.
+As such, it must adhere to restrictions on C++ symbol names (e.g. may
+only contain alphanumeric characters or underscores, and may nor start
+with a digit).  A $PREFIX directive was found with an argument (given
+in the message) that violates those restictions.
+</p><p>
+Note: the $PREFIX directive is deprecated and will be removed in a future
+version of BIND10.
+</p></dd><dt><a name="LOG_READING_LOCAL_FILE"></a><span class="term">LOG_READING_LOCAL_FILE reading local message file %1</span></dt><dd><p>
+This is an informational message output by BIND10 when it starts to read
+a local message file.  (A local message file may replace the text of
+one of more messages; the ID of the message will not be changed though.)
+</p></dd><dt><a name="LOG_READ_ERROR"></a><span class="term">LOG_READ_ERROR error reading from message file %1: %2</span></dt><dd><p>
 The specified error was encountered reading from the named message file.
-</p></dd><dt><a name="MSG_UNRECDIR"></a><span class="term">MSG_UNRECDIR line %1: unrecognised directive '%2'</span></dt><dd><p>
-A line starting with a dollar symbol was found, but the first word on the line
-(shown in the message) was not a recognised message compiler directive.
-</p></dd><dt><a name="MSG_WRITERR"></a><span class="term">MSG_WRITERR error writing to %1: %2</span></dt><dd><p>
-The specified error was encountered by the message compiler when writing to
-the named output file.
-</p></dd><dt><a name="NSAS_INVRESPSTR"></a><span class="term">NSAS_INVRESPSTR queried for %1 but got invalid response</span></dt><dd><p>
-This message indicates an internal error in the nameserver address store
-component (NSAS) of the resolver.  The NSAS made a query for a RR for the
-specified nameserver but received an invalid response.  Either the success
-function was called without a DNS message or the message was invalid on some
-way. (In the latter case, the error should have been picked up elsewhere in
-the processing logic, hence the raising of the error here.)
-</p></dd><dt><a name="NSAS_INVRESPTC"></a><span class="term">NSAS_INVRESPTC queried for %1 RR of type/class %2/%3, received response %4/%5</span></dt><dd><p>
-This message indicates an internal error in the nameserver address store
-component (NSAS) of the resolver.  The NSAS made a query for the given RR
-type and class, but instead received an answer with the given type and class.
-</p></dd><dt><a name="NSAS_LOOKUPCANCEL"></a><span class="term">NSAS_LOOKUPCANCEL lookup for zone %1 has been cancelled</span></dt><dd><p>
-A debug message, this is output when a NSAS (nameserver address store -
-part of the resolver) lookup for a zone has been cancelled.
-</p></dd><dt><a name="NSAS_LOOKUPZONE"></a><span class="term">NSAS_LOOKUPZONE searching NSAS for nameservers for zone %1</span></dt><dd><p>
-A debug message, this is output when a call is made to the nameserver address
-store (part of the resolver) to obtain the nameservers for the specified zone.
-</p></dd><dt><a name="NSAS_NSADDR"></a><span class="term">NSAS_NSADDR asking resolver to obtain A and AAAA records for %1</span></dt><dd><p>
-A debug message, the NSAS (nameserver address store - part of the resolver) is
-making a callback into the resolver to retrieve the address records for the
-specified nameserver.
-</p></dd><dt><a name="NSAS_NSLKUPFAIL"></a><span class="term">NSAS_NSLKUPFAIL failed to lookup any %1 for %2</span></dt><dd><p>
-A debug message, the NSAS (nameserver address store - part of the resolver)
-has been unable to retrieve the specified resource record for the specified
-nameserver.  This is not necessarily a problem - the nameserver may be
-unreachable, in which case the NSAS will try other nameservers in the zone.
-</p></dd><dt><a name="NSAS_NSLKUPSUCC"></a><span class="term">NSAS_NSLKUPSUCC found address %1 for %2</span></dt><dd><p>
-A debug message, the NSAS (nameserver address store - part of the resolver)
-has retrieved the given address for the specified nameserver through an
-external query.
-</p></dd><dt><a name="NSAS_SETRTT"></a><span class="term">NSAS_SETRTT reporting RTT for %1 as %2; new value is now %3</span></dt><dd><p>
+</p></dd><dt><a name="LOG_UNRECOGNISED_DIRECTIVE"></a><span class="term">LOG_UNRECOGNISED_DIRECTIVE line %1: unrecognised directive '%2'</span></dt><dd><p>
+Within a message file, a line starting with a dollar symbol was found
+(indicating the presence of a directive) but the first word on the line
+(shown in the message) was not recognised.
+</p></dd><dt><a name="LOG_WRITE_ERROR"></a><span class="term">LOG_WRITE_ERROR error writing to %1: %2</span></dt><dd><p>
+The specified error was encountered by the message compiler when writing
+to the named output file.
+</p></dd><dt><a name="NSAS_FIND_NS_ADDRESS"></a><span class="term">NSAS_FIND_NS_ADDRESS asking resolver to obtain A and AAAA records for %1</span></dt><dd><p>
+A debug message issued when the NSAS (nameserver address store - part
+of the resolver) is making a callback into the resolver to retrieve the
+address records for the specified nameserver.
+</p></dd><dt><a name="NSAS_FOUND_ADDRESS"></a><span class="term">NSAS_FOUND_ADDRESS found address %1 for %2</span></dt><dd><p>
+A debug message issued when the NSAS (nameserver address store - part
+of the resolver) has retrieved the given address for the specified
+nameserver through an external query.
+</p></dd><dt><a name="NSAS_INVALID_RESPONSE"></a><span class="term">NSAS_INVALID_RESPONSE queried for %1 but got invalid response</span></dt><dd><p>
+The NSAS (nameserver address store - part of the resolver) made a query
+for a RR for the specified nameserver but received an invalid response.
+Either the success function was called without a DNS message or the
+message was invalid on some way. (In the latter case, the error should
+have been picked up elsewhere in the processing logic, hence the raising
+of the error here.)
+</p><p>
+This message indicates an internal error in the NSAS.  Please raise a
+bug report.
+</p></dd><dt><a name="NSAS_LOOKUP_CANCEL"></a><span class="term">NSAS_LOOKUP_CANCEL lookup for zone %1 has been canceled</span></dt><dd><p>
+A debug message issued when an NSAS (nameserver address store - part of
+the resolver) lookup for a zone has been canceled.
+</p></dd><dt><a name="NSAS_NS_LOOKUP_FAIL"></a><span class="term">NSAS_NS_LOOKUP_FAIL failed to lookup any %1 for %2</span></dt><dd><p>
+A debug message issued when the NSAS (nameserver address store - part of
+the resolver) has been unable to retrieve the specified resource record
+for the specified nameserver.  This is not necessarily a problem - the
+nameserver may be unreachable, in which case the NSAS will try other
+nameservers in the zone.
+</p></dd><dt><a name="NSAS_SEARCH_ZONE_NS"></a><span class="term">NSAS_SEARCH_ZONE_NS searching NSAS for nameservers for zone %1</span></dt><dd><p>
+A debug message output when a call is made to the NSAS (nameserver
+address store - part of the resolver) to obtain the nameservers for
+the specified zone.
+</p></dd><dt><a name="NSAS_UPDATE_RTT"></a><span class="term">NSAS_UPDATE_RTT update RTT for %1: was %2 ms, is now %3 ms</span></dt><dd><p>
 A NSAS (nameserver address store - part of the resolver) debug message
-reporting the round-trip time (RTT) for a query made to the specified
-nameserver.  The RTT has been updated using the value given and the new RTT is
-displayed.  (The RTT is subject to a calculation that damps out sudden
-changes.  As a result, the new RTT is not necessarily equal to the RTT
-reported.)
+reporting the update of a round-trip time (RTT) for a query made to the
+specified nameserver.  The RTT has been updated using the value given
+and the new RTT is displayed.  (The RTT is subject to a calculation that
+damps out sudden changes.  As a result, the new RTT used by the NSAS in
+future decisions of which nameserver to use is not necessarily equal to
+the RTT reported.)
+</p></dd><dt><a name="NSAS_WRONG_ANSWER"></a><span class="term">NSAS_WRONG_ANSWER queried for %1 RR of type/class %2/%3, received response %4/%5</span></dt><dd><p>
+A NSAS (nameserver address store - part of the resolver) made a query for
+a resource record of a particular type and class, but instead received
+an answer with a different given type and class.
+</p><p>
+This message indicates an internal error in the NSAS.  Please raise a
+bug report.
 </p></dd><dt><a name="RESLIB_ANSWER"></a><span class="term">RESLIB_ANSWER answer received in response to query for &lt;%1&gt;</span></dt><dd><p>
 A debug message recording that an answer has been received to an upstream
 query for the specified question.  Previous debug messages will have indicated
@@ -599,95 +932,95 @@ the server to which the question was sent.
 </p></dd><dt><a name="RESLIB_DEEPEST"></a><span class="term">RESLIB_DEEPEST did not find &lt;%1&gt; in cache, deepest delegation found is %2</span></dt><dd><p>
 A debug message, a cache lookup did not find the specified &lt;name, class,
 type&gt; tuple in the cache; instead, the deepest delegation found is indicated.
-</p></dd><dt><a name="RESLIB_FOLLOWCNAME"></a><span class="term">RESLIB_FOLLOWCNAME following CNAME chain to &lt;%1&gt;</span></dt><dd><p>
+</p></dd><dt><a name="RESLIB_FOLLOW_CNAME"></a><span class="term">RESLIB_FOLLOW_CNAME following CNAME chain to &lt;%1&gt;</span></dt><dd><p>
 A debug message, a CNAME response was received and another query is being issued
 for the &lt;name, class, type&gt; tuple.
-</p></dd><dt><a name="RESLIB_LONGCHAIN"></a><span class="term">RESLIB_LONGCHAIN CNAME received in response to query for &lt;%1&gt;: CNAME chain length exceeded</span></dt><dd><p>
+</p></dd><dt><a name="RESLIB_LONG_CHAIN"></a><span class="term">RESLIB_LONG_CHAIN CNAME received in response to query for &lt;%1&gt;: CNAME chain length exceeded</span></dt><dd><p>
 A debug message recording that a CNAME response has been received to an upstream
 query for the specified question (Previous debug messages will have indicated
 the server to which the question was sent).  However, receipt of this CNAME
 has meant that the resolver has exceeded the CNAME chain limit (a CNAME chain
 is where on CNAME points to another) and so an error is being returned.
-</p></dd><dt><a name="RESLIB_NONSRRSET"></a><span class="term">RESLIB_NONSRRSET no NS RRSet in referral response received to query for &lt;%1&gt;</span></dt><dd><p>
+</p></dd><dt><a name="RESLIB_NO_NS_RRSET"></a><span class="term">RESLIB_NO_NS_RRSET no NS RRSet in referral response received to query for &lt;%1&gt;</span></dt><dd><p>
 A debug message, this indicates that a response was received for the specified
-query and was categorised as a referral.  However, the received message did
+query and was categorized as a referral.  However, the received message did
 not contain any NS RRsets.  This may indicate a programming error in the
 response classification code.
-</p></dd><dt><a name="RESLIB_NSASLOOK"></a><span class="term">RESLIB_NSASLOOK looking up nameserver for zone %1 in the NSAS</span></dt><dd><p>
+</p></dd><dt><a name="RESLIB_NSAS_LOOKUP"></a><span class="term">RESLIB_NSAS_LOOKUP looking up nameserver for zone %1 in the NSAS</span></dt><dd><p>
 A debug message, the RunningQuery object is querying the NSAS for the
 nameservers for the specified zone.
-</p></dd><dt><a name="RESLIB_NXDOMRR"></a><span class="term">RESLIB_NXDOMRR NXDOMAIN/NXRRSET received in response to query for &lt;%1&gt;</span></dt><dd><p>
+</p></dd><dt><a name="RESLIB_NXDOM_NXRR"></a><span class="term">RESLIB_NXDOM_NXRR NXDOMAIN/NXRRSET received in response to query for &lt;%1&gt;</span></dt><dd><p>
 A debug message recording that either a NXDOMAIN or an NXRRSET response has
 been received to an upstream query for the specified question.  Previous debug
 messages will have indicated the server to which the question was sent.
 </p></dd><dt><a name="RESLIB_PROTOCOL"></a><span class="term">RESLIB_PROTOCOL protocol error in answer for %1:  %3</span></dt><dd><p>
 A debug message indicating that a protocol error was received.  As there
 are no retries left, an error will be reported.
-</p></dd><dt><a name="RESLIB_PROTOCOLRTRY"></a><span class="term">RESLIB_PROTOCOLRTRY protocol error in answer for %1: %2 (retries left: %3)</span></dt><dd><p>
+</p></dd><dt><a name="RESLIB_PROTOCOL_RETRY"></a><span class="term">RESLIB_PROTOCOL_RETRY protocol error in answer for %1: %2 (retries left: %3)</span></dt><dd><p>
 A debug message indicating that a protocol error was received and that
 the resolver is repeating the query to the same nameserver.  After this
 repeated query, there will be the indicated number of retries left.
-</p></dd><dt><a name="RESLIB_RCODERR"></a><span class="term">RESLIB_RCODERR RCODE indicates error in response to query for &lt;%1&gt;</span></dt><dd><p>
+</p></dd><dt><a name="RESLIB_RCODE_ERR"></a><span class="term">RESLIB_RCODE_ERR RCODE indicates error in response to query for &lt;%1&gt;</span></dt><dd><p>
 A debug message, the response to the specified query indicated an error
 that is not covered by a specific code path.  A SERVFAIL will be returned.
-</p></dd><dt><a name="RESLIB_REFERRAL"></a><span class="term">RESLIB_REFERRAL referral received in response to query for &lt;%1&gt;</span></dt><dd><p>
-A debug message recording that a referral response has been received to an
-upstream query for the specified question.  Previous debug messages will
-have indicated the server to which the question was sent.
-</p></dd><dt><a name="RESLIB_REFERZONE"></a><span class="term">RESLIB_REFERZONE referred to zone %1</span></dt><dd><p>
-A debug message indicating that the last referral message was to the specified
-zone.
-</p></dd><dt><a name="RESLIB_RESCAFND"></a><span class="term">RESLIB_RESCAFND found &lt;%1&gt; in the cache (resolve() instance %2)</span></dt><dd><p>
+</p></dd><dt><a name="RESLIB_RECQ_CACHE_FIND"></a><span class="term">RESLIB_RECQ_CACHE_FIND found &lt;%1&gt; in the cache (resolve() instance %2)</span></dt><dd><p>
 This is a debug message and indicates that a RecursiveQuery object found the
 the specified &lt;name, class, type&gt; tuple in the cache.  The instance number
 at the end of the message indicates which of the two resolve() methods has
 been called.
-</p></dd><dt><a name="RESLIB_RESCANOTFND"></a><span class="term">RESLIB_RESCANOTFND did not find &lt;%1&gt; in the cache, starting RunningQuery (resolve() instance %2)</span></dt><dd><p>
+</p></dd><dt><a name="RESLIB_RECQ_CACHE_NO_FIND"></a><span class="term">RESLIB_RECQ_CACHE_NO_FIND did not find &lt;%1&gt; in the cache, starting RunningQuery (resolve() instance %2)</span></dt><dd><p>
 This is a debug message and indicates that the look in the cache made by the
 RecursiveQuery::resolve() method did not find an answer, so a new RunningQuery
 object has been created to resolve the question.  The instance number at
 the end of the message indicates which of the two resolve() methods has
 been called.
+</p></dd><dt><a name="RESLIB_REFERRAL"></a><span class="term">RESLIB_REFERRAL referral received in response to query for &lt;%1&gt;</span></dt><dd><p>
+A debug message recording that a referral response has been received to an
+upstream query for the specified question.  Previous debug messages will
+have indicated the server to which the question was sent.
+</p></dd><dt><a name="RESLIB_REFER_ZONE"></a><span class="term">RESLIB_REFER_ZONE referred to zone %1</span></dt><dd><p>
+A debug message indicating that the last referral message was to the specified
+zone.
 </p></dd><dt><a name="RESLIB_RESOLVE"></a><span class="term">RESLIB_RESOLVE asked to resolve &lt;%1&gt; (resolve() instance %2)</span></dt><dd><p>
 A debug message, the RecursiveQuery::resolve method has been called to resolve
 the specified &lt;name, class, type&gt; tuple.  The first action will be to lookup
 the specified tuple in the cache.  The instance number at the end of the
 message indicates which of the two resolve() methods has been called.
-</p></dd><dt><a name="RESLIB_RRSETFND"></a><span class="term">RESLIB_RRSETFND found single RRset in the cache when querying for &lt;%1&gt; (resolve() instance %2)</span></dt><dd><p>
+</p></dd><dt><a name="RESLIB_RRSET_FOUND"></a><span class="term">RESLIB_RRSET_FOUND found single RRset in the cache when querying for &lt;%1&gt; (resolve() instance %2)</span></dt><dd><p>
 A debug message, indicating that when RecursiveQuery::resolve queried the
 cache, a single RRset was found which was put in the answer.  The instance
 number at the end of the message indicates which of the two resolve()
 methods has been called.
 </p></dd><dt><a name="RESLIB_RTT"></a><span class="term">RESLIB_RTT round-trip time of last query calculated as %1 ms</span></dt><dd><p>
 A debug message giving the round-trip time of the last query and response.
-</p></dd><dt><a name="RESLIB_RUNCAFND"></a><span class="term">RESLIB_RUNCAFND found &lt;%1&gt; in the cache</span></dt><dd><p>
+</p></dd><dt><a name="RESLIB_RUNQ_CACHE_FIND"></a><span class="term">RESLIB_RUNQ_CACHE_FIND found &lt;%1&gt; in the cache</span></dt><dd><p>
 This is a debug message and indicates that a RunningQuery object found
 the specified &lt;name, class, type&gt; tuple in the cache.
-</p></dd><dt><a name="RESLIB_RUNCALOOK"></a><span class="term">RESLIB_RUNCALOOK looking up up &lt;%1&gt; in the cache</span></dt><dd><p>
+</p></dd><dt><a name="RESLIB_RUNQ_CACHE_LOOKUP"></a><span class="term">RESLIB_RUNQ_CACHE_LOOKUP looking up up &lt;%1&gt; in the cache</span></dt><dd><p>
 This is a debug message and indicates that a RunningQuery object has made
 a call to its doLookup() method to look up the specified &lt;name, class, type&gt;
 tuple, the first action of which will be to examine the cache.
-</p></dd><dt><a name="RESLIB_RUNQUFAIL"></a><span class="term">RESLIB_RUNQUFAIL failure callback - nameservers are unreachable</span></dt><dd><p>
+</p></dd><dt><a name="RESLIB_RUNQ_FAIL"></a><span class="term">RESLIB_RUNQ_FAIL failure callback - nameservers are unreachable</span></dt><dd><p>
 A debug message indicating that a RunningQuery's failure callback has been
 called because all nameservers for the zone in question are unreachable.
-</p></dd><dt><a name="RESLIB_RUNQUSUCC"></a><span class="term">RESLIB_RUNQUSUCC success callback - sending query to %1</span></dt><dd><p>
+</p></dd><dt><a name="RESLIB_RUNQ_SUCCESS"></a><span class="term">RESLIB_RUNQ_SUCCESS success callback - sending query to %1</span></dt><dd><p>
 A debug message indicating that a RunningQuery's success callback has been
 called because a nameserver has been found, and that a query is being sent
 to the specified nameserver.
-</p></dd><dt><a name="RESLIB_TESTSERV"></a><span class="term">RESLIB_TESTSERV setting test server to %1(%2)</span></dt><dd><p>
+</p></dd><dt><a name="RESLIB_TEST_SERVER"></a><span class="term">RESLIB_TEST_SERVER setting test server to %1(%2)</span></dt><dd><p>
 This is an internal debugging message and is only generated in unit tests.
 It indicates that all upstream queries from the resolver are being routed to
 the specified server, regardless of the address of the nameserver to which
 the query would normally be routed.  As it should never be seen in normal
 operation, it is a warning message instead of a debug message.
-</p></dd><dt><a name="RESLIB_TESTUPSTR"></a><span class="term">RESLIB_TESTUPSTR sending upstream query for &lt;%1&gt; to test server at %2</span></dt><dd><p>
+</p></dd><dt><a name="RESLIB_TEST_UPSTREAM"></a><span class="term">RESLIB_TEST_UPSTREAM sending upstream query for &lt;%1&gt; to test server at %2</span></dt><dd><p>
 This is a debug message and should only be seen in unit tests.  A query for
 the specified &lt;name, class, type&gt; tuple is being sent to a test nameserver
 whose address is given in the message.
 </p></dd><dt><a name="RESLIB_TIMEOUT"></a><span class="term">RESLIB_TIMEOUT query &lt;%1&gt; to %2 timed out</span></dt><dd><p>
 A debug message indicating that the specified query has timed out and as
 there are no retries left, an error will be reported.
-</p></dd><dt><a name="RESLIB_TIMEOUTRTRY"></a><span class="term">RESLIB_TIMEOUTRTRY query &lt;%1&gt; to %2 timed out, re-trying (retries left: %3)</span></dt><dd><p>
+</p></dd><dt><a name="RESLIB_TIMEOUT_RETRY"></a><span class="term">RESLIB_TIMEOUT_RETRY query &lt;%1&gt; to %2 timed out, re-trying (retries left: %3)</span></dt><dd><p>
 A debug message indicating that the specified query has timed out and that
 the resolver is repeating the query to the same nameserver.  After this
 repeated query, there will be the indicated number of retries left.
@@ -699,118 +1032,134 @@ gives no cause for concern.
 </p></dd><dt><a name="RESLIB_UPSTREAM"></a><span class="term">RESLIB_UPSTREAM sending upstream query for &lt;%1&gt; to %2</span></dt><dd><p>
 A debug message indicating that a query for the specified &lt;name, class, type&gt;
 tuple is being sent to a nameserver whose address is given in the message.
-</p></dd><dt><a name="RESOLVER_AXFRTCP"></a><span class="term">RESOLVER_AXFRTCP AXFR request received over TCP</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_AXFR_TCP"></a><span class="term">RESOLVER_AXFR_TCP AXFR request received over TCP</span></dt><dd><p>
 A debug message, the resolver received a NOTIFY message over TCP.  The server
 cannot process it and will return an error message to the sender with the
 RCODE set to NOTIMP.
-</p></dd><dt><a name="RESOLVER_AXFRUDP"></a><span class="term">RESOLVER_AXFRUDP AXFR request received over UDP</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_AXFR_UDP"></a><span class="term">RESOLVER_AXFR_UDP AXFR request received over UDP</span></dt><dd><p>
 A debug message, the resolver received a NOTIFY message over UDP.  The server
 cannot process it (and in any case, an AXFR request should be sent over TCP)
 and will return an error message to the sender with the RCODE set to FORMERR.
-</p></dd><dt><a name="RESOLVER_CLTMOSMALL"></a><span class="term">RESOLVER_CLTMOSMALL client timeout of %1 is too small</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_CLIENT_TIME_SMALL"></a><span class="term">RESOLVER_CLIENT_TIME_SMALL client timeout of %1 is too small</span></dt><dd><p>
 An error indicating that the configuration value specified for the query
 timeout is too small.
-</p></dd><dt><a name="RESOLVER_CONFIGCHAN"></a><span class="term">RESOLVER_CONFIGCHAN configuration channel created</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_CONFIG_CHANNEL"></a><span class="term">RESOLVER_CONFIG_CHANNEL configuration channel created</span></dt><dd><p>
 A debug message, output when the resolver has successfully established a
 connection to the configuration channel.
-</p></dd><dt><a name="RESOLVER_CONFIGERR"></a><span class="term">RESOLVER_CONFIGERR error in configuration: %1</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_CONFIG_ERROR"></a><span class="term">RESOLVER_CONFIG_ERROR error in configuration: %1</span></dt><dd><p>
 An error was detected in a configuration update received by the resolver. This
 may be in the format of the configuration message (in which case this is a
 programming error) or it may be in the data supplied (in which case it is
 a user error).  The reason for the error, given as a parameter in the message,
 will give more details.
-</p></dd><dt><a name="RESOLVER_CONFIGLOAD"></a><span class="term">RESOLVER_CONFIGLOAD configuration loaded</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_CONFIG_LOADED"></a><span class="term">RESOLVER_CONFIG_LOADED configuration loaded</span></dt><dd><p>
 A debug message, output when the resolver configuration has been successfully
 loaded.
-</p></dd><dt><a name="RESOLVER_CONFIGUPD"></a><span class="term">RESOLVER_CONFIGUPD configuration updated: %1</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_CONFIG_UPDATED"></a><span class="term">RESOLVER_CONFIG_UPDATED configuration updated: %1</span></dt><dd><p>
 A debug message, the configuration has been updated with the specified
 information.
 </p></dd><dt><a name="RESOLVER_CREATED"></a><span class="term">RESOLVER_CREATED main resolver object created</span></dt><dd><p>
 A debug message, output when the Resolver() object has been created.
-</p></dd><dt><a name="RESOLVER_DNSMSGRCVD"></a><span class="term">RESOLVER_DNSMSGRCVD DNS message received: %1</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_DNS_MESSAGE_RECEIVED"></a><span class="term">RESOLVER_DNS_MESSAGE_RECEIVED DNS message received: %1</span></dt><dd><p>
 A debug message, this always precedes some other logging message and is the
 formatted contents of the DNS packet that the other message refers to.
-</p></dd><dt><a name="RESOLVER_DNSMSGSENT"></a><span class="term">RESOLVER_DNSMSGSENT DNS message of %1 bytes sent: %2</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_DNS_MESSAGE_SENT"></a><span class="term">RESOLVER_DNS_MESSAGE_SENT DNS message of %1 bytes sent: %2</span></dt><dd><p>
 A debug message, this contains details of the response sent back to the querying
 system.
 </p></dd><dt><a name="RESOLVER_FAILED"></a><span class="term">RESOLVER_FAILED resolver failed, reason: %1</span></dt><dd><p>
 This is an error message output when an unhandled exception is caught by the
 resolver.  All it can do is to shut down.
-</p></dd><dt><a name="RESOLVER_FWDADDR"></a><span class="term">RESOLVER_FWDADDR setting forward address %1(%2)</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_FORWARD_ADDRESS"></a><span class="term">RESOLVER_FORWARD_ADDRESS setting forward address %1(%2)</span></dt><dd><p>
 This message may appear multiple times during startup, and it lists the
 forward addresses used by the resolver when running in forwarding mode.
-</p></dd><dt><a name="RESOLVER_FWDQUERY"></a><span class="term">RESOLVER_FWDQUERY processing forward query</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_FORWARD_QUERY"></a><span class="term">RESOLVER_FORWARD_QUERY processing forward query</span></dt><dd><p>
 The received query has passed all checks and is being forwarded to upstream
 servers.
-</p></dd><dt><a name="RESOLVER_HDRERR"></a><span class="term">RESOLVER_HDRERR message received, exception when processing header: %1</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_HEADER_ERROR"></a><span class="term">RESOLVER_HEADER_ERROR message received, exception when processing header: %1</span></dt><dd><p>
 A debug message noting that an exception occurred during the processing of
 a received packet.  The packet has been dropped.
 </p></dd><dt><a name="RESOLVER_IXFR"></a><span class="term">RESOLVER_IXFR IXFR request received</span></dt><dd><p>
 The resolver received a NOTIFY message over TCP.  The server cannot process it
 and will return an error message to the sender with the RCODE set to NOTIMP.
-</p></dd><dt><a name="RESOLVER_LKTMOSMALL"></a><span class="term">RESOLVER_LKTMOSMALL lookup timeout of %1 is too small</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_LOOKUP_TIME_SMALL"></a><span class="term">RESOLVER_LOOKUP_TIME_SMALL lookup timeout of %1 is too small</span></dt><dd><p>
 An error indicating that the configuration value specified for the lookup
 timeout is too small.
-</p></dd><dt><a name="RESOLVER_NFYNOTAUTH"></a><span class="term">RESOLVER_NFYNOTAUTH NOTIFY arrived but server is not authoritative</span></dt><dd><p>
-The resolver received a NOTIFY message.  As the server is not authoritative it
-cannot process it, so it returns an error message to the sender with the RCODE
-set to NOTAUTH.
-</p></dd><dt><a name="RESOLVER_NORMQUERY"></a><span class="term">RESOLVER_NORMQUERY processing normal query</span></dt><dd><p>
-The received query has passed all checks and is being processed by the resolver.
-</p></dd><dt><a name="RESOLVER_NOROOTADDR"></a><span class="term">RESOLVER_NOROOTADDR no root addresses available</span></dt><dd><p>
-A warning message during startup, indicates that no root addresses have been
-set.  This may be because the resolver will get them from a priming query.
-</p></dd><dt><a name="RESOLVER_NOTIN"></a><span class="term">RESOLVER_NOTIN non-IN class request received, returning REFUSED message</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_MESSAGE_ERROR"></a><span class="term">RESOLVER_MESSAGE_ERROR error parsing received message: %1 - returning %2</span></dt><dd><p>
+A debug message noting that the resolver received a message and the
+parsing of the body of the message failed due to some error (although
+the parsing of the header succeeded).  The message parameters give a
+textual description of the problem and the RCODE returned.
+</p></dd><dt><a name="RESOLVER_NEGATIVE_RETRIES"></a><span class="term">RESOLVER_NEGATIVE_RETRIES negative number of retries (%1) specified in the configuration</span></dt><dd><p>
+An error message indicating that the resolver configuration has specified a
+negative retry count.  Only zero or positive values are valid.
+</p></dd><dt><a name="RESOLVER_NON_IN_PACKET"></a><span class="term">RESOLVER_NON_IN_PACKET non-IN class request received, returning REFUSED message</span></dt><dd><p>
 A debug message, the resolver has received a DNS packet that was not IN class.
 The resolver cannot handle such packets, so is returning a REFUSED response to
 the sender.
-</p></dd><dt><a name="RESOLVER_NOTONEQUES"></a><span class="term">RESOLVER_NOTONEQUES query contained %1 questions, exactly one question was expected</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_NORMAL_QUERY"></a><span class="term">RESOLVER_NORMAL_QUERY processing normal query</span></dt><dd><p>
+The received query has passed all checks and is being processed by the resolver.
+</p></dd><dt><a name="RESOLVER_NOTIFY_RECEIVED"></a><span class="term">RESOLVER_NOTIFY_RECEIVED NOTIFY arrived but server is not authoritative</span></dt><dd><p>
+The resolver received a NOTIFY message.  As the server is not authoritative it
+cannot process it, so it returns an error message to the sender with the RCODE
+set to NOTAUTH.
+</p></dd><dt><a name="RESOLVER_NOT_ONE_QUESTION"></a><span class="term">RESOLVER_NOT_ONE_QUESTION query contained %1 questions, exactly one question was expected</span></dt><dd><p>
 A debug message, the resolver received a query that contained the number of
 entires in the question section detailed in the message.  This is a malformed
 message, as a DNS query must contain only one question.  The resolver will
 return a message to the sender with the RCODE set to FORMERR.
-</p></dd><dt><a name="RESOLVER_OPCODEUNS"></a><span class="term">RESOLVER_OPCODEUNS opcode %1 not supported by the resolver</span></dt><dd><p>
-A debug message, the resolver received a message with an unsupported opcode
-(it can only process QUERY opcodes).  It will return a message to the sender
-with the RCODE set to NOTIMP.
-</p></dd><dt><a name="RESOLVER_PARSEERR"></a><span class="term">RESOLVER_PARSEERR error parsing received message: %1 - returning %2</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_NO_ROOT_ADDRESS"></a><span class="term">RESOLVER_NO_ROOT_ADDRESS no root addresses available</span></dt><dd><p>
+A warning message during startup, indicates that no root addresses have been
+set.  This may be because the resolver will get them from a priming query.
+</p></dd><dt><a name="RESOLVER_PARSE_ERROR"></a><span class="term">RESOLVER_PARSE_ERROR error parsing received message: %1 - returning %2</span></dt><dd><p>
 A debug message noting that the resolver received a message and the parsing
 of the body of the message failed due to some non-protocol related reason
 (although the parsing of the header succeeded).  The message parameters give
 a textual description of the problem and the RCODE returned.
-</p></dd><dt><a name="RESOLVER_PRINTMSG"></a><span class="term">RESOLVER_PRINTMSG print message command, aeguments are: %1</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_PRINT_COMMAND"></a><span class="term">RESOLVER_PRINT_COMMAND print message command, arguments are: %1</span></dt><dd><p>
 This message is logged when a "print_message" command is received over the
 command channel.
-</p></dd><dt><a name="RESOLVER_PROTERR"></a><span class="term">RESOLVER_PROTERR protocol error parsing received message: %1 - returning %2</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_PROTOCOL_ERROR"></a><span class="term">RESOLVER_PROTOCOL_ERROR protocol error parsing received message: %1 - returning %2</span></dt><dd><p>
 A debug message noting that the resolver received a message and the parsing
 of the body of the message failed due to some protocol error (although the
 parsing of the header succeeded).  The message parameters give a textual
 description of the problem and the RCODE returned.
-</p></dd><dt><a name="RESOLVER_QUSETUP"></a><span class="term">RESOLVER_QUSETUP query setup</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_QUERY_ACCEPTED"></a><span class="term">RESOLVER_QUERY_ACCEPTED query accepted: '%1/%2/%3' from %4</span></dt><dd><p>
+A debug message that indicates an incoming query is accepted in terms of
+the query ACL.  The log message shows the query in the form of
+&lt;query name&gt;/&lt;query type&gt;/&lt;query class&gt;, and the client that sends the
+query in the form of &lt;Source IP address&gt;#&lt;source port&gt;.
+</p></dd><dt><a name="RESOLVER_QUERY_DROPPED"></a><span class="term">RESOLVER_QUERY_DROPPED query dropped: '%1/%2/%3' from %4</span></dt><dd><p>
+An informational message that indicates an incoming query is dropped
+in terms of the query ACL.  Unlike the RESOLVER_QUERY_REJECTED
+case, the server does not return any response.  The log message
+shows the query in the form of &lt;query name&gt;/&lt;query type&gt;/&lt;query
+class&gt;, and the client that sends the query in the form of &lt;Source
+IP address&gt;#&lt;source port&gt;.
+</p></dd><dt><a name="RESOLVER_QUERY_REJECTED"></a><span class="term">RESOLVER_QUERY_REJECTED query rejected: '%1/%2/%3' from %4</span></dt><dd><p>
+An informational message that indicates an incoming query is rejected
+in terms of the query ACL.  This results in a response with an RCODE of
+REFUSED. The log message shows the query in the form of &lt;query
+name&gt;/&lt;query type&gt;/&lt;query class&gt;, and the client that sends the
+query in the form of &lt;Source IP address&gt;#&lt;source port&gt;.
+</p></dd><dt><a name="RESOLVER_QUERY_SETUP"></a><span class="term">RESOLVER_QUERY_SETUP query setup</span></dt><dd><p>
 A debug message noting that the resolver is creating a RecursiveQuery object.
-</p></dd><dt><a name="RESOLVER_QUSHUT"></a><span class="term">RESOLVER_QUSHUT query shutdown</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_QUERY_SHUTDOWN"></a><span class="term">RESOLVER_QUERY_SHUTDOWN query shutdown</span></dt><dd><p>
 A debug message noting that the resolver is destroying a RecursiveQuery object.
-</p></dd><dt><a name="RESOLVER_QUTMOSMALL"></a><span class="term">RESOLVER_QUTMOSMALL query timeout of %1 is too small</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_QUERY_TIME_SMALL"></a><span class="term">RESOLVER_QUERY_TIME_SMALL query timeout of %1 is too small</span></dt><dd><p>
 An error indicating that the configuration value specified for the query
 timeout is too small.
-</p></dd><dt><a name="RESOLVER_RECURSIVE"></a><span class="term">RESOLVER_RECURSIVE running in recursive mode</span></dt><dd><p>
-This is an informational message that appears at startup noting that the
-resolver is running in recursive mode.
-</p></dd><dt><a name="RESOLVER_RECVMSG"></a><span class="term">RESOLVER_RECVMSG resolver has received a DNS message</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_RECEIVED_MESSAGE"></a><span class="term">RESOLVER_RECEIVED_MESSAGE resolver has received a DNS message</span></dt><dd><p>
 A debug message indicating that the resolver has received a message.  Depending
 on the debug settings, subsequent log output will indicate the nature of the
 message.
-</p></dd><dt><a name="RESOLVER_RETRYNEG"></a><span class="term">RESOLVER_RETRYNEG negative number of retries (%1) specified in the configuration</span></dt><dd><p>
-An error message indicating that the resolver configuration has specified a
-negative retry count.  Only zero or positive values are valid.
-</p></dd><dt><a name="RESOLVER_ROOTADDR"></a><span class="term">RESOLVER_ROOTADDR setting root address %1(%2)</span></dt><dd><p>
-This message may appear multiple times during startup; it lists the root
-addresses used by the resolver.
-</p></dd><dt><a name="RESOLVER_SERVICE"></a><span class="term">RESOLVER_SERVICE service object created</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_RECURSIVE"></a><span class="term">RESOLVER_RECURSIVE running in recursive mode</span></dt><dd><p>
+This is an informational message that appears at startup noting that the
+resolver is running in recursive mode.
+</p></dd><dt><a name="RESOLVER_SERVICE_CREATED"></a><span class="term">RESOLVER_SERVICE_CREATED service object created</span></dt><dd><p>
 A debug message, output when the main service object (which handles the
 received queries) is created.
-</p></dd><dt><a name="RESOLVER_SETPARAM"></a><span class="term">RESOLVER_SETPARAM query timeout: %1, client timeout: %2, lookup timeout: %3, retry count: %4</span></dt><dd><p>
-A debug message, lists the parameters associated with the message.  These are:
+</p></dd><dt><a name="RESOLVER_SET_PARAMS"></a><span class="term">RESOLVER_SET_PARAMS query timeout: %1, client timeout: %2, lookup timeout: %3, retry count: %4</span></dt><dd><p>
+A debug message, lists the parameters being set for the resolver.  These are:
 query timeout: the timeout (in ms) used for queries originated by the resolver
 to upstream servers.  Client timeout: the interval to resolver a query by
 a client: after this time, the resolver sends back a SERVFAIL to the client
@@ -819,14 +1168,20 @@ resolver gives up trying to resolve a query.  Retry count: the number of times
 the resolver will retry a query to an upstream server if it gets a timeout.
 </p><p>
 The client and lookup timeouts require a bit more explanation. The
-resolution of the clent query might require a large number of queries to
+resolution of the client query might require a large number of queries to
 upstream nameservers.  Even if none of these queries timeout, the total time
 taken to perform all the queries may exceed the client timeout.  When this
 happens, a SERVFAIL is returned to the client, but the resolver continues
 with the resolution process. Data received is added to the cache.  However,
-there comes a time - the lookup timeout - when even the resolve gives up.
+there comes a time - the lookup timeout - when even the resolver gives up.
 At this point it will wait for pending upstream queries to complete or
 timeout and drop the query.
+</p></dd><dt><a name="RESOLVER_SET_QUERY_ACL"></a><span class="term">RESOLVER_SET_QUERY_ACL query ACL is configured</span></dt><dd><p>
+A debug message that appears when a new query ACL is configured for the
+resolver.
+</p></dd><dt><a name="RESOLVER_SET_ROOT_ADDRESS"></a><span class="term">RESOLVER_SET_ROOT_ADDRESS setting root address %1(%2)</span></dt><dd><p>
+This message may appear multiple times during startup; it lists the root
+addresses used by the resolver.
 </p></dd><dt><a name="RESOLVER_SHUTDOWN"></a><span class="term">RESOLVER_SHUTDOWN resolver shutdown complete</span></dt><dd><p>
 This information message is output when the resolver has shut down.
 </p></dd><dt><a name="RESOLVER_STARTED"></a><span class="term">RESOLVER_STARTED resolver started</span></dt><dd><p>
@@ -834,8 +1189,166 @@ This informational message is output by the resolver when all initialization
 has been completed and it is entering its main loop.
 </p></dd><dt><a name="RESOLVER_STARTING"></a><span class="term">RESOLVER_STARTING starting resolver with command line '%1'</span></dt><dd><p>
 An informational message, this is output when the resolver starts up.
-</p></dd><dt><a name="RESOLVER_UNEXRESP"></a><span class="term">RESOLVER_UNEXRESP received unexpected response, ignoring</span></dt><dd><p>
+</p></dd><dt><a name="RESOLVER_UNEXPECTED_RESPONSE"></a><span class="term">RESOLVER_UNEXPECTED_RESPONSE received unexpected response, ignoring</span></dt><dd><p>
 A debug message noting that the server has received a response instead of a
 query and is ignoring it.
+</p></dd><dt><a name="RESOLVER_UNSUPPORTED_OPCODE"></a><span class="term">RESOLVER_UNSUPPORTED_OPCODE opcode %1 not supported by the resolver</span></dt><dd><p>
+A debug message, the resolver received a message with an unsupported opcode
+(it can only process QUERY opcodes).  It will return a message to the sender
+with the RCODE set to NOTIMP.
+</p></dd><dt><a name="XFRIN_AXFR_DATABASE_FAILURE"></a><span class="term">XFRIN_AXFR_DATABASE_FAILURE AXFR transfer of zone %1 failed: %2</span></dt><dd><p>
+The AXFR transfer for the given zone has failed due to a database problem.
+The error is shown in the log message.
+</p></dd><dt><a name="XFRIN_AXFR_INTERNAL_FAILURE"></a><span class="term">XFRIN_AXFR_INTERNAL_FAILURE AXFR transfer of zone %1 failed: %2</span></dt><dd><p>
+The AXFR transfer for the given zone has failed due to an internal
+problem in the bind10 python wrapper library.
+The error is shown in the log message.
+</p></dd><dt><a name="XFRIN_AXFR_TRANSFER_FAILURE"></a><span class="term">XFRIN_AXFR_TRANSFER_FAILURE AXFR transfer of zone %1 failed: %2</span></dt><dd><p>
+The AXFR transfer for the given zone has failed due to a protocol error.
+The error is shown in the log message.
+</p></dd><dt><a name="XFRIN_AXFR_TRANSFER_STARTED"></a><span class="term">XFRIN_AXFR_TRANSFER_STARTED AXFR transfer of zone %1 started</span></dt><dd><p>
+A connection to the master server has been made, the serial value in
+the SOA record has been checked, and a zone transfer has been started.
+</p></dd><dt><a name="XFRIN_AXFR_TRANSFER_SUCCESS"></a><span class="term">XFRIN_AXFR_TRANSFER_SUCCESS AXFR transfer of zone %1 succeeded</span></dt><dd><p>
+The AXFR transfer of the given zone was successfully completed.
+</p></dd><dt><a name="XFRIN_BAD_MASTER_ADDR_FORMAT"></a><span class="term">XFRIN_BAD_MASTER_ADDR_FORMAT bad format for master address: %1</span></dt><dd><p>
+The given master address is not a valid IP address.
+</p></dd><dt><a name="XFRIN_BAD_MASTER_PORT_FORMAT"></a><span class="term">XFRIN_BAD_MASTER_PORT_FORMAT bad format for master port: %1</span></dt><dd><p>
+The master port as read from the configuration is not a valid port number.
+</p></dd><dt><a name="XFRIN_BAD_TSIG_KEY_STRING"></a><span class="term">XFRIN_BAD_TSIG_KEY_STRING bad TSIG key string: %1</span></dt><dd><p>
+The TSIG key string as read from the configuration does not represent
+a valid TSIG key.
+</p></dd><dt><a name="XFRIN_BAD_ZONE_CLASS"></a><span class="term">XFRIN_BAD_ZONE_CLASS Invalid zone class: %1</span></dt><dd><p>
+The zone class as read from the configuration is not a valid DNS class.
+</p></dd><dt><a name="XFRIN_CC_SESSION_ERROR"></a><span class="term">XFRIN_CC_SESSION_ERROR error reading from cc channel: %1</span></dt><dd><p>
+There was a problem reading from the command and control channel. The
+most likely cause is that xfrin the msgq daemon is not running.
+</p></dd><dt><a name="XFRIN_COMMAND_ERROR"></a><span class="term">XFRIN_COMMAND_ERROR error while executing command '%1': %2</span></dt><dd><p>
+There was an error while the given command was being processed. The
+error is given in the log message.
+</p></dd><dt><a name="XFRIN_CONNECT_MASTER"></a><span class="term">XFRIN_CONNECT_MASTER error connecting to master at %1: %2</span></dt><dd><p>
+There was an error opening a connection to the master. The error is
+shown in the log message.
+</p></dd><dt><a name="XFRIN_IMPORT_DNS"></a><span class="term">XFRIN_IMPORT_DNS error importing python DNS module: %1</span></dt><dd><p>
+There was an error importing the python DNS module pydnspp. The most
+likely cause is a PYTHONPATH problem.
+</p></dd><dt><a name="XFRIN_MSGQ_SEND_ERROR"></a><span class="term">XFRIN_MSGQ_SEND_ERROR error while contacting %1 and %2</span></dt><dd><p>
+There was a problem sending a message to the xfrout module or the
+zone manager. This most likely means that the msgq daemon has quit or
+was killed.
+</p></dd><dt><a name="XFRIN_MSGQ_SEND_ERROR_ZONE_MANAGER"></a><span class="term">XFRIN_MSGQ_SEND_ERROR_ZONE_MANAGER error while contacting %1</span></dt><dd><p>
+There was a problem sending a message to the zone manager. This most
+likely means that the msgq daemon has quit or was killed.
+</p></dd><dt><a name="XFRIN_RETRANSFER_UNKNOWN_ZONE"></a><span class="term">XFRIN_RETRANSFER_UNKNOWN_ZONE got notification to retransfer unknown zone %1</span></dt><dd><p>
+There was an internal command to retransfer the given zone, but the
+zone is not known to the system. This may indicate that the configuration
+for xfrin is incomplete, or there was a typographical error in the
+zone name in the configuration.
+</p></dd><dt><a name="XFRIN_STARTING"></a><span class="term">XFRIN_STARTING starting resolver with command line '%1'</span></dt><dd><p>
+An informational message, this is output when the resolver starts up.
+</p></dd><dt><a name="XFRIN_STOPPED_BY_KEYBOARD"></a><span class="term">XFRIN_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down</span></dt><dd><p>
+There was a keyboard interrupt signal to stop the xfrin daemon. The
+daemon will now shut down.
+</p></dd><dt><a name="XFRIN_UNKNOWN_ERROR"></a><span class="term">XFRIN_UNKNOWN_ERROR unknown error: %1</span></dt><dd><p>
+An uncaught exception was raised while running the xfrin daemon. The
+exception message is printed in the log message.
+</p></dd><dt><a name="XFROUT_AXFR_TRANSFER_DONE"></a><span class="term">XFROUT_AXFR_TRANSFER_DONE transfer of %1/%2 complete</span></dt><dd><p>
+The transfer of the given zone has been completed successfully, or was
+aborted due to a shutdown event.
+</p></dd><dt><a name="XFROUT_AXFR_TRANSFER_ERROR"></a><span class="term">XFROUT_AXFR_TRANSFER_ERROR error transferring zone %1/%2: %3</span></dt><dd><p>
+An uncaught exception was encountered while sending the response to
+an AXFR query. The error message of the exception is included in the
+log message, but this error most likely points to incomplete exception
+handling in the code.
+</p></dd><dt><a name="XFROUT_AXFR_TRANSFER_FAILED"></a><span class="term">XFROUT_AXFR_TRANSFER_FAILED transfer of %1/%2 failed, rcode: %3</span></dt><dd><p>
+A transfer out for the given zone failed. An error response is sent
+to the client. The given rcode is the rcode that is set in the error
+response. This is either NOTAUTH (we are not authoritative for the
+zone), SERVFAIL (our internal database is missing the SOA record for
+the zone), or REFUSED (the limit of simultaneous outgoing AXFR
+transfers, as specified by the configuration value
+Xfrout/max_transfers_out, has been reached).
+</p></dd><dt><a name="XFROUT_AXFR_TRANSFER_STARTED"></a><span class="term">XFROUT_AXFR_TRANSFER_STARTED transfer of zone %1/%2 has started</span></dt><dd><p>
+A transfer out of the given zone has started.
+</p></dd><dt><a name="XFROUT_BAD_TSIG_KEY_STRING"></a><span class="term">XFROUT_BAD_TSIG_KEY_STRING bad TSIG key string: %1</span></dt><dd><p>
+The TSIG key string as read from the configuration does not represent
+a valid TSIG key.
+</p></dd><dt><a name="XFROUT_CC_SESSION_ERROR"></a><span class="term">XFROUT_CC_SESSION_ERROR error reading from cc channel: %1</span></dt><dd><p>
+There was a problem reading from the command and control channel. The
+most likely cause is that the msgq daemon is not running.
+</p></dd><dt><a name="XFROUT_CC_SESSION_TIMEOUT_ERROR"></a><span class="term">XFROUT_CC_SESSION_TIMEOUT_ERROR timeout waiting for cc response</span></dt><dd><p>
+There was a problem reading a response from antoher module over the
+command and control channel. The most likely cause is that the
+configuration manager b10-cfgmgr is not running.
+</p></dd><dt><a name="XFROUT_FETCH_REQUEST_ERROR"></a><span class="term">XFROUT_FETCH_REQUEST_ERROR socket error while fetching a request from the auth daemon</span></dt><dd><p>
+There was a socket error while contacting the b10-auth daemon to
+fetch a transfer request. The auth daemon may have shutdown.
+</p></dd><dt><a name="XFROUT_HANDLE_QUERY_ERROR"></a><span class="term">XFROUT_HANDLE_QUERY_ERROR error while handling query: %1</span></dt><dd><p>
+There was a general error handling an xfrout query. The error is shown
+in the message. In principle this error should not appear, and points
+to an oversight catching exceptions in the right place. However, to
+ensure the daemon keeps running, this error is caught and reported.
+</p></dd><dt><a name="XFROUT_IMPORT"></a><span class="term">XFROUT_IMPORT error importing python module: %1</span></dt><dd><p>
+There was an error importing a python module. One of the modules needed
+by xfrout could not be found. This suggests that either some libraries
+are missing on the system, or the PYTHONPATH variable is not correct.
+The specific place where this library needs to be depends on your
+system and your specific installation.
+</p></dd><dt><a name="XFROUT_NEW_CONFIG"></a><span class="term">XFROUT_NEW_CONFIG Update xfrout configuration</span></dt><dd><p>
+New configuration settings have been sent from the configuration
+manager. The xfrout daemon will now apply them.
+</p></dd><dt><a name="XFROUT_NEW_CONFIG_DONE"></a><span class="term">XFROUT_NEW_CONFIG_DONE Update xfrout configuration done</span></dt><dd><p>
+The xfrout daemon is now done reading the new configuration settings
+received from the configuration manager.
+</p></dd><dt><a name="XFROUT_NOTIFY_COMMAND"></a><span class="term">XFROUT_NOTIFY_COMMAND received command to send notifies for %1/%2</span></dt><dd><p>
+The xfrout daemon received a command on the command channel that
+NOTIFY packets should be sent for the given zone.
+</p></dd><dt><a name="XFROUT_PARSE_QUERY_ERROR"></a><span class="term">XFROUT_PARSE_QUERY_ERROR error parsing query: %1</span></dt><dd><p>
+There was a parse error while reading an incoming query. The parse
+error is shown in the log message. A remote client sent a packet we
+do not understand or support. The xfrout request will be ignored.
+In general, this should only occur for unexpected problems like
+memory allocation failures, as the query should already have been
+parsed by the b10-auth daemon, before it was passed here.
+</p></dd><dt><a name="XFROUT_PROCESS_REQUEST_ERROR"></a><span class="term">XFROUT_PROCESS_REQUEST_ERROR error processing transfer request: %2</span></dt><dd><p>
+There was an error processing a transfer request. The error is included
+in the log message, but at this point no specific information other
+than that could be given. This points to incomplete exception handling
+in the code.
+</p></dd><dt><a name="XFROUT_RECEIVED_SHUTDOWN_COMMAND"></a><span class="term">XFROUT_RECEIVED_SHUTDOWN_COMMAND shutdown command received</span></dt><dd><p>
+The xfrout daemon received a shutdown command from the command channel
+and will now shut down.
+</p></dd><dt><a name="XFROUT_RECEIVE_FILE_DESCRIPTOR_ERROR"></a><span class="term">XFROUT_RECEIVE_FILE_DESCRIPTOR_ERROR error receiving the file descriptor for an XFR connection</span></dt><dd><p>
+There was an error receiving the file descriptor for the transfer
+request. Normally, the request is received by b10-auth, and passed on
+to the xfrout daemon, so it can answer directly. However, there was a
+problem receiving this file descriptor. The request will be ignored.
+</p></dd><dt><a name="XFROUT_REMOVE_OLD_UNIX_SOCKET_FILE_ERROR"></a><span class="term">XFROUT_REMOVE_OLD_UNIX_SOCKET_FILE_ERROR error removing unix socket file %1: %2</span></dt><dd><p>
+The unix socket file xfrout needs for contact with the auth daemon
+already exists, and needs to be removed first, but there is a problem
+removing it. It is likely that we do not have permission to remove
+this file. The specific error is show in the log message. The xfrout
+daemon will shut down.
+</p></dd><dt><a name="XFROUT_REMOVE_UNIX_SOCKET_FILE_ERROR"></a><span class="term">XFROUT_REMOVE_UNIX_SOCKET_FILE_ERROR error clearing unix socket file %1: %2</span></dt><dd><p>
+When shutting down, the xfrout daemon tried to clear the unix socket
+file used for communication with the auth daemon. It failed to remove
+the file. The reason for the failure is given in the error message.
+</p></dd><dt><a name="XFROUT_SOCKET_SELECT_ERROR"></a><span class="term">XFROUT_SOCKET_SELECT_ERROR error while calling select() on request socket: %1</span></dt><dd><p>
+There was an error while calling select() on the socket that informs
+the xfrout daemon that a new xfrout request has arrived. This should
+be a result of rare local error such as memory allocation failure and
+shouldn't happen under normal conditions. The error is included in the
+log message.
+</p></dd><dt><a name="XFROUT_STOPPED_BY_KEYBOARD"></a><span class="term">XFROUT_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down</span></dt><dd><p>
+There was a keyboard interrupt signal to stop the xfrout daemon. The
+daemon will now shut down.
+</p></dd><dt><a name="XFROUT_STOPPING"></a><span class="term">XFROUT_STOPPING the xfrout daemon is shutting down</span></dt><dd><p>
+The current transfer is aborted, as the xfrout daemon is shutting down.
+</p></dd><dt><a name="XFROUT_UNIX_SOCKET_FILE_IN_USE"></a><span class="term">XFROUT_UNIX_SOCKET_FILE_IN_USE another xfrout process seems to be using the unix socket file %1</span></dt><dd><p>
+While starting up, the xfrout daemon tried to clear the unix domain
+socket needed for contacting the b10-auth daemon to pass requests
+on, but the file is in use. The most likely cause is that another
+xfrout daemon process is still running. This xfrout daemon (the one
+printing this message) will not start.
 </p></dd></dl></div><p>
     </p></div></div></body></html>
