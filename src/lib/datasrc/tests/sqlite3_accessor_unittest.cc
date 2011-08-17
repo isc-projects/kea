@@ -114,7 +114,7 @@ TEST_F(SQLite3Access, iterator) {
     ASSERT_NE(DatabaseAccessor::IteratorContextPtr(),
               context);
 
-    size_t size(5);
+    const size_t size(5);
     std::string data[size];
     // Get and check the first and only record
     EXPECT_TRUE(context->getNext(data, size));
