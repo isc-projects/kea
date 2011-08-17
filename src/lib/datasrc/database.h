@@ -165,6 +165,12 @@ public:
         ADD_RDATA = 5    ///< Full text representation of the record's RDATA
     };
 
+    enum DeleteRecordParams {
+        DEL_NAME = 0, ///< The owner name of the record (a domain name)
+        DEL_TYPE = 1, ///< The RRType of the record (A/NS/TXT etc.)
+        DEL_RDATA = 2 ///< Full text representation of the record's RDATA
+    };
+
     /// TBD
     virtual std::pair<bool, int> startUpdateZone(const std::string& zone_name,
                                                  bool replace) = 0;
@@ -362,6 +368,7 @@ public:
         ~Updater();
         virtual ZoneFinder& getFinder();
         virtual void addRRset(const isc::dns::RRset& rrset);
+        virtual void deleteRRset(const isc::dns::RRset& rrset);
         virtual void commit();
 
     private:
@@ -373,6 +380,7 @@ public:
         isc::dns::RRClass zone_class_;
         boost::scoped_ptr<Finder::Finder> finder_;
         std::vector<std::string> add_columns_;
+        std::vector<std::string> del_params_;
     };
 
     /**
