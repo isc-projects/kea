@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium.
+// Copyright (C) 2010, 2011  Internet Systems Consortium.
 //
 // Permission to use, copy, modify, and distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -71,6 +71,12 @@ namespace isc { namespace config {
         ///                    part of the specification
         isc::data::ConstElementPtr getConfigSpec() const;
 
+        /// Returns the statistics part of the specification as an
+        /// ElementPtr
+        /// \return ElementPtr Shared pointer to the statistics
+        ///                    part of the specification
+        isc::data::ConstElementPtr getStatisticsSpec() const;
+
         /// Returns the full module specification as an ElementPtr
         /// \return ElementPtr Shared pointer to the specification
         isc::data::ConstElementPtr getFullSpec() const {
@@ -93,6 +99,17 @@ namespace isc { namespace config {
         /// \return true if the data conforms to the specification,
         /// false otherwise.
         bool validateConfig(isc::data::ConstElementPtr data,
+                             const bool full = false) const;
+
+        // returns true if the given element conforms to this data
+        // statistics specification
+        /// Validates the given statistics data for this specification.
+        /// \param data The base \c Element of the data to check
+        /// \param full If true, all non-optional statistics parameters
+        /// must be specified.
+        /// \return true if the data conforms to the specification,
+        /// false otherwise.
+        bool validateStatistics(isc::data::ConstElementPtr data,
                              const bool full = false) const;
 
         /// Validates the arguments for the given command
@@ -141,6 +158,10 @@ namespace isc { namespace config {
         /// errors must be of type ListElement
         bool validateConfig(isc::data::ConstElementPtr data, const bool full,
                              isc::data::ElementPtr errors) const;
+
+        /// errors must be of type ListElement
+        bool validateStatistics(isc::data::ConstElementPtr data, const bool full,
+                                isc::data::ElementPtr errors) const;
 
     private:
         bool validateItem(isc::data::ConstElementPtr spec,
