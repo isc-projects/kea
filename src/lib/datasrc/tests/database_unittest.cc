@@ -332,6 +332,14 @@ private:
         addCurName("*.wild.example.org.");
         addRecord("AAAA", "3600", "", "2001:db8::5");
         addCurName("cancel.here.wild.example.org.");
+        addRecord("NS", "3600", "", "ns.example.com.");
+        addCurName("delegatedwild.example.org.");
+        addRecord("A", "3600", "", "192.0.2.5");
+        addCurName("*.delegatedwild.example.org.");
+        addRecord("A", "3600", "", "192.0.2.5");
+        addCurName("wild.*.foo.example.org.");
+        addRecord("A", "3600", "", "192.0.2.5");
+        addCurName("wild.*.foo.*.bar.example.org.");
     }
 };
 
@@ -1030,8 +1038,59 @@ TEST_F(DatabaseClientTest, wildcard) {
                isc::dns::RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas_,
                expected_sig_rdatas_);
 
-    // TODO Check delegation, multiple wildcards and wildcards somewhere
-    // in the middle.
+    // How wildcard go together with delegation
+    expected_rdatas_.push_back("ns.example.com.");
+    doFindTest(finder, isc::dns::Name("below.delegatedwild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::NS(),
+               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
+               expected_sig_rdatas_,
+               isc::dns::Name("delegatedwild.example.org"));
+    // FIXME: This doesn't look logically OK, GLUE_OK should make it transparent,
+    // so the match should either work or be canceled, but return NXDOMAIN
+    doFindTest(finder, isc::dns::Name("below.delegatedwild.example.org"),
+               isc::dns::RRType::A(), isc::dns::RRType::NS(),
+               isc::dns::RRTTL(3600), ZoneFinder::DELEGATION, expected_rdatas_,
+               expected_sig_rdatas_,
+               isc::dns::Name("delegatedwild.example.org"),
+               ZoneFinder::FIND_GLUE_OK);
+
+    expected_rdatas_.clear();
+    expected_rdatas_.push_back("192.0.2.5");
+    // These are direct matches
+    const char* positive_names[] = {
+        "wild.*.foo.example.org.",
+        "wild.*.foo.*.bar.example.org.",
+        NULL
+    };
+    for (const char** name(positive_names); *name != NULL; ++ name) {
+        doFindTest(finder, isc::dns::Name(*name), isc::dns::RRType::A(),
+                   isc::dns::RRType::A(), isc::dns::RRTTL(3600),
+                   ZoneFinder::SUCCESS, expected_rdatas_,
+                   expected_sig_rdatas_);
+    }
+
+    // These are wildcard matches against empty nonterminal asterisk
+    expected_rdatas_.clear();
+    const char* negative_names[] = {
+        "a.foo.example.org.",
+        "*.foo.example.org.",
+        "foo.example.org.",
+        "wild.bar.foo.example.org.",
+        "baz.foo.*.bar.example.org",
+        "baz.foo.baz.bar.example.org",
+        "*.foo.baz.bar.example.org",
+        "*.foo.*.bar.example.org",
+        "foo.*.bar.example.org",
+        "*.bar.example.org",
+        "bar.example.org",
+        NULL
+    };
+    for (const char** name(negative_names); *name != NULL; ++ name) {
+        doFindTest(finder, isc::dns::Name(*name), isc::dns::RRType::A(),
+                   isc::dns::RRType::A(), isc::dns::RRTTL(3600),
+                   ZoneFinder::NXRRSET, expected_rdatas_,
+                   expected_sig_rdatas_);
+    }
 }
 
 TEST_F(DatabaseClientTest, getOrigin) {
