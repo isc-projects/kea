@@ -39,7 +39,8 @@ public:
 
     /// \brief Define the assignment operator.
     ///
-    /// This method never throws an exception.
+    /// \exception std::bad_alloc Memory allocation fails in copying
+    /// internal member variables (this should be very rare).
     MINFO& operator=(const MINFO& source);
 
     /// \brief Return the value of the rmailbox field.
@@ -52,11 +53,11 @@ public:
     /// \c NS::getNSName()), this method constructs a new \c Name object
     /// and returns it, instead of returning a reference to a \c Name object
     /// internally maintained in the class (which is a private member).
-    /// This is based on the observation that this method will be rarely used
-    /// and even when it's used it will not be in a performance context
+    /// This is based on the observation that this method will be rarely
+    /// used and even when it's used it will not be in a performance context
     /// (for example, a recursive resolver won't need this field in its
-    /// resolution process).  By returning a new object we have flexibility of
-    /// changing the internal representation without the risk of changing
+    /// resolution process).  By returning a new object we have flexibility
+    /// of changing the internal representation without the risk of changing
     /// the interface or method property.
     /// The same note applies to the \c getEmailbox() method.
     Name getRmailbox() const { return (rmailbox_); }
