@@ -1,3 +1,8 @@
+280.	[func		ocean
+	libdns++: Implement the NAPTR rrtype according to RFC2915,
+	RFC2168 and RFC3403.
+	(Trac #1130, git a030033e5a53dd18157509c6c101340688d16011)
+
 279.	[func]		jerry
 	libdns++: Implement the AFSDB rrtype according to RFC1183.
 	(Trac #1114, git ce052cd92cd128ea3db5a8f154bd151956c2920c)
