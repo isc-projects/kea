@@ -39,7 +39,6 @@ const char* const too_long_label = "01234567890123456789012345678901234567"
 
 namespace {
 class Rdata_MINFO_Test : public RdataTest {
-    // there's nothing to specialize
 public:
     Rdata_MINFO_Test():
         rdata_minfo(string(minfo_txt)), rdata_minfo2(string(minfo_txt2)) {}
