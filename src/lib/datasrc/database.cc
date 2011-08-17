@@ -287,6 +287,19 @@ DatabaseClient::Finder::getRRset(const isc::dns::Name& name,
     return (std::pair<bool, isc::dns::RRsetPtr>(records_found, result_rrset));
 }
 
+bool
+DatabaseClient::Finder::hasSubdomains(const std::string& name) {
+    database_->searchForRecords(zone_id_, name, true);
+    std::string columns[DatabaseAccessor::COLUMN_COUNT];
+    if (database_->getNextRecord(columns,
+                                 DatabaseAccessor::COLUMN_COUNT)) {
+        // We don't consume everything, discard the rest
+        database_->resetSearch();
+        return (true);
+    } else {
+        return (false);
+    }
+}
 
 ZoneFinder::FindResult
 DatabaseClient::Finder::find(const isc::dns::Name& name,
@@ -357,13 +370,8 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
             // Nothing lives here.
             // But check if something lives below this
             // domain and if so, pretend something is here as well.
-            database_->searchForRecords(zone_id_, name.toText(), true);
-            std::string columns[DatabaseAccessor::COLUMN_COUNT];
-            if (database_->getNextRecord(columns,
-                                         DatabaseAccessor::COLUMN_COUNT)) {
+            if (hasSubdomains(name.toText())) {
                 records_found = true;
-                // We don't consume everything, so get rid of the rest
-                database_->resetSearch();
             } else {
                 // It's not empty non-terminal. So check for wildcards.
                 // We remove labels one by one and look for the wildcard there.
@@ -379,9 +387,15 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
                     // TODO What do we do about DNAME here?
                     found = getRRset(wildcard, &type, true, false, true,
                                      &name);
-                    result_rrset = found.second;
                     if (found.first) {
-                        records_found = true;
+                        // Nothing we added as part of the * can exist directly,
+                        // as we go up only to first existing domain,
+                        // but it could be empty non-terminal. In that case, we
+                        // need to cancel the match.
+                        if (!hasSubdomains(name.split(i - 1).toText())) {
+                            records_found = true;
+                            result_rrset = found.second;
+                        }
                         break;
                     }
                 }
