@@ -1,3 +1,7 @@
+280.	[func]		jerry
+	libdns++: Implement the MINFO rrtype according to RFC1035.
+	(Trac #1113, git 7a9a19d6431df02d48a7bc9de44f08d9450d3a37)
+
 279.	[func]		jerry
 	libdns++: Implement the AFSDB rrtype according to RFC1183.
 	(Trac #1114, git ce052cd92cd128ea3db5a8f154bd151956c2920c)
