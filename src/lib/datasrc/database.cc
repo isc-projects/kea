@@ -15,10 +15,12 @@
 #include <vector>
 
 #include <datasrc/database.h>
+#include <datasrc/data_source.h>
+#include <datasrc/iterator.h>
 
 #include <exceptions/exceptions.h>
 #include <dns/name.h>
-#include <dns/rrttl.h>
+#include <dns/rrclass.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
@@ -27,7 +29,10 @@
 
 #include <boost/foreach.hpp>
 
-using isc::dns::Name;
+#include <string>
+
+using namespace isc::dns;
+using std::string;
 
 namespace isc {
 namespace datasrc {
@@ -109,7 +114,7 @@ void addOrCreate(isc::dns::RRsetPtr& rrset,
             if (ttl < rrset->getTTL()) {
                 rrset->setTTL(ttl);
             }
-            logger.info(DATASRC_DATABASE_FIND_TTL_MISMATCH)
+            logger.warn(DATASRC_DATABASE_FIND_TTL_MISMATCH)
                 .arg(db.getDBName()).arg(name).arg(cls)
                 .arg(type).arg(rrset->getTTL());
         }
@@ -399,6 +404,110 @@ isc::dns::RRClass
 DatabaseClient::Finder::getClass() const {
     // TODO Implement
     return isc::dns::RRClass::IN();
+}
+
+namespace {
+
+/*
+ * This needs, beside of converting all data from textual representation, group
+ * together rdata of the same RRsets. To do this, we hold one row of data ahead
+ * of iteration. When we get a request to provide data, we create it from this
+ * data and load a new one. If it is to be put to the same rrset, we add it.
+ * Otherwise we just return what we have and keep the row as the one ahead
+ * for next time.
+ */
+class DatabaseIterator : public ZoneIterator {
+public:
+    DatabaseIterator(const DatabaseAccessor::IteratorContextPtr& context,
+             const RRClass& rrclass) :
+        context_(context),
+        class_(rrclass),
+        ready_(true)
+    {
+        // Prepare data for the next time
+        getData();
+    }
+
+    virtual isc::dns::ConstRRsetPtr getNextRRset() {
+        if (!ready_) {
+            isc_throw(isc::Unexpected, "Iterating past the zone end");
+        }
+        if (!data_ready_) {
+            // At the end of zone
+            ready_ = false;
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                      DATASRC_DATABASE_ITERATE_END);
+            return (ConstRRsetPtr());
+        }
+        string name_str(name_), rtype_str(rtype_), ttl(ttl_);
+        Name name(name_str);
+        RRType rtype(rtype_str);
+        RRsetPtr rrset(new RRset(name, class_, rtype, RRTTL(ttl)));
+        while (data_ready_ && name_ == name_str && rtype_str == rtype_) {
+            if (ttl_ != ttl) {
+                if (ttl < ttl_) {
+                    ttl_ = ttl;
+                    rrset->setTTL(RRTTL(ttl));
+                }
+                LOG_WARN(logger, DATASRC_DATABASE_ITERATE_TTL_MISMATCH).
+                    arg(name_).arg(class_).arg(rtype_).arg(rrset->getTTL());
+            }
+            rrset->addRdata(rdata::createRdata(rtype, class_, rdata_));
+            getData();
+        }
+        LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE_NEXT).
+            arg(rrset->getName()).arg(rrset->getType());
+        return (rrset);
+    }
+private:
+    // Load next row of data
+    void getData() {
+        string data[DatabaseAccessor::COLUMN_COUNT];
+        data_ready_ = context_->getNext(data, DatabaseAccessor::COLUMN_COUNT);
+        name_ = data[DatabaseAccessor::NAME_COLUMN];
+        rtype_ = data[DatabaseAccessor::TYPE_COLUMN];
+        ttl_ = data[DatabaseAccessor::TTL_COLUMN];
+        rdata_ = data[DatabaseAccessor::RDATA_COLUMN];
+    }
+
+    // The context
+    const DatabaseAccessor::IteratorContextPtr context_;
+    // Class of the zone
+    RRClass class_;
+    // Status
+    bool ready_, data_ready_;
+    // Data of the next row
+    string name_, rtype_, rdata_, ttl_;
+};
+
+}
+
+ZoneIteratorPtr
+DatabaseClient::getIterator(const isc::dns::Name& name) const {
+    // Get the zone
+    std::pair<bool, int> zone(database_->getZone(name));
+    if (!zone.first) {
+        // No such zone, can't continue
+        isc_throw(DataSourceError, "Zone " + name.toText() +
+                  " can not be iterated, because it doesn't exist "
+                  "in this data source");
+    }
+    // Request the context
+    DatabaseAccessor::IteratorContextPtr
+        context(database_->getAllRecords(name, zone.second));
+    // It must not return NULL, that's a bug of the implementation
+    if (context == DatabaseAccessor::IteratorContextPtr()) {
+        isc_throw(isc::Unexpected, "Iterator context null at " +
+                  name.toText());
+    }
+    // Create the iterator and return it
+    // TODO: Once #1062 is merged with this, we need to get the
+    // actual zone class from the connection, as the DatabaseClient
+    // doesn't know it and the iterator needs it (so it wouldn't query
+    // it each time)
+    LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE).
+        arg(name);
+    return (ZoneIteratorPtr(new DatabaseIterator(context, RRClass::IN())));
 }
 
 }
