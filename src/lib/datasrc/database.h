@@ -106,16 +106,23 @@ public:
          * \brief Function to provide next resource record
          *
          * This function should provide data about the next resource record
-         * from the iterated zone. The data are not converted yet.
+         * from the data that is searched. The data is not converted yet.
          *
+         * Depending on how the iterator was constructed, there is a difference
+         * in behaviour; for a 'full zone iterator', created with
+         * getAllRecords(), all 5 elements of the array are overwritten.
+         * for a 'name iterator', created with getRecords(), the fifth column
+         * (NAME_COLUMN) is untouched, since what would be added here is by
+         * definition already known to the caller (it already passes it as
+         * an argument to getRecords()).
+         * 
          * \note The order of RRs is not strictly set, but the RRs for single
          * RRset must not be interleaved with any other RRs (eg. RRsets must be
          * "together").
          *
          * \param columns The data will be returned through here. The order
-         *     is specified by the RecordColumns enum.
-         * \param Size of the columns array. Must be equal to COLUMN_COUNT,
-         *     otherwise DataSourceError is thrown.
+         *     is specified by the RecordColumns enum, and the size must be
+         *     COLUMN_COUNT
          * \todo Do we consider databases where it is stored in binary blob
          *     format?
          * \throw DataSourceError if there's database-related error. If the
@@ -139,6 +146,10 @@ public:
      * The default implementation throws isc::NotImplemented, to allow
      * "minimal" implementations of the connection not supporting optional
      * functionality.
+     *
+     * The implementation of the iterator that is returned may leave the
+     * fifth column of the array passed to getNext() untouched, as that
+     * data is already known (it is the same as the name argument here)
      *
      * \param name The name to search for.
      * \param id The ID of the zone, returned from getZone().
@@ -172,7 +183,6 @@ public:
      * "minimal" implementations of the connection not supporting optional
      * functionality.
      *
-     * \param name The name of the zone.
      * \param id The ID of the zone, returned from getZone().
      * \return Newly created iterator context. Must not be NULL.
      */
@@ -193,7 +203,7 @@ public:
      * Definitions of the fields as they are required to be filled in
      * by getNextRecord()
      *
-     * When implementing getNextRecord(), the columns array should
+     * When implementing getNext(), the columns array should
      * be filled with the values as described in this enumeration,
      * in this order, i.e. TYPE_COLUMN should be the first element
      * (index 0) of the array, TTL_COLUMN should be the second element
