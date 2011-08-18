@@ -96,8 +96,7 @@ public:
                                           int id) const;
 
     /// \brief Implementation of DatabaseAbstraction::getAllRecords
-    virtual IteratorContextPtr getAllRecords(const isc::dns::Name&,
-                                             int id) const;
+    virtual IteratorContextPtr getAllRecords(int id) const;
 
     /// The SQLite3 implementation of this method returns a string starting
     /// with a fixed prefix of "sqlite3_" followed by the DB file name
