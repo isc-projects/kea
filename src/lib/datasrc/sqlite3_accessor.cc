@@ -49,7 +49,7 @@ struct SQLite3Parameters {
 };
 
 SQLite3Database::SQLite3Database(const std::string& filename,
-                                     const isc::dns::RRClass& rrclass) :
+                                 const isc::dns::RRClass& rrclass) :
     dbparameters_(new SQLite3Parameters),
     class_(rrclass.toText()),
     database_name_("sqlite3_" +
@@ -243,7 +243,7 @@ SQLite3Database::open(const std::string& name) {
     }
 
     checkAndSetupSchema(&initializer);
-    initializer.move(dbparameters_);
+    initializer.move(dbparameters_.get());
 }
 
 SQLite3Database::~SQLite3Database() {
@@ -251,7 +251,6 @@ SQLite3Database::~SQLite3Database() {
     if (dbparameters_->db_ != NULL) {
         close();
     }
-    delete dbparameters_;
 }
 
 void
@@ -432,7 +431,7 @@ private:
     void copyColumn(std::string (&data)[COLUMN_COUNT], int column) {
         data[column] = convertToPlainChar(sqlite3_column_text(statement_,
                                                               column),
-                                          database_->dbparameters_);
+                                          database_->dbparameters_.get());
     }
 
     void bindZoneId(const int zone_id) {

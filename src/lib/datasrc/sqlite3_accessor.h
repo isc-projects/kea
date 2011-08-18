@@ -21,6 +21,7 @@
 #include <exceptions/exceptions.h>
 
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <string>
 
 namespace isc {
@@ -127,7 +128,7 @@ public:
 
 private:
     /// \brief Private database data
-    SQLite3Parameters* dbparameters_;
+    boost::scoped_ptr<SQLite3Parameters> dbparameters_;
     /// \brief The class for which the queries are done
     const std::string class_;
     /// \brief Opens the database
