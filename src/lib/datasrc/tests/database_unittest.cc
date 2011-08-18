@@ -82,7 +82,7 @@ private:
  */
 class MockAccessor : public NopAccessor {
 public:
-    MockAccessor() : search_running_(false)
+    MockAccessor() : cur_record(0), search_running_(false)
     {
         fillData();
     }
