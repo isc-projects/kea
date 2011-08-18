@@ -117,14 +117,14 @@ TEST_F(SQLite3Access, iterator) {
     const size_t size(5);
     std::string data[size];
     // Get and check the first and only record
-    EXPECT_TRUE(context->getNext(data, size));
+    EXPECT_TRUE(context->getNext(data));
     EXPECT_EQ("example2.com.", data[4]);
     EXPECT_EQ("SOA", data[0]);
     EXPECT_EQ("master.example2.com. admin.example2.com. "
               "1234 3600 1800 2419200 7200", data[3]);
     EXPECT_EQ("3600", data[1]);
     // Check there's no other
-    EXPECT_FALSE(context->getNext(data, size));
+    EXPECT_FALSE(context->getNext(data));
 }
 
 TEST_F(SQLite3Access, iteratorColumnCount) {
@@ -137,11 +137,8 @@ TEST_F(SQLite3Access, iteratorColumnCount) {
     ASSERT_NE(DatabaseAccessor::IteratorContextPtr(),
               context);
 
-    EXPECT_THROW(context->getNext(NULL, 0), DataSourceError);
-    std::string data[6];
-    EXPECT_THROW(context->getNext(data, 4), DataSourceError);
-    EXPECT_THROW(context->getNext(data, 6), DataSourceError);
-    EXPECT_NO_THROW(context->getNext(data, 5));
+    std::string data[DatabaseAccessor::COLUMN_COUNT];
+    EXPECT_NO_THROW(context->getNext(data));
 }
 
 TEST(SQLite3Open, getDBNameExample2) {
@@ -183,89 +180,85 @@ TEST_F(SQLite3Access, getRecords) {
 
     // TODO: can't do this anymore
     // without search, getNext() should return false
-    //EXPECT_FALSE(context->getNext(columns, column_count));
+    //EXPECT_FALSE(context->getNext(columns));
     //checkRecordRow(columns, "", "", "", "", "");
 
     DatabaseAccessor::IteratorContextPtr
         context(db->getRecords(Name("foo.bar"), 1));
     ASSERT_NE(DatabaseAccessor::IteratorContextPtr(),
               context);
-    EXPECT_FALSE(context->getNext(columns, column_count));
+    EXPECT_FALSE(context->getNext(columns));
     checkRecordRow(columns, "", "", "", "", "");
 
     // TODO can't pass incomplete name anymore
     //context = db->getRecords(Name(""), zone_id);
-    //EXPECT_FALSE(context->getNext(columns, column_count));
+    //EXPECT_FALSE(context->getNext(columns));
     //checkRecordRow(columns, "", "", "", "", "");
-
-    // Should error on a bad number of columns
-    EXPECT_THROW(context->getNext(columns, 4), DataSourceError);
-    EXPECT_THROW(context->getNext(columns, 6), DataSourceError);
 
     // now try some real searches
     context = db->getRecords(Name("foo.example.com."), zone_id);
-    ASSERT_TRUE(context->getNext(columns, column_count));
+    ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "CNAME", "3600", "",
                    "cnametest.example.org.", "");
-    ASSERT_TRUE(context->getNext(columns, column_count));
+    ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "RRSIG", "3600", "CNAME",
                    "CNAME 5 3 3600 20100322084538 20100220084538 33495 "
                    "example.com. FAKEFAKEFAKEFAKE", "");
-    ASSERT_TRUE(context->getNext(columns, column_count));
+    ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "NSEC", "7200", "",
                    "mail.example.com. CNAME RRSIG NSEC", "");
-    ASSERT_TRUE(context->getNext(columns, column_count));
+    ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "RRSIG", "7200", "NSEC",
                    "NSEC 5 3 7200 20100322084538 20100220084538 33495 "
                    "example.com. FAKEFAKEFAKEFAKE", "");
-    EXPECT_FALSE(context->getNext(columns, column_count));
+    EXPECT_FALSE(context->getNext(columns));
     // with no more records, the array should not have been modified
     checkRecordRow(columns, "RRSIG", "7200", "NSEC",
                    "NSEC 5 3 7200 20100322084538 20100220084538 33495 "
                    "example.com. FAKEFAKEFAKEFAKE", "");
 
     context = db->getRecords(Name("example.com."), zone_id);
-    ASSERT_TRUE(context->getNext(columns, column_count));
+    ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "SOA", "3600", "",
                    "master.example.com. admin.example.com. "
                    "1234 3600 1800 2419200 7200", "");
-    ASSERT_TRUE(context->getNext(columns, column_count));
+    ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "RRSIG", "3600", "SOA",
                    "SOA 5 2 3600 20100322084538 20100220084538 "
                    "33495 example.com. FAKEFAKEFAKEFAKE", "");
-    ASSERT_TRUE(context->getNext(columns, column_count));
+    ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "NS", "1200", "", "dns01.example.com.", "");
-    ASSERT_TRUE(context->getNext(columns, column_count));
+    ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "NS", "3600", "", "dns02.example.com.", "");
-    ASSERT_TRUE(context->getNext(columns, column_count));
+    ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "NS", "1800", "", "dns03.example.com.", "");
-    ASSERT_TRUE(context->getNext(columns, column_count));
+    ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "RRSIG", "3600", "NS",
                    "NS 5 2 3600 20100322084538 20100220084538 "
                    "33495 example.com. FAKEFAKEFAKEFAKE", "");
-    ASSERT_TRUE(context->getNext(columns, column_count));
+    ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "MX", "3600", "", "10 mail.example.com.", "");
-    ASSERT_TRUE(context->getNext(columns, column_count));
+    ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "MX", "3600", "",
                    "20 mail.subzone.example.com.", "");
-    ASSERT_TRUE(context->getNext(columns, column_count));
+    ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "RRSIG", "3600", "MX",
                    "MX 5 2 3600 20100322084538 20100220084538 "
                    "33495 example.com. FAKEFAKEFAKEFAKE", "");
-    ASSERT_TRUE(context->getNext(columns, column_count));
+    ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "NSEC", "7200", "",
                    "cname-ext.example.com. NS SOA MX RRSIG NSEC DNSKEY", "");
-    ASSERT_TRUE(context->getNext(columns, column_count));
+    ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "RRSIG", "7200", "NSEC",
                    "NSEC 5 2 7200 20100322084538 20100220084538 "
                    "33495 example.com. FAKEFAKEFAKEFAKE", "");
-    ASSERT_TRUE(context->getNext(columns, column_count));
+    ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "DNSKEY", "3600", "",
                    "256 3 5 AwEAAcOUBllYc1hf7ND9uDy+Yz1BF3sI0m4q NGV7W"
                    "cTD0WEiuV7IjXgHE36fCmS9QsUxSSOV o1I/FMxI2PJVqTYHkX"
                    "FBS7AzLGsQYMU7UjBZ SotBJ6Imt5pXMu+lEDNy8TOUzG3xm7g"
                    "0qcbW YF6qCEfvZoBtAqi5Rk7Mlrqs8agxYyMx", "");
-    ASSERT_TRUE(context->getNext(columns, column_count));
+    ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "DNSKEY", "3600", "",
                    "257 3 5 AwEAAe5WFbxdCPq2jZrZhlMj7oJdff3W7syJ tbvzg"
                    "62tRx0gkoCDoBI9DPjlOQG0UAbj+xUV 4HQZJStJaZ+fHU5AwV"
@@ -275,15 +268,15 @@ TEST_F(SQLite3Access, getRecords) {
                    "fiHAxFHrkY3t3D5J R9Nsl/7fdRmSznwtcSDgLXBoFEYmw6p86"
                    "Acv RyoYNcL1SXjaKVLG5jyU3UR+LcGZT5t/0xGf oIK/aKwEN"
                    "rsjcKZZj660b1M=", "");
-    ASSERT_TRUE(context->getNext(columns, column_count));
+    ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "RRSIG", "3600", "DNSKEY",
                    "DNSKEY 5 2 3600 20100322084538 20100220084538 "
                    "4456 example.com. FAKEFAKEFAKEFAKE", "");
-    ASSERT_TRUE(context->getNext(columns, column_count));
+    ASSERT_TRUE(context->getNext(columns));
     checkRecordRow(columns, "RRSIG", "3600", "DNSKEY",
                    "DNSKEY 5 2 3600 20100322084538 20100220084538 "
                    "33495 example.com. FAKEFAKEFAKEFAKE", "");
-    EXPECT_FALSE(context->getNext(columns, column_count));
+    EXPECT_FALSE(context->getNext(columns));
     // getnextrecord returning false should mean array is not altered
     checkRecordRow(columns, "RRSIG", "3600", "DNSKEY",
                    "DNSKEY 5 2 3600 20100322084538 20100220084538 "
