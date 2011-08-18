@@ -48,11 +48,6 @@ IfaceMgr::instance() {
     return (*instance_);
 }
 
-IfaceMgr::Iface::Iface()
-    : name_(""), ifindex_(0), mac_len_(0) {
-    memset(mac_, 0, 20);
-}
-
 IfaceMgr::Iface::Iface(const std::string& name, int ifindex)
     :name_(name), ifindex_(ifindex), mac_len_(0) {
     memset(mac_, 0, 20);
@@ -84,6 +79,9 @@ IfaceMgr::IfaceMgr() {
     cout << "IfaceMgr initialization." << endl;
 
     try {
+        // required for sending/receiving packets
+        // let's keep it in front, just in case someone
+        // wants to send anything during initialization
         control_buf_len_ = CMSG_SPACE(sizeof(struct in6_pktinfo));
         control_buf_ = new char[control_buf_len_];
 
@@ -140,6 +138,11 @@ IfaceMgr::detectIfaces() {
         ifaces_.push_back(iface);
         interfaces.close();
     } catch (std::exception& ex) {
+        // TODO: deallocate whatever memory we used
+        // not that important, since this function is going to be
+        // thrown away as soon as we get proper interface detection
+        // implemented
+
         // TODO Do LOG_FATAL here
         std::cerr << "Interface detection failed." << std::endl;
         throw ex;
@@ -171,6 +174,7 @@ IfaceMgr::openSockets() {
                               DHCP6_SERVER_PORT, true);
             if (sock<0) {
                 cout << "Failed to open multicast socket." << endl;
+                close(sendsock_);
                 return (false);
             }
             recvsock_ = sock;
@@ -181,18 +185,18 @@ IfaceMgr::openSockets() {
 }
 
 void
-IfaceMgr::printIfaces() {
+IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
     for (IfaceLst::const_iterator iface=ifaces_.begin();
          iface!=ifaces_.end();
          ++iface) {
-        cout << "Detected interface " << iface->getFullName() << endl;
-        cout << "  " << iface->addrs_.size() << " addr(s):" << endl;
+        out << "Detected interface " << iface->getFullName() << endl;
+        out << "  " << iface->addrs_.size() << " addr(s):" << endl;
         for (Addr6Lst::const_iterator addr=iface->addrs_.begin();
              addr != iface->addrs_.end();
              ++addr) {
-            cout << "  " << addr->toText() << endl;
+            out << "  " << addr->toText() << endl;
         }
-        cout << "  mac: " << iface->getPlainMac() << endl;
+        out << "  mac: " << iface->getPlainMac() << endl;
     }
 }
 
@@ -205,7 +209,7 @@ IfaceMgr::getIface(int ifindex) {
             return (&(*iface));
     }
 
-    return 0; // not found
+    return (NULL); // not found
 }
 
 IfaceMgr::Iface*
@@ -217,12 +221,24 @@ IfaceMgr::getIface(const std::string& ifname) {
             return (&(*iface));
     }
 
-    return (0); // not found
+    return (NULL); // not found
 }
 
+
+/**
+ * Opens UDP/IPv6 socket and binds it to specific address, interface nad port.
+ *
+ * @param ifname name of the interface
+ * @param addr address to be bound.
+ * @param port UDP port.
+ * @param mcast Should multicast address also be bound?
+ *
+ * @return socket descriptor, if socket creation, binding and multicast
+ * group join were all successful. -1 otherwise.
+ */
 int
 IfaceMgr::openSocket(const std::string& ifname,
-                     const IOAddress & addr,
+                     const IOAddress& addr,
                      int port,
                      bool mcast) {
     struct sockaddr_storage name;
@@ -247,7 +263,7 @@ IfaceMgr::openSocket(const std::string& ifname,
 #endif
     name_len = sizeof(*addr6);
 
-    // XXX: use sockcreator once it becomes available
+    // TODO: use sockcreator once it becomes available
 
     // make a socket
     int sock = socket(AF_INET6, SOCK_DGRAM, 0);
@@ -262,12 +278,14 @@ IfaceMgr::openSocket(const std::string& ifname,
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
                    (char *)&flag, sizeof(flag)) < 0) {
         cout << "Can't set SO_REUSEADDR option on dhcpv6 socket." << endl;
+        close(sock);
         return (-1);
     }
 
     if (bind(sock, (struct sockaddr *)&name, name_len) < 0) {
         cout << "Failed to bind socket " << sock << " to " << addr.toText()
              << "/port=" << port << endl;
+        close(sock);
         return (-1);
     }
 
@@ -276,6 +294,7 @@ IfaceMgr::openSocket(const std::string& ifname,
     if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO,
                    &flag, sizeof(flag)) != 0) {
         cout << "setsockopt: IPV6_RECVPKTINFO failed." << endl;
+        close(sock);
         return (-1);
     }
 #else
@@ -283,6 +302,7 @@ IfaceMgr::openSocket(const std::string& ifname,
     if (setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO,
                    &flag, sizeof(flag)) != 0) {
         cout << "setsockopt: IPV6_PKTINFO: failed." << endl;
+        close(sock);
         return (-1);
     }
 #endif
@@ -307,6 +327,15 @@ IfaceMgr::openSocket(const std::string& ifname,
     return (sock);
 }
 
+/**
+ * joins multicast group
+ *
+ * @param sock socket file descriptor
+ * @param ifname name of the interface (DHCPv6 uses link-scoped mc groups)
+ * @param mcast multicast address to join (string)
+ *
+ * @return true if joined successfully, false otherwise
+ */
 bool
 IfaceMgr::joinMcast(int sock, const std::string& ifname,
 const std::string & mcast) {
@@ -332,6 +361,17 @@ const std::string & mcast) {
     return (true);
 }
 
+/**
+ * Sends UDP packet over IPv6.
+ *
+ * All parameters for actual transmission are specified in
+ * Pkt6 structure itself. That includes destination address,
+ * src/dst port and interface over which data will be sent.
+ *
+ * @param pkt A packet object that is going to be sent.
+ *
+ * @return True, if transmission was successful. False otherwise.
+ */
 bool
 IfaceMgr::send(Pkt6 &pkt) {
     struct msghdr m;
@@ -405,6 +445,16 @@ IfaceMgr::send(Pkt6 &pkt) {
     return (result);
 }
 
+
+/**
+ * Attempts to receive UDP/IPv6 packet over open sockets.
+ *
+ * TODO Start using select() and add timeout to be able
+ * to not wait infinitely, but rather do something useful
+ * (e.g. remove expired leases)
+ *
+ * @return Object prepresenting received packet.
+ */
 Pkt6*
 IfaceMgr::receive() {
     struct msghdr m;
@@ -418,7 +468,14 @@ IfaceMgr::receive() {
     char addr_str[INET6_ADDRSTRLEN];
 
     try {
-        pkt = new Pkt6(1500);
+        // RFC3315 states that server responses may be
+        // fragmented if they are over MTU. There is no
+        // text whether client's packets may be larger
+        // than 1500. Nevertheless to be on the safe side
+        // we use larger buffer. This buffer limit is checked
+        // during reception (see iov_len below), so we are
+        // safe
+        pkt = new Pkt6(65536);
     } catch (std::exception& ex) {
         cout << "Failed to create new packet." << endl;
         return (0);
@@ -495,9 +552,8 @@ IfaceMgr::receive() {
         return (0);
     }
 
-
     // That's ugly.
-    // TODO add IOAddress constructor that will take struct in6_addr* parameter
+    // TODO add IOAddress constructor that will take struct in6_addr*
     inet_ntop(AF_INET6, &to_addr, addr_str,INET6_ADDRSTRLEN);
     pkt->local_addr_ = IOAddress(string(addr_str));
 
@@ -511,8 +567,9 @@ IfaceMgr::receive() {
         pkt->iface_ = received->name_;
     } else {
         cout << "Received packet over unknown interface (ifindex="
-             << pkt->ifindex_ << endl;
-        pkt->iface_ = "[unknown]";
+             << pkt->ifindex_ << ")." << endl;
+        delete pkt;
+        return (0);
     }
 
     pkt->data_len_ = result;

@@ -30,12 +30,19 @@ using namespace isc::asiolink;
 
 namespace {
 class NakedIfaceMgr: public IfaceMgr {
-    // "naked" Interface Manager, exposes internal fields 
+    // "naked" Interface Manager, exposes internal fields
 public:
     NakedIfaceMgr() { }
     IfaceLst & getIfacesLst() { return ifaces_; }
     void setSendSock(int sock) { sendsock_ = sock; }
     void setRecvSock(int sock) { recvsock_ = sock; }
+
+    int openSocket(const std::string& ifname,
+                   const isc::asiolink::IOAddress& addr,
+                   int port, bool multicast) {
+        return IfaceMgr::openSocket(ifname, addr, port, multicast);
+    }
+
 };
 
 // dummy class for now, but this will be expanded when needed
@@ -102,29 +109,29 @@ TEST_F(IfaceMgrTest, getIface) {
 
 TEST_F(IfaceMgrTest, detectIfaces) {
 
-    // test detects that interfaces can be detected 
+    // test detects that interfaces can be detected
     // there is no code for that now, but interfaces are
     // read from file
     fstream fakeifaces("interfaces.txt", ios::out);
     fakeifaces << "eth0 fe80::1234";
     fakeifaces.close();
-    
+
     // this is not usable on systems that don't have eth0
     // interfaces. Nevertheless, this fake interface should
     // be on list, but if_nametoindex() will fail.
-    
+
     IfaceMgr & ifacemgr = IfaceMgr::instance();
-    
+
     ASSERT_TRUE( ifacemgr.getIface("eth0") != NULL );
-    
+
     IfaceMgr::Iface * eth0 = ifacemgr.getIface("eth0");
-    
+
     // there should be one address
     EXPECT_EQ(1, eth0->addrs_.size());
-    
+
     IOAddress * addr = &(*eth0->addrs_.begin());
     ASSERT_TRUE( addr != NULL );
-    
+
     EXPECT_STREQ( "fe80::1234", addr->toText().c_str() );
 }
 
@@ -132,27 +139,33 @@ TEST_F(IfaceMgrTest, sockets) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 
-    IfaceMgr & ifacemgr = IfaceMgr::instance();
+    NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
 
     IOAddress loAddr("::1");
 
     // bind multicast socket to port 10547
-    int socket1 = ifacemgr.openSocket("lo", loAddr, 10547, true);
+    int socket1 = ifacemgr->openSocket("lo", loAddr, 10547, true);
     EXPECT_GT(socket1, 0); // socket > 0
 
     // bind unicast socket to port 10548
-    int socket2 = ifacemgr.openSocket("lo", loAddr, 10548, false);
+    int socket2 = ifacemgr->openSocket("lo", loAddr, 10548, false);
     EXPECT_GT(socket2, 0);
 
     // good to check that both sockets can be opened at once
 
     close(socket1);
     close(socket2);
+
+    delete ifacemgr;
 }
 
 TEST_F(IfaceMgrTest, sendReceive) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
+
+    fstream fakeifaces("interfaces.txt", ios::out);
+    fakeifaces << "lo ::1";
+    fakeifaces.close();
 
     NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
 
@@ -168,14 +181,14 @@ TEST_F(IfaceMgrTest, sendReceive) {
 
     // prepare dummy payload
     for (int i=0;i<128; i++) {
-	sendPkt.data_[i] = i;
+        sendPkt.data_[i] = i;
     }
 
     sendPkt.remote_port_ = 10547;
     sendPkt.remote_addr_ = IOAddress("::1");
     sendPkt.ifindex_ = 1;
     sendPkt.iface_ = "lo";
-    
+
     Pkt6 * rcvPkt;
 
     EXPECT_EQ(true, ifacemgr->send(sendPkt));
@@ -186,7 +199,8 @@ TEST_F(IfaceMgrTest, sendReceive) {
 
     // let's check that we received what was sent
     EXPECT_EQ(sendPkt.data_len_, rcvPkt->data_len_);
-    EXPECT_EQ(0, memcmp(&sendPkt.data_[0], &rcvPkt->data_[0], rcvPkt->data_len_) );
+    EXPECT_EQ(0, memcmp(&sendPkt.data_[0], &rcvPkt->data_[0],
+                        rcvPkt->data_len_) );
 
     EXPECT_EQ(sendPkt.remote_addr_, rcvPkt->remote_addr_);
     EXPECT_EQ(rcvPkt->remote_port_, 10546);
