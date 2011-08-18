@@ -233,7 +233,7 @@ private:
         }
     };
 public:
-    virtual IteratorContextPtr getAllRecords(const Name&, int id) const {
+    virtual IteratorContextPtr getAllRecords(int id) const {
         if (id == 42) {
             return (IteratorContextPtr(new MockIteratorContext()));
         } else if (id == 13) {
@@ -440,12 +440,16 @@ private:
     }
 };
 
+// This tests the default getRecords behaviour, throwing NotImplemented
+TEST(DatabaseConnectionTest, getRecords) {
+    EXPECT_THROW(NopAccessor().getRecords(Name("."), 1),
+                 isc::NotImplemented);
+}
+
 // This tests the default getAllRecords behaviour, throwing NotImplemented
 TEST(DatabaseConnectionTest, getAllRecords) {
     // The parameters don't matter
-    EXPECT_THROW(NopAccessor().getRecords(Name("."), 1),
-                 isc::NotImplemented);
-    EXPECT_THROW(NopAccessor().getAllRecords(Name("."), 1),
+    EXPECT_THROW(NopAccessor().getAllRecords(1),
                  isc::NotImplemented);
 }
 

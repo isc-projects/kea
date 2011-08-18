@@ -173,15 +173,13 @@ public:
      * \param id The ID of the zone, returned from getZone().
      * \return Newly created iterator context. Must not be NULL.
      */
-    virtual IteratorContextPtr getAllRecords(const isc::dns::Name& name,
-                                             int id) const
+    virtual IteratorContextPtr getAllRecords(int id) const
     {
         /*
          * This is a compromise. We need to document the parameters in doxygen,
          * so they need a name, but then it complains about unused parameter.
          * This is a NOP that "uses" the parameters.
          */
-        static_cast<void>(name);
         static_cast<void>(id);
 
         isc_throw(isc::NotImplemented,
