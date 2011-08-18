@@ -22,55 +22,25 @@ namespace isc {
 ///
 /// constructor
 ///
-/// This constructor is used during packet reception.
-///
-/// Note: Pkt6 will take ownership of any data passed
-/// (due to performance reasons). Copying data on creation
-/// would be more elegant, but slower.
-///
-/// \param data
-/// \param dataLen
-///
-Pkt6::Pkt6(char * data, int dataLen)
-    :local_addr_("::"),
-     remote_addr_("::")
-{
-    data_ = data;
-    data_len_ = dataLen;
-}
-
-///
-/// constructor
-///
-/// This constructor is used for generated packets.
-///
-/// Note: Pkt6 will take ownership of any data passed
-/// (due to performance reasons). Copying data on creation
-/// would be more elegant, but slower.
-///
 /// \param dataLen - length of the data to be allocated
 ///
 Pkt6::Pkt6(int dataLen)
     :local_addr_("::"),
      remote_addr_("::") {
     try {
-	data_ = new char[dataLen];
+	data_ = boost::shared_array<char>(new char[dataLen]);
 	data_len_ = dataLen;
     } catch (const std::exception& ex) {
 	// TODO move to LOG_FATAL()
 	// let's continue with empty pkt for now
         std::cout << "Failed to allocate " << dataLen << " bytes."
                   << std::endl;
-        data_ = 0;
         data_len_ = 0;
     }
 }
 
 Pkt6::~Pkt6() {
-    if (data_) {
-        delete [] data_;
-        data_ = 0;
-    }
+    // no need to delete anything shared_ptr will take care of data_
 }
 
 };

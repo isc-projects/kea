@@ -366,7 +366,7 @@ IfaceMgr::send(Pkt6 &pkt) {
      * "scatter-gather" stuff... we only have a single chunk
      * of data to send, so we declare a single vector entry.)
      */
-    v.iov_base = (char *) pkt.data_;
+    v.iov_base = (char *) &pkt.data_[0];
     v.iov_len = pkt.data_len_;
     m.msg_iov = &v;
     m.msg_iovlen = 1;
@@ -445,7 +445,7 @@ IfaceMgr::receive() {
      * "scatter-gather" stuff... but we that doesn't really make
      * sense for us, so we use a single vector entry.)
      */
-    v.iov_base = pkt->data_;
+    v.iov_base = (void*)&pkt->data_[0];
     v.iov_len = pkt->data_len_;
     m.msg_iov = &v;
     m.msg_iovlen = 1;
