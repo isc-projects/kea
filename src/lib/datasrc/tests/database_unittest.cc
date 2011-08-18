@@ -238,12 +238,6 @@ public:
     virtual IteratorContextPtr getRecords(const Name& name, int id) const {
         if (id == 42) {
             return (IteratorContextPtr(new MockNameIteratorContext(*this, id, name)));
-        } else if (id == 13) {
-            return (IteratorContextPtr());
-        } else if (id == 0) {
-            return (IteratorContextPtr(new EmptyIteratorContext()));
-        } else if (id == -1) {
-            return (IteratorContextPtr(new BadIteratorContext()));
         } else {
             isc_throw(isc::Unexpected, "Unknown zone ID");
         }
@@ -890,7 +884,7 @@ TEST_F(DatabaseClientTest, find) {
     EXPECT_THROW(finder->find(isc::dns::Name("iscexception.in.search."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
-                 DataSourceError);
+                 isc::Exception);
     EXPECT_THROW(finder->find(isc::dns::Name("basicexception.in.search."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
@@ -903,7 +897,7 @@ TEST_F(DatabaseClientTest, find) {
     EXPECT_THROW(finder->find(isc::dns::Name("iscexception.in.getnext."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
-                 DataSourceError);
+                 isc::Exception);
     EXPECT_THROW(finder->find(isc::dns::Name("basicexception.in.getnext."),
                                               isc::dns::RRType::A(),
                                               NULL, ZoneFinder::FIND_DEFAULT),
