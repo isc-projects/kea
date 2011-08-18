@@ -112,7 +112,7 @@ TEST_F(IfaceMgrTest, detectIfaces) {
     // test detects that interfaces can be detected
     // there is no code for that now, but interfaces are
     // read from file
-    fstream fakeifaces("interfaces.txt", ios::out);
+    fstream fakeifaces("interfaces.txt", ios::out|ios::trunc);
     fakeifaces << "eth0 fe80::1234";
     fakeifaces.close();
 
@@ -120,11 +120,11 @@ TEST_F(IfaceMgrTest, detectIfaces) {
     // interfaces. Nevertheless, this fake interface should
     // be on list, but if_nametoindex() will fail.
 
-    IfaceMgr & ifacemgr = IfaceMgr::instance();
+    NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
 
-    ASSERT_TRUE( ifacemgr.getIface("eth0") != NULL );
+    ASSERT_TRUE( ifacemgr->getIface("eth0") != NULL );
 
-    IfaceMgr::Iface * eth0 = ifacemgr.getIface("eth0");
+    IfaceMgr::Iface * eth0 = ifacemgr->getIface("eth0");
 
     // there should be one address
     EXPECT_EQ(1, eth0->addrs_.size());
@@ -133,6 +133,8 @@ TEST_F(IfaceMgrTest, detectIfaces) {
     ASSERT_TRUE( addr != NULL );
 
     EXPECT_STREQ( "fe80::1234", addr->toText().c_str() );
+
+    delete ifacemgr;
 }
 
 TEST_F(IfaceMgrTest, sockets) {
@@ -163,7 +165,7 @@ TEST_F(IfaceMgrTest, sendReceive) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 
-    fstream fakeifaces("interfaces.txt", ios::out);
+    fstream fakeifaces("interfaces.txt", ios::out|ios::trunc);
     fakeifaces << "lo ::1";
     fakeifaces.close();
 
