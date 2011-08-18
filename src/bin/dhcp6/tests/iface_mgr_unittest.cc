@@ -186,7 +186,7 @@ TEST_F(IfaceMgrTest, sendReceive) {
 
     // let's check that we received what was sent
     EXPECT_EQ(sendPkt.data_len_, rcvPkt->data_len_);
-    EXPECT_EQ(0, memcmp(sendPkt.data_, rcvPkt->data_, rcvPkt->data_len_) );
+    EXPECT_EQ(0, memcmp(&sendPkt.data_[0], &rcvPkt->data_[0], rcvPkt->data_len_) );
 
     EXPECT_EQ(sendPkt.remote_addr_, rcvPkt->remote_addr_);
     EXPECT_EQ(rcvPkt->remote_port_, 10546);
