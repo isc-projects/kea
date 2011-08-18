@@ -87,6 +87,65 @@ public:
         fillData();
     }
 private:
+    class MockNameIteratorContext : public IteratorContext {
+    public:
+        MockNameIteratorContext(const MockAccessor& mock_accessor, int zone_id,
+                                const isc::dns::Name& name) :
+            searched_name_(name.toText()), cur_record_(0)
+        {
+            // 'hardcoded' name to trigger exceptions (for testing
+            // the error handling of find() (the other on is below in
+            // if the name is "exceptiononsearch" it'll raise an exception here
+            if (searched_name_ == "dsexception.in.search.") {
+                isc_throw(DataSourceError, "datasource exception on search");
+            } else if (searched_name_ == "iscexception.in.search.") {
+                isc_throw(isc::Exception, "isc exception on search");
+            } else if (searched_name_ == "basicexception.in.search.") {
+                throw std::exception();
+            }
+
+            // we're not aiming for efficiency in this test, simply
+            // copy the relevant vector from records
+            if (zone_id == 42) {
+                if (mock_accessor.records.count(searched_name_) > 0) {
+                    cur_name = mock_accessor.records.find(searched_name_)->second;
+                } else {
+                    cur_name.clear();
+                }
+            } else {
+                cur_name.clear();
+            }
+        }
+
+        virtual bool getNext(std::string columns[], size_t column_count) {
+            if (searched_name_ == "dsexception.in.getnext.") {
+                isc_throw(DataSourceError, "datasource exception on getnextrecord");
+            } else if (searched_name_ == "iscexception.in.getnext.") {
+                isc_throw(isc::Exception, "isc exception on getnextrecord");
+            } else if (searched_name_ == "basicexception.in.getnext.") {
+                throw std::exception();
+            }
+
+            if (column_count != DatabaseAccessor::COLUMN_COUNT) {
+                isc_throw(DataSourceError, "Wrong column count in getNextRecord");
+            }
+            if (cur_record_ < cur_name.size()) {
+                for (size_t i = 0; i < column_count; ++i) {
+                    columns[i] = cur_name[cur_record_][i];
+                }
+                cur_record_++;
+                return (true);
+            } else {
+                return (false);
+            }
+        }
+
+    private:
+        const std::string searched_name_;
+        int cur_record_;
+        std::vector< std::vector<std::string> > cur_name;
+    };
+
     class MockIteratorContext : public IteratorContext {
     private:
         int step;
@@ -183,6 +242,20 @@ public:
     virtual IteratorContextPtr getAllRecords(const Name&, int id) const {
         if (id == 42) {
             return (IteratorContextPtr(new MockIteratorContext()));
+        } else if (id == 13) {
+            return (IteratorContextPtr());
+        } else if (id == 0) {
+            return (IteratorContextPtr(new EmptyIteratorContext()));
+        } else if (id == -1) {
+            return (IteratorContextPtr(new BadIteratorContext()));
+        } else {
+            isc_throw(isc::Unexpected, "Unknown zone ID");
+        }
+    }
+
+    virtual IteratorContextPtr getRecords(const Name& name, int id) const {
+        if (id == 42) {
+            return (IteratorContextPtr(new MockNameIteratorContext(*this, id, name)));
         } else if (id == 13) {
             return (IteratorContextPtr());
         } else if (id == 0) {
@@ -448,6 +521,8 @@ private:
 // This tests the default getAllRecords behaviour, throwing NotImplemented
 TEST(DatabaseConnectionTest, getAllRecords) {
     // The parameters don't matter
+    EXPECT_THROW(NopAccessor().getRecords(Name("."), 1),
+                 isc::NotImplemented);
     EXPECT_THROW(NopAccessor().getAllRecords(Name("."), 1),
                  isc::NotImplemented);
 }
