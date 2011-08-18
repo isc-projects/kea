@@ -17,8 +17,6 @@
 
 #include <iostream>
 
-#include "dhcp6/addr6.h"
-
 namespace isc {
     class Dhcpv6Srv {
     private:

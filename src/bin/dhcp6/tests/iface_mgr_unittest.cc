@@ -20,12 +20,13 @@
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 
-#include "dhcp6/addr6.h"
+#include "io_address.h"
 #include "dhcp6/pkt6.h"
 #include "dhcp6/iface_mgr.h"
 
 using namespace std;
 using namespace isc;
+using namespace isc::asiolink;
 
 namespace {
 class NakedIfaceMgr: public IfaceMgr {
@@ -121,10 +122,10 @@ TEST_F(IfaceMgrTest, detectIfaces) {
     // there should be one address
     EXPECT_EQ(1, eth0->addrs_.size());
     
-    Addr6 * addr = &(*eth0->addrs_.begin());
+    IOAddress * addr = &(*eth0->addrs_.begin());
     ASSERT_TRUE( addr != NULL );
     
-    EXPECT_STREQ( "fe80::1234", addr->getPlain().c_str() );
+    EXPECT_STREQ( "fe80::1234", addr->toText().c_str() );
 }
 
 TEST_F(IfaceMgrTest, sockets) {
@@ -133,7 +134,7 @@ TEST_F(IfaceMgrTest, sockets) {
 
     IfaceMgr & ifacemgr = IfaceMgr::instance();
 
-    Addr6 loAddr("::1", true);
+    IOAddress loAddr("::1");
 
     // bind multicast socket to port 10547
     int socket1 = ifacemgr.openSocket("lo", loAddr, 10547, true);
@@ -156,7 +157,7 @@ TEST_F(IfaceMgrTest, sendReceive) {
     NakedIfaceMgr * ifacemgr = new NakedIfaceMgr();
 
     // let's assume that every supported OS have lo interface
-    Addr6 loAddr("::1", true);
+    IOAddress loAddr("::1");
     int socket1 = ifacemgr->openSocket("lo", loAddr, 10547, true);
     int socket2 = ifacemgr->openSocket("lo", loAddr, 10546, false);
 
@@ -171,7 +172,7 @@ TEST_F(IfaceMgrTest, sendReceive) {
     }
 
     sendPkt.remote_port_ = 10547;
-    sendPkt.remote_addr_ = Addr6("::1", true);
+    sendPkt.remote_addr_ = IOAddress("::1");
     sendPkt.ifindex_ = 1;
     sendPkt.iface_ = "lo";
     

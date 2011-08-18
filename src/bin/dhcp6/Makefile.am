@@ -31,8 +31,8 @@ spec_config.h: spec_config.h.pre
 
 BUILT_SOURCES = spec_config.h
 pkglibexec_PROGRAMS = b10-dhcp6
-b10_dhcp6_SOURCES = main.cc addr6.cc iface_mgr.cc pkt6.cc dhcp6_srv.cc 
-b10_dhcp6_SOURCES += addr6.h iface_mgr.h pkt6.h dhcp6_srv.h dhcp6.h
+b10_dhcp6_SOURCES = main.cc iface_mgr.cc pkt6.cc dhcp6_srv.cc
+b10_dhcp6_SOURCES += iface_mgr.h pkt6.h dhcp6_srv.h dhcp6.h
 b10_dhcp6_LDADD =  $(top_builddir)/src/lib/datasrc/libdatasrc.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la

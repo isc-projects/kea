@@ -12,7 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "dhcp6/addr6.h"
 #include "dhcp6/pkt6.h"
 #include "dhcp6/iface_mgr.h"
 #include "dhcp6/dhcp6_srv.h"

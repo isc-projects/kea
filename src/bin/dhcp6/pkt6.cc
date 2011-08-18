@@ -31,7 +31,10 @@ namespace isc {
 /// \param data
 /// \param dataLen
 ///
-Pkt6::Pkt6(char * data, int dataLen) {
+Pkt6::Pkt6(char * data, int dataLen)
+    :local_addr_("::"),
+     remote_addr_("::")
+{
     data_ = data;
     data_len_ = dataLen;
 }
@@ -47,7 +50,9 @@ Pkt6::Pkt6(char * data, int dataLen) {
 ///
 /// \param dataLen - length of the data to be allocated
 ///
-Pkt6::Pkt6(int dataLen) {
+Pkt6::Pkt6(int dataLen)
+    :local_addr_("::"),
+     remote_addr_("::") {
     try {
 	data_ = new char[dataLen];
 	data_len_ = dataLen;
