@@ -429,7 +429,7 @@ private:
         ITT_NAME
     };
 
-    void copyColumn(std::string data[], int column) {
+    void copyColumn(std::string (&data)[COLUMN_COUNT], int column) {
         data[column] = convertToPlainChar(sqlite3_column_text(statement_,
                                                               column),
                                           database_->dbparameters_);
