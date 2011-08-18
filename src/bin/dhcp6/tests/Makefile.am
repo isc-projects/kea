@@ -26,6 +26,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
+AM_CPPFLAGS += -I$(top_srcdir)/src/lib/asiolink
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(abs_top_srcdir)/src/lib/testutils/testdata\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/testutils/testdata\"
@@ -42,12 +43,10 @@ if HAVE_GTEST
 
 TESTS += dhcp6_unittests
 
-dhcp6_unittests_SOURCES  = ../addr6.h ../addr6.cc
-dhcp6_unittests_SOURCES += ../pkt6.h ../pkt6.cc
+dhcp6_unittests_SOURCES = ../pkt6.h ../pkt6.cc
 dhcp6_unittests_SOURCES += ../iface_mgr.h ../iface_mgr.cc
 dhcp6_unittests_SOURCES += ../dhcp6_srv.h ../dhcp6_srv.cc
 dhcp6_unittests_SOURCES += dhcp6_unittests.cc
-dhcp6_unittests_SOURCES += addr6_unittest.cc
 dhcp6_unittests_SOURCES += pkt6_unittest.cc
 dhcp6_unittests_SOURCES += iface_mgr_unittest.cc
 dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc

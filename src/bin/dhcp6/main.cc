@@ -73,6 +73,8 @@ main(int argc, char* argv[]) {
         }
     }
 
+    cout << "My pid=" << getpid() << endl;
+
     if (argc - optind > 0) {
         usage();
     }
